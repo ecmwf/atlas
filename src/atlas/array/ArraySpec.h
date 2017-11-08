@@ -39,6 +39,7 @@ public:
   ArraySpec( const ArrayShape& );
   ArraySpec( const ArrayShape&, const ArrayStrides& );
   ArraySpec( const ArrayShape&, const ArrayStrides&, const ArrayLayout& );
+  size_t allocated_size() const { return allocated_size_; }
   size_t size() const { return size_; }
   size_t rank() const { return rank_; }
   const ArrayShape& shape() const { return shape_; }
@@ -48,6 +49,10 @@ public:
   const std::vector<int>& stridesf() const;
   bool contiguous() const { return contiguous_; }
   bool hasDefaultLayout() const { return default_layout_; }
+
+/// todo: make private
+  size_t allocated_size_;
+
 };
 
 //------------------------------------------------------------------------------------------------------

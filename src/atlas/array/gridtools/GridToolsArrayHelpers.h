@@ -20,6 +20,7 @@
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------
@@ -237,9 +238,9 @@ struct default_layout_t {
           auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr().get();
           using Layout = typename DataStore::storage_info_t::layout_t;
 
-      using seq = my_apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
+          using seq = my_apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
 
-          return ArraySpec(
+          ArraySpec spec(
               ArrayShape{(unsigned long)dims...},
               seq::template apply<
                         ArrayStrides,
@@ -249,9 +250,12 @@ struct default_layout_t {
                         ArrayLayout,
                         get_layout_map_component<unsigned long, Layout>::template get_component>()
           );
+          spec.allocated_size_ = storage_info_ptr->padded_total_length();
+          ASSERT( spec.allocated_size() == storage_info_ptr->padded_total_length() );
+          return spec;
+      } else {
+          return ArraySpec( make_shape({dims...}), make_null_strides(typename ::gridtools::make_gt_integer_sequence<size_t, sizeof...(dims)>::type()));
       }
-
-      return ArraySpec( make_shape({dims...}), make_null_strides(typename ::gridtools::make_gt_integer_sequence<size_t, sizeof...(dims)>::type()));
   }
 
 //------------------------------------------------------------------------------

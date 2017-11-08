@@ -203,24 +203,24 @@ bool ArrayT<Value>::accMap() const {
   return false;
 }
 
-template <typename DATATYPE> DATATYPE const* Array::host_data() const {
-  return array::make_host_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE*       Array::host_data() {
-  return array::make_host_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE const* Array::device_data() const {
-  return array::make_device_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE*       Array::device_data() {
-  return array::make_device_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE const* Array::data() const {
-  return array::make_host_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE*       Array::data() {
-  return array::make_host_storageview<DATATYPE>(*this).data();
-}
+// template <typename DATATYPE> DATATYPE const* Array::host_data() const {
+//   return array::make_host_storageview<DATATYPE>(*this).data();
+// }
+// template <typename DATATYPE> DATATYPE*       Array::host_data() {
+//   return array::make_host_storageview<DATATYPE>(*this).data();
+// }
+// template <typename DATATYPE> DATATYPE const* Array::device_data() const {
+//   return array::make_device_storageview<DATATYPE>(*this).data();
+// }
+// template <typename DATATYPE> DATATYPE*       Array::device_data() {
+//   return array::make_device_storageview<DATATYPE>(*this).data();
+// }
+// template <typename DATATYPE> DATATYPE const* Array::data() const {
+//   return array::make_host_storageview<DATATYPE>(*this).data();
+// }
+// template <typename DATATYPE> DATATYPE*       Array::data() {
+//   return array::make_host_storageview<DATATYPE>(*this).data();
+// }
 
 template int*                 Array::host_data<int>();
 template int const*           Array::host_data<int>() const;

@@ -65,6 +65,14 @@ struct GridToolsDataStore : ArrayDataStore
         return static_cast<void*>(const_cast<gt_DataStore*>(data_store_));
     }
 
+    void* voidHostData() {
+        return ::gridtools::make_host_view<::gridtools::access_mode::ReadOnly>(*data_store_).data();
+    }
+
+    void* voidDeviceData() {
+        return ::gridtools::make_device_view<::gridtools::access_mode::ReadOnly>(*data_store_).data();
+    }
+
 private:
     gt_DataStore const* data_store_;
 };

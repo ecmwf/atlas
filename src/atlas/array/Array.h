@@ -113,12 +113,12 @@ public:
   ArraySpec& spec() {return spec_;}
 
   // -- dangerous methods... You're on your own interpreting the raw data
-  template <typename DATATYPE> DATATYPE const* host_data() const;
-  template <typename DATATYPE> DATATYPE*       host_data();
-  template <typename DATATYPE> DATATYPE const* device_data() const;
-  template <typename DATATYPE> DATATYPE*       device_data();
-  template <typename DATATYPE> DATATYPE const* data() const;
-  template <typename DATATYPE> DATATYPE*       data();
+  template <typename DATATYPE> DATATYPE const* host_data() const { return data_store_->hostData<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       host_data()       { return data_store_->hostData<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE const* device_data() const { return data_store_->deviceData<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       device_data()       { return data_store_->deviceData<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE const* data() const { return data_store_->hostData<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       data()       { return data_store_->hostData<DATATYPE>(); }
 
   ArrayDataStore const* data_store() const { return data_store_.get();}
 

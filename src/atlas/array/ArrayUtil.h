@@ -41,6 +41,10 @@ public:
   virtual void reactivateDeviceWriteViews() const = 0;
   virtual void reactivateHostWriteViews() const = 0;
   virtual void* voidDataStore() = 0;
+  virtual void* voidHostData() = 0;
+  virtual void* voidDeviceData() = 0;
+  template <typename Value> Value* hostData()   { return static_cast<Value*>(voidHostData());   }
+  template <typename Value> Value* deviceData() { return static_cast<Value*>(voidDeviceData()); }
 };
 
 template < int Dim >

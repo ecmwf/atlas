@@ -18,6 +18,7 @@ namespace array {
 ArraySpec::ArraySpec():
     size_(),
     rank_(),
+    allocated_size_(),
     contiguous_(true),
     default_layout_(true)
 {
@@ -36,6 +37,7 @@ ArraySpec::ArraySpec( const ArrayShape& shape )
     layout_[j]  = j;
     size_ *= shape_[j];
   }
+  allocated_size_ = size_;
   contiguous_ = true;
   default_layout_ = true;
 };
@@ -56,7 +58,8 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides )
     layout_[j]  = j;
     size_ *= shape_[j];
   }
-  contiguous_ = (size_ == shape_[0]*strides_[0] ? true : false);
+  allocated_size_ = shape_[0]*strides_[0];
+  contiguous_ = (size_ == allocated_size_);
   default_layout_ = true;
 }
 
@@ -76,9 +79,12 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, cons
     strides_[j] = strides[j];
     layout_[j]  = layout[j];
     size_ *= shape_[j];
-    if( layout_[j] != size_t(j) ) default_layout_ = false;
+    if( layout_[j] != size_t(j) ) {
+      default_layout_ = false;
+    }
   }
-  contiguous_ = (size_ == shape_[0]*strides_[0] ? true : false);
+  allocated_size_ = shape_[0]*strides_[0];
+  contiguous_ = (size_ == allocated_size_);
 }
 
 const std::vector<int>& ArraySpec::shapef() const
