@@ -344,9 +344,12 @@ bool ArrayT<Value>::accMap() const {
 //------------------------------------------------------------------------------
 
 template <typename Value> void ArrayT<Value>::insert(size_t idx1, size_t size1) {
-    if(!hostNeedsUpdate()) {
+
+    if( hostNeedsUpdate() ) {
         cloneFromDevice();
     }
+    if( not hasDefaultLayout() )
+      NOTIMP;
 
     ArrayShape nshape = shape();
     if(idx1 > nshape[0]) {
@@ -357,6 +360,7 @@ template <typename Value> void ArrayT<Value>::insert(size_t idx1, size_t size1) 
     Array* resized = Array::create<Value>(nshape);
 
     array_initializer_partitioned<0>::apply( *this, *resized, idx1, size1);
+    
     replace(*resized);
     delete resized;
 }

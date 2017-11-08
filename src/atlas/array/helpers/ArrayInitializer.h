@@ -103,10 +103,10 @@ struct array_initializer_partitioned_val_impl {
             pos, offset);
   }
 
-  template <typename ... DimIndex>
+  template <typename ... DimIndexPair>
   static void apply( ArrayView<Value, Rank> const&& orig,
                      ArrayView<Value, Rank>&& dest,
-                     unsigned int pos, unsigned int offset, DimIndex... idxs) {
+                     unsigned int pos, unsigned int offset, DimIndexPair... idxs) {
       for(size_t i=0; i < orig.shape(Dim); ++i)
       {
           unsigned int displ = i;
@@ -123,14 +123,29 @@ struct array_initializer_partitioned_val_impl {
 
 };
 
+
+// template< typename stdarray >
+// inline std::string print_array(const stdarray& v)
+// {
+//   std::stringstream s;
+//   s << "[ ";
+//   for( int j=0; j<v.size(); ++ j ) {
+//     s << v[j];
+//     if( j != v.size()-1 ) s << " , ";
+//   }
+//   s << " ]";
+//   return s.str();
+// }
+
 //------------------------------------------------------------------------------
 
 template <typename Value, unsigned int Rank, unsigned int PartDim>
 struct array_initializer_partitioned_val_impl<Value, Rank, Rank, PartDim> {
-    template <typename ... DimIndex>
-  static void apply(ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& dest, unsigned int pos, unsigned int offset, DimIndex... idxs) {
-      dest(std::get<1>(idxs)...) = orig(std::get<0>(idxs)...);
-  }
+    template <typename ... DimIndexPair>
+    static void apply(ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& dest, unsigned int pos, unsigned int offset, DimIndexPair... idxs) {
+// Log::info() << print_array(std::array<int,Rank>{std::get<0>(idxs)...}) << " --> " << print_array(std::array<int,Rank>{std::get<1>(idxs)...}) << "    " <<  orig(std::get<0>(idxs)...) << std::endl;
+        dest(std::get<1>(idxs)...) = orig(std::get<0>(idxs)...);
+    }
 };
 
 //------------------------------------------------------------------------------

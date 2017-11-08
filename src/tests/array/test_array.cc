@@ -338,13 +338,14 @@ CASE("test_resize_shape") {
   delete ds;
 }
 
-#ifndef TODO
-#warning TODO
-#else
 CASE("test_insert") {
   Array* ds = Array::create<double>(7, 5, 8);
 
-  atlas::array::ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
+  EXPECT( ds->hostNeedsUpdate() == false );
+  auto hv = make_host_view<double, 3>(*ds);
+  hv.assign(-1.);
+  
+  EXPECT( hv(0,0,0) == -1. );
   hv(1, 3, 3) = 1.5;
   hv(2, 3, 3) = 2.5;
   hv(3, 3, 3) = 3.5;
@@ -359,12 +360,13 @@ CASE("test_insert") {
   EXPECT(ds->spec().rank() == 3);
   EXPECT(ds->spec().size() == 9 * 5 * 8);
 
-  atlas::array::ArrayView<double, 3> hv2 = make_host_view<double, 3>(*ds);
+  auto hv2 = make_host_view<double, 3>(*ds);
 
   // currently we have no mechanism to invalidate the old views after an insertion into the Array
   // The original gt data store is deleted and replaced, but the former atlas::array::ArrayView keeps a pointer to it
   // wihtout noticing it has been deleted
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+  // Following statement seems to contradict previous comment
   EXPECT(hv.valid() == false);
 #endif
 
@@ -377,7 +379,6 @@ CASE("test_insert") {
 
   delete ds;
 }
-#endif
 
 CASE("test_insert_throw") {
   Array* ds = Array::create<double>(7, 5, 8);
