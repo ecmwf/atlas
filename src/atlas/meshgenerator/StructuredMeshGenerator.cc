@@ -1358,7 +1358,6 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
       }
     }
   }
-
   generate_global_element_numbering( mesh );
 }
 

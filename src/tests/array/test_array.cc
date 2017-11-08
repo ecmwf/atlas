@@ -386,9 +386,6 @@ CASE("test_insert_throw") {
   EXPECT_THROWS_AS(ds->insert(8, 2), eckit::BadParameter);
 }
 
-#ifndef TODO
-#warning TODO
-#else
 CASE("test_wrap_storage") {
   {
     Array* ds = Array::create<double>(4, 5, 6);
@@ -407,24 +404,18 @@ CASE("test_wrap_storage") {
     delete ds_ext;
   }
   {
-    Array* ds = Array::create<double>(4, 5, 6);
-
-    atlas::array::ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
-
-    hv(2, 3, 3) = 2.5;
-
+    std::vector<double> v(4*5*6, 0.);
+    v[ 2*(5*6) + 3*6 + 3 ] = 2.5;
     ArrayShape shape{4, 5, 6};
-    Array* ds_ext = Array::wrap<double>(hv.data(), shape);
+    Array* ds_ext = Array::wrap<double>(v.data(), shape);
 
     atlas::array::ArrayView<double, 3> hv_ext = make_host_view<double, 3>(*ds_ext);
 
     EXPECT(hv_ext(2, 3, 3) == 2.5);
 
-    delete ds;
     delete ds_ext;
   }
 }
-#endif
 
 CASE("test_storageview") {
   Array* ds = Array::create<double>(2ul, 3ul, 4ul);
