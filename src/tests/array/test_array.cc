@@ -14,6 +14,18 @@
 #include "tests/AtlasTestEnvironment.h"
 #include "eckit/testing/Test.h"
 
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#define PADDED 1
+#else
+#define PADDED 0
+#endif
+#else
+#define PADDED 0
+#endif
+#define NOT_PADDED 1-PADDED
+
+
 using namespace atlas::array;
 using namespace eckit::testing;
 
@@ -105,9 +117,6 @@ CASE("test_localview") {
   delete ds;
 }
 
-#ifndef TODO
-# warning TODO
-#else
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_array_shape") {
   ArrayShape as{2, 3};
@@ -124,8 +133,7 @@ CASE("test_array_shape") {
   EXPECT(ds->rank() == 2);
   EXPECT(ds->stride(0) == gt_hv.storage_info().stride<0>());
   EXPECT(ds->stride(1) == gt_hv.storage_info().stride<1>());
-  EXPECT(ds->contiguous() == true);
-
+  EXPECT(ds->contiguous() == NOT_PADDED );
   delete ds;
 }
 #endif
@@ -141,10 +149,11 @@ CASE("test_spec") {
   EXPECT(ds->spec().shapef()[1] == 5);
   EXPECT(ds->spec().shapef()[2] == 4);
 
-  EXPECT(ds->spec().strides()[0] == 6 * 5);
-  EXPECT(ds->spec().strides()[1] == 6);
-  EXPECT(ds->spec().strides()[2] == 1);
-
+  if( NOT_PADDED ) {
+    EXPECT(ds->spec().strides()[0] == 6 * 5);
+    EXPECT(ds->spec().strides()[1] == 6);
+    EXPECT(ds->spec().strides()[2] == 1);
+  }
   EXPECT(ds->spec().hasDefaultLayout() == true);
 
   delete ds;
@@ -160,9 +169,11 @@ CASE("test_spec_layout") {
   EXPECT(ds->spec().shapef()[0] == 6);
   EXPECT(ds->spec().shapef()[1] == 5);
   EXPECT(ds->spec().shapef()[2] == 4);
-  EXPECT(ds->spec().strides()[0] == 6 * 5);
-  EXPECT(ds->spec().strides()[1] == 6);
-  EXPECT(ds->spec().strides()[2] == 1);
+  if( NOT_PADDED ) {
+    EXPECT(ds->spec().strides()[0] == 6 * 5);
+    EXPECT(ds->spec().strides()[1] == 6);
+    EXPECT(ds->spec().strides()[2] == 1);
+  }
   EXPECT(ds->spec().hasDefaultLayout() == true);
   EXPECT(ds->spec().layout()[0] == 0);
   EXPECT(ds->spec().layout()[1] == 1);
@@ -182,9 +193,11 @@ CASE("test_spec_layout_rev") {
   EXPECT(ds->spec().shapef()[0] == 4);
   EXPECT(ds->spec().shapef()[1] == 5);
   EXPECT(ds->spec().shapef()[2] == 6);
-  EXPECT(ds->spec().strides()[0] == 1);
-  EXPECT(ds->spec().strides()[1] == 4);
-  EXPECT(ds->spec().strides()[2] == 4 * 5);
+  if( NOT_PADDED ) {
+    EXPECT(ds->spec().strides()[0] == 1);
+    EXPECT(ds->spec().strides()[1] == 4);
+    EXPECT(ds->spec().strides()[2] == 4 * 5);
+  }
   EXPECT(ds->spec().hasDefaultLayout() == false);
   EXPECT(ds->spec().layout()[0] == 2);
   EXPECT(ds->spec().layout()[1] == 1);
@@ -195,7 +208,6 @@ CASE("test_spec_layout_rev") {
 
   EXPECT_THROWS_AS( Array::create<double>(make_shape(4,5,6,2),make_layout(0,1,3,2)), eckit::BadParameter );
 }
-#endif
 #endif
 
 CASE("test_resize_throw") {
