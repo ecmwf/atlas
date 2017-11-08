@@ -29,8 +29,8 @@ struct array_assigner;
 // Recursive function to apply value to every index
 template <typename Value, unsigned int Rank, unsigned int Dim>
 struct array_assigner_impl {
-  template <typename ... DimIndex>
-  static void apply(ArrayView<Value,Rank>& arr, Value value, DimIndex... idxs) {
+  template <typename View, typename ... DimIndex>
+  static void apply(View& arr, Value value, DimIndex... idxs) {
     for(size_t i=0; i < arr.shape(Dim); ++i) {
       array_assigner_impl<Value, Rank, Dim+1>::apply( arr, value, idxs..., i );
     }
@@ -40,8 +40,8 @@ struct array_assigner_impl {
 // End of recursion when Dim == Rank
 template <typename Value, unsigned int Rank>
 struct array_assigner_impl<Value, Rank, Rank> {
-  template <typename ... DimIndex>
-  static void apply(ArrayView<Value,Rank>& arr, Value value, DimIndex... idxs) {
+  template <typename View, typename ... DimIndex>
+  static void apply(View& arr, Value value, DimIndex... idxs) {
       arr(idxs...) = value;
   }
 };
@@ -58,6 +58,11 @@ struct array_assigner {
   }
 
   static void apply(ArrayView<Value,Rank>& arr, Value value) {
+    array_assigner_impl<Value,Rank,0u>::apply( arr, value );
+    // Note: no need to apply variadic pack (idxs...)
+  }
+
+  static void apply(LocalView<Value,Rank>& arr, Value value) {
     array_assigner_impl<Value,Rank,0u>::apply( arr, value );
     // Note: no need to apply variadic pack (idxs...)
   }

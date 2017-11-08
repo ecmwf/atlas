@@ -11,6 +11,7 @@
 #include <iostream>
 #include "eckit/exception/Exceptions.h"
 #include "atlas/array/LocalView.h"
+#include "atlas/array/helpers/ArrayAssigner.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -21,11 +22,7 @@ namespace array {
 
 template <typename Value, int Rank>
 void LocalView<Value,Rank>::assign(const value_type& value) {
-    ASSERT( contiguous() );
-    value_type* raw_data = data();
-    for( size_t j=0; j<size_; ++j ) {
-        raw_data[j] = value;
-    }
+    helpers::array_assigner<Value,Rank>::apply(*this,value);
 }
 
 //------------------------------------------------------------------------------------------------------

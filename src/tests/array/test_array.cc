@@ -438,9 +438,6 @@ CASE("test_storageview") {
   delete ds;
 }
 
-#ifndef TODO
-#warning TODO
-#else
 CASE("test_assign") {
   Array* ds = Array::create<double>(2ul, 3ul, 4ul);
   auto hv = make_host_view<double, 3>(*ds);
@@ -456,13 +453,6 @@ CASE("test_assign") {
   EXPECT(hv(1, 2, 3) == 5.0);
   EXPECT(lv(2, 3) == 5.0);
 
-  auto sv = make_storageview<double>(*ds);
-  sv.assign(0.);
-
-  EXPECT(hv(0, 2, 3) == 0.);
-  EXPECT(hv(1, 2, 3) == 0.);
-  EXPECT(lv(2, 3) == 0.);
-
   delete ds;
 }
 
@@ -471,9 +461,11 @@ CASE("test_ArrayT") {
     ArrayT<double> ds(2, 3, 4);
 
     EXPECT(ds.size() == 2 * 3 * 4);
-    EXPECT(ds.stride(0) == 3 * 4);
-    EXPECT(ds.stride(1) == 4);
-    EXPECT(ds.stride(2) == 1);
+    if( NOT_PADDED ) {
+      EXPECT(ds.stride(0) == 3 * 4);
+      EXPECT(ds.stride(1) == 4);
+      EXPECT(ds.stride(2) == 1);
+    }
     EXPECT(ds.shape(0) == 2);
     EXPECT(ds.shape(1) == 3);
     EXPECT(ds.shape(2) == 4);
@@ -483,9 +475,11 @@ CASE("test_ArrayT") {
     ArrayT<double> ds(make_shape(2, 3, 4));
 
     EXPECT(ds.size() == 2 * 3 * 4);
-    EXPECT(ds.stride(0) == 3 * 4);
-    EXPECT(ds.stride(1) == 4);
-    EXPECT(ds.stride(2) == 1);
+    if( NOT_PADDED ) {
+      EXPECT(ds.stride(0) == 3 * 4);
+      EXPECT(ds.stride(1) == 4);
+      EXPECT(ds.stride(2) == 1);
+    }
     EXPECT(ds.shape(0) == 2);
     EXPECT(ds.shape(1) == 3);
     EXPECT(ds.shape(2) == 4);
@@ -495,15 +489,16 @@ CASE("test_ArrayT") {
     ArrayT<double> ds(ArraySpec(make_shape(2, 3, 4)));
 
     EXPECT(ds.size() == 2 * 3 * 4);
-    EXPECT(ds.stride(0) == 3 * 4);
-    EXPECT(ds.stride(1) == 4);
-    EXPECT(ds.stride(2) == 1);
+    if( NOT_PADDED ) {
+      EXPECT(ds.stride(0) == 3 * 4);
+      EXPECT(ds.stride(1) == 4);
+      EXPECT(ds.stride(2) == 1);
+    }
     EXPECT(ds.shape(0) == 2);
     EXPECT(ds.shape(1) == 3);
     EXPECT(ds.shape(2) == 4);
   }
 }
-#endif
 
 CASE("test_valid") {
 
