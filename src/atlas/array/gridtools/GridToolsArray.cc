@@ -22,7 +22,9 @@
 #include "atlas/array/gridtools/GridToolsDataStore.h"
 #include "atlas/array/gridtools/GridToolsArrayHelpers.h"
 #include "atlas/array/helpers/ArrayInitializer.h"
-
+#ifdef ATLAS_HAVE_ACC
+#include "atlas_acc_support/atlas_acc_map_data.h"
+#endif
 #include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------
@@ -431,6 +433,17 @@ template <typename Value> ArrayT<Value>::ArrayT(const ArrayShape& shape, const A
 template <typename Value> ArrayT<Value>::ArrayT(const ArraySpec& spec) {
     if( not spec.contiguous() )     NOTIMP;
     ArrayT_impl<Value>(*this).construct(spec.shape(),spec.layout());
+}
+
+template <typename Value>
+bool ArrayT<Value>::accMap() const {
+  if( not acc_map_ ) {
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA && defined(ATLAS_HAVE_ACC)
+    atlas_acc_map_data( (void*) host_data<Value>(), (void*) device_data<Value>(), size() );
+    acc_map_ = true;
+#endif
+  }
+  return acc_map_;
 }
 
 //------------------------------------------------------------------------------

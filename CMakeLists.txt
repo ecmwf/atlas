@@ -215,22 +215,23 @@ add_subdirectory( src )
 set( ATLAS_URL "https://software.ecmwf.int/wiki/display/ATLAS" )
 set( ATLAS_DESCRIPTION "Atlas framework for parallel mesh datastructures" )
 
-ecbuild_pkgconfig()
+#ecbuild_pkgconfig()
 
-ecbuild_pkgconfig(
-  NAME             atlas-c++
-  LANGUAGES        CXX
-  LIBRARIES        atlas
-)
+#ecbuild_pkgconfig(
+#  NAME             atlas-c++
+#  LANGUAGES        CXX
+#  LIBRARIES        atlas
+#)
 
-if( ATLAS_HAVE_FORTRAN )
-  ecbuild_pkgconfig(
-    NAME             atlas-fortran
-    LANGUAGES        Fortran
-    LIBRARIES        atlas_f
-    NO_PRIVATE_INCLUDE_DIRS
-  )
-endif()
+#if( ATLAS_HAVE_FORTRAN )
+#  ecbuild_pkgconfig(
+#    NAME             atlas-fortran
+#    LANGUAGES        Fortran
+#    LIBRARIES        atlas_f
+#    NO_PRIVATE_INCLUDE_DIRS
+#  )
+#endif()
+ecbuild_warn( "ecbuild needs fixing to enable above with OpenACC imported library" )
 
 ################################################################################
 # documentation

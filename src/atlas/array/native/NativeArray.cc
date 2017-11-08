@@ -198,6 +198,10 @@ size_t ArrayT<Value>::footprint() const {
   return size;
 }
 
+template <typename Value>
+bool ArrayT<Value>::accMap() const {
+  return false;
+}
 
 template <typename DATATYPE> DATATYPE const* Array::host_data() const {
   return array::make_host_storageview<DATATYPE>(*this).data();

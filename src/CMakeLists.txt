@@ -55,6 +55,8 @@ if( ATLAS_HAVE_MPI )
 
 endif()
 
+add_subdirectory( atlas_acc_support )
+
 add_subdirectory( atlas )
 
 if( ATLAS_HAVE_FORTRAN )

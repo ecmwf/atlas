@@ -88,6 +88,8 @@ public:
 
   virtual void dump(std::ostream& os) const = 0;
 
+  virtual bool accMap() const = 0;
+
   virtual void* storage() { return data_store_->voidDataStore();}
 
   virtual const void* storage() const { return data_store_->voidDataStore();}
@@ -170,9 +172,12 @@ public:
 
     virtual size_t footprint() const;
 
+    virtual bool accMap() const;
+
 private:
     template <typename T>
     friend class ArrayT_impl;
+    mutable bool acc_map_{false};
 };
 
 } // namespace array

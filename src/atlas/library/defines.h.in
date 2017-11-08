@@ -35,6 +35,10 @@
 #define ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA @ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA@
 #endif
 
+#if @ATLAS_HAVE_ACC@
+#define ATLAS_HAVE_ACC
+#endif
+
 #ifdef __CUDACC__
 #define ATLAS_HOST_DEVICE __host__ __device__
 #define ATLAS_DEVICE __device__
