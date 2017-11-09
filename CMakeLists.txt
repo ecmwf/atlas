@@ -119,15 +119,14 @@ if( HAVE_TESSELATION )
     endif()
 endif()
 
-### FIND GRIDTOOLS STORAGE
+### GridTools storage module
+
 ecbuild_add_option(
   FEATURE GRIDTOOLS_STORAGE
   DESCRIPTION "Arrays internally use GridTools storage layer"
   REQUIRED_PACKAGES "PROJECT gridtools_storage" )
 
-
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
-
 
   set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
   set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
@@ -138,6 +137,30 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
     set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
   endif()
 
+endif()
+
+### OpenACC
+
+set( ATLAS_ACC_CAPABLE FALSE )
+if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+  if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI" )
+    set( ATLAS_ACC_CAPABLE TRUE )
+  endif()
+endif()
+
+ecbuild_add_option( FEATURE ACC
+                    DESCRIPTION  "OpenACC capable data structures"
+                    CONDITION ATLAS_ACC_CAPABLE )
+
+if( ATLAS_HAVE_ACC )
+  if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI" )
+    set( ACC_Fortran_FLAGS -acc -ta=tesla,cuda${CUDA_VERSION},nordc )
+    set( ACC_C_FLAGS ${ACC_Fortran_FLAGS} )
+    find_program( ACC_C_COMPILER NAMES pgcc HINTS ${PGI_DIR} ENV PGI_DIR PATH_SUFFIXES bin )
+    if( NOT ACC_C_COMPILER )
+      ecbuild_error( "Could not find OpenACC capable C compiler" )
+    endif()
+  endif()
 endif()
 
 ### Eigen
@@ -215,23 +238,22 @@ add_subdirectory( src )
 set( ATLAS_URL "https://software.ecmwf.int/wiki/display/ATLAS" )
 set( ATLAS_DESCRIPTION "Atlas framework for parallel mesh datastructures" )
 
-#ecbuild_pkgconfig()
+ecbuild_pkgconfig()
 
-#ecbuild_pkgconfig(
-#  NAME             atlas-c++
-#  LANGUAGES        CXX
-#  LIBRARIES        atlas
-#)
+ecbuild_pkgconfig(
+ NAME             atlas-c++
+ LANGUAGES        CXX
+ LIBRARIES        atlas
+)
 
-#if( ATLAS_HAVE_FORTRAN )
-#  ecbuild_pkgconfig(
-#    NAME             atlas-fortran
-#    LANGUAGES        Fortran
-#    LIBRARIES        atlas_f
-#    NO_PRIVATE_INCLUDE_DIRS
-#  )
-#endif()
-ecbuild_warn( "ecbuild needs fixing to enable above with OpenACC imported library" )
+if( ATLAS_HAVE_FORTRAN )
+ ecbuild_pkgconfig(
+   NAME             atlas-fortran
+   LANGUAGES        Fortran
+   LIBRARIES        atlas_f
+   NO_PRIVATE_INCLUDE_DIRS
+ )
+endif()
 
 ################################################################################
 # documentation

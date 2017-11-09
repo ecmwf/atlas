@@ -1,36 +1,7 @@
 
-set( ATLAS_HAVE_ACC  0 )
-set( ENABLE_ACC ON CACHE STRING "Enable OpenACC" )
-
-if( ENABLE_ACC AND NOT CUDA_FOUND )
-
-  ecbuild_warn( "OpenACC support not enabled as CUDA was not found" )
-
-elseif( ENABLE_ACC )
-
-  if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI" )
-    set( ACC_Fortran_FLAGS -acc -ta=tesla,cuda${CUDA_VERSION},nordc )
-    set( ACC_C_FLAGS ${ACC_Fortran_FLAGS} )
-    set( ACC_C_COMPILER pgcc )
-    set( ATLAS_HAVE_ACC 1 )
-  elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
-    ecbuild_warn( "OpenACC support not enabled as we did not yet implement it for Cray" )
-  else()
-    ecbuild_warn( "OpenACC support not enabled as we did not yet implement it for ${CMAKE_Fortran_COMPILER_ID}" )
-  endif()
-  if( ATLAS_HAVE_ACC )
-    ecbuild_info( "OpenACC enabled" )
-  endif()
-
-endif()
-
 if( ATLAS_HAVE_ACC )
 
   if( NOT (CMAKE_C_COMPILER_ID MATCHES ${CMAKE_Fortran_COMPILER_ID}) )
-
-    foreach( _dir ${ACC_C_INCLUDE_DIRS} )
-      set( ACC_C_INCLUDE ${ACC_C_INCLUDE} -I${_dir} )
-    endforeach()
     add_custom_command(
         OUTPUT  ${CMAKE_BINARY_DIR}/lib/libatlas_acc_support.so ${CMAKE_CURRENT_BINARY_DIR}/atlas_acc_map_data.c.o
         COMMAND ${ACC_C_COMPILER} ${ACC_C_FLAGS} ${ACC_C_INCLUDE} -fPIC -o ${CMAKE_CURRENT_BINARY_DIR}/atlas_acc_map_data.c.o
@@ -58,6 +29,3 @@ if( ATLAS_HAVE_ACC )
   endif()
 
 endif()
-
-set( ATLAS_HAVE_ACC ${ATLAS_HAVE_ACC} PARENT_SCOPE )
-set( ACC_Fortran_FLAGS ${ACC_Fortran_FLAGS} PARENT_SCOPE )
