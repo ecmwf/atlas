@@ -60,3 +60,4 @@ if( ATLAS_HAVE_ACC )
 endif()
 
 set( ATLAS_HAVE_ACC ${ATLAS_HAVE_ACC} PARENT_SCOPE )
+set( ACC_Fortran_FLAGS ${ACC_Fortran_FLAGS} PARENT_SCOPE )

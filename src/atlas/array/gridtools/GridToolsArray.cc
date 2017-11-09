@@ -282,7 +282,7 @@ template <typename Value>
 bool ArrayT<Value>::accMap() const {
   if( not acc_map_ ) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA && defined(ATLAS_HAVE_ACC)
-    atlas_acc_map_data( (void*) host_data<Value>(), (void*) device_data<Value>(), spec_.allocatedSize() );
+    atlas_acc_map_data( (void*) host_data<Value>(), (void*) device_data<Value>(), spec_.allocatedSize()*sizeof(Value) );
     acc_map_ = true;
 #endif
   }
