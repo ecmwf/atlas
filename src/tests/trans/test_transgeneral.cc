@@ -195,6 +195,60 @@ void compute_legendre(
 }
 
 //-----------------------------------------------------------------------------
+// Routine to compute the Legendre transformation
+//
+// Author:
+// Andreas Mueller *ECMWF*
+//
+void legendre_transform(
+        const size_t knsmax,                 // truncation + 1 (in)
+        const size_t knsmaxFT,               // truncation + 1 for Fourier transformation (in)
+        array::ArrayView<double,1>& rlegReal,// values of associated Legendre functions, size (knsmax+1)*knsmax/2 (out)
+        array::ArrayView<double,1>& rlegImag,// values of associated Legendre functions, size (knsmax+1)*knsmax/2 (out)
+        array::ArrayView<double,1>& zlfpol,  // values of associated Legendre functions, size (knsmax+1)*knsmax/2 (out)
+        double rspecg[])                     // spectral data, size (knsmax+1)*knsmax (in)
+{
+    // Legendre transformation:
+    rlegReal.assign(0.); rlegImag.assign(0.);
+    double zfac = 1.;
+    int k = 0;
+    for( int jm=0; jm<=knsmaxFT; ++jm ) {
+        for( int jn=jm; jn<=knsmax; ++jn ) {
+            if( jm>0 ) zfac = 2.;
+
+            // not completely sure where this zfac comes from. One possible explanation:
+            // normalization of trigonometric functions in the spherical harmonics
+            // integral over square of trig function is 1 for m=0 and 0.5 (?) for m>0
+            rlegReal[jm] += rspecg[2*k]   * zfac * zlfpol(k);
+            rlegImag[jm] += rspecg[2*k+1] * zfac * zlfpol(k);
+            //Log::info() << zfac * zlfpol(k) << std::endl; // just for debugging
+            k++;
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Routine to compute the local Fourier transformation
+//
+// Author:
+// Andreas Mueller *ECMWF*
+//
+double fourier_transform(
+        const size_t knsmaxFT,
+        array::ArrayView<double,1>& rlegReal,// values of associated Legendre functions, size (knsmax+1)*knsmax/2 (out)
+        array::ArrayView<double,1>& rlegImag,// values of associated Legendre functions, size (knsmax+1)*knsmax/2 (out)
+        double lon)
+{
+    // local Fourier transformation:
+    // (FFT would be slower when computing the Fourier transformation for a single point)
+    double lonRad = lon * util::Constants::degreesToRadians(), result = 0.;
+    for( int jm=0; jm<=knsmaxFT; ++jm ) {
+        result += std::cos(jm*lonRad) * rlegReal(jm) - std::sin(jm*lonRad) * rlegImag(jm);
+    }
+    return result;
+}
+
+//-----------------------------------------------------------------------------
 // Routine to compute the spectral transform by using a local Fourier transformation
 // for a single point
 //
@@ -204,126 +258,9 @@ void compute_legendre(
 double spectral_transform_point(
         const size_t knsmax,               // truncation + 1 (in)
         const size_t knsmaxFT,             // truncation + 1 for Fourier transformation (in)
-        double& lon,                       // longitude in degree (in)
-        array::ArrayView<double,1>& zlfpol,// values of associated Legendre functions at desired latitude, size (knsmax+1)*knsmax/2 (in)
-        array::ArrayView<double,1>& rspecg)// spectral data, size (knsmax+1)*knsmax (in)
-{
-    std::ostream& out = Log::info(); // just for debugging
-    double result = 0., zfac = 1.;
-    int k = 0;
-    double lonRad = lon * util::Constants::degreesToRadians();
-    for( int jm=0; jm<=knsmax; ++jm ) {
-        // Legendre transformation:
-        double rlegReal = 0., rlegImag = 0.;
-        for( int jn=jm; jn<=knsmax; ++jn ) {
-            if( jm>0 ) zfac = 2.;
-            // not completely sure where this zfac comes from. One possible explanation:
-            // normalization of trigonometric functions in the spherical harmonics
-            // integral over square of trig function is 1 for m=0 and 0.5 (?) for m>0
-            rlegReal += rspecg(2*k)   * zfac * zlfpol(k);
-            rlegImag += rspecg(2*k+1) * zfac * zlfpol(k);
-            //Log::info() << zfac * zlfpol(k) << std::endl; // just for debugging
-            k++;
-        }
-        // local Fourier transformation:
-        // (FFT would be slower when computing the Fourier transformation for a single point)
-        if( jm<=knsmaxFT ) {
-            result += std::cos(jm*lonRad) * rlegReal - std::sin(jm*lonRad) * rlegImag;
-            out << result << "  ";
-        }
-    }
-    return result;
-}
-
-
-double spectral_transform_point(
-        const size_t knsmax,               // truncation + 1 (in)
-        const size_t knsmaxFT,             // truncation + 1 for Fourier transformation (in)
-        double& lon,                       // longitude in degree (in)
-        array::ArrayView<double,1>& zlfpol,// values of associated Legendre functions at desired latitude, size (knsmax+1)*knsmax/2 (in)
+        double lon,                        // longitude in degree (in)
+        double lat,                        // latitude in degree (in)
         double rspecg[])                   // spectral data, size (knsmax+1)*knsmax (in)
-{
-    std::ostream& out = Log::info(); // just for debugging
-    double result = 0., zfac = 1.;
-    int k = 0;
-    double lonRad = lon * util::Constants::degreesToRadians();
-    for( int jm=0; jm<=knsmax; ++jm ) {
-        // Legendre transformation:
-        double rlegReal = 0., rlegImag = 0.;
-        for( int jn=jm; jn<=knsmax; ++jn ) {
-            if( jm>0 ) zfac = 2.;
-            // not completely sure where this zfac comes from. One possible explanation:
-            // normalization of trigonometric functions in the spherical harmonics
-            // integral over square of trig function is 1 for m=0 and 0.5 (?) for m>0
-            rlegReal += rspecg[2*k]   * zfac * zlfpol(k);
-            rlegImag += rspecg[2*k+1] * zfac * zlfpol(k);
-            //Log::info() << zfac * zlfpol(k) << std::endl; // just for debugging
-            k++;
-        }
-        // local Fourier transformation:
-        // (FFT would be slower when computing the Fourier transformation for a single point)
-        if( jm<=knsmaxFT ) {
-            result += std::cos(jm*lonRad) * rlegReal - std::sin(jm*lonRad) * rlegImag;
-            out << result << "  ";
-        }
-    }
-    return result;
-}
-
-
-//-----------------------------------------------------------------------------
-// Routine to compute the spectral transform by using a local Fourier transformation
-// for a grid (same latitude for all longitudes, allows to compute Legendre functions
-// once for all longitudes)
-//
-// Author:
-// Andreas Mueller *ECMWF*
-//
-void spectral_transform_grid(
-        const size_t knsmax,               // truncation + 1 (in)
-        const size_t knsmaxFT,             // truncation + 1 for Fourier transformation (in)
-        array::ArrayView<double,1>& lats,  // vector of (unique) latitudes in degree (in)
-        array::ArrayView<double,1>& lons,  // vector of (unique) longitudes in degree (in)
-        array::ArrayView<double,1>& rspecg,// spectral data, size (knsmax+1)*knsmax (in)
-        array::ArrayView<double,2>& rgp)   // resulting grid point data (out)
-{
-    int N = (knsmax+2)*(knsmax+1)/2, k = 0;
-    atlas::array::ArrayT<double> zlfpol_(N);
-    atlas::array::ArrayView<double,1> zlfpol = make_view<double,1>(zlfpol_);
-
-    ATLAS_TRACE();
-    for( int jlat=0; jlat<lats.size(); ++jlat ) {
-
-        // compute associated Legendre functions:
-        compute_legendre(knsmax, lats(jlat), zlfpol);
-
-        for( int jlon=0; jlon<lons.size(); ++jlon ) {
-            // perform spectral transform:
-            rgp(jlon,jlat) = spectral_transform_point(knsmax, knsmaxFT, lons(jlon), zlfpol, rspecg);
-            k++;
-        }
-    }
-
-    Log::info() << "performed " << k << " spectral transforms" << std::endl;
-
-}
-
-
-//-----------------------------------------------------------------------------
-// Routine to compute the spectral transform by using a local Fourier transformation
-// for a grid (same latitude for all longitudes, allows to compute Legendre functions
-// once for all longitudes)
-//
-// Author:
-// Andreas Mueller *ECMWF*
-//
-void spectral_transform_grid2(
-        const size_t knsmax,               // truncation + 1 (in)
-        const size_t knsmaxFT,             // truncation + 1 for Fourier transformation (in)
-        array::ArrayView<double,1>& lats,  // vector of (unique) latitudes in degree (in)
-        array::ArrayView<double,1>& lons,  // vector of (unique) longitudes in degree (in)
-        array::ArrayView<double,1>& rspecg,// spectral data, size (knsmax+1)*knsmax (in)
-        array::ArrayView<double,2>& rgp)   // resulting grid point data (out)
 {
     std::ostream& out = Log::info(); // just for debugging
     int N = (knsmax+2)*(knsmax+1)/2;
@@ -337,40 +274,14 @@ void spectral_transform_grid2(
     atlas::array::ArrayT<double> rlegImag_(knsmaxFT+1);
     atlas::array::ArrayView<double,1> rlegImag = make_view<double,1>(rlegImag_);
 
-    for( int jlat=0; jlat<lats.size(); ++jlat ) {
+    // Legendre transform:
+    compute_legendre(knsmax, lat, zlfpol);
+    legendre_transform(knsmax, knsmaxFT, rlegReal, rlegImag, zlfpol, rspecg);
 
-        // compute associated Legendre functions:
-        compute_legendre(knsmax, lats(jlat), zlfpol);
-
-        // Legendre transformation:
-        rlegReal.assign(0.); rlegImag.assign(0.);
-        double zfac = 1.;
-        int k = 0;
-        for( int jm=0; jm<=knsmaxFT; ++jm ) {
-            for( int jn=jm; jn<=knsmax; ++jn ) {
-                if( jm>0 ) zfac = 2.;
-                // not completely sure where this zfac comes from. One possible explanation:
-                // normalization of trigonometric functions in the spherical harmonics
-                // integral over square of trig function is 1 for m=0 and 0.5 (?) for m>0
-                rlegReal(jm) += rspecg(2*k)   * zfac * zlfpol(k);
-                rlegImag(jm) += rspecg(2*k+1) * zfac * zlfpol(k);
-                //Log::info() << zfac * zlfpol(k) << std::endl; // just for debugging
-                k++;
-            }
-        }
-
-        // local Fourier transformation:
-        // (FFT would be slower when computing the Fourier transformation for a single point)
-        for( int jlon=0; jlon<lons.size(); ++jlon ) {
-            double lonRad = lons(jlon) * util::Constants::degreesToRadians();
-            for( int jm=0; jm<=knsmaxFT; ++jm ) {
-                rgp(jlon,jlat) += std::cos(jm*lonRad) * rlegReal(jm) - std::sin(jm*lonRad) * rlegImag(jm);
-                if( jlon == 0 && jlat == 0 ) out << rgp(jlon,jlat) << "  ";
-            }
-        }
-    }
-
+    // Fourier transform:
+    return fourier_transform(knsmaxFT, rlegReal, rlegImag, lon);
 }
+
 
 //-----------------------------------------------------------------------------
 // Routine to compute the spectral transform by using a local Fourier transformation
@@ -385,7 +296,8 @@ void spectral_transform_grid(
         const size_t knsmaxFT,// truncation + 1 for Fourier transformation (in)
         Grid grid,            // call with something like Grid("O32")
         double rspecg[],      // spectral data, size (knsmax+1)*knsmax (in)
-        double rgp[])         // resulting grid point data (out)
+        double rgp[],         // resulting grid point data (out)
+        bool pointwise)       // use point function for unstructured mesh for testing purposes
 {
     std::ostream& out = Log::info(); // just for debugging
     int N = (knsmax+2)*(knsmax+1)/2;
@@ -407,50 +319,31 @@ void spectral_transform_grid(
         for( size_t j=0; j<g.ny(); ++j ) {
             double lat = g.y(j);
 
-            // compute associated Legendre functions:
+            // Legendre transform:
             compute_legendre(knsmax, lat, zlfpol);
-
-            // Legendre transformation:
-            rlegReal.assign(0.); rlegImag.assign(0.);
-            double zfac = 1.;
-            int k = 0;
-            for( int jm=0; jm<=knsmaxFT; ++jm ) {
-                for( int jn=jm; jn<=knsmax; ++jn ) {
-                    if( jm>0 ) zfac = 2.;
-
-                    // not completely sure where this zfac comes from. One possible explanation:
-                    // normalization of trigonometric functions in the spherical harmonics
-                    // integral over square of trig function is 1 for m=0 and 0.5 (?) for m>0
-                    rlegReal[jm] += rspecg[2*k]   * zfac * zlfpol(k);
-                    rlegImag[jm] += rspecg[2*k+1] * zfac * zlfpol(k);
-                    //Log::info() << zfac * zlfpol(k) << std::endl; // just for debugging
-                    k++;
-                }
-            }
+            legendre_transform(knsmax, knsmaxFT, rlegReal, rlegImag, zlfpol, rspecg);
 
             for( size_t i=0; i<g.nx(j); ++i ) {
                 double lon = g.x(i,j);
-
-                // local Fourier transformation:
-                // (FFT would be slower when computing the Fourier transformation for a single point)
-                double lonRad = lon * util::Constants::degreesToRadians();
-                for( int jm=0; jm<=knsmaxFT; ++jm ) {
-                    rgp[idx] += std::cos(jm*lonRad) * rlegReal(jm) - std::sin(jm*lonRad) * rlegImag(jm);
-                }
-                idx++;
+                // Fourier transform:
+                rgp[idx++] = fourier_transform(knsmaxFT, rlegReal, rlegImag, lon);
             }
         }
     } else {
         int idx = 0;
         for( PointXY p: grid.xy()) {
             double lon = p.x(), lat = p.y();
-            // pointwise computation
+            if( pointwise ) {
+                // alternative for testing: use spectral_transform_point function:
+                rgp[idx++] = spectral_transform_point(knsmax, knsmaxFT, lon, lat, rspecg);
+            } else {
+                // Legendre transform:
+                compute_legendre(knsmax, lat, zlfpol);
+                legendre_transform(knsmax, knsmaxFT, rlegReal, rlegImag, zlfpol, rspecg);
 
-            // compute associated Legendre functions:
-            compute_legendre(knsmax, lat, zlfpol);
-
-            // perform spectral transform:
-            rgp[idx++] = spectral_transform_point(knsmax, knsmaxFT, lon, zlfpol, rspecg);
+                // Fourier transform:
+                rgp[idx++] = fourier_transform(knsmaxFT, rlegReal, rlegImag, lon);
+            }
         }
     }
 }
@@ -463,26 +356,75 @@ void spectral_transform_grid(
 // Andreas Mueller *ECMWF*
 //
 double sphericalharmonics_analytic(
-        double lon,
-        double lat)
+        double n,             // total wave number (implemented so far for n<4
+        double m,             // zonal wave number (implemented so far for m<4, m<n
+        bool real,            // true: test real part, false: test imaginary part
+        double lon,           // longitude in degree
+        double lat)           // latitude in degree
 {
     double lonRad = lon * util::Constants::degreesToRadians();
     double latRad = lat * util::Constants::degreesToRadians();
-    // m=3, n=3
-    return 2*std::sqrt(35.)/4.*std::pow(std::cos(latRad),3)*std::cos(3.*lonRad);
+    double latsin = std::sin(latRad), latcos = std::cos(latRad);
+    // Fourier part of the spherical harmonics:
+    double rft = 1.; // not sure why I need a minus here
+    if( m>0 ) rft *= 2.; // the famous factor 2 that noone really understands
+    if( real ) {
+        rft *= std::cos(m*lonRad);
+    } else {
+        rft *= -std::sin(m*lonRad);
+    }
+    // Legendre part of the spherical harmonics (following http://mathworld.wolfram.com/SphericalHarmonic.html
+    // multiplied with -2*sqrt(pi) due to different normalization and different coordinates):
+    // (can also be computed on http://www.wolframalpha.com with:
+    // LegendreP[n, m, x]/Sqrt[1/2*Integrate[LegendreP[n, m, y]^2, {y, -1, 1}]])
+    if ( m==0 && n==0 )
+        return rft;
+    if ( m==0 && n==1 )
+        return std::sqrt(3.)*latsin*rft;
+    if ( m==0 && n==2 )
+        return std::sqrt(5.)/2.*(3.*latsin*latsin-1.)*rft; // shouldn't this be minus?
+    if ( m==0 && n==3 )
+        return std::sqrt(7.)/2.*(5.*latsin*latsin-3.)*latsin*rft; // shouldn't this be minus?
+    if ( m==1 && n==1 )
+        return std::sqrt(3./2.)*latcos*rft; // shouldn't this be minus?
+    if ( m==1 && n==2 )
+        return std::sqrt(15./2.)*latsin*latcos*rft; // shouldn't this be minus?
+    if ( m==1 && n==3 )
+        return std::sqrt(21.)/4.*latcos*(5.*latsin*latsin-1.)*rft; // shouldn't this be minus?
+    if ( m==2 && n==2 )
+        return -std::sqrt(15./2.)/2.*latcos*latcos*rft;
+    if ( m==2 && n==3 )
+        return std::sqrt(105./2.)/2.*latcos*latcos*latsin*rft;
+    if ( m==3 && n==3 )
+        return std::sqrt(35.)/4.*latcos*latcos*latcos*rft; // shouldn't this be minus?
+    return 0;
 }
 
 void spectral_transform_grid_analytic(
         const size_t knsmax,  // truncation + 1 (in)
         const size_t knsmaxFT,// truncation + 1 for Fourier transformation (in)
+        double n,             // total wave number (implemented so far for n<4
+        double m,             // zonal wave number (implemented so far for m<4, m<n
+        bool real,            // true: test real part, false: test imaginary part
         Grid grid,            // call with something like Grid("O32")
         double rspecg[],      // spectral data, size (knsmax+1)*knsmax (out)
         double rgp[])         // resulting grid point data (out)
 {
     std::ostream& out = Log::info(); // just for debugging
     int N = (knsmax+2)*(knsmax+1)/2;
-    for( int jm=0; jm<N; jm++) rspecg[jm] = 0.;
-    rspecg[6*knsmax] = 1.;
+    for( int jm=0; jm<2*N; jm++) rspecg[jm] = 0.;
+    int k = 0;
+    for( int jm=0; jm<=knsmax; jm++ )
+        for( int jn=jm; jn<=knsmax; jn++ ) {
+            if( jm==m && jn==n ) {
+                if( real ) {
+                    rspecg[2*k] = 1.;
+                } else {
+                    rspecg[2*k+1] = 1.;
+                }
+            }
+            k++;
+        }
 
     for( int jm=0; jm<grid.size(); jm++) rgp[jm] = 0.;
 
@@ -496,7 +438,7 @@ void spectral_transform_grid_analytic(
                 double lon = g.x(i,j);
 
                 // compute spherical harmonics:
-                rgp[idx] = sphericalharmonics_analytic(lon, lat);
+                rgp[idx] = sphericalharmonics_analytic(n, m, real, lon, lat);
                 idx++;
             }
         }
@@ -505,9 +447,41 @@ void spectral_transform_grid_analytic(
         for( PointXY p: grid.xy()) {
             double lon = p.x(), lat = p.y();
             // compute spherical harmonics:
-            rgp[idx] = sphericalharmonics_analytic(lon, lat);
+            rgp[idx++] = sphericalharmonics_analytic(n, m, real, lon, lat);
         }
     }
+}
+
+double spectral_transform_test(
+        double trc,           // truncation
+        double n,             // total wave number (implemented so far for n<4
+        double m,             // zonal wave number (implemented so far for m<4, m<n
+        bool real,            // true: test real part, false: test imaginary part
+        Grid g,               // call with something like Grid("O32")
+        bool pointwise)       // use point function for unstructured mesh for testing purposes
+{
+    std::ostream& out = Log::info();
+    int N = (trc+2)*(trc+1)/2;
+    auto *rspecg       = new double[2*N];
+    auto *rgp          = new double[g.size()];
+    auto *rgp_analytic = new double[g.size()];
+
+    // compute analytic solution (this also initializes rspecg and needs to be done before the actual transform):
+    spectral_transform_grid_analytic(trc, trc, n, m, real, g, rspecg, rgp_analytic);
+    // perform spectral transform:
+    spectral_transform_grid(trc, trc, g, rspecg, rgp, pointwise);
+
+    double rms = 0.;
+    for( int jm=0; jm<g.size(); jm++ ) rms += std::pow(rgp[jm]-rgp_analytic[jm],2);
+
+    delete [] rspecg;
+    delete [] rgp;
+    delete [] rgp_analytic;
+
+    rms = std::sqrt(rms/g.size());
+    out << "m=" << m << " n=" << n << " real:" << real << " structured:" << grid::StructuredGrid(g) << " error:" << rms << std::endl;
+
+    return rms;
 }
 
 //-----------------------------------------------------------------------------
@@ -520,14 +494,14 @@ CASE( "test_transgeneral_legendrepolynomials" )
   Grid g( "O10" );
   trans::Trans trans(g,1279);
 */
-  int trp1 = 1280; // truncation + 1
-  int N = (trp1+2)*(trp1+1)/2;
+  int trc = 1280; // truncation + 1
+  int N = (trc+2)*(trc+1)/2;
   atlas::array::ArrayT<double> zlfpol_(N);
   atlas::array::ArrayView<double,1> zlfpol = make_view<double,1>(zlfpol_);
 
   double lat = 50.;
   lat = std::acos(0.99312859918509488)*util::Constants::radiansToDegrees();
-  compute_legendre(trp1, lat, zlfpol);
+  compute_legendre(trc, lat, zlfpol);
 /*
   out << "zlfpol after compute legendre:" << std::endl;
   int idx, col = 8;
@@ -546,184 +520,63 @@ CASE( "test_transgeneral_legendrepolynomials" )
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_transgeneral_pointtrans" )
+CASE( "test_transgeneral_point" )
 {
   std::ostream& out = Log::info();
-  Log::info() << "test_transgeneral_pointtrans" << std::endl;
+  Log::info() << "test_transgeneral_point" << std::endl;
+  double tolerance = 1.e-15;
+  // test spectral transform up to wave number 3 by comparing
+  // the result with the analytically computed spherical harmonics
 
-  int trp1 = 10; // truncation + 1
-  int N = (trp1+2)*(trp1+1)/2;
+  Grid g = grid::UnstructuredGrid( new std::vector<PointXY>{
+    {20., 50.},
+    {-20., 30.},
+    {-89., 179.},
+    {70., -101.}
+  });
 
-  atlas::array::ArrayT<double> rspecg_(2*N);
-  atlas::array::ArrayView<double,1> rspecg = make_view<double,1>(rspecg_);
-  rspecg.assign( { // copy and paste from Python output from print repr(data) for geopotential of T1279 truncated to T10
-                           2.27058862e+03,   0.00000000e+00,   2.64344482e+02,
-                           0.00000000e+00,   1.04363721e+03,   0.00000000e+00,
-                          -1.38711157e+03,   0.00000000e+00,   6.30294678e+02,
-                           0.00000000e+00,  -1.47959766e+03,   0.00000000e+00,
-                           1.25787305e+03,   0.00000000e+00,  -3.47238281e+02,
-                           0.00000000e+00,   6.09284912e+02,   0.00000000e+00,
-                          -5.79417480e+02,   0.00000000e+00,  -7.42720642e+01,
-                           0.00000000e+00,   4.70171387e+02,  -4.99296387e+02,
-                          -4.64239407e+00,  -4.20254883e+02,  -2.01318069e+02,
-                          -4.17947510e+02,  -8.64668579e+01,   6.79094482e+02,
-                           8.39252777e+01,   5.26367493e+01,  -7.47528839e+01,
-                           7.56367920e+02,   2.95226318e+02,  -4.45547119e+02,
-                           6.53360596e+01,   3.04475098e+02,   1.98545914e+02,
-                          -6.05724854e+02,  -4.66925335e+00,   4.36788086e+02,
-                          -4.38317627e+02,  -2.01735626e+02,  -6.73341553e+02,
-                          -3.45433105e+02,  -7.00174316e+02,  -1.59601822e+01,
-                          -1.14086212e+02,   1.66471054e+02,   2.38090469e+02,
-                           1.47945251e+02,   5.53364014e+02,   1.67163818e+02,
-                           8.92426300e+01,   1.93021362e+02,   3.87085419e+01,
-                           7.25012970e+01,  -3.77425781e+02,   1.46001043e+01,
-                           2.06437378e+01,  -2.54263626e+02,   2.88258545e+02,
-                           4.34750977e+02,   2.13519592e+02,   3.96897217e+02,
-                           8.74137115e+01,   7.21976471e+01,   1.45806274e+02,
-                          -1.06001190e+02,   4.55372467e+01,  -1.79682510e+02,
-                           4.84295959e+01,  -1.41918839e+02,  -1.50270279e+02,
-                           2.25189957e+02,   1.10319427e+02,  -4.35088135e+02,
-                           5.34815430e+02,   3.42563721e+02,   4.42061523e+02,
-                           1.75658325e+02,   1.22033813e+02,  -2.49562073e+01,
-                          -1.15247650e+02,   3.08883514e+01,  -3.12923828e+02,
-                          -1.02068848e+02,  -3.29612549e+02,  -1.96804504e+02,
-                          -1.12869827e+02,  -3.42539062e+02,  -2.32903732e+02,
-                          -9.58003235e+01,  -7.35217896e+01,  -3.16965576e+02,
-                          -1.24462708e+02,  -3.18577637e+02,  -1.14058228e+02,
-                          -2.69070282e+01,  -3.63590851e+01,   6.86552277e+01,
-                          -1.93415085e+02,  -3.96717262e+00,  -1.63823044e+02,
-                           6.96005821e-01,  -6.39315796e+01,  -9.11142426e+01,
-                          -1.09771667e+02,  -1.34256149e+02,  -1.35531940e+01,
-                           1.38606615e+01,  -1.35011963e+02,   2.22399918e+02,
-                           3.54877930e+02,   1.22672028e+02,   1.83927261e+02,
-                           2.95129639e+02,   8.63545532e+01,   2.30139908e+02,
-                          -1.14560532e+02,   6.74462585e+01,   3.10108154e+02,
-                           9.13583469e+00,   1.77570038e+01,   1.12481117e+01,
-                          -2.94228516e+01,  -2.62760925e+01,   7.95001831e+01,
-                          -8.78986206e+01,   1.31246429e+02,   6.75210419e+01
-               }
-               );
+  int trc = 1279; // truncation
 
-  double lat = 27.9878, lon = 86.9250; // latitude and longitude of Mt. Everest in degree
-
-  atlas::array::ArrayT<double> zlfpol_(N);
-  atlas::array::ArrayView<double,1> zlfpol = make_view<double,1>(zlfpol_);
-
-  // compute associated Legendre functions:
-  compute_legendre(trp1, lat, zlfpol);
-
-  // perform spectral transform:
-  double result = spectral_transform_point(trp1, trp1, lon, zlfpol, rspecg);
-
-  // output result:
-  out << "result: " << result << std::endl;
+  int n = 3, m = 3;
+  double rms = 0.;
+  for( int m=0; m<=3; m++ )
+      for( int n=m; n<=3; n++ ) {
+          rms = spectral_transform_test(trc, n, m, true, g, true);
+          EXPECT( rms < tolerance );
+          rms = spectral_transform_test(trc, n, m, false, g, true);
+          EXPECT( rms < tolerance );
+      }
 
 }
 
 //-----------------------------------------------------------------------------
 
-/*CASE( "test_transgeneral_gridtrans_speed" )
+CASE( "test_transgeneral_unstructured" )
 {
   std::ostream& out = Log::info();
-  Log::info() << "test_transgeneral_gridtrans" << std::endl;
+  Log::info() << "test_transgeneral_unstructured" << std::endl;
+  double tolerance = 1.e-15;
+  // test spectral transform up to wave number 3 by comparing
+  // the result with the analytically computed spherical harmonics
 
-  int trp1 = 10;//1280; // truncation + 1
-  int N = (trp1+2)*(trp1+1)/2;
+  Grid g = grid::UnstructuredGrid( new std::vector<PointXY>{
+    {20., 50.},
+    {-20., 30.},
+    {-89., 179.},
+    {70., -101.}
+  });
 
-  atlas::array::ArrayT<double> rspecg_(2*N);
-  atlas::array::ArrayView<double,1> rspecg = make_view<double,1>(rspecg_);
+  int trc = 1279; // truncation
 
-  int nlats = 100, nlons = 100;
-  atlas::array::ArrayT<double> lats_(nlats);
-  atlas::array::ArrayView<double,1> lats = make_view<double,1>(lats_);
-  atlas::array::ArrayT<double> lons_(nlons);
-  atlas::array::ArrayView<double,1> lons = make_view<double,1>(lons_);
-
-  atlas::array::ArrayT<double> rgp_(nlons, nlats);
-  atlas::array::ArrayView<double,2> rgp = make_view<double,2>(rgp_);
-
-  // perform spectral transform:
-  spectral_transform_grid2(trp1, trp1, lats, lons, rspecg, rgp);
-
-}
-*/
-//-----------------------------------------------------------------------------
-
-CASE( "test_transgeneral_gridtrans_result" )
-{
-  std::ostream& out = Log::info();
-  Log::info() << "test_transgeneral_gridtrans" << std::endl;
-
-  std::string grid_uid("O80");
-  grid::StructuredGrid g (grid_uid);
-
-  int trp1 = 10; // truncation + 1
-  int N = (trp1+2)*(trp1+1)/2;
-
-  atlas::array::ArrayT<double> rspecg_(2*N);
-  atlas::array::ArrayView<double,1> rspecg = make_view<double,1>(rspecg_);
-  rspecg.assign( { // copy and paste from Python output from print repr(data) for geopotential of T1279 truncated to T10
-                           2.27058862e+03,   0.00000000e+00,   2.64344482e+02,
-                           0.00000000e+00,   1.04363721e+03,   0.00000000e+00,
-                          -1.38711157e+03,   0.00000000e+00,   6.30294678e+02,
-                           0.00000000e+00,  -1.47959766e+03,   0.00000000e+00,
-                           1.25787305e+03,   0.00000000e+00,  -3.47238281e+02,
-                           0.00000000e+00,   6.09284912e+02,   0.00000000e+00,
-                          -5.79417480e+02,   0.00000000e+00,  -7.42720642e+01,
-                           0.00000000e+00,   4.70171387e+02,  -4.99296387e+02,
-                          -4.64239407e+00,  -4.20254883e+02,  -2.01318069e+02,
-                          -4.17947510e+02,  -8.64668579e+01,   6.79094482e+02,
-                           8.39252777e+01,   5.26367493e+01,  -7.47528839e+01,
-                           7.56367920e+02,   2.95226318e+02,  -4.45547119e+02,
-                           6.53360596e+01,   3.04475098e+02,   1.98545914e+02,
-                          -6.05724854e+02,  -4.66925335e+00,   4.36788086e+02,
-                          -4.38317627e+02,  -2.01735626e+02,  -6.73341553e+02,
-                          -3.45433105e+02,  -7.00174316e+02,  -1.59601822e+01,
-                          -1.14086212e+02,   1.66471054e+02,   2.38090469e+02,
-                           1.47945251e+02,   5.53364014e+02,   1.67163818e+02,
-                           8.92426300e+01,   1.93021362e+02,   3.87085419e+01,
-                           7.25012970e+01,  -3.77425781e+02,   1.46001043e+01,
-                           2.06437378e+01,  -2.54263626e+02,   2.88258545e+02,
-                           4.34750977e+02,   2.13519592e+02,   3.96897217e+02,
-                           8.74137115e+01,   7.21976471e+01,   1.45806274e+02,
-                          -1.06001190e+02,   4.55372467e+01,  -1.79682510e+02,
-                           4.84295959e+01,  -1.41918839e+02,  -1.50270279e+02,
-                           2.25189957e+02,   1.10319427e+02,  -4.35088135e+02,
-                           5.34815430e+02,   3.42563721e+02,   4.42061523e+02,
-                           1.75658325e+02,   1.22033813e+02,  -2.49562073e+01,
-                          -1.15247650e+02,   3.08883514e+01,  -3.12923828e+02,
-                          -1.02068848e+02,  -3.29612549e+02,  -1.96804504e+02,
-                          -1.12869827e+02,  -3.42539062e+02,  -2.32903732e+02,
-                          -9.58003235e+01,  -7.35217896e+01,  -3.16965576e+02,
-                          -1.24462708e+02,  -3.18577637e+02,  -1.14058228e+02,
-                          -2.69070282e+01,  -3.63590851e+01,   6.86552277e+01,
-                          -1.93415085e+02,  -3.96717262e+00,  -1.63823044e+02,
-                           6.96005821e-01,  -6.39315796e+01,  -9.11142426e+01,
-                          -1.09771667e+02,  -1.34256149e+02,  -1.35531940e+01,
-                           1.38606615e+01,  -1.35011963e+02,   2.22399918e+02,
-                           3.54877930e+02,   1.22672028e+02,   1.83927261e+02,
-                           2.95129639e+02,   8.63545532e+01,   2.30139908e+02,
-                          -1.14560532e+02,   6.74462585e+01,   3.10108154e+02,
-                           9.13583469e+00,   1.77570038e+01,   1.12481117e+01,
-                          -2.94228516e+01,  -2.62760925e+01,   7.95001831e+01,
-                          -8.78986206e+01,   1.31246429e+02,   6.75210419e+01
-               }
-               );
-
-  int nlats = 1, nlons = 1;
-  atlas::array::ArrayT<double> lats_(nlats);
-  atlas::array::ArrayView<double,1> lats = make_view<double,1>(lats_);
-  atlas::array::ArrayT<double> lons_(nlons);
-  atlas::array::ArrayView<double,1> lons = make_view<double,1>(lons_);
-  lats.assign(27.9878); lons.assign(86.9250); // latitude and longitude of Mt. Everest in degree
-
-  atlas::array::ArrayT<double> rgp_(nlons, nlats);
-  atlas::array::ArrayView<double,2> rgp = make_view<double,2>(rgp_);
-
-  // perform spectral transform:
-  spectral_transform_grid2(trp1, trp1, lats, lons, rspecg, rgp);
-
-  out << "result of grid computation: " << rgp(0,0) << std::endl;
+  int n = 3, m = 3;
+  double rms = 0.;
+  for( int m=0; m<=3; m++ )
+      for( int n=m; n<=3; n++ ) {
+          rms = spectral_transform_test(trc, n, m, true, g, false);
+          EXPECT( rms < tolerance );
+          rms = spectral_transform_test(trc, n, m, false, g, false);
+          EXPECT( rms < tolerance );
+      }
 
 }
 
@@ -732,108 +585,25 @@ CASE( "test_transgeneral_gridtrans_result" )
 CASE( "test_transgeneral_structured" )
 {
   std::ostream& out = Log::info();
-  Log::info() << "test_transgeneral_gridtrans" << std::endl;
+  Log::info() << "test_transgeneral_structured" << std::endl;
+  double tolerance = 1.e-15;
+  // test spectral transform up to wave number 3 by comparing
+  // the result with the analytically computed spherical harmonics
 
-  std::string grid_uid("F1");
+  std::string grid_uid("O10");
   grid::StructuredGrid g (grid_uid);
-  /*Grid g = grid::UnstructuredGrid( new std::vector<PointXY>{
-    {27.9878, 86.9250},
-    {27.9878, 86.9250},
-    {27.9878, 86.9250}
-  });*/
 
-  int trp1 = 10; // truncation + 1
-  int N = (trp1+2)*(trp1+1)/2;
+  int trc = 1279; // truncation
 
-  double rspecg[] = {                  2.27058862e+03,   0.00000000e+00,   2.64344482e+02,
-                                       0.00000000e+00,   1.04363721e+03,   0.00000000e+00,
-                                      -1.38711157e+03,   0.00000000e+00,   6.30294678e+02,
-                                       0.00000000e+00,  -1.47959766e+03,   0.00000000e+00,
-                                       1.25787305e+03,   0.00000000e+00,  -3.47238281e+02,
-                                       0.00000000e+00,   6.09284912e+02,   0.00000000e+00,
-                                      -5.79417480e+02,   0.00000000e+00,  -7.42720642e+01,
-                                       0.00000000e+00,   4.70171387e+02,  -4.99296387e+02,
-                                      -4.64239407e+00,  -4.20254883e+02,  -2.01318069e+02,
-                                      -4.17947510e+02,  -8.64668579e+01,   6.79094482e+02,
-                                       8.39252777e+01,   5.26367493e+01,  -7.47528839e+01,
-                                       7.56367920e+02,   2.95226318e+02,  -4.45547119e+02,
-                                       6.53360596e+01,   3.04475098e+02,   1.98545914e+02,
-                                      -6.05724854e+02,  -4.66925335e+00,   4.36788086e+02,
-                                      -4.38317627e+02,  -2.01735626e+02,  -6.73341553e+02,
-                                      -3.45433105e+02,  -7.00174316e+02,  -1.59601822e+01,
-                                      -1.14086212e+02,   1.66471054e+02,   2.38090469e+02,
-                                       1.47945251e+02,   5.53364014e+02,   1.67163818e+02,
-                                       8.92426300e+01,   1.93021362e+02,   3.87085419e+01,
-                                       7.25012970e+01,  -3.77425781e+02,   1.46001043e+01,
-                                       2.06437378e+01,  -2.54263626e+02,   2.88258545e+02,
-                                       4.34750977e+02,   2.13519592e+02,   3.96897217e+02,
-                                       8.74137115e+01,   7.21976471e+01,   1.45806274e+02,
-                                      -1.06001190e+02,   4.55372467e+01,  -1.79682510e+02,
-                                       4.84295959e+01,  -1.41918839e+02,  -1.50270279e+02,
-                                       2.25189957e+02,   1.10319427e+02,  -4.35088135e+02,
-                                       5.34815430e+02,   3.42563721e+02,   4.42061523e+02,
-                                       1.75658325e+02,   1.22033813e+02,  -2.49562073e+01,
-                                      -1.15247650e+02,   3.08883514e+01,  -3.12923828e+02,
-                                      -1.02068848e+02,  -3.29612549e+02,  -1.96804504e+02,
-                                      -1.12869827e+02,  -3.42539062e+02,  -2.32903732e+02,
-                                      -9.58003235e+01,  -7.35217896e+01,  -3.16965576e+02,
-                                      -1.24462708e+02,  -3.18577637e+02,  -1.14058228e+02,
-                                      -2.69070282e+01,  -3.63590851e+01,   6.86552277e+01,
-                                      -1.93415085e+02,  -3.96717262e+00,  -1.63823044e+02,
-                                       6.96005821e-01,  -6.39315796e+01,  -9.11142426e+01,
-                                      -1.09771667e+02,  -1.34256149e+02,  -1.35531940e+01,
-                                       1.38606615e+01,  -1.35011963e+02,   2.22399918e+02,
-                                       3.54877930e+02,   1.22672028e+02,   1.83927261e+02,
-                                       2.95129639e+02,   8.63545532e+01,   2.30139908e+02,
-                                      -1.14560532e+02,   6.74462585e+01,   3.10108154e+02,
-                                       9.13583469e+00,   1.77570038e+01,   1.12481117e+01,
-                                      -2.94228516e+01,  -2.62760925e+01,   7.95001831e+01,
-                                      -8.78986206e+01,   1.31246429e+02,   6.75210419e+01};
-
-  double rgp[g.size()];
-
-  // perform spectral transform:
-  spectral_transform_grid(trp1, trp1, g, rspecg, rgp);
-
-  out << "result of grid computation: ";
-  for( int jm=0; jm<g.size(); jm++ ) out << rgp[jm] << " ";
-  out << std::endl;
-
-}
-
-//-----------------------------------------------------------------------------
-
-CASE( "test_transgeneral_analytic" )
-{
-  std::ostream& out = Log::info();
-  Log::info() << "test_transgeneral_analytic" << std::endl;
-  // test spectral transform up to wave number 3 by comparing the result with the analytically computed spherical harmonics
-
-  std::string grid_uid("O800");
-  grid::StructuredGrid g (grid_uid);
-  /*Grid g = grid::UnstructuredGrid( new std::vector<PointXY>{
-    {27.9878, 86.9250},
-    {27.9878, 86.9250},
-    {27.9878, 86.9250}
-  });*/
-
-  int trp1 = 4; // truncation
-  int N = (trp1+2)*(trp1+1)/2;
-
-  double rspecg[2*N];
-  double rgp[g.size()], rgp_analytic[g.size()];
-
-
-  // compute analytic solution (this also initializes rspecg and needs to be done before the actual transform):
-  spectral_transform_grid_analytic(trp1, trp1, g, rspecg, rgp_analytic);
-  // perform spectral transform:
-  spectral_transform_grid(trp1, trp1, g, rspecg, rgp);
-
-  out << "result of grid computation: rms-error: ";
+  int n = 3, m = 3;
   double rms = 0.;
-  for( int jm=0; jm<g.size(); jm++ ) rms += std::pow(rgp[jm]-rgp_analytic[jm],2);
-  rms = std::sqrt(rms/g.size());
-  out << rms << std::endl;
+  for( int m=0; m<=3; m++ )
+      for( int n=m; n<=3; n++ ) {
+          rms = spectral_transform_test(trc, n, m, true, g, false);
+          EXPECT( rms < tolerance );
+          rms = spectral_transform_test(trc, n, m, false, g, false);
+          EXPECT( rms < tolerance );
+      }
 
 }
 
