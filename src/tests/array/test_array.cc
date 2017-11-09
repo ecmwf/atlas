@@ -173,6 +173,7 @@ CASE("test_spec_layout") {
     EXPECT(ds->spec().strides()[0] == 6 * 5);
     EXPECT(ds->spec().strides()[1] == 6);
     EXPECT(ds->spec().strides()[2] == 1);
+    EXPECT(ds->spec().size() == ds->spec().allocatedSize());
   }
   EXPECT(ds->spec().hasDefaultLayout() == true);
   EXPECT(ds->spec().layout()[0] == 0);
@@ -204,7 +205,6 @@ CASE("test_spec_layout_rev") {
   EXPECT(ds->spec().layout()[2] == 0);
 
   delete ds;
-
 
   EXPECT_THROWS_AS( Array::create<double>(make_shape(4,5,6,2),make_layout(0,1,3,2)), eckit::BadParameter );
 }

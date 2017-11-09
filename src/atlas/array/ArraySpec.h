@@ -27,9 +27,11 @@ class ArraySpec {
 private:
   size_t size_;
   size_t rank_;
+  size_t allocated_size_;
   ArrayShape shape_;
   ArrayStrides strides_;
   ArrayLayout layout_;
+  ArrayAlignment alignment_;
   mutable std::vector<int> shapef_;
   mutable std::vector<int> stridesf_;
   bool contiguous_;
@@ -39,20 +41,20 @@ public:
   ArraySpec( const ArrayShape& );
   ArraySpec( const ArrayShape&, const ArrayStrides& );
   ArraySpec( const ArrayShape&, const ArrayStrides&, const ArrayLayout& );
-  size_t allocated_size() const { return allocated_size_; }
+  ArraySpec( const ArrayShape&, ArrayAlignment&& );
+  ArraySpec( const ArrayShape&, const ArrayStrides&, ArrayAlignment&& );
+  ArraySpec( const ArrayShape&, const ArrayStrides&, const ArrayLayout&, ArrayAlignment&& );
+  size_t allocatedSize() const { return allocated_size_; }
   size_t size() const { return size_; }
   size_t rank() const { return rank_; }
   const ArrayShape& shape() const { return shape_; }
+  const ArrayAlignment& alignment() const { return alignment_; }
   const ArrayStrides& strides() const { return strides_; }
   const ArrayLayout& layout() const { return layout_; }
   const std::vector<int>& shapef() const;
   const std::vector<int>& stridesf() const;
   bool contiguous() const { return contiguous_; }
   bool hasDefaultLayout() const { return default_layout_; }
-
-/// todo: make private
-  size_t allocated_size_;
-
 };
 
 //------------------------------------------------------------------------------------------------------

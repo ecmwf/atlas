@@ -15,6 +15,16 @@
 namespace atlas {
 namespace array {
 
+namespace {
+  size_t compute_allocated_size( size_t size, int alignment ) {
+    int div = size/alignment;
+    int mod = size%alignment;
+    size_t _allocated_size = div*alignment;
+    if( mod > 0 ) _allocated_size += alignment;
+    return _allocated_size;
+  }
+}
+
 ArraySpec::ArraySpec():
     size_(),
     rank_(),
@@ -24,8 +34,14 @@ ArraySpec::ArraySpec():
 {
 }
 
-ArraySpec::ArraySpec( const ArrayShape& shape )
+ArraySpec::ArraySpec( const ArrayShape& shape ) : 
+  ArraySpec( shape, ArrayAlignment() ) {
+}
+
+ArraySpec::ArraySpec( const ArrayShape& shape, ArrayAlignment&& alignment )
 {
+  if( int(alignment) > 1 ) NOTIMP;  // innermost dimension needs to be padded
+
   rank_ = shape.size();
   size_ = 1;
   shape_.resize(rank_);
@@ -37,12 +53,16 @@ ArraySpec::ArraySpec( const ArrayShape& shape )
     layout_[j]  = j;
     size_ *= shape_[j];
   }
-  allocated_size_ = size_;
+  allocated_size_ = compute_allocated_size(size_,alignment);
   contiguous_ = true;
   default_layout_ = true;
 };
 
-ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides )
+ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides ) : 
+  ArraySpec( shape, strides, ArrayAlignment() ) {
+}
+
+ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, ArrayAlignment&& alignment )
 {
   if( shape.size() != strides.size() )
     throw eckit::BadParameter("dimensions of shape and stride don't match", Here());
@@ -58,12 +78,16 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides )
     layout_[j]  = j;
     size_ *= shape_[j];
   }
-  allocated_size_ = shape_[0]*strides_[0];
+  allocated_size_ = compute_allocated_size(shape_[0]*strides_[0],alignment);
   contiguous_ = (size_ == allocated_size_);
   default_layout_ = true;
 }
 
-ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, const ArrayLayout& layout )
+ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, const ArrayLayout& layout ) : 
+  ArraySpec( shape, strides, layout, ArrayAlignment() ) {
+}
+
+ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, const ArrayLayout& layout, ArrayAlignment&& alignment )
 {
   if( shape.size() != strides.size() )
     throw eckit::BadParameter("dimensions of shape and stride don't match", Here());
@@ -83,7 +107,7 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, cons
       default_layout_ = false;
     }
   }
-  allocated_size_ = shape_[0]*strides_[0];
+  allocated_size_ = compute_allocated_size(shape_[layout_[0]]*strides_[layout_[0]],alignment);
   contiguous_ = (size_ == allocated_size_);
 }
 
