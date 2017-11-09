@@ -95,8 +95,9 @@ void ArrayView<Value,Rank>::assign(const value_type& value) {
 
 template <typename Value, int Rank>
 void ArrayView<Value,Rank>::assign(const std::initializer_list<value_type>& list) {
-    ASSERT( contiguous() );
     ASSERT( list.size() == size_ );
+
+    ASSERT( contiguous() );
     value_type* raw_data = data();
     size_t j(0);
     for( const value_type& v : list ) {
@@ -107,6 +108,7 @@ void ArrayView<Value,Rank>::assign(const std::initializer_list<value_type>& list
 template< typename Value, int Rank >
 void ArrayView<Value,Rank>::dump(std::ostream& os) const {
     ASSERT( contiguous() );
+
     const value_type* data_ = data();
     os << "size: " << size() << " , values: ";
     os << "[ ";
