@@ -381,7 +381,6 @@ subroutine array_c_to_f_int32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
    array_fptr => tmp(1:shape(1)) 
   
@@ -415,7 +414,6 @@ subroutine array_c_to_f_int64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
    array_fptr => tmp(1:shape(1)) 
   
@@ -449,7 +447,6 @@ subroutine array_c_to_f_real32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
    array_fptr => tmp(1:shape(1)) 
   
@@ -483,7 +480,6 @@ subroutine array_c_to_f_real64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
    array_fptr => tmp(1:shape(1)) 
   
@@ -517,7 +513,6 @@ subroutine array_c_to_f_logical32_r1(array_cptr,rank,shape_cptr,strides_cptr,arr
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
    array_fptr => tmp(1:shape(1)) 
   
@@ -551,7 +546,6 @@ subroutine array_c_to_f_int32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
    array_fptr => tmp(1:shape(1),1:shape(2)) 
@@ -585,7 +579,6 @@ subroutine array_c_to_f_int64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
    array_fptr => tmp(1:shape(1),1:shape(2)) 
@@ -619,7 +612,6 @@ subroutine array_c_to_f_real32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
    array_fptr => tmp(1:shape(1),1:shape(2)) 
@@ -653,7 +645,6 @@ subroutine array_c_to_f_real64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
    array_fptr => tmp(1:shape(1),1:shape(2)) 
@@ -687,7 +678,6 @@ subroutine array_c_to_f_logical32_r2(array_cptr,rank,shape_cptr,strides_cptr,arr
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
    array_fptr => tmp(1:shape(1),1:shape(2)) 
@@ -721,7 +711,6 @@ subroutine array_c_to_f_int32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
@@ -755,7 +744,6 @@ subroutine array_c_to_f_int64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
@@ -789,7 +777,6 @@ subroutine array_c_to_f_real32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
@@ -823,7 +810,6 @@ subroutine array_c_to_f_real64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
@@ -857,7 +843,6 @@ subroutine array_c_to_f_logical32_r3(array_cptr,rank,shape_cptr,strides_cptr,arr
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
@@ -891,7 +876,6 @@ subroutine array_c_to_f_int32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
@@ -925,7 +909,6 @@ subroutine array_c_to_f_int64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
@@ -959,7 +942,6 @@ subroutine array_c_to_f_real32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
@@ -993,7 +975,6 @@ subroutine array_c_to_f_real64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
@@ -1027,7 +1008,6 @@ subroutine array_c_to_f_logical32_r4(array_cptr,rank,shape_cptr,strides_cptr,arr
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
@@ -2192,7 +2172,7 @@ integer function atlas_real(kind)
   else if (kind == c_float) then
     atlas_real = ATLAS_KIND_REAL32
   else
-    call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",272))
+    call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",271))
   end if
 end function
 
@@ -2208,7 +2188,7 @@ integer function atlas_integer(kind)
     else if (kind == c_long) then
       atlas_integer = ATLAS_KIND_INT64
     else
-      call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",288))
+      call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",287))
     end if
   end if
 end function
@@ -2234,7 +2214,7 @@ function atlas_data_type(kind)
   else if( kind == ATLAS_KIND_REAL64 ) then
     atlas_data_type = "real64"
   else
-    call atlas_abort("cannot convert kind to data_type",atlas_code_location("atlas_Field_module.F90",314))
+    call atlas_abort("cannot convert kind to data_type",atlas_code_location("atlas_Field_module.F90",313))
   endif
 end function
 

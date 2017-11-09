@@ -177,7 +177,6 @@ subroutine array_c_to_f_${dtype}$_r${rank}$(array_cptr,rank,shape_cptr,strides_c
     eshape(j) = strides(j+1)/strides(j)
   enddo
   eshape(rank) = shape(rank)
-  write(0,*) "padded shape = ",eshape
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   #{if rank == 1}# array_fptr => tmp(1:shape(1)) #{endif}#
   #{if rank == 2}# array_fptr => tmp(1:shape(1),1:shape(2)) #{endif}#
