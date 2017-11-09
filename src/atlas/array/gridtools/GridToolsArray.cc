@@ -272,7 +272,6 @@ template <typename Value>
 size_t ArrayT<Value>::footprint() const {
   size_t size = sizeof(*this);
   size += bytes();
-  if( not contiguous() ) NOTIMP;
   return size;
 }
 

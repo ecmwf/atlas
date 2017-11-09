@@ -50,7 +50,7 @@ public:
 
   template <typename Value> static Array* wrap(Value* data, const ArraySpec& spec);
 
-  size_t bytes() const { return sizeof_data() * size();}
+  size_t bytes() const { return sizeof_data() * spec().allocatedSize();}
 
   size_t size() const { return spec_.size(); }
 
@@ -110,7 +110,7 @@ public:
 
   void reactivateHostWriteViews() const { data_store_->reactivateHostWriteViews(); }
 
-  ArraySpec& spec() {return spec_;}
+  const ArraySpec& spec() const {return spec_;}
 
   // -- dangerous methods... You're on your own interpreting the raw data
   template <typename DATATYPE> DATATYPE const* host_data() const { return data_store_->hostData<DATATYPE>(); }
