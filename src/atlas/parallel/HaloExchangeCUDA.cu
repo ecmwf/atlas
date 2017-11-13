@@ -105,17 +105,35 @@ __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const s
     halo_unpacker_impl<0, (RANK>=3) ? (RANK-2) : 0, 2>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,var1_idx);
 }
 
-template<int RANK>
+template<int ParallelDim, int RANK, int DimCnt>
+struct get_first_non_parallel_dim
+{
+    static_assert((ParallelDim <= RANK), "Error: parallelDim larger than RANK");
+    constexpr static int apply() {
+        return (DimCnt == ParallelDim) ? get_first_non_parallel_dim<ParallelDim, RANK, DimCnt+1>::apply() : DimCnt;
+    }
+};
+
+template<int ParallelDim, int RANK>
+struct get_first_non_parallel_dim<ParallelDim, RANK, RANK>
+{
+    static_assert((ParallelDim <= RANK), "Error: parallelDim larger than RANK");
+    constexpr static int apply() {
+        return -1;
+    }
+};
+
+template<int ParallelDim, int RANK>
 struct get_n_cuda_blocks
 {
   template<typename DATA_TYPE>
   static unsigned int apply(const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield, const unsigned int block_size_y) {
-      return (hfield.data_view().template length<1>()+block_size_y-1)/block_size_y;
+      return (hfield.data_view().template length<get_first_non_parallel_dim<ParallelDim, RANK, 0>::apply()>()+block_size_y-1)/block_size_y;
   }
 };
 
 template<>
-struct get_n_cuda_blocks<1> {
+struct get_n_cuda_blocks<0, 1> {
     template<typename DATA_TYPE>
     static unsigned int apply(const array::ArrayView<DATA_TYPE, 1, array::Intent::ReadOnly>& hfield, const unsigned int block_size_y) {
         return 1;
@@ -130,7 +148,7 @@ void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, ar
   const unsigned int block_size_x = 32;
   const unsigned int block_size_y = (RANK==1) ? 1 : 4;
 
-  unsigned int nblocks_y = get_n_cuda_blocks<RANK>::apply(hfield, block_size_y);
+  unsigned int nblocks_y = get_n_cuda_blocks<ParallelDim, RANK>::apply(hfield, block_size_y);
 
   dim3 threads(block_size_x, block_size_y);
   dim3 blocks((sendcnt+block_size_x-1)/block_size_x, nblocks_y);
@@ -163,7 +181,7 @@ void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, a
   const unsigned int block_size_x = 32;
   const unsigned int block_size_y = (RANK==1) ? 1 : 4;
 
-  unsigned int nblocks_y = get_n_cuda_blocks<RANK>::apply(hfield, block_size_y);
+  unsigned int nblocks_y = get_n_cuda_blocks<ParallelDim, RANK>::apply(hfield, block_size_y);
 
   dim3 threads(block_size_x, block_size_y);
   dim3 blocks((recvcnt+block_size_x-1)/block_size_x, nblocks_y);
