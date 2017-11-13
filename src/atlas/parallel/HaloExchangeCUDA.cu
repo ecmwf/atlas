@@ -15,7 +15,7 @@
 namespace atlas {
 namespace parallel {
 
-template<int RANK>
+template<int ParallelDim, int RANK>
 struct get_buffer_index{
     template<typename DATA_TYPE>
     ATLAS_HOST_DEVICE
@@ -26,8 +26,8 @@ struct get_buffer_index{
     }
 };
 
-template<>
-struct get_buffer_index<2>{
+template<int ParallelDim>
+struct get_buffer_index<ParallelDim, 2>{
     template<typename DATA_TYPE>
     ATLAS_HOST_DEVICE
     static size_t apply(const array::ArrayView<DATA_TYPE, 2, array::Intent::ReadWrite>& field,
@@ -36,7 +36,7 @@ struct get_buffer_index<2>{
     }
 };
 
-template<typename DATA_TYPE, int RANK>
+template<int ParallelDim, typename DATA_TYPE, int RANK>
 __global__ void pack_kernel(const int sendcnt, const int* sendmap_ptr, const size_t sendmap_size,
          const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer_ptr,
          const size_t send_buffer_size, const typename std::enable_if<RANK==1, int>::type = 0) {
@@ -50,7 +50,7 @@ __global__ void pack_kernel(const int sendcnt, const int* sendmap_ptr, const siz
     send_buffer[node_cnt] = field(sendmap[node_cnt]);
 }
 
-template<typename DATA_TYPE, int RANK>
+template<int ParallelDim, typename DATA_TYPE, int RANK>
 __global__ void pack_kernel(const int sendcnt,  const int* sendmap_ptr, const size_t sendmap_size,
          const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer_ptr,
          const size_t send_buffer_size, const typename std::enable_if<RANK>=2, int>::type = 0) {
@@ -62,13 +62,13 @@ __global__ void pack_kernel(const int sendcnt,  const int* sendmap_ptr, const si
 
     if(node_cnt >= sendcnt || var1_idx >= field.data_view().template length<1>() ) return;
 
-    size_t buff_idx = get_buffer_index<RANK>::apply(field, node_cnt, var1_idx);
+    size_t buff_idx = get_buffer_index<ParallelDim, RANK>::apply(field, node_cnt, var1_idx);
     const size_t node_idx = sendmap[node_cnt];
 
     halo_packer_impl<0, (RANK>=3) ? (RANK-2) : 0, 2>::apply(buff_idx, node_idx, field, send_buffer, node_idx,var1_idx);
 }
 
-template<typename DATA_TYPE, int RANK>
+template<int ParallelDim, typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
          const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
          array::Intent::ReadWrite> field, const typename std::enable_if<RANK==1, int>::type = 0) {
@@ -85,7 +85,7 @@ __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const s
     field(node_idx) = recv_buffer[node_cnt];
 }
 
-template<typename DATA_TYPE, int RANK>
+template<int ParallelDim, typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
          const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
          array::Intent::ReadWrite> field, const typename std::enable_if<RANK>=2, int>::type = 0) {
@@ -100,7 +100,7 @@ __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const s
 
     const size_t node_idx = recvmap[node_cnt];
 
-    size_t buff_idx = get_buffer_index<RANK>::apply(field, node_cnt, var1_idx);
+    size_t buff_idx = get_buffer_index<ParallelDim, RANK>::apply(field, node_cnt, var1_idx);
 
     halo_unpacker_impl<0, (RANK>=3) ? (RANK-2) : 0, 2>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,var1_idx);
 }
@@ -159,7 +159,7 @@ void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, ar
     throw eckit::Exception(msg);
   }
 
-  pack_kernel<DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap.data(), sendmap.size(), dfield, send_buffer.data(), send_buffer.size());
+  pack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap.data(), sendmap.size(), dfield, send_buffer.data(), send_buffer.size());
   err = cudaGetLastError();
   if (err != cudaSuccess)
     throw eckit::Exception("Error launching GPU packing kernel");
@@ -193,7 +193,7 @@ void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, a
     throw eckit::Exception(msg);
   }
 
-  unpack_kernel<<<blocks,threads>>>(recvcnt, recvmap.data(), recvmap.size(), recv_buffer.data(), recv_buffer.size(), dfield);
+  unpack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(recvcnt, recvmap.data(), recvmap.size(), recv_buffer.data(), recv_buffer.size(), dfield);
 
   err = cudaGetLastError();
   if (err != cudaSuccess) {
