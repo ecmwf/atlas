@@ -1,7 +1,8 @@
-#include "atlas/library/Library.h"
-#include "atlas/runtime/Log.h"
+#include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/library/Library.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/Metadata.h"
 
 using atlas::Log;

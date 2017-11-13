@@ -1,5 +1,3 @@
-#include <cmath>
-#include <vector>
 #include "atlas/library/Library.h"
 #include "atlas/grid.h"
 #include "atlas/meshgenerator.h"
@@ -16,7 +14,7 @@ int main(int argc, char *argv[])
 {
     atlas::Library::instance().initialise(argc, argv);
 
-    Grid grid = UnstructuredGrid( new std::vector<PointXY>{
+    Grid grid = UnstructuredGrid( {
       {180,0},
       {90,0},
       {-90,0},

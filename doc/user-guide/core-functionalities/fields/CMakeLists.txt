@@ -12,7 +12,7 @@ ecbuild_add_executable(
 
 set_target_properties(atlas_c-fields
                       atlas_c-fields-on-grid
-                      PROPERTIES EXCLUDE_FROM_ALL true )
+                      PROPERTIES EXCLUDE_FROM_ALL ${ENABLE_TESTS} )
 
 if( ATLAS_HAVE_FORTRAN )
 
@@ -30,6 +30,6 @@ ecbuild_add_executable(
 
 set_target_properties(atlas_f-fields
                       atlas_f-fields-on-grid
-                      PROPERTIES EXCLUDE_FROM_ALL true )
+                      PROPERTIES EXCLUDE_FROM_ALL ${ENABLE_TESTS} )
 
 endif()

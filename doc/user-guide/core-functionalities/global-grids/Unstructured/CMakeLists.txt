@@ -5,5 +5,5 @@ ecbuild_add_executable(
   NOINSTALL )
 
 set_target_properties(atlas_c-global-grids-Unstructured
-                      PROPERTIES EXCLUDE_FROM_ALL true )
+                      PROPERTIES EXCLUDE_FROM_ALL ${ENABLE_TESTS} )
 

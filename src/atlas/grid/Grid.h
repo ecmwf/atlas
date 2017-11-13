@@ -147,6 +147,8 @@ public:
     UnstructuredGrid( const Config& );
     UnstructuredGrid( const Grid::Implementation* );
     UnstructuredGrid( std::vector<PointXY>* ); // takes ownership
+    UnstructuredGrid( std::vector<PointXY>&& ); // move constructor
+    UnstructuredGrid( std::initializer_list<PointXY> );
 
     operator bool() const {
         return valid();
