@@ -122,8 +122,8 @@ struct get_n_cuda_blocks<1> {
     }
 };
 
-template<typename DATA_TYPE, int RANK>
-void halo_packer_cuda<DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<int> const & sendmap,
+template<int ParallelDim, typename DATA_TYPE, int RANK>
+void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<int> const & sendmap,
                    const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield, const array::ArrayView<DATA_TYPE, RANK>& dfield,
                    array::SVector<DATA_TYPE>& send_buffer )
 {
@@ -155,8 +155,8 @@ void halo_packer_cuda<DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<
 
 }
 
-template<typename DATA_TYPE, int RANK>
-void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
+template<int ParallelDim, typename DATA_TYPE, int RANK>
+void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
                    const array::SVector<DATA_TYPE> &recv_buffer ,
                    const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly> &hfield, array::ArrayView<DATA_TYPE, RANK> &dfield)
 {
@@ -191,17 +191,20 @@ void halo_packer_cuda<DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector
   }
 }
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION(RANK) \
-template class halo_packer_cuda<int,RANK>; \
-template class halo_packer_cuda<long,RANK>; \
-template class halo_packer_cuda<long unsigned,RANK>; \
-template class halo_packer_cuda<float,RANK>; \
-template class halo_packer_cuda<double,RANK>; \
+#define EXPLICIT_TEMPLATE_INSTANTIATION(z, ParallelDim, RANK ) \
+template class halo_packer_cuda<ParallelDim, int,RANK>; \
+template class halo_packer_cuda<ParallelDim, long,RANK>; \
+template class halo_packer_cuda<ParallelDim, long unsigned,RANK>; \
+template class halo_packer_cuda<ParallelDim, float,RANK>; \
+template class halo_packer_cuda<ParallelDim, double,RANK>; \
 
-  EXPLICIT_TEMPLATE_INSTANTIATION(1)
-  EXPLICIT_TEMPLATE_INSTANTIATION(2)
-  EXPLICIT_TEMPLATE_INSTANTIATION(3)
-  EXPLICIT_TEMPLATE_INSTANTIATION(4)
+#define EXPLICIT_TEMPLATE_INSTANTIATION_REP(RANK) \
+    BOOST_PP_REPEAT(RANK, EXPLICIT_TEMPLATE_INSTANTIATION, RANK)
+
+  EXPLICIT_TEMPLATE_INSTANTIATION_REP(1)
+  EXPLICIT_TEMPLATE_INSTANTIATION_REP(2)
+  EXPLICIT_TEMPLATE_INSTANTIATION_REP(3)
+  EXPLICIT_TEMPLATE_INSTANTIATION_REP(4)
 
 } //namespace array
 } //namespace atlas

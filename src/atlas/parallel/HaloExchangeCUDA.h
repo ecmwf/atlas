@@ -16,7 +16,7 @@
 namespace atlas {
 namespace parallel {
 
-template<typename DATA_TYPE, int RANK>
+template<int ParallelDim, typename DATA_TYPE, int RANK>
 struct halo_packer_cuda {
     static void pack( const int sendcnt, array::SVector<int> const & sendmap,
                        const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield, const array::ArrayView<DATA_TYPE, RANK>& dfield, 
