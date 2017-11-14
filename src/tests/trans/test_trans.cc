@@ -28,10 +28,13 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/array/MakeView.h"
-#include "transi/trans.h"
 
 #include "tests/AtlasTestEnvironment.h"
 #include "eckit/testing/Test.h"
+
+#ifdef ATLAS_HAVE_TRANS
+#include "atlas/trans/detail/TransIFS.h"
+#endif
 
 using namespace eckit;
 using namespace eckit::testing;
@@ -57,7 +60,7 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
 
 //-----------------------------------------------------------------------------
 
-void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int &nfld )
+void read_rspecg(trans::TransIFS& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int &nfld )
 {
   Log::info() << "read_rspecg ...\n";
   nfld = 2;
@@ -79,6 +82,26 @@ void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<i
 
 //-----------------------------------------------------------------------------
 
+void read_rspecg( Field spec )
+{
+  Log::info() << "read_rspecg ...\n";
+  if( parallel::mpi::comm().rank() == 0 )
+  {
+    functionspace::Spectral funcspace = spec.functionspace();
+    int nb_spectral_coefficients_global = functionspace::Spectral( spec.functionspace() ).nb_spectral_coefficients_global();
+    auto view = array::make_view<double,2>( spec );
+    ASSERT( view.shape(1) >= 2 );
+    for( int i=0; i<nb_spectral_coefficients_global; ++i )
+    {
+      view(i,0) = (i==0 ? 1. : 0.); // scalar field 1
+      view(i,1) = (i==0 ? 2. : 0.); // scalar field 2
+    }
+  }
+  Log::info() << "read_rspecg ... done" << std::endl;
+}
+
+//-----------------------------------------------------------------------------
+
 CASE( "test_trans_distribution_matches_atlas" )
 {
   EXPECT( grid::Partitioner::exists("trans") );
@@ -93,11 +116,11 @@ CASE( "test_trans_distribution_matches_atlas" )
   grid::Partitioner partitioner( trans_partitioner );
   grid::Distribution distribution( g, partitioner );
 
-  trans::Trans trans( g );
+  trans::TransIFS trans( g, 159 );
   ::Trans_t* t = trans;
 
   ATLAS_DEBUG_VAR( trans.truncation() );
-  EXPECT( trans.truncation() <= 0 );
+  EXPECT( trans.truncation() == 159 );
 
   // -------------- do checks -------------- //
   EXPECT( t->nproc  ==  parallel::mpi::comm().size() );
@@ -131,21 +154,9 @@ CASE( "test_trans_distribution_matches_atlas" )
   }
 }
 
-CASE( "test_trans_partitioner" )
-{
-  Log::info() << "test_trans_partitioner" << std::endl;
-  // Create grid and trans object
-  Grid g( "N80" );
-
-  trans::Trans trans( g );
-
-  EXPECT( trans.truncation() <= 0 );
-  EXPECT( trans.nb_gridpoints_global() == g.size() );
-}
-
 CASE( "test_trans_options" )
 {
-  trans::Trans::Options opts;
+  trans::TransIFS::Options opts;
   opts.set_fft(trans::FFTW);
   opts.set_split_latitudes(false);
   opts.set_read("readfile");
@@ -155,14 +166,14 @@ CASE( "test_trans_options" )
 
 CASE( "test_distspec" )
 {
-  trans::Trans::Options p;
+  trans::TransIFS::Options p;
 
 #ifdef TRANS_HAVE_IO
   if( parallel::mpi::comm().size() == 1 )
     p.set_write("cached_legendre_coeffs");
 #endif
   p.set_flt(false);
-  trans::Trans trans( Grid("F400"), 159, p);
+  trans::TransIFS trans( Grid("F400"), 159, p);
   Log::info() << "Trans initialized" << std::endl;
   std::vector<double> rspecg;
   std::vector<int   > nfrom;
@@ -192,30 +203,22 @@ CASE( "test_distspec" )
 
 CASE( "test_distspec_speconly" )
 {
-  trans::Trans::Options p;
+  functionspace::Spectral fs(159);
+  int nfld = 2;
+  Field glb = fs.createField<double>(option::global()|option::levels(nfld));
+  read_rspecg(glb);
 
-  p.set_flt(false);
-  trans::Trans trans( 159, p);
-  Log::info() << "Trans initialized" << std::endl;
-  std::vector<double> rspecg;
-  std::vector<int   > nfrom;
-  int nfld;
-  Log::info() << "Read rspecg" << std::endl;
-  read_rspecg(trans,rspecg,nfrom,nfld);
-
-
-  std::vector<double> rspec(nfld*trans.nb_spectral_coefficients());
-  std::vector<int> nto(nfld,1);
   std::vector<double> specnorms(nfld,0);
 
-  trans.distspec( nfld, nfrom.data(), rspecg.data(), rspec.data() );
-  trans.specnorm( nfld, rspec.data(), specnorms.data() );
+  Field dist = fs.createField(glb);
+
+  fs.scatter(glb,dist);
+  fs.norm(dist,specnorms);
 
   if( parallel::mpi::comm().rank() == 0 ) {
     EXPECT( eckit::types::is_approximately_equal( specnorms[0], 1., 1.e-10 ));
     EXPECT( eckit::types::is_approximately_equal( specnorms[1], 2., 1.e-10 ));
   }
-
   Log::info() << "end test_distspec_only" << std::endl;
 }
 
@@ -251,7 +254,6 @@ CASE( "test_generate_mesh" )
     ("angle",0)
     ("triangulate",true)
   );
-  trans::Trans trans(g);
 
   Mesh m_default = generate( g );
 
@@ -287,7 +289,7 @@ CASE( "test_spectral_fields" )
   );
   Mesh m = generate( g );
 
-  trans::Trans trans(g,47);
+  trans::TransIFS trans(g,47);
 
 
   functionspace::NodeColumns nodal (m);
@@ -297,17 +299,17 @@ CASE( "test_spectral_fields" )
   Field gpf = nodal.   createField<double>(option::name("gpf"));
 
 
-  EXPECT_NO_THROW( trans.dirtrans(nodal,gpf,spectral,spf) );
-  EXPECT_NO_THROW( trans.invtrans(spectral,spf,nodal,gpf) );
+  EXPECT_NO_THROW( trans.dirtrans(gpf,spf) );
+  EXPECT_NO_THROW( trans.invtrans(spf,gpf) );
 
   FieldSet gpfields;   gpfields.add(gpf);
   FieldSet spfields;   spfields.add(spf);
 
-  EXPECT_NO_THROW( trans.dirtrans(nodal,gpfields,spectral,spfields) );
-  EXPECT_NO_THROW( trans.invtrans(spectral,spfields,nodal,gpfields) );
+  EXPECT_NO_THROW( trans.dirtrans(gpfields,spfields) );
+  EXPECT_NO_THROW( trans.invtrans(spfields,gpfields) );
 
   gpfields.add(gpf);
-  EXPECT_THROWS_AS(trans.dirtrans(nodal,gpfields,spectral,spfields),eckit::SeriousBug);
+  EXPECT_THROWS_AS(trans.dirtrans(gpfields,spfields),eckit::SeriousBug);
 
 }
 
@@ -317,7 +319,7 @@ CASE( "test_nomesh" )
   Log::info() << "test_spectral_fields" << std::endl;
 
   Grid g( "O48" );
-  trans::Trans trans(g,47) ;
+  trans::TransIFS trans(g,47) ;
 
   functionspace::Spectral          spectral   (trans);
   functionspace::StructuredColumns gridpoints (g);

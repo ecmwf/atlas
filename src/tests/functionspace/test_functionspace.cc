@@ -23,8 +23,9 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/field/Field.h"
 #include "atlas/parallel/mpi/mpi.h"
-#ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
+#ifdef ATLAS_HAVE_TRANS
+#include "atlas/trans/detail/TransIFS.h"
 #endif
 
 
@@ -530,7 +531,7 @@ CASE( "test_SpectralFunctionSpace" )
 
 CASE( "test_SpectralFunctionSpace_trans_dist" )
 {
-  trans::Trans trans(Grid("F80"),159);
+  trans::TransIFS trans(Grid("F80"),159);
   size_t nb_levels(10);
 
   size_t nspec2 = trans.nb_spectral_coefficients();
@@ -619,7 +620,7 @@ CASE( "test_SpectralFunctionSpace_trans_global" )
 }
 CASE( "test_SpectralFunctionSpace_norm" )
 {
-  trans::Trans trans(Grid("F80"),159);
+  trans::TransIFS trans(Grid("F80"),159);
   size_t nb_levels(10);
 
   Spectral spectral_fs( trans );

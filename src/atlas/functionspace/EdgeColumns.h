@@ -49,7 +49,7 @@ public:
 
     virtual ~EdgeColumns();
 
-    virtual std::string name() const { return "Edges"; }
+    virtual std::string type() const { return "Edges"; }
 
     size_t nb_edges() const;
     size_t nb_edges_global() const; // Only on MPI rank 0, will this be different from 0

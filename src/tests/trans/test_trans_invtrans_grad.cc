@@ -27,10 +27,13 @@
 #include "atlas/trans/Trans.h"
 #include "atlas/util/Earth.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "transi/trans.h"
 
 #include "tests/AtlasTestEnvironment.h"
 #include "eckit/testing/Test.h"
+
+#ifdef ATLAS_HAVE_TRANS
+#include "atlas/trans/detail/TransIFS.h"
+#endif
 
 using namespace eckit::testing;
 
@@ -104,7 +107,7 @@ CASE( "test_invtrans_ifsStyle" )
   std::string grid_uid("O80");
   grid::StructuredGrid g (grid_uid);
   long N = g.ny()/2;
-  trans::Trans trans(g,2*N-1);
+  trans::TransIFS trans(g,2*N-1);
   Log::info() << "Trans initialized" << std::endl;
   std::vector<double> rspecg;
   int nfld = 1;
@@ -121,12 +124,10 @@ CASE( "test_invtrans_ifsStyle" )
   trans.dirtrans(nfld,init_gp.data(),init_sp.data());
 
   std::vector<double> rgp(3*nfld*trans.nb_gridpoints());
-  double *no_vorticity(NULL), *no_divergence(NULL);
+  double *no_vorticity(nullptr), *no_divergence(nullptr);
   int nb_vordiv(0);
   int nb_scalar(nfld);
-  trans::TransParameters p;
-  p.set_scalar_derivatives(true);
-  trans.invtrans( nb_scalar, init_sp.data(), nb_vordiv, no_vorticity, no_divergence, rgp.data(), p );
+  trans.invtrans( nb_scalar, init_sp.data(), nb_vordiv, no_vorticity, no_divergence, rgp.data(), trans::options::scalar_derivatives(true) );
 
   std::vector<int>    nto(nfld,1);
   std::vector<double> rgpg(3*nfld*trans.nb_gridpoints_global());
@@ -155,7 +156,7 @@ CASE( "test_invtrans_grad" )
   grid::StructuredGrid g ( grid_uid );
   Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(g);
   long N = g.ny()/2;
-  trans::Trans trans(g, 2*N-1);
+  trans::TransIFS trans(g, 2*N-1);
   functionspace::NodeColumns gp(mesh);
   functionspace::Spectral sp(trans);
 
@@ -168,10 +169,10 @@ CASE( "test_invtrans_grad" )
   rotated_flow_magnitude(gp,scalar,beta);
 
   // Transform to spectral
-  trans.dirtrans(gp,scalar,sp,scalar_sp);
+  trans.dirtrans(scalar,scalar_sp);
 
   // Inverse transform for gradient
-  trans.invtrans_grad(sp,scalar_sp,gp,grad);
+  trans.invtrans_grad(scalar_sp,grad);
 
   gp.haloExchange(grad);
 

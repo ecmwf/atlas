@@ -153,7 +153,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/interpolation/Interpolation.h
       MODULE    atlas_interpolation_c_binding
       OUTPUT    interpolation_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/detail/TransIFS.h
+  MODULE    atlas_trans_c_binding
+  OUTPUT    trans_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Metadata.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Config.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/detail/GmshIO.h)

@@ -322,7 +322,7 @@ void write_field_nodes(
     if( atlas::parallel::mpi::comm().size() > 1 )
     {
       field_glb = function_space.createField<DATATYPE>(
-          option::name("glb_field") | 
+          option::name("glb_field") |
           option::global() );
       function_space.gather(field, field_glb);
       data = array::LocalView<DATATYPE,2>(
@@ -1097,7 +1097,7 @@ void GmshIO::write(
         std::stringstream msg;
         msg << "Field ["<<field.name()
             <<"] has functionspace ["
-            << field.functionspace().name()
+            << field.functionspace().type()
             << "] but requires a [functionspace::NodeColumns "
             << "or functionspace::StructuredColumns]";
 

@@ -316,11 +316,14 @@ numerics/fvm/Method.h
 numerics/fvm/Method.cc
 numerics/fvm/Nabla.h
 numerics/fvm/Nabla.cc
+
+trans/Trans.h
+trans/Trans.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs
-  trans/Trans.h
-  trans/Trans.cc
+  trans/detail/TransIFS.h
+  trans/detail/TransIFS.cc
 )
 endif()
 

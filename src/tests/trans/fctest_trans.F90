@@ -121,8 +121,8 @@ TEST( test_trans )
   spec2(:) = 0
   spec2(1) = 4
 
-  call trans%invtrans(spectral_fs,spectralfield1,nodes_fs,scalarfield1)
-  call trans%dirtrans(nodes_fs,scalarfield1,spectral_fs,spectralfield1)
+  call trans%invtrans(spectralfield1,scalarfield1)
+  call trans%dirtrans(scalarfield1,spectralfield1)
 
   allocate( check(nlev) )
   check(:) = 3
@@ -137,8 +137,8 @@ TEST( test_trans )
   call spectralfields%add(spectralfield1)
   call spectralfields%add(spectralfield2)
 
-  call trans%invtrans(spectral_fs,spectralfields,nodes_fs,scalarfields)
-  call trans%dirtrans(nodes_fs,scalarfields,spectral_fs,spectralfields)
+  call trans%invtrans(spectralfields,scalarfields)
+  call trans%dirtrans(scalarfields,spectralfields)
 
   allocate( check(nlev) )
   check(:) = 3
@@ -170,9 +170,9 @@ TEST( test_trans )
 
   call divfield%data(div)
 
-  call trans%dirtrans_wind2vordiv(nodes_fs,windfield,spectral_fs,vorfield,divfield)
+  call trans%dirtrans_wind2vordiv(windfield,vorfield,divfield)
 
-  call trans%invtrans_vordiv2wind(spectral_fs,vorfield,divfield,nodes_fs,windfield)
+  call trans%invtrans_vordiv2wind(vorfield,divfield,windfield)
 
   glb_vorfield = spectral_fs%create_field(name="vorticity",kind=atlas_real(c_double),levels=nlev,global=.true.)
   call spectral_fs%gather(vorfield,glb_vorfield)

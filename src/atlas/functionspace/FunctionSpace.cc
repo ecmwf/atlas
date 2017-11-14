@@ -41,7 +41,7 @@ extern "C" {
 const char* atlas__FunctionSpace__name (FunctionSpaceImpl* This) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
-    return This->name().c_str();
+    return This->type().c_str();
   );
   return 0;
 }
@@ -113,8 +113,8 @@ FunctionSpace::FunctionSpace( const FunctionSpace& functionspace ) :
   functionspace_( functionspace.functionspace_ ) {
 }
 
-std::string FunctionSpace::name() const {
-  return functionspace_->name();
+std::string FunctionSpace::type() const {
+  return functionspace_->type();
 }
 
 FunctionSpace::operator bool() const {

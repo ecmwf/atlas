@@ -120,9 +120,9 @@ TEST( test_trans_invtrans_grad )
   beta = pi*0.5;
   call rotated_flow_magnitude(nodes_fs,scalar,beta)
 
-  call trans%dirtrans(nodes_fs,scalar,spectral_fs,scalar_sp)
+  call trans%dirtrans(scalar,scalar_sp)
 
-  call trans%invtrans_grad(spectral_fs,scalar_sp,nodes_fs,grad);
+  call trans%invtrans_grad(scalar_sp,grad);
 
   call nodes_fs%halo_exchange(grad);
 

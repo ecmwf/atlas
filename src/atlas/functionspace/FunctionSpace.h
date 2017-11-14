@@ -37,7 +37,7 @@ private:
 public:
     FunctionSpaceImpl() {}
     virtual ~FunctionSpaceImpl() = 0;
-    virtual std::string name() const = 0;
+    virtual std::string type() const = 0;
     virtual operator bool() const { return true; }
     virtual size_t footprint() const = 0;
 
@@ -102,7 +102,7 @@ class NoFunctionSpace : public FunctionSpaceImpl
 public:
     NoFunctionSpace() {}
     virtual ~NoFunctionSpace() {}
-    virtual std::string name() const { return "NoFunctionSpace"; }
+    virtual std::string type() const { return "NoFunctionSpace"; }
     virtual operator bool() const { return false; }
     virtual size_t footprint() const { return sizeof(*this); }
 
@@ -144,7 +144,7 @@ public:
   FunctionSpace( const Implementation* );
   FunctionSpace( const FunctionSpace& );
 
-  std::string name() const;
+  std::string type() const;
   operator bool() const;
   size_t footprint() const;
 

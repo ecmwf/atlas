@@ -55,19 +55,20 @@ public:
 
     virtual ~NodeColumns();
 
-    virtual std::string name() const { return "Nodes"; }
+    static std::string static_type() { return "NodeColumns"; }
+    virtual std::string type() const { return static_type(); }
 
     size_t nb_nodes() const;
     size_t nb_nodes_global() const; // All MPI ranks will have same output
 
     const Mesh& mesh() const { return mesh_; }
-    
+
     size_t levels() const { return nb_levels_; }
 
     mesh::Nodes& nodes() const { return nodes_; }
 
 // -- Field creation methods
-    
+
     using FunctionSpaceImpl::createField;
 
     /// @brief Create a field
@@ -242,7 +243,7 @@ private: // methods
     size_t config_levels(const eckit::Configuration&) const;
     array::ArrayShape config_shape(const eckit::Configuration&) const;
     void set_field_metadata(const eckit::Configuration&, Field& ) const;
-    
+
     size_t footprint() const;
 
 private: // data
@@ -433,6 +434,8 @@ public:
     NodeColumns( Mesh& mesh, const mesh::Halo & );
     NodeColumns( Mesh& mesh );
     NodeColumns( Mesh& mesh, const eckit::Configuration & );
+
+    static std::string type() { return detail::NodeColumns::static_type(); }
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
