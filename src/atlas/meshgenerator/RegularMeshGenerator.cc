@@ -140,7 +140,7 @@ void RegularMeshGenerator::generate(const Grid& grid, const grid::Distribution& 
   }
 
   // clone some grid properties
-  set_projection(mesh,rg.projection());
+  setGrid(mesh,rg);
 
   generate_mesh(rg,distribution,mesh);
 }
@@ -494,7 +494,7 @@ void RegularMeshGenerator::generate_mesh(
   }
 #endif
 
-  generate_global_element_numbering( mesh );
+  generateGlobalElementNumbering( mesh );
 
   nodes.metadata().set("parallel",true);
 

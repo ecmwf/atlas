@@ -96,6 +96,12 @@ void MeshImpl::setProjection(const Projection& projection) {
   projection_ = projection;
 }
 
+void MeshImpl::setGrid(const Grid& grid) {
+  grid_ = grid;
+  if( not projection_ )
+    projection_ = grid_.projection();
+}
+
 size_t MeshImpl::nb_partitions() const {
   return parallel::mpi::comm().size();
 }

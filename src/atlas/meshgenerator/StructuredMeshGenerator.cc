@@ -224,7 +224,7 @@ void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distributio
 #endif
 
   // clone some grid properties
-  set_projection(mesh,rg.projection());
+  setGrid(mesh,rg);
 
   Region region;
   generate_region(rg,distribution,mypart,region);
@@ -1359,7 +1359,7 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
     }
   }
 
-  generate_global_element_numbering( mesh );
+  generateGlobalElementNumbering( mesh );
 }
 
 namespace {
