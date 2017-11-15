@@ -122,7 +122,7 @@ Spectral::Spectral( const eckit::Configuration& config ) :
 
 // ----------------------------------------------------------------------
 
-Spectral::Spectral( const size_t truncation, const eckit::Configuration& config ) :
+Spectral::Spectral( const int truncation, const eckit::Configuration& config ) :
     truncation_(truncation),
     parallelisation_( new Parallelisation(truncation_) ),
     nb_levels_(0)
@@ -390,6 +390,10 @@ size_t Spectral::nb_spectral_coefficients() const {
 
 size_t Spectral::nb_spectral_coefficients_global() const {
   return functionspace_->nb_spectral_coefficients_global();
+}
+
+int Spectral::truncation() const {
+  return functionspace_->truncation();
 }
 
 void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const {

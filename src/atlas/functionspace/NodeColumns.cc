@@ -86,15 +86,15 @@ array::LocalView<T,1> make_surface_scalar_view(const Field &field)
 
 }
 
-NodeColumns::NodeColumns( Mesh& mesh ) :
+NodeColumns::NodeColumns( Mesh mesh ) :
     NodeColumns( mesh, util::NoConfig() ) {
 }
 
-NodeColumns::NodeColumns(Mesh& mesh, const mesh::Halo &halo) :
+NodeColumns::NodeColumns(Mesh mesh, const mesh::Halo &halo) :
     NodeColumns( mesh, util::Config("halo",halo.size()) ) {
 }
 
-NodeColumns::NodeColumns( Mesh& mesh, const eckit::Configuration & config ) :
+NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration & config ) :
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_( mesh::Halo(config.getInt("halo",0) ) ),
@@ -2115,17 +2115,17 @@ NodeColumns::NodeColumns( const FunctionSpace& functionspace ) :
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
 }
 
-NodeColumns::NodeColumns( Mesh& mesh, const mesh::Halo& halo ) :
+NodeColumns::NodeColumns( Mesh mesh, const mesh::Halo& halo ) :
   FunctionSpace( new detail::NodeColumns(mesh,halo) ),
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
 }
 
-NodeColumns::NodeColumns( Mesh& mesh ) :
+NodeColumns::NodeColumns( Mesh mesh ) :
   FunctionSpace( new detail::NodeColumns(mesh) ),
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
 }
 
-NodeColumns::NodeColumns( Mesh& mesh, const eckit::Configuration& config ) :
+NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration& config ) :
   FunctionSpace( new detail::NodeColumns(mesh, config) ),
   functionspace_( dynamic_cast< const detail::NodeColumns* >( get() ) ) {
 }

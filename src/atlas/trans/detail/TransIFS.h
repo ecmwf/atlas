@@ -132,6 +132,7 @@ public:
 
   /// @brief Constructor given grid and spectral truncation
   TransIFS( const Grid& g, const long truncation, const Options& = Options() );
+  TransIFS( const Grid& g, const long truncation, const eckit::Configuration& );
 
   virtual ~TransIFS();
   operator ::Trans_t*() const { return trans(); }
@@ -143,7 +144,7 @@ public:
   size_t nb_gridpoints() const { return trans_->ngptot; }
   size_t nb_gridpoints_global() const { return trans_->ngptotg; }
 
-  grid::StructuredGrid grid() const { return grid_; }
+  virtual const Grid& grid() const { return grid_; }
 
 
 

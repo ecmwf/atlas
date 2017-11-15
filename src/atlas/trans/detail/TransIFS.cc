@@ -33,6 +33,10 @@ using atlas::array::make_view;
 namespace atlas {
 namespace trans {
 
+namespace {
+static TransBuilderGrid<TransIFS> builder("ifs");
+}
+
 class TransParameters {
 public:
   TransParameters( const eckit::Configuration& config ) : config_(config) {}
@@ -677,6 +681,10 @@ TransIFS::TransIFS(const Grid& grid, const long truncation, const TransIFS::Opti
   ASSERT( grid.domain().global() );
   ASSERT( not grid.projection() );
   ctor( grid,truncation,p);
+}
+
+TransIFS::TransIFS( const Grid& g, const long truncation, const eckit::Configuration& config ) :
+  TransIFS(g,truncation) {
 }
 
 //TransIFS::TransIFS(const long truncation, const TransIFS::Options& p )

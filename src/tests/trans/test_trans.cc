@@ -34,6 +34,8 @@
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/detail/TransIFS.h"
+#include "atlas/trans/detail/ifs/TransIFSNodeColumns.h"
+#include "atlas/trans/detail/ifs/TransIFSStructuredColumns.h"
 #endif
 
 using namespace eckit;
@@ -367,6 +369,103 @@ CASE( "test_nomesh" )
     EXPECT( eckit::types::is_approximately_equal( spg(0), 4., 0.001 ));
   }
 }
+
+
+CASE( "test_trans_factory" )
+{
+  Log::info() << "test_trans_factory" << std::endl;
+
+  trans::TransFactory::list( Log::info() );
+  Log::info() << std::endl;
+
+  functionspace::StructuredColumns gp ( Grid("O48") );
+  functionspace::Spectral          sp ( 47 );
+
+  trans::Trans trans1 = trans::Trans(gp,sp);
+  EXPECT( bool(trans1) == true );
+
+  trans::Trans trans2 = trans::Trans( Grid("O48"), 47 );
+  EXPECT( bool(trans2) == true );
+}
+
+CASE( "test_trans_using_grid" )
+{
+  Log::info() << "test_trans_using_grid" << std::endl;
+
+  trans::Trans trans( Grid("O48"), 47 );
+
+  functionspace::StructuredColumns gp ( trans.grid() );
+  functionspace::Spectral          sp ( trans.truncation() );
+
+  Field spf = sp.createField<double>(option::name("spf"));
+  Field gpf = gp.createField<double>(option::name("gpf"));
+
+  EXPECT_NO_THROW( trans.dirtrans(gpf,spf) );
+  EXPECT_NO_THROW( trans.invtrans(spf,gpf) );
+
+  FieldSet gpfields;   gpfields.add(gpf);
+  FieldSet spfields;   spfields.add(spf);
+
+  EXPECT_NO_THROW( trans.dirtrans(gpfields,spfields) );
+  EXPECT_NO_THROW( trans.invtrans(spfields,gpfields) );
+
+  gpfields.add(gpf);
+  EXPECT_THROWS_AS(trans.dirtrans(gpfields,spfields),eckit::SeriousBug);
+
+}
+
+CASE( "test_trans_using_functionspace_NodeColumns" )
+{
+  Log::info() << "test_trans_using_functionspace_NodeColumns" << std::endl;
+
+  functionspace::NodeColumns gp ( MeshGenerator("structured").generate( Grid("O48") ) );
+  functionspace::Spectral    sp ( 47 );
+
+  trans::Trans trans( gp, sp );
+
+  Field spf = sp.createField<double>(option::name("spf"));
+  Field gpf = gp.createField<double>(option::name("gpf"));
+
+  EXPECT_NO_THROW( trans.dirtrans(gpf,spf) );
+  EXPECT_NO_THROW( trans.invtrans(spf,gpf) );
+
+  FieldSet gpfields;   gpfields.add(gpf);
+  FieldSet spfields;   spfields.add(spf);
+
+  EXPECT_NO_THROW( trans.dirtrans(gpfields,spfields) );
+  EXPECT_NO_THROW( trans.invtrans(spfields,gpfields) );
+
+  gpfields.add(gpf);
+  EXPECT_THROWS_AS(trans.dirtrans(gpfields,spfields),eckit::SeriousBug);
+
+}
+
+CASE( "test_trans_using_functionspace_StructuredColumns" )
+{
+  Log::info() << "test_trans_using_functionspace_StructuredColumns" << std::endl;
+
+  functionspace::StructuredColumns gp ( Grid("O48") );
+  functionspace::Spectral    sp ( 47 );
+
+  trans::Trans trans( gp, sp );
+
+  Field spf = sp.createField<double>(option::name("spf"));
+  Field gpf = gp.createField<double>(option::name("gpf"));
+
+  EXPECT_NO_THROW( trans.dirtrans(gpf,spf) );
+  EXPECT_NO_THROW( trans.invtrans(spf,gpf) );
+
+  FieldSet gpfields;   gpfields.add(gpf);
+  FieldSet spfields;   spfields.add(spf);
+
+  EXPECT_NO_THROW( trans.dirtrans(gpfields,spfields) );
+  EXPECT_NO_THROW( trans.invtrans(spfields,gpfields) );
+
+  gpfields.add(gpf);
+  EXPECT_THROWS_AS(trans.dirtrans(gpfields,spfields),eckit::SeriousBug);
+
+}
+
 
 //-----------------------------------------------------------------------------
 

@@ -49,9 +49,9 @@ class NodeColumns : public FunctionSpaceImpl
 {
 public:
 
-    NodeColumns( Mesh& mesh, const mesh::Halo & );
-    NodeColumns( Mesh& mesh, const eckit::Configuration & );
-    NodeColumns( Mesh& mesh );
+    NodeColumns( Mesh mesh, const mesh::Halo & );
+    NodeColumns( Mesh mesh, const eckit::Configuration & );
+    NodeColumns( Mesh mesh );
 
     virtual ~NodeColumns();
 
@@ -431,9 +431,9 @@ public:
     NodeColumns();
     NodeColumns( const FunctionSpace& );
 
-    NodeColumns( Mesh& mesh, const mesh::Halo & );
-    NodeColumns( Mesh& mesh );
-    NodeColumns( Mesh& mesh, const eckit::Configuration & );
+    NodeColumns( Mesh mesh, const mesh::Halo & );
+    NodeColumns( Mesh mesh );
+    NodeColumns( Mesh mesh, const eckit::Configuration & );
 
     static std::string type() { return detail::NodeColumns::static_type(); }
 

@@ -324,6 +324,10 @@ if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs
   trans/detail/TransIFS.h
   trans/detail/TransIFS.cc
+  trans/detail/ifs/TransIFSNodeColumns.h
+  trans/detail/ifs/TransIFSNodeColumns.cc
+  trans/detail/ifs/TransIFSStructuredColumns.h
+  trans/detail/ifs/TransIFSStructuredColumns.cc
 )
 endif()
 

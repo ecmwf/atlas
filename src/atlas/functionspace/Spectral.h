@@ -38,7 +38,7 @@ public:
 
   Spectral( const eckit::Configuration& );
 
-  Spectral(const size_t truncation, const eckit::Configuration& = util::NoConfig() );
+  Spectral(const int truncation, const eckit::Configuration& = util::NoConfig() );
 
   Spectral(trans::TransImpl&, const eckit::Configuration& = util::NoConfig() );
 
@@ -68,6 +68,7 @@ public: // methods
 
   size_t nb_spectral_coefficients() const;
   size_t nb_spectral_coefficients_global() const;
+  int truncation() const { return truncation_; }
 
 private: // methods
 
@@ -82,7 +83,7 @@ private: // data
 
   size_t nb_levels_;
 
-  size_t truncation_;
+  int truncation_;
 
   class Parallelisation;
   std::unique_ptr<Parallelisation> parallelisation_;
@@ -119,6 +120,7 @@ public:
 
   size_t nb_spectral_coefficients() const;
   size_t nb_spectral_coefficients_global() const;
+  int truncation() const;
 
 private:
 
