@@ -32,6 +32,20 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
+class TransCacheEntry {
+public:
+  virtual operator bool() const = 0;
+  virtual size_t size() const = 0;
+  virtual const void* data() const = 0;
+  virtual std::string hash() const = 0;
+};
+
+class TransCache {
+public:
+  virtual const TransCacheEntry& legendre() const = 0;
+  virtual const TransCacheEntry& fft()      const = 0;
+};
+
 class TransImpl : public eckit::Owned {
 
 public:
@@ -133,11 +147,14 @@ class TransFactory {
 public:
 
     /*!
-     * \brief build Trans with factory key, and default options
-     * \return mesh generator
+     * \brief build Trans
+     * \return TransImpl
      */
     static TransImpl* build( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::Config() );
     static TransImpl* build( const Grid&, int truncation, const eckit::Configuration& = util::Config() );
+
+    static TransImpl* build( const TransCache&, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::Config() );
+    static TransImpl* build( const TransCache&, const Grid&, int truncation, const eckit::Configuration& = util::Config() );
 
     /*!
      * \brief list all registered trans implementations
@@ -149,8 +166,10 @@ public:
 private:
 
     std::string name_;
-    virtual TransImpl* make(const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration&) { return nullptr; }
-    virtual TransImpl* make(const Grid& gp, int truncation, const eckit::Configuration&) { return nullptr; }
+    virtual TransImpl* make( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& ) { return nullptr; }
+    virtual TransImpl* make( const Grid& gp, int truncation, const eckit::Configuration& ) { return nullptr; }
+    virtual TransImpl* make( const TransCache&, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& ) { return nullptr; }
+    virtual TransImpl* make( const TransCache&, const Grid& gp, int truncation, const eckit::Configuration& ) { return nullptr; }
 
 protected:
 
@@ -163,8 +182,11 @@ protected:
 
 template<class T>
 class TransBuilderFunctionSpace : public TransFactory {
-  virtual TransImpl* make(const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config) {
+  virtual TransImpl* make( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) {
         return new T(gp,sp,config);
+  }
+  virtual TransImpl* make( const TransCache& cache, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) {
+        return new T(cache,gp,sp,config);
   }
 public:
     TransBuilderFunctionSpace(const std::string& name) : TransFactory(name) {}
@@ -172,8 +194,11 @@ public:
 
 template<class T>
 class TransBuilderGrid : public TransFactory {
-  virtual TransImpl* make(const Grid& grid, int truncation, const eckit::Configuration& config) {
+  virtual TransImpl* make( const Grid& grid, int truncation, const eckit::Configuration& config ) {
         return new T(grid,truncation,config);
+  }
+  virtual TransImpl* make( const TransCache& cache, const Grid& grid, int truncation, const eckit::Configuration& config ) {
+        return new T(cache,grid,truncation,config);
   }
 public:
     TransBuilderGrid(const std::string& name) : TransFactory(name) {}
@@ -196,8 +221,13 @@ public:
     Trans();
     Trans( Implementation* );
     Trans( const Trans& );
+
     Trans( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig() );
     Trans( const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
+
+    Trans( const TransCache&, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig() );
+    Trans( const TransCache&, const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
+
     void hash(eckit::Hash&) const;
     const Implementation* get() const { return impl_.get(); }
     operator bool() const { return impl_.owners(); }

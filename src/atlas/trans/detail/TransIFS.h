@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "eckit/filesystem/PathName.h"
 #include "transi/trans.h"
 #include "atlas/array/LocalView.h"
 #include "atlas/grid/Grid.h"
@@ -67,8 +68,9 @@ namespace atlas {
 namespace trans {
 
 ////-----------------------------------------------------------------------------
+enum FFT { FFT992=TRANS_FFT992, FFTW=TRANS_FFTW };
 
-namespace options {
+namespace option {
 
 class scalar_derivatives : public util::Config {
 public:
@@ -85,11 +87,45 @@ public:
   vorticity_divergence_fields( bool v ) { set("vorticity_divergence_fields",v); }
 };
 
+class flt : public util::Config {
+public:
+  flt(bool);
+};
+inline flt::flt(bool flt) { set("flt",flt); }
+
+class fft : public util::Config {
+public:
+  fft( FFT );
+  fft( const std::string& );
+private:
+  static const std::map<FFT,std::string> to_str;
+  static const std::map<std::string,FFT> to_enum;
+};
+inline fft::fft( FFT fft ) { set("fft",fft); }
+inline fft::fft( const std::string& fft ) { set("fft",to_enum.at(fft)); }
+
+class split_latitudes : public util::Config {
+public:
+  split_latitudes(bool);
+};
+inline split_latitudes::split_latitudes(bool split_latitudes) { set("split_latitudes",split_latitudes); }
+
+class write_legendre : public util::Config {
+public:
+  write_legendre( const eckit::PathName& );
+};
+inline write_legendre::write_legendre( const eckit::PathName& filepath ) { set("write_legendre",filepath); }
+
+class read_legendre : public util::Config {
+public:
+  read_legendre( const eckit::PathName& );
+};
+inline read_legendre::read_legendre( const eckit::PathName& filepath ) { set("read_legendre",filepath); }
+
 }
 
 //-----------------------------------------------------------------------------
 
-enum FFT { FFT992=TRANS_FFT992, FFTW=TRANS_FFTW };
 
 class TransIFS : public trans::TransImpl {
 private:
@@ -97,42 +133,8 @@ private:
 
 public:
 
-  class Options : public util::Config {
-  public:
-
-    Options();
-    ~Options() {}
-
-    void set_split_latitudes(bool);
-    void set_fft( FFT );
-    void set_flt(bool);
-    void set_cache(const void* buffer, const size_t size);
-    void set_read(const std::string&);
-    void set_write(const std::string&);
-
-    bool split_latitudes() const;
-    FFT fft() const;
-    bool flt() const;
-    const void* cache()const;
-    size_t cachesize() const;
-    std::string read() const;
-    std::string write() const;
-
-  private: // not represented in Configuration internals
-    const void*  cacheptr_;
-    size_t cachesize_;
-  };
-
-
-public:
-
-//  /// @brief Constructor for spectral-only setup
-//  ///        (e.g. for parallelisation routines)
-//  TransIFS(const long truncation, const Options& = Options() );
-
-  /// @brief Constructor given grid and spectral truncation
-  TransIFS( const Grid& g, const long truncation, const Options& = Options() );
-  TransIFS( const Grid& g, const long truncation, const eckit::Configuration& );
+  TransIFS( const Grid& g, const long truncation, const eckit::Configuration& = util::NoConfig() );
+  TransIFS( const TransCache&, const Grid& g, const long truncation, const eckit::Configuration& = util::NoConfig() );
 
   virtual ~TransIFS();
   operator ::Trans_t*() const { return trans(); }
@@ -308,19 +310,19 @@ public:
 
 private:
 
-  void ctor( const Grid&, long nsmax, const Options& );
+  void ctor( const Grid&, long nsmax, const eckit::Configuration& );
 
-  void ctor_rgg(const long nlat, const long pl[], long nsmax, const Options& );
+  void ctor_rgg(const long nlat, const long pl[], long nsmax, const eckit::Configuration& );
 
-  void ctor_lonlat(const long nlon, const long nlat, long nsmax, const Options& );
+  void ctor_lonlat(const long nlon, const long nlat, long nsmax, const eckit::Configuration& );
 
-  void ctor_spectral_only(long truncation, const TransIFS::Options& p );
+  void ctor_spectral_only(long truncation, const eckit::Configuration& );
 
 private:
   friend class grid::detail::partitioner::TransPartitioner;
 
   /// @brief Constructor for grid-only setup (e.g. for partitioning/parallelisation routines)
-  TransIFS(const Grid& g, const Options& = Options() );
+  TransIFS(const Grid& g, const eckit::Configuration& = util::NoConfig() );
 
   int        handle()       const { return trans_->handle; }
   int        ndgl()         const { return trans_->ndgl; }
@@ -515,6 +517,8 @@ private:
   friend class functionspace::detail::Spectral;
   mutable std::shared_ptr<::Trans_t> trans_;
   grid::StructuredGrid grid_;
+  const void* cache_{nullptr};
+  size_t cachesize_{0};
 };
 
 //-----------------------------------------------------------------------------

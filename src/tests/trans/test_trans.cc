@@ -158,24 +158,38 @@ CASE( "test_trans_distribution_matches_atlas" )
 
 CASE( "test_trans_options" )
 {
-  trans::TransIFS::Options opts;
-  opts.set_fft(trans::FFTW);
-  opts.set_split_latitudes(false);
-  opts.set_read("readfile");
-
+  util::Config opts (
+        trans::option::fft(trans::FFTW)          |
+        trans::option::split_latitudes(false)    |
+        trans::option::read_legendre("readfile") );
   Log::info() << "trans_opts = " << opts << std::endl;
 }
 
+#ifdef TRANS_HAVE_IO
+CASE( "test_write_read_cache" )
+{
+  util::Config write_legendre;
+  util::Config read_legendre;
+  if( parallel::mpi::comm().size() == 1 ) {
+    write_legendre = trans::option::write_legendre("cached_legendre_coeffs");
+    read_legendre = trans::option::read_legendre("cached_legendre_coeffs");
+  }
+  // Create trans that will write file
+  trans::Trans trans_write_F24( Grid("F24"), 23, trans::option::write_legendre("cached_legendre_coeffs-F24") | trans::option::flt(false) );
+  trans::Trans trans_write_N24( Grid("N24"), 23, trans::option::write_legendre("cached_legendre_coeffs-N24") | trans::option::flt(false) );
+  trans::Trans trans_write_O24( Grid("O24"), 23, trans::option::write_legendre("cached_legendre_coeffs-O24") | trans::option::flt(false) );
+
+  // Create trans that will read from file
+  trans::Trans trans_read_F24( Grid("F24"), 23, trans::option::read_legendre("cached_legendre_coeffs-F24") | trans::option::flt(false) );
+  trans::Trans trans_read_N24( Grid("N24"), 23, trans::option::read_legendre("cached_legendre_coeffs-N24") | trans::option::flt(false) );
+  trans::Trans trans_read_O24( Grid("O24"), 23, trans::option::read_legendre("cached_legendre_coeffs-O24") | trans::option::flt(false) );
+}
+#endif
+
+
 CASE( "test_distspec" )
 {
-  trans::TransIFS::Options p;
-
-#ifdef TRANS_HAVE_IO
-  if( parallel::mpi::comm().size() == 1 )
-    p.set_write("cached_legendre_coeffs");
-#endif
-  p.set_flt(false);
-  trans::TransIFS trans( Grid("F400"), 159, p);
+  trans::TransIFS trans( Grid("F80"), 159 );
   Log::info() << "Trans initialized" << std::endl;
   std::vector<double> rspecg;
   std::vector<int   > nfrom;

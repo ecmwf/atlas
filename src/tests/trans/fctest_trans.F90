@@ -70,18 +70,20 @@ TEST( test_trans )
 
   meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid)
+
   call meshgenerator%final()
 
   FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
+  FCTEST_CHECK_EQUAL( grid%owners(), 2 ) ! mesh tracks grid
 
   trans = atlas_Trans(grid,truncation)
-  FCTEST_CHECK_EQUAL( grid%owners(), 2 )
+  FCTEST_CHECK_EQUAL( grid%owners(), 3 ) ! trans tracks grid
 
   FCTEST_CHECK_EQUAL( trans%nb_gridpoints(), int(grid%size()) )
   FCTEST_CHECK_EQUAL( trans%nb_gridpoints_global(), int(grid%size()) )
 
   trans_grid = trans%grid()
-  FCTEST_CHECK_EQUAL( trans_grid%owners(), 3 )
+  FCTEST_CHECK_EQUAL( trans_grid%owners(), 4 )
 
   FCTEST_CHECK( .not. trans%is_null() )
   FCTEST_CHECK_EQUAL( trans%truncation(), truncation )

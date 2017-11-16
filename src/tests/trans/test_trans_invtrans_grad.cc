@@ -127,7 +127,7 @@ CASE( "test_invtrans_ifsStyle" )
   double *no_vorticity(nullptr), *no_divergence(nullptr);
   int nb_vordiv(0);
   int nb_scalar(nfld);
-  trans.invtrans( nb_scalar, init_sp.data(), nb_vordiv, no_vorticity, no_divergence, rgp.data(), trans::options::scalar_derivatives(true) );
+  trans.invtrans( nb_scalar, init_sp.data(), nb_vordiv, no_vorticity, no_divergence, rgp.data(), trans::option::scalar_derivatives(true) );
 
   std::vector<int>    nto(nfld,1);
   std::vector<double> rgpg(3*nfld*trans.nb_gridpoints_global());

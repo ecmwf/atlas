@@ -54,6 +54,26 @@ public:
     return config_.getBool("vorticity_divergence_fields",false);
   }
 
+  bool split_latitudes() const {
+    return config_.getBool("split_latitudes",true);
+  }
+
+  FFT fft() const {
+    return static_cast<FFT>( config_.getInt("fft",int(FFTW)) );
+  }
+
+  bool flt() const {
+    return config_.getBool("flt",false);
+  }
+
+  std::string read_legendre() const {
+    return config_.getString("read_legendre","");
+  }
+
+  std::string write_legendre() const {
+    return config_.getString("write_legendre","");
+  }
+
 private:
   const eckit::Configuration& config_;
 };
@@ -65,7 +85,7 @@ std::string fieldset_functionspace( const FieldSet& fields ) {
     if( functionspace == "undefined" )
       functionspace = fields[jfld].functionspace().type();
     if( fields[jfld].functionspace().type() != functionspace ) {
-      throw eckit::SeriousBug("trans: fielset has fields with different functionspaces",Here());
+      throw eckit::SeriousBug(": fielset has fields with different functionspaces",Here());
     }
   }
   return functionspace;
@@ -668,55 +688,65 @@ struct UnpackSpectral
 namespace atlas {
 namespace trans {
 
-TransIFS::TransIFS(const Grid& grid, const TransIFS::Options& p) :
-  grid_(grid) {
+class EmptyCacheEntry : public TransCacheEntry {
+public:
+  virtual operator bool() const { return false; }
+  virtual size_t size() const { return 0; }
+  virtual const void* data() const { return nullptr; }
+  virtual std::string hash() const { return "empty"; }
+};
+
+class NoCache : public TransCache {
+  virtual TransCacheEntry& legendre() const override { static EmptyCacheEntry cache; return cache; }
+  virtual TransCacheEntry& fft()      const override { static EmptyCacheEntry cache; return cache; }
+};
+
+
+TransIFS::TransIFS( const TransCache& cache, const Grid& grid, const long truncation, const eckit::Configuration& config ) :
+  grid_(grid),
+  cache_( cache.legendre().data() ),
+  cachesize_( cache.legendre().size() ) {
   ASSERT( grid.domain().global() );
   ASSERT( not grid.projection() );
-  size_t grid_only = -1; // triggers grid-only setup
-  ctor(grid,grid_only,p);
+  ctor( grid, truncation, config );
 }
 
-TransIFS::TransIFS(const Grid& grid, const long truncation, const TransIFS::Options& p ) :
-  grid_(grid) {
+TransIFS::TransIFS( const Grid& grid, const long truncation, const eckit::Configuration& config ) :
+  TransIFS(NoCache(),grid,truncation,config) {
   ASSERT( grid.domain().global() );
   ASSERT( not grid.projection() );
-  ctor( grid,truncation,p);
+  ctor( grid, truncation, config );
 }
 
-TransIFS::TransIFS( const Grid& g, const long truncation, const eckit::Configuration& config ) :
-  TransIFS(g,truncation) {
+TransIFS::TransIFS(const Grid& grid, const eckit::Configuration& config ) :
+  TransIFS( grid, /*grid-only*/-1, config ) {
 }
-
-//TransIFS::TransIFS(const long truncation, const TransIFS::Options& p )
-//{
-//  ctor_spectral_only(truncation,p);
-//}
 
 
 TransIFS::~TransIFS()
 {
 }
 
-void TransIFS::ctor( const Grid& grid, long truncation, const TransIFS::Options& p ) {
+void TransIFS::ctor( const Grid& grid, long truncation, const eckit::Configuration& config ) {
   trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, [](::Trans_t* p) {
     ::trans_delete(p);
     delete p;
   });
 
   if( auto gg = grid::GaussianGrid(grid) ) {
-    ctor_rgg(gg.ny(), gg.nx().data(), truncation, p);
+    ctor_rgg(gg.ny(), gg.nx().data(), truncation, config );
     return;
   }
   if( auto ll = grid::RegularLonLatGrid(grid) ) {
     if( ll.standard() || ll.shifted() ) {
-      ctor_lonlat( ll.nx(), ll.ny(), truncation, p );
+      ctor_lonlat( ll.nx(), ll.ny(), truncation, config );
       return;
     }
   }
   throw eckit::NotImplemented("Grid type not supported for Spectral Transforms",Here());
 }
 
-void TransIFS::ctor_spectral_only(long truncation, const TransIFS::Options& p )
+void TransIFS::ctor_spectral_only(long truncation, const eckit::Configuration& )
 {
   trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, [](::Trans_t* p) {
     ::trans_delete(p);
@@ -728,8 +758,9 @@ void TransIFS::ctor_spectral_only(long truncation, const TransIFS::Options& p )
   TRANS_CHECK(::trans_setup(trans_.get()));
 }
 
-void TransIFS::ctor_rgg(const long nlat, const long pl[], long truncation, const TransIFS::Options& p )
+void TransIFS::ctor_rgg(const long nlat, const long pl[], long truncation, const eckit::Configuration& config )
 {
+  TransParameters p(config);
   std::vector<int> nloen(nlat);
   for( long jlat=0; jlat<nlat; ++jlat )
     nloen[jlat] = pl[jlat];
@@ -737,19 +768,23 @@ void TransIFS::ctor_rgg(const long nlat, const long pl[], long truncation, const
   TRANS_CHECK(::trans_set_resol(trans_.get(),nlat,nloen.data()));
   if( truncation >= 0 )
     TRANS_CHECK(::trans_set_trunc(trans_.get(),truncation));
-  TRANS_CHECK(::trans_set_cache(trans_.get(),p.cache(),p.cachesize()));
 
-  if( not p.read().empty() )
+  TRANS_CHECK(::trans_set_cache(trans_.get(),cache_,cachesize_));
+
+  if( p.read_legendre().size() && parallel::mpi::comm().size() == 1 )
   {
-    if( eckit::PathName(p.read()).exists() )
+    eckit::PathName file( p.read_legendre() );
+    if( not file.exists() )
     {
-      std::stringstream msg; msg << "File " << p.read() << "doesn't exist";
+      std::stringstream msg; msg << "File " << file << " doesn't exist";
       throw eckit::CantOpenFile(msg.str(),Here());
     }
-    TRANS_CHECK(::trans_set_read(trans_.get(),p.read().c_str()));
+    TRANS_CHECK(::trans_set_read(trans_.get(),file.asString().c_str()));
   }
-  if( !p.write().empty() )
-    TRANS_CHECK(::trans_set_write(trans_.get(),p.write().c_str()));
+  if( p.write_legendre().size() && parallel::mpi::comm().size() == 1 ) {
+    eckit::PathName file( p.write_legendre() );
+    TRANS_CHECK(::trans_set_write(trans_.get(),file.asString().c_str()));
+  }
 
   trans_->fft = p.fft();
   trans_->lsplit = p.split_latitudes();
@@ -759,25 +794,28 @@ void TransIFS::ctor_rgg(const long nlat, const long pl[], long truncation, const
   TRANS_CHECK(::trans_setup(trans_.get()));
 }
 
-void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, const TransIFS::Options& p )
+void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, const eckit::Configuration& config )
 {
+  TransParameters p(config);
   TRANS_CHECK(::trans_new(trans_.get()));
   TRANS_CHECK(::trans_set_resol_lonlat(trans_.get(),nlon,nlat));
   if( truncation >= 0 )
     TRANS_CHECK(::trans_set_trunc(trans_.get(),truncation));
-  TRANS_CHECK(::trans_set_cache(trans_.get(),p.cache(),p.cachesize()));
+  TRANS_CHECK(::trans_set_cache(trans_.get(),cache_,cachesize_));
 
-  if( not p.read().empty() )
-  {
-    if( eckit::PathName(p.read()).exists() )
+  if( p.read_legendre().size() && parallel::mpi::comm().size() == 1 ) {
+    eckit::PathName file( p.read_legendre() );
+    if( not file.exists() )
     {
-      std::stringstream msg; msg << "File " << p.read() << "doesn't exist";
+      std::stringstream msg; msg << "File " << file << " doesn't exist";
       throw eckit::CantOpenFile(msg.str(),Here());
     }
-    TRANS_CHECK(::trans_set_read(trans_.get(),p.read().c_str()));
+    TRANS_CHECK(::trans_set_read(trans_.get(),file.asString().c_str()));
   }
-  if( not p.write().empty() )
-    TRANS_CHECK(::trans_set_write(trans_.get(),p.write().c_str()));
+  if( p.write_legendre().size() && parallel::mpi::comm().size() == 1 ) {
+    eckit::PathName file( p.write_legendre() );
+    TRANS_CHECK(::trans_set_write(trans_.get(),file.asString().c_str()));
+  }
 
   trans_->fft = p.fft();
   trans_->lsplit = p.split_latitudes();
@@ -787,99 +825,11 @@ void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, co
   TRANS_CHECK(::trans_setup(trans_.get()));
 }
 
-TransIFS::Options::Options() : util::Config()
-{
-  set_cache(nullptr,0);
-  set_split_latitudes(true);
-  set_fft(FFTW);
-  set_flt(false);
+
+namespace option{
+const std::map<FFT,std::string> fft::to_str  = { {FFT992,"FFT992"},{FFTW,"FFTW"} };
+const std::map<std::string,FFT> fft::to_enum = { {"FFT992",FFT992},{"FFTW",FFTW} };
 }
-
-void TransIFS::Options::set_cache(const void* buffer, size_t size)
-{
-  cacheptr_=buffer;
-  cachesize_=size;
-}
-
-const void* TransIFS::Options::cache() const
-{
-  return cacheptr_;
-}
-
-size_t TransIFS::Options::cachesize() const
-{
-  return cachesize_;
-}
-
-void TransIFS::Options::set_fft( FFT fft )
-{
-  if( fft == FFTW )
-  {
-    set( "fft", "FFTW" );
-  }
-  else if( fft == FFT992 )
-  {
-    set( "fft", "FFT992" );
-  }
-  else
-  {
-    NOTIMP;
-  }
-}
-
-void TransIFS::Options::set_split_latitudes( bool split )
-{
-  set("split_latitudes",split);
-}
-
-void TransIFS::Options::set_flt( bool flt )
-{
-  set("flt",flt);
-}
-
-bool TransIFS::Options::split_latitudes() const
-{
-  return getBool("split_latitudes");
-}
-
-FFT TransIFS::Options::fft() const
-{
-  std::string fftstr = getString( "fft" );
-  if( fftstr == "FFTW" )
-    return FFTW;
-  else if( fftstr == "FFT992" )
-    return FFT992;
-  else
-    NOTIMP;
-  return FFTW;
-}
-
-bool TransIFS::Options::flt() const
-{
-  return getBool("flt");
-}
-
-
-void TransIFS::Options::set_read(const std::string& file)
-{
-  set("read",file);
-}
-
-std::string TransIFS::Options::read() const
-{
-  return getString("read","");
-}
-
-void TransIFS::Options::set_write(const std::string& file)
-{
-  set("write",file);
-}
-
-std::string TransIFS::Options::write() const
-{
-  return getString("write","");
-}
-
 
 // --------------------------------------------------------------------------------------------
 
@@ -1347,8 +1297,6 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
     ASSERT( transform.rspdiv );
     TRANS_CHECK( ::trans_dirtrans(&transform) );
   }
-  ATLAS_DEBUG_HERE();
-
 }
 
 
@@ -1634,6 +1582,7 @@ const Grid::Implementation* atlas__Trans__grid(const TransIFS* This)
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
     ASSERT( This->grid() );
+  ATLAS_DEBUG_VAR( This->grid().get()->owners() );
     return This->grid().get();
   );
   return nullptr;

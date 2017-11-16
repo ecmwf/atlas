@@ -19,10 +19,17 @@ namespace trans {
 TransIFSNodeColumns::TransIFSNodeColumns(
     const functionspace::NodeColumns& gp,
     const functionspace::Spectral& sp,
-    const eckit::Configuration& ) :
-  TransIFS( gp.mesh().grid(), sp.truncation() ) {
+    const eckit::Configuration& config ) :
+  TransIFS( gp.mesh().grid(), sp.truncation(), config ) {
 }
 
+TransIFSNodeColumns::TransIFSNodeColumns(
+    const TransCache& cache,
+    const functionspace::NodeColumns& gp,
+    const functionspace::Spectral& sp,
+    const eckit::Configuration& config ) :
+  TransIFS( cache, gp.mesh().grid(), sp.truncation(), config ) {
+}
 
 TransIFSNodeColumns::~TransIFSNodeColumns()
 {

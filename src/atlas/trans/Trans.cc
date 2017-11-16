@@ -136,6 +136,36 @@ Trans::Implementation *TransFactory::build( const FunctionSpace& gp, const Funct
     return (*j).second->make(gp,sp,config);
 }
 
+Trans::Implementation *TransFactory::build( const TransCache& cache, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) {
+
+    pthread_once(&once, init);
+
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+
+    static force_link static_linking;
+
+    std::string suffix ( "("+gp.type()+","+sp.type()+")" );
+    std::string name = config.getString("type",TRANS_DEFAULT)+suffix;
+
+    Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
+
+    if( not config.has("type") and not has(name) ) {
+      name = std::string("local")+suffix;
+      Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
+    }
+
+    std::map<std::string, TransFactory *>::const_iterator j = m->find(name);
+    if (j == m->end()) {
+        Log::error() << "No TransFactory for [" << name << "]" << std::endl;
+        Log::error() << "TransFactories are:" << std::endl;
+        for (j = m->begin() ; j != m->end() ; ++j)
+            Log::error() << "   " << (*j).first << std::endl;
+        throw eckit::SeriousBug(std::string("No TransFactory called ") + name);
+    }
+
+    return (*j).second->make(cache,gp,sp,config);
+}
+
 Trans::Implementation *TransFactory::build( const Grid& grid, int truncation, const eckit::Configuration& config ) {
 
     pthread_once(&once, init);
@@ -165,6 +195,36 @@ Trans::Implementation *TransFactory::build( const Grid& grid, int truncation, co
     return (*j).second->make(grid,truncation,config);
 }
 
+Trans::Implementation *TransFactory::build( const TransCache& cache, const Grid& grid, int truncation, const eckit::Configuration& config ) {
+
+    pthread_once(&once, init);
+
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+
+    static force_link static_linking;
+
+    std::string name = config.getString("type",TRANS_DEFAULT);
+
+    Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
+
+    if( not config.has("type") and not has(name) ) {
+      name = std::string("local");
+      Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
+    }
+
+    std::map<std::string, TransFactory *>::const_iterator j = m->find(name);
+    if (j == m->end()) {
+        Log::error() << "No TransFactory for [" << name << "]" << std::endl;
+        Log::error() << "TransFactories are:" << std::endl;
+        for (j = m->begin() ; j != m->end() ; ++j)
+            Log::error() << "   " << (*j).first << std::endl;
+        throw eckit::SeriousBug(std::string("No TransFactory called ") + name);
+    }
+
+    return (*j).second->make(cache,grid,truncation,config);
+}
+
+
 
 Trans::Trans() {
 }
@@ -179,6 +239,14 @@ Trans::Trans( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Con
 
 Trans::Trans( const Grid& grid, int truncation, const eckit::Configuration& config ) :
   impl_( TransFactory::build(grid,truncation,config) ) {
+}
+
+Trans::Trans( const TransCache& cache, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) :
+  impl_( TransFactory::build(cache,gp,sp,config) ) {
+}
+
+Trans::Trans( const TransCache& cache, const Grid& grid, int truncation, const eckit::Configuration& config ) :
+  impl_( TransFactory::build(cache,grid,truncation,config) ) {
 }
 
 Trans::Trans( const Trans& trans ) :

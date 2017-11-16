@@ -19,8 +19,16 @@ namespace trans {
 TransIFSStructuredColumns::TransIFSStructuredColumns(
     const functionspace::StructuredColumns& gp,
     const functionspace::Spectral& sp,
-    const eckit::Configuration& ) :
-  TransIFS( gp.grid(), sp.truncation() ) {
+    const eckit::Configuration& config ) :
+  TransIFS( gp.grid(), sp.truncation(), config ) {
+}
+
+TransIFSStructuredColumns::TransIFSStructuredColumns(
+    const TransCache& cache,
+    const functionspace::StructuredColumns& gp,
+    const functionspace::Spectral& sp,
+    const eckit::Configuration& config ) :
+  TransIFS( cache, gp.grid(), sp.truncation(), config ) {
 }
 
 
