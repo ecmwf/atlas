@@ -13,6 +13,10 @@
 #include "eckit/config/Configuration.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
+
+#include "eckit/io/Buffer.h"
+#include "eckit/io/DataHandle.h"
+
 #include "atlas/util/Config.h"
 
 //-----------------------------------------------------------------------------
@@ -34,17 +38,58 @@ namespace trans {
 
 class TransCacheEntry {
 public:
-  virtual operator bool() const = 0;
+  operator bool() const { return size() != 0; }
   virtual size_t size() const = 0;
   virtual const void* data() const = 0;
-  virtual std::string hash() const = 0;
 };
 
-class TransCache {
+class EmptyCacheEntry : public TransCacheEntry {
 public:
-  virtual const TransCacheEntry& legendre() const = 0;
-  virtual const TransCacheEntry& fft()      const = 0;
+  virtual size_t size() const override { return 0; }
+  virtual const void* data() const override { return nullptr; }
 };
+
+class TransCacheFileEntry : public TransCacheEntry {
+  eckit::Buffer buffer_;
+public:
+  TransCacheFileEntry( const eckit::PathName& path ) :
+    buffer_(path.size()) {
+    std::unique_ptr<eckit::DataHandle> dh( path.fileHandle() );
+    dh->openForRead();
+    dh->read(buffer_.data(),buffer_.size());
+    dh->close();
+  }
+  virtual size_t size() const override { return buffer_.size(); }
+  virtual const void* data() const override { return buffer_.data(); }
+};
+
+class Cache {
+public:
+  Cache() = default;
+  Cache( const Cache& other ) = default;
+protected:
+  Cache( const std::shared_ptr<TransCacheEntry>& legendre ) :
+    legendre_(legendre) {
+  }
+  Cache( const std::shared_ptr<TransCacheEntry>& legendre, const std::shared_ptr<TransCacheEntry>& fft ) :
+    legendre_(legendre),
+    fft_(fft) {
+  }
+public:
+  const TransCacheEntry& legendre() const { return *legendre_; }
+  const TransCacheEntry& fft()      const { return *fft_; }
+private:
+  std::shared_ptr<TransCacheEntry> legendre_{ new EmptyCacheEntry() };
+  std::shared_ptr<TransCacheEntry> fft_{ new EmptyCacheEntry() } ;
+};
+
+class LegendreCache : public Cache {
+public:
+  LegendreCache( const eckit::PathName& path ) :
+    Cache( std::shared_ptr<TransCacheEntry>( new TransCacheFileEntry( path ) ) ) {
+  }
+};
+
 
 class TransImpl : public eckit::Owned {
 
@@ -53,6 +98,8 @@ public:
     virtual ~TransImpl() = 0;
 
     virtual int truncation() const = 0;
+
+    virtual size_t spectralCoefficients() const = 0;
 
     virtual const Grid& grid() const = 0;
 
@@ -137,6 +184,7 @@ public:
      */
     virtual void dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[],
                            const eckit::Configuration& = util::NoConfig() ) const = 0;
+
 };
 
 // ------------------------------------------------------------------
@@ -153,8 +201,8 @@ public:
     static TransImpl* build( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::Config() );
     static TransImpl* build( const Grid&, int truncation, const eckit::Configuration& = util::Config() );
 
-    static TransImpl* build( const TransCache&, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::Config() );
-    static TransImpl* build( const TransCache&, const Grid&, int truncation, const eckit::Configuration& = util::Config() );
+    static TransImpl* build( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::Config() );
+    static TransImpl* build( const Cache&, const Grid&, int truncation, const eckit::Configuration& = util::Config() );
 
     /*!
      * \brief list all registered trans implementations
@@ -168,8 +216,8 @@ private:
     std::string name_;
     virtual TransImpl* make( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& ) { return nullptr; }
     virtual TransImpl* make( const Grid& gp, int truncation, const eckit::Configuration& ) { return nullptr; }
-    virtual TransImpl* make( const TransCache&, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& ) { return nullptr; }
-    virtual TransImpl* make( const TransCache&, const Grid& gp, int truncation, const eckit::Configuration& ) { return nullptr; }
+    virtual TransImpl* make( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& ) { return nullptr; }
+    virtual TransImpl* make( const Cache&, const Grid& gp, int truncation, const eckit::Configuration& ) { return nullptr; }
 
 protected:
 
@@ -185,7 +233,7 @@ class TransBuilderFunctionSpace : public TransFactory {
   virtual TransImpl* make( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) {
         return new T(gp,sp,config);
   }
-  virtual TransImpl* make( const TransCache& cache, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) {
+  virtual TransImpl* make( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) {
         return new T(cache,gp,sp,config);
   }
 public:
@@ -197,7 +245,7 @@ class TransBuilderGrid : public TransFactory {
   virtual TransImpl* make( const Grid& grid, int truncation, const eckit::Configuration& config ) {
         return new T(grid,truncation,config);
   }
-  virtual TransImpl* make( const TransCache& cache, const Grid& grid, int truncation, const eckit::Configuration& config ) {
+  virtual TransImpl* make( const Cache& cache, const Grid& grid, int truncation, const eckit::Configuration& config ) {
         return new T(cache,grid,truncation,config);
   }
 public:
@@ -225,14 +273,15 @@ public:
     Trans( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig() );
     Trans( const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
 
-    Trans( const TransCache&, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig() );
-    Trans( const TransCache&, const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
+    Trans( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig() );
+    Trans( const Cache&, const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
 
     void hash(eckit::Hash&) const;
     const Implementation* get() const { return impl_.get(); }
     operator bool() const { return impl_.owners(); }
 
     int truncation() const;
+    size_t spectralCoefficients() const;
     const Grid& grid() const;
 
     void dirtrans( const Field& gpfield,

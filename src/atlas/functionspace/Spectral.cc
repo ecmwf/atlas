@@ -23,7 +23,7 @@
 #include "atlas/trans/Trans.h"
 
 #ifdef ATLAS_HAVE_TRANS
-#include "atlas/trans/detail/TransIFS.h"
+#include "atlas/trans/ifs/TransIFS.h"
 namespace {
 void trans_check(const int code, const char* msg, const eckit::CodeLocation& location) {
   if(code != TRANS_SUCCESS) {

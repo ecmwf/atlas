@@ -24,9 +24,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
-#ifdef ATLAS_HAVE_TRANS
-#include "atlas/trans/detail/TransIFS.h"
-#endif
+#include "atlas/trans/ifs/TransIFS.h"
 
 
 using namespace eckit;
@@ -531,12 +529,11 @@ CASE( "test_SpectralFunctionSpace" )
 
 CASE( "test_SpectralFunctionSpace_trans_dist" )
 {
-  trans::TransIFS trans(Grid("F80"),159);
+  trans::Trans trans(Grid("F80"),159);
   size_t nb_levels(10);
 
-  size_t nspec2 = trans.nb_spectral_coefficients();
-
   Spectral spectral_fs( trans );
+  size_t nspec2 = spectral_fs.nb_spectral_coefficients();
 
   Field surface_scalar_field = spectral_fs.createField<double>( option::name("scalar") );
 
@@ -620,7 +617,7 @@ CASE( "test_SpectralFunctionSpace_trans_global" )
 }
 CASE( "test_SpectralFunctionSpace_norm" )
 {
-  trans::TransIFS trans(Grid("F80"),159);
+  trans::Trans trans(Grid("F80"),159);
   size_t nb_levels(10);
 
   Spectral spectral_fs( trans );

@@ -31,11 +31,13 @@
 
 #include "tests/AtlasTestEnvironment.h"
 #include "eckit/testing/Test.h"
+#include "eckit/io/DataHandle.h"
+#include "eckit/filesystem/PathName.h"
 
 #ifdef ATLAS_HAVE_TRANS
-#include "atlas/trans/detail/TransIFS.h"
-#include "atlas/trans/detail/ifs/TransIFSNodeColumns.h"
-#include "atlas/trans/detail/ifs/TransIFSStructuredColumns.h"
+#include "atlas/trans/ifs/TransIFS.h"
+#include "atlas/trans/ifs/TransIFSNodeColumns.h"
+#include "atlas/trans/ifs/TransIFSStructuredColumns.h"
 #endif
 
 using namespace eckit;
@@ -62,14 +64,14 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
 
 //-----------------------------------------------------------------------------
 
-void read_rspecg(trans::TransIFS& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int &nfld )
+void read_rspecg(trans::TransImpl& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int &nfld )
 {
   Log::info() << "read_rspecg ...\n";
   nfld = 2;
   if( parallel::mpi::comm().rank() == 0 )
   {
-    rspecg.resize(nfld*trans.nb_spectral_coefficients_global());
-    for( int i=0; i<trans.nb_spectral_coefficients_global(); ++i )
+    rspecg.resize(nfld*trans.spectralCoefficients());
+    for( int i=0; i<trans.spectralCoefficients(); ++i )
     {
       rspecg[i*nfld + 0] = (i==0 ? 1. : 0.); // scalar field 1
       rspecg[i*nfld + 1] = (i==0 ? 2. : 0.); // scalar field 2
@@ -146,8 +148,8 @@ CASE( "test_trans_distribution_matches_atlas" )
     for(size_t j = 0; j < g.size(); ++j)
       ++npts[distribution.partition(j)];
 
-    EXPECT( trans.nb_gridpoints_global()  == g.size() );
-    EXPECT( trans.nb_gridpoints() ==  npts[parallel::mpi::comm().rank()] );
+    EXPECT( t->ngptotg == g.size() );
+    EXPECT( t->ngptot ==  npts[parallel::mpi::comm().rank()] );
     EXPECT( t->ngptotmx == *std::max_element(npts.begin(),npts.end()) );
 
     // array::LocalView<int,1> n_regions ( trans.n_regions() ) ;
@@ -159,30 +161,36 @@ CASE( "test_trans_distribution_matches_atlas" )
 CASE( "test_trans_options" )
 {
   util::Config opts (
-        trans::option::fft(trans::FFTW)          |
-        trans::option::split_latitudes(false)    |
-        trans::option::read_legendre("readfile") );
+        option::fft("FFTW")               |
+        option::split_latitudes(false)    |
+        option::read_legendre("readfile") );
   Log::info() << "trans_opts = " << opts << std::endl;
 }
 
 #ifdef TRANS_HAVE_IO
 CASE( "test_write_read_cache" )
 {
-  util::Config write_legendre;
-  util::Config read_legendre;
+  Log::info() << "test_write_read_cache" << std::endl;
+  using namespace trans;
   if( parallel::mpi::comm().size() == 1 ) {
-    write_legendre = trans::option::write_legendre("cached_legendre_coeffs");
-    read_legendre = trans::option::read_legendre("cached_legendre_coeffs");
-  }
-  // Create trans that will write file
-  trans::Trans trans_write_F24( Grid("F24"), 23, trans::option::write_legendre("cached_legendre_coeffs-F24") | trans::option::flt(false) );
-  trans::Trans trans_write_N24( Grid("N24"), 23, trans::option::write_legendre("cached_legendre_coeffs-N24") | trans::option::flt(false) );
-  trans::Trans trans_write_O24( Grid("O24"), 23, trans::option::write_legendre("cached_legendre_coeffs-O24") | trans::option::flt(false) );
+    // Create trans that will write file
+    Trans trans_write_F24( Grid("F24"), 23, option::write_legendre("cached_legendre_coeffs-F24") | option::flt(false) );
+    Trans trans_write_N24( Grid("N24"), 23, option::write_legendre("cached_legendre_coeffs-N24") | option::flt(false) );
+    Trans trans_write_O24( Grid("O24"), 23, option::write_legendre("cached_legendre_coeffs-O24") | option::flt(false) );
 
-  // Create trans that will read from file
-  trans::Trans trans_read_F24( Grid("F24"), 23, trans::option::read_legendre("cached_legendre_coeffs-F24") | trans::option::flt(false) );
-  trans::Trans trans_read_N24( Grid("N24"), 23, trans::option::read_legendre("cached_legendre_coeffs-N24") | trans::option::flt(false) );
-  trans::Trans trans_read_O24( Grid("O24"), 23, trans::option::read_legendre("cached_legendre_coeffs-O24") | trans::option::flt(false) );
+    // Create trans that will read from file
+    Trans trans_read_F24( Grid("F24"), 23, option::read_legendre("cached_legendre_coeffs-F24") | option::flt(false) );
+    Trans trans_read_N24( Grid("N24"), 23, option::read_legendre("cached_legendre_coeffs-N24") | option::flt(false) );
+    Trans trans_read_O24( Grid("O24"), 23, option::read_legendre("cached_legendre_coeffs-O24") | option::flt(false) );
+
+    LegendreCache legendre_cache_F24( "cached_legendre_coeffs-F24" );
+    LegendreCache legendre_cache_N24( "cached_legendre_coeffs-N24" );
+    LegendreCache legendre_cache_O24( "cached_legendre_coeffs-O24" );
+
+    Trans trans_cache_F24( legendre_cache_F24, Grid("F24"), 23, option::flt(false) );
+    Trans trans_cache_N24( legendre_cache_N24, Grid("N24"), 23, option::flt(false) );
+    Trans trans_cache_O24( legendre_cache_O24, Grid("O24"), 23, option::flt(false) );
+  }
 }
 #endif
 
@@ -197,11 +205,10 @@ CASE( "test_distspec" )
   Log::info() << "Read rspecg" << std::endl;
   read_rspecg(trans,rspecg,nfrom,nfld);
 
-
-  std::vector<double> rspec(nfld*trans.nb_spectral_coefficients());
+  std::vector<double> rspec(nfld*trans.trans()->nspec2);
   std::vector<int> nto(nfld,1);
-  std::vector<double> rgp(nfld*trans.nb_gridpoints());
-  std::vector<double> rgpg(nfld*trans.nb_gridpoints_global());
+  std::vector<double> rgp(nfld*trans.trans()->ngptot);
+  std::vector<double> rgpg(nfld*trans.grid().size());
   std::vector<double> specnorms(nfld,0);
 
   trans.distspec( nfld, nfrom.data(), rspecg.data(), rspec.data() );

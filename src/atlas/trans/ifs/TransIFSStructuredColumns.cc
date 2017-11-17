@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/trans/detail/ifs/TransIFSStructuredColumns.h"
+#include "atlas/trans/ifs/TransIFSStructuredColumns.h"
 
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/functionspace/Spectral.h"
@@ -24,7 +24,7 @@ TransIFSStructuredColumns::TransIFSStructuredColumns(
 }
 
 TransIFSStructuredColumns::TransIFSStructuredColumns(
-    const TransCache& cache,
+    const Cache& cache,
     const functionspace::StructuredColumns& gp,
     const functionspace::Spectral& sp,
     const eckit::Configuration& config ) :

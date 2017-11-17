@@ -27,12 +27,13 @@
 #include "atlas/trans/Trans.h"
 #include "atlas/util/Earth.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/option.h"
 
 #include "tests/AtlasTestEnvironment.h"
 #include "eckit/testing/Test.h"
 
 #ifdef ATLAS_HAVE_TRANS
-#include "atlas/trans/detail/TransIFS.h"
+#include "atlas/trans/ifs/TransIFS.h"
 #endif
 
 using namespace eckit::testing;
@@ -112,9 +113,9 @@ CASE( "test_invtrans_ifsStyle" )
   std::vector<double> rspecg;
   int nfld = 1;
 
-  std::vector<double> init_gpg(trans.nb_gridpoints_global());
-  std::vector<double> init_gp (trans.nb_gridpoints ());
-  std::vector<double> init_sp (trans.nb_spectral_coefficients());
+  std::vector<double> init_gpg(trans.grid().size());
+  std::vector<double> init_gp (trans.trans()->ngptot);
+  std::vector<double> init_sp (trans.trans()->nspec2);
   std::vector<int>    nfrom(nfld,1);
   if( parallel::mpi::comm().rank()==0) {
     double beta = M_PI*0.5;
@@ -123,14 +124,14 @@ CASE( "test_invtrans_ifsStyle" )
   trans.distgrid(nfld,nfrom.data(),init_gpg.data(),init_gp.data());
   trans.dirtrans(nfld,init_gp.data(),init_sp.data());
 
-  std::vector<double> rgp(3*nfld*trans.nb_gridpoints());
+  std::vector<double> rgp(3*nfld*trans.trans()->ngptot);
   double *no_vorticity(nullptr), *no_divergence(nullptr);
   int nb_vordiv(0);
   int nb_scalar(nfld);
-  trans.invtrans( nb_scalar, init_sp.data(), nb_vordiv, no_vorticity, no_divergence, rgp.data(), trans::option::scalar_derivatives(true) );
+  trans.invtrans( nb_scalar, init_sp.data(), nb_vordiv, no_vorticity, no_divergence, rgp.data(), option::scalar_derivatives(true) );
 
   std::vector<int>    nto(nfld,1);
-  std::vector<double> rgpg(3*nfld*trans.nb_gridpoints_global());
+  std::vector<double> rgpg(3*nfld*trans.grid().size());
 
   trans.gathgrid( nfld, nto.data(),   rgp.data(),    rgpg.data() );
 

@@ -12,7 +12,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
-#include "atlas/trans/detail/TransIFS.h"
+#include "atlas/trans/ifs/TransIFS.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/array.h"
 #include "atlas/runtime/Trace.h"

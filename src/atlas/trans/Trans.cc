@@ -19,8 +19,8 @@
 #include "atlas/grid/Grid.h"
 
 #ifdef ATLAS_HAVE_TRANS
-#include "atlas/trans/detail/ifs/TransIFSNodeColumns.h"
-#include "atlas/trans/detail/ifs/TransIFSStructuredColumns.h"
+#include "atlas/trans/ifs/TransIFSNodeColumns.h"
+#include "atlas/trans/ifs/TransIFSStructuredColumns.h"
 #define TRANS_DEFAULT "ifs"
 #else
 #define TRANS_DEFAULT "local"
@@ -136,7 +136,7 @@ Trans::Implementation *TransFactory::build( const FunctionSpace& gp, const Funct
     return (*j).second->make(gp,sp,config);
 }
 
-Trans::Implementation *TransFactory::build( const TransCache& cache, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) {
+Trans::Implementation *TransFactory::build( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) {
 
     pthread_once(&once, init);
 
@@ -195,7 +195,7 @@ Trans::Implementation *TransFactory::build( const Grid& grid, int truncation, co
     return (*j).second->make(grid,truncation,config);
 }
 
-Trans::Implementation *TransFactory::build( const TransCache& cache, const Grid& grid, int truncation, const eckit::Configuration& config ) {
+Trans::Implementation *TransFactory::build( const Cache& cache, const Grid& grid, int truncation, const eckit::Configuration& config ) {
 
     pthread_once(&once, init);
 
@@ -241,11 +241,11 @@ Trans::Trans( const Grid& grid, int truncation, const eckit::Configuration& conf
   impl_( TransFactory::build(grid,truncation,config) ) {
 }
 
-Trans::Trans( const TransCache& cache, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) :
+Trans::Trans( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) :
   impl_( TransFactory::build(cache,gp,sp,config) ) {
 }
 
-Trans::Trans( const TransCache& cache, const Grid& grid, int truncation, const eckit::Configuration& config ) :
+Trans::Trans( const Cache& cache, const Grid& grid, int truncation, const eckit::Configuration& config ) :
   impl_( TransFactory::build(cache,grid,truncation,config) ) {
 }
 

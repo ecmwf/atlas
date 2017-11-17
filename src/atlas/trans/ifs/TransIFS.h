@@ -67,65 +67,7 @@ namespace partitioner {
 namespace atlas {
 namespace trans {
 
-////-----------------------------------------------------------------------------
-enum FFT { FFT992=TRANS_FFT992, FFTW=TRANS_FFTW };
-
-namespace option {
-
-class scalar_derivatives : public util::Config {
-public:
-  scalar_derivatives( bool v ) { set("scalar_derivatives",v); }
-};
-
-class wind_EW_derivatives : public util::Config {
-public:
-  wind_EW_derivatives( bool v ) { set("wind_EW_derivatives",v); }
-};
-
-class vorticity_divergence_fields : public util::Config {
-public:
-  vorticity_divergence_fields( bool v ) { set("vorticity_divergence_fields",v); }
-};
-
-class flt : public util::Config {
-public:
-  flt(bool);
-};
-inline flt::flt(bool flt) { set("flt",flt); }
-
-class fft : public util::Config {
-public:
-  fft( FFT );
-  fft( const std::string& );
-private:
-  static const std::map<FFT,std::string> to_str;
-  static const std::map<std::string,FFT> to_enum;
-};
-inline fft::fft( FFT fft ) { set("fft",fft); }
-inline fft::fft( const std::string& fft ) { set("fft",to_enum.at(fft)); }
-
-class split_latitudes : public util::Config {
-public:
-  split_latitudes(bool);
-};
-inline split_latitudes::split_latitudes(bool split_latitudes) { set("split_latitudes",split_latitudes); }
-
-class write_legendre : public util::Config {
-public:
-  write_legendre( const eckit::PathName& );
-};
-inline write_legendre::write_legendre( const eckit::PathName& filepath ) { set("write_legendre",filepath); }
-
-class read_legendre : public util::Config {
-public:
-  read_legendre( const eckit::PathName& );
-};
-inline read_legendre::read_legendre( const eckit::PathName& filepath ) { set("read_legendre",filepath); }
-
-}
-
 //-----------------------------------------------------------------------------
-
 
 class TransIFS : public trans::TransImpl {
 private:
@@ -134,17 +76,14 @@ private:
 public:
 
   TransIFS( const Grid& g, const long truncation, const eckit::Configuration& = util::NoConfig() );
-  TransIFS( const TransCache&, const Grid& g, const long truncation, const eckit::Configuration& = util::NoConfig() );
+  TransIFS( const Cache&, const Grid& g, const long truncation, const eckit::Configuration& = util::NoConfig() );
 
   virtual ~TransIFS();
   operator ::Trans_t*() const { return trans(); }
   ::Trans_t* trans() const { return trans_.get(); }
 
   virtual int truncation() const { return std::max(0,trans_->nsmax); }
-  size_t nb_spectral_coefficients() const { return trans_->nspec2; }
-  size_t nb_spectral_coefficients_global() const { return trans_->nspec2g; }
-  size_t nb_gridpoints() const { return trans_->ngptot; }
-  size_t nb_gridpoints_global() const { return trans_->ngptotg; }
+  virtual size_t spectralCoefficients() const { return trans_->nspec2g; }
 
   virtual const Grid& grid() const { return grid_; }
 

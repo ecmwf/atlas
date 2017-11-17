@@ -10,14 +10,14 @@
 
 #pragma once
 
-#include "atlas/trans/detail/TransIFS.h"
+#include "atlas/trans/ifs/TransIFS.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
 
 namespace atlas {
 namespace functionspace {
-    class StructuredColumns;
+    class NodeColumns;
     class Spectral;
 }
 }
@@ -29,21 +29,21 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
-class TransIFSStructuredColumns : public trans::TransIFS {
+class TransIFSNodeColumns : public trans::TransIFS {
 public:
 
-  TransIFSStructuredColumns(
-      const functionspace::StructuredColumns&,
+  TransIFSNodeColumns(
+      const functionspace::NodeColumns&,
       const functionspace::Spectral&,
       const eckit::Configuration& = util::Config() );
 
-  TransIFSStructuredColumns(
-      const TransCache&,
-      const functionspace::StructuredColumns&,
+  TransIFSNodeColumns(
+      const Cache&,
+      const functionspace::NodeColumns&,
       const functionspace::Spectral&,
       const eckit::Configuration& = util::Config() );
 
-  virtual ~TransIFSStructuredColumns();
+  virtual ~TransIFSNodeColumns();
 };
 
 //-----------------------------------------------------------------------------

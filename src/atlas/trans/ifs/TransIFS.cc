@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/trans/detail/TransIFS.h"
+#include "atlas/trans/ifs/TransIFS.h"
 
 #include "eckit/parser/JSON.h"
 #include "atlas/array.h"
@@ -58,8 +58,9 @@ public:
     return config_.getBool("split_latitudes",true);
   }
 
-  FFT fft() const {
-    return static_cast<FFT>( config_.getInt("fft",int(FFTW)) );
+  int fft() const {
+    static const std::map<std::string,int> string_to_FFT = { {"FFT992",TRANS_FFT992},{"FFTW",TRANS_FFTW} };
+    return string_to_FFT.at( config_.getString("fft","FFTW") );
   }
 
   bool flt() const {
@@ -688,21 +689,10 @@ struct UnpackSpectral
 namespace atlas {
 namespace trans {
 
-class EmptyCacheEntry : public TransCacheEntry {
-public:
-  virtual operator bool() const { return false; }
-  virtual size_t size() const { return 0; }
-  virtual const void* data() const { return nullptr; }
-  virtual std::string hash() const { return "empty"; }
-};
-
-class NoCache : public TransCache {
-  virtual TransCacheEntry& legendre() const override { static EmptyCacheEntry cache; return cache; }
-  virtual TransCacheEntry& fft()      const override { static EmptyCacheEntry cache; return cache; }
-};
 
 
-TransIFS::TransIFS( const TransCache& cache, const Grid& grid, const long truncation, const eckit::Configuration& config ) :
+
+TransIFS::TransIFS( const Cache& cache, const Grid& grid, const long truncation, const eckit::Configuration& config ) :
   grid_(grid),
   cache_( cache.legendre().data() ),
   cachesize_( cache.legendre().size() ) {
@@ -712,7 +702,7 @@ TransIFS::TransIFS( const TransCache& cache, const Grid& grid, const long trunca
 }
 
 TransIFS::TransIFS( const Grid& grid, const long truncation, const eckit::Configuration& config ) :
-  TransIFS(NoCache(),grid,truncation,config) {
+  TransIFS( Cache(), grid, truncation, config ) {
   ASSERT( grid.domain().global() );
   ASSERT( not grid.projection() );
   ctor( grid, truncation, config );
@@ -825,11 +815,6 @@ void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, co
   TRANS_CHECK(::trans_setup(trans_.get()));
 }
 
-
-namespace option{
-const std::map<FFT,std::string> fft::to_str  = { {FFT992,"FFT992"},{FFTW,"FFTW"} };
-const std::map<std::string,FFT> fft::to_enum = { {"FFT992",FFT992},{"FFTW",FFTW} };
-}
 
 // --------------------------------------------------------------------------------------------
 
@@ -1536,7 +1521,7 @@ int atlas__Trans__nspec2 (const TransIFS* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
-    return This->nb_spectral_coefficients();
+    return This->trans()->nspec2;
   );
   return 0;
 }
@@ -1545,7 +1530,7 @@ int atlas__Trans__nspec2g (const TransIFS* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
-    return This->nb_spectral_coefficients_global();
+    return This->trans()->nspec2g;
   );
   return 0;
 }
@@ -1554,7 +1539,7 @@ int atlas__Trans__ngptot (const TransIFS* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
-    return This->nb_gridpoints();
+    return This->trans()->ngptot;
   );
   return 0;
 }
@@ -1563,7 +1548,7 @@ int atlas__Trans__ngptotg (const TransIFS* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
-    return This->nb_gridpoints_global();
+      return This->trans()->ngptotg;
   );
   return 0;
 }

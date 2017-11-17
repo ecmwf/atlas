@@ -21,109 +21,140 @@ namespace option {
 
 // ----------------------------------------------------------------------------
 
-class type : public util::Config
-{
+class type : public util::Config {
 public:
-  type( const std::string& _type )
-  {
-    set("type",_type);
-  }
+  type( const std::string& );
 };
-
-class global : public util::Config
-{
-public:
-  global(size_t _owner=0)
-  {
-    set("global",true);
-    set("owner",_owner);
-  }
-};
-
-class levels : public util::Config
-{
-public:
-  levels(size_t _levels)
-  {
-    set("levels",_levels);
-  }
-};
-
-class variables : public util::Config
-{
-public:
-  variables(size_t _variables)
-  {
-    set("variables",_variables);
-  }
-};
-
-class name : public util::Config
-{
-public:
-  name(const std::string& _name)
-  {
-    set("name",_name);
-  }
-};
-
-template< typename T >
-class datatypeT : public util::Config
-{
-public:
-  datatypeT()
-  {
-    set("datatype",array::DataType::kind<T>());
-  }
-};
-
-
-class datatype : public util::Config
-{
-public:
-  datatype(array::DataType::kind_t kind)
-  {
-    set("datatype",kind);
-  }
-  datatype(const std::string& str)
-  {
-    set("datatype",array::DataType::str_to_kind(str));
-  }
-  datatype(array::DataType dtype)
-  {
-    set("datatype",dtype.kind());
-  }
-};
-
-class halo : public util::Config
-{
-public:
-  halo(size_t size)
-  {
-    set("halo",size);
-  }
-};
-
-class radius : public util::Config
-{
-public:
-  radius(double _radius)
-  {
-    set("radius",_radius);
-  }
-  radius(const std::string& key = "Earth")
-  {
-    if( key == "Earth" ) {
-      set("radius",util::Earth::radiusInMeters());
-    } else {
-      NOTIMP;
-    }
-  }
-
-};
-
 
 // ----------------------------------------------------------------------------
+
+class global : public util::Config {
+public:
+  global( size_t owner = 0 );
+};
+
+// ----------------------------------------------------------------------------
+
+class levels : public util::Config {
+public:
+  levels( size_t );
+};
+
+// ----------------------------------------------------------------------------
+
+class variables : public util::Config {
+public:
+  variables( size_t );
+};
+
+// ----------------------------------------------------------------------------
+
+class name : public util::Config {
+public:
+  name( const std::string& );
+};
+
+// ----------------------------------------------------------------------------
+
+template< typename T >
+class datatypeT : public util::Config {
+public:
+  datatypeT();
+};
+
+// ----------------------------------------------------------------------------
+
+class datatype : public util::Config {
+public:
+  datatype( array::DataType::kind_t );
+  datatype( const std::string& );
+  datatype( array::DataType );
+};
+
+// ----------------------------------------------------------------------------
+
+class halo : public util::Config {
+public:
+  halo(size_t size);
+};
+
+// ----------------------------------------------------------------------------
+
+class radius : public util::Config {
+public:
+  radius( double );
+  radius( const std::string& = "Earth" );
+};
+
+// ----------------------------------------------------------------------------
+
+class scalar_derivatives : public util::Config {
+public:
+  scalar_derivatives( bool );
+};
+
+// ----------------------------------------------------------------------------
+
+class wind_EW_derivatives : public util::Config {
+public:
+  wind_EW_derivatives( bool );
+};
+
+// ----------------------------------------------------------------------------
+
+class vorticity_divergence_fields : public util::Config {
+public:
+  vorticity_divergence_fields( bool );
+};
+
+// ----------------------------------------------------------------------------
+
+class flt : public util::Config {
+public:
+  flt( bool );
+};
+
+// ----------------------------------------------------------------------------
+
+enum FFT { FFT992=1, FFTW=2 };
+
+class fft : public util::Config {
+public:
+  fft( FFT );
+  fft( const std::string& );
+};
+
+// ----------------------------------------------------------------------------
+
+class split_latitudes : public util::Config {
+public:
+  split_latitudes( bool );
+};
+
+// ----------------------------------------------------------------------------
+
+class write_legendre : public util::Config {
+public:
+  write_legendre( const eckit::PathName& );
+};
+
+// ----------------------------------------------------------------------------
+
+class read_legendre : public util::Config {
+public:
+  read_legendre( const eckit::PathName& );
+};
+
+// ----------------------------------------------------------------------------
+// Definitions
+// ----------------------------------------------------------------------------
+
+template<typename T>
+datatypeT<T>::datatypeT() {
+  set("datatype",array::DataType::kind<T>());
+}
+
+
 
 } // namespace option
 } // namespace atlas

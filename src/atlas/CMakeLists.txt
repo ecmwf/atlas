@@ -55,6 +55,7 @@ list( APPEND atlas_grid_srcs
 
 option.h
 option/Options.h
+option/Options.cc
 
 
 projection.h
@@ -322,12 +323,12 @@ trans/Trans.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs
-  trans/detail/TransIFS.h
-  trans/detail/TransIFS.cc
-  trans/detail/ifs/TransIFSNodeColumns.h
-  trans/detail/ifs/TransIFSNodeColumns.cc
-  trans/detail/ifs/TransIFSStructuredColumns.h
-  trans/detail/ifs/TransIFSStructuredColumns.cc
+  trans/ifs/TransIFS.h
+  trans/ifs/TransIFS.cc
+  trans/ifs/TransIFSNodeColumns.h
+  trans/ifs/TransIFSNodeColumns.cc
+  trans/ifs/TransIFSStructuredColumns.h
+  trans/ifs/TransIFSStructuredColumns.cc
 )
 endif()
 

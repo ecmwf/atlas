@@ -36,12 +36,6 @@ namespace field {
 }
 
 namespace atlas {
-namespace trans {
-    class TransIFS;
-}
-}
-
-namespace atlas {
 namespace functionspace {
 
 // -------------------------------------------------------------------
