@@ -384,22 +384,25 @@ double sphericalharmonics_analytic_point(
     if ( m==0 && n==1 )
         return std::sqrt(3.)*latsin*rft;
     if ( m==0 && n==2 )
-        return std::sqrt(5.)/2.*(3.*latsin*latsin-1.)*rft; // shouldn't this be minus?
+        return std::sqrt(5.)/2.*(3.*latsin*latsin-1.)*rft; // sign?
     if ( m==0 && n==3 )
-        return std::sqrt(7.)/2.*(5.*latsin*latsin-3.)*latsin*rft; // shouldn't this be minus?
+        return std::sqrt(7.)/2.*(5.*latsin*latsin-3.)*latsin*rft; // sign?
     if ( m==1 && n==1 )
-        return std::sqrt(3./2.)*latcos*rft; // shouldn't this be minus?
+        return std::sqrt(3./2.)*latcos*rft; // sign?
     if ( m==1 && n==2 )
-        return std::sqrt(15./2.)*latsin*latcos*rft; // shouldn't this be minus?
+        return std::sqrt(15./2.)*latsin*latcos*rft; // sign?
     if ( m==1 && n==3 )
-        return std::sqrt(21.)/4.*latcos*(5.*latsin*latsin-1.)*rft; // shouldn't this be minus?
+        return std::sqrt(21.)/4.*latcos*(5.*latsin*latsin-1.)*rft; // sign?
     if ( m==2 && n==2 )
-        return -std::sqrt(15./2.)/2.*latcos*latcos*rft;
+        return std::sqrt(15./2.)/2.*latcos*latcos*rft;
     if ( m==2 && n==3 )
-        return -std::sqrt(105./2.)/2.*latcos*latcos*latsin*rft;
+        return std::sqrt(105./2.)/2.*latcos*latcos*latsin*rft;
     if ( m==3 && n==3 )
-        return std::sqrt(35.)/4.*latcos*latcos*latcos*rft; // shouldn't this be minus?
-    return 0;
+        return std::sqrt(35.)/4.*latcos*latcos*latcos*rft; // sign?
+    if ( m==45 && n==45 )
+        return std::pow(latcos,45)*rft*21.*std::sqrt(1339044123748208678378695.)/8796093022208.; // sign?
+
+    return -1.;
 }
 
 //-----------------------------------------------------------------------------
@@ -499,13 +502,19 @@ double spectral_transform_test(
     spectral_transform_grid(trc, trc, g, rspecg, rgp, pointwise);
 
     double rms = compute_rms(g.size(), rgp, rgp_analytic);
+
+    out << "m=" << m << " n=" << n << " imag:" << imag << " structured:" << grid::StructuredGrid(g) << " error:" << rms;
+    if( rms > 1.e-15 ) {
+        out << " !!!!" << std::endl;
+        for( int jp=0; jp<g.size(); jp++ ) {
+            out << rgp[jp]/rgp_analytic[jp] << " rgp:" << rgp[jp] << " analytic:" << rgp_analytic[jp] << std::endl;
+        }
+    }
+    out << std::endl;
+
     delete [] rspecg;
     delete [] rgp;
     delete [] rgp_analytic;
-
-    out << "m=" << m << " n=" << n << " imag:" << imag << " structured:" << grid::StructuredGrid(g) << " error:" << rms;
-    if( rms > 1.e-15 ) out << " !!!!";
-    out << std::endl;
 
     return rms;
 }
@@ -555,10 +564,10 @@ CASE( "test_transgeneral_point" )
   // the result with the analytically computed spherical harmonics
 
   Grid g = grid::UnstructuredGrid( new std::vector<PointXY>{
-                                       { 20.,   50.},
-                                       {-20.,   30.},
-                                       {-89.,  179.},
-                                       { 70., -101.}
+                                       {  50.,  20.},
+                                       {  30., -20.},
+                                       { 179., -89.},
+                                       {-101.,  70.}
   });
 
   int trc = 47; // truncation
@@ -584,10 +593,10 @@ CASE( "test_transgeneral_unstructured" )
   // the result with the analytically computed spherical harmonics
 
   Grid g = grid::UnstructuredGrid( new std::vector<PointXY>{
-                                       { 20.,   50.},
-                                       {-20.,   30.},
-                                       {-89.,  179.},
-                                       { 70., -101.}
+                                       {  50.,  20.},
+                                       {  30., -20.},
+                                       { 179., -89.},
+                                       {-101.,  70.}
   });
 
   int trc = 47; // truncation
@@ -636,8 +645,9 @@ CASE( "test_transgeneral_with_translib" )
   // this test is based on the test_nomesh case in test_trans.cc
 
   std::ostream& out = Log::info();
-  double tolerance = 1.e-15;
-  Grid g( "O48" );
+  double tolerance = 1.e-13;
+  Grid g( "F24" );
+  grid::StructuredGrid gs(g);
   int trc = 47;
   trans::Trans trans(g,trc) ;
 
@@ -649,24 +659,27 @@ CASE( "test_transgeneral_with_translib" )
   Field gpf  = gridpoints.createField<double>(option::name("gpf"));
   Field gpfg = gridpoints.createField<double>(option::name("gpf") | option::global());
 
-  auto *rgp = new double[g.size()];
+  int N = (trc+2)*(trc+1)/2;
+  auto *rspecg       = new double[2*N];
+  auto *rgp          = new double[g.size()];
+  auto *rgp_analytic = new double[g.size()];
 
   int k = 0;
-  for( int m=0; m<=30; m++ ) // zonal wavenumber
-      for( int n=m; n<=30; n++ ) // total wavenumber
+  for( int m=0; m<=trc; m++ ) // zonal wavenumber
+      for( int n=m; n<=trc; n++ ) // total wavenumber
           for( int imag=0; imag<=1; imag++ ) { // real and imaginary part
 
               array::ArrayView<double,1> spg = array::make_view<double,1>(spfg);
               if( parallel::mpi::comm().rank() == 0 ) {
                 spg.assign(0.);
-                spg(2*k+imag) = 1.;
+                spg(k) = 1.;
               }
 
               EXPECT_NO_THROW( spectral.scatter(spfg,spf) );
 
               if( parallel::mpi::comm().rank() == 0 ) {
                 array::ArrayView<double,1> sp = array::make_view<double,1>(spf);
-                EXPECT( eckit::types::is_approximately_equal( sp(2*k+imag), 1., 0.001 ));
+                EXPECT( eckit::types::is_approximately_equal( sp(k), 1., 0.001 ));
                 for( size_t jp=0; jp<sp.size(); ++jp ) {
                   Log::debug() << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
                 }
@@ -676,24 +689,43 @@ CASE( "test_transgeneral_with_translib" )
 
               EXPECT_NO_THROW( gridpoints.gather(gpf,gpfg) );
 
-              if( parallel::mpi::comm().rank() == 0 ) {
+              if( parallel::mpi::comm().rank() == 0) {// && m==45 && n==45 && imag==0 ) {
                 array::ArrayView<double,1> gpg = array::make_view<double,1>(gpfg);
+
+                spectral_transform_grid_analytic(trc, trc, n, m, imag, g, rspecg, rgp_analytic);
 
                 // compute spectral transform with the general transform:
                 spectral_transform_grid(trc, trc, g, spg.data(), rgp, false);
-                double rms = compute_rms(g.size(), gpg.data(), rgp);
+                double rms_trans = compute_rms(g.size(), gpg.data(), rgp);
+                double rms_gen   = compute_rms(g.size(), rgp, rgp_analytic);
 
-                out << "m=" << m << " n=" << n << " imag:" << imag << " error:" << rms;
-                if( rms > tolerance ) out << " !!!!";
-                out << std::endl;
-                //EXPECT( rms < tolerance );
+                /*int jp = 0;
+                for( size_t j=0; j<gs.ny(); ++j ) {
+                    double lat = gs.y(j);
+
+                    for( size_t i=0; i<gs.nx(j); ++i ) {
+                        double lon = gs.x(i,j);
+
+                        out << "lon:" << lon << " lat:" << lat << "  analytic: " << rgp_analytic[jp] << " trans/ana:" << gpg.data()[jp]/rgp_analytic[jp] << " gen/ana: " << rgp[jp]/rgp_analytic[jp] << std::endl;
+                        jp++;
+                    }
+                }*/
+                //out << "m=" << m << " n=" << n << " imag:" << imag << "  trans-general:" << rms_trans;
+                if( sphericalharmonics_analytic_point(n, m, true, 0., 0.) == 0. ) {
+                    //out << " error general:" << rms_gen;
+                    EXPECT( rms_gen < tolerance );
+                }
+                //out << std::endl;
+                EXPECT( rms_trans < tolerance );
 
               }
 
               k++;
           }
 
+  delete [] rspecg;
   delete [] rgp;
+  delete [] rgp_analytic;
 }
 
 //-----------------------------------------------------------------------------
