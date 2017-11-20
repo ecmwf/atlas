@@ -44,3 +44,10 @@ ecbuild_add_test( TARGET atlas_test_trans_invtrans_grad
   CONDITION ATLAS_HAVE_TRANS
   LIBS      atlas
 )
+
+ecbuild_add_test( TARGET atlas_test_transgeneral
+  SOURCES   test_transgeneral.cc
+  CONDITION ATLAS_HAVE_TRANS
+  LIBS      atlas
+)
+
