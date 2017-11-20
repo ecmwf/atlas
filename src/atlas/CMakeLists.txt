@@ -320,6 +320,8 @@ numerics/fvm/Nabla.cc
 
 trans/Trans.h
 trans/Trans.cc
+trans/local/TransLocal.h
+trans/local/TransLocal.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs

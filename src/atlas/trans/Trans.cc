@@ -25,6 +25,8 @@
 #else
 #define TRANS_DEFAULT "local"
 #endif
+#include "atlas/trans/local/TransLocal.h"
+
 
 namespace atlas {
 namespace trans {
@@ -259,6 +261,10 @@ int Trans::truncation() const {
 
 const Grid& Trans::grid() const {
   return impl_->grid();
+}
+
+size_t Trans::spectralCoefficients() const {
+  return impl_->spectralCoefficients();
 }
 
 void Trans::dirtrans( const Field& gpfield,

@@ -262,7 +262,6 @@ double spectral_transform_point(
         double lat,                        // latitude in degree (in)
         double rspecg[])                   // spectral data, size (trc+1)*trc (in)
 {
-    std::ostream& out = Log::info(); // just for debugging
     int N = (trc+2)*(trc+1)/2;
     ATLAS_TRACE();
     atlas::array::ArrayT<double> zlfpol_(N);
@@ -726,6 +725,23 @@ CASE( "test_transgeneral_with_translib" )
   delete [] rspecg;
   delete [] rgp;
   delete [] rgp_analytic;
+}
+
+//-----------------------------------------------------------------------------
+
+CASE( "test_trans_invtrans" ) {
+
+  trans::Trans trans( Grid("O64"), 63, util::Config("type","local") );
+
+  std::ostream& out = Log::info();
+  std::vector<double> rspec(trans.spectralCoefficients());
+  std::vector<double> rgp(trans.grid().size());
+
+
+  // TODO: rspec needs proper initial data
+
+  trans.invtrans(1,rspec.data(),rgp.data());
+
 }
 
 //-----------------------------------------------------------------------------
