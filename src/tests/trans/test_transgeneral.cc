@@ -274,11 +274,12 @@ void spectral_transform_grid_analytic(
     int N = (trc+2)*(trc+1)/2;
     for( int jm=0; jm<2*N; jm++) rspecg[jm] = 0.;
     int k = 0;
-    for( int jm=0; jm<=trc; jm++ )
+    for( int jm=0; jm<=trc; jm++ ) {
         for( int jn=jm; jn<=trc; jn++ ) {
             if( jm==m && jn==n ) rspecg[2*k+imag] = 1.;
             k++;
         }
+    }
 
     for( int jm=0; jm<grid.size(); jm++) rgp[jm] = 0.;
 
@@ -385,20 +386,6 @@ CASE( "test_transgeneral_legendrepolynomials" )
 
   double lat = std::acos(0.99312859918509488);
   compute_legendre(trc, lat, zlfpol);
-/*
-  out << "zlfpol after compute legendre:" << std::endl;
-  int idx, col = 8;
-  for( int jn=0; jn<std::ceil(1.*N/col); ++jn ) {
-      for( int jm=0; jm<col; ++jm ) {
-          idx = col*jn+jm;
-          if( idx < N ) out << std::setw(15) << std::left << zlfpol(idx);
-      }
-      out << std::endl;
-  }
-*/
-
-  //EXPECT(eckit::testing::make_view(arrv.data(),arrv.data()+2*f.N) == eckit::testing::make_view(arr_c,arr_c+2*f.N)); break; }
-
 }
 
 //-----------------------------------------------------------------------------
@@ -421,12 +408,14 @@ CASE( "test_transgeneral_point" )
   int trc = 47; // truncation
 
   double rms = 0.;
-  for( int m=0; m<=3; m++ ) // zonal wavenumber
-      for( int n=m; n<=3; n++ ) // total wavenumber
+  for( int m=0; m<=3; m++ ) { // zonal wavenumber
+      for( int n=m; n<=3; n++ ) { // total wavenumber
           for( int imag=0; imag<=1; imag++ ) { // real and imaginary part
               rms = spectral_transform_test(trc, n, m, imag, g, true);
-              //EXPECT( rms < tolerance );
+              EXPECT( rms < tolerance );
           }
+      }
+  }
 
 }
 
@@ -450,12 +439,14 @@ CASE( "test_transgeneral_unstructured" )
   int trc = 47; // truncation
 
   double rms = 0.;
-  for( int m=0; m<=3; m++ ) // zonal wavenumber
-      for( int n=m; n<=3; n++ ) // total wavenumber
+  for( int m=0; m<=3; m++ ) { // zonal wavenumber
+      for( int n=m; n<=3; n++ ) { // total wavenumber
           for( int imag=0; imag<=1; imag++ ) { // real and imaginary part
               rms = spectral_transform_test(trc, n, m, imag, g, false);
-              //EXPECT( rms < tolerance );
+              EXPECT( rms < tolerance );
           }
+      }
+  }
 
 }
 
@@ -475,12 +466,14 @@ CASE( "test_transgeneral_structured" )
   int trc = 47; // truncation
 
   double rms = 0.;
-  for( int m=0; m<=3; m++ ) // zonal wavenumber
-      for( int n=m; n<=3; n++ ) // total wavenumber
+  for( int m=0; m<=3; m++ ) { // zonal wavenumber
+      for( int n=m; n<=3; n++ ) { // total wavenumber
           for( int imag=0; imag<=1; imag++ ) { // real and imaginary part
               rms = spectral_transform_test(trc, n, m, imag, g, false);
-              //EXPECT( rms < tolerance );
+              EXPECT( rms < tolerance );
           }
+      }
+  }
 
 }
 
@@ -552,22 +545,8 @@ CASE( "test_transgeneral_with_translib" )
                   double rms_trans = compute_rms(g.size(), gpg.data(), rgp.data());
                   double rms_gen   = compute_rms(g.size(), rgp.data(), rgp_analytic.data());
 
-                  /*int jp = 0;
-                  for( size_t j=0; j<gs.ny(); ++j ) {
-                      double lat = gs.y(j)  * util::Constants::degreesToRadians();
-
-                      for( size_t i=0; i<gs.nx(j); ++i ) {
-                          double lon = gs.x(i,j)  * util::Constants::degreesToRadians();
-
-                          out << "lon:" << lon << " lat:" << lat << "  analytic: " << rgp_analytic[jp] << " trans/ana:" << gpg.data()[jp]/rgp_analytic[jp] << " gen/ana: " << rgp[jp]/rgp_analytic[jp] << std::endl;
-                          jp++;
-                      }
-                  }*/
-                  //out << "m=" << m << " n=" << n << " imag:" << imag << "  trans-general:" << rms_trans;
-
-                    //out << " error general:" << rms_gen;
-                    EXPECT( rms_gen < tolerance );
-                    EXPECT( rms_trans < tolerance );
+                  EXPECT( rms_gen < tolerance );
+                  EXPECT( rms_trans < tolerance );
               }
               k++;
           }
