@@ -508,72 +508,71 @@ CASE( "test_transgeneral_with_translib" )
   Field gpfg = gridpoints.createField<double>(option::name("gpf") | option::global());
 
   int N = (trc+2)*(trc+1)/2;
-  auto *rspecg       = new double[2*N];
-  auto *rgp          = new double[g.size()];
-  auto *rgp_analytic = new double[g.size()];
+  std::vector<double> rspecg       (2*N);
+  std::vector<double> rgp          (g.size());
+  std::vector<double> rgp_analytic (g.size());
+
+  ASSERT( 2*N == spectral.nb_spectral_coefficients_global() );
 
   int k = 0;
-  for( int m=0; m<=trc; m++ ) // zonal wavenumber
-      for( int n=m; n<=trc; n++ ) // total wavenumber
+  for( int m=0; m<=trc; m++ ) { // zonal wavenumber
+      for( int n=m; n<=trc; n++ ) { // total wavenumber
           for( int imag=0; imag<=1; imag++ ) { // real and imaginary part
 
-              array::ArrayView<double,1> spg = array::make_view<double,1>(spfg);
-              if( parallel::mpi::comm().rank() == 0 ) {
-                spg.assign(0.);
-                spg(k) = 1.;
-              }
+              if( sphericalharmonics_analytic_point(n, m, true, 0., 0.) == 0. ) {
 
-              EXPECT_NO_THROW( spectral.scatter(spfg,spf) );
+                  ATLAS_DEBUG_VAR( k );
+                  array::ArrayView<double,1> spg = array::make_view<double,1>(spfg);
+                  if( parallel::mpi::comm().rank() == 0 ) {
+                    spg.assign(0.);
+                    spg(k) = 1.;
+                  }
 
-              if( parallel::mpi::comm().rank() == 0 ) {
-                array::ArrayView<double,1> sp = array::make_view<double,1>(spf);
-                EXPECT( eckit::types::is_approximately_equal( sp(k), 1., 0.001 ));
-                for( size_t jp=0; jp<sp.size(); ++jp ) {
-                  Log::debug() << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
-                }
-              }
+                  EXPECT_NO_THROW( spectral.scatter(spfg,spf) );
 
-              EXPECT_NO_THROW( trans.invtrans(spf,gpf) );
-
-              EXPECT_NO_THROW( gridpoints.gather(gpf,gpfg) );
-
-              if( parallel::mpi::comm().rank() == 0) {// && m==45 && n==45 && imag==0 ) {
-                array::ArrayView<double,1> gpg = array::make_view<double,1>(gpfg);
-
-                spectral_transform_grid_analytic(trc, trc, n, m, imag, g, rspecg, rgp_analytic);
-
-                // compute spectral transform with the general transform:
-                spectral_transform_grid(trc, trc, g, spg.data(), rgp, false);
-                double rms_trans = compute_rms(g.size(), gpg.data(), rgp);
-                double rms_gen   = compute_rms(g.size(), rgp, rgp_analytic);
-
-                /*int jp = 0;
-                for( size_t j=0; j<gs.ny(); ++j ) {
-                    double lat = gs.y(j)  * util::Constants::degreesToRadians();
-
-                    for( size_t i=0; i<gs.nx(j); ++i ) {
-                        double lon = gs.x(i,j)  * util::Constants::degreesToRadians();
-
-                        out << "lon:" << lon << " lat:" << lat << "  analytic: " << rgp_analytic[jp] << " trans/ana:" << gpg.data()[jp]/rgp_analytic[jp] << " gen/ana: " << rgp[jp]/rgp_analytic[jp] << std::endl;
-                        jp++;
+                  if( parallel::mpi::comm().rank() == 0 ) {
+                    array::ArrayView<double,1> sp = array::make_view<double,1>(spf);
+                    EXPECT( eckit::types::is_approximately_equal( sp(k), 1., 0.001 ));
+                    for( size_t jp=0; jp<sp.size(); ++jp ) {
+                      Log::debug() << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
                     }
-                }*/
-                //out << "m=" << m << " n=" << n << " imag:" << imag << "  trans-general:" << rms_trans;
-                if( sphericalharmonics_analytic_point(n, m, true, 0., 0.) == 0. ) {
+                  }
+
+                  EXPECT_NO_THROW( trans.invtrans(spf,gpf) );
+
+                  EXPECT_NO_THROW( gridpoints.gather(gpf,gpfg) );
+
+                  array::ArrayView<double,1> gpg = array::make_view<double,1>(gpfg);
+
+                  spectral_transform_grid_analytic(trc, trc, n, m, imag, g, rspecg.data(), rgp_analytic.data());
+
+                  // compute spectral transform with the general transform:
+                  spectral_transform_grid(trc, trc, g, spg.data(), rgp.data(), false);
+
+                  double rms_trans = compute_rms(g.size(), gpg.data(), rgp.data());
+                  double rms_gen   = compute_rms(g.size(), rgp.data(), rgp_analytic.data());
+
+                  /*int jp = 0;
+                  for( size_t j=0; j<gs.ny(); ++j ) {
+                      double lat = gs.y(j)  * util::Constants::degreesToRadians();
+
+                      for( size_t i=0; i<gs.nx(j); ++i ) {
+                          double lon = gs.x(i,j)  * util::Constants::degreesToRadians();
+
+                          out << "lon:" << lon << " lat:" << lat << "  analytic: " << rgp_analytic[jp] << " trans/ana:" << gpg.data()[jp]/rgp_analytic[jp] << " gen/ana: " << rgp[jp]/rgp_analytic[jp] << std::endl;
+                          jp++;
+                      }
+                  }*/
+                  //out << "m=" << m << " n=" << n << " imag:" << imag << "  trans-general:" << rms_trans;
+
                     //out << " error general:" << rms_gen;
                     EXPECT( rms_gen < tolerance );
-                }
-                //out << std::endl;
-                EXPECT( rms_trans < tolerance );
-
+                    EXPECT( rms_trans < tolerance );
               }
-
               k++;
           }
-
-  delete [] rspecg;
-  delete [] rgp;
-  delete [] rgp_analytic;
+      }
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -582,10 +581,8 @@ CASE( "test_trans_invtrans" ) {
 
   trans::Trans trans( Grid("O64"), 63, util::Config("type","local") );
 
-  std::ostream& out = Log::info();
   std::vector<double> rspec(trans.spectralCoefficients());
   std::vector<double> rgp(trans.grid().size());
-
 
   // TODO: rspec needs proper initial data
 

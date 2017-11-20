@@ -157,7 +157,7 @@ CASE( "test_invtrans_grad" )
   grid::StructuredGrid g ( grid_uid );
   Mesh mesh = meshgenerator::StructuredMeshGenerator().generate(g);
   long N = g.ny()/2;
-  trans::TransIFS trans(g, 2*N-1);
+  trans::Trans trans(g, 2*N-1);
   functionspace::NodeColumns gp(mesh);
   functionspace::Spectral sp(trans);
 

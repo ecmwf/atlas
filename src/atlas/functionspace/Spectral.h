@@ -22,6 +22,7 @@ namespace atlas {
 
 namespace atlas {
 namespace trans {
+    class Trans;
     class TransImpl;
 }
 }
@@ -38,9 +39,9 @@ public:
 
   Spectral( const eckit::Configuration& );
 
-  Spectral(const int truncation, const eckit::Configuration& = util::NoConfig() );
+  Spectral( const int truncation, const eckit::Configuration& = util::NoConfig() );
 
-  Spectral(trans::TransImpl&, const eckit::Configuration& = util::NoConfig() );
+  Spectral( const trans::Trans&, const eckit::Configuration& = util::NoConfig() );
 
   virtual ~Spectral();
 
@@ -100,7 +101,7 @@ public:
   Spectral( const FunctionSpace& );
   Spectral( const eckit::Configuration& );
   Spectral( const size_t truncation, const eckit::Configuration& = util::NoConfig() );
-  Spectral( trans::TransImpl&, const eckit::Configuration& = util::NoConfig() );
+  Spectral( const trans::Trans&, const eckit::Configuration& = util::NoConfig() );
 
   operator bool() const { return valid(); }
   bool valid() const { return functionspace_; }

@@ -130,10 +130,10 @@ Spectral::Spectral( const int truncation, const eckit::Configuration& config ) :
   config.get("levels",nb_levels_);
 }
 
-Spectral::Spectral( trans::TransImpl& trans, const eckit::Configuration& config ) :
+Spectral::Spectral( const trans::Trans& trans, const eckit::Configuration& config ) :
     truncation_(trans.truncation()),
 #ifdef ATLAS_HAVE_TRANS
-    parallelisation_( new Parallelisation( dynamic_cast<trans::TransIFS&>(trans).trans_) ),
+    parallelisation_( new Parallelisation( dynamic_cast<const trans::TransIFS&>(*trans.get()).trans_) ),
 #else
     parallelisation_( new Parallelisation(truncation_) ),
 #endif
@@ -379,7 +379,7 @@ Spectral::Spectral( const size_t truncation, const eckit::Configuration& config 
   functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
 }
 
-Spectral::Spectral( trans::TransImpl& trans, const eckit::Configuration& config ) :
+Spectral::Spectral( const trans::Trans& trans, const eckit::Configuration& config ) :
   FunctionSpace( new detail::Spectral(trans,config) ),
   functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
 }
@@ -449,7 +449,7 @@ const detail::Spectral* atlas__SpectralFunctionSpace__new__config ( const eckit:
 const detail::Spectral* atlas__SpectralFunctionSpace__new__trans (trans::TransImpl* trans, const eckit::Configuration* config )
 {
   ATLAS_ERROR_HANDLING(
-    return new detail::Spectral(*trans,*config);
+    return new detail::Spectral(trans::Trans(trans),*config);
   );
   return 0;
 }

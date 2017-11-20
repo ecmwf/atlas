@@ -312,7 +312,7 @@ CASE( "test_spectral_fields" )
   );
   Mesh m = generate( g );
 
-  trans::TransIFS trans(g,47);
+  trans::Trans trans(g,47);
 
 
   functionspace::NodeColumns nodal (m);
@@ -342,7 +342,7 @@ CASE( "test_nomesh" )
   Log::info() << "test_spectral_fields" << std::endl;
 
   Grid g( "O48" );
-  trans::TransIFS trans(g,47) ;
+  trans::Trans trans(g,47) ;
 
   functionspace::Spectral          spectral   (trans);
   functionspace::StructuredColumns gridpoints (g);
