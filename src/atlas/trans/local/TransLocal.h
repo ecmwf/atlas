@@ -50,10 +50,10 @@ public:
 
   virtual ~TransLocal();
 
-  virtual int truncation() const { return truncation_; }
-  virtual size_t spectralCoefficients() const { return (truncation_+1)*(truncation_+2); }
+  virtual int truncation() const override { return truncation_; }
+  virtual size_t spectralCoefficients() const override { return (truncation_+1)*(truncation_+2); }
 
-  virtual const Grid& grid() const { return grid_; }
+  virtual const Grid& grid() const override { return grid_; }
 
 
   virtual void invtrans( const Field& spfield,
@@ -114,6 +114,7 @@ public:
 
 private:
 
+  const double* legendre_data( int j ) const { return legendre_.data() + legendre_begin_[j]; }
   double* legendre_data( int j ) { return legendre_.data() + legendre_begin_[j]; }
 
 private:

@@ -164,7 +164,7 @@ void TransLocal::invtrans(
     // legendre polynomials for every latitute
     std::vector<double> recomputed_legendre_;
 
-    auto legPol = [&](double lat, int j) {
+    auto legPol = [&](double lat, int j) -> const double * {
       if( precompute_ ) {
         return legendre_data(j);
       } else {

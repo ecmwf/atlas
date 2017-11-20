@@ -82,10 +82,10 @@ public:
   operator ::Trans_t*() const { return trans(); }
   ::Trans_t* trans() const { return trans_.get(); }
 
-  virtual int truncation() const { return std::max(0,trans_->nsmax); }
-  virtual size_t spectralCoefficients() const { return trans_->nspec2g; }
+  virtual int truncation() const override { return std::max(0,trans_->nsmax); }
+  virtual size_t spectralCoefficients() const override { return trans_->nspec2g; }
 
-  virtual const Grid& grid() const { return grid_; }
+  virtual const Grid& grid() const override { return grid_; }
 
 
 
