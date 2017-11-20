@@ -322,6 +322,12 @@ trans/Trans.h
 trans/Trans.cc
 trans/local/TransLocal.h
 trans/local/TransLocal.cc
+trans/local/LegendrePolynomials.h
+trans/local/LegendrePolynomials.cc
+trans/local/LegendreTransforms.h
+trans/local/LegendreTransforms.cc
+trans/local/FourierTransforms.h
+trans/local/FourierTransforms.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs
