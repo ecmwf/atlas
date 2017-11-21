@@ -1,7 +1,9 @@
+#include "atlas/array.h"
+#include "atlas/field/Field.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/library/Library.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/field/Field.h"
+
 
 using atlas::Log;
 using atlas::array::make_shape;

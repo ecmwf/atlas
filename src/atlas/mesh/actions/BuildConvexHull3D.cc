@@ -112,7 +112,7 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
     idx_t idx[3];
     Polyhedron_3::Vertex_const_handle vts[3];
 
-    std::cout << "Inserting triags (" << eckit::BigNum(nb_triags) << ")" << std::endl;
+    Log::debug() << "Inserting triags (" << eckit::BigNum(nb_triags) << ")" << std::endl;
 
     size_t tidx = 0;
     for( Polyhedron_3::Facet_const_iterator f = poly.facets_begin(); f != poly.facets_end(); ++f )

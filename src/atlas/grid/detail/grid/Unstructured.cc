@@ -59,11 +59,26 @@ Unstructured::Unstructured(const util::Config& p) :
 Unstructured::Unstructured(std::vector<PointXY>* pts) :
     Grid(),
     points_(pts) {
-
     util::Config config_domain;
     config_domain.set("type","global");
     domain_ = Domain(config_domain);
-  }
+}
+
+Unstructured::Unstructured(std::vector<PointXY>&& pts) :
+    Grid(),
+    points_( new std::vector<PointXY>( std::move(pts) ) ) {
+    util::Config config_domain;
+    config_domain.set("type","global");
+    domain_ = Domain(config_domain);
+}
+
+Unstructured::Unstructured( std::initializer_list< PointXY > initializer_list ) :
+    Grid(),
+    points_( new std::vector<PointXY>( initializer_list ) ) {
+    util::Config config_domain;
+    config_domain.set("type","global");
+    domain_ = Domain(config_domain);
+}
 
 
 Unstructured::~Unstructured() {

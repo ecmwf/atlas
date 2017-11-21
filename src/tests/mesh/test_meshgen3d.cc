@@ -42,6 +42,9 @@ CASE( "test_create_mesh" )
 
   m = generate( Grid("N24") );
 
+  Grid grid = m.grid();
+  std::cout << grid.spec() << std::endl;
+
   Gmsh("out.msh", util::Config("coordinates","xyz") ).write(m);
 }
 

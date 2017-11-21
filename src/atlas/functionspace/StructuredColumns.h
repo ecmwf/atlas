@@ -36,12 +36,6 @@ namespace field {
 }
 
 namespace atlas {
-namespace trans {
-    class Trans;
-}
-}
-
-namespace atlas {
 namespace functionspace {
 
 // -------------------------------------------------------------------
@@ -57,7 +51,8 @@ public:
 
   virtual ~StructuredColumns();
 
-  virtual std::string name() const { return "StructuredColumns"; }
+  static std::string static_type() { return "StructuredColumns"; }
+  virtual std::string type() const { return static_type(); }
 
   /// @brief Create a Structured field
   virtual Field createField( const eckit::Configuration&) const;
@@ -256,6 +251,8 @@ public:
   StructuredColumns( const FunctionSpace& );
   StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
   StructuredColumns( const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig() );
+
+  static std::string type() { return detail::StructuredColumns::static_type(); }
 
   operator bool() const { return valid(); }
   bool valid() const { return functionspace_; }

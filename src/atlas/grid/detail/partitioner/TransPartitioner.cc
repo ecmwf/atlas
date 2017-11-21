@@ -12,7 +12,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
-#include "atlas/trans/Trans.h"
+#include "atlas/trans/ifs/TransIFS.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/array.h"
 #include "atlas/runtime/Trace.h"
@@ -53,7 +53,7 @@ void TransPartitioner::partition(const Grid& grid, int part[]) const {
     if( not g )
         throw eckit::BadCast("Grid is not a grid::Structured type. Cannot partition using IFS trans",Here());
 
-    trans::Trans t(grid);
+    trans::TransIFS t(grid);
     if( nb_partitions() != size_t(t.nproc()) ) {
         std::stringstream msg;
         msg << "Requested to partition grid with TransPartitioner in "<<nb_partitions()<<" partitions, but "

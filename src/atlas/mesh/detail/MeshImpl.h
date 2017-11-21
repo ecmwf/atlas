@@ -16,6 +16,7 @@
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/util/Metadata.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/mesh/detail/PartitionGraph.h"
 #include "atlas/mesh/PartitionPolygon.h"
@@ -103,6 +104,8 @@ public: // methods
 
     const PartitionPolygon& polygon(size_t halo=0) const;
 
+    const Grid& grid() const { return grid_; }
+
 private:  // methods
 
     friend class ::atlas::Mesh;
@@ -115,6 +118,7 @@ private:  // methods
     void createElements();
 
     void setProjection(const Projection&);
+    void setGrid(const Grid&);
 
 private: // members
 
@@ -133,6 +137,8 @@ private: // members
     size_t dimensionality_;
 
     Projection projection_;
+
+    Grid grid_;
 
     mutable eckit::SharedPtr<PartitionGraph> partition_graph_;
 

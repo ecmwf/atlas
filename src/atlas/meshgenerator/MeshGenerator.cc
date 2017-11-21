@@ -97,7 +97,7 @@ Mesh MeshGeneratorImpl::generate( const Grid& grid, const grid::Distribution& di
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void MeshGeneratorImpl::generate_global_element_numbering( Mesh& mesh ) const
+void MeshGeneratorImpl::generateGlobalElementNumbering( Mesh& mesh ) const
 {
   size_t loc_nb_elems = mesh.cells().size();
   std::vector<size_t> elem_counts( parallel::mpi::comm().size() );
@@ -124,10 +124,13 @@ void MeshGeneratorImpl::generate_global_element_numbering( Mesh& mesh ) const
 }
 
 
-void MeshGeneratorImpl::set_projection( Mesh& mesh, const Projection& p ) const {
+void MeshGeneratorImpl::setProjection( Mesh& mesh, const Projection& p ) const {
   mesh.setProjection(p);
 }
 
+void MeshGeneratorImpl::setGrid( Mesh& mesh, const Grid& g ) const {
+  mesh.setGrid(g);
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 

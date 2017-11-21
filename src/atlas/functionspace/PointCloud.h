@@ -28,7 +28,7 @@ public:
     PointCloud(const Field& lonlat);
     PointCloud(const Field& lonlat, const Field& ghost);
     virtual ~PointCloud() {}
-    virtual std::string name() const { return "PointCloud"; }
+    virtual std::string type() const { return "PointCloud"; }
     virtual operator bool() const { return true; }
     virtual size_t footprint() const { return sizeof(*this); }
 

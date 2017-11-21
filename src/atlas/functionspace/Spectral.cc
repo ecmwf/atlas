@@ -20,14 +20,61 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/array/MakeView.h"
+#include "atlas/trans/Trans.h"
 
 #ifdef ATLAS_HAVE_TRANS
-#include "atlas/trans/Trans.h"
+#include "atlas/trans/ifs/TransIFS.h"
+namespace {
+void trans_check(const int code, const char* msg, const eckit::CodeLocation& location) {
+  if(code != TRANS_SUCCESS) {
+    std::stringstream errmsg;
+    errmsg << "atlas::trans ERROR: " << msg << " failed: \n";
+    errmsg << ::trans_error_msg(code);
+    throw eckit::Exception(errmsg.str(),location);
+  }
+}
+#define TRANS_CHECK( CALL ) trans_check(CALL, #CALL, Here() )
+}
 #endif
 
 namespace atlas {
 namespace functionspace {
 namespace detail {
+
+#ifdef ATLAS_HAVE_TRANS
+class Spectral::Parallelisation {
+public:
+
+  Parallelisation( const std::shared_ptr<::Trans_t> other) :
+    trans_(other) {
+  }
+
+  Parallelisation(int truncation) {
+      trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, [](::Trans_t* p) {
+        TRANS_CHECK(::trans_delete(p));
+        delete p;
+      });
+      TRANS_CHECK(::trans_new(trans_.get()));
+      TRANS_CHECK(::trans_set_trunc(trans_.get(),truncation));
+      TRANS_CHECK(::trans_use_mpi(parallel::mpi::comm().size()>1));
+      TRANS_CHECK(::trans_setup(trans_.get()));
+  }
+
+  int nb_spectral_coefficients_global() const { return trans_->nspec2g; }
+  int nb_spectral_coefficients() const { return trans_->nspec2; }
+
+  operator ::Trans_t*() const { return trans_.get(); }
+  std::shared_ptr<::Trans_t> trans_;
+};
+#else
+class Spectral::Parallelisation {
+public:
+  Parallelisation(int truncation) : truncation_(truncation) {}
+  int nb_spectral_coefficients_global() const { return (truncation_+1)*(truncation_+2); }
+  int nb_spectral_coefficients() const { return nb_spectral_coefficients_global(); }
+  int truncation_;
+};
+#endif
 
 void Spectral::set_field_metadata(const eckit::Configuration& config, Field& field) const
 {
@@ -75,26 +122,20 @@ Spectral::Spectral( const eckit::Configuration& config ) :
 
 // ----------------------------------------------------------------------
 
-Spectral::Spectral( const size_t truncation, const eckit::Configuration& config ) :
+Spectral::Spectral( const int truncation, const eckit::Configuration& config ) :
     truncation_(truncation),
-#ifdef ATLAS_HAVE_TRANS
-    trans_( new trans::Trans(truncation_) ),
-    delete_trans_(true),
-#else
-    trans_(0),
-#endif
+    parallelisation_( new Parallelisation(truncation_) ),
     nb_levels_(0)
 {
   config.get("levels",nb_levels_);
 }
 
-Spectral::Spectral( trans::Trans& trans, const eckit::Configuration& config ) :
-#ifdef ATLAS_HAVE_TRANS
+Spectral::Spectral( const trans::Trans& trans, const eckit::Configuration& config ) :
     truncation_(trans.truncation()),
-    trans_(&trans),
+#ifdef ATLAS_HAVE_TRANS
+    parallelisation_( new Parallelisation( dynamic_cast<const trans::TransIFS&>(*trans.get()).trans_) ),
 #else
-    truncation_(0),
-    trans_(0),
+    parallelisation_( new Parallelisation(truncation_) ),
 #endif
     nb_levels_(0)
 {
@@ -103,10 +144,6 @@ Spectral::Spectral( trans::Trans& trans, const eckit::Configuration& config ) :
 
 Spectral::~Spectral()
 {
-#ifdef ATLAS_HAVE_TRANS
-  if( delete_trans_ )
-    delete trans_;
-#endif
 }
 
 size_t Spectral::footprint() const {
@@ -116,17 +153,11 @@ size_t Spectral::footprint() const {
 }
 
 size_t Spectral::nb_spectral_coefficients() const {
-#ifdef ATLAS_HAVE_TRANS
-  if( trans_ ) return trans_->nb_spectral_coefficients();
-#endif
-  return (truncation_+1)*(truncation_+2);
+  return parallelisation_->nb_spectral_coefficients();
 }
 
 size_t Spectral::nb_spectral_coefficients_global() const {
-#ifdef ATLAS_HAVE_TRANS
-  if( trans_ ) return trans_->nb_spectral_coefficients_global();
-#endif
-  return (truncation_+1)*(truncation_+2);
+  return parallelisation_->nb_spectral_coefficients_global();
 }
 
 
@@ -179,7 +210,6 @@ Field Spectral::createField(
 
 void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const
 {
-  ASSERT( trans_ );
   ASSERT(local_fieldset.size() == global_fieldset.size());
 
   for( size_t f=0; f<local_fieldset.size(); ++f ) {
@@ -205,9 +235,13 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
       nto.resize(loc.stride(0));
       for( size_t i=0; i<nto.size(); ++i ) nto[i] = root+1;
     }
-    trans_->gathspec(nto.size(),nto.data(),
-                     array::make_storageview<double>(loc).data(),
-                     array::make_storageview<double>(glb).data());
+
+    struct ::GathSpec_t args = new_gathspec( *parallelisation_ );
+      args.nfld = nto.size();
+      args.rspecg = glb.data<double>();
+      args.nto = nto.data();
+      args.rspec = loc.data<double>();
+    TRANS_CHECK( ::trans_gathspec(&args) );
 #else
 
     throw eckit::Exception("Cannot gather spectral fields because Atlas has not been compiled with TRANS support.");
@@ -225,7 +259,6 @@ void Spectral::gather( const Field& local, Field& global ) const
 
 void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const
 {
-  ASSERT( trans_ );
   ASSERT(local_fieldset.size() == global_fieldset.size());
 
   for( size_t f=0; f<local_fieldset.size(); ++f ) {
@@ -251,9 +284,14 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
       nfrom.resize(loc.stride(0));
       for( size_t i=0; i<nfrom.size(); ++i ) nfrom[i] = root+1;
     }
-    trans_->distspec(nfrom.size(),nfrom.data(),
-                     array::make_storageview<double>(glb).data(),
-                     array::make_storageview<double>(loc).data());
+
+    struct ::DistSpec_t args = new_distspec( *parallelisation_ );
+      args.nfld   = nfrom.size();
+      args.rspecg = glb.data<double>();
+      args.nfrom  = nfrom.data();
+      args.rspec  = loc.data<double>();
+    TRANS_CHECK( ::trans_distspec(&args) );
+
     glb.metadata().broadcast(loc.metadata(),root);
     loc.metadata().set("global",false);
 #else
@@ -285,14 +323,25 @@ std::string Spectral::checksum( const Field& field ) const {
 void Spectral::norm( const Field& field, double& norm, int rank ) const {
 #ifdef ATLAS_HAVE_TRANS
   ASSERT( std::max<int>(1,field.levels()) == 1 );
-  trans_->specnorm(1,field.data<double>(), &norm, rank);
+  struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
+    args.nfld = 1;
+    args.rspec = field.data<double>();
+    args.rnorm = &norm;
+    args.nmaster = rank+1;
+  TRANS_CHECK( ::trans_specnorm(&args) );
 #else
   throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");
 #endif
 }
 void Spectral::norm( const Field& field, double norm_per_level[], int rank ) const {
 #ifdef ATLAS_HAVE_TRANS
-  trans_->specnorm( std::max<int>(1,field.levels()),field.data<double>(), norm_per_level, rank);
+  ASSERT( std::max<int>(1,field.levels()) == 1 );
+  struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
+    args.nfld = std::max<int>(1,field.levels());
+    args.rspec = field.data<double>();
+    args.rnorm = norm_per_level;
+    args.nmaster = rank+1;
+  TRANS_CHECK( ::trans_specnorm(&args) );
 #else
   throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");
 #endif
@@ -300,7 +349,12 @@ void Spectral::norm( const Field& field, double norm_per_level[], int rank ) con
 void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, int rank ) const {
 #ifdef ATLAS_HAVE_TRANS
   norm_per_level.resize( std::max<int>(1,field.levels()) );
-  trans_->specnorm(norm_per_level.size(),field.data<double>(), norm_per_level.data(), rank);
+  struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
+    args.nfld = norm_per_level.size();
+    args.rspec = field.data<double>();
+    args.rnorm = norm_per_level.data();
+    args.nmaster = rank+1;
+  TRANS_CHECK( ::trans_specnorm(&args) );
 #else
   throw eckit::Exception("Cannot compute spectral norms because Atlas has not been compiled with TRANS support.");
 #endif
@@ -325,7 +379,7 @@ Spectral::Spectral( const size_t truncation, const eckit::Configuration& config 
   functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
 }
 
-Spectral::Spectral( trans::Trans& trans, const eckit::Configuration& config ) :
+Spectral::Spectral( const trans::Trans& trans, const eckit::Configuration& config ) :
   FunctionSpace( new detail::Spectral(trans,config) ),
   functionspace_( dynamic_cast< const detail::Spectral* >( get() ) ) {
 }
@@ -336,6 +390,10 @@ size_t Spectral::nb_spectral_coefficients() const {
 
 size_t Spectral::nb_spectral_coefficients_global() const {
   return functionspace_->nb_spectral_coefficients_global();
+}
+
+int Spectral::truncation() const {
+  return functionspace_->truncation();
 }
 
 void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const {
@@ -388,10 +446,10 @@ const detail::Spectral* atlas__SpectralFunctionSpace__new__config ( const eckit:
     return 0;
   }
 
-const detail::Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans, const eckit::Configuration* config )
+const detail::Spectral* atlas__SpectralFunctionSpace__new__trans (trans::TransImpl* trans, const eckit::Configuration* config )
 {
   ATLAS_ERROR_HANDLING(
-    return new detail::Spectral(*trans,*config);
+    return new detail::Spectral(trans::Trans(trans),*config);
   );
   return 0;
 }

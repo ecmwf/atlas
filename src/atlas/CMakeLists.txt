@@ -55,6 +55,7 @@ list( APPEND atlas_grid_srcs
 
 option.h
 option/Options.h
+option/Options.cc
 
 
 projection.h
@@ -316,11 +317,26 @@ numerics/fvm/Method.h
 numerics/fvm/Method.cc
 numerics/fvm/Nabla.h
 numerics/fvm/Nabla.cc
+
+trans/Trans.h
+trans/Trans.cc
+trans/local/TransLocal.h
+trans/local/TransLocal.cc
+trans/local/LegendrePolynomials.h
+trans/local/LegendrePolynomials.cc
+trans/local/LegendreTransforms.h
+trans/local/LegendreTransforms.cc
+trans/local/FourierTransforms.h
+trans/local/FourierTransforms.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs
-  trans/Trans.h
-  trans/Trans.cc
+  trans/ifs/TransIFS.h
+  trans/ifs/TransIFS.cc
+  trans/ifs/TransIFSNodeColumns.h
+  trans/ifs/TransIFSNodeColumns.cc
+  trans/ifs/TransIFSStructuredColumns.h
+  trans/ifs/TransIFSStructuredColumns.cc
 )
 endif()
 

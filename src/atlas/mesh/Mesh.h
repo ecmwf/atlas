@@ -119,6 +119,8 @@ public:
 
     const Polygon& polygon( size_t halo = 0) const { return impl_->polygon(halo); }
 
+    const Grid& grid() const { return impl_->grid(); }
+
 private:  // methods
 
     friend std::ostream& operator<<(std::ostream& s, const Mesh& p) {
@@ -128,6 +130,7 @@ private:  // methods
 
     friend class meshgenerator::MeshGeneratorImpl;
     void setProjection(const Projection& p) { impl_->setProjection(p); }
+    void setGrid(const Grid& p) { impl_->setGrid(p); }
 
 private:
 

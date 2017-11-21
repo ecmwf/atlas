@@ -59,8 +59,9 @@ public:
 
 protected:
 
-    void generate_global_element_numbering( Mesh& mesh ) const;
-    void set_projection( Mesh&, const Projection& ) const;
+    void generateGlobalElementNumbering( Mesh& mesh ) const;
+    void setProjection( Mesh&, const Projection& ) const;
+    void setGrid( Mesh&, const Grid& ) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -135,9 +136,9 @@ public:
 
   using Implementation = meshgenerator::MeshGeneratorImpl;
   typedef atlas::util::Config Parameters;
-  
+
 private:
-  
+
   eckit::SharedPtr< const Implementation > meshgenerator_;
 
 public:
@@ -154,7 +155,7 @@ public:
 
     Mesh operator()( const Grid&, const grid::Distribution& ) const;
     Mesh operator()( const Grid& ) const;
-    
+
     const Implementation* get() const { return meshgenerator_.get(); }
 
 };

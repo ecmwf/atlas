@@ -5,7 +5,7 @@ ecbuild_add_executable(
   NOINSTALL )
 
 set_target_properties(atlas_c-global-grids-Structured
-                      PROPERTIES EXCLUDE_FROM_ALL true )
+                      PROPERTIES EXCLUDE_FROM_ALL ${ENABLE_TESTS} )
 
 if( ATLAS_HAVE_FORTRAN )
 
@@ -16,6 +16,6 @@ ecbuild_add_executable(
   NOINSTALL )
 
 set_target_properties(atlas_f-global-grids-Structured
-                      PROPERTIES EXCLUDE_FROM_ALL true )
+                      PROPERTIES EXCLUDE_FROM_ALL ${ENABLE_TESTS} )
 
 endif()

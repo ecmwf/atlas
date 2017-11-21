@@ -18,11 +18,11 @@
 
 #include <cstddef>
 #include <vector>
-#include "eckit/memory/ScopedPtr.h"
+#include <memory>
 #include "eckit/utils/Hash.h"
 #include "atlas/grid/detail/grid/Grid.h"
 
-namespace atlas { 
+namespace atlas {
     class Mesh;
 }
 
@@ -73,7 +73,7 @@ public:
     const Unstructured& grid_;
     size_t n_;
   };
-  
+
   class IteratorLonLat: public Grid::IteratorLonLat {
   public:
     IteratorLonLat(const Unstructured& grid, bool begin=true):
@@ -121,11 +121,17 @@ public: // methods
     /// Constructor taking a list of parameters
     Unstructured( const Config& );
 
-    /// Constructor taking a list of points
+    /// Constructor taking a list of points (takes ownership)
     Unstructured( std::vector< PointXY >* pts );
+
+    /// Constructor taking a list of points (takes ownership)
+    Unstructured( std::vector< PointXY >&& pts );
 
     /// Constructor taking a mesh
     Unstructured( const Mesh& m );
+
+    /// Constructor from initializer list
+    Unstructured( std::initializer_list< PointXY > );
 
     virtual ~Unstructured();
 
@@ -153,13 +159,13 @@ private: // methods
 protected:
 
     /// Storage of coordinate points
-    eckit::ScopedPtr< std::vector< PointXY > > points_;
+    std::unique_ptr< std::vector< PointXY > > points_;
 
     /// Cache for the shortName
     mutable std::string shortName_;
 
     /// Cache for the spec since may be quite heavy to compute
-    mutable eckit::ScopedPtr<Grid::Spec> cached_spec_;
+    mutable std::unique_ptr<Grid::Spec> cached_spec_;
 
 };
 

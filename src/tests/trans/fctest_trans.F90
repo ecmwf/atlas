@@ -70,18 +70,20 @@ TEST( test_trans )
 
   meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid)
+
   call meshgenerator%final()
 
   FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
+  FCTEST_CHECK_EQUAL( grid%owners(), 2 ) ! mesh tracks grid
 
   trans = atlas_Trans(grid,truncation)
-  FCTEST_CHECK_EQUAL( grid%owners(), 2 )
+  FCTEST_CHECK_EQUAL( grid%owners(), 3 ) ! trans tracks grid
 
   FCTEST_CHECK_EQUAL( trans%nb_gridpoints(), int(grid%size()) )
   FCTEST_CHECK_EQUAL( trans%nb_gridpoints_global(), int(grid%size()) )
 
   trans_grid = trans%grid()
-  FCTEST_CHECK_EQUAL( trans_grid%owners(), 3 )
+  FCTEST_CHECK_EQUAL( trans_grid%owners(), 4 )
 
   FCTEST_CHECK( .not. trans%is_null() )
   FCTEST_CHECK_EQUAL( trans%truncation(), truncation )
@@ -121,8 +123,8 @@ TEST( test_trans )
   spec2(:) = 0
   spec2(1) = 4
 
-  call trans%invtrans(spectral_fs,spectralfield1,nodes_fs,scalarfield1)
-  call trans%dirtrans(nodes_fs,scalarfield1,spectral_fs,spectralfield1)
+  call trans%invtrans(spectralfield1,scalarfield1)
+  call trans%dirtrans(scalarfield1,spectralfield1)
 
   allocate( check(nlev) )
   check(:) = 3
@@ -137,8 +139,8 @@ TEST( test_trans )
   call spectralfields%add(spectralfield1)
   call spectralfields%add(spectralfield2)
 
-  call trans%invtrans(spectral_fs,spectralfields,nodes_fs,scalarfields)
-  call trans%dirtrans(nodes_fs,scalarfields,spectral_fs,spectralfields)
+  call trans%invtrans(spectralfields,scalarfields)
+  call trans%dirtrans(scalarfields,spectralfields)
 
   allocate( check(nlev) )
   check(:) = 3
@@ -170,9 +172,9 @@ TEST( test_trans )
 
   call divfield%data(div)
 
-  call trans%dirtrans_wind2vordiv(nodes_fs,windfield,spectral_fs,vorfield,divfield)
+  call trans%dirtrans_wind2vordiv(windfield,vorfield,divfield)
 
-  call trans%invtrans_vordiv2wind(spectral_fs,vorfield,divfield,nodes_fs,windfield)
+  call trans%invtrans_vordiv2wind(vorfield,divfield,windfield)
 
   glb_vorfield = spectral_fs%create_field(name="vorticity",kind=atlas_real(c_double),levels=nlev,global=.true.)
   call spectral_fs%gather(vorfield,glb_vorfield)

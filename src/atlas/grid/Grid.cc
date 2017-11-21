@@ -39,7 +39,7 @@ Grid::Grid( const Grid::Implementation *grid ):
 
 Grid::Grid( const std::string& shortname, const Domain& domain ) {
     grid_ = Grid::Implementation::create(
-                shortname, 
+                shortname,
                 Config("domain", domain.spec())
             );
 }
@@ -79,6 +79,15 @@ UnstructuredGrid::UnstructuredGrid( std::vector<PointXY>* xy ):
     grid_( unstructured_grid(get()) ) {
 }
 
+UnstructuredGrid::UnstructuredGrid( std::vector<PointXY>&& xy ):
+    Grid( new UnstructuredGrid::grid_t( std::forward< std::vector<PointXY> >(xy) ) ),
+    grid_( unstructured_grid(get()) ) {
+}
+
+UnstructuredGrid::UnstructuredGrid( std::initializer_list<PointXY> xy ):
+    Grid( new UnstructuredGrid::grid_t( xy ) ),
+    grid_( unstructured_grid(get()) ) {
+}
 
 inline const StructuredGrid::grid_t* structured_grid( const Grid::Implementation *grid ) {
     return dynamic_cast<const StructuredGrid::grid_t*>(grid);

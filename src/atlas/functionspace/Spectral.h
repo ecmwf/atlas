@@ -23,6 +23,7 @@ namespace atlas {
 namespace atlas {
 namespace trans {
     class Trans;
+    class TransImpl;
 }
 }
 
@@ -38,13 +39,13 @@ public:
 
   Spectral( const eckit::Configuration& );
 
-  Spectral(const size_t truncation, const eckit::Configuration& = util::NoConfig() );
+  Spectral( const int truncation, const eckit::Configuration& = util::NoConfig() );
 
-  Spectral(trans::Trans&, const eckit::Configuration& = util::NoConfig() );
+  Spectral( const trans::Trans&, const eckit::Configuration& = util::NoConfig() );
 
   virtual ~Spectral();
 
-  virtual std::string name() const { return "Spectral"; }
+  virtual std::string type() const { return "Spectral"; }
 
   /// @brief Create a spectral field
   using FunctionSpaceImpl::createField;
@@ -68,6 +69,7 @@ public: // methods
 
   size_t nb_spectral_coefficients() const;
   size_t nb_spectral_coefficients_global() const;
+  int truncation() const { return truncation_; }
 
 private: // methods
 
@@ -82,10 +84,10 @@ private: // data
 
   size_t nb_levels_;
 
-  size_t truncation_;
+  int truncation_;
 
-  trans::Trans* trans_;
-  bool delete_trans_{false};
+  class Parallelisation;
+  std::unique_ptr<Parallelisation> parallelisation_;
 
 };
 
@@ -99,7 +101,7 @@ public:
   Spectral( const FunctionSpace& );
   Spectral( const eckit::Configuration& );
   Spectral( const size_t truncation, const eckit::Configuration& = util::NoConfig() );
-  Spectral( trans::Trans&, const eckit::Configuration& = util::NoConfig() );
+  Spectral( const trans::Trans&, const eckit::Configuration& = util::NoConfig() );
 
   operator bool() const { return valid(); }
   bool valid() const { return functionspace_; }
@@ -119,6 +121,7 @@ public:
 
   size_t nb_spectral_coefficients() const;
   size_t nb_spectral_coefficients_global() const;
+  int truncation() const;
 
 private:
 
@@ -131,7 +134,7 @@ private:
 extern "C"
 {
   const detail::Spectral* atlas__SpectralFunctionSpace__new__config ( const eckit::Configuration* config );
-  const detail::Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans,  const eckit::Configuration* config );
+  const detail::Spectral* atlas__SpectralFunctionSpace__new__trans (trans::TransImpl* trans,  const eckit::Configuration* config );
   void atlas__SpectralFunctionSpace__delete (detail::Spectral* This);
   field::FieldImpl* atlas__fs__Spectral__create_field(const detail::Spectral* This, const eckit::Configuration* options);
   void atlas__SpectralFunctionSpace__gather(const detail::Spectral* This, const field::FieldImpl* local, field::FieldImpl* global);

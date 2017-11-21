@@ -13,7 +13,6 @@ private :: fckit_refcounted
 private :: fckit_object
 
 public :: atlas_Trans
-public :: atlas_TransParameters
 
 private
 
@@ -45,31 +44,23 @@ contains
   procedure :: nb_gridpoints
   procedure :: nb_gridpoints_global
 
-  procedure, private :: dirtrans_field_nodes
   procedure, private :: dirtrans_field
-  procedure, private :: dirtrans_fieldset_nodes
   procedure, private :: dirtrans_fieldset
   procedure, public :: dirtrans_wind2vordiv => dirtrans_wind2vordiv_field
   generic, public :: dirtrans => &
     & dirtrans_field, &
-    & dirtrans_fieldset, &
-    & dirtrans_fieldset_nodes, &
-    & dirtrans_field_nodes
+    & dirtrans_fieldset
 
-  procedure, private :: invtrans_field_nodes
   procedure, private :: invtrans_field
-  procedure, private :: invtrans_fieldset_nodes
   procedure, private :: invtrans_fieldset
   procedure, public :: invtrans_vordiv2wind => invtrans_vordiv2wind_field
   generic, public :: invtrans => &
     & invtrans_field, &
-    & invtrans_fieldset, &
-    & invtrans_field_nodes, &
-    & invtrans_fieldset_nodes
+    & invtrans_fieldset
 
-  procedure, private :: invtrans_grad_field_nodes
+  procedure, private :: invtrans_grad_field
   generic, public :: invtrans_grad => &
-    & invtrans_grad_field_nodes
+    & invtrans_grad_field
 
   procedure, private :: gathspec_r1
   procedure, private :: gathspec_r2
@@ -88,32 +79,6 @@ END TYPE atlas_Trans
 
 interface atlas_Trans
   module procedure atlas_Trans__ctor
-end interface
-
-!------------------------------------------------------------------------------
-
-TYPE, extends(fckit_object) :: atlas_TransParameters
-
-! Purpose :
-! -------
-!   *TransParameters* : Extra information to pass to dirtrans and invtrans
-
-! Author :
-! ------
-!   20-Mar-2015 Willem Deconinck     *ECMWF*
-
-!------------------------------------------------------------------------------
-contains
-
-  procedure, public :: delete => atlas_TransParameters__delete
-  procedure, public :: copy => atlas_TransParameters__copy
-
-END TYPE atlas_TransParameters
-
-!------------------------------------------------------------------------------
-
-interface atlas_TransParameters
-  module procedure atlas_TransParameters__ctor
 end interface
 
 !------------------------------------------------------------------------------
@@ -153,17 +118,6 @@ function atlas_Trans__ctor( grid, nsmax ) result(trans)
 #endif
 end function atlas_Trans__ctor
 
-function atlas_TransParameters__ctor() result(params)
-  use atlas_trans_c_binding
-  use, intrinsic :: iso_c_binding, only: c_null_ptr
-  type(atlas_TransParameters) :: params
-#ifdef ATLAS_HAVE_TRANS
-  call params%reset_c_ptr( atlas__TransParameters__new() )
-#else
-  ! IGNORE
-  call params%reset_c_ptr( c_null_ptr)
-#endif
-end function atlas_TransParameters__ctor
 
 subroutine atlas_Trans__delete( this )
   use atlas_trans_c_binding
@@ -184,22 +138,6 @@ subroutine atlas_Trans__copy(this,obj_in)
 end subroutine
 
 
-
-subroutine atlas_TransParameters__delete( this )
-  use atlas_trans_c_binding
-  class(atlas_TransParameters), intent(inout) :: this
-#ifdef ATLAS_HAVE_TRANS
-  call atlas__TransParameters__delete(this%c_ptr());
-#else
-  ! IGNORE
-#endif
-end subroutine
-
-
-subroutine atlas_TransParameters__copy(this,obj_in)
-  class(atlas_TransParameters), intent(inout) :: this
-  class(fckit_refcounted), target, intent(in) :: obj_in
-end subroutine
 
 function handle( this )
   use atlas_trans_c_binding
@@ -287,56 +225,23 @@ function grid( this )
 #endif
 end function
 
-subroutine dirtrans_fieldset_nodes(this, gp, gpfields, sp, spfields, parameters)
-  use atlas_trans_c_binding
-  use atlas_functionspace_module, only: atlas_Functionspace
-  use atlas_fieldset_module, only: atlas_FieldSet
-  use atlas_field_module, only: atlas_Field
-  class(atlas_Trans), intent(in) :: this
-  class(atlas_FunctionSpace), intent(in)  :: gp
-  class(atlas_FieldSet), intent(in)  :: gpfields
-  class(atlas_FunctionSpace), intent(in)  :: sp
-  class(atlas_FieldSet), intent(inout) :: spfields
-  class(atlas_TransParameters), intent(in), optional  :: parameters
-#ifdef ATLAS_HAVE_TRANS
-  type(atlas_TransParameters) :: p
 
-  if( present(parameters) ) then
-    call p%reset_c_ptr( parameters%c_ptr() )
-  else
-    p = atlas_TransParameters()
-  endif
-
-  call atlas__Trans__dirtrans_fieldset_nodes( this%c_ptr(),     &
-    &                          gp%c_ptr(), &
-    &                          gpfields%c_ptr(), &
-    &                          sp%c_ptr(), &
-    &                          spfields%c_ptr(), &
-    &                          p%c_ptr() )
-
-  if( .not. present(parameters) ) then
-    call atlas_TransParameters__delete(p)
-  endif
-#else
-  THROW_ERROR
-#endif
-end subroutine dirtrans_fieldset_nodes
-
-subroutine dirtrans_fieldset(this, gpfields, spfields, parameters)
+subroutine dirtrans_fieldset(this, gpfields, spfields, config)
   use atlas_trans_c_binding
   use atlas_fieldset_module, only: atlas_FieldSet
   use atlas_field_module, only: atlas_Field
+  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
   class(atlas_FieldSet), intent(in)  :: gpfields
   class(atlas_FieldSet), intent(inout) :: spfields
-  class(atlas_TransParameters), intent(in), optional  :: parameters
+  class(atlas_Config), intent(in), optional  :: config
 #ifdef ATLAS_HAVE_TRANS
-  type(atlas_TransParameters) :: p
+  type(atlas_Config) :: p
 
-  if( present(parameters) ) then
-    call p%reset_c_ptr( parameters%c_ptr() )
+  if( present(config) ) then
+    call p%reset_c_ptr( config%c_ptr() )
   else
-    p = atlas_TransParameters()
+    p = atlas_Config()
   endif
 
   call atlas__Trans__dirtrans_fieldset( this%c_ptr(),     &
@@ -344,64 +249,31 @@ subroutine dirtrans_fieldset(this, gpfields, spfields, parameters)
     &                          spfields%c_ptr(), &
     &                          p%c_ptr() )
 
-  if( .not. present(parameters) ) then
-    call atlas_TransParameters__delete(p)
+  if( .not. present(config) ) then
+    call p%final()
   endif
 #else
   THROW_ERROR
 #endif
 end subroutine dirtrans_fieldset
 
-subroutine invtrans_fieldset_nodes(this, sp, spfields, gp, gpfields, parameters)
-  use atlas_trans_c_binding
-  use atlas_functionspace_module, only: atlas_Functionspace
-  use atlas_fieldset_module, only: atlas_FieldSet
-  use atlas_field_module, only: atlas_Field
-  class(atlas_Trans), intent(in) :: this
-  class(atlas_FunctionSpace), intent(in)  :: sp
-  class(atlas_FieldSet), intent(in)  :: spfields
-  class(atlas_FunctionSpace), intent(in) :: gp
-  class(atlas_FieldSet), intent(inout) :: gpfields
-  class(atlas_TransParameters), intent(in), optional  :: parameters
-#ifdef ATLAS_HAVE_TRANS
-  type(atlas_TransParameters) :: p
 
-  if( present(parameters) ) then
-    call p%reset_c_ptr( parameters%c_ptr() )
-  else
-    p = atlas_TransParameters()
-  endif
-
-  call atlas__Trans__invtrans_fieldset_nodes( this%c_ptr(),     &
-    &                          sp%c_ptr(), &
-    &                          spfields%c_ptr(), &
-    &                          gp%c_ptr(), &
-    &                          gpfields%c_ptr(), &
-    &                          p%c_ptr() )
-
-  if( .not. present(parameters) ) then
-    call atlas_TransParameters__delete(p)
-  endif
-#else
-  THROW_ERROR
-#endif
-end subroutine invtrans_fieldset_nodes
-
-subroutine invtrans_fieldset(this, spfields, gpfields, parameters)
+subroutine invtrans_fieldset(this, spfields, gpfields, config)
   use atlas_trans_c_binding
   use atlas_fieldset_module, only: atlas_FieldSet
   use atlas_field_module, only: atlas_Field
+  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
   class(atlas_FieldSet), intent(in)  :: spfields
   class(atlas_FieldSet), intent(inout) :: gpfields
-  class(atlas_TransParameters), intent(in), optional  :: parameters
+  class(atlas_Config), intent(in), optional  :: config
 #ifdef ATLAS_HAVE_TRANS
-  type(atlas_TransParameters) :: p
+  type(atlas_Config) :: p
 
-  if( present(parameters) ) then
-    call p%reset_c_ptr( parameters%c_ptr() )
+  if( present(config) ) then
+    call p%reset_c_ptr( config%c_ptr() )
   else
-    p = atlas_TransParameters()
+    p = atlas_Config()
   endif
 
   call atlas__Trans__invtrans_fieldset( this%c_ptr(),     &
@@ -409,63 +281,29 @@ subroutine invtrans_fieldset(this, spfields, gpfields, parameters)
     &                          gpfields%c_ptr(), &
     &                          p%c_ptr() )
 
-  if( .not. present(parameters) ) then
-    call atlas_TransParameters__delete(p)
+  if( .not. present(config) ) then
+    call p%final()
   endif
 #else
   THROW_ERROR
 #endif
 end subroutine invtrans_fieldset
 
-
-subroutine dirtrans_field_nodes(this, gp, gpfield, sp, spfield, parameters)
-  use atlas_trans_c_binding
-  use atlas_functionspace_module, only: atlas_Functionspace
-  use atlas_field_module, only: atlas_Field
-  class(atlas_Trans), intent(in) :: this
-  class(atlas_FunctionSpace), intent(in)  :: gp
-  class(atlas_Field), intent(in)  :: gpfield
-  class(atlas_FunctionSpace), intent(in) :: sp
-  class(atlas_Field), intent(inout) :: spfield
-  class(atlas_TransParameters), intent(in), optional  :: parameters
-#ifdef ATLAS_HAVE_TRANS
-  type(atlas_TransParameters) :: p
-
-  if( present(parameters) ) then
-    call p%reset_c_ptr( parameters%c_ptr() )
-  else
-    p = atlas_TransParameters()
-  endif
-
-  call atlas__Trans__dirtrans_field_nodes( this%c_ptr(), &
-    &                          gp%c_ptr(), &
-    &                          gpfield%c_ptr(), &
-    &                          sp%c_ptr(), &
-    &                          spfield%c_ptr(), &
-    &                          p%c_ptr() )
-
-  if( .not. present(parameters) ) then
-    call atlas_TransParameters__delete(p)
-  endif
-#else
-  THROW_ERROR
-#endif
-end subroutine dirtrans_field_nodes
-
-subroutine dirtrans_field(this, gpfield, spfield, parameters)
+subroutine dirtrans_field(this, gpfield, spfield, config)
   use atlas_trans_c_binding
   use atlas_field_module, only: atlas_Field
+  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
   class(atlas_Field), intent(in)  :: gpfield
   class(atlas_Field), intent(inout) :: spfield
-  class(atlas_TransParameters), intent(in), optional  :: parameters
+  class(atlas_Config), intent(in), optional  :: config
 #ifdef ATLAS_HAVE_TRANS
-  type(atlas_TransParameters) :: p
+  type(atlas_Config) :: p
 
-  if( present(parameters) ) then
-    call p%reset_c_ptr( parameters%c_ptr() )
+  if( present(config) ) then
+    call p%reset_c_ptr( config%c_ptr() )
   else
-    p = atlas_TransParameters()
+    p = atlas_Config()
   endif
 
   call atlas__Trans__dirtrans_field( this%c_ptr(), &
@@ -473,44 +311,40 @@ subroutine dirtrans_field(this, gpfield, spfield, parameters)
     &                          spfield%c_ptr(), &
     &                          p%c_ptr() )
 
-  if( .not. present(parameters) ) then
-    call atlas_TransParameters__delete(p)
+  if( .not. present(config) ) then
+    call p%final()
   endif
 #else
   THROW_ERROR
 #endif
 end subroutine dirtrans_field
 
-subroutine dirtrans_wind2vordiv_field(this, gp, gpwind, sp, spvor, spdiv, parameters)
+subroutine dirtrans_wind2vordiv_field(this, gpwind, spvor, spdiv, config)
   use atlas_trans_c_binding
-  use atlas_functionspace_module, only: atlas_Functionspace
   use atlas_field_module, only: atlas_Field
+  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
-  class(atlas_FunctionSpace), intent(in)  :: gp
   type(atlas_Field), intent(in)  :: gpwind
-  class(atlas_FunctionSpace), intent(in) :: sp
   type(atlas_Field), intent(inout) :: spvor
   type(atlas_Field), intent(inout) :: spdiv
-  type(atlas_TransParameters), intent(in), optional  :: parameters
+  type(atlas_Config), intent(in), optional  :: config
 #ifdef ATLAS_HAVE_TRANS
-  type(atlas_TransParameters) :: p
+  type(atlas_Config) :: p
 
-  if( present(parameters) ) then
-    call p%reset_c_ptr( parameters%c_ptr() )
+  if( present(config) ) then
+    call p%reset_c_ptr( config%c_ptr() )
   else
-    p = atlas_TransParameters()
+    p = atlas_Config()
   endif
 
-  call atlas__Trans__dirtrans_wind2vordiv_field_nodes( this%c_ptr(), &
-    &                          gp%c_ptr(), &
+  call atlas__Trans__dirtrans_wind2vordiv_field( this%c_ptr(), &
     &                          gpwind%c_ptr(), &
-    &                          sp%c_ptr(), &
     &                          spvor%c_ptr(), &
     &                          spdiv%c_ptr(), &
     &                          p%c_ptr() )
 
-  if( .not. present(parameters) ) then
-    call atlas_TransParameters__delete(p)
+  if( .not. present(config) ) then
+    call p%final()
   endif
 #else
   THROW_ERROR
@@ -518,54 +352,22 @@ subroutine dirtrans_wind2vordiv_field(this, gp, gpwind, sp, spvor, spdiv, parame
 
 end subroutine dirtrans_wind2vordiv_field
 
-subroutine invtrans_field_nodes(this, sp, spfield, gp, gpfield, parameters)
-  use atlas_trans_c_binding
-  use atlas_functionspace_module, only: atlas_Functionspace
-  use atlas_field_module, only: atlas_Field
-  class(atlas_Trans), intent(in) :: this
-  class(atlas_FunctionSpace), intent(in)  :: sp
-  class(atlas_Field), intent(in)  :: spfield
-  class(atlas_FunctionSpace), intent(in)  :: gp
-  class(atlas_Field), intent(inout) :: gpfield
-  class(atlas_TransParameters), intent(in), optional  :: parameters
-#ifdef ATLAS_HAVE_TRANS
-  type(atlas_TransParameters) :: p
 
-  if( present(parameters) ) then
-    call p%reset_c_ptr( parameters%c_ptr() )
-  else
-    p = atlas_TransParameters()
-  endif
-
-  call atlas__Trans__invtrans_field_nodes( this%c_ptr(), &
-    &                          sp%c_ptr(), &
-    &                          spfield%c_ptr(), &
-    &                          gp%c_ptr(), &
-    &                          gpfield%c_ptr(), &
-    &                          p%c_ptr() )
-
-  if( .not. present(parameters) ) then
-    call atlas_TransParameters__delete(p)
-  endif
-#else
-  THROW_ERROR
-#endif
-end subroutine invtrans_field_nodes
-
-subroutine invtrans_field(this, spfield, gpfield, parameters)
+subroutine invtrans_field(this, spfield, gpfield, config)
   use atlas_trans_c_binding
   use atlas_field_module, only: atlas_Field
+  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
   class(atlas_Field), intent(in)  :: spfield
   class(atlas_Field), intent(inout) :: gpfield
-  class(atlas_TransParameters), intent(in), optional  :: parameters
+  class(atlas_Config), intent(in), optional  :: config
 #ifdef ATLAS_HAVE_TRANS
-  type(atlas_TransParameters) :: p
+  type(atlas_Config) :: p
 
-  if( present(parameters) ) then
-    call p%reset_c_ptr( parameters%c_ptr() )
+  if( present(config) ) then
+    call p%reset_c_ptr( config%c_ptr() )
   else
-    p = atlas_TransParameters()
+    p = atlas_Config()
   endif
 
   call atlas__Trans__invtrans_field( this%c_ptr(), &
@@ -573,8 +375,8 @@ subroutine invtrans_field(this, spfield, gpfield, parameters)
     &                          gpfield%c_ptr(), &
     &                          p%c_ptr() )
 
-  if( .not. present(parameters) ) then
-    call atlas_TransParameters__delete(p)
+  if( .not. present(config) ) then
+    call p%final()
   endif
 #else
   THROW_ERROR
@@ -582,36 +384,32 @@ subroutine invtrans_field(this, spfield, gpfield, parameters)
 end subroutine invtrans_field
 
 
-subroutine invtrans_vordiv2wind_field(this, sp, spvor, spdiv, gp, gpwind, parameters)
+subroutine invtrans_vordiv2wind_field(this, spvor, spdiv, gpwind, config)
   use atlas_trans_c_binding
-  use atlas_functionspace_module, only: atlas_Functionspace
   use atlas_field_module, only: atlas_Field
+  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
-  class(atlas_FunctionSpace), intent(in)  :: sp
   class(atlas_Field), intent(in)  :: spvor
   class(atlas_Field), intent(in)  :: spdiv
-  class(atlas_FunctionSpace), intent(in)  :: gp
   class(atlas_Field), intent(inout) :: gpwind
-  class(atlas_TransParameters), intent(in), optional  :: parameters
+  class(atlas_Config), intent(in), optional  :: config
 #ifdef ATLAS_HAVE_TRANS
-  type(atlas_TransParameters) :: p
+  type(atlas_Config) :: p
 
-  if( present(parameters) ) then
-    call p%reset_c_ptr( parameters%c_ptr() )
+  if( present(config) ) then
+    call p%reset_c_ptr( config%c_ptr() )
   else
-    p = atlas_TransParameters()
+    p = atlas_Config()
   endif
 
-  call atlas__Trans__invtrans_vordiv2wind_field_nodes( this%c_ptr(), &
-    &                          sp%c_ptr(), &
+  call atlas__Trans__invtrans_vordiv2wind_field( this%c_ptr(), &
     &                          spvor%c_ptr(), &
     &                          spdiv%c_ptr(), &
-    &                          gp%c_ptr(), &
     &                          gpwind%c_ptr(), &
     &                          p%c_ptr() )
 
-  if( .not. present(parameters) ) then
-    call atlas_TransParameters__delete(p)
+  if( .not. present(config) ) then
+    call p%final()
   endif
 #else
   THROW_ERROR
@@ -620,26 +418,25 @@ subroutine invtrans_vordiv2wind_field(this, sp, spvor, spdiv, gp, gpwind, parame
 end subroutine invtrans_vordiv2wind_field
 
 
-subroutine invtrans_grad_field_nodes(this, sp, spfield, gp, gpfield)
+subroutine invtrans_grad_field(this, spfield, gpfield)
   use atlas_trans_c_binding
-  use atlas_functionspace_module, only: atlas_Functionspace
   use atlas_field_module, only: atlas_Field
+  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
-  class(atlas_FunctionSpace), intent(in)  :: sp
   class(atlas_Field), intent(in)  :: spfield
-  class(atlas_FunctionSpace), intent(in)  :: gp
   class(atlas_Field), intent(inout) :: gpfield
 #ifdef ATLAS_HAVE_TRANS
-
-  call atlas__Trans__invtrans_grad_field_nodes( this%c_ptr(), &
-    &                          sp%c_ptr(), &
+  type(atlas_Config) :: config
+  config = atlas_Config()
+  call atlas__Trans__invtrans_grad_field( this%c_ptr(), &
     &                          spfield%c_ptr(), &
-    &                          gp%c_ptr(), &
-    &                          gpfield%c_ptr() )
+    &                          gpfield%c_ptr(), &
+    &                          config%c_ptr())
+  call config%final()
 #else
   THROW_ERROR
 #endif
-end subroutine invtrans_grad_field_nodes
+end subroutine invtrans_grad_field
 
 
 
