@@ -80,8 +80,8 @@ public:
 
     const mesh::Halo& halo() const { return halo_; }
 
-    void haloExchange( FieldSet& ) const;
-    void haloExchange( Field& ) const;
+    void haloExchange( FieldSet&, bool on_device = false ) const;
+    void haloExchange( Field&, bool on_device = false ) const;
     const parallel::HaloExchange& halo_exchange() const;
 
     void gather( const FieldSet&, FieldSet& ) const;
@@ -453,8 +453,8 @@ public:
 
     const mesh::Halo& halo() const;
 
-    void haloExchange( FieldSet& ) const;
-    void haloExchange( Field& ) const;
+    void haloExchange( FieldSet&, bool on_device = false ) const;
+    void haloExchange( Field&, bool on_device = false ) const;
     const parallel::HaloExchange& halo_exchange() const;
 
     void gather( const FieldSet&, FieldSet& ) const;

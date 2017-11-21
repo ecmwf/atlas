@@ -13,13 +13,14 @@
 #include <vector>
 #include <array>
 #include <type_traits>
+#include <utility>
 #include "atlas/library/config.h"
 #include "atlas/array_fwd.h"
 #include "atlas/array.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
-#include "atlas/array/helpers/ArrayInitializer.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------
@@ -137,7 +138,7 @@ struct default_layout_t {
       template < typename StorageInfoPtr>
       ATLAS_HOST_DEVICE constexpr static size_t apply(StorageInfoPtr a) {
           static_assert((::gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type >::value ), "Error: not a storage_info");
-          return a->template dim<Idx>();
+          return a->template unaligned_dim<Idx>();
       }
   };
 
@@ -150,52 +151,58 @@ struct default_layout_t {
   template <typename Value, typename LayoutMap, typename... UInts>
   static gridtools::storage_traits::data_store_t<
       Value,
-      gridtools::storage_traits::storage_info_t<
+      gridtools::storage_traits::custom_layout_storage_info_t<
           0,
-          get_pack_size<UInts...>::type::value,
-          typename ::gridtools::zero_halo<get_pack_size<UInts...>::type::value>::type,
-          LayoutMap
+          LayoutMap,
+          ::gridtools::zero_halo<get_pack_size<UInts...>::type::value>
       >
    >*
    create_gt_storage(UInts... dims) {
       static_assert((sizeof...(dims) > 0), "Error: can not create storages without any dimension");
 
       constexpr static unsigned int rank = get_pack_size<UInts...>::type::value;
-      typedef gridtools::storage_traits::storage_info_t<
+      typedef gridtools::storage_traits::custom_layout_storage_info_t<
           0,
-          rank,
-          typename ::gridtools::zero_halo<rank>::type,
-          LayoutMap
+          LayoutMap,
+          ::gridtools::zero_halo<rank>
       > storage_info_ty;
       typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
-      storage_info_ty si(dims...);
-      data_store_t* ds = new data_store_t(si);
-      ds->allocate();
+      data_store_t* ds;
+      if(::gridtools::accumulate(::gridtools::multiplies(), dims...) == 0) { 
+          ds = new data_store_t();
+      }
+      else {
+          storage_info_ty si(dims...);
+          ds = new data_store_t(si);
+      }
       return ds;
   }
 
   template <typename Value, unsigned int Rank>
   static gridtools::storage_traits::data_store_t<
-      Value, gridtools::storage_traits::storage_info_t<
-                 0, Rank,
-                 typename ::gridtools::zero_halo<Rank>::type,
-                 typename default_layout_t<Rank>::type > >*
+      Value, gridtools::storage_traits::storage_info_t<0, Rank> >*
   wrap_gt_storage(
       Value* data,
       std::array<unsigned int, Rank>&& shape, std::array<unsigned int, Rank>&& strides)
   {
       static_assert((Rank > 0), "Error: can not create storages without any dimension");
       typedef gridtools::storage_traits::storage_info_t<
-          0, Rank, typename ::gridtools::zero_halo<Rank>::type,
-          typename default_layout_t<Rank>::type> storage_info_ty;
+          0, Rank, ::gridtools::zero_halo<Rank> > storage_info_ty;
       typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
       storage_info_ty si(shape, strides);
       data_store_t* ds = new data_store_t(si, data);
+
       return ds;
   }
 
+  constexpr size_t zero(std::size_t) {return 0;}
+
+  template<size_t ... Is>
+  ArrayShape make_null_strides(::gridtools::gt_integer_sequence<size_t, Is...>) {
+      return make_strides({zero(Is)...});
+  }
 
     template < typename UInt >
     struct my_apply_gt_integer_sequence {
@@ -227,21 +234,29 @@ struct default_layout_t {
   ArraySpec make_spec(DataStore* gt_data_store_ptr, Dims...dims) {
       static_assert((::gridtools::is_data_store<DataStore>::value), "Internal Error: passing a non GT data store");
 
-      auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr();
-      using Layout = typename DataStore::storage_info_t::Layout;
+      if(gt_data_store_ptr->valid()) {
+          auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr().get();
+          using Layout = typename DataStore::storage_info_t::layout_t;
+          using Alignment = typename DataStore::storage_info_t::alignment_t;
 
-      using seq = my_apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
+          using seq = my_apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
 
-      return ArraySpec(
-          ArrayShape{(unsigned long)dims...},
-          seq::template apply<
+          ArraySpec spec(
+              ArrayShape{(unsigned long)dims...},
+              seq::template apply<
                         ArrayStrides,
                         get_stride_component<unsigned long, typename get_pack_size<Dims...>::type>::template get_component>(
                         storage_info_ptr),
-          seq::template apply<
+              seq::template apply<
                         ArrayLayout,
-                        get_layout_map_component<unsigned long, Layout>::template get_component>()
-        );
+                        get_layout_map_component<unsigned long, Layout>::template get_component>(),
+              ArrayAlignment( Alignment::value )
+          );
+          ASSERT( spec.allocatedSize() == storage_info_ptr->padded_total_length() );
+          return spec;
+      } else {
+          return ArraySpec( make_shape({dims...}), make_null_strides(typename ::gridtools::make_gt_integer_sequence<size_t, sizeof...(dims)>::type()));
+      }
   }
 
 //------------------------------------------------------------------------------

@@ -119,50 +119,48 @@ if( HAVE_TESSELATION )
     endif()
 endif()
 
-### FIND GRIDTOOLS STORAGE
+### GridTools storage module
+
 ecbuild_add_option(
-    FEATURE GRIDTOOLS_STORAGE
-    DESCRIPTION "Arrays internally use GridTools storage layer"
-    REQUIRED_PACKAGES "gridtools_storage" )
+  FEATURE GRIDTOOLS_STORAGE
+  DESCRIPTION "Arrays internally use GridTools storage layer"
+  REQUIRED_PACKAGES "PROJECT gridtools_storage" )
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
 
-  set( ENABLE_GPU "OFF" CACHE BOOL "Compile with GPU support (CUDA)" )
+  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
+  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
 
-    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
-    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
+  if( GRIDTOOLS_HAVE_CUDA )
+    ecbuild_info( "Gridtools found with CUDA support" )
+    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
+    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
+  endif()
 
-    if(ENABLE_GPU)
-        set( CUDA_USE_STATIC_CUDA_RUNTIME OFF )
-        find_package(CUDA REQUIRED)
+endif()
 
-        string(REPLACE "." "" CUDA_VERSION ${CUDA_VERSION})
+### OpenACC
 
-        add_definitions(-D_FORCE_INLINES) # Question to Carlos: Is this needed for nvcc only?
+set( ATLAS_ACC_CAPABLE FALSE )
+if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+  if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI" )
+    set( ATLAS_ACC_CAPABLE TRUE )
+  endif()
+endif()
 
-        set(CUDA_PROPAGATE_HOST_FLAGS ON)
-        set(CUDA_NVCC_FLAGS "--std=c++11" "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
-        if( NOT ${CUDA_VERSION} VERSION_GREATER "60")
-            message(FATAL_ERROR "CUDA 6.0 or lower does not support C++11 (disabling)")
-        endif()
+ecbuild_add_option( FEATURE ACC
+                    DESCRIPTION  "OpenACC capable data structures"
+                    CONDITION ATLAS_ACC_CAPABLE )
 
-        set( CUDA_ARCH "sm_35" CACHE STRING "Compute capability for CUDA" )
-        set( CUDA_SEPARABLE_COMPILATION ON)
-
-        include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
-
-        set(CUDA_SEPARABLE_COMPILATION ON)
-        # adding the additional nvcc flags
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-arch=${CUDA_ARCH}" "-Xcudafe" "--diag_suppress=dupl_calling_convention")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-Xcudafe" "--diag_suppress=code_is_unreachable" "-Xcudafe")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=implicit_return_from_non_void_function" "-Xcudafe")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=calling_convention_not_allowed" "-Xcudafe")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=conflicting_calling_conventions")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-Xcompiler" "-fPIC")
-
-        set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
-        set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
+if( ATLAS_HAVE_ACC )
+  if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI" )
+    set( ACC_Fortran_FLAGS -acc -ta=tesla,cuda${CUDA_VERSION},nordc )
+    set( ACC_C_FLAGS ${ACC_Fortran_FLAGS} )
+    find_program( ACC_C_COMPILER NAMES pgcc HINTS ${PGI_DIR} ENV PGI_DIR PATH_SUFFIXES bin )
+    if( NOT ACC_C_COMPILER )
+      ecbuild_error( "Could not find OpenACC capable C compiler" )
     endif()
+  endif()
 endif()
 
 ### Eigen
@@ -243,18 +241,18 @@ set( ATLAS_DESCRIPTION "Atlas framework for parallel mesh datastructures" )
 ecbuild_pkgconfig()
 
 ecbuild_pkgconfig(
-  NAME             atlas-c++
-  LANGUAGES        CXX
-  LIBRARIES        atlas
+ NAME             atlas-c++
+ LANGUAGES        CXX
+ LIBRARIES        atlas
 )
 
 if( ATLAS_HAVE_FORTRAN )
-  ecbuild_pkgconfig(
-    NAME             atlas-fortran
-    LANGUAGES        Fortran
-    LIBRARIES        atlas_f
-    NO_PRIVATE_INCLUDE_DIRS
-  )
+ ecbuild_pkgconfig(
+   NAME             atlas-fortran
+   LANGUAGES        Fortran
+   LIBRARIES        atlas_f
+   NO_PRIVATE_INCLUDE_DIRS
+ )
 endif()
 
 ################################################################################

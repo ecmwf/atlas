@@ -77,12 +77,15 @@ public:
     #define FROM_FORTRAN
     #define TO_FORTRAN
 #endif
-  using data_view_t = gridtools::data_view_tt<Value, Rank>;
+  using data_view_t = gridtools::data_view_tt<Value, Rank, ::gridtools::access_mode::ReadWrite>;
 
 public:
 
     IndexView(data_view_t data_view) : gt_data_view_(data_view) {
-      size_ = gt_data_view_.storage_info().size();
+        if(data_view.valid())
+            size_ = gt_data_view_.storage_info().total_length();
+        else
+            size_ = 0;
     }
 
     template < typename... Coords >

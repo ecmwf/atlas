@@ -142,7 +142,10 @@ void IrregularConnectivityImpl::clear()
   }
   else
   {
-      std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a=0;});
+      data_[_values_] = nullptr;
+      data_[_displs_] = nullptr;
+      data_[_counts_] = nullptr;
+//std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a=0;});
   }
   maxcols_ = 0;
   mincols_ = std::numeric_limits<size_t>::max();
@@ -399,14 +402,14 @@ bool IrregularConnectivityImpl::valid() const {
     std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->valid();});
     return res;
 }
-bool IrregularConnectivityImpl::isOnHost() const {
+bool IrregularConnectivityImpl::hostNeedsUpdate() const {
     bool res=true;
-    std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->isOnHost();});
+    std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->hostNeedsUpdate();});
     return res;
 }
-bool IrregularConnectivityImpl::isOnDevice() const {
+bool IrregularConnectivityImpl::deviceNeedsUpdate() const {
     bool res=true;
-    std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->isOnDevice();});
+    std::for_each(data_.begin(), data_.end(), [&](array::Array* a){ res &= a->deviceNeedsUpdate();});
     return res;
 }
 
@@ -518,18 +521,18 @@ bool MultiBlockConnectivityImpl::valid() const {
       block_cols_->valid();
 }
 
-bool MultiBlockConnectivityImpl::isOnHost() const {
+bool MultiBlockConnectivityImpl::hostNeedsUpdate() const {
   return
-      IrregularConnectivityImpl::isOnHost() &&
-      block_displs_->isOnHost() &&
-      block_cols_->isOnHost();
+      IrregularConnectivityImpl::hostNeedsUpdate() &&
+      block_displs_->hostNeedsUpdate() &&
+      block_cols_->hostNeedsUpdate();
 }
 
-bool MultiBlockConnectivityImpl::isOnDevice() const {
+bool MultiBlockConnectivityImpl::deviceNeedsUpdate() const {
   return
-      IrregularConnectivityImpl::isOnDevice() &&
-      block_displs_->isOnDevice() &&
-      block_cols_->isOnDevice();
+      IrregularConnectivityImpl::deviceNeedsUpdate() &&
+      block_displs_->deviceNeedsUpdate() &&
+      block_cols_->deviceNeedsUpdate();
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -872,12 +875,12 @@ bool BlockConnectivityImpl::valid() const {
     return values_->valid();
 }
 
-bool BlockConnectivityImpl::isOnHost() const {
-    return values_->isOnHost();
+bool BlockConnectivityImpl::hostNeedsUpdate() const {
+    return values_->hostNeedsUpdate();
 }
 
-bool BlockConnectivityImpl::isOnDevice() const {
-    return values_->isOnDevice();
+bool BlockConnectivityImpl::deviceNeedsUpdate() const {
+    return values_->deviceNeedsUpdate();
 }
 
 //------------------------------------------------------------------------------------------------------

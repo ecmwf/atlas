@@ -11,6 +11,7 @@
 #pragma once
 
 #include "atlas/array/ArrayUtil.h"
+#include "atlas/array/gridtools/GridToolsTraits.h"
 
 //------------------------------------------------------------------------------
 
@@ -29,6 +30,7 @@ struct GridToolsDataStore : ArrayDataStore
     }
 
     void cloneToDevice() const {
+        assert(data_store_);
         data_store_->clone_to_device();
     }
 
@@ -44,12 +46,12 @@ struct GridToolsDataStore : ArrayDataStore
         data_store_->sync();
     }
 
-    bool isOnHost() const {
-        return data_store_->is_on_host();
+    bool hostNeedsUpdate() const {
+        return data_store_->host_needs_update();
     }
 
-    bool isOnDevice() const {
-        return data_store_->is_on_device();
+    bool deviceNeedsUpdate() const {
+        return data_store_->device_needs_update();
     }
 
     void reactivateDeviceWriteViews() const {
@@ -62,6 +64,18 @@ struct GridToolsDataStore : ArrayDataStore
 
     void* voidDataStore() {
         return static_cast<void*>(const_cast<gt_DataStore*>(data_store_));
+    }
+
+    void* voidHostData() {
+        return ::gridtools::make_host_view<::gridtools::access_mode::ReadOnly>(*data_store_).data();
+    }
+
+    void* voidDeviceData() {
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+        return ::gridtools::make_device_view<::gridtools::access_mode::ReadOnly>(*data_store_).data();
+#else
+        return ::gridtools::make_host_view<::gridtools::access_mode::ReadOnly>(*data_store_).data();
+#endif
     }
 
 private:

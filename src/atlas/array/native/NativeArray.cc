@@ -5,6 +5,7 @@
 #include "atlas/array/native/NativeDataStore.h"
 
 #include "atlas/array/helpers/ArrayInitializer.h"
+#include "atlas/array/helpers/ArrayWriter.h"
 
 using namespace atlas::array::helpers;
 
@@ -175,17 +176,19 @@ template< typename Value >
 void ArrayT<Value>::resize(size_t size1, size_t size2, size_t size3, size_t size4, size_t size5) { resize( make_shape(size1,size2,size3,size4,size5) ); }
 
 template< typename Value >
-void ArrayT<Value>::dump(std::ostream& os) const {
-  if( not contiguous() ) NOTIMP;
-
-  Value *data = make_storageview<Value>(*this).data();
-
-  for(size_t i=0; i<size(); ++i) {
-      os << data[i] << " ";
-      if( (i+1)%10 == 0 )
-          os << std::endl;
+void ArrayT<Value>::dump(std::ostream& out) const {
+  switch( rank() ) {
+    case 1: make_host_view<Value,1,Intent::ReadOnly>(*this).dump(out); break;
+    case 2: make_host_view<Value,2,Intent::ReadOnly>(*this).dump(out); break;
+    case 3: make_host_view<Value,3,Intent::ReadOnly>(*this).dump(out); break;
+    case 4: make_host_view<Value,4,Intent::ReadOnly>(*this).dump(out); break;
+    case 5: make_host_view<Value,5,Intent::ReadOnly>(*this).dump(out); break;
+    case 6: make_host_view<Value,6,Intent::ReadOnly>(*this).dump(out); break;
+    case 7: make_host_view<Value,7,Intent::ReadOnly>(*this).dump(out); break;
+    case 8: make_host_view<Value,8,Intent::ReadOnly>(*this).dump(out); break;
+    case 9: make_host_view<Value,9,Intent::ReadOnly>(*this).dump(out); break;
+    default: NOTIMP;
   }
-  os << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -198,59 +201,10 @@ size_t ArrayT<Value>::footprint() const {
   return size;
 }
 
-
-template <typename DATATYPE> DATATYPE const* Array::host_data() const {
-  return array::make_host_storageview<DATATYPE>(*this).data();
+template <typename Value>
+bool ArrayT<Value>::accMap() const {
+  return false;
 }
-template <typename DATATYPE> DATATYPE*       Array::host_data() {
-  return array::make_host_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE const* Array::device_data() const {
-  return array::make_device_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE*       Array::device_data() {
-  return array::make_device_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE const* Array::data() const {
-  return array::make_host_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE*       Array::data() {
-  return array::make_host_storageview<DATATYPE>(*this).data();
-}
-
-template int*                 Array::host_data<int>();
-template int const*           Array::host_data<int>() const;
-template long*                Array::host_data<long>();
-template long const*          Array::host_data<long>() const;
-template long unsigned*       Array::host_data<long unsigned>();
-template long unsigned const* Array::host_data<long unsigned>() const;
-template float*               Array::host_data<float>();
-template float const*         Array::host_data<float>() const;
-template double*              Array::host_data<double>();
-template double const*        Array::host_data<double>() const;
-
-template int*                 Array::device_data<int>();
-template int const*           Array::device_data<int>() const;
-template long*                Array::device_data<long>();
-template long const*          Array::device_data<long>() const;
-template long unsigned*       Array::device_data<long unsigned>();
-template long unsigned const* Array::device_data<long unsigned>() const;
-template float*               Array::device_data<float>();
-template float const*         Array::device_data<float>() const;
-template double*              Array::device_data<double>();
-template double const*        Array::device_data<double>() const;
-
-template int*                 Array::data<int>();
-template int const*           Array::data<int>() const;
-template long*                Array::data<long>();
-template long const*          Array::data<long>() const;
-template long unsigned*       Array::data<long unsigned>();
-template long unsigned const* Array::data<long unsigned>() const;
-template float*               Array::data<float>();
-template float const*         Array::data<float>() const;
-template double*              Array::data<double>();
-template double const*        Array::data<double>() const;
-
 
 //------------------------------------------------------------------------------
 

@@ -13,6 +13,19 @@
 #include "atlas/array/MakeView.h"
 #include "tests/AtlasTestEnvironment.h"
 #include "eckit/testing/Test.h"
+#include "eckit/memory/SharedPtr.h"
+
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#define PADDED 1
+#else
+#define PADDED 0
+#endif
+#else
+#define PADDED 0
+#endif
+#define NOT_PADDED 1-PADDED
+
 
 using namespace atlas::array;
 using namespace eckit::testing;
@@ -74,6 +87,7 @@ CASE("test_make_view") {
 }
 #endif
 
+
 CASE("test_localview") {
   Array* ds = Array::create<double>(8ul, 4ul, 2ul);
   auto hv = make_host_view<double, 3>(*ds);
@@ -109,20 +123,19 @@ CASE("test_localview") {
 CASE("test_array_shape") {
   ArrayShape as{2, 3};
   Array* ds = Array::create<double>(as);
-  auto hv = atlas::array::gridtools::make_gt_host_view<double, 2>(*ds);
+  auto gt_hv = atlas::array::gridtools::make_gt_host_view<double, 2>(*ds);
   atlas::array::ArrayView<double, 2> atlas_hv = make_host_view<double, 2>(*ds);
 
-  hv(1, 1) = 4.5;
+  gt_hv(1, 1) = 4.5;
 
-  EXPECT(hv(1, 1) == 4.5);
+  EXPECT(gt_hv(1, 1) == 4.5);
   EXPECT(atlas_hv(1, 1) == 4.5);
 
   EXPECT(ds->size() == 6);
   EXPECT(ds->rank() == 2);
-  EXPECT(ds->stride(0) == 3);
-  EXPECT(ds->stride(1) == 1);
-  EXPECT(ds->contiguous() == true);
-
+  EXPECT(ds->stride(0) == gt_hv.storage_info().stride<0>());
+  EXPECT(ds->stride(1) == gt_hv.storage_info().stride<1>());
+  EXPECT(ds->contiguous() == NOT_PADDED );
   delete ds;
 }
 #endif
@@ -138,10 +151,11 @@ CASE("test_spec") {
   EXPECT(ds->spec().shapef()[1] == 5);
   EXPECT(ds->spec().shapef()[2] == 4);
 
-  EXPECT(ds->spec().strides()[0] == 6 * 5);
-  EXPECT(ds->spec().strides()[1] == 6);
-  EXPECT(ds->spec().strides()[2] == 1);
-
+  if( NOT_PADDED ) {
+    EXPECT(ds->spec().strides()[0] == 6 * 5);
+    EXPECT(ds->spec().strides()[1] == 6);
+    EXPECT(ds->spec().strides()[2] == 1);
+  }
   EXPECT(ds->spec().hasDefaultLayout() == true);
 
   delete ds;
@@ -157,9 +171,12 @@ CASE("test_spec_layout") {
   EXPECT(ds->spec().shapef()[0] == 6);
   EXPECT(ds->spec().shapef()[1] == 5);
   EXPECT(ds->spec().shapef()[2] == 4);
-  EXPECT(ds->spec().strides()[0] == 6 * 5);
-  EXPECT(ds->spec().strides()[1] == 6);
-  EXPECT(ds->spec().strides()[2] == 1);
+  if( NOT_PADDED ) {
+    EXPECT(ds->spec().strides()[0] == 6 * 5);
+    EXPECT(ds->spec().strides()[1] == 6);
+    EXPECT(ds->spec().strides()[2] == 1);
+    EXPECT(ds->spec().size() == ds->spec().allocatedSize());
+  }
   EXPECT(ds->spec().hasDefaultLayout() == true);
   EXPECT(ds->spec().layout()[0] == 0);
   EXPECT(ds->spec().layout()[1] == 1);
@@ -179,16 +196,17 @@ CASE("test_spec_layout_rev") {
   EXPECT(ds->spec().shapef()[0] == 4);
   EXPECT(ds->spec().shapef()[1] == 5);
   EXPECT(ds->spec().shapef()[2] == 6);
-  EXPECT(ds->spec().strides()[0] == 1);
-  EXPECT(ds->spec().strides()[1] == 4);
-  EXPECT(ds->spec().strides()[2] == 4 * 5);
+  if( NOT_PADDED ) {
+    EXPECT(ds->spec().strides()[0] == 1);
+    EXPECT(ds->spec().strides()[1] == 4);
+    EXPECT(ds->spec().strides()[2] == 4 * 5);
+  }
   EXPECT(ds->spec().hasDefaultLayout() == false);
   EXPECT(ds->spec().layout()[0] == 2);
   EXPECT(ds->spec().layout()[1] == 1);
   EXPECT(ds->spec().layout()[2] == 0);
 
   delete ds;
-
 
   EXPECT_THROWS_AS( Array::create<double>(make_shape(4,5,6,2),make_layout(0,1,3,2)), eckit::BadParameter );
 }
@@ -205,12 +223,60 @@ CASE("test_resize_throw") {
   delete ds;
 }
 
+CASE("test_copy_ctr") {
+  Array* ds = Array::create<int>(3, 2);
+  atlas::array::ArrayView<int, 2> hv = make_host_view<int, 2>(*ds);
+  hv(2, 1) = 4;
+  hv(1, 1) = 7;
+
+  atlas::array::ArrayView<int, 2> hv2(hv);
+
+  EXPECT(hv2(2, 1) == 4);
+  EXPECT(hv2(1, 1) == 7);
+
+  delete ds;
+}
+
+#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+CASE("test_copy_gt_ctr") {
+  Array* ds = Array::create<int>(3, 2);
+  atlas::array::ArrayView<int, 2> hv = make_host_view<int, 2>(*ds);
+  hv(2, 1) = 4;
+  hv(1, 1) = 7;
+
+  atlas::array::ArrayView<int, 2> hv2(hv);
+
+  EXPECT(hv2(2, 1) == 4);
+  EXPECT(hv2(1, 1) == 7);
+
+  auto dims = hv.data_view().storage_info().dims();
+  EXPECT(dims[0] == 3);
+  EXPECT(dims[1] == 2);
+
+  delete ds;
+}
+#endif
+
 CASE("test_resize") {
 
   {
     Array* ds = Array::create<double>(0);
     EXPECT(ds->size() == 0);
     ds->resize(0);
+    delete ds;
+  }
+
+  {
+    Array* ds = Array::create<double>(1);
+    EXPECT(ds->size() == 1);
+    ds->resize(2);
+    delete ds;
+  }
+
+  {
+    Array* ds = Array::create<double>(0);
+    EXPECT(ds->size() == 0);
+    ds->resize(make_shape(5));
     delete ds;
   }
 
@@ -222,6 +288,7 @@ CASE("test_resize") {
       hv(1, 2, 2) = 7.5;
     }
     ds->resize(3, 4, 5);
+
     atlas::array::ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
 
     EXPECT(ds->spec().shape()[0] == 3);
@@ -310,7 +377,11 @@ CASE("test_resize_shape") {
 CASE("test_insert") {
   Array* ds = Array::create<double>(7, 5, 8);
 
-  atlas::array::ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
+  EXPECT( ds->hostNeedsUpdate() == false );
+  auto hv = make_host_view<double, 3>(*ds);
+  hv.assign(-1.);
+
+  EXPECT( hv(0,0,0) == -1. );
   hv(1, 3, 3) = 1.5;
   hv(2, 3, 3) = 2.5;
   hv(3, 3, 3) = 3.5;
@@ -325,12 +396,13 @@ CASE("test_insert") {
   EXPECT(ds->spec().rank() == 3);
   EXPECT(ds->spec().size() == 9 * 5 * 8);
 
-  atlas::array::ArrayView<double, 3> hv2 = make_host_view<double, 3>(*ds);
+  auto hv2 = make_host_view<double, 3>(*ds);
 
   // currently we have no mechanism to invalidate the old views after an insertion into the Array
   // The original gt data store is deleted and replaced, but the former atlas::array::ArrayView keeps a pointer to it
   // wihtout noticing it has been deleted
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+  // Following statement seems to contradict previous comment
   EXPECT(hv.valid() == false);
 #endif
 
@@ -368,20 +440,15 @@ CASE("test_wrap_storage") {
     delete ds_ext;
   }
   {
-    Array* ds = Array::create<double>(4, 5, 6);
-
-    atlas::array::ArrayView<double, 3> hv = make_host_view<double, 3>(*ds);
-
-    hv(2, 3, 3) = 2.5;
-
+    std::vector<double> v(4*5*6, 0.);
+    v[ 2*(5*6) + 3*6 + 3 ] = 2.5;
     ArrayShape shape{4, 5, 6};
-    Array* ds_ext = Array::wrap<double>(hv.data(), shape);
+    Array* ds_ext = Array::wrap<double>(v.data(), shape);
 
     atlas::array::ArrayView<double, 3> hv_ext = make_host_view<double, 3>(*ds_ext);
 
     EXPECT(hv_ext(2, 3, 3) == 2.5);
 
-    delete ds;
     delete ds_ext;
   }
 }
@@ -414,13 +481,6 @@ CASE("test_assign") {
   EXPECT(hv(1, 2, 3) == 5.0);
   EXPECT(lv(2, 3) == 5.0);
 
-  auto sv = make_storageview<double>(*ds);
-  sv.assign(0.);
-
-  EXPECT(hv(0, 2, 3) == 0.);
-  EXPECT(hv(1, 2, 3) == 0.);
-  EXPECT(lv(2, 3) == 0.);
-
   delete ds;
 }
 
@@ -429,9 +489,11 @@ CASE("test_ArrayT") {
     ArrayT<double> ds(2, 3, 4);
 
     EXPECT(ds.size() == 2 * 3 * 4);
-    EXPECT(ds.stride(0) == 3 * 4);
-    EXPECT(ds.stride(1) == 4);
-    EXPECT(ds.stride(2) == 1);
+    if( NOT_PADDED ) {
+      EXPECT(ds.stride(0) == 3 * 4);
+      EXPECT(ds.stride(1) == 4);
+      EXPECT(ds.stride(2) == 1);
+    }
     EXPECT(ds.shape(0) == 2);
     EXPECT(ds.shape(1) == 3);
     EXPECT(ds.shape(2) == 4);
@@ -441,9 +503,11 @@ CASE("test_ArrayT") {
     ArrayT<double> ds(make_shape(2, 3, 4));
 
     EXPECT(ds.size() == 2 * 3 * 4);
-    EXPECT(ds.stride(0) == 3 * 4);
-    EXPECT(ds.stride(1) == 4);
-    EXPECT(ds.stride(2) == 1);
+    if( NOT_PADDED ) {
+      EXPECT(ds.stride(0) == 3 * 4);
+      EXPECT(ds.stride(1) == 4);
+      EXPECT(ds.stride(2) == 1);
+    }
     EXPECT(ds.shape(0) == 2);
     EXPECT(ds.shape(1) == 3);
     EXPECT(ds.shape(2) == 4);
@@ -453,9 +517,11 @@ CASE("test_ArrayT") {
     ArrayT<double> ds(ArraySpec(make_shape(2, 3, 4)));
 
     EXPECT(ds.size() == 2 * 3 * 4);
-    EXPECT(ds.stride(0) == 3 * 4);
-    EXPECT(ds.stride(1) == 4);
-    EXPECT(ds.stride(2) == 1);
+    if( NOT_PADDED ) {
+      EXPECT(ds.stride(0) == 3 * 4);
+      EXPECT(ds.stride(1) == 4);
+      EXPECT(ds.stride(2) == 1);
+    }
     EXPECT(ds.shape(0) == 2);
     EXPECT(ds.shape(1) == 3);
     EXPECT(ds.shape(2) == 4);
@@ -483,6 +549,58 @@ CASE("test_valid") {
   }
 }
 
+CASE("test_wrap") {
+
+    array::ArrayT<int> arr_t(3,2);
+    EXPECT(arr_t.shape(0) == 3);
+    EXPECT(arr_t.stride(0) == 2);
+    EXPECT(arr_t.shape(1) == 2);
+    EXPECT(arr_t.stride(1) == 1);
+    EXPECT(arr_t.rank() == 2);
+
+    array::ArrayView<int,2> arrv_t = array::make_view<int,2>(arr_t);
+    for(size_t i=0; i < arrv_t.shape(0); ++i)
+    {
+      for(size_t j=0; j < arrv_t.shape(1); ++j)
+      {
+          arrv_t(i,j) = i*10+j-1;
+      }
+    }
+
+    eckit::SharedPtr<array::Array> arr ( array::Array::wrap<int>(arrv_t.data(),
+                     array::ArraySpec{array::make_shape(3), array::make_strides(2) } ) );
+
+    EXPECT(arr->shape(0) == 3);
+    EXPECT(arr->stride(0) == 2);
+    EXPECT(arr->rank() == 1);
+
+    auto view = make_host_view<int, 1, array::Intent::ReadOnly>(*arr);
+
+    EXPECT(view.shape(0) == 3);
+// TODO fix this
+#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
+    EXPECT(view.stride(0) == 2);
+#endif
+    EXPECT(view.rank() == 1);
+
+    EXPECT(view(0) == -1);
+    EXPECT(view(1) == 9);
+    EXPECT(view(2) == 19);
+}
+
+#ifdef ATLAS_HAVE_ACC
+CASE("test_acc_map") {
+    Array* ds = Array::create<double>(2, 3, 4);
+#ifdef ATLAS_HAVE_ACC
+    EXPECT( ds->accMap() == true );
+    EXPECT( ds->accMap() == true );
+#else
+    EXPECT( ds->accMap() == false );
+#endif
+
+}
+#endif
+
 //-----------------------------------------------------------------------------
 
 }  // namespace test
@@ -491,6 +609,6 @@ CASE("test_valid") {
 
 int main(int argc, char **argv) {
     atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return eckit::testing::run_tests ( argc, argv, false );
 }
 

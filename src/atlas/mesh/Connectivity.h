@@ -98,18 +98,18 @@ class ConnectivityIndex
 public:
   enum { BASE = 1 };
 public:
-  ConnectivityIndex(idx_t* idx): idx_(idx) {}
-  void set(const idx_t& value) { *(idx_) = value+BASE; }
-  idx_t get() const { return *(idx_)-BASE; }
-  void operator=(const idx_t& value) { set(value); }
-  ConnectivityIndex& operator=(const ConnectivityIndex& other) { set(other.get()); return *this; }
-  ConnectivityIndex& operator+(const idx_t& value) { *(idx_)+=value; return *this; }
-  ConnectivityIndex& operator-(const idx_t& value) { *(idx_)-=value; return *this; }
-  ConnectivityIndex& operator--() { --(*(idx_)); return *this; }
-  ConnectivityIndex& operator++() { ++(*(idx_)); return *this; }
+  ATLAS_HOST_DEVICE ConnectivityIndex(idx_t* idx): idx_(idx) {}
+  ATLAS_HOST_DEVICE void set(const idx_t& value) { *(idx_) = value+BASE; }
+  ATLAS_HOST_DEVICE idx_t get() const { return *(idx_)-BASE; }
+  ATLAS_HOST_DEVICE void operator=(const idx_t& value) { set(value); }
+  ATLAS_HOST_DEVICE ConnectivityIndex& operator=(const ConnectivityIndex& other) { set(other.get()); return *this; }
+  ATLAS_HOST_DEVICE ConnectivityIndex& operator+(const idx_t& value) { *(idx_)+=value; return *this; }
+  ATLAS_HOST_DEVICE ConnectivityIndex& operator-(const idx_t& value) { *(idx_)-=value; return *this; }
+  ATLAS_HOST_DEVICE ConnectivityIndex& operator--() { --(*(idx_)); return *this; }
+  ATLAS_HOST_DEVICE ConnectivityIndex& operator++() { ++(*(idx_)); return *this; }
 
   //implicit conversion
-  operator idx_t() const { return get(); }
+  ATLAS_HOST_DEVICE operator idx_t() const { return get(); }
 
 private:
   idx_t* idx_;
@@ -264,8 +264,8 @@ public:
   virtual void cloneFromDevice();
   virtual void syncHostDevice() const;
   virtual bool valid() const;
-  virtual bool isOnHost() const;
-  virtual bool isOnDevice() const;
+  virtual bool hostNeedsUpdate() const;
+  virtual bool deviceNeedsUpdate() const;
 
   IrregularConnectivityImpl* gpu_object_ptr() {return gpu_clone_.gpu_object_ptr();}
   void dump(std::ostream& os) const;
@@ -430,8 +430,8 @@ public:
   virtual void cloneFromDevice();
   virtual void syncHostDevice() const;
   virtual bool valid() const;
-  virtual bool isOnHost() const;
-  virtual bool isOnDevice() const;
+  virtual bool hostNeedsUpdate() const;
+  virtual bool deviceNeedsUpdate() const;
 
   MultiBlockConnectivityImpl* gpu_object_ptr() {return gpu_clone_.gpu_object_ptr();}
 
@@ -553,8 +553,8 @@ public:
   void cloneFromDevice();
   void syncHostDevice() const;
   bool valid() const;
-  bool isOnHost() const;
-  bool isOnDevice() const;
+  bool hostNeedsUpdate() const;
+  bool deviceNeedsUpdate() const;
 
   bool owns() const { return owns_; }
   BlockConnectivityImpl* gpu_object_ptr() {return gpu_clone_.gpu_object_ptr();}

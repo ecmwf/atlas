@@ -265,11 +265,11 @@ void Field::cloneFromDevice() const {
 void Field::syncHostDevice() const {
     field_->syncHostDevice();
 }
-bool Field::isOnHost() const {
-    return field_->isOnHost();
+bool Field::hostNeedsUpdate() const {
+    return field_->hostNeedsUpdate();
 }
-bool Field::isOnDevice() const {
-    return field_->isOnDevice();
+bool Field::deviceNeedsUpdate() const {
+    return field_->deviceNeedsUpdate();
 }
 void Field::reactivateDeviceWriteViews() const {
     field_->reactivateDeviceWriteViews();

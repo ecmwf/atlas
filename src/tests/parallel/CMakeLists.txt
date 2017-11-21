@@ -19,3 +19,4 @@ ecbuild_add_test( TARGET atlas_test_gather
   SOURCES    test_gather.cc
   LIBS       atlas
 )
+

@@ -98,8 +98,7 @@ size_t FieldImpl::footprint() const {
 
 void FieldImpl::dump(std::ostream& os) const
 {
-  print(os);
-  array_->dump(os);
+  print(os,true);
 }
 
 namespace {
@@ -127,7 +126,7 @@ const std::string& FieldImpl::name() const
   return name_;
 }
 
-void FieldImpl::print(std::ostream& os) const
+void FieldImpl::print(std::ostream& os, bool dump) const
 {
   os << "FieldImpl[name=" << name()
      << ",datatype=" << datatype().str()
@@ -137,8 +136,13 @@ void FieldImpl::print(std::ostream& os) const
       #ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
      << ",bytes=" << bytes()
       #endif
-     << ",metadata=" << metadata()
-     << "]";
+     << ",metadata=" << metadata();
+  if( dump ) {
+    os << ",array=[";
+    array_->dump(os);
+    os << "]";
+  }
+  os << "]";
 }
 
 std::ostream& operator<<( std::ostream& os, const FieldImpl& f)
@@ -165,6 +169,20 @@ void FieldImpl::set_functionspace(const FunctionSpace& functionspace)
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
+
+namespace {
+  template< typename Value >
+  void atlas__Field__host_data_specf (FieldImpl* This, Value* &data, int &rank, int* &shapef, int* &stridesf) {
+    ATLAS_ERROR_HANDLING(
+      ASSERT(This);
+      This->array().accMap();
+      data = This->host_data<Value>();
+      shapef = const_cast<int*>(This->shapef().data());
+      stridesf = const_cast<int*>(This->stridesf().data());
+      rank = This->shapef().size();
+    );
+  }
+}
 
 extern "C"
 {
@@ -280,7 +298,7 @@ FieldImpl* atlas__Field__create(eckit::Parametrisation* params)
       field->attach();
     }
     field->detach();
-    
+
     ASSERT(field);
     return field;
   );
@@ -291,7 +309,7 @@ void atlas__Field__delete (FieldImpl* This)
 {
   delete This;
 }
-  
+
 const char* atlas__Field__name (FieldImpl* This)
 {
   ATLAS_ERROR_HANDLING(
@@ -398,46 +416,24 @@ void atlas__Field__shapef (FieldImpl* This, int* &shape, int &rank)
 
 void atlas__Field__host_data_int_specf (FieldImpl* This, int* &data, int &rank, int* &shapef, int* &stridesf)
 {
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    data = This->host_data<int>();
-    shapef = const_cast<int*>(This->shapef().data());
-    stridesf = const_cast<int*>(This->stridesf().data());
-    rank = This->shapef().size();
-  );
+  atlas__Field__host_data_specf(This,data,rank,shapef,stridesf);
 }
 
 void atlas__Field__host_data_long_specf (FieldImpl* This, long* &data, int &rank, int* &shapef, int* &stridesf)
 {
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    data = This->host_data<long>();
-    shapef = const_cast<int*>(This->shapef().data());
-    stridesf = const_cast<int*>(This->stridesf().data());
-    rank = This->shapef().size();
-  );
+  atlas__Field__host_data_specf(This,data,rank,shapef,stridesf);
 }
 
 void atlas__Field__host_data_float_specf (FieldImpl* This, float* &data, int &rank, int* &shapef, int* &stridesf)
 {
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    data = This->host_data<float>();
-    shapef = const_cast<int*>(This->shapef().data());
-    stridesf = const_cast<int*>(This->stridesf().data());
-    rank = This->shapef().size();
-  );
+  atlas__Field__host_data_specf(This,data,rank,shapef,stridesf);
+
 }
 
 void atlas__Field__host_data_double_specf (FieldImpl* This, double* &data, int &rank, int* &shapef, int* &stridesf)
 {
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    data = This->host_data<double>();
-    shapef = const_cast<int*>(This->shapef().data());
-    stridesf = const_cast<int*>(This->stridesf().data());
-    rank = This->shapef().size();
-  );
+  atlas__Field__host_data_specf(This,data,rank,shapef,stridesf);
+
 }
 
 void atlas__Field__device_data_int_specf (FieldImpl* This, int* &data, int &rank, int* &shapef, int* &stridesf)
@@ -484,14 +480,14 @@ void atlas__Field__device_data_double_specf (FieldImpl* This, double* &data, int
   );
 }
 
-int atlas__Field__is_on_host(const FieldImpl* This)
+int atlas__Field__host_needs_update(const FieldImpl* This)
 {
-  return This->isOnHost();
+  return This->hostNeedsUpdate();
 }
 
-int atlas__Field__is_on_device(const FieldImpl* This)
+int atlas__Field__device_needs_update(const FieldImpl* This)
 {
-  return This->isOnDevice();
+  return This->deviceNeedsUpdate();
 }
 
 void atlas__Field__rename(FieldImpl* This, const char* name)

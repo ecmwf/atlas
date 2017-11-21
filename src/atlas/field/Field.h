@@ -163,8 +163,8 @@ public:
   void cloneToDevice() const;
   void cloneFromDevice() const;
   void syncHostDevice() const;
-  bool isOnHost() const;
-  bool isOnDevice() const;
+  bool hostNeedsUpdate() const;
+  bool deviceNeedsUpdate() const;
   void reactivateDeviceWriteViews() const;
   void reactivateHostWriteViews() const;
 };

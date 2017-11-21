@@ -18,6 +18,15 @@
 namespace atlas {
 namespace array {
 
+class ArrayAlignment {
+public:
+  ArrayAlignment() : alignment_(1) {}
+  ArrayAlignment( int alignment ) : alignment_(alignment) {}
+  operator int() const { return alignment_; }
+private:
+  int alignment_;
+};
+
 class ArrayShape : public std::vector<size_t> {
 private:
    using Base = std::vector<size_t>;
@@ -27,6 +36,7 @@ public:
     ArrayShape( std::initializer_list<size_t> list ) : Base(list) {}
 };
 
+inline ArrayShape make_shape(std::initializer_list<size_t> sizes) { return ArrayShape(sizes); }
 inline ArrayShape make_shape(size_t size1) { return ArrayShape{size1}; }
 inline ArrayShape make_shape(size_t size1, size_t size2) { return ArrayShape{size1,size2}; }
 inline ArrayShape make_shape(size_t size1, size_t size2, size_t size3) { return ArrayShape{size1,size2,size3}; }

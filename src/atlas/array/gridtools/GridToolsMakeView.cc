@@ -34,8 +34,8 @@ namespace {
 
 namespace gridtools {
 
-template <typename Value, unsigned int Rank, bool ReadOnly>
-data_view_tt<Value, Rank>
+template <typename Value, unsigned int Rank, Intent AccessMode>
+data_view_tt<Value, Rank, get_access_mode(AccessMode) >
 make_gt_host_view(const Array& array) {
 
   using storage_info_ty = storage_traits::storage_info_t<0, Rank>;
@@ -43,29 +43,29 @@ make_gt_host_view(const Array& array) {
 
   data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
-  return ::gridtools::make_host_view(*ds);
+  return ::gridtools::make_host_view< get_access_mode(AccessMode) >(*ds);
 }
 
-template <typename Value, unsigned int Rank, bool ReadOnly>
-data_view_tt<Value, Rank>
+template <typename Value, unsigned int Rank, Intent AccessMode>
+data_view_tt<Value, Rank, get_access_mode(AccessMode)>
 make_gt_device_view(const Array& array) {
   typedef storage_traits::storage_info_t<0, Rank> storage_info_ty;
   typedef storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
   data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-  return ::gridtools::make_device_view(*ds);
+  return ::gridtools::make_device_view< get_access_mode(AccessMode) >(*ds);
 #else
-  return ::gridtools::make_host_view(*ds);
+  return ::gridtools::make_host_view< get_access_mode(AccessMode) >(*ds);
 #endif
 }
 }
 
-template <typename Value, unsigned int Rank, bool ReadOnly>
-ArrayView<Value, Rank>
+template <typename Value, unsigned int Rank, Intent AccessMode>
+ArrayView<Value, Rank, AccessMode>
 make_host_view(const Array& array) {
   check_metadata<Value, Rank>(array);
-  return ArrayView<Value, Rank>(gridtools::make_gt_host_view<Value, Rank>(array), array);
+  return ArrayView<Value, Rank, AccessMode>(gridtools::make_gt_host_view<Value, Rank, AccessMode>(array), array);
 }
 
 template <typename Value>
@@ -77,11 +77,11 @@ make_host_storageview(const Array& array) {
   return StorageView<Value>(::gridtools::make_host_view(*ds),array.size(),array.contiguous());
 }
 
-template <typename Value, unsigned int Rank, bool ReadOnly>
-ArrayView<Value, Rank>
+template <typename Value, unsigned int Rank, Intent AccessMode>
+ArrayView<Value, Rank, AccessMode>
 make_device_view(const Array& array) {
   check_metadata<Value, Rank>(array);
-  return ArrayView<Value, Rank>(gridtools::make_gt_device_view<Value, Rank>(array), array);
+  return ArrayView<Value, Rank, AccessMode>(gridtools::make_gt_device_view<Value, Rank, AccessMode>(array), array);
 }
 
 
@@ -91,7 +91,7 @@ make_device_storageview(const Array& array) {
   return StorageView<Value>(gridtools::make_gt_device_view<Value, 1>(array),array.size(),array.contiguous());
 }
 
-template <typename Value, unsigned int Rank, bool ReadOnly>
+template <typename Value, unsigned int Rank, Intent AccessMode>
 IndexView<Value, Rank>
 make_host_indexview(const Array& array) {
   typedef gridtools::storage_traits::storage_info_t<0, Rank> storage_info_ty;
@@ -99,24 +99,24 @@ make_host_indexview(const Array& array) {
 
   data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
-  return IndexView<Value, Rank>(::gridtools::make_host_view(*ds));
+  return IndexView<Value, Rank>(::gridtools::make_host_view<::gridtools::access_mode::ReadWrite>(*ds));
 }
 
 // --------------------------------------------------------------------------------------------
 
-template <typename Value, unsigned int Rank, bool ReadOnly>
+template <typename Value, unsigned int Rank, Intent AccessMode>
 IndexView<Value, Rank>
 make_indexview(const Array& array) {
   check_metadata<Value, Rank>(array);
   return make_host_indexview<Value,Rank>(array);
 }
 
-template <typename Value, unsigned int Rank, bool ReadOnly>
-ArrayView<Value, Rank>
+template <typename Value, unsigned int Rank, Intent AccessMode>
+ArrayView<Value, Rank, AccessMode>
 make_view(const Array& array) {
     check_metadata<Value, Rank>(array);
 
-    return make_host_view<Value, Rank, ReadOnly>(array);
+    return make_host_view<Value, Rank, AccessMode>(array);
 }
 
 template <typename Value>
@@ -133,67 +133,67 @@ make_storageview(const Array& array) {
 namespace atlas {
 namespace array {
 #define EXPLICIT_TEMPLATE_INSTANTIATION(RANK) \
-template ArrayView<int,RANK> make_view<int,RANK,true >(const Array&);\
-template ArrayView<int,RANK> make_view<int,RANK,false>(const Array&);\
-template ArrayView<long,RANK> make_view<long,RANK,true >(const Array&);\
-template ArrayView<long,RANK> make_view<long,RANK,false>(const Array&);\
-template ArrayView<long unsigned,RANK> make_view<long unsigned,RANK,true >(const Array&);\
-template ArrayView<long unsigned,RANK> make_view<long unsigned,RANK,false>(const Array&);\
-template ArrayView<float,RANK> make_view<float,RANK,true >(const Array&);\
-template ArrayView<float,RANK> make_view<float,RANK,false>(const Array&);\
-template ArrayView<double,RANK> make_view<double,RANK,true >(const Array&);\
-template ArrayView<double,RANK> make_view<double,RANK,false>(const Array&);\
+template ArrayView<int,RANK,Intent::ReadOnly> make_view<int,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<int,RANK,Intent::ReadWrite> make_view<int,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<long,RANK,Intent::ReadOnly> make_view<long,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<long,RANK,Intent::ReadWrite> make_view<long,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<long unsigned,RANK,Intent::ReadOnly> make_view<long unsigned,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<long unsigned,RANK,Intent::ReadWrite> make_view<long unsigned,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<float,RANK,Intent::ReadOnly> make_view<float,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<float,RANK,Intent::ReadWrite> make_view<float,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<double,RANK,Intent::ReadOnly> make_view<double,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<double,RANK,Intent::ReadWrite> make_view<double,RANK,Intent::ReadWrite>(const Array&);\
 \
-template ArrayView<int,RANK> make_host_view<int,RANK,true >(const Array&);\
-template ArrayView<int,RANK> make_host_view<int,RANK,false>(const Array&);\
-template ArrayView<long,RANK> make_host_view<long,RANK,true >(const Array&);\
-template ArrayView<long,RANK> make_host_view<long,RANK,false>(const Array&);\
-template ArrayView<long unsigned,RANK> make_host_view<long unsigned,RANK,true >(const Array&);\
-template ArrayView<long unsigned,RANK> make_host_view<long unsigned,RANK,false>(const Array&);\
-template ArrayView<float,RANK> make_host_view<float,RANK,true >(const Array&);\
-template ArrayView<float,RANK> make_host_view<float,RANK,false>(const Array&);\
-template ArrayView<double,RANK> make_host_view<double,RANK,true >(const Array&);\
-template ArrayView<double,RANK> make_host_view<double,RANK,false>(const Array&);\
+template ArrayView<int,RANK,Intent::ReadOnly> make_host_view<int,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<int,RANK,Intent::ReadWrite> make_host_view<int,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<long,RANK,Intent::ReadOnly> make_host_view<long,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<long,RANK,Intent::ReadWrite> make_host_view<long,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<long unsigned,RANK,Intent::ReadOnly> make_host_view<long unsigned,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<long unsigned,RANK,Intent::ReadWrite> make_host_view<long unsigned,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<float,RANK,Intent::ReadOnly> make_host_view<float,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<float,RANK,Intent::ReadWrite> make_host_view<float,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<double,RANK,Intent::ReadOnly> make_host_view<double,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<double,RANK,Intent::ReadWrite> make_host_view<double,RANK,Intent::ReadWrite>(const Array&);\
 \
-template ArrayView<int,RANK> make_device_view<int,RANK,true >(const Array&);\
-template ArrayView<int,RANK> make_device_view<int,RANK,false>(const Array&);\
-template ArrayView<long,RANK> make_device_view<long,RANK,true >(const Array&);\
-template ArrayView<long,RANK> make_device_view<long,RANK,false>(const Array&);\
-template ArrayView<long unsigned,RANK> make_device_view<long unsigned,RANK,true >(const Array&);\
-template ArrayView<long unsigned,RANK> make_device_view<long unsigned,RANK,false>(const Array&);\
-template ArrayView<float,RANK> make_device_view<float,RANK,true >(const Array&);\
-template ArrayView<float,RANK> make_device_view<float,RANK,false>(const Array&);\
-template ArrayView<double,RANK> make_device_view<double,RANK,true >(const Array&);\
-template ArrayView<double,RANK> make_device_view<double,RANK,false>(const Array&);\
+template ArrayView<int,RANK,Intent::ReadOnly> make_device_view<int,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<int,RANK,Intent::ReadWrite> make_device_view<int,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<long,RANK,Intent::ReadOnly> make_device_view<long,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<long,RANK,Intent::ReadWrite> make_device_view<long,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<long unsigned,RANK,Intent::ReadOnly> make_device_view<long unsigned,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<long unsigned,RANK,Intent::ReadWrite> make_device_view<long unsigned,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<float,RANK,Intent::ReadOnly> make_device_view<float,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<float,RANK,Intent::ReadWrite> make_device_view<float,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<double,RANK,Intent::ReadOnly> make_device_view<double,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<double,RANK,Intent::ReadWrite> make_device_view<double,RANK,Intent::ReadWrite>(const Array&);\
 \
-template IndexView<int,RANK> make_indexview<int,RANK,true >(const Array&);\
-template IndexView<int,RANK> make_indexview<int,RANK,false>(const Array&);\
+template IndexView<int,RANK> make_indexview<int,RANK,Intent::ReadOnly >(const Array&);\
+template IndexView<int,RANK> make_indexview<int,RANK,Intent::ReadWrite>(const Array&);\
 \
-template IndexView<int,RANK> make_host_indexview<int,RANK,true >(const Array&);\
-template IndexView<int,RANK> make_host_indexview<int,RANK,false>(const Array&);\
+template IndexView<int,RANK> make_host_indexview<int,RANK,Intent::ReadOnly >(const Array&);\
+template IndexView<int,RANK> make_host_indexview<int,RANK,Intent::ReadWrite>(const Array&);\
 \
 namespace gridtools { \
-  template data_view_tt<int,RANK> make_gt_host_view<int,RANK,true >(const Array& array);\
-  template data_view_tt<int,RANK> make_gt_host_view<int,RANK,false>(const Array& array);\
-  template data_view_tt<long,RANK> make_gt_host_view<long,RANK,true >(const Array& array);\
-  template data_view_tt<long,RANK> make_gt_host_view<long,RANK,false>(const Array& array);\
-  template data_view_tt<long unsigned,RANK> make_gt_host_view<long unsigned,RANK,true >(const Array& array);\
-  template data_view_tt<long unsigned,RANK> make_gt_host_view<long unsigned,RANK,false>(const Array& array);\
-  template data_view_tt<float,RANK> make_gt_host_view<float,RANK,true >(const Array& array);\
-  template data_view_tt<float,RANK> make_gt_host_view<float,RANK,false>(const Array& array);\
-  template data_view_tt<double,RANK> make_gt_host_view<double,RANK,true >(const Array& array);\
-  template data_view_tt<double,RANK> make_gt_host_view<double,RANK,false>(const Array& array);\
+  template data_view_tt<int,RANK,::gridtools::access_mode::ReadOnly> make_gt_host_view<int,RANK,Intent::ReadOnly >(const Array& array);\
+  template data_view_tt<int,RANK,::gridtools::access_mode::ReadWrite> make_gt_host_view<int,RANK,Intent::ReadWrite>(const Array& array);\
+  template data_view_tt<long,RANK,::gridtools::access_mode::ReadOnly> make_gt_host_view<long,RANK,Intent::ReadOnly >(const Array& array);\
+  template data_view_tt<long,RANK,::gridtools::access_mode::ReadWrite> make_gt_host_view<long,RANK,Intent::ReadWrite>(const Array& array);\
+  template data_view_tt<long unsigned,RANK,::gridtools::access_mode::ReadOnly> make_gt_host_view<long unsigned,RANK,Intent::ReadOnly >(const Array& array);\
+  template data_view_tt<long unsigned,RANK,::gridtools::access_mode::ReadWrite> make_gt_host_view<long unsigned,RANK,Intent::ReadWrite>(const Array& array);\
+  template data_view_tt<float,RANK,::gridtools::access_mode::ReadOnly> make_gt_host_view<float,RANK,Intent::ReadOnly >(const Array& array);\
+  template data_view_tt<float,RANK,::gridtools::access_mode::ReadWrite> make_gt_host_view<float,RANK,Intent::ReadWrite>(const Array& array);\
+  template data_view_tt<double,RANK,::gridtools::access_mode::ReadOnly> make_gt_host_view<double,RANK,Intent::ReadOnly >(const Array& array);\
+  template data_view_tt<double,RANK,::gridtools::access_mode::ReadWrite> make_gt_host_view<double,RANK,Intent::ReadWrite>(const Array& array);\
 \
-  template data_view_tt<int,RANK> make_gt_device_view<int,RANK,true >(const Array& array);\
-  template data_view_tt<int,RANK> make_gt_device_view<int,RANK,false>(const Array& array);\
-  template data_view_tt<long,RANK> make_gt_device_view<long,RANK,true >(const Array& array);\
-  template data_view_tt<long,RANK> make_gt_device_view<long,RANK,false>(const Array& array);\
-  template data_view_tt<long unsigned,RANK> make_gt_device_view<long unsigned,RANK,true >(const Array& array);\
-  template data_view_tt<long unsigned,RANK> make_gt_device_view<long unsigned,RANK,false>(const Array& array);\
-  template data_view_tt<float,RANK> make_gt_device_view<float,RANK,true >(const Array& array);\
-  template data_view_tt<float,RANK> make_gt_device_view<float,RANK,false>(const Array& array);\
-  template data_view_tt<double,RANK> make_gt_device_view<double,RANK,true >(const Array& array);\
-  template data_view_tt<double,RANK> make_gt_device_view<double,RANK,false>(const Array& array);\
+  template data_view_tt<int,RANK,::gridtools::access_mode::ReadOnly> make_gt_device_view<int,RANK,Intent::ReadOnly >(const Array& array);\
+  template data_view_tt<int,RANK,::gridtools::access_mode::ReadWrite> make_gt_device_view<int,RANK,Intent::ReadWrite>(const Array& array);\
+  template data_view_tt<long,RANK,::gridtools::access_mode::ReadOnly> make_gt_device_view<long,RANK,Intent::ReadOnly >(const Array& array);\
+  template data_view_tt<long,RANK,::gridtools::access_mode::ReadWrite> make_gt_device_view<long,RANK,Intent::ReadWrite>(const Array& array);\
+  template data_view_tt<long unsigned,RANK,::gridtools::access_mode::ReadOnly> make_gt_device_view<long unsigned,RANK,Intent::ReadOnly >(const Array& array);\
+  template data_view_tt<long unsigned,RANK,::gridtools::access_mode::ReadWrite> make_gt_device_view<long unsigned,RANK,Intent::ReadWrite>(const Array& array);\
+  template data_view_tt<float,RANK,::gridtools::access_mode::ReadOnly> make_gt_device_view<float,RANK,Intent::ReadOnly >(const Array& array);\
+  template data_view_tt<float,RANK,::gridtools::access_mode::ReadWrite> make_gt_device_view<float,RANK,Intent::ReadWrite>(const Array& array);\
+  template data_view_tt<double,RANK,::gridtools::access_mode::ReadOnly> make_gt_device_view<double,RANK,Intent::ReadOnly >(const Array& array);\
+  template data_view_tt<double,RANK,::gridtools::access_mode::ReadWrite> make_gt_device_view<double,RANK,Intent::ReadWrite>(const Array& array);\
 }
 
 template StorageView<int> make_storageview<int>(const Array&);

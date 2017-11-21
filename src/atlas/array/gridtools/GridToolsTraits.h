@@ -1,15 +1,10 @@
 #pragma once
 
 #include "atlas/library/config.h"
+#include "atlas/array/ArrayViewDefs.h"
+#include "gridtools/common/generic_metafunctions/all_integrals.hpp"
+#include "gridtools/storage/storage-facility.hpp"
 
-//------------------------------------------------------------------------------
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-#define ENABLE_GPU
-#endif
-#include "storage-facility.hpp"
-#ifdef ENABLE_GPU
-#undef ENABLE_GPU
-#endif
 //------------------------------------------------------------------------------
 
 namespace atlas {
@@ -28,12 +23,16 @@ using storage_traits = ::gridtools::storage_traits< ::gridtools::enumtype::Host 
 
 //------------------------------------------------------------------------------
 
-template <typename Value, unsigned int Rank, bool ReadOnly = false>
+template <typename Value, unsigned int Rank, ::gridtools::access_mode AccessMode = ::gridtools::access_mode::ReadWrite >
 using data_view_tt = ::gridtools::data_view<
         gridtools::storage_traits::data_store_t<
-          Value,
-          gridtools::storage_traits::storage_info_t<0, Rank> >,
-          ReadOnly>;
+            Value,
+            gridtools::storage_traits::storage_info_t<0, Rank> >,
+        AccessMode>;
+
+inline constexpr ::gridtools::access_mode get_access_mode(Intent kind) {
+   return (kind == Intent::ReadOnly) ? ::gridtools::access_mode::ReadOnly : ::gridtools::access_mode::ReadWrite;
+}
 
 //------------------------------------------------------------------------------
 

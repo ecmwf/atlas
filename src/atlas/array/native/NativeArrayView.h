@@ -55,6 +55,7 @@
 #include "atlas/library/config.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/LocalView.h"
+#include "atlas/array/ArrayViewDefs.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -63,7 +64,7 @@ namespace array {
 
 //------------------------------------------------------------------------------------------------------
 
-template <typename Value, int Rank> class ArrayView {
+template <typename Value, int Rank, Intent AccessMode = Intent::ReadWrite> class ArrayView {
 public:
 
 // -- Type definitions
@@ -81,32 +82,12 @@ public:
         strides_(other.strides_) {
     }
 
-    ArrayView( const value_type* data, const size_t shape[], const size_t strides[] ) :
+    ArrayView( const value_type* data, const ArrayShape& shape, const ArrayStrides& strides ) :
         data_(const_cast<value_type*>(data)) {
         size_ = 1;
         for( int j=0; j<Rank; ++j ) {
             shape_[j] = shape[j];
             strides_[j] = strides[j];
-            size_ *= shape_[j];
-        }
-    }
-
-    ArrayView( const value_type* data, const size_t shape[] ) :
-        data_(const_cast<value_type*>(data)) {
-        size_ = 1;
-        for( int j=Rank-1; j>=0; --j ) {
-            shape_[j] = shape[j];
-            strides_[j] = size_;
-            size_ *= shape_[j];
-        }
-    }
-
-    ArrayView( const value_type* data, const ArrayShape& shape ) :
-        data_(const_cast<value_type*>(data)) {
-        size_ = 1;
-        for( int j=Rank-1; j>=0; --j ) {
-            shape_[j]   = shape[j];
-            strides_[j] = size_;
             size_ *= shape_[j];
         }
     }
@@ -121,6 +102,7 @@ public:
 
     template < typename... Ints >
     const value_type& operator()(Ints... idx) const {
+
         return data_[index(idx...)];
     }
 
@@ -144,6 +126,14 @@ public:
           throw_OutOfRange( "ArrayView::at", 'i', i, shape(0) );
         }
         return Slicer<Slice, Rank==1>(*this).apply(i);
+    }
+
+    template<unsigned int Dim>
+    size_t shape() const { return shape(Dim);}
+
+    template<unsigned int Dim>
+    size_t stride() const {
+        return stride(Dim);
     }
 
     size_t size() const { return size_;}
@@ -227,8 +217,8 @@ private:
 
     template <typename ReturnType = Slice, bool ToScalar = false>
     struct Slicer {
-        Slicer(ArrayView<value_type, Rank> const& av) : av_(av) {}
-        ArrayView<value_type, Rank> const& av_;
+        Slicer(ArrayView<value_type, Rank, AccessMode> const& av) : av_(av) {}
+        ArrayView<value_type, Rank, AccessMode> const& av_;
         ReturnType apply(const size_t i) const {
             return LocalView<value_type, Rank - 1>(av_.data_ + av_.strides_[0] * i, av_.shape_.data() + 1, av_.strides_.data() + 1);
         }
@@ -236,8 +226,8 @@ private:
 
     template <typename ReturnType>
     struct Slicer<ReturnType, true> {
-        Slicer(ArrayView<value_type, Rank> const& av) : av_(av) {}
-        ArrayView<value_type, Rank> const& av_;
+        Slicer(ArrayView<value_type, Rank, AccessMode> const& av) : av_(av) {}
+        ArrayView<value_type, Rank, AccessMode> const& av_;
         ReturnType apply(const size_t i) const {
             return *(av_.data_ + av_.strides_[0] * i);
         }

@@ -8,24 +8,54 @@
 
 if( MPI_CXX_FOUND AND MPI_Fortan_FOUND )
 
-	message( STATUS "MPI")
+	ecbuild_info( "MPI" )
 
-	message( STATUS "	MPI_CXX_COMPILER      : [${MPI_CXX_COMPILER}]")
-	message( STATUS "	MPI_CXX_INCLUDE_PATH  : [${MPI_CXX_INCLUDE_PATH}]")
-	message( STATUS "	MPI_CXX_LIBRARIES     : [${MPI_CXX_LIBRARIES}]")
+	ecbuild_info( "    MPI_CXX_COMPILER         : [${MPI_CXX_COMPILER}]" )
+	ecbuild_info( "    MPI_CXX_INCLUDE_PATH     : [${MPI_CXX_INCLUDE_PATH}]" )
+	ecbuild_info( "    MPI_CXX_LIBRARIES        : [${MPI_CXX_LIBRARIES}]" )
 
-	message( STATUS "	MPI_Fortan_COMPILER      : [${MPI_Fortan_COMPILER}]")
-	message( STATUS "	MPI_Fortan_INCLUDE_PATH  : [${MPI_Fortan_INCLUDE_PATH}]")
-	message( STATUS "	MPI_Fortan_LIBRARIES     : [${MPI_Fortan_LIBRARIES}]")
+	ecbuild_info( "    MPI_Fortan_COMPILER      : [${MPI_Fortan_COMPILER}]" )
+	ecbuild_info( "    MPI_Fortan_INCLUDE_PATH  : [${MPI_Fortan_INCLUDE_PATH}]" )
+	ecbuild_info( "    MPI_Fortan_LIBRARIES     : [${MPI_Fortan_LIBRARIES}]" )
 
-	message( STATUS "	MPIEXEC               : [${MPIEXEC}]")
+	ecbuild_info( "    MPIEXEC                  : [${MPIEXEC}]" )
 
 endif()
 
 if( CGAL_FOUND )
 
-	message( STATUS "CGAL (${CGAL_VERSION})")
-	message( STATUS "	includes : [${CGAL_INCLUDE_DIRS}]")
-	message( STATUS "	libs     : [${CGAL_LIBRARY}]")
+	ecbuild_info( "CGAL (${CGAL_VERSION})" )
+	ecbuild_info( "    includes : [${CGAL_INCLUDE_DIRS}]" )
+	ecbuild_info( "    libs     : [${CGAL_LIBRARY}]" )
+
+endif()
+
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+
+    ecbuild_info( "GRIDTOOLS_STORAGE" )
+    if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST )
+        ecbuild_info( "    BACKEND : [HOST]" )
+    endif()    
+    if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+        ecbuild_info( "    BACKEND : [CUDA]" )
+    endif()    
+
+endif()
+
+if( CUDA_FOUND )
+
+    ecbuild_info( "CUDA (${CUDA_VERSION})" )
+    ecbuild_info( "    CUDA_NVCC_COMPILER  : [${CUDA_NVCC_EXECUTABLE}]" )
+    ecbuild_info( "    CUDA_CUDART_LIBRARY : [${CUDA_CUDART_LIBRARY}]" )
+    ecbuild_info( "    CUDA_NVCC_FLAGS     : [${CUDA_NVCC_FLAGS}]" )
+
+endif()
+
+if( ATLAS_HAVE_ACC )
+
+    ecbuild_info( "ACC" )
+    ecbuild_info( "    ACC_C_COMPILER     : [${ACC_C_COMPILER}]" )
+    ecbuild_info( "    ACC_C_FLAGS        : [${ACC_C_FLAGS}]" )
+    ecbuild_info( "    ACC_Fortran_FLAGS  : [${ACC_Fortran_FLAGS}]" )
 
 endif()

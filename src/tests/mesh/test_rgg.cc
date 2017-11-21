@@ -391,6 +391,7 @@ CASE( "test_rgg_meshgen_many_parts" )
            ("part",p)
            ("include_pole",false)
            ("3d",false) );
+    ATLAS_DEBUG_HERE();
 
     Mesh m = generate( grid );
     ATLAS_DEBUG_HERE();

@@ -385,6 +385,8 @@ array/ArrayStrides.h
 array/ArrayUtil.cc
 array/ArrayUtil.h
 array/ArrayView.h
+array/ArrayViewUtil.h
+array/ArrayViewDefs.h
 array/DataType.h
 array/IndexView.h
 array/LocalView.cc
@@ -392,6 +394,8 @@ array/LocalView.h
 array/StorageView.h
 array/Vector.h
 array/helpers/ArrayInitializer.h
+array/helpers/ArrayAssigner.h
+array/helpers/ArrayWriter.h
 #array/Table.h
 #array/Table.cc
 #array/TableView.h
@@ -436,6 +440,7 @@ parallel/GatherScatter.cc
 parallel/GatherScatter.h
 parallel/HaloExchange.cc
 parallel/HaloExchange.h
+parallel/HaloExchangeImpl.h
 parallel/mpi/Buffer.h
 runtime/ErrorHandling.cc
 runtime/ErrorHandling.h
@@ -467,51 +472,6 @@ mesh/detail/PeriodicTransform.h
 util/Unique.h
 #parallel/detail/MPLArrayView.h
 )
-
-
-function( create_cuda_wrapper variable )
-set( options "" )
-set( single_value_args SOURCE )
-set( multi_value_args "" )
-cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
-
-  get_filename_component(directory ${_PAR_SOURCE} DIRECTORY)
-  get_filename_component(base      ${_PAR_SOURCE} NAME_WE)
-  get_filename_component(name      ${_PAR_SOURCE} NAME)
-  if( directory )
-    set(cuda_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${directory}/${base}.cu)
-  else()
-    set(cuda_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${base}.cu)
-  endif()
-  set(${variable} ${cuda_wrapper} PARENT_SCOPE)
-  set(content
-"
-#include \"atlas/${directory}/${name}\"
-")
-
-  file(WRITE ${cuda_wrapper} "${content}")
-
-endfunction()
-
-function( use_cuda srclist )
-  set( options "" )
-  set( single_value_args "" )
-  set( multi_value_args "" )
-  cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}" ${ARGN} )
-  set( use_cuda_srclist ${ARGN} )
-
-  ecbuild_list_exclude_pattern( LIST ${srclist} REGEX ${use_cuda_srclist} )
-
-  foreach( src ${use_cuda_srclist} )
-    create_cuda_wrapper( cuda_wrapper SOURCE ${src} )
-    list( APPEND ${srclist} ${cuda_wrapper} )
-  endforeach()
-
-  set( ${srclist} "${${srclist}}" PARENT_SCOPE )
-
-  add_custom_target( atlas_cuda SOURCES ${use_cuda_srclist} )
-
-endfunction()
 
 ### atlas c++ library
 
@@ -552,14 +512,19 @@ list( APPEND source_list
 )
 
 if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
-## TODO temporary disabled since I get a linking error of the nvcc intermediate step
-#  use_cuda( source_list
-#    array/gridtools/GridToolsArrayView.cc
-#    array/gridtools/GridToolsIndexView.cc
-#    array/gridtools/GridToolsMakeView.cc
-#    mesh/Connectivity.cc
-#  )
+  list( APPEND source_list
+    parallel/HaloExchangeCUDA.h
+    parallel/HaloExchangeCUDA.cu
+  )
 endif()
+
+include( atlas_host_device )
+atlas_host_device( source_list
+  SOURCES
+    array/gridtools/GridToolsArrayView.cc
+    array/gridtools/GridToolsIndexView.cc
+    mesh/Connectivity.cc
+)
 
 ecbuild_add_library( TARGET atlas
 
@@ -586,7 +551,14 @@ ecbuild_add_library( TARGET atlas
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}"
     "${FCKIT_LIBRARIES}"
-    "${CUDA_LIBRARIES}"
   DEFINITIONS
     ${ATLAS_DEFINITIONS}
  )
+
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+  target_link_libraries( atlas gridtools::storage )
+endif()
+
+if( ATLAS_HAVE_ACC )
+  target_link_libraries( atlas atlas_acc_support )
+endif()

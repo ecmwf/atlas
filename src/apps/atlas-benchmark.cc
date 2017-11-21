@@ -466,7 +466,7 @@ void AtlasBenchmark::iteration()
 
   // halo-exchange
   Trace halo( Here(), "halo-exchange");
-  nodes_fs.halo_exchange().execute(grad);
+  nodes_fs.halo_exchange().execute<double,3>(grad_field.array());
   halo.stop();
 
   t.stop();

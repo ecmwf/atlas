@@ -40,11 +40,11 @@ public:
     void syncHostDevice() const {
     }
 
-    bool isOnHost() const {
-        return true;
+    bool hostNeedsUpdate() const {
+        return false;
     }
 
-    bool isOnDevice() const {
+    bool deviceNeedsUpdate() const {
         return false;
     }
 
@@ -55,6 +55,14 @@ public:
     }
 
     void* voidDataStore() {
+        return static_cast<void*>( &data_store_.front() );
+    }
+
+    void* voidHostData() {
+        return static_cast<void*>( &data_store_.front() );
+    }
+
+    void* voidDeviceData() {
         return static_cast<void*>( &data_store_.front() );
     }
 
@@ -85,11 +93,11 @@ public:
     void syncHostDevice() const {
     }
 
-    bool isOnHost() const {
+    bool hostNeedsUpdate() const {
         return true;
     }
 
-    bool isOnDevice() const {
+    bool deviceNeedsUpdate() const {
         return false;
     }
 
@@ -100,6 +108,14 @@ public:
     }
 
     void* voidDataStore() {
+        return static_cast<void*>( data_store_ );
+    }
+
+    void* voidHostData() {
+        return static_cast<void*>( data_store_ );
+    }
+
+    void* voidDeviceData() {
         return static_cast<void*>( data_store_ );
     }
 

@@ -102,8 +102,8 @@ contains
 #:endfor
       & dummy
 
-  procedure, public :: is_on_host
-  procedure, public :: is_on_device
+  procedure, public :: host_needs_update
+  procedure, public :: device_needs_update
   procedure, public :: clone_to_device
   procedure, public :: clone_from_device
   procedure, public :: sync_host_device
@@ -162,32 +162,31 @@ subroutine array_c_to_f_${dtype}$_r${rank}$(array_cptr,rank,shape_cptr,strides_c
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
   ${ftype}$, pointer, intent(out) :: array_fptr(${dim[rank]}$)
-  ${ftype}$, pointer :: tmp(${dim[rank+1]}$)
+  ${ftype}$, pointer :: tmp(${dim[rank]}$)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:${rank}$)
-  integer :: accumulated, factor, j
+  integer :: eshape(${rank}$)
+  integer :: j
 
   if( rank /= ${rank}$ ) call ${atlas_abort("Rank mismatch")}$
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
-  #{if rank == 1}# array_fptr => tmp(1,1:shape(1)) #{endif}#
-  #{if rank == 2}# array_fptr => tmp(1,1:shape(1),1:shape(2)) #{endif}#
-  #{if rank == 3}# array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3)) #{endif}#
-  #{if rank == 4}# array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3),1:shape(4)) #{endif}#
+  #{if rank == 1}# array_fptr => tmp(1:shape(1)) #{endif}#
+  #{if rank == 2}# array_fptr => tmp(1:shape(1),1:shape(2)) #{endif}#
+  #{if rank == 3}# array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3)) #{endif}#
+  #{if rank == 4}# array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3),1:shape(4)) #{endif}#
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 #:endfor
@@ -642,27 +641,27 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-function is_on_host(this)
+function host_needs_update(this)
   use atlas_field_c_binding
-  logical :: is_on_host
+  logical :: host_needs_update
   class(atlas_Field), intent(in) :: this
-  if( atlas__Field__is_on_host(this%c_ptr()) == 1 ) then
-    is_on_host = .true.
+  if( atlas__Field__host_needs_update(this%c_ptr()) == 1 ) then
+    host_needs_update = .true.
   else
-    is_on_host = .false.
+    host_needs_update = .false.
   endif
 end function
 
 !-------------------------------------------------------------------------------
 
-function is_on_device(this)
+function device_needs_update(this)
   use atlas_field_c_binding
-  logical :: is_on_device
+  logical :: device_needs_update
   class(atlas_Field), intent(in) :: this
-  if( atlas__Field__is_on_device(this%c_ptr()) == 1 ) then
-    is_on_device = .true.
+  if( atlas__Field__device_needs_update(this%c_ptr()) == 1 ) then
+    device_needs_update = .true.
   else
-    is_on_device = .false.
+    device_needs_update = .false.
   endif
 end function
 

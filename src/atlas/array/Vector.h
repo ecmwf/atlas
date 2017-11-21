@@ -12,6 +12,13 @@
 
 #include <cstddef>
 #include <cassert>
+
+#include "atlas/library/config.h"
+
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+  #include <cuda_runtime.h>
+#endif
+
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/library/config.h"
 
@@ -56,7 +63,7 @@ public:
   void cloneToDevice() {
     if(!data_gpu_) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-        cudaMalloc((void**)(&data_gpu_), sizeof(T*)*size_);
+        ::cudaMalloc((void**)(&data_gpu_), sizeof(T*)*size_);
 
         T* buff = new T[size_];
 
@@ -64,7 +71,7 @@ public:
           data_[i]->cloneToDevice();
           buff[i] = data_[i]->gpu_object_ptr();
         }
-        cudaMemcpy(data_gpu_, buff, sizeof(T*)*size_, cudaMemcpyHostToDevice);
+        ::cudaMemcpy(data_gpu_, buff, sizeof(T*)*size_, cudaMemcpyHostToDevice);
         delete buff;
 #else
         data_gpu_ = data_;
@@ -73,7 +80,7 @@ public:
     }
     else {
         assert(size_gpu_ == size_);
-#ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
         for(size_t i=0; i < size(); ++i) {
           data_[i]->cloneToDevice();
           assert(data_gpu_[i] == data_[i]->gpu_object_ptr());

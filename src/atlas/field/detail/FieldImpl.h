@@ -170,11 +170,11 @@ public: // Destructor
   void syncHostDevice() const {
       array_->syncHostDevice();
   }
-  bool isOnHost() const {
-      return array_->isOnHost();
+  bool hostNeedsUpdate() const {
+      return array_->hostNeedsUpdate();
   }
-  bool isOnDevice() const {
-      return array_->isOnDevice();
+  bool deviceNeedsUpdate() const {
+      return array_->deviceNeedsUpdate();
   }
   void reactivateDeviceWriteViews() const {
       array_->reactivateDeviceWriteViews();
@@ -185,7 +185,7 @@ public: // Destructor
 
 private: // methods
 
-  void print(std::ostream& os) const;
+  void print(std::ostream& os, bool dump=false) const;
 
 private: // members
 
@@ -256,8 +256,8 @@ extern "C"
   void atlas__Field__rename(FieldImpl* This, const char* name);
   void atlas__Field__set_levels(FieldImpl* This, int levels);
   void atlas__Field__set_functionspace(FieldImpl* This, const functionspace::FunctionSpaceImpl* functionspace);
-  int atlas__Field__is_on_host(const FieldImpl* This);
-  int atlas__Field__is_on_device(const FieldImpl* This);
+  int atlas__Field__host_needs_update(const FieldImpl* This);
+  int atlas__Field__device_needs_update(const FieldImpl* This);
   void atlas__Field__clone_to_device(FieldImpl* This);
   void atlas__Field__clone_from_device(FieldImpl* This);
   void atlas__Field__sync_host_device(FieldImpl* This);

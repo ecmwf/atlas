@@ -11,6 +11,7 @@
 /// @author Willem Deconinck
 
 #pragma once
+#include "atlas/array/ArrayViewDefs.h"
 
 namespace atlas {
 namespace array {
@@ -27,29 +28,29 @@ class ArrayT;
 template <typename Value>
 class StorageView;
 
-template <typename Value, int RANK>
+template <typename Value, int RANK, Intent AccessMode>
 class ArrayView;
 
 template <typename Value, int RANK>
 class IndexView;
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-ArrayView<Value, NDims>
+template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
+ArrayView<Value, NDims, AccessMode>
 make_view(const Array& array);
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-ArrayView<Value, NDims>
+template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
+ArrayView<Value, NDims, AccessMode>
 make_host_view(const Array& array);
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
-ArrayView<Value, NDims>
+template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
+ArrayView<Value, NDims, AccessMode>
 make_device_view(const Array& array);
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
+template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
 IndexView<Value, NDims>
 make_indexview(const Array& array);
 
-template <typename Value, unsigned int NDims, bool ReadOnly = false>
+template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
 IndexView<Value, NDims>
 make_host_indexview(const Array& array);
 

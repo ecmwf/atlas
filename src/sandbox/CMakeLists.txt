@@ -10,7 +10,7 @@ add_subdirectory( fortran_submodule )
 add_subdirectory( fortran_modinc )
 add_subdirectory( fortran_object )
 add_subdirectory( example_fortran )
-
+add_subdirectory( fortran_acc_fields )
 add_subdirectory( interpolation )
 add_subdirectory( interpolation-fortran )
 add_subdirectory( grid_distribution )

@@ -17,6 +17,7 @@
 #include <sstream>
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/Statistics.h"
+#include "atlas/array/Array.h"
 
 namespace atlas {
 namespace parallel {
@@ -95,8 +96,6 @@ void HaloExchange::setup( const int part[],
   }
 
   sendcnt_ = std::accumulate(sendcounts_.begin(),sendcounts_.end(),0);
-//  std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;
-//  std::cout << myproc << ":  recvcnt = " << recvcnt_ << std::endl;
 
   recvdispls_[0]=0;
   senddispls_[0]=0;
@@ -142,87 +141,71 @@ void HaloExchange::setup( const int part[],
   for( int jj=0; jj<sendcnt_; ++jj )
     sendmap_[jj] = recv_requests[jj];
 
-//   std::cout << Here() << std::endl;
-//   std::cout << myproc << "  :  sendmap_[size="<<sendmap_.size()<<"]  = ";
-//   for( int i=0; i< sendmap_.size(); ++i)
-//     std::cout << sendmap_[i] << " ";
-//   std::cout << std::endl;
-
-//   std::cout << myproc << "  :  recvmap_[size="<<recvmap_.size()<<"]  = ";
-//   for( int i=0; i< recvmap_.size(); ++i)
-//     std::cout << recvmap_[i] << " ";
-//   std::cout << std::endl;
-
   is_setup_ = true;
+  backdoor.parsize = parsize_;
 }
 
 
 /////////////////////
 
+namespace {
+
+template <typename Value>
+void execute_halo_exchange( HaloExchange* This, Value field[], int var_strides[], int var_extents[], int var_rank ) {
+    // WARNING: Only works if there is only one parallel dimension AND being slowest moving
+
+    array::ArrayShape shape{size_t(This->backdoor.parsize)};
+    for( size_t j=0; j<var_rank; ++j )
+      shape.push_back(var_extents[j]);
+
+    array::ArrayStrides strides{size_t(var_extents[0]*var_strides[0])};
+    for( size_t j=0; j<var_rank; ++j )
+      strides.push_back(var_strides[j]);
+
+    eckit::SharedPtr<array::Array> arr ( array::Array::wrap(field,
+          array::ArraySpec{shape,strides} ) );
+
+    switch(var_rank) {
+        case 1: {This->execute<int,1>(*arr); break;}
+        case 2: {This->execute<int,2>(*arr); break;}
+        case 3: {This->execute<int,3>(*arr); break;}
+        case 4: {This->execute<int,4>(*arr); break;}
+        default: throw eckit::AssertionFailed("Rank not supported in halo exchange");
+    }
+}
+}
+
+extern "C" {
 
 HaloExchange* atlas__HaloExchange__new () {
-  return new HaloExchange();
+    return new HaloExchange();
 }
 
 void atlas__HaloExchange__delete (HaloExchange* This) {
-  delete This;
+    delete This;
 }
 
 void atlas__HaloExchange__setup (HaloExchange* This, int part[], int remote_idx[], int base, int size)
 {
-  This->setup(part,remote_idx,base,size);
+    This->setup(part,remote_idx,base,size);
 }
 
 void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], int var_strides[], int var_extents[], int var_rank) {
-  std::vector<size_t> vstrides(var_rank);
-  std::vector<size_t> vextents(var_rank);
-  for(int n = 0; n < var_rank; ++n) {
-    vstrides[n] = var_strides[n];
-    vextents[n] = var_extents[n];
-  }
-  This->execute(field,vstrides.data(),vextents.data(),var_rank);
+    execute_halo_exchange(This,field,var_strides,var_extents,var_rank);
 }
 
 void atlas__HaloExchange__execute_strided_long (HaloExchange* This, long field[], int var_strides[], int var_extents[], int var_rank) {
-  std::vector<size_t> vstrides(var_rank);
-  std::vector<size_t> vextents(var_rank);
-  for(int n = 0; n < var_rank; ++n) {
-    vstrides[n] = var_strides[n];
-    vextents[n] = var_extents[n];
-  }
-  This->execute(field,vstrides.data(),vextents.data(),var_rank);
+    execute_halo_exchange(This,field,var_strides,var_extents,var_rank);
 }
 
 void atlas__HaloExchange__execute_strided_float (HaloExchange* This, float field[], int var_strides[], int var_extents[], int var_rank) {
-  std::vector<size_t> vstrides(var_rank);
-  std::vector<size_t> vextents(var_rank);
-  for(int n = 0; n < var_rank; ++n) {
-    vstrides[n] = var_strides[n];
-    vextents[n] = var_extents[n];
-  }
-  This->execute(field,vstrides.data(),vextents.data(),var_rank);
+  execute_halo_exchange(This,field,var_strides,var_extents,var_rank);
 }
 
 void atlas__HaloExchange__execute_strided_double (HaloExchange* This, double field[], int var_strides[], int var_extents[], int var_rank) {
-  std::vector<size_t> vstrides(var_rank);
-  std::vector<size_t> vextents(var_rank);
-  for(int n = 0; n < var_rank; ++n) {
-    vstrides[n] = var_strides[n];
-    vextents[n] = var_extents[n];
-  }
-  This->execute(field,vstrides.data(),vextents.data(),var_rank);
+    execute_halo_exchange(This,field,var_strides,var_extents,var_rank);
 }
 
-void atlas__HaloExchange__execute_int (HaloExchange* This, int field[], int nb_vars ) {
-  This->execute(field,nb_vars);
-}
-
-void atlas__HaloExchange__execute_float (HaloExchange* This, float field[], int nb_vars ) {
-  This->execute(field,nb_vars);
-}
-
-void atlas__HaloExchange__execute_double (HaloExchange* This, double field[], int nb_vars ) {
-  This->execute(field,nb_vars);
 }
 
 /////////////////////
