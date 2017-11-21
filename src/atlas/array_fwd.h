@@ -28,29 +28,29 @@ class ArrayT;
 template <typename Value>
 class StorageView;
 
-template <typename Value, int RANK, Intent Kind>
+template <typename Value, int RANK, Intent AccessMode>
 class ArrayView;
 
 template <typename Value, int RANK>
 class IndexView;
 
-template <typename Value, unsigned int NDims, Intent Kind = Intent::ReadWrite>
-ArrayView<Value, NDims, Kind>
+template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
+ArrayView<Value, NDims, AccessMode>
 make_view(const Array& array);
 
-template <typename Value, unsigned int NDims, Intent Kind = Intent::ReadWrite>
-ArrayView<Value, NDims, Kind>
+template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
+ArrayView<Value, NDims, AccessMode>
 make_host_view(const Array& array);
 
-template <typename Value, unsigned int NDims, Intent Kind = Intent::ReadWrite>
-ArrayView<Value, NDims, Kind>
+template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
+ArrayView<Value, NDims, AccessMode>
 make_device_view(const Array& array);
 
-template <typename Value, unsigned int NDims, Intent Kind = Intent::ReadWrite>
+template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
 IndexView<Value, NDims>
 make_indexview(const Array& array);
 
-template <typename Value, unsigned int NDims, Intent Kind = Intent::ReadWrite>
+template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
 IndexView<Value, NDims>
 make_host_indexview(const Array& array);
 

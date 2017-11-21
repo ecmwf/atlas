@@ -41,7 +41,7 @@ public:
     }
 
     bool hostNeedsUpdate() const {
-        return true;
+        return false;
     }
 
     bool deviceNeedsUpdate() const {

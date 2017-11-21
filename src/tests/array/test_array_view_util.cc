@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/array_fwd.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayViewUtil.h"
 #include "tests/AtlasTestEnvironment.h"

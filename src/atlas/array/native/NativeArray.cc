@@ -178,7 +178,7 @@ template< typename Value >
 void ArrayT<Value>::dump(std::ostream& os) const {
   if( not contiguous() ) NOTIMP;
 
-  const Value *data = data();
+  const Value *data = host_data<Value>();
 
   for(size_t i=0; i<size(); ++i) {
       os << data[i] << " ";

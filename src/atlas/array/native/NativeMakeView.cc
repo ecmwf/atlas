@@ -30,21 +30,21 @@ namespace {
 
 //------------------------------------------------------------------------------
 
-template <typename Value, unsigned int Rank, bool ReadOnly>
-ArrayView<Value, Rank, ReadOnly>
+template <typename Value, unsigned int Rank, Intent AccessMode>
+ArrayView<Value, Rank, AccessMode>
 make_host_view(const Array& array) {
-    return ArrayView<Value, Rank, ReadOnly>((const Value*)(array.storage()),array.shape(), array.strides());
+    return ArrayView<Value, Rank, AccessMode>((const Value*)(array.storage()),array.shape(), array.strides());
 }
 
 
-template <typename Value, unsigned int Rank, bool ReadOnly>
-ArrayView<Value, Rank, ReadOnly>
+template <typename Value, unsigned int Rank, Intent AccessMode>
+ArrayView<Value, Rank, AccessMode>
 make_device_view(const Array& array) {
-    return make_host_view<Value,Rank,ReadOnly>(array);
+    return make_host_view<Value,Rank,AccessMode>(array);
 }
 
 
-template <typename Value, unsigned int Rank, bool ReadOnly>
+template <typename Value, unsigned int Rank, Intent AccessMode>
 IndexView<Value, Rank>
 make_host_indexview(const Array& array) {
     return IndexView<Value,Rank>( (Value*)(array.storage()),array.shape().data() );
@@ -65,19 +65,19 @@ make_device_storageview(const Array& array) {
 }
 
 
-template <typename Value, unsigned int Rank, bool ReadOnly>
+template <typename Value, unsigned int Rank, Intent AccessMode>
 IndexView<Value, Rank>
 make_indexview(const Array& array) {
     check_metadata<Value, Rank>(array);
-    return make_host_indexview<Value,Rank>(array);
+    return make_host_indexview<Value,Rank,AccessMode>(array);
 }
 
 
-template <typename Value, unsigned int Rank, bool ReadOnly>
-ArrayView<Value, Rank, ReadOnly>
+template <typename Value, unsigned int Rank, Intent AccessMode>
+ArrayView<Value, Rank, AccessMode>
 make_view(const Array& array) {
     check_metadata<Value, Rank>(array);
-    return make_host_view<Value, Rank, ReadOnly>(array);
+    return make_host_view<Value, Rank, AccessMode>(array);
 }
 
 
@@ -98,48 +98,48 @@ make_storageview(const Array& array) {
 namespace atlas {
 namespace array {
 #define EXPLICIT_TEMPLATE_INSTANTIATION(RANK) \
-template ArrayView<int,RANK,true> make_view<int,RANK,true >(const Array&);\
-template ArrayView<int,RANK,false> make_view<int,RANK,false>(const Array&);\
-template ArrayView<long,RANK,true> make_view<long,RANK,true >(const Array&);\
-template ArrayView<long,RANK,false> make_view<long,RANK,false>(const Array&);\
-template ArrayView<long unsigned,RANK,true> make_view<long unsigned,RANK,true >(const Array&);\
-template ArrayView<long unsigned,RANK,false> make_view<long unsigned,RANK,false>(const Array&);\
-template ArrayView<float,RANK,true> make_view<float,RANK,true >(const Array&);\
-template ArrayView<float,RANK,false> make_view<float,RANK,false>(const Array&);\
-template ArrayView<double,RANK,true> make_view<double,RANK,true >(const Array&);\
-template ArrayView<double,RANK,false> make_view<double,RANK,false>(const Array&);\
+template ArrayView<int,RANK,Intent::ReadOnly> make_view<int,RANK,Intent::ReadOnly>(const Array&);\
+template ArrayView<int,RANK,Intent::ReadWrite> make_view<int,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<long,RANK,Intent::ReadOnly> make_view<long,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<long,RANK,Intent::ReadWrite> make_view<long,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<long unsigned,RANK,Intent::ReadOnly> make_view<long unsigned,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<long unsigned,RANK,Intent::ReadWrite> make_view<long unsigned,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<float,RANK,Intent::ReadOnly> make_view<float,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<float,RANK,Intent::ReadWrite> make_view<float,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<double,RANK,Intent::ReadOnly> make_view<double,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<double,RANK,Intent::ReadWrite> make_view<double,RANK,Intent::ReadWrite>(const Array&);\
 \
-template ArrayView<int,RANK,true> make_host_view<int,RANK,true >(const Array&);\
-template ArrayView<int,RANK,false> make_host_view<int,RANK,false>(const Array&);\
-template ArrayView<long,RANK,true> make_host_view<long,RANK,true >(const Array&);\
-template ArrayView<long,RANK,false> make_host_view<long,RANK,false>(const Array&);\
-template ArrayView<long unsigned,RANK,true> make_host_view<long unsigned,RANK,true >(const Array&);\
-template ArrayView<long unsigned,RANK,false> make_host_view<long unsigned,RANK,false>(const Array&);\
-template ArrayView<float,RANK,true> make_host_view<float,RANK,true >(const Array&);\
-template ArrayView<float,RANK,false> make_host_view<float,RANK,false>(const Array&);\
-template ArrayView<double,RANK,true> make_host_view<double,RANK,true >(const Array&);\
-template ArrayView<double,RANK,false> make_host_view<double,RANK,false>(const Array&);\
+template ArrayView<int,RANK,Intent::ReadOnly> make_host_view<int,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<int,RANK,Intent::ReadWrite> make_host_view<int,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<long,RANK,Intent::ReadOnly> make_host_view<long,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<long,RANK,Intent::ReadWrite> make_host_view<long,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<long unsigned,RANK,Intent::ReadOnly> make_host_view<long unsigned,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<long unsigned,RANK,Intent::ReadWrite> make_host_view<long unsigned,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<float,RANK,Intent::ReadOnly> make_host_view<float,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<float,RANK,Intent::ReadWrite> make_host_view<float,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<double,RANK,Intent::ReadOnly> make_host_view<double,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<double,RANK,Intent::ReadWrite> make_host_view<double,RANK,Intent::ReadWrite>(const Array&);\
 \
-template ArrayView<int,RANK,true> make_device_view<int,RANK,true >(const Array&);\
-template ArrayView<int,RANK,false> make_device_view<int,RANK,false>(const Array&);\
-template ArrayView<long,RANK,true> make_device_view<long,RANK,true >(const Array&);\
-template ArrayView<long,RANK,false> make_device_view<long,RANK,false>(const Array&);\
-template ArrayView<long unsigned,RANK,true> make_device_view<long unsigned,RANK,true >(const Array&);\
-template ArrayView<long unsigned,RANK,false> make_device_view<long unsigned,RANK,false>(const Array&);\
-template ArrayView<float,RANK,true> make_device_view<float,RANK,true >(const Array&);\
-template ArrayView<float,RANK,false> make_device_view<float,RANK,false>(const Array&);\
-template ArrayView<double,RANK,true> make_device_view<double,RANK,true >(const Array&);\
-template ArrayView<double,RANK,false> make_device_view<double,RANK,false>(const Array&);\
+template ArrayView<int,RANK,Intent::ReadOnly> make_device_view<int,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<int,RANK,Intent::ReadWrite> make_device_view<int,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<long,RANK,Intent::ReadOnly> make_device_view<long,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<long,RANK,Intent::ReadWrite> make_device_view<long,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<long unsigned,RANK,Intent::ReadOnly> make_device_view<long unsigned,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<long unsigned,RANK,Intent::ReadWrite> make_device_view<long unsigned,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<float,RANK,Intent::ReadOnly> make_device_view<float,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<float,RANK,Intent::ReadWrite> make_device_view<float,RANK,Intent::ReadWrite>(const Array&);\
+template ArrayView<double,RANK,Intent::ReadOnly> make_device_view<double,RANK,Intent::ReadOnly >(const Array&);\
+template ArrayView<double,RANK,Intent::ReadWrite> make_device_view<double,RANK,Intent::ReadWrite>(const Array&);\
 
-template IndexView<int,1> make_indexview<int,1,true >(const Array&);\
-template IndexView<int,1> make_indexview<int,1,false>(const Array&);\
-template IndexView<int,2> make_indexview<int,2,true >(const Array&);\
-template IndexView<int,2> make_indexview<int,2,false>(const Array&);\
+template IndexView<int,1> make_indexview<int,1,Intent::ReadOnly >(const Array&);\
+template IndexView<int,1> make_indexview<int,1,Intent::ReadWrite>(const Array&);\
+template IndexView<int,2> make_indexview<int,2,Intent::ReadOnly >(const Array&);\
+template IndexView<int,2> make_indexview<int,2,Intent::ReadWrite>(const Array&);\
 
-template IndexView<int,1> make_host_indexview<int,1,true >(const Array&);\
-template IndexView<int,1> make_host_indexview<int,1,false>(const Array&);\
-template IndexView<int,2> make_host_indexview<int,2,true >(const Array&);\
-template IndexView<int,2> make_host_indexview<int,2,false>(const Array&);\
+template IndexView<int,1> make_host_indexview<int,1,Intent::ReadOnly >(const Array&);\
+template IndexView<int,1> make_host_indexview<int,1,Intent::ReadWrite>(const Array&);\
+template IndexView<int,2> make_host_indexview<int,2,Intent::ReadOnly >(const Array&);\
+template IndexView<int,2> make_host_indexview<int,2,Intent::ReadWrite>(const Array&);\
 
 template StorageView<int> make_storageview<int>(const Array&);
 template StorageView<long> make_storageview<long>(const Array&);
