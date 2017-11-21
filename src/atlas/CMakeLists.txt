@@ -201,6 +201,7 @@ endif()
 
 list( APPEND atlas_mesh_srcs
 mesh.h
+mesh/Connectivity.cc
 mesh/Connectivity.h
 mesh/ElementType.cc
 mesh/ElementType.h
@@ -262,13 +263,6 @@ meshgenerator/RegularMeshGenerator.h
 mesh/actions/BuildTorusXYZField.h
 mesh/actions/BuildTorusXYZField.cc
 )
-
-if(NOT ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA) 
-list( APPEND atlas_mesh_srcs
-mesh/Connectivity.cc
-)
-endif()
-
 
 list( APPEND atlas_output_srcs
 output/Output.h
@@ -384,6 +378,7 @@ array/LocalView.h
 array/StorageView.h
 array/Vector.h
 array/helpers/ArrayInitializer.h
+array/helpers/ArrayAssigner.h
 #array/Table.h
 #array/Table.cc
 #array/TableView.h
@@ -394,22 +389,16 @@ list( APPEND atlas_array_srcs
 array/gridtools/GPUClonable.h
 array/gridtools/GridToolsArray.cc
 array/gridtools/GridToolsArrayHelpers.h
+array/gridtools/GridToolsArrayView.cc
 array/gridtools/GridToolsArrayView.h
 array/gridtools/GridToolsDataStore.h
+array/gridtools/GridToolsIndexView.cc
 array/gridtools/GridToolsIndexView.h
 array/gridtools/GridToolsMakeView.cc
 array/gridtools/GridToolsMakeView.h
 array/gridtools/GridToolsStorageView.h
 array/gridtools/GridToolsTraits.h
 )
-
-if(NOT ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA) 
-list( APPEND atlas_array_srcs
-array/gridtools/GridToolsArrayView.cc
-array/gridtools/GridToolsIndexView.cc
-)
-endif()
-
 else()
 list( APPEND atlas_array_srcs
 array/native/NativeArray.cc
@@ -467,51 +456,6 @@ util/Unique.h
 #parallel/detail/MPLArrayView.h
 )
 
-
-function( create_cuda_wrapper variable )
-set( options "" )
-set( single_value_args SOURCE )
-set( multi_value_args "" )
-cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
-
-  get_filename_component(directory ${_PAR_SOURCE} DIRECTORY)
-  get_filename_component(base      ${_PAR_SOURCE} NAME_WE)
-  get_filename_component(name      ${_PAR_SOURCE} NAME)
-  if( directory )
-    set(cuda_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${directory}/${base}.cu)
-  else()
-    set(cuda_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${base}.cu)
-  endif()
-  set(${variable} ${cuda_wrapper} PARENT_SCOPE)
-  set(content
-"
-#include \"atlas/${directory}/${name}\"
-")
-
-  file(WRITE ${cuda_wrapper} "${content}")
-
-endfunction()
-
-function( use_cuda srclist )
-  set( options "" )
-  set( single_value_args "" )
-  set( multi_value_args "" )
-  cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}" ${ARGN} )
-  set( use_cuda_srclist ${ARGN} )
-
-  ecbuild_list_exclude_pattern( LIST ${srclist} REGEX ${use_cuda_srclist} )
-
-  foreach( src ${use_cuda_srclist} )
-    create_cuda_wrapper( cuda_wrapper SOURCE ${src} )
-    list( APPEND ${srclist} ${cuda_wrapper} )
-  endforeach()
-
-  set( ${srclist} "${${srclist}}" PARENT_SCOPE )
-
-  add_custom_target( atlas_cuda SOURCES ${use_cuda_srclist} )
-
-endfunction()
-
 ### atlas c++ library
 
 ecbuild_debug_var(CGAL_LIBRARIES)
@@ -553,14 +497,17 @@ list( APPEND source_list
 if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
   list( APPEND source_list
     parallel/HaloExchangeCUDA.h
-  )
-  use_cuda( source_list
-    array/gridtools/GridToolsArrayView.cu
-    array/gridtools/GridToolsIndexView.cu
-    mesh/Connectivity.cu
     parallel/HaloExchangeCUDA.cu
   )
 endif()
+
+include( atlas_host_device )
+atlas_host_device( source_list
+  SOURCES
+    array/gridtools/GridToolsArrayView.cc
+    array/gridtools/GridToolsIndexView.cc
+    mesh/Connectivity.cc
+)
 
 ecbuild_add_library( TARGET atlas
 
@@ -587,7 +534,14 @@ ecbuild_add_library( TARGET atlas
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}"
     "${FCKIT_LIBRARIES}"
-    "${CUDA_LIBRARIES}"
   DEFINITIONS
     ${ATLAS_DEFINITIONS}
  )
+
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+  target_link_libraries( atlas gridtools::storage )
+endif()
+
+if( ATLAS_HAVE_ACC )
+  target_link_libraries( atlas atlas_acc_support )
+endif()

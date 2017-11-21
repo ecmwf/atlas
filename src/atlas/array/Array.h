@@ -50,7 +50,7 @@ public:
 
   template <typename Value> static Array* wrap(Value* data, const ArraySpec& spec);
 
-  size_t bytes() const { return sizeof_data() * size();}
+  size_t bytes() const { return sizeof_data() * spec().allocatedSize();}
 
   size_t size() const { return spec_.size(); }
 
@@ -88,6 +88,8 @@ public:
 
   virtual void dump(std::ostream& os) const = 0;
 
+  virtual bool accMap() const = 0;
+
   virtual void* storage() { return data_store_->voidDataStore();}
 
   virtual const void* storage() const { return data_store_->voidDataStore();}
@@ -108,15 +110,15 @@ public:
 
   void reactivateHostWriteViews() const { data_store_->reactivateHostWriteViews(); }
 
-  ArraySpec& spec() {return spec_;}
+  const ArraySpec& spec() const {return spec_;}
 
   // -- dangerous methods... You're on your own interpreting the raw data
-  template <typename DATATYPE> DATATYPE const* host_data() const;
-  template <typename DATATYPE> DATATYPE*       host_data();
-  template <typename DATATYPE> DATATYPE const* device_data() const;
-  template <typename DATATYPE> DATATYPE*       device_data();
-  template <typename DATATYPE> DATATYPE const* data() const;
-  template <typename DATATYPE> DATATYPE*       data();
+  template <typename DATATYPE> DATATYPE const* host_data() const { return data_store_->hostData<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       host_data()       { return data_store_->hostData<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE const* device_data() const { return data_store_->deviceData<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       device_data()       { return data_store_->deviceData<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE const* data() const { return data_store_->hostData<DATATYPE>(); }
+  template <typename DATATYPE> DATATYPE*       data()       { return data_store_->hostData<DATATYPE>(); }
 
   ArrayDataStore const* data_store() const { return data_store_.get();}
 
@@ -170,9 +172,12 @@ public:
 
     virtual size_t footprint() const;
 
+    virtual bool accMap() const;
+
 private:
     template <typename T>
     friend class ArrayT_impl;
+    mutable bool acc_map_{false};
 };
 
 } // namespace array

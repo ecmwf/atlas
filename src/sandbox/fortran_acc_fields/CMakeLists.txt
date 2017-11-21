@@ -6,13 +6,13 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-add_subdirectory( fortran_submodule )
-add_subdirectory( fortran_modinc )
-add_subdirectory( fortran_object )
-add_subdirectory( example_fortran )
-add_subdirectory( fortran_acc_fields )
-add_subdirectory( interpolation )
-add_subdirectory( interpolation-fortran )
-add_subdirectory( grid_distribution )
-add_subdirectory( benchmark_build_halo )
-add_subdirectory( benchmark_sorting )
+if( ATLAS_HAVE_ACC ) 
+    ecbuild_add_executable(
+        TARGET  atlas-acc-fields
+        SOURCES atlas-acc-fields.F90
+        LIBS    atlas_f
+        NOINSTALL
+    )
+    target_compile_options( atlas-acc-fields PUBLIC ${ACC_Fortran_FLAGS} )
+    target_link_libraries( atlas-acc-fields ${ACC_Fortran_FLAGS} )
+endif()

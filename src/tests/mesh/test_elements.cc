@@ -280,6 +280,7 @@ CASE( "block_connectivity" )
 
 }
 
+#warning TODO: gridtools storage cuda backend cannot allocate zero elements
 CASE( "zero_elements" )
 {
   HybridElements hybrid_elements;

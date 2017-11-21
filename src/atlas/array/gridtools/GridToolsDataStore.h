@@ -11,6 +11,7 @@
 #pragma once
 
 #include "atlas/array/ArrayUtil.h"
+#include "atlas/array/gridtools/GridToolsTraits.h"
 
 //------------------------------------------------------------------------------
 
@@ -63,6 +64,14 @@ struct GridToolsDataStore : ArrayDataStore
 
     void* voidDataStore() {
         return static_cast<void*>(const_cast<gt_DataStore*>(data_store_));
+    }
+
+    void* voidHostData() {
+        return ::gridtools::make_host_view<::gridtools::access_mode::ReadOnly>(*data_store_).data();
+    }
+
+    void* voidDeviceData() {
+        return ::gridtools::make_device_view<::gridtools::access_mode::ReadOnly>(*data_store_).data();
     }
 
 private:

@@ -56,10 +56,6 @@ public:
         return gt_data_view_(c...);
     }
 
-    size_t shape(size_t idx) const { return shape_[idx]; }
-
-    size_t stride(size_t idx) const { return strides_[idx]; }
-
     const Slice operator[](size_t i) const {
         return Slicer<Slice, Rank==1>(*this).apply(i);
     }
@@ -112,6 +108,14 @@ public:
     void assign(const value_type& value);
 
     void assign(const std::initializer_list<value_type>&);
+
+    const size_t* strides() const { return strides_; }
+
+    const size_t* shape() const { return shape_; }
+
+    size_t shape(size_t idx) const { return shape_[idx]; }
+
+    size_t stride(size_t idx) const { return strides_[idx]; }
 
 private:
 

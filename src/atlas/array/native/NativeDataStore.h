@@ -58,6 +58,14 @@ public:
         return static_cast<void*>( &data_store_.front() );
     }
 
+    void* voidHostData() {
+        return static_cast<void*>( &data_store_.front() );
+    }
+
+    void* voidDeviceData() {
+        return static_cast<void*>( &data_store_.front() );
+    }
+
 private:
     std::vector<Value> data_store_;
 };
@@ -100,6 +108,14 @@ public:
     }
 
     void* voidDataStore() {
+        return static_cast<void*>( data_store_ );
+    }
+
+    void* voidHostData() {
+        return static_cast<void*>( data_store_ );
+    }
+
+    void* voidDeviceData() {
         return static_cast<void*>( data_store_ );
     }
 

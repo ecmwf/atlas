@@ -9,10 +9,15 @@
  */
 
 #include <cuda_runtime.h>
+
 #include "tests/AtlasTestEnvironment.h"
 #include "eckit/testing/Test.h"
+
 #include "atlas/array/Vector.h"
 #include "atlas/array/gridtools/GPUClonable.h"
+#include "atlas/array.h"
+#include "atlas/array/MakeView.h"
+#include "atlas/runtime/Log.h"
 
 using namespace atlas::array;
 using namespace eckit::testing;
@@ -56,14 +61,13 @@ CASE( "test_resize" )
 
     list_ints.resize(6);
     EXPECT( list_ints_h.is_valid(list_ints) == false );
-  
+
     VectorView<int_gpu*> list_ints_h2 = make_host_vector_view(list_ints);
- 
+
 
     EXPECT( list_ints_h2[0]->val_ == 3 );
     EXPECT( list_ints_h2[1]->val_ == 4 );
-    EXPECT( list_ints_h2.size() == 6 );
-
+    EXPECT( list_ints_h2.size()   == 6 );
 }
 
 

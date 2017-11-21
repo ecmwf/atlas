@@ -166,6 +166,20 @@ void FieldImpl::set_functionspace(const FunctionSpace& functionspace)
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
+namespace {
+  template< typename Value >
+  void atlas__Field__host_data_specf (FieldImpl* This, Value* &data, int &rank, int* &shapef, int* &stridesf) {
+    ATLAS_ERROR_HANDLING(
+      ASSERT(This);
+      This->array().accMap();
+      data = This->host_data<Value>();
+      shapef = const_cast<int*>(This->shapef().data());
+      stridesf = const_cast<int*>(This->stridesf().data());
+      rank = This->shapef().size();
+    );
+  }
+}
+
 extern "C"
 {
 
@@ -398,46 +412,24 @@ void atlas__Field__shapef (FieldImpl* This, int* &shape, int &rank)
 
 void atlas__Field__host_data_int_specf (FieldImpl* This, int* &data, int &rank, int* &shapef, int* &stridesf)
 {
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    data = This->host_data<int>();
-    shapef = const_cast<int*>(This->shapef().data());
-    stridesf = const_cast<int*>(This->stridesf().data());
-    rank = This->shapef().size();
-  );
+  atlas__Field__host_data_specf(This,data,rank,shapef,stridesf);
 }
 
 void atlas__Field__host_data_long_specf (FieldImpl* This, long* &data, int &rank, int* &shapef, int* &stridesf)
 {
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    data = This->host_data<long>();
-    shapef = const_cast<int*>(This->shapef().data());
-    stridesf = const_cast<int*>(This->stridesf().data());
-    rank = This->shapef().size();
-  );
+  atlas__Field__host_data_specf(This,data,rank,shapef,stridesf);
 }
 
 void atlas__Field__host_data_float_specf (FieldImpl* This, float* &data, int &rank, int* &shapef, int* &stridesf)
 {
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    data = This->host_data<float>();
-    shapef = const_cast<int*>(This->shapef().data());
-    stridesf = const_cast<int*>(This->stridesf().data());
-    rank = This->shapef().size();
-  );
+  atlas__Field__host_data_specf(This,data,rank,shapef,stridesf);
+
 }
 
 void atlas__Field__host_data_double_specf (FieldImpl* This, double* &data, int &rank, int* &shapef, int* &stridesf)
 {
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    data = This->host_data<double>();
-    shapef = const_cast<int*>(This->shapef().data());
-    stridesf = const_cast<int*>(This->stridesf().data());
-    rank = This->shapef().size();
-  );
+  atlas__Field__host_data_specf(This,data,rank,shapef,stridesf);
+
 }
 
 void atlas__Field__device_data_int_specf (FieldImpl* This, int* &data, int &rank, int* &shapef, int* &stridesf)

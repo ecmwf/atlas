@@ -21,7 +21,10 @@
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array/gridtools/GridToolsDataStore.h"
 #include "atlas/array/gridtools/GridToolsArrayHelpers.h"
-
+#include "atlas/array/helpers/ArrayInitializer.h"
+#ifdef ATLAS_HAVE_ACC
+#include "atlas_acc_support/atlas_acc_map_data.h"
+#endif
 #include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------
@@ -64,7 +67,6 @@ public:
     auto gt_storage = create_gt_storage<Value,typename default_layout_t<sizeof...(dims)>::type>(dims...);
     using data_store_t = typename std::remove_pointer<decltype(gt_storage)>::type;
     array_.data_store_ = std::unique_ptr<ArrayDataStore>(new GridToolsDataStore<data_store_t>(gt_storage));
-
     array_.spec_ = make_spec(gt_storage,dims...);
   }
 
@@ -264,74 +266,37 @@ Array* Array::create(DataType datatype, const ArrayShape& shape, const ArrayLayo
   return 0;
 }
 
-template <typename DATATYPE> DATATYPE const* Array::host_data() const {
-  return array::make_host_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE*       Array::host_data() {
-  return array::make_host_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE const* Array::device_data() const {
-  return array::make_device_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE*       Array::device_data() {
-  return array::make_device_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE const* Array::data() const {
-  return array::make_host_storageview<DATATYPE>(*this).data();
-}
-template <typename DATATYPE> DATATYPE*       Array::data() {
-  return array::make_host_storageview<DATATYPE>(*this).data();
-}
-
-template int*                 Array::host_data<int>();
-template int const*           Array::host_data<int>() const;
-template long*                Array::host_data<long>();
-template long const*          Array::host_data<long>() const;
-template long unsigned*       Array::host_data<long unsigned>();
-template long unsigned const* Array::host_data<long unsigned>() const;
-template float*               Array::host_data<float>();
-template float const*         Array::host_data<float>() const;
-template double*              Array::host_data<double>();
-template double const*        Array::host_data<double>() const;
-
-template int*                 Array::device_data<int>();
-template int const*           Array::device_data<int>() const;
-template long*                Array::device_data<long>();
-template long const*          Array::device_data<long>() const;
-template long unsigned*       Array::device_data<long unsigned>();
-template long unsigned const* Array::device_data<long unsigned>() const;
-template float*               Array::device_data<float>();
-template float const*         Array::device_data<float>() const;
-template double*              Array::device_data<double>();
-template double const*        Array::device_data<double>() const;
-
-template int*                 Array::data<int>();
-template int const*           Array::data<int>() const;
-template long*                Array::data<long>();
-template long const*          Array::data<long>() const;
-template long unsigned*       Array::data<long unsigned>();
-template long unsigned const* Array::data<long unsigned>() const;
-template float*               Array::data<float>();
-template float const*         Array::data<float>() const;
-template double*              Array::data<double>();
-template double const*        Array::data<double>() const;
-
 //------------------------------------------------------------------------------
 
 template <typename Value>
 size_t ArrayT<Value>::footprint() const {
   size_t size = sizeof(*this);
   size += bytes();
-  if( not contiguous() ) NOTIMP;
   return size;
 }
 
 //------------------------------------------------------------------------------
 
+template <typename Value>
+bool ArrayT<Value>::accMap() const {
+  if( not acc_map_ ) {
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA && defined(ATLAS_HAVE_ACC)
+    atlas_acc_map_data( (void*) host_data<Value>(), (void*) device_data<Value>(), spec_.allocatedSize()*sizeof(Value) );
+    acc_map_ = true;
+#endif
+  }
+  return acc_map_;
+}
+
+//------------------------------------------------------------------------------
+
 template <typename Value> void ArrayT<Value>::insert(size_t idx1, size_t size1) {
-    if(!hostNeedsUpdate()) {
+
+    if( hostNeedsUpdate() ) {
         cloneFromDevice();
     }
+    if( not hasDefaultLayout() )
+      NOTIMP;
 
     ArrayShape nshape = shape();
     if(idx1 > nshape[0]) {
@@ -342,6 +307,7 @@ template <typename Value> void ArrayT<Value>::insert(size_t idx1, size_t size1) 
     Array* resized = Array::create<Value>(nshape);
 
     array_initializer_partitioned<0>::apply( *this, *resized, idx1, size1);
+
     replace(*resized);
     delete resized;
 }

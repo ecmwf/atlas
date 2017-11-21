@@ -20,7 +20,7 @@
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
-#include "atlas/array/helpers/ArrayInitializer.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------
@@ -237,10 +237,11 @@ struct default_layout_t {
       if(gt_data_store_ptr->valid()) {
           auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr().get();
           using Layout = typename DataStore::storage_info_t::layout_t;
+          using Alignment = typename DataStore::storage_info_t::alignment_t;
 
-      using seq = my_apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
+          using seq = my_apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...(dims)>::type>;
 
-          return ArraySpec(
+          ArraySpec spec(
               ArrayShape{(unsigned long)dims...},
               seq::template apply<
                         ArrayStrides,
@@ -248,11 +249,14 @@ struct default_layout_t {
                         storage_info_ptr),
               seq::template apply<
                         ArrayLayout,
-                        get_layout_map_component<unsigned long, Layout>::template get_component>()
+                        get_layout_map_component<unsigned long, Layout>::template get_component>(),
+              ArrayAlignment( Alignment::value )
           );
+          ASSERT( spec.allocatedSize() == storage_info_ptr->padded_total_length() );
+          return spec;
+      } else {
+          return ArraySpec( make_shape({dims...}), make_null_strides(typename ::gridtools::make_gt_integer_sequence<size_t, sizeof...(dims)>::type()));
       }
-
-      return ArraySpec( make_shape({dims...}), make_null_strides(typename ::gridtools::make_gt_integer_sequence<size_t, sizeof...(dims)>::type()));
   }
 
 //------------------------------------------------------------------------------

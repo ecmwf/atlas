@@ -15,6 +15,7 @@
 #include "eckit/mpi/Comm.h"
 #include "atlas/runtime/Log.h"
 #include "eckit/config/Resource.h"
+#include "eckit/testing/Test.h"
 
 namespace atlas {
 namespace test {

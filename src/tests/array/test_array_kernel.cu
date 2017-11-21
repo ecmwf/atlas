@@ -9,11 +9,17 @@
  */
 
 #include <cuda_runtime.h>
+<<<<<<< HEAD
 #include "tests/AtlasTestEnvironment.h"
 #include "eckit/testing/Test.h"
+=======
+>>>>>>> escape-develop-0.12
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
+
+#include "tests/AtlasTestEnvironment.h"
+#include "eckit/testing/Test.h"
 
 using namespace atlas::array;
 using namespace eckit::testing;
@@ -48,13 +54,13 @@ CASE( "test_array" )
    constexpr unsigned int dz = 7;
 
    Array* ds = Array::create<double>(dx, dy, dz);
-   array::ArrayView<double,3> hv = make_host_view<double, 3>(*ds);
+   auto hv = make_host_view<double, 3>(*ds);
    hv(3, 3, 3) = 4.5;
 
    ds->cloneToDevice();
 
    auto cv = make_device_view<double, 3>(*ds);
- 
+
    kernel_ex<<<1,1>>>(cv);
 
    cudaDeviceSynchronize();
@@ -82,11 +88,11 @@ CASE( "test_array_loop" )
        }
      }
    }
-  
+
    ds->cloneToDevice();
 
    auto cv = make_device_view<double, 3>(*ds);
- 
+
    loop_kernel_ex<<<1,1>>>(cv);
 
    cudaDeviceSynchronize();
