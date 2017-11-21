@@ -272,11 +272,11 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
     std::vector<std::string> prefix_(size());
     if( indent ) {
       std::vector<bool> active(max_nest,false);
-      for( long j=long(size())-1; j>=0; --j ) {
-        const auto& nest   = nest_[j];
+      for( long k=long(size())-1; k>=0; --k ) {
+        const auto& nest   = nest_[k];
 
-        const CallStack& this_stack = stack_[j];
-        const CallStack& next_stack = (j==size()-1) ? this_stack : stack_[j+1];
+        const CallStack& this_stack = stack_[k];
+        const CallStack& next_stack = (k==size()-1) ? this_stack : stack_[k+1];
 
         auto this_it = this_stack.rbegin();
         auto next_it = next_stack.rbegin();
@@ -308,7 +308,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
           out << box_horizontal(1);
 
 
-        prefix_[j] = out.str();
+        prefix_[k] = out.str();
       }
     }
 

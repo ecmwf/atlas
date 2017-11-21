@@ -107,8 +107,10 @@ private: // data
   int nproc;
   int myproc;
 
-  std::vector<int> bounds_;
-  int par_bound_;
+public:
+  struct Backdoor {
+    int parsize;
+  } backdoor ;
 
 };
 
@@ -244,7 +246,6 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, arr
         halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, hfield, dfield, send_buffer);
     }
     else
-        halo_packer<ParallelDim, RANK>::pack(sendcnt_, sendmap_, dfield, send_buffer);
 #else
     halo_packer<ParallelDim, RANK>::pack(sendcnt_, sendmap_, dfield, send_buffer);
 #endif
@@ -256,13 +257,11 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
                                        array::ArrayView<DATA_TYPE,RANK>& dfield, const bool on_device) const
 {
   ATLAS_TRACE();
-
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     if(on_device) {
         halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, hfield, dfield);
     }
     else
-        halo_packer<ParallelDim, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, dfield);
 #else
     halo_packer<ParallelDim, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, dfield);
 #endif
