@@ -18,25 +18,23 @@
 namespace atlas {
 namespace array {
 
-template< typename T >
-struct private_vector {
+template< typename T, size_t Rank >
+struct host_device_array {
 
-    ATLAS_HOST_DEVICE private_vector( std::initializer_list<T> list ) {
-        data_ = new T( list.size() );
+    ATLAS_HOST_DEVICE host_device_array( std::initializer_list<T> list ) {
         size_t i(0);
         for( const T v : list ) {
             data_[i++] = v;
         }
     }
-    ATLAS_HOST_DEVICE ~private_vector() {
-        delete data_;
+    ATLAS_HOST_DEVICE ~host_device_array() {
     }
 
     ATLAS_HOST_DEVICE const T* data() const {
         return data_;
     }
 
-    T* data_;
+    T data_[Rank];
 };
 
 template< typename Value, int Rank, Intent AccessMode >
@@ -62,11 +60,11 @@ ArrayView<Value,Rank, AccessMode>::ArrayView(data_view_t data_view, const Array&
         auto storage_info_ = *((reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage())))->get_storage_info_ptr());
 
         auto stridest = seq::template apply<
-            private_vector<size_t>,
+            host_device_array<size_t,Rank>,
             atlas::array::gridtools::get_stride_component<unsigned long, ::gridtools::static_uint<Rank> >::template get_component>(
             &(storage_info_));
         auto shapet = seq::template apply<
-            private_vector<size_t>,
+            host_device_array<size_t,Rank>,
             atlas::array::gridtools::get_shape_component>(&(storage_info_));
 
         std::memcpy(strides_, stridest.data(), sizeof(size_t)*Rank);
@@ -88,7 +86,9 @@ bool ArrayView<Value,Rank, AccessMode>::valid() const {
     return gt_data_view_.valid() && (array_->data_store() == data_store_orig_);
 }
 
-template< typename Value, int Rank, Intent AccessMode >
+
+
+template< typename Value, int Rank, Intent AccessMode>
 void ArrayView<Value,Rank,AccessMode>::assign(const value_type& value) {
     helpers::array_assigner<Value,Rank>::apply(*this,value);
 }

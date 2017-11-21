@@ -172,9 +172,12 @@ subroutine array_c_to_f_${dtype}$_r${rank}$(array_cptr,rank,shape_cptr,strides_c
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
   do j=1,rank-1
-    eshape(j) = strides(j+1)/strides(j)
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
   eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )

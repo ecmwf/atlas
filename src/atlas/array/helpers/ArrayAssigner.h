@@ -54,10 +54,15 @@ struct array_assigner {
 
   template <typename T>
   static void apply(Array& arr, Value value) {
-    return apply( make_host_view<T,Rank>(arr), value );
+    return apply( make_host_view<T,Rank,Intent::ReadWrite>(arr), value );
   }
 
-  static void apply(ArrayView<Value,Rank>& arr, Value value) {
+  static void apply(ArrayView<Value,Rank,Intent::ReadOnly>& arr, Value value) {
+    throw eckit::AssertionFailed("Cannot assign ReadOnly array",Here());
+    // TODO use SFINAE to disallow at compile time
+  }
+
+  static void apply(ArrayView<Value,Rank,Intent::ReadWrite>& arr, Value value) {
     array_assigner_impl<Value,Rank,0u>::apply( arr, value );
     // Note: no need to apply variadic pack (idxs...)
   }

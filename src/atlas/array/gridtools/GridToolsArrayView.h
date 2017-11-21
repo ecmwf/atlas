@@ -31,10 +31,10 @@ public:
     using value_type = typename remove_const<Value>::type;
     using Slice = typename std::conditional<(Rank==1), value_type&, LocalView<value_type,Rank-1> >::type;
     using data_view_t = gridtools::data_view_tt<value_type, Rank, gridtools::get_access_mode(AccessMode)>;
+    using return_type = typename std::conditional< (AccessMode == Intent::ReadWrite), value_type, value_type const>::type;
 
 public:
 
-    using return_type = typename std::conditional< (AccessMode == Intent::ReadWrite), value_type, value_type const>::type;
     ATLAS_HOST_DEVICE
     ArrayView( const ArrayView& other );
     ArrayView(data_view_t data_view, const Array& array);

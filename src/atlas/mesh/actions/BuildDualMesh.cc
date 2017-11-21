@@ -121,7 +121,8 @@ void build_median_dual_mesh( Mesh& mesh )
     mesh.edges().add(
        Field("centroids_xy",build_centroids_xy(mesh.edges(),mesh.nodes().xy())) );
 
-  array::make_view<double,1>(dual_volumes).assign(0.);
+  array::ArrayView<double,1,array::Intent::ReadWrite> v = array::make_view<double,1,array::Intent::ReadWrite>(dual_volumes);
+  v.assign(0.);
   add_median_dual_volume_contribution_cells(mesh.cells(),mesh.edges(),mesh.nodes(),dual_volumes);
   add_median_dual_volume_contribution_poles(mesh.edges(),mesh.nodes(),dual_volumes);
 

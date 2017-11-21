@@ -71,7 +71,11 @@ struct GridToolsDataStore : ArrayDataStore
     }
 
     void* voidDeviceData() {
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
         return ::gridtools::make_device_view<::gridtools::access_mode::ReadOnly>(*data_store_).data();
+#else
+        return ::gridtools::make_host_view<::gridtools::access_mode::ReadOnly>(*data_store_).data();
+#endif
     }
 
 private:
