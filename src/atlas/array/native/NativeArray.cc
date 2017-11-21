@@ -5,6 +5,7 @@
 #include "atlas/array/native/NativeDataStore.h"
 
 #include "atlas/array/helpers/ArrayInitializer.h"
+#include "atlas/array/helpers/ArrayWriter.h"
 
 using namespace atlas::array::helpers;
 
@@ -175,17 +176,19 @@ template< typename Value >
 void ArrayT<Value>::resize(size_t size1, size_t size2, size_t size3, size_t size4, size_t size5) { resize( make_shape(size1,size2,size3,size4,size5) ); }
 
 template< typename Value >
-void ArrayT<Value>::dump(std::ostream& os) const {
-  if( not contiguous() ) NOTIMP;
-
-  const Value *data = host_data<Value>();
-
-  for(size_t i=0; i<size(); ++i) {
-      os << data[i] << " ";
-      if( (i+1)%10 == 0 )
-          os << std::endl;
+void ArrayT<Value>::dump(std::ostream& out) const {
+  switch( rank() ) {
+    case 1: make_host_view<Value,1,Intent::ReadOnly>(*this).dump(out); break;
+    case 2: make_host_view<Value,2,Intent::ReadOnly>(*this).dump(out); break;
+    case 3: make_host_view<Value,3,Intent::ReadOnly>(*this).dump(out); break;
+    case 4: make_host_view<Value,4,Intent::ReadOnly>(*this).dump(out); break;
+    case 5: make_host_view<Value,5,Intent::ReadOnly>(*this).dump(out); break;
+    case 6: make_host_view<Value,6,Intent::ReadOnly>(*this).dump(out); break;
+    case 7: make_host_view<Value,7,Intent::ReadOnly>(*this).dump(out); break;
+    case 8: make_host_view<Value,8,Intent::ReadOnly>(*this).dump(out); break;
+    case 9: make_host_view<Value,9,Intent::ReadOnly>(*this).dump(out); break;
+    default: NOTIMP;
   }
-  os << std::endl;
 }
 
 //------------------------------------------------------------------------------

@@ -43,9 +43,12 @@ CASE( "test_functionspace_PointCloud" )
     80. , 0.,
     90. , 0.
   } );
-  
+
   functionspace::PointCloud pointcloud( points );
   EXPECT( pointcloud.size() == 10 );
+
+  points.dump( Log::info() );
+  Log::info() << std::endl;
 
 }
 

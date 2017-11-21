@@ -379,6 +379,7 @@ array/StorageView.h
 array/Vector.h
 array/helpers/ArrayInitializer.h
 array/helpers/ArrayAssigner.h
+array/helpers/ArrayWriter.h
 #array/Table.h
 #array/Table.cc
 #array/TableView.h

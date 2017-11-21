@@ -98,8 +98,7 @@ size_t FieldImpl::footprint() const {
 
 void FieldImpl::dump(std::ostream& os) const
 {
-  print(os);
-  array_->dump(os);
+  print(os,true);
 }
 
 namespace {
@@ -127,7 +126,7 @@ const std::string& FieldImpl::name() const
   return name_;
 }
 
-void FieldImpl::print(std::ostream& os) const
+void FieldImpl::print(std::ostream& os, bool dump) const
 {
   os << "FieldImpl[name=" << name()
      << ",datatype=" << datatype().str()
@@ -137,8 +136,13 @@ void FieldImpl::print(std::ostream& os) const
       #ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
      << ",bytes=" << bytes()
       #endif
-     << ",metadata=" << metadata()
-     << "]";
+     << ",metadata=" << metadata();
+  if( dump ) {
+    os << ",array=[";
+    array_->dump(os);
+    os << "]";
+  }
+  os << "]";
 }
 
 std::ostream& operator<<( std::ostream& os, const FieldImpl& f)
@@ -294,7 +298,7 @@ FieldImpl* atlas__Field__create(eckit::Parametrisation* params)
       field->attach();
     }
     field->detach();
-    
+
     ASSERT(field);
     return field;
   );
@@ -305,7 +309,7 @@ void atlas__Field__delete (FieldImpl* This)
 {
   delete This;
 }
-  
+
 const char* atlas__Field__name (FieldImpl* This)
 {
   ATLAS_ERROR_HANDLING(

@@ -185,7 +185,7 @@ public: // Destructor
 
 private: // methods
 
-  void print(std::ostream& os) const;
+  void print(std::ostream& os, bool dump=false) const;
 
 private: // members
 

@@ -159,7 +159,7 @@ public:
 
       check_dimension_lengths(array_.shape(), c...);
 
-      if(array_.valid()) 
+      if(array_.valid())
           array_.syncHostDevice();
 
       Array* resized = Array::create<Value>(ArrayShape{(unsigned int)c...});
@@ -334,8 +334,20 @@ template <typename Value> void ArrayT<Value>::resize(size_t dim0, size_t dim1, s
     ArrayT_impl<Value>(*this).resize_variadic(dim0,dim1,dim2,dim3,dim4);
 }
 
-template <typename Value> void ArrayT<Value>::dump(std::ostream& os) const {
-    os << "\nWARNING: Array dump not implemented\n";
+template< typename Value >
+void ArrayT<Value>::dump(std::ostream& out) const {
+  switch( rank() ) {
+    case 1: make_host_view<Value,1,Intent::ReadOnly>(*this).dump(out); break;
+    case 2: make_host_view<Value,2,Intent::ReadOnly>(*this).dump(out); break;
+    case 3: make_host_view<Value,3,Intent::ReadOnly>(*this).dump(out); break;
+    case 4: make_host_view<Value,4,Intent::ReadOnly>(*this).dump(out); break;
+    case 5: make_host_view<Value,5,Intent::ReadOnly>(*this).dump(out); break;
+    case 6: make_host_view<Value,6,Intent::ReadOnly>(*this).dump(out); break;
+    case 7: make_host_view<Value,7,Intent::ReadOnly>(*this).dump(out); break;
+    case 8: make_host_view<Value,8,Intent::ReadOnly>(*this).dump(out); break;
+    case 9: make_host_view<Value,9,Intent::ReadOnly>(*this).dump(out); break;
+    default: NOTIMP;
+  }
 }
 
 template <typename Value>

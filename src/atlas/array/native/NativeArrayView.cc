@@ -11,6 +11,8 @@
 #include <iostream>
 #include "eckit/exception/Exceptions.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/helpers/ArrayAssigner.h"
+#include "atlas/array/helpers/ArrayWriter.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -21,37 +23,24 @@ namespace array {
 
 template <typename Value, int Rank, Intent AccessMode>
 void ArrayView<Value,Rank,AccessMode>::assign(const value_type& value) {
-    ASSERT( contiguous() );
-    value_type* raw_data = data();
-    for( size_t j=0; j<size_; ++j ) {
-        raw_data[j] = value;
-    }
+  helpers::array_assigner<Value,Rank>::apply(*this,value);
 }
 
 //------------------------------------------------------------------------------------------------------
 
 template <typename Value, int Rank, Intent AccessMode>
 void ArrayView<Value,Rank,AccessMode>::assign(const std::initializer_list<value_type>& list) {
-    ASSERT( contiguous() );
-    ASSERT( list.size() == size_ );
-    value_type* raw_data = data();
-    size_t j(0);
-    for( const value_type& v : list ) {
-        raw_data[j++] = v;
-    }
+  helpers::array_assigner<Value,Rank>::apply(*this,list);
 }
 
 //------------------------------------------------------------------------------------------------------
 
 template <typename Value, int Rank, Intent AccessMode>
 void ArrayView<Value,Rank,AccessMode>::dump(std::ostream& os) const {
-ASSERT( contiguous() );
-const value_type* data_ = data();
-os << "size: " << size() << " , values: ";
-os << "[ ";
-for( size_t j=0; j<size(); ++ j )
-  os << data_[j] << " ";
-os << "]";
+  os << "size: " << size() << " , values: ";
+  os << "[ ";
+  helpers::array_writer::apply(*this,os);
+  os << " ]";
 }
 
 //------------------------------------------------------------------------------------------------------
