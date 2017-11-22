@@ -31,7 +31,7 @@ public:
     virtual std::string type() const { return "PointCloud"; }
     virtual operator bool() const { return true; }
     virtual size_t footprint() const { return sizeof(*this); }
-
+    virtual std::string distribution() const;
     const Field& lonlat() const { return lonlat_; }
     const Field& ghost() const;
     size_t size() const { return lonlat_.shape(0); }

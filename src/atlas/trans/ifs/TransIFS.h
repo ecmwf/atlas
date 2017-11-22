@@ -246,6 +246,9 @@ public:
 public:
   void specnorm( const int nb_fields, const double spectra[], double norms[], int rank=0 ) const;
 
+protected:
+
+  void assertCompatibleDistributions( const FunctionSpace& gp, const FunctionSpace& /*sp*/ ) const;
 
 private:
 

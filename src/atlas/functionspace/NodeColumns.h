@@ -58,6 +58,8 @@ public:
     static std::string static_type() { return "NodeColumns"; }
     virtual std::string type() const { return static_type(); }
 
+    virtual std::string distribution() const;
+
     size_t nb_nodes() const;
     size_t nb_nodes_global() const; // All MPI ranks will have same output
 

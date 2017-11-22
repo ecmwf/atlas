@@ -56,11 +56,19 @@ public:
 
     template <typename DATATYPE> atlas::Field createField() const;
 
+    const util::Metadata& metadata() const { return metadata_; }
+          util::Metadata& metadata()       { return metadata_; }
+
     template <typename FunctionSpaceT>
     FunctionspaceT_nonconst *cast();
 
     template <typename FunctionSpaceT>
     FunctionspaceT_const *cast() const;
+
+    virtual std::string distribution() const = 0;
+
+private:
+    util::Metadata metadata_;
 
 };
 
@@ -105,6 +113,7 @@ public:
     virtual std::string type() const { return "NoFunctionSpace"; }
     virtual operator bool() const { return false; }
     virtual size_t footprint() const { return sizeof(*this); }
+    virtual std::string distribution() const { return std::string(); }
 
     virtual Field createField( const eckit::Configuration& ) const;
     virtual Field createField( const Field&, const eckit::Configuration& ) const;
@@ -147,6 +156,7 @@ public:
   std::string type() const;
   operator bool() const;
   size_t footprint() const;
+  std::string distribution() const;
 
   const Implementation* get() const { return functionspace_.get(); }
 

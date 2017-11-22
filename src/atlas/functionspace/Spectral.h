@@ -47,6 +47,8 @@ public:
 
   virtual std::string type() const { return "Spectral"; }
 
+  virtual std::string distribution() const;
+
   /// @brief Create a spectral field
   using FunctionSpaceImpl::createField;
   virtual Field createField( const eckit::Configuration& ) const;

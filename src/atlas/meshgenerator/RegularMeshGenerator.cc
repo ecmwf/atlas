@@ -140,7 +140,7 @@ void RegularMeshGenerator::generate(const Grid& grid, const grid::Distribution& 
   }
 
   // clone some grid properties
-  setGrid(mesh,rg);
+  setGrid(mesh,rg,distribution);
 
   generate_mesh(rg,distribution,mesh);
 }

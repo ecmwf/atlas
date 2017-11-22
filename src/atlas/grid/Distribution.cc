@@ -18,12 +18,25 @@
 namespace atlas {
 namespace grid {
 
+namespace {
+std::string distribution_type( int N, const Partitioner& p = Partitioner() ) {
+  if( N == 1 ) {
+    return "serial";
+  }
+  if( not p ) {
+    return "custom";
+  }
+  return p.type();
+}
+}
+
 Distribution::impl_t::impl_t( const Grid& grid ) :
     nb_partitions_(1),
     part_(grid.size(),0),
     nb_pts_(nb_partitions_,grid.size()),
     max_pts_(grid.size()),
-    min_pts_(grid.size()) {
+    min_pts_(grid.size()),
+    type_( distribution_type(nb_partitions_) ) {
 }
 
 Distribution::impl_t::impl_t( const Grid& grid, const Partitioner& partitioner ) {
@@ -35,6 +48,7 @@ Distribution::impl_t::impl_t( const Grid& grid, const Partitioner& partitioner )
         ++nb_pts_[part_[j]];
     max_pts_ = *std::max_element(nb_pts_.begin(),nb_pts_.end());
     min_pts_ = *std::min_element(nb_pts_.begin(),nb_pts_.end());
+    type_ = distribution_type(nb_partitions_,partitioner);
 }
 
 Distribution::impl_t::impl_t( size_t npts, int part[], int part0 ) {
@@ -48,12 +62,14 @@ Distribution::impl_t::impl_t( size_t npts, int part[], int part0 ) {
     }
     max_pts_ = *std::max_element(nb_pts_.begin(),nb_pts_.end());
     min_pts_ = *std::min_element(nb_pts_.begin(),nb_pts_.end());
+    type_ = distribution_type(nb_partitions_);
 }
 
 
 void Distribution::impl_t::print( std::ostream& s ) const {
   s << "Distribution( "
-    <<  "nbPoints: " << part_.size()
+    <<  "type: " << type_
+    <<", nbPoints: " << part_.size()
     <<", nbPartitions: " <<nb_pts_.size()
     <<", parts : [";
   for(size_t i = 0; i < part_.size(); i++) {

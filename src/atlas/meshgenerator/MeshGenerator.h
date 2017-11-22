@@ -61,7 +61,7 @@ protected:
 
     void generateGlobalElementNumbering( Mesh& mesh ) const;
     void setProjection( Mesh&, const Projection& ) const;
-    void setGrid( Mesh&, const Grid& ) const;
+    void setGrid( Mesh&, const Grid&, const grid::Distribution& ) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

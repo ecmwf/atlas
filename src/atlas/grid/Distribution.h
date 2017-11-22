@@ -75,6 +75,8 @@ public:
         return min_pts_;
     }
 
+    const std::string& type() const { return type_; }
+
     void print( std::ostream& ) const;
 
   private:
@@ -84,6 +86,7 @@ public:
     std::vector<int> nb_pts_;
     size_t max_pts_;
     size_t min_pts_;
+    std::string type_;
 
   };
 
@@ -130,6 +133,10 @@ public:
     }
     size_t min_pts() const {
         return impl_->min_pts();
+    }
+
+    const std::string& type() const {
+      return impl_->type();
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Distribution& distribution ) {

@@ -20,7 +20,7 @@ TransIFSStructuredColumns::TransIFSStructuredColumns(
     const functionspace::StructuredColumns& gp,
     const functionspace::Spectral& sp,
     const eckit::Configuration& config ) :
-  TransIFS( gp.grid(), sp.truncation(), config ) {
+  TransIFSStructuredColumns( Cache(), gp, sp, config ) {
 }
 
 TransIFSStructuredColumns::TransIFSStructuredColumns(
@@ -29,6 +29,8 @@ TransIFSStructuredColumns::TransIFSStructuredColumns(
     const functionspace::Spectral& sp,
     const eckit::Configuration& config ) :
   TransIFS( cache, gp.grid(), sp.truncation(), config ) {
+
+  assertCompatibleDistributions( gp, sp );
 }
 
 

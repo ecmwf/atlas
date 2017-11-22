@@ -224,7 +224,7 @@ void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distributio
 #endif
 
   // clone some grid properties
-  setGrid(mesh,rg);
+  setGrid(mesh,rg,distribution);
 
   Region region;
   generate_region(rg,distribution,mypart,region);

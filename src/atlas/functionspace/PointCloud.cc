@@ -20,16 +20,16 @@ PointCloud::PointCloud(const std::vector<PointXY>& points) {
   lonlat_ = Field("lonlat", array::make_datatype<double>(), array::make_shape(points.size(),2));
   auto lonlat = array::make_view<double,2>(lonlat_);
   for( size_t j=0; j<points.size(); ++j ) {
-    lonlat(j,0) = points[j].x();    
-    lonlat(j,1) = points[j].y();    
+    lonlat(j,0) = points[j].x();
+    lonlat(j,1) = points[j].y();
   }
 }
 
-PointCloud::PointCloud(const Field& lonlat) : 
+PointCloud::PointCloud(const Field& lonlat) :
   lonlat_(lonlat) {
 }
 
-PointCloud::PointCloud(const Field& lonlat, const Field& ghost) : 
+PointCloud::PointCloud(const Field& lonlat, const Field& ghost) :
   lonlat_(lonlat),
   ghost_(ghost) {
 }
@@ -49,12 +49,16 @@ Field PointCloud::createField(const eckit::Configuration& options) const {
 }
 
 Field PointCloud::createField(
-    const Field& other, 
+    const Field& other,
     const eckit::Configuration& config ) const
 {
-  return createField( 
+  return createField(
     option::datatype ( other.datatype()  ) |
     config );
+}
+
+std::string PointCloud::distribution() const {
+  return std::string("serial");
 }
 
 }

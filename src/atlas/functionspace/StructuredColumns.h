@@ -53,6 +53,7 @@ public:
 
   static std::string static_type() { return "StructuredColumns"; }
   virtual std::string type() const { return static_type(); }
+  virtual std::string distribution() const;
 
   /// @brief Create a Structured field
   virtual Field createField( const eckit::Configuration&) const;
@@ -110,6 +111,8 @@ private: // methods
   size_t footprint() const;
 
 private: // data
+
+  std::string distribution_;
 
   size_t size_owned_;
   size_t size_halo_;

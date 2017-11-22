@@ -63,6 +63,7 @@ public:
   int nb_spectral_coefficients_global() const { return trans_->nspec2g; }
   int nb_spectral_coefficients() const { return trans_->nspec2; }
 
+  std::string distribution() const { return "trans"; }
   operator ::Trans_t*() const { return trans_.get(); }
   std::shared_ptr<::Trans_t> trans_;
 };
@@ -73,6 +74,7 @@ public:
   int nb_spectral_coefficients_global() const { return (truncation_+1)*(truncation_+2); }
   int nb_spectral_coefficients() const { return nb_spectral_coefficients_global(); }
   int truncation_;
+  std::string distribution() const { return "serial"; }
 };
 #endif
 
@@ -144,6 +146,10 @@ Spectral::Spectral( const trans::Trans& trans, const eckit::Configuration& confi
 
 Spectral::~Spectral()
 {
+}
+
+std::string Spectral::distribution() const {
+  return parallelisation_->distribution();
 }
 
 size_t Spectral::footprint() const {

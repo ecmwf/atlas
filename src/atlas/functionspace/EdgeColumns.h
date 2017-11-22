@@ -51,6 +51,8 @@ public:
 
     virtual std::string type() const { return "Edges"; }
 
+    virtual std::string distribution() const;
+
     size_t nb_edges() const;
     size_t nb_edges_global() const; // Only on MPI rank 0, will this be different from 0
     std::vector<size_t> nb_edges_global_foreach_rank() const;

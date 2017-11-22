@@ -195,6 +195,10 @@ void NodeColumns::constructor()
 
 NodeColumns::~NodeColumns() {}
 
+std::string NodeColumns::distribution() const {
+  return mesh().metadata().getString("distribution");
+}
+
 size_t NodeColumns::footprint() const {
   size_t size = sizeof(*this);
   // TODO

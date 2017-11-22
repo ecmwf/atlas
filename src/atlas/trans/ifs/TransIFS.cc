@@ -27,6 +27,7 @@ using atlas::functionspace::StructuredColumns;
 using atlas::functionspace::NodeColumns;
 using atlas::functionspace::Spectral;
 using atlas::Field;
+using atlas::FunctionSpace;
 using atlas::array::ArrayView;
 using atlas::array::make_view;
 
@@ -690,7 +691,17 @@ namespace atlas {
 namespace trans {
 
 
-
+void TransIFS::assertCompatibleDistributions( const FunctionSpace& gp, const FunctionSpace& /*sp*/ ) const {
+  std::string gp_dist = gp.distribution();
+  if( gp_dist != "trans"  &&  // distribution computed by TransPartitioner
+      gp_dist != "serial" &&  // serial distribution always works
+      gp_dist != "custom" ) { // trust user that he knows what he is doing
+    throw eckit::Exception(
+          gp.type() + " functionspace has unsupported distribution ("+gp_dist+") "
+          "to do spectral transforms. Please partition grid with TransPartitioner",
+          Here());
+  }
+}
 
 TransIFS::TransIFS( const Cache& cache, const Grid& grid, const long truncation, const eckit::Configuration& config ) :
   grid_(grid),
@@ -834,6 +845,8 @@ void TransIFS::__dirtrans( const functionspace::NodeColumns& gp, const Field& gp
 void TransIFS::__dirtrans( const functionspace::NodeColumns& gp,const FieldSet& gpfields,
                            const Spectral& sp, FieldSet& spfields, const eckit::Configuration& ) const
 {
+  assertCompatibleDistributions( gp, sp );
+
   // Count total number of fields and do sanity checks
   int nfld(0);
   for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
@@ -889,14 +902,17 @@ void TransIFS::__dirtrans( const functionspace::NodeColumns& gp,const FieldSet& 
 // --------------------------------------------------------------------------------------------
 
 void TransIFS::__dirtrans(
-    const StructuredColumns&, const Field& gpfield,
-    const Spectral&,                Field& spfield,
+    const StructuredColumns& gp, const Field& gpfield,
+    const Spectral& sp,                Field& spfield,
     const eckit::Configuration& ) const
 {
   ASSERT( gpfield.functionspace() == 0 ||
           functionspace::StructuredColumns(gpfield.functionspace()) );
   ASSERT( spfield.functionspace() == 0 ||
           functionspace::Spectral(spfield.functionspace()) );
+
+  assertCompatibleDistributions( gp, sp );
+
   if ( gpfield.stride(0) != spfield.stride(0) )
   {
     throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields",Here());
@@ -920,10 +936,12 @@ void TransIFS::__dirtrans(
 }
 
 void TransIFS::__dirtrans(
-    const StructuredColumns&, const FieldSet& gpfields,
-    const Spectral&,                FieldSet& spfields,
+    const StructuredColumns& gp, const FieldSet& gpfields,
+    const Spectral& sp,                FieldSet& spfields,
     const eckit::Configuration& ) const
 {
+  assertCompatibleDistributions( gp, sp );
+
   // Count total number of fields and do sanity checks
   int nfld(0);
   for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
@@ -994,6 +1012,8 @@ void TransIFS::__invtrans_grad(
     const functionspace::NodeColumns& gp, FieldSet& gradfields,
     const eckit::Configuration& config ) const
 {
+  assertCompatibleDistributions( gp, sp );
+
   // Count total number of fields and do sanity checks
   int nb_gridpoint_field(0);
   for(size_t jfld = 0; jfld < gradfields.size(); ++jfld)
@@ -1090,6 +1110,8 @@ void TransIFS::__invtrans( const Spectral& sp, const FieldSet& spfields,
                            const functionspace::NodeColumns& gp, FieldSet& gpfields,
                            const eckit::Configuration& config ) const
 {
+  assertCompatibleDistributions( gp, sp );
+
   // Count total number of fields and do sanity checks
   int nfld(0);
   for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
@@ -1148,6 +1170,8 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const Field& spfie
                            const functionspace::StructuredColumns& gp, Field& gpfield,
                            const eckit::Configuration& config ) const
 {
+  assertCompatibleDistributions( gp, sp );
+
   ASSERT( gpfield.functionspace() == 0 ||
           functionspace::StructuredColumns( gpfield.functionspace() ) );
   ASSERT( spfield.functionspace() == 0 ||
@@ -1181,6 +1205,8 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& sp
                            const functionspace::StructuredColumns& gp, FieldSet& gpfields,
                            const eckit::Configuration& config ) const
 {
+  assertCompatibleDistributions( gp, sp );
+
   // Count total number of fields and do sanity checks
   int nfld(0);
   for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
@@ -1240,9 +1266,11 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& sp
 // -----------------------------------------------------------------------------------------------
 
 void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, const Field& gpwind,
-                                     const Spectral& sp, Field& spvor, Field&spdiv,
-                                     const eckit::Configuration& ) const
+                                       const Spectral& sp, Field& spvor, Field&spdiv,
+                                       const eckit::Configuration& ) const
 {
+  assertCompatibleDistributions( gp, sp );
+
   // Count total number of fields and do sanity checks
   size_t nfld = spvor.stride(0);
   if( spdiv.shape(0) != spvor.shape(0) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());
@@ -1286,9 +1314,11 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
 
 
 void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, const Field& spdiv,
-                                     const functionspace::NodeColumns& gp, Field& gpwind,
-                                     const eckit::Configuration& config ) const
+                                       const functionspace::NodeColumns& gp, Field& gpwind,
+                                       const eckit::Configuration& config ) const
 {
+  assertCompatibleDistributions( gp, sp );
+
   // Count total number of fields and do sanity checks
   size_t nfld = spvor.stride(0);
   if( spdiv.shape(0) != spvor.shape(0) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());

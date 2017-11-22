@@ -128,8 +128,9 @@ void MeshGeneratorImpl::setProjection( Mesh& mesh, const Projection& p ) const {
   mesh.setProjection(p);
 }
 
-void MeshGeneratorImpl::setGrid( Mesh& mesh, const Grid& g ) const {
+void MeshGeneratorImpl::setGrid( Mesh& mesh, const Grid& g, const grid::Distribution& d ) const {
   mesh.setGrid(g);
+  mesh.metadata().set("distribution",d.type());
 }
 
 //----------------------------------------------------------------------------------------------------------------------

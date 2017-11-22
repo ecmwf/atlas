@@ -221,6 +221,10 @@ size_t EdgeColumns::footprint() const {
   return size;
 }
 
+std::string EdgeColumns::distribution() const {
+  return mesh().metadata().getString("distribution");
+}
+
 size_t EdgeColumns::nb_edges() const
 {
   return nb_edges_;

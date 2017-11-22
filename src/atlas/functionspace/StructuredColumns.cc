@@ -36,9 +36,9 @@
 namespace atlas {
 namespace functionspace {
 namespace detail {
-  
+
 namespace {
-  
+
 struct GridPoint
 {
 public:
@@ -192,6 +192,10 @@ size_t StructuredColumns::config_size(const eckit::Configuration& config) const
   return size;
 }
 
+std::string StructuredColumns::distribution() const {
+  return distribution_;
+}
+
 // ----------------------------------------------------------------------------
 // Constructor
 // ----------------------------------------------------------------------------
@@ -228,6 +232,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     ATLAS_TRACE_SCOPE( "Partitioning grid ..." ) {
       distribution = grid::Distribution(grid,partitioner);
     }
+    distribution_ = distribution.type();
 
     int mpi_rank = parallel::mpi::comm().rank();
 
@@ -611,10 +616,10 @@ Field StructuredColumns::createField( const eckit::Configuration& options ) cons
 }
 
 Field StructuredColumns::createField(
-    const Field& other, 
+    const Field& other,
     const eckit::Configuration& config ) const
 {
-  return createField( 
+  return createField(
     option::datatype ( other.datatype()  ) |
     option::levels   ( other.levels()    ) |
     option::variables( other.variables() ) |

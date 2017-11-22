@@ -135,6 +135,10 @@ Field FunctionSpace::createField(
   return functionspace_->createField(other,config);
 }
 
+std::string FunctionSpace::distribution() const {
+  return functionspace_->distribution();
+}
+
 // ------------------------------------------------------------------
 
 
