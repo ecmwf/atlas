@@ -56,6 +56,8 @@ list( APPEND atlas_grid_srcs
 option.h
 option/Options.h
 option/Options.cc
+option/TransOptions.h
+option/TransOptions.cc
 
 
 projection.h

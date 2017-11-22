@@ -11,7 +11,6 @@
 #pragma once
 
 #include "atlas/util/Config.h"
-#include "atlas/array/DataType.h"
 
 // ----------------------------------------------------------------------------
 
@@ -20,81 +19,66 @@ namespace option {
 
 // ----------------------------------------------------------------------------
 
-class type : public util::Config {
+enum class FFT { FFT992=1, FFTW=2 };
+
+// ----------------------------------------------------------------------------
+
+class scalar_derivatives : public util::Config {
 public:
-  type( const std::string& );
+  scalar_derivatives( bool );
 };
 
 // ----------------------------------------------------------------------------
 
-class global : public util::Config {
+class wind_EW_derivatives : public util::Config {
 public:
-  global( size_t owner = 0 );
+  wind_EW_derivatives( bool );
 };
 
 // ----------------------------------------------------------------------------
 
-class levels : public util::Config {
+class vorticity_divergence_fields : public util::Config {
 public:
-  levels( size_t );
+  vorticity_divergence_fields( bool );
 };
 
 // ----------------------------------------------------------------------------
 
-class variables : public util::Config {
+class flt : public util::Config {
 public:
-  variables( size_t );
+  flt( bool );
 };
 
 // ----------------------------------------------------------------------------
 
-class name : public util::Config {
+class fft : public util::Config {
 public:
-  name( const std::string& );
+  fft( FFT );
+  fft( const std::string& );
 };
 
 // ----------------------------------------------------------------------------
 
-template< typename T >
-class datatypeT : public util::Config {
+class split_latitudes : public util::Config {
 public:
-  datatypeT();
+  split_latitudes( bool );
 };
 
 // ----------------------------------------------------------------------------
 
-class datatype : public util::Config {
+class write_legendre : public util::Config {
 public:
-  datatype( array::DataType::kind_t );
-  datatype( const std::string& );
-  datatype( array::DataType );
+  write_legendre( const eckit::PathName& );
 };
 
 // ----------------------------------------------------------------------------
 
-class halo : public util::Config {
+class read_legendre : public util::Config {
 public:
-  halo(size_t size);
+  read_legendre( const eckit::PathName& );
 };
 
 // ----------------------------------------------------------------------------
-
-class radius : public util::Config {
-public:
-  radius( double );
-  radius( const std::string& = "Earth" );
-};
-
-// ----------------------------------------------------------------------------
-// Definitions
-// ----------------------------------------------------------------------------
-
-template<typename T>
-datatypeT<T>::datatypeT() {
-  set("datatype",array::DataType::kind<T>());
-}
-
-
 
 } // namespace option
 } // namespace atlas

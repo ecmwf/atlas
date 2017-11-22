@@ -13,3 +13,4 @@
 #pragma once
 
 #include "atlas/option/Options.h"
+#include "atlas/option/TransOptions.h"
