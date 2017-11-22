@@ -6,17 +6,17 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-#if( HAVE_FCTEST )
+if( HAVE_FCTEST )
 
-#  add_fctest( TARGET atlas_fctest_functionspace
-#    MPI             4
-#    CONDITION       ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
-#    LINKER_LANGUAGE Fortran
-#    SOURCES         fctest_functionspace.F90
-#    LIBS            atlas_f
-#  )
+  add_fctest( TARGET atlas_fctest_functionspace
+    MPI             4
+    CONDITION       ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_functionspace.F90
+    LIBS            atlas_f
+  )
 
-#endif()
+endif()
 
 ecbuild_add_test( TARGET atlas_test_functionspace
   SOURCES  test_functionspace.cc
