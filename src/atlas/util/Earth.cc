@@ -57,22 +57,36 @@ double Sphere::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
      * doi = {10.1179/sre.1975.23.176.88}
      * }
      */
-    ASSERT(-90. <= p1.lat() && p1.lat() <= 90.);
-    ASSERT(-90. <= p2.lat() && p2.lat() <= 90.);
+    if (!(-90. <= p1.lat() && p1.lat() <= 90.)) {
+        std::ostringstream oss;
+        oss << "Invalid greatCircleLatitudeGivenLongitude "
+            << p1.lat() << " 90 - lat: "
+            << (90.0 - p1.lat())
+            << " -90 - lat: " << (-90.0 - p1.lat());
+        throw eckit::SeriousBug(oss.str());
+    }
+    if (!(-90. <= p2.lat() && p2.lat() <= 90.)) {
+        std::ostringstream oss;
+        oss << "Invalid greatCircleLatitudeGivenLongitude "
+            << p2.lat() << " 90 - lat: "
+            << (90.0 - p2.lat())
+            << " -90 - lat: " << (-90.0 - p2.lat());
+        throw eckit::SeriousBug(oss.str());
+    }
 
     const double
-            phi1   = Constants::degreesToRadians() * p1.lat(),
-            phi2   = Constants::degreesToRadians() * p2.lat(),
-            lambda = Constants::degreesToRadians() * (p2.lon() - p1.lon()),
+    phi1   = Constants::degreesToRadians() * p1.lat(),
+    phi2   = Constants::degreesToRadians() * p2.lat(),
+    lambda = Constants::degreesToRadians() * (p2.lon() - p1.lon()),
 
-            cos_phi1 = cos(phi1),
-            sin_phi1 = sin(phi1),
-            cos_phi2 = cos(phi2),
-            sin_phi2 = sin(phi2),
-            cos_lambda = cos(lambda),
-            sin_lambda = sin(lambda),
+    cos_phi1 = cos(phi1),
+    sin_phi1 = sin(phi1),
+    cos_phi2 = cos(phi2),
+    sin_phi2 = sin(phi2),
+    cos_lambda = cos(lambda),
+    sin_lambda = sin(lambda),
 
-            angle = atan2(
+    angle = atan2(
                 sqrt(pow(cos_phi2 * sin_lambda, 2) + pow(cos_phi1 * sin_phi2 - sin_phi1 * cos_phi2 * cos_lambda, 2)),
                 sin_phi1 * sin_phi2 + cos_phi1 * cos_phi2 * cos_lambda );
 
@@ -96,8 +110,8 @@ double Sphere::centralAngle(const PointXYZ& p1, const PointXYZ& p2, const double
     }
 
     const double
-            chord = std::sqrt(d2) / radius,
-            angle = std::asin(chord * 0.5) * 2.;
+    chord = std::sqrt(d2) / radius,
+    angle = std::asin(chord * 0.5) * 2.;
 
     return angle;
 }
@@ -120,15 +134,15 @@ void Sphere::greatCircleLatitudeGivenLongitude(const PointLonLat& p1, const Poin
     //   http://www.edwilliams.org/avform.htm#Int
     ASSERT(!eckit::types::is_approximately_equal(p1.lon(), p2.lon()));
     const double
-            phi1     = Constants::degreesToRadians() * p1.lat(),
-            phi2     = Constants::degreesToRadians() * p2.lat(),
-            lambda1p = Constants::degreesToRadians() * (p.lon() - p1.lon()),
-            lambda2p = Constants::degreesToRadians() * (p.lon() - p2.lon()),
-            lambda   = Constants::degreesToRadians() * (p2.lon() - p1.lon());
+    phi1     = Constants::degreesToRadians() * p1.lat(),
+    phi2     = Constants::degreesToRadians() * p2.lat(),
+    lambda1p = Constants::degreesToRadians() * (p.lon() - p1.lon()),
+    lambda2p = Constants::degreesToRadians() * (p.lon() - p2.lon()),
+    lambda   = Constants::degreesToRadians() * (p2.lon() - p1.lon());
 
     p.lat() = Constants::radiansToDegrees() * atan(
-                (tan(phi2) * sin(lambda1p) - tan(phi1) * sin(lambda2p)) /
-                (sin(lambda)) );
+                  (tan(phi2) * sin(lambda1p) - tan(phi1) * sin(lambda2p)) /
+                  (sin(lambda)) );
 }
 
 
@@ -139,31 +153,31 @@ PointXYZ Sphere::convertSphericalToCartesian(const PointLonLat& p, const double&
     // See https://en.wikipedia.org/wiki/Reference_ellipsoid#Coordinates
     // numerical conditioning for both ϕ (poles) and λ (Greenwich/Date Line)
     const double
-            &a = radius,
-            &b = radius,
+    &a = radius,
+     &b = radius,
 
-            lambda_deg = between_m180_and_p180(p.lon()),
-            lambda = Constants::degreesToRadians() * lambda_deg,
-            phi    = Constants::degreesToRadians() * p.lat(),
+      lambda_deg = between_m180_and_p180(p.lon()),
+      lambda = Constants::degreesToRadians() * lambda_deg,
+      phi    = Constants::degreesToRadians() * p.lat(),
 
-            sin_phi = std::sin(phi),
-            cos_phi = std::sqrt(1. - sin_phi * sin_phi),
-            sin_lambda = std::abs(lambda_deg) < 180. ? std::sin(lambda) : 0.,
-            cos_lambda = std::abs(lambda_deg) >  90. ? std::cos(lambda) : std::sqrt(1. - sin_lambda * sin_lambda);
+      sin_phi = std::sin(phi),
+      cos_phi = std::sqrt(1. - sin_phi * sin_phi),
+      sin_lambda = std::abs(lambda_deg) < 180. ? std::sin(lambda) : 0.,
+      cos_lambda = std::abs(lambda_deg) >  90. ? std::cos(lambda) : std::sqrt(1. - sin_lambda * sin_lambda);
 
     if (a == b) {
         // no eccentricity
         return PointXYZ(
-                    (a + height) * cos_phi * cos_lambda,
-                    (a + height) * cos_phi * sin_lambda,
-                    (a + height) * sin_phi );
+                   (a + height) * cos_phi * cos_lambda,
+                   (a + height) * cos_phi * sin_lambda,
+                   (a + height) * sin_phi );
     }
 
     const double N_phi = a * a / std::sqrt(a * a * cos_phi * cos_phi + b * b * sin_phi * sin_phi);
     return PointXYZ(
-        (N_phi + height) * cos_phi * cos_lambda,
-        (N_phi + height) * cos_phi * sin_lambda,
-        (N_phi * (b * b) / (a * a) + height) * sin_phi );
+               (N_phi + height) * cos_phi * cos_lambda,
+               (N_phi + height) * cos_phi * sin_lambda,
+               (N_phi * (b * b) / (a * a) + height) * sin_phi );
 }
 
 
@@ -172,13 +186,13 @@ PointLonLat Sphere::convertCartesianToSpherical(const PointXYZ& p, const double&
 
     // numerical conditioning for both z (poles) and y
     const double
-            x = p.x(),
-            y = eckit::types::is_approximately_equal(p.y(), 0.) ? 0. : p.y(),
-            z = std::min(radius, std::max(-radius, p.z())) / radius;
+    x = p.x(),
+    y = eckit::types::is_approximately_equal(p.y(), 0.) ? 0. : p.y(),
+    z = std::min(radius, std::max(-radius, p.z())) / radius;
 
     return PointLonLat(
-                Constants::radiansToDegrees() * std::atan2(y, x),
-                Constants::radiansToDegrees() * std::asin(z) );
+               Constants::radiansToDegrees() * std::atan2(y, x),
+               Constants::radiansToDegrees() * std::asin(z) );
 }
 
 
