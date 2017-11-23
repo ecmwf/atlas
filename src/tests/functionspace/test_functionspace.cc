@@ -24,7 +24,6 @@
 #include "atlas/field/Field.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
-#include "atlas/trans/ifs/TransIFS.h"
 
 
 using namespace eckit;
