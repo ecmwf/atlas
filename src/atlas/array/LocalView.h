@@ -44,6 +44,7 @@
 #include <type_traits>
 #include "atlas/library/config.h"
 #include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayViewDefs.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -57,6 +58,9 @@ public:
 // -- Type definitions
     using value_type = typename remove_const<Value>::type;
     using Slice = typename std::conditional<(Rank==1), value_type&, LocalView<value_type,Rank-1> >::type;
+
+  static constexpr Intent ACCESS{Intent::ReadWrite};
+  static constexpr int RANK{Rank};
 
 public:
 
@@ -114,6 +118,8 @@ public:
 
     size_t shape(size_t idx) const { return shape_[idx]; }
 
+    size_t stride(size_t idx) const { return strides_[idx]; }
+
     value_type const* data() const { return data_; }
 
     value_type*       data()       { return data_; }
@@ -126,7 +132,7 @@ public:
 
     void dump(std::ostream& os) const;
 
-    static constexpr int rank() { return Rank; }
+    static constexpr size_t rank() { return Rank; }
 
 private:
 

@@ -71,6 +71,9 @@ public:
     using value_type = typename remove_const<Value>::type;
     using Slice = typename std::conditional<(Rank==1), value_type&, LocalView<value_type,Rank-1> >::type;
 
+    static constexpr Intent ACCESS{AccessMode};
+    static constexpr int RANK{Rank};
+
 public:
 
  // -- Constructors
@@ -138,7 +141,7 @@ public:
 
     size_t size() const { return size_;}
 
-    size_t rank() const { return Rank; }
+    static constexpr size_t rank() { return Rank; }
 
     const size_t* strides() const { return strides_.data(); }
 

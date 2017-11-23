@@ -32,8 +32,8 @@ struct Slice {
 
   struct Slicer {
   template< int Rank, typename ...Args >
-  static typename Slice<double,SliceRank<Rank,Args...>::value>::type apply(Args... args) {
-    typename Slice<double,SliceRank<Rank,Args...>::value>::type a;
+  static typename Slice<double,SliceRank_impl<Rank,Args...>::value>::type apply(Args... args) {
+    typename Slice<double,SliceRank_impl<Rank,Args...>::value>::type a;
   }
 
 };
@@ -45,32 +45,34 @@ namespace test {
 
 CASE( "test_SliceRank" ){
 
-  static_assert( SliceRank<1,int  >::value == 0, "failed" );
-  static_assert( SliceRank<1,Range>::value == 1, "failed" );
+  static_assert( SliceRank_impl<1,int  >::value == 0, "failed" );
+  static_assert( SliceRank_impl<1,Range>::value == 1, "failed" );
 
-  static_assert( SliceRank<2,int,  int  >::value == 0, "failed" );
-  static_assert( SliceRank<2,Range,int  >::value == 1, "failed" );
-  static_assert( SliceRank<2,Range,Range>::value == 2, "failed" );
+  static_assert( SliceRank_impl<2,int,  int  >::value == 0, "failed" );
+  static_assert( SliceRank_impl<2,Range,int  >::value == 1, "failed" );
+  static_assert( SliceRank_impl<2,Range,Range>::value == 2, "failed" );
 
-  static_assert( SliceRank<3,int,  int  ,int  >::value == 0, "failed" );
-  static_assert( SliceRank<3,Range,int  ,int  >::value == 1, "failed" );
-  static_assert( SliceRank<3,Range,Range,int  >::value == 2, "failed" );
-  static_assert( SliceRank<3,int,  int  ,Range>::value == 1, "failed" );
-  static_assert( SliceRank<3,Range,int  ,Range>::value == 2, "failed" );
-  static_assert( SliceRank<3,Range,Range,Range>::value == 3, "failed" );
-  static_assert( SliceRank<3,Range,int  ,Range>::value == 2, "failed" );
-  static_assert( SliceRank<3,int  ,int  ,Range>::value == 1, "failed" );
-  static_assert( SliceRank<3,int  ,Range,Range>::value == 2, "failed" );
+  static_assert( SliceRank_impl<3,int,  int  ,int  >::value == 0, "failed" );
+  static_assert( SliceRank_impl<3,Range,int  ,int  >::value == 1, "failed" );
+  static_assert( SliceRank_impl<3,Range,Range,int  >::value == 2, "failed" );
+  static_assert( SliceRank_impl<3,int,  int  ,Range>::value == 1, "failed" );
+  static_assert( SliceRank_impl<3,Range,int  ,Range>::value == 2, "failed" );
+  static_assert( SliceRank_impl<3,Range,Range,Range>::value == 3, "failed" );
+  static_assert( SliceRank_impl<3,Range,int  ,Range>::value == 2, "failed" );
+  static_assert( SliceRank_impl<3,int  ,int  ,Range>::value == 1, "failed" );
+  static_assert( SliceRank_impl<3,int  ,Range,Range>::value == 2, "failed" );
 
 }
 
+#if 1
 CASE( "test_array_slicer_1d" )
 {
   ArrayT<double> arr(10);
   auto view = make_view<double,1,Intent::ReadWrite>(arr);
   view.assign( {0,1,2,3,4,5,6,7,8,9} );
 
-  ArraySlicer<double,1,Intent::ReadWrite> slicer(view);
+  using View = decltype(view);
+  ArraySlicer<View> slicer(view);
 
   {
     auto slice = slicer.apply(Range{0,2});
@@ -100,7 +102,7 @@ CASE( "test_array_slicer_1d" )
   }
 
 }
-
+#endif
 CASE( "test_array_slicer_2d" )
 {
   ArrayT<double> arr(3,5);
@@ -108,8 +110,10 @@ CASE( "test_array_slicer_2d" )
   view.assign( {11,12,13,14,15,
                 21,22,23,24,25,
                 31,32,33,34,35, } );
+  using View = decltype(view);
+  ArraySlicer<View> slicer(view);
 
-  ArraySlicer<double,2,Intent::ReadWrite> slicer(view);
+//  ArraySlicer<double,2,Intent::ReadWrite> slicer(view);
 
   {
     auto slice = slicer.apply(Range{0,2},2);
@@ -139,7 +143,8 @@ CASE( "test_array_slicer_3d" )
                 221,222,223,224,225,
                 231,232,233,234,235} );
 
-  ArraySlicer<double,3,Intent::ReadWrite> slicer(view);
+  using View = decltype(view);
+  ArraySlicer<View> slicer(view);
 
   {
     auto slice = slicer.apply(Range{0,2},2,Range{2,5});
@@ -155,10 +160,54 @@ CASE( "test_array_slicer_3d" )
   }
 
   {
+    auto slice = slicer.apply(0,0,Range::from(3));
+    EXPECT( slice.rank() == 1 );
+    EXPECT( slice.shape(0) == 2 );
+    EXPECT( slice(0) == 114 );
+    EXPECT( slice(1) == 115 );
+  }
+
+  {
+    auto slice = slicer.apply(1,Range::all(),3);
+    EXPECT( slice.rank() == 1 );
+    EXPECT( slice.shape(0) == 3 );
+    EXPECT( slice(0) == 214 );
+    EXPECT( slice(1) == 224 );
+    EXPECT( slice(2) == 234 );
+  }
+
+  {
     const double& slice = slicer.apply(1,2,3);
     EXPECT( slice == 234 );
   }
 
+}
+
+
+CASE( "test_array_slicer_of_slice" )
+{
+  ArrayT<double> arr(2,3,5);
+  auto view = make_view<double,3,Intent::ReadWrite>(arr);
+  view.assign( {111,112,113,114,115,
+                121,122,123,124,125,
+                131,132,133,134,135,
+
+                211,212,213,214,215,
+                221,222,223,224,225,
+                231,232,233,234,235} );
+
+  using View = decltype(view);
+  ArraySlicer<View> slicer(view);
+
+  auto slice = slicer.apply(Range{0,2},2,Range{2,5});
+
+  using Slice = decltype(slice);
+  ArraySlicer<Slice> subslicer(slice);
+
+  auto subslice1 = subslicer.apply(0,0);
+  auto subslice2 = subslicer.apply(Range::all(),Range::all());
+  auto subslice3 = subslicer.apply(Range::all(),0);
+  auto subslice4 = subslicer.apply(0,Range::to(2));
 }
 
 

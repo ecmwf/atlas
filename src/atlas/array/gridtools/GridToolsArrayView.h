@@ -103,7 +103,7 @@ public:
         return gt_data_view_.storage_info().template stride<Dim>();
     }
 
-    size_t rank() const { return Rank; }
+    static constexpr size_t rank() { return Rank; }
     size_t size() const { return size_; }
     bool valid() const;
 
