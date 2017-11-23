@@ -12,6 +12,8 @@
 #include "atlas/util/Earth.h"
 
 #include <cmath>
+#include <limits>
+
 #include "eckit/types/FloatCompare.h"
 #include "eckit/exception/Exceptions.h"
 #include "atlas/util/Constants.h"
@@ -22,8 +24,7 @@ namespace atlas {
 namespace util {
 
 
-//------------------------------------------------------------------------------------------------------
-
+//----------------------------------------------------------------------------------------------------------------------
 
 static inline double between_m180_and_p180(double a) {
     while (a > 180) {
@@ -36,8 +37,7 @@ static inline double between_m180_and_p180(double a) {
 }
 
 
-//------------------------------------------------------------------------------------------------------
-
+//----------------------------------------------------------------------------------------------------------------------
 
 double Sphere::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
     using namespace std;
@@ -57,38 +57,40 @@ double Sphere::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
      * doi = {10.1179/sre.1975.23.176.88}
      * }
      */
-    if (!(-90. <= p1.lat() && p1.lat() <= 90.)) {
+
+    // guard against non-IEEE 754 conformant operations that may give latitudes not exaclty 90.
+    const double p1_lat = eckit::types::is_approximately_equal(p1.lat(), 90.) ? 90. : p1.lat();
+    if (!(-90. <= p1_lat && p1_lat <= 90.)) {
         std::ostringstream oss;
-        oss << "Invalid greatCircleLatitudeGivenLongitude "
-            << p1.lat() << " 90 - lat: "
-            << (90.0 - p1.lat())
-            << " -90 - lat: " << (-90.0 - p1.lat());
-        throw eckit::SeriousBug(oss.str());
-    }
-    if (!(-90. <= p2.lat() && p2.lat() <= 90.)) {
-        std::ostringstream oss;
-        oss << "Invalid greatCircleLatitudeGivenLongitude "
-            << p2.lat() << " 90 - lat: "
-            << (90.0 - p2.lat())
-            << " -90 - lat: " << (-90.0 - p2.lat());
-        throw eckit::SeriousBug(oss.str());
+        oss.precision(std::numeric_limits<double>::max_digits10);
+        oss << "Invalid latitude " << p1.lat();
+        throw eckit::BadValue(oss.str(), Here());
     }
 
-    const double
-    phi1   = Constants::degreesToRadians() * p1.lat(),
-    phi2   = Constants::degreesToRadians() * p2.lat(),
-    lambda = Constants::degreesToRadians() * (p2.lon() - p1.lon()),
+    // guard against non-IEEE 754 conformant operations that may give latitudes not exaclty 90.
+    const double p2_lat = eckit::types::is_approximately_equal(p2.lat(), 90.) ? 90. : p2.lat();
+    if (!(-90. <= p2_lat && p2_lat <= 90.)) {
+        std::ostringstream oss;
+        oss.precision(std::numeric_limits<double>::max_digits10);
+        oss << "Invalid latitude " << p2.lat();
+        throw eckit::BadValue(oss.str(), Here());
+    }
 
-    cos_phi1 = cos(phi1),
-    sin_phi1 = sin(phi1),
-    cos_phi2 = cos(phi2),
-    sin_phi2 = sin(phi2),
-    cos_lambda = cos(lambda),
-    sin_lambda = sin(lambda),
+    const double phi1   = Constants::degreesToRadians() * p1_lat;
+    const double phi2   = Constants::degreesToRadians() * p2_lat;
+    const double lambda = Constants::degreesToRadians() * (p2.lon() - p1.lon());
 
-    angle = atan2(
-                sqrt(pow(cos_phi2 * sin_lambda, 2) + pow(cos_phi1 * sin_phi2 - sin_phi1 * cos_phi2 * cos_lambda, 2)),
-                sin_phi1 * sin_phi2 + cos_phi1 * cos_phi2 * cos_lambda );
+    const double cos_phi1 = cos(phi1);
+    const double sin_phi1 = sin(phi1);
+    const double cos_phi2 = cos(phi2);
+    const double sin_phi2 = sin(phi2);
+    const double cos_lambda = cos(lambda);
+    const double sin_lambda = sin(lambda);
+
+    const double angle = atan2(
+                             sqrt(pow(cos_phi2 * sin_lambda, 2) +
+                                  pow(cos_phi1 * sin_phi2 - sin_phi1 * cos_phi2 * cos_lambda, 2)),
+                             sin_phi1 * sin_phi2 + cos_phi1 * cos_phi2 * cos_lambda );
 
     if (eckit::types::is_approximately_equal(angle, 0.)) {
         return 0.;
@@ -109,9 +111,8 @@ double Sphere::centralAngle(const PointXYZ& p1, const PointXYZ& p2, const double
         return 0.;
     }
 
-    const double
-    chord = std::sqrt(d2) / radius,
-    angle = std::asin(chord * 0.5) * 2.;
+    const double chord = std::sqrt(d2) / radius;
+    const double angle = std::asin(chord * 0.5) * 2.;
 
     return angle;
 }
@@ -133,12 +134,12 @@ void Sphere::greatCircleLatitudeGivenLongitude(const PointLonLat& p1, const Poin
     //  Intermediate great circle points (not applicable for meridians), see
     //   http://www.edwilliams.org/avform.htm#Int
     ASSERT(!eckit::types::is_approximately_equal(p1.lon(), p2.lon()));
-    const double
-    phi1     = Constants::degreesToRadians() * p1.lat(),
-    phi2     = Constants::degreesToRadians() * p2.lat(),
-    lambda1p = Constants::degreesToRadians() * (p.lon() - p1.lon()),
-    lambda2p = Constants::degreesToRadians() * (p.lon() - p2.lon()),
-    lambda   = Constants::degreesToRadians() * (p2.lon() - p1.lon());
+
+    const double phi1     = Constants::degreesToRadians() * p1.lat();
+    const double phi2     = Constants::degreesToRadians() * p2.lat();
+    const double lambda1p = Constants::degreesToRadians() * (p.lon() - p1.lon());
+    const double lambda2p = Constants::degreesToRadians() * (p.lon() - p2.lon());
+    const double lambda   = Constants::degreesToRadians() * (p2.lon() - p1.lon());
 
     p.lat() = Constants::radiansToDegrees() * atan(
                   (tan(phi2) * sin(lambda1p) - tan(phi1) * sin(lambda2p)) /
@@ -148,32 +149,32 @@ void Sphere::greatCircleLatitudeGivenLongitude(const PointLonLat& p1, const Poin
 
 PointXYZ Sphere::convertSphericalToCartesian(const PointLonLat& p, const double& radius, const double& height) {
     ASSERT(radius > 0.);
-    if (!(-90. <= p.lat() && p.lat() <= 90.)) {
+
+    // guard against non-IEEE 754 conformant operations that may give latitudes not exaclty 90.
+    const double lat = eckit::types::is_approximately_equal(p.lat(), 90.) ? 90. : p.lat();
+    if (!(-90. <= lat && lat <= 90.)) {
         std::ostringstream oss;
-        oss << "Invalid latitute in convertSphericalToCartesian "
-            << p.lat() << " 90 - lat: "
-            << (90.0 - p.lat())
-            << " -90 - lat: " << (-90.0 - p.lat());
-        throw eckit::SeriousBug(oss.str(), Here());
+        oss.precision(std::numeric_limits<double>::max_digits10);
+        oss << "Invalid latitude " << p.lat();
+        throw eckit::BadValue(oss.str(), Here());
     }
 
     // See https://en.wikipedia.org/wiki/Reference_ellipsoid#Coordinates
     // numerical conditioning for both ϕ (poles) and λ (Greenwich/Date Line)
-    const double
-    &a = radius,
-     &b = radius,
+    const double& a = radius;
+    const double& b = radius;
 
-      lambda_deg = between_m180_and_p180(p.lon()),
-      lambda = Constants::degreesToRadians() * lambda_deg,
-      phi    = Constants::degreesToRadians() * p.lat(),
+    const double lambda_deg = between_m180_and_p180(p.lon());
+    const double lambda = Constants::degreesToRadians() * lambda_deg;
+    const double phi    = Constants::degreesToRadians() * p.lat();
 
-      sin_phi = std::sin(phi),
-      cos_phi = std::sqrt(1. - sin_phi * sin_phi),
-      sin_lambda = std::abs(lambda_deg) < 180. ? std::sin(lambda) : 0.,
-      cos_lambda = std::abs(lambda_deg) >  90. ? std::cos(lambda) : std::sqrt(1. - sin_lambda * sin_lambda);
+    const double sin_phi = std::sin(phi);
+    const double cos_phi = std::sqrt(1. - sin_phi * sin_phi);
+    const double sin_lambda = std::abs(lambda_deg) < 180. ? std::sin(lambda) : 0.;
+    const double cos_lambda = std::abs(lambda_deg) >  90. ? std::cos(lambda) : std::sqrt(1. - sin_lambda * sin_lambda);
 
-    if (a == b) {
-        // no eccentricity
+    if (eckit::types::is_approximately_equal(a,b)) { // no eccentricity case
+
         return PointXYZ(
                    (a + height) * cos_phi * cos_lambda,
                    (a + height) * cos_phi * sin_lambda,
@@ -181,6 +182,7 @@ PointXYZ Sphere::convertSphericalToCartesian(const PointLonLat& p, const double&
     }
 
     const double N_phi = a * a / std::sqrt(a * a * cos_phi * cos_phi + b * b * sin_phi * sin_phi);
+
     return PointXYZ(
                (N_phi + height) * cos_phi * cos_lambda,
                (N_phi + height) * cos_phi * sin_lambda,
@@ -192,10 +194,10 @@ PointLonLat Sphere::convertCartesianToSpherical(const PointXYZ& p, const double&
     ASSERT(radius > 0.);
 
     // numerical conditioning for both z (poles) and y
-    const double
-    x = p.x(),
-    y = eckit::types::is_approximately_equal(p.y(), 0.) ? 0. : p.y(),
-    z = std::min(radius, std::max(-radius, p.z())) / radius;
+
+    const double x = p.x();
+    const double y = eckit::types::is_approximately_equal(p.y(), 0.) ? 0. : p.y();
+    const double z = std::min(radius, std::max(-radius, p.z())) / radius;
 
     return PointLonLat(
                Constants::radiansToDegrees() * std::atan2(y, x),
@@ -203,7 +205,7 @@ PointLonLat Sphere::convertCartesianToSpherical(const PointXYZ& p, const double&
 }
 
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 
 double Earth::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
@@ -241,7 +243,7 @@ PointLonLat Earth::convertGeocentricToGeodetic(const PointXYZ& p, const double& 
 }
 
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 
 }  // namespace util
