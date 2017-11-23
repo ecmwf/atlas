@@ -19,10 +19,8 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/Point.h"
 
-
 namespace atlas {
 namespace util {
-
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -58,26 +56,22 @@ double Sphere::centralAngle(const PointLonLat& p1, const PointLonLat& p2) {
      * }
      */
 
-    // guard against non-IEEE 754 conformant operations that may give latitudes not exaclty 90.
-    const double p1_lat = eckit::types::is_approximately_equal(p1.lat(), 90.) ? 90. : p1.lat();
-    if (!(-90. <= p1_lat && p1_lat <= 90.)) {
+    if (!(-90. <= p1.lat() && p1.lat() <= 90.)) {
         std::ostringstream oss;
         oss.precision(std::numeric_limits<double>::max_digits10);
         oss << "Invalid latitude " << p1.lat();
         throw eckit::BadValue(oss.str(), Here());
     }
 
-    // guard against non-IEEE 754 conformant operations that may give latitudes not exaclty 90.
-    const double p2_lat = eckit::types::is_approximately_equal(p2.lat(), 90.) ? 90. : p2.lat();
-    if (!(-90. <= p2_lat && p2_lat <= 90.)) {
+    if (!(-90. <= p2.lat() && p2.lat() <= 90.)) {
         std::ostringstream oss;
         oss.precision(std::numeric_limits<double>::max_digits10);
         oss << "Invalid latitude " << p2.lat();
         throw eckit::BadValue(oss.str(), Here());
     }
 
-    const double phi1   = Constants::degreesToRadians() * p1_lat;
-    const double phi2   = Constants::degreesToRadians() * p2_lat;
+    const double phi1   = Constants::degreesToRadians() * p1.lat();
+    const double phi2   = Constants::degreesToRadians() * p2.lat();
     const double lambda = Constants::degreesToRadians() * (p2.lon() - p1.lon());
 
     const double cos_phi1 = cos(phi1);
@@ -150,9 +144,7 @@ void Sphere::greatCircleLatitudeGivenLongitude(const PointLonLat& p1, const Poin
 PointXYZ Sphere::convertSphericalToCartesian(const PointLonLat& p, const double& radius, const double& height) {
     ASSERT(radius > 0.);
 
-    // guard against non-IEEE 754 conformant operations that may give latitudes not exaclty 90.
-    const double lat = eckit::types::is_approximately_equal(p.lat(), 90.) ? 90. : p.lat();
-    if (!(-90. <= lat && lat <= 90.)) {
+    if (!(-90. <= p.lat() && p.lat() <= 90.)) {
         std::ostringstream oss;
         oss.precision(std::numeric_limits<double>::max_digits10);
         oss << "Invalid latitude " << p.lat();
