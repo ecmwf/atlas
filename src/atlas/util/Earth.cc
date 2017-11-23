@@ -148,7 +148,14 @@ void Sphere::greatCircleLatitudeGivenLongitude(const PointLonLat& p1, const Poin
 
 PointXYZ Sphere::convertSphericalToCartesian(const PointLonLat& p, const double& radius, const double& height) {
     ASSERT(radius > 0.);
-    ASSERT(-90. <= p.lat() && p.lat() <= 90.);
+    if (!(-90. <= p.lat() && p.lat() <= 90.)) {
+        std::ostringstream oss;
+        oss << "Invalid latitute in convertSphericalToCartesian "
+            << p.lat() << " 90 - lat: "
+            << (90.0 - p.lat())
+            << " -90 - lat: " << (-90.0 - p.lat());
+        throw eckit::SeriousBug(oss.str(), Here());
+    }
 
     // See https://en.wikipedia.org/wiki/Reference_ellipsoid#Coordinates
     // numerical conditioning for both ϕ (poles) and λ (Greenwich/Date Line)
