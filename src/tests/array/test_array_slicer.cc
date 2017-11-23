@@ -1,0 +1,175 @@
+/*
+ * (C) Copyright 1996-2016 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
+
+#include "eckit/testing/Test.h"
+#include "eckit/memory/SharedPtr.h"
+#include "atlas/library/config.h"
+#include "atlas/array.h"
+#include "atlas/array/MakeView.h"
+#include "atlas/array/helpers/ArraySlicer.h"
+#include "tests/AtlasTestEnvironment.h"
+
+
+using namespace atlas::array;
+using namespace atlas::array::helpers;
+using namespace eckit::testing;
+
+template< typename Value, int Rank >
+struct Slice {
+  using type = typename std::conditional<(Rank==0),
+      Value,
+      std::array<Value,Rank>
+  >::type;
+};
+
+
+  struct Slicer {
+  template< int Rank, typename ...Args >
+  static typename Slice<double,SliceRank<Rank,Args...>::value>::type apply(Args... args) {
+    typename Slice<double,SliceRank<Rank,Args...>::value>::type a;
+  }
+
+};
+
+namespace atlas {
+namespace test {
+
+//-----------------------------------------------------------------------------
+
+CASE( "test_SliceRank" ){
+
+  static_assert( SliceRank<1,int  >::value == 0, "failed" );
+  static_assert( SliceRank<1,Range>::value == 1, "failed" );
+
+  static_assert( SliceRank<2,int,  int  >::value == 0, "failed" );
+  static_assert( SliceRank<2,Range,int  >::value == 1, "failed" );
+  static_assert( SliceRank<2,Range,Range>::value == 2, "failed" );
+
+  static_assert( SliceRank<3,int,  int  ,int  >::value == 0, "failed" );
+  static_assert( SliceRank<3,Range,int  ,int  >::value == 1, "failed" );
+  static_assert( SliceRank<3,Range,Range,int  >::value == 2, "failed" );
+  static_assert( SliceRank<3,int,  int  ,Range>::value == 1, "failed" );
+  static_assert( SliceRank<3,Range,int  ,Range>::value == 2, "failed" );
+  static_assert( SliceRank<3,Range,Range,Range>::value == 3, "failed" );
+  static_assert( SliceRank<3,Range,int  ,Range>::value == 2, "failed" );
+  static_assert( SliceRank<3,int  ,int  ,Range>::value == 1, "failed" );
+  static_assert( SliceRank<3,int  ,Range,Range>::value == 2, "failed" );
+
+}
+
+CASE( "test_array_slicer_1d" )
+{
+  ArrayT<double> arr(10);
+  auto view = make_view<double,1,Intent::ReadWrite>(arr);
+  view.assign( {0,1,2,3,4,5,6,7,8,9} );
+
+  ArraySlicer<double,1,Intent::ReadWrite> slicer(view);
+
+  {
+    auto slice = slicer.apply(Range{0,2});
+    static_assert( std::is_same< decltype(slice) , LocalView<double,1> >::value, "failed" );
+    EXPECT( slice.rank() == 1 );
+    EXPECT( slice.shape(0) == 2 );
+    EXPECT( slice(0) == 0 );
+    EXPECT( slice(1) == 1 );
+  }
+
+  {
+    auto slice = slicer.apply(Range{5,10});
+    static_assert( std::is_same< decltype(slice) , LocalView<double,1> >::value, "failed" );
+    EXPECT( slice.rank() == 1 );
+    EXPECT( slice.shape(0) == 5 );
+    EXPECT( slice(0) == 5 );
+    EXPECT( slice(1) == 6 );
+    EXPECT( slice(2) == 7 );
+    EXPECT( slice(3) == 8 );
+    EXPECT( slice(4) == 9 );
+  }
+
+  {
+    const double& slice = slicer.apply(5);
+    EXPECT( slice == 5 );
+    //static_assert( std::is_same< decltype(slice) , double& >::value, "failed" );
+  }
+
+}
+
+CASE( "test_array_slicer_2d" )
+{
+  ArrayT<double> arr(3,5);
+  auto view = make_view<double,2,Intent::ReadWrite>(arr);
+  view.assign( {11,12,13,14,15,
+                21,22,23,24,25,
+                31,32,33,34,35, } );
+
+  ArraySlicer<double,2,Intent::ReadWrite> slicer(view);
+
+  {
+    auto slice = slicer.apply(Range{0,2},2);
+    EXPECT( slice.rank() == 1 );
+    EXPECT( slice.shape(0) == 2 );
+    EXPECT( slice(0) == 13 );
+    EXPECT( slice(1) == 23 );
+  }
+
+  {
+    const double& slice = slicer.apply(1,3);
+    EXPECT( slice == 24 );
+    //static_assert( std::is_same< decltype(slice) , double& >::value, "failed" );
+  }
+
+}
+
+CASE( "test_array_slicer_3d" )
+{
+  ArrayT<double> arr(2,3,5);
+  auto view = make_view<double,3,Intent::ReadWrite>(arr);
+  view.assign( {111,112,113,114,115,
+                121,122,123,124,125,
+                131,132,133,134,135,
+
+                211,212,213,214,215,
+                221,222,223,224,225,
+                231,232,233,234,235} );
+
+  ArraySlicer<double,3,Intent::ReadWrite> slicer(view);
+
+  {
+    auto slice = slicer.apply(Range{0,2},2,Range{2,5});
+    EXPECT( slice.rank() == 2 );
+    EXPECT( slice.shape(0) == 2 );
+    EXPECT( slice.shape(1) == 3 );
+    EXPECT( slice(0,0) == 133 );
+    EXPECT( slice(0,1) == 134 );
+    EXPECT( slice(0,2) == 135 );
+    EXPECT( slice(1,0) == 233 );
+    EXPECT( slice(1,1) == 234 );
+    EXPECT( slice(1,2) == 235 );
+  }
+
+  {
+    const double& slice = slicer.apply(1,2,3);
+    EXPECT( slice == 234 );
+  }
+
+}
+
+
+//-----------------------------------------------------------------------------
+
+}  // namespace test
+}  // namespace atlas
+
+
+int main(int argc, char **argv) {
+    atlas::test::AtlasTestEnvironment env( argc, argv );
+    return eckit::testing::run_tests ( argc, argv, false );
+}
+

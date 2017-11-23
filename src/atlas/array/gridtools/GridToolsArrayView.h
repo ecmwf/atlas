@@ -78,6 +78,14 @@ public:
         return Slicer<Slice, Rank==1>(*this).apply(i);
     }
 
+    const Slice slice(size_t i) const {
+        return Slicer<Slice, Rank==1>(*this).apply(i);
+    }
+
+    Slice slice(size_t i) {
+        return Slicer<Slice, Rank==1>(*this).apply(i);
+    }
+
     template<unsigned int Dim>
     ATLAS_HOST_DEVICE
     size_t shape() const {

@@ -6,6 +6,12 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+
+ecbuild_add_test( TARGET atlas_test_array_slicer
+  SOURCES  test_array_slicer.cc
+  LIBS     atlas
+)
+
 ecbuild_add_test( TARGET atlas_test_array
   SOURCES  test_array.cc
   LIBS     atlas

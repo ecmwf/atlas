@@ -126,6 +126,8 @@ public:
 
     void dump(std::ostream& os) const;
 
+    static constexpr int rank() { return Rank; }
+
 private:
 
 // -- Type definitions
