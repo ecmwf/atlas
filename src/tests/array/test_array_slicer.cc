@@ -96,9 +96,9 @@ CASE( "test_array_slicer_1d" )
   }
 
   {
-    const double& slice = slicer.apply(5);
+    auto slice = slicer.apply(5);
     EXPECT( slice == 5 );
-    //static_assert( std::is_same< decltype(slice) , double& >::value, "failed" );
+    static_assert( std::is_same< decltype(slice) , Reference<double> >::value, "failed" );
   }
 
 }
@@ -208,6 +208,97 @@ CASE( "test_array_slicer_of_slice" )
   auto subslice2 = subslicer.apply(Range::all(),Range::all());
   auto subslice3 = subslicer.apply(Range::all(),0);
   auto subslice4 = subslicer.apply(0,Range::to(2));
+}
+
+
+CASE( "test_arrayview_slice_type" )
+{
+  ArrayT<double> arr(2,3,5);
+
+  // Assign
+  {
+    auto view = make_view<double,3>(arr);
+    view.assign( {111,112,113,114,115,
+                  121,122,123,124,125,
+                  131,132,133,134,135,
+
+                  211,212,213,214,215,
+                  221,222,223,224,225,
+                  231,232,233,234,235} );
+  }
+
+  {
+    auto read_write_view = make_view<double,3,Intent::ReadWrite>(arr);
+
+    auto slice1 = read_write_view.slice( Range{0,2}, 2, Range{2,5} );
+
+    EXPECT( slice1(0,0) == 133 );
+    EXPECT( slice1(0,1) == 134 );
+    EXPECT( slice1(0,2) == 135 );
+    EXPECT( slice1(1,0) == 233 );
+    EXPECT( slice1(1,1) == 234 );
+    EXPECT( slice1(1,2) == 235 );
+
+    auto slice2 = read_write_view.slice( Range::all(), Range::to(2), Range::from(3) );
+
+    EXPECT( slice2(0,0,0) == 114 );
+    EXPECT( slice2(0,0,1) == 115 );
+    EXPECT( slice2(0,1,0) == 124 );
+    EXPECT( slice2(0,1,1) == 125 );
+    EXPECT( slice2(1,0,0) == 214 );
+    EXPECT( slice2(1,0,1) == 215 );
+    EXPECT( slice2(1,1,0) == 224 );
+    EXPECT( slice2(1,1,1) == 225 );
+
+    auto slice3 = read_write_view.slice( 0, 1, 2 );
+
+    EXPECT( slice3 == 123 );
+
+    static_assert( read_write_view.ACCESS == Intent::ReadWrite, "failed" );
+    static_assert( std::is_same< decltype(slice1), LocalView<double,2> >::value, "failed" );
+    static_assert( std::is_same< decltype(slice2), LocalView<double,3> >::value, "failed" );
+    static_assert( std::is_same< decltype(slice3), Reference<double>   >::value, "failed" );
+  }
+
+  {
+    auto read_only_view = make_view<double,3,Intent::ReadOnly>(arr);
+
+    auto slice1 = read_only_view.slice( Range{0,2}, 2, Range{2,5} );
+
+    EXPECT( slice1(0,0) == 133 );
+    EXPECT( slice1(0,1) == 134 );
+    EXPECT( slice1(0,2) == 135 );
+    EXPECT( slice1(1,0) == 233 );
+    EXPECT( slice1(1,1) == 234 );
+    EXPECT( slice1(1,2) == 235 );
+
+    auto slice2 = read_only_view.slice( Range::all(), Range::to(2), Range::from(3) );
+
+    EXPECT( slice2(0,0,0) == 114 );
+    EXPECT( slice2(0,0,1) == 115 );
+    EXPECT( slice2(0,1,0) == 124 );
+    EXPECT( slice2(0,1,1) == 125 );
+    EXPECT( slice2(1,0,0) == 214 );
+    EXPECT( slice2(1,0,1) == 215 );
+    EXPECT( slice2(1,1,0) == 224 );
+    EXPECT( slice2(1,1,1) == 225 );
+
+    auto slice3 = read_only_view.slice( 0, 1, 2 );
+
+    EXPECT( slice3 == 123 );
+
+    const double& slice4 = read_only_view.slice( 0, 1, 2 );
+
+    EXPECT( slice4 == 123 );
+
+    static_assert( read_only_view.ACCESS == Intent::ReadOnly, "failed" );
+    static_assert( std::is_same< decltype(slice1), LocalView<double,2>    >::value, "failed" );
+    static_assert( std::is_same< decltype(slice2), LocalView<double,3>    >::value, "failed" );
+    static_assert( std::is_same< decltype(slice3), Reference<double const>>::value, "failed" );
+    static_assert( std::is_same< decltype(slice4), double const&          >::value , "failed" );
+
+  }
+
 }
 
 

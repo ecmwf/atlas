@@ -54,6 +54,8 @@
 #include <initializer_list>
 #include "atlas/library/config.h"
 #include "atlas/array/ArrayUtil.h"
+#include "atlas/array/Range.h"
+#include "atlas/array/helpers/ArraySlicer.h"
 #include "atlas/array/LocalView.h"
 #include "atlas/array/ArrayViewDefs.h"
 
@@ -69,10 +71,20 @@ public:
 
 // -- Type definitions
     using value_type = typename remove_const<Value>::type;
-    using Slice = typename std::conditional<(Rank==1), value_type&, LocalView<value_type,Rank-1> >::type;
-
     static constexpr Intent ACCESS{AccessMode};
     static constexpr int RANK{Rank};
+
+private:
+    using slicer_t = typename helpers::ArraySlicer< ArrayView<Value,Rank,AccessMode> >;
+
+    using SliceDepr = typename std::conditional<(Rank==1), value_type&, LocalView<value_type,Rank-1> >::type;
+
+
+public:
+    template< typename ...Args >
+    struct Slice {
+      using type = typename slicer_t::template Slice<Args...>::type;
+    };
 
 public:
 
@@ -109,26 +121,26 @@ public:
         return data_[index(idx...)];
     }
 
-    const Slice operator[](size_t i) const {
-        return Slicer<Slice, Rank==1>(*this).apply(i);
+    const SliceDepr operator[](size_t i) const {
+        return Slicer<SliceDepr, Rank==1>(*this).apply(i);
     }
 
-    Slice operator[](size_t i) {
-        return Slicer<Slice, Rank==1>(*this).apply(i);
+    SliceDepr operator[](size_t i) {
+        return Slicer<SliceDepr, Rank==1>(*this).apply(i);
     }
 
-    const Slice at(size_t i) const {
+    const SliceDepr at(size_t i) const {
         if( i>= shape(0) ) {
           throw_OutOfRange( "ArrayView::at", 'i', i, shape(0) );
         }
-        return Slicer<Slice, Rank==1>(*this).apply(i);
+        return Slicer<SliceDepr, Rank==1>(*this).apply(i);
     }
 
-    Slice at(size_t i) {
+    SliceDepr at(size_t i) {
         if( i>= shape(0) ) {
           throw_OutOfRange( "ArrayView::at", 'i', i, shape(0) );
         }
-        return Slicer<Slice, Rank==1>(*this).apply(i);
+        return Slicer<SliceDepr, Rank==1>(*this).apply(i);
     }
 
     template<unsigned int Dim>
@@ -164,6 +176,11 @@ public:
     void assign(const std::initializer_list<value_type>& list);
 
     void dump(std::ostream& os) const;
+
+    template< typename ...Args >
+    typename Slice<Args...>::type slice(Args... args) {
+      return slicer_t(*this).apply(args...);
+    }
 
 private:
 
@@ -218,7 +235,7 @@ private:
 
 // -- Type definitions
 
-    template <typename ReturnType = Slice, bool ToScalar = false>
+    template <typename ReturnType = SliceDepr, bool ToScalar = false>
     struct Slicer {
         Slicer(ArrayView<value_type, Rank, AccessMode> const& av) : av_(av) {}
         ArrayView<value_type, Rank, AccessMode> const& av_;

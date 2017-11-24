@@ -11,7 +11,9 @@
 #pragma once
 
 #include "atlas/runtime/Log.h"
-#include "atlas/array.h"
+#include "atlas/array/ArrayViewDefs.h"
+#include "atlas/array/LocalView.h"
+#include "atlas/array/Range.h"
 
 //------------------------------------------------------------------------------
 
@@ -19,73 +21,11 @@ namespace atlas {
 namespace array {
 namespace helpers {
 
-class RangeBase {};
-
-class From : public RangeBase {
-public:
-  From(int start) : start_(start) {}
-
-  int start() const { return start_; }
-
-  template < int Dim, typename View >
-  int end(const View& view) const { return view.shape(Dim); }
-
-private:
-  int start_;
-};
-
-class To : public RangeBase {
-public:
-  To(int end) : end_(end) {}
-
-  int start() const { return 0; }
-  int end() const { return end_; }
-
-private:
-  int end_;
-};
-
-class All : public RangeBase {
-public:
-  All() {}
-
-  int start() const { return 0; }
-
-  template < int Dim, typename View >
-  int end(const View& view) const { return view.shape(Dim); }
-};
-
-class Range : public RangeBase{
-public:
-  Range(int start, int end ) : start_(start), end_(end) {}
-  int start() const { return start_; }
-  int end() const { return end_; }
-
-  static From from(int start) { return From(start); }
-  static To   to(int end) { return To(end); }
-  static All  all() { return All(); }
-
-private:
-  int start_;
-  int end_;
-};
-
-
-
-class Index {
-public:
-  int index;
-};
-
-template< int Rank, typename ...Args >
-struct SliceRank_impl;
-
-
-
-
 template< int Dim >
 struct deduce_slice_rank;
 
+template< int Rank, typename ...Args >
+struct SliceRank_impl;
 
 template<>
 struct deduce_slice_rank<1> {
@@ -96,8 +36,13 @@ struct deduce_slice_rank<1> {
   }
 
 };
+template<typename ...Args>
+struct SliceRank_impl<1,Args...> {
+  static constexpr int value{ deduce_slice_rank<1>::apply<Args...>() };
+};
 
-#define EXPLICIT_TEMPLATE_SPECIALISATION(RANK) \
+
+#define ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION(RANK) \
 template<> \
 struct deduce_slice_rank<RANK> { \
 \
@@ -110,34 +55,52 @@ struct deduce_slice_rank<RANK> { \
 template<typename ...Args> \
 struct SliceRank_impl<RANK,Args...> \
 { \
-  enum { value = deduce_slice_rank<RANK>::apply<Args...>() }; \
+  static constexpr int value{ deduce_slice_rank<RANK>::apply<Args...>() }; \
 }
 
-EXPLICIT_TEMPLATE_SPECIALISATION(2);
-EXPLICIT_TEMPLATE_SPECIALISATION(3);
-EXPLICIT_TEMPLATE_SPECIALISATION(4);
-EXPLICIT_TEMPLATE_SPECIALISATION(5);
-EXPLICIT_TEMPLATE_SPECIALISATION(6);
-EXPLICIT_TEMPLATE_SPECIALISATION(7);
-EXPLICIT_TEMPLATE_SPECIALISATION(8);
-EXPLICIT_TEMPLATE_SPECIALISATION(9);
-#undef EXPLICIT_TEMPLATE_SPECIALISATION
+ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION(2);
+ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION(3);
+ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION(4);
+ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION(5);
+ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION(6);
+ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION(7);
+ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION(8);
+ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION(9);
+#undef ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION
 
-template<typename ...Args>
-struct SliceRank_impl<1,Args...>
-{
-  enum { value = deduce_slice_rank<1>::apply<Args...>() };
+template<typename Value>
+struct Reference {
+  Value& value;
+  operator Value&() { return value; }
+  template < typename T > void operator=(const T a) { value = a; }
+  template < typename T > Reference<Value>& operator+(const T a) { value+=a; return *this; }
+  template < typename T > Reference<Value>& operator-(const T a) { value-=a; return *this; }
+  Reference<Value>& operator--() { --value; return *this; }
+  Reference<Value>& operator++() { ++value; return *this; }
 };
 
-template<typename Value, int RANK, Intent Access>
+//template<typename Value, int Rank, Intent Access>
+//struct get_slice_type {
+//  using type =
+//    typename std::conditional<(Rank==0),
+//       typename std::conditional<(Access==Intent::ReadOnly),
+//           const Value&,
+//           Value&
+//       >::type,
+//       LocalView<Value,Rank>
+//    >::type;
+//};
+
+
+template<typename Value, int Rank, Intent Access>
 struct get_slice_type {
   using type =
-    typename std::conditional<(RANK==0),
+    typename std::conditional<(Rank==0),
        typename std::conditional<(Access==Intent::ReadOnly),
-           const Value&,
-           Value&
+           Reference<Value const>,
+           Reference<Value>
        >::type,
-       LocalView<Value,RANK>
+       LocalView<Value,Rank>
     >::type;
 };
 
@@ -190,7 +153,7 @@ private:
     struct Slicer<ReturnType,true> {
       template< typename ...Args >
       static ReturnType apply(View& view, const Args...args) {
-          return *(view.data()+offset(view,args...));
+          return ReturnType{*(view.data()+offset(view,args...))};
       }
     };
 
@@ -203,15 +166,15 @@ private:
       return range.start();
     }
 
-    static int start( All range ) {
+    static int start( RangeAll range ) {
       return range.start();
     }
 
-    static int start( To range ) {
+    static int start( RangeTo range ) {
       return range.start();
     }
 
-    static int start( From range ) {
+    static int start( RangeFrom range ) {
       return range.start();
     }
 
@@ -240,15 +203,15 @@ private:
        shape[i++] = range.end()-range.start();
     }
     template< int Dim, typename Shape >
-    static void update_shape( View& view, Shape& shape, int& i, const All range ){
+    static void update_shape( View& view, Shape& shape, int& i, const RangeAll range ){
        shape[i++] = range.end<Dim>(view)-range.start();
     }
     template< int Dim, typename Shape >
-    static void update_shape( View& view, Shape& shape, int& i, const From range ){
+    static void update_shape( View& view, Shape& shape, int& i, const RangeFrom range ){
        shape[i++] = range.end<Dim>(view)-range.start();
     }
     template< int Dim, typename Shape >
-    static void update_shape( View&, Shape& shape, int& i, const To range ){
+    static void update_shape( View&, Shape& shape, int& i, const RangeTo range ){
        shape[i++] = range.end()-range.start();
     }
 
@@ -281,15 +244,15 @@ private:
        strides[i++] = view.stride(Dim);
     }
     template<int Dim,typename Strides >
-    static void update_strides( View& view, Strides& strides, int& i, const From& /*range*/ ) {
+    static void update_strides( View& view, Strides& strides, int& i, const RangeFrom& /*range*/ ) {
        strides[i++] = view.stride(Dim);
     }
     template<int Dim,typename Strides >
-    static void update_strides( View& view, Strides& strides, int& i, const To& /*range*/ ) {
+    static void update_strides( View& view, Strides& strides, int& i, const RangeTo& /*range*/ ) {
        strides[i++] = view.stride(Dim);
     }
     template<int Dim,typename Strides >
-    static void update_strides( View& view, Strides& strides, int& i, const All& /*range*/ ) {
+    static void update_strides( View& view, Strides& strides, int& i, const RangeAll& /*range*/ ) {
        strides[i++] = view.stride(Dim);
     }
 
