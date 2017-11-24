@@ -27,11 +27,28 @@ namespace array {
 
 template< typename Value, int Rank, Intent AccessMode = Intent::ReadWrite > class ArrayView {
 public:
-// -- Type definitions
-    using value_type = typename remove_const<Value>::type;
-    using Slice = typename std::conditional<(Rank==1), value_type&, LocalView<value_type,Rank-1> >::type;
+  // -- Type definitions
+      using value_type = typename remove_const<Value>::type;
+      using return_type = typename std::conditional< (AccessMode == Intent::ReadWrite), value_type, value_type const>::type;
+
+    static constexpr Intent ACCESS{AccessMode};
+    static constexpr int RANK{Rank};
+
     using data_view_t = gridtools::data_view_tt<value_type, Rank, gridtools::get_access_mode(AccessMode)>;
-    using return_type = typename std::conditional< (AccessMode == Intent::ReadWrite), value_type, value_type const>::type;
+
+  private:
+      using slicer_t = typename helpers::ArraySlicer< ArrayView<Value,Rank,AccessMode> >;
+      using const_slicer_t = typename helpers::ArraySlicer< const ArrayView<Value,Rank,AccessMode> >;
+
+      template< typename ...Args >
+      struct slice_t {
+        using type = typename slicer_t::template Slice<Args...>::type;
+      };
+
+      template< typename ...Args >
+      struct const_slice_t {
+        using type = typename const_slicer_t::template Slice<Args...>::type;
+      };
 
 public:
 
@@ -54,36 +71,6 @@ public:
     value_type const& operator()(Coords... c) const {
         assert(sizeof...(Coords) == Rank);
         return gt_data_view_(c...);
-    }
-
-    const Slice operator[](size_t i) const {
-        return Slicer<Slice, Rank==1>(*this).apply(i);
-    }
-
-    Slice operator[](size_t i) {
-        return Slicer<Slice, Rank==1>(*this).apply(i);
-    }
-
-    const Slice at(size_t i) const {
-        if( i>= shape(0) ) {
-          throw_OutOfRange( "ArrayView::at", 'i', i, shape(0) );
-        }
-        return Slicer<Slice, Rank==1>(*this).apply(i);
-    }
-
-    Slice at(size_t i) {
-        if( i>= shape(0) ) {
-          throw_OutOfRange( "ArrayView::at", 'i', i, shape(0) );
-        }
-        return Slicer<Slice, Rank==1>(*this).apply(i);
-    }
-
-    const Slice slice(size_t i) const {
-        return Slicer<Slice, Rank==1>(*this).apply(i);
-    }
-
-    Slice slice(size_t i) {
-        return Slicer<Slice, Rank==1>(*this).apply(i);
     }
 
     template<unsigned int Dim>
@@ -125,29 +112,17 @@ public:
 
     size_t stride(size_t idx) const { return strides_[idx]; }
 
+    template< typename ...Args >
+    typename slice_t<Args...>::type slice(Args... args) {
+      return slicer_t(*this).apply(args...);
+    }
+
+    template< typename ...Args >
+    typename const_slice_t<Args...>::type slice(Args... args) const {
+      return const_slicer_t(*this).apply(args...);
+    }
+
 private:
-
-    template <typename ReturnType = Slice, bool ToScalar = false>
-    struct Slicer {
-        Slicer(ArrayView<value_type, Rank, AccessMode> const& av) : av_(av) {}
-        ArrayView<value_type, Rank, AccessMode> const& av_;
-        ReturnType apply(const size_t i) const {
-          return LocalView<value_type,Rank-1>(
-                  av_.data()+av_.strides_[0]*i,
-                  av_.shape_+1,
-                  av_.strides_+1 );
-        }
-    };
-
-    template <typename ReturnType>
-    struct Slicer<ReturnType, true> {
-        Slicer(ArrayView<value_type, Rank, AccessMode> const& av) : av_(av) {}
-        ArrayView<value_type, Rank, AccessMode> const& av_;
-        ReturnType apply(const size_t i) const {
-            return *(const_cast<value_type*>(av_.data()) + av_.strides_[0] * i);
-        }
-    };
-
 
     data_view_t gt_data_view_;
     size_t shape_[Rank];

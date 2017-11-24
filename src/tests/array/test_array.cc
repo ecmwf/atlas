@@ -108,7 +108,7 @@ CASE("test_localview") {
 
   // Check values
   for (size_t i = 0; i < ds->shape(0); ++i) {
-    LocalView<double, 2> lv = hv.at(i);
+    LocalView<double, 2> lv = hv.slice(i,Range::all(),Range::all());
     for (size_t j = 0; j < lv.shape(0); ++j) {
       for (size_t k = 0; k < lv.shape(1); ++k) {
         EXPECT(lv(j, k) == (i * 100) + (j * 10) + (k));
@@ -474,7 +474,7 @@ CASE("test_assign") {
 
   EXPECT(hv(1, 2, 3) == 2.5);
 
-  auto lv = hv.at(1);
+  auto lv = hv.slice(1,Range::all(),Range::all());
   lv.assign(5.0);
 
   EXPECT(hv(0, 2, 3) == 2.5);

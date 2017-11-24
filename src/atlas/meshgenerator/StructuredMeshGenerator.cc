@@ -40,6 +40,7 @@
 #define DEBUG_OUTPUT 0
 
 using namespace eckit;
+using namespace atlas::array;
 using atlas::Mesh;
 using Topology = atlas::mesh::Nodes::Topology;
 
@@ -322,7 +323,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
 
     ilat = jlat-region.north;
 
-    array::LocalView<int,2> lat_elems_view = elemview.at(ilat);
+    auto lat_elems_view = elemview.slice(ilat,Range::all(),Range::all());
 
     latN = jlat;
     latS = jlat+1;
@@ -490,7 +491,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
       DEBUG_VAR(jelem);
 #endif
 
-      array::LocalView<int,1> elem = lat_elems_view.at(jelem);
+      auto elem = lat_elems_view.slice(jelem,Range::all());
 
       if( try_make_quad )
       {
@@ -499,10 +500,10 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
         Log::info()  << "          " << ipN1 << "  " << ipN2 << '\n';
         Log::info()  << "          " << ipS1 << "  " << ipS2 << '\n';
 #endif
-        elem.at(0) = ipN1;
-        elem.at(1) = ipS1;
-        elem.at(2) = ipS2;
-        elem.at(3) = ipN2;
+        elem(0) = ipN1;
+        elem(1) = ipS1;
+        elem(2) = ipS2;
+        elem(3) = ipN2;
         add_quad = false;
         int np[] = {pN1, pN2, pS1, pS2};
         int cnt_mypart = std::count(np, np+4, mypart);
@@ -572,10 +573,10 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
         Log::info()  << "          " << ipN1 << "  " << ipN2 << '\n';
         Log::info()  << "          " << ipS1 << '\n';
 #endif
-        elem.at(0) = ipN1;
-        elem.at(1) = ipS1;
-        elem.at(2) = -1;
-        elem.at(3) = ipN2;
+        elem(0) = ipN1;
+        elem(1) = ipS1;
+        elem(2) = -1;
+        elem(3) = ipN2;
 
         add_triag = false;
 
@@ -651,10 +652,10 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
         Log::info()  << "          " << ipN1 << " ("<<pN1<<")" << '\n';
         Log::info()  << "          " << ipS1 << " ("<<pS1<<")" << "  " << ipS2 << " ("<<pS2<<")" << '\n';
 #endif
-        elem.at(0) = ipN1;
-        elem.at(1) = ipS1;
-        elem.at(2) = ipS2;
-        elem.at(3) = -1;
+        elem(0) = ipN1;
+        elem(1) = ipS1;
+        elem(2) = ipS2;
+        elem(3) = -1;
 
         add_triag = false;
 
@@ -1164,19 +1165,19 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
     int ilatS = ilat+1;
     for (int jelem=0; jelem<region.nb_lat_elems.at(jlat); ++jelem)
     {
-      const array::LocalView<int,1> elem = array::make_view<int,3>(*region.elems).at(ilat).at(jelem);
+      const auto elem = array::make_view<int,3>(*region.elems).slice(ilat,jelem,Range::all());
 
-      if(elem.at(2)>=0 && elem.at(3)>=0) // This is a quad
+      if(elem(2)>=0 && elem(3)>=0) // This is a quad
       {
-        quad_nodes[0] = node_numbering.at( offset_loc.at(ilatN) + elem.at(0) - region.lat_begin.at(jlatN) );
-        quad_nodes[1] = node_numbering.at( offset_loc.at(ilatS) + elem.at(1) - region.lat_begin.at(jlatS) );
-        quad_nodes[2] = node_numbering.at( offset_loc.at(ilatS) + elem.at(2) - region.lat_begin.at(jlatS) );
-        quad_nodes[3] = node_numbering.at( offset_loc.at(ilatN) + elem.at(3) - region.lat_begin.at(jlatN) );
+        quad_nodes[0] = node_numbering.at( offset_loc.at(ilatN) + elem(0) - region.lat_begin.at(jlatN) );
+        quad_nodes[1] = node_numbering.at( offset_loc.at(ilatS) + elem(1) - region.lat_begin.at(jlatS) );
+        quad_nodes[2] = node_numbering.at( offset_loc.at(ilatS) + elem(2) - region.lat_begin.at(jlatS) );
+        quad_nodes[3] = node_numbering.at( offset_loc.at(ilatN) + elem(3) - region.lat_begin.at(jlatN) );
 
         if( three_dimensional && periodic_east_west )
         {
-          if (size_t(elem.at(2)) == rg.nx(jlatS)) quad_nodes[2] = node_numbering.at( offset_loc.at(ilatS) );
-          if (size_t(elem.at(3)) == rg.nx(jlatN)) quad_nodes[3] = node_numbering.at( offset_loc.at(ilatN) );
+          if (size_t(elem(2)) == rg.nx(jlatS)) quad_nodes[2] = node_numbering.at( offset_loc.at(ilatS) );
+          if (size_t(elem(3)) == rg.nx(jlatN)) quad_nodes[3] = node_numbering.at( offset_loc.at(ilatN) );
         }
 
         jcell = quad_begin + jquad++;
@@ -1187,26 +1188,26 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
       }
       else // This is a triag
       {
-        if(elem.at(3)<0) // This is a triangle pointing up
+        if(elem(3)<0) // This is a triangle pointing up
         {
-          triag_nodes[0] = node_numbering.at( offset_loc.at(ilatN) + elem.at(0) - region.lat_begin.at(jlatN) );
-          triag_nodes[1] = node_numbering.at( offset_loc.at(ilatS) + elem.at(1) - region.lat_begin.at(jlatS) );
-          triag_nodes[2] = node_numbering.at( offset_loc.at(ilatS) + elem.at(2) - region.lat_begin.at(jlatS) );
+          triag_nodes[0] = node_numbering.at( offset_loc.at(ilatN) + elem(0) - region.lat_begin.at(jlatN) );
+          triag_nodes[1] = node_numbering.at( offset_loc.at(ilatS) + elem(1) - region.lat_begin.at(jlatS) );
+          triag_nodes[2] = node_numbering.at( offset_loc.at(ilatS) + elem(2) - region.lat_begin.at(jlatS) );
           if( three_dimensional && periodic_east_west )
           {
-            if (size_t(elem.at(0)) == rg.nx(jlatN)) triag_nodes[0] = node_numbering.at( offset_loc.at(ilatN) );
-            if (size_t(elem.at(2)) == rg.nx(jlatS)) triag_nodes[2] = node_numbering.at( offset_loc.at(ilatS) );
+            if (size_t(elem(0)) == rg.nx(jlatN)) triag_nodes[0] = node_numbering.at( offset_loc.at(ilatN) );
+            if (size_t(elem(2)) == rg.nx(jlatS)) triag_nodes[2] = node_numbering.at( offset_loc.at(ilatS) );
           }
         }
         else // This is a triangle pointing down
         {
-          triag_nodes[0] = node_numbering.at( offset_loc.at(ilatN) + elem.at(0) - region.lat_begin.at(jlatN) );
-          triag_nodes[1] = node_numbering.at( offset_loc.at(ilatS) + elem.at(1) - region.lat_begin.at(jlatS) );
-          triag_nodes[2] = node_numbering.at( offset_loc.at(ilatN) + elem.at(3) - region.lat_begin.at(jlatN) );
+          triag_nodes[0] = node_numbering.at( offset_loc.at(ilatN) + elem(0) - region.lat_begin.at(jlatN) );
+          triag_nodes[1] = node_numbering.at( offset_loc.at(ilatS) + elem(1) - region.lat_begin.at(jlatS) );
+          triag_nodes[2] = node_numbering.at( offset_loc.at(ilatN) + elem(3) - region.lat_begin.at(jlatN) );
           if( three_dimensional && periodic_east_west )
           {
-            if (size_t(elem.at(1)) == rg.nx(jlatS)) triag_nodes[1] = node_numbering.at( offset_loc.at(ilatS) );
-            if (size_t(elem.at(3)) == rg.nx(jlatN)) triag_nodes[2] = node_numbering.at( offset_loc.at(ilatN) );
+            if (size_t(elem(1)) == rg.nx(jlatS)) triag_nodes[1] = node_numbering.at( offset_loc.at(ilatS) );
+            if (size_t(elem(3)) == rg.nx(jlatN)) triag_nodes[2] = node_numbering.at( offset_loc.at(ilatN) );
           }
         }
         jcell = triag_begin + jtriag++;

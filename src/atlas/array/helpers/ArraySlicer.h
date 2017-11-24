@@ -12,13 +12,41 @@
 
 #include "atlas/runtime/Log.h"
 #include "atlas/array/ArrayViewDefs.h"
-#include "atlas/array/LocalView.h"
 #include "atlas/array/Range.h"
-
-//------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
+
+template< typename Value, int Rank, Intent AccessMode >
+class LocalView;
+
+
+template<typename Value>
+struct Reference {
+  Value& value;
+  operator Value&() { return value; }
+  template < typename T > void operator=(const T a) { value = a; }
+  template < typename T > Reference<Value>& operator+(const T a) { value+=a; return *this; }
+  template < typename T > Reference<Value>& operator-(const T a) { value-=a; return *this; }
+  Reference<Value>& operator--() { --value; return *this; }
+  Reference<Value>& operator++() { ++value; return *this; }
+};
+
+
+template<typename Value, int Rank, Intent Access>
+struct get_slice_type {
+  using type =
+    typename std::conditional<(Rank==0),
+       typename std::conditional<(Access==Intent::ReadOnly),
+           Reference<Value const>,
+           Reference<Value>
+       >::type,
+       LocalView<Value,Rank,Access>
+    >::type;
+};
+
+//------------------------------------------------------------------------------
+
 namespace helpers {
 
 template< int Dim >
@@ -68,40 +96,16 @@ ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION(8);
 ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION(9);
 #undef ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION
 
-template<typename Value>
-struct Reference {
-  Value& value;
-  operator Value&() { return value; }
-  template < typename T > void operator=(const T a) { value = a; }
-  template < typename T > Reference<Value>& operator+(const T a) { value+=a; return *this; }
-  template < typename T > Reference<Value>& operator-(const T a) { value-=a; return *this; }
-  Reference<Value>& operator--() { --value; return *this; }
-  Reference<Value>& operator++() { ++value; return *this; }
+
+
+template< typename View, bool constness = false >
+struct get_access {
+  static constexpr Intent value{ View::ACCESS };
 };
 
-//template<typename Value, int Rank, Intent Access>
-//struct get_slice_type {
-//  using type =
-//    typename std::conditional<(Rank==0),
-//       typename std::conditional<(Access==Intent::ReadOnly),
-//           const Value&,
-//           Value&
-//       >::type,
-//       LocalView<Value,Rank>
-//    >::type;
-//};
-
-
-template<typename Value, int Rank, Intent Access>
-struct get_slice_type {
-  using type =
-    typename std::conditional<(Rank==0),
-       typename std::conditional<(Access==Intent::ReadOnly),
-           Reference<Value const>,
-           Reference<Value>
-       >::type,
-       LocalView<Value,Rank>
-    >::type;
+template< typename View >
+struct get_access<View,true> {
+  static constexpr Intent value{ Intent::ReadOnly };
 };
 
 
@@ -121,7 +125,10 @@ public:
 
     template <typename ...Args>
     struct Slice {
-      using type = typename get_slice_type< typename View::value_type, SliceRank<Args...>::value, View::ACCESS >::type;
+      using type = typename get_slice_type<
+          typename View::value_type,
+          SliceRank<Args...>::value,
+          get_access<View, std::is_const<View>::value>::value >::type;
     };
 
     template <typename ...Args>

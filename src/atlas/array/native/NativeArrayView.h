@@ -71,19 +71,23 @@ public:
 
 // -- Type definitions
     using value_type = typename remove_const<Value>::type;
+    using return_type = typename std::conditional< (AccessMode == Intent::ReadWrite), value_type, value_type const>::type;
+
     static constexpr Intent ACCESS{AccessMode};
     static constexpr int RANK{Rank};
 
 private:
     using slicer_t = typename helpers::ArraySlicer< ArrayView<Value,Rank,AccessMode> >;
+    using const_slicer_t = typename helpers::ArraySlicer< const ArrayView<Value,Rank,AccessMode> >;
 
-    using SliceDepr = typename std::conditional<(Rank==1), value_type&, LocalView<value_type,Rank-1> >::type;
-
-
-public:
     template< typename ...Args >
-    struct Slice {
+    struct slice_t {
       using type = typename slicer_t::template Slice<Args...>::type;
+    };
+
+    template< typename ...Args >
+    struct const_slice_t {
+      using type = typename const_slicer_t::template Slice<Args...>::type;
     };
 
 public:
@@ -110,7 +114,7 @@ public:
 // -- Access methods
 
     template < typename... Idx >
-    value_type& operator()(Idx... idx) {
+    return_type& operator()(Idx... idx) {
         check_bounds(idx...);
         return data_[index(idx...)];
     }
@@ -121,35 +125,11 @@ public:
         return data_[index(idx...)];
     }
 
-    const SliceDepr operator[](size_t i) const {
-        return Slicer<SliceDepr, Rank==1>(*this).apply(i);
-    }
-
-    SliceDepr operator[](size_t i) {
-        return Slicer<SliceDepr, Rank==1>(*this).apply(i);
-    }
-
-    const SliceDepr at(size_t i) const {
-        if( i>= shape(0) ) {
-          throw_OutOfRange( "ArrayView::at", 'i', i, shape(0) );
-        }
-        return Slicer<SliceDepr, Rank==1>(*this).apply(i);
-    }
-
-    SliceDepr at(size_t i) {
-        if( i>= shape(0) ) {
-          throw_OutOfRange( "ArrayView::at", 'i', i, shape(0) );
-        }
-        return Slicer<SliceDepr, Rank==1>(*this).apply(i);
-    }
-
     template<unsigned int Dim>
     size_t shape() const { return shape(Dim);}
 
     template<unsigned int Dim>
-    size_t stride() const {
-        return stride(Dim);
-    }
+    size_t stride() const { return stride(Dim); }
 
     size_t size() const { return size_;}
 
@@ -178,9 +158,15 @@ public:
     void dump(std::ostream& os) const;
 
     template< typename ...Args >
-    typename Slice<Args...>::type slice(Args... args) {
+    typename slice_t<Args...>::type slice(Args... args) {
       return slicer_t(*this).apply(args...);
     }
+
+    template< typename ...Args >
+    typename const_slice_t<Args...>::type slice(Args... args) const {
+      return const_slicer_t(*this).apply(args...);
+    }
+
 
 private:
 
@@ -232,26 +218,6 @@ private:
             throw_OutOfRange( "ArrayView", array_dim<Dim>(), last_idx, shape_[Dim] );
         }
     }
-
-// -- Type definitions
-
-    template <typename ReturnType = SliceDepr, bool ToScalar = false>
-    struct Slicer {
-        Slicer(ArrayView<value_type, Rank, AccessMode> const& av) : av_(av) {}
-        ArrayView<value_type, Rank, AccessMode> const& av_;
-        ReturnType apply(const size_t i) const {
-            return LocalView<value_type, Rank - 1>(av_.data_ + av_.strides_[0] * i, av_.shape_.data() + 1, av_.strides_.data() + 1);
-        }
-    };
-
-    template <typename ReturnType>
-    struct Slicer<ReturnType, true> {
-        Slicer(ArrayView<value_type, Rank, AccessMode> const& av) : av_(av) {}
-        ArrayView<value_type, Rank, AccessMode> const& av_;
-        ReturnType apply(const size_t i) const {
-            return *(av_.data_ + av_.strides_[0] * i);
-        }
-    };
 
 // -- Private data
 

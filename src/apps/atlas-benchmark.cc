@@ -80,6 +80,7 @@ using atlas::mesh::IsGhostNode;
 
 using namespace eckit::option;
 using namespace atlas;
+using namespace atlas::array;
 using namespace atlas::grid;
 using namespace atlas::mesh::actions;
 using namespace atlas::functionspace;
@@ -490,7 +491,7 @@ void AtlasBenchmark::iteration()
 //----------------------------------------------------------------------------------------------------------------------
 
 template< typename DATA_TYPE >
-DATA_TYPE vecnorm( DATA_TYPE vec[], size_t size )
+DATA_TYPE vecnorm( const DATA_TYPE vec[], size_t size )
 {
   DATA_TYPE norm=0;
   for(size_t j=0; j < size; ++j)
@@ -517,7 +518,7 @@ double AtlasBenchmark::result()
         minval = min(minval,grad(jnode,jlev,LAT));
         minval = min(minval,grad(jnode,jlev,ZZ));
 //        norm += std::pow(vecnorm(grad[jnode][jlev].data(),3),2);
-        norm += std::pow(vecnorm(grad.at(jnode).at(jlev).data(),3),2);
+        norm += std::pow(vecnorm( grad.slice(jnode,jlev,Range::all()).data(),3),2);
       }
     }
   }

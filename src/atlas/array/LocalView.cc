@@ -20,15 +20,15 @@ namespace array {
 
 //------------------------------------------------------------------------------------------------------
 
-template <typename Value, int Rank>
-void LocalView<Value,Rank>::assign(const value_type& value) {
+template <typename Value, int Rank, Intent AccessMode>
+void LocalView<Value,Rank,AccessMode>::assign(const value_type& value) {
     helpers::array_assigner<Value,Rank>::apply(*this,value);
 }
 
 //------------------------------------------------------------------------------------------------------
 
-template <typename Value, int Rank>
-void LocalView<Value,Rank>::dump(std::ostream& os) const {
+template <typename Value, int Rank, Intent AccessMode>
+void LocalView<Value,Rank,AccessMode>::dump(std::ostream& os) const {
 ASSERT( contiguous() );
 const value_type* data_ = data();
 os << "size: " << size() << " , values: ";
@@ -50,11 +50,16 @@ os << "]";
 namespace atlas {
 namespace array {
 #define EXPLICIT_TEMPLATE_INSTANTIATION(Rank) \
-template class LocalView<int,Rank>;\
-template class LocalView<long,Rank>;\
-template class LocalView<long unsigned,Rank>;\
-template class LocalView<float,Rank>;\
-template class LocalView<double,Rank>;\
+template class LocalView<int,Rank,Intent::ReadOnly>;\
+template class LocalView<int,Rank,Intent::ReadWrite>;\
+template class LocalView<long,Rank,Intent::ReadOnly>;\
+template class LocalView<long,Rank,Intent::ReadWrite>;\
+template class LocalView<long unsigned,Rank,Intent::ReadOnly>;\
+template class LocalView<long unsigned,Rank,Intent::ReadWrite>;\
+template class LocalView<float,Rank,Intent::ReadOnly>;\
+template class LocalView<float,Rank,Intent::ReadWrite>;\
+template class LocalView<double,Rank,Intent::ReadOnly>;\
+template class LocalView<double,Rank,Intent::ReadWrite>;\
 
 // For each NDims in [1..9]
 EXPLICIT_TEMPLATE_INSTANTIATION(1)

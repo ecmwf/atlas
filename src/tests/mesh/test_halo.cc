@@ -479,7 +479,7 @@ CASE( "test_t63" )
   }
   std::vector<uidx_t> uid(m.nodes().size());
   for( size_t j=0; j<m.nodes().size(); ++j ){
-    uid[j] = util::unique_lonlat(lonlat[j]);
+    uid[j] = util::unique_lonlat( lonlat(j,0),lonlat(j,1) );
   }
   if( check.size() && parallel::mpi::comm().size() == 5 ) {
     ATLAS_DEBUG_VAR( uid.size() );
