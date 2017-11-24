@@ -106,6 +106,13 @@ class Vector3D {
         return s;
     }
 
+    double* data() {
+      return xyz_;
+    }
+
+    const double* data() const {
+      return xyz_;
+    }
 
   private:
 
