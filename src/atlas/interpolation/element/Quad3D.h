@@ -15,6 +15,7 @@
 
 #include "atlas/interpolation/Vector3D.h"
 #include "atlas/interpolation/method/Intersect.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace interpolation {
@@ -28,11 +29,15 @@ namespace element {
 class Quad3D {
 public:
 
-    Quad3D(const double* x0, const double* x1, const double* x2, const double* x3) {
-        v00 = Vector3D::Map(x0);
-        v10 = Vector3D::Map(x1);
-        v11 = Vector3D::Map(x2);
-        v01 = Vector3D::Map(x3);
+    Quad3D(const double* x0, const double* x1, const double* x2, const double* x3) :
+        v00(x0),
+        v10(x1),
+        v11(x2),
+        v01(x3) {
+    }
+
+    Quad3D(const PointXYZ& x0, const PointXYZ& x1, const PointXYZ& x2, const PointXYZ& x3) :
+        Quad3D(x0.data(),x1.data(),x2.data(),x3.data()) {
     }
 
     method::Intersect intersects(

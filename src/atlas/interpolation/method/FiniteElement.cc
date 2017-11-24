@@ -133,7 +133,7 @@ void FiniteElement::setup(const FunctionSpace& source) {
                 continue;
             }
 
-            PointXYZ p ( (*ocoords_)[ip].data() ); // lookup point
+            PointXYZ p{(*ocoords_)(ip,0),(*ocoords_)(ip,1),(*ocoords_)(ip,2)}; // lookup point
 
             size_t kpts = 1;
             bool success = false;
@@ -172,7 +172,7 @@ void FiniteElement::setup(const FunctionSpace& source) {
         std::ostringstream msg;
         msg << "Rank " << eckit::mpi::comm().rank() << " failed to project points:\n";
         for (std::vector<size_t>::const_iterator i = failures.begin(); i != failures.end(); ++i) {
-            const PointXYZ p ( (*ocoords_)[*i].data() ); // lookup point
+            const PointXYZ p{ (*ocoords_)(*i,0), (*ocoords_)(*i,1), (*ocoords_)(*i,2) }; // lookup point
             const PointLonLat pll = util::Earth::convertGeocentricToGeodetic(p);
             msg << "\t(lon,lat) = " << pll << "\n";
         }
@@ -200,7 +200,7 @@ Method::Triplets FiniteElement::projectPointToElements(
     double w[4];
 
     Triplets triplets;
-    Ray ray( (*ocoords_)[ip].data() );
+    Ray ray( PointXYZ{(*ocoords_)(ip,0),(*ocoords_)(ip,1),(*ocoords_)(ip,2)} );
 
     for (ElemIndex3::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc) {
 
@@ -219,9 +219,9 @@ Method::Triplets FiniteElement::projectPointToElements(
 
             /* triangle */
             element::Triag3D triag(
-                    (*icoords_)[idx[0]].data(),
-                    (*icoords_)[idx[1]].data(),
-                    (*icoords_)[idx[2]].data());
+                  PointXYZ{(*icoords_)(idx[0],0),(*icoords_)(idx[0],1),(*icoords_)(idx[0],2)},
+                  PointXYZ{(*icoords_)(idx[1],0),(*icoords_)(idx[1],1),(*icoords_)(idx[1],2)},
+                  PointXYZ{(*icoords_)(idx[2],0),(*icoords_)(idx[2],1),(*icoords_)(idx[2],2)});
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
@@ -248,10 +248,10 @@ Method::Triplets FiniteElement::projectPointToElements(
 
             /* quadrilateral */
             element::Quad3D quad(
-                    (*icoords_)[idx[0]].data(),
-                    (*icoords_)[idx[1]].data(),
-                    (*icoords_)[idx[2]].data(),
-                    (*icoords_)[idx[3]].data() );
+                  PointXYZ{(*icoords_)(idx[0],0),(*icoords_)(idx[0],1),(*icoords_)(idx[0],2)},
+                  PointXYZ{(*icoords_)(idx[1],0),(*icoords_)(idx[1],1),(*icoords_)(idx[1],2)},
+                  PointXYZ{(*icoords_)(idx[2],0),(*icoords_)(idx[2],1),(*icoords_)(idx[2],2)},
+                  PointXYZ{(*icoords_)(idx[3],0),(*icoords_)(idx[3],1),(*icoords_)(idx[3],2)});
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
