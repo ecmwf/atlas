@@ -218,9 +218,9 @@ void test_rank1_strided_v1(Fixture& f) {
 
     eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(
         arrv_t.data(),
-        array::ArraySpec{array::make_shape(f.N, 1), 
+        array::ArraySpec{array::make_shape(f.N, 1),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-        array::make_strides(32, 1) } 
+        array::make_strides(32, 1) }
 #else
         array::make_strides(2, 1) }
 #endif
@@ -260,11 +260,11 @@ void test_rank1_strided_v2(Fixture& f) {
     // (i.e. we are only selecting and exchanging the first component of the field)
 
     eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(&(arrv_t(0,1)),
-                     array::ArraySpec{array::make_shape(f.N, 1), 
+                     array::ArraySpec{array::make_shape(f.N, 1),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-                     array::make_strides(32, 1) 
+                     array::make_strides(32, 1)
 #else
-                     array::make_strides(2, 1) 
+                     array::make_strides(2, 1)
 #endif
     } ) );
 
@@ -346,9 +346,9 @@ void test_rank2_l1(Fixture& f) {
 
     eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(
          arrv_t.data(),
-         array::ArraySpec{array::make_shape(f.N, 1, 2), 
+         array::ArraySpec{array::make_shape(f.N, 1, 2),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-         array::make_strides(96,32, 1) 
+         array::make_strides(96,32, 1)
 #else
          array::make_strides(6, 2, 1)
 #endif
@@ -414,9 +414,9 @@ void test_rank2_l2_v2(Fixture& f) {
     }
 
     eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(&arrv_t(0,1,1),
-                     array::ArraySpec{array::make_shape(f.N, 1, 1), 
+                     array::ArraySpec{array::make_shape(f.N, 1, 1),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-                     array::make_strides(192, 32, 1) 
+                     array::make_strides(192, 32, 1)
 #else
                      array::make_strides(6, 2, 1)
 #endif
@@ -477,11 +477,11 @@ void test_rank2_v2(Fixture& f) {
     }
 
     eckit::SharedPtr<array::Array> arr ( array::Array::wrap<POD>(&arrv_t(0,0,1),
-                     array::ArraySpec{array::make_shape(f.N, 3, 1), 
+                     array::ArraySpec{array::make_shape(f.N, 3, 1),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-                     array::make_strides(192, 32, 2) 
+                     array::make_strides(192, 32, 2)
 #else
-                     array::make_strides(6, 2, 2) 
+                     array::make_strides(6, 2, 2)
 #endif
     } ) );
 
@@ -627,7 +627,7 @@ void test_rank1_cinterface(Fixture& f) {
     int shapes[2] = {(int)arrv.shape(0), (int)arrv.shape(1)};
     int strides[2] = {(int)arrv.stride(0), (int)arrv.stride(1)};
 
-    atlas__HaloExchange__execute_strided_double(&(f.halo_exchange), arrv.data(), &(strides[0]), &(shapes[0]), 2);
+    atlas__HaloExchange__execute_strided_double(&(f.halo_exchange), arrv.data(), &(strides[1]), &(shapes[1]), 1);
 
     switch( parallel::mpi::comm().rank() )
     {

@@ -165,11 +165,11 @@ void execute_halo_exchange( HaloExchange* This, Value field[], int var_strides[]
     eckit::SharedPtr<array::Array> arr ( array::Array::wrap(field,
           array::ArraySpec{shape,strides} ) );
 
-    switch(var_rank) {
-        case 1: {This->execute<int,1>(*arr); break;}
-        case 2: {This->execute<int,2>(*arr); break;}
-        case 3: {This->execute<int,3>(*arr); break;}
-        case 4: {This->execute<int,4>(*arr); break;}
+    switch(arr->rank()) {
+        case 1: {This->execute<Value,1>(*arr); break;}
+        case 2: {This->execute<Value,2>(*arr); break;}
+        case 3: {This->execute<Value,3>(*arr); break;}
+        case 4: {This->execute<Value,4>(*arr); break;}
         default: throw eckit::AssertionFailed("Rank not supported in halo exchange");
     }
 }
