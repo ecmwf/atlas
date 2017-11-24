@@ -10,10 +10,11 @@
 
 #pragma once
 
+#include <memory>
+
 #include "eckit/config/Configuration.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-
 #include "eckit/io/Buffer.h"
 #include "eckit/io/DataHandle.h"
 
@@ -65,11 +66,15 @@ public:
 
 class Cache {
 public:
-  Cache() = default;
+  Cache() :
+    legendre_( new EmptyCacheEntry() ),
+    fft_( new EmptyCacheEntry() ) {
+  }
   Cache( const Cache& other ) = default;
 protected:
   Cache( const std::shared_ptr<TransCacheEntry>& legendre ) :
-    legendre_(legendre) {
+    legendre_(legendre),
+    fft_( new EmptyCacheEntry() ) {
   }
   Cache( const std::shared_ptr<TransCacheEntry>& legendre, const std::shared_ptr<TransCacheEntry>& fft ) :
     legendre_(legendre),
@@ -79,8 +84,8 @@ public:
   const TransCacheEntry& legendre() const { return *legendre_; }
   const TransCacheEntry& fft()      const { return *fft_; }
 private:
-  std::shared_ptr<TransCacheEntry> legendre_{ new EmptyCacheEntry() };
-  std::shared_ptr<TransCacheEntry> fft_{ new EmptyCacheEntry() } ;
+  std::shared_ptr<TransCacheEntry> legendre_;
+  std::shared_ptr<TransCacheEntry> fft_;
 };
 
 class LegendreCache : public Cache {
@@ -236,6 +241,12 @@ class TransBuilderFunctionSpace : public TransFactory {
   virtual TransImpl* make( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) {
         return new T(cache,gp,sp,config);
   }
+  virtual TransImpl* make( const Grid&, int, const eckit::Configuration& ) {
+        throw eckit::SeriousBug("This function should not be called",Here());
+  }
+  virtual TransImpl* make( const Cache&, const Grid&, int, const eckit::Configuration& ) {
+        throw eckit::SeriousBug("This function should not be called",Here());
+  }
 public:
     TransBuilderFunctionSpace(const std::string& name) : TransFactory(name) {}
 };
@@ -247,6 +258,12 @@ class TransBuilderGrid : public TransFactory {
   }
   virtual TransImpl* make( const Cache& cache, const Grid& grid, int truncation, const eckit::Configuration& config ) {
         return new T(cache,grid,truncation,config);
+  }
+  virtual TransImpl* make( const FunctionSpace&, const FunctionSpace&, const eckit::Configuration& ) {
+        throw eckit::SeriousBug("This function should not be called",Here());
+  }
+  virtual TransImpl* make( const Cache&, const FunctionSpace&, const FunctionSpace&, const eckit::Configuration& ) {
+        throw eckit::SeriousBug("This function should not be called",Here());
   }
 public:
     TransBuilderGrid(const std::string& name) : TransFactory(name) {}
