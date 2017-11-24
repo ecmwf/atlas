@@ -38,7 +38,7 @@ typedef  Eigen::Vector3d Vector3D;
 #else
 
 class Vector3D {
-  private:
+  public:
 
     Vector3D(const double *d) {
         xyz_[0] = d[0];
@@ -51,8 +51,6 @@ class Vector3D {
         xyz_[1] = y;
         xyz_[2] = z;
      }
-
-  public:
 
     Vector3D() {
         // Warning, data_ is uninitialised
