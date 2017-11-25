@@ -62,46 +62,106 @@ const std::string& Elements::name() const
   return hybrid_elements_->element_type(type_idx_).name();
 }
 
-template<> array::LocalView<double,1> Elements::view( const Field& field ) const
+template<> array::LocalView<double,1,array::Intent::ReadOnly> Elements::view( const Field& field ) const
 {
-  return array::LocalView<double,1>( array::make_storageview<double>(field).data()+begin(), array::make_shape(size()) );
+  return array::make_host_view<double,1,array::Intent::ReadOnly>( field )
+      .slice( array::Range{begin(),begin()+size()} );
 }
 
-template<> array::LocalView<float,1> Elements::view( const Field& field ) const
+template<> array::LocalView<float,1,array::Intent::ReadOnly> Elements::view( const Field& field ) const
 {
-  return array::LocalView<float,1>( array::make_storageview<float>(field).data()+begin(), array::make_shape(size()) );
+  return array::make_host_view<float,1,array::Intent::ReadOnly>( field )
+      .slice( array::Range{begin(),begin()+size()} );
 }
 
-template<> array::LocalView<int,1> Elements::view( const Field& field ) const
+template<> array::LocalView<int,1,array::Intent::ReadOnly> Elements::view( const Field& field ) const
 {
-  return array::LocalView<int,1>( array::make_storageview<int>(field).data()+begin(), array::make_shape(size()) );
+  return array::make_host_view<int,1,array::Intent::ReadOnly>( field )
+      .slice( array::Range{begin(),begin()+size()} );
 }
 
-template<> array::LocalView<long,1> Elements::view( const Field& field ) const
+template<> array::LocalView<long,1,array::Intent::ReadOnly> Elements::view( const Field& field ) const
 {
-  return array::LocalView<long,1>( array::make_storageview<long>(field).data()+begin(), array::make_shape(size()) );
+  return array::make_host_view<long,1,array::Intent::ReadOnly>( field )
+      .slice( array::Range{begin(),begin()+size()} );
 }
 
 
 
-template<> array::LocalView<double,2> Elements::view( const Field& field ) const
+template<> array::LocalView<double,2,array::Intent::ReadOnly> Elements::view( const Field& field ) const
 {
-  return array::LocalView<double,2>( array::make_storageview<double>(field).data()+begin(), array::make_shape(size(),field.shape(1)) );
+  return array::make_host_view<double,2,array::Intent::ReadOnly>( field )
+      .slice( array::Range{begin(),begin()+size()} , array::Range::all() );
 }
 
-template<> array::LocalView<float,2> Elements::view( const Field& field ) const
+template<> array::LocalView<float,2,array::Intent::ReadOnly> Elements::view( const Field& field ) const
 {
-  return array::LocalView<float,2>( array::make_storageview<float>(field).data()+begin(), array::make_shape(size(),field.shape(1)) );
+  return array::make_host_view<float,2,array::Intent::ReadOnly>( field )
+      .slice( array::Range{begin(),begin()+size()} , array::Range::all() );
 }
 
-template<> array::LocalView<int,2> Elements::view( const Field& field ) const
+template<> array::LocalView<int,2,array::Intent::ReadOnly> Elements::view( const Field& field ) const
 {
-  return array::LocalView<int,2>( array::make_storageview<int>(field).data()+begin(), array::make_shape(size(),field.shape(1)) );
+  return array::make_host_view<int,2,array::Intent::ReadOnly>( field )
+      .slice( array::Range{begin(),begin()+size()} , array::Range::all() );
 }
 
-template<> array::LocalView<long,2> Elements::view( const Field& field ) const
+template<> array::LocalView<long,2,array::Intent::ReadOnly> Elements::view( const Field& field ) const
 {
-  return array::LocalView<long,2>( array::make_storageview<long>(field).data()+begin(), array::make_shape(size(),field.shape(1)) );
+  return array::make_host_view<long,2,array::Intent::ReadOnly>( field )
+      .slice( array::Range{begin(),begin()+size()} , array::Range::all() );
+}
+
+// ----------------------------------------------------------------------------
+
+template<> array::LocalView<double,1,array::Intent::ReadWrite> Elements::view( Field& field ) const
+{
+  return array::make_host_view<double,1,array::Intent::ReadWrite>( field )
+      .slice( array::Range{begin(),begin()+size()} );
+}
+
+template<> array::LocalView<float,1,array::Intent::ReadWrite> Elements::view( Field& field ) const
+{
+  return array::make_host_view<float,1,array::Intent::ReadWrite>( field )
+      .slice( array::Range{begin(),begin()+size()} );
+}
+
+template<> array::LocalView<int,1,array::Intent::ReadWrite> Elements::view( Field& field ) const
+{
+  return array::make_host_view<int,1,array::Intent::ReadWrite>( field )
+      .slice( array::Range{begin(),begin()+size()} );
+}
+
+template<> array::LocalView<long,1,array::Intent::ReadWrite> Elements::view( Field& field ) const
+{
+  return array::make_host_view<long,1,array::Intent::ReadWrite>( field )
+      .slice( array::Range{begin(),begin()+size()} );
+}
+
+
+
+template<> array::LocalView<double,2,array::Intent::ReadWrite> Elements::view( Field& field ) const
+{
+  return array::make_host_view<double,2,array::Intent::ReadWrite>( field )
+      .slice( array::Range{begin(),begin()+size()} , array::Range::all() );
+}
+
+template<> array::LocalView<float,2,array::Intent::ReadWrite> Elements::view( Field& field ) const
+{
+  return array::make_host_view<float,2,array::Intent::ReadWrite>( field )
+      .slice( array::Range{begin(),begin()+size()} , array::Range::all() );
+}
+
+template<> array::LocalView<int,2,array::Intent::ReadWrite> Elements::view( Field& field ) const
+{
+  return array::make_host_view<int,2,array::Intent::ReadWrite>( field )
+      .slice( array::Range{begin(),begin()+size()} , array::Range::all() );
+}
+
+template<> array::LocalView<long,2,array::Intent::ReadWrite> Elements::view( Field& field ) const
+{
+  return array::make_host_view<long,2,array::Intent::ReadWrite>( field )
+      .slice( array::Range{begin(),begin()+size()} , array::Range::all() );
 }
 
 size_t Elements::add(const size_t nb_elements)

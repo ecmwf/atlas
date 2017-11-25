@@ -80,7 +80,7 @@ public:
   /// @brief Access hybrid_elements
   /// HybridElements can contain more Elements, and holds the data.
 //  const HybridElements& hybrid_elements() const;
-  
+
   /// @brief Index of Elements in hybrid_elements
 //  size_t type_idx() const;
 
@@ -89,8 +89,8 @@ public:
 
   /// @brief End of elements in hybrid_elements
   size_t end() const;
-  
-  
+
+
   const Field& field(const std::string& name) const { return hybrid_elements_->field(name); }
         Field& field(const std::string& name)   { return hybrid_elements_->field(name); }
   bool has_field(const std::string& name) const { return hybrid_elements_->has_field(name); }
@@ -110,10 +110,13 @@ public:
 
   const Field& halo() const { return hybrid_elements_->halo(); }
         Field& halo()       { return hybrid_elements_->halo(); }
-        
+
   template <typename DATATYPE, int RANK>
-  array::LocalView<DATATYPE,RANK> view( const Field& ) const;
-  
+  array::LocalView<DATATYPE,RANK,array::Intent::ReadOnly> view( const Field& ) const;
+
+  template <typename DATATYPE, int RANK>
+  array::LocalView<DATATYPE,RANK,array::Intent::ReadWrite> view( Field& ) const;
+
   size_t add(const size_t nb_elements);
 
 private:

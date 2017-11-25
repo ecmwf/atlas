@@ -961,9 +961,9 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const
 
         const mesh::BlockConnectivity& node_connectivity = elements.node_connectivity();
 
-        const array::LocalView<gidx_t,1> elems_glb_idx = elements.view<gidx_t,1>( elements.global_index() );
-        const array::LocalView<int,1> elems_partition = elements.view<int,1>( elements.partition() );
-        const array::LocalView<int,1> elems_halo = elements.view<int,1>( elements.halo() );
+        auto elems_glb_idx = elements.view<gidx_t,1>( elements.global_index() );
+        auto elems_partition = elements.view<int,1>( elements.partition() );
+        auto elems_halo = elements.view<int,1>( elements.halo() );
 
         if( binary )
         {

@@ -83,7 +83,11 @@ public:
 
 public:
 
-  Range(int start, int end ) : start_(start), end_(end) {}
+  template< typename Start, typename End >
+  Range(Start start, End end ) :
+    start_( static_cast<int>(start) ),
+    end_( static_cast<int>(end) ) {
+  }
   int start() const { return start_; }
   int end() const { return end_; }
 
