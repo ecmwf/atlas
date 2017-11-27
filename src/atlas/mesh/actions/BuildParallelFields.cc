@@ -791,7 +791,7 @@ Field& build_edges_global_idx( Mesh& mesh )
 
   mesh::HybridElements& edges = mesh.edges();
 
-  array::make_storageview<gidx_t>(edges.global_index()).assign(-1);
+  array::make_view<gidx_t,1>(edges.global_index()).assign(-1);
   array::ArrayView<gidx_t,1> edge_gidx = array::make_view<gidx_t,1>( edges.global_index() );
 
   const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();

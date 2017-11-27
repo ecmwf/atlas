@@ -437,8 +437,8 @@ CASE( "write_read_write_field" )
   // (data section: guarantee data are from different places, to make checks useful)
   const Field& field_from_FieldSet(mesh_from_FieldSet.nodes().field("my_super_field"));
   const Field& field_from_Grid    (mesh_from_FieldSet.nodes().field("my_super_field"));
-  EXPECT( array::make_storageview<double>(field).data() != array::make_storageview<double>(field_from_FieldSet).data() );
-  EXPECT( array::make_storageview<double>(field).data() != array::make_storageview<double>(field_from_Grid)    .data() );
+  EXPECT( field.data<double>() != field_from_FieldSet.data<double>() );
+  EXPECT( field.data<double>() != field_from_Grid.data<double>() );
 
   array::ArrayView< double,1 > field_from_FieldSet_data = array::make_view<double,1>(field_from_FieldSet);
   array::ArrayView< double,1 > field_from_Grid_data     = array::make_view<double,1>(field_from_Grid    );
