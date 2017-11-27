@@ -97,7 +97,7 @@ struct compute_strides {
 template<typename DATA_TYPE, int Rank>
 struct validate {
 
-    static bool apply(array::ArrayView<DATA_TYPE,Rank>& arrv, DATA_TYPE arr_c[] ) {
+    static void apply(array::ArrayView<DATA_TYPE,Rank>& arrv, DATA_TYPE arr_c[] ) {
         std::array<size_t, Rank> strides;
         strides[Rank-1] = 1;
         compute_strides<Rank-1>::apply(arrv, strides);
@@ -161,7 +161,7 @@ void test_rank0_arrview(Fixture& f) {
 
     arr.syncHostDevice();
 
-    f.halo_exchange.template execute<POD,1>(arr, f.on_device_);
+    f.halo_exchange.execute<POD,1>(arr, f.on_device_);
 
     arr.syncHostDevice();
 
@@ -186,7 +186,7 @@ void test_rank1(Fixture& f) {
 
     arr.syncHostDevice();
 
-    f.halo_exchange.template execute<POD,2>(arr, f.on_device_);
+    f.halo_exchange.execute<POD,2>(arr, f.on_device_);
 
     arr.syncHostDevice();
 
@@ -228,7 +228,7 @@ void test_rank1_strided_v1(Fixture& f) {
 
     arr->syncHostDevice();
 
-    f.halo_exchange.template execute<POD,2>(*arr, f.on_device_);
+    f.halo_exchange.execute<POD,2>(*arr, f.on_device_);
 
     arr->syncHostDevice();
 
@@ -268,7 +268,7 @@ void test_rank1_strided_v2(Fixture& f) {
 #endif
     } ) );
 
-    f.halo_exchange.template execute<POD,2>(*arr, false);
+    f.halo_exchange.execute<POD,2>(*arr, false);
 
     switch( parallel::mpi::comm().rank() )
     {
@@ -295,7 +295,7 @@ void test_rank2(Fixture& f) {
 
     arr.syncHostDevice();
 
-    f.halo_exchange.template execute<POD,3>(arr, f.on_device_);
+    f.halo_exchange.execute<POD,3>(arr, f.on_device_);
 
     arr.syncHostDevice();
 
@@ -357,7 +357,7 @@ void test_rank2_l1(Fixture& f) {
 
     arr_t.syncHostDevice();
 
-    f.halo_exchange.template execute<POD,3>(*arr, false);
+    f.halo_exchange.execute<POD,3>(*arr, false);
 
     arr_t.syncHostDevice();
 
@@ -422,7 +422,7 @@ void test_rank2_l2_v2(Fixture& f) {
 #endif
     } ) );
 
-    f.halo_exchange.template execute<POD,3>(*arr, f.on_device_);
+    f.halo_exchange.execute<POD,3>(*arr, f.on_device_);
 
     switch( parallel::mpi::comm().rank() )
     {
@@ -485,7 +485,7 @@ void test_rank2_v2(Fixture& f) {
 #endif
     } ) );
 
-    f.halo_exchange.template execute<POD,3>(*arr, f.on_device_);
+    f.halo_exchange.execute<POD,3>(*arr, f.on_device_);
 
     switch( parallel::mpi::comm().rank() )
     {
@@ -532,7 +532,7 @@ void test_rank0_wrap(Fixture& f) {
 
     arr->syncHostDevice();
 
-    f.halo_exchange.template execute<POD,1>(*arr, f.on_device_);
+    f.halo_exchange.execute<POD,1>(*arr, f.on_device_);
 
     arr->syncHostDevice();
 
@@ -555,7 +555,7 @@ void test_rank1_paralleldim1(Fixture& f) {
       arrv(1,j) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
     }
 
-    f.halo_exchange.template execute<POD,2, array::LastDim>(arr, false);
+    f.halo_exchange.execute<POD,2, array::LastDim>(arr, false);
 
     switch( parallel::mpi::comm().rank() )
     {
@@ -580,7 +580,7 @@ void test_rank2_paralleldim2(Fixture& f) {
       }
     }
 
-    f.halo_exchange.template execute<POD,3, array::Dim<1> >(arr, false);
+    f.halo_exchange.execute<POD,3, array::Dim<1> >(arr, false);
 
     switch( parallel::mpi::comm().rank() )
     {

@@ -479,7 +479,7 @@ subroutine specnorm_r1_scalar(this, spectra, norm, rank)
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: spectra(:)
   real(c_double), intent(out) :: norm
-  integer, optional :: rank
+  integer, optional :: rank ! MPI rank
 #ifdef ATLAS_HAVE_TRANS
   integer :: rank_opt
   real(c_double) :: norms(1)
@@ -500,10 +500,12 @@ subroutine specnorm_r2(this, spectra, norm, rank)
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: spectra(:,:)
   real(c_double), intent(inout) :: norm(:)
-  integer, optional :: rank
+  integer, optional :: rank ! MPI rank
 #ifdef ATLAS_HAVE_TRANS
   integer :: rank_opt
   real(c_double), pointer :: spectra_view(:)
+  rank_opt = 0
+  if( present(rank) ) rank_opt = rank
   spectra_view => array_view1d(spectra)
   call atlas__Trans__specnorm(this%c_ptr(), size(spectra,1), spectra_view, norm, rank_opt )
 #else

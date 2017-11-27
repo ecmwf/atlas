@@ -254,7 +254,11 @@ CASE( "test_arrayview_slice_type" )
 
     EXPECT( slice3 == 123 );
 
-    static_assert( read_write_view.ACCESS == Intent::ReadWrite, "failed" );
+    // Following static assert fails somehow for Cray <= 8.5 (8.6 OK)...
+    // Using runtime EXPECT instead works fine
+    //static_assert( read_write_view.ACCESS == Intent::ReadWrite, "failed" );
+    EXPECT( read_write_view.ACCESS == Intent::ReadWrite );
+
     static_assert( std::is_same< decltype(slice1), LocalView<double,2> >::value, "failed" );
     static_assert( std::is_same< decltype(slice2), LocalView<double,3> >::value, "failed" );
     static_assert( std::is_same< decltype(slice3), Reference<double>   >::value, "failed" );
@@ -291,7 +295,11 @@ CASE( "test_arrayview_slice_type" )
 
     EXPECT( slice4 == 123 );
 
-    static_assert( read_only_view.ACCESS == Intent::ReadOnly, "failed" );
+    // Following static assert fails somehow for Cray <= 8.5 (8.6 OK)...
+    // Using runtime EXPECT instead works fine
+    //static_assert( read_only_view.ACCESS == Intent::ReadOnly, "failed" );
+    EXPECT( read_only_view.ACCESS == Intent::ReadOnly );
+
     static_assert( std::is_same< decltype(slice1), LocalView<double,2,Intent::ReadOnly> >::value, "failed" );
     static_assert( std::is_same< decltype(slice2), LocalView<double,3,Intent::ReadOnly> >::value, "failed" );
     static_assert( std::is_same< decltype(slice3), Reference<double const>              >::value, "failed" );
@@ -327,7 +335,11 @@ CASE( "test_arrayview_slice_type" )
 
     EXPECT( slice3 == 123 );
 
-    static_assert( read_write_view.ACCESS == Intent::ReadWrite, "failed" );
+    // Following static assert fails somehow for Cray <= 8.5 (8.6 OK)...
+    // Using runtime EXPECT instead works fine
+    //static_assert( read_write_view.ACCESS == Intent::ReadWrite, "failed" );
+    EXPECT( read_write_view.ACCESS == Intent::ReadWrite );
+
     static_assert( std::is_same< decltype(slice1), LocalView<double,2,Intent::ReadOnly> >::value, "failed" );
     static_assert( std::is_same< decltype(slice2), LocalView<double,3,Intent::ReadOnly> >::value, "failed" );
     static_assert( std::is_same< decltype(slice3), Reference<double const> >::value, "failed" );

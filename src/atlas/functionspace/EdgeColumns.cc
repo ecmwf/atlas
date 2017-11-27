@@ -260,16 +260,16 @@ void EdgeColumns::haloExchange( FieldSet& fieldset ) const
   for( size_t f=0; f<fieldset.size(); ++f ) {
     Field& field = fieldset[f];
     if     ( field.datatype() == array::DataType::kind<int>() ) {
-      halo_exchange().template execute<int,2>( field.array(), false );
+      halo_exchange().execute<int,2>( field.array(), false );
     }
     else if( field.datatype() == array::DataType::kind<long>() ) {
-      halo_exchange().template execute<long,2>( field.array(), false );
+      halo_exchange().execute<long,2>( field.array(), false );
     }
     else if( field.datatype() == array::DataType::kind<float>() ) {
-      halo_exchange().template execute<float,2>( field.array(), false );
+      halo_exchange().execute<float,2>( field.array(), false );
     }
     else if( field.datatype() == array::DataType::kind<double>() ) {
-      halo_exchange().template execute<double,2>( field.array(), false );
+      halo_exchange().execute<double,2>( field.array(), false );
     }
     else throw eckit::Exception("datatype not supported",Here());
   }
