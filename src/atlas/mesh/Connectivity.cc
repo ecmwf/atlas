@@ -461,7 +461,10 @@ MultiBlockConnectivityImpl::MultiBlockConnectivityImpl(const std::string& name) 
 
 //------------------------------------------------------------------------------------------------------
 
-MultiBlockConnectivityImpl::~MultiBlockConnectivityImpl() {}
+MultiBlockConnectivityImpl::~MultiBlockConnectivityImpl() {
+  if (block_displs_) delete block_displs_;
+  if (block_cols_)   delete block_cols_;
+}
 
 //------------------------------------------------------------------------------------------------------
 
