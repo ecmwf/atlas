@@ -30,8 +30,7 @@ namespace array {
 template <typename T>
 class Vector {
 public:
-  Vector() : data_(nullptr), data_gpu_(nullptr), size_(0) {}
-  Vector(size_t N) : data_(new T[N]), data_gpu_(nullptr), size_(N) {}
+    Vector(size_t N = 0) : data_(N ? new T[N] : nullptr), data_gpu_(nullptr), size_(N) {}
 
   void resize_impl(size_t N) {
       if( data_gpu_ ) throw eckit::AssertionFailed("we can not resize a vector after has been cloned to device");

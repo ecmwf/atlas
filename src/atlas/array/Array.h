@@ -30,6 +30,7 @@ template <typename Value> class ArrayT_impl;
 
 class Array : public eckit::Owned {
 public:
+  virtual ~Array();
 
   static Array* create( array::DataType, const ArrayShape& );
 
