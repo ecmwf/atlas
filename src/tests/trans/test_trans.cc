@@ -487,6 +487,25 @@ CASE( "test_trans_using_functionspace_StructuredColumns" )
 
 }
 
+CASE( "test_trans_MIR_lonlat" )
+{
+  Log::info() << "test_trans_MIR_lonlat" << std::endl;
+
+  Grid grid("L48");
+  trans::Trans trans( grid, 47 );
+
+  // global fields
+  std::vector<double> spf( trans.spectralCoefficients() );
+  std::vector<double> gpf( grid.size() );
+
+  if( parallel::mpi::comm().size() == 1 ) {
+    EXPECT_NO_THROW( trans.invtrans( 1, spf.data(), gpf.data(), option::global() ) );
+
+    EXPECT_NO_THROW( trans.dirtrans( 1, gpf.data(), spf.data(), option::global() ) );
+
+  }
+}
+
 
 //-----------------------------------------------------------------------------
 

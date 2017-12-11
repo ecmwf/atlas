@@ -76,6 +76,10 @@ public:
     return config_.getString("write_legendre","");
   }
 
+  bool global() const {
+    return config_.getBool("global",false);
+  }
+
 private:
   const eckit::Configuration& config_;
 };
@@ -233,15 +237,10 @@ void TransIFS::invtrans( const int nb_scalar_fields, const double scalar_spectra
     args.rspvor = vorticity_spectra;
     args.rspdiv = divergence_spectra;
     args.rgp = gp_fields;
-  if( params.scalar_derivatives() ) {
-    args.lscalarders = true;
-  }
-  if( params.wind_EW_derivatives() ) {
-    args.luvder_EW = true;
-  }
-  if( params.vorticity_divergence_fields() ) {
-    args.lvordivgp = true;
-  }
+    args.lglobal     = params.global();
+    args.lscalarders = params.scalar_derivatives();
+    args.luvder_EW   = params.wind_EW_derivatives();
+    args.lvordivgp   = params.vorticity_divergence_fields();
   TRANS_CHECK( ::trans_invtrans(&args) );
 }
 
@@ -256,9 +255,8 @@ void TransIFS::invtrans( const int nb_scalar_fields, const double scalar_spectra
     args.nscalar     = nb_scalar_fields;
     args.rspscalar   = scalar_spectra;
     args.rgp         = gp_fields;
-  if( params.scalar_derivatives() ) {
-    args.lscalarders = true;
-  }
+    args.lglobal     = params.global();
+    args.lscalarders = params.scalar_derivatives();
   TRANS_CHECK( ::trans_invtrans(&args) );
 }
 
@@ -274,37 +272,38 @@ void TransIFS::invtrans( const int nb_vordiv_fields, const double vorticity_spec
     args.rspvor  = vorticity_spectra;
     args.rspdiv  = divergence_spectra;
     args.rgp     = gp_fields;
-  if( params.wind_EW_derivatives() ) {
-      args.luvder_EW = true;
-    }
-  if( params.vorticity_divergence_fields() ) {
-    args.lvordivgp = true;
-  }
+    args.lglobal = params.global();
+    args.luvder_EW = params.wind_EW_derivatives();
+    args.lvordivgp = params.vorticity_divergence_fields();
   TRANS_CHECK( ::trans_invtrans(&args) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 void TransIFS::dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
-                         const eckit::Configuration& ) const
+                         const eckit::Configuration& config ) const
 {
+  TransParameters params(config);
   struct ::DirTrans_t args = new_dirtrans(trans_.get());
     args.nscalar = nb_fields;
     args.rgp = scalar_fields;
     args.rspscalar = scalar_spectra;
+    args.lglobal   = params.global();
   TRANS_CHECK( ::trans_dirtrans(&args) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 void TransIFS::dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[],
-                         const eckit::Configuration& ) const
+                         const eckit::Configuration& config ) const
 {
+  TransParameters params(config);
   struct ::DirTrans_t args = new_dirtrans(trans_.get());
     args.nvordiv = nb_fields;
     args.rspvor = vorticity_spectra;
     args.rspdiv = divergence_spectra;
     args.rgp    = wind_fields;
+    args.lglobal = params.global();
   TRANS_CHECK( ::trans_dirtrans(&args) );
 }
 
