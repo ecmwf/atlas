@@ -84,7 +84,7 @@ void legendre_transform(
         array::ArrayView<double,1>& zlfpol,  // values of associated Legendre functions, size (trc+1)*trc/2 (out)
         double rspecg[])                     // spectral data, size (trc+1)*trc (in)
 {
-    trans::invtrans_legendre( trc, trcFT, zlfpol.data(), rspecg, rlegReal.data(), rlegImag.data() );
+    trans::invtrans_legendre( trc, trcFT, zlfpol.data(), 1, rspecg, rlegReal.data(), rlegImag.data() );
 }
 
 //-----------------------------------------------------------------------------
@@ -95,7 +95,9 @@ double fourier_transform(
         array::ArrayView<double,1>& rlegImag,// values of associated Legendre functions, size (trc+1)*trc/2 (out)
         double lon) // radians
 {
-  return trans::invtrans_fourier( trcFT, rlegReal.data(), rlegImag.data(), lon );
+  double gp;
+  trans::invtrans_fourier( trcFT, lon, 1, rlegReal.data(), rlegImag.data(), &gp );
+  return gp;
 }
 
 //-----------------------------------------------------------------------------

@@ -20,6 +20,7 @@ void invtrans_legendre(
         const size_t trc,       // truncation (in)
         const size_t trcFT,     // truncation for Fourier transformation (in)
         const double legpol[],  // values of associated Legendre functions, size (trc+1)*trc/2 (in)
+        const int nb_fields,    // number of fields
         const double spec[],    // spectral data, size (trc+1)*trc (in)
         double leg_real[],      // values of associated Legendre functions, size (trc+1)*trc/2 (out)
         double leg_imag[] )     // values of associated Legendre functions, size (trc+1)*trc/2 (out)
@@ -30,17 +31,20 @@ void invtrans_legendre(
         leg_real[jm] = 0.;
         leg_imag[jm] = 0.;
         for( int jn=jm; jn<=trc; ++jn, ++k ) {
-            // not completely sure where this factor 2 comes from. One possible explanation:
-            // normalization of trigonometric functions in the spherical harmonics
-            // integral over square of trig function is 1 for m=0 and 0.5 (?) for m>0
-            leg_real[jm] += 2. * spec[2*k]   * legpol[k];
-            leg_imag[jm] += 2. * spec[2*k+1] * legpol[k];
+            for( int jfld=0; jfld<nb_fields; ++jfld ) {
+              // not completely sure where this factor 2 comes from. One possible explanation:
+              // normalization of trigonometric functions in the spherical harmonics
+              // integral over square of trig function is 1 for m=0 and 0.5 (?) for m>0
+              leg_real[jm*nb_fields+jfld] += 2. * spec[(2*k  )*nb_fields+jfld] * legpol[k];
+              leg_imag[jm*nb_fields+jfld] += 2. * spec[(2*k+1)*nb_fields+jfld] * legpol[k];
+            }
         }
     }
     // Undo factor 2 for (jm == 0)
-    leg_real[0] /= 2.;
-    leg_imag[0] /= 2.;
-
+    for( int jfld=0; jfld<nb_fields; ++jfld ) {
+        leg_real[jfld] /= 2.;
+        leg_imag[jfld] /= 2.;
+    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------

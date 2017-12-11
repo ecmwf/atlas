@@ -25,9 +25,10 @@ void invtrans_legendre(
         const size_t trc,       // truncation (in)
         const size_t trcFT,     // truncation for Fourier transformation (in)
         const double legpol[],  // values of associated Legendre functions, size (trc+1)*trc/2 (in)
+        const int nb_fields,    // Number of fields
         const double spec[],    // spectral data, size (trc+1)*trc (in)
         double leg_real[],      // values of associated Legendre functions, size (trc+1)*trc/2 (out)
-        double leg_imag[] );     // values of associated Legendre functions, size (trc+1)*trc/2 (out)
+        double leg_imag[] );    // values of associated Legendre functions, size (trc+1)*trc/2 (out)
 
 // --------------------------------------------------------------------------------------------------------------------
 

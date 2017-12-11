@@ -158,7 +158,7 @@ void TransLocal::invtrans(
     double gp_fields[],
     const eckit::Configuration& config ) const
 {
-    ASSERT( nb_scalar_fields == 1 ); // More not yet supported
+    int nb_fields = nb_scalar_fields;
 
     // Depending on "precompute_legendre_", we have to compute the
     // legendre polynomials for every latitute
@@ -175,8 +175,8 @@ void TransLocal::invtrans(
     };
 
     // Temporary storage for legendre space
-    std::vector<double> legReal(truncation_+1);
-    std::vector<double> legImag(truncation_+1);
+    std::vector<double> legReal(nb_fields*(truncation_+1));
+    std::vector<double> legImag(nb_fields*(truncation_+1));
 
     // Transform
     if( grid::StructuredGrid g = grid_ ) {
@@ -187,12 +187,13 @@ void TransLocal::invtrans(
             double trcFT = fourier_truncation( truncation_, lat );
 
             // Legendre transform:
-            invtrans_legendre( truncation_, trcFT, legPol(lat,j), scalar_spectra, legReal.data(), legImag.data() );
+            invtrans_legendre( truncation_, trcFT, legPol(lat,j), nb_fields, scalar_spectra, legReal.data(), legImag.data() );
 
             // Fourier transform:
             for( size_t i=0; i<g.nx(j); ++i ) {
                 double lon = g.x(i,j) * util::Constants::degreesToRadians();
-                gp_fields[idx++] = invtrans_fourier( trcFT, legReal.data(), legImag.data(), lon );
+                invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(), gp_fields+(nb_fields*idx));
+                ++idx;
             }
         }
     } else {
@@ -204,10 +205,11 @@ void TransLocal::invtrans(
             double trcFT = fourier_truncation( truncation_, lat );
 
             // Legendre transform:
-            invtrans_legendre( truncation_, trcFT, legPol(lat,idx), scalar_spectra, legReal.data(), legImag.data() );
+            invtrans_legendre( truncation_, trcFT, legPol(lat,idx), nb_fields, scalar_spectra, legReal.data(), legImag.data() );
 
             // Fourier transform:
-            gp_fields[idx++] = invtrans_fourier( trcFT, legReal.data(), legImag.data(), lon );
+            invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(), gp_fields+(nb_fields*idx));
+            ++idx;
         }
     }
 }
