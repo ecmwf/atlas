@@ -246,9 +246,8 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, arr
         halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, hfield, dfield, send_buffer);
     }
     else
-#else
-    halo_packer<ParallelDim, RANK>::pack(sendcnt_, sendmap_, dfield, send_buffer);
 #endif
+      halo_packer<ParallelDim, RANK>::pack(sendcnt_, sendmap_, dfield, send_buffer);
 }
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
@@ -262,9 +261,8 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
         halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, hfield, dfield);
     }
     else
-#else
-    halo_packer<ParallelDim, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, dfield);
 #endif
+      halo_packer<ParallelDim, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, dfield);
 
 }
 
