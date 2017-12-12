@@ -8,12 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_interpolation_method_Ray_h
-#define atlas_interpolation_method_Ray_h
+#pragma once
 
 #include <iosfwd>
 
 #include "atlas/interpolation/Vector3D.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace interpolation {
@@ -33,6 +33,10 @@ struct Ray {
 
   Ray(const double* o, const double* d);
 
+  explicit Ray( const PointXYZ& );
+
+  Ray(const PointXYZ&, const Vector3D&);
+
   Vector3D operator()(double t) const { return orig + t * dir; }
 
   void print(std::ostream& s) const;
@@ -46,6 +50,3 @@ struct Ray {
 }  // namespace method
 }  // namespace interpolation
 }  // namespace atlas
-
-
-#endif

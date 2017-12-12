@@ -67,7 +67,7 @@ void NearestNeighbour::setup(const FunctionSpace& source, const FunctionSpace& t
             }
 
             // find the closest input point to the output point
-            PointIndex3::Point p(coords[ip].data());
+            PointIndex3::Point p{coords(ip,0),coords(ip,1),coords(ip,2)};
             PointIndex3::NodeInfo nn = pTree_->nearestNeighbour(p);
             size_t jp = nn.payload();
 

@@ -171,7 +171,7 @@ public:
   // it is compiled it for a GPU kernel
   IrregularConnectivityImpl(const IrregularConnectivityImpl &other);
 
-  ~IrregularConnectivityImpl();
+  virtual ~IrregularConnectivityImpl();
 
 //-- Accessors
 
@@ -363,7 +363,7 @@ public:
       size_t blocks, size_t block_displs[],
       size_t block_cols[] );
 */
-  ~MultiBlockConnectivityImpl();
+  virtual ~MultiBlockConnectivityImpl();
 
 //-- Accessors
 

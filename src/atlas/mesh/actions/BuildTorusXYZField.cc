@@ -57,15 +57,12 @@ Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const Domain& dom, dou
     const double c2 = 2.*pi/double(ny)*(ny-1)/(ymax-ymin);
     for( size_t n=0; n<npts; ++n )
     {
-      const double *ll=lonlat[n].data();
-      double *xx=xyz[n].data();
+      double lon=-pi+c1*(lonlat(n,0)-xmin);
+      double lat=-pi+c2*(lonlat(n,1)-ymin);
 
-      double lon=-pi+c1*(ll[0]-xmin);
-      double lat=-pi+c2*(ll[1]-ymin);
-
-      xx[0]=std::cos(lon)*(r0+r1*std::cos(lat));
-      xx[1]=std::sin(lon)*(r0+r1*std::cos(lat));
-      xx[2]=r1*std::sin(lat);
+      xyz(n,0)=std::cos(lon)*(r0+r1*std::cos(lat));
+      xyz(n,1)=std::sin(lon)*(r0+r1*std::cos(lat));
+      xyz(n,2)=r1*std::sin(lat);
     }
   }
   return nodes.field(name_);

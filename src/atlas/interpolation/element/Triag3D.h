@@ -15,6 +15,7 @@
 
 #include "atlas/interpolation/Vector3D.h"
 #include "atlas/interpolation/method/Intersect.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace interpolation {
@@ -33,16 +34,19 @@ class Triag3D {
 
 public: // types
 
-    Triag3D(const Vector3D& x0, const Vector3D& x1, const Vector3D& x2):
+
+    Triag3D(const double* x0, const double* x1, const double* x2) :
         v0(x0),
         v1(x1),
         v2(x2) {
     }
 
-    Triag3D(const double* x0, const double* x1, const double* x2) {
-        v0 = Vector3D::Map(x0);
-        v1 = Vector3D::Map(x1);
-        v2 = Vector3D::Map(x2);
+    Triag3D(const PointXYZ& x0, const PointXYZ& x1, const PointXYZ& x2) :
+        Triag3D(x0.data(),x1.data(),x2.data()) {
+    }
+
+    Triag3D(const Vector3D& x0, const Vector3D& x1, const Vector3D& x2) :
+      Triag3D(x0.data(),x1.data(),x2.data()) {
     }
 
     method::Intersect intersects(

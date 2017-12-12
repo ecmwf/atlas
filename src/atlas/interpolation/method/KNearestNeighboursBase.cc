@@ -52,7 +52,7 @@ void KNearestNeighboursBase::buildPointSearchTree(Mesh& meshSource) {
         std::vector<PointIndex3::Value> pidx;
         pidx.reserve(meshSource.nodes().size());
         for (size_t ip = 0; ip < meshSource.nodes().size(); ++ip) {
-            PointIndex3::Point p(coords[ip].data());
+            PointIndex3::Point p{coords(ip,0),coords(ip,1),coords(ip,2)};
             pidx.push_back(PointIndex3::Value(p, ip));
         }
         pTree_->build(pidx.begin(), pidx.end());
@@ -60,7 +60,7 @@ void KNearestNeighboursBase::buildPointSearchTree(Mesh& meshSource) {
 #   if ECKIT_VERSION_INT > 1700
     else {
         for (size_t ip = 0; ip < meshSource.nodes().size(); ++ip) {
-            PointIndex3::Point p(coords[ip].data());
+            PointIndex3::Point p{coords(ip,0),coords(ip,1),coords(ip,2)};
             pTree_->insert(PointIndex3::Value(p, ip));
         }
     }

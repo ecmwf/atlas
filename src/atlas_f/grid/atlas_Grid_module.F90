@@ -409,6 +409,7 @@ function Structured__nx_array(this) result(nx)
   integer(c_long), pointer                :: nx(:)
   type   (c_ptr)                          :: nx_c_ptr
   integer(c_size_t)                       :: nx_size
+  nullify(nx)
   call atlas__grid__Structured__nx_array(this%c_ptr(), nx_c_ptr, nx_size)
   call c_f_pointer(nx_c_ptr , nx , (/nx_size/))
 end function
@@ -463,6 +464,7 @@ function Structured__y_array(this) result(y)
   real   (c_double)       , pointer    :: y(:)
   type   (c_ptr)                       :: y_c_ptr
   integer(c_size_t)                    :: y_size
+  nullify(y)
   call atlas__grid__Structured__y_array(this%c_ptr(), &
       & y_c_ptr, y_size)
   call c_f_pointer (y_c_ptr, y, (/y_size/))

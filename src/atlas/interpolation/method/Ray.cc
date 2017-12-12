@@ -28,6 +28,16 @@ Ray::Ray(const double* o, const double* d) {
     dir = Vector3D::Map(d);
 }
 
+Ray::Ray(const PointXYZ& p ) {
+    orig = Vector3D::Map(p.data());
+    dir = -orig;
+}
+
+Ray::Ray(const PointXYZ& o, const Vector3D& d) {
+    orig = Vector3D::Map(o.data());
+    dir = d;
+}
+
 void Ray::print(std::ostream& s) const { s << "Ray[orig=" << orig << ",dir=" << dir << "]"; }
 
 std::ostream& operator<<(std::ostream& s, const Ray& p) {
