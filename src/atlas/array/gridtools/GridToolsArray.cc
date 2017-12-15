@@ -268,6 +268,11 @@ Array* Array::create(DataType datatype, const ArrayShape& shape, const ArrayLayo
 
 //------------------------------------------------------------------------------
 
+Array::~Array() {
+}
+
+//------------------------------------------------------------------------------
+
 template <typename Value>
 size_t ArrayT<Value>::footprint() const {
   size_t size = sizeof(*this);
