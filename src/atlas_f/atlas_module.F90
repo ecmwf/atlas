@@ -96,7 +96,7 @@ use atlas_Checksum_module, only: &
 use atlas_Mesh_module, only: &
     & atlas_Mesh
 use atlas_Grid_module, only: &
-    & atlas_Grid, &
+    & atlas_Grid , &
     & atlas_StructuredGrid, &
     & atlas_GaussianGrid, &
     & atlas_ReducedGaussianGrid, &

@@ -1,24 +1,29 @@
 
+#include "fckit/defines.h"
+
 module atlas_Grid_module
 
-
-use fckit_refcounted_module, only: fckit_refcounted
+use fckit_shared_ptr_module, only: fckit_owned
+use fckit_shared_object_module, only: fckit_shared_object, fckit_c_deleter!, fckit_owned
+!use fckit_object_module, only: fckit_object
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_shared_object
 
 public :: atlas_Grid
+#if 1
 public :: atlas_StructuredGrid
 public :: atlas_GaussianGrid
 public :: atlas_ReducedGaussianGrid
 public :: atlas_RegularGaussianGrid
 public :: atlas_RegularLonLatGrid
+#endif
 
 private
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_Grid
+TYPE, extends(fckit_shared_object) :: atlas_Grid
 
 ! Purpose :
 ! -------
@@ -34,16 +39,21 @@ TYPE, extends(fckit_refcounted) :: atlas_Grid
 !------------------------------------------------------------------------------
 contains
   procedure :: size => atlas_Grid__size
-  procedure, public :: delete => atlas_Grid__delete
-  procedure, public :: copy => atlas_Grid__copy
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Grid__final_auto
+#endif
+
 END TYPE atlas_Grid
 
 interface atlas_Grid
   module procedure atlas_Grid__ctor_id
   module procedure atlas_Grid__ctor_config
+  module procedure atlas_Grid__ctor_cptr
 end interface
 
 !------------------------------------------------------------------------------
+#if 1
 
 TYPE, extends(atlas_Grid) :: atlas_StructuredGrid
 
@@ -91,7 +101,6 @@ end interface
 
 !------------------------------------------------------------------------------
 !------------------------------------------------------------------------------
-
 TYPE, extends(atlas_StructuredGrid) :: atlas_GaussianGrid
 
 ! Purpose :
@@ -188,7 +197,7 @@ interface atlas_RegularLonLatGrid
   module procedure atlas_grid_RegularLonLat__ctor_int32
   module procedure atlas_grid_RegularLonLat__ctor_int64
 end interface
-
+#endif
 !------------------------------------------------------------------------------
 !------------------------------------------------------------------------------
 
@@ -216,122 +225,181 @@ pure function c_idx_64(f_idx) result(c_idx)
     c_idx = f_idx - 1_c_long
 end function
 
+! -----------------------------------------------------------------------------
+! Destructor
+
+subroutine atlas_Grid__final_auto(this)
+  type(atlas_Grid) :: this
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
 
 ! -----------------------------------------------------------------------------
 ! Constructors
 
-function atlas_Grid__ctor_id(identifier) result(grid)
+function atlas_Grid__ctor_id(identifier) result(this)
   use fckit_c_interop_module, only: c_str
   use atlas_grid_Structured_c_binding
-  type(atlas_Grid) :: grid
+  type(atlas_Grid) :: this
   character(len=*), intent(in) :: identifier
-  call grid%reset_c_ptr( atlas__grid__Structured(c_str(identifier)) )
+  call this%reset_c_ptr( atlas__grid__Structured(c_str(identifier)), &
+    fckit_c_deleter(atlas__grid__Structured__delete), &
+    fckit_owned() )
+  call this%return()
 end function
 
-function atlas_Grid__ctor_config(config) result(grid)
+function atlas_Grid__ctor_config(config) result(this)
   use atlas_grid_Structured_c_binding
   use atlas_Config_module, only: atlas_Config
-  type(atlas_Grid) :: grid
+  type(atlas_Grid) :: this
   type(atlas_Config), intent(in) :: config
-  call grid%reset_c_ptr( atlas__grid__Structured__config(config%c_ptr()) )
+  call this%reset_c_ptr( atlas__grid__Structured__config(config%c_ptr()), &
+    & fckit_c_deleter(atlas__grid__Structured__delete), &
+    & fckit_owned() )
+  call this%return()
 end function
 
-! -----------------------------------------------------------------------------
-
-function atlas_StructuredGrid__ctor_id(identifier) result(grid)
-  use fckit_c_interop_module, only: c_str
-  use atlas_grid_Structured_c_binding
-  type(atlas_StructuredGrid) :: grid
-  character(len=*), intent(in) :: identifier
-  call grid%reset_c_ptr( atlas__grid__Structured(c_str(identifier)) )
-end function
-
-function atlas_StructuredGrid__ctor_config(config) result(grid)
-  use atlas_grid_Structured_c_binding
-  use atlas_Config_module, only: atlas_Config
-  type(atlas_StructuredGrid) :: grid
-  type(atlas_Config), intent(in) :: config
-  call grid%reset_c_ptr( atlas__grid__Structured__config(config%c_ptr()) )
-end function
-
-function atlas_StructuredGrid__ctor_cptr(cptr) result(grid)
+function atlas_Grid__ctor_cptr(cptr) result(this)
   use fckit_c_interop_module, only: c_str
   use, intrinsic :: iso_c_binding, only : c_ptr
   use atlas_grid_Structured_c_binding
-  type(atlas_StructuredGrid) :: grid
+  type(atlas_Grid) :: this
   type(c_ptr), intent(in) :: cptr
-  call grid%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr, fckit_c_deleter(atlas__grid__Structured__delete), &
+    & fckit_owned() )
+  call this%return()
+end function
+
+! -----------------------------------------------------------------------------
+#if 1
+
+function atlas_StructuredGrid__ctor_id(identifier) result(this)
+  use fckit_c_interop_module, only: c_str
+  use atlas_grid_Structured_c_binding
+  type(atlas_StructuredGrid) :: this
+  character(len=*), intent(in) :: identifier
+  call this%reset_c_ptr( atlas__grid__Structured(c_str(identifier)), &
+    & fckit_c_deleter(atlas__grid__Structured__delete), &
+    & fckit_owned() )
+  call this%return()
+end function
+
+function atlas_StructuredGrid__ctor_config(config) result(this)
+  use atlas_grid_Structured_c_binding
+  use atlas_Config_module, only: atlas_Config
+  type(atlas_StructuredGrid) :: this
+  type(atlas_Config), intent(in) :: config
+  call this%reset_c_ptr( atlas__grid__Structured__config(config%c_ptr()), &
+    & fckit_c_deleter(atlas__grid__Structured__delete), &
+    & fckit_owned() )
+  call this%return()
+end function
+
+function atlas_StructuredGrid__ctor_cptr(cptr) result(this)
+  use fckit_c_interop_module, only: c_str
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  use atlas_grid_Structured_c_binding
+  type(atlas_StructuredGrid) :: this
+  type(c_ptr), intent(in) :: cptr
+  call this%reset_c_ptr( cptr, &
+    & fckit_c_deleter(atlas__grid__Structured__delete), &
+    & fckit_owned() )
+  call this%return()
 end function
 
 !-----------------------------------------------------------------------------
 
-function atlas_GaussianGrid__ctor_id(identifier) result(grid)
+function atlas_GaussianGrid__ctor_id(identifier) result(this)
   use fckit_c_interop_module, only: c_str
   use atlas_grid_Structured_c_binding
-  type(atlas_GaussianGrid) :: grid
+  type(atlas_GaussianGrid) :: this
   character(len=*), intent(in) :: identifier
-  call grid%reset_c_ptr( atlas__grid__Structured(c_str(identifier)) )
+  call this%reset_c_ptr( atlas__grid__Structured(c_str(identifier)),&
+    & fckit_c_deleter(atlas__grid__Structured__delete), &
+    & fckit_owned() )
+  call this%return()
 end function
 
 ! -----------------------------------------------------------------------------
 
-function atlas_RegularGaussianGrid__ctor_int32(N) result(grid)
+function atlas_RegularGaussianGrid__ctor_int32(N) result(this)
   use, intrinsic :: iso_c_binding, only: c_int, c_long
   use atlas_grid_Structured_c_binding
-  type(atlas_RegularGaussianGrid) :: grid
+  type(atlas_RegularGaussianGrid) :: this
   integer(c_int), intent(in) :: N
-  call grid%reset_c_ptr( atlas__grid__regular__RegularGaussian(int(N,c_long)) )
+  call this%reset_c_ptr( atlas__grid__regular__RegularGaussian(int(N,c_long)), &
+    fckit_c_deleter(atlas__grid__Structured__delete), &
+    fckit_owned() )
+  call this%return()
 end function
 
-function atlas_RegularGaussianGrid__ctor_int64(N) result(grid)
+function atlas_RegularGaussianGrid__ctor_int64(N) result(this)
   use, intrinsic :: iso_c_binding, only: c_long
   use atlas_grid_Structured_c_binding
-  type(atlas_RegularGaussianGrid) :: grid
+  type(atlas_RegularGaussianGrid) :: this
   integer(c_long), intent(in) :: N
-  call grid%reset_c_ptr( atlas__grid__regular__RegularGaussian(int(N,c_long)) )
+  call this%reset_c_ptr( atlas__grid__regular__RegularGaussian(int(N,c_long)), &
+    & fckit_c_deleter(atlas__grid__Structured__delete), &
+    & fckit_owned() )
+  call this%return()
 end function
 
 !-----------------------------------------------------------------------------
 
-function atlas_ReducedGaussianGrid__ctor_int32(nx) result(grid)
+function atlas_ReducedGaussianGrid__ctor_int32(nx) result(this)
   use, intrinsic :: iso_c_binding, only: c_int, c_long
   use atlas_grid_Structured_c_binding
-  type(atlas_ReducedGaussianGrid) :: grid
+  type(atlas_ReducedGaussianGrid) :: this
   integer(c_int), intent(in)  :: nx(:)
-  call grid%reset_c_ptr( &
-    & atlas__grid__reduced__ReducedGaussian_int( nx, int(size(nx),c_long) ) )
+  call this%reset_c_ptr( &
+    & atlas__grid__reduced__ReducedGaussian_int( nx, int(size(nx),c_long) ), &
+    & fckit_c_deleter(atlas__grid__Structured__delete), &
+    & fckit_owned() )
+   call this%return()
 end function
 
-function atlas_ReducedGaussianGrid__ctor_int64(nx) result(grid)
+function atlas_ReducedGaussianGrid__ctor_int64(nx) result(this)
   use, intrinsic :: iso_c_binding, only: c_int, c_long
   use atlas_grid_Structured_c_binding
-  type(atlas_ReducedGaussianGrid) :: grid
+  type(atlas_ReducedGaussianGrid) :: this
   integer(c_long), intent(in)  :: nx(:)
-  call grid%reset_c_ptr( &
-    & atlas__grid__reduced__ReducedGaussian_long( nx, int(size(nx),c_long) ) )
+  call this%reset_c_ptr( &
+    & atlas__grid__reduced__ReducedGaussian_long( nx, int(size(nx),c_long) ), &
+    & fckit_c_deleter(atlas__grid__Structured__delete), &
+    & fckit_owned() )
+  call this%return()
 end function
 
 !-----------------------------------------------------------------------------
 
-function atlas_grid_RegularLonLat__ctor_int32(nlon,nlat) result(grid)
+function atlas_grid_RegularLonLat__ctor_int32(nlon,nlat) result(this)
   use, intrinsic :: iso_c_binding, only: c_int, c_long
   use atlas_grid_Structured_c_binding
-  type(atlas_RegularLonLatGrid) :: grid
+  type(atlas_RegularLonLatGrid) :: this
   integer(c_int), intent(in) :: nlon, nlat
-  call grid%reset_c_ptr( atlas__grid__regular__RegularLonLat(int(nlon,c_long),int(nlat,c_long)) )
+  call this%reset_c_ptr( atlas__grid__regular__RegularLonLat(int(nlon,c_long),int(nlat,c_long)), &
+    & fckit_c_deleter(atlas__grid__Structured__delete), &
+    & fckit_owned() )
+  call this%return()
 end function
 
-function atlas_grid_RegularLonLat__ctor_int64(nlon,nlat) result(grid)
+function atlas_grid_RegularLonLat__ctor_int64(nlon,nlat) result(this)
   use, intrinsic :: iso_c_binding, only: c_long
   use atlas_grid_Structured_c_binding
-  type(atlas_RegularLonLatGrid) :: grid
+  type(atlas_RegularLonLatGrid) :: this
   integer(c_long), intent(in) :: nlon, nlat
-  call grid%reset_c_ptr( atlas__grid__regular__RegularLonLat( nlon, nlat ) )
+  call this%reset_c_ptr( atlas__grid__regular__RegularLonLat( nlon, nlat ), &
+    & fckit_c_deleter(atlas__grid__Structured__delete), &
+    & fckit_owned() )
+  call this%return()
 end function
 
 ! -----------------------------------------------------------------------------
 ! Structured members
-
+#endif
 function atlas_Grid__size(this) result(npts)
   use, intrinsic :: iso_c_binding, only: c_long
   use atlas_grid_Structured_c_binding
@@ -339,7 +407,7 @@ function atlas_Grid__size(this) result(npts)
   integer(c_long) :: npts
   npts = atlas__grid__Structured__size(this%c_ptr())
 end function
-
+#if 1
 function Gaussian__N(this) result(N)
   use, intrinsic :: iso_c_binding, only: c_long
   use atlas_grid_Structured_c_binding
@@ -521,22 +589,7 @@ function Structured__lonlat_64(this, i,j) result(lonlat)
   integer(c_long) , intent(in) :: i,j
   call atlas__grid__Structured__lonlat(this%c_ptr(), c_idx(i), c_idx(j), lonlat)
 end function
-
-subroutine atlas_Grid__delete(this)
-  use atlas_grid_Structured_c_binding
-  class(atlas_Grid), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__grid__Structured__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine
-
-
-
-subroutine atlas_Grid__copy(this,obj_in)
-  class(atlas_Grid), intent(inout) :: this
-  class(fckit_refcounted), target, intent(in) :: obj_in
-end subroutine
+#endif
 
 ! ----------------------------------------------------------------------------------------
 

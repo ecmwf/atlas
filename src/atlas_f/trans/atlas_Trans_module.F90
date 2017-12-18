@@ -215,13 +215,14 @@ function grid( this )
   use atlas_trans_c_binding
   use atlas_grid_module
   class(atlas_Trans) :: this
-  type(atlas_StructuredGrid) :: grid
+  type(atlas_Grid) :: grid
 #ifdef ATLAS_HAVE_TRANS
-  grid = atlas_StructuredGrid( atlas__Trans__grid(this%c_ptr()) )
+  grid = atlas_Grid( atlas__Trans__grid(this%c_ptr()) )
   call grid%return()
+#warning here
 #else
   THROW_ERROR
-  call grid%return()
+ ! call grid%return()
 #endif
 end function
 

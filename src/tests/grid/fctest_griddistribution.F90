@@ -80,12 +80,13 @@ TEST( test_griddist )
 
   griddistribution = atlas_GridDistribution(part, part0=1)
 
-  write(msg,*) "owners fort",griddistribution%owners()
-  call atlas_log%info(msg)
+  FCTEST_CHECK_EQUAL( grid%owners(), 1 )
 
   meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid,griddistribution)
   call griddistribution%final()
+
+  FCTEST_CHECK_EQUAL( grid%owners(), 2 )
 
   gmsh = atlas_output_Gmsh("testf3.msh")
   call gmsh%write(mesh)
@@ -93,6 +94,7 @@ TEST( test_griddist )
   deallocate(part)
 
   call mesh%final()
+  FCTEST_CHECK_EQUAL( grid%owners(), 1 )
   call gmsh%final()
   call grid%final()
   call meshgenerator%final()

@@ -19,7 +19,7 @@ implicit none
 
   character(len=1024) :: msg
 
-  type(atlas_StructuredGrid) :: grid
+  type(atlas_Grid) :: grid
   type(atlas_Mesh) :: mesh
   type(atlas_mesh_Nodes) :: nodes
   type(atlas_functionspace_NodeColumns) :: node_columns
@@ -245,7 +245,7 @@ subroutine init()
   if( .not.config%get("radius",RA) ) RA = 1.0
 
   ! Setup
-  grid = atlas_StructuredGrid(grid_uid)
+  grid = atlas_Grid(grid_uid)
   meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
   fvm  = atlas_fvm_Method(mesh,config)
