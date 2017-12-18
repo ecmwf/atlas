@@ -1,13 +1,13 @@
 
 module atlas_functionspace_module
 
-use fckit_refcounted_module, only : fckit_refcounted
+use fckit_owned_object_module, only : fckit_owned_object
 use atlas_field_module, only : atlas_Field
 use atlas_config_module, only : atlas_Config
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 private :: atlas_Field
 private :: atlas_Config
 
@@ -16,7 +16,7 @@ public :: atlas_FunctionSpace
 private
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_FunctionSpace
+TYPE, extends(fckit_owned_object) :: atlas_FunctionSpace
 
 ! Purpose :
 ! -------
@@ -35,7 +35,6 @@ TYPE, extends(fckit_refcounted) :: atlas_FunctionSpace
 !------------------------------------------------------------------------------
 contains
   procedure, public :: name => atlas_FunctionSpace__name
-  procedure, public :: delete => atlas_FunctionSpace__delete
 
   procedure, private :: create_field_args
   procedure, private :: create_field_template
@@ -59,21 +58,13 @@ end interface
 contains
 !========================================================
 
-function atlas_FunctionSpace__cptr(cptr) result(functionspace)
+function atlas_FunctionSpace__cptr(cptr) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
-  type(atlas_FunctionSpace) :: functionspace
+  type(atlas_FunctionSpace) :: this
   type(c_ptr), intent(in) :: cptr
-  call functionspace%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr )
+  call this%return()
 end function
-
-subroutine atlas_FunctionSpace__delete(this)
-  use atlas_functionspace_c_binding
-  class(atlas_FunctionSpace), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__FunctionSpace__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine atlas_FunctionSpace__delete
 
 function atlas_FunctionSpace__name(this) result(name)
   use atlas_functionspace_c_binding

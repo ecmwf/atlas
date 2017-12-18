@@ -2,11 +2,11 @@
 module atlas_MeshGenerator_module
 
 
-use fckit_refcounted_module, only: fckit_refcounted
+use fckit_owned_object_module, only: fckit_owned_object
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 
 public :: atlas_MeshGenerator
 
@@ -17,10 +17,8 @@ private
 !-----------------------------!
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_MeshGenerator
+TYPE, extends(fckit_owned_object) :: atlas_MeshGenerator
 contains
-  procedure, public :: delete => atlas_MeshGenerator__delete
-  procedure, public :: copy => atlas_MeshGenerator__copy
   procedure, public :: generate => atlas_MeshGenerator__generate
 END TYPE atlas_MeshGenerator
 
@@ -37,47 +35,32 @@ contains
 !========================================================
 
 
-function atlas_MeshGenerator__cptr(cptr) result(MeshGenerator)
+function atlas_MeshGenerator__cptr(cptr) result(this)
   use, intrinsic :: iso_c_binding, only: c_ptr
-  type(atlas_MeshGenerator) :: MeshGenerator
+  type(atlas_MeshGenerator) :: this
   type(c_ptr), intent(in) :: cptr
-  call MeshGenerator%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr )
+  call this%return()
 end function
 
 
-function atlas_MeshGenerator__config(config) result(meshgenerator)
+function atlas_MeshGenerator__config(config) result(this)
   use fckit_c_interop_module, only: c_str
   use atlas_MeshGenerator_c_binding
   use atlas_Config_module, only: atlas_Config
-  type(atlas_MeshGenerator) :: meshgenerator
+  type(atlas_MeshGenerator) :: this
   type(atlas_Config), intent(in), optional :: config
   character(len=:), allocatable :: meshgenerator_type
   if( present(config) ) then
     if( .not. config%get("type",meshgenerator_type) ) then
-       allocate(meshgenerator_type, source='structured')
+       meshgenerator_type='structured'
     endif
-    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str(meshgenerator_type),config%c_ptr()))
+    call this%reset_c_ptr( atlas__MeshGenerator__create(c_str(meshgenerator_type),config%c_ptr()) )
   else
-    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create_noconfig('structured'))
+    call this%reset_c_ptr( atlas__MeshGenerator__create_noconfig(c_str('structured')) )
   endif
-  call meshgenerator%return()
+  call this%return()
 end function
-
-
-subroutine atlas_MeshGenerator__delete(this)
-  use atlas_MeshGenerator_c_binding
-  class(atlas_MeshGenerator), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__MeshGenerator__delete(this%c_ptr())
-  endif
-  call this%reset_c_ptr()
-end subroutine atlas_MeshGenerator__delete
-
-
-subroutine atlas_MeshGenerator__copy(this,obj_in)
-  class(atlas_MeshGenerator), intent(inout) :: this
-  class(fckit_refcounted), target, intent(in) :: obj_in
-end subroutine
 
 function atlas_MeshGenerator__generate(this,grid,distribution) result(mesh)
    use atlas_MeshGenerator_c_binding

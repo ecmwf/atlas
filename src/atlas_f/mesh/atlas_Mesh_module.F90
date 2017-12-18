@@ -3,11 +3,11 @@
 
 module atlas_Mesh_module
 
-use fckit_refcounted_module, only: fckit_refcounted
+use fckit_owned_object_module, only: fckit_owned_object
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 
 public :: atlas_Mesh
 
@@ -17,7 +17,7 @@ private
 ! atlas_Mesh                 !
 !-----------------------------
 
-TYPE, extends(fckit_refcounted) :: atlas_Mesh
+TYPE, extends(fckit_owned_object) :: atlas_Mesh
 
 ! Purpose :
 ! -------
@@ -36,8 +36,6 @@ contains
   procedure, public :: nodes => Mesh__nodes
   procedure, public :: cells => Mesh__cells
   procedure, public :: edges => Mesh__edges
-  procedure, public :: delete => atlas_Mesh__delete
-  procedure, public :: copy => atlas_Mesh__copy
   procedure, public :: footprint
   
   procedure, public :: clone_to_device
@@ -55,20 +53,22 @@ end interface
 contains
 !========================================================
 
-function atlas_Mesh__cptr(cptr) result(mesh)
+function atlas_Mesh__cptr(cptr) result(this)
   use, intrinsic :: iso_c_binding, only: c_ptr
   use atlas_mesh_c_binding
-  type(atlas_Mesh) :: mesh
+  type(atlas_Mesh) :: this
   type(c_ptr), intent(in) :: cptr
-  call mesh%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr )
+  call this%return()
 end function atlas_Mesh__cptr
 
 !-------------------------------------------------------------------------------
 
-function atlas_Mesh__ctor() result(mesh)
+function atlas_Mesh__ctor() result(this)
   use atlas_mesh_c_binding
-  type(atlas_Mesh) :: mesh
-  call mesh%reset_c_ptr( atlas__Mesh__new() )
+  type(atlas_Mesh) :: this
+  call this%reset_c_ptr( atlas__Mesh__new() )
+  call this%return()
 end function atlas_Mesh__ctor
 
 !-------------------------------------------------------------------------------
@@ -105,24 +105,6 @@ function Mesh__edges(this) result(edges)
   if( edges%is_null() ) write(0,*) 'call abort()'
   call edges%return()
 end function
-
-!-------------------------------------------------------------------------------
-
-subroutine atlas_Mesh__delete(this)
-  use atlas_mesh_c_binding
-  class(atlas_Mesh), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__Mesh__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine atlas_Mesh__delete
-
-!-------------------------------------------------------------------------------
-
-subroutine atlas_Mesh__copy(this,obj_in)
-  class(atlas_Mesh), intent(inout) :: this
-  class(fckit_refcounted), target, intent(in) :: obj_in
-end subroutine
 
 !-------------------------------------------------------------------------------
 

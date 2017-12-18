@@ -180,11 +180,12 @@ subroutine set_index(this)
   this%index(i_min:i_max,j_min:j_max) => index_fptr(:)
 end subroutine
 
+#warning todo
 subroutine copy(this,obj_in)
-  use fckit_refcounted_module, only : fckit_refcounted
+  use fckit_shared_ptr_module, only : fckit_shared_ptr
   use fckit_exception_module, only : fckit_exception
   class(atlas_functionspace_StructuredColumns), intent(inout) :: this
-  class(fckit_refcounted), target, intent(in) :: obj_in
+  class(fckit_shared_ptr), target, intent(in) :: obj_in
   nullify(this%index)
   select type( obj_in_concrete => obj_in )
     class is (atlas_functionspace_StructuredColumns)

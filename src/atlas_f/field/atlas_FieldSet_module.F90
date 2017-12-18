@@ -1,11 +1,11 @@
 
 module atlas_FieldSet_module
 
-use fckit_refcounted_module, only: fckit_refcounted
+use fckit_owned_object_module, only: fckit_owned_object
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 
 public :: atlas_FieldSet
 
@@ -16,7 +16,7 @@ private
 !-----------------------------
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_FieldSet
+TYPE, extends(fckit_owned_object) :: atlas_FieldSet
 
 ! Purpose :
 ! -------
@@ -42,7 +42,6 @@ contains
   procedure, private :: field_by_idx_size_t
   procedure, public :: add
   generic :: field => field_by_name, field_by_idx_int, field_by_idx_size_t
-  procedure, public :: delete
 END TYPE atlas_FieldSet
 !------------------------------------------------------------------------------
 
@@ -79,15 +78,6 @@ function atlas_FieldSet__ctor(name) result(fieldset)
   endif
   call fieldset%return()
 end function
-
-subroutine delete(this)
-  use atlas_fieldset_c_binding
-  class(atlas_FieldSet), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__FieldSet__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine
 
 subroutine add(this,field)
   use atlas_fieldset_c_binding
