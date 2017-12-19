@@ -30,12 +30,14 @@ function atlas_mesh_cells__cptr(cptr) result(this)
   type(atlas_mesh_cells) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )
+  call this%return()
 end function
 
 function atlas_mesh_cells__constructor() result(this)
   use atlas_hybridelements_c_binding
   type(atlas_mesh_cells) :: this
   call this%reset_c_ptr( atlas__mesh__HybridElements__create() )
+  call this%return()
 end function
 
 ! ----------------------------------------------------------------------------------------

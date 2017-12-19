@@ -1,11 +1,11 @@
 
 module atlas_mesh_Nodes_module
 
-use fckit_refcounted_module, only: fckit_refcounted
+use fckit_owned_object_module, only: fckit_owned_object
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 
 public :: atlas_mesh_Nodes
 
@@ -15,7 +15,7 @@ private
 ! atlas_mesh_Nodes           !
 !-----------------------------
 
-TYPE, extends(fckit_refcounted) :: atlas_mesh_Nodes
+TYPE, extends(fckit_owned_object) :: atlas_mesh_Nodes
 contains
 procedure, public :: size => atlas_mesh_Nodes__size
 procedure, public :: resize
@@ -47,10 +47,6 @@ procedure, public :: edge_connectivity
 procedure, public :: cell_connectivity
 
 procedure, public :: connectivity
-
-procedure, public :: delete => atlas_mesh_Nodes__delete
-procedure, public :: copy => atlas_mesh_Nodes__copy
-
 end type
 
 interface atlas_mesh_Nodes
@@ -68,27 +64,15 @@ function atlas_mesh_Nodes__cptr(cptr) result(this)
   type(atlas_mesh_Nodes) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )
+  call this%return()
 end function
 
 function atlas_mesh_Nodes__constructor() result(this)
   use atlas_nodes_c_binding
   type(atlas_mesh_Nodes) :: this
   call this%reset_c_ptr( atlas__mesh__Nodes__create() )
+  call this%return()
 end function
-
-subroutine atlas_mesh_Nodes__delete(this)
-  use atlas_nodes_c_binding
-  class(atlas_mesh_Nodes), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__mesh__Nodes__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine
-
-subroutine atlas_mesh_Nodes__copy(this,obj_in)
-  class(atlas_mesh_Nodes), intent(inout) :: this
-  class(fckit_refcounted),   target, intent(in) :: obj_in
-end subroutine
 
 function atlas_mesh_Nodes__size(this) result(val)
   use, intrinsic :: iso_c_binding, only: c_size_t
