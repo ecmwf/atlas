@@ -78,8 +78,8 @@ function Mesh__nodes(this) result(nodes)
   use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Nodes) :: nodes
-  call nodes%reset_c_ptr( atlas__Mesh__nodes(this%c_ptr()) )
-  if( nodes%is_null() ) write(0,*) 'call abort()'
+  nodes = atlas_mesh_Nodes( atlas__Mesh__nodes(this%c_ptr()) )
+  call nodes%return()
 end function
 
 !-------------------------------------------------------------------------------
@@ -89,8 +89,7 @@ function Mesh__cells(this) result(cells)
   use atlas_mesh_Cells_module, only: atlas_mesh_Cells
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Cells) :: cells
-  cells = atlas_mesh_Cells(atlas__Mesh__cells(this%c_ptr()))
-  if( cells%is_null() ) write(0,*) 'call abort()'
+  cells = atlas_mesh_Cells( atlas__Mesh__cells(this%c_ptr()) )
   call cells%return()
 end function
 
@@ -102,7 +101,6 @@ function Mesh__edges(this) result(edges)
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Edges) :: edges
   edges = atlas_mesh_Edges( atlas__Mesh__Edges(this%c_ptr()) )
-  if( edges%is_null() ) write(0,*) 'call abort()'
   call edges%return()
 end function
 
