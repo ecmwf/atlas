@@ -1,11 +1,11 @@
 
 module atlas_Partitioner_module
 
-use fckit_refcounted_module, only: fckit_refcounted
+use fckit_owned_object_module, only: fckit_owned_object
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 
 public :: atlas_Partitioner
 public :: atlas_MatchingMeshPartitioner
@@ -18,7 +18,7 @@ private
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_Partitioner
+TYPE, extends(fckit_owned_object) :: atlas_Partitioner
 
 ! Purpose :
 ! -------
@@ -33,11 +33,6 @@ TYPE, extends(fckit_refcounted) :: atlas_Partitioner
 
 !------------------------------------------------------------------------------
 contains
-
-  procedure, public :: final  => atlas_Partitioner__final
-  procedure, public :: delete => atlas_Partitioner__delete
-  procedure, public :: copy   => atlas_Partitioner__copy
-
   procedure, public :: partition
 
 END TYPE atlas_Partitioner
@@ -64,6 +59,7 @@ function atlas_Partitioner__ctor( config ) result(this)
   type(atlas_Partitioner) :: this
   type(atlas_Config) :: config
   call this%reset_c_ptr( atlas__grid__Partitioner__new( config%c_ptr() ) )
+  call this%return()
 end function
 
 function atlas_MatchingMeshPartitioner__ctor( mesh, config ) result(this)
@@ -76,35 +72,13 @@ function atlas_MatchingMeshPartitioner__ctor( mesh, config ) result(this)
   type(atlas_Config) :: opt_config
   if( present(config) ) then
     call this%reset_c_ptr( atlas__grid__MatchingMeshPartitioner__new( mesh%c_ptr(), config%c_ptr() ) )
-   else
-     opt_config = atlas_Config()
-     call this%reset_c_ptr( atlas__grid__MatchingMeshPartitioner__new( mesh%c_ptr(), opt_config%c_ptr() ) )
-     call opt_config%final()
-   endif
+  else
+    opt_config = atlas_Config()
+    call this%reset_c_ptr( atlas__grid__MatchingMeshPartitioner__new( mesh%c_ptr(), opt_config%c_ptr() ) )
+    call opt_config%final()
+  endif
+  call this%return()
 end function
-
-subroutine atlas_Partitioner__final( this )
-  use atlas_partitioner_c_binding
-  class(atlas_Partitioner), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__grid__Partitioner__delete(this%c_ptr());
-  end if
-  call this%reset_c_ptr()
-end subroutine
-
-subroutine atlas_Partitioner__delete( this )
-  use atlas_partitioner_c_binding
-  class(atlas_Partitioner), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__grid__Partitioner__delete(this%c_ptr());
-  end if
-  call this%reset_c_ptr()
-end subroutine
-
-subroutine atlas_Partitioner__copy(this,obj_in)
-  class(atlas_Partitioner), intent(inout) :: this
-  class(fckit_RefCounted), target, intent(in) :: obj_in
-end subroutine
 
 function partition(this,grid) result(distribution)
   use atlas_partitioner_c_binding

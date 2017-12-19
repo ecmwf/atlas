@@ -83,7 +83,6 @@ end function
 function create_field_args(this,kind,name,levels,variables,global,owner) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_module, only : atlas_Field
   use atlas_config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Functionspace), intent(in) :: this
@@ -114,7 +113,6 @@ end function
 function create_field_template(this,template,name,global,owner) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_module, only : atlas_Field
   use atlas_config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Functionspace), intent(in) :: this
@@ -148,7 +146,6 @@ end function
 function deprecated_create_field_1(this,name,kind,levels,vars) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_module, only : atlas_Field
   use atlas_config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Functionspace), intent(in) :: this
@@ -178,7 +175,6 @@ end function
 function deprecated_create_field_2(this,require_name,kind,levels) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_module, only : atlas_Field
   use atlas_config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Functionspace), intent(in) :: this

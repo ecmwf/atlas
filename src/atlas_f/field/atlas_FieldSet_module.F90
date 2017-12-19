@@ -64,6 +64,7 @@ function atlas_FieldSet__cptr(cptr) result(fieldset)
   type(atlas_FieldSet) :: fieldset
   type(c_ptr), intent(in) :: cptr
   call fieldset%reset_c_ptr( cptr )
+  call fieldset%return()
 end function
 
 function atlas_FieldSet__ctor(name) result(fieldset)

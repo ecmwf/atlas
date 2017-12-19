@@ -12,10 +12,16 @@ atlas_abort("${string}$",atlas_code_location("atlas_Field_module.F90",${_LINE_}$
 module atlas_field_module
 
 use fckit_refcounted_module, only : fckit_refcounted
+use fckit_object_module, only : fckit_object
+use fckit_owned_object_module, only : fckit_owned_object
+use fckit_shared_object_module, only : fckit_shared_object
 use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange
 implicit none
 
-private :: fckit_refcounted, atlas_code_location, atlas_abort, atlas_throw_outofrange
+private :: fckit_refcounted
+private :: fckit_owned_object
+private :: fckit_shared_object
+private :: atlas_code_location, atlas_abort, atlas_throw_outofrange
 
 public :: atlas_Field
 public :: atlas_real
@@ -29,7 +35,7 @@ private
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_Field
+TYPE, extends(fckit_owned_object) :: atlas_Field
 
 ! Purpose :
 ! -------
@@ -63,8 +69,6 @@ contains
   procedure :: rename
   procedure :: set_levels
   procedure :: set_functionspace
-
-  procedure, public :: delete => atlas_Field__delete
 
 #:for rank in ranks
 #:for dtype in dtypes
@@ -324,6 +328,7 @@ function atlas_Field__cptr(cptr) result(field)
   type(atlas_Field) :: field
   type(c_ptr), intent(in) :: cptr
   call field%reset_c_ptr( cptr )
+  call field%return()
 end function
 
 !-------------------------------------------------------------------------------
@@ -473,17 +478,6 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Field__delete(this)
-  use atlas_field_c_binding
-  class(atlas_Field), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__Field__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine
-
-!-------------------------------------------------------------------------------
-
 function Field__name(this) result(field_name)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr
@@ -499,9 +493,10 @@ end function Field__name
 
 function Field__functionspace(this) result(functionspace)
   use atlas_field_c_binding
-  type(fckit_refcounted) :: functionspace
+  type(fckit_owned_object) :: functionspace
   class(atlas_Field), intent(in) :: this
   call functionspace%reset_c_ptr( atlas__Field__functionspace(this%c_ptr()) )
+  call functionspace%return()
 end function Field__functionspace
 
 !-------------------------------------------------------------------------------
@@ -635,7 +630,7 @@ end subroutine
 subroutine set_functionspace(this,functionspace)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
-  class(fckit_refcounted), intent(in) :: functionspace
+  class(fckit_owned_object), intent(in) :: functionspace
   call atlas__field__set_functionspace(this%c_ptr(),functionspace%c_ptr())
 end subroutine
 
