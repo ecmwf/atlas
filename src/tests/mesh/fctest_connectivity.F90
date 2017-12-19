@@ -39,6 +39,7 @@ TEST( test_connectivity )
   FCTEST_CHECK_EQUAL( connectivity%owners(), 1 )
 
   FCTEST_CHECK_EQUAL(connectivity%name(),"hybrid")
+
   FCTEST_CHECK_EQUAL(connectivity%rows(),0_c_size_t)
   FCTEST_CHECK_EQUAL(connectivity%missing_value(),0)
 

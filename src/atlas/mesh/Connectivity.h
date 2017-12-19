@@ -301,11 +301,8 @@ public:
 
 private:
   friend class ConnectivityPrivateAccess;
-  ctxt_t     ctxt_update_;
-  ctxt_t     ctxt_set_;
-  ctxt_t     ctxt_delete_;
+  ctxt_t     ctxt_;
   callback_t callback_update_;
-  callback_t callback_set_;
   callback_t callback_delete_;
   array::gridtools::GPUClonable<IrregularConnectivityImpl> gpu_clone_;
 

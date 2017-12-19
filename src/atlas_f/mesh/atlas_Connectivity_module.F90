@@ -2,7 +2,7 @@
 module atlas_connectivity_module
 
 use, intrinsic :: iso_c_binding, only : c_int, c_size_t, c_ptr, c_null_ptr
-use fckit_refcounted_module, only : fckit_refcounted
+use fckit_owned_object_module, only : fckit_owned_object
 use fckit_object_module, only : fckit_object
 implicit none
 
@@ -10,7 +10,7 @@ private :: c_ptr
 private :: c_int
 private :: c_size_t
 private :: c_null_ptr
-private :: fckit_refcounted
+private :: fckit_owned_object
 private :: fckit_object
 
 public :: atlas_Connectivity
@@ -24,12 +24,15 @@ private
 ! atlas_Connectivity         !
 !-----------------------------
 
-type, extends(fckit_refcounted) :: atlas_Connectivity
+type, extends(fckit_owned_object) :: atlas_Connectivity
 
 ! Public members
   type( atlas_ConnectivityAccess ), public, pointer :: access => null()
 
 contains
+
+  procedure, public :: shared_ptr_cast
+  procedure, public :: set_access
 
 ! Public methods
   procedure, public  :: name => atlas_Connectivity__name
@@ -43,8 +46,6 @@ contains
   procedure, public :: padded_data     => atlas_Connectivity__padded_data
   procedure, public :: data     => atlas_Connectivity__data
   procedure, public :: row      => atlas_Connectivity__row
-  procedure, public :: copy     => atlas_Connectivity__copy
-  procedure, public :: delete   => atlas_Connectivity__delete
   procedure, public :: missing_value  => atlas_Connectivity__missing_value
   procedure, private :: add_values_args_int => atlas_Connectivity__add_values_args_int
   procedure, private :: add_values_args_size_t => atlas_Connectivity__add_values_args_size_t
@@ -70,7 +71,6 @@ end type
 
 type, extends(fckit_object) :: atlas_BlockConnectivity
 contains
-  procedure, public :: delete   => atlas_BlockConnectivity__delete
   procedure, public :: rows     => atlas_BlockConnectivity__rows
   procedure, public :: cols     => atlas_BlockConnectivity__cols
   procedure, public :: data     => atlas_BlockConnectivity__data
@@ -118,30 +118,27 @@ end type
 
 ! ----------------------------------------------------------------------------
 interface
-    subroutine atlas__connectivity__register_update(This,funptr,ptr) bind(c,name="atlas__connectivity__register_update")
-        use, intrinsic :: iso_c_binding, only: c_ptr, c_funptr
+    subroutine atlas__connectivity__register_ctxt(This,ptr) bind(c,name="atlas__connectivity__register_ctxt")
+        use, intrinsic :: iso_c_binding, only: c_ptr
         type(c_ptr),    value :: This
-        type(c_funptr), value :: funptr
         type(c_ptr),    value :: ptr
     end subroutine
 
-    subroutine atlas__connectivity__register_delete(This,funptr,ptr) bind(c,name="atlas__connectivity__register_delete")
+    subroutine atlas__connectivity__register_update(This,funptr) bind(c,name="atlas__connectivity__register_update")
         use, intrinsic :: iso_c_binding, only: c_ptr, c_funptr
         type(c_ptr),    value :: This
         type(c_funptr), value :: funptr
-        type(c_ptr),    value :: ptr
     end subroutine
 
-    function atlas__connectivity__ctxt_update(This,ptr) bind(c,name="atlas__connectivity__ctxt_update")
-        use, intrinsic :: iso_c_binding, only: c_ptr, c_int
-        integer(c_int) :: atlas__connectivity__ctxt_update
+    subroutine atlas__connectivity__register_delete(This,funptr) bind(c,name="atlas__connectivity__register_delete")
+        use, intrinsic :: iso_c_binding, only: c_ptr, c_funptr
         type(c_ptr),    value :: This
-        type(c_ptr) :: ptr
-    end function
+        type(c_funptr), value :: funptr
+    end subroutine
 
-    function atlas__connectivity__ctxt_delete(This,ptr) bind(c,name="atlas__connectivity__ctxt_delete")
+    function atlas__connectivity__ctxt(This,ptr) bind(c,name="atlas__connectivity__ctxt")
         use, intrinsic :: iso_c_binding, only: c_ptr, c_int
-        integer(c_int) :: atlas__connectivity__ctxt_delete
+        integer(c_int) :: atlas__connectivity__ctxt
         type(c_ptr),    value :: This
         type(c_ptr) :: ptr
     end function
@@ -149,6 +146,15 @@ interface
 end interface
 
 contains
+  
+function shared_ptr_cast(this) result(success)
+  class(atlas_Connectivity) :: this
+  logical :: success
+  success = this%fckit_shared_object__shared_ptr_cast()
+  if( success ) then
+    call this%set_access()
+  endif
+end function
 
 function Connectivity_cptr(cptr) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
@@ -156,7 +162,8 @@ function Connectivity_cptr(cptr) result(this)
   type(atlas_Connectivity) :: this
   type(c_ptr) :: cptr
   call this%reset_c_ptr( cptr )
-  call setup_access(this)
+  call this%set_access()
+  call this%return()
 end function
 
 function Connectivity_constructor(name) result(this)
@@ -164,35 +171,14 @@ function Connectivity_constructor(name) result(this)
   use fckit_c_interop_module, only : c_str
   type(atlas_Connectivity) :: this
   character(len=*), intent(in), optional :: name
-  this = Connectivity_cptr( atlas__Connectivity__create() )
+  call this%reset_c_ptr( atlas__Connectivity__create() )
+  call this%set_access()
   if( present(name) ) then
     call atlas__Connectivity__rename(this%c_ptr(),c_str(name))
   endif
   call this%return()
 end function
 
-subroutine atlas_Connectivity__delete(this)
-  use atlas_connectivity_c_binding
-  class(atlas_Connectivity), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__Connectivity__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine
-
-subroutine atlas_Connectivity__copy(this,obj_in)
-  class(atlas_Connectivity), intent(inout) :: this
-  class(fckit_refcounted),   target, intent(in) :: obj_in
-  class(atlas_Connectivity), pointer :: obj_in_cast
-  select type (ptr => obj_in)
-    type is (atlas_Connectivity)
-      obj_in_cast => ptr
-      if( associated( obj_in_cast%access ) ) this%access => obj_in_cast%access
-    type is (atlas_MultiBlockConnectivity)
-      obj_in_cast => ptr
-      if( associated( obj_in_cast%access ) ) this%access => obj_in_cast%access
-  end select
-end subroutine
 
 function atlas_Connectivity__name(this) result(name)
   use, intrinsic :: iso_c_binding, only : c_ptr
@@ -367,7 +353,8 @@ function MultiBlockConnectivity_cptr(cptr) result(this)
   type(atlas_MultiBlockConnectivity) :: this
   type(c_ptr) :: cptr
   call this%reset_c_ptr( cptr )
-  call setup_access(this)
+  call this%set_access()
+  call this%return()
 end function
 
 function MultiBlockConnectivity_constructor(name) result(this)
@@ -410,15 +397,6 @@ function BlockConnectivity_cptr(cptr) result(this)
   call this%reset_c_ptr( cptr )
 end function
 
-subroutine atlas_BlockConnectivity__delete(this)
-  use atlas_connectivity_c_binding
-  class(atlas_BlockConnectivity), intent(inout) :: this
-!  if ( .not. this%is_null() ) then
-!    call atlas__BlockConnectivity__delete(this%c_ptr())
-!  end if
-  call this%reset_c_ptr()
-end subroutine
-
 subroutine atlas_BlockConnectivity__data(this,data)
   use atlas_connectivity_c_binding
   use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_size_t, c_f_pointer
@@ -457,25 +435,22 @@ end function
 
 !========================================================
 
-subroutine setup_access(connectivity)
+subroutine set_access(this)
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_f_pointer, c_funloc, c_loc
-  class(atlas_Connectivity), intent(inout) :: connectivity
-  type(c_ptr) :: ctxt_update
-  type(c_ptr) :: ctxt_delete
-  integer(c_int) :: have_ctxt_update
-  integer(c_int) :: have_ctxt_delete
-  have_ctxt_update = atlas__connectivity__ctxt_update(connectivity%c_ptr(),ctxt_update)
-  if( have_ctxt_update == 1 ) then
-    call c_f_pointer(ctxt_update,connectivity%access)
+  class(atlas_Connectivity), intent(inout) :: this
+  type(c_ptr) :: ctxt
+  integer(c_int) :: have_ctxt
+  have_ctxt = atlas__connectivity__ctxt(this%c_ptr(),ctxt)
+  if( have_ctxt == 1 ) then
+    call c_f_pointer(ctxt,this%access)
   else
-    allocate( connectivity%access )
-    call atlas__connectivity__register_update( connectivity%c_ptr(), c_funloc(update_access_c), c_loc(connectivity%access) )
-    connectivity%access%connectivity_ptr = connectivity%c_ptr()
-    call update_access(connectivity%access)
-  endif
-  have_ctxt_delete = atlas__connectivity__ctxt_delete(connectivity%c_ptr(),ctxt_delete)
-  if( have_ctxt_update /= 1 ) then
-    call atlas__connectivity__register_delete( connectivity%c_ptr(), c_funloc(delete_access_c), c_loc(connectivity%access) )
+    allocate( this%access )
+    call atlas__connectivity__register_ctxt  ( this%c_ptr(), c_loc(this%access) )
+    call atlas__connectivity__register_update( this%c_ptr(), c_funloc(update_access_c) )
+    call atlas__connectivity__register_delete( this%c_ptr(), c_funloc(delete_access_c) )
+    
+    this%access%connectivity_ptr = this%c_ptr()
+    call update_access(this%access)
   endif
 end subroutine
 
