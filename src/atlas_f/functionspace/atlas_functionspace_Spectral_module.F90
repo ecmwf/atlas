@@ -70,10 +70,11 @@ end interface
 contains
 !========================================================
 
-function atlas_functionspace_Spectral__cptr(cptr) result(functionspace)
-  type(atlas_functionspace_Spectral) :: functionspace
+function atlas_functionspace_Spectral__cptr(cptr) result(this)
+  type(atlas_functionspace_Spectral) :: this
   type(c_ptr), intent(in) :: cptr
-  call functionspace%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr )
+  call this%return()
 end function
 
 
@@ -96,8 +97,7 @@ function atlas_functionspace_Spectral__config(truncation,levels) result(this)
   call options%set("truncation",truncation)
   if( present(levels) ) call options%set("levels",levels)
 
-  this = atlas_functionspace_Spectral__cptr( &
-    & atlas__SpectralFunctionSpace__new__config(options%c_ptr()) )
+  call this%reset_c_ptr( atlas__SpectralFunctionSpace__new__config(options%c_ptr()) )
   call options%final()
 
   call this%return()
@@ -114,8 +114,7 @@ function atlas_functionspace_Spectral__trans(trans,levels) result(this)
 
   if( present(levels) ) call options%set("levels",levels)
 
-  this = atlas_functionspace_Spectral__cptr( &
-    & atlas__SpectralFunctionSpace__new__trans(trans%c_ptr(), options%c_ptr() ) )
+  call this%reset_c_ptr( atlas__SpectralFunctionSpace__new__trans(trans%c_ptr(), options%c_ptr() ) )
   call options%final()
 
   call this%return()

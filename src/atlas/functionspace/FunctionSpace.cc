@@ -38,13 +38,16 @@ extern "C" {
   );
 }
 
-const char* atlas__FunctionSpace__name (FunctionSpaceImpl* This) {
+void atlas__FunctionSpace__name( const FunctionSpaceImpl* This, char* &name, int &size ) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
-    return This->type().c_str();
+    std::string s = This->type();
+    size = s.size()+1;
+    name = new char[size];
+    strcpy(name,s.c_str());
   );
-  return 0;
 }
+
 
 field::FieldImpl* atlas__FunctionSpace__create_field (
     const FunctionSpaceImpl* This,

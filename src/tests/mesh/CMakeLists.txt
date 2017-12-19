@@ -61,11 +61,17 @@ ecbuild_add_test(
   TARGET      atlas_test_cgal_mesh_gen_from_points
   SOURCES     test_cgal_mesh_gen_from_points.cc
   CONDITION   HAVE_TESSELATION
-  LIBS        atlas)
+  LIBS        atlas
+)
 
-foreach( test accumulate_facets connectivity elements ll meshgen3d polygon rgg )
+ecbuild_add_test(
+  TARGET atlas_test_accumulate_facets
+  SOURCES test_accumulate_facets.cc
+  LIBS atlas
+)
+
+foreach( test connectivity elements ll meshgen3d polygon rgg )
   ecbuild_add_test( TARGET atlas_test_${test}
-    BOOST
     SOURCES test_${test}.cc
     LIBS atlas
   )
@@ -73,7 +79,6 @@ endforeach()
 
 atlas_add_cuda_test(
   TARGET atlas_test_connectivity_kernel
-  BOOST
   SOURCES test_connectivity_kernel.cu
   LIBS atlas
 )

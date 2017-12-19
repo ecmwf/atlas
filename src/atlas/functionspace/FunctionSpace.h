@@ -126,7 +126,7 @@ public:
 extern "C"
 {
     void atlas__FunctionSpace__delete (FunctionSpaceImpl* This);
-    const char* atlas__FunctionSpace__name (FunctionSpaceImpl* This);
+    void atlas__FunctionSpace__name( const FunctionSpaceImpl* This, char* &name, int &size );
     field::FieldImpl* atlas__FunctionSpace__create_field (const FunctionSpaceImpl* This, const eckit::Configuration* options);
     field::FieldImpl* atlas__FunctionSpace__create_field_template (const FunctionSpaceImpl* This, const field::FieldImpl* field_template, const eckit::Configuration* options);
 }

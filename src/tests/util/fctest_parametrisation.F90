@@ -125,8 +125,8 @@ TEST( test_parametrisation )
   do j=1,size(alist)
     call alist(j)%final()
   enddo
-  call anested%final()
 
+  call anested%final()
 
   ! ---------------------------------------------
 

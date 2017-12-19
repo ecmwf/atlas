@@ -68,13 +68,15 @@ end function
 
 function atlas_FunctionSpace__name(this) result(name)
   use atlas_functionspace_c_binding
-  use fckit_c_interop_module, only : c_ptr_to_string
+  use fckit_c_interop_module, only : c_ptr_to_string, c_ptr_free
   use, intrinsic :: iso_c_binding, only : c_ptr
   class(atlas_FunctionSpace), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
-  name_c_str = atlas__FunctionSpace__name(this%c_ptr())
+  integer :: size
+  call atlas__FunctionSpace__name(this%c_ptr(), name_c_str, size )
   name = c_ptr_to_string(name_c_str)
+  call c_ptr_free(name_c_str)
 end function
 
 
@@ -83,7 +85,6 @@ end function
 function create_field_args(this,kind,name,levels,variables,global,owner) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Functionspace), intent(in) :: this
   integer,          intent(in)           :: kind
@@ -104,6 +105,7 @@ function create_field_args(this,kind,name,levels,variables,global,owner) result(
   if( present(variables) ) call options%set("variables",variables)
 
   field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
+  
   call field%return()
   call options%final()
 end function
@@ -113,7 +115,6 @@ end function
 function create_field_template(this,template,name,global,owner) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Functionspace), intent(in) :: this
   type(atlas_Field), intent(in) :: template
@@ -146,7 +147,6 @@ end function
 function deprecated_create_field_1(this,name,kind,levels,vars) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Functionspace), intent(in) :: this
   character(len=*), intent(in)           :: name
@@ -175,7 +175,6 @@ end function
 function deprecated_create_field_2(this,require_name,kind,levels) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Functionspace), intent(in) :: this
   character(len=*), intent(in) :: require_name
@@ -192,7 +191,6 @@ function deprecated_create_field_2(this,require_name,kind,levels) result(field)
   call options%set("levels",levels)
 
   field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
-
   call options%final()
 
   call field%return()

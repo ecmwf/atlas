@@ -42,6 +42,8 @@ TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_StructuredColumns
 
 contains
 
+  procedure, public :: shared_ptr_cast
+
   procedure, public :: gather
   procedure, public :: scatter
 
@@ -52,8 +54,6 @@ contains
   procedure, private :: halo_exchange_fieldset
   procedure, private :: halo_exchange_field
   generic, public :: halo_exchange => halo_exchange_fieldset, halo_exchange_field
-
-  procedure :: copy
 
   procedure :: j_begin
   procedure :: j_end
@@ -67,10 +67,6 @@ contains
   procedure :: xy
   procedure :: partition
   procedure :: global_index
-
-#ifdef FORTRAN_SUPPORTS_FINAL
-  final :: atlas_functionspace_StructuredColumns__final
-#endif
 
   procedure, private :: set_index
 
@@ -88,24 +84,26 @@ end interface
 contains
 !========================================================
 
+function shared_ptr_cast(this) result(success)
+  class(atlas_functionspace_StructuredColumns) :: this
+  logical :: success
+  success = this%fckit_shared_object__shared_ptr_cast()
+  if( success ) then
+    call this%set_index()
+  endif
+end function
+
 function StructuredColumns__cptr(cptr) result(this)
   type(atlas_functionspace_StructuredColumns) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )
   call this%set_index()
+  call this%return()
 end function
 
-
-#ifdef FORTRAN_SUPPORTS_FINAL
-subroutine StructuredColumns__final(this)
-  type(atlas_functionspace_StructuredColumns), intent(inout) :: this
-  call this%final()
-end subroutine
-#endif
-
-function StructuredColumns__grid(grid, halo, levels) result(functionspace)
+function StructuredColumns__grid(grid, halo, levels) result(this)
   use atlas_functionspace_StructuredColumns_c_binding
-  type(atlas_functionspace_StructuredColumns) :: functionspace
+  type(atlas_functionspace_StructuredColumns) :: this
   class(atlas_Grid), intent(in) :: grid
   integer, optional :: halo
   integer, optional :: levels
@@ -113,10 +111,10 @@ function StructuredColumns__grid(grid, halo, levels) result(functionspace)
   config = atlas_Config()
   if( present(halo) )   call config%set("halo",halo)
   if( present(levels) ) call config%set("levels",levels)
-  functionspace = StructuredColumns__cptr( &
-    & atlas__functionspace__StructuredColumns__new__grid( grid%c_ptr(), config%c_ptr() ) )
+  call this%reset_c_ptr( atlas__functionspace__StructuredColumns__new__grid( grid%c_ptr(), config%c_ptr() ) )
+  call this%set_index()
   call config%final()
-  call functionspace%return()
+  call this%return()
 end function
 
 subroutine gather(this,local,global)
@@ -178,25 +176,6 @@ subroutine set_index(this)
   nj = j_max-j_min+1;
   call c_f_pointer( index_cptr, index_fptr, (/ni*nj/) )
   this%index(i_min:i_max,j_min:j_max) => index_fptr(:)
-end subroutine
-
-#warning todo
-subroutine copy(this,obj_in)
-  use fckit_shared_ptr_module, only : fckit_shared_ptr
-  use fckit_exception_module, only : fckit_exception
-  class(atlas_functionspace_StructuredColumns), intent(inout) :: this
-  class(fckit_shared_ptr), target, intent(in) :: obj_in
-  nullify(this%index)
-  select type( obj_in_concrete => obj_in )
-    class is (atlas_functionspace_StructuredColumns)
-      this%index => obj_in_concrete%index
-    class default
-  end select
-  if( .not. associated(this%index) ) then
-    call fckit_exception%abort("Could not assign StructuredColumns", &
-      & "atlas_functionspace_StructuredColumns_module.F90",__LINE__)
-  endif
-
 end subroutine
 
 function j_begin(this) result(j)

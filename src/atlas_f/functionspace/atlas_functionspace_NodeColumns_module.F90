@@ -226,6 +226,7 @@ function constructor__cptr(cptr) result(this)
   type(atlas_functionspace_NodeColumns) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )
+  call this%return()
 end function
 
 !------------------------------------------------------------------------------
@@ -240,8 +241,7 @@ function constructor(mesh,halo,levels) result(this)
   config = atlas_Config()
   if( present(halo) )   call config%set("halo",halo)
   if( present(levels) ) call config%set("levels",levels)
-  this = constructor__cptr( &
-      & atlas__NodesFunctionSpace__new(mesh%c_ptr(),config%c_ptr()) )
+  call this%reset_c_ptr( atlas__NodesFunctionSpace__new(mesh%c_ptr(),config%c_ptr()) )
   call config%final()
   call this%return()
 end function
@@ -271,6 +271,7 @@ function mesh(this)
   type(atlas_Mesh) :: mesh
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   call mesh%reset_c_ptr( atlas__NodesFunctionSpace__mesh(this%c_ptr()) )
+  call mesh%return()
 end function
 
 !------------------------------------------------------------------------------
@@ -280,6 +281,7 @@ function nodes(this)
   type(atlas_mesh_Nodes) :: nodes
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   call nodes%reset_c_ptr( atlas__NodesFunctionSpace__nodes(this%c_ptr()) )
+  call nodes%return()
 end function
 
 !------------------------------------------------------------------------------

@@ -5,12 +5,13 @@ module atlas_Trans_module
 
 
 use fckit_object_module, only: fckit_object
-use fckit_refcounted_module, only: fckit_refcounted
+use fckit_owned_object_module, only: fckit_owned_object
+use atlas_config_module, only : atlas_Config
+use atlas_field_module, only : atlas_Field
+use atlas_fieldset_module, only : atlas_FieldSet
+use atlas_grid_module, only : atlas_Grid
 
 implicit none
-
-private :: fckit_refcounted
-private :: fckit_object
 
 public :: atlas_Trans
 
@@ -21,7 +22,7 @@ private
 !-----------------------------
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_Trans
+TYPE, extends(fckit_owned_object) :: atlas_Trans
 
 ! Purpose :
 ! -------
@@ -70,9 +71,6 @@ contains
   procedure, private :: specnorm_r2
   generic, public :: specnorm => specnorm_r1_scalar, specnorm_r2
 
-  procedure, public :: delete => atlas_Trans__delete
-  procedure, public :: copy => atlas_Trans__copy
-
 END TYPE atlas_Trans
 
 !------------------------------------------------------------------------------
@@ -82,6 +80,13 @@ interface atlas_Trans
 end interface
 
 !------------------------------------------------------------------------------
+
+private :: fckit_owned_object
+private :: fckit_object
+private :: atlas_Config
+private :: atlas_Field
+private :: atlas_FieldSet
+private :: atlas_Grid
 
 !========================================================
 contains
@@ -99,45 +104,24 @@ subroutine te(file,line)
     & "ENABLE_TRANS=ON",atlas_code_location(file,line))
 end subroutine
 
-function atlas_Trans__ctor( grid, nsmax ) result(trans)
+function atlas_Trans__ctor( grid, nsmax ) result(this)
   use, intrinsic :: iso_c_binding, only: c_null_ptr
   use atlas_trans_c_binding
-  use atlas_Grid_module, only: atlas_Grid
-  type(atlas_Trans) :: trans
+  type(atlas_Trans) :: this
   class(atlas_Grid), intent(in) :: grid
   integer, intent(in), optional :: nsmax
 #ifdef ATLAS_HAVE_TRANS
   if( present(nsmax) ) then
-    call trans%reset_c_ptr( atlas__Trans__new( grid%c_ptr(), nsmax ) )
+    call this%reset_c_ptr( atlas__Trans__new( grid%c_ptr(), nsmax ) )
   else
-    call trans%reset_c_ptr( atlas__Trans__new( grid%c_ptr(), 0 ) )
+    call this%reset_c_ptr( atlas__Trans__new( grid%c_ptr(), 0 ) )
   endif
-#else
-  ! IGNORE
-  call trans%reset_c_ptr( c_null_ptr )
-#endif
-end function atlas_Trans__ctor
-
-
-subroutine atlas_Trans__delete( this )
-  use atlas_trans_c_binding
-  use, intrinsic :: iso_c_binding, only: c_null_ptr
-  class(atlas_Trans), intent(inout) :: this
-#ifdef ATLAS_HAVE_TRANS
-  call atlas__Trans__delete(this%c_ptr());
 #else
   ! IGNORE
   call this%reset_c_ptr( c_null_ptr )
 #endif
-end subroutine
-
-
-subroutine atlas_Trans__copy(this,obj_in)
-  class(atlas_Trans), intent(inout) :: this
-  class(fckit_refcounted), target, intent(in) :: obj_in
-end subroutine
-
-
+  call this%return()
+end function atlas_Trans__ctor
 
 function handle( this )
   use atlas_trans_c_binding
@@ -213,7 +197,6 @@ end function
 
 function grid( this )
   use atlas_trans_c_binding
-  use atlas_grid_module
   class(atlas_Trans) :: this
   type(atlas_Grid) :: grid
 #ifdef ATLAS_HAVE_TRANS
@@ -229,9 +212,6 @@ end function
 
 subroutine dirtrans_fieldset(this, gpfields, spfields, config)
   use atlas_trans_c_binding
-  use atlas_fieldset_module, only: atlas_FieldSet
-  use atlas_field_module, only: atlas_Field
-  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
   class(atlas_FieldSet), intent(in)  :: gpfields
   class(atlas_FieldSet), intent(inout) :: spfields
@@ -261,9 +241,6 @@ end subroutine dirtrans_fieldset
 
 subroutine invtrans_fieldset(this, spfields, gpfields, config)
   use atlas_trans_c_binding
-  use atlas_fieldset_module, only: atlas_FieldSet
-  use atlas_field_module, only: atlas_Field
-  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
   class(atlas_FieldSet), intent(in)  :: spfields
   class(atlas_FieldSet), intent(inout) :: gpfields
@@ -292,8 +269,6 @@ end subroutine invtrans_fieldset
 
 subroutine dirtrans_field(this, gpfield, spfield, config)
   use atlas_trans_c_binding
-  use atlas_field_module, only: atlas_Field
-  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
   class(atlas_Field), intent(in)  :: gpfield
   class(atlas_Field), intent(inout) :: spfield
@@ -322,8 +297,6 @@ end subroutine dirtrans_field
 
 subroutine dirtrans_wind2vordiv_field(this, gpwind, spvor, spdiv, config)
   use atlas_trans_c_binding
-  use atlas_field_module, only: atlas_Field
-  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
   type(atlas_Field), intent(in)  :: gpwind
   type(atlas_Field), intent(inout) :: spvor
@@ -356,8 +329,6 @@ end subroutine dirtrans_wind2vordiv_field
 
 subroutine invtrans_field(this, spfield, gpfield, config)
   use atlas_trans_c_binding
-  use atlas_field_module, only: atlas_Field
-  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
   class(atlas_Field), intent(in)  :: spfield
   class(atlas_Field), intent(inout) :: gpfield
@@ -387,8 +358,6 @@ end subroutine invtrans_field
 
 subroutine invtrans_vordiv2wind_field(this, spvor, spdiv, gpwind, config)
   use atlas_trans_c_binding
-  use atlas_field_module, only: atlas_Field
-  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
   class(atlas_Field), intent(in)  :: spvor
   class(atlas_Field), intent(in)  :: spdiv
@@ -421,8 +390,6 @@ end subroutine invtrans_vordiv2wind_field
 
 subroutine invtrans_grad_field(this, spfield, gpfield)
   use atlas_trans_c_binding
-  use atlas_field_module, only: atlas_Field
-  use atlas_config_module, only: atlas_Config
   class(atlas_Trans), intent(in) :: this
   class(atlas_Field), intent(in)  :: spfield
   class(atlas_Field), intent(inout) :: gpfield
