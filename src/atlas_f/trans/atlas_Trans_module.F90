@@ -202,7 +202,6 @@ function grid( this )
 #ifdef ATLAS_HAVE_TRANS
   grid = atlas_Grid( atlas__Trans__grid(this%c_ptr()) )
   call grid%return()
-#warning here
 #else
   THROW_ERROR
  ! call grid%return()
