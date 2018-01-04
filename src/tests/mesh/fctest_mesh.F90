@@ -298,6 +298,7 @@ END_TEST
 TEST( test_fv )
 implicit none
 
+
       type(atlas_StructuredGrid) :: grid
       type(atlas_Mesh) :: mesh
       type(atlas_MeshGenerator) :: meshgenerator
@@ -361,14 +362,11 @@ implicit none
 
       node_to_node = nodes%connectivity("node")
       node_to_edge = nodes%connectivity("edge")
-      
-      write(0,*) "mesh.footprint (bytes) = ", mesh%footprint()
 
       call node_to_node%final()
       call mesh%final()
       call grid%final()
       call nodes_fs%final()
-
 END_TEST
 
 

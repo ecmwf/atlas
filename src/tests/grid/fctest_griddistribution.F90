@@ -61,7 +61,6 @@ TEST( test_griddist )
   type(atlas_Output) :: gmsh
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_GridDistribution) :: griddistribution
-  character(len=1024) :: msg
 
   integer, allocatable :: part(:)
   integer :: jnode

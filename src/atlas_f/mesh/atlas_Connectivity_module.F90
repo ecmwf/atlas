@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_connectivity_module
 
@@ -31,7 +32,7 @@ type, extends(fckit_owned_object) :: atlas_Connectivity
 
 contains
 
-  procedure, public :: shared_ptr_cast
+  procedure, public :: assignment_operator_hook
   procedure, public :: set_access
 
 ! Public methods
@@ -147,14 +148,12 @@ end interface
 
 contains
   
-function shared_ptr_cast(this) result(success)
+subroutine assignment_operator_hook(this,other)
   class(atlas_Connectivity) :: this
-  logical :: success
-  success = this%fckit_shared_object__shared_ptr_cast()
-  if( success ) then
-    call this%set_access()
-  endif
-end function
+  class(fckit_owned_object) :: other
+  call this%set_access()
+  ATLAS_SUPPRESS_UNUSED(other)
+end subroutine
 
 function Connectivity_cptr(cptr) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
@@ -262,7 +261,7 @@ subroutine atlas_Connectivity__padded_data(this, padded, cols)
   use, intrinsic :: iso_c_binding, only : c_int, c_size_t
   class(atlas_Connectivity), intent(inout) :: this
   integer(c_int), pointer, intent(inout) :: padded(:,:)
-  integer(c_size_t), pointer, intent(out), optional :: cols(:)
+  integer(c_size_t), pointer, intent(inout), optional :: cols(:)
   if( .not. associated(this%access%padded_) ) call update_padded(this%access)
   padded => this%access%padded_
   if( present(cols) ) cols => this%access%cols
@@ -301,7 +300,7 @@ subroutine atlas_Connectivity__row(this, row_idx, row, cols)
   use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_Connectivity), intent(in) :: this
   integer(c_int), intent(in) :: row_idx
-  integer(c_int), pointer, intent(out) :: row(:)
+  integer(c_int), pointer, intent(inout) :: row(:)
   integer(c_int), intent(out) ::  cols
   row  => this%access%values_(this%access%displs_(row_idx)+1:this%access%displs_(row_idx+1)+1)
   cols =  this%access%cols(row_idx)
@@ -401,7 +400,7 @@ subroutine atlas_BlockConnectivity__data(this,data)
   use atlas_connectivity_c_binding
   use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_size_t, c_f_pointer
   class(atlas_BlockConnectivity), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: data(:,:)
+  integer(c_int), pointer, intent(inout) :: data(:,:)
   type(c_ptr) :: data_cptr
   integer(c_size_t) :: rows
   integer(c_size_t) :: cols

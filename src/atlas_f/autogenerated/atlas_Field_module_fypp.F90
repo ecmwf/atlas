@@ -1,3 +1,5 @@
+#include "atlas/atlas_f.h"
+
 
 
 module atlas_field_module
@@ -366,14 +368,14 @@ subroutine array_c_to_f_int32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_int), pointer, intent(out) :: array_fptr(:)
+  integer(c_int), pointer, intent(inout) :: array_fptr(:)
   integer(c_int), pointer :: tmp(:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(1)
   integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -402,14 +404,14 @@ subroutine array_c_to_f_int64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_long), pointer, intent(out) :: array_fptr(:)
+  integer(c_long), pointer, intent(inout) :: array_fptr(:)
   integer(c_long), pointer :: tmp(:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(1)
   integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -438,14 +440,14 @@ subroutine array_c_to_f_real32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_float), pointer, intent(out) :: array_fptr(:)
+  real(c_float), pointer, intent(inout) :: array_fptr(:)
   real(c_float), pointer :: tmp(:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(1)
   integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -474,14 +476,14 @@ subroutine array_c_to_f_real64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_double), pointer, intent(out) :: array_fptr(:)
+  real(c_double), pointer, intent(inout) :: array_fptr(:)
   real(c_double), pointer :: tmp(:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(1)
   integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -510,14 +512,14 @@ subroutine array_c_to_f_logical32_r1(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  logical, pointer, intent(out) :: array_fptr(:)
+  logical, pointer, intent(inout) :: array_fptr(:)
   logical, pointer :: tmp(:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(1)
   integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -546,14 +548,14 @@ subroutine array_c_to_f_int32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_int), pointer, intent(out) :: array_fptr(:,:)
+  integer(c_int), pointer, intent(inout) :: array_fptr(:,:)
   integer(c_int), pointer :: tmp(:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(2)
   integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -582,14 +584,14 @@ subroutine array_c_to_f_int64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_long), pointer, intent(out) :: array_fptr(:,:)
+  integer(c_long), pointer, intent(inout) :: array_fptr(:,:)
   integer(c_long), pointer :: tmp(:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(2)
   integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -618,14 +620,14 @@ subroutine array_c_to_f_real32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_float), pointer, intent(out) :: array_fptr(:,:)
+  real(c_float), pointer, intent(inout) :: array_fptr(:,:)
   real(c_float), pointer :: tmp(:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(2)
   integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -654,14 +656,14 @@ subroutine array_c_to_f_real64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_double), pointer, intent(out) :: array_fptr(:,:)
+  real(c_double), pointer, intent(inout) :: array_fptr(:,:)
   real(c_double), pointer :: tmp(:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(2)
   integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -690,14 +692,14 @@ subroutine array_c_to_f_logical32_r2(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  logical, pointer, intent(out) :: array_fptr(:,:)
+  logical, pointer, intent(inout) :: array_fptr(:,:)
   logical, pointer :: tmp(:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(2)
   integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -726,14 +728,14 @@ subroutine array_c_to_f_int32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_int), pointer, intent(out) :: array_fptr(:,:,:)
+  integer(c_int), pointer, intent(inout) :: array_fptr(:,:,:)
   integer(c_int), pointer :: tmp(:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(3)
   integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -762,14 +764,14 @@ subroutine array_c_to_f_int64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_long), pointer, intent(out) :: array_fptr(:,:,:)
+  integer(c_long), pointer, intent(inout) :: array_fptr(:,:,:)
   integer(c_long), pointer :: tmp(:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(3)
   integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -798,14 +800,14 @@ subroutine array_c_to_f_real32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_float), pointer, intent(out) :: array_fptr(:,:,:)
+  real(c_float), pointer, intent(inout) :: array_fptr(:,:,:)
   real(c_float), pointer :: tmp(:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(3)
   integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -834,14 +836,14 @@ subroutine array_c_to_f_real64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_double), pointer, intent(out) :: array_fptr(:,:,:)
+  real(c_double), pointer, intent(inout) :: array_fptr(:,:,:)
   real(c_double), pointer :: tmp(:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(3)
   integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -870,14 +872,14 @@ subroutine array_c_to_f_logical32_r3(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  logical, pointer, intent(out) :: array_fptr(:,:,:)
+  logical, pointer, intent(inout) :: array_fptr(:,:,:)
   logical, pointer :: tmp(:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(3)
   integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -906,14 +908,14 @@ subroutine array_c_to_f_int32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_int), pointer, intent(out) :: array_fptr(:,:,:,:)
+  integer(c_int), pointer, intent(inout) :: array_fptr(:,:,:,:)
   integer(c_int), pointer :: tmp(:,:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(4)
   integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -942,14 +944,14 @@ subroutine array_c_to_f_int64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_long), pointer, intent(out) :: array_fptr(:,:,:,:)
+  integer(c_long), pointer, intent(inout) :: array_fptr(:,:,:,:)
   integer(c_long), pointer :: tmp(:,:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(4)
   integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -978,14 +980,14 @@ subroutine array_c_to_f_real32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_float), pointer, intent(out) :: array_fptr(:,:,:,:)
+  real(c_float), pointer, intent(inout) :: array_fptr(:,:,:,:)
   real(c_float), pointer :: tmp(:,:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(4)
   integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -1014,14 +1016,14 @@ subroutine array_c_to_f_real64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_double), pointer, intent(out) :: array_fptr(:,:,:,:)
+  real(c_double), pointer, intent(inout) :: array_fptr(:,:,:,:)
   real(c_double), pointer :: tmp(:,:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(4)
   integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -1050,14 +1052,14 @@ subroutine array_c_to_f_logical32_r4(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  logical, pointer, intent(out) :: array_fptr(:,:,:,:)
+  logical, pointer, intent(inout) :: array_fptr(:,:,:,:)
   logical, pointer :: tmp(:,:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
   integer :: eshape(4)
   integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",172))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",174))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -1082,7 +1084,7 @@ subroutine access_host_data_int32_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:)
+  integer(c_int), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1095,7 +1097,7 @@ subroutine access_device_data_int32_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:)
+  integer(c_int), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1110,7 +1112,7 @@ subroutine access_host_data_int64_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:)
+  integer(c_long), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1123,7 +1125,7 @@ subroutine access_device_data_int64_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:)
+  integer(c_long), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1138,7 +1140,7 @@ subroutine access_host_data_real32_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:)
+  real(c_float), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1151,7 +1153,7 @@ subroutine access_device_data_real32_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:)
+  real(c_float), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1166,7 +1168,7 @@ subroutine access_host_data_real64_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:)
+  real(c_double), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1179,7 +1181,7 @@ subroutine access_device_data_real64_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:)
+  real(c_double), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1194,7 +1196,7 @@ subroutine access_host_data_logical32_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:)
+  logical, pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1207,7 +1209,7 @@ subroutine access_device_data_logical32_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:)
+  logical, pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1222,7 +1224,7 @@ subroutine access_host_data_int32_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1235,7 +1237,7 @@ subroutine access_device_data_int32_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1250,7 +1252,7 @@ subroutine access_host_data_int64_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1263,7 +1265,7 @@ subroutine access_device_data_int64_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1278,7 +1280,7 @@ subroutine access_host_data_real32_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1291,7 +1293,7 @@ subroutine access_device_data_real32_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1306,7 +1308,7 @@ subroutine access_host_data_real64_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1319,7 +1321,7 @@ subroutine access_device_data_real64_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1334,7 +1336,7 @@ subroutine access_host_data_logical32_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:)
+  logical, pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1347,7 +1349,7 @@ subroutine access_device_data_logical32_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:)
+  logical, pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1362,7 +1364,7 @@ subroutine access_host_data_int32_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1375,7 +1377,7 @@ subroutine access_device_data_int32_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1390,7 +1392,7 @@ subroutine access_host_data_int64_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1403,7 +1405,7 @@ subroutine access_device_data_int64_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1418,7 +1420,7 @@ subroutine access_host_data_real32_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1431,7 +1433,7 @@ subroutine access_device_data_real32_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1446,7 +1448,7 @@ subroutine access_host_data_real64_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1459,7 +1461,7 @@ subroutine access_device_data_real64_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1474,7 +1476,7 @@ subroutine access_host_data_logical32_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1487,7 +1489,7 @@ subroutine access_device_data_logical32_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1502,7 +1504,7 @@ subroutine access_host_data_int32_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1515,7 +1517,7 @@ subroutine access_device_data_int32_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1530,7 +1532,7 @@ subroutine access_host_data_int64_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1543,7 +1545,7 @@ subroutine access_device_data_int64_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1558,7 +1560,7 @@ subroutine access_host_data_real32_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1571,7 +1573,7 @@ subroutine access_device_data_real32_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1586,7 +1588,7 @@ subroutine access_host_data_real64_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1599,7 +1601,7 @@ subroutine access_device_data_real64_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1614,7 +1616,7 @@ subroutine access_host_data_logical32_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1627,7 +1629,7 @@ subroutine access_device_data_logical32_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -1642,7 +1644,7 @@ subroutine access_host_data_int32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:)
+  integer(c_int), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1656,7 +1658,7 @@ subroutine access_device_data_int32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:)
+  integer(c_int), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1671,7 +1673,7 @@ subroutine access_host_data_int64_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:)
+  integer(c_long), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1685,7 +1687,7 @@ subroutine access_device_data_int64_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:)
+  integer(c_long), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1700,7 +1702,7 @@ subroutine access_host_data_real32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:)
+  real(c_float), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1714,7 +1716,7 @@ subroutine access_device_data_real32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:)
+  real(c_float), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1729,7 +1731,7 @@ subroutine access_host_data_real64_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:)
+  real(c_double), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1743,7 +1745,7 @@ subroutine access_device_data_real64_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:)
+  real(c_double), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1758,7 +1760,7 @@ subroutine access_host_data_logical32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:)
+  logical, pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1772,7 +1774,7 @@ subroutine access_device_data_logical32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:)
+  logical, pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1787,7 +1789,7 @@ subroutine access_host_data_int32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1801,7 +1803,7 @@ subroutine access_device_data_int32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1816,7 +1818,7 @@ subroutine access_host_data_int64_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1830,7 +1832,7 @@ subroutine access_device_data_int64_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1845,7 +1847,7 @@ subroutine access_host_data_real32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1859,7 +1861,7 @@ subroutine access_device_data_real32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1874,7 +1876,7 @@ subroutine access_host_data_real64_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1888,7 +1890,7 @@ subroutine access_device_data_real64_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1903,7 +1905,7 @@ subroutine access_host_data_logical32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:)
+  logical, pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1917,7 +1919,7 @@ subroutine access_device_data_logical32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:)
+  logical, pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1932,7 +1934,7 @@ subroutine access_host_data_int32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1946,7 +1948,7 @@ subroutine access_device_data_int32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1961,7 +1963,7 @@ subroutine access_host_data_int64_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1975,7 +1977,7 @@ subroutine access_device_data_int64_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -1990,7 +1992,7 @@ subroutine access_host_data_real32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2004,7 +2006,7 @@ subroutine access_device_data_real32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2019,7 +2021,7 @@ subroutine access_host_data_real64_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2033,7 +2035,7 @@ subroutine access_device_data_real64_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2048,7 +2050,7 @@ subroutine access_host_data_logical32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2062,7 +2064,7 @@ subroutine access_device_data_logical32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2077,7 +2079,7 @@ subroutine access_host_data_int32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2091,7 +2093,7 @@ subroutine access_device_data_int32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2106,7 +2108,7 @@ subroutine access_host_data_int64_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2120,7 +2122,7 @@ subroutine access_device_data_int64_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2135,7 +2137,7 @@ subroutine access_host_data_real32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2149,7 +2151,7 @@ subroutine access_device_data_real32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2164,7 +2166,7 @@ subroutine access_host_data_real64_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2178,7 +2180,7 @@ subroutine access_device_data_real64_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2193,7 +2195,7 @@ subroutine access_host_data_logical32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2207,7 +2209,7 @@ subroutine access_device_data_logical32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -2221,6 +2223,7 @@ end subroutine
 subroutine dummy(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
+  ATLAS_SUPPRESS_UNUSED(this)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -2233,7 +2236,7 @@ integer function atlas_real(kind)
   else if (kind == c_float) then
     atlas_real = ATLAS_KIND_REAL32
   else
-    call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",275))
+    call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",278))
   end if
 end function
 
@@ -2249,7 +2252,7 @@ integer function atlas_integer(kind)
     else if (kind == c_long) then
       atlas_integer = ATLAS_KIND_INT64
     else
-      call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",291))
+      call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",294))
     end if
   end if
 end function
@@ -2259,6 +2262,7 @@ end function
 integer function atlas_logical(kind)
   integer, optional :: kind
   atlas_logical = ATLAS_KIND_INT32
+  ATLAS_SUPPRESS_UNUSED(kind)
 end function
 
 !-------------------------------------------------------------------------------
@@ -2275,7 +2279,7 @@ function atlas_data_type(kind)
   else if( kind == ATLAS_KIND_REAL64 ) then
     atlas_data_type = "real64"
   else
-    call atlas_abort("cannot convert kind to data_type",atlas_code_location("atlas_Field_module.F90",317))
+    call atlas_abort("cannot convert kind to data_type",atlas_code_location("atlas_Field_module.F90",321))
   endif
 end function
 

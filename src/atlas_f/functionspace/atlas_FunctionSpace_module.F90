@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_functionspace_module
 
@@ -180,8 +181,6 @@ function deprecated_create_field_2(this,require_name,kind,levels) result(field)
   character(len=*), intent(in) :: require_name
   integer,          intent(in) :: kind
   integer(c_int),   intent(in) :: levels
-
-  integer(c_int) :: opt_variables
 
   type(atlas_Config) :: options
   options = atlas_Config()

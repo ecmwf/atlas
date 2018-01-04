@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_functionspace_StructuredColumns_module
 
@@ -8,6 +9,7 @@ use atlas_Field_module, only: atlas_Field
 use atlas_FieldSet_module, only: atlas_FieldSet
 use atlas_Grid_module, only: atlas_Grid
 use atlas_Config_module, only: atlas_Config
+use fckit_owned_object_module, only : fckit_owned_object
 
 implicit none
 
@@ -18,6 +20,7 @@ private :: atlas_Field
 private :: atlas_FieldSet
 private :: atlas_Grid
 private :: atlas_Config
+private :: fckit_owned_object
 
 public :: atlas_functionspace_StructuredColumns
 
@@ -42,7 +45,7 @@ TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_StructuredColumns
 
 contains
 
-  procedure, public :: shared_ptr_cast
+  procedure, public :: assignment_operator_hook
 
   procedure, public :: gather
   procedure, public :: scatter
@@ -84,14 +87,12 @@ end interface
 contains
 !========================================================
 
-function shared_ptr_cast(this) result(success)
+subroutine assignment_operator_hook(this,other)
   class(atlas_functionspace_StructuredColumns) :: this
-  logical :: success
-  success = this%fckit_shared_object__shared_ptr_cast()
-  if( success ) then
-    call this%set_index()
-  endif
-end function
+  class(fckit_owned_object) :: other
+  call this%set_index()
+  ATLAS_SUPPRESS_UNUSED(other)
+end subroutine
 
 function StructuredColumns__cptr(cptr) result(this)
   type(atlas_functionspace_StructuredColumns) :: this
@@ -169,7 +170,6 @@ subroutine set_index(this)
   type(c_ptr) :: index_cptr
   integer(c_int), pointer :: index_fptr(:)
   integer(c_int) :: i_min, i_max, j_min, j_max
-  integer(c_int) :: size
   integer(c_int) :: ni, nj
   call atlas__fs__StructuredColumns__index_host( this%c_ptr(), index_cptr, i_min, i_max, j_min, j_max )
   ni = i_max-i_min+1;

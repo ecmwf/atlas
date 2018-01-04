@@ -1,3 +1,5 @@
+#include "atlas/atlas_f.h"
+
 #:setvar ranks [1,2,3,4]
 #:setvar dim   ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
 #:setvar ftypes ['integer(c_int)','integer(c_long)','real(c_float)','real(c_double)', 'logical']
@@ -162,7 +164,7 @@ subroutine array_c_to_f_${dtype}$_r${rank}$(array_cptr,rank,shape_cptr,strides_c
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  ${ftype}$, pointer, intent(out) :: array_fptr(${dim[rank]}$)
+  ${ftype}$, pointer, intent(inout) :: array_fptr(${dim[rank]}$)
   ${ftype}$, pointer :: tmp(${dim[rank]}$)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
@@ -198,7 +200,7 @@ subroutine access_host_data_${dtype}$_r${rank}$(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  ${ftype}$, pointer, intent(out) :: field(${dim[rank]}$)
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -211,7 +213,7 @@ subroutine access_device_data_${dtype}$_r${rank}$(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  ${ftype}$, pointer, intent(out) :: field(${dim[rank]}$)
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
@@ -230,7 +232,7 @@ subroutine access_host_data_${dtype}$_r${rank}$_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  ${ftype}$, pointer, intent(out) :: field(${dim[rank]}$)
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -244,7 +246,7 @@ subroutine access_device_data_${dtype}$_r${rank}$_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  ${ftype}$, pointer, intent(out) :: field(${dim[rank]}$)
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
@@ -260,6 +262,7 @@ end subroutine
 subroutine dummy(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
+  ATLAS_SUPPRESS_UNUSED(this)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -298,6 +301,7 @@ end function
 integer function atlas_logical(kind)
   integer, optional :: kind
   atlas_logical = ATLAS_KIND_INT32
+  ATLAS_SUPPRESS_UNUSED(kind)
 end function
 
 !-------------------------------------------------------------------------------
