@@ -68,7 +68,7 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
 
 void compute_legendre(
         const size_t trc,                  // truncation (in)
-        double& lat,                       // latitude in radians (in)
+        const double& lat,                 // latitude in radians (in)
         array::ArrayView<double,1>& zlfpol)// values of associated Legendre functions, size (trc+1)*trc/2 (out)
 {
     trans::compute_legendre_polynomials(trc,lat,zlfpol.data());
@@ -81,8 +81,8 @@ void legendre_transform(
         const size_t trcFT,                  // truncation for Fourier transformation (in)
         array::ArrayView<double,1>& rlegReal,// values of associated Legendre functions, size (trc+1)*trc/2 (out)
         array::ArrayView<double,1>& rlegImag,// values of associated Legendre functions, size (trc+1)*trc/2 (out)
-        array::ArrayView<double,1>& zlfpol,  // values of associated Legendre functions, size (trc+1)*trc/2 (out)
-        double rspecg[])                     // spectral data, size (trc+1)*trc (in)
+        const array::ArrayView<double,1>& zlfpol,  // values of associated Legendre functions, size (trc+1)*trc/2 (in)
+        const double rspecg[])               // spectral data, size (trc+1)*trc (in)
 {
     trans::invtrans_legendre( trc, trcFT, zlfpol.data(), 1, rspecg, rlegReal.data(), rlegImag.data() );
 }
@@ -93,11 +93,11 @@ double fourier_transform(
         const size_t trcFT,
         array::ArrayView<double,1>& rlegReal,// values of associated Legendre functions, size (trc+1)*trc/2 (out)
         array::ArrayView<double,1>& rlegImag,// values of associated Legendre functions, size (trc+1)*trc/2 (out)
-        double lon) // radians
+        const double lon) // radians
 {
-  double gp;
-  trans::invtrans_fourier( trcFT, lon, 1, rlegReal.data(), rlegImag.data(), &gp );
-  return gp;
+  double gp[1];
+  trans::invtrans_fourier( trcFT, lon, 1, rlegReal.data(), rlegImag.data(), gp );
+  return gp[0];
 }
 
 //-----------------------------------------------------------------------------
@@ -110,9 +110,9 @@ double fourier_transform(
 double spectral_transform_point(
         const size_t trc,                  // truncation (in)
         const size_t trcFT,                // truncation for Fourier transformation (in)
-        double lon,                        // longitude in radians (in)
-        double lat,                        // latitude in radians (in)
-        double rspecg[])                   // spectral data, size (trc+1)*trc (in)
+        const double lon,                  // longitude in radians (in)
+        const double lat,                  // latitude in radians (in)
+        const double rspecg[])             // spectral data, size (trc+1)*trc (in)
 {
     int N = (trc+2)*(trc+1)/2;
     ATLAS_TRACE();
@@ -145,10 +145,10 @@ double spectral_transform_point(
 void spectral_transform_grid(
         const size_t trc,     // truncation (in)
         const size_t trcFT,   // truncation for Fourier transformation (in)
-        Grid grid,            // call with something like Grid("O32")
-        double rspecg[],      // spectral data, size (trc+1)*trc (in)
+        const Grid grid,            // call with something like Grid("O32")
+        const double rspecg[],      // spectral data, size (trc+1)*trc (in)
         double rgp[],         // resulting grid point data (out)
-        bool pointwise)       // use point function for unstructured mesh for testing purposes
+        const bool pointwise)       // use point function for unstructured mesh for testing purposes
 {
     std::ostream& out = Log::info(); // just for debugging
     int N = (trc+2)*(trc+1)/2;
@@ -162,11 +162,10 @@ void spectral_transform_grid(
     atlas::array::ArrayT<double> rlegImag_(trcFT+1);
     atlas::array::ArrayView<double,1> rlegImag = make_view<double,1>(rlegImag_);
 
-    for( int jm=0; jm<grid.size(); jm++) rgp[jm] = 0.;
+    int idx = 0;
 
     if( grid::StructuredGrid(grid) ) {
         grid::StructuredGrid g(grid);
-        int idx = 0;
         for( size_t j=0; j<g.ny(); ++j ) {
             double lat = g.y(j) * util::Constants::degreesToRadians() ;
 
@@ -181,7 +180,6 @@ void spectral_transform_grid(
             }
         }
     } else {
-        int idx = 0;
         for( PointXY p: grid.xy()) {
             double lon = p.x() * util::Constants::degreesToRadians();
             double lat = p.y() * util::Constants::degreesToRadians();
@@ -198,6 +196,8 @@ void spectral_transform_grid(
             }
         }
     }
+
+    EXPECT( idx == grid.size() );
 }
 
 //-----------------------------------------------------------------------------
@@ -208,11 +208,11 @@ void spectral_transform_grid(
 // Andreas Mueller *ECMWF*
 //
 double sphericalharmonics_analytic_point(
-        double n,             // total wave number (implemented so far for n<4
-        double m,             // zonal wave number (implemented so far for m<4, m<n
-        int imag,             // 0: test real part, 1: test imaginary part
-        double lon,           // longitude in radians
-        double lat)           // latitude in radians
+        const double n,             // total wave number (implemented so far for n<4
+        const double m,             // zonal wave number (implemented so far for m<4, m<n
+        const int imag,             // 0: test real part, 1: test imaginary part
+        const double lon,           // longitude in radians
+        const double lat)           // latitude in radians
 {
     double latsin = std::sin(lat), latcos = std::cos(lat);
     // Fourier part of the spherical harmonics:
@@ -265,20 +265,22 @@ double sphericalharmonics_analytic_point(
 void spectral_transform_grid_analytic(
         const size_t trc,     // truncation (in)
         const size_t trcFT,   // truncation for Fourier transformation (in)
-        double n,             // total wave number (implemented so far for n<4
-        double m,             // zonal wave number (implemented so far for m<4, m<n
-        int imag,             // 0: test real part, 1: test imaginary part
-        Grid grid,            // call with something like Grid("O32")
+        const double n,       // total wave number (implemented so far for n<4
+        const double m,       // zonal wave number (implemented so far for m<4, m<n
+        const int imag,       // 0: test real part, 1: test imaginary part
+        const Grid grid,      // call with something like Grid("O32")
         double rspecg[],      // spectral data, size (trc+1)*trc (out)
         double rgp[])         // resulting grid point data (out)
 {
-    std::ostream& out = Log::info(); // just for debugging
     int N = (trc+2)*(trc+1)/2;
     for( int jm=0; jm<2*N; jm++) rspecg[jm] = 0.;
     int k = 0;
     for( int jm=0; jm<=trc; jm++ ) {
         for( int jn=jm; jn<=trc; jn++ ) {
-            if( jm==m && jn==n ) rspecg[2*k+imag] = 1.;
+            if( jm==m && jn==n ) {
+              rspecg[2*k+imag] = 1.;
+              rspecg[2*k+(1-imag)] = 0.;
+            }
             k++;
         }
     }
@@ -322,7 +324,10 @@ double compute_rms(
         double array2[]) // second of the two arrays
 {
     double rms = 0.;
-    for( int idx=0; idx<N; idx++ ) rms += std::pow(array1[idx]-array2[idx],2);
+    for( int idx=0; idx<N; idx++ ) {
+      double diff = array1[idx]-array2[idx];
+      rms += diff*diff;
+    }
     rms = std::sqrt(rms/N);
     return rms;
 }
@@ -351,7 +356,10 @@ double spectral_transform_test(
     // compute analytic solution (this also initializes rspecg and needs to be done before the actual transform):
     spectral_transform_grid_analytic(trc, trc, n, m, imag, g, rspecg, rgp_analytic);
     // perform spectral transform:
+
     spectral_transform_grid(trc, trc, g, rspecg, rgp, pointwise);
+
+    //for( int i=0; i<g.size(); ++i ) rgp[i] = 0.;
 
     double rms = compute_rms(g.size(), rgp, rgp_analytic);
 
@@ -372,7 +380,7 @@ double spectral_transform_test(
 }
 
 //-----------------------------------------------------------------------------
-
+#if 0
 CASE( "test_transgeneral_legendrepolynomials" )
 {
   std::ostream& out = Log::info(); // just for debugging
@@ -389,9 +397,9 @@ CASE( "test_transgeneral_legendrepolynomials" )
   double lat = std::acos(0.99312859918509488);
   compute_legendre(trc, lat, zlfpol);
 }
-
+#endif
 //-----------------------------------------------------------------------------
-
+#if 1
 CASE( "test_transgeneral_point" )
 {
   std::ostream& out = Log::info();
@@ -400,12 +408,12 @@ CASE( "test_transgeneral_point" )
   // test spectral transform up to wave number 3 by comparing
   // the result with the analytically computed spherical harmonics
 
-  Grid g = grid::UnstructuredGrid( new std::vector<PointXY>{
-                                       {  50.,  20.},
-                                       {  30., -20.},
-                                       { 179., -89.},
-                                       {-101.,  70.}
-  });
+  Grid g = grid::UnstructuredGrid( {
+                                     {  50.,  20.},
+                                     {  30., -20.},
+                                     { 179., -89.},
+                                     {-101.,  70.}
+                                   } );
 
   int trc = 47; // truncation
 
@@ -420,9 +428,9 @@ CASE( "test_transgeneral_point" )
   }
 
 }
-
+#endif
 //-----------------------------------------------------------------------------
-
+#if 1
 CASE( "test_transgeneral_unstructured" )
 {
   std::ostream& out = Log::info();
@@ -547,6 +555,10 @@ CASE( "test_transgeneral_with_translib" )
                   double rms_trans = compute_rms(g.size(), gpg.data(), rgp.data());
                   double rms_gen   = compute_rms(g.size(), rgp.data(), rgp_analytic.data());
 
+                  if( rms_gen >= tolerance ) {
+                    ATLAS_DEBUG_VAR(rms_gen);
+                    ATLAS_DEBUG_VAR(tolerance);
+                  }
                   EXPECT( rms_gen < tolerance );
                   EXPECT( rms_trans < tolerance );
               }
@@ -570,7 +582,7 @@ CASE( "test_trans_invtrans" ) {
   trans.invtrans(1,rspec.data(),rgp.data());
 
 }
-
+#endif
 //-----------------------------------------------------------------------------
 
 }  // namespace test

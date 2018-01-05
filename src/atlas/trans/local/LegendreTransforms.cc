@@ -28,8 +28,10 @@ void invtrans_legendre(
     // Legendre transformation:
     int k = 0;
     for( int jm=0; jm<=trcFT; ++jm ) {
-        leg_real[jm] = 0.;
-        leg_imag[jm] = 0.;
+        for( int jfld=0; jfld<nb_fields; ++jfld ) {
+            leg_real[jm*nb_fields+jfld] = 0.;
+            leg_imag[jm*nb_fields+jfld] = 0.;
+        }
         for( int jn=jm; jn<=trc; ++jn, ++k ) {
             for( int jfld=0; jfld<nb_fields; ++jfld ) {
               // not completely sure where this factor 2 comes from. One possible explanation:
