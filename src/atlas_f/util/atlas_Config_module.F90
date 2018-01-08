@@ -156,7 +156,7 @@ subroutine atlas_Config__set_config_list(this, name, value)
   use atlas_Config_c_binding
   class(atlas_Config), intent(inout) :: this
   character(len=*), intent(in) :: name
-  class(atlas_Config), intent(in) :: value(:)
+  type(atlas_Config), intent(in) :: value(:) !PGI (17.7) compiler bug when "type" replaced with "class"
   type(c_ptr), target :: value_cptrs(size(value))
   integer :: j
   if( size(value) > 0 ) then

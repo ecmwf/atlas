@@ -80,6 +80,7 @@ TEST( test_parametrisation )
     call list(j)%set("l1",21)
     call list(j)%set("l2",22)
   enddo
+
   call nested%set("list",list)
   do j=1,2
     call list(j)%final()

@@ -64,6 +64,10 @@ contains
 ! Public methods
   procedure, public :: blocks   => atlas_MultiBlockConnectivity__blocks
   procedure, public :: block    => atlas_MultiBlockConnectivity__block
+
+! PGI compiler bug won't accept "assignment_operator_hook" from atlas_Connectivity parent class... grrr
+  procedure, public :: assignment_operator_hook => atlas_MultiBlockConnectivity__assignment_operator_hook
+
 end type
 
 !----------------------------!
@@ -150,6 +154,16 @@ contains
   
 subroutine assignment_operator_hook(this,other)
   class(atlas_Connectivity) :: this
+  class(fckit_owned_object) :: other
+  call this%set_access()
+  ATLAS_SUPPRESS_UNUSED(other)
+end subroutine
+
+! Following routine is exact copy of "assignment_operator_hook" above, because of bug in PGI compiler (17.7)
+! Without it, wrongly the "fckit_owned_object::assignment_operator_hook" is used instead of
+! "atlas_Connectivity::assignment_operator_hook".
+subroutine atlas_MultiBlockConnectivity__assignment_operator_hook(this,other)
+  class(atlas_MultiBlockConnectivity) :: this
   class(fckit_owned_object) :: other
   call this%set_access()
   ATLAS_SUPPRESS_UNUSED(other)
@@ -361,8 +375,8 @@ function MultiBlockConnectivity_constructor(name) result(this)
   use fckit_c_interop_module
   type(atlas_MultiBlockConnectivity) :: this
   character(len=*), intent(in), optional :: name
-  this = MultiBlockConnectivity_cptr( atlas__MultiBlockConnectivity__create() )
-
+  call this%reset_c_ptr( atlas__MultiBlockConnectivity__create() )
+  call this%set_access()
   if( present(name) ) then
     call atlas__Connectivity__rename(this%c_ptr(),c_str(name))
   endif

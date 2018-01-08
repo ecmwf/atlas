@@ -102,6 +102,12 @@ function StructuredColumns__cptr(cptr) result(this)
   call this%return()
 end function
 
+function empty_config() result(config)
+  type(atlas_Config) :: config
+  config = atlas_Config()
+  call config%return()
+end function
+
 function StructuredColumns__grid(grid, halo, levels) result(this)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_functionspace_StructuredColumns) :: this
@@ -109,7 +115,7 @@ function StructuredColumns__grid(grid, halo, levels) result(this)
   integer, optional :: halo
   integer, optional :: levels
   type(atlas_Config) :: config
-  config = atlas_Config()
+  config = empty_config() ! Due to PGI compiler bug, we have to do this instead of "config = atlas_Config()""
   if( present(halo) )   call config%set("halo",halo)
   if( present(levels) ) call config%set("levels",levels)
   call this%reset_c_ptr( atlas__functionspace__StructuredColumns__new__grid( grid%c_ptr(), config%c_ptr() ) )
