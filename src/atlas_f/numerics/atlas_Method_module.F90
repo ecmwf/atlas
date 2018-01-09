@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_Method_module
 
@@ -31,10 +32,9 @@ TYPE, extends(fckit_owned_object) :: atlas_Method
 !------------------------------------------------------------------------------
 contains
   procedure, public :: name => atlas_Method__name
-#ifdef FORTRAN_SUPPORTS_FINAL
-  final :: atlas_Method__final
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Method__final_auto
 #endif
-
 END TYPE atlas_Method
 
 interface atlas_Method
@@ -63,6 +63,20 @@ function atlas_Method__name(this) result(name)
   name_c_str = atlas__Method__name(this%c_ptr())
   name = c_ptr_to_string(name_c_str)
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Method__final_auto(this)
+  type(atlas_Method) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Method__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
 
 end module atlas_Method_module
 

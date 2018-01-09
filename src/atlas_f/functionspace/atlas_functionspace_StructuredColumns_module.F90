@@ -73,6 +73,10 @@ contains
 
   procedure, private :: set_index
 
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_functionspace_StructuredColumns__final_auto
+#endif
+
 END TYPE atlas_functionspace_StructuredColumns
 
 interface atlas_functionspace_StructuredColumns
@@ -91,7 +95,7 @@ subroutine assignment_operator_hook(this,other)
   class(atlas_functionspace_StructuredColumns) :: this
   class(fckit_owned_object) :: other
   call this%set_index()
-  ATLAS_SUPPRESS_UNUSED(other)
+  FCKIT_SUPPRESS_UNUSED(other)
 end subroutine
 
 function StructuredColumns__cptr(cptr) result(this)
@@ -294,6 +298,18 @@ subroutine halo_exchange_field(this,field)
   call atlas__fs__StructuredColumns__halo_exchange_field(this%c_ptr(),field%c_ptr())
 end subroutine
 
+!-------------------------------------------------------------------------------
+
+subroutine atlas_functionspace_StructuredColumns__final_auto(this)
+  type(atlas_functionspace_StructuredColumns) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_functionspace_StructuredColumns__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 end module atlas_functionspace_StructuredColumns_module
 

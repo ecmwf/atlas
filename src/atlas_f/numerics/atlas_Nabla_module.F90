@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_Nabla_module
 
@@ -32,6 +33,9 @@ contains
   procedure, public :: curl => atlas_Nabla__curl
   procedure, public :: laplacian => atlas_Nabla__laplacian
 
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Nabla__final_auto
+#endif
 END TYPE atlas_Nabla
 
 interface atlas_Nabla
@@ -104,6 +108,19 @@ subroutine atlas_Nabla__laplacian(this,scalar,lapl)
   class(atlas_Field), intent(in) :: scalar
   class(atlas_Field), intent(inout) :: lapl
   call atlas__Nabla__laplacian(this%c_ptr(),scalar%c_ptr(),lapl%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Nabla__final_auto(this)
+  type(atlas_Nabla) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Nabla__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
 ! -----------------------------------------------------------------------------

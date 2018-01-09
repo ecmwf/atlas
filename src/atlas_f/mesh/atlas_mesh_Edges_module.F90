@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_mesh_Edges_module
 
@@ -13,6 +14,9 @@ private
 
 type, extends(atlas_HybridElements) :: atlas_mesh_Edges
 contains
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_mesh_Edges__final_auto
+#endif
 end type
 
 interface atlas_mesh_Edges
@@ -39,6 +43,19 @@ function atlas_mesh_edges__constructor() result(this)
   call this%reset_c_ptr( atlas__mesh__HybridElements__create() )
   call this%return()
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_mesh_Edges__final_auto(this)
+  type(atlas_mesh_Edges) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_mesh_Edges__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 ! ----------------------------------------------------------------------------------------
 

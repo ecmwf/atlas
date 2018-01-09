@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_metadata_module
 
@@ -61,6 +62,10 @@ contains
   procedure :: json => Metadata__json
 
   procedure, public :: delete => atlas_Metadata__delete
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Metadata__final_auto
+#endif
 
 END TYPE atlas_Metadata
 
@@ -361,6 +366,19 @@ function Metadata__json(this) result(json)
   json = c_ptr_to_string(json_cptr)
   if( json_allocated == 1 ) call c_ptr_free(json_cptr)
 end function Metadata__json
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Metadata__final_auto(this)
+  type(atlas_Metadata) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Metadata__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 end module atlas_metadata_module
 

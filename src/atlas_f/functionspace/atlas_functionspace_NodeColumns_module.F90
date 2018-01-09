@@ -201,10 +201,9 @@ contains
   procedure, public :: mean_and_standard_deviation_per_level => &
     & mean_and_stddev_per_level
 
-#ifdef FORTRAN_SUPPORTS_FINAL
-  final :: atlas_functionspace_NodeColumns__final
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_functionspace_NodeColumns__final_auto
 #endif
-
 
 END TYPE atlas_functionspace_NodeColumns
 
@@ -245,15 +244,6 @@ function constructor(mesh,halo,levels) result(this)
   call config%final()
   call this%return()
 end function
-
-!------------------------------------------------------------------------------
-
-#ifdef FORTRAN_SUPPORTS_FINAL
-subroutine atlas_functionspace_NodeColumns__final(this)
-  type(atlas_functionspace_NodeColumns), intent(inout) :: this
-  call this%final()
-end subroutine
-#endif
 
 !------------------------------------------------------------------------------
 
@@ -1948,6 +1938,19 @@ subroutine mean_and_stddev_per_level(this,field,mean,stddev,N)
   call atlas__NodesFunctionSpace__mean_and_stddev_per_level( &
     & this%c_ptr(),field%c_ptr(),mean%c_ptr(),stddev%c_ptr(),opt_N)
   if( present(N) ) N = opt_N
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_functionspace_NodeColumns__final_auto(this)
+  type(atlas_functionspace_NodeColumns) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_functionspace_NodeColumns__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
 !------------------------------------------------------------------------------

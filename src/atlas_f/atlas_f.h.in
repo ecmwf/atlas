@@ -1,0 +1,20 @@
+#ifndef atlas_f_h
+#define atlas_f_h
+
+#include "fckit/defines.h"
+
+#if @ATLAS_HAVE_OMP@
+#define ATLAS_HAVE_OMP
+#endif
+
+#if @ATLAS_HAVE_TRANS@
+#define ATLAS_HAVE_TRANS
+#endif
+
+#if @ATLAS_HAVE_ACC@
+#define ATLAS_HAVE_ACC
+#endif
+
+#define ATLAS_BITS_GLOBAL @ATLAS_BITS_GLOBAL@
+
+#endif

@@ -1,4 +1,3 @@
-
 #include "atlas/atlas_f.h"
 
 module atlas_Mesh_module
@@ -42,6 +41,9 @@ contains
   procedure, public :: clone_from_device
   procedure, public :: sync_host_device
 
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Mesh__final_auto
+#endif
 END TYPE atlas_Mesh
 
 interface atlas_Mesh
@@ -136,6 +138,19 @@ subroutine sync_host_device(this)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(inout) :: this
   call atlas__Mesh__sync_host_device(this%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Mesh__final_auto(this)
+  type(atlas_Mesh) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Mesh__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
 !-------------------------------------------------------------------------------

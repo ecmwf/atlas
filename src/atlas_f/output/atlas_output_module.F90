@@ -1,5 +1,3 @@
-! (C) Copyright 2013-2016 ECMWF.
-
 #include "atlas/atlas_f.h"
 
 module atlas_output_module
@@ -44,6 +42,10 @@ contains
     & write_fieldset_fs, &
     & write_field, &
     & write_fieldset
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Output__final_auto
+#endif
 
 END TYPE atlas_Output
 
@@ -175,6 +177,19 @@ subroutine write_fieldset(this,fieldset,config)
     call atlas__output__write_fieldset(this%c_ptr(),fieldset%c_ptr(),opt_config%c_ptr())
     call opt_config%final()
   endif
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Output__final_auto(this)
+  type(atlas_Output) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Output__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
 end module atlas_output_module

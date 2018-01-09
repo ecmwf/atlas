@@ -1,5 +1,4 @@
-
-#include "fckit/defines.h"
+#include "atlas/atlas_f.h"
 
 module atlas_Grid_module
 
@@ -86,6 +85,11 @@ contains
   procedure, private :: lonlat_64    => Structured__lonlat_64
   generic :: lonlat    => lonlat_32, lonlat_64
   procedure :: reduced   => Structured__reduced
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_StructuredGrid__final_auto
+#endif
+
 END TYPE atlas_StructuredGrid
 
 interface atlas_StructuredGrid
@@ -112,6 +116,11 @@ TYPE, extends(atlas_StructuredGrid) :: atlas_GaussianGrid
 !------------------------------------------------------------------------------
 contains
 procedure :: N         => Gaussian__N
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_GaussianGrid__final_auto
+#endif
+
 END TYPE atlas_GaussianGrid
 
 interface atlas_GaussianGrid
@@ -137,6 +146,11 @@ TYPE, extends(atlas_StructuredGrid) :: atlas_ReducedGaussianGrid
 !------------------------------------------------------------------------------
 contains
 procedure :: N         => ReducedGaussian__N
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_ReducedGaussianGrid__final_auto
+#endif
+
 END TYPE atlas_ReducedGaussianGrid
 
 interface atlas_ReducedGaussianGrid
@@ -162,6 +176,11 @@ TYPE, extends(atlas_StructuredGrid) :: atlas_RegularGaussianGrid
 !------------------------------------------------------------------------------
 contains
 procedure :: N         => RegularGaussian__N
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_RegularGaussianGrid__final_auto
+#endif
+
 END TYPE atlas_RegularGaussianGrid
 
 interface atlas_RegularGaussianGrid
@@ -186,6 +205,9 @@ TYPE, extends(atlas_StructuredGrid) :: atlas_RegularLonLatGrid
 
 !------------------------------------------------------------------------------
 contains
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_RegularLonLatGrid__final_auto
+#endif
 END TYPE atlas_RegularLonLatGrid
 
 interface atlas_RegularLonLatGrid
@@ -229,6 +251,47 @@ subroutine atlas_Grid__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+
+subroutine atlas_StructuredGrid__final_auto(this)
+  type(atlas_StructuredGrid) :: this
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+subroutine atlas_GaussianGrid__final_auto(this)
+  type(atlas_GaussianGrid) :: this
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+subroutine atlas_ReducedGaussianGrid__final_auto(this)
+  type(atlas_ReducedGaussianGrid) :: this
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+subroutine atlas_RegularLonLatGrid__final_auto(this)
+  type(atlas_RegularLonLatGrid) :: this
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+subroutine atlas_RegularGaussianGrid__final_auto(this)
+  type(atlas_RegularGaussianGrid) :: this
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
 
 
 ! -----------------------------------------------------------------------------

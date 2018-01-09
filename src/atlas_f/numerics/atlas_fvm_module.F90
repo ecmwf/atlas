@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_fvm_module
 
@@ -34,6 +35,10 @@ contains
 
   procedure, public :: node_columns
   procedure, public :: edge_columns
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_fvm_Method__final_auto
+#endif
 
 END TYPE atlas_fvm_Method
 
@@ -91,6 +96,18 @@ function edge_columns(this)
   call edge_columns%return()
 end function
 
+!-------------------------------------------------------------------------------
+
+subroutine atlas_fvm_Method__final_auto(this)
+  type(atlas_fvm_Method) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_fvm_Method__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 end module atlas_fvm_module
 

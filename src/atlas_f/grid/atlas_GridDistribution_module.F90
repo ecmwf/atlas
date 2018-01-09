@@ -1,4 +1,4 @@
-#include "fckit/defines.h"
+#include "atlas/atlas_f.h"
 
 module atlas_GridDistribution_module
 
@@ -77,6 +77,9 @@ end function
 
 subroutine atlas_GridDistribution__final_auto(this)
   type(atlas_GridDistribution) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_GridDistribution__final_auto"
+#endif
 #if FCKIT_FINAL_NOT_PROPAGATING
   call this%final()
 #endif

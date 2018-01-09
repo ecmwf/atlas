@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_Elements_module
 
@@ -45,6 +46,9 @@ contains
   procedure, private :: add_elements_size_t
   procedure, private :: add_elements_int
 
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Elements__final_auto
+#endif
 end type
 
 interface atlas_Elements
@@ -233,5 +237,18 @@ function atlas_Elements__end(this) result(val)
   class(atlas_Elements), intent(in) :: this
   val = atlas__mesh__Elements__end(this%c_ptr())
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Elements__final_auto(this)
+  type(atlas_Elements) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Elements__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 end module atlas_Elements_module

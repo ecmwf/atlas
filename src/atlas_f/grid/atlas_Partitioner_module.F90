@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_Partitioner_module
 
@@ -34,6 +35,10 @@ TYPE, extends(fckit_owned_object) :: atlas_Partitioner
 !------------------------------------------------------------------------------
 contains
   procedure, public :: partition
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Partitioner__final_auto
+#endif
 
 END TYPE atlas_Partitioner
 
@@ -90,6 +95,19 @@ function partition(this,grid) result(distribution)
   distribution = atlas_GridDistribution( atlas__grid__Partitioner__partition( this%c_ptr(), grid%c_ptr() ) )
   call distribution%return()
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Partitioner__final_auto(this)
+  type(atlas_Partitioner) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Partitioner__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 ! ----------------------------------------------------------------------------------------
 

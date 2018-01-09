@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_ElementType_module
 
@@ -26,7 +27,9 @@ contains
   procedure, public :: nb_edges
   procedure, public :: name
   procedure, public :: parametric
-
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_ElementType__final_auto
+#endif
 end type
 
 interface atlas_ElementType
@@ -120,6 +123,18 @@ function parametric(this)
   endif
 end function
 
+!-------------------------------------------------------------------------------
+
+subroutine atlas_ElementType__final_auto(this)
+  type(atlas_ElementType) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_ElementType__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 end module atlas_ElementType_module
 

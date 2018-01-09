@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_FieldSet_module
 
@@ -10,10 +11,6 @@ private :: fckit_owned_object
 public :: atlas_FieldSet
 
 private
-
-!-----------------------------
-! atlas_Mesh                 !
-!-----------------------------
 
 !------------------------------------------------------------------------------
 TYPE, extends(fckit_owned_object) :: atlas_FieldSet
@@ -42,6 +39,10 @@ contains
   procedure, private :: field_by_idx_size_t
   procedure, public :: add
   generic :: field => field_by_name, field_by_idx_int, field_by_idx_size_t
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_FieldSet__final_auto
+#endif
 END TYPE atlas_FieldSet
 !------------------------------------------------------------------------------
 
@@ -144,6 +145,19 @@ function field_by_idx_int(this,idx) result(field)
   field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), int(idx-1,c_size_t) ) ) ! C index
   call field%return()
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_FieldSet__final_auto(this)
+  type(atlas_FieldSet) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_FieldSet__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 ! ----------------------------------------------------------------------------------------
 

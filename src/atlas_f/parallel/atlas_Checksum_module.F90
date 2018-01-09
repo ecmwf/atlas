@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_checksum_module
 
@@ -60,6 +61,10 @@ contains
       & Checksum__execute_real64_r3
 
   procedure, public :: delete => atlas_Checksum__delete
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Checksum__final_auto
+#endif
 
 END TYPE atlas_Checksum
 
@@ -248,6 +253,19 @@ function Checksum__execute_real64_r3(this, loc_field_data) result(checksum)
     &  lview, lstrides, lextents, lrank, checksum_c_str )
   checksum = c_str_to_string(checksum_c_str)
 end function Checksum__execute_real64_r3
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Checksum__final_auto(this)
+  type(atlas_Checksum) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Checksum__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 ! -----------------------------------------------------------------------------
 

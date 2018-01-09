@@ -1,17 +1,5 @@
 
-### fortranize function
-
-function( fortranize file )
-  unset( result )
-  file( STRINGS "${file}" lines )
-  foreach( i IN LISTS lines )
-  string( REGEX REPLACE "^/\\* (#undef .*) \\*/$" "! \\1" i "${i}" )
-  set( result "${result}${i}\n" )
-  endforeach()
-  file( WRITE "${file}" "${result}" )
-endfunction()
-
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../atlas/library/defines.h.in
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/atlas_f.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h )
 
 install( FILES

@@ -1,4 +1,3 @@
-
 #include "atlas/atlas_f.h"
 
 module atlas_Trans_module
@@ -71,6 +70,10 @@ contains
   procedure, private :: specnorm_r2
   generic, public :: specnorm => specnorm_r1_scalar, specnorm_r2
 
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Trans__final_auto
+#endif
+
 END TYPE atlas_Trans
 
 !------------------------------------------------------------------------------
@@ -119,8 +122,8 @@ function atlas_Trans__ctor( grid, nsmax ) result(this)
 #else
   ! IGNORE
   call this%reset_c_ptr( c_null_ptr )
-  ATLAS_SUPPRESS_UNUSED( grid )
-  ATLAS_SUPPRESS_UNUSED( nsmax )
+  FCKIT_SUPPRESS_UNUSED( grid )
+  FCKIT_SUPPRESS_UNUSED( nsmax )
 #endif
   call this%return()
 end function atlas_Trans__ctor
@@ -134,7 +137,7 @@ function handle( this )
 #else
   THROW_ERROR
   handle = 0
-  ATLAS_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( this )
 #endif
 end function
 
@@ -147,7 +150,7 @@ function truncation( this )
 #else
   THROW_ERROR
   truncation = 0
-  ATLAS_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( this )
 #endif
 end function
 
@@ -160,7 +163,7 @@ function nb_spectral_coefficients( this )
 #else
   THROW_ERROR
   nb_spectral_coefficients = 0
-  ATLAS_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( this )
 #endif
 end function
 
@@ -173,7 +176,7 @@ function nb_spectral_coefficients_global( this )
 #else
   THROW_ERROR
   nb_spectral_coefficients_global = 0
-  ATLAS_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( this )
 #endif
 end function
 
@@ -186,7 +189,7 @@ function nb_gridpoints( this )
 #else
   THROW_ERROR
   nb_gridpoints = 0
-  ATLAS_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( this )
 #endif
 end function
 
@@ -199,7 +202,7 @@ function nb_gridpoints_global( this )
 #else
   THROW_ERROR
   nb_gridpoints_global = 0
-  ATLAS_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( this )
 #endif
 end function
 
@@ -212,8 +215,8 @@ function grid( this )
   call grid%return()
 #else
   THROW_ERROR
-  ATLAS_SUPPRESS_UNUSED( this )
-  ATLAS_SUPPRESS_UNUSED( grid )
+  FCKIT_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( grid )
 #endif
 end function
 
@@ -243,10 +246,10 @@ subroutine dirtrans_fieldset(this, gpfields, spfields, config)
   endif
 #else
   THROW_ERROR
-  ATLAS_SUPPRESS_UNUSED( this )
-  ATLAS_SUPPRESS_UNUSED( gpfields )
-  ATLAS_SUPPRESS_UNUSED( spfields )
-  ATLAS_SUPPRESS_UNUSED( config )
+  FCKIT_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( gpfields )
+  FCKIT_SUPPRESS_UNUSED( spfields )
+  FCKIT_SUPPRESS_UNUSED( config )
 #endif
 end subroutine dirtrans_fieldset
 
@@ -276,10 +279,10 @@ subroutine invtrans_fieldset(this, spfields, gpfields, config)
   endif
 #else
   THROW_ERROR
-  ATLAS_SUPPRESS_UNUSED( this )
-  ATLAS_SUPPRESS_UNUSED( spfields )
-  ATLAS_SUPPRESS_UNUSED( gpfields )
-  ATLAS_SUPPRESS_UNUSED( config )
+  FCKIT_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( spfields )
+  FCKIT_SUPPRESS_UNUSED( gpfields )
+  FCKIT_SUPPRESS_UNUSED( config )
 #endif
 end subroutine invtrans_fieldset
 
@@ -308,10 +311,10 @@ subroutine dirtrans_field(this, gpfield, spfield, config)
   endif
 #else
   THROW_ERROR
-  ATLAS_SUPPRESS_UNUSED( this )
-  ATLAS_SUPPRESS_UNUSED( gpfield )
-  ATLAS_SUPPRESS_UNUSED( spfield )
-  ATLAS_SUPPRESS_UNUSED( config )
+  FCKIT_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( gpfield )
+  FCKIT_SUPPRESS_UNUSED( spfield )
+  FCKIT_SUPPRESS_UNUSED( config )
 #endif
 end subroutine dirtrans_field
 
@@ -342,11 +345,11 @@ subroutine dirtrans_wind2vordiv_field(this, gpwind, spvor, spdiv, config)
   endif
 #else
   THROW_ERROR
-  ATLAS_SUPPRESS_UNUSED( this )
-  ATLAS_SUPPRESS_UNUSED( gpwind )
-  ATLAS_SUPPRESS_UNUSED( spvor )
-  ATLAS_SUPPRESS_UNUSED( spdiv )
-  ATLAS_SUPPRESS_UNUSED( config )
+  FCKIT_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( gpwind )
+  FCKIT_SUPPRESS_UNUSED( spvor )
+  FCKIT_SUPPRESS_UNUSED( spdiv )
+  FCKIT_SUPPRESS_UNUSED( config )
 #endif
 
 end subroutine dirtrans_wind2vordiv_field
@@ -377,10 +380,10 @@ subroutine invtrans_field(this, spfield, gpfield, config)
   endif
 #else
   THROW_ERROR
-  ATLAS_SUPPRESS_UNUSED( this )
-  ATLAS_SUPPRESS_UNUSED( spfield )
-  ATLAS_SUPPRESS_UNUSED( gpfield )
-  ATLAS_SUPPRESS_UNUSED( config )
+  FCKIT_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( spfield )
+  FCKIT_SUPPRESS_UNUSED( gpfield )
+  FCKIT_SUPPRESS_UNUSED( config )
 #endif
 end subroutine invtrans_field
 
@@ -412,11 +415,11 @@ subroutine invtrans_vordiv2wind_field(this, spvor, spdiv, gpwind, config)
   endif
 #else
   THROW_ERROR
-  ATLAS_SUPPRESS_UNUSED( this )
-  ATLAS_SUPPRESS_UNUSED( spvor )
-  ATLAS_SUPPRESS_UNUSED( spdiv )
-  ATLAS_SUPPRESS_UNUSED( gpwind )
-  ATLAS_SUPPRESS_UNUSED( config )
+  FCKIT_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( spvor )
+  FCKIT_SUPPRESS_UNUSED( spdiv )
+  FCKIT_SUPPRESS_UNUSED( gpwind )
+  FCKIT_SUPPRESS_UNUSED( config )
 #endif
 
 end subroutine invtrans_vordiv2wind_field
@@ -437,9 +440,9 @@ subroutine invtrans_grad_field(this, spfield, gpfield)
   call config%final()
 #else
   THROW_ERROR
-  ATLAS_SUPPRESS_UNUSED( this )
-  ATLAS_SUPPRESS_UNUSED( spfield )
-  ATLAS_SUPPRESS_UNUSED( gpfield )
+  FCKIT_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( spfield )
+  FCKIT_SUPPRESS_UNUSED( gpfield )
 #endif
 end subroutine invtrans_grad_field
 
@@ -455,9 +458,9 @@ subroutine gathspec_r1(this, local, global)
   call atlas__Trans__gathspec(this%c_ptr(), 1, (/1/), local, global )
 #else
   THROW_ERROR
-  ATLAS_SUPPRESS_UNUSED( this )
-  ATLAS_SUPPRESS_UNUSED( local )
-  ATLAS_SUPPRESS_UNUSED( global )
+  FCKIT_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( local )
+  FCKIT_SUPPRESS_UNUSED( global )
 #endif
 end subroutine gathspec_r1
 
@@ -477,9 +480,9 @@ subroutine gathspec_r2(this, local, global)
   call atlas__Trans__gathspec(this%c_ptr(), size(local,1), destination, local_view, global_view )
 #else
   THROW_ERROR
-  ATLAS_SUPPRESS_UNUSED( this )
-  ATLAS_SUPPRESS_UNUSED( local )
-  ATLAS_SUPPRESS_UNUSED( global )
+  FCKIT_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( local )
+  FCKIT_SUPPRESS_UNUSED( global )
 #endif
 end subroutine gathspec_r2
 
@@ -501,9 +504,9 @@ subroutine specnorm_r1_scalar(this, spectra, norm, rank)
 #else
   norm=0
   THROW_ERROR
-  ATLAS_SUPPRESS_UNUSED( this )
-  ATLAS_SUPPRESS_UNUSED( spectra )
-  ATLAS_SUPPRESS_UNUSED( rank )
+  FCKIT_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( spectra )
+  FCKIT_SUPPRESS_UNUSED( rank )
 #endif
 end subroutine
 
@@ -524,11 +527,24 @@ subroutine specnorm_r2(this, spectra, norm, rank)
   call atlas__Trans__specnorm(this%c_ptr(), size(spectra,1), spectra_view, norm, rank_opt )
 #else
   THROW_ERROR
-  ATLAS_SUPPRESS_UNUSED( this )
-  ATLAS_SUPPRESS_UNUSED( spectra )
-  ATLAS_SUPPRESS_UNUSED( norm )
-  ATLAS_SUPPRESS_UNUSED( rank )
+  FCKIT_SUPPRESS_UNUSED( this )
+  FCKIT_SUPPRESS_UNUSED( spectra )
+  FCKIT_SUPPRESS_UNUSED( norm )
+  FCKIT_SUPPRESS_UNUSED( rank )
 #endif
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Trans__final_auto(this)
+  type(atlas_Trans) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Trans__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
 ! ----------------------------------------------------------------------------------------

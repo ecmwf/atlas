@@ -83,6 +83,8 @@ TEST( test_griddist )
 
   meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid,griddistribution)
+  FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
+
   call griddistribution%final()
 
   FCTEST_CHECK_EQUAL( grid%owners(), 2 )

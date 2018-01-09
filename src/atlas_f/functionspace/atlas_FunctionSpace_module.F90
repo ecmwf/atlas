@@ -48,6 +48,9 @@ contains
     & deprecated_create_field_1, &
     & deprecated_create_field_2
 
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_FunctionSpace__final_auto
+#endif
 
 END TYPE atlas_FunctionSpace
 
@@ -194,6 +197,19 @@ function deprecated_create_field_2(this,require_name,kind,levels) result(field)
 
   call field%return()
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_FunctionSpace__final_auto(this)
+  type(atlas_FunctionSpace) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_FunctionSpace__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 !------------------------------------------------------------------------------
 

@@ -53,6 +53,11 @@ contains
   procedure, private :: add_missing_args_int => atlas_Connectivity__add_missing_args_int
   procedure, private :: add_missing_args_size_t => atlas_Connectivity__add_missing_args_size_t
   generic, public :: add => add_values_args_int, add_values_args_size_t, add_missing_args_int, add_missing_args_size_t
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Connectivity__final_auto
+#endif
+
 end type
 
 !---------------------------------------
@@ -67,6 +72,10 @@ contains
 
 ! PGI compiler bug won't accept "assignment_operator_hook" from atlas_Connectivity parent class... grrr
   procedure, public :: assignment_operator_hook => atlas_MultiBlockConnectivity__assignment_operator_hook
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_MultiBlockConnectivity__final_auto
+#endif
 
 end type
 
@@ -156,7 +165,7 @@ subroutine assignment_operator_hook(this,other)
   class(atlas_Connectivity) :: this
   class(fckit_owned_object) :: other
   call this%set_access()
-  ATLAS_SUPPRESS_UNUSED(other)
+  FCKIT_SUPPRESS_UNUSED(other)
 end subroutine
 
 ! Following routine is exact copy of "assignment_operator_hook" above, because of bug in PGI compiler (17.7)
@@ -166,7 +175,7 @@ subroutine atlas_MultiBlockConnectivity__assignment_operator_hook(this,other)
   class(atlas_MultiBlockConnectivity) :: this
   class(fckit_owned_object) :: other
   call this%set_access()
-  ATLAS_SUPPRESS_UNUSED(other)
+  FCKIT_SUPPRESS_UNUSED(other)
 end subroutine
 
 function Connectivity_cptr(cptr) result(this)
@@ -539,6 +548,33 @@ subroutine delete_access(this)
   if( associated( this%padded_) ) deallocate(this%padded_)
 end subroutine
 
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Connectivity__final_auto(this)
+  type(atlas_Connectivity) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Connectivity__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_MultiBlockConnectivity__final_auto(this)
+  type(atlas_MultiBlockConnectivity) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_MultiBlockConnectivity__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+!-------------------------------------------------------------------------------
 
 end module atlas_connectivity_module
 

@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_functionspace_EdgeColumns_module
 
@@ -73,10 +74,9 @@ contains
   generic, public :: checksum => checksum_field, checksum_fieldset
   procedure, public :: get_checksum
 
-#ifdef FORTRAN_SUPPORTS_FINAL
-  final :: atlas_functionspace_EdgeColumns__final
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_functionspace_EdgeColumns__final_auto
 #endif
-
 
 END TYPE atlas_functionspace_EdgeColumns
 
@@ -114,15 +114,6 @@ function constructor(mesh,halo,levels) result(this)
   call config%final()
   call this%return()
 end function
-
-!------------------------------------------------------------------------------
-
-#ifdef FORTRAN_SUPPORTS_FINAL
-subroutine atlas_functionspace_EdgeColumns__final(this)
-  type(atlas_functionspace_EdgeColumns), intent(inout) :: this
-  call this%final()
-end subroutine
-#endif
 
 !------------------------------------------------------------------------------
 
@@ -280,6 +271,19 @@ function checksum_field(this,field) result(checksum)
   checksum = c_ptr_to_string(checksum_cptr)
   if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_functionspace_EdgeColumns__final_auto(this)
+  type(atlas_functionspace_EdgeColumns) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_functionspace_EdgeColumns__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 !------------------------------------------------------------------------------
 

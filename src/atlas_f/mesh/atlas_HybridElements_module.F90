@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_HybridElements_module
 
@@ -58,6 +59,10 @@ contains
 
   procedure, private :: elements_int
   procedure, private :: elements_size_t
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_HybridElements__final_auto
+#endif
 
 end type
 
@@ -259,6 +264,19 @@ function elements_int(this,idx) result(elements)
   elements = atlas_Elements( atlas__mesh__HybridElements__elements(this%c_ptr(),int(idx-1,c_size_t)) )
   call elements%return()
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_HybridElements__final_auto(this)
+  type(atlas_HybridElements) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_HybridElements__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 end module atlas_HybridElements_module
 

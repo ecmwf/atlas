@@ -109,6 +109,10 @@ contains
 
   procedure, private :: dummy
 
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Field__final_auto
+#endif
+
 END TYPE atlas_Field
 
 interface atlas_Field
@@ -262,7 +266,7 @@ end subroutine
 subroutine dummy(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
-  ATLAS_SUPPRESS_UNUSED(this)
+  FCKIT_SUPPRESS_UNUSED(this)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -301,7 +305,7 @@ end function
 integer function atlas_logical(kind)
   integer, optional :: kind
   atlas_logical = ATLAS_KIND_INT32
-  ATLAS_SUPPRESS_UNUSED(kind)
+  FCKIT_SUPPRESS_UNUSED(kind)
 end function
 
 !-------------------------------------------------------------------------------
@@ -678,6 +682,19 @@ subroutine sync_host_device(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
   call atlas__Field__sync_host_device(this%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Field__final_auto(this)
+  type(atlas_Field) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Field__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
 !-------------------------------------------------------------------------------

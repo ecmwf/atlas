@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_Interpolation_module
 
@@ -30,6 +31,10 @@ contains
   procedure, private :: execute_field
   procedure, private :: execute_fieldset
   generic, public :: execute => execute_field, execute_fieldset
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Interpolation__final_auto
+#endif
 
 END TYPE atlas_Interpolation
 
@@ -77,6 +82,19 @@ subroutine execute_fieldset(this,source,target)
   class(atlas_FieldSet), intent(in) :: source
   class(atlas_FieldSet), intent(inout) :: target
   call atlas__Interpolation__execute_fieldset(this%c_ptr(),source%c_ptr(),target%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Interpolation__final_auto(this)
+  type(atlas_Interpolation) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Interpolation__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
 ! -----------------------------------------------------------------------------

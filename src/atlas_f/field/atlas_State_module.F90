@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_State_module
 
@@ -55,6 +56,10 @@ contains
   procedure, private :: field_by_index => atlas_State__field_by_index
   generic, public :: field => field_by_name, field_by_index
   procedure, public :: metadata => atlas_State__metadata
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_State__final_auto
+#endif
 END TYPE atlas_State
 
 interface atlas_State
@@ -160,6 +165,19 @@ function atlas_State__metadata(this) result(metadata)
   class(atlas_State), intent(in) :: this
   call metadata%reset_c_ptr( atlas__State__metadata(this%c_ptr()) )
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_State__final_auto(this)
+  type(atlas_State) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_State__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 ! ----------------------------------------------------------------------------------------
 

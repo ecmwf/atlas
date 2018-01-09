@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_MeshGenerator_module
 
@@ -20,6 +21,10 @@ private
 TYPE, extends(fckit_owned_object) :: atlas_MeshGenerator
 contains
   procedure, public :: generate => atlas_MeshGenerator__generate
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_MeshGenerator__final_auto
+#endif
+
 END TYPE atlas_MeshGenerator
 
 interface atlas_MeshGenerator
@@ -80,8 +85,18 @@ function atlas_MeshGenerator__generate(this,grid,distribution) result(mesh)
    call mesh%return()
 end function
 
+!-------------------------------------------------------------------------------
 
-! -----------------------------------------------------------------------------
+subroutine atlas_MeshGenerator__final_auto(this)
+  type(atlas_MeshGenerator) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_MeshGenerator__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 ! ----------------------------------------------------------------------------------------
 

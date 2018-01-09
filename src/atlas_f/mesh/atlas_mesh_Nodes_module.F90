@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_mesh_Nodes_module
 
@@ -47,6 +48,10 @@ procedure, public :: edge_connectivity
 procedure, public :: cell_connectivity
 
 procedure, public :: connectivity
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_mesh_Nodes__final_auto
+#endif
 end type
 
 interface atlas_mesh_Nodes
@@ -278,6 +283,18 @@ function str(this)
   call c_ptr_free(str_cptr)
 end function
 
+!-------------------------------------------------------------------------------
+
+subroutine atlas_mesh_Nodes__final_auto(this)
+  type(atlas_mesh_Nodes) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_mesh_Nodes__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 ! ----------------------------------------------------------------------------------------
 

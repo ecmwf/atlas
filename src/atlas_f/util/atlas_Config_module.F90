@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_config_module
 
@@ -57,6 +58,10 @@ contains
                     get_string, get_array_int32, get_array_int64, get_array_real32, get_array_real64
   procedure :: json => atlas_Config__json
   
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Config__final_auto
+#endif
+
 END TYPE atlas_Config
 
 !------------------------------------------------------------------------------
@@ -80,6 +85,17 @@ contains
 
 ! -----------------------------------------------------------------------------
 ! Config routines
+
+subroutine atlas_Config__final_auto(this)
+  type(atlas_Config), intent(inout) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Config__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 function atlas_Config__ctor() result(this)
   use atlas_Config_c_binding
