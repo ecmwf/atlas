@@ -1,4 +1,3 @@
-#include "fckit/defines.h"
 #include "atlas/atlas_f.h"
 
 module atlas_Error_module

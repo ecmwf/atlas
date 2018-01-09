@@ -1,7 +1,7 @@
 #ifndef atlas_f_h
 #define atlas_f_h
 
-#include "fckit/defines.h"
+#include "fckit/fckit.h"
 
 #if @ATLAS_HAVE_OMP@
 #define ATLAS_HAVE_OMP
