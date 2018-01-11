@@ -8,6 +8,7 @@ use atlas_FunctionSpace_module, only: atlas_FunctionSpace
 use atlas_FieldSet_module, only: atlas_FieldSet
 use atlas_Field_module, only: atlas_Field
 use atlas_Mesh_module, only: atlas_Mesh
+  use, intrinsic :: iso_c_binding, only : c_ptr
 
 implicit none
 
@@ -65,13 +66,13 @@ private :: atlas_FunctionSpace
 private :: atlas_FieldSet
 private :: atlas_Field
 private :: atlas_Mesh
+private :: c_ptr
 
 ! =============================================================================
 CONTAINS
 ! =============================================================================
 
 function atlas_Output__cptr(cptr) result(this)
-  use, intrinsic :: iso_c_binding, only : c_ptr
   type(atlas_Output) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )

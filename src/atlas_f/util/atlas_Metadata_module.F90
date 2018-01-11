@@ -86,10 +86,11 @@ contains
 ! -----------------------------------------------------------------------------
 ! Metadata routines
 
-function atlas_Metadata__ctor() result(metadata)
+function atlas_Metadata__ctor() result(this)
   use atlas_metadata_c_binding
-  type(atlas_Metadata) :: metadata
-  call metadata%reset_c_ptr( atlas__Metadata__new() )
+  use fckit_c_interop_module
+  type(atlas_Metadata) :: this
+  call this%reset_c_ptr( atlas__Metadata__new() )
 end function atlas_Metadata__ctor
 
 subroutine atlas_Metadata__delete(this)

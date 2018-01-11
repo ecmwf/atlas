@@ -3,10 +3,19 @@
 module atlas_Mesh_module
 
 use fckit_owned_object_module, only: fckit_owned_object
+use atlas_mesh_Cells_module, only: atlas_mesh_Cells
+use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
+use atlas_mesh_Edges_module, only: atlas_mesh_Edges
+use, intrinsic :: iso_c_binding, only : c_size_t, c_ptr
 
 implicit none
 
 private :: fckit_owned_object
+private :: atlas_mesh_Cells
+private :: atlas_mesh_Nodes
+private :: atlas_mesh_Edges
+private :: c_size_t
+private :: c_ptr
 
 public :: atlas_Mesh
 
@@ -56,7 +65,6 @@ contains
 !========================================================
 
 function atlas_Mesh__cptr(cptr) result(this)
-  use, intrinsic :: iso_c_binding, only: c_ptr
   use atlas_mesh_c_binding
   type(atlas_Mesh) :: this
   type(c_ptr), intent(in) :: cptr
@@ -77,7 +85,6 @@ end function atlas_Mesh__ctor
 
 function Mesh__nodes(this) result(nodes)
   use atlas_mesh_c_binding
-  use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Nodes) :: nodes
   nodes = atlas_mesh_Nodes( atlas__Mesh__nodes(this%c_ptr()) )
@@ -88,7 +95,6 @@ end function
 
 function Mesh__cells(this) result(cells)
   use atlas_mesh_c_binding
-  use atlas_mesh_Cells_module, only: atlas_mesh_Cells
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Cells) :: cells
   cells = atlas_mesh_Cells( atlas__Mesh__cells(this%c_ptr()) )
@@ -99,7 +105,6 @@ end function
 
 function Mesh__edges(this) result(edges)
   use atlas_mesh_c_binding
-  use atlas_mesh_Edges_module, only: atlas_mesh_Edges
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Edges) :: edges
   edges = atlas_mesh_Edges( atlas__Mesh__Edges(this%c_ptr()) )
@@ -109,7 +114,6 @@ end function
 !-------------------------------------------------------------------------------
 
 function footprint(this)
-  use, intrinsic :: iso_c_binding, only : c_size_t
   use atlas_mesh_c_binding
   integer(c_size_t) :: footprint
   class(atlas_Mesh) :: this

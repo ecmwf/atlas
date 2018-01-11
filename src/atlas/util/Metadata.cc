@@ -165,27 +165,43 @@ void atlas__Metadata__delete (Metadata* This) {
 
 void atlas__Metadata__set_int (Metadata* This, const char* name, int value)
 {
-  ATLAS_ERROR_HANDLING( This->set( std::string(name), long(value) ) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    This->set( std::string(name), long(value) )
+  );
 }
 void atlas__Metadata__set_long (Metadata* This, const char* name, long value)
 {
-  ATLAS_ERROR_HANDLING( This->set( std::string(name), value ) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    This->set( std::string(name), value );
+  );
 }
 void atlas__Metadata__set_float (Metadata* This, const char* name, float value)
 {
-  ATLAS_ERROR_HANDLING( This->set( std::string(name), double(value) ) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    This->set( std::string(name), double(value) );
+  );
 }
 void atlas__Metadata__set_double (Metadata* This, const char* name, double value)
 {
-  ATLAS_ERROR_HANDLING( This->set( std::string(name), value ) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    This->set( std::string(name), value );
+  );
 }
 void atlas__Metadata__set_string (Metadata* This, const char* name, const char* value)
 {
-  ATLAS_ERROR_HANDLING( This->set( std::string(name), std::string(value) ) );
+  ATLAS_ERROR_HANDLING( 
+    ASSERT( This != NULL );
+    This->set( std::string(name), std::string(value) );
+  );
 }
 void atlas__Metadata__set_array_int (Metadata* This, const char* name, int value[], int size)
 {
   ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
     std::vector<int> v;
     v.assign(value,value+size);
     This->set( std::string(name), v );
@@ -194,6 +210,7 @@ void atlas__Metadata__set_array_int (Metadata* This, const char* name, int value
 void atlas__Metadata__set_array_long (Metadata* This, const char* name, long value[], int size)
 {
   ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
     std::vector<long> v;
     v.assign(value,value+size);
     This->set( std::string(name), v );
@@ -202,6 +219,7 @@ void atlas__Metadata__set_array_long (Metadata* This, const char* name, long val
 void atlas__Metadata__set_array_float (Metadata* This, const char* name, float value[], int size)
 {
   ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
     std::vector<float> v;
     v.assign(value,value+size);
     This->set( std::string(name), v );
@@ -210,6 +228,7 @@ void atlas__Metadata__set_array_float (Metadata* This, const char* name, float v
 void atlas__Metadata__set_array_double (Metadata* This, const char* name, double value[], int size)
 {
   ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
     std::vector<double> v;
     v.assign(value,value+size);
     This->set( std::string(name), v );
@@ -217,27 +236,40 @@ void atlas__Metadata__set_array_double (Metadata* This, const char* name, double
 }
 int atlas__Metadata__get_int (Metadata* This, const char* name)
 {
-  ATLAS_ERROR_HANDLING( return This->get<long>( std::string(name) ) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    return This->get<long>( std::string(name) )
+  );
   return 0;
 }
 long atlas__Metadata__get_long (Metadata* This, const char* name)
 {
-  ATLAS_ERROR_HANDLING( return This->get<long>( std::string(name) ) );
+  ATLAS_ERROR_HANDLING( 
+    ASSERT( This != NULL );
+    return This->get<long>( std::string(name) );
+  );
   return 0;
 }
 float atlas__Metadata__get_float (Metadata* This, const char* name)
 {
-  ATLAS_ERROR_HANDLING( return This->get<double>( std::string(name) ) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    return This->get<double>( std::string(name) );
+  );
   return 0;
 }
 double atlas__Metadata__get_double (Metadata* This, const char* name)
 {
-  ATLAS_ERROR_HANDLING( return This->get<double>( std::string(name) ) );
+  ATLAS_ERROR_HANDLING( 
+    ASSERT( This != NULL );
+    return This->get<double>( std::string(name) );
+  );
   return 0;
 }
 void atlas__Metadata__get_string( Metadata* This, const char* name, char* output_str, int max_len )
 {
   ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
     std::string s = This->get<std::string>( std::string(name) );
     if(s.size() > size_t(max_len))
     {
@@ -254,6 +286,7 @@ void atlas__Metadata__get_string( Metadata* This, const char* name, char* output
 void atlas__Metadata__get_array_int (Metadata* This, const char* name, int* &value, int& size, int& allocated)
 {
   ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
     std::vector<int> v = This->get< std::vector<int> >( std::string(name ) );
     size = v.size();
     value = new int[size];
@@ -264,6 +297,7 @@ void atlas__Metadata__get_array_int (Metadata* This, const char* name, int* &val
 void atlas__Metadata__get_array_long (Metadata* This, const char* name, long* &value, int& size, int& allocated)
 {
   ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
     std::vector<long> v = This->get< std::vector<long> >( std::string(name ) );
     size = v.size();
     value = new long[size];
@@ -274,6 +308,7 @@ void atlas__Metadata__get_array_long (Metadata* This, const char* name, long* &v
 void atlas__Metadata__get_array_float (Metadata* This, const char* name, float* &value, int& size, int& allocated)
 {
   ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
     std::vector<float> v = This->get< std::vector<float> >( std::string(name ) );
     size = v.size();
     value = new float[size];
@@ -284,6 +319,7 @@ void atlas__Metadata__get_array_float (Metadata* This, const char* name, float* 
 void atlas__Metadata__get_array_double (Metadata* This, const char* name, double* &value, int& size, int& allocated)
 {
   ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
     std::vector<double> v = This->get< std::vector<double> >( std::string(name ) );
     size = v.size();
     value = new double[size];
@@ -294,7 +330,10 @@ void atlas__Metadata__get_array_double (Metadata* This, const char* name, double
 
 int atlas__Metadata__has (Metadata* This, const char* name)
 {
-  ATLAS_ERROR_HANDLING( return This->has( std::string(name) ));
+  ATLAS_ERROR_HANDLING( 
+    ASSERT( This != NULL );
+    return This->has( std::string(name) );
+  );
   return 0;
 }
 

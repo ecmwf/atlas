@@ -2,11 +2,13 @@
 
 module atlas_mesh_cells_module
 
+use, intrinsic :: iso_c_binding, only: c_ptr
 use atlas_HybridElements_module, only: atlas_HybridElements
 
 implicit none
 
 private :: atlas_HybridElements
+private :: c_ptr
 
 public :: atlas_mesh_cells
 
@@ -30,7 +32,6 @@ contains
 
 function atlas_mesh_cells__cptr(cptr) result(this)
   use atlas_hybridelements_c_binding
-  use, intrinsic :: iso_c_binding, only: c_ptr
   type(atlas_mesh_cells) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )

@@ -3,10 +3,14 @@
 module atlas_Grid_module
 
 use fckit_owned_object_module, only: fckit_owned_object
+use atlas_Config_module, only: atlas_Config
+use, intrinsic :: iso_c_binding, only : c_ptr
 
 implicit none
 
 private :: fckit_owned_object
+private :: atlas_Config
+private :: c_ptr
 
 public :: atlas_Grid
 public :: atlas_StructuredGrid
@@ -308,7 +312,6 @@ end function
 
 function atlas_Grid__ctor_config(config) result(this)
   use atlas_grid_Structured_c_binding
-  use atlas_Config_module, only: atlas_Config
   type(atlas_Grid) :: this
   type(atlas_Config), intent(in) :: config
   call this%reset_c_ptr( atlas__grid__Structured__config(config%c_ptr()) )
@@ -317,7 +320,6 @@ end function
 
 function atlas_Grid__ctor_cptr(cptr) result(this)
   use fckit_c_interop_module, only: c_str
-  use, intrinsic :: iso_c_binding, only : c_ptr
   use atlas_grid_Structured_c_binding
   type(atlas_Grid) :: this
   type(c_ptr), intent(in) :: cptr
@@ -338,7 +340,6 @@ end function
 
 function atlas_StructuredGrid__ctor_config(config) result(this)
   use atlas_grid_Structured_c_binding
-  use atlas_Config_module, only: atlas_Config
   type(atlas_StructuredGrid) :: this
   type(atlas_Config), intent(in) :: config
   call this%reset_c_ptr( atlas__grid__Structured__config(config%c_ptr()) )
@@ -347,7 +348,6 @@ end function
 
 function atlas_StructuredGrid__ctor_cptr(cptr) result(this)
   use fckit_c_interop_module, only: c_str
-  use, intrinsic :: iso_c_binding, only : c_ptr
   use atlas_grid_Structured_c_binding
   type(atlas_StructuredGrid) :: this
   type(c_ptr), intent(in) :: cptr
@@ -503,7 +503,7 @@ end function
 
 function Structured__nx_array(this) result(nx)
   use atlas_grid_Structured_c_binding
-  use, intrinsic :: iso_c_binding , only : c_long, c_ptr, c_size_t, c_f_pointer
+  use, intrinsic :: iso_c_binding , only : c_long, c_size_t, c_f_pointer
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_long), pointer                :: nx(:)
   type   (c_ptr)                          :: nx_c_ptr
@@ -557,7 +557,7 @@ end function
 
 function Structured__y_array(this) result(y)
   use atlas_grid_Structured_c_binding
-  use, intrinsic :: iso_c_binding , only : c_double, c_ptr, c_size_t, c_f_pointer
+  use, intrinsic :: iso_c_binding , only : c_double, c_size_t, c_f_pointer
   class(atlas_StructuredGrid), intent(in) :: this
   real   (c_double)       , pointer    :: y(:)
   type   (c_ptr)                       :: y_c_ptr

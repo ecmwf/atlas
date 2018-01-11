@@ -2,6 +2,7 @@
 
 module atlas_mesh_Edges_module
 
+use, intrinsic :: iso_c_binding, only: c_ptr
 use atlas_HybridElements_module, only: atlas_HybridElements
 
 implicit none
@@ -29,7 +30,6 @@ contains
 !========================================================
 
 function atlas_mesh_edges__cptr(cptr) result(this)
-  use, intrinsic :: iso_c_binding, only: c_ptr
   use atlas_hybridelements_c_binding
   type(atlas_mesh_Edges) :: this
   type(c_ptr), intent(in) :: cptr
