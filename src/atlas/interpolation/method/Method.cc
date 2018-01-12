@@ -24,6 +24,11 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 
+// for static linking
+#include "FiniteElement.h"
+#include "KNearestNeighbours.h"
+#include "NearestNeighbour.h"
+
 namespace atlas {
 namespace interpolation {
 
@@ -40,6 +45,17 @@ static void init() {
     local_mutex = new eckit::Mutex();
     m = new MethodFactoryMap_t();
 }
+
+template<typename T> void load_builder() { MethodBuilder<T>("tmp"); }
+
+struct force_link {
+    force_link()
+    {
+        load_builder<method::FiniteElement>();
+        load_builder<method::KNearestNeighbours>();
+        load_builder<method::NearestNeighbour>();
+    }
+};
 
 
 }  // (anonymous namespace)
@@ -68,6 +84,8 @@ MethodFactory::~MethodFactory() {
 Method* MethodFactory::build(const std::string& name, const Method::Config& config) {
     pthread_once(&once, init);
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+
+    force_link();
 
     MethodFactoryMap_t::const_iterator j = m->find(name);
     if (j == m->end()) {

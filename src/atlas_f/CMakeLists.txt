@@ -159,7 +159,6 @@ preprocess_fypp( atlas_f_src field/atlas_Field_module.F90 )
 ## gridtools_storage_files ##
 add_custom_target( pre_processed_files SOURCES field/atlas_Field_module.F90 )
 
-
 ecbuild_debug_var( atlas_f_src )
 
 ### atlas fortran lib

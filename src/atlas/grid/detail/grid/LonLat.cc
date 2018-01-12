@@ -147,6 +147,8 @@ public:
     return create_lonlat( config, Shift(false,false) );
   }
 
+  void force_link() {}
+
 } regular_lonlat_;
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -190,6 +192,8 @@ public:
     return create_lonlat( config, Shift(true,true) );
   }
 
+  void force_link() {}
+
 } shifted_lonlat_;
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -232,6 +236,8 @@ public:
   virtual const Grid::Implementation* create( const Grid::Config& config ) const {
     return create_lonlat( config, Shift(true,false) );
   }
+
+  void force_link() {}
 
 } shifted_lon_;
 
@@ -277,10 +283,26 @@ public:
     return create_lonlat( config, Shift(false,true) );
   }
 
+  void force_link() {}
+
 } shifted_lat_;
 
 //---------------------------------------------------------------------------------------------------------------------
 
 }  // anonymous namespace
+
+namespace detail {
+namespace grid {
+
+void force_link_LonLat() {
+  regular_lonlat_.force_link();
+  shifted_lonlat_.force_link();
+  shifted_lon_.force_link();
+  shifted_lat_.force_link();
+}
+
+}
+}
+
 }  // namespace grid
 }  // namespace atlas

@@ -238,6 +238,8 @@ public:
 
   }
 
+  void force_link() {}
+
 } regional_;
 
 
@@ -288,11 +290,25 @@ public:
 
   }
 
+  void force_link() {}
+
 } zonal_band_;
 
 
 
 
 } // anonymous
+
+namespace detail {
+namespace grid {
+
+void force_link_Regional() {
+  regional_.force_link();
+  zonal_band_.force_link();
+}
+
+}
+}
+
 } // namespace grid
 } // namespace atlas
