@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 1996-2018 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,18 +8,34 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/mesh/detail/Polygon.h"
+#include "atlas/util/Polygon.h"
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <limits>
 #include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
-namespace mesh {
-namespace detail {
+namespace util {
+
+namespace {
+
+
+//------------------------------------------------------------------------------------------------------
+
+
+double cross_product_analog(const PointLonLat& A, const PointLonLat& B, const PointLonLat& C) {
+  return (A.lon() - C.lon()) * (B.lat() - C.lat())
+       - (A.lat() - C.lat()) * (B.lon() - C.lon());
+}
+
+
+}  // (anonymous)
+
 
 //------------------------------------------------------------------------------------------------------
 
@@ -101,7 +117,80 @@ void Polygon::print(std::ostream& s) const {
 
 //------------------------------------------------------------------------------------------------------
 
-}  // detail
-}  // mesh
+
+PolygonCoordinates::PolygonCoordinates(
+        const Polygon& poly,
+        const atlas::Field& lonlat,
+        bool includesNorthPole,
+        bool includesSouthPole,
+        bool removeAlignedPoints ) :
+    includesNorthPole_(includesNorthPole),
+    includesSouthPole_(includesSouthPole) {
+
+    ASSERT(poly.size() > 2);
+    ASSERT(poly.front() == poly.back());
+
+    // Point coordinates
+    // - use a bounding box to quickly discard points,
+    // - except when that is above/below bounding box but poles should be included
+
+    coordinates_.clear();
+    coordinates_.reserve(poly.size());
+
+    auto ll = array::make_view< double, 2 >(lonlat);
+    coordinatesMin_ = PointLonLat(ll(poly[0], LON), ll(poly[0], LAT));
+    coordinatesMax_ = coordinatesMin_;
+
+    for (size_t i = 0; i < poly.size(); ++i) {
+
+        PointLonLat A(ll(poly[i], LON), ll(poly[i], LAT));
+        coordinatesMin_ = PointLonLat::componentsMin(coordinatesMin_, A);
+        coordinatesMax_ = PointLonLat::componentsMax(coordinatesMax_, A);
+
+        // if new point is aligned with existing edge (cross product ~= 0) make the edge longer
+        if ((coordinates_.size() >= 2) && removeAlignedPoints) {
+            const PointLonLat& B = coordinates_.back();
+            const PointLonLat& C = coordinates_[coordinates_.size() - 2];
+            if (eckit::types::is_approximately_equal( 0., cross_product_analog(A, B, C) )) {
+                coordinates_.back() = A;
+                continue;
+            }
+        }
+
+        coordinates_.push_back(A);
+    }
+
+    ASSERT(coordinates_.size() == poly.size());
+}
+
+
+PolygonCoordinates::PolygonCoordinates(
+        const std::vector<PointLonLat>& points,
+        bool includesNorthPole,
+        bool includesSouthPole ) :
+    coordinates_(points),
+    includesNorthPole_(includesNorthPole),
+    includesSouthPole_(includesSouthPole) {
+
+    ASSERT(coordinates_.size() > 2);
+    ASSERT(eckit::geometry::points_equal(coordinates_.front(), coordinates_.back()));
+
+    coordinatesMin_ = coordinates_.front();
+    coordinatesMax_ = coordinatesMin_;
+    for (const PointLonLat& P : coordinates_) {
+        coordinatesMin_ = PointLonLat::componentsMin(coordinatesMin_, P);
+        coordinatesMax_ = PointLonLat::componentsMax(coordinatesMax_, P);
+    }
+}
+
+
+PolygonCoordinates::~PolygonCoordinates() {
+}
+
+
+//------------------------------------------------------------------------------------------------------
+
+
+}  // util
 }  // atlas
 
