@@ -28,10 +28,10 @@ namespace atlas {
 namespace mesh {
 
 namespace {
-detail::Polygon::edge_set_t compute_edges(const detail::MeshImpl& mesh, size_t halo) {
+util::Polygon::edge_set_t compute_edges(const detail::MeshImpl& mesh, size_t halo) {
   // extract partition boundary edges by always attempting first to`
   // remove a reversed edge from a neighbouring element, if any
-  detail::Polygon::edge_set_t edges;
+  util::Polygon::edge_set_t edges;
   for (size_t t = 0; t < mesh.cells().nb_types(); ++t) {
       const Elements& elements = mesh.cells().elements(t);
 
@@ -44,7 +44,7 @@ detail::Polygon::edge_set_t compute_edges(const detail::MeshImpl& mesh, size_t h
       for (size_t j = 0; j < elements.size(); ++j) {
           if (field_patch(j) == 0 && field_halo(j) <= halo ) {
               for (size_t k = 0; k < nb_nodes; ++k) {
-                  detail::Polygon::edge_t edge( conn(j,k), conn(j, (k+1) % nb_nodes));
+                  util::Polygon::edge_t edge( conn(j,k), conn(j, (k+1) % nb_nodes));
                   if (!edges.erase(edge.reverse())) {
                       edges.insert(edge);
                   }
@@ -57,7 +57,7 @@ detail::Polygon::edge_set_t compute_edges(const detail::MeshImpl& mesh, size_t h
 }
 
 PartitionPolygon::PartitionPolygon(const detail::MeshImpl& mesh, size_t halo) :
-  detail::Polygon( compute_edges(mesh,halo) ),
+  util::Polygon( compute_edges(mesh,halo) ),
   mesh_(mesh),
   halo_(halo) {
 }
@@ -151,7 +151,7 @@ void PartitionPolygon::print(std::ostream& out) const {
     out << "polygon:{"
         <<  "halo:" << halo_
         << ",size:" << size()
-        << ",nodes:" << static_cast<const detail::Polygon&>(*this)
+        << ",nodes:" << static_cast<const util::Polygon&>(*this)
         << "}";
 }
 

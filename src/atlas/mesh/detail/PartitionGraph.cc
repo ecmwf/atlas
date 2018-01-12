@@ -34,7 +34,7 @@ PartitionGraph* build_partition_graph(const MeshImpl& mesh ) {
   const eckit::mpi::Comm& comm = parallel::mpi::comm();
   const int mpi_size = int(comm.size());
 
-  const Polygon& poly = mesh.polygon();
+  const util::Polygon& poly = mesh.polygon();
 
   std::vector< double > polygon;
   polygon.reserve(poly.size()*2);

@@ -18,8 +18,8 @@
 #include "eckit/memory/Owned.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/detail/MeshImpl.h"
-#include "atlas/mesh/detail/Polygon.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Polygon.h"
 
 namespace atlas {
 namespace mesh {
@@ -27,7 +27,7 @@ namespace mesh {
 /**
  * @brief Polygon class that holds the boundary of a mesh partition
  */
-class PartitionPolygon : public detail::Polygon, public eckit::Owned {
+class PartitionPolygon : public util::Polygon, public eckit::Owned {
 
 public: // methods
 

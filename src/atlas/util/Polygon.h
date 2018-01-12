@@ -19,10 +19,14 @@
 #include <utility>
 #include <vector>
 #include "atlas/library/config.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
-namespace mesh {
-namespace detail {
+class Field;
+}
+
+namespace atlas {
+namespace util {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -83,7 +87,42 @@ protected:
 
 //------------------------------------------------------------------------------------------------------
 
-}  // detail
-}  // mesh
+class PolygonCoordinates {
+public:
+
+    // -- Constructors
+
+    PolygonCoordinates(const Polygon&, const atlas::Field& lonlat, bool includesNorthPole, bool includesSouthPole, bool removeAlignedPoints);
+
+    PolygonCoordinates(const std::vector<PointLonLat>& points, bool includesNorthPole, bool includesSouthPole);
+
+    // -- Destructor
+
+    virtual ~PolygonCoordinates();
+
+    // -- Methods
+
+    /*
+     * Point-in-partition test
+     * @param[in] P given point
+     * @return if point is in polygon
+     */
+    virtual bool contains(const PointLonLat& P) const = 0;
+
+protected:
+
+    // -- Members
+
+    PointLonLat coordinatesMin_;
+    PointLonLat coordinatesMax_;
+    std::vector< PointLonLat > coordinates_;
+    const bool includesNorthPole_;
+    const bool includesSouthPole_;
+
+};
+
+//------------------------------------------------------------------------------------------------------
+
+}  // util
 }  // atlas
 

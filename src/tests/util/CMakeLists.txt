@@ -36,15 +36,12 @@ if( HAVE_FCTEST )
 
 endif()
 
-ecbuild_add_test( TARGET atlas_test_flags
-  SOURCES  test_flags.cc
-  LIBS     atlas
-)
-
-ecbuild_add_test( TARGET atlas_test_indexview
-  SOURCES  test_indexview.cc
-  LIBS     atlas
-)
+foreach( test earth flags footprint indexview polygon )
+  ecbuild_add_test( TARGET atlas_test_${test}
+    SOURCES test_${test}.cc
+    LIBS atlas
+  )
+endforeach()
 
 ecbuild_add_test( TARGET atlas_test_vector
   SOURCES  test_vector.cc
@@ -59,12 +56,3 @@ ecbuild_add_test( TARGET atlas_test_metadata
   LIBS       atlas
 )
 
-ecbuild_add_test( TARGET atlas_test_footprint
-  SOURCES test_footprint.cc
-  LIBS    atlas
-)
-
-ecbuild_add_test( TARGET atlas_test_earth
-  SOURCES test_earth.cc
-  LIBS    atlas
-)

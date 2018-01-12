@@ -226,10 +226,6 @@ mesh/detail/MeshIntf.cc
 mesh/detail/MeshIntf.h
 mesh/detail/PartitionGraph.cc
 mesh/detail/PartitionGraph.h
-mesh/detail/Polygon.cc
-mesh/detail/Polygon.h
-mesh/detail/PolygonCoordinates.cc
-mesh/detail/PolygonCoordinates.h
 
 mesh/actions/ExtendNodesGlobal.h
 mesh/actions/ExtendNodesGlobal.cc
@@ -455,10 +451,16 @@ util/Earth.cc
 util/Earth.h
 util/GaussianLatitudes.cc
 util/GaussianLatitudes.h
+util/LonLatPolygon.cc
+util/LonLatPolygon.h
 util/Metadata.cc
 util/Metadata.h
+util/Polygon.cc
+util/Polygon.h
 util/Rotation.cc
 util/Rotation.h
+util/SphericalPolygon.cc
+util/SphericalPolygon.h
 util/detail/BlackMagic.h
 )
 

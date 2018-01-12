@@ -63,7 +63,7 @@ ecbuild_add_test(
   CONDITION   HAVE_TESSELATION
   LIBS        atlas)
 
-foreach( test accumulate_facets connectivity elements ll meshgen3d polygon rgg )
+foreach( test accumulate_facets connectivity elements ll meshgen3d rgg )
   ecbuild_add_test( TARGET atlas_test_${test}
     BOOST
     SOURCES test_${test}.cc

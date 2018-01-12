@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 1996-2018 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -12,8 +12,7 @@
 #include <cmath>
 #include <utility>
 #include "eckit/testing/Test.h"
-#include "atlas/mesh/detail/Polygon.h"
-#include "atlas/mesh/detail/PolygonCoordinates.h"
+#include "atlas/util/SphericalPolygon.h"
 #include "atlas/util/Point.h"
 
 #include "tests/AtlasTestEnvironment.h"
@@ -25,11 +24,11 @@ namespace test {
 
 CASE( "test_polygon_something" )
 {
-    using mesh::detail::PolygonCoordinates;
+    using util::SphericalPolygon;
     using p = PointLonLat;
     typedef std::pair<p, bool> point_inside_t;
 
-    PolygonCoordinates poly(
+    SphericalPolygon poly(
                 std::vector<PointLonLat> {
                     p(122.143, 35.9951),
                     p(120, 30.4576),
@@ -114,7 +113,7 @@ CASE( "test_polygon_something" )
                 false,
                 false );
 
-    // test som partitioning points that (approximately) exist in lon-lat polygon, but not in a spherical polygon
+    // test some partitioning points that (approximately) exist in lon-lat polygon, but not in a spherical polygon
     for (auto P : std::vector<point_inside_t> {
          point_inside_t(p(118.8,  26.9135), true),
          point_inside_t(p(118.8,  19.3822), false),
@@ -125,7 +124,8 @@ CASE( "test_polygon_something" )
          point_inside_t(p(118.8, -32.0080), false),
          point_inside_t(p(118.8, -35.9951), true)
      }) {
-        EXPECT( poly.containsPointInSphericalGeometry(P.first) == P.second );
+        // 'contains' uses spherical geometry
+        EXPECT( poly.contains(P.first) == P.second );
     }
 }
 

@@ -16,9 +16,9 @@
 #include "eckit/log/ProgressTimer.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/detail/PolygonCoordinates.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/LonLatPolygon.h"
 
 namespace atlas {
 namespace grid {
@@ -44,7 +44,7 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int part
     bool includesNorthPole = (mpi_rank == 0);
     bool includesSouthPole = (mpi_rank == mpi_size - 1);
 
-    const mesh::detail::PolygonCoordinates poly(
+    const util::LonLatPolygon poly(
                 prePartitionedMesh_.polygon(0),
                 prePartitionedMesh_.nodes().lonlat(),
                 includesNorthPole,
@@ -58,7 +58,7 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int part
         for (const PointXY Pxy : grid.xy()) {
             ++timer;
             const PointLonLat P = grid.projection().lonlat(Pxy);
-            partitioning[i++] = poly.containsPointInLonLatGeometry(P) ? mpi_rank : -1;
+            partitioning[i++] = poly.contains(P) ? mpi_rank : -1;
         }
     }
 

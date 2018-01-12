@@ -15,9 +15,9 @@
 #include "eckit/log/ProgressTimer.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/detail/PolygonCoordinates.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/SphericalPolygon.h"
 
 namespace atlas {
 namespace grid {
@@ -43,7 +43,7 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
     bool includesNorthPole = (mpi_rank == 0);
     bool includesSouthPole = (mpi_rank == mpi_size - 1);
 
-    const mesh::detail::PolygonCoordinates poly(
+    const util::SphericalPolygon poly(
                 prePartitionedMesh_.polygon(0),
                 prePartitionedMesh_.nodes().lonlat(),
                 includesNorthPole,
@@ -57,7 +57,7 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
         for (const PointXY Pxy : grid.xy()) {
             ++timer;
             const PointLonLat P = grid.projection().lonlat(Pxy);
-            partitioning[i++] = poly.containsPointInSphericalGeometry(P) ? mpi_rank : -1;
+            partitioning[i++] = poly.contains(P) ? mpi_rank : -1;
         }
     }
 
