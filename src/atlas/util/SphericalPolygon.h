@@ -30,13 +30,12 @@ public:
     // -- Overridden methods
 
     /*
-     * Point-in-partition test based on winding number for a point in a polygon
+     * Point-in-polygon test based on winding number
      * @note reference <a href="http://geomalgorithms.com/a03-_inclusion.html">Inclusion of a Point in a Polygon</a>
-     * @param[in] points vertex points of a polygon (closed, where poly.front() == poly.back())
      * @param[in] P given point
-     * @return if point is in partition
+     * @return if point is in polygon
      */
-    bool contains(const PointLonLat&) const;
+    bool contains(const PointLonLat& P) const;
 
 };
 
