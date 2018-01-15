@@ -215,11 +215,9 @@ void Library::Information::print( std::ostream& out ) const {
 #endif
       std::string array_data_store = "Native";
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-#if GRIDTOOLS_STORAGE_BACKEND_CUDA
+      array_data_store = "Gridtools-host";
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
       array_data_store = "GridTools-CUDA";
-#endif
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
-      array_data_store = "GridTools-host";
 #endif
 #endif
       out << "  Features:" << '\n'
