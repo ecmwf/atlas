@@ -74,7 +74,7 @@ contains
   procedure, private :: set_index
 
 #if FCKIT_FINAL_NOT_INHERITING
-  final :: atlas_functionspace_StructuredColumns__final_auto
+  final :: StructuredColumns__final_auto
 #endif
 
 END TYPE atlas_functionspace_StructuredColumns
@@ -300,7 +300,7 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_functionspace_StructuredColumns__final_auto(this)
+subroutine StructuredColumns__final_auto(this)
   type(atlas_functionspace_StructuredColumns) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_functionspace_StructuredColumns__final_auto"
