@@ -23,9 +23,9 @@ public:
 
     // -- Constructors
 
-    LonLatPolygon(const Polygon&, const atlas::Field& lonlat, bool includesNorthPole, bool includesSouthPole, bool removeAlignedPoints = true);
+    LonLatPolygon(const Polygon&, const atlas::Field& lonlat, bool removeAlignedPoints = true);
 
-    LonLatPolygon(const std::vector<PointLonLat>& points, bool includesNorthPole, bool includesSouthPole);
+    LonLatPolygon(const std::vector<PointLonLat>& points);
 
     // -- Overridden methods
 

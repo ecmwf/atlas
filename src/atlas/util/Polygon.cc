@@ -121,11 +121,7 @@ void Polygon::print(std::ostream& s) const {
 PolygonCoordinates::PolygonCoordinates(
         const Polygon& poly,
         const atlas::Field& lonlat,
-        bool includesNorthPole,
-        bool includesSouthPole,
-        bool removeAlignedPoints ) :
-    includesNorthPole_(includesNorthPole),
-    includesSouthPole_(includesSouthPole) {
+        bool removeAlignedPoints ) {
 
     ASSERT(poly.size() > 2);
     ASSERT(poly.front() == poly.back());
@@ -164,13 +160,8 @@ PolygonCoordinates::PolygonCoordinates(
 }
 
 
-PolygonCoordinates::PolygonCoordinates(
-        const std::vector<PointLonLat>& points,
-        bool includesNorthPole,
-        bool includesSouthPole ) :
-    coordinates_(points),
-    includesNorthPole_(includesNorthPole),
-    includesSouthPole_(includesSouthPole) {
+PolygonCoordinates::PolygonCoordinates(const std::vector<PointLonLat>& points) :
+    coordinates_(points) {
 
     ASSERT(coordinates_.size() > 2);
     ASSERT(eckit::geometry::points_equal(coordinates_.front(), coordinates_.back()));
@@ -185,6 +176,16 @@ PolygonCoordinates::PolygonCoordinates(
 
 
 PolygonCoordinates::~PolygonCoordinates() {
+}
+
+
+const PointLonLat& PolygonCoordinates::coordinatesMax() const {
+    return coordinatesMax_;
+}
+
+
+const PointLonLat& PolygonCoordinates::coordinatesMin() const {
+    return coordinatesMin_;
 }
 
 

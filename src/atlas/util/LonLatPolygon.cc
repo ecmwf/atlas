@@ -41,18 +41,13 @@ double cross_product_analog(const PointLonLat& A, const PointLonLat& B, const Po
 LonLatPolygon::LonLatPolygon(
         const Polygon& poly,
         const atlas::Field& lonlat,
-        bool includesNorthPole,
-        bool includesSouthPole,
         bool removeAlignedPoints ) :
-    PolygonCoordinates(poly, lonlat, includesNorthPole, includesSouthPole, removeAlignedPoints) {
+    PolygonCoordinates(poly, lonlat, removeAlignedPoints) {
 }
 
 
-LonLatPolygon::LonLatPolygon(
-        const std::vector<PointLonLat>& points,
-        bool includesNorthPole,
-        bool includesSouthPole ) :
-    PolygonCoordinates(points, includesNorthPole, includesSouthPole) {
+LonLatPolygon::LonLatPolygon(const std::vector<PointLonLat>& points ) :
+    PolygonCoordinates(points) {
 }
 
 
@@ -60,40 +55,38 @@ bool LonLatPolygon::contains(const PointLonLat& P) const {
     ASSERT(coordinates_.size() >= 2);
 
     // check first bounding box
-    if (coordinatesMin_.lon() <= P.lon() && P.lon() < coordinatesMax_.lon()
-     && coordinatesMin_.lat() <= P.lat() && P.lat() < coordinatesMax_.lat()) {
-
-        // winding number
-        int wn = 0;
-
-        // loop on polygon edges
-        for (size_t i = 1; i < coordinates_.size(); ++i) {
-            const PointLonLat& A = coordinates_[i-1];
-            const PointLonLat& B = coordinates_[ i ];
-
-            // check point-edge side and direction, using 2D-analog cross-product;
-            // tests if P is left|on|right of a directed A-B infinite line, by intersecting either:
-            // - "up" on upward crossing & P left of edge, or
-            // - "down" on downward crossing & P right of edge
-            const bool APB = (A.lat() <= P.lat() && P.lat() < B.lat());
-            const bool BPA = (B.lat() <= P.lat() && P.lat() < A.lat());
-
-            if (APB != BPA) {
-                const double side = cross_product_analog(P, A, B);
-                if (APB && side > 0) {
-                    ++wn;
-                } else if (BPA && side < 0) {
-                    --wn;
-                }
-            }
-        }
-
-        // wn == 0 only when P is outside
-        return wn != 0;
+    if (coordinatesMax_.lon() <= P.lon() || P.lon() < coordinatesMin_.lon() ||
+        coordinatesMax_.lat() <= P.lat() || P.lat() < coordinatesMin_.lat() ) {
+        return false;
     }
 
-    return ((includesNorthPole_ && P.lat() >= coordinatesMax_.lat())
-         || (includesSouthPole_ && P.lat() <  coordinatesMin_.lat()));
+    // winding number
+    int wn = 0;
+
+    // loop on polygon edges
+    for (size_t i = 1; i < coordinates_.size(); ++i) {
+        const PointLonLat& A = coordinates_[i-1];
+        const PointLonLat& B = coordinates_[ i ];
+
+        // check point-edge side and direction, using 2D-analog cross-product;
+        // tests if P is left|on|right of a directed A-B infinite line, by intersecting either:
+        // - "up" on upward crossing & P left of edge, or
+        // - "down" on downward crossing & P right of edge
+        const bool APB = (A.lat() <= P.lat() && P.lat() < B.lat());
+        const bool BPA = (B.lat() <= P.lat() && P.lat() < A.lat());
+
+        if (APB != BPA) {
+            const double side = cross_product_analog(P, A, B);
+            if (APB && side > 0) {
+                ++wn;
+            } else if (BPA && side < 0) {
+                --wn;
+            }
+        }
+    }
+
+    // wn == 0 only when P is outside
+    return wn != 0;
 }
 
 

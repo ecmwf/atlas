@@ -46,9 +46,7 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int part
 
     const util::LonLatPolygon poly(
                 prePartitionedMesh_.polygon(0),
-                prePartitionedMesh_.nodes().lonlat(),
-                includesNorthPole,
-                includesSouthPole );
+                prePartitionedMesh_.nodes().lonlat() );
 
     {
         eckit::ProgressTimer timer("Partitioning", grid.size(), "point",
@@ -58,7 +56,11 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int part
         for (const PointXY Pxy : grid.xy()) {
             ++timer;
             const PointLonLat P = grid.projection().lonlat(Pxy);
-            partitioning[i++] = poly.contains(P) ? mpi_rank : -1;
+            const bool atThePole =
+                    (includesNorthPole && P.lat() >= poly.coordinatesMax().lat()) ||
+                    (includesSouthPole && P.lat() <  poly.coordinatesMin().lat());
+
+            partitioning[i++] = atThePole || poly.contains(P) ? mpi_rank : -1;
         }
     }
 

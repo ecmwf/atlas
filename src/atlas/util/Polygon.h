@@ -92,9 +92,9 @@ public:
 
     // -- Constructors
 
-    PolygonCoordinates(const Polygon&, const atlas::Field& lonlat, bool includesNorthPole, bool includesSouthPole, bool removeAlignedPoints);
+    PolygonCoordinates(const Polygon&, const atlas::Field& lonlat, bool removeAlignedPoints);
 
-    PolygonCoordinates(const std::vector<PointLonLat>& points, bool includesNorthPole, bool includesSouthPole);
+    PolygonCoordinates(const std::vector<PointLonLat>& points);
 
     // -- Destructor
 
@@ -109,6 +109,9 @@ public:
      */
     virtual bool contains(const PointLonLat& P) const = 0;
 
+    const PointLonLat& coordinatesMax() const;
+    const PointLonLat& coordinatesMin() const;
+
 protected:
 
     // -- Members
@@ -116,8 +119,6 @@ protected:
     PointLonLat coordinatesMin_;
     PointLonLat coordinatesMax_;
     std::vector< PointLonLat > coordinates_;
-    const bool includesNorthPole_;
-    const bool includesSouthPole_;
 
 };
 

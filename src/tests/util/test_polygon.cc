@@ -109,9 +109,7 @@ CASE( "test_polygon_something" )
                     p(135, 35.9951),
                     p(128.571, 35.9951),
                     p(122.143, 35.9951)
-                },
-                false,
-                false );
+                } );
 
     // test some partitioning points that (approximately) exist in lon-lat polygon, but not in a spherical polygon
     for (auto P : std::vector<point_inside_t> {

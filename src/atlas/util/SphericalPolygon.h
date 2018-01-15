@@ -23,9 +23,9 @@ public:
 
     // -- Constructors
 
-    SphericalPolygon(const Polygon&, const atlas::Field& lonlat, bool includesNorthPole, bool includesSouthPole);
+    SphericalPolygon(const Polygon&, const atlas::Field& lonlat);
 
-    SphericalPolygon(const std::vector<PointLonLat>& points, bool includesNorthPole, bool includesSouthPole);
+    SphericalPolygon(const std::vector<PointLonLat>& points);
 
     // -- Overridden methods
 
