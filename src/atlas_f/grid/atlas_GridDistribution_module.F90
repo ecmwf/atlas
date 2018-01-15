@@ -57,10 +57,8 @@ function atlas_GridDistribution__cptr( cptr ) result(this)
   use atlas_distribution_c_binding
   type(atlas_GridDistribution) :: this
   type(c_ptr) :: cptr
-write(0,*) "atlas_GridDistribution__cptr"
   call this%reset_c_ptr( cptr )
   call this%return()
-write(0,*) "atlas_GridDistribution__cptr done"
 end function
 
 function atlas_GridDistribution__ctor( part, part0 ) result(this)
@@ -69,13 +67,11 @@ function atlas_GridDistribution__ctor( part, part0 ) result(this)
   integer, intent(in) :: part(:)
   integer, intent(in), optional :: part0
   integer:: npts, opt_part0
-  write(0,*) "atlas_GridDistribution__ctor"
   opt_part0 = 0
   if( present(part0) ) opt_part0 = part0
   npts = size(part)
   call this%reset_c_ptr( atlas__GridDistribution__new(npts, part, opt_part0) )
   call this%return()
-  write(0,*) "atlas_GridDistribution__ctor done"
 end function
 
 ! ----------------------------------------------------------------------------------------

@@ -76,7 +76,7 @@ function atlas_MeshGenerator__generate(this,grid,distribution) result(mesh)
    class(atlas_MeshGenerator), intent(in) :: this
    class(atlas_Grid), intent(in) :: grid
    class(atlas_GridDistribution), intent(in), optional :: distribution
-
+   call mesh%reset_c_ptr() ! Somehow needed with PGI/16.7 and build-type "bit"
    if( present(distribution) ) then
      mesh = atlas_Mesh( atlas__MeshGenerator__generate__grid_griddist(this%c_ptr(),grid%c_ptr(),distribution%c_ptr()) )
    else
