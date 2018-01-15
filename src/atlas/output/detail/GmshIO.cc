@@ -113,23 +113,19 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
   bool binary( !gmsh_options.get<bool>("ascii") );
   size_t nlev  = std::max<int>(1,field.levels());
   size_t ndata = std::min(function_space.nb_nodes(),field.shape(0));
-  size_t nvars = field.stride(0)/nlev;
+  size_t nvars = std::max<int>(1,field.variables()); //field.stride(0)/nlev;
   array::ArrayView<gidx_t,1> gidx   = array::make_view<gidx_t,1>( function_space.nodes().global_index() );
-  array::LocalView<DATATYPE,2> data ( field.data<DATATYPE>(),
-                                      array::make_shape(field.shape(0),field.stride(0)) );
   Field gidx_glb;
-  Field data_glb;
+  Field field_glb;
   if( gather )
   {
     gidx_glb = function_space.createField<gidx_t>( option::name("gidx_glb") | option::levels(false) | option::global() );
     function_space.gather(function_space.nodes().global_index(),gidx_glb);
     gidx = array::make_view<gidx_t,1>( gidx_glb );
 
-    data_glb = function_space.createField<DATATYPE>( option::name("glb_field") | option::levels(field.levels()) | option::variables( field.variables() ) | option::global() );
-    function_space.gather(field,data_glb);
-    data = array::LocalView<DATATYPE,2>( data_glb.data<DATATYPE>(),
-                                         array::make_shape(data_glb.shape(0),data_glb.stride(0)) );
-    ndata = std::min(function_space.nb_nodes_global(),data.shape(0));
+    field_glb = function_space.createField( field, option::global() );
+    function_space.gather(field,field_glb);
+    ndata = std::min(function_space.nb_nodes_global(),field_glb.shape(0));
   }
 
   std::vector<long> lev;
@@ -168,123 +164,138 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
       out << ndata << "\n";
       out << atlas::parallel::mpi::comm().rank() << "\n";
 
-      if( binary )
-      {
-        if( nvars == 1)
-        {
-          double value;
-          for(size_t n = 0; n < ndata; ++n)
-          {
-            out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
-            value = data(n,jlev*nvars+0);
-            out.write(reinterpret_cast<const char*>(&value),sizeof(double));
-          }
-        }
-        else if( nvars <= 3 )
-        {
-          double value[3] = {0,0,0};
-          for(size_t n = 0; n < ndata; ++n)
-          {
-            out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
-            for(size_t v=0; v < nvars; ++v)
-              value[v] = data(n,jlev*nvars+v);
-            out.write(reinterpret_cast<const char*>(&value),sizeof(double)*3);
-          }
-        }
-        else if( nvars <= 9 )
-        {
-          double value[9] = {
-            0,0,0,
-            0,0,0,
-            0,0,0
-          };
-          if( nvars == 4 )
-          {
-            for(size_t n = 0; n < ndata; ++n)
-            {
-              out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
-              for( int i=0; i<2; ++i )
-              {
-                for( int j=0; j<2; ++j )
-                {
-                  value[i*3+j] = data(n,jlev*nvars+i*2+j);
-                }
-              }
-              out.write(reinterpret_cast<const char*>(&value),sizeof(double)*9);
-            }
-          }
-          if( nvars == 9 )
-          {
-            for(size_t n = 0; n < ndata; ++n)
-            {
-              out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
-              for( int i=0; i<3; ++i )
-              {
-                for( int j=0; j<3; ++j )
-                {
-                  value[i*3+j] = data(n,jlev*nvars+i*3+j);
-                }
-              }
-              out.write(reinterpret_cast<const char*>(&value),sizeof(double)*9);
-            }
-          }
-        }
-        out << "\n";
-      }
-      else
-      {
-        if( nvars == 1)
-        {
-          for( size_t n = 0; n < ndata; ++n )
-          {
-            ASSERT( jlev*nvars < data.shape(1) );
-            ASSERT( n < gidx.shape(0) );
-            out << gidx(n) << " " << data(n,jlev*nvars+0) << "\n";
-          }
-        }
-        else if( nvars <= 3 )
-        {
-          std::vector<DATATYPE> data_vec(3,0.);
-          for( size_t n = 0; n < ndata; ++n )
-          {
-            out << gidx(n);
-            for(size_t v=0; v < nvars; ++v)
-              data_vec[v] = data(n,jlev*nvars+v);
-            for( int v=0; v<3; ++v)
-              out << " " << data_vec[v];
-            out << "\n";
-          }
-        }
-        else if( nvars <= 9 )
-        {
-          std::vector<DATATYPE> data_vec(9,0.);
 
-          if( nvars == 4 )
-          {
-            for( size_t n = 0; n < ndata; ++n ) {
-              for( int i=0; i<2; ++i ) {
-                for( int j=0; j<2; ++j ) {
-                  data_vec[i*3+j] = data(n,jlev*nvars+i*2+j);
+      {
+        if( field.levels() ) {
+          if( field.variables() ) {
+            auto data = gather ? array::make_view<DATATYPE,3>( field_glb ) : array::make_view<DATATYPE,3>( field );
+            if( nvars == 1)
+            {
+              for( size_t n = 0; n < ndata; ++n )
+              {
+                ASSERT( jlev*nvars < data.shape(1) );
+                ASSERT( n < gidx.shape(0) );
+                out << gidx(n) << " " << data(n,jlev,0) << "\n";
+              }
+            }
+            else if( nvars <= 3 )
+            {
+              std::vector<DATATYPE> data_vec(3,0.);
+              for( size_t n = 0; n < ndata; ++n )
+              {
+                out << gidx(n);
+                for(size_t v=0; v < nvars; ++v)
+                  data_vec[v] = data(n,jlev,v);
+                for( int v=0; v<3; ++v)
+                  out << " " << data_vec[v];
+                out << "\n";
+              }
+            }
+            else if( nvars <= 9 )
+            {
+              std::vector<DATATYPE> data_vec(9,0.);
+
+              if( nvars == 4 )
+              {
+                for( size_t n = 0; n < ndata; ++n ) {
+                  for( int i=0; i<2; ++i ) {
+                    for( int j=0; j<2; ++j ) {
+                      data_vec[i*3+j] = data(n,jlev,i*2+j);
+                    }
+                  }
+                  out << gidx(n);
+                  for( int v=0; v<9; ++v)
+                    out << " " << data_vec[v];
+                  out << "\n";
                 }
               }
-              out << gidx(n);
-              for( int v=0; v<9; ++v)
-                out << " " << data_vec[v];
-              out << "\n";
+              if( nvars == 9 )
+              {
+                for( size_t n = 0; n < ndata; ++n ) {
+                  for( int i=0; i<3; ++i ) {
+                    for( int j=0; j<3; ++j ) {
+                      data_vec[i*3+j] = data(n,jlev,i*2+j);
+                    }
+                  }
+                  out << gidx(n);
+                  for( int v=0; v<9; ++v)
+                    out << " " << data_vec[v];
+                  out << "\n";
+                }
+              }
+            }
+          } else {
+            auto data = gather ? array::make_view<DATATYPE,2>( field_glb ) : array::make_view<DATATYPE,2>( field );
+            for( size_t n = 0; n < ndata; ++n )
+            {
+              ASSERT( jlev*nvars < data.shape(1) );
+              ASSERT( n < gidx.shape(0) );
+              out << gidx(n) << " " << data(n,jlev) << "\n";
             }
           }
-          if( nvars == 9 )
-          {
-            for( size_t n = 0; n < ndata; ++n ) {
-              for( int i=0; i<2; ++i ) {
-                for( int j=0; j<2; ++j ) {
-                  data_vec[i*3+j] = data(n,jlev*nvars+i*2+j);
+        } else {
+          if( field.variables() ) {
+            auto data = gather ? array::make_view<DATATYPE,2>( field_glb ) : array::make_view<DATATYPE,2>( field );
+            if( nvars == 1)
+            {
+              for( size_t n = 0; n < ndata; ++n )
+              {
+                ASSERT( n < gidx.shape(0) );
+                out << gidx(n) << " " << data(n,0) << "\n";
+              }
+            }
+            else if( nvars <= 3 )
+            {
+              std::vector<DATATYPE> data_vec(3,0.);
+              for( size_t n = 0; n < ndata; ++n )
+              {
+                out << gidx(n);
+                for(size_t v=0; v < nvars; ++v)
+                  data_vec[v] = data(n,v);
+                for( int v=0; v<3; ++v)
+                  out << " " << data_vec[v];
+                out << "\n";
+              }
+            }
+            else if( nvars <= 9 )
+            {
+              std::vector<DATATYPE> data_vec(9,0.);
+
+              if( nvars == 4 )
+              {
+                for( size_t n = 0; n < ndata; ++n ) {
+                  for( int i=0; i<2; ++i ) {
+                    for( int j=0; j<2; ++j ) {
+                      data_vec[i*3+j] = data(n,i*2+j);
+                    }
+                  }
+                  out << gidx(n);
+                  for( int v=0; v<9; ++v)
+                    out << " " << data_vec[v];
+                  out << "\n";
                 }
               }
-              out << gidx(n);
-              for( int v=0; v<9; ++v)
-                out << " " << data_vec[v];
-              out << "\n";
+              if( nvars == 9 )
+              {
+                for( size_t n = 0; n < ndata; ++n ) {
+                  for( int i=0; i<3; ++i ) {
+                    for( int j=0; j<3; ++j ) {
+                      data_vec[i*3+j] = data(n,i*2+j);
+                    }
+                  }
+                  out << gidx(n);
+                  for( int v=0; v<9; ++v)
+                    out << " " << data_vec[v];
+                  out << "\n";
+                }
+              }
+            }
+          } else {
+            auto data = gather ? array::make_view<DATATYPE,1>( field_glb ) : array::make_view<DATATYPE,1>( field );
+            for( size_t n = 0; n < ndata; ++n )
+            {
+              ASSERT( n < gidx.shape(0) );
+              out << gidx(n) << " " << data(n) << "\n";
             }
           }
         }
