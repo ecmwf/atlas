@@ -1,17 +1,5 @@
 
-### fortranize function
-
-function( fortranize file )
-  unset( result )
-  file( STRINGS "${file}" lines )
-  foreach( i IN LISTS lines )
-  string( REGEX REPLACE "^/\\* (#undef .*) \\*/$" "! \\1" i "${i}" )
-  set( result "${result}${i}\n" )
-  endforeach()
-  file( WRITE "${file}" "${result}" )
-endfunction()
-
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../atlas/library/defines.h.in
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/atlas_f.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h )
 
 install( FILES
@@ -170,7 +158,6 @@ preprocess_fypp( atlas_f_src field/atlas_Field_module.F90 )
 
 ## gridtools_storage_files ##
 add_custom_target( pre_processed_files SOURCES field/atlas_Field_module.F90 )
-
 
 ecbuild_debug_var( atlas_f_src )
 

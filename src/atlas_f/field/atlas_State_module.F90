@@ -1,11 +1,14 @@
+#include "atlas/atlas_f.h"
 
 module atlas_State_module
 
-use fckit_refcounted_module, only: fckit_refcounted
+use fckit_owned_object_module, only: fckit_owned_object
+use atlas_Field_module, only: atlas_Field
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
+private :: atlas_Field
 
 public :: atlas_State
 
@@ -18,7 +21,7 @@ private
 ! (C) Copyright 2013-2015 ECMWF.
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_State
+TYPE, extends(fckit_owned_object) :: atlas_State
 
 ! Purpose :
 ! -------
@@ -54,8 +57,9 @@ contains
   generic, public :: field => field_by_name, field_by_index
   procedure, public :: metadata => atlas_State__metadata
 
-  procedure, public :: delete => atlas_State__delete
-  procedure, public :: copy => atlas_State__copy
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_State__final_auto
+#endif
 END TYPE atlas_State
 
 interface atlas_State
@@ -72,52 +76,37 @@ contains
 ! State routines
 
 
-function atlas_State__new() result(State)
+function atlas_State__new() result(this)
   use atlas_state_c_binding
-  type(atlas_State) :: State
-  call State%reset_c_ptr( atlas__State__new() )
+  type(atlas_State) :: this
+  call this%reset_c_ptr( atlas__State__new() )
+  call this%return()
 end function
 
-function atlas_State__generate(generator, params) result(State)
+function atlas_State__generate(generator, params) result(this)
   use fckit_c_interop_module, only: c_str
   use atlas_state_c_binding
   use atlas_Config_module, only: atlas_Config
-  type(atlas_State) :: State
+  type(atlas_State) :: this
   character(len=*), intent(in) :: generator
   class(atlas_Config), intent(in), optional :: params
 
   type(atlas_Config) :: p
 
-  call State%reset_c_ptr( atlas__State__new() )
+  call this%reset_c_ptr( atlas__State__new() )
 
   if( present(params) ) then
-    call atlas__State__initialize(State%c_ptr(),c_str(generator),params%c_ptr())
+    call atlas__State__initialize(this%c_ptr(),c_str(generator),params%c_ptr())
   else
     p = atlas_Config()
-    call atlas__State__initialize(State%c_ptr(),c_str(generator),p%c_ptr())
+    call atlas__State__initialize(this%c_ptr(),c_str(generator),p%c_ptr())
     call p%final()
   endif
+  call this%return()
 end function
-
-subroutine atlas_State__delete(this)
-  use atlas_state_c_binding
-  class(atlas_State), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__State__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine
-
-
-subroutine atlas_State__copy(this,obj_in)
-  class(atlas_State), intent(inout) :: this
-  class(fckit_refcounted), target, intent(in) :: obj_in
-end subroutine
-
 
 subroutine atlas_State__add(this,field)
   use atlas_state_c_binding
-  use atlas_Field_module, only: atlas_Field
   class(atlas_State), intent(inout) :: this
   class(atlas_Field), intent(in) :: field
   call atlas__State__add(this%c_ptr(),field%c_ptr())
@@ -153,7 +142,6 @@ end function
 function atlas_State__field_by_name(this,name) result(field)
   use fckit_c_interop_module, only: c_str
   use atlas_state_c_binding
-  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_State), intent(inout) :: this
   character(len=*), intent(in) :: name
@@ -163,7 +151,6 @@ end function
 
 function atlas_State__field_by_index(this,index) result(field)
   use atlas_state_c_binding
-  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_State), intent(in) :: this
   integer, intent(in) :: index
@@ -178,6 +165,19 @@ function atlas_State__metadata(this) result(metadata)
   class(atlas_State), intent(in) :: this
   call metadata%reset_c_ptr( atlas__State__metadata(this%c_ptr()) )
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_State__final_auto(this)
+  type(atlas_State) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_State__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 ! ----------------------------------------------------------------------------------------
 

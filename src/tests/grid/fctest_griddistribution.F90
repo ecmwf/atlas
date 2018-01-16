@@ -61,7 +61,6 @@ TEST( test_griddist )
   type(atlas_Output) :: gmsh
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_GridDistribution) :: griddistribution
-  character(len=1024) :: msg
 
   integer, allocatable :: part(:)
   integer :: jnode
@@ -80,12 +79,15 @@ TEST( test_griddist )
 
   griddistribution = atlas_GridDistribution(part, part0=1)
 
-  write(msg,*) "owners fort",griddistribution%owners()
-  call atlas_log%info(msg)
+  FCTEST_CHECK_EQUAL( grid%owners(), 1 )
 
   meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid,griddistribution)
+  FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
+
   call griddistribution%final()
+
+  FCTEST_CHECK_EQUAL( grid%owners(), 2 )
 
   gmsh = atlas_output_Gmsh("testf3.msh")
   call gmsh%write(mesh)
@@ -93,6 +95,7 @@ TEST( test_griddist )
   deallocate(part)
 
   call mesh%final()
+  FCTEST_CHECK_EQUAL( grid%owners(), 1 )
   call gmsh%final()
   call grid%final()
   call meshgenerator%final()

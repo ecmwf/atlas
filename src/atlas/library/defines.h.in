@@ -1,10 +1,6 @@
 #ifndef atlas_library_defines_h
 #define atlas_library_defines_h
 
-#if 0
-// Do not use cmakedefine as this file needs to be included by fortran as well
-#endif
-
 #if @CGAL_FOUND@
 #define CGAL_FOUND
 #endif

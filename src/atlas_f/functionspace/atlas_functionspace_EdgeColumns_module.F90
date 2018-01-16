@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_functionspace_EdgeColumns_module
 
@@ -73,10 +74,9 @@ contains
   generic, public :: checksum => checksum_field, checksum_fieldset
   procedure, public :: get_checksum
 
-#ifdef FORTRAN_SUPPORTS_FINAL
-  final :: atlas_functionspace_EdgeColumns__final
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_functionspace_EdgeColumns__final_auto
 #endif
-
 
 END TYPE atlas_functionspace_EdgeColumns
 
@@ -91,38 +91,29 @@ end interface
 contains
 !========================================================
 
-function constructor__cptr(cptr) result(functionspace)
-  type(atlas_functionspace_EdgeColumns) :: functionspace
+function constructor__cptr(cptr) result(this)
+  type(atlas_functionspace_EdgeColumns) :: this
   type(c_ptr), intent(in) :: cptr
-  call functionspace%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr )
+  call this%return()
 end function
 
 !------------------------------------------------------------------------------
 
 function constructor(mesh,halo,levels) result(this)
-    use atlas_functionspace_EdgeColumns_c_binding
-    type(atlas_functionspace_EdgeColumns) :: this
-    type(atlas_Mesh), intent(inout) :: mesh
-    integer, intent(in), optional :: halo
-    integer, intent(in), optional :: levels
-    type(atlas_Config) :: config
-    config = atlas_Config()
-    if( present(halo) )   call config%set("halo",halo)
-    if( present(levels) ) call config%set("levels",levels)
-    this  = constructor__cptr( &
-      & atlas__fs__EdgeColumns__new(mesh%c_ptr(),config%c_ptr()) )
-    call config%final()
-    call this%return()
+  use atlas_functionspace_EdgeColumns_c_binding
+  type(atlas_functionspace_EdgeColumns) :: this
+  type(atlas_Mesh), intent(inout) :: mesh
+  integer, intent(in), optional :: halo
+  integer, intent(in), optional :: levels
+  type(atlas_Config) :: config
+  config = atlas_Config()
+  if( present(halo) )   call config%set("halo",halo)
+  if( present(levels) ) call config%set("levels",levels)
+  call this%reset_c_ptr( atlas__fs__EdgeColumns__new(mesh%c_ptr(),config%c_ptr()) )
+  call config%final()
+  call this%return()
 end function
-
-!------------------------------------------------------------------------------
-
-#ifdef FORTRAN_SUPPORTS_FINAL
-subroutine atlas_functionspace_EdgeColumns__final(this)
-  type(atlas_functionspace_EdgeColumns), intent(inout) :: this
-  call this%final()
-end subroutine
-#endif
 
 !------------------------------------------------------------------------------
 
@@ -140,6 +131,7 @@ function mesh(this)
   type(atlas_Mesh) :: mesh
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   call mesh%reset_c_ptr( atlas__fs__EdgeColumns__mesh(this%c_ptr()) )
+  call mesh%return()
 end function
 
 !------------------------------------------------------------------------------
@@ -149,6 +141,7 @@ function edges(this)
   type(atlas_mesh_Edges) :: edges
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   call edges%reset_c_ptr( atlas__fs__EdgeColumns__edges(this%c_ptr()) )
+  call edges%return()
 end function
 
 !------------------------------------------------------------------------------
@@ -176,15 +169,17 @@ function get_gather(this) result(gather)
   type(atlas_GatherScatter) :: gather
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   call gather%reset_c_ptr( atlas__fs__EdgeColumns__get_gather(this%c_ptr()) )
+!   call gather%return()
 end function
 
 !------------------------------------------------------------------------------
 
-function get_scatter(this) result(gather)
+function get_scatter(this) result(scatter)
   use atlas_functionspace_EdgeColumns_c_binding
-  type(atlas_GatherScatter) :: gather
+  type(atlas_GatherScatter) :: scatter
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  call gather%reset_c_ptr( atlas__fs__EdgeColumns__get_scatter(this%c_ptr()) )
+  call scatter%reset_c_ptr( atlas__fs__EdgeColumns__get_scatter(this%c_ptr()) )
+!   call scatter%return()
 end function
 
 !------------------------------------------------------------------------------
@@ -234,6 +229,7 @@ function get_halo_exchange(this) result(halo_exchange)
   type(atlas_HaloExchange) :: halo_exchange
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   call halo_exchange%reset_c_ptr( atlas__fs__EdgeColumns__get_halo_exchange(this%c_ptr()) )
+!   call halo_exchange%return()
 end function
 
 !------------------------------------------------------------------------------
@@ -243,6 +239,7 @@ function get_checksum(this) result(checksum)
   type(atlas_Checksum) :: checksum
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   call checksum%reset_c_ptr( atlas__fs__EdgeColumns__get_checksum(this%c_ptr()) )
+!   call checksum%return()
 end function
 
 !------------------------------------------------------------------------------
@@ -274,6 +271,19 @@ function checksum_field(this,field) result(checksum)
   checksum = c_ptr_to_string(checksum_cptr)
   if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_functionspace_EdgeColumns__final_auto(this)
+  type(atlas_functionspace_EdgeColumns) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_functionspace_EdgeColumns__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 !------------------------------------------------------------------------------
 

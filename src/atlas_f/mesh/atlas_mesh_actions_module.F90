@@ -1,5 +1,3 @@
-! (C) Copyright 2013-2015 ECMWF.
-
 #include "atlas/atlas_f.h"
 
 module atlas_mesh_actions_module

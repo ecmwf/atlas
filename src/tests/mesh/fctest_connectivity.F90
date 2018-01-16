@@ -23,6 +23,7 @@ TESTSUITE_INIT()
 END_TESTSUITE_INIT
 
 TEST( test_connectivity )
+#if 1
   use fckit_module
   use atlas_connectivity_module
   use, intrinsic :: iso_c_binding
@@ -39,6 +40,7 @@ TEST( test_connectivity )
   FCTEST_CHECK_EQUAL( connectivity%owners(), 1 )
 
   FCTEST_CHECK_EQUAL(connectivity%name(),"hybrid")
+
   FCTEST_CHECK_EQUAL(connectivity%rows(),0_c_size_t)
   FCTEST_CHECK_EQUAL(connectivity%missing_value(),0)
 
@@ -157,7 +159,7 @@ TEST( test_connectivity )
   FCTEST_CHECK_EQUAL(row(3),14)
 
   call connectivity%final()
-
+#endif
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -180,7 +182,6 @@ TEST( test_multiblockconnectivity )
   multiblock = atlas_MultiBlockConnectivity()
 
   FCTEST_CHECK_EQUAL( multiblock%owners(), 1 )
-
   FCTEST_CHECK_EQUAL(multiblock%name(),"")
   FCTEST_CHECK_EQUAL(multiblock%rows(),0_c_size_t)
   FCTEST_CHECK_EQUAL(multiblock%blocks(),0_c_size_t)

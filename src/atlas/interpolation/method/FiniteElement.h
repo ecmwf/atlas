@@ -8,9 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-
-#ifndef atlas_interpolation_method_FiniteElement_h
-#define atlas_interpolation_method_FiniteElement_h
+#pragma once
 
 #include "atlas/interpolation/method/Method.h"
 
@@ -74,6 +72,3 @@ protected:
 }  // method
 }  // interpolation
 }  // atlas
-
-
-#endif

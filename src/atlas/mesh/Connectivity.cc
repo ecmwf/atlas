@@ -42,11 +42,8 @@ IrregularConnectivityImpl::IrregularConnectivityImpl(const std::string& name ) :
   rows_(0),
   maxcols_(0),
   mincols_(std::numeric_limits<size_t>::max()),
-  ctxt_update_(0),
-  ctxt_set_(0),
-  ctxt_delete_(0),
+  ctxt_(0),
   callback_update_(0),
-  callback_set_(0),
   callback_delete_(0),
   gpu_clone_(this)
 {
@@ -79,11 +76,8 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( idx_t values[], size_t row
     counts_view_(array::make_view<size_t, 1>(*(data_[_counts_]))),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
     rows_(rows),
-    ctxt_update_(0),
-    ctxt_set_(0),
-    ctxt_delete_(0),
+    ctxt_(0),
     callback_update_(0),
-    callback_set_(0),
     callback_delete_(0),
     gpu_clone_(this)
 {
@@ -105,9 +99,7 @@ IrregularConnectivityImpl::IrregularConnectivityImpl(const IrregularConnectivity
   rows_(other.rows_),
   maxcols_(other.maxcols_),
   mincols_(other.mincols_),
-  ctxt_update_(0),
-  ctxt_set_(0),
-  ctxt_delete_(0),
+  ctxt_(0),
   gpu_clone_(this)
 {}
 
@@ -156,14 +148,14 @@ void IrregularConnectivityImpl::clear()
 
 void IrregularConnectivityImpl::on_delete()
 {
-  if( ctxt_delete_ && callback_delete_ ) callback_delete_(ctxt_delete_);
+  if( ctxt_ && callback_delete_ ) callback_delete_(ctxt_);
 }
 
 //------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivityImpl::on_update()
 {
-  if( ctxt_update_ && callback_update_ ) callback_update_(ctxt_update_);
+  if( ctxt_ && callback_update_ ) callback_update_(ctxt_);
 }
 
 void IrregularConnectivityImpl::resize( size_t old_size, size_t new_size, bool initialize, const idx_t values[], bool fortran_array)
@@ -897,11 +889,8 @@ public:
   ConnectivityPrivateAccess(Connectivity& connectivity) : connectivity_(connectivity)
   {
   }
-  ctxt_t      &ctxt_update()     { return connectivity_.ctxt_update_; }
-  ctxt_t      &ctxt_set()        { return connectivity_.ctxt_set_; }
-  ctxt_t      &ctxt_delete()     { return connectivity_.ctxt_delete_; }
+  ctxt_t      &ctxt()            { return connectivity_.ctxt_; }
   callback_t  &callback_update() { return connectivity_.callback_update_; }
-  callback_t  &callback_set()    { return connectivity_.callback_set_; }
   callback_t  &callback_delete() { return connectivity_.callback_delete_; }
 
 // TODO : For now return host-view raw data to Fortran, but this should be
@@ -933,32 +922,29 @@ void atlas__Connectivity__delete(Connectivity* This)
   ATLAS_ERROR_HANDLING(delete This);
 }
 
-void atlas__connectivity__register_update(Connectivity* This, Connectivity::callback_t callback, Connectivity::ctxt_t ctxt )
+void atlas__connectivity__register_ctxt(Connectivity* This, Connectivity::ctxt_t ctxt )
 {
   ConnectivityPrivateAccess access(*This);
-  access.ctxt_update() = ctxt;
+  access.ctxt() = ctxt;
+}
+
+int atlas__connectivity__ctxt(Connectivity* This, Connectivity::ctxt_t* ctxt)
+{
+  ConnectivityPrivateAccess access(*This);
+  *ctxt = access.ctxt();
+  return bool( access.ctxt() );
+}
+
+void atlas__connectivity__register_update(Connectivity* This, Connectivity::callback_t callback )
+{
+  ConnectivityPrivateAccess access(*This);
   access.callback_update() = callback;
 }
 
-int atlas__connectivity__ctxt_update(Connectivity* This, Connectivity::ctxt_t* ctxt)
+void atlas__connectivity__register_delete(Connectivity* This, Connectivity::callback_t callback )
 {
   ConnectivityPrivateAccess access(*This);
-  *ctxt = access.ctxt_update();
-  return bool( access.ctxt_update() );
-}
-
-void atlas__connectivity__register_delete(Connectivity* This, Connectivity::callback_t callback, Connectivity::ctxt_t ctxt )
-{
-  ConnectivityPrivateAccess access(*This);
-  access.ctxt_delete() = ctxt;
   access.callback_delete() = callback;
-}
-
-int atlas__connectivity__ctxt_delete(Connectivity* This, Connectivity::ctxt_t* ctxt)
-{
-  ConnectivityPrivateAccess access(*This);
-  *ctxt = access.ctxt_delete();
-  return bool( access.ctxt_delete() );
 }
 
 void atlas__Connectivity__displs(Connectivity* This, size_t* &displs, size_t &size)

@@ -1,12 +1,20 @@
+#include "atlas/atlas_f.h"
 
 module atlas_mesh_Nodes_module
 
-use fckit_refcounted_module, only: fckit_refcounted
+use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t, c_int
+use fckit_owned_object_module, only: fckit_owned_object
+use atlas_Metadata_module, only: atlas_Metadata
+use atlas_Field_module, only: atlas_Field
+use atlas_Connectivity_module, only: atlas_Connectivity
 
 implicit none
 
-private :: fckit_refcounted
-
+private :: fckit_owned_object
+private :: c_ptr, c_size_t, c_int
+private :: atlas_Metadata
+private :: atlas_Field
+private :: atlas_Connectivity
 public :: atlas_mesh_Nodes
 
 private
@@ -15,7 +23,7 @@ private
 ! atlas_mesh_Nodes           !
 !-----------------------------
 
-TYPE, extends(fckit_refcounted) :: atlas_mesh_Nodes
+TYPE, extends(fckit_owned_object) :: atlas_mesh_Nodes
 contains
 procedure, public :: size => atlas_mesh_Nodes__size
 procedure, public :: resize
@@ -48,9 +56,9 @@ procedure, public :: cell_connectivity
 
 procedure, public :: connectivity
 
-procedure, public :: delete => atlas_mesh_Nodes__delete
-procedure, public :: copy => atlas_mesh_Nodes__copy
-
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_mesh_Nodes__final_auto
+#endif
 end type
 
 interface atlas_mesh_Nodes
@@ -63,35 +71,21 @@ contains
 !========================================================
 
 function atlas_mesh_Nodes__cptr(cptr) result(this)
-  use, intrinsic :: iso_c_binding, only : c_ptr
   use atlas_nodes_c_binding
   type(atlas_mesh_Nodes) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )
+  call this%return()
 end function
 
 function atlas_mesh_Nodes__constructor() result(this)
   use atlas_nodes_c_binding
   type(atlas_mesh_Nodes) :: this
   call this%reset_c_ptr( atlas__mesh__Nodes__create() )
+  call this%return()
 end function
 
-subroutine atlas_mesh_Nodes__delete(this)
-  use atlas_nodes_c_binding
-  class(atlas_mesh_Nodes), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__mesh__Nodes__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine
-
-subroutine atlas_mesh_Nodes__copy(this,obj_in)
-  class(atlas_mesh_Nodes), intent(inout) :: this
-  class(fckit_refcounted),   target, intent(in) :: obj_in
-end subroutine
-
 function atlas_mesh_Nodes__size(this) result(val)
-  use, intrinsic :: iso_c_binding, only: c_size_t
   use atlas_nodes_c_binding
   integer(c_size_t) :: val
   class(atlas_mesh_Nodes), intent(in) :: this
@@ -110,7 +104,6 @@ end function
 
 function cell_connectivity(this) result(connectivity)
   use atlas_nodes_c_binding
-  use atlas_Connectivity_module, only: atlas_Connectivity
   class(atlas_mesh_Nodes), intent(in) :: this
   type(atlas_Connectivity) :: connectivity
   connectivity = atlas_Connectivity( &
@@ -121,7 +114,6 @@ end function
 function connectivity(this,name)
   use atlas_nodes_c_binding
   use fckit_c_interop_module, only: c_str
-  use atlas_Connectivity_module, only: atlas_Connectivity
   type(atlas_Connectivity) :: connectivity
   class(atlas_mesh_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -132,7 +124,6 @@ end function
 
 subroutine add_connectivity(this,connectivity)
   use atlas_nodes_c_binding
-  use atlas_Connectivity_module, only: atlas_Connectivity
   class(atlas_mesh_Nodes), intent(inout) :: this
   type(atlas_Connectivity), intent(in) :: connectivity
   call atlas__mesh__Nodes__add_connectivity(this%c_ptr(), connectivity%c_ptr())
@@ -141,7 +132,6 @@ end subroutine
 
 subroutine add_field(this,field)
   use atlas_nodes_c_binding
-  use atlas_Field_module, only: atlas_Field
   class(atlas_mesh_Nodes), intent(inout) :: this
   type(atlas_Field), intent(in) :: field
   call atlas__mesh__Nodes__add_field(this%c_ptr(), field%c_ptr())
@@ -157,7 +147,6 @@ end subroutine
 
 function nb_fields(this) result(val)
   use atlas_nodes_c_binding
-  use, intrinsic :: iso_c_binding, only: c_size_t
   integer(c_size_t) :: val
   class(atlas_mesh_Nodes), intent(in) :: this
   val = atlas__mesh__Nodes__nb_fields(this%c_ptr())
@@ -179,7 +168,6 @@ end function
 function field_by_name(this,name) result(field)
   use atlas_nodes_c_binding
   use fckit_c_interop_module, only: c_str
-  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_mesh_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -189,8 +177,6 @@ end function
 
 function field_by_idx_size_t(this,idx) result(field)
   use atlas_nodes_c_binding
-  use, intrinsic :: iso_c_binding, only: c_size_t
-  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_mesh_Nodes), intent(in) :: this
   integer(c_size_t), intent(in) :: idx
@@ -201,7 +187,6 @@ end function
 function field_by_idx_int(this,idx) result(field)
   use atlas_nodes_c_binding
   use, intrinsic :: iso_c_binding, only: c_size_t, c_int
-  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_mesh_Nodes), intent(in) :: this
   integer(c_int), intent(in) :: idx
@@ -211,7 +196,6 @@ end function
 
 function xy(this) result(field)
   use atlas_nodes_c_binding
-  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_mesh_Nodes), intent(in) :: this
   field = atlas_Field( atlas__mesh__Nodes__xy(this%c_ptr()) )
@@ -220,7 +204,6 @@ end function
 
 function lonlat(this) result(field)
   use atlas_nodes_c_binding
-  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_mesh_Nodes), intent(in) :: this
   field = atlas_Field( atlas__mesh__Nodes__lonlat(this%c_ptr()) )
@@ -229,7 +212,6 @@ end function
 
 function global_index(this) result(field)
   use atlas_nodes_c_binding
-  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_mesh_Nodes), intent(in) :: this
   field = atlas_Field( atlas__mesh__Nodes__global_index(this%c_ptr()) )
@@ -238,7 +220,6 @@ end function
 
 function remote_index(this) result(field)
   use atlas_nodes_c_binding
-  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_mesh_Nodes), intent(in) :: this
   field = atlas_Field( atlas__mesh__Nodes__remote_index(this%c_ptr()) )
@@ -247,7 +228,6 @@ end function
 
 function partition(this) result(field)
   use atlas_nodes_c_binding
-  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_mesh_Nodes), intent(in) :: this
   field = atlas_Field( atlas__mesh__Nodes__partition(this%c_ptr()) )
@@ -256,7 +236,6 @@ end function
 
 function ghost(this) result(field)
   use atlas_nodes_c_binding
-  use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_mesh_Nodes), intent(in) :: this
   field = atlas_Field( atlas__mesh__Nodes__ghost(this%c_ptr()) )
@@ -265,7 +244,6 @@ end function
 
 function metadata(this)
   use atlas_nodes_c_binding
-  use atlas_Metadata_module, only: atlas_Metadata
   type(atlas_Metadata) :: metadata
   class(atlas_mesh_Nodes), intent(in) :: this
   call metadata%reset_c_ptr( atlas__mesh__Nodes__metadata(this%c_ptr()) )
@@ -273,7 +251,6 @@ end function
 
 subroutine resize(this,size)
   use atlas_nodes_c_binding
-  use, intrinsic :: iso_c_binding, only: c_size_t
   class(atlas_mesh_Nodes), intent(in) :: this
   integer(c_size_t), intent(in) :: size
   call atlas__mesh__Nodes__resize(this%c_ptr(),size)
@@ -282,8 +259,6 @@ end subroutine
 function str(this)
   use atlas_nodes_c_binding
   use fckit_c_interop_module, only: c_ptr_to_string, c_ptr_free
-
-  use, intrinsic :: iso_c_binding, only: c_ptr, c_int
   character(len=:), allocatable :: str
   class(atlas_mesh_Nodes), intent(in) :: this
   type(c_ptr) :: str_cptr
@@ -294,6 +269,18 @@ function str(this)
   call c_ptr_free(str_cptr)
 end function
 
+!-------------------------------------------------------------------------------
+
+subroutine atlas_mesh_Nodes__final_auto(this)
+  type(atlas_mesh_Nodes) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_mesh_Nodes__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 ! ----------------------------------------------------------------------------------------
 

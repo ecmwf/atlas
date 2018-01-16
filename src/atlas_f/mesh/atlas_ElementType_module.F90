@@ -1,11 +1,12 @@
+#include "atlas/atlas_f.h"
 
 module atlas_ElementType_module
 
-use fckit_refcounted_module, only : fckit_refcounted
+use fckit_owned_object_module, only : fckit_owned_object
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 
 public :: atlas_ElementType
 public :: atlas_Triangle
@@ -19,16 +20,16 @@ private
 ! atlas_ElementType     !
 !-----------------------------
 
-type, extends(fckit_refcounted) :: atlas_ElementType
+type, extends(fckit_owned_object) :: atlas_ElementType
 contains
 ! Public methods
-  procedure, public :: delete   => atlas_ElementType__delete
-
   procedure, public :: nb_nodes
   procedure, public :: nb_edges
   procedure, public :: name
   procedure, public :: parametric
-
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_ElementType__final_auto
+#endif
 end type
 
 interface atlas_ElementType
@@ -51,39 +52,34 @@ end interface
 contains
 !========================================================
 
-subroutine atlas_ElementType__delete(this)
-  use atlas_elementtype_c_binding
-  class(atlas_ElementType), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__mesh__ElementType__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine
-
 function atlas_ElementType__cptr(cptr) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
   use atlas_elementtype_c_binding
   type(atlas_ElementType) :: this
   type(c_ptr) :: cptr
   call this%reset_c_ptr( cptr )
+  call this%return()
 end function
 
 function atlas_Quadrilateral__constructor() result(this)
   use atlas_elementtype_c_binding
   type(atlas_ElementType) :: this
   call this%reset_c_ptr( atlas__mesh__Quadrilateral__create() )
+  call this%return()
 end function
 
 function atlas_Triangle__constructor() result(this)
   use atlas_elementtype_c_binding
   type(atlas_ElementType) :: this
   call this%reset_c_ptr( atlas__mesh__Triangle__create() )
+  call this%return()
 end function
 
 function atlas_Line__constructor() result(this)
   use atlas_elementtype_c_binding
   type(atlas_ElementType) :: this
   call this%reset_c_ptr( atlas__mesh__Line__create() )
+  call this%return()
 end function
 
 function nb_nodes(this)
@@ -127,6 +123,18 @@ function parametric(this)
   endif
 end function
 
+!-------------------------------------------------------------------------------
+
+subroutine atlas_ElementType__final_auto(this)
+  type(atlas_ElementType) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_ElementType__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 end module atlas_ElementType_module
 

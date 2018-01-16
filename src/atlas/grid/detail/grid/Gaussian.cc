@@ -96,6 +96,8 @@ public:
     return new StructuredGrid::grid_t( "N"+std::to_string(N), xspace(nx) , yspace(config), projection(config), domain(config) );
   }
 
+  void force_link() {}
+
 } classic_gaussian_;
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -139,6 +141,8 @@ public:
     return new StructuredGrid::grid_t( "O"+std::to_string(N), xspace(nx) , yspace(config), projection(config), domain(config) );
   }
 
+  void force_link() {}
+
 } octahedral_gaussian_;
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -173,9 +177,9 @@ public:
     return new StructuredGrid::grid_t( "F"+std::to_string(N), xspace(nx) , yspace(config), projection(config), domain(config) );
   }
 
+  void force_link() {}
 
 } regular_gaussian_;
-
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -183,6 +187,12 @@ public:
 
 namespace detail {
 namespace grid {
+
+void force_link_Gaussian() {
+  regular_gaussian_.force_link();
+  classic_gaussian_.force_link();
+  octahedral_gaussian_.force_link();
+}
 
 StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx ) {
 

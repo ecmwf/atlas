@@ -1,18 +1,19 @@
+#include "atlas/atlas_f.h"
 
 module atlas_Nabla_module
 
-use fckit_refcounted_module, only : fckit_refcounted
+use fckit_owned_object_module, only : fckit_owned_object
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 
 public :: atlas_Nabla
 
 private
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_Nabla
+TYPE, extends(fckit_owned_object) :: atlas_Nabla
 
 ! Purpose :
 ! -------
@@ -27,13 +28,14 @@ TYPE, extends(fckit_refcounted) :: atlas_Nabla
 
 !------------------------------------------------------------------------------
 contains
-  procedure, public :: delete => atlas_Nabla__delete
-  procedure, public :: copy => atlas_Nabla__copy
   procedure, public :: gradient => atlas_Nabla__gradient
   procedure, public :: divergence => atlas_Nabla__divergence
   procedure, public :: curl => atlas_Nabla__curl
   procedure, public :: laplacian => atlas_Nabla__laplacian
 
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Nabla__final_auto
+#endif
 END TYPE atlas_Nabla
 
 interface atlas_Nabla
@@ -45,45 +47,31 @@ end interface
 contains
 !========================================================
 
-function atlas_Nabla__cptr(cptr) result(nabla)
+function atlas_Nabla__cptr(cptr) result(this)
   use, intrinsic :: iso_c_binding, only: c_ptr
-  type(atlas_Nabla) :: nabla
+  type(atlas_Nabla) :: this
   type(c_ptr), intent(in) :: cptr
-  call nabla%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr )
+  call this%return()
 end function
 
-function atlas_Nabla__method_config(method,config) result(nabla)
+function atlas_Nabla__method_config(method,config) result(this)
   use atlas_Nabla_c_binding
   use atlas_Method_module, only : atlas_Method
   use atlas_Config_module, only : atlas_Config
-  type(atlas_Nabla) :: nabla
+  type(atlas_Nabla) :: this
   class(atlas_Method), intent(in) :: method
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    nabla = atlas_Nabla__cptr(atlas__Nabla__create(method%c_ptr(),config%c_ptr()))
+    call this%reset_c_ptr( atlas__Nabla__create(method%c_ptr(),config%c_ptr()) )
   else
     opt_config = atlas_Config()
-    nabla = atlas_Nabla__cptr(atlas__Nabla__create(method%c_ptr(),opt_config%c_ptr()))
+    call this%reset_c_ptr( atlas__Nabla__create(method%c_ptr(),opt_config%c_ptr()) )
     call opt_config%final()
   endif
-  call nabla%return()
+  call this%return()
 end function
-
-subroutine atlas_Nabla__delete(this)
-  use atlas_Nabla_c_binding
-  class(atlas_Nabla), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__Nabla__delete(this%c_ptr())
-  endif
-  call this%reset_c_ptr()
-end subroutine atlas_Nabla__delete
-
-subroutine atlas_Nabla__copy(this,obj_in)
-  class(atlas_Nabla), intent(inout) :: this
-  class(fckit_refcounted), target, intent(in) :: obj_in
-end subroutine
-
 
 subroutine atlas_Nabla__gradient(this,scalar,grad)
   use atlas_Nabla_c_binding
@@ -120,6 +108,19 @@ subroutine atlas_Nabla__laplacian(this,scalar,lapl)
   class(atlas_Field), intent(in) :: scalar
   class(atlas_Field), intent(inout) :: lapl
   call atlas__Nabla__laplacian(this%c_ptr(),scalar%c_ptr(),lapl%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Nabla__final_auto(this)
+  type(atlas_Nabla) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Nabla__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
 ! -----------------------------------------------------------------------------

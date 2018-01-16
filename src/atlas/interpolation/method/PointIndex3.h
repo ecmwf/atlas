@@ -8,9 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-
-#ifndef atlas_interpolation_method_PointIndex3_h
-#define atlas_interpolation_method_PointIndex3_h
+#pragma once
 
 #include "eckit/container/KDMapped.h"
 #include "eckit/container/KDMemory.h"
@@ -79,6 +77,3 @@ ElemIndex3* create_element_centre_index(const Mesh& mesh);
 } // namespace method
 } // namespace interpolation
 } // namespace atlas
-
-
-#endif

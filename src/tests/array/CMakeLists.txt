@@ -50,7 +50,6 @@ atlas_add_cuda_test(
 
 atlas_add_cuda_test(
   TARGET atlas_test_svector_kernel
-  BOOST
   SOURCES test_svector_kernel.cu
   LIBS atlas
 )

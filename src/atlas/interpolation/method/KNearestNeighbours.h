@@ -8,9 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-
-#ifndef atlas_interpolation_method_KNearestNeighbours_h
-#define atlas_interpolation_method_KNearestNeighbours_h
+#pragma once
 
 #include "atlas/interpolation/method/KNearestNeighboursBase.h"
 
@@ -44,6 +42,3 @@ protected:
 }  // method
 }  // interpolation
 }  // atlas
-
-
-#endif

@@ -1,11 +1,12 @@
+#include "atlas/atlas_f.h"
 
 module atlas_fvm_module
 
-use fckit_refcounted_module, only : fckit_refcounted
+use fckit_owned_object_module, only : fckit_owned_object
 use atlas_Method_module, only : atlas_Method
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 private :: atlas_Method
 
 public :: atlas_fvm_Method
@@ -35,6 +36,10 @@ contains
   procedure, public :: node_columns
   procedure, public :: edge_columns
 
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_fvm_Method__final_auto
+#endif
+
 END TYPE atlas_fvm_Method
 
 interface atlas_fvm_Method
@@ -46,31 +51,29 @@ end interface
 contains
 !========================================================
 
-function atlas_fvm_Method__cptr(cptr) result(method)
+function atlas_fvm_Method__cptr(cptr) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
-  type(atlas_fvm_Method) :: method
+  type(atlas_fvm_Method) :: this
   type(c_ptr), intent(in) :: cptr
-  call method%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr )
 end function
 
-function atlas_fvm_Method__mesh_config(mesh,config) result(method)
+function atlas_fvm_Method__mesh_config(mesh,config) result(this)
   use atlas_fvm_method_c_binding
   use atlas_Config_module, only : atlas_Config
   use atlas_Mesh_module, only : atlas_Mesh
-  type(atlas_fvm_Method) :: method
+  type(atlas_fvm_Method) :: this
   type(atlas_Mesh), intent(inout) :: mesh
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    method = atlas_fvm_Method__cptr( &
-      & atlas__numerics__fvm__Method__new(mesh%c_ptr(),config%c_ptr()) )
+    call this%reset_c_ptr( atlas__numerics__fvm__Method__new(mesh%c_ptr(),config%c_ptr()) )
   else
     opt_config = atlas_Config()
-    method = atlas_fvm_Method__cptr( &
-      & atlas__numerics__fvm__Method__new(mesh%c_ptr(),opt_config%c_ptr()) )
+    call this%reset_c_ptr( atlas__numerics__fvm__Method__new(mesh%c_ptr(),opt_config%c_ptr()) )
     call opt_config%final()
   endif
-  call method%return()
+  call this%return()
 end function
 
 function node_columns(this)
@@ -93,6 +96,18 @@ function edge_columns(this)
   call edge_columns%return()
 end function
 
+!-------------------------------------------------------------------------------
+
+subroutine atlas_fvm_Method__final_auto(this)
+  type(atlas_fvm_Method) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_fvm_Method__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 end module atlas_fvm_module
 

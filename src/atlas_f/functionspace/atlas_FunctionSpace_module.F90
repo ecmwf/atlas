@@ -1,13 +1,14 @@
+#include "atlas/atlas_f.h"
 
 module atlas_functionspace_module
 
-use fckit_refcounted_module, only : fckit_refcounted
+use fckit_owned_object_module, only : fckit_owned_object
 use atlas_field_module, only : atlas_Field
 use atlas_config_module, only : atlas_Config
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 private :: atlas_Field
 private :: atlas_Config
 
@@ -16,7 +17,7 @@ public :: atlas_FunctionSpace
 private
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_FunctionSpace
+TYPE, extends(fckit_owned_object) :: atlas_FunctionSpace
 
 ! Purpose :
 ! -------
@@ -35,7 +36,6 @@ TYPE, extends(fckit_refcounted) :: atlas_FunctionSpace
 !------------------------------------------------------------------------------
 contains
   procedure, public :: name => atlas_FunctionSpace__name
-  procedure, public :: delete => atlas_FunctionSpace__delete
 
   procedure, private :: create_field_args
   procedure, private :: create_field_template
@@ -48,6 +48,9 @@ contains
     & deprecated_create_field_1, &
     & deprecated_create_field_2
 
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_FunctionSpace__final_auto
+#endif
 
 END TYPE atlas_FunctionSpace
 
@@ -59,31 +62,25 @@ end interface
 contains
 !========================================================
 
-function atlas_FunctionSpace__cptr(cptr) result(functionspace)
+function atlas_FunctionSpace__cptr(cptr) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
-  type(atlas_FunctionSpace) :: functionspace
+  type(atlas_FunctionSpace) :: this
   type(c_ptr), intent(in) :: cptr
-  call functionspace%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr )
+  call this%return()
 end function
-
-subroutine atlas_FunctionSpace__delete(this)
-  use atlas_functionspace_c_binding
-  class(atlas_FunctionSpace), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__FunctionSpace__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine atlas_FunctionSpace__delete
 
 function atlas_FunctionSpace__name(this) result(name)
   use atlas_functionspace_c_binding
-  use fckit_c_interop_module, only : c_ptr_to_string
+  use fckit_c_interop_module, only : c_ptr_to_string, c_ptr_free
   use, intrinsic :: iso_c_binding, only : c_ptr
   class(atlas_FunctionSpace), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
-  name_c_str = atlas__FunctionSpace__name(this%c_ptr())
+  integer :: size
+  call atlas__FunctionSpace__name(this%c_ptr(), name_c_str, size )
   name = c_ptr_to_string(name_c_str)
+  call c_ptr_free(name_c_str)
 end function
 
 
@@ -92,8 +89,6 @@ end function
 function create_field_args(this,kind,name,levels,variables,global,owner) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_module, only : atlas_Field
-  use atlas_config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Functionspace), intent(in) :: this
   integer,          intent(in)           :: kind
@@ -114,6 +109,7 @@ function create_field_args(this,kind,name,levels,variables,global,owner) result(
   if( present(variables) ) call options%set("variables",variables)
 
   field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
+  
   call field%return()
   call options%final()
 end function
@@ -123,8 +119,6 @@ end function
 function create_field_template(this,template,name,global,owner) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_module, only : atlas_Field
-  use atlas_config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Functionspace), intent(in) :: this
   type(atlas_Field), intent(in) :: template
@@ -157,8 +151,6 @@ end function
 function deprecated_create_field_1(this,name,kind,levels,vars) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_module, only : atlas_Field
-  use atlas_config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Functionspace), intent(in) :: this
   character(len=*), intent(in)           :: name
@@ -187,15 +179,11 @@ end function
 function deprecated_create_field_2(this,require_name,kind,levels) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_module, only : atlas_Field
-  use atlas_config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Functionspace), intent(in) :: this
   character(len=*), intent(in) :: require_name
   integer,          intent(in) :: kind
   integer(c_int),   intent(in) :: levels
-
-  integer(c_int) :: opt_variables
 
   type(atlas_Config) :: options
   options = atlas_Config()
@@ -205,11 +193,23 @@ function deprecated_create_field_2(this,require_name,kind,levels) result(field)
   call options%set("levels",levels)
 
   field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
-
   call options%final()
 
   call field%return()
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_FunctionSpace__final_auto(this)
+  type(atlas_FunctionSpace) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_FunctionSpace__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 !------------------------------------------------------------------------------
 

@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_gatherscatter_module
 
@@ -85,6 +86,10 @@ contains
       & GatherScatter__scatter_real64_r3_r3
 
   procedure, public :: delete => atlas_GatherScatter__delete
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_GatherScatter__final_auto
+#endif
 
 END TYPE atlas_GatherScatter
 !------------------------------------------------------------------------------
@@ -602,8 +607,19 @@ subroutine GatherScatter__scatter_real64_r3_r3(this, glb_field_data, loc_field_d
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_real64_r3_r3
 
+!-------------------------------------------------------------------------------
+
+subroutine atlas_GatherScatter__final_auto(this)
+  type(atlas_GatherScatter) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_GatherScatter__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 ! -----------------------------------------------------------------------------
 
 end module atlas_gatherscatter_module
-

@@ -1,7 +1,8 @@
+#include "atlas/atlas_f.h"
 
 module atlas_HybridElements_module
 
-use fckit_refcounted_module, only: fckit_refcounted
+use fckit_owned_object_module, only: fckit_owned_object
 use atlas_Connectivity_module, only: atlas_MultiBlockConnectivity
 use atlas_Field_module, only: atlas_Field
 use atlas_ElementType_module, only: atlas_ElementType
@@ -9,7 +10,7 @@ use atlas_Elements_module, only: atlas_Elements
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 private :: atlas_MultiBlockConnectivity
 private :: atlas_Field
 private :: atlas_ElementType
@@ -23,13 +24,10 @@ private
 ! atlas_HybridElements       !
 !-----------------------------
 
-type, extends(fckit_refcounted) :: atlas_HybridElements
+type, extends(fckit_owned_object) :: atlas_HybridElements
 contains
 
 ! Public methods
-  procedure, public :: copy     => atlas_HybridElements__copy
-  procedure, public :: delete   => atlas_HybridElements__delete
-
   procedure, public :: size     => atlas_HybridElements__size
 
   procedure, public ::  node_connectivity
@@ -62,6 +60,10 @@ contains
   procedure, private :: elements_int
   procedure, private :: elements_size_t
 
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_HybridElements__final_auto
+#endif
+
 end type
 
 interface atlas_HybridElements
@@ -79,27 +81,15 @@ function atlas_HybridElements__cptr(cptr) result(this)
   type(atlas_HybridElements) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )
+  call this%return()
 end function
 
 function atlas_HybridElements__constructor() result(this)
   use atlas_hybridelements_c_binding
   type(atlas_HybridElements) :: this
   call this%reset_c_ptr( atlas__mesh__HybridElements__create() )
+  call this%return()
 end function
-
-subroutine atlas_HybridElements__delete(this)
-  use atlas_hybridelements_c_binding
-  class(atlas_HybridElements), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__mesh__HybridElements__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine
-
-subroutine atlas_HybridElements__copy(this,obj_in)
-  class(atlas_HybridElements), intent(inout) :: this
-  class(fckit_refcounted),   target, intent(in) :: obj_in
-end subroutine
 
 function atlas_HybridElements__size(this) result(val)
   use, intrinsic :: iso_c_binding
@@ -274,6 +264,19 @@ function elements_int(this,idx) result(elements)
   elements = atlas_Elements( atlas__mesh__HybridElements__elements(this%c_ptr(),int(idx-1,c_size_t)) )
   call elements%return()
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_HybridElements__final_auto(this)
+  type(atlas_HybridElements) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_HybridElements__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 end module atlas_HybridElements_module
 
