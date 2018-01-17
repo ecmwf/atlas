@@ -282,11 +282,11 @@ CASE( "test_functionspace_NodeColumns" )
     auto vec_arr = array::make_view<double,2>( field );
     vec_arr.assign( parallel::mpi::comm().rank()+1 );
     fs.maximum(field, max);
-    std::vector<double> check_max(field.stride(0), parallel::mpi::comm().size());
+    std::vector<double> check_max(field.variables(), parallel::mpi::comm().size());
     EXPECT( max == check_max );
 
     fs.minimum(field,min);
-    std::vector<double> check_min(field.stride(0), 1);
+    std::vector<double> check_min(field.variables(), 1);
     EXPECT( min == check_min );
 
     fs.maximumAndLocation(field,max, gidx_max);
@@ -404,7 +404,7 @@ CASE( "test_functionspace_NodeColumns" )
   if(1) {
     const Field& field = columns_vector_field;
     const functionspace::NodeColumns fs = nodes_fs;
-    size_t nvar = field.stride(1);
+    size_t nvar = field.variables();
     std::vector<double> max;
     std::vector<double> min;
     std::vector<double> sum;
@@ -434,7 +434,7 @@ CASE( "test_functionspace_NodeColumns" )
     Log::info() << "global index for minimum: " << gidx_min << std::endl;
 
     fs.orderIndependentSum(field,sum,N);
-    Log::info() << "sum: " << sum << std::endl;
+    Log::info() << "oisum: " << sum << std::endl;
     Log::info() << "N: " << N << std::endl;
 
     fs.mean(field,mean,N);

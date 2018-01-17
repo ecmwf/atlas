@@ -834,8 +834,9 @@ void dispatch_order_independent_sum( const NodeColumns& fs , const Field& field,
     auto surface = array::make_view<T,1>( surface_field );
 
     for( size_t n=0; n<arr.shape(0); ++n ) {
+      surface(n) = 0;
       for( size_t l=0; l<arr.shape(1); ++l ) {
-          surface(n) += arr(n,l);
+        surface(n) += arr(n,l);
       }
     }
     dispatch_order_independent_sum_2d( fs, surface_field, result, N );
@@ -889,7 +890,7 @@ void order_independent_sum( const NodeColumns& fs , const Field& field, T& resul
 template< typename DATATYPE >
 void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& field, std::vector<DATATYPE>& result, size_t& N )
 {
-  size_t nvar = field.stride(0);
+  size_t nvar = field.variables();
   result.resize(nvar);
   for( size_t j=0; j<nvar; ++j ) result[j] = 0.;
   Field global = fs.createField( field, option::name("global")|option::global() );
@@ -914,11 +915,17 @@ void dispatch_order_independent_sum( const NodeColumns& fs, const Field& field, 
 {
   if( field.levels() )
   {
-    const size_t nvar = field.stride(1);
+    const size_t nvar = field.variables();
     const auto arr = make_leveled_view<T>(field);
 
     Field surface_field = fs.createField<T>(option::name("surface")|option::variables(nvar)|option::levels(false));
     auto surface = make_surface_view<T>( surface_field );
+
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t j=0; j<arr.shape(2); ++j ) {
+        surface(n,j) = 0;
+      }
+    }
 
     for( size_t n=0; n<arr.shape(0); ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
@@ -1213,7 +1220,6 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Fiel
   for( size_t j=1; j<field.rank(); ++j )
     shape.push_back(field.shape(j));
   min_field.resize(shape);
-  const size_t nvar = field.stride(1);
   auto min = make_per_level_view<T>( min_field );
 
   for( size_t l=0; l<min.shape(0); ++l ) {
@@ -1236,7 +1242,7 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Fiel
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
-        for( size_t j=0; j<nvar; ++j ) {
+        for( size_t j=0; j<arr.shape(2); ++j ) {
           min_private_view(l,j) = std::min(arr(n,l,j),min_private_view(l,j));
         }
       }
@@ -1244,7 +1250,7 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Fiel
     atlas_omp_critical
     {
       for( size_t l=0; l<arr.shape(1); ++l ) {
-        for( size_t j=0; j<nvar; ++j ) {
+        for( size_t j=0; j<arr.shape(2); ++j ) {
           min(l,j) = std::min(min_private_view(l,j),min(l,j));
         }
       }
@@ -1282,7 +1288,6 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Fiel
   for( size_t j=1; j<field.rank(); ++j )
     shape.push_back(field.shape(j));
   max_field.resize(shape);
-  const size_t nvar = field.stride(1);
   auto max = make_per_level_view<T>( max_field );
 
   for( size_t l=0; l<max.shape(0); ++l ) {
@@ -1306,7 +1311,7 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Fiel
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
-        for( size_t j=0; j<nvar; ++j ) {
+        for( size_t j=0; j<arr.shape(2); ++j ) {
           max_private_view(l,j) = std::max(arr(n,l,j),max_private_view(l,j));
         }
       }
@@ -1314,7 +1319,7 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Fiel
     atlas_omp_critical
     {
       for( size_t l=0; l<arr.shape(1); ++l ) {
-        for( size_t j=0; j<nvar; ++j ) {
+        for( size_t j=0; j<arr.shape(2); ++j ) {
           max(l,j) = std::max(max_private_view(l,j),max(l,j));
         }
       }

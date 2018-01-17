@@ -756,12 +756,21 @@ namespace {
 template <typename T>
 array::LocalView<T,3> make_leveled_view(const Field &field)
 {
-  if( field.levels() )
-    return array::LocalView<T,3> ( array::make_storageview<T>(field).data(),
-                                   array::make_shape(field.shape(0),field.shape(1),field.stride(1)) );
-  else
-    return array::LocalView<T,3> ( array::make_storageview<T>(field).data(),
-                                   array::make_shape(field.shape(0),1,field.stride(0)) );
+  using namespace array;
+  if( field.levels() ) {
+    if( field.variables() ) {
+      return make_view<T,3>( field ).slice( Range::all(), Range::all(), Range::all() );
+    } else {
+      return make_view<T,2>( field ).slice( Range::all(), Range::all(), Range::dummy() );
+    }
+  }
+  else {
+    if( field.variables() ) {
+      return make_view<T,2>( field ).slice( Range::all(), Range::dummy(), Range::all() );
+    } else {
+      return make_view<T,1>( field ).slice( Range::all(), Range::dummy(), Range::dummy() );
+    }
+  }
 }
 
 template <typename T>
