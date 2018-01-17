@@ -69,6 +69,7 @@ FieldImpl::FieldImpl(
   array_->attach();
   rename(name);
   set_levels(0);
+  set_variables(0);
 }
 
 
@@ -78,6 +79,7 @@ FieldImpl::FieldImpl(const std::string& name, array::Array* array)
   array_->attach();
   rename(name);
   set_levels(0);
+  set_variables(0);
 }
 
 FieldImpl::~FieldImpl()

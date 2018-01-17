@@ -30,7 +30,9 @@ Nodes::Nodes(): size_(0)
   remote_index_ = add( Field("remote_idx", make_datatype<int   >(), make_shape(size())) );
   partition_    = add( Field("partition",  make_datatype<int   >(), make_shape(size())) );
   xy_           = add( Field("xy",         make_datatype<double>(), make_shape(size(),2)) );
+  xy_.set_variables(2);
   lonlat_       = add( Field("lonlat",     make_datatype<double>(), make_shape(size(),2)) );
+  lonlat_.set_variables(2);
   ghost_        = add( Field("ghost",      make_datatype<int   >(), make_shape(size())) );
 
   edge_connectivity_ = &add( new Connectivity("edge") );
