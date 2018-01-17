@@ -89,16 +89,10 @@ void compute_legendre_polynomials(
         legpol[idxmn(1,jn)] = zdlldn;
     }
 
-{
-#warning zfn(jn_odd,0) used but uninitialized... Andreas should look at this. Set to zero for now.
-    for( int jn=1; jn<=trc; jn+=2 ) {
-      zfn(jn,0) = 0.;
-    }
-}
-
     // odd N
     for( int jn=1; jn<=trc; jn+=2 ) {
-        double zdlk = 0.5*zfn(jn,0);
+        zfn(jn,0) = 0.;
+        double zdlk = 0.;
         double zdlldn = 0.0;
         // represented by only even k
         for (int jk=1; jk<=jn; jk+=2 ) {
