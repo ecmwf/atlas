@@ -385,18 +385,18 @@ CASE( "test_functionspace_NodeColumns" )
     Field gidx_per_level   ( "gidx",   array::make_datatype<gidx_t>(), array::make_shape(nb_levels) );
 
     fs.maximumPerLevel(field,max_per_level);
-    max_per_level.dump(Log::info());
+    //max_per_level.dump(Log::info());
     fs.minimumPerLevel(field,min_per_level);
-    min_per_level.dump(Log::info());
+    //min_per_level.dump(Log::info());
     fs.sumPerLevel(field,sum_per_level,N);
-    sum_per_level.dump(Log::info());
+    //sum_per_level.dump(Log::info());
     fs.meanPerLevel(field,mean_per_level,N);
-    mean_per_level.dump(Log::info());
+    //mean_per_level.dump(Log::info());
     fs.meanAndStandardDeviationPerLevel(field,mean_per_level,stddev_per_level,N);
-    mean_per_level.dump(Log::info());
-    stddev_per_level.dump(Log::info());
+    //mean_per_level.dump(Log::info());
+    //stddev_per_level.dump(Log::info());
     fs.orderIndependentSumPerLevel(field,sum_per_level,N);
-    sum_per_level.dump(Log::info());
+    //sum_per_level.dump(Log::info());
 
   }
 
@@ -461,23 +461,23 @@ CASE( "test_functionspace_NodeColumns" )
     Field gidx_per_level   ( "gidx",   array::make_datatype<gidx_t>(), array::make_shape(nb_levels,nvar) );
 
     fs.maximumPerLevel(field,max_per_level);
-    max_per_level.dump(Log::info());
+    //max_per_level.dump(Log::info());
 
     fs.minimumPerLevel(field,min_per_level);
-    min_per_level.dump(Log::info());
+    //min_per_level.dump(Log::info());
 
     fs.sumPerLevel(field,sum_per_level,N);
-    sum_per_level.dump(Log::info());
+    //sum_per_level.dump(Log::info());
 
     fs.meanPerLevel(field,mean_per_level,N);
-    mean_per_level.dump(Log::info());
+    //mean_per_level.dump(Log::info());
 
     fs.meanAndStandardDeviationPerLevel(field,mean_per_level,stddev_per_level,N);
-    mean_per_level.dump(Log::info());
-    stddev_per_level.dump(Log::info());
+    //mean_per_level.dump(Log::info());
+    //stddev_per_level.dump(Log::info());
 
     fs.orderIndependentSumPerLevel(field,sum_per_level,N);
-    sum_per_level.dump(Log::info());
+    //sum_per_level.dump(Log::info());
   }
 
 
