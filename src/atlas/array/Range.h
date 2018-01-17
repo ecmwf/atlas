@@ -34,6 +34,9 @@ public:
   template < int Dim, typename View >
   int end(const View& view) const { return view.shape(Dim); }
 
+  template < typename View >
+  int end(const View& view, int i) const { return view.shape(i); }
+
 private:
   int start_;
 };
@@ -61,6 +64,13 @@ public:
 
   template < int Dim, typename View >
   int end(const View& view) const { return view.shape(Dim); }
+
+  template < typename View >
+  int end(const View& view, int i) const { return view.shape(i); }
+
+};
+
+class RangeDummy : public RangeBase {
 };
 
 //------------------------------------------------------------------------------
@@ -71,15 +81,17 @@ public:
 
 class Range : public helpers::RangeBase{
 private:
-  using From = helpers::RangeFrom;
-  using To   = helpers::RangeTo;
-  using All  = helpers::RangeAll;
+  using From  = helpers::RangeFrom;
+  using To    = helpers::RangeTo;
+  using All   = helpers::RangeAll;
+  using Dummy = helpers::RangeDummy;
 
 public:
 
-  static From from(int start) { return From(start); }
-  static To   to(int end) { return To(end); }
-  static All  all() { return All(); }
+  static From  from(int start) { return From(start); }
+  static To    to(int end) { return To(end); }
+  static All   all() { return All(); }
+  static Dummy dummy() { return Dummy(); }
 
 public:
 

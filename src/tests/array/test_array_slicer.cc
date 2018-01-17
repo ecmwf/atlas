@@ -61,7 +61,6 @@ CASE( "test_SliceRank" ){
   static_assert( SliceRank_impl<3,Range,int  ,Range>::value == 2, "failed" );
   static_assert( SliceRank_impl<3,int  ,int  ,Range>::value == 1, "failed" );
   static_assert( SliceRank_impl<3,int  ,Range,Range>::value == 2, "failed" );
-
 }
 
 #if 1
@@ -101,6 +100,16 @@ CASE( "test_array_slicer_1d" )
     static_assert( std::is_same< decltype(slice) , Reference<double> >::value, "failed" );
   }
 
+  {
+    auto slice = slicer.apply(Range::all(),Range::dummy());
+    static_assert( std::is_same< decltype(slice) , LocalView<double,2> >::value, "failed" );
+    EXPECT( slice.rank() == 2 );
+    EXPECT( slice.shape(0) == 10 );
+    EXPECT( slice.shape(1) == 1 );
+    EXPECT( slice(0,0) == 0 );
+    EXPECT( slice(1,0) == 1 );
+  }
+
 }
 #endif
 CASE( "test_array_slicer_2d" )
@@ -127,6 +136,19 @@ CASE( "test_array_slicer_2d" )
     const double& slice = slicer.apply(1,3);
     EXPECT( slice == 24 );
     //static_assert( std::is_same< decltype(slice) , double& >::value, "failed" );
+  }
+
+  {
+    auto slice = slicer.apply(Range{0,2},Range::dummy(),Range{1,3});
+    static_assert( std::is_same< decltype(slice) , LocalView<double,3> >::value, "failed" );
+    EXPECT( slice.rank() == 3 );
+    EXPECT( slice.shape(0) == 2 );
+    EXPECT( slice.shape(1) == 1 );
+    EXPECT( slice.shape(2) == 2 );
+    EXPECT( slice(0,0,0) == 12 );
+    EXPECT( slice(0,0,1) == 13 );
+    EXPECT( slice(1,0,0) == 22 );
+    EXPECT( slice(1,0,1) == 23 );
   }
 
 }
