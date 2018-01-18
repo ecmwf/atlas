@@ -20,8 +20,6 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/parallel/GatherScatter.h"
 
-using atlas::array::make_storageview;
-
 #include "tests/AtlasTestEnvironment.h"
 #include "eckit/testing/Test.h"
 
@@ -224,7 +222,7 @@ CASE("test_gather") {
         size_t glb_rank = 2;
         size_t glb_mpl_idxpos[] = {0};
         size_t glb_mpl_rank = 1;
-        parallel::detail::MPL_ArrayView<POD> lview(make_storageview<POD>(loc).data(),loc_strides,loc_extents,loc_rank,loc_mpl_idxpos,loc_mpl_rank);
+        parallel::detail::MPL_ArrayView<POD> lview(loc.data<POD>(),loc_strides,loc_extents,loc_rank,loc_mpl_idxpos,loc_mpl_rank);
         parallel::detail::MPL_ArrayView<POD> gview(glb.data(),glb_strides,glb_extents,glb_rank,glb_mpl_idxpos,glb_mpl_rank);
 
         EXPECT(lview.var_rank() == 1);
@@ -241,14 +239,14 @@ CASE("test_gather") {
         EXPECT(gview.mpl_stride(0) == 2);
         EXPECT(gview.mpl_shape(0) == f.Ng());
 
-        f.gather_scatter.gather( make_storageview<POD>(loc).data(), loc_strides, loc_extents, loc_rank, loc_mpl_idxpos, loc_mpl_rank,
-                              make_storageview<POD>(glb).data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
+        f.gather_scatter.gather( loc.data<POD>(), loc_strides, loc_extents, loc_rank, loc_mpl_idxpos, loc_mpl_rank,
+                              glb.data<POD>(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                               f.root );
 
         if( parallel::mpi::comm().rank() == f.root )
           {
             POD glb_c[] = { 10,100, 20,200, 30,300, 40,400, 50,500, 60,600, 70,700, 80,800, 90,900 };
-            EXPECT(make_view(make_storageview<POD>(glb).data(),make_storageview<POD>(glb).data()+2*f.Ng()) == make_view(glb_c,glb_c+2*f.Ng()));
+            EXPECT(make_view(glb.data<POD>(),glb.data<POD>()+2*f.Ng()) == make_view(glb_c,glb_c+2*f.Ng()));
           }
         }
     #endif
@@ -266,7 +264,7 @@ CASE("test_gather") {
           size_t glb_rank = 1;
           size_t glb_mpl_idxpos[] = {0};
           size_t glb_mpl_rank = 1;
-          parallel::detail::MPL_ArrayView<POD> lview(make_storageview<POD>(loc).data(),loc_strides,loc_extents,loc_rank,loc_mpl_idxpos,loc_mpl_rank);
+          parallel::detail::MPL_ArrayView<POD> lview(loc.data<POD>(),loc_strides,loc_extents,loc_rank,loc_mpl_idxpos,loc_mpl_rank);
           EXPECT(lview.var_rank() == 1);
           EXPECT(lview.var_stride(0) == 2);
           EXPECT(lview.var_shape(0) == 1);
@@ -274,7 +272,7 @@ CASE("test_gather") {
           EXPECT(lview.mpl_stride(0) == 2);
           EXPECT(lview.mpl_shape(0) == f.Nl);
 
-          parallel::detail::MPL_ArrayView<POD> gview(make_storageview<POD>(glb1).data(),glb_strides,glb_extents,glb_rank,glb_mpl_idxpos,glb_mpl_rank);
+          parallel::detail::MPL_ArrayView<POD> gview(glb1.data<POD>(),glb_strides,glb_extents,glb_rank,glb_mpl_idxpos,glb_mpl_rank);
           EXPECT(gview.var_rank() == 1);
           EXPECT(gview.var_stride(0) == 1);
           EXPECT(gview.var_shape(0) == 1);
@@ -282,13 +280,13 @@ CASE("test_gather") {
           EXPECT(gview.mpl_stride(0) == 1);
           EXPECT(gview.mpl_shape(0) == f.Ng());
 
-          f.gather_scatter.gather( make_storageview<POD>(loc).data(),  loc_strides, loc_extents, loc_rank, loc_mpl_idxpos, loc_mpl_rank,
-                                make_storageview<POD>(glb1).data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
+          f.gather_scatter.gather( loc.data<POD>(),  loc_strides, loc_extents, loc_rank, loc_mpl_idxpos, loc_mpl_rank,
+                                glb1.data<POD>(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                                 f.root );
         if( parallel::mpi::comm().rank() == f.root )
           {
             POD glb1_c[] = { 10, 20, 30, 40, 50, 60, 70, 80, 90 };
-            EXPECT(make_view(make_storageview<POD>(glb1).data(),make_storageview<POD>(glb1).data()+f.Ng()) == make_view( glb1_c,glb1_c+f.Ng()));
+            EXPECT(make_view(glb1.data<POD>(),glb1.data<POD>()+f.Ng()) == make_view( glb1_c,glb1_c+f.Ng()));
           }
         }
     #endif
@@ -306,14 +304,14 @@ CASE("test_gather") {
           size_t glb_rank = 1;
           size_t glb_mpl_idxpos[] = {0};
           size_t glb_mpl_rank = 1;
-          f.gather_scatter.gather( make_storageview<POD>(loc).data()+1,  loc_strides, loc_extents, loc_rank, loc_mpl_idxpos, loc_mpl_rank,
-                                make_storageview<POD>(glb2).data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
+          f.gather_scatter.gather( loc.data<POD>()+1,  loc_strides, loc_extents, loc_rank, loc_mpl_idxpos, loc_mpl_rank,
+                                glb2.data<POD>(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                                 f.root );
         }
         if( parallel::mpi::comm().rank() == f.root )
         {
           POD glb2_c[] = { 100, 200, 300, 400, 500, 600, 700, 800, 900 };
-          EXPECT(make_view(make_storageview<POD>(glb2).data(),make_storageview<POD>(glb2).data()+f.Ng()) == make_view(glb2_c,glb2_c+f.Ng()));
+          EXPECT(make_view(glb2.data<POD>(),glb2.data<POD>()+f.Ng()) == make_view(glb2_c,glb2_c+f.Ng()));
         }
     #endif
       }
@@ -356,8 +354,8 @@ CASE("test_gather") {
           size_t glb_rank = 3;
           size_t glb_mpl_idxpos[] = {0};
           size_t glb_mpl_rank = 1;
-          f.gather_scatter.gather( make_storageview<POD>(loc).data(), loc_strides, loc_extents, loc_rank, loc_mpl_idxpos, loc_mpl_rank,
-                                make_storageview<POD>(glb).data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
+          f.gather_scatter.gather( loc.data<POD>(), loc_strides, loc_extents, loc_rank, loc_mpl_idxpos, loc_mpl_rank,
+                                glb.data<POD>(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                                 f.root );
         }
         if( parallel::mpi::comm().rank() == f.root )
@@ -570,7 +568,9 @@ CASE("test_gather") {
                           70,
                           80,
                           90 };
-          EXPECT( make_view(make_storageview<POD>(glb).data(),make_storageview<POD>(glb).data()+f.Ng()) == make_view( glb_c,glb_c+f.Ng()));
+          for( size_t n=0; n<glb.shape(0); ++n ) {
+            EXPECT( glbv(n) == glb_c[n] );
+          }
         }
       }
     }
@@ -614,7 +614,6 @@ CASE("test_gather") {
               EXPECT( glbv(i,j) == glb_c[c++] );
             }
           }
-          //EXPECT(make_view(make_storageview<POD>(glb).data(),make_storageview<POD>(glb).data()+2*f.Ng()) == make_view(glb_c,glb_c+2*f.Ng()));
         }
       }
     }

@@ -454,19 +454,6 @@ CASE("test_wrap_storage") {
   }
 }
 
-CASE("test_storageview") {
-  Array* ds = Array::create<double>(2ul, 3ul, 4ul);
-  auto hv = make_host_view<double, 3>(*ds);
-
-  EXPECT(hv.size() == 2 * 3 * 4);
-
-  auto sv = make_storageview<double>(*ds);
-
-  EXPECT(sv.size() == 2 * 3 * 4);
-
-  delete ds;
-}
-
 CASE("test_assign") {
   Array* ds = Array::create<double>(2ul, 3ul, 4ul);
   auto hv = make_host_view<double, 3>(*ds);

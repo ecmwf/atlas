@@ -390,7 +390,6 @@ array/IndexView.h
 array/LocalView.cc
 array/LocalView.h
 array/Range.h
-array/StorageView.h
 array/Vector.h
 array/helpers/ArrayInitializer.h
 array/helpers/ArrayAssigner.h
@@ -413,7 +412,6 @@ array/gridtools/GridToolsIndexView.cc
 array/gridtools/GridToolsIndexView.h
 array/gridtools/GridToolsMakeView.cc
 array/gridtools/GridToolsMakeView.h
-array/gridtools/GridToolsStorageView.h
 array/gridtools/GridToolsTraits.h
 )
 else()
@@ -425,7 +423,6 @@ array/native/NativeDataStore.h
 array/native/NativeIndexView.cc
 array/native/NativeIndexView.h
 array/native/NativeMakeView.cc
-array/native/NativeStorageView.h
 )
 endif()
 

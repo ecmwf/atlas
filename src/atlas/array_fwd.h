@@ -25,9 +25,6 @@ class Array;
 template <typename Value>
 class ArrayT;
 
-template <typename Value>
-class StorageView;
-
 template <typename Value, int RANK, Intent AccessMode>
 class ArrayView;
 
@@ -53,18 +50,6 @@ make_indexview(const Array& array);
 template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
 IndexView<Value, NDims>
 make_host_indexview(const Array& array);
-
-template <typename Value>
-StorageView<Value>
-make_storageview(const Array& array);
-
-template <typename Value>
-StorageView<Value>
-make_host_storageview(const Array& array);
-
-template <typename Value>
-StorageView<Value>
-make_device_storageview(const Array& array);
 
 class Table;
 

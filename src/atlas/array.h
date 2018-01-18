@@ -21,7 +21,6 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/LocalView.h"
 #include "atlas/array/MakeView.h"
-#include "atlas/array/StorageView.h"
 #include "atlas/array/Table.h"
 //#include "atlas/array/TableView.h"
 

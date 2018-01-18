@@ -280,9 +280,6 @@ CASE( "block_connectivity" )
 
 }
 
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-#warning TODO: gridtools storage cuda backend cannot allocate zero elements
-#endif
 CASE( "zero_elements" )
 {
   HybridElements hybrid_elements;
