@@ -420,28 +420,29 @@ void NodeColumns::gather( const FieldSet& local_fieldset, FieldSet& global_field
     glb.metadata().get("owner",root);
 
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      parallel::Field<int const> loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
-      parallel::Field<int      > glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
+      parallel::Field<int const> loc_field( make_leveled_view<int>( loc ) );
+      parallel::Field<int      > glb_field( make_leveled_view<int>( glb ) );
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      parallel::Field<long const> loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
-      parallel::Field<long      > glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
+      parallel::Field<long const> loc_field( make_leveled_view<long>( loc ) );
+      parallel::Field<long      > glb_field( make_leveled_view<long>( glb ) );
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      parallel::Field<float const> loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
-      parallel::Field<float      > glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
+      parallel::Field<float const> loc_field( make_leveled_view<float>( loc ) );
+      parallel::Field<float      > glb_field( make_leveled_view<float>( glb ) );
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      parallel::Field<double const> loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
-      parallel::Field<double      > glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
+      parallel::Field<double const> loc_field( make_leveled_view<double>( loc ) );
+      parallel::Field<double      > glb_field( make_leveled_view<double>( glb ) );
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
   }
 }
+
 void NodeColumns::gather( const Field& local, Field& global ) const
 {
   FieldSet local_fields;
@@ -473,23 +474,23 @@ void NodeColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fiel
     glb.metadata().get("owner",root);
 
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      parallel::Field<int const> glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
-      parallel::Field<int      > loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
+      parallel::Field<int const> glb_field( make_leveled_view<int>( glb ) );
+      parallel::Field<int      > loc_field( make_leveled_view<int>( loc ) );
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      parallel::Field<long const> glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
-      parallel::Field<long      > loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
+      parallel::Field<long const> glb_field( make_leveled_view<long>( glb ) );
+      parallel::Field<long      > loc_field( make_leveled_view<long>( loc ) );
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      parallel::Field<float const> glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
-      parallel::Field<float      > loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
+      parallel::Field<float const> glb_field( make_leveled_view<float>( glb ) );
+      parallel::Field<float      > loc_field( make_leveled_view<float>( loc ) );
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      parallel::Field<double const> glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
-      parallel::Field<double      > loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
+      parallel::Field<double const> glb_field( make_leveled_view<double>( glb ) );
+      parallel::Field<double      > loc_field( make_leveled_view<double>( loc ) );
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());

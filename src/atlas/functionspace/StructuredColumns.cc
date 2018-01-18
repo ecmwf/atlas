@@ -39,6 +39,44 @@ namespace detail {
 
 namespace {
 
+template <typename T>
+array::LocalView<T,3> make_leveled_view(const Field &field)
+{
+  using namespace array;
+  if( field.levels() ) {
+    if( field.variables() ) {
+      return make_view<T,3>( field ).slice( Range::all(), Range::all(), Range::all() );
+    } else {
+      return make_view<T,2>( field ).slice( Range::all(), Range::all(), Range::dummy() );
+    }
+  }
+  else {
+    if( field.variables() ) {
+      return make_view<T,2>( field ).slice( Range::all(), Range::dummy(), Range::all() );
+    } else {
+      return make_view<T,1>( field ).slice( Range::all(), Range::dummy(), Range::dummy() );
+    }
+  }
+}
+
+template <typename T>
+std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& field )
+{
+  array::LocalView<T,3> values = make_leveled_view<T>(field);
+  array::ArrayT<T> surface_field( values.shape(0), values.shape(2) );
+  array::ArrayView<T,2> surface = array::make_view<T,2>(surface_field);
+  const size_t npts = values.shape(0);
+  atlas_omp_for( size_t n=0; n<npts; ++n ) {
+    for( size_t j=0; j<surface.shape(1); ++j )
+    {
+      surface(n,j) = 0.;
+      for( size_t l=0; l<values.shape(1);++l )
+        surface(n,j) += values(n,l,j);
+    }
+  }
+  return checksum.execute( surface.data(), surface_field.stride(0) );
+}
+
 struct GridPoint
 {
 public:
@@ -646,23 +684,23 @@ void StructuredColumns::gather(
       glb.metadata().get("owner",root);
 
       if     ( loc.datatype() == array::DataType::kind<int>() ) {
-        parallel::Field<int const> loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
-        parallel::Field<int      > glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
+        parallel::Field<int const> loc_field( make_leveled_view<int>( loc ) );
+        parallel::Field<int      > glb_field( make_leveled_view<int>( glb ) );
         gather_scatter_->gather( &loc_field, &glb_field, nb_fields, root );
       }
       else if( loc.datatype() == array::DataType::kind<long>() ) {
-        parallel::Field<long const> loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
-        parallel::Field<long      > glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
+        parallel::Field<long const> loc_field( make_leveled_view<long>( loc ) );
+        parallel::Field<long      > glb_field( make_leveled_view<long>( glb ) );
         gather_scatter_->gather( &loc_field, &glb_field, nb_fields, root );
       }
       else if( loc.datatype() == array::DataType::kind<float>() ) {
-        parallel::Field<float const> loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
-        parallel::Field<float      > glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
+        parallel::Field<float const> loc_field( make_leveled_view<float>( loc ) );
+        parallel::Field<float      > glb_field( make_leveled_view<float>( glb ) );
         gather_scatter_->gather( &loc_field, &glb_field, nb_fields, root );
       }
       else if( loc.datatype() == array::DataType::kind<double>() ) {
-        parallel::Field<double const> loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
-        parallel::Field<double      > glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
+        parallel::Field<double const> loc_field( make_leveled_view<double>( loc ) );
+        parallel::Field<double      > glb_field( make_leveled_view<double>( glb ) );
         gather_scatter_->gather( &loc_field, &glb_field, nb_fields, root );
       }
       else throw eckit::Exception("datatype not supported",Here());
@@ -707,23 +745,23 @@ void StructuredColumns::scatter(
     glb.metadata().get("owner",root);
 
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      parallel::Field<int const> glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
-      parallel::Field<int      > loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
+      parallel::Field<int const> glb_field( make_leveled_view<int>( glb ) );
+      parallel::Field<int      > loc_field( make_leveled_view<int>( loc ) );
       gather_scatter_->scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      parallel::Field<long const> glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
-      parallel::Field<long      > loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
+      parallel::Field<long const> glb_field( make_leveled_view<long>( glb ) );
+      parallel::Field<long      > loc_field( make_leveled_view<long>( loc ) );
       gather_scatter_->scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      parallel::Field<float const> glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
-      parallel::Field<float      > loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
+      parallel::Field<float const> glb_field( make_leveled_view<float>( glb ) );
+      parallel::Field<float      > loc_field( make_leveled_view<float>( loc ) );
       gather_scatter_->scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      parallel::Field<double const> glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
-      parallel::Field<double      > loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
+      parallel::Field<double const> glb_field( make_leveled_view<double>( glb ) );
+      parallel::Field<double      > loc_field( make_leveled_view<double>( loc ) );
       gather_scatter_->scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -751,46 +789,6 @@ void StructuredColumns::scatter(
 }
 // ----------------------------------------------------------------------------
 
-namespace {
-
-template <typename T>
-array::LocalView<T,3> make_leveled_view(const Field &field)
-{
-  using namespace array;
-  if( field.levels() ) {
-    if( field.variables() ) {
-      return make_view<T,3>( field ).slice( Range::all(), Range::all(), Range::all() );
-    } else {
-      return make_view<T,2>( field ).slice( Range::all(), Range::all(), Range::dummy() );
-    }
-  }
-  else {
-    if( field.variables() ) {
-      return make_view<T,2>( field ).slice( Range::all(), Range::dummy(), Range::all() );
-    } else {
-      return make_view<T,1>( field ).slice( Range::all(), Range::dummy(), Range::dummy() );
-    }
-  }
-}
-
-template <typename T>
-std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& field )
-{
-  array::LocalView<T,3> values = make_leveled_view<T>(field);
-  array::ArrayT<T> surface_field( values.shape(0), values.shape(2) );
-  array::ArrayView<T,2> surface = array::make_view<T,2>(surface_field);
-  const size_t npts = values.shape(0);
-  atlas_omp_for( size_t n=0; n<npts; ++n ) {
-    for( size_t j=0; j<surface.shape(1); ++j )
-    {
-      surface(n,j) = 0.;
-      for( size_t l=0; l<values.shape(1);++l )
-        surface(n,j) += values(n,l,j);
-    }
-  }
-  return checksum.execute( surface.data(), surface_field.stride(0) );
-}
-}
 
 std::string StructuredColumns::checksum( const FieldSet& fieldset ) const {
   eckit::MD5 md5;

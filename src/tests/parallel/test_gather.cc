@@ -114,6 +114,7 @@ CASE("test_gather") {
       }
     }
 
+#if 1    
     SECTION( "test_gather_rank1_deprecated" )
     {
       for( f.root=0; f.root<parallel::mpi::comm().size(); ++f.root )
@@ -130,50 +131,71 @@ CASE("test_gather") {
 
         // Gather complete field
         {
-        size_t loc_strides[] = {1};
-        size_t loc_extents[] = {2};
-        size_t glb_strides[] = {1};
-        size_t glb_extents[] = {2};
-        f.gather_scatter.gather( make_storageview<POD>(loc).data(), loc_strides, loc_extents, 1,
-                              make_storageview<POD>(glb).data(), glb_strides, glb_extents, 1, f.root );
+        size_t loc_strides[] = {loc.stride(0),loc.stride(1)};
+        size_t loc_extents[] = {1,loc.shape(1)};
+        size_t glb_strides[] = {glb.stride(0),glb.stride(1)};
+        size_t glb_extents[] = {1,glb.shape(1)};
+
+        f.gather_scatter.gather( loc.data<POD>(), loc_strides, loc_extents, 2,
+                                 glb.data<POD>(), glb_strides, glb_extents, 2, f.root );
         }
         if( parallel::mpi::comm().rank() == f.root )
         {
+          auto glbv = array::make_view<POD,2>(glb);
           POD glb_c[] = { 10,100, 20,200, 30,300, 40,400, 50,500, 60,600, 70,700, 80,800, 90,900 };
-          EXPECT(make_view(make_storageview<POD>(glb).data(),make_storageview<POD>(glb).data()+2*f.Ng()) == make_view(glb_c,glb_c+2*f.Ng()));
+          size_t c(0);
+          for( size_t i=0; i<glb.shape(0); ++i ) {
+            for( size_t j=0; j<glb.shape(1); ++j ) {
+              EXPECT( glbv(i,j) == glb_c[c++] );
+            }
+          }
         }
 
         // Gather only first component
         {
-          size_t loc_strides[] = {2};
-          size_t loc_extents[] = {1};
-          size_t glb_strides[] = {1};
-          size_t glb_extents[] = {1};
-          f.gather_scatter.gather( make_storageview<POD>(loc).data(),  loc_strides, loc_extents, 1,
-                                make_storageview<POD>(glb1).data(), glb_strides, glb_extents, 1, f.root );
+          size_t loc_strides[] = {loc.stride(0),2};
+          size_t loc_extents[] = {1,1};
+          size_t glb_strides[] = {glb1.stride(0),glb1.stride(1)};
+          size_t glb_extents[] = {1,glb1.shape(1)};
+
+          f.gather_scatter.gather( loc.data<POD>(),  loc_strides, loc_extents, 2,
+                                   glb1.data<POD>(), glb_strides, glb_extents, 2, f.root );
         }
         if( parallel::mpi::comm().rank() == f.root )
         {
+          auto glbv = array::make_view<POD,2>(glb1);
           POD glb1_c[] = { 10, 20, 30, 40, 50, 60, 70, 80, 90 };
-          EXPECT(make_view(make_storageview<POD>(glb1).data(),make_storageview<POD>(glb1).data()+f.Ng()) == make_view(glb1_c,glb1_c+f.Ng()));
+          size_t c(0);
+          for( size_t i=0; i<glb1.shape(0); ++i ) {
+            for( size_t j=0; j<glb1.shape(1); ++j ) {
+              EXPECT( glbv(i,j) == glb1_c[c++] );
+            }
+          }
         }
 
         // Gather only second component
         {
-          size_t loc_strides[] = {2};
-          size_t loc_extents[] = {1};
-          size_t glb_strides[] = {1};
-          size_t glb_extents[] = {1};
-          f.gather_scatter.gather( make_storageview<POD>(loc).data()+1, loc_strides, loc_extents, 1,
-                                make_storageview<POD>(glb2).data(),  glb_strides, glb_extents, 1, f.root );
+          size_t loc_strides[] = {loc.stride(0),2};
+          size_t loc_extents[] = {1,1};
+          size_t glb_strides[] = {glb2.stride(0),glb2.stride(1)};
+          size_t glb_extents[] = {1,glb2.shape(2)};
+          f.gather_scatter.gather( loc.data<POD>()+1, loc_strides, loc_extents, 1,
+                                   glb2.data<POD>(),  glb_strides, glb_extents, 1, f.root );
         }
         if( parallel::mpi::comm().rank() == f.root )
         {
+          auto glbv = array::make_view<POD,2>(glb2);
           POD glb2_c[] = { 100, 200, 300, 400, 500, 600, 700, 800, 900 };
-          EXPECT(make_view(make_storageview<POD>(glb2).data(),make_storageview<POD>(glb2).data()+f.Ng()) == make_view(glb2_c,glb2_c+f.Ng()));
+          size_t c(0);
+          for( size_t i=0; i<glb2.shape(0); ++i ) {
+            for( size_t j=0; j<glb2.shape(1); ++j ) {
+              EXPECT( glbv(i,j) == glb2_c[c++] );
+            }
+          }
         }
       }
     }
+#endif
 
     SECTION( "test_gather_rank1" )
     {
@@ -584,7 +606,15 @@ CASE("test_gather") {
                           -70,70,
                           -80,80,
                           -90,90 };
-          EXPECT(make_view(make_storageview<POD>(glb).data(),make_storageview<POD>(glb).data()+2*f.Ng()) == make_view(glb_c,glb_c+2*f.Ng()));
+
+          auto glbv = array::make_view<POD,2>(glb);
+          size_t c(0);
+          for( size_t i=0; i<glb.shape(0); ++i ) {
+            for( size_t j=0; j<glb.shape(1); ++j ) {
+              EXPECT( glbv(i,j) == glb_c[c++] );
+            }
+          }
+          //EXPECT(make_view(make_storageview<POD>(glb).data(),make_storageview<POD>(glb).data()+2*f.Ng()) == make_view(glb_c,glb_c+2*f.Ng()));
         }
       }
     }
@@ -624,7 +654,14 @@ CASE("test_gather") {
                           -7,7, -70,70, -700,700,
                           -8,8, -80,80, -800,800,
                           -9,9, -90,90, -900,900 };
-          EXPECT(make_view(make_storageview<POD>(glb).data(),make_storageview<POD>(glb).data()+6*f.Ng()) == make_view(glb_c,glb_c+6*f.Ng()));
+          size_t c(0);
+          for( size_t i=0; i<glb.shape(0); ++i ) {
+            for( size_t j=0; j<glb.shape(1); ++j ) {
+              for( size_t k=0; k<glb.shape(2); ++k ) {
+                EXPECT( glbv(i,j,k) == glb_c[c++] );
+              }
+            }
+          }
         }
       }
       f.root = 0;
@@ -651,8 +688,14 @@ CASE("test_gather") {
                           -7,7, -70,70, -700,700,
                           -8,8, -80,80, -800,800,
                           -9,9, -90,90, -900,900 };
-          auto glb_data = make_storageview<POD>(glb).data();
-          for( int j=0; j<f.Ng()*6; ++j ) glb_data[j] = glb_c[j];
+          size_t c(0);
+          for( int i=0; i<glb.shape(0); ++i ) {
+            for( int j=0; j<glb.shape(1); ++j ) {
+              for( int k=0; k<glb.shape(2); ++k ) {
+                glbv(i,j,k) = glb_c[c++];
+              }
+            }
+          }
         }
 
         POD nan = -1000.;
@@ -669,7 +712,15 @@ CASE("test_gather") {
                           -3,3,   -30,30, -300,300,
                           nan,nan, nan,nan, nan,nan,
                           nan,nan, nan,nan, nan,nan };
-          EXPECT(make_view(make_storageview<POD>(loc).data(),make_storageview<POD>(loc).data()+f.Nl*6) == make_view(loc_c,loc_c+f.Nl*6));
+
+          size_t c(0);
+          for( size_t i=0; i<loc.shape(0); ++i ) {
+            for( size_t j=0; j<loc.shape(1); ++j ) {
+              for( size_t k=0; k<loc.shape(2); ++k ) {
+                EXPECT( locv(i,j,k) == loc_c[c++] );
+              }
+            }
+          }
           break; }
         case 1: {
           POD loc_c[] = { nan,nan, nan,nan, nan,nan,
@@ -678,7 +729,14 @@ CASE("test_gather") {
                           -6,6,   -60,60, -600,600,
                           nan,nan, nan,nan, nan,nan,
                           nan,nan, nan,nan, nan,nan };
-          EXPECT(make_view(make_storageview<POD>(loc).data(),make_storageview<POD>(loc).data()+f.Nl*6) == make_view(loc_c,loc_c+f.Nl*6));
+          size_t c(0);
+          for( size_t i=0; i<loc.shape(0); ++i ) {
+            for( size_t j=0; j<loc.shape(1); ++j ) {
+              for( size_t k=0; k<loc.shape(2); ++k ) {
+                EXPECT( locv(i,j,k) == loc_c[c++] );
+              }
+            }
+          }
           break; }
         case 2: {
             POD loc_c[] = { nan,nan, nan,nan, nan,nan,
@@ -688,8 +746,15 @@ CASE("test_gather") {
                             -9,9,   -90,90, -900,900,
                             nan,nan, nan,nan, nan,nan,
                             nan,nan, nan,nan, nan,nan };
-            EXPECT(make_view(make_storageview<POD>(loc).data(),make_storageview<POD>(loc).data()+f.Nl*6) == make_view(loc_c,loc_c+f.Nl*6));
-            break; }
+          size_t c(0);
+          for( size_t i=0; i<loc.shape(0); ++i ) {
+            for( size_t j=0; j<loc.shape(1); ++j ) {
+              for( size_t k=0; k<loc.shape(2); ++k ) {
+                EXPECT( locv(i,j,k) == loc_c[c++] );
+              }
+            }
+          }
+          break; }
         }
       }
     }
