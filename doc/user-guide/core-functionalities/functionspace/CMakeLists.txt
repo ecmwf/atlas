@@ -20,6 +20,7 @@ ecbuild_add_executable(
   TARGET      atlas_f-NodeColumns
   SOURCES     NodeColumns.F90
   LIBS        atlas_f
+  LINKER_LANGUAGE Fortran
   NOINSTALL )
 
 set_target_properties(atlas_f-NodeColumns

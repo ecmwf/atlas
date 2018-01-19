@@ -13,6 +13,7 @@ ecbuild_add_executable(
   TARGET      atlas_f-global-grids-Structured
   SOURCES     global-grids-Structured.F90
   LIBS        atlas_f
+  LINKER_LANGUAGE Fortran
   NOINSTALL )
 
 set_target_properties(atlas_f-global-grids-Structured

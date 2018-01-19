@@ -20,12 +20,14 @@ ecbuild_add_executable(
   TARGET      atlas_f-fields
   SOURCES     fields.F90
   LIBS        atlas_f
+  LINKER_LANGUAGE Fortran
   NOINSTALL )
 
 ecbuild_add_executable(
   TARGET      atlas_f-fields-on-grid
   SOURCES     fields-on-grid.F90
   LIBS        atlas_f
+  LINKER_LANGUAGE Fortran
   NOINSTALL )
 
 set_target_properties(atlas_f-fields

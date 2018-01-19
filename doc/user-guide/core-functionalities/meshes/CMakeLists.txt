@@ -13,6 +13,7 @@ ecbuild_add_executable(
   TARGET      atlas_f-meshes-Structured
   SOURCES     meshes-Structured.F90
   LIBS        atlas_f
+  LINKER_LANGUAGE Fortran
   NOINSTALL )
 
 set_target_properties(atlas_f-meshes-Structured
