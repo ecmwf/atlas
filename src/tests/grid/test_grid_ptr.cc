@@ -29,7 +29,6 @@ using StructuredGrid = atlas::grid::StructuredGrid;
 using RegularGrid    = atlas::grid::RegularGrid;
 using Config         = atlas::util::Config;
 
-using namespace eckit::testing;
 namespace atlas {
 namespace test {
 
@@ -208,6 +207,5 @@ CASE( "test_iterator" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }

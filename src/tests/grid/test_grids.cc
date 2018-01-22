@@ -28,8 +28,6 @@ using Grid       = atlas::Grid;
 using Regular    = atlas::grid::RegularGrid;
 using ReducedGaussianGrid    = atlas::grid::ReducedGaussianGrid;
 
-using namespace eckit::testing;
-
 namespace atlas {
 namespace test {
 
@@ -156,6 +154,5 @@ CASE( "test_reducedgaussian" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }

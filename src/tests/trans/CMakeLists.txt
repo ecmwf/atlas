@@ -49,5 +49,6 @@ ecbuild_add_test( TARGET atlas_test_transgeneral
   SOURCES   test_transgeneral.cc
   CONDITION ATLAS_HAVE_TRANS
   LIBS      atlas
+  ENVIRONMENT ATLAS_TEST_REPORT=1
 )
 

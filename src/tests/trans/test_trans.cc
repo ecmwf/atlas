@@ -512,6 +512,5 @@ CASE( "test_trans_MIR_lonlat" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTransEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+  return atlas::test::run< atlas::test::AtlasTransEnvironment >( argc, argv );
 }

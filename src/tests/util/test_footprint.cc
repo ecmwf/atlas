@@ -70,6 +70,5 @@ CASE( "test_broadcast_to_self" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }

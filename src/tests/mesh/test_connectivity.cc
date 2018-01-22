@@ -561,6 +561,5 @@ CASE("test_multi_block_connectivity_insert") {
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }

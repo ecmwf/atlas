@@ -18,10 +18,12 @@
 #include "eckit/config/Resource.h"
 #include "eckit/testing/Test.h"
 
-using namespace eckit::testing;
-
 namespace atlas {
 namespace test {
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// Redefine macro's defined in "eckit/testing/Test.h" to include trace information
 
 #ifdef CASE
 #undef CASE
@@ -72,6 +74,18 @@ struct AtlasTestEnvironment {
         atlas::Library::instance().finalise();
     }
 };
+
+//----------------------------------------------------------------------------------------------------------------------
+
+template< typename Environment >
+int run(int argc, char* argv[]) {
+    Environment env( argc, argv );
+    return eckit::testing::run_tests(argc,argv,false);
+}
+
+int run(int argc, char* argv[]) {
+    return run<atlas::test::AtlasTestEnvironment>( argc, argv );
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 

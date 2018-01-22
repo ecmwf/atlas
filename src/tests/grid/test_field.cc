@@ -30,7 +30,6 @@
 
 using namespace std;
 using namespace eckit;
-using namespace eckit::testing;
 using namespace atlas;
 using namespace atlas::grid;
 using namespace atlas::meshgenerator;
@@ -156,6 +155,5 @@ CASE( "test_wrap_rawdata_direct" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }

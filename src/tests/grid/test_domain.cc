@@ -18,8 +18,6 @@
 #include "atlas/util/Config.h"
 #include "tests/AtlasTestEnvironment.h"
 
-using namespace eckit::testing;
-
 namespace atlas {
 namespace test {
 
@@ -123,6 +121,5 @@ CASE( "test_domain_global_from_zonalband" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }

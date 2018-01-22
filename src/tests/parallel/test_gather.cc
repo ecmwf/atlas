@@ -104,7 +104,7 @@ CASE("test_gather") {
         if( parallel::mpi::comm().rank() == f.root )
         {
           POD glb_c[] = { 10, 20, 30, 40, 50, 60, 70, 80, 90 };
-          EXPECT(glb == make_view( glb_c,glb_c+f.Ng() ) );
+          EXPECT(glb == eckit::testing::make_view( glb_c,glb_c+f.Ng() ) );
         }
       }
     }
@@ -765,6 +765,5 @@ CASE("test_gather") {
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }

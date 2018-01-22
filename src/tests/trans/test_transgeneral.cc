@@ -588,8 +588,5 @@ CASE( "test_trans_invtrans" ) {
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTransEnvironment env( argc, argv );
-    int i = run_tests ( argc, argv, false );
-    std::cout << atlas::Trace::report() << std::endl;
-    return i;
+  return atlas::test::run< atlas::test::AtlasTransEnvironment >( argc, argv );
 }

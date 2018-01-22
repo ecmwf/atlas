@@ -21,8 +21,6 @@
 using atlas::util::Rotation;
 using atlas::util::Config;
 
-using namespace eckit::testing;
-
 namespace atlas {
 namespace test {
 
@@ -239,6 +237,5 @@ CASE( "test_rotation_angle_only" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }
