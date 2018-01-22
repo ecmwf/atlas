@@ -12,10 +12,8 @@
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayViewUtil.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
 using namespace atlas::array;
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {

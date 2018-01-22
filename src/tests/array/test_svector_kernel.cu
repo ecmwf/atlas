@@ -10,12 +10,9 @@
 
 #include "atlas/library/config.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 #include "atlas/array/SVector.h"
 
 using namespace atlas::array;
-using namespace eckit::testing;
-
 
 namespace atlas {
 namespace test {
@@ -24,7 +21,7 @@ __global__
 void kernel_exe(int* list_ints_ptr, size_t size, int offset, bool* result )
 {
     SVector<int> list_ints(list_ints_ptr, size);
-   
+
     *result = *result && (list_ints[offset] == 3);
     *result = *result && (list_ints[offset+1] == 4);
 
@@ -54,7 +51,7 @@ CASE( "test_svector" )
     *result=true;
     kernel_exe<<<1,1>>>(list_ints.data(), list_ints.size(), 0, result);
     cudaDeviceSynchronize();
-    
+
     err = cudaGetLastError();
     if(err != cudaSuccess)
         throw eckit::AssertionFailed("failed to execute kernel");

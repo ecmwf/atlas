@@ -31,10 +31,8 @@
 #include "atlas/grid/Partitioner.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
 using namespace eckit;
-using namespace eckit::testing;
 using namespace atlas::numerics;
 using namespace atlas::meshgenerator;
 using namespace atlas::grid;

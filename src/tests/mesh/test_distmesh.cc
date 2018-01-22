@@ -32,9 +32,7 @@
 #include "eckit/types/FloatCompare.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
-using namespace eckit::testing;
 using namespace atlas;
 using namespace atlas::output;
 using namespace atlas::meshgenerator;

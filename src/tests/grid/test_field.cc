@@ -26,7 +26,6 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
 
-#include "eckit/testing/Test.h"
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace std;

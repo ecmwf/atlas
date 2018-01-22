@@ -29,12 +29,9 @@
 #include "atlas/array.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
-
 
 using Topology = atlas::mesh::Nodes::Topology;
 
-using namespace eckit::testing;
 using namespace atlas::array;
 using namespace atlas::output;
 using namespace atlas::meshgenerator;

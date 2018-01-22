@@ -11,13 +11,10 @@
 #include <algorithm>
 #include <cmath>
 #include <utility>
-#include "eckit/testing/Test.h"
 #include "atlas/util/SphericalPolygon.h"
 #include "atlas/util/Point.h"
 
 #include "tests/AtlasTestEnvironment.h"
-
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {

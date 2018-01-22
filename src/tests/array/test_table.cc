@@ -11,9 +11,7 @@
 #include "atlas/array/Table.h"
 #include "atlas/runtime/Log.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
-using namespace eckit::testing;
 using namespace atlas::array;
 
 namespace atlas {

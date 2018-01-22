@@ -28,9 +28,7 @@
 
 #include "eckit/maths/Matrix.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
-using namespace eckit::testing;
 using namespace eckit::maths;
 
 namespace atlas {

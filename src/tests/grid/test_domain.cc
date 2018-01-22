@@ -17,7 +17,6 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
 using namespace eckit::testing;
 

@@ -14,9 +14,6 @@
 #include "atlas/output/Gmsh.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
-
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {

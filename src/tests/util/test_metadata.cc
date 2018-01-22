@@ -14,12 +14,8 @@
 #include "atlas/parallel/mpi/mpi.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
-
-
 
 using namespace eckit;
-using namespace eckit::testing;
 using namespace atlas::util;
 
 namespace atlas {
@@ -34,14 +30,14 @@ CASE( "test_broadcast_to_self" )
   {
     metadata.set("paramID",128);
   }
-  
+
   // broadcast
   metadata.broadcast();
-  
+
   EXPECT( metadata.has("paramID") );
   if( metadata.has("paramID") )
     EXPECT( metadata.get<int>("paramID") == 128 );
-  
+
 }
 
 // -----------------------------------------------------------------------------
@@ -54,16 +50,16 @@ CASE( "test_broadcast_to_other" )
   {
     global.set("paramID",128);
   }
-  
+
   Metadata local;
-  
+
   // broadcast
   global.broadcast(local);
-  
+
   EXPECT( local.has("paramID") );
   if( local.has("paramID") )
     EXPECT( local.get<int>("paramID") == 128 );
-  
+
   if( parallel::mpi::comm().rank() != root )
     EXPECT( ! global.has("paramID") );
 }

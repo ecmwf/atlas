@@ -12,10 +12,6 @@
 
 #include "atlas/util/Bitflags.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
-
-using namespace eckit::testing;
-
 
 using atlas::util::Bitflags;
 

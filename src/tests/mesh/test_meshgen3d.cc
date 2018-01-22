@@ -15,9 +15,7 @@
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
-using namespace eckit::testing;
 using namespace atlas::output;
 using namespace atlas::meshgenerator;
 using namespace atlas::grid;

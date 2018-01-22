@@ -35,13 +35,11 @@
 #include "transi/trans.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
 #include <iomanip>
 #include <chrono>
 
 using namespace eckit;
-using namespace eckit::testing;
 
 using atlas::array::Array;
 using atlas::array::ArrayView;

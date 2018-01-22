@@ -22,7 +22,6 @@
 #include "eckit/types/FloatCompare.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
 using StructuredGrid = atlas::grid::StructuredGrid;
 using Grid       = atlas::Grid;

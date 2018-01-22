@@ -12,26 +12,11 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
-
-using namespace eckit::testing;
-
 
 using namespace atlas::mesh;
 
 namespace atlas {
 namespace test {
-
-#undef CASE
-#define CASE(description) \
-void UNIQUE_NAME2(test_, __LINE__) (std::string&); \
-static eckit::testing::TestRegister UNIQUE_NAME2(test_registration_, __LINE__)(description, &UNIQUE_NAME2(test_, __LINE__)); \
-void UNIQUE_NAME2(traced_test_, __LINE__) (std::string&); \
-void UNIQUE_NAME2(test_, __LINE__) (std::string& _test_subsection) { \
-    ATLAS_TRACE(description); \
-    UNIQUE_NAME2(traced_test_, __LINE__); \
-} \
-void UNIQUE_NAME2(traced_test_, __LINE__) (std::string& _test_subsection)
 
 //-----------------------------------------------------------------------------
 

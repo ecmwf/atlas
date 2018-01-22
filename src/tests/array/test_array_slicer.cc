@@ -8,7 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/testing/Test.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/library/config.h"
 #include "atlas/array.h"
@@ -19,7 +18,6 @@
 
 using namespace atlas::array;
 using namespace atlas::array::helpers;
-using namespace eckit::testing;
 
 template< typename Value, int Rank >
 struct Slice {

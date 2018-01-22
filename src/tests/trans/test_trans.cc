@@ -30,7 +30,6 @@
 #include "atlas/array/MakeView.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 #include "eckit/io/DataHandle.h"
 #include "eckit/filesystem/PathName.h"
 
@@ -41,7 +40,6 @@
 #endif
 
 using namespace eckit;
-using namespace eckit::testing;
 using atlas::grid::detail::partitioner::TransPartitioner;
 using atlas::grid::detail::partitioner::EqualRegionsPartitioner;
 

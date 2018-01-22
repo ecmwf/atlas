@@ -14,11 +14,37 @@
 #include "eckit/runtime/Main.h"
 #include "eckit/mpi/Comm.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Trace.h"
 #include "eckit/config/Resource.h"
 #include "eckit/testing/Test.h"
 
+using namespace eckit::testing;
+
 namespace atlas {
 namespace test {
+
+#ifdef CASE
+#undef CASE
+#endif
+
+#define CASE(description) \
+void UNIQUE_NAME2(test_, __LINE__) (std::string& _test_subsection); \
+static eckit::testing::TestRegister UNIQUE_NAME2(test_registration_, __LINE__)(description, &UNIQUE_NAME2(test_, __LINE__)); \
+void UNIQUE_NAME2(traced_test_, __LINE__)(std::string& _test_subsection); \
+void UNIQUE_NAME2(test_, __LINE__) (std::string& _test_subsection) { \
+    ATLAS_TRACE(description); \
+    UNIQUE_NAME2(traced_test_, __LINE__)(_test_subsection); \
+} \
+void UNIQUE_NAME2(traced_test_, __LINE__)(std::string& _test_subsection)
+
+#ifdef SECTION
+#undef SECTION
+#endif
+#define SECTION(name) \
+    _test_num += 1; \
+    _test_count = _test_num; \
+    _test_subsection = name; \
+    if ((_test_num - 1) == _test) ATLAS_TRACE_SCOPE(name)
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -35,6 +61,14 @@ struct AtlasTestEnvironment {
     }
 
     ~AtlasTestEnvironment() {
+        bool report = eckit::Resource<bool>("--report;$ATLAS_TEST_REPORT", false);
+        if( report ) {
+#if ATLAS_HAVE_TRACE
+          Log::info() << atlas::Trace::report() << std::endl;
+#else
+          Log::warning() << "Atlas cannot generate report as ATLAS_HAVE_TRACE is not defined." << std::endl;
+#endif
+        }
         atlas::Library::instance().finalise();
     }
 };

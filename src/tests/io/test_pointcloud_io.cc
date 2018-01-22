@@ -30,9 +30,6 @@
 #include "eckit/types/FloatCompare.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
-
-using namespace eckit::testing;
 
 //----------------------------------------------------------------------------------------------------------------------
 

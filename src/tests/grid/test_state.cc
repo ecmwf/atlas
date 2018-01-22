@@ -29,11 +29,9 @@
 #include "atlas/runtime/Log.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
 using namespace atlas::field;
 using namespace atlas::field;
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {

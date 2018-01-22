@@ -10,11 +10,9 @@
 
 #include "atlas/library/config.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 #include "atlas/array/SVector.h"
 
 using namespace atlas::array;
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {

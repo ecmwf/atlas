@@ -30,13 +30,10 @@
 #include "atlas/option.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/ifs/TransIFS.h"
 #endif
-
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {

@@ -9,7 +9,6 @@
  */
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 #include "eckit/types/Types.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "atlas/library/Library.h"
@@ -29,7 +28,6 @@
 using namespace eckit;
 using namespace atlas::functionspace;
 using namespace atlas::util;
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {

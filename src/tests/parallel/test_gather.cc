@@ -21,9 +21,6 @@
 #include "atlas/parallel/GatherScatter.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
-
-using namespace eckit::testing;
 
 /// POD: Type to test
 typedef double POD;
@@ -112,7 +109,7 @@ CASE("test_gather") {
       }
     }
 
-#if 1    
+#if 1
     SECTION( "test_gather_rank1_deprecated" )
     {
       for( f.root=0; f.root<parallel::mpi::comm().size(); ++f.root )

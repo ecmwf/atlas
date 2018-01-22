@@ -22,10 +22,8 @@
 #include "atlas/util/CoordinateEnums.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
 using namespace eckit;
-using namespace eckit::testing;
 using namespace atlas::functionspace;
 using namespace atlas::util;
 
@@ -41,7 +39,7 @@ CASE( "test_interpolation_finite_element" )
   MeshGenerator meshgen("structured");
   Mesh mesh = meshgen.generate(grid);
   NodeColumns fs(mesh);
-  
+
   // Some points at the equator
   PointCloud pointcloud( {
     {00., 0.},
@@ -54,14 +52,14 @@ CASE( "test_interpolation_finite_element" )
     {70., 0.},
     {80., 0.},
     {90., 0.}});
-  
+
   auto func = [](double x) -> double { return std::sin(x*M_PI/180.); };
-  
+
   Interpolation interpolation(Config("type","finite-element"),fs,pointcloud);
-  
+
   Field field_source = fs.createField<double>(option::name("source"));
   Field field_target("target",array::make_datatype<double>(),array::make_shape(pointcloud.size()));
-  
+
   auto lonlat = array::make_view<double,2>(fs.nodes().lonlat());
   auto source = array::make_view<double,1>(field_source);
   for( size_t j=0; j<fs.nodes().size(); ++ j ) {

@@ -23,9 +23,6 @@
 
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
-
-using namespace eckit::testing;
 
 /// POD: Type to test
 typedef double POD;

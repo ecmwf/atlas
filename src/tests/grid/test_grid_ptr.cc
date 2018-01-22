@@ -23,7 +23,6 @@
 #include "atlas/output/Gmsh.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
 using Grid           = atlas::Grid;
 using StructuredGrid = atlas::grid::StructuredGrid;

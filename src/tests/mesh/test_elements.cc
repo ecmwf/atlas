@@ -30,9 +30,7 @@
 #include "atlas/grid/Grid.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
-using namespace eckit::testing;
 using namespace atlas::mesh;
 using namespace atlas::mesh::temporary;
 

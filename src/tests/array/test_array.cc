@@ -12,7 +12,6 @@
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 #include "eckit/memory/SharedPtr.h"
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
@@ -28,7 +27,6 @@
 
 
 using namespace atlas::array;
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {

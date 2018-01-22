@@ -14,8 +14,6 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/array/MakeView.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
-
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define IN_FORTRAN
@@ -24,7 +22,6 @@
 #endif
 
 using namespace atlas::array;
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {

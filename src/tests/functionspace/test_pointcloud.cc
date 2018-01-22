@@ -13,11 +13,9 @@
 #include "atlas/array.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
 
 using namespace eckit;
-using namespace eckit::testing;
 using namespace atlas::functionspace;
 using namespace atlas::util;
 

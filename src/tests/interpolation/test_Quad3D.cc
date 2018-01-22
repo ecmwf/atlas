@@ -14,15 +14,12 @@
 #include "atlas/util/Point.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 #include "eckit/types/FloatCompare.h"
 
 using atlas::interpolation::element::Quad3D;
 using atlas::interpolation::method::Intersect;
 using atlas::interpolation::method::Ray;
 using atlas::PointXYZ;
-
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
