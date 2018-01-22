@@ -146,16 +146,25 @@ void TransLocal::invtrans_vordiv2wind(
   NOTIMP;
 }
 
+void TransLocal::invtrans(
+    const int nb_scalar_fields, const double scalar_spectra[],
+    double gp_fields[],
+    const eckit::Configuration& config ) const
+{
+    invtrans_uv(nb_scalar_fields, 0, scalar_spectra, gp_fields, config);
+}
+
 //-----------------------------------------------------------------------------
 // Routine to compute the spectral transform by using a local Fourier transformation
 // for a grid (same latitude for all longitudes, allows to compute Legendre functions
-// once for all longitudes)
+// once for all longitudes). U and v components are divided by cos(latitude) for
+// nb_vordiv_fields > 0.
 //
 // Author:
 // Andreas Mueller *ECMWF*
 //
-void TransLocal::invtrans(
-    const int nb_scalar_fields, const double scalar_spectra[],
+void TransLocal::invtrans_uv(
+    const int nb_scalar_fields, const int nb_vordiv_fields, const double scalar_spectra[],
     double gp_fields[],
     const eckit::Configuration& config ) const
 {
@@ -196,6 +205,11 @@ void TransLocal::invtrans(
                 invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(), gp_fields+(nb_fields*idx));
                 ++idx;
             }
+
+            // Divide U, V by cos(latitude):
+            for( int jfld=2*nb_vordiv_fields; jfld<4*nb_vordiv_fields; ++jfld ) {
+                gp_fields[nb_fields*idx+jfld] /= std::cos(lat);
+            }
         }
     } else {
         ATLAS_TRACE( "invtrans unstructured");
@@ -211,6 +225,11 @@ void TransLocal::invtrans(
             // Fourier transform:
             invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(), gp_fields+(nb_fields*idx));
             ++idx;
+
+            // Divide U, V by cos(latitude):
+            for( int jfld=2*nb_vordiv_fields; jfld<4*nb_vordiv_fields; ++jfld ) {
+                gp_fields[nb_fields*idx+jfld] /= std::cos(lat);
+            }
         }
     }
 }
@@ -329,7 +348,7 @@ void vd2uv(
     double za_r = 1./util::Earth::radiusInMeters();
     for( int j=0; j<ilcm; ++j ) {
         int inm = ioff+(ilcm-j)*2;
-        for( int jfld=0; jfld<=nb_vordiv_fields; ++jfld ) {
+        for( int jfld=0; jfld<=nb_vordiv_fields; ++jfld ) { // < instead of <= ????
             int ir = 2*jfld*nlei1, ii = ir + nlei1;
             int idx = inm*nb_all_fields+jfld, idx0 = inm*nb_vordiv_fields+jfld, idx1 = idx0 + nb_vordiv_fields;
             // vorticity
@@ -382,7 +401,8 @@ void TransLocal::invtrans(
     }
 
     // perform spectral transform to compute all fields in grid point space
-    invtrans(nb_all_fields, all_spectra, gp_fields, config);
+    invtrans_uv(nb_all_fields, nb_vordiv_fields, all_spectra, gp_fields, config);
+
 }
 
 // --------------------------------------------------------------------------------------------------------------------

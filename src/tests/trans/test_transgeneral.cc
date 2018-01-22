@@ -505,17 +505,13 @@ CASE( "test_transgeneral_with_translib" )
   functionspace::Spectral          spectral   (trans);
   functionspace::StructuredColumns gridpoints (g);
 
-  Field spfg = spectral.  createField<double>(option::name("spf") | option::global());
   Field spf  = spectral.  createField<double>(option::name("spf"));
   Field gpf  = gridpoints.createField<double>(option::name("gpf"));
-  Field gpfg = gridpoints.createField<double>(option::name("gpf") | option::global());
 
   int N = (trc+2)*(trc+1)/2;
   std::vector<double> rspecg       (2*N);
   std::vector<double> rgp          (g.size());
   std::vector<double> rgp_analytic (g.size());
-
-  ASSERT( 2*N == spectral.nb_spectral_coefficients_global() );
 
   int k = 0;
   for( int m=0; m<=trc; m++ ) { // zonal wavenumber
@@ -524,36 +520,86 @@ CASE( "test_transgeneral_with_translib" )
 
               if( sphericalharmonics_analytic_point(n, m, true, 0., 0.) == 0. ) {
 
-                  ATLAS_DEBUG_VAR( k );
-                  array::ArrayView<double,1> spg = array::make_view<double,1>(spfg);
-                  if( parallel::mpi::comm().rank() == 0 ) {
-                    spg.assign(0.);
-                    spg(k) = 1.;
-                  }
-
-                  EXPECT_NO_THROW( spectral.scatter(spfg,spf) );
-
-                  if( parallel::mpi::comm().rank() == 0 ) {
-                    array::ArrayView<double,1> sp = array::make_view<double,1>(spf);
-                    EXPECT( eckit::types::is_approximately_equal( sp(k), 1., 0.001 ));
-                    for( size_t jp=0; jp<sp.size(); ++jp ) {
-                      Log::debug() << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
-                    }
-                  }
+                  array::ArrayView<double,1> sp = array::make_view<double,1>(spf);
+                  sp.assign(0.);
+                  sp(k) = 1.;
 
                   EXPECT_NO_THROW( trans.invtrans(spf,gpf) );
-
-                  EXPECT_NO_THROW( gridpoints.gather(gpf,gpfg) );
-
-                  array::ArrayView<double,1> gpg = array::make_view<double,1>(gpfg);
 
                   spectral_transform_grid_analytic(trc, trc, n, m, imag, g, rspecg.data(), rgp_analytic.data());
 
                   // compute spectral transform with the general transform:
-                  spectral_transform_grid(trc, trc, g, spg.data(), rgp.data(), false);
+                  spectral_transform_grid(trc, trc, g, sp.data(), rgp.data(), false);
 
-                  double rms_trans = compute_rms(g.size(), gpg.data(), rgp.data());
+                  array::ArrayView<double,1> gp = array::make_view<double,1>(gpf);
+                  double rms_trans = compute_rms(g.size(), gp.data(), rgp.data());
                   double rms_gen   = compute_rms(g.size(), rgp.data(), rgp_analytic.data());
+
+                  if( rms_gen >= tolerance ) {
+                    ATLAS_DEBUG_VAR(rms_gen);
+                    ATLAS_DEBUG_VAR(tolerance);
+                  }
+                  EXPECT( rms_gen < tolerance );
+                  EXPECT( rms_trans < tolerance );
+              }
+              k++;
+          }
+      }
+  }
+}
+
+//-----------------------------------------------------------------------------
+
+CASE( "test_trans_vordiv_with_translib" )
+{
+  Log::info() << "test_trans_vordiv_with_translib" << std::endl;
+  // test transgeneral by comparing its result with the trans library
+  // this test is based on the test_nomesh case in test_trans.cc
+
+  std::ostream& out = Log::info();
+  double tolerance = 1.e-13;
+  Grid g( "F24" );
+  grid::StructuredGrid gs(g);
+  int trc = 47;
+  trans::Trans trans(g,trc) ;
+
+  functionspace::Spectral          spectral   (trans);
+  functionspace::StructuredColumns gridpoints (g);
+
+  int N = (trc+2)*(trc+1)/2;
+  double sp           [2*N     ];
+  double vor          [2*N     ];
+  double div          [2*N     ];
+  double rspecg       [2*N     ];
+  double gp           [g.size()];
+  double rgp          [g.size()];
+  double rgp_analytic [g.size()];
+
+  int nb_scalar = 1, nb_vordiv = 0;
+
+  int k = 0;
+  for( int m=0; m<=trc; m++ ) { // zonal wavenumber
+      for( int n=m; n<=trc; n++ ) { // total wavenumber
+          for( int imag=0; imag<=1; imag++ ) { // real and imaginary part
+
+              if( sphericalharmonics_analytic_point(n, m, true, 0., 0.) == 0. ) {
+
+                  for( int j=0; j<2*N; j++ ) {
+                      sp [j] = 0.;
+                      vor[j] = 0.;
+                      div[j] = 0.;
+                  }
+                  sp[k] = 1.;
+
+                  EXPECT_NO_THROW( trans.invtrans( nb_scalar, sp, nb_vordiv, vor, div, gp ) );
+
+                  spectral_transform_grid_analytic(trc, trc, n, m, imag, g, rspecg, rgp_analytic);
+
+                  // compute spectral transform with the general transform:
+                  spectral_transform_grid(trc, trc, g, sp, rgp, false);
+
+                  double rms_trans = compute_rms(g.size(), gp, rgp);
+                  double rms_gen   = compute_rms(g.size(), rgp, rgp_analytic);
 
                   if( rms_gen >= tolerance ) {
                     ATLAS_DEBUG_VAR(rms_gen);
