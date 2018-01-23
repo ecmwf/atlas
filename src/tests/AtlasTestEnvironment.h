@@ -48,8 +48,34 @@ void UNIQUE_NAME2(traced_test_, __LINE__)(std::string& _test_subsection)
 #define SECTION(name) \
     _test_num += 1; \
     _test_count = _test_num; \
-    _test_subsection = name; \
-    if ((_test_num - 1) == _test) ATLAS_TRACE_SCOPE(name)
+    _test_subsection = (name); \
+    if ((_test_num - 1) == _test) ATLAS_TRACE_SCOPE(_test_subsection)
+
+#else
+
+#undef CASE
+#define CASE(description) \
+void UNIQUE_NAME2(test_, __LINE__) (std::string& , int&, int); \
+static eckit::testing::TestRegister UNIQUE_NAME2(test_registration_, __LINE__)(description, &UNIQUE_NAME2(test_, __LINE__)); \
+void UNIQUE_NAME2(traced_test_, __LINE__)(std::string& _test_subsection, int& _num_subsections, int _subsection); \
+void UNIQUE_NAME2(test_, __LINE__) (std::string& _test_subsection, int& _num_subsections, int _subsection) { \
+    ATLAS_TRACE(description); \
+    UNIQUE_NAME2(traced_test_, __LINE__)(_test_subsection,_num_subsections,_subsection); \
+} \
+void UNIQUE_NAME2(traced_test_, __LINE__)(std::string& _test_subsection, int& _num_subsections, int _subsection)
+
+#undef SECTION
+#define SECTION(name) \
+    _num_subsections += 1; \
+    _test_subsection = (name); \
+    if ((_num_subsections - 1) == _subsection) { \
+        eckit::Log::info() << "Running section \"" << _test_subsection << "\" ..." << std::endl; \
+    } \
+    if ((_num_subsections - 1) == _subsection) ATLAS_TRACE_SCOPE(_test_subsection)
+
+#ifndef SETUP
+#define SETUP(name)
+#endif
 
 #endif
 
