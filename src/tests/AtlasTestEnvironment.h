@@ -17,6 +17,7 @@
 #include "atlas/runtime/Trace.h"
 #include "eckit/config/Resource.h"
 #include "eckit/testing/Test.h"
+#include "eckit/eckit_version.h"
 
 namespace atlas {
 namespace test {
@@ -25,10 +26,14 @@ namespace test {
 
 // Redefine macro's defined in "eckit/testing/Test.h" to include trace information
 
-#ifdef CASE
-#undef CASE
-#endif
+#define _ECKIT_VERSION (ECKIT_MAJOR_VERSION * 10000 \
+                      + ECKIT_MINOR_VERSION * 100 \
+                      + ECKIT_PATCH_VERSION)
 
+// Test ECKIT_VERSION < 0.19.1
+#if _ECKIT_VERSION < 1901
+
+#undef CASE
 #define CASE(description) \
 void UNIQUE_NAME2(test_, __LINE__) (std::string& _test_subsection); \
 static eckit::testing::TestRegister UNIQUE_NAME2(test_registration_, __LINE__)(description, &UNIQUE_NAME2(test_, __LINE__)); \
@@ -39,14 +44,14 @@ void UNIQUE_NAME2(test_, __LINE__) (std::string& _test_subsection) { \
 } \
 void UNIQUE_NAME2(traced_test_, __LINE__)(std::string& _test_subsection)
 
-#ifdef SECTION
 #undef SECTION
-#endif
 #define SECTION(name) \
     _test_num += 1; \
     _test_count = _test_num; \
     _test_subsection = name; \
     if ((_test_num - 1) == _test) ATLAS_TRACE_SCOPE(name)
+
+#endif
 
 //----------------------------------------------------------------------------------------------------------------------
 
