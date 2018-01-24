@@ -23,7 +23,6 @@ namespace atlas {
 namespace atlas {
 namespace trans {
     class Trans;
-    class TransImpl;
 }
 }
 
@@ -130,9 +129,16 @@ private:
   const detail::Spectral* functionspace_;
 };
 
+} // namespace functionspace
+} // namespace atlas
 
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
+namespace atlas {
+namespace field { class FieldSetImpl; class FieldImpl; }
+namespace trans { class TransImpl; }
+namespace functionspace {
+
 extern "C"
 {
   const detail::Spectral* atlas__SpectralFunctionSpace__new__config ( const eckit::Configuration* config );

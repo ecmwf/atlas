@@ -242,11 +242,6 @@ void TransIFS::invtrans( const int nb_scalar_fields, const double scalar_spectra
                          const eckit::Configuration& config ) const
 {
   TransParameters params(*this,config);
-
-  ATLAS_DEBUG_VAR( params.global() );
-  ATLAS_DEBUG_VAR( params.nproma() );
-  ATLAS_DEBUG_VAR( params.ngpblks() );
-
   struct ::InvTrans_t args = new_invtrans(trans_.get());
     args.nscalar = nb_scalar_fields;
     args.rspscalar = scalar_spectra;

@@ -57,6 +57,7 @@ namespace {
             load_builder_functionspace<TransIFSStructuredColumns>();
             load_builder_grid<TransIFS>();
 #endif
+            load_builder_grid<TransLocal>();
         }
     };
 
