@@ -65,6 +65,11 @@ read_legendre::read_legendre( const eckit::PathName& filepath )
   set("read_legendre",filepath);
 }
 
+nproma::nproma( int nproma )
+{
+  set("nproma",nproma);
+}
+
 // ----------------------------------------------------------------------------
 
 } // namespace option
