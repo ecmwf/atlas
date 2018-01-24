@@ -254,7 +254,7 @@ void prfi1b(
     const double rspec[], // spectral data
     double pia[]) // spectral components in data layout of trans library
 {
-    int ilcm = truncation-km, ioff = (2*truncation-km+1)*km, nlei1 = truncation+4+(truncation+4+1)%2;
+    int ilcm = truncation-km, ioff = (2*truncation-km+3)*km, nlei1 = truncation+4+(truncation+4+1)%2;
     for( int j=0; j<=ilcm; ++j ) {
         int inm = ioff+(ilcm-j)*2;
         for( int jfld=0; jfld<nb_fields; ++jfld ) {
@@ -284,6 +284,7 @@ void vd2uv(
     const double scalar_spectra[],
     const eckit::Configuration& config )
 {
+
     int nlei1 = truncation+4+(truncation+4+1)%2;
 
     double repsnm[(truncation+1)*(truncation+6)/2], rlapin[truncation+3];
@@ -315,7 +316,7 @@ void vd2uv(
     prfi1b(truncation, km, nb_vordiv_fields, divergence_spectra, rdiv);
 
     if( km==0 ) {
-        for( int jfld=0; jfld<=nb_vordiv_fields; ++jfld ) {
+        for( int jfld=0; jfld<nb_vordiv_fields; ++jfld ) {
             int ir=2*jfld*nlei1;
             for( int ji=1; ji<truncation+3-km; ++ji ) {
                 ru[ir+ji] = + zn[ji+1]*repsnm[ji  ]*rlapin[ji+1]*rvor[ir+ji+1]
@@ -325,7 +326,7 @@ void vd2uv(
             }
         }
     } else {
-        for( int jfld=0; jfld<=nb_vordiv_fields; ++jfld) {
+        for( int jfld=0; jfld<nb_vordiv_fields; ++jfld) {
             int ir=2*jfld*nlei1, ii = ir+nlei1;
             for( int ji=1; ji<truncation+3-km; ++ji ) {
                 ru[ir+ji] = -                    km*rlapin[ji  ]*rdiv[ii+ji  ]
@@ -344,11 +345,11 @@ void vd2uv(
         }
     }
 
-    int ilcm = truncation-km, ioff = (2*truncation-km+1)*km;
+    int ilcm = truncation-km, ioff = (2*truncation-km+3)*km;
     double za_r = 1./util::Earth::radiusInMeters();
-    for( int j=0; j<ilcm; ++j ) {
+    for( int j=0; j<=ilcm; ++j ) {
         int inm = ioff+(ilcm-j)*2;
-        for( int jfld=0; jfld<=nb_vordiv_fields; ++jfld ) { // < instead of <= ????
+        for( int jfld=0; jfld<nb_vordiv_fields; ++jfld ) {
             int ir = 2*jfld*nlei1, ii = ir + nlei1;
             int idx = inm*nb_all_fields+jfld, idx0 = inm*nb_vordiv_fields+jfld, idx1 = idx0 + nb_vordiv_fields;
             // vorticity
@@ -371,7 +372,7 @@ void vd2uv(
             idx += nb_vordiv_fields;
             all_spectra[idx] = rv[ii+j+2]*za_r;
         }
-        for( int jfld=0; jfld<=nb_scalar_fields; ++jfld ) {
+        for( int jfld=0; jfld<nb_scalar_fields; ++jfld ) {
             int idx = inm*nb_all_fields+8*nb_vordiv_fields+jfld, idx0 = inm*nb_scalar_fields+jfld, idx1 = idx0 + nb_scalar_fields;
             // scalars
             all_spectra[idx] = scalar_spectra[idx0];
@@ -396,7 +397,10 @@ void TransLocal::invtrans(
     // call vd2uv to compute u and v in spectral space
     int nb_all_fields = nb_scalar_fields+4*nb_vordiv_fields;
     double all_spectra[2*legendre_size(truncation_)*nb_all_fields];
-    for( int jm=0; jm<truncation_; ++jm ) {
+    for( int j=0; j<2*legendre_size(truncation_)*nb_all_fields; j++ ) {
+        all_spectra[j] = 0.;
+    }
+    for( int jm=0; jm<=truncation_; ++jm ) {
         vd2uv(truncation_, jm, nb_vordiv_fields, vorticity_spectra, divergence_spectra, nb_all_fields, all_spectra, nb_scalar_fields, scalar_spectra, config);
     }
 
