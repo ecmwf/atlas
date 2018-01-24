@@ -424,8 +424,8 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
       const double dxN = std::abs(xN2-xN1);
       const double dxS = std::abs(xS2-xS1);
       const double dx  = std::min(dxN,dxS);
-      const double alpha1 = ( dx==0. ? 0. : std::atan2((xN1-xS1)/dx,1.) * to_deg );
-      const double alpha2 = ( dx==0. ? 0. : std::atan2((xN2-xS2)/dx,1.) * to_deg );
+      const double alpha1 = ( dx==0. ? 0. : std::atan2((xN1-xS1),dx) * to_deg );
+      const double alpha2 = ( dx==0. ? 0. : std::atan2((xN2-xS2),dx) * to_deg );
       if( std::abs(alpha1) <= max_angle && std::abs(alpha2) <= max_angle )
       {
         if( triangulate_quads )
