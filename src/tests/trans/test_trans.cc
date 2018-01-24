@@ -523,7 +523,7 @@ CASE( "test_trans_VorDivToUV")
 
     // With IFS
     if( trans::VorDivToUVFactory::has("ifs") ) {
-      trans::VorDivToUV vordiv_to_UV(truncation,util::Config("type","ifs"));
+      trans::VorDivToUV vordiv_to_UV(truncation, option::type("ifs"));
       EXPECT( vordiv_to_UV.truncation() == truncation );
 
       std::vector<double> field_U  ( nfld*nspec2 );
@@ -537,7 +537,7 @@ CASE( "test_trans_VorDivToUV")
 
     // With Local
     {
-      trans::VorDivToUV vordiv_to_UV(truncation,util::Config("type","local"));
+      trans::VorDivToUV vordiv_to_UV(truncation, option::type("local"));
       EXPECT( vordiv_to_UV.truncation() == truncation );
 
       std::vector<double> field_U  ( nfld*nspec2 );
