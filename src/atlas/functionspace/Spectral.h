@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -23,7 +23,6 @@ namespace atlas {
 namespace atlas {
 namespace trans {
     class Trans;
-    class TransImpl;
 }
 }
 
@@ -130,9 +129,16 @@ private:
   const detail::Spectral* functionspace_;
 };
 
+} // namespace functionspace
+} // namespace atlas
 
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
+namespace atlas {
+namespace field { class FieldSetImpl; class FieldImpl; }
+namespace trans { class TransImpl; }
+namespace functionspace {
+
 extern "C"
 {
   const detail::Spectral* atlas__SpectralFunctionSpace__new__config ( const eckit::Configuration* config );

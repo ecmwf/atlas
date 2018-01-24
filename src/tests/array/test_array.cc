@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -12,7 +12,6 @@
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 #include "eckit/memory/SharedPtr.h"
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
@@ -28,7 +27,6 @@
 
 
 using namespace atlas::array;
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
@@ -250,9 +248,10 @@ CASE("test_copy_gt_ctr") {
   EXPECT(hv2(1, 1) == 7);
 
   auto dims = hv.data_view().storage_info().dims();
+  ATLAS_DEBUG_VAR(dims[0]);
+  ATLAS_DEBUG_VAR(dims[1]);
   EXPECT(dims[0] == 3);
-  EXPECT(dims[1] == 2);
-
+  if( NOT_PADDED ) EXPECT(dims[1] == 2);
   delete ds;
 }
 #endif
@@ -453,19 +452,6 @@ CASE("test_wrap_storage") {
   }
 }
 
-CASE("test_storageview") {
-  Array* ds = Array::create<double>(2ul, 3ul, 4ul);
-  auto hv = make_host_view<double, 3>(*ds);
-
-  EXPECT(hv.size() == 2 * 3 * 4);
-
-  auto sv = make_storageview<double>(*ds);
-
-  EXPECT(sv.size() == 2 * 3 * 4);
-
-  delete ds;
-}
-
 CASE("test_assign") {
   Array* ds = Array::create<double>(2ul, 3ul, 4ul);
   auto hv = make_host_view<double, 3>(*ds);
@@ -553,7 +539,7 @@ CASE("test_wrap") {
 
     array::ArrayT<int> arr_t(3,2);
     EXPECT(arr_t.shape(0) == 3);
-    EXPECT(arr_t.stride(0) == 2);
+    if( NOT_PADDED ) EXPECT(arr_t.stride(0) == 2);
     EXPECT(arr_t.shape(1) == 2);
     EXPECT(arr_t.stride(1) == 1);
     EXPECT(arr_t.rank() == 2);
@@ -568,19 +554,16 @@ CASE("test_wrap") {
     }
 
     eckit::SharedPtr<array::Array> arr ( array::Array::wrap<int>(arrv_t.data(),
-                     array::ArraySpec{array::make_shape(3), array::make_strides(2) } ) );
+                     array::ArraySpec{array::make_shape(3), array::make_strides(arr_t.stride(0) ) } ) );
 
     EXPECT(arr->shape(0) == 3);
-    EXPECT(arr->stride(0) == 2);
+    EXPECT(arr->stride(0) == arr_t.stride(0) );
     EXPECT(arr->rank() == 1);
 
     auto view = make_host_view<int, 1, array::Intent::ReadOnly>(*arr);
 
     EXPECT(view.shape(0) == 3);
-// TODO fix this
-#ifndef ATLAS_HAVE_GRIDTOOLS_STORAGE
-    EXPECT(view.stride(0) == 2);
-#endif
+    EXPECT(view.stride(0) == arr_t.stride(0) );
     EXPECT(view.rank() == 1);
 
     EXPECT(view(0) == -1);
@@ -608,7 +591,6 @@ CASE("test_acc_map") {
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return eckit::testing::run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }
 

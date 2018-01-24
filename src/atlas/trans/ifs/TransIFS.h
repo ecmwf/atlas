@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -131,11 +131,12 @@ public:
   /*!
    * @brief invtrans
    * @param nb_scalar_fields
-   * @param scalar_spectra
+   * @param scalar_spectra       [NSPEC2][nb_scalar_fields]
    * @param nb_vordiv_fields
-   * @param vorticity_spectra
-   * @param divergence_spectra
-   * @param gp_fields
+   * @param vorticity_spectra    [NSPEC2][nb_vordiv_fields]
+   * @param divergence_spectra   [NSPEC2][nb_vordiv_fields]
+   * @param gp_fields  Ordering: [NGPBLKS][NFLD][NPROMA] if distributed,
+   *                             [NFLD][NGPTOTG] if global ( add option::global() )
    */
   virtual void invtrans( const int nb_scalar_fields, const double scalar_spectra[],
                          const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],

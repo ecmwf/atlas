@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,11 +10,9 @@
 
 #include "atlas/library/config.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 #include "atlas/array/SVector.h"
 
 using namespace atlas::array;
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
@@ -72,7 +70,6 @@ CASE( "test_svector_resize" )
 } // namespace atlas
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }
 

@@ -2,7 +2,6 @@
 #include "atlas/array_fwd.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/array/StorageView.h"
 #include "atlas/library/config.h"
 
 #include "atlas/array.h"
@@ -50,21 +49,6 @@ make_host_indexview(const Array& array) {
     return IndexView<Value,Rank>( (Value*)(array.storage()),array.shape().data() );
 }
 
-
-template <typename Value>
-StorageView<Value>
-make_host_storageview(const Array& array) {
-    return StorageView<Value>(const_cast<Array&>(array).storage(),array.size(),array.contiguous());
-}
-
-
-template <typename Value>
-StorageView<Value>
-make_device_storageview(const Array& array) {
-    return make_host_storageview<Value>(array);
-}
-
-
 template <typename Value, unsigned int Rank, Intent AccessMode>
 IndexView<Value, Rank>
 make_indexview(const Array& array) {
@@ -72,19 +56,11 @@ make_indexview(const Array& array) {
     return make_host_indexview<Value,Rank,AccessMode>(array);
 }
 
-
 template <typename Value, unsigned int Rank, Intent AccessMode>
 ArrayView<Value, Rank, AccessMode>
 make_view(const Array& array) {
     check_metadata<Value, Rank>(array);
     return make_host_view<Value, Rank, AccessMode>(array);
-}
-
-
-template <typename Value>
-StorageView<Value>
-make_storageview(const Array& array) {
-    return make_host_storageview<Value>(array);
 }
 
 // --------------------------------------------------------------------------------------------
@@ -140,24 +116,6 @@ template IndexView<int,1> make_host_indexview<int,1,Intent::ReadOnly >(const Arr
 template IndexView<int,1> make_host_indexview<int,1,Intent::ReadWrite>(const Array&);\
 template IndexView<int,2> make_host_indexview<int,2,Intent::ReadOnly >(const Array&);\
 template IndexView<int,2> make_host_indexview<int,2,Intent::ReadWrite>(const Array&);\
-
-template StorageView<int> make_storageview<int>(const Array&);
-template StorageView<long> make_storageview<long>(const Array&);
-template StorageView<long unsigned> make_storageview<long unsigned>(const Array&);
-template StorageView<float> make_storageview<float>(const Array&);
-template StorageView<double> make_storageview<double>(const Array&);
-
-template StorageView<int> make_host_storageview<int>(const Array&);
-template StorageView<long> make_host_storageview<long>(const Array&);
-template StorageView<long unsigned> make_host_storageview<long unsigned>(const Array&);
-template StorageView<float> make_host_storageview<float>(const Array&);
-template StorageView<double> make_host_storageview<double>(const Array&);
-
-template StorageView<int> make_device_storageview<int>(const Array&);
-template StorageView<long> make_device_storageview<long>(const Array&);
-template StorageView<long unsigned> make_device_storageview<long unsigned>(const Array&);
-template StorageView<float> make_device_storageview<float>(const Array&);
-template StorageView<double> make_device_storageview<double>(const Array&);
 
 // For each Rank in [1..9]
 EXPLICIT_TEMPLATE_INSTANTIATION(1)

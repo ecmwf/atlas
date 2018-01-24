@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2015 ECMWF.
+! (C) Copyright 2013 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -366,9 +366,12 @@ END_TEST
 TEST( test_nabla )
 type(timer_type) :: timer;
 integer :: jiter, niter
-real(c_double) :: norm_native
-real(c_double) :: norm_fortran
-real(c_double) :: checked_value = 0.13215712584
+real(c_double), allocatable :: norm_native(:)
+real(c_double), allocatable :: norm_fortran(:)
+real(c_double) :: checked_value_X = 1.7893197319163668E-016
+real(c_double) :: checked_value_Y = -1.0547670904632068E-006
+
+type(atlas_Output) :: gmsh
 
 call node_columns%halo_exchange(varfield)
 
@@ -379,11 +382,14 @@ call timer%start()
 do jiter = 1,niter
 call nabla%gradient(varfield,gradfield)
 enddo
+
 write(0,*) "time elapsed: ", timer%elapsed()
+call node_columns%halo_exchange(gradfield)
 call node_columns%mean(gradfield,norm_native)
 write(0,*) "mean : ", norm_native
 
-FCTEST_CHECK_CLOSE( norm_native, checked_value, 1.e-6_c_double )
+FCTEST_CHECK_CLOSE( norm_native(1), checked_value_X, 1.e-12_c_double )
+FCTEST_CHECK_CLOSE( norm_native(2), checked_value_Y, 1.e-12_c_double )
 
 write(0,*) ""
 
@@ -392,12 +398,19 @@ call timer%start()
 do jiter = 1,niter
 CALL FV_GRADIENT(var,grad)
 enddo
+
 write(0,*) "time elapsed: ", timer%elapsed()
+call node_columns%halo_exchange(gradfield)
 call node_columns%mean(gradfield,norm_fortran)
 write(0,*) "mean : ", norm_fortran
 
-FCTEST_CHECK_CLOSE( norm_fortran, checked_value, 1.e-6_c_double )
+FCTEST_CHECK_CLOSE( norm_native(1), checked_value_X, 1.e-12_c_double )
+FCTEST_CHECK_CLOSE( norm_native(2), checked_value_Y, 1.e-12_c_double )
 
+gmsh = atlas_output_Gmsh("out_atlas_fctest_fvm_nabla.msh", levels=[10])
+call gmsh%write( mesh )
+call gmsh%write( varfield )
+call gmsh%write( gradfield )
 END_TEST
 
 ! -----------------------------------------------------------------------------

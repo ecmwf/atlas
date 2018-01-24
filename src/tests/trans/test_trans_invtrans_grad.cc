@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -30,13 +30,10 @@
 #include "atlas/option.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/ifs/TransIFS.h"
 #endif
-
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
@@ -195,7 +192,6 @@ CASE( "test_invtrans_grad" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTransEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+  return atlas::test::run< atlas::test::AtlasTransEnvironment >( argc, argv );
 }
 

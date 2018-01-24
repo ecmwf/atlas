@@ -9,6 +9,7 @@ set_target_properties( atlas_c-hello-world
 
 if( ATLAS_HAVE_FORTRAN )
   ecbuild_add_executable(
+    LINKER_LANGUAGE Fortran
     TARGET      atlas_f-hello-world
     SOURCES     hello-world.F90
     LIBS        atlas_f

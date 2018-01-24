@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -16,6 +16,7 @@
 #include "transi/version.h"
 #endif
 
+#include "eckit/eckit_config.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/log/Log.h"
 #include "eckit/filesystem/PathName.h"
@@ -198,8 +199,12 @@ void Library::Information::print( std::ostream& out ) const {
     bool feature_Trans(false);
     bool feature_Tesselation(false);
     bool feature_BoundsChecking(false);
+    bool feature_MPI(false);
 #ifdef ATLAS_HAVE_FORTRAN
       feature_fortran = true;
+#endif
+#ifdef ECKIT_HAVE_MPI
+      feature_MPI = true;
 #endif
 #ifdef ATLAS_HAVE_OMP
       feature_OpenMP = true;
@@ -215,15 +220,14 @@ void Library::Information::print( std::ostream& out ) const {
 #endif
       std::string array_data_store = "Native";
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-#if GRIDTOOLS_STORAGE_BACKEND_CUDA
+      array_data_store = "Gridtools-host";
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
       array_data_store = "GridTools-CUDA";
-#endif
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
-      array_data_store = "GridTools-host";
 #endif
 #endif
       out << "  Features:" << '\n'
         << "    Fortran        : " << str(feature_fortran) << '\n'
+        << "    MPI            : " << str(feature_MPI) << '\n'
         << "    OpenMP         : " << str(feature_OpenMP) << '\n'
         << "    BoundsChecking : " << str(feature_BoundsChecking) << '\n'
         << "    Trans          : " << str(feature_Trans) << '\n'

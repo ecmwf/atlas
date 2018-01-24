@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2017 ECMWF.
+# (C) Copyright 2013 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -35,10 +35,10 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
     ecbuild_info( "GRIDTOOLS_STORAGE" )
     if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST )
         ecbuild_info( "    BACKEND : [HOST]" )
-    endif()    
+    endif()
     if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
         ecbuild_info( "    BACKEND : [CUDA]" )
-    endif()    
+    endif()
 
 endif()
 

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -62,22 +62,47 @@ public:
   {
     data = const_cast<DATA_TYPE*>(arr.data());
 
-    var_rank = std::max(1,(int)arr.rank()-1);
+    var_rank = RANK;
     var_strides.resize(var_rank);
     var_shape.resize(var_rank);
 
     if( arr.rank()>1 )
     {
-      size_t stride=1;
-      for( int j=RANK-1; j>0; --j ) {
-        var_strides[j-1] = stride;
-        var_shape[j-1] = arr.shape(j);
-        stride *= var_shape[j-1];
+      var_strides[0] = arr.stride(0);
+      var_shape[0] = 1;
+      for( int j=1; j<RANK; ++j ) {
+        var_strides[j] = arr.stride(j);
+        var_shape[j] = arr.shape(j);
       }
     }
     else
     {
-      var_strides[0] = 1;
+      var_strides[0] = arr.stride(0);
+      var_shape[0] = 1;
+    }
+  }
+
+  template<int RANK>
+  Field( const array::LocalView<NON_CONST_DATA_TYPE,RANK>& arr )
+  {
+    data = const_cast<DATA_TYPE*>(arr.data());
+
+    var_rank = RANK;
+    var_strides.resize(var_rank);
+    var_shape.resize(var_rank);
+
+    if( arr.rank()>1 )
+    {
+      var_strides[0] = arr.stride(0);
+      var_shape[0] = 1;
+      for( int j=1; j<RANK; ++j ) {
+        var_strides[j] = arr.stride(j);
+        var_shape[j] = arr.shape(j);
+      }
+    }
+    else
+    {
+      var_strides[0] = arr.stride(0);
       var_shape[0] = 1;
     }
   }

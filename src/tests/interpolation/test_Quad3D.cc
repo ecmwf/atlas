@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -14,15 +14,12 @@
 #include "atlas/util/Point.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 #include "eckit/types/FloatCompare.h"
 
 using atlas::interpolation::element::Quad3D;
 using atlas::interpolation::method::Intersect;
 using atlas::interpolation::method::Ray;
 using atlas::PointXYZ;
-
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
@@ -237,6 +234,5 @@ CASE( "test_quadrilateral_intersection_corners" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }

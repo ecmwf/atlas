@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2017 ECMWF.
+# (C) Copyright 2013 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -318,6 +318,8 @@ numerics/fvm/Nabla.cc
 
 trans/Trans.h
 trans/Trans.cc
+trans/VorDivToUV.h
+trans/VorDivToUV.cc
 trans/local/TransLocal.h
 trans/local/TransLocal.cc
 trans/local/LegendrePolynomials.h
@@ -326,6 +328,9 @@ trans/local/LegendreTransforms.h
 trans/local/LegendreTransforms.cc
 trans/local/FourierTransforms.h
 trans/local/FourierTransforms.cc
+trans/local/VorDivToUVLocal.h
+trans/local/VorDivToUVLocal.cc
+
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs
@@ -335,6 +340,8 @@ list( APPEND atlas_numerics_srcs
   trans/ifs/TransIFSNodeColumns.cc
   trans/ifs/TransIFSStructuredColumns.h
   trans/ifs/TransIFSStructuredColumns.cc
+  trans/ifs/VorDivToUVIFS.h
+  trans/ifs/VorDivToUVIFS.cc
 )
 endif()
 
@@ -390,7 +397,6 @@ array/IndexView.h
 array/LocalView.cc
 array/LocalView.h
 array/Range.h
-array/StorageView.h
 array/Vector.h
 array/helpers/ArrayInitializer.h
 array/helpers/ArrayAssigner.h
@@ -413,7 +419,6 @@ array/gridtools/GridToolsIndexView.cc
 array/gridtools/GridToolsIndexView.h
 array/gridtools/GridToolsMakeView.cc
 array/gridtools/GridToolsMakeView.h
-array/gridtools/GridToolsStorageView.h
 array/gridtools/GridToolsTraits.h
 )
 else()
@@ -425,7 +430,6 @@ array/native/NativeDataStore.h
 array/native/NativeIndexView.cc
 array/native/NativeIndexView.h
 array/native/NativeMakeView.cc
-array/native/NativeStorageView.h
 )
 endif()
 

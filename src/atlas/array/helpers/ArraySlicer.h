@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -96,6 +96,10 @@ ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION(8);
 ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION(9);
 #undef ATLAS_ARRAY_SLICER_EXPLICIT_TEMPLATE_SPECIALISATION
 
+template <typename ...Args>
+struct SliceRank {
+  static constexpr int value{ SliceRank_impl<sizeof...(Args),Args...>::value };
+};
 
 
 template< typename View, bool constness = false >
@@ -117,11 +121,6 @@ public:
     ArraySlicer(View& view) :
       view_(view) {
     }
-
-    template <typename ...Args>
-    struct SliceRank {
-      static constexpr int value{ SliceRank_impl<View::RANK,Args...>::value };
-    };
 
     template <typename ...Args>
     struct Slice {
@@ -165,120 +164,159 @@ private:
     };
 
     template< typename Int >
-    static int start( Int idx ) {
-      return idx;
+    static int offset_part( View& view, int& i_view, Int idx ) {
+      return idx * view.stride(i_view++);
     }
 
-    static int start( Range range ) {
-      return range.start();
+    static int offset_part( View& view, int& i_view, Range range ) {
+      return range.start() * view.stride(i_view++);
     }
 
-    static int start( RangeAll range ) {
-      return range.start();
+    static int offset_part( View& view, int& i_view, RangeAll range ) {
+      return range.start() * view.stride(i_view++);
     }
 
-    static int start( RangeTo range ) {
-      return range.start();
+    static int offset_part( View& view, int& i_view, RangeTo range ) {
+      return range.start() * view.stride(i_view++);
     }
 
-    static int start( RangeFrom range ) {
-      return range.start();
+    static int offset_part( View& view, int& i_view, RangeFrom range ) {
+      return range.start() * view.stride(i_view++);
+    }
+
+    static int offset_part( View& , int& /*i_view*/, RangeDummy ) {
+      return 0;
     }
 
     template < int Dim, typename Int, typename... Ints >
-    static constexpr int offset_part(View& view, const Int idx, const Ints... next_idx) {
-        return start(idx)*view.stride(Dim) + offset_part<Dim+1>( view, next_idx... );
+    static int offset_remaining(View& view, int& i_view, const Int idx, const Ints... next_idx) {
+        return offset_part(view,i_view,idx) + offset_remaining<Dim+1>( view, i_view, next_idx... );
     }
 
     template < int Dim, typename Int >
-    static constexpr int offset_part(View& view, const Int last_idx) {
-        return start(last_idx)*view.stride(Dim);
+    static int offset_remaining(View& view, int& i_view, const Int last_idx) {
+        return offset_part(view,i_view,last_idx);
     }
 
     template < typename... Args >
-    static constexpr int offset(View& view, const Args... args) {
-        return offset_part<0>(view,args...);
+    static int offset(View& view, const Args... args) {
+        int i_view(0);
+        return offset_remaining<0>(view,i_view,args...);
     }
 
 
     template< int Dim, typename Shape, typename Int >
-    static void update_shape( View&, Shape&, int& /*i*/, const Int& /*index*/ ){
+    static void update_shape( View&, Shape&, int& i_view, int& /*i_slice*/, const Int& /*index*/ ){
       // do nothing
+      ++i_view;
     }
     template< int Dim, typename Shape >
-    static void update_shape( View&, Shape& shape, int& i, const Range range ){
-       shape[i++] = range.end()-range.start();
+    static void update_shape( View&, Shape& shape, int& i_view, int& i_slice, const Range range ){
+       shape[i_slice] = range.end()-range.start();
+       ++i_slice;
+       ++i_view;
     }
     template< int Dim, typename Shape >
-    static void update_shape( View& view, Shape& shape, int& i, const RangeAll range ){
-       shape[i++] = range.end<Dim>(view)-range.start();
+    static void update_shape( View& view, Shape& shape, int& i_view, int& i_slice, const RangeAll range ){
+       shape[i_slice] = range.end(view,i_view)-range.start();
+       ++i_slice;
+       ++i_view;
     }
     template< int Dim, typename Shape >
-    static void update_shape( View& view, Shape& shape, int& i, const RangeFrom range ){
-       shape[i++] = range.end<Dim>(view)-range.start();
+    static void update_shape( View& view, Shape& shape, int& i_view, int& i_slice, const RangeFrom range ){
+       shape[i_slice] = range.end(view,i_view)-range.start();
+       ++i_slice;
+       ++i_view;
     }
     template< int Dim, typename Shape >
-    static void update_shape( View&, Shape& shape, int& i, const RangeTo range ){
-       shape[i++] = range.end()-range.start();
+    static void update_shape( View&, Shape& shape, int& i_view, int& i_slice, const RangeTo range ){
+       shape[i_slice] = range.end()-range.start();
+       ++i_slice;
+       ++i_view;
+    }
+
+    template< int Dim, typename Shape >
+    static void update_shape( View&, Shape& shape, int& /*i_view*/, int& i_slice, const RangeDummy ){
+       shape[i_slice] = 1;
+       ++i_slice;
+       // no update of i_view for dummy-dimension
     }
 
     template< int Dim, typename Shape, typename Int, typename... Ints >
-    static void shape_part( View& view, Shape& shape, int& i, const Int idx, const Ints... next_idx ) {
-      update_shape<Dim>(view,shape,i,idx);
-      shape_part<Dim+1>(view,shape,i,next_idx...);
+    static void shape_part( View& view, Shape& shape, int& i_view, int& i_slice, const Int idx, const Ints... next_idx ) {
+      update_shape<Dim>(view,shape,i_view,i_slice,idx);
+      shape_part<Dim+1>(view,shape,i_view,i_slice,next_idx...);
     }
 
     template< int Dim, typename Shape, typename Int >
-    static void shape_part( View& view, Shape& shape, int& i, const Int idx) {
-      update_shape<Dim>(view,shape,i,idx);
+    static void shape_part( View& view, Shape& shape, int& i_view, int& i_slice, const Int idx) {
+      update_shape<Dim>(view,shape,i_view,i_slice,idx);
     }
 
     template< typename... Args >
     static typename array<Args...>::type shape( View& view, const Args... args ) {
       typename array<Args...>::type result;
-      int i(0);
-      shape_part<0>(view,result,i,args...);
+      int i_slice(0);
+      int i_view(0);
+      shape_part<0>(view,result,i_view,i_slice,args...);
+      ASSERT( i_view == view.rank() );
       return result;
     }
 
 
     template<int Dim, typename Strides, typename Int >
-    static void update_strides( View&, Strides&, int& /*i*/, const Int& /*idx*/) {
+    static void update_strides( View&, Strides&, int& i_view, int& /*i_slice*/, const Int& /*idx*/) {
       // do nothing
+      ++i_view;
      }
     template<int Dim,typename Strides >
-    static void update_strides( View& view, Strides& strides, int& i, const Range& /*range*/ ) {
-       strides[i++] = view.stride(Dim);
+    static void update_strides( View& view, Strides& strides, int& i_view, int& i_slice, const Range& /*range*/ ) {
+       strides[i_slice] = view.stride(i_view);
+       ++i_slice;
+       ++i_view;
     }
     template<int Dim,typename Strides >
-    static void update_strides( View& view, Strides& strides, int& i, const RangeFrom& /*range*/ ) {
-       strides[i++] = view.stride(Dim);
+    static void update_strides( View& view, Strides& strides, int& i_view, int& i_slice, const RangeFrom& /*range*/ ) {
+       strides[i_slice] = view.stride(i_view);
+       ++i_slice;
+       ++i_view;
     }
     template<int Dim,typename Strides >
-    static void update_strides( View& view, Strides& strides, int& i, const RangeTo& /*range*/ ) {
-       strides[i++] = view.stride(Dim);
+    static void update_strides( View& view, Strides& strides, int& i_view, int& i_slice, const RangeTo& /*range*/ ) {
+       strides[i_slice] = view.stride(i_view);
+       ++i_slice;
+       ++i_view;
     }
     template<int Dim,typename Strides >
-    static void update_strides( View& view, Strides& strides, int& i, const RangeAll& /*range*/ ) {
-       strides[i++] = view.stride(Dim);
+    static void update_strides( View& view, Strides& strides, int& i_view, int& i_slice, const RangeAll& /*range*/ ) {
+       strides[i_slice] = view.stride(i_view);
+       ++i_slice;
+       ++i_view;
+    }
+    template<int Dim,typename Strides >
+    static void update_strides( View& view, Strides& strides, int& /*i_view*/, int& i_slice, const RangeDummy& /*range*/ ) {
+       strides[i_slice] = 0;
+       ++i_slice;
     }
 
     template< int Dim, typename Strides, typename Int, typename... Ints >
-    static void strides_part( View& view, Strides& strides, int& i, const Int idx, const Ints... next_idx ) {
-      update_strides<Dim>(view,strides,i,idx);
-      strides_part<Dim+1>(view,strides,i,next_idx...);
+    static void strides_part( View& view, Strides& strides, int& i_view, int& i_slice, const Int idx, const Ints... next_idx ) {
+      update_strides<Dim>(view,strides,i_view,i_slice,idx);
+      strides_part<Dim+1>(view,strides,i_view,i_slice,next_idx...);
     }
 
     template< int Dim, typename Strides, typename Int >
-    static void strides_part( View& view, Strides& strides, int& i, const Int idx) {
-      update_strides<Dim>(view,strides,i,idx);
+    static void strides_part( View& view, Strides& strides, int& i_view, int& i_slice, const Int idx) {
+      update_strides<Dim>(view,strides,i_view,i_slice,idx);
     }
 
     template< typename... Args >
     static typename array<Args...>::type strides(View& view, const Args... args ) {
       typename array<Args...>::type result;
-      int i(0);
-      strides_part<0>(view,result,i,args...);
+      int i_slice(0);
+      int i_view(0);
+      strides_part<0>(view,result,i_view,i_slice,args...);
+      ASSERT( i_view == view.rank() );
       return result;
     }
 

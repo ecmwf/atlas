@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -101,37 +101,95 @@ void write_header_binary(std::ostream& out)
 }
 // ----------------------------------------------------------------------------
 
+namespace { // anonymous
 
-
-// ----------------------------------------------------------------------------
-template< typename DATATYPE >
-void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeColumns& function_space, const Field& field, std::ostream& out)
+template <typename T>
+array::LocalView<T,2> make_level_view(const Field &field, int ndata, int jlev)
 {
-  Log::debug() << "writing field " << field.name() << " defined in NodeColumns..." << std::endl;
-
-  bool gather( gmsh_options.get<bool>("gather") );
-  bool binary( !gmsh_options.get<bool>("ascii") );
-  size_t nlev  = std::max<int>(1,field.levels());
-  size_t ndata = std::min(function_space.nb_nodes(),field.shape(0));
-  size_t nvars = field.stride(0)/nlev;
-  array::ArrayView<gidx_t,1> gidx   = array::make_view<gidx_t,1>( function_space.nodes().global_index() );
-  array::LocalView<DATATYPE,2> data ( field.data<DATATYPE>(),
-                                      array::make_shape(field.shape(0),field.stride(0)) );
-  Field gidx_glb;
-  Field data_glb;
-  if( gather )
-  {
-    gidx_glb = function_space.createField<gidx_t>( option::name("gidx_glb") | option::levels(false) | option::global() );
-    function_space.gather(function_space.nodes().global_index(),gidx_glb);
-    gidx = array::make_view<gidx_t,1>( gidx_glb );
-
-    data_glb = function_space.createField<DATATYPE>( option::name("glb_field") | option::levels(field.levels()) | option::variables( field.variables() ) | option::global() );
-    function_space.gather(field,data_glb);
-    data = array::LocalView<DATATYPE,2>( data_glb.data<DATATYPE>(),
-                                         array::make_shape(data_glb.shape(0),data_glb.stride(0)) );
-    ndata = std::min(function_space.nb_nodes_global(),data.shape(0));
+  using namespace array;
+  if( field.levels() ) {
+    if( field.variables() ) {
+      return make_view<T,3>( field ).slice( Range::to(ndata), jlev, Range::all() );
+    } else {
+      return make_view<T,2>( field ).slice( Range::to(ndata), jlev, Range::dummy() );
+    }
   }
+  else {
+    if( field.variables() ) {
+      return make_view<T,2>( field ).slice( Range::to(ndata), Range::all() );
+    } else {
+      return make_view<T,1>( field ).slice( Range::to(ndata), Range::dummy() );
+    }
+  }
+}
 
+template< typename DATATYPE >
+void write_level( std::ostream& out, const array::ArrayView<gidx_t,1> gidx, const array::LocalView<DATATYPE,2> data ) {
+  int ndata = data.shape(0);
+  int nvars = data.shape(1);
+  if( nvars == 1)
+  {
+    for( size_t n = 0; n < ndata; ++n )
+    {
+      out << gidx(n) << " " << data(n,0) << "\n";
+    }
+  }
+  else if( nvars <= 3 )
+  {
+    std::vector<DATATYPE> data_vec(3,0.);
+    for( size_t n = 0; n < ndata; ++n )
+    {
+      out << gidx(n);
+      for(size_t v=0; v < nvars; ++v)
+        data_vec[v] = data(n,v);
+      for( int v=0; v<3; ++v)
+        out << " " << data_vec[v];
+      out << "\n";
+    }
+  }
+  else if( nvars <= 9 )
+  {
+    std::vector<DATATYPE> data_vec(9,0.);
+    if( nvars == 4 )
+    {
+      for( size_t n = 0; n < ndata; ++n ) {
+        for( int i=0; i<2; ++i ) {
+          for( int j=0; j<2; ++j ) {
+            data_vec[i*3+j] = data(n,i*2+j);
+          }
+        }
+        out << gidx(n);
+        for( int v=0; v<9; ++v)
+          out << " " << data_vec[v];
+        out << "\n";
+      }
+    }
+    else if( nvars == 9 )
+    {
+      for( size_t n = 0; n < ndata; ++n ) {
+        for( int i=0; i<3; ++i ) {
+          for( int j=0; j<3; ++j ) {
+            data_vec[i*3+j] = data(n,i*2+j);
+          }
+        }
+        out << gidx(n);
+        for( int v=0; v<9; ++v)
+          out << " " << data_vec[v];
+        out << "\n";
+      }
+    }
+    else
+    {
+      NOTIMP;
+    }
+  }
+  else
+  {
+    NOTIMP;
+  }
+}
+
+std::vector<long> get_levels( int nlev, const Metadata& gmsh_options ) {
   std::vector<long> lev;
   std::vector<long> gmsh_levels;
   gmsh_options.get("levels",gmsh_levels);
@@ -145,150 +203,83 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
   {
     lev = gmsh_levels;
   }
+  return lev;
+}
+
+std::string field_lev( const Field& field, int jlev ) {
+  if( field.levels() ) {
+    char str[6] = {0, 0, 0, 0, 0, 0};
+    std::sprintf(str, "[%03lu]",jlev);
+    return std::string(str);
+  } else {
+    return std::string();
+  }
+}
+
+double field_time( const Field& field ) {
+  return field.metadata().has("time") ? field.metadata().get<double>("time") : 0.;
+}
+
+int field_step( const Field& field ) {
+  return field.metadata().has("step") ? field.metadata().get<size_t>("step") : 0 ;
+}
+
+int field_vars( int nvars ) {
+  if     ( nvars == 1 ) return nvars;
+  else if( nvars <= 3 ) return 3;
+  else if( nvars <= 9 ) return 9;
+  else                  return nvars;
+}
+
+} // namespace anonymous
+
+// ----------------------------------------------------------------------------
+template< typename DATATYPE >
+void write_field_nodes(
+    const Metadata&                   gmsh_options,
+    const functionspace::NodeColumns& function_space,
+    const Field&                      field,
+    std::ostream&                     out)
+{
+  Log::debug() << "writing NodeColumns field " << field.name() << " defined in NodeColumns..." << std::endl;
+
+  bool gather( gmsh_options.get<bool>("gather") && atlas::parallel::mpi::comm().size() > 1 );
+  bool binary( !gmsh_options.get<bool>("ascii") );
+  size_t nlev  = std::max<int>(1,field.levels());
+  size_t ndata = std::min(function_space.nb_nodes(),field.shape(0));
+  size_t nvars = std::max<int>(1,field.variables());
+  array::ArrayView<gidx_t,1> gidx   = array::make_view<gidx_t,1>( function_space.nodes().global_index() );
+  Field gidx_glb;
+  Field field_glb;
+  if( gather )
+  {
+    gidx_glb = function_space.createField<gidx_t>( option::name("gidx_glb") | option::levels(false) | option::global() );
+    function_space.gather(function_space.nodes().global_index(),gidx_glb);
+    gidx = array::make_view<gidx_t,1>( gidx_glb );
+
+    field_glb = function_space.createField( field, option::global() );
+    function_space.gather(field,field_glb);
+    ndata = std::min(function_space.nb_nodes_global(),field_glb.shape(0));
+  }
+
+  std::vector<long> lev = get_levels( nlev, gmsh_options );
   for (size_t ilev=0; ilev < lev.size(); ++ilev)
   {
     size_t jlev = lev[ilev];
     if( ( gather && atlas::parallel::mpi::comm().rank() == 0 ) || !gather )
     {
-      char field_lev[6] = {0, 0, 0, 0, 0, 0};
-      if( field.levels() )
-        std::sprintf(field_lev, "[%03lu]",jlev);
-      double time = field.metadata().has("time") ? field.metadata().get<double>("time") : 0.;
-      int step = field.metadata().has("step") ? field.metadata().get<size_t>("step") : 0 ;
       out << "$NodeData\n";
       out << "1\n";
-      out << "\"" << field.name() << field_lev << "\"\n";
+      out << "\"" << field.name() << field_lev(field,jlev) << "\"\n";
       out << "1\n";
-      out << time << "\n";
+      out << field_time(field) << "\n";
       out << "4\n";
-      out << step << "\n";
-      if     ( nvars == 1 ) out << nvars << "\n";
-      else if( nvars <= 3 ) out << 3     << "\n";
-      else if( nvars <= 9 ) out << 9     << "\n";
+      out << field_step(field) << "\n";
+      out << field_vars(nvars) << "\n";
       out << ndata << "\n";
       out << atlas::parallel::mpi::comm().rank() << "\n";
-
-      if( binary )
-      {
-        if( nvars == 1)
-        {
-          double value;
-          for(size_t n = 0; n < ndata; ++n)
-          {
-            out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
-            value = data(n,jlev*nvars+0);
-            out.write(reinterpret_cast<const char*>(&value),sizeof(double));
-          }
-        }
-        else if( nvars <= 3 )
-        {
-          double value[3] = {0,0,0};
-          for(size_t n = 0; n < ndata; ++n)
-          {
-            out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
-            for(size_t v=0; v < nvars; ++v)
-              value[v] = data(n,jlev*nvars+v);
-            out.write(reinterpret_cast<const char*>(&value),sizeof(double)*3);
-          }
-        }
-        else if( nvars <= 9 )
-        {
-          double value[9] = {
-            0,0,0,
-            0,0,0,
-            0,0,0
-          };
-          if( nvars == 4 )
-          {
-            for(size_t n = 0; n < ndata; ++n)
-            {
-              out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
-              for( int i=0; i<2; ++i )
-              {
-                for( int j=0; j<2; ++j )
-                {
-                  value[i*3+j] = data(n,jlev*nvars+i*2+j);
-                }
-              }
-              out.write(reinterpret_cast<const char*>(&value),sizeof(double)*9);
-            }
-          }
-          if( nvars == 9 )
-          {
-            for(size_t n = 0; n < ndata; ++n)
-            {
-              out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
-              for( int i=0; i<3; ++i )
-              {
-                for( int j=0; j<3; ++j )
-                {
-                  value[i*3+j] = data(n,jlev*nvars+i*3+j);
-                }
-              }
-              out.write(reinterpret_cast<const char*>(&value),sizeof(double)*9);
-            }
-          }
-        }
-        out << "\n";
-      }
-      else
-      {
-        if( nvars == 1)
-        {
-          for( size_t n = 0; n < ndata; ++n )
-          {
-            ASSERT( jlev*nvars < data.shape(1) );
-            ASSERT( n < gidx.shape(0) );
-            out << gidx(n) << " " << data(n,jlev*nvars+0) << "\n";
-          }
-        }
-        else if( nvars <= 3 )
-        {
-          std::vector<DATATYPE> data_vec(3,0.);
-          for( size_t n = 0; n < ndata; ++n )
-          {
-            out << gidx(n);
-            for(size_t v=0; v < nvars; ++v)
-              data_vec[v] = data(n,jlev*nvars+v);
-            for( int v=0; v<3; ++v)
-              out << " " << data_vec[v];
-            out << "\n";
-          }
-        }
-        else if( nvars <= 9 )
-        {
-          std::vector<DATATYPE> data_vec(9,0.);
-
-          if( nvars == 4 )
-          {
-            for( size_t n = 0; n < ndata; ++n ) {
-              for( int i=0; i<2; ++i ) {
-                for( int j=0; j<2; ++j ) {
-                  data_vec[i*3+j] = data(n,jlev*nvars+i*2+j);
-                }
-              }
-              out << gidx(n);
-              for( int v=0; v<9; ++v)
-                out << " " << data_vec[v];
-              out << "\n";
-            }
-          }
-          if( nvars == 9 )
-          {
-            for( size_t n = 0; n < ndata; ++n ) {
-              for( int i=0; i<2; ++i ) {
-                for( int j=0; j<2; ++j ) {
-                  data_vec[i*3+j] = data(n,jlev*nvars+i*2+j);
-                }
-              }
-              out << gidx(n);
-              for( int v=0; v<9; ++v)
-                out << " " << data_vec[v];
-              out << "\n";
-            }
-          }
-        }
-      }
+      auto data = gather ? make_level_view<DATATYPE>( field_glb, ndata, jlev ) : make_level_view<DATATYPE>( field, ndata, jlev );
+      write_level( out, gidx, data );
       out << "$EndNodeData\n";
     }
   }
@@ -300,151 +291,64 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
 // ----------------------------------------------------------------------------
 template< typename DATATYPE >
 void write_field_nodes(
-    const Metadata&                            gmsh_options,
+    const Metadata&                         gmsh_options,
     const functionspace::StructuredColumns& function_space,
-    const Field&                           field,
-    std::ostream&                          out)
+    const Field&                            field,
+    std::ostream&                           out)
 {
-    Log::debug() << "writing field " << field.name() << "..." << std::endl;
-    //bool gather(gmsh_options.get<bool>("gather"));
-    bool binary(!gmsh_options.get<bool>("ascii"));
+  Log::debug() << "writing StructuredColumns field " << field.name() << "..." << std::endl;
 
-    size_t nlev  = std::max<size_t>(1,field.levels());
-    size_t nvars = field.stride(0) / nlev;
+  bool gather( gmsh_options.get<bool>("gather") && atlas::parallel::mpi::comm().size() > 1 );
+  bool binary( !gmsh_options.get<bool>("ascii") );
+  size_t nlev  = std::max<int>(1,field.levels());
+  size_t ndata = std::min(function_space.sizeOwned(),field.shape(0));
+  size_t nvars = std::max<int>(1,field.variables());
+  auto gidx  = array::make_view<gidx_t,1>( function_space.global_index() );
+  Field gidx_glb;
+  Field field_glb;
+  if( gather )
+  {
+    gidx_glb = function_space.createField( function_space.global_index(), option::name("gidx_glb") | option::global() );
+    function_space.gather(function_space.global_index(),gidx_glb);
+    gidx = array::make_view<gidx_t,1>( gidx_glb );
 
-    array::LocalView<DATATYPE,2> data(
-        field.data<DATATYPE>(),
-        array::make_shape(field.shape(0),field.stride(0)) );
+    field_glb = function_space.createField( field, option::global() );
+    function_space.gather(field,field_glb);
+    ndata = field_glb.shape(0);
+  }
 
-    Field gidx_glb;
-    Field field_glb;
 
-    if( atlas::parallel::mpi::comm().size() > 1 )
-    {
-      field_glb = function_space.createField<DATATYPE>(
-          option::name("glb_field") |
-          option::global() );
-      function_space.gather(field, field_glb);
-      data = array::LocalView<DATATYPE,2>(
-          field_glb.data<DATATYPE>(),
-          array::make_shape(field_glb.shape(0),field_glb.stride(0)) );
-    }
+  std::vector<long> lev = get_levels(nlev,gmsh_options);
+  for (size_t ilev = 0; ilev < lev.size(); ++ilev)
+  {
+      size_t jlev = lev[ilev];
+      char field_lev[6] = {0, 0, 0, 0, 0, 0};
 
-    size_t ndata = data.shape(0);
+      if (field.levels())
+      {
+          std::sprintf(field_lev, "[%03lu]", jlev);
+      }
 
-    std::vector<long> lev;
-    std::vector<long> gmsh_levels;
-    gmsh_options.get("levels", gmsh_levels);
+      double time = field.metadata().has("time") ?
+          field.metadata().get<double>("time") : 0.;
 
-    if (gmsh_levels.empty() || nlev == 1)
-    {
-        lev.resize(nlev);
-        for (size_t ilev=0; ilev < nlev; ++ilev)
-        {
-            lev[ilev] = ilev;
-        }
-    }
-    else
-    {
-        lev = gmsh_levels;
-    }
+      int step = field.metadata().has("step") ?
+          field.metadata().get<size_t>("step") : 0 ;
 
-    if (atlas::parallel::mpi::comm().rank() == 0)
-    {
-        for (size_t ilev = 0; ilev < lev.size(); ++ilev)
-        {
-            size_t jlev = lev[ilev];
-            char field_lev[6] = {0, 0, 0, 0, 0, 0};
-
-            if (field.levels())
-            {
-                std::sprintf(field_lev, "[%03lu]", jlev);
-            }
-
-            double time = field.metadata().has("time") ?
-                field.metadata().get<double>("time") : 0.;
-
-            int step = field.metadata().has("step") ?
-                field.metadata().get<size_t>("step") : 0 ;
-
-            out << "$NodeData\n";
-            out << "1\n";
-            out << "\"" << field.name() << field_lev << "\"\n";
-            out << "1\n";
-            out << time << "\n";
-            out << "4\n";
-            out << step << "\n";
-            if     ( nvars == 1 ) out << nvars << "\n";
-            else if( nvars <= 3 ) out << 3     << "\n";
-            out << ndata << "\n";
-            out << atlas::parallel::mpi::comm().rank() << "\n";
-
-            if (binary)
-            {
-                if (nvars == 1)
-                {
-                    double value;
-                    for (size_t n = 0; n < ndata; ++n)
-                    {
-                        out.write(reinterpret_cast<const char*>(n+1),
-                                  sizeof(int));
-
-                        value = data(n,jlev*nvars+0);
-
-                        out.write(reinterpret_cast<const char*>(&value),
-                                  sizeof(double));
-                    }
-                }
-                else if (nvars <= 3)
-                {
-                    double value[3] = {0,0,0};
-                    for (size_t n = 0; n < ndata; ++n)
-                    {
-                        out.write(reinterpret_cast<const char*>(n+1),
-                                  sizeof(int));
-                        for (size_t v = 0; v < nvars; ++v)
-                        {
-                            value[v] = data(n,jlev*nvars+v);
-                        }
-                        out.write(reinterpret_cast<const char*>(&value),
-                                  sizeof(double)*3);
-                    }
-                }
-                out << "\n";
-            }
-            else
-            {
-                ASSERT(jlev*nvars <= data.shape(1));
-                if (nvars == 1)
-                {
-                    for (size_t n = 0; n < ndata; ++n)
-                    {
-                        ASSERT(n < data.shape(0));
-                        out << n+1 << " "
-                            << data(n, jlev*nvars+0) << "\n";
-                    }
-                }
-                else if (nvars <= 3)
-                {
-                    std::vector<DATATYPE> data_vec(3,0.);
-                    for (size_t n = 0; n < ndata; ++n)
-                    {
-                        out << n+1;
-                        for (size_t v = 0; v < nvars; ++v)
-                        {
-                            data_vec[v] = data(n, jlev*nvars+v);
-                        }
-                        for (int v = 0; v < 3; ++v)
-                        {
-                            out << " " << data_vec[v];
-                        }
-                        out << "\n";
-                    }
-                }
-            }
-            out << "$EndNodeData\n";
-        }
-    }
+      out << "$NodeData\n";
+      out << "1\n";
+      out << "\"" << field.name() << field_lev << "\"\n";
+      out << "1\n";
+      out << field_time(field) << "\n";
+      out << "4\n";
+      out << field_step(field) << "\n";
+      out << field_vars(nvars) << "\n";
+      out << ndata << "\n";
+      out << atlas::parallel::mpi::comm().rank() << "\n";
+      auto data = gather ? make_level_view<DATATYPE>( field_glb, ndata, jlev ) : make_level_view<DATATYPE>( field, ndata, jlev );
+      write_level( out, gidx, data );
+      out << "$EndNodeData\n";
+  }
 }
 // ----------------------------------------------------------------------------
 

@@ -13,7 +13,6 @@
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::mesh;
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
@@ -97,6 +96,18 @@ CASE( "test_block_connectivity" )
     idx_t vals2[12] = {2,3,9,34,356,86,3,24,84,45,2,2};
 
     conn.add(2,5, vals2);
+
+    EXPECT(conn(0,0) == 2);
+    EXPECT(conn(0,1) == 3);
+    EXPECT(conn(0,2) == 9);
+    EXPECT(conn(0,3) == 34);
+    EXPECT(conn(0,4) == 356);
+    EXPECT(conn(1,0) == 86);
+    EXPECT(conn(1,1) == 3);
+    EXPECT(conn(1,2) == 24);
+    EXPECT(conn(1,3) == 84);
+    EXPECT(conn(1,4) == 45);
+
     conn.cloneToDevice();
     EXPECT( !conn.deviceNeedsUpdate() );
 
@@ -106,7 +117,7 @@ CASE( "test_block_connectivity" )
 
     EXPECT( *result == true );
 
-    // copy back, although not strickly needed since the gpu copy does not modify values, 
+    // copy back, although not strickly needed since the gpu copy does not modify values,
     // but for the sake of testing it
 
     conn.cloneFromDevice();
@@ -123,6 +134,8 @@ CASE( "test_irregular_connectivity" )
     bool from_fortran = true;
     conn.add(2, 3, vals, from_fortran);
 
+    EXPECT(conn(0,0) == 1 IN_FORTRAN);
+
     bool* result;
     cudaMallocManaged(&result, sizeof(bool));
     *result = true;
@@ -136,7 +149,7 @@ CASE( "test_irregular_connectivity" )
 
     EXPECT( *result == true );
 
-    // copy back, although not strickly needed since the gpu copy does not modify values, 
+    // copy back, although not strickly needed since the gpu copy does not modify values,
     // but for the sake of testing it
     conn.cloneFromDevice();
     EXPECT(conn(0,1) == 3 IN_FORTRAN);
@@ -145,7 +158,7 @@ CASE( "test_irregular_connectivity" )
 
 CASE( "test_multiblock_connectivity" )
 {
-    
+
     MultiBlockConnectivity conn("mesh");
     EXPECT(conn.rows() == 0);
     EXPECT(conn.maxcols() == 0);
@@ -153,8 +166,8 @@ CASE( "test_multiblock_connectivity" )
     constexpr idx_t vals[6] = {1,3,4,3,7,8};
     bool from_fortran = true;
     conn.add(2, 3, vals, from_fortran);
-    
-    EXPECT(conn.block(0)(0,0) == 1);
+
+    EXPECT(conn.block(0)(0,0) == 1 IN_FORTRAN);
     bool* result;
     cudaMallocManaged(&result, sizeof(bool));
     *result = true;
@@ -168,10 +181,10 @@ CASE( "test_multiblock_connectivity" )
 
     EXPECT( *result == true );
 
-    // copy back, although not strickly needed since the gpu copy does not modify values, 
+    // copy back, although not strickly needed since the gpu copy does not modify values,
     // but for the sake of testing it
     conn.cloneFromDevice();
-    EXPECT(conn.block(0)(0,0) == 1);
+    EXPECT(conn.block(0)(0,0) == 1 IN_FORTRAN);
 
 }
 

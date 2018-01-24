@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -63,6 +63,11 @@ write_legendre::write_legendre( const eckit::PathName& filepath )
 read_legendre::read_legendre( const eckit::PathName& filepath )
 {
   set("read_legendre",filepath);
+}
+
+nproma::nproma( int nproma )
+{
+  set("nproma",nproma);
 }
 
 // ----------------------------------------------------------------------------

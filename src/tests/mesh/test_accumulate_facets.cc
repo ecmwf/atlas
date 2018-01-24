@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -21,9 +21,7 @@
 #include "atlas/util/Unique.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
-using namespace eckit::testing;
 using namespace atlas::mesh;
 using namespace atlas::util;
 
@@ -229,7 +227,7 @@ CASE( "test_accumulate_facets" )
   88, 89,
   89, 67
   };
-  EXPECT( edge_nodes_data == make_view(edge_nodes_check, edge_nodes_check+2*nb_edges) );
+  EXPECT( edge_nodes_data == eckit::testing::make_view(edge_nodes_check, edge_nodes_check+2*nb_edges) );
 
   idx_t edge_to_cell_check[] = {
   0, missing_value,
@@ -404,7 +402,7 @@ CASE( "test_accumulate_facets" )
   78, missing_value,
   78, 79
   };
-  EXPECT( edge_to_cell_data == make_view(edge_to_cell_check, edge_to_cell_check+2*nb_edges) );
+  EXPECT( edge_to_cell_data == eckit::testing::make_view(edge_to_cell_check, edge_to_cell_check+2*nb_edges) );
 }
 
 CASE( "test_build_edges" )
@@ -861,6 +859,5 @@ CASE( "test_build_edges_triangles_only" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }

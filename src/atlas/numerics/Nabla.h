@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2015 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -39,13 +39,13 @@ public:
 class Nabla {
 
 public:
-  
+
   using nabla_t = NablaImpl;
-  
+
 private:
-  
+
   eckit::SharedPtr<const nabla_t> nabla_;
-  
+
 public:
 
   Nabla();
@@ -58,7 +58,7 @@ public:
   void divergence(const Field &vector, Field &div) const;
   void curl(const Field &vector, Field &curl) const;
   void laplacian(const Field &scalar, Field &laplacian) const;
-  
+
   const nabla_t* get() const { return nabla_.get(); }
 };
 

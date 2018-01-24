@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -24,9 +24,6 @@ class Array;
 
 template <typename Value>
 class ArrayT;
-
-template <typename Value>
-class StorageView;
 
 template <typename Value, int RANK, Intent AccessMode>
 class ArrayView;
@@ -53,18 +50,6 @@ make_indexview(const Array& array);
 template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
 IndexView<Value, NDims>
 make_host_indexview(const Array& array);
-
-template <typename Value>
-StorageView<Value>
-make_storageview(const Array& array);
-
-template <typename Value>
-StorageView<Value>
-make_host_storageview(const Array& array);
-
-template <typename Value>
-StorageView<Value>
-make_device_storageview(const Array& array);
 
 class Table;
 

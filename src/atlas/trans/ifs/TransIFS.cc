@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -40,7 +40,7 @@ static TransBuilderGrid<TransIFS> builder("ifs");
 
 class TransParameters {
 public:
-  TransParameters( const eckit::Configuration& config ) : config_(config) {}
+  TransParameters( const TransIFS& trans, const eckit::Configuration& config ) : trans_(trans), config_(config) {}
   ~TransParameters() {}
 
   bool scalar_derivatives() const {
@@ -80,7 +80,19 @@ public:
     return config_.getBool("global",false);
   }
 
+  int nproma() const {
+    return config_.getInt("nproma",trans_->ngptot);
+  }
+
+  int ngpblks() const {
+    int _ngptot = trans_->ngptot;
+    int _nproma = nproma();
+    ASSERT(_ngptot%_nproma == 0); // assert _ngptot is divisable by nproma
+    return _ngptot/_nproma;
+  }
+
 private:
+  const Trans_t* trans_;
   const eckit::Configuration& config_;
 };
 
@@ -229,7 +241,7 @@ void TransIFS::invtrans( const int nb_scalar_fields, const double scalar_spectra
                          double gp_fields[],
                          const eckit::Configuration& config ) const
 {
-  TransParameters params(config);
+  TransParameters params(*this,config);
   struct ::InvTrans_t args = new_invtrans(trans_.get());
     args.nscalar = nb_scalar_fields;
     args.rspscalar = scalar_spectra;
@@ -241,6 +253,8 @@ void TransIFS::invtrans( const int nb_scalar_fields, const double scalar_spectra
     args.lscalarders = params.scalar_derivatives();
     args.luvder_EW   = params.wind_EW_derivatives();
     args.lvordivgp   = params.vorticity_divergence_fields();
+    args.nproma = params.nproma();
+    args.ngpblks = params.ngpblks();
   TRANS_CHECK( ::trans_invtrans(&args) );
 }
 
@@ -250,14 +264,7 @@ void TransIFS::invtrans( const int nb_scalar_fields, const double scalar_spectra
                          double gp_fields[],
                          const eckit::Configuration& config ) const
 {
-  TransParameters params(config);
-  struct ::InvTrans_t args = new_invtrans(trans_.get());
-    args.nscalar     = nb_scalar_fields;
-    args.rspscalar   = scalar_spectra;
-    args.rgp         = gp_fields;
-    args.lglobal     = params.global();
-    args.lscalarders = params.scalar_derivatives();
-  TRANS_CHECK( ::trans_invtrans(&args) );
+  return invtrans( nb_scalar_fields, scalar_spectra, 0, nullptr, nullptr, gp_fields, config );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -266,7 +273,16 @@ void TransIFS::invtrans( const int nb_vordiv_fields, const double vorticity_spec
                          double gp_fields[],
                          const eckit::Configuration& config ) const
 {
-  TransParameters params(config);
+  TransParameters params(*this,config);
+  bool global = params.global();
+  int nproma = params.nproma();
+  int ngpblks;
+  if( nproma == 0 ) { // default
+    nproma = global ? trans_->ngptotg : trans_->ngptot;
+    ngpblks = 1;
+  } else {
+    ngpblks = global ? (trans_->ngptotg/nproma) : (trans_->ngptot/nproma);
+  }
   struct ::InvTrans_t args = new_invtrans(trans_.get());
     args.nvordiv = nb_vordiv_fields;
     args.rspvor  = vorticity_spectra;
@@ -275,6 +291,8 @@ void TransIFS::invtrans( const int nb_vordiv_fields, const double vorticity_spec
     args.lglobal = params.global();
     args.luvder_EW = params.wind_EW_derivatives();
     args.lvordivgp = params.vorticity_divergence_fields();
+    args.nproma = params.nproma();
+    args.ngpblks = params.ngpblks();
   TRANS_CHECK( ::trans_invtrans(&args) );
 }
 
@@ -283,12 +301,23 @@ void TransIFS::invtrans( const int nb_vordiv_fields, const double vorticity_spec
 void TransIFS::dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
                          const eckit::Configuration& config ) const
 {
-  TransParameters params(config);
+  TransParameters params(*this,config);
+  bool global = params.global();
+  int nproma = params.nproma();
+  int ngpblks;
+  if( nproma == 0 ) { // default
+    nproma = global ? trans_->ngptotg : trans_->ngptot;
+    ngpblks = 1;
+  } else {
+    ngpblks = global ? (trans_->ngptotg/nproma) : (trans_->ngptot/nproma);
+  }
   struct ::DirTrans_t args = new_dirtrans(trans_.get());
     args.nscalar = nb_fields;
     args.rgp = scalar_fields;
     args.rspscalar = scalar_spectra;
     args.lglobal   = params.global();
+    args.nproma = params.nproma();
+    args.ngpblks = params.ngpblks();
   TRANS_CHECK( ::trans_dirtrans(&args) );
 }
 
@@ -297,13 +326,24 @@ void TransIFS::dirtrans( const int nb_fields, const double scalar_fields[], doub
 void TransIFS::dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[],
                          const eckit::Configuration& config ) const
 {
-  TransParameters params(config);
+  TransParameters params(*this,config);
+  bool global = params.global();
+  int nproma = params.nproma();
+  int ngpblks;
+  if( nproma == 0 ) { // default
+    nproma = global ? trans_->ngptotg : trans_->ngptot;
+    ngpblks = 1;
+  } else {
+    ngpblks = global ? (trans_->ngptotg/nproma) : (trans_->ngptot/nproma);
+  }
   struct ::DirTrans_t args = new_dirtrans(trans_.get());
     args.nvordiv = nb_fields;
     args.rspvor = vorticity_spectra;
     args.rspdiv = divergence_spectra;
     args.rgp    = wind_fields;
     args.lglobal = params.global();
+    args.nproma = params.nproma();
+    args.ngpblks = params.ngpblks();
   TRANS_CHECK( ::trans_dirtrans(&args) );
 }
 
@@ -760,7 +800,7 @@ void TransIFS::ctor_spectral_only(long truncation, const eckit::Configuration& )
 
 void TransIFS::ctor_rgg(const long nlat, const long pl[], long truncation, const eckit::Configuration& config )
 {
-  TransParameters p(config);
+  TransParameters p(*this,config);
   std::vector<int> nloen(nlat);
   for( long jlat=0; jlat<nlat; ++jlat )
     nloen[jlat] = pl[jlat];
@@ -796,7 +836,7 @@ void TransIFS::ctor_rgg(const long nlat, const long pl[], long truncation, const
 
 void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, const eckit::Configuration& config )
 {
-  TransParameters p(config);
+  TransParameters p(*this,config);
   TRANS_CHECK(::trans_new(trans_.get()));
   TRANS_CHECK(::trans_set_resol_lonlat(trans_.get(),nlon,nlat));
   if( truncation >= 0 )

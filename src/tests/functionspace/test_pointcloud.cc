@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -13,11 +13,9 @@
 #include "atlas/array.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
 
 using namespace eckit;
-using namespace eckit::testing;
 using namespace atlas::functionspace;
 using namespace atlas::util;
 
@@ -59,6 +57,5 @@ CASE( "test_functionspace_PointCloud" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }

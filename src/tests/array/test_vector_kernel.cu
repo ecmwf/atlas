@@ -11,7 +11,6 @@
 #include <cuda_runtime.h>
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
 #include "atlas/array/Vector.h"
 #include "atlas/array/gridtools/GPUClonable.h"
@@ -20,7 +19,6 @@
 #include "atlas/runtime/Log.h"
 
 using namespace atlas::array;
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {

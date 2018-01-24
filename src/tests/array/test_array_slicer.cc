@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,7 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/testing/Test.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/library/config.h"
 #include "atlas/array.h"
@@ -19,7 +18,6 @@
 
 using namespace atlas::array;
 using namespace atlas::array::helpers;
-using namespace eckit::testing;
 
 template< typename Value, int Rank >
 struct Slice {
@@ -61,7 +59,6 @@ CASE( "test_SliceRank" ){
   static_assert( SliceRank_impl<3,Range,int  ,Range>::value == 2, "failed" );
   static_assert( SliceRank_impl<3,int  ,int  ,Range>::value == 1, "failed" );
   static_assert( SliceRank_impl<3,int  ,Range,Range>::value == 2, "failed" );
-
 }
 
 #if 1
@@ -101,6 +98,16 @@ CASE( "test_array_slicer_1d" )
     static_assert( std::is_same< decltype(slice) , Reference<double> >::value, "failed" );
   }
 
+  {
+    auto slice = slicer.apply(Range::all(),Range::dummy());
+    static_assert( std::is_same< decltype(slice) , LocalView<double,2> >::value, "failed" );
+    EXPECT( slice.rank() == 2 );
+    EXPECT( slice.shape(0) == 10 );
+    EXPECT( slice.shape(1) == 1 );
+    EXPECT( slice(0,0) == 0 );
+    EXPECT( slice(1,0) == 1 );
+  }
+
 }
 #endif
 CASE( "test_array_slicer_2d" )
@@ -127,6 +134,19 @@ CASE( "test_array_slicer_2d" )
     const double& slice = slicer.apply(1,3);
     EXPECT( slice == 24 );
     //static_assert( std::is_same< decltype(slice) , double& >::value, "failed" );
+  }
+
+  {
+    auto slice = slicer.apply(Range{0,2},Range::dummy(),Range{1,3});
+    static_assert( std::is_same< decltype(slice) , LocalView<double,3> >::value, "failed" );
+    EXPECT( slice.rank() == 3 );
+    EXPECT( slice.shape(0) == 2 );
+    EXPECT( slice.shape(1) == 1 );
+    EXPECT( slice.shape(2) == 2 );
+    EXPECT( slice(0,0,0) == 12 );
+    EXPECT( slice(0,0,1) == 13 );
+    EXPECT( slice(1,0,0) == 22 );
+    EXPECT( slice(1,0,1) == 23 );
   }
 
 }
@@ -355,7 +375,6 @@ CASE( "test_arrayview_slice_type" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return eckit::testing::run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }
 

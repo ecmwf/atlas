@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -29,7 +29,6 @@
 #include "atlas/parallel/Checksum.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #undef atlas_omp_critical_ordered
 #define atlas_omp_critical_ordered atlas_omp_critical
@@ -50,39 +49,52 @@ namespace {
 template <typename T>
 array::LocalView<T,3> make_leveled_view(const Field &field)
 {
-  if( field.levels() )
-    return array::LocalView<T,3> ( array::make_storageview<T>(field).data(),
-                                   array::make_shape(field.shape(0),field.shape(1),field.stride(1)) );
-  else
-    return array::LocalView<T,3> ( array::make_storageview<T>(field).data(),
-                                   array::make_shape(field.shape(0),1,field.stride(0)) );
-}
-
-template <typename T>
-array::LocalView<T,2> surface_view(const Field &field)
-{
-  return array::LocalView<T,2> ( array::make_storageview<T>(field).data(),
-                                 array::make_shape(field.shape(0),field.stride(0)) );
+  using namespace array;
+  if( field.levels() ) {
+    if( field.variables() ) {
+      return make_view<T,3>( field ).slice( Range::all(), Range::all(), Range::all() );
+    } else {
+      return make_view<T,2>( field ).slice( Range::all(), Range::all(), Range::dummy() );
+    }
+  }
+  else {
+    if( field.variables() ) {
+      return make_view<T,2>( field ).slice( Range::all(), Range::dummy(), Range::all() );
+    } else {
+      return make_view<T,1>( field ).slice( Range::all(), Range::dummy(), Range::dummy() );
+    }
+  }
 }
 
 template <typename T>
 array::LocalView<T,2> make_leveled_scalar_view(const Field &field)
 {
+  using namespace array;
   if( field.levels() )
-    return array::LocalView<T,2> ( array::make_storageview<T>(field).data(),
-                                   array::make_shape(field.shape(0),field.shape(1)) );
+    return make_view<T,2>( field ).slice( Range::all(), Range::all() );
   else
-    return array::LocalView<T,2> ( array::make_storageview<T>(field).data(),
-                                   array::make_shape(field.shape(0),1) );
+    return make_view<T,1>( field ).slice( Range::all(), Range::dummy() );
 }
 
 template <typename T>
-array::LocalView<T,1> make_surface_scalar_view(const Field &field)
+array::LocalView<T,2> make_surface_view(const Field &field)
 {
-  return array::LocalView<T,1> ( array::make_storageview<T>(field).data(),
-                                 array::make_shape(field.size()) );
+  using namespace array;
+  if( field.variables() )
+    return make_view<T,2>( field ).slice( Range::all(), Range::all() );
+  else
+    return make_view<T,1>( field ).slice( Range::all(), Range::dummy() );
 }
 
+template <typename T>
+array::LocalView<T,2> make_per_level_view(const Field &field)
+{
+  using namespace array;
+  if( field.rank() == 2 )
+    return make_view<T,2>( field ).slice( Range::all(), Range::all() );
+  else
+    return make_view<T,1>( field ).slice( Range::all(), Range::dummy() );
+}
 
 }
 
@@ -408,28 +420,29 @@ void NodeColumns::gather( const FieldSet& local_fieldset, FieldSet& global_field
     glb.metadata().get("owner",root);
 
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      parallel::Field<int const> loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
-      parallel::Field<int      > glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
+      parallel::Field<int const> loc_field( make_leveled_view<int>( loc ) );
+      parallel::Field<int      > glb_field( make_leveled_view<int>( glb ) );
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      parallel::Field<long const> loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
-      parallel::Field<long      > glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
+      parallel::Field<long const> loc_field( make_leveled_view<long>( loc ) );
+      parallel::Field<long      > glb_field( make_leveled_view<long>( glb ) );
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      parallel::Field<float const> loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
-      parallel::Field<float      > glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
+      parallel::Field<float const> loc_field( make_leveled_view<float>( loc ) );
+      parallel::Field<float      > glb_field( make_leveled_view<float>( glb ) );
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      parallel::Field<double const> loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
-      parallel::Field<double      > glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
+      parallel::Field<double const> loc_field( make_leveled_view<double>( loc ) );
+      parallel::Field<double      > glb_field( make_leveled_view<double>( glb ) );
       gather().gather( &loc_field, &glb_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
   }
 }
+
 void NodeColumns::gather( const Field& local, Field& global ) const
 {
   FieldSet local_fields;
@@ -461,23 +474,23 @@ void NodeColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fiel
     glb.metadata().get("owner",root);
 
     if     ( loc.datatype() == array::DataType::kind<int>() ) {
-      parallel::Field<int const> glb_field( array::make_storageview<int>(glb).data(),glb.stride(0));
-      parallel::Field<int      > loc_field( array::make_storageview<int>(loc).data(),loc.stride(0));
+      parallel::Field<int const> glb_field( make_leveled_view<int>( glb ) );
+      parallel::Field<int      > loc_field( make_leveled_view<int>( loc ) );
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<long>() ) {
-      parallel::Field<long const> glb_field( array::make_storageview<long>(glb).data(),glb.stride(0));
-      parallel::Field<long      > loc_field( array::make_storageview<long>(loc).data(),loc.stride(0));
+      parallel::Field<long const> glb_field( make_leveled_view<long>( glb ) );
+      parallel::Field<long      > loc_field( make_leveled_view<long>( loc ) );
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<float>() ) {
-      parallel::Field<float const> glb_field( array::make_storageview<float>(glb).data(),glb.stride(0));
-      parallel::Field<float      > loc_field( array::make_storageview<float>(loc).data(),loc.stride(0));
+      parallel::Field<float const> glb_field( make_leveled_view<float>( glb ) );
+      parallel::Field<float      > loc_field( make_leveled_view<float>( loc ) );
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else if( loc.datatype() == array::DataType::kind<double>() ) {
-      parallel::Field<double const> glb_field( array::make_storageview<double>(glb).data(),glb.stride(0));
-      parallel::Field<double      > loc_field( array::make_storageview<double>(loc).data(),loc.stride(0));
+      parallel::Field<double const> glb_field( make_leveled_view<double>( glb ) );
+      parallel::Field<double      > loc_field( make_leveled_view<double>( loc ) );
       scatter().scatter( &glb_field, &loc_field, nb_fields, root );
     }
     else throw eckit::Exception("datatype not supported",Here());
@@ -726,11 +739,9 @@ void dispatch_sum_per_level( const NodeColumns& fs, const Field& field, Field& s
     shape.push_back(field.shape(j));
   sum.resize(shape);
 
-  const array::LocalView<T,3> arr = make_leveled_view<T>(field);
+  auto arr = make_leveled_view<T>(field);
 
-  array::LocalView<T,2> sum_per_level(
-    array::make_storageview<T>(sum).data(),
-    array::make_shape(sum.shape(0),sum.stride(0)) );
+  auto sum_per_level = make_per_level_view<T>( sum );
 
   for( size_t l=0; l<sum_per_level.shape(0); ++l ) {
     for( size_t j=0; j<sum_per_level.shape(1); ++j ) {
@@ -802,9 +813,11 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs , const Field& fie
   size_t root = 0;
   Field global = fs.createField( field , option::global() );
   fs.gather(field,global);
-  result = std::accumulate(array::make_storageview<DATATYPE>(global).data(),
-                           array::make_storageview<DATATYPE>(global).data()+global.size(),0.);
-
+  result = 0;
+  auto glb = array::make_view<DATATYPE,1>( global );
+  for( size_t jnode=0; jnode<glb.size(); ++jnode ) {
+    result += glb(jnode);
+  }
   ATLAS_TRACE_MPI( BROADCAST ) {
     parallel::mpi::comm().broadcast(&result, 1, root);
   }
@@ -818,12 +831,13 @@ void dispatch_order_independent_sum( const NodeColumns& fs , const Field& field,
   {
     const array::LocalView<T,2> arr = make_leveled_scalar_view<T>(field);
 
-    Field surface_field = fs.createField<T>(option::name("surface"));
-    array::LocalView<T,1> surface = make_surface_scalar_view<T>( surface_field );
+    Field surface_field = fs.createField<T>(option::name("surface") | option::levels(false));
+    auto surface = array::make_view<T,1>( surface_field );
 
     for( size_t n=0; n<arr.shape(0); ++n ) {
+      surface(n) = 0;
       for( size_t l=0; l<arr.shape(1); ++l ) {
-          surface(n) += arr(n,l);
+        surface(n) += arr(n,l);
       }
     }
     dispatch_order_independent_sum_2d( fs, surface_field, result, N );
@@ -877,14 +891,13 @@ void order_independent_sum( const NodeColumns& fs , const Field& field, T& resul
 template< typename DATATYPE >
 void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& field, std::vector<DATATYPE>& result, size_t& N )
 {
-  size_t nvar = field.stride(0);
+  size_t nvar = field.variables();
   result.resize(nvar);
   for( size_t j=0; j<nvar; ++j ) result[j] = 0.;
-  Field global = fs.createField<DATATYPE>(option::name("global")|option::variables(field.variables())|option::levels(field.levels())| option::global() );
+  Field global = fs.createField( field, option::name("global")|option::global() );
   fs.gather(field,global);
   if( parallel::mpi::comm().rank() == 0 ) {
-    const array::LocalView<DATATYPE,2> glb( array::make_storageview<DATATYPE>(global).data(),
-                                            array::make_shape(global.shape(0),global.stride(0)) );
+    const auto glb = make_surface_view<DATATYPE>( global );
     for( size_t n=0; n<fs.nb_nodes_global(); ++n ) {
       for( size_t j=0; j<nvar; ++j ) {
         result[j] += glb(n,j);
@@ -903,11 +916,17 @@ void dispatch_order_independent_sum( const NodeColumns& fs, const Field& field, 
 {
   if( field.levels() )
   {
-    const size_t nvar = field.stride(1);
-    const array::LocalView<T,3> arr = make_leveled_view<T>(field);
+    const size_t nvar = field.variables();
+    const auto arr = make_leveled_view<T>(field);
 
-    Field surface_field = fs.createField<T>(option::name("surface")|option::variables(nvar));
-    array::LocalView<T,2> surface = surface_view<T>( surface_field );
+    Field surface_field = fs.createField<T>(option::name("surface")|option::variables(nvar)|option::levels(false));
+    auto surface = make_surface_view<T>( surface_field );
+
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t j=0; j<arr.shape(2); ++j ) {
+        surface(n,j) = 0;
+      }
+    }
 
     for( size_t n=0; n<arr.shape(0); ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
@@ -975,20 +994,15 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
     shape.push_back(field.shape(j));
   sumfield.resize(shape);
 
-  array::LocalView<T,2> sum ( array::make_storageview<T>(sumfield).data(),
-                              array::make_shape(sumfield.shape(0),sumfield.stride(0)) );
+  auto sum = make_per_level_view<T>( sumfield );
   for( size_t l=0; l<sum.shape(0); ++l ) {
     for( size_t j=0; j<sum.shape(1); ++j ) {
       sum(l,j) = 0.;
     }
   }
-  Log::info() << field << std::endl;
-  Log::info() << sumfield << std::endl;
 
   size_t root = 0;
-  Field global = fs.createField(option::datatype(field.datatype())|option::name("global")|option::variables(field.variables())|option::levels(field.levels())|option::global());
-
-  Log::info() << global << std::endl;
+  Field global = fs.createField( field , option::name("global")|option::global());
 
   fs.gather(field,global);
   if( parallel::mpi::comm().rank() == 0 ) {
@@ -1003,7 +1017,24 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
     }
   }
   ATLAS_TRACE_MPI( BROADCAST ) {
-    parallel::mpi::comm().broadcast( array::make_storageview<T>(sumfield).data(),sumfield.size(),root);
+    std::vector<T> sum_array(sumfield.size());
+    if( parallel::mpi::comm().rank() == root ) {
+      size_t c(0);
+      for( size_t l=0; l<sum.shape(0); ++l ) {
+        for( size_t j=0; j<sum.shape(1); ++j ) {
+          sum_array[c++] = sum(l,j);
+        }
+      }
+    }
+    parallel::mpi::comm().broadcast( sum_array, root);
+    if( parallel::mpi::comm().rank() != root ) {
+      size_t c(0);
+      for( size_t l=0; l<sum.shape(0); ++l ) {
+        for( size_t j=0; j<sum.shape(1); ++j ) {
+          sum(l,j) = sum_array[c++];
+        }
+      }
+    }
   }
   N = fs.nb_nodes_global();
 }
@@ -1190,10 +1221,7 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Fiel
   for( size_t j=1; j<field.rank(); ++j )
     shape.push_back(field.shape(j));
   min_field.resize(shape);
-  const size_t nvar = field.stride(1);
-  array::LocalView<T,2> min(
-      array::make_storageview<T>(min_field).data(),
-      array::make_shape(min_field.shape(0),min_field.stride(0)) );
+  auto min = make_per_level_view<T>( min_field );
 
   for( size_t l=0; l<min.shape(0); ++l ) {
     for( size_t j=0; j<min.shape(1); ++j ) {
@@ -1215,7 +1243,7 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Fiel
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
-        for( size_t j=0; j<nvar; ++j ) {
+        for( size_t j=0; j<arr.shape(2); ++j ) {
           min_private_view(l,j) = std::min(arr(n,l,j),min_private_view(l,j));
         }
       }
@@ -1223,7 +1251,7 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Fiel
     atlas_omp_critical
     {
       for( size_t l=0; l<arr.shape(1); ++l ) {
-        for( size_t j=0; j<nvar; ++j ) {
+        for( size_t j=0; j<arr.shape(2); ++j ) {
           min(l,j) = std::min(min_private_view(l,j),min(l,j));
         }
       }
@@ -1261,10 +1289,7 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Fiel
   for( size_t j=1; j<field.rank(); ++j )
     shape.push_back(field.shape(j));
   max_field.resize(shape);
-  const size_t nvar = field.stride(1);
-  array::LocalView<T,2> max (
-      array::make_storageview<T>(max_field).data(),
-      array::make_shape(max_field.shape(0),max_field.stride(0)) );
+  auto max = make_per_level_view<T>( max_field );
 
   for( size_t l=0; l<max.shape(0); ++l ) {
     for( size_t j=0; j<max.shape(1); ++j ) {
@@ -1287,7 +1312,7 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Fiel
     const size_t npts = arr.shape(0);
     atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
-        for( size_t j=0; j<nvar; ++j ) {
+        for( size_t j=0; j<arr.shape(2); ++j ) {
           max_private_view(l,j) = std::max(arr(n,l,j),max_private_view(l,j));
         }
       }
@@ -1295,7 +1320,7 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Fiel
     atlas_omp_critical
     {
       for( size_t l=0; l<arr.shape(1); ++l ) {
-        for( size_t j=0; j<nvar; ++j ) {
+        for( size_t j=0; j<arr.shape(2); ++j ) {
           max(l,j) = std::max(max_private_view(l,j),max(l,j));
         }
       }
@@ -1599,20 +1624,14 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field
   min_field.resize(shape);
   glb_idx_field.resize(shape);
   const size_t nvar = arr.shape(2);
-  array::LocalView<T,2> min(
-      array::make_storageview<T>(min_field).data(),
-      array::make_shape(min_field.shape(0),min_field.stride(0)) );
+  auto min = make_per_level_view<T>( min_field );
+  auto glb_idx = make_per_level_view<gidx_t>( glb_idx_field );
 
   for( size_t l=0; l<min.shape(0); ++l ) {
     for( size_t j=0; j<min.shape(1); ++j ) {
       min(l,j) = std::numeric_limits<T>::max();
     }
   }
-
-  array::LocalView<gidx_t,2> glb_idx(
-    array::make_storageview<gidx_t>(glb_idx_field).data(),
-    array::make_shape(glb_idx_field.shape(0),glb_idx_field.stride(0)) );
-
 
   atlas_omp_parallel
   {
@@ -1708,19 +1727,14 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field
   max_field.resize(shape);
   glb_idx_field.resize(shape);
   const size_t nvar = arr.shape(2);
-  array::LocalView<T,2> max(
-      array::make_storageview<T>(max_field).data(),
-      array::make_shape(max_field.shape(0),max_field.stride(0)) );
+  auto max = make_per_level_view<T>( max_field );
+  auto glb_idx = make_per_level_view<gidx_t>( glb_idx_field );
 
   for( size_t l=0; l<max.shape(0); ++l ) {
     for( size_t j=0; j<max.shape(1); ++j ) {
       max(l,j) = -std::numeric_limits<T>::max();
     }
   }
-
-  array::LocalView<gidx_t,2> glb_idx(
-      array::make_storageview<gidx_t>(glb_idx_field).data(),
-      array::make_shape(glb_idx_field.shape(0),glb_idx_field.stride(0)) );
 
   atlas_omp_parallel
   {
@@ -1826,9 +1840,11 @@ template< typename T >
 void dispatch_mean_per_level( const NodeColumns& fs, const Field& field, Field& mean, size_t& N )
 {
   dispatch_sum_per_level<T>(fs,field,mean,N);
-  T* rawdata = array::make_storageview<T>(mean).data();
-  for( size_t j=0; j<mean.size(); ++j ) {
-    rawdata[j] /= static_cast<double>(N);
+  auto view = make_per_level_view<T>( mean );
+  for( size_t l=0; l<view.shape(0); ++l ) {
+    for( size_t j=0; j<view.shape(1); ++j ) {
+      view(l,j) /= static_cast<double>(N);
+    }
   }
 }
 
@@ -1901,9 +1917,9 @@ void dispatch_mean_and_standard_deviation_per_level( const NodeColumns& fs, cons
 {
   dispatch_mean_per_level<T>(fs,field,mean,N);
   Field squared_diff_field = fs.createField<T>(option::name("sqr_diff")|option::levels(field.levels())|option::variables(field.variables()));
-  array::LocalView<T,3> squared_diff = make_leveled_view<T>( squared_diff_field );
-  array::LocalView<T,3> values = make_leveled_view<T>( field );
-  array::LocalView<T,2> mu( array::make_storageview<T>(mean).data(), array::make_shape(values.shape(1),values.shape(2)) );
+  auto squared_diff = make_leveled_view<T>( squared_diff_field );
+  auto values = make_leveled_view<T>( field );
+  auto mu = make_per_level_view<T>( mean );
 
   const size_t npts = values.shape(0);
   atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
@@ -1914,10 +1930,11 @@ void dispatch_mean_and_standard_deviation_per_level( const NodeColumns& fs, cons
     }
   }
   dispatch_mean_per_level<T>(fs,squared_diff_field,stddev,N);
-  T* sigma = array::make_storageview<T>(stddev).data();
-  const size_t size = stddev.size();
-  atlas_omp_parallel_for( size_t j=0; j<size; ++j ) {
-    sigma[j] = std::sqrt(sigma[j]);
+  auto sigma = make_per_level_view<T>( stddev );
+  atlas_omp_for( size_t l=0; l<sigma.shape(0); ++l ) {
+    for( size_t j=0; j<sigma.shape(1); ++j ) {
+      sigma(l,j) = std::sqrt( sigma(l,j) );
+    }
   }
 }
 

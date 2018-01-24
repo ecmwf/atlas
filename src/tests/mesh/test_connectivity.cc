@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -12,26 +12,11 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
-
-using namespace eckit::testing;
-
 
 using namespace atlas::mesh;
 
 namespace atlas {
 namespace test {
-
-#undef CASE
-#define CASE(description) \
-void UNIQUE_NAME2(test_, __LINE__) (std::string&); \
-static eckit::testing::TestRegister UNIQUE_NAME2(test_registration_, __LINE__)(description, &UNIQUE_NAME2(test_, __LINE__)); \
-void UNIQUE_NAME2(traced_test_, __LINE__) (std::string&); \
-void UNIQUE_NAME2(test_, __LINE__) (std::string& _test_subsection) { \
-    ATLAS_TRACE(description); \
-    UNIQUE_NAME2(traced_test_, __LINE__); \
-} \
-void UNIQUE_NAME2(traced_test_, __LINE__) (std::string& _test_subsection)
 
 //-----------------------------------------------------------------------------
 
@@ -576,6 +561,5 @@ CASE("test_multi_block_connectivity_insert") {
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }

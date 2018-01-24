@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -69,6 +69,7 @@ FieldImpl::FieldImpl(
   array_->attach();
   rename(name);
   set_levels(0);
+  set_variables(0);
 }
 
 
@@ -78,6 +79,7 @@ FieldImpl::FieldImpl(const std::string& name, array::Array* array)
   array_->attach();
   rename(name);
   set_levels(0);
+  set_variables(0);
 }
 
 FieldImpl::~FieldImpl()

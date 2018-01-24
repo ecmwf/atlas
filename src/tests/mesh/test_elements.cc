@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -30,9 +30,7 @@
 #include "atlas/grid/Grid.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 
-using namespace eckit::testing;
 using namespace atlas::mesh;
 using namespace atlas::mesh::temporary;
 
@@ -280,9 +278,6 @@ CASE( "block_connectivity" )
 
 }
 
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-#warning TODO: gridtools storage cuda backend cannot allocate zero elements
-#endif
 CASE( "zero_elements" )
 {
   HybridElements hybrid_elements;
@@ -477,6 +472,5 @@ CASE( "cells_add_add" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }

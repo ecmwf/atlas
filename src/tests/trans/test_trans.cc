@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -27,10 +27,10 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
+#include "atlas/trans/VorDivToUV.h"
 #include "atlas/array/MakeView.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 #include "eckit/io/DataHandle.h"
 #include "eckit/filesystem/PathName.h"
 
@@ -41,7 +41,6 @@
 #endif
 
 using namespace eckit;
-using namespace eckit::testing;
 using atlas::grid::detail::partitioner::TransPartitioner;
 using atlas::grid::detail::partitioner::EqualRegionsPartitioner;
 
@@ -506,6 +505,54 @@ CASE( "test_trans_MIR_lonlat" )
   }
 }
 
+CASE( "test_trans_VorDivToUV")
+{
+  int nfld = 10;
+  std::vector<int> truncation_array{159,160,1279,1280};
+  for( int i=0; i<truncation_array.size(); ++i)
+  {
+    int truncation = truncation_array[i];
+    int nspec2 = (truncation+1)*(truncation+2);
+
+    Log::info() << "truncation = " <<  truncation << std::endl;
+
+    std::vector<double> field_vor( nfld*nspec2, 0. );
+    std::vector<double> field_div( nfld*nspec2, 0. );
+
+    // TODO: initialise field_vor and field_div with something meaningful
+
+    // With IFS
+    if( trans::VorDivToUVFactory::has("ifs") ) {
+      trans::VorDivToUV vordiv_to_UV(truncation, option::type("ifs"));
+      EXPECT( vordiv_to_UV.truncation() == truncation );
+
+      std::vector<double> field_U  ( nfld*nspec2 );
+      std::vector<double> field_V  ( nfld*nspec2 );
+
+      vordiv_to_UV.execute( nspec2, nfld, field_vor.data(), field_div.data(), field_U.data(), field_V.data() );
+
+      // TODO: do some meaningful checks
+
+    }
+
+    // With Local
+    {
+      trans::VorDivToUV vordiv_to_UV(truncation, option::type("local"));
+      EXPECT( vordiv_to_UV.truncation() == truncation );
+
+      std::vector<double> field_U  ( nfld*nspec2 );
+      std::vector<double> field_V  ( nfld*nspec2 );
+
+      // TODO:
+      // vordiv_to_UV.execute( nspec2, nfld, field_vor.data(), field_div.data(), field_U.data(), field_V.data() );
+
+      // TODO: do some meaningful checks
+    }
+
+
+  }
+}
+
 
 //-----------------------------------------------------------------------------
 
@@ -514,6 +561,5 @@ CASE( "test_trans_MIR_lonlat" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTransEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+  return atlas::test::run< atlas::test::AtlasTransEnvironment >( argc, argv );
 }

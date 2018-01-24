@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,7 +9,6 @@
  */
 
 #include "tests/AtlasTestEnvironment.h"
-#include "eckit/testing/Test.h"
 #include "eckit/types/Types.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "atlas/library/Library.h"
@@ -29,7 +28,6 @@
 using namespace eckit;
 using namespace atlas::functionspace;
 using namespace atlas::util;
-using namespace eckit::testing;
 
 namespace atlas {
 namespace test {
@@ -282,11 +280,11 @@ CASE( "test_functionspace_NodeColumns" )
     auto vec_arr = array::make_view<double,2>( field );
     vec_arr.assign( parallel::mpi::comm().rank()+1 );
     fs.maximum(field, max);
-    std::vector<double> check_max(field.stride(0), parallel::mpi::comm().size());
+    std::vector<double> check_max(field.variables(), parallel::mpi::comm().size());
     EXPECT( max == check_max );
 
     fs.minimum(field,min);
-    std::vector<double> check_min(field.stride(0), 1);
+    std::vector<double> check_min(field.variables(), 1);
     EXPECT( min == check_min );
 
     fs.maximumAndLocation(field,max, gidx_max);
@@ -385,18 +383,18 @@ CASE( "test_functionspace_NodeColumns" )
     Field gidx_per_level   ( "gidx",   array::make_datatype<gidx_t>(), array::make_shape(nb_levels) );
 
     fs.maximumPerLevel(field,max_per_level);
-    max_per_level.dump(Log::info());
+    //max_per_level.dump(Log::info());
     fs.minimumPerLevel(field,min_per_level);
-    min_per_level.dump(Log::info());
+    //min_per_level.dump(Log::info());
     fs.sumPerLevel(field,sum_per_level,N);
-    sum_per_level.dump(Log::info());
+    //sum_per_level.dump(Log::info());
     fs.meanPerLevel(field,mean_per_level,N);
-    mean_per_level.dump(Log::info());
+    //mean_per_level.dump(Log::info());
     fs.meanAndStandardDeviationPerLevel(field,mean_per_level,stddev_per_level,N);
-    mean_per_level.dump(Log::info());
-    stddev_per_level.dump(Log::info());
+    //mean_per_level.dump(Log::info());
+    //stddev_per_level.dump(Log::info());
     fs.orderIndependentSumPerLevel(field,sum_per_level,N);
-    sum_per_level.dump(Log::info());
+    //sum_per_level.dump(Log::info());
 
   }
 
@@ -404,7 +402,7 @@ CASE( "test_functionspace_NodeColumns" )
   if(1) {
     const Field& field = columns_vector_field;
     const functionspace::NodeColumns fs = nodes_fs;
-    size_t nvar = field.stride(1);
+    size_t nvar = field.variables();
     std::vector<double> max;
     std::vector<double> min;
     std::vector<double> sum;
@@ -434,7 +432,7 @@ CASE( "test_functionspace_NodeColumns" )
     Log::info() << "global index for minimum: " << gidx_min << std::endl;
 
     fs.orderIndependentSum(field,sum,N);
-    Log::info() << "sum: " << sum << std::endl;
+    Log::info() << "oisum: " << sum << std::endl;
     Log::info() << "N: " << N << std::endl;
 
     fs.mean(field,mean,N);
@@ -461,23 +459,23 @@ CASE( "test_functionspace_NodeColumns" )
     Field gidx_per_level   ( "gidx",   array::make_datatype<gidx_t>(), array::make_shape(nb_levels,nvar) );
 
     fs.maximumPerLevel(field,max_per_level);
-    max_per_level.dump(Log::info());
+    //max_per_level.dump(Log::info());
 
     fs.minimumPerLevel(field,min_per_level);
-    min_per_level.dump(Log::info());
+    //min_per_level.dump(Log::info());
 
     fs.sumPerLevel(field,sum_per_level,N);
-    sum_per_level.dump(Log::info());
+    //sum_per_level.dump(Log::info());
 
     fs.meanPerLevel(field,mean_per_level,N);
-    mean_per_level.dump(Log::info());
+    //mean_per_level.dump(Log::info());
 
     fs.meanAndStandardDeviationPerLevel(field,mean_per_level,stddev_per_level,N);
-    mean_per_level.dump(Log::info());
-    stddev_per_level.dump(Log::info());
+    //mean_per_level.dump(Log::info());
+    //stddev_per_level.dump(Log::info());
 
     fs.orderIndependentSumPerLevel(field,sum_per_level,N);
-    sum_per_level.dump(Log::info());
+    //sum_per_level.dump(Log::info());
   }
 
 
@@ -660,7 +658,6 @@ CASE( "test_SpectralFunctionSpace_norm" )
 
 
 int main(int argc, char **argv) {
-    atlas::test::AtlasTestEnvironment env( argc, argv );
-    return run_tests ( argc, argv, false );
+    return atlas::test::run( argc, argv );
 }
 
