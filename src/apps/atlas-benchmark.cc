@@ -209,7 +209,7 @@ void AtlasBenchmark::execute(const Args& args)
   haloexchange_timer = TimerStats("halo-exchange");
 
   if( omp_threads > 0 )
-    omp_set_num_threads(omp_threads);
+    atlas_omp_set_num_threads(omp_threads);
 
   Log::info() << "atlas-benchmark\n" << endl;
   Log::info() << Library::instance().info() << endl;
@@ -219,7 +219,7 @@ void AtlasBenchmark::execute(const Args& args)
   Log::info() << "  niter: " << niter << endl;
   Log::info() << endl;
   Log::info() << "  MPI tasks: "<<parallel::mpi::comm().size()<<endl;
-  Log::info() << "  OpenMP threads per MPI task: " << omp_get_max_threads() << endl;
+  Log::info() << "  OpenMP threads per MPI task: " << atlas_omp_get_max_threads() << endl;
   Log::info() << endl;
 
   Log::info() << "Timings:" << endl;
