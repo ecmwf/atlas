@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "atlas/library/config.h"
+
 void atlas_omp_set_num_threads(int num_threads);
 int atlas_omp_get_num_threads(void);
 int atlas_omp_get_max_threads(void);
@@ -22,7 +24,7 @@ void atlas_omp_set_nested(int nested);
 int atlas_omp_get_nested(void);
 
 
-#ifdef _OPENMP
+#ifdef ATLAS_HAVE_OMP
 #define __ATLAS_OMP_STR(x) #x
 #define __ATLAS_OMP_STRINGIFY(x) __ATLAS_OMP_STR(x)
 #define atlas_omp_pragma(x) \
