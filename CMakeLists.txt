@@ -66,9 +66,11 @@ if( ATLAS_HAVE_FORTRAN )
     ecbuild_warn( "In order to compile atlas_f, fckit is required to be compiled with eckit. Turning off fortran." )
     set( HAVE_FORTRAN 0 )
     set( ATLAS_HAVE_FORTRAN 0 )
+    unset( FCKIT_LIBRARIES )
 
   endif()
-
+else()
+  unset( FCKIT_LIBRARIES )
 endif()
 
 ### MPI ...
