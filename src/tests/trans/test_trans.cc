@@ -508,7 +508,7 @@ CASE( "test_trans_MIR_lonlat" )
 CASE( "test_trans_VorDivToUV")
 {
   int nfld = 10;
-  std::vector<int> truncation_array{159,160,1279,1280};
+  std::vector<int> truncation_array{159,160,1279};
   for( int i=0; i<truncation_array.size(); ++i)
   {
     int truncation = truncation_array[i];
