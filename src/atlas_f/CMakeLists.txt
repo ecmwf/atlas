@@ -11,7 +11,7 @@ function( fortranize file )
   file( WRITE "${file}" "${result}" )
 endfunction()
 
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../atlas/library/defines.h.in
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/defines.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h )
 
 install( FILES

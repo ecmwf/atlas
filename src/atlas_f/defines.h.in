@@ -1,0 +1,56 @@
+#ifndef atlas_library_defines_h
+#define atlas_library_defines_h
+
+#if 0
+// Do not use cmakedefine as this file needs to be included by fortran as well
+#endif
+
+#if @CGAL_FOUND@
+#define CGAL_FOUND
+#endif
+
+#if @ATLAS_HAVE_OMP@
+#define ATLAS_HAVE_OMP
+#endif
+
+#if @ATLAS_HAVE_TESSELATION@
+#define ATLAS_HAVE_TESSELATION
+#endif
+
+#if @ATLAS_HAVE_FORTRAN@
+#define ATLAS_HAVE_FORTRAN
+#endif
+
+#if @ATLAS_HAVE_TRANS@
+#define ATLAS_HAVE_TRANS
+#endif
+
+#if @ATLAS_HAVE_EIGEN@
+#define ATLAS_HAVE_EIGEN
+#endif
+
+#if @ATLAS_HAVE_GRIDTOOLS_STORAGE@
+#define ATLAS_HAVE_GRIDTOOLS_STORAGE
+#define BOOST_RESULT_OF_USE_TR1
+#define ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST @ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST@
+#define ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA @ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA@
+#endif
+
+#ifdef __CUDACC__
+#define ATLAS_HOST_DEVICE __host__ __device__
+#define ATLAS_DEVICE __device__
+#define ATLAS_HOST __host__
+#else
+#define ATLAS_HOST_DEVICE
+#define ATLAS_DEVICE
+#define ATLAS_HOST
+#endif
+
+#define ATLAS_BITS_GLOBAL @ATLAS_BITS_GLOBAL@
+
+#if @ATLAS_HAVE_BOUNDSCHECKING@
+#define ATLAS_ARRAYVIEW_BOUNDS_CHECKING
+#define ATLAS_INDEXVIEW_BOUNDS_CHECKING
+#endif
+
+#endif
