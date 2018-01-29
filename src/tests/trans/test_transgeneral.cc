@@ -210,16 +210,20 @@ double sphericalharmonics_analytic_point(
         const double m,             // zonal wave number (implemented so far for m<4, m<n
         const int imag,             // 0: test real part, 1: test imaginary part
         const double lon,           // longitude in radians
-        const double lat)           // latitude in radians
+        const double lat,           // latitude in radians
+        const int ivar_in,          // variable that is set to 1 for wave number n,m. 0: vorticity, 1: divergence, 2: scalar
+        const int ivar_out)         // variable returned by this function. 0: u, 1: v, 2: scalar
 {
-    double latsin = std::sin(lat), latcos = std::cos(lat);
+    double latsin = std::sin(  lat), latcos = std::cos(  lat);
+    double lonsin = std::sin(m*lon), loncos = std::cos(m*lon);
+    double a = util::Earth::radiusInMeters();
     // Fourier part of the spherical harmonics:
     double rft = 1.;
     if( m>0 ) rft *= 2.; // the famous factor 2 that noone really understands
     if( imag==0 ) {
-        rft *= std::cos(m*lon);
+        rft *= loncos;
     } else {
-        rft *= -std::sin(m*lon);
+        rft *= -lonsin;
     }
     // Legendre part of the spherical harmonics (following http://mathworld.wolfram.com/SphericalHarmonic.html
     // multiplied with -2*sqrt(pi) due to different normalization and different coordinates):
@@ -227,28 +231,110 @@ double sphericalharmonics_analytic_point(
     // LegendreP[n, m, x]/Sqrt[1/2*Integrate[LegendreP[n, m, y]^2, {y, -1, 1}]])
     // n, m need to be replaced by hand with the correct values
     // (otherwise the command will be too long for the free version of wolframalpha)
-    if ( m==0 && n==0 )
-        return rft;
-    if ( m==0 && n==1 )
-        return std::sqrt(3.)*latsin*rft;
-    if ( m==0 && n==2 )
-        return std::sqrt(5.)/2.*(3.*latsin*latsin-1.)*rft; // sign?
-    if ( m==0 && n==3 )
-        return std::sqrt(7.)/2.*(5.*latsin*latsin-3.)*latsin*rft; // sign?
-    if ( m==1 && n==1 )
-        return std::sqrt(3./2.)*latcos*rft; // sign?
-    if ( m==1 && n==2 )
-        return std::sqrt(15./2.)*latsin*latcos*rft; // sign?
-    if ( m==1 && n==3 )
-        return std::sqrt(21.)/4.*latcos*(5.*latsin*latsin-1.)*rft; // sign?
-    if ( m==2 && n==2 )
-        return std::sqrt(15./2.)/2.*latcos*latcos*rft;
-    if ( m==2 && n==3 )
-        return std::sqrt(105./2.)/2.*latcos*latcos*latsin*rft;
-    if ( m==3 && n==3 )
-        return std::sqrt(35.)/4.*latcos*latcos*latcos*rft; // sign?
-    if ( m==45 && n==45 )
-        return std::pow(latcos,45)*rft*21.*std::sqrt(1339044123748208678378695.)/8796093022208.; // sign?
+
+    // scalar:
+    if ( ivar_in==2 ) {
+        if ( ivar_out==2 ) {
+            if ( m==0 && n==0 )
+                return rft;
+            if ( m==0 && n==1 )
+                return std::sqrt(3.)*latsin*rft;
+            if ( m==0 && n==2 )
+                return std::sqrt(5.)/2.*(3.*latsin*latsin-1.)*rft; // sign?
+            if ( m==0 && n==3 )
+                return std::sqrt(7.)/2.*(5.*latsin*latsin-3.)*latsin*rft; // sign?
+            if ( m==1 && n==1 )
+                return std::sqrt(3./2.)*latcos*rft; // sign?
+            if ( m==1 && n==2 )
+                return std::sqrt(15./2.)*latsin*latcos*rft; // sign?
+            if ( m==1 && n==3 )
+                return std::sqrt(21.)/4.*latcos*(5.*latsin*latsin-1.)*rft; // sign?
+            if ( m==2 && n==2 )
+                return std::sqrt(15./2.)/2.*latcos*latcos*rft;
+            if ( m==2 && n==3 )
+                return std::sqrt(105./2.)/2.*latcos*latcos*latsin*rft;
+            if ( m==3 && n==3 )
+                return std::sqrt(35.)/4.*latcos*latcos*latcos*rft; // sign?
+            if ( m==45 && n==45 )
+                return std::pow(latcos,45)*rft*21.*std::sqrt(1339044123748208678378695.)/8796093022208.; // sign?
+        } else {
+            return 0.;
+        }
+    }
+
+    // for the remainder the factor 2 from rft is already included in the formulas:
+
+    // vorticity:
+    if ( ivar_in==0 ) {
+        if ( ivar_out==0 ) { // u:
+            if ( m==0 && n==0 )
+                return 0.;
+            if ( m==0 && n==1 ) {
+                if ( imag==0 ) {
+                    return std::sqrt(3.)*a/2.*latcos;
+                } else {
+                    return 0.;
+                }
+            }
+            if ( m==1 && n==1 ) {
+                if ( imag==0 ) {
+                    return -a*std::sqrt(3./2.)*loncos*latsin;
+                } else {
+                    return a*std::sqrt(3./2.)*lonsin*latsin;
+                }
+            }
+        } else if ( ivar_out==1 ) { // v:
+            if ( m==0 && n==0 )
+                return 0.;
+            if ( m==0 && n==1 )
+                return 0.;
+            if ( m==1 && n==1 ) {
+                if ( imag==0 ) {
+                    return a*std::sqrt(3./2.)*lonsin;
+                } else {
+                    return a*std::sqrt(3./2.)*loncos;
+                }
+            }
+        } else {
+            return 0.;
+        }
+    }
+
+    // divergence:
+    if ( ivar_in==1 ) {
+        if ( ivar_out==0 ) { // u:
+            if ( m==0 && n==0 )
+                return 0.;
+            if ( m==0 && n==1 )
+                return 0.;
+            if ( m==1 && n==1 ) {
+                if ( imag==0 ) {
+                    return a*std::sqrt(3./2.)*lonsin;
+                } else {
+                    return a*std::sqrt(3./2.)*loncos;
+                }
+            }
+        } else if ( ivar_out==1 ) { // v:
+            if ( m==0 && n==0 )
+                return 0.;
+            if ( m==0 && n==1 ) {
+                if ( imag==0 ) {
+                    return -std::sqrt(3.)*a/2.*latcos;
+                } else {
+                    return 0.;
+                }
+            }
+            if ( m==1 && n==1 ) {
+                if ( imag==0 ) {
+                    return a*std::sqrt(3./2.)*loncos*latsin;
+                } else {
+                    return -a*std::sqrt(3./2.)*lonsin*latsin; // sign?
+                }
+            }
+        } else {
+            return 0.;
+        }
+    }
 
     return -1.;
 }
@@ -263,14 +349,14 @@ double sphericalharmonics_analytic_point(
 void spectral_transform_grid_analytic(
         const size_t trc,     // truncation (in)
         const size_t trcFT,   // truncation for Fourier transformation (in)
-        const int nb_scalar,
-        const int nb_vordiv,
         const double n,       // total wave number (implemented so far for n<4
         const double m,       // zonal wave number (implemented so far for m<4, m<n
         const int imag,       // 0: test real part, 1: test imaginary part
         const Grid grid,      // call with something like Grid("O32")
         double rspecg[],      // spectral data, size (trc+1)*trc (out)
-        double rgp[])         // resulting grid point data (out)
+        double rgp[],         // resulting grid point data (out)
+        const int ivar_in,    // variable that is set to 1 for wave number n,m. 0: vorticity, 1: divergence, 2: scalar
+        const int ivar_out)   // variable returned by this function. 0: u, 1: v, 2: scalar
 {
     int N = (trc+2)*(trc+1)/2;
     for( int jm=0; jm<2*N; jm++) rspecg[jm] = 0.;
@@ -289,7 +375,7 @@ void spectral_transform_grid_analytic(
 
     if( grid::StructuredGrid(grid) ) {
         grid::StructuredGrid g(grid);
-        int idx = 4*nb_vordiv;
+        int idx = 0;
         for( size_t j=0; j<g.ny(); ++j ) {
             double lat = g.y(j) * util::Constants::degreesToRadians();
 
@@ -297,24 +383,22 @@ void spectral_transform_grid_analytic(
                 double lon = g.x(i,j) * util::Constants::degreesToRadians();
 
                 // compute spherical harmonics:
-                rgp[idx] = sphericalharmonics_analytic_point(n, m, imag, lon, lat);
-                idx+=4*nb_vordiv+nb_scalar;
+                rgp[idx++] = sphericalharmonics_analytic_point(n, m, imag, lon, lat, ivar_in, ivar_out);
             }
         }
     } else {
-        int idx = 4*nb_vordiv;
+        int idx = 0;
         for( PointXY p: grid.xy()) {
             double lon = p.x() * util::Constants::degreesToRadians();
             double lat = p.y() * util::Constants::degreesToRadians();
             // compute spherical harmonics:
-            rgp[idx] = sphericalharmonics_analytic_point(n, m, imag, lon, lat);
-            idx+=4*nb_vordiv+nb_scalar;
+            rgp[idx++] = sphericalharmonics_analytic_point(n, m, imag, lon, lat, ivar_in, ivar_out);
         }
     }
 }
 
 //-----------------------------------------------------------------------------
-// Compute root mean square of difference between two arrays
+// Compute root mean square of difference between two arrays divided by maximum absolute value of second array
 //
 // Author:
 // Andreas Mueller *ECMWF*
@@ -324,12 +408,17 @@ double compute_rms(
         double array1[], // first of the two arrays
         double array2[]) // second of the two arrays
 {
-    double rms = 0.;
+    double rms = 0., rmax = 0.;
     for( int idx=0; idx<N; idx++ ) {
       double diff = array1[idx]-array2[idx];
       rms += diff*diff;
+      rmax = std::max(rmax, std::abs(array2[idx]));
     }
-    rms = std::sqrt(rms/N);
+    if( rmax==0. ) {
+        rms = 0.;
+    } else {
+        rms = std::sqrt(rms/N)/rmax;
+    }
     return rms;
 }
 
@@ -355,7 +444,7 @@ double spectral_transform_test(
     auto *rgp_analytic = new double[g.size()];
 
     // compute analytic solution (this also initializes rspecg and needs to be done before the actual transform):
-    spectral_transform_grid_analytic(trc, trc, 1, 0, n, m, imag, g, rspecg, rgp_analytic);
+    spectral_transform_grid_analytic(trc, trc, n, m, imag, g, rspecg, rgp_analytic, 2, 2);
     // perform spectral transform:
 
     spectral_transform_grid(trc, trc, g, rspecg, rgp, pointwise);
@@ -365,7 +454,7 @@ double spectral_transform_test(
     double rms = compute_rms(g.size(), rgp, rgp_analytic);
 
     out << "m=" << m << " n=" << n << " imag:" << imag << " structured:" << grid::StructuredGrid(g) << " error:" << rms;
-    if( rms > 1.e-15 ) {
+    if( rms > 2.e-15 ) {
         out << " !!!!" << std::endl;
         for( int jp=0; jp<g.size(); jp++ ) {
             out << rgp[jp]/rgp_analytic[jp] << " rgp:" << rgp[jp] << " analytic:" << rgp_analytic[jp] << std::endl;
@@ -405,7 +494,7 @@ CASE( "test_transgeneral_point" )
 {
   std::ostream& out = Log::info();
   Log::info() << "test_transgeneral_point" << std::endl;
-  double tolerance = 1.e-15;
+  double tolerance = 2.e-15;
   // test spectral transform up to wave number 3 by comparing
   // the result with the analytically computed spherical harmonics
 
@@ -436,7 +525,7 @@ CASE( "test_transgeneral_unstructured" )
 {
   std::ostream& out = Log::info();
   Log::info() << "test_transgeneral_unstructured" << std::endl;
-  double tolerance = 1.e-15;
+  double tolerance = 2.e-15;
   // test spectral transform up to wave number 3 by comparing
   // the result with the analytically computed spherical harmonics
 
@@ -467,7 +556,7 @@ CASE( "test_transgeneral_structured" )
 {
   std::ostream& out = Log::info();
   Log::info() << "test_transgeneral_structured" << std::endl;
-  double tolerance = 1.e-15;
+  double tolerance = 2.e-15;
   // test spectral transform up to wave number 3 by comparing
   // the result with the analytically computed spherical harmonics
 
@@ -519,7 +608,7 @@ CASE( "test_transgeneral_with_translib" )
       for( int n=m; n<=trc; n++ ) { // total wavenumber
           for( int imag=0; imag<=1; imag++ ) { // real and imaginary part
 
-              if( sphericalharmonics_analytic_point(n, m, true, 0., 0.) == 0. ) {
+              if( sphericalharmonics_analytic_point(n, m, true, 0., 0., 2, 2) == 0. ) {
 
                   array::ArrayView<double,1> sp = array::make_view<double,1>(spf);
                   sp.assign(0.);
@@ -527,7 +616,7 @@ CASE( "test_transgeneral_with_translib" )
 
                   EXPECT_NO_THROW( trans.invtrans(spf,gpf) );
 
-                  spectral_transform_grid_analytic(trc, trc, 1, 0, n, m, imag, g, rspecg.data(), rgp_analytic.data());
+                  spectral_transform_grid_analytic(trc, trc, n, m, imag, g, rspecg.data(), rgp_analytic.data(), 2, 2);
 
                   // compute spectral transform with the general transform:
                   spectral_transform_grid(trc, trc, g, sp.data(), rgp.data(), false);
@@ -569,66 +658,86 @@ CASE( "test_trans_vordiv_with_translib" )
   functionspace::StructuredColumns gridpoints (g);
 
   int nb_scalar = 1, nb_vordiv = 1;
-  int N = (trc+2)*(trc+1)/2, nb_all = nb_scalar+4*nb_vordiv;
-  double sp           [2*N     ];
-  double vor          [2*N     ];
-  double div          [2*N     ];
-  double rspecg       [2*N     ];
+  int N = (trc+2)*(trc+1)/2, nb_all = nb_scalar+2*nb_vordiv;
+  double sp           [2*N];
+  double vor          [2*N];
+  double div          [2*N];
+  double rspecg       [2*N];
   double gp           [nb_all*g.size()];
   double rgp          [nb_all*g.size()];
-  double rgp_analytic [nb_all*g.size()];
+  double rgp_analytic [g.size()];
 
-  int k = 0;
-  for( int m=0; m<=trc; m++ ) { // zonal wavenumber
-      for( int n=m; n<=trc; n++ ) { // total wavenumber
-          for( int imag=0; imag<=1; imag++ ) { // real and imaginary part
+  int icase = 0;
+  for( int ivar_in=0; ivar_in<3; ivar_in++ ) { // vorticity, divergence, scalar
+      for( int ivar_out=0; ivar_out<3; ivar_out++ ) { // u, v, scalar
+          if( ivar_out==2) {
+              tolerance = 1.e-13;
+          } else {
+              tolerance = 1.e-4;
+          }
+          int k = 0;
+          for( int m=0; m<=trc; m++ ) { // zonal wavenumber
+              for( int n=m; n<=trc; n++ ) { // total wavenumber
+                  for( int imag=0; imag<=1; imag++ ) { // real and imaginary part
 
-              if( sphericalharmonics_analytic_point(n, m, true, 0., 0.) == 0. ) {
+                      if( sphericalharmonics_analytic_point(n, m, true, 0., 0., ivar_in, ivar_in) == 0. ) {
 
-                  for( int j=0; j<2*N; j++ ) {
-                      sp [j] = 0.;
-                      vor[j] = 0.;
-                      div[j] = 0.;
+                          for( int j=0; j<2*N; j++ ) {
+                              sp [j] = 0.;
+                              vor[j] = 0.;
+                              div[j] = 0.;
+                          }
+                          if( ivar_in==0 ) vor[k] = 1.;
+                          if( ivar_in==1 ) div[k] = 1.;
+                          if( ivar_in==2 ) sp [k] = 1.;
+
+                          for( int j=0; j<nb_all*g.size(); j++ ) {
+                              gp [j] = 0.;
+                              rgp[j] = 0.;
+                              rgp_analytic[j] = 0.;
+                          }
+
+                          spectral_transform_grid_analytic(trc, trc, n, m, imag, g, rspecg, rgp_analytic, ivar_in, ivar_out);
+                          Log::info() << "Case " << icase << " Analytic solution: ivar_in=" << ivar_in << " ivar_out=" << ivar_out << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
+                          for( int j=0; j<g.size(); j++ ) Log::info() << std::setprecision(2) << rgp_analytic[j] << " ";
+                          Log::info() << std::endl;
+
+                          EXPECT_NO_THROW( trans.invtrans( nb_scalar, sp, nb_vordiv, vor, div, gp ) );
+
+                          Log::info() << "Trans library: ivar_in=" << ivar_in << " ivar_out=" << ivar_out << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
+                          for( int j=ivar_out*g.size(); j<(ivar_out+1)*g.size(); j++ ) Log::info() << gp[j] << " ";
+                          Log::info() << std::endl;
+
+                          // compute spectral transform with the general transform:
+                          //EXPECT_NO_THROW( spectral_transform_grid(trc, trc, g, sp, rgp, false) );
+                          //EXPECT_NO_THROW( transLocal.invtrans( nb_scalar, sp, rgp) );
+                          EXPECT_NO_THROW( transLocal.invtrans( nb_scalar, sp, nb_vordiv, vor, div, rgp) );
+                          Log::info() << "Local transform: ivar_in=" << ivar_in << " ivar_out=" << ivar_out << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
+                          for( int j=ivar_out*g.size(); j<(ivar_out+1)*g.size(); j++ ) Log::info() << rgp[j] << " ";
+                          Log::info() << std::endl;
+                          Log::info() << std::endl;
+
+                          double rms_trans = compute_rms(g.size(), gp+ivar_out*g.size(), rgp_analytic);
+                          double rms_gen   = compute_rms(g.size(), rgp+ivar_out*g.size(), rgp_analytic);
+
+                          //if( rms_gen >= tolerance ) {
+                            ATLAS_DEBUG_VAR(rms_gen);
+                            ATLAS_DEBUG_VAR(tolerance);
+                          //}
+                          //if( rms_trans >= tolerance ) {
+                            ATLAS_DEBUG_VAR(rms_trans);
+                            ATLAS_DEBUG_VAR(tolerance);
+                          //}
+                          EXPECT( rms_trans < tolerance );
+                          // local transformation truncates the spectral U,V to trc! This is different from
+                          // the analytic solution and trans library's invtrans!
+                          bool invalid = ( ivar_in<2 && ivar_out<2 && n==trc );
+                          if( !invalid ) EXPECT( rms_gen < tolerance );
+                          icase++;
+                      }
+                      k++;
                   }
-                  sp[k] = 1.;
-
-                  for( int j=0; j<nb_all*g.size(); j++ ) {
-                      gp [j] = 0.;
-                      rgp[j] = 0.;
-                      rgp_analytic[j] = 0.;
-                  }
-
-                  EXPECT_NO_THROW( trans.invtrans( nb_scalar, sp, nb_vordiv, vor, div, gp ) );
-
-                  spectral_transform_grid_analytic(trc, trc, nb_scalar, nb_vordiv, n, m, imag, g, rspecg, rgp_analytic);
-
-                  // compute spectral transform with the general transform:
-                  //EXPECT_NO_THROW( spectral_transform_grid(trc, trc, g, sp, rgp, false) );
-                  //EXPECT_NO_THROW( transLocal.invtrans( nb_scalar, sp, rgp) );
-                  EXPECT_NO_THROW( transLocal.invtrans( nb_scalar, sp, nb_vordiv, vor, div, rgp) );
-                  Log::info() << "Trans library: m=" << m << " n=" << n << " imag=" << imag << std::endl;
-                  for( int j=0; j<nb_all*g.size(); j++ ) Log::info() << gp[j] << " ";
-                  Log::info() << std::endl;
-                  Log::info() << "Local transform: m=" << m << " n=" << n << " imag=" << imag << std::endl;
-                  for( int j=0; j<nb_all*g.size(); j++ ) Log::info() << rgp[j] << " ";
-                  Log::info() << std::endl;
-                  Log::info() << std::endl;
-
-                  double rms_trans = compute_rms(nb_all*g.size(), gp, rgp_analytic);
-                  double rms_gen   = compute_rms(nb_all*g.size(), rgp, rgp_analytic);
-
-                  //if( rms_gen >= tolerance ) {
-                    ATLAS_DEBUG_VAR(rms_gen);
-                    ATLAS_DEBUG_VAR(tolerance);
-                  //}
-                  //if( rms_trans >= tolerance ) {
-                    ATLAS_DEBUG_VAR(rms_trans);
-                    ATLAS_DEBUG_VAR(tolerance);
-                  //}
-                  //EXPECT( rms_gen < tolerance );
-                  //EXPECT( rms_trans < tolerance );
               }
-              k++;
           }
       }
   }

@@ -507,8 +507,8 @@ CASE( "test_trans_MIR_lonlat" )
 
 CASE( "test_trans_VorDivToUV")
 {
-  int nfld = 10;
-  std::vector<int> truncation_array{159,160,1279};
+  int nfld = 1; // TODO: test for nfld>1
+  std::vector<int> truncation_array{1};// truncation_array{159,160,1279};
   for( int i=0; i<truncation_array.size(); ++i)
   {
     int truncation = truncation_array[i];
@@ -520,6 +520,10 @@ CASE( "test_trans_VorDivToUV")
     std::vector<double> field_div( nfld*nspec2, 0. );
 
     // TODO: initialise field_vor and field_div with something meaningful
+    field_vor[4*nfld] = 1.;
+    Log::info() << "vor: " << std::endl;
+    for( int j=0; j<nfld*nspec2; j++ ) Log::info() << field_vor[j] << " ";
+    Log::info() << std::endl;
 
     // With IFS
     if( trans::VorDivToUVFactory::has("ifs") ) {
@@ -532,6 +536,10 @@ CASE( "test_trans_VorDivToUV")
       vordiv_to_UV.execute( nspec2, nfld, field_vor.data(), field_div.data(), field_U.data(), field_V.data() );
 
       // TODO: do some meaningful checks
+      Log::info() << "Trans library" << std::endl;
+      Log::info() << "U: " << std::endl;
+      for( int j=0; j<nfld*nspec2; j++ ) Log::info() << field_U[j] << " ";
+      Log::info() << std::endl;
 
     }
 
@@ -543,10 +551,13 @@ CASE( "test_trans_VorDivToUV")
       std::vector<double> field_U  ( nfld*nspec2 );
       std::vector<double> field_V  ( nfld*nspec2 );
 
-      // TODO:
-      // vordiv_to_UV.execute( nspec2, nfld, field_vor.data(), field_div.data(), field_U.data(), field_V.data() );
+      vordiv_to_UV.execute( nspec2, nfld, field_vor.data(), field_div.data(), field_U.data(), field_V.data() );
 
       // TODO: do some meaningful checks
+      Log::info() << "Local transform" << std::endl;
+      Log::info() << "U: " << std::endl;
+      for( int j=0; j<nfld*nspec2; j++ ) Log::info() << field_U[j] << " ";
+      Log::info() << std::endl;
     }
 
 
