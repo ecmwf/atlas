@@ -130,6 +130,8 @@ call template%final()
 call fs%final()
 call mesh%final()
 call grid%final()
+#else
+#warning test test_nodes disabled
 #endif
 END_TEST
 
@@ -238,6 +240,8 @@ call mesh%final()
 
 FCTEST_CHECK_EQUAL( grid%owners(), 1 )
 call grid%final()
+#else
+#warning test test_nodescolumns disabled
 #endif
 END_TEST
 
@@ -481,6 +485,8 @@ call fs%final()
 call edges%final()
 call mesh%final()
 call grid%final()
+#else
+#warning test test_edges disabled
 #endif
 END_TEST
 
@@ -544,6 +550,8 @@ call field_xy%final()
 call fs%final()
 call fs_base%final()
 call grid%final()
+#else
+#warning test test_structuredcolumns disabled
 #endif
 END_TEST
 

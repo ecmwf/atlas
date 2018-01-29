@@ -151,7 +151,7 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration &params )
 {
   nb_levels_ = config_levels(params);
 
-  size_t mesh_halo;
+  size_t mesh_halo(0);
   mesh.metadata().get("halo",mesh_halo);
 
   size_t halo = mesh_halo;
