@@ -520,7 +520,7 @@ CASE( "test_trans_VorDivToUV")
     std::vector<double> field_div( nfld*nspec2, 0. );
 
     // TODO: initialise field_vor and field_div with something meaningful
-    field_vor[4*nfld] = 1.;
+    field_vor[2*nfld] = 1.;
     Log::info() << "vor: " << std::endl;
     for( int j=0; j<nfld*nspec2; j++ ) Log::info() << field_vor[j] << " ";
     Log::info() << std::endl;

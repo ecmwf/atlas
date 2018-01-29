@@ -77,8 +77,8 @@ public:
      * \brief build VorDivToUV
      * \return VorDivToUVImpl
      */
-    static VorDivToUVImpl* build( const FunctionSpace& sp, const eckit::Configuration& = util::Config() );
-    static VorDivToUVImpl* build( int truncation, const eckit::Configuration& = util::Config() );
+    static VorDivToUVImpl* build( const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig() );
+    static VorDivToUVImpl* build( int truncation, const eckit::Configuration& = util::NoConfig() );
 
     /*!
      * \brief list all registered trans implementations

@@ -145,7 +145,7 @@ void vd2uv(
         int inm = ioff+(ilcm-j)*2;
         for( int jfld=0; jfld<nb_vordiv_fields; ++jfld ) {
             int ir = 2*jfld*nlei1, ii = ir + nlei1;
-            int idx = 2*inm*nb_vordiv_fields+jfld;
+            int idx = inm*nb_vordiv_fields+jfld;
             // real part:
             U[idx] = ru[ir+j+2]*za_r;
             V[idx] = rv[ir+j+2]*za_r;
