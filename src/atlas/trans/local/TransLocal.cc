@@ -40,6 +40,19 @@ int fourier_truncation( double truncation, double lat ) {
   return truncation;
 }
 
+void gp_transpose(
+        const int nb_size,
+        const int nb_fields,
+        const double gp_tmp[],
+        double gp_fields[] )
+{
+    for( int jgp=0; jgp<nb_size; jgp++ ) {
+        for( int jfld=0; jfld<nb_fields; jfld++ ) {
+            gp_fields[jfld*nb_size+jgp] = gp_tmp[jgp*nb_fields+jfld];
+        }
+    }
+}
+
 } // namespace anonymous
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -188,6 +201,7 @@ void TransLocal::invtrans_uv(
     // Temporary storage for legendre space
     std::vector<double> legReal(nb_fields*(truncation_+1));
     std::vector<double> legImag(nb_fields*(truncation_+1));
+    std::vector<double> gp_tmp(nb_fields*grid_.size(), 0.);
 
     // Transform
     if( grid::StructuredGrid g = grid_ ) {
@@ -203,9 +217,9 @@ void TransLocal::invtrans_uv(
             // Fourier transform:
             for( size_t i=0; i<g.nx(j); ++i ) {
                 double lon = g.x(i,j) * util::Constants::degreesToRadians();
-                invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(), gp_fields+(nb_fields*idx));
+                invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(), gp_tmp.data()+(nb_fields*idx));
                 for( int jfld=0; jfld<2*nb_vordiv_fields; ++jfld ) {
-                    gp_fields[nb_fields*idx+jfld] /= std::cos(lat);
+                    gp_tmp[nb_fields*idx+jfld] /= std::cos(lat);
                 }
                 ++idx;
             }
@@ -222,13 +236,17 @@ void TransLocal::invtrans_uv(
             invtrans_legendre( truncation_, trcFT, legPol(lat,idx), nb_fields, scalar_spectra, legReal.data(), legImag.data() );
 
             // Fourier transform:
-            invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(), gp_fields+(nb_fields*idx));
+            invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(), gp_tmp.data()+(nb_fields*idx));
             for( int jfld=0; jfld<2*nb_vordiv_fields; ++jfld ) {
-                gp_fields[nb_fields*idx+jfld] /= std::cos(lat);
+                gp_tmp[nb_fields*idx+jfld] /= std::cos(lat);
             }
             ++idx;
         }
     }
+
+    // transpose result
+    gp_transpose( grid_.size(), nb_fields, gp_tmp.data(), gp_fields );
+
 }
 
 // --------------------------------------------------------------------------------------------------------------------
