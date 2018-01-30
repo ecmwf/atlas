@@ -453,14 +453,14 @@ double spectral_transform_test(
 
     double rms = compute_rms(g.size(), rgp, rgp_analytic);
 
-    out << "m=" << m << " n=" << n << " imag:" << imag << " structured:" << grid::StructuredGrid(g) << " error:" << rms;
+    /*out << "m=" << m << " n=" << n << " imag:" << imag << " structured:" << grid::StructuredGrid(g) << " error:" << rms;
     if( rms > 2.e-15 ) {
         out << " !!!!" << std::endl;
         for( int jp=0; jp<g.size(); jp++ ) {
             out << rgp[jp]/rgp_analytic[jp] << " rgp:" << rgp[jp] << " analytic:" << rgp_analytic[jp] << std::endl;
         }
     }
-    out << std::endl;
+    out << std::endl;*/
 
     delete [] rspecg;
     delete [] rgp;
@@ -648,9 +648,9 @@ CASE( "test_trans_vordiv_with_translib" )
 
   std::ostream& out = Log::info();
   double tolerance = 1.e-13;
-  Grid g( "F1" );
+  Grid g( "F3" );
   grid::StructuredGrid gs(g);
-  int trc = 1;
+  int trc = 3;
   trans::Trans trans     (g, trc) ;
   trans::Trans transLocal(g, trc, util::Config("type","local"));
 
@@ -659,10 +659,10 @@ CASE( "test_trans_vordiv_with_translib" )
 
   int nb_scalar = 1, nb_vordiv = 1;
   int N = (trc+2)*(trc+1)/2, nb_all = nb_scalar+2*nb_vordiv;
-  double sp           [2*N];
-  double vor          [2*N];
-  double div          [2*N];
-  double rspecg       [2*N];
+  std::vector<double> sp           (2*N);
+  std::vector<double> vor          (2*N);
+  std::vector<double> div          (2*N);
+  std::vector<double> rspecg       (2*N);
   double gp           [nb_all*g.size()];
   double rgp          [nb_all*g.size()];
   double rgp_analytic [g.size()];
@@ -697,37 +697,37 @@ CASE( "test_trans_vordiv_with_translib" )
                               rgp_analytic[j] = 0.;
                           }
 
-                          spectral_transform_grid_analytic(trc, trc, n, m, imag, g, rspecg, rgp_analytic, ivar_in, ivar_out);
-                          Log::info() << "Case " << icase << " Analytic solution: ivar_in=" << ivar_in << " ivar_out=" << ivar_out << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
+                          spectral_transform_grid_analytic(trc, trc, n, m, imag, g, rspecg.data(), rgp_analytic, ivar_in, ivar_out);
+                          /*Log::info() << "Case " << icase << " Analytic solution: ivar_in=" << ivar_in << " ivar_out=" << ivar_out << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
                           for( int j=0; j<g.size(); j++ ) Log::info() << std::setprecision(2) << rgp_analytic[j] << " ";
-                          Log::info() << std::endl;
+                          Log::info() << std::endl;*/
 
-                          EXPECT_NO_THROW( trans.invtrans( nb_scalar, sp, nb_vordiv, vor, div, gp ) );
+                          EXPECT_NO_THROW( trans.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(), div.data(), gp ) );
 
-                          Log::info() << "Trans library: ivar_in=" << ivar_in << " ivar_out=" << ivar_out << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
+                          /*Log::info() << "Trans library: ivar_in=" << ivar_in << " ivar_out=" << ivar_out << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
                           for( int j=ivar_out*g.size(); j<(ivar_out+1)*g.size(); j++ ) Log::info() << gp[j] << " ";
-                          Log::info() << std::endl;
+                          Log::info() << std::endl;*/
 
                           // compute spectral transform with the general transform:
                           //EXPECT_NO_THROW( spectral_transform_grid(trc, trc, g, sp, rgp, false) );
                           //EXPECT_NO_THROW( transLocal.invtrans( nb_scalar, sp, rgp) );
-                          EXPECT_NO_THROW( transLocal.invtrans( nb_scalar, sp, nb_vordiv, vor, div, rgp) );
-                          Log::info() << "Local transform: ivar_in=" << ivar_in << " ivar_out=" << ivar_out << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
+                          EXPECT_NO_THROW( transLocal.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(), div.data(), rgp) );
+                          /*Log::info() << "Local transform: ivar_in=" << ivar_in << " ivar_out=" << ivar_out << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
                           for( int j=ivar_out*g.size(); j<(ivar_out+1)*g.size(); j++ ) Log::info() << rgp[j] << " ";
                           Log::info() << std::endl;
-                          Log::info() << std::endl;
+                          Log::info() << std::endl;*/
 
                           double rms_trans = compute_rms(g.size(), gp+ivar_out*g.size(), rgp_analytic);
                           double rms_gen   = compute_rms(g.size(), rgp+ivar_out*g.size(), rgp_analytic);
 
-                          //if( rms_gen >= tolerance ) {
+                          if( rms_gen >= tolerance ) {
                             ATLAS_DEBUG_VAR(rms_gen);
                             ATLAS_DEBUG_VAR(tolerance);
-                          //}
-                          //if( rms_trans >= tolerance ) {
+                          }
+                          if( rms_trans >= tolerance ) {
                             ATLAS_DEBUG_VAR(rms_trans);
                             ATLAS_DEBUG_VAR(tolerance);
-                          //}
+                          }
                           EXPECT( rms_trans < tolerance );
                           // local transformation truncates the spectral U,V to trc! This is different from
                           // the analytic solution and trans library's invtrans!
@@ -741,6 +741,7 @@ CASE( "test_trans_vordiv_with_translib" )
           }
       }
   }
+  Log::info() << "Vordiv+scalar comparison with trans: all " << icase << " cases successfully passed!" << std::endl;
 }
 
 //-----------------------------------------------------------------------------

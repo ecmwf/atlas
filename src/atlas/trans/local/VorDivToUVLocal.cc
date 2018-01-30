@@ -103,7 +103,7 @@ void vd2uv(
     std::vector<double> rv  (2*nb_vordiv_fields*nlei1);
     prfi1b(truncation, km, nb_vordiv_fields, vorticity_spectra,  rvor.data());
     prfi1b(truncation, km, nb_vordiv_fields, divergence_spectra, rdiv.data());
-//Log::info() << "nlei1=" << nlei1 << std::endl;
+
     if( km==0 ) {
         for( int jfld=0; jfld<nb_vordiv_fields; ++jfld ) {
             int ir=2*jfld*nlei1-1;
@@ -129,14 +129,14 @@ void vd2uv(
                 rv[ir+ji] = -                    km*zlapin[ji  ]*rvor[ii+ji  ]
                             - zn[ji+1]*zepsnm[ji  ]*zlapin[ji+1]*rdiv[ir+ji+1]
                             + zn[ji-2]*zepsnm[ji-1]*zlapin[ji-1]*rdiv[ir+ji-1];
-                rv[ii+ji] = -                    km*zlapin[ji  ]*rvor[ir+ji  ]
+                rv[ii+ji] = +                    km*zlapin[ji  ]*rvor[ir+ji  ]
                             - zn[ji+1]*zepsnm[ji  ]*zlapin[ji+1]*rdiv[ii+ji+1]
                             + zn[ji-2]*zepsnm[ji-1]*zlapin[ji-1]*rdiv[ii+ji-1];
             }
         }
     }
-    /*Log::info() << "ru: " << std::endl;
-    for( int j=0; j<2*nb_vordiv_fields*nlei1; j++ ) Log::info() << ru[j] << " ";
+    /*Log::info() << "rv: " << std::endl;
+    for( int j=0; j<2*nb_vordiv_fields*nlei1; j++ ) Log::info() << rv[j] << " ";
     Log::info() << std::endl;*/
 
     int ilcm = truncation-km, ioff = (2*truncation-km+3)*km;
