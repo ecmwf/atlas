@@ -38,7 +38,7 @@ void prfi1b(
         for( int jfld=0; jfld<nb_fields; jfld++ ) {
             int ir = 2*jfld, ii = ir+1;
             pia[ir*nlei1+j+1] = rspec[inm*nb_fields+jfld];
-            pia[ii*nlei1+j+1] = rspec[inm*nb_fields+jfld+1];
+            pia[ii*nlei1+j+1] = rspec[(inm+1)*nb_fields+jfld];
         }
     }
 
@@ -104,6 +104,9 @@ void vd2uv(
     prfi1b(truncation, km, nb_vordiv_fields, vorticity_spectra,  rvor.data());
     prfi1b(truncation, km, nb_vordiv_fields, divergence_spectra, rdiv.data());
 
+    //Log::info() << "km=" << km << " rvor: " << std::endl;
+    //for( int j=0; j<2*nb_vordiv_fields*nlei1; j++ ) Log::info() << rvor[j] << " ";
+    //Log::info() << std::endl;
     if( km==0 ) {
         for( int jfld=0; jfld<nb_vordiv_fields; ++jfld ) {
             int ir=2*jfld*nlei1-1;
@@ -135,9 +138,9 @@ void vd2uv(
             }
         }
     }
-    /*Log::info() << "rv: " << std::endl;
-    for( int j=0; j<2*nb_vordiv_fields*nlei1; j++ ) Log::info() << rv[j] << " ";
-    Log::info() << std::endl;*/
+    //Log::info() << "km=" << km << " ru: " << std::endl;
+    //for( int j=0; j<2*nb_vordiv_fields*nlei1; j++ ) Log::info() << ru[j] << " ";
+    //Log::info() << std::endl;
 
     int ilcm = truncation-km, ioff = (2*truncation-km+3)*km;
     double za_r = 1./util::Earth::radiusInMeters();

@@ -40,19 +40,6 @@ int fourier_truncation( double truncation, double lat ) {
   return truncation;
 }
 
-void gp_transpose(
-        const int nb_size,
-        const int nb_fields,
-        const double gp_tmp[],
-        double gp_fields[] )
-{
-    for( int jgp=0; jgp<nb_size; jgp++ ) {
-        for( int jfld=0; jfld<nb_fields; jfld++ ) {
-            gp_fields[jfld*nb_size+jgp] = gp_tmp[jgp*nb_fields+jfld];
-        }
-    }
-}
-
 } // namespace anonymous
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -168,6 +155,25 @@ void TransLocal::invtrans(
     invtrans_uv(nb_scalar_fields, 0, scalar_spectra, gp_fields, config);
 }
 
+void gp_transpose(
+        const int nb_size,
+        const int nb_fields,
+        const double gp_tmp[],
+        double gp_fields[] )
+{
+    for( int jgp=0; jgp<nb_size; jgp++ ) {
+        for( int jfld=0; jfld<nb_fields; jfld++ ) {
+            gp_fields[jfld*nb_size+jgp] = gp_tmp[jgp*nb_fields+jfld];
+        }
+    }
+    //Log::info() << "gp_transpose: gp_tmp:" << std::endl;
+    //for( int j=0; j<nb_fields*nb_size; j++ ) Log::info() << gp_tmp[j] << " ";
+    //Log::info() << std::endl;
+    //Log::info() << "gp_transpose: gp_fields:" << std::endl;
+    //for( int j=0; j<nb_fields*nb_size; j++ ) Log::info() << gp_fields[j] << " ";
+    //Log::info() << std::endl;
+}
+
 //-----------------------------------------------------------------------------
 // Routine to compute the spectral transform by using a local Fourier transformation
 // for a grid (same latitude for all longitudes, allows to compute Legendre functions
@@ -218,7 +224,7 @@ void TransLocal::invtrans_uv(
             for( size_t i=0; i<g.nx(j); ++i ) {
                 double lon = g.x(i,j) * util::Constants::degreesToRadians();
                 invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(), gp_tmp.data()+(nb_fields*idx));
-                for( int jfld=0; jfld<2*nb_vordiv_fields; ++jfld ) {
+                for( int jfld=0; jfld<nb_vordiv_fields; ++jfld ) {
                     gp_tmp[nb_fields*idx+jfld] /= std::cos(lat);
                 }
                 ++idx;
@@ -237,7 +243,7 @@ void TransLocal::invtrans_uv(
 
             // Fourier transform:
             invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(), gp_tmp.data()+(nb_fields*idx));
-            for( int jfld=0; jfld<2*nb_vordiv_fields; ++jfld ) {
+            for( int jfld=0; jfld<nb_vordiv_fields; ++jfld ) {
                 gp_tmp[nb_fields*idx+jfld] /= std::cos(lat);
             }
             ++idx;
@@ -283,8 +289,8 @@ void TransLocal::invtrans(
 
     // perform spectral transform to compute all fields in grid point space
     invtrans_uv(nb_vordiv_fields, nb_vordiv_fields, U.data(), gp_fields, config);
-    invtrans_uv(nb_vordiv_fields, nb_vordiv_fields, V.data(), gp_fields+nb_gp, config);
-    invtrans_uv(nb_scalar_fields, 0, scalar_spectra, gp_fields+2*nb_gp, config);
+    invtrans_uv(nb_vordiv_fields, nb_vordiv_fields, V.data(), gp_fields+nb_gp*nb_vordiv_fields, config);
+    invtrans_uv(nb_scalar_fields, 0, scalar_spectra, gp_fields+2*nb_gp*nb_vordiv_fields, config);
 
 }
 
