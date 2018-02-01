@@ -12,6 +12,7 @@
 #include <map>
 #include <mutex>
 #include "eckit/memory/SharedPtr.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace util {
@@ -22,7 +23,7 @@ public:
   using key_type = Key;
   using value_type = Value;
   using creator_type = std::function<value_type* ()>;
-  
+
   eckit::SharedPtr<value_type> get(const key_type& key, const creator_type& creator) {
     std::lock_guard<std::mutex> guard(lock_);
     auto it = map_.find(key);
