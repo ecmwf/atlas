@@ -755,7 +755,6 @@ TransIFS::TransIFS( const Grid& grid, const long truncation, const eckit::Config
   TransIFS( Cache(), grid, truncation, config ) {
   ASSERT( grid.domain().global() );
   ASSERT( not grid.projection() );
-  ctor( grid, truncation, config );
 }
 
 TransIFS::TransIFS(const Grid& grid, const eckit::Configuration& config ) :
@@ -805,6 +804,7 @@ void TransIFS::ctor_rgg(const long nlat, const long pl[], long truncation, const
   for( long jlat=0; jlat<nlat; ++jlat )
     nloen[jlat] = pl[jlat];
   TRANS_CHECK(::trans_new(trans_.get()));
+  TRANS_CHECK(::trans_use_mpi(parallel::mpi::comm().size()>1));
   TRANS_CHECK(::trans_set_resol(trans_.get(),nlat,nloen.data()));
   if( truncation >= 0 )
     TRANS_CHECK(::trans_set_trunc(trans_.get(),truncation));
@@ -830,7 +830,6 @@ void TransIFS::ctor_rgg(const long nlat, const long pl[], long truncation, const
   trans_->lsplit = p.split_latitudes();
   trans_->flt = p.flt();
 
-  TRANS_CHECK(::trans_use_mpi(parallel::mpi::comm().size()>1));
   TRANS_CHECK(::trans_setup(trans_.get()));
 }
 
@@ -838,6 +837,7 @@ void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, co
 {
   TransParameters p(*this,config);
   TRANS_CHECK(::trans_new(trans_.get()));
+  TRANS_CHECK(::trans_use_mpi(parallel::mpi::comm().size()>1));
   TRANS_CHECK(::trans_set_resol_lonlat(trans_.get(),nlon,nlat));
   if( truncation >= 0 )
     TRANS_CHECK(::trans_set_trunc(trans_.get(),truncation));
@@ -861,7 +861,6 @@ void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, co
   trans_->lsplit = p.split_latitudes();
   trans_->flt = p.flt();
 
-  TRANS_CHECK(::trans_use_mpi(parallel::mpi::comm().size()>1));
   TRANS_CHECK(::trans_setup(trans_.get()));
 }
 
