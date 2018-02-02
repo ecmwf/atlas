@@ -14,6 +14,11 @@
 
 namespace atlas {
     class Mesh;
+namespace mesh {
+namespace detail {
+    class MeshImpl;
+}
+}
 }
 
 namespace atlas {
@@ -26,6 +31,7 @@ class Halo
 public:
   Halo() {}
   Halo(const Mesh& mesh);
+  Halo(const detail::MeshImpl& mesh);
   Halo(const long size) : size_(size) {}
   long size() const;
 private:

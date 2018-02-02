@@ -104,23 +104,37 @@ array::LocalView<T,2> make_per_level_view(const Field &field)
 }
 
 
-class NodeColumnsHaloExchangeCache : public util::Cache<std::string,parallel::HaloExchange> {
+class NodeColumnsHaloExchangeCache :
+    public util::Cache<std::string,parallel::HaloExchange>,
+    public mesh::detail::MeshObserver
+{
 private:
   using Base = util::Cache<std::string,parallel::HaloExchange>;
-  NodeColumnsHaloExchangeCache() {}
+  NodeColumnsHaloExchangeCache() : Base("NodeColumnsHaloExchangeCache") {}
 public:
   static NodeColumnsHaloExchangeCache& instance() {
     static NodeColumnsHaloExchangeCache inst;
     return inst;
   }
-  eckit::SharedPtr<value_type> get( const Mesh& mesh, long halo ) {
+  eckit::SharedPtr<value_type> get_or_create( const Mesh& mesh, long halo ) {
     creator_type creator = std::bind( &NodeColumnsHaloExchangeCache::create, mesh, halo );
-    std::ostringstream key ;
-    key << "mesh[address="<<mesh.get()<<"],halo="<<halo;
-    return Base::get( key.str(), creator );
+    return Base::get_or_create( key(*mesh.get(),halo) , creator );
+  }
+  virtual void onMeshDestruction(mesh::detail::MeshImpl& mesh) {
+    for( long jhalo=1; jhalo < mesh::Halo(mesh).size(); ++jhalo ) {
+      remove( key(mesh,jhalo) );
+    }
   }
 private:
+  static Base::key_type key( const mesh::detail::MeshImpl& mesh, long halo ) {
+    std::ostringstream key ;
+    key << "mesh.nodes[address="<<&mesh<<"],halo="<<halo;
+    return key.str();
+  }
+
   static value_type* create( const Mesh& mesh, long halo ) {
+
+    mesh.get()->attachObserver(instance());
 
     value_type* value = new value_type();
 
@@ -130,30 +144,44 @@ private:
     mesh.metadata().get(ss.str(),nb_nodes);
 
     value->setup( array::make_view<int,1>(mesh.nodes().partition()).data(),
-                           array::make_view<int,1>(mesh.nodes().remote_index()).data(),
-                           REMOTE_IDX_BASE,nb_nodes);
+                  array::make_view<int,1>(mesh.nodes().remote_index()).data(),
+                  REMOTE_IDX_BASE,nb_nodes);
 
     return value;
   }
 };
 
-class NodeColumnsGatherScatterCache : public util::Cache<std::string,parallel::GatherScatter> {
+class NodeColumnsGatherScatterCache :
+    public util::Cache<std::string,parallel::GatherScatter>,
+    public mesh::detail::MeshObserver
+{
 private:
   using Base = util::Cache<std::string,parallel::GatherScatter>;
-  NodeColumnsGatherScatterCache() {}
+  NodeColumnsGatherScatterCache() : Base("NodeColumnsGatherScatterCache") {}
 public:
   static NodeColumnsGatherScatterCache& instance() {
     static NodeColumnsGatherScatterCache inst;
     return inst;
   }
-  eckit::SharedPtr<value_type> get( const Mesh& mesh ) {
+  eckit::SharedPtr<value_type> get_or_create( const Mesh& mesh ) {
     creator_type creator = std::bind( &NodeColumnsGatherScatterCache::create, mesh );
-    std::ostringstream key ;
-    key << "mesh.nodes[address="<<mesh.get()<<"]";
-    return Base::get( key.str(), creator );
+    return Base::get_or_create( key(*mesh.get()), creator );
   }
+  virtual void onMeshDestruction(mesh::detail::MeshImpl& mesh) {
+    remove( key(mesh) );
+  }
+
 private:
+
+  static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
+    std::ostringstream key ;
+    key << "mesh.nodes[address="<<&mesh<<"]";
+    return key.str();
+  }
+
   static value_type* create( const Mesh& mesh ) {
+
+    mesh.get()->attachObserver(instance());
 
     value_type* value = new value_type();
 
@@ -178,25 +206,37 @@ private:
   }
 };
 
-class NodeColumnsChecksumCache : public util::Cache<std::string,parallel::Checksum> {
+class NodeColumnsChecksumCache :
+    public util::Cache<std::string,parallel::Checksum>,
+    public mesh::detail::MeshObserver
+{
 private:
   using Base = util::Cache<std::string,parallel::Checksum>;
-  NodeColumnsChecksumCache() {}
+  NodeColumnsChecksumCache(): Base("NodeColumnsChecksumCache"){}
 public:
   static NodeColumnsChecksumCache& instance() {
     static NodeColumnsChecksumCache inst;
     return inst;
   }
-  eckit::SharedPtr<value_type> get( const Mesh& mesh ) {
+  eckit::SharedPtr<value_type> get_or_create( const Mesh& mesh ) {
     creator_type creator = std::bind( &NodeColumnsChecksumCache::create, mesh );
-    std::ostringstream key ;
-    key << "mesh[address="<<mesh.get()<<"]";
-    return Base::get( key.str(), creator );
+    return Base::get_or_create( key(*mesh.get()), creator );
+  }
+  virtual void onMeshDestruction(mesh::detail::MeshImpl& mesh) {
+    remove( key(mesh) );
   }
 private:
+
+  static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
+    std::ostringstream key ;
+    key << "mesh[address="<<&mesh<<"]";
+    return key.str();
+  }
+
   static value_type* create( const Mesh& mesh ) {
+    mesh.get()->attachObserver(instance());
     value_type* value = new value_type();
-    eckit::SharedPtr<parallel::GatherScatter> gather( NodeColumnsGatherScatterCache::instance().get(mesh) );
+    eckit::SharedPtr<parallel::GatherScatter> gather( NodeColumnsGatherScatterCache::instance().get_or_create(mesh) );
     value->setup( gather );
     return value;
   }
@@ -443,7 +483,7 @@ void NodeColumns::haloExchange( Field& field, bool on_device ) const
 const parallel::HaloExchange& NodeColumns::halo_exchange() const
 {
   if ( halo_exchange_ ) return *halo_exchange_;
-  halo_exchange_ = NodeColumnsHaloExchangeCache::instance().get( mesh_, halo_.size() );
+  halo_exchange_ = NodeColumnsHaloExchangeCache::instance().get_or_create( mesh_, halo_.size() );
   return *halo_exchange_;
 }
 
@@ -495,13 +535,13 @@ void NodeColumns::gather( const Field& local, Field& global ) const
 const parallel::GatherScatter& NodeColumns::gather() const
 {
   if (gather_scatter_) return *gather_scatter_;
-  gather_scatter_ = NodeColumnsGatherScatterCache::instance().get( mesh_ );
+  gather_scatter_ = NodeColumnsGatherScatterCache::instance().get_or_create( mesh_ );
   return *gather_scatter_;
 }
 const parallel::GatherScatter& NodeColumns::scatter() const
 {
   if (gather_scatter_) return *gather_scatter_;
-  gather_scatter_ = NodeColumnsGatherScatterCache::instance().get( mesh_ );
+  gather_scatter_ = NodeColumnsGatherScatterCache::instance().get_or_create( mesh_ );
   return *gather_scatter_;
 }
 
@@ -599,7 +639,7 @@ std::string NodeColumns::checksum( const Field& field ) const {
 const parallel::Checksum& NodeColumns::checksum() const
 {
   if (checksum_) return *checksum_;
-  checksum_ = NodeColumnsChecksumCache::instance().get( mesh_ );
+  checksum_ = NodeColumnsChecksumCache::instance().get_or_create( mesh_ );
   return *checksum_;
 }
 

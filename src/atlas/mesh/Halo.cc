@@ -22,6 +22,12 @@ Halo::Halo(const Mesh& mesh)
   mesh.metadata().get("halo",size_);
 }
 
+Halo::Halo(const detail::MeshImpl& mesh)
+{
+  size_=0;
+  mesh.metadata().get("halo",size_);
+}
+
 long Halo::size() const {
   ASSERT( size_>=0 );
   return size_;

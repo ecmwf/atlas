@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+#include <algorithm>
 #include "atlas/mesh/detail/MeshImpl.h"
 
 #include "eckit/exception/Exceptions.h"
@@ -48,6 +49,9 @@ MeshImpl::MeshImpl():
 
 MeshImpl::~MeshImpl()
 {
+  for( MeshObserver* o : mesh_observers_ ) {
+    o->onMeshDestruction(*this);
+  }
 }
 
 void MeshImpl::print(std::ostream& os) const
@@ -162,6 +166,17 @@ const PartitionPolygon& MeshImpl::polygon(size_t halo) const {
   return *polygons_[halo];
 }
 
+void MeshImpl::attachObserver( MeshObserver& observer ) const {
+  if( std::find( mesh_observers_.begin(), mesh_observers_.end(), &observer ) == mesh_observers_.end() ) {
+    mesh_observers_.push_back( &observer );
+  }
+}
+
+void MeshImpl::detachObserver( MeshObserver& observer ) const {
+  mesh_observers_.erase(
+        std::remove( mesh_observers_.begin(), mesh_observers_.end(), &observer ),
+        mesh_observers_.end() );
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 

@@ -66,23 +66,36 @@ array::LocalView<T,3> make_leveled_view(const Field &field)
 }
 }
 
-class EdgeColumnsHaloExchangeCache : public util::Cache<std::string,parallel::HaloExchange> {
+class EdgeColumnsHaloExchangeCache :
+    public util::Cache<std::string,parallel::HaloExchange>,
+    public mesh::detail::MeshObserver
+{
 private:
   using Base = util::Cache<std::string,parallel::HaloExchange>;
-  EdgeColumnsHaloExchangeCache() {}
+  EdgeColumnsHaloExchangeCache() : Base("EdgeColumnsHaloExchangeCache") {}
 public:
   static EdgeColumnsHaloExchangeCache& instance() {
     static EdgeColumnsHaloExchangeCache inst;
     return inst;
   }
-  eckit::SharedPtr<value_type> get( const Mesh& mesh ) {
+  eckit::SharedPtr<value_type> get_or_create( const Mesh& mesh ) {
     creator_type creator = std::bind( &EdgeColumnsHaloExchangeCache::create, mesh );
-    std::ostringstream key ;
-    key << "mesh[address="<<mesh.get()<<"]";
-    return Base::get( key.str(), creator );
+    return Base::get_or_create( key(*mesh.get()), creator );
   }
+  virtual void onMeshDestruction(mesh::detail::MeshImpl& mesh) {
+    remove( key(mesh) );
+  }
+
 private:
+
+  static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
+    std::ostringstream key ;
+    key << "mesh[address="<<&mesh<<"]";
+    return key.str();
+  }
+
   static value_type* create( const Mesh& mesh ) {
+    mesh.get()->attachObserver(instance());
     value_type* value = new value_type();
     value->setup( array::make_view<int,1>(mesh.edges().partition()).data(),
                   array::make_view<int,1>(mesh.edges().remote_index()).data(),
@@ -92,23 +105,36 @@ private:
   }
 };
 
-class EdgeColumnsGatherScatterCache : public util::Cache<std::string,parallel::GatherScatter> {
+class EdgeColumnsGatherScatterCache :
+    public util::Cache<std::string,parallel::GatherScatter>,
+    public mesh::detail::MeshObserver
+{
 private:
   using Base = util::Cache<std::string,parallel::GatherScatter>;
-  EdgeColumnsGatherScatterCache() {}
+  EdgeColumnsGatherScatterCache() : Base("EdgeColumnsGatherScatterCache"){}
 public:
   static EdgeColumnsGatherScatterCache& instance() {
     static EdgeColumnsGatherScatterCache inst;
     return inst;
   }
-  eckit::SharedPtr<value_type> get( const Mesh& mesh ) {
+  eckit::SharedPtr<value_type> get_or_create( const Mesh& mesh ) {
     creator_type creator = std::bind( &EdgeColumnsGatherScatterCache::create, mesh );
-    std::ostringstream key ;
-    key << "mesh[address="<<mesh.get()<<"]";
-    return Base::get( key.str(), creator );
+    return Base::get_or_create( key(*mesh.get()), creator );
   }
+  virtual void onMeshDestruction(mesh::detail::MeshImpl& mesh) {
+    remove( key(mesh) );
+  }
+
 private:
+
+  static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
+    std::ostringstream key ;
+    key << "mesh[address="<<&mesh<<"]";
+    return key.str();
+  }
+
   static value_type* create( const Mesh& mesh ) {
+    mesh.get()->attachObserver(instance());
     value_type* value = new value_type();
     value->setup(array::make_view<int,1>(mesh.edges().partition()).data(),
                  array::make_view<int,1>(mesh.edges().remote_index()).data(),
@@ -119,25 +145,38 @@ private:
   }
 };
 
-class EdgeColumnsChecksumCache : public util::Cache<std::string,parallel::Checksum> {
+class EdgeColumnsChecksumCache :
+    public util::Cache<std::string,parallel::Checksum>,
+    public mesh::detail::MeshObserver
+{
 private:
   using Base = util::Cache<std::string,parallel::Checksum>;
-  EdgeColumnsChecksumCache() {}
+  EdgeColumnsChecksumCache() : Base("EdgeColumnsChecksumCache") {}
 public:
   static EdgeColumnsChecksumCache& instance() {
     static EdgeColumnsChecksumCache inst;
     return inst;
   }
-  eckit::SharedPtr<value_type> get( const Mesh& mesh ) {
+  eckit::SharedPtr<value_type> get_or_create( const Mesh& mesh ) {
     creator_type creator = std::bind( &EdgeColumnsChecksumCache::create, mesh );
-    std::ostringstream key ;
-    key << "mesh[address="<<mesh.get()<<"]";
-    return Base::get( key.str(), creator );
+    return Base::get_or_create( key(*mesh.get()), creator );
   }
+  virtual void onMeshDestruction(mesh::detail::MeshImpl& mesh) {
+    remove( key(mesh) );
+  }
+
 private:
+
+  static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
+    std::ostringstream key ;
+    key << "mesh[address="<<&mesh<<"]";
+    return key.str();
+  }
+
   static value_type* create( const Mesh& mesh ) {
+    mesh.get()->attachObserver(instance());
     value_type* value = new value_type();
-    eckit::SharedPtr<parallel::GatherScatter> gather( EdgeColumnsGatherScatterCache::instance().get(mesh) );
+    eckit::SharedPtr<parallel::GatherScatter> gather( EdgeColumnsGatherScatterCache::instance().get_or_create(mesh) );
     value->setup( gather );
     return value;
   }
@@ -178,7 +217,8 @@ size_t EdgeColumns::config_size(const eckit::Configuration& config) const
     {
       size_t owner(0);
       config.get("owner",owner);
-      size = (parallel::mpi::comm().rank() == owner ? nb_edges_global() : 0);
+      size_t _nb_edges_global( nb_edges_global() );
+      size = (parallel::mpi::comm().rank() == owner ? _nb_edges_global : 0);
     }
   }
   return size;
@@ -360,7 +400,7 @@ void EdgeColumns::haloExchange( Field& field ) const
 const parallel::HaloExchange& EdgeColumns::halo_exchange() const
 {
   if (halo_exchange_) return *halo_exchange_;
-  halo_exchange_ = EdgeColumnsHaloExchangeCache::instance().get( mesh_ );
+  halo_exchange_ = EdgeColumnsHaloExchangeCache::instance().get_or_create( mesh_ );
   return *halo_exchange_;
 }
 
@@ -412,14 +452,14 @@ const parallel::GatherScatter& EdgeColumns::gather() const
 {
   if( gather_scatter_ )
     return *gather_scatter_;
-  gather_scatter_ = EdgeColumnsGatherScatterCache::instance().get( mesh_ );
+  gather_scatter_ = EdgeColumnsGatherScatterCache::instance().get_or_create( mesh_ );
   return *gather_scatter_;
 }
 const parallel::GatherScatter& EdgeColumns::scatter() const
 {
   if( gather_scatter_ )
     return *gather_scatter_;
-  gather_scatter_ = EdgeColumnsGatherScatterCache::instance().get( mesh_ );
+  gather_scatter_ = EdgeColumnsGatherScatterCache::instance().get_or_create( mesh_ );
   return *gather_scatter_;
 }
 
@@ -538,7 +578,7 @@ std::string EdgeColumns::checksum( const Field& field ) const {
 const parallel::Checksum& EdgeColumns::checksum() const
 {
   if (checksum_) return *checksum_;
-  checksum_ = EdgeColumnsChecksumCache::instance().get( mesh_ ) ;
+  checksum_ = EdgeColumnsChecksumCache::instance().get_or_create( mesh_ ) ;
   return *checksum_;
 }
 

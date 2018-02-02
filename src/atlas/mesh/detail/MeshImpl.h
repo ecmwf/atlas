@@ -42,6 +42,8 @@ namespace detail {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+class MeshObserver;
+
 class MeshImpl : public eckit::Owned {
 
 public: // methods
@@ -106,6 +108,9 @@ public: // methods
 
     const Grid& grid() const { return grid_; }
 
+    void attachObserver(MeshObserver&) const;
+    void detachObserver(MeshObserver&) const;
+
 private:  // methods
 
     friend class ::atlas::Mesh;
@@ -143,6 +148,15 @@ private: // members
     mutable eckit::SharedPtr<PartitionGraph> partition_graph_;
 
     mutable std::vector<eckit::SharedPtr<PartitionPolygon>> polygons_;
+
+    mutable std::vector<MeshObserver*> mesh_observers_;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
+class MeshObserver {
+public:
+  virtual void onMeshDestruction(MeshImpl&) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
