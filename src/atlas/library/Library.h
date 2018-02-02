@@ -39,7 +39,7 @@ public:
     void initialise(const eckit::Parametrisation&);
     void initialise();
     void finalise();
-    
+
     struct Information {
       friend std::ostream& operator<<(std::ostream& s, const Information& i) { i.print(s); return s; }
       void print(std::ostream&) const;
@@ -48,8 +48,11 @@ public:
 
     std::ostream& infoChannel() const;
     std::ostream& traceChannel() const;
+    virtual eckit::Channel& debugChannel() const override;
     bool trace() const { return trace_; }
-    bool barriers() const { return barriers_; }
+    virtual bool debug() const override { return debug_; }
+
+    bool traceBarriers() const { return trace_barriers_; }
 
 protected:
 
@@ -57,9 +60,12 @@ protected:
 
     bool info_{true};
     bool trace_{false};
-    bool barriers_{false};
-    mutable std::unique_ptr<std::ostream> trace_channel_;
+    bool debug_{false};
+    bool trace_barriers_{false};
+    bool trace_report_{false};
     mutable std::unique_ptr<std::ostream> info_channel_;
+    mutable std::unique_ptr<std::ostream> trace_channel_;
+    mutable std::unique_ptr<eckit::Channel> debug_channel_;
 };
 
 typedef Library Atlas;

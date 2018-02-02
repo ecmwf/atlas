@@ -10,14 +10,17 @@
 
 #pragma once
 
-#include "atlas/library/Library.h"
-#include "eckit/runtime/Main.h"
+#include "eckit/config/Resource.h"
+#include "eckit/eckit_version.h"
 #include "eckit/mpi/Comm.h"
+#include "eckit/runtime/Main.h"
+#include "eckit/testing/Test.h"
+
+#include "atlas/library/Library.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
-#include "eckit/config/Resource.h"
-#include "eckit/testing/Test.h"
-#include "eckit/eckit_version.h"
+#include "atlas/util/Config.h"
+
 
 namespace atlas {
 namespace test {
@@ -83,6 +86,8 @@ void UNIQUE_NAME2(traced_test_, __LINE__)(std::string& _test_subsection, int& _n
 
 struct AtlasTestEnvironment {
 
+    using Config = util::Config;
+
     AtlasTestEnvironment(int argc, char * argv[]) {
         eckit::Main::initialise(argc, argv);
         eckit::Main::instance().taskID( eckit::mpi::comm("world").rank() );
@@ -90,19 +95,12 @@ struct AtlasTestEnvironment {
             long logtask = eckit::Resource<long>("--logtask;$ATLAS_TEST_LOGTASK", 0);
             if( eckit::Main::instance().taskID() != logtask ) Log::reset();
         }
-        atlas::Library::instance().initialise();
+        bool report = eckit::Resource<bool>("--report;$ATLAS_TRACE_REPORT", false);
+        Library::instance().initialise( Config("trace", Config("report",report) ) );
     }
 
     ~AtlasTestEnvironment() {
-        bool report = eckit::Resource<bool>("--report;$ATLAS_TEST_REPORT", false);
-        if( report ) {
-#if ATLAS_HAVE_TRACE
-          Log::info() << atlas::Trace::report() << std::endl;
-#else
-          Log::warning() << "Atlas cannot generate report as ATLAS_HAVE_TRACE is not defined." << std::endl;
-#endif
-        }
-        atlas::Library::instance().finalise();
+        Library::instance().finalise();
     }
 };
 
