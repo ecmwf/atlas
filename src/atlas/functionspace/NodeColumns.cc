@@ -128,7 +128,7 @@ public:
 private:
   static Base::key_type key( const mesh::detail::MeshImpl& mesh, long halo ) {
     std::ostringstream key ;
-    key << "mesh.nodes[address="<<&mesh<<"],halo="<<halo;
+    key << "mesh[address="<<&mesh<<"],halo[size="<<halo<<"]";
     return key.str();
   }
 
@@ -175,7 +175,7 @@ private:
 
   static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
     std::ostringstream key ;
-    key << "mesh.nodes[address="<<&mesh<<"]";
+    key << "mesh[address="<<&mesh<<"]";
     return key.str();
   }
 
@@ -318,7 +318,11 @@ size_t NodeColumns::nb_nodes() const
 size_t NodeColumns::nb_nodes_global() const
 {
   if( nb_nodes_global_>=0 ) return nb_nodes_global_;
-  nb_nodes_global_ = gather().glb_dof();
+  if( Grid grid = mesh().grid() ) {
+    nb_nodes_global_ = grid.size();
+  } else {
+    nb_nodes_global_ = gather().glb_dof();
+  }
   return nb_nodes_global_;
 }
 
