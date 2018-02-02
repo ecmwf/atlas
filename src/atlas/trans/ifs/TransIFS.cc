@@ -241,6 +241,7 @@ void TransIFS::invtrans( const int nb_scalar_fields, const double scalar_spectra
                          double gp_fields[],
                          const eckit::Configuration& config ) const
 {
+  ATLAS_TRACE("TransIFS::invtrans");
   TransParameters params(*this,config);
   struct ::InvTrans_t args = new_invtrans(trans_.get());
     args.nscalar = nb_scalar_fields;
@@ -273,27 +274,7 @@ void TransIFS::invtrans( const int nb_vordiv_fields, const double vorticity_spec
                          double gp_fields[],
                          const eckit::Configuration& config ) const
 {
-  TransParameters params(*this,config);
-  bool global = params.global();
-  int nproma = params.nproma();
-  int ngpblks;
-  if( nproma == 0 ) { // default
-    nproma = global ? trans_->ngptotg : trans_->ngptot;
-    ngpblks = 1;
-  } else {
-    ngpblks = global ? (trans_->ngptotg/nproma) : (trans_->ngptot/nproma);
-  }
-  struct ::InvTrans_t args = new_invtrans(trans_.get());
-    args.nvordiv = nb_vordiv_fields;
-    args.rspvor  = vorticity_spectra;
-    args.rspdiv  = divergence_spectra;
-    args.rgp     = gp_fields;
-    args.lglobal = params.global();
-    args.luvder_EW = params.wind_EW_derivatives();
-    args.lvordivgp = params.vorticity_divergence_fields();
-    args.nproma = params.nproma();
-    args.ngpblks = params.ngpblks();
-  TRANS_CHECK( ::trans_invtrans(&args) );
+  return invtrans( 0, nullptr, nb_vordiv_fields, vorticity_spectra, divergence_spectra, gp_fields, config );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -301,16 +282,8 @@ void TransIFS::invtrans( const int nb_vordiv_fields, const double vorticity_spec
 void TransIFS::dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
                          const eckit::Configuration& config ) const
 {
+  ATLAS_TRACE();
   TransParameters params(*this,config);
-  bool global = params.global();
-  int nproma = params.nproma();
-  int ngpblks;
-  if( nproma == 0 ) { // default
-    nproma = global ? trans_->ngptotg : trans_->ngptot;
-    ngpblks = 1;
-  } else {
-    ngpblks = global ? (trans_->ngptotg/nproma) : (trans_->ngptot/nproma);
-  }
   struct ::DirTrans_t args = new_dirtrans(trans_.get());
     args.nscalar = nb_fields;
     args.rgp = scalar_fields;
@@ -326,16 +299,8 @@ void TransIFS::dirtrans( const int nb_fields, const double scalar_fields[], doub
 void TransIFS::dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[],
                          const eckit::Configuration& config ) const
 {
+  ATLAS_TRACE();
   TransParameters params(*this,config);
-  bool global = params.global();
-  int nproma = params.nproma();
-  int ngpblks;
-  if( nproma == 0 ) { // default
-    nproma = global ? trans_->ngptotg : trans_->ngptot;
-    ngpblks = 1;
-  } else {
-    ngpblks = global ? (trans_->ngptotg/nproma) : (trans_->ngptot/nproma);
-  }
   struct ::DirTrans_t args = new_dirtrans(trans_.get());
     args.nvordiv = nb_fields;
     args.rspvor = vorticity_spectra;
