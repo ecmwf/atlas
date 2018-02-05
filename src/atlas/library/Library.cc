@@ -63,6 +63,14 @@ namespace {
       }
       return default_value;
   }
+
+  int getEnv( const std::string& env, int default_value ) {
+      if (::getenv( env.c_str() ) ) {
+        return eckit::Translator<std::string, int>()(::getenv( env.c_str() ));
+      }
+      return default_value;
+  }
+
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -99,7 +107,12 @@ void Library::initialise(int argc, char **argv) {
     if( not Main::ready() ) {
         Main::initialise(argc, argv);
         Main::instance().taskID( eckit::mpi::comm("world").rank() );
-        if( Main::instance().taskID() != 0 ) Log::reset();
+        if( Main::instance().taskID() != 0 ) {
+          eckit::Log::warning().reset();
+          eckit::Log::info().reset();
+          eckit::Log::debug().reset();
+          atlas::Log::debug().reset();
+        }
         Log::debug() << "Atlas initialised eckit::Main.\n";
         if( eckit::mpi::comm("world").size() > 1 )
             Log::debug() <<
@@ -121,25 +134,31 @@ void Library::initialise(const eckit::Parametrisation& config) {
       config.get("trace.report", trace_report_);
     }
 
+    if( not debug_ ) debug_channel_.reset();
+    if( not trace_ ) trace_channel_.reset();
+    if( not info_  ) info_channel_ .reset();
+
     // Summary
-    std::ostream& out = Log::debug();
-    out << "Executable        [" << Main::instance().name() << "]\n";
-    out << " \n";
-    out << "  current dir     [" << PathName(LocalPathName::cwd()).fullName() << "]\n";
-    out << " \n";
-    out << "  MPI\n";
-    out << "    communicator  [" << parallel::mpi::comm() << "] \n";
-    out << "    size          [" << parallel::mpi::comm().size() << "] \n";
-    out << "    rank          [" << parallel::mpi::comm().rank() << "] \n";
-    out << " \n";
-    out << "  log.info        [" << str(info_) << "] \n";
-    out << "  log.trace       [" << str(trace()) << "] \n";
-    out << "  log.debug       [" << str(debug()) << "] \n";
-    out << "  trace.barriers  [" << str(traceBarriers()) << "] \n";
-    out << "  trace.report    [" << str(trace_report_) << "] \n";
-    out << " \n";
-    out << atlas::Library::instance().information();
-    out << std::flush;
+    if( getEnv( "ATLAS_LOG_RANK", 0 ) == parallel::mpi::comm().rank() ) {
+      std::ostream& out = Log::debug();
+      out << "Executable        [" << Main::instance().name() << "]\n";
+      out << " \n";
+      out << "  current dir     [" << PathName(LocalPathName::cwd()).fullName() << "]\n";
+      out << " \n";
+      out << "  MPI\n";
+      out << "    communicator  [" << parallel::mpi::comm() << "] \n";
+      out << "    size          [" << parallel::mpi::comm().size() << "] \n";
+      out << "    rank          [" << parallel::mpi::comm().rank() << "] \n";
+      out << " \n";
+      out << "  log.info        [" << str(info_) << "] \n";
+      out << "  log.trace       [" << str(trace()) << "] \n";
+      out << "  log.debug       [" << str(debug()) << "] \n";
+      out << "  trace.barriers  [" << str(traceBarriers()) << "] \n";
+      out << "  trace.report    [" << str(trace_report_) << "] \n";
+      out << " \n";
+      out << atlas::Library::instance().information();
+      out << std::flush;
+    }
 }
 
 void Library::initialise() {
@@ -162,17 +181,16 @@ void Library::finalise() {
     Log::flush();
 }
 
-std::ostream& Library::infoChannel() const {
-  if( info_channel_ ) return *info_channel_;
+eckit::Channel& Library::infoChannel() const {
   if( info_ ) {
     return eckit::Log::info();
-  } else {
+  } else if( ! info_channel_ ) {
     info_channel_.reset( new eckit::Channel() );
   }
   return *info_channel_;
 }
 
-std::ostream& Library::traceChannel() const {
+eckit::Channel& Library::traceChannel() const {
   if( trace_channel_ ) return *trace_channel_;
   if( trace_ ) {
     trace_channel_.reset( new eckit::Channel(

@@ -46,8 +46,8 @@ public:
     };
     Information information() const { return Information(); }
 
-    std::ostream& infoChannel() const;
-    std::ostream& traceChannel() const;
+    virtual eckit::Channel& infoChannel() const;
+    virtual eckit::Channel& traceChannel() const;
     virtual eckit::Channel& debugChannel() const override;
     bool trace() const { return trace_; }
     virtual bool debug() const override { return debug_; }
@@ -63,8 +63,8 @@ protected:
     bool debug_{false};
     bool trace_barriers_{false};
     bool trace_report_{false};
-    mutable std::unique_ptr<std::ostream> info_channel_;
-    mutable std::unique_ptr<std::ostream> trace_channel_;
+    mutable std::unique_ptr<eckit::Channel> info_channel_;
+    mutable std::unique_ptr<eckit::Channel> trace_channel_;
     mutable std::unique_ptr<eckit::Channel> debug_channel_;
 };
 

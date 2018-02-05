@@ -18,11 +18,11 @@ class Log : public detail::LogBase {
 
 public:
 
-    typedef eckit::Channel Channel;
+    using Channel = eckit::Channel; // derives from std::ostream
 
-    static std::ostream& info()  { return atlas::Library::instance().infoChannel();  }
-    static std::ostream& trace() { return atlas::Library::instance().traceChannel(); }
-    static std::ostream& debug() { return atlas::Library::instance().debugChannel(); }
+    static Channel& info()  { return atlas::Library::instance().infoChannel();  }
+    static Channel& trace() { return atlas::Library::instance().traceChannel(); }
+    static Channel& debug() { return atlas::Library::instance().debugChannel(); }
 
     static std::ostream& debug_parallel();
 
