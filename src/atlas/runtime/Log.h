@@ -54,10 +54,10 @@ namespace detail {
 #define ATLAS_DEBUG_WHAT(WHAT) do{ ::atlas::Log::info() << "DEBUG(" << WHAT << ") @ " << Here() << std::endl; } while(0)
 #define ATLAS_DEBUG_VAR(VAR)   do{ ::atlas::Log::info() << "DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl; } while(0)
 
-#define ATLAS_DEBUG(...) __ATLAS_SPLICE( __ATLAS_DEBUG_, __ATLAS_NARGS(__VA_ARGS__) ) (__VA_ARGS__)
+#define ATLAS_DEBUG(...) __ATLAS_SPLICE( __ATLAS_DEBUG_, __ATLAS_NARG(__VA_ARGS__) ) (__VA_ARGS__)
 #define __ATLAS_DEBUG_0 ATLAS_DEBUG_HERE
 #define __ATLAS_DEBUG_1 ATLAS_DEBUG_WHAT
 
-#define ATLAS_DEBUG_BACKTRACE() do{ ::atlas::Log::info() << "DEBUG() @ " << Here() << "Backtrace:\n" << backtrace() << std::endl; } while (0)
+#define ATLAS_DEBUG_BACKTRACE() do{ ::atlas::Log::info() << "DEBUG() @ " << Here() << "Backtrace:\n" << ::atlas::backtrace() << std::endl; } while (0)
 
 #define ATLAS_DEBUG_PARALLEL_HERE() do{ ::atlas::print_parallel_here(std::cout,Here()); } while (0)
