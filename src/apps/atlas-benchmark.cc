@@ -53,11 +53,13 @@
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/Earth.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
+#include "atlas/util/detail/Debug.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -156,6 +158,8 @@ public:
   double result();
 
   int verify(const double&);
+
+  void initial_condition(const Field& field, const double& beta);
 
 private:
 
@@ -280,14 +284,40 @@ void AtlasBenchmark::execute(const Args& args)
       "atlas-benchmark-setup/*"
     });
   Log::info() << timer.report( report_config ) << std::endl;
-
   Log::info() << endl;
+
+  parallel::mpi::comm().barrier();
+
   Log::info() << "Results:" << endl;
 
   double res = result();
 
   Log::info() << endl;
   exit_code = verify( res );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void AtlasBenchmark::initial_condition(const Field& field, const double& beta)
+{
+  const double radius = util::Earth::radiusInMeters();
+  const double USCAL = 20.;
+  const double pvel = USCAL/radius;
+  const double deg2rad = M_PI/180.;
+
+  auto lonlat_deg = array::make_view<double,2> (mesh.nodes().lonlat());
+  auto var        = array::make_view<double,2> (field);
+
+  size_t nnodes = mesh.nodes().size();
+  for( size_t jnode=0; jnode<nnodes; ++jnode )
+  {
+     double x = lonlat_deg(jnode,LON) * deg2rad;
+     double y = lonlat_deg(jnode,LAT) * deg2rad;
+     double Ux =  pvel*(std::cos(beta)+std::tan(y)*std::cos(x)*std::sin(beta))*radius*std::cos(y);
+     double Uy = -pvel*std::sin(x)*std::sin(beta)*radius;
+     for( size_t jlev=0; jlev<field.levels(); ++jlev )
+       var(jnode,jlev) = std::sqrt(Ux*Ux+Uy*Uy);
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -303,6 +333,11 @@ void AtlasBenchmark::setup()
   ATLAS_TRACE_SCOPE( "Create node_fs") { nodes_fs = functionspace::NodeColumns(mesh,option::halo(halo)); }
   ATLAS_TRACE_SCOPE( "build_edges" )                     { build_edges(mesh); }
   ATLAS_TRACE_SCOPE( "build_pole_edges" )                { build_pole_edges(mesh); }
+
+  //mesh.polygon(0).outputPythonScript("plot_polygon.py");
+  //atlas::output::Output gmsh = atlas::output::Gmsh( "edges.msh", util::Config("ghost",true)("edges",true)("elements",false) );
+  //gmsh.write( mesh );
+
   ATLAS_TRACE_SCOPE( "build_edges_parallel_fiels" )      { build_edges_parallel_fields(mesh); }
   ATLAS_TRACE_SCOPE( "build_median_dual_mesh" )          { build_median_dual_mesh(mesh); }
   ATLAS_TRACE_SCOPE( "build_node_to_edge_connectivity" ) { build_node_to_edge_connectivity(mesh); }
@@ -318,6 +353,8 @@ void AtlasBenchmark::setup()
   auto S      = array::make_view<double,2> ( mesh.edges().field("dual_normals") );
   auto field  = array::make_view<double,2> ( scalar_field );
 
+  initial_condition(scalar_field,0.);
+
   double radius = 6371.22e+03; // Earth's radius
   double height = 80.e+03;     // Height of atmosphere
   double deg2rad = M_PI/180.;
@@ -330,9 +367,6 @@ void AtlasBenchmark::setup()
     double hy = radius;
     double G  = hx*hy;
     V(jnode) *= std::pow(deg2rad,2) * G;
-
-    for(size_t jlev = 0; jlev < nlev; ++jlev)
-      field(jnode,jlev) = 100.+50.*std::cos(2*y);
   }
   atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
   {
@@ -395,18 +429,48 @@ void AtlasBenchmark::iteration()
 
   auto grad = array::make_view<double,3>( grad_field );
   auto avgS = array::make_view<double,3>( *avgS_arr );
+  auto node_glb_idx = array::make_view<gidx_t,1>(mesh.nodes().global_index());
+  auto node_part = array::make_view<int,1>(mesh.nodes().partition());
+  auto edge_part = array::make_view<int,1>(mesh.edges().partition());
+  auto edge_glb_idx = array::make_view<gidx_t,1>(mesh.edges().global_index());
 
   atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
   {
     int ip1 = edge2node(jedge,0);
     int ip2 = edge2node(jedge,1);
 
+    bool debug_here = false;
+    if( debug::is_node_global_index( node_glb_idx(ip1) ) || debug::is_node_global_index( node_glb_idx(ip2) ) ) {
+      debug_here = true;
+    }
+    if( debug_here ) {
+      if( debug::is_edge_global_index( edge_glb_idx(jedge) ) ) {
+        std::cout << "* ";
+      }
+      else {
+        std::cout << "  ";
+      }
+
+      std::cout << debug::rank_str() << "Edge["<<edge_glb_idx(jedge)<<",p"<<edge_part(jedge)<<"] ( "
+        << "Node["<<node_glb_idx(ip1)<<",p"<<node_part(ip1)<<"], "
+        << "Node["<<node_glb_idx(ip2)<<",p"<<node_part(ip2)<<"] )";
+    }
     for(size_t jlev = 0; jlev < nlev; ++jlev)
     {
       double avg = ( field(ip1,jlev) + field(ip2,jlev) ) * 0.5;
       avgS(jedge,jlev,LON) = S(jedge,LON)*avg;
       avgS(jedge,jlev,LAT) = S(jedge,LAT)*avg;
+      if( debug_here && jlev == 0 ) {
+          std::cout
+            << "  avg " << avg
+            << "  S(LON) " << S(jedge,LON)
+            << "  S(LAT) " << S(jedge,LAT)
+            << "  V(ip1) " << V(ip1)
+            << "  V(ip2) " << V(ip2);
+      }
     }
+    if( debug_here )
+      std::cout << std::endl;
   }
 
   atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
@@ -495,45 +559,53 @@ DATA_TYPE vecnorm( const DATA_TYPE vec[], size_t size )
 {
   DATA_TYPE norm=0;
   for(size_t j=0; j < size; ++j)
-    norm += std::pow(vec[j],2);
-  return std::sqrt(norm);
+    norm += vec[j]*vec[j];
+  return norm;
 }
 
 double AtlasBenchmark::result()
 {
-  const auto grad = array::make_view<double,3>( grad_field );
-  double maxval = numeric_limits<double>::min();
-  double minval = numeric_limits<double>::max();;
+  auto grad = array::make_view<double,3>( grad_field );
+  double maxval = -std::numeric_limits<double>::max();
+  double minval =  std::numeric_limits<double>::max();;
   double norm = 0.;
+
+  nodes_fs.haloExchange(grad_field);
+  auto glb_idx = array::make_view<gidx_t,1>(mesh.nodes().global_index());
+  auto part = array::make_view<int,1>(mesh.nodes().partition());
   for(size_t jnode = 0; jnode < nnodes; ++jnode)
   {
+
     if( !is_ghost[jnode] )
     {
-      for(size_t jlev = 0; jlev < nlev; ++jlev)
+      for(size_t jlev = 0; jlev < 1; ++jlev)
       {
-        maxval = max(maxval,grad(jnode,jlev,LON));
-        maxval = max(maxval,grad(jnode,jlev,LAT));
-        maxval = max(maxval,grad(jnode,jlev,ZZ));
-        minval = min(minval,grad(jnode,jlev,LON));
-        minval = min(minval,grad(jnode,jlev,LAT));
-        minval = min(minval,grad(jnode,jlev,ZZ));
-//        norm += std::pow(vecnorm(grad[jnode][jlev].data(),3),2);
-        norm += std::pow(vecnorm( grad.slice(jnode,jlev,Range::all()).data(),3),2);
+        const double scaling = 1.e12;
+        grad(jnode,jlev,LON) *= scaling;
+        grad(jnode,jlev,LAT) *= scaling;
+        grad(jnode,jlev,ZZ)  *= scaling;
+
+        std::array<double,3> v;
+        v[0] = grad(jnode,jlev,LON);
+        v[1] = grad(jnode,jlev,LAT);
+        v[2] = grad(jnode,jlev,ZZ);
+
+        maxval = std::max(maxval,v[0]);
+        maxval = std::max(maxval,v[1]);
+        maxval = std::max(maxval,v[2]);
+        minval = std::min(minval,v[0]);
+        minval = std::min(minval,v[1]);
+        minval = std::min(minval,v[2]);
+
+        //if( parallel::mpi::comm().rank() == 478 ) {
+        //  std::cout << "    " << jnode << "   part " << part(jnode) << "    glb_idx " <<  glb_idx(jnode) << "   x,y,z " << v[0] << "," << v[1] << ","<< v[2] <<  std::endl;
+        //}
+
+
+        norm += v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
       }
     }
   }
-  ATLAS_TRACE_MPI( ALLREDUCE ) {
-    parallel::mpi::comm().allReduceInPlace(maxval, eckit::mpi::max());
-    parallel::mpi::comm().allReduceInPlace(minval, eckit::mpi::min());
-    parallel::mpi::comm().allReduceInPlace(norm,   eckit::mpi::sum());
-  }
-
-  norm = std::sqrt(norm);
-
-  Log::info() << "  checksum: " << nodes_fs.checksum().execute( grad ) << endl;
-  Log::info() << "  maxval: " << setw(13) << setprecision(6) << scientific << maxval << endl;
-  Log::info() << "  minval: " << setw(13) << setprecision(6) << scientific << minval << endl;
-  Log::info() << "  norm:   " << setw(13) << setprecision(6) << scientific << norm << endl;
 
   if( output )
   {
@@ -543,61 +615,49 @@ double AtlasBenchmark::result()
     gmsh.write( scalar_field );
     gmsh.write( grad_field );
   }
+
+
+  bool found;
+  for ( size_t jnode=0; jnode<nnodes; ++jnode ) {
+    if ( glb_idx(jnode) == debug::node_global_index() ) {
+      found = true;
+    }
+  }
+  if( parallel::mpi::comm().rank() == debug::mpi_rank() ) ASSERT(found);
+
+
+  for(size_t jnode = 0; jnode < nnodes; ++jnode)
+  {
+    size_t jlev=0;
+    if ( glb_idx(jnode) == debug::node_global_index() ) {
+      std::cout << "["<<parallel::mpi::comm().rank() << "] "
+      << " glb_idx " << glb_idx(jnode)
+      << " part "    << part(jnode)
+      << " x,y,z "   << grad(jnode,jlev,LON) << ","<<grad(jnode,jlev,LAT)<<","<<grad(jnode,jlev,ZZ)
+      <<  std::endl;
+    }
+  }
+
+  ATLAS_TRACE_MPI( ALLREDUCE ) {
+    parallel::mpi::comm().allReduceInPlace(maxval, eckit::mpi::max());
+    parallel::mpi::comm().allReduceInPlace(minval, eckit::mpi::min());
+    parallel::mpi::comm().allReduceInPlace(norm,   eckit::mpi::sum());
+  }
+
+  norm = std::sqrt(norm);
+
+  Log::info() << "  maxval: " << setw(13) << setprecision(6) << scientific << maxval << endl;
+  Log::info() << "  minval: " << setw(13) << setprecision(6) << scientific << minval << endl;
+  Log::info() << "  norm:   " << setw(13) << setprecision(6) << scientific << norm << endl;
+
+  Log::info() << "  checksum: " << nodes_fs.checksum().execute( grad ) << endl;
+
   return norm;
 }
 
 int AtlasBenchmark::verify(const double& norm)
 {
-  if( nlev != 137 )
-  {
-    Log::warning() << "Results cannot be verified with nlev != 137" << endl;
-    return 1;
-  }
-  std::map<std::string,double> norms;
-  norms[  "N16"] = 1.473937e-09;
-  norms[  "N24"] = 2.090045e-09;
-  norms[  "N32"] = 2.736576e-09;
-  norms[  "N48"] = 3.980306e-09;
-  norms[  "N64"] = 5.219642e-09;
-  norms[  "N80"] = 6.451913e-09;
-  norms[  "N96"] = 7.647690e-09;
-  norms[ "N128"] = 1.009042e-08;
-  norms[ "N160"] = 1.254571e-08;
-  norms[ "N200"] = 1.557589e-08;
-  norms[ "N256"] = 1.983944e-08;
-  norms[ "N320"] = 2.469347e-08;
-  norms[ "N400"] = 3.076775e-08;
-  norms[ "N512"] = 3.924470e-08;
-  norms[ "N576"] = 4.409003e-08;
-  norms[ "N640"] = 4.894316e-08;
-  norms[ "N800"] = 6.104009e-08;
-  norms["N1024"] = 7.796900e-08;
-  norms["N1280"] = 9.733947e-08;
-  norms["N1600"] = 1.215222e-07;
-  norms["N2000"] = 1.517164e-07;
-  norms["N4000"] = 2.939562e-07;
-
-  if( norms.count(gridname) == 0 )
-  {
-    Log::warning() << "Results cannot be verified with grid "<< gridname << '\n';
-    Log::warning() << "Valid grids: \n";
-    for( std::map<std::string,double>::const_iterator it=norms.begin(); it!=norms.end(); ++it)
-    {
-      Log::warning() << "    -  " << it->first << "\n";
-    }
-    Log::warning() << std::flush;
-
-    return 1;
-  }
-
-  double diff = (norm-norms[gridname])/norms[gridname];
-  if( diff < 0.01 )
-  {
-    Log::info() << "Results are verified and correct.\n  difference = " << setprecision(6) << fixed << diff*100 << "%" << endl;
-    return 0;
-  }
-
-  Log::info() << "Results are wrong.\n  difference = " << setprecision(6) << fixed << diff*100 << "%" << endl;
+  Log::warning() << "Verification is not yet implemented" << endl;
   return 1;
 }
 

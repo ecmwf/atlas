@@ -92,9 +92,9 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
   array::ArrayView<gidx_t,1> nodes_glb_idx = array::make_view<gidx_t,1> ( nodes.global_index() );
   //nodes_glb_idx.dump( Log::info() );
-  Log::info() << "min = " << nodes.global_index().metadata().getLong("min") << std::endl;
-  Log::info() << "max = " << nodes.global_index().metadata().getLong("max") << std::endl;
-  Log::info() << "human_readable = " << nodes.global_index().metadata().getBool("human_readable") << std::endl;
+//  ATLAS_DEBUG( "min = " << nodes.global_index().metadata().getLong("min") );
+//  ATLAS_DEBUG( "max = " << nodes.global_index().metadata().getLong("max") );
+//  ATLAS_DEBUG( "human_readable = " << nodes.global_index().metadata().getBool("human_readable") );
   gidx_t glb_idx_max = 0;
 
   std::vector<int> points_to_edit;
@@ -116,8 +116,8 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
     glb_idx[i] = nodes_glb_idx(points_to_edit[i]);
 
 
-  ATLAS_DEBUG_VAR( points_to_edit );
-  ATLAS_DEBUG_VAR( points_to_edit.size() );
+//  ATLAS_DEBUG_VAR( points_to_edit );
+//  ATLAS_DEBUG_VAR( points_to_edit.size() );
 
   /*
    * Sorting following gidx will define global order of
