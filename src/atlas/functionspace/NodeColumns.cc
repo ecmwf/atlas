@@ -2232,8 +2232,6 @@ NodeColumns::NodeColumns( const FunctionSpace& functionspace ) :
 
 namespace {
 detail::NodeColumns* make_functionspace( Mesh mesh, const eckit::Configuration& config ) {
-  ATLAS_DEBUG_VAR( mesh.get() );
-  ATLAS_DEBUG_VAR( config );
   return new detail::NodeColumns(mesh, config);
 }
 }
