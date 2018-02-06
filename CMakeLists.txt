@@ -233,6 +233,7 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI"  AND
 endif()
 
 include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
+include(CompileFlags)
 add_subdirectory( src )
 
 ################################################################################
