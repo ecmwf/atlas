@@ -648,9 +648,9 @@ CASE( "test_trans_vordiv_with_translib" )
 
   std::ostream& out = Log::info();
   double tolerance = 1.e-13;
-  Grid g( "F12" );
+  Grid g( "F12" );                         // This was F24 (but test takes too long)
   grid::StructuredGrid gs(g);
-  int trc = 23;
+  int trc = 23;                            // This was 47 (corresponding to F24)
   trans::Trans trans     (g, trc) ;
   trans::Trans transLocal(g, trc, util::Config("type","local"));
 

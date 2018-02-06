@@ -18,11 +18,13 @@ class Log : public detail::LogBase {
 
 public:
 
-    typedef eckit::Channel Channel;
-    
-    static std::ostream& info()  { return atlas::Library::instance().infoChannel();  }
-    static std::ostream& trace() { return atlas::Library::instance().traceChannel(); }
-    static std::ostream& debug() { return atlas::Library::instance().debugChannel(); }
+    using Channel = eckit::Channel; // derives from std::ostream
+
+    static Channel& info()  { return atlas::Library::instance().infoChannel();  }
+    static Channel& trace() { return atlas::Library::instance().traceChannel(); }
+    static Channel& debug() { return atlas::Library::instance().debugChannel(); }
+
+    static std::ostream& debug_parallel();
 
 #ifndef ATLAS_HAVE_FORTRAN
     // Stubs for what fckit::Log provides
@@ -37,6 +39,13 @@ public:
     static int error_unit()  { return 0; }
 #endif
 };
+
+std::string backtrace();
+
+namespace detail {
+  void print_parallel_here(std::ostream&,const eckit::CodeLocation&);
+}
+
 } // namespace atlas
 
 #include "atlas/util/detail/BlackMagic.h"
@@ -49,3 +58,6 @@ public:
 #define __ATLAS_DEBUG_0 ATLAS_DEBUG_HERE
 #define __ATLAS_DEBUG_1 ATLAS_DEBUG_WHAT
 
+#define ATLAS_DEBUG_BACKTRACE() do{ ::atlas::Log::info() << "DEBUG() @ " << Here() << "Backtrace:\n" << backtrace() << std::endl; } while (0)
+
+#define ATLAS_DEBUG_PARALLEL_HERE() do{ ::atlas::print_parallel_here(std::cout,Here()); } while (0)

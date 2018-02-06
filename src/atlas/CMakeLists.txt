@@ -33,6 +33,7 @@ runtime/ErrorHandling.cc
 runtime/AtlasTool.h
 runtime/AtlasTool.cc
 runtime/Log.h
+runtime/Log.cc
 runtime/Trace.h
 runtime/trace/CallStack.h
 runtime/trace/CallStack.cc

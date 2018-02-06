@@ -24,7 +24,7 @@ namespace trace {
 class BarriersState {
 private:
     BarriersState() {
-        barriers_ = atlas::Library::instance().barriers();
+        barriers_ = atlas::Library::instance().traceBarriers();
     }
     bool barriers_;
     StopWatch stopwatch_;

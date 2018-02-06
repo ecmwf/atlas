@@ -207,7 +207,7 @@ void TransLocal::invtrans_uv(
 
         // Transform
         if( grid::StructuredGrid g = grid_ ) {
-            ATLAS_TRACE( "invtrans structured");
+            ATLAS_TRACE( "invtrans_uv structured");
             int idx = 0;
             for( size_t j=0; j<g.ny(); ++j ) {
                 double lat = g.y(j) * util::Constants::degreesToRadians();
@@ -227,7 +227,7 @@ void TransLocal::invtrans_uv(
                 }
             }
         } else {
-            ATLAS_TRACE( "invtrans unstructured");
+            ATLAS_TRACE( "invtrans_uv unstructured");
             int idx = 0;
             for( PointXY p: grid_.xy() ) {
                 double lon = p.x() * util::Constants::degreesToRadians();
@@ -296,6 +296,7 @@ void TransLocal::invtrans(
     double gp_fields[],
     const eckit::Configuration& config ) const
 {
+    ATLAS_TRACE("TransLocal::invtrans");
     int nb_gp = grid_.size();
 
     // increase truncation in vorticity_spectra and divergence_spectra:
