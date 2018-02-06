@@ -24,8 +24,6 @@ public:
     static Channel& trace() { return atlas::Library::instance().traceChannel(); }
     static Channel& debug() { return atlas::Library::instance().debugChannel(); }
 
-    static std::ostream& debug_parallel();
-
 #ifndef ATLAS_HAVE_FORTRAN
     // Stubs for what fckit::Log provides
     enum Style {
@@ -43,11 +41,13 @@ public:
 std::string backtrace();
 
 namespace detail {
-  void print_parallel_here(std::ostream&,const eckit::CodeLocation&);
+  void debug_parallel_here( const eckit::CodeLocation& );
+  void debug_parallel_what( const eckit::CodeLocation&, const std::string& );
 }
 
 } // namespace atlas
 
+#include <sstream>
 #include "atlas/util/detail/BlackMagic.h"
 
 #define ATLAS_DEBUG_HERE()     do{ ::atlas::Log::info() << "DEBUG() @ " << Here() << std::endl; } while(0)
@@ -60,4 +60,13 @@ namespace detail {
 
 #define ATLAS_DEBUG_BACKTRACE() do{ ::atlas::Log::info() << "DEBUG() @ " << Here() << "Backtrace:\n" << ::atlas::backtrace() << std::endl; } while (0)
 
-#define ATLAS_DEBUG_PARALLEL_HERE() do{ ::atlas::print_parallel_here(std::cout,Here()); } while (0)
+#define ATLAS_DEBUG_PARALLEL_HERE() do{ ::atlas::detail::debug_parallel_here( Here() ); } while (0)
+#define ATLAS_DEBUG_PARALLEL_WHAT(WHAT) do{ \
+  std::stringstream w;\
+  w << WHAT;\
+  ::atlas::detail::debug_parallel_what( Here(), w.str() ); } while (0)
+
+#define ATLAS_DEBUG_PARALLEL(...) __ATLAS_SPLICE( __ATLAS_DEBUG_PARALLEL_, __ATLAS_NARG(__VA_ARGS__) ) (__VA_ARGS__)
+#define __ATLAS_DEBUG_PARALLEL_0 ATLAS_DEBUG_PARALLEL_HERE
+#define __ATLAS_DEBUG_PARALLEL_1 ATLAS_DEBUG_PARALLEL_WHAT
+
