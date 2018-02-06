@@ -82,7 +82,7 @@ void legendre_transform(
         const array::ArrayView<double,1>& zlfpol,  // values of associated Legendre functions, size (trc+1)*trc/2 (in)
         const double rspecg[])               // spectral data, size (trc+1)*trc (in)
 {
-    trans::invtrans_legendre( trc, trcFT, zlfpol.data(), 1, rspecg, rlegReal.data(), rlegImag.data() );
+    trans::invtrans_legendre( trc, trcFT, trc, zlfpol.data(), 1, rspecg, rlegReal.data(), rlegImag.data() );
 }
 
 //-----------------------------------------------------------------------------
@@ -648,9 +648,9 @@ CASE( "test_trans_vordiv_with_translib" )
 
   std::ostream& out = Log::info();
   double tolerance = 1.e-13;
-  Grid g( "F24" );
+  Grid g( "F12" );
   grid::StructuredGrid gs(g);
-  int trc = 47;
+  int trc = 23;
   trans::Trans trans     (g, trc) ;
   trans::Trans transLocal(g, trc, util::Config("type","local"));
 
@@ -729,22 +729,16 @@ CASE( "test_trans_vordiv_with_translib" )
                               double rms_trans = compute_rms(g.size(),  gp.data()+pos*g.size(), rgp_analytic.data());
                               double rms_gen   = compute_rms(g.size(), rgp.data()+pos*g.size(), rgp_analytic.data());
 
-                              // local transformation truncates the spectral U,V to trc! This is different from
-                              // the analytic solution and trans library's invtrans!
-                              bool invalid = ( ivar_in<2 && ivar_out<2 && n==trc );
-
-                              if( !invalid ) {
-                                  if( rms_gen >= tolerance ) {
-                                    ATLAS_DEBUG_VAR(rms_gen);
-                                    ATLAS_DEBUG_VAR(tolerance);
-                                  }
-                                  if( rms_trans >= tolerance ) {
-                                    ATLAS_DEBUG_VAR(rms_trans);
-                                    ATLAS_DEBUG_VAR(tolerance);
-                                  }
-                                  EXPECT( rms_trans < tolerance );
-                                  EXPECT( rms_gen < tolerance );
+                              if( rms_gen >= tolerance ) {
+                                ATLAS_DEBUG_VAR(rms_gen);
+                                ATLAS_DEBUG_VAR(tolerance);
                               }
+                              if( rms_trans >= tolerance ) {
+                                ATLAS_DEBUG_VAR(rms_trans);
+                                ATLAS_DEBUG_VAR(tolerance);
+                              }
+                              EXPECT( rms_trans < tolerance );
+                              EXPECT( rms_gen < tolerance );
                               icase++;
                           }
                           k++;

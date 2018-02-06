@@ -58,13 +58,13 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const long truncat
             legendre_begin_.resize( g.ny() );
             for( size_t j=0; j<g.ny(); ++j ) {
                 legendre_begin_[j] = size;
-                size  += legendre_size( truncation_ );
+                size  += legendre_size( truncation_+1 );
             }
             legendre_.resize(size);
 
             for( size_t j=0; j<g.ny(); ++j ) {
               double lat = g.y(j) * util::Constants::degreesToRadians();
-              compute_legendre_polynomials( truncation_ , lat, legendre_data(j) );
+              compute_legendre_polynomials( truncation_+1 , lat, legendre_data(j) );
             }
         } else {
             ATLAS_TRACE("Precompute legendre unstructured");
@@ -72,13 +72,13 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const long truncat
             legendre_begin_.resize( grid_.size() );
             for( size_t j=0; j<grid_.size(); ++j ) {
                 legendre_begin_[j] = size;
-                size  += legendre_size( truncation_ );
+                size  += legendre_size( truncation_+1 );
             }
             legendre_.resize(size);
             int j(0);
             for( PointXY p: grid_.xy() ) {
                 double lat = p.y() * util::Constants::degreesToRadians();
-                compute_legendre_polynomials( truncation_ , lat, legendre_data(j++) );
+                compute_legendre_polynomials( truncation_+1 , lat, legendre_data(j++) );
             }
         }
     }
@@ -152,7 +152,7 @@ void TransLocal::invtrans(
     double gp_fields[],
     const eckit::Configuration& config ) const
 {
-    invtrans_uv(nb_scalar_fields, 0, scalar_spectra, gp_fields, config);
+    invtrans_uv(truncation_, nb_scalar_fields, 0, scalar_spectra, gp_fields, config);
 }
 
 void gp_transpose(
@@ -166,12 +166,6 @@ void gp_transpose(
             gp_fields[jfld*nb_size+jgp] = gp_tmp[jgp*nb_fields+jfld];
         }
     }
-    //Log::info() << "gp_transpose: gp_tmp:" << std::endl;
-    //for( int j=0; j<nb_fields*nb_size; j++ ) Log::info() << gp_tmp[j] << " ";
-    //Log::info() << std::endl;
-    //Log::info() << "gp_transpose: gp_fields:" << std::endl;
-    //for( int j=0; j<nb_fields*nb_size; j++ ) Log::info() << gp_fields[j] << " ";
-    //Log::info() << std::endl;
 }
 
 //-----------------------------------------------------------------------------
@@ -184,45 +178,66 @@ void gp_transpose(
 // Andreas Mueller *ECMWF*
 //
 void TransLocal::invtrans_uv(
+    const int truncation,
     const int nb_scalar_fields, const int nb_vordiv_fields, const double scalar_spectra[],
     double gp_fields[],
     const eckit::Configuration& config ) const
 {
-    int nb_fields = nb_scalar_fields;
+    if( nb_scalar_fields>0 ) {
+        int nb_fields = nb_scalar_fields;
 
-    // Depending on "precompute_legendre_", we have to compute the
-    // legendre polynomials for every latitute
-    std::vector<double> recomputed_legendre_;
+        // Depending on "precompute_legendre_", we have to compute the
+        // legendre polynomials for every latitute
+        std::vector<double> recomputed_legendre_;
 
-    auto legPol = [&](double lat, int j) -> const double * {
-      if( precompute_ ) {
-        return legendre_data(j);
-      } else {
-        recomputed_legendre_.resize( legendre_size( truncation_ ) );
-        compute_legendre_polynomials( truncation_, lat, recomputed_legendre_.data() );
-        return recomputed_legendre_.data();
-      }
-    };
+        auto legPol = [&](double lat, int j) -> const double * {
+          if( precompute_ ) {
+            return legendre_data(j);
+          } else {
+            recomputed_legendre_.resize( legendre_size( truncation ) );
+            compute_legendre_polynomials( truncation, lat, recomputed_legendre_.data() );
+            return recomputed_legendre_.data();
+          }
+        };
 
-    // Temporary storage for legendre space
-    std::vector<double> legReal(nb_fields*(truncation_+1));
-    std::vector<double> legImag(nb_fields*(truncation_+1));
-    std::vector<double> gp_tmp(nb_fields*grid_.size(), 0.);
+        // Temporary storage for legendre space
+        std::vector<double> legReal(nb_fields*(truncation+1));
+        std::vector<double> legImag(nb_fields*(truncation+1));
+        std::vector<double> gp_tmp(nb_fields*grid_.size(), 0.);
 
-    // Transform
-    if( grid::StructuredGrid g = grid_ ) {
-        ATLAS_TRACE( "invtrans structured");
-        int idx = 0;
-        for( size_t j=0; j<g.ny(); ++j ) {
-            double lat = g.y(j) * util::Constants::degreesToRadians();
-            double trcFT = fourier_truncation( truncation_, lat );
+        // Transform
+        if( grid::StructuredGrid g = grid_ ) {
+            ATLAS_TRACE( "invtrans structured");
+            int idx = 0;
+            for( size_t j=0; j<g.ny(); ++j ) {
+                double lat = g.y(j) * util::Constants::degreesToRadians();
+                double trcFT = fourier_truncation( truncation, lat );
 
-            // Legendre transform:
-            invtrans_legendre( truncation_, trcFT, legPol(lat,j), nb_fields, scalar_spectra, legReal.data(), legImag.data() );
+                // Legendre transform:
+                invtrans_legendre( truncation, trcFT, truncation_+1, legPol(lat,j), nb_fields, scalar_spectra, legReal.data(), legImag.data() );
 
-            // Fourier transform:
-            for( size_t i=0; i<g.nx(j); ++i ) {
-                double lon = g.x(i,j) * util::Constants::degreesToRadians();
+                // Fourier transform:
+                for( size_t i=0; i<g.nx(j); ++i ) {
+                    double lon = g.x(i,j) * util::Constants::degreesToRadians();
+                    invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(), gp_tmp.data()+(nb_fields*idx));
+                    for( int jfld=0; jfld<nb_vordiv_fields; ++jfld ) {
+                        gp_tmp[nb_fields*idx+jfld] /= std::cos(lat);
+                    }
+                    ++idx;
+                }
+            }
+        } else {
+            ATLAS_TRACE( "invtrans unstructured");
+            int idx = 0;
+            for( PointXY p: grid_.xy() ) {
+                double lon = p.x() * util::Constants::degreesToRadians();
+                double lat = p.y() * util::Constants::degreesToRadians();
+                double trcFT = fourier_truncation( truncation, lat );
+
+                // Legendre transform:
+                invtrans_legendre( truncation, trcFT, truncation_+1, legPol(lat,idx), nb_fields, scalar_spectra, legReal.data(), legImag.data() );
+
+                // Fourier transform:
                 invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(), gp_tmp.data()+(nb_fields*idx));
                 for( int jfld=0; jfld<nb_vordiv_fields; ++jfld ) {
                     gp_tmp[nb_fields*idx+jfld] /= std::cos(lat);
@@ -230,29 +245,10 @@ void TransLocal::invtrans_uv(
                 ++idx;
             }
         }
-    } else {
-        ATLAS_TRACE( "invtrans unstructured");
-        int idx = 0;
-        for( PointXY p: grid_.xy() ) {
-            double lon = p.x() * util::Constants::degreesToRadians();
-            double lat = p.y() * util::Constants::degreesToRadians();
-            double trcFT = fourier_truncation( truncation_, lat );
 
-            // Legendre transform:
-            invtrans_legendre( truncation_, trcFT, legPol(lat,idx), nb_fields, scalar_spectra, legReal.data(), legImag.data() );
-
-            // Fourier transform:
-            invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(), gp_tmp.data()+(nb_fields*idx));
-            for( int jfld=0; jfld<nb_vordiv_fields; ++jfld ) {
-                gp_tmp[nb_fields*idx+jfld] /= std::cos(lat);
-            }
-            ++idx;
-        }
+        // transpose result
+        gp_transpose( grid_.size(), nb_fields, gp_tmp.data(), gp_fields );
     }
-
-    // transpose result
-    gp_transpose( grid_.size(), nb_fields, gp_tmp.data(), gp_fields );
-
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -264,7 +260,29 @@ void TransLocal::invtrans(
     double gp_fields[],
     const eckit::Configuration& config ) const
 {
-  NOTIMP;
+  invtrans(0, nullptr, nb_vordiv_fields, vorticity_spectra, divergence_spectra, gp_fields, config);
+}
+
+void extend_truncation(
+    const int old_truncation,
+    const int nb_fields,
+    const double old_spectra[],
+    double new_spectra[])
+{
+    int k=0, k_old=0;
+    for( int m=0; m<=old_truncation+1; m++ ) { // zonal wavenumber
+        for( int n=m; n<=old_truncation+1; n++ ) { // total wavenumber
+            for( int imag=0; imag<2; imag++ ) { // imaginary/real part
+                for( int jfld=0; jfld<nb_fields; jfld++ ) { // field
+                    if( m==old_truncation+1 || n==old_truncation+1 ) {
+                        new_spectra[k++] = 0.;
+                    } else {
+                        new_spectra[k++] = old_spectra[k_old++];
+                    }
+                }
+            }
+        }
+    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -278,19 +296,25 @@ void TransLocal::invtrans(
     double gp_fields[],
     const eckit::Configuration& config ) const
 {
-    // call vd2uv to compute u and v in spectral space
     int nb_gp = grid_.size();
 
-    int nb_vordiv_spec = 2*legendre_size(truncation_)*nb_vordiv_fields;
-    std::vector<double> U(nb_vordiv_spec,0.);
-    std::vector<double> V(nb_vordiv_spec,0.);
-    trans::VorDivToUV vordiv_to_UV(truncation_, option::type("local"));
-    vordiv_to_UV.execute( nb_vordiv_spec, nb_vordiv_fields, vorticity_spectra, divergence_spectra, U.data(), V.data() );
+    // increase truncation in vorticity_spectra and divergence_spectra:
+    int nb_vordiv_spec_ext = 2*legendre_size(truncation_+1)*nb_vordiv_fields;
+    std::vector<double> vorticity_spectra_extended(nb_vordiv_spec_ext,0.);
+    std::vector<double> divergence_spectra_extended(nb_vordiv_spec_ext,0.);
+    extend_truncation(truncation_, nb_vordiv_fields, vorticity_spectra, vorticity_spectra_extended.data());
+    extend_truncation(truncation_, nb_vordiv_fields, divergence_spectra, divergence_spectra_extended.data());
+
+    // call vd2uv to compute u and v in spectral space
+    std::vector<double> U_ext(nb_vordiv_spec_ext,0.);
+    std::vector<double> V_ext(nb_vordiv_spec_ext,0.);
+    trans::VorDivToUV vordiv_to_UV_ext(truncation_+1, option::type("local"));
+    vordiv_to_UV_ext.execute( nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(), divergence_spectra_extended.data(), U_ext.data(), V_ext.data() );
 
     // perform spectral transform to compute all fields in grid point space
-    invtrans_uv(nb_vordiv_fields, nb_vordiv_fields, U.data(), gp_fields, config);
-    invtrans_uv(nb_vordiv_fields, nb_vordiv_fields, V.data(), gp_fields+nb_gp*nb_vordiv_fields, config);
-    invtrans_uv(nb_scalar_fields, 0, scalar_spectra, gp_fields+2*nb_gp*nb_vordiv_fields, config);
+    invtrans_uv(truncation_+1, nb_vordiv_fields, nb_vordiv_fields, U_ext.data(), gp_fields, config);
+    invtrans_uv(truncation_+1, nb_vordiv_fields, nb_vordiv_fields, V_ext.data(), gp_fields+nb_gp*nb_vordiv_fields, config);
+    invtrans_uv(truncation_  , nb_scalar_fields, 0, scalar_spectra, gp_fields+2*nb_gp*nb_vordiv_fields, config);
 
 }
 

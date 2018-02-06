@@ -25,6 +25,8 @@ static VorDivToUVBuilder<VorDivToUVLocal> builder("local");
 }
 
 // --------------------------------------------------------------------------------------------------------------------
+// Routine to copy spectral data into internal storage form of IFS trans
+// Ported to C++ by: Andreas Mueller *ECMWF*
 void prfi1b(
     const int truncation,
     const int km, // zonal wavenumber
@@ -50,6 +52,11 @@ void prfi1b(
 }
 
 // --------------------------------------------------------------------------------------------------------------------
+// Routine to compute spectral velocities (*cos(latitude)) out of spectral vorticity and divergence
+// Reference:
+//        ECMWF Research Department documentation of the IFS
+//        Temperton, 1991, MWR 119 p1303
+// Ported to C++ by: Andreas Mueller *ECMWF*
 void vd2uv(
     const int truncation,
     const int km, // zonal wavenumber
@@ -63,8 +70,8 @@ void vd2uv(
 
     int nlei1 = truncation+4+(truncation+4+1)%2;
 
+    // repsnm: epsilon from eq.(2.12) and (2.13) in [Temperton 1991]
     std::vector<double> repsnm((truncation+1)*(truncation+6)/2);
-    std::vector<double> rlapin(truncation+3);
     int idx = 0;
     for( int jm=0; jm<=truncation; ++jm ) {
         for( int jn=jm; jn<=truncation+2; ++jn, ++idx ) {
@@ -72,10 +79,15 @@ void vd2uv(
         }
     }
     repsnm[0] = 0.;
+
+    // rlapin: constant factor from eq.(2.2) and (2.3) in [Temperton 1991]
+    std::vector<double> rlapin(truncation+3);
     for( int jn=1; jn<=truncation+2; ++jn ) {
         rlapin[jn] = -util::Earth::radiusInMeters()*util::Earth::radiusInMeters()/(jn*(jn+1.));
     }
     rlapin[0] = 0.;
+
+    // inverse the order of repsnm and rlapin for improved accuracy
     std::vector<double> zepsnm(truncation+6);
     std::vector<double> zlapin(truncation+6);
     std::vector<double> zn    (truncation+6);
@@ -93,10 +105,10 @@ void vd2uv(
             zepsnm[ij] = 0.;
         }
         zn[ij]     = jn;
-        //Log::info() << "ij=" << ij << " jn=" << zn[ij] << " rlapin=" << zlapin[ij] << " repsnm=" << zepsnm[ij] << std::endl;
     }
     zn[0] = truncation+3;
 
+    // copy spectral data into internal trans storage:
     std::vector<double> rvor(2*nb_vordiv_fields*nlei1);
     std::vector<double> rdiv(2*nb_vordiv_fields*nlei1);
     std::vector<double> ru  (2*nb_vordiv_fields*nlei1);
@@ -104,14 +116,11 @@ void vd2uv(
     prfi1b(truncation, km, nb_vordiv_fields, vorticity_spectra,  rvor.data());
     prfi1b(truncation, km, nb_vordiv_fields, divergence_spectra, rdiv.data());
 
-    //Log::info() << "km=" << km << " rvor: " << std::endl;
-    //for( int j=0; j<2*nb_vordiv_fields*nlei1; j++ ) Log::info() << rvor[j] << " ";
-    //Log::info() << std::endl;
+    // compute eq.(2.12) and (2.13) in [Temperton 1991]:
     if( km==0 ) {
         for( int jfld=0; jfld<nb_vordiv_fields; ++jfld ) {
             int ir=2*jfld*nlei1-1;
             for( int ji=2; ji<truncation+4-km; ++ji ) {
-                //Log::info() << "ir+ji=" << ir+ji << " ji=" << ji << " zn=" << zn[ji] << " rlapin=" << zlapin[ji] << " repsnm=" << zepsnm[ji ] << std::endl;
                 ru[ir+ji] = + zn[ji+1]*zepsnm[ji  ]*zlapin[ji+1]*rvor[ir+ji+1]
                             - zn[ji-2]*zepsnm[ji-1]*zlapin[ji-1]*rvor[ir+ji-1];
                 rv[ir+ji] = - zn[ji+1]*zepsnm[ji  ]*zlapin[ji+1]*rdiv[ir+ji+1]
@@ -122,7 +131,6 @@ void vd2uv(
         for( int jfld=0; jfld<nb_vordiv_fields; ++jfld) {
             int ir=2*jfld*nlei1-1, ii = ir+nlei1;
             for( int ji=2; ji<truncation+4-km; ++ji ) {
-                //Log::info() << "ir+ji=" << ir+ji << " ji=" << ji << "zn=" << zn[ji] << " rlapin=" << zlapin[ji] << " repsnm=" << zepsnm[ji ] << std::endl;
                 ru[ir+ji] = -                    km*zlapin[ji  ]*rdiv[ii+ji  ]
                             + zn[ji+1]*zepsnm[ji  ]*zlapin[ji+1]*rvor[ir+ji+1]
                             - zn[ji-2]*zepsnm[ji-1]*zlapin[ji-1]*rvor[ir+ji-1];
@@ -138,13 +146,14 @@ void vd2uv(
             }
         }
     }
-    //Log::info() << "km=" << km << " ru: " << std::endl;
-    //for( int j=0; j<2*nb_vordiv_fields*nlei1; j++ ) Log::info() << ru[j] << " ";
-    //Log::info() << std::endl;
 
-    int ilcm = truncation-km, ioff = (2*truncation-km+3)*km;
+    // copy data from internal storage back to external spectral data:
+    int ilcm = truncation-km;
+    int ioff = (2*truncation-km+3)*km;
+    // ioff: start index of zonal wavenumber km in spectral data
     double za_r = 1./util::Earth::radiusInMeters();
     for( int j=0; j<=ilcm; ++j ) {
+        // ilcm-j = total wavenumber
         int inm = ioff+(ilcm-j)*2;
         for( int jfld=0; jfld<nb_vordiv_fields; ++jfld ) {
             int ir = 2*jfld*nlei1, ii = ir + nlei1;

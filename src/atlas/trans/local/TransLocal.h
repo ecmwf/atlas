@@ -117,7 +117,7 @@ private:
   const double* legendre_data( int j ) const { return legendre_.data() + legendre_begin_[j]; }
   double* legendre_data( int j ) { return legendre_.data() + legendre_begin_[j]; }
 
-  void invtrans_uv( const int nb_scalar_fields, const int nb_vordiv_fields, const double scalar_spectra[],
+  void invtrans_uv(const int truncation, const int nb_scalar_fields, const int nb_vordiv_fields, const double scalar_spectra[],
                          double gp_fields[],
                          const eckit::Configuration& = util::NoConfig() ) const;
 
