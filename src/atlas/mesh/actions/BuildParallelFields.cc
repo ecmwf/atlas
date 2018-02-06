@@ -26,12 +26,14 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/GatherScatter.h"
+#include "atlas/util/detail/Debug.h"
 
-//#define DEBUGGING_PARFIELDS
+#define EDGE(jedge) "Edge("<<node_gidx(edge_nodes(jedge,0))<<"[p"<<node_part(edge_nodes(jedge,0))<<"] "<<node_gidx(edge_nodes(jedge,1))<<"[p"<<node_part(edge_nodes(jedge,1))<<"])"
+
 #ifdef DEBUGGING_PARFIELDS
-#define EDGE(jedge) "Edge("<<gidx(edge_nodes(jedge,0))<<"[p"<<node_part(edge_nodes(jedge,0))<<"] "<<gidx(edge_nodes(jedge,1))<<"p["<<node_part(edge_nodes(jedge,1))<<"])"
 #define own1 2419089
 #define own2 2423185
 #define OWNED_EDGE(jedge) ((gidx(edge_nodes(jedge,0)) == own1 && gidx(edge_nodes(jedge,1)) == own2)\
@@ -367,7 +369,9 @@ Field& build_edges_partition( Mesh& mesh )
   size_t nparts = parallel::mpi::comm().size();
 
   mesh::HybridElements& edges = mesh.edges();
-  array::ArrayView<int,1> edge_part = array::make_view<int,1>( edges.partition() );
+  array::ArrayView<int,1>    edge_part    = array::make_view<int,1>( edges.partition() );
+  array::ArrayView<gidx_t,1> edge_glb_idx = array::make_view<gidx_t,1>( edges.global_index() );
+
   const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
   const mesh::HybridElements::Connectivity& edge_to_elem = edges.cell_connectivity();
 
@@ -383,11 +387,24 @@ Field& build_edges_partition( Mesh& mesh )
   array::ArrayView<int,1> node_part = array::make_view<int,1>( nodes.partition() );
   array::ArrayView<double,2> xy = array::make_view<double,2>( nodes.xy() );
   array::ArrayView<int,   1> flags  = array::make_view<int,1>( nodes.field("flags") );
-#ifdef DEBUGGING_PARFIELDS
-  array::ArrayView<gidx_t,   1> gidx  = array::make_view<gidx_t,1>( nodes.global_index() );
-#endif
+  array::ArrayView<gidx_t,1> node_gidx  = array::make_view<gidx_t,1>( nodes.global_index() );
 
   array::ArrayView<int,1>     elem_part = array::make_view<int,1>(mesh.cells().partition() );
+
+  auto check_flags = [&](idx_t jedge, int flag) {
+    idx_t ip1 = edge_nodes(jedge,0);
+    idx_t ip2 = edge_nodes(jedge,1);
+    return Topology::check( flags(ip1), flag ) && Topology::check( flags(ip2), flag );
+  };
+  auto domain_bdry = [&](idx_t jedge) {
+    if( check_flags(jedge, Topology::BC|Topology::NORTH) ) {
+      return true;
+    }
+    if( check_flags(jedge, Topology::BC|Topology::SOUTH) ) {
+      return true;
+    }
+    return false;
+  };
 
   PeriodicTransform transform;
 
@@ -395,237 +412,138 @@ Field& build_edges_partition( Mesh& mesh )
 
   std::vector<int> periodic(nb_edges);
 
+  std::vector<gidx_t> bdry_edges; bdry_edges.reserve(nb_edges);
+  std::map<gidx_t,size_t> global_to_local;
+
   for( size_t jedge=0; jedge<nb_edges; ++jedge )
   {
+    global_to_local[edge_glb_idx(jedge)] = jedge;
+
     periodic[jedge] = 0;
     idx_t ip1 = edge_nodes(jedge,0);
     idx_t ip2 = edge_nodes(jedge,1);
     int pn1 = node_part( ip1 );
     int pn2 = node_part( ip2 );
-    if( pn1 == pn2 )
-      edge_part(jedge) = pn1;
-    else
-    {
-      if( edge_to_elem(jedge,1) == edge_to_elem.missing_value() ) // This is a edge at partition boundary
-      {
-        if( (Topology::check(flags(ip1),Topology::PERIODIC) && !Topology::check(flags(ip1),Topology::BC|Topology::WEST) &&
-             Topology::check(flags(ip2),Topology::PERIODIC) && !Topology::check(flags(ip2),Topology::BC|Topology::WEST)) ||
-            (Topology::check(flags(ip1),Topology::PERIODIC) && !Topology::check(flags(ip1),Topology::BC|Topology::WEST) &&
-             Topology::check(flags(ip2),Topology::BC|Topology::WEST)) ||
-            (Topology::check(flags(ip1),Topology::BC|Topology::WEST) &&
-             Topology::check(flags(ip2),Topology::PERIODIC) && !Topology::check(flags(ip2),Topology::BC|Topology::WEST)) )
-        {
-          edge_part(jedge) = -1;
-          if( Topology::check(flags(ip1),Topology::EAST ) )
-            periodic[jedge] = -1;
-          else
-            periodic[jedge] = +1;
-        }
-        else if( Topology::check(flags(ip1),Topology::BC) && Topology::check(flags(ip2),Topology::BC) )
-        {
-          int pe1 = elem_part(edge_to_elem(jedge,0));
-          int pmx = std::max(pn1,pn2);
-          if( pe1 == pmx )
-            edge_part(jedge) = pmx;
-          else
-            edge_part(jedge) = std::min(pn1,pn2);
-        }
-        else
-        {
-          edge_part(jedge) = -1;
-        }
-      }
-      else
-      {
-        int pe1 = elem_part(edge_to_elem(jedge,0));
-        int pe2 = elem_part(edge_to_elem(jedge,1));
-        int pc[] = {0,0};
-        if( pn1 == pe1 ) ++pc[0];
-        if( pn1 == pe2 ) ++pc[0];
-        if( pn2 == pe1 ) ++pc[1];
-        if( pn2 == pe2 ) ++pc[1];
-        if     ( pc[0] > pc[1] ) edge_part(jedge) = pn1;
-        else if( pc[0] < pc[1] ) edge_part(jedge) = pn2;
-        else edge_part(jedge) = std::min(pn1,pn2);
-
-#ifdef DEBUGGING_PARFIELDS
-        if( OWNED_EDGE(jedge) )
-          DEBUG( EDGE(jedge) << " -->    pn1,pn2,pe1,pe2 " << pn1 << "," << pn2<< "," << pe1 << "," << pe2);
-#endif
-
-      }
+    int y1 = util::microdeg(xy(ip1,YY));
+    int y2 = util::microdeg(xy(ip2,YY));
+    int p;
+    if( y1 == y2 ) {
+      int x1 = util::microdeg(xy(ip1,XX));
+      int x2 = util::microdeg(xy(ip2,XX));
+      p = (x1 < x2) ? pn1 : pn2;
+    } else {
+      p = (y1 > y2) ? pn1 : pn2;
     }
 
-#ifdef DEBUGGING_PARFIELDS
-        if( OWNED_EDGE(jedge) )
-          DEBUG( EDGE(jedge) << " -->    pn1,pn2 " << pn1 << "," << pn2);
-#endif
+    idx_t elem1 = edge_to_elem(jedge,0);
+    idx_t elem2 = edge_to_elem(jedge,1);
+    if( elem1 == edge_to_elem.missing_value() ) {
+      bdry_edges.push_back( edge_glb_idx(jedge) );
+      p = pn1;
+      // Log::error() << debug::rank_str() << EDGE(jedge) << " is a pole edge with part " << p << std::endl;
+    } else if(elem2 == edge_to_elem.missing_value()) {
+      // if( not domain_bdry(jedge) ) {
+        bdry_edges.push_back( edge_glb_idx(jedge) );
+        p = elem_part(elem1);
+      // }
+    } else if( p != elem_part(elem1) && p != elem_part(elem2) ) {
+      p = ( p == pn1 ) ? pn2 : pn1;
 
-#ifdef DEBUGGING_PARFIELDS_disable
-    if( periodic[jedge] )
-      DEBUG(EDGE(jedge)<<" is periodic  " << periodic[jedge]);
-#endif
-
-#ifdef DEBUGGING_PARFIELDS_disable
-    if( PERIODIC_EDGE(jedge) )
-      DEBUG( EDGE(jedge) <<": edge_part="<<edge_part(jedge)<<"  periodic="<<periodic[jedge]);
-#endif
- }
-
-  // In the periodic halo's, the partition MAY be assigned wrongly
-  // following scoped piece of code will fix this.
-  {
-    std::map<uid_t,int> lookup;
-    int varsize=2;
-    double centroid[2];
-    std::vector< std::vector<uid_t> > send_unknown( parallel::mpi::comm().size() );
-    std::vector< std::vector<uid_t> > recv_unknown( parallel::mpi::comm().size() );
-    for( size_t jedge=0; jedge<nb_edges; ++jedge )
-    {
-      int ip1 = edge_nodes(jedge,0);
-      int ip2 = edge_nodes(jedge,1);
-      int pn1 = node_part( ip1 );
-      int pn2 = node_part( ip2 );
-
-      centroid[XX] = 0.5*(xy( ip1, XX ) + xy( ip2, XX ) );
-      centroid[YY] = 0.5*(xy( ip1, YY ) + xy( ip2, YY ) );
-      if( has_pole_edges && (*is_pole_edge)(jedge) )
-      {
-        centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
-      }
-
-      transform(centroid,periodic[jedge]);
-      uid_t uid = util::unique_lonlat(centroid);
-
-      if( size_t(edge_part(jedge)) == mypart )
-      {
-        lookup[ uid ] = jedge;
-      }
-      else
-      {
-        if( edge_part(jedge)<0 )
-        {
-          ASSERT(pn1!=pn2);
-          send_unknown[ pn1 ].push_back( uid   );
-          send_unknown[ pn1 ].push_back( jedge );
-          send_unknown[ pn2 ].push_back( uid   );
-          send_unknown[ pn2 ].push_back( jedge );
-
-#ifdef DEBUGGING_PARFIELDS_disable
-          if( PERIODIC_EDGE(jedge) )
-            DEBUG_VAR( uid );
-#endif
-
-        }
-      }
-#ifdef DEBUGGING_PARFIELDS
-        if( OWNED_EDGE(jedge) )
-          DEBUG( EDGE(jedge) << " --> " << uid << "   part " << edge_part(jedge));
-#endif
-
-#ifdef DEBUGGING_PARFIELDS
-        if( OWNED_UID(uid) )
-        {
-          double x1,y1, x2,y2, xe,ye;
-          x1 = xy(ip1,XX);
-          y1 = xy(ip1,YY);
-          x2 = xy(ip2,XX);
-          y2 = xy(ip2,YY);
-          xe = centroid[XX];
-          ye = centroid[YY];
-          DEBUG( uid << " --> " << EDGE(jedge) << "   x1,y1 - x2,y2 - xe,ye " << x1<<","<<y1
-                 << " - " << x2<<","<<y2<< " - " << xe <<","<<ye<< "     part " << edge_part(jedge));
-        }
-#endif
-
-    }
-
-    ATLAS_TRACE_MPI( ALLTOALL ) {
-      parallel::mpi::comm().allToAll(send_unknown, recv_unknown);
-    }
-
-    // So now we have identified all possible edges with wrong partition.
-    // We still need to check if it is actually wrong. This can be achieved
-    // just by looking if the edge in question is owned by the possibly wrongly
-    // assigned edge partition. If the edge is not found on that partition,
-    // then its other node must be the edge partition.
-
-    std::vector< std::vector<int> > send_found( parallel::mpi::comm().size() );
-    std::vector< std::vector<int> > recv_found( parallel::mpi::comm().size() );
-
-    for( size_t jpart=0; jpart<nparts; ++jpart )
-    {
-      const std::vector<uid_t>& recv_edge = recv_unknown[jpart];
-      const size_t nb_recv_edges = recv_edge.size()/varsize;
-      // array::ArrayView<uid_t,2> recv_edge( recv_unknown[ jpart ].data(),
-      //     array::make_shape(recv_unknown[ jpart ].size()/varsize,varsize) );
-      for( size_t jedge=0; jedge<nb_recv_edges; ++jedge )
-      {
-        uid_t uid      = recv_edge[jedge*varsize+0];
-        int    recv_idx = recv_edge[jedge*varsize+1];
-        if( lookup.count(uid) )
-        {
-          send_found[ jpart ].push_back( recv_idx );
-        }
+      if( p != elem_part(elem1) and p != elem_part(elem2) ) {
+        std::stringstream msg;
+        msg << debug::rank_str() << EDGE(jedge) << " has nodes and elements of different rank: elem1[p"<<elem_part(elem1)<<"] elem2[p"<<elem_part(elem2)<<"]";
+        Log::error() << msg.str() << std::endl;
+        //throw eckit::SeriousBug(msg.str(),Here());
       }
     }
+    edge_part(jedge) = p;
 
-    ATLAS_TRACE_MPI( ALLTOALL ) {
-      parallel::mpi::comm().allToAll(send_found, recv_found);
-    }
+  }
+  std::sort( bdry_edges.begin(), bdry_edges.end() );
+  auto is_bdry_edge = [&bdry_edges]( gidx_t gid ) {
+    std::vector<uid_t>::iterator it = std::lower_bound( bdry_edges.begin(), bdry_edges.end(), gid );
+    bool found = !( it == bdry_edges.end() || gid < *it );
+    return found;
+  };
 
-    for( size_t jpart=0; jpart<nparts; ++jpart )
-    {
-      for( size_t jedge=0; jedge<recv_found[jpart].size(); ++jedge )
-      {
-        int iedge = recv_found[jpart][jedge];
-#ifdef DEBUGGING_PARFIELDS
-        //DEBUG(EDGE(iedge)<< " found on part " << jpart);
-        if( edge_part(iedge) != -1 )
-        {
-          std::stringstream msg;
-          msg << "Edge ("<<gidx(edge_nodes(iedge,0))<<"[p"<<node_part(edge_nodes(iedge,0))<<"] "<<gidx(edge_nodes(iedge,1))
-              << "[p"<<node_part(edge_nodes(iedge,1))<<"]) from part " << jpart << " was already found on part " << edge_part(iedge);
-          throw eckit::Exception(msg.str(),Here());
+  int mpi_size = eckit::mpi::comm().size();
+  parallel::mpi::Buffer<gidx_t,1> recv_bdry_edges_from_parts(mpi_size);
+  std::vector< std::vector<gidx_t> > send_gidx(mpi_size);
+  std::vector< std::vector<int>    > send_part(mpi_size);
+  std::vector< std::vector<gidx_t> > recv_gidx(mpi_size);
+  std::vector< std::vector<int>    > recv_part(mpi_size);
+  parallel::mpi::comm().allGatherv(bdry_edges.begin(),bdry_edges.end(),recv_bdry_edges_from_parts);
+  for( int p=0; p<mpi_size; ++p ) {
+      auto view = recv_bdry_edges_from_parts[p];
+      for ( int j=0; j<view.size(); ++j ) {
+        gidx_t gidx = view[j];
+        if( global_to_local.count(gidx) ) {
+          if( not is_bdry_edge(gidx)) {
+            int iedge = global_to_local[gidx];
+            send_gidx[p].push_back( gidx );
+            send_part[p].push_back( edge_part(iedge) );
         }
-#endif
-        ASSERT( edge_part(iedge) == -1 );
-        edge_part(iedge) = jpart;
       }
     }
   }
+  parallel::mpi::comm().allToAll(send_gidx,recv_gidx);
+  parallel::mpi::comm().allToAll(send_part,recv_part);
+  for( int p=0; p<mpi_size; ++p ) {
+    const auto& recv_gidx_p = recv_gidx[p];
+    const auto& recv_part_p = recv_part[p];
+    for( int j=0; j<recv_gidx_p.size(); ++ j ) {
+      idx_t iedge = global_to_local[recv_gidx_p[j]];
+      int prev = edge_part(iedge);
+      edge_part(iedge) = recv_part_p[j];
+      // if( edge_part(iedge) != prev )
+      //   Log::error() << debug::rank_str() << EDGE(iedge) << " part " << prev << " --> " << edge_part(iedge) << std::endl;
+    }
+  }
 
-  // Sanity check
+
+//  // Sanity check
   for( size_t jedge=0; jedge<nb_edges; ++jedge )
   {
-    int ip1 = edge_nodes(jedge,0);
-    int ip2 = edge_nodes(jedge,1);
-    if( edge_part(jedge) == -1 )
-    {
-      std::stringstream msg;
-#ifdef DEBUGGING_PARFIELDS
-      msg << EDGE(jedge) << " was not found on part "<< node_part(ip1) << " or " << node_part(ip2);
-#else
-      msg << "Edge was not found on part "<< node_part(ip1) << " or " <<node_part(ip2);
-#endif
-      throw eckit::SeriousBug(msg.str(),Here());
+    idx_t ip1 = edge_nodes(jedge,0);
+    idx_t ip2 = edge_nodes(jedge,1);
+    idx_t elem1 = edge_to_elem(jedge,0);
+    idx_t elem2 = edge_to_elem(jedge,1);
+    int p = edge_part(jedge);
+    int pn1 = node_part(ip1);
+    int pn2 = node_part(ip2);
+    int pe1 = elem_part(elem1);
+    bool edge_is_partition_boundary = (elem1 == edge_to_elem.missing_value() || elem2 == edge_to_elem.missing_value());
+    bool edge_partition_is_same_as_one_of_nodes = ( p == pn1 || p == pn2 );
+    if ( edge_is_partition_boundary ) {
+      if( not edge_partition_is_same_as_one_of_nodes ) {
+        Log::error() << debug::rank_str() << EDGE(jedge) << " [p"<<p<<"] is not correct elem1[p"<<pe1<<"]" << std::endl;
+        throw eckit::Exception("Sanity check failed",Here());
+      }
+    } else {
+      int pe2 = elem_part(elem2);
+      bool edge_partition_is_same_as_one_of_elems = ( p == pe1 || p == pe2 );
+      if( not edge_partition_is_same_as_one_of_elems and not edge_partition_is_same_as_one_of_nodes ) {
+        Log::error() << debug::rank_str() << EDGE(jedge) << " is not correct elem1[p"<<pe1<<"] elem2[p"<<pe2<<"]" << std::endl;
+        throw eckit::Exception("Sanity check failed",Here());
+      }
     }
-
-#ifdef DEBUGGING_PARFIELDS
-        if( OWNED_EDGE(jedge) )
-          DEBUG( EDGE(jedge) << " -->    part " << edge_part(jedge));
-#endif
-
-
-#ifdef DEBUGGING_PARFIELDS_disable
-    if( PERIODIC_EDGE(jedge) )
-      DEBUG_VAR( "           the part is " << edge_part(jedge) );
-#endif
   }
-  /// TODO: Make sure that the edge-partition is at least one of the partition numbers of the
-  /// neighbouring elements.
-  /// Because of this problem, the size of the halo should be set to 2 instead of 1!!!
-  /// This will be addressed with JIRA issue  ATLAS-12
+
+//#ifdef DEBUGGING_PARFIELDS
+//        if( OWNED_EDGE(jedge) )
+//          DEBUG( EDGE(jedge) << " -->    part " << edge_part(jedge));
+//#endif
+
+
+//#ifdef DEBUGGING_PARFIELDS_disable
+//    if( PERIODIC_EDGE(jedge) )
+//      DEBUG_VAR( "           the part is " << edge_part(jedge) );
+//#endif
+//  }
+//  /// TODO: Make sure that the edge-partition is at least one of the partition numbers of the
+//  /// neighbouring elements.
+//  /// Because of this problem, the size of the halo should be set to 2 instead of 1!!!
+//  /// This will be addressed with JIRA issue  ATLAS-12
 
   return edges.partition();
 }
@@ -650,7 +568,7 @@ Field& build_edges_remote_idx( Mesh& mesh  )
   array::ArrayView<double,2> xy = array::make_view<double,2>( nodes.xy() );
   array::ArrayView<int,   1> flags  = array::make_view<int,1>( nodes.field("flags")       );
 #ifdef DEBUGGING_PARFIELDS
-  array::ArrayView<gidx_t,   1> gidx   = array::make_view<gidx_t,1>( nodes.global_index()       );
+  array::ArrayView<gidx_t,   1> node_gidx   = array::make_view<gidx_t,1>( nodes.global_index()       );
   array::ArrayView<int,   1> node_part = array::make_view<int,1>( nodes.partition()       );
 #endif
 
@@ -720,8 +638,8 @@ Field& build_edges_remote_idx( Mesh& mesh  )
       send_needed[ edge_part(jedge) ].push_back( uid   );
       send_needed[ edge_part(jedge) ].push_back( jedge );
 #ifdef DEBUGGING_PARFIELDS
-      send_needed[ edge_part(jedge) ].push_back( gidx(ip1) );
-      send_needed[ edge_part(jedge) ].push_back( gidx(ip2) );
+      send_needed[ edge_part(jedge) ].push_back( node_gidx(ip1) );
+      send_needed[ edge_part(jedge) ].push_back( node_gidx(ip2) );
       send_needed[ edge_part(jedge) ].push_back( node_part(ip1) );
       send_needed[ edge_part(jedge) ].push_back( node_part(ip2) );
 #endif
