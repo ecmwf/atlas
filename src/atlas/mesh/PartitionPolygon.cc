@@ -125,13 +125,13 @@ void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath, const
                "\n" "count_" << r << " = " << count <<
                "\n" "count_all_" << r << " = " << count_all <<
                "\n" ""
-               "\n" "x_" << r << " = ["; for (size_t i=0; i<count; ++i) { f << xy(i, XX) << ", "; } f << "]"
-               "\n" "y_" << r << " = ["; for (size_t i=0; i<count; ++i) { f << xy(i, YY) << ", "; } f << "]"
+               //"\n" "x_" << r << " = ["; for (size_t i=0; i<count; ++i) { f << xy(i, XX) << ", "; } f << "]"
+               //"\n" "y_" << r << " = ["; for (size_t i=0; i<count; ++i) { f << xy(i, YY) << ", "; } f << "]"
                "\n"
                "\n" "c = cycol()"
                "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), facecolor=c, color=c, alpha=0.3, lw=1))"
-               "\n" "if plot_nodes:"
-               "\n" "    ax.scatter(x_" << r << ", y_" << r << ", color=c, marker='o')"
+               //"\n" "if plot_nodes:"
+               //"\n" "    ax.scatter(x_" << r << ", y_" << r << ", color=c, marker='o')"
                "\n" "";
           if (mpi_rank == mpi_size - 1) {
               f << "\n" "ax.set_xlim( "<<xmin<<"-5, "<<xmax<<"+5)"
