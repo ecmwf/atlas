@@ -26,7 +26,6 @@
 #include "atlas/mesh/detail/AccumulateFacets.h"
 #include "atlas/mesh/detail/PeriodicTransform.h"
 #include "atlas/parallel/mpi/Buffer.h"
-#include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
@@ -398,7 +397,7 @@ void accumulate_elements( const Mesh& mesh,
                           std::vector<int>& found_elements,
                           std::set< uid_t >& new_nodes_uid )
 {
-  ATLAS_TRACE();
+  //ATLAS_TRACE();
   const mesh::HybridElements::Connectivity &elem_nodes = mesh.cells().node_connectivity();
   const array::ArrayView<int,1> elem_part = array::make_view<int,1>( mesh.cells().partition() );
 
@@ -614,7 +613,7 @@ public:
   template< typename NodeContainer, typename ElementContainer >
   void fill_sendbuffer(Buffers& buf,const NodeContainer& nodes_uid, const ElementContainer& elems, const int p)
   {
-    ATLAS_TRACE();
+    //ATLAS_TRACE();
 
     int nb_nodes = nodes_uid.size();
     buf.node_glb_idx[p].resize(nb_nodes);
@@ -677,7 +676,7 @@ public:
   template< typename NodeContainer, typename ElementContainer >
   void fill_sendbuffer(Buffers& buf,const NodeContainer& nodes_uid, const ElementContainer& elems, const PeriodicTransform& transform, int newflags, const int p)
   {
-    ATLAS_TRACE();
+    //ATLAS_TRACE();
 
     int nb_nodes = nodes_uid.size();
     buf.node_glb_idx[p].resize(nb_nodes);
