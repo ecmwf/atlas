@@ -36,8 +36,21 @@ size_t legendre_size( const size_t truncation ) {
   return (truncation+2)*(truncation+1)/2;
 }
 
-int fourier_truncation( double truncation, double lat ) {
-  return truncation;
+int fourier_truncation( const int truncation, const int nx, const int nxmax, const double lat ) {
+    int linear_truncation = (nxmax-1)/2, trc = truncation;
+    if( truncation>=linear_truncation ) {
+        // linear
+        trc = (nx-1)/2;
+    } else if( truncation>=2./3.*linear_truncation ) {
+        // quadratic
+        trc = (nx-1)/(2+3*(linear_truncation-truncation)/linear_truncation*std::pow(std::sin(lat),2));
+    } else {
+        // cubic
+        trc = (nx-1)/(2+std::pow(std::sin(lat),2))-1;
+    }
+    trc = std::min(truncation, trc);
+    //Log::info() << "truncation=" <<  truncation << " trc=" << trc <<  " nx=" << nx << " nxmax=" << nxmax << " lat=" << lat << std::endl;
+    return trc;
 }
 
 } // namespace anonymous
@@ -211,7 +224,7 @@ void TransLocal::invtrans_uv(
             int idx = 0;
             for( size_t j=0; j<g.ny(); ++j ) {
                 double lat = g.y(j) * util::Constants::degreesToRadians();
-                double trcFT = fourier_truncation( truncation, lat );
+                double trcFT = fourier_truncation( truncation, g.nx(j), g.nxmax(), lat );
 
                 // Legendre transform:
                 invtrans_legendre( truncation, trcFT, truncation_+1, legPol(lat,j), nb_fields, scalar_spectra, legReal.data(), legImag.data() );
@@ -232,7 +245,7 @@ void TransLocal::invtrans_uv(
             for( PointXY p: grid_.xy() ) {
                 double lon = p.x() * util::Constants::degreesToRadians();
                 double lat = p.y() * util::Constants::degreesToRadians();
-                double trcFT = fourier_truncation( truncation, lat );
+                double trcFT = truncation;
 
                 // Legendre transform:
                 invtrans_legendre( truncation, trcFT, truncation_+1, legPol(lat,idx), nb_fields, scalar_spectra, legReal.data(), legImag.data() );
@@ -246,7 +259,7 @@ void TransLocal::invtrans_uv(
             }
         }
 
-        // transpose result
+        // transpose result (gp_tmp: jfld is fastest index. gp_fields: jfld needs to be slowest index)
         gp_transpose( grid_.size(), nb_fields, gp_tmp.data(), gp_fields );
     }
 }
