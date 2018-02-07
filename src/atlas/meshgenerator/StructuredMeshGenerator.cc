@@ -36,6 +36,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/util/detail/Debug.h"
 
 #define DEBUG_OUTPUT 0
 
@@ -983,7 +984,7 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
     if(include_periodic_ghost_points && size_t(region.lat_end.at(jlat)) == rg.nx(jlat) - 1) // add periodic point
     {
       int inode = node_numbering.at(jnode);
-      int inode_left = node_numbering.at(jnode-1);
+      //int inode_left = node_numbering.at(jnode-1);
       ++l;
       double x = rg.x(rg.nx(jlat),jlat);
       if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nx(jlat));
@@ -999,8 +1000,9 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
 
 
       glb_idx(inode)   = periodic_glb.at(jlat)+1;
-      part(inode)      = part( offset_glb.at(jlat) ); // part(inode_left);
+      part(inode)      = parts.at( offset_glb.at(jlat) ); // part(inode_left);
       ghost(inode)     = 1;
+      std::cout << debug::rank_str() << "periodic point  gidx: " << glb_idx(inode) << "  part: " << part(inode)  << " master = " << 1+ offset_glb.at(jlat) << std::endl;
       Topology::reset(flags(inode));
       Topology::set(flags(inode),Topology::BC|Topology::EAST);
       Topology::set(flags(inode),Topology::GHOST);

@@ -261,8 +261,9 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
     proc[jpart] = jpart;
   // <---------
 
-  array::IndexView<int,   1> ridx   = array::make_indexview<int,1>( nodes.remote_index()  );
-  array::ArrayView<int,   1> part   = array::make_view<int,1>( nodes.partition()   );
+  auto ridx   = array::make_indexview<int,1>( nodes.remote_index()  );
+  auto part   = array::make_view<int,1>( nodes.partition()   );
+  auto gidx   = array::make_view<gidx_t,1>( nodes.global_index()   );
   size_t nb_nodes = nodes.size();
 
   int varsize=2;
@@ -274,6 +275,11 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
   for( size_t jnode=0; jnode<nb_nodes; ++jnode )
   {
     uid_t uid = compute_uid(jnode);
+
+    if( debug::is_node_uid(uid) ) {
+      std::cout << debug::rank_str() << "uid: " << uid << " gidx: " << gidx(jnode) << " part: " << part(jnode) << std::endl;
+    }
+
     if( size_t(part(jnode)) == mypart )
     {
       lookup[ uid ] = jnode;

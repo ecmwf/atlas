@@ -211,7 +211,7 @@ void Meshgen2Gmsh::execute(const Args& args)
   }
 
   if( grid.projection().units() == "degrees" ) {
-    functionspace::NodeColumns nodes_fs(mesh,option::halo(halo));
+  //  functionspace::NodeColumns nodes_fs(mesh,option::halo(halo));
   } else {
     Log::warning() << "Not yet implemented: building halo's with projections not defined in degrees" << std::endl;
     Log::warning() << "units: " << grid.projection().units() << std::endl;
