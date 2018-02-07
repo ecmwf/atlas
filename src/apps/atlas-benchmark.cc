@@ -475,7 +475,6 @@ void AtlasBenchmark::iteration()
     if( debug_here )
       std::cout << std::endl;
   }
-  ::exit(1);
 
   atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
   {

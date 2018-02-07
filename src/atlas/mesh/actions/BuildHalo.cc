@@ -694,14 +694,15 @@ public:
         std::cout << debug::rank_str() << "preparing send of elem " << elem_glb_idx(ielem) << std::endl;
       }
 
-      buf.elem_glb_idx[p][jelem] = compute_uid( elem_nodes->row(ielem) );
+      buf.elem_glb_idx[p][jelem] = elem_glb_idx(ielem);
       buf.elem_part   [p][jelem] = elem_part(ielem);
       buf.elem_type   [p][jelem] = mesh.cells().type_idx(ielem);
       for( size_t jnode=0; jnode<elem_nodes->cols(ielem); ++jnode )
         buf.elem_nodes_id[p][jelemnode++] = compute_uid( (*elem_nodes)(ielem,jnode) );
 
       if( debug::is_cell_global_index( elem_glb_idx(ielem) ) ) {
-        std::cout << debug::rank_str() << "uid of elem " << elem_glb_idx(ielem) << " : " << buf.elem_glb_idx[p][jelem] << std::endl; 
+        auto elem_uid = compute_uid( elem_nodes->row(ielem) );
+        std::cout << debug::rank_str() << "uid of elem " << elem_glb_idx(ielem) << " : " << elem_uid << std::endl; 
       }
 
     }
@@ -777,7 +778,7 @@ public:
       }
       // Global index of element is based on UID of destination
 
-      buf.elem_glb_idx[p][jelem] = util::unique_lonlat( crds.data(), elem_nodes->cols(ielem) );
+      buf.elem_glb_idx[p][jelem] = - util::unique_lonlat( crds.data(), elem_nodes->cols(ielem) );
     }
 
   }
@@ -895,16 +896,17 @@ public:
     ATLAS_TRACE();
 
     const size_t mpi_size = parallel::mpi::comm().size();
-
+    auto cell_gidx = array::make_view<gidx_t,1>(mesh.cells().global_index());
     // Elements might be duplicated from different Tasks. We need to identify unique entries
     int nb_elems = mesh.cells().size();
 //    std::set<uid_t> elem_uid;
-    std::vector<uid_t> elem_uid(nb_elems);
+    std::vector<uid_t> elem_uid(2*nb_elems);
     std::set<uid_t> new_elem_uid;
     {
       ATLAS_TRACE( "compute elem_uid" );
       for( int jelem=0; jelem<nb_elems; ++jelem ) {
-        elem_uid[jelem] = compute_uid(elem_nodes->row(jelem));
+        elem_uid[jelem*2+0] = - compute_uid(elem_nodes->row(jelem));
+        elem_uid[jelem*2+1] = cell_gidx(jelem);
       }
       std::sort( elem_uid.begin(), elem_uid.end() );
     }
@@ -974,7 +976,7 @@ public:
         for(size_t e = 0; e < elems[jpart].size(); ++e)
         {
           size_t jelem = elems[jpart][e];
-          elem_type_glb_idx(new_elems_pos+new_elem)   = buf.elem_glb_idx[jpart][jelem];
+          elem_type_glb_idx(new_elems_pos+new_elem)   = std::abs(buf.elem_glb_idx[jpart][jelem]);
           elem_type_part   (new_elems_pos+new_elem)   = buf.elem_part[jpart][jelem];
           elem_type_halo   (new_elems_pos+new_elem)   = halo+1;
           elem_type_patch  (new_elems_pos+new_elem)   = 0;
