@@ -338,6 +338,9 @@ void AtlasBenchmark::setup()
   atlas::output::Output gmsh = atlas::output::Gmsh( "edges.msh", util::Config("ghost",true)("edges",true)("elements",false) );
   gmsh.write( mesh );
 
+  gmsh = atlas::output::Gmsh( "elements.msh", util::Config("ghost",true)("edges",false)("elements",true) );
+  gmsh.write( mesh );
+
   ATLAS_TRACE_SCOPE( "build_edges_parallel_fiels" )      { build_edges_parallel_fields(mesh); }
   ATLAS_TRACE_SCOPE( "build_median_dual_mesh" )          { build_median_dual_mesh(mesh); }
   ATLAS_TRACE_SCOPE( "build_node_to_edge_connectivity" ) { build_node_to_edge_connectivity(mesh); }

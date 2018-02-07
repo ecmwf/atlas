@@ -35,7 +35,7 @@
 #include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/MicroDeg.h"
 #include "atlas/util/Unique.h"
-
+#include "atlas/util/detail/Debug.h"
 
 //#define DEBUG_OUTPUT
 #ifdef DEBUG_OUTPUT
@@ -232,6 +232,9 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
 {
   ATLAS_TRACE();
 
+  auto cell_gidx = array::make_view<gidx_t,1>( mesh.cells().global_index() );
+  auto node_gidx = array::make_view<gidx_t,1>( mesh.nodes().global_index() );
+
   const mesh::Nodes& nodes  = mesh.nodes();
 
   node2elem.resize(nodes.size());
@@ -292,6 +295,17 @@ void accumulate_partition_bdry_nodes_old( Mesh& mesh, std::vector<int>& bdry_nod
     }
   }
   bdry_nodes = std::vector<int>( bdry_nodes_set.begin(), bdry_nodes_set.end());
+
+  //debugging
+  {
+    auto node_gidx = array::make_view<gidx_t,1>(mesh.nodes().global_index());
+    for( int j=0; j<bdry_nodes.size(); ++j ) {
+      if( debug::is_node_global_index( node_gidx(bdry_nodes[j]) ) ) {
+        std::cout << debug::rank_str() << "node " << node_gidx(bdry_nodes[j]) << " detected in boundary " << std::endl;
+      }
+    }
+  }
+
 }
 
 
@@ -391,24 +405,30 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
 }
 
 void accumulate_elements( const Mesh& mesh,
-                          const parallel::mpi::BufferView<uid_t>& node_uid,
+                          const parallel::mpi::BufferView<uid_t>& request_node_uid,
                           const Uid2Node& uid2node,
                           const Node2Elem& node2elem,
-                          std::vector<int>& found_elements,
+                          std::vector<idx_t>& found_elements,
                           std::set< uid_t >& new_nodes_uid )
 {
   //ATLAS_TRACE();
   const mesh::HybridElements::Connectivity &elem_nodes = mesh.cells().node_connectivity();
-  const array::ArrayView<int,1> elem_part = array::make_view<int,1>( mesh.cells().partition() );
+  const auto elem_part = array::make_view<int,1>( mesh.cells().partition() );
+  const auto cell_gidx = array::make_view<gidx_t,1>( mesh.cells().global_index() );
+  const auto node_gidx = array::make_view<gidx_t,1>( mesh.nodes().global_index() );
 
-  size_t nb_nodes = node_uid.size();
+  size_t nb_nodes = request_node_uid.size();
   const size_t mpi_rank = parallel::mpi::comm().rank();
 
-  std::set< int > found_elements_set;
+  std::set< idx_t > found_elements_set;
 
   for( size_t jnode=0; jnode<nb_nodes; ++jnode )
   {
-    uid_t uid = node_uid(jnode);
+    uid_t uid = request_node_uid(jnode);
+
+//    if( debug::is_mpi_rank() && debug::is_node_uid(uid) ) {
+//      std::cout << debug::rank_str() << "accumulate_elements for uid " << uid << std::endl;
+//    }
 
     int inode = -1;
     // search and get node index for uid
@@ -416,12 +436,15 @@ void accumulate_elements( const Mesh& mesh,
     if( found != uid2node.end() )
     {
       inode = found->second;
+//      if( debug::is_node_global_index( node_gidx(inode) ) ) {
+//        std::cout << debug::rank_str() << " node " << node_gidx(inode) << " found" << std::endl;
+//      }
     }
     if( inode != -1 && size_t(inode) < node2elem.size() )
     {
       for(size_t jelem = 0; jelem < node2elem[inode].size(); ++jelem)
       {
-        int e = node2elem[inode][jelem];
+        idx_t e = node2elem[inode][jelem];
         if( size_t(elem_part(e)) == mpi_rank )
         {
           found_elements_set.insert( e );
@@ -431,7 +454,7 @@ void accumulate_elements( const Mesh& mesh,
   }
 
   // found_bdry_elements_set now contains elements for the nodes
-  found_elements = std::vector<int>( found_elements_set.begin(), found_elements_set.end());
+  found_elements = std::vector<idx_t>( found_elements_set.begin(), found_elements_set.end());
 
   UniqueLonLat compute_uid( mesh );
 
@@ -439,7 +462,8 @@ void accumulate_elements( const Mesh& mesh,
   new_nodes_uid.clear();
   for(size_t jelem = 0; jelem < found_elements.size(); ++jelem)
   {
-    size_t e = found_elements[jelem];
+    idx_t e = found_elements[jelem];
+
     size_t nb_elem_nodes = elem_nodes.cols(e);
     for( size_t n=0; n<nb_elem_nodes; ++n )
     {
@@ -447,10 +471,10 @@ void accumulate_elements( const Mesh& mesh,
     }
   }
 
-  // Remove nodes we already have
+  // Remove nodes we already have in the request-buffer
   for( size_t jnode=0; jnode<nb_nodes; ++jnode)
   {
-    new_nodes_uid.erase( node_uid(jnode) ) ;
+    new_nodes_uid.erase( request_node_uid(jnode) ) ;
   }
 }
 
@@ -665,11 +689,21 @@ public:
     {
       buf.elem_nodes_displs[p][jelem] = jelemnode;
       size_t ielem = elems[jelem];
+
+      if( debug::is_cell_global_index( elem_glb_idx(ielem) ) ) {
+        std::cout << debug::rank_str() << "preparing send of elem " << elem_glb_idx(ielem) << std::endl;
+      }
+
       buf.elem_glb_idx[p][jelem] = compute_uid( elem_nodes->row(ielem) );
       buf.elem_part   [p][jelem] = elem_part(ielem);
       buf.elem_type   [p][jelem] = mesh.cells().type_idx(ielem);
       for( size_t jnode=0; jnode<elem_nodes->cols(ielem); ++jnode )
         buf.elem_nodes_id[p][jelemnode++] = compute_uid( (*elem_nodes)(ielem,jnode) );
+
+      if( debug::is_cell_global_index( elem_glb_idx(ielem) ) ) {
+        std::cout << debug::rank_str() << "uid of elem " << elem_glb_idx(ielem) << " : " << buf.elem_glb_idx[p][jelem] << std::endl; 
+      }
+
     }
   }
 
@@ -964,7 +998,7 @@ public:
 
 
 namespace {
-void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uidx_t>& send, atlas::parallel::mpi::Buffer<uid_t,1>& recv, bool periodic = false ) {
+void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uid_t>& send, atlas::parallel::mpi::Buffer<uid_t,1>& recv, bool periodic = false ) {
   auto& comm = parallel::mpi::comm();
 #ifndef ATLAS_103
   /* deprecated */
@@ -1055,6 +1089,8 @@ void increase_halo_interior( BuildHaloHelper& helper )
     build_lookup_uid2node(helper.mesh,helper.uid2node);
 
 
+  auto cell_gidx = array::make_view<gidx_t,1>( helper.mesh.cells().global_index() );
+
   // All buffers needed to move elements and nodes
   BuildHaloHelper::Buffers sendmesh(helper.mesh);
   BuildHaloHelper::Buffers recvmesh(helper.mesh);
@@ -1069,6 +1105,12 @@ void increase_halo_interior( BuildHaloHelper& helper )
   std::vector<uid_t> send_bdry_nodes_uid(bdry_nodes.size());
   for(size_t jnode = 0; jnode < bdry_nodes.size(); ++jnode)
     send_bdry_nodes_uid[jnode] = helper.compute_uid(bdry_nodes[jnode]);
+
+  for( auto uid : send_bdry_nodes_uid ) {
+    if( debug::is_node_uid(uid) ) {
+      std::cout << debug::rank_str() << "requesting elements for uid " << uid << std::endl;
+    }
+  }
 
   size_t mpi_size = parallel::mpi::comm().size();
   atlas::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(mpi_size);
@@ -1090,7 +1132,11 @@ void increase_halo_interior( BuildHaloHelper& helper )
 
     parallel::mpi::BufferView<uid_t> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
 
-    std::vector<int>  found_bdry_elems;
+    if( debug::is_mpi_rank() && debug::is_mpi_rank(jpart) ) {
+      std::cout << debug::rank_str() << "handling requests from " << jpart << std::endl;
+    }
+
+    std::vector<idx_t>  found_bdry_elems;
     std::set< uid_t > found_bdry_nodes_uid;
 
     accumulate_elements(helper.mesh,recv_bdry_nodes_uid,
@@ -1098,6 +1144,12 @@ void increase_halo_interior( BuildHaloHelper& helper )
                         helper.node_to_elem,
                         found_bdry_elems,
                         found_bdry_nodes_uid);
+
+    for( idx_t elem : found_bdry_elems ) {
+      if( debug::is_cell_global_index( cell_gidx(elem) ) ) {
+        std::cout << debug::rank_str() << "found requested elem " << cell_gidx(elem) << std::endl;
+      }
+    }
 
     // 4) Fill node and element buffers to send back
     helper.fill_sendbuffer(sendmesh, found_bdry_nodes_uid, found_bdry_elems, jpart);

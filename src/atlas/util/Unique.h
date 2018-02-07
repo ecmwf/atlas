@@ -173,7 +173,8 @@ inline uidx_t unique_lonlat( const double elem_lonlat[], size_t npts )
 
   // FIXME: this should be `unique_lonlat( centroid )`
   //        but this causes some weird behavior in parallelisation
-  return detail::unique32( microdeg(centroid[LON]), microdeg(centroid[LAT]) );
+  return unique_lonlat( centroid[LON], centroid[LAT] );
+//  return detail::unique32( microdeg(centroid[LON]), microdeg(centroid[LAT]) );
 }
 
 
@@ -213,7 +214,8 @@ inline uidx_t UniqueLonLat::operator()( const mesh::Connectivity::Row& elem_node
 
   // FIXME: this should be `unique_lonlat( centroid )`
   //        but this causes some weird behavior in parallelisation
-  return detail::unique32( microdeg(centroid[XX]), microdeg(centroid[YY]) );
+  return unique_lonlat( centroid[XX], centroid[YY] );
+//  return detail::unique32( microdeg(centroid[XX]), microdeg(centroid[YY]) );
 }
 
 
@@ -234,7 +236,8 @@ inline uidx_t UniqueLonLat::operator()( const int elem_nodes[], size_t npts ) co
   // FIXME: this should be `unique_lonlat( centroid )`
   //        but this causes some weird behavior in parallelisation
 
-  return detail::unique32( microdeg(centroid[XX]), microdeg(centroid[YY]) );
+  return unique_lonlat( centroid[XX], centroid[YY] );
+//  return detail::unique32( microdeg(centroid[XX]), microdeg(centroid[YY]) );
 }
 
 

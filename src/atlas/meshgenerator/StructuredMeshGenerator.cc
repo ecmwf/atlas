@@ -937,9 +937,6 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
     l+=region.lat_end.at(jlat)-region.lat_begin.at(jlat)+1;
 
     double y = rg.y(jlat);
-    if( region.lat_end[jlat] == rg.nx(jlat) ) {
-      std::cout << debug::rank_str() << jlat << " includes periodic point " << std::endl;
-    }
     for( int jlon=region.lat_begin.at(jlat); jlon<=region.lat_end.at(jlat); ++jlon )
     {
       if( jlon < rg.nx(jlat) ) {
@@ -1000,7 +997,6 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
   //      part(inode)      = part(inode_left);
         part(inode)      = mypart;
         ghost(inode)     = 1;
-        std::cout << debug::rank_str() << "periodic point  gidx: " << glb_idx(inode) << "  part: " << part(inode)  << " master = " << 1+ offset_glb.at(jlat) << std::endl;
         Topology::reset(flags(inode));
         Topology::set(flags(inode),Topology::BC|Topology::EAST);
         Topology::set(flags(inode),Topology::GHOST);
