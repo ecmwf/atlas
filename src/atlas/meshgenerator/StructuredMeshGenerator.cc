@@ -350,6 +350,8 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
     ipS2 = std::min(ipS1+1,endS);
 
     int jelem=0;
+    int pE = parts.at(offset.at(latN));
+
 
 #if DEBUG_OUTPUT
     Log::info()  << "=================\n";
@@ -535,6 +537,8 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
           }
           else if( cnt_max < 3 ) // 3 or 4 points don't belong to mypart
           {
+            if( pN1 == mypart ) add_quad = true;
+/*
             if( 0.5*(yN+yS) > 1e-6)
             {
               if ( pS1 == mypart )  add_quad = true;
@@ -543,6 +547,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
             {
               if ( pN2 == mypart )  add_quad = true;
             }
+*/
           }
         }
         if (add_quad)
@@ -579,19 +584,8 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
         elem(2) = -1;
         elem(3) = ipN2;
 
-        add_triag = false;
-
-        if( pN2 == pS1 ) {
-          add_triag = ( mypart == pN1 );
-        } else if( pN1 == pS1 ) {
-          add_triag = ( mypart == pN2 );
-        } else {
-          if( 0.5*(yN+yS) > 1e-6 ) {
-            add_triag = ( mypart == pN1 );
-          } else {
-            add_triag = ( mypart == pS1 );
-          }
-        }
+        pE = pN1;
+        add_triag = (mypart == pE);
 
         if (add_triag)
         {
@@ -628,19 +622,15 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
         elem(2) = ipS2;
         elem(3) = -1;
 
-        add_triag = false;
-
-        if( pN1 == pS2 ) {
-          add_triag = ( mypart == pS1 );
-        } else if( pN1 == pS1 ) {
-          add_triag = ( mypart == pS2 );
+        if( pS1 == pE && pN1 != pE ) {
+          if( xN1 < 0.5*(xS1+xS2) ) {
+            pE = pN1;
+          } // else pE of previous element
         } else {
-          if( 0.5*(yN+yS) > 1.e-6 ) {
-            add_triag = ( mypart == pN1 );
-          } else {
-            add_triag = ( mypart == pS2 );
-          }
+          pE = pN1;
         }
+        if( ipN1 == rg.nx(latN) ) pE = pS1;
+        add_triag = (mypart == pE);
 
         if (add_triag)
         {
@@ -682,8 +672,8 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
     if( region.nb_lat_elems.at(jlat) == 0 && latS == size_t(region.south) ) {
       --region.south;
     }
-    region.lat_end.at(latN) = std::min(region.lat_end.at(latN), int(rg.nx(latN)-1));
-    region.lat_end.at(latS) = std::min(region.lat_end.at(latS), int(rg.nx(latS)-1));
+//    region.lat_end.at(latN) = std::min(region.lat_end.at(latN), int(rg.nx(latN)-1));
+//    region.lat_end.at(latS) = std::min(region.lat_end.at(latS), int(rg.nx(latS)-1));
     if( yN == 90 && unique_pole )
       region.lat_end.at(latN) = rg.nx(latN)-1;
     if( yS == -90 && unique_pole )
@@ -714,7 +704,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
     nb_region_nodes += region.lat_end.at(jlat)-region.lat_begin.at(jlat)+1;
 
     // Count extra periodic node
-    if( periodic_east_west && size_t(region.lat_end.at(jlat)) == rg.nx(jlat) - 1) ++nb_region_nodes;
+    //if( periodic_east_west && size_t(region.lat_end.at(jlat)) == rg.nx(jlat) - 1) ++nb_region_nodes;
   }
 
   region.nnodes = nb_region_nodes;
@@ -893,23 +883,26 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
       }
       for( int jlon=region.lat_begin.at(jlat); jlon<=region.lat_end.at(jlat); ++jlon )
       {
-        n = offset_glb.at(jlat) + jlon;
-        if( parts.at(n) == mypart ) {
-          node_numbering.at(jnode) = node_number;
-          ++node_number;
+        if( jlon < rg.nx(jlat) ) {
+          n = offset_glb.at(jlat) + jlon;
+          if( parts.at(n) == mypart ) {
+            node_numbering.at(jnode) = node_number;
+            ++node_number;
+          }
+          else {
+            ghost_nodes.push_back( GhostNode(jlat,jlon,jnode));
+          }
+          ++jnode;
         }
-        else {
-          ghost_nodes.push_back( GhostNode(jlat,jlon,jnode));
+        else if ( include_periodic_ghost_points ) // add periodic point
+        {
+          part(jnode)      = part(jnode-1);
+          ghost(jnode)     = 1;
+          ghost_nodes.push_back( GhostNode(jlat,rg.nx(jlat),jnode) );
+          ++jnode;
+        } else {
+          --l;
         }
-        ++jnode;
-      }
-      if(include_periodic_ghost_points && size_t(region.lat_end.at(jlat)) == rg.nx(jlat) - 1) // add periodic point
-      {
-        ++l;
-        part(jnode)      = part(jnode-1);
-        ghost(jnode)     = 1;
-        ghost_nodes.push_back( GhostNode(jlat,rg.nx(jlat),jnode) );
-        ++jnode;
       }
     }
     for( size_t jghost=0; jghost<ghost_nodes.size(); ++jghost )
@@ -944,69 +937,77 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
     l+=region.lat_end.at(jlat)-region.lat_begin.at(jlat)+1;
 
     double y = rg.y(jlat);
+    if( region.lat_end[jlat] == rg.nx(jlat) ) {
+      std::cout << debug::rank_str() << jlat << " includes periodic point " << std::endl;
+    }
     for( int jlon=region.lat_begin.at(jlat); jlon<=region.lat_end.at(jlat); ++jlon )
     {
-      int inode = node_numbering.at(jnode);
-      n = offset_glb.at(jlat) + jlon;
+      if( jlon < rg.nx(jlat) ) {
+        int inode = node_numbering.at(jnode);
+        n = offset_glb.at(jlat) + jlon;
 
-      double x = rg.x(jlon,jlat);
-      //std::cout << "jlat = " << jlat << "; jlon = " << jlon << "; x = " << x << std::endl;
-      if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nx(jlat));
+        double x = rg.x(jlon,jlat);
+        //std::cout << "jlat = " << jlat << "; jlon = " << jlon << "; x = " << x << std::endl;
+        if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nx(jlat));
 
-      xy(inode,XX) = x;
-      xy(inode,YY) = y;
+        xy(inode,XX) = x;
+        xy(inode,YY) = y;
 
-      // geographic coordinates by using projection
-      double crd[] = {x,y};
-      rg.projection().xy2lonlat(crd);
-      lonlat(inode,LON) = crd[LON];
-      lonlat(inode,LAT) = crd[LAT];
+        // geographic coordinates by using projection
+        double crd[] = {x,y};
+        rg.projection().xy2lonlat(crd);
+        lonlat(inode,LON) = crd[LON];
+        lonlat(inode,LAT) = crd[LAT];
 
-      glb_idx(inode)   = n+1;
-      part(inode) = parts.at(n);
-      ghost(inode) = 0;
-      Topology::reset(flags(inode));
-      if( jlat == 0 && !include_north_pole) {
-        Topology::set(flags(inode),Topology::BC|Topology::NORTH);
+        glb_idx(inode)   = n+1;
+        part(inode) = parts.at(n);
+        ghost(inode) = 0;
+        Topology::reset(flags(inode));
+        if( jlat == 0 && !include_north_pole) {
+          Topology::set(flags(inode),Topology::BC|Topology::NORTH);
+        }
+        if( size_t(jlat) == rg.ny()-1 && !include_south_pole) {
+          Topology::set(flags(inode),Topology::BC|Topology::SOUTH);
+        }
+        if( jlon == 0 && include_periodic_ghost_points) {
+          Topology::set(flags(inode),Topology::BC|Topology::WEST);
+        }
+        if( part(inode) != mypart ) {
+          Topology::set(flags(inode),Topology::GHOST);
+          ghost(inode) = 1;
+        }
+        ++jnode;
       }
-      if( size_t(jlat) == rg.ny()-1 && !include_south_pole) {
-        Topology::set(flags(inode),Topology::BC|Topology::SOUTH);
-      }
-      if( jlon == 0 && include_periodic_ghost_points) {
-        Topology::set(flags(inode),Topology::BC|Topology::WEST);
-      }
-      if( part(inode) != mypart ) {
+      else if(include_periodic_ghost_points) // add periodic point
+      {
+        int inode = node_numbering.at(jnode);
+        //int inode_left = node_numbering.at(jnode-1);
+        double x = rg.x(rg.nx(jlat),jlat);
+        if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nx(jlat));
+
+        xy(inode,XX) = x;
+        xy(inode,YY) = y;
+
+        // geographic coordinates by using projection
+        double crd[] = {x,y};
+        rg.projection().xy2lonlat(crd);
+        lonlat(inode,LON) = crd[LON];
+        lonlat(inode,LAT) = crd[LAT];
+
+
+        glb_idx(inode)   = periodic_glb.at(jlat)+1;
+  //      part(inode)      = parts.at( offset_glb.at(jlat) ); // part(inode_left);
+  //      part(inode)      = part(inode_left);
+        part(inode)      = mypart;
+        ghost(inode)     = 1;
+        std::cout << debug::rank_str() << "periodic point  gidx: " << glb_idx(inode) << "  part: " << part(inode)  << " master = " << 1+ offset_glb.at(jlat) << std::endl;
+        Topology::reset(flags(inode));
+        Topology::set(flags(inode),Topology::BC|Topology::EAST);
         Topology::set(flags(inode),Topology::GHOST);
-        ghost(inode) = 1;
+        ++jnode;
+      } else {
+        --l;
       }
-      ++jnode;
-    }
-    if(include_periodic_ghost_points && size_t(region.lat_end.at(jlat)) == rg.nx(jlat) - 1) // add periodic point
-    {
-      int inode = node_numbering.at(jnode);
-      //int inode_left = node_numbering.at(jnode-1);
-      ++l;
-      double x = rg.x(rg.nx(jlat),jlat);
-      if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rg.nx(jlat));
-
-      xy(inode,XX) = x;
-      xy(inode,YY) = y;
-
-      // geographic coordinates by using projection
-      double crd[] = {x,y};
-      rg.projection().xy2lonlat(crd);
-      lonlat(inode,LON) = crd[LON];
-      lonlat(inode,LAT) = crd[LAT];
-
-
-      glb_idx(inode)   = periodic_glb.at(jlat)+1;
-      part(inode)      = parts.at( offset_glb.at(jlat) ); // part(inode_left);
-      ghost(inode)     = 1;
-      std::cout << debug::rank_str() << "periodic point  gidx: " << glb_idx(inode) << "  part: " << part(inode)  << " master = " << 1+ offset_glb.at(jlat) << std::endl;
-      Topology::reset(flags(inode));
-      Topology::set(flags(inode),Topology::BC|Topology::EAST);
-      Topology::set(flags(inode),Topology::GHOST);
-      ++jnode;
     }
   };
 
