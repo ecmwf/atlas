@@ -372,19 +372,19 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
       if( ipN1 != rg.nx(latN) )
         pN1 = parts.at(offset.at(latN)+ipN1);
       else
-        pN1 = parts.at(offset.at(latN)+ipN1-1);
+        pN1 = parts.at(offset.at(latN));
       if( ipS1 != rg.nx(latS) )
         pS1 = parts.at(offset.at(latS)+ipS1);
       else
-        pS1 = parts.at(offset.at(latS)+ipS1-1);
+        pS1 = parts.at(offset.at(latS));
 
 
       if( ipN2 == rg.nx(latN) )
-        pN2 = pN1;
+        pN2 = parts.at(offset.at(latN));
       else
         pN2 = parts.at(offset.at(latN)+ipN2);
       if( ipS2 == rg.nx(latS) )
-        pS2 = pS1;
+        pS2 = parts.at(offset.at(latS));
       else
         pS2 = parts.at(offset.at(latS)+ipS2);
 
@@ -580,48 +580,18 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
 
         add_triag = false;
 
-#ifdef PARTITIONING_BEFORE_ATLAS_0_12
-        int cnt_mypart = 0;
-        int np[3] = {pN1, pN2, pS1};
-        for( int j=0; j<3; ++j ) {
-          if (np[j]==mypart) ++cnt_mypart;
-        }
-        if( cnt_mypart > 1 )
-        {
-          add_triag=true;
-        }
-        else if( cnt_mypart == 1)
-        {
-          int pcnts[3];
-          for( int j=0; j<3; ++j )
-            pcnts[j] = std::count(np, np+3, np[j]);
-          int cnt_max = *std::max_element(pcnts,pcnts+3);
-          if( cnt_max == 1)
-          {
-            if( 0.5*(yN+yS) > 1e-6 )
-            {
-              if( pS1 == mypart )
-                add_triag = true;
-            }
-            else
-            {
-              if( pN1 == mypart )
-                add_triag = true;
-            }
+        if( pN2 == pS1 ) {
+          add_triag = ( mypart == pN1 );
+        } else if( pN1 == pS1 ) {
+          add_triag = ( mypart == pN2 );
+        } else {
+          if( 0.5*(yN+yS) > 1e-6 ) {
+            add_triag = ( mypart == pN1 );
+          } else {
+            add_triag = ( mypart == pS1 );
           }
         }
-#else
-        if( 0.5*(yN+yS) > 1e-6 )
-        {
-          if( pN1 == mypart )
-            add_triag = true;
-        }
-        else
-        {
-          if( pS1 == mypart )
-            add_triag = true;
-        }
-#endif
+
         if (add_triag)
         {
           ++region.ntriags;
@@ -659,54 +629,17 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
 
         add_triag = false;
 
-#ifdef PARTITIONING_BEFORE_ATLAS_0_12
-        int cnt_mypart = 0;
-        int np[3] = {pN1, pS1, pS2};
-        for( int j=0; j<3; ++j ) {
-          if (np[j]==mypart) ++cnt_mypart;
-        }
-
-        if( cnt_mypart > 1 )
-        {
-          add_triag=true;
-        }
-        else if( cnt_mypart == 1)
-        {
-          int pcnts[3];
-          for( int j=0; j<3; ++j )
-            pcnts[j] = std::count(np, np+3, np[j]);
-          int cnt_max = *std::max_element(pcnts,pcnts+3);
-          if( cnt_max == 1)
-          {
-            // if( latN == 0 && mypart = pN1 ) || latS == rg.nlat()-1 )
-            // {
-            //   add_triag = true;
-            // }
-            // else
-            if( 0.5*(yN+yS) > 1e-6 )
-            {
-              if( pS2 == mypart )
-                add_triag = true;
-            }
-            else
-            {
-              if( pN1 == mypart )
-                add_triag = true;
-            }
+        if( pN1 == pS2 ) {
+          add_triag = ( mypart == pS1 );
+        } else if( pN1 == pS1 ) {
+          add_triag = ( mypart == pS2 );
+        } else {
+          if( 0.5*(yN+yS) > 1.e-6 ) {
+            add_triag = ( mypart == pN1 );
+          } else {
+            add_triag = ( mypart == pS2 );
           }
         }
-#else
-        if( 0.5*(yN+yS) > 1e-6 )
-        {
-          if( pN1 == mypart )
-            add_triag = true;
-        }
-        else
-        {
-          if( pS2 == mypart )
-            add_triag = true;
-        }
-#endif
 
         if (add_triag)
         {
@@ -1066,7 +999,7 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
 
 
       glb_idx(inode)   = periodic_glb.at(jlat)+1;
-      part(inode)      = part(inode_left);
+      part(inode)      = part( offset_glb.at(jlat) ); // part(inode_left);
       ghost(inode)     = 1;
       Topology::reset(flags(inode));
       Topology::set(flags(inode),Topology::BC|Topology::EAST);

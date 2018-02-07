@@ -502,6 +502,7 @@ Field& build_edges_partition( Mesh& mesh )
 
 
 //  // Sanity check
+  int insane = 0;
   for( size_t jedge=0; jedge<nb_edges; ++jedge )
   {
     idx_t ip1 = edge_nodes(jedge,0);
@@ -517,17 +518,20 @@ Field& build_edges_partition( Mesh& mesh )
     if ( edge_is_partition_boundary ) {
       if( not edge_partition_is_same_as_one_of_nodes ) {
         Log::error() << debug::rank_str() << EDGE(jedge) << " [p"<<p<<"] is not correct elem1[p"<<pe1<<"]" << std::endl;
-        throw eckit::Exception("Sanity check failed",Here());
+        insane = 1;  //throw eckit::Exception("Sanity check failed",Here());
       }
     } else {
       int pe2 = elem_part(elem2);
       bool edge_partition_is_same_as_one_of_elems = ( p == pe1 || p == pe2 );
       if( not edge_partition_is_same_as_one_of_elems and not edge_partition_is_same_as_one_of_nodes ) {
         Log::error() << debug::rank_str() << EDGE(jedge) << " is not correct elem1[p"<<pe1<<"] elem2[p"<<pe2<<"]" << std::endl;
-        throw eckit::Exception("Sanity check failed",Here());
+        insane = 1; //throw eckit::Exception("Sanity check failed",Here());
       }
     }
   }
+  parallel::mpi::comm().allReduceInPlace(insane, eckit::mpi::max() );
+  if( insane && eckit::mpi::comm().rank() == 0 )
+    ;//throw eckit::Exception("Sanity check failed",Here());
 
 //#ifdef DEBUGGING_PARFIELDS
 //        if( OWNED_EDGE(jedge) )

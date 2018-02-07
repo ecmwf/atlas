@@ -335,8 +335,8 @@ void AtlasBenchmark::setup()
   ATLAS_TRACE_SCOPE( "build_pole_edges" )                { build_pole_edges(mesh); }
 
   //mesh.polygon(0).outputPythonScript("plot_polygon.py");
-  //atlas::output::Output gmsh = atlas::output::Gmsh( "edges.msh", util::Config("ghost",true)("edges",true)("elements",false) );
-  //gmsh.write( mesh );
+  atlas::output::Output gmsh = atlas::output::Gmsh( "edges.msh", util::Config("ghost",true)("edges",true)("elements",false) );
+  gmsh.write( mesh );
 
   ATLAS_TRACE_SCOPE( "build_edges_parallel_fiels" )      { build_edges_parallel_fields(mesh); }
   ATLAS_TRACE_SCOPE( "build_median_dual_mesh" )          { build_median_dual_mesh(mesh); }
@@ -472,6 +472,7 @@ void AtlasBenchmark::iteration()
     if( debug_here )
       std::cout << std::endl;
   }
+  ::exit(1);
 
   atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
   {

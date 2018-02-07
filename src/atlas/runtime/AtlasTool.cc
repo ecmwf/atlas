@@ -9,6 +9,16 @@
 
 
 namespace {
+
+int digits(int number) {
+  int d = 0;
+  while( number ) {
+    number /= 10;
+    d++;
+  }
+  return d;
+}
+
 static std::string debug_prefix(const std::string& libname) {
   std::string s = libname;
   std::transform(s.begin(), s.end(), s.begin(), ::toupper);
@@ -109,6 +119,7 @@ bool atlas::AtlasTool::handle_help()
 atlas::AtlasTool::AtlasTool(int argc, char **argv): eckit::Tool(argc,argv)
 {
   eckit::LibEcKit::instance().setAbortHandler( []{
+    Log::error() << "["<<atlas::parallel::mpi::comm().rank()<<"] " << "calling MPI_Abort" << std::endl;
     atlas::parallel::mpi::comm().abort(1);
   });
 
@@ -177,8 +188,13 @@ void atlas::AtlasTool::setupLogging()
 
   if( use_logfile ) {
 
+    int d = digits(parallel::mpi::comm().size());
+    std::string rankstr = std::to_string(taskID());
+    for( int i = rankstr.size(); i<d; ++i )
+      rankstr = "0"+rankstr;
+
     eckit::LogTarget* logfile =
-        new eckit::FileTarget(displayName() + ".log.p" + std::to_string(taskID()));
+        new eckit::FileTarget(displayName() + ".log.p" + rankstr);
 
     if( parallel::mpi::comm().rank() == log_rank ) {
       if( Log::info() )    Log::info()   .addTarget(logfile);
