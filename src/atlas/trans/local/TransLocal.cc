@@ -36,23 +36,6 @@ size_t legendre_size( const size_t truncation ) {
   return (truncation+2)*(truncation+1)/2;
 }
 
-int fourier_truncation( const int truncation, const int nx, const int nxmax, const double lat ) {
-    int linear_truncation = (nxmax-1)/2, trc = truncation;
-    if( truncation>=linear_truncation ) {
-        // linear
-        trc = (nx-1)/2;
-    } else if( truncation>=2./3.*linear_truncation ) {
-        // quadratic
-        trc = (nx-1)/(2+3*(linear_truncation-truncation)/linear_truncation*std::pow(std::sin(lat),2));
-    } else {
-        // cubic
-        trc = (nx-1)/(2+std::pow(std::sin(lat),2))-1;
-    }
-    trc = std::min(truncation, trc);
-    //Log::info() << "truncation=" <<  truncation << " trc=" << trc <<  " nx=" << nx << " nxmax=" << nxmax << " lat=" << lat << std::endl;
-    return trc;
-}
-
 } // namespace anonymous
 
 // --------------------------------------------------------------------------------------------------------------------

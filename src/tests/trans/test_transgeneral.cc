@@ -466,7 +466,11 @@ void spectral_transform_grid_analytic(
                 double lon = g.x(i,j) * util::Constants::degreesToRadians();
 
                 // compute spherical harmonics:
-                rgp[idx++] = sphericalharmonics_analytic_point(n, m, imag, lon, lat, ivar_in, ivar_out);
+                if( trans::fourier_truncation(trc, g.nx(j), g.nxmax(), lat)>=m ) {
+                    rgp[idx++] = sphericalharmonics_analytic_point(n, m, imag, lon, lat, ivar_in, ivar_out);
+                } else {
+                    rgp[idx++] = 0.;
+                }
             }
         }
     } else {
@@ -735,9 +739,9 @@ CASE( "test_trans_vordiv_with_translib" )
   // resolution: (Reduce this number if the test takes too long!)
   int res = 12;
   
-  Grid g( "F" + std::to_string(res) );
+  Grid g( "O" + std::to_string(res) );
   grid::StructuredGrid gs(g);
-  int trc = res*2-2;
+  int trc = res*2-1;
   trans::Trans trans     (g, trc) ;
   trans::Trans transLocal(g, trc, util::Config("type","local"));
 
@@ -816,11 +820,13 @@ CASE( "test_trans_vordiv_with_translib" )
 
                               double rms_trans = compute_rms(g.size(),  gp.data()+pos*g.size(), rgp_analytic.data());
                               double rms_gen   = compute_rms(g.size(), rgp.data()+pos*g.size(), rgp_analytic.data());
+                              double rms_diff  = compute_rms(g.size(), rgp.data()+pos*g.size(), gp.data()+pos*g.size());
 
-                              if( rms_gen >= tolerance || rms_trans >= tolerance ) {
+                              if( rms_gen >= tolerance || rms_trans >= tolerance || rms_diff >= tolerance ) {
                                 Log::info() << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
                                 ATLAS_DEBUG_VAR(rms_gen);
                                 ATLAS_DEBUG_VAR(rms_trans);
+                                ATLAS_DEBUG_VAR(rms_diff);
                                 ATLAS_DEBUG_VAR(tolerance);
                               }
                               EXPECT( rms_trans < tolerance );

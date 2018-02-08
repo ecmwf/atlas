@@ -30,6 +30,12 @@ void invtrans_fourier(
         const double rlegImag[],  // values of associated Legendre functions, size (trc+1)*trc/2 (in)
         double rgp[] );           // gridpoint
 
+int fourier_truncation(
+        const int truncation,
+        const int nx,
+        const int nxmax,
+        const double lat );
+
 // --------------------------------------------------------------------------------------------------------------------
 
 } // namespace trans

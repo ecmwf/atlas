@@ -9,6 +9,7 @@
  */
 
 #include <cmath>
+#include <algorithm>
 #include "atlas/trans/local/FourierTransforms.h"
 
 namespace atlas {
@@ -36,6 +37,25 @@ void invtrans_fourier(
             rgp[jfld] += cos * rlegReal[jm*nb_fields+jfld] - sin * rlegImag[jm*nb_fields+jfld];
         }
     }
+}
+
+int fourier_truncation( const int truncation, const int nx, const int nxmax, const double lat ) {
+    int linear_truncation = (nxmax-1)/2;
+    int trc = truncation;
+    if( truncation>=linear_truncation ) {
+        // linear
+        trc = (nx-1)/2;
+    } else if( truncation>=2./3.*linear_truncation ) {
+        // quadratic
+        //trc = (nx-1)/(2+std::pow(std::cos(lat),2));
+        trc = (nx-1)/(2+3*(linear_truncation-truncation)/linear_truncation*std::pow(std::cos(lat),2));
+    } else {
+        // cubic
+        trc = (nx-1)/(2+std::pow(std::cos(lat),2))-1;
+    }
+    trc = std::min(truncation, trc);
+    //Log::info() << "truncation=" <<  truncation << " trc=" << trc <<  " nx=" << nx << " nxmax=" << nxmax << " latsin2=" << std::pow(std::cos(lat),2) << std::endl;
+    return trc;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
