@@ -376,7 +376,7 @@ CASE( "test_rgg_meshgen_many_parts" )
   int triags[] = { 42, 13, 12, 13, 12, 14,  0,  1,  0,  1,  1,  0,  1,  0, 14, 12, 13, 11, 14, 42};
   int nb_owned = 0;
 
-  std::vector<int> all_owned    ( grid.size()+grid.ny()+1, -1 );
+  std::vector<int> all_owned ( grid.size(), -1 );
 
   for(size_t p = 0; p < nb_parts; ++p)
   {
@@ -396,6 +396,7 @@ CASE( "test_rgg_meshgen_many_parts" )
     Log::info() << "generated grid " << p << std::endl;
     array::ArrayView<int   ,1> part = array::make_view<int   ,1>( m.nodes().partition() );
     array::ArrayView<gidx_t,1> gidx = array::make_view<gidx_t,1>( m.nodes().global_index() );
+    array::ArrayView<double,2> lonlat = array::make_view<double,2>( m.nodes().lonlat() );
 
     area += test::compute_lonlat_area(m);
     ATLAS_DEBUG_HERE();
@@ -441,25 +442,27 @@ DISABLE{
     // Test if all nodes are owned
     for( size_t n=0; n<nb_nodes; ++n )
     {
-      if( size_t(part(n)) == p )
-      {
-        ++nb_owned;
-        EXPECT( all_owned[ gidx(n) ] == -1 );
-        if( all_owned[ gidx(n)] != -1 )
-          std::cout << "node " << gidx(n) << " already visited for" << std::endl;
-        all_owned[ gidx(n) ] = part(n);
+      if( gidx(n) <= grid.size() ) {
+        if( size_t(part(n)) == p )
+        {
+          ++nb_owned;
+          if( all_owned[ gidx(n)-1 ] != -1 )
+            std::cout << "node " << gidx(n) << " already visited by " << all_owned[gidx(n)-1] << std::endl;
+          EXPECT( all_owned[ gidx(n)-1 ] == -1 );
+          all_owned[ gidx(n)-1 ] = part(n);
+        }
       }
     }
   }
 
-  for(size_t gid = 1; gid < all_owned.size(); ++gid)
+  for(size_t gid = 1; gid <= all_owned.size(); ++gid)
   {
-    if( all_owned[gid] == -1 )
+    if( all_owned[gid-1] == -1 )
     {
       Log::error() << "node " << gid << " is not owned by anyone"  << std::endl;
     }
   }
-  EXPECT( nb_owned == grid.size()+grid.ny() );
+  EXPECT( nb_owned == grid.size() );
 
   EXPECT( eckit::types::is_approximately_equal(area, check_area, 1e-10) );
 
