@@ -794,8 +794,9 @@ void TransIFS::ctor_rgg(const long nlat, const long pl[], long truncation, const
   trans_->fft = p.fft();
   trans_->lsplit = p.split_latitudes();
   trans_->flt = p.flt();
-
-  TRANS_CHECK(::trans_setup(trans_.get()));
+  ATLAS_TRACE_SCOPE("trans_setup"){
+    TRANS_CHECK(::trans_setup(trans_.get()));
+  }
 }
 
 void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, const eckit::Configuration& config )

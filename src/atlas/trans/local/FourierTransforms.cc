@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <iostream>
 #include "atlas/trans/local/FourierTransforms.h"
 
 namespace atlas {
@@ -39,22 +40,28 @@ void invtrans_fourier(
     }
 }
 
-int fourier_truncation( const int truncation, const int nx, const int nxmax, const double lat ) {
-    int linear_truncation = (nxmax-1)/2;
+int fourier_truncation(
+    const int truncation,
+    const int nx,
+    const int nxmax,
+    const int ndgl,
+    const double lat )
+{
+    int linear_truncation = ndgl-1;
     int trc = truncation;
     if( truncation>=linear_truncation ) {
         // linear
         trc = (nx-1)/2;
-    } else if( truncation>=2./3.*linear_truncation ) {
+    } else if( truncation>=ndgl*2/3-1 ) {
         // quadratic
         //trc = (nx-1)/(2+std::pow(std::cos(lat),2));
-        trc = (nx-1)/(2+3*(linear_truncation-truncation)/linear_truncation*std::pow(std::cos(lat),2));
+        trc = (nx-1)/(2+3*(linear_truncation-truncation)/ndgl*std::pow(std::cos(lat),2));
     } else {
         // cubic
         trc = (nx-1)/(2+std::pow(std::cos(lat),2))-1;
     }
     trc = std::min(truncation, trc);
-    //Log::info() << "truncation=" <<  truncation << " trc=" << trc <<  " nx=" << nx << " nxmax=" << nxmax << " latsin2=" << std::pow(std::cos(lat),2) << std::endl;
+    //std::cout << "truncation=" <<  truncation << " 2./3.*ndgl-1=" << 2./3.*ndgl-1 <<  " nx=" << nx << " nxmax=" << nxmax << " latsin2=" << std::pow(std::cos(lat),2) << std::endl;
     return trc;
 }
 

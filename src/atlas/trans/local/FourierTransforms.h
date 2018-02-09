@@ -34,6 +34,7 @@ int fourier_truncation(
         const int truncation,
         const int nx,
         const int nxmax,
+        const int ndgl,
         const double lat );
 
 // --------------------------------------------------------------------------------------------------------------------

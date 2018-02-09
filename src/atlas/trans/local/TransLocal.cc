@@ -207,7 +207,7 @@ void TransLocal::invtrans_uv(
             int idx = 0;
             for( size_t j=0; j<g.ny(); ++j ) {
                 double lat = g.y(j) * util::Constants::degreesToRadians();
-                double trcFT = fourier_truncation( truncation, g.nx(j), g.nxmax(), lat );
+                double trcFT = fourier_truncation( truncation, g.nx(j), g.nxmax(), g.ny(), lat );
 
                 // Legendre transform:
                 invtrans_legendre( truncation, trcFT, truncation_+1, legPol(lat,j), nb_fields, scalar_spectra, legReal.data(), legImag.data() );
