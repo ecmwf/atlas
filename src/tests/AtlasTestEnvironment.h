@@ -10,17 +10,29 @@
 
 #pragma once
 
+#include <thread>
+#include <chrono>
+#include <exception>
+
 #include "eckit/config/Resource.h"
 #include "eckit/eckit_version.h"
+#include "eckit/eckit_config.h"
 #include "eckit/mpi/Comm.h"
 #include "eckit/runtime/Main.h"
+#include "eckit/config/Resource.h"
+#include "eckit/config/LibEcKit.h"
 #include "eckit/testing/Test.h"
+#include "eckit/log/PrefixTarget.h"
 
 #include "atlas/library/Library.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Config.h"
+#include "atlas/runtime/trace/StopWatch.h"
 
+#ifdef ECKIT_HAVE_MPI
+#include <mpi.h>
+#endif
 
 namespace atlas {
 namespace test {
@@ -64,6 +76,10 @@ void UNIQUE_NAME2(traced_test_, __LINE__)(std::string& _test_subsection, int& _n
 void UNIQUE_NAME2(test_, __LINE__) (std::string& _test_subsection, int& _num_subsections, int _subsection) { \
     ATLAS_TRACE(description); \
     UNIQUE_NAME2(traced_test_, __LINE__)(_test_subsection,_num_subsections,_subsection); \
+    if( atlas::test::barrier_timeout( atlas::test::ATLAS_MPI_BARRIER_TIMEOUT() ) ) { \
+        atlas::Log::warning() << "\nWARNING: Test \""<< description << "\" failed with MPI deadlock.  (${ATLAS_MPI_BARRIER_TIMEOUT}="<<ATLAS_MPI_BARRIER_TIMEOUT() << ").\nCalling MPI_Abort..." << std::endl; \
+        eckit::mpi::comm().abort(); \
+    }\
 } \
 void UNIQUE_NAME2(traced_test_, __LINE__)(std::string& _test_subsection, int& _num_subsections, int _subsection)
 
@@ -72,7 +88,7 @@ void UNIQUE_NAME2(traced_test_, __LINE__)(std::string& _test_subsection, int& _n
     _num_subsections += 1; \
     _test_subsection = (name); \
     if ((_num_subsections - 1) == _subsection) { \
-        eckit::Log::info() << "Running section \"" << _test_subsection << "\" ..." << std::endl; \
+        atlas::Log::info() << "Running section \"" << _test_subsection << "\" ..." << std::endl; \
     } \
     if ((_num_subsections - 1) == _subsection) ATLAS_TRACE_SCOPE(_test_subsection)
 
@@ -84,6 +100,35 @@ void UNIQUE_NAME2(traced_test_, __LINE__)(std::string& _test_subsection, int& _n
 
 //----------------------------------------------------------------------------------------------------------------------
 
+static double ATLAS_MPI_BARRIER_TIMEOUT() {
+  static int v = eckit::Resource<double>("${ATLAS_MPI_BARRIER_TIMEOUT",3.);
+  return v;
+}
+
+
+static int barrier_timeout( double seconds ) {
+#ifdef ECKIT_HAVE_MPI
+  if( eckit::mpi::comm().size() > 1 ) {
+    MPI_Request req;
+    MPI_Ibarrier( MPI_COMM_WORLD, &req );
+
+    int barrier_succesful = 0;
+    runtime::trace::StopWatch watch; watch.start();
+    while( not barrier_succesful ) {
+      watch.stop();
+      if( watch.elapsed() > seconds ) {
+        return 1;
+      }
+      watch.start();
+      std::this_thread::sleep_for( std::chrono::milliseconds(100) );
+      MPI_Test( &req, &barrier_succesful, MPI_STATUS_IGNORE );
+    }
+  }
+#endif
+  return 0;
+}
+
+
 struct AtlasTestEnvironment {
 
     using Config = util::Config;
@@ -92,11 +137,21 @@ struct AtlasTestEnvironment {
         eckit::Main::initialise(argc, argv);
         eckit::Main::instance().taskID( eckit::mpi::comm("world").rank() );
         if( eckit::mpi::comm("world").size() != 1 ) {
-            long logtask = eckit::Resource<long>("--logtask;$ATLAS_TEST_LOGTASK", 0);
-            if( eckit::Main::instance().taskID() != logtask ) Log::reset();
+            long logtask = eckit::Resource<long>("$ATLAS_LOG_TASK", 0);
+            if( eckit::Main::instance().taskID() != logtask ) {
+              eckit::Log::info().reset();
+              eckit::Log::warning().reset();
+              eckit::Log::debug().reset();
+            }
+            eckit::Log::error().setTarget(
+              new eckit::PrefixTarget( "["+std::to_string(eckit::mpi::comm().rank())+"]" ) );
         }
-        bool report = eckit::Resource<bool>("--report;$ATLAS_TRACE_REPORT", false);
-        Library::instance().initialise( Config("trace", Config("report",report) ) );
+        eckit::LibEcKit::instance().setAbortHandler( []{
+          Log::error() << "Calling MPI_Abort" << std::endl;
+          eckit::mpi::comm().abort();
+        });
+        Library::instance().initialise();
+        eckit::mpi::comm().barrier();
     }
 
     ~AtlasTestEnvironment() {
@@ -109,7 +164,15 @@ struct AtlasTestEnvironment {
 template< typename Environment >
 int run(int argc, char* argv[]) {
     Environment env( argc, argv );
-    return eckit::testing::run_tests(argc,argv,false);
+    int errors = eckit::testing::run_tests(argc,argv,false);
+    if( eckit::mpi::comm().size() > 1 ) {
+      if( barrier_timeout(ATLAS_MPI_BARRIER_TIMEOUT()) ) {
+        eckit::Log::warning() << "\nWARNING: Tests failed with MPI deadlock (${ATLAS_MPI_BARRIER_TIMEOUT}="<<ATLAS_MPI_BARRIER_TIMEOUT() << ").\nCalling MPI_Abort..." << std::endl;
+        eckit::mpi::comm().abort();
+      }
+      eckit::mpi::comm().allReduceInPlace( errors, eckit::mpi::max() );
+    }
+    return errors;
 }
 
 int run(int argc, char* argv[]) {
