@@ -36,7 +36,6 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/util/detail/Debug.h"
 
 #define DEBUG_OUTPUT 0
 
@@ -517,39 +516,17 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
             pcnts[j] = std::count(np, np+4, np[j]);
           int cnt_max = *std::max_element(pcnts,pcnts+4);
 
-          if( latN == 0 )
+          if( cnt_mypart > 2 ) // 3 or 4 points belong to mypart
           {
-            if( pN1 == mypart )
-            {
-              add_quad = true;
-            }
+            pE = mypart;
           }
-          else if ( latS == rg.ny()-1 )
+          else // 3 or 4 points don't belong to mypart
           {
-            if( pS2 == mypart )
-            {
-              add_quad = true;
-            }
-          }
-          else if( cnt_mypart > 2 ) // 3 or 4 points belong to mypart
-          {
-            add_quad = true;
-          }
-          else if( cnt_max < 3 ) // 3 or 4 points don't belong to mypart
-          {
-            if( pN1 == mypart ) add_quad = true;
-/*
-            if( 0.5*(yN+yS) > 1e-6)
-            {
-              if ( pS1 == mypart )  add_quad = true;
-            }
-            else
-            {
-              if ( pN2 == mypart )  add_quad = true;
-            }
-*/
+            pE = pN1;
+            if( latS == rg.ny()-1 ) pE = pS1;
           }
         }
+        add_quad = ( pE == mypart );
         if (add_quad)
         {
           ++region.nquads;
@@ -585,6 +562,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
         elem(3) = ipN2;
 
         pE = pN1;
+        if( latS == rg.ny()-1 ) pE = pS1;
         add_triag = (mypart == pE);
 
         if (add_triag)
@@ -630,6 +608,8 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
           pE = pN1;
         }
         if( ipN1 == rg.nx(latN) ) pE = pS1;
+        if( latS == rg.ny()-1 ) pE = pS1;
+
         add_triag = (mypart == pE);
 
         if (add_triag)
@@ -993,9 +973,7 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
 
 
         glb_idx(inode)   = periodic_glb.at(jlat)+1;
-  //      part(inode)      = parts.at( offset_glb.at(jlat) ); // part(inode_left);
-  //      part(inode)      = part(inode_left);
-        part(inode)      = mypart;
+        part(inode)      = mypart; // The actual part will be fixed later
         ghost(inode)     = 1;
         Topology::reset(flags(inode));
         Topology::set(flags(inode),Topology::BC|Topology::EAST);

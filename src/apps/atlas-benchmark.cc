@@ -59,7 +59,6 @@
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
-#include "atlas/util/detail/Debug.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -442,38 +441,12 @@ void AtlasBenchmark::iteration()
     int ip1 = edge2node(jedge,0);
     int ip2 = edge2node(jedge,1);
 
-    bool debug_here = false;
-    if( debug::is_node_global_index( node_glb_idx(ip1) ) || debug::is_node_global_index( node_glb_idx(ip2) ) ) {
-      debug_here = true;
-    }
-    if( debug_here ) {
-      if( debug::is_edge_global_index( edge_glb_idx(jedge) ) ) {
-        std::cout << "* ";
-      }
-      else {
-        std::cout << "  ";
-      }
-
-      std::cout << debug::rank_str() << "Edge["<<edge_glb_idx(jedge)<<",p"<<edge_part(jedge)<<"] ( "
-        << "Node["<<node_glb_idx(ip1)<<",p"<<node_part(ip1)<<"], "
-        << "Node["<<node_glb_idx(ip2)<<",p"<<node_part(ip2)<<"] )";
-    }
     for(size_t jlev = 0; jlev < nlev; ++jlev)
     {
       double avg = ( field(ip1,jlev) + field(ip2,jlev) ) * 0.5;
       avgS(jedge,jlev,LON) = S(jedge,LON)*avg;
       avgS(jedge,jlev,LAT) = S(jedge,LAT)*avg;
-      if( debug_here && jlev == 0 ) {
-          std::cout
-            << "  avg " << avg
-            << "  S(LON) " << S(jedge,LON)
-            << "  S(LAT) " << S(jedge,LAT)
-            << "  V(ip1) " << V(ip1)
-            << "  V(ip2) " << V(ip2);
-      }
     }
-    if( debug_here )
-      std::cout << std::endl;
   }
 
   atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
@@ -617,28 +590,6 @@ double AtlasBenchmark::result()
     gmsh.write( mesh );
     gmsh.write( scalar_field );
     gmsh.write( grad_field );
-  }
-
-
-  bool found;
-  for ( size_t jnode=0; jnode<nnodes; ++jnode ) {
-    if ( glb_idx(jnode) == debug::node_global_index() ) {
-      found = true;
-    }
-  }
-  if( parallel::mpi::comm().rank() == debug::mpi_rank() ) ASSERT(found);
-
-
-  for(size_t jnode = 0; jnode < nnodes; ++jnode)
-  {
-    size_t jlev=0;
-    if ( glb_idx(jnode) == debug::node_global_index() ) {
-      std::cout << "["<<parallel::mpi::comm().rank() << "] "
-      << " glb_idx " << glb_idx(jnode)
-      << " part "    << part(jnode)
-      << " x,y,z "   << grad(jnode,jlev,LON) << ","<<grad(jnode,jlev,LAT)<<","<<grad(jnode,jlev,ZZ)
-      <<  std::endl;
-    }
   }
 
   ATLAS_TRACE_MPI( ALLREDUCE ) {

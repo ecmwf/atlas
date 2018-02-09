@@ -29,7 +29,6 @@
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/GatherScatter.h"
-#include "atlas/util/detail/Debug.h"
 
 #define EDGE(jedge) "Edge("<<node_gidx(edge_nodes(jedge,0))<<"[p"<<node_part(edge_nodes(jedge,0))<<"] "<<node_gidx(edge_nodes(jedge,1))<<"[p"<<node_part(edge_nodes(jedge,1))<<"])"
 
@@ -276,10 +275,6 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
   {
     uid_t uid = compute_uid(jnode);
 
-    if( debug::is_node_uid(uid) ) {
-      std::cout << debug::rank_str() << "uid: " << uid << " gidx: " << gidx(jnode) << " part: " << part(jnode) << std::endl;
-    }
-
     if( size_t(part(jnode)) == mypart )
     {
       lookup[ uid ] = jnode;
@@ -446,7 +441,7 @@ Field& build_edges_partition( Mesh& mesh )
     if( elem1 == edge_to_elem.missing_value() ) {
       bdry_edges.push_back( edge_glb_idx(jedge) );
       p = pn1;
-      // Log::error() << debug::rank_str() << EDGE(jedge) << " is a pole edge with part " << p << std::endl;
+      // Log::error() << EDGE(jedge) << " is a pole edge with part " << p << std::endl;
     } else if(elem2 == edge_to_elem.missing_value()) {
       // if( not domain_bdry(jedge) ) {
         bdry_edges.push_back( edge_glb_idx(jedge) );
@@ -457,9 +452,8 @@ Field& build_edges_partition( Mesh& mesh )
 
       if( p != elem_part(elem1) and p != elem_part(elem2) ) {
         std::stringstream msg;
-        msg << debug::rank_str() << EDGE(jedge) << " has nodes and elements of different rank: elem1[p"<<elem_part(elem1)<<"] elem2[p"<<elem_part(elem2)<<"]";
-        Log::error() << msg.str() << std::endl;
-        //throw eckit::SeriousBug(msg.str(),Here());
+        msg << "[" << eckit::mpi::comm().rank() << "] " << EDGE(jedge) << " has nodes and elements of different rank: elem1[p"<<elem_part(elem1)<<"] elem2[p"<<elem_part(elem2)<<"]";
+        throw eckit::SeriousBug(msg.str(),Here());
       }
     }
     edge_part(jedge) = p;
@@ -502,7 +496,7 @@ Field& build_edges_partition( Mesh& mesh )
       int prev = edge_part(iedge);
       edge_part(iedge) = recv_part_p[j];
       // if( edge_part(iedge) != prev )
-      //   Log::error() << debug::rank_str() << EDGE(iedge) << " part " << prev << " --> " << edge_part(iedge) << std::endl;
+      //   Log::error() << EDGE(iedge) << " part " << prev << " --> " << edge_part(iedge) << std::endl;
     }
   }
 
@@ -523,14 +517,14 @@ Field& build_edges_partition( Mesh& mesh )
     bool edge_partition_is_same_as_one_of_nodes = ( p == pn1 || p == pn2 );
     if ( edge_is_partition_boundary ) {
       if( not edge_partition_is_same_as_one_of_nodes ) {
-        Log::error() << debug::rank_str() << EDGE(jedge) << " [p"<<p<<"] is not correct elem1[p"<<pe1<<"]" << std::endl;
+        Log::error() << EDGE(jedge) << " [p"<<p<<"] is not correct elem1[p"<<pe1<<"]" << std::endl;
         insane = 1;  //throw eckit::Exception("Sanity check failed",Here());
       }
     } else {
       int pe2 = elem_part(elem2);
       bool edge_partition_is_same_as_one_of_elems = ( p == pe1 || p == pe2 );
       if( not edge_partition_is_same_as_one_of_elems and not edge_partition_is_same_as_one_of_nodes ) {
-        Log::error() << debug::rank_str() << EDGE(jedge) << " is not correct elem1[p"<<pe1<<"] elem2[p"<<pe2<<"]" << std::endl;
+        Log::error() << EDGE(jedge) << " is not correct elem1[p"<<pe1<<"] elem2[p"<<pe2<<"]" << std::endl;
         insane = 1; //throw eckit::Exception("Sanity check failed",Here());
       }
     }

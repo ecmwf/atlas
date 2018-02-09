@@ -35,7 +35,6 @@
 #include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/MicroDeg.h"
 #include "atlas/util/Unique.h"
-#include "atlas/util/detail/Debug.h"
 
 //#define DEBUG_OUTPUT
 #ifdef DEBUG_OUTPUT
@@ -295,17 +294,6 @@ void accumulate_partition_bdry_nodes_old( Mesh& mesh, std::vector<int>& bdry_nod
     }
   }
   bdry_nodes = std::vector<int>( bdry_nodes_set.begin(), bdry_nodes_set.end());
-
-  //debugging
-  {
-    auto node_gidx = array::make_view<gidx_t,1>(mesh.nodes().global_index());
-    for( int j=0; j<bdry_nodes.size(); ++j ) {
-      if( debug::is_node_global_index( node_gidx(bdry_nodes[j]) ) ) {
-        std::cout << debug::rank_str() << "node " << node_gidx(bdry_nodes[j]) << " detected in boundary " << std::endl;
-      }
-    }
-  }
-
 }
 
 
@@ -414,8 +402,6 @@ void accumulate_elements( const Mesh& mesh,
   //ATLAS_TRACE();
   const mesh::HybridElements::Connectivity &elem_nodes = mesh.cells().node_connectivity();
   const auto elem_part = array::make_view<int,1>( mesh.cells().partition() );
-  const auto cell_gidx = array::make_view<gidx_t,1>( mesh.cells().global_index() );
-  const auto node_gidx = array::make_view<gidx_t,1>( mesh.nodes().global_index() );
 
   size_t nb_nodes = request_node_uid.size();
   const size_t mpi_rank = parallel::mpi::comm().rank();
@@ -426,19 +412,12 @@ void accumulate_elements( const Mesh& mesh,
   {
     uid_t uid = request_node_uid(jnode);
 
-//    if( debug::is_mpi_rank() && debug::is_node_uid(uid) ) {
-//      std::cout << debug::rank_str() << "accumulate_elements for uid " << uid << std::endl;
-//    }
-
     int inode = -1;
     // search and get node index for uid
     Uid2Node::const_iterator found = uid2node.find(uid);
     if( found != uid2node.end() )
     {
       inode = found->second;
-//      if( debug::is_node_global_index( node_gidx(inode) ) ) {
-//        std::cout << debug::rank_str() << " node " << node_gidx(inode) << " found" << std::endl;
-//      }
     }
     if( inode != -1 && size_t(inode) < node2elem.size() )
     {
@@ -690,21 +669,11 @@ public:
       buf.elem_nodes_displs[p][jelem] = jelemnode;
       size_t ielem = elems[jelem];
 
-      if( debug::is_cell_global_index( elem_glb_idx(ielem) ) ) {
-        std::cout << debug::rank_str() << "preparing send of elem " << elem_glb_idx(ielem) << std::endl;
-      }
-
       buf.elem_glb_idx[p][jelem] = elem_glb_idx(ielem);
       buf.elem_part   [p][jelem] = elem_part(ielem);
       buf.elem_type   [p][jelem] = mesh.cells().type_idx(ielem);
       for( size_t jnode=0; jnode<elem_nodes->cols(ielem); ++jnode )
         buf.elem_nodes_id[p][jelemnode++] = compute_uid( (*elem_nodes)(ielem,jnode) );
-
-      if( debug::is_cell_global_index( elem_glb_idx(ielem) ) ) {
-        auto elem_uid = compute_uid( elem_nodes->row(ielem) );
-        std::cout << debug::rank_str() << "uid of elem " << elem_glb_idx(ielem) << " : " << elem_uid << std::endl; 
-      }
-
     }
   }
 
@@ -1091,8 +1060,6 @@ void increase_halo_interior( BuildHaloHelper& helper )
     build_lookup_uid2node(helper.mesh,helper.uid2node);
 
 
-  auto cell_gidx = array::make_view<gidx_t,1>( helper.mesh.cells().global_index() );
-
   // All buffers needed to move elements and nodes
   BuildHaloHelper::Buffers sendmesh(helper.mesh);
   BuildHaloHelper::Buffers recvmesh(helper.mesh);
@@ -1107,12 +1074,6 @@ void increase_halo_interior( BuildHaloHelper& helper )
   std::vector<uid_t> send_bdry_nodes_uid(bdry_nodes.size());
   for(size_t jnode = 0; jnode < bdry_nodes.size(); ++jnode)
     send_bdry_nodes_uid[jnode] = helper.compute_uid(bdry_nodes[jnode]);
-
-  for( auto uid : send_bdry_nodes_uid ) {
-    if( debug::is_node_uid(uid) ) {
-      std::cout << debug::rank_str() << "requesting elements for uid " << uid << std::endl;
-    }
-  }
 
   size_t mpi_size = parallel::mpi::comm().size();
   atlas::parallel::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts(mpi_size);
@@ -1134,10 +1095,6 @@ void increase_halo_interior( BuildHaloHelper& helper )
 
     parallel::mpi::BufferView<uid_t> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
 
-    if( debug::is_mpi_rank() && debug::is_mpi_rank(jpart) ) {
-      std::cout << debug::rank_str() << "handling requests from " << jpart << std::endl;
-    }
-
     std::vector<idx_t>  found_bdry_elems;
     std::set< uid_t > found_bdry_nodes_uid;
 
@@ -1146,12 +1103,6 @@ void increase_halo_interior( BuildHaloHelper& helper )
                         helper.node_to_elem,
                         found_bdry_elems,
                         found_bdry_nodes_uid);
-
-    for( idx_t elem : found_bdry_elems ) {
-      if( debug::is_cell_global_index( cell_gidx(elem) ) ) {
-        std::cout << debug::rank_str() << "found requested elem " << cell_gidx(elem) << std::endl;
-      }
-    }
 
     // 4) Fill node and element buffers to send back
     helper.fill_sendbuffer(sendmesh, found_bdry_nodes_uid, found_bdry_elems, jpart);
