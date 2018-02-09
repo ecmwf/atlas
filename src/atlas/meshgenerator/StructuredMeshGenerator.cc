@@ -507,21 +507,23 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
         elem(2) = ipS2;
         elem(3) = ipN2;
         add_quad = false;
-        int np[] = {pN1, pN2, pS1, pS2};
-        int cnt_mypart = std::count(np, np+4, mypart);
-        if( cnt_mypart > 0 )
-        {
-          int pcnts[4];
-          for( int j=0; j<4; ++j )
-            pcnts[j] = std::count(np, np+4, np[j]);
-          int cnt_max = *std::max_element(pcnts,pcnts+4);
-
-          if( cnt_mypart > 2 ) // 3 or 4 points belong to mypart
-          {
-            pE = mypart;
+        std::array<int,4> np {pN1, pN2, pS1, pS2};
+        std::array<int,4> pcnts;
+        for( int j=0; j<4; ++j )
+          pcnts[j] = std::count(np.begin(),np.end(),np[j]);
+        if( pcnts[0] > 2 ) { // 3 or more of pN1
+          pE = pN1;
+          if( latS == rg.ny()-1 ) pE = pS1;
+        } else if ( pcnts[2] > 2 ) { // 3 or more of pS1
+          pE = pS1;
+          if( latN == 0 ) pE = pN1;
+        }
+        else {
+          std::array<int,4>::iterator p_max = std::max_element(pcnts.begin(),pcnts.end());
+          if( *p_max > 2 ) { // 3 or 4 points belong to same part
+            pE = np[ std::distance(np.begin(),p_max) ];
           }
-          else // 3 or 4 points don't belong to mypart
-          {
+          else { // 3 or 4 points don't belong to mypart
             pE = pN1;
             if( latS == rg.ny()-1 ) pE = pS1;
           }
@@ -876,7 +878,9 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
         }
         else if ( include_periodic_ghost_points ) // add periodic point
         {
-          part(jnode)      = part(jnode-1);
+#warning TODO: use second approach
+          part(jnode)      = mypart;
+          //part(jnode)      = parts.at( offset_glb.at(jlat) );
           ghost(jnode)     = 1;
           ghost_nodes.push_back( GhostNode(jlat,rg.nx(jlat),jnode) );
           ++jnode;
@@ -973,6 +977,8 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
 
 
         glb_idx(inode)   = periodic_glb.at(jlat)+1;
+#warning TODO: use second approach
+//        part(inode)      = parts.at( offset_glb.at(jlat) );
         part(inode)      = mypart; // The actual part will be fixed later
         ghost(inode)     = 1;
         Topology::reset(flags(inode));

@@ -111,7 +111,6 @@ CASE( "test_distribute_t63" )
 
   mesh::actions::write_load_balance_report(m,"load_balance.dat");
 
-  // Mesh& mesh1 = Mesh::from_id(meshid);
   Mesh& mesh1 = m;
   EXPECT( mesh1.nodes().size() == m.nodes().size() );
 
