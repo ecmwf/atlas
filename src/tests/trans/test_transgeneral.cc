@@ -869,11 +869,12 @@ CASE( "test_trans_fourier_truncation" )
   // test transgeneral by comparing its result with the trans library
   // this test is based on the test_nomesh case in test_trans.cc
 
-  Grid g( "F640" );
+  Grid g( "O640" );
   grid::StructuredGrid gs(g);
   int ndgl = gs.ny();
   //int trc = 2*ndgl; // extreme high truncation (below linear)
   int trc = ndgl-1; // linear
+  //int trc = 5./6.*ndgl-1; // between linear and quadratic
   //int trc = 2./3.*ndgl-1; // quadratic
   //int trc = ndgl/2. -1; // cubic
   trans::Trans trans(g, trc) ;
@@ -881,7 +882,7 @@ CASE( "test_trans_fourier_truncation" )
   for( int j=0; j<gs.ny(); j+=80 ) {
       double lat = gs.y(j) * util::Constants::degreesToRadians();
       int trcFT = trans::fourier_truncation(trc, gs.nx(j), gs.nxmax(), gs.ny(), lat, fullgrid);
-      //Log::info() << trcFT << "         " << gs.nx(j) << std::endl;
+      Log::info() << trcFT << "         " << gs.nx(j) << std::endl;
   }
   // TODO: create some real criterion to test fourier_truncation. So far only comparison with trans library through print statements.
 }
