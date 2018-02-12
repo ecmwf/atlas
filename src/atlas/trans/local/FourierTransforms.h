@@ -35,7 +35,8 @@ int fourier_truncation(
         const int nx,
         const int nxmax,
         const int ndgl,
-        const double lat );
+        const double lat,
+        const bool fullgrid );
 
 // --------------------------------------------------------------------------------------------------------------------
 

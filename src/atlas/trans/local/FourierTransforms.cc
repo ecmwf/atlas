@@ -45,11 +45,12 @@ int fourier_truncation(
     const int nx,
     const int nxmax,
     const int ndgl,
-    const double lat )
+    const double lat,
+    const bool fullgrid )
 {
     int linear_truncation = ndgl-1;
     int trc = truncation;
-    if( truncation>=linear_truncation ) {
+    if( truncation>=linear_truncation || fullgrid ) {
         // linear
         trc = (nx-1)/2;
     } else if( truncation>=ndgl*2/3-1 ) {
@@ -61,7 +62,7 @@ int fourier_truncation(
         trc = (nx-1)/(2+std::pow(std::cos(lat),2))-1;
     }
     trc = std::min(truncation, trc);
-    //std::cout << "truncation=" <<  truncation << " 2./3.*ndgl-1=" << 2./3.*ndgl-1 <<  " nx=" << nx << " nxmax=" << nxmax << " latsin2=" << std::pow(std::cos(lat),2) << std::endl;
+    //std::cout << "truncation=" <<  truncation << " trc=" << trc << " ndgl*2/3-1=" << ndgl*2/3-1 <<  " nx=" << nx << " nxmax=" << nxmax << " latsin2=" << std::pow(std::cos(lat),2) << std::endl;
     return trc;
 }
 
