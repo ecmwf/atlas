@@ -48,8 +48,9 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const long truncat
     precompute_ ( config.getBool("precompute", true) )
 {
     if ( precompute_ ) {
-        if( grid::StructuredGrid g = grid_ ) {
+        if( grid::StructuredGrid(grid_) && not grid_.projection() ) {
             ATLAS_TRACE("Precompute legendre structured");
+            grid::StructuredGrid g(grid_);
             size_t size(0);
             legendre_begin_.resize( g.ny() );
             for( size_t j=0; j<g.ny(); ++j ) {
