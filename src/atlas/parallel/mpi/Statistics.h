@@ -21,17 +21,16 @@
 #include "atlas/util/detail/BlackMagic.h"
 
 #undef ATLAS_TRACE_MPI
-#define ATLAS_TRACE_MPI(...) ATLAS_TRACE_MPI_( ::atlas::parallel::mpi::Statistics, Here(), __VA_ARGS__ )
+#define ATLAS_TRACE_MPI(...) ATLAS_TRACE_MPI_( ::atlas::mpi::Trace, Here(), __VA_ARGS__ )
 #define ATLAS_TRACE_MPI_( Type, location, operation, ... ) __ATLAS_TYPE_SCOPE( \
   Type, location, __ATLAS_TRACE_MPI_ENUM(operation) __ATLAS_COMMA_ARGS(__VA_ARGS__) )
 
-#define __ATLAS_TRACE_MPI_ENUM(operation) ::atlas::parallel::mpi::Operation::__ATLAS_STRINGIFY(operation)
+#define __ATLAS_TRACE_MPI_ENUM(operation) ::atlas::mpi::Operation::__ATLAS_STRINGIFY(operation)
 
 #endif
 
 
 namespace atlas {
-namespace parallel {
 namespace mpi {
 
 struct StatisticsTimerTraits {
@@ -74,13 +73,13 @@ static const std::string& name(Operation c) {
   return names[ static_cast<size_t>(c) ];
 }
 
-class Statistics : public runtime::trace::TraceT< StatisticsTimerTraits > {
+class Trace : public runtime::trace::TraceT< StatisticsTimerTraits > {
     using Base = runtime::trace::TraceT< StatisticsTimerTraits >;
 public:
-    Statistics( const eckit::CodeLocation& loc, Operation c ) :
+    Trace( const eckit::CodeLocation& loc, Operation c ) :
       Base( loc, name(c), make_labels(c) ) {
     }
-    Statistics( const eckit::CodeLocation& loc, Operation c, const std::string& title ) :
+    Trace( const eckit::CodeLocation& loc, Operation c, const std::string& title ) :
       Base( loc, title, make_labels(c) ) {
     }
 private:
@@ -90,5 +89,4 @@ private:
 };
 
 } // namespace mpi
-} // namespace parallel
 } // namespace atlas

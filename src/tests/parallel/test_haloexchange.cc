@@ -110,8 +110,8 @@ struct Fixture {
   Fixture(bool on_device) : on_device_(on_device)
   {
     int nnodes_c[] = {5, 6, 7}; nb_nodes = vec(nnodes_c);
-    N = nb_nodes[parallel::mpi::comm().rank()];
-    switch( parallel::mpi::comm().rank() )
+    N = nb_nodes[mpi::comm().rank()];
+    switch( mpi::comm().rank() )
     {
       case 0:
       {
@@ -153,7 +153,7 @@ void test_rank0_arrview(Fixture& f) {
     array::ArrayT<POD> arr(f.N);
     array::ArrayView<POD,1> arrv = array::make_host_view<POD,1>(arr);
     for( int j=0; j<f.N; ++j ) {
-      arrv(j) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j] );
+      arrv(j) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j] );
     }
 
     arr.syncHostDevice();
@@ -162,7 +162,7 @@ void test_rank0_arrview(Fixture& f) {
 
     arr.syncHostDevice();
 
-    switch( parallel::mpi::comm().rank() )
+    switch( mpi::comm().rank() )
     {
       case 0: { POD arr_c[] = { 9, 1, 2, 3, 4};
         validate<POD,1>::apply(arrv, arr_c); break; }
@@ -177,8 +177,8 @@ void test_rank1(Fixture& f) {
     array::ArrayT<POD> arr(f.N,2);
     array::ArrayView<POD,2> arrv = array::make_host_view<POD,2>(arr);
     for( int j=0; j<f.N; ++j ) {
-      arrv(j,0) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
-      arrv(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
+      arrv(j,0) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*10 );
+      arrv(j,1) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*100);
     }
 
     arr.syncHostDevice();
@@ -187,7 +187,7 @@ void test_rank1(Fixture& f) {
 
     arr.syncHostDevice();
 
-    switch( parallel::mpi::comm().rank() )
+    switch( mpi::comm().rank() )
     {
       case 0: { POD arr_c[] = { 90,900, 10,100, 20,200, 30,300, 40,400 };
         validate<POD,2>::apply(arrv, arr_c); break; }
@@ -203,8 +203,8 @@ void test_rank1_strided_v1(Fixture& f) {
     array::ArrayT<POD> arr_t(f.N,2);
     array::ArrayView<POD,2> arrv_t = array::make_host_view<POD,2>(arr_t);
     for( int j=0; j<f.N; ++j ) {
-       arrv_t(j,0) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
-       arrv_t(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
+       arrv_t(j,0) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*10 );
+       arrv_t(j,1) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*100);
     }
 
     arr_t.syncHostDevice();
@@ -229,7 +229,7 @@ void test_rank1_strided_v1(Fixture& f) {
 
     arr->syncHostDevice();
 
-    switch( parallel::mpi::comm().rank() )
+    switch( mpi::comm().rank() )
     {
       case 0: { POD arr_c[] = { 90,0, 10,100, 20,200, 30,300, 40,0 };
         validate<POD,2>::apply(arrv_t, arr_c); break; }
@@ -246,8 +246,8 @@ void test_rank1_strided_v2(Fixture& f) {
     array::ArrayT<POD> arr_t(f.N,2);
     array::ArrayView<POD,2> arrv_t = array::make_host_view<POD,2>(arr_t);
     for( int j=0; j<f.N; ++j ) {
-       arrv_t(j,0) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
-       arrv_t(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
+       arrv_t(j,0) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*10 );
+       arrv_t(j,1) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*100);
     }
 
     arr_t.syncHostDevice();
@@ -267,7 +267,7 @@ void test_rank1_strided_v2(Fixture& f) {
 
     f.halo_exchange.execute<POD,2>(*arr, false);
 
-    switch( parallel::mpi::comm().rank() )
+    switch( mpi::comm().rank() )
     {
         case 0: { POD arr_c[] = { 0,900, 10,100, 20,200, 30,300, 0,400 };
             validate<POD,2>::apply(arrv_t, arr_c); break; }
@@ -285,8 +285,8 @@ void test_rank2(Fixture& f) {
     {
       for( size_t i=0; i<3; ++i )
       {
-        arrv(p,i,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
-        arrv(p,i,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
+        arrv(p,i,0) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
+        arrv(p,i,1) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
       }
     }
 
@@ -296,7 +296,7 @@ void test_rank2(Fixture& f) {
 
     arr.syncHostDevice();
 
-    switch( parallel::mpi::comm().rank() )
+    switch( mpi::comm().rank() )
     {
       case 0:
       {
@@ -335,8 +335,8 @@ void test_rank2_l1(Fixture& f) {
     {
       for( size_t i=0; i<3; ++i )
       {
-        arrv_t(p,i,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
-        arrv_t(p,i,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
+        arrv_t(p,i,0) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
+        arrv_t(p,i,1) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
       }
     }
     arr_t.syncHostDevice();
@@ -358,7 +358,7 @@ void test_rank2_l1(Fixture& f) {
 
     arr_t.syncHostDevice();
 
-    switch( parallel::mpi::comm().rank() )
+    switch( mpi::comm().rank() )
     {
       case 0:
       {
@@ -405,8 +405,8 @@ void test_rank2_l2_v2(Fixture& f) {
     {
       for( size_t i=0; i<3; ++i )
       {
-        arrv_t(p,i,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
-        arrv_t(p,i,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
+        arrv_t(p,i,0) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
+        arrv_t(p,i,1) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
       }
     }
 
@@ -421,7 +421,7 @@ void test_rank2_l2_v2(Fixture& f) {
 
     f.halo_exchange.execute<POD,3>(*arr, f.on_device_);
 
-    switch( parallel::mpi::comm().rank() )
+    switch( mpi::comm().rank() )
     {
       case 0:
       {
@@ -468,8 +468,8 @@ void test_rank2_v2(Fixture& f) {
     {
       for( size_t i=0; i<3; ++i )
       {
-        arrv_t(p,i,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
-        arrv_t(p,i,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
+        arrv_t(p,i,0) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
+        arrv_t(p,i,1) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
       }
     }
 
@@ -484,7 +484,7 @@ void test_rank2_v2(Fixture& f) {
 
     f.halo_exchange.execute<POD,3>(*arr, f.on_device_);
 
-    switch( parallel::mpi::comm().rank() )
+    switch( mpi::comm().rank() )
     {
       case 0:
       {
@@ -533,7 +533,7 @@ void test_rank0_wrap(Fixture& f) {
 
     arr->syncHostDevice();
 
-    switch( parallel::mpi::comm().rank() )
+    switch( mpi::comm().rank() )
     {
       case 0: { POD arr_c[] = { 9, 1, 2, 3, 4};
         validate<POD,1>::apply(arrv, arr_c); break; }
@@ -548,13 +548,13 @@ void test_rank1_paralleldim1(Fixture& f) {
     array::ArrayT<POD> arr(2,f.N);
     array::ArrayView<POD,2> arrv = array::make_view<POD,2>(arr);
     for( int j=0; j<f.N; ++j ) {
-      arrv(0,j) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
-      arrv(1,j) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
+      arrv(0,j) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*10 );
+      arrv(1,j) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*100);
     }
 
     f.halo_exchange.execute<POD,2, array::LastDim>(arr, false);
 
-    switch( parallel::mpi::comm().rank() )
+    switch( mpi::comm().rank() )
     {
       case 0: { POD arr_c[] = { 90, 10, 20 , 30 , 40, 900, 100, 200, 300, 400 }; //90,900, 10,100, 20,200, 30,300, 40,400 };
         validate<POD,2>::apply(arrv, arr_c); break; }
@@ -572,14 +572,14 @@ void test_rank2_paralleldim2(Fixture& f) {
     {
       for( size_t i=0; i<3; ++i )
       {
-        arrv(i,p,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
-        arrv(i,p,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
+        arrv(i,p,0) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
+        arrv(i,p,1) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
       }
     }
 
     f.halo_exchange.execute<POD,3, array::Dim<1> >(arr, false);
 
-    switch( parallel::mpi::comm().rank() )
+    switch( mpi::comm().rank() )
     {
       case 0:
       {
@@ -615,8 +615,8 @@ void test_rank1_cinterface(Fixture& f) {
     array::ArrayT<POD> arr(f.N,2);
     array::ArrayView<POD,2> arrv = array::make_host_view<POD,2>(arr);
     for( int j=0; j<f.N; ++j ) {
-      arrv(j,0) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
-      arrv(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
+      arrv(j,0) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*10 );
+      arrv(j,1) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*100);
     }
 
     arr.syncHostDevice();
@@ -626,7 +626,7 @@ void test_rank1_cinterface(Fixture& f) {
 
     atlas__HaloExchange__execute_strided_double(&(f.halo_exchange), arrv.data(), &(strides[1]), &(shapes[1]), 1);
 
-    switch( parallel::mpi::comm().rank() )
+    switch( mpi::comm().rank() )
     {
       case 0: { POD arr_c[] = { 90,900, 10,100, 20,200, 30,300, 40,400 };
         validate<POD,2>::apply(arrv, arr_c); break; }

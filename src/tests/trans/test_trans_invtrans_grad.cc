@@ -42,7 +42,7 @@ namespace test {
 
 struct AtlasTransEnvironment : public AtlasTestEnvironment {
        AtlasTransEnvironment(int argc, char * argv[]) : AtlasTestEnvironment(argc, argv) {
-         if( parallel::mpi::comm().size() == 1 )
+         if( mpi::comm().size() == 1 )
            trans_use_mpi(false);
          trans_init();
        }
@@ -114,7 +114,7 @@ CASE( "test_invtrans_ifsStyle" )
   std::vector<double> init_gp (trans.trans()->ngptot);
   std::vector<double> init_sp (trans.trans()->nspec2);
   std::vector<int>    nfrom(nfld,1);
-  if( parallel::mpi::comm().rank()==0) {
+  if( mpi::comm().rank()==0) {
     double beta = M_PI*0.5;
     rotated_flow_magnitude(g,init_gpg.data(),beta);
   }

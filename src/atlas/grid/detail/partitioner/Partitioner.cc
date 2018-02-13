@@ -49,7 +49,7 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-Partitioner::Partitioner(): nb_partitions_(parallel::mpi::comm().size()) {
+Partitioner::Partitioner(): nb_partitions_(mpi::comm().size()) {
 }
 
 Partitioner::Partitioner(const size_t nb_partitions): nb_partitions_(nb_partitions) {

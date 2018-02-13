@@ -758,7 +758,7 @@ void TransIFS::ctor_spectral_only(long truncation, const eckit::Configuration& )
   });
   TRANS_CHECK(::trans_new(trans_.get()));
   TRANS_CHECK(::trans_set_trunc(trans_.get(),truncation));
-  TRANS_CHECK(::trans_use_mpi(parallel::mpi::comm().size()>1));
+  TRANS_CHECK(::trans_use_mpi(mpi::comm().size()>1));
   TRANS_CHECK(::trans_setup(trans_.get()));
 }
 
@@ -769,14 +769,14 @@ void TransIFS::ctor_rgg(const long nlat, const long pl[], long truncation, const
   for( long jlat=0; jlat<nlat; ++jlat )
     nloen[jlat] = pl[jlat];
   TRANS_CHECK(::trans_new(trans_.get()));
-  TRANS_CHECK(::trans_use_mpi(parallel::mpi::comm().size()>1));
+  TRANS_CHECK(::trans_use_mpi(mpi::comm().size()>1));
   TRANS_CHECK(::trans_set_resol(trans_.get(),nlat,nloen.data()));
   if( truncation >= 0 )
     TRANS_CHECK(::trans_set_trunc(trans_.get(),truncation));
 
   TRANS_CHECK(::trans_set_cache(trans_.get(),cache_,cachesize_));
 
-  if( p.read_legendre().size() && parallel::mpi::comm().size() == 1 )
+  if( p.read_legendre().size() && mpi::comm().size() == 1 )
   {
     eckit::PathName file( p.read_legendre() );
     if( not file.exists() )
@@ -786,7 +786,7 @@ void TransIFS::ctor_rgg(const long nlat, const long pl[], long truncation, const
     }
     TRANS_CHECK(::trans_set_read(trans_.get(),file.asString().c_str()));
   }
-  if( p.write_legendre().size() && parallel::mpi::comm().size() == 1 ) {
+  if( p.write_legendre().size() && mpi::comm().size() == 1 ) {
     eckit::PathName file( p.write_legendre() );
     TRANS_CHECK(::trans_set_write(trans_.get(),file.asString().c_str()));
   }
@@ -803,13 +803,13 @@ void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, co
 {
   TransParameters p(*this,config);
   TRANS_CHECK(::trans_new(trans_.get()));
-  TRANS_CHECK(::trans_use_mpi(parallel::mpi::comm().size()>1));
+  TRANS_CHECK(::trans_use_mpi(mpi::comm().size()>1));
   TRANS_CHECK(::trans_set_resol_lonlat(trans_.get(),nlon,nlat));
   if( truncation >= 0 )
     TRANS_CHECK(::trans_set_trunc(trans_.get(),truncation));
   TRANS_CHECK(::trans_set_cache(trans_.get(),cache_,cachesize_));
 
-  if( p.read_legendre().size() && parallel::mpi::comm().size() == 1 ) {
+  if( p.read_legendre().size() && mpi::comm().size() == 1 ) {
     eckit::PathName file( p.read_legendre() );
     if( not file.exists() )
     {
@@ -818,7 +818,7 @@ void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, co
     }
     TRANS_CHECK(::trans_set_read(trans_.get(),file.asString().c_str()));
   }
-  if( p.write_legendre().size() && parallel::mpi::comm().size() == 1 ) {
+  if( p.write_legendre().size() && mpi::comm().size() == 1 ) {
     eckit::PathName file( p.write_legendre() );
     TRANS_CHECK(::trans_set_write(trans_.get(),file.asString().c_str()));
   }

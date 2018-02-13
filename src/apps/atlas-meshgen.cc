@@ -194,7 +194,7 @@ void Meshgen2Gmsh::execute(const Args& args)
   std::string Implementationype = ( RegularGrid(grid) ? "regular" : "structured" );
   args.get("generator",Implementationype);
   eckit::LocalConfiguration meshgenerator_config( args );
-  if( parallel::mpi::comm().size() > 1 || edges )
+  if( mpi::comm().size() > 1 || edges )
     meshgenerator_config.set("3d",false);
 
   MeshGenerator meshgenerator(Implementationype,meshgenerator_config);

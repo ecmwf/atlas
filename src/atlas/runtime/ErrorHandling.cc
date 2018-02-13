@@ -76,7 +76,7 @@ void handle_error(const eckit::Exception& exception, const int errorCode)
   if( Error::instance().aborts() )
   {
     Log::error() << msg.str() << std::endl;
-    parallel::mpi::comm().abort(errorCode);
+    mpi::comm().abort(errorCode);
   }
   if( Error::instance().throws() )
   {
@@ -203,7 +203,7 @@ void atlas__abort(char* msg, char* file, int line, char* function )
                << "========================================="
                << std::endl;
 
-  parallel::mpi::comm().abort(-1);
+  mpi::comm().abort(-1);
 }
 
 void atlas__error_example()

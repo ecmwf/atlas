@@ -11,7 +11,6 @@
 #include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
-namespace parallel {
 namespace mpi {
 
 const eckit::mpi::Comm& comm()
@@ -20,5 +19,4 @@ const eckit::mpi::Comm& comm()
 }
 
 } // namespace mpi
-} // namespace parallel
 } // namespace atlas

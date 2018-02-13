@@ -30,7 +30,7 @@ struct IsGhostPoint
     part_   = part;
     ridx_   = ridx;
     base_   = base;
-    mypart_ = parallel::mpi::comm().rank();
+    mypart_ = mpi::comm().rank();
   }
 
   bool operator()(int idx)
@@ -81,16 +81,16 @@ GatherScatter::GatherScatter() :
   name_(),
   is_setup_(false)
 {
-  myproc = parallel::mpi::comm().rank();
-  nproc  = parallel::mpi::comm().size();
+  myproc = mpi::comm().rank();
+  nproc  = mpi::comm().size();
 }
 
 GatherScatter::GatherScatter(const std::string& name) :
   name_(name),
   is_setup_(false)
 {
-  myproc = parallel::mpi::comm().rank();
-  nproc  = parallel::mpi::comm().size();
+  myproc = mpi::comm().rank();
+  nproc  = mpi::comm().size();
 }
 
 
@@ -120,7 +120,7 @@ void GatherScatter::setup( const int part[],
   }
 
   ATLAS_TRACE_MPI( ALLGATHER ) {
-    parallel::mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
+    mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
   }
 
   glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
@@ -133,7 +133,7 @@ void GatherScatter::setup( const int part[],
   std::vector<gidx_t> recvnodes(glbcnt_);
 
   ATLAS_TRACE_MPI( ALLGATHER ) {
-    parallel::mpi::comm().allGatherv(sendnodes.begin(), sendnodes.begin() + loccnt_,
+    mpi::comm().allGatherv(sendnodes.begin(), sendnodes.begin() + loccnt_,
                                      recvnodes.data(), glbcounts_.data(), glbdispls_.data());
   }
 

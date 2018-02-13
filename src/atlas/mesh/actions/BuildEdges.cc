@@ -214,8 +214,8 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
   }
 
   ATLAS_TRACE_MPI( ALLREDUCE ) {
-    parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
-    parallel::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
+    mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
+    mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
   }
 
   double tol = 1e-6;

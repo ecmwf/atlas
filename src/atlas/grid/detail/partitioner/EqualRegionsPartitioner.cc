@@ -511,7 +511,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
 
         ASSERT( grid.projection().units() == "degrees" );
 
-        const auto& comm = parallel::mpi::comm();
+        const auto& comm = mpi::comm();
         int mpi_rank = comm.rank();
         int mpi_size = comm.size();
 

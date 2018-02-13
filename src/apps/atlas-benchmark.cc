@@ -227,7 +227,7 @@ void AtlasBenchmark::execute(const Args& args)
   Log::info() << "  nlev: " << nlev << endl;
   Log::info() << "  niter: " << niter << endl;
   Log::info() << endl;
-  Log::info() << "  MPI tasks: "<<parallel::mpi::comm().size()<<endl;
+  Log::info() << "  MPI tasks: "<<mpi::comm().size()<<endl;
   Log::info() << "  OpenMP threads per MPI task: " << atlas_omp_get_max_threads() << endl;
   Log::info() << endl;
 
@@ -285,7 +285,7 @@ void AtlasBenchmark::execute(const Args& args)
   Log::info() << timer.report( report_config ) << std::endl;
   Log::info() << endl;
 
-  parallel::mpi::comm().barrier();
+  mpi::comm().barrier();
 
   Log::info() << "Results:" << endl;
 
@@ -573,7 +573,7 @@ double AtlasBenchmark::result()
         minval = std::min(minval,v[1]);
         minval = std::min(minval,v[2]);
 
-        //if( parallel::mpi::comm().rank() == 478 ) {
+        //if( mpi::comm().rank() == 478 ) {
         //  std::cout << "    " << jnode << "   part " << part(jnode) << "    glb_idx " <<  glb_idx(jnode) << "   x,y,z " << v[0] << "," << v[1] << ","<< v[2] <<  std::endl;
         //}
 
@@ -593,9 +593,9 @@ double AtlasBenchmark::result()
   }
 
   ATLAS_TRACE_MPI( ALLREDUCE ) {
-    parallel::mpi::comm().allReduceInPlace(maxval, eckit::mpi::max());
-    parallel::mpi::comm().allReduceInPlace(minval, eckit::mpi::min());
-    parallel::mpi::comm().allReduceInPlace(norm,   eckit::mpi::sum());
+    mpi::comm().allReduceInPlace(maxval, eckit::mpi::max());
+    mpi::comm().allReduceInPlace(minval, eckit::mpi::min());
+    mpi::comm().allReduceInPlace(norm,   eckit::mpi::sum());
   }
 
   norm = std::sqrt(norm);

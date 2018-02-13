@@ -8,15 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef ATLAS_MPI_BUFFER_h
-#define ATLAS_MPI_BUFFER_h
+#pragma once
 
 #include "atlas/parallel/mpi/mpi.h"
-
 #include "atlas/array/LocalView.h"
 
 namespace atlas {
-namespace parallel {
 namespace mpi {
 
 /// @brief Buffer<DATA_TYPE,SHAPE>
@@ -67,7 +64,4 @@ struct Buffer<DATA_TYPE,1> : public eckit::mpi::Buffer<DATA_TYPE>
 // ----------------------------------------------------------------------------------
 
 } // namespace mpi
-} // namespace parallel
 } // namespace atlas
-
-#endif

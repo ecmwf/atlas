@@ -40,8 +40,8 @@ struct Fixture {
   Fixture()
   {
     int nnodes_c[] = {6, 6, 7}; nb_nodes = vec(nnodes_c);
-    Nl = nb_nodes[parallel::mpi::comm().rank()];
-    switch( parallel::mpi::comm().rank() )
+    Nl = nb_nodes[mpi::comm().rank()];
+    switch( mpi::comm().rank() )
     {
       case 0:
       {               //./----> extra ghost point with nonstandard gidx
@@ -76,7 +76,7 @@ struct Fixture {
   int Nl;
   size_t root;
 
-  int Ng() { return parallel::mpi::comm().rank() == root ? gather_scatter.glb_dof() : 0; }
+  int Ng() { return mpi::comm().rank() == root ? gather_scatter.glb_dof() : 0; }
 };
 
 //-----------------------------------------------------------------------------
@@ -88,20 +88,20 @@ CASE("test_gather") {
 
     SECTION( "test_gather_rank0" )
     {
-      for( f.root=0; f.root<parallel::mpi::comm().size(); ++f.root )
+      for( f.root=0; f.root<mpi::comm().size(); ++f.root )
       {
         std::vector<POD> loc(f.Nl);
         std::vector<POD> glb(f.Ng());
 
         for( int j=0; j<f.Nl; ++j ) {
-          loc[j] = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
+          loc[j] = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*10 );
         }
 
         size_t strides[] = {1};
         size_t extents[] = {1};
         f.gather_scatter.gather(loc.data(),strides,extents,1,glb.data(),strides,extents,1,f.root);
 
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           POD glb_c[] = { 10, 20, 30, 40, 50, 60, 70, 80, 90 };
           EXPECT(glb == eckit::testing::make_view( glb_c,glb_c+f.Ng() ) );
@@ -112,7 +112,7 @@ CASE("test_gather") {
 #if 1
     SECTION( "test_gather_rank1_deprecated" )
     {
-      for( f.root=0; f.root<parallel::mpi::comm().size(); ++f.root )
+      for( f.root=0; f.root<mpi::comm().size(); ++f.root )
       {
         array::ArrayT<POD> loc(f.Nl,2);
         array::ArrayT<POD> glb(f.Ng(),2);
@@ -120,8 +120,8 @@ CASE("test_gather") {
         array::ArrayT<POD> glb2(f.Ng(),1);
         array::ArrayView<POD,2> locv = array::make_view<POD,2>(loc);
         for( int j=0; j<f.Nl; ++j ) {
-          locv(j,0) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
-          locv(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
+          locv(j,0) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*10 );
+          locv(j,1) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*100);
         }
 
         // Gather complete field
@@ -134,7 +134,7 @@ CASE("test_gather") {
         f.gather_scatter.gather( loc.data<POD>(), loc_strides, loc_extents, 2,
                                  glb.data<POD>(), glb_strides, glb_extents, 2, f.root );
         }
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           auto glbv = array::make_view<POD,2>(glb);
           POD glb_c[] = { 10,100, 20,200, 30,300, 40,400, 50,500, 60,600, 70,700, 80,800, 90,900 };
@@ -156,7 +156,7 @@ CASE("test_gather") {
           f.gather_scatter.gather( loc.data<POD>(),  loc_strides, loc_extents, 2,
                                    glb1.data<POD>(), glb_strides, glb_extents, 2, f.root );
         }
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           auto glbv = array::make_view<POD,2>(glb1);
           POD glb1_c[] = { 10, 20, 30, 40, 50, 60, 70, 80, 90 };
@@ -177,7 +177,7 @@ CASE("test_gather") {
           f.gather_scatter.gather( loc.data<POD>()+1, loc_strides, loc_extents, 1,
                                    glb2.data<POD>(),  glb_strides, glb_extents, 1, f.root );
         }
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           auto glbv = array::make_view<POD,2>(glb2);
           POD glb2_c[] = { 100, 200, 300, 400, 500, 600, 700, 800, 900 };
@@ -194,7 +194,7 @@ CASE("test_gather") {
 
     SECTION( "test_gather_rank1" )
     {
-      for( f.root=0; f.root<parallel::mpi::comm().size(); ++f.root )
+      for( f.root=0; f.root<mpi::comm().size(); ++f.root )
       {
         array::ArrayT<POD> loc(f.Nl,2);
         array::ArrayT<POD> glb(f.Ng(),2);
@@ -202,8 +202,8 @@ CASE("test_gather") {
         array::ArrayT<POD> glb2(f.Ng(),1);
         array::ArrayView<POD,2> locv = array::make_view<POD,2>(loc);
         for( int j=0; j<f.Nl; ++j ) {
-          locv(j,0) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*10 );
-          locv(j,1) = (size_t(f.part[j]) != parallel::mpi::comm().rank() ? 0 : f.gidx[j]*100);
+          locv(j,0) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*10 );
+          locv(j,1) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]*100);
         }
 
         // Gather complete field
@@ -240,7 +240,7 @@ CASE("test_gather") {
                               glb.data<POD>(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                               f.root );
 
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
           {
             POD glb_c[] = { 10,100, 20,200, 30,300, 40,400, 50,500, 60,600, 70,700, 80,800, 90,900 };
             EXPECT(make_view(glb.data<POD>(),glb.data<POD>()+2*f.Ng()) == make_view(glb_c,glb_c+2*f.Ng()));
@@ -280,7 +280,7 @@ CASE("test_gather") {
           f.gather_scatter.gather( loc.data<POD>(),  loc_strides, loc_extents, loc_rank, loc_mpl_idxpos, loc_mpl_rank,
                                 glb1.data<POD>(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                                 f.root );
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
           {
             POD glb1_c[] = { 10, 20, 30, 40, 50, 60, 70, 80, 90 };
             EXPECT(make_view(glb1.data<POD>(),glb1.data<POD>()+f.Ng()) == make_view( glb1_c,glb1_c+f.Ng()));
@@ -305,7 +305,7 @@ CASE("test_gather") {
                                 glb2.data<POD>(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                                 f.root );
         }
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           POD glb2_c[] = { 100, 200, 300, 400, 500, 600, 700, 800, 900 };
           EXPECT(make_view(glb2.data<POD>(),glb2.data<POD>()+f.Ng()) == make_view(glb2_c,glb2_c+f.Ng()));
@@ -318,7 +318,7 @@ CASE("test_gather") {
 
     SECTION( "test_gather_rank2" )
     {
-      for( f.root=0; f.root<parallel::mpi::comm().size(); ++f.root )
+      for( f.root=0; f.root<mpi::comm().size(); ++f.root )
       {
         array::ArrayT<POD> loc(f.Nl,3,2);
         array::ArrayT<POD> glb(f.Ng(),3,2);
@@ -333,8 +333,8 @@ CASE("test_gather") {
         {
           for(int i = 0; i < 3; ++i)
           {
-            locv(p,i,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
-            locv(p,i,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
+            locv(p,i,0) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
+            locv(p,i,1) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
           }
         }
 
@@ -355,7 +355,7 @@ CASE("test_gather") {
                                 glb.data<POD>(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                                 f.root );
         }
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           POD glb_c[] = { -1,1, -10,10, -100,100,
                           -2,2, -20,20, -200,200,
@@ -387,7 +387,7 @@ CASE("test_gather") {
                                 glbx1.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                                 f.root );
         }
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           POD glb_c[] = { -1, -10, -100,
                           -2, -20, -200,
@@ -419,7 +419,7 @@ CASE("test_gather") {
                                 glbx2.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                                 f.root );
         }
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           POD glb_c[] = { 1, 10, 100,
                           2, 20, 200,
@@ -452,7 +452,7 @@ CASE("test_gather") {
                                 glb1x.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                                 f.root );
         }
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           POD glb_c[] = { -1,1,
                           -2,2,
@@ -484,7 +484,7 @@ CASE("test_gather") {
                                 glb2x.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                                 f.root );
         }
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           POD glb_c[] = { -10,10,
                           -20,20,
@@ -517,7 +517,7 @@ CASE("test_gather") {
                                 glb32.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
                                 f.root );
         }
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           POD glb_c[] = { 100,
                           200,
@@ -537,7 +537,7 @@ CASE("test_gather") {
 
     SECTION( "test_gather_rank0_ArrayView" )
     {
-      for( f.root=0; f.root<parallel::mpi::comm().size(); ++f.root )
+      for( f.root=0; f.root<mpi::comm().size(); ++f.root )
       {
 
         array::ArrayT<POD> loc(f.Nl);
@@ -547,14 +547,14 @@ CASE("test_gather") {
         array::ArrayView<POD,1> glbv = array::make_view<POD,1>(glb);
         for(int p = 0; p < f.Nl; ++p)
         {
-          locv(p) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*10 );
+          locv(p) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 :  f.gidx[p]*10 );
         }
 
         // Gather complete field
         {
           f.gather_scatter.gather( locv, glbv, f.root );
         }
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           POD glb_c[] = { 10,
                           20,
@@ -574,7 +574,7 @@ CASE("test_gather") {
 
     SECTION( "test_gather_rank1_ArrayView" )
     {
-      for( f.root=0; f.root<parallel::mpi::comm().size(); ++f.root )
+      for( f.root=0; f.root<mpi::comm().size(); ++f.root )
       {
 
         array::ArrayT<POD> loc(f.Nl,2);
@@ -584,15 +584,15 @@ CASE("test_gather") {
         array::ArrayView<POD,2> glbv = array::make_view<POD,2>(glb);
         for(int p = 0; p < f.Nl; ++p)
         {
-          locv(p,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*10 );
-          locv(p,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*10 );
+          locv(p,0) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : -f.gidx[p]*10 );
+          locv(p,1) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 :  f.gidx[p]*10 );
         }
 
         // Gather complete field
         {
           f.gather_scatter.gather( locv, glbv, f.root );
         }
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           POD glb_c[] = { -10,10,
                           -20,20,
@@ -618,7 +618,7 @@ CASE("test_gather") {
 
     SECTION( "test_gather_rank2_ArrayView" )
     {
-      for( f.root=0; f.root<parallel::mpi::comm().size(); ++f.root )
+      for( f.root=0; f.root<mpi::comm().size(); ++f.root )
       {
 
         array::ArrayT<POD> loc(f.Nl,3,2);
@@ -630,8 +630,8 @@ CASE("test_gather") {
         {
           for(int i = 0; i < 3; ++i)
           {
-            locv(p,i,0) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
-            locv(p,i,1) = (size_t(f.part[p]) != parallel::mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
+            locv(p,i,0) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : -f.gidx[p]*std::pow(10,i) );
+            locv(p,i,1) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 :  f.gidx[p]*std::pow(10,i) );
           }
         }
 
@@ -639,7 +639,7 @@ CASE("test_gather") {
         {
           f.gather_scatter.gather( locv, glbv, f.root );
         }
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           POD glb_c[] = { -1,1, -10,10, -100,100,
                           -2,2, -20,20, -200,200,
@@ -665,7 +665,7 @@ CASE("test_gather") {
 
     SECTION( "test_scatter_rank2_ArrayView" )
     {
-      for( f.root=0; f.root<parallel::mpi::comm().size(); ++f.root )
+      for( f.root=0; f.root<mpi::comm().size(); ++f.root )
       {
 
         array::ArrayT<POD> loc(f.Nl,3,2);
@@ -673,7 +673,7 @@ CASE("test_gather") {
 
         array::ArrayView<POD,3> locv = array::make_view<POD,3>(loc);
         array::ArrayView<POD,3> glbv = array::make_view<POD,3>(glb);
-        if( parallel::mpi::comm().rank() == f.root )
+        if( mpi::comm().rank() == f.root )
         {
           POD glb_c[] = { -1,1, -10,10, -100,100,
                           -2,2, -20,20, -200,200,
@@ -699,7 +699,7 @@ CASE("test_gather") {
 
         f.gather_scatter.scatter( glbv, locv, f.root );
 
-        switch( parallel::mpi::comm().rank() )
+        switch( mpi::comm().rank() )
         {
         case 0: {
           POD loc_c[] = { nan,nan, nan,nan, nan,nan,

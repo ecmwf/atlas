@@ -51,7 +51,7 @@ CASE( "test_functionspace_StructuredColumns_no_halo" )
   auto value     = array::make_view<double,1>( field );
   auto value_glb = array::make_view<double,1>( field_glb );
 
-  value.assign(parallel::mpi::comm().rank());
+  value.assign(mpi::comm().rank());
 
   fs.gather(field,field_glb);
 
@@ -61,7 +61,7 @@ CASE( "test_functionspace_StructuredColumns_no_halo" )
 //    Log::info() << value_glb(j) << " ";
 //  Log::info() << std::endl;
 
-  if( parallel::mpi::comm().rank() == root && parallel::mpi::comm().size() == 5 ) {
+  if( mpi::comm().rank() == root && mpi::comm().size() == 5 ) {
     std::vector<double> check{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
 
     EXPECT( value_glb.size() == check.size() );
@@ -78,7 +78,7 @@ CASE( "test_functionspace_StructuredColumns_no_halo" )
 
 CASE( "test_functionspace_StructuredColumns_halo" )
 {
-  ATLAS_DEBUG_VAR( parallel::mpi::comm().size() );
+  ATLAS_DEBUG_VAR( mpi::comm().size() );
   int root=0;
 //  grid::StructuredGrid grid(
 //      grid::StructuredGrid::XSpace( {0.,360.} , {2,4,6,6,4,2} , false ),
@@ -116,7 +116,7 @@ CASE( "test_functionspace_StructuredColumns_halo" )
 
   //EXPECT( fs.checksum(field) == "cef2694016492d408fa157b7c59ce741" );
 
-  eckit::PathName filepath("test_functionspace_StructuredColumns_halo_p"+std::to_string(parallel::mpi::comm().rank())+".py");
+  eckit::PathName filepath("test_functionspace_StructuredColumns_halo_p"+std::to_string(mpi::comm().rank())+".py");
 
   std::ofstream f(filepath.asString().c_str(), std::ios::trunc );
 

@@ -29,8 +29,8 @@ private:
     bool barriers_;
     StopWatch stopwatch_;
 public:
-    BarriersState(BarriersState const&)           = delete;
-    void operator=(BarriersState const&)  = delete;
+    BarriersState(BarriersState const&)  = delete;
+    void operator=(BarriersState const&) = delete;
     static BarriersState& instance() {
         static BarriersState state;
         return state;
@@ -42,7 +42,7 @@ public:
         barriers_ = state;
     }
     StopWatch& stopwatch() { return stopwatch_; }
-    
+
     std::string report() const {
       std::stringstream out;
       double time = stopwatch_.elapsed();
@@ -73,7 +73,7 @@ bool Barriers::state() {
 void Barriers::execute() {
   if( state() ) {
     BarriersState::instance().stopwatch().start();
-    parallel::mpi::comm().barrier();
+    mpi::comm().barrier();
     BarriersState::instance().stopwatch().stop();
   }
 }
@@ -93,7 +93,7 @@ std::string Barriers::report() {
 std::string NoBarriers::report() {
   return BarriersState::instance().report();
 }
-  
+
 } // namespace trace
 } // namespace runtime
 } // namespace atlas

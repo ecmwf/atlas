@@ -37,7 +37,7 @@ Partitioner::Partitioner( const std::string& type, const size_t nb_partitions):
 namespace {
 detail::partitioner::Partitioner* partitioner_from_config( const Partitioner::Config& config ) {
     std::string type;
-    long partitions = parallel::mpi::comm().size();
+    long partitions = mpi::comm().size();
     if( not config.get("type",type) )
       throw eckit::BadParameter("'type' missing in configuration for Partitioner",Here());
     config.get("partitions",partitions);

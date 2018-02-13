@@ -101,20 +101,20 @@ Mesh MeshGeneratorImpl::generate( const Grid& grid, const grid::Distribution& di
 void MeshGeneratorImpl::generateGlobalElementNumbering( Mesh& mesh ) const
 {
   size_t loc_nb_elems = mesh.cells().size();
-  std::vector<size_t> elem_counts( parallel::mpi::comm().size() );
-  std::vector<int> elem_displs( parallel::mpi::comm().size() );
+  std::vector<size_t> elem_counts( mpi::comm().size() );
+  std::vector<int> elem_displs( mpi::comm().size() );
 
   ATLAS_TRACE_MPI( ALLGATHER ) {
-    parallel::mpi::comm().allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end());
+    mpi::comm().allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end());
   }
 
   elem_displs.at(0) = 0;
-  for(size_t jpart = 1; jpart < parallel::mpi::comm().size(); ++jpart)
+  for(size_t jpart = 1; jpart < mpi::comm().size(); ++jpart)
   {
     elem_displs.at(jpart) = elem_displs.at(jpart-1) + elem_counts.at(jpart-1);
   }
 
-  gidx_t gid = 1+elem_displs.at( parallel::mpi::comm().rank() );
+  gidx_t gid = 1+elem_displs.at( mpi::comm().rank() );
 
   array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( mesh.cells().global_index() );
 

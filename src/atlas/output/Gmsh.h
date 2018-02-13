@@ -29,8 +29,8 @@ namespace output {
 
 class GmshFileStream : public std::ofstream {
 public:
-  static std::string parallelPathName(const PathName& path,int part = parallel::mpi::comm().rank());
-  GmshFileStream(const PathName& file_path, const char* mode, int part = parallel::mpi::comm().rank());
+  static std::string parallelPathName(const PathName& path,int part = mpi::comm().rank());
+  GmshFileStream(const PathName& file_path, const char* mode, int part = mpi::comm().rank());
 
 };
 

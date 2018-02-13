@@ -79,7 +79,7 @@ inline int mpi_rank(int i=0) {
 
 inline int is_mpi_rank() {
   static std::vector<long> v = eckit::Resource<std::vector<long>>("$ATLAS_DEBUG_MPI_RANK", std::vector<long>() );
-  static int r = parallel::mpi::comm().rank();
+  static int r = mpi::comm().rank();
   for( long g : v ) {
     if ( r == g )
       return true;
@@ -96,7 +96,7 @@ inline int is_mpi_rank(int x) {
   return false;
 }
 inline std::string rank_str() {
-  static std::string s = "["+std::to_string(parallel::mpi::comm().rank())+"] ";
+  static std::string s = "["+std::to_string(mpi::comm().rank())+"] ";
   return s;
 }
 

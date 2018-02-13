@@ -110,7 +110,7 @@ std::string Checksum::execute( const DATA_TYPE data[],
     local_checksums[pp] = util::checksum(data+pp*var_size,var_size);
   }
 
-  std::vector<util::checksum_t> global_checksums( parallel::mpi::comm().rank() == root ? gather_->glb_dof() : 0 );
+  std::vector<util::checksum_t> global_checksums( mpi::comm().rank() == root ? gather_->glb_dof() : 0 );
   parallel::Field<util::checksum_t const> loc(local_checksums.data(),1);
   parallel::Field<util::checksum_t> glb(global_checksums.data(),1);
   gather_->gather(&loc,&glb,1);
@@ -119,7 +119,7 @@ std::string Checksum::execute( const DATA_TYPE data[],
                                                 global_checksums.data(),
                                                 global_checksums.size());
 
-  parallel::mpi::comm().broadcast(glb_checksum, root);
+  mpi::comm().broadcast(glb_checksum, root);
 
   return eckit::Translator<util::checksum_t,std::string>()(glb_checksum);
 }

@@ -57,7 +57,7 @@ double dual_volume(Mesh& mesh)
   }
 
   ATLAS_TRACE_MPI( ALLREDUCE ) {
-    parallel::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
+    mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
   }
 
   return area;
@@ -76,12 +76,12 @@ CASE( "test_small" )
   mesh::actions::build_halo(*m,2);
 
 
-  if( parallel::mpi::comm().size() == 5 )
+  if( mpi::comm().size() == 5 )
   {
     IndexView<int,1> ridx ( m->nodes().remote_index() );
     array::array::ArrayView<gidx_t,1> gidx ( m->nodes().global_index() );
 
-    switch( parallel::mpi::comm().rank() ) // with 5 tasks
+    switch( mpi::comm().rank() ) // with 5 tasks
     {
     case 0:
       EXPECT( ridx(9) ==  9  );
@@ -93,7 +93,7 @@ CASE( "test_small" )
   }
   else
   {
-    if( parallel::mpi::comm().rank() == 0 )
+    if( mpi::comm().rank() == 0 )
       std::cout << "skipping tests with 5 mpi tasks!" << std::endl;
   }
 
@@ -102,7 +102,7 @@ CASE( "test_small" )
 
   EXPECT( eckit::types::is_approximately_equal( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 ));
 
-  std::stringstream filename; filename << "small_halo_p" << parallel::mpi::comm().rank() << ".msh";
+  std::stringstream filename; filename << "small_halo_p" << mpi::comm().rank() << ".msh";
   Gmsh(filename.str()).write(*m);
 }
 #endif
@@ -130,7 +130,7 @@ CASE( "test_custom" )
   auto lonlat = array::make_view<double,2>( m.nodes().lonlat() );
 
   std::vector<uidx_t> check;
-  switch( parallel::mpi::comm().rank() ) {
+  switch( mpi::comm().rank() ) {
   case 0: check = {
       607990293346953216,
       607990293382953216,
@@ -472,7 +472,7 @@ CASE( "test_custom" )
   for( size_t j=0; j<m.nodes().size(); ++j ){
     uid[j] = util::unique_lonlat( lonlat(j,0),lonlat(j,1) );
   }
-  if( check.size() && parallel::mpi::comm().size() == 5 ) {
+  if( check.size() && mpi::comm().size() == 5 ) {
     ATLAS_DEBUG_VAR( uid.size() );
     ATLAS_DEBUG_VAR( check.size() );
     EXPECT( uid.size() == check.size() );

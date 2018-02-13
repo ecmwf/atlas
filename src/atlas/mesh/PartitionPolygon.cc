@@ -71,7 +71,7 @@ size_t PartitionPolygon::footprint() const {
 
 
 void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath, const eckit::Configuration& config) const {
-  const eckit::mpi::Comm& comm = atlas::parallel::mpi::comm();
+  const eckit::mpi::Comm& comm = atlas::mpi::comm();
   int mpi_rank = int(comm.rank());
   int mpi_size = int(comm.size());
 

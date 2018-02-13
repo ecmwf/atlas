@@ -107,11 +107,11 @@ void MeshImpl::setGrid(const Grid& grid) {
 }
 
 size_t MeshImpl::nb_partitions() const {
-  return parallel::mpi::comm().size();
+  return mpi::comm().size();
 }
 
 size_t MeshImpl::partition() const {
-  return parallel::mpi::comm().rank();
+  return mpi::comm().rank();
 }
 
 void MeshImpl::cloneToDevice() const {

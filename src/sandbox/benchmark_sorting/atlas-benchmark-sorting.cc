@@ -80,8 +80,8 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
   UniqueLonLat compute_uid(nodes);
 
-  // unused // int mypart = parallel::mpi::comm().rank();
-  int nparts = parallel::mpi::comm().size();
+  // unused // int mypart = mpi::comm().rank();
+  int nparts = mpi::comm().size();
   size_t root = 0;
 
   array::ArrayView<gidx_t,1> nodes_glb_idx = array::make_view<gidx_t,1> ( nodes.global_index() );
@@ -126,11 +126,11 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
   // 1) Gather all global indices, together with location
 
-  std::vector<int> recvcounts(parallel::mpi::comm().size());
-  std::vector<int> recvdispls(parallel::mpi::comm().size());
+  std::vector<int> recvcounts(mpi::comm().size());
+  std::vector<int> recvdispls(mpi::comm().size());
 
   ATLAS_TRACE_MPI( GATHER ) {
-    parallel::mpi::comm().gather(nb_nodes, recvcounts, root);
+    mpi::comm().gather(nb_nodes, recvcounts, root);
   }
 
   recvdispls[0]=0;
@@ -142,7 +142,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
   std::vector<gidx_t> glb_idx_gathered( glb_nb_nodes );
   ATLAS_TRACE_MPI( GATHER ) {
-    parallel::mpi::comm().gatherv(glb_idx.data(), glb_idx.size(), glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), root);
+    mpi::comm().gatherv(glb_idx.data(), glb_idx.size(), glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), root);
   }
 
 
@@ -174,7 +174,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
   // 3) Scatter renumbered back
   ATLAS_TRACE_MPI( SCATTER ) {
-    parallel::mpi::comm().scatterv(glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), glb_idx.data(), glb_idx.size(), root);
+    mpi::comm().scatterv(glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), glb_idx.data(), glb_idx.size(), root);
   }
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
@@ -259,7 +259,7 @@ void Tool::execute(const Args& args)
   ATLAS_DEBUG_VAR( do_all );
 
   size_t iterations = 1;
-  parallel::mpi::comm().barrier();
+  mpi::comm().barrier();
 
   for( size_t j=0; j<1; ++j ) {
     ATLAS_TRACE("outer_iteration");

@@ -224,7 +224,7 @@ size_t StructuredColumns::config_size(const eckit::Configuration& config) const
     {
       size_t owner(0);
       config.get("owner",owner);
-      size = (parallel::mpi::comm().rank() == owner ? grid_.size() : 0);
+      size = (mpi::comm().rank() == owner ? grid_.size() : 0);
     }
   }
   return size;
@@ -251,7 +251,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     {
       throw eckit::BadCast("Grid is not a grid::Structured type", Here());
     }
-    const eckit::mpi::Comm& comm = parallel::mpi::comm();
+    const eckit::mpi::Comm& comm = mpi::comm();
 
 
     grid::Partitioner partitioner( p );
@@ -272,7 +272,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     }
     distribution_ = distribution.type();
 
-    int mpi_rank = parallel::mpi::comm().rank();
+    int mpi_rank = mpi::comm().rank();
 
     j_begin_ = std::numeric_limits<idx_t>::max();
     j_end_   = std::numeric_limits<idx_t>::min();
@@ -480,7 +480,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
 
       auto build_partition_graph = [this]() -> std::unique_ptr<Mesh::PartitionGraph> {
 
-        const eckit::mpi::Comm& comm = parallel::mpi::comm();
+        const eckit::mpi::Comm& comm = mpi::comm();
         const int mpi_size = int(comm.size());
         const int mpi_rank = int(comm.rank());
 
@@ -514,7 +514,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
           auto p  = array::make_view< int, 1 >( partition() );
           auto g  = array::make_view< gidx_t, 1 >( global_index() );
 
-          const eckit::mpi::Comm& comm = parallel::mpi::comm();
+          const eckit::mpi::Comm& comm = mpi::comm();
           const int mpi_size = int(comm.size());
           const int mpi_rank = int(comm.rank());
 

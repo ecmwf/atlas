@@ -57,7 +57,7 @@ double dual_volume(const Mesh& mesh)
     }
   }
 
-  parallel::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
+  mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
 
   return area;
 }

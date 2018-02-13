@@ -63,7 +63,7 @@ void Metadata::broadcast(Metadata& dest, const size_t root)
 {
   std::string buffer;
   int buffer_size;
-  if( atlas::parallel::mpi::comm().rank() == root )
+  if( atlas::mpi::comm().rank() == root )
   {
     std::stringstream s;
     eckit::JSON json(s);
@@ -74,18 +74,18 @@ void Metadata::broadcast(Metadata& dest, const size_t root)
   }
 
   ATLAS_TRACE_MPI( BROADCAST ) {
-    atlas::parallel::mpi::comm().broadcast(buffer_size,root);
+    atlas::mpi::comm().broadcast(buffer_size,root);
   }
 
-  if( atlas::parallel::mpi::comm().rank() != root ) {
+  if( atlas::mpi::comm().rank() != root ) {
     buffer.resize(buffer_size);
   }
 
   ATLAS_TRACE_MPI( BROADCAST ) {
-    atlas::parallel::mpi::comm().broadcast(buffer.begin(), buffer.end(), root);
+    atlas::mpi::comm().broadcast(buffer.begin(), buffer.end(), root);
   }
 
-  if( not (&dest==this && atlas::parallel::mpi::comm().rank() == root ) )
+  if( not (&dest==this && atlas::mpi::comm().rank() == root ) )
   {
     std::stringstream s;
     s << buffer;
@@ -105,7 +105,7 @@ void Metadata::broadcast(Metadata& dest, const size_t root) const
 {
   std::string buffer;
   int buffer_size;
-  if( atlas::parallel::mpi::comm().rank() == root )
+  if( atlas::mpi::comm().rank() == root )
   {
     std::stringstream s;
     eckit::JSON json(s);
@@ -116,15 +116,15 @@ void Metadata::broadcast(Metadata& dest, const size_t root) const
   }
 
   ATLAS_TRACE_MPI( BROADCAST ) {
-    atlas::parallel::mpi::comm().broadcast(buffer_size,root);
+    atlas::mpi::comm().broadcast(buffer_size,root);
   }
 
-  if( atlas::parallel::mpi::comm().rank() != root ) {
+  if( atlas::mpi::comm().rank() != root ) {
     buffer.resize(buffer_size);
   }
 
   ATLAS_TRACE_MPI( BROADCAST ) {
-    atlas::parallel::mpi::comm().broadcast(buffer.begin(), buffer.end(), root);
+    atlas::mpi::comm().broadcast(buffer.begin(), buffer.end(), root);
   }
 
   // Fill in dest

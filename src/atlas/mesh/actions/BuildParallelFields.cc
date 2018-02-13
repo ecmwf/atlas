@@ -160,8 +160,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
   UniqueLonLat compute_uid(nodes);
 
-  // unused // int mypart = parallel::mpi::comm().rank();
-  int nparts = parallel::mpi::comm().size();
+  // unused // int mypart = mpi::comm().rank();
+  int nparts = mpi::comm().size();
   size_t root = 0;
 
   array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1> ( nodes.global_index() );
@@ -188,11 +188,11 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
     loc_id(jnode) = glb_idx(jnode);
   }
 
-  std::vector<int> recvcounts(parallel::mpi::comm().size());
-  std::vector<int> recvdispls(parallel::mpi::comm().size());
+  std::vector<int> recvcounts(mpi::comm().size());
+  std::vector<int> recvdispls(mpi::comm().size());
 
   ATLAS_TRACE_MPI( GATHER ) {
-    parallel::mpi::comm().gather(nb_nodes, recvcounts, root);
+    mpi::comm().gather(nb_nodes, recvcounts, root);
   }
 
   recvdispls[0]=0;
@@ -205,7 +205,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
   array::ArrayView<uid_t,1> glb_id = array::make_view<uid_t,1>(glb_id_arr);
 
   ATLAS_TRACE_MPI( GATHER ) {
-    parallel::mpi::comm().gatherv(loc_id.data(), loc_id.size(), glb_id.data(), recvcounts.data(), recvdispls.data(), root);
+    mpi::comm().gatherv(loc_id.data(), loc_id.size(), glb_id.data(), recvcounts.data(), recvdispls.data(), root);
   }
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
@@ -233,7 +233,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 
   // 3) Scatter renumbered back
   ATLAS_TRACE_MPI( SCATTER ) {
-    parallel::mpi::comm().scatterv(glb_id.data(), recvcounts.data(), recvdispls.data(), loc_id.data(), loc_id.size(), root);
+    mpi::comm().scatterv(glb_id.data(), recvcounts.data(), recvdispls.data(), loc_id.data(), loc_id.size(), root);
   }
 
   for( int jnode=0; jnode<nb_nodes; ++jnode ) {
@@ -248,8 +248,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 {
   ATLAS_TRACE();
-  size_t mypart = parallel::mpi::comm().rank();
-  size_t nparts = parallel::mpi::comm().size();
+  size_t mypart = mpi::comm().rank();
+  size_t nparts = mpi::comm().size();
 
   UniqueLonLat compute_uid(nodes);
 
@@ -267,8 +267,8 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 
   int varsize=2;
 
-  std::vector< std::vector<uid_t> > send_needed( parallel::mpi::comm().size() );
-  std::vector< std::vector<uid_t> > recv_needed( parallel::mpi::comm().size() );
+  std::vector< std::vector<uid_t> > send_needed( mpi::comm().size() );
+  std::vector< std::vector<uid_t> > recv_needed( mpi::comm().size() );
   int sendcnt=0;
   std::map<uid_t,int> lookup;
   for( size_t jnode=0; jnode<nb_nodes; ++jnode )
@@ -300,11 +300,11 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
   }
 
   ATLAS_TRACE_MPI( ALLTOALL ) {
-    parallel::mpi::comm().allToAll(send_needed, recv_needed);
+    mpi::comm().allToAll(send_needed, recv_needed);
   }
 
-  std::vector< std::vector<int> > send_found( parallel::mpi::comm().size() );
-  std::vector< std::vector<int> > recv_found( parallel::mpi::comm().size() );
+  std::vector< std::vector<int> > send_found( mpi::comm().size() );
+  std::vector< std::vector<int> > recv_found( mpi::comm().size() );
 
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
@@ -324,7 +324,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
       else
       {
         std::stringstream msg;
-        msg << "[" << parallel::mpi::comm().rank() << "] " << "Node requested by rank ["<<jpart
+        msg << "[" << mpi::comm().rank() << "] " << "Node requested by rank ["<<jpart
             << "] with uid [" << uid << "] that should be owned is not found";
         throw eckit::SeriousBug(msg.str(),Here());
       }
@@ -332,7 +332,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes )
   }
 
   ATLAS_TRACE_MPI( ALLTOALL ) {
-    parallel::mpi::comm().allToAll(send_found, recv_found);
+    mpi::comm().allToAll(send_found, recv_found);
   }
 
   for( size_t jpart=0; jpart<nparts; ++jpart )
@@ -366,8 +366,8 @@ Field& build_edges_partition( Mesh& mesh )
 
   UniqueLonLat compute_uid(mesh);
 
-  size_t mypart = parallel::mpi::comm().rank();
-  size_t nparts = parallel::mpi::comm().size();
+  size_t mypart = mpi::comm().rank();
+  size_t nparts = mpi::comm().size();
 
   mesh::HybridElements& edges = mesh.edges();
   array::ArrayView<int,1>    edge_part    = array::make_view<int,1>( edges.partition() );
@@ -467,12 +467,12 @@ Field& build_edges_partition( Mesh& mesh )
   };
 
   int mpi_size = eckit::mpi::comm().size();
-  parallel::mpi::Buffer<gidx_t,1> recv_bdry_edges_from_parts(mpi_size);
+  mpi::Buffer<gidx_t,1> recv_bdry_edges_from_parts(mpi_size);
   std::vector< std::vector<gidx_t> > send_gidx(mpi_size);
   std::vector< std::vector<int>    > send_part(mpi_size);
   std::vector< std::vector<gidx_t> > recv_gidx(mpi_size);
   std::vector< std::vector<int>    > recv_part(mpi_size);
-  parallel::mpi::comm().allGatherv(bdry_edges.begin(),bdry_edges.end(),recv_bdry_edges_from_parts);
+  mpi::comm().allGatherv(bdry_edges.begin(),bdry_edges.end(),recv_bdry_edges_from_parts);
   for( int p=0; p<mpi_size; ++p ) {
       auto view = recv_bdry_edges_from_parts[p];
       for ( int j=0; j<view.size(); ++j ) {
@@ -486,8 +486,8 @@ Field& build_edges_partition( Mesh& mesh )
       }
     }
   }
-  parallel::mpi::comm().allToAll(send_gidx,recv_gidx);
-  parallel::mpi::comm().allToAll(send_part,recv_part);
+  mpi::comm().allToAll(send_gidx,recv_gidx);
+  mpi::comm().allToAll(send_part,recv_part);
   for( int p=0; p<mpi_size; ++p ) {
     const auto& recv_gidx_p = recv_gidx[p];
     const auto& recv_part_p = recv_part[p];
@@ -529,7 +529,7 @@ Field& build_edges_partition( Mesh& mesh )
       }
     }
   }
-  parallel::mpi::comm().allReduceInPlace(insane, eckit::mpi::max() );
+  mpi::comm().allReduceInPlace(insane, eckit::mpi::max() );
   if( insane && eckit::mpi::comm().rank() == 0 )
     ;//throw eckit::Exception("Sanity check failed",Here());
 
@@ -559,8 +559,8 @@ Field& build_edges_remote_idx( Mesh& mesh  )
   const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(mesh);
 
-  size_t mypart = parallel::mpi::comm().rank();
-  size_t nparts = parallel::mpi::comm().size();
+  size_t mypart = mpi::comm().rank();
+  size_t nparts = mpi::comm().size();
 
   mesh::HybridElements& edges = mesh.edges();
 
@@ -588,8 +588,8 @@ Field& build_edges_remote_idx( Mesh& mesh  )
   const int nb_edges = edges.size();
 
   double centroid[2];
-  std::vector< std::vector<uid_t> > send_needed( parallel::mpi::comm().size() );
-  std::vector< std::vector<uid_t> > recv_needed( parallel::mpi::comm().size() );
+  std::vector< std::vector<uid_t> > send_needed( mpi::comm().size() );
+  std::vector< std::vector<uid_t> > recv_needed( mpi::comm().size() );
   int sendcnt=0;
   std::map<uid_t,int> lookup;
 
@@ -657,11 +657,11 @@ Field& build_edges_remote_idx( Mesh& mesh  )
 #endif
 
   ATLAS_TRACE_MPI( ALLTOALL ) {
-    parallel::mpi::comm().allToAll(send_needed, recv_needed);
+    mpi::comm().allToAll(send_needed, recv_needed);
   }
 
-  std::vector< std::vector<int> > send_found( parallel::mpi::comm().size() );
-  std::vector< std::vector<int> > recv_found( parallel::mpi::comm().size() );
+  std::vector< std::vector<int> > send_found( mpi::comm().size() );
+  std::vector< std::vector<int> > recv_found( mpi::comm().size() );
 
   std::map<uid_t,int>::iterator found;
   for( size_t jpart=0; jpart<nparts; ++jpart )
@@ -697,7 +697,7 @@ Field& build_edges_remote_idx( Mesh& mesh  )
   }
 
   ATLAS_TRACE_MPI( ALLTOALL ) {
-    parallel::mpi::comm().allToAll(send_found, recv_found);
+    mpi::comm().allToAll(send_found, recv_found);
   }
 
   for( size_t jpart=0; jpart<nparts; ++jpart )
@@ -720,7 +720,7 @@ Field& build_edges_global_idx( Mesh& mesh )
 
   UniqueLonLat compute_uid(mesh);
 
-  int nparts = parallel::mpi::comm().size();
+  int nparts = mpi::comm().size();
   size_t root = 0;
 
   mesh::HybridElements& edges = mesh.edges();
@@ -774,11 +774,11 @@ Field& build_edges_global_idx( Mesh& mesh )
     loc_edge_id(jedge) = edge_gidx(jedge);
   }
 
-  std::vector<int> recvcounts(parallel::mpi::comm().size());
-  std::vector<int> recvdispls(parallel::mpi::comm().size());
+  std::vector<int> recvcounts(mpi::comm().size());
+  std::vector<int> recvdispls(mpi::comm().size());
 
   ATLAS_TRACE_MPI( GATHER ) {
-    parallel::mpi::comm().gather(nb_edges, recvcounts, root);
+    mpi::comm().gather(nb_edges, recvcounts, root);
   }
 
   recvdispls[0]=0;
@@ -792,7 +792,7 @@ Field& build_edges_global_idx( Mesh& mesh )
   array::ArrayView<uid_t,1> glb_edge_id = array::make_view<uid_t,1>(glb_edge_id_arr);
 
   ATLAS_TRACE_MPI( GATHER ) {
-    parallel::mpi::comm().gatherv(loc_edge_id.data(), loc_edge_id.size(),
+    mpi::comm().gatherv(loc_edge_id.data(), loc_edge_id.size(),
                                   glb_edge_id.data(), recvcounts.data(), recvdispls.data(), root);
   }
 
@@ -822,7 +822,7 @@ Field& build_edges_global_idx( Mesh& mesh )
 
   // 3) Scatter renumbered back
   ATLAS_TRACE_MPI( SCATTER ) {
-    parallel::mpi::comm().scatterv(glb_edge_id.data(), recvcounts.data(), recvdispls.data(),
+    mpi::comm().scatterv(glb_edge_id.data(), recvcounts.data(), recvdispls.data(),
                                    loc_edge_id.data(), loc_edge_id.size(), root);
   }
 

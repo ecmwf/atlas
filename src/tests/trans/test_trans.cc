@@ -51,7 +51,7 @@ namespace test {
 
 struct AtlasTransEnvironment : public AtlasTestEnvironment {
        AtlasTransEnvironment(int argc, char * argv[]) : AtlasTestEnvironment(argc, argv) {
-         if( parallel::mpi::comm().size() == 1 )
+         if( mpi::comm().size() == 1 )
            trans_use_mpi(false);
          trans_init();
        }
@@ -67,7 +67,7 @@ void read_rspecg(trans::TransImpl& trans, std::vector<double>& rspecg, std::vect
 {
   Log::info() << "read_rspecg ...\n";
   nfld = 2;
-  if( parallel::mpi::comm().rank() == 0 )
+  if( mpi::comm().rank() == 0 )
   {
     rspecg.resize(nfld*trans.spectralCoefficients());
     for( int i=0; i<trans.spectralCoefficients(); ++i )
@@ -88,7 +88,7 @@ void read_rspecg(trans::TransImpl& trans, std::vector<double>& rspecg, std::vect
 void read_rspecg( Field spec )
 {
   Log::info() << "read_rspecg ...\n";
-  if( parallel::mpi::comm().rank() == 0 )
+  if( mpi::comm().rank() == 0 )
   {
     functionspace::Spectral funcspace = spec.functionspace();
     int nb_spectral_coefficients_global = functionspace::Spectral( spec.functionspace() ).nb_spectral_coefficients_global();
@@ -126,11 +126,11 @@ CASE( "test_trans_distribution_matches_atlas" )
   EXPECT( trans.truncation() == 159 );
 
   // -------------- do checks -------------- //
-  EXPECT( t->nproc  ==  parallel::mpi::comm().size() );
-  EXPECT( t->myproc == parallel::mpi::comm().rank()+1 );
+  EXPECT( t->nproc  ==  mpi::comm().size() );
+  EXPECT( t->myproc == mpi::comm().rank()+1 );
 
 
-  if( parallel::mpi::comm().rank() == 0 ) // all tasks do the same, so only one needs to check
+  if( mpi::comm().rank() == 0 ) // all tasks do the same, so only one needs to check
   {
     int max_nb_regions_EW(0);
     for( int j=0; j<trans_partitioner->nb_bands(); ++j )
@@ -139,7 +139,7 @@ CASE( "test_trans_distribution_matches_atlas" )
     EXPECT( t->n_regions_NS == trans_partitioner->nb_bands() );
     EXPECT( t->n_regions_EW == max_nb_regions_EW );
 
-    EXPECT( distribution.nb_partitions() == parallel::mpi::comm().size() );
+    EXPECT( distribution.nb_partitions() == mpi::comm().size() );
     EXPECT( distribution.partition().size() == g.size() );
 
     std::vector<int> npts(distribution.nb_partitions(),0);
@@ -148,7 +148,7 @@ CASE( "test_trans_distribution_matches_atlas" )
       ++npts[distribution.partition(j)];
 
     EXPECT( t->ngptotg == g.size() );
-    EXPECT( t->ngptot ==  npts[parallel::mpi::comm().rank()] );
+    EXPECT( t->ngptot ==  npts[mpi::comm().rank()] );
     EXPECT( t->ngptotmx == *std::max_element(npts.begin(),npts.end()) );
 
     // array::LocalView<int,1> n_regions ( trans.n_regions() ) ;
@@ -171,7 +171,7 @@ CASE( "test_write_read_cache" )
 {
   Log::info() << "test_write_read_cache" << std::endl;
   using namespace trans;
-  if( parallel::mpi::comm().size() == 1 ) {
+  if( mpi::comm().size() == 1 ) {
     // Create trans that will write file
     Trans trans_write_F24( Grid("F24"), 23, option::write_legendre("cached_legendre_coeffs-F24") | option::flt(false) );
     Trans trans_write_N24( Grid("N24"), 23, option::write_legendre("cached_legendre_coeffs-N24") | option::flt(false) );
@@ -215,7 +215,7 @@ CASE( "test_distspec" )
   trans.invtrans( nfld, rspec.data(), rgp.data() );
   trans.gathgrid( nfld, nto.data(),   rgp.data(),    rgpg.data() );
 
-  if( parallel::mpi::comm().rank() == 0 ) {
+  if( mpi::comm().rank() == 0 ) {
     EXPECT( eckit::types::is_approximately_equal( specnorms[0], 1., 1.e-10 ));
     EXPECT( eckit::types::is_approximately_equal( specnorms[1], 2., 1.e-10 ));
   }
@@ -237,7 +237,7 @@ CASE( "test_distspec_speconly" )
   fs.scatter(glb,dist);
   fs.norm(dist,specnorms);
 
-  if( parallel::mpi::comm().rank() == 0 ) {
+  if( mpi::comm().rank() == 0 ) {
     EXPECT( eckit::types::is_approximately_equal( specnorms[0], 1., 1.e-10 ));
     EXPECT( eckit::types::is_approximately_equal( specnorms[1], 2., 1.e-10 ));
   }
@@ -257,7 +257,7 @@ CASE( "test_distribution" )
   grid::Distribution d_eqreg = grid::Partitioner( new EqualRegionsPartitioner() ).partition(g);
   Log::info() << "eqregions distribution created" << std::endl;
 
-  if( parallel::mpi::comm().rank() == 0 )
+  if( mpi::comm().rank() == 0 )
   {
     EXPECT( d_trans.nb_partitions() == d_eqreg.nb_partitions() );
     EXPECT( d_trans.max_pts() == d_eqreg.max_pts() );
@@ -352,14 +352,14 @@ CASE( "test_nomesh" )
   Field gpfg = gridpoints.createField<double>(option::name("gpf") | option::global());
 
   array::ArrayView<double,1> spg = array::make_view<double,1>(spfg);
-  if( parallel::mpi::comm().rank() == 0 ) {
+  if( mpi::comm().rank() == 0 ) {
     spg.assign(0.);
     spg(0) = 4.;
   }
 
   EXPECT_NO_THROW( spectral.scatter(spfg,spf) );
 
-  if( parallel::mpi::comm().rank() == 0 ) {
+  if( mpi::comm().rank() == 0 ) {
     array::ArrayView<double,1> sp = array::make_view<double,1>(spf);
     EXPECT( eckit::types::is_approximately_equal( sp(0), 4., 0.001 ));
     for( size_t jp=0; jp<sp.size(); ++jp ) {
@@ -371,7 +371,7 @@ CASE( "test_nomesh" )
 
   EXPECT_NO_THROW( gridpoints.gather(gpf,gpfg) );
 
-  if( parallel::mpi::comm().rank() == 0 ) {
+  if( mpi::comm().rank() == 0 ) {
     array::ArrayView<double,1> gpg = array::make_view<double,1>(gpfg);
     for( size_t jp=0; jp<gpg.size(); ++jp ) {
       EXPECT( eckit::types::is_approximately_equal( gpg(jp), 4., 0.001 ));
@@ -385,7 +385,7 @@ CASE( "test_nomesh" )
 
   EXPECT_NO_THROW( spectral.gather(spf,spfg) );
 
-  if( parallel::mpi::comm().rank() == 0 ) {
+  if( mpi::comm().rank() == 0 ) {
     EXPECT( eckit::types::is_approximately_equal( spg(0), 4., 0.001 ));
   }
 }
@@ -497,7 +497,7 @@ CASE( "test_trans_MIR_lonlat" )
   std::vector<double> spf( trans.spectralCoefficients() );
   std::vector<double> gpf( grid.size() );
 
-  if( parallel::mpi::comm().size() == 1 ) {
+  if( mpi::comm().size() == 1 ) {
     EXPECT_NO_THROW( trans.invtrans( 1, spf.data(), gpf.data(), option::global() ) );
 
     EXPECT_NO_THROW( trans.dirtrans( 1, gpf.data(), spf.data(), option::global() ) );

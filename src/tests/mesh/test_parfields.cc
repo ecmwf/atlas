@@ -47,7 +47,7 @@ public:
   IsGhost( const mesh::Nodes& nodes ) :
     part_( make_view<int,1>(nodes.partition()) ),
     ridx_( make_indexview<int,1>(nodes.remote_index()) ),
-    mypart_(parallel::mpi::comm().rank())
+    mypart_(mpi::comm().rank())
   {
 
   }
@@ -88,11 +88,11 @@ CASE( "test1" )
   glb_idx(2) = 3;    part(2) = 0;
   glb_idx(3) = 4;    part(3) = 0;
   glb_idx(4) = 5;    part(4) = 0;
-  glb_idx(5) = 6;    part(5) = std::min(1,(int)parallel::mpi::comm().size()-1);
-  glb_idx(6) = 7;    part(6) = std::min(1,(int)parallel::mpi::comm().size()-1);
-  glb_idx(7) = 8;    part(7) = std::min(1,(int)parallel::mpi::comm().size()-1);
-  glb_idx(8) = 9;    part(8) = std::min(1,(int)parallel::mpi::comm().size()-1);
-  glb_idx(9) = 10;   part(9) = std::min(1,(int)parallel::mpi::comm().size()-1);
+  glb_idx(5) = 6;    part(5) = std::min(1,(int)mpi::comm().size()-1);
+  glb_idx(6) = 7;    part(6) = std::min(1,(int)mpi::comm().size()-1);
+  glb_idx(7) = 8;    part(7) = std::min(1,(int)mpi::comm().size()-1);
+  glb_idx(8) = 9;    part(8) = std::min(1,(int)mpi::comm().size()-1);
+  glb_idx(9) = 10;   part(9) = std::min(1,(int)mpi::comm().size()-1);
 
   xy(0,XX) = 0.;    xy(0,YY) = 80.;    Topology::set( flags(0), Topology::BC|Topology::WEST );
   xy(1,XX) = 0.;    xy(1,YY) =-80.;    Topology::set( flags(1), Topology::BC|Topology::WEST );
@@ -123,7 +123,7 @@ CASE( "test1" )
 
   test::IsGhost is_ghost( m.nodes() );
 
-  switch ( parallel::mpi::comm().rank() )
+  switch ( mpi::comm().rank() )
   {
   case 0:
     EXPECT( is_ghost(0) == false );
@@ -158,7 +158,7 @@ CASE( "test1" )
   EXPECT( part(9) == 0 );
   EXPECT( loc(8) == 0 );
   EXPECT( loc(9) == 1 );
-  if( parallel::mpi::comm().rank() == 1 )
+  if( mpi::comm().rank() == 1 )
   {
     EXPECT( is_ghost(8) == true );
     EXPECT( is_ghost(9) == true );
@@ -186,8 +186,8 @@ CASE( "test2" )
   }
 
   ATLAS_DEBUG_VAR( nb_ghost );
-  if( parallel::mpi::comm().rank() == 0 ) EXPECT( nb_ghost == 128 ); // South boundary of Northern hemisphere
-  if( parallel::mpi::comm().rank() == 1 ) EXPECT( nb_ghost == 0   ); // Southern hemisphere has no ghosts
+  if( mpi::comm().rank() == 0 ) EXPECT( nb_ghost == 128 ); // South boundary of Northern hemisphere
+  if( mpi::comm().rank() == 1 ) EXPECT( nb_ghost == 0   ); // Southern hemisphere has no ghosts
 
   mesh::actions::build_periodic_boundaries(m);
 
@@ -199,8 +199,8 @@ CASE( "test2" )
 
   ATLAS_DEBUG_VAR( nb_periodic );
 
-  if( parallel::mpi::comm().rank() == 0 ) EXPECT( nb_periodic == 33 ); // Periodic East boundary of Northern hemisphere (plus one point south)
-  if( parallel::mpi::comm().rank() == 1 ) EXPECT( nb_periodic == 32 ); // Periodic East boundary of Southern hemisphere
+  if( mpi::comm().rank() == 0 ) EXPECT( nb_periodic == 33 ); // Periodic East boundary of Northern hemisphere (plus one point south)
+  if( mpi::comm().rank() == 1 ) EXPECT( nb_periodic == 32 ); // Periodic East boundary of Southern hemisphere
 
   Gmsh("periodic.msh",util::Config("info",true)).write(m);
 }

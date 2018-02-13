@@ -147,7 +147,7 @@ CASE( "test_functionspace_NodeColumns" )
 
   Field field = nodes_fs.createField<int>(option::name("partition"));
   array::ArrayView<int,2> arr = array::make_view<int,2>(field);
-  arr.assign(parallel::mpi::comm().rank());
+  arr.assign(mpi::comm().rank());
   //field->dump( Log::info() );
   nodes_fs.haloExchange(field);
   //field->dump( Log::info() );
@@ -155,7 +155,7 @@ CASE( "test_functionspace_NodeColumns" )
   Field field2 = nodes_fs.createField<int>(option::name("partition2")|option::variables(2));
   Log::info() << "field2.rank() = " << field2.rank() << std::endl;
   array::ArrayView<int,3> arr2 = array::make_view<int,3>(field2);
-  arr2.assign(parallel::mpi::comm().rank());
+  arr2.assign(mpi::comm().rank());
 
   //field2->dump( Log::info() );
   nodes_fs.haloExchange(field2);
@@ -163,7 +163,7 @@ CASE( "test_functionspace_NodeColumns" )
 
   Log::info() << nodes_fs.checksum(field) << std::endl;
 
-  size_t root = parallel::mpi::comm().size()-1;
+  size_t root = mpi::comm().size()-1;
   Field glb_field = nodes_fs.createField(
     option::name("partition") |
     option::datatype(field.datatype()) |
@@ -188,7 +188,7 @@ CASE( "test_functionspace_NodeColumns" )
 
   //glb_field->dump( Log::info() );
 
-  if( parallel::mpi::comm().rank() == root )
+  if( mpi::comm().rank() == root )
     glb_field.metadata().set("test_broadcast",123);
 
   arr.assign(-1);
@@ -221,15 +221,15 @@ CASE( "test_functionspace_NodeColumns" )
   gidx_t gidx_min;
 
   array::ArrayView<double,1> sfc_arr = array::make_view<double,1>( field );
-  sfc_arr.assign( parallel::mpi::comm().rank()+1 );
+  sfc_arr.assign( mpi::comm().rank()+1 );
   fs.maximum(surface_scalar_field,max);
-  EXPECT( max == double(parallel::mpi::comm().size()) );
+  EXPECT( max == double(mpi::comm().size()) );
 
   fs.minimum(surface_scalar_field,min);
   EXPECT( min == 1 );
 
   fs.maximumAndLocation(field,max,gidx_max);
-  EXPECT( max == double(parallel::mpi::comm().size()) );
+  EXPECT( max == double(mpi::comm().size()) );
   Log::info() << "global index for maximum: " << gidx_max << std::endl;
 
   fs.minimumAndLocation(field,min,gidx_min);
@@ -278,9 +278,9 @@ CASE( "test_functionspace_NodeColumns" )
     std::vector<gidx_t> gidx_min;
 
     auto vec_arr = array::make_view<double,2>( field );
-    vec_arr.assign( parallel::mpi::comm().rank()+1 );
+    vec_arr.assign( mpi::comm().rank()+1 );
     fs.maximum(field, max);
-    std::vector<double> check_max(field.variables(), parallel::mpi::comm().size());
+    std::vector<double> check_max(field.variables(), mpi::comm().size());
     EXPECT( max == check_max );
 
     fs.minimum(field,min);
@@ -334,15 +334,15 @@ CASE( "test_functionspace_NodeColumns" )
     EXPECT(field.levels() == nb_levels);
 
     array::ArrayView<double,2> arr = array::make_view<double,2>( field );
-    arr.assign( parallel::mpi::comm().rank()+1 );
+    arr.assign( mpi::comm().rank()+1 );
     fs.maximum(field,max);
-    EXPECT( max == double(parallel::mpi::comm().size()) );
+    EXPECT( max == double(mpi::comm().size()) );
 
     fs.minimum(field,min);
     EXPECT( min == 1 );
 
     fs.maximumAndLocation(field,max,gidx_max,level);
-    EXPECT( max == double(parallel::mpi::comm().size()) );
+    EXPECT( max == double(mpi::comm().size()) );
     Log::info() << "global index for maximum: " << gidx_max << std::endl;
     Log::info() << "level for maximum: " << level << std::endl;
 
@@ -414,9 +414,9 @@ CASE( "test_functionspace_NodeColumns" )
     std::vector<size_t> levels;
 
     array::ArrayView<double,3> vec_arr = array::make_view<double,3>( field );
-    vec_arr.assign( parallel::mpi::comm().rank()+1 );
+    vec_arr.assign( mpi::comm().rank()+1 );
     fs.maximum(field,max);
-    std::vector<double> check_max(nvar,parallel::mpi::comm().size());
+    std::vector<double> check_max(nvar,mpi::comm().size());
     EXPECT( max == check_max );
 
     fs.minimum(field,min);
@@ -626,12 +626,12 @@ CASE( "test_SpectralFunctionSpace_norm" )
   {
     auto twoD = array::make_view<double,1>( twoD_field );
     twoD.assign(0.);
-    if( parallel::mpi::comm().rank() == 0 ) twoD(0) = 1.;
+    if( mpi::comm().rank() == 0 ) twoD(0) = 1.;
 
     auto threeD = array::make_view<double,2>( threeD_field );
     threeD.assign(0.);
     for( size_t jlev=0; jlev<nb_levels; ++jlev) {
-      if( parallel::mpi::comm().rank() == 0 ) threeD(0,jlev) = jlev;
+      if( mpi::comm().rank() == 0 ) threeD(0,jlev) = jlev;
     }
   }
 

@@ -119,8 +119,8 @@ bool atlas::AtlasTool::handle_help()
 atlas::AtlasTool::AtlasTool(int argc, char **argv): eckit::Tool(argc,argv)
 {
   eckit::LibEcKit::instance().setAbortHandler( []{
-    Log::error() << "["<<atlas::parallel::mpi::comm().rank()<<"] " << "calling MPI_Abort" << std::endl;
-    atlas::parallel::mpi::comm().abort(1);
+    Log::error() << "["<<atlas::mpi::comm().rank()<<"] " << "calling MPI_Abort" << std::endl;
+    atlas::mpi::comm().abort(1);
   });
 
   add_option( new SimpleOption<bool>("help","Print this help") );
@@ -188,7 +188,7 @@ void atlas::AtlasTool::setupLogging()
 
   if( use_logfile ) {
 
-    int d = digits(parallel::mpi::comm().size());
+    int d = digits(mpi::comm().size());
     std::string rankstr = std::to_string(taskID());
     for( int i = rankstr.size(); i<d; ++i )
       rankstr = "0"+rankstr;
@@ -196,7 +196,7 @@ void atlas::AtlasTool::setupLogging()
     eckit::LogTarget* logfile =
         new eckit::FileTarget(displayName() + ".log.p" + rankstr);
 
-    if( parallel::mpi::comm().rank() == log_rank ) {
+    if( mpi::comm().rank() == log_rank ) {
       if( Log::info() )    Log::info()   .addTarget(logfile);
       if( Log::warning() ) Log::warning().addTarget(logfile);
       if( Log::error() )   Log::error()  .addTarget(logfile);
@@ -210,7 +210,7 @@ void atlas::AtlasTool::setupLogging()
 
   } else {
 
-    if( parallel::mpi::comm().rank() != log_rank ) {
+    if( mpi::comm().rank() != log_rank ) {
       if( Log::info() )    Log::info()   .reset();
       if( Log::warning() ) Log::warning().reset();
       if( Log::error() )   Log::error()  .reset();

@@ -109,10 +109,10 @@ void Tool::execute(const Args& args)
   if( not args.get("partitioner",partitioner_type) )
     partitioner_type = "equal_regions";
 
-  long N=parallel::mpi::comm().size();
+  long N=mpi::comm().size();
   args.get("partitions",N);
 
-  if( parallel::mpi::comm().rank() == 0 ) {
+  if( mpi::comm().rank() == 0 ) {
 
     grid::Partitioner partitioner(partitioner_type,N);
     grid::Distribution distribution = partitioner.partition(grid);

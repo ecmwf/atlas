@@ -139,16 +139,16 @@ void Library::initialise(const eckit::Parametrisation& config) {
     if( not info_  ) info_channel_ .reset();
 
     // Summary
-    if( getEnv( "ATLAS_LOG_RANK", 0 ) == parallel::mpi::comm().rank() ) {
+    if( getEnv( "ATLAS_LOG_RANK", 0 ) == mpi::comm().rank() ) {
       std::ostream& out = Log::debug();
       out << "Executable        [" << Main::instance().name() << "]\n";
       out << " \n";
       out << "  current dir     [" << PathName(LocalPathName::cwd()).fullName() << "]\n";
       out << " \n";
       out << "  MPI\n";
-      out << "    communicator  [" << parallel::mpi::comm() << "] \n";
-      out << "    size          [" << parallel::mpi::comm().size() << "] \n";
-      out << "    rank          [" << parallel::mpi::comm().rank() << "] \n";
+      out << "    communicator  [" << mpi::comm() << "] \n";
+      out << "    size          [" << mpi::comm().size() << "] \n";
+      out << "    rank          [" << mpi::comm().rank() << "] \n";
       out << " \n";
       out << "  log.info        [" << str(info_) << "] \n";
       out << "  log.trace       [" << str(trace()) << "] \n";

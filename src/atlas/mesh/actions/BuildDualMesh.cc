@@ -61,8 +61,8 @@ void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2]
   }
 
   ATLAS_TRACE_MPI( ALLREDUCE ) {
-    parallel::mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
-    parallel::mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
+    mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
+    mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
   }
 }
 
@@ -423,7 +423,7 @@ void build_brick_dual_mesh(const Grid& grid, Mesh& mesh)
   auto g = grid::StructuredGrid(grid);
   if( g )
   {
-    if( parallel::mpi::comm().size() != 1 )
+    if( mpi::comm().size() != 1 )
       throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());
 
     mesh::Nodes& nodes   = mesh.nodes();

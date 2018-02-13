@@ -77,14 +77,14 @@ void RegularMeshGenerator::configure_defaults()
 {
 
   // This option sets number of parts the mesh will be split in
-  options.set( "nb_parts", parallel::mpi::comm().size() );
+  options.set( "nb_parts", mpi::comm().size() );
 
   // This option sets the part that will be generated
-  options.set( "part", parallel::mpi::comm().rank() );
+  options.set( "part", mpi::comm().rank() );
 
   // This options sets the default partitioner
   std::string partitioner;
-  if( grid::Partitioner::exists("trans") && parallel::mpi::comm().size() > 1 )
+  if( grid::Partitioner::exists("trans") && mpi::comm().size() > 1 )
     partitioner = "trans";
   else
     partitioner = "checkerboard";

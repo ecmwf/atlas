@@ -14,11 +14,9 @@
 #include "atlas/parallel/mpi/Statistics.h"
 
 namespace atlas {
-namespace parallel {
 namespace mpi {
 
 const eckit::mpi::Comm& comm();
 
 } // namespace mpi
-} // namespace parallel
 } // namespace atlas

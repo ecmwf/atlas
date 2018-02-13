@@ -102,7 +102,7 @@ void TimingsRegistry::update( size_t idx, double seconds ) {
     double n = counts_[idx]+1;
     double avg_nm1 = tot_timings_[idx] / std::max(n,1.);
     double var_nm1 = var_timings_[idx];
-    var_timings_[idx] = counts_[idx] == 0 ? 0. : (n-2.)/(n-1.) * var_nm1 + 1./n * sqr(seconds-avg_nm1);
+    var_timings_[idx] = n == 1. ? 0. : (n-2.)/(n-1.) * var_nm1 + 1./n * sqr(seconds-avg_nm1);
     min_timings_[idx] = std::min( seconds, min_timings_[idx] );
     max_timings_[idx] = std::max( seconds, max_timings_[idx] );
     tot_timings_[idx] += seconds;
@@ -324,8 +324,8 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
       auto  std    = std::sqrt( var_timings_[j] );
       auto  avg    = tot/double(count);
 
-      //parallel::mpi::comm().allReduceInPlace(min,eckit::mpi::min());
-      //parallel::mpi::comm().allReduceInPlace(max,eckit::mpi::max());
+      //mpi::comm().allReduceInPlace(min,eckit::mpi::min());
+      //mpi::comm().allReduceInPlace(max,eckit::mpi::max());
 
       if( not excluded(j) ) {
 

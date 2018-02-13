@@ -110,7 +110,7 @@ void Tool::execute(const Args& args)
     ATLAS_TRACE("iteration");
     Mesh mesh = meshgenerator.generate(grid);
     mesh::actions::build_halo( mesh, halo );
-    parallel::mpi::comm().barrier();
+    mpi::comm().barrier();
   }
   timer.stop();
   Log::info() << Trace::report() << std::endl;

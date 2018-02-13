@@ -56,7 +56,7 @@ public:
       });
       TRANS_CHECK(::trans_new(trans_.get()));
       TRANS_CHECK(::trans_set_trunc(trans_.get(),truncation));
-      TRANS_CHECK(::trans_use_mpi(parallel::mpi::comm().size()>1));
+      TRANS_CHECK(::trans_use_mpi(mpi::comm().size()>1));
       TRANS_CHECK(::trans_setup(trans_.get()));
   }
 
@@ -109,7 +109,7 @@ size_t Spectral::config_size(const eckit::Configuration& config) const
     {
       size_t owner(0);
       config.get("owner",owner);
-      size = (parallel::mpi::comm().rank() == owner ? nb_spectral_coefficients_global() : 0);
+      size = (mpi::comm().rank() == owner ? nb_spectral_coefficients_global() : 0);
     }
   }
   return size;
@@ -234,7 +234,7 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
     size_t root=0;
     glb.metadata().get("owner",root);
     ASSERT( loc.shape(0) == nb_spectral_coefficients() );
-    if( parallel::mpi::comm().rank() == root )
+    if( mpi::comm().rank() == root )
       ASSERT( glb.shape(0) == nb_spectral_coefficients_global() );
     std::vector<int> nto(1,root+1);
     if( loc.rank() > 1 ) {
@@ -283,7 +283,7 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
     size_t root=0;
     glb.metadata().get("owner",root);
     ASSERT( loc.shape(0) == nb_spectral_coefficients() );
-    if( parallel::mpi::comm().rank() == root )
+    if( mpi::comm().rank() == root )
       ASSERT( glb.shape(0) == nb_spectral_coefficients_global() );
     std::vector<int> nfrom(1,root+1);
     if( loc.rank() > 1 ) {

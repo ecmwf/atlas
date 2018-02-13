@@ -159,7 +159,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
     {
       if(recv_counts[jproc] > 0)
       {
-          recv_req[jproc] = parallel::mpi::comm().iReceive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag);
+          recv_req[jproc] = mpi::comm().iReceive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag);
       }
     }
   }
@@ -173,7 +173,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
     {
       if(send_counts[jproc] > 0)
       {
-         send_req[jproc] = parallel::mpi::comm().iSend(
+         send_req[jproc] = mpi::comm().iSend(
               &send_buffer[send_displs[jproc]],
               send_counts[jproc], jproc, tag);
       }
@@ -186,7 +186,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
     {
       if( recvcounts_[jproc] > 0)
       {
-          parallel::mpi::comm().wait(recv_req[jproc]);
+          mpi::comm().wait(recv_req[jproc]);
       }
     }
   }
@@ -200,7 +200,7 @@ void HaloExchange::execute(array::Array& field, bool on_device) const
     {
       if( sendcounts_[jproc] > 0)
       {
-          parallel::mpi::comm().wait(send_req[jproc]);
+          mpi::comm().wait(send_req[jproc]);
       }
     }
   }

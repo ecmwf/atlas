@@ -127,7 +127,7 @@ void AtlasLoadbalance::run()
     std::stringstream s;
     write_load_balance_report(mesh,s);
 
-    if( parallel::mpi::comm().rank() == 0 )
+    if( mpi::comm().rank() == 0 )
     {
       std::cout << s.str() << std::endl;
     }

@@ -218,7 +218,7 @@ size_t EdgeColumns::config_size(const eckit::Configuration& config) const
       size_t owner(0);
       config.get("owner",owner);
       size_t _nb_edges_global( nb_edges_global() );
-      size = (parallel::mpi::comm().rank() == owner ? _nb_edges_global : 0);
+      size = (mpi::comm().rank() == owner ? _nb_edges_global : 0);
     }
   }
   return size;

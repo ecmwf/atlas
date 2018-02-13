@@ -31,7 +31,7 @@ namespace detail {
 
 PartitionGraph* build_partition_graph(const MeshImpl& mesh ) {
 
-  const eckit::mpi::Comm& comm = parallel::mpi::comm();
+  const eckit::mpi::Comm& comm = mpi::comm();
   const int mpi_size = int(comm.size());
 
   const util::Polygon& poly = mesh.polygon();

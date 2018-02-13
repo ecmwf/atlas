@@ -49,17 +49,17 @@ static double rad2deg = util::Constants::radiansToDegrees();
 
 class GmshFile : public std::ofstream {
 public:
-  GmshFile(const PathName& file_path, std::ios_base::openmode mode, int part = atlas::parallel::mpi::comm().rank())
+  GmshFile(const PathName& file_path, std::ios_base::openmode mode, int part = atlas::mpi::comm().rank())
   {
     PathName par_path(file_path);
-    if (atlas::parallel::mpi::comm().size() == 1 || part == -1) {
+    if (atlas::mpi::comm().size() == 1 || part == -1) {
       std::ofstream::open(par_path.localPath(), mode);
     } else {
       Translator<int, std::string> to_str;
-      if (atlas::parallel::mpi::comm().rank() == 0) {
+      if (atlas::mpi::comm().rank() == 0) {
         PathName par_path(file_path);
         std::ofstream par_file(par_path.localPath(), std::ios_base::out);
-        for(size_t p = 0; p < atlas::parallel::mpi::comm().size(); ++p) {
+        for(size_t p = 0; p < atlas::mpi::comm().size(); ++p) {
           PathName loc_path(file_path);
           // loc_path = loc_path.baseName(false) + "_p" + to_str(p) + ".msh";
           loc_path = loc_path.baseName(false) + ".msh.p" + to_str(p);
@@ -243,7 +243,7 @@ void write_field_nodes(
 {
   Log::debug() << "writing NodeColumns field " << field.name() << " defined in NodeColumns..." << std::endl;
 
-  bool gather( gmsh_options.get<bool>("gather") && atlas::parallel::mpi::comm().size() > 1 );
+  bool gather( gmsh_options.get<bool>("gather") && atlas::mpi::comm().size() > 1 );
   bool binary( !gmsh_options.get<bool>("ascii") );
   size_t nlev  = std::max<int>(1,field.levels());
   size_t ndata = std::min(function_space.nb_nodes(),field.shape(0));
@@ -266,7 +266,7 @@ void write_field_nodes(
   for (size_t ilev=0; ilev < lev.size(); ++ilev)
   {
     size_t jlev = lev[ilev];
-    if( ( gather && atlas::parallel::mpi::comm().rank() == 0 ) || !gather )
+    if( ( gather && atlas::mpi::comm().rank() == 0 ) || !gather )
     {
       out << "$NodeData\n";
       out << "1\n";
@@ -277,7 +277,7 @@ void write_field_nodes(
       out << field_step(field) << "\n";
       out << field_vars(nvars) << "\n";
       out << ndata << "\n";
-      out << atlas::parallel::mpi::comm().rank() << "\n";
+      out << atlas::mpi::comm().rank() << "\n";
       auto data = gather ? make_level_view<DATATYPE>( field_glb, ndata, jlev ) : make_level_view<DATATYPE>( field, ndata, jlev );
       write_level( out, gidx, data );
       out << "$EndNodeData\n";
@@ -298,7 +298,7 @@ void write_field_nodes(
 {
   Log::debug() << "writing StructuredColumns field " << field.name() << "..." << std::endl;
 
-  bool gather( gmsh_options.get<bool>("gather") && atlas::parallel::mpi::comm().size() > 1 );
+  bool gather( gmsh_options.get<bool>("gather") && atlas::mpi::comm().size() > 1 );
   bool binary( !gmsh_options.get<bool>("ascii") );
   size_t nlev  = std::max<int>(1,field.levels());
   size_t ndata = std::min(function_space.sizeOwned(),field.shape(0));
@@ -344,7 +344,7 @@ void write_field_nodes(
       out << field_step(field) << "\n";
       out << field_vars(nvars) << "\n";
       out << ndata << "\n";
-      out << atlas::parallel::mpi::comm().rank() << "\n";
+      out << atlas::mpi::comm().rank() << "\n";
       auto data = gather ? make_level_view<DATATYPE>( field_glb, ndata, jlev ) : make_level_view<DATATYPE>( field, ndata, jlev );
       write_level( out, gidx, data );
       out << "$EndNodeData\n";
@@ -404,7 +404,7 @@ void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& functi
     if     ( nvars == 1 ) out << nvars << "\n";
     else if( nvars <= 3 ) out << 3     << "\n";
     out << ndata << "\n";
-    out << parallel::mpi::comm().rank() << "\n";
+    out << mpi::comm().rank() << "\n";
 
     if( binary )
     {
@@ -767,7 +767,7 @@ void GmshIO::read(const PathName& file_path, Mesh& mesh ) const
 
 void GmshIO::write(const Mesh& mesh, const PathName& file_path) const
 {
-  int part = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : atlas::parallel::mpi::comm().rank();
+  int part = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : atlas::mpi::comm().rank();
   bool include_ghost = options.get<bool>("ghost") && options.get<bool>("elements");
 
   std::string nodes_field = options.get<std::string>("nodes");
@@ -1053,7 +1053,7 @@ void GmshIO::write_delegate(
     bool binary( !options.get<bool>("ascii") );
     if ( binary ) mode |= std::ios_base::binary;
     bool gather = options.has("gather") ? options.get<bool>("gather") : false;
-    GmshFile file(file_path,mode,gather?-1:atlas::parallel::mpi::comm().rank());
+    GmshFile file(file_path,mode,gather?-1:atlas::mpi::comm().rank());
 
     // Header
     if (is_new_file)
@@ -1106,7 +1106,7 @@ void GmshIO::write_delegate(
 
     bool gather = options.has("gather") ? options.get<bool>("gather") : false;
 
-    GmshFile file(file_path,mode,gather?-1:atlas::parallel::mpi::comm().rank());
+    GmshFile file(file_path,mode,gather?-1:atlas::mpi::comm().rank());
 
     // Header
     if (is_new_file)

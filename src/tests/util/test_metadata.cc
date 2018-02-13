@@ -26,7 +26,7 @@ namespace test {
 CASE( "test_broadcast_to_self" )
 {
   Metadata metadata;
-  if( parallel::mpi::comm().rank() == 0 )
+  if( mpi::comm().rank() == 0 )
   {
     metadata.set("paramID",128);
   }
@@ -46,7 +46,7 @@ CASE( "test_broadcast_to_other" )
 {
   size_t root = 0;
   Metadata global;
-  if( parallel::mpi::comm().rank() == root )
+  if( mpi::comm().rank() == root )
   {
     global.set("paramID",128);
   }
@@ -60,7 +60,7 @@ CASE( "test_broadcast_to_other" )
   if( local.has("paramID") )
     EXPECT( local.get<int>("paramID") == 128 );
 
-  if( parallel::mpi::comm().rank() != root )
+  if( mpi::comm().rank() != root )
     EXPECT( ! global.has("paramID") );
 }
 

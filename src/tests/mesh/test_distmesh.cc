@@ -62,7 +62,7 @@ double dual_volume(Mesh& mesh)
 
 
   ATLAS_TRACE_MPI( ALLREDUCE ) {
-    parallel::mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
+    mpi::comm().allReduceInPlace(area, eckit::mpi::sum());
   }
 
   return area;
