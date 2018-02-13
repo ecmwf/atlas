@@ -185,8 +185,9 @@ CASE( "test2" )
     if( is_ghost(jnode) ) ++nb_ghost;
   }
 
-  if( parallel::mpi::comm().rank() == 0 ) EXPECT( nb_ghost == 129 );
-  if( parallel::mpi::comm().rank() == 1 ) EXPECT( nb_ghost == 0   );
+  ATLAS_DEBUG_VAR( nb_ghost );
+  if( parallel::mpi::comm().rank() == 0 ) EXPECT( nb_ghost == 128 ); // South boundary of Northern hemisphere
+  if( parallel::mpi::comm().rank() == 1 ) EXPECT( nb_ghost == 0   ); // Southern hemisphere has no ghosts
 
   mesh::actions::build_periodic_boundaries(m);
 
@@ -196,10 +197,12 @@ CASE( "test2" )
     if( is_ghost(jnode) ) ++nb_periodic;
   }
 
-  if( parallel::mpi::comm().rank() == 0 ) EXPECT( nb_periodic == 32 );
-  if( parallel::mpi::comm().rank() == 1 ) EXPECT( nb_periodic == 32 );
+  ATLAS_DEBUG_VAR( nb_periodic );
 
-  Gmsh("periodic.msh").write(m);
+  if( parallel::mpi::comm().rank() == 0 ) EXPECT( nb_periodic == 33 ); // Periodic East boundary of Northern hemisphere (plus one point south)
+  if( parallel::mpi::comm().rank() == 1 ) EXPECT( nb_periodic == 32 ); // Periodic East boundary of Southern hemisphere
+
+  Gmsh("periodic.msh",util::Config("info",true)).write(m);
 }
 
 //-----------------------------------------------------------------------------
