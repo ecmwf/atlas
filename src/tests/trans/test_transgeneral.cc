@@ -459,7 +459,6 @@ void spectral_transform_grid_analytic(
     if( grid::StructuredGrid(grid) ) {
         grid::StructuredGrid g(grid);
         int idx = 0;
-        bool fullgrid = (g.nx(0)==g.nxmax());
         for( size_t j=0; j<g.ny(); ++j ) {
             double lat = g.y(j) * util::Constants::degreesToRadians();
 
@@ -467,7 +466,7 @@ void spectral_transform_grid_analytic(
                 double lon = g.x(i,j) * util::Constants::degreesToRadians();
 
                 // compute spherical harmonics:
-                if( trans::fourier_truncation(trc, g.nx(j), g.nxmax(), g.ny(), lat, fullgrid)>=m ) {
+                if( trans::fourier_truncation(trc, g.nx(j), g.nxmax(), g.ny(), lat, grid::RegularGrid(g))>=m ) {
                     rgp[idx++] = sphericalharmonics_analytic_point(n, m, imag, lon, lat, ivar_in, ivar_out);
                 } else {
                     rgp[idx++] = 0.;
@@ -869,7 +868,7 @@ CASE( "test_trans_fourier_truncation" )
   // test transgeneral by comparing its result with the trans library
   // this test is based on the test_nomesh case in test_trans.cc
 
-  Grid g( "O640" );
+  Grid g( "F640" );
   grid::StructuredGrid gs(g);
   int ndgl = gs.ny();
   //int trc = 2*ndgl; // extreme high truncation (below linear)
@@ -878,10 +877,9 @@ CASE( "test_trans_fourier_truncation" )
   //int trc = 2./3.*ndgl-1; // quadratic
   //int trc = ndgl/2. -1; // cubic
   trans::Trans trans(g, trc) ;
-  bool fullgrid = (gs.nx(0)==gs.nxmax());
   for( int j=0; j<gs.ny(); j+=80 ) {
       double lat = gs.y(j) * util::Constants::degreesToRadians();
-      int trcFT = trans::fourier_truncation(trc, gs.nx(j), gs.nxmax(), gs.ny(), lat, fullgrid);
+      int trcFT = trans::fourier_truncation(trc, gs.nx(j), gs.nxmax(), gs.ny(), lat, grid::RegularGrid(g));
       Log::info() << trcFT << "         " << gs.nx(j) << std::endl;
   }
   // TODO: create some real criterion to test fourier_truncation. So far only comparison with trans library through print statements.

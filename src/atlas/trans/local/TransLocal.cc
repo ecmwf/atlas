@@ -205,10 +205,9 @@ void TransLocal::invtrans_uv(
         if( grid::StructuredGrid g = grid_ ) {
             ATLAS_TRACE( "invtrans_uv structured");
             int idx = 0;
-            bool fullgrid = (g.nx(0)==g.nxmax());
             for( size_t j=0; j<g.ny(); ++j ) {
                 double lat = g.y(j) * util::Constants::degreesToRadians();
-                double trcFT = fourier_truncation( truncation, g.nx(j), g.nxmax(), g.ny(), lat, fullgrid );
+                double trcFT = fourier_truncation( truncation, g.nx(j), g.nxmax(), g.ny(), lat, grid::RegularGrid(grid_) );
 
                 // Legendre transform:
                 invtrans_legendre( truncation, trcFT, truncation_+1, legPol(lat,j), nb_fields, scalar_spectra, legReal.data(), legImag.data() );
