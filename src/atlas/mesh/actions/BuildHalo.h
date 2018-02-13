@@ -14,6 +14,8 @@
 #define BuildHalo_h
 
 #include <string>
+#include <vector>
+#include "atlas/library/config.h"
 
 namespace atlas {
   class Mesh;
@@ -26,7 +28,8 @@ public:
   BuildHalo( Mesh& mesh ) : mesh_(mesh) {}
   void operator()(int nb_elems);
 public:
-  std::vector<gidx_t> periodic_local_index_;
+  std::vector<idx_t> periodic_points_local_index_;
+  std::vector<idx_t> periodic_cells_local_index_;
 
 private:
   Mesh& mesh_;

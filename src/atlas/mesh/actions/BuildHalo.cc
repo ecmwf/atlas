@@ -61,16 +61,16 @@ namespace atlas {
 namespace mesh {
 namespace actions {
 
-struct Node
+struct Entity
 {
-  Node(gidx_t gid, int idx)
+  Entity(gidx_t gid, int idx)
   {
     g = gid;
     i = idx;
   }
   gidx_t g;
   gidx_t i;
-  bool operator < (const Node& other) const
+  bool operator < (const Entity& other) const
   {
     return ( g<other.g );
   }
@@ -103,9 +103,9 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
       points_to_edit[i] = i;
   } else {
     glb_idx_max = nodes.global_index().metadata().getLong("max",0);
-    points_to_edit.resize( build_halo.periodic_local_index_.size() );
+    points_to_edit.resize( build_halo.periodic_points_local_index_.size() );
     for( size_t i=0; i<points_to_edit.size(); ++i )
-      points_to_edit[i] = build_halo.periodic_local_index_[i];
+      points_to_edit[i] = build_halo.periodic_points_local_index_[i];
   }
 
   std::vector<gidx_t> glb_idx(points_to_edit.size());
@@ -158,9 +158,9 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
-  std::vector<Node> node_sort; node_sort.reserve(glb_nb_nodes);
+  std::vector<Entity> node_sort; node_sort.reserve(glb_nb_nodes);
   for( size_t jnode=0; jnode<glb_idx_gathered.size(); ++jnode ) {
-    node_sort.push_back( Node(glb_idx_gathered[jnode],jnode) );
+    node_sort.push_back( Entity(glb_idx_gathered[jnode],jnode) );
   }
 
   ATLAS_TRACE_SCOPE( "sort on rank 0" ) {
@@ -196,9 +196,98 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
 // -------------------------------------------------------------------------------------
 
+void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& build_halo, mesh::Cells& cells, bool do_all )
+{
+  ATLAS_TRACE();
+
+  int nparts = parallel::mpi::comm().size();
+  size_t root = 0;
+
+  array::ArrayView<gidx_t,1> cells_glb_idx = array::make_view<gidx_t,1> ( cells.global_index() );
+//  ATLAS_DEBUG( "min = " << cells.global_index().metadata().getLong("min") );
+//  ATLAS_DEBUG( "max = " << cells.global_index().metadata().getLong("max") );
+//  ATLAS_DEBUG( "human_readable = " << cells.global_index().metadata().getBool("human_readable") );
+  gidx_t glb_idx_max = 0;
+
+  std::vector<int> cells_to_edit;
+
+  if( do_all ) {
+    cells_to_edit.resize(cells_glb_idx.size());
+    for( size_t i=0; i<cells_glb_idx.size(); ++i )
+      cells_to_edit[i] = i;
+  } else {
+    glb_idx_max = cells.global_index().metadata().getLong("max",0);
+    cells_to_edit.resize( build_halo.periodic_cells_local_index_.size() );
+    for( size_t i=0; i<cells_to_edit.size(); ++i )
+      cells_to_edit[i] = build_halo.periodic_cells_local_index_[i];
+  }
+
+  std::vector<gidx_t> glb_idx(cells_to_edit.size());
+  int nb_cells = glb_idx.size();
+  for( size_t i=0; i<nb_cells; ++i )
+    glb_idx[i] = cells_glb_idx(cells_to_edit[i]);
+
+  // 1) Gather all global indices, together with location
+
+  std::vector<int> recvcounts(parallel::mpi::comm().size());
+  std::vector<int> recvdispls(parallel::mpi::comm().size());
+
+  ATLAS_TRACE_MPI( GATHER ) {
+    parallel::mpi::comm().gather(nb_cells, recvcounts, root);
+  }
+  int glb_nb_cells = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
+
+  recvdispls[0]=0;
+  for (int jpart=1; jpart<nparts; ++jpart) { // start at 1
+    recvdispls[jpart]=recvcounts[jpart-1]+recvdispls[jpart-1];
+  }
+
+  std::vector<gidx_t> glb_idx_gathered( glb_nb_cells );
+  ATLAS_TRACE_MPI( GATHER ) {
+    parallel::mpi::comm().gatherv(glb_idx.data(), glb_idx.size(),
+                                  glb_idx_gathered.data(),
+                                  recvcounts.data(), recvdispls.data(), root);
+  }
 
 
+  // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
+  std::vector<Entity> cell_sort; cell_sort.reserve(glb_nb_cells);
+  for( size_t jnode=0; jnode<glb_idx_gathered.size(); ++jnode ) {
+    cell_sort.push_back( Entity(glb_idx_gathered[jnode],jnode) );
+  }
 
+  ATLAS_TRACE_SCOPE( "sort on rank 0" ) {
+    std::sort(cell_sort.begin(), cell_sort.end());
+  }
+
+  gidx_t gid=glb_idx_max+1;
+  for( size_t jcell=0; jcell<cell_sort.size(); ++jcell )
+  {
+    if( jcell > 0 && cell_sort[jcell].g != cell_sort[jcell-1].g ) {
+      ++gid;
+    }
+    int icell = cell_sort[jcell].i;
+    glb_idx_gathered[icell] = gid;
+  }
+
+  // 3) Scatter renumbered back
+  ATLAS_TRACE_MPI( SCATTER ) {
+    parallel::mpi::comm().scatterv(glb_idx_gathered.data(),
+                                   recvcounts.data(), recvdispls.data(),
+                                   glb_idx.data(), glb_idx.size(), root);
+  }
+
+  for( int jcell=0; jcell<nb_cells; ++jcell ) {
+    cells_glb_idx(cells_to_edit[jcell]) = glb_idx[jcell];
+  }
+
+  //nodes_glb_idx.dump( Log::info() );
+  //Log::info() << std::endl;
+  cells.global_index().metadata().set("human_readable",true);
+
+}
+
+// -------------------------------------------------------------------------------------
 
 typedef gidx_t uid_t;
 
@@ -550,7 +639,8 @@ public:
   }
 
   struct Status {
-    std::vector<gidx_t> new_periodic_ghost_points;
+    std::vector<idx_t> new_periodic_ghost_points;
+    std::vector< std::vector<idx_t> > new_periodic_ghost_cells;
   } status;
 
 public:
@@ -753,7 +843,7 @@ public:
   }
 
 
-  void add_nodes(Buffers& buf, bool periodic )
+  void add_nodes( Buffers& buf, bool periodic )
   {
     ATLAS_TRACE();
 
@@ -860,7 +950,7 @@ public:
     }
   }
 
-  void add_elements(Buffers& buf)
+  void add_elements( Buffers& buf, bool periodic )
   {
     ATLAS_TRACE();
 
@@ -889,6 +979,10 @@ public:
         return true;
       }
     };
+
+    if( not status.new_periodic_ghost_cells.size() )
+      status.new_periodic_ghost_cells.resize(mesh.cells().nb_types());
+
 
     std::vector< std::vector<int> > received_new_elems( mpi_size );
     for(size_t jpart = 0; jpart < mpi_size; ++jpart)
@@ -931,6 +1025,8 @@ public:
       // Add new elements
       BlockConnectivity &node_connectivity = elements.node_connectivity();
       if( nb_elements_of_type[t] == 0 ) continue;
+
+      size_t old_size = elements.size();
       size_t new_elems_pos = elements.add(nb_elements_of_type[t]);
 
       auto elem_type_glb_idx = elements.view<gidx_t,1>( mesh.cells().global_index() );
@@ -945,22 +1041,28 @@ public:
         for(size_t e = 0; e < elems[jpart].size(); ++e)
         {
           size_t jelem = elems[jpart][e];
-          elem_type_glb_idx(new_elems_pos+new_elem)   = std::abs(buf.elem_glb_idx[jpart][jelem]);
-          elem_type_part   (new_elems_pos+new_elem)   = buf.elem_part[jpart][jelem];
-          elem_type_halo   (new_elems_pos+new_elem)   = halo+1;
-          elem_type_patch  (new_elems_pos+new_elem)   = 0;
+          int loc_idx = new_elems_pos+new_elem;
+          elem_type_glb_idx(loc_idx)   = std::abs(buf.elem_glb_idx[jpart][jelem]);
+          elem_type_part   (loc_idx)   = buf.elem_part[jpart][jelem];
+          elem_type_halo   (loc_idx)   = halo+1;
+          elem_type_patch  (loc_idx)   = 0;
           for( size_t n=0; n<node_connectivity.cols(); ++n )
-            node_connectivity.set(new_elems_pos+new_elem,n ,  uid2node[ buf.elem_nodes_id[jpart][ buf.elem_nodes_displs[jpart][jelem]+n] ] );
+            node_connectivity.set(loc_idx,n ,  uid2node[ buf.elem_nodes_id[jpart][ buf.elem_nodes_displs[jpart][jelem]+n] ] );
+
+          if( periodic ) {
+            status.new_periodic_ghost_cells[t].push_back(old_size+new_elem);
+          }
+
           ++new_elem;
         }
       }
     }
   }
 
-  void add_buffers(Buffers& buf, bool periodic = false )
+  void add_buffers( Buffers& buf, bool periodic = false )
   {
-    add_nodes(buf, periodic );
-    add_elements(buf);
+    add_nodes( buf, periodic );
+    add_elements( buf, periodic );
     update();
   }
 
@@ -1269,8 +1371,15 @@ void BuildHalo::operator () ( int nb_elems )
       increase_halo_periodic( helper, eastpts, EastWest(), Topology::PERIODIC|Topology::EAST|Topology::GHOST );
     }
 
-    for( gidx_t p : helper.status.new_periodic_ghost_points ) {
-      periodic_local_index_.push_back( p );
+    for( idx_t p : helper.status.new_periodic_ghost_points ) {
+      periodic_points_local_index_.push_back( p );
+    }
+    int c(0);
+    for( int t=0; t<mesh_.cells().nb_types(); ++t ) {
+      for( idx_t p : helper.status.new_periodic_ghost_cells[t] ) {
+        periodic_cells_local_index_.push_back( c+p );
+      }
+      c += mesh_.cells().elements(t).size();
     }
 
     std::stringstream ss;
@@ -1278,6 +1387,7 @@ void BuildHalo::operator () ( int nb_elems )
     mesh_.metadata().set(ss.str(),mesh_.nodes().size());
     mesh_.metadata().set("halo",jhalo+1);
     mesh_.nodes().global_index().metadata().set("human_readable",false);
+    mesh_.cells().global_index().metadata().set("human_readable",false);
 
 #ifdef DEBUG_OUTPUT
     output::Gmsh gmsh2d("build-halo-mesh2d.msh",util::Config
@@ -1297,6 +1407,7 @@ void BuildHalo::operator () ( int nb_elems )
   }
 
   make_nodes_global_index_human_readable( *this, mesh_.nodes(), /*do_all*/ false );
+  make_cells_global_index_human_readable( *this, mesh_.cells(), /*do_all*/ false );
 //  renumber_nodes_glb_idx (mesh_.nodes());
 
 }

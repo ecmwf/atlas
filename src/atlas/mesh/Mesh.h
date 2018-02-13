@@ -121,6 +121,8 @@ public:
 
     const Grid& grid() const { return impl_->grid(); }
 
+    operator bool() const { return impl_; }
+
 private:  // methods
 
     friend std::ostream& operator<<(std::ostream& s, const Mesh& p) {

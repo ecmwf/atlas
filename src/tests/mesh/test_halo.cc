@@ -108,7 +108,7 @@ CASE( "test_small" )
 #endif
 
 #if 1
-CASE( "test_t63" )
+CASE( "test_custom" )
 {
   // Mesh m = test::generate_mesh( T63() );
 
@@ -119,10 +119,10 @@ CASE( "test_t63" )
   mesh::actions::build_halo(m,1);
   //mesh::actions::build_edges(m);
   //mesh::actions::build_pole_edges(m);
-  //mesh::actions::build_edges_parallel_fields(m.function_space("edges"),m-.nodes());
+  //mesh::actions::build_edges_parallel_fields(m.function_space("edges"),m.nodes());
   //mesh::actions::build_centroid_dual_mesh(m);
 
-  std::stringstream filename; filename << "T63_halo.msh";
+  std::stringstream filename; filename << "custom.msh";
   Gmsh(filename.str(),util::Config("ghost",true)).write(m);
 
 //  EXPECT( eckit::types::is_approximately_equal( test::dual_volume(m), 2.*M_PI*M_PI, 1e-6 ));

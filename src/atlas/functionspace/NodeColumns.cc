@@ -263,6 +263,7 @@ NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration & config ) :
 
 void NodeColumns::constructor()
 {
+  ASSERT( mesh_ );
   mesh::actions::build_nodes_parallel_fields( mesh_.nodes() );
   mesh::actions::build_periodic_boundaries(mesh_);
 

@@ -10,6 +10,7 @@
 
 #include <map>
 #include <string>
+#include <numeric>
 
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
@@ -121,6 +122,12 @@ void MeshGeneratorImpl::generateGlobalElementNumbering( Mesh& mesh ) const
   {
     glb_idx(jelem) = gid++;
   }
+
+  size_t max_glb_idx = std::accumulate(elem_counts.begin(),elem_counts.end(),size_t(0));
+
+  mesh.cells().global_index().metadata().set("human_readable",true);
+  mesh.cells().global_index().metadata().set("min",1);
+  mesh.cells().global_index().metadata().set("max",max_glb_idx);
 }
 
 
