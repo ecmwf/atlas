@@ -46,10 +46,6 @@
 // #define ATLAS_103
 // #define ATLAS_103_SORT
 
-#ifndef ATLAS_103
-#warning ATLAS-103 proposed solution deactivated
-#endif
-
 using atlas::mesh::detail::accumulate_facets;
 using atlas::mesh::detail::PeriodicTransform;
 using atlas::util::UniqueLonLat;
@@ -1083,6 +1079,7 @@ void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uid_t>&
   }
 #else
   ATLAS_TRACE();
+
   Mesh::PartitionGraph::Neighbours neighbours = helper.mesh.nearestNeighbourPartitions();
   if( periodic ) {
     // add own rank to neighbours to allow periodicity with self (pole caps)
@@ -1100,7 +1097,7 @@ void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uid_t>&
   int sendcnt = send.size();
   ATLAS_TRACE_MPI(ISEND) {
     for( size_t to : neighbours ) {
-      count_requests.push_back( comm.iSend( sendcnt, to, counts_tag ) );
+      counts_requests.push_back( comm.iSend( sendcnt, to, counts_tag ) );
     }
   }
 
