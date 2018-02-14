@@ -363,7 +363,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
       if( ipN1 == endN && ipS1 == endS ) break;
 
 #if DEBUG_OUTPUT
-      Log::info(Here())  << "-------\n";
+      Log::info()  << "-------\n";
 #endif
 
       //ASSERT(offset.at(latN)+ipN1 < parts.size());
@@ -490,7 +490,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
 
 
 #if DEBUG_OUTPUT
-      DEBUG_VAR(jelem);
+      ATLAS_DEBUG_VAR(jelem);
 #endif
 
       auto elem = lat_elems_view.slice(jelem,Range::all());
@@ -646,7 +646,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
     }
     region.nb_lat_elems.at(jlat) = jelem;
 #if DEBUG_OUTPUT
-    DEBUG_VAR(region.nb_lat_elems.at(jlat));
+    ATLAS_DEBUG_VAR(region.nb_lat_elems.at(jlat));
 #endif
     if( region.nb_lat_elems.at(jlat) == 0 && latN == size_t(region.north) ) {
       ++region.north;
@@ -695,7 +695,7 @@ void StructuredMeshGenerator::generate_region(const grid::StructuredGrid& rg, co
     throw Exception("Trying to generate mesh with too many partitions. Reduce the number of partitions.",Here());
   }
 #if DEBUG_OUTPUT
-  DEBUG("End of generate_region()");
+  ATLAS_DEBUG("End of generate_region()");
 #endif
 }
 
@@ -773,23 +773,23 @@ void StructuredMeshGenerator::generate_mesh(const grid::StructuredGrid& rg, cons
   if ( remove_periodic_ghost_points ) {
     for(size_t jlat = 0; jlat < rg.ny(); ++jlat)
     {
-      if( rg.nx(jlat) > 0 )
+      if( region.lat_end[jlat] >= rg.nx(jlat) )
         --nnodes;
     }
   }
 
 #if DEBUG_OUTPUT
-  DEBUG_VAR(include_periodic_ghost_points);
-  DEBUG_VAR(include_north_pole);
-  DEBUG_VAR(include_south_pole);
-  DEBUG_VAR(three_dimensional);
-  DEBUG_VAR(patch_north_pole);
-  DEBUG_VAR(patch_south_pole);
-  DEBUG_VAR(rg.npts());
-  DEBUG_VAR(nnodes);
-  DEBUG_VAR(ntriags);
-  DEBUG_VAR(nquads);
-  DEBUG_VAR(options.get<bool>("ghost_at_end"));
+  ATLAS_DEBUG_VAR(include_periodic_ghost_points);
+  ATLAS_DEBUG_VAR(include_north_pole);
+  ATLAS_DEBUG_VAR(include_south_pole);
+  ATLAS_DEBUG_VAR(three_dimensional);
+  ATLAS_DEBUG_VAR(patch_north_pole);
+  ATLAS_DEBUG_VAR(patch_south_pole);
+  ATLAS_DEBUG_VAR(rg.size());
+  ATLAS_DEBUG_VAR(nnodes);
+  ATLAS_DEBUG_VAR(ntriags);
+  ATLAS_DEBUG_VAR(nquads);
+  ATLAS_DEBUG_VAR(options.get<bool>("ghost_at_end"));
 #endif
 
 
