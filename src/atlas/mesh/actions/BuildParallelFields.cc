@@ -376,15 +376,6 @@ Field& build_edges_partition( Mesh& mesh )
   const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
   const mesh::HybridElements::Connectivity& edge_to_elem = edges.cell_connectivity();
 
-  std::shared_ptr< array::ArrayView<int,1> > is_pole_edge;
-  bool has_pole_edges = false;
-  if( edges.has_field("is_pole_edge") )
-  {
-    has_pole_edges = true;
-    is_pole_edge = std::shared_ptr< array::ArrayView<int,1> > (
-      new array::ArrayView<int,1>( array::make_view<int,1>( edges.field("is_pole_edge") ) ) );
-  }
-
   array::ArrayView<int,1> node_part = array::make_view<int,1>( nodes.partition() );
   array::ArrayView<double,2> xy = array::make_view<double,2>( nodes.xy() );
   array::ArrayView<int,   1> flags  = array::make_view<int,1>( nodes.field("flags") );
@@ -501,7 +492,14 @@ Field& build_edges_partition( Mesh& mesh )
   }
 
 
-//  // Sanity check
+  // Sanity check
+  std::shared_ptr< array::ArrayView<int,1> > is_pole_edge;
+  bool has_pole_edges = false;
+  if( edges.has_field("is_pole_edge") )
+  {
+    has_pole_edges = true;
+    is_pole_edge = std::shared_ptr<array::ArrayView<int,1>>( new array::ArrayView<int,1>(array::make_view<int,1>( edges.field("is_pole_edge") ) ) );
+  }
   int insane = 0;
   for( size_t jedge=0; jedge<nb_edges; ++jedge )
   {
@@ -512,26 +510,41 @@ Field& build_edges_partition( Mesh& mesh )
     int p = edge_part(jedge);
     int pn1 = node_part(ip1);
     int pn2 = node_part(ip2);
-    int pe1 = elem_part(elem1);
+    if( has_pole_edges && (*is_pole_edge)(jedge) ) {
+      if( p != pn1 || p != pn2) {
+        Log::error() << "pole edge " << EDGE(jedge) << " [p"<<p<<"] is not correct" << std::endl;
+        insane = 1;
+      }
+    } else {
+      if( elem1 == edge_to_elem.missing_value() && elem2 == edge_to_elem.missing_value() ) {
+        Log::error() << EDGE(jedge) << " has no neighbouring elements" << std::endl;
+        insane = 1;
+      }
+    }
     bool edge_is_partition_boundary = (elem1 == edge_to_elem.missing_value() || elem2 == edge_to_elem.missing_value());
     bool edge_partition_is_same_as_one_of_nodes = ( p == pn1 || p == pn2 );
     if ( edge_is_partition_boundary ) {
       if( not edge_partition_is_same_as_one_of_nodes ) {
-        Log::error() << EDGE(jedge) << " [p"<<p<<"] is not correct elem1[p"<<pe1<<"]" << std::endl;
-        insane = 1;  //throw eckit::Exception("Sanity check failed",Here());
+        if( elem1 != edge_to_elem.missing_value() ) {
+          Log::error() << EDGE(jedge) << " [p"<<p<<"] is not correct elem1[p"<<elem_part(elem1)<<"]" << std::endl;
+        } else {
+          Log::error() << EDGE(jedge) << " [p"<<p<<"] is not correct elem2[p"<<elem_part(elem2)<<"]" << std::endl;
+        }
+        insane = 1;
       }
     } else {
+      int pe1 = elem_part(elem1);
       int pe2 = elem_part(elem2);
       bool edge_partition_is_same_as_one_of_elems = ( p == pe1 || p == pe2 );
       if( not edge_partition_is_same_as_one_of_elems and not edge_partition_is_same_as_one_of_nodes ) {
         Log::error() << EDGE(jedge) << " is not correct elem1[p"<<pe1<<"] elem2[p"<<pe2<<"]" << std::endl;
-        insane = 1; //throw eckit::Exception("Sanity check failed",Here());
+        insane = 1;
       }
     }
   }
   mpi::comm().allReduceInPlace(insane, eckit::mpi::max() );
   if( insane && eckit::mpi::comm().rank() == 0 )
-    ;//throw eckit::Exception("Sanity check failed",Here());
+    throw eckit::Exception("Sanity check failed",Here());
 
 //#ifdef DEBUGGING_PARFIELDS
 //        if( OWNED_EDGE(jedge) )
