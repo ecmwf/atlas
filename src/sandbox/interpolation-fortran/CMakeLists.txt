@@ -10,6 +10,7 @@ ecbuild_add_executable(
     TARGET  atlas-interpolation-fortran
     SOURCES atlas-interpolation-fortran.F90
     LIBS    atlas_f
+    LINKER_LANGUAGE Fortran
     NOINSTALL
 )
 

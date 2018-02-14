@@ -316,11 +316,13 @@ Log::info() << "\n\n\ntest_multi_block_connectivity_add_block\n" << std::endl;
         1,3,76,4,3 } );
     EXPECT( conn1.owns() );
 
-    ATLAS_DEBUG_HERE();
+    EXPECT(conn1(0,2) ==  1  );
+    EXPECT(conn1(1,1) ==  4  );
+    EXPECT(conn1(2,2) ==  76 );
+
     mbc.add(conn1);
   }
   EXPECT( mbc.blocks() == 1 );
-
 
   EXPECT(mbc(0,2) ==  1  );
   EXPECT(mbc(1,1) ==  4  );
@@ -336,8 +338,10 @@ Log::info() << "\n\n\ntest_multi_block_connectivity_add_block\n" << std::endl;
       61,41,
       11,31 });
     EXPECT( conn2.owns() );
+    EXPECT(conn2(0,0) ==  31);
+    EXPECT(conn2(1,1) ==  41);
+    EXPECT(conn2(2,0) ==  11);
 
-    ATLAS_DEBUG_HERE();
     mbc.add(conn2);
   }
   EXPECT( mbc.blocks() == 2 );
@@ -356,13 +360,12 @@ Log::info() << "\n\n\ntest_multi_block_connectivity_add_block\n" << std::endl;
   EXPECT(mbc(1, 1,1) == 41 );
   EXPECT(mbc(1, 2,0) == 11 );
 
-  ATLAS_DEBUG_HERE();
   const BlockConnectivity& b0 = mbc.block(0);
   EXPECT( b0.owns() == false );
   EXPECT(b0(0,2) ==  1  );
   EXPECT(b0(1,1) ==  4  );
   EXPECT(b0(2,2) ==  76 );
-  ATLAS_DEBUG_HERE();
+
   const BlockConnectivity& b1 = mbc.block(1);
   EXPECT( b1.owns() == false );
   EXPECT(b1(0,0) ==  31 );

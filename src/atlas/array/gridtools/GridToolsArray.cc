@@ -297,9 +297,9 @@ bool ArrayT<Value>::accMap() const {
 
 template <typename Value> void ArrayT<Value>::insert(size_t idx1, size_t size1) {
 
-    if( hostNeedsUpdate() ) {
-        cloneFromDevice();
-    }
+    //if( hostNeedsUpdate() ) {
+    //    cloneFromDevice();
+    //}
     if( not hasDefaultLayout() )
       NOTIMP;
 

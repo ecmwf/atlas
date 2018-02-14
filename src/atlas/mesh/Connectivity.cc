@@ -214,7 +214,24 @@ void IrregularConnectivityImpl::add(const BlockConnectivityImpl &block )
 {
   if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
   bool fortran_array = FORTRAN_BASE;
-  add(block.rows(),block.cols(),block.data(),fortran_array);
+  const size_t rows = block.rows();
+  const size_t cols = block.cols();
+  const idx_t* values = block.data();
+
+  std::vector<idx_t> values_vector;
+  if( ! block.values_view_.contiguous() ) {
+    values_vector.resize(rows*cols);
+    values = values_vector.data();
+    for( int i=0, c=0; i<rows; ++i ) {
+      for( int j=0; j<cols; ++j ) {
+        values_vector[c++] = block(i,j);
+      }
+    }
+    fortran_array = false;
+  }
+
+  add(rows,cols,values,fortran_array);
+
 }
 
 //------------------------------------------------------------------------------------------------------

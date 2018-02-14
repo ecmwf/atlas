@@ -470,6 +470,7 @@ private:
 class BlockConnectivityImpl {
 
 private:
+  friend class IrregularConnectivityImpl;
   friend class MultiBlockConnectivityImpl;
   BlockConnectivityImpl( size_t rows, size_t cols, idx_t values[], bool dummy);
 

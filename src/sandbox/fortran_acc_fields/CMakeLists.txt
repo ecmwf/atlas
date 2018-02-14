@@ -11,6 +11,7 @@ if( ATLAS_HAVE_ACC )
         TARGET  atlas-acc-fields
         SOURCES atlas-acc-fields.F90
         LIBS    atlas_f
+        LINKER_LANGUAGE Fortran
         NOINSTALL
     )
     target_compile_options( atlas-acc-fields PUBLIC ${ACC_Fortran_FLAGS} )

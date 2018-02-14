@@ -30,8 +30,10 @@
 #include "atlas/util/Config.h"
 #include "atlas/runtime/trace/StopWatch.h"
 
+#ifdef ATLAS_TEST_MPI
 #ifdef ECKIT_HAVE_MPI
 #include <mpi.h>
+#endif
 #endif
 
 namespace atlas {
@@ -107,7 +109,7 @@ static double ATLAS_MPI_BARRIER_TIMEOUT() {
 
 
 static int barrier_timeout( double seconds ) {
-#ifdef ECKIT_HAVE_MPI
+#ifdef ATLAS_TEST_MPI
   if( eckit::mpi::comm().size() > 1 ) {
     MPI_Request req;
     MPI_Ibarrier( MPI_COMM_WORLD, &req );

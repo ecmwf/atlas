@@ -100,9 +100,9 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
       points_to_edit[i] = i;
   } else {
     glb_idx_max = nodes.global_index().metadata().getLong("max",0);
-    points_to_edit.resize( build_halo.periodic_local_index_.size() );
+    points_to_edit.resize( build_halo.periodic_points_local_index_.size() );
     for( size_t i=0; i<points_to_edit.size(); ++i )
-      points_to_edit[i] = build_halo.periodic_local_index_[i];
+      points_to_edit[i] = build_halo.periodic_points_local_index_[i];
   }
 
   std::vector<gidx_t> glb_idx(points_to_edit.size());
