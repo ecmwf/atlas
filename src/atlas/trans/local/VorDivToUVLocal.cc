@@ -58,10 +58,14 @@ void prfi1b( const int truncation,
 //        ECMWF Research Department documentation of the IFS
 //        Temperton, 1991, MWR 119 p1303
 // Ported to C++ by: Andreas Mueller *ECMWF*
-void vd2uv( const int truncation,
-            const int km,  // zonal wavenumber
-            const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[], double U[],
-            double V[], const eckit::Configuration& config ) {
+void vd2uv( const int truncation,               // truncation
+            const int km,                       // zonal wavenumber
+            const int nb_vordiv_fields,         // number of vorticity and divergence fields
+            const double vorticity_spectra[],   // spectral data of vorticity
+            const double divergence_spectra[],  // spectral data of divergence
+            double U[],                         // spectral data of U
+            double V[],                         // spectral data of V
+            const eckit::Configuration& config ) {
     int nlei1 = truncation + 4 + ( truncation + 4 + 1 ) % 2;
 
     // repsnm: epsilon from eq.(2.12) and (2.13) in [Temperton 1991]

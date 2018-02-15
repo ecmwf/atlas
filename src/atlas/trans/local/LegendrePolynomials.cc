@@ -132,10 +132,10 @@ void compute_legendre_polynomials(
 
     for ( int jn = 3; jn <= trc; ++jn ) {
         for ( int jm = 2; jm < jn; ++jm ) {
-            double cn = ( ( 2. * jn + 1. ) * ( jn + jm - 1. ) * ( jn + jm - 3. ) );  // numerator of c in Belousov
-            double cd = ( ( 2. * jn - 3. ) * ( jn + jm ) * ( jn + jm - 2. ) );       // denominator of c in Belousov
-            double dn = ( ( 2. * jn + 1. ) * ( jn + jm - 1. ) * ( jn - jm + 1. ) );  // numerator of d in Belousov
-            double dd = ( ( 2. * jn - 1. ) * ( jn + jm ) * ( jn + jm - 2. ) );       // denominator of d in Belousov
+            double cn = ( ( 2. * jn + 1. ) * ( jn + jm - 3. ) * ( jn + jm - 1. ) );  // numerator of c in Belousov
+            double cd = ( ( 2. * jn - 3. ) * ( jn + jm - 2. ) * ( jn + jm ) );       // denominator of c in Belousov
+            double dn = ( ( 2. * jn + 1. ) * ( jn - jm + 1. ) * ( jn + jm - 1. ) );  // numerator of d in Belousov
+            double dd = ( ( 2. * jn - 1. ) * ( jn + jm - 2. ) * ( jn + jm ) );       // denominator of d in Belousov
             double en = ( ( 2. * jn + 1. ) * ( jn - jm ) );                          // numerator of e in Belousov
             double ed = ( ( 2. * jn - 1. ) * ( jn + jm ) );                          // denominator of e in Belousov
 
