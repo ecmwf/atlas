@@ -11,6 +11,7 @@
 #pragma once
 
 #include <vector>
+
 #include "atlas/numerics/Nabla.h"
 
 namespace atlas {

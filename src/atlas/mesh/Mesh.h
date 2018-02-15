@@ -12,8 +12,9 @@
 
 #include <iosfwd>
 
-#include "atlas/mesh/detail/MeshImpl.h"
 #include "eckit/memory/SharedPtr.h"
+
+#include "atlas/mesh/detail/MeshImpl.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 // Forward declarations

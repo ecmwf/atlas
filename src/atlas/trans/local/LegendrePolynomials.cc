@@ -9,9 +9,10 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/trans/local/LegendrePolynomials.h"
 #include <cmath>
 #include <limits>
+
+#include "atlas/trans/local/LegendrePolynomials.h"
 #include "atlas/array.h"
 
 namespace atlas {

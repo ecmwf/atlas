@@ -1,7 +1,8 @@
 
+#include "CallStack.h"
+
 #include <functional>
 
-#include "CallStack.h"
 #include "eckit/log/CodeLocation.h"
 
 namespace atlas {

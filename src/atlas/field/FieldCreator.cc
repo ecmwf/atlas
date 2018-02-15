@@ -9,18 +9,21 @@
  */
 
 #include "atlas/field/FieldCreator.h"
+
 #include <map>
 #include <sstream>
 #include <string>
+
+#include "eckit/exception/Exceptions.h"
+#include "eckit/os/BackTrace.h"
+#include "eckit/thread/AutoLock.h"
+#include "eckit/thread/Mutex.h"
+
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldCreatorArraySpec.h"
 #include "atlas/field/FieldCreatorIFS.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/exception/Exceptions.h"
-#include "eckit/os/BackTrace.h"
-#include "eckit/thread/AutoLock.h"
-#include "eckit/thread/Mutex.h"
 
 namespace {
 static eckit::Mutex* local_mutex                                    = 0;

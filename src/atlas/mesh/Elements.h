@@ -16,10 +16,11 @@
 
 #pragma once
 
+#include "eckit/memory/Owned.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/mesh/HybridElements.h"
-#include "eckit/memory/Owned.h"
 
 namespace atlas {
 namespace mesh {

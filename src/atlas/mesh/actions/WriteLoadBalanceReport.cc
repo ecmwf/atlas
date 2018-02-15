@@ -11,9 +11,9 @@
 #include <fstream>
 #include <iomanip>
 
-#include "atlas/parallel/mpi/mpi.h"
 #include "eckit/filesystem/PathName.h"
 
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/Mesh.h"

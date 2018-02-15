@@ -8,10 +8,14 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/mesh/actions/BuildParallelFields.h"
+
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
+
+#include "eckit/exception/Exceptions.h"
+
+#include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -28,7 +32,6 @@
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Unique.h"
-#include "eckit/exception/Exceptions.h"
 
 #define EDGE( jedge )                                                                                     \
     "Edge(" << node_gidx( edge_nodes( jedge, 0 ) ) << "[p" << node_part( edge_nodes( jedge, 0 ) ) << "] " \

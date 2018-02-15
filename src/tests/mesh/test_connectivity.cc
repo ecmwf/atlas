@@ -12,6 +12,7 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/library/defines.h"
+
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::mesh;

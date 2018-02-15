@@ -22,6 +22,7 @@
 #pragma once
 
 #include <type_traits>
+
 #include "atlas/array/Table.h"
 #include "atlas/library/config.h"
 

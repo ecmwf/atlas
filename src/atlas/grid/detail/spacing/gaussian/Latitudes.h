@@ -11,8 +11,7 @@
 /// @author Willem Deconinck
 /// @date Jan 2014
 
-#ifndef atlas_grid_spacing_gaussian_Latitudes_h
-#define atlas_grid_spacing_gaussian_Latitudes_h
+#pragma once
 
 #include <cstddef>
 
@@ -61,5 +60,3 @@ void gaussian_quadrature_npole_spole( const size_t N, double latitudes[], double
 }  // namespace spacing
 }  // namespace grid
 }  // namespace atlas
-
-#endif

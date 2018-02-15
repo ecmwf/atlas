@@ -8,6 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/memory/ScopedPtr.h"
+#include "eckit/types/Types.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
@@ -20,8 +23,7 @@
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
-#include "eckit/memory/ScopedPtr.h"
-#include "eckit/types/Types.h"
+
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace eckit;
@@ -498,7 +500,7 @@ CASE( "test_SpectralFunctionSpace" ) {
     EXPECT( columns_scalar.shape( 1 ) == nb_levels );
 }
 
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
 
 CASE( "test_SpectralFunctionSpace_trans_dist" ) {
     trans::Trans trans( Grid( "F80" ), 159 );

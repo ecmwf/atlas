@@ -9,14 +9,17 @@
  */
 
 #include "atlas/field/FieldCreatorIFS.h"
+
 #include <sstream>
+
+#include "eckit/config/Parametrisation.h"
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/field/detail/FieldImpl.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace field {

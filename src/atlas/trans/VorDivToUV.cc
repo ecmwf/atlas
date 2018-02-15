@@ -17,8 +17,10 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/VorDivToUV.h"
+#include "atlas/library/defines.h"
 
-#ifdef ATLAS_HAVE_TRANS
+// For factory registration only
+#if ATLAS_HAVE_TRANS
 #include "atlas/trans/ifs/VorDivToUVIFS.h"
 #define TRANS_DEFAULT "ifs"
 #else
@@ -49,7 +51,7 @@ void load_builder() {
 
 struct force_link {
     force_link() {
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
         load_builder<VorDivToUVIFS>();
 #endif
         load_builder<VorDivToUVLocal>();

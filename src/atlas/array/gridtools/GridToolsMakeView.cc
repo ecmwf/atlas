@@ -6,7 +6,7 @@
 #include "atlas/array/IndexView.h"
 
 #include "atlas/library/config.h"
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #endif
 //------------------------------------------------------------------------------

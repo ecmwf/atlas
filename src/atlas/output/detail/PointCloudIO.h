@@ -12,6 +12,7 @@
 
 #include <string>
 #include <vector>
+
 #include "atlas/util/Point.h"
 
 // forward declarations

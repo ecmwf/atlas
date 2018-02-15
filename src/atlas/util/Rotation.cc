@@ -8,14 +8,15 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/util/Rotation.h"
-
 #include <cmath>
 #include <iostream>
+
+#include "eckit/config/Parametrisation.h"
+
+#include "atlas/util/Rotation.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
-#include "eckit/config/Parametrisation.h"
 
 // Temporary option to activate implementation by RMI during ESCAPE
 #define OLD_IMPLEMENTATION 0

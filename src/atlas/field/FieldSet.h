@@ -17,9 +17,10 @@
 #include <iterator>
 #include <vector>
 
-#include "atlas/field/Field.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
+
+#include "atlas/field/Field.h"
 
 namespace atlas {
 

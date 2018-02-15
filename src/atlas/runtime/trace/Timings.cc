@@ -8,18 +8,21 @@
  * nor does it submit to any jurisdiction.
  */
 
+
+#include "Timings.h"
+
 #include <cmath>
 #include <limits>
 #include <regex>
 #include <sstream>
 #include <string>
 
-#include "Timings.h"
+#include "eckit/config/Configuration.h"
+#include "eckit/filesystem/PathName.h"
+
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/trace/CallStack.h"
 #include "atlas/util/Config.h"
-#include "eckit/config/Configuration.h"
-#include "eckit/filesystem/PathName.h"
 
 //-----------------------------------------------------------------------------------------------------------
 

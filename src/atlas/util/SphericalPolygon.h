@@ -11,6 +11,7 @@
 #pragma once
 
 #include <vector>
+
 #include "atlas/util/Polygon.h"
 
 namespace atlas {

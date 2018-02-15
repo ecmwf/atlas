@@ -8,8 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/trans/ifs/TransIFS.h"
+#include "eckit/parser/JSON.h"
 
+#include "atlas/trans/ifs/TransIFS.h"
 #include "atlas/array.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
@@ -19,7 +20,6 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/parser/JSON.h"
 
 using Topology = atlas::mesh::Nodes::Topology;
 using atlas::Field;

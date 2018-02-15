@@ -16,6 +16,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
+
 #include "tests/AtlasTestEnvironment.h"
 
 namespace atlas {

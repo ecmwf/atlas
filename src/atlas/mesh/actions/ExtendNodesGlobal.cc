@@ -8,15 +8,15 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/mesh/actions/ExtendNodesGlobal.h"
+#include "eckit/exception/Exceptions.h"
 
+#include "atlas/mesh/actions/ExtendNodesGlobal.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
-#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace mesh {

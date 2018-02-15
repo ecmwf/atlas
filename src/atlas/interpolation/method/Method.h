@@ -12,6 +12,7 @@
 
 #include <string>
 #include <vector>
+
 #include "eckit/config/Configuration.h"
 #include "eckit/linalg/SparseMatrix.h"
 #include "eckit/memory/Owned.h"

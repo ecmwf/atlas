@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/utils/Hash.h"
+
 #include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
@@ -23,7 +25,6 @@
 #include "atlas/projection/Projection.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "eckit/utils/Hash.h"
 
 using atlas::Mesh;
 

@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <sstream>
 
+#include "eckit/types/FloatCompare.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/grid/Grid.h"
@@ -28,9 +30,8 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "eckit/types/FloatCompare.h"
-#include "tests/TestMeshes.h"
 
+#include "tests/TestMeshes.h"
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas;

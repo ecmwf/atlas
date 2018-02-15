@@ -8,9 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/os/BackTrace.h"
+
 #include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "eckit/os/BackTrace.h"
 
 namespace atlas {
 

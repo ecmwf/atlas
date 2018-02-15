@@ -8,8 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/numerics/fvm/Method.h"
 #include <cmath>
+
+#include "eckit/exception/Exceptions.h"
+
+#include "atlas/numerics/fvm/Method.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/functionspace/EdgeColumns.h"
@@ -24,7 +27,6 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
-#include "eckit/exception/Exceptions.h"
 
 // =======================================================
 

@@ -8,8 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/parallel/Checksum.h"
 #include <cstring>
+
+#include "atlas/parallel/Checksum.h"
 
 namespace atlas {
 namespace parallel {

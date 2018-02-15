@@ -8,10 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/mesh/Halo.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/util/Metadata.h"
-#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace mesh {

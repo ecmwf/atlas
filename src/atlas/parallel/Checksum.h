@@ -8,18 +8,19 @@
  * nor does it submit to any jurisdiction.
  */
 
-#ifndef Checksum_h
-#define Checksum_h
+#pragma once
 
 #include <vector>
+
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
+#include "eckit/utils/Translator.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Checksum.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
-#include "eckit/utils/Translator.h"
 
 namespace atlas {
 namespace parallel {
@@ -169,5 +170,3 @@ void atlas__Checksum__execute_strided_double( Checksum* This, double lfield[], i
 
 }  // namespace parallel
 }  // namespace atlas
-
-#endif  // Checksum_h

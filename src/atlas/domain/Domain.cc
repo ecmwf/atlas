@@ -9,7 +9,6 @@
  */
 
 #include "atlas/domain/Domain.h"
-
 #include "atlas/domain/detail/Domain.h"
 #include "atlas/domain/detail/EmptyDomain.h"
 #include "atlas/domain/detail/GlobalDomain.h"

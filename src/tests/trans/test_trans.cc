@@ -10,6 +10,9 @@
 
 #include <algorithm>
 
+#include "eckit/filesystem/PathName.h"
+#include "eckit/io/DataHandle.h"
+
 #include "atlas/array/MakeView.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
@@ -29,11 +32,9 @@
 #include "atlas/trans/Trans.h"
 #include "atlas/trans/VorDivToUV.h"
 
-#include "eckit/filesystem/PathName.h"
-#include "eckit/io/DataHandle.h"
 #include "tests/AtlasTestEnvironment.h"
 
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
 #include "atlas/trans/ifs/TransIFS.h"
 #include "atlas/trans/ifs/TransIFSNodeColumns.h"
 #include "atlas/trans/ifs/TransIFSStructuredColumns.h"

@@ -8,11 +8,15 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/output/detail/PointCloudIO.h"
 #include <fstream>
 #include <iomanip>
 #include <limits>
 #include <sstream>
+
+#include "eckit/exception/Exceptions.h"
+#include "eckit/filesystem/PathName.h"
+
+#include "atlas/output/detail/PointCloudIO.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
@@ -23,8 +27,6 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "eckit/exception/Exceptions.h"
-#include "eckit/filesystem/PathName.h"
 
 namespace atlas {
 namespace output {

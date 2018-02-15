@@ -8,10 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/functionspace/StructuredColumns.h"
+
 #include <functional>
 #include <iomanip>
-
-#include "atlas/functionspace/StructuredColumns.h"
 
 #include "eckit/utils/MD5.h"
 
@@ -28,7 +28,6 @@
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Checksum.h"
 #include "atlas/util/CoordinateEnums.h"
-
 #include "atlas/mesh/Mesh.h"
 
 #define IDX( i, j ) "(" << i << "," << j << ")"

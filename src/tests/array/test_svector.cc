@@ -10,6 +10,7 @@
 
 #include "atlas/array/SVector.h"
 #include "atlas/library/config.h"
+
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::array;

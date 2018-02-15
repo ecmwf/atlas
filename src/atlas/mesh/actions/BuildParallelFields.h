@@ -11,8 +11,7 @@
 /// @author Willem Deconinck
 /// @date   June 2014
 
-#ifndef BuildParallelFields_h
-#define BuildParallelFields_h
+#pragma once
 
 #include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
@@ -72,5 +71,3 @@ void atlas__renumber_nodes_glb_idx( mesh::Nodes* nodes );
 }  // namespace actions
 }  // namespace mesh
 }  // namespace atlas
-
-#endif  // BuildParallelFields_h

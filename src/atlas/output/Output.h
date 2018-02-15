@@ -12,11 +12,13 @@
 
 #include <iosfwd>
 #include <string>
-#include "atlas/util/Config.h"
+
 #include "eckit/config/Parametrisation.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/serialisation/FileStream.h"
+
+#include "atlas/util/Config.h"
 
 namespace eckit {
 class Parametrisation;

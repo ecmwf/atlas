@@ -10,9 +10,10 @@
 
 #pragma once
 
+#include "eckit/memory/ScopedPtr.h"
+
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/interpolation/method/PointIndex3.h"
-#include "eckit/memory/ScopedPtr.h"
 
 namespace atlas {
 namespace interpolation {

@@ -11,10 +11,7 @@
 #include "atlas/interpolation/method/Method.h"
 
 #include <map>
-#include "atlas/field/Field.h"
-#include "atlas/field/FieldSet.h"
-#include "atlas/runtime/Log.h"
-#include "atlas/runtime/Trace.h"
+
 #include "eckit/exception/Exceptions.h"
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Vector.h"
@@ -22,6 +19,11 @@
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/thread/Once.h"
+
+#include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/runtime/Trace.h"
 
 // for static linking
 #include "FiniteElement.h"

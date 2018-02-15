@@ -11,11 +11,13 @@
 #pragma once
 
 #include <string>
+
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
+
 #include "atlas/field/Field.h"
 #include "atlas/option.h"
 #include "atlas/util/Config.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
 
 namespace atlas {
 namespace functionspace {

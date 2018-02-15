@@ -9,10 +9,8 @@
  */
 
 #include "atlas/library/config.h"
-
 #include "atlas/library/Library.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
-
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"

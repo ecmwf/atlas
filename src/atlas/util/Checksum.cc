@@ -1,7 +1,8 @@
 
-#include "atlas/util/Checksum.h"
 #include <stdint.h>
 #include <cstddef>
+
+#include "atlas/util/Checksum.h"
 
 namespace atlas {
 namespace util {

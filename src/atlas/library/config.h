@@ -1,9 +1,11 @@
 #pragma once
 
 #include <cstddef>
+
+#include "eckit/eckit_config.h"
+
 #include "atlas/atlas_ecbuild_config.h"
 #include "atlas/library/defines.h"
-#include "eckit/eckit_config.h"
 
 #define ATLAS_HAVE_TRACE 1
 

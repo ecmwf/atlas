@@ -3,16 +3,9 @@
 
 #include "fckit/fckit.h"
 
-#define ATLAS_HAVE_OMP @ATLAS_HAVE_OMP@
-
-#if @ATLAS_HAVE_TRANS@
-#define ATLAS_HAVE_TRANS
-#endif
-
-#if @ATLAS_HAVE_ACC@
-#define ATLAS_HAVE_ACC
-#endif
-
+#define ATLAS_HAVE_OMP    @ATLAS_HAVE_OMP@
+#define ATLAS_HAVE_TRANS  @ATLAS_HAVE_TRANS@
+#define ATLAS_HAVE_ACC    @ATLAS_HAVE_ACC@
 #define ATLAS_BITS_GLOBAL @ATLAS_BITS_GLOBAL@
 
 #endif

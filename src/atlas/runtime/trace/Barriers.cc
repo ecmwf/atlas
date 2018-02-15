@@ -9,7 +9,9 @@
  */
 
 #include "Barriers.h"
+
 #include <sstream>
+
 #include "atlas/library/Library.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/trace/StopWatch.h"

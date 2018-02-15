@@ -12,6 +12,7 @@
 
 #include <array>
 #include <iosfwd>
+
 #include "atlas/util/Point.h"
 
 namespace eckit {

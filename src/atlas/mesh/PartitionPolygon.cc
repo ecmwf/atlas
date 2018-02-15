@@ -9,20 +9,11 @@
  */
 
 #include "atlas/mesh/PartitionPolygon.h"
-
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/CoordinateEnums.h"
-//#include "eckit/config/Resource.h"
-//#include "eckit/mpi/Comm.h"
-//#include "eckit/types/FloatCompare.h"
-//#include "atlas/grid/Grid.h"
-//#include "atlas/mesh/Elements.h"
-//#include "atlas/mesh/Mesh.h"
-//#include "atlas/mesh/Nodes.h"
-//#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace mesh {

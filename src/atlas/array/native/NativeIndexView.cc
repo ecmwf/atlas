@@ -8,8 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/array/native/NativeIndexView.h"
 #include <iostream>
+
+#include "atlas/array/native/NativeIndexView.h"
 
 //------------------------------------------------------------------------------------------------------
 

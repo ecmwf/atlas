@@ -8,8 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#ifndef BuildPeriodicBoundaries_h
-#define BuildPeriodicBoundaries_h
+#pragma once
 
 namespace atlas {
 class Mesh;
@@ -36,5 +35,3 @@ void atlas__build_periodic_boundaries( Mesh::Implementation* mesh );
 }  // namespace actions
 }  // namespace mesh
 }  // namespace atlas
-
-#endif  // BuildPeriodicBoundaries_h

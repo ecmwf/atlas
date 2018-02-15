@@ -39,6 +39,7 @@
 #pragma once
 
 #include <iosfwd>
+
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/library/config.h"
 

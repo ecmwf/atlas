@@ -1,10 +1,13 @@
 
-#include "atlas/meshgenerator/RegularMeshGenerator.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <numeric>
 #include <vector>
+
+#include "eckit/utils/Hash.h"
+
+#include "atlas/meshgenerator/RegularMeshGenerator.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -21,7 +24,6 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "eckit/utils/Hash.h"
 
 #define DEBUG_OUTPUT 0
 #define DEBUG_OUTPUT_DETAIL 0

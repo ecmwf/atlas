@@ -14,6 +14,7 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/library/defines.h"
+
 #include "tests/AtlasTestEnvironment.h"
 
 #if ATLAS_HAVE_FORTRAN
@@ -99,7 +100,7 @@ std::endl;
 }
 */
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE( "test_indexview_1d" ) {
     // array::ArrayT<int> array( 10 );
 

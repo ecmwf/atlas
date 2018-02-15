@@ -9,18 +9,21 @@
  */
 
 #include "atlas/functionspace/FunctionSpace.h"
+
 #include <cassert>
 #include <iostream>
 #include <limits>
 #include <sstream>
+
+#include "eckit/exception/Exceptions.h"
+#include "eckit/types/Types.h"
+
 #include "atlas/array/DataType.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/detail/FieldImpl.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "eckit/exception/Exceptions.h"
-#include "eckit/types/Types.h"
 
 namespace atlas {
 namespace functionspace {

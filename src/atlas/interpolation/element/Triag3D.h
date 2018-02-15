@@ -8,8 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#ifndef atlas_interpolation_element_Triag3D_h
-#define atlas_interpolation_element_Triag3D_h
+#pragma once
 
 #include <limits>
 
@@ -67,5 +66,3 @@ private:  // members
 }  // namespace element
 }  // namespace interpolation
 }  // namespace atlas
-
-#endif

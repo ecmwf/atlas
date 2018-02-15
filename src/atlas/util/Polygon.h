@@ -18,6 +18,7 @@
 #include <set>
 #include <utility>
 #include <vector>
+
 #include "atlas/library/config.h"
 #include "atlas/util/Point.h"
 

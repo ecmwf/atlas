@@ -8,18 +8,20 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/util/Config.h"
 #include <cstdarg>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include "atlas/grid/Grid.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/runtime/ErrorHandling.h"
+
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/YAMLParser.h"
+
+#include "atlas/util/Config.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 using std::string;
 

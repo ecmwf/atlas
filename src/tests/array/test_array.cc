@@ -8,10 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/memory/SharedPtr.h"
+
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/library/config.h"
-#include "eckit/memory/SharedPtr.h"
 #include "tests/AtlasTestEnvironment.h"
 
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
@@ -32,7 +33,7 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE( "test_array" ) {
     Array* ds = Array::create<double>( 4ul );
     auto hv   = atlas::array::gridtools::make_gt_host_view<double, 1>( *ds );
@@ -54,7 +55,7 @@ CASE( "test_array_zero_size" ) {
     delete ds;
 }
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE( "test_create" ) {
     Array* ds  = Array::create( array::DataType::create<int>(), ArrayShape( {4, 3} ) );
     auto hv    = atlas::array::gridtools::make_gt_host_view<int, 2>( *ds );
@@ -69,7 +70,7 @@ CASE( "test_create" ) {
 }
 #endif
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE( "test_make_view" ) {
     Array* ds = Array::create<double>( 4ul );
     auto hv   = atlas::array::gridtools::make_gt_host_view<double, 1>( *ds );
@@ -115,7 +116,7 @@ CASE( "test_localview" ) {
     delete ds;
 }
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE( "test_array_shape" ) {
     ArrayShape as{2, 3};
     Array* ds                                   = Array::create<double>( as );
@@ -181,7 +182,7 @@ CASE( "test_spec_layout" ) {
     delete ds;
 }
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE( "test_spec_layout_rev" ) {
     Array* ds = Array::create<double>( make_shape( 4, 5, 6 ), make_layout( 2, 1, 0 ) );
     EXPECT( ds->spec().rank() == 3 );
@@ -234,7 +235,7 @@ CASE( "test_copy_ctr" ) {
     delete ds;
 }
 
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE( "test_copy_gt_ctr" ) {
     Array* ds                          = Array::create<int>( 3, 2 );
     atlas::array::ArrayView<int, 2> hv = make_host_view<int, 2>( *ds );
@@ -400,7 +401,7 @@ CASE( "test_insert" ) {
 // The original gt data store is deleted and replaced, but the former
 // atlas::array::ArrayView keeps a pointer to it
 // wihtout noticing it has been deleted
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
     // Following statement seems to contradict previous comment
     EXPECT( hv.valid() == false );
 #endif
@@ -526,7 +527,7 @@ CASE( "test_valid" ) {
         ds->resize( 3, 4, 5 );
 
 // Only implemented using gridtools storage for now
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
         EXPECT( hv.valid() == false );
 #endif
 

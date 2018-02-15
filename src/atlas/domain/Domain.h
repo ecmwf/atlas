@@ -11,11 +11,13 @@
 #pragma once
 
 #include <array>
+
+#include "eckit/memory/SharedPtr.h"
+
 #include "atlas/domain/detail/Domain.h"
 #include "atlas/domain/detail/RectangularDomain.h"
 #include "atlas/domain/detail/ZonalBandDomain.h"
 #include "atlas/projection/Projection.h"
-#include "eckit/memory/SharedPtr.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 

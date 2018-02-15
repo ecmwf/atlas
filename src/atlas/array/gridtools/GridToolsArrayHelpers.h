@@ -14,6 +14,9 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
@@ -21,7 +24,6 @@
 #include "atlas/array_fwd.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------
 

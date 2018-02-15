@@ -9,23 +9,27 @@
  */
 
 #include "atlas/grid/detail/partitioner/Partitioner.h"
+
 #include <map>
 #include <string>
+
+#include "eckit/thread/AutoLock.h"
+#include "eckit/thread/Mutex.h"
+
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h"
-#include "eckit/thread/AutoLock.h"
-#include "eckit/thread/Mutex.h"
-#ifdef ATLAS_HAVE_TRANS
-#include "atlas/grid/detail/partitioner/TransPartitioner.h"
-#endif
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/library/config.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
+
+#if ATLAS_HAVE_TRANS
+#include "atlas/grid/detail/partitioner/TransPartitioner.h"
+#endif
 
 namespace {
 
@@ -68,7 +72,7 @@ void load_builder() {
 struct force_link {
     force_link() {
         load_builder<EqualRegionsPartitioner>();
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
         load_builder<TransPartitioner>();
 #endif
     }

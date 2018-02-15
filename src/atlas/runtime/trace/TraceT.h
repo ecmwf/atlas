@@ -13,6 +13,7 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
+
 #include "atlas/runtime/trace/Nesting.h"
 #include "atlas/runtime/trace/StopWatch.h"
 #include "atlas/runtime/trace/Timings.h"

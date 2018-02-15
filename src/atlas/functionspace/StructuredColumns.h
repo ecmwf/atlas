@@ -11,6 +11,7 @@
 #pragma once
 
 #include <array>
+
 #include "atlas/array/DataType.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"

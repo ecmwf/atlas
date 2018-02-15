@@ -12,6 +12,9 @@
 
 #include <algorithm>
 #include <limits>
+
+#include "eckit/types/FloatCompare.h"
+
 #include "atlas/domain/Domain.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
@@ -21,7 +24,6 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
-#include "eckit/types/FloatCompare.h"
 
 namespace atlas {
 namespace grid {

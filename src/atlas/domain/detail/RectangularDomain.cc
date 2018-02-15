@@ -1,5 +1,6 @@
-#include "atlas/domain/detail/RectangularDomain.h"
 #include <utility>
+
+#include "atlas/domain/detail/RectangularDomain.h"
 
 namespace atlas {
 namespace domain {

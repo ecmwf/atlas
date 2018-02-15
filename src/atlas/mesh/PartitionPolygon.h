@@ -15,10 +15,12 @@
 #pragma once
 
 #include <vector>
+
+#include "eckit/memory/Owned.h"
+
 #include "atlas/library/config.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Polygon.h"
-#include "eckit/memory/Owned.h"
 
 namespace atlas {
 namespace mesh {

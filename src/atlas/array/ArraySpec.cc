@@ -9,8 +9,10 @@
  */
 
 #include <algorithm>
-#include "atlas/array/ArrayUtil.h"
+
 #include "eckit/exception/Exceptions.h"
+
+#include "atlas/array/ArrayUtil.h"
 
 namespace atlas {
 namespace array {

@@ -13,6 +13,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstring>
+
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/LocalView.h"

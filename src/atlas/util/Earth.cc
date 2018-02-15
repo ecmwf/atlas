@@ -8,15 +8,15 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/util/Earth.h"
-
 #include <cmath>
 #include <limits>
 
-#include "atlas/util/Constants.h"
-#include "atlas/util/Point.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
+
+#include "atlas/util/Earth.h"
+#include "atlas/util/Constants.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace util {

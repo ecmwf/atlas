@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include "atlas/util/Bitflags.h"
+
 #include "tests/AtlasTestEnvironment.h"
 
 using atlas::util::Bitflags;

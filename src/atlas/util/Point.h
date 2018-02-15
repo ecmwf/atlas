@@ -18,9 +18,11 @@
 
 #include <array>
 #include <initializer_list>
-#include "atlas/util/Earth.h"
+
 #include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
+
+#include "atlas/util/Earth.h"
 
 namespace atlas {
 

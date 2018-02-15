@@ -8,6 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/memory/ScopedPtr.h"
+#include "eckit/types/Types.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
@@ -21,8 +24,6 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/MicroDeg.h"
-#include "eckit/memory/ScopedPtr.h"
-#include "eckit/types/Types.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

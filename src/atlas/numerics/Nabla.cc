@@ -8,9 +8,14 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/numerics/Nabla.h"
 #include <map>
 #include <string>
+
+#include "eckit/exception/Exceptions.h"
+#include "eckit/thread/AutoLock.h"
+#include "eckit/thread/Mutex.h"
+
+#include "atlas/numerics/Nabla.h"
 #include "atlas/library/config.h"
 #include "atlas/numerics/Method.h"
 #include "atlas/numerics/fvm/Method.h"
@@ -18,9 +23,6 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
-#include "eckit/exception/Exceptions.h"
-#include "eckit/thread/AutoLock.h"
-#include "eckit/thread/Mutex.h"
 
 namespace {
 

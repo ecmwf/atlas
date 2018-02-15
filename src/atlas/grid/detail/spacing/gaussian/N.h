@@ -11,8 +11,7 @@
 /// @author Willem Deconinck
 /// @date Nov 2014
 
-#ifndef atlas_grid_spacing_gaussian_N_h
-#define atlas_grid_spacing_gaussian_N_h
+#pragma once
 
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
@@ -87,5 +86,3 @@ DECLARE_GAUSSIAN_LATITUDES( 8000 );
 }  // namespace spacing
 }  // namespace grid
 }  // namespace atlas
-
-#endif

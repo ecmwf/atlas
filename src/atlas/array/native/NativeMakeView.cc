@@ -1,9 +1,7 @@
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/array_fwd.h"
 #include "atlas/library/config.h"
-
 #include "atlas/array.h"
 
 namespace atlas {

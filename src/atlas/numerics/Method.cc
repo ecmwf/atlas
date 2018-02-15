@@ -8,10 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/numerics/Method.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace numerics {

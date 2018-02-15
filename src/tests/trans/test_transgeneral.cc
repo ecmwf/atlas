@@ -9,6 +9,7 @@
  */
 
 #include <algorithm>
+#include <iomanip>
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/FieldSet.h"
@@ -31,12 +32,12 @@
 #include "atlas/trans/local/FourierTransforms.h"
 #include "atlas/trans/local/LegendrePolynomials.h"
 #include "atlas/trans/local/LegendreTransforms.h"
-#include "transi/trans.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
-#include <chrono>
-#include <iomanip>
+#if ATLAS_HAVE_TRANS
+#include "transi/trans.h"
+#endif
 
 using namespace eckit;
 
@@ -51,11 +52,17 @@ namespace test {
 
 struct AtlasTransEnvironment : public AtlasTestEnvironment {
     AtlasTransEnvironment( int argc, char* argv[] ) : AtlasTestEnvironment( argc, argv ) {
-        if ( mpi::comm().size() == 1 ) trans_use_mpi( false );
+#if ATLAS_HAVE_TRANS
+        trans_use_mpi( mpi::comm().size() > 1 );
         trans_init();
+#endif
     }
 
-    ~AtlasTransEnvironment() { trans_finalize(); }
+    ~AtlasTransEnvironment() {
+#if ATLAS_HAVE_TRANS
+        trans_finalize();
+#endif
+    }
 };
 
 //-----------------------------------------------------------------------------
@@ -655,9 +662,9 @@ CASE( "test_transgeneral_with_translib" ) {
     Grid g( "F24" );
     grid::StructuredGrid gs( g );
     int trc = 47;
-    trans::Trans trans( g, trc );
+    trans::Trans transIFS( g, trc, util::Config("type", "ifs") );
 
-    functionspace::Spectral spectral( trans );
+    functionspace::Spectral spectral( transIFS );
     functionspace::StructuredColumns gridpoints( g );
 
     Field spf = spectral.createField<double>( option::name( "spf" ) );
@@ -678,7 +685,7 @@ CASE( "test_transgeneral_with_translib" ) {
                     sp.assign( 0. );
                     sp( k ) = 1.;
 
-                    EXPECT_NO_THROW( trans.invtrans( spf, gpf ) );
+                    EXPECT_NO_THROW( transIFS.invtrans( spf, gpf ) );
 
                     spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg.data(), rgp_analytic.data(), 2,
                                                       2 );
@@ -706,6 +713,7 @@ CASE( "test_transgeneral_with_translib" ) {
 //-----------------------------------------------------------------------------
 
 CASE( "test_trans_vordiv_with_translib" ) {
+
     Log::info() << "test_trans_vordiv_with_translib" << std::endl;
     // test transgeneral by comparing its result with the trans library
     // this test is based on the test_nomesh case in test_trans.cc
@@ -719,10 +727,10 @@ CASE( "test_trans_vordiv_with_translib" ) {
     Grid g( "O" + std::to_string( res ) );
     grid::StructuredGrid gs( g );
     int trc = res * 2 - 1;
-    trans::Trans trans( g, trc );
+    trans::Trans transIFS( g, trc, util::Config("type", "ifs" ) );
     trans::Trans transLocal( g, trc, util::Config( "type", "local" ) );
 
-    functionspace::Spectral spectral( trans );
+    functionspace::Spectral spectral( transIFS );
     functionspace::StructuredColumns gridpoints( g );
 
     int nb_scalar = 2, nb_vordiv = 2;
@@ -776,7 +784,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                 spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg.data(),
                                                                   rgp_analytic.data(), ivar_in, ivar_out );
 
-                                EXPECT_NO_THROW( trans.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                EXPECT_NO_THROW( transIFS.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
                                                                  div.data(), gp.data() ) );
 
                                 // compute spectral transform with the general transform:

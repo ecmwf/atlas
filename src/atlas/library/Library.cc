@@ -8,11 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/library/config.h"
-
-#ifdef ATLAS_HAVE_TRANS
-#include "transi/version.h"
-#endif
 
 #include "eckit/eckit_config.h"
 #include "eckit/filesystem/LocalPathName.h"
@@ -30,6 +25,11 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Config.h"
+#include "atlas/library/config.h"
+
+#if ATLAS_HAVE_TRANS
+#include "transi/version.h"
+#endif
 
 using eckit::LocalPathName;
 using eckit::Main;
@@ -217,32 +217,17 @@ void Library::Information::print( std::ostream& out ) const {
 #endif
         << " \n";
 
-    bool feature_fortran( false );
-    bool feature_OpenMP( false );
-    bool feature_Trans( false );
-    bool feature_Tesselation( false );
-    bool feature_BoundsChecking( false );
+    bool feature_fortran( ATLAS_HAVE_FORTRAN );
+    bool feature_OpenMP( ATLAS_HAVE_OMP );
+    bool feature_Trans( ATLAS_HAVE_TRANS );
+    bool feature_Tesselation( ATLAS_HAVE_TESSELATION );
+    bool feature_BoundsChecking( ATLAS_ARRAYVIEW_BOUNDS_CHECKING );
     bool feature_MPI( false );
-#if ATLAS_HAVE_FORTRAN
-    feature_fortran = true;
-#endif
 #ifdef ECKIT_HAVE_MPI
     feature_MPI = true;
 #endif
-#if ATLAS_HAVE_OMP
-    feature_OpenMP = true;
-#endif
-#ifdef ATLAS_HAVE_TRANS
-    feature_Trans = true;
-#endif
-#if ATLAS_HAVE_TESSELATION
-    feature_Tesselation = true;
-#endif
-#ifdef ATLAS_HAVE_BOUNDSCHECKING
-    feature_BoundsChecking = true;
-#endif
     std::string array_data_store = "Native";
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
     array_data_store = "Gridtools-host";
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     array_data_store = "GridTools-CUDA";
@@ -265,7 +250,7 @@ void Library::Information::print( std::ostream& out ) const {
     if ( Library::exists( "eckit" ) ) { out << "    " << str( Library::lookup( "eckit" ) ) << '\n'; }
     if ( Library::exists( "fckit" ) ) { out << "    " << str( Library::lookup( "fckit" ) ) << '\n'; }
 
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
     out << "    transi version (" << transi_version() << "), "
         << "git-sha1 " << transi_git_sha1_abbrev( 7 ) << '\n';
     out << "    trans version (" << trans_version() << "), "

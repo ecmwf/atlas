@@ -18,8 +18,10 @@
 #include <cstddef>
 #include <memory>
 #include <vector>
-#include "atlas/grid/detail/grid/Grid.h"
+
 #include "eckit/utils/Hash.h"
+
+#include "atlas/grid/detail/grid/Grid.h"
 
 namespace atlas {
 class Mesh;

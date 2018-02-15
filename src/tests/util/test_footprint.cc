@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/log/Bytes.h"
+
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
@@ -19,7 +21,6 @@
 #include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Metadata.h"
-#include "eckit/log/Bytes.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

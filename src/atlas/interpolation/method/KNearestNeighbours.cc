@@ -10,13 +10,14 @@
 
 #include "atlas/interpolation/method/KNearestNeighbours.h"
 
+#include "eckit/log/Plural.h"
+#include "eckit/log/Timer.h"
+
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
-#include "eckit/log/Plural.h"
-#include "eckit/log/Timer.h"
 
 namespace atlas {
 namespace interpolation {

@@ -11,8 +11,7 @@
 /// @author Willem Deconinck
 /// @date June 2015
 
-#ifndef atlas_field_IFS_h
-#define atlas_field_IFS_h
+#pragma once
 
 #include "atlas/field/FieldCreator.h"
 
@@ -58,5 +57,3 @@ public:
 
 }  // namespace field
 }  // namespace atlas
-
-#endif

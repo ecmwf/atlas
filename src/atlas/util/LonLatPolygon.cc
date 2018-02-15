@@ -8,12 +8,13 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/util/LonLatPolygon.h"
 
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <limits>
+
+#include "atlas/util/LonLatPolygon.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {

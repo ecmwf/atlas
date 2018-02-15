@@ -8,11 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
-#ifndef BuildHalo_h
-#define BuildHalo_h
+#pragma once
 
 #include <string>
 #include <vector>
+
 #include "atlas/library/config.h"
 
 namespace atlas {
@@ -54,5 +54,3 @@ void atlas__build_halo( Mesh::Implementation* mesh, int nb_elems );
 }  // namespace actions
 }  // namespace mesh
 }  // namespace atlas
-
-#endif  // BuildHalo_h

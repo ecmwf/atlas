@@ -11,8 +11,7 @@
 /// @author Willem Deconinck
 /// @date June 2015
 
-#ifndef atlas_State_H
-#define atlas_State_H
+#pragma once
 
 #include "atlas/field/Field.h"
 #include "atlas/util/Config.h"
@@ -139,5 +138,3 @@ util::Metadata* atlas__State__metadata( State* This );
 
 }  // namespace field
 }  // namespace atlas
-
-#endif

@@ -8,8 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#ifndef atlas_actions_BuildTorusXYZField_h
-#define atlas_actions_BuildTorusXYZField_h
+#pragma once
 
 #include <string>
 
@@ -50,5 +49,3 @@ private:
 }  // namespace actions
 }  // namespace mesh
 }  // namespace atlas
-
-#endif

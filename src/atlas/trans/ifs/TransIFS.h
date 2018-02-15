@@ -10,11 +10,13 @@
 
 #pragma once
 
+#include "transi/trans.h"
+
+#include "eckit/filesystem/PathName.h"
+
 #include "atlas/array/LocalView.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/trans/Trans.h"
-#include "eckit/filesystem/PathName.h"
-#include "transi/trans.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations

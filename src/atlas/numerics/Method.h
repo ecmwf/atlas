@@ -11,6 +11,7 @@
 #pragma once
 
 #include <string>
+
 #include "eckit/memory/Owned.h"
 
 namespace atlas {

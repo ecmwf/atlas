@@ -10,9 +10,10 @@
 
 #pragma once
 
-#include "atlas/interpolation/method/Method.h"
 #include "eckit/config/Configuration.h"
 #include "eckit/memory/SharedPtr.h"
+
+#include "atlas/interpolation/method/Method.h"
 
 namespace atlas {
 class Field;

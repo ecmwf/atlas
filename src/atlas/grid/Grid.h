@@ -11,13 +11,15 @@
 #pragma once
 
 #include <functional>
+
+#include "eckit/memory/SharedPtr.h"
+
 #include "atlas/domain/Domain.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/grid/detail/grid/Structured.h"
 #include "atlas/grid/detail/grid/Unstructured.h"
 #include "atlas/projection/Projection.h"
-#include "eckit/memory/SharedPtr.h"
 
 namespace eckit {
 class Hash;

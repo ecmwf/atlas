@@ -8,11 +8,12 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/types/FloatCompare.h"
+
 #include "atlas/interpolation/element/Quad3D.h"
 #include "atlas/interpolation/method/Ray.h"
 #include "atlas/util/Point.h"
 
-#include "eckit/types/FloatCompare.h"
 #include "tests/AtlasTestEnvironment.h"
 
 using atlas::PointXYZ;

@@ -9,7 +9,6 @@
  */
 
 #include "atlas/trans/local/VorDivToUVLocal.h"
-
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Earth.h"

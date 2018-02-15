@@ -8,6 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/config/Parametrisation.h"
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/numerics/fvm/Nabla.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
@@ -19,8 +22,6 @@
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
 
 // =======================================================
 

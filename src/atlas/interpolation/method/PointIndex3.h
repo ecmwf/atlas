@@ -10,13 +10,14 @@
 
 #pragma once
 
-#include "atlas/field/Field.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/util/CoordinateEnums.h"
 #include "eckit/container/KDMapped.h"
 #include "eckit/container/KDMemory.h"
 #include "eckit/container/KDTree.h"
 #include "eckit/geometry/Point3.h"
+
+#include "atlas/field/Field.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
 namespace interpolation {

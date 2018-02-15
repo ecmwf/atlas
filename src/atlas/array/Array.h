@@ -11,11 +11,13 @@
 #pragma once
 
 #include <vector>
+
+#include "eckit/memory/Owned.h"
+
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
 #include "atlas/library/config.h"
-#include "eckit/memory/Owned.h"
 
 namespace atlas {
 namespace array {

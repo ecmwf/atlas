@@ -8,8 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#ifndef atlas_actions_BuildConvexHull3D_h
-#define atlas_actions_BuildConvexHull3D_h
+#pragma once
 
 namespace atlas {
 
@@ -27,5 +26,3 @@ public:
 }  // namespace actions
 }  // namespace mesh
 }  // namespace atlas
-
-#endif

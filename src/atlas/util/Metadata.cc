@@ -14,12 +14,13 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "atlas/parallel/mpi/mpi.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/JSONParser.h"
 #include "eckit/utils/Hash.h"
 
+
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
 
 using std::string;

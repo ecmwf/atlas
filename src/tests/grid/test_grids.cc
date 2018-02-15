@@ -12,14 +12,15 @@
 #include <iomanip>
 #include <sstream>
 
+#include "eckit/memory/Builder.h"
+#include "eckit/memory/Factory.h"
+#include "eckit/types/FloatCompare.h"
+
 #include "atlas/grid.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/library/Library.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Factory.h"
-#include "eckit/types/FloatCompare.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

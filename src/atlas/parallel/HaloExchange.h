@@ -11,8 +11,7 @@
 /// @author Willem Deconinck
 /// @date   Nov 2013
 
-#ifndef HaloExchange_h
-#define HaloExchange_h
+#pragma once
 
 #include <stdexcept>
 #include <string>
@@ -273,5 +272,3 @@ void atlas__HaloExchange__execute_double( HaloExchange* This, double field[], in
 
 }  // namespace parallel
 }  // namespace atlas
-
-#endif  // HaloExchange_h

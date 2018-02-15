@@ -1,6 +1,7 @@
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/domain/detail/Domain.h"
 #include "atlas/projection/Projection.h"
-#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace domain {

@@ -8,8 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#ifndef atlas_interpolation_element_Quad3D_h
-#define atlas_interpolation_element_Quad3D_h
+#pragma once
 
 #include <limits>
 
@@ -66,4 +65,3 @@ private:           // members
 }  // namespace interpolation
 }  // namespace atlas
 
-#endif

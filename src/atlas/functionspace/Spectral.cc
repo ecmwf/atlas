@@ -8,7 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/parallel/mpi/mpi.h"
 #include "eckit/os/BackTrace.h"
 #include "eckit/utils/MD5.h"
 
@@ -21,8 +20,10 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/Trans.h"
+#include "atlas/parallel/mpi/mpi.h"
 
-#ifdef ATLAS_HAVE_TRANS
+
+#if ATLAS_HAVE_TRANS
 #include "atlas/trans/ifs/TransIFS.h"
 namespace {
 void trans_check( const int code, const char* msg, const eckit::CodeLocation& location ) {
@@ -41,7 +42,7 @@ namespace atlas {
 namespace functionspace {
 namespace detail {
 
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
 class Spectral::Parallelisation {
 public:
     Parallelisation( const std::shared_ptr<::Trans_t> other ) : trans_( other ) {}
@@ -121,7 +122,7 @@ Spectral::Spectral( const int truncation, const eckit::Configuration& config ) :
 
 Spectral::Spectral( const trans::Trans& trans, const eckit::Configuration& config ) :
     truncation_( trans.truncation() ),
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
     parallelisation_( new Parallelisation( dynamic_cast<const trans::TransIFS&>( *trans.get() ).trans_ ) ),
 #else
     parallelisation_( new Parallelisation( truncation_ ) ),
@@ -199,7 +200,7 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
             throw eckit::BadValue( err.str() );
         }
 
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
         Field& glb  = global_fieldset[f];
         size_t root = 0;
         glb.metadata().get( "owner", root );
@@ -247,7 +248,7 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
             throw eckit::BadValue( err.str() );
         }
 
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
         size_t root = 0;
         glb.metadata().get( "owner", root );
         ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
@@ -295,7 +296,7 @@ std::string Spectral::checksum( const Field& field ) const {
 }
 
 void Spectral::norm( const Field& field, double& norm, int rank ) const {
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
     ASSERT( std::max<int>( 1, field.levels() ) == 1 );
     struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
     args.nfld                = 1;
@@ -310,7 +311,7 @@ void Spectral::norm( const Field& field, double& norm, int rank ) const {
 #endif
 }
 void Spectral::norm( const Field& field, double norm_per_level[], int rank ) const {
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
     ASSERT( std::max<int>( 1, field.levels() ) == 1 );
     struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
     args.nfld                = std::max<int>( 1, field.levels() );
@@ -325,7 +326,7 @@ void Spectral::norm( const Field& field, double norm_per_level[], int rank ) con
 #endif
 }
 void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, int rank ) const {
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
     norm_per_level.resize( std::max<int>( 1, field.levels() ) );
     struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
     args.nfld                = norm_per_level.size();

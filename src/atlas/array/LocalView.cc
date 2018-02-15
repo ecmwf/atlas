@@ -9,9 +9,12 @@
  */
 
 #include "atlas/array/LocalView.h"
+
 #include <iostream>
-#include "atlas/array/helpers/ArrayAssigner.h"
+
 #include "eckit/exception/Exceptions.h"
+
+#include "atlas/array/helpers/ArrayAssigner.h"
 
 //------------------------------------------------------------------------------------------------------
 

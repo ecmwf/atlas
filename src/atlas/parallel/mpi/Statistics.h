@@ -11,6 +11,7 @@
 #pragma once
 
 #include <array>
+
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
 

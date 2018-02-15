@@ -19,9 +19,10 @@
 #include <array>
 #include <type_traits>
 
+#include "eckit/memory/Owned.h"
+
 #include "atlas/array.h"
 #include "atlas/library/config.h"
-#include "eckit/memory/Owned.h"
 
 namespace atlas {
 namespace array {

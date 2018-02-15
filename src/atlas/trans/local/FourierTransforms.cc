@@ -9,10 +9,11 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/trans/local/FourierTransforms.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+
+#include "atlas/trans/local/FourierTransforms.h"
 
 namespace atlas {
 namespace trans {

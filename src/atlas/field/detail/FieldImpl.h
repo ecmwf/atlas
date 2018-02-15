@@ -15,12 +15,14 @@
 
 #include <string>
 #include <vector>
+
+#include "eckit/memory/Owned.h"
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/Metadata.h"
-#include "eckit/memory/Owned.h"
 
 namespace eckit {
 class Parametrisation;

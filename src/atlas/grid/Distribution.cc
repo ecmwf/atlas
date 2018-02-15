@@ -8,8 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/grid/Distribution.h"
 #include <algorithm>
+
+#include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/parallel/mpi/mpi.h"

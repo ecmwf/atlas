@@ -8,8 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#ifndef atlas_interpolation_method_Intersect_h
-#define atlas_interpolation_method_Intersect_h
+#pragma once
 
 #include <iosfwd>
 
@@ -55,5 +54,3 @@ private:
 }  // namespace method
 }  // namespace interpolation
 }  // namespace atlas
-
-#endif

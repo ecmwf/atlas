@@ -14,6 +14,9 @@
 #include <limits>
 #include <set>
 #include <stdexcept>
+
+#include "eckit/filesystem/PathName.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
@@ -29,7 +32,6 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
-#include "eckit/filesystem/PathName.h"
 
 namespace atlas {
 namespace mesh {

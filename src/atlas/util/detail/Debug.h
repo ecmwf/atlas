@@ -1,8 +1,9 @@
+#include "eckit/config/Resource.h"
+
 #include "atlas/field.h"
 #include "atlas/functionspace.h"
 #include "atlas/mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "eckit/config/Resource.h"
 
 namespace atlas {
 namespace debug {

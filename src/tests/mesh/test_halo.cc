@@ -12,6 +12,8 @@
 #include <iomanip>
 #include <sstream>
 
+#include "eckit/types/FloatCompare.h"
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -29,9 +31,8 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/MicroDeg.h"
 #include "atlas/util/Unique.h"
-#include "eckit/types/FloatCompare.h"
-#include "tests/TestMeshes.h"
 
+#include "tests/TestMeshes.h"
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::output;

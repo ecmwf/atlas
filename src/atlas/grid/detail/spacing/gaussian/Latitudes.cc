@@ -13,6 +13,8 @@
 
 #include <limits>
 
+#include "eckit/memory/ScopedPtr.h"
+
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
@@ -21,7 +23,6 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "eckit/memory/ScopedPtr.h"
 
 using eckit::ConcreteBuilderT0;
 using eckit::Factory;

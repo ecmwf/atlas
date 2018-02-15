@@ -1,9 +1,9 @@
 #include <iostream>
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/array/native/NativeDataStore.h"
-
 #include "atlas/array/helpers/ArrayInitializer.h"
 #include "atlas/array/helpers/ArrayWriter.h"
 

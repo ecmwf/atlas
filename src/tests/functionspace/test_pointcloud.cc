@@ -9,7 +9,6 @@
  */
 
 #include "atlas/functionspace/PointCloud.h"
-
 #include "atlas/array.h"
 
 #include "tests/AtlasTestEnvironment.h"

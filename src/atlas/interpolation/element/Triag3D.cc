@@ -8,8 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/interpolation/element/Triag3D.h"
 #include <cmath>
+
+#include "atlas/interpolation/element/Triag3D.h"
 #include "atlas/interpolation/method/Intersect.h"
 #include "atlas/interpolation/method/Ray.h"
 

@@ -9,7 +9,6 @@
  */
 
 #include "atlas/trans/ifs/TransIFSNodeColumns.h"
-
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 

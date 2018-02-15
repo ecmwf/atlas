@@ -11,10 +11,11 @@
 /// @author Willem Deconinck
 /// @date   Nov 2013
 
-#include "atlas/parallel/HaloExchange.h"
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
+
+#include "atlas/parallel/HaloExchange.h"
 #include "atlas/array/Array.h"
 #include "atlas/parallel/mpi/Statistics.h"
 

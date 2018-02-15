@@ -2,6 +2,7 @@
 
 #include <array>
 #include <iostream>
+
 #include "atlas/domain/detail/Domain.h"
 
 namespace atlas {

@@ -11,6 +11,7 @@
 /// @author Willem Deconinck
 
 #pragma once
+
 #include "atlas/array/ArrayViewDefs.h"
 
 namespace atlas {

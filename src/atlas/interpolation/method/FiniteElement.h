@@ -13,11 +13,13 @@
 #include "atlas/interpolation/method/Method.h"
 
 #include <string>
+
+#include "eckit/config/Configuration.h"
+#include "eckit/memory/NonCopyable.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/interpolation/method/PointIndex3.h"
 #include "atlas/mesh/Elements.h"
-#include "eckit/config/Configuration.h"
-#include "eckit/memory/NonCopyable.h"
 
 namespace atlas {
 namespace interpolation {

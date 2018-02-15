@@ -9,12 +9,12 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/interpolation/method/PointIndex3.h"
+#include "eckit/config/Resource.h"
 
+#include "atlas/interpolation/method/PointIndex3.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/mesh/HybridElements.h"
-#include "eckit/config/Resource.h"
 
 namespace atlas {
 namespace interpolation {

@@ -11,13 +11,15 @@
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h"
 
 #include <vector>
+
+#include "eckit/config/Resource.h"
+#include "eckit/log/ProgressTimer.h"
+
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/LonLatPolygon.h"
-#include "eckit/config/Resource.h"
-#include "eckit/log/ProgressTimer.h"
 
 namespace atlas {
 namespace grid {

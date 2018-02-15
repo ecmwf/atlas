@@ -8,13 +8,13 @@
  * nor does it submit to any jurisdiction. and Interpolation
  */
 
-#include "atlas/interpolation/method/KNearestNeighboursBase.h"
+#include "eckit/config/Resource.h"
 
+#include "atlas/interpolation/method/KNearestNeighboursBase.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/runtime/Trace.h"
-#include "eckit/config/Resource.h"
 
 namespace atlas {
 namespace interpolation {

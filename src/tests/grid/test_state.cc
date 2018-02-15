@@ -11,13 +11,12 @@
 #include <cmath>
 #include <string>
 
-#include "atlas/library/config.h"
-
 #include "eckit/exception/Exceptions.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/JSONParser.h"
 
+#include "atlas/library/config.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"

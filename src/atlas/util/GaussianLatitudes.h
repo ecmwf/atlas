@@ -12,6 +12,7 @@
 /// @date Jan 2014
 
 #pragma once
+
 #include <cstddef>
 
 namespace atlas {

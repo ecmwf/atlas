@@ -11,10 +11,12 @@
 #pragma once
 
 #include <vector>
+
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/array.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
-#include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------
 

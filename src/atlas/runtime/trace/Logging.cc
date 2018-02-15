@@ -11,8 +11,10 @@
 #include "Logging.h"
 
 #include <iostream>
-#include "atlas/library/Library.h"
+
 #include "eckit/log/Channel.h"
+
+#include "atlas/library/Library.h"
 
 //-----------------------------------------------------------------------------------------------------------
 

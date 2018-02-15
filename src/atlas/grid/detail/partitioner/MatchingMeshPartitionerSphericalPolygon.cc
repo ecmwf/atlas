@@ -11,12 +11,14 @@
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h"
 
 #include <vector>
+
+#include "eckit/log/ProgressTimer.h"
+
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/SphericalPolygon.h"
-#include "eckit/log/ProgressTimer.h"
 
 namespace atlas {
 namespace grid {

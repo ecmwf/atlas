@@ -11,6 +11,8 @@
 #include <map>
 #include <string>
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
@@ -21,7 +23,6 @@
 #include "atlas/output/detail/GmshIO.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/exception/Exceptions.h"
 
 using atlas::Field;
 using atlas::FieldSet;

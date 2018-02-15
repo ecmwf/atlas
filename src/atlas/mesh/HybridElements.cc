@@ -8,8 +8,12 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/mesh/HybridElements.h"
 #include <algorithm>
+
+#include "eckit/log/Bytes.h"
+#include "eckit/memory/SharedPtr.h"
+
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/library/config.h"
@@ -18,8 +22,6 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/log/Bytes.h"
-#include "eckit/memory/SharedPtr.h"
 
 #if ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1

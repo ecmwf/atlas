@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include <utility>
 
 namespace atlas {

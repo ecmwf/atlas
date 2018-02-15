@@ -8,11 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/runtime/Log.h"
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/value/CompositeParams.h"
 
+#include "atlas/runtime/Log.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/FieldSet.h"

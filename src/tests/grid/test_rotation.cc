@@ -9,12 +9,14 @@
  */
 
 #include <cmath>
+
+#include "eckit/types/FloatCompare.h"
+
 #include "atlas/library/Library.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Rotation.h"
-#include "eckit/types/FloatCompare.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

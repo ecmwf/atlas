@@ -13,6 +13,7 @@
 #include <iosfwd>
 #include <memory>
 #include <string>
+
 #include "eckit/system/Library.h"
 
 namespace eckit {

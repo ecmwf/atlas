@@ -10,8 +10,9 @@
 
 #pragma once
 
-#include "atlas/runtime/trace/CallStack.h"
 #include "eckit/log/CodeLocation.h"
+
+#include "atlas/runtime/trace/CallStack.h"
 
 //-----------------------------------------------------------------------------------------------------------
 

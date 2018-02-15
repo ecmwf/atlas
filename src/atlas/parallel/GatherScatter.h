@@ -8,16 +8,15 @@
  * nor does it submit to any jurisdiction.
  */
 
-#ifndef Gather_h
-#define Gather_h
+#pragma once
 
 #include <stdexcept>
 #include <vector>
 
-#include "atlas/parallel/mpi/mpi.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Log.h"
@@ -511,5 +510,3 @@ void atlas__GatherScatter__scatter_double( GatherScatter* This, double gdata[], 
 
 }  // namespace parallel
 }  // namespace atlas
-
-#endif  // Gather_h

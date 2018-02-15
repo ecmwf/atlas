@@ -2,6 +2,7 @@
 
 #include <array>
 #include <iostream>
+
 #include "atlas/domain/Domain.h"
 #include "atlas/domain/detail/RectangularDomain.h"
 

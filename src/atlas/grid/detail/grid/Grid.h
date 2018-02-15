@@ -12,12 +12,14 @@
 
 #include <functional>
 #include <string>
+
+#include "eckit/memory/Builder.h"
+#include "eckit/memory/Owned.h"
+
 #include "atlas/domain/Domain.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Owned.h"
 
 namespace eckit {
 class Hash;

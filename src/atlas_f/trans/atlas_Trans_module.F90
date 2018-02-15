@@ -113,7 +113,7 @@ function atlas_Trans__ctor( grid, nsmax ) result(this)
   type(atlas_Trans) :: this
   class(atlas_Grid), intent(in) :: grid
   integer, intent(in), optional :: nsmax
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   if( present(nsmax) ) then
     call this%reset_c_ptr( atlas__Trans__new( grid%c_ptr(), nsmax ) )
   else
@@ -132,7 +132,7 @@ function handle( this )
   use atlas_trans_c_binding
   integer :: handle
   class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   handle = atlas__Trans__handle (this%c_ptr())
 #else
   THROW_ERROR
@@ -145,7 +145,7 @@ function truncation( this )
   use atlas_trans_c_binding
   integer :: truncation
   class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   truncation = atlas__Trans__truncation (this%c_ptr())
 #else
   THROW_ERROR
@@ -158,7 +158,7 @@ function nb_spectral_coefficients( this )
   use atlas_trans_c_binding
   integer :: nb_spectral_coefficients
   class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   nb_spectral_coefficients = atlas__Trans__nspec2 (this%c_ptr())
 #else
   THROW_ERROR
@@ -171,7 +171,7 @@ function nb_spectral_coefficients_global( this )
   use atlas_trans_c_binding
   integer :: nb_spectral_coefficients_global
   class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   nb_spectral_coefficients_global = atlas__Trans__nspec2g (this%c_ptr())
 #else
   THROW_ERROR
@@ -184,7 +184,7 @@ function nb_gridpoints( this )
   use atlas_trans_c_binding
   integer :: nb_gridpoints
   class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   nb_gridpoints = atlas__Trans__ngptot (this%c_ptr())
 #else
   THROW_ERROR
@@ -197,7 +197,7 @@ function nb_gridpoints_global( this )
   use atlas_trans_c_binding
   integer :: nb_gridpoints_global
   class(atlas_Trans) :: this
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   nb_gridpoints_global = atlas__Trans__ngptotg (this%c_ptr())
 #else
   THROW_ERROR
@@ -210,7 +210,7 @@ function grid( this )
   use atlas_trans_c_binding
   class(atlas_Trans) :: this
   type(atlas_Grid) :: grid
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   grid = atlas_Grid( atlas__Trans__grid(this%c_ptr()) )
   call grid%return()
 #else
@@ -227,7 +227,7 @@ subroutine dirtrans_fieldset(this, gpfields, spfields, config)
   class(atlas_FieldSet), intent(in)  :: gpfields
   class(atlas_FieldSet), intent(inout) :: spfields
   class(atlas_Config), intent(in), optional  :: config
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   type(atlas_Config) :: p
 
   if( present(config) ) then
@@ -260,7 +260,7 @@ subroutine invtrans_fieldset(this, spfields, gpfields, config)
   class(atlas_FieldSet), intent(in)  :: spfields
   class(atlas_FieldSet), intent(inout) :: gpfields
   class(atlas_Config), intent(in), optional  :: config
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   type(atlas_Config) :: p
 
   if( present(config) ) then
@@ -292,7 +292,7 @@ subroutine dirtrans_field(this, gpfield, spfield, config)
   class(atlas_Field), intent(in)  :: gpfield
   class(atlas_Field), intent(inout) :: spfield
   class(atlas_Config), intent(in), optional  :: config
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   type(atlas_Config) :: p
 
   if( present(config) ) then
@@ -325,7 +325,7 @@ subroutine dirtrans_wind2vordiv_field(this, gpwind, spvor, spdiv, config)
   type(atlas_Field), intent(inout) :: spvor
   type(atlas_Field), intent(inout) :: spdiv
   type(atlas_Config), intent(in), optional  :: config
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   type(atlas_Config) :: p
 
   if( present(config) ) then
@@ -361,7 +361,7 @@ subroutine invtrans_field(this, spfield, gpfield, config)
   class(atlas_Field), intent(in)  :: spfield
   class(atlas_Field), intent(inout) :: gpfield
   class(atlas_Config), intent(in), optional  :: config
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   type(atlas_Config) :: p
 
   if( present(config) ) then
@@ -395,7 +395,7 @@ subroutine invtrans_vordiv2wind_field(this, spvor, spdiv, gpwind, config)
   class(atlas_Field), intent(in)  :: spdiv
   class(atlas_Field), intent(inout) :: gpwind
   class(atlas_Config), intent(in), optional  :: config
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   type(atlas_Config) :: p
 
   if( present(config) ) then
@@ -430,7 +430,7 @@ subroutine invtrans_grad_field(this, spfield, gpfield)
   class(atlas_Trans), intent(in) :: this
   class(atlas_Field), intent(in)  :: spfield
   class(atlas_Field), intent(inout) :: gpfield
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   type(atlas_Config) :: config
   config = atlas_Config()
   call atlas__Trans__invtrans_grad_field( this%c_ptr(), &
@@ -454,7 +454,7 @@ subroutine gathspec_r1(this, local, global)
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: local(:)
   real(c_double), intent(inout) :: global(:)
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   call atlas__Trans__gathspec(this%c_ptr(), 1, (/1/), local, global )
 #else
   THROW_ERROR
@@ -471,7 +471,7 @@ subroutine gathspec_r2(this, local, global)
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: local(:,:)
   real(c_double), intent(inout) :: global(:,:)
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   real(c_double), pointer :: local_view(:), global_view(:)
   integer :: destination(size(local,1))
   destination(:) = 1
@@ -494,7 +494,7 @@ subroutine specnorm_r1_scalar(this, spectra, norm, rank)
   real(c_double), intent(in) :: spectra(:)
   real(c_double), intent(out) :: norm
   integer, optional :: rank ! MPI rank
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   integer :: rank_opt
   real(c_double) :: norms(1)
   rank_opt = 0
@@ -518,7 +518,7 @@ subroutine specnorm_r2(this, spectra, norm, rank)
   real(c_double), intent(in) :: spectra(:,:)
   real(c_double), intent(inout) :: norm(:)
   integer, optional :: rank ! MPI rank
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
   integer :: rank_opt
   real(c_double), pointer :: spectra_view(:)
   rank_opt = 0

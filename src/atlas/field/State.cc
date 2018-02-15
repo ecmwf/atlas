@@ -9,17 +9,20 @@
  */
 
 #include "atlas/field/State.h"
+
 #include <iomanip>
 #include <map>
 #include <memory>
 #include <string>
+
+#include "eckit/thread/AutoLock.h"
+#include "eckit/thread/Mutex.h"
+
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/thread/AutoLock.h"
-#include "eckit/thread/Mutex.h"
 
 namespace atlas {
 namespace field {

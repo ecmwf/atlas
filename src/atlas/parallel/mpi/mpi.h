@@ -10,8 +10,9 @@
 
 #pragma once
 
-#include "atlas/parallel/mpi/Statistics.h"
 #include "eckit/mpi/Comm.h"
+
+#include "atlas/parallel/mpi/Statistics.h"
 
 namespace atlas {
 namespace mpi {

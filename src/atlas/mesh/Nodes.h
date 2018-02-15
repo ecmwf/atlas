@@ -15,13 +15,15 @@
 
 #include <map>
 #include <string>
+
+#include "eckit/exception/Exceptions.h"
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
+
 #include "atlas/field/Field.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/util/Bitflags.h"
 #include "atlas/util/Metadata.h"
-#include "eckit/exception/Exceptions.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
 
 namespace atlas {
 namespace mesh {

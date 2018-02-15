@@ -9,12 +9,14 @@
  */
 
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
+
 #include <algorithm>
 #include <cmath>
 #include <ctime>
 #include <functional>
 #include <iostream>
 #include <vector>
+
 #include "atlas/grid/Grid.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"

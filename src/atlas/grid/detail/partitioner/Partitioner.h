@@ -10,10 +10,11 @@
 
 #pragma once
 
+#include "eckit/memory/Owned.h"
+
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
-#include "eckit/memory/Owned.h"
 
 namespace atlas {
 namespace grid {

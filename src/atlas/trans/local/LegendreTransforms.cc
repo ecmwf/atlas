@@ -8,8 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/trans/local/LegendreTransforms.h"
 #include <cstddef>
+
+#include "atlas/trans/local/LegendreTransforms.h"
 
 namespace atlas {
 namespace trans {

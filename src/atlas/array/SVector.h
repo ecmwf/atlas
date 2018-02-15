@@ -14,13 +14,11 @@
 #include <cstddef>
 
 #include "atlas/library/config.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
 #include <cuda_runtime.h>
 #endif
-
-#include "atlas/library/config.h"
-#include "atlas/runtime/ErrorHandling.h"
 
 namespace atlas {
 namespace array {

@@ -8,8 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#ifndef BuildStatistics_h
-#define BuildStatistics_h
+#pragma once
 
 namespace atlas {
 class Mesh;
@@ -29,5 +28,3 @@ void atlas__build_statistics( Mesh::Implementation* mesh );
 }  // namespace actions
 }  // namespace mesh
 }  // namespace atlas
-
-#endif  // BuildStatistics_h

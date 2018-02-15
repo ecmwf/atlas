@@ -11,6 +11,7 @@
 #pragma once
 
 #include <vector>
+
 #include "atlas/library/config.h"
 
 namespace atlas {

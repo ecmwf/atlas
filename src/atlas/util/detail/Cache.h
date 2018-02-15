@@ -12,8 +12,10 @@
 #include <map>
 #include <mutex>
 #include <string>
-#include "atlas/runtime/Log.h"
+
 #include "eckit/memory/SharedPtr.h"
+
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace util {

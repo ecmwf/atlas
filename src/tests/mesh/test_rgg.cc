@@ -12,6 +12,8 @@
 #include <iomanip>
 #include <sstream>
 
+#include "eckit/types/FloatCompare.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
@@ -32,7 +34,6 @@
 #include "atlas/util/Config.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Metadata.h"
-#include "eckit/types/FloatCompare.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

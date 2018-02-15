@@ -10,9 +10,9 @@
 
 #include <cmath>
 
-#include "atlas/functionspace/PointCloud.h"
 #include "eckit/types/FloatCompare.h"
 
+#include "atlas/functionspace/PointCloud.h"
 #include "atlas/array.h"
 #include "atlas/functionspace.h"
 #include "atlas/grid.h"

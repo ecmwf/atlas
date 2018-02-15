@@ -8,8 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#ifndef atlas_WriteLoadBalanceReport_h
-#define atlas_WriteLoadBalanceReport_h
+#pragma once
 
 namespace atlas {
 class Mesh;
@@ -31,5 +30,3 @@ void atlas__write_load_balance_report( Mesh::Implementation* mesh, char* filenam
 }  // namespace actions
 }  // namespace mesh
 }  // namespace atlas
-
-#endif

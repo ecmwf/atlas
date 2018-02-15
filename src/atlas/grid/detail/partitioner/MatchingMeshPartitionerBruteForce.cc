@@ -11,6 +11,11 @@
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
 
 #include <vector>
+
+#include "eckit/geometry/Point2.h"
+#include "eckit/log/ProgressTimer.h"
+#include "eckit/mpi/Comm.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
@@ -19,9 +24,6 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "eckit/geometry/Point2.h"
-#include "eckit/log/ProgressTimer.h"
-#include "eckit/mpi/Comm.h"
 
 namespace atlas {
 namespace grid {

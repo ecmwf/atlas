@@ -8,12 +8,12 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/mesh/detail/MeshImpl.h"
 #include <algorithm>
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 
+#include "atlas/mesh/detail/MeshImpl.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/HybridElements.h"

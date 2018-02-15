@@ -1,9 +1,10 @@
 #pragma once
 
-#include "atlas/array/ArrayViewDefs.h"
-#include "atlas/library/config.h"
 #include "gridtools/common/generic_metafunctions/all_integrals.hpp"
 #include "gridtools/storage/storage-facility.hpp"
+
+#include "atlas/array/ArrayViewDefs.h"
+#include "atlas/library/config.h"
 
 //------------------------------------------------------------------------------
 

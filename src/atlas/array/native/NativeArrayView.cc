@@ -9,10 +9,12 @@
  */
 
 #include <iostream>
+
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/helpers/ArrayAssigner.h"
 #include "atlas/array/helpers/ArrayWriter.h"
-#include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------------------------------
 

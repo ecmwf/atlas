@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
 #include "atlas/array.h"
 #include "atlas/grid/Grid.h"
@@ -15,7 +17,6 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/trans/ifs/TransIFS.h"
-#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace grid {

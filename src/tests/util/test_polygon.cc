@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <utility>
+
 #include "atlas/util/Point.h"
 #include "atlas/util/SphericalPolygon.h"
 

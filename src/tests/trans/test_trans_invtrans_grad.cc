@@ -30,7 +30,7 @@
 
 #include "tests/AtlasTestEnvironment.h"
 
-#ifdef ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS
 #include "atlas/trans/ifs/TransIFS.h"
 #endif
 

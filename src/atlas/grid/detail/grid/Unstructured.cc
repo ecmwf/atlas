@@ -11,13 +11,15 @@
 #include "atlas/grid/detail/grid/Unstructured.h"
 
 #include <limits>
+
+#include "eckit/memory/Builder.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "eckit/memory/Builder.h"
 
 namespace atlas {
 namespace grid {

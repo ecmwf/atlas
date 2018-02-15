@@ -9,7 +9,6 @@
  */
 
 #include "atlas/trans/local/TransLocal.h"
-
 #include "atlas/array.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"

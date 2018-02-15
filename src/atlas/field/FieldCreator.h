@@ -15,8 +15,10 @@
 #define atlas_field_FieldCreator_h
 
 #include <string>
-#include "atlas/field/Field.h"
+
 #include "eckit/memory/Owned.h"
+
+#include "atlas/field/Field.h"
 
 namespace eckit {
 class Parametrisation;

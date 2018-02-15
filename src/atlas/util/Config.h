@@ -8,14 +8,14 @@
  * nor does it submit to any jurisdiction.
  */
 
-#ifndef atlas_Config_h
-#define atlas_Config_h
-
+#pragma once
 #include <initializer_list>
 #include <string>
-#include "atlas/util/Metadata.h"
+
 #include "eckit/config/Parametrisation.h"
 #include "eckit/utils/Hash.h"
+
+#include "atlas/util/Metadata.h"
 
 namespace eckit {
 class PathName;
@@ -151,5 +151,3 @@ public:  // methods
 
 }  // namespace util
 }  // namespace atlas
-
-#endif  // Parametrisation_h

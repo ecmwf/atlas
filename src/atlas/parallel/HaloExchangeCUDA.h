@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * (C) Copyright 2013 ECMWF.
  *
@@ -9,6 +7,9 @@
  * granted to it by virtue of its status as an intergovernmental organisation
  * nor does it submit to any jurisdiction.
  */
+
+#pragma once
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/SVector.h"

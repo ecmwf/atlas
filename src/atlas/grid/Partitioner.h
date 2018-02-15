@@ -10,10 +10,11 @@
 
 #pragma once
 
+#include "eckit/memory/SharedPtr.h"
+
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
-#include "eckit/memory/SharedPtr.h"
 
 namespace atlas {
 namespace grid {

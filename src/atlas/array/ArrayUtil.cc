@@ -8,9 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/array/ArrayUtil.h"
 #include <sstream>
+
 #include "eckit/exception/Exceptions.h"
+
+#include "atlas/array/ArrayUtil.h"
 
 namespace atlas {
 namespace array {

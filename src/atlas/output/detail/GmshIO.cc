@@ -8,12 +8,16 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/output/detail/GmshIO.h"
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
+
+#include "eckit/exception/Exceptions.h"
+#include "eckit/filesystem/PathName.h"
+
+#include "atlas/output/detail/GmshIO.h"
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -31,13 +35,10 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "eckit/exception/Exceptions.h"
-#include "eckit/filesystem/PathName.h"
-#include "eckit/utils/Translator.h"
 
-using namespace eckit;
 using atlas::functionspace::NodeColumns;
 using atlas::util::Metadata;
+using eckit::PathName;
 
 namespace atlas {
 namespace output {
@@ -53,14 +54,13 @@ public:
         PathName par_path( file_path );
         if ( atlas::mpi::comm().size() == 1 || part == -1 ) { std::ofstream::open( par_path.localPath(), mode ); }
         else {
-            Translator<int, std::string> to_str;
             if ( atlas::mpi::comm().rank() == 0 ) {
                 PathName par_path( file_path );
                 std::ofstream par_file( par_path.localPath(), std::ios_base::out );
                 for ( size_t p = 0; p < atlas::mpi::comm().size(); ++p ) {
                     PathName loc_path( file_path );
                     // loc_path = loc_path.baseName(false) + "_p" + to_str(p) + ".msh";
-                    loc_path = loc_path.baseName( false ) + ".msh.p" + to_str( p );
+                    loc_path = loc_path.baseName( false ) + ".msh.p" + std::to_string( p );
                     par_file << "Merge \"" << loc_path << "\";" << std::endl;
                 }
                 par_file.close();
@@ -68,7 +68,7 @@ public:
             PathName path( file_path );
             // path = path.dirName() + "/" + path.baseName(false) + "_p" +
             // to_str(part) + ".msh";
-            path = path.dirName() + "/" + path.baseName( false ) + ".msh.p" + to_str( part );
+            path = path.dirName() + "/" + path.baseName( false ) + ".msh.p" + std::to_string( part );
             std::ofstream::open( path.localPath(), mode );
         }
     }
@@ -509,7 +509,7 @@ mesh::ElementType* make_element_type( int type ) {
 void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
     std::ifstream file;
     file.open( file_path.localPath(), std::ios::in | std::ios::binary );
-    if ( !file.is_open() ) throw CantOpenFile( file_path );
+    if ( !file.is_open() ) throw eckit::CantOpenFile( file_path );
 
     std::string line;
 
@@ -711,7 +711,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
                     break;
                 default:
                     std::cout << "etype " << etype << std::endl;
-                    throw Exception( "ERROR: element type not supported", Here() );
+                    throw eckit::Exception( "ERROR: element type not supported", Here() );
             }
         }
     }

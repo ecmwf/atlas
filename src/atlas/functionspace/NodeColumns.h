@@ -10,13 +10,14 @@
 
 #pragma once
 
+#include "eckit/memory/SharedPtr.h"
+
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/Halo.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/option.h"
-#include "eckit/memory/SharedPtr.h"
 
 // ----------------------------------------------------------------------------
 // Forward declarations

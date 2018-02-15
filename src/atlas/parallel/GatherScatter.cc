@@ -8,11 +8,12 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/parallel/GatherScatter.h"
 #include <iostream>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
+
+#include "atlas/parallel/GatherScatter.h"
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/parallel/mpi/Statistics.h"

@@ -12,11 +12,12 @@ domain shapes (circular, frame, and what not...)
 
 #pragma once
 
-#include "atlas/util/Config.h"
-#include "atlas/util/Point.h"
 #include "eckit/config/Parametrisation.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
+
+#include "atlas/util/Config.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 class Projection;

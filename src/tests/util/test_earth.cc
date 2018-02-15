@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <limits>
+
 #include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
 

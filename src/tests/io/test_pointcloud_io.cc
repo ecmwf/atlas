@@ -11,11 +11,11 @@
 #include <cmath>
 #include <string>
 
-#include "atlas/library/config.h"
-
 #include "eckit/exception/Exceptions.h"
 #include "eckit/memory/ScopedPtr.h"
+#include "eckit/types/FloatCompare.h"
 
+#include "atlas/library/config.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
@@ -27,7 +27,6 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/detail/PointCloudIO.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "eckit/types/FloatCompare.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

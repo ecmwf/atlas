@@ -1,7 +1,6 @@
 #pragma once
 
 #include "atlas/library/config.h"
-
 #include "atlas/library/Library.h"
 
 #if ATLAS_HAVE_FORTRAN

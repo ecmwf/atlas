@@ -25,6 +25,8 @@
 
 #include <array>
 
+#include "eckit/memory/Owned.h"
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/DataType.h"
@@ -33,8 +35,6 @@
 #include "atlas/array/gridtools/GPUClonable.h"
 #include "atlas/array_fwd.h"
 #include "atlas/library/config.h"
-
-#include "eckit/memory/Owned.h"
 
 namespace atlas {
 namespace mesh {

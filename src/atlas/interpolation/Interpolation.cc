@@ -8,12 +8,12 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/interpolation/Interpolation.h"
+#include "eckit/exception/Exceptions.h"
 
+#include "atlas/interpolation/Interpolation.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 

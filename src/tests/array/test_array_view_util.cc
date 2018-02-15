@@ -11,6 +11,7 @@
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayViewUtil.h"
 #include "atlas/array_fwd.h"
+
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::array;

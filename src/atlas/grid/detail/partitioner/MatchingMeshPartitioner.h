@@ -11,8 +11,10 @@
 #pragma once
 
 #include <vector>
-#include "atlas/grid/detail/partitioner/Partitioner.h"
+
 #include "eckit/exception/Exceptions.h"
+
+#include "atlas/grid/detail/partitioner/Partitioner.h"
 
 namespace atlas {
 namespace grid {

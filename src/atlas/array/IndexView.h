@@ -38,7 +38,7 @@
 
 #pragma once
 #include "atlas/library/config.h"
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "atlas/array/gridtools/GridToolsIndexView.h"
 #else
 #include "atlas/array/native/NativeIndexView.h"

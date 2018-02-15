@@ -8,8 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/mesh/Connectivity.h"
 #include <limits>
+
+#include "atlas/mesh/Connectivity.h"
 #include "atlas/array.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"

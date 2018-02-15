@@ -1,10 +1,12 @@
 #include "atlas/grid/detail/partitioner/CheckerboardPartitioner.h"
+
 #include <algorithm>
 #include <cmath>
 #include <ctime>
 #include <functional>
 #include <iostream>
 #include <vector>
+
 #include "atlas/grid/Grid.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/MicroDeg.h"
