@@ -13,9 +13,10 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/library/defines.h"
 #include "tests/AtlasTestEnvironment.h"
 
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
 #define IN_FORTRAN
 #else
 #define IN_FORTRAN -1

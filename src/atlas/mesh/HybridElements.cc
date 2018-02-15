@@ -21,7 +21,7 @@
 #include "eckit/log/Bytes.h"
 #include "eckit/memory/SharedPtr.h"
 
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
 #define TO_FORTRAN +1
 #else

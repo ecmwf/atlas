@@ -30,7 +30,7 @@ namespace array {
 
 // --------------------------------------------------------------------------
 
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
 #define INDEX_REF Index
 #define FROM_FORTRAN -1
 #define TO_FORTRAN +1
@@ -99,7 +99,7 @@ private:
 
 template <bool ReadOnly>
 class TableRow {
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
     typedef detail::TableIndex Index;
 #else
     typedef idx_t Index;
@@ -139,7 +139,7 @@ private:
 
 template <bool ReadOnly>
 class TableView : public eckit::Owned {
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
     using Index = typename std::conditional<ReadOnly, idx_t, detail::TableIndex>::type;
 #else
     using Index = idx_t;

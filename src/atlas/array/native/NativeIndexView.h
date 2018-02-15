@@ -95,7 +95,7 @@ private:
 
 }  // namespace detail
 
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
 #define INDEX_REF Index
 #define FROM_FORTRAN -1
 #define TO_FORTRAN +1
@@ -112,7 +112,7 @@ class IndexView {
 public:
     using value_type = typename remove_const<Value>::type;
 
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
     typedef detail::FortranIndex<Value> Index;
 #else
     typedef Value& Index;

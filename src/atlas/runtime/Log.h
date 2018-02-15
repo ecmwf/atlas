@@ -4,7 +4,7 @@
 
 #include "atlas/library/Library.h"
 
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
 #include "fckit/Log.h"
 namespace atlas {
 namespace detail {
@@ -30,7 +30,7 @@ public:
     static Channel& trace() { return atlas::Library::instance().traceChannel(); }
     static Channel& debug() { return atlas::Library::instance().debugChannel(); }
 
-#ifndef ATLAS_HAVE_FORTRAN
+#if ! ATLAS_HAVE_FORTRAN
     // Stubs for what fckit::Log provides
     enum Style
     {

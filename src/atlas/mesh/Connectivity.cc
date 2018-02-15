@@ -15,8 +15,9 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/array/Vector.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/library/defines.h"
 
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
 #define TO_FORTRAN +1
 #else

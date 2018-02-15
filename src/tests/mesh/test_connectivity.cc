@@ -11,6 +11,7 @@
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/library/defines.h"
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::mesh;
@@ -20,7 +21,7 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
 #define INDEX_REF Index
 #define FROM_FORTRAN -1

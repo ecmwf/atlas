@@ -10,6 +10,7 @@
 
 #include "atlas/array/Table.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/library/defines.h"
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::array;
@@ -19,7 +20,7 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
 #define IN_FORTRAN -1
 #else
 #define IN_FORTRAN

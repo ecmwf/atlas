@@ -54,7 +54,7 @@ class MultiBlockConnectivityImpl;
 
 // --------------------------------------------------------------------------
 
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
 #define INDEX_REF Index
 #define FROM_FORTRAN -1
 #define TO_FORTRAN +1
@@ -133,7 +133,7 @@ private:
 }  // namespace detail
 
 class ConnectivityRow {
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
     typedef detail::ConnectivityIndex Index;
 #else
     typedef idx_t Index;

@@ -32,7 +32,7 @@
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/detail/Cache.h"
 
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
 #else
 #define REMOTE_IDX_BASE 0

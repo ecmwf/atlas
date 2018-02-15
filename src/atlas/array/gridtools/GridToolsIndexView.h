@@ -83,7 +83,7 @@ template <typename Value, int Rank>
 class IndexView {
 public:
 // -- Type definitions
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
     typedef detail::FortranIndex<Value> Index;
 #define INDEX_REF Index
 #define FROM_FORTRAN -1

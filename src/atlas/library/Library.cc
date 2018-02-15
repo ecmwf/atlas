@@ -223,7 +223,7 @@ void Library::Information::print( std::ostream& out ) const {
     bool feature_Tesselation( false );
     bool feature_BoundsChecking( false );
     bool feature_MPI( false );
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
     feature_fortran = true;
 #endif
 #ifdef ECKIT_HAVE_MPI
@@ -235,7 +235,7 @@ void Library::Information::print( std::ostream& out ) const {
 #ifdef ATLAS_HAVE_TRANS
     feature_Trans = true;
 #endif
-#ifdef ATLAS_HAVE_TESSELATION
+#if ATLAS_HAVE_TESSELATION
     feature_Tesselation = true;
 #endif
 #ifdef ATLAS_HAVE_BOUNDSCHECKING
