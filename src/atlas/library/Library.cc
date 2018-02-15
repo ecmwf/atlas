@@ -229,7 +229,7 @@ void Library::Information::print( std::ostream& out ) const {
 #ifdef ECKIT_HAVE_MPI
     feature_MPI = true;
 #endif
-#ifdef ATLAS_HAVE_OMP
+#if ATLAS_HAVE_OMP
     feature_OpenMP = true;
 #endif
 #ifdef ATLAS_HAVE_TRANS

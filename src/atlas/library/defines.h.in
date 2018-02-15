@@ -5,9 +5,7 @@
 #define CGAL_FOUND
 #endif
 
-#if @ATLAS_HAVE_OMP@
-#define ATLAS_HAVE_OMP
-#endif
+#define ATLAS_HAVE_OMP @ATLAS_HAVE_OMP@
 
 #if @ATLAS_HAVE_TESSELATION@
 #define ATLAS_HAVE_TESSELATION

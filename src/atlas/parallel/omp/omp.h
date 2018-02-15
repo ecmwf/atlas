@@ -23,7 +23,7 @@ int atlas_omp_get_dynamic( void );
 void atlas_omp_set_nested( int nested );
 int atlas_omp_get_nested( void );
 
-#ifdef ATLAS_HAVE_OMP
+#if ATLAS_HAVE_OMP
 #define __ATLAS_OMP_STR( x ) #x
 #define __ATLAS_OMP_STRINGIFY( x ) __ATLAS_OMP_STR( x )
 #define atlas_omp_pragma( x ) _Pragma( __ATLAS_OMP_STRINGIFY( x ) )
