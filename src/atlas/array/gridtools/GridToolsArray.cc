@@ -22,7 +22,7 @@
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array/helpers/ArrayInitializer.h"
 #include "atlas/array_fwd.h"
-#ifdef ATLAS_HAVE_ACC
+#if ATLAS_HAVE_ACC
 #include "atlas_acc_support/atlas_acc_map_data.h"
 #endif
 #include "eckit/exception/Exceptions.h"
@@ -332,7 +332,7 @@ size_t ArrayT<Value>::footprint() const {
 template <typename Value>
 bool ArrayT<Value>::accMap() const {
     if ( not acc_map_ ) {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA && defined( ATLAS_HAVE_ACC )
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA && ATLAS_HAVE_ACC
         atlas_acc_map_data( (void*)host_data<Value>(), (void*)device_data<Value>(),
                             spec_.allocatedSize() * sizeof( Value ) );
         acc_map_ = true;

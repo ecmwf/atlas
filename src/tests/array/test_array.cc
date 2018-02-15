@@ -567,17 +567,15 @@ CASE( "test_wrap" ) {
     EXPECT( view( 2 ) == 19 );
 }
 
-#ifdef ATLAS_HAVE_ACC
 CASE( "test_acc_map" ) {
     Array* ds = Array::create<double>( 2, 3, 4 );
-#ifdef ATLAS_HAVE_ACC
-    EXPECT( ds->accMap() == true );
-    EXPECT( ds->accMap() == true );
-#else
-    EXPECT( ds->accMap() == false );
-#endif
+    if( ATLAS_HAVE_ACC ) {
+        EXPECT( ds->accMap() == true );
+        EXPECT( ds->accMap() == true );
+    } else {
+        EXPECT( ds->accMap() == false );
+    }
 }
-#endif
 
 //-----------------------------------------------------------------------------
 
