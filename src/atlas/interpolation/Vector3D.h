@@ -15,7 +15,7 @@
 
 #include "atlas/library/config.h"
 
-#ifdef ATLAS_HAVE_EIGEN
+#if ATLAS_HAVE_EIGEN
 
 #define EIGEN_NO_AUTOMATIC_RESIZING
 //#define EIGEN_DONT_ALIGN
@@ -31,7 +31,7 @@ namespace interpolation {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-#ifdef ATLAS_HAVE_EIGEN
+#if ATLAS_HAVE_EIGEN
 
 typedef Eigen::Vector3d Vector3D;
 
