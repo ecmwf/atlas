@@ -1,7 +1,7 @@
 #pragma once
 
-#include "atlas/library/config.h"
 #include "atlas/array/ArrayViewDefs.h"
+#include "atlas/library/config.h"
 #include "gridtools/common/generic_metafunctions/all_integrals.hpp"
 #include "gridtools/storage/storage-facility.hpp"
 
@@ -14,28 +14,25 @@ namespace gridtools {
 //------------------------------------------------------------------------------
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-using storage_traits = ::gridtools::storage_traits< ::gridtools::enumtype::Cuda >;
+using storage_traits = ::gridtools::storage_traits<::gridtools::enumtype::Cuda>;
 #elif ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
-using storage_traits = ::gridtools::storage_traits< ::gridtools::enumtype::Host >;
+using storage_traits = ::gridtools::storage_traits<::gridtools::enumtype::Host>;
 #else
 #error ATLAS_GRIDTOOLS_STORAGE_BACKEND_<HOST,CUDA> not set
 #endif
 
 //------------------------------------------------------------------------------
 
-template <typename Value, unsigned int Rank, ::gridtools::access_mode AccessMode = ::gridtools::access_mode::ReadWrite >
+template <typename Value, unsigned int Rank, ::gridtools::access_mode AccessMode = ::gridtools::access_mode::ReadWrite>
 using data_view_tt = ::gridtools::data_view<
-        gridtools::storage_traits::data_store_t<
-            Value,
-            gridtools::storage_traits::storage_info_t<0, Rank> >,
-        AccessMode>;
+    gridtools::storage_traits::data_store_t<Value, gridtools::storage_traits::storage_info_t<0, Rank>>, AccessMode>;
 
-inline constexpr ::gridtools::access_mode get_access_mode(Intent kind) {
-   return (kind == Intent::ReadOnly) ? ::gridtools::access_mode::ReadOnly : ::gridtools::access_mode::ReadWrite;
+inline constexpr ::gridtools::access_mode get_access_mode( Intent kind ) {
+    return ( kind == Intent::ReadOnly ) ? ::gridtools::access_mode::ReadOnly : ::gridtools::access_mode::ReadWrite;
 }
 
 //------------------------------------------------------------------------------
 
-} // namespace gridtools
-} // namespace array
-} // namespace atlas
+}  // namespace gridtools
+}  // namespace array
+}  // namespace atlas

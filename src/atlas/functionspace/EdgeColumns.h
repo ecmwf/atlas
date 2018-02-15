@@ -4,34 +4,35 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor
  * does it submit to any jurisdiction.
  */
 
 #pragma once
 
-#include "eckit/memory/SharedPtr.h"
+#include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/mesh/Halo.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/field/FieldSet.h"
 #include "atlas/option.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/util/Config.h"
+#include "eckit/memory/SharedPtr.h"
 
 // ----------------------------------------------------------------------------
 // Forward declarations
 
 namespace atlas {
-  class FieldSet;
+class FieldSet;
 }
 
 namespace atlas {
 namespace parallel {
-    class HaloExchange;
-    class GatherScatter;
-    class Checksum;
-}
-}
+class HaloExchange;
+class GatherScatter;
+class Checksum;
+}  // namespace parallel
+}  // namespace atlas
 
 namespace atlas {
 namespace functionspace {
@@ -39,12 +40,10 @@ namespace detail {
 
 // ----------------------------------------------------------------------------
 
-class EdgeColumns : public FunctionSpaceImpl
-{
+class EdgeColumns : public FunctionSpaceImpl {
 public:
-
-    EdgeColumns( const Mesh&, const mesh::Halo &, const eckit::Configuration & );
-    EdgeColumns( const Mesh&, const mesh::Halo & );
+    EdgeColumns( const Mesh&, const mesh::Halo&, const eckit::Configuration& );
+    EdgeColumns( const Mesh&, const mesh::Halo& );
     EdgeColumns( const Mesh&, const eckit::Configuration& = util::NoConfig() );
 
     virtual ~EdgeColumns();
@@ -54,22 +53,22 @@ public:
     virtual std::string distribution() const;
 
     size_t nb_edges() const;
-    size_t nb_edges_global() const; // Only on MPI rank 0, will this be different from 0
+    size_t nb_edges_global() const;  // Only on MPI rank 0, will this be different from 0
     std::vector<size_t> nb_edges_global_foreach_rank() const;
 
     const Mesh& mesh() const { return mesh_; }
-          Mesh& mesh()       { return mesh_; }
+    Mesh& mesh() { return mesh_; }
 
     const mesh::HybridElements& edges() const { return edges_; }
-          mesh::HybridElements& edges()       { return edges_; }
+    mesh::HybridElements& edges() { return edges_; }
 
-// -- Field creation methods
+    // -- Field creation methods
 
-    virtual Field createField( const eckit::Configuration&) const;
+    virtual Field createField( const eckit::Configuration& ) const;
 
-    virtual Field createField(const Field&, const eckit::Configuration& ) const;
+    virtual Field createField( const Field&, const eckit::Configuration& ) const;
 
-// -- Parallelisation aware methods
+    // -- Parallelisation aware methods
 
     void haloExchange( FieldSet& ) const;
     void haloExchange( Field& ) const;
@@ -87,67 +86,70 @@ public:
     std::string checksum( const Field& ) const;
     const parallel::Checksum& checksum() const;
 
-private: // methods
-
+private:  // methods
     void constructor();
-    size_t config_size(const eckit::Configuration& config) const;
-    array::DataType config_datatype(const eckit::Configuration&) const;
-    std::string config_name(const eckit::Configuration&) const;
-    size_t config_levels(const eckit::Configuration&) const;
-    array::ArrayShape config_shape(const eckit::Configuration&) const;
-    void set_field_metadata(const eckit::Configuration&, Field& ) const;
+    size_t config_size( const eckit::Configuration& config ) const;
+    array::DataType config_datatype( const eckit::Configuration& ) const;
+    std::string config_name( const eckit::Configuration& ) const;
+    size_t config_levels( const eckit::Configuration& ) const;
+    array::ArrayShape config_shape( const eckit::Configuration& ) const;
+    void set_field_metadata( const eckit::Configuration&, Field& ) const;
     size_t footprint() const;
 
-private: // data
-
-    Mesh mesh_; // non-const because functionspace may modify mesh
+private:         // data
+    Mesh mesh_;  // non-const because functionspace may modify mesh
     size_t nb_levels_;
-    mesh::HybridElements& edges_; // non-const because functionspace may modify mesh
+    mesh::HybridElements& edges_;  // non-const because functionspace may modify mesh
     size_t nb_edges_;
     mutable long nb_edges_global_{-1};
-    mutable eckit::SharedPtr<parallel::GatherScatter> gather_scatter_; // without ghost
-    mutable eckit::SharedPtr<parallel::HaloExchange>  halo_exchange_;
-    mutable eckit::SharedPtr<parallel::Checksum>      checksum_;
+    mutable eckit::SharedPtr<parallel::GatherScatter> gather_scatter_;  // without ghost
+    mutable eckit::SharedPtr<parallel::HaloExchange> halo_exchange_;
+    mutable eckit::SharedPtr<parallel::Checksum> checksum_;
 };
 
 // -------------------------------------------------------------------
 
 extern "C" {
 
-EdgeColumns* atlas__fs__EdgeColumns__new (Mesh::Implementation* mesh, const eckit::Configuration* config);
-void atlas__fs__EdgeColumns__delete (EdgeColumns* This);
-int atlas__fs__EdgeColumns__nb_edges(const EdgeColumns* This);
-Mesh::Implementation* atlas__fs__EdgeColumns__mesh(EdgeColumns* This);
-mesh::Edges* atlas__fs__EdgeColumns__edges(EdgeColumns* This);
-field::FieldImpl* atlas__fs__EdgeColumns__create_field (const EdgeColumns* This, const eckit::Configuration* options);
-field::FieldImpl* atlas__fs__EdgeColumns__create_field_template (const EdgeColumns* This, const field::FieldImpl* field_template, const eckit::Configuration* options);
+EdgeColumns* atlas__fs__EdgeColumns__new( Mesh::Implementation* mesh, const eckit::Configuration* config );
+void atlas__fs__EdgeColumns__delete( EdgeColumns* This );
+int atlas__fs__EdgeColumns__nb_edges( const EdgeColumns* This );
+Mesh::Implementation* atlas__fs__EdgeColumns__mesh( EdgeColumns* This );
+mesh::Edges* atlas__fs__EdgeColumns__edges( EdgeColumns* This );
+field::FieldImpl* atlas__fs__EdgeColumns__create_field( const EdgeColumns* This, const eckit::Configuration* options );
+field::FieldImpl* atlas__fs__EdgeColumns__create_field_template( const EdgeColumns* This,
+                                                                 const field::FieldImpl* field_template,
+                                                                 const eckit::Configuration* options );
 
+void atlas__fs__EdgeColumns__halo_exchange_fieldset( const EdgeColumns* This, field::FieldSetImpl* fieldset );
+void atlas__fs__EdgeColumns__halo_exchange_field( const EdgeColumns* This, field::FieldImpl* field );
+const parallel::HaloExchange* atlas__fs__EdgeColumns__get_halo_exchange( const EdgeColumns* This );
 
-void atlas__fs__EdgeColumns__halo_exchange_fieldset(const EdgeColumns* This, field::FieldSetImpl* fieldset);
-void atlas__fs__EdgeColumns__halo_exchange_field(const EdgeColumns* This, field::FieldImpl* field);
-const parallel::HaloExchange* atlas__fs__EdgeColumns__get_halo_exchange(const EdgeColumns* This);
+void atlas__fs__EdgeColumns__gather_fieldset( const EdgeColumns* This, const field::FieldSetImpl* local,
+                                              field::FieldSetImpl* global );
+void atlas__fs__EdgeColumns__gather_field( const EdgeColumns* This, const field::FieldImpl* local,
+                                           field::FieldImpl* global );
+const parallel::GatherScatter* atlas__fs__EdgeColumns__get_gather( const EdgeColumns* This );
 
-void atlas__fs__EdgeColumns__gather_fieldset(const EdgeColumns* This, const field::FieldSetImpl* local, field::FieldSetImpl* global);
-void atlas__fs__EdgeColumns__gather_field(const EdgeColumns* This, const field::FieldImpl* local, field::FieldImpl* global);
-const parallel::GatherScatter* atlas__fs__EdgeColumns__get_gather(const EdgeColumns* This);
+void atlas__fs__EdgeColumns__scatter_fieldset( const EdgeColumns* This, const field::FieldSetImpl* global,
+                                               field::FieldSetImpl* local );
+void atlas__fs__EdgeColumns__scatter_field( const EdgeColumns* This, const field::FieldImpl* global,
+                                            field::FieldImpl* local );
+const parallel::GatherScatter* atlas__fs__EdgeColumns__get_scatter( const EdgeColumns* This );
 
-void atlas__fs__EdgeColumns__scatter_fieldset(const EdgeColumns* This, const field::FieldSetImpl* global, field::FieldSetImpl* local);
-void atlas__fs__EdgeColumns__scatter_field(const EdgeColumns* This, const field::FieldImpl* global, field::FieldImpl* local);
-const parallel::GatherScatter* atlas__fs__EdgeColumns__get_scatter(const EdgeColumns* This);
-
-void atlas__fs__EdgeColumns__checksum_fieldset(const EdgeColumns* This, const field::FieldSetImpl* fieldset, char* &checksum, int &size, int &allocated);
-void atlas__fs__EdgeColumns__checksum_field(const EdgeColumns* This, const field::FieldImpl* field, char* &checksum, int &size, int &allocated);
-const parallel::Checksum* atlas__fs__EdgeColumns__get_checksum(const EdgeColumns* This);
+void atlas__fs__EdgeColumns__checksum_fieldset( const EdgeColumns* This, const field::FieldSetImpl* fieldset,
+                                                char*& checksum, int& size, int& allocated );
+void atlas__fs__EdgeColumns__checksum_field( const EdgeColumns* This, const field::FieldImpl* field, char*& checksum,
+                                             int& size, int& allocated );
+const parallel::Checksum* atlas__fs__EdgeColumns__get_checksum( const EdgeColumns* This );
 }
 
-} // namespace detail
+}  // namespace detail
 
 // -------------------------------------------------------------------
 
 class EdgeColumns : public FunctionSpace {
-
 public:
-
     EdgeColumns();
     EdgeColumns( const FunctionSpace& );
     EdgeColumns( const Mesh&, const mesh::Halo&, const eckit::Configuration& );
@@ -158,13 +160,13 @@ public:
     bool valid() const { return functionspace_; }
 
     size_t nb_edges() const;
-    size_t nb_edges_global() const; // Only on MPI rank 0, will this be different from 0
+    size_t nb_edges_global() const;  // Only on MPI rank 0, will this be different from 0
 
     const Mesh& mesh() const;
 
     const mesh::HybridElements& edges() const;
 
-// -- Parallelisation aware methods
+    // -- Parallelisation aware methods
 
     void haloExchange( FieldSet& ) const;
     void haloExchange( Field& ) const;
@@ -183,10 +185,8 @@ public:
     const parallel::Checksum& checksum() const;
 
 private:
-
-  const detail::EdgeColumns* functionspace_;
+    const detail::EdgeColumns* functionspace_;
 };
 
-} // namespace functionspace
-} // namespace atlas
-
+}  // namespace functionspace
+}  // namespace atlas

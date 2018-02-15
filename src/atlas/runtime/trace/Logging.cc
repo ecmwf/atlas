@@ -4,15 +4,16 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor
  * does it submit to any jurisdiction.
  */
 
 #include "Logging.h"
 
 #include <iostream>
-#include "eckit/log/Channel.h"
 #include "atlas/library/Library.h"
+#include "eckit/log/Channel.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -26,12 +27,9 @@ class LoggingState {
 private:
     std::ostream* channel_;
 
-    LoggingState() {
-        channel_ = &atlas::Library::instance().traceChannel();
-    }
+    LoggingState() { channel_ = &atlas::Library::instance().traceChannel(); }
 
 public:
-
     static eckit::Channel& empty_channel() {
         static eckit::Channel channel;
         return channel;
@@ -46,57 +44,53 @@ public:
     operator std::ostream*() { return channel_; }
 
     void set( std::ostream& channel ) { channel_ = &channel; }
-    void set( bool state ) { if( state == false ) channel_ = &empty_channel(); }
+    void set( bool state ) {
+        if ( state == false ) channel_ = &empty_channel();
+    }
 };
 
 //-----------------------------------------------------------------------------------------------------------
 
-Logging::Logging( bool state ) :
-    previous_state_( LoggingState::instance() ) {
+Logging::Logging( bool state ) : previous_state_( LoggingState::instance() ) {
     LoggingState::instance().set( state );
 }
 
-Logging::Logging( std::ostream& channel ) :
-    previous_state_( LoggingState::instance() ) {
+Logging::Logging( std::ostream& channel ) : previous_state_( LoggingState::instance() ) {
     LoggingState::instance().set( channel );
 }
 
 Logging::~Logging() {
-      LoggingState::instance().set( *previous_state_ );
+    LoggingState::instance().set( *previous_state_ );
 }
 
 std::ostream& Logging::channel() {
-  return LoggingState::instance();
+    return LoggingState::instance();
 }
 
 bool Logging::enabled() {
-  return LoggingState::instance();
+    return LoggingState::instance();
 }
 void Logging::start( const std::string& title ) {
-  if( enabled() )
-    channel() << title << " ..." << std::endl;
+    if ( enabled() ) channel() << title << " ..." << std::endl;
 }
 
 void Logging::stop( const std::string& title, double seconds ) {
-  if( enabled() )
-    channel() << title << " ... done : " << seconds << "s" << std::endl;
+    if ( enabled() ) channel() << title << " ... done : " << seconds << "s" << std::endl;
 }
 //-----------------------------------------------------------------------------------------------------------
 
 std::ostream& NoLogging::channel() {
-  return LoggingState::empty_channel();
+    return LoggingState::empty_channel();
 }
 
 //-----------------------------------------------------------------------------------------------------------
 
 void LoggingResult::stop( const std::string& title, double seconds ) {
-  if( enabled() )
-    channel() << title << " : " << seconds << "s" << std::endl;
+    if ( enabled() ) channel() << title << " : " << seconds << "s" << std::endl;
 }
 
 //-----------------------------------------------------------------------------------------------------------
 
-} // namespace trace
-} // namespace runtime
-} // namespace atlas
-
+}  // namespace trace
+}  // namespace runtime
+}  // namespace atlas

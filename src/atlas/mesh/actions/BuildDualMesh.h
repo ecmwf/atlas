@@ -4,7 +4,8 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor
  * does it submit to any jurisdiction.
  */
 
@@ -52,17 +53,16 @@ void build_centroid_dual_mesh( Mesh& mesh );
  *   |       |       |       |
  *   |   #   |   #   |   #   |   #
  */
-void build_brick_dual_mesh(const Grid& grid, Mesh& mesh );
+void build_brick_dual_mesh( const Grid& grid, Mesh& mesh );
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-extern "C"
-{
-  void atlas__build_median_dual_mesh (Mesh::Implementation* mesh);
-  void atlas__build_centroid_dual_mesh (Mesh::Implementation* mesh);
+extern "C" {
+void atlas__build_median_dual_mesh( Mesh::Implementation* mesh );
+void atlas__build_centroid_dual_mesh( Mesh::Implementation* mesh );
 }
 // ------------------------------------------------------------------
 
-} // namespace actions
-} // namespace mesh
-} // namespace atlas
+}  // namespace actions
+}  // namespace mesh
+}  // namespace atlas

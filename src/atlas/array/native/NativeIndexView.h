@@ -4,18 +4,22 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor
  * does it submit to any jurisdiction.
  */
 
 /// @file IndexView.h
-/// This file contains the IndexView class, a class that allows to wrap any contiguous raw data into
+/// This file contains the IndexView class, a class that allows to wrap any
+/// contiguous raw data into
 /// a view which is accessible with multiple indices.
-/// This view is intended to work with Connectivity Tables storing Fortran Numbering internally
+/// This view is intended to work with Connectivity Tables storing Fortran
+/// Numbering internally
 /// All it needs is the strides for each index, and the shape of each index.
 /// ATTENTION: The last index is stride 1
 ///
-/// Bounds-checking can be turned ON by defining "ATLAS_INDEXVIEW_BOUNDS_CHECKING"
+/// Bounds-checking can be turned ON by defining
+/// "ATLAS_INDEXVIEW_BOUNDS_CHECKING"
 /// before including this header.
 ///
 /// Example:
@@ -35,7 +39,6 @@
 
 #pragma once
 
-
 #include <iosfwd>
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/library/config.h"
@@ -50,36 +53,53 @@ namespace array {
 namespace detail {
 // FortranIndex:
 // Helper class that does +1 and -1 operations on stored values
-template< typename Value >
-class FortranIndex
-{
+template <typename Value>
+class FortranIndex {
 public:
-  enum { BASE = 1 };
-public:
-  FortranIndex(Value* idx): idx_(idx) {}
-  void set(const Value& value) { *(idx_) = value+BASE; }
-  Value get() const { return *(idx_)-BASE; }
-  void operator=(const Value& value) { set(value); }
-  FortranIndex<Value>& operator=(const FortranIndex<Value>& other) { set(other.get()); return *this; }
-  FortranIndex<Value>& operator+(const Value& value) { *(idx_)+=value; return *this; }
-  FortranIndex<Value>& operator-(const Value& value) { *(idx_)-=value; return *this; }
-  FortranIndex<Value>& operator--() { --(*(idx_)); return *this; }
-  FortranIndex<Value>& operator++() { ++(*(idx_)); return *this; }
+    enum
+    {
+        BASE = 1
+    };
 
-  //implicit conversion
-  operator Value() const { return get(); }
+public:
+    FortranIndex( Value* idx ) : idx_( idx ) {}
+    void set( const Value& value ) { *( idx_ ) = value + BASE; }
+    Value get() const { return *(idx_)-BASE; }
+    void operator                =( const Value& value ) { set( value ); }
+    FortranIndex<Value>& operator=( const FortranIndex<Value>& other ) {
+        set( other.get() );
+        return *this;
+    }
+    FortranIndex<Value>& operator+( const Value& value ) {
+        *( idx_ ) += value;
+        return *this;
+    }
+    FortranIndex<Value>& operator-( const Value& value ) {
+        *( idx_ ) -= value;
+        return *this;
+    }
+    FortranIndex<Value>& operator--() {
+        --( *( idx_ ) );
+        return *this;
+    }
+    FortranIndex<Value>& operator++() {
+        ++( *( idx_ ) );
+        return *this;
+    }
+
+    // implicit conversion
+    operator Value() const { return get(); }
 
 private:
-  Value* idx_;
+    Value* idx_;
 };
 
-}
-
+}  // namespace detail
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define INDEX_REF Index
 #define FROM_FORTRAN -1
-#define TO_FORTRAN   +1
+#define TO_FORTRAN +1
 #else
 #define INDEX_REF *
 #define FROM_FORTRAN
@@ -88,10 +108,9 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-template< typename Value, int Rank >
+template <typename Value, int Rank>
 class IndexView {
 public:
-
     using value_type = typename remove_const<Value>::type;
 
 #ifdef ATLAS_HAVE_FORTRAN
@@ -101,85 +120,80 @@ public:
 #endif
 
 public:
-
     IndexView( Value* data, const size_t shape[Rank] );
 
+    // -- Access methods
 
-// -- Access methods
-
-    template < typename... Idx >
-    Index operator()(Idx... idx) {
-        check_bounds(idx...);
-        return INDEX_REF(&data_[index(idx...)]);
+    template <typename... Idx>
+    Index operator()( Idx... idx ) {
+        check_bounds( idx... );
+        return INDEX_REF( &data_[index( idx... )] );
     }
 
-    template < typename... Ints >
-    const value_type operator()(Ints... idx) const {
-        return data_[index(idx...)] FROM_FORTRAN;
+    template <typename... Ints>
+    const value_type operator()( Ints... idx ) const {
+        return data_[index( idx... )] FROM_FORTRAN;
     }
 
 private:
+    // -- Private methods
 
-// -- Private methods
-
-    template < int Dim, typename Int, typename... Ints >
-    constexpr int index_part(Int idx, Ints... next_idx) const {
-        return idx*strides_[Dim] + index_part<Dim+1>( next_idx... );
+    template <int Dim, typename Int, typename... Ints>
+    constexpr int index_part( Int idx, Ints... next_idx ) const {
+        return idx * strides_[Dim] + index_part<Dim + 1>( next_idx... );
     }
 
-    template < int Dim, typename Int >
-    constexpr int index_part(Int last_idx) const {
-        return last_idx*strides_[Dim];
+    template <int Dim, typename Int>
+    constexpr int index_part( Int last_idx ) const {
+        return last_idx * strides_[Dim];
     }
 
-    template < typename... Ints >
-    constexpr int index(Ints... idx) const {
-        return index_part<0>(idx...);
+    template <typename... Ints>
+    constexpr int index( Ints... idx ) const {
+        return index_part<0>( idx... );
     }
 
 #ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
-    template < typename... Ints >
-    void check_bounds(Ints... idx) const {
-        static_assert ( sizeof...(idx) == Rank , "Expected number of indices is different from rank of array" );
-        return check_bounds_part<0>(idx...);
+    template <typename... Ints>
+    void check_bounds( Ints... idx ) const {
+        static_assert( sizeof...( idx ) == Rank, "Expected number of indices is different from rank of array" );
+        return check_bounds_part<0>( idx... );
     }
 #else
-    template < typename... Ints >
-    void check_bounds(Ints...) const {}
+    template <typename... Ints>
+    void check_bounds( Ints... ) const {}
 #endif
 
-    template < typename... Ints >
-    void check_bounds_force(Ints... idx) const {
-        static_assert ( sizeof...(idx) == Rank , "Expected number of indices is different from rank of array" );
-        return check_bounds_part<0>(idx...);
+    template <typename... Ints>
+    void check_bounds_force( Ints... idx ) const {
+        static_assert( sizeof...( idx ) == Rank, "Expected number of indices is different from rank of array" );
+        return check_bounds_part<0>( idx... );
     }
 
-    template < int Dim, typename Int, typename... Ints >
-    void check_bounds_part(Int idx, Ints... next_idx) const {
-        if( size_t(idx) >= shape_[Dim] ) {
-            throw_OutOfRange( "IndexView", array_dim<Dim>(), idx, shape_[Dim] );
-        }
-        check_bounds_part<Dim+1>( next_idx... );
+    template <int Dim, typename Int, typename... Ints>
+    void check_bounds_part( Int idx, Ints... next_idx ) const {
+        if ( size_t( idx ) >= shape_[Dim] ) { throw_OutOfRange( "IndexView", array_dim<Dim>(), idx, shape_[Dim] ); }
+        check_bounds_part<Dim + 1>( next_idx... );
     }
 
-    template < int Dim, typename Int >
-    void check_bounds_part(Int last_idx) const {
-        if( size_t(last_idx) >= shape_[Dim] ) {
+    template <int Dim, typename Int>
+    void check_bounds_part( Int last_idx ) const {
+        if ( size_t( last_idx ) >= shape_[Dim] ) {
             throw_OutOfRange( "IndexView", array_dim<Dim>(), last_idx, shape_[Dim] );
         }
     }
 
-  size_t size() const { return shape_[0]; }
+    size_t size() const { return shape_[0]; }
 
-  void dump(std::ostream& os) const;
+    void dump( std::ostream& os ) const;
 
 private:
-  Value* data_;
-  size_t strides_[Rank];
-  size_t shape_[Rank];
+    Value* data_;
+    size_t strides_[Rank];
+    size_t shape_[Rank];
 };
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace array
-} // namespace atlas
+}  // namespace array
+}  // namespace atlas

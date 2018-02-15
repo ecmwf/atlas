@@ -4,27 +4,28 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor
  * does it submit to any jurisdiction.
  */
 
 #pragma once
 
-#include "atlas/library/config.h"
-#include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/util/Config.h"
 #include "atlas/field/Field.h"
+#include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/library/config.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
-    class Field;
-    class FieldSet;
-}
+class Field;
+class FieldSet;
+}  // namespace atlas
 
 namespace atlas {
 namespace trans {
-    class Trans;
+class Trans;
 }
-}
+}  // namespace atlas
 
 namespace atlas {
 namespace functionspace {
@@ -32,125 +33,128 @@ namespace detail {
 
 // -------------------------------------------------------------------
 
-class Spectral : public FunctionSpaceImpl
-{
+class Spectral : public FunctionSpaceImpl {
 public:
+    Spectral( const eckit::Configuration& );
 
-  Spectral( const eckit::Configuration& );
+    Spectral( const int truncation, const eckit::Configuration& = util::NoConfig() );
 
-  Spectral( const int truncation, const eckit::Configuration& = util::NoConfig() );
+    Spectral( const trans::Trans&, const eckit::Configuration& = util::NoConfig() );
 
-  Spectral( const trans::Trans&, const eckit::Configuration& = util::NoConfig() );
+    virtual ~Spectral();
 
-  virtual ~Spectral();
+    virtual std::string type() const { return "Spectral"; }
 
-  virtual std::string type() const { return "Spectral"; }
+    virtual std::string distribution() const;
 
-  virtual std::string distribution() const;
+    /// @brief Create a spectral field
+    using FunctionSpaceImpl::createField;
+    virtual Field createField( const eckit::Configuration& ) const;
+    virtual Field createField( const Field&, const eckit::Configuration& ) const;
 
-  /// @brief Create a spectral field
-  using FunctionSpaceImpl::createField;
-  virtual Field createField( const eckit::Configuration& ) const;
-  virtual Field createField( const Field&, const eckit::Configuration& ) const;
+    void gather( const FieldSet&, FieldSet& ) const;
+    void gather( const Field&, Field& ) const;
 
-  void gather( const FieldSet&, FieldSet& ) const;
-  void gather( const Field&,    Field& ) const;
+    void scatter( const FieldSet&, FieldSet& ) const;
+    void scatter( const Field&, Field& ) const;
 
-  void scatter( const FieldSet&, FieldSet& ) const;
-  void scatter( const Field&,    Field& ) const;
+    std::string checksum( const FieldSet& ) const;
+    std::string checksum( const Field& ) const;
 
-  std::string checksum( const FieldSet& ) const;
-  std::string checksum( const Field& ) const;
+    void norm( const Field&, double& norm, int rank = 0 ) const;
+    void norm( const Field&, double norm_per_level[], int rank = 0 ) const;
+    void norm( const Field&, std::vector<double>& norm_per_level, int rank = 0 ) const;
 
-  void norm( const Field&, double& norm, int rank=0 ) const;
-  void norm( const Field&, double norm_per_level[], int rank=0 ) const;
-  void norm( const Field&, std::vector<double>& norm_per_level, int rank=0 ) const;
+public:  // methods
+    size_t nb_spectral_coefficients() const;
+    size_t nb_spectral_coefficients_global() const;
+    int truncation() const { return truncation_; }
 
-public: // methods
+private:  // methods
+    array::DataType config_datatype( const eckit::Configuration& ) const;
+    std::string config_name( const eckit::Configuration& ) const;
+    size_t config_size( const eckit::Configuration& ) const;
+    size_t config_levels( const eckit::Configuration& ) const;
+    void set_field_metadata( const eckit::Configuration&, Field& ) const;
+    size_t footprint() const;
 
-  size_t nb_spectral_coefficients() const;
-  size_t nb_spectral_coefficients_global() const;
-  int truncation() const { return truncation_; }
+private:  // data
+    size_t nb_levels_;
 
-private: // methods
+    int truncation_;
 
-  array::DataType config_datatype( const eckit::Configuration& ) const;
-  std::string config_name( const eckit::Configuration& ) const;
-  size_t config_size( const eckit::Configuration& ) const;
-  size_t config_levels( const eckit::Configuration& ) const;
-  void set_field_metadata(const eckit::Configuration&, Field& ) const;
-  size_t footprint() const;
-
-private: // data
-
-  size_t nb_levels_;
-
-  int truncation_;
-
-  class Parallelisation;
-  std::unique_ptr<Parallelisation> parallelisation_;
-
+    class Parallelisation;
+    std::unique_ptr<Parallelisation> parallelisation_;
 };
 
-} // detail
+}  // namespace detail
 
 // -------------------------------------------------------------------
 
 class Spectral : public FunctionSpace {
 public:
+    Spectral( const FunctionSpace& );
+    Spectral( const eckit::Configuration& );
+    Spectral( const size_t truncation, const eckit::Configuration& = util::NoConfig() );
+    Spectral( const trans::Trans&, const eckit::Configuration& = util::NoConfig() );
 
-  Spectral( const FunctionSpace& );
-  Spectral( const eckit::Configuration& );
-  Spectral( const size_t truncation, const eckit::Configuration& = util::NoConfig() );
-  Spectral( const trans::Trans&, const eckit::Configuration& = util::NoConfig() );
+    operator bool() const { return valid(); }
+    bool valid() const { return functionspace_; }
 
-  operator bool() const { return valid(); }
-  bool valid() const { return functionspace_; }
+    void gather( const FieldSet&, FieldSet& ) const;
+    void gather( const Field&, Field& ) const;
 
-  void gather( const FieldSet&, FieldSet& ) const;
-  void gather( const Field&,    Field& ) const;
+    void scatter( const FieldSet&, FieldSet& ) const;
+    void scatter( const Field&, Field& ) const;
 
-  void scatter( const FieldSet&, FieldSet& ) const;
-  void scatter( const Field&,    Field& ) const;
+    std::string checksum( const FieldSet& ) const;
+    std::string checksum( const Field& ) const;
 
-  std::string checksum( const FieldSet& ) const;
-  std::string checksum( const Field& ) const;
+    void norm( const Field&, double& norm, int rank = 0 ) const;
+    void norm( const Field&, double norm_per_level[], int rank = 0 ) const;
+    void norm( const Field&, std::vector<double>& norm_per_level, int rank = 0 ) const;
 
-  void norm( const Field&, double& norm, int rank=0 ) const;
-  void norm( const Field&, double norm_per_level[], int rank=0 ) const;
-  void norm( const Field&, std::vector<double>& norm_per_level, int rank=0 ) const;
-
-  size_t nb_spectral_coefficients() const;
-  size_t nb_spectral_coefficients_global() const;
-  int truncation() const;
+    size_t nb_spectral_coefficients() const;
+    size_t nb_spectral_coefficients_global() const;
+    int truncation() const;
 
 private:
-
-  const detail::Spectral* functionspace_;
+    const detail::Spectral* functionspace_;
 };
 
-} // namespace functionspace
-} // namespace atlas
+}  // namespace functionspace
+}  // namespace atlas
 
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 namespace atlas {
-namespace field { class FieldSetImpl; class FieldImpl; }
-namespace trans { class TransImpl; }
+namespace field {
+class FieldSetImpl;
+class FieldImpl;
+}  // namespace field
+namespace trans {
+class TransImpl;
+}
 namespace functionspace {
 
-extern "C"
-{
-  const detail::Spectral* atlas__SpectralFunctionSpace__new__config ( const eckit::Configuration* config );
-  const detail::Spectral* atlas__SpectralFunctionSpace__new__trans (trans::TransImpl* trans,  const eckit::Configuration* config );
-  void atlas__SpectralFunctionSpace__delete (detail::Spectral* This);
-  field::FieldImpl* atlas__fs__Spectral__create_field(const detail::Spectral* This, const eckit::Configuration* options);
-  void atlas__SpectralFunctionSpace__gather(const detail::Spectral* This, const field::FieldImpl* local, field::FieldImpl* global);
-  void atlas__SpectralFunctionSpace__gather_fieldset(const detail::Spectral* This, const field::FieldSetImpl* local, field::FieldSetImpl* global);
-  void atlas__SpectralFunctionSpace__scatter(const detail::Spectral* This, const field::FieldImpl* global, field::FieldImpl* local);
-  void atlas__SpectralFunctionSpace__scatter_fieldset(const detail::Spectral* This, const field::FieldSetImpl* global, field::FieldSetImpl* local);
-  void atlas__SpectralFunctionSpace__norm(const detail::Spectral* This, const field::FieldImpl* field, double norm[], int rank);
+extern "C" {
+const detail::Spectral* atlas__SpectralFunctionSpace__new__config( const eckit::Configuration* config );
+const detail::Spectral* atlas__SpectralFunctionSpace__new__trans( trans::TransImpl* trans,
+                                                                  const eckit::Configuration* config );
+void atlas__SpectralFunctionSpace__delete( detail::Spectral* This );
+field::FieldImpl* atlas__fs__Spectral__create_field( const detail::Spectral* This,
+                                                     const eckit::Configuration* options );
+void atlas__SpectralFunctionSpace__gather( const detail::Spectral* This, const field::FieldImpl* local,
+                                           field::FieldImpl* global );
+void atlas__SpectralFunctionSpace__gather_fieldset( const detail::Spectral* This, const field::FieldSetImpl* local,
+                                                    field::FieldSetImpl* global );
+void atlas__SpectralFunctionSpace__scatter( const detail::Spectral* This, const field::FieldImpl* global,
+                                            field::FieldImpl* local );
+void atlas__SpectralFunctionSpace__scatter_fieldset( const detail::Spectral* This, const field::FieldSetImpl* global,
+                                                     field::FieldSetImpl* local );
+void atlas__SpectralFunctionSpace__norm( const detail::Spectral* This, const field::FieldImpl* field, double norm[],
+                                         int rank );
 }
 
-} // namespace functionspace
-} // namespace atlas
+}  // namespace functionspace
+}  // namespace atlas

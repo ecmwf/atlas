@@ -1,23 +1,24 @@
-#include <cmath>
 #include "atlas/projection/detail/MercatorProjection.h"
+#include <cmath>
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
 
 /*
-Projection formula's for Mercator projection from "Map Projections: A Working Manual"
+Projection formula's for Mercator projection from "Map Projections: A Working
+Manual"
 
 The origin of the xy-system is at (lon0,0)
 
 */
 
 namespace {
-  static double D2R(const double x) {
-    return atlas::util::Constants::degreesToRadians()*x;
-  }
-  static double R2D(const double x) {
-    return atlas::util::Constants::radiansToDegrees()*x;
-  }
+static double D2R( const double x ) {
+    return atlas::util::Constants::degreesToRadians() * x;
 }
+static double R2D( const double x ) {
+    return atlas::util::Constants::radiansToDegrees() * x;
+}
+}  // namespace
 
 namespace atlas {
 namespace projection {
@@ -25,66 +26,59 @@ namespace detail {
 
 // constructors
 template <typename Rotation>
-MercatorProjectionT<Rotation>::MercatorProjectionT(const eckit::Parametrisation& params) :
-  ProjectionImpl(),
-  rotation_(params) {
+MercatorProjectionT<Rotation>::MercatorProjectionT( const eckit::Parametrisation& params ) :
+    ProjectionImpl(),
+    rotation_( params ) {
+    // check presence of radius
+    if ( !params.get( "radius", radius_ ) ) radius_ = util::Earth::radiusInMeters();
+    // check presence of lon0
+    if ( !params.get( "longitude0", lon0_ ) ) lon0_ = 0.0;
 
-  // check presence of radius
-  if( ! params.get("radius",radius_) )
-    radius_=util::Earth::radiusInMeters();
-  // check presence of lon0
-  if( ! params.get("longitude0",lon0_) )
-    lon0_=0.0;
-
-  inv_radius_ = 1./radius_;
+    inv_radius_ = 1. / radius_;
 }
 
 template <typename Rotation>
-void MercatorProjectionT<Rotation>::lonlat2xy(double crd[]) const {
+void MercatorProjectionT<Rotation>::lonlat2xy( double crd[] ) const {
+    // first unrotate
+    rotation_.unrotate( crd );
 
-  // first unrotate
-  rotation_.unrotate(crd);
-
-  // then project
-  crd[0] = radius_*(D2R(crd[0]-lon0_));
-  crd[1] = radius_*std::log(std::tan(D2R(45.+crd[1]*0.5)));
+    // then project
+    crd[0] = radius_ * ( D2R( crd[0] - lon0_ ) );
+    crd[1] = radius_ * std::log( std::tan( D2R( 45. + crd[1] * 0.5 ) ) );
 }
 
 template <typename Rotation>
-void MercatorProjectionT<Rotation>::xy2lonlat(double crd[]) const {
+void MercatorProjectionT<Rotation>::xy2lonlat( double crd[] ) const {
+    // first projection
+    crd[0] = lon0_ + R2D( crd[0] * inv_radius_ );
+    crd[1] = 2. * R2D( std::atan( std::exp( crd[1] * inv_radius_ ) ) ) - 90.;
 
-  // first projection
-  crd[0] = lon0_ + R2D(crd[0]*inv_radius_);
-  crd[1] = 2.*R2D(std::atan(std::exp(crd[1]*inv_radius_)))-90.;
-
-  // then rotate
-  rotation_.rotate(crd);
+    // then rotate
+    rotation_.rotate( crd );
 }
-
 
 // specification
 template <typename Rotation>
 typename MercatorProjectionT<Rotation>::Spec MercatorProjectionT<Rotation>::spec() const {
-  Spec proj_spec;
-  proj_spec.set("type",static_type());
-  proj_spec.set("longitude0",lon0_);
-  if( radius_ != util::Earth::radiusInMeters() ) proj_spec.set("radius",radius_);
-  rotation_.spec(proj_spec);
-  return proj_spec;
+    Spec proj_spec;
+    proj_spec.set( "type", static_type() );
+    proj_spec.set( "longitude0", lon0_ );
+    if ( radius_ != util::Earth::radiusInMeters() ) proj_spec.set( "radius", radius_ );
+    rotation_.spec( proj_spec );
+    return proj_spec;
 }
 
 template <typename Rotation>
 void MercatorProjectionT<Rotation>::hash( eckit::Hash& hsh ) const {
-  hsh.add(static_type());
-  rotation_.hash(hsh);
-  hsh.add(lon0_);
-  hsh.add(radius_);
+    hsh.add( static_type() );
+    rotation_.hash( hsh );
+    hsh.add( lon0_ );
+    hsh.add( radius_ );
 }
 
-register_BuilderT1(ProjectionImpl,MercatorProjection,MercatorProjection::static_type());
-register_BuilderT1(ProjectionImpl,RotatedMercatorProjection,RotatedMercatorProjection::static_type());
+register_BuilderT1( ProjectionImpl, MercatorProjection, MercatorProjection::static_type() );
+register_BuilderT1( ProjectionImpl, RotatedMercatorProjection, RotatedMercatorProjection::static_type() );
 
 }  // namespace detail
 }  // namespace projection
 }  // namespace atlas
-

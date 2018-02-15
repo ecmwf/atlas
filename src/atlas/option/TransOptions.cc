@@ -4,7 +4,8 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor
  * does it submit to any jurisdiction.
  */
 
@@ -15,62 +16,48 @@
 namespace atlas {
 namespace option {
 
-vorticity_divergence_fields::vorticity_divergence_fields(bool v)
-{
-  set("vorticity_divergence_fields",v);
+vorticity_divergence_fields::vorticity_divergence_fields( bool v ) {
+    set( "vorticity_divergence_fields", v );
 }
 
-wind_EW_derivatives::wind_EW_derivatives(bool v)
-{
-  set("wind_EW_derivatives",v);
+wind_EW_derivatives::wind_EW_derivatives( bool v ) {
+    set( "wind_EW_derivatives", v );
 }
 
-scalar_derivatives::scalar_derivatives(bool v)
-{
-  set("scalar_derivatives",v);
+scalar_derivatives::scalar_derivatives( bool v ) {
+    set( "scalar_derivatives", v );
 }
 
-flt::flt(bool flt)
-{
-  set("flt",flt);
+flt::flt( bool flt ) {
+    set( "flt", flt );
 }
 
-fft::fft( FFT fft )
-{
-  static const std::map<FFT,std::string> FFT_to_string =
-  {
-    {FFT::FFT992, "FFT992"},
-    {FFT::FFTW,   "FFTW"  }
-  };
-  set("fft",FFT_to_string.at(fft));
+fft::fft( FFT fft ) {
+    static const std::map<FFT, std::string> FFT_to_string = {{FFT::FFT992, "FFT992"}, {FFT::FFTW, "FFTW"}};
+    set( "fft", FFT_to_string.at( fft ) );
 }
 
-fft::fft( const std::string& fft )
-{
-  set("fft",fft);
+fft::fft( const std::string& fft ) {
+    set( "fft", fft );
 }
 
-split_latitudes::split_latitudes(bool split_latitudes)
-{
-  set("split_latitudes",split_latitudes);
+split_latitudes::split_latitudes( bool split_latitudes ) {
+    set( "split_latitudes", split_latitudes );
 }
 
-write_legendre::write_legendre( const eckit::PathName& filepath )
-{
-  set("write_legendre",filepath);
+write_legendre::write_legendre( const eckit::PathName& filepath ) {
+    set( "write_legendre", filepath );
 }
 
-read_legendre::read_legendre( const eckit::PathName& filepath )
-{
-  set("read_legendre",filepath);
+read_legendre::read_legendre( const eckit::PathName& filepath ) {
+    set( "read_legendre", filepath );
 }
 
-nproma::nproma( int nproma )
-{
-  set("nproma",nproma);
+nproma::nproma( int nproma ) {
+    set( "nproma", nproma );
 }
 
 // ----------------------------------------------------------------------------
 
-} // namespace option
-} // namespace atlas
+}  // namespace option
+}  // namespace atlas

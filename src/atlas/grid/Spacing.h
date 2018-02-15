@@ -1,8 +1,8 @@
 #pragma once
 
-#include "eckit/memory/SharedPtr.h"
 #include "atlas/grid/detail/spacing/Spacing.h"
 #include "atlas/util/Config.h"
+#include "eckit/memory/SharedPtr.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -19,75 +19,66 @@ namespace grid {
 //---------------------------------------------------------------------------------------------------------------------
 
 class Spacing {
+public:
+    using Implementation = atlas::grid::spacing::Spacing;
+    using const_iterator = Implementation::const_iterator;
+    using Interval       = Implementation::Interval;
+    using Spec           = Implementation::Spec;
 
 public:
+    Spacing();
+    Spacing( const Spacing& );
+    Spacing( const atlas::grid::spacing::Spacing* );
+    Spacing( const eckit::Parametrisation& );
 
-  using Implementation = atlas::grid::spacing::Spacing;
-  using const_iterator = Implementation::const_iterator;
-  using Interval = Implementation::Interval;
-  using Spec = Implementation::Spec;
+    operator bool() const { return spacing_; }
 
-public:
+    operator const atlas::grid::spacing::Spacing*() { return spacing_.get(); }
 
-  Spacing();
-  Spacing( const Spacing& );
-  Spacing( const atlas::grid::spacing::Spacing* );
-  Spacing( const eckit::Parametrisation& );
+    size_t size() const { return spacing_.get()->size(); }
 
-  operator bool() const { return spacing_; }
+    double operator[]( size_t i ) const { return spacing_.get()->operator[]( i ); }
 
-  operator const atlas::grid::spacing::Spacing*() { return spacing_.get(); }
+    const_iterator begin() const { return spacing_.get()->begin(); }
+    const_iterator end() const { return spacing_.get()->end(); }
 
-  size_t size() const { return spacing_.get()->size(); }
+    double front() const { return spacing_.get()->front(); }
+    double back() const { return spacing_.get()->back(); }
 
-  double operator[](size_t i) const { return spacing_.get()->operator[](i); }
+    Interval interval() const { return spacing_.get()->interval(); }
 
-  const_iterator begin() const { return spacing_.get()->begin(); }
-  const_iterator end()   const { return spacing_.get()->end();   }
+    double min() const { return spacing_.get()->min(); }
+    double max() const { return spacing_.get()->max(); }
 
-  double front() const { return spacing_.get()->front(); }
-  double back()  const { return spacing_.get()->back();  }
+    std::string type() const { return spacing_.get()->type(); }
 
-  Interval interval() const { return spacing_.get()->interval(); }
+    Spec spec() const { return spacing_.get()->spec(); }
 
-  double min() const { return spacing_.get()->min(); }
-  double max() const { return spacing_.get()->max(); }
-
-  std::string type() const { return spacing_.get()->type(); }
-
-  Spec spec() const { return spacing_.get()->spec(); }
-  
-  const atlas::grid::spacing::Spacing* get() const { return spacing_.get(); }
+    const atlas::grid::spacing::Spacing* get() const { return spacing_.get(); }
 
 private:
-
-  eckit::SharedPtr<const atlas::grid::spacing::Spacing> spacing_;
+    eckit::SharedPtr<const atlas::grid::spacing::Spacing> spacing_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
 
 class LinearSpacing : public Spacing {
+public:
+    using Interval = std::array<double, 2>;
 
 public:
-  
-  using Interval = std::array<double,2>;
-  
-public:
-  
-  LinearSpacing( double start, double stop, long N, bool endpoint = true );
-  LinearSpacing( const Interval&, long N, bool endpoint = true );  
+    LinearSpacing( double start, double stop, long N, bool endpoint = true );
+    LinearSpacing( const Interval&, long N, bool endpoint = true );
 };
 
 //---------------------------------------------------------------------------------------------------------------------
 
 class GaussianSpacing : public Spacing {
-  
 public:
-  
-  GaussianSpacing( long N );
+    GaussianSpacing( long N );
 };
 
 //---------------------------------------------------------------------------------------------------------------------
 
-}
-}
+}  // namespace grid
+}  // namespace atlas

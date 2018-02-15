@@ -7,22 +7,18 @@ namespace atlas {
 namespace grid {
 namespace spacing {
 
-class FocusSpacing: public Spacing {
-
+class FocusSpacing : public Spacing {
 public:
-
     // constructor
-    FocusSpacing(const eckit::Parametrisation& p);
+    FocusSpacing( const eckit::Parametrisation& p );
 
     // class name
-    static std::string static_type() {return "focus";}
-    virtual std::string type() const {return static_type();}
-    
+    static std::string static_type() { return "focus"; }
+    virtual std::string type() const { return static_type(); }
+
     virtual Spec spec() const;
 
-
 private:
-
     double focus_factor_;
     double start_;
     double end_;
@@ -31,6 +27,5 @@ private:
 }  // namespace spacing
 }  // namespace grid
 }  // namespace atlas
-
 
 #endif

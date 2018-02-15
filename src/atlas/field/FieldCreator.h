@@ -4,7 +4,8 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor
  * does it submit to any jurisdiction.
  */
 
@@ -15,10 +16,12 @@
 #define atlas_field_FieldCreator_h
 
 #include <string>
-#include "eckit/memory/Owned.h"
 #include "atlas/field/Field.h"
+#include "eckit/memory/Owned.h"
 
-namespace eckit { class Parametrisation; }
+namespace eckit {
+class Parametrisation;
+}
 
 //------------------------------------------------------------------------------------------------------
 
@@ -34,70 +37,63 @@ namespace field {
  *    FieldImpl* field = Field::create(
  *         Config
  *           ("creator","ArraySpec")      // ArraySpec FieldCreator
- *           ("shape",array::make_shape(100,3))  // Rank 2 field with indexing [100][3]
+ *           ("shape",array::make_shape(100,3))  // Rank 2 field with indexing
+ * [100][3]
  *         );
  * \endcode
  */
 class FieldCreator : public eckit::Owned {
-
 public:
-
     FieldCreator();
 
     virtual ~FieldCreator();
 
     virtual FieldImpl* createField( const eckit::Parametrisation& ) const = 0;
-
 };
 
 //------------------------------------------------------------------------------------------------------
 
 class FieldCreatorFactory {
-  public:
+public:
     /*!
-     * \brief build FieldCreator with factory key, and default options
-     * \return FieldCreator
-     */
-    static FieldCreator* build(const std::string&);
+   * \brief build FieldCreator with factory key, and default options
+   * \return FieldCreator
+   */
+    static FieldCreator* build( const std::string& );
 
     /*!
-     * \brief build FieldCreator with options specified in parametrisation
-     * \return mesh generator
-     */
-    static FieldCreator* build(const std::string&, const eckit::Parametrisation&);
+   * \brief build FieldCreator with options specified in parametrisation
+   * \return mesh generator
+   */
+    static FieldCreator* build( const std::string&, const eckit::Parametrisation& );
 
     /*!
-     * \brief list all registered field creators
-     */
-    static void list(std::ostream &);
+   * \brief list all registered field creators
+   */
+    static void list( std::ostream& );
 
-  private:
+private:
     std::string name_;
-    virtual FieldCreator* make() = 0 ;
-    virtual FieldCreator* make(const eckit::Parametrisation&) = 0 ;
+    virtual FieldCreator* make()                                = 0;
+    virtual FieldCreator* make( const eckit::Parametrisation& ) = 0;
 
-  protected:
-
-    FieldCreatorFactory(const std::string&);
+protected:
+    FieldCreatorFactory( const std::string& );
     virtual ~FieldCreatorFactory();
 };
 
-
-template<class T>
+template <class T>
 class FieldCreatorBuilder : public FieldCreatorFactory {
-  virtual FieldCreator* make() {
-      return new T();
-  }
-  virtual FieldCreator* make(const eckit::Parametrisation& param) {
-        return new T(param);
-    }
-  public:
-    FieldCreatorBuilder(const std::string& name) : FieldCreatorFactory(name) {}
+    virtual FieldCreator* make() { return new T(); }
+    virtual FieldCreator* make( const eckit::Parametrisation& param ) { return new T( param ); }
+
+public:
+    FieldCreatorBuilder( const std::string& name ) : FieldCreatorFactory( name ) {}
 };
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace field
-} // namespace atlas
+}  // namespace field
+}  // namespace atlas
 
 #endif

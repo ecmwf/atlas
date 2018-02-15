@@ -4,11 +4,10 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor
  * does it submit to any jurisdiction.
  */
-
-
 
 #ifndef BuildHalo_h
 #define BuildHalo_h
@@ -18,23 +17,23 @@
 #include "atlas/library/config.h"
 
 namespace atlas {
-  class Mesh;
+class Mesh;
 
 namespace mesh {
 namespace actions {
 
 class BuildHalo {
 public:
-  BuildHalo( Mesh& mesh ) : mesh_(mesh) {}
-  void operator()(int nb_elems);
+    BuildHalo( Mesh& mesh ) : mesh_( mesh ) {}
+    void operator()( int nb_elems );
+
 public:
-  std::vector<idx_t> periodic_points_local_index_;
-  std::vector<idx_t> periodic_cells_local_index_;
+    std::vector<idx_t> periodic_points_local_index_;
+    std::vector<idx_t> periodic_cells_local_index_;
 
 private:
-  Mesh& mesh_;
+    Mesh& mesh_;
 };
-
 
 /// @brief Enlarge each partition of the mesh with a halo of elements
 /// @param [inout] mesh      The mesh to enlarge
@@ -42,20 +41,19 @@ private:
 /// @author Willem Deconinck
 /// @date June 2014
 inline void build_halo( Mesh& mesh, int nb_elems ) {
-  BuildHalo f(mesh);
-  f( nb_elems );
+    BuildHalo f( mesh );
+    f( nb_elems );
 }
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-extern "C"
-{
-  void atlas__build_halo (Mesh::Implementation* mesh, int nb_elems);
+extern "C" {
+void atlas__build_halo( Mesh::Implementation* mesh, int nb_elems );
 }
 // ------------------------------------------------------------------
 
-} // namespace actions
-} // namespace mesh
-} // namespace atlas
+}  // namespace actions
+}  // namespace mesh
+}  // namespace atlas
 
-#endif // BuildHalo_h
+#endif  // BuildHalo_h

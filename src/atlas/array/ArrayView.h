@@ -4,17 +4,20 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor
  * does it submit to any jurisdiction.
  */
 
 /// @file ArrayView.h
-/// This file contains the ArrayView class, a class that allows to wrap any contiguous raw data into
+/// This file contains the ArrayView class, a class that allows to wrap any
+/// contiguous raw data into
 /// a view which is accessible with multiple indices.
 /// All it needs is the strides for each index, and the shape of each index.
 /// ATTENTION: The last index is stride 1
 ///
-/// Bounds-checking can be turned ON by defining "ATLAS_ARRAYVIEW_BOUNDS_CHECKING"
+/// Bounds-checking can be turned ON by defining
+/// "ATLAS_ARRAYVIEW_BOUNDS_CHECKING"
 /// before including this header.
 ///
 /// Example 1:

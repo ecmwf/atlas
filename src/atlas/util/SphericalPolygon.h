@@ -4,7 +4,8 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor
  * does it submit to any jurisdiction.
  */
 
@@ -20,27 +21,26 @@ namespace util {
 
 class SphericalPolygon : public PolygonCoordinates {
 public:
-
     // -- Constructors
 
-    SphericalPolygon(const Polygon&, const atlas::Field& lonlat);
+    SphericalPolygon( const Polygon&, const atlas::Field& lonlat );
 
-    SphericalPolygon(const std::vector<PointLonLat>& points);
+    SphericalPolygon( const std::vector<PointLonLat>& points );
 
     // -- Overridden methods
 
     /*
-     * Point-in-polygon test based on winding number
-     * @note reference <a href="http://geomalgorithms.com/a03-_inclusion.html">Inclusion of a Point in a Polygon</a>
-     * @param[in] P given point
-     * @return if point is in polygon
-     */
-    bool contains(const PointLonLat& P) const;
-
+   * Point-in-polygon test based on winding number
+   * @note reference <a
+   * href="http://geomalgorithms.com/a03-_inclusion.html">Inclusion of a Point
+   * in a Polygon</a>
+   * @param[in] P given point
+   * @return if point is in polygon
+   */
+    bool contains( const PointLonLat& P ) const;
 };
 
 //------------------------------------------------------------------------------------------------------
 
-}  // util
-}  // atlas
-
+}  // namespace util
+}  // namespace atlas

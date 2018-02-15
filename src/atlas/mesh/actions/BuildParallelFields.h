@@ -4,7 +4,8 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor
  * does it submit to any jurisdiction.
  */
 
@@ -19,8 +20,9 @@
 
 namespace atlas {
 namespace mesh {
-    class Nodes;
-} }
+class Nodes;
+}
+}  // namespace atlas
 
 namespace atlas {
 namespace mesh {
@@ -46,30 +48,30 @@ void build_nodes_parallel_fields( mesh::Nodes& nodes );
  * - partition:  set to partition of node with lowest glb_idx
  * - remote_idx: rebuild from scratch
  *
- *  TODO: Make sure that the edge-partition is at least one of the partition numbers of the
+ *  TODO: Make sure that the edge-partition is at least one of the partition
+ * numbers of the
  *        neighbouring elements.
- *        Because of this problem, the size of the halo should be set to 2 instead of 1!!!
+ *        Because of this problem, the size of the halo should be set to 2
+ * instead of 1!!!
  */
 void build_edges_parallel_fields( Mesh& mesh );
 
-void renumber_nodes_glb_idx (mesh::Nodes& nodes);
+void renumber_nodes_glb_idx( mesh::Nodes& nodes );
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-extern "C"
-{
-  void atlas__build_parallel_fields (Mesh::Implementation* mesh);
-  void atlas__build_nodes_parallel_fields (mesh::Nodes* nodes);
-  void atlas__build_edges_parallel_fields (Mesh::Implementation* mesh);
-  void atlas__renumber_nodes_glb_idx (mesh::Nodes* nodes);
+extern "C" {
+void atlas__build_parallel_fields( Mesh::Implementation* mesh );
+void atlas__build_nodes_parallel_fields( mesh::Nodes* nodes );
+void atlas__build_edges_parallel_fields( Mesh::Implementation* mesh );
+void atlas__renumber_nodes_glb_idx( mesh::Nodes* nodes );
 }
 
 // ------------------------------------------------------------------
 
-} // namespace actions
-} // namespace mesh
-} // namespace atlas
+}  // namespace actions
+}  // namespace mesh
+}  // namespace atlas
 
-
-#endif // BuildParallelFields_h
+#endif  // BuildParallelFields_h
