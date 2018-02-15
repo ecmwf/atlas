@@ -62,7 +62,7 @@ EXPECT( array(1,0,1) == 5 );
 EXPECT( array(1,0,2) == 6 );
 EXPECT( array(1,0,3) == 7 );
 
-#ifdef ATLAS_INDEXVIEW_BOUNDS_CHECKING
+#if ATLAS_INDEXVIEW_BOUNDS_CHECKING
 EXPECT_THROWS_AS( array(0,1,0) , eckit::OutOfRange );  // j index out of range
 EXPECT_THROWS_AS( array(1,2,0,3), eckit::OutOfRange ); // rank out of range
 #endif
