@@ -30,12 +30,6 @@
 #include "atlas/runtime/trace/StopWatch.h"
 #include "atlas/util/Config.h"
 
-#ifdef ATLAS_TEST_MPI
-#ifdef ECKIT_HAVE_MPI
-#include <mpi.h>
-#endif
-#endif
-
 namespace atlas {
 namespace test {
 
@@ -114,21 +108,15 @@ static double ATLAS_MPI_BARRIER_TIMEOUT() {
 }
 
 static int barrier_timeout( double seconds ) {
-#ifdef ATLAS_TEST_MPI
-    if ( eckit::mpi::comm().size() > 1 ) {
-        MPI_Request req;
-        MPI_Ibarrier( MPI_COMM_WORLD, &req );
-
-        int barrier_succesful = 0;
-        runtime::trace::StopWatch watch;
+// iBarrier only available since eckit 0.19.5
+#if _ECKIT_VERSION >= 1905
+    auto req = eckit::mpi::comm().iBarrier();
+    runtime::trace::StopWatch watch;
+    while ( not req.test() ) {
         watch.start();
-        while ( not barrier_succesful ) {
-            watch.stop();
-            if ( watch.elapsed() > seconds ) { return 1; }
-            watch.start();
-            std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
-            MPI_Test( &req, &barrier_succesful, MPI_STATUS_IGNORE );
-        }
+        std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
+        watch.stop();
+        if ( watch.elapsed() > seconds ) { return 1; }
     }
 #endif
     return 0;
