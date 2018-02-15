@@ -5,7 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation
- * nor does it submit to any jurisdiction.
+ * nor
+ * does it submit to any jurisdiction.
  */
 
 #include "atlas/trans/local/LegendrePolynomials.h"
@@ -18,15 +19,15 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
-void compute_legendre_polynomials( const size_t trc,  // truncation (in)
-                                   const double lat,  // latitude in radians (in)
-                                   double legpol[] )  // values of associated
-                                                      // Legendre functions, size
-                                                      // (trc+1)*trc/2 (out)
+void compute_legendre_polynomials(
+    const size_t trc,  // truncation (in)
+    const double lat,  // latitude in radians (in)
+    double legpol[] )  // values of associated Legendre functions, size (trc+1)*trc/2 (out)
 {
     array::ArrayT<int> idxmn_( trc + 1, trc + 1 );
     array::ArrayView<int, 2> idxmn = array::make_view<int, 2>( idxmn_ );
-    int j                          = 0;
+
+    int j = 0;
     for ( int jm = 0; jm <= trc; ++jm ) {
         for ( int jn = jm; jn <= trc; ++jn ) {
             idxmn( jm, jn ) = j++;
@@ -38,6 +39,7 @@ void compute_legendre_polynomials( const size_t trc,  // truncation (in)
 
     int iodd;
 
+    // Compute coefficients for Taylor series in Belousov (19) and (21)
     // Belousov, Swarztrauber use zfn(0,0)=std::sqrt(2.)
     // IFS normalisation chosen to be 0.5*Integral(Pnm**2) = 1
     zfn( 0, 0 ) = 2.;
@@ -49,8 +51,10 @@ void compute_legendre_polynomials( const size_t trc,  // truncation (in)
         iodd          = jn % 2;
         zfn( jn, jn ) = zfnn;
         for ( int jgl = 2; jgl <= jn - iodd; jgl += 2 ) {
-            zfn( jn, jn - jgl ) =
-                zfn( jn, jn - jgl + 2 ) * ( ( jgl - 1. ) * ( 2. * jn - jgl + 2. ) ) / ( jgl * ( 2. * jn - jgl + 1. ) );
+            double zfjn = ( ( jgl - 1. ) * ( 2. * jn - jgl + 2. ) );  // new factor numerator
+            double zfjd = ( jgl * ( 2. * jn - jgl + 1. ) );           // new factor denominator
+
+            zfn( jn, jn - jgl ) = zfn( jn, jn - jgl + 2 ) * zfjn / zfjd;
         }
     }
 
@@ -80,12 +84,13 @@ void compute_legendre_polynomials( const size_t trc,  // truncation (in)
     for ( int jn = 2; jn <= trc; jn += 2 ) {
         double zdlk   = 0.5 * zfn( jn, 0 );
         double zdlldn = 0.0;
+        double zdsq   = 1. / std::sqrt( jn * ( jn + 1. ) );
         // represented by only even k
         for ( int jk = 2; jk <= jn; jk += 2 ) {
             // normalised ordinary Legendre polynomial == \overbar{P_n}^0
             zdlk = zdlk + zfn( jn, jk ) * std::cos( jk * zdlx1 );
             // normalised associated Legendre polynomial == \overbar{P_n}^1
-            zdlldn = zdlldn + 1. / std::sqrt( jn * ( jn + 1. ) ) * zfn( jn, jk ) * jk * std::sin( jk * zdlx1 );
+            zdlldn = zdlldn + zdsq * zfn( jn, jk ) * jk * std::sin( jk * zdlx1 );
         }
         legpol[idxmn( 0, jn )] = zdlk;
         legpol[idxmn( 1, jn )] = zdlldn;
@@ -96,12 +101,13 @@ void compute_legendre_polynomials( const size_t trc,  // truncation (in)
         zfn( jn, 0 )  = 0.;
         double zdlk   = 0.;
         double zdlldn = 0.0;
+        double zdsq   = 1. / std::sqrt( jn * ( jn + 1. ) );
         // represented by only even k
         for ( int jk = 1; jk <= jn; jk += 2 ) {
             // normalised ordinary Legendre polynomial == \overbar{P_n}^0
             zdlk = zdlk + zfn( jn, jk ) * std::cos( jk * zdlx1 );
             // normalised associated Legendre polynomial == \overbar{P_n}^1
-            zdlldn = zdlldn + 1. / std::sqrt( jn * ( jn + 1. ) ) * zfn( jn, jk ) * jk * std::sin( jk * zdlx1 );
+            zdlldn = zdlldn + zdsq * zfn( jn, jk ) * jk * std::sin( jk * zdlx1 );
         }
         legpol[idxmn( 0, jn )] = zdlk;
         legpol[idxmn( 1, jn )] = zdlldn;
@@ -114,8 +120,9 @@ void compute_legendre_polynomials( const size_t trc,  // truncation (in)
 
     double zdls = zdl1sita * std::numeric_limits<double>::min();
     for ( int jn = 2; jn <= trc; ++jn ) {
-        legpol[idxmn( jn, jn )] =
-            legpol[idxmn( jn - 1, jn - 1 )] * zdlsita * std::sqrt( ( 2. * jn + 1. ) / ( 2. * jn ) );
+        double sq = std::sqrt( ( 2. * jn + 1. ) / ( 2. * jn ) );
+
+        legpol[idxmn( jn, jn )] = legpol[idxmn( jn - 1, jn - 1 )] * zdlsita * sq;
         if ( std::abs( legpol[idxmn( jn, jn )] ) < zdls ) legpol[idxmn( jn, jn )] = 0.0;
     }
 
@@ -125,15 +132,16 @@ void compute_legendre_polynomials( const size_t trc,  // truncation (in)
 
     for ( int jn = 3; jn <= trc; ++jn ) {
         for ( int jm = 2; jm < jn; ++jm ) {
-            legpol[idxmn( jm, jn )] =
-                std::sqrt( ( ( 2. * jn + 1. ) * ( jn + jm - 1. ) * ( jn + jm - 3. ) ) /
-                           ( ( 2. * jn - 3. ) * ( jn + jm ) * ( jn + jm - 2. ) ) ) *
-                    legpol[idxmn( jm - 2, jn - 2 )] -
-                std::sqrt( ( ( 2. * jn + 1. ) * ( jn + jm - 1. ) * ( jn - jm + 1. ) ) /
-                           ( ( 2. * jn - 1. ) * ( jn + jm ) * ( jn + jm - 2. ) ) ) *
-                    legpol[idxmn( jm - 2, jn - 1 )] * zdlx +
-                std::sqrt( ( ( 2. * jn + 1. ) * ( jn - jm ) ) / ( ( 2. * jn - 1. ) * ( jn + jm ) ) ) *
-                    legpol[idxmn( jm, jn - 1 )] * zdlx;
+            double cn = ( ( 2. * jn + 1. ) * ( jn + jm - 1. ) * ( jn + jm - 3. ) );  // numerator of c in Belousov
+            double cd = ( ( 2. * jn - 3. ) * ( jn + jm ) * ( jn + jm - 2. ) );       // denominator of c in Belousov
+            double dn = ( ( 2. * jn + 1. ) * ( jn + jm - 1. ) * ( jn - jm + 1. ) );  // numerator of d in Belousov
+            double dd = ( ( 2. * jn - 1. ) * ( jn + jm ) * ( jn + jm - 2. ) );       // denominator of d in Belousov
+            double en = ( ( 2. * jn + 1. ) * ( jn - jm ) );                          // numerator of e in Belousov
+            double ed = ( ( 2. * jn - 1. ) * ( jn + jm ) );                          // denominator of e in Belousov
+
+            legpol[idxmn( jm, jn )] = std::sqrt( cn / cd ) * legpol[idxmn( jm - 2, jn - 2 )] -
+                                      std::sqrt( dn / dd ) * legpol[idxmn( jm - 2, jn - 1 )] * zdlx +
+                                      std::sqrt( en / ed ) * legpol[idxmn( jm, jn - 1 )] * zdlx;
         }
     }
 }

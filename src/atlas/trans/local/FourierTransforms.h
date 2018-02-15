@@ -25,12 +25,8 @@ namespace trans {
 void invtrans_fourier( const size_t trcFT,
                        const double lon,         // longitude in radians (in)
                        const int nb_fields,      // Number of fields
-                       const double rlegReal[],  // values of associated Legendre
-                                                 // functions, size (trc+1)*trc/2
-                                                 // (in)
-                       const double rlegImag[],  // values of associated Legendre
-                                                 // functions, size (trc+1)*trc/2
-                                                 // (in)
+                       const double rlegReal[],  // values of associated Legendre functions, size (trc+1)*trc/2 (in)
+                       const double rlegImag[],  // values of associated Legendre functions, size (trc+1)*trc/2 (in)
                        double rgp[] );           // gridpoint
 
 int fourier_truncation( const int truncation, const int nx, const int nxmax, const int ndgl, const double lat,

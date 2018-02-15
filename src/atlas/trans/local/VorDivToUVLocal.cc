@@ -75,9 +75,10 @@ void vd2uv( const int truncation,
     repsnm[0] = 0.;
 
     // rlapin: constant factor from eq.(2.2) and (2.3) in [Temperton 1991]
+    double ra = util::Earth::radiusInMeters();
     std::vector<double> rlapin( truncation + 3 );
     for ( int jn = 1; jn <= truncation + 2; ++jn ) {
-        rlapin[jn] = -util::Earth::radiusInMeters() * util::Earth::radiusInMeters() / ( jn * ( jn + 1. ) );
+        rlapin[jn] = -ra * ra / ( jn * ( jn + 1. ) );
     }
     rlapin[0] = 0.;
 
@@ -115,10 +116,10 @@ void vd2uv( const int truncation,
         for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
             int ir = 2 * jfld * nlei1 - 1;
             for ( int ji = 2; ji < truncation + 4 - km; ++ji ) {
-                ru[ir + ji] = +zn[ji + 1] * zepsnm[ji] * zlapin[ji + 1] * rvor[ir + ji + 1] -
-                              zn[ji - 2] * zepsnm[ji - 1] * zlapin[ji - 1] * rvor[ir + ji - 1];
-                rv[ir + ji] = -zn[ji + 1] * zepsnm[ji] * zlapin[ji + 1] * rdiv[ir + ji + 1] +
-                              zn[ji - 2] * zepsnm[ji - 1] * zlapin[ji - 1] * rdiv[ir + ji - 1];
+                double psiM1 = zn[ji + 1] * zepsnm[ji] * zlapin[ji + 1];
+                double psiP1 = zn[ji - 2] * zepsnm[ji - 1] * zlapin[ji - 1];
+                ru[ir + ji]  = +psiM1 * rvor[ir + ji + 1] - psiP1 * rvor[ir + ji - 1];
+                rv[ir + ji]  = -psiM1 * rdiv[ir + ji + 1] + psiP1 * rdiv[ir + ji - 1];
             }
         }
     }
@@ -126,18 +127,13 @@ void vd2uv( const int truncation,
         for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
             int ir = 2 * jfld * nlei1 - 1, ii = ir + nlei1;
             for ( int ji = 2; ji < truncation + 4 - km; ++ji ) {
-                ru[ir + ji] = -km * zlapin[ji] * rdiv[ii + ji] +
-                              zn[ji + 1] * zepsnm[ji] * zlapin[ji + 1] * rvor[ir + ji + 1] -
-                              zn[ji - 2] * zepsnm[ji - 1] * zlapin[ji - 1] * rvor[ir + ji - 1];
-                ru[ii + ji] = +km * zlapin[ji] * rdiv[ir + ji] +
-                              zn[ji + 1] * zepsnm[ji] * zlapin[ji + 1] * rvor[ii + ji + 1] -
-                              zn[ji - 2] * zepsnm[ji - 1] * zlapin[ji - 1] * rvor[ii + ji - 1];
-                rv[ir + ji] = -km * zlapin[ji] * rvor[ii + ji] -
-                              zn[ji + 1] * zepsnm[ji] * zlapin[ji + 1] * rdiv[ir + ji + 1] +
-                              zn[ji - 2] * zepsnm[ji - 1] * zlapin[ji - 1] * rdiv[ir + ji - 1];
-                rv[ii + ji] = +km * zlapin[ji] * rvor[ir + ji] -
-                              zn[ji + 1] * zepsnm[ji] * zlapin[ji + 1] * rdiv[ii + ji + 1] +
-                              zn[ji - 2] * zepsnm[ji - 1] * zlapin[ji - 1] * rdiv[ii + ji - 1];
+                double chiIm = km * zlapin[ji];
+                double psiM1 = zn[ji + 1] * zepsnm[ji] * zlapin[ji + 1];
+                double psiP1 = zn[ji - 2] * zepsnm[ji - 1] * zlapin[ji - 1];
+                ru[ir + ji]  = -chiIm * rdiv[ii + ji] + psiM1 * rvor[ir + ji + 1] - psiP1 * rvor[ir + ji - 1];
+                ru[ii + ji]  = +chiIm * rdiv[ir + ji] + psiM1 * rvor[ii + ji + 1] - psiP1 * rvor[ii + ji - 1];
+                rv[ir + ji]  = -chiIm * rvor[ii + ji] - psiM1 * rdiv[ir + ji + 1] + psiP1 * rdiv[ir + ji - 1];
+                rv[ii + ji]  = +chiIm * rvor[ir + ji] - psiM1 * rdiv[ii + ji + 1] + psiP1 * rdiv[ii + ji - 1];
             }
         }
     }

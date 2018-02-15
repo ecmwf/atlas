@@ -32,11 +32,10 @@ namespace trans {
 // Ported to C++ by:
 // Andreas Mueller *ECMWF*
 //
-void compute_legendre_polynomials( const size_t trc,   // truncation (in)
-                                   const double lat,   // latitude in radians (in)
-                                   double legpol[] );  // values of associated
-                                                       // Legendre functions, size
-                                                       // (trc+1)*trc/2 (out)
+void compute_legendre_polynomials(
+    const size_t trc,   // truncation (in)
+    const double lat,   // latitude in radians (in)
+    double legpol[] );  // values of associated Legendre functions, size (trc+1)*trc/2 (out)
 
 // --------------------------------------------------------------------------------------------------------------------
 
