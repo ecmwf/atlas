@@ -1,7 +1,7 @@
 #pragma once
 
-#include "atlas/library/config.h"
 #include "atlas/library/Library.h"
+#include "atlas/library/config.h"
 
 #if ATLAS_HAVE_FORTRAN
 #include "fckit/Log.h"
@@ -29,7 +29,7 @@ public:
     static Channel& trace() { return atlas::Library::instance().traceChannel(); }
     static Channel& debug() { return atlas::Library::instance().debugChannel(); }
 
-#if ! ATLAS_HAVE_FORTRAN
+#if !ATLAS_HAVE_FORTRAN
     // Stubs for what fckit::Log provides
     enum Style
     {

@@ -10,13 +10,13 @@
 
 #include <limits>
 
-#include "atlas/mesh/Connectivity.h"
 #include "atlas/array.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/array/Vector.h"
-#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/library/defines.h"
+#include "atlas/mesh/Connectivity.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 #if ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1

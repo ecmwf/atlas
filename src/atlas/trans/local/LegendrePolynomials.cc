@@ -12,8 +12,8 @@
 #include <cmath>
 #include <limits>
 
-#include "atlas/trans/local/LegendrePolynomials.h"
 #include "atlas/array.h"
+#include "atlas/trans/local/LegendrePolynomials.h"
 
 namespace atlas {
 namespace trans {

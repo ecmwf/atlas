@@ -15,9 +15,9 @@
 
 #include "atlas/functionspace.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/library/defines.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/VorDivToUV.h"
-#include "atlas/library/defines.h"
 
 // For factory registration only
 #if ATLAS_HAVE_TRANS

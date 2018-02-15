@@ -10,8 +10,8 @@
 
 #include "eckit/exception/Exceptions.h"
 
-#include "atlas/numerics/Method.h"
 #include "atlas/library/config.h"
+#include "atlas/numerics/Method.h"
 #include "atlas/runtime/ErrorHandling.h"
 
 namespace atlas {

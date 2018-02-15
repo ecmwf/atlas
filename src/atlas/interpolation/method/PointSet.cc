@@ -10,10 +10,10 @@
 
 #include "eckit/config/Resource.h"
 
-#include "atlas/interpolation/method/PointSet.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
+#include "atlas/interpolation/method/PointSet.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 

@@ -15,8 +15,8 @@
 
 #include "eckit/types/FloatCompare.h"
 
-#include "atlas/util/SphericalPolygon.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/SphericalPolygon.h"
 
 namespace atlas {
 namespace util {

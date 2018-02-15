@@ -15,9 +15,9 @@
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 
-#include "atlas/numerics/Nabla.h"
 #include "atlas/library/config.h"
 #include "atlas/numerics/Method.h"
+#include "atlas/numerics/Nabla.h"
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/numerics/fvm/Nabla.h"
 #include "atlas/runtime/ErrorHandling.h"

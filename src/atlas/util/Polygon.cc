@@ -16,9 +16,9 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 
-#include "atlas/util/Polygon.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/Polygon.h"
 
 namespace atlas {
 namespace util {

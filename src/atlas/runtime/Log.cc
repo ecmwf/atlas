@@ -10,8 +10,8 @@
 
 #include "eckit/os/BackTrace.h"
 
-#include "atlas/runtime/Log.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 

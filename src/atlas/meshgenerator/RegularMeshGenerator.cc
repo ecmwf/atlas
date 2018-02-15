@@ -7,7 +7,6 @@
 
 #include "eckit/utils/Hash.h"
 
-#include "atlas/meshgenerator/RegularMeshGenerator.h"
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -21,6 +20,7 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/meshgenerator/RegularMeshGenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"

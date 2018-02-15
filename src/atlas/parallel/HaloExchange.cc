@@ -15,8 +15,8 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "atlas/parallel/HaloExchange.h"
 #include "atlas/array/Array.h"
+#include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/Statistics.h"
 
 namespace atlas {

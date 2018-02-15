@@ -10,10 +10,10 @@
 
 #include "eckit/exception/Exceptions.h"
 
-#include "atlas/mesh/detail/AccumulateFacets.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/detail/AccumulateFacets.h"
 #include "atlas/runtime/Trace.h"
 
 namespace atlas {

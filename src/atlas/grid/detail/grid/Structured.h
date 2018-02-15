@@ -16,9 +16,9 @@
 #include "eckit/memory/Builder.h"
 #include "eckit/utils/Hash.h"
 
+#include "atlas/grid/Spacing.h"
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/util/Config.h"
-#include "atlas/grid/Spacing.h"
 
 namespace atlas {
 namespace grid {

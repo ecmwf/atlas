@@ -64,4 +64,3 @@ private:           // members
 }  // namespace element
 }  // namespace interpolation
 }  // namespace atlas
-

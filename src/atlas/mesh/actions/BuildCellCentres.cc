@@ -12,12 +12,12 @@
 
 #include "eckit/types/FloatCompare.h"
 
-#include "atlas/mesh/actions/BuildCellCentres.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/actions/BuildCellCentres.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {

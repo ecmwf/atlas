@@ -19,13 +19,13 @@
 #include "eckit/utils/Translator.h"
 
 #include "atlas/library/Library.h"
+#include "atlas/library/config.h"
 #include "atlas/library/git_sha1.h"
 #include "atlas/library/version.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Config.h"
-#include "atlas/library/config.h"
 
 #if ATLAS_HAVE_TRANS
 #include "transi/version.h"

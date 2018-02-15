@@ -12,7 +12,6 @@
 
 #include "eckit/exception/Exceptions.h"
 
-#include "atlas/numerics/fvm/Method.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/functionspace/EdgeColumns.h"
@@ -23,6 +22,7 @@
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
+#include "atlas/numerics/fvm/Method.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/util/CoordinateEnums.h"

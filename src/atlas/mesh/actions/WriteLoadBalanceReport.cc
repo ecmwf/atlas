@@ -13,12 +13,12 @@
 
 #include "eckit/filesystem/PathName.h"
 
-#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
 
 using atlas::mesh::IsGhostNode;

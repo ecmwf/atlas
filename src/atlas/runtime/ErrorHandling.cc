@@ -2,8 +2,8 @@
 #include "eckit/os/BackTrace.h"
 #include "eckit/utils/Translator.h"
 
-#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 
 using namespace atlas;

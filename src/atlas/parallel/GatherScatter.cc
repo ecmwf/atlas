@@ -13,9 +13,9 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "atlas/parallel/GatherScatter.h"
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"

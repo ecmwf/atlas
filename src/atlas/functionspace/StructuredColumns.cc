@@ -28,7 +28,6 @@
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Checksum.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/mesh/Mesh.h"
 
 #define IDX( i, j ) "(" << i << "," << j << ")"
 

@@ -16,7 +16,6 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 
-#include "atlas/output/detail/PointCloudIO.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
@@ -26,6 +25,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/output/detail/PointCloudIO.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {

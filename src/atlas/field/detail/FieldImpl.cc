@@ -112,7 +112,7 @@ const std::string& FieldImpl::name() const {
 void FieldImpl::print( std::ostream& os, bool dump ) const {
     os << "FieldImpl[name=" << name() << ",datatype=" << datatype().str() << ",size=" << size()
        << ",shape=" << vector_to_str( shape() ) << ",strides=" << vector_to_str( strides() )
-#if ! ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if !ATLAS_HAVE_GRIDTOOLS_STORAGE
        << ",bytes=" << bytes()
 #endif
        << ",metadata=" << metadata();

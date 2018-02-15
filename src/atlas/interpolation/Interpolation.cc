@@ -10,10 +10,10 @@
 
 #include "eckit/exception/Exceptions.h"
 
-#include "atlas/interpolation/Interpolation.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/interpolation/Interpolation.h"
 
 namespace atlas {
 

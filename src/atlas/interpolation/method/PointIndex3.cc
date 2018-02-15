@@ -11,9 +11,9 @@
 
 #include "eckit/config/Resource.h"
 
-#include "atlas/interpolation/method/PointIndex3.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
+#include "atlas/interpolation/method/PointIndex3.h"
 #include "atlas/mesh/HybridElements.h"
 
 namespace atlas {

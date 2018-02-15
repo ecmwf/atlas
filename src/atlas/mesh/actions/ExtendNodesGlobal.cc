@@ -10,11 +10,11 @@
 
 #include "eckit/exception/Exceptions.h"
 
-#include "atlas/mesh/actions/ExtendNodesGlobal.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/actions/ExtendNodesGlobal.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
 

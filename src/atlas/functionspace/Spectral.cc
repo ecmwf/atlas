@@ -17,10 +17,10 @@
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/option.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/Trans.h"
-#include "atlas/parallel/mpi/mpi.h"
 
 
 #if ATLAS_HAVE_TRANS

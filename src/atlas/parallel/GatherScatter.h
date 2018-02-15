@@ -16,9 +16,9 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
-#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/library/config.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 
 namespace atlas {

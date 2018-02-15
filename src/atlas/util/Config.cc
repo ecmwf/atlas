@@ -18,10 +18,10 @@
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/YAMLParser.h"
 
-#include "atlas/util/Config.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/util/Config.h"
 
 using std::string;
 

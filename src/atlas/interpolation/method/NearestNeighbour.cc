@@ -10,8 +10,8 @@
 
 #include "eckit/log/Plural.h"
 
-#include "atlas/interpolation/method/NearestNeighbour.h"
 #include "atlas/functionspace/NodeColumns.h"
+#include "atlas/interpolation/method/NearestNeighbour.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/runtime/Log.h"

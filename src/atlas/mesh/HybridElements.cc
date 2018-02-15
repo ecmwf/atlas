@@ -13,12 +13,12 @@
 #include "eckit/log/Bytes.h"
 #include "eckit/memory/SharedPtr.h"
 
-#include "atlas/mesh/HybridElements.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"

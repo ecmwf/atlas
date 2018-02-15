@@ -14,8 +14,8 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 
-#include "atlas/util/Earth.h"
 #include "atlas/util/Constants.h"
+#include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {

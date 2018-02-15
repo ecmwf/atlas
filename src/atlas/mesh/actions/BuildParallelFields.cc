@@ -15,7 +15,6 @@
 
 #include "eckit/exception/Exceptions.h"
 
-#include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -23,6 +22,7 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/detail/PeriodicTransform.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/Buffer.h"

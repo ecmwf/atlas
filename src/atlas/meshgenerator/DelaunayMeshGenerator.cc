@@ -10,7 +10,6 @@
 
 #include "eckit/utils/Hash.h"
 
-#include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
@@ -22,6 +21,7 @@
 #include "atlas/mesh/actions/BuildConvexHull3D.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/mesh/actions/ExtendNodesGlobal.h"
+#include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"

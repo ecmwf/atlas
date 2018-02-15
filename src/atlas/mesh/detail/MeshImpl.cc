@@ -13,12 +13,12 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 
-#include "atlas/mesh/detail/MeshImpl.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/detail/MeshImpl.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 using atlas::Grid;

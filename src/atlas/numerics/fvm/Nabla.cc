@@ -11,7 +11,6 @@
 #include "eckit/config/Parametrisation.h"
 #include "eckit/exception/Exceptions.h"
 
-#include "atlas/numerics/fvm/Nabla.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
@@ -19,6 +18,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/numerics/fvm/Method.h"
+#include "atlas/numerics/fvm/Nabla.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"

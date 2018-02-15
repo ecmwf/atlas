@@ -12,8 +12,8 @@
 #include <limits>
 #include "atlas/array.h"
 #include "atlas/array/DataType.h"
-#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/library/defines.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 #if ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1

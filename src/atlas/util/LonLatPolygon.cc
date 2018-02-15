@@ -14,8 +14,8 @@
 #include <iostream>
 #include <limits>
 
-#include "atlas/util/LonLatPolygon.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/LonLatPolygon.h"
 
 namespace atlas {
 namespace util {
