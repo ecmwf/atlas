@@ -4,16 +4,16 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 #pragma once
 
 #include "atlas/library/config.h"
-#include "atlas/runtime/trace/TraceT.h"
 #include "atlas/runtime/trace/Barriers.h"
 #include "atlas/runtime/trace/Logging.h"
+#include "atlas/runtime/trace/TraceT.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -49,8 +49,8 @@
 ///         // trace "custom" ends
 ///     }
 ///
-#define ATLAS_TRACE(...)
-#define ATLAS_TRACE_SCOPE(...)
+#define ATLAS_TRACE( ... )
+#define ATLAS_TRACE_SCOPE( ... )
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -61,14 +61,14 @@ struct TraceTraits {
     using Tracing  = runtime::trace::Logging;
 };
 
-class Trace : public runtime::trace::TraceT< TraceTraits > {
-    using Base = runtime::trace::TraceT< TraceTraits >;
+class Trace : public runtime::trace::TraceT<TraceTraits> {
+    using Base = runtime::trace::TraceT<TraceTraits>;
+
 public:
     using Base::Base;
 };
 
-} // namespace atlas
-
+}  // namespace atlas
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -79,8 +79,8 @@ public:
 #undef ATLAS_TRACE
 #undef ATLAS_TRACE_SCOPE
 
-#define ATLAS_TRACE(...)       __ATLAS_TYPE( ::atlas::Trace, Here() __ATLAS_COMMA_ARGS(__VA_ARGS__) )
-#define ATLAS_TRACE_SCOPE(...) __ATLAS_TYPE_SCOPE( ::atlas::Trace, Here() __ATLAS_COMMA_ARGS(__VA_ARGS__) )
+#define ATLAS_TRACE( ... ) __ATLAS_TYPE(::atlas::Trace, Here() __ATLAS_COMMA_ARGS( __VA_ARGS__ ) )
+#define ATLAS_TRACE_SCOPE( ... ) __ATLAS_TYPE_SCOPE(::atlas::Trace, Here() __ATLAS_COMMA_ARGS( __VA_ARGS__ ) )
 
 #endif
 

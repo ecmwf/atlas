@@ -48,13 +48,6 @@ else()
   set( ATLAS_HAVE_GRIDTOOLS_STORAGE 0 )
 endif()
 
-if( ATLAS_HAVE_MPI )
-
-  set( ATLAS_MPI_C_LIBRARIES            ${MPI_CXX_LIBRARIES} )
-  ecbuild_include_mpi()
-
-endif()
-
 add_subdirectory( atlas_acc_support )
 
 add_subdirectory( atlas )

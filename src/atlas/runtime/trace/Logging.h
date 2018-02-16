@@ -4,8 +4,8 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 #pragma once
@@ -26,7 +26,7 @@ public:
     NoLogging( bool state );
     NoLogging( std::ostream& channel );
 
-public: // static methods
+public:  // static methods
     static std::ostream& channel();
     static bool enabled();
     static void start( const std::string& ) {}
@@ -45,14 +45,14 @@ public:
     Logging( std::ostream& channel );
     virtual ~Logging();
 
-public: // static methods
+public:  // static methods
     static std::ostream& channel();
     static bool enabled();
     static void start( const std::string& title );
     static void stop( const std::string& title, double seconds );
-    
+
 private:
-  std::ostream* previous_state_;
+    std::ostream* previous_state_;
 };
 
 //-----------------------------------------------------------------------------------------------------------
@@ -64,14 +64,13 @@ class LoggingResult : public Logging {
 public:
     using Logging::Logging;
 
-public: // static methods
+public:  // static methods
     static void start( const std::string& ) {}
     static void stop( const std::string& title, double seconds );
 };
 
 //-----------------------------------------------------------------------------------------------------------
 
-} // namespace trace
-} // namespace runtime
-} // namespace atlas
-
+}  // namespace trace
+}  // namespace runtime
+}  // namespace atlas

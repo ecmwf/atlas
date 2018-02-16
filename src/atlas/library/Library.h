@@ -4,19 +4,20 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 #pragma once
 
 #include <iosfwd>
-#include <string>
 #include <memory>
+#include <string>
+
 #include "eckit/system/Library.h"
 
 namespace eckit {
-  class Parametrisation;
+class Parametrisation;
 }
 
 namespace atlas {
@@ -25,24 +26,26 @@ namespace atlas {
 
 class Library : public eckit::system::Library {
 public:
-
     Library();
 
     static Library& instance();
 
     virtual std::string version() const override;
 
-    virtual std::string gitsha1(unsigned int count) const override;
-    std::string gitsha1() const { return gitsha1(7); }
+    virtual std::string gitsha1( unsigned int count ) const override;
+    std::string gitsha1() const { return gitsha1( 7 ); }
 
-    void initialise(int argc, char **argv);
-    void initialise(const eckit::Parametrisation&);
+    void initialise( int argc, char** argv );
+    void initialise( const eckit::Parametrisation& );
     void initialise();
     void finalise();
 
     struct Information {
-      friend std::ostream& operator<<(std::ostream& s, const Information& i) { i.print(s); return s; }
-      void print(std::ostream&) const;
+        friend std::ostream& operator<<( std::ostream& s, const Information& i ) {
+            i.print( s );
+            return s;
+        }
+        void print( std::ostream& ) const;
     };
     Information information() const { return Information(); }
 
@@ -55,7 +58,6 @@ public:
     bool traceBarriers() const { return trace_barriers_; }
 
 protected:
-
     virtual const void* addr() const override;
 
     bool info_{true};
@@ -72,5 +74,4 @@ typedef Library Atlas;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-} // namespace atlas
-
+}  // namespace atlas

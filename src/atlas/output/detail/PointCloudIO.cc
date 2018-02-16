@@ -4,27 +4,29 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 #include <fstream>
-#include <sstream>
 #include <iomanip>
 #include <limits>
+#include <sstream>
+
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
+
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/DataType.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/util/CoordinateEnums.h"
-#include "atlas/array/ArrayView.h"
-#include "atlas/array/MakeView.h"
-#include "atlas/array/DataType.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/output/detail/PointCloudIO.h"
+#include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
 namespace output {
@@ -34,333 +36,294 @@ namespace detail {
 
 namespace {
 
-std::string sanitize_field_name(const std::string& s)
-{
-  // replace non-printable characters, then trim right & left
-  std::string r(s);
-  std::replace_if(r.begin(), r.end(), ::isspace, '_');
-  r.erase(r.find_last_not_of('_')+1);
-  r.erase(0, r.find_first_not_of('_'));
-  if (!r.length())
-    r = "_";
-  return r;
+std::string sanitize_field_name( const std::string& s ) {
+    // replace non-printable characters, then trim right & left
+    std::string r( s );
+    std::replace_if( r.begin(), r.end(), ::isspace, '_' );
+    r.erase( r.find_last_not_of( '_' ) + 1 );
+    r.erase( 0, r.find_first_not_of( '_' ) );
+    if ( !r.length() ) r = "_";
+    return r;
 }
 
-
-} // end anonymous namespace
-
+}  // end anonymous namespace
 
 // ------------------------------------------------------------------
 
+Mesh PointCloudIO::read( const eckit::PathName& path, std::vector<std::string>& vfnames ) {
+    const std::string msg( "PointCloudIO::read: " );
 
-Mesh PointCloudIO::read(const eckit::PathName& path, std::vector<std::string>& vfnames )
-{
-  const std::string msg("PointCloudIO::read: ");
+    Mesh mesh;
 
-  Mesh mesh;
+    vfnames.clear();
 
-  vfnames.clear();
-
-  {
-    std::string line;
-    std::istringstream iss;
-    std::ostringstream oss;
-    size_t nb_pts;      // # points/nodes
-    size_t nb_columns;  // # data columns (lon,lat,field1,field2,...)
-    size_t nb_fld;      // # fields (nb_fld := nb_columns-2)
-
-    // open file and read all of header & data
-    std::ifstream f(path.asString().c_str());
-    if (!f.is_open())
-      throw eckit::CantOpenFile(path.asString());
-
-    // header, part 1:
-    // determine number of rows/columns
-    // (read all of line, look for "PointCloudIO" signature, nb_pts, nb_columns, ...)
-    std::getline(f,line);
-    iss.str(line);
-    iss >> line >> nb_pts >> nb_columns;
-    if (line!="PointCloudIO")
     {
-      std::stringstream errmsg; errmsg << msg << "beginning of file `"<<path<<"` not found (expected: PointCloudIO, got: " << line << ")";
-      throw eckit::BadParameter(errmsg.str(),Here());
+        std::string line;
+        std::istringstream iss;
+        std::ostringstream oss;
+        size_t nb_pts;      // # points/nodes
+        size_t nb_columns;  // # data columns (lon,lat,field1,field2,...)
+        size_t nb_fld;      // # fields (nb_fld := nb_columns-2)
+
+        // open file and read all of header & data
+        std::ifstream f( path.asString().c_str() );
+        if ( !f.is_open() ) throw eckit::CantOpenFile( path.asString() );
+
+        // header, part 1:
+        // determine number of rows/columns
+        // (read all of line, look for "PointCloudIO" signature, nb_pts, nb_columns,
+        // ...)
+        std::getline( f, line );
+        iss.str( line );
+        iss >> line >> nb_pts >> nb_columns;
+        if ( line != "PointCloudIO" ) {
+            std::stringstream errmsg;
+            errmsg << msg << "beginning of file `" << path << "` not found (expected: PointCloudIO, got: " << line
+                   << ")";
+            throw eckit::BadParameter( errmsg.str(), Here() );
+        }
+        if ( nb_pts == 0 ) throw eckit::BadValue( msg + "invalid number of points (failed: nb_pts>0)" );
+        if ( nb_columns < 2 ) throw eckit::BadValue( msg + "invalid number of columns (failed: nb_columns>=2)" );
+
+        mesh.nodes().resize( nb_pts );
+
+        mesh::Nodes& nodes             = mesh.nodes();
+        array::ArrayView<double, 2> xy = array::make_view<double, 2>( nodes.xy() );
+
+        // header, part 2:
+        // determine columns' labels
+        // (check end of first line for possible column labels, starting from
+        // defaults)
+
+        vfnames.resize( nb_columns );
+        for ( size_t j = 0; j < nb_columns; ++j ) {
+            oss.str( "column_" );
+            oss << ( j + 1 );
+            vfnames[j] = ( iss && iss >> line ) ? sanitize_field_name( line ) : oss.str();
+        }
+
+        // (preallocate data, and define fields without the first two columns
+        // (lon,lat) because they are treated differently)
+        vfnames.erase( vfnames.begin(), vfnames.begin() + 2 );
+        nb_fld = nb_columns - 2;  // always >= 0, considering previous check
+
+        std::vector<array::ArrayView<double, 1>> fields;
+        for ( size_t j = 0; j < nb_fld; ++j ) {
+            fields.push_back( array::make_view<double, 1>(
+                nodes.add( Field( vfnames[j], array::make_datatype<double>(), array::make_shape( nb_pts ) ) ) ) );
+        }
+
+        size_t i, j;  // (index for node/row and field/column, out of scope to check
+                      // at end of loops)
+        for ( i = 0; f && i < nb_pts; ++i ) {
+            std::getline( f, line );
+            iss.clear();
+            iss.str( line );
+
+            // NOTE always expects (lon,lat) order, maybe make it configurable?
+            iss >> xy( i, XX ) >> xy( i, YY );
+            ;
+            for ( j = 0; iss && j < nb_fld; ++j )
+                iss >> fields[j]( i );
+            if ( j < nb_fld ) {
+                oss << "invalid number of fields in data section, on line " << ( i + 1 ) << ", read " << j
+                    << " fields, expected " << nb_fld << ".";
+                throw eckit::BadValue( msg + oss.str() );
+            }
+        }
+        if ( i < nb_pts ) {
+            oss << "invalid number of lines in data section, read " << ( i ) << " lines, expected " << nb_pts << ".";
+            throw eckit::BadValue( msg + oss.str() );
+        }
+
+        f.close();
     }
-    if (nb_pts==0)
-      throw eckit::BadValue(msg+"invalid number of points (failed: nb_pts>0)");
-    if (nb_columns<2)
-      throw eckit::BadValue(msg+"invalid number of columns (failed: nb_columns>=2)");
 
-    mesh.nodes().resize(nb_pts);
+    return mesh;
+}
 
-    mesh::Nodes& nodes = mesh.nodes();
-    array::ArrayView< double, 2 > xy = array::make_view<double,2>( nodes.xy() );
+Mesh PointCloudIO::read( const eckit::PathName& path ) {
+    std::vector<std::string> vfnames;
+    return read( path, vfnames );
+}
 
-    // header, part 2:
-    // determine columns' labels
-    // (check end of first line for possible column labels, starting from defaults)
+void PointCloudIO::write( const eckit::PathName& path, const Mesh& mesh ) {
+    const std::string msg( "PointCloudIO::write: " );
 
-    vfnames.resize(nb_columns);
-    for (size_t j=0; j<nb_columns; ++j) {
-      oss.str("column_");
-      oss << (j+1);
-      vfnames[j] = (iss && iss>>line)? sanitize_field_name(line) : oss.str();
+    // operate in mesh function space, creating transversing data structures
+    // @warning: several copy operations here
+
+    const mesh::Nodes& nodes = mesh.nodes();
+
+    const array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( nodes.lonlat() );
+    if ( !lonlat.size() ) throw eckit::BadParameter( msg + "invalid number of points (failed: nb_pts>0)" );
+
+    // get the fields (sanitized) names and values
+    // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
+    std::vector<std::string> vfnames;
+    std::vector<array::ArrayView<double, 1>> vfvalues;
+    for ( size_t i = 0; i < nodes.nb_fields(); ++i ) {
+        const Field& field = nodes.field( i );
+        if ( field.shape( 0 ) == lonlat.shape( 0 ) && field.shape( 1 ) == 1 &&
+             field.datatype() == array::DataType::real64() )  // FIXME: no support for
+                                                              // non-double types!
+        {
+            vfnames.push_back( sanitize_field_name( field.name() ) );
+            vfvalues.push_back( array::make_view<double, 1>( field ) );
+        }
     }
 
-    // (preallocate data, and define fields without the first two columns (lon,lat) because they are treated differently)
-    vfnames.erase(vfnames.begin(),vfnames.begin()+2);
-    nb_fld = nb_columns-2;  // always >= 0, considering previous check
+    std::ofstream f( path.asString().c_str() );
+    if ( !f.is_open() ) throw eckit::CantOpenFile( path.asString() );
 
-    std::vector< array::ArrayView<double,1> > fields;
-    for (size_t j=0; j<nb_fld; ++j)
-    {
-      fields.push_back( array::make_view<double,1> ( nodes.add( Field(vfnames[j],array::make_datatype<double>(),array::make_shape(nb_pts)) ) ) );
-    }
+    const size_t Npts = lonlat.shape( 0 );
+    const size_t Nfld = vfvalues.size();
 
-    size_t i,j;  // (index for node/row and field/column, out of scope to check at end of loops)
-    for (i=0; f && i<nb_pts; ++i)
-    {
-      std::getline(f,line);
-      iss.clear();
-      iss.str(line);
+    // header
+    f << "PointCloudIO\t" << Npts << '\t' << ( 2 + Nfld ) << "\tlon\tlat";
+    for ( size_t j = 0; j < Nfld; ++j )
+        f << '\t' << vfnames[j];
+    f << '\n';
 
-      //NOTE always expects (lon,lat) order, maybe make it configurable?
-      iss >> xy(i,XX) >> xy(i,YY);;
-      for (j=0; iss && j<nb_fld; ++j)
-        iss >> fields[j](i);
-      if (j<nb_fld) {
-        oss << "invalid number of fields in data section, on line " << (i+1) << ", read " << j << " fields, expected " << nb_fld << ".";
-        throw eckit::BadValue(msg+oss.str());
-      }
-    }
-    if (i<nb_pts) {
-      oss << "invalid number of lines in data section, read " << (i) << " lines, expected " << nb_pts << ".";
-      throw eckit::BadValue(msg+oss.str());
+    // data
+    for ( size_t i = 0; i < Npts; ++i ) {
+        f << lonlat( i, 0 ) << '\t' << lonlat( i, 1 );
+        for ( size_t j = 0; j < Nfld; ++j )
+            f << '\t' << vfvalues[j]( i );
+        f << '\n';
     }
 
     f.close();
-  }
-
-  return mesh;
 }
 
+void PointCloudIO::write( const eckit::PathName& path, const FieldSet& fieldset,
+                          const functionspace::NodeColumns& function_space ) {
+    const std::string msg( "PointCloudIO::write: " );
 
-Mesh PointCloudIO::read(const eckit::PathName& path)
-{
-  std::vector<std::string> vfnames;
-  return read(path,vfnames);
-}
+    // operate in field sets with same grid and consistent size(s), creating
+    // transversing data structures
+    // @warning: several copy operations here
 
-void PointCloudIO::write(const eckit::PathName& path, const Mesh& mesh)
-{
-  const std::string msg("PointCloudIO::write: ");
+    ASSERT( fieldset.size() );
 
-  // operate in mesh function space, creating transversing data structures
-  // @warning: several copy operations here
+    array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( function_space.nodes().lonlat() );
+    if ( !lonlat.size() ) throw eckit::BadParameter( msg + "invalid number of points (failed: nb_pts>0)" );
 
-  const mesh::Nodes& nodes = mesh.nodes();
-
-  const array::ArrayView< double, 2 > lonlat = array::make_view<double,2>(nodes.lonlat());
-  if (!lonlat.size())
-    throw eckit::BadParameter(msg+"invalid number of points (failed: nb_pts>0)");
-
-  // get the fields (sanitized) names and values
-  // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
-  std::vector< std::string > vfnames;
-  std::vector< array::ArrayView< double, 1 > > vfvalues;
-  for(size_t i=0; i<nodes.nb_fields(); ++i)
-  {
-    const Field& field = nodes.field(i);
-    if ( field.shape(0)==lonlat.shape(0) &&
-         field.shape(1)==1 &&
-         field.datatype()==array::DataType::real64() )  // FIXME: no support for non-double types!
-    {
-      vfnames.push_back(sanitize_field_name(field.name()));
-      vfvalues.push_back(array::make_view< double, 1 >(field));
+    // get the fields (sanitized) names and values
+    // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
+    std::vector<std::string> vfnames;
+    std::vector<array::ArrayView<double, 1>> vfvalues;
+    for ( size_t i = 0; i < fieldset.size(); ++i ) {
+        const Field& field = fieldset[i];
+        if ( field.shape( 0 ) == lonlat.shape( 0 ) && field.rank() == 1 &&
+             field.name() != "glb_idx" )  // FIXME: no support for non-int types!
+        {
+            vfnames.push_back( sanitize_field_name( field.name() ) );
+            vfvalues.push_back( array::make_view<double, 1>( field ) );
+        }
     }
-  }
 
-  std::ofstream f( path.asString().c_str() );
-  if (!f.is_open())
-    throw eckit::CantOpenFile(path.asString());
+    std::ofstream f( path.asString().c_str() );
+    if ( !f.is_open() ) throw eckit::CantOpenFile( path.asString() );
+    const size_t Npts = lonlat.shape( 0 ), Nfld = vfvalues.size();
 
-  const size_t Npts = lonlat.shape(0);
-  const size_t Nfld = vfvalues.size();
-
-  // header
-  f << "PointCloudIO\t" << Npts << '\t' << (2+Nfld) << "\tlon\tlat";
-  for (size_t j=0; j<Nfld; ++j)
-    f << '\t' << vfnames[j];
-  f << '\n';
-
-  // data
-  for (size_t i=0; i<Npts; ++i) {
-    f << lonlat(i,0) << '\t' << lonlat(i,1);
-    for (size_t j=0; j<Nfld; ++j)
-      f << '\t' << vfvalues[j](i);
+    // header
+    f << "PointCloudIO\t" << Npts << '\t' << ( 2 + Nfld ) << "\tlon\tlat";
+    for ( size_t j = 0; j < Nfld; ++j )
+        f << '\t' << vfnames[j];
     f << '\n';
-  }
 
-  f.close();
-}
+    f.precision( std::numeric_limits<double>::digits10 );
 
-
-void PointCloudIO::write(const eckit::PathName& path, const FieldSet& fieldset, const functionspace::NodeColumns& function_space)
-{
-  const std::string msg("PointCloudIO::write: ");
-
-  // operate in field sets with same grid and consistent size(s), creating transversing data structures
-  // @warning: several copy operations here
-
-  ASSERT( fieldset.size() );
-
-  array::ArrayView< double, 2 > lonlat = array::make_view<double,2>( function_space.nodes().lonlat() );
-  if (!lonlat.size())
-    throw eckit::BadParameter(msg+"invalid number of points (failed: nb_pts>0)");
-
-  // get the fields (sanitized) names and values
-  // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
-  std::vector< std::string > vfnames;
-  std::vector< array::ArrayView< double, 1 > > vfvalues;
-  for (size_t i=0; i<fieldset.size(); ++i)
-  {
-    const Field& field = fieldset[i];
-    if ( field.shape(0)==lonlat.shape(0) &&
-         field.rank()==1 &&
-         field.name()!="glb_idx" )  // FIXME: no support for non-int types!
-    {
-      vfnames.push_back(sanitize_field_name(field.name()));
-      vfvalues.push_back(array::make_view< double, 1 >(field));
+    // data
+    for ( size_t i = 0; i < Npts; ++i ) {
+        f << lonlat( i, 0 ) << '\t' << lonlat( i, 1 );
+        for ( size_t j = 0; j < Nfld; ++j )
+            f << '\t' << vfvalues[j]( i );
+        f << '\n';
     }
-  }
 
-  std::ofstream f(path.asString().c_str());
-  if (!f.is_open())
-    throw eckit::CantOpenFile(path.asString());
-  const size_t
-      Npts = lonlat.shape(0),
-      Nfld = vfvalues.size();
+    f.close();
+}
 
-  // header
-  f << "PointCloudIO\t" << Npts << '\t' << (2+Nfld) << "\tlon\tlat";
-  for (size_t j=0; j<Nfld; ++j)
-    f << '\t' << vfnames[j];
-  f << '\n';
+void PointCloudIO::write( const eckit::PathName& path, const std::vector<PointLonLat>& pts ) {
+    std::ofstream f( path.asString().c_str() );
+    if ( !f.is_open() ) throw eckit::CantOpenFile( path.asString() );
 
-  f.precision( std::numeric_limits< double >::digits10 );
+    // header
+    f << "PointCloudIO\t" << pts.size() << '\t' << 2 << "\tlon\tlat\n";
 
-  // data
-  for (size_t i=0; i<Npts; ++i) {
-    f << lonlat(i,0) << '\t' << lonlat(i,1);
-    for (size_t j=0; j<Nfld; ++j)
-      f << '\t' << vfvalues[j](i);
+    // data
+    for ( size_t i = 0; i < pts.size(); ++i )
+        f << pts[i].lon() << '\t' << pts[i].lat() << '\n';
+
+    f.close();
+}
+
+void PointCloudIO::write( const eckit::PathName& path, const std::vector<double>& lon, const std::vector<double>& lat,
+                          const std::vector<std::vector<double>*>& vfvalues, const std::vector<std::string>& vfnames ) {
+    const std::string msg( "PointCloudIO::write: " );
+    const size_t Npts( lon.size() ), Nfld( vfvalues.size() );
+    if ( Npts != lat.size() ) throw eckit::BadParameter( msg + "number of points inconsistent (failed: #lon == #lat)" );
+    if ( Nfld != vfnames.size() )
+        throw eckit::BadParameter( msg + "number of fields inconsistent (failed: #vfvalues == #vfnames)" );
+    for ( size_t j = 0; j < Nfld; ++j )
+        if ( Npts != vfvalues[j]->size() )
+            throw eckit::BadParameter( msg +
+                                       "number of points inconsistent (failed: "
+                                       "#lon == #lat == #*vfvalues[])" );
+
+    std::ofstream f( path.asString().c_str() );
+    if ( !f.is_open() ) throw eckit::CantOpenFile( path.asString() );
+
+    // header
+    f << "PointCloudIO\t" << Npts << '\t' << ( 2 + Nfld ) << "\tlon\tlat";
+    for ( size_t j = 0; j < Nfld; ++j )
+        f << '\t' << sanitize_field_name( vfnames[j] );
     f << '\n';
-  }
 
-  f.close();
+    // data
+    for ( size_t i = 0; i < Npts; ++i ) {
+        f << lon[i] << '\t' << lat[i];
+        for ( size_t j = 0; j < Nfld; ++j )
+            f << '\t' << vfvalues[j]->operator[]( i );
+        f << '\n';
+    }
+
+    f.close();
 }
 
+void PointCloudIO::write( const eckit::PathName& path, const int& nb_pts, const double* lon, const double* lat,
+                          const int& nb_fld, const double** afvalues, const char** afnames ) {
+    const std::string msg( "PointCloudIO::write: " );
 
-void PointCloudIO::write(
-    const eckit::PathName& path,
-    const std::vector< PointLonLat >& pts )
-{
-  std::ofstream f(path.asString().c_str());
-  if (!f.is_open())
-    throw eckit::CantOpenFile(path.asString());
+    const size_t Npts( nb_pts > 0 ? nb_pts : 0 ), Nfld( nb_fld > 0 && afvalues && afnames ? nb_fld : 0 );
+    if ( !Npts ) throw eckit::BadParameter( msg + "invalid number of points (nb_nodes)" );
+    if ( !lon ) throw eckit::BadParameter( msg + "invalid array describing longitude (lon)" );
+    if ( !lat ) throw eckit::BadParameter( msg + "invalid array describing latitude (lat)" );
 
-  // header
-  f << "PointCloudIO\t" << pts.size() << '\t' << 2 << "\tlon\tlat\n";
+    std::ofstream f( path.asString().c_str() );
+    if ( !f.is_open() ) throw eckit::CantOpenFile( path.asString() );
 
-  // data
-  for (size_t i=0; i<pts.size(); ++i)
-    f << pts[i].lon() << '\t' << pts[i].lat() << '\n';
-
-  f.close();
-}
-
-
-void PointCloudIO::write(
-    const eckit::PathName& path,
-    const std::vector< double >& lon, const std::vector< double >& lat,
-    const std::vector< std::vector< double >* >& vfvalues,
-    const std::vector< std::string >& vfnames )
-{
-  const std::string msg("PointCloudIO::write: ");
-  const size_t
-      Npts (lon.size()),
-      Nfld (vfvalues.size());
-  if (Npts!=lat.size())
-    throw eckit::BadParameter(msg+"number of points inconsistent (failed: #lon == #lat)");
-  if (Nfld!=vfnames.size())
-    throw eckit::BadParameter(msg+"number of fields inconsistent (failed: #vfvalues == #vfnames)");
-  for (size_t j=0; j<Nfld; ++j)
-    if (Npts!=vfvalues[j]->size())
-      throw eckit::BadParameter(msg+"number of points inconsistent (failed: #lon == #lat == #*vfvalues[])");
-
-  std::ofstream f(path.asString().c_str());
-  if (!f.is_open())
-    throw eckit::CantOpenFile(path.asString());
-
-  // header
-  f << "PointCloudIO\t" << Npts << '\t' << (2+Nfld) << "\tlon\tlat";
-  for (size_t j=0; j<Nfld; ++j)
-    f << '\t' << sanitize_field_name(vfnames[j]);
-  f << '\n';
-
-  // data
-  for (size_t i=0; i<Npts; ++i) {
-    f << lon[i] << '\t' << lat[i];
-    for (size_t j=0; j<Nfld; ++j)
-      f << '\t' << vfvalues[j]->operator[](i);
+    // header
+    f << "PointCloudIO\t" << Npts << '\t' << ( 2 + Nfld ) << "\tlon\tlat";
+    for ( size_t j = 0; j < Nfld; ++j )
+        f << '\t' << sanitize_field_name( afnames[j] );
     f << '\n';
-  }
 
-  f.close();
+    // data
+    for ( size_t i = 0; i < Npts; ++i ) {
+        f << lon[i] << '\t' << lat[i];
+        for ( size_t j = 0; j < Nfld; ++j )
+            f << '\t' << afvalues[j][i];
+        f << '\n';
+    }
+
+    f.close();
 }
-
-
-void PointCloudIO::write(
-    const eckit::PathName& path,
-    const int& nb_pts, const double* lon, const double* lat,
-    const int& nb_fld, const double** afvalues, const char** afnames )
-{
-  const std::string msg("PointCloudIO::write: ");
-
-  const size_t
-      Npts (nb_pts>0? nb_pts : 0),
-      Nfld (nb_fld>0 && afvalues && afnames? nb_fld : 0);
-  if (!Npts)
-    throw eckit::BadParameter(msg+"invalid number of points (nb_nodes)");
-  if (!lon)
-    throw eckit::BadParameter(msg+"invalid array describing longitude (lon)");
-  if (!lat)
-    throw eckit::BadParameter(msg+"invalid array describing latitude (lat)");
-
-  std::ofstream f(path.asString().c_str());
-  if (!f.is_open())
-    throw eckit::CantOpenFile(path.asString());
-
-  // header
-  f << "PointCloudIO\t" << Npts << '\t' << (2+Nfld) << "\tlon\tlat";
-  for (size_t j=0; j<Nfld; ++j)
-    f << '\t' << sanitize_field_name(afnames[j]);
-  f << '\n';
-
-  // data
-  for (size_t i=0; i<Npts; ++i) {
-    f << lon[i] << '\t' << lat[i];
-    for (size_t j=0; j<Nfld; ++j)
-      f << '\t' << afvalues[j][i];
-    f << '\n';
-  }
-
-  f.close();
-}
-
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-
 
 // PointCloudIO* atlas__pointcloud__new()
 // { return new PointCloudIO(); }
@@ -378,12 +341,13 @@ void PointCloudIO::write(
 // { return PointCloudIO::read(file_path); }
 //
 //
-// void atlas__write_pointcloud_fieldset (char* file_path, const field::FieldSetImpl* fieldset, const functionspace::detail::NodeColumns* functionspace)
+// void atlas__write_pointcloud_fieldset (char* file_path, const
+// field::FieldSetImpl* fieldset, const functionspace::detail::NodeColumns*
+// functionspace)
 // { PointCloudIO::write(file_path, *fieldset, *functionspace); }
-
 
 // ------------------------------------------------------------------
 
-} // namespace detail
-} // namespace output
-} // namespace atlas
+}  // namespace detail
+}  // namespace output
+}  // namespace atlas

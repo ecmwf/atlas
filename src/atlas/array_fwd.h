@@ -4,13 +4,14 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 /// @author Willem Deconinck
 
 #pragma once
+
 #include "atlas/array/ArrayViewDefs.h"
 
 namespace atlas {
@@ -32,24 +33,19 @@ template <typename Value, int RANK>
 class IndexView;
 
 template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
-ArrayView<Value, NDims, AccessMode>
-make_view(const Array& array);
+ArrayView<Value, NDims, AccessMode> make_view( const Array& array );
 
 template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
-ArrayView<Value, NDims, AccessMode>
-make_host_view(const Array& array);
+ArrayView<Value, NDims, AccessMode> make_host_view( const Array& array );
 
 template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
-ArrayView<Value, NDims, AccessMode>
-make_device_view(const Array& array);
+ArrayView<Value, NDims, AccessMode> make_device_view( const Array& array );
 
 template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
-IndexView<Value, NDims>
-make_indexview(const Array& array);
+IndexView<Value, NDims> make_indexview( const Array& array );
 
 template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
-IndexView<Value, NDims>
-make_host_indexview(const Array& array);
+IndexView<Value, NDims> make_host_indexview( const Array& array );
 
 class Table;
 
@@ -59,9 +55,8 @@ class TableView;
 template <bool ReadOnly>
 class TableRow;
 
-template<bool ReadOnly=true>
-TableView<ReadOnly>
-make_table_view(const Table& table);
+template <bool ReadOnly = true>
+TableView<ReadOnly> make_table_view( const Table& table );
 
-}
-}
+}  // namespace array
+}  // namespace atlas

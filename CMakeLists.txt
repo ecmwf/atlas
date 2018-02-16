@@ -31,7 +31,7 @@ ecbuild_declare_project()
 
 ### eckit
 
-ecbuild_use_package( PROJECT eckit VERSION 0.18 REQUIRED )
+ecbuild_use_package( PROJECT eckit VERSION 0.18.1 REQUIRED )
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 # options & dependencies
@@ -113,7 +113,7 @@ ecbuild_add_option( FEATURE TESSELATION
                     DESCRIPTION "Support for unstructured mesh generation"
                     REQUIRED_PACKAGES "CGAL QUIET" "Boost 1.45.0" )
 
-if( HAVE_TESSELATION )
+if( ATLAS_HAVE_TESSELATION )
     list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
     if ( TARGET CGAL::CGAL )
       list( APPEND CGAL_LIBRARIES CGAL::CGAL ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
@@ -140,7 +140,13 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
     set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
   endif()
 
+else()
+
+  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
+  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
+
 endif()
+
 
 ### OpenACC
 
@@ -233,6 +239,7 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI"  AND
 endif()
 
 include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
+include(CompileFlags)
 add_subdirectory( src )
 
 ################################################################################

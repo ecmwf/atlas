@@ -4,17 +4,17 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/array/MakeView.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
-#include "atlas/util/CoordinateEnums.h"
-#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/CoordinateEnums.h"
 
 using atlas::array::make_datatype;
 using atlas::array::make_shape;
@@ -24,394 +24,293 @@ namespace mesh {
 
 //------------------------------------------------------------------------------------------------------
 
-Nodes::Nodes(): size_(0)
-{
-  global_index_ = add( Field("glb_idx",    make_datatype<gidx_t>(), make_shape(size())) );
-  remote_index_ = add( Field("remote_idx", make_datatype<int   >(), make_shape(size())) );
-  partition_    = add( Field("partition",  make_datatype<int   >(), make_shape(size())) );
-  xy_           = add( Field("xy",         make_datatype<double>(), make_shape(size(),2)) );
-  xy_.set_variables(2);
-  lonlat_       = add( Field("lonlat",     make_datatype<double>(), make_shape(size(),2)) );
-  lonlat_.set_variables(2);
-  ghost_        = add( Field("ghost",      make_datatype<int   >(), make_shape(size())) );
+Nodes::Nodes() : size_( 0 ) {
+    global_index_ = add( Field( "glb_idx", make_datatype<gidx_t>(), make_shape( size() ) ) );
+    remote_index_ = add( Field( "remote_idx", make_datatype<int>(), make_shape( size() ) ) );
+    partition_    = add( Field( "partition", make_datatype<int>(), make_shape( size() ) ) );
+    xy_           = add( Field( "xy", make_datatype<double>(), make_shape( size(), 2 ) ) );
+    xy_.set_variables( 2 );
+    lonlat_ = add( Field( "lonlat", make_datatype<double>(), make_shape( size(), 2 ) ) );
+    lonlat_.set_variables( 2 );
+    ghost_ = add( Field( "ghost", make_datatype<int>(), make_shape( size() ) ) );
 
-  edge_connectivity_ = &add( new Connectivity("edge") );
-  cell_connectivity_ = &add( new Connectivity("cell") );
+    edge_connectivity_ = &add( new Connectivity( "edge" ) );
+    cell_connectivity_ = &add( new Connectivity( "cell" ) );
 
+    add( Field( "flags", make_datatype<int>(), make_shape( size() ) ) );
 
-  add( Field("flags", make_datatype<int>(), make_shape(size())) );
+    array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( global_index() );
+    array::ArrayView<int, 1> part       = array::make_view<int, 1>( partition() );
+    array::ArrayView<int, 1> flags      = array::make_view<int, 1>( field( "flags" ) );
 
-  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( global_index() );
-  array::ArrayView<int   ,1> part    = array::make_view<int,   1>( partition() );
-  array::ArrayView<int   ,1> flags   = array::make_view<int,   1>( field("flags") );
-
-  for(size_t n=0; n<size(); ++n)
-  {
-    glb_idx(n) = 1+n;
-    part(n) = parallel::mpi::comm().rank();
-    flags(n) = 0;
-  }
-}
-
-Nodes::Connectivity& Nodes::add( Connectivity *connectivity )
-{
-  connectivities_[connectivity->name()] = connectivity;
-  return *connectivity;
-}
-
-Field Nodes::add( const Field& field )
-{
-  ASSERT( field );
-  ASSERT( ! field.name().empty() );
-
-  if( has_field(field.name()) ) {
-    std::stringstream msg;
-    msg << "Trying to add field '"<<field.name()<<"' to Nodes, but Nodes already has a field with this name.";
-    throw eckit::Exception(msg.str(),Here());
-  }
-  fields_[field.name()] = field;
-  return field;
-}
-
-void Nodes::remove_field(const std::string& name)
-{
-  if( ! has_field(name) )
-  {
-    std::stringstream msg;
-    msg << "Trying to remove field `"<<name<<"' in Nodes, but no field with this name is present in Nodes.";
-    throw eckit::Exception(msg.str(),Here());
-  }
-  fields_.erase(name);
-}
-
-
-const Field& Nodes::field(const std::string& name) const
-{
-  if( ! has_field(name) )
-  {
-    std::stringstream msg;
-    msg << "Trying to access field `"<<name<<"' in Nodes, but no field with this name is present in Nodes.";
-    throw eckit::Exception(msg.str(),Here());
-  }
-  return fields_.find(name)->second;
-}
-
-Field& Nodes::field(const std::string& name)
-{
-  return const_cast<Field&>(static_cast<const Nodes*>(this)->field(name));
-}
-
-void Nodes::resize( size_t size )
-{
-  size_t previous_size = size_;
-  size_ = size;
-  for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
-  {
-    Field& field = it->second;
-    array::ArrayShape shape = field.shape();
-    shape[0] = size_;
-    field.resize(shape);
-  }
-
-  array::ArrayView<gidx_t,1> glb_idx = array::make_view<gidx_t,1>( global_index() );
-  array::ArrayView<int   ,1> part    = array::make_view<int,   1>( partition() );
-  array::ArrayView<int   ,1> flags   = array::make_view<int,   1>( field("flags") );
-
-  for(size_t n=previous_size; n<size_; ++n)
-  {
-    glb_idx(n) = 1+n;
-    part(n) = parallel::mpi::comm().rank();
-    flags(n) = 0;
-  }
-}
-
-const Field& Nodes::field(size_t idx) const
-{
-  ASSERT(idx < nb_fields());
-  size_t c(0);
-  for( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it )
-  {
-    if( idx == c )
-    {
-      const Field& field = it->second;
-      return field;
+    for ( size_t n = 0; n < size(); ++n ) {
+        glb_idx( n ) = 1 + n;
+        part( n )    = mpi::comm().rank();
+        flags( n )   = 0;
     }
-    c++;
-  }
-  eckit::SeriousBug("Should not be here!",Here());
-  static Field f;
-  return f;
-}
-Field& Nodes::field(size_t idx)
-{
-  return const_cast<Field&>(static_cast<const Nodes*>(this)->field(idx));
 }
 
-void Nodes::print(std::ostream& os) const
-{
+Nodes::Connectivity& Nodes::add( Connectivity* connectivity ) {
+    connectivities_[connectivity->name()] = connectivity;
+    return *connectivity;
+}
+
+Field Nodes::add( const Field& field ) {
+    ASSERT( field );
+    ASSERT( !field.name().empty() );
+
+    if ( has_field( field.name() ) ) {
+        std::stringstream msg;
+        msg << "Trying to add field '" << field.name() << "' to Nodes, but Nodes already has a field with this name.";
+        throw eckit::Exception( msg.str(), Here() );
+    }
+    fields_[field.name()] = field;
+    return field;
+}
+
+void Nodes::remove_field( const std::string& name ) {
+    if ( !has_field( name ) ) {
+        std::stringstream msg;
+        msg << "Trying to remove field `" << name << "' in Nodes, but no field with this name is present in Nodes.";
+        throw eckit::Exception( msg.str(), Here() );
+    }
+    fields_.erase( name );
+}
+
+const Field& Nodes::field( const std::string& name ) const {
+    if ( !has_field( name ) ) {
+        std::stringstream msg;
+        msg << "Trying to access field `" << name << "' in Nodes, but no field with this name is present in Nodes.";
+        throw eckit::Exception( msg.str(), Here() );
+    }
+    return fields_.find( name )->second;
+}
+
+Field& Nodes::field( const std::string& name ) {
+    return const_cast<Field&>( static_cast<const Nodes*>( this )->field( name ) );
+}
+
+void Nodes::resize( size_t size ) {
+    size_t previous_size = size_;
+    size_                = size;
+    for ( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it ) {
+        Field& field            = it->second;
+        array::ArrayShape shape = field.shape();
+        shape[0]                = size_;
+        field.resize( shape );
+    }
+
+    array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( global_index() );
+    array::ArrayView<int, 1> part       = array::make_view<int, 1>( partition() );
+    array::ArrayView<int, 1> flags      = array::make_view<int, 1>( field( "flags" ) );
+
+    const int mpi_rank = mpi::comm().rank();
+    for ( size_t n = previous_size; n < size_; ++n ) {
+        glb_idx( n ) = 1 + n;
+        part( n )    = mpi_rank;
+        ;
+        flags( n ) = 0;
+    }
+}
+
+const Field& Nodes::field( size_t idx ) const {
+    ASSERT( idx < nb_fields() );
+    size_t c( 0 );
+    for ( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
+        if ( idx == c ) {
+            const Field& field = it->second;
+            return field;
+        }
+        c++;
+    }
+    eckit::SeriousBug( "Should not be here!", Here() );
+    static Field f;
+    return f;
+}
+Field& Nodes::field( size_t idx ) {
+    return const_cast<Field&>( static_cast<const Nodes*>( this )->field( idx ) );
+}
+
+void Nodes::print( std::ostream& os ) const {
     os << "Nodes[\n";
     os << "\t size=" << size() << ",\n";
     os << "\t fields=\n";
-    for(size_t i = 0; i < nb_fields(); ++i)
-    {
-        os << "\t\t" << field(i);
-        if( i != nb_fields()-1 )
-          os << ",";
+    for ( size_t i = 0; i < nb_fields(); ++i ) {
+        os << "\t\t" << field( i );
+        if ( i != nb_fields() - 1 ) os << ",";
         os << "\n";
     }
     os << "]";
 }
 
-
 size_t Nodes::footprint() const {
-  size_t size = sizeof(*this);
-  for( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
-    size += (*it).second.footprint();
-  }
-  for( ConnectivityMap::const_iterator it = connectivities_.begin(); it != connectivities_.end(); ++it ) {
-    size += (*it).second->footprint();
-  }
-  size += metadata_.footprint();
-  return size;
+    size_t size = sizeof( *this );
+    for ( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
+        size += ( *it ).second.footprint();
+    }
+    for ( ConnectivityMap::const_iterator it = connectivities_.begin(); it != connectivities_.end(); ++it ) {
+        size += ( *it ).second->footprint();
+    }
+    size += metadata_.footprint();
+    return size;
 }
 
-
-const IrregularConnectivity& Nodes::connectivity(const std::string& name) const
-{
-  if( (connectivities_.find(name) == connectivities_.end()) )
-  {
-    std::stringstream msg;
-    msg << "Trying to access connectivity `"<<name<<"' in Nodes, but no connectivity with this name is present in Nodes.";
-    throw eckit::Exception(msg.str(),Here());
-  }
-  return *connectivities_.find(name)->second;
+const IrregularConnectivity& Nodes::connectivity( const std::string& name ) const {
+    if ( ( connectivities_.find( name ) == connectivities_.end() ) ) {
+        std::stringstream msg;
+        msg << "Trying to access connectivity `" << name
+            << "' in Nodes, but no connectivity with this name is present in "
+               "Nodes.";
+        throw eckit::Exception( msg.str(), Here() );
+    }
+    return *connectivities_.find( name )->second;
 }
-IrregularConnectivity& Nodes::connectivity(const std::string& name)
-{
-  if( (connectivities_.find(name) == connectivities_.end()) )
-  {
-    std::stringstream msg;
-    msg << "Trying to access connectivity `"<<name<<"' in Nodes, but no connectivity with this name is present in Nodes.";
-    throw eckit::Exception(msg.str(),Here());
-  }
-  return *connectivities_.find(name)->second;
+IrregularConnectivity& Nodes::connectivity( const std::string& name ) {
+    if ( ( connectivities_.find( name ) == connectivities_.end() ) ) {
+        std::stringstream msg;
+        msg << "Trying to access connectivity `" << name
+            << "' in Nodes, but no connectivity with this name is present in "
+               "Nodes.";
+        throw eckit::Exception( msg.str(), Here() );
+    }
+    return *connectivities_.find( name )->second;
 }
 
 void Nodes::cloneToDevice() const {
-  std::for_each(fields_.begin(), fields_.end(), [](const FieldMap::value_type& v){ v.second.cloneToDevice();});
-  std::for_each(connectivities_.begin(), connectivities_.end(), [](const ConnectivityMap::value_type& v){ v.second->cloneToDevice();});
+    std::for_each( fields_.begin(), fields_.end(), []( const FieldMap::value_type& v ) { v.second.cloneToDevice(); } );
+    std::for_each( connectivities_.begin(), connectivities_.end(),
+                   []( const ConnectivityMap::value_type& v ) { v.second->cloneToDevice(); } );
 }
 
 void Nodes::cloneFromDevice() const {
-  std::for_each(fields_.begin(), fields_.end(), [](const FieldMap::value_type& v){ v.second.cloneFromDevice();});
-  std::for_each(connectivities_.begin(), connectivities_.end(), [](const ConnectivityMap::value_type& v){ v.second->cloneFromDevice();});
+    std::for_each( fields_.begin(), fields_.end(),
+                   []( const FieldMap::value_type& v ) { v.second.cloneFromDevice(); } );
+    std::for_each( connectivities_.begin(), connectivities_.end(),
+                   []( const ConnectivityMap::value_type& v ) { v.second->cloneFromDevice(); } );
 }
 
 void Nodes::syncHostDevice() const {
-  std::for_each(fields_.begin(), fields_.end(), [](const FieldMap::value_type& v){ v.second.syncHostDevice();});
-  std::for_each(connectivities_.begin(), connectivities_.end(), [](const ConnectivityMap::value_type& v){ v.second->syncHostDevice();});
+    std::for_each( fields_.begin(), fields_.end(), []( const FieldMap::value_type& v ) { v.second.syncHostDevice(); } );
+    std::for_each( connectivities_.begin(), connectivities_.end(),
+                   []( const ConnectivityMap::value_type& v ) { v.second->syncHostDevice(); } );
 }
 
 //-----------------------------------------------------------------------------
 
 extern "C" {
 
-Nodes* atlas__mesh__Nodes__create()
-{
-  Nodes* nodes(0);
-  ATLAS_ERROR_HANDLING( nodes = new Nodes() );
-  return nodes;
+Nodes* atlas__mesh__Nodes__create() {
+    Nodes* nodes( 0 );
+    ATLAS_ERROR_HANDLING( nodes = new Nodes() );
+    return nodes;
 }
 
-void atlas__mesh__Nodes__delete (Nodes* This)
-{
-  ATLAS_ERROR_HANDLING( delete This );
+void atlas__mesh__Nodes__delete( Nodes* This ) {
+    ATLAS_ERROR_HANDLING( delete This );
 }
 
-
-size_t atlas__mesh__Nodes__size (Nodes* This)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    return This->size();
-  );
-  return 0;
+size_t atlas__mesh__Nodes__size( Nodes* This ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->size(); );
+    return 0;
 }
-void atlas__mesh__Nodes__resize (Nodes* This, size_t size)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    This->resize(size);
-  );
+void atlas__mesh__Nodes__resize( Nodes* This, size_t size ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); This->resize( size ); );
 }
-size_t atlas__mesh__Nodes__nb_fields (Nodes* This)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    return This->nb_fields();
-  );
-  return 0;
+size_t atlas__mesh__Nodes__nb_fields( Nodes* This ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nb_fields(); );
+    return 0;
 }
 
-void atlas__mesh__Nodes__add_field (Nodes* This, field::FieldImpl* field)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    ASSERT(field);
-    This->add(field);
-  );
+void atlas__mesh__Nodes__add_field( Nodes* This, field::FieldImpl* field ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( field ); This->add( field ); );
 }
 
-void atlas__mesh__Nodes__remove_field (Nodes* This, char* name)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    This->remove_field(std::string(name));
-  );
+void atlas__mesh__Nodes__remove_field( Nodes* This, char* name ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); This->remove_field( std::string( name ) ); );
 }
 
-int atlas__mesh__Nodes__has_field (Nodes* This, char* name)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    return This->has_field(std::string(name));
-  );
-  return 0;
+int atlas__mesh__Nodes__has_field( Nodes* This, char* name ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->has_field( std::string( name ) ); );
+    return 0;
 }
 
-field::FieldImpl* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    return This->field(std::string(name)).get();
-  );
-  return 0;
+field::FieldImpl* atlas__mesh__Nodes__field_by_name( Nodes* This, char* name ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->field( std::string( name ) ).get(); );
+    return 0;
 }
 
-field::FieldImpl* atlas__mesh__Nodes__field_by_idx (Nodes* This, size_t idx)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    return This->field(idx).get();
-  );
-  return 0;
+field::FieldImpl* atlas__mesh__Nodes__field_by_idx( Nodes* This, size_t idx ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->field( idx ).get(); );
+    return 0;
 }
 
-util::Metadata* atlas__mesh__Nodes__metadata(Nodes* This)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    return &This->metadata();
-  );
-  return 0;
+util::Metadata* atlas__mesh__Nodes__metadata( Nodes* This ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->metadata(); );
+    return 0;
 }
 
-void atlas__mesh__Nodes__str (Nodes* This, char* &str, int &size)
-{
-  ATLAS_ERROR_HANDLING(
-    std::stringstream ss;
-    ss << *This;
-    std::string s = ss.str();
-    size = s.size();
-    str = new char[size+1];
-    strcpy(str,s.c_str());
-  );
+void atlas__mesh__Nodes__str( Nodes* This, char*& str, int& size ) {
+    ATLAS_ERROR_HANDLING( std::stringstream ss; ss << *This; std::string s = ss.str(); size = s.size();
+                          str = new char[size + 1]; strcpy( str, s.c_str() ); );
 }
 
-IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity(Nodes* This)
-{
-  IrregularConnectivity* connectivity(0);
-  ATLAS_ERROR_HANDLING( connectivity = &This->edge_connectivity() );
-  return connectivity;
+IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity( Nodes* This ) {
+    IrregularConnectivity* connectivity( 0 );
+    ATLAS_ERROR_HANDLING( connectivity = &This->edge_connectivity() );
+    return connectivity;
 }
 
-IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity(Nodes* This)
-{
-  IrregularConnectivity* connectivity(0);
-  ATLAS_ERROR_HANDLING( connectivity = &This->cell_connectivity() );
-  return connectivity;
+IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity( Nodes* This ) {
+    IrregularConnectivity* connectivity( 0 );
+    ATLAS_ERROR_HANDLING( connectivity = &This->cell_connectivity() );
+    return connectivity;
 }
 
-IrregularConnectivity* atlas__mesh__Nodes__connectivity (Nodes* This, char* name)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    return &This->connectivity(std::string(name));
-  );
-  return 0;
+IrregularConnectivity* atlas__mesh__Nodes__connectivity( Nodes* This, char* name ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->connectivity( std::string( name ) ); );
+    return 0;
 }
 
-
-void atlas__mesh__Nodes__add_connectivity (Nodes* This, IrregularConnectivity* connectivity)
-{
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This);
-    ASSERT(connectivity);
-    This->add(connectivity);
-  );
+void atlas__mesh__Nodes__add_connectivity( Nodes* This, IrregularConnectivity* connectivity ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( connectivity ); This->add( connectivity ); );
 }
 
-field::FieldImpl* atlas__mesh__Nodes__xy(Nodes* This)
-{
-  field::FieldImpl* field(0);
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This!=0);
-    field = This->xy().get();
-  );
-  return field;
+field::FieldImpl* atlas__mesh__Nodes__xy( Nodes* This ) {
+    field::FieldImpl* field( 0 );
+    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->xy().get(); );
+    return field;
 }
 
-field::FieldImpl* atlas__mesh__Nodes__lonlat(Nodes* This)
-{
-  field::FieldImpl* field(0);
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This!=0);
-    field = This->lonlat().get();
-  );
-  return field;
+field::FieldImpl* atlas__mesh__Nodes__lonlat( Nodes* This ) {
+    field::FieldImpl* field( 0 );
+    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->lonlat().get(); );
+    return field;
 }
 
-field::FieldImpl* atlas__mesh__Nodes__global_index(Nodes* This)
-{
-  field::FieldImpl* field(0);
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This!=0);
-    field = This->global_index().get();
-  );
-  return field;
+field::FieldImpl* atlas__mesh__Nodes__global_index( Nodes* This ) {
+    field::FieldImpl* field( 0 );
+    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->global_index().get(); );
+    return field;
 }
 
-field::FieldImpl* atlas__mesh__Nodes__remote_index(Nodes* This)
-{
-  field::FieldImpl* field(0);
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This!=0);
-    field = This->remote_index().get();
-  );
-  return field;
+field::FieldImpl* atlas__mesh__Nodes__remote_index( Nodes* This ) {
+    field::FieldImpl* field( 0 );
+    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->remote_index().get(); );
+    return field;
 }
 
-field::FieldImpl* atlas__mesh__Nodes__partition(Nodes* This)
-{
-  field::FieldImpl* field(0);
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This!=0);
-    field = This->partition().get();
-  );
-  return field;
+field::FieldImpl* atlas__mesh__Nodes__partition( Nodes* This ) {
+    field::FieldImpl* field( 0 );
+    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->partition().get(); );
+    return field;
 }
 
-field::FieldImpl* atlas__mesh__Nodes__ghost(Nodes* This)
-{
-  field::FieldImpl* field(0);
-  ATLAS_ERROR_HANDLING(
-    ASSERT(This!=0);
-    field = This->ghost().get();
-  );
-  return field;
+field::FieldImpl* atlas__mesh__Nodes__ghost( Nodes* This ) {
+    field::FieldImpl* field( 0 );
+    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->ghost().get(); );
+    return field;
 }
 }
 
 }  // namespace mesh
 }  // namespace atlas
-

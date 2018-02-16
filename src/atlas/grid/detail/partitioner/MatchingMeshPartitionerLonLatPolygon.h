@@ -4,10 +4,9 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
-
 
 #pragma once
 
@@ -18,33 +17,29 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-
 class MatchingMeshPartitionerLonLatPolygon : public MatchingMeshPartitioner {
+public:
+    static std::string static_type() { return "lonlat-polygon"; }
 
 public:
-
-  static std::string static_type() {return "lonlat-polygon";}
-
-public:
-
     MatchingMeshPartitionerLonLatPolygon() : MatchingMeshPartitioner() {}
-    MatchingMeshPartitionerLonLatPolygon(const size_t nb_partitions) : MatchingMeshPartitioner(nb_partitions) {}
-    MatchingMeshPartitionerLonLatPolygon(const Mesh& mesh) : MatchingMeshPartitioner(mesh) {}
+    MatchingMeshPartitionerLonLatPolygon( const size_t nb_partitions ) : MatchingMeshPartitioner( nb_partitions ) {}
+    MatchingMeshPartitionerLonLatPolygon( const Mesh& mesh ) : MatchingMeshPartitioner( mesh ) {}
 
     /**
-     * @brief Partition a grid, using the same partitions from a pre-partitioned mesh.
-     * The method constructs a partition edges polygon to test every target grid node with.
-     * @param[in] grid grid to be partitioned
-     * @param[out] partitioning partitioning result
-     */
-    void partition(const Grid& grid, int partitioning[]) const;
+   * @brief Partition a grid, using the same partitions from a pre-partitioned
+   * mesh.
+   * The method constructs a partition edges polygon to test every target grid
+   * node with.
+   * @param[in] grid grid to be partitioned
+   * @param[out] partitioning partitioning result
+   */
+    void partition( const Grid& grid, int partitioning[] ) const;
 
     virtual std::string type() const { return static_type(); }
-
 };
 
-
-}  // partitioner
-}  // detail
-}  // grid
-}  // atlas
+}  // namespace partitioner
+}  // namespace detail
+}  // namespace grid
+}  // namespace atlas

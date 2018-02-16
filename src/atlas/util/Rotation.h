@@ -4,18 +4,19 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 #pragma once
 
 #include <array>
 #include <iosfwd>
+
 #include "atlas/util/Point.h"
 
 namespace eckit {
-  class Parametrisation;
+class Parametrisation;
 }
 
 namespace atlas {
@@ -23,9 +24,7 @@ namespace util {
 
 // Compute coordinates of a point on a rotated sphere with specified pole
 class Rotation {
-
 public:
-
     Rotation( const PointLonLat& south_pole, double rotation_angle = 0. );
     Rotation( const eckit::Parametrisation& );
 
@@ -33,42 +32,39 @@ public:
 
     PointLonLat southPole() const { return spole_; }
     PointLonLat northPole() const { return npole_; }
-    double rotationAngle()  const { return angle_; }
-    
-    PointLonLat rotate(const PointLonLat&)   const;
-    PointLonLat unrotate(const PointLonLat&) const;
+    double rotationAngle() const { return angle_; }
 
-    void rotate(double crd[]) const;
-    void unrotate(double crd[]) const;
+    PointLonLat rotate( const PointLonLat& ) const;
+    PointLonLat unrotate( const PointLonLat& ) const;
+
+    void rotate( double crd[] ) const;
+    void unrotate( double crd[] ) const;
 
 private:
-
     void precompute();
 
     void print( std::ostream& ) const;
-    friend std::ostream& operator<< (std::ostream&, const Rotation&);
+    friend std::ostream& operator<<( std::ostream&, const Rotation& );
 
 private:
+    PointLonLat npole_ = {-180., 90.};  // North Pole
+    PointLonLat spole_ = {0., -90.};    // South Pole
+    double angle_      = {0.};
 
-    PointLonLat npole_ = {-180., 90.}; // North Pole
-    PointLonLat spole_ = {0.   ,-90.}; // South Pole
-    double angle_ = {0.};
+    using RotationMatrix = std::array<std::array<double, 3>, 3>;
 
-
-    using RotationMatrix = std::array<std::array<double,3>,3>;
-
-    RotationMatrix rotate_;   // rotate   matrix
-    RotationMatrix unrotate_; // unrotate matrix
+    RotationMatrix rotate_;    // rotate   matrix
+    RotationMatrix unrotate_;  // unrotate matrix
 
     bool rotation_angle_only_;
-    bool rotated_      = {true};
+    bool rotated_ = {true};
 
-// ---- Older implementation ----
+    // ---- Older implementation ----
 
-    void rotate_old(double crd[]) const;
-    void unrotate_old(double crd[]) const;
-    double cos_latrp_; //  cos( 90 - npole_lat )
-    double sin_latrp_; //  sin( 90 - npole_lat )
+    void rotate_old( double crd[] ) const;
+    void unrotate_old( double crd[] ) const;
+    double cos_latrp_;  //  cos( 90 - npole_lat )
+    double sin_latrp_;  //  sin( 90 - npole_lat )
 };
 
 }  // namespace util

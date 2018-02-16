@@ -4,8 +4,8 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 /// @author Willem Deconinck
@@ -14,14 +14,15 @@
 #include <limits>
 
 #include "eckit/memory/ScopedPtr.h"
-#include "atlas/library/config.h"
-#include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
-#include "atlas/grid/detail/spacing/gaussian/N.h"
-#include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/Constants.h"
-#include "atlas/runtime/Log.h"
+
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
+#include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
+#include "atlas/grid/detail/spacing/gaussian/N.h"
+#include "atlas/library/config.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/util/Constants.h"
+#include "atlas/util/CoordinateEnums.h"
 
 using eckit::ConcreteBuilderT0;
 using eckit::Factory;
@@ -38,65 +39,60 @@ namespace gaussian {
 
 //-----------------------------------------------------------------------------
 
-void compute_gaussian_quadrature_npole_equator(const size_t N, double lat[], double weights[]);
+void compute_gaussian_quadrature_npole_equator( const size_t N, double lat[], double weights[] );
 
 //-----------------------------------------------------------------------------
 
-void gaussian_latitudes_npole_equator(const size_t N, double lats[]) {
+void gaussian_latitudes_npole_equator( const size_t N, double lats[] ) {
     std::stringstream Nstream;
     Nstream << N;
     std::string Nstr = Nstream.str();
-    if( Factory<GaussianLatitudes>::instance().exists(Nstr) ) {
-        ScopedPtr<GaussianLatitudes> gl (
-            Factory<GaussianLatitudes>::instance().get(Nstr).create() );
-        gl->assign(lats,N);
-    } else {
-        std::vector<double> weights(N);
-        compute_gaussian_quadrature_npole_equator(N,lats,weights.data());
+    if ( Factory<GaussianLatitudes>::instance().exists( Nstr ) ) {
+        ScopedPtr<GaussianLatitudes> gl( Factory<GaussianLatitudes>::instance().get( Nstr ).create() );
+        gl->assign( lats, N );
+    }
+    else {
+        std::vector<double> weights( N );
+        compute_gaussian_quadrature_npole_equator( N, lats, weights.data() );
     }
 }
 
 //-----------------------------------------------------------------------------
 
-void gaussian_latitudes_npole_spole(const size_t N, double lats[]) {
-    gaussian_latitudes_npole_equator(N,lats);
-    size_t end = 2*N-1;
-    for(size_t jlat=0; jlat<N; ++jlat) {
+void gaussian_latitudes_npole_spole( const size_t N, double lats[] ) {
+    gaussian_latitudes_npole_equator( N, lats );
+    size_t end = 2 * N - 1;
+    for ( size_t jlat = 0; jlat < N; ++jlat ) {
         lats[end--] = -lats[jlat];
     }
 }
 
 //-----------------------------------------------------------------------------
 
-void gaussian_quadrature_npole_equator(const size_t N, double lats[], double weights[]) {
-    compute_gaussian_quadrature_npole_equator(N,lats,weights);
+void gaussian_quadrature_npole_equator( const size_t N, double lats[], double weights[] ) {
+    compute_gaussian_quadrature_npole_equator( N, lats, weights );
 }
 
 //-----------------------------------------------------------------------------
 
-void gaussian_quadrature_npole_spole(const size_t N, double lats[], double weights[]) {
-    gaussian_quadrature_npole_equator(N,lats,weights);
-    size_t end = 2*N-1;
-    for(size_t jlat=0; jlat<N; ++jlat) {
-        lats   [end] = -lats[jlat];
-        weights[end] =  weights[jlat];
+void gaussian_quadrature_npole_spole( const size_t N, double lats[], double weights[] ) {
+    gaussian_quadrature_npole_equator( N, lats, weights );
+    size_t end = 2 * N - 1;
+    for ( size_t jlat = 0; jlat < N; ++jlat ) {
+        lats[end]    = -lats[jlat];
+        weights[end] = weights[jlat];
         end--;
     }
 }
 
 //-----------------------------------------------------------------------------
 
-namespace { // Anonymous namespace
+namespace {  // Anonymous namespace
 
 //-----------------------------------------------------------------------------
 
-void legpol_newton_iteration(
-    int kn,
-    const double pfn[],
-    double px,
-    double &pxn,
-    double &pxmod ) {
-    //Routine to perform a single Newton iteration step to find
+void legpol_newton_iteration( int kn, const double pfn[], double px, double& pxn, double& pxmod ) {
+    // Routine to perform a single Newton iteration step to find
     //                the zero of the ordinary Legendre polynomial of degree N
 
     //        Explicit arguments :
@@ -115,33 +111,29 @@ void legpol_newton_iteration(
 
     zdlx = px;
     zdlk = 0.;
-    if( kodd==0 ) zdlk=0.5*pfn[0];
-    zdlxn = 0.;
+    if ( kodd == 0 ) zdlk = 0.5 * pfn[0];
+    zdlxn  = 0.;
     zdlldn = 0.;
-    ik=1;
+    ik     = 1;
 
     // Newton interation step
     // ----------------------
-    for( int jn=2-kodd; jn<=kn; jn+=2 ) {
+    for ( int jn = 2 - kodd; jn <= kn; jn += 2 ) {
         // normalised ordinary Legendre polynomial == \overbar{P_n}^0
-        zdlk+= pfn[ik]*std::cos( static_cast<double>(jn)*zdlx );
+        zdlk += pfn[ik] * std::cos( static_cast<double>( jn ) * zdlx );
         // normalised derivative == d/d\theta(\overbar{P_n}^0)
-        zdlldn -= pfn[ik]*static_cast<double>(jn)*std::sin( static_cast<double>(jn)*zdlx );
+        zdlldn -= pfn[ik] * static_cast<double>( jn ) * std::sin( static_cast<double>( jn ) * zdlx );
         ++ik;
     }
     // Newton method
-    zdlmod = -zdlk/zdlldn;
-    zdlxn = zdlx+zdlmod;
-    pxn = zdlxn;
-    pxmod = zdlmod;
+    zdlmod = -zdlk / zdlldn;
+    zdlxn  = zdlx + zdlmod;
+    pxn    = zdlxn;
+    pxmod  = zdlmod;
 }
 
-void legpol_weight(
-    const int kn,
-    const double pfn[],
-    const double px,
-    double &pw ) {
-    //Routine to compute the quadrature weight of the legendre polynomial
+void legpol_weight( const int kn, const double pfn[], const double px, double& pw ) {
+    // Routine to compute the quadrature weight of the legendre polynomial
 
     //        Explicit arguments :
     //        --------------------
@@ -158,29 +150,22 @@ void legpol_weight(
     int ik;
     int kodd = kn % 2;
 
-    zdlx = px;
+    zdlx   = px;
     zdlldn = 0.;
-    ik=1;
+    ik     = 1;
 
     // Compute weights
     // ---------------
-    for( int jn=2-kodd; jn<=kn; jn+=2 ) {
-        zdlldn -= pfn[ik]*static_cast<double>(jn)*std::sin( static_cast<double>(jn)*zdlx );
+    for ( int jn = 2 - kodd; jn <= kn; jn += 2 ) {
+        zdlldn -= pfn[ik] * static_cast<double>( jn ) * std::sin( static_cast<double>( jn ) * zdlx );
         ++ik;
     }
-    pw = static_cast<double> (2*kn+1)/(zdlldn*zdlldn);
+    pw = static_cast<double>( 2 * kn + 1 ) / ( zdlldn * zdlldn );
 }
-
 
 //-----------------------------------------------------------------------------
 
-void legpol_quadrature(
-    const int kn,
-    const double pfn[],
-    double &pl,
-    double &pw,
-    int& kiter,
-    double &pmod ) {
+void legpol_quadrature( const int kn, const double pfn[], double& pl, double& pw, int& kiter, double& pmod ) {
     //**** *GAWL * - Routine to perform the Newton loop
 
     //     Purpose.
@@ -210,31 +195,30 @@ void legpol_quadrature(
     //           ---------------
 
     itemax = 20;
-    zx = pl;
-    iflag = 0;
-    pw = 0.;
+    zx     = pl;
+    iflag  = 0;
+    pw     = 0.;
 
     //*       2. Newton iteration.
     //           -----------------
 
     const double zeps = std::numeric_limits<double>::epsilon();
 
-    for( int jter=1; jter<=itemax+1; ++jter) {
+    for ( int jter = 1; jter <= itemax + 1; ++jter ) {
         kiter = jter;
-        legpol_newton_iteration(kn,pfn,zx,zxn,pmod);
+        legpol_newton_iteration( kn, pfn, zx, zxn, pmod );
         zx = zxn;
-        if( iflag == 1 ) {
-            legpol_weight(kn,pfn,zx,zw);
+        if ( iflag == 1 ) {
+            legpol_weight( kn, pfn, zx, zw );
             break;
         }
-        if( std::abs(pmod) <= zeps*1000. )
-            iflag = 1;
+        if ( std::abs( pmod ) <= zeps * 1000. ) iflag = 1;
     }
-    if( iflag != 1 ) {
+    if ( iflag != 1 ) {
         std::stringstream s;
-        s << "Could not converge gaussian latitude to accuracy ["<<zeps*1000<<"]\n";
+        s << "Could not converge gaussian latitude to accuracy [" << zeps * 1000 << "]\n";
         s << "after " << itemax << " iterations. Consequently also failed to compute quadrature weight.";
-        throw eckit::Exception(s.str(),Here());
+        throw eckit::Exception( s.str(), Here() );
     }
 
     pl = zxn;
@@ -243,60 +227,58 @@ void legpol_quadrature(
 
 //-----------------------------------------------------------------------------
 
-} //  anonymous namespace
+}  //  anonymous namespace
 
 //-----------------------------------------------------------------------------
 
-void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], double weights[]) {
+void compute_gaussian_quadrature_npole_equator( const size_t N, double lats[], double weights[] ) {
     Log::debug() << "Atlas computing Gaussian latitudes for N " << N << "\n";
 
     // Compute first guess for colatitudes in radians
     double z;
-    for(size_t i=0; i<N; ++i ) {
-        z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
-        lats[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) );
+    for ( size_t i = 0; i < N; ++i ) {
+        z       = ( 4. * ( i + 1. ) - 1. ) * M_PI / ( 4. * 2. * N + 2. );
+        lats[i] = ( z + 1. / ( tan( z ) * ( 8. * ( 2. * N ) * ( 2. * N ) ) ) );
     }
 
+    int kdgl = 2 * N;
+    array::ArrayT<double> zfn_( kdgl + 1, kdgl + 1 );
+    ArrayView<double, 2> zfn = make_view<double, 2>( zfn_ );
 
-    int kdgl = 2*N;
-    array::ArrayT<double> zfn_(kdgl+1,kdgl+1);
-    ArrayView<double,2> zfn = make_view<double,2>(zfn_);
-    
     int iodd;
 
     // Belousov, Swarztrauber use zfn(0,0)=std::sqrt(2.)
     // IFS normalisation chosen to be 0.5*Integral(Pnm**2) = 1
-    zfn(0,0) = 2.;
-    for( int jn=1; jn<=kdgl; ++jn ) {
-        double zfnn = zfn(0,0);
-        for( int jgl=1; jgl<=jn; ++jgl) {
-            zfnn *= std::sqrt(1.-0.25/(static_cast<double>(jgl*jgl)));
+    zfn( 0, 0 ) = 2.;
+    for ( int jn = 1; jn <= kdgl; ++jn ) {
+        double zfnn = zfn( 0, 0 );
+        for ( int jgl = 1; jgl <= jn; ++jgl ) {
+            zfnn *= std::sqrt( 1. - 0.25 / ( static_cast<double>( jgl * jgl ) ) );
         }
-        iodd = jn % 2;
-        zfn(jn,jn)=zfnn;
-        for( int jgl=2; jgl<=jn-iodd; jgl+=2 ) {
-            zfn(jn,jn-jgl) = zfn(jn,jn-jgl+2) *
-                             static_cast<double>  ((jgl-1)*(2*jn-jgl+2)) /
-                             static_cast<double>  (jgl*(2*jn-jgl+1));
+        iodd          = jn % 2;
+        zfn( jn, jn ) = zfnn;
+        for ( int jgl = 2; jgl <= jn - iodd; jgl += 2 ) {
+            zfn( jn, jn - jgl ) = zfn( jn, jn - jgl + 2 ) * static_cast<double>( ( jgl - 1 ) * ( 2 * jn - jgl + 2 ) ) /
+                                  static_cast<double>( jgl * ( 2 * jn - jgl + 1 ) );
         }
     }
 
-    iodd = kdgl % 2;
+    iodd   = kdgl % 2;
     int ik = iodd;
 
-    std::vector<double> zzfn(N+1);
-    std::vector<double> zmod(kdgl);
-    std::vector<int> iter(kdgl);
+    std::vector<double> zzfn( N + 1 );
+    std::vector<double> zmod( kdgl );
+    std::vector<int> iter( kdgl );
 
-    for( int jgl=iodd; jgl<=kdgl; jgl+=2 ) {
-        zzfn[ik] = zfn(kdgl,jgl);
+    for ( int jgl = iodd; jgl <= kdgl; jgl += 2 ) {
+        zzfn[ik] = zfn( kdgl, jgl );
         ++ik;
     }
 
     const double pole = 90.;
-    for( size_t jgl=0; jgl<N; ++jgl ) {
+    for ( size_t jgl = 0; jgl < N; ++jgl ) {
         // refine colat first guess here via Newton's method
-        legpol_quadrature(kdgl,zzfn.data(),lats[jgl],weights[jgl],iter[jgl],zmod[jgl]);
+        legpol_quadrature( kdgl, zzfn.data(), lats[jgl], weights[jgl], iter[jgl], zmod[jgl] );
 
         // Convert colat to lat, in degrees
         lats[jgl] = pole - lats[jgl] * util::Constants::radiansToDegrees();
@@ -309,4 +291,3 @@ void compute_gaussian_quadrature_npole_equator(const size_t N, double lats[], do
 }  // namespace spacing
 }  // namespace grid
 }  // namespace atlas
-

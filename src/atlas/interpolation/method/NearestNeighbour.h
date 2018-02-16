@@ -4,39 +4,34 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 #pragma once
 
 #include "atlas/interpolation/method/KNearestNeighboursBase.h"
 
-
 namespace atlas {
 namespace interpolation {
 namespace method {
 
-
 class NearestNeighbour : public KNearestNeighboursBase {
 public:
-
-    NearestNeighbour(const Config& config) : KNearestNeighboursBase(config) {}
+    NearestNeighbour( const Config& config ) : KNearestNeighboursBase( config ) {}
     virtual ~NearestNeighbour() {}
 
 protected:
-
     /**
-     * @brief Create an interpolant sparse matrix relating two (pre-partitioned) meshes,
-     * using nearest neighbour method
-     * @param source functionspace containing source elements
-     * @param target functionspace containing target points
-     */
-    virtual void setup(const FunctionSpace& source, const FunctionSpace& target) override;
-
+   * @brief Create an interpolant sparse matrix relating two (pre-partitioned)
+   * meshes,
+   * using nearest neighbour method
+   * @param source functionspace containing source elements
+   * @param target functionspace containing target points
+   */
+    virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
 };
 
-
-}  // method
-}  // interpolation
-}  // atlas
+}  // namespace method
+}  // namespace interpolation
+}  // namespace atlas

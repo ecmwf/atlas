@@ -4,17 +4,19 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 /// @file LocalView.h
-/// This file contains the LocalView class, a class that allows to wrap any contiguous raw data into
+/// This file contains the LocalView class, a class that allows to wrap any
+/// contiguous raw data into
 /// a view which is accessible with multiple indices.
 /// All it needs is the strides for each index, and the shape of each index.
 /// ATTENTION: The last index is stride 1
 ///
-/// Bounds-checking can be turned ON by defining "ATLAS_ARRAYVIEW_BOUNDS_CHECKING"
+/// Bounds-checking can be turned ON by defining
+/// "ATLAS_ARRAYVIEW_BOUNDS_CHECKING"
 /// before including this header.
 ///
 /// Example 1:
@@ -42,182 +44,172 @@
 
 #include <cstddef>
 #include <type_traits>
-#include "atlas/library/config.h"
+
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/helpers/ArraySlicer.h"
+#include "atlas/library/config.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
 
-template< typename Value, int Rank, Intent AccessMode = Intent::ReadWrite >
+template <typename Value, int Rank, Intent AccessMode = Intent::ReadWrite>
 class LocalView {
 public:
-
-// -- Type definitions
+    // -- Type definitions
     using value_type = typename remove_const<Value>::type;
 
-    using return_type = typename std::conditional< (AccessMode==Intent::ReadOnly), const value_type, value_type >::type;
+    using return_type =
+        typename std::conditional<( AccessMode == Intent::ReadOnly ), const value_type, value_type>::type;
 
     static constexpr Intent ACCESS{AccessMode};
     static constexpr int RANK{Rank};
 
 private:
+    using slicer_t       = typename helpers::ArraySlicer<LocalView<Value, Rank, AccessMode>>;
+    using const_slicer_t = typename helpers::ArraySlicer<const LocalView<Value, Rank, AccessMode>>;
 
-    using slicer_t = typename helpers::ArraySlicer< LocalView<Value,Rank,AccessMode> >;
-    using const_slicer_t = typename helpers::ArraySlicer< const LocalView<Value,Rank,AccessMode> >;
-
-    template< typename ...Args >
+    template <typename... Args>
     struct slice_t {
-      using type = typename slicer_t::template Slice<Args...>::type;
+        using type = typename slicer_t::template Slice<Args...>::type;
     };
 
-    template< typename ...Args >
+    template <typename... Args>
     struct const_slice_t {
-      using type = typename const_slicer_t::template Slice<Args...>::type;
+        using type = typename const_slicer_t::template Slice<Args...>::type;
     };
 
 public:
-
-// -- Constructors
+    // -- Constructors
 
     LocalView( const value_type* data, const size_t shape[], const size_t strides[] ) :
-        data_(const_cast<value_type*>(data)) {
+        data_( const_cast<value_type*>( data ) ) {
         size_ = 1;
-        for( size_t j=0; j<Rank; ++j ) {
-            shape_[j] = shape[j];
+        for ( size_t j = 0; j < Rank; ++j ) {
+            shape_[j]   = shape[j];
             strides_[j] = strides[j];
             size_ *= shape_[j];
         }
     }
 
-    LocalView( const value_type* data, const size_t shape[] ) :
-        data_(const_cast<value_type*>(data)) {
+    LocalView( const value_type* data, const size_t shape[] ) : data_( const_cast<value_type*>( data ) ) {
         size_ = 1;
-        for( int j=Rank-1; j>=0; --j ) {
-            shape_[j] = shape[j];
-            strides_[j] = size_;
-            size_ *= shape_[j];
-        }
-    }
-
-    LocalView( const value_type* data, const ArrayShape& shape ) :
-        data_(const_cast<value_type*>(data)) {
-        size_ = 1;
-        for( int j=Rank-1; j>=0; --j ) {
+        for ( int j = Rank - 1; j >= 0; --j ) {
             shape_[j]   = shape[j];
             strides_[j] = size_;
             size_ *= shape_[j];
         }
     }
 
-// -- Access methods
-
-    template < typename... Ints >
-    return_type& operator()(Ints... idx) {
-        check_bounds(idx...);
-        return data_[index(idx...)];
+    LocalView( const value_type* data, const ArrayShape& shape ) : data_( const_cast<value_type*>( data ) ) {
+        size_ = 1;
+        for ( int j = Rank - 1; j >= 0; --j ) {
+            shape_[j]   = shape[j];
+            strides_[j] = size_;
+            size_ *= shape_[j];
+        }
     }
 
-    template < typename... Ints >
-    const value_type& operator()(Ints... idx) const {
-        check_bounds(idx...);
-        return data_[index(idx...)];
+    // -- Access methods
+
+    template <typename... Ints>
+    return_type& operator()( Ints... idx ) {
+        check_bounds( idx... );
+        return data_[index( idx... )];
     }
 
-    size_t size() const { return size_;}
+    template <typename... Ints>
+    const value_type& operator()( Ints... idx ) const {
+        check_bounds( idx... );
+        return data_[index( idx... )];
+    }
 
-    size_t shape(size_t idx) const { return shape_[idx]; }
+    size_t size() const { return size_; }
 
-    size_t stride(size_t idx) const { return strides_[idx]; }
+    size_t shape( size_t idx ) const { return shape_[idx]; }
+
+    size_t stride( size_t idx ) const { return strides_[idx]; }
 
     value_type const* data() const { return data_; }
 
-    return_type*       data()       { return data_; }
+    return_type* data() { return data_; }
 
-    bool contiguous() const {
-        return (size_ == shape_[0]*strides_[0] ? true : false);
-    }
+    bool contiguous() const { return ( size_ == shape_[0] * strides_[0] ? true : false ); }
 
-    void assign(const value_type& value);
+    void assign( const value_type& value );
 
-    void dump(std::ostream& os) const;
+    void dump( std::ostream& os ) const;
 
     static constexpr size_t rank() { return Rank; }
 
-    template< typename ...Args >
-    typename slice_t<Args...>::type slice(Args... args) {
-      return slicer_t(*this).apply(args...);
+    template <typename... Args>
+    typename slice_t<Args...>::type slice( Args... args ) {
+        return slicer_t( *this ).apply( args... );
     }
 
-    template< typename ...Args >
-    typename const_slice_t<Args...>::type slice(Args... args) const {
-      return const_slicer_t(*this).apply(args...);
+    template <typename... Args>
+    typename const_slice_t<Args...>::type slice( Args... args ) const {
+        return const_slicer_t( *this ).apply( args... );
     }
 
 private:
+    // -- Private methods
 
-// -- Private methods
-
-    template < int Dim, typename Int, typename... Ints >
-    constexpr int index_part(Int idx, Ints... next_idx) const {
-        return idx*strides_[Dim] + index_part<Dim+1>( next_idx... );
+    template <int Dim, typename Int, typename... Ints>
+    constexpr int index_part( Int idx, Ints... next_idx ) const {
+        return idx * strides_[Dim] + index_part<Dim + 1>( next_idx... );
     }
 
-    template < int Dim, typename Int >
-    constexpr int index_part(Int last_idx) const {
-        return last_idx*strides_[Dim];
+    template <int Dim, typename Int>
+    constexpr int index_part( Int last_idx ) const {
+        return last_idx * strides_[Dim];
     }
 
-    template < typename... Ints >
-    constexpr int index(Ints... idx) const {
-        return index_part<0>(idx...);
+    template <typename... Ints>
+    constexpr int index( Ints... idx ) const {
+        return index_part<0>( idx... );
     }
 
-#ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
-    template < typename... Ints >
-    void check_bounds(Ints... idx) const {
-        static_assert ( sizeof...(idx) == Rank , "Expected number of indices is different from rank of array" );
-        return check_bounds_part<0>(idx...);
+#if ATLAS_ARRAYVIEW_BOUNDS_CHECKING
+    template <typename... Ints>
+    void check_bounds( Ints... idx ) const {
+        static_assert( sizeof...( idx ) == Rank, "Expected number of indices is different from rank of array" );
+        return check_bounds_part<0>( idx... );
     }
 #else
-    template < typename... Ints >
-    void check_bounds(Ints...) const {}
+    template <typename... Ints>
+    void check_bounds( Ints... ) const {}
 #endif
 
-    template < typename... Ints >
-    void check_bounds_force(Ints... idx) const {
-        static_assert ( sizeof...(idx) == Rank , "Expected number of indices is different from rank of array" );
-        return check_bounds_part<0>(idx...);
+    template <typename... Ints>
+    void check_bounds_force( Ints... idx ) const {
+        static_assert( sizeof...( idx ) == Rank, "Expected number of indices is different from rank of array" );
+        return check_bounds_part<0>( idx... );
     }
 
-    template < int Dim, typename Int, typename... Ints >
-    void check_bounds_part(Int idx, Ints... next_idx) const {
-        if( size_t(idx) >= shape_[Dim] ) {
-            throw_OutOfRange( "LocalView", array_dim<Dim>(), idx, shape_[Dim] );
-        }
-        check_bounds_part<Dim+1>( next_idx... );
+    template <int Dim, typename Int, typename... Ints>
+    void check_bounds_part( Int idx, Ints... next_idx ) const {
+        if ( size_t( idx ) >= shape_[Dim] ) { throw_OutOfRange( "LocalView", array_dim<Dim>(), idx, shape_[Dim] ); }
+        check_bounds_part<Dim + 1>( next_idx... );
     }
 
-    template < int Dim, typename Int >
-    void check_bounds_part(Int last_idx) const {
-        if( size_t(last_idx) >= shape_[Dim] ) {
+    template <int Dim, typename Int>
+    void check_bounds_part( Int last_idx ) const {
+        if ( size_t( last_idx ) >= shape_[Dim] ) {
             throw_OutOfRange( "LocalView", array_dim<Dim>(), last_idx, shape_[Dim] );
         }
     }
 
 private:
+    // -- Private data
 
-// -- Private data
-
-  value_type *data_;
-  size_t size_;
-  size_t shape_[Rank];
-  size_t strides_[Rank];
-
+    value_type* data_;
+    size_t size_;
+    size_t shape_[Rank];
+    size_t strides_[Rank];
 };
 
-} // namespace array
-} // namespace atlas
+}  // namespace array
+}  // namespace atlas
