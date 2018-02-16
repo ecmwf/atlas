@@ -1,11 +1,12 @@
+#include "atlas/atlas_f.h"
 
 module atlas_Elements_module
 
-use fckit_refcounted_module, only: fckit_refcounted
+use fckit_owned_object_module, only: fckit_owned_object
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 
 public :: atlas_Elements
 
@@ -15,11 +16,9 @@ private
 ! atlas_Elements        !
 !-----------------------------
 
-type, extends(fckit_refcounted) :: atlas_Elements
+type, extends(fckit_owned_object) :: atlas_Elements
 contains
 ! Public methods
-  procedure, public :: delete   => atlas_Elements__delete
-
   procedure, public :: size     => atlas_Elements__size
   procedure, public :: begin => atlas_Elements__begin
   procedure, public :: end   => atlas_Elements__end
@@ -47,6 +46,9 @@ contains
   procedure, private :: add_elements_size_t
   procedure, private :: add_elements_int
 
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Elements__final_auto
+#endif
 end type
 
 interface atlas_Elements
@@ -58,21 +60,13 @@ end interface
 contains
 !========================================================
 
-function atlas_Elements__cptr(cptr) result(elements)
+function atlas_Elements__cptr(cptr) result(this)
   use, intrinsic :: iso_c_binding, only: c_ptr
-  type(atlas_Elements) :: elements
+  type(atlas_Elements) :: this
   type(c_ptr), intent(in) :: cptr
-  call elements%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr )
+  call this%return()
 end function
-
-subroutine atlas_Elements__delete(this)
-  use atlas_elements_c_binding
-  class(atlas_Elements), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__mesh__Elements__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine
 
 function atlas_Elements__size(this) result(val)
   use, intrinsic :: iso_c_binding, only: c_size_t
@@ -243,5 +237,18 @@ function atlas_Elements__end(this) result(val)
   class(atlas_Elements), intent(in) :: this
   val = atlas__mesh__Elements__end(this%c_ptr())
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Elements__final_auto(this)
+  type(atlas_Elements) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Elements__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 end module atlas_Elements_module

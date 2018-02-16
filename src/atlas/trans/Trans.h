@@ -1,65 +1,34 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 #pragma once
 
-#include "transi/trans.h"
-#include "eckit/config/LocalConfiguration.h"
+#include <memory>
+
+#include "eckit/config/Configuration.h"
+#include "eckit/io/Buffer.h"
+#include "eckit/io/DataHandle.h"
 #include "eckit/memory/Owned.h"
-#include "atlas/array/LocalView.h"
-#include "atlas/grid/Grid.h"
+#include "eckit/memory/SharedPtr.h"
+
+#include "atlas/util/Config.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
 
 namespace atlas {
-    class Field;
-    class FieldSet;
-namespace field {
-    class FieldImpl;
-    class FieldSetImpl;
-}
-}
-
-namespace atlas {
-namespace array {
-    class Array;
-}
-}
-
-namespace atlas {
-namespace functionspace {
-    class NodeColumns;
-    class Spectral;
-}
-}
-
-namespace atlas {
-namespace functionspace {
-namespace detail {
-    class NodeColumns;
-    class Spectral;
-}
-}
-}
-
-namespace atlas {
-namespace grid {
-namespace detail {
-namespace partitioner {
-    class TransPartitioner;
-}
-}
-}
-}
-
+class Field;
+class FieldSet;
+class FunctionSpace;
+class Grid;
+}  // namespace atlas
 
 //-----------------------------------------------------------------------------
 
@@ -68,416 +37,327 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
-enum FFT { FFT992=TRANS_FFT992, FFTW=TRANS_FFTW };
-
-//-----------------------------------------------------------------------------
-
-class TransParameters : public util::Config {
+class TransCacheEntry {
 public:
-  TransParameters() {}
-  ~TransParameters() {}
-  static const char* className() { return "atlas::trans::TransParameters"; }
-
-  void set_scalar_derivatives(bool v)      { set("scalar_derivatives",v); }
-  void set_wind_EW_derivatives(bool v)     { set("wind_EW_derivatives",v); }
-  void vorticity_divergence_fields(bool v) { set("vorticity_divergence_fields",v); }
-
-  bool scalar_derivatives() const {
-    return getBool("scalar_derivatives",false);
-  }
-
-  bool wind_EW_derivatives() const {
-    return getBool("wind_EW_derivatives",false);
-  }
-
-  bool vorticity_divergence_fields() const {
-    return getBool("vorticity_divergence_fields",false);
-  }
-
+    operator bool() const { return size() != 0; }
+    virtual size_t size() const      = 0;
+    virtual const void* data() const = 0;
 };
 
-//-----------------------------------------------------------------------------
+class EmptyCacheEntry : public TransCacheEntry {
+public:
+    virtual size_t size() const override { return 0; }
+    virtual const void* data() const override { return nullptr; }
+};
 
-class Trans : public eckit::Owned {
+class TransCacheFileEntry : public TransCacheEntry {
+    eckit::Buffer buffer_;
+
+public:
+    TransCacheFileEntry( const eckit::PathName& path ) : buffer_( path.size() ) {
+        std::unique_ptr<eckit::DataHandle> dh( path.fileHandle() );
+        dh->openForRead();
+        dh->read( buffer_.data(), buffer_.size() );
+        dh->close();
+    }
+    virtual size_t size() const override { return buffer_.size(); }
+    virtual const void* data() const override { return buffer_.data(); }
+};
+
+class Cache {
+public:
+    Cache() : legendre_( new EmptyCacheEntry() ), fft_( new EmptyCacheEntry() ) {}
+    Cache( const Cache& other ) = default;
+
+protected:
+    Cache( const std::shared_ptr<TransCacheEntry>& legendre ) : legendre_( legendre ), fft_( new EmptyCacheEntry() ) {}
+    Cache( const std::shared_ptr<TransCacheEntry>& legendre, const std::shared_ptr<TransCacheEntry>& fft ) :
+        legendre_( legendre ),
+        fft_( fft ) {}
+
+public:
+    const TransCacheEntry& legendre() const { return *legendre_; }
+    const TransCacheEntry& fft() const { return *fft_; }
+
 private:
-  typedef struct ::Trans_t Trans_t;
+    std::shared_ptr<TransCacheEntry> legendre_;
+    std::shared_ptr<TransCacheEntry> fft_;
+};
 
+class LegendreCache : public Cache {
 public:
+    LegendreCache( const eckit::PathName& path ) :
+        Cache( std::shared_ptr<TransCacheEntry>( new TransCacheFileEntry( path ) ) ) {}
+};
 
-  class Options : public util::Config {
-  public:
-
-    Options();
-    ~Options() {}
-    static const char* className() { return "atlas::trans::Trans::Options"; }
-
-    void set_split_latitudes(bool);
-    void set_fft( FFT );
-    void set_flt(bool);
-    void set_cache(const void* buffer, const size_t size);
-    void set_read(const std::string&);
-    void set_write(const std::string&);
-
-    bool split_latitudes() const;
-    FFT fft() const;
-    bool flt() const;
-    const void* cache()const;
-    size_t cachesize() const;
-    std::string read() const;
-    std::string write() const;
-
-  private: // not represented in Property internals
-    const void*  cacheptr_;
-    size_t cachesize_;
-  };
-
+class TransImpl : public eckit::Owned {
 public:
+    virtual ~TransImpl() = 0;
 
-  /// @brief Constructor for grid-only setup
-  ///        (e.g. for parallelisation routines)
-  Trans(const Grid& g, const Options& = Options() );
+    virtual int truncation() const = 0;
 
-  /// @brief Constructor for spectral-only setup
-  ///        (e.g. for parallelisation routines)
-  Trans(const long truncation, const Options& = Options() );
+    virtual size_t spectralCoefficients() const = 0;
 
-  /// @brief Constructor given grid and spectral truncation
-  Trans( const Grid& g, const long truncation, const Options& = Options() );
+    virtual const Grid& grid() const = 0;
 
-  virtual ~Trans();
-  operator Trans_t*() const { return &trans_; }
+    virtual void dirtrans( const Field& gpfield, Field& spfield,
+                           const eckit::Configuration& = util::NoConfig() ) const = 0;
 
-  size_t truncation() const { return std::max(0,trans_.nsmax); }
-  size_t nb_spectral_coefficients() const { return trans_.nspec2; }
-  size_t nb_spectral_coefficients_global() const { return trans_.nspec2g; }
-  size_t nb_gridpoints() const { return trans_.ngptot; }
-  size_t nb_gridpoints_global() const { return trans_.ngptotg; }
+    virtual void dirtrans( const FieldSet& gpfields, FieldSet& spfields,
+                           const eckit::Configuration& = util::NoConfig() ) const = 0;
 
-  grid::StructuredGrid grid() const { return grid_; }
+    virtual void dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Field& spdiv,
+                                       const eckit::Configuration& = util::NoConfig() ) const = 0;
 
+    virtual void invtrans( const Field& spfield, Field& gpfield,
+                           const eckit::Configuration& = util::NoConfig() ) const = 0;
 
-  /*!
-   * @brief distspec
-   * @param nb_fields
-   * @param origin
-   * @param global_spectra
-   * @param spectra
+    virtual void invtrans( const FieldSet& spfields, FieldSet& gpfields,
+                           const eckit::Configuration& = util::NoConfig() ) const = 0;
+
+    virtual void invtrans_grad( const Field& spfield, Field& gradfield,
+                                const eckit::Configuration& = util::NoConfig() ) const = 0;
+
+    virtual void invtrans_grad( const FieldSet& spfields, FieldSet& gradfields,
+                                const eckit::Configuration& = util::NoConfig() ) const = 0;
+
+    virtual void invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
+                                       const eckit::Configuration& = util::NoConfig() ) const = 0;
+
+    // -- IFS type fields --
+    // These fields have special interpretation required. You need to know what
+    // you're doing.
+    // See IFS trans library.
+
+    /*!
+   * @brief invtrans
+   * @param nb_scalar_fields
+   * @param scalar_spectra
+   * @param nb_vordiv_fields
+   * @param vorticity_spectra
+   * @param divergence_spectra
+   * @param gp_fields
    */
-  void distspec( const int nb_fields, const int origin[], const double global_spectra[], double spectra[] ) const;
+    virtual void invtrans( const int nb_scalar_fields, const double scalar_spectra[], const int nb_vordiv_fields,
+                           const double vorticity_spectra[], const double divergence_spectra[], double gp_fields[],
+                           const eckit::Configuration& = util::NoConfig() ) const = 0;
 
-  /*!
-   * @brief gathspec
-   * @param nb_fields
-   * @param destination
-   * @param spectra
-   * @param global_spectra
-   */
-  void gathspec( const int nb_fields, const int destination[], const double spectra[], double global_spectra[] ) const;
-
-  /*!
-   * @brief distgrid
-   * @param nb_fields
-   * @param origin
-   * @param global_fields
-   * @param fields
-   */
-  void distgrid( const int nb_fields, const int origin[], const double global_fields[], double fields[] ) const;
-
-  /*!
-   * @brief gathgrid
-   * @param nb_fields
-   * @param destination
-   * @param fields
-   * @param global_fields
-   */
-  void gathgrid( const int nb_fields, const int destination[], const double fields[], double global_fields[] ) const;
-
-  void invtrans( const int nb_scalar_fields, const double scalar_spectra[],
-                 const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],
-                 double gp_fields[],
-                 const TransParameters& = TransParameters() ) const;
-
-  /*!
+    /*!
    * @brief invtrans
    * @param nb_fields
    * @param scalar_spectra
    * @param scalar_fields
    */
-  void invtrans( const int nb_scalar_fields, const double scalar_spectra[],
-                 double gp_fields[],
-                 const TransParameters& = TransParameters() ) const;
+    virtual void invtrans( const int nb_scalar_fields, const double scalar_spectra[], double gp_fields[],
+                           const eckit::Configuration& = util::NoConfig() ) const = 0;
 
-  /*!
+    /*!
    * @brief Inverse transform of vorticity/divergence to wind(U/V)
-   * @param nb_fields [in] Number of fields ( both components of wind count as 1 )
+   * @param nb_fields [in] Number of fields ( both components of wind count as 1
+   * )
    */
-  void invtrans( const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],
-                 double gp_fields[],
-                 const TransParameters& = TransParameters()) const;
+    virtual void invtrans( const int nb_vordiv_fields, const double vorticity_spectra[],
+                           const double divergence_spectra[], double gp_fields[],
+                           const eckit::Configuration& = util::NoConfig() ) const = 0;
 
-  /*!
+    /*!
    * @brief Direct transform of scalar fields
    */
-  void dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[] ) const;
+    virtual void dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
+                           const eckit::Configuration& = util::NoConfig() ) const = 0;
 
-  /*!
+    /*!
    * @brief Direct transform of wind(U/V) to vorticity/divergence
-   * @param nb_fields [in] Number of fields ( both components of wind count as 1 )
+   * @param nb_fields [in] Number of fields ( both components of wind count as 1
+   * )
    */
-  void dirtrans(const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] ) const;
-
-  void dirtrans(const Field& gpfield,
-                      Field& spfield,
-                const TransParameters& = TransParameters()) const;
-  void dirtrans(const FieldSet& gpfields,
-                      FieldSet& spfields,
-                const TransParameters& = TransParameters()) const;
-
-  void dirtrans(const functionspace::NodeColumns&,    const Field& gpfield,
-                const functionspace::Spectral&,       Field& spfield,
-                const TransParameters& = TransParameters()) const;
-  void dirtrans(const functionspace::NodeColumns&,    const FieldSet& gpfields,
-                const functionspace::Spectral&,       FieldSet& spfields,
-                const TransParameters& = TransParameters()) const;
-  void dirtrans_wind2vordiv(const functionspace::NodeColumns&, const Field& gpwind,
-                            const functionspace::Spectral&, Field& spvor, Field& spdiv,
-                            const TransParameters& = TransParameters()) const;
-
-  void invtrans(const Field& spfield,
-                      Field& gpfield,
-                const TransParameters& = TransParameters()) const;
-  void invtrans(const FieldSet& spfields,
-                      FieldSet& gpfields,
-                const TransParameters& = TransParameters()) const;
-
-  void invtrans(const functionspace::Spectral&, const Field& spfield,
-                const functionspace::NodeColumns&,          Field& gpfield,
-                const TransParameters& = TransParameters()) const;
-  void invtrans(const functionspace::Spectral&, const FieldSet& spfields,
-                const functionspace::NodeColumns&,          FieldSet& gpfields,
-                const TransParameters& = TransParameters()) const;
-  void invtrans_vordiv2wind(const functionspace::Spectral&, const Field& spvor, const Field& spdiv,
-                            const functionspace::NodeColumns&, Field& gpwind,
-                            const TransParameters& = TransParameters()) const;
-
-  void invtrans_grad(const functionspace::Spectral& sp, const Field& spfield,
-                     const functionspace::NodeColumns& gp, Field& gradfield) const;
-
-
-  void invtrans_grad(const functionspace::Spectral& sp, const FieldSet& spfields,
-                     const functionspace::NodeColumns& gp, FieldSet& gradfields) const;
-
-  void specnorm( const int nb_fields, const double spectra[], double norms[], int rank=0 ) const;
-
-
-private:
-
-  void ctor( const Grid&, long nsmax, const Options& );
-
-  void ctor_rgg(const long nlat, const long pl[], long nsmax, const Options& );
-
-  void ctor_lonlat(const long nlon, const long nlat, long nsmax, const Options& );
-
-  void ctor_spectral_only(long truncation, const Trans::Options& p );
-
-private:
-  friend class grid::detail::partitioner::TransPartitioner;
-  int        handle()       const { return trans_.handle; }
-  int        ndgl()         const { return trans_.ndgl; }
-  int        nsmax()        const { return trans_.nsmax; }
-  int        ngptot()       const { return trans_.ngptot; }
-  int        ngptotg()      const { return trans_.ngptotg; }
-  int        ngptotmx()     const { return trans_.ngptotmx; }
-  int        nspec()        const { return trans_.nspec; }
-  int        nspec2()       const { return trans_.nspec2; }
-  int        nspec2g()      const { return trans_.nspec2g; }
-  int        nspec2mx()     const { return trans_.nspec2mx; }
-  int        n_regions_NS() const { return trans_.n_regions_NS; }
-  int        n_regions_EW() const { return trans_.n_regions_EW; }
-  int        nump()         const { return trans_.nump; }
-  int        nproc()        const { return trans_.nproc; }
-  int        myproc(int proc0=0) const { return trans_.myproc-1+proc0; }
-
-  const int* nloen(int& size) const
-  {
-    size = trans_.ndgl;
-    ASSERT( trans_.nloen != NULL );
-    return trans_.nloen;
-  }
-
-  array::LocalView<int,1> nloen() const
-  {
-    ASSERT( trans_.nloen != NULL );
-    return array::LocalView<int,1>(trans_.nloen, array::make_shape(trans_.ndgl));
-  }
-
-  const int* n_regions(int& size) const
-  {
-    size = trans_.n_regions_NS;
-    ASSERT( trans_.n_regions != NULL );
-    return trans_.n_regions;
-  }
-
-  array::LocalView<int,1> n_regions() const
-  {
-    ASSERT( trans_.n_regions != NULL );
-    return array::LocalView<int,1>(trans_.n_regions, array::make_shape(trans_.n_regions_NS));
-  }
-
-
-  const int* nfrstlat(int& size) const
-  {
-    size = trans_.n_regions_NS;
-    if( trans_.nfrstlat == NULL ) ::trans_inquire(&trans_,"nfrstlat");
-    return trans_.nfrstlat;
-  }
-
-  array::LocalView<int,1> nfrstlat() const
-  {
-    if( trans_.nfrstlat == NULL ) ::trans_inquire(&trans_,"nfrstlat");
-    return array::LocalView<int,1>(trans_.nfrstlat, array::make_shape(trans_.n_regions_NS));
-  }
-
-  const int* nlstlat(int& size) const
-  {
-    size = trans_.n_regions_NS;
-    if( trans_.nlstlat == NULL ) ::trans_inquire(&trans_,"nlstlat");
-    return trans_.nlstlat;
-  }
-
-  array::LocalView<int,1> nlstlat() const
-  {
-    if( trans_.nlstlat == NULL ) ::trans_inquire(&trans_,"nlstlat");
-    return array::LocalView<int,1>(trans_.nlstlat, array::make_shape(trans_.n_regions_NS));
-  }
-
-  const int* nptrfrstlat(int& size) const
-  {
-    size = trans_.n_regions_NS;
-    if( trans_.nptrfrstlat == NULL ) ::trans_inquire(&trans_,"nptrfrstlat");
-    return trans_.nptrfrstlat;
-  }
-
-  array::LocalView<int,1> nptrfrstlat() const
-  {
-    if( trans_.nptrfrstlat == NULL ) ::trans_inquire(&trans_,"nptrfrstlat");
-    return array::LocalView<int,1>(trans_.nptrfrstlat, array::make_shape(trans_.n_regions_NS));
-  }
-
-  const int* nsta(int& sizef2, int& sizef1) const
-  {
-    sizef1 = trans_.ndgl+trans_.n_regions_NS-1;
-    sizef2 = trans_.n_regions_EW;
-    if( trans_.nsta == NULL ) ::trans_inquire(&trans_,"nsta");
-    return trans_.nsta;
-  }
-
-  array::LocalView<int,2> nsta() const
-  {
-    if( trans_.nsta == NULL ) ::trans_inquire(&trans_,"nsta");
-    return array::LocalView<int,2>( trans_.nsta, array::make_shape(trans_.n_regions_EW, trans_.ndgl+trans_.n_regions_NS-1) );
-  }
-
-  const int* nonl(int& sizef2, int& sizef1) const
-  {
-    sizef1 = trans_.ndgl+trans_.n_regions_NS-1;
-    sizef2 = trans_.n_regions_EW;
-    if( trans_.nonl == NULL ) ::trans_inquire(&trans_,"nonl");
-    return trans_.nonl;
-  }
-
-  array::LocalView<int,2> nonl() const
-  {
-    if( trans_.nonl == NULL ) ::trans_inquire(&trans_,"nonl");
-    return array::LocalView<int,2>( trans_.nonl, array::make_shape(trans_.n_regions_EW, trans_.ndgl+trans_.n_regions_NS-1) );
-  }
-
-  const int* nmyms(int& size) const
-  {
-    size = trans_.nump;
-    if( trans_.nmyms == NULL ) ::trans_inquire(&trans_,"nmyms");
-    return trans_.nmyms;
-  }
-
-  array::LocalView<int,1> nmyms() const
-  {
-    if( trans_.nmyms == NULL ) ::trans_inquire(&trans_,"nmyms");
-    return array::LocalView<int,1> (trans_.nmyms, array::make_shape(trans_.nump));
-  }
-
-  const int* nasm0(int& size) const
-  {
-    size = trans_.nsmax+1; // +1 because zeroth wave included
-    if( trans_.nasm0 == NULL ) ::trans_inquire(&trans_,"nasm0");
-    return trans_.nasm0;
-  }
-
-  array::LocalView<int,1> nasm0() const
-  {
-    if( trans_.nasm0 == NULL ) ::trans_inquire(&trans_,"nasm0");
-    return array::LocalView<int,1> (trans_.nasm0, array::make_shape(trans_.nsmax+1) );
-  }
-
-  const int* nvalue(int& size) const
-  {
-    size = trans_.nspec2;
-    if( trans_.nvalue == NULL ) ::trans_inquire(&trans_,"nvalue");
-    return trans_.nvalue;
-  }
-
-  array::LocalView<int,1> nvalue() const
-  {
-    if( trans_.nvalue == NULL ) ::trans_inquire(&trans_,"nvalue");
-    return array::LocalView<int,1> (trans_.nvalue, array::make_shape(trans_.nspec2));
-  }
-
-private:
-  mutable Trans_t trans_;
-  grid::StructuredGrid grid_;
+    virtual void dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[],
+                           double divergence_spectra[], const eckit::Configuration& = util::NoConfig() ) const = 0;
 };
-
-//-----------------------------------------------------------------------------
-
-// C wrapper interfaces to C++ routines
-
-extern "C"
-{
-  Trans* atlas__Trans__new (const Grid::Implementation* grid, int nsmax);
-  void atlas__Trans__delete (Trans* trans);
-  void atlas__Trans__distspec (const Trans* t, int nb_fields, int origin[], double global_spectra[], double spectra[]);
-  void atlas__Trans__gathspec (const Trans* t, int nb_fields, int destination[], double spectra[], double global_spectra[]);
-  void atlas__Trans__distgrid (const Trans* t, int nb_fields, int origin[], double global_fields[], double fields[]);
-  void atlas__Trans__gathgrid (const Trans* t, int nb_fields, int destination[], double fields[], double global_fields[]);
-  void atlas__Trans__invtrans (const Trans* t, int nb_scalar_fields, double scalar_spectra[], int nb_vordiv_fields, double vorticity_spectra[], double divergence_spectra[], double gp_fields[], const TransParameters* parameters);
-  void atlas__Trans__invtrans_scalar (const Trans* t, int nb_fields, double scalar_spectra[], double scalar_fields[]);
-  void atlas__Trans__invtrans_vordiv2wind (const Trans* t, int nb_fields, double vorticity_spectra[], double divergence_spectra[], double wind_fields[]);
-  void atlas__Trans__dirtrans_scalar (const Trans* t, int nb_fields, double scalar_fields[], double scalar_spectra[]);
-  void atlas__Trans__dirtrans_wind2vordiv (const Trans* t, int nb_fields, double wind_fields[], double vorticity_spectra[], double divergence_spectra[]);
-  void atlas__Trans__specnorm (const Trans* t, int nb_fields, double spectra[], double norms[], int rank);
-  void atlas__Trans__dirtrans_fieldset (const Trans* This, const field::FieldSetImpl* gpfields, field::FieldSetImpl* spfields, const TransParameters* parameters);
-  void atlas__Trans__dirtrans_field (const Trans* This, const field::FieldImpl* gpfield, field::FieldImpl* spfield, const TransParameters* parameters);
-  void atlas__Trans__invtrans_fieldset (const Trans* This, const field::FieldSetImpl* spfields, field::FieldSetImpl* gpfields, const TransParameters* parameters);
-  void atlas__Trans__invtrans_field (const Trans* This, const field::FieldImpl* spfield, field::FieldImpl* gpfield, const TransParameters* parameters);
-  void atlas__Trans__dirtrans_fieldset_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::FieldSetImpl* gpfields, const functionspace::detail::Spectral* sp, field::FieldSetImpl* spfields, const TransParameters* parameters);
-  void atlas__Trans__invtrans_fieldset_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldSetImpl* spfields, const functionspace::detail::NodeColumns* gp, field::FieldSetImpl* gpfields, const TransParameters* parameters);
-  void atlas__Trans__dirtrans_field_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::FieldImpl* gpfield, const functionspace::detail::Spectral* sp, field::FieldImpl* spfield, const TransParameters* parameters);
-  void atlas__Trans__invtrans_field_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldImpl* spfield, const functionspace::detail::NodeColumns* gp, field::FieldImpl* gpfield, const TransParameters* parameters);
-  void atlas__Trans__dirtrans_wind2vordiv_field_nodes (const Trans* This, const functionspace::detail::NodeColumns* gp, const field::FieldImpl* gpwind, const functionspace::detail::Spectral* sp, field::FieldImpl* spvor, field::FieldImpl* spdiv, const TransParameters* parameters);
-  void atlas__Trans__invtrans_vordiv2wind_field_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldImpl* spvor, const field::FieldImpl* spdiv, const functionspace::detail::NodeColumns* gp, field::FieldImpl* gpwind, const TransParameters* parameters);
-  void atlas__Trans__invtrans_grad_field_nodes (const Trans* This, const functionspace::detail::Spectral* sp, const field::FieldImpl* spfield, const functionspace::detail::NodeColumns* gp, field::FieldImpl* gpfield);
-
-  int atlas__Trans__handle (const Trans* trans);
-  int atlas__Trans__truncation (const Trans* This);
-  int atlas__Trans__nspec2 (const Trans* This);
-  int atlas__Trans__nspec2g (const Trans* This);
-  int atlas__Trans__ngptot (const Trans* This);
-  int atlas__Trans__ngptotg (const Trans* This);
-  const Grid::Implementation* atlas__Trans__grid(const Trans* This);
-  TransParameters* atlas__TransParameters__new ();
-  void atlas__TransParameters__delete (TransParameters* parameters);
-}
 
 // ------------------------------------------------------------------
 
-} // namespace trans
-} // namespace atlas
+class TransFactory {
+public:
+    /*!
+   * \brief build Trans
+   * \return TransImpl
+   */
+    static TransImpl* build( const FunctionSpace& gp, const FunctionSpace& sp,
+                             const eckit::Configuration& = util::Config() );
+    static TransImpl* build( const Grid&, int truncation, const eckit::Configuration& = util::Config() );
+
+    static TransImpl* build( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
+                             const eckit::Configuration& = util::Config() );
+    static TransImpl* build( const Cache&, const Grid&, int truncation, const eckit::Configuration& = util::Config() );
+
+    /*!
+   * \brief list all registered trans implementations
+   */
+    static void list( std::ostream& );
+
+    static bool has( const std::string& name );
+
+private:
+    std::string name_;
+    virtual TransImpl* make( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& ) {
+        return nullptr;
+    }
+    virtual TransImpl* make( const Grid& gp, int truncation, const eckit::Configuration& ) { return nullptr; }
+    virtual TransImpl* make( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
+                             const eckit::Configuration& ) {
+        return nullptr;
+    }
+    virtual TransImpl* make( const Cache&, const Grid& gp, int truncation, const eckit::Configuration& ) {
+        return nullptr;
+    }
+
+protected:
+    TransFactory( const std::string& );
+    virtual ~TransFactory();
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
+template <class T>
+class TransBuilderFunctionSpace : public TransFactory {
+    virtual TransImpl* make( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) {
+        return new T( gp, sp, config );
+    }
+    virtual TransImpl* make( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp,
+                             const eckit::Configuration& config ) {
+        return new T( cache, gp, sp, config );
+    }
+    virtual TransImpl* make( const Grid&, int, const eckit::Configuration& ) {
+        throw eckit::SeriousBug( "This function should not be called", Here() );
+    }
+    virtual TransImpl* make( const Cache&, const Grid&, int, const eckit::Configuration& ) {
+        throw eckit::SeriousBug( "This function should not be called", Here() );
+    }
+
+public:
+    TransBuilderFunctionSpace( const std::string& name ) : TransFactory( name ) {}
+};
+
+template <class T>
+class TransBuilderGrid : public TransFactory {
+    virtual TransImpl* make( const Grid& grid, int truncation, const eckit::Configuration& config ) {
+        return new T( grid, truncation, config );
+    }
+    virtual TransImpl* make( const Cache& cache, const Grid& grid, int truncation,
+                             const eckit::Configuration& config ) {
+        return new T( cache, grid, truncation, config );
+    }
+    virtual TransImpl* make( const FunctionSpace&, const FunctionSpace&, const eckit::Configuration& ) {
+        throw eckit::SeriousBug( "This function should not be called", Here() );
+    }
+    virtual TransImpl* make( const Cache&, const FunctionSpace&, const FunctionSpace&, const eckit::Configuration& ) {
+        throw eckit::SeriousBug( "This function should not be called", Here() );
+    }
+
+public:
+    TransBuilderGrid( const std::string& name ) : TransFactory( name ) {}
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
+class Trans {
+public:
+    using Implementation = TransImpl;
+
+private:
+    eckit::SharedPtr<Implementation> impl_;
+
+public:
+    Trans();
+    Trans( Implementation* );
+    Trans( const Trans& );
+
+    Trans( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig() );
+    Trans( const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
+
+    Trans( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
+           const eckit::Configuration& = util::NoConfig() );
+    Trans( const Cache&, const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
+
+    void hash( eckit::Hash& ) const;
+    const Implementation* get() const { return impl_.get(); }
+    operator bool() const { return impl_.owners(); }
+
+    int truncation() const;
+    size_t spectralCoefficients() const;
+    const Grid& grid() const;
+
+    void dirtrans( const Field& gpfield, Field& spfield, const eckit::Configuration& = util::NoConfig() ) const;
+
+    void dirtrans( const FieldSet& gpfields, FieldSet& spfields, const eckit::Configuration& = util::NoConfig() ) const;
+
+    void dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Field& spdiv,
+                               const eckit::Configuration& = util::NoConfig() ) const;
+
+    void invtrans( const Field& spfield, Field& gpfield, const eckit::Configuration& = util::NoConfig() ) const;
+
+    void invtrans( const FieldSet& spfields, FieldSet& gpfields, const eckit::Configuration& = util::NoConfig() ) const;
+
+    void invtrans_grad( const Field& spfield, Field& gradfield, const eckit::Configuration& = util::NoConfig() ) const;
+
+    void invtrans_grad( const FieldSet& spfields, FieldSet& gradfields,
+                        const eckit::Configuration& = util::NoConfig() ) const;
+
+    void invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
+                               const eckit::Configuration& = util::NoConfig() ) const;
+
+    // -- IFS type fields --
+    // These fields have special interpretation required. You need to know what
+    // you're doing.
+    // See IFS trans library.
+
+    /*!
+   * @brief invtrans
+   * @param nb_scalar_fields
+   * @param scalar_spectra
+   * @param nb_vordiv_fields
+   * @param vorticity_spectra
+   * @param divergence_spectra
+   * @param gp_fields
+   */
+    void invtrans( const int nb_scalar_fields, const double scalar_spectra[], const int nb_vordiv_fields,
+                   const double vorticity_spectra[], const double divergence_spectra[], double gp_fields[],
+                   const eckit::Configuration& = util::NoConfig() ) const;
+
+    /*!
+   * @brief invtrans
+   * @param nb_fields
+   * @param scalar_spectra
+   * @param scalar_fields
+   */
+    void invtrans( const int nb_scalar_fields, const double scalar_spectra[], double gp_fields[],
+                   const eckit::Configuration& = util::NoConfig() ) const;
+
+    /*!
+   * @brief Inverse transform of vorticity/divergence to wind(U/V)
+   * @param nb_fields [in] Number of fields ( both components of wind count as 1
+   * )
+   */
+    void invtrans( const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],
+                   double gp_fields[], const eckit::Configuration& = util::NoConfig() ) const;
+
+    /*!
+   * @brief Direct transform of scalar fields
+   */
+    void dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
+                   const eckit::Configuration& = util::NoConfig() ) const;
+
+    /*!
+   * @brief Direct transform of wind(U/V) to vorticity/divergence
+   * @param nb_fields [in] Number of fields ( both components of wind count as 1
+   * )
+   */
+    void dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[],
+                   double divergence_spectra[], const eckit::Configuration& = util::NoConfig() ) const;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
+}  // namespace trans
+}  // namespace atlas

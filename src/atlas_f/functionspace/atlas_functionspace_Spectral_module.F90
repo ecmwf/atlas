@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_functionspace_Spectral_module
 
@@ -52,8 +53,8 @@ contains
   procedure, private :: norm_array
   generic, public :: norm => norm_scalar, norm_array
 
-#ifdef FORTRAN_SUPPORTS_FINAL
-  final :: atlas_functionspace_Spectral__final
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_functionspace_Spectral__final_auto
 #endif
 
 END TYPE atlas_functionspace_Spectral
@@ -70,19 +71,12 @@ end interface
 contains
 !========================================================
 
-function atlas_functionspace_Spectral__cptr(cptr) result(functionspace)
-  type(atlas_functionspace_Spectral) :: functionspace
+function atlas_functionspace_Spectral__cptr(cptr) result(this)
+  type(atlas_functionspace_Spectral) :: this
   type(c_ptr), intent(in) :: cptr
-  call functionspace%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr )
+  call this%return()
 end function
-
-
-#ifdef FORTRAN_SUPPORTS_FINAL
-subroutine atlas_functionspace_Spectral__final(this)
-  type(atlas_functionspace_Spectral), intent(inout) :: this
-  call this%final()
-end subroutine
-#endif
 
 function atlas_functionspace_Spectral__config(truncation,levels) result(this)
   use atlas_functionspace_spectral_c_binding
@@ -96,8 +90,7 @@ function atlas_functionspace_Spectral__config(truncation,levels) result(this)
   call options%set("truncation",truncation)
   if( present(levels) ) call options%set("levels",levels)
 
-  this = atlas_functionspace_Spectral__cptr( &
-    & atlas__SpectralFunctionSpace__new__config(options%c_ptr()) )
+  call this%reset_c_ptr( atlas__SpectralFunctionSpace__new__config(options%c_ptr()) )
   call options%final()
 
   call this%return()
@@ -114,8 +107,7 @@ function atlas_functionspace_Spectral__trans(trans,levels) result(this)
 
   if( present(levels) ) call options%set("levels",levels)
 
-  this = atlas_functionspace_Spectral__cptr( &
-    & atlas__SpectralFunctionSpace__new__trans(trans%c_ptr(), options%c_ptr() ) )
+  call this%reset_c_ptr( atlas__SpectralFunctionSpace__new__trans(trans%c_ptr(), options%c_ptr() ) )
   call options%final()
 
   call this%return()
@@ -179,6 +171,19 @@ subroutine norm_array(this,field,norm,rank)
   opt_rank = 0
   if( present(rank) ) opt_rank = rank
   call atlas__SpectralFunctionSpace__norm(this%c_ptr(),field%c_ptr(),norm,opt_rank)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_functionspace_Spectral__final_auto(this)
+  type(atlas_functionspace_Spectral) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_functionspace_Spectral__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
 end module atlas_functionspace_Spectral_module

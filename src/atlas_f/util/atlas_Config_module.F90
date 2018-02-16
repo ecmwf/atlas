@@ -1,16 +1,16 @@
+#include "atlas/atlas_f.h"
 
 module atlas_config_module
 
-use fckit_refcounted_fortran_module, only : fckit_refcounted_fortran
+use fckit_shared_object_module, only : fckit_shared_object, fckit_c_deleter, fckit_c_nodeleter
 
 implicit none
 
-private :: fckit_refcounted_fortran
 public :: atlas_Config
 
 private
 
-TYPE, extends(fckit_refcounted_fortran) :: atlas_Config
+TYPE, extends(fckit_shared_object) :: atlas_Config
 
 ! Purpose :
 ! -------
@@ -57,8 +57,10 @@ contains
   generic :: get => get_config, get_config_list, get_int32, get_logical, get_real32, get_real64, &
                     get_string, get_array_int32, get_array_int64, get_array_real32, get_array_real64
   procedure :: json => atlas_Config__json
-
-  procedure, public :: delete => atlas_Config__delete
+  
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Config__final_auto
+#endif
 
 END TYPE atlas_Config
 
@@ -66,11 +68,16 @@ END TYPE atlas_Config
 
 interface atlas_Config
   module procedure atlas_Config__ctor
+  module procedure atlas_Config__ctor_from_cptr
   module procedure atlas_Config__ctor_from_file
   module procedure atlas_Config__ctor_from_json
 end interface
 
 !------------------------------------------------------------------------------
+
+private :: fckit_shared_object
+private :: fckit_c_deleter
+private :: fckit_c_nodeleter
 
 !========================================================
 contains
@@ -79,39 +86,61 @@ contains
 ! -----------------------------------------------------------------------------
 ! Config routines
 
-function atlas_Config__ctor() result(Config)
+subroutine atlas_Config__final_auto(this)
+  type(atlas_Config), intent(inout) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Config__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+function atlas_Config__ctor() result(this)
   use atlas_Config_c_binding
-  type(atlas_Config) :: Config
-  call Config%reset_c_ptr( atlas__Config__new() )
+  type(atlas_Config) :: this
+  call this%reset_c_ptr( atlas__Config__new(), &
+    & fckit_c_deleter(atlas__Config__delete) )
+  call this%return()
 end function atlas_Config__ctor
 
-function atlas_Config__ctor_from_json(json) result(Config)
+function atlas_Config__ctor_from_cptr(cptr,delete) result(this)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  use atlas_Config_c_binding
+  type(c_ptr), value :: cptr
+  type(atlas_Config) :: this
+  logical, optional :: delete
+  logical :: opt_delete
+  opt_delete = .true.
+  if( present(delete) ) opt_delete = delete
+  if( opt_delete ) then
+    call this%reset_c_ptr( cptr, fckit_c_deleter(atlas__Config__delete) )
+  else
+    call this%reset_c_ptr( cptr, fckit_c_nodeleter() )
+  endif
+  call this%return()
+end function
+
+function atlas_Config__ctor_from_json(json) result(this)
   use fckit_c_interop_module, only : c_str
   use atlas_Config_c_binding
   use atlas_JSON_module
-  type(atlas_Config) :: Config
+  type(atlas_Config) :: this
   class(atlas_JSON) :: json
-  call Config%reset_c_ptr( atlas__Config__new_from_json(c_str(json%str())) )
+  call this%reset_c_ptr( atlas__Config__new_from_json(c_str(json%str())) )
+  call this%return()
 end function atlas_Config__ctor_from_json
 
-function atlas_Config__ctor_from_file(path) result(Config)
+function atlas_Config__ctor_from_file(path) result(this)
   use fckit_c_interop_module, only : c_str
   use atlas_Config_c_binding
   use atlas_JSON_module
-  type(atlas_Config) :: Config
+  type(atlas_Config) :: this
   class(atlas_PathName), intent(in) :: path
-  call Config%reset_c_ptr( atlas__Config__new_from_file(c_str(path%str())) )
+  call this%reset_c_ptr( atlas__Config__new_from_file(c_str(path%str())) )
+  call this%return()
 end function atlas_Config__ctor_from_file
-
-subroutine atlas_Config__delete(this)
-  use atlas_Config_c_binding
-  class(atlas_Config), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__Config__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine atlas_Config__delete
-
 
 function atlas_Config__has(this, name) result(value)
   use fckit_c_interop_module, only : c_str
@@ -143,7 +172,7 @@ subroutine atlas_Config__set_config_list(this, name, value)
   use atlas_Config_c_binding
   class(atlas_Config), intent(inout) :: this
   character(len=*), intent(in) :: name
-  class(atlas_Config), intent(in) :: value(:)
+  type(atlas_Config), intent(in) :: value(:) !PGI (17.7) compiler bug when "type" replaced with "class"
   type(c_ptr), target :: value_cptrs(size(value))
   integer :: j
   if( size(value) > 0 ) then
@@ -216,10 +245,8 @@ function atlas_Config__get_config(this, name, value) result(found)
   character(len=*), intent(in) :: name
   class(atlas_Config), intent(inout) :: value
   integer :: found_int
-  if( value%is_null() ) then
-    call value%reset_c_ptr( atlas__Config__new() )
-  endif
-  found_int = atlas__Config__get_config(this%c_ptr(), c_str(name), value%c_ptr() )
+  value = atlas_Config()
+  found_int = atlas__Config__get_config( this%c_ptr(), c_str(name), value%c_ptr() )
   found = .False.
   if (found_int == 1) found = .True.
 end function atlas_Config__get_config
@@ -246,7 +273,7 @@ function atlas_Config__get_config_list(this, name, value) result(found)
     if( allocated(value) ) deallocate(value)
     allocate(value(value_list_size))
     do j=1,value_list_size
-      call value(j)%reset_c_ptr( value_cptrs(j) )
+      value(j) = atlas_Config( value_cptrs(j) )
     enddo
     if( value_list_allocated == 1 ) call c_ptr_free(value_list_cptr)
   endif

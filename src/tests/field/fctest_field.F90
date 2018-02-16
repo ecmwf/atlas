@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2016 ECMWF.
+! (C) Copyright 2013 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -49,11 +49,11 @@ field = atlas_Field(kind=atlas_real(8),shape=[10,5])
 
 call field%host_data(host)
 
-FCTEST_CHECK( field%is_on_host() )
-FCTEST_CHECK( field%is_on_device() )
+FCTEST_CHECK( .not. field%host_needs_update() )
+FCTEST_CHECK( .not. field%device_needs_update() )
 
 call field%clone_to_device()
-FCTEST_CHECK( field%is_on_device() )
+FCTEST_CHECK( .not. field%device_needs_update() )
 
 call field%final()
 END_TEST

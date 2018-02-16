@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2017 ECMWF.
+! (C) Copyright 2013 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -80,6 +80,7 @@ TEST( test_parametrisation )
     call list(j)%set("l1",21)
     call list(j)%set("l2",22)
   enddo
+
   call nested%set("list",list)
   do j=1,2
     call list(j)%final()
@@ -125,8 +126,8 @@ TEST( test_parametrisation )
   do j=1,size(alist)
     call alist(j)%final()
   enddo
-  call anested%final()
 
+  call anested%final()
 
   ! ---------------------------------------------
 

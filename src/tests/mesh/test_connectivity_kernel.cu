@@ -8,10 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestConnectivityKernel
 #include <cuda_runtime.h>
-#include "ecbuild/boost_test_framework.h"
 #include "atlas/mesh/Connectivity.h"
+#include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::mesh;
 
@@ -85,7 +84,7 @@ void kernel_multiblock(MultiBlockConnectivityImpl* conn_, bool* result)
 
 
 
-BOOST_AUTO_TEST_CASE( test_block_connectivity )
+CASE( "test_block_connectivity" )
 {
     BlockConnectivity conn;
 
@@ -97,84 +96,102 @@ BOOST_AUTO_TEST_CASE( test_block_connectivity )
     idx_t vals2[12] = {2,3,9,34,356,86,3,24,84,45,2,2};
 
     conn.add(2,5, vals2);
+
+    EXPECT(conn(0,0) == 2);
+    EXPECT(conn(0,1) == 3);
+    EXPECT(conn(0,2) == 9);
+    EXPECT(conn(0,3) == 34);
+    EXPECT(conn(0,4) == 356);
+    EXPECT(conn(1,0) == 86);
+    EXPECT(conn(1,1) == 3);
+    EXPECT(conn(1,2) == 24);
+    EXPECT(conn(1,3) == 84);
+    EXPECT(conn(1,4) == 45);
+
     conn.cloneToDevice();
-    BOOST_CHECK( conn.isOnDevice() );
+    EXPECT( !conn.deviceNeedsUpdate() );
 
     kernel_block<<<1,1>>>(conn.gpu_object_ptr(), result);
 
     cudaDeviceSynchronize();
 
-    BOOST_CHECK_EQUAL( *result , true );
+    EXPECT( *result == true );
 
-    // copy back, although not strickly needed since the gpu copy does not modify values, 
+    // copy back, although not strickly needed since the gpu copy does not modify values,
     // but for the sake of testing it
 
     conn.cloneFromDevice();
-    BOOST_CHECK_EQUAL((conn)(0,4), 356 );
+    EXPECT((conn)(0,4) == 356 );
 }
 
-BOOST_AUTO_TEST_CASE( test_irregular_connectivity )
+CASE( "test_irregular_connectivity" )
 {
     IrregularConnectivity conn("mesh");
-    BOOST_CHECK_EQUAL(conn.rows(),0);
-    BOOST_CHECK_EQUAL(conn.maxcols(),0);
+    EXPECT(conn.rows() == 0);
+    EXPECT(conn.maxcols() ==0);
 
     constexpr idx_t vals[6] = {1,3,4,3,7,8};
     bool from_fortran = true;
     conn.add(2, 3, vals, from_fortran);
+
+    EXPECT(conn(0,0) == 1 IN_FORTRAN);
 
     bool* result;
     cudaMallocManaged(&result, sizeof(bool));
     *result = true;
 
     conn.cloneToDevice();
-    BOOST_CHECK( conn.isOnDevice() );
+    EXPECT( !conn.deviceNeedsUpdate() );
 
     kernel_irr<<<1,1>>>(conn.gpu_object_ptr(), result);
 
     cudaDeviceSynchronize();
 
-    BOOST_CHECK_EQUAL( *result , true );
+    EXPECT( *result == true );
 
-    // copy back, although not strickly needed since the gpu copy does not modify values, 
+    // copy back, although not strickly needed since the gpu copy does not modify values,
     // but for the sake of testing it
     conn.cloneFromDevice();
-    BOOST_CHECK_EQUAL(conn(0,1), 3 IN_FORTRAN);
+    EXPECT(conn(0,1) == 3 IN_FORTRAN);
 
 }
 
-BOOST_AUTO_TEST_CASE( test_multiblock_connectivity )
+CASE( "test_multiblock_connectivity" )
 {
-    
+
     MultiBlockConnectivity conn("mesh");
-    BOOST_CHECK_EQUAL(conn.rows(),0);
-    BOOST_CHECK_EQUAL(conn.maxcols(),0);
+    EXPECT(conn.rows() == 0);
+    EXPECT(conn.maxcols() == 0);
 
     constexpr idx_t vals[6] = {1,3,4,3,7,8};
     bool from_fortran = true;
     conn.add(2, 3, vals, from_fortran);
-    
-    BOOST_CHECK(conn.block(0)(0,0) == 1);
+
+    EXPECT(conn.block(0)(0,0) == 1 IN_FORTRAN);
     bool* result;
     cudaMallocManaged(&result, sizeof(bool));
     *result = true;
 
     conn.cloneToDevice();
-    BOOST_CHECK( conn.isOnDevice() );
+    EXPECT( !conn.deviceNeedsUpdate() );
 
     kernel_multiblock<<<1,1>>>(conn.gpu_object_ptr(), result);
 
     cudaDeviceSynchronize();
 
-    BOOST_CHECK_EQUAL( *result , true );
+    EXPECT( *result == true );
 
-    // copy back, although not strickly needed since the gpu copy does not modify values, 
+    // copy back, although not strickly needed since the gpu copy does not modify values,
     // but for the sake of testing it
     conn.cloneFromDevice();
-    BOOST_CHECK(conn.block(0)(0,0) == 1);
+    EXPECT(conn.block(0)(0,0) == 1 IN_FORTRAN);
 
 }
 
 
 }
+}
+
+int main(int argc, char **argv) {
+    return atlas::test::run( argc, argv );
 }

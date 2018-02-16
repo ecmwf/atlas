@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2017 ECMWF.
+! (C) Copyright 2013 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -40,6 +40,7 @@ END_TESTSUITE_FINALIZE
 
 TEST( test_metadata )
 use fckit_log_module
+use fckit_c_interop_module
 implicit none
 
   integer(c_int) :: intval
@@ -49,12 +50,14 @@ implicit none
   character(len=:), allocatable :: string
   integer(c_int), allocatable :: arr_int32(:)
   real(c_float), allocatable :: arr_real32(:)
-  type(atlas_Metadata) metadata
+  type(atlas_Metadata) :: metadata
   type(fckit_logchannel) :: info
 
   write(*,*) "test_metadata starting"
 
   metadata = atlas_Metadata()
+
+  write(0,*) "metadata%c_ptr() = ", c_ptr_to_loc(metadata%c_ptr())
 
   call metadata%set("true",.True.)
   call metadata%set("false",.False.)

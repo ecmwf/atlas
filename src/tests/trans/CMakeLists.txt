@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2017 ECMWF.
+# (C) Copyright 2013 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -26,8 +26,6 @@ if( HAVE_FCTEST )
 
 endif()
 
-if( ECKIT_HAVE_TESTING )
-
 ecbuild_add_test( TARGET atlas_test_trans
   MPI      4
   SOURCES   test_trans.cc
@@ -47,5 +45,9 @@ ecbuild_add_test( TARGET atlas_test_trans_invtrans_grad
   LIBS      atlas
 )
 
-endif()
+ecbuild_add_test( TARGET atlas_test_transgeneral
+  SOURCES   test_transgeneral.cc
+  LIBS      atlas
+  ENVIRONMENT ATLAS_TRACE_REPORT=1
+)
 

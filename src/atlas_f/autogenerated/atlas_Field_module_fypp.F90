@@ -1,12 +1,13 @@
+#include "atlas/atlas_f.h"
+
 
 
 module atlas_field_module
 
-use fckit_refcounted_module, only : fckit_refcounted
+use fckit_owned_object_module, only : fckit_owned_object
 use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange
+use atlas_Config_module, only: atlas_Config
 implicit none
-
-private :: fckit_refcounted, atlas_code_location, atlas_abort, atlas_throw_outofrange
 
 public :: atlas_Field
 public :: atlas_real
@@ -20,7 +21,7 @@ private
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_Field
+TYPE, extends(fckit_owned_object) :: atlas_Field
 
 ! Purpose :
 ! -------
@@ -54,8 +55,6 @@ contains
   procedure :: rename
   procedure :: set_levels
   procedure :: set_functionspace
-
-  procedure, public :: delete => atlas_Field__delete
 
   procedure, private :: access_host_data_int32_r1
   procedure, private :: access_host_data_int32_r1_shape
@@ -267,13 +266,17 @@ contains
       & access_device_data_logical32_r4_shape, &
       & dummy
 
-  procedure, public :: is_on_host
-  procedure, public :: is_on_device
+  procedure, public :: host_needs_update
+  procedure, public :: device_needs_update
   procedure, public :: clone_to_device
   procedure, public :: clone_from_device
   procedure, public :: sync_host_device
 
   procedure, private :: dummy
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Field__final_auto
+#endif
 
 END TYPE atlas_Field
 
@@ -353,6 +356,10 @@ end interface
 !-------------------------------------------------------------------------------
 
 
+private :: fckit_owned_object
+private :: atlas_code_location, atlas_abort, atlas_throw_outofrange
+private :: atlas_Config
+
 !========================================================
 contains
 !========================================================
@@ -365,33 +372,32 @@ subroutine array_c_to_f_int32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_int), pointer, intent(out) :: array_fptr(:)
-  integer(c_int), pointer :: tmp(:,:)
+  integer(c_int), pointer, intent(inout) :: array_fptr(:)
+  integer(c_int), pointer :: tmp(:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:1)
-  integer :: accumulated, factor, j
+  integer :: eshape(1)
+  integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
-   array_fptr => tmp(1,1:shape(1)) 
+   array_fptr => tmp(1:shape(1)) 
   
   
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -402,33 +408,32 @@ subroutine array_c_to_f_int64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_long), pointer, intent(out) :: array_fptr(:)
-  integer(c_long), pointer :: tmp(:,:)
+  integer(c_long), pointer, intent(inout) :: array_fptr(:)
+  integer(c_long), pointer :: tmp(:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:1)
-  integer :: accumulated, factor, j
+  integer :: eshape(1)
+  integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
-   array_fptr => tmp(1,1:shape(1)) 
+   array_fptr => tmp(1:shape(1)) 
   
   
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -439,33 +444,32 @@ subroutine array_c_to_f_real32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_float), pointer, intent(out) :: array_fptr(:)
-  real(c_float), pointer :: tmp(:,:)
+  real(c_float), pointer, intent(inout) :: array_fptr(:)
+  real(c_float), pointer :: tmp(:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:1)
-  integer :: accumulated, factor, j
+  integer :: eshape(1)
+  integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
-   array_fptr => tmp(1,1:shape(1)) 
+   array_fptr => tmp(1:shape(1)) 
   
   
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -476,33 +480,32 @@ subroutine array_c_to_f_real64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_double), pointer, intent(out) :: array_fptr(:)
-  real(c_double), pointer :: tmp(:,:)
+  real(c_double), pointer, intent(inout) :: array_fptr(:)
+  real(c_double), pointer :: tmp(:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:1)
-  integer :: accumulated, factor, j
+  integer :: eshape(1)
+  integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
-   array_fptr => tmp(1,1:shape(1)) 
+   array_fptr => tmp(1:shape(1)) 
   
   
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -513,33 +516,32 @@ subroutine array_c_to_f_logical32_r1(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  logical, pointer, intent(out) :: array_fptr(:)
-  logical, pointer :: tmp(:,:)
+  logical, pointer, intent(inout) :: array_fptr(:)
+  logical, pointer :: tmp(:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:1)
-  integer :: accumulated, factor, j
+  integer :: eshape(1)
+  integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
-   array_fptr => tmp(1,1:shape(1)) 
+   array_fptr => tmp(1:shape(1)) 
   
   
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -550,33 +552,32 @@ subroutine array_c_to_f_int32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_int), pointer, intent(out) :: array_fptr(:,:)
-  integer(c_int), pointer :: tmp(:,:,:)
+  integer(c_int), pointer, intent(inout) :: array_fptr(:,:)
+  integer(c_int), pointer :: tmp(:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:2)
-  integer :: accumulated, factor, j
+  integer :: eshape(2)
+  integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2)) 
+   array_fptr => tmp(1:shape(1),1:shape(2)) 
   
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -587,33 +588,32 @@ subroutine array_c_to_f_int64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_long), pointer, intent(out) :: array_fptr(:,:)
-  integer(c_long), pointer :: tmp(:,:,:)
+  integer(c_long), pointer, intent(inout) :: array_fptr(:,:)
+  integer(c_long), pointer :: tmp(:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:2)
-  integer :: accumulated, factor, j
+  integer :: eshape(2)
+  integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2)) 
+   array_fptr => tmp(1:shape(1),1:shape(2)) 
   
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -624,33 +624,32 @@ subroutine array_c_to_f_real32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_float), pointer, intent(out) :: array_fptr(:,:)
-  real(c_float), pointer :: tmp(:,:,:)
+  real(c_float), pointer, intent(inout) :: array_fptr(:,:)
+  real(c_float), pointer :: tmp(:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:2)
-  integer :: accumulated, factor, j
+  integer :: eshape(2)
+  integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2)) 
+   array_fptr => tmp(1:shape(1),1:shape(2)) 
   
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -661,33 +660,32 @@ subroutine array_c_to_f_real64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_double), pointer, intent(out) :: array_fptr(:,:)
-  real(c_double), pointer :: tmp(:,:,:)
+  real(c_double), pointer, intent(inout) :: array_fptr(:,:)
+  real(c_double), pointer :: tmp(:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:2)
-  integer :: accumulated, factor, j
+  integer :: eshape(2)
+  integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2)) 
+   array_fptr => tmp(1:shape(1),1:shape(2)) 
   
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -698,33 +696,32 @@ subroutine array_c_to_f_logical32_r2(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  logical, pointer, intent(out) :: array_fptr(:,:)
-  logical, pointer :: tmp(:,:,:)
+  logical, pointer, intent(inout) :: array_fptr(:,:)
+  logical, pointer :: tmp(:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:2)
-  integer :: accumulated, factor, j
+  integer :: eshape(2)
+  integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2)) 
+   array_fptr => tmp(1:shape(1),1:shape(2)) 
   
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -735,33 +732,32 @@ subroutine array_c_to_f_int32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_int), pointer, intent(out) :: array_fptr(:,:,:)
-  integer(c_int), pointer :: tmp(:,:,:,:)
+  integer(c_int), pointer, intent(inout) :: array_fptr(:,:,:)
+  integer(c_int), pointer :: tmp(:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:3)
-  integer :: accumulated, factor, j
+  integer :: eshape(3)
+  integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3)) 
+   array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3)) 
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -772,33 +768,32 @@ subroutine array_c_to_f_int64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_long), pointer, intent(out) :: array_fptr(:,:,:)
-  integer(c_long), pointer :: tmp(:,:,:,:)
+  integer(c_long), pointer, intent(inout) :: array_fptr(:,:,:)
+  integer(c_long), pointer :: tmp(:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:3)
-  integer :: accumulated, factor, j
+  integer :: eshape(3)
+  integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3)) 
+   array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3)) 
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -809,33 +804,32 @@ subroutine array_c_to_f_real32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_float), pointer, intent(out) :: array_fptr(:,:,:)
-  real(c_float), pointer :: tmp(:,:,:,:)
+  real(c_float), pointer, intent(inout) :: array_fptr(:,:,:)
+  real(c_float), pointer :: tmp(:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:3)
-  integer :: accumulated, factor, j
+  integer :: eshape(3)
+  integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3)) 
+   array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3)) 
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -846,33 +840,32 @@ subroutine array_c_to_f_real64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_double), pointer, intent(out) :: array_fptr(:,:,:)
-  real(c_double), pointer :: tmp(:,:,:,:)
+  real(c_double), pointer, intent(inout) :: array_fptr(:,:,:)
+  real(c_double), pointer :: tmp(:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:3)
-  integer :: accumulated, factor, j
+  integer :: eshape(3)
+  integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3)) 
+   array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3)) 
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -883,33 +876,32 @@ subroutine array_c_to_f_logical32_r3(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  logical, pointer, intent(out) :: array_fptr(:,:,:)
-  logical, pointer :: tmp(:,:,:,:)
+  logical, pointer, intent(inout) :: array_fptr(:,:,:)
+  logical, pointer :: tmp(:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:3)
-  integer :: accumulated, factor, j
+  integer :: eshape(3)
+  integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3)) 
+   array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3)) 
   
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -920,33 +912,32 @@ subroutine array_c_to_f_int32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_int), pointer, intent(out) :: array_fptr(:,:,:,:)
-  integer(c_int), pointer :: tmp(:,:,:,:,:)
+  integer(c_int), pointer, intent(inout) :: array_fptr(:,:,:,:)
+  integer(c_int), pointer :: tmp(:,:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:4)
-  integer :: accumulated, factor, j
+  integer :: eshape(4)
+  integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3),1:shape(4)) 
+   array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3),1:shape(4)) 
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -957,33 +948,32 @@ subroutine array_c_to_f_int64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  integer(c_long), pointer, intent(out) :: array_fptr(:,:,:,:)
-  integer(c_long), pointer :: tmp(:,:,:,:,:)
+  integer(c_long), pointer, intent(inout) :: array_fptr(:,:,:,:)
+  integer(c_long), pointer :: tmp(:,:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:4)
-  integer :: accumulated, factor, j
+  integer :: eshape(4)
+  integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3),1:shape(4)) 
+   array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3),1:shape(4)) 
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -994,33 +984,32 @@ subroutine array_c_to_f_real32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_float), pointer, intent(out) :: array_fptr(:,:,:,:)
-  real(c_float), pointer :: tmp(:,:,:,:,:)
+  real(c_float), pointer, intent(inout) :: array_fptr(:,:,:,:)
+  real(c_float), pointer :: tmp(:,:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:4)
-  integer :: accumulated, factor, j
+  integer :: eshape(4)
+  integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3),1:shape(4)) 
+   array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3),1:shape(4)) 
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -1031,33 +1020,32 @@ subroutine array_c_to_f_real64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  real(c_double), pointer, intent(out) :: array_fptr(:,:,:,:)
-  real(c_double), pointer :: tmp(:,:,:,:,:)
+  real(c_double), pointer, intent(inout) :: array_fptr(:,:,:,:)
+  real(c_double), pointer :: tmp(:,:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:4)
-  integer :: accumulated, factor, j
+  integer :: eshape(4)
+  integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3),1:shape(4)) 
+   array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3),1:shape(4)) 
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -1068,45 +1056,43 @@ subroutine array_c_to_f_logical32_r4(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  logical, pointer, intent(out) :: array_fptr(:,:,:,:)
-  logical, pointer :: tmp(:,:,:,:,:)
+  logical, pointer, intent(inout) :: array_fptr(:,:,:,:)
+  logical, pointer :: tmp(:,:,:,:)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:4)
-  integer :: accumulated, factor, j
+  integer :: eshape(4)
+  integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",171))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
   
   
   
-   array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3),1:shape(4)) 
+   array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3),1:shape(4)) 
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 subroutine access_host_data_int32_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:)
+  integer(c_int), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1115,12 +1101,11 @@ subroutine access_device_data_int32_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:)
+  integer(c_int), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1131,12 +1116,11 @@ subroutine access_host_data_int64_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:)
+  integer(c_long), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1145,12 +1129,11 @@ subroutine access_device_data_int64_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:)
+  integer(c_long), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1161,12 +1144,11 @@ subroutine access_host_data_real32_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:)
+  real(c_float), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1175,12 +1157,11 @@ subroutine access_device_data_real32_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:)
+  real(c_float), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1191,12 +1172,11 @@ subroutine access_host_data_real64_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:)
+  real(c_double), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1205,12 +1185,11 @@ subroutine access_device_data_real64_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:)
+  real(c_double), pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1221,12 +1200,11 @@ subroutine access_host_data_logical32_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:)
+  logical, pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1235,12 +1213,11 @@ subroutine access_device_data_logical32_r1(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:)
+  logical, pointer, intent(inout) :: field(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1251,12 +1228,11 @@ subroutine access_host_data_int32_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1265,12 +1241,11 @@ subroutine access_device_data_int32_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1281,12 +1256,11 @@ subroutine access_host_data_int64_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1295,12 +1269,11 @@ subroutine access_device_data_int64_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1311,12 +1284,11 @@ subroutine access_host_data_real32_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1325,12 +1297,11 @@ subroutine access_device_data_real32_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1341,12 +1312,11 @@ subroutine access_host_data_real64_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1355,12 +1325,11 @@ subroutine access_device_data_real64_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1371,12 +1340,11 @@ subroutine access_host_data_logical32_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:)
+  logical, pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1385,12 +1353,11 @@ subroutine access_device_data_logical32_r2(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:)
+  logical, pointer, intent(inout) :: field(:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1401,12 +1368,11 @@ subroutine access_host_data_int32_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1415,12 +1381,11 @@ subroutine access_device_data_int32_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1431,12 +1396,11 @@ subroutine access_host_data_int64_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1445,12 +1409,11 @@ subroutine access_device_data_int64_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1461,12 +1424,11 @@ subroutine access_host_data_real32_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1475,12 +1437,11 @@ subroutine access_device_data_real32_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1491,12 +1452,11 @@ subroutine access_host_data_real64_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1505,12 +1465,11 @@ subroutine access_device_data_real64_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1521,12 +1480,11 @@ subroutine access_host_data_logical32_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1535,12 +1493,11 @@ subroutine access_device_data_logical32_r3(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1551,12 +1508,11 @@ subroutine access_host_data_int32_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1565,12 +1521,11 @@ subroutine access_device_data_int32_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1581,12 +1536,11 @@ subroutine access_host_data_int64_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1595,12 +1549,11 @@ subroutine access_device_data_int64_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1611,12 +1564,11 @@ subroutine access_host_data_real32_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1625,12 +1577,11 @@ subroutine access_device_data_real32_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1641,12 +1592,11 @@ subroutine access_host_data_real64_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1655,12 +1605,11 @@ subroutine access_device_data_real64_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1671,12 +1620,11 @@ subroutine access_host_data_logical32_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1685,12 +1633,11 @@ subroutine access_device_data_logical32_r4(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:,:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -1701,13 +1648,12 @@ subroutine access_host_data_int32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:)
+  integer(c_int), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1716,13 +1662,12 @@ subroutine access_device_data_int32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:)
+  integer(c_int), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1732,13 +1677,12 @@ subroutine access_host_data_int64_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:)
+  integer(c_long), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1747,13 +1691,12 @@ subroutine access_device_data_int64_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:)
+  integer(c_long), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1763,13 +1706,12 @@ subroutine access_host_data_real32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:)
+  real(c_float), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1778,13 +1720,12 @@ subroutine access_device_data_real32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:)
+  real(c_float), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1794,13 +1735,12 @@ subroutine access_host_data_real64_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:)
+  real(c_double), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1809,13 +1749,12 @@ subroutine access_device_data_real64_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:)
+  real(c_double), pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1825,13 +1764,12 @@ subroutine access_host_data_logical32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:)
+  logical, pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1840,13 +1778,12 @@ subroutine access_device_data_logical32_r1_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:)
+  logical, pointer, intent(inout) :: field(:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1856,13 +1793,12 @@ subroutine access_host_data_int32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1871,13 +1807,12 @@ subroutine access_device_data_int32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1887,13 +1822,12 @@ subroutine access_host_data_int64_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1902,13 +1836,12 @@ subroutine access_device_data_int64_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1918,13 +1851,12 @@ subroutine access_host_data_real32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1933,13 +1865,12 @@ subroutine access_device_data_real32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1949,13 +1880,12 @@ subroutine access_host_data_real64_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1964,13 +1894,12 @@ subroutine access_device_data_real64_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1980,13 +1909,12 @@ subroutine access_host_data_logical32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:)
+  logical, pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -1995,13 +1923,12 @@ subroutine access_device_data_logical32_r2_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:)
+  logical, pointer, intent(inout) :: field(:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2011,13 +1938,12 @@ subroutine access_host_data_int32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2026,13 +1952,12 @@ subroutine access_device_data_int32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2042,13 +1967,12 @@ subroutine access_host_data_int64_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2057,13 +1981,12 @@ subroutine access_device_data_int64_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2073,13 +1996,12 @@ subroutine access_host_data_real32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2088,13 +2010,12 @@ subroutine access_device_data_real32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2104,13 +2025,12 @@ subroutine access_host_data_real64_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2119,13 +2039,12 @@ subroutine access_device_data_real64_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2135,13 +2054,12 @@ subroutine access_host_data_logical32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2150,13 +2068,12 @@ subroutine access_device_data_logical32_r3_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2166,13 +2083,12 @@ subroutine access_host_data_int32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2181,13 +2097,12 @@ subroutine access_device_data_int32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_int), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2197,13 +2112,12 @@ subroutine access_host_data_int64_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2212,13 +2126,12 @@ subroutine access_device_data_int64_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  integer(c_long), pointer, intent(out) :: field(:,:,:,:)
+  integer(c_long), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_long_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2228,13 +2141,12 @@ subroutine access_host_data_real32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2243,13 +2155,12 @@ subroutine access_device_data_real32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_float), pointer, intent(out) :: field(:,:,:,:)
+  real(c_float), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_float_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2259,13 +2170,12 @@ subroutine access_host_data_real64_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2274,13 +2184,12 @@ subroutine access_device_data_real64_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  real(c_double), pointer, intent(out) :: field(:,:,:,:)
+  real(c_double), pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_double_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2290,13 +2199,12 @@ subroutine access_host_data_logical32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2305,13 +2213,12 @@ subroutine access_device_data_logical32_r4_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  logical, pointer, intent(out) :: field(:,:,:,:)
+  logical, pointer, intent(inout) :: field(:,:,:,:)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_int_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -2320,6 +2227,7 @@ end subroutine
 subroutine dummy(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
+  FCKIT_SUPPRESS_UNUSED(this)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -2332,7 +2240,7 @@ integer function atlas_real(kind)
   else if (kind == c_float) then
     atlas_real = ATLAS_KIND_REAL32
   else
-    call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",279))
+    call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",282))
   end if
 end function
 
@@ -2348,7 +2256,7 @@ integer function atlas_integer(kind)
     else if (kind == c_long) then
       atlas_integer = ATLAS_KIND_INT64
     else
-      call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",295))
+      call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",298))
     end if
   end if
 end function
@@ -2358,6 +2266,7 @@ end function
 integer function atlas_logical(kind)
   integer, optional :: kind
   atlas_logical = ATLAS_KIND_INT32
+  FCKIT_SUPPRESS_UNUSED(kind)
 end function
 
 !-------------------------------------------------------------------------------
@@ -2374,7 +2283,7 @@ function atlas_data_type(kind)
   else if( kind == ATLAS_KIND_REAL64 ) then
     atlas_data_type = "real64"
   else
-    call atlas_abort("cannot convert kind to data_type",atlas_code_location("atlas_Field_module.F90",321))
+    call atlas_abort("cannot convert kind to data_type",atlas_code_location("atlas_Field_module.F90",325))
   endif
 end function
 
@@ -2385,13 +2294,13 @@ function atlas_Field__cptr(cptr) result(field)
   type(atlas_Field) :: field
   type(c_ptr), intent(in) :: cptr
   call field%reset_c_ptr( cptr )
+  call field%return()
 end function
 
 !-------------------------------------------------------------------------------
 
 function atlas_Field__create(params) result(field)
   use atlas_field_c_binding
-  use atlas_Config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Config), intent(in) :: params
   field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
@@ -2402,7 +2311,6 @@ end function
 
 function atlas_Field__create_name_kind_shape_int32(name,kind,shape) result(field)
   use atlas_field_c_binding
-  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -2427,7 +2335,6 @@ end function
 
 function atlas_Field__create_name_kind_shape_int64(name,kind,shape) result(field)
   use atlas_field_c_binding
-  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_long
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -2452,7 +2359,6 @@ end function
 
 function atlas_Field__create_kind_shape_int32(kind,shape) result(field)
   use atlas_field_c_binding
-  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   integer(c_int), intent(in) :: kind
@@ -2473,7 +2379,6 @@ end function
 
 function atlas_Field__create_kind_shape_int64(kind,shape) result(field)
   use atlas_field_c_binding
-  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_int, c_long
   type(atlas_Field) :: field
   integer(c_int), intent(in) :: kind
@@ -3010,17 +2915,6 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Field__delete(this)
-  use atlas_field_c_binding
-  class(atlas_Field), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__Field__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine
-
-!-------------------------------------------------------------------------------
-
 function Field__name(this) result(field_name)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr
@@ -3036,9 +2930,10 @@ end function Field__name
 
 function Field__functionspace(this) result(functionspace)
   use atlas_field_c_binding
-  type(fckit_refcounted) :: functionspace
+  type(fckit_owned_object) :: functionspace
   class(atlas_Field), intent(in) :: this
   call functionspace%reset_c_ptr( atlas__Field__functionspace(this%c_ptr()) )
+  call functionspace%return()
 end function Field__functionspace
 
 !-------------------------------------------------------------------------------
@@ -3172,33 +3067,33 @@ end subroutine
 subroutine set_functionspace(this,functionspace)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
-  class(fckit_refcounted), intent(in) :: functionspace
+  class(fckit_owned_object), intent(in) :: functionspace
   call atlas__field__set_functionspace(this%c_ptr(),functionspace%c_ptr())
 end subroutine
 
 !-------------------------------------------------------------------------------
 
-function is_on_host(this)
+function host_needs_update(this)
   use atlas_field_c_binding
-  logical :: is_on_host
+  logical :: host_needs_update
   class(atlas_Field), intent(in) :: this
-  if( atlas__Field__is_on_host(this%c_ptr()) == 1 ) then
-    is_on_host = .true.
+  if( atlas__Field__host_needs_update(this%c_ptr()) == 1 ) then
+    host_needs_update = .true.
   else
-    is_on_host = .false.
+    host_needs_update = .false.
   endif
 end function
 
 !-------------------------------------------------------------------------------
 
-function is_on_device(this)
+function device_needs_update(this)
   use atlas_field_c_binding
-  logical :: is_on_device
+  logical :: device_needs_update
   class(atlas_Field), intent(in) :: this
-  if( atlas__Field__is_on_device(this%c_ptr()) == 1 ) then
-    is_on_device = .true.
+  if( atlas__Field__device_needs_update(this%c_ptr()) == 1 ) then
+    device_needs_update = .true.
   else
-    is_on_device = .false.
+    device_needs_update = .false.
   endif
 end function
 
@@ -3224,6 +3119,19 @@ subroutine sync_host_device(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
   call atlas__Field__sync_host_device(this%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Field__final_auto(this)
+  type(atlas_Field) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Field__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
 !-------------------------------------------------------------------------------

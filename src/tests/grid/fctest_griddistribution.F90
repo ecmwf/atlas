@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2017 ECMWF.
+! (C) Copyright 2013 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -61,7 +61,6 @@ TEST( test_griddist )
   type(atlas_Output) :: gmsh
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_GridDistribution) :: griddistribution
-  character(len=1024) :: msg
 
   integer, allocatable :: part(:)
   integer :: jnode
@@ -80,12 +79,15 @@ TEST( test_griddist )
 
   griddistribution = atlas_GridDistribution(part, part0=1)
 
-  write(msg,*) "owners fort",griddistribution%owners()
-  call atlas_log%info(msg)
+  FCTEST_CHECK_EQUAL( grid%owners(), 1 )
 
   meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid,griddistribution)
+  FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
+
   call griddistribution%final()
+
+  FCTEST_CHECK_EQUAL( grid%owners(), 2 )
 
   gmsh = atlas_output_Gmsh("testf3.msh")
   call gmsh%write(mesh)
@@ -93,6 +95,7 @@ TEST( test_griddist )
   deallocate(part)
 
   call mesh%final()
+  FCTEST_CHECK_EQUAL( grid%owners(), 1 )
   call gmsh%final()
   call grid%final()
   call meshgenerator%final()

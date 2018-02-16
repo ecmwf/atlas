@@ -1,17 +1,12 @@
+# (C) Copyright 2013 ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation nor
+# does it submit to any jurisdiction.
 
-### fortranize function
-
-function( fortranize file )
-  unset( result )
-  file( STRINGS "${file}" lines )
-  foreach( i IN LISTS lines )
-  string( REGEX REPLACE "^/\\* (#undef .*) \\*/$" "! \\1" i "${i}" )
-  set( result "${result}${i}\n" )
-  endforeach()
-  file( WRITE "${file}" "${result}" )
-endfunction()
-
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/defines.h.in
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/atlas_f.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h )
 
 install( FILES
@@ -153,7 +148,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/interpolation/Interpolation.h
       MODULE    atlas_interpolation_c_binding
       OUTPUT    interpolation_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/ifs/TransIFS.h
+  MODULE    atlas_trans_c_binding
+  OUTPUT    trans_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Metadata.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Config.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/detail/GmshIO.h)
@@ -165,6 +162,10 @@ generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_read_file.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/Library.h)
 
 preprocess_fypp( atlas_f_src field/atlas_Field_module.F90 )
+
+## gridtools_storage_files ##
+add_custom_target( pre_processed_files SOURCES field/atlas_Field_module.F90 )
+
 ecbuild_debug_var( atlas_f_src )
 
 ### atlas fortran lib

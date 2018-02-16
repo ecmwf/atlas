@@ -1,3 +1,4 @@
+#include "atlas/atlas_f.h"
 
 module atlas_haloexchange_module
 
@@ -65,6 +66,10 @@ contains
       & HaloExchange__execute_real64_r4
 
   procedure, public :: delete => atlas_HaloExchange__delete
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_HaloExchange__final_auto
+#endif
 
 END TYPE atlas_HaloExchange
 !------------------------------------------------------------------------------
@@ -272,6 +277,19 @@ subroutine HaloExchange__execute_real64_r4(this, field_data)
   call atlas__HaloExchange__execute_strided_double( this%c_ptr(), view, &
     & strides, extents, rank )
 end subroutine HaloExchange__execute_real64_r4
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_HaloExchange__final_auto(this)
+  type(atlas_HaloExchange) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_HaloExchange__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 ! -----------------------------------------------------------------------------
 

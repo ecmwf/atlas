@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2016 ECMWF.
+! (C) Copyright 2013 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -11,6 +11,8 @@
 
 #include "fckit/fctest.h"
 
+
+
 ! -----------------------------------------------------------------------------
 
 module fcta_Field_gpu_fxt
@@ -20,22 +22,22 @@ implicit none
 
 contains
 
+subroutine module_acc_routine(view)
+
+  implicit none
+  real(4), intent(inout) :: view(:,:)
+
+  !$acc data present(view)
+  !$acc kernels
+  view(1,1) = 4.
+  !$acc end kernels
+  !$acc end data
+
+end subroutine module_acc_routine
+
 end module
 
-
-subroutine test_res(ie, je, v1, vres)
-  implicit none
-  integer :: ie, je
-  real(8), intent(in) :: v1(ie, je)
-  real(8), intent(out) :: vres
-  integer :: i,j
-
- !$acc kernels deviceptr(v1) copyout(vres)
-     vres = v1(1,1)
- !$acc end kernels
-
-end subroutine test_res
-
+! -----------------------------------------------------------------------------
 
 ! -----------------------------------------------------------------------------
 
@@ -56,37 +58,52 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_host_data )
+implicit none
 type(atlas_Field) :: field
-real(8), pointer :: host(:,:)
-real(8), pointer :: device_ptr(:,:)
-real(8),pointer :: v1(:, :)
-real(8) :: vres
+real(4), pointer :: view(:,:)
 
-field = atlas_Field(kind=atlas_real(8),shape=[10,5])
+!!! WARNING !!! Without this interface, there is a runtime error !!!
+interface
+  subroutine external_acc_routine(view)
+    real(4), intent(inout) :: view(:,:)
+  end subroutine external_acc_routine
+end interface
 
-FCTEST_CHECK( field%is_on_host() )
-FCTEST_CHECK( field%is_on_device() )
+field = atlas_Field(kind=atlas_real(8),shape=[5,3])
+
+call field%data(view)
+view(:,:) = 0
+view(1,1) = 1
+call field%clone_to_device()
+
+!$acc data present(view)
+!$acc kernels
+view(1,1) = 2.
+!$acc end kernels
+!$acc end data
+
+FCTEST_CHECK_EQUAL( view(1,1), 1. )
+call field%clone_from_device()
+FCTEST_CHECK_EQUAL( view(1,1), 2. )
+
+view(1,1) = 3.
 
 call field%clone_to_device()
-call field%host_data(host)
-call field%device_data(device_ptr)
 
-call test_res(10,5,device_ptr, vres)
+write(0,*) "Calling module_acc_routine ..."
+call module_acc_routine(view)
+write(0,*) "Calling module_acc_routine ... done"
 
+write(0,*) "Calling external_acc_routine ..."
+call external_acc_routine(view)
+write(0,*) "Calling external_acc_routine ... done"
 
-!! acc kernels deviceptr(v1)  copyout(vres)
-!  v1(2,2) = 3.5
-!  vres = 2!v1(2,2)
-!! acc end kernels
-
-!FCTEST_CHECK_EQUAL( val, 3.5_c_float )
-
-
-FCTEST_CHECK( field%is_on_device() )
+FCTEST_CHECK_EQUAL( view(1,1), 3. )
+call field%clone_from_device()
+FCTEST_CHECK_EQUAL( view(1,1), 4. )
 
 call field%final()
 END_TEST
-
 
 ! -----------------------------------------------------------------------------
 

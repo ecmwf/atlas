@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2017 ECMWF.
+! (C) Copyright 2013 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -41,6 +41,7 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_nodes )
+#if 1
 type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
@@ -129,13 +130,16 @@ call template%final()
 call fs%final()
 call mesh%final()
 call grid%final()
-
+#else
+#warning test test_nodes disabled
+#endif
 END_TEST
 
 ! -----------------------------------------------------------------------------
 
 
 TEST( test_nodescolumns )
+#if 1
 type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
@@ -228,15 +232,23 @@ FCTEST_CHECK_EQUAL( field%name() , "" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
+FCTEST_CHECK_EQUAL( fs%owners(), 1 )
 call fs%final()
-call mesh%final()
-call grid%final()
 
+FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
+call mesh%final()
+
+FCTEST_CHECK_EQUAL( grid%owners(), 1 )
+call grid%final()
+#else
+#warning test test_nodescolumns disabled
+#endif
 END_TEST
 
 ! -----------------------------------------------------------------------------
 
 TEST( test_collectives )
+#if 1
 use fckit_mpi_module
 type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
@@ -350,7 +362,7 @@ call fs2d%final()
 
 call mesh%final()
 call grid%final()
-
+#endif
 END_TEST
 
 
@@ -360,6 +372,7 @@ END_TEST
 
 
 TEST( test_edges )
+#if 1
 type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
@@ -382,7 +395,6 @@ edges = fs%edges()
 FCTEST_CHECK_EQUAL( edges%owners(), 3 )
 nb_edges = fs%nb_edges()
 write(msg,*) "nb_edges = ",nb_edges; call atlas_log%info(msg)
-
 field = fs%create_field(atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
@@ -473,10 +485,13 @@ call fs%final()
 call edges%final()
 call mesh%final()
 call grid%final()
-
+#else
+#warning test test_edges disabled
+#endif
 END_TEST
 
 TEST( test_structuredcolumns )
+#if 1
 type(atlas_StructuredGrid) :: grid
 type(atlas_functionspace_StructuredColumns) :: fs
 type(atlas_functionspace) :: fs_base
@@ -491,9 +506,12 @@ integer, parameter :: XX=1
 
 grid = atlas_StructuredGrid("O8")
 fs = atlas_functionspace_StructuredColumns(grid,halo=2)
+write(0,*) __LINE__
 
 field = fs%create_field(name="field",kind=atlas_real(8))
+FCTEST_CHECK_EQUAL( field%owners(), 1 )
 field_xy = fs%xy()
+FCTEST_CHECK_EQUAL( field_xy%owners(), 2 )
 call field%host_data(x)
 call field_xy%host_data(xy)
 
@@ -510,8 +528,9 @@ enddo
 
 call fs%halo_exchange(field)
 
-
+FCTEST_CHECK_EQUAL( field_xy%owners(), 2 )
 fs = atlas_functionspace_StructuredColumns(grid,levels=5)
+
 field = fs%create_field(atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
@@ -524,12 +543,16 @@ fs_base = field%functionspace()
 write(0,*) "after: name = " , fs%name()
 write(0,*) "after: owners = " , fs%owners()
 
+FCTEST_CHECK_EQUAL( field%owners(), 1 )
 call field%final()
-
-
+FCTEST_CHECK_EQUAL( field_xy%owners(), 1 )
 call field_xy%final()
 call fs%final()
+call fs_base%final()
 call grid%final()
+#else
+#warning test test_structuredcolumns disabled
+#endif
 END_TEST
 
 

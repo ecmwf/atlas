@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2017 ECMWF.
+# (C) Copyright 2013 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -36,8 +36,6 @@ if( HAVE_FCTEST )
 
 endif()
 
-if( ECKIT_HAVE_TESTING )
-
 ecbuild_add_test( TARGET atlas_test_parfields
   MPI        2
   CONDITION  ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
@@ -62,23 +60,25 @@ ecbuild_add_test( TARGET atlas_test_distmesh
 ecbuild_add_test(
   TARGET      atlas_test_cgal_mesh_gen_from_points
   SOURCES     test_cgal_mesh_gen_from_points.cc
-  CONDITION   HAVE_TESSELATION
-  LIBS        atlas)
+  CONDITION   ATLAS_HAVE_TESSELATION
+  LIBS        atlas
+)
 
-foreach( test accumulate_facets connectivity elements ll meshgen3d polygon rgg )
+ecbuild_add_test(
+  TARGET atlas_test_accumulate_facets
+  SOURCES test_accumulate_facets.cc
+  LIBS atlas
+)
+
+foreach( test connectivity elements ll meshgen3d rgg )
   ecbuild_add_test( TARGET atlas_test_${test}
-    BOOST
     SOURCES test_${test}.cc
     LIBS atlas
   )
 endforeach()
 
-endif()
-
 atlas_add_cuda_test(
   TARGET atlas_test_connectivity_kernel
-  BOOST
   SOURCES test_connectivity_kernel.cu
   LIBS atlas
 )
-

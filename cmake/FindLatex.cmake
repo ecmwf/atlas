@@ -1,4 +1,4 @@
-# © Copyright 1996-2017 ECMWF.
+# (C) Copyright 2013 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,20 +9,20 @@
 ###############################################################################
 
 # find latex libraries
-FIND_PROGRAM (PDFLATEX  
-              NAMES pdflatex 
+FIND_PROGRAM (PDFLATEX
+              NAMES pdflatex
               PATHS /usr/local/share/apps/TeXLive/2014/bin/x86_64-linux/)
-FIND_PROGRAM (BIBTEX  
-              NAMES bibtex 
+FIND_PROGRAM (BIBTEX
+              NAMES bibtex
               PATHS /usr/local/share/apps/TeXLive/2014/bin/x86_64-linux/)
-FIND_PROGRAM (MAKEINDEX  
-              NAMES makeindex 
+FIND_PROGRAM (MAKEINDEX
+              NAMES makeindex
               PATHS /usr/local/share/apps/TeXLive/2014/bin/x86_64-linux/)
-FIND_PROGRAM (HTLATEX  
-              NAMES htlatex 
+FIND_PROGRAM (HTLATEX
+              NAMES htlatex
               PATHS /usr/local/share/apps/TeXLive/2014/bin/x86_64-linux/)
 
-if ( PDFLATEX AND BIBTEX AND MAKEINDEX AND HTLATEX ) 
+if ( PDFLATEX AND BIBTEX AND MAKEINDEX AND HTLATEX )
     set( LATEX_FOUND TRUE )
 endif()
 

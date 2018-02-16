@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2017 ECMWF.
+! (C) Copyright 2013 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -43,6 +43,7 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_state_fields )
+#if 1
 type(atlas_State) :: state
 type(atlas_Field) :: temperature_field
 type(atlas_Field) :: pressure_field
@@ -63,11 +64,13 @@ call state%add( atlas_Field(shape=[20,10,3], kind=atlas_real(c_float),  name="pr
 
 ! Check how many fields we have
 write(msg,'(A,I0,A)') "The state contains ",state%size()," fields."; call atlas_log%info(msg)
+FCTEST_CHECK_EQUAL( state%size(), 2 )
 
 ! Check if wind field exists
 if( .not. state%has("wind") ) then
   write(msg,'(A)') "The state does not contain the wind field"; call atlas_log%info(msg)
 endif
+FCTEST_CHECK( .not. state%has("wind") )
 
 ! Print existing fields info
 write(msg,'(A)') "The state contains the fields:"; call atlas_log%info(msg)
@@ -101,13 +104,14 @@ FCTEST_CHECK(state%has("pressure") .eqv. .False.)
 
 ! Delete the state
 call state%final()
-
+#endif
 END_TEST
 
 ! -----------------------------------------------------------------------------
 
 
 TEST( test_state_factory )
+#if 1
 type(atlas_State) :: state
 
 ! Create a new state
@@ -115,12 +119,13 @@ state = atlas_State()
 
 ! Delete the state
 call state%final()
-
+#endif
 END_TEST
 
 ! -----------------------------------------------------------------------------
 
 TEST( test_state_metadata )
+#if 1
 type(atlas_State) :: state
 type(atlas_Metadata) :: state_metadata
 
@@ -134,7 +139,7 @@ call state_metadata%set("integer",1)
 
 ! Delete the state
 call state%final()
-
+#endif
 END_TEST
 
 ! -----------------------------------------------------------------------------

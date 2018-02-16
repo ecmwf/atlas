@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2017 ECMWF.
+# (C) Copyright 2013 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -6,14 +6,10 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-if( ECKIT_HAVE_TESTING )
-
 ecbuild_add_test( TARGET atlas_test_fvm_nabla
   SOURCES   test_fvm_nabla.cc
   LIBS      atlas
 )
-
-endif()
 
 if( HAVE_FCTEST)
   add_fctest( TARGET atlas_fctest_fvm_nabla

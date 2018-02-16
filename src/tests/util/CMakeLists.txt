@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2017 ECMWF.
+# (C) Copyright 2013 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -36,17 +36,12 @@ if( HAVE_FCTEST )
 
 endif()
 
-if( ECKIT_HAVE_TESTING )
-
-ecbuild_add_test( TARGET atlas_test_flags
-  SOURCES  test_flags.cc
-  LIBS     atlas
-)
-
-ecbuild_add_test( TARGET atlas_test_indexview
-  SOURCES  test_indexview.cc
-  LIBS     atlas
-)
+foreach( test earth flags footprint indexview polygon )
+  ecbuild_add_test( TARGET atlas_test_${test}
+    SOURCES test_${test}.cc
+    LIBS atlas
+  )
+endforeach()
 
 ecbuild_add_test( TARGET atlas_test_vector
   SOURCES  test_vector.cc
@@ -60,16 +55,4 @@ ecbuild_add_test( TARGET atlas_test_metadata
   SOURCES    test_metadata.cc
   LIBS       atlas
 )
-
-ecbuild_add_test( TARGET atlas_test_footprint
-  SOURCES test_footprint.cc
-  LIBS    atlas
-)
-
-ecbuild_add_test( TARGET atlas_test_earth
-  SOURCES test_earth.cc
-  LIBS    atlas
-)
-
-endif()
 

@@ -3,9 +3,6 @@
 
 program example_fortran
 use atlas_module
-#ifdef ATLAS_HAVE_OMP
-use omp_lib
-#endif
 implicit none
 
 integer j
@@ -23,7 +20,7 @@ call atlas_library%initialise()
 
 call atlas_log%set_fortran_unit(6)
 
-#ifdef ATLAS_HAVE_OMP
+#if ATLAS_HAVE_OMP
 call atlas_log%info("OpenMP enabled")
 #endif
 

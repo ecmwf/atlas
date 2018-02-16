@@ -1,18 +1,19 @@
+#include "atlas/atlas_f.h"
 
 module atlas_Method_module
 
-use fckit_refcounted_module, only : fckit_refcounted
+use fckit_owned_object_module, only : fckit_owned_object
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 
 public :: atlas_Method
 
 private
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_Method
+TYPE, extends(fckit_owned_object) :: atlas_Method
 
 ! Purpose :
 ! -------
@@ -31,12 +32,9 @@ TYPE, extends(fckit_refcounted) :: atlas_Method
 !------------------------------------------------------------------------------
 contains
   procedure, public :: name => atlas_Method__name
-  procedure, public :: delete => atlas_Method__delete
-  procedure, public :: copy => atlas_Method__copy
-#ifdef FORTRAN_SUPPORTS_FINAL
-  final :: atlas_Method__final
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Method__final_auto
 #endif
-
 END TYPE atlas_Method
 
 interface atlas_Method
@@ -47,35 +45,13 @@ end interface
 contains
 !========================================================
 
-function atlas_Method__cptr(cptr) result(Method)
+function atlas_Method__cptr(cptr) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
-  type(atlas_Method) :: Method
+  type(atlas_Method) :: this
   type(c_ptr), intent(in) :: cptr
-  call Method%reset_c_ptr( cptr )
+  call this%reset_c_ptr( cptr )
+  call this%return()
 end function
-
-#ifdef FORTRAN_SUPPORTS_FINAL
-subroutine atlas_Method__final(this)
-  type(atlas_Method), intent(inout) :: this
-  call this%final()
-end subroutine
-#endif
-
-subroutine atlas_Method__delete(this)
-  use atlas_Method_c_binding
-  class(atlas_Method), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__Method__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine atlas_Method__delete
-
-
-subroutine atlas_Method__copy(this,obj_in)
-  class(atlas_Method), intent(inout) :: this
-  class(fckit_refcounted), target, intent(in) :: obj_in
-end subroutine
-
 
 function atlas_Method__name(this) result(name)
   use atlas_Method_c_binding
@@ -87,6 +63,20 @@ function atlas_Method__name(this) result(name)
   name_c_str = atlas__Method__name(this%c_ptr())
   name = c_ptr_to_string(name_c_str)
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Method__final_auto(this)
+  type(atlas_Method) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Method__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
 
 end module atlas_Method_module
 

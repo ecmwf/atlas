@@ -1,5 +1,3 @@
-! (C) Copyright 2013-2015 ECMWF.
-
 #include "atlas/atlas_f.h"
 
 module atlas_module
@@ -96,7 +94,7 @@ use atlas_Checksum_module, only: &
 use atlas_Mesh_module, only: &
     & atlas_Mesh
 use atlas_Grid_module, only: &
-    & atlas_Grid, &
+    & atlas_Grid , &
     & atlas_StructuredGrid, &
     & atlas_GaussianGrid, &
     & atlas_ReducedGaussianGrid, &
@@ -188,12 +186,9 @@ subroutine atlas_init( comm )
   use atlas_library_c_binding
   use iso_fortran_env, only : stdout => output_unit
   use fckit_main_module, only: fckit_main
-  use fckit_mpi_module, only : fckit_mpi_comm
   use atlas_mpi_module, only : atlas_mpi_set_comm
 
   integer, intent(in), optional :: comm
-  type(fckit_mpi_comm) :: world
-  integer :: output_unit
 
   if( .not. fckit_main%ready() ) then
     call fckit_main%initialise()

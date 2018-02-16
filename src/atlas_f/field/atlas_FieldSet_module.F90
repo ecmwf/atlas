@@ -1,22 +1,19 @@
+#include "atlas/atlas_f.h"
 
 module atlas_FieldSet_module
 
-use fckit_refcounted_module, only: fckit_refcounted
+use fckit_owned_object_module, only: fckit_owned_object
 
 implicit none
 
-private :: fckit_refcounted
+private :: fckit_owned_object
 
 public :: atlas_FieldSet
 
 private
 
-!-----------------------------
-! atlas_Mesh                 !
-!-----------------------------
-
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_FieldSet
+TYPE, extends(fckit_owned_object) :: atlas_FieldSet
 
 ! Purpose :
 ! -------
@@ -42,7 +39,10 @@ contains
   procedure, private :: field_by_idx_size_t
   procedure, public :: add
   generic :: field => field_by_name, field_by_idx_int, field_by_idx_size_t
-  procedure, public :: delete
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_FieldSet__final_auto
+#endif
 END TYPE atlas_FieldSet
 !------------------------------------------------------------------------------
 
@@ -65,6 +65,7 @@ function atlas_FieldSet__cptr(cptr) result(fieldset)
   type(atlas_FieldSet) :: fieldset
   type(c_ptr), intent(in) :: cptr
   call fieldset%reset_c_ptr( cptr )
+  call fieldset%return()
 end function
 
 function atlas_FieldSet__ctor(name) result(fieldset)
@@ -79,15 +80,6 @@ function atlas_FieldSet__ctor(name) result(fieldset)
   endif
   call fieldset%return()
 end function
-
-subroutine delete(this)
-  use atlas_fieldset_c_binding
-  class(atlas_FieldSet), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__FieldSet__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine
 
 subroutine add(this,field)
   use atlas_fieldset_c_binding
@@ -153,6 +145,19 @@ function field_by_idx_int(this,idx) result(field)
   field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), int(idx-1,c_size_t) ) ) ! C index
   call field%return()
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_FieldSet__final_auto(this)
+  type(atlas_FieldSet) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_FieldSet__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
 
 ! ----------------------------------------------------------------------------------------
 

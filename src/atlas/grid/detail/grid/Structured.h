@@ -1,26 +1,24 @@
 /*
- * (C) Copyright 1996-2016 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
-
 
 #pragma once
 
-#include <memory>
 #include <array>
+#include <memory>
 
 #include "eckit/memory/Builder.h"
 #include "eckit/utils/Hash.h"
-#include "atlas/grid/detail/grid/Grid.h"
-#include "atlas/util/Config.h"
 
 #include "atlas/grid/Spacing.h"
-
+#include "atlas/grid/detail/grid/Grid.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace grid {
@@ -37,122 +35,171 @@ namespace grid {
  * such distribution can be represented with this class
  */
 class Structured : public Grid {
+public:
+    class IteratorXY : public Grid::IteratorXY {
+    public:
+        IteratorXY( const Structured& grid, bool begin = true ) : grid_( grid ), i_( 0 ), j_( begin ? 0 : grid.ny() ) {}
+
+        virtual bool next( PointXY& xy ) {
+            if ( j_ < grid_.ny() && i_ < grid_.nx( j_ ) ) {
+                xy = grid_.xy( i_++, j_ );
+
+                if ( i_ == grid_.nx( j_ ) ) {
+                    j_++;
+                    i_ = 0;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        virtual const PointXY operator*() const { return grid_.xy( i_, j_ ); }
+
+        virtual const Grid::IteratorXY& operator++() {
+            ++i_;
+            if ( i_ == grid_.nx( j_ ) ) {
+                ++j_;
+                i_ = 0;
+            }
+            return *this;
+        }
+
+        virtual bool operator==( const Grid::IteratorXY& other ) const {
+            return j_ == static_cast<const IteratorXY&>( other ).j_ && i_ == static_cast<const IteratorXY&>( other ).i_;
+        }
+
+        virtual bool operator!=( const Grid::IteratorXY& other ) const {
+            return i_ != static_cast<const IteratorXY&>( other ).i_ || j_ != static_cast<const IteratorXY&>( other ).j_;
+        }
+
+    private:
+        const Structured& grid_;
+        size_t i_;
+        size_t j_;
+    };
+
+    class IteratorXYPredicated : public Grid::IteratorXY {
+    public:
+        IteratorXYPredicated( const Structured& grid, Grid::IteratorXY::Predicate p, bool begin = true ) :
+            grid_( grid ),
+            p_( p ),
+            i_( 0 ),
+            j_( begin ? 0 : grid.ny() ),
+            n_( 0 ),
+            size_( grid.size() ) {
+            if ( begin ) {
+                while ( not p_( n_ ) && n_ < size_ ) {
+                    ++i_;
+                    if ( i_ == grid_.nx( j_ ) ) {
+                        ++j_;
+                        i_ = 0;
+                    }
+                    ++n_;
+                }
+            }
+        }
+
+        virtual bool next( PointXY& xy ) {
+            NOTIMP;
+
+            if ( j_ < grid_.ny() && i_ < grid_.nx( j_ ) ) {
+                xy = grid_.xy( i_++, j_ );
+
+                if ( i_ == grid_.nx( j_ ) ) {
+                    j_++;
+                    i_ = 0;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        virtual const PointXY operator*() const { return grid_.xy( i_, j_ ); }
+
+        virtual const Grid::IteratorXY& operator++() {
+            do {
+                ++i_;
+                if ( i_ == grid_.nx( j_ ) ) {
+                    ++j_;
+                    i_ = 0;
+                }
+                ++n_;
+                if ( n_ == size_ ) return *this;
+            } while ( not p_( n_ ) );
+            return *this;
+        }
+
+        virtual bool operator==( const Grid::IteratorXY& other ) const {
+            return j_ == static_cast<const IteratorXYPredicated&>( other ).j_ &&
+                   i_ == static_cast<const IteratorXYPredicated&>( other ).i_;
+        }
+
+        virtual bool operator!=( const Grid::IteratorXY& other ) const {
+            return i_ != static_cast<const IteratorXYPredicated&>( other ).i_ ||
+                   j_ != static_cast<const IteratorXYPredicated&>( other ).j_;
+        }
+
+    private:
+        Grid::IteratorXY::Predicate p_;
+        const Structured& grid_;
+        size_t i_;
+        size_t j_;
+        size_t n_;
+        size_t size_;
+    };
+
+    class IteratorLonLat : public Grid::IteratorLonLat {
+    public:
+        IteratorLonLat( const Structured& grid, bool begin = true ) :
+            grid_( grid ),
+            i_( 0 ),
+            j_( begin ? 0 : grid.ny() ) {}
+
+        virtual bool next( PointLonLat& lonlat ) {
+            if ( j_ < grid_.ny() && i_ < grid_.nx( j_ ) ) {
+                lonlat = grid_.lonlat( i_++, j_ );
+
+                if ( i_ == grid_.nx( j_ ) ) {
+                    j_++;
+                    i_ = 0;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        virtual const PointLonLat operator*() const { return grid_.lonlat( i_, j_ ); }
+
+        virtual const Grid::IteratorLonLat& operator++() {
+            ++i_;
+            if ( i_ == grid_.nx( j_ ) ) {
+                ++j_;
+                i_ = 0;
+            }
+            return *this;
+        }
+
+        virtual bool operator==( const Grid::IteratorLonLat& other ) const {
+            return j_ == static_cast<const IteratorLonLat&>( other ).j_ &&
+                   i_ == static_cast<const IteratorLonLat&>( other ).i_;
+        }
+
+        virtual bool operator!=( const Grid::IteratorLonLat& other ) const {
+            return i_ != static_cast<const IteratorLonLat&>( other ).i_ ||
+                   j_ != static_cast<const IteratorLonLat&>( other ).j_;
+        }
+
+    private:
+        const Structured& grid_;
+        size_t i_;
+        size_t j_;
+    };
 
 public:
-
-  class IteratorXY: public Grid::IteratorXY {
-  public:
-    IteratorXY(const Structured& grid, bool begin = true):
-        grid_(grid),
-        i_(0),
-        j_( begin ? 0 : grid.ny() ) {
-    }
-
-    virtual bool next(PointXY& xy) {
-
-       if( j_<grid_.ny() && i_<grid_.nx(j_) ) {
-
-         xy = grid_.xy(i_++,j_);
-
-         if( i_==grid_.nx(j_) ) {
-           j_++;
-           i_=0;
-         }
-         return true;
-       }
-       return false;
-    }
-
-
-    virtual const PointXY operator *() const {
-        return grid_.xy(i_,j_);
-    }
-
-    virtual const Grid::IteratorXY& operator ++() {
-        ++i_;
-        if( i_ == grid_.nx(j_) ) {
-          ++j_;
-          i_=0;
-        }
-        return *this;
-    }
-
-    virtual bool operator ==(const Grid::IteratorXY &other) const {
-        return j_ == static_cast<const IteratorXY&>(other).j_ && i_ == static_cast<const IteratorXY&>(other).i_;
-    }
-
-    virtual bool operator !=(const Grid::IteratorXY &other) const {
-        return i_ != static_cast<const IteratorXY&>(other).i_ || j_ != static_cast<const IteratorXY&>(other).j_;
-    }
-
-
-  private:
-    const Structured& grid_;
-    size_t i_;
-    size_t j_;
-  };
-
-  class IteratorLonLat: public Grid::IteratorLonLat {
-  public:
-    IteratorLonLat(const Structured& grid, bool begin = true):
-        grid_(grid),
-        i_(0),
-        j_( begin ? 0 : grid.ny() ) {
-    }
-
-    virtual bool next(PointLonLat& lonlat) {
-
-       if( j_<grid_.ny() && i_<grid_.nx(j_) ) {
-
-         lonlat = grid_.lonlat(i_++,j_);
-
-         if( i_==grid_.nx(j_) ) {
-           j_++;
-           i_=0;
-         }
-         return true;
-       }
-       return false;
-    }
-
-
-    virtual const PointLonLat operator *() const {
-        return grid_.lonlat(i_,j_);
-    }
-
-    virtual const Grid::IteratorLonLat& operator ++() {
-        ++i_;
-        if( i_ == grid_.nx(j_) ) {
-          ++j_;
-          i_=0;
-        }
-        return *this;
-    }
-
-    virtual bool operator ==(const Grid::IteratorLonLat &other) const {
-        return j_ == static_cast<const IteratorLonLat&>(other).j_ && i_ == static_cast<const IteratorLonLat&>(other).i_;
-    }
-
-    virtual bool operator !=(const Grid::IteratorLonLat &other) const {
-        return i_ != static_cast<const IteratorLonLat&>(other).i_ || j_ != static_cast<const IteratorLonLat&>(other).j_;
-    }
-
-
-  private:
-    const Structured& grid_;
-    size_t i_;
-    size_t j_;
-  };
-
-public:
-
     class XSpace {
-
         class Implementation : public eckit::Owned {
-
         public:
-
-            Implementation( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint=true );
+            Implementation( const std::array<double, 2>& interval, const std::vector<long>& N, bool endpoint = true );
 
             Implementation( const Spacing& );
 
@@ -183,11 +230,9 @@ public:
             Spec spec() const;
 
         private:
-
             void reserve( long ny );
 
         private:
-
             size_t ny_;
             size_t nxmin_;
             size_t nxmax_;
@@ -198,14 +243,13 @@ public:
         };
 
     public:
-
         XSpace();
 
         XSpace( const XSpace& );
 
         XSpace( const Spacing& );
 
-        XSpace( const std::array<double,2>& interval, const std::vector<long>& N, bool endpoint=true );
+        XSpace( const std::array<double, 2>& interval, const std::vector<long>& N, bool endpoint = true );
 
         XSpace( const Config& );
 
@@ -234,107 +278,86 @@ public:
         Spec spec() const { return impl_->spec(); }
 
     private:
-
         eckit::SharedPtr<Implementation> impl_;
     };
 
     using YSpace = Spacing;
 
 public:
-
     static std::string static_type();
 
 public:
-
     Structured( const std::string&, XSpace, YSpace, Projection, Domain );
     Structured( XSpace, YSpace, Projection, Domain );
 
     virtual ~Structured();
 
-    virtual size_t size() const {
-        return npts_;
-    }
+    virtual size_t size() const { return npts_; }
 
     virtual Spec spec() const;
 
     /**
-     * Human readable name
-     * Either the name is the one given at construction as a canonical named grid, or the name "structured"
-     */
+   * Human readable name
+   * Either the name is the one given at construction as a canonical named grid,
+   * or the name "structured"
+   */
     virtual std::string name() const;
 
     virtual std::string type() const;
 
-    inline size_t ny() const {
-        return y_.size();
-    }
+    inline size_t ny() const { return y_.size(); }
 
-    inline size_t nx( size_t j ) const {
-        return static_cast<size_t>(nx_[j]);
-    }
+    inline size_t nx( size_t j ) const { return static_cast<size_t>( nx_[j] ); }
 
-    inline size_t nxmax() const {
-        return nxmax_;
-    }
+    inline size_t nxmax() const { return nxmax_; }
 
-    inline size_t nxmin() const {
-        return nxmin_;
-    }
+    inline size_t nxmin() const { return nxmin_; }
 
-    inline const std::vector<long>& nx() const {
-        return nx_;
-    }
+    inline const std::vector<long>& nx() const { return nx_; }
 
-    inline const std::vector<double>& y() const {
-        return y_;
-    }
+    inline const std::vector<double>& y() const { return y_; }
 
-    inline double x( size_t i, size_t j ) const {
-        return xmin_[j] + static_cast<double>(i) * dx_[j];
-    }
+    inline double x( size_t i, size_t j ) const { return xmin_[j] + static_cast<double>( i ) * dx_[j]; }
 
-    inline double y( size_t j ) const {
-        return y_[j];
-    }
+    inline double y( size_t j ) const { return y_[j]; }
 
     inline void xy( size_t i, size_t j, double crd[] ) const {
-        crd[0] = x(i,j);
-        crd[1] = y(j);
+        crd[0] = x( i, j );
+        crd[1] = y( j );
     }
 
-    PointXY xy( size_t i, size_t j ) const {
-        return PointXY( x(i,j), y(j) );
+    PointXY xy( size_t i, size_t j ) const { return PointXY( x( i, j ), y( j ) ); }
+
+    PointLonLat lonlat( size_t i, size_t j ) const { return projection_.lonlat( xy( i, j ) ); }
+
+    void lonlat( size_t i, size_t j, double crd[] ) const {
+        xy( i, j, crd );
+        projection_.xy2lonlat( crd );
     }
 
-    PointLonLat lonlat( size_t i, size_t j ) const {
-        return projection_.lonlat( xy(i,j) );
-    }
-
-    void lonlat(size_t i, size_t j, double crd[]) const {
-      xy(i,j,crd);
-      projection_.xy2lonlat(crd);
-    }
-
-    inline bool reduced() const {
-        return nxmax() != nxmin();
-    }
+    inline bool reduced() const { return nxmax() != nxmin(); }
 
     bool periodic() const { return periodic_x_; }
 
     const XSpace& xspace() const { return xspace_; }
     const YSpace& yspace() const { return yspace_; }
 
-    virtual IteratorXY* xy_begin() const{ return new IteratorXY(*this); }
-    virtual IteratorXY* xy_end()   const{ return new IteratorXY(*this,false); }
-    virtual IteratorLonLat* lonlat_begin() const{ return new IteratorLonLat(*this); }
-    virtual IteratorLonLat* lonlat_end()   const{ return new IteratorLonLat(*this,false); }
+    virtual IteratorXY* xy_begin() const { return new IteratorXY( *this ); }
+    virtual IteratorXY* xy_end() const { return new IteratorXY( *this, false ); }
+    virtual IteratorLonLat* lonlat_begin() const { return new IteratorLonLat( *this ); }
+    virtual IteratorLonLat* lonlat_end() const { return new IteratorLonLat( *this, false ); }
 
+    virtual IteratorXYPredicated* xy_begin( IteratorXY::Predicate p ) const {
+        return new IteratorXYPredicated( *this, p );
+    }
+    virtual IteratorXYPredicated* xy_end( IteratorXY::Predicate p ) const {
+        return new IteratorXYPredicated( *this, p, false );
+    }
 
-protected: // methods
+protected:  // methods
+    virtual void print( std::ostream& ) const;
 
-    virtual void print(std::ostream&) const;
-
-    virtual void hash(eckit::Hash&) const;
+    virtual void hash( eckit::Hash& ) const;
 
     void computeTruePeriodicity();
 
@@ -343,7 +366,6 @@ protected: // methods
     void crop( const Domain& );
 
 protected:
-
     // Minimum number of points across parallels (constant y)
     size_t nxmin_;
 
@@ -378,37 +400,33 @@ private:
     mutable std::string type_;
 };
 
+extern "C" {
+void atlas__grid__Structured__delete( Structured* This );
+const Structured* atlas__grid__Structured( char* identifier );
+const Structured* atlas__grid__Structured__config( util::Config* conf );
+Structured* atlas__grid__regular__RegularGaussian( long N );
+Structured* atlas__grid__reduced__ReducedGaussian_int( int nx[], long ny );
+Structured* atlas__grid__reduced__ReducedGaussian_long( long nx[], long ny );
+Structured* atlas__grid__regular__RegularLonLat( long nx, long ny );
+Structured* atlas__grid__regular__ShiftedLonLat( long nx, long ny );
+Structured* atlas__grid__regular__ShiftedLon( long nx, long ny );
+Structured* atlas__grid__regular__ShiftedLat( long nx, long ny );
 
-extern "C"
-{
-    void atlas__grid__Structured__delete(Structured* This);
-    const Structured *atlas__grid__Structured(char* identifier);
-    const Structured* atlas__grid__Structured__config(util::Config* conf);
-    Structured* atlas__grid__regular__RegularGaussian(long N);
-    Structured* atlas__grid__reduced__ReducedGaussian_int(int nx[], long ny);
-    Structured* atlas__grid__reduced__ReducedGaussian_long(long nx[], long ny);
-    Structured* atlas__grid__regular__RegularLonLat(long nx, long ny);
-    Structured* atlas__grid__regular__ShiftedLonLat(long nx, long ny);
-    Structured* atlas__grid__regular__ShiftedLon(long nx, long ny);
-    Structured* atlas__grid__regular__ShiftedLat(long nx, long ny);
+void atlas__grid__Structured__nx_array( Structured* This, const long*& nx, size_t& size );
+long atlas__grid__Structured__nx( Structured* This, long j );
+long atlas__grid__Structured__ny( Structured* This );
+long atlas__grid__Structured__nxmin( Structured* This );
+long atlas__grid__Structured__nxmax( Structured* This );
+long atlas__grid__Structured__size( Structured* This );
+double atlas__grid__Structured__y( Structured* This, long j );
+double atlas__grid__Structured__x( Structured* This, long i, long j );
+void atlas__grid__Structured__xy( Structured* This, long i, long j, double crd[] );
+void atlas__grid__Structured__lonlat( Structured* This, long i, long j, double crd[] );
+void atlas__grid__Structured__y_array( Structured* This, const double*& lats, size_t& size );
+int atlas__grid__Structured__reduced( Structured* This );
 
-    void   atlas__grid__Structured__nx_array  (Structured* This, const long* &nx, size_t &size);
-    long   atlas__grid__Structured__nx        (Structured* This, long j);
-    long   atlas__grid__Structured__ny        (Structured* This);
-    long   atlas__grid__Structured__nxmin     (Structured* This);
-    long   atlas__grid__Structured__nxmax     (Structured* This);
-    long   atlas__grid__Structured__size      (Structured* This);
-    double atlas__grid__Structured__y         (Structured* This, long j);
-    double atlas__grid__Structured__x         (Structured* This, long i, long j);
-    void   atlas__grid__Structured__xy        (Structured* This, long i, long j, double crd[]);
-    void   atlas__grid__Structured__lonlat    (Structured* This, long i, long j, double crd[]);
-    void   atlas__grid__Structured__y_array   (Structured* This, const double* &lats, size_t &size);
-    int    atlas__grid__Structured__reduced   (Structured* This);
-
-    long   atlas__grid__Gaussian__N           (Structured* This);
-
+long atlas__grid__Gaussian__N( Structured* This );
 }
-
 
 }  // namespace grid
 }  // namespace detail

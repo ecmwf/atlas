@@ -1,3 +1,5 @@
+#include "atlas/atlas_f.h"
+
 #:setvar ranks [1,2,3,4]
 #:setvar dim   ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
 #:setvar ftypes ['integer(c_int)','integer(c_long)','real(c_float)','real(c_double)', 'logical']
@@ -11,11 +13,10 @@ atlas_abort("${string}$",atlas_code_location("atlas_Field_module.F90",${_LINE_}$
 
 module atlas_field_module
 
-use fckit_refcounted_module, only : fckit_refcounted
+use fckit_owned_object_module, only : fckit_owned_object
 use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange
+use atlas_Config_module, only: atlas_Config
 implicit none
-
-private :: fckit_refcounted, atlas_code_location, atlas_abort, atlas_throw_outofrange
 
 public :: atlas_Field
 public :: atlas_real
@@ -29,7 +30,7 @@ private
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_refcounted) :: atlas_Field
+TYPE, extends(fckit_owned_object) :: atlas_Field
 
 ! Purpose :
 ! -------
@@ -63,8 +64,6 @@ contains
   procedure :: rename
   procedure :: set_levels
   procedure :: set_functionspace
-
-  procedure, public :: delete => atlas_Field__delete
 
 #:for rank in ranks
 #:for dtype in dtypes
@@ -102,13 +101,17 @@ contains
 #:endfor
       & dummy
 
-  procedure, public :: is_on_host
-  procedure, public :: is_on_device
+  procedure, public :: host_needs_update
+  procedure, public :: device_needs_update
   procedure, public :: clone_to_device
   procedure, public :: clone_from_device
   procedure, public :: sync_host_device
 
   procedure, private :: dummy
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_Field__final_auto
+#endif
 
 END TYPE atlas_Field
 
@@ -147,6 +150,10 @@ end interface
 !-------------------------------------------------------------------------------
 
 
+private :: fckit_owned_object
+private :: atlas_code_location, atlas_abort, atlas_throw_outofrange
+private :: atlas_Config
+
 !========================================================
 contains
 !========================================================
@@ -161,33 +168,32 @@ subroutine array_c_to_f_${dtype}$_r${rank}$(array_cptr,rank,shape_cptr,strides_c
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
   type(c_ptr), intent(in) :: strides_cptr
-  ${ftype}$, pointer, intent(out) :: array_fptr(${dim[rank]}$)
-  ${ftype}$, pointer :: tmp(${dim[rank+1]}$)
+  ${ftype}$, pointer, intent(inout) :: array_fptr(${dim[rank]}$)
+  ${ftype}$, pointer :: tmp(${dim[rank]}$)
   integer, pointer :: shape(:)
   integer, pointer :: strides(:)
-  integer :: eshape(0:${rank}$)
-  integer :: accumulated, factor, j
+  integer :: eshape(${rank}$)
+  integer :: j
 
   if( rank /= ${rank}$ ) call ${atlas_abort("Rank mismatch")}$
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
-
-  eshape(0)=1
-  accumulated = 1
-  do j=1,rank
-    accumulated = accumulated*shape(j)
-    factor = shape(j)*strides(j)/max(accumulated,1)
-    eshape(j-1) = eshape(j-1)*factor
-    eshape(j)   = shape(j)
-    accumulated = accumulated*factor
+  do j=1,rank-1
+    if( strides(j) /= 0 ) then
+        eshape(j) = strides(j+1)/strides(j)
+    else
+        eshape(j) = shape(j)
+    endif
   enddo
+  eshape(rank) = shape(rank)
   call c_f_pointer ( array_cptr , tmp , shape=eshape )
-  #{if rank == 1}# array_fptr => tmp(1,1:shape(1)) #{endif}#
-  #{if rank == 2}# array_fptr => tmp(1,1:shape(1),1:shape(2)) #{endif}#
-  #{if rank == 3}# array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3)) #{endif}#
-  #{if rank == 4}# array_fptr => tmp(1,1:shape(1),1:shape(2),1:shape(3),1:shape(4)) #{endif}#
+  #{if rank == 1}# array_fptr => tmp(1:shape(1)) #{endif}#
+  #{if rank == 2}# array_fptr => tmp(1:shape(1),1:shape(2)) #{endif}#
+  #{if rank == 3}# array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3)) #{endif}#
+  #{if rank == 4}# array_fptr => tmp(1:shape(1),1:shape(2),1:shape(3),1:shape(4)) #{endif}#
 end subroutine
+
 !-------------------------------------------------------------------------------
 
 #:endfor
@@ -198,12 +204,11 @@ subroutine access_host_data_${dtype}$_r${rank}$(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  ${ftype}$, pointer, intent(out) :: field(${dim[rank]}$)
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -212,12 +217,11 @@ subroutine access_device_data_${dtype}$_r${rank}$(this, field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_Field), intent(in) :: this
-  ${ftype}$, pointer, intent(out) :: field(${dim[rank]}$)
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
@@ -232,13 +236,12 @@ subroutine access_host_data_${dtype}$_r${rank}$_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  ${ftype}$, pointer, intent(out) :: field(${dim[rank]}$)
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__host_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -247,13 +250,12 @@ subroutine access_device_data_${dtype}$_r${rank}$_shape(this, field, shape)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
   class(atlas_Field), intent(in) :: this
-  ${ftype}$, pointer, intent(out) :: field(${dim[rank]}$)
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
   integer(c_int), intent(in) :: shape(:)
   type(c_ptr) :: field_cptr
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  nullify(field)
   call atlas__Field__device_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
@@ -264,6 +266,7 @@ end subroutine
 subroutine dummy(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
+  FCKIT_SUPPRESS_UNUSED(this)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -302,6 +305,7 @@ end function
 integer function atlas_logical(kind)
   integer, optional :: kind
   atlas_logical = ATLAS_KIND_INT32
+  FCKIT_SUPPRESS_UNUSED(kind)
 end function
 
 !-------------------------------------------------------------------------------
@@ -329,13 +333,13 @@ function atlas_Field__cptr(cptr) result(field)
   type(atlas_Field) :: field
   type(c_ptr), intent(in) :: cptr
   call field%reset_c_ptr( cptr )
+  call field%return()
 end function
 
 !-------------------------------------------------------------------------------
 
 function atlas_Field__create(params) result(field)
   use atlas_field_c_binding
-  use atlas_Config_module, only : atlas_Config
   type(atlas_Field) :: field
   class(atlas_Config), intent(in) :: params
   field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
@@ -346,7 +350,6 @@ end function
 
 function atlas_Field__create_name_kind_shape_int32(name,kind,shape) result(field)
   use atlas_field_c_binding
-  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -371,7 +374,6 @@ end function
 
 function atlas_Field__create_name_kind_shape_int64(name,kind,shape) result(field)
   use atlas_field_c_binding
-  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_long
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -396,7 +398,6 @@ end function
 
 function atlas_Field__create_kind_shape_int32(kind,shape) result(field)
   use atlas_field_c_binding
-  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
   integer(c_int), intent(in) :: kind
@@ -417,7 +418,6 @@ end function
 
 function atlas_Field__create_kind_shape_int64(kind,shape) result(field)
   use atlas_field_c_binding
-  use atlas_Config_module, only : atlas_Config
   use, intrinsic :: iso_c_binding, only : c_int, c_long
   type(atlas_Field) :: field
   integer(c_int), intent(in) :: kind
@@ -478,17 +478,6 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Field__delete(this)
-  use atlas_field_c_binding
-  class(atlas_Field), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__Field__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine
-
-!-------------------------------------------------------------------------------
-
 function Field__name(this) result(field_name)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr
@@ -504,9 +493,10 @@ end function Field__name
 
 function Field__functionspace(this) result(functionspace)
   use atlas_field_c_binding
-  type(fckit_refcounted) :: functionspace
+  type(fckit_owned_object) :: functionspace
   class(atlas_Field), intent(in) :: this
   call functionspace%reset_c_ptr( atlas__Field__functionspace(this%c_ptr()) )
+  call functionspace%return()
 end function Field__functionspace
 
 !-------------------------------------------------------------------------------
@@ -640,33 +630,33 @@ end subroutine
 subroutine set_functionspace(this,functionspace)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
-  class(fckit_refcounted), intent(in) :: functionspace
+  class(fckit_owned_object), intent(in) :: functionspace
   call atlas__field__set_functionspace(this%c_ptr(),functionspace%c_ptr())
 end subroutine
 
 !-------------------------------------------------------------------------------
 
-function is_on_host(this)
+function host_needs_update(this)
   use atlas_field_c_binding
-  logical :: is_on_host
+  logical :: host_needs_update
   class(atlas_Field), intent(in) :: this
-  if( atlas__Field__is_on_host(this%c_ptr()) == 1 ) then
-    is_on_host = .true.
+  if( atlas__Field__host_needs_update(this%c_ptr()) == 1 ) then
+    host_needs_update = .true.
   else
-    is_on_host = .false.
+    host_needs_update = .false.
   endif
 end function
 
 !-------------------------------------------------------------------------------
 
-function is_on_device(this)
+function device_needs_update(this)
   use atlas_field_c_binding
-  logical :: is_on_device
+  logical :: device_needs_update
   class(atlas_Field), intent(in) :: this
-  if( atlas__Field__is_on_device(this%c_ptr()) == 1 ) then
-    is_on_device = .true.
+  if( atlas__Field__device_needs_update(this%c_ptr()) == 1 ) then
+    device_needs_update = .true.
   else
-    is_on_device = .false.
+    device_needs_update = .false.
   endif
 end function
 
@@ -692,6 +682,19 @@ subroutine sync_host_device(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
   call atlas__Field__sync_host_device(this%c_ptr())
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_Field__final_auto(this)
+  type(atlas_Field) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_Field__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
 !-------------------------------------------------------------------------------

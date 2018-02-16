@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2017 ECMWF.
+# (C) Copyright 2013 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -31,14 +31,8 @@ ecbuild_declare_project()
 
 ### eckit
 
-ecbuild_use_package( PROJECT eckit VERSION 0.17 REQUIRED )
+ecbuild_use_package( PROJECT eckit VERSION 0.18.1 REQUIRED )
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
-
-set( ECKIT_HAVE_TESTING ON )
-if( ECKIT_VERSION VERSION_LESS 0.18 )
-  set( ECKIT_HAVE_TESTING OFF )
-  ecbuild_warn("Atlas C++ unit tests are disabled because (eckit version < 0.18)")
-endif()
 
 # options & dependencies
 
@@ -50,7 +44,8 @@ ecbuild_find_python()
 
 ecbuild_add_option( FEATURE FORTRAN
                     DESCRIPTION "Provide Fortran bindings"
-                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.4" )
+                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.5" )
+
 if( ATLAS_HAVE_FORTRAN )
 
   if( FCKIT_HAVE_ECKIT )
@@ -71,9 +66,11 @@ if( ATLAS_HAVE_FORTRAN )
     ecbuild_warn( "In order to compile atlas_f, fckit is required to be compiled with eckit. Turning off fortran." )
     set( HAVE_FORTRAN 0 )
     set( ATLAS_HAVE_FORTRAN 0 )
+    unset( FCKIT_LIBRARIES )
 
   endif()
-
+else()
+  unset( FCKIT_LIBRARIES )
 endif()
 
 ### MPI ...
@@ -116,7 +113,7 @@ ecbuild_add_option( FEATURE TESSELATION
                     DESCRIPTION "Support for unstructured mesh generation"
                     REQUIRED_PACKAGES "CGAL QUIET" "Boost 1.45.0" )
 
-if( HAVE_TESSELATION )
+if( ATLAS_HAVE_TESSELATION )
     list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
     if ( TARGET CGAL::CGAL )
       list( APPEND CGAL_LIBRARIES CGAL::CGAL ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
@@ -125,50 +122,54 @@ if( HAVE_TESSELATION )
     endif()
 endif()
 
-### FIND GRIDTOOLS STORAGE
+### GridTools storage module
+
 ecbuild_add_option(
-    FEATURE GRIDTOOLS_STORAGE
-    DESCRIPTION "Arrays internally use GridTools storage layer"
-    REQUIRED_PACKAGES "gridtools_storage" )
+  FEATURE GRIDTOOLS_STORAGE
+  DESCRIPTION "Arrays internally use GridTools storage layer"
+  REQUIRED_PACKAGES "PROJECT gridtools_storage" )
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
 
-  set( ENABLE_GPU "OFF" CACHE BOOL "Compile with GPU support (CUDA)" )
+  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
+  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
 
-    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
-    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
+  if( GRIDTOOLS_HAVE_CUDA )
+    ecbuild_info( "Gridtools found with CUDA support" )
+    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
+    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
+  endif()
 
-    if(ENABLE_GPU)
-        set( CUDA_USE_STATIC_CUDA_RUNTIME OFF )
-        find_package(CUDA REQUIRED)
+else()
 
-        string(REPLACE "." "" CUDA_VERSION ${CUDA_VERSION})
+  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
+  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
 
-        add_definitions(-D_FORCE_INLINES) # Question to Carlos: Is this needed for nvcc only?
+endif()
 
-        set(CUDA_PROPAGATE_HOST_FLAGS ON)
-        set(CUDA_NVCC_FLAGS "--std=c++11" "--relaxed-constexpr" "${CUDA_NVCC_FLAGS}")
-        if( NOT ${CUDA_VERSION} VERSION_GREATER "60")
-            message(FATAL_ERROR "CUDA 6.0 or lower does not support C++11 (disabling)")
-        endif()
 
-        set( CUDA_ARCH "sm_35" CACHE STRING "Compute capability for CUDA" )
-        set( CUDA_SEPARABLE_COMPILATION ON)
+### OpenACC
 
-        include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
+set( ATLAS_ACC_CAPABLE FALSE )
+if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+  if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI" )
+    set( ATLAS_ACC_CAPABLE TRUE )
+  endif()
+endif()
 
-        set(CUDA_SEPARABLE_COMPILATION ON)
-        # adding the additional nvcc flags
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-arch=${CUDA_ARCH}" "-Xcudafe" "--diag_suppress=dupl_calling_convention")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-Xcudafe" "--diag_suppress=code_is_unreachable" "-Xcudafe")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=implicit_return_from_non_void_function" "-Xcudafe")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=calling_convention_not_allowed" "-Xcudafe")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "--diag_suppress=conflicting_calling_conventions")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "-Xcompiler" "-fPIC")
+ecbuild_add_option( FEATURE ACC
+                    DESCRIPTION  "OpenACC capable data structures"
+                    CONDITION ATLAS_ACC_CAPABLE )
 
-        set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
-        set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
+if( ATLAS_HAVE_ACC )
+  if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI" )
+    set( ACC_Fortran_FLAGS -acc -ta=tesla,cuda${CUDA_VERSION},nordc )
+    set( ACC_C_FLAGS ${ACC_Fortran_FLAGS} )
+    find_program( ACC_C_COMPILER NAMES pgcc HINTS ${PGI_DIR} ENV PGI_DIR PATH_SUFFIXES bin )
+    if( NOT ACC_C_COMPILER )
+      ecbuild_error( "Could not find OpenACC capable C compiler" )
     endif()
+  endif()
 endif()
 
 ### Eigen
@@ -238,6 +239,7 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI"  AND
 endif()
 
 include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
+include(CompileFlags)
 add_subdirectory( src )
 
 ################################################################################
@@ -249,18 +251,18 @@ set( ATLAS_DESCRIPTION "Atlas framework for parallel mesh datastructures" )
 ecbuild_pkgconfig()
 
 ecbuild_pkgconfig(
-  NAME             atlas-c++
-  LANGUAGES        CXX
-  LIBRARIES        atlas
+ NAME             atlas-c++
+ LANGUAGES        CXX
+ LIBRARIES        atlas
 )
 
 if( ATLAS_HAVE_FORTRAN )
-  ecbuild_pkgconfig(
-    NAME             atlas-fortran
-    LANGUAGES        Fortran
-    LIBRARIES        atlas_f
-    NO_PRIVATE_INCLUDE_DIRS
-  )
+ ecbuild_pkgconfig(
+   NAME             atlas-fortran
+   LANGUAGES        Fortran
+   LIBRARIES        atlas_f
+   NO_PRIVATE_INCLUDE_DIRS
+ )
 endif()
 
 ################################################################################

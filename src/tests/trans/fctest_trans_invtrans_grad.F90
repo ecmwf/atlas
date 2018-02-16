@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2017 ECMWF.
+! (C) Copyright 2013 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -120,9 +120,9 @@ TEST( test_trans_invtrans_grad )
   beta = pi*0.5;
   call rotated_flow_magnitude(nodes_fs,scalar,beta)
 
-  call trans%dirtrans(nodes_fs,scalar,spectral_fs,scalar_sp)
+  call trans%dirtrans(scalar,scalar_sp)
 
-  call trans%invtrans_grad(spectral_fs,scalar_sp,nodes_fs,grad);
+  call trans%invtrans_grad(scalar_sp,grad);
 
   call nodes_fs%halo_exchange(grad);
 

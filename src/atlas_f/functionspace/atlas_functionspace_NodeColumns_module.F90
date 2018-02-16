@@ -201,10 +201,9 @@ contains
   procedure, public :: mean_and_standard_deviation_per_level => &
     & mean_and_stddev_per_level
 
-#ifdef FORTRAN_SUPPORTS_FINAL
-  final :: atlas_functionspace_NodeColumns__final
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_functionspace_NodeColumns__final_auto
 #endif
-
 
 END TYPE atlas_functionspace_NodeColumns
 
@@ -226,6 +225,7 @@ function constructor__cptr(cptr) result(this)
   type(atlas_functionspace_NodeColumns) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )
+  call this%return()
 end function
 
 !------------------------------------------------------------------------------
@@ -240,20 +240,10 @@ function constructor(mesh,halo,levels) result(this)
   config = atlas_Config()
   if( present(halo) )   call config%set("halo",halo)
   if( present(levels) ) call config%set("levels",levels)
-  this = constructor__cptr( &
-      & atlas__NodesFunctionSpace__new(mesh%c_ptr(),config%c_ptr()) )
+  call this%reset_c_ptr( atlas__NodesFunctionSpace__new(mesh%c_ptr(),config%c_ptr()) )
   call config%final()
   call this%return()
 end function
-
-!------------------------------------------------------------------------------
-
-#ifdef FORTRAN_SUPPORTS_FINAL
-subroutine atlas_functionspace_NodeColumns__final(this)
-  type(atlas_functionspace_NodeColumns), intent(inout) :: this
-  call this%final()
-end subroutine
-#endif
 
 !------------------------------------------------------------------------------
 
@@ -271,6 +261,7 @@ function mesh(this)
   type(atlas_Mesh) :: mesh
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   call mesh%reset_c_ptr( atlas__NodesFunctionSpace__mesh(this%c_ptr()) )
+  call mesh%return()
 end function
 
 !------------------------------------------------------------------------------
@@ -280,6 +271,7 @@ function nodes(this)
   type(atlas_mesh_Nodes) :: nodes
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   call nodes%reset_c_ptr( atlas__NodesFunctionSpace__nodes(this%c_ptr()) )
+  call nodes%return()
 end function
 
 !------------------------------------------------------------------------------
@@ -1946,6 +1938,19 @@ subroutine mean_and_stddev_per_level(this,field,mean,stddev,N)
   call atlas__NodesFunctionSpace__mean_and_stddev_per_level( &
     & this%c_ptr(),field%c_ptr(),mean%c_ptr(),stddev%c_ptr(),opt_N)
   if( present(N) ) N = opt_N
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine atlas_functionspace_NodeColumns__final_auto(this)
+  type(atlas_functionspace_NodeColumns) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_functionspace_NodeColumns__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
 !------------------------------------------------------------------------------

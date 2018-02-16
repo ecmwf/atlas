@@ -1,38 +1,42 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
-#ifndef atlas_mesh_Halo_h
-#define atlas_mesh_Halo_h
+#pragma once
 
 #include <cstddef>
 
 namespace atlas {
-    class Mesh;
+class Mesh;
+namespace mesh {
+namespace detail {
+class MeshImpl;
 }
+}  // namespace mesh
+}  // namespace atlas
 
 namespace atlas {
 namespace mesh {
 
 // -------------------------------------------------------------------
 
-class Halo
-{
+class Halo {
 public:
-  Halo(const Mesh& mesh);
-  Halo(const size_t size) : size_(size) {}
-  size_t size() const { return size_; }
+    Halo() {}
+    Halo( const Mesh& mesh );
+    Halo( const detail::MeshImpl& mesh );
+    Halo( const long size ) : size_( size ) {}
+    long size() const;
+
 private:
-  size_t size_;
+    long size_{-1};
 };
 
-} // namespace mesh
-} // namespace atlas
-
-#endif // atlas_mesh_Halo_h
+}  // namespace mesh
+}  // namespace atlas

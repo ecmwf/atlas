@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2017 ECMWF.
+# (C) Copyright 2013 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -21,15 +21,11 @@ macro( atlas_add_cuda_test )
     ecbuild_critical("Unknown keywords given to atlas_add_cuda_test(): \"${_PAR_UNPARSED_ARGUMENTS}\"")
   endif()
 
-  if( ATLAS_HAVE_GRIDTOOLS_STORAGE AND ENABLE_GPU AND ENABLE_TESTS )
+  if( ATLAS_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAVE_CUDA AND ENABLE_TESTS )
 
     ecbuild_debug("atlas_add_cuda_test: Adding test ${_PAR_TARGET}")
 
     list( APPEND _libs ${_PAR_LIBS} )
-
-    if( _PAR_BOOST )
-      list( APPEND _libs ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${Boost_TEST_EXEC_MONITOR_LIBRARY} )
-    endif()
 
     cuda_add_executable (${_PAR_TARGET} ${_PAR_SOURCES})
     if( _libs )

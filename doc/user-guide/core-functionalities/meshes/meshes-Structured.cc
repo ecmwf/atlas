@@ -1,5 +1,5 @@
-#include "atlas/library/Library.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
@@ -11,20 +11,19 @@ using atlas::meshgenerator::StructuredMeshGenerator;
 using atlas::output::Gmsh;
 using atlas::util::Config;
 
-int main(int argc, char *argv[])
-{
-    atlas::Library::instance().initialise(argc, argv);
+int main( int argc, char* argv[] ) {
+    atlas::Library::instance().initialise( argc, argv );
 
     StructuredMeshGenerator meshgenerator;
 
     Grid grid( "O32" );
-    Mesh mesh = meshgenerator.generate(grid);
+    Mesh mesh = meshgenerator.generate( grid );
 
-    Gmsh gmsh_2d("mesh2d.msh");
-    Gmsh gmsh_3d("mesh3d.msh", Config("coordinates", "xyz") );
+    Gmsh gmsh_2d( "mesh2d.msh" );
+    Gmsh gmsh_3d( "mesh3d.msh", Config( "coordinates", "xyz" ) );
 
-    gmsh_2d.write(mesh);
-    gmsh_3d.write(mesh);
+    gmsh_2d.write( mesh );
+    gmsh_3d.write( mesh );
 
     atlas::Library::instance().finalise();
 

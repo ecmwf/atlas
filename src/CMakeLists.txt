@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2017 ECMWF.
+# (C) Copyright 2013 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -48,17 +48,7 @@ else()
   set( ATLAS_HAVE_GRIDTOOLS_STORAGE 0 )
 endif()
 
-if( ATLAS_HAVE_MPI )
-
-  set( ATLAS_MPI_C_LIBRARIES            ${MPI_CXX_LIBRARIES} )
-  ecbuild_include_mpi()
-
-endif()
-
-if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
-  include_directories( ${GRIDTOOLS_STORAGE_INCLUDE_DIRS} )
-endif()
-
+add_subdirectory( atlas_acc_support )
 
 add_subdirectory( atlas )
 

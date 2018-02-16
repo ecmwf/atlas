@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2017 ECMWF.
+# (C) Copyright 2013 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -33,6 +33,19 @@ runtime/ErrorHandling.cc
 runtime/AtlasTool.h
 runtime/AtlasTool.cc
 runtime/Log.h
+runtime/Log.cc
+runtime/Trace.h
+runtime/trace/CallStack.h
+runtime/trace/CallStack.cc
+runtime/trace/TraceT.h
+runtime/trace/Nesting.cc
+runtime/trace/Nesting.h
+runtime/trace/Barriers.cc
+runtime/trace/Barriers.h
+runtime/trace/Logging.cc
+runtime/trace/Logging.h
+runtime/trace/Timings.h
+runtime/trace/Timings.cc
 parallel/mpi/mpi.cc
 parallel/mpi/mpi.h
 parallel/omp/omp.cc
@@ -43,6 +56,9 @@ list( APPEND atlas_grid_srcs
 
 option.h
 option/Options.h
+option/Options.cc
+option/TransOptions.h
+option/TransOptions.cc
 
 
 projection.h
@@ -211,10 +227,6 @@ mesh/detail/MeshIntf.cc
 mesh/detail/MeshIntf.h
 mesh/detail/PartitionGraph.cc
 mesh/detail/PartitionGraph.h
-mesh/detail/Polygon.cc
-mesh/detail/Polygon.h
-mesh/detail/PolygonCoordinates.cc
-mesh/detail/PolygonCoordinates.h
 
 mesh/actions/ExtendNodesGlobal.h
 mesh/actions/ExtendNodesGlobal.cc
@@ -304,11 +316,33 @@ numerics/fvm/Method.h
 numerics/fvm/Method.cc
 numerics/fvm/Nabla.h
 numerics/fvm/Nabla.cc
+
+trans/Trans.h
+trans/Trans.cc
+trans/VorDivToUV.h
+trans/VorDivToUV.cc
+trans/local/TransLocal.h
+trans/local/TransLocal.cc
+trans/local/LegendrePolynomials.h
+trans/local/LegendrePolynomials.cc
+trans/local/LegendreTransforms.h
+trans/local/LegendreTransforms.cc
+trans/local/FourierTransforms.h
+trans/local/FourierTransforms.cc
+trans/local/VorDivToUVLocal.h
+trans/local/VorDivToUVLocal.cc
+
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs
-  trans/Trans.h
-  trans/Trans.cc
+  trans/ifs/TransIFS.h
+  trans/ifs/TransIFS.cc
+  trans/ifs/TransIFSNodeColumns.h
+  trans/ifs/TransIFSNodeColumns.cc
+  trans/ifs/TransIFSStructuredColumns.h
+  trans/ifs/TransIFSStructuredColumns.cc
+  trans/ifs/VorDivToUVIFS.h
+  trans/ifs/VorDivToUVIFS.cc
 )
 endif()
 
@@ -354,15 +388,21 @@ array/ArrayShape.h
 array/ArraySpec.cc
 array/ArraySpec.h
 array/ArrayStrides.h
+array/ArrayUtil.cc
 array/ArrayUtil.h
 array/ArrayView.h
+array/ArrayViewUtil.h
+array/ArrayViewDefs.h
 array/DataType.h
 array/IndexView.h
 array/LocalView.cc
 array/LocalView.h
-array/StorageView.h
+array/Range.h
 array/Vector.h
 array/helpers/ArrayInitializer.h
+array/helpers/ArrayAssigner.h
+array/helpers/ArrayWriter.h
+array/helpers/ArraySlicer.h
 #array/Table.h
 #array/Table.cc
 #array/TableView.h
@@ -380,7 +420,6 @@ array/gridtools/GridToolsIndexView.cc
 array/gridtools/GridToolsIndexView.h
 array/gridtools/GridToolsMakeView.cc
 array/gridtools/GridToolsMakeView.h
-array/gridtools/GridToolsStorageView.h
 array/gridtools/GridToolsTraits.h
 )
 else()
@@ -392,7 +431,6 @@ array/native/NativeDataStore.h
 array/native/NativeIndexView.cc
 array/native/NativeIndexView.h
 array/native/NativeMakeView.cc
-array/native/NativeStorageView.h
 )
 endif()
 
@@ -407,6 +445,7 @@ parallel/GatherScatter.cc
 parallel/GatherScatter.h
 parallel/HaloExchange.cc
 parallel/HaloExchange.h
+parallel/HaloExchangeImpl.h
 parallel/mpi/Buffer.h
 runtime/ErrorHandling.cc
 runtime/ErrorHandling.h
@@ -417,10 +456,19 @@ util/Earth.cc
 util/Earth.h
 util/GaussianLatitudes.cc
 util/GaussianLatitudes.h
+util/LonLatPolygon.cc
+util/LonLatPolygon.h
 util/Metadata.cc
 util/Metadata.h
+util/Polygon.cc
+util/Polygon.h
 util/Rotation.cc
 util/Rotation.h
+util/SphericalPolygon.cc
+util/SphericalPolygon.h
+util/detail/BlackMagic.h
+util/detail/Cache.h
+util/detail/Debug.h
 )
 
 list( APPEND atlas_internals_srcs
@@ -429,7 +477,6 @@ mesh/detail/AccumulateFacets.cc
 util/Bitflags.h
 util/Checksum.h
 util/Checksum.cc
-runtime/Debug.h
 util/MicroDeg.h
 mesh/IsGhostNode.h
 util/LonLatMicroDeg.h
@@ -439,51 +486,6 @@ util/Unique.h
 #parallel/detail/MPLArrayView.h
 )
 
-
-function( create_cuda_wrapper variable )
-set( options "" )
-set( single_value_args SOURCE )
-set( multi_value_args "" )
-cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
-
-  get_filename_component(directory ${_PAR_SOURCE} DIRECTORY)
-  get_filename_component(base      ${_PAR_SOURCE} NAME_WE)
-  get_filename_component(name      ${_PAR_SOURCE} NAME)
-  if( directory )
-    set(cuda_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${directory}/${base}.cu)
-  else()
-    set(cuda_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${base}.cu)
-  endif()
-  set(${variable} ${cuda_wrapper} PARENT_SCOPE)
-  set(content
-"
-#include \"atlas/${directory}/${name}\"
-")
-
-  file(WRITE ${cuda_wrapper} "${content}")
-
-endfunction()
-
-function( use_cuda srclist )
-  set( options "" )
-  set( single_value_args "" )
-  set( multi_value_args "" )
-  cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}" ${ARGN} )
-  set( use_cuda_srclist ${ARGN} )
-
-  ecbuild_list_exclude_pattern( LIST ${srclist} REGEX ${use_cuda_srclist} )
-
-  foreach( src ${use_cuda_srclist} )
-    create_cuda_wrapper( cuda_wrapper SOURCE ${src} )
-    list( APPEND ${srclist} ${cuda_wrapper} )
-  endforeach()
-
-  set( ${srclist} "${${srclist}}" PARENT_SCOPE )
-
-  add_custom_target( atlas_cuda SOURCES ${use_cuda_srclist} )
-
-endfunction()
-
 ### atlas c++ library
 
 ecbuild_debug_var(CGAL_LIBRARIES)
@@ -492,11 +494,6 @@ ecbuild_debug_var(CGAL_INCLUDE_DIRS)
 if( NOT ATLAS_HAVE_TRANS )
   unset( TRANSI_INCLUDE_DIRS )
   unset( TRANSI_LIBRARIES )
-endif()
-
-if( ECKIT_HAVE_MPI AND ATLAS_HAVE_MPI AND  EC_OS_NAME MATCHES "macosx" )
-  list( APPEND ATLAS_DEFINITIONS BUG_ECKIT_166 )
-  link_libraries(${MPI_CXX_LIBRARIES})
 endif()
 
 if( SHORTCUT_COMPILATION )
@@ -528,14 +525,19 @@ list( APPEND source_list
 )
 
 if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
-## TODO temporary disabled since I get a linking error of the nvcc intermediate step
-#  use_cuda( source_list
-#    array/gridtools/GridToolsArrayView.cc
-#    array/gridtools/GridToolsIndexView.cc
-#    array/gridtools/GridToolsMakeView.cc
-#    mesh/Connectivity.cc
-#  )
+  list( APPEND source_list
+    parallel/HaloExchangeCUDA.h
+    parallel/HaloExchangeCUDA.cu
+  )
 endif()
+
+include( atlas_host_device )
+atlas_host_device( source_list
+  SOURCES
+    array/gridtools/GridToolsArrayView.cc
+    array/gridtools/GridToolsIndexView.cc
+    mesh/Connectivity.cc
+)
 
 ecbuild_add_library( TARGET atlas
 
@@ -562,7 +564,14 @@ ecbuild_add_library( TARGET atlas
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}"
     "${FCKIT_LIBRARIES}"
-    "${CUDA_LIBRARIES}"
   DEFINITIONS
     ${ATLAS_DEFINITIONS}
  )
+
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+  target_link_libraries( atlas gridtools::storage )
+endif()
+
+if( ATLAS_HAVE_ACC )
+  target_link_libraries( atlas atlas_acc_support )
+endif()

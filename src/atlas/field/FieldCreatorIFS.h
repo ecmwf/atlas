@@ -1,23 +1,28 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 /// @author Willem Deconinck
 /// @date June 2015
 
-#ifndef atlas_field_IFS_h
-#define atlas_field_IFS_h
+#pragma once
 
 #include "atlas/field/FieldCreator.h"
 
-namespace eckit { class Parametrisation; }
-namespace atlas { namespace field { class FieldImpl; } }
+namespace eckit {
+class Parametrisation;
+}
+namespace atlas {
+namespace field {
+class FieldImpl;
+}
+}  // namespace atlas
 
 namespace atlas {
 namespace field {
@@ -41,17 +46,14 @@ namespace field {
  *         );
  * \endcode
  */
-class FieldCreatorIFS: public FieldCreator
-{
+class FieldCreatorIFS : public FieldCreator {
 public:
-  FieldCreatorIFS() {}
-  FieldCreatorIFS(const eckit::Parametrisation&) {}
-  virtual FieldImpl* createField( const eckit::Parametrisation& ) const;
+    FieldCreatorIFS() {}
+    FieldCreatorIFS( const eckit::Parametrisation& ) {}
+    virtual FieldImpl* createField( const eckit::Parametrisation& ) const;
 };
 
 // ------------------------------------------------------------------
 
-} // namespace field
-} // namespace atlas
-
-#endif
+}  // namespace field
+}  // namespace atlas
