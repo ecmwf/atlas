@@ -820,7 +820,7 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
                 }
                 else if ( include_periodic_ghost_points )  // add periodic point
                 {
-#warning TODO: use second approach
+//#warning TODO: use commented approach
                     part( jnode ) = mypart;
                     // part(jnode)      = parts.at( offset_glb.at(jlat) );
                     ghost( jnode ) = 1;
@@ -915,7 +915,7 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
                 lonlat( inode, LAT ) = crd[LAT];
 
                 glb_idx( inode ) = periodic_glb.at( jlat ) + 1;
-#warning TODO: use second approach
+//#warning TODO: use commented approach
                 //        part(inode)      = parts.at( offset_glb.at(jlat) );
                 part( inode )  = mypart;  // The actual part will be fixed later
                 ghost( inode ) = 1;
