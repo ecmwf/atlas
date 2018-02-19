@@ -279,7 +279,7 @@ void AtlasBenchmark::execute( const Args& args ) {
 //----------------------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::initial_condition( const Field& field, const double& beta ) {
-    const double radius  = util::Earth::radiusInMeters();
+    const double radius  = util::Earth::radius();
     const double USCAL   = 20.;
     const double pvel    = USCAL / radius;
     const double deg2rad = M_PI / 180.;

@@ -65,7 +65,7 @@ void FiniteElement::setup( const FunctionSpace& source, const FunctionSpace& tar
         PointXYZ p2;
         for ( size_t n = 0; n < N; ++n ) {
             const PointLonLat p1( lonlat( n, 0 ), lonlat( n, 1 ) );
-            p2          = util::Earth::convertGeodeticToGeocentric( p1 );
+            util::Earth::convertSphericalToCartesian( p1, p2 );
             xyz( n, 0 ) = p2.x();
             xyz( n, 1 ) = p2.y();
             xyz( n, 2 ) = p2.z();
@@ -148,7 +148,8 @@ void FiniteElement::setup( const FunctionSpace& source ) {
                 failures.push_back( ip );
                 Log::debug() << "------------------------------------------------------"
                                 "---------------------\n";
-                const PointLonLat pll = util::Earth::convertGeocentricToGeodetic( p );
+                PointLonLat pll;
+                util::Earth::convertCartesianToSpherical( p, pll );
                 Log::debug() << "Failed to project point (lon,lat)=" << pll << '\n';
                 Log::debug() << failures_log.str();
             }
@@ -163,7 +164,8 @@ void FiniteElement::setup( const FunctionSpace& source ) {
         msg << "Rank " << eckit::mpi::comm().rank() << " failed to project points:\n";
         for ( std::vector<size_t>::const_iterator i = failures.begin(); i != failures.end(); ++i ) {
             const PointXYZ p{( *ocoords_ )( *i, 0 ), ( *ocoords_ )( *i, 1 ), ( *ocoords_ )( *i, 2 )};  // lookup point
-            const PointLonLat pll = util::Earth::convertGeocentricToGeodetic( p );
+            PointLonLat pll;
+            util::Earth::convertCartesianToSpherical(p, pll);
             msg << "\t(lon,lat) = " << pll << "\n";
         }
 

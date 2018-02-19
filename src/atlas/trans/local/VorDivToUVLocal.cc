@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <cmath>  // for std::sqrt
 #include "atlas/trans/local/VorDivToUVLocal.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/runtime/Log.h"
@@ -78,7 +79,7 @@ void vd2uv( const int truncation,               // truncation
     repsnm[0] = 0.;
 
     // rlapin: constant factor from eq.(2.2) and (2.3) in [Temperton 1991]
-    double ra = util::Earth::radiusInMeters();
+    double ra = util::Earth::radius();
     std::vector<double> rlapin( truncation + 3 );
     for ( int jn = 1; jn <= truncation + 2; ++jn ) {
         rlapin[jn] = -ra * ra / ( jn * ( jn + 1. ) );
@@ -145,7 +146,7 @@ void vd2uv( const int truncation,               // truncation
     int ilcm = truncation - km;
     int ioff = ( 2 * truncation - km + 3 ) * km;
     // ioff: start index of zonal wavenumber km in spectral data
-    double za_r = 1. / util::Earth::radiusInMeters();
+    double za_r = 1. / util::Earth::radius();
     for ( int j = 0; j <= ilcm; ++j ) {
         // ilcm-j = total wavenumber
         int inm = ioff + ( ilcm - j ) * 2;

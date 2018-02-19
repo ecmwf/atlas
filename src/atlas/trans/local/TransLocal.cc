@@ -18,6 +18,7 @@
 #include "atlas/trans/local/FourierTransforms.h"
 #include "atlas/trans/local/LegendrePolynomials.h"
 #include "atlas/trans/local/LegendreTransforms.h"
+#include "atlas/util/Constants.h"
 
 namespace atlas {
 namespace trans {

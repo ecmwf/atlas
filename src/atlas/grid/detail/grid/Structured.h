@@ -140,8 +140,8 @@ public:
         }
 
     private:
-        Grid::IteratorXY::Predicate p_;
         const Structured& grid_;
+        Grid::IteratorXY::Predicate p_;
         size_t i_;
         size_t j_;
         size_t n_;

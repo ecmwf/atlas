@@ -51,7 +51,7 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
 /// @brief Compute magnitude of flow with rotation-angle beta
 /// (beta=0 --> zonal, beta=pi/2 --> meridional)
 static void rotated_flow_magnitude( grid::StructuredGrid& grid, double var[], const double& beta ) {
-    const double radius  = util::Earth::radiusInMeters();
+    const double radius  = util::Earth::radius();
     const double USCAL   = 20.;
     const double pvel    = USCAL / radius;
     const double deg2rad = M_PI / 180.;
@@ -73,7 +73,7 @@ static void rotated_flow_magnitude( grid::StructuredGrid& grid, double var[], co
 /// @brief Compute magnitude of flow with rotation-angle beta
 /// (beta=0 --> zonal, beta=pi/2 --> meridional)
 void rotated_flow_magnitude( const functionspace::NodeColumns& fs, Field& field, const double& beta ) {
-    const double radius  = util::Earth::radiusInMeters();
+    const double radius  = util::Earth::radius();
     const double USCAL   = 20.;
     const double pvel    = USCAL / radius;
     const double deg2rad = M_PI / 180.;
