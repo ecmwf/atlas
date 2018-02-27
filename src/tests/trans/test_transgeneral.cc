@@ -721,6 +721,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     trans::Trans transIFS( g, trc, util::Config( "type", "ifs" ) );
 #endif
     trans::Trans transLocal( g, trc, util::Config( "type", "local" ) );
+    trans::Trans transLocalopt( g, trc, util::Config( "type", "localopt" ) );
 
     functionspace::Spectral spectral( trc );
     functionspace::StructuredColumns gridpoints( g );
@@ -733,6 +734,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     std::vector<double> rspecg( 2 * N );
     std::vector<double> gp( nb_all * g.size() );
     std::vector<double> rgp( nb_all * g.size() );
+    std::vector<double> rgpopt( nb_all * g.size() );
     std::vector<double> rgp_analytic( g.size() );
 
     int icase = 0;
@@ -768,6 +770,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                 for ( int j = 0; j < nb_all * g.size(); j++ ) {
                                     gp[j]  = 0.;
                                     rgp[j] = 0.;
+                                    rgpopt[j] = 0.;
                                 }
                                 for ( int j = 0; j < g.size(); j++ ) {
                                     rgp_analytic[j] = 0.;
@@ -779,19 +782,27 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                 EXPECT_NO_THROW( transLocal.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
                                                                       div.data(), rgp.data() ) );
 
+                                EXPECT_NO_THROW( transLocalopt.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                      div.data(), rgpopt.data() ) );
+
                                 int pos = ( ivar_out * nb_vordiv + jfld );
 
                                 double rms_gen =
                                     compute_rms( g.size(), rgp.data() + pos * g.size(), rgp_analytic.data() );
 
-                                if ( rms_gen >= tolerance ) {
+                                double rms_genopt =
+                                    compute_rms( g.size(), rgpopt.data() + pos * g.size(), rgp_analytic.data() );
+
+                                if ( !(rms_gen < tolerance) || !(rms_genopt < tolerance) ) {
                                     Log::info()
                                         << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
                                         << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
                                     ATLAS_DEBUG_VAR( rms_gen );
+                                    ATLAS_DEBUG_VAR( rms_genopt );
                                     ATLAS_DEBUG_VAR( tolerance );
                                 }
                                 EXPECT( rms_gen < tolerance );
+                                EXPECT( rms_genopt < tolerance );
                                 icase++;
 
 #if ATLAS_HAVE_TRANS
@@ -802,11 +813,12 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                 double rms_diff =
                                     compute_rms( g.size(), rgp.data() + pos * g.size(), gp.data() + pos * g.size() );
                                 EXPECT( rms_trans < tolerance );
-                                if ( rms_trans >= tolerance || rms_diff >= tolerance ) {
+                                if ( !(rms_trans < tolerance) || !(rms_diff < tolerance) ) {
                                     Log::info()
                                         << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
                                         << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
                                     ATLAS_DEBUG_VAR( rms_gen );
+                                    ATLAS_DEBUG_VAR( rms_genopt );
                                     ATLAS_DEBUG_VAR( rms_trans );
                                     ATLAS_DEBUG_VAR( rms_diff );
                                     ATLAS_DEBUG_VAR( tolerance );
