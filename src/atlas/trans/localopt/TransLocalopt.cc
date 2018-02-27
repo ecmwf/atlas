@@ -61,7 +61,7 @@ TransLocalopt::TransLocalopt( const Cache& cache, const Grid& grid, const long t
 
             for ( size_t j = 0; j < g.ny(); ++j ) {
                 double lat = g.y( j ) * util::Constants::degreesToRadians();
-                compute_legendre_polynomialsopt( truncation_ + 1, lat, legendre_data( j ) );
+                compute_legendre_polynomialsopt( truncation_ + 1, 1, &lat, legendre_data( j ) );
             }
         }
         else {
@@ -76,7 +76,7 @@ TransLocalopt::TransLocalopt( const Cache& cache, const Grid& grid, const long t
             int j( 0 );
             for ( PointXY p : grid_.xy() ) {
                 double lat = p.y() * util::Constants::degreesToRadians();
-                compute_legendre_polynomialsopt( truncation_ + 1, lat, legendre_data( j++ ) );
+                compute_legendre_polynomialsopt( truncation_ + 1, 1, &lat, legendre_data( j++ ) );
             }
         }
     }
@@ -161,7 +161,7 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
             if ( precompute_ ) { return legendre_data( j ); }
             else {
                 recomputed_legendre_.resize( legendre_size( truncation ) );
-                compute_legendre_polynomialsopt( truncation, lat, recomputed_legendre_.data() );
+                compute_legendre_polynomialsopt( truncation, 1, &lat, recomputed_legendre_.data() );
                 return recomputed_legendre_.data();
             }
         };
