@@ -17,7 +17,7 @@ using namespace atlas::mesh;
 namespace atlas {
 namespace test {
 
-#ifdef ATLAS_HAVE_FORTRAN
+#if ATLAS_HAVE_FORTRAN
 #define IN_FORTRAN -1
 #else
 #define IN_FORTRAN
