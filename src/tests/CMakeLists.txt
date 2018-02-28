@@ -24,12 +24,12 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
   endif()
   if( CMAKE_Fortran_COMPILER_VERSION VERSION_EQUAL 18.0 )
     set( atlas_fctest_parametrisation_DISABLED TRUE )
-    set( atlas_fctest_mesh_DISABLED TRUE )
     ecbuild_warn( "Intel Fortran compiler version tested 18.0 has a internal compiler error "
-                  "when compiling atlas_fctest_parametrisation, atlas_fctest_mesh. "
-                  "Disabling these tests..." )
+                  "when compiling atlas_fctest_parametrisation. "
+                  "Disabling this tests..." )
   endif()
 endif()
+
 
 ######################################################
 

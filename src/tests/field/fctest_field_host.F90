@@ -6,62 +6,56 @@
 ! does it submit to any jurisdiction.
 
 ! This File contains Unit Tests for testing the
-! C++ / Fortran Interfaces to the Mesh Datastructure
+! C++ / Fortran Interfaces to the State Datastructure
 ! @author Willem Deconinck
 
 #include "fckit/fctest.h"
 
 ! -----------------------------------------------------------------------------
 
-module fcta_Mesh_fixture
+module fcta_Field_fxt
 use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
-end module fcta_Mesh_fixture
+
+contains
+
+end module
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_Mesh,fcta_Mesh_fixture)
+TESTSUITE_WITH_FIXTURE(fcta_Field,fcta_Field_fxt)
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-  call atlas_library%initialise()
+  call atlas_init()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-  call atlas_library%finalise()
+  call atlas_finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
 
-!!! WARNING ! THIS IS DEPRECATED AND SHOULD NOT BE USED AS EXAMPLE !!!!
+TEST( test_host_data )
+type(atlas_Field) :: field
+real(8), pointer :: host(:,:)
+real(8), pointer :: device(:,:)
 
-TEST( test_mesh_nodes )
-implicit none
+field = atlas_Field(kind=atlas_real(8),shape=[10,5])
 
-  type(atlas_Mesh) :: mesh
-  type(atlas_mesh_Nodes) :: nodes
-  integer(c_int) :: nb_nodes
+call field%host_data(host)
 
-  write(*,*) "test_function_space starting"
-  mesh = atlas_Mesh()
-  nodes = mesh%nodes()
-  nb_nodes = nodes%size()
-  FCTEST_CHECK_EQUAL( nb_nodes, 0 )
-  FCTEST_CHECK_EQUAL( nodes%size() , 0_c_size_t  )
-  FCTEST_CHECK( nodes%has_field("partition") )
-  FCTEST_CHECK( nodes%has_field("remote_idx") )
-  call nodes%resize(10_c_size_t)
-  nb_nodes = nodes%size()
-  FCTEST_CHECK_EQUAL( nb_nodes, 10 )
-  FCTEST_CHECK_EQUAL( nodes%size() , 10_c_size_t  )
-  call atlas_log%info( nodes%str() )
+FCTEST_CHECK( .not. field%host_needs_update() )
+FCTEST_CHECK( .not. field%device_needs_update() )
 
-  call mesh%final()
-  call nodes%final()
+call field%clone_to_device()
+FCTEST_CHECK( .not. field%device_needs_update() )
+
+call field%final()
 END_TEST
 
 
