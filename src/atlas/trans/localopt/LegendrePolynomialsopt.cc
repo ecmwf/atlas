@@ -66,7 +66,7 @@ void compute_legendre_polynomialsopt(
         // --------------------
         // 1. First two columns
         // --------------------
-        double lat = lats[jlat];
+        double lat     = lats[jlat];
         double zdlx1   = ( M_PI_2 - lat );               // theta
         double zdlx    = std::cos( zdlx1 );              // cos(theta)
         double zdlsita = std::sqrt( 1. - zdlx * zdlx );  // sin(theta) (this is how trans library does it)
@@ -146,8 +146,8 @@ void compute_legendre_polynomialsopt(
                 double ed = ( ( 2. * jn - 1. ) * ( jn + jm ) );                          // denominator of e in Belousov
 
                 legpol[idxmn( jm, jn, jlat )] = std::sqrt( cn / cd ) * legpol[idxmn( jm - 2, jn - 2, jlat )] -
-                                        std::sqrt( dn / dd ) * legpol[idxmn( jm - 2, jn - 1, jlat )] * zdlx +
-                                        std::sqrt( en / ed ) * legpol[idxmn( jm, jn - 1, jlat )] * zdlx;
+                                                std::sqrt( dn / dd ) * legpol[idxmn( jm - 2, jn - 1, jlat )] * zdlx +
+                                                std::sqrt( en / ed ) * legpol[idxmn( jm, jn - 1, jlat )] * zdlx;
             }
         }
     }

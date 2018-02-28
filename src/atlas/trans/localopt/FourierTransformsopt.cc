@@ -21,11 +21,11 @@ namespace trans {
 //-----------------------------------------------------------------------------
 
 void invtrans_fourieropt( const size_t trcFT,
-                       const double lon,         // longitude in radians (in)
-                       const int nb_fields,      // Number of fields
-                       const double rlegReal[],  // associated Legendre functions, size (trc+1)*trc/2 (in)
-                       const double rlegImag[],  // associated Legendre functions, size (trc+1)*trc/2 (in)
-                       double rgp[] )            // gridpoint
+                          const double lon,         // longitude in radians (in)
+                          const int nb_fields,      // Number of fields
+                          const double rlegReal[],  // associated Legendre functions, size (trc+1)*trc/2 (in)
+                          const double rlegImag[],  // associated Legendre functions, size (trc+1)*trc/2 (in)
+                          double rgp[] )            // gridpoint
 {
     for ( int jfld = 0; jfld < nb_fields; ++jfld ) {
         rgp[jfld] = 0.;
@@ -43,11 +43,11 @@ void invtrans_fourieropt( const size_t trcFT,
 }
 
 int fourier_truncationopt( const int truncation,    // truncation
-                        const int nx,            // number of longitudes
-                        const int nxmax,         // maximum nx
-                        const int ndgl,          // number of latitudes
-                        const double lat,        // latitude in radian
-                        const bool fullgrid ) {  // regular grid
+                           const int nx,            // number of longitudes
+                           const int nxmax,         // maximum nx
+                           const int ndgl,          // number of latitudes
+                           const double lat,        // latitude in radian
+                           const bool fullgrid ) {  // regular grid
     int trc     = truncation;
     int trclin  = ndgl - 1;
     int trcquad = ndgl * 2 / 3 - 1;

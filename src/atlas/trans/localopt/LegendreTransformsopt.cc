@@ -17,14 +17,15 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
-void invtrans_legendreopt( const size_t trc,    // truncation (in)
-                        const size_t trcFT,  // truncation for Fourier transformation (in)
-                        const size_t trcLP,  // truncation of Legendre polynomials data legpol. Needs to be >= trc (in)
-                        const double legpol[],  // values of associated Legendre functions, size (trc+1)*trc/2 (in)
-                        const int nb_fields,    // number of fields
-                        const double spec[],    // spectral data, size (trc+1)*trc (in)
-                        double leg_real[],      // values of associated Legendre functions, size (trc+1)*trc/2 (out)
-                        double leg_imag[] )     // values of associated Legendre functions, size (trc+1)*trc/2 (out)
+void invtrans_legendreopt(
+    const size_t trc,       // truncation (in)
+    const size_t trcFT,     // truncation for Fourier transformation (in)
+    const size_t trcLP,     // truncation of Legendre polynomials data legpol. Needs to be >= trc (in)
+    const double legpol[],  // values of associated Legendre functions, size (trc+1)*trc/2 (in)
+    const int nb_fields,    // number of fields
+    const double spec[],    // spectral data, size (trc+1)*trc (in)
+    double leg_real[],      // values of associated Legendre functions, size (trc+1)*trc/2 (out)
+    double leg_imag[] )     // values of associated Legendre functions, size (trc+1)*trc/2 (out)
 {
     // Legendre transformation:
     int k = 0, klp = 0;

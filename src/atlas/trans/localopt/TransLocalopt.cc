@@ -182,13 +182,13 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
 
                 // Legendre transform:
                 invtrans_legendreopt( truncation, trcFT, truncation_ + 1, legPol( lat, j ), nb_fields, scalar_spectra,
-                                   legReal.data(), legImag.data() );
+                                      legReal.data(), legImag.data() );
 
                 // Fourier transform:
                 for ( size_t i = 0; i < g.nx( j ); ++i ) {
                     double lon = g.x( i, j ) * util::Constants::degreesToRadians();
                     invtrans_fourieropt( trcFT, lon, nb_fields, legReal.data(), legImag.data(),
-                                      gp_tmp.data() + ( nb_fields * idx ) );
+                                         gp_tmp.data() + ( nb_fields * idx ) );
                     for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
                         gp_tmp[nb_fields * idx + jfld] /= std::cos( lat );
                     }
@@ -206,11 +206,11 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
 
                 // Legendre transform:
                 invtrans_legendreopt( truncation, trcFT, truncation_ + 1, legPol( lat, idx ), nb_fields, scalar_spectra,
-                                   legReal.data(), legImag.data() );
+                                      legReal.data(), legImag.data() );
 
                 // Fourier transform:
                 invtrans_fourieropt( trcFT, lon, nb_fields, legReal.data(), legImag.data(),
-                                  gp_tmp.data() + ( nb_fields * idx ) );
+                                     gp_tmp.data() + ( nb_fields * idx ) );
                 for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
                     gp_tmp[nb_fields * idx + jfld] /= std::cos( lat );
                 }
@@ -233,7 +233,7 @@ void TransLocalopt::invtrans( const int nb_vordiv_fields, const double vorticity
 }
 
 void extend_truncationopt( const int old_truncation, const int nb_fields, const double old_spectra[],
-                        double new_spectra[] ) {
+                           double new_spectra[] ) {
     int k = 0, k_old = 0;
     for ( int m = 0; m <= old_truncation + 1; m++ ) {             // zonal wavenumber
         for ( int n = m; n <= old_truncation + 1; n++ ) {         // total wavenumber
