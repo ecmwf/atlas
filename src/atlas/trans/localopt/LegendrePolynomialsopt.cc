@@ -71,9 +71,9 @@ void compute_legendre_polynomialsopt(
         double zdlx    = std::cos( zdlx1 );              // cos(theta)
         double zdlsita = std::sqrt( 1. - zdlx * zdlx );  // sin(theta) (this is how trans library does it)
 
-        legpol[0]       = 1.;
-        double zdl1sita = 0.;
+        legpol[idxmn( 0, 0, jlat )] = 1.;
 
+        double zdl1sita = 0.;
         // if we are less than 1 meter from the pole,
         if ( std::abs( zdlsita ) <= std::sqrt( std::numeric_limits<double>::epsilon() ) ) {
             zdlx    = 1.;
@@ -148,6 +148,13 @@ void compute_legendre_polynomialsopt(
                 legpol[idxmn( jm, jn, jlat )] = std::sqrt( cn / cd ) * legpol[idxmn( jm - 2, jn - 2, jlat )] -
                                                 std::sqrt( dn / dd ) * legpol[idxmn( jm - 2, jn - 1, jlat )] * zdlx +
                                                 std::sqrt( en / ed ) * legpol[idxmn( jm, jn - 1, jlat )] * zdlx;
+            }
+        }
+
+        // take factor 2 for m > 0 into account:
+        for ( int jm = 1; jm <= trc; ++jm ) {
+            for ( int jn = jm; jn <= trc; ++jn ) {
+                legpol[idxmn( jm, jn, jlat )] *= 2.;
             }
         }
     }

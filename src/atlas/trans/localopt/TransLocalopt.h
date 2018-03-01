@@ -111,7 +111,8 @@ private:
     Grid grid_;
     int truncation_;
     bool precompute_;
-    std::vector<double> legendre_;
+    mutable std::vector<double> legendre_;
+    mutable std::vector<double> fourier_;
     std::vector<size_t> legendre_begin_;
 };
 
