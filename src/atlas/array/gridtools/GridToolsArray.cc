@@ -61,7 +61,7 @@ class ArrayT_impl {
 public:
     ArrayT_impl( ArrayT<Value>& array ) : array_( array ) {}
 
-    template <typename... UInts, typename = ::gridtools::all_integers<UInts...>>
+    template <typename... UInts, typename = ::gridtools::is_all_integral<UInts...>>
     void construct( UInts... dims ) {
         auto gt_storage    = create_gt_storage<Value, typename default_layout_t<sizeof...( dims )>::type>( dims... );
         using data_store_t = typename std::remove_pointer<decltype( gt_storage )>::type;
@@ -147,7 +147,7 @@ public:
         }
     }
 
-    template <typename Layout, typename... UInts, typename = ::gridtools::all_integers<UInts...>>
+    template <typename Layout, typename... UInts, typename = ::gridtools::is_all_integral<UInts...>>
     void construct_with_layout( UInts... dims ) {
         auto gt_data_store_ptr = create_gt_storage<Value, Layout>( dims... );
         using data_store_t     = typename std::remove_pointer<decltype( gt_data_store_ptr )>::type;

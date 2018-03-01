@@ -10,7 +10,7 @@ if( HAVE_FCTEST )
 
   add_fctest( TARGET atlas_fctest_mesh
     LINKER_LANGUAGE Fortran
-    CONDITION       ON
+    CONDITION       NOT atlas_fctest_mesh_DISABLED
     SOURCES         fctest_mesh.F90
     LIBS            atlas_f
   )

@@ -17,4 +17,10 @@ if( HAVE_FCTEST)
     SOURCES         fctest_fvm_nabla.F90
     LIBS            atlas_f
   )
+  
+  add_fctest( TARGET atlas_fctest_ifs_setup
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_ifs_setup.F90
+    LIBS            atlas_f
+  )
 endif()

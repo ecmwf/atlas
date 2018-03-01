@@ -21,11 +21,11 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
   )
 
-  add_fctest( TARGET atlas_fctest_parametrisation
-    CONDITION       NOT atlas_fctest_parametrisation_DISABLED
-    LINKER_LANGUAGE Fortran
-    SOURCES         fctest_parametrisation.F90
-    LIBS            atlas_f
+ add_fctest( TARGET atlas_fctest_parametrisation
+   CONDITION       NOT atlas_fctest_parametrisation_DISABLED
+   LINKER_LANGUAGE Fortran
+   SOURCES         fctest_parametrisation.F90
+   LIBS            atlas_f
   )
 
   add_fctest( TARGET atlas_fctest_metadata
