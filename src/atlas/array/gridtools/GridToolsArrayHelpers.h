@@ -212,8 +212,10 @@ struct my_apply_gt_integer_sequence<::gridtools::gt_integer_sequence<UInt, Indic
     }
 };
 
+#ifndef __CUDACC__
+
 template <typename DataStore, typename... Dims>
-ArraySpec make_spec( DataStore* gt_data_store_ptr, Dims... dims ) {
+ArraySpec ATLAS_HOST make_spec( DataStore* gt_data_store_ptr, Dims... dims ) {
     static_assert( (::gridtools::is_data_store<DataStore>::value ), "Internal Error: passing a non GT data store" );
 
     if ( gt_data_store_ptr->valid() ) {
@@ -241,6 +243,7 @@ ArraySpec make_spec( DataStore* gt_data_store_ptr, Dims... dims ) {
             make_null_strides( typename ::gridtools::make_gt_integer_sequence<size_t, sizeof...( dims )>::type() ) );
     }
 }
+#endif
 
 //------------------------------------------------------------------------------
 

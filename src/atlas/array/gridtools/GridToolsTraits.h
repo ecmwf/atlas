@@ -1,6 +1,7 @@
 #pragma once
 
-#include "gridtools/common/generic_metafunctions/all_integrals.hpp"
+#include "gridtools/common/generic_metafunctions/is_all_integrals.hpp"
+#include "gridtools/common/generic_metafunctions/accumulate.hpp"
 #include "gridtools/storage/storage-facility.hpp"
 
 #include "atlas/array/ArrayViewDefs.h"

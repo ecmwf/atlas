@@ -6,7 +6,32 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+######################################################
+# Compiler bugs force us to disable some tests
 
+if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI"  AND
+    CMAKE_Fortran_COMPILER_VERSION VERSION_LESS 16.8 )
+  set( atlas_fctest_parametrisation_DISABLED TRUE )
+  ecbuild_warn( "PGI Fortran compiler version tested up to 16.7 has a compiler bug "
+                "that leads to a segfaults for atlas_fctest_parametrisation. "
+                "Disabling this test..." )
+endif()
+
+if( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
+  if( NOT CMAKE_Fortran_COMPILER_VERSION
+      AND CMAKE_C_COMPILER_ID MATCHES "Intel" )
+    set( CMAKE_Fortran_COMPILER_VERSION ${CMAKE_C_COMPILER_VERSION} )
+  endif()
+  if( CMAKE_Fortran_COMPILER_VERSION VERSION_EQUAL 18.0 )
+    set( atlas_fctest_parametrisation_DISABLED TRUE )
+    ecbuild_warn( "Intel Fortran compiler version tested 18.0 has a internal compiler error "
+                  "when compiling atlas_fctest_parametrisation. "
+                  "Disabling this tests..." )
+  endif()
+endif()
+
+
+######################################################
 
 # Macro atlas_add_cuda_test
 # Envisioned to become part of ecbuild_add_test with a CUDA option
