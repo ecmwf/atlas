@@ -70,7 +70,7 @@ TransLocalopt::TransLocalopt( const Cache& cache, const Grid& grid, const long t
             lats[j] = g.y( j ) * util::Constants::degreesToRadians();
         }
         for ( size_t j = 0; j < nlons; ++j ) {
-            lons[j] = g.x( 0, j ) * util::Constants::degreesToRadians();
+            lons[j] = g.x( j, 0 ) * util::Constants::degreesToRadians();
         }
     }
     else {
@@ -174,6 +174,7 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
         // Transform
         if ( grid::StructuredGrid g = grid_ ) {
             ATLAS_TRACE( "invtrans_uv structured opt" );
+            int nlats        = g.ny();
             int size_fourier = nb_fields * 2 * g.ny();
             std::vector<double> scl_fourier( size_fourier * ( truncation + 1 ) );
 
@@ -205,6 +206,30 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
             }
 
             // Fourier transformation:
+            std::vector<double> gp_opt( nb_fields * grid_.size(), 0. );
+            eckit::linalg::Matrix A( scl_fourier_tp.data(), nb_fields * g.ny(), ( truncation_ + 1 ) * 2 );
+            eckit::linalg::Matrix B( fourier_.data(), ( truncation_ + 1 ) * 2, g.nxmax() );
+            eckit::linalg::Matrix C( gp_opt.data(), nb_fields * g.ny(), g.nxmax() );
+            eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+
+            // Transposition in grid point space:
+            {
+                std::vector<double> coslats( nlats );
+                for ( size_t j = 0; j < nlats; ++j ) {
+                    coslats[j] = std::cos( g.y( j ) * util::Constants::degreesToRadians() );
+                }
+                int idx = 0;
+                for ( int jlon = 0; jlon < g.nxmax(); jlon++ ) {
+                    for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
+                        for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                            int pos_tp = jlon + g.nxmax() * ( jlat + g.ny() * ( jfld ) );
+                            //int pos  = jfld + nb_fields * ( jlat + g.ny() * ( jlon ) );
+                            if ( jfld < nb_vordiv_fields ) { gp_opt[idx] /= coslats[jlat]; }
+                            gp_fields[pos_tp] = gp_opt[idx++];  // = gp_opt[pos]
+                        }
+                    }
+                }
+            }
 
             int idx = 0;
             for ( size_t j = 0; j < g.ny(); ++j ) {
@@ -246,15 +271,17 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
                 idx1 = 0;
                 for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
                     for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
-                        int posReal = jfld + nb_fields * ( 2 * ( j + g.ny() * ( jm ) ) );
-                        if ( std::abs( legReal[idx1] - scl_fourier[posReal] ) > 1e-14 ) {
+                        int posReal    = jfld + nb_fields * ( 2 * ( j + g.ny() * ( jm ) ) );
+                        int posReal_tp = jfld + nb_fields * ( j + g.ny() * ( 2 * ( jm ) ) );
+                        if ( std::abs( legReal[idx1] - scl_fourier_tp[posReal_tp] ) > 1e-14 ) {
                             Log::info() << "jm=" << jm << " jlat=" << j << " jfld=" << jfld
-                                        << " real: " << legReal[idx1] << " " << scl_fourier[posReal] << std::endl;
+                                        << " real: " << legReal[idx1] << " " << scl_fourier_tp[posReal_tp] << std::endl;
                         }
-                        int posImag = jfld + nb_fields * ( 1 + 2 * ( j + g.ny() * ( jm ) ) );
-                        if ( std::abs( legImag[idx1] - scl_fourier[posImag] ) > 1e-14 ) {
+                        int posImag    = jfld + nb_fields * ( 1 + 2 * ( j + g.ny() * ( jm ) ) );
+                        int posImag_tp = jfld + nb_fields * ( j + g.ny() * ( 1 + 2 * ( jm ) ) );
+                        if ( std::abs( legImag[idx1] - scl_fourier_tp[posImag_tp] ) > 1e-14 ) {
                             Log::info() << "jm=" << jm << " jlat=" << j << " jfld=" << jfld
-                                        << " imag: " << legImag[idx1] << " " << scl_fourier[posImag] << std::endl;
+                                        << " imag: " << legImag[idx1] << " " << scl_fourier_tp[posImag_tp] << std::endl;
                         }
                         idx1++;
                     }
@@ -268,6 +295,32 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
                         gp_tmp[nb_fields * idx + jfld] /= std::cos( lat );
                     }
                     ++idx;
+                }
+            }
+            // transpose result (gp_tmp: jfld is fastest index. gp_fields: jfld needs to
+            // be slowest index)
+            std::vector<double> gp_tmp2( nb_fields * grid_.size(), 0. );
+            gp_transposeopt( grid_.size(), nb_fields, gp_tmp.data(), gp_tmp2.data() );
+
+            // compare new and old version:
+            {
+                int idx = 0;
+                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                    for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
+                        for ( int jlon = 0; jlon < g.nxmax(); jlon++ ) {
+                            int pos = jfld + nb_fields * ( jlat + g.ny() * ( jlon ) );
+                            if ( std::abs( gp_opt[pos] - gp_tmp2[idx] ) > 1e-14 ) {
+                                Log::info() << "jlon=" << jlon << " jlat=" << jlat << " jfld=" << jfld
+                                            << " new:" << gp_opt[pos] << " old:" << gp_tmp2[idx] << std::endl;
+                            }
+                            /*if ( std::abs( gp_fields[idx] - gp_tmp2[idx] ) > 1e-14 ) {
+                                Log::info() << "jlon=" << jlon << " jlat=" << jlat << " jfld=" << jfld
+                                            << " new:" << gp_fields[idx] << " old:" << gp_tmp2[idx] << std::endl;
+                            }*/
+                            //gp_fields[idx] = gp_tmp2[idx];
+                            idx++;
+                        }
+                    }
                 }
             }
         }
@@ -292,10 +345,6 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
                 ++idx;
             }
         }
-
-        // transpose result (gp_tmp: jfld is fastest index. gp_fields: jfld needs to
-        // be slowest index)
-        gp_transposeopt( grid_.size(), nb_fields, gp_tmp.data(), gp_fields );
     }
 }
 
