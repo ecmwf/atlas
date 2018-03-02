@@ -129,6 +129,7 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
 }
 
 void gp_transpose( const int nb_size, const int nb_fields, const double gp_tmp[], double gp_fields[] ) {
+    ATLAS_TRACE( "gp_transpose" );
     for ( int jgp = 0; jgp < nb_size; jgp++ ) {
         for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
             gp_fields[jfld * nb_size + jgp] = gp_tmp[jgp * nb_fields + jfld];
@@ -181,18 +182,24 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
                     fourier_truncation( truncation, g.nx( j ), g.nxmax(), g.ny(), lat, grid::RegularGrid( grid_ ) );
 
                 // Legendre transform:
-                invtrans_legendre( truncation, trcFT, truncation_ + 1, legPol( lat, j ), nb_fields, scalar_spectra,
-                                   legReal.data(), legImag.data() );
+                {
+                    ATLAS_TRACE( "invtrans_legendre" );
+                    invtrans_legendre( truncation, trcFT, truncation_ + 1, legPol( lat, j ), nb_fields, scalar_spectra,
+                                       legReal.data(), legImag.data() );
+                }
 
                 // Fourier transform:
-                for ( size_t i = 0; i < g.nx( j ); ++i ) {
-                    double lon = g.x( i, j ) * util::Constants::degreesToRadians();
-                    invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(),
-                                      gp_tmp.data() + ( nb_fields * idx ) );
-                    for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
-                        gp_tmp[nb_fields * idx + jfld] /= std::cos( lat );
+                {
+                    ATLAS_TRACE( "invtrans_fourier" );
+                    for ( size_t i = 0; i < g.nx( j ); ++i ) {
+                        double lon = g.x( i, j ) * util::Constants::degreesToRadians();
+                        invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(),
+                                          gp_tmp.data() + ( nb_fields * idx ) );
+                        for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
+                            gp_tmp[nb_fields * idx + jfld] /= std::cos( lat );
+                        }
+                        ++idx;
                     }
-                    ++idx;
                 }
             }
         }
@@ -205,14 +212,20 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
                 double trcFT = truncation;
 
                 // Legendre transform:
-                invtrans_legendre( truncation, trcFT, truncation_ + 1, legPol( lat, idx ), nb_fields, scalar_spectra,
-                                   legReal.data(), legImag.data() );
+                {
+                    ATLAS_TRACE( "invtrans_legendre" );
+                    invtrans_legendre( truncation, trcFT, truncation_ + 1, legPol( lat, idx ), nb_fields,
+                                       scalar_spectra, legReal.data(), legImag.data() );
+                }
 
                 // Fourier transform:
-                invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(),
-                                  gp_tmp.data() + ( nb_fields * idx ) );
-                for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
-                    gp_tmp[nb_fields * idx + jfld] /= std::cos( lat );
+                {
+                    ATLAS_TRACE( "invtrans_fourier" );
+                    invtrans_fourier( trcFT, lon, nb_fields, legReal.data(), legImag.data(),
+                                      gp_tmp.data() + ( nb_fields * idx ) );
+                    for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
+                        gp_tmp[nb_fields * idx + jfld] /= std::cos( lat );
+                    }
                 }
                 ++idx;
             }
@@ -255,21 +268,24 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
                            const double vorticity_spectra[], const double divergence_spectra[], double gp_fields[],
                            const eckit::Configuration& config ) const {
     ATLAS_TRACE( "TransLocal::invtrans" );
-    int nb_gp = grid_.size();
-
-    // increase truncation in vorticity_spectra and divergence_spectra:
+    int nb_gp              = grid_.size();
     int nb_vordiv_spec_ext = 2 * legendre_size( truncation_ + 1 ) * nb_vordiv_fields;
     std::vector<double> vorticity_spectra_extended( nb_vordiv_spec_ext, 0. );
     std::vector<double> divergence_spectra_extended( nb_vordiv_spec_ext, 0. );
-    extend_truncation( truncation_, nb_vordiv_fields, vorticity_spectra, vorticity_spectra_extended.data() );
-    extend_truncation( truncation_, nb_vordiv_fields, divergence_spectra, divergence_spectra_extended.data() );
-
-    // call vd2uv to compute u and v in spectral space
     std::vector<double> U_ext( nb_vordiv_spec_ext, 0. );
     std::vector<double> V_ext( nb_vordiv_spec_ext, 0. );
-    trans::VorDivToUV vordiv_to_UV_ext( truncation_ + 1, option::type( "local" ) );
-    vordiv_to_UV_ext.execute( nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(),
-                              divergence_spectra_extended.data(), U_ext.data(), V_ext.data() );
+
+    {
+        ATLAS_TRACE( "vordiv to UV" );
+        // increase truncation in vorticity_spectra and divergence_spectra:
+        extend_truncation( truncation_, nb_vordiv_fields, vorticity_spectra, vorticity_spectra_extended.data() );
+        extend_truncation( truncation_, nb_vordiv_fields, divergence_spectra, divergence_spectra_extended.data() );
+
+        // call vd2uv to compute u and v in spectral space
+        trans::VorDivToUV vordiv_to_UV_ext( truncation_ + 1, option::type( "localopt" ) );
+        vordiv_to_UV_ext.execute( nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(),
+                                  divergence_spectra_extended.data(), U_ext.data(), V_ext.data() );
+    }
 
     // perform spectral transform to compute all fields in grid point space
     invtrans_uv( truncation_ + 1, nb_vordiv_fields, nb_vordiv_fields, U_ext.data(), gp_fields, config );
