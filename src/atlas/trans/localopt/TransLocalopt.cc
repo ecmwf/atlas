@@ -99,6 +99,19 @@ TransLocalopt::TransLocalopt( const Cache& cache, const Grid& grid, const long t
             }
         }
     }
+    {
+        ATLAS_TRACE( "opt precomp Fourier tp" );
+        fouriertp_.resize( 2 * ( truncation_ + 1 ) * nlons );
+        int idx = 0;
+        for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
+            for ( int jlon = 0; jlon < nlons; jlon++ ) {
+                fouriertp_[idx++] = +std::cos( jm * lons[jlon] );  // real part
+            }
+            for ( int jlon = 0; jlon < nlons; jlon++ ) {
+                fouriertp_[idx++] = -std::sin( jm * lons[jlon] );  // imaginary part
+            }
+        }
+    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -193,13 +206,14 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
                     eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
                 }
             }
+#if 0  // 1: better for small number of columns, large truncation; 0: better for large number of columns
 
             // Transposition in Fourier space:
             std::vector<double> scl_fourier_tp( size_fourier * ( truncation + 1 ) );
             {
                 ATLAS_TRACE( "opt transposition in Fourier" );
                 int idx = 0;
-                for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
+                for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
                     for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
                         for ( int imag = 0; imag < 2; imag++ ) {
                             for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
@@ -223,10 +237,6 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
             }
 
             // Transposition in grid point space:
-            std::vector<double> coslats( nlats );
-            for ( size_t j = 0; j < nlats; ++j ) {
-                coslats[j] = std::cos( g.y( j ) * util::Constants::degreesToRadians() );
-            }
             {
                 ATLAS_TRACE( "opt transposition in gp-space" );
                 int idx = 0;
@@ -235,8 +245,56 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
                         for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                             int pos_tp = jlon + g.nxmax() * ( jlat + g.ny() * ( jfld ) );
                             //int pos  = jfld + nb_fields * ( jlat + g.ny() * ( jlon ) );
-                            if ( jfld < nb_vordiv_fields ) { gp_opt[idx] /= coslats[jlat]; }
                             gp_fields[pos_tp] = gp_opt[idx++];  // = gp_opt[pos]
+                        }
+                    }
+                }
+            }
+#else
+            // Transposition in Fourier space:
+            std::vector<double> scl_fourier_tp( size_fourier * ( truncation + 1 ) );
+            {
+                ATLAS_TRACE( "opt transposition in Fourier" );
+                int idx = 0;
+                for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
+                    for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
+                        for ( int imag = 0; imag < 2; imag++ ) {
+                            for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                                int pos_tp = imag + 2 * ( jm + ( truncation_ + 1 ) * ( jlat + g.ny() * ( jfld ) ) );
+                                //int pos  = jfld + nb_fields * ( imag + 2 * ( jlat + g.ny() * ( jm ) ) );
+                                scl_fourier_tp[pos_tp] = scl_fourier[idx++];  // = scl_fourier[pos]
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Fourier transformation:
+            std::vector<double> gp_opt( nb_fields * grid_.size(), 0. );
+            {
+                ATLAS_TRACE( "opt Fourier dgemm" );
+                eckit::linalg::Matrix A( fouriertp_.data(), g.nxmax(), ( truncation_ + 1 ) * 2 );
+                eckit::linalg::Matrix B( scl_fourier_tp.data(), ( truncation_ + 1 ) * 2, nb_fields * g.ny() );
+                eckit::linalg::Matrix C( gp_fields, g.nxmax(), nb_fields * g.ny() );
+                eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+            }
+
+#endif
+            // Computing u,v from U,V:
+            {
+                if ( nb_vordiv_fields > 0 ) {
+                    ATLAS_TRACE( "opt u,v from U,V" );
+                    std::vector<double> coslats( nlats );
+                    for ( size_t j = 0; j < nlats; ++j ) {
+                        coslats[j] = std::cos( g.y( j ) * util::Constants::degreesToRadians() );
+                    }
+                    int idx = 0;
+                    for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                        for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
+                            for ( int jlon = 0; jlon < g.nxmax(); jlon++ ) {
+                                gp_fields[idx] /= coslats[jlat];
+                                idx++;
+                            }
                         }
                     }
                 }

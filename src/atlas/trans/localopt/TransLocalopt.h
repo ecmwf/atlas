@@ -113,6 +113,7 @@ private:
     bool precompute_;
     mutable std::vector<double> legendre_;
     mutable std::vector<double> fourier_;
+    mutable std::vector<double> fouriertp_;
     std::vector<size_t> legendre_begin_;
 };
 
