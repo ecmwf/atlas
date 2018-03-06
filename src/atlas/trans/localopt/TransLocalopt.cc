@@ -81,16 +81,22 @@ TransLocalopt::TransLocalopt( const Cache& cache, const Grid& grid, const long t
         }
     }
     // precomputations for Legendre polynomials:
-    legendre_.resize( legendre_size( truncation_ + 1 ) * nlats );
-    compute_legendre_polynomialsopt( truncation_ + 1, nlats, lats.data(), legendre_.data() );
+    {
+        ATLAS_TRACE( "opt precomp Legendre" );
+        legendre_.resize( legendre_size( truncation_ + 1 ) * nlats );
+        compute_legendre_polynomialsopt( truncation_ + 1, nlats, lats.data(), legendre_.data() );
+    }
 
     // precomputations for Fourier transformations:
-    fourier_.resize( 2 * ( truncation_ + 1 ) * nlons );
-    int idx = 0;
-    for ( int jlon = 0; jlon < nlons; jlon++ ) {
-        for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
-            fourier_[idx++] = +std::cos( jm * lons[jlon] );  // real part
-            fourier_[idx++] = -std::sin( jm * lons[jlon] );  // imaginary part
+    {
+        ATLAS_TRACE( "opt precomp Fourier" );
+        fourier_.resize( 2 * ( truncation_ + 1 ) * nlons );
+        int idx = 0;
+        for ( int jlon = 0; jlon < nlons; jlon++ ) {
+            for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
+                fourier_[idx++] = +std::cos( jm * lons[jlon] );  // real part
+                fourier_[idx++] = -std::sin( jm * lons[jlon] );  // imaginary part
+            }
         }
     }
 }
@@ -293,32 +299,40 @@ void TransLocalopt::invtrans( const int nb_scalar_fields, const double scalar_sp
     ATLAS_TRACE( "TransLocalopt::invtrans" );
     int nb_gp              = grid_.size();
     int nb_vordiv_spec_ext = 2 * legendre_size( truncation_ + 1 ) * nb_vordiv_fields;
-    std::vector<double> vorticity_spectra_extended( nb_vordiv_spec_ext, 0. );
-    std::vector<double> divergence_spectra_extended( nb_vordiv_spec_ext, 0. );
-    std::vector<double> U_ext( nb_vordiv_spec_ext, 0. );
-    std::vector<double> V_ext( nb_vordiv_spec_ext, 0. );
+    if ( nb_vordiv_fields > 0 ) {
+        std::vector<double> vorticity_spectra_extended( nb_vordiv_spec_ext, 0. );
+        std::vector<double> divergence_spectra_extended( nb_vordiv_spec_ext, 0. );
+        std::vector<double> U_ext( nb_vordiv_spec_ext, 0. );
+        std::vector<double> V_ext( nb_vordiv_spec_ext, 0. );
 
-    {
-        ATLAS_TRACE( "vordiv to UV opt" );
-        // increase truncation in vorticity_spectra and divergence_spectra:
-        extend_truncationopt( truncation_, nb_vordiv_fields, vorticity_spectra, vorticity_spectra_extended.data() );
-        extend_truncationopt( truncation_, nb_vordiv_fields, divergence_spectra, divergence_spectra_extended.data() );
+        {
+            ATLAS_TRACE( "opt extend vordiv" );
+            // increase truncation in vorticity_spectra and divergence_spectra:
+            extend_truncationopt( truncation_, nb_vordiv_fields, vorticity_spectra, vorticity_spectra_extended.data() );
+            extend_truncationopt( truncation_, nb_vordiv_fields, divergence_spectra,
+                                  divergence_spectra_extended.data() );
+        }
 
-        // call vd2uv to compute u and v in spectral space
-        trans::VorDivToUV vordiv_to_UV_ext( truncation_ + 1, option::type( "localopt" ) );
-        vordiv_to_UV_ext.execute( nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(),
-                                  divergence_spectra_extended.data(), U_ext.data(), V_ext.data() );
+        {
+            ATLAS_TRACE( "vordiv to UV opt" );
+            // call vd2uv to compute u and v in spectral space
+            trans::VorDivToUV vordiv_to_UV_ext( truncation_ + 1, option::type( "localopt" ) );
+            vordiv_to_UV_ext.execute( nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(),
+                                      divergence_spectra_extended.data(), U_ext.data(), V_ext.data() );
+        }
+
+        // perform spectral transform to compute all fields in grid point space
+        invtrans_uv( truncation_ + 1, nb_vordiv_fields, nb_vordiv_fields, U_ext.data(), gp_fields, config );
+        invtrans_uv( truncation_ + 1, nb_vordiv_fields, nb_vordiv_fields, V_ext.data(),
+                     gp_fields + nb_gp * nb_vordiv_fields, config );
     }
-
-    // perform spectral transform to compute all fields in grid point space
-    invtrans_uv( truncation_ + 1, nb_vordiv_fields, nb_vordiv_fields, U_ext.data(), gp_fields, config );
-    invtrans_uv( truncation_ + 1, nb_vordiv_fields, nb_vordiv_fields, V_ext.data(),
-                 gp_fields + nb_gp * nb_vordiv_fields, config );
-    int nb_scalar_spec_ext = 2 * legendre_size( truncation_ + 1 ) * nb_scalar_fields;
-    std::vector<double> scalar_spectra_extended( nb_scalar_spec_ext, 0. );
-    extend_truncationopt( truncation_, nb_scalar_fields, scalar_spectra, scalar_spectra_extended.data() );
-    invtrans_uv( truncation_ + 1, nb_scalar_fields, 0, scalar_spectra_extended.data(),
-                 gp_fields + 2 * nb_gp * nb_vordiv_fields, config );
+    if ( nb_scalar_fields > 0 ) {
+        int nb_scalar_spec_ext = 2 * legendre_size( truncation_ + 1 ) * nb_scalar_fields;
+        std::vector<double> scalar_spectra_extended( nb_scalar_spec_ext, 0. );
+        extend_truncationopt( truncation_, nb_scalar_fields, scalar_spectra, scalar_spectra_extended.data() );
+        invtrans_uv( truncation_ + 1, nb_scalar_fields, 0, scalar_spectra_extended.data(),
+                     gp_fields + 2 * nb_gp * nb_vordiv_fields, config );
+    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
