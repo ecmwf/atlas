@@ -1,44 +1,52 @@
 Atlas
 =====
 
-Project home: https://software.ecmwf.int/wiki/display/ATLAS/Atlas
-Contact: Willem Deconinck (willem.deconinck@ecmwf.int)
-Publication (open-access): https://doi.org/10.1016/j.cpc.2017.07.006
+[![travis master](https://img.shields.io/travis/ecmwf/atlas/master.svg?label=master&logo=travis)](http://travis-ci.org/ecmwf/atlas "master")
+[![travis develop](https://img.shields.io/travis/ecmwf/atlas/develop.svg?label=develop&logo=travis)](http://travis-ci.org/ecmwf/atlas "develop")
 
-Atlas is a ECMWF framework for parallel data-structures supporting unstructured
+Project home: https://software.ecmwf.int/wiki/display/ATLAS  
+Contact: Willem Deconinck (willem.deconinck@ecmwf.int)  
+Publication:
+   >  [Deconinck et al, 2017](https://doi.org/10.1016/j.cpc.2017.07.006) --- 
+   >  Atlas: A library for numerical weather prediction and climate modelling
+
+Atlas is a ECMWF library for parallel data-structures supporting unstructured
 grids and function spaces, with the aim to investigate alternative more scalable
 dynamical core options for Earth System models, and to support modern interpolation
-and product generation softrware
+and product generation software
 
 Atlas is predominantly C++ code, with main features available to Fortran codes
 through a F2003 interface. It requires some flavour of Unix (such as Linux).
 It is known to run on a number of systems, some of which are directly supported
 by ECMWF.
 
-If Atlas has been useful in your research, please cite the above-mentioned publication.
+Requirements
+------------
 
-Tested compilers include
+Tested compilers include:
 
 - GCC 4.9.1, 5.3.0, 6.3.0, 7.2.0
-- Intel 15.0.2, 16.0.3, 17.
+- Intel 15.0.2, 16.0.3, 17, 18
 - CCE 8.4.5, 8.5.8, 8.6.2
 - PGI-Fortran 17.7 combined with GNU-C/C++ 6.3
+- PGI 17.7
 
-Third Party Requirements
-------------------------
+Known compilers to fail include:
 
-Requirements to compile atlas:
+- PGI-Fortran 17.10, 18.1
+
+Required dependencies:
 
 - CMake --- For use and installation see http://www.cmake.org/
 - ecbuild --- ECMWF library of CMake macros
-- eckit (with mpi support)
+- eckit (with MPI support) --- C++ support library
 
-Recommended:
+Recommended dependencies:
 
 - fckit --- For enabling Fortran interfaces
 - python (only when Fortran bindings are required)
 
-Optional for certain features:
+Optional dependencies:
 
 - gridtools-storage --- For GPU interoperability
 - transi --- For enabling IFS spherical harmonics transforms ( not open-source )
@@ -50,7 +58,8 @@ Installation
 Atlas employs an out-of-source build/install based on CMake.
 
 Make sure ecbuild, eckit and fckit are installed and the ecbuild
-executable script is found ( `which ecbuild` ):
+executable script is found ( `which ecbuild` ). Following environment variables
+help the build system to detect the right dependencies:
 
 ```bash
 # For finding eckit
@@ -100,9 +109,9 @@ $ATLAS_INSTALL/bin/atlas --info
 Extra flags maybe added to step 2 to fine-tune configuration.
 
 - `--build=DEBUG|RELEASE|BIT` --- Optimisation level
-  * DEBUG:   No optimisation (-O0 -g)
-  * BIT:     Maximum optimisation while remaning bit-reproducible (-O2 -g)
-  * RELEASE: Maximum optimisation (-O3)
+  * DEBUG:   No optimisation (`-O0 -g`)
+  * BIT:     Maximum optimisation while remaning bit-reproducible (`-O2 -g`)
+  * RELEASE: Maximum optimisation (`-O3`)
 - `-DENABLE_OMP=OFF` --- Disable OpenMP
 - `-DENABLE_FORTRAN=OFF` --- Disable Compilation of Fortran bindings
 
@@ -120,3 +129,30 @@ Atlas behaviour can be configured through some environment variables with defaul
 - `ATLAS_INFO=<0|[1]>`  --- Control printing of Atlas standard information
 - `ATLAS_DEBUG=<[0]|1>` --- Control printing of Atlas debug information
 - `ATLAS_TRACE=<[0]|1>` --- Control printing of Atlas traces (includes timings)
+
+Contributing
+------------
+Contributions to Atlas are welcome. In order to do so, please open an issue
+where a feature request or bug can be discussed. Then issue a pull request
+with your contribution. Pull requests must be issued against the develop branch.
+
+Citing Atlas
+------------
+If you publish work which mentions Atlas, or Atlas has been useful in your research,
+please cite the following paper:
+
+```bibtex
+@article{DECONINCK2017188,
+title = "Atlas : A library for numerical weather prediction and climate modelling",
+journal = "Computer Physics Communications",
+volume = "220",
+pages = "188 - 204",
+year = "2017",
+issn = "0010-4655",
+doi = "https://doi.org/10.1016/j.cpc.2017.07.006",
+url = "http://www.sciencedirect.com/science/article/pii/S0010465517302138",
+author = "Willem Deconinck and Peter Bauer and Michail Diamantakis and Mats Hamrud and Christian Kühnlein and Pedro Maciel and Gianmarco Mengaldo and Tiago Quintino and Baudouin Raoult and Piotr K. Smolarkiewicz and Nils P. Wedi",
+keywords = "Numerical weather prediction, Climate, Earth system, High performance computing, Meteorology, Flexible mesh data structure"
+}
+```
+
