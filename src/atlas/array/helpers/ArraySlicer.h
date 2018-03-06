@@ -162,13 +162,15 @@ private:
         return idx * view.stride( i_view++ );
     }
 
-    static int offset_part( View& view, int& i_view, Range range ) { return range.start() * view.stride( i_view++ ); }
+    static int offset_part( View& view, int& i_view, Range range ) {
+        return range.start() * view.stride( i_view++ ); }
 
     static int offset_part( View& view, int& i_view, RangeAll range ) {
         return range.start() * view.stride( i_view++ );
     }
 
-    static int offset_part( View& view, int& i_view, RangeTo range ) { return range.start() * view.stride( i_view++ ); }
+    static int offset_part( View& view, int& i_view, RangeTo range ) {
+        return range.start() * view.stride( i_view++ ); }
 
     static int offset_part( View& view, int& i_view, RangeFrom range ) {
         return range.start() * view.stride( i_view++ );
@@ -178,7 +180,8 @@ private:
 
     template <int Dim, typename Int, typename... Ints>
     static int offset_remaining( View& view, int& i_view, const Int idx, const Ints... next_idx ) {
-        return offset_part( view, i_view, idx ) + offset_remaining<Dim + 1>( view, i_view, next_idx... );
+        const int p = offset_part( view, i_view, idx );
+        return p + offset_remaining<Dim + 1>( view, i_view, next_idx... );
     }
 
     template <int Dim, typename Int>
