@@ -9,6 +9,7 @@
 
 #! /usr/bin/env python
 
+from __future__ import print_function
 from argparse import ArgumentParser
 import re
 import time
@@ -117,12 +118,12 @@ class Argument:
             self.ptr = False
         
         if debug:
-            print "name = ",self.name
-            print "type = ",self.type
-            print "base_type = ",self.base_type
-            print "array = ",self.array
-            print "ref = ",self.ref
-            print "ptr = ",self.ptr
+            print ("name = ",self.name)
+            print ("type = ",self.type)
+            print ("base_type = ",self.base_type)
+            print ("array = ",self.array)
+            print ("ref = ",self.ref)
+            print ("ptr = ",self.ptr)
  
         self.use = set()
         self.fortran = ""
@@ -150,7 +151,7 @@ class Argument:
         self.fortran += " :: "+self.name
         
         if( debug ):
-            print self.fortran
+            print( self.fortran )
 
 class ReturnType:
 
@@ -179,11 +180,11 @@ class ReturnType:
                 except KeyError:
                     raise ParsingFailed("Could not parse return type for statement "+line)
 
-    def __nonzero__(self):
-        if( self.type == "void" ):
-            return 0
-        else:
-            return 1
+    def __nonzero__(self): # python 2
+        return self.type != "void"
+
+    def __bool__(self): # python 3
+        return self.type != "void"
         
 class Function:
     
@@ -340,7 +341,7 @@ intf += "interface\n\n"
 for statement in code.statements():
     try:
         intf += Function(statement).fortran_interface()+"\n"
-    except ParsingFailed, e:
+    except ParsingFailed( e ):
         print("\n\n"+"-"*80+"\n"+"Automatic generation of Fortran bindings failed for file\n\n"+
               "    "+input+"\n\n"+"ParsingFailed for statement:\n\n"+
               "    "+statement+"\n\nError: "+str(e)+"\n"+"-"*80+"\n")
