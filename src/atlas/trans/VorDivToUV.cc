@@ -28,6 +28,7 @@
 #endif
 #include "atlas/trans/local/VorDivToUVLocal.h"
 #include "atlas/trans/localopt/VorDivToUVLocalopt.h"
+#include "atlas/trans/localopt2/VorDivToUVLocalopt2.h"
 
 namespace atlas {
 namespace trans {
@@ -57,6 +58,7 @@ struct force_link {
 #endif
         load_builder<VorDivToUVLocal>();
         load_builder<VorDivToUVLocalopt>();
+        load_builder<VorDivToUVLocalopt2>();
     }
 };
 

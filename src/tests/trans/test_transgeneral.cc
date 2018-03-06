@@ -721,8 +721,8 @@ CASE( "test_trans_vordiv_with_translib" ) {
 #if ATLAS_HAVE_TRANS
     trans::Trans transIFS( g, trc, util::Config( "type", "ifs" ) );
 #endif
-    trans::Trans transLocal( g, trc, util::Config( "type", "local" ) );
-    trans::Trans transLocalopt( g, trc, util::Config( "type", "localopt" ) );
+    trans::Trans transLocal( g, trc, util::Config( "type", "localopt" ) );
+    trans::Trans transLocalopt( g, trc, util::Config( "type", "localopt2" ) );
 
     functionspace::Spectral spectral( trc );
     functionspace::StructuredColumns gridpoints( g );
@@ -780,8 +780,8 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                 spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg.data(),
                                                                   rgp_analytic.data(), ivar_in, ivar_out );
 
-                                //EXPECT_NO_THROW( transLocal.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
-                                //                                      div.data(), rgp.data() ) );
+                                EXPECT_NO_THROW( transLocal.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                      div.data(), rgp.data() ) );
 
                                 EXPECT_NO_THROW( transLocalopt.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
                                                                          div.data(), rgpopt.data() ) );
@@ -803,7 +803,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                     ATLAS_DEBUG_VAR( tolerance );
                                 }
                                 EXPECT( rms_gen < tolerance );
-                                //EXPECT( rms_genopt < tolerance );
+                                EXPECT( rms_genopt < tolerance );
                                 icase++;
 
 #if ATLAS_HAVE_TRANS

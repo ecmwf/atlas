@@ -29,6 +29,7 @@
 #endif
 #include "atlas/trans/local/TransLocal.h"
 #include "atlas/trans/localopt/TransLocalopt.h"
+#include "atlas/trans/localopt2/TransLocalopt2.h"
 
 namespace atlas {
 namespace trans {
@@ -64,6 +65,7 @@ struct force_link {
 #endif
         load_builder_grid<TransLocal>();
         load_builder_grid<TransLocalopt>();
+        load_builder_grid<TransLocalopt2>();
     }
 };
 
