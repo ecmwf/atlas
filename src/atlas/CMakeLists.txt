@@ -576,6 +576,7 @@ ecbuild_add_library( TARGET atlas
     "${CGAL_INCLUDE_DIRS}"
     "${TRANSI_INCLUDE_DIRS}"
     "${MPI_CXX_INCLUDE_DIRS}"
+    "${FFTW_INCLUDES}"
   LIBS
     eckit_geometry
     eckit_linalg
@@ -584,9 +585,10 @@ ecbuild_add_library( TARGET atlas
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}"
     "${FCKIT_LIBRARIES}"
+    "${FFTW_LIBRARIES}"
   DEFINITIONS
     ${ATLAS_DEFINITIONS}
- )
+)
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
   target_link_libraries( atlas gridtools::storage )

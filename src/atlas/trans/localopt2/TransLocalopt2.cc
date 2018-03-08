@@ -23,6 +23,9 @@
 #include "atlas/util/Constants.h"
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Matrix.h"
+#if ATLAS_HAVE_FFTW
+#include <fftw3.h>
+#endif
 
 namespace atlas {
 namespace trans {
@@ -82,6 +85,11 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
     grid_( grid ),
     truncation_( truncation ),
     precompute_( config.getBool( "precompute", true ) ) {
+#if ATLAS_HAVE_FFTW
+    Log::info() << "Atlas has FFTW" << std::endl;
+#else
+    Log::info() << "Atlas has no FFTW" << std::endl;
+#endif
     ATLAS_TRACE( "Precompute legendre opt2" );
     int nlats   = 0;
     int nlons   = 0;
@@ -257,6 +265,7 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
         if ( grid::StructuredGrid g = grid_ ) {
             ATLAS_TRACE( "invtrans_uv structured opt2" );
             int nlats        = g.ny();
+            int nlons        = g.nxmax();
             int nlatsNH      = nlats_northernHemisphere( nlats );
             int size_fourier = nb_fields * 2 * g.ny();
             std::vector<double> scl_fourier( size_fourier * ( truncation + 1 ) );
@@ -265,7 +274,8 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
             {
                 ATLAS_TRACE( "opt2 Legendre dgemm" );
                 for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
-#if 1  // 0: no symmetry, 1: use symmetry
+#if 1  // 0: no symmetry, 1: use symmetry \
+    // TODO: 0 is currently not working because it requires all latitudes to be included in legendre_ (which is currently not done)
                     int size_sym  = num_n( truncation_ + 1, jm, true );
                     int size_asym = num_n( truncation_ + 1, jm, false );
                     std::vector<double> scalar_sym( 2 * nb_fields * size_sym, -1234. );
@@ -329,6 +339,95 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
 #endif
                 }
             }
+#if ATLAS_HAVE_FFTW
+            std::vector<double> scl_fourier_tp( size_fourier * ( truncation + 1 ) );
+            {
+                // Transposition in Fourier space:
+                {
+                    ATLAS_TRACE( "opt2 transposition in Fourier" );
+                    int idx = 0;
+                    for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
+                        for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
+                            for ( int imag = 0; imag < 2; imag++ ) {
+                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                                    int pos_tp = imag + 2 * ( jm + ( truncation_ + 1 ) * ( jlat + g.ny() * ( jfld ) ) );
+                                    //int pos  = jfld + nb_fields * ( imag + 2 * ( jlat + g.ny() * ( jm ) ) );
+                                    scl_fourier_tp[pos_tp] = scl_fourier[idx++];  // = scl_fourier[pos]
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Fourier transformation:
+                std::vector<double> gp_opt2( nb_fields * grid_.size(), 0. );
+                {
+                    ATLAS_TRACE( "opt2 Fourier dgemm" );
+                    eckit::linalg::Matrix A( fouriertp_.data(), g.nxmax(), ( truncation_ + 1 ) * 2 );
+                    eckit::linalg::Matrix B( scl_fourier_tp.data(), ( truncation_ + 1 ) * 2, nb_fields * g.ny() );
+                    eckit::linalg::Matrix C( gp_fields, g.nxmax(), nb_fields * g.ny() );
+                    eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+                }
+            }
+            {
+                auto position = [&]( int jfld, int imag, int jlat, int jm ) {
+                    return jfld + nb_fields * ( imag + 2 * ( jlat + g.ny() * ( jm ) ) );
+                };
+
+                {
+                    ATLAS_TRACE( "opt2 transposition in Fourier for FFTW" );
+                    int num_complex  = ( nlons / 2 ) + 1;
+                    fftw_complex* in = fftw_alloc_complex( num_complex );
+                    double* out      = fftw_alloc_real( nlons );
+                    fftw_plan plan   = fftw_plan_dft_c2r_1d( nlons, in, out, FFTW_ESTIMATE );
+                    int idx0 = 0, idx1 = 0;
+                    for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                        for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
+                            Log::info() << "scl_fourier_tp: " << std::endl;
+                            for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
+                                for ( int imag = 0; imag < 2; imag++, idx1++ ) {
+                                    Log::info() << scl_fourier_tp[idx1] << " ";
+                                }
+                            }
+                            Log::info() << std::endl;
+                            for ( int jm = 0; jm < num_complex; jm++ ) {
+                                for ( int imag = 0; imag < 2; imag++ ) {
+                                    if ( jm <= truncation_ ) {
+                                        in[jm][imag] = scl_fourier[position( jfld, imag, jlat, jm )] / 2.;
+                                    }
+                                    else {
+                                        in[jm][imag] = 0.;
+                                    }
+                                }
+                            }
+                            in[0][0] *= 2.;
+                            Log::info() << "fft:in: " << std::endl;
+                            for ( int jm = 0; jm < num_complex; jm++ ) {
+                                for ( int imag = 0; imag < 2; imag++ ) {
+                                    Log::info() << in[jm][imag] << " ";
+                                }
+                            }
+                            Log::info() << std::endl;
+                            fftw_execute( plan );
+                            Log::info() << "fft:out: " << std::endl;
+                            for ( int jlon = 0; jlon < nlons; jlon++ ) {
+                                Log::info() << out[jlon] << " ";
+                            }
+                            Log::info() << std::endl;
+                            Log::info() << "gp_fields: old: " << std::endl;
+                            for ( int jlon = 0; jlon < nlons; jlon++, idx0++ ) {
+                                Log::info() << gp_fields[idx0] << " ";
+                                gp_fields[idx0] = out[jlon];
+                            }
+                            Log::info() << std::endl;
+                        }
+                    }
+                    fftw_destroy_plan( plan );
+                    fftw_free( in );
+                    fftw_free( out );
+                }
+            }
+#else
 #if 0  // 1: better for small number of columns, large truncation; 0: better for large number of columns
 
             // Transposition in Fourier space:
@@ -402,6 +501,7 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                 eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
             }
 
+#endif
 #endif
             // Computing u,v from U,V:
             {

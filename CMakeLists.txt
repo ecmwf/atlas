@@ -99,6 +99,12 @@ else()
   ecbuild_enable_ompstubs()
 endif()
 
+### FFTW ...
+
+ecbuild_add_option( FEATURE FFTW
+                    DESCRIPTION "Support for fftw"
+                    REQUIRED_PACKAGES "FFTW COMPONENTS double" )
+
 ### trans ...
 
 ecbuild_add_option( FEATURE TRANS

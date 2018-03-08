@@ -712,7 +712,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     double tolerance  = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F120" );
+    Grid g( "F3" );
 
     grid::StructuredGrid gs( g );
     int ndgl = gs.ny();
@@ -814,16 +814,15 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                 double rms_diff =
                                     compute_rms( g.size(), rgp1.data() + pos * g.size(), gp.data() + pos * g.size() );
                                 EXPECT( rms_trans < tolerance );
-                                if ( !( rms_trans < tolerance ) || !( rms_diff < tolerance ) ) {
-                                    Log::info()
-                                        << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
-                                        << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
-                                    ATLAS_DEBUG_VAR( rms_gen1 );
-                                    ATLAS_DEBUG_VAR( rms_gen2 );
-                                    ATLAS_DEBUG_VAR( rms_trans );
-                                    ATLAS_DEBUG_VAR( rms_diff );
-                                    ATLAS_DEBUG_VAR( tolerance );
-                                }
+                                //if ( !( rms_trans < tolerance ) || !( rms_diff < tolerance ) ) {
+                                Log::info() << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
+                                            << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
+                                ATLAS_DEBUG_VAR( rms_gen1 );
+                                ATLAS_DEBUG_VAR( rms_gen2 );
+                                ATLAS_DEBUG_VAR( rms_trans );
+                                ATLAS_DEBUG_VAR( rms_diff );
+                                ATLAS_DEBUG_VAR( tolerance );
+                                //}
 #endif
                                 EXPECT( icase < 300 );
                             }
@@ -838,7 +837,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
 }
 
 //-----------------------------------------------------------------------------
-
+#if 0
 CASE( "test_trans_hires" ) {
     Log::info() << "test_trans_hires" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -972,7 +971,7 @@ CASE( "test_trans_hires" ) {
     }
     Log::info() << "Vordiv+scalar comparison with trans: all " << icase << " cases successfully passed!" << std::endl;
 }
-
+#endif
 //-----------------------------------------------------------------------------
 
 CASE( "test_trans_invtrans" ) {

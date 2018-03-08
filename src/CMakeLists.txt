@@ -36,6 +36,12 @@ else()
   set( ATLAS_HAVE_TRANS 0 )
 endif()
 
+if( ATLAS_HAVE_FFTW )
+  set( ATLAS_HAVE_FFTW 1 )
+else()
+  set( ATLAS_HAVE_FFTW 0 )
+endif()
+
 if( ATLAS_HAVE_BOUNDSCHECKING )
   set( ATLAS_HAVE_BOUNDSCHECKING 1 )
 else()

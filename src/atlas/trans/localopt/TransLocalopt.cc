@@ -206,7 +206,7 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
                     eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
                 }
             }
-#if 1  // 1: better for small number of columns, large truncation; 0: better for large number of columns
+#if 0  // 1: better for small number of columns, large truncation; 0: better for large number of columns
 
             // Transposition in Fourier space:
             std::vector<double> scl_fourier_tp( size_fourier * ( truncation + 1 ) );
