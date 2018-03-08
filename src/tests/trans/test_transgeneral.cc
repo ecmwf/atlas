@@ -712,7 +712,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     double tolerance  = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F320" );
+    Grid g( "F120" );
 
     grid::StructuredGrid gs( g );
     int ndgl = gs.ny();
@@ -721,8 +721,8 @@ CASE( "test_trans_vordiv_with_translib" ) {
 #if ATLAS_HAVE_TRANS
     trans::Trans transIFS( g, trc, util::Config( "type", "ifs" ) );
 #endif
-    trans::Trans transLocal( g, trc, util::Config( "type", "localopt" ) );
-    trans::Trans transLocalopt( g, trc, util::Config( "type", "localopt2" ) );
+    trans::Trans transLocal1( g, trc, util::Config( "type", "localopt" ) );
+    trans::Trans transLocal2( g, trc, util::Config( "type", "localopt2" ) );
 
     functionspace::Spectral spectral( trc );
     functionspace::StructuredColumns gridpoints( g );
@@ -734,8 +734,8 @@ CASE( "test_trans_vordiv_with_translib" ) {
     std::vector<double> div( 2 * N * nb_vordiv );
     std::vector<double> rspecg( 2 * N );
     std::vector<double> gp( nb_all * g.size() );
-    std::vector<double> rgp( nb_all * g.size() );
-    std::vector<double> rgpopt( nb_all * g.size() );
+    std::vector<double> rgp1( nb_all * g.size() );
+    std::vector<double> rgp2( nb_all * g.size() );
     std::vector<double> rgp_analytic( g.size() );
 
     int icase = 0;
@@ -769,9 +769,9 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                 if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
 
                                 for ( int j = 0; j < nb_all * g.size(); j++ ) {
-                                    gp[j]     = 0.;
-                                    rgp[j]    = 0.;
-                                    rgpopt[j] = 0.;
+                                    gp[j]   = 0.;
+                                    rgp1[j] = 0.;
+                                    rgp2[j] = 0.;
                                 }
                                 for ( int j = 0; j < g.size(); j++ ) {
                                     rgp_analytic[j] = 0.;
@@ -780,30 +780,30 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                 spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg.data(),
                                                                   rgp_analytic.data(), ivar_in, ivar_out );
 
-                                EXPECT_NO_THROW( transLocal.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
-                                                                      div.data(), rgp.data() ) );
+                                EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                       div.data(), rgp1.data() ) );
 
-                                EXPECT_NO_THROW( transLocalopt.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
-                                                                         div.data(), rgpopt.data() ) );
+                                EXPECT_NO_THROW( transLocal2.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                       div.data(), rgp2.data() ) );
 
                                 int pos = ( ivar_out * nb_vordiv + jfld );
 
-                                double rms_gen =
-                                    compute_rms( g.size(), rgpopt.data() + pos * g.size(), rgp_analytic.data() );
+                                double rms_gen1 =
+                                    compute_rms( g.size(), rgp1.data() + pos * g.size(), rgp_analytic.data() );
 
-                                double rms_genopt =
-                                    compute_rms( g.size(), rgpopt.data() + pos * g.size(), rgp_analytic.data() );
+                                double rms_gen2 =
+                                    compute_rms( g.size(), rgp2.data() + pos * g.size(), rgp_analytic.data() );
 
-                                if ( !( rms_gen < tolerance ) || !( rms_genopt < tolerance ) ) {
+                                if ( !( rms_gen1 < tolerance ) || !( rms_gen2 < tolerance ) ) {
                                     Log::info()
                                         << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
                                         << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
-                                    ATLAS_DEBUG_VAR( rms_gen );
-                                    ATLAS_DEBUG_VAR( rms_genopt );
+                                    ATLAS_DEBUG_VAR( rms_gen1 );
+                                    ATLAS_DEBUG_VAR( rms_gen2 );
                                     ATLAS_DEBUG_VAR( tolerance );
                                 }
-                                EXPECT( rms_gen < tolerance );
-                                EXPECT( rms_genopt < tolerance );
+                                EXPECT( rms_gen1 < tolerance );
+                                EXPECT( rms_gen2 < tolerance );
                                 icase++;
 
 #if ATLAS_HAVE_TRANS
@@ -812,21 +812,156 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                 double rms_trans =
                                     compute_rms( g.size(), gp.data() + pos * g.size(), rgp_analytic.data() );
                                 double rms_diff =
-                                    compute_rms( g.size(), rgpopt.data() + pos * g.size(), gp.data() + pos * g.size() );
+                                    compute_rms( g.size(), rgp1.data() + pos * g.size(), gp.data() + pos * g.size() );
                                 EXPECT( rms_trans < tolerance );
                                 if ( !( rms_trans < tolerance ) || !( rms_diff < tolerance ) ) {
                                     Log::info()
                                         << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
                                         << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
-                                    ATLAS_DEBUG_VAR( rms_gen );
-                                    ATLAS_DEBUG_VAR( rms_genopt );
+                                    ATLAS_DEBUG_VAR( rms_gen1 );
+                                    ATLAS_DEBUG_VAR( rms_gen2 );
                                     ATLAS_DEBUG_VAR( rms_trans );
                                     ATLAS_DEBUG_VAR( rms_diff );
                                     ATLAS_DEBUG_VAR( tolerance );
                                 }
 #endif
-                                if ( icase > 2 ) EXPECT( false );
-                                Log::info() << "test " << icase << std::endl;
+                                EXPECT( icase < 300 );
+                            }
+                            k++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Log::info() << "Vordiv+scalar comparison with trans: all " << icase << " cases successfully passed!" << std::endl;
+}
+
+//-----------------------------------------------------------------------------
+
+CASE( "test_trans_hires" ) {
+    Log::info() << "test_trans_hires" << std::endl;
+    // test transgeneral by comparing its result with the trans library
+    // this test is based on the test_nomesh case in test_trans.cc
+
+    std::ostream& out = Log::info();
+    double tolerance  = 1.e-13;
+
+    // Grid: (Adjust the following line if the test takes too long!)
+    Grid g( "F128" );
+
+    grid::StructuredGrid gs( g );
+    int ndgl = gs.ny();
+    //int trc  = ndgl - 1;  // linear
+    int trc = ndgl / 2. - 1;  // cubic
+#if 0
+    trans::Trans transIFS( g, trc, util::Config( "type", "ifs" ) );
+#endif
+    trans::Trans transLocal1( g, trc, util::Config( "type", "localopt2" ) );
+    //trans::Trans transLocal2( g, trc, util::Config( "type", "localopt2" ) );
+
+    functionspace::Spectral spectral( trc );
+    functionspace::StructuredColumns gridpoints( g );
+
+    int nb_scalar = 1, nb_vordiv = 0;
+    int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
+    std::vector<double> sp( 2 * N * nb_scalar );
+    std::vector<double> vor( 2 * N * nb_vordiv );
+    std::vector<double> div( 2 * N * nb_vordiv );
+    std::vector<double> rspecg( 2 * N );
+    std::vector<double> gp( nb_all * g.size() );
+    std::vector<double> rgp1( nb_all * g.size() );
+    //std::vector<double> rgp2( nb_all * g.size() );
+    std::vector<double> rgp_analytic( g.size() );
+
+    int icase = 0;
+    for ( int ivar_in = 2; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
+        for ( int ivar_out = 2; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
+            int nb_fld = 1;
+            if ( ivar_out == 2 ) {
+                tolerance = 1.e-13;
+                nb_fld    = nb_scalar;
+            }
+            else {
+                tolerance = 2.e-6;
+                nb_fld    = nb_vordiv;
+            }
+            for ( int jfld = 0; jfld < nb_fld; jfld++ ) {  // multiple fields
+                int k = 0;
+                for ( int m = 0; m <= trc; m++ ) {                 // zonal wavenumber
+                    for ( int n = m; n <= trc; n++ ) {             // total wavenumber
+                        for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
+
+                            if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. ) {
+                                for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
+                                    sp[j] = 0.;
+                                }
+                                for ( int j = 0; j < 2 * N * nb_vordiv; j++ ) {
+                                    vor[j] = 0.;
+                                    div[j] = 0.;
+                                }
+                                if ( ivar_in == 0 ) vor[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 1 ) div[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
+
+                                for ( int j = 0; j < nb_all * g.size(); j++ ) {
+                                    gp[j]   = 0.;
+                                    rgp1[j] = 0.;
+                                    //rgp2[j] = 0.;
+                                }
+                                for ( int j = 0; j < g.size(); j++ ) {
+                                    rgp_analytic[j] = 0.;
+                                }
+
+                                spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg.data(),
+                                                                  rgp_analytic.data(), ivar_in, ivar_out );
+
+                                EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                       div.data(), rgp1.data() ) );
+
+                                //EXPECT_NO_THROW( transLocal2.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                //                                       div.data(), rgp2.data() ) );
+
+                                int pos = ( ivar_out * nb_vordiv + jfld );
+
+                                double rms_gen1 =
+                                    compute_rms( g.size(), rgp1.data() + pos * g.size(), rgp_analytic.data() );
+
+                                //double rms_gen2 =
+                                //    compute_rms( g.size(), rgp2.data() + pos * g.size(), rgp_analytic.data() );
+
+                                if ( !( rms_gen1 < tolerance ) ) {  // || !( rms_gen2 < tolerance ) ) {
+                                    Log::info()
+                                        << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
+                                        << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
+                                    ATLAS_DEBUG_VAR( rms_gen1 );
+                                    //ATLAS_DEBUG_VAR( rms_gen2 );
+                                    ATLAS_DEBUG_VAR( tolerance );
+                                }
+                                EXPECT( rms_gen1 < tolerance );
+                                //EXPECT( rms_gen2 < tolerance );
+                                icase++;
+
+#if 0
+                                EXPECT_NO_THROW( transIFS.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                    div.data(), gp.data() ) );
+                                double rms_trans =
+                                    compute_rms( g.size(), gp.data() + pos * g.size(), rgp_analytic.data() );
+                                double rms_diff =
+                                    compute_rms( g.size(), rgp1.data() + pos * g.size(), gp.data() + pos * g.size() );
+                                EXPECT( rms_trans < tolerance );
+                                if ( !( rms_trans < tolerance ) || !( rms_diff < tolerance ) ) {
+                                    Log::info()
+                                        << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
+                                        << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
+                                    ATLAS_DEBUG_VAR( rms_gen1 );
+                                    //ATLAS_DEBUG_VAR( rms_gen2 );
+                                    ATLAS_DEBUG_VAR( rms_trans );
+                                    ATLAS_DEBUG_VAR( rms_diff );
+                                    ATLAS_DEBUG_VAR( tolerance );
+                                }
+#endif
+                                EXPECT( icase < 300 );
                             }
                             k++;
                         }

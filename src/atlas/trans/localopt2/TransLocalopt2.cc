@@ -9,6 +9,7 @@
  */
 
 #include "atlas/trans/localopt2/TransLocalopt2.h"
+#include <math.h>
 #include "atlas/array.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -39,6 +40,37 @@ size_t legendre_size( const size_t truncation ) {
     return ( truncation + 2 ) * ( truncation + 1 ) / 2;
 }
 
+int nlats_northernHemisphere( const int nlats ) {
+    return ceil( nlats / 2. );
+    // using ceil here should make it possible to have odd number of latitudes (with the centre latitude being the equator)
+}
+
+int num_n( const int truncation, const int m, const bool symmetric ) {
+    int len = 0;
+    if ( symmetric ) { len = ( truncation - m + 2 ) / 2; }
+    else {
+        len = ( truncation - m + 1 ) / 2;
+    }
+    return len;
+}
+
+std::vector<int> n_indices( const int truncation, const int m, const bool symmetric ) {
+    int len = num_n( truncation, m, symmetric ), jn0 = 0;
+    if ( !symmetric ) { jn0 = 1; }
+    std::vector<int> jns( len );
+    int ia = 0, id = len - 1;
+    for ( int jn = jn0; jn <= truncation - m; jn += 2, ia++, id-- ) {
+#if 1  // 1: ascending, 0: descending
+        int idx = ia;
+#else
+        int idx = id;
+#endif
+        jns[idx] = jn;
+        ASSERT( idx < len && idx >= 0 );
+    }
+    return jns;
+}
+
 }  // namespace
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -51,22 +83,26 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
     truncation_( truncation ),
     precompute_( config.getBool( "precompute", true ) ) {
     ATLAS_TRACE( "Precompute legendre opt2" );
-    int nlats, nlons;
+    int nlats   = 0;
+    int nlons   = 0;
+    int nlatsNH = nlats_northernHemisphere( nlats );
     if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
         grid::StructuredGrid g( grid_ );
-        nlats = g.ny();
-        nlons = g.nxmax();
+        nlats   = g.ny();
+        nlons   = g.nxmax();
+        nlatsNH = nlats_northernHemisphere( nlats );
     }
     else {
-        nlats = grid_.size();
-        nlons = grid_.size();
+        nlats   = grid_.size();
+        nlons   = grid_.size();
+        nlatsNH = nlats;
     }
-    std::vector<double> lats( nlats );
+    std::vector<double> lats( nlatsNH );
     std::vector<double> lons( nlons );
     if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
         grid::StructuredGrid g( grid_ );
         // TODO: remove legendre_begin and legendre_data (only legendre_ should be needed)
-        for ( size_t j = 0; j < nlats; ++j ) {
+        for ( size_t j = 0; j < nlatsNH; ++j ) {
             lats[j] = g.y( j ) * util::Constants::degreesToRadians();
         }
         for ( size_t j = 0; j < nlons; ++j ) {
@@ -83,8 +119,37 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
     // precomputations for Legendre polynomials:
     {
         ATLAS_TRACE( "opt2 precomp Legendre" );
-        legendre_.resize( legendre_size( truncation_ + 1 ) * nlats );
-        compute_legendre_polynomialsopt2( truncation_ + 1, nlats, lats.data(), legendre_.data() );
+        legendre_.resize( legendre_size( truncation_ + 1 ) * nlatsNH );
+        compute_legendre_polynomialsopt2( truncation_ + 1, nlatsNH, lats.data(), legendre_.data() );
+    }
+    {
+        ATLAS_TRACE( "opt2 split Legendre" );
+        int size_sym  = 0;
+        int size_asym = 0;
+        legendre_sym_begin_.resize( truncation_ + 3 );
+        legendre_asym_begin_.resize( truncation_ + 3 );
+        legendre_sym_begin_[0]  = 0;
+        legendre_asym_begin_[0] = 0;
+        for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
+            size_sym += num_n( truncation_ + 1, jm, true );
+            size_asym += num_n( truncation_ + 1, jm, false );
+            legendre_sym_begin_[jm + 1]  = size_sym;
+            legendre_asym_begin_[jm + 1] = size_asym;
+        }
+        legendre_sym_.resize( size_sym * nlatsNH );
+        legendre_asym_.resize( size_asym * nlatsNH );
+        int idx = 0, is = 0, ia = 0;
+        for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
+            for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
+                for ( int jn = 0; jn <= truncation_ - jm + 1; jn++, idx++ ) {
+                    if ( jn % 2 == 0 ) { legendre_sym_[is++] = legendre_[idx]; }
+                    else {
+                        legendre_asym_[ia++] = legendre_[idx];
+                    }
+                }
+            }
+        }
+        ASSERT( ia == size_asym * nlatsNH && is == size_sym * nlatsNH );
     }
 
     // precomputations for Fourier transformations:
@@ -192,19 +257,76 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
         if ( grid::StructuredGrid g = grid_ ) {
             ATLAS_TRACE( "invtrans_uv structured opt2" );
             int nlats        = g.ny();
+            int nlatsNH      = nlats_northernHemisphere( nlats );
             int size_fourier = nb_fields * 2 * g.ny();
             std::vector<double> scl_fourier( size_fourier * ( truncation + 1 ) );
 
             // Legendre transform:
             {
                 ATLAS_TRACE( "opt2 Legendre dgemm" );
-                for ( int jm = 0; jm <= truncation; jm++ ) {
+                for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
+#if 1  // 0: no symmetry, 1: use symmetry
+                    int size_sym  = num_n( truncation_ + 1, jm, true );
+                    int size_asym = num_n( truncation_ + 1, jm, false );
+                    std::vector<double> scalar_sym( 2 * nb_fields * size_sym, -1234. );
+                    std::vector<double> scalar_asym( 2 * nb_fields * size_asym, -1234. );
+                    std::vector<double> scl_fourier_sym( size_fourier );
+                    std::vector<double> scl_fourier_asym( size_fourier );
+                    {
+                        //ATLAS_TRACE( "opt2 Legendre split" );
+                        int idx = 0, is = 0, ia = 0, ioff = ( 2 * truncation + 3 - jm ) * jm / 2 * nb_fields * 2;
+                        for ( int jn = 0; jn <= truncation_ - jm + 1; jn++ ) {
+                            for ( int imag = 0; imag < 2; imag++ ) {
+                                for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
+                                    if ( jn % 2 == 0 ) { scalar_sym[is++] = scalar_spectra[idx + ioff]; }
+                                    else {
+                                        scalar_asym[ia++] = scalar_spectra[idx + ioff];
+                                    }
+                                }
+                            }
+                        }
+                        ASSERT( ia == 2 * nb_fields * size_asym && is == 2 * nb_fields * size_sym );
+                    }
+                    {
+                        eckit::linalg::Matrix A( scalar_sym.data(), nb_fields * 2, size_sym );
+                        eckit::linalg::Matrix B( legendre_sym_.data() + legendre_sym_begin_[jm] * nlatsNH, size_sym,
+                                                 nlatsNH );
+                        eckit::linalg::Matrix C( scl_fourier_sym.data(), nb_fields * 2, nlatsNH );
+                        eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+                    }
+                    if ( size_asym > 0 ) {
+                        eckit::linalg::Matrix A( scalar_asym.data(), nb_fields * 2, size_asym );
+                        eckit::linalg::Matrix B( legendre_asym_.data() + legendre_asym_begin_[jm] * nlatsNH, size_asym,
+                                                 nlatsNH );
+                        eckit::linalg::Matrix C( scl_fourier_asym.data(), nb_fields * 2, nlatsNH );
+                        eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+                        {
+                            //ATLAS_TRACE( "opt2 merge spheres" );
+                            // northern hemisphere:
+                            int ioff = jm * size_fourier;
+                            for ( int j = 0; j < 2 * nb_fields * nlatsNH; j++ ) {
+                                scl_fourier[j + ioff] = scl_fourier_sym[j] + scl_fourier_asym[j];
+                            }
+                            // southern hemisphere:
+                            int idx = 0;
+                            for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
+                                for ( int imag = 0; imag < 2; imag++ ) {
+                                    for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
+                                        int pos = jfld + nb_fields * ( imag + 2 * ( nlats - jlat - 1 ) );
+                                        scl_fourier[pos + ioff] = scl_fourier_sym[idx] - scl_fourier_asym[idx];
+                                    }
+                                }
+                            }
+                        }
+                    }
+#else
                     int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
                     eckit::linalg::Matrix A( eckit::linalg::Matrix(
                         const_cast<double*>( scalar_spectra ) + nb_fields * 2 * noff, nb_fields * 2, ns ) );
                     eckit::linalg::Matrix B( legendre_.data() + noff * g.ny(), ns, g.ny() );
                     eckit::linalg::Matrix C( scl_fourier.data() + jm * size_fourier, nb_fields * 2, g.ny() );
                     eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+#endif
                 }
             }
 #if 0  // 1: better for small number of columns, large truncation; 0: better for large number of columns
@@ -323,7 +445,7 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
             }
         }
     }
-}
+}  // namespace trans
 
 // --------------------------------------------------------------------------------------------------------------------
 

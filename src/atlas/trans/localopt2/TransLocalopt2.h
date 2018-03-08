@@ -113,9 +113,13 @@ private:
     int truncation_;
     bool precompute_;
     mutable std::vector<double> legendre_;
+    mutable std::vector<double> legendre_sym_;
+    mutable std::vector<double> legendre_asym_;
     mutable std::vector<double> fourier_;
     mutable std::vector<double> fouriertp_;
     std::vector<size_t> legendre_begin_;
+    std::vector<size_t> legendre_sym_begin_;
+    std::vector<size_t> legendre_asym_begin_;
 };
 
 //-----------------------------------------------------------------------------
