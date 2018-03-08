@@ -373,15 +373,37 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                 auto position = [&]( int jfld, int imag, int jlat, int jm ) {
                     return jfld + nb_fields * ( imag + 2 * ( jlat + g.ny() * ( jm ) ) );
                 };
+                auto factor = [&]( int jm ) {
+                    if ( jm > 0 ) { return 2.; }
+                    else {
+                        return 1.;
+                    }
+                };
 
                 {
                     ATLAS_TRACE( "opt2 transposition in Fourier for FFTW" );
-                    int num_complex  = ( nlons / 2 ) + 1;
-                    fftw_complex* in = fftw_alloc_complex( num_complex );
-                    double* out      = fftw_alloc_real( nlons );
-                    fftw_plan plan   = fftw_plan_dft_c2r_1d( nlons, in, out, FFTW_ESTIMATE );
-                    int idx0 = 0, idx1 = 0;
+                    int num_complex      = ( nlons / 2 ) + 1;
+                    fftw_complex* fft_in = fftw_alloc_complex( nlats * num_complex );
+                    double* fft_out      = fftw_alloc_real( nlats * nlons );
+                    fftw_plan plan = fftw_plan_many_dft_c2r( 1, &nlons, nlats, fft_in, NULL, 1, num_complex, fft_out,
+                                                             NULL, 1, nlons, FFTW_ESTIMATE );
                     for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                        int idx = 0;
+                        for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
+                            for ( int jm = 0; jm < num_complex; jm++, idx++ ) {
+                                for ( int imag = 0; imag < 2; imag++ ) {
+                                    if ( jm <= truncation_ ) {
+                                        fft_in[idx][imag] =
+                                            scl_fourier[position( jfld, imag, jlat, jm )] / factor( jm );
+                                    }
+                                    else {
+                                        fft_in[idx][imag] = 0.;
+                                    }
+                                }
+                            }
+                        }
+                        fftw_execute( plan );
+                        int idx0 = 0, idx1 = 0;
                         for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
                             Log::info() << "scl_fourier_tp: " << std::endl;
                             for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
@@ -390,41 +412,29 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                                 }
                             }
                             Log::info() << std::endl;
-                            for ( int jm = 0; jm < num_complex; jm++ ) {
-                                for ( int imag = 0; imag < 2; imag++ ) {
-                                    if ( jm <= truncation_ ) {
-                                        in[jm][imag] = scl_fourier[position( jfld, imag, jlat, jm )] / 2.;
-                                    }
-                                    else {
-                                        in[jm][imag] = 0.;
-                                    }
-                                }
-                            }
-                            in[0][0] *= 2.;
                             Log::info() << "fft:in: " << std::endl;
                             for ( int jm = 0; jm < num_complex; jm++ ) {
                                 for ( int imag = 0; imag < 2; imag++ ) {
-                                    Log::info() << in[jm][imag] << " ";
+                                    Log::info() << fft_in[jm + num_complex * jlat][imag] << " ";
                                 }
                             }
                             Log::info() << std::endl;
-                            fftw_execute( plan );
                             Log::info() << "fft:out: " << std::endl;
                             for ( int jlon = 0; jlon < nlons; jlon++ ) {
-                                Log::info() << out[jlon] << " ";
+                                Log::info() << fft_out[jlon + nlons * jlat] << " ";
                             }
                             Log::info() << std::endl;
                             Log::info() << "gp_fields: old: " << std::endl;
                             for ( int jlon = 0; jlon < nlons; jlon++, idx0++ ) {
                                 Log::info() << gp_fields[idx0] << " ";
-                                gp_fields[idx0] = out[jlon];
+                                //gp_fields[idx0] = fft_out[jlon + nlons * jlat];
                             }
                             Log::info() << std::endl;
                         }
                     }
                     fftw_destroy_plan( plan );
-                    fftw_free( in );
-                    fftw_free( out );
+                    fftw_free( fft_in );
+                    fftw_free( fft_out );
                 }
             }
 #else
