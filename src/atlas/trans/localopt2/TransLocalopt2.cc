@@ -23,9 +23,6 @@
 #include "atlas/util/Constants.h"
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Matrix.h"
-#if ATLAS_HAVE_FFTW
-#include <fftw3.h>
-#endif
 
 namespace atlas {
 namespace trans {
@@ -85,11 +82,6 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
     grid_( grid ),
     truncation_( truncation ),
     precompute_( config.getBool( "precompute", true ) ) {
-#if ATLAS_HAVE_FFTW
-    Log::info() << "Atlas has FFTW" << std::endl;
-#else
-    Log::info() << "Atlas has no FFTW" << std::endl;
-#endif
     ATLAS_TRACE( "Precompute legendre opt2" );
     int nlats   = 0;
     int nlons   = 0;
@@ -185,6 +177,16 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
             }
         }
     }
+#if ATLAS_HAVE_FFTW
+    {
+        ATLAS_TRACE( "opt2 precomp FFTW" );
+        int num_complex = ( nlons / 2 ) + 1;
+        fft_in_         = fftw_alloc_complex( nlats * num_complex );
+        fft_out_        = fftw_alloc_real( nlats * nlons );
+        plan_ = fftw_plan_many_dft_c2r( 1, &nlons, nlats, fft_in_, NULL, 1, num_complex, fft_out_, NULL, 1, nlons,
+                                        FFTW_ESTIMATE );
+    }
+#endif
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -194,7 +196,13 @@ TransLocalopt2::TransLocalopt2( const Grid& grid, const long truncation, const e
 
 // --------------------------------------------------------------------------------------------------------------------
 
-TransLocalopt2::~TransLocalopt2() {}
+TransLocalopt2::~TransLocalopt2() {
+#if ATLAS_HAVE_FFTW
+    fftw_destroy_plan( plan_ );
+    fftw_free( fft_in_ );
+    fftw_free( fft_out_ );
+#endif
+}
 
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -340,35 +348,6 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                 }
             }
 #if ATLAS_HAVE_FFTW
-            std::vector<double> scl_fourier_tp( size_fourier * ( truncation + 1 ) );
-            {
-                // Transposition in Fourier space:
-                {
-                    ATLAS_TRACE( "opt2 transposition in Fourier" );
-                    int idx = 0;
-                    for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
-                        for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
-                            for ( int imag = 0; imag < 2; imag++ ) {
-                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
-                                    int pos_tp = imag + 2 * ( jm + ( truncation_ + 1 ) * ( jlat + g.ny() * ( jfld ) ) );
-                                    //int pos  = jfld + nb_fields * ( imag + 2 * ( jlat + g.ny() * ( jm ) ) );
-                                    scl_fourier_tp[pos_tp] = scl_fourier[idx++];  // = scl_fourier[pos]
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Fourier transformation:
-                std::vector<double> gp_opt2( nb_fields * grid_.size(), 0. );
-                {
-                    ATLAS_TRACE( "opt2 Fourier dgemm" );
-                    eckit::linalg::Matrix A( fouriertp_.data(), g.nxmax(), ( truncation_ + 1 ) * 2 );
-                    eckit::linalg::Matrix B( scl_fourier_tp.data(), ( truncation_ + 1 ) * 2, nb_fields * g.ny() );
-                    eckit::linalg::Matrix C( gp_fields, g.nxmax(), nb_fields * g.ny() );
-                    eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
-                }
-            }
             {
                 auto position = [&]( int jfld, int imag, int jlat, int jm ) {
                     return jfld + nb_fields * ( imag + 2 * ( jlat + g.ny() * ( jm ) ) );
@@ -380,61 +359,29 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                     }
                 };
 
+                int num_complex = ( nlons / 2 ) + 1;
                 {
-                    ATLAS_TRACE( "opt2 transposition in Fourier for FFTW" );
-                    int num_complex      = ( nlons / 2 ) + 1;
-                    fftw_complex* fft_in = fftw_alloc_complex( nlats * num_complex );
-                    double* fft_out      = fftw_alloc_real( nlats * nlons );
-                    fftw_plan plan = fftw_plan_many_dft_c2r( 1, &nlons, nlats, fft_in, NULL, 1, num_complex, fft_out,
-                                                             NULL, 1, nlons, FFTW_ESTIMATE );
+                    ATLAS_TRACE( "opt2 FFTW" );
                     for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                         int idx = 0;
                         for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
                             for ( int jm = 0; jm < num_complex; jm++, idx++ ) {
                                 for ( int imag = 0; imag < 2; imag++ ) {
                                     if ( jm <= truncation_ ) {
-                                        fft_in[idx][imag] =
+                                        fft_in_[idx][imag] =
                                             scl_fourier[position( jfld, imag, jlat, jm )] / factor( jm );
                                     }
                                     else {
-                                        fft_in[idx][imag] = 0.;
+                                        fft_in_[idx][imag] = 0.;
                                     }
                                 }
                             }
                         }
-                        fftw_execute( plan );
-                        int idx0 = 0, idx1 = 0;
-                        for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
-                            Log::info() << "scl_fourier_tp: " << std::endl;
-                            for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
-                                for ( int imag = 0; imag < 2; imag++, idx1++ ) {
-                                    Log::info() << scl_fourier_tp[idx1] << " ";
-                                }
-                            }
-                            Log::info() << std::endl;
-                            Log::info() << "fft:in: " << std::endl;
-                            for ( int jm = 0; jm < num_complex; jm++ ) {
-                                for ( int imag = 0; imag < 2; imag++ ) {
-                                    Log::info() << fft_in[jm + num_complex * jlat][imag] << " ";
-                                }
-                            }
-                            Log::info() << std::endl;
-                            Log::info() << "fft:out: " << std::endl;
-                            for ( int jlon = 0; jlon < nlons; jlon++ ) {
-                                Log::info() << fft_out[jlon + nlons * jlat] << " ";
-                            }
-                            Log::info() << std::endl;
-                            Log::info() << "gp_fields: old: " << std::endl;
-                            for ( int jlon = 0; jlon < nlons; jlon++, idx0++ ) {
-                                Log::info() << gp_fields[idx0] << " ";
-                                //gp_fields[idx0] = fft_out[jlon + nlons * jlat];
-                            }
-                            Log::info() << std::endl;
+                        fftw_execute( plan_ );
+                        for ( int j = 0; j < nlats * nlons; j++ ) {
+                            gp_fields[j + jfld * nlats * nlons] = fft_out_[j];
                         }
                     }
-                    fftw_destroy_plan( plan );
-                    fftw_free( fft_in );
-                    fftw_free( fft_out );
                 }
             }
 #else
