@@ -83,6 +83,7 @@ TransLocalopt::TransLocalopt( const Cache& cache, const Grid& grid, const long t
     truncation_( truncation ),
     precompute_( config.getBool( "precompute", true ) ) {
     ATLAS_TRACE( "Precompute legendre opt" );
+    eckit::linalg::LinearAlgebra::backend( "generic" );  // might want to choose backend with this command
     int nlats   = 0;
     int nlons   = 0;
     int nlatsNH = nlats_northernHemisphere( nlats );

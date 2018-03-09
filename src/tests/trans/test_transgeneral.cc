@@ -712,7 +712,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     double tolerance  = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F640" );
+    Grid g( "F120" );
 
     grid::StructuredGrid gs( g );
     int ndgl = gs.ny();

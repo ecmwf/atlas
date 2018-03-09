@@ -83,6 +83,7 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
     truncation_( truncation ),
     precompute_( config.getBool( "precompute", true ) ) {
     ATLAS_TRACE( "Precompute legendre opt2" );
+    eckit::linalg::LinearAlgebra::backend( "generic" );  // might want to choose backend with this command
     int nlats   = 0;
     int nlons   = 0;
     int nlatsNH = nlats_northernHemisphere( nlats );
@@ -266,8 +267,6 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                                   const eckit::Configuration& config ) const {
     if ( nb_scalar_fields > 0 ) {
         int nb_fields = nb_scalar_fields;
-
-        //eckit::linalg::LinearAlgebra::backend( "string" ) // might want to choose backend with this command
 
         // Transform
         if ( grid::StructuredGrid g = grid_ ) {
