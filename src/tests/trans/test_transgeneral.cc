@@ -704,7 +704,7 @@ CASE( "test_transgeneral_with_translib" ) {
 #endif
 #endif
 //-----------------------------------------------------------------------------
-#if 0
+#if 1
 CASE( "test_trans_vordiv_with_translib" ) {
     Log::info() << "test_trans_vordiv_with_translib" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -714,7 +714,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     double tolerance  = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F120" );
+    Grid g( "F640" );
 
     grid::StructuredGrid gs( g );
     int ndgl = gs.ny();
@@ -729,7 +729,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     functionspace::Spectral spectral( trc );
     functionspace::StructuredColumns gridpoints( g );
 
-    int nb_scalar = 2, nb_vordiv = 0;
+    int nb_scalar = 100, nb_vordiv = 0;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
     std::vector<double> sp( 2 * N * nb_scalar );
     std::vector<double> vor( 2 * N * nb_vordiv );
@@ -827,7 +827,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                     ATLAS_DEBUG_VAR( tolerance );
                                 }
 #endif
-                                EXPECT( icase < 300 );
+                                EXPECT( icase < 100 );
                             }
                             k++;
                         }
@@ -840,7 +840,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
 }
 #endif
 //-----------------------------------------------------------------------------
-#if 1
+#if 0
 CASE( "test_trans_hires" ) {
     Log::info() << "test_trans_hires" << std::endl;
     // test transgeneral by comparing its result with the trans library
