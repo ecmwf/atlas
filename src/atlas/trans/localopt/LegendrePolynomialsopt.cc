@@ -13,6 +13,7 @@
 #include <limits>
 
 #include "atlas/array.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/localopt/LegendrePolynomialsopt.h"
 
 namespace atlas {
@@ -26,42 +27,37 @@ void compute_legendre_polynomialsopt(
     const double lats[],  // latitudes in radians (in)
     double legpol[] )     // values of associated Legendre functions, size (trc+1)*trc/2*nlats (out)
 {
-    array::ArrayT<int> idxmn_( trc + 1, trc + 1, nlats );
-    array::ArrayView<int, 3> idxmn = array::make_view<int, 3>( idxmn_ );
-
-    int j = 0;
-    for ( int jm = 0; jm <= trc; ++jm ) {
-        for ( int jlat = 0; jlat < nlats; ++jlat ) {
-            for ( int jn = jm; jn <= trc; ++jn ) {
-                idxmn( jm, jn, jlat ) = j++;
-            }
-        }
-    }
-
     array::ArrayT<double> zfn_( trc + 1, trc + 1 );
     array::ArrayView<double, 2> zfn = array::make_view<double, 2>( zfn_ );
 
-    int iodd;
+    auto idxmn = [&]( int jm, int jn, int jlat ) {
+        return ( 2 * trc + 3 - jm ) * jm / 2 * nlats + jlat * ( trc - jm + 1 ) + jn - jm;
+    };
 
-    // Compute coefficients for Taylor series in Belousov (19) and (21)
-    // Belousov, Swarztrauber use zfn(0,0)=std::sqrt(2.)
-    // IFS normalisation chosen to be 0.5*Integral(Pnm**2) = 1
-    zfn( 0, 0 ) = 2.;
-    for ( int jn = 1; jn <= trc; ++jn ) {
-        double zfnn = zfn( 0, 0 );
-        for ( int jgl = 1; jgl <= jn; ++jgl ) {
-            zfnn *= std::sqrt( 1. - 0.25 / ( jgl * jgl ) );
-        }
-        iodd          = jn % 2;
-        zfn( jn, jn ) = zfnn;
-        for ( int jgl = 2; jgl <= jn - iodd; jgl += 2 ) {
-            double zfjn = ( ( jgl - 1. ) * ( 2. * jn - jgl + 2. ) );  // new factor numerator
-            double zfjd = ( jgl * ( 2. * jn - jgl + 1. ) );           // new factor denominator
+    {
+        ATLAS_TRACE( "init arrays" );
 
-            zfn( jn, jn - jgl ) = zfn( jn, jn - jgl + 2 ) * zfjn / zfjd;
+        int iodd;
+
+        // Compute coefficients for Taylor series in Belousov (19) and (21)
+        // Belousov, Swarztrauber use zfn(0,0)=std::sqrt(2.)
+        // IFS normalisation chosen to be 0.5*Integral(Pnm**2) = 1
+        zfn( 0, 0 ) = 2.;
+        for ( int jn = 1; jn <= trc; ++jn ) {
+            double zfnn = zfn( 0, 0 );
+            for ( int jgl = 1; jgl <= jn; ++jgl ) {
+                zfnn *= std::sqrt( 1. - 0.25 / ( jgl * jgl ) );
+            }
+            iodd          = jn % 2;
+            zfn( jn, jn ) = zfnn;
+            for ( int jgl = 2; jgl <= jn - iodd; jgl += 2 ) {
+                double zfjn = ( ( jgl - 1. ) * ( 2. * jn - jgl + 2. ) );  // new factor numerator
+                double zfjd = ( jgl * ( 2. * jn - jgl + 1. ) );           // new factor denominator
+
+                zfn( jn, jn - jgl ) = zfn( jn, jn - jgl + 2 ) * zfjn / zfjd;
+            }
         }
     }
-
     for ( int jlat = 0; jlat < nlats; ++jlat ) {
         // --------------------
         // 1. First two columns

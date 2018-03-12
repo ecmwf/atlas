@@ -8,3 +8,7 @@ if( CMAKE_CXX_COMPILER_ID MATCHES Cray )
 #          directives, ACC directives, or ASM intrinsics.
 
 endif()
+
+#ecbuild_add_cxx_flags("-fsanitize=address")
+#ecbuild_add_cxx_flags("-fsanitize=thread")
+#ecbuild_add_cxx_flags("-fsanitize=memory")

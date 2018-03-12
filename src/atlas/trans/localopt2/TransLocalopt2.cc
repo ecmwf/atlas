@@ -120,11 +120,6 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
     // precomputations for Legendre polynomials:
     {
         ATLAS_TRACE( "opt2 precomp Legendre" );
-        legendre_.resize( legendre_size( truncation_ + 1 ) * nlatsNH );
-        compute_legendre_polynomialsopt2( truncation_ + 1, nlatsNH, lats.data(), legendre_.data() );
-    }
-    {
-        ATLAS_TRACE( "opt2 split Legendre" );
         int size_sym  = 0;
         int size_asym = 0;
         legendre_sym_begin_.resize( truncation_ + 3 );
@@ -139,18 +134,8 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
         }
         legendre_sym_.resize( size_sym * nlatsNH );
         legendre_asym_.resize( size_asym * nlatsNH );
-        int idx = 0, is = 0, ia = 0;
-        for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
-            for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
-                for ( int jn = 0; jn <= truncation_ - jm + 1; jn++, idx++ ) {
-                    if ( jn % 2 == 0 ) { legendre_sym_[is++] = legendre_[idx]; }
-                    else {
-                        legendre_asym_[ia++] = legendre_[idx];
-                    }
-                }
-            }
-        }
-        ASSERT( ia == size_asym * nlatsNH && is == size_sym * nlatsNH );
+        compute_legendre_polynomialsopt2( truncation_ + 1, nlatsNH, lats.data(), legendre_sym_.data(),
+                                          legendre_asym_.data() );
     }
 
     // precomputations for Fourier transformations:
@@ -188,7 +173,7 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
                                         FFTW_ESTIMATE );
     }
 #endif
-}
+}  // namespace atlas
 
 // --------------------------------------------------------------------------------------------------------------------
 

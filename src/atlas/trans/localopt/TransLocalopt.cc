@@ -119,38 +119,40 @@ TransLocalopt::TransLocalopt( const Cache& cache, const Grid& grid, const long t
     }
     // precomputations for Legendre polynomials:
     {
-        ATLAS_TRACE( "opt precomp Legendre" );
-        legendre_.resize( legendre_size( truncation_ + 1 ) * nlatsNH );
-        compute_legendre_polynomialsopt( truncation_ + 1, nlatsNH, lats.data(), legendre_.data() );
-    }
-    {
-        ATLAS_TRACE( "opt split Legendre" );
-        int size_sym  = 0;
-        int size_asym = 0;
-        legendre_sym_begin_.resize( truncation_ + 3 );
-        legendre_asym_begin_.resize( truncation_ + 3 );
-        legendre_sym_begin_[0]  = 0;
-        legendre_asym_begin_[0] = 0;
-        for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
-            size_sym += num_n( truncation_ + 1, jm, true );
-            size_asym += num_n( truncation_ + 1, jm, false );
-            legendre_sym_begin_[jm + 1]  = size_sym;
-            legendre_asym_begin_[jm + 1] = size_asym;
+        std::vector<double> legendre( legendre_size( truncation_ + 1 ) * nlatsNH );
+        {
+            ATLAS_TRACE( "opt precomp Legendre" );
+            compute_legendre_polynomialsopt( truncation_ + 1, nlatsNH, lats.data(), legendre.data() );
         }
-        legendre_sym_.resize( size_sym * nlatsNH );
-        legendre_asym_.resize( size_asym * nlatsNH );
-        int idx = 0, is = 0, ia = 0;
-        for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
-            for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
-                for ( int jn = 0; jn <= truncation_ - jm + 1; jn++, idx++ ) {
-                    if ( jn % 2 == 0 ) { legendre_sym_[is++] = legendre_[idx]; }
-                    else {
-                        legendre_asym_[ia++] = legendre_[idx];
+        {
+            ATLAS_TRACE( "opt split Legendre" );
+            int size_sym  = 0;
+            int size_asym = 0;
+            legendre_sym_begin_.resize( truncation_ + 3 );
+            legendre_asym_begin_.resize( truncation_ + 3 );
+            legendre_sym_begin_[0]  = 0;
+            legendre_asym_begin_[0] = 0;
+            for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
+                size_sym += num_n( truncation_ + 1, jm, true );
+                size_asym += num_n( truncation_ + 1, jm, false );
+                legendre_sym_begin_[jm + 1]  = size_sym;
+                legendre_asym_begin_[jm + 1] = size_asym;
+            }
+            legendre_sym_.resize( size_sym * nlatsNH );
+            legendre_asym_.resize( size_asym * nlatsNH );
+            int idx = 0, is = 0, ia = 0;
+            for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
+                for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
+                    for ( int jn = 0; jn <= truncation_ - jm + 1; jn++, idx++ ) {
+                        if ( jn % 2 == 0 ) { legendre_sym_[is++] = legendre[idx]; }
+                        else {
+                            legendre_asym_[ia++] = legendre[idx];
+                        }
                     }
                 }
             }
+            ASSERT( ia == size_asym * nlatsNH && is == size_sym * nlatsNH );
         }
-        ASSERT( ia == size_asym * nlatsNH && is == size_sym * nlatsNH );
     }
 
     // precomputations for Fourier transformations:

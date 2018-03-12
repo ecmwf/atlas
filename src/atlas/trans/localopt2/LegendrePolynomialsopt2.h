@@ -33,10 +33,11 @@ namespace trans {
 // Andreas Mueller *ECMWF*
 //
 void compute_legendre_polynomialsopt2(
-    const size_t trc,     // truncation (in)
-    const int nlats,      // number of latitudes
-    const double lats[],  // latitudes in radians (in)
-    double legpol[] );    // values of associated Legendre functions, size (trc+1)*trc/2*nlats (out)
+    const size_t trc,          // truncation (in)
+    const int nlats,           // number of latitudes
+    const double lats[],       // latitudes in radians (in)
+    double legendre_sym[],     // values of associated Legendre functions, symmetric part
+    double legendre_asym[] );  // values of associated Legendre functions, asymmetric part
 
 // --------------------------------------------------------------------------------------------------------------------
 

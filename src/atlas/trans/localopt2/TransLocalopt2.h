@@ -105,9 +105,6 @@ public:
                            double divergence_spectra[], const eckit::Configuration& = util::NoConfig() ) const override;
 
 private:
-    const double* legendre_data( int j ) const { return legendre_.data() + legendre_begin_[j]; }
-    double* legendre_data( int j ) { return legendre_.data() + legendre_begin_[j]; }
-
     void invtrans_uv( const int truncation, const int nb_scalar_fields, const int nb_vordiv_fields,
                       const double scalar_spectra[], double gp_fields[],
                       const eckit::Configuration& = util::NoConfig() ) const;
@@ -116,7 +113,6 @@ private:
     Grid grid_;
     int truncation_;
     bool precompute_;
-    mutable std::vector<double> legendre_;
     mutable std::vector<double> legendre_sym_;
     mutable std::vector<double> legendre_asym_;
     mutable std::vector<double> fourier_;
