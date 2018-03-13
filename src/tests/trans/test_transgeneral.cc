@@ -958,8 +958,8 @@ CASE( "test_trans_hires" ) {
                                     EXPECT( rms_gen1 < tolerance );
                                     //EXPECT( rms_gen2 < tolerance );
                                     icase++;
-
-                                    EXPECT( icase < 50 );
+                                    Log::info() << transType << ": case " << icase << std::endl;
+                                    EXPECT( icase < 25 );
                                 }
                                 k++;
                             }
