@@ -704,7 +704,7 @@ CASE( "test_transgeneral_with_translib" ) {
 #endif
 #endif
 //-----------------------------------------------------------------------------
-#if 1
+#if 0
 CASE( "test_trans_vordiv_with_translib" ) {
     Log::info() << "test_trans_vordiv_with_translib" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -714,7 +714,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     double tolerance  = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F640" );
+    Grid g( "F120" );
 
     grid::StructuredGrid gs( g );
     int ndgl = gs.ny();
@@ -722,14 +722,16 @@ CASE( "test_trans_vordiv_with_translib" ) {
     int trc = ndgl / 2. - 1;  // cubic
 #if ATLAS_HAVE_TRANS
     trans::Trans transIFS( g, trc, util::Config( "type", "ifs" ) );
+    double rav = 0.;  // compute average rms error of trans library in rav
 #endif
     trans::Trans transLocal1( g, trc, util::Config( "type", "localopt" ) );
     trans::Trans transLocal2( g, trc, util::Config( "type", "localopt2" ) );
+    double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 
     functionspace::Spectral spectral( trc );
     functionspace::StructuredColumns gridpoints( g );
 
-    int nb_scalar = 100, nb_vordiv = 0;
+    int nb_scalar = 1, nb_vordiv = 0;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
     std::vector<double> sp( 2 * N * nb_scalar );
     std::vector<double> vor( 2 * N * nb_vordiv );
@@ -796,6 +798,8 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                 double rms_gen2 =
                                     compute_rms( g.size(), rgp2.data() + pos * g.size(), rgp_analytic.data() );
 
+                                rav1 += rms_gen1;
+                                rav2 += rms_gen2;
                                 if ( !( rms_gen1 < tolerance ) || !( rms_gen2 < tolerance ) ) {
                                     Log::info()
                                         << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
@@ -813,6 +817,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                                                     div.data(), gp.data() ) );
                                 double rms_trans =
                                     compute_rms( g.size(), gp.data() + pos * g.size(), rgp_analytic.data() );
+                                rav += rms_trans;
                                 double rms_diff =
                                     compute_rms( g.size(), rgp1.data() + pos * g.size(), gp.data() + pos * g.size() );
                                 EXPECT( rms_trans < tolerance );
@@ -827,7 +832,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                     ATLAS_DEBUG_VAR( tolerance );
                                 }
 #endif
-                                EXPECT( icase < 100 );
+                                EXPECT( icase < 300 );
                             }
                             k++;
                         }
@@ -837,10 +842,18 @@ CASE( "test_trans_vordiv_with_translib" ) {
         }
     }
     Log::info() << "Vordiv+scalar comparison with trans: all " << icase << " cases successfully passed!" << std::endl;
+    rav1 /= icase;
+    Log::info() << "average RMS error of transLocal1: " << rav1 << std::endl;
+    rav2 /= icase;
+    Log::info() << "average RMS error of transLocal2: " << rav2 << std::endl;
+#if ATLAS_HAVE_TRANS
+    rav /= icase;
+    Log::info() << "average RMS error of transIFS: " << rav << std::endl;
+#endif
 }
 #endif
 //-----------------------------------------------------------------------------
-#if 0
+#if 1
 CASE( "test_trans_hires" ) {
     Log::info() << "test_trans_hires" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -865,7 +878,7 @@ CASE( "test_trans_hires" ) {
     functionspace::Spectral spectral( trc );
     functionspace::StructuredColumns gridpoints( g );
 
-    int nb_scalar = 1, nb_vordiv = 0;
+    int nb_scalar = 100, nb_vordiv = 0;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
     std::vector<double> sp( 2 * N * nb_scalar );
     std::vector<double> vor( 2 * N * nb_vordiv );
@@ -946,7 +959,7 @@ CASE( "test_trans_hires" ) {
                                     //EXPECT( rms_gen2 < tolerance );
                                     icase++;
 
-                                    EXPECT( icase < 300 );
+                                    EXPECT( icase < 50 );
                                 }
                                 k++;
                             }

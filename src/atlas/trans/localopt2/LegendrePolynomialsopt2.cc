@@ -170,7 +170,14 @@ void compute_legendre_polynomialsopt2( const size_t trc,     // truncation (in)
                     }
                 }
                 int is2 = 0, ia2 = 0;
-                for ( int jn = jm; jn <= trc; jn++ ) {
+                // the choice between the following two code lines determines whether
+                // total wavenumbers are summed in an ascending or descending order.
+                // The trans library in IFS uses descending order because it should
+                // be more accurate (higher wavenumbers have smaller contributions).
+                // This also needs to be changed when splitting the spectral data in
+                // TransLocalopt2::invtrans_uv!
+                //for ( int jn = jm; jn <= trc; jn++ ) {
+                for ( int jn = trc; jn >= jm; jn-- ) {
                     if ( ( jn - jm ) % 2 == 0 ) {
                         int is      = is0 * nlats + is1 * jlat + is2++;
                         leg_sym[is] = legpol[idxmn( jm, jn )];

@@ -277,10 +277,18 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                     {
                         //ATLAS_TRACE( "opt2 Legendre split" );
                         int idx = 0, is = 0, ia = 0, ioff = ( 2 * truncation + 3 - jm ) * jm / 2 * nb_fields * 2;
-                        for ( int jn = 0; jn <= truncation_ - jm + 1; jn++ ) {
+                        // the choice between the following two code lines determines whether
+                        // total wavenumbers are summed in an ascending or descending order.
+                        // The trans library in IFS uses descending order because it should
+                        // be more accurate (higher wavenumbers have smaller contributions).
+                        // This also needs to be changed when splitting the spectral data in
+                        // compute_legendre_polynomialsopt2!
+                        //for ( int jn = jm; jn <= truncation_ + 1; jn++ ) {
+                        for ( int jn = truncation_ + 1; jn >= jm; jn-- ) {
                             for ( int imag = 0; imag < 2; imag++ ) {
-                                for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
-                                    if ( jn % 2 == 0 ) { scalar_sym[is++] = scalar_spectra[idx + ioff]; }
+                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                                    idx = jfld + nb_fields * ( imag + 2 * ( jn - jm ) );
+                                    if ( ( jn - jm ) % 2 == 0 ) { scalar_sym[is++] = scalar_spectra[idx + ioff]; }
                                     else {
                                         scalar_asym[ia++] = scalar_spectra[idx + ioff];
                                     }
