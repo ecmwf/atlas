@@ -44,13 +44,13 @@ public:
     virtual const void* data() const = 0;
 };
 
-class EmptyCacheEntry : public TransCacheEntry {
+class EmptyCacheEntry final : public TransCacheEntry {
 public:
     virtual size_t size() const override { return 0; }
     virtual const void* data() const override { return nullptr; }
 };
 
-class TransCacheFileEntry : public TransCacheEntry {
+class TransCacheFileEntry final : public TransCacheEntry {
     eckit::Buffer buffer_;
 
 public:
@@ -63,6 +63,21 @@ public:
     virtual size_t size() const override { return buffer_.size(); }
     virtual const void* data() const override { return buffer_.data(); }
 };
+
+class TransCacheMemoryEntry final : public TransCacheEntry {
+public:
+    TransCacheMemoryEntry(const void* data, size_t size) : data_(data), size_(size) {
+        ASSERT(data_);
+        ASSERT(size_);
+    }
+    virtual const void* data() const override { return data_; }
+    virtual size_t size() const override { return size_; }
+private:
+    const void* data_;
+    const size_t size_;
+};
+
+//-----------------------------------------------------------------------------
 
 class Cache {
 public:
@@ -86,6 +101,9 @@ private:
 
 class LegendreCache : public Cache {
 public:
+    LegendreCache(const void* address, size_t size) :
+        Cache(std::make_shared<atlas::trans::TransCacheMemoryEntry>(address, size)) {
+    }
     LegendreCache( const eckit::PathName& path ) :
         Cache( std::shared_ptr<TransCacheEntry>( new TransCacheFileEntry( path ) ) ) {}
 };
