@@ -119,40 +119,23 @@ TransLocalopt::TransLocalopt( const Cache& cache, const Grid& grid, const long t
     }
     // precomputations for Legendre polynomials:
     {
-        std::vector<double> legendre( legendre_size( truncation_ + 1 ) * nlatsNH );
-        {
-            ATLAS_TRACE( "opt precomp Legendre" );
-            compute_legendre_polynomialsopt( truncation_ + 1, nlatsNH, lats.data(), legendre.data() );
+        ATLAS_TRACE( "opt precomp Legendre" );
+        int size_sym  = 0;
+        int size_asym = 0;
+        legendre_sym_begin_.resize( truncation_ + 3 );
+        legendre_asym_begin_.resize( truncation_ + 3 );
+        legendre_sym_begin_[0]  = 0;
+        legendre_asym_begin_[0] = 0;
+        for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
+            size_sym += num_n( truncation_ + 1, jm, true );
+            size_asym += num_n( truncation_ + 1, jm, false );
+            legendre_sym_begin_[jm + 1]  = size_sym;
+            legendre_asym_begin_[jm + 1] = size_asym;
         }
-        {
-            ATLAS_TRACE( "opt split Legendre" );
-            int size_sym  = 0;
-            int size_asym = 0;
-            legendre_sym_begin_.resize( truncation_ + 3 );
-            legendre_asym_begin_.resize( truncation_ + 3 );
-            legendre_sym_begin_[0]  = 0;
-            legendre_asym_begin_[0] = 0;
-            for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
-                size_sym += num_n( truncation_ + 1, jm, true );
-                size_asym += num_n( truncation_ + 1, jm, false );
-                legendre_sym_begin_[jm + 1]  = size_sym;
-                legendre_asym_begin_[jm + 1] = size_asym;
-            }
-            legendre_sym_.resize( size_sym * nlatsNH );
-            legendre_asym_.resize( size_asym * nlatsNH );
-            int idx = 0, is = 0, ia = 0;
-            for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
-                for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
-                    for ( int jn = 0; jn <= truncation_ - jm + 1; jn++, idx++ ) {
-                        if ( jn % 2 == 0 ) { legendre_sym_[is++] = legendre[idx]; }
-                        else {
-                            legendre_asym_[ia++] = legendre[idx];
-                        }
-                    }
-                }
-            }
-            ASSERT( ia == size_asym * nlatsNH && is == size_sym * nlatsNH );
-        }
+        legendre_sym_.resize( size_sym * nlatsNH );
+        legendre_asym_.resize( size_asym * nlatsNH );
+        compute_legendre_polynomialsopt( truncation_ + 1, nlatsNH, lats.data(), legendre_sym_.data(),
+                                         legendre_asym_.data() );
     }
 
     // precomputations for Fourier transformations:
@@ -180,7 +163,17 @@ TransLocalopt::TransLocalopt( const Cache& cache, const Grid& grid, const long t
             }
         }
     }
-}
+#if ATLAS_HAVE_FFTW
+    {
+        ATLAS_TRACE( "opt precomp FFTW" );
+        int num_complex = ( nlons / 2 ) + 1;
+        fft_in_         = fftw_alloc_complex( nlats * num_complex );
+        fft_out_        = fftw_alloc_real( nlats * nlons );
+        plan_ = fftw_plan_many_dft_c2r( 1, &nlons, nlats, fft_in_, NULL, 1, num_complex, fft_out_, NULL, 1, nlons,
+                                        FFTW_ESTIMATE );
+    }
+#endif
+}  // namespace atlas
 
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -189,7 +182,13 @@ TransLocalopt::TransLocalopt( const Grid& grid, const long truncation, const eck
 
 // --------------------------------------------------------------------------------------------------------------------
 
-TransLocalopt::~TransLocalopt() {}
+TransLocalopt::~TransLocalopt() {
+#if ATLAS_HAVE_FFTW
+    fftw_destroy_plan( plan_ );
+    fftw_free( fft_in_ );
+    fftw_free( fft_out_ );
+#endif
+}
 
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -253,8 +252,6 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
     if ( nb_scalar_fields > 0 ) {
         int nb_fields = nb_scalar_fields;
 
-        //eckit::linalg::LinearAlgebra::backend( "string" ) // might want to choose backend with this command
-
         // Transform
         if ( grid::StructuredGrid g = grid_ ) {
             ATLAS_TRACE( "invtrans_uv structured opt" );
@@ -272,17 +269,25 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
     // TODO: 0 is currently not working because it requires all latitudes to be included in legendre_ (which is currently not done)
                     int size_sym  = num_n( truncation_ + 1, jm, true );
                     int size_asym = num_n( truncation_ + 1, jm, false );
-                    std::vector<double> scalar_sym( 2 * nb_fields * size_sym, -1234. );
-                    std::vector<double> scalar_asym( 2 * nb_fields * size_asym, -1234. );
+                    std::vector<double> scalar_sym( 2 * nb_fields * size_sym );
+                    std::vector<double> scalar_asym( 2 * nb_fields * size_asym );
                     std::vector<double> scl_fourier_sym( size_fourier );
                     std::vector<double> scl_fourier_asym( size_fourier );
                     {
                         //ATLAS_TRACE( "opt Legendre split" );
                         int idx = 0, is = 0, ia = 0, ioff = ( 2 * truncation + 3 - jm ) * jm / 2 * nb_fields * 2;
-                        for ( int jn = 0; jn <= truncation_ - jm + 1; jn++ ) {
+                        // the choice between the following two code lines determines whether
+                        // total wavenumbers are summed in an ascending or descending order.
+                        // The trans library in IFS uses descending order because it should
+                        // be more accurate (higher wavenumbers have smaller contributions).
+                        // This also needs to be changed when splitting the spectral data in
+                        // compute_legendre_polynomialsopt!
+                        //for ( int jn = jm; jn <= truncation_ + 1; jn++ ) {
+                        for ( int jn = truncation_ + 1; jn >= jm; jn-- ) {
                             for ( int imag = 0; imag < 2; imag++ ) {
-                                for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
-                                    if ( jn % 2 == 0 ) { scalar_sym[is++] = scalar_spectra[idx + ioff]; }
+                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                                    idx = jfld + nb_fields * ( imag + 2 * ( jn - jm ) );
+                                    if ( ( jn - jm ) % 2 == 0 ) { scalar_sym[is++] = scalar_spectra[idx + ioff]; }
                                     else {
                                         scalar_asym[ia++] = scalar_spectra[idx + ioff];
                                     }
@@ -333,6 +338,44 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
 #endif
                 }
             }
+#if ATLAS_HAVE_FFTW
+            {
+                auto position = [&]( int jfld, int imag, int jlat, int jm ) {
+                    return jfld + nb_fields * ( imag + 2 * ( jlat + g.ny() * ( jm ) ) );
+                };
+                auto factor = [&]( int jm ) {
+                    if ( jm > 0 ) { return 2.; }
+                    else {
+                        return 1.;
+                    }
+                };
+
+                int num_complex = ( nlons / 2 ) + 1;
+                {
+                    ATLAS_TRACE( "opt FFTW" );
+                    for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                        int idx = 0;
+                        for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
+                            for ( int jm = 0; jm < num_complex; jm++, idx++ ) {
+                                for ( int imag = 0; imag < 2; imag++ ) {
+                                    if ( jm <= truncation_ ) {
+                                        fft_in_[idx][imag] =
+                                            scl_fourier[position( jfld, imag, jlat, jm )] / factor( jm );
+                                    }
+                                    else {
+                                        fft_in_[idx][imag] = 0.;
+                                    }
+                                }
+                            }
+                        }
+                        fftw_execute( plan_ );
+                        for ( int j = 0; j < nlats * nlons; j++ ) {
+                            gp_fields[j + jfld * nlats * nlons] = fft_out_[j];
+                        }
+                    }
+                }
+            }
+#else
 #if 0  // 1: better for small number of columns, large truncation; 0: better for large number of columns
 
             // Transposition in Fourier space:
@@ -406,6 +449,7 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
                 eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
             }
 
+#endif
 #endif
             // Computing u,v from U,V:
             {

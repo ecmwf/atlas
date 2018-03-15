@@ -704,7 +704,7 @@ CASE( "test_transgeneral_with_translib" ) {
 #endif
 #endif
 //-----------------------------------------------------------------------------
-#if 0
+#if 1
 CASE( "test_trans_vordiv_with_translib" ) {
     Log::info() << "test_trans_vordiv_with_translib" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -714,7 +714,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     double tolerance  = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F120" );
+    Grid g( "F320" );
 
     grid::StructuredGrid gs( g );
     int ndgl = gs.ny();
@@ -853,7 +853,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
 }
 #endif
 //-----------------------------------------------------------------------------
-#if 1
+#if 0
 CASE( "test_trans_hires" ) {
     Log::info() << "test_trans_hires" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -863,10 +863,10 @@ CASE( "test_trans_hires" ) {
     double tolerance  = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F1280" );
+    Grid g( "F640" );
 #if ATLAS_HAVE_TRANS
-    //std::string transTypes[1] = {"localopt2"};
-    std::string transTypes[2] = {"localopt2", "ifs"};
+    std::string transTypes[1] = {"localopt2"};
+    //std::string transTypes[3] = {"localopt", "localopt2", "ifs"};
 #else
     std::string transTypes[1] = {"localopt2"};
 #endif
@@ -880,14 +880,6 @@ CASE( "test_trans_hires" ) {
 
     int nb_scalar = 100, nb_vordiv = 0;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
-    std::vector<double> sp( 2 * N * nb_scalar );
-    std::vector<double> vor( 2 * N * nb_vordiv );
-    std::vector<double> div( 2 * N * nb_vordiv );
-    std::vector<double> rspecg( 2 * N );
-    std::vector<double> gp( nb_all * g.size() );
-    std::vector<double> rgp1( nb_all * g.size() );
-    //std::vector<double> rgp2( nb_all * g.size() );
-    std::vector<double> rgp_analytic( g.size() );
 
     for ( auto transType : transTypes ) {
         int icase = 0;
@@ -895,71 +887,33 @@ CASE( "test_trans_hires" ) {
         for ( int ivar_in = 2; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
             for ( int ivar_out = 2; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
                 int nb_fld = 1;
-                if ( ivar_out == 2 ) {
-                    tolerance = 1.e-13;
-                    nb_fld    = nb_scalar;
-                }
+                if ( ivar_out == 2 ) { nb_fld = nb_scalar; }
                 else {
-                    tolerance = 2.e-6;
-                    nb_fld    = nb_vordiv;
+                    nb_fld = nb_vordiv;
                 }
-                for ( int jfld = 0; jfld < nb_fld; jfld++ ) {  // multiple fields
+                for ( int jfld = 0; jfld < 1; jfld++ ) {  // multiple fields
                     int k = 0;
                     for ( int m = 0; m <= trc; m++ ) {                 // zonal wavenumber
                         for ( int n = m; n <= trc; n++ ) {             // total wavenumber
                             for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
 
-                                if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. ) {
-                                    for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
-                                        sp[j] = 0.;
-                                    }
-                                    for ( int j = 0; j < 2 * N * nb_vordiv; j++ ) {
-                                        vor[j] = 0.;
-                                        div[j] = 0.;
-                                    }
-                                    if ( ivar_in == 0 ) vor[k * nb_vordiv + jfld] = 1.;
-                                    if ( ivar_in == 1 ) div[k * nb_vordiv + jfld] = 1.;
+                                if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
+                                     icase < 25 ) {
+                                    auto start = std::chrono::system_clock::now();
+                                    std::vector<double> sp( 2 * N * nb_scalar );
+                                    std::vector<double> gp( nb_all * g.size() );
                                     if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
-
-                                    for ( int j = 0; j < nb_all * g.size(); j++ ) {
-                                        gp[j]   = 0.;
-                                        rgp1[j] = 0.;
-                                        //rgp2[j] = 0.;
-                                    }
-                                    for ( int j = 0; j < g.size(); j++ ) {
-                                        rgp_analytic[j] = 0.;
-                                    }
-
-                                    spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg.data(),
-                                                                      rgp_analytic.data(), ivar_in, ivar_out );
-
-                                    EXPECT_NO_THROW( trans.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
-                                                                     div.data(), rgp1.data() ) );
-
-                                    //EXPECT_NO_THROW( transLocal2.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
-                                    //                                       div.data(), rgp2.data() ) );
-
-                                    int pos = ( ivar_out * nb_vordiv + jfld );
-
-                                    double rms_gen1 =
-                                        compute_rms( g.size(), rgp1.data() + pos * g.size(), rgp_analytic.data() );
-
-                                    //double rms_gen2 =
-                                    //    compute_rms( g.size(), rgp2.data() + pos * g.size(), rgp_analytic.data() );
-
-                                    if ( !( rms_gen1 < tolerance ) ) {  // || !( rms_gen2 < tolerance ) ) {
-                                        Log::info()
-                                            << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
-                                            << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
-                                        ATLAS_DEBUG_VAR( rms_gen1 );
-                                        //ATLAS_DEBUG_VAR( rms_gen2 );
-                                        ATLAS_DEBUG_VAR( tolerance );
-                                    }
-                                    EXPECT( rms_gen1 < tolerance );
-                                    //EXPECT( rms_gen2 < tolerance );
+                                    EXPECT_NO_THROW( trans.invtrans( nb_scalar, sp.data(), nb_vordiv, nullptr, nullptr,
+                                                                     gp.data() ) );
                                     icase++;
-                                    Log::info() << transType << ": case " << icase << std::endl;
-                                    EXPECT( icase < 25 );
+                                    auto end = std::chrono::system_clock::now();  //
+                                    std::chrono::duration<double> elapsed_seconds = end - start;
+                                    std::time_t end_time = std::chrono::system_clock::to_time_t( end );
+                                    std::string time_str = std::ctime( &end_time );
+                                    Log::info()
+                                        << transType << ": case " << icase
+                                        << ", elapsed time: " << elapsed_seconds.count()
+                                        << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
                                 }
                                 k++;
                             }

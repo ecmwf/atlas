@@ -12,8 +12,12 @@
 
 #include <vector>
 
+#include "atlas/array.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/trans/Trans.h"
+#if ATLAS_HAVE_FFTW
+#include <fftw3.h>
+#endif
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -100,9 +104,6 @@ public:
                            double divergence_spectra[], const eckit::Configuration& = util::NoConfig() ) const override;
 
 private:
-    const double* legendre_data( int j ) const { return legendre_.data() + legendre_begin_[j]; }
-    double* legendre_data( int j ) { return legendre_.data() + legendre_begin_[j]; }
-
     void invtrans_uv( const int truncation, const int nb_scalar_fields, const int nb_vordiv_fields,
                       const double scalar_spectra[], double gp_fields[],
                       const eckit::Configuration& = util::NoConfig() ) const;
@@ -111,7 +112,6 @@ private:
     Grid grid_;
     int truncation_;
     bool precompute_;
-    mutable std::vector<double> legendre_;
     mutable std::vector<double> legendre_sym_;
     mutable std::vector<double> legendre_asym_;
     mutable std::vector<double> fourier_;
@@ -119,6 +119,11 @@ private:
     std::vector<size_t> legendre_begin_;
     std::vector<size_t> legendre_sym_begin_;
     std::vector<size_t> legendre_asym_begin_;
+#if ATLAS_HAVE_FFTW
+    fftw_complex* fft_in_;
+    double* fft_out_;
+    fftw_plan plan_;
+#endif
 };
 
 //-----------------------------------------------------------------------------
