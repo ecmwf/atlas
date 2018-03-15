@@ -21,12 +21,11 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
-void compute_legendre_polynomialsopt2(
-    const size_t trc,               // truncation (in)
-    const int nlats,                // number of latitudes
-    const double lats[],            // latitudes in radians (in)
-    double __restrict leg_sym[],    // values of associated Legendre functions, symmetric part
-    double __restrict leg_asym[] )  // values of associated Legendre functions, asymmetric part
+void compute_legendre_polynomialsopt2( const size_t trc,     // truncation (in)
+                                       const int nlats,      // number of latitudes
+                                       const double lats[],  // latitudes in radians (in)
+                                       double leg_sym[],     // values of associated Legendre functions, symmetric part
+                                       double leg_asym[] )   // values of associated Legendre functions, asymmetric part
 {
     auto legendre_size = [&]( int truncation ) { return ( truncation + 2 ) * ( truncation + 1 ) / 2; };
     array::ArrayT<double> zfn_( trc + 1, trc + 1 );
