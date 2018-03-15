@@ -54,23 +54,6 @@ int num_n( const int truncation, const int m, const bool symmetric ) {
     return len;
 }
 
-std::vector<int> n_indices( const int truncation, const int m, const bool symmetric ) {
-    int len = num_n( truncation, m, symmetric ), jn0 = 0;
-    if ( !symmetric ) { jn0 = 1; }
-    std::vector<int> jns( len );
-    int ia = 0, id = len - 1;
-    for ( int jn = jn0; jn <= truncation - m; jn += 2, ia++, id-- ) {
-#if 1  // 1: ascending, 0: descending
-        int idx = ia;
-#else
-        int idx = id;
-#endif
-        jns[idx] = jn;
-        ASSERT( idx < len && idx >= 0 );
-    }
-    return jns;
-}
-
 }  // namespace
 
 // --------------------------------------------------------------------------------------------------------------------

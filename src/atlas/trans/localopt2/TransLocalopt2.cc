@@ -54,23 +54,6 @@ int num_n( const int truncation, const int m, const bool symmetric ) {
     return len;
 }
 
-std::vector<int> n_indices( const int truncation, const int m, const bool symmetric ) {
-    int len = num_n( truncation, m, symmetric ), jn0 = 0;
-    if ( !symmetric ) { jn0 = 1; }
-    std::vector<int> jns( len );
-    int ia = 0, id = len - 1;
-    for ( int jn = jn0; jn <= truncation - m; jn += 2, ia++, id-- ) {
-#if 1  // 1: ascending, 0: descending
-        int idx = ia;
-#else
-        int idx = id;
-#endif
-        jns[idx] = jn;
-        ASSERT( idx < len && idx >= 0 );
-    }
-    return jns;
-}
-
 }  // namespace
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -167,17 +150,10 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
     {
         ATLAS_TRACE( "opt2 precomp FFTW" );
         int num_complex = ( nlons / 2 ) + 1;
-
-        fftw_complex* tmp_in = (fftw_complex*)malloc( sizeof( fftw_complex ) );
-        double* tmp_out      = (double*)malloc( sizeof( double ) );
-        fft_in_              = fftw_alloc_complex( nlats * num_complex );
-        fft_out_             = fftw_alloc_real( nlats * nlons );
-
-        plan_ = fftw_plan_many_dft_c2r( 1, &nlons, nlats, tmp_in, NULL, 1, num_complex, tmp_out, NULL, 1, nlons,
-                                        FFTW_ESTIMATE + FFTW_NO_SIMD );
-
-        free( tmp_in );
-        free( tmp_out );
+        fft_in_         = fftw_alloc_complex( nlats * num_complex );
+        fft_out_        = fftw_alloc_real( nlats * nlons );
+        plan_ = fftw_plan_many_dft_c2r( 1, &nlons, nlats, fft_in_, NULL, 1, num_complex, fft_out_, NULL, 1, nlons,
+                                        FFTW_ESTIMATE );
     }
 #endif
 }  // namespace atlas
@@ -320,12 +296,15 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                             //ATLAS_TRACE( "opt2 merge spheres" );
                             // southern hemisphere:
                             int ioff = jm * size_fourier;
+                            int pos0 = 2 * ( nlats - 1 ) + ioff;
                             int idx  = 0;
                             for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
+                                int poslat = pos0 - 2 * jlat;
                                 for ( int imag = 0; imag < 2; imag++ ) {
+                                    int posimag = nb_fields * ( imag + poslat );
                                     for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
-                                        int pos = jfld + nb_fields * ( imag + 2 * ( nlats - jlat - 1 ) );
-                                        scl_fourier[pos + ioff] = scl_fourier[idx + ioff] - scl_fourier_asym[idx];
+                                        int pos          = jfld + posimag;
+                                        scl_fourier[pos] = scl_fourier[idx + ioff] - scl_fourier_asym[idx];
                                     }
                                 }
                             }
