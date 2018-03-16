@@ -714,7 +714,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     double tolerance  = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F320" );
+    Grid g( "F3" );
 
     grid::StructuredGrid gs( g );
     int ndgl = gs.ny();
@@ -865,7 +865,7 @@ CASE( "test_trans_hires" ) {
     // Grid: (Adjust the following line if the test takes too long!)
     Grid g( "F640" );
 #if ATLAS_HAVE_TRANS
-    std::string transTypes[1] = {"localopt2"};
+    std::string transTypes[2] = {"localopt2", "ifs"};
     //std::string transTypes[3] = {"localopt", "localopt2", "ifs"};
 #else
     std::string transTypes[1] = {"localopt2"};
@@ -875,13 +875,14 @@ CASE( "test_trans_hires" ) {
     //int trc  = ndgl - 1;  // linear
     int trc = ndgl / 2. - 1;  // cubic
 
-    functionspace::Spectral spectral( trc );
-    functionspace::StructuredColumns gridpoints( g );
-
-    int nb_scalar = 100, nb_vordiv = 0;
-    int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
+    int nb_scalar = 1, nb_vordiv = 0;
 
     for ( auto transType : transTypes ) {
+        if ( transType == "localopt2" ) { trc = ndgl / 2. - 2; }
+        else {
+            trc = ndgl / 2. - 1;
+        }
+        int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
         int icase = 0;
         trans::Trans trans( g, trc, util::Config( "type", transType ) );
         for ( int ivar_in = 2; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar

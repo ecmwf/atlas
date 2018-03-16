@@ -239,11 +239,11 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
         // Transform
         if ( grid::StructuredGrid g = grid_ ) {
             ATLAS_TRACE( "invtrans_uv structured opt2" );
-            int nlats        = g.ny();
-            int nlons        = g.nxmax();
-            int nlatsNH      = nlats_northernHemisphere( nlats );
-            int size_fourier = nb_fields * 2 * g.ny();
-            std::vector<double> scl_fourier( size_fourier * ( truncation + 1 ) );
+            int nlats            = g.ny();
+            int nlons            = g.nxmax();
+            int nlatsNH          = nlats_northernHemisphere( nlats );
+            int size_fourier_max = nb_fields * 2 * nlats;
+            std::vector<double> scl_fourier( size_fourier_max * ( truncation + 1 ) );
 
             // Legendre transform:
             {
@@ -253,9 +253,13 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
     // TODO: 0 is currently not working because it requires all latitudes to be included in legendre_ (which is currently not done)
                     int size_sym  = num_n( truncation_ + 1, jm, true );
                     int size_asym = num_n( truncation_ + 1, jm, false );
-                    std::vector<double> scalar_sym( 2 * nb_fields * size_sym );
-                    std::vector<double> scalar_asym( 2 * nb_fields * size_asym );
-                    std::vector<double> scl_fourier_asym( size_fourier );
+                    int n_imag    = 2;
+                    if ( jm == 0 ) { n_imag = 1; }
+                    int size_fourier = nb_fields * n_imag * nlatsNH;
+                    std::vector<double> scalar_sym( n_imag * nb_fields * size_sym );
+                    std::vector<double> scalar_asym( n_imag * nb_fields * size_asym );
+                    std::vector<double> scl_fourier_sym( size_fourier );
+                    std::vector<double> scl_fourier_asym( size_fourier, 0. );
                     {
                         //ATLAS_TRACE( "opt2 Legendre split" );
                         int idx = 0, is = 0, ia = 0, ioff = ( 2 * truncation + 3 - jm ) * jm / 2 * nb_fields * 2;
@@ -267,7 +271,7 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                         // compute_legendre_polynomialsopt2!
                         //for ( int jn = jm; jn <= truncation_ + 1; jn++ ) {
                         for ( int jn = truncation_ + 1; jn >= jm; jn-- ) {
-                            for ( int imag = 0; imag < 2; imag++ ) {
+                            for ( int imag = 0; imag < n_imag; imag++ ) {
                                 for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                                     idx = jfld + nb_fields * ( imag + 2 * ( jn - jm ) );
                                     if ( ( jn - jm ) % 2 == 0 ) { scalar_sym[is++] = scalar_spectra[idx + ioff]; }
@@ -277,40 +281,51 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                                 }
                             }
                         }
-                        ASSERT( ia == 2 * nb_fields * size_asym && is == 2 * nb_fields * size_sym );
+                        ASSERT( ia == n_imag * nb_fields * size_asym && is == n_imag * nb_fields * size_sym );
                     }
                     {
-                        eckit::linalg::Matrix A( scalar_sym.data(), nb_fields * 2, size_sym );
+                        //Log::info() << "jm=" << jm << " symmetric - ";
+                        eckit::linalg::Matrix A( scalar_sym.data(), nb_fields * n_imag, size_sym );
                         eckit::linalg::Matrix B( legendre_sym_.data() + legendre_sym_begin_[jm] * nlatsNH, size_sym,
                                                  nlatsNH );
-                        eckit::linalg::Matrix C( scl_fourier.data() + jm * size_fourier, nb_fields * 2, nlatsNH );
+                        eckit::linalg::Matrix C( scl_fourier_sym.data(), nb_fields * n_imag, nlatsNH );
                         eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
                     }
                     if ( size_asym > 0 ) {
-                        eckit::linalg::Matrix A( scalar_asym.data(), nb_fields * 2, size_asym );
+                        //Log::info() << "jm=" << jm << " antisymmetric - ";
+                        eckit::linalg::Matrix A( scalar_asym.data(), nb_fields * n_imag, size_asym );
                         eckit::linalg::Matrix B( legendre_asym_.data() + legendre_asym_begin_[jm] * nlatsNH, size_asym,
                                                  nlatsNH );
-                        eckit::linalg::Matrix C( scl_fourier_asym.data(), nb_fields * 2, nlatsNH );
+                        eckit::linalg::Matrix C( scl_fourier_asym.data(), nb_fields * n_imag, nlatsNH );
                         eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
-                        {
-                            //ATLAS_TRACE( "opt2 merge spheres" );
-                            // southern hemisphere:
-                            int ioff = jm * size_fourier;
-                            int pos0 = 2 * ( nlats - 1 ) + ioff;
-                            int idx  = 0;
-                            for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
-                                int poslat = pos0 - 2 * jlat;
-                                for ( int imag = 0; imag < 2; imag++ ) {
-                                    int posimag = nb_fields * ( imag + poslat );
-                                    for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
-                                        int pos          = jfld + posimag;
-                                        scl_fourier[pos] = scl_fourier[idx + ioff] - scl_fourier_asym[idx];
-                                    }
+                    }
+                    {
+                        //ATLAS_TRACE( "opt2 merge spheres" );
+                        // northern hemisphere:
+                        int ioff = jm * size_fourier_max;
+                        int pos0 = ioff;
+                        int idx  = 0;
+                        for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
+                            int poslat = pos0 + 2 * jlat;
+                            for ( int imag = 0; imag < n_imag; imag++ ) {
+                                int posimag = nb_fields * ( imag + poslat );
+                                for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
+                                    int pos          = jfld + posimag;
+                                    scl_fourier[pos] = scl_fourier_sym[idx] + scl_fourier_asym[idx];
                                 }
                             }
-                            // northern hemisphere:
-                            for ( int j = 0; j < 2 * nb_fields * nlatsNH; j++ ) {
-                                scl_fourier[j + ioff] += scl_fourier_asym[j];
+                        }
+                        // southern hemisphere:
+                        idx  = 0;
+                        pos0 = 2 * ( nlats - 1 ) + ioff;
+                        for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
+                            int poslat = pos0 - 2 * jlat;
+                            for ( int imag = 0; imag < n_imag; imag++ ) {
+                                int posimag = nb_fields * ( imag + poslat );
+                                for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
+                                    int pos          = jfld + posimag;
+                                    scl_fourier[pos] = scl_fourier_sym[idx] - scl_fourier_asym[idx];
+                                }
                             }
                         }
                     }
@@ -327,26 +342,19 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
 #if ATLAS_HAVE_FFTW
             {
                 auto position = [&]( int jfld, int imag, int jlat, int jm ) {
-                    return jfld + nb_fields * ( imag + 2 * ( jlat + g.ny() * ( jm ) ) );
+                    return jfld + nb_fields * ( imag + 2 * ( jlat + nlats * ( jm ) ) );
                 };
-                auto factor = [&]( int jm ) {
-                    if ( jm > 0 ) { return 2.; }
-                    else {
-                        return 1.;
-                    }
-                };
-
                 int num_complex = ( nlons / 2 ) + 1;
                 {
                     ATLAS_TRACE( "opt2 FFTW" );
                     for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                         int idx = 0;
                         for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
-                            for ( int jm = 0; jm < num_complex; jm++, idx++ ) {
+                            fft_in_[idx++][0] = scl_fourier[position( jfld, 0, jlat, 0 )];
+                            for ( int jm = 1; jm < num_complex; jm++, idx++ ) {
                                 for ( int imag = 0; imag < 2; imag++ ) {
                                     if ( jm <= truncation_ ) {
-                                        fft_in_[idx][imag] =
-                                            scl_fourier[position( jfld, imag, jlat, jm )] / factor( jm );
+                                        fft_in_[idx][imag] = scl_fourier[position( jfld, imag, jlat, jm )] / 2.;
                                     }
                                     else {
                                         fft_in_[idx][imag] = 0.;
