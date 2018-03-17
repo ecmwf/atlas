@@ -704,7 +704,7 @@ CASE( "test_transgeneral_with_translib" ) {
 #endif
 #endif
 //-----------------------------------------------------------------------------
-#if 1
+#if 0
 CASE( "test_trans_vordiv_with_translib" ) {
     Log::info() << "test_trans_vordiv_with_translib" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -853,7 +853,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
 }
 #endif
 //-----------------------------------------------------------------------------
-#if 0
+#if 1
 CASE( "test_trans_hires" ) {
     Log::info() << "test_trans_hires" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -865,7 +865,7 @@ CASE( "test_trans_hires" ) {
     // Grid: (Adjust the following line if the test takes too long!)
     Grid g( "F640" );
 #if ATLAS_HAVE_TRANS
-    std::string transTypes[2] = {"localopt2", "ifs"};
+    std::string transTypes[4] = {"localopt", "localopt2", "localopt3", "ifs"};
     //std::string transTypes[3] = {"localopt", "localopt2", "ifs"};
 #else
     std::string transTypes[1] = {"localopt2"};

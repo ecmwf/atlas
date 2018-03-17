@@ -32,7 +32,7 @@ namespace trans {
 // Ported to C++ by:
 // Andreas Mueller *ECMWF*
 //
-void compute_legendre_polynomialsopt(
+void compute_legendre_polynomialsopt3(
     const size_t trc,           // truncation (in)
     const int nlats,            // number of latitudes
     const double lats[],        // latitudes in radians (in)

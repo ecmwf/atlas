@@ -34,9 +34,9 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
-/// @class TransLocalopt
+/// @class TransLocalopt3
 ///
-/// Localopt spherical harmonics transformations to any grid
+/// Localopt3 spherical harmonics transformations to any grid
 /// Optimisations are present for structured grids
 /// For global grids, please consider using TransIFS instead.
 ///
@@ -46,12 +46,13 @@ namespace trans {
 ///
 /// @note: Direct transforms are not implemented and cannot be unless
 ///        the grid is global. There are no plans to support this at the moment.
-class TransLocalopt : public trans::TransImpl {
+class TransLocalopt3 : public trans::TransImpl {
 public:
-    TransLocalopt( const Grid& g, const long truncation, const eckit::Configuration& = util::NoConfig() );
-    TransLocalopt( const Cache&, const Grid& g, const long truncation, const eckit::Configuration& = util::NoConfig() );
+    TransLocalopt3( const Grid& g, const long truncation, const eckit::Configuration& = util::NoConfig() );
+    TransLocalopt3( const Cache&, const Grid& g, const long truncation,
+                    const eckit::Configuration& = util::NoConfig() );
 
-    virtual ~TransLocalopt();
+    virtual ~TransLocalopt3();
 
     virtual int truncation() const override { return truncation_; }
     virtual size_t spectralCoefficients() const override { return ( truncation_ + 1 ) * ( truncation_ + 2 ); }

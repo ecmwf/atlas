@@ -351,6 +351,16 @@ trans/localopt2/FourierTransformsopt2.h
 trans/localopt2/FourierTransformsopt2.cc
 trans/localopt2/VorDivToUVLocalopt2.h
 trans/localopt2/VorDivToUVLocalopt2.cc
+trans/localopt3/TransLocalopt3.h
+trans/localopt3/TransLocalopt3.cc
+trans/localopt3/LegendrePolynomialsopt3.h
+trans/localopt3/LegendrePolynomialsopt3.cc
+trans/localopt3/LegendreTransformsopt3.h
+trans/localopt3/LegendreTransformsopt3.cc
+trans/localopt3/FourierTransformsopt3.h
+trans/localopt3/FourierTransformsopt3.cc
+trans/localopt3/VorDivToUVLocalopt3.h
+trans/localopt3/VorDivToUVLocalopt3.cc
 
 )
 if( ATLAS_HAVE_TRANS )
