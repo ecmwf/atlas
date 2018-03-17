@@ -577,6 +577,7 @@ ecbuild_add_library( TARGET atlas
     "${TRANSI_INCLUDE_DIRS}"
     "${MPI_CXX_INCLUDE_DIRS}"
     "${FFTW_INCLUDES}"
+    "${MKL_INCLUDE_DIRS}"
   LIBS
     eckit_geometry
     eckit_linalg
@@ -586,6 +587,7 @@ ecbuild_add_library( TARGET atlas
     "${TRANSI_LIBRARIES}"
     "${FCKIT_LIBRARIES}"
     "${FFTW_LIBRARIES}"
+    "${MKL_LIBRARIES}"
   DEFINITIONS
     ${ATLAS_DEFINITIONS}
 )

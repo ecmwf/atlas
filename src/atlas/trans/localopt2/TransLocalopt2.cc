@@ -23,6 +23,9 @@
 #include "atlas/util/Constants.h"
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Matrix.h"
+#ifdef ATLAS_HAVE_MKL
+#include "mkl.h"
+#endif
 
 namespace atlas {
 namespace trans {
@@ -54,6 +57,28 @@ int num_n( const int truncation, const int m, const bool symmetric ) {
     return len;
 }
 
+void alloc_aligned( double*& ptr, size_t n ) {
+#ifdef ATLAS_HAVE_MKL
+    int al = 64;
+    ptr    = mkl_malloc( sizeof( double ) * n, al );
+#else
+    posix_memalign( (void**)&ptr, sizeof( double ) * 64, sizeof( double ) * n );
+    //ptr = (double*)malloc( sizeof( double ) * n );
+    //ptr = new double[n];
+#endif
+}
+
+void free_aligned( double*& ptr ) {
+#ifdef ATLAS_HAVE_MKL
+    mkl_free( ptr );
+#else
+    free( ptr );
+#endif
+}
+
+int add_padding( int n ) {
+    return std::ceil( n / 8. ) * 8;
+}
 }  // namespace
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -110,21 +135,21 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
         legendre_sym_begin_[0]  = 0;
         legendre_asym_begin_[0] = 0;
         for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
-            size_sym += num_n( truncation_ + 1, jm, true );
-            size_asym += num_n( truncation_ + 1, jm, false );
+            size_sym += add_padding( num_n( truncation_ + 1, jm, true ) * nlatsNH );
+            size_asym += add_padding( num_n( truncation_ + 1, jm, false ) * nlatsNH );
             legendre_sym_begin_[jm + 1]  = size_sym;
             legendre_asym_begin_[jm + 1] = size_asym;
         }
-        legendre_sym_.resize( size_sym * nlatsNH );
-        legendre_asym_.resize( size_asym * nlatsNH );
-        compute_legendre_polynomialsopt2( truncation_ + 1, nlatsNH, lats.data(), legendre_sym_.data(),
-                                          legendre_asym_.data() );
+        alloc_aligned( legendre_sym_, size_sym );
+        alloc_aligned( legendre_asym_, size_asym );
+        compute_legendre_polynomialsopt2( truncation_ + 1, nlatsNH, lats.data(), legendre_sym_, legendre_asym_,
+                                          legendre_sym_begin_.data(), legendre_asym_begin_.data() );
     }
 
     // precomputations for Fourier transformations:
     {
         ATLAS_TRACE( "opt2 precomp Fourier" );
-        fourier_.resize( 2 * ( truncation_ + 1 ) * nlons );
+        alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlons );
         int idx = 0;
         for ( int jlon = 0; jlon < nlons; jlon++ ) {
             for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
@@ -135,7 +160,7 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
     }
     {
         ATLAS_TRACE( "opt2 precomp Fourier tp" );
-        fouriertp_.resize( 2 * ( truncation_ + 1 ) * nlons );
+        alloc_aligned( fouriertp_, 2 * ( truncation_ + 1 ) * nlons );
         int idx = 0;
         for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
             for ( int jlon = 0; jlon < nlons; jlon++ ) {
@@ -166,6 +191,10 @@ TransLocalopt2::TransLocalopt2( const Grid& grid, const long truncation, const e
 // --------------------------------------------------------------------------------------------------------------------
 
 TransLocalopt2::~TransLocalopt2() {
+    free_aligned( legendre_sym_ );
+    free_aligned( legendre_asym_ );
+    free_aligned( fourier_ );
+    free_aligned( fouriertp_ );
 #if ATLAS_HAVE_FFTW
     fftw_destroy_plan( plan_ );
     fftw_free( fft_in_ );
@@ -243,7 +272,8 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
             int nlons            = g.nxmax();
             int nlatsNH          = nlats_northernHemisphere( nlats );
             int size_fourier_max = nb_fields * 2 * nlats;
-            std::vector<double> scl_fourier( size_fourier_max * ( truncation + 1 ) );
+            double* scl_fourier;
+            alloc_aligned( scl_fourier, size_fourier_max * ( truncation + 1 ) );
 
             // Legendre transform:
             {
@@ -256,10 +286,14 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                     int n_imag    = 2;
                     if ( jm == 0 ) { n_imag = 1; }
                     int size_fourier = nb_fields * n_imag * nlatsNH;
-                    std::vector<double> scalar_sym( n_imag * nb_fields * size_sym );
-                    std::vector<double> scalar_asym( n_imag * nb_fields * size_asym );
-                    std::vector<double> scl_fourier_sym( size_fourier );
-                    std::vector<double> scl_fourier_asym( size_fourier, 0. );
+                    double* scalar_sym;
+                    double* scalar_asym;
+                    double* scl_fourier_sym;
+                    double* scl_fourier_asym;
+                    alloc_aligned( scalar_sym, n_imag * nb_fields * size_sym );
+                    alloc_aligned( scalar_asym, n_imag * nb_fields * size_asym );
+                    alloc_aligned( scl_fourier_sym, size_fourier );
+                    alloc_aligned( scl_fourier_asym, size_fourier );
                     {
                         //ATLAS_TRACE( "opt2 Legendre split" );
                         int idx = 0, is = 0, ia = 0, ioff = ( 2 * truncation + 3 - jm ) * jm / 2 * nb_fields * 2;
@@ -284,19 +318,15 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                         ASSERT( ia == n_imag * nb_fields * size_asym && is == n_imag * nb_fields * size_sym );
                     }
                     {
-                        //Log::info() << "jm=" << jm << " symmetric - ";
-                        eckit::linalg::Matrix A( scalar_sym.data(), nb_fields * n_imag, size_sym );
-                        eckit::linalg::Matrix B( legendre_sym_.data() + legendre_sym_begin_[jm] * nlatsNH, size_sym,
-                                                 nlatsNH );
-                        eckit::linalg::Matrix C( scl_fourier_sym.data(), nb_fields * n_imag, nlatsNH );
+                        eckit::linalg::Matrix A( scalar_sym, nb_fields * n_imag, size_sym );
+                        eckit::linalg::Matrix B( legendre_sym_ + legendre_sym_begin_[jm], size_sym, nlatsNH );
+                        eckit::linalg::Matrix C( scl_fourier_sym, nb_fields * n_imag, nlatsNH );
                         eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
                     }
                     if ( size_asym > 0 ) {
-                        //Log::info() << "jm=" << jm << " antisymmetric - ";
-                        eckit::linalg::Matrix A( scalar_asym.data(), nb_fields * n_imag, size_asym );
-                        eckit::linalg::Matrix B( legendre_asym_.data() + legendre_asym_begin_[jm] * nlatsNH, size_asym,
-                                                 nlatsNH );
-                        eckit::linalg::Matrix C( scl_fourier_asym.data(), nb_fields * n_imag, nlatsNH );
+                        eckit::linalg::Matrix A( scalar_asym, nb_fields * n_imag, size_asym );
+                        eckit::linalg::Matrix B( legendre_asym_ + legendre_asym_begin_[jm], size_asym, nlatsNH );
+                        eckit::linalg::Matrix C( scl_fourier_asym, nb_fields * n_imag, nlatsNH );
                         eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
                     }
                     {
@@ -329,6 +359,11 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                             }
                         }
                     }
+                    free_aligned( scalar_sym );
+                    free_aligned( scalar_asym );
+                    free_aligned( scl_fourier_sym );
+                    free_aligned( scl_fourier_asym );
+
 #else
                     int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
                     eckit::linalg::Matrix A( eckit::linalg::Matrix(
@@ -464,6 +499,7 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                     }
                 }
             }
+            free_aligned( scl_fourier );
         }
         else {
             ATLAS_TRACE( "invtrans_uv unstructured opt2" );

@@ -9,6 +9,8 @@ if( CMAKE_CXX_COMPILER_ID MATCHES Cray )
 
 endif()
 
+ecbuild_add_cxx_flags("-Wl,-ydgemm_")
+ecbuild_add_fortran_flags("-Wl,-ydgemm_")
 #ecbuild_add_cxx_flags("-fsanitize=address")
 #ecbuild_add_cxx_flags("-fsanitize=thread")
 #ecbuild_add_cxx_flags("-fsanitize=memory")

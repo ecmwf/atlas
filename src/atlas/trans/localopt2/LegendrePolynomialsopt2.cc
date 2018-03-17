@@ -21,11 +21,14 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
-void compute_legendre_polynomialsopt2( const size_t trc,     // truncation (in)
-                                       const int nlats,      // number of latitudes
-                                       const double lats[],  // latitudes in radians (in)
-                                       double leg_sym[],     // values of associated Legendre functions, symmetric part
-                                       double leg_asym[] )   // values of associated Legendre functions, asymmetric part
+void compute_legendre_polynomialsopt2(
+    const size_t trc,          // truncation (in)
+    const int nlats,           // number of latitudes
+    const double lats[],       // latitudes in radians (in)
+    double leg_sym[],          // values of associated Legendre functions, symmetric part
+    double leg_asym[],         // values of associated Legendre functions, asymmetric part
+    size_t leg_start_sym[],    // start indices for different zonal wave numbers, symmetric part
+    size_t leg_start_asym[] )  // start indices for different zonal wave numbers, asymmetric part
 {
     auto legendre_size = [&]( int truncation ) { return ( truncation + 2 ) * ( truncation + 1 ) / 2; };
     array::ArrayT<double> zfn_( trc + 1, trc + 1 );
@@ -157,7 +160,6 @@ void compute_legendre_polynomialsopt2( const size_t trc,     // truncation (in)
                     legpol[idxmn( jm, jn )] *= 2.;
                 }
             }
-            int is0 = 0, ia0 = 0;
             for ( int jm = 0; jm <= trc; jm++ ) {
                 int is1 = 0, ia1 = 0;
                 for ( int jn = jm; jn <= trc; jn++ ) {
@@ -176,16 +178,14 @@ void compute_legendre_polynomialsopt2( const size_t trc,     // truncation (in)
                 //for ( int jn = jm; jn <= trc; jn++ ) {
                 for ( int jn = trc; jn >= jm; jn-- ) {
                     if ( ( jn - jm ) % 2 == 0 ) {
-                        int is      = is0 * nlats + is1 * jlat + is2++;
+                        int is      = leg_start_sym[jm] + is1 * jlat + is2++;
                         leg_sym[is] = legpol[idxmn( jm, jn )];
                     }
                     else {
-                        int ia       = ia0 * nlats + ia1 * jlat + ia2++;
+                        int ia       = leg_start_asym[jm] + ia1 * jlat + ia2++;
                         leg_asym[ia] = legpol[idxmn( jm, jn )];
                     }
                 }
-                is0 += is2;
-                ia0 += ia2;
             }
         }
     }
