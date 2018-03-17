@@ -60,7 +60,7 @@ int num_n( const int truncation, const int m, const bool symmetric ) {
 void alloc_aligned( double*& ptr, size_t n ) {
 #ifdef ATLAS_HAVE_MKL
     int al = 64;
-    ptr    = mkl_malloc( sizeof( double ) * n, al );
+    ptr    = (double*)mkl_malloc( sizeof( double ) * n, al );
 #else
     posix_memalign( (void**)&ptr, sizeof( double ) * 64, sizeof( double ) * n );
     //ptr = (double*)malloc( sizeof( double ) * n );
