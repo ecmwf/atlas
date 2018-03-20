@@ -704,7 +704,7 @@ CASE( "test_transgeneral_with_translib" ) {
 #endif
 #endif
 //-----------------------------------------------------------------------------
-#if 0
+#if 1
 CASE( "test_trans_vordiv_with_translib" ) {
     Log::info() << "test_trans_vordiv_with_translib" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -853,7 +853,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
 }
 #endif
 //-----------------------------------------------------------------------------
-#if 1
+#if 0
 CASE( "test_trans_hires" ) {
     Log::info() << "test_trans_hires" << std::endl;
     // test transgeneral by comparing its result with the trans library

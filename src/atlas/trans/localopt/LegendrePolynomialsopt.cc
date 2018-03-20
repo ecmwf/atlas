@@ -157,7 +157,7 @@ void compute_legendre_polynomialsopt(
             // take factor 2 for m > 0 into account:
             for ( int jm = 1; jm <= trc; ++jm ) {
                 for ( int jn = jm; jn <= trc; ++jn ) {
-                    legpol[idxmn( jm, jn )] *= 2.;
+                    //legpol[idxmn( jm, jn )] *= 2.;
                 }
             }
             for ( int jm = 0; jm <= trc; jm++ ) {

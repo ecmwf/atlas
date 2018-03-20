@@ -15,9 +15,6 @@
 #include "atlas/array.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/trans/Trans.h"
-#if ATLAS_HAVE_FFTW
-#include <fftw3.h>
-#endif
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -119,11 +116,6 @@ private:
     std::vector<size_t> legendre_begin_;
     std::vector<size_t> legendre_sym_begin_;
     std::vector<size_t> legendre_asym_begin_;
-#if ATLAS_HAVE_FFTW
-    fftw_complex* fft_in_;
-    double* fft_out_;
-    fftw_plan plan_;
-#endif
 };
 
 //-----------------------------------------------------------------------------
