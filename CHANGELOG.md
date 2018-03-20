@@ -7,6 +7,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.14.0] - 2018-03-??
+### Added
+- Spherical Harmonics transforms can receive a cache memory handle
+
+### Changed
+- Earth interface
+
 ## [0.13.2] - 2018-03-20
 ### Fixed
 - C++ compilation using PGI 17, 18 and GCC 7
