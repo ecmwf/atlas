@@ -146,11 +146,21 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         }
         alloc_aligned( legendre_sym_, size_sym );
         alloc_aligned( legendre_asym_, size_asym );
-        compute_legendre_polynomialsopt3( truncation_ + 1, nlatsNH, lats.data(), legendre_sym_, legendre_asym_,
-                                          legendre_sym_begin_.data(), legendre_asym_begin_.data() );
+        //compute_legendre_polynomialsopt3( truncation_ + 1, nlatsNH, lats.data(), legendre_sym_, legendre_asym_,
+        //                                  legendre_sym_begin_.data(), legendre_asym_begin_.data() );
     }
 
-    // precomputations for Fourier transformations:
+        // precomputations for Fourier transformations:
+#if 0  //ATLAS_HAVE_FFTW
+    {
+        ATLAS_TRACE( "opt3 precomp FFTW" );
+        int num_complex = ( nlons / 2 ) + 1;
+        fft_in_         = fftw_alloc_complex( nlats * num_complex );
+        fft_out_        = fftw_alloc_real( nlats * nlons );
+        plan_ = fftw_plan_many_dft_c2r( 1, &nlons, nlats, fft_in_, NULL, 1, num_complex, fft_out_, NULL, 1, nlons,
+                                        FFTW_ESTIMATE );
+    }
+#else
     {
         ATLAS_TRACE( "opt3 precomp Fourier" );
         alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlons );
@@ -175,15 +185,6 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
             }
         }
     }
-#if ATLAS_HAVE_FFTW
-    {
-        ATLAS_TRACE( "opt3 precomp FFTW" );
-        int num_complex = ( nlons / 2 ) + 1;
-        fft_in_         = fftw_alloc_complex( nlats * num_complex );
-        fft_out_        = fftw_alloc_real( nlats * nlons );
-        plan_ = fftw_plan_many_dft_c2r( 1, &nlons, nlats, fft_in_, NULL, 1, num_complex, fft_out_, NULL, 1, nlons,
-                                        FFTW_ESTIMATE );
-    }
 #endif
 }  // namespace atlas
 
@@ -199,7 +200,7 @@ TransLocalopt3::~TransLocalopt3() {
     free_aligned( legendre_asym_ );
     free_aligned( fourier_ );
     free_aligned( fouriertp_ );
-#if ATLAS_HAVE_FFTW
+#if 0  //ATLAS_HAVE_FFTW
     fftw_destroy_plan( plan_ );
     fftw_free( fft_in_ );
     fftw_free( fft_out_ );

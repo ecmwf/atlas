@@ -704,7 +704,7 @@ CASE( "test_transgeneral_with_translib" ) {
 #endif
 #endif
 //-----------------------------------------------------------------------------
-#if 1
+#if 0
 CASE( "test_trans_vordiv_with_translib" ) {
     Log::info() << "test_trans_vordiv_with_translib" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -853,7 +853,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
 }
 #endif
 //-----------------------------------------------------------------------------
-#if 0
+#if 1
 CASE( "test_trans_hires" ) {
     Log::info() << "test_trans_hires" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -863,9 +863,10 @@ CASE( "test_trans_hires" ) {
     double tolerance  = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F640" );
+    Grid g( "F1280" );
 #if ATLAS_HAVE_TRANS
-    std::string transTypes[4] = {"localopt", "localopt2", "localopt3", "ifs"};
+    //std::string transTypes[4] = {"localopt", "localopt2", "localopt3", "ifs"};
+    std::string transTypes[3] = {"localopt", "localopt2", "localopt3"};
     //std::string transTypes[3] = {"localopt", "localopt2", "ifs"};
 #else
     std::string transTypes[1] = {"localopt2"};
@@ -878,9 +879,9 @@ CASE( "test_trans_hires" ) {
     int nb_scalar = 1, nb_vordiv = 0;
 
     for ( auto transType : transTypes ) {
-        if ( transType == "localopt2" ) { trc = ndgl / 2. - 2; }
+        if ( transType == "ifs" ) { trc = ndgl / 2. - 1; }
         else {
-            trc = ndgl / 2. - 1;
+            trc = ndgl / 2. - 2;
         }
         int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
         int icase = 0;
@@ -899,7 +900,7 @@ CASE( "test_trans_hires" ) {
                             for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
 
                                 if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
-                                     icase < 25 ) {
+                                     icase < 1 ) {
                                     auto start = std::chrono::system_clock::now();
                                     std::vector<double> sp( 2 * N * nb_scalar );
                                     std::vector<double> gp( nb_all * g.size() );

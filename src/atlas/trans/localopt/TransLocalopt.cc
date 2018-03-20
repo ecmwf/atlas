@@ -149,11 +149,12 @@ TransLocalopt::TransLocalopt( const Cache& cache, const Grid& grid, const long t
         }
         alloc_aligned( legendre_sym_, size_sym );
         alloc_aligned( legendre_asym_, size_asym );
-        compute_legendre_polynomialsopt( truncation_ + 1, nlatsNH, lats.data(), legendre_sym_, legendre_asym_,
-                                         legendre_sym_begin_.data(), legendre_asym_begin_.data() );
+        //compute_legendre_polynomialsopt( truncation_ + 1, nlatsNH, lats.data(), legendre_sym_, legendre_asym_,
+        //                                 legendre_sym_begin_.data(), legendre_asym_begin_.data() );
     }
 
-    // precomputations for Fourier transformations:
+        // precomputations for Fourier transformations:
+#if !ATLAS_HAVE_FFTW
     {
         ATLAS_TRACE( "opt precomp Fourier" );
         alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlons );
@@ -178,6 +179,7 @@ TransLocalopt::TransLocalopt( const Cache& cache, const Grid& grid, const long t
             }
         }
     }
+#endif
 }  // namespace atlas
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -190,8 +192,10 @@ TransLocalopt::TransLocalopt( const Grid& grid, const long truncation, const eck
 TransLocalopt::~TransLocalopt() {
     free_aligned( legendre_sym_ );
     free_aligned( legendre_asym_ );
+#if !ATLAS_HAVE_FFTW
     free_aligned( fourier_ );
     free_aligned( fouriertp_ );
+#endif
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -347,7 +351,7 @@ void TransLocalopt::invtrans_uv( const int truncation, const int nb_scalar_field
                     }
 #if 1  //ATLAS_HAVE_FFTW
                     {
-                        //ATLAS_TRACE( "opt merge spheres" );
+                        ATLAS_TRACE( "opt merge spheres" );
                         // northern hemisphere:
                         int idx = 0;
                         for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
