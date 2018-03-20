@@ -275,6 +275,7 @@ ecbuild_add_resources(
     TARGET atlas-others
     SOURCES_PACK
         README.md
+        CHANGELOG.md
         LICENSE
 )
 

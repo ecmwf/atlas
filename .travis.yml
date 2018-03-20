@@ -1,0 +1,240 @@
+sudo: false
+
+language: cpp
+
+
+# Workaround for https://github.com/travis-ci/travis-ci/issues/4681
+matrix:
+  - TRAVIS_EMPTY_JOB_WORKAROUND=true
+
+
+cache:
+  directories:
+    - ${HOME}/deps/cmake
+    - ${HOME}/deps/openmpi
+    - ${HOME}/deps/mpich
+    - ${HOME}/deps/eckit
+    - ${HOME}/deps/fckit
+
+
+matrix:
+  exclude:
+
+    - env: TRAVIS_EMPTY_JOB_WORKAROUND
+
+  include:
+
+    - os: linux
+      compiler: clang
+      env:
+        - CACHE_NAME=linux-clang38-mpich
+        - CXX_COMPILER='clang++-3.8' C_COMPILER='clang-3.8' Fortran_COMPILER='gfortran'
+        - MPI='mpich'
+        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
+      addons:
+        apt:
+          sources:  ['llvm-toolchain-precise', 'ubuntu-toolchain-r-test']
+          packages: ['clang-3.8', 'gfortran']
+
+    - os: linux
+      compiler: gcc
+      env:
+        - CACHE_NAME=linux-gcc5-openmpi
+        - CXX_COMPILER='g++-5' C_COMPILER='gcc-5' Fortran_COMPILER='gfortran-5'
+        - MPI='openmpi'
+        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
+      addons:
+        apt:
+          sources:  ['ubuntu-toolchain-r-test']
+          packages: ['g++-5', 'gcc-5', 'gfortran-5']
+
+    - os: linux
+      compiler: gcc
+      env:
+        - CACHE_NAME=linux-gcc7-mpich
+        - CXX_COMPILER='g++-7' C_COMPILER='gcc-7' Fortran_COMPILER='gfortran-7'
+        - MPI='mpich'
+        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
+      addons:
+        apt:
+          sources:  ['ubuntu-toolchain-r-test']
+          packages: ['g++-7', 'gcc-7', 'gfortran-7']
+
+    - os: linux
+      compiler: gcc
+      env:
+        - CACHE_NAME=linux-pgi-openmpi
+        - CXX_COMPILER='pgc++' C_COMPILER='pgcc' Fortran_COMPILER='pgfortran'
+        - MPI='openmpi'
+        - PGI_VERSION="CommunityEdition"
+        - ECKIT_CMAKE_OPTIONS="-DRT_LIB=/usr/lib/x86_64-linux-gnu/librt.so -DCURSES_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurses.so"
+        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG -DENABLE_FORTRAN=OFF" # Fortran tests known to be broken with pgi/17.10
+
+    - os: osx
+      env:
+        - CACHE_NAME=osx-clang-openmpi
+        - CXX_COMPILER='clang++' C_COMPILER='clang' Fortran_COMPILER='gfortran'
+        - MPI=openmpi
+        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
+      osx_image: xcode9
+
+    ##################################
+    # KNOWN TO FAIL, so comment
+    ##################################
+
+    # - os: osx
+    #   env:
+    #     - CACHE_NAME=osx-clang-mpich
+    #     - CXX_COMPILER='clang++' C_COMPILER='clang' Fortran_COMPILER='gfortran'
+    #     - MPI=mpich
+    #   osx_image: xcode9
+
+before_install:
+
+  #################################################################
+  # Fixes to pre-installed packages
+  #################################################################
+  - |
+    ### Fix pre-installed packages
+    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
+      brew update
+      brew list oclint || brew cask uninstall oclint # Prevent conflict with gcc
+    fi
+
+  #################################################################
+  # Set compilers
+  #################################################################
+  - |
+    ### Set compilers
+    export CC=${C_COMPILER}
+    export CXX=${CXX_COMPILER}
+    export FC=${Fortran_COMPILER}
+
+  - |
+    ### Load scripts
+    source ${TRAVIS_BUILD_DIR}/tools/source-me.sh
+
+install:
+
+  #################################################################
+  # All dependencies are installed in ${TRAVIS_BUILD_DIR}/deps/
+  #################################################################
+  - DEPS_DIR=${HOME}/deps
+  - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
+  - |
+    DEPS_BRANCH="master"
+    if [[ "${TRAVIS_BRANCH}" != "master" ]]; then
+      DEPS_BRANCH="develop"
+    fi
+
+
+  #################################################################
+  # Install Compilers
+  #################################################################
+  - |
+    ### Install gcc (homebrew)
+    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
+      brew upgrade gcc || brew install gcc
+    fi
+  - |
+    ### Install PGI community edition
+    if [[ "${PGI_VERSION:-notset}" == "CommunityEdition" ]]; then
+      install-pgi.sh --mpi --prefix ${DEPS_DIR}/pgi
+      source ${DEPS_DIR}/pgi/env.sh
+    fi
+
+
+  #################################################################
+  # Install CGAL
+  #################################################################
+  - |
+    ### Install CGAL
+    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
+      brew upgrade cgal || brew install cgal
+    fi
+
+  #################################################################
+  # Install MPI
+  #################################################################
+  - |
+    ### Install MPI
+    install-mpi.sh ${MPI}
+    source ${DEPS_DIR}/${MPI}/env.sh
+    echo "${MPI_HOME}"
+    echo "${PATH}"
+
+  #################################################################
+  # Install CMake
+  #################################################################
+  - |
+    ### Install CMake
+    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
+      if [[ -z "$(ls -A ${DEPS_DIR}/cmake)" ]]; then
+        CMAKE_URL="https://cmake.org/files/v3.10/cmake-3.10.2-Linux-x86_64.tar.gz"
+        mkdir -p ${DEPS_DIR}/cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C ${DEPS_DIR}/cmake
+      fi
+      export PATH=${DEPS_DIR}/cmake/bin:${PATH}
+    else
+      brew upgrade cmake || brew install cmake
+    fi
+    cmake --version
+
+  #################################################################
+  # Install ecbuild
+  #################################################################
+  - |
+    ### Install ecbuild
+    git clone --depth 1 -b ${DEPS_BRANCH} https://github.com/ecmwf/ecbuild ${DEPS_DIR}/ecbuild
+    export PATH=${DEPS_DIR}/ecbuild/bin:${PATH}
+    export ECBUILD_MODULE_PATH=${DEPS_DIR}/ecbuild/cmake
+    ecbuild --version
+
+  #################################################################
+  # Install eckit
+  #################################################################
+  - |
+    ### Install eckit
+    install-dep.sh --repo eckit --branch ${DEPS_BRANCH} --prefix ${DEPS_DIR}/eckit --cmake "-DENABLE_TESTS=OFF -DCMAKE_BUILD_TYPE=DEBUG ${ECKIT_CMAKE_OPTIONS}"
+  - export ECKIT_PATH=${DEPS_DIR}/eckit
+  - ${DEPS_DIR}/eckit/bin/eckit_version
+
+  #################################################################
+  # Install fckit
+  #################################################################
+  - |
+    ### Install fckit
+    install-dep.sh --repo fckit --branch ${DEPS_BRANCH} --prefix ${DEPS_DIR}/fckit --cmake "-DENABLE_TESTS=ON -DCMAKE_BUILD_TYPE=DEBUG" --depends "eckit"
+  - export FCKIT_PATH=${DEPS_DIR}/fckit
+
+script:
+
+  #################################################################
+  # Environment variables
+  #################################################################
+  - echo ${CXX}
+  - echo ${CC}
+  - echo ${FC}
+  - echo ${MPI_HOME}
+  - echo ${PATH}
+  - |
+    ATLAS_SOURCE_DIR=${TRAVIS_BUILD_DIR}
+    ATLAS_BUILD_DIR=${TRAVIS_BUILD_DIR}/builds/atlas
+
+  #################################################################
+  # Build Atlas
+  #################################################################
+  - mkdir -p ${ATLAS_BUILD_DIR} && cd ${ATLAS_BUILD_DIR}
+  - cmake -DCMAKE_MODULE_PATH=${ECBUILD_MODULE_PATH} ${ATLAS_CMAKE_OPTIONS} ${ATLAS_SOURCE_DIR}
+  - make -j4
+  - bin/atlas --info
+
+  #################################################################
+  # Test Atlas
+  #################################################################
+  - ctest
+
+after_failure:
+
+  - cd ${ATLAS_BUILD_DIR}
+  - ctest -VV --rerun-failed
+  - cat ecbuild.log

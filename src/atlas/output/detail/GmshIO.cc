@@ -195,7 +195,7 @@ std::vector<long> get_levels( int nlev, const Metadata& gmsh_options ) {
 std::string field_lev( const Field& field, int jlev ) {
     if ( field.levels() ) {
         char str[6] = {0, 0, 0, 0, 0, 0};
-        std::sprintf( str, "[%03lu]", jlev );
+        std::sprintf( str, "[%03d]", jlev );
         return std::string( str );
     }
     else {

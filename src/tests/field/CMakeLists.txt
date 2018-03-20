@@ -28,15 +28,15 @@ if( HAVE_FCTEST )
   )
 
   add_fctest( TARGET atlas_fctest_field_device
-    CONDITION       ATLAS_HAVE_GRIDTOOLS_STORAGE AND ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+    CONDITION       ATLAS_HAVE_GRIDTOOLS_STORAGE AND ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA AND ATLAS_HAVE_ACC
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field_gpu.F90 external_acc_routine.F90
     LIBS            atlas_f
   )
 
-  if( TARGET atlas_fctest_field_gpu )
-    target_compile_options( atlas_fctest_field_gpu PUBLIC ${ACC_Fortran_FLAGS} )
-    target_link_libraries( atlas_fctest_field_gpu ${ACC_Fortran_FLAGS} )
+  if( TARGET atlas_fctest_field_device )
+    target_compile_options( atlas_fctest_field_device PUBLIC ${ACC_Fortran_FLAGS} )
+    target_link_libraries( atlas_fctest_field_device ${ACC_Fortran_FLAGS} )
   endif()
 
 endif()
