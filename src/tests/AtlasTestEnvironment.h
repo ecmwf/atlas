@@ -17,7 +17,6 @@
 #include "eckit/config/LibEcKit.h"
 #include "eckit/config/Resource.h"
 #include "eckit/eckit_config.h"
-#include "eckit/eckit_version.h"
 #include "eckit/log/PrefixTarget.h"
 #include "eckit/mpi/Comm.h"
 #include "eckit/runtime/Main.h"
@@ -37,32 +36,6 @@ namespace test {
 // Redefine macro's defined in "eckit/testing/Test.h" to include trace
 // information
 
-#define _ECKIT_VERSION ( ECKIT_MAJOR_VERSION * 10000 + ECKIT_MINOR_VERSION * 100 + ECKIT_PATCH_VERSION )
-
-// Test ECKIT_VERSION < 0.19.1
-#if _ECKIT_VERSION < 1901
-
-#undef CASE
-#define CASE( description )                                                           \
-    void UNIQUE_NAME2( test_, __LINE__ )( std::string & _test_subsection );           \
-    static eckit::testing::TestRegister UNIQUE_NAME2( test_registration_, __LINE__ )( \
-        description, &UNIQUE_NAME2( test_, __LINE__ ) );                              \
-    void UNIQUE_NAME2( traced_test_, __LINE__ )( std::string & _test_subsection );    \
-    void UNIQUE_NAME2( test_, __LINE__ )( std::string & _test_subsection ) {          \
-        ATLAS_TRACE( description );                                                   \
-        UNIQUE_NAME2( traced_test_, __LINE__ )( _test_subsection );                   \
-    }                                                                                 \
-    void UNIQUE_NAME2( traced_test_, __LINE__ )( std::string & _test_subsection )
-
-#undef SECTION
-#define SECTION( name )           \
-    _test_num += 1;               \
-    _test_count      = _test_num; \
-    _test_subsection = ( name );  \
-    if ( ( _test_num - 1 ) == _test ) ATLAS_TRACE_SCOPE( _test_subsection )
-
-#else
-
 #undef CASE
 #define CASE( description )                                                                                          \
     void UNIQUE_NAME2( test_, __LINE__ )( std::string&, int&, int );                                                 \
@@ -77,7 +50,8 @@ namespace test {
         if ( atlas::test::barrier_timeout( atlas::test::ATLAS_MPI_BARRIER_TIMEOUT() ) ) {                            \
             atlas::Log::warning() << "\nWARNING: Test \"" << description                                             \
                                   << "\" failed with MPI deadlock.  (${ATLAS_MPI_BARRIER_TIMEOUT}="                  \
-                                  << ATLAS_MPI_BARRIER_TIMEOUT() << ").\nCalling MPI_Abort..." << std::endl;         \
+                                  << atlas::test::ATLAS_MPI_BARRIER_TIMEOUT()                                        \
+                                  << ").\nCalling MPI_Abort..." << std::endl;                                        \
             eckit::mpi::comm().abort();                                                                              \
         }                                                                                                            \
     }                                                                                                                \
@@ -97,8 +71,6 @@ namespace test {
 #define SETUP( name )
 #endif
 
-#endif
-
 //----------------------------------------------------------------------------------------------------------------------
 
 static double ATLAS_MPI_BARRIER_TIMEOUT() {
@@ -107,8 +79,6 @@ static double ATLAS_MPI_BARRIER_TIMEOUT() {
 }
 
 static int barrier_timeout( double seconds ) {
-// iBarrier only available since eckit 0.19.5
-#if _ECKIT_VERSION >= 1905
     auto req = eckit::mpi::comm().iBarrier();
     runtime::trace::StopWatch watch;
     while ( not req.test() ) {
@@ -117,7 +87,6 @@ static int barrier_timeout( double seconds ) {
         watch.stop();
         if ( watch.elapsed() > seconds ) { return 1; }
     }
-#endif
     return 0;
 }
 
