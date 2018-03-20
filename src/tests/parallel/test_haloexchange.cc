@@ -41,10 +41,14 @@ size_t eval_idx( size_t pos, std::array<size_t, Rank>& strides, FirstDim first )
     return first * strides[pos];
 }
 
-template <int Rank, typename FirstDim, typename... Int>
-typename std::enable_if< (sizeof...(Int) > 0) , size_t >::type
-eval_idx( size_t pos, std::array<size_t, Rank>& strides, FirstDim first, Int... dims ) {
-    return first * strides[pos] + eval_idx<Rank>( (size_t)pos + 1, strides, dims... );
+template <int Rank, typename FirstDim, typename SecondDim>
+size_t eval_idx( size_t pos, std::array<size_t, Rank>& strides, FirstDim first, SecondDim second ) {
+    return first * strides[pos] + eval_idx<Rank>( pos+1, strides, second );
+}
+
+template <int Rank, typename FirstDim, typename SecondDim, typename ThirdDim>
+size_t eval_idx( size_t pos, std::array<size_t, Rank>& strides, FirstDim first, SecondDim second, ThirdDim third ) {
+    return first * strides[pos] + eval_idx<Rank>( pos+1, strides, second, third );
 }
 
 template <typename DATA_TYPE, int Rank, int Dim>
