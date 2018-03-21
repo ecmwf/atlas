@@ -178,11 +178,11 @@ void compute_legendre_polynomialsopt2(
                 //for ( int jn = jm; jn <= trc; jn++ ) {
                 for ( int jn = trc; jn >= jm; jn-- ) {
                     if ( ( jn - jm ) % 2 == 0 ) {
-                        int is      = leg_start_sym[jm] + is1 * jlat + is2++;
+                        int is      = leg_start_sym[jm] + jlat + nlats * is2++;
                         leg_sym[is] = legpol[idxmn( jm, jn )];
                     }
                     else {
-                        int ia       = leg_start_asym[jm] + ia1 * jlat + ia2++;
+                        int ia       = leg_start_asym[jm] + jlat + nlats * ia2++;
                         leg_asym[ia] = legpol[idxmn( jm, jn )];
                     }
                 }

@@ -146,8 +146,8 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
         }
         alloc_aligned( legendre_sym_, size_sym );
         alloc_aligned( legendre_asym_, size_asym );
-        //compute_legendre_polynomialsopt2( truncation_ + 1, nlatsNH, lats.data(), legendre_sym_, legendre_asym_,
-        //                                  legendre_sym_begin_.data(), legendre_asym_begin_.data() );
+        compute_legendre_polynomialsopt2( truncation_ + 1, nlatsNH, lats.data(), legendre_sym_, legendre_asym_,
+                                          legendre_sym_begin_.data(), legendre_asym_begin_.data() );
     }
 
         // precomputations for Fourier transformations:
@@ -313,16 +313,10 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                     {
                         //ATLAS_TRACE( "opt2 Legendre split" );
                         int idx = 0, is = 0, ia = 0, ioff = ( 2 * truncation + 3 - jm ) * jm / 2 * nb_fields * 2;
-                        // the choice between the following two code lines determines whether
-                        // total wavenumbers are summed in an ascending or descending order.
-                        // The trans library in IFS uses descending order because it should
-                        // be more accurate (higher wavenumbers have smaller contributions).
-                        // This also needs to be changed when splitting the spectral data in
-                        // compute_legendre_polynomialsopt2!
-                        //for ( int jn = jm; jn <= truncation_ + 1; jn++ ) {
-                        for ( int jn = truncation_ + 1; jn >= jm; jn-- ) {
+                        for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                             for ( int imag = 0; imag < n_imag; imag++ ) {
-                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                                //for ( int jn = jm; jn <= truncation_ + 1; jn++ ) { //ascending
+                                for ( int jn = truncation_ + 1; jn >= jm; jn-- ) {  // descending
                                     idx = jfld + nb_fields * ( imag + 2 * ( jn - jm ) );
                                     if ( ( jn - jm ) % 2 == 0 ) { scalar_sym[is++] = scalar_spectra[idx + ioff]; }
                                     else {
@@ -333,7 +327,19 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                         }
                         ASSERT( ia == n_imag * nb_fields * size_asym && is == n_imag * nb_fields * size_sym );
                     }
-                    {
+                    {  // transposed
+                        eckit::linalg::Matrix A( legendre_sym_ + legendre_sym_begin_[jm], nlatsNH, size_sym );
+                        eckit::linalg::Matrix B( scalar_sym, size_sym, nb_fields * n_imag );
+                        eckit::linalg::Matrix C( scl_fourier_sym, nlatsNH, nb_fields * n_imag );
+                        eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+                    }
+                    if ( size_asym > 0 ) {
+                        eckit::linalg::Matrix A( legendre_asym_ + legendre_asym_begin_[jm], nlatsNH, size_asym );
+                        eckit::linalg::Matrix B( scalar_asym, size_asym, nb_fields * n_imag );
+                        eckit::linalg::Matrix C( scl_fourier_asym, nlatsNH, nb_fields * n_imag );
+                        eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+                    }
+                        /*{ // non-transposed
                         eckit::linalg::Matrix A( scalar_sym, nb_fields * n_imag, size_sym );
                         eckit::linalg::Matrix B( legendre_sym_ + legendre_sym_begin_[jm], size_sym, nlatsNH );
                         eckit::linalg::Matrix C( scl_fourier_sym, nb_fields * n_imag, nlatsNH );
@@ -344,32 +350,25 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
                         eckit::linalg::Matrix B( legendre_asym_ + legendre_asym_begin_[jm], size_asym, nlatsNH );
                         eckit::linalg::Matrix C( scl_fourier_asym, nb_fields * n_imag, nlatsNH );
                         eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
-                    }
+                    }*/
 #if 1  //ATLAS_HAVE_FFTW
                     {
-                        ATLAS_TRACE( "opt2 merge spheres" );
+                        //ATLAS_TRACE( "opt2 merge spheres" );
                         // northern hemisphere:
-                        int ioff = jm * size_fourier_max;
-                        int pos0 = ioff;
-                        int idx  = 0;
-                        for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
-                            int poslat = pos0 + 2 * jlat;
+                        int idx = 0;
+                        for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                             for ( int imag = 0; imag < n_imag; imag++ ) {
-                                int posimag = nb_fields * ( imag + poslat );
-                                for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
+                                for ( int jlat = 0; jlat < nlatsNH; jlat++, idx++ ) {
                                     scl_fourier[posFFTW( jfld, imag, jlat, jm )] =
                                         scl_fourier_sym[idx] + scl_fourier_asym[idx];
                                 }
                             }
                         }
                         // southern hemisphere:
-                        idx  = 0;
-                        pos0 = 2 * ( nlats - 1 ) + ioff;
-                        for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
-                            int poslat = pos0 - 2 * jlat;
+                        idx = 0;
+                        for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                             for ( int imag = 0; imag < n_imag; imag++ ) {
-                                int posimag = nb_fields * ( imag + poslat );
-                                for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
+                                for ( int jlat = 0; jlat < nlatsNH; jlat++, idx++ ) {
                                     int jslat = nlats - jlat - 1;
                                     scl_fourier[posFFTW( jfld, imag, jslat, jm )] =
                                         scl_fourier_sym[idx] - scl_fourier_asym[idx];
