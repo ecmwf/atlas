@@ -166,9 +166,11 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlons );
         int idx = 0;
         for ( int jlon = 0; jlon < nlons; jlon++ ) {
+            double factor = 1.;
+            if ( jm > 0 ) { factor = 0.5; }
             for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
-                fourier_[idx++] = +std::cos( jm * lons[jlon] );  // real part
-                fourier_[idx++] = -std::sin( jm * lons[jlon] );  // imaginary part
+                fourier_[idx++] = +std::cos( jm * lons[jlon] ) * factor;  // real part
+                fourier_[idx++] = -std::sin( jm * lons[jlon] ) * factor;  // imaginary part
             }
         }
     }
@@ -177,11 +179,13 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         alloc_aligned( fouriertp_, 2 * ( truncation_ + 1 ) * nlons );
         int idx = 0;
         for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
+            double factor = 1.;
+            if ( jm > 0 ) { factor = 0.5; }
             for ( int jlon = 0; jlon < nlons; jlon++ ) {
-                fouriertp_[idx++] = +std::cos( jm * lons[jlon] );  // real part
+                fouriertp_[idx++] = +std::cos( jm * lons[jlon] ) * factor;  // real part
             }
             for ( int jlon = 0; jlon < nlons; jlon++ ) {
-                fouriertp_[idx++] = -std::sin( jm * lons[jlon] );  // imaginary part
+                fouriertp_[idx++] = -std::sin( jm * lons[jlon] ) * factor;  // imaginary part
             }
         }
     }
@@ -349,13 +353,9 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                     {
                         //ATLAS_TRACE( "opt3 merge spheres" );
                         // northern hemisphere:
-                        int ioff = jm * size_fourier_max;
-                        int pos0 = ioff;
-                        int idx  = 0;
+                        int idx = 0;
                         for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
-                            int poslat = pos0 + 2 * jlat;
                             for ( int imag = 0; imag < n_imag; imag++ ) {
-                                int posimag = nb_fields * ( imag + poslat );
                                 for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
                                     scl_fourier[posFFTW( jfld, imag, jlat, jm )] =
                                         scl_fourier_sym[idx] + scl_fourier_asym[idx];
@@ -363,12 +363,9 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                             }
                         }
                         // southern hemisphere:
-                        idx  = 0;
-                        pos0 = 2 * ( nlats - 1 ) + ioff;
+                        idx = 0;
                         for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
-                            int poslat = pos0 - 2 * jlat;
                             for ( int imag = 0; imag < n_imag; imag++ ) {
-                                int posimag = nb_fields * ( imag + poslat );
                                 for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
                                     int jslat = nlats - jlat - 1;
                                     scl_fourier[posFFTW( jfld, imag, jslat, jm )] =
@@ -394,7 +391,7 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                             for ( int jm = 1; jm < num_complex; jm++, idx++ ) {
                                 for ( int imag = 0; imag < 2; imag++ ) {
                                     if ( jm <= truncation_ ) {
-                                        fft_in_[idx][imag] = scl_fourier[posFFTW( jfld, imag, jlat, jm )] / 2.;
+                                        fft_in_[idx][imag] = scl_fourier[posFFTW( jfld, imag, jlat, jm )];
                                     }
                                     else {
                                         fft_in_[idx][imag] = 0.;

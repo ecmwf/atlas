@@ -69,6 +69,13 @@ void compute_legendre_polynomialsopt(
             double zdlsita = std::sqrt( 1. - zdlx * zdlx );  // sin(theta) (this is how trans library does it)
 
             legpol[idxmn( 0, 0 )] = 1.;
+            double vsin[trc + 1], vcos[trc + 1];
+            for ( int j = 1; j <= trc; j++ ) {
+                vsin[j] = std::sin( j * zdlx1 );
+            }
+            for ( int j = 1; j <= trc; j++ ) {
+                vcos[j] = std::cos( j * zdlx1 );
+            }
 
             double zdl1sita = 0.;
             // if we are less than 1 meter from the pole,
@@ -91,9 +98,9 @@ void compute_legendre_polynomialsopt(
                 // represented by only even k
                 for ( int jk = 2; jk <= jn; jk += 2 ) {
                     // normalised ordinary Legendre polynomial == \overbar{P_n}^0
-                    zdlk = zdlk + zfn( jn, jk ) * std::cos( jk * zdlx1 );
+                    zdlk = zdlk + zfn( jn, jk ) * vcos[jk];
                     // normalised associated Legendre polynomial == \overbar{P_n}^1
-                    zdlldn = zdlldn + zdsq * zfn( jn, jk ) * jk * std::sin( jk * zdlx1 );
+                    zdlldn = zdlldn + zdsq * zfn( jn, jk ) * jk * vsin[jk];
                 }
                 legpol[idxmn( 0, jn )] = zdlk;
                 legpol[idxmn( 1, jn )] = zdlldn;
@@ -108,9 +115,9 @@ void compute_legendre_polynomialsopt(
                 // represented by only even k
                 for ( int jk = 1; jk <= jn; jk += 2 ) {
                     // normalised ordinary Legendre polynomial == \overbar{P_n}^0
-                    zdlk = zdlk + zfn( jn, jk ) * std::cos( jk * zdlx1 );
+                    zdlk = zdlk + zfn( jn, jk ) * vcos[jk];
                     // normalised associated Legendre polynomial == \overbar{P_n}^1
-                    zdlldn = zdlldn + zdsq * zfn( jn, jk ) * jk * std::sin( jk * zdlx1 );
+                    zdlldn = zdlldn + zdsq * zfn( jn, jk ) * jk * vsin[jk];
                 }
                 legpol[idxmn( 0, jn )] = zdlk;
                 legpol[idxmn( 1, jn )] = zdlldn;

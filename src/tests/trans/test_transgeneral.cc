@@ -724,8 +724,8 @@ CASE( "test_trans_vordiv_with_translib" ) {
     trans::Trans transIFS( g, trc, util::Config( "type", "ifs" ) );
     double rav = 0.;  // compute average rms error of trans library in rav
 #endif
-    trans::Trans transLocal1( g, trc, util::Config( "type", "localopt2" ) );
-    trans::Trans transLocal2( g, trc, util::Config( "type", "localopt3" ) );
+    trans::Trans transLocal1( g, trc, util::Config( "type", "localopt" ) );
+    trans::Trans transLocal2( g, trc, util::Config( "type", "localopt2" ) );
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 
     functionspace::Spectral spectral( trc );
@@ -863,11 +863,12 @@ CASE( "test_trans_hires" ) {
     double tolerance  = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F640" );
+    Grid g( "F1280" );
 #if ATLAS_HAVE_TRANS
     std::string transTypes[4] = {"localopt", "localopt2", "localopt3", "ifs"};
     //std::string transTypes[2] = {"localopt", "localopt2"};
     //std::string transTypes[3] = {"localopt", "localopt2", "ifs"};
+    //std::string transTypes[1] = {"localopt3"};
 #else
     std::string transTypes[1] = {"localopt2"};
 #endif
