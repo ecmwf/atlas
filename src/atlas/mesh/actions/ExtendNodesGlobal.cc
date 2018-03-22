@@ -8,13 +8,13 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
+#include "atlas/mesh/actions/ExtendNodesGlobal.h"
 
+#include "eckit/exception/Exceptions.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/actions/ExtendNodesGlobal.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
 
@@ -64,7 +64,10 @@ void ExtendNodesGlobal::operator()( const Grid& grid, Mesh& mesh ) const {
     for ( size_t i = 0; i < nb_extension_pts; ++i ) {
         const size_t n        = nb_real_pts + i;
         const PointLonLat pLL = grid.projection().lonlat( extended_pts[i] );
-        const PointXYZ pXYZ   = util::Earth::convertGeodeticToGeocentric( pLL );
+
+        PointXYZ pXYZ;
+        util::Earth::convertSphericalToCartesian( pLL, pXYZ );
+
         xyz( n, XX )          = pXYZ.x();
         xyz( n, YY )          = pXYZ.y();
         xyz( n, ZZ )          = pXYZ.z();

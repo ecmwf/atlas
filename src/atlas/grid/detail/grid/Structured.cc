@@ -22,8 +22,8 @@
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
+#include "atlas/util/UnitSphere.h"
 
 namespace atlas {
 namespace grid {
@@ -438,8 +438,11 @@ void Structured::computeTruePeriodicity() {
             const PointLonLat Pllmin = projection().lonlat( PointXY( xmin_[j], y_[j] ) );
             const PointLonLat Pllmax = projection().lonlat( PointXY( xmax_[j], y_[j] ) );
 
-            Point3 Pxmin = util::Earth::convertGeodeticToGeocentric( Pllmin, 1. );
-            Point3 Pxmax = util::Earth::convertGeodeticToGeocentric( Pllmax, 1. );
+            Point3 Pxmin;
+            util::UnitSphere::convertSphericalToCartesian(Pllmin, Pxmin );
+
+            Point3 Pxmax;
+            util::UnitSphere::convertSphericalToCartesian(Pllmax, Pxmax );
 
             periodic_x_ = points_equal( Pxmin, Pxmax );
         }

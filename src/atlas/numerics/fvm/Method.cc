@@ -51,7 +51,7 @@ size_t get_levels( const eckit::Parametrisation& params ) {
 }
 
 double get_radius( const eckit::Parametrisation& params ) {
-    double radius = util::Earth::radiusInMeters();
+    double radius = util::Earth::radius();
     params.get( "radius", radius );
     return radius;
 }

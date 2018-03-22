@@ -6,5 +6,5 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-set  ( ${PROJECT_NAME}_VERSION_STR  "0.13.2" )
+set  ( ${PROJECT_NAME}_VERSION_STR  "0.14.0" )
 

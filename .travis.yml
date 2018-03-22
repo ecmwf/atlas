@@ -196,7 +196,7 @@ install:
     ### Install eckit
     install-dep.sh --repo eckit --branch ${DEPS_BRANCH} --prefix ${DEPS_DIR}/eckit --cmake "-DENABLE_TESTS=OFF -DCMAKE_BUILD_TYPE=DEBUG ${ECKIT_CMAKE_OPTIONS}"
   - export ECKIT_PATH=${DEPS_DIR}/eckit
-  - ${DEPS_DIR}/eckit/bin/eckit_version
+  - ${DEPS_DIR}/eckit/bin/eckit-version
 
   #################################################################
   # Install fckit

@@ -8,15 +8,15 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/util/Rotation.h"
+
 #include <cmath>
 #include <iostream>
 
 #include "eckit/config/Parametrisation.h"
-
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/Earth.h"
-#include "atlas/util/Rotation.h"
+#include "atlas/util/UnitSphere.h"
 
 // Temporary option to activate implementation by RMI during ESCAPE
 #define OLD_IMPLEMENTATION 0
@@ -211,9 +211,13 @@ void Rotation::rotate( double crd[] ) const {
     }
 
     const PointLonLat L( crd );
-    const PointXYZ P     = Earth::convertGeodeticToGeocentric( L, 1. );
-    const PointXYZ Pt    = rotate_geocentric( P, rotate_ );
-    const PointLonLat Lt = Earth::convertGeocentricToGeodetic( Pt, 1. );
+    PointXYZ P;
+    UnitSphere::convertSphericalToCartesian( L, P );
+
+    const PointXYZ Pt = rotate_geocentric( P, rotate_ );
+
+    PointLonLat Lt;
+    UnitSphere::convertCartesianToSpherical( Pt, Lt );
 
     crd[LON] = Lt.lon() - angle_;
     crd[LAT] = Lt.lat();
@@ -234,9 +238,13 @@ void Rotation::unrotate( double crd[] ) const {
     PointLonLat Lt( crd );
     Lt.lon() += angle_;
 
-    const PointXYZ Pt   = Earth::convertGeodeticToGeocentric( Lt, 1. );
-    const PointXYZ P    = rotate_geocentric( Pt, unrotate_ );
-    const PointLonLat L = Earth::convertGeocentricToGeodetic( P, 1. );
+    PointXYZ Pt;
+    UnitSphere::convertSphericalToCartesian( Lt, Pt );
+
+    const PointXYZ P = rotate_geocentric( Pt, unrotate_ );
+
+    PointLonLat L;
+    UnitSphere::convertCartesianToSpherical( P, L );
 
     crd[LON] = L.lon();
     crd[LAT] = L.lat();

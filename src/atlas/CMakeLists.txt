@@ -452,7 +452,6 @@ runtime/ErrorHandling.h
 util/Config.cc
 util/Config.h
 util/Constants.h
-util/Earth.cc
 util/Earth.h
 util/GaussianLatitudes.cc
 util/GaussianLatitudes.h
@@ -466,6 +465,7 @@ util/Rotation.cc
 util/Rotation.h
 util/SphericalPolygon.cc
 util/SphericalPolygon.h
+util/UnitSphere.h
 util/detail/BlackMagic.h
 util/detail/Cache.h
 util/detail/Debug.h

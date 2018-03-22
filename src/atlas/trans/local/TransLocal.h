@@ -108,8 +108,8 @@ private:
                       const eckit::Configuration& = util::NoConfig() ) const;
 
 private:
-    int truncation_;
     Grid grid_;
+    int truncation_;
     bool precompute_;
     std::vector<double> legendre_;
     std::vector<size_t> legendre_begin_;

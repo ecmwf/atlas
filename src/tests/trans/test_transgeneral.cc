@@ -32,6 +32,8 @@
 #include "atlas/trans/local/FourierTransforms.h"
 #include "atlas/trans/local/LegendrePolynomials.h"
 #include "atlas/trans/local/LegendreTransforms.h"
+#include "atlas/util/Constants.h"
+#include "atlas/util/Earth.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -234,7 +236,7 @@ double sphericalharmonics_analytic_point(
 {
     double latsin = std::sin( lat ), latcos = std::cos( lat );
     double lonsin = std::sin( m * lon ), loncos = std::cos( m * lon );
-    double a = util::Earth::radiusInMeters();
+    double a = util::Earth::radius();
     // Fourier part of the spherical harmonics:
     double rft = 1.;
     if ( m > 0 ) rft *= 2.;  // the famous factor 2 that noone really understands

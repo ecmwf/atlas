@@ -7,6 +7,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.14.0] - 2018-03-22
+### Added
+- Spherical Harmonics transforms can receive a cache memory handle
+
+### Changed
+- Earth interface (C++)
+- Requires eckit 0.20.0, fckit 0.5.0
+
 ## [0.13.2] - 2018-03-20
 ### Fixed
 - C++ compilation using PGI 17, 18 and GCC 7
@@ -22,5 +30,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.14.0]: https://github.com/ecmwf/atlas/compare/0.13.2...0.14.0
 [0.13.2]: https://github.com/ecmwf/atlas/compare/0.13.1...0.13.2
 [0.13.1]: https://github.com/ecmwf/atlas/compare/0.13.0...0.13.1

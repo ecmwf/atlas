@@ -38,7 +38,7 @@ namespace detail {
 // constructors
 LambertProjection::LambertProjection( const eckit::Parametrisation& params ) {
     // check presence of radius
-    if ( !params.get( "radius", radius_ ) ) radius_ = util::Earth::radiusInMeters();
+    if ( !params.get( "radius", radius_ ) ) radius_ = util::Earth::radius();
     // check presence of lat1 and lat2
     if ( !params.get( "latitude1", lat1_ ) ) throw eckit::BadParameter( "latitude1 missing in Params", Here() );
     if ( !params.get( "latitude2", lat2_ ) ) lat2_ = lat1_;
@@ -95,7 +95,7 @@ LambertProjection::Spec LambertProjection::spec() const {
     proj_spec.set( "latitude1", lat1_ );
     proj_spec.set( "latitude2", lat2_ );
     proj_spec.set( "longitude0", lon0_ );
-    if ( radius_ != util::Earth::radiusInMeters() ) proj_spec.set( "radius", radius_ );
+    if ( radius_ != util::Earth::radius() ) proj_spec.set( "radius", radius_ );
     return proj_spec;
 }
 

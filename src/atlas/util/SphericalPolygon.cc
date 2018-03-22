@@ -47,13 +47,14 @@ bool SphericalPolygon::contains( const PointLonLat& P ) const {
         const bool BPA = ( B.lon() <= P.lon() && P.lon() < A.lon() );
 
         if ( APB != BPA ) {
-            PointLonLat p( P.lon(), std::numeric_limits<double>::quiet_NaN() );
-            util::Earth::greatCircleLatitudeGivenLongitude( A, B, p );
+            const double lat = util::Earth::greatCircleLatitudeGivenLongitude( A, B, P.lon() );
 
-            ASSERT( !std::isnan( p.lat() ) );
-            if ( eckit::types::is_approximately_equal( P.lat(), p.lat() ) ) { return true; }
+            ASSERT( !std::isnan( lat ) );
+            if ( eckit::types::is_approximately_equal( P.lat(), lat ) ) {
+                return true;
+            }
 
-            wn += ( P.lat() > p.lat() ? -1 : 1 ) * ( APB ? -1 : 1 );
+            wn += ( P.lat() > lat ? -1 : 1 ) * ( APB ? -1 : 1 );
         }
     }
 

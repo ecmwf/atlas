@@ -29,9 +29,11 @@
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
+#include "atlas/util/UnitSphere.h"
 
 namespace atlas {
 namespace mesh {
@@ -62,9 +64,11 @@ void quad_quality( double& eta, double& rho, const PointLonLat& p1, const PointL
                    const PointLonLat& p4 ) {
     // see http://geuz.org/gmsh/doc/preprints/gmsh_quad_preprint.pdf
 
-    const PointXYZ xyz[]{
-        util::Earth::convertGeodeticToGeocentric( p1, 1. ), util::Earth::convertGeodeticToGeocentric( p2, 1. ),
-        util::Earth::convertGeodeticToGeocentric( p3, 1. ), util::Earth::convertGeodeticToGeocentric( p4, 1. )};
+    PointXYZ xyz[4];
+    util::UnitSphere::convertSphericalToCartesian(p1, xyz[0]);
+    util::UnitSphere::convertSphericalToCartesian(p2, xyz[1]);
+    util::UnitSphere::convertSphericalToCartesian(p3, xyz[2]);
+    util::UnitSphere::convertSphericalToCartesian(p4, xyz[3]);
 
     PointXYZ l2m1( PointXYZ::sub( xyz[1], xyz[0] ) );
     PointXYZ l3m2( PointXYZ::sub( xyz[2], xyz[1] ) );
@@ -123,7 +127,7 @@ void build_statistics( Mesh& mesh ) {
             int ip2 = edge_nodes( jedge, 1 );
             PointLonLat p1( lonlat( ip1, LON ), lonlat( ip1, LAT ) );
             PointLonLat p2( lonlat( ip2, LON ), lonlat( ip2, LAT ) );
-            dist( jedge ) = util::Earth::distanceInMeters( p1, p2 ) * 1e-3;
+            dist( jedge ) = util::Earth::distance( p1, p2 ) * 1e-3;
         }
     }
 
@@ -209,8 +213,8 @@ void build_statistics( Mesh& mesh ) {
 
         for ( size_t jnode = 0; jnode < nodes.size(); ++jnode ) {
             const double lat        = util::Constants::degreesToRadians() * lonlat( jnode, LAT );
-            const double hx         = util::Constants::degreesToRadians() * util::Earth::radiusInKm() * std::cos( lat );
-            const double hy         = util::Constants::degreesToRadians() * util::Earth::radiusInKm();
+            const double hx         = util::Constants::degreesToRadians() * util::Earth::radius() * std::cos( lat );
+            const double hy         = util::Constants::degreesToRadians() * util::Earth::radius();
             dual_delta_sph( jnode ) = std::sqrt( dual_volumes( jnode ) * hx * hy );
         }
 

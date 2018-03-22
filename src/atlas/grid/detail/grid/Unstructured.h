@@ -112,8 +112,8 @@ public:
     private:
         const Unstructured& grid_;
         Grid::IteratorXY::Predicate p_;
-        size_t n_;
         size_t size_;
+        size_t n_;
     };
 
     class IteratorLonLat : public Grid::IteratorLonLat {
