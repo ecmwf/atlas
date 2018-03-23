@@ -118,6 +118,8 @@ PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field&
     coordinatesMin_ = PointLonLat( ll( poly[0], LON ), ll( poly[0], LAT ) );
     coordinatesMax_ = coordinatesMin_;
 
+    size_t nb_removed_points_due_to_alignment = 0;
+
     for ( size_t i = 0; i < poly.size(); ++i ) {
         PointLonLat A( ll( poly[i], LON ), ll( poly[i], LAT ) );
         coordinatesMin_ = PointLonLat::componentsMin( coordinatesMin_, A );
@@ -130,6 +132,7 @@ PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field&
             const PointLonLat& C = coordinates_[coordinates_.size() - 2];
             if ( eckit::types::is_approximately_equal( 0., cross_product_analog( A, B, C ) ) ) {
                 coordinates_.back() = A;
+                ++nb_removed_points_due_to_alignment;
                 continue;
             }
         }
@@ -137,7 +140,7 @@ PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field&
         coordinates_.push_back( A );
     }
 
-    ASSERT( coordinates_.size() == poly.size() );
+    ASSERT( coordinates_.size() == poly.size() - nb_removed_points_due_to_alignment );
 }
 
 PolygonCoordinates::PolygonCoordinates( const std::vector<PointLonLat>& points ) : coordinates_( points ) {
