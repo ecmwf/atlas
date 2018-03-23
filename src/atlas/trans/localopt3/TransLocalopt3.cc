@@ -151,7 +151,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
     }
 
         // precomputations for Fourier transformations:
-#if ATLAS_HAVE_FFTW
+#if 0  //ATLAS_HAVE_FFTW
     {
         ATLAS_TRACE( "opt3 precomp FFTW" );
         int num_complex = ( nlons / 2 ) + 1;
@@ -167,8 +167,8 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         int idx = 0;
         for ( int jlon = 0; jlon < nlons; jlon++ ) {
             double factor = 1.;
-            if ( jm > 0 ) { factor = 0.5; }
             for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
+                if ( jm > 0 ) { factor = 2.; }
                 fourier_[idx++] = +std::cos( jm * lons[jlon] ) * factor;  // real part
                 fourier_[idx++] = -std::sin( jm * lons[jlon] ) * factor;  // imaginary part
             }
@@ -180,7 +180,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         int idx = 0;
         for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
             double factor = 1.;
-            if ( jm > 0 ) { factor = 0.5; }
+            if ( jm > 0 ) { factor = 2.; }
             for ( int jlon = 0; jlon < nlons; jlon++ ) {
                 fouriertp_[idx++] = +std::cos( jm * lons[jlon] ) * factor;  // real part
             }
@@ -202,7 +202,7 @@ TransLocalopt3::TransLocalopt3( const Grid& grid, const long truncation, const e
 TransLocalopt3::~TransLocalopt3() {
     free_aligned( legendre_sym_ );
     free_aligned( legendre_asym_ );
-#if ATLAS_HAVE_FFTW
+#if 0  //ATLAS_HAVE_FFTW
     fftw_destroy_plan( plan_ );
     fftw_free( fft_in_ );
     fftw_free( fft_out_ );
@@ -349,7 +349,7 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                         eckit::linalg::Matrix C( scl_fourier_asym, nb_fields * n_imag, nlatsNH );
                         eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
                     }
-#if 1  //ATLAS_HAVE_FFTW
+#if 0  //ATLAS_HAVE_FFTW
                     {
                         //ATLAS_TRACE( "opt3 merge spheres" );
                         // northern hemisphere:
@@ -411,13 +411,9 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                     {
                         //ATLAS_TRACE( "opt3 merge spheres" );
                         // northern hemisphere:
-                        int ioff = jm * size_fourier_max;
-                        int pos0 = ioff;
-                        int idx  = 0;
+                        int idx = 0;
                         for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
-                            int poslat = pos0 + 2 * jlat;
                             for ( int imag = 0; imag < n_imag; imag++ ) {
-                                int posimag = nb_fields * ( imag + poslat );
                                 for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
                                     scl_fourier[posGemm1( jfld, imag, jlat, jm )] =
                                         scl_fourier_sym[idx] + scl_fourier_asym[idx];
@@ -425,12 +421,9 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                             }
                         }
                         // southern hemisphere:
-                        idx  = 0;
-                        pos0 = 2 * ( nlats - 1 ) + ioff;
+                        idx = 0;
                         for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
-                            int poslat = pos0 - 2 * jlat;
                             for ( int imag = 0; imag < n_imag; imag++ ) {
-                                int posimag = nb_fields * ( imag + poslat );
                                 for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
                                     int jslat = nlats - jlat - 1;
                                     scl_fourier[posGemm1( jfld, imag, jslat, jm )] =
@@ -522,166 +515,168 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
 
 #endif
 #endif
-            // Computing u,v from U,V:
-            {
-                if ( nb_vordiv_fields > 0 ) {
-                    ATLAS_TRACE( "opt3 u,v from U,V" );
-                    std::vector<double> coslats( nlats );
-                    for ( size_t j = 0; j < nlats; ++j ) {
-                        coslats[j] = std::cos( g.y( j ) * util::Constants::degreesToRadians() );
+                    // Computing u,v from U,V:
+                    {
+                        if ( nb_vordiv_fields > 0 ) {
+                            ATLAS_TRACE( "opt3 u,v from U,V" );
+                            std::vector<double> coslats( nlats );
+                            for ( size_t j = 0; j < nlats; ++j ) {
+                                coslats[j] = std::cos( g.y( j ) * util::Constants::degreesToRadians() );
+                            }
+                            int idx = 0;
+                            for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                                for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
+                                    for ( int jlon = 0; jlon < g.nxmax(); jlon++ ) {
+                                        gp_fields[idx] /= coslats[jlat];
+                                        idx++;
+                                    }
+                                }
+                            }
+                        }
                     }
+                    free_aligned( scl_fourier );
+                }
+                else {
+                    ATLAS_TRACE( "invtrans_uv unstructured opt3" );
                     int idx = 0;
-                    for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
-                        for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
-                            for ( int jlon = 0; jlon < g.nxmax(); jlon++ ) {
-                                gp_fields[idx] /= coslats[jlat];
-                                idx++;
+                    for ( PointXY p : grid_.xy() ) {
+                        double lon   = p.x() * util::Constants::degreesToRadians();
+                        double lat   = p.y() * util::Constants::degreesToRadians();
+                        double trcFT = truncation;
+
+                        // Legendre transform:
+                        //invtrans_legendreopt3( truncation, trcFT, truncation_ + 1, legPol( lat, idx ), nb_fields, scalar_spectra,
+                        //                      legReal.data(), legImag.data() );
+
+                        // Fourier transform:
+                        //invtrans_fourieropt3( trcFT, lon, nb_fields, legReal.data(), legImag.data(),
+                        //                     gp_tmp.data() + ( nb_fields * idx ) );
+                        for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
+                            //gp_tmp[nb_fields * idx + jfld] /= std::cos( lat );
+                        }
+                        ++idx;
+                    }
+                }
+            }
+        }  // namespace trans
+
+        // --------------------------------------------------------------------------------------------------------------------
+
+        void TransLocalopt3::invtrans( const int nb_vordiv_fields, const double vorticity_spectra[],
+                                       const double divergence_spectra[], double gp_fields[],
+                                       const eckit::Configuration& config ) const {
+            invtrans( 0, nullptr, nb_vordiv_fields, vorticity_spectra, divergence_spectra, gp_fields, config );
+        }
+
+        void extend_truncationopt3( const int old_truncation, const int nb_fields, const double old_spectra[],
+                                    double new_spectra[] ) {
+            int k = 0, k_old = 0;
+            for ( int m = 0; m <= old_truncation + 1; m++ ) {             // zonal wavenumber
+                for ( int n = m; n <= old_truncation + 1; n++ ) {         // total wavenumber
+                    for ( int imag = 0; imag < 2; imag++ ) {              // imaginary/real part
+                        for ( int jfld = 0; jfld < nb_fields; jfld++ ) {  // field
+                            if ( m == old_truncation + 1 || n == old_truncation + 1 ) { new_spectra[k++] = 0.; }
+                            else {
+                                new_spectra[k++] = old_spectra[k_old++];
                             }
                         }
                     }
                 }
             }
-            free_aligned( scl_fourier );
         }
-        else {
-            ATLAS_TRACE( "invtrans_uv unstructured opt3" );
-            int idx = 0;
-            for ( PointXY p : grid_.xy() ) {
-                double lon   = p.x() * util::Constants::degreesToRadians();
-                double lat   = p.y() * util::Constants::degreesToRadians();
-                double trcFT = truncation;
 
-                // Legendre transform:
-                //invtrans_legendreopt3( truncation, trcFT, truncation_ + 1, legPol( lat, idx ), nb_fields, scalar_spectra,
-                //                      legReal.data(), legImag.data() );
+        // --------------------------------------------------------------------------------------------------------------------
 
-                // Fourier transform:
-                //invtrans_fourieropt3( trcFT, lon, nb_fields, legReal.data(), legImag.data(),
-                //                     gp_tmp.data() + ( nb_fields * idx ) );
-                for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
-                    //gp_tmp[nb_fields * idx + jfld] /= std::cos( lat );
+        void TransLocalopt3::invtrans( const int nb_scalar_fields, const double scalar_spectra[],
+                                       const int nb_vordiv_fields, const double vorticity_spectra[],
+                                       const double divergence_spectra[], double gp_fields[],
+                                       const eckit::Configuration& config ) const {
+            ATLAS_TRACE( "TransLocalopt3::invtrans" );
+            int nb_gp              = grid_.size();
+            int nb_vordiv_spec_ext = 2 * legendre_size( truncation_ + 1 ) * nb_vordiv_fields;
+            if ( nb_vordiv_fields > 0 ) {
+                std::vector<double> vorticity_spectra_extended( nb_vordiv_spec_ext, 0. );
+                std::vector<double> divergence_spectra_extended( nb_vordiv_spec_ext, 0. );
+                std::vector<double> U_ext( nb_vordiv_spec_ext, 0. );
+                std::vector<double> V_ext( nb_vordiv_spec_ext, 0. );
+
+                {
+                    ATLAS_TRACE( "opt3 extend vordiv" );
+                    // increase truncation in vorticity_spectra and divergence_spectra:
+                    extend_truncationopt3( truncation_, nb_vordiv_fields, vorticity_spectra,
+                                           vorticity_spectra_extended.data() );
+                    extend_truncationopt3( truncation_, nb_vordiv_fields, divergence_spectra,
+                                           divergence_spectra_extended.data() );
                 }
-                ++idx;
+
+                {
+                    ATLAS_TRACE( "vordiv to UV opt3" );
+                    // call vd2uv to compute u and v in spectral space
+                    trans::VorDivToUV vordiv_to_UV_ext( truncation_ + 1, option::type( "localopt3" ) );
+                    vordiv_to_UV_ext.execute( nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(),
+                                              divergence_spectra_extended.data(), U_ext.data(), V_ext.data() );
+                }
+
+                // perform spectral transform to compute all fields in grid point space
+                invtrans_uv( truncation_ + 1, nb_vordiv_fields, nb_vordiv_fields, U_ext.data(), gp_fields, config );
+                invtrans_uv( truncation_ + 1, nb_vordiv_fields, nb_vordiv_fields, V_ext.data(),
+                             gp_fields + nb_gp * nb_vordiv_fields, config );
+            }
+            if ( nb_scalar_fields > 0 ) {
+                int nb_scalar_spec_ext = 2 * legendre_size( truncation_ + 1 ) * nb_scalar_fields;
+                std::vector<double> scalar_spectra_extended( nb_scalar_spec_ext, 0. );
+                extend_truncationopt3( truncation_, nb_scalar_fields, scalar_spectra, scalar_spectra_extended.data() );
+                invtrans_uv( truncation_ + 1, nb_scalar_fields, 0, scalar_spectra_extended.data(),
+                             gp_fields + 2 * nb_gp * nb_vordiv_fields, config );
             }
         }
-    }
-}  // namespace trans
 
-// --------------------------------------------------------------------------------------------------------------------
+        // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans( const int nb_vordiv_fields, const double vorticity_spectra[],
-                               const double divergence_spectra[], double gp_fields[],
-                               const eckit::Configuration& config ) const {
-    invtrans( 0, nullptr, nb_vordiv_fields, vorticity_spectra, divergence_spectra, gp_fields, config );
-}
-
-void extend_truncationopt3( const int old_truncation, const int nb_fields, const double old_spectra[],
-                            double new_spectra[] ) {
-    int k = 0, k_old = 0;
-    for ( int m = 0; m <= old_truncation + 1; m++ ) {             // zonal wavenumber
-        for ( int n = m; n <= old_truncation + 1; n++ ) {         // total wavenumber
-            for ( int imag = 0; imag < 2; imag++ ) {              // imaginary/real part
-                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {  // field
-                    if ( m == old_truncation + 1 || n == old_truncation + 1 ) { new_spectra[k++] = 0.; }
-                    else {
-                        new_spectra[k++] = old_spectra[k_old++];
-                    }
-                }
-            }
-        }
-    }
-}
-
-// --------------------------------------------------------------------------------------------------------------------
-
-void TransLocalopt3::invtrans( const int nb_scalar_fields, const double scalar_spectra[], const int nb_vordiv_fields,
-                               const double vorticity_spectra[], const double divergence_spectra[], double gp_fields[],
-                               const eckit::Configuration& config ) const {
-    ATLAS_TRACE( "TransLocalopt3::invtrans" );
-    int nb_gp              = grid_.size();
-    int nb_vordiv_spec_ext = 2 * legendre_size( truncation_ + 1 ) * nb_vordiv_fields;
-    if ( nb_vordiv_fields > 0 ) {
-        std::vector<double> vorticity_spectra_extended( nb_vordiv_spec_ext, 0. );
-        std::vector<double> divergence_spectra_extended( nb_vordiv_spec_ext, 0. );
-        std::vector<double> U_ext( nb_vordiv_spec_ext, 0. );
-        std::vector<double> V_ext( nb_vordiv_spec_ext, 0. );
-
-        {
-            ATLAS_TRACE( "opt3 extend vordiv" );
-            // increase truncation in vorticity_spectra and divergence_spectra:
-            extend_truncationopt3( truncation_, nb_vordiv_fields, vorticity_spectra,
-                                   vorticity_spectra_extended.data() );
-            extend_truncationopt3( truncation_, nb_vordiv_fields, divergence_spectra,
-                                   divergence_spectra_extended.data() );
+        void TransLocalopt3::dirtrans( const Field& gpfield, Field& spfield, const eckit::Configuration& config )
+            const {
+            NOTIMP;
+            // Not implemented and not planned.
+            // Use the TransIFS implementation instead.
         }
 
-        {
-            ATLAS_TRACE( "vordiv to UV opt3" );
-            // call vd2uv to compute u and v in spectral space
-            trans::VorDivToUV vordiv_to_UV_ext( truncation_ + 1, option::type( "localopt3" ) );
-            vordiv_to_UV_ext.execute( nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(),
-                                      divergence_spectra_extended.data(), U_ext.data(), V_ext.data() );
+        // --------------------------------------------------------------------------------------------------------------------
+
+        void TransLocalopt3::dirtrans( const FieldSet& gpfields, FieldSet& spfields,
+                                       const eckit::Configuration& config ) const {
+            NOTIMP;
+            // Not implemented and not planned.
+            // Use the TransIFS implementation instead.
         }
 
-        // perform spectral transform to compute all fields in grid point space
-        invtrans_uv( truncation_ + 1, nb_vordiv_fields, nb_vordiv_fields, U_ext.data(), gp_fields, config );
-        invtrans_uv( truncation_ + 1, nb_vordiv_fields, nb_vordiv_fields, V_ext.data(),
-                     gp_fields + nb_gp * nb_vordiv_fields, config );
-    }
-    if ( nb_scalar_fields > 0 ) {
-        int nb_scalar_spec_ext = 2 * legendre_size( truncation_ + 1 ) * nb_scalar_fields;
-        std::vector<double> scalar_spectra_extended( nb_scalar_spec_ext, 0. );
-        extend_truncationopt3( truncation_, nb_scalar_fields, scalar_spectra, scalar_spectra_extended.data() );
-        invtrans_uv( truncation_ + 1, nb_scalar_fields, 0, scalar_spectra_extended.data(),
-                     gp_fields + 2 * nb_gp * nb_vordiv_fields, config );
-    }
-}
+        // --------------------------------------------------------------------------------------------------------------------
 
-// --------------------------------------------------------------------------------------------------------------------
+        void TransLocalopt3::dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Field& spdiv,
+                                                   const eckit::Configuration& config ) const {
+            NOTIMP;
+            // Not implemented and not planned.
+            // Use the TransIFS implementation instead.
+        }
 
-void TransLocalopt3::dirtrans( const Field& gpfield, Field& spfield, const eckit::Configuration& config ) const {
-    NOTIMP;
-    // Not implemented and not planned.
-    // Use the TransIFS implementation instead.
-}
+        // --------------------------------------------------------------------------------------------------------------------
 
-// --------------------------------------------------------------------------------------------------------------------
+        void TransLocalopt3::dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
+                                       const eckit::Configuration& ) const {
+            NOTIMP;
+            // Not implemented and not planned.
+            // Use the TransIFS implementation instead.
+        }
 
-void TransLocalopt3::dirtrans( const FieldSet& gpfields, FieldSet& spfields,
-                               const eckit::Configuration& config ) const {
-    NOTIMP;
-    // Not implemented and not planned.
-    // Use the TransIFS implementation instead.
-}
+        // --------------------------------------------------------------------------------------------------------------------
 
-// --------------------------------------------------------------------------------------------------------------------
+        void TransLocalopt3::dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[],
+                                       double divergence_spectra[], const eckit::Configuration& ) const {
+            NOTIMP;
+            // Not implemented and not planned.
+            // Use the TransIFS implementation instead.
+        }
 
-void TransLocalopt3::dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Field& spdiv,
-                                           const eckit::Configuration& config ) const {
-    NOTIMP;
-    // Not implemented and not planned.
-    // Use the TransIFS implementation instead.
-}
+        // --------------------------------------------------------------------------------------------------------------------
 
-// --------------------------------------------------------------------------------------------------------------------
-
-void TransLocalopt3::dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
-                               const eckit::Configuration& ) const {
-    NOTIMP;
-    // Not implemented and not planned.
-    // Use the TransIFS implementation instead.
-}
-
-// --------------------------------------------------------------------------------------------------------------------
-
-void TransLocalopt3::dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[],
-                               double divergence_spectra[], const eckit::Configuration& ) const {
-    NOTIMP;
-    // Not implemented and not planned.
-    // Use the TransIFS implementation instead.
-}
-
-// --------------------------------------------------------------------------------------------------------------------
-
-}  // namespace trans
+    }  // namespace trans
 }  // namespace atlas

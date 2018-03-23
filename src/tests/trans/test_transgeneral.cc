@@ -704,7 +704,7 @@ CASE( "test_transgeneral_with_translib" ) {
 #endif
 #endif
 //-----------------------------------------------------------------------------
-#if 0
+#if 1
 CASE( "test_trans_vordiv_with_translib" ) {
     Log::info() << "test_trans_vordiv_with_translib" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -724,8 +724,8 @@ CASE( "test_trans_vordiv_with_translib" ) {
     trans::Trans transIFS( g, trc, util::Config( "type", "ifs" ) );
     double rav = 0.;  // compute average rms error of trans library in rav
 #endif
-    trans::Trans transLocal1( g, trc, util::Config( "type", "localopt" ) );
-    trans::Trans transLocal2( g, trc, util::Config( "type", "localopt2" ) );
+    trans::Trans transLocal1( g, trc, util::Config( "type", "localopt3" ) );
+    trans::Trans transLocal2( g, trc, util::Config( "type", "localopt3" ) );
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 
     functionspace::Spectral spectral( trc );
@@ -853,7 +853,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
 }
 #endif
 //-----------------------------------------------------------------------------
-#if 1
+#if 0
 CASE( "test_trans_hires" ) {
     Log::info() << "test_trans_hires" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -928,6 +928,137 @@ CASE( "test_trans_hires" ) {
         Log::info() << "Vordiv+scalar comparison with trans::" << transType << ": all " << icase
                     << " cases successfully passed!" << std::endl;
     }
+}
+#endif
+//-----------------------------------------------------------------------------
+#if 0
+CASE( "test_trans_domain" ) {
+    Log::info() << "test_trans_domain" << std::endl;
+    // test transgeneral by comparing with analytic solution on a cropped domain
+
+    std::ostream& out = Log::info();
+    double tolerance  = 1.e-13;
+
+    //Domain testdomain = ZonalBandDomain( {-90., 90.} );
+    //Domain testdomain = ZonalBandDomain( {-.5, .5} );
+    Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
+    // Grid: (Adjust the following line if the test takes too long!)
+    Grid g( "F8000", testdomain );
+    Grid g_global( g.name() );
+
+    grid::StructuredGrid gs( g );
+    grid::StructuredGrid gs_global( g_global );
+    int ndgl = gs_global.ny();
+    //int trc  = ndgl - 1;  // linear
+    int trc = ndgl / 2. - 1;  // cubic
+    trans::Trans transLocal1( g, trc, util::Config( "type", "localopt3" ) );
+    trans::Trans transLocal2( g, trc, util::Config( "type", "localopt3" ) );
+    double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
+
+    functionspace::Spectral spectral( trc );
+    functionspace::StructuredColumns gridpoints( g );
+
+    int nb_scalar = 1, nb_vordiv = 0;
+    int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
+    std::vector<double> sp( 2 * N * nb_scalar );
+    std::vector<double> vor( 2 * N * nb_vordiv );
+    std::vector<double> div( 2 * N * nb_vordiv );
+    std::vector<double> rspecg( 2 * N );
+    std::vector<double> gp( nb_all * g.size() );
+    std::vector<double> rgp1( nb_all * g.size() );
+    std::vector<double> rgp2( nb_all * g.size() );
+    std::vector<double> rgp_analytic( g.size() );
+
+    int icase = 0;
+    for ( int ivar_in = 2; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
+        for ( int ivar_out = 2; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
+            int nb_fld = 1;
+            if ( ivar_out == 2 ) {
+                tolerance = 1.e-13;
+                nb_fld    = nb_scalar;
+            }
+            else {
+                tolerance = 2.e-6;
+                nb_fld    = nb_vordiv;
+            }
+            for ( int jfld = 0; jfld < nb_fld; jfld++ ) {  // multiple fields
+                int k = 0;
+                for ( int m = 0; m <= trc; m++ ) {                 // zonal wavenumber
+                    for ( int n = m; n <= trc; n++ ) {             // total wavenumber
+                        for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
+
+                            if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
+                                 icase < 1 ) {
+                                auto start = std::chrono::system_clock::now();
+                                for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
+                                    sp[j] = 0.;
+                                }
+                                for ( int j = 0; j < 2 * N * nb_vordiv; j++ ) {
+                                    vor[j] = 0.;
+                                    div[j] = 0.;
+                                }
+                                if ( ivar_in == 0 ) vor[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 1 ) div[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
+
+                                for ( int j = 0; j < nb_all * g.size(); j++ ) {
+                                    gp[j]   = 0.;
+                                    rgp1[j] = 0.;
+                                    rgp2[j] = 0.;
+                                }
+                                for ( int j = 0; j < g.size(); j++ ) {
+                                    rgp_analytic[j] = 0.;
+                                }
+
+                                spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg.data(),
+                                                                  rgp_analytic.data(), ivar_in, ivar_out );
+
+                                EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                       div.data(), rgp1.data() ) );
+
+                                EXPECT_NO_THROW( transLocal2.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                       div.data(), rgp2.data() ) );
+
+                                int pos = ( ivar_out * nb_vordiv + jfld );
+
+                                double rms_gen1 =
+                                    compute_rms( g.size(), rgp1.data() + pos * g.size(), rgp_analytic.data() );
+
+                                double rms_gen2 =
+                                    compute_rms( g.size(), rgp2.data() + pos * g.size(), rgp_analytic.data() );
+
+                                rav1 += rms_gen1;
+                                rav2 += rms_gen2;
+                                if ( !( rms_gen1 < tolerance ) || !( rms_gen2 < tolerance ) ) {
+                                    Log::info()
+                                        << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
+                                        << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
+                                    ATLAS_DEBUG_VAR( rms_gen1 );
+                                    ATLAS_DEBUG_VAR( rms_gen2 );
+                                    ATLAS_DEBUG_VAR( tolerance );
+                                }
+                                EXPECT( rms_gen1 < tolerance );
+                                EXPECT( rms_gen2 < tolerance );
+                                icase++;
+                                auto end                                      = std::chrono::system_clock::now();  //
+                                std::chrono::duration<double> elapsed_seconds = end - start;
+                                std::time_t end_time = std::chrono::system_clock::to_time_t( end );
+                                std::string time_str = std::ctime( &end_time );
+                                Log::info() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
+                                            << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
+                            }
+                            k++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Log::info() << "Vordiv+scalar comparison with trans: all " << icase << " cases successfully passed!" << std::endl;
+    rav1 /= icase;
+    Log::info() << "average RMS error of transLocal1: " << rav1 << std::endl;
+    rav2 /= icase;
+    Log::info() << "average RMS error of transLocal2: " << rav2 << std::endl;
 }
 #endif
 //-----------------------------------------------------------------------------
