@@ -112,6 +112,9 @@ private:
 private:
     Grid grid_;
     int truncation_;
+    int nlatsNH_;
+    int nlatsSH_;
+    int nlatsLeg_;
     bool precompute_;
     double* legendre_sym_;
     double* legendre_asym_;

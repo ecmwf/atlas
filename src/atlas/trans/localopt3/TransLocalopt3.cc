@@ -98,25 +98,52 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
 #endif
     int nlats   = 0;
     int nlons   = 0;
+    int neqtr   = 0;
     int nlatsNH = nlats_northernHemisphere( nlats );
+    nlatsNH_    = 0;
+    nlatsSH_    = 0;
+    nlatsLeg_   = 0;
+    double sign = 1.;
     if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
         grid::StructuredGrid g( grid_ );
-        nlats   = g.ny();
-        nlons   = g.nxmax();
-        nlatsNH = nlats_northernHemisphere( nlats );
+        nlats = g.ny();
+        nlons = g.nxmax();
+        for ( size_t j = 0; j < nlats; ++j ) {
+            // assumptions: latitudes in g.y(j) are monotone and decreasing
+            // no assumption on whether we have 0, 1 or 2 latitudes at the equator
+            double lat = g.y( j );
+            if ( lat > 0. ) { nlatsNH_++; }
+            if ( lat == 0. ) { neqtr++; }
+            if ( lat < 0. ) { nlatsSH_++; }
+        }
+        if ( neqtr > 0 ) {
+            nlatsNH_++;
+            nlatsSH_++;
+        }
+        if ( nlatsNH_ >= nlatsSH_ ) { nlatsLeg_ = nlatsNH_; }
+        else {
+            nlatsLeg_ = nlatsSH_;
+        }
     }
     else {
-        nlats   = grid_.size();
-        nlons   = grid_.size();
-        nlatsNH = nlats;
+        nlats     = grid_.size();
+        nlons     = grid_.size();
+        nlatsNH_  = nlats;
+        nlatsLeg_ = nlats;
     }
-    std::vector<double> lats( nlatsNH );
+    std::vector<double> lats( nlatsLeg_ );
     std::vector<double> lons( nlons );
     if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
         grid::StructuredGrid g( grid_ );
-        // TODO: remove legendre_begin and legendre_data (only legendre_ should be needed)
-        for ( size_t j = 0; j < nlatsNH; ++j ) {
-            lats[j] = g.y( j ) * util::Constants::degreesToRadians();
+        if ( nlatsNH_ >= nlatsSH_ ) {
+            for ( size_t j = 0; j < nlatsLeg_; ++j ) {
+                lats[j] = g.y( j ) * util::Constants::degreesToRadians();
+            }
+        }
+        else {
+            for ( size_t j = nlats - 1, idx = 0; idx < nlatsLeg_; --j, ++idx ) {
+                lats[idx] = -g.y( j ) * util::Constants::degreesToRadians();
+            }
         }
         for ( size_t j = 0; j < nlons; ++j ) {
             lons[j] = g.x( j, 0 ) * util::Constants::degreesToRadians();
@@ -139,14 +166,14 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         legendre_sym_begin_[0]  = 0;
         legendre_asym_begin_[0] = 0;
         for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
-            size_sym += add_padding( num_n( truncation_ + 1, jm, true ) * nlatsNH );
-            size_asym += add_padding( num_n( truncation_ + 1, jm, false ) * nlatsNH );
+            size_sym += add_padding( num_n( truncation_ + 1, jm, true ) * nlatsLeg_ );
+            size_asym += add_padding( num_n( truncation_ + 1, jm, false ) * nlatsLeg_ );
             legendre_sym_begin_[jm + 1]  = size_sym;
             legendre_asym_begin_[jm + 1] = size_asym;
         }
         alloc_aligned( legendre_sym_, size_sym );
         alloc_aligned( legendre_asym_, size_asym );
-        compute_legendre_polynomialsopt3( truncation_ + 1, nlatsNH, lats.data(), legendre_sym_, legendre_asym_,
+        compute_legendre_polynomialsopt3( truncation_ + 1, nlatsLeg_, lats.data(), legendre_sym_, legendre_asym_,
                                           legendre_sym_begin_.data(), legendre_asym_begin_.data() );
     }
 
@@ -162,6 +189,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
     }
 #else
     {
+        // todo: only compute fourier_ if needed
         ATLAS_TRACE( "opt3 precomp Fourier" );
         alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlons );
         int idx = 0;
@@ -175,6 +203,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         }
     }
     {
+        // todo: only compute fouriertp_ if needed
         ATLAS_TRACE( "opt3 precomp Fourier tp" );
         alloc_aligned( fouriertp_, 2 * ( truncation_ + 1 ) * nlons );
         int idx = 0;
@@ -190,7 +219,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         }
     }
 #endif
-}  // namespace atlas
+}  // namespace trans
 
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -280,7 +309,6 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
             ATLAS_TRACE( "invtrans_uv structured opt3" );
             int nlats    = g.ny();
             int nlons    = g.nxmax();
-            int nlatsNH  = nlats_northernHemisphere( nlats );
             auto posFFTW = [&]( int jfld, int imag, int jlat, int jm ) {
                 return imag + 2 * ( jm + ( truncation_ + 1 ) * ( jlat + nlats * jfld ) );
             };
@@ -305,7 +333,10 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                     int size_asym = num_n( truncation_ + 1, jm, false );
                     int n_imag    = 2;
                     if ( jm == 0 ) { n_imag = 1; }
-                    int size_fourier = nb_fields * n_imag * nlatsNH;
+                    int size_fourier = nb_fields * n_imag * nlatsLeg_;
+                    auto posFourier  = [&]( int jfld, int imag, int jlat, int jm, int nlatsH ) {
+                        return jfld + nb_fields * ( imag + n_imag * ( nlatsLeg_ - nlatsH + jlat ) );
+                    };
                     double* scalar_sym;
                     double* scalar_asym;
                     double* scl_fourier_sym;
@@ -339,34 +370,34 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                     }
                     {
                         eckit::linalg::Matrix A( scalar_sym, nb_fields * n_imag, size_sym );
-                        eckit::linalg::Matrix B( legendre_sym_ + legendre_sym_begin_[jm], size_sym, nlatsNH );
-                        eckit::linalg::Matrix C( scl_fourier_sym, nb_fields * n_imag, nlatsNH );
+                        eckit::linalg::Matrix B( legendre_sym_ + legendre_sym_begin_[jm], size_sym, nlatsLeg_ );
+                        eckit::linalg::Matrix C( scl_fourier_sym, nb_fields * n_imag, nlatsLeg_ );
                         eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
                     }
                     if ( size_asym > 0 ) {
                         eckit::linalg::Matrix A( scalar_asym, nb_fields * n_imag, size_asym );
-                        eckit::linalg::Matrix B( legendre_asym_ + legendre_asym_begin_[jm], size_asym, nlatsNH );
-                        eckit::linalg::Matrix C( scl_fourier_asym, nb_fields * n_imag, nlatsNH );
+                        eckit::linalg::Matrix B( legendre_asym_ + legendre_asym_begin_[jm], size_asym, nlatsLeg_ );
+                        eckit::linalg::Matrix C( scl_fourier_asym, nb_fields * n_imag, nlatsLeg_ );
                         eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
                     }
 #if 0  //ATLAS_HAVE_FFTW
                     {
                         //ATLAS_TRACE( "opt3 merge spheres" );
                         // northern hemisphere:
-                        int idx = 0;
-                        for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
+                        for ( int jlat = 0; jlat < nlatsNH_; jlat++ ) {
                             for ( int imag = 0; imag < n_imag; imag++ ) {
-                                for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
+                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                                    int idx = posFourier( jfld, imag, jlat, jm, nlatsNH_ );
                                     scl_fourier[posFFTW( jfld, imag, jlat, jm )] =
                                         scl_fourier_sym[idx] + scl_fourier_asym[idx];
                                 }
                             }
                         }
                         // southern hemisphere:
-                        idx = 0;
-                        for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
+                        for ( int jlat = 0; jlat < nlatsSH_; jlat++ ) {
                             for ( int imag = 0; imag < n_imag; imag++ ) {
-                                for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
+                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                                    int idx   = posFourier( jfld, imag, jlat, jm, nlatsSH_ );
                                     int jslat = nlats - jlat - 1;
                                     scl_fourier[posFFTW( jfld, imag, jslat, jm )] =
                                         scl_fourier_sym[idx] - scl_fourier_asym[idx];
@@ -407,24 +438,24 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                 }
             }
 #else
-#if 1  // 1: better for small number of columns, large truncation; 0: better for large number of columns
+#if 0  // 1: better for small number of columns, large truncation; 0: better for large number of columns
                     {
                         //ATLAS_TRACE( "opt3 merge spheres" );
                         // northern hemisphere:
-                        int idx = 0;
-                        for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
+                        for ( int jlat = 0; jlat < nlatsNH_; jlat++ ) {
                             for ( int imag = 0; imag < n_imag; imag++ ) {
-                                for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
+                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                                    int idx = posFourier( jfld, imag, jlat, jm, nlatsNH_ );
                                     scl_fourier[posGemm1( jfld, imag, jlat, jm )] =
                                         scl_fourier_sym[idx] + scl_fourier_asym[idx];
                                 }
                             }
                         }
                         // southern hemisphere:
-                        idx = 0;
-                        for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
+                        for ( int jlat = 0; jlat < nlatsSH_; jlat++ ) {
                             for ( int imag = 0; imag < n_imag; imag++ ) {
-                                for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
+                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                                    int idx   = posFourier( jfld, imag, jlat, jm, nlatsSH_ );
                                     int jslat = nlats - jlat - 1;
                                     scl_fourier[posGemm1( jfld, imag, jslat, jm )] =
                                         scl_fourier_sym[idx] - scl_fourier_asym[idx];
@@ -469,27 +500,20 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                     {
                         //ATLAS_TRACE( "opt3 merge spheres" );
                         // northern hemisphere:
-                        int ioff = jm * size_fourier_max;
-                        int pos0 = ioff;
-                        int idx  = 0;
-                        for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
-                            int poslat = pos0 + 2 * jlat;
+                        for ( int jlat = 0; jlat < nlatsNH_; jlat++ ) {
                             for ( int imag = 0; imag < n_imag; imag++ ) {
-                                int posimag = nb_fields * ( imag + poslat );
-                                for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
+                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                                    int idx = posFourier( jfld, imag, jlat, jm, nlatsNH_ );
                                     scl_fourier[posGemm2( jfld, imag, jlat, jm )] =
                                         scl_fourier_sym[idx] + scl_fourier_asym[idx];
                                 }
                             }
                         }
                         // southern hemisphere:
-                        idx  = 0;
-                        pos0 = 2 * ( nlats - 1 ) + ioff;
-                        for ( int jlat = 0; jlat < nlatsNH; jlat++ ) {
-                            int poslat = pos0 - 2 * jlat;
+                        for ( int jlat = 0; jlat < nlatsSH_; jlat++ ) {
                             for ( int imag = 0; imag < n_imag; imag++ ) {
-                                int posimag = nb_fields * ( imag + poslat );
-                                for ( int jfld = 0; jfld < nb_fields; jfld++, idx++ ) {
+                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                                    int idx   = posFourier( jfld, imag, jlat, jm, nlatsSH_ );
                                     int jslat = nlats - jlat - 1;
                                     scl_fourier[posGemm2( jfld, imag, jslat, jm )] =
                                         scl_fourier_sym[idx] - scl_fourier_asym[idx];

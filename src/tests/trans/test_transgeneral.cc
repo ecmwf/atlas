@@ -704,7 +704,7 @@ CASE( "test_transgeneral_with_translib" ) {
 #endif
 #endif
 //-----------------------------------------------------------------------------
-#if 1
+#if 0
 CASE( "test_trans_vordiv_with_translib" ) {
     Log::info() << "test_trans_vordiv_with_translib" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -931,7 +931,7 @@ CASE( "test_trans_hires" ) {
 }
 #endif
 //-----------------------------------------------------------------------------
-#if 0
+#if 1
 CASE( "test_trans_domain" ) {
     Log::info() << "test_trans_domain" << std::endl;
     // test transgeneral by comparing with analytic solution on a cropped domain
@@ -941,9 +941,11 @@ CASE( "test_trans_domain" ) {
 
     //Domain testdomain = ZonalBandDomain( {-90., 90.} );
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
-    Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
+    //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
+    //Domain testdomain = ZonalBandDomain( {-85., -86.} );
+    Domain testdomain = RectangularDomain( {-5., 10.}, {5., 6.} );
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F8000", testdomain );
+    Grid g( "F1280", testdomain );
     Grid g_global( g.name() );
 
     grid::StructuredGrid gs( g );
@@ -988,7 +990,7 @@ CASE( "test_trans_domain" ) {
                         for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
 
                             if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
-                                 icase < 1 ) {
+                                 icase < 1000 ) {
                                 auto start = std::chrono::system_clock::now();
                                 for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
                                     sp[j] = 0.;
@@ -1044,8 +1046,8 @@ CASE( "test_trans_domain" ) {
                                 std::chrono::duration<double> elapsed_seconds = end - start;
                                 std::time_t end_time = std::chrono::system_clock::to_time_t( end );
                                 std::string time_str = std::ctime( &end_time );
-                                Log::info() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
-                                            << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
+                                //Log::info() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
+                                //            << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
                             }
                             k++;
                         }
