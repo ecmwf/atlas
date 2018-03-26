@@ -111,6 +111,8 @@ private:
 
 private:
     Grid grid_;
+    bool useFFT_;
+    bool dgemmMethod1_;
     int truncation_;
     int nlatsNH_;
     int nlatsSH_;
