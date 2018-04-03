@@ -96,12 +96,14 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
 #else
     eckit::linalg::LinearAlgebra::backend( "generic" );  // might want to choose backend with this command
 #endif
+    double fft_threshold = 2.;  // 0.05;  // fraction of latitudes of the full grid up to which FFT is used.
+    // This threshold needs to be adjusted depending on the dgemm and FFT performance of the machine
+    // on which this code is running!
     int nlats     = 0;
     int nlons     = 0;
     int neqtr     = 0;
-    int nlatsNH   = nlats_northernHemisphere( nlats );
     useFFT_       = true;
-    dgemmMethod1_ = false;
+    dgemmMethod1_ = true;
     nlatsNH_      = 0;
     nlatsSH_      = 0;
     nlatsLeg_     = 0;
@@ -131,12 +133,9 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         jlonMin_      = 0;
         double lonmin = fmod( g.x( 0, 0 ), 360 );
         if ( lonmin < 0. ) { lonmin += 360.; }
-        if ( nlons < nlonsGlobal_ ) {
-            double fft_threshold = 0.05;  // fraction of latitudes of the full grid up to which FFT is used.
-            // This threshold needs to be adjusted depending on the dgemm and FFT performance of the machine
-            // on which this code is running!
-            if ( nlons < fft_threshold * nlonsGlobal_ ) { useFFT_ = false; }
-            else {
+        if ( nlons < fft_threshold * nlonsGlobal_ ) { useFFT_ = false; }
+        else {
+            if ( nlons < nlonsGlobal_ ) {
                 // need to use FFT with cropped grid
                 for ( size_t j = 0; j < nlonsGlobal_; ++j ) {
                     if ( gs_global.x( j, 0 ) == lonmin ) { jlonMin_ = j; }
@@ -336,22 +335,16 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
         // Transform
         if ( grid::StructuredGrid g = grid_ ) {
             ATLAS_TRACE( "invtrans_uv structured opt3" );
-            int nlats    = g.ny();
-            int nlons    = g.nxmax();
-            auto posFFTW = [&]( int jfld, int imag, int jlat, int jm ) {
-                return imag + 2 * ( jm + ( truncation_ + 1 ) * ( jlat + nlats * jfld ) );
+            int nlats      = g.ny();
+            int nlons      = g.nxmax();
+            auto posMethod = [&]( int jfld, int imag, int jlat, int jm ) {
+                if ( useFFT_ || !dgemmMethod1_ ) {
+                    return imag + 2 * ( jm + ( truncation_ + 1 ) * ( jlat + nlats * jfld ) );
+                }
+                else {
+                    return jfld + nb_fields * ( jlat + nlats * ( imag + 2 * ( jm ) ) );
+                };
             };
-            /*auto posFFTW = [&]( int jfld, int imag, int jlat, int jm ) {
-                return jfld + nb_fields * ( imag + 2 * ( nlats - jlat - 1 ) + jm * nb_fields * 2 * nlats );
-            };*/
-            auto posGemm1 = [&]( int jfld, int imag, int jlat, int jm ) {
-                return jfld + nb_fields * ( jlat + nlats * ( imag + 2 * ( jm ) ) );
-            };
-            auto posGemm2 = [&]( int jfld, int imag, int jlat, int jm ) {
-                return imag + 2 * ( jm + ( truncation_ + 1 ) * ( jlat + nlats * jfld ) );
-            };
-            auto posMethod = posGemm2;
-            if ( useFFT_ ) { auto posMethod = posFFTW; }
             int size_fourier_max = nb_fields * 2 * nlats;
             double* scl_fourier;
             alloc_aligned( scl_fourier, size_fourier_max * ( truncation + 1 ) );
@@ -451,11 +444,11 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                         for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                             int idx = 0;
                             for ( int jlat = 0; jlat < nlats; jlat++ ) {
-                                fft_in_[idx++][0] = scl_fourier[posFFTW( jfld, 0, jlat, 0 )];
+                                fft_in_[idx++][0] = scl_fourier[posMethod( jfld, 0, jlat, 0 )];
                                 for ( int jm = 1; jm < num_complex; jm++, idx++ ) {
                                     for ( int imag = 0; imag < 2; imag++ ) {
                                         if ( jm <= truncation_ ) {
-                                            fft_in_[idx][imag] = scl_fourier[posFFTW( jfld, imag, jlat, jm )];
+                                            fft_in_[idx][imag] = scl_fourier[posMethod( jfld, imag, jlat, jm )];
                                         }
                                         else {
                                             fft_in_[idx][imag] = 0.;
@@ -480,13 +473,14 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
             else {
                 if ( dgemmMethod1_ ) {
                     // dgemm-method 1
+                    // should be faster for small domains or large truncation
                     double* gp_opt3;
                     alloc_aligned( gp_opt3, nb_fields * grid_.size() );
                     {
                         ATLAS_TRACE( "opt3 Fourier dgemm" );
-                        eckit::linalg::Matrix A( scl_fourier, nb_fields * g.ny(), ( truncation_ + 1 ) * 2 );
-                        eckit::linalg::Matrix B( fourier_, ( truncation_ + 1 ) * 2, g.nxmax() );
-                        eckit::linalg::Matrix C( gp_opt3, nb_fields * g.ny(), g.nxmax() );
+                        eckit::linalg::Matrix A( scl_fourier, nb_fields * nlats, ( truncation_ + 1 ) * 2 );
+                        eckit::linalg::Matrix B( fourier_, ( truncation_ + 1 ) * 2, nlons );
+                        eckit::linalg::Matrix C( gp_opt3, nb_fields * nlats, nlons );
                         eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
                     }
 
@@ -494,11 +488,11 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                     {
                         ATLAS_TRACE( "opt3 transposition in gp-space" );
                         int idx = 0;
-                        for ( int jlon = 0; jlon < g.nxmax(); jlon++ ) {
-                            for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
+                        for ( int jlon = 0; jlon < nlons; jlon++ ) {
+                            for ( int jlat = 0; jlat < nlats; jlat++ ) {
                                 for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
-                                    int pos_tp = jlon + g.nxmax() * ( jlat + g.ny() * ( jfld ) );
-                                    //int pos  = jfld + nb_fields * ( jlat + g.ny() * ( jlon ) );
+                                    int pos_tp = jlon + nlons * ( jlat + nlats * ( jfld ) );
+                                    //int pos  = jfld + nb_fields * ( jlat + nlats * ( jlon ) );
                                     gp_fields[pos_tp] = gp_opt3[idx++];  // = gp_opt3[pos]
                                 }
                             }
@@ -510,9 +504,9 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                     // dgemm-method 2
                     {
                         ATLAS_TRACE( "opt3 Fourier dgemm" );
-                        eckit::linalg::Matrix A( fourier_, g.nxmax(), ( truncation_ + 1 ) * 2 );
-                        eckit::linalg::Matrix B( scl_fourier, ( truncation_ + 1 ) * 2, nb_fields * g.ny() );
-                        eckit::linalg::Matrix C( gp_fields, g.nxmax(), nb_fields * g.ny() );
+                        eckit::linalg::Matrix A( fourier_, nlons, ( truncation_ + 1 ) * 2 );
+                        eckit::linalg::Matrix B( scl_fourier, ( truncation_ + 1 ) * 2, nb_fields * nlats );
+                        eckit::linalg::Matrix C( gp_fields, nlons, nb_fields * nlats );
                         eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
                     }
                 }
