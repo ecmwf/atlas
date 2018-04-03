@@ -127,9 +127,26 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         }
         Grid g_global( grid.name() );
         grid::StructuredGrid gs_global( g_global );
-        if ( nlons < 1.0 * gs_global.nxmax() ) { useFFT_ = false; }
+        nlonsGlobal_  = gs_global.nxmax();
+        jlonMin_      = 0;
+        double lonmin = fmod( g.x( 0, 0 ), 360 );
+        if ( lonmin < 0. ) { lonmin += 360.; }
+        if ( nlons < nlonsGlobal_ ) {
+            double fft_threshold = 0.05;  // fraction of latitudes of the full grid up to which FFT is used.
+            // This threshold needs to be adjusted depending on the dgemm and FFT performance of the machine
+            // on which this code is running!
+            if ( nlons < fft_threshold * nlonsGlobal_ ) { useFFT_ = false; }
+            else {
+                // need to use FFT with cropped grid
+                for ( size_t j = 0; j < nlonsGlobal_; ++j ) {
+                    if ( gs_global.x( j, 0 ) == lonmin ) { jlonMin_ = j; }
+                }
+            }
+        }
+        //Log::info() << "nlats=" << g.ny() << " nlatsGlobal=" << gs_global.ny() << std::endl;
     }
     else {
+        // unstructured grid
         useFFT_   = false;
         nlats     = grid_.size();
         nlons     = grid_.size();
@@ -187,11 +204,11 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
 #if ATLAS_HAVE_FFTW
         {
             ATLAS_TRACE( "opt3 precomp FFTW" );
-            int num_complex = ( nlons / 2 ) + 1;
+            int num_complex = ( nlonsGlobal_ / 2 ) + 1;
             fft_in_         = fftw_alloc_complex( nlats * num_complex );
-            fft_out_        = fftw_alloc_real( nlats * nlons );
-            plan_ = fftw_plan_many_dft_c2r( 1, &nlons, nlats, fft_in_, NULL, 1, num_complex, fft_out_, NULL, 1, nlons,
-                                            FFTW_ESTIMATE );
+            fft_out_        = fftw_alloc_real( nlats * nlonsGlobal_ );
+            plan_ = fftw_plan_many_dft_c2r( 1, &nlonsGlobal_, nlats, fft_in_, NULL, 1, num_complex, fft_out_, NULL, 1,
+                                            nlonsGlobal_, FFTW_ESTIMATE );
         }
             // other FFT implementations should be added with #elif statements
 #else
@@ -302,10 +319,8 @@ void gp_transposeopt3( const int nb_size, const int nb_fields, const double gp_t
 }
 
 //-----------------------------------------------------------------------------
-// Routine to compute the spectral transform by using a localopt3 Fourier
-// transformation
-// for a grid (same latitude for all longitudes, allows to compute Legendre
-// functions
+// Routine to compute the spectral transform by using a localopt3 Fourier transformation
+// for a grid (same latitude for all longitudes, allows to compute Legendre functions
 // once for all longitudes). U and v components are divided by cos(latitude) for
 // nb_vordiv_fields > 0.
 //
@@ -430,7 +445,7 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
             if ( useFFT_ ) {
 #if ATLAS_HAVE_FFTW
                 {
-                    int num_complex = ( nlons / 2 ) + 1;
+                    int num_complex = ( nlonsGlobal_ / 2 ) + 1;
                     {
                         ATLAS_TRACE( "opt3 FFTW" );
                         for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
@@ -449,8 +464,13 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                                 }
                             }
                             fftw_execute_dft_c2r( plan_, fft_in_, fft_out_ );
-                            for ( int j = 0; j < nlats * nlons; j++ ) {
-                                gp_fields[j + jfld * nlats * nlons] = fft_out_[j];
+                            for ( int jlat = 0; jlat < nlats; jlat++ ) {
+                                for ( int jlon = 0; jlon < nlons; jlon++ ) {
+                                    int j = jlon + jlonMin_;
+                                    if ( j >= nlonsGlobal_ ) { j -= nlonsGlobal_; }
+                                    gp_fields[jlon + nlons * ( jlat + nlats * jfld )] =
+                                        fft_out_[j + nlonsGlobal_ * jlat];
+                                }
                             }
                         }
                     }

@@ -117,6 +117,8 @@ private:
     int nlatsNH_;
     int nlatsSH_;
     int nlatsLeg_;
+    int jlonMin_;
+    int nlonsGlobal_;
     bool precompute_;
     double* legendre_sym_;
     double* legendre_asym_;
