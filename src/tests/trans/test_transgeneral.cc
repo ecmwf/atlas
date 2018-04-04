@@ -877,7 +877,7 @@ CASE( "test_trans_hires" ) {
     //Domain testdomain = ZonalBandDomain( {-85., -86.} );
     Domain testdomain = RectangularDomain( {-1., 1.}, {5., 5.5} );
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F1280", testdomain );
+    Grid g( "F5000", testdomain );
     Grid g_global( g.name() );
 
     grid::StructuredGrid gs( g );
@@ -887,7 +887,7 @@ CASE( "test_trans_hires" ) {
     //int trc  = ndgl - 1;  // linear
     int trc = ndgl / 2. - 1;  // cubic
 
-    int nb_scalar = 1000, nb_vordiv = 0;
+    int nb_scalar = 1, nb_vordiv = 0;
 
     for ( auto transType : transTypes ) {
         int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
@@ -967,7 +967,7 @@ CASE( "test_trans_domain" ) {
     functionspace::Spectral spectral( trc );
     functionspace::StructuredColumns gridpoints( g );
 
-    int nb_scalar = 1000, nb_vordiv = 0;
+    int nb_scalar = 1, nb_vordiv = 0;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
     std::vector<double> sp( 2 * N * nb_scalar );
     std::vector<double> vor( 2 * N * nb_vordiv );
@@ -997,7 +997,7 @@ CASE( "test_trans_domain" ) {
                         for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
 
                             if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
-                                 icase < 1 ) {
+                                 icase < 1000 ) {
                                 auto start = std::chrono::system_clock::now();
                                 for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
                                     sp[j] = 0.;

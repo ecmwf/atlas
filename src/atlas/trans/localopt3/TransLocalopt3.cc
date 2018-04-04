@@ -194,8 +194,21 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         }
         alloc_aligned( legendre_sym_, size_sym );
         alloc_aligned( legendre_asym_, size_asym );
-        compute_legendre_polynomialsopt3( truncation_ + 1, nlatsLeg_, lats.data(), legendre_sym_, legendre_asym_,
-                                          legendre_sym_begin_.data(), legendre_asym_begin_.data() );
+        FILE* file_leg;
+        file_leg = fopen( "legendre.bin", "r" );
+        if ( file_leg ) {
+            fread( legendre_sym_, sizeof( double ), size_sym, file_leg );
+            fread( legendre_asym_, sizeof( double ), size_asym, file_leg );
+            fclose( file_leg );
+        }
+        else {
+            compute_legendre_polynomialsopt3( truncation_ + 1, nlatsLeg_, lats.data(), legendre_sym_, legendre_asym_,
+                                              legendre_sym_begin_.data(), legendre_asym_begin_.data() );
+            file_leg = fopen( "legendre.bin", "wb" );
+            fwrite( legendre_sym_, sizeof( double ), size_sym, file_leg );
+            fwrite( legendre_asym_, sizeof( double ), size_asym, file_leg );
+            fclose( file_leg );
+        }
     }
 
     // precomputations for Fourier transformations:
