@@ -853,7 +853,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
 }
 #endif
 //-----------------------------------------------------------------------------
-#if 0
+#if 1
 CASE( "test_trans_hires" ) {
     Log::info() << "test_trans_hires" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -862,28 +862,34 @@ CASE( "test_trans_hires" ) {
     std::ostream& out = Log::info();
     double tolerance  = 1.e-13;
 
-    // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F1280" );
 #if ATLAS_HAVE_TRANS
-    std::string transTypes[4] = {"localopt", "localopt2", "localopt3", "ifs"};
-    //std::string transTypes[2] = {"localopt", "localopt2"};
-    //std::string transTypes[3] = {"localopt", "localopt2", "ifs"};
+    //std::string transTypes[4] = {"localopt", "localopt2", "localopt3", "ifs"};
+    //std::string transTypes[2] = {"localopt2", "localopt3"};
+    std::string transTypes[3] = {"localopt", "localopt2", "localopt3"};
     //std::string transTypes[1] = {"localopt3"};
 #else
     std::string transTypes[1] = {"localopt2"};
 #endif
+
+    //Domain testdomain = ZonalBandDomain( {-90., 90.} );
+    //Domain testdomain = ZonalBandDomain( {-.5, .5} );
+    //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
+    //Domain testdomain = ZonalBandDomain( {-85., -86.} );
+    Domain testdomain = RectangularDomain( {-1., 1.}, {5., 5.5} );
+    // Grid: (Adjust the following line if the test takes too long!)
+    Grid g( "F1280", testdomain );
+    Grid g_global( g.name() );
+
     grid::StructuredGrid gs( g );
-    int ndgl = gs.ny();
+    grid::StructuredGrid gs_global( g_global );
+    Log::info() << "nlats: " << gs.ny() << " nlons:" << gs.nxmax() << std::endl;
+    int ndgl = gs_global.ny();
     //int trc  = ndgl - 1;  // linear
     int trc = ndgl / 2. - 1;  // cubic
 
-    int nb_scalar = 1, nb_vordiv = 0;
+    int nb_scalar = 1000, nb_vordiv = 0;
 
     for ( auto transType : transTypes ) {
-        if ( transType == "ifs" ) { trc = ndgl / 2. - 1; }
-        else {
-            trc = ndgl / 2. - 2;
-        }
         int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
         int icase = 0;
         trans::Trans trans( g, trc, util::Config( "type", transType ) );
@@ -931,7 +937,7 @@ CASE( "test_trans_hires" ) {
 }
 #endif
 //-----------------------------------------------------------------------------
-#if 1
+#if 0
 CASE( "test_trans_domain" ) {
     Log::info() << "test_trans_domain" << std::endl;
     // test transgeneral by comparing with analytic solution on a cropped domain
@@ -943,24 +949,25 @@ CASE( "test_trans_domain" ) {
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
     //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
     //Domain testdomain = ZonalBandDomain( {-85., -86.} );
-    Domain testdomain = RectangularDomain( {-5., 10.}, {5., 6.} );
+    Domain testdomain = RectangularDomain( {-1., 1.}, {5., 5.5} );
     // Grid: (Adjust the following line if the test takes too long!)
     Grid g( "F1280", testdomain );
     Grid g_global( g.name() );
 
     grid::StructuredGrid gs( g );
     grid::StructuredGrid gs_global( g_global );
+    Log::info() << "nlats: " << gs.ny() << " nlons:" << gs.nxmax() << std::endl;
     int ndgl = gs_global.ny();
     //int trc  = ndgl - 1;  // linear
     int trc = ndgl / 2. - 1;  // cubic
-    trans::Trans transLocal1( g, trc, util::Config( "type", "localopt3" ) );
+    trans::Trans transLocal1( g, trc, util::Config( "type", "localopt2" ) );
     trans::Trans transLocal2( g, trc, util::Config( "type", "localopt3" ) );
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 
     functionspace::Spectral spectral( trc );
     functionspace::StructuredColumns gridpoints( g );
 
-    int nb_scalar = 1, nb_vordiv = 0;
+    int nb_scalar = 1000, nb_vordiv = 0;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
     std::vector<double> sp( 2 * N * nb_scalar );
     std::vector<double> vor( 2 * N * nb_vordiv );
@@ -990,7 +997,7 @@ CASE( "test_trans_domain" ) {
                         for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
 
                             if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
-                                 icase < 1000 ) {
+                                 icase < 1 ) {
                                 auto start = std::chrono::system_clock::now();
                                 for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
                                     sp[j] = 0.;

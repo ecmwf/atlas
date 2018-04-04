@@ -96,14 +96,14 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
 #else
     eckit::linalg::LinearAlgebra::backend( "generic" );  // might want to choose backend with this command
 #endif
-    double fft_threshold = 2.;  // 0.05;  // fraction of latitudes of the full grid up to which FFT is used.
+    double fft_threshold = 0.05;  // fraction of latitudes of the full grid up to which FFT is used.
     // This threshold needs to be adjusted depending on the dgemm and FFT performance of the machine
     // on which this code is running!
     int nlats     = 0;
     int nlons     = 0;
     int neqtr     = 0;
     useFFT_       = true;
-    dgemmMethod1_ = true;
+    dgemmMethod1_ = false;
     nlatsNH_      = 0;
     nlatsSH_      = 0;
     nlatsLeg_     = 0;
@@ -323,6 +323,12 @@ void gp_transposeopt3( const int nb_size, const int nb_fields, const double gp_t
 // once for all longitudes). U and v components are divided by cos(latitude) for
 // nb_vordiv_fields > 0.
 //
+// Legendre polynomials are computed up to truncation_+1 to be accurate for vorticity and
+// divergence computation. The parameter truncation is the truncation used in storing the
+// spectral data scalar_spectra and can be different from truncation_. If truncation is
+// larger than truncation_+1 the transform will behave as if the spectral data was truncated
+// to truncation_+1.
+//
 // Author:
 // Andreas Mueller *ECMWF*
 //
@@ -347,7 +353,7 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
             };
             int size_fourier_max = nb_fields * 2 * nlats;
             double* scl_fourier;
-            alloc_aligned( scl_fourier, size_fourier_max * ( truncation + 1 ) );
+            alloc_aligned( scl_fourier, size_fourier_max * ( truncation_ + 1 ) );
 
             // Legendre transform:
             {
@@ -383,9 +389,17 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                             for ( int imag = 0; imag < n_imag; imag++ ) {
                                 for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                                     idx = jfld + nb_fields * ( imag + 2 * ( jn - jm ) );
-                                    if ( ( jn - jm ) % 2 == 0 ) { scalar_sym[is++] = scalar_spectra[idx + ioff]; }
+                                    if ( jn <= truncation && jm < truncation ) {
+                                        if ( ( jn - jm ) % 2 == 0 ) { scalar_sym[is++] = scalar_spectra[idx + ioff]; }
+                                        else {
+                                            scalar_asym[ia++] = scalar_spectra[idx + ioff];
+                                        }
+                                    }
                                     else {
-                                        scalar_asym[ia++] = scalar_spectra[idx + ioff];
+                                        if ( ( jn - jm ) % 2 == 0 ) { scalar_sym[is++] = 0.; }
+                                        else {
+                                            scalar_asym[ia++] = 0.;
+                                        }
                                     }
                                 }
                             }
@@ -477,7 +491,7 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                     double* gp_opt3;
                     alloc_aligned( gp_opt3, nb_fields * grid_.size() );
                     {
-                        ATLAS_TRACE( "opt3 Fourier dgemm" );
+                        ATLAS_TRACE( "opt3 Fourier dgemm method 1" );
                         eckit::linalg::Matrix A( scl_fourier, nb_fields * nlats, ( truncation_ + 1 ) * 2 );
                         eckit::linalg::Matrix B( fourier_, ( truncation_ + 1 ) * 2, nlons );
                         eckit::linalg::Matrix C( gp_opt3, nb_fields * nlats, nlons );
@@ -503,7 +517,7 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                 else {
                     // dgemm-method 2
                     {
-                        ATLAS_TRACE( "opt3 Fourier dgemm" );
+                        ATLAS_TRACE( "opt3 Fourier dgemm method 2" );
                         eckit::linalg::Matrix A( fourier_, nlons, ( truncation_ + 1 ) * 2 );
                         eckit::linalg::Matrix B( scl_fourier, ( truncation_ + 1 ) * 2, nb_fields * nlats );
                         eckit::linalg::Matrix C( gp_fields, nlons, nb_fields * nlats );
@@ -618,11 +632,8 @@ void TransLocalopt3::invtrans( const int nb_scalar_fields, const double scalar_s
                      gp_fields + nb_gp * nb_vordiv_fields, config );
     }
     if ( nb_scalar_fields > 0 ) {
-        int nb_scalar_spec_ext = 2 * legendre_size( truncation_ + 1 ) * nb_scalar_fields;
-        std::vector<double> scalar_spectra_extended( nb_scalar_spec_ext, 0. );
-        extend_truncationopt3( truncation_, nb_scalar_fields, scalar_spectra, scalar_spectra_extended.data() );
-        invtrans_uv( truncation_ + 1, nb_scalar_fields, 0, scalar_spectra_extended.data(),
-                     gp_fields + 2 * nb_gp * nb_vordiv_fields, config );
+        invtrans_uv( truncation_, nb_scalar_fields, 0, scalar_spectra, gp_fields + 2 * nb_gp * nb_vordiv_fields,
+                     config );
     }
 }
 

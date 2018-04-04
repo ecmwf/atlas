@@ -161,12 +161,6 @@ void compute_legendre_polynomialsopt(
         {
             //ATLAS_TRACE( "add to global arrays" );
 
-            // take factor 2 for m > 0 into account:
-            for ( int jm = 1; jm <= trc; ++jm ) {
-                for ( int jn = jm; jn <= trc; ++jn ) {
-                    //legpol[idxmn( jm, jn )] *= 2.;
-                }
-            }
             for ( int jm = 0; jm <= trc; jm++ ) {
                 int is1 = 0, ia1 = 0;
                 for ( int jn = jm; jn <= trc; jn++ ) {
@@ -185,11 +179,11 @@ void compute_legendre_polynomialsopt(
                 //for ( int jn = jm; jn <= trc; jn++ ) {
                 for ( int jn = trc; jn >= jm; jn-- ) {
                     if ( ( jn - jm ) % 2 == 0 ) {
-                        int is      = leg_start_sym[jm] + jlat + nlats * is2++;
+                        int is      = leg_start_sym[jm] + is1 * jlat + is2++;
                         leg_sym[is] = legpol[idxmn( jm, jn )];
                     }
                     else {
-                        int ia       = leg_start_asym[jm] + jlat + nlats * ia2++;
+                        int ia       = leg_start_asym[jm] + ia1 * jlat + ia2++;
                         leg_asym[ia] = legpol[idxmn( jm, jn )];
                     }
                 }

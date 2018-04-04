@@ -111,7 +111,14 @@ private:
 
 private:
     Grid grid_;
+    bool useFFT_;
+    bool dgemmMethod1_;
     int truncation_;
+    int nlatsNH_;
+    int nlatsSH_;
+    int nlatsLeg_;
+    int jlonMin_;
+    int nlonsGlobal_;
     bool precompute_;
     double* legendre_sym_;
     double* legendre_asym_;
