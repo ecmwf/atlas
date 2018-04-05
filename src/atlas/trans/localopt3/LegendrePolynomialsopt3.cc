@@ -204,6 +204,34 @@ void compute_legendre_polynomialsopt3(
     }
 }
 
+void compute_legendre_polynomials_allopt3(
+    const size_t trc,     // truncation (in)
+    const int nlats,      // number of latitudes
+    const double lats[],  // latitudes in radians (in)
+    double legendre[] )   // start indices for different zonal wave numbers, asymmetric part
+{
+    auto legendre_size = [&]( int truncation ) { return ( truncation + 2 ) * ( truncation + 1 ) / 2; };
+    std::vector<double> legpol( legendre_size( trc ) );
+    std::vector<double> zfn( ( trc + 1 ) * ( trc + 1 ) );
+    auto idxmn  = [&]( int jm, int jn ) { return ( 2 * trc + 3 - jm ) * jm / 2 + jn - jm; };
+    auto idxmnl = [&]( int jm, int jn, int jlat ) {
+        return ( 2 * trc + 3 - jm ) * jm / 2 * nlats + jlat * ( trc - jm + 1 ) + jn - jm;
+    };
+    compute_zfnopt3( trc, zfn.data() );
+
+    // Loop over latitudes:
+    for ( int jlat = 0; jlat < nlats; ++jlat ) {
+        // compute legendre polynomials for current latitude:
+        compute_legendre_polynomials_latopt3( trc, lats[jlat], legpol.data(), zfn.data() );
+
+        for ( int jm = 1; jm <= trc; ++jm ) {
+            for ( int jn = jm; jn <= trc; ++jn ) {
+                legendre[idxmnl( jm, jn, jlat )] = legpol[idxmn( jm, jn )];
+            }
+        }
+    }
+}  // namespace trans
+
 // --------------------------------------------------------------------------------------------------------------------
 
 }  // namespace trans

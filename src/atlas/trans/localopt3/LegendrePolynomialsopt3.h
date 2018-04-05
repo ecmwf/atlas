@@ -48,6 +48,11 @@ void compute_legendre_polynomialsopt3(
     size_t leg_start_sym[],     // start indices for different zonal wave numbers, symmetric part
     size_t leg_start_asym[] );  // start indices for different zonal wave numbers, asymmetric part
 
+void compute_legendre_polynomials_allopt3( const size_t trc,     // truncation (in)
+                                           const int nlats,      // number of latitudes
+                                           const double lats[],  // latitudes in radians (in)
+                                           double legendre[] );  // legendre polynomials for all latitudes
+
 // --------------------------------------------------------------------------------------------------------------------
 
 }  // namespace trans

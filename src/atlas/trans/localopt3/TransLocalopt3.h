@@ -120,6 +120,7 @@ private:
     int jlonMin_;
     int nlonsGlobal_;
     bool precompute_;
+    double* legendre_;
     double* legendre_sym_;
     double* legendre_asym_;
     double* fourier_;

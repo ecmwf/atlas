@@ -1098,10 +1098,10 @@ CASE( "test_trans_unstructured" ) {
     }
     Grid gu = grid::UnstructuredGrid( new std::vector<PointXY>( pts ) );
 
-    int trc     = 120;
+    int trc     = 12;
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 
-    int nb_scalar = 100, nb_vordiv = 0;
+    int nb_scalar = 1, nb_vordiv = 0;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
     std::vector<double> sp( 2 * N * nb_scalar );
     std::vector<double> vor( 2 * N * nb_vordiv );
@@ -1133,7 +1133,7 @@ CASE( "test_trans_unstructured" ) {
                             if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
                                  icase < 1000 ) {
                                 auto start = std::chrono::system_clock::now();
-                                trans::Trans transLocal1( g, trc, util::Config( "type", "localopt3" ) );
+                                trans::Trans transLocal1( gu, trc, util::Config( "type", "localopt3" ) );
                                 trans::Trans transLocal2( gu, trc, util::Config( "type", "localopt3" ) );
                                 for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
                                     sp[j] = 0.;
@@ -1158,11 +1158,12 @@ CASE( "test_trans_unstructured" ) {
                                 spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg.data(),
                                                                   rgp_analytic.data(), ivar_in, ivar_out );
 
-                                //Log::info() << icase << " m=" << m << " n=" << n << " imag=" << imag << " structured: ";
+                                Log::info()
+                                    << icase << " m=" << m << " n=" << n << " imag=" << imag << " unstructured: ";
                                 EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
                                                                        div.data(), rgp1.data() ) );
 
-                                //Log::info() << icase << " m=" << m << " n=" << n << " imag=" << imag << " unstructured: ";
+                                Log::info() << icase << " m=" << m << " n=" << n << " imag=" << imag << " structured: ";
                                 EXPECT_NO_THROW( transLocal2.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
                                                                        div.data(), rgp2.data() ) );
 

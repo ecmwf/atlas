@@ -103,7 +103,7 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
     int nlons     = 0;
     int neqtr     = 0;
     useFFT_       = true;
-    dgemmMethod1_ = true;
+    dgemmMethod1_ = false;
     nlatsNH_      = 0;
     nlatsSH_      = 0;
     nlatsLeg_     = 0;
@@ -143,19 +143,8 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
             }
         }
         //Log::info() << "nlats=" << g.ny() << " nlatsGlobal=" << gs_global.ny() << std::endl;
-    }
-    else {
-        // unstructured grid
-        useFFT_   = false;
-        nlats     = grid_.size();
-        nlons     = grid_.size();
-        nlatsNH_  = nlats;
-        nlatsLeg_ = nlats;
-    }
-    std::vector<double> lats( nlatsLeg_ );
-    std::vector<double> lons( nlons );
-    if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
-        grid::StructuredGrid g( grid_ );
+        std::vector<double> lats( nlatsLeg_ );
+        std::vector<double> lons( nlons );
         if ( nlatsNH_ >= nlatsSH_ ) {
             for ( size_t j = 0; j < nlatsLeg_; ++j ) {
                 lats[j] = g.y( j ) * util::Constants::degreesToRadians();
@@ -169,92 +158,86 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
         for ( size_t j = 0; j < nlons; ++j ) {
             lons[j] = g.x( j, 0 ) * util::Constants::degreesToRadians();
         }
-    }
-    else {
-        int j( 0 );
-        for ( PointXY p : grid_.xy() ) {
-            lats[j++] = p.y() * util::Constants::degreesToRadians();
-            lons[j++] = p.x() * util::Constants::degreesToRadians();
-        }
-    }
-    // precomputations for Legendre polynomials:
-    {
-        ATLAS_TRACE( "opt2 precomp Legendre" );
-        int size_sym  = 0;
-        int size_asym = 0;
-        legendre_sym_begin_.resize( truncation_ + 3 );
-        legendre_asym_begin_.resize( truncation_ + 3 );
-        legendre_sym_begin_[0]  = 0;
-        legendre_asym_begin_[0] = 0;
-        for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
-            size_sym += add_padding( num_n( truncation_ + 1, jm, true ) * nlatsLeg_ );
-            size_asym += add_padding( num_n( truncation_ + 1, jm, false ) * nlatsLeg_ );
-            legendre_sym_begin_[jm + 1]  = size_sym;
-            legendre_asym_begin_[jm + 1] = size_asym;
-        }
-        alloc_aligned( legendre_sym_, size_sym );
-        alloc_aligned( legendre_asym_, size_asym );
-        FILE* file_leg;
-        file_leg = fopen( "legendre.bin", "r" );
-        if ( file_leg ) {
-            fread( legendre_sym_, sizeof( double ), size_sym, file_leg );
-            fread( legendre_asym_, sizeof( double ), size_asym, file_leg );
-            fclose( file_leg );
-        }
-        else {
-            compute_legendre_polynomialsopt2( truncation_ + 1, nlatsLeg_, lats.data(), legendre_sym_, legendre_asym_,
-                                              legendre_sym_begin_.data(), legendre_asym_begin_.data() );
-            file_leg = fopen( "legendre.bin", "wb" );
-            fwrite( legendre_sym_, sizeof( double ), size_sym, file_leg );
-            fwrite( legendre_asym_, sizeof( double ), size_asym, file_leg );
-            fclose( file_leg );
-        }
-    }
-
-    // precomputations for Fourier transformations:
-    if ( useFFT_ ) {
-#if ATLAS_HAVE_FFTW
+        // precomputations for Legendre polynomials:
         {
-            ATLAS_TRACE( "opt2 precomp FFTW" );
-            int num_complex = ( nlonsGlobal_ / 2 ) + 1;
-            fft_in_         = fftw_alloc_complex( nlats * num_complex );
-            fft_out_        = fftw_alloc_real( nlats * nlonsGlobal_ );
-            plan_ = fftw_plan_many_dft_c2r( 1, &nlonsGlobal_, nlats, fft_in_, NULL, 1, num_complex, fft_out_, NULL, 1,
-                                            nlonsGlobal_, FFTW_ESTIMATE );
+            ATLAS_TRACE( "opt2 precomp Legendre" );
+            int size_sym  = 0;
+            int size_asym = 0;
+            legendre_sym_begin_.resize( truncation_ + 3 );
+            legendre_asym_begin_.resize( truncation_ + 3 );
+            legendre_sym_begin_[0]  = 0;
+            legendre_asym_begin_[0] = 0;
+            for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
+                size_sym += add_padding( num_n( truncation_ + 1, jm, true ) * nlatsLeg_ );
+                size_asym += add_padding( num_n( truncation_ + 1, jm, false ) * nlatsLeg_ );
+                legendre_sym_begin_[jm + 1]  = size_sym;
+                legendre_asym_begin_[jm + 1] = size_asym;
+            }
+            alloc_aligned( legendre_sym_, size_sym );
+            alloc_aligned( legendre_asym_, size_asym );
+            FILE* file_leg;
+            file_leg = fopen( "legendre.bin", "r" );
+            if ( false ) {  //if ( file_leg ) {
+                fread( legendre_sym_, sizeof( double ), size_sym, file_leg );
+                fread( legendre_asym_, sizeof( double ), size_asym, file_leg );
+                fclose( file_leg );
+            }
+            else {
+                compute_legendre_polynomialsopt2( truncation_ + 1, nlatsLeg_, lats.data(), legendre_sym_,
+                                                  legendre_asym_, legendre_sym_begin_.data(),
+                                                  legendre_asym_begin_.data() );
+                /*file_leg = fopen( "legendre.bin", "wb" );
+                fwrite( legendre_sym_, sizeof( double ), size_sym, file_leg );
+                fwrite( legendre_asym_, sizeof( double ), size_asym, file_leg );
+                fclose( file_leg );*/
+            }
         }
-            // other FFT implementations should be added with #elif statements
-#else
-        useFFT_ = false;                                 // no FFT implemented => default to dgemm
-#endif
-    }
-    if ( !useFFT_ ) {
-        alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlons );
-        if ( dgemmMethod1_ ) {
+
+        // precomputations for Fourier transformations:
+        if ( useFFT_ ) {
+#if ATLAS_HAVE_FFTW
             {
-                ATLAS_TRACE( "opt2 precomp Fourier" );
-                int idx = 0;
-                for ( int jlon = 0; jlon < nlons; jlon++ ) {
-                    double factor = 1.;
-                    for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
-                        if ( jm > 0 ) { factor = 2.; }
-                        fourier_[idx++] = +std::cos( jm * lons[jlon] ) * factor;  // real part
-                        fourier_[idx++] = -std::sin( jm * lons[jlon] ) * factor;  // imaginary part
+                ATLAS_TRACE( "opt2 precomp FFTW" );
+                int num_complex = ( nlonsGlobal_ / 2 ) + 1;
+                fft_in_         = fftw_alloc_complex( nlats * num_complex );
+                fft_out_        = fftw_alloc_real( nlats * nlonsGlobal_ );
+                plan_ = fftw_plan_many_dft_c2r( 1, &nlonsGlobal_, nlats, fft_in_, NULL, 1, num_complex, fft_out_, NULL,
+                                                1, nlonsGlobal_, FFTW_ESTIMATE );
+            }
+                // other FFT implementations should be added with #elif statements
+#else
+            useFFT_ = false;                             // no FFT implemented => default to dgemm
+#endif
+        }
+        if ( !useFFT_ ) {
+            alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlons );
+            if ( dgemmMethod1_ ) {
+                {
+                    ATLAS_TRACE( "opt2 precomp Fourier" );
+                    int idx = 0;
+                    for ( int jlon = 0; jlon < nlons; jlon++ ) {
+                        double factor = 1.;
+                        for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
+                            if ( jm > 0 ) { factor = 2.; }
+                            fourier_[idx++] = +std::cos( jm * lons[jlon] ) * factor;  // real part
+                            fourier_[idx++] = -std::sin( jm * lons[jlon] ) * factor;  // imaginary part
+                        }
                     }
                 }
             }
-        }
-        else {
-            {
-                ATLAS_TRACE( "opt2 precomp Fourier tp" );
-                int idx = 0;
-                for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
-                    double factor = 1.;
-                    if ( jm > 0 ) { factor = 2.; }
-                    for ( int jlon = 0; jlon < nlons; jlon++ ) {
-                        fourier_[idx++] = +std::cos( jm * lons[jlon] ) * factor;  // real part
-                    }
-                    for ( int jlon = 0; jlon < nlons; jlon++ ) {
-                        fourier_[idx++] = -std::sin( jm * lons[jlon] ) * factor;  // imaginary part
+            else {
+                {
+                    ATLAS_TRACE( "opt2 precomp Fourier tp" );
+                    int idx = 0;
+                    for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
+                        double factor = 1.;
+                        if ( jm > 0 ) { factor = 2.; }
+                        for ( int jlon = 0; jlon < nlons; jlon++ ) {
+                            fourier_[idx++] = +std::cos( jm * lons[jlon] ) * factor;  // real part
+                        }
+                        for ( int jlon = 0; jlon < nlons; jlon++ ) {
+                            fourier_[idx++] = -std::sin( jm * lons[jlon] ) * factor;  // imaginary part
+                        }
                     }
                 }
             }
@@ -270,17 +253,19 @@ TransLocalopt2::TransLocalopt2( const Grid& grid, const long truncation, const e
 // --------------------------------------------------------------------------------------------------------------------
 
 TransLocalopt2::~TransLocalopt2() {
-    free_aligned( legendre_sym_ );
-    free_aligned( legendre_asym_ );
-    if ( useFFT_ ) {
+    if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
+        free_aligned( legendre_sym_ );
+        free_aligned( legendre_asym_ );
+        if ( useFFT_ ) {
 #if ATLAS_HAVE_FFTW
-        fftw_destroy_plan( plan_ );
-        fftw_free( fft_in_ );
-        fftw_free( fft_out_ );
+            fftw_destroy_plan( plan_ );
+            fftw_free( fft_in_ );
+            fftw_free( fft_out_ );
 #endif
-    }
-    else {
-        free_aligned( fourier_ );
+        }
+        else {
+            free_aligned( fourier_ );
+        }
     }
 }
 
@@ -561,24 +546,78 @@ void TransLocalopt2::invtrans_uv( const int truncation, const int nb_scalar_fiel
         }  // namespace atlas
         else {
             ATLAS_TRACE( "invtrans_uv unstructured opt2" );
-            int idx = 0;
-            for ( PointXY p : grid_.xy() ) {
-                double lon   = p.x() * util::Constants::degreesToRadians();
-                double lat   = p.y() * util::Constants::degreesToRadians();
-                double trcFT = truncation;
+            grid::UnstructuredGrid gu = grid_;
+            double* zfn;
+            alloc_aligned( zfn, ( truncation + 1 ) * ( truncation + 1 ) );
+            compute_zfnopt2( truncation, zfn );
+            int size_fourier = nb_fields * 2;
+            double* legendre;
+            double* scl_fourier;
+            double* scl_fourier_tp;
+            double* fouriertp;
+            double* gp_opt;
+            alloc_aligned( legendre, legendre_size( truncation + 1 ) );
+            alloc_aligned( scl_fourier, size_fourier * ( truncation + 1 ) );
+            alloc_aligned( scl_fourier_tp, size_fourier * ( truncation + 1 ) );
+            alloc_aligned( fouriertp, 2 * ( truncation + 1 ) );
+            alloc_aligned( gp_opt, nb_fields );
 
+            // loop over all points:
+            for ( int ip = 0; ip < grid_.size(); ip++ ) {
+                PointXY p  = gu.xy( ip );
+                double lon = p.x() * util::Constants::degreesToRadians();
+                double lat = p.y() * util::Constants::degreesToRadians();
+                compute_legendre_polynomials_latopt2( truncation, lat, legendre, zfn );
                 // Legendre transform:
-                //invtrans_legendreopt2( truncation, trcFT, truncation_ + 1, legPol( lat, idx ), nb_fields, scalar_spectra,
-                //                      legReal.data(), legImag.data() );
-
-                // Fourier transform:
-                //invtrans_fourieropt2( trcFT, lon, nb_fields, legReal.data(), legImag.data(),
-                //                     gp_tmp.data() + ( nb_fields * idx ) );
-                for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
-                    //gp_tmp[nb_fields * idx + jfld] /= std::cos( lat );
+                {
+                    //ATLAS_TRACE( "opt Legendre dgemm" );
+                    for ( int jm = 0; jm <= truncation; jm++ ) {
+                        int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
+                        eckit::linalg::Matrix A( eckit::linalg::Matrix(
+                            const_cast<double*>( scalar_spectra ) + nb_fields * 2 * noff, nb_fields * 2, ns ) );
+                        eckit::linalg::Matrix B( legendre + noff, ns, 1 );
+                        eckit::linalg::Matrix C( scl_fourier + jm * size_fourier, nb_fields * 2, 1 );
+                        eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+                    }
                 }
-                ++idx;
+                {
+                    //ATLAS_TRACE( "opt transposition in Fourier" );
+                    int idx = 0;
+                    for ( int jm = 0; jm < truncation + 1; jm++ ) {
+                        for ( int imag = 0; imag < 2; imag++ ) {
+                            for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                                int pos_tp = imag + 2 * ( jm + ( truncation + 1 ) * ( jfld ) );
+                                //int pos  = jfld + nb_fields * ( imag + 2 * ( jm ) );
+                                scl_fourier_tp[pos_tp] = scl_fourier[idx++];  // = scl_fourier[pos]
+                            }
+                        }
+                    }
+                }
+
+                // Fourier transformation:
+                int idx          = 0;
+                fouriertp[idx++] = 1.;  // real part
+                fouriertp[idx++] = 0.;  // imaginary part
+                for ( int jm = 1; jm < truncation + 1; jm++ ) {
+                    fouriertp[idx++] = +2. * std::cos( jm * lon );  // real part
+                    fouriertp[idx++] = -2. * std::sin( jm * lon );  // imaginary part
+                }
+                {
+                    //ATLAS_TRACE( "opt Fourier dgemm" );
+                    eckit::linalg::Matrix A( fouriertp, 1, ( truncation + 1 ) * 2 );
+                    eckit::linalg::Matrix B( scl_fourier_tp, ( truncation + 1 ) * 2, nb_fields );
+                    eckit::linalg::Matrix C( gp_opt, 1, nb_fields );
+                    eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+                    for ( int j = 0; j < nb_fields; j++ ) {
+                        gp_fields[ip + j * grid_.size()] = gp_opt[j];
+                    }
+                }
             }
+            free_aligned( legendre );
+            free_aligned( scl_fourier );
+            free_aligned( scl_fourier_tp );
+            free_aligned( fouriertp );
+            free_aligned( gp_opt );
         }
     }  // namespace trans
 }  // namespace atlas

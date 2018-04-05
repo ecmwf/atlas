@@ -243,6 +243,17 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
             }
         }
     }
+    else {
+        // unstructured grid
+        ATLAS_TRACE( "opt2 precomp unstructured" );
+        std::vector<double> lats( grid_.size() );
+        alloc_aligned( legendre_, legendre_size( truncation_ ) * grid_.size() );
+        int j( 0 );
+        for ( PointXY p : grid_.xy() ) {
+            lats[j++] = p.y() * util::Constants::degreesToRadians();
+        }
+        compute_legendre_polynomials_allopt3( truncation_, grid_.size(), lats.data(), legendre_ );
+    }
 }  // namespace trans
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -266,6 +277,9 @@ TransLocalopt3::~TransLocalopt3() {
         else {
             free_aligned( fourier_ );
         }
+    }
+    else {
+        free_aligned( legendre_ );
     }
 }
 
@@ -550,6 +564,7 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
             double* zfn;
             alloc_aligned( zfn, ( truncation + 1 ) * ( truncation + 1 ) );
             compute_zfnopt3( truncation, zfn );
+            int nlats        = grid_.size();
             int size_fourier = nb_fields * 2;
             double* legendre;
             double* scl_fourier;
@@ -557,33 +572,32 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
             double* fouriertp;
             double* gp_opt;
             alloc_aligned( legendre, legendre_size( truncation + 1 ) );
-            alloc_aligned( scl_fourier, size_fourier * ( truncation + 1 ) );
+            alloc_aligned( scl_fourier, size_fourier * ( truncation + 1 ) * nlats );
             alloc_aligned( scl_fourier_tp, size_fourier * ( truncation + 1 ) );
             alloc_aligned( fouriertp, 2 * ( truncation + 1 ) );
             alloc_aligned( gp_opt, nb_fields );
+
+            {
+                ATLAS_TRACE( "opt Legendre dgemm" );
+                for ( int jm = 0; jm <= truncation; jm++ ) {
+                    int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
+                    eckit::linalg::Matrix A( eckit::linalg::Matrix(
+                        const_cast<double*>( scalar_spectra ) + nb_fields * 2 * noff, nb_fields * 2, ns ) );
+                    eckit::linalg::Matrix B( legendre_ + noff * nlats, ns, nlats );
+                    eckit::linalg::Matrix C( scl_fourier + jm * size_fourier, nb_fields * 2, nlats );
+                    eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+                }
+            }
 
             // loop over all points:
             for ( int ip = 0; ip < grid_.size(); ip++ ) {
                 PointXY p  = gu.xy( ip );
                 double lon = p.x() * util::Constants::degreesToRadians();
                 double lat = p.y() * util::Constants::degreesToRadians();
-                compute_legendre_polynomials_latopt3( truncation, lat, legendre, zfn );
-                // Legendre transform:
-                {
-                    //ATLAS_TRACE( "opt Legendre dgemm" );
-                    for ( int jm = 0; jm <= truncation; jm++ ) {
-                        int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
-                        eckit::linalg::Matrix A( eckit::linalg::Matrix(
-                            const_cast<double*>( scalar_spectra ) + nb_fields * 2 * noff, nb_fields * 2, ns ) );
-                        eckit::linalg::Matrix B( legendre + noff, ns, 1 );
-                        eckit::linalg::Matrix C( scl_fourier + jm * size_fourier, nb_fields * 2, 1 );
-                        eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
-                    }
-                }
                 {
                     //ATLAS_TRACE( "opt transposition in Fourier" );
-                    int idx = 0;
                     for ( int jm = 0; jm < truncation + 1; jm++ ) {
+                        int idx = nb_fields * 2 * ( ip + nlats * jm );
                         for ( int imag = 0; imag < 2; imag++ ) {
                             for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                                 int pos_tp = imag + 2 * ( jm + ( truncation + 1 ) * ( jfld ) );
@@ -619,6 +633,11 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
             free_aligned( fouriertp );
             free_aligned( gp_opt );
         }
+        for ( int j = 0; j < nb_fields * grid_.size(); j++ ) {
+            Log::info() << gp_fields[j] << " ";
+        }
+        Log::info() << std::endl;
+
     }  // namespace trans
 }  // namespace atlas
 
