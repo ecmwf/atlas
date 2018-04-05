@@ -1082,9 +1082,9 @@ CASE( "test_trans_unstructured" ) {
     double tolerance  = 1.e-13;
 
     //Domain testdomain = RectangularDomain( {20., 25.}, {40., 60.} );
-    Domain testdomain = RectangularDomain( {20., 25.}, {45., 50.} );
+    //Domain testdomain = RectangularDomain( {10., 25.}, {35., 50.} );
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F12", testdomain );
+    Grid g( "F120" );
     grid::StructuredGrid gs( g );
     std::vector<PointXY> pts( g.size() );
     int idx( 0 );
@@ -1092,13 +1092,13 @@ CASE( "test_trans_unstructured" ) {
         double lat = gs.y( j );
         for ( size_t i = 0; i < gs.nx( j ); ++i ) {
             double lon = gs.x( i, j );
-            Log::info() << "idx=" << idx << " lon=" << lon << " lat=" << lat << std::endl;
+            //Log::info() << "idx=" << idx << " lon=" << lon << " lat=" << lat << std::endl;
             pts[idx++].assign( lon, lat );
         }
     }
     Grid gu = grid::UnstructuredGrid( new std::vector<PointXY>( pts ) );
 
-    int trc     = 12;
+    int trc     = 120;
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 
     int nb_scalar = 1, nb_vordiv = 0;
@@ -1131,9 +1131,9 @@ CASE( "test_trans_unstructured" ) {
                         for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
 
                             if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
-                                 icase < 1000 ) {
+                                 icase < 1 ) {
                                 auto start = std::chrono::system_clock::now();
-                                trans::Trans transLocal1( gu, trc, util::Config( "type", "localopt3" ) );
+                                trans::Trans transLocal1( g, trc, util::Config( "type", "localopt3" ) );
                                 trans::Trans transLocal2( gu, trc, util::Config( "type", "localopt3" ) );
                                 for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
                                     sp[j] = 0.;
@@ -1158,12 +1158,11 @@ CASE( "test_trans_unstructured" ) {
                                 spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg.data(),
                                                                   rgp_analytic.data(), ivar_in, ivar_out );
 
-                                Log::info()
-                                    << icase << " m=" << m << " n=" << n << " imag=" << imag << " unstructured: ";
+                                //Log::info() << icase << " m=" << m << " n=" << n << " imag=" << imag << " structured: ";
                                 EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
                                                                        div.data(), rgp1.data() ) );
 
-                                Log::info() << icase << " m=" << m << " n=" << n << " imag=" << imag << " structured: ";
+                                //Log::info() << icase << " m=" << m << " n=" << n << " imag=" << imag << " unstructured: ";
                                 EXPECT_NO_THROW( transLocal2.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
                                                                        div.data(), rgp2.data() ) );
 

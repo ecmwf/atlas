@@ -105,6 +105,21 @@ public:
                            double divergence_spectra[], const eckit::Configuration& = util::NoConfig() ) const override;
 
 private:
+    int posMethod( const int jfld, const int imag, const int jlat, const int jm, const int nb_fields,
+                   const int nlats ) const;
+
+    void invtrans_legendreopt3( const int truncation, const int nlats, const int nb_fields,
+                                const double scalar_spectra[], double scl_fourier[],
+                                const eckit::Configuration& config ) const;
+
+    void invtrans_unstructured_precomp( const int truncation, const int nb_scalar_fields, const int nb_vordiv_fields,
+                                        const double scalar_spectra[], double gp_fields[],
+                                        const eckit::Configuration& = util::NoConfig() ) const;
+
+    void invtrans_unstructured( const int truncation, const int nb_fields, const int nb_vordiv_fields,
+                                const double scalar_spectra[], double gp_fields[],
+                                const eckit::Configuration& config ) const;
+
     void invtrans_uv( const int truncation, const int nb_scalar_fields, const int nb_vordiv_fields,
                       const double scalar_spectra[], double gp_fields[],
                       const eckit::Configuration& = util::NoConfig() ) const;
@@ -113,6 +128,7 @@ private:
     Grid grid_;
     bool useFFT_;
     bool dgemmMethod1_;
+    bool unstruct_precomp_;
     int truncation_;
     int nlatsNH_;
     int nlatsSH_;

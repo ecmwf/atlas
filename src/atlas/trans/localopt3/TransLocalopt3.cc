@@ -17,9 +17,7 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/VorDivToUV.h"
 #include "atlas/trans/local/LegendrePolynomials.h"
-#include "atlas/trans/localopt3/FourierTransformsopt3.h"
 #include "atlas/trans/localopt3/LegendrePolynomialsopt3.h"
-#include "atlas/trans/localopt3/LegendreTransformsopt3.h"
 #include "atlas/util/Constants.h"
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Matrix.h"
@@ -99,14 +97,15 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
     double fft_threshold = 0.05;  // fraction of latitudes of the full grid up to which FFT is used.
     // This threshold needs to be adjusted depending on the dgemm and FFT performance of the machine
     // on which this code is running!
-    int nlats     = 0;
-    int nlons     = 0;
-    int neqtr     = 0;
-    useFFT_       = true;
-    dgemmMethod1_ = false;
-    nlatsNH_      = 0;
-    nlatsSH_      = 0;
-    nlatsLeg_     = 0;
+    int nlats         = 0;
+    int nlons         = 0;
+    int neqtr         = 0;
+    useFFT_           = true;
+    dgemmMethod1_     = false;
+    unstruct_precomp_ = true;
+    nlatsNH_          = 0;
+    nlatsSH_          = 0;
+    nlatsLeg_         = 0;
     if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
         grid::StructuredGrid g( grid_ );
         nlats = g.ny();
@@ -245,14 +244,16 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
     }
     else {
         // unstructured grid
-        ATLAS_TRACE( "opt2 precomp unstructured" );
-        std::vector<double> lats( grid_.size() );
-        alloc_aligned( legendre_, legendre_size( truncation_ ) * grid_.size() );
-        int j( 0 );
-        for ( PointXY p : grid_.xy() ) {
-            lats[j++] = p.y() * util::Constants::degreesToRadians();
+        if ( unstruct_precomp_ ) {
+            ATLAS_TRACE( "opt3 precomp unstructured" );
+            std::vector<double> lats( grid_.size() );
+            alloc_aligned( legendre_, legendre_size( truncation_ ) * grid_.size() );
+            int j( 0 );
+            for ( PointXY p : grid_.xy() ) {
+                lats[j++] = p.y() * util::Constants::degreesToRadians();
+            }
+            compute_legendre_polynomials_allopt3( truncation_, grid_.size(), lats.data(), legendre_ );
         }
-        compute_legendre_polynomials_allopt3( truncation_, grid_.size(), lats.data(), legendre_ );
     }
 }  // namespace trans
 
@@ -279,7 +280,7 @@ TransLocalopt3::~TransLocalopt3() {
         }
     }
     else {
-        free_aligned( legendre_ );
+        if ( unstruct_precomp_ ) { free_aligned( legendre_ ); }
     }
 }
 
@@ -329,6 +330,263 @@ void gp_transposeopt3( const int nb_size, const int nb_fields, const double gp_t
     }
 }
 
+int TransLocalopt3::posMethod( const int jfld, const int imag, const int jlat, const int jm, const int nb_fields,
+                               const int nlats ) const {
+    if ( useFFT_ || !dgemmMethod1_ ) { return imag + 2 * ( jm + ( truncation_ + 1 ) * ( jlat + nlats * jfld ) ); }
+    else {
+        return jfld + nb_fields * ( jlat + nlats * ( imag + 2 * ( jm ) ) );
+    };
+};
+
+void TransLocalopt3::invtrans_legendreopt3( const int truncation, const int nlats, const int nb_fields,
+                                            const double scalar_spectra[], double scl_fourier[],
+                                            const eckit::Configuration& config ) const {
+    // Legendre transform:
+    {
+        ATLAS_TRACE( "opt3 Legendre dgemm" );
+        for ( int jm = 0; jm <= truncation_; jm++ ) {
+            int size_sym  = num_n( truncation_ + 1, jm, true );
+            int size_asym = num_n( truncation_ + 1, jm, false );
+            int n_imag    = 2;
+            if ( jm == 0 ) { n_imag = 1; }
+            int size_fourier = nb_fields * n_imag * nlatsLeg_;
+            auto posFourier  = [&]( int jfld, int imag, int jlat, int jm, int nlatsH ) {
+                return jfld + nb_fields * ( imag + n_imag * ( nlatsLeg_ - nlatsH + jlat ) );
+            };
+            double* scalar_sym;
+            double* scalar_asym;
+            double* scl_fourier_sym;
+            double* scl_fourier_asym;
+            alloc_aligned( scalar_sym, n_imag * nb_fields * size_sym );
+            alloc_aligned( scalar_asym, n_imag * nb_fields * size_asym );
+            alloc_aligned( scl_fourier_sym, size_fourier );
+            alloc_aligned( scl_fourier_asym, size_fourier );
+            {
+                //ATLAS_TRACE( "opt3 Legendre split" );
+                int idx = 0, is = 0, ia = 0, ioff = ( 2 * truncation + 3 - jm ) * jm / 2 * nb_fields * 2;
+                // the choice between the following two code lines determines whether
+                // total wavenumbers are summed in an ascending or descending order.
+                // The trans library in IFS uses descending order because it should
+                // be more accurate (higher wavenumbers have smaller contributions).
+                // This also needs to be changed when splitting the spectral data in
+                // compute_legendre_polynomialsopt3!
+                //for ( int jn = jm; jn <= truncation_ + 1; jn++ ) {
+                for ( int jn = truncation_ + 1; jn >= jm; jn-- ) {
+                    for ( int imag = 0; imag < n_imag; imag++ ) {
+                        for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                            idx = jfld + nb_fields * ( imag + 2 * ( jn - jm ) );
+                            if ( jn <= truncation && jm < truncation ) {
+                                if ( ( jn - jm ) % 2 == 0 ) { scalar_sym[is++] = scalar_spectra[idx + ioff]; }
+                                else {
+                                    scalar_asym[ia++] = scalar_spectra[idx + ioff];
+                                }
+                            }
+                            else {
+                                if ( ( jn - jm ) % 2 == 0 ) { scalar_sym[is++] = 0.; }
+                                else {
+                                    scalar_asym[ia++] = 0.;
+                                }
+                            }
+                        }
+                    }
+                }
+                ASSERT( ia == n_imag * nb_fields * size_asym && is == n_imag * nb_fields * size_sym );
+            }
+            {
+                eckit::linalg::Matrix A( scalar_sym, nb_fields * n_imag, size_sym );
+                eckit::linalg::Matrix B( legendre_sym_ + legendre_sym_begin_[jm], size_sym, nlatsLeg_ );
+                eckit::linalg::Matrix C( scl_fourier_sym, nb_fields * n_imag, nlatsLeg_ );
+                eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+            }
+            if ( size_asym > 0 ) {
+                eckit::linalg::Matrix A( scalar_asym, nb_fields * n_imag, size_asym );
+                eckit::linalg::Matrix B( legendre_asym_ + legendre_asym_begin_[jm], size_asym, nlatsLeg_ );
+                eckit::linalg::Matrix C( scl_fourier_asym, nb_fields * n_imag, nlatsLeg_ );
+                eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+            }
+            {
+                //ATLAS_TRACE( "opt3 merge spheres" );
+                // northern hemisphere:
+                for ( int jlat = 0; jlat < nlatsNH_; jlat++ ) {
+                    for ( int imag = 0; imag < n_imag; imag++ ) {
+                        for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                            int idx = posFourier( jfld, imag, jlat, jm, nlatsNH_ );
+                            scl_fourier[posMethod( jfld, imag, jlat, jm, nb_fields, nlats )] =
+                                scl_fourier_sym[idx] + scl_fourier_asym[idx];
+                        }
+                    }
+                }
+                // southern hemisphere:
+                for ( int jlat = 0; jlat < nlatsSH_; jlat++ ) {
+                    for ( int imag = 0; imag < n_imag; imag++ ) {
+                        for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                            int idx   = posFourier( jfld, imag, jlat, jm, nlatsSH_ );
+                            int jslat = nlats - jlat - 1;
+                            scl_fourier[posMethod( jfld, imag, jslat, jm, nb_fields, nlats )] =
+                                scl_fourier_sym[idx] - scl_fourier_asym[idx];
+                        }
+                    }
+                }
+            }
+            free_aligned( scalar_sym );
+            free_aligned( scalar_asym );
+            free_aligned( scl_fourier_sym );
+            free_aligned( scl_fourier_asym );
+        }
+    }
+}
+
+void TransLocalopt3::invtrans_unstructured_precomp( const int truncation, const int nb_fields,
+                                                    const int nb_vordiv_fields, const double scalar_spectra[],
+                                                    double gp_fields[], const eckit::Configuration& config ) const {
+    ATLAS_TRACE( "invtrans_uv unstructured opt3" );
+    grid::UnstructuredGrid gu = grid_;
+    int nlats                 = grid_.size();
+    int size_fourier          = nb_fields * 2;
+    double* legendre;
+    double* scl_fourier;
+    double* scl_fourier_tp;
+    double* fouriertp;
+    double* gp_opt;
+    alloc_aligned( scl_fourier, size_fourier * (truncation)*nlats );
+    alloc_aligned( scl_fourier_tp, size_fourier * ( truncation ) );
+    alloc_aligned( fouriertp, 2 * ( truncation ) );
+    alloc_aligned( gp_opt, nb_fields );
+
+    {
+        ATLAS_TRACE( "opt Legendre dgemm" );
+        for ( int jm = 0; jm < truncation; jm++ ) {
+            int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
+            eckit::linalg::Matrix A( eckit::linalg::Matrix(
+                const_cast<double*>( scalar_spectra ) + nb_fields * 2 * noff, nb_fields * 2, ns ) );
+            eckit::linalg::Matrix B( legendre_ + noff * nlats, ns, nlats );
+            eckit::linalg::Matrix C( scl_fourier + jm * size_fourier * nlats, nb_fields * 2, nlats );
+            eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+        }
+    }
+
+    // loop over all points:
+    for ( int ip = 0; ip < grid_.size(); ip++ ) {
+        PointXY p  = gu.xy( ip );
+        double lon = p.x() * util::Constants::degreesToRadians();
+        double lat = p.y() * util::Constants::degreesToRadians();
+        {
+            //ATLAS_TRACE( "opt transposition in Fourier" );
+            for ( int jm = 0; jm < truncation; jm++ ) {
+                int idx = nb_fields * 2 * ( ip + nlats * jm );
+                for ( int imag = 0; imag < 2; imag++ ) {
+                    for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                        int pos_tp = imag + 2 * ( jm + ( truncation ) * ( jfld ) );
+                        //int pos  = jfld + nb_fields * ( imag + 2 * ( jm ) );
+                        scl_fourier_tp[pos_tp] = scl_fourier[idx++];  // = scl_fourier[pos]
+                    }
+                }
+            }
+        }
+
+        // Fourier transformation:
+        int idx          = 0;
+        fouriertp[idx++] = 1.;  // real part
+        fouriertp[idx++] = 0.;  // imaginary part
+        for ( int jm = 1; jm < truncation; jm++ ) {
+            fouriertp[idx++] = +2. * std::cos( jm * lon );  // real part
+            fouriertp[idx++] = -2. * std::sin( jm * lon );  // imaginary part
+        }
+        {
+            //ATLAS_TRACE( "opt Fourier dgemm" );
+            eckit::linalg::Matrix A( fouriertp, 1, (truncation)*2 );
+            eckit::linalg::Matrix B( scl_fourier_tp, (truncation)*2, nb_fields );
+            eckit::linalg::Matrix C( gp_opt, 1, nb_fields );
+            eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+            for ( int j = 0; j < nb_fields; j++ ) {
+                gp_fields[ip + j * grid_.size()] = gp_opt[j];
+            }
+        }
+    }
+    free_aligned( scl_fourier );
+    free_aligned( scl_fourier_tp );
+    free_aligned( fouriertp );
+    free_aligned( gp_opt );
+}
+
+void TransLocalopt3::invtrans_unstructured( const int truncation, const int nb_fields, const int nb_vordiv_fields,
+                                            const double scalar_spectra[], double gp_fields[],
+                                            const eckit::Configuration& config ) const {
+    ATLAS_TRACE( "invtrans_uv unstructured opt3" );
+    grid::UnstructuredGrid gu = grid_;
+    double* zfn;
+    alloc_aligned( zfn, ( truncation + 1 ) * ( truncation + 1 ) );
+    compute_zfnopt3( truncation, zfn );
+    int size_fourier = nb_fields * 2;
+    double* legendre;
+    double* scl_fourier;
+    double* scl_fourier_tp;
+    double* fouriertp;
+    double* gp_opt;
+    alloc_aligned( legendre, legendre_size( truncation + 1 ) );
+    alloc_aligned( scl_fourier, size_fourier * ( truncation + 1 ) );
+    alloc_aligned( scl_fourier_tp, size_fourier * ( truncation + 1 ) );
+    alloc_aligned( fouriertp, 2 * ( truncation + 1 ) );
+    alloc_aligned( gp_opt, nb_fields );
+
+    // loop over all points:
+    for ( int ip = 0; ip < grid_.size(); ip++ ) {
+        PointXY p  = gu.xy( ip );
+        double lon = p.x() * util::Constants::degreesToRadians();
+        double lat = p.y() * util::Constants::degreesToRadians();
+        compute_legendre_polynomials_latopt3( truncation, lat, legendre, zfn );
+        // Legendre transform:
+        {
+            //ATLAS_TRACE( "opt Legendre dgemm" );
+            for ( int jm = 0; jm <= truncation; jm++ ) {
+                int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
+                eckit::linalg::Matrix A( eckit::linalg::Matrix(
+                    const_cast<double*>( scalar_spectra ) + nb_fields * 2 * noff, nb_fields * 2, ns ) );
+                eckit::linalg::Matrix B( legendre + noff, ns, 1 );
+                eckit::linalg::Matrix C( scl_fourier + jm * size_fourier, nb_fields * 2, 1 );
+                eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+            }
+        }
+        {
+            //ATLAS_TRACE( "opt transposition in Fourier" );
+            int idx = 0;
+            for ( int jm = 0; jm < truncation + 1; jm++ ) {
+                for ( int imag = 0; imag < 2; imag++ ) {
+                    for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                        int pos_tp = imag + 2 * ( jm + ( truncation + 1 ) * ( jfld ) );
+                        //int pos  = jfld + nb_fields * ( imag + 2 * ( jm ) );
+                        scl_fourier_tp[pos_tp] = scl_fourier[idx++];  // = scl_fourier[pos]
+                    }
+                }
+            }
+        }
+
+        // Fourier transformation:
+        int idx          = 0;
+        fouriertp[idx++] = 1.;  // real part
+        fouriertp[idx++] = 0.;  // imaginary part
+        for ( int jm = 1; jm < truncation + 1; jm++ ) {
+            fouriertp[idx++] = +2. * std::cos( jm * lon );  // real part
+            fouriertp[idx++] = -2. * std::sin( jm * lon );  // imaginary part
+        }
+        {
+            //ATLAS_TRACE( "opt Fourier dgemm" );
+            eckit::linalg::Matrix A( fouriertp, 1, ( truncation + 1 ) * 2 );
+            eckit::linalg::Matrix B( scl_fourier_tp, ( truncation + 1 ) * 2, nb_fields );
+            eckit::linalg::Matrix C( gp_opt, 1, nb_fields );
+            eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+            for ( int j = 0; j < nb_fields; j++ ) {
+                gp_fields[ip + j * grid_.size()] = gp_opt[j];
+            }
+        }
+    }
+    free_aligned( legendre );
+    free_aligned( scl_fourier );
+    free_aligned( scl_fourier_tp );
+    free_aligned( fouriertp );
+    free_aligned( gp_opt );
+}
+
 //-----------------------------------------------------------------------------
 // Routine to compute the spectral transform by using a localopt3 Fourier transformation
 // for a grid (same latitude for all longitudes, allows to compute Legendre functions
@@ -353,113 +611,13 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
         // Transform
         if ( grid::StructuredGrid g = grid_ ) {
             ATLAS_TRACE( "invtrans_uv structured opt3" );
-            int nlats      = g.ny();
-            int nlons      = g.nxmax();
-            auto posMethod = [&]( int jfld, int imag, int jlat, int jm ) {
-                if ( useFFT_ || !dgemmMethod1_ ) {
-                    return imag + 2 * ( jm + ( truncation_ + 1 ) * ( jlat + nlats * jfld ) );
-                }
-                else {
-                    return jfld + nb_fields * ( jlat + nlats * ( imag + 2 * ( jm ) ) );
-                };
-            };
+            int nlats            = g.ny();
+            int nlons            = g.nxmax();
             int size_fourier_max = nb_fields * 2 * nlats;
             double* scl_fourier;
             alloc_aligned( scl_fourier, size_fourier_max * ( truncation_ + 1 ) );
+            invtrans_legendreopt3( truncation, nlats, nb_scalar_fields, scalar_spectra, scl_fourier, config );
 
-            // Legendre transform:
-            {
-                ATLAS_TRACE( "opt3 Legendre dgemm" );
-                for ( int jm = 0; jm <= truncation_; jm++ ) {
-                    int size_sym  = num_n( truncation_ + 1, jm, true );
-                    int size_asym = num_n( truncation_ + 1, jm, false );
-                    int n_imag    = 2;
-                    if ( jm == 0 ) { n_imag = 1; }
-                    int size_fourier = nb_fields * n_imag * nlatsLeg_;
-                    auto posFourier  = [&]( int jfld, int imag, int jlat, int jm, int nlatsH ) {
-                        return jfld + nb_fields * ( imag + n_imag * ( nlatsLeg_ - nlatsH + jlat ) );
-                    };
-                    double* scalar_sym;
-                    double* scalar_asym;
-                    double* scl_fourier_sym;
-                    double* scl_fourier_asym;
-                    alloc_aligned( scalar_sym, n_imag * nb_fields * size_sym );
-                    alloc_aligned( scalar_asym, n_imag * nb_fields * size_asym );
-                    alloc_aligned( scl_fourier_sym, size_fourier );
-                    alloc_aligned( scl_fourier_asym, size_fourier );
-                    {
-                        //ATLAS_TRACE( "opt3 Legendre split" );
-                        int idx = 0, is = 0, ia = 0, ioff = ( 2 * truncation + 3 - jm ) * jm / 2 * nb_fields * 2;
-                        // the choice between the following two code lines determines whether
-                        // total wavenumbers are summed in an ascending or descending order.
-                        // The trans library in IFS uses descending order because it should
-                        // be more accurate (higher wavenumbers have smaller contributions).
-                        // This also needs to be changed when splitting the spectral data in
-                        // compute_legendre_polynomialsopt3!
-                        //for ( int jn = jm; jn <= truncation_ + 1; jn++ ) {
-                        for ( int jn = truncation_ + 1; jn >= jm; jn-- ) {
-                            for ( int imag = 0; imag < n_imag; imag++ ) {
-                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
-                                    idx = jfld + nb_fields * ( imag + 2 * ( jn - jm ) );
-                                    if ( jn <= truncation && jm < truncation ) {
-                                        if ( ( jn - jm ) % 2 == 0 ) { scalar_sym[is++] = scalar_spectra[idx + ioff]; }
-                                        else {
-                                            scalar_asym[ia++] = scalar_spectra[idx + ioff];
-                                        }
-                                    }
-                                    else {
-                                        if ( ( jn - jm ) % 2 == 0 ) { scalar_sym[is++] = 0.; }
-                                        else {
-                                            scalar_asym[ia++] = 0.;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        ASSERT( ia == n_imag * nb_fields * size_asym && is == n_imag * nb_fields * size_sym );
-                    }
-                    {
-                        eckit::linalg::Matrix A( scalar_sym, nb_fields * n_imag, size_sym );
-                        eckit::linalg::Matrix B( legendre_sym_ + legendre_sym_begin_[jm], size_sym, nlatsLeg_ );
-                        eckit::linalg::Matrix C( scl_fourier_sym, nb_fields * n_imag, nlatsLeg_ );
-                        eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
-                    }
-                    if ( size_asym > 0 ) {
-                        eckit::linalg::Matrix A( scalar_asym, nb_fields * n_imag, size_asym );
-                        eckit::linalg::Matrix B( legendre_asym_ + legendre_asym_begin_[jm], size_asym, nlatsLeg_ );
-                        eckit::linalg::Matrix C( scl_fourier_asym, nb_fields * n_imag, nlatsLeg_ );
-                        eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
-                    }
-                    {
-                        //ATLAS_TRACE( "opt3 merge spheres" );
-                        // northern hemisphere:
-                        for ( int jlat = 0; jlat < nlatsNH_; jlat++ ) {
-                            for ( int imag = 0; imag < n_imag; imag++ ) {
-                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
-                                    int idx = posFourier( jfld, imag, jlat, jm, nlatsNH_ );
-                                    scl_fourier[posMethod( jfld, imag, jlat, jm )] =
-                                        scl_fourier_sym[idx] + scl_fourier_asym[idx];
-                                }
-                            }
-                        }
-                        // southern hemisphere:
-                        for ( int jlat = 0; jlat < nlatsSH_; jlat++ ) {
-                            for ( int imag = 0; imag < n_imag; imag++ ) {
-                                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
-                                    int idx   = posFourier( jfld, imag, jlat, jm, nlatsSH_ );
-                                    int jslat = nlats - jlat - 1;
-                                    scl_fourier[posMethod( jfld, imag, jslat, jm )] =
-                                        scl_fourier_sym[idx] - scl_fourier_asym[idx];
-                                }
-                            }
-                        }
-                    }
-                    free_aligned( scalar_sym );
-                    free_aligned( scalar_asym );
-                    free_aligned( scl_fourier_sym );
-                    free_aligned( scl_fourier_asym );
-                }
-            }
             // Fourier transformation:
             if ( useFFT_ ) {
 #if ATLAS_HAVE_FFTW
@@ -470,11 +628,12 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
                         for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                             int idx = 0;
                             for ( int jlat = 0; jlat < nlats; jlat++ ) {
-                                fft_in_[idx++][0] = scl_fourier[posMethod( jfld, 0, jlat, 0 )];
+                                fft_in_[idx++][0] = scl_fourier[posMethod( jfld, 0, jlat, 0, nb_fields, nlats )];
                                 for ( int jm = 1; jm < num_complex; jm++, idx++ ) {
                                     for ( int imag = 0; imag < 2; imag++ ) {
                                         if ( jm <= truncation_ ) {
-                                            fft_in_[idx][imag] = scl_fourier[posMethod( jfld, imag, jlat, jm )];
+                                            fft_in_[idx][imag] =
+                                                scl_fourier[posMethod( jfld, imag, jlat, jm, nb_fields, nlats )];
                                         }
                                         else {
                                             fft_in_[idx][imag] = 0.;
@@ -559,84 +718,15 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
             free_aligned( scl_fourier );
         }  // namespace atlas
         else {
-            ATLAS_TRACE( "invtrans_uv unstructured opt3" );
-            grid::UnstructuredGrid gu = grid_;
-            double* zfn;
-            alloc_aligned( zfn, ( truncation + 1 ) * ( truncation + 1 ) );
-            compute_zfnopt3( truncation, zfn );
-            int nlats        = grid_.size();
-            int size_fourier = nb_fields * 2;
-            double* legendre;
-            double* scl_fourier;
-            double* scl_fourier_tp;
-            double* fouriertp;
-            double* gp_opt;
-            alloc_aligned( legendre, legendre_size( truncation + 1 ) );
-            alloc_aligned( scl_fourier, size_fourier * ( truncation + 1 ) * nlats );
-            alloc_aligned( scl_fourier_tp, size_fourier * ( truncation + 1 ) );
-            alloc_aligned( fouriertp, 2 * ( truncation + 1 ) );
-            alloc_aligned( gp_opt, nb_fields );
-
-            {
-                ATLAS_TRACE( "opt Legendre dgemm" );
-                for ( int jm = 0; jm <= truncation; jm++ ) {
-                    int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
-                    eckit::linalg::Matrix A( eckit::linalg::Matrix(
-                        const_cast<double*>( scalar_spectra ) + nb_fields * 2 * noff, nb_fields * 2, ns ) );
-                    eckit::linalg::Matrix B( legendre_ + noff * nlats, ns, nlats );
-                    eckit::linalg::Matrix C( scl_fourier + jm * size_fourier, nb_fields * 2, nlats );
-                    eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
-                }
+            if ( unstruct_precomp_ ) {
+                invtrans_unstructured_precomp( truncation, nb_scalar_fields, nb_vordiv_fields, scalar_spectra,
+                                               gp_fields, config );
             }
-
-            // loop over all points:
-            for ( int ip = 0; ip < grid_.size(); ip++ ) {
-                PointXY p  = gu.xy( ip );
-                double lon = p.x() * util::Constants::degreesToRadians();
-                double lat = p.y() * util::Constants::degreesToRadians();
-                {
-                    //ATLAS_TRACE( "opt transposition in Fourier" );
-                    for ( int jm = 0; jm < truncation + 1; jm++ ) {
-                        int idx = nb_fields * 2 * ( ip + nlats * jm );
-                        for ( int imag = 0; imag < 2; imag++ ) {
-                            for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
-                                int pos_tp = imag + 2 * ( jm + ( truncation + 1 ) * ( jfld ) );
-                                //int pos  = jfld + nb_fields * ( imag + 2 * ( jm ) );
-                                scl_fourier_tp[pos_tp] = scl_fourier[idx++];  // = scl_fourier[pos]
-                            }
-                        }
-                    }
-                }
-
-                // Fourier transformation:
-                int idx          = 0;
-                fouriertp[idx++] = 1.;  // real part
-                fouriertp[idx++] = 0.;  // imaginary part
-                for ( int jm = 1; jm < truncation + 1; jm++ ) {
-                    fouriertp[idx++] = +2. * std::cos( jm * lon );  // real part
-                    fouriertp[idx++] = -2. * std::sin( jm * lon );  // imaginary part
-                }
-                {
-                    //ATLAS_TRACE( "opt Fourier dgemm" );
-                    eckit::linalg::Matrix A( fouriertp, 1, ( truncation + 1 ) * 2 );
-                    eckit::linalg::Matrix B( scl_fourier_tp, ( truncation + 1 ) * 2, nb_fields );
-                    eckit::linalg::Matrix C( gp_opt, 1, nb_fields );
-                    eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
-                    for ( int j = 0; j < nb_fields; j++ ) {
-                        gp_fields[ip + j * grid_.size()] = gp_opt[j];
-                    }
-                }
+            else {
+                invtrans_unstructured( truncation, nb_scalar_fields, nb_vordiv_fields, scalar_spectra, gp_fields,
+                                       config );
             }
-            free_aligned( legendre );
-            free_aligned( scl_fourier );
-            free_aligned( scl_fourier_tp );
-            free_aligned( fouriertp );
-            free_aligned( gp_opt );
         }
-        for ( int j = 0; j < nb_fields * grid_.size(); j++ ) {
-            Log::info() << gp_fields[j] << " ";
-        }
-        Log::info() << std::endl;
 
     }  // namespace trans
 }  // namespace atlas
