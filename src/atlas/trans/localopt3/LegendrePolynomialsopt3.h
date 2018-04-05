@@ -32,6 +32,13 @@ namespace trans {
 // Ported to C++ by:
 // Andreas Mueller *ECMWF*
 //
+void compute_zfnopt3( const size_t trc, double zfn[] );
+
+void compute_legendre_polynomials_latopt3( const size_t trc,  // truncation (in)
+                                           const double lat,  // latitude in radians (in)
+                                           double legpol[],   // legendre polynomials
+                                           double zfn[] );
+
 void compute_legendre_polynomialsopt3(
     const size_t trc,           // truncation (in)
     const int nlats,            // number of latitudes

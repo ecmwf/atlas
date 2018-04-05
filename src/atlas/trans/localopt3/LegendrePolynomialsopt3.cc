@@ -21,6 +21,134 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
+void compute_zfnopt3( const size_t trc, double zfn[] ) {
+    auto idxzfn = [&]( int jn, int jk ) { return jk + ( trc + 1 ) * jn; };
+    int iodd    = 0;
+    // Compute coefficients for Taylor series in Belousov (19) and (21)
+    // Belousov, Swarztrauber use zfn[0]=std::sqrt(2.)
+    // IFS normalisation chosen to be 0.5*Integral(Pnm**2) = 1
+    zfn[idxzfn( 0, 0 )] = 2.;
+    for ( int jn = 1; jn <= trc; ++jn ) {
+        double zfnn = zfn[idxzfn( 0, 0 )];
+        for ( int jgl = 1; jgl <= jn; ++jgl ) {
+            zfnn *= std::sqrt( 1. - 0.25 / ( jgl * jgl ) );
+        }
+        iodd                  = jn % 2;
+        zfn[idxzfn( jn, jn )] = zfnn;
+        for ( int jgl = 2; jgl <= jn - iodd; jgl += 2 ) {
+            double zfjn = ( ( jgl - 1. ) * ( 2. * jn - jgl + 2. ) );  // new factor numerator
+            double zfjd = ( jgl * ( 2. * jn - jgl + 1. ) );           // new factor denominator
+
+            zfn[idxzfn( jn, jn - jgl )] = zfn[idxzfn( jn, jn - jgl + 2 )] * zfjn / zfjd;
+        }
+    }
+}
+
+
+void compute_legendre_polynomials_latopt3( const size_t trc,  // truncation (in)
+                                           const double lat,  // latitude in radians (in)
+                                           double legpol[],   // legendre polynomials
+                                           double zfn[] ) {
+    auto idxmn  = [&]( int jm, int jn ) { return ( 2 * trc + 3 - jm ) * jm / 2 + jn - jm; };
+    auto idxzfn = [&]( int jn, int jk ) { return jk + ( trc + 1 ) * jn; };
+    {  //ATLAS_TRACE( "compute Legendre polynomials" );
+        // --------------------
+        // 1. First two columns
+        // --------------------
+        double zdlx1   = ( M_PI_2 - lat );               // theta
+        double zdlx    = std::cos( zdlx1 );              // cos(theta)
+        double zdlsita = std::sqrt( 1. - zdlx * zdlx );  // sin(theta) (this is how trans library does it)
+
+        legpol[idxmn( 0, 0 )] = 1.;
+        double vsin[trc + 1], vcos[trc + 1];
+        for ( int j = 1; j <= trc; j++ ) {
+            vsin[j] = std::sin( j * zdlx1 );
+        }
+        for ( int j = 1; j <= trc; j++ ) {
+            vcos[j] = std::cos( j * zdlx1 );
+        }
+
+        double zdl1sita = 0.;
+        // if we are less than 1 meter from the pole,
+        if ( std::abs( zdlsita ) <= std::sqrt( std::numeric_limits<double>::epsilon() ) ) {
+            zdlx    = 1.;
+            zdlsita = 0.;
+        }
+        else {
+            zdl1sita = 1. / zdlsita;
+        }
+
+        // ordinary Legendre polynomials from series expansion
+        // ---------------------------------------------------
+
+        // even N
+        for ( int jn = 2; jn <= trc; jn += 2 ) {
+            double zdlk   = 0.5 * zfn[idxzfn( jn, 0 )];
+            double zdlldn = 0.0;
+            double zdsq   = 1. / std::sqrt( jn * ( jn + 1. ) );
+            // represented by only even k
+            for ( int jk = 2; jk <= jn; jk += 2 ) {
+                // normalised ordinary Legendre polynomial == \overbar{P_n}^0
+                zdlk = zdlk + zfn[idxzfn( jn, jk )] * vcos[jk];
+                // normalised associated Legendre polynomial == \overbar{P_n}^1
+                zdlldn = zdlldn + zdsq * zfn[idxzfn( jn, jk )] * jk * vsin[jk];
+            }
+            legpol[idxmn( 0, jn )] = zdlk;
+            legpol[idxmn( 1, jn )] = zdlldn;
+        }
+
+        // odd N
+        for ( int jn = 1; jn <= trc; jn += 2 ) {
+            zfn[idxzfn( jn, 0 )] = 0.;
+            double zdlk          = 0.;
+            double zdlldn        = 0.0;
+            double zdsq          = 1. / std::sqrt( jn * ( jn + 1. ) );
+            // represented by only even k
+            for ( int jk = 1; jk <= jn; jk += 2 ) {
+                // normalised ordinary Legendre polynomial == \overbar{P_n}^0
+                zdlk = zdlk + zfn[idxzfn( jn, jk )] * vcos[jk];
+                // normalised associated Legendre polynomial == \overbar{P_n}^1
+                zdlldn = zdlldn + zdsq * zfn[idxzfn( jn, jk )] * jk * vsin[jk];
+            }
+            legpol[idxmn( 0, jn )] = zdlk;
+            legpol[idxmn( 1, jn )] = zdlldn;
+        }
+
+        // --------------------------------------------------------------
+        // 2. Diagonal (the terms 0,0 and 1,1 have already been computed)
+        //    Belousov, equation (23)
+        // --------------------------------------------------------------
+
+        double zdls = zdl1sita * std::numeric_limits<double>::min();
+        for ( int jn = 2; jn <= trc; ++jn ) {
+            double sq = std::sqrt( ( 2. * jn + 1. ) / ( 2. * jn ) );
+
+            legpol[idxmn( jn, jn )] = legpol[idxmn( jn - 1, jn - 1 )] * zdlsita * sq;
+            if ( std::abs( legpol[idxmn( jn, jn )] ) < zdls ) legpol[idxmn( jn, jn )] = 0.0;
+        }
+
+        // ---------------------------------------------
+        // 3. General recurrence (Belousov, equation 17)
+        // ---------------------------------------------
+
+        for ( int jn = 3; jn <= trc; ++jn ) {
+            for ( int jm = 2; jm < jn; ++jm ) {
+                double cn = ( ( 2. * jn + 1. ) * ( jn + jm - 3. ) * ( jn + jm - 1. ) );  // numerator of c in Belousov
+                double cd = ( ( 2. * jn - 3. ) * ( jn + jm - 2. ) * ( jn + jm ) );       // denominator of c in Belousov
+                double dn = ( ( 2. * jn + 1. ) * ( jn - jm + 1. ) * ( jn + jm - 1. ) );  // numerator of d in Belousov
+                double dd = ( ( 2. * jn - 1. ) * ( jn + jm - 2. ) * ( jn + jm ) );       // denominator of d in Belousov
+                double en = ( ( 2. * jn + 1. ) * ( jn - jm ) );                          // numerator of e in Belousov
+                double ed = ( ( 2. * jn - 1. ) * ( jn + jm ) );                          // denominator of e in Belousov
+
+                legpol[idxmn( jm, jn )] = std::sqrt( cn / cd ) * legpol[idxmn( jm - 2, jn - 2 )] -
+                                          std::sqrt( dn / dd ) * legpol[idxmn( jm - 2, jn - 1 )] * zdlx +
+                                          std::sqrt( en / ed ) * legpol[idxmn( jm, jn - 1 )] * zdlx;
+            }
+        }
+    }
+}
+
+
 void compute_legendre_polynomialsopt3(
     const size_t trc,          // truncation (in)
     const int nlats,           // number of latitudes
@@ -31,133 +159,17 @@ void compute_legendre_polynomialsopt3(
     size_t leg_start_asym[] )  // start indices for different zonal wave numbers, asymmetric part
 {
     auto legendre_size = [&]( int truncation ) { return ( truncation + 2 ) * ( truncation + 1 ) / 2; };
-    array::ArrayT<double> zfn_( trc + 1, trc + 1 );
-    array::ArrayView<double, 2> zfn = array::make_view<double, 2>( zfn_ );
     std::vector<double> legpol( legendre_size( trc ) );
+    std::vector<double> zfn( ( trc + 1 ) * ( trc + 1 ) );
     auto idxmn = [&]( int jm, int jn ) { return ( 2 * trc + 3 - jm ) * jm / 2 + jn - jm; };
-    int iodd;
-
-    // Compute coefficients for Taylor series in Belousov (19) and (21)
-    // Belousov, Swarztrauber use zfn(0,0)=std::sqrt(2.)
-    // IFS normalisation chosen to be 0.5*Integral(Pnm**2) = 1
-    zfn( 0, 0 ) = 2.;
-    for ( int jn = 1; jn <= trc; ++jn ) {
-        double zfnn = zfn( 0, 0 );
-        for ( int jgl = 1; jgl <= jn; ++jgl ) {
-            zfnn *= std::sqrt( 1. - 0.25 / ( jgl * jgl ) );
-        }
-        iodd          = jn % 2;
-        zfn( jn, jn ) = zfnn;
-        for ( int jgl = 2; jgl <= jn - iodd; jgl += 2 ) {
-            double zfjn = ( ( jgl - 1. ) * ( 2. * jn - jgl + 2. ) );  // new factor numerator
-            double zfjd = ( jgl * ( 2. * jn - jgl + 1. ) );           // new factor denominator
-
-            zfn( jn, jn - jgl ) = zfn( jn, jn - jgl + 2 ) * zfjn / zfjd;
-        }
-    }
+    compute_zfnopt3( trc, zfn.data() );
 
     // Loop over latitudes:
     for ( int jlat = 0; jlat < nlats; ++jlat ) {
-        {
-            //ATLAS_TRACE( "compute Legendre polynomials" );
-            // --------------------
-            // 1. First two columns
-            // --------------------
-            double lat     = lats[jlat];
-            double zdlx1   = ( M_PI_2 - lat );               // theta
-            double zdlx    = std::cos( zdlx1 );              // cos(theta)
-            double zdlsita = std::sqrt( 1. - zdlx * zdlx );  // sin(theta) (this is how trans library does it)
+        // compute legendre polynomials for current latitude:
+        compute_legendre_polynomials_latopt3( trc, lats[jlat], legpol.data(), zfn.data() );
 
-            legpol[idxmn( 0, 0 )] = 1.;
-            double vsin[trc + 1], vcos[trc + 1];
-            for ( int j = 1; j <= trc; j++ ) {
-                vsin[j] = std::sin( j * zdlx1 );
-            }
-            for ( int j = 1; j <= trc; j++ ) {
-                vcos[j] = std::cos( j * zdlx1 );
-            }
-
-            double zdl1sita = 0.;
-            // if we are less than 1 meter from the pole,
-            if ( std::abs( zdlsita ) <= std::sqrt( std::numeric_limits<double>::epsilon() ) ) {
-                zdlx    = 1.;
-                zdlsita = 0.;
-            }
-            else {
-                zdl1sita = 1. / zdlsita;
-            }
-
-            // ordinary Legendre polynomials from series expansion
-            // ---------------------------------------------------
-
-            // even N
-            for ( int jn = 2; jn <= trc; jn += 2 ) {
-                double zdlk   = 0.5 * zfn( jn, 0 );
-                double zdlldn = 0.0;
-                double zdsq   = 1. / std::sqrt( jn * ( jn + 1. ) );
-                // represented by only even k
-                for ( int jk = 2; jk <= jn; jk += 2 ) {
-                    // normalised ordinary Legendre polynomial == \overbar{P_n}^0
-                    zdlk = zdlk + zfn( jn, jk ) * vcos[jk];
-                    // normalised associated Legendre polynomial == \overbar{P_n}^1
-                    zdlldn = zdlldn + zdsq * zfn( jn, jk ) * jk * vsin[jk];
-                }
-                legpol[idxmn( 0, jn )] = zdlk;
-                legpol[idxmn( 1, jn )] = zdlldn;
-            }
-
-            // odd N
-            for ( int jn = 1; jn <= trc; jn += 2 ) {
-                zfn( jn, 0 )  = 0.;
-                double zdlk   = 0.;
-                double zdlldn = 0.0;
-                double zdsq   = 1. / std::sqrt( jn * ( jn + 1. ) );
-                // represented by only even k
-                for ( int jk = 1; jk <= jn; jk += 2 ) {
-                    // normalised ordinary Legendre polynomial == \overbar{P_n}^0
-                    zdlk = zdlk + zfn( jn, jk ) * vcos[jk];
-                    // normalised associated Legendre polynomial == \overbar{P_n}^1
-                    zdlldn = zdlldn + zdsq * zfn( jn, jk ) * jk * vsin[jk];
-                }
-                legpol[idxmn( 0, jn )] = zdlk;
-                legpol[idxmn( 1, jn )] = zdlldn;
-            }
-
-            // --------------------------------------------------------------
-            // 2. Diagonal (the terms 0,0 and 1,1 have already been computed)
-            //    Belousov, equation (23)
-            // --------------------------------------------------------------
-
-            double zdls = zdl1sita * std::numeric_limits<double>::min();
-            for ( int jn = 2; jn <= trc; ++jn ) {
-                double sq = std::sqrt( ( 2. * jn + 1. ) / ( 2. * jn ) );
-
-                legpol[idxmn( jn, jn )] = legpol[idxmn( jn - 1, jn - 1 )] * zdlsita * sq;
-                if ( std::abs( legpol[idxmn( jn, jn )] ) < zdls ) legpol[idxmn( jn, jn )] = 0.0;
-            }
-
-            // ---------------------------------------------
-            // 3. General recurrence (Belousov, equation 17)
-            // ---------------------------------------------
-
-            for ( int jn = 3; jn <= trc; ++jn ) {
-                for ( int jm = 2; jm < jn; ++jm ) {
-                    double cn =
-                        ( ( 2. * jn + 1. ) * ( jn + jm - 3. ) * ( jn + jm - 1. ) );     // numerator of c in Belousov
-                    double cd = ( ( 2. * jn - 3. ) * ( jn + jm - 2. ) * ( jn + jm ) );  // denominator of c in Belousov
-                    double dn =
-                        ( ( 2. * jn + 1. ) * ( jn - jm + 1. ) * ( jn + jm - 1. ) );     // numerator of d in Belousov
-                    double dd = ( ( 2. * jn - 1. ) * ( jn + jm - 2. ) * ( jn + jm ) );  // denominator of d in Belousov
-                    double en = ( ( 2. * jn + 1. ) * ( jn - jm ) );                     // numerator of e in Belousov
-                    double ed = ( ( 2. * jn - 1. ) * ( jn + jm ) );                     // denominator of e in Belousov
-
-                    legpol[idxmn( jm, jn )] = std::sqrt( cn / cd ) * legpol[idxmn( jm - 2, jn - 2 )] -
-                                              std::sqrt( dn / dd ) * legpol[idxmn( jm - 2, jn - 1 )] * zdlx +
-                                              std::sqrt( en / ed ) * legpol[idxmn( jm, jn - 1 )] * zdlx;
-                }
-            }
-        }
-
+        // split polynomials into symmetric and antisymmetric parts:
         {
             //ATLAS_TRACE( "add to global arrays" );
 
