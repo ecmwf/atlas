@@ -120,8 +120,12 @@ private:
                                 const double scalar_spectra[], double scl_fourier[],
                                 const eckit::Configuration& config ) const;
 
-    void invtrans_fourieropt3( const int nlats, const int nlons, const int nb_fields, double scl_fourier[],
-                               double gp_fields[], const eckit::Configuration& config ) const;
+    void invtrans_fourier_regularopt3( const int nlats, const int nlons, const int nb_fields, double scl_fourier[],
+                                       double gp_fields[], const eckit::Configuration& config ) const;
+
+    void invtrans_fourier_reducedopt3( const int nlats, const grid::StructuredGrid g, const int nb_fields,
+                                       double scl_fourier[], double gp_fields[],
+                                       const eckit::Configuration& config ) const;
 
     void invtrans_unstructured_precomp( const int truncation, const int nb_scalar_fields, const int nb_vordiv_fields,
                                         const double scalar_spectra[], double gp_fields[],
@@ -137,6 +141,7 @@ private:
 
 private:
     Grid grid_;
+    Grid gridGlobal_;
     bool useFFT_;
     bool dgemmMethod1_;
     bool unstruct_precomp_;
@@ -144,8 +149,12 @@ private:
     int nlatsNH_;
     int nlatsSH_;
     int nlatsLeg_;
-    int jlonMin_;
-    int nlonsGlobal_;
+    std::vector<size_t> jlonMin_;
+    int jlatMin_;
+    int jlatMinLeg_;
+    int nlonsMaxGlobal_;
+    std::vector<size_t> nlonsGlobal_;
+    int nlatsGlobal_;
     bool precompute_;
     double* legendre_;
     double* legendre_sym_;
@@ -158,7 +167,7 @@ private:
 #if ATLAS_HAVE_FFTW
     fftw_complex* fft_in_;
     double* fft_out_;
-    fftw_plan plan_;
+    std::vector<fftw_plan> plans_;
 #endif
 };
 

@@ -94,11 +94,11 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
 #else
     eckit::linalg::LinearAlgebra::backend( "generic" );  // might want to choose backend with this command
 #endif
-    double fft_threshold = 0.05;  // fraction of latitudes of the full grid up to which FFT is used.
+    double fft_threshold = 0.0;  // fraction of latitudes of the full grid up to which FFT is used.
     // This threshold needs to be adjusted depending on the dgemm and FFT performance of the machine
     // on which this code is running!
     int nlats         = 0;
-    int nlons         = 0;
+    int nlonsMax      = 0;
     int neqtr         = 0;
     useFFT_           = true;
     unstruct_precomp_ = true;
@@ -107,8 +107,8 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
     nlatsLeg_         = 0;
     if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
         grid::StructuredGrid g( grid_ );
-        nlats = g.ny();
-        nlons = g.nxmax();
+        nlats    = g.ny();
+        nlonsMax = g.nxmax();
         for ( size_t j = 0; j < nlats; ++j ) {
             // assumptions: latitudes in g.y(j) are monotone and decreasing
             // no assumption on whether we have 0, 1 or 2 latitudes at the equator
@@ -125,24 +125,48 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         else {
             nlatsLeg_ = nlatsSH_;
         }
-        Grid g_global( grid.name() );
-        grid::StructuredGrid gs_global( g_global );
-        nlonsGlobal_  = gs_global.nxmax();
-        jlonMin_      = 0;
-        double lonmin = fmod( g.x( 0, 0 ), 360 );
-        if ( lonmin < 0. ) { lonmin += 360.; }
-        if ( nlons < fft_threshold * nlonsGlobal_ ) { useFFT_ = false; }
+        gridGlobal_ = Grid( grid.name() );
+        grid::StructuredGrid gs_global( gridGlobal_ );
+        nlonsMaxGlobal_ = gs_global.nxmax();
+        jlonMin_.resize( 1 );
+        jlonMin_[0]  = 0;
+        jlatMin_     = 0;
+        nlatsGlobal_ = gs_global.ny();
+        for ( int jlat = 0; jlat < nlatsGlobal_; jlat++ ) {
+            if ( gs_global.y( jlat ) > g.y( 0 ) ) { jlatMin_++; };
+        }
+        int jlatMinLeg_ = jlatMin_;
+        if ( nlatsNH_ < nlatsSH_ ) { jlatMinLeg_ += nlatsNH_ - nlatsSH_; };
+        auto wrapAngle = [&]( double angle ) {
+            double result = fmod( angle, 360 );
+            if ( result < 0. ) { result += 360.; }
+            return result;
+        };
+        double lonmin = wrapAngle( g.x( 0, 0 ) );
+        if ( nlonsMax < fft_threshold * nlonsMaxGlobal_ ) { useFFT_ = false; }
         else {
-            if ( nlons < nlonsGlobal_ ) {
-                // need to use FFT with cropped grid
-                for ( size_t j = 0; j < nlonsGlobal_; ++j ) {
-                    if ( gs_global.x( j, 0 ) == lonmin ) { jlonMin_ = j; }
+            // need to use FFT with cropped grid
+            if ( grid::RegularGrid( gridGlobal_ ) ) {
+                for ( size_t jlon = 0; jlon < nlonsMaxGlobal_; ++jlon ) {
+                    if ( gs_global.x( jlon, 0 ) < lonmin ) { jlonMin_[0]++; }
+                }
+            }
+            else {
+                nlonsGlobal_.resize( nlats );
+                jlonMin_.resize( nlats );
+                for ( size_t jlat = 0; jlat < nlats; jlat++ ) {
+                    double lonmin      = wrapAngle( g.x( 0, jlat ) );
+                    nlonsGlobal_[jlat] = gs_global.nx( jlat + jlatMin_ );
+                    jlonMin_[jlat]     = 0;
+                    for ( size_t jlon = 0; jlon < nlonsGlobal_[jlat]; ++jlon ) {
+                        if ( gs_global.x( jlon, jlat + jlatMin_ ) < lonmin ) { jlonMin_[jlat]++; }
+                    }
                 }
             }
         }
         //Log::info() << "nlats=" << g.ny() << " nlatsGlobal=" << gs_global.ny() << std::endl;
         std::vector<double> lats( nlatsLeg_ );
-        std::vector<double> lons( nlons );
+        std::vector<double> lons( nlonsMax );
         if ( nlatsNH_ >= nlatsSH_ ) {
             for ( size_t j = 0; j < nlatsLeg_; ++j ) {
                 lats[j] = g.y( j ) * util::Constants::degreesToRadians();
@@ -153,7 +177,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
                 lats[idx] = -g.y( j ) * util::Constants::degreesToRadians();
             }
         }
-        for ( size_t j = 0; j < nlons; ++j ) {
+        for ( size_t j = 0; j < nlonsMax; ++j ) {
             lons[j] = g.x( j, 0 ) * util::Constants::degreesToRadians();
         }
         // precomputations for Legendre polynomials:
@@ -196,11 +220,37 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
 #if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
             {
                 ATLAS_TRACE( "opt3 precomp FFTW" );
-                int num_complex = ( nlonsGlobal_ / 2 ) + 1;
+                int num_complex = ( nlonsMaxGlobal_ / 2 ) + 1;
                 fft_in_         = fftw_alloc_complex( nlats * num_complex );
-                fft_out_        = fftw_alloc_real( nlats * nlonsGlobal_ );
-                plan_ = fftw_plan_many_dft_c2r( 1, &nlonsGlobal_, nlats, fft_in_, NULL, 1, num_complex, fft_out_, NULL,
-                                                1, nlonsGlobal_, FFTW_ESTIMATE );
+                fft_out_        = fftw_alloc_real( nlats * nlonsMaxGlobal_ );
+                if ( grid::RegularGrid( gridGlobal_ ) ) {
+                    plans_.resize( 1 );
+                    FILE* file_fftw;
+                    file_fftw = fopen( "wisdom.bin", "r" );
+                    if ( file_fftw ) {
+                        fftw_import_wisdom_from_file( file_fftw );
+                        fclose( file_fftw );
+                    }
+                    plans_[0] = fftw_plan_many_dft_c2r( 1, &nlonsMaxGlobal_, nlats, fft_in_, NULL, 1, num_complex,
+                                                        fft_out_, NULL, 1, nlonsMaxGlobal_, FFTW_ESTIMATE );
+                }
+                else {
+                    plans_.resize( nlatsLeg_ );
+                    FILE* file_fftw;
+                    file_fftw = fopen( "wisdom.bin", "r" );
+                    if ( file_fftw ) {
+                        fftw_import_wisdom_from_file( file_fftw );
+                        fclose( file_fftw );
+                    }
+                    for ( int j = 0; j < nlatsLeg_; j++ ) {
+                        int nlonsGlobalj = gs_global.nx( jlatMinLeg_ + j );
+                        //ASSERT( nlonsGlobalj > 0 && nlonsGlobalj <= nlonsMaxGlobal_ );
+                        plans_[j] = fftw_plan_dft_c2r_1d( nlonsGlobalj, fft_in_, fft_out_, FFTW_ESTIMATE );
+                    }
+                    file_fftw = fopen( "wisdom.bin", "wb" );
+                    fftw_export_wisdom_to_file( file_fftw );
+                    fclose( file_fftw );
+                }
             }
                 // other FFT implementations should be added with #elif statements
 #else
@@ -208,7 +258,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
 #endif
         }
         if ( !useFFT_ ) {
-            alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlons );
+            alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlonsMax );
 #if !TRANSLOCAL_DGEMM2
             {
                 ATLAS_TRACE( "opt3 precomp Fourier tp" );
@@ -216,10 +266,10 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
                 for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
                     double factor = 1.;
                     if ( jm > 0 ) { factor = 2.; }
-                    for ( int jlon = 0; jlon < nlons; jlon++ ) {
+                    for ( int jlon = 0; jlon < nlonsMax; jlon++ ) {
                         fourier_[idx++] = +std::cos( jm * lons[jlon] ) * factor;  // real part
                     }
-                    for ( int jlon = 0; jlon < nlons; jlon++ ) {
+                    for ( int jlon = 0; jlon < nlonsMax; jlon++ ) {
                         fourier_[idx++] = -std::sin( jm * lons[jlon] ) * factor;  // imaginary part
                     }
                 }
@@ -228,7 +278,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
             {
                 ATLAS_TRACE( "opt3 precomp Fourier" );
                 int idx = 0;
-                for ( int jlon = 0; jlon < nlons; jlon++ ) {
+                for ( int jlon = 0; jlon < nlonsMax; jlon++ ) {
                     double factor = 1.;
                     for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
                         if ( jm > 0 ) { factor = 2.; }
@@ -268,7 +318,9 @@ TransLocalopt3::~TransLocalopt3() {
         free_aligned( legendre_asym_ );
         if ( useFFT_ ) {
 #if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
-            fftw_destroy_plan( plan_ );
+            for ( int j = 0; j < plans_.size(); j++ ) {
+                fftw_destroy_plan( plans_[j] );
+            }
             fftw_free( fft_in_ );
             fftw_free( fft_out_ );
 #endif
@@ -434,15 +486,16 @@ void TransLocalopt3::invtrans_legendreopt3( const int truncation, const int nlat
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans_fourieropt3( const int nlats, const int nlons, const int nb_fields, double scl_fourier[],
-                                           double gp_fields[], const eckit::Configuration& config ) const {
+void TransLocalopt3::invtrans_fourier_regularopt3( const int nlats, const int nlons, const int nb_fields,
+                                                   double scl_fourier[], double gp_fields[],
+                                                   const eckit::Configuration& config ) const {
     // Fourier transformation:
     if ( useFFT_ ) {
 #if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
         {
-            int num_complex = ( nlonsGlobal_ / 2 ) + 1;
+            int num_complex = ( nlonsMaxGlobal_ / 2 ) + 1;
             {
-                ATLAS_TRACE( "opt3 FFTW" );
+                ATLAS_TRACE( "opt3 FFTW regular" );
                 for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                     int idx = 0;
                     for ( int jlat = 0; jlat < nlats; jlat++ ) {
@@ -459,12 +512,12 @@ void TransLocalopt3::invtrans_fourieropt3( const int nlats, const int nlons, con
                             }
                         }
                     }
-                    fftw_execute_dft_c2r( plan_, fft_in_, fft_out_ );
+                    fftw_execute_dft_c2r( plans_[0], fft_in_, fft_out_ );
                     for ( int jlat = 0; jlat < nlats; jlat++ ) {
                         for ( int jlon = 0; jlon < nlons; jlon++ ) {
-                            int j = jlon + jlonMin_;
-                            if ( j >= nlonsGlobal_ ) { j -= nlonsGlobal_; }
-                            gp_fields[jlon + nlons * ( jlat + nlats * jfld )] = fft_out_[j + nlonsGlobal_ * jlat];
+                            int j = jlon + jlonMin_[0];
+                            if ( j >= nlonsMaxGlobal_ ) { j -= nlonsMaxGlobal_; }
+                            gp_fields[jlon + nlons * ( jlat + nlats * jfld )] = fft_out_[j + nlonsMaxGlobal_ * jlat];
                         }
                     }
                 }
@@ -504,6 +557,98 @@ void TransLocalopt3::invtrans_fourieropt3( const int nlats, const int nlons, con
                 for ( int jlat = 0; jlat < nlats; jlat++ ) {
                     for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                         int pos_tp = jlon + nlons * ( jlat + nlats * ( jfld ) );
+                        //int pos  = jfld + nb_fields * ( jlat + nlats * ( jlon ) );
+                        gp_fields[pos_tp] = gp_opt3[idx++];  // = gp_opt3[pos]
+                    }
+                }
+            }
+        }
+        free_aligned( gp_opt3 );
+#endif
+    }
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+
+void TransLocalopt3::invtrans_fourier_reducedopt3( const int nlats, const grid::StructuredGrid g, const int nb_fields,
+                                                   double scl_fourier[], double gp_fields[],
+                                                   const eckit::Configuration& config ) const {
+    // Fourier transformation:
+    int nlonsMax = g.nxmax();
+    if ( useFFT_ ) {
+#if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
+        {
+            {
+                ATLAS_TRACE( "opt3 FFTW reduced" );
+                int jgp = 0;
+                for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                    for ( int jlat = 0; jlat < nlats; jlat++ ) {
+                        int idx           = 0;
+                        int num_complex   = ( nlonsGlobal_[jlat] / 2 ) + 1;
+                        fft_in_[idx++][0] = scl_fourier[posMethod( jfld, 0, jlat, 0, nb_fields, nlats )];
+                        for ( int jm = 1; jm < num_complex; jm++, idx++ ) {
+                            for ( int imag = 0; imag < 2; imag++ ) {
+                                if ( jm <= truncation_ ) {
+                                    fft_in_[idx][imag] =
+                                        scl_fourier[posMethod( jfld, imag, jlat, jm, nb_fields, nlats )];
+                                }
+                                else {
+                                    fft_in_[idx][imag] = 0.;
+                                }
+                            }
+                        }
+                        //Log::info() << std::endl;
+                        //Log::info() << jlat << "out:" << std::endl;
+                        int jplan = nlatsLeg_ - nlatsNH_ + jlat;
+                        if ( jplan >= nlatsLeg_ ) { jplan = nlats - 1 + nlatsLeg_ - nlatsSH_ - jlat; };
+                        //ASSERT( jplan < nlatsLeg_ && jplan >= 0 );
+                        fftw_execute_dft_c2r( plans_[jplan], fft_in_, fft_out_ );
+                        for ( int jlon = 0; jlon < g.nx( jlat ); jlon++ ) {
+                            int j = jlon + jlonMin_[jlat];
+                            if ( j >= nlonsGlobal_[jlat] ) { j -= nlonsGlobal_[jlat]; }
+                            //Log::info() << fft_out_[j] << " ";
+                            ASSERT( j < nlonsMaxGlobal_ );
+                            gp_fields[jgp++] = fft_out_[j];
+                        }
+                        //Log::info() << std::endl;
+                    }
+                }
+            }
+        }
+#endif
+    }
+    else {
+#if !TRANSLOCAL_DGEMM2
+        // dgemm-method 1
+        {
+            ATLAS_TRACE( "opt3 Fourier dgemm method 1" );
+            eckit::linalg::Matrix A( fourier_, nlonsMax, ( truncation_ + 1 ) * 2 );
+            eckit::linalg::Matrix B( scl_fourier, ( truncation_ + 1 ) * 2, nb_fields * nlats );
+            eckit::linalg::Matrix C( gp_fields, nlonsMax, nb_fields * nlats );
+            eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+        }
+#else
+        // dgemm-method 2
+        // should be faster for small domains or large truncation
+        // but have not found any significant speedup so far
+        double* gp_opt3;
+        alloc_aligned( gp_opt3, nb_fields * grid_.size() );
+        {
+            ATLAS_TRACE( "opt3 Fourier dgemm method 2" );
+            eckit::linalg::Matrix A( scl_fourier, nb_fields * nlats, ( truncation_ + 1 ) * 2 );
+            eckit::linalg::Matrix B( fourier_, ( truncation_ + 1 ) * 2, nlonsMax );
+            eckit::linalg::Matrix C( gp_opt3, nb_fields * nlats, nlonsMax );
+            eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+        }
+
+        // Transposition in grid point space:
+        {
+            ATLAS_TRACE( "opt3 transposition in gp-space" );
+            int idx = 0;
+            for ( int jlon = 0; jlon < nlonsMax; jlon++ ) {
+                for ( int jlat = 0; jlat < nlats; jlat++ ) {
+                    for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+                        int pos_tp = jlon + nlonsMax * ( jlat + nlats * ( jfld ) );
                         //int pos  = jfld + nb_fields * ( jlat + nlats * ( jlon ) );
                         gp_fields[pos_tp] = gp_opt3[idx++];  // = gp_opt3[pos]
                     }
@@ -569,14 +714,18 @@ void TransLocalopt3::invtrans_unstructured_precomp( const int truncation, const 
             }
 
             // Fourier transformation:
-            int idx          = 0;
-            fouriertp[idx++] = 1.;  // real part
-            fouriertp[idx++] = 0.;  // imaginary part
-            for ( int jm = 1; jm < truncation; jm++ ) {
-                fouriertp[idx++] = +2. * std::cos( jm * lon );  // real part
-                fouriertp[idx++] = -2. * std::sin( jm * lon );  // imaginary part
+            {
+                //ATLAS_TRACE( "opt compute fouriertp" );
+                int idx          = 0;
+                fouriertp[idx++] = 1.;  // real part
+                fouriertp[idx++] = 0.;  // imaginary part
+                for ( int jm = 1; jm < truncation; jm++ ) {
+                    fouriertp[idx++] = +2. * std::cos( jm * lon );  // real part
+                    fouriertp[idx++] = -2. * std::sin( jm * lon );  // imaginary part
+                }
             }
             {
+                //ATLAS_TRACE( "opt Fourier dgemm" );
                 eckit::linalg::Matrix A( fouriertp, 1, (truncation)*2 );
                 eckit::linalg::Matrix B( scl_fourier_tp, (truncation)*2, nb_fields );
                 eckit::linalg::Matrix C( gp_opt, 1, nb_fields );
@@ -707,7 +856,12 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
             invtrans_legendreopt3( truncation, nlats, nb_scalar_fields, scalar_spectra, scl_fourier, config );
 
             // Fourier transformation:
-            invtrans_fourieropt3( nlats, nlons, nb_fields, scl_fourier, gp_fields, config );
+            if ( grid::RegularGrid( gridGlobal_ ) ) {
+                invtrans_fourier_regularopt3( nlats, nlons, nb_fields, scl_fourier, gp_fields, config );
+            }
+            else {
+                invtrans_fourier_reducedopt3( nlats, g, nb_fields, scl_fourier, gp_fields, config );
+            }
 
             // Computing u,v from U,V:
             {

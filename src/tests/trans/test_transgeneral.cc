@@ -938,7 +938,7 @@ CASE( "test_trans_hires" ) {
 }
 #endif
 //-----------------------------------------------------------------------------
-#if 0
+#if 1
 CASE( "test_trans_domain" ) {
     Log::info() << "test_trans_domain" << std::endl;
     // test transgeneral by comparing with analytic solution on a cropped domain
@@ -950,9 +950,9 @@ CASE( "test_trans_domain" ) {
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
     //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
     //Domain testdomain = ZonalBandDomain( {-85., -86.} );
-    Domain testdomain = RectangularDomain( {-1., 1.}, {5., 5.5} );
+    Domain testdomain = RectangularDomain( {-2., 2.}, {20., 30.} );
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F1280", testdomain );
+    Grid g( "O1280" );
     Grid g_global( g.name() );
 
     grid::StructuredGrid gs( g );
@@ -960,8 +960,9 @@ CASE( "test_trans_domain" ) {
     Log::info() << "nlats: " << gs.ny() << " nlons:" << gs.nxmax() << std::endl;
     int ndgl = gs_global.ny();
     //int trc  = ndgl - 1;  // linear
-    int trc = ndgl / 2. - 1;  // cubic
-    trans::Trans transLocal1( g, trc, util::Config( "type", "localopt2" ) );
+    //int trc = ndgl / 2. - 1;  // cubic
+    int trc = 120;
+    trans::Trans transLocal1( g, trc, util::Config( "type", "ifs" ) );
     trans::Trans transLocal2( g, trc, util::Config( "type", "localopt3" ) );
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 
@@ -998,7 +999,7 @@ CASE( "test_trans_domain" ) {
                         for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
 
                             if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
-                                 icase < 1000 ) {
+                                 icase < 1 ) {
                                 auto start = std::chrono::system_clock::now();
                                 for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
                                     sp[j] = 0.;
@@ -1037,6 +1038,17 @@ CASE( "test_trans_domain" ) {
                                 double rms_gen2 =
                                     compute_rms( g.size(), rgp2.data() + pos * g.size(), rgp_analytic.data() );
 
+                                //Log::info() << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
+                                //            << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl
+                                //            << "rgp2:";
+                                //for ( int j = 0; j < g.size(); j++ ) {
+                                //    Log::info() << rgp2[pos * g.size() + j] << " ";
+                                //};
+                                //Log::info() << std::endl << "analytic:";
+                                //for ( int j = 0; j < g.size(); j++ ) {
+                                //    Log::info() << rgp_analytic[j] << " ";
+                                //};
+                                //Log::info() << std::endl;
                                 rav1 += rms_gen1;
                                 rav2 += rms_gen2;
                                 if ( !( rms_gen1 < tolerance ) || !( rms_gen2 < tolerance ) ) {
@@ -1073,7 +1085,7 @@ CASE( "test_trans_domain" ) {
 #endif
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-#if 1
+#if 0
 CASE( "test_trans_unstructured" ) {
     Log::info() << "test_trans_unstructured" << std::endl;
     // test transgeneral by comparing with analytic solution on an unstructured grid
