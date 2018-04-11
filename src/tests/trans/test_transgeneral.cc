@@ -981,7 +981,7 @@ CASE( "test_trans_domain" ) {
     functionspace::Spectral spectral( trc );
     functionspace::StructuredColumns gridpoints( g );
 
-    int nb_scalar = 1, nb_vordiv = 0;
+    int nb_scalar = 2, nb_vordiv = 2;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
     std::vector<double> sp( 2 * N * nb_scalar );
     std::vector<double> vor( 2 * N * nb_vordiv );
@@ -1124,10 +1124,10 @@ CASE( "test_trans_unstructured" ) {
     }
     Grid gu = grid::UnstructuredGrid( new std::vector<PointXY>( &pts[0], &pts[idx] ) );
     Log::info() << "gu: size=" << gu.size() << std::endl;
-    int trc     = 1280;
+    int trc     = 120;
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 
-    int nb_scalar = 1, nb_vordiv = 0;
+    int nb_scalar = 1, nb_vordiv = 1;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
     std::vector<double> sp( 2 * N * nb_scalar );
     std::vector<double> vor( 2 * N * nb_vordiv );

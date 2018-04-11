@@ -125,7 +125,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
 #else
     eckit::linalg::LinearAlgebra::backend( "generic" );  // might want to choose backend with this command
 #endif
-    double fft_threshold = 0.0;  // fraction of latitudes of the full grid up to which FFT is used.
+    double fft_threshold = 0.0;  // fraction of latitudes of the full grid down to which FFT is used.
     // This threshold needs to be adjusted depending on the dgemm and FFT performance of the machine
     // on which this code is running!
     int nlats         = 0;
@@ -832,6 +832,16 @@ void TransLocalopt3::invtrans_unstructured_precomp( const int truncation, const 
                     gp_fields[ip + j * grid_.size()] = gp_opt[j];
                 }
             }
+            // Computing u,v from U,V:
+            {
+                if ( nb_vordiv_fields > 0 ) {
+                    //ATLAS_TRACE( "opt3 u,v from U,V" );
+                    double coslat = std::cos( lat );
+                    for ( int j = 0; j < nb_fields; j++ ) {
+                        gp_fields[ip + j * grid_.size()] /= coslat;
+                    }
+                }
+            }
         }
     }
     free_aligned( scl_fourier );
@@ -910,6 +920,16 @@ void TransLocalopt3::invtrans_unstructured( const int truncation, const int nb_f
             eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
             for ( int j = 0; j < nb_fields; j++ ) {
                 gp_fields[ip + j * grid_.size()] = gp_opt[j];
+            }
+        }
+        // Computing u,v from U,V:
+        {
+            if ( nb_vordiv_fields > 0 ) {
+                //ATLAS_TRACE( "opt3 u,v from U,V" );
+                double coslat = std::cos( lat );
+                for ( int j = 0; j < nb_fields; j++ ) {
+                    gp_fields[ip + j * grid_.size()] /= coslat;
+                }
             }
         }
     }
