@@ -154,6 +154,7 @@ private:
     int jlatMinLeg_;
     int nlonsMaxGlobal_;
     std::vector<size_t> nlonsGlobal_;
+    std::vector<int> nlat0_;
     int nlatsGlobal_;
     bool precompute_;
     double* legendre_;

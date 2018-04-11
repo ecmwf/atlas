@@ -457,16 +457,28 @@ void spectral_transform_grid_analytic(
 
     if ( grid::StructuredGrid( grid ) ) {
         grid::StructuredGrid g( grid );
+        Grid gridGlobal( grid.name() );
+        grid::StructuredGrid gs_global( gridGlobal );
+        int nlatsGlobal = gs_global.ny();
+        int jlatMin     = 0;
+        for ( int jlat = 0; jlat < nlatsGlobal; jlat++ ) {
+            if ( gs_global.y( jlat ) > g.y( 0 ) ) { jlatMin++; };
+        }
+
         int idx = 0;
         for ( size_t j = 0; j < g.ny(); ++j ) {
             double lat = g.y( j ) * util::Constants::degreesToRadians();
 
+            int ftrc = trans::fourier_truncation( trc, gs_global.nx( jlatMin + j ), gs_global.nxmax(), gs_global.ny(),
+                                                  lat, grid::RegularGrid( gs_global ) );
+            /*Log::info() << "j=" << j << " ftrc=" << ftrc << " trc=" << trc << " nx=" << gs_global.nx( jlatMin + j )
+                        << " nxmax=" << gs_global.nxmax() << " nlats=" << gs_global.ny() << " lat=" << g.y( j )
+                        << " jlatMin=" << jlatMin << std::endl;*/
             for ( size_t i = 0; i < g.nx( j ); ++i ) {
                 double lon = g.x( i, j ) * util::Constants::degreesToRadians();
 
                 // compute spherical harmonics:
-                if ( trans::fourier_truncation( trc, g.nx( j ), g.nxmax(), g.ny(), lat, grid::RegularGrid( g ) ) >=
-                     m ) {
+                if ( ftrc >= m ) {
                     rgp[idx++] = sphericalharmonics_analytic_point( n, m, imag, lon, lat, ivar_in, ivar_out );
                 }
                 else {
@@ -950,9 +962,9 @@ CASE( "test_trans_domain" ) {
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
     //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
     //Domain testdomain = ZonalBandDomain( {-85., -86.} );
-    Domain testdomain = RectangularDomain( {-2., 2.}, {20., 30.} );
+    Domain testdomain = RectangularDomain( {15., 20.}, {10., 20.} );
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "O1280" );
+    Grid g( "O120" );
     Grid g_global( g.name() );
 
     grid::StructuredGrid gs( g );
@@ -999,7 +1011,7 @@ CASE( "test_trans_domain" ) {
                         for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
 
                             if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
-                                 icase < 1 ) {
+                                 icase < 1000 ) {
                                 auto start = std::chrono::system_clock::now();
                                 for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
                                     sp[j] = 0.;
