@@ -77,6 +77,10 @@ StructuredMeshGenerator::StructuredMeshGenerator( const eckit::Parametrisation& 
     bool unique_pole;
     if ( p.get( "unique_pole", unique_pole ) ) options.set( "unique_pole", unique_pole );
 
+    bool force_include_pole;
+    if ( p.get( "force_include_north_pole", force_include_pole ) ) options.set( "force_include_north_pole", force_include_pole );
+    if ( p.get( "force_include_south_pole", force_include_pole ) ) options.set( "force_include_south_pole", force_include_pole );
+
     bool three_dimensional;
     if ( p.get( "three_dimensional", three_dimensional ) || p.get( "3d", three_dimensional ) )
         options.set( "3d", three_dimensional );
@@ -689,24 +693,23 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
     int nparts = options.get<size_t>( "nb_parts" );
     int n, l;
 
-    bool has_point_at_north_pole       = rg.y().front() == 90 && rg.nx().front() > 0;
-    bool has_point_at_south_pole       = rg.y().back() == -90 && rg.nx().back() > 0;
     bool three_dimensional             = options.get<bool>( "3d" );
     bool periodic_east_west            = rg.periodic();
     bool include_periodic_ghost_points = periodic_east_west && !three_dimensional;
     bool remove_periodic_ghost_points  = periodic_east_west && three_dimensional;
 
-    bool include_north_pole = ( mypart == 0 ) && options.get<bool>( "include_pole" ) && !has_point_at_north_pole &&
-                              rg.domain().containsNorthPole();
+    bool has_point_at_north_pole = rg.y().front() == 90 && rg.nx().front() > 0;
+    bool has_point_at_south_pole = rg.y().back() == -90 && rg.nx().back() > 0;
+    bool possible_north_pole = !has_point_at_north_pole && rg.domain().containsNorthPole() && ( mypart == 0 );
+    bool possible_south_pole = !has_point_at_south_pole && rg.domain().containsSouthPole() && ( mypart == nparts - 1 );
 
-    bool include_south_pole = ( mypart == nparts - 1 ) && options.get<bool>( "include_pole" ) &&
-                              !has_point_at_south_pole && rg.domain().containsSouthPole();
+    bool include_north_pole = (possible_north_pole && options.get<bool>( "include_pole" )) || options.get<bool>( "force_include_north_pole" );
+    bool include_south_pole = (possible_south_pole && options.get<bool>( "include_pole" )) || options.get<bool>( "force_include_south_pole" );
+    bool patch_north_pole   =  possible_north_pole && options.get<bool>( "patch_pole" ) && rg.nx( 1 ) > 0;
+    bool patch_south_pole   =  possible_south_pole && options.get<bool>( "patch_pole" ) && rg.nx( rg.ny() - 2 ) > 0;
 
-    bool patch_north_pole = ( mypart == 0 ) && options.get<bool>( "patch_pole" ) && !has_point_at_north_pole &&
-                            rg.domain().containsNorthPole() && rg.nx( 1 ) > 0;
-
-    bool patch_south_pole = ( mypart == nparts - 1 ) && options.get<bool>( "patch_pole" ) && !has_point_at_south_pole &&
-                            rg.domain().containsSouthPole() && rg.nx( rg.ny() - 2 ) > 0;
+    int nnewnodes = (!has_point_at_north_pole && include_north_pole ? 1 : 0)
+                  + (!has_point_at_south_pole && include_south_pole ? 1 : 0);
 
     if ( three_dimensional && nparts != 1 )
         throw BadParameter( "Cannot generate three_dimensional mesh in parallel", Here() );
@@ -735,6 +738,7 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
             if ( region.lat_end[jlat] >= rg.nx( jlat ) ) --nnodes;
         }
     }
+    ASSERT( nnodes >= nnewnodes );
 
 #if DEBUG_OUTPUT
     ATLAS_DEBUG_VAR( include_periodic_ghost_points );
@@ -976,6 +980,9 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
         ++jnode;
     }
 
+    nodes.metadata().set<size_t>( "NbRealPts", size_t(nnodes - nnewnodes) );
+    nodes.metadata().set<size_t>( "NbVirtualPts", size_t(nnewnodes) );
+
     nodes.global_index().metadata().set( "human_readable", true );
     nodes.global_index().metadata().set( "min", 1 );
     nodes.global_index().metadata().set( "max", max_glb_idx );
@@ -992,13 +999,13 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
     array::ArrayView<int, 1> cells_patch                  = array::make_view<int, 1>( mesh.cells().field( "patch" ) );
 
     /*
- * label all patch cells a non-patch
- */
+     * label all patch cells a non-patch
+     */
     cells_patch.assign( 0 );
 
     /*
-Fill in connectivity tables with global node indices first
-*/
+     * Fill in connectivity tables with global node indices first
+     */
     int jcell;
     int jquad       = 0;
     int jtriag      = 0;
