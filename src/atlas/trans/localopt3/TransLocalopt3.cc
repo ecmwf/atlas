@@ -21,7 +21,8 @@
 #include "atlas/util/Constants.h"
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Matrix.h"
-#if ATLAS_HAVE_MKL
+#include "eckit/eckit_config.h"
+#ifdef ECKIT_HAVE_MKL
 #include "mkl.h"
 #endif
 
@@ -56,7 +57,7 @@ int num_n( const int truncation, const int m, const bool symmetric ) {
 }
 
 void alloc_aligned( double*& ptr, size_t n ) {
-#if ATLAS_HAVE_MKL
+#ifdef ECKIT_HAVE_MKL
     int al = 64;
     ptr    = (double*)mkl_malloc( sizeof( double ) * n, al );
 #else
@@ -67,7 +68,7 @@ void alloc_aligned( double*& ptr, size_t n ) {
 }
 
 void free_aligned( double*& ptr ) {
-#if ATLAS_HAVE_MKL
+#ifdef ECKIT_HAVE_MKL
     mkl_free( ptr );
 #else
     free( ptr );
@@ -120,7 +121,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
     truncation_( truncation ),
     precompute_( config.getBool( "precompute", true ) ) {
     ATLAS_TRACE( "Precompute legendre opt3" );
-#if ATLAS_HAVE_MKL
+#ifdef ECKIT_HAVE_MKL
     eckit::linalg::LinearAlgebra::backend( "mkl" );  // might want to choose backend with this command
 #else
     eckit::linalg::LinearAlgebra::backend( "generic" );  // might want to choose backend with this command

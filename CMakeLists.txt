@@ -105,12 +105,6 @@ ecbuild_add_option( FEATURE FFTW
                     DESCRIPTION "Support for fftw"
                     REQUIRED_PACKAGES "FFTW COMPONENTS double" )
 
-### MKL ...
-
-ecbuild_add_option( FEATURE MKL
-                    DESCRIPTION "MKL linear algebra library"
-                    REQUIRED_PACKAGES MKL )
-
 ### trans ...
 
 ecbuild_add_option( FEATURE TRANS
