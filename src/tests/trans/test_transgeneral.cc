@@ -478,7 +478,7 @@ void spectral_transform_grid_analytic(
                 double lon = g.x( i, j ) * util::Constants::degreesToRadians();
 
                 // compute spherical harmonics:
-                if ( ftrc >= m ) {
+                if ( ftrc > m ) {
                     rgp[idx++] = sphericalharmonics_analytic_point( n, m, imag, lon, lat, ivar_in, ivar_out );
                 }
                 else {
@@ -961,36 +961,33 @@ CASE( "test_trans_domain" ) {
     //Domain testdomain = ZonalBandDomain( {-90., 90.} );
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
     //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
-    //Domain testdomain = ZonalBandDomain( {-85., -86.} );
-    Domain testdomain = RectangularDomain( {15., 20.}, {10., 20.} );
+    Domain testdomain1 = ZonalBandDomain( {-10., 5.} );
+    //Domain testdomain1 = RectangularDomain( {-1., 1.}, {50., 55.} );
+    Domain testdomain2 = RectangularDomain( {-1., 1.}, {-5., 40.} );
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "O120" );
-    Grid g_global( g.name() );
+    std::string gridString = "O640";
+    Grid g1( gridString, testdomain1 );
+    Grid g2( gridString, testdomain2 );
 
-    grid::StructuredGrid gs( g );
-    grid::StructuredGrid gs_global( g_global );
-    Log::info() << "nlats: " << gs.ny() << " nlons:" << gs.nxmax() << std::endl;
-    int ndgl = gs_global.ny();
-    //int trc  = ndgl - 1;  // linear
-    //int trc = ndgl / 2. - 1;  // cubic
-    int trc = 120;
-    trans::Trans transLocal1( g, trc, util::Config( "type", "ifs" ) );
-    trans::Trans transLocal2( g, trc, util::Config( "type", "localopt3" ) );
+    int trc = 640;
+    //Log::info() << "rgp1:" << std::endl;
+    trans::Trans transLocal1( g1, trc, util::Config( "type", "localopt3" ) );
+    //Log::info() << "rgp2:" << std::endl;
+    trans::Trans transLocal2( g2, trc, util::Config( "type", "localopt3" ) );
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 
     functionspace::Spectral spectral( trc );
-    functionspace::StructuredColumns gridpoints( g );
 
-    int nb_scalar = 2, nb_vordiv = 2;
+    int nb_scalar = 1, nb_vordiv = 0;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
     std::vector<double> sp( 2 * N * nb_scalar );
     std::vector<double> vor( 2 * N * nb_vordiv );
     std::vector<double> div( 2 * N * nb_vordiv );
     std::vector<double> rspecg( 2 * N );
-    std::vector<double> gp( nb_all * g.size() );
-    std::vector<double> rgp1( nb_all * g.size() );
-    std::vector<double> rgp2( nb_all * g.size() );
-    std::vector<double> rgp_analytic( g.size() );
+    std::vector<double> rgp1( nb_all * g1.size() );
+    std::vector<double> rgp2( nb_all * g2.size() );
+    std::vector<double> rgp1_analytic( g1.size() );
+    std::vector<double> rgp2_analytic( g2.size() );
 
     int icase = 0;
     for ( int ivar_in = 2; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
@@ -1024,41 +1021,54 @@ CASE( "test_trans_domain" ) {
                                 if ( ivar_in == 1 ) div[k * nb_vordiv + jfld] = 1.;
                                 if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
 
-                                for ( int j = 0; j < nb_all * g.size(); j++ ) {
-                                    gp[j]   = 0.;
+                                for ( int j = 0; j < nb_all * g1.size(); j++ ) {
                                     rgp1[j] = 0.;
+                                }
+                                for ( int j = 0; j < nb_all * g2.size(); j++ ) {
                                     rgp2[j] = 0.;
                                 }
-                                for ( int j = 0; j < g.size(); j++ ) {
-                                    rgp_analytic[j] = 0.;
+                                for ( int j = 0; j < g1.size(); j++ ) {
+                                    rgp1_analytic[j] = 0.;
+                                }
+                                for ( int j = 0; j < g2.size(); j++ ) {
+                                    rgp2_analytic[j] = 0.;
                                 }
 
-                                spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg.data(),
-                                                                  rgp_analytic.data(), ivar_in, ivar_out );
+                                spectral_transform_grid_analytic( trc, trc, n, m, imag, g1, rspecg.data(),
+                                                                  rgp1_analytic.data(), ivar_in, ivar_out );
 
+                                spectral_transform_grid_analytic( trc, trc, n, m, imag, g2, rspecg.data(),
+                                                                  rgp2_analytic.data(), ivar_in, ivar_out );
+
+                                //Log::info() << std::endl << "rgp1:";
                                 EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
                                                                        div.data(), rgp1.data() ) );
 
+                                //Log::info() << std::endl << "rgp2:";
                                 EXPECT_NO_THROW( transLocal2.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
                                                                        div.data(), rgp2.data() ) );
 
                                 int pos = ( ivar_out * nb_vordiv + jfld );
 
                                 double rms_gen1 =
-                                    compute_rms( g.size(), rgp1.data() + pos * g.size(), rgp_analytic.data() );
+                                    compute_rms( g1.size(), rgp1.data() + pos * g1.size(), rgp1_analytic.data() );
 
                                 double rms_gen2 =
-                                    compute_rms( g.size(), rgp2.data() + pos * g.size(), rgp_analytic.data() );
+                                    compute_rms( g2.size(), rgp2.data() + pos * g2.size(), rgp2_analytic.data() );
 
                                 //Log::info() << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
                                 //            << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl
-                                //            << "rgp2:";
-                                //for ( int j = 0; j < g.size(); j++ ) {
-                                //    Log::info() << rgp2[pos * g.size() + j] << " ";
+                                //            << "rgp1:";
+                                //for ( int j = 0; j < g1.size(); j++ ) {
+                                //    Log::info() << rgp1[pos * g1.size() + j] << " ";
                                 //};
-                                //Log::info() << std::endl << "analytic:";
-                                //for ( int j = 0; j < g.size(); j++ ) {
-                                //    Log::info() << rgp_analytic[j] << " ";
+                                //Log::info() << std::endl << "rgp2:";
+                                //for ( int j = 0; j < g2.size(); j++ ) {
+                                //    Log::info() << rgp2[pos * g2.size() + j] << " ";
+                                //};
+                                //Log::info() << std::endl << "analytic1:";
+                                //for ( int j = 0; j < g1.size(); j++ ) {
+                                //    Log::info() << rgp1_analytic[j] << " ";
                                 //};
                                 //Log::info() << std::endl;
                                 rav1 += rms_gen1;

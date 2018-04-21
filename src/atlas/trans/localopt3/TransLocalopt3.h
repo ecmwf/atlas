@@ -149,6 +149,8 @@ private:
     int nlatsNH_;
     int nlatsSH_;
     int nlatsLeg_;
+    int nlatsLegReduced_;
+    int nlatsLegDomain_;
     std::vector<size_t> jlonMin_;
     int jlatMin_;
     int jlatMinLeg_;
