@@ -305,35 +305,36 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
                 int num_complex = ( nlonsMaxGlobal_ / 2 ) + 1;
                 fft_in_         = fftw_alloc_complex( nlats * num_complex );
                 fft_out_        = fftw_alloc_real( nlats * nlonsMaxGlobal_ );
+                std::string wisdomString( "" );
+                std::ifstream read( "wisdom.bin" );
+                if ( read.is_open() ) {
+                    std::getline( read, wisdomString );
+                    while ( read ) {
+                        std::string line;
+                        std::getline( read, line );
+                        wisdomString += line;
+                    }
+                }
+                read.close();
+                if ( wisdomString.length() > 0 ) { fftw_import_wisdom_from_string( &wisdomString[0u] ); }
                 if ( grid::RegularGrid( gridGlobal_ ) ) {
                     plans_.resize( 1 );
-                    FILE* file_fftw;
-                    file_fftw = fopen( "wisdom.bin", "r" );
-                    if ( file_fftw ) {
-                        fftw_import_wisdom_from_file( file_fftw );
-                        fclose( file_fftw );
-                    }
                     plans_[0] = fftw_plan_many_dft_c2r( 1, &nlonsMaxGlobal_, nlats, fft_in_, NULL, 1, num_complex,
                                                         fft_out_, NULL, 1, nlonsMaxGlobal_, FFTW_ESTIMATE );
                 }
                 else {
                     plans_.resize( nlatsLegDomain_ );
-                    FILE* file_fftw;
-                    file_fftw = fopen( "wisdom.bin", "r" );
-                    if ( file_fftw ) {
-                        fftw_import_wisdom_from_file( file_fftw );
-                        fclose( file_fftw );
-                    }
                     for ( int j = 0; j < nlatsLegDomain_; j++ ) {
                         int nlonsGlobalj = gs_global.nx( jlatMinLeg_ + j );
                         //ASSERT( nlonsGlobalj > 0 && nlonsGlobalj <= nlonsMaxGlobal_ );
                         plans_[j] = fftw_plan_dft_c2r_1d( nlonsGlobalj, fft_in_, fft_out_, FFTW_ESTIMATE );
                     }
-                    if ( !file_fftw ) {
-                        file_fftw = fopen( "wisdom.bin", "wb" );
-                        fftw_export_wisdom_to_file( file_fftw );
-                        fclose( file_fftw );
-                    }
+                }
+                std::string newWisdom( fftw_export_wisdom_to_string() );
+                if ( 1.1 * wisdomString.length() < newWisdom.length() ) {
+                    std::ofstream write( "wisdom.bin" );
+                    write << newWisdom;
+                    write.close();
                 }
             }
                 // other FFT implementations should be added with #elif statements
