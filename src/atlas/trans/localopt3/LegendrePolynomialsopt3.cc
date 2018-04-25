@@ -158,6 +158,7 @@ void compute_legendre_polynomialsopt3(
     size_t leg_start_sym[],    // start indices for different zonal wave numbers, symmetric part
     size_t leg_start_asym[] )  // start indices for different zonal wave numbers, asymmetric part
 {
+    ATLAS_TRACE();
     auto legendre_size = [&]( int truncation ) { return ( truncation + 2 ) * ( truncation + 1 ) / 2; };
     std::vector<double> legpol( legendre_size( trc ) );
     std::vector<double> zfn( ( trc + 1 ) * ( trc + 1 ) );

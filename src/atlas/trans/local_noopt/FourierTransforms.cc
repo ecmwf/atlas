@@ -13,7 +13,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "atlas/trans/local/FourierTransforms.h"
+#include "atlas/trans/local_noopt/FourierTransforms.h"
 
 namespace atlas {
 namespace trans {

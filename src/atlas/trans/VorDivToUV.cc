@@ -26,10 +26,10 @@
 #else
 #define TRANS_DEFAULT "local"
 #endif
-#include "atlas/trans/local/VorDivToUVLocal.h"
+#include "atlas/trans/local_noopt/VorDivToUVLocal.h"
 #include "atlas/trans/localopt/VorDivToUVLocalopt.h"
 #include "atlas/trans/localopt2/VorDivToUVLocalopt2.h"
-#include "atlas/trans/localopt3/VorDivToUVLocalopt3.h"
+#include "atlas/trans/localopt3/VorDivToUVLocalopt3.h"  // --> recommended "local"
 
 namespace atlas {
 namespace trans {

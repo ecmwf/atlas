@@ -16,12 +16,13 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/VorDivToUV.h"
-#include "atlas/trans/local/LegendrePolynomials.h"
+#include "atlas/trans/local_noopt/LegendrePolynomials.h"
 #include "atlas/trans/localopt3/LegendrePolynomialsopt3.h"
 #include "atlas/util/Constants.h"
 #include "eckit/eckit_config.h"
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Matrix.h"
+#include "eckit/log/Bytes.h"
 #ifdef ECKIT_HAVE_MKL
 #include "mkl.h"
 #endif
@@ -30,7 +31,84 @@ namespace atlas {
 namespace trans {
 
 namespace {
-static TransBuilderGrid<TransLocalopt3> builder( "localopt3" );
+static TransBuilderGrid<TransLocalopt3> builder_deprecated( "localopt3" );
+static TransBuilderGrid<TransLocalopt3> builder( "local" );
+}
+
+namespace {
+class TransParameters {
+public:
+    TransParameters( const eckit::Configuration& config ) : config_( config ) {}
+    ~TransParameters() {}
+
+    bool scalar_derivatives() const { return config_.getBool( "scalar_derivatives", false ); }
+
+    bool wind_EW_derivatives() const { return config_.getBool( "wind_EW_derivatives", false ); }
+
+    bool vorticity_divergence_fields() const { return config_.getBool( "vorticity_divergence_fields", false ); }
+
+    std::string read_legendre() const { return config_.getString( "read_legendre", "" ); }
+
+    std::string write_legendre() const { return config_.getString( "write_legendre", "" ); }
+
+    std::string read_fft() const { return config_.getString( "read_fft", "" ); }
+
+    std::string write_fft() const { return config_.getString( "write_fft", "" ); }
+
+    bool global() const { return config_.getBool( "global", false ); }
+
+private:
+    const eckit::Configuration& config_;
+};
+
+struct ReadCache {
+ReadCache( const void* cache ) {
+    begin = (char*) cache;
+    pos = 0;
+}
+template <typename T>  T* read(size_t size) {
+    T* v = (T*) (begin + pos);
+    pos += size * sizeof(T);
+    return v;
+}
+char*  begin;
+size_t pos;
+};
+
+struct WriteCache {
+WriteCache( const eckit::PathName& file_path, long estimated_length = 0 ) : 
+    dh_( file_path.fileHandle( /*overwrite = */ true ) )
+{
+    dh_->openForWrite( estimated_length );
+    pos = 0;
+}
+~WriteCache() {
+    dh_->close();
+}
+template <typename T> void write( const T* v, long size) {
+    dh_->write( v , size * sizeof(T) );
+    pos += size * sizeof(T);
+}
+std::unique_ptr<eckit::DataHandle> dh_;
+size_t pos;
+};
+
+#if ATLAS_HAVE_FFTW
+struct FFTW_Wisdom {
+    char* wisdom;
+    FFTW_Wisdom() {
+        wisdom = fftw_export_wisdom_to_string();
+    }
+    ~FFTW_Wisdom() {
+        free( wisdom );
+    }
+};
+std::ostream& operator<< (std::ostream& out, const FFTW_Wisdom& w) {
+    out << w.wisdom;
+    return out;
+}
+#endif
+
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -119,7 +197,13 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
                                 const eckit::Configuration& config ) :
     grid_( grid ),
     truncation_( truncation ),
-    precompute_( config.getBool( "precompute", true ) ) {
+    precompute_( config.getBool( "precompute", true ) ),
+    cache_( cache ),
+    legendre_cache_( cache.legendre().data() ),
+    legendre_cachesize_( cache.legendre().size() ),
+    fft_cache_( cache.fft().data() ),
+    fft_cachesize_( cache.fft().size() )
+{
     ATLAS_TRACE( "Precompute legendre opt3" );
 #ifdef ECKIT_HAVE_MKL
     eckit::linalg::LinearAlgebra::backend( "mkl" );  // might want to choose backend with this command
@@ -272,28 +356,38 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
             legendre_sym_begin_[0]  = 0;
             legendre_asym_begin_[0] = 0;
             for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
-                size_sym += add_padding( num_n( truncation_ + 1, jm, true ) * nlatsLeg_ );
+                size_sym  += add_padding( num_n( truncation_ + 1, jm, true  ) * nlatsLeg_ );
                 size_asym += add_padding( num_n( truncation_ + 1, jm, false ) * nlatsLeg_ );
                 legendre_sym_begin_[jm + 1]  = size_sym;
                 legendre_asym_begin_[jm + 1] = size_asym;
             }
-            alloc_aligned( legendre_sym_, size_sym );
-            alloc_aligned( legendre_asym_, size_asym );
-            FILE* file_leg;
-            file_leg = fopen( "legendre.bin", "r" );
-            if ( file_leg ) {
-                fread( legendre_sym_, sizeof( double ), size_sym, file_leg );
-                fread( legendre_asym_, sizeof( double ), size_asym, file_leg );
-                fclose( file_leg );
-            }
-            else {
+
+            if( legendre_cache_ ) {
+                ReadCache legendre( legendre_cache_ );
+                legendre_sym_  = legendre.read<double>( size_sym  );
+                legendre_asym_ = legendre.read<double>( size_asym );
+                ASSERT( legendre.pos == legendre_cachesize_ );
+                // TODO: check this is all aligned...
+            } else {
+
+                alloc_aligned( legendre_sym_, size_sym );
+                alloc_aligned( legendre_asym_, size_asym );
+
                 compute_legendre_polynomialsopt3( truncation_ + 1, nlatsLeg_, lats.data(), legendre_sym_,
                                                   legendre_asym_, legendre_sym_begin_.data(),
                                                   legendre_asym_begin_.data() );
-                file_leg = fopen( "legendre.bin", "wb" );
-                fwrite( legendre_sym_, sizeof( double ), size_sym, file_leg );
-                fwrite( legendre_asym_, sizeof( double ), size_asym, file_leg );
-                fclose( file_leg );
+                std::string file_path = TransParameters(config).write_legendre();
+                if( file_path.size() ) {
+                    ATLAS_TRACE( "write_legendre" );
+                    size_t estimated_length = sizeof(double) * ( size_sym + size_asym );
+                    Log::debug() << "Writing Legendre cache file ..." << std::endl;
+                    Log::debug() << "    path      = " << file_path << std::endl;
+                    Log::debug() << "    estimated = " << eckit::Bytes(estimated_length) << std::endl;
+                    WriteCache legendre( file_path, estimated_length );
+                    legendre.write( legendre_sym_,  size_sym  );
+                    legendre.write( legendre_asym_, size_asym );
+                    Log::debug() << "Cache file size: " << eckit::Bytes(legendre.pos) << std::endl;
+                }
             }
         }
 
@@ -305,18 +399,23 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
                 int num_complex = ( nlonsMaxGlobal_ / 2 ) + 1;
                 fft_in_         = fftw_alloc_complex( nlats * num_complex );
                 fft_out_        = fftw_alloc_real( nlats * nlonsMaxGlobal_ );
-                std::string wisdomString( "" );
-                std::ifstream read( "wisdom.bin" );
-                if ( read.is_open() ) {
-                    std::getline( read, wisdomString );
-                    while ( read ) {
-                        std::string line;
-                        std::getline( read, line );
-                        wisdomString += line;
-                    }
+
+                if( fft_cache_ ) {
+                    Log::debug() << "Import FFTW wisdom from cache" << std::endl;
+                    fftw_import_wisdom_from_string( (const char*)fft_cache_ );
                 }
-                read.close();
-                if ( wisdomString.length() > 0 ) { fftw_import_wisdom_from_string( &wisdomString[0u] ); }
+//                std::string wisdomString( "" );
+//                std::ifstream read( "wisdom.bin" );
+//                if ( read.is_open() ) {
+//                    std::getline( read, wisdomString );
+//                    while ( read ) {
+//                        std::string line;
+//                        std::getline( read, line );
+//                        wisdomString += line;
+//                    }
+//                }
+//                read.close();
+//                if ( wisdomString.length() > 0 ) { fftw_import_wisdom_from_string( &wisdomString[0u] ); }
                 if ( grid::RegularGrid( gridGlobal_ ) ) {
                     plans_.resize( 1 );
                     plans_[0] = fftw_plan_many_dft_c2r( 1, &nlonsMaxGlobal_, nlats, fft_in_, NULL, 1, num_complex,
@@ -330,16 +429,36 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
                         plans_[j] = fftw_plan_dft_c2r_1d( nlonsGlobalj, fft_in_, fft_out_, FFTW_ESTIMATE );
                     }
                 }
-                std::string newWisdom( fftw_export_wisdom_to_string() );
-                if ( 1.1 * wisdomString.length() < newWisdom.length() ) {
-                    std::ofstream write( "wisdom.bin" );
-                    write << newWisdom;
-                    write.close();
+                std::string file_path = TransParameters(config).write_fft();
+                if( file_path.size() ) {
+                    Log::debug() << "Write FFTW wisdom to file " << file_path << std::endl;
+                    //bool success = fftw_export_wisdom_to_filename( "wisdom.bin" );
+                    //ASSERT( success );
+                    //std::ofstream write( file_path );
+                    //write << FFTW_Wisdom();
+
+                    FILE* file_fftw = fopen( file_path.c_str(), "wb" );
+                    fftw_export_wisdom_to_file( file_fftw );
+                    fclose( file_fftw );
+
                 }
+//                std::string newWisdom( fftw_export_wisdom_to_string() );
+//                if ( 1.1 * wisdomString.length() < newWisdom.length() ) {
+//                    std::ofstream write( "wisdom.bin" );
+//                    write << newWisdom;
+//                    write.close();
+//                }
             }
                 // other FFT implementations should be added with #elif statements
 #else
             useFFT_ = false;                             // no FFT implemented => default to dgemm
+            std::string file_path = TransParameters(config).write_fft();
+            if( file_path.size() ) {
+                std::ofstream write( file_path );
+                write << "No cache available, as FFTW is not enabled" << std::endl;
+                write.close();
+            }
+
 #endif
         }
         if ( !useFFT_ ) {
@@ -399,8 +518,10 @@ TransLocalopt3::TransLocalopt3( const Grid& grid, const long truncation, const e
 
 TransLocalopt3::~TransLocalopt3() {
     if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
-        free_aligned( legendre_sym_ );
-        free_aligned( legendre_asym_ );
+        if( not legendre_cache_ ) {
+            free_aligned( legendre_sym_ );
+            free_aligned( legendre_asym_ );
+        }
         if ( useFFT_ ) {
 #if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
             for ( int j = 0; j < plans_.size(); j++ ) {
@@ -662,6 +783,9 @@ void TransLocalopt3::invtrans_fourier_regularopt3( const int nlats, const int nl
 #endif
     }
     else {
+
+        throw eckit::SeriousBug("dgemm for Fourier transforms currently broken. Make sure atlas is compiled with FFTW.",Here());
+
 #if !TRANSLOCAL_DGEMM2
         // dgemm-method 1
         {
@@ -757,9 +881,15 @@ void TransLocalopt3::invtrans_fourier_reducedopt3( const int nlats, const grid::
 #endif
     }
     else {
+
+        throw eckit::SeriousBug("dgemm for Fourier transforms currently broken. Make sure atlas is compiled with FFTW.",Here());
+
 #if !TRANSLOCAL_DGEMM2
         // dgemm-method 1
         {
+#warning dgemm currently broken for Fourier transforms. FFTW required!
+// Noticed that Matrix C is trying to access more than is actually allocated
+// Memory error!!! BEWARE!!!
             ATLAS_TRACE( "opt3 Fourier dgemm method 1" );
             eckit::linalg::Matrix A( fourier_, nlonsMax, ( truncation_ + 1 ) * 2 );
             eckit::linalg::Matrix B( scl_fourier, ( truncation_ + 1 ) * 2, nb_fields * nlats );
@@ -797,6 +927,7 @@ void TransLocalopt3::invtrans_fourier_reducedopt3( const int nlats, const grid::
         free_aligned( gp_opt3 );
 #endif
     }
+
 }
 
 // --------------------------------------------------------------------------------------------------------------------

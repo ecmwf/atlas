@@ -52,6 +52,14 @@ read_legendre::read_legendre( const eckit::PathName& filepath ) {
     set( "read_legendre", filepath );
 }
 
+write_fft::write_fft( const eckit::PathName& filepath ) {
+    set( "write_fft", filepath );
+}
+
+read_fft::read_fft( const eckit::PathName& filepath ) {
+    set( "read_fft", filepath );
+}
+
 nproma::nproma( int nproma ) {
     set( "nproma", nproma );
 }

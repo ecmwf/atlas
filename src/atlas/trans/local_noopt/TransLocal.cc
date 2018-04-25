@@ -8,23 +8,23 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/trans/local/TransLocal.h"
+#include "atlas/trans/local_noopt/TransLocal.h"
 #include "atlas/array.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/VorDivToUV.h"
-#include "atlas/trans/local/FourierTransforms.h"
-#include "atlas/trans/local/LegendrePolynomials.h"
-#include "atlas/trans/local/LegendreTransforms.h"
+#include "atlas/trans/local_noopt/FourierTransforms.h"
+#include "atlas/trans/local_noopt/LegendrePolynomials.h"
+#include "atlas/trans/local_noopt/LegendreTransforms.h"
 #include "atlas/util/Constants.h"
 
 namespace atlas {
 namespace trans {
 
 namespace {
-static TransBuilderGrid<TransLocal> builder( "local" );
+static TransBuilderGrid<TransLocal> builder( "local_noopt" );
 }
 
 // --------------------------------------------------------------------------------------------------------------------

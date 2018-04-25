@@ -172,6 +172,12 @@ private:
     double* fft_out_;
     std::vector<fftw_plan> plans_;
 #endif
+
+    Cache cache_;
+    const void* legendre_cache_{nullptr};
+    size_t legendre_cachesize_{0};
+    const void* fft_cache_{nullptr};
+    size_t fft_cachesize_{0};
 };
 
 //-----------------------------------------------------------------------------

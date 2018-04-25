@@ -29,9 +29,9 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/trans/Trans.h"
-#include "atlas/trans/local/FourierTransforms.h"
-#include "atlas/trans/local/LegendrePolynomials.h"
-#include "atlas/trans/local/LegendreTransforms.h"
+#include "atlas/trans/local_noopt/FourierTransforms.h"
+#include "atlas/trans/local_noopt/LegendrePolynomials.h"
+#include "atlas/trans/local_noopt/LegendreTransforms.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
 
@@ -965,15 +965,23 @@ CASE( "test_trans_domain" ) {
     //Domain testdomain1 = RectangularDomain( {-1., 1.}, {50., 55.} );
     Domain testdomain2 = RectangularDomain( {-1., 1.}, {-5., 40.} );
     // Grid: (Adjust the following line if the test takes too long!)
+
     std::string gridString = "O640";
     Grid g1( gridString, testdomain1 );
     Grid g2( gridString, testdomain2 );
 
     int trc = 640;
     //Log::info() << "rgp1:" << std::endl;
-    trans::Trans transLocal1( g1, trc, util::Config( "type", "localopt3" ) );
+    Trace t1(Here(),"translocal1 construction");
+    trans::Trans transLocal1( g1, trc, option::type("local") | option::write_legendre("legcache.bin") );
+    t1.stop();
     //Log::info() << "rgp2:" << std::endl;
-    trans::Trans transLocal2( g2, trc, util::Config( "type", "localopt3" ) );
+    trans::Cache cache;
+    ATLAS_TRACE_SCOPE("Read cache") cache = trans::LegendreCache("legcache.bin");
+    Trace t2(Here(),"translocal2 construction");
+    trans::Trans transLocal2( cache, g2, trc, option::type("local") );
+    t2.stop();
+
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 
     functionspace::Spectral spectral( trc );

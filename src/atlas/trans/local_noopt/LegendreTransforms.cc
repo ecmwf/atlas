@@ -10,7 +10,7 @@
 
 #include <cstddef>
 
-#include "atlas/trans/local/LegendreTransforms.h"
+#include "atlas/trans/local_noopt/LegendreTransforms.h"
 
 namespace atlas {
 namespace trans {

@@ -16,7 +16,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/VorDivToUV.h"
-#include "atlas/trans/local/LegendrePolynomials.h"
+#include "atlas/trans/local_noopt/LegendrePolynomials.h"
 #include "atlas/trans/localopt/FourierTransformsopt.h"
 #include "atlas/trans/localopt/LegendrePolynomialsopt.h"
 #include "atlas/trans/localopt/LegendreTransformsopt.h"

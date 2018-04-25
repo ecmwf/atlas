@@ -13,7 +13,7 @@
 #include <limits>
 
 #include "atlas/array.h"
-#include "atlas/trans/local/LegendrePolynomials.h"
+#include "atlas/trans/local_noopt/LegendrePolynomials.h"
 
 namespace atlas {
 namespace trans {

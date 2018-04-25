@@ -19,6 +19,8 @@
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/util/Config.h"
+#include "atlas/runtime/Trace.h"
+#include "atlas/runtime/Log.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -55,6 +57,8 @@ class TransCacheFileEntry final : public TransCacheEntry {
 
 public:
     TransCacheFileEntry( const eckit::PathName& path ) : buffer_( path.size() ) {
+        ATLAS_TRACE();
+        Log::debug() << "Loading cache from file " << path << std::endl;
         std::unique_ptr<eckit::DataHandle> dh( path.fileHandle() );
         dh->openForRead();
         dh->read( buffer_.data(), buffer_.size() );
@@ -102,10 +106,24 @@ private:
 class LegendreCache : public Cache {
 public:
     LegendreCache(const void* address, size_t size) :
-        Cache(std::make_shared<atlas::trans::TransCacheMemoryEntry>(address, size)) {
+        Cache( std::make_shared<TransCacheMemoryEntry>( address, size ) ) {
     }
     LegendreCache( const eckit::PathName& path ) :
-        Cache( std::shared_ptr<TransCacheEntry>( new TransCacheFileEntry( path ) ) ) {}
+        Cache( std::shared_ptr<TransCacheEntry>( new TransCacheFileEntry( path ) ) ) {
+    }
+};
+
+class LegendreFFTCache : public Cache {
+public:
+    LegendreFFTCache( const void* legendre_address, size_t legendre_size,
+                      const void* fft_address, size_t fft_size ) :
+        Cache( std::make_shared<TransCacheMemoryEntry>( legendre_address, legendre_size ),
+               std::make_shared<TransCacheMemoryEntry>( fft_address, fft_size ) ) {
+    }
+    LegendreFFTCache( const eckit::PathName& legendre_path, const eckit::PathName& fft_path ) :
+        Cache( std::shared_ptr<TransCacheEntry>( new TransCacheFileEntry( legendre_path ) ),
+               std::shared_ptr<TransCacheEntry>( new TransCacheFileEntry( fft_path ) ) ) {
+    }
 };
 
 class TransImpl : public eckit::Owned {

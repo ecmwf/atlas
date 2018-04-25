@@ -84,6 +84,20 @@ public:
 
 // ----------------------------------------------------------------------------
 
+class write_fft : public util::Config {
+public:
+    write_fft( const eckit::PathName& );
+};
+
+// ----------------------------------------------------------------------------
+
+class read_fft : public util::Config {
+public:
+    read_fft( const eckit::PathName& );
+};
+
+// ----------------------------------------------------------------------------
+
 class nproma : public util::Config {
     nproma( int );
 };

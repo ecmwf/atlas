@@ -21,7 +21,8 @@ namespace atlas {
 namespace trans {
 
 namespace {
-static VorDivToUVBuilder<VorDivToUVLocalopt3> builder( "localopt3" );
+static VorDivToUVBuilder<VorDivToUVLocalopt3> builder_deprecated( "localopt3" );
+static VorDivToUVBuilder<VorDivToUVLocalopt3> builder( "local" );
 }
 
 // --------------------------------------------------------------------------------------------------------------------

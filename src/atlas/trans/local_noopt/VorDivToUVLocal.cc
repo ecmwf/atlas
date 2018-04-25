@@ -9,7 +9,7 @@
  */
 
 #include <cmath>  // for std::sqrt
-#include "atlas/trans/local/VorDivToUVLocal.h"
+#include "atlas/trans/local_noopt/VorDivToUVLocal.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Earth.h"
@@ -21,7 +21,7 @@ namespace atlas {
 namespace trans {
 
 namespace {
-static VorDivToUVBuilder<VorDivToUVLocal> builder( "local" );
+static VorDivToUVBuilder<VorDivToUVLocal> builder( "local_noopt" );
 }
 
 // --------------------------------------------------------------------------------------------------------------------

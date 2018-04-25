@@ -27,10 +27,10 @@
 #else
 #define TRANS_DEFAULT "local"
 #endif
-#include "atlas/trans/local/TransLocal.h"
+#include "atlas/trans/local_noopt/TransLocal.h"
 #include "atlas/trans/localopt/TransLocalopt.h"
 #include "atlas/trans/localopt2/TransLocalopt2.h"
-#include "atlas/trans/localopt3/TransLocalopt3.h"
+#include "atlas/trans/localopt3/TransLocalopt3.h" // --> recommended "local"
 
 namespace atlas {
 namespace trans {
