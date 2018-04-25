@@ -703,8 +703,11 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
     bool possible_north_pole = !has_point_at_north_pole && rg.domain().containsNorthPole() && ( mypart == 0 );
     bool possible_south_pole = !has_point_at_south_pole && rg.domain().containsSouthPole() && ( mypart == nparts - 1 );
 
-    bool include_north_pole = (possible_north_pole && options.get<bool>( "include_pole" )) || options.get<bool>( "force_include_north_pole" );
-    bool include_south_pole = (possible_south_pole && options.get<bool>( "include_pole" )) || options.get<bool>( "force_include_south_pole" );
+    bool force_include_north_pole(options.has("force_include_north_pole") && options.get<bool>( "force_include_north_pole" ));
+    bool force_include_south_pole(options.has("force_include_south_pole") && options.get<bool>( "force_include_south_pole" ));
+
+    bool include_north_pole = (possible_north_pole && options.get<bool>( "include_pole" )) || force_include_north_pole;
+    bool include_south_pole = (possible_south_pole && options.get<bool>( "include_pole" )) || force_include_south_pole;
     bool patch_north_pole   =  possible_north_pole && options.get<bool>( "patch_pole" ) && rg.nx( 1 ) > 0;
     bool patch_south_pole   =  possible_south_pole && options.get<bool>( "patch_pole" ) && rg.nx( rg.ny() - 2 ) > 0;
 
