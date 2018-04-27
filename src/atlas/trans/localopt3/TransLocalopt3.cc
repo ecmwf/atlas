@@ -22,7 +22,9 @@
 #include "eckit/eckit_config.h"
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Matrix.h"
+#include "eckit/parser/JSON.h"
 #include "eckit/log/Bytes.h"
+#include "eckit/config/YAMLConfiguration.h"
 #ifdef ECKIT_HAVE_MKL
 #include "mkl.h"
 #endif
@@ -55,7 +57,27 @@ public:
 
     std::string write_fft() const { return config_.getString( "write_fft", "" ); }
 
+    Grid global_grid() const {
+        Grid g;
+        util::Config spec;
+        if( config_.get("global_grid",spec) ) {
+            g = Grid( spec );
+        }
+        return g;
+    }
+
     bool global() const { return config_.getBool( "global", false ); }
+
+    int fft() const {
+        static const std::map<std::string, int> string_to_FFT =
+          { { "OFF", (int) option::FFT::OFF }, { "FFTW", (int) option::FFT::FFTW } };
+#ifdef ATLAS_HAVE_FFTW
+        std::string fft_default = "FFTW";
+#else
+        std::string fft_default = "OFF";
+#endif
+        return string_to_FFT.at( config_.getString( "fft", fft_default ) );
+    }
 
 private:
     const eckit::Configuration& config_;
@@ -71,15 +93,27 @@ template <typename T>  T* read(size_t size) {
     pos += size * sizeof(T);
     return v;
 }
+
+Grid read_grid() {
+    long& size = *read<long>(1);
+    char* json = read<char>(size);
+    return Grid( eckit::YAMLConfiguration( std::string( json, size ) ) );
+}
+
 char*  begin;
 size_t pos;
 };
 
 struct WriteCache {
-WriteCache( const eckit::PathName& file_path, long estimated_length = 0 ) : 
+WriteCache( const eckit::PathName& file_path) :
     dh_( file_path.fileHandle( /*overwrite = */ true ) )
 {
-    dh_->openForWrite( estimated_length );
+    if( file_path.exists() ) {
+        std::stringstream err;
+        err << "Cannot open cache file " << file_path << " for writing as it already exists. Remove first.";
+        throw eckit::BadParameter( err.str(), Here() );
+    }
+    dh_->openForWrite(0);
     pos = 0;
 }
 ~WriteCache() {
@@ -89,6 +123,24 @@ template <typename T> void write( const T* v, long size) {
     dh_->write( v , size * sizeof(T) );
     pos += size * sizeof(T);
 }
+
+//void write( long v ) {
+//    dh_->write( &v , sizeof(long) );
+//    pos += sizeof(long);
+//}
+
+//void write( const Grid& grid ) {
+//    std::stringstream s;
+//    eckit::JSON json(s);
+//    json << grid.spec();
+//    std::string grid_spec( s.str() );
+//    long size = grid_spec.size();
+//    write( size );
+//    dh_->write( grid_spec.c_str(), grid_spec.size() );
+//    pos += grid_spec.size();
+//}
+
+
 std::unique_ptr<eckit::DataHandle> dh_;
 size_t pos;
 };
@@ -135,6 +187,11 @@ int num_n( const int truncation, const int m, const bool symmetric ) {
 }
 
 void alloc_aligned( double*& ptr, size_t n ) {
+#warning todo1
+    // If we can assume that posix_memalign gives the same result, we would not need to support mkl_malloc
+    // We can then remove the include of mkl.h above (simplifying things).
+    // As well there is the C++ functions "std::align" (http://en.cppreference.com/w/cpp/memory/align)
+    // that we could look into.
 #ifdef ECKIT_HAVE_MKL
     int al = 64;
     ptr    = (double*)mkl_malloc( sizeof( double ) * n, al );
@@ -216,7 +273,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
     int nlats         = 0;
     int nlonsMax      = 0;
     int neqtr         = 0;
-    useFFT_           = true;
+    useFFT_           = TransParameters(config).fft();
     unstruct_precomp_ = true;
     nlatsNH_          = 0;
     nlatsSH_          = 0;
@@ -247,11 +304,19 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
             nlatsLegDomain_ = nlatsSH_;
         }
 
-        // compute latitudinal location of domain relative to global grid:
-        gridGlobal_ = Grid( grid.name() );
+
+        gridGlobal_ = TransParameters(config).global_grid();
+        if( not gridGlobal_ ) {
+            if ( grid_.domain().global() ) {
+                gridGlobal_ = grid_;
+            } else {
+                throw eckit::BadParameter("A global structured grid is required to be passed in the optional arguments",Here());
+            }
+        }
+
         grid::StructuredGrid gs_global( gridGlobal_ );
-        grid::StructuredGrid* gsLeg = &g;
-        if ( useGlobalLeg ) { gsLeg = &gs_global; };
+        ASSERT( gs_global ); // assert structured grid
+        grid::StructuredGrid gsLeg = ( useGlobalLeg ? gs_global : g );
         nlonsMaxGlobal_ = gs_global.nxmax();
         jlonMin_.resize( 1 );
         jlonMin_[0]  = 0;
@@ -298,7 +363,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
 
         // compute longitudinal location of domain within global grid for using FFT:
         auto wrapAngle = [&]( double angle ) {
-            double result = fmod( angle, 360 );
+            double result = std::fmod( angle, 360. );
             if ( result < 0. ) { result += 360.; }
             return result;
         };
@@ -329,12 +394,12 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         std::vector<double> lons( nlonsMax );
         if ( nlatsNH_ >= nlatsSH_ || useGlobalLeg ) {
             for ( size_t j = 0; j < nlatsLeg_; ++j ) {
-                lats[j] = gsLeg->y( j ) * util::Constants::degreesToRadians();
+                lats[j] = gsLeg.y( j ) * util::Constants::degreesToRadians();
             }
         }
         else {
             for ( size_t j = nlats - 1, idx = 0; idx < nlatsLeg_; --j, ++idx ) {
-                lats[idx] = -gsLeg->y( j ) * util::Constants::degreesToRadians();
+                lats[idx] = -gsLeg.y( j ) * util::Constants::degreesToRadians();
             }
         }
         for ( size_t j = 0; j < nlonsMax; ++j ) {
@@ -379,11 +444,9 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
                 std::string file_path = TransParameters(config).write_legendre();
                 if( file_path.size() ) {
                     ATLAS_TRACE( "write_legendre" );
-                    size_t estimated_length = sizeof(double) * ( size_sym + size_asym );
                     Log::debug() << "Writing Legendre cache file ..." << std::endl;
                     Log::debug() << "    path      = " << file_path << std::endl;
-                    Log::debug() << "    estimated = " << eckit::Bytes(estimated_length) << std::endl;
-                    WriteCache legendre( file_path, estimated_length );
+                    WriteCache legendre( file_path );
                     legendre.write( legendre_sym_,  size_sym  );
                     legendre.write( legendre_asym_, size_asym );
                     Log::debug() << "Cache file size: " << eckit::Bytes(legendre.pos) << std::endl;
@@ -440,7 +503,6 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
                     FILE* file_fftw = fopen( file_path.c_str(), "wb" );
                     fftw_export_wisdom_to_file( file_fftw );
                     fclose( file_fftw );
-
                 }
 //                std::string newWisdom( fftw_export_wisdom_to_string() );
 //                if ( 1.1 * wisdomString.length() < newWisdom.length() ) {
@@ -506,6 +568,10 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
             }
             compute_legendre_polynomials_allopt3( truncation_, grid_.size(), lats.data(), legendre_ );
         }
+        if( TransParameters(config).write_legendre().size() ) {
+            throw eckit::NotImplemented("Caching for unstructured grids not implemented",Here());
+        }
+
     }
 }  // namespace trans
 

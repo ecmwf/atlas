@@ -51,3 +51,9 @@ ecbuild_add_test( TARGET atlas_test_transgeneral
   ENVIRONMENT ATLAS_TRACE_REPORT=1
 )
 
+ecbuild_add_test( TARGET atlas_test_trans_localcache
+  SOURCES   test_trans_localcache.cc
+  LIBS      atlas
+  ENVIRONMENT ATLAS_TRACE_REPORT=1
+)
+

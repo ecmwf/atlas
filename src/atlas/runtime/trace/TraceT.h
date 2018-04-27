@@ -90,7 +90,7 @@ template <typename TraceTraits>
 inline TraceT<TraceTraits>::TraceT( const eckit::CodeLocation& loc, const std::string& title ) :
     loc_( loc ),
     title_( title ),
-    nesting_( loc ) {
+    nesting_( loc, title ) {
     start();
 }
 
@@ -106,7 +106,7 @@ template <typename TraceTraits>
 inline TraceT<TraceTraits>::TraceT( const eckit::CodeLocation& loc, const std::string& title, const Labels& labels ) :
     loc_( loc ),
     title_( title ),
-    nesting_( loc ),
+    nesting_( loc, title ),
     labels_( labels ) {
     start();
 }

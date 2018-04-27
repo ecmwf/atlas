@@ -9,6 +9,7 @@
  */
 
 #include "atlas/option/TransOptions.h"
+#include "atlas/grid.h"
 
 // ----------------------------------------------------------------------------
 
@@ -32,7 +33,7 @@ flt::flt( bool flt ) {
 }
 
 fft::fft( FFT fft ) {
-    static const std::map<FFT, std::string> FFT_to_string = {{FFT::FFT992, "FFT992"}, {FFT::FFTW, "FFTW"}};
+    static const std::map<FFT, std::string> FFT_to_string = { {FFT::OFF, "OFF"}, {FFT::FFT992, "FFT992"}, {FFT::FFTW, "FFTW"}};
     set( "fft", FFT_to_string.at( fft ) );
 }
 
@@ -46,6 +47,10 @@ split_latitudes::split_latitudes( bool split_latitudes ) {
 
 write_legendre::write_legendre( const eckit::PathName& filepath ) {
     set( "write_legendre", filepath );
+}
+
+global_grid::global_grid( const Grid& grid ) {
+    set( "global_grid", grid.spec() );
 }
 
 read_legendre::read_legendre( const eckit::PathName& filepath ) {

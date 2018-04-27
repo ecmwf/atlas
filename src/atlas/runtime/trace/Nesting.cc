@@ -29,14 +29,18 @@ public:
         return state;
     }
     operator CallStack() const { return stack_; }
-    CallStack& push( const eckit::CodeLocation& loc ) {
-        stack_.push_front( loc );
+    CallStack& push( const eckit::CodeLocation& loc, const std::string& id ) {
+        stack_.push_front( loc, id );
         return stack_;
     }
     void pop() { stack_.pop_front(); }
 };
 
-Nesting::Nesting( const eckit::CodeLocation& loc ) : loc_( loc ), stack_( NestingState::instance().push( loc ) ) {}
+Nesting::Nesting( const eckit::CodeLocation& loc, const std::string& id ) : 
+    loc_( loc ),
+    id_( id ),
+    stack_( NestingState::instance().push( loc, id ) ) {
+}
 
 Nesting::~Nesting() {
     stop();
@@ -51,7 +55,7 @@ void Nesting::stop() {
 
 void Nesting::start() {
     if ( not running_ ) {
-        NestingState::instance().push( loc_ );
+        NestingState::instance().push( loc_, id_ );
         running_ = true;
     }
 }

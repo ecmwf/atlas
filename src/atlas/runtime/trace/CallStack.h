@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <list>
+#include <string>
 
 namespace eckit {
 class CodeLocation;
@@ -19,7 +20,7 @@ public:
     using const_reverse_iterator = std::list<size_t>::const_reverse_iterator;
 
 public:
-    void push_front( const eckit::CodeLocation& );
+    void push_front( const eckit::CodeLocation&, const std::string& id = "" );
     void pop_front();
 
     const_iterator begin() const { return stack_.begin(); }

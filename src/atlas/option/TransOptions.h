@@ -14,6 +14,10 @@
 
 // ----------------------------------------------------------------------------
 
+namespace atlas { class Grid; }
+
+// ----------------------------------------------------------------------------
+
 namespace atlas {
 namespace option {
 
@@ -21,8 +25,9 @@ namespace option {
 
 enum class FFT
 {
+    OFF    = 0,
     FFT992 = 1,
-    FFTW   = 2
+    FFTW   = 2,
 };
 
 // ----------------------------------------------------------------------------
@@ -61,6 +66,11 @@ public:
     fft( const std::string& );
 };
 
+class no_fft : public fft {
+public:
+    no_fft() : fft( FFT::OFF ) {}
+};
+
 // ----------------------------------------------------------------------------
 
 class split_latitudes : public util::Config {
@@ -73,6 +83,13 @@ public:
 class write_legendre : public util::Config {
 public:
     write_legendre( const eckit::PathName& );
+};
+
+// ----------------------------------------------------------------------------
+
+class global_grid : public util::Config {
+public:
+    global_grid( const Grid& );
 };
 
 // ----------------------------------------------------------------------------
