@@ -320,6 +320,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         jlonMin_[0]  = 0;
         jlatMin_     = 0;
         nlatsGlobal_ = gs_global.ny();
+        Log::debug() << "Grid has " << nlats << " latitudes. Global grid has " << nlatsGlobal_ << std::endl;
         if ( useGlobalLeg ) { nlatsLeg_ = nlatsGlobal_ / 2; }
         else {
             nlatsLeg_        = nlatsLegDomain_;
