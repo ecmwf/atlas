@@ -300,8 +300,15 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         if ( not gridGlobal_ ) {
             if ( grid_.domain().global() ) { gridGlobal_ = grid_; }
             else {
-                throw eckit::BadParameter(
-                    "A global structured grid is required to be passed in the optional arguments", Here() );
+                if ( Grid( grid_.name() ).domain().global() ) {
+                    Log::warning() << Here() << " Deprecated. We should pass a global grid as optional argument"
+                                   << std::endl;
+                    gridGlobal_ = Grid( grid_.name() );
+                }
+                else {
+                    throw eckit::BadParameter(
+                        "A global structured grid is required to be passed in the optional arguments", Here() );
+                }
             }
         }
 

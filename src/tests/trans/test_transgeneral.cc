@@ -982,7 +982,8 @@ CASE( "test_trans_domain" ) {
     trans::Cache cache;
     ATLAS_TRACE_SCOPE( "Read cache" ) cache = trans::LegendreCache( "legcache.bin" );
     Trace t2( Here(), "translocal2 construction" );
-    trans::Trans transLocal2( cache, g2, trc, option::type( "local" ) | option::global_grid( Grid( "O640" ) ) );
+    //    trans::Trans transLocal2( cache, g2, trc, option::type( "local" ) | option::global_grid( Grid( "O640" ) ) );
+    trans::Trans transLocal2( cache, g2, trc, option::type( "local" ) );
     t2.stop();
 
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
