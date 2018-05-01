@@ -972,15 +972,17 @@ CASE( "test_trans_domain" ) {
 
     int trc = 640;
     //Log::info() << "rgp1:" << std::endl;
-    if( eckit::PathName("legcache.bin").exists() ) eckit::PathName("legcache.bin").unlink();
-    Trace t1(Here(),"translocal1 construction");
-    trans::Trans transLocal1( g1, trc, option::type("local") | option::write_legendre("legcache.bin" ) | option::global_grid( Grid("O640")) );
+    if ( eckit::PathName( "legcache.bin" ).exists() ) eckit::PathName( "legcache.bin" ).unlink();
+    Trace t1( Here(), "translocal1 construction" );
+    trans::Trans transLocal1(
+        g1, trc,
+        option::type( "local" ) | option::write_legendre( "legcache.bin" ) | option::global_grid( Grid( "O640" ) ) );
     t1.stop();
     //Log::info() << "rgp2:" << std::endl;
     trans::Cache cache;
-    ATLAS_TRACE_SCOPE("Read cache") cache = trans::LegendreCache("legcache.bin");
-    Trace t2(Here(),"translocal2 construction");
-    trans::Trans transLocal2( cache, g2, trc, option::type("local") | option::global_grid( Grid("O640")) );
+    ATLAS_TRACE_SCOPE( "Read cache" ) cache = trans::LegendreCache( "legcache.bin" );
+    Trace t2( Here(), "translocal2 construction" );
+    trans::Trans transLocal2( cache, g2, trc, option::type( "local" ) | option::global_grid( Grid( "O640" ) ) );
     t2.stop();
 
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
@@ -1050,10 +1052,12 @@ CASE( "test_trans_domain" ) {
                                                                   rgp2_analytic.data(), ivar_in, ivar_out );
 
                                 //Log::info() << std::endl << "rgp1:";
+                                ATLAS_TRACE_SCOPE( "translocal1" )
                                 EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
                                                                        div.data(), rgp1.data() ) );
 
                                 //Log::info() << std::endl << "rgp2:";
+                                ATLAS_TRACE_SCOPE( "translocal2" )
                                 EXPECT_NO_THROW( transLocal2.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
                                                                        div.data(), rgp2.data() ) );
 
