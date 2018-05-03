@@ -852,9 +852,6 @@ void TransLocalopt3::invtrans_fourier_regularopt3( const int nlats, const int nl
 #endif
     }
     else {
-        throw eckit::SeriousBug(
-            "dgemm for Fourier transforms currently broken. Make sure atlas is compiled with FFTW.", Here() );
-
 #if !TRANSLOCAL_DGEMM2
         // dgemm-method 1
         {
@@ -950,51 +947,7 @@ void TransLocalopt3::invtrans_fourier_reducedopt3( const int nlats, const grid::
 #endif
     }
     else {
-        throw eckit::SeriousBug(
-            "dgemm for Fourier transforms currently broken. Make sure atlas is compiled with FFTW.", Here() );
-
-#if !TRANSLOCAL_DGEMM2
-        // dgemm-method 1
-        {
-#warning dgemm currently broken for Fourier transforms. FFTW required!
-            // Noticed that Matrix C is trying to access more than is actually allocated
-            // Memory error!!! BEWARE!!!
-            ATLAS_TRACE( "opt3 Fourier dgemm method 1" );
-            eckit::linalg::Matrix A( fourier_, nlonsMax, ( truncation_ + 1 ) * 2 );
-            eckit::linalg::Matrix B( scl_fourier, ( truncation_ + 1 ) * 2, nb_fields * nlats );
-            eckit::linalg::Matrix C( gp_fields, nlonsMax, nb_fields * nlats );
-            eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
-        }
-#else
-        // dgemm-method 2
-        // should be faster for small domains or large truncation
-        // but have not found any significant speedup so far
-        double* gp_opt3;
-        alloc_aligned( gp_opt3, nb_fields * grid_.size() );
-        {
-            ATLAS_TRACE( "opt3 Fourier dgemm method 2" );
-            eckit::linalg::Matrix A( scl_fourier, nb_fields * nlats, ( truncation_ + 1 ) * 2 );
-            eckit::linalg::Matrix B( fourier_, ( truncation_ + 1 ) * 2, nlonsMax );
-            eckit::linalg::Matrix C( gp_opt3, nb_fields * nlats, nlonsMax );
-            eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
-        }
-
-        // Transposition in grid point space:
-        {
-            ATLAS_TRACE( "opt3 transposition in gp-space" );
-            int idx = 0;
-            for ( int jlon = 0; jlon < nlonsMax; jlon++ ) {
-                for ( int jlat = 0; jlat < nlats; jlat++ ) {
-                    for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
-                        int pos_tp = jlon + nlonsMax * ( jlat + nlats * ( jfld ) );
-                        //int pos  = jfld + nb_fields * ( jlat + nlats * ( jlon ) );
-                        gp_fields[pos_tp] = gp_opt3[idx++];  // = gp_opt3[pos]
-                    }
-                }
-            }
-        }
-        free_aligned( gp_opt3 );
-#endif
+        throw eckit::SeriousBug( "dgemm for Fourier transforms not implemented for reduced grids", Here() );
     }
 }
 
