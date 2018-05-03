@@ -266,12 +266,14 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
     int neqtr         = 0;
     useFFT_           = TransParameters( config ).fft();
     unstruct_precomp_ = true;
+    no_symmetry_      = false;
     nlatsNH_          = 0;
     nlatsSH_          = 0;
     nlatsLeg_         = 0;
     nlatsLegDomain_   = 0;
     nlatsLegReduced_  = 0;
     bool useGlobalLeg = true;
+    bool no_nest      = false;
     if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
         grid::StructuredGrid g( grid_ );
         nlats    = g.ny();
@@ -300,15 +302,28 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         if ( not gridGlobal_ ) {
             if ( grid_.domain().global() ) { gridGlobal_ = grid_; }
             else {
-                if ( Grid( grid_.name() ).domain().global() ) {
+                /*if ( Grid( grid_.name() ).domain().global() ) {
                     Log::warning() << Here() << " Deprecated. We should pass a global grid as optional argument"
                                    << std::endl;
                     gridGlobal_ = Grid( grid_.name() );
                 }
-                else {
-                    throw eckit::BadParameter(
-                        "A global structured grid is required to be passed in the optional arguments", Here() );
+                else {*/
+                if ( grid::RegularGrid( grid_ ) ) {
+                    // non-nested regular grid
+                    no_nest         = true;
+                    no_symmetry_    = true;
+                    useFFT_         = false;
+                    nlatsNH_        = nlats;
+                    nlatsSH_        = 0;
+                    nlatsLegDomain_ = nlatsNH_;
+                    gridGlobal_     = grid_;
+                    useGlobalLeg    = false;
                 }
+                else {
+                    NOTIMP;
+                    // non-nested reduced grids are not supported
+                }
+                //}
             }
         }
 
@@ -343,21 +358,28 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
 
         // reduce truncation towards the pole for reduced meshes:
         nlat0_.resize( truncation_ + 1 );
-        int nmen0 = -1;
-        for ( int jlat = 0; jlat < nlatsGlobal_ / 2; jlat++ ) {
-            double lat = gs_global.y( jlat ) * util::Constants::degreesToRadians();
-            int nmen   = fourier_truncation( truncation_, gs_global.nx( jlat ), gs_global.nxmax(), nlatsGlobal_, lat,
-                                           grid::RegularGrid( gs_global ) );
-            nmen       = std::max( nmen0, nmen );
-            int ndgluj = nlatsLeg_ - std::min( nlatsLeg_, nlatsLeg_ + jlatMinLeg_ - jlat );
-            if ( useGlobalLeg ) { ndgluj = std::max( jlatMinLeg_, jlat ); }
-            for ( int j = nmen0 + 1; j <= nmen; j++ ) {
-                nlat0_[j] = ndgluj;
+        if ( no_nest ) {
+            for ( int j = 0; j <= truncation_; j++ ) {
+                nlat0_[j] = 0;
             }
-            nmen0 = nmen;
         }
-        for ( int j = nmen0 + 1; j <= truncation_; j++ ) {
-            nlat0_[j] = nlatsLeg_;
+        else {
+            int nmen0 = -1;
+            for ( int jlat = 0; jlat < nlatsGlobal_ / 2; jlat++ ) {
+                double lat = gs_global.y( jlat ) * util::Constants::degreesToRadians();
+                int nmen = fourier_truncation( truncation_, gs_global.nx( jlat ), gs_global.nxmax(), nlatsGlobal_, lat,
+                                               grid::RegularGrid( gs_global ) );
+                nmen     = std::max( nmen0, nmen );
+                int ndgluj = nlatsLeg_ - std::min( nlatsLeg_, nlatsLeg_ + jlatMinLeg_ - jlat );
+                if ( useGlobalLeg ) { ndgluj = std::max( jlatMinLeg_, jlat ); }
+                for ( int j = nmen0 + 1; j <= nmen; j++ ) {
+                    nlat0_[j] = ndgluj;
+                }
+                nmen0 = nmen;
+            }
+            for ( int j = nmen0 + 1; j <= truncation_; j++ ) {
+                nlat0_[j] = nlatsLeg_;
+            }
         }
         /*Log::info() << "nlats=" << g.ny() << " nlatsGlobal=" << gs_global.ny() << " jlatMin=" << jlatMin_
                     << " jlatMinLeg=" << jlatMinLeg_ << " nlatsGlobal/2-nlatsLeg=" << nlatsGlobal_ / 2 - nlatsLeg_
@@ -369,24 +391,26 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
             if ( result < 0. ) { result += 360.; }
             return result;
         };
-        double lonmin = wrapAngle( g.x( 0, 0 ) );
-        if ( nlonsMax < fft_threshold * nlonsMaxGlobal_ ) { useFFT_ = false; }
-        else {
-            // need to use FFT with cropped grid
-            if ( grid::RegularGrid( gridGlobal_ ) ) {
-                for ( size_t jlon = 0; jlon < nlonsMaxGlobal_; ++jlon ) {
-                    if ( gs_global.x( jlon, 0 ) < lonmin ) { jlonMin_[0]++; }
-                }
-            }
+        if ( useFFT_ ) {
+            double lonmin = wrapAngle( g.x( 0, 0 ) );
+            if ( nlonsMax < fft_threshold * nlonsMaxGlobal_ ) { useFFT_ = false; }
             else {
-                nlonsGlobal_.resize( nlats );
-                jlonMin_.resize( nlats );
-                for ( size_t jlat = 0; jlat < nlats; jlat++ ) {
-                    double lonmin      = wrapAngle( g.x( 0, jlat ) );
-                    nlonsGlobal_[jlat] = gs_global.nx( jlat + jlatMin_ );
-                    jlonMin_[jlat]     = 0;
-                    for ( size_t jlon = 0; jlon < nlonsGlobal_[jlat]; ++jlon ) {
-                        if ( gs_global.x( jlon, jlat + jlatMin_ ) < lonmin ) { jlonMin_[jlat]++; }
+                // need to use FFT with cropped grid
+                if ( grid::RegularGrid( gridGlobal_ ) ) {
+                    for ( size_t jlon = 0; jlon < nlonsMaxGlobal_; ++jlon ) {
+                        if ( gs_global.x( jlon, 0 ) < lonmin ) { jlonMin_[0]++; }
+                    }
+                }
+                else {
+                    nlonsGlobal_.resize( nlats );
+                    jlonMin_.resize( nlats );
+                    for ( size_t jlat = 0; jlat < nlats; jlat++ ) {
+                        double lonmin      = wrapAngle( g.x( 0, jlat ) );
+                        nlonsGlobal_[jlat] = gs_global.nx( jlat + jlatMin_ );
+                        jlonMin_[jlat]     = 0;
+                        for ( size_t jlon = 0; jlon < nlonsGlobal_[jlat]; ++jlon ) {
+                            if ( gs_global.x( jlon, jlat + jlatMin_ ) < lonmin ) { jlonMin_[jlat]++; }
+                        }
                     }
                 }
             }
@@ -947,9 +971,9 @@ void TransLocalopt3::invtrans_fourier_reducedopt3( const int nlats, const grid::
 #endif
     }
     else {
-        NOTIMP;
-        // Using dgemm in Fourier transform for reduced grids is extremely slow.
-        // Please install and use FFTW!
+        throw eckit::NotImplemented(
+            "Using dgemm in Fourier transform for reduced grids is extremely slow. Please install and use FFTW!",
+            Here() );
     }
 }
 

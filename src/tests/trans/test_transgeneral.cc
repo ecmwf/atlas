@@ -427,7 +427,7 @@ double sphericalharmonics_analytic_point(
 //
 void spectral_transform_grid_analytic(
     const size_t trc,     // truncation (in)
-    const size_t trcFT,   // truncation for Fourier transformation (in)
+    bool trcFT,           // truncation for Fourier transformation (in)
     const double n,       // total wave number (implemented so far for n<4
     const double m,       // zonal wave number (implemented so far for m<4, m<n
     const int imag,       // 0: test real part, 1: test imaginary part
@@ -457,20 +457,26 @@ void spectral_transform_grid_analytic(
 
     if ( grid::StructuredGrid( grid ) ) {
         grid::StructuredGrid g( grid );
-        Grid gridGlobal( grid.name() );
-        grid::StructuredGrid gs_global( gridGlobal );
-        int nlatsGlobal = gs_global.ny();
-        int jlatMin     = 0;
-        for ( int jlat = 0; jlat < nlatsGlobal; jlat++ ) {
-            if ( gs_global.y( jlat ) > g.y( 0 ) ) { jlatMin++; };
+        Grid gridGlobal;
+        grid::StructuredGrid gs_global;
+        int jlatMin = 0;
+        if ( trcFT ) {
+            gridGlobal      = Grid( grid.name() );
+            gs_global       = grid::StructuredGrid( gridGlobal );
+            int nlatsGlobal = gs_global.ny();
+            for ( int jlat = 0; jlat < nlatsGlobal; jlat++ ) {
+                if ( gs_global.y( jlat ) > g.y( 0 ) ) { jlatMin++; };
+            }
         }
 
         int idx = 0;
         for ( size_t j = 0; j < g.ny(); ++j ) {
             double lat = g.y( j ) * util::Constants::degreesToRadians();
-
-            int ftrc = trans::fourier_truncation( trc, gs_global.nx( jlatMin + j ), gs_global.nxmax(), gs_global.ny(),
+            int ftrc   = trc + 1;
+            if ( trcFT ) {
+                ftrc = trans::fourier_truncation( trc, gs_global.nx( jlatMin + j ), gs_global.nxmax(), gs_global.ny(),
                                                   lat, grid::RegularGrid( gs_global ) );
+            }
             /*Log::info() << "j=" << j << " ftrc=" << ftrc << " trc=" << trc << " nx=" << gs_global.nx( jlatMin + j )
                         << " nxmax=" << gs_global.nxmax() << " nlats=" << gs_global.ny() << " lat=" << g.y( j )
                         << " jlatMin=" << jlatMin << std::endl;*/
@@ -545,7 +551,7 @@ double spectral_transform_test( double trc,       // truncation
 
     // compute analytic solution (this also initializes rspecg and needs to be
     // done before the actual transform):
-    spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg, rgp_analytic, 2, 2 );
+    spectral_transform_grid_analytic( trc, true, n, m, imag, g, rspecg, rgp_analytic, 2, 2 );
     // perform spectral transform:
 
     spectral_transform_grid( trc, trc, g, rspecg, rgp, pointwise );
@@ -968,7 +974,13 @@ CASE( "test_trans_domain" ) {
 
     std::string gridString = "O640";
     Grid g1( gridString, testdomain1 );
-    Grid g2( gridString, testdomain2 );
+    //Grid g2( gridString, testdomain2 );
+
+    bool fourierTrc1 = true;
+    bool fourierTrc2 = false;
+    using grid::StructuredGrid;
+    using LinearSpacing = grid::LinearSpacing;
+    StructuredGrid g2( LinearSpacing( {0., 180.}, 181 ), LinearSpacing( {0., 45.}, 46 ) );
 
     int trc = 640;
     //Log::info() << "rgp1:" << std::endl;
@@ -982,9 +994,9 @@ CASE( "test_trans_domain" ) {
     trans::Cache cache;
     ATLAS_TRACE_SCOPE( "Read cache" ) cache = trans::LegendreCache( "legcache.bin" );
     Trace t2( Here(), "translocal2 construction" );
-    trans::Trans transLocal2( cache, g2, trc,
-                              option::type( "local" ) | option::global_grid( Grid( gridString ) ) | option::no_fft() );
-    //trans::Trans transLocal2( cache, g2, trc, option::type( "local" ) );
+    //trans::Trans transLocal2( cache, g2, trc,
+    //                          option::type( "local" ) | option::global_grid( Grid( gridString ) ) | option::no_fft() );
+    trans::Trans transLocal2( g2, trc, option::type( "local" ) );
     t2.stop();
 
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
@@ -1047,10 +1059,10 @@ CASE( "test_trans_domain" ) {
                                     rgp2_analytic[j] = 0.;
                                 }
 
-                                spectral_transform_grid_analytic( trc, trc, n, m, imag, g1, rspecg.data(),
+                                spectral_transform_grid_analytic( trc, fourierTrc1, n, m, imag, g1, rspecg.data(),
                                                                   rgp1_analytic.data(), ivar_in, ivar_out );
 
-                                spectral_transform_grid_analytic( trc, trc, n, m, imag, g2, rspecg.data(),
+                                spectral_transform_grid_analytic( trc, fourierTrc2, n, m, imag, g2, rspecg.data(),
                                                                   rgp2_analytic.data(), ivar_in, ivar_out );
 
                                 //Log::info() << std::endl << "rgp1:";

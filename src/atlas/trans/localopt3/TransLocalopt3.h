@@ -145,6 +145,7 @@ private:
     bool useFFT_;
     bool dgemmMethod1_;
     bool unstruct_precomp_;
+    bool no_symmetry_;
     int truncation_;
     int nlatsNH_;
     int nlatsSH_;
