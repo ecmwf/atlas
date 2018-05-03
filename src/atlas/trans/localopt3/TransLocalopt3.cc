@@ -947,7 +947,9 @@ void TransLocalopt3::invtrans_fourier_reducedopt3( const int nlats, const grid::
 #endif
     }
     else {
-        throw eckit::SeriousBug( "dgemm for Fourier transforms not implemented for reduced grids", Here() );
+        NOTIMP;
+        // Using dgemm in Fourier transform for reduced grids is extremely slow.
+        // Please install and use FFTW!
     }
 }
 

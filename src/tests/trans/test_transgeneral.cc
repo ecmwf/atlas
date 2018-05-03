@@ -966,7 +966,7 @@ CASE( "test_trans_domain" ) {
     Domain testdomain2 = RectangularDomain( {-1., 1.}, {-5., 40.} );
     // Grid: (Adjust the following line if the test takes too long!)
 
-    std::string gridString = "F640";
+    std::string gridString = "O640";
     Grid g1( gridString, testdomain1 );
     Grid g2( gridString, testdomain2 );
 
