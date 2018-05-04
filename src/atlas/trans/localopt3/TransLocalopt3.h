@@ -24,6 +24,12 @@
 //-----------------------------------------------------------------------------
 // Forward declarations
 
+namespace eckit {
+namespace linalg {
+class LinearAlgebra;
+}  // namespace linalg
+}  // namespace eckit
+
 namespace atlas {
 class Field;
 class FieldSet;
@@ -179,6 +185,8 @@ private:
     size_t legendre_cachesize_{0};
     const void* fft_cache_{nullptr};
     size_t fft_cachesize_{0};
+
+    const eckit::linalg::LinearAlgebra& linalg_;
 };
 
 //-----------------------------------------------------------------------------

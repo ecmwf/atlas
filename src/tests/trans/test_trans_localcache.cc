@@ -106,7 +106,7 @@ CASE( "test_global_grids" ) {
     auto resolutions = { 32, 64 };
     for( int n : resolutions ) {
         int t = n-1;
-        auto cases = { 
+        auto cases = {
             std::make_pair(F(n),t),
             std::make_pair(O(n),t),
             std::make_pair(N(n),t),
@@ -149,7 +149,7 @@ CASE( "test_global_grids" ) {
 CASE( "test_global_grids_with_subdomain" ) {
     int n = 64;
     int t = n-1;
-    auto cases = { 
+    auto cases = {
         std::make_pair(F(n),t),
         std::make_pair(O(n),t),
         std::make_pair(N(n),t),
@@ -193,46 +193,56 @@ CASE( "test_global_grids_with_subdomain" ) {
     }
 }
 
-CASE( "test_regional_grids_nested_in_global" ) {
+CASE( "test_regional_grids nested_in_global" ) {
+    auto cachefile = CacheFile("regional_lonlat.bin");
+    auto truncation = 89;
     Cache cache;
-    {
-        auto truncation = 89;
-
-        ATLAS_TRACE("regional_lonlat");
-
-        auto cachefile = CacheFile("regional_lonlat.bin");
-        StructuredGrid grid_global( 
-            LinearSpacing( {  0., 360.}, 360, false ), 
-            LinearSpacing( {-90.,  90.}, 181, true  )
-        );
-        ASSERT( grid_global.domain().global() );
-        StructuredGrid grid( LinearSpacing( {0.,180.}, 181 ), LinearSpacing( {0.,45.}, 46 ) );
-        ATLAS_TRACE_SCOPE("create without cache")
-            Trans( grid, truncation, option::type("local") | option::global_grid( grid_global ) );
-        ATLAS_TRACE_SCOPE("create without cache and write")
-            Trans( grid, truncation, option::type("local") | option::global_grid( grid_global ) | option::write_legendre( cachefile ) );
-        ATLAS_TRACE_SCOPE("read cache")
-            cache = LegendreCache( cachefile );
-        ATLAS_TRACE_SCOPE("create with cache")
-            Trans( grid, truncation, option::type("local") | option::global_grid( grid_global ) );
-    }
-//    {
-//        StructuredGrid grid( LinearSpacing( {0.,180.}, 181 ), LinearSpacing( {0.,45.}, 46 ) );
-//        Trans( grid, 89 );
-//    }
+    StructuredGrid grid_global(
+        LinearSpacing( {  0., 360.}, 360, false ),
+        LinearSpacing( {-90.,  90.}, 181, true  )
+    );
+    ASSERT( grid_global.domain().global() );
+    StructuredGrid grid( LinearSpacing( {0.,180.}, 181 ), LinearSpacing( {0.,45.}, 46 ) );
+    ATLAS_TRACE_SCOPE("create without cache")
+        Trans( grid, truncation, option::type("local") | option::global_grid( grid_global ) );
+    ATLAS_TRACE_SCOPE("create without cache and write")
+        Trans( grid, truncation, option::type("local") | option::global_grid( grid_global ) | option::write_legendre( cachefile ) );
+    ATLAS_TRACE_SCOPE("read cache")
+        cache = LegendreCache( cachefile );
+    ATLAS_TRACE_SCOPE("create with cache")
+        Trans( cache, grid, truncation, option::type("local") | option::global_grid( grid_global ) );
 }
 
 CASE( "test_regional_grids not nested" ) {
-   if (false) {
-       StructuredGrid grid( LinearSpacing( {0.,180.}, 181 ), LinearSpacing( {0.,45.}, 46 ) );
-       Trans( grid, 89 );
-   } else {
-       Log::warning() << "This test fails if enabled!!! " << Here() << std::endl;
-   }
+    auto cachefile = CacheFile("cache-regional.bin");
+    auto truncation = 89;
+    Cache cache;
+
+    StructuredGrid grid( LinearSpacing( {0.,180.}, 181 ), LinearSpacing( {0.,45.}, 46 ) );
+    ATLAS_TRACE_SCOPE("create without cache")
+        Trans( grid, truncation, option::type("local") );
+    ATLAS_TRACE_SCOPE("create without cache and write")
+        Trans( grid, truncation, option::type("local") | option::write_legendre( cachefile ) );
+    ATLAS_TRACE_SCOPE("read cache")
+        cache = LegendreCache( cachefile );
+    ATLAS_TRACE_SCOPE("create with cache")
+        Trans( cache, grid, truncation, option::type("local") );
 }
 
 CASE( "test_regional_grids with projection" ) {
-    Log::warning() << "TODO" << std::endl;
+    auto cachefile = CacheFile("cache-regional.bin");
+    auto truncation = 89;
+    Cache cache;
+
+    Projection projection( util::Config
+       ( "type",      "rotated_lonlat")
+       ("north_pole", std::vector<double>{ 4., 54.} ) );
+
+    StructuredGrid grid( LinearSpacing( {0.,180.}, 181 ), LinearSpacing( {0.,45.}, 46 ), projection );
+    ATLAS_TRACE_SCOPE("create without cache")
+        Trans( grid, truncation, option::type("local") );
+
+    // Note: caching not yet implemented for unstructured and projected grids
 }
 
 }  // namespace test

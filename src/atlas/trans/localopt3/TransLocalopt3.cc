@@ -9,6 +9,7 @@
  */
 
 #include "atlas/trans/localopt3/TransLocalopt3.h"
+#include <cstdlib>
 #include <cmath>
 #include "atlas/array.h"
 #include "atlas/option.h"
@@ -25,9 +26,6 @@
 #include "eckit/linalg/Matrix.h"
 #include "eckit/log/Bytes.h"
 #include "eckit/parser/JSON.h"
-#ifdef ECKIT_HAVE_MKL
-#include "mkl.h"
-#endif
 
 namespace atlas {
 namespace trans {
@@ -179,27 +177,13 @@ int num_n( const int truncation, const int m, const bool symmetric ) {
 }
 
 void alloc_aligned( double*& ptr, size_t n ) {
-#warning todo1
-// If we can assume that posix_memalign gives the same result, we would not need to support mkl_malloc
-// We can then remove the include of mkl.h above (simplifying things).
-// As well there is the C++ functions "std::align" (http://en.cppreference.com/w/cpp/memory/align)
-// that we could look into.
-#ifdef ECKIT_HAVE_MKL
-    int al = 64;
-    ptr    = (double*)mkl_malloc( sizeof( double ) * n, al );
-#else
-    posix_memalign( (void**)&ptr, sizeof( double ) * 64, sizeof( double ) * n );
-    //ptr = (double*)malloc( sizeof( double ) * n );
-    //ptr = new double[n];
-#endif
+    const size_t alignment = 64 * sizeof( double );
+    ptr = (double*) aligned_alloc( alignment, sizeof( double ) * n );
 }
 
 void free_aligned( double*& ptr ) {
-#ifdef ECKIT_HAVE_MKL
-    mkl_free( ptr );
-#else
     free( ptr );
-#endif
+    ptr = nullptr;
 }
 
 int add_padding( int n ) {
@@ -242,6 +226,14 @@ int fourier_truncation( const int truncation,    // truncation
 // Class TransLocalopt3
 // --------------------------------------------------------------------------------------------------------------------
 
+const eckit::linalg::LinearAlgebra& linear_algebra_backend() {
+    if( eckit::linalg::LinearAlgebra::hasBackend("mkl") ) {
+        return eckit::linalg::LinearAlgebra::getBackend("mkl");
+    }
+    // Default backend
+    return eckit::linalg::LinearAlgebra::backend();
+}
+
 TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long truncation,
                                 const eckit::Configuration& config ) :
     grid_( grid ),
@@ -251,13 +243,10 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
     legendre_cache_( cache.legendre().data() ),
     legendre_cachesize_( cache.legendre().size() ),
     fft_cache_( cache.fft().data() ),
-    fft_cachesize_( cache.fft().size() ) {
-    ATLAS_TRACE( "Precompute legendre opt3" );
-#ifdef ECKIT_HAVE_MKL
-    eckit::linalg::LinearAlgebra::backend( "mkl" );  // might want to choose backend with this command
-#else
-    eckit::linalg::LinearAlgebra::backend( "generic" );  // might want to choose backend with this command
-#endif
+    fft_cachesize_( cache.fft().size() ),
+    linalg_( linear_algebra_backend() )
+{
+    ATLAS_TRACE( "TransLocalOpt3 constructor" );
     double fft_threshold = 0.0;  // fraction of latitudes of the full grid down to which FFT is used.
     // This threshold needs to be adjusted depending on the dgemm and FFT performance of the machine
     // on which this code is running!
@@ -439,7 +428,6 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
 
         // precomputations for Legendre polynomials:
         {
-            ATLAS_TRACE( "opt3 precomp Legendre" );
             int size_sym  = 0;
             int size_asym = 0;
             legendre_sym_begin_.resize( truncation_ + 3 );
@@ -461,15 +449,18 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
                 // TODO: check this is all aligned...
             }
             else {
-                alloc_aligned( legendre_sym_, size_sym );
-                alloc_aligned( legendre_asym_, size_asym );
+                ATLAS_TRACE_SCOPE( "Legendre precomputations (structured)" ) {
 
-                compute_legendre_polynomialsopt3( truncation_ + 1, nlatsLeg_, lats.data(), legendre_sym_,
-                                                  legendre_asym_, legendre_sym_begin_.data(),
-                                                  legendre_asym_begin_.data() );
+                    alloc_aligned( legendre_sym_, size_sym );
+                    alloc_aligned( legendre_asym_, size_asym );
+
+                    compute_legendre_polynomialsopt3( truncation_ + 1, nlatsLeg_, lats.data(), legendre_sym_,
+                                                      legendre_asym_, legendre_sym_begin_.data(),
+                                                      legendre_asym_begin_.data() );
+                }
                 std::string file_path = TransParameters( config ).write_legendre();
                 if ( file_path.size() ) {
-                    ATLAS_TRACE( "write_legendre" );
+                    ATLAS_TRACE( "Write LegendreCache to file" );
                     Log::debug() << "Writing Legendre cache file ..." << std::endl;
                     Log::debug() << "    path      = " << file_path << std::endl;
                     WriteCache legendre( file_path );
@@ -484,7 +475,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
         if ( useFFT_ ) {
 #if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
             {
-                ATLAS_TRACE( "opt3 precomp FFTW" );
+                ATLAS_TRACE( "Fourier precomputations (FFTW)" );
                 int num_complex = ( nlonsMaxGlobal_ / 2 ) + 1;
                 fft_in_         = fftw_alloc_complex( nlats * num_complex );
                 fft_out_        = fftw_alloc_real( nlats * nlonsMaxGlobal_ );
@@ -553,7 +544,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
             alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlonsMax );
 #if !TRANSLOCAL_DGEMM2
             {
-                ATLAS_TRACE( "opt3 precomp Fourier tp" );
+                ATLAS_TRACE( "Fourier precomputations (NoFFT)" );
                 int idx = 0;
                 for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
                     double factor = 1.;
@@ -585,17 +576,17 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
     else {
         // unstructured grid
         if ( unstruct_precomp_ ) {
-            ATLAS_TRACE( "opt3 precomp unstructured" );
+            ATLAS_TRACE( "Legendre precomputations (unstructured)" );
             std::vector<double> lats( grid_.size() );
             alloc_aligned( legendre_, legendre_size( truncation_ ) * grid_.size() );
             int j( 0 );
-            for ( PointXY p : grid_.xy() ) {
-                lats[j++] = p.y() * util::Constants::degreesToRadians();
+            for ( PointLonLat p : grid_.lonlat() ) {
+                lats[j++] = p.lat() * util::Constants::degreesToRadians();
             }
             compute_legendre_polynomials_allopt3( truncation_, grid_.size(), lats.data(), legendre_ );
         }
         if ( TransParameters( config ).write_legendre().size() ) {
-            throw eckit::NotImplemented( "Caching for unstructured grids not implemented", Here() );
+            throw eckit::NotImplemented( "Caching for unstructured grids or structured grids with projections not yet implemented", Here() );
         }
     }
 }  // namespace trans
@@ -690,7 +681,7 @@ void TransLocalopt3::invtrans_legendreopt3( const int truncation, const int nlat
     {
         Log::debug() << "Legendre dgemm: using " << nlatsLegReduced_ - nlat0_[0] << " latitudes out of "
                      << nlatsGlobal_ / 2 << std::endl;
-        ATLAS_TRACE( "opt3 Legendre dgemm" );
+        ATLAS_TRACE( "Inverse Legendre Transform (GEMM)" );
         for ( int jm = 0; jm <= truncation_; jm++ ) {
             int size_sym  = num_n( truncation_ + 1, jm, true );
             int size_asym = num_n( truncation_ + 1, jm, false );
@@ -746,7 +737,7 @@ void TransLocalopt3::invtrans_legendreopt3( const int truncation, const int nlat
                         eckit::linalg::Matrix B( legendre_sym_ + legendre_sym_begin_[jm] + nlat0_[jm] * size_sym,
                                                  size_sym, nlatsLegReduced_ - nlat0_[jm] );
                         eckit::linalg::Matrix C( scl_fourier_sym, nb_fields * n_imag, nlatsLegReduced_ - nlat0_[jm] );
-                        eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+                        linalg_.gemm( A, B, C );
                         /*Log::info() << "sym: ";
                         for ( int j = 0; j < size_sym * ( nlatsLegReduced_ - nlat0_[jm] ); j++ ) {
                             Log::info() << legendre_sym_[j + legendre_sym_begin_[jm] + nlat0_[jm] * size_sym] << " ";
@@ -758,7 +749,7 @@ void TransLocalopt3::invtrans_legendreopt3( const int truncation, const int nlat
                         eckit::linalg::Matrix B( legendre_asym_ + legendre_asym_begin_[jm] + nlat0_[jm] * size_asym,
                                                  size_asym, nlatsLegReduced_ - nlat0_[jm] );
                         eckit::linalg::Matrix C( scl_fourier_asym, nb_fields * n_imag, nlatsLegReduced_ - nlat0_[jm] );
-                        eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+                        linalg_.gemm( A, B, C );
                         /*Log::info() << "asym: ";
                         for ( int j = 0; j < size_asym * ( nlatsLegReduced_ - nlat0_[jm] ); j++ ) {
                             Log::info() << legendre_asym_[j + legendre_asym_begin_[jm] + nlat0_[jm] * size_asym] << " ";
@@ -845,7 +836,7 @@ void TransLocalopt3::invtrans_fourier_regularopt3( const int nlats, const int nl
         {
             int num_complex = ( nlonsMaxGlobal_ / 2 ) + 1;
             {
-                ATLAS_TRACE( "opt3 FFTW regular" );
+                ATLAS_TRACE( "Inverse Fourier Transform (FFTW, RegularGrid)" );
                 for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                     int idx = 0;
                     for ( int jlat = 0; jlat < nlats; jlat++ ) {
@@ -879,11 +870,11 @@ void TransLocalopt3::invtrans_fourier_regularopt3( const int nlats, const int nl
 #if !TRANSLOCAL_DGEMM2
         // dgemm-method 1
         {
-            ATLAS_TRACE( "opt3 Fourier dgemm method 1" );
+            ATLAS_TRACE( "Inverse Fourier Transform (NoFFT)" );
             eckit::linalg::Matrix A( fourier_, nlons, ( truncation_ + 1 ) * 2 );
             eckit::linalg::Matrix B( scl_fourier, ( truncation_ + 1 ) * 2, nb_fields * nlats );
             eckit::linalg::Matrix C( gp_fields, nlons, nb_fields * nlats );
-            eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+            linalg_.gemm( A, B, C );
         }
 #else
         // dgemm-method 2
@@ -896,7 +887,7 @@ void TransLocalopt3::invtrans_fourier_regularopt3( const int nlats, const int nl
             eckit::linalg::Matrix A( scl_fourier, nb_fields * nlats, ( truncation_ + 1 ) * 2 );
             eckit::linalg::Matrix B( fourier_, ( truncation_ + 1 ) * 2, nlons );
             eckit::linalg::Matrix C( gp_opt3, nb_fields * nlats, nlons );
-            eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+            linalg_.gemm( A, B, C );
         }
 
         // Transposition in grid point space:
@@ -929,7 +920,7 @@ void TransLocalopt3::invtrans_fourier_reducedopt3( const int nlats, const grid::
 #if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
         {
             {
-                ATLAS_TRACE( "opt3 FFTW reduced" );
+                ATLAS_TRACE( "Inverse Fourier Transform (FFTW, ReducedGid)" );
                 int jgp = 0;
                 for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                     for ( int jlat = 0; jlat < nlats; jlat++ ) {
@@ -984,8 +975,8 @@ void TransLocalopt3::invtrans_unstructured_precomp( const int truncation, const 
                                                     double gp_fields[], const eckit::Configuration& config ) const {
     ATLAS_TRACE( "invtrans_uv unstructured opt3" );
     grid::UnstructuredGrid gu = grid_;
-    int nlats                 = grid_.size();
-    int size_fourier          = nb_fields * 2;
+    const int nlats                 = grid_.size();
+    const int size_fourier          = nb_fields * 2;
     double* legendre;
     double* scl_fourier;
     double* scl_fourier_tp;
@@ -997,32 +988,32 @@ void TransLocalopt3::invtrans_unstructured_precomp( const int truncation, const 
     alloc_aligned( gp_opt, nb_fields );
 
     {
-        ATLAS_TRACE( "opt3 Legendre dgemm" );
+        ATLAS_TRACE( "Inverse Legendre Transform (GEMM)" );
         for ( int jm = 0; jm < truncation; jm++ ) {
-            int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
+            const int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
             eckit::linalg::Matrix A( eckit::linalg::Matrix(
                 const_cast<double*>( scalar_spectra ) + nb_fields * 2 * noff, nb_fields * 2, ns ) );
             eckit::linalg::Matrix B( legendre_ + noff * nlats, ns, nlats );
             eckit::linalg::Matrix C( scl_fourier + jm * size_fourier * nlats, nb_fields * 2, nlats );
-            eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+            linalg_.gemm( A, B, C );
         }
     }
 
     // loop over all points:
     {
-        ATLAS_TRACE( "opt3 Fourier dgemm" );
+        ATLAS_TRACE( "Inverse Fourier Transform (NoFFT)" );
 
         for ( int ip = 0; ip < grid_.size(); ip++ ) {
-            PointXY p  = gu.xy( ip );
-            double lon = p.x() * util::Constants::degreesToRadians();
-            double lat = p.y() * util::Constants::degreesToRadians();
+            const PointLonLat p  = gu.lonlat( ip );
+            const double lon = p.lon() * util::Constants::degreesToRadians();
+            const double lat = p.lat() * util::Constants::degreesToRadians();
             {
                 //ATLAS_TRACE( "opt transposition in Fourier" );
                 for ( int jm = 0; jm < truncation; jm++ ) {
                     int idx = nb_fields * 2 * ( ip + nlats * jm );
                     for ( int imag = 0; imag < 2; imag++ ) {
                         for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
-                            int pos_tp = imag + 2 * ( jm + ( truncation ) * ( jfld ) );
+                            const int pos_tp = imag + 2 * ( jm + ( truncation ) * ( jfld ) );
                             //int pos  = jfld + nb_fields * ( imag + 2 * ( jm ) );
                             scl_fourier_tp[pos_tp] = scl_fourier[idx++];  // = scl_fourier[pos]
                         }
@@ -1046,7 +1037,7 @@ void TransLocalopt3::invtrans_unstructured_precomp( const int truncation, const 
                 eckit::linalg::Matrix A( fouriertp, 1, (truncation)*2 );
                 eckit::linalg::Matrix B( scl_fourier_tp, (truncation)*2, nb_fields );
                 eckit::linalg::Matrix C( gp_opt, 1, nb_fields );
-                eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+                linalg_.gemm( A, B, C );
                 for ( int j = 0; j < nb_fields; j++ ) {
                     gp_fields[ip + j * grid_.size()] = gp_opt[j];
                 }
@@ -1074,7 +1065,7 @@ void TransLocalopt3::invtrans_unstructured_precomp( const int truncation, const 
 void TransLocalopt3::invtrans_unstructured( const int truncation, const int nb_fields, const int nb_vordiv_fields,
                                             const double scalar_spectra[], double gp_fields[],
                                             const eckit::Configuration& config ) const {
-    ATLAS_TRACE( "invtrans_uv unstructured opt3" );
+    ATLAS_TRACE( "invtrans_uv unstructured" );
     grid::UnstructuredGrid gu = grid_;
     double* zfn;
     alloc_aligned( zfn, ( truncation + 1 ) * ( truncation + 1 ) );
@@ -1093,20 +1084,20 @@ void TransLocalopt3::invtrans_unstructured( const int truncation, const int nb_f
 
     // loop over all points:
     for ( int ip = 0; ip < grid_.size(); ip++ ) {
-        PointXY p  = gu.xy( ip );
-        double lon = p.x() * util::Constants::degreesToRadians();
-        double lat = p.y() * util::Constants::degreesToRadians();
+        const PointLonLat p  = gu.lonlat( ip );
+        const double lon = p.lon() * util::Constants::degreesToRadians();
+        const double lat = p.lat() * util::Constants::degreesToRadians();
         compute_legendre_polynomials_latopt3( truncation, lat, legendre, zfn );
         // Legendre transform:
         {
             //ATLAS_TRACE( "opt Legendre dgemm" );
             for ( int jm = 0; jm <= truncation; jm++ ) {
-                int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
+                const int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
                 eckit::linalg::Matrix A( eckit::linalg::Matrix(
                     const_cast<double*>( scalar_spectra ) + nb_fields * 2 * noff, nb_fields * 2, ns ) );
                 eckit::linalg::Matrix B( legendre + noff, ns, 1 );
                 eckit::linalg::Matrix C( scl_fourier + jm * size_fourier, nb_fields * 2, 1 );
-                eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+                linalg_.gemm( A, B, C );
             }
         }
         {
@@ -1115,7 +1106,7 @@ void TransLocalopt3::invtrans_unstructured( const int truncation, const int nb_f
             for ( int jm = 0; jm < truncation + 1; jm++ ) {
                 for ( int imag = 0; imag < 2; imag++ ) {
                     for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
-                        int pos_tp = imag + 2 * ( jm + ( truncation + 1 ) * ( jfld ) );
+                        const int pos_tp = imag + 2 * ( jm + ( truncation + 1 ) * ( jfld ) );
                         //int pos  = jfld + nb_fields * ( imag + 2 * ( jm ) );
                         scl_fourier_tp[pos_tp] = scl_fourier[idx++];  // = scl_fourier[pos]
                     }
@@ -1136,7 +1127,7 @@ void TransLocalopt3::invtrans_unstructured( const int truncation, const int nb_f
             eckit::linalg::Matrix A( fouriertp, 1, ( truncation + 1 ) * 2 );
             eckit::linalg::Matrix B( scl_fourier_tp, ( truncation + 1 ) * 2, nb_fields );
             eckit::linalg::Matrix C( gp_opt, 1, nb_fields );
-            eckit::linalg::LinearAlgebra::backend().gemm( A, B, C );
+            linalg_.gemm( A, B, C );
             for ( int j = 0; j < nb_fields; j++ ) {
                 gp_fields[ip + j * grid_.size()] = gp_opt[j];
             }
@@ -1145,7 +1136,7 @@ void TransLocalopt3::invtrans_unstructured( const int truncation, const int nb_f
         {
             if ( nb_vordiv_fields > 0 ) {
                 //ATLAS_TRACE( "opt3 u,v from U,V" );
-                double coslat = std::cos( lat );
+                const double coslat = std::cos( lat );
                 for ( int j = 0; j < nb_fields; j++ ) {
                     gp_fields[ip + j * grid_.size()] /= coslat;
                 }
@@ -1182,7 +1173,7 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
 
         // Transform
         if ( grid::StructuredGrid g = grid_ ) {
-            ATLAS_TRACE( "invtrans_uv structured opt3" );
+            ATLAS_TRACE( "invtrans_uv structured" );
             int nlats            = g.ny();
             int nlons            = g.nxmax();
             int size_fourier_max = nb_fields * 2 * nlats;
