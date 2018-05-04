@@ -29,6 +29,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/trans/Trans.h"
+#include "atlas/trans/LegendreCacheCreator.h"
 #include "atlas/trans/local_noopt/FourierTransforms.h"
 #include "atlas/trans/local_noopt/LegendrePolynomials.h"
 #include "atlas/trans/local_noopt/LegendreTransforms.h"
@@ -70,6 +71,7 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
 
 using trans::Trans;
 using trans::LegendreCache;
+using trans::LegendreCacheCreator;
 using trans::Cache;
 using grid::StructuredGrid;
 using grid::GaussianGrid;
@@ -243,6 +245,31 @@ CASE( "test_regional_grids with projection" ) {
         Trans( grid, truncation, option::type("local") );
 
     // Note: caching not yet implemented for unstructured and projected grids
+}
+
+
+CASE( "test_regional_grids nested_in_global NEW" ) {
+
+    auto truncation = 89;
+    StructuredGrid grid_global(
+        LinearSpacing( {  0., 360.}, 360, false ),
+        LinearSpacing( {-90.,  90.}, 181, true  )
+    );
+
+    LegendreCacheCreator legendre_cache_creator( grid_global, truncation, option::type("local") );
+    auto cachefile = CacheFile( legendre_cache_creator.uid() );
+    ATLAS_TRACE_SCOPE( "Creating cache "+std::string(cachefile) )
+      legendre_cache_creator.create( cachefile );
+
+    Cache cache;
+    ASSERT( grid_global.domain().global() );
+    StructuredGrid grid( LinearSpacing( {0.,180.}, 181 ), LinearSpacing( {0.,45.}, 46 ) );
+    ATLAS_TRACE_SCOPE("create without cache")
+        Trans( grid, truncation, option::type("local") | option::global_grid( grid_global ) );
+    ATLAS_TRACE_SCOPE("read cache")
+        cache = LegendreCache( cachefile );
+    ATLAS_TRACE_SCOPE("create with cache")
+        Trans( cache, grid, truncation, option::type("local") | option::global_grid( grid_global ) );
 }
 
 }  // namespace test

@@ -321,6 +321,8 @@ trans/Trans.h
 trans/Trans.cc
 trans/VorDivToUV.h
 trans/VorDivToUV.cc
+trans/LegendreCacheCreator.h
+trans/LegendreCacheCreator.cc
 trans/local_noopt/TransLocal.h
 trans/local_noopt/TransLocal.cc
 trans/local_noopt/LegendrePolynomials.h
@@ -357,6 +359,8 @@ trans/localopt3/LegendrePolynomialsopt3.h
 trans/localopt3/LegendrePolynomialsopt3.cc
 trans/localopt3/VorDivToUVLocalopt3.h
 trans/localopt3/VorDivToUVLocalopt3.cc
+trans/localopt3/LegendreCacheCreatorLocal.h
+trans/localopt3/LegendreCacheCreatorLocal.cc
 
 )
 if( ATLAS_HAVE_TRANS )
