@@ -289,6 +289,7 @@ public:
 public:
     Structured( const std::string&, XSpace, YSpace, Projection, Domain );
     Structured( XSpace, YSpace, Projection, Domain );
+    Structured( const Structured&, Domain );
 
     virtual ~Structured();
 

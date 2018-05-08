@@ -66,6 +66,8 @@ public:  // methods
 
     static const Grid* create( const std::string& name, const Config& = Config() );
 
+    static const Grid* create( const Grid&, const Domain& );
+
     /// ctor (default)
     Grid();
 

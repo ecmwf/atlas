@@ -80,6 +80,7 @@ public:
     Grid( const Grid& );
     Grid( const Implementation* );
     Grid( const std::string& name, const Domain& = Domain() );
+    Grid( const Grid&, const Domain& );
     Grid( const Config& );
 
     operator bool() const { return grid_; }
@@ -186,6 +187,7 @@ public:
     StructuredGrid( const std::string& name, const Domain& = Domain() );
     StructuredGrid( const Config& );
     StructuredGrid( const XSpace&, const YSpace&, const Projection& = Projection(), const Domain& = Domain() );
+    StructuredGrid( const Grid&, const Domain& );
 
     operator bool() const { return valid(); }
 

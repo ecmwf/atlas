@@ -36,6 +36,11 @@ Grid::Grid( const std::string& shortname, const Domain& domain ) {
     grid_ = Grid::Implementation::create( shortname, Config( "domain", domain.spec() ) );
 }
 
+Grid::Grid( const Grid& grid, const Grid::Domain& domain ) {
+    ASSERT( grid );
+    grid_ = Grid::Implementation::create( *grid.get(), domain );
+}
+
 Grid::Grid( const Config& p ) {
     grid_ = Grid::Implementation::create( p );
 }
@@ -87,6 +92,10 @@ StructuredGrid::StructuredGrid( const Config& grid ) : Grid( grid ), grid_( stru
 StructuredGrid::StructuredGrid( const XSpace& xspace, const YSpace& yspace, const Projection& projection,
                                 const Domain& domain ) :
     Grid( new detail::grid::Structured( xspace, yspace, projection, domain ) ),
+    grid_( structured_grid( get() ) ) {}
+
+StructuredGrid::StructuredGrid( const Grid& grid , const Grid::Domain& domain ) :
+    Grid( grid, domain ),
     grid_( structured_grid( get() ) ) {}
 
 ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx, const Domain& domain ) :
