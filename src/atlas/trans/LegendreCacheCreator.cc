@@ -20,6 +20,7 @@
 // For factory registration only:
 #if ATLAS_HAVE_TRANS
 #define TRANS_DEFAULT "ifs"
+#include "atlas/trans/ifs/LegendreCacheCreatorIFS.h"
 #else
 #define TRANS_DEFAULT "local"
 #endif
@@ -49,7 +50,7 @@ void load_builder() {
 struct force_link {
     force_link() {
 #if ATLAS_HAVE_TRANS
-        //load_builder<LegendreCacheCreatorIFS>();
+        load_builder<LegendreCacheCreatorIFS>();
 #endif
         load_builder<LegendreCacheCreatorLocal>();
     }
@@ -136,12 +137,16 @@ LegendreCacheCreator::LegendreCacheCreator( const Grid& grid, int truncation, co
 
 LegendreCacheCreator::LegendreCacheCreator( const LegendreCacheCreator& creator ) : impl_( creator.impl_ ) {}
 
-void LegendreCacheCreator::create( const std::string& path ) const {
-    impl_->create( path );
+bool LegendreCacheCreator::supported() const {
+    return impl_->supported();
 }
 
 std::string LegendreCacheCreator::uid() const {
     return impl_->uid();
+}
+
+void LegendreCacheCreator::create( const std::string& path ) const {
+    impl_->create( path );
 }
 
 }  // namespace trans

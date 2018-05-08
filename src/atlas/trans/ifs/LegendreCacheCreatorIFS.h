@@ -21,11 +21,11 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
-class LegendreCacheCreatorLocal : public trans::LegendreCacheCreatorImpl {
+class LegendreCacheCreatorIFS : public trans::LegendreCacheCreatorImpl {
 public:
-    LegendreCacheCreatorLocal( const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
+    LegendreCacheCreatorIFS( const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
 
-    virtual ~LegendreCacheCreatorLocal();
+    virtual ~LegendreCacheCreatorIFS();
 
     virtual bool supported() const override;
 

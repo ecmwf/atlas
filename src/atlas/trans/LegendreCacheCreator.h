@@ -36,6 +36,8 @@ class LegendreCacheCreatorImpl : public eckit::Owned {
 public:
     virtual ~LegendreCacheCreatorImpl() = 0;
 
+    virtual bool supported() const = 0;
+
     virtual std::string uid() const = 0;
 
     virtual void create( const std::string& path ) const = 0;
@@ -60,7 +62,10 @@ public:
     const Implementation* get() const { return impl_.get(); }
     operator bool() const { return impl_.owners(); }
 
+    bool supported() const;
+
     std::string uid() const;
+
     void create( const std::string& path ) const;
 };
 

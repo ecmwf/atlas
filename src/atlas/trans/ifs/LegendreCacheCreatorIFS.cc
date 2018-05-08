@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/trans/localopt3/LegendreCacheCreatorLocal.h"
+#include "atlas/trans/ifs/LegendreCacheCreatorIFS.h"
 #include <string>
 #include <sstream>
 #include "eckit/utils/MD5.h"
@@ -20,7 +20,7 @@ namespace atlas {
 namespace trans {
 
 namespace {
-static LegendreCacheCreatorBuilder<LegendreCacheCreatorLocal> builder( "local" );
+static LegendreCacheCreatorBuilder<LegendreCacheCreatorIFS> builder( "ifs" );
 }
 
 namespace {
@@ -52,18 +52,25 @@ std::string hash( const eckit::Configuration& config ) {
 
 }
 
-std::string LegendreCacheCreatorLocal::uid() const {
+std::string LegendreCacheCreatorIFS::uid() const {
   if( unique_identifier_.empty() ) {
     std::ostringstream stream;
-    stream << "local-T" << truncation_ << "-";
+    stream << "ifs-T" << truncation_ << "-";
     if( grid::GaussianGrid( grid_ ) ) {
-      // Same cache for any global Gaussian grid
-      stream << "GaussianN" << grid::GaussianGrid( grid_ ).N();
+      if( grid::RegularGaussianGrid( grid_ ) ) {
+        stream << "RegularGaussianN" << grid::GaussianGrid( grid_ ).N();
+      } else {
+        stream << "ReducedGaussianN" << grid::GaussianGrid( grid_ ).N() << "-PL";
+        stream << hash( grid_ );
+      }
     } else if( grid::RegularLonLatGrid( grid_ ) ) {
-      // Same cache for any global regular grid
       auto g = grid::RegularLonLatGrid( grid_ );
-      stream << ( g.shiftedLat() ? "S" : "L" ) << "+x" << g.ny();
-      // The above '+' is a placeholder for any g.nx()
+      if( g.standard() || g.shifted() ) {
+          stream << ( g.standard() ? "L" : "S" ) << g.nx() << "x" << g.ny();
+      } else {
+        // We cannot make more assumptions on reusability for different grids
+        stream << "grid-" << hash( grid_ );
+      }
     } else {
       // We cannot make more assumptions on reusability for different grids
       stream << "grid-" << hash( grid_ );
@@ -74,20 +81,28 @@ std::string LegendreCacheCreatorLocal::uid() const {
   return unique_identifier_;
 }
 
-LegendreCacheCreatorLocal::~LegendreCacheCreatorLocal() {}
+LegendreCacheCreatorIFS::~LegendreCacheCreatorIFS() {}
 
-LegendreCacheCreatorLocal::LegendreCacheCreatorLocal( const Grid& grid, int truncation, const eckit::Configuration& config ) :
+bool LegendreCacheCreatorIFS::supported() const {
+  if( grid::GaussianGrid( grid_ ) ) {
+    return true;
+  } else if( grid::RegularLonLatGrid( grid_ ) ) {
+    auto g = grid::RegularLonLatGrid( grid_ );
+    if( g.standard() || g.shifted() ) {
+        return true;
+    }
+  }
+  return false;
+}
+
+LegendreCacheCreatorIFS::LegendreCacheCreatorIFS( const Grid& grid, int truncation, const eckit::Configuration& config ) :
   grid_(grid),
   truncation_(truncation),
   config_(config) {
 }
 
-bool LegendreCacheCreatorLocal::supported() const {
-  return true;
-}
-
-void LegendreCacheCreatorLocal::create( const std::string& path ) const {
-  Trans( grid_, truncation_, config_ | option::type("local") | option::write_legendre( path ) );
+void LegendreCacheCreatorIFS::create( const std::string& path ) const {
+  Trans( grid_, truncation_, config_ | option::type("ifs") | option::write_legendre( path ) );
 }
 
 

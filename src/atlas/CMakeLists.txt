@@ -365,6 +365,8 @@ trans/localopt3/LegendreCacheCreatorLocal.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs
+  trans/ifs/LegendreCacheCreatorIFS.h
+  trans/ifs/LegendreCacheCreatorIFS.cc
   trans/ifs/TransIFS.h
   trans/ifs/TransIFS.cc
   trans/ifs/TransIFSNodeColumns.h
