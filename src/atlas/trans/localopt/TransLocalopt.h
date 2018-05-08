@@ -48,8 +48,10 @@ namespace trans {
 ///        the grid is global. There are no plans to support this at the moment.
 class TransLocalopt : public trans::TransImpl {
 public:
-    TransLocalopt( const Grid& g, const long truncation, const eckit::Configuration& = util::NoConfig() );
-    TransLocalopt( const Cache&, const Grid& g, const long truncation, const eckit::Configuration& = util::NoConfig() );
+    TransLocalopt( const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig() );
+    TransLocalopt( const Grid&, const Domain&, const long truncation, const eckit::Configuration& = util::NoConfig() );
+    TransLocalopt( const Cache&, const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig() );
+    TransLocalopt( const Cache&, const Grid&, const Domain&, const long truncation, const eckit::Configuration& = util::NoConfig() );
 
     virtual ~TransLocalopt();
 

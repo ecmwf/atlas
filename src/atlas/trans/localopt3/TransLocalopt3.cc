@@ -55,13 +55,6 @@ public:
 
     std::string write_fft() const { return config_.getString( "write_fft", "" ); }
 
-    Grid global_grid() const {
-        Grid g;
-        util::Config spec;
-        if ( config_.get( "global_grid", spec ) ) { g = Grid( spec ); }
-        return g;
-    }
-
     bool global() const { return config_.getBool( "global", false ); }
 
     int fft() const {
@@ -234,9 +227,9 @@ const eckit::linalg::LinearAlgebra& linear_algebra_backend() {
     return eckit::linalg::LinearAlgebra::backend();
 }
 
-TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long truncation,
+TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const Domain& domain, const long truncation,
                                 const eckit::Configuration& config ) :
-    grid_( grid ),
+    grid_( grid, domain ),
     truncation_( truncation ),
     precompute_( config.getBool( "precompute", true ) ),
     cache_( cache ),
@@ -286,33 +279,21 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
             nlatsLegDomain_ = nlatsSH_;
         }
 
-
-        gridGlobal_ = TransParameters( config ).global_grid();
-        if ( not gridGlobal_ ) {
-            if ( grid_.domain().global() ) { gridGlobal_ = grid_; }
-            else {
-                /*if ( Grid( grid_.name() ).domain().global() ) {
-                    Log::warning() << Here() << " Deprecated. We should pass a global grid as optional argument"
-                                   << std::endl;
-                    gridGlobal_ = Grid( grid_.name() );
-                }
-                else {*/
-                if ( grid::RegularGrid( grid_ ) ) {
-                    // non-nested regular grid
-                    no_nest         = true;
-                    no_symmetry_    = true;
-                    useFFT_         = false;
-                    nlatsNH_        = nlats;
-                    nlatsSH_        = 0;
-                    nlatsLegDomain_ = nlatsNH_;
-                    gridGlobal_     = grid_;
-                    useGlobalLeg    = false;
-                }
-                else {
-                    NOTIMP;
-                    // non-nested reduced grids are not supported
-                }
-                //}
+        gridGlobal_ = grid;
+        if( not gridGlobal_.domain().global() ) {
+            if ( grid::RegularGrid( grid_ ) ) {
+                // non-nested regular grid
+                no_nest         = true;
+                no_symmetry_    = true;
+                useFFT_         = false;
+                nlatsNH_        = nlats;
+                nlatsSH_        = 0;
+                nlatsLegDomain_ = nlatsNH_;
+                gridGlobal_     = grid_;
+                useGlobalLeg    = false;
+            } else {
+                NOTIMP;
+                // non-nested reduced grids are not supported
             }
         }
 
@@ -594,7 +575,13 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long
 // --------------------------------------------------------------------------------------------------------------------
 
 TransLocalopt3::TransLocalopt3( const Grid& grid, const long truncation, const eckit::Configuration& config ) :
-    TransLocalopt3( Cache(), grid, truncation, config ) {}
+    TransLocalopt3( Cache(), grid, grid.domain(), truncation, config ) {}
+
+TransLocalopt3::TransLocalopt3( const Grid& grid, const Domain& domain, const long truncation, const eckit::Configuration& config ) :
+    TransLocalopt3( Cache(), grid, domain, truncation, config ) {}
+
+TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long truncation, const eckit::Configuration& config ) :
+    TransLocalopt3( cache, grid, grid.domain(), truncation, config ) {}
 
 // --------------------------------------------------------------------------------------------------------------------
 

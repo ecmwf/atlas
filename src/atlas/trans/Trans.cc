@@ -153,7 +153,16 @@ Trans::Implementation* TransFactory::build( const Grid& grid, int truncation, co
     return build( Cache(), grid, truncation, config );
 }
 
+Trans::Implementation* TransFactory::build( const Grid& grid, const Domain& domain, int truncation, const eckit::Configuration& config ) {
+    return build( Cache(), grid, domain, truncation, config );
+}
+
 Trans::Implementation* TransFactory::build( const Cache& cache, const Grid& grid, int truncation,
+                                            const eckit::Configuration& config ) {
+    return build( cache, grid, grid.domain(), truncation, config );
+}
+
+Trans::Implementation* TransFactory::build( const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
                                             const eckit::Configuration& config ) {
     pthread_once( &once, init );
 
@@ -170,8 +179,11 @@ Trans::Implementation* TransFactory::build( const Cache& cache, const Grid& grid
         Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
     }
 
-    return factory( name ).make( cache, grid, truncation, config );
+    return factory( name ).make( cache, grid, domain, truncation, config );
 }
+
+
+
 
 Trans::Trans() {}
 
@@ -183,12 +195,18 @@ Trans::Trans( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Con
 Trans::Trans( const Grid& grid, int truncation, const eckit::Configuration& config ) :
     impl_( TransFactory::build( grid, truncation, config ) ) {}
 
+Trans::Trans( const Grid& grid, const Domain& domain, int truncation, const eckit::Configuration& config ) :
+    impl_( TransFactory::build( grid, domain, truncation, config ) ) {}
+
 Trans::Trans( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp,
               const eckit::Configuration& config ) :
     impl_( TransFactory::build( cache, gp, sp, config ) ) {}
 
 Trans::Trans( const Cache& cache, const Grid& grid, int truncation, const eckit::Configuration& config ) :
     impl_( TransFactory::build( cache, grid, truncation, config ) ) {}
+
+Trans::Trans( const Cache& cache, const Grid& grid, const Domain& domain, int truncation, const eckit::Configuration& config ) :
+    impl_( TransFactory::build( cache, grid, domain, truncation, config ) ) {}
 
 Trans::Trans( const Trans& trans ) : impl_( trans.impl_ ) {}
 

@@ -30,6 +30,7 @@ class Field;
 class FieldSet;
 class FunctionSpace;
 class Grid;
+class Domain;
 }  // namespace atlas
 
 //-----------------------------------------------------------------------------
@@ -223,9 +224,14 @@ public:
                              const eckit::Configuration& = util::Config() );
     static TransImpl* build( const Grid&, int truncation, const eckit::Configuration& = util::Config() );
 
+    static TransImpl* build( const Grid&, const Domain&, int truncation, const eckit::Configuration& = util::Config() );
+
     static TransImpl* build( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
                              const eckit::Configuration& = util::Config() );
+
     static TransImpl* build( const Cache&, const Grid&, int truncation, const eckit::Configuration& = util::Config() );
+
+    static TransImpl* build( const Cache&, const Grid&, const Domain&, int truncation, const eckit::Configuration& = util::Config() );
 
     /*!
    * \brief list all registered trans implementations
@@ -236,15 +242,10 @@ public:
 
 private:
     std::string name_;
-    virtual TransImpl* make( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& ) {
+    virtual TransImpl* make( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& ) {
         return nullptr;
     }
-    virtual TransImpl* make( const Grid& gp, int truncation, const eckit::Configuration& ) { return nullptr; }
-    virtual TransImpl* make( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
-                             const eckit::Configuration& ) {
-        return nullptr;
-    }
-    virtual TransImpl* make( const Cache&, const Grid& gp, int truncation, const eckit::Configuration& ) {
+    virtual TransImpl* make( const Cache&, const Grid& gp, const Domain&, int truncation, const eckit::Configuration& ) {
         return nullptr;
     }
 
@@ -257,17 +258,11 @@ protected:
 
 template <class T>
 class TransBuilderFunctionSpace : public TransFactory {
-    virtual TransImpl* make( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) {
-        return new T( gp, sp, config );
-    }
     virtual TransImpl* make( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp,
                              const eckit::Configuration& config ) {
         return new T( cache, gp, sp, config );
     }
-    virtual TransImpl* make( const Grid&, int, const eckit::Configuration& ) {
-        throw eckit::SeriousBug( "This function should not be called", Here() );
-    }
-    virtual TransImpl* make( const Cache&, const Grid&, int, const eckit::Configuration& ) {
+    virtual TransImpl* make( const Cache&, const Grid&, const Domain&, int, const eckit::Configuration& ) {
         throw eckit::SeriousBug( "This function should not be called", Here() );
     }
 
@@ -277,15 +272,9 @@ public:
 
 template <class T>
 class TransBuilderGrid : public TransFactory {
-    virtual TransImpl* make( const Grid& grid, int truncation, const eckit::Configuration& config ) {
-        return new T( grid, truncation, config );
-    }
-    virtual TransImpl* make( const Cache& cache, const Grid& grid, int truncation,
+    virtual TransImpl* make( const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
                              const eckit::Configuration& config ) {
-        return new T( cache, grid, truncation, config );
-    }
-    virtual TransImpl* make( const FunctionSpace&, const FunctionSpace&, const eckit::Configuration& ) {
-        throw eckit::SeriousBug( "This function should not be called", Here() );
+        return new T( cache, grid, domain, truncation, config );
     }
     virtual TransImpl* make( const Cache&, const FunctionSpace&, const FunctionSpace&, const eckit::Configuration& ) {
         throw eckit::SeriousBug( "This function should not be called", Here() );
@@ -311,10 +300,12 @@ public:
 
     Trans( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig() );
     Trans( const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
+    Trans( const Grid&, const Domain&, int truncation, const eckit::Configuration& = util::NoConfig() );
 
     Trans( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
            const eckit::Configuration& = util::NoConfig() );
     Trans( const Cache&, const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
+    Trans( const Cache&, const Grid&, const Domain&, int truncation, const eckit::Configuration& = util::NoConfig() );
 
     void hash( eckit::Hash& ) const;
     const Implementation* get() const { return impl_.get(); }

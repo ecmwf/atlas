@@ -49,10 +49,6 @@ write_legendre::write_legendre( const eckit::PathName& filepath ) {
     set( "write_legendre", filepath );
 }
 
-global_grid::global_grid( const Grid& grid ) {
-    set( "global_grid", grid.spec() );
-}
-
 read_legendre::read_legendre( const eckit::PathName& filepath ) {
     set( "read_legendre", filepath );
 }

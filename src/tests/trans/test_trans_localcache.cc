@@ -194,7 +194,7 @@ CASE( "test_global_grids_with_subdomain" ) {
         for( auto domain : domains ) {
             Grid grid( gridname, domain );
             ATLAS_TRACE_SCOPE("create with cache")
-                Trans( global_cache, grid, truncation, option::type("local") | option::global_grid( global_grid) );
+                Trans( global_cache, global_grid, domain, truncation, option::type("local") );
         }
     }
 }
@@ -217,15 +217,15 @@ CASE( "test_regional_grids nested_in_global" ) {
 
 
 
-    StructuredGrid grid( LinearSpacing( {0.,180.}, 181 ), LinearSpacing( {0.,45.}, 46 ) );
+    StructuredGrid regional( LinearSpacing( {0.,180.}, 181 ), LinearSpacing( {0.,45.}, 46 ) );
 
 
     ATLAS_TRACE_SCOPE("create without cache")
-        Trans( grid, truncation, option::type("local") | option::global_grid( grid_global ) );
+        Trans( grid_global, regional.domain(), truncation, option::type("local") );
     ATLAS_TRACE_SCOPE("read cache")
         cache = LegendreCache( global_cachefile );
     ATLAS_TRACE_SCOPE("create with cache")
-        Trans( cache, grid, truncation, option::type("local") | option::global_grid( grid_global ) );
+        Trans( cache, grid_global, regional.domain(), truncation, option::type("local") );
 }
 
 CASE( "test_regional_grids not nested" ) {

@@ -972,8 +972,8 @@ CASE( "test_trans_domain" ) {
     Domain testdomain2 = RectangularDomain( {-1., 1.}, {-5., 40.} );
     // Grid: (Adjust the following line if the test takes too long!)
 
-    std::string gridString = "O640";
-    Grid g1( gridString, testdomain1 );
+    Grid global_grid( "O640" );
+    Grid g1( global_grid, testdomain1 );
     //Grid g2( gridString, testdomain2 );
 
     bool fourierTrc1 = true;
@@ -986,16 +986,15 @@ CASE( "test_trans_domain" ) {
     //Log::info() << "rgp1:" << std::endl;
     if ( eckit::PathName( "legcache.bin" ).exists() ) eckit::PathName( "legcache.bin" ).unlink();
     Trace t1( Here(), "translocal1 construction" );
-    trans::Trans transLocal1( g1, trc,
-                              option::type( "local" ) | option::write_legendre( "legcache.bin" ) |
-                                  option::global_grid( Grid( gridString ) ) );
+    trans::Trans transLocal1( global_grid, g1.domain(), trc,
+                              option::type( "local" ) | option::write_legendre( "legcache.bin" ) );
     t1.stop();
     //Log::info() << "rgp2:" << std::endl;
     trans::Cache cache;
     ATLAS_TRACE_SCOPE( "Read cache" ) cache = trans::LegendreCache( "legcache.bin" );
     Trace t2( Here(), "translocal2 construction" );
     //trans::Trans transLocal2( cache, g2, trc,
-    //                          option::type( "local" ) | option::global_grid( Grid( gridString ) ) | option::no_fft() );
+    //                          option::type( "local" ) | option::no_fft() );
     trans::Trans transLocal2( g2, trc, option::type( "local" ) );
     t2.stop();
 

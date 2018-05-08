@@ -44,8 +44,10 @@ namespace trans {
 ///        the grid is global. There are no plans to support this at the moment.
 class TransLocal : public trans::TransImpl {
 public:
-    TransLocal( const Grid& g, const long truncation, const eckit::Configuration& = util::NoConfig() );
-    TransLocal( const Cache&, const Grid& g, const long truncation, const eckit::Configuration& = util::NoConfig() );
+    TransLocal( const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig() );
+    TransLocal( const Grid&, const Domain&, const long truncation, const eckit::Configuration& = util::NoConfig() );
+    TransLocal( const Cache&, const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig() );
+    TransLocal( const Cache&, const Grid&, const Domain&, const long truncation, const eckit::Configuration& = util::NoConfig() );
 
     virtual ~TransLocal();
 

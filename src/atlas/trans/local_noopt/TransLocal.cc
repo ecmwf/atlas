@@ -87,6 +87,12 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const long truncat
 TransLocal::TransLocal( const Grid& grid, const long truncation, const eckit::Configuration& config ) :
     TransLocal( Cache(), grid, truncation, config ) {}
 
+TransLocal::TransLocal( const Grid& grid, const Domain&, const long truncation, const eckit::Configuration& config ) :
+    TransLocal( Cache(), grid, truncation, config ) {}
+
+TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain&, const long truncation, const eckit::Configuration& config ) :
+    TransLocal( cache, grid, truncation, config ) {}
+
 // --------------------------------------------------------------------------------------------------------------------
 
 TransLocal::~TransLocal() {}

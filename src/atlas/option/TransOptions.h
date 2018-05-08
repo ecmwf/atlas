@@ -87,13 +87,6 @@ public:
 
 // ----------------------------------------------------------------------------
 
-class global_grid : public util::Config {
-public:
-    global_grid( const Grid& );
-};
-
-// ----------------------------------------------------------------------------
-
 class read_legendre : public util::Config {
 public:
     read_legendre( const eckit::PathName& );

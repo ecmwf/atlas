@@ -251,6 +251,12 @@ TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const long
 TransLocalopt2::TransLocalopt2( const Grid& grid, const long truncation, const eckit::Configuration& config ) :
     TransLocalopt2( Cache(), grid, truncation, config ) {}
 
+TransLocalopt2::TransLocalopt2( const Grid& grid, const Domain&, const long truncation, const eckit::Configuration& config ) :
+    TransLocalopt2( Cache(), grid, truncation, config ) {}
+
+TransLocalopt2::TransLocalopt2( const Cache& cache, const Grid& grid, const Domain&, const long truncation, const eckit::Configuration& config ) :
+    TransLocalopt2( cache, grid, truncation, config ) {}
+
 // --------------------------------------------------------------------------------------------------------------------
 
 TransLocalopt2::~TransLocalopt2() {
