@@ -149,5 +149,13 @@ void LegendreCacheCreator::create( const std::string& path ) const {
     impl_->create( path );
 }
 
+Cache LegendreCacheCreator::create() const {
+    return impl_->create();
+}
+
+size_t LegendreCacheCreator::estimate() const {
+    return impl_->estimate();
+}
+
 }  // namespace trans
 }  // namespace atlas

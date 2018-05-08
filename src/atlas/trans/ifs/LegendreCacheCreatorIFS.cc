@@ -105,6 +105,13 @@ void LegendreCacheCreatorIFS::create( const std::string& path ) const {
   Trans( grid_, truncation_, config_ | option::type("ifs") | option::write_legendre( path ) );
 }
 
+Cache LegendreCacheCreatorIFS::create() const {
+    NOTIMP;
+}
+
+size_t LegendreCacheCreatorIFS::estimate() const {
+    return size_t(truncation_ * truncation_ * truncation_) / 2 * sizeof(double);
+}
 
 
 }  // namespace trans

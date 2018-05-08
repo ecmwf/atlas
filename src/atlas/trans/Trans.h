@@ -96,6 +96,8 @@ protected:
         fft_( fft ) {}
 
 public:
+    operator bool() const { return bool(legendre()) ; }
+
     const TransCacheEntry& legendre() const { return *legendre_; }
     const TransCacheEntry& fft() const { return *fft_; }
 

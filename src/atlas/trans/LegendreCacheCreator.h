@@ -17,6 +17,7 @@
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/util/Config.h"
+#include "atlas/trans/Trans.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -41,6 +42,10 @@ public:
     virtual std::string uid() const = 0;
 
     virtual void create( const std::string& path ) const = 0;
+
+    virtual Cache create() const = 0;
+
+    virtual size_t estimate() const = 0;
 };
 
 // ------------------------------------------------------------------
@@ -67,6 +72,10 @@ public:
     std::string uid() const;
 
     void create( const std::string& path ) const;
+
+    Cache create() const;
+
+    size_t estimate() const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

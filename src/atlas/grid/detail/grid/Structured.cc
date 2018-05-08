@@ -363,6 +363,8 @@ void Structured::crop( const Domain& dom ) {
                 jmax = std::max( j, jmax );
             }
         }
+        ASSERT(jmax >= jmin);
+
         size_t cropped_ny = jmax - jmin + 1;
         std::vector<double> cropped_y( y_.begin() + jmin, y_.begin() + jmin + cropped_ny );
         std::vector<double> cropped_dx( dx_.begin() + jmin, dx_.begin() + jmin + cropped_ny );

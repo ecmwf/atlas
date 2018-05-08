@@ -33,6 +33,10 @@ public:
 
     virtual void create(const std::string &path) const override;
 
+    virtual Cache create() const override;
+
+    size_t estimate() const override;
+
 private:
     const Grid grid_;
     const int truncation_;

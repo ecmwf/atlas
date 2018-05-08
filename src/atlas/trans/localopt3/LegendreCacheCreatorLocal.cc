@@ -90,6 +90,13 @@ void LegendreCacheCreatorLocal::create( const std::string& path ) const {
   Trans( grid_, truncation_, config_ | option::type("local") | option::write_legendre( path ) );
 }
 
+Cache LegendreCacheCreatorLocal::create() const {
+  NOTIMP;
+}
+
+size_t LegendreCacheCreatorLocal::estimate() const {
+    return size_t(truncation_ * truncation_ * truncation_) / 2 * sizeof(double);
+}
 
 
 }  // namespace trans
