@@ -28,8 +28,6 @@
 #define TRANS_DEFAULT "local"
 #endif
 #include "atlas/trans/local_noopt/TransLocal.h"
-#include "atlas/trans/localopt/TransLocalopt.h"
-#include "atlas/trans/localopt2/TransLocalopt2.h"
 #include "atlas/trans/localopt3/TransLocalopt3.h" // --> recommended "local"
 
 namespace atlas {
@@ -65,8 +63,6 @@ struct force_link {
         load_builder_grid<TransIFS>();
 #endif
         load_builder_grid<TransLocal>();
-        load_builder_grid<TransLocalopt>();
-        load_builder_grid<TransLocalopt2>();
         load_builder_grid<TransLocalopt3>();
     }
 };

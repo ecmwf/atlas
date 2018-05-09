@@ -11,43 +11,23 @@
 #include <algorithm>
 #include <iomanip>
 
-#include "atlas/array/MakeView.h"
-#include "atlas/field/FieldSet.h"
-#include "atlas/functionspace/NodeColumns.h"
-#include "atlas/functionspace/Spectral.h"
-#include "atlas/functionspace/StructuredColumns.h"
+#include "eckit/utils/MD5.h"
+
 #include "atlas/grid.h"
-#include "atlas/grid/Distribution.h"
-#include "atlas/grid/Partitioner.h"
-#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
-#include "atlas/grid/detail/partitioner/TransPartitioner.h"
+#include "atlas/option.h"
 #include "atlas/library/Library.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
-#include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/trans/LegendreCacheCreator.h"
-#include "atlas/trans/local_noopt/FourierTransforms.h"
-#include "atlas/trans/local_noopt/LegendrePolynomials.h"
-#include "atlas/trans/local_noopt/LegendreTransforms.h"
 #include "atlas/util/Constants.h"
-#include "atlas/util/Earth.h"
-#include "eckit/utils/MD5.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
 #if ATLAS_HAVE_TRANS
 #include "transi/trans.h"
 #endif
-
-using namespace eckit;
-
-using atlas::array::Array;
-using atlas::array::ArrayView;
-using atlas::array::make_view;
 
 namespace atlas {
 namespace test {

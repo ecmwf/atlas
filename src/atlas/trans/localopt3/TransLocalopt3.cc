@@ -17,7 +17,6 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/VorDivToUV.h"
-#include "atlas/trans/local_noopt/LegendrePolynomials.h"
 #include "atlas/trans/localopt3/LegendrePolynomialsopt3.h"
 #include "atlas/util/Constants.h"
 #include "eckit/config/YAMLConfiguration.h"
