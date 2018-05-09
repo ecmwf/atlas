@@ -239,13 +239,18 @@ CASE( "test_regional_grids with projection" ) {
        ("north_pole", std::vector<double>{ 4., 54.} ) );
 
     StructuredGrid grid( LinearSpacing( {0.,180.}, 181 ), LinearSpacing( {0.,45.}, 46 ), projection );
+    Trans trans;
     ATLAS_TRACE_SCOPE("create without cache")
-        Trans( grid, truncation, option::type("local") );
+        trans = Trans( grid, truncation, option::type("local") | option::warning(1) );
 
     // Note: caching not yet implemented for unstructured and projected grids
     LegendreCacheCreator legendre_cache_creator( grid, truncation, option::type("local") );
     ATLAS_DEBUG_VAR( legendre_cache_creator.uid() );
     EXPECT( not legendre_cache_creator.supported() );
+
+    std::vector<double> rspecg( trans.spectralCoefficients(), 0. );
+    std::vector<double> rgp( trans.grid().size() );
+    trans.invtrans(1,rspecg.data(),rgp.data());
 }
 
 CASE( "test cache creator to file" ) {

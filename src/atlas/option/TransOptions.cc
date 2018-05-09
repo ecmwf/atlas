@@ -65,6 +65,10 @@ nproma::nproma( int nproma ) {
     set( "nproma", nproma );
 }
 
+warning::warning( int warning ) {
+    set( "warning", warning );
+}
+
 // ----------------------------------------------------------------------------
 
 }  // namespace option

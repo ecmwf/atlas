@@ -57,6 +57,8 @@ public:
 
     bool global() const { return config_.getBool( "global", false ); }
 
+    int warning() const { return config_.getLong( "warning", 0 ); }
+
     int fft() const {
         static const std::map<std::string, int> string_to_FFT = {{"OFF", (int)option::FFT::OFF},
                                                                  {"FFTW", (int)option::FFT::FFTW}};
@@ -237,7 +239,8 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
     legendre_cachesize_( cache.legendre().size() ),
     fft_cache_( cache.fft().data() ),
     fft_cachesize_( cache.fft().size() ),
-    linalg_( linear_algebra_backend() )
+    linalg_( linear_algebra_backend() ),
+    warning_( TransParameters(config).warning() )
 {
     ATLAS_TRACE( "TransLocal constructor" );
     double fft_threshold = 0.0;  // fraction of latitudes of the full grid down to which FFT is used.
@@ -569,6 +572,11 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         // unstructured grid
         if ( unstruct_precomp_ ) {
             ATLAS_TRACE( "Legendre precomputations (unstructured)" );
+
+            if( warning_ > 0 && grid_.size() > warning_ ) {
+              Log::warning() << "WARNING: Precomputations for spectral transforms could take a long time and consume a lot of memory (unstructured grid approach)!" << std::endl;
+            }
+
             std::vector<double> lats( grid_.size() );
             alloc_aligned( legendre_, legendre_size( truncation_ ) * grid_.size() );
             int j( 0 );
@@ -971,8 +979,9 @@ void TransLocal::invtrans_fourier_reducedopt3( const int nlats, const grid::Stru
 void TransLocal::invtrans_unstructured_precomp( const int truncation, const int nb_fields,
                                                     const int nb_vordiv_fields, const double scalar_spectra[],
                                                     double gp_fields[], const eckit::Configuration& config ) const {
-    ATLAS_TRACE( "invtrans_uv unstructured opt3" );
-    grid::UnstructuredGrid gu = grid_;
+
+    ATLAS_TRACE( "invtrans_uv unstructured" );
+
     const int nlats                 = grid_.size();
     const int size_fourier          = nb_fields * 2;
     double* legendre;
@@ -1000,9 +1009,8 @@ void TransLocal::invtrans_unstructured_precomp( const int truncation, const int 
     // loop over all points:
     {
         ATLAS_TRACE( "Inverse Fourier Transform (NoFFT)" );
-
-        for ( int ip = 0; ip < grid_.size(); ip++ ) {
-            const PointLonLat p  = gu.lonlat( ip );
+        int ip = 0;
+        for( const PointLonLat p : grid_.lonlat() ) {
             const double lon = p.lon() * util::Constants::degreesToRadians();
             const double lat = p.lat() * util::Constants::degreesToRadians();
             {
@@ -1050,6 +1058,7 @@ void TransLocal::invtrans_unstructured_precomp( const int truncation, const int 
                     }
                 }
             }
+            ++ip;
         }
     }
     free_aligned( scl_fourier );
@@ -1063,8 +1072,14 @@ void TransLocal::invtrans_unstructured_precomp( const int truncation, const int 
 void TransLocal::invtrans_unstructured( const int truncation, const int nb_fields, const int nb_vordiv_fields,
                                             const double scalar_spectra[], double gp_fields[],
                                             const eckit::Configuration& config ) const {
-    ATLAS_TRACE( "invtrans_uv unstructured" );
-    grid::UnstructuredGrid gu = grid_;
+    ATLAS_TRACE( "invtrans_unstructured" );
+
+    int warning = warning_;
+    config.get("warning",warning);
+    if( warning > 0 && grid_.size() > warning ) {
+      Log::warning() << "WARNING: Spectral transforms could take a long time (unstructured grid approach)." << std::endl;
+    }
+
     double* zfn;
     alloc_aligned( zfn, ( truncation + 1 ) * ( truncation + 1 ) );
     compute_zfnopt3( truncation, zfn );
@@ -1080,9 +1095,10 @@ void TransLocal::invtrans_unstructured( const int truncation, const int nb_field
     alloc_aligned( fouriertp, 2 * ( truncation + 1 ) );
     alloc_aligned( gp_opt, nb_fields );
 
+
     // loop over all points:
-    for ( int ip = 0; ip < grid_.size(); ip++ ) {
-        const PointLonLat p  = gu.lonlat( ip );
+    int ip = 0;
+    for ( const PointLonLat p : grid_.lonlat() ) {
         const double lon = p.lon() * util::Constants::degreesToRadians();
         const double lat = p.lat() * util::Constants::degreesToRadians();
         compute_legendre_polynomials_latopt3( truncation, lat, legendre, zfn );
@@ -1140,6 +1156,7 @@ void TransLocal::invtrans_unstructured( const int truncation, const int nb_field
                 }
             }
         }
+        ++ip;
     }
     free_aligned( legendre );
     free_aligned( scl_fourier );
@@ -1170,7 +1187,8 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
         int nb_fields = nb_scalar_fields;
 
         // Transform
-        if ( grid::StructuredGrid g = grid_ ) {
+        if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
+            auto g = grid::StructuredGrid( grid_ );
             ATLAS_TRACE( "invtrans_uv structured" );
             int nlats            = g.ny();
             int nlons            = g.nxmax();

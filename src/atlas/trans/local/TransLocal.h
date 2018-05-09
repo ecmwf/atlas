@@ -201,6 +201,7 @@ private:
     size_t fft_cachesize_{0};
 
     const eckit::linalg::LinearAlgebra& linalg_;
+    int warning_ = 0;
 };
 
 //-----------------------------------------------------------------------------
