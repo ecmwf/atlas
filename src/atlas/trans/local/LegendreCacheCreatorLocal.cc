@@ -63,41 +63,35 @@ std::string LegendreCacheCreatorLocal::uid() const {
     };
     stream << "local-T" << truncation_ << "-";
     grid::StructuredGrid structured ( grid_ );
-    if( grid_.domain().global() ) {
-      if( grid::GaussianGrid( grid_ ) ) {
-        // Same cache for any global Gaussian grid
-        stream << "GaussianN" << grid::GaussianGrid( grid_ ).N();
-      } else if( grid::RegularLonLatGrid( grid_ ) ) {
-        // Same cache for any global regular grid
-        auto g = grid::RegularLonLatGrid( grid_ );
+    if( grid::GaussianGrid( grid_ ) ) {
+      // Same cache for any global Gaussian grid
+      stream << "GaussianN" << grid::GaussianGrid( grid_ ).N();
+    } else if( grid::RegularLonLatGrid( grid_ ) ) {
+      // Same cache for any global regular grid
+      auto g = grid::RegularLonLatGrid( grid_ );
 
-        const double dy_2 = 90. / double(g.ny());
-        bool shifted_lat = eckit::types::is_approximately_equal( g.y().front(), 90. - dy_2 ) &&
-                           eckit::types::is_approximately_equal( g.y().back(), -90. + dy_2 );
-        bool standard_lat = eckit::types::is_approximately_equal( g.y().front(), 90. ) &&
-                            eckit::types::is_approximately_equal( g.y().back(), -90. );
+      const double dy_2 = 90. / double(g.ny());
+      bool shifted_lat = eckit::types::is_approximately_equal( g.y().front(), 90. - dy_2 ) &&
+                         eckit::types::is_approximately_equal( g.y().back(), -90. + dy_2 );
+      bool standard_lat = eckit::types::is_approximately_equal( g.y().front(), 90. ) &&
+                          eckit::types::is_approximately_equal( g.y().back(), -90. );
 
-        if( standard_lat ) {
-          stream << "L" << "-ny" << g.ny();
-        } else if( shifted_lat ) {
-          stream << "S" << "-ny" << g.ny();
-        } else { // I don't think we get here, but just in case, give up
-          give_up();
-        }
-      } else { // global but not gaussian or regularlonlat
+      if( standard_lat ) {
+        stream << "L" << "-ny" << g.ny();
+      } else if( shifted_lat ) {
+        stream << "S" << "-ny" << g.ny();
+      } else { // I don't think we get here, but just in case, give up
         give_up();
       }
-    } else { // regional grid
-      if( grid::RegularGrid( grid_ ) && not grid_.projection() && structured.yspace().type() == "linear" ) {
-        RectangularDomain domain( grid_.domain() );
-        ASSERT( domain );
-        stream << "Regional";
-        stream << "-south" << domain.ymin();
-        stream << "-north" << domain.ymax();
-        stream << "-ny" << structured.ny();
-      } else { // It gets too complicated, so let's not be smart
-        give_up();
-      }
+    } else if ( grid::RegularGrid( grid_ ) && not grid_.projection() && structured.yspace().type() == "linear" ) {
+      RectangularDomain domain( grid_.domain() );
+      ASSERT( domain );
+      stream << "Regional";
+      stream << "-south" << domain.ymin();
+      stream << "-north" << domain.ymax();
+      stream << "-ny" << structured.ny();
+    } else { // It gets too complicated, so let's not be smart
+      give_up();
     }
     stream << "-OPT" << hash( config_ );
     unique_identifier_ = stream.str();
