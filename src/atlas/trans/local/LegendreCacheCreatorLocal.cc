@@ -8,14 +8,14 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/trans/localopt3/LegendreCacheCreatorLocal.h"
+#include "atlas/trans/local/LegendreCacheCreatorLocal.h"
 #include <string>
 #include <sstream>
 #include "eckit/utils/MD5.h"
 #include "atlas/grid.h"
 #include "atlas/option.h"
 #include "atlas/trans/Trans.h"
-#include "atlas/trans/localopt3/TransLocalopt3.h"
+#include "atlas/trans/local/TransLocal.h"
 
 namespace atlas {
 namespace trans {
@@ -94,7 +94,7 @@ void LegendreCacheCreatorLocal::create( const std::string& path ) const {
 Cache LegendreCacheCreatorLocal::create() const {
   util::Config export_legendre("export_legendre",true);
   Trans tmp( grid_, truncation_, config_ | option::type("local") | export_legendre );
-  auto impl = dynamic_cast<const TransLocalopt3*>( tmp.get() );
+  auto impl = dynamic_cast<const TransLocal*>( tmp.get() );
   return impl->export_legendre_;
 }
 

@@ -14,7 +14,7 @@
 
 #include "atlas/array.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/trans/localopt3/LegendrePolynomialsopt3.h"
+#include "atlas/trans/local/LegendrePolynomials.h"
 
 namespace atlas {
 namespace trans {
@@ -187,7 +187,7 @@ void compute_legendre_polynomialsopt3(
                 // The trans library in IFS uses descending order because it should
                 // be more accurate (higher wavenumbers have smaller contributions).
                 // This also needs to be changed when splitting the spectral data in
-                // TransLocalopt3::invtrans_uv!
+                // TransLocal::invtrans_uv!
                 //for ( int jn = jm; jn <= trc; jn++ ) {
                 for ( int jn = trc; jn >= jm; jn-- ) {
                     if ( ( jn - jm ) % 2 == 0 ) {

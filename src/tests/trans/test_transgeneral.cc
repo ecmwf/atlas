@@ -31,7 +31,7 @@
 #include "atlas/trans/Trans.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
-#include "atlas/trans/localopt3/TransLocalopt3.h"
+#include "atlas/trans/local/TransLocal.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -744,7 +744,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     double rav = 0.;  // compute average rms error of trans library in rav
 #endif
     trans::Trans transLocal1( g, trc, util::Config( "type", "localopt2" ) );
-    trans::Trans transLocal2( g, trc, util::Config( "type", "localopt3" ) );
+    trans::Trans transLocal2( g, trc, util::Config( "type", "Local" ) );
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 
     functionspace::Spectral spectral( trc );
@@ -882,10 +882,10 @@ CASE( "test_trans_hires" ) {
     double tolerance  = 1.e-13;
 
 #if ATLAS_HAVE_TRANS
-    //std::string transTypes[4] = {"localopt", "localopt2", "localopt3", "ifs"};
-    //std::string transTypes[2] = {"localopt2", "localopt3"};
-    std::string transTypes[3] = {"localopt3", "localopt2", "localopt"};
-    //std::string transTypes[1] = {"localopt3"};
+    //std::string transTypes[4] = {"localopt", "localopt2", "Local", "ifs"};
+    //std::string transTypes[2] = {"localopt2", "Local"};
+    std::string transTypes[3] = {"Local", "localopt2", "localopt"};
+    //std::string transTypes[1] = {"Local"};
 #else
     std::string transTypes[1] = {"localopt2"};
 #endif
@@ -1176,8 +1176,8 @@ CASE( "test_trans_unstructured" ) {
     std::vector<double> rgp_analytic1( g.size() );
     std::vector<double> rgp_analytic2( gu.size() );
 
-    trans::Trans transLocal1( g, trc, util::Config( "type", "localopt3" ) );
-    trans::Trans transLocal2( gu, trc, util::Config( "type", "localopt3" ) );
+    trans::Trans transLocal1( g, trc, util::Config( "type", "Local" ) );
+    trans::Trans transLocal2( gu, trc, util::Config( "type", "Local" ) );
 
     int icase = 0;
     for ( int ivar_in = 2; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar

@@ -26,12 +26,12 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
-class VorDivToUVLocalopt3 : public trans::VorDivToUVImpl {
+class VorDivToUVLocal : public trans::VorDivToUVImpl {
 public:
-    VorDivToUVLocalopt3( const FunctionSpace&, const eckit::Configuration& = util::NoConfig() );
-    VorDivToUVLocalopt3( int truncation, const eckit::Configuration& = util::NoConfig() );
+    VorDivToUVLocal( const FunctionSpace&, const eckit::Configuration& = util::NoConfig() );
+    VorDivToUVLocal( int truncation, const eckit::Configuration& = util::NoConfig() );
 
-    virtual ~VorDivToUVLocalopt3();
+    virtual ~VorDivToUVLocal();
 
     virtual int truncation() const override { return truncation_; }
 

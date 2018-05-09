@@ -24,7 +24,7 @@
 #else
 #define TRANS_DEFAULT "local"
 #endif
-#include "atlas/trans/localopt3/LegendreCacheCreatorLocal.h"
+#include "atlas/trans/local/LegendreCacheCreatorLocal.h"
 
 namespace atlas {
 namespace trans {

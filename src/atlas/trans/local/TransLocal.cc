@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/trans/localopt3/TransLocalopt3.h"
+#include "atlas/trans/local/TransLocal.h"
 #include <cstdlib>
 #include <cmath>
 #include "atlas/array.h"
@@ -17,7 +17,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/VorDivToUV.h"
-#include "atlas/trans/localopt3/LegendrePolynomialsopt3.h"
+#include "atlas/trans/local/LegendrePolynomials.h"
 #include "atlas/util/Constants.h"
 #include "eckit/config/YAMLConfiguration.h"
 #include "eckit/eckit_config.h"
@@ -30,8 +30,7 @@ namespace atlas {
 namespace trans {
 
 namespace {
-static TransBuilderGrid<TransLocalopt3> builder_deprecated( "localopt3" );
-static TransBuilderGrid<TransLocalopt3> builder( "local" );
+static TransBuilderGrid<TransLocal> builder( "local" );
 }  // namespace
 
 namespace {
@@ -217,7 +216,7 @@ int fourier_truncation( const int truncation,    // truncation
 }
 
 // --------------------------------------------------------------------------------------------------------------------
-// Class TransLocalopt3
+// Class TransLocal
 // --------------------------------------------------------------------------------------------------------------------
 
 const eckit::linalg::LinearAlgebra& linear_algebra_backend() {
@@ -228,7 +227,7 @@ const eckit::linalg::LinearAlgebra& linear_algebra_backend() {
     return eckit::linalg::LinearAlgebra::backend();
 }
 
-TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const Domain& domain, const long truncation,
+TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& domain, const long truncation,
                                 const eckit::Configuration& config ) :
     grid_( grid, domain ),
     truncation_( truncation ),
@@ -240,7 +239,7 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const Doma
     fft_cachesize_( cache.fft().size() ),
     linalg_( linear_algebra_backend() )
 {
-    ATLAS_TRACE( "TransLocalOpt3 constructor" );
+    ATLAS_TRACE( "TransLocal constructor" );
     double fft_threshold = 0.0;  // fraction of latitudes of the full grid down to which FFT is used.
     // This threshold needs to be adjusted depending on the dgemm and FFT performance of the machine
     // on which this code is running!
@@ -586,18 +585,18 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const Doma
 
 // --------------------------------------------------------------------------------------------------------------------
 
-TransLocalopt3::TransLocalopt3( const Grid& grid, const long truncation, const eckit::Configuration& config ) :
-    TransLocalopt3( Cache(), grid, grid.domain(), truncation, config ) {}
+TransLocal::TransLocal( const Grid& grid, const long truncation, const eckit::Configuration& config ) :
+    TransLocal( Cache(), grid, grid.domain(), truncation, config ) {}
 
-TransLocalopt3::TransLocalopt3( const Grid& grid, const Domain& domain, const long truncation, const eckit::Configuration& config ) :
-    TransLocalopt3( Cache(), grid, domain, truncation, config ) {}
+TransLocal::TransLocal( const Grid& grid, const Domain& domain, const long truncation, const eckit::Configuration& config ) :
+    TransLocal( Cache(), grid, domain, truncation, config ) {}
 
-TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const long truncation, const eckit::Configuration& config ) :
-    TransLocalopt3( cache, grid, grid.domain(), truncation, config ) {}
+TransLocal::TransLocal( const Cache& cache, const Grid& grid, const long truncation, const eckit::Configuration& config ) :
+    TransLocal( cache, grid, grid.domain(), truncation, config ) {}
 
 // --------------------------------------------------------------------------------------------------------------------
 
-TransLocalopt3::~TransLocalopt3() {
+TransLocal::~TransLocal() {
     if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
         if ( not legendre_cache_ ) {
             free_aligned( legendre_sym_ );
@@ -623,40 +622,40 @@ TransLocalopt3::~TransLocalopt3() {
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans( const Field& spfield, Field& gpfield, const eckit::Configuration& config ) const {
+void TransLocal::invtrans( const Field& spfield, Field& gpfield, const eckit::Configuration& config ) const {
     NOTIMP;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans( const FieldSet& spfields, FieldSet& gpfields,
+void TransLocal::invtrans( const FieldSet& spfields, FieldSet& gpfields,
                                const eckit::Configuration& config ) const {
     NOTIMP;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans_grad( const Field& spfield, Field& gradfield, const eckit::Configuration& config ) const {
+void TransLocal::invtrans_grad( const Field& spfield, Field& gradfield, const eckit::Configuration& config ) const {
     NOTIMP;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans_grad( const FieldSet& spfields, FieldSet& gradfields,
+void TransLocal::invtrans_grad( const FieldSet& spfields, FieldSet& gradfields,
                                     const eckit::Configuration& config ) const {
     NOTIMP;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
+void TransLocal::invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
                                            const eckit::Configuration& config ) const {
     NOTIMP;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans( const int nb_scalar_fields, const double scalar_spectra[], double gp_fields[],
+void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spectra[], double gp_fields[],
                                const eckit::Configuration& config ) const {
     invtrans_uv( truncation_, nb_scalar_fields, 0, scalar_spectra, gp_fields, config );
 }
@@ -673,7 +672,7 @@ void gp_transposeopt3( const int nb_size, const int nb_fields, const double gp_t
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans_legendreopt3( const int truncation, const int nlats, const int nb_fields,
+void TransLocal::invtrans_legendreopt3( const int truncation, const int nlats, const int nb_fields,
                                             const double scalar_spectra[], double scl_fourier[],
                                             const eckit::Configuration& config ) const {
     // Legendre transform:
@@ -826,7 +825,7 @@ void TransLocalopt3::invtrans_legendreopt3( const int truncation, const int nlat
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans_fourier_regularopt3( const int nlats, const int nlons, const int nb_fields,
+void TransLocal::invtrans_fourier_regularopt3( const int nlats, const int nlons, const int nb_fields,
                                                    double scl_fourier[], double gp_fields[],
                                                    const eckit::Configuration& config ) const {
     // Fourier transformation:
@@ -910,7 +909,7 @@ void TransLocalopt3::invtrans_fourier_regularopt3( const int nlats, const int nl
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans_fourier_reducedopt3( const int nlats, const grid::StructuredGrid g, const int nb_fields,
+void TransLocal::invtrans_fourier_reducedopt3( const int nlats, const grid::StructuredGrid g, const int nb_fields,
                                                    double scl_fourier[], double gp_fields[],
                                                    const eckit::Configuration& config ) const {
     // Fourier transformation:
@@ -969,7 +968,7 @@ void TransLocalopt3::invtrans_fourier_reducedopt3( const int nlats, const grid::
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans_unstructured_precomp( const int truncation, const int nb_fields,
+void TransLocal::invtrans_unstructured_precomp( const int truncation, const int nb_fields,
                                                     const int nb_vordiv_fields, const double scalar_spectra[],
                                                     double gp_fields[], const eckit::Configuration& config ) const {
     ATLAS_TRACE( "invtrans_uv unstructured opt3" );
@@ -1061,7 +1060,7 @@ void TransLocalopt3::invtrans_unstructured_precomp( const int truncation, const 
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans_unstructured( const int truncation, const int nb_fields, const int nb_vordiv_fields,
+void TransLocal::invtrans_unstructured( const int truncation, const int nb_fields, const int nb_vordiv_fields,
                                             const double scalar_spectra[], double gp_fields[],
                                             const eckit::Configuration& config ) const {
     ATLAS_TRACE( "invtrans_uv unstructured" );
@@ -1150,7 +1149,7 @@ void TransLocalopt3::invtrans_unstructured( const int truncation, const int nb_f
 }
 
 //-----------------------------------------------------------------------------
-// Routine to compute the spectral transform by using a localopt3 Fourier transformation
+// Routine to compute the spectral transform by using a Local Fourier transformation
 // for a grid (same latitude for all longitudes, allows to compute Legendre functions
 // once for all longitudes). U and v components are divided by cos(latitude) for
 // nb_vordiv_fields > 0.
@@ -1164,7 +1163,7 @@ void TransLocalopt3::invtrans_unstructured( const int truncation, const int nb_f
 // Author:
 // Andreas Mueller *ECMWF*
 //
-void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fields, const int nb_vordiv_fields,
+void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, const int nb_vordiv_fields,
                                   const double scalar_spectra[], double gp_fields[],
                                   const eckit::Configuration& config ) const {
     if ( nb_scalar_fields > 0 ) {
@@ -1226,7 +1225,7 @@ void TransLocalopt3::invtrans_uv( const int truncation, const int nb_scalar_fiel
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans( const int nb_vordiv_fields, const double vorticity_spectra[],
+void TransLocal::invtrans( const int nb_vordiv_fields, const double vorticity_spectra[],
                                const double divergence_spectra[], double gp_fields[],
                                const eckit::Configuration& config ) const {
     invtrans( 0, nullptr, nb_vordiv_fields, vorticity_spectra, divergence_spectra, gp_fields, config );
@@ -1253,10 +1252,10 @@ void extend_truncationopt3( const int old_truncation, const int nb_fields, const
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::invtrans( const int nb_scalar_fields, const double scalar_spectra[], const int nb_vordiv_fields,
+void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spectra[], const int nb_vordiv_fields,
                                const double vorticity_spectra[], const double divergence_spectra[], double gp_fields[],
                                const eckit::Configuration& config ) const {
-    ATLAS_TRACE( "TransLocalopt3::invtrans" );
+    ATLAS_TRACE( "TransLocal::invtrans" );
     int nb_gp              = grid_.size();
     int nb_vordiv_spec_ext = 2 * legendre_size( truncation_ + 1 ) * nb_vordiv_fields;
     if ( nb_vordiv_fields > 0 ) {
@@ -1277,7 +1276,7 @@ void TransLocalopt3::invtrans( const int nb_scalar_fields, const double scalar_s
         {
             ATLAS_TRACE( "vordiv to UV opt3" );
             // call vd2uv to compute u and v in spectral space
-            trans::VorDivToUV vordiv_to_UV_ext( truncation_ + 1, option::type( "localopt3" ) );
+            trans::VorDivToUV vordiv_to_UV_ext( truncation_ + 1, option::type( "Local" ) );
             vordiv_to_UV_ext.execute( nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(),
                                       divergence_spectra_extended.data(), U_ext.data(), V_ext.data() );
         }
@@ -1295,7 +1294,7 @@ void TransLocalopt3::invtrans( const int nb_scalar_fields, const double scalar_s
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::dirtrans( const Field& gpfield, Field& spfield, const eckit::Configuration& config ) const {
+void TransLocal::dirtrans( const Field& gpfield, Field& spfield, const eckit::Configuration& config ) const {
     NOTIMP;
     // Not implemented and not planned.
     // Use the TransIFS implementation instead.
@@ -1303,7 +1302,7 @@ void TransLocalopt3::dirtrans( const Field& gpfield, Field& spfield, const eckit
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::dirtrans( const FieldSet& gpfields, FieldSet& spfields,
+void TransLocal::dirtrans( const FieldSet& gpfields, FieldSet& spfields,
                                const eckit::Configuration& config ) const {
     NOTIMP;
     // Not implemented and not planned.
@@ -1312,7 +1311,7 @@ void TransLocalopt3::dirtrans( const FieldSet& gpfields, FieldSet& spfields,
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Field& spdiv,
+void TransLocal::dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Field& spdiv,
                                            const eckit::Configuration& config ) const {
     NOTIMP;
     // Not implemented and not planned.
@@ -1321,7 +1320,7 @@ void TransLocalopt3::dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Fi
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
+void TransLocal::dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
                                const eckit::Configuration& ) const {
     NOTIMP;
     // Not implemented and not planned.
@@ -1330,7 +1329,7 @@ void TransLocalopt3::dirtrans( const int nb_fields, const double scalar_fields[]
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocalopt3::dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[],
+void TransLocal::dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[],
                                double divergence_spectra[], const eckit::Configuration& ) const {
     NOTIMP;
     // Not implemented and not planned.

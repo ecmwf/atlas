@@ -50,9 +50,9 @@ int fourier_truncation( const int truncation,    // truncation
 
 //-----------------------------------------------------------------------------
 
-/// @class TransLocalopt3
+/// @class TransLocal
 ///
-/// Localopt3 spherical harmonics transformations to any grid
+/// Local spherical harmonics transformations to any grid
 /// Optimisations are present for structured grids
 /// For global grids, please consider using TransIFS instead.
 ///
@@ -62,16 +62,16 @@ int fourier_truncation( const int truncation,    // truncation
 ///
 /// @note: Direct transforms are not implemented and cannot be unless
 ///        the grid is global. There are no plans to support this at the moment.
-class TransLocalopt3 : public trans::TransImpl {
+class TransLocal : public trans::TransImpl {
 public:
-    TransLocalopt3( const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig() );
-    TransLocalopt3( const Grid&, const Domain&, const long truncation, const eckit::Configuration& = util::NoConfig() );
-    TransLocalopt3( const Cache&, const Grid&, const long truncation,
+    TransLocal( const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig() );
+    TransLocal( const Grid&, const Domain&, const long truncation, const eckit::Configuration& = util::NoConfig() );
+    TransLocal( const Cache&, const Grid&, const long truncation,
                     const eckit::Configuration& = util::NoConfig() );
-    TransLocalopt3( const Cache&, const Grid&, const Domain&, const long truncation,
+    TransLocal( const Cache&, const Grid&, const Domain&, const long truncation,
                     const eckit::Configuration& = util::NoConfig() );
 
-    virtual ~TransLocalopt3();
+    virtual ~TransLocal();
 
     virtual int truncation() const override { return truncation_; }
     virtual size_t spectralCoefficients() const override { return ( truncation_ + 1 ) * ( truncation_ + 2 ); }

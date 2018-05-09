@@ -325,14 +325,14 @@ trans/VorDivToUV.h
 trans/VorDivToUV.cc
 trans/LegendreCacheCreator.h
 trans/LegendreCacheCreator.cc
-trans/localopt3/TransLocalopt3.h
-trans/localopt3/TransLocalopt3.cc
-trans/localopt3/LegendrePolynomialsopt3.h
-trans/localopt3/LegendrePolynomialsopt3.cc
-trans/localopt3/VorDivToUVLocalopt3.h
-trans/localopt3/VorDivToUVLocalopt3.cc
-trans/localopt3/LegendreCacheCreatorLocal.h
-trans/localopt3/LegendreCacheCreatorLocal.cc
+trans/local/TransLocal.h
+trans/local/TransLocal.cc
+trans/local/LegendrePolynomials.h
+trans/local/LegendrePolynomials.cc
+trans/local/VorDivToUVLocal.h
+trans/local/VorDivToUVLocal.cc
+trans/local/LegendreCacheCreatorLocal.h
+trans/local/LegendreCacheCreatorLocal.cc
 
 )
 if( ATLAS_HAVE_TRANS )

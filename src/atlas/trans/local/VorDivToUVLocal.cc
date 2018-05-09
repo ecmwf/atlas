@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/trans/localopt3/VorDivToUVLocalopt3.h"
+#include "atlas/trans/local/VorDivToUVLocal.h"
 #include <cmath>  // for std::sqrt
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/runtime/Log.h"
@@ -21,8 +21,7 @@ namespace atlas {
 namespace trans {
 
 namespace {
-static VorDivToUVBuilder<VorDivToUVLocalopt3> builder_deprecated( "localopt3" );
-static VorDivToUVBuilder<VorDivToUVLocalopt3> builder( "local" );
+static VorDivToUVBuilder<VorDivToUVLocal> builder( "local" );
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -165,7 +164,7 @@ void vd2uvopt3( const int truncation,               // truncation
     }
 }
 
-void VorDivToUVLocalopt3::execute( const int nb_coeff, const int nb_fields, const double vorticity[],
+void VorDivToUVLocal::execute( const int nb_coeff, const int nb_fields, const double vorticity[],
                                    const double divergence[], double U[], double V[],
                                    const eckit::Configuration& config ) const {
     for ( int jm = 0; jm <= truncation_; ++jm ) {
@@ -173,13 +172,13 @@ void VorDivToUVLocalopt3::execute( const int nb_coeff, const int nb_fields, cons
     }
 }
 
-VorDivToUVLocalopt3::VorDivToUVLocalopt3( const int truncation, const eckit::Configuration& config ) :
+VorDivToUVLocal::VorDivToUVLocal( const int truncation, const eckit::Configuration& config ) :
     truncation_( truncation ) {}
 
-VorDivToUVLocalopt3::VorDivToUVLocalopt3( const FunctionSpace& fs, const eckit::Configuration& config ) :
+VorDivToUVLocal::VorDivToUVLocal( const FunctionSpace& fs, const eckit::Configuration& config ) :
     truncation_( Spectral( fs ).truncation() ) {}
 
-VorDivToUVLocalopt3::~VorDivToUVLocalopt3() {}
+VorDivToUVLocal::~VorDivToUVLocal() {}
 
 }  // namespace trans
 }  // namespace atlas
