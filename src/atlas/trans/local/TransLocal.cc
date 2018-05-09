@@ -228,7 +228,7 @@ const eckit::linalg::LinearAlgebra& linear_algebra_backend() {
 }
 
 TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& domain, const long truncation,
-                                const eckit::Configuration& config ) :
+                        const eckit::Configuration& config ) :
     grid_( grid, domain ),
     truncation_( truncation ),
     precompute_( config.getBool( "precompute", true ) ),
@@ -430,22 +430,22 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 // TODO: check this is all aligned...
             }
             else {
-                ATLAS_TRACE_SCOPE( "Legendre precomputations (structured)" ) {
 
-                    if( TransParameters(config).export_legendre() ) {
-                        ASSERT( not cache_.legendre() );
-                        export_legendre_ = LegendreCache( sizeof(double) * ( size_sym + size_asym ) );
-                        legendre_cachesize_ = export_legendre_.legendre().size();
-                        legendre_cache_ = export_legendre_.legendre().data();
-                        legendre_cache_ = std::malloc( legendre_cachesize_ );
-                        ReadCache legendre( legendre_cache_ );
-                        legendre_sym_  = legendre.read<double>( size_sym );
-                        legendre_asym_ = legendre.read<double>( size_asym );
-                    } else {
-                        alloc_aligned( legendre_sym_, size_sym );
-                        alloc_aligned( legendre_asym_, size_asym );
-                    }
+              if( TransParameters(config).export_legendre() ) {
+                  ASSERT( not cache_.legendre() );
+                  export_legendre_ = LegendreCache( sizeof(double) * ( size_sym + size_asym ) );
+                  legendre_cachesize_ = export_legendre_.legendre().size();
+                  legendre_cache_ = export_legendre_.legendre().data();
+                  legendre_cache_ = std::malloc( legendre_cachesize_ );
+                  ReadCache legendre( legendre_cache_ );
+                  legendre_sym_  = legendre.read<double>( size_sym );
+                  legendre_asym_ = legendre.read<double>( size_asym );
+              } else {
+                  alloc_aligned( legendre_sym_, size_sym );
+                  alloc_aligned( legendre_asym_, size_asym );
+              }
 
+              ATLAS_TRACE_SCOPE( "Legendre precomputations (structured)" ) {
                     compute_legendre_polynomialsopt3( truncation_ + 1, nlatsLeg_, lats.data(), legendre_sym_,
                                                       legendre_asym_, legendre_sym_begin_.data(),
                                                       legendre_asym_begin_.data() );
@@ -454,11 +454,11 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 if ( file_path.size() ) {
                     ATLAS_TRACE( "Write LegendreCache to file" );
                     Log::debug() << "Writing Legendre cache file ..." << std::endl;
-                    Log::debug() << "    path      = " << file_path << std::endl;
+                    Log::debug() << "    path: " << file_path << std::endl;
                     WriteCache legendre( file_path );
                     legendre.write( legendre_sym_, size_sym );
                     legendre.write( legendre_asym_, size_asym );
-                    Log::debug() << "Cache file size: " << eckit::Bytes( legendre.pos ) << std::endl;
+                    Log::debug() << "    size: " << eckit::Bytes( legendre.pos ) << std::endl;
                 }
             }
         }
@@ -1192,7 +1192,7 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
             // Computing u,v from U,V:
             {
                 if ( nb_vordiv_fields > 0 ) {
-                    ATLAS_TRACE( "opt3 u,v from U,V" );
+                    ATLAS_TRACE( "compute u,v from U,V" );
                     std::vector<double> coslats( nlats );
                     for ( size_t j = 0; j < nlats; ++j ) {
                         coslats[j] = std::cos( g.y( j ) * util::Constants::degreesToRadians() );
@@ -1265,7 +1265,7 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
         std::vector<double> V_ext( nb_vordiv_spec_ext, 0. );
 
         {
-            ATLAS_TRACE( "opt3 extend vordiv" );
+            ATLAS_TRACE( "extend vordiv" );
             // increase truncation in vorticity_spectra and divergence_spectra:
             extend_truncationopt3( truncation_, nb_vordiv_fields, vorticity_spectra,
                                    vorticity_spectra_extended.data() );
@@ -1274,7 +1274,7 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
         }
 
         {
-            ATLAS_TRACE( "vordiv to UV opt3" );
+            ATLAS_TRACE( "vordiv to UV" );
             // call vd2uv to compute u and v in spectral space
             trans::VorDivToUV vordiv_to_UV_ext( truncation_ + 1, option::type( "Local" ) );
             vordiv_to_UV_ext.execute( nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(),

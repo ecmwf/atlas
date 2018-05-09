@@ -209,7 +209,6 @@ CASE( "test_regional_grids nested_in_global" ) {
 }
 
 CASE( "test_regional_grids not nested" ) {
-    auto cachefile = CacheFile("cache-regional.bin");
     auto truncation = 89;
     Cache cache;
 
@@ -217,6 +216,8 @@ CASE( "test_regional_grids not nested" ) {
 
     LegendreCacheCreator cache_creator( grid, truncation, option::type("local") );
     EXPECT( cache_creator.supported() );
+    auto cachefile = CacheFile( "leg_" + cache_creator.uid() + ".bin" );
+
     ATLAS_TRACE_SCOPE( "Creating cache "+std::string(cachefile) )
         cache_creator.create( cachefile );
 
@@ -242,6 +243,9 @@ CASE( "test_regional_grids with projection" ) {
         Trans( grid, truncation, option::type("local") );
 
     // Note: caching not yet implemented for unstructured and projected grids
+    LegendreCacheCreator legendre_cache_creator( grid, truncation, option::type("local") );
+    ATLAS_DEBUG_VAR( legendre_cache_creator.uid() );
+    EXPECT( not legendre_cache_creator.supported() );
 }
 
 CASE( "test cache creator to file" ) {
