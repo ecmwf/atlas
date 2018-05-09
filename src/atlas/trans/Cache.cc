@@ -1,0 +1,132 @@
+/*
+ * (C) Copyright 2013 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
+
+#include <cstdlib>
+#include "atlas/trans/Cache.h"
+
+#include "eckit/io/DataHandle.h"
+#include "eckit/exception/Exceptions.h"
+#include "eckit/thread/AutoLock.h"
+#include "eckit/thread/Mutex.h"
+
+#include "atlas/runtime/Trace.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/trans/Trans.h"
+
+namespace {
+static eckit::Mutex* local_mutex               = 0;
+static pthread_once_t once                     = PTHREAD_ONCE_INIT;
+static void init() {
+    local_mutex = new eckit::Mutex();
+}
+}
+
+namespace atlas {
+namespace trans {
+
+TransCacheFileEntry::TransCacheFileEntry(const eckit::PathName& path) : buffer_( path.size() ) {
+  ATLAS_TRACE();
+  Log::debug() << "Loading cache from file " << path << std::endl;
+  std::unique_ptr<eckit::DataHandle> dh( path.fileHandle() );
+  dh->openForRead();
+  dh->read( buffer_.data(), buffer_.size() );
+  dh->close();
+}
+
+TransCacheMemoryEntry::TransCacheMemoryEntry(const void* data, size_t size) : data_(data), size_(size) {
+  ASSERT(data_);
+  ASSERT(size_);
+}
+
+LegendreFFTCache::LegendreFFTCache( const void* legendre_address, size_t legendre_size, const void* fft_address, size_t fft_size ) :
+  Cache( std::make_shared<TransCacheMemoryEntry>( legendre_address, legendre_size ),
+         std::make_shared<TransCacheMemoryEntry>( fft_address, fft_size ) ) {
+}
+
+LegendreFFTCache::LegendreFFTCache( const eckit::PathName& legendre_path, const eckit::PathName& fft_path ) :
+  Cache( std::shared_ptr<TransCacheEntry>( new TransCacheFileEntry( legendre_path ) ),
+         std::shared_ptr<TransCacheEntry>( new TransCacheFileEntry( fft_path ) ) ) {
+}
+
+LegendreCache::LegendreCache( const eckit::PathName& path ) :
+  Cache( std::shared_ptr<TransCacheEntry>( new TransCacheFileEntry( path ) ) ) {
+}
+
+LegendreCache::LegendreCache( size_t size) :
+  Cache( std::make_shared<TransCacheOwnedMemoryEntry>( size ) ) {
+}
+
+LegendreCache::LegendreCache( const void* address, size_t size ) :
+  Cache( std::make_shared<TransCacheMemoryEntry>( address, size ) ) {
+}
+
+Cache::Cache(const std::shared_ptr<TransCacheEntry>& legendre) :
+  legendre_( legendre ),
+  fft_( new EmptyCacheEntry() ) {}
+
+Cache::Cache(const std::shared_ptr<TransCacheEntry>& legendre, const std::shared_ptr<TransCacheEntry>& fft) :
+  legendre_( legendre ),
+  fft_( fft ) {}
+
+Cache::Cache( const TransImpl* trans ) :
+  trans_( trans ),
+  legendre_( new EmptyCacheEntry() ),
+  fft_( new EmptyCacheEntry() ) {
+  if( trans_ )
+    trans_->attach();
+}
+
+Cache::Cache() :
+  legendre_( new EmptyCacheEntry() ),
+  fft_( new EmptyCacheEntry() ) {}
+
+Cache::Cache(const Cache& other) :
+  trans_( other.trans_ ),
+  legendre_( other.legendre_ ),
+  fft_( other.fft_ ) {
+  if( trans_ )
+    trans_->attach();
+}
+
+Cache::operator bool() const {
+  return trans_ || bool(legendre()) ;
+}
+
+Cache::~Cache() {
+  pthread_once( &once, init );
+  eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+  if( trans_ ) {
+    trans_->detach();
+    if( trans_->owners() == 0 ) {
+      delete trans_;
+    }
+    trans_ = nullptr;
+  }
+}
+
+TransCache::TransCache( const Trans& trans ) :
+  Cache( trans.get() ) {
+}
+
+TransCacheOwnedMemoryEntry::TransCacheOwnedMemoryEntry(size_t size) :
+  size_(size) {
+  if( size_ ) {
+    data_ = std::malloc( size_ );
+  }
+}
+
+TransCacheOwnedMemoryEntry::~TransCacheOwnedMemoryEntry() {
+  if( size_ ) {
+    std::free( data_ );
+  }
+}
+
+}  // namespace trans
+}  // namespace atlas

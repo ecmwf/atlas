@@ -15,6 +15,7 @@
 #include "atlas/grid.h"
 #include "atlas/option.h"
 #include "atlas/trans/Trans.h"
+#include "atlas/trans/localopt3/TransLocalopt3.h"
 
 namespace atlas {
 namespace trans {
@@ -87,11 +88,14 @@ bool LegendreCacheCreatorLocal::supported() const {
 }
 
 void LegendreCacheCreatorLocal::create( const std::string& path ) const {
-  Trans( grid_, truncation_, config_ | option::type("local") | option::write_legendre( path ) );
+  Trans tmp( grid_, truncation_, config_ | option::type("local") | option::write_legendre( path ) );
 }
 
 Cache LegendreCacheCreatorLocal::create() const {
-  NOTIMP;
+  util::Config export_legendre("export_legendre",true);
+  Trans tmp( grid_, truncation_, config_ | option::type("local") | export_legendre );
+  auto impl = dynamic_cast<const TransLocalopt3*>( tmp.get() );
+  return impl->export_legendre_;
 }
 
 size_t LegendreCacheCreatorLocal::estimate() const {

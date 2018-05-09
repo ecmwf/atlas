@@ -51,6 +51,8 @@ public:
 
     std::string write_legendre() const { return config_.getString( "write_legendre", "" ); }
 
+    bool export_legendre() const { return config_.getBool( "export_legendre", false ); }
+
     std::string read_fft() const { return config_.getString( "read_fft", "" ); }
 
     std::string write_fft() const { return config_.getString( "write_fft", "" ); }
@@ -432,8 +434,19 @@ TransLocalopt3::TransLocalopt3( const Cache& cache, const Grid& grid, const Doma
             else {
                 ATLAS_TRACE_SCOPE( "Legendre precomputations (structured)" ) {
 
-                    alloc_aligned( legendre_sym_, size_sym );
-                    alloc_aligned( legendre_asym_, size_asym );
+                    if( TransParameters(config).export_legendre() ) {
+                        ASSERT( not cache_.legendre() );
+                        export_legendre_ = LegendreCache( sizeof(double) * ( size_sym + size_asym ) );
+                        legendre_cachesize_ = export_legendre_.legendre().size();
+                        legendre_cache_ = export_legendre_.legendre().data();
+                        legendre_cache_ = std::malloc( legendre_cachesize_ );
+                        ReadCache legendre( legendre_cache_ );
+                        legendre_sym_  = legendre.read<double>( size_sym );
+                        legendre_asym_ = legendre.read<double>( size_asym );
+                    } else {
+                        alloc_aligned( legendre_sym_, size_sym );
+                        alloc_aligned( legendre_asym_, size_asym );
+                    }
 
                     compute_legendre_polynomialsopt3( truncation_ + 1, nlatsLeg_, lats.data(), legendre_sym_,
                                                       legendre_asym_, legendre_sym_begin_.data(),

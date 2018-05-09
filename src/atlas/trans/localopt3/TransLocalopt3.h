@@ -40,6 +40,8 @@ class FieldSet;
 namespace atlas {
 namespace trans {
 
+class LegendreCacheCreatorLocal;
+
 //-----------------------------------------------------------------------------
 
 /// @class TransLocalopt3
@@ -148,6 +150,8 @@ private:
                       const double scalar_spectra[], double gp_fields[],
                       const eckit::Configuration& = util::NoConfig() ) const;
 
+friend class LegendreCacheCreatorLocal;
+
 private:
     Grid grid_;
     Grid gridGlobal_;
@@ -184,6 +188,7 @@ private:
 #endif
 
     Cache cache_;
+    Cache export_legendre_;
     const void* legendre_cache_{nullptr};
     size_t legendre_cachesize_{0};
     const void* fft_cache_{nullptr};

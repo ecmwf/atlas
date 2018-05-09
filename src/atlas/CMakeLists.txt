@@ -317,6 +317,8 @@ numerics/fvm/Method.cc
 numerics/fvm/Nabla.h
 numerics/fvm/Nabla.cc
 
+trans/Cache.h
+trans/Cache.cc
 trans/Trans.h
 trans/Trans.cc
 trans/VorDivToUV.h

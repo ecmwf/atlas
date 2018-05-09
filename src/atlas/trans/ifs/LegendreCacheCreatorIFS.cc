@@ -106,7 +106,8 @@ void LegendreCacheCreatorIFS::create( const std::string& path ) const {
 }
 
 Cache LegendreCacheCreatorIFS::create() const {
-    NOTIMP;
+  return TransCache(
+      Trans( grid_, truncation_, config_ | option::type("ifs") ) );
 }
 
 size_t LegendreCacheCreatorIFS::estimate() const {

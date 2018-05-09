@@ -130,6 +130,11 @@ Trans::Implementation* TransFactory::build( const FunctionSpace& gp, const Funct
 
 Trans::Implementation* TransFactory::build( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp,
                                             const eckit::Configuration& config ) {
+    if( cache.trans() ) {
+        Log::debug() << "Creating Trans from cache, ignoring any other arguments" << std::endl;
+        return cache.trans();
+    }
+
     pthread_once( &once, init );
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
@@ -164,6 +169,11 @@ Trans::Implementation* TransFactory::build( const Cache& cache, const Grid& grid
 
 Trans::Implementation* TransFactory::build( const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
                                             const eckit::Configuration& config ) {
+    if( cache.trans() ) {
+        Log::debug() << "Creating Trans from cache, ignoring any other arguments" << std::endl;
+        return cache.trans();
+    }
+
     pthread_once( &once, init );
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );

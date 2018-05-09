@@ -264,8 +264,7 @@ CASE( "test_regional_grids with projection" ) {
     // Note: caching not yet implemented for unstructured and projected grids
 }
 
-
-CASE( "test cache creator" ) {
+CASE( "test cache creator to file" ) {
 
     auto truncation = 89;
     StructuredGrid grid_global(
@@ -277,6 +276,28 @@ CASE( "test cache creator" ) {
     auto cachefile = CacheFile( legendre_cache_creator.uid() );
     ATLAS_TRACE_SCOPE( "Creating cache "+std::string(cachefile) )
       legendre_cache_creator.create( cachefile );
+
+    Cache c = legendre_cache_creator.create();
+    auto trans1 = Trans( c, grid_global, truncation, option::type("local") );
+    auto trans2 = Trans( c, grid_global, truncation, option::type("local") );
+}
+
+CASE( "test cache creator in memory" ) {
+
+    auto truncation = 89;
+    StructuredGrid grid_global(
+        LinearSpacing( {  0., 360.}, 360, false ),
+        LinearSpacing( { 90., -90.}, 181, true  )
+    );
+
+    LegendreCacheCreator legendre_cache_creator( grid_global, truncation, option::type("local") );
+
+    Cache cache;
+    ATLAS_TRACE_SCOPE( "Creating cache in memory" )
+      cache = legendre_cache_creator.create();
+
+    auto trans1 = Trans( cache, grid_global, truncation, option::type("local") );
+    auto trans2 = Trans( cache, grid_global, truncation, option::type("local") );
 }
 
 }  // namespace test
