@@ -184,6 +184,8 @@ int add_padding( int n ) {
     return std::ceil( n / 8. ) * 8;
 }
 
+}  // namespace
+
 int fourier_truncation( const int truncation,    // truncation
                         const int nx,            // number of longitudes
                         const int nxmax,         // maximum nx
@@ -213,8 +215,6 @@ int fourier_truncation( const int truncation,    // truncation
     trc = std::min( truncation, trc );
     return trc;
 }
-
-}  // namespace
 
 // --------------------------------------------------------------------------------------------------------------------
 // Class TransLocalopt3

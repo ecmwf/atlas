@@ -41,6 +41,12 @@ namespace atlas {
 namespace trans {
 
 class LegendreCacheCreatorLocal;
+int fourier_truncation( const int truncation,    // truncation
+                        const int nx,            // number of longitudes
+                        const int nxmax,         // maximum nx
+                        const int ndgl,          // number of latitudes
+                        const double lat,        // latitude in radian
+                        const bool regular );    // regular grid
 
 //-----------------------------------------------------------------------------
 

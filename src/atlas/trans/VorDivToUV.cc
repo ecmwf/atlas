@@ -26,7 +26,6 @@
 #else
 #define TRANS_DEFAULT "local"
 #endif
-#include "atlas/trans/local_noopt/VorDivToUVLocal.h"
 #include "atlas/trans/localopt3/VorDivToUVLocalopt3.h"  // --> recommended "local"
 
 namespace atlas {
@@ -55,7 +54,6 @@ struct force_link {
 #if ATLAS_HAVE_TRANS
         load_builder<VorDivToUVIFS>();
 #endif
-        load_builder<VorDivToUVLocal>();
         load_builder<VorDivToUVLocalopt3>();
     }
 };

@@ -29,11 +29,9 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/trans/Trans.h"
-#include "atlas/trans/local_noopt/FourierTransforms.h"
-#include "atlas/trans/local_noopt/LegendrePolynomials.h"
-#include "atlas/trans/local_noopt/LegendreTransforms.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
+#include "atlas/trans/localopt3/TransLocalopt3.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -69,6 +67,7 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
 
 //-----------------------------------------------------------------------------
 
+#if 0
 void compute_legendre( const size_t trc,                      // truncation (in)
                        const double& lat,                     // latitude in radians (in)
                        array::ArrayView<double, 1>& zlfpol )  // values of
@@ -216,7 +215,7 @@ void spectral_transform_grid( const size_t trc,       // truncation (in)
 
     EXPECT( idx == grid.size() );
 }
-
+#endif
 //-----------------------------------------------------------------------------
 // Routine to compute the spherical harmonics analytically at one point
 // (up to wave number 3)
@@ -528,6 +527,7 @@ double compute_rms( const size_t N,    // length of the arrays
     return rms;
 }
 
+#if 0
 //-----------------------------------------------------------------------------
 // Routine to test the spectral transform by comparing it with the analytically
 // derived spherical harmonics
@@ -566,6 +566,7 @@ double spectral_transform_test( double trc,       // truncation
 
     return rms;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 #if 0

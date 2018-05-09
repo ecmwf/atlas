@@ -325,16 +325,6 @@ trans/VorDivToUV.h
 trans/VorDivToUV.cc
 trans/LegendreCacheCreator.h
 trans/LegendreCacheCreator.cc
-trans/local_noopt/TransLocal.h
-trans/local_noopt/TransLocal.cc
-trans/local_noopt/LegendrePolynomials.h
-trans/local_noopt/LegendrePolynomials.cc
-trans/local_noopt/LegendreTransforms.h
-trans/local_noopt/LegendreTransforms.cc
-trans/local_noopt/FourierTransforms.h
-trans/local_noopt/FourierTransforms.cc
-trans/local_noopt/VorDivToUVLocal.h
-trans/local_noopt/VorDivToUVLocal.cc
 trans/localopt3/TransLocalopt3.h
 trans/localopt3/TransLocalopt3.cc
 trans/localopt3/LegendrePolynomialsopt3.h
