@@ -973,7 +973,7 @@ CASE( "test_trans_domain" ) {
     Domain testdomain2 = RectangularDomain( {-1., 1.}, {-5., 40.} );
     // Grid: (Adjust the following line if the test takes too long!)
 
-    Grid global_grid( "O640" );
+    Grid global_grid( "O64" );
     Grid g1( global_grid, testdomain1 );
     //Grid g2( gridString, testdomain2 );
 
@@ -983,7 +983,7 @@ CASE( "test_trans_domain" ) {
     using LinearSpacing = grid::LinearSpacing;
     StructuredGrid g2( LinearSpacing( {0., 180.}, 181 ), LinearSpacing( {0., 45.}, 46 ) );
 
-    int trc = 640;
+    int trc = 63;
     //Log::info() << "rgp1:" << std::endl;
     if ( eckit::PathName( "legcache.bin" ).exists() ) eckit::PathName( "legcache.bin" ).unlink();
     Trace t1( Here(), "translocal1 construction" );
