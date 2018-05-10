@@ -173,7 +173,7 @@ int num_n( const int truncation, const int m, const bool symmetric ) {
 
 void alloc_aligned( double*& ptr, size_t n ) {
     const size_t alignment = 64 * sizeof( double );
-    ptr                    = (double*)aligned_alloc( alignment, sizeof( double ) * n );
+    posix_memalign( (void**)&ptr, alignment, sizeof( double ) * n );
 }
 
 void free_aligned( double*& ptr ) {
