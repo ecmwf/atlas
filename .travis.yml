@@ -54,7 +54,7 @@ matrix:
         - CACHE_NAME=linux-gcc7-mpich
         - CXX_COMPILER='g++-7' C_COMPILER='gcc-7' Fortran_COMPILER='gfortran-7'
         - MPI='mpich'
-        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
+        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG -DENABLE_GPROF=ON"
       addons:
         apt:
           sources:  ['ubuntu-toolchain-r-test']
@@ -232,6 +232,19 @@ script:
   # Test Atlas
   #################################################################
   - ctest
+
+after_success:
+
+  - |
+    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
+      # Creating report
+      cd ${ATLAS_BUILD_DIR}
+      lcov --directory . --capture --output-file coverage.info # capture coverage info
+      lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+      lcov --list coverage.info #debug info
+      # Uploading report to CodeCov
+      bash <(curl -s https://codecov.io/bash) -t 9c489980-d292-499c-8615-af02df3b20d1 || echo "Codecov did not collect coverage reports"
+    fi
 
 after_failure:
 
