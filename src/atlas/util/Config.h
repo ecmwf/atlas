@@ -67,8 +67,6 @@ public:
 
     using eckit::LocalConfiguration::get;
     bool get( const std::string& name, std::vector<Config>& value ) const;
-
-    void hash( eckit::Hash& ) const;
 };
 
 // ------------------------------------------------------------------

@@ -115,16 +115,6 @@ void Metadata::broadcast( Metadata& dest, const size_t root ) const {
     }
 }
 
-void Metadata::hash( eckit::Hash& hsh ) const {
-    eckit::ValueMap map = get();
-    for ( eckit::ValueMap::const_iterator vit = map.begin(); vit != map.end(); ++vit ) {
-        hsh.add( vit->first.as<std::string>() );
-        /// @note below, we assume all Values translate to std::string, this needs
-        /// more verification
-        hsh.add( vit->second.as<std::string>() );
-    }
-}
-
 Metadata::Metadata( const eckit::Value& value ) : eckit::LocalConfiguration( value ) {}
 
 // ------------------------------------------------------------------
