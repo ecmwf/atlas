@@ -241,6 +241,14 @@ void Trans::config( const eckit::Configuration& options )  {
     TransFactory::config( options );
 }
 
+namespace {
+util::Config options( const eckit::Configuration& config ) {
+    util::Config opts = Trans::config();
+    opts.set(config);
+    return opts;
+}
+}
+
 Trans::Trans() {}
 
 Trans::Trans( Implementation* impl ) : impl_( impl ) {}
@@ -279,37 +287,37 @@ size_t Trans::spectralCoefficients() const {
 }
 
 void Trans::dirtrans( const Field& gpfield, Field& spfield, const eckit::Configuration& config ) const {
-    impl_->dirtrans( gpfield, spfield, config );
+    impl_->dirtrans( gpfield, spfield, options(config) );
 }
 
 void Trans::dirtrans( const FieldSet& gpfields, FieldSet& spfields, const eckit::Configuration& config ) const {
-    impl_->dirtrans( gpfields, spfields, config );
+    impl_->dirtrans( gpfields, spfields, options(config) );
 }
 
 void Trans::dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Field& spdiv,
                                   const eckit::Configuration& config ) const {
-    impl_->dirtrans_wind2vordiv( gpwind, spvor, spdiv, config );
+    impl_->dirtrans_wind2vordiv( gpwind, spvor, spdiv, options(config) );
 }
 
 void Trans::invtrans( const Field& spfield, Field& gpfield, const eckit::Configuration& config ) const {
-    impl_->invtrans( spfield, gpfield, config );
+    impl_->invtrans( spfield, gpfield, options(config) );
 }
 
 void Trans::invtrans( const FieldSet& spfields, FieldSet& gpfields, const eckit::Configuration& config ) const {
-    impl_->invtrans( spfields, gpfields, config );
+    impl_->invtrans( spfields, gpfields, options(config) );
 }
 
 void Trans::invtrans_grad( const Field& spfield, Field& gradfield, const eckit::Configuration& config ) const {
-    impl_->invtrans_grad( spfield, gradfield, config );
+    impl_->invtrans_grad( spfield, gradfield, options(config) );
 }
 
 void Trans::invtrans_grad( const FieldSet& spfields, FieldSet& gradfields, const eckit::Configuration& config ) const {
-    impl_->invtrans_grad( spfields, gradfields, config );
+    impl_->invtrans_grad( spfields, gradfields, options(config) );
 }
 
 void Trans::invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
                                   const eckit::Configuration& config ) const {
-    impl_->invtrans_vordiv2wind( spvor, spdiv, gpwind, config );
+    impl_->invtrans_vordiv2wind( spvor, spdiv, gpwind, options(config) );
 }
 
 // -- IFS type fields --
@@ -330,7 +338,7 @@ void Trans::invtrans( const int nb_scalar_fields, const double scalar_spectra[],
                       const double vorticity_spectra[], const double divergence_spectra[], double gp_fields[],
                       const eckit::Configuration& config ) const {
     impl_->invtrans( nb_scalar_fields, scalar_spectra, nb_vordiv_fields, vorticity_spectra, divergence_spectra,
-                     gp_fields, config );
+                     gp_fields, options(config) );
 }
 
 /*!
@@ -341,7 +349,7 @@ void Trans::invtrans( const int nb_scalar_fields, const double scalar_spectra[],
  */
 void Trans::invtrans( const int nb_scalar_fields, const double scalar_spectra[], double gp_fields[],
                       const eckit::Configuration& config ) const {
-    impl_->invtrans( nb_scalar_fields, scalar_spectra, gp_fields, config );
+    impl_->invtrans( nb_scalar_fields, scalar_spectra, gp_fields, options(config) );
 }
 
 /*!
@@ -350,7 +358,7 @@ void Trans::invtrans( const int nb_scalar_fields, const double scalar_spectra[],
  */
 void Trans::invtrans( const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],
                       double gp_fields[], const eckit::Configuration& config ) const {
-    impl_->invtrans( nb_vordiv_fields, vorticity_spectra, divergence_spectra, gp_fields, config );
+    impl_->invtrans( nb_vordiv_fields, vorticity_spectra, divergence_spectra, gp_fields, options(config) );
 }
 
 /*!
@@ -358,7 +366,7 @@ void Trans::invtrans( const int nb_vordiv_fields, const double vorticity_spectra
  */
 void Trans::dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
                       const eckit::Configuration& config ) const {
-    impl_->dirtrans( nb_fields, scalar_fields, scalar_spectra, config );
+    impl_->dirtrans( nb_fields, scalar_fields, scalar_spectra, options(config) );
 }
 
 /*!
@@ -367,7 +375,7 @@ void Trans::dirtrans( const int nb_fields, const double scalar_fields[], double 
  */
 void Trans::dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[],
                       double divergence_spectra[], const eckit::Configuration& config ) const {
-    impl_->dirtrans( nb_fields, wind_fields, vorticity_spectra, divergence_spectra, config );
+    impl_->dirtrans( nb_fields, wind_fields, vorticity_spectra, divergence_spectra, options(config) );
 }
 
 }  // namespace trans
