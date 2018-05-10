@@ -23,14 +23,29 @@
 #if ATLAS_HAVE_TRANS
 #include "atlas/trans/ifs/TransIFSNodeColumns.h"
 #include "atlas/trans/ifs/TransIFSStructuredColumns.h"
-#define TRANS_DEFAULT "ifs"
-#else
-#define TRANS_DEFAULT "local"
 #endif
 #include "atlas/trans/local/TransLocal.h" // --> recommended "local"
 
+namespace {
+struct default_backend {
+#if ATLAS_HAVE_TRANS
+    std::string value = "ifs";
+#else
+    std::string value = "local";
+#endif
+    static default_backend instance() {
+        static default_backend x;
+        return x;
+    }
+private:
+    default_backend() = default;
+};
+}
+
 namespace atlas {
 namespace trans {
+
+util::Config TransFactory::default_options_ = util::Config( "type", default_backend::instance().value );
 
 TransImpl::~TransImpl() {}
 
@@ -79,7 +94,8 @@ TransFactory& factory( const std::string& name ) {
 
 }  // namespace
 
-TransFactory::TransFactory( const std::string& name ) : name_( name ) {
+TransFactory::TransFactory( const std::string& name ) :
+    name_( name ) {
     pthread_once( &once, init );
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
@@ -101,6 +117,28 @@ bool TransFactory::has( const std::string& name ) {
     static force_link static_linking;
 
     return ( m->find( name ) != m->end() );
+}
+
+void TransFactory::backend( const std::string& backend ) {
+    pthread_once( &once, init );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    default_options_.set( "type", backend );
+}
+
+std::string TransFactory::backend() {
+    return default_options_.getString("type");
+}
+
+const eckit::Configuration& TransFactory::config() {
+    return default_options_;
+}
+
+void TransFactory::config( const eckit::Configuration& config ) {
+    std::string type = default_options_.getString( "type" );
+    default_options_ = config;
+    if( not config.has("type") ) {
+        default_options_.set( "type", type );
+    }
 }
 
 void TransFactory::list( std::ostream& out ) {
@@ -135,17 +173,15 @@ Trans::Implementation* TransFactory::build( const Cache& cache, const FunctionSp
 
     static force_link static_linking;
 
+    util::Config options = default_options_;
+    options.set( config );
+
     std::string suffix( "(" + gp.type() + "," + sp.type() + ")" );
-    std::string name = config.getString( "type", TRANS_DEFAULT ) + suffix;
+    std::string name = options.getString( "type" ) + suffix;
 
     Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
 
-    if ( not config.has( "type" ) and not has( name ) ) {
-        name = std::string( "local" ) + suffix;
-        Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
-    }
-
-    return factory( name ).make( cache, gp, sp, config );
+    return factory( name ).make( cache, gp, sp, options );
 }
 
 Trans::Implementation* TransFactory::build( const Grid& grid, int truncation, const eckit::Configuration& config ) {
@@ -174,20 +210,36 @@ Trans::Implementation* TransFactory::build( const Cache& cache, const Grid& grid
 
     static force_link static_linking;
 
-    std::string name = config.getString( "type", TRANS_DEFAULT );
+    util::Config options = default_options_;
+    options.set( config );
+
+    std::string name = options.getString( "type" );
 
     Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
 
-    if ( not config.has( "type" ) and not has( name ) ) {
-        name = std::string( "local" );
-        Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
-    }
-
-    return factory( name ).make( cache, grid, domain, truncation, config );
+    return factory( name ).make( cache, grid, domain, truncation, options );
 }
 
+bool Trans::hasBackend( const std::string& backend ) {
+    return TransFactory::has( backend );
+}
 
+void Trans::backend( const std::string& backend ) {
+    ASSERT( hasBackend( backend ) );
+    TransFactory::backend( backend );
+}
 
+std::string Trans::backend() {
+    return TransFactory::backend();
+}
+
+const eckit::Configuration& Trans::config() {
+    return TransFactory::config();
+}
+
+void Trans::config( const eckit::Configuration& options )  {
+    TransFactory::config( options );
+}
 
 Trans::Trans() {}
 

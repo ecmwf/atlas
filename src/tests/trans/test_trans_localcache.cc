@@ -25,10 +25,6 @@
 
 #include "tests/AtlasTestEnvironment.h"
 
-#if ATLAS_HAVE_TRANS
-#include "transi/trans.h"
-#endif
-
 namespace atlas {
 namespace test {
 
@@ -36,16 +32,8 @@ namespace test {
 
 struct AtlasTransEnvironment : public AtlasTestEnvironment {
     AtlasTransEnvironment( int argc, char* argv[] ) : AtlasTestEnvironment( argc, argv ) {
-#if ATLAS_HAVE_TRANS
-        trans_use_mpi( mpi::comm().size() > 1 );
-        trans_init();
-#endif
-    }
-
-    ~AtlasTransEnvironment() {
-#if ATLAS_HAVE_TRANS
-        trans_finalize();
-#endif
+        trans::Trans::backend( "local" );
+        trans::Trans::config( option::warning(1) );
     }
 };
 
@@ -98,7 +86,7 @@ CASE( "test_global_grids" ) {
             std::make_pair(Slat(n),t),
         };
 
-        LegendreCacheCreator F_cache_creator( Grid(F(n)), t, option::type("local") );
+        LegendreCacheCreator F_cache_creator( Grid(F(n)), t );
         EXPECT( F_cache_creator.supported() );
         auto F_cachefile = CacheFile("leg_"+F_cache_creator.uid()+".bin");
         F_cache_creator.create( F_cachefile );
@@ -113,7 +101,7 @@ CASE( "test_global_grids" ) {
             ATLAS_TRACE("Case "+gridname+" T"+std::to_string(truncation));
             Grid grid(gridname);
 
-            LegendreCacheCreator cache_creator( grid, truncation, option::type("local") );
+            LegendreCacheCreator cache_creator( grid, truncation );
             EXPECT( cache_creator.supported() );
             auto cachefile = CacheFile("leg_"+cache_creator.uid()+".bin");
             cache_creator.create( cachefile );
@@ -122,13 +110,13 @@ CASE( "test_global_grids" ) {
             }
 
             ATLAS_TRACE_SCOPE("create without cache")
-                Trans( grid, truncation, option::type("local") );
+                Trans( grid, truncation );
 
             Cache cache;
             ATLAS_TRACE_SCOPE("read cache")
                 cache = LegendreCache( cachefile );
             ATLAS_TRACE_SCOPE("create with cache")
-                Trans( cache, grid, truncation, option::type("local") );
+                Trans( cache, grid, truncation );
 
         }
     }
@@ -160,7 +148,7 @@ CASE( "test_global_grids_with_subdomain" ) {
 
         Grid global_grid( gridname );
 
-        LegendreCacheCreator global_cache_creator( Grid(gridname), truncation, option::type("local") );
+        LegendreCacheCreator global_cache_creator( Grid(gridname), truncation );
         EXPECT( global_cache_creator.supported() );
         auto global_cachefile = CacheFile( "leg_" + global_cache_creator.uid() + ".bin" );
         ATLAS_TRACE_SCOPE( "Creating cache " + std::string( global_cachefile ) )
@@ -174,7 +162,7 @@ CASE( "test_global_grids_with_subdomain" ) {
         for( auto domain : domains ) {
             Grid grid( gridname, domain );
             ATLAS_TRACE_SCOPE("create with cache")
-                Trans( global_cache, global_grid, domain, truncation, option::type("local") );
+                Trans( global_cache, global_grid, domain, truncation );
         }
     }
 }
@@ -189,7 +177,7 @@ CASE( "test_regional_grids nested_in_global" ) {
     );
     EXPECT( grid_global.domain().global() );
 
-    LegendreCacheCreator global_cache_creator( grid_global, truncation, option::type("local") );
+    LegendreCacheCreator global_cache_creator( grid_global, truncation );
     EXPECT( global_cache_creator.supported() );
     auto global_cachefile = CacheFile( "leg_" + global_cache_creator.uid() + ".bin" );
     ATLAS_TRACE_SCOPE( "Creating cache "+std::string(cachefile) )
@@ -201,11 +189,11 @@ CASE( "test_regional_grids nested_in_global" ) {
 
 
     ATLAS_TRACE_SCOPE("create without cache")
-        Trans( grid_global, regional.domain(), truncation, option::type("local") );
+        Trans( grid_global, regional.domain(), truncation );
     ATLAS_TRACE_SCOPE("read cache")
         cache = LegendreCache( global_cachefile );
     ATLAS_TRACE_SCOPE("create with cache")
-        Trans( cache, grid_global, regional.domain(), truncation, option::type("local") );
+        Trans( cache, grid_global, regional.domain(), truncation );
 }
 
 CASE( "test_regional_grids not nested" ) {
@@ -214,7 +202,7 @@ CASE( "test_regional_grids not nested" ) {
 
     StructuredGrid grid( LinearSpacing( {0.,180.}, 181 ), LinearSpacing( {0.,45.}, 46 ) );
 
-    LegendreCacheCreator cache_creator( grid, truncation, option::type("local") );
+    LegendreCacheCreator cache_creator( grid, truncation );
     EXPECT( cache_creator.supported() );
     auto cachefile = CacheFile( "leg_" + cache_creator.uid() + ".bin" );
 
@@ -222,11 +210,11 @@ CASE( "test_regional_grids not nested" ) {
         cache_creator.create( cachefile );
 
     ATLAS_TRACE_SCOPE("create without cache")
-        Trans( grid, truncation, option::type("local") );
+        Trans( grid, truncation );
     ATLAS_TRACE_SCOPE("read cache")
         cache = LegendreCache( cachefile );
     ATLAS_TRACE_SCOPE("create with cache")
-        Trans( cache, grid, truncation, option::type("local") );
+        Trans( cache, grid, truncation );
 }
 
 CASE( "test_regional_grids with projection" ) {
@@ -241,10 +229,10 @@ CASE( "test_regional_grids with projection" ) {
     StructuredGrid grid( LinearSpacing( {0.,180.}, 181 ), LinearSpacing( {0.,45.}, 46 ), projection );
     Trans trans;
     ATLAS_TRACE_SCOPE("create without cache")
-        trans = Trans( grid, truncation, option::type("local") | option::warning(1) );
+        trans = Trans( grid, truncation );
 
     // Note: caching not yet implemented for unstructured and projected grids
-    LegendreCacheCreator legendre_cache_creator( grid, truncation, option::type("local") );
+    LegendreCacheCreator legendre_cache_creator( grid, truncation );
     ATLAS_DEBUG_VAR( legendre_cache_creator.uid() );
     EXPECT( not legendre_cache_creator.supported() );
 
@@ -261,14 +249,14 @@ CASE( "test cache creator to file" ) {
         LinearSpacing( { 90., -90.}, 181, true  )
     );
 
-    LegendreCacheCreator legendre_cache_creator( grid_global, truncation, option::type("local") );
+    LegendreCacheCreator legendre_cache_creator( grid_global, truncation );
     auto cachefile = CacheFile( legendre_cache_creator.uid() );
     ATLAS_TRACE_SCOPE( "Creating cache "+std::string(cachefile) )
       legendre_cache_creator.create( cachefile );
 
     Cache c = legendre_cache_creator.create();
-    auto trans1 = Trans( c, grid_global, truncation, option::type("local") );
-    auto trans2 = Trans( c, grid_global, truncation, option::type("local") );
+    auto trans1 = Trans( c, grid_global, truncation );
+    auto trans2 = Trans( c, grid_global, truncation );
 }
 
 CASE( "test cache creator in memory" ) {
@@ -279,14 +267,14 @@ CASE( "test cache creator in memory" ) {
         LinearSpacing( { 90., -90.}, 181, true  )
     );
 
-    LegendreCacheCreator legendre_cache_creator( grid_global, truncation, option::type("local") );
+    LegendreCacheCreator legendre_cache_creator( grid_global, truncation );
 
     Cache cache;
     ATLAS_TRACE_SCOPE( "Creating cache in memory" )
       cache = legendre_cache_creator.create();
 
-    auto trans1 = Trans( cache, grid_global, truncation, option::type("local") );
-    auto trans2 = Trans( cache, grid_global, truncation, option::type("local") );
+    auto trans1 = Trans( cache, grid_global, truncation );
+    auto trans2 = Trans( cache, grid_global, truncation );
 }
 
 }  // namespace test

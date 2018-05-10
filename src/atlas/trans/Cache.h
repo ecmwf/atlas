@@ -14,6 +14,7 @@
 
 #include "eckit/filesystem/PathName.h"
 #include "eckit/io/Buffer.h"
+#include "eckit/memory/SharedPtr.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -95,16 +96,17 @@ public:
     Cache();
     Cache( const Cache& other );
     operator bool() const;
-    const TransImpl* trans() const { return trans_; }
+    const TransImpl* trans() const { return trans_.get(); }
     const TransCacheEntry& legendre() const { return *legendre_; }
     const TransCacheEntry& fft() const { return *fft_; }
-    ~Cache();
+    virtual ~Cache();
 protected:
     Cache( const std::shared_ptr<TransCacheEntry>& legendre );
     Cache( const std::shared_ptr<TransCacheEntry>& legendre, const std::shared_ptr<TransCacheEntry>& fft );
     Cache( const TransImpl* );
 private:
-    const TransImpl*                 trans_ = nullptr;
+    eckit::SharedPtr<const TransImpl> trans_;
+//    const TransImpl*                 trans_ = nullptr;
     std::shared_ptr<TransCacheEntry> legendre_;
     std::shared_ptr<TransCacheEntry> fft_;
 };

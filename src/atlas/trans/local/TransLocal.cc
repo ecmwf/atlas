@@ -580,7 +580,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             ATLAS_TRACE( "Legendre precomputations (unstructured)" );
 
             if( warning() ) {
-              Log::warning() << "WARNING: Precomputations for spectral transforms could take a long time and consume a lot of memory (unstructured grid approach)!" << std::endl;
+              Log::warning() << "WARNING: Precomputations for spectral transforms could take a long time and consume a lot of memory (unstructured grid approach)! Results may contain aliasing errors." << std::endl;
             }
 
             std::vector<double> lats( grid_.size() );
@@ -1081,7 +1081,7 @@ void TransLocal::invtrans_unstructured( const int truncation, const int nb_field
     ATLAS_TRACE( "invtrans_unstructured" );
 
     if( warning(config) ) {
-      Log::warning() << "WARNING: Spectral transforms could take a long time (unstructured grid approach)." << std::endl;
+      Log::warning() << "WARNING: Spectral transforms could take a long time (unstructured grid approach). Results may contain aliasing errors." << std::endl;
     }
 
     double* zfn;

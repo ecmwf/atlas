@@ -68,10 +68,12 @@ LegendreCache::LegendreCache( const void* address, size_t size ) :
 }
 
 Cache::Cache(const std::shared_ptr<TransCacheEntry>& legendre) :
+  trans_( nullptr ),
   legendre_( legendre ),
   fft_( new EmptyCacheEntry() ) {}
 
 Cache::Cache(const std::shared_ptr<TransCacheEntry>& legendre, const std::shared_ptr<TransCacheEntry>& fft) :
+  trans_( nullptr ),
   legendre_( legendre ),
   fft_( fft ) {}
 
@@ -79,20 +81,17 @@ Cache::Cache( const TransImpl* trans ) :
   trans_( trans ),
   legendre_( new EmptyCacheEntry() ),
   fft_( new EmptyCacheEntry() ) {
-  if( trans_ )
-    trans_->attach();
 }
 
 Cache::Cache() :
+  trans_( nullptr ),
   legendre_( new EmptyCacheEntry() ),
   fft_( new EmptyCacheEntry() ) {}
 
-Cache::Cache(const Cache& other) :
+Cache::Cache( const Cache& other ) :
   trans_( other.trans_ ),
   legendre_( other.legendre_ ),
   fft_( other.fft_ ) {
-  if( trans_ )
-    trans_->attach();
 }
 
 Cache::operator bool() const {
@@ -102,13 +101,6 @@ Cache::operator bool() const {
 Cache::~Cache() {
   pthread_once( &once, init );
   eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-  if( trans_ ) {
-    trans_->detach();
-    if( trans_->owners() == 0 ) {
-      delete trans_;
-    }
-    trans_ = nullptr;
-  }
 }
 
 TransCache::TransCache( const Trans& trans ) :

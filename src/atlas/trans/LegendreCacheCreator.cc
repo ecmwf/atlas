@@ -19,10 +19,7 @@
 
 // For factory registration only:
 #if ATLAS_HAVE_TRANS
-#define TRANS_DEFAULT "ifs"
 #include "atlas/trans/ifs/LegendreCacheCreatorIFS.h"
-#else
-#define TRANS_DEFAULT "local"
 #endif
 #include "atlas/trans/local/LegendreCacheCreatorLocal.h"
 
@@ -116,16 +113,14 @@ LegendreCacheCreator::Implementation* LegendreCacheCreatorFactory::build( const 
 
     static force_link static_linking;
 
-    std::string name = config.getString( "type", TRANS_DEFAULT );
+    util::Config options = Trans::config();
+    options.set( config );
+
+    std::string name = options.getString( "type" );
 
     Log::debug() << "Looking for LegendreCacheCreatorFactory [" << name << "]" << std::endl;
 
-    if ( not config.has( "type" ) and not has( name ) ) {
-        name = std::string( "local" );
-        Log::debug() << "Looking for LegendreCacheCreatorFactory [" << name << "]" << std::endl;
-    }
-
-    return factory( name ).make( grid, truncation, config );
+    return factory( name ).make( grid, truncation, options );
 }
 
 LegendreCacheCreator::LegendreCacheCreator() {}

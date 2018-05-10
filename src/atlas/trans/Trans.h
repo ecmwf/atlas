@@ -149,8 +149,17 @@ public:
 
     static bool has( const std::string& name );
 
+    static void backend( const std::string& );
+
+    static std::string backend();
+
+    static void config( const eckit::Configuration& );
+
+    static const eckit::Configuration& config();
+
 private:
     std::string name_;
+    static util::Config default_options_;
     virtual Trans_t* make( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& ) {
         return nullptr;
     }
@@ -203,6 +212,13 @@ private:
     eckit::SharedPtr<Implementation> impl_;
 
 public:
+
+    static bool hasBackend( const std::string& );
+    static void backend( const std::string& );
+    static std::string backend();
+    static void config( const eckit::Configuration& );
+    static const eckit::Configuration& config();
+
     Trans();
     Trans( Implementation* );
     Trans( const Trans& );
