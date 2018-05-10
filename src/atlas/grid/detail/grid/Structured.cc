@@ -226,6 +226,10 @@ Structured::XSpace::Implementation::Implementation( const Spacing& spacing ) :
     nxmin_                                 = nx_[0];
 }
 
+std::string Structured::XSpace::Implementation::type() const {
+    return "linear";
+}
+
 Grid::Spec Structured::XSpace::Implementation::spec() const {
     Grid::Spec spec;
 

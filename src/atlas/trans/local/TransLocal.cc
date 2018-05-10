@@ -338,7 +338,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         // reduce truncation towards the pole for reduced meshes:
         nlat0_.resize( truncation_ + 1 );
         if ( no_nest ) {
-            for ( int j = 0; j <= truncation_; j++ ) {
+          for ( int j = 0; j <= truncation_; j++ ) {
                 nlat0_[j] = 0;
             }
         }
@@ -542,6 +542,8 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
 #endif
         }
         if ( !useFFT_ ) {
+            Log::warning() << "WARNING: Spectral transform results may contain aliasing errors. This will be addressed soon." << std::endl;
+
             alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlonsMax );
 #if !TRANSLOCAL_DGEMM2
             {

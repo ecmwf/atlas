@@ -222,6 +222,8 @@ public:
 
     bool periodic() const { return grid_->periodic(); }
 
+    const XSpace& xspace() const { return grid_->xspace(); }
+
     const YSpace& yspace() const { return grid_->yspace(); }
 
 private:

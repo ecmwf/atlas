@@ -229,6 +229,8 @@ public:
 
             Spec spec() const;
 
+            std::string type() const;
+
         private:
             void reserve( long ny );
 
@@ -276,6 +278,8 @@ public:
         const std::vector<double>& dx() const { return impl_->dx(); }
 
         Spec spec() const { return impl_->spec(); }
+
+        std::string type() const { return impl_->type(); }
 
     private:
         eckit::SharedPtr<Implementation> impl_;
