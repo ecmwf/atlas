@@ -12,7 +12,6 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/value/CompositeParams.h"
 
-#include "atlas/runtime/Log.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/FieldSet.h"
@@ -24,6 +23,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

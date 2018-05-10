@@ -78,8 +78,10 @@ StructuredMeshGenerator::StructuredMeshGenerator( const eckit::Parametrisation& 
     if ( p.get( "unique_pole", unique_pole ) ) options.set( "unique_pole", unique_pole );
 
     bool force_include_pole;
-    if ( p.get( "force_include_north_pole", force_include_pole ) ) options.set( "force_include_north_pole", force_include_pole );
-    if ( p.get( "force_include_south_pole", force_include_pole ) ) options.set( "force_include_south_pole", force_include_pole );
+    if ( p.get( "force_include_north_pole", force_include_pole ) )
+        options.set( "force_include_north_pole", force_include_pole );
+    if ( p.get( "force_include_south_pole", force_include_pole ) )
+        options.set( "force_include_south_pole", force_include_pole );
 
     bool three_dimensional;
     if ( p.get( "three_dimensional", three_dimensional ) || p.get( "3d", three_dimensional ) )
@@ -700,19 +702,23 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
 
     bool has_point_at_north_pole = rg.y().front() == 90 && rg.nx().front() > 0;
     bool has_point_at_south_pole = rg.y().back() == -90 && rg.nx().back() > 0;
-    bool possible_north_pole = !has_point_at_north_pole && rg.domain().containsNorthPole() && ( mypart == 0 );
+    bool possible_north_pole     = !has_point_at_north_pole && rg.domain().containsNorthPole() && ( mypart == 0 );
     bool possible_south_pole = !has_point_at_south_pole && rg.domain().containsSouthPole() && ( mypart == nparts - 1 );
 
-    bool force_include_north_pole(options.has("force_include_north_pole") && options.get<bool>( "force_include_north_pole" ));
-    bool force_include_south_pole(options.has("force_include_south_pole") && options.get<bool>( "force_include_south_pole" ));
+    bool force_include_north_pole( options.has( "force_include_north_pole" ) &&
+                                   options.get<bool>( "force_include_north_pole" ) );
+    bool force_include_south_pole( options.has( "force_include_south_pole" ) &&
+                                   options.get<bool>( "force_include_south_pole" ) );
 
-    bool include_north_pole = (possible_north_pole && options.get<bool>( "include_pole" )) || force_include_north_pole;
-    bool include_south_pole = (possible_south_pole && options.get<bool>( "include_pole" )) || force_include_south_pole;
-    bool patch_north_pole   =  possible_north_pole && options.get<bool>( "patch_pole" ) && rg.nx( 1 ) > 0;
-    bool patch_south_pole   =  possible_south_pole && options.get<bool>( "patch_pole" ) && rg.nx( rg.ny() - 2 ) > 0;
+    bool include_north_pole =
+        ( possible_north_pole && options.get<bool>( "include_pole" ) ) || force_include_north_pole;
+    bool include_south_pole =
+        ( possible_south_pole && options.get<bool>( "include_pole" ) ) || force_include_south_pole;
+    bool patch_north_pole = possible_north_pole && options.get<bool>( "patch_pole" ) && rg.nx( 1 ) > 0;
+    bool patch_south_pole = possible_south_pole && options.get<bool>( "patch_pole" ) && rg.nx( rg.ny() - 2 ) > 0;
 
-    int nnewnodes = (!has_point_at_north_pole && include_north_pole ? 1 : 0)
-                  + (!has_point_at_south_pole && include_south_pole ? 1 : 0);
+    int nnewnodes = ( !has_point_at_north_pole && include_north_pole ? 1 : 0 ) +
+                    ( !has_point_at_south_pole && include_south_pole ? 1 : 0 );
 
     if ( three_dimensional && nparts != 1 )
         throw BadParameter( "Cannot generate three_dimensional mesh in parallel", Here() );
@@ -827,7 +833,7 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
                 }
                 else if ( include_periodic_ghost_points )  // add periodic point
                 {
-//#warning TODO: use commented approach
+                    //#warning TODO: use commented approach
                     part( jnode ) = mypart;
                     // part(jnode)      = parts.at( offset_glb.at(jlat) );
                     ghost( jnode ) = 1;
@@ -922,7 +928,7 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
                 lonlat( inode, LAT ) = crd[LAT];
 
                 glb_idx( inode ) = periodic_glb.at( jlat ) + 1;
-//#warning TODO: use commented approach
+                //#warning TODO: use commented approach
                 //        part(inode)      = parts.at( offset_glb.at(jlat) );
                 part( inode )  = mypart;  // The actual part will be fixed later
                 ghost( inode ) = 1;
@@ -983,8 +989,8 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
         ++jnode;
     }
 
-    nodes.metadata().set<size_t>( "NbRealPts", size_t(nnodes - nnewnodes) );
-    nodes.metadata().set<size_t>( "NbVirtualPts", size_t(nnewnodes) );
+    nodes.metadata().set<size_t>( "NbRealPts", size_t( nnodes - nnewnodes ) );
+    nodes.metadata().set<size_t>( "NbVirtualPts", size_t( nnewnodes ) );
 
     nodes.global_index().metadata().set( "human_readable", true );
     nodes.global_index().metadata().set( "min", 1 );

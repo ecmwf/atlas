@@ -135,8 +135,8 @@ CASE( "test_earth_lon_135" ) {
 CASE( "test_earth_lon_225" ) {
     const PointLonLat p1[2] = {{225., 0.}, {-135., 0.}};
     PointXYZ p2[2];
-    Earth::convertSphericalToCartesian( p1[0], p2[0]);
-    Earth::convertSphericalToCartesian( p1[1], p2[1]);
+    Earth::convertSphericalToCartesian( p1[0], p2[0] );
+    Earth::convertSphericalToCartesian( p1[1], p2[1] );
 
     EXPECT( eckit::types::is_approximately_equal( p2[0].x(), -L ) );
     EXPECT( eckit::types::is_approximately_equal( p2[0].y(), -L ) );

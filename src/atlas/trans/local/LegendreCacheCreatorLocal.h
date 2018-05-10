@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "atlas/trans/LegendreCacheCreator.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/trans/LegendreCacheCreator.h"
 #include "atlas/util/Config.h"
 
 //-----------------------------------------------------------------------------
@@ -31,7 +31,7 @@ public:
 
     virtual std::string uid() const override;
 
-    virtual void create(const std::string &path) const override;
+    virtual void create( const std::string& path ) const override;
 
     virtual Cache create() const override;
 

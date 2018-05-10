@@ -15,7 +15,6 @@
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/types/FloatCompare.h"
 
-#include "atlas/library/config.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
@@ -23,6 +22,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/grid/Unstructured.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/detail/PointCloudIO.h"

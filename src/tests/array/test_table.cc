@@ -9,8 +9,8 @@
  */
 
 #include "atlas/array/Table.h"
-#include "atlas/runtime/Log.h"
 #include "atlas/library/defines.h"
+#include "atlas/runtime/Log.h"
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::array;

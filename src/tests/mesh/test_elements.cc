@@ -15,17 +15,17 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/memory/ScopedPtr.h"
 
-#include "atlas/library/config.h"
 #include "atlas/field/Field.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/library/Library.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
-#include "atlas/mesh/Nodes.h"
-#include "atlas/runtime/Log.h"
-#include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/runtime/Log.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

@@ -165,7 +165,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
         for ( std::vector<size_t>::const_iterator i = failures.begin(); i != failures.end(); ++i ) {
             const PointXYZ p{( *ocoords_ )( *i, 0 ), ( *ocoords_ )( *i, 1 ), ( *ocoords_ )( *i, 2 )};  // lookup point
             PointLonLat pll;
-            util::Earth::convertCartesianToSpherical(p, pll);
+            util::Earth::convertCartesianToSpherical( p, pll );
             msg << "\t(lon,lat) = " << pll << "\n";
         }
 

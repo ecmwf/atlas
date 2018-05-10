@@ -10,13 +10,13 @@
 
 #include "atlas/mesh/actions/ExtendNodesGlobal.h"
 
-#include "eckit/exception/Exceptions.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
+#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace mesh {
@@ -68,14 +68,14 @@ void ExtendNodesGlobal::operator()( const Grid& grid, Mesh& mesh ) const {
         PointXYZ pXYZ;
         util::Earth::convertSphericalToCartesian( pLL, pXYZ );
 
-        xyz( n, XX )          = pXYZ.x();
-        xyz( n, YY )          = pXYZ.y();
-        xyz( n, ZZ )          = pXYZ.z();
-        xy( n, XX )           = extended_pts[i].x();
-        xy( n, YY )           = extended_pts[i].y();
-        lonlat( n, LON )      = pLL.lon();
-        lonlat( n, LAT )      = pLL.lat();
-        gidx( n )             = n + 1;
+        xyz( n, XX )     = pXYZ.x();
+        xyz( n, YY )     = pXYZ.y();
+        xyz( n, ZZ )     = pXYZ.z();
+        xy( n, XX )      = extended_pts[i].x();
+        xy( n, YY )      = extended_pts[i].y();
+        lonlat( n, LON ) = pLL.lon();
+        lonlat( n, LAT ) = pLL.lat();
+        gidx( n )        = n + 1;
     }
 }
 

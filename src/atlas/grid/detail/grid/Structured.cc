@@ -367,7 +367,7 @@ void Structured::crop( const Domain& dom ) {
                 jmax = std::max( j, jmax );
             }
         }
-        ASSERT(jmax >= jmin);
+        ASSERT( jmax >= jmin );
 
         size_t cropped_ny = jmax - jmin + 1;
         std::vector<double> cropped_y( y_.begin() + jmin, y_.begin() + jmin + cropped_ny );
@@ -445,10 +445,10 @@ void Structured::computeTruePeriodicity() {
             const PointLonLat Pllmax = projection().lonlat( PointXY( xmax_[j], y_[j] ) );
 
             Point3 Pxmin;
-            util::UnitSphere::convertSphericalToCartesian(Pllmin, Pxmin );
+            util::UnitSphere::convertSphericalToCartesian( Pllmin, Pxmin );
 
             Point3 Pxmax;
-            util::UnitSphere::convertSphericalToCartesian(Pllmax, Pxmax );
+            util::UnitSphere::convertSphericalToCartesian( Pllmax, Pxmax );
 
             periodic_x_ = points_equal( Pxmin, Pxmax );
         }

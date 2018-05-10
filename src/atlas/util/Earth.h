@@ -34,7 +34,7 @@ struct DatumWGS84SemiMajorAxis {
 
 //------------------------------------------------------------------------------------------------------
 
-typedef eckit::geometry::SphereT< DatumIFS > Earth;
+typedef eckit::geometry::SphereT<DatumIFS> Earth;
 
 //------------------------------------------------------------------------------------------------------
 

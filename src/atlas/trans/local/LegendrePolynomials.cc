@@ -46,9 +46,9 @@ void compute_zfn( const size_t trc, double zfn[] ) {
 
 
 void compute_legendre_polynomials_lat( const size_t trc,  // truncation (in)
-                                           const double lat,  // latitude in radians (in)
-                                           double legpol[],   // legendre polynomials
-                                           double zfn[] ) {
+                                       const double lat,  // latitude in radians (in)
+                                       double legpol[],   // legendre polynomials
+                                       double zfn[] ) {
     auto idxmn  = [&]( int jm, int jn ) { return ( 2 * trc + 3 - jm ) * jm / 2 + jn - jm; };
     auto idxzfn = [&]( int jn, int jk ) { return jk + ( trc + 1 ) * jn; };
     {  //ATLAS_TRACE( "compute Legendre polynomials" );
@@ -205,9 +205,9 @@ void compute_legendre_polynomials(
 }
 
 void compute_legendre_polynomials_all( const size_t trc,     // truncation (in)
-                                           const int nlats,      // number of latitudes
-                                           const double lats[],  // latitudes in radians (in)
-                                           double legendre[] )   // legendre polynomials for all latitudes
+                                       const int nlats,      // number of latitudes
+                                       const double lats[],  // latitudes in radians (in)
+                                       double legendre[] )   // legendre polynomials for all latitudes
 {
     auto legendre_size = [&]( int truncation ) { return ( truncation + 2 ) * ( truncation + 1 ) / 2; };
     std::vector<double> legpol( legendre_size( trc ) );

@@ -12,8 +12,8 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/output/Output.h"
 
-#include "tests/TestMeshes.h"
 #include "tests/AtlasTestEnvironment.h"
+#include "tests/TestMeshes.h"
 
 namespace atlas {
 namespace test {

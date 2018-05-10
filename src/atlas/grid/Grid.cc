@@ -94,7 +94,7 @@ StructuredGrid::StructuredGrid( const XSpace& xspace, const YSpace& yspace, cons
     Grid( new detail::grid::Structured( xspace, yspace, projection, domain ) ),
     grid_( structured_grid( get() ) ) {}
 
-StructuredGrid::StructuredGrid( const Grid& grid , const Grid::Domain& domain ) :
+StructuredGrid::StructuredGrid( const Grid& grid, const Grid::Domain& domain ) :
     Grid( grid, domain ),
     grid_( structured_grid( get() ) ) {}
 

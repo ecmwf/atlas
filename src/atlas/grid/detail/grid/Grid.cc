@@ -76,11 +76,12 @@ const Grid* Grid::create( const std::string& name, const Grid::Config& config ) 
     //    return GridBuilder::createNamed(name);
 }
 
-const Grid* Grid::create( const Grid& grid, const Domain& domain) {
-    if( grid.type() == "structured" ) {
-        const Structured& g = dynamic_cast<const Structured&>(grid);
+const Grid* Grid::create( const Grid& grid, const Domain& domain ) {
+    if ( grid.type() == "structured" ) {
+        const Structured& g = dynamic_cast<const Structured&>( grid );
         return new Structured( g.name(), g.xspace(), g.yspace(), g.projection(), domain );
-    } else {
+    }
+    else {
         NOTIMP;
     }
 }

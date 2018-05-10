@@ -78,7 +78,8 @@ public:
     TransIFS( const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig() );
     TransIFS( const Grid&, const Domain&, const long truncation, const eckit::Configuration& = util::NoConfig() );
     TransIFS( const Cache&, const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig() );
-    TransIFS( const Cache&, const Grid&, const Domain&, const long truncation, const eckit::Configuration& = util::NoConfig() );
+    TransIFS( const Cache&, const Grid&, const Domain&, const long truncation,
+              const eckit::Configuration& = util::NoConfig() );
 
     virtual ~TransIFS();
     operator ::Trans_t*() const { return trans(); }

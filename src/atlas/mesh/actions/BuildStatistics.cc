@@ -65,10 +65,10 @@ void quad_quality( double& eta, double& rho, const PointLonLat& p1, const PointL
     // see http://geuz.org/gmsh/doc/preprints/gmsh_quad_preprint.pdf
 
     PointXYZ xyz[4];
-    util::UnitSphere::convertSphericalToCartesian(p1, xyz[0]);
-    util::UnitSphere::convertSphericalToCartesian(p2, xyz[1]);
-    util::UnitSphere::convertSphericalToCartesian(p3, xyz[2]);
-    util::UnitSphere::convertSphericalToCartesian(p4, xyz[3]);
+    util::UnitSphere::convertSphericalToCartesian( p1, xyz[0] );
+    util::UnitSphere::convertSphericalToCartesian( p2, xyz[1] );
+    util::UnitSphere::convertSphericalToCartesian( p3, xyz[2] );
+    util::UnitSphere::convertSphericalToCartesian( p4, xyz[3] );
 
     PointXYZ l2m1( PointXYZ::sub( xyz[1], xyz[0] ) );
     PointXYZ l3m2( PointXYZ::sub( xyz[2], xyz[1] ) );

@@ -50,9 +50,7 @@ bool SphericalPolygon::contains( const PointLonLat& P ) const {
             const double lat = util::Earth::greatCircleLatitudeGivenLongitude( A, B, P.lon() );
 
             ASSERT( !std::isnan( lat ) );
-            if ( eckit::types::is_approximately_equal( P.lat(), lat ) ) {
-                return true;
-            }
+            if ( eckit::types::is_approximately_equal( P.lat(), lat ) ) { return true; }
 
             wn += ( P.lat() > lat ? -1 : 1 ) * ( APB ? -1 : 1 );
         }

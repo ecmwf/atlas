@@ -41,12 +41,12 @@ namespace atlas {
 namespace trans {
 
 class LegendreCacheCreatorLocal;
-int fourier_truncation( const int truncation,    // truncation
-                        const int nx,            // number of longitudes
-                        const int nxmax,         // maximum nx
-                        const int ndgl,          // number of latitudes
-                        const double lat,        // latitude in radian
-                        const bool regular );    // regular grid
+int fourier_truncation( const int truncation,  // truncation
+                        const int nx,          // number of longitudes
+                        const int nxmax,       // maximum nx
+                        const int ndgl,        // number of latitudes
+                        const double lat,      // latitude in radian
+                        const bool regular );  // regular grid
 
 //-----------------------------------------------------------------------------
 
@@ -66,10 +66,9 @@ class TransLocal : public trans::TransImpl {
 public:
     TransLocal( const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig() );
     TransLocal( const Grid&, const Domain&, const long truncation, const eckit::Configuration& = util::NoConfig() );
-    TransLocal( const Cache&, const Grid&, const long truncation,
-                    const eckit::Configuration& = util::NoConfig() );
+    TransLocal( const Cache&, const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig() );
     TransLocal( const Cache&, const Grid&, const Domain&, const long truncation,
-                    const eckit::Configuration& = util::NoConfig() );
+                const eckit::Configuration& = util::NoConfig() );
 
     virtual ~TransLocal();
 
@@ -133,16 +132,14 @@ private:
 #endif
     };
 
-    void invtrans_legendre( const int truncation, const int nlats, const int nb_fields,
-                            const double scalar_spectra[], double scl_fourier[],
-                            const eckit::Configuration& config ) const;
+    void invtrans_legendre( const int truncation, const int nlats, const int nb_fields, const double scalar_spectra[],
+                            double scl_fourier[], const eckit::Configuration& config ) const;
 
     void invtrans_fourier_regular( const int nlats, const int nlons, const int nb_fields, double scl_fourier[],
                                    double gp_fields[], const eckit::Configuration& config ) const;
 
     void invtrans_fourier_reduced( const int nlats, const grid::StructuredGrid g, const int nb_fields,
-                                   double scl_fourier[], double gp_fields[],
-                                   const eckit::Configuration& config ) const;
+                                   double scl_fourier[], double gp_fields[], const eckit::Configuration& config ) const;
 
     void invtrans_unstructured_precomp( const int truncation, const int nb_scalar_fields, const int nb_vordiv_fields,
                                         const double scalar_spectra[], double gp_fields[],
@@ -158,7 +155,7 @@ private:
 
     bool warning( const eckit::Configuration& = util::NoConfig() ) const;
 
-friend class LegendreCacheCreatorLocal;
+    friend class LegendreCacheCreatorLocal;
 
 private:
     Grid grid_;

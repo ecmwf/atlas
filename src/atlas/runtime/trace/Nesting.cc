@@ -36,11 +36,10 @@ public:
     void pop() { stack_.pop_front(); }
 };
 
-Nesting::Nesting( const eckit::CodeLocation& loc, const std::string& id ) : 
+Nesting::Nesting( const eckit::CodeLocation& loc, const std::string& id ) :
     loc_( loc ),
     id_( id ),
-    stack_( NestingState::instance().push( loc, id ) ) {
-}
+    stack_( NestingState::instance().push( loc, id ) ) {}
 
 Nesting::~Nesting() {
     stop();

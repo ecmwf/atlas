@@ -30,9 +30,9 @@ LegendreCacheCreatorImpl::~LegendreCacheCreatorImpl() {}
 
 namespace {
 
-static eckit::Mutex* local_mutex               = 0;
+static eckit::Mutex* local_mutex                              = 0;
 static std::map<std::string, LegendreCacheCreatorFactory*>* m = 0;
-static pthread_once_t once                     = PTHREAD_ONCE_INIT;
+static pthread_once_t once                                    = PTHREAD_ONCE_INIT;
 
 static void init() {
     local_mutex = new eckit::Mutex();
@@ -106,7 +106,7 @@ void LegendreCacheCreatorFactory::list( std::ostream& out ) {
 }
 
 LegendreCacheCreator::Implementation* LegendreCacheCreatorFactory::build( const Grid& grid, int truncation,
-                                            const eckit::Configuration& config ) {
+                                                                          const eckit::Configuration& config ) {
     pthread_once( &once, init );
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );

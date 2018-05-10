@@ -162,15 +162,13 @@ private:
         return idx * view.stride( i_view++ );
     }
 
-    static int offset_part( View& view, int& i_view, Range range ) {
-        return range.start() * view.stride( i_view++ ); }
+    static int offset_part( View& view, int& i_view, Range range ) { return range.start() * view.stride( i_view++ ); }
 
     static int offset_part( View& view, int& i_view, RangeAll range ) {
         return range.start() * view.stride( i_view++ );
     }
 
-    static int offset_part( View& view, int& i_view, RangeTo range ) {
-        return range.start() * view.stride( i_view++ ); }
+    static int offset_part( View& view, int& i_view, RangeTo range ) { return range.start() * view.stride( i_view++ ); }
 
     static int offset_part( View& view, int& i_view, RangeFrom range ) {
         return range.start() * view.stride( i_view++ );

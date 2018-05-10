@@ -29,9 +29,9 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/trans/Trans.h"
+#include "atlas/trans/local/TransLocal.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
-#include "atlas/trans/local/TransLocal.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

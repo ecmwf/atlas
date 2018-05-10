@@ -165,8 +165,8 @@ void vd2uvopt3( const int truncation,               // truncation
 }
 
 void VorDivToUVLocal::execute( const int nb_coeff, const int nb_fields, const double vorticity[],
-                                   const double divergence[], double U[], double V[],
-                                   const eckit::Configuration& config ) const {
+                               const double divergence[], double U[], double V[],
+                               const eckit::Configuration& config ) const {
     for ( int jm = 0; jm <= truncation_; ++jm ) {
         vd2uvopt3( truncation_, jm, nb_fields, vorticity, divergence, U, V, config );
     }

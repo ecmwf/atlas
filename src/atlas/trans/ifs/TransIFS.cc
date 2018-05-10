@@ -638,13 +638,14 @@ TransIFS::TransIFS( const Grid& grid, const eckit::Configuration& config ) :
     TransIFS( grid, /*grid-only*/ -1, config ) {}
 
 
-
-TransIFS::TransIFS( const Grid& grid, const Domain& domain, const long truncation, const eckit::Configuration& config ) :
+TransIFS::TransIFS( const Grid& grid, const Domain& domain, const long truncation,
+                    const eckit::Configuration& config ) :
     TransIFS( Cache(), grid, truncation, config ) {
     ASSERT( domain.global() );
 }
 
-TransIFS::TransIFS( const Cache& cache, const Grid& grid, const Domain& domain, const long truncation, const eckit::Configuration& config ) :
+TransIFS::TransIFS( const Cache& cache, const Grid& grid, const Domain& domain, const long truncation,
+                    const eckit::Configuration& config ) :
     TransIFS( cache, grid, truncation, config ) {
     ASSERT( domain.global() );
 }

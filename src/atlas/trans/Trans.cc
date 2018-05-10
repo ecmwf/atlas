@@ -24,7 +24,7 @@
 #include "atlas/trans/ifs/TransIFSNodeColumns.h"
 #include "atlas/trans/ifs/TransIFSStructuredColumns.h"
 #endif
-#include "atlas/trans/local/TransLocal.h" // --> recommended "local"
+#include "atlas/trans/local/TransLocal.h"  // --> recommended "local"
 
 namespace {
 struct default_backend {
@@ -37,10 +37,11 @@ struct default_backend {
         static default_backend x;
         return x;
     }
+
 private:
     default_backend() = default;
 };
-}
+}  // namespace
 
 namespace atlas {
 namespace trans {
@@ -94,8 +95,7 @@ TransFactory& factory( const std::string& name ) {
 
 }  // namespace
 
-TransFactory::TransFactory( const std::string& name ) :
-    name_( name ) {
+TransFactory::TransFactory( const std::string& name ) : name_( name ) {
     pthread_once( &once, init );
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
@@ -126,7 +126,7 @@ void TransFactory::backend( const std::string& backend ) {
 }
 
 std::string TransFactory::backend() {
-    return default_options_.getString("type");
+    return default_options_.getString( "type" );
 }
 
 const eckit::Configuration& TransFactory::config() {
@@ -136,9 +136,7 @@ const eckit::Configuration& TransFactory::config() {
 void TransFactory::config( const eckit::Configuration& config ) {
     std::string type = default_options_.getString( "type" );
     default_options_ = config;
-    if( not config.has("type") ) {
-        default_options_.set( "type", type );
-    }
+    if ( not config.has( "type" ) ) { default_options_.set( "type", type ); }
 }
 
 void TransFactory::list( std::ostream& out ) {
@@ -162,7 +160,7 @@ Trans::Implementation* TransFactory::build( const FunctionSpace& gp, const Funct
 
 Trans::Implementation* TransFactory::build( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp,
                                             const eckit::Configuration& config ) {
-    if( cache.trans() ) {
+    if ( cache.trans() ) {
         Log::debug() << "Creating Trans from cache, ignoring any other arguments" << std::endl;
         return cache.trans();
     }
@@ -188,7 +186,8 @@ Trans::Implementation* TransFactory::build( const Grid& grid, int truncation, co
     return build( Cache(), grid, truncation, config );
 }
 
-Trans::Implementation* TransFactory::build( const Grid& grid, const Domain& domain, int truncation, const eckit::Configuration& config ) {
+Trans::Implementation* TransFactory::build( const Grid& grid, const Domain& domain, int truncation,
+                                            const eckit::Configuration& config ) {
     return build( Cache(), grid, domain, truncation, config );
 }
 
@@ -199,7 +198,7 @@ Trans::Implementation* TransFactory::build( const Cache& cache, const Grid& grid
 
 Trans::Implementation* TransFactory::build( const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
                                             const eckit::Configuration& config ) {
-    if( cache.trans() ) {
+    if ( cache.trans() ) {
         Log::debug() << "Creating Trans from cache, ignoring any other arguments" << std::endl;
         return cache.trans();
     }
@@ -237,17 +236,17 @@ const eckit::Configuration& Trans::config() {
     return TransFactory::config();
 }
 
-void Trans::config( const eckit::Configuration& options )  {
+void Trans::config( const eckit::Configuration& options ) {
     TransFactory::config( options );
 }
 
 namespace {
 util::Config options( const eckit::Configuration& config ) {
     util::Config opts = Trans::config();
-    opts.set(config);
+    opts.set( config );
     return opts;
 }
-}
+}  // namespace
 
 Trans::Trans() {}
 
@@ -269,7 +268,8 @@ Trans::Trans( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& 
 Trans::Trans( const Cache& cache, const Grid& grid, int truncation, const eckit::Configuration& config ) :
     impl_( TransFactory::build( cache, grid, truncation, config ) ) {}
 
-Trans::Trans( const Cache& cache, const Grid& grid, const Domain& domain, int truncation, const eckit::Configuration& config ) :
+Trans::Trans( const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
+              const eckit::Configuration& config ) :
     impl_( TransFactory::build( cache, grid, domain, truncation, config ) ) {}
 
 Trans::Trans( const Trans& trans ) : impl_( trans.impl_ ) {}
@@ -287,37 +287,37 @@ size_t Trans::spectralCoefficients() const {
 }
 
 void Trans::dirtrans( const Field& gpfield, Field& spfield, const eckit::Configuration& config ) const {
-    impl_->dirtrans( gpfield, spfield, options(config) );
+    impl_->dirtrans( gpfield, spfield, options( config ) );
 }
 
 void Trans::dirtrans( const FieldSet& gpfields, FieldSet& spfields, const eckit::Configuration& config ) const {
-    impl_->dirtrans( gpfields, spfields, options(config) );
+    impl_->dirtrans( gpfields, spfields, options( config ) );
 }
 
 void Trans::dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Field& spdiv,
                                   const eckit::Configuration& config ) const {
-    impl_->dirtrans_wind2vordiv( gpwind, spvor, spdiv, options(config) );
+    impl_->dirtrans_wind2vordiv( gpwind, spvor, spdiv, options( config ) );
 }
 
 void Trans::invtrans( const Field& spfield, Field& gpfield, const eckit::Configuration& config ) const {
-    impl_->invtrans( spfield, gpfield, options(config) );
+    impl_->invtrans( spfield, gpfield, options( config ) );
 }
 
 void Trans::invtrans( const FieldSet& spfields, FieldSet& gpfields, const eckit::Configuration& config ) const {
-    impl_->invtrans( spfields, gpfields, options(config) );
+    impl_->invtrans( spfields, gpfields, options( config ) );
 }
 
 void Trans::invtrans_grad( const Field& spfield, Field& gradfield, const eckit::Configuration& config ) const {
-    impl_->invtrans_grad( spfield, gradfield, options(config) );
+    impl_->invtrans_grad( spfield, gradfield, options( config ) );
 }
 
 void Trans::invtrans_grad( const FieldSet& spfields, FieldSet& gradfields, const eckit::Configuration& config ) const {
-    impl_->invtrans_grad( spfields, gradfields, options(config) );
+    impl_->invtrans_grad( spfields, gradfields, options( config ) );
 }
 
 void Trans::invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
                                   const eckit::Configuration& config ) const {
-    impl_->invtrans_vordiv2wind( spvor, spdiv, gpwind, options(config) );
+    impl_->invtrans_vordiv2wind( spvor, spdiv, gpwind, options( config ) );
 }
 
 // -- IFS type fields --
@@ -338,7 +338,7 @@ void Trans::invtrans( const int nb_scalar_fields, const double scalar_spectra[],
                       const double vorticity_spectra[], const double divergence_spectra[], double gp_fields[],
                       const eckit::Configuration& config ) const {
     impl_->invtrans( nb_scalar_fields, scalar_spectra, nb_vordiv_fields, vorticity_spectra, divergence_spectra,
-                     gp_fields, options(config) );
+                     gp_fields, options( config ) );
 }
 
 /*!
@@ -349,7 +349,7 @@ void Trans::invtrans( const int nb_scalar_fields, const double scalar_spectra[],
  */
 void Trans::invtrans( const int nb_scalar_fields, const double scalar_spectra[], double gp_fields[],
                       const eckit::Configuration& config ) const {
-    impl_->invtrans( nb_scalar_fields, scalar_spectra, gp_fields, options(config) );
+    impl_->invtrans( nb_scalar_fields, scalar_spectra, gp_fields, options( config ) );
 }
 
 /*!
@@ -358,7 +358,7 @@ void Trans::invtrans( const int nb_scalar_fields, const double scalar_spectra[],
  */
 void Trans::invtrans( const int nb_vordiv_fields, const double vorticity_spectra[], const double divergence_spectra[],
                       double gp_fields[], const eckit::Configuration& config ) const {
-    impl_->invtrans( nb_vordiv_fields, vorticity_spectra, divergence_spectra, gp_fields, options(config) );
+    impl_->invtrans( nb_vordiv_fields, vorticity_spectra, divergence_spectra, gp_fields, options( config ) );
 }
 
 /*!
@@ -366,7 +366,7 @@ void Trans::invtrans( const int nb_vordiv_fields, const double vorticity_spectra
  */
 void Trans::dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
                       const eckit::Configuration& config ) const {
-    impl_->dirtrans( nb_fields, scalar_fields, scalar_spectra, options(config) );
+    impl_->dirtrans( nb_fields, scalar_fields, scalar_spectra, options( config ) );
 }
 
 /*!
@@ -375,7 +375,7 @@ void Trans::dirtrans( const int nb_fields, const double scalar_fields[], double 
  */
 void Trans::dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[],
                       double divergence_spectra[], const eckit::Configuration& config ) const {
-    impl_->dirtrans( nb_fields, wind_fields, vorticity_spectra, divergence_spectra, options(config) );
+    impl_->dirtrans( nb_fields, wind_fields, vorticity_spectra, divergence_spectra, options( config ) );
 }
 
 }  // namespace trans

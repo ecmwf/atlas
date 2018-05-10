@@ -56,7 +56,8 @@ public:
 //-----------------------------------------------------------------------------
 class TransCacheFileEntry final : public TransCacheEntry {
 private:
-  eckit::Buffer buffer_;
+    eckit::Buffer buffer_;
+
 public:
     TransCacheFileEntry( const eckit::PathName& path );
     virtual size_t size() const override { return buffer_.size(); }
@@ -67,9 +68,10 @@ public:
 
 class TransCacheMemoryEntry final : public TransCacheEntry {
 public:
-    TransCacheMemoryEntry(const void* data, size_t size);
+    TransCacheMemoryEntry( const void* data, size_t size );
     virtual const void* data() const override { return data_; }
     virtual size_t size() const override { return size_; }
+
 private:
     const void* data_;
     const size_t size_;
@@ -79,12 +81,13 @@ private:
 
 class TransCacheOwnedMemoryEntry final : public TransCacheEntry {
 public:
-    TransCacheOwnedMemoryEntry(size_t size);
+    TransCacheOwnedMemoryEntry( size_t size );
     ~TransCacheOwnedMemoryEntry();
     virtual const void* data() const override { return data_; }
     virtual size_t size() const override { return size_; }
+
 private:
-    void* data_ = nullptr;
+    void* data_        = nullptr;
     const size_t size_ = 0;
 };
 
@@ -99,13 +102,15 @@ public:
     const TransCacheEntry& legendre() const { return *legendre_; }
     const TransCacheEntry& fft() const { return *fft_; }
     virtual ~Cache();
+
 protected:
     Cache( const std::shared_ptr<TransCacheEntry>& legendre );
     Cache( const std::shared_ptr<TransCacheEntry>& legendre, const std::shared_ptr<TransCacheEntry>& fft );
     Cache( const TransImpl* );
+
 private:
     eckit::SharedPtr<const TransImpl> trans_;
-//    const TransImpl*                 trans_ = nullptr;
+    //    const TransImpl*                 trans_ = nullptr;
     std::shared_ptr<TransCacheEntry> legendre_;
     std::shared_ptr<TransCacheEntry> fft_;
 };
@@ -125,8 +130,7 @@ public:
 
 class LegendreFFTCache : public Cache {
 public:
-    LegendreFFTCache( const void* legendre_address, size_t legendre_size,
-                      const void* fft_address, size_t fft_size );
+    LegendreFFTCache( const void* legendre_address, size_t legendre_size, const void* fft_address, size_t fft_size );
     LegendreFFTCache( const eckit::PathName& legendre_path, const eckit::PathName& fft_path );
 };
 

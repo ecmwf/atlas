@@ -16,8 +16,8 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
-#include "atlas/util/Config.h"
 #include "atlas/trans/Trans.h"
+#include "atlas/util/Config.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -97,7 +97,9 @@ public:
 
 private:
     std::string name_;
-    virtual LegendreCacheCreatorImpl* make( const Grid& gp, int truncation, const eckit::Configuration& ) { return nullptr; }
+    virtual LegendreCacheCreatorImpl* make( const Grid& gp, int truncation, const eckit::Configuration& ) {
+        return nullptr;
+    }
 
 protected:
     LegendreCacheCreatorFactory( const std::string& );
