@@ -229,6 +229,12 @@ const eckit::linalg::LinearAlgebra& linear_algebra_backend() {
     return eckit::linalg::LinearAlgebra::backend();
 }
 
+bool TransLocal::warning( const eckit::Configuration& config ) const {
+  int warning = warning_;
+  config.get("warning",warning);
+  return ( warning > 0 && grid_.size() >= warning );
+}
+
 TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& domain, const long truncation,
                         const eckit::Configuration& config ) :
     grid_( grid, domain ),
@@ -573,7 +579,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         if ( unstruct_precomp_ ) {
             ATLAS_TRACE( "Legendre precomputations (unstructured)" );
 
-            if( warning_ > 0 && grid_.size() > warning_ ) {
+            if( warning() ) {
               Log::warning() << "WARNING: Precomputations for spectral transforms could take a long time and consume a lot of memory (unstructured grid approach)!" << std::endl;
             }
 
@@ -1074,9 +1080,7 @@ void TransLocal::invtrans_unstructured( const int truncation, const int nb_field
                                             const eckit::Configuration& config ) const {
     ATLAS_TRACE( "invtrans_unstructured" );
 
-    int warning = warning_;
-    config.get("warning",warning);
-    if( warning > 0 && grid_.size() > warning ) {
+    if( warning(config) ) {
       Log::warning() << "WARNING: Spectral transforms could take a long time (unstructured grid approach)." << std::endl;
     }
 

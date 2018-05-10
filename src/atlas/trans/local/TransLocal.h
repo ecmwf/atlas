@@ -156,6 +156,8 @@ private:
                       const double scalar_spectra[], double gp_fields[],
                       const eckit::Configuration& = util::NoConfig() ) const;
 
+    bool warning( const eckit::Configuration& = util::NoConfig() ) const;
+
 friend class LegendreCacheCreatorLocal;
 
 private:
