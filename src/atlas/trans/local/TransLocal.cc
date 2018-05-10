@@ -455,9 +455,9 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
               }
 
               ATLAS_TRACE_SCOPE( "Legendre precomputations (structured)" ) {
-                    compute_legendre_polynomialsopt3( truncation_ + 1, nlatsLeg_, lats.data(), legendre_sym_,
-                                                      legendre_asym_, legendre_sym_begin_.data(),
-                                                      legendre_asym_begin_.data() );
+                    compute_legendre_polynomials( truncation_ + 1, nlatsLeg_, lats.data(), legendre_sym_,
+                                                  legendre_asym_, legendre_sym_begin_.data(),
+                                                  legendre_asym_begin_.data() );
                 }
                 std::string file_path = TransParameters( config ).write_legendre();
                 if ( file_path.size() ) {
@@ -562,7 +562,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             }
 #else
             {
-                ATLAS_TRACE( "opt3 precomp Fourier" );
+                ATLAS_TRACE( "precomp Fourier" );
                 int idx = 0;
                 for ( int jlon = 0; jlon < nlonsMax; jlon++ ) {
                     double factor = 1.;
@@ -591,7 +591,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             for ( PointLonLat p : grid_.lonlat() ) {
                 lats[j++] = p.lat() * util::Constants::degreesToRadians();
             }
-            compute_legendre_polynomials_allopt3( truncation_, grid_.size(), lats.data(), legendre_ );
+            compute_legendre_polynomials_all( truncation_, grid_.size(), lats.data(), legendre_ );
         }
         if ( TransParameters( config ).write_legendre().size() ) {
             throw eckit::NotImplemented( "Caching for unstructured grids or structured grids with projections not yet implemented", Here() );
@@ -678,7 +678,7 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void gp_transposeopt3( const int nb_size, const int nb_fields, const double gp_tmp[], double gp_fields[] ) {
+void gp_transpose( const int nb_size, const int nb_fields, const double gp_tmp[], double gp_fields[] ) {
     for ( int jgp = 0; jgp < nb_size; jgp++ ) {
         for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
             gp_fields[jfld * nb_size + jgp] = gp_tmp[jgp * nb_fields + jfld];
@@ -688,9 +688,9 @@ void gp_transposeopt3( const int nb_size, const int nb_fields, const double gp_t
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans_legendreopt3( const int truncation, const int nlats, const int nb_fields,
-                                            const double scalar_spectra[], double scl_fourier[],
-                                            const eckit::Configuration& config ) const {
+void TransLocal::invtrans_legendre( const int truncation, const int nlats, const int nb_fields,
+                                    const double scalar_spectra[], double scl_fourier[],
+                                    const eckit::Configuration& config ) const {
     // Legendre transform:
     {
         Log::debug() << "Legendre dgemm: using " << nlatsLegReduced_ - nlat0_[0] << " latitudes out of "
@@ -715,14 +715,14 @@ void TransLocal::invtrans_legendreopt3( const int truncation, const int nlats, c
                 alloc_aligned( scl_fourier_sym, size_fourier );
                 alloc_aligned( scl_fourier_asym, size_fourier );
                 {
-                    //ATLAS_TRACE( "opt3 Legendre split" );
+                    //ATLAS_TRACE( "Legendre split" );
                     int idx = 0, is = 0, ia = 0, ioff = ( 2 * truncation + 3 - jm ) * jm / 2 * nb_fields * 2;
                     // the choice between the following two code lines determines whether
                     // total wavenumbers are summed in an ascending or descending order.
                     // The trans library in IFS uses descending order because it should
                     // be more accurate (higher wavenumbers have smaller contributions).
                     // This also needs to be changed when splitting the spectral data in
-                    // compute_legendre_polynomialsopt3!
+                    // compute_legendre_polynomials!
                     //for ( int jn = jm; jn <= truncation_ + 1; jn++ ) {
                     for ( int jn = truncation_ + 1; jn >= jm; jn-- ) {
                         for ( int imag = 0; imag < n_imag; imag++ ) {
@@ -772,7 +772,7 @@ void TransLocal::invtrans_legendreopt3( const int truncation, const int nlats, c
                     }
                 }
                 {
-                    //ATLAS_TRACE( "opt3 merge spheres" );
+                    //ATLAS_TRACE( "merge spheres" );
                     // northern hemisphere:
                     for ( int jlat = 0; jlat < nlatsNH_; jlat++ ) {
                         if ( nlatsLegReduced_ - nlat0_[jm] - nlatsNH_ + jlat >= 0 ) {
@@ -841,7 +841,7 @@ void TransLocal::invtrans_legendreopt3( const int truncation, const int nlats, c
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans_fourier_regularopt3( const int nlats, const int nlons, const int nb_fields,
+void TransLocal::invtrans_fourier_regular( const int nlats, const int nlons, const int nb_fields,
                                                    double scl_fourier[], double gp_fields[],
                                                    const eckit::Configuration& config ) const {
     // Fourier transformation:
@@ -894,38 +894,38 @@ void TransLocal::invtrans_fourier_regularopt3( const int nlats, const int nlons,
         // dgemm-method 2
         // should be faster for small domains or large truncation
         // but have not found any significant speedup so far
-        double* gp_opt3;
-        alloc_aligned( gp_opt3, nb_fields * grid_.size() );
+        double* gp;
+        alloc_aligned( gp, nb_fields * grid_.size() );
         {
-            ATLAS_TRACE( "opt3 Fourier dgemm method 2" );
+            ATLAS_TRACE( "Fourier dgemm method 2" );
             eckit::linalg::Matrix A( scl_fourier, nb_fields * nlats, ( truncation_ + 1 ) * 2 );
             eckit::linalg::Matrix B( fourier_, ( truncation_ + 1 ) * 2, nlons );
-            eckit::linalg::Matrix C( gp_opt3, nb_fields * nlats, nlons );
+            eckit::linalg::Matrix C( gp, nb_fields * nlats, nlons );
             linalg_.gemm( A, B, C );
         }
 
         // Transposition in grid point space:
         {
-            ATLAS_TRACE( "opt3 transposition in gp-space" );
+            ATLAS_TRACE( "transposition in gp-space" );
             int idx = 0;
             for ( int jlon = 0; jlon < nlons; jlon++ ) {
                 for ( int jlat = 0; jlat < nlats; jlat++ ) {
                     for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                         int pos_tp = jlon + nlons * ( jlat + nlats * ( jfld ) );
                         //int pos  = jfld + nb_fields * ( jlat + nlats * ( jlon ) );
-                        gp_fields[pos_tp] = gp_opt3[idx++];  // = gp_opt3[pos]
+                        gp_fields[pos_tp] = gp[idx++];  // = gp[pos]
                     }
                 }
             }
         }
-        free_aligned( gp_opt3 );
+        free_aligned( gp );
 #endif
     }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans_fourier_reducedopt3( const int nlats, const grid::StructuredGrid g, const int nb_fields,
+void TransLocal::invtrans_fourier_reduced( const int nlats, const grid::StructuredGrid g, const int nb_fields,
                                                    double scl_fourier[], double gp_fields[],
                                                    const eckit::Configuration& config ) const {
     // Fourier transformation:
@@ -1059,7 +1059,7 @@ void TransLocal::invtrans_unstructured_precomp( const int truncation, const int 
             // Computing u,v from U,V:
             {
                 if ( nb_vordiv_fields > 0 ) {
-                    //ATLAS_TRACE( "opt3 u,v from U,V" );
+                    //ATLAS_TRACE( " u,v from U,V" );
                     double coslat = std::cos( lat );
                     for ( int j = 0; j < nb_fields; j++ ) {
                         gp_fields[ip + j * grid_.size()] /= coslat;
@@ -1088,7 +1088,7 @@ void TransLocal::invtrans_unstructured( const int truncation, const int nb_field
 
     double* zfn;
     alloc_aligned( zfn, ( truncation + 1 ) * ( truncation + 1 ) );
-    compute_zfnopt3( truncation, zfn );
+    compute_zfn( truncation, zfn );
     int size_fourier = nb_fields * 2;
     double* legendre;
     double* scl_fourier;
@@ -1107,7 +1107,7 @@ void TransLocal::invtrans_unstructured( const int truncation, const int nb_field
     for ( const PointLonLat p : grid_.lonlat() ) {
         const double lon = p.lon() * util::Constants::degreesToRadians();
         const double lat = p.lat() * util::Constants::degreesToRadians();
-        compute_legendre_polynomials_latopt3( truncation, lat, legendre, zfn );
+        compute_legendre_polynomials_lat( truncation, lat, legendre, zfn );
         // Legendre transform:
         {
             //ATLAS_TRACE( "opt Legendre dgemm" );
@@ -1155,7 +1155,7 @@ void TransLocal::invtrans_unstructured( const int truncation, const int nb_field
         // Computing u,v from U,V:
         {
             if ( nb_vordiv_fields > 0 ) {
-                //ATLAS_TRACE( "opt3 u,v from U,V" );
+                //ATLAS_TRACE( "u,v from U,V" );
                 const double coslat = std::cos( lat );
                 for ( int j = 0; j < nb_fields; j++ ) {
                     gp_fields[ip + j * grid_.size()] /= coslat;
@@ -1203,14 +1203,14 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
             alloc_aligned( scl_fourier, size_fourier_max * ( truncation_ + 1 ) );
 
             // Legendre transformation:
-            invtrans_legendreopt3( truncation, nlats, nb_scalar_fields, scalar_spectra, scl_fourier, config );
+            invtrans_legendre( truncation, nlats, nb_scalar_fields, scalar_spectra, scl_fourier, config );
 
             // Fourier transformation:
             if ( grid::RegularGrid( gridGlobal_ ) ) {
-                invtrans_fourier_regularopt3( nlats, nlons, nb_fields, scl_fourier, gp_fields, config );
+                invtrans_fourier_regular( nlats, nlons, nb_fields, scl_fourier, gp_fields, config );
             }
             else {
-                invtrans_fourier_reducedopt3( nlats, g, nb_fields, scl_fourier, gp_fields, config );
+                invtrans_fourier_reduced( nlats, g, nb_fields, scl_fourier, gp_fields, config );
             }
 
             // Computing u,v from U,V:
@@ -1257,8 +1257,8 @@ void TransLocal::invtrans( const int nb_vordiv_fields, const double vorticity_sp
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void extend_truncationopt3( const int old_truncation, const int nb_fields, const double old_spectra[],
-                            double new_spectra[] ) {
+void extend_truncation( const int old_truncation, const int nb_fields, const double old_spectra[],
+                        double new_spectra[] ) {
     int k = 0, k_old = 0;
     for ( int m = 0; m <= old_truncation + 1; m++ ) {             // zonal wavenumber
         for ( int n = m; n <= old_truncation + 1; n++ ) {         // total wavenumber
@@ -1291,10 +1291,10 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
         {
             ATLAS_TRACE( "extend vordiv" );
             // increase truncation in vorticity_spectra and divergence_spectra:
-            extend_truncationopt3( truncation_, nb_vordiv_fields, vorticity_spectra,
-                                   vorticity_spectra_extended.data() );
-            extend_truncationopt3( truncation_, nb_vordiv_fields, divergence_spectra,
-                                   divergence_spectra_extended.data() );
+            extend_truncation( truncation_, nb_vordiv_fields, vorticity_spectra,
+                               vorticity_spectra_extended.data() );
+            extend_truncation( truncation_, nb_vordiv_fields, divergence_spectra,
+                               divergence_spectra_extended.data() );
         }
 
         {

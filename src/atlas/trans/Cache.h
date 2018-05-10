@@ -54,7 +54,6 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-
 class TransCacheFileEntry final : public TransCacheEntry {
 private:
   eckit::Buffer buffer_;

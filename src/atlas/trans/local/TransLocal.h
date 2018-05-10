@@ -133,16 +133,16 @@ private:
 #endif
     };
 
-    void invtrans_legendreopt3( const int truncation, const int nlats, const int nb_fields,
-                                const double scalar_spectra[], double scl_fourier[],
-                                const eckit::Configuration& config ) const;
+    void invtrans_legendre( const int truncation, const int nlats, const int nb_fields,
+                            const double scalar_spectra[], double scl_fourier[],
+                            const eckit::Configuration& config ) const;
 
-    void invtrans_fourier_regularopt3( const int nlats, const int nlons, const int nb_fields, double scl_fourier[],
-                                       double gp_fields[], const eckit::Configuration& config ) const;
+    void invtrans_fourier_regular( const int nlats, const int nlons, const int nb_fields, double scl_fourier[],
+                                   double gp_fields[], const eckit::Configuration& config ) const;
 
-    void invtrans_fourier_reducedopt3( const int nlats, const grid::StructuredGrid g, const int nb_fields,
-                                       double scl_fourier[], double gp_fields[],
-                                       const eckit::Configuration& config ) const;
+    void invtrans_fourier_reduced( const int nlats, const grid::StructuredGrid g, const int nb_fields,
+                                   double scl_fourier[], double gp_fields[],
+                                   const eckit::Configuration& config ) const;
 
     void invtrans_unstructured_precomp( const int truncation, const int nb_scalar_fields, const int nb_vordiv_fields,
                                         const double scalar_spectra[], double gp_fields[],
