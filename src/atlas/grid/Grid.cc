@@ -12,6 +12,7 @@
 
 #include <limits>
 #include <vector>
+#include <string>
 
 #include "eckit/config/Parametrisation.h"
 #include "eckit/exception/Exceptions.h"
@@ -103,6 +104,9 @@ ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx, const Dom
 
 ReducedGaussianGrid::ReducedGaussianGrid( const std::initializer_list<long>& nx ) :
     ReducedGaussianGrid( std::vector<long>( nx ) ) {}
+
+RegularGaussianGrid::RegularGaussianGrid( int N, const Grid::Domain& domain ) :
+    RegularGaussianGrid::grid_t( "F" + std::to_string( N ), domain ) {}
 
 }  // namespace grid
 }  // namespace atlas

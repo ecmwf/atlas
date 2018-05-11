@@ -302,7 +302,7 @@ class ReducedGaussianGrid : public Gaussian<ReducedGrid> {
 public:
     using grid_t::grid_t;
     ReducedGaussianGrid( const std::initializer_list<long>& pl );
-    ReducedGaussianGrid( const std::vector<long>& pl, const Domain& domain = Domain() );
+    ReducedGaussianGrid( const std::vector<long>& pl, const Domain& = Domain() );
 
     operator bool() const { return valid(); }
 
@@ -316,6 +316,7 @@ class RegularGaussianGrid : public Gaussian<RegularGrid> {
 
 public:
     using grid_t::grid_t;
+    RegularGaussianGrid( int N , const Domain& = Domain() );
 
     inline double lon( size_t i ) const { return x( i ); }
 
