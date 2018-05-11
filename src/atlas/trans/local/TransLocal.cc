@@ -893,7 +893,27 @@ void TransLocal::invtrans_fourier_regular( const int nlats, const int nlons, con
             eckit::linalg::Matrix A( fourier_, nlons, ( truncation_ + 1 ) * 2 );
             eckit::linalg::Matrix B( scl_fourier, ( truncation_ + 1 ) * 2, nb_fields * nlats );
             eckit::linalg::Matrix C( gp_fields, nlons, nb_fields * nlats );
+
+// BUG ATLAS-159: valgrind warns here, saying that B(1,:) is uninitialised
+//                if workaround above labeled ATLAS-159 is not applied.
+//
+//                        for( int i=0; i<A.rows(); ++i ) {
+//                          for ( int j=0; j<A.cols(); ++j ) {
+//                            if( A(i,j) == 999.999 ) {
+//                              ASSERT(false);
+//                            }
+//                          }
+//                        }
+//                        for ( int i=0; i<B.rows(); ++i ) {
+//                          for( int j=0; j<B.cols(); ++j ) {
+//                            if( B(i,j) == 999.999 ) {
+//                              ASSERT(false);
+//                            }
+//                          }
+//                        }
+
             linalg_.gemm( A, B, C );
+
         }
 #else
         // dgemm-method 2
@@ -1207,6 +1227,12 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
             int size_fourier_max = nb_fields * 2 * nlats;
             double* scl_fourier;
             alloc_aligned( scl_fourier, size_fourier_max * ( truncation_ + 1 ) );
+
+// ATLAS-159 workaround begin
+            for( int i=0; i<size_fourier_max*(truncation_+1); ++i ) {
+              scl_fourier[i] = 0.;
+            }
+// ATLAS-159 workaround end
 
             // Legendre transformation:
             invtrans_legendre( truncation, nlats, nb_scalar_fields, scalar_spectra, scl_fourier, config );
