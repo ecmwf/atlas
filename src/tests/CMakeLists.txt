@@ -80,3 +80,4 @@ add_subdirectory( numerics )
 add_subdirectory( trans )
 add_subdirectory( interpolation )
 
+add_subdirectory( acceptance_tests )

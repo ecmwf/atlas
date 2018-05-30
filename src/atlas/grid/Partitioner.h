@@ -63,7 +63,7 @@ public:
 
 public:
     MatchingMeshPartitioner();
-    MatchingMeshPartitioner( const Mesh& mesh, const Config& config );
+    MatchingMeshPartitioner( const Mesh& mesh, const Config& config = util::NoConfig() );
 };
 
 // ------------------------------------------------------------------
