@@ -529,7 +529,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 //                    write.close();
                 //                }
             }
-                // other FFT implementations should be added with #elif statements
+            // other FFT implementations should be added with #elif statements
 #else
             useFFT_               = false;  // no FFT implemented => default to dgemm
             std::string file_path = TransParameters( config ).write_fft();
@@ -894,26 +894,25 @@ void TransLocal::invtrans_fourier_regular( const int nlats, const int nlons, con
             eckit::linalg::Matrix B( scl_fourier, ( truncation_ + 1 ) * 2, nb_fields * nlats );
             eckit::linalg::Matrix C( gp_fields, nlons, nb_fields * nlats );
 
-// BUG ATLAS-159: valgrind warns here, saying that B(1,:) is uninitialised
-//                if workaround above labeled ATLAS-159 is not applied.
-//
-//                        for( int i=0; i<A.rows(); ++i ) {
-//                          for ( int j=0; j<A.cols(); ++j ) {
-//                            if( A(i,j) == 999.999 ) {
-//                              ASSERT(false);
-//                            }
-//                          }
-//                        }
-//                        for ( int i=0; i<B.rows(); ++i ) {
-//                          for( int j=0; j<B.cols(); ++j ) {
-//                            if( B(i,j) == 999.999 ) {
-//                              ASSERT(false);
-//                            }
-//                          }
-//                        }
+            // BUG ATLAS-159: valgrind warns here, saying that B(1,:) is uninitialised
+            //                if workaround above labeled ATLAS-159 is not applied.
+            //
+            //                        for( int i=0; i<A.rows(); ++i ) {
+            //                          for ( int j=0; j<A.cols(); ++j ) {
+            //                            if( A(i,j) == 999.999 ) {
+            //                              ASSERT(false);
+            //                            }
+            //                          }
+            //                        }
+            //                        for ( int i=0; i<B.rows(); ++i ) {
+            //                          for( int j=0; j<B.cols(); ++j ) {
+            //                            if( B(i,j) == 999.999 ) {
+            //                              ASSERT(false);
+            //                            }
+            //                          }
+            //                        }
 
             linalg_.gemm( A, B, C );
-
         }
 #else
         // dgemm-method 2
@@ -1228,11 +1227,11 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
             double* scl_fourier;
             alloc_aligned( scl_fourier, size_fourier_max * ( truncation_ + 1 ) );
 
-// ATLAS-159 workaround begin
-            for( int i=0; i<size_fourier_max*(truncation_+1); ++i ) {
-              scl_fourier[i] = 0.;
+            // ATLAS-159 workaround begin
+            for ( int i = 0; i < size_fourier_max * ( truncation_ + 1 ); ++i ) {
+                scl_fourier[i] = 0.;
             }
-// ATLAS-159 workaround end
+            // ATLAS-159 workaround end
 
             // Legendre transformation:
             invtrans_legendre( truncation, nlats, nb_scalar_fields, scalar_spectra, scl_fourier, config );
@@ -1330,7 +1329,7 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
         {
             ATLAS_TRACE( "vordiv to UV" );
             // call vd2uv to compute u and v in spectral space
-            trans::VorDivToUV vordiv_to_UV_ext( truncation_ + 1, option::type( "Local" ) );
+            trans::VorDivToUV vordiv_to_UV_ext( truncation_ + 1, option::type( "local" ) );
             vordiv_to_UV_ext.execute( nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(),
                                       divergence_spectra_extended.data(), U_ext.data(), V_ext.data() );
         }

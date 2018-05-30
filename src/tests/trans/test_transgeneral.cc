@@ -970,18 +970,18 @@ CASE( "test_trans_domain" ) {
     //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
     Domain testdomain1 = ZonalBandDomain( {-10., 5.} );
     //Domain testdomain1 = RectangularDomain( {-1., 1.}, {50., 55.} );
-    Domain testdomain2 = RectangularDomain( {-1., 1.}, {-5., 40.} );
+    Domain testdomain2 = RectangularDomain( {-10., 10.}, {-5., 40.} );
     // Grid: (Adjust the following line if the test takes too long!)
 
     Grid global_grid( "O64" );
     Grid g1( global_grid, testdomain1 );
-    //Grid g2( gridString, testdomain2 );
+    Grid g2( global_grid, testdomain2 );
 
     bool fourierTrc1 = true;
     bool fourierTrc2 = false;
     using grid::StructuredGrid;
     using LinearSpacing = grid::LinearSpacing;
-    StructuredGrid g2( LinearSpacing( {0., 180.}, 181 ), LinearSpacing( {0., 45.}, 46 ) );
+    //StructuredGrid g2( LinearSpacing( {0., 180.}, 181 ), LinearSpacing( {0., 45.}, 46 ) );
 
     int trc = 63;
     //Log::info() << "rgp1:" << std::endl;
@@ -994,9 +994,12 @@ CASE( "test_trans_domain" ) {
     trans::Cache cache;
     ATLAS_TRACE_SCOPE( "Read cache" ) cache = trans::LegendreCache( "legcache.bin" );
     Trace t2( Here(), "translocal2 construction" );
+    trans::Trans transLocal2( cache, global_grid, g2.domain(), trc,
+                              option::type( "local" ) | option::write_legendre( "legcache2.bin" ) );
+    //trans::Trans transLocal2( cache, g2, trc, option::type( "local" ) );
     //trans::Trans transLocal2( cache, g2, trc,
     //                          option::type( "local" ) | option::no_fft() );
-    trans::Trans transLocal2( g2, trc, option::type( "local" ) );
+    //trans::Trans transLocal2( g2, trc, option::type( "local" ) );
     t2.stop();
 
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
@@ -1293,7 +1296,7 @@ CASE( "test_trans_invtrans" ) {
 }
 #endif
 
-    //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 #if 0
 CASE( "test_trans_fourier_truncation" ) {

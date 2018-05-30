@@ -27,11 +27,11 @@ static VorDivToUVBuilder<VorDivToUVLocal> builder( "local" );
 // --------------------------------------------------------------------------------------------------------------------
 // Routine to copy spectral data into internal storage form of IFS trans
 // Ported to C++ by: Andreas Mueller *ECMWF*
-void prfi1bopt3( const int truncation,
-                 const int km,          // zonal wavenumber
-                 const int nb_fields,   // number of fields
-                 const double rspec[],  // spectral data
-                 double pia[] )         // spectral components in data layout of trans library
+void prfi1b( const int truncation,
+             const int km,          // zonal wavenumber
+             const int nb_fields,   // number of fields
+             const double rspec[],  // spectral data
+             double pia[] )         // spectral components in data layout of trans library
 {
     int ilcm = truncation + 1 - km, ioff = ( 2 * truncation - km + 3 ) * km,
         nlei1 = truncation + 4 + ( truncation + 4 + 1 ) % 2;
@@ -58,14 +58,14 @@ void prfi1bopt3( const int truncation,
 //        ECMWF Research Department documentation of the IFS
 //        Temperton, 1991, MWR 119 p1303
 // Ported to C++ by: Andreas Mueller *ECMWF*
-void vd2uvopt3( const int truncation,               // truncation
-                const int km,                       // zonal wavenumber
-                const int nb_vordiv_fields,         // number of vorticity and divergence fields
-                const double vorticity_spectra[],   // spectral data of vorticity
-                const double divergence_spectra[],  // spectral data of divergence
-                double U[],                         // spectral data of U
-                double V[],                         // spectral data of V
-                const eckit::Configuration& config ) {
+void vd2uv( const int truncation,               // truncation
+            const int km,                       // zonal wavenumber
+            const int nb_vordiv_fields,         // number of vorticity and divergence fields
+            const double vorticity_spectra[],   // spectral data of vorticity
+            const double divergence_spectra[],  // spectral data of divergence
+            double U[],                         // spectral data of U
+            double V[],                         // spectral data of V
+            const eckit::Configuration& config ) {
     int nlei1 = truncation + 4 + ( truncation + 4 + 1 ) % 2;
 
     // repsnm: epsilon from eq.(2.12) and (2.13) in [Temperton 1991]
@@ -112,8 +112,8 @@ void vd2uvopt3( const int truncation,               // truncation
     std::vector<double> rdiv( 2 * nb_vordiv_fields * nlei1 );
     std::vector<double> ru( 2 * nb_vordiv_fields * nlei1 );
     std::vector<double> rv( 2 * nb_vordiv_fields * nlei1 );
-    prfi1bopt3( truncation, km, nb_vordiv_fields, vorticity_spectra, rvor.data() );
-    prfi1bopt3( truncation, km, nb_vordiv_fields, divergence_spectra, rdiv.data() );
+    prfi1b( truncation, km, nb_vordiv_fields, vorticity_spectra, rvor.data() );
+    prfi1b( truncation, km, nb_vordiv_fields, divergence_spectra, rdiv.data() );
 
     // compute eq.(2.12) and (2.13) in [Temperton 1991]:
     if ( km == 0 ) {
@@ -168,7 +168,7 @@ void VorDivToUVLocal::execute( const int nb_coeff, const int nb_fields, const do
                                const double divergence[], double U[], double V[],
                                const eckit::Configuration& config ) const {
     for ( int jm = 0; jm <= truncation_; ++jm ) {
-        vd2uvopt3( truncation_, jm, nb_fields, vorticity, divergence, U, V, config );
+        vd2uv( truncation_, jm, nb_fields, vorticity, divergence, U, V, config );
     }
 }
 
