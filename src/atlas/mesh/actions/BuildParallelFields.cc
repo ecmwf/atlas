@@ -503,15 +503,18 @@ Field& build_edges_partition( Mesh& mesh ) {
         bool edge_partition_is_same_as_one_of_nodes = ( p == pn1 || p == pn2 );
         if ( edge_is_partition_boundary ) {
             if ( not edge_partition_is_same_as_one_of_nodes ) {
-                if ( elem1 != edge_to_elem.missing_value() ) {
-                    Log::error() << EDGE( jedge ) << " [p" << p << "] is not correct elem1[p" << elem_part( elem1 )
-                                 << "]" << std::endl;
+                // If this is a ghost edge, we could trust it.
+                if( edge_part(jedge) == mypart ) {
+                    if ( elem1 != edge_to_elem.missing_value() ) {
+                        Log::error() << "[" << mypart << "] " << EDGE( jedge ) << " [p" << p << "] is not correct elem1[p" << elem_part( elem1 )
+                                     << "]" << std::endl;
+                    }
+                    else {
+                        Log::error() << "[" << mypart << "] " << EDGE( jedge ) << " [p" << p << "] is not correct elem2[p" << elem_part( elem2 )
+                                     << "]" << std::endl;
+                    }
+                    insane = 1;
                 }
-                else {
-                    Log::error() << EDGE( jedge ) << " [p" << p << "] is not correct elem2[p" << elem_part( elem2 )
-                                 << "]" << std::endl;
-                }
-                insane = 1;
             }
         }
         else {
