@@ -1255,7 +1255,7 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
                     int idx = 0;
                     for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                         for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
-                            for ( int jlon = 0; jlon < g.nxmax(); jlon++ ) {
+                            for ( int jlon = 0; jlon < g.nx( jlat ); jlon++ ) {
                                 gp_fields[idx] /= coslats[jlat];
                                 idx++;
                             }

@@ -976,6 +976,8 @@ CASE( "test_trans_domain" ) {
     Grid global_grid( "O64" );
     Grid g1( global_grid, testdomain1 );
     Grid g2( global_grid, testdomain2 );
+    //Grid g1( global_grid );
+    //Grid g2( global_grid );
 
     bool fourierTrc1 = true;
     bool fourierTrc2 = false;
@@ -1006,7 +1008,7 @@ CASE( "test_trans_domain" ) {
 
     functionspace::Spectral spectral( trc );
 
-    int nb_scalar = 1, nb_vordiv = 0;
+    int nb_scalar = 1, nb_vordiv = 1;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
     std::vector<double> sp( 2 * N * nb_scalar );
     std::vector<double> vor( 2 * N * nb_vordiv );
@@ -1018,8 +1020,8 @@ CASE( "test_trans_domain" ) {
     std::vector<double> rgp2_analytic( g2.size() );
 
     int icase = 0;
-    for ( int ivar_in = 2; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
-        for ( int ivar_out = 2; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
+    for ( int ivar_in = 0; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
+        for ( int ivar_out = 0; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
             int nb_fld = 1;
             if ( ivar_out == 2 ) {
                 tolerance = 1.e-13;
