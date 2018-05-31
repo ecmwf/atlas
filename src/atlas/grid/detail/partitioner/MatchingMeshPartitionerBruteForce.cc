@@ -100,7 +100,7 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int partiti
     }
 
     {
-        eckit::ProgressTimer timer( "Partitioning target", grid.size(), "point", double( 10 ), atlas::Log::info() );
+        eckit::ProgressTimer timer( "Partitioning target", grid.size(), "point", double( 10 ), atlas::Log::trace() );
         for ( size_t i = 0; i < grid.size(); ++i, ++timer ) {
             partitioning[i] = -1;
             const PointLonLat& P( coordinates[i] );
