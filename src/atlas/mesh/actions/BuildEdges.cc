@@ -113,13 +113,16 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
         }
     }
 
-    // Verify that all edges have been found
-    for ( size_t jcell = 0; jcell < mesh.cells().size(); ++jcell ) {
-        // If this is a patched element (over the pole), there were no edges
-        // created, so skip the check.
-        auto patch = array::make_view<int, 1>( mesh.cells().field( "patch" ) );
-        if ( patch( jcell ) ) continue;
 
+    // Verify that all edges have been found
+    auto field_flags = array::make_view<int, 1>( mesh.cells().flags() );
+    auto patch = [&field_flags]( size_t e ) {
+        using Topology = atlas::mesh::Nodes::Topology;
+        return Topology::check( field_flags( e ), Topology::PATCH );
+    };
+
+    for ( size_t jcell = 0; jcell < mesh.cells().size(); ++jcell ) {
+        if ( patch( jcell ) ) continue;
         for ( size_t jcol = 0; jcol < cell_edge_connectivity.cols( jcell ); ++jcol ) {
             if ( cell_edge_connectivity( jcell, jcol ) == cell_edge_connectivity.missing_value() ) {
                 const array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( mesh.nodes().global_index() );

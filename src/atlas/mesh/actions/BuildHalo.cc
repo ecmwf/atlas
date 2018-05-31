@@ -307,7 +307,11 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem ) {
     }
 
     const mesh::HybridElements::Connectivity& elem_nodes = mesh.cells().node_connectivity();
-    auto patched                                         = array::make_view<int, 1>( mesh.cells().field( "patch" ) );
+    auto field_flags                                     = array::make_view<int, 1>( mesh.cells().flags() );
+    auto patched = [&field_flags]( size_t e ) {
+        using Topology = atlas::mesh::Nodes::Topology;
+        return Topology::check( field_flags( e ), Topology::PATCH );
+    };
 
     size_t nb_elems = mesh.cells().size();
     for ( size_t elem = 0; elem < nb_elems; ++elem ) {
@@ -950,7 +954,6 @@ public:
             auto elem_type_part    = elements.view<int, 1>( mesh.cells().partition() );
             auto elem_type_halo    = elements.view<int, 1>( mesh.cells().halo() );
             auto elem_type_flags   = elements.view<int, 1>( mesh.cells().flags() );
-            auto elem_type_patch   = elements.view<int, 1>( mesh.cells().field( "patch" ) );
 
             // Copy information in new elements
             size_t new_elem( 0 );
@@ -961,7 +964,6 @@ public:
                     elem_type_glb_idx( loc_idx ) = std::abs( buf.elem_glb_idx[jpart][jelem] );
                     elem_type_part( loc_idx )    = buf.elem_part[jpart][jelem];
                     elem_type_halo( loc_idx )    = halo + 1;
-                    elem_type_patch( loc_idx )   = 0;
                     elem_type_flags( loc_idx )   = buf.elem_flags[jpart][jelem];
                     for ( size_t n = 0; n < node_connectivity.cols(); ++n ) {
                         node_connectivity.set(

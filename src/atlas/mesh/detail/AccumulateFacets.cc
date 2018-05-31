@@ -37,7 +37,12 @@ void accumulate_facets( const mesh::HybridElements& cells, const mesh::Nodes& no
     for ( size_t t = 0; t < cells.nb_types(); ++t ) {
         const mesh::Elements& elements            = cells.elements( t );
         const mesh::BlockConnectivity& elem_nodes = elements.node_connectivity();
-        auto patch                                = elements.view<int, 1>( elements.field( "patch" ) );
+        auto elem_flags                           = elements.view<int, 1>( elements.flags() );
+
+        auto patch = [&elem_flags]( size_t e ) {
+            using Topology = atlas::mesh::Nodes::Topology;
+            return Topology::check( elem_flags( e ), Topology::PATCH );
+        };
 
         size_t nb_elems          = elements.size();
         size_t nb_nodes_in_facet = 2;

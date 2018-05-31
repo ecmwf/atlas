@@ -1005,12 +1005,12 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
     mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
     array::ArrayView<gidx_t, 1> cells_glb_idx             = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
     array::ArrayView<int, 1> cells_part                   = array::make_view<int, 1>( mesh.cells().partition() );
-    array::ArrayView<int, 1> cells_patch                  = array::make_view<int, 1>( mesh.cells().field( "patch" ) );
+    array::ArrayView<int, 1> cells_flags                  = array::make_view<int, 1>( mesh.cells().flags() );
 
     /*
      * label all patch cells a non-patch
      */
-    cells_patch.assign( 0 );
+    cells_flags.assign( 0 );
 
     /*
      * Fill in connectivity tables with global node indices first
@@ -1050,7 +1050,6 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
                 node_connectivity.set( jcell, quad_nodes );
                 cells_glb_idx( jcell ) = jcell + 1;
                 cells_part( jcell )    = mypart;
-                cells_patch( jcell )   = 0;
             }
             else  // This is a triag
             {
@@ -1088,7 +1087,6 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
                 node_connectivity.set( jcell, triag_nodes );
                 cells_glb_idx( jcell ) = jcell + 1;
                 cells_part( jcell )    = mypart;
-                cells_patch( jcell )   = 0;
             }
         }
     }
@@ -1107,7 +1105,6 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
             node_connectivity.set( jcell, triag_nodes );
             cells_glb_idx( jcell ) = jcell + 1;
             cells_part( jcell )    = mypart;
-            cells_patch( jcell )   = 0;
         }
     }
     else if ( patch_north_pole ) {
@@ -1140,7 +1137,7 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
 
             cells_glb_idx( jcell ) = jcell + 1;
             cells_part( jcell )    = mypart;
-            cells_patch( jcell )   = 1;  // mark cell as "patch"
+            Topology::set( cells_flags( jcell ), Topology::PATCH );
 
             if ( jbackward == jforward + 2 ) break;
 
@@ -1203,7 +1200,7 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
 
             cells_glb_idx( jcell ) = jcell + 1;
             cells_part( jcell )    = mypart;
-            cells_patch( jcell )   = 1;  // mark cell as "patch"
+            Topology::set( cells_flags( jcell ), Topology::PATCH );
 
             if ( jbackward == jforward + 2 ) break;
 
