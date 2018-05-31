@@ -23,12 +23,12 @@ namespace actions {
 
 class BuildHalo {
 public:
-    BuildHalo( Mesh& mesh ) : mesh_( mesh ) {}
+    BuildHalo( Mesh& mesh );
     void operator()( int nb_elems );
 
 public:
     std::vector<idx_t> periodic_points_local_index_;
-    std::vector<idx_t> periodic_cells_local_index_;
+    std::vector<std::vector<idx_t>> periodic_cells_local_index_;
 
 private:
     Mesh& mesh_;
