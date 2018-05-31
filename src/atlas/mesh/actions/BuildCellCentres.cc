@@ -26,10 +26,25 @@ namespace actions {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-BuildCellCentres::BuildCellCentres( const std::string& field_name ) : field_name_( field_name ) {}
+BuildCellCentres::BuildCellCentres( const std::string& field_name, bool force_recompute ) :
+    field_name_( field_name ),
+    force_recompute_( force_recompute ),
+    flatten_virtual_elements_( true ) {
+}
+
+BuildCellCentres::BuildCellCentres( eckit::Configuration& config ) :
+    field_name_( config.getString( "name", "centre" ) ),
+    force_recompute_( config.getBool( "force_recompute", false ) ),
+    flatten_virtual_elements_( config.getBool( "flatten_virtual_elements", true) ) {
+}
 
 Field& BuildCellCentres::operator()( Mesh& mesh ) const {
+    bool recompute = force_recompute_;
     if ( !mesh.cells().has_field( field_name_ ) ) {
+        mesh.cells().add( Field( field_name_, array::make_datatype<double>(), array::make_shape( mesh.cells().size(), 3 ) ) );
+        recompute = true;
+    }
+    if ( recompute ) {
         mesh::Nodes& nodes                 = mesh.nodes();
         array::ArrayView<double, 2> coords = array::make_view<double, 2>( nodes.field( "xyz" ) );
 
@@ -37,8 +52,7 @@ Field& BuildCellCentres::operator()( Mesh& mesh ) const {
         if ( nodes.metadata().has( "NbRealPts" ) ) { firstVirtualPoint = nodes.metadata().get<size_t>( "NbRealPts" ); }
 
         size_t nb_cells                       = mesh.cells().size();
-        array::ArrayView<double, 2> centroids = array::make_view<double, 2>( mesh.cells().add(
-            Field( field_name_, array::make_datatype<double>(), array::make_shape( nb_cells, 3 ) ) ) );
+        auto centroids = array::make_view<double, 2>( mesh.cells().field( field_name_ ) );
         const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
 
         for ( size_t e = 0; e < nb_cells; ++e ) {
@@ -68,23 +82,33 @@ Field& BuildCellCentres::operator()( Mesh& mesh ) const {
             int nb_unique_nodes = int( nb_cell_nodes ) - nb_equal_nodes;
             if ( nb_unique_nodes < 3 ) { continue; }
 
-            // calculate centroid by averaging coordinates (uses only "real" nodes)
-            size_t nb_real_nodes = 0;
-            for ( size_t n = 0; n < nb_cell_nodes; ++n ) {
-                const size_t i = size_t( cell_node_connectivity( e, n ) );
-                if ( i < firstVirtualPoint ) {
-                    ++nb_real_nodes;
-                    centroids( e, XX ) += coords( i, XX );
-                    centroids( e, YY ) += coords( i, YY );
-                    centroids( e, ZZ ) += coords( i, ZZ );
+            if( flatten_virtual_elements_ ) {
+                // calculate centroid by averaging coordinates (uses only "real" nodes)
+                size_t nb_real_nodes = 0;
+                for ( size_t n = 0; n < nb_cell_nodes; ++n ) {
+                    const size_t i = size_t( cell_node_connectivity( e, n ) );
+                    if ( i < firstVirtualPoint ) {
+                        ++nb_real_nodes;
+                        centroids( e, XX ) += coords( i, XX );
+                        centroids( e, YY ) += coords( i, YY );
+                        centroids( e, ZZ ) += coords( i, ZZ );
+                    }
                 }
-            }
 
-            if ( nb_real_nodes > 1 ) {
-                const double average_coefficient = 1. / static_cast<double>( nb_real_nodes );
-                centroids( e, XX ) *= average_coefficient;
-                centroids( e, YY ) *= average_coefficient;
-                centroids( e, ZZ ) *= average_coefficient;
+                if ( nb_real_nodes > 1 ) {
+                    const double average_coefficient = 1. / static_cast<double>( nb_real_nodes );
+                    centroids( e, XX ) *= average_coefficient;
+                    centroids( e, YY ) *= average_coefficient;
+                    centroids( e, ZZ ) *= average_coefficient;
+                }
+            } else {
+                const double average_coefficient = 1./ static_cast<double>( nb_cell_nodes );
+                for ( size_t n = 0; n < nb_cell_nodes; ++n ) {
+                    const size_t i = size_t( cell_node_connectivity( e, n ) );
+                    for ( size_t d=0; d<3; ++d ) {
+                        centroids( e, d ) += coords( i, d ) * average_coefficient;
+                    }
+                }
             }
         }
     }

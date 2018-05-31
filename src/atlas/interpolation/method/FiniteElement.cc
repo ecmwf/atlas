@@ -88,7 +88,10 @@ void FiniteElement::setup( const FunctionSpace& source ) {
     Field source_xyz = mesh::actions::BuildXYZField( "xyz" )( meshSource );
 
     // generate barycenters of each triangle & insert them on a kd-tree
-    Field cell_centres = mesh::actions::BuildCellCentres( "centre" )( meshSource );
+    util::Config config;
+    config.set("name", "centre ");
+    config.set("flatten_virtual_elements", false );
+    Field cell_centres = mesh::actions::BuildCellCentres( config )( meshSource );
 
     eckit::ScopedPtr<ElemIndex3> eTree( create_element_kdtree( cell_centres ) );
 
@@ -150,6 +153,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
                                 "---------------------\n";
                 PointLonLat pll;
                 util::Earth::convertCartesianToSpherical( p, pll );
+                if( pll.lon() < 0 ) pll.lon() += 360.;
                 Log::debug() << "Failed to project point (lon,lat)=" << pll << '\n';
                 Log::debug() << failures_log.str();
             }
@@ -166,6 +170,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
             const PointXYZ p{( *ocoords_ )( *i, 0 ), ( *ocoords_ )( *i, 1 ), ( *ocoords_ )( *i, 2 )};  // lookup point
             PointLonLat pll;
             util::Earth::convertCartesianToSpherical( p, pll );
+            if( pll.lon() < 0 ) pll.lon() += 360.;
             msg << "\t(lon,lat) = " << pll << "\n";
         }
 
