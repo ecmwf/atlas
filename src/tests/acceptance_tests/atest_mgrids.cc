@@ -55,14 +55,14 @@ Program::Program( int argc, char** argv ) : AtlasTool( argc, argv ) {
 //-----------------------------------------------------------------------------
 
 void Program::execute( const Args& args ) {
-  
+
   auto ghost = util::Config("ghost",args.getBool("ghost",false));
   auto haloA = option::halo( args.getLong("haloA",1) );
   auto haloB = option::halo( args.getLong("haloB",1) );
-  
+
   auto gridA = Grid( args.getString("gridA") );
   auto gridB = Grid( args.getString("gridB") );
-  
+
   auto meshgenerator = MeshGenerator( "structured" );
 
   auto distA = grid::Distribution( gridA, grid::Partitioner( "trans" ) );
@@ -73,18 +73,17 @@ void Program::execute( const Args& args ) {
   auto gmshA = output::Gmsh( "meshA.msh", ghost );
   gmshA.write(meshA);
 
-
   auto distB = grid::Distribution( gridB, grid::MatchingMeshPartitioner( meshA ) );
 
   auto meshB = meshgenerator.generate( gridB, distB );
 
   numerics::fvm::Method fvmB(meshB,haloB);
 
-  // Field fieldB = fvmB.node_columns().createField<double>();
+  Field fieldB = fvmB.node_columns().createField<double>();
 
   output::Gmsh gmshB( "meshB.msh", ghost );
   gmshB.write(meshB);
-  // gmshB.write(fieldB);
+  gmshB.write(fieldB);
 
   Interpolation AtoB( option::type("finite-element"), fvmA.node_columns(), fvmB.node_columns() );
   Interpolation BtoA( option::type("finite-element"), fvmB.node_columns(), fvmA.node_columns() );
