@@ -753,13 +753,13 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
     file << nb_nodes << "\n";
     double xyz[3] = {0., 0., 0.};
     for ( size_t n = 0; n < nb_nodes; ++n ) {
-        int g = glb_idx( n );
+        gidx_t g = glb_idx( n );
 
         for ( size_t d = 0; d < surfdim; ++d )
             xyz[d] = coords( n, d );
 
         if ( binary ) {
-            file.write( reinterpret_cast<const char*>( &g ), sizeof( int ) );
+            file.write( reinterpret_cast<const char*>( &g ), sizeof( gidx_t ) );
             file.write( reinterpret_cast<const char*>( &xyz ), sizeof( double ) * 3 );
         }
         else {
