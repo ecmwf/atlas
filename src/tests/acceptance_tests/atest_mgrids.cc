@@ -50,6 +50,8 @@ Program::Program( int argc, char** argv ) : AtlasTool( argc, argv ) {
     add_option( new SimpleOption<bool>( "ghost", "Output ghost elements" ) );
     add_option( new SimpleOption<long>( "haloA", "Halo size" ) );
     add_option( new SimpleOption<long>( "haloB", "Halo size" ) );
+    add_option( new SimpleOption<bool>( "no-forward",  "no forward interpolation" ) );
+    add_option( new SimpleOption<bool>( "no-backward", "no backward interpolation" ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -85,9 +87,12 @@ void Program::execute( const Args& args ) {
   gmshB.write(meshB);
   gmshB.write(fieldB);
 
-  Interpolation AtoB( option::type("finite-element"), fvmA.node_columns(), fvmB.node_columns() );
-  Interpolation BtoA( option::type("finite-element"), fvmB.node_columns(), fvmA.node_columns() );
-
+  if( not args.getBool("no-forward",false) ) {
+    Interpolation AtoB( option::type("finite-element"), fvmA.node_columns(), fvmB.node_columns() );
+  }
+  if( not args.getBool("no-backward",false) ) {  
+    Interpolation BtoA( option::type("finite-element"), fvmB.node_columns(), fvmA.node_columns() );
+  }
 }
 
 //------------------------------------------------------------------------------
