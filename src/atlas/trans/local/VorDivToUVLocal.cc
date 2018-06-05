@@ -66,102 +66,116 @@ void vd2uv( const int truncation,               // truncation
             double U[],                         // spectral data of U
             double V[],                         // spectral data of V
             const eckit::Configuration& config ) {
-    ATLAS_TRACE( "vd2uv" );
     std::vector<double> repsnm( ( truncation + 1 ) * ( truncation + 6 ) / 2 );
     int idx   = 0;
     int nlei1 = truncation + 4 + ( truncation + 4 + 1 ) % 2;
     double ra = util::Earth::radius();
     std::vector<double> rlapin( truncation + 3 );
 
-    // repsnm: epsilon from eq.(2.12) and (2.13) in [Temperton 1991]
-    for ( int jm = 0; jm <= truncation; ++jm ) {
-        for ( int jn = jm; jn <= truncation + 2; ++jn, ++idx ) {
-            repsnm[idx] = std::sqrt( ( jn * jn - jm * jm ) / ( 4. * jn * jn - 1. ) );
+    {
+        //ATLAS_TRACE( "general setup" );
+        // repsnm: epsilon from eq.(2.12) and (2.13) in [Temperton 1991]
+        for ( int jm = 0; jm <= truncation; ++jm ) {
+            for ( int jn = jm; jn <= truncation + 2; ++jn, ++idx ) {
+                repsnm[idx] = std::sqrt( ( jn * jn - jm * jm ) / ( 4. * jn * jn - 1. ) );
+            }
         }
-    }
-    repsnm[0] = 0.;
+        repsnm[0] = 0.;
 
-    // rlapin: constant factor from eq.(2.2) and (2.3) in [Temperton 1991]
-    for ( int jn = 1; jn <= truncation + 2; ++jn ) {
-        rlapin[jn] = -ra * ra / ( jn * ( jn + 1. ) );
+        // rlapin: constant factor from eq.(2.2) and (2.3) in [Temperton 1991]
+        for ( int jn = 1; jn <= truncation + 2; ++jn ) {
+            rlapin[jn] = -ra * ra / ( jn * ( jn + 1. ) );
+        }
+        rlapin[0] = 0.;
     }
-    rlapin[0] = 0.;
 
     // inverse the order of repsnm and rlapin for improved accuracy
     std::vector<double> zepsnm( truncation + 6 );
     std::vector<double> zlapin( truncation + 6 );
     std::vector<double> zn( truncation + 6 );
     for ( int km = 0; km <= truncation; ++km ) {
-        for ( int jn = km - 1; jn <= truncation + 2; ++jn ) {
-            int ij = truncation + 3 - jn;
-            if ( jn >= 0 ) {
-                zlapin[ij] = rlapin[jn];
-                if ( jn < km ) { zepsnm[ij] = 0.; }
-                else {
-                    zepsnm[ij] = repsnm[jn + ( 2 * truncation - km + 5 ) * km / 2];
+        {
+            //ATLAS_TRACE( "current wavenumber setup" );
+            for ( int jn = km - 1; jn <= truncation + 2; ++jn ) {
+                int ij = truncation + 3 - jn;
+                if ( jn >= 0 ) {
+                    zlapin[ij] = rlapin[jn];
+                    if ( jn < km ) { zepsnm[ij] = 0.; }
+                    else {
+                        zepsnm[ij] = repsnm[jn + ( 2 * truncation - km + 5 ) * km / 2];
+                    }
                 }
+                else {
+                    zlapin[ij] = 0.;
+                    zepsnm[ij] = 0.;
+                }
+                zn[ij] = jn;
             }
-            else {
-                zlapin[ij] = 0.;
-                zepsnm[ij] = 0.;
-            }
-            zn[ij] = jn;
+            zn[0] = truncation + 3;
         }
-        zn[0] = truncation + 3;
 
         // copy spectral data into internal trans storage:
         std::vector<double> rvor( 2 * nb_vordiv_fields * nlei1 );
         std::vector<double> rdiv( 2 * nb_vordiv_fields * nlei1 );
         std::vector<double> ru( 2 * nb_vordiv_fields * nlei1 );
         std::vector<double> rv( 2 * nb_vordiv_fields * nlei1 );
-        prfi1b( truncation, km, nb_vordiv_fields, vorticity_spectra, rvor.data() );
-        prfi1b( truncation, km, nb_vordiv_fields, divergence_spectra, rdiv.data() );
+        {
+            //ATLAS_TRACE( "copy data to internal storage" );
+            prfi1b( truncation, km, nb_vordiv_fields, vorticity_spectra, rvor.data() );
+            prfi1b( truncation, km, nb_vordiv_fields, divergence_spectra, rdiv.data() );
+        }
 
-        // compute eq.(2.12) and (2.13) in [Temperton 1991]:
-        if ( km == 0 ) {
-            for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
-                int ir = 2 * jfld * nlei1 - 1;
-                for ( int ji = 2; ji < truncation + 4 - km; ++ji ) {
-                    double psiM1 = zn[ji + 1] * zepsnm[ji] * zlapin[ji + 1];
-                    double psiP1 = zn[ji - 2] * zepsnm[ji - 1] * zlapin[ji - 1];
-                    ru[ir + ji]  = +psiM1 * rvor[ir + ji + 1] - psiP1 * rvor[ir + ji - 1];
-                    rv[ir + ji]  = -psiM1 * rdiv[ir + ji + 1] + psiP1 * rdiv[ir + ji - 1];
+        {
+            //ATLAS_TRACE( "actual computation" );
+            // compute eq.(2.12) and (2.13) in [Temperton 1991]:
+            if ( km == 0 ) {
+                for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
+                    int ir = 2 * jfld * nlei1 - 1;
+                    for ( int ji = 2; ji < truncation + 4 - km; ++ji ) {
+                        double psiM1 = zn[ji + 1] * zepsnm[ji] * zlapin[ji + 1];
+                        double psiP1 = zn[ji - 2] * zepsnm[ji - 1] * zlapin[ji - 1];
+                        ru[ir + ji]  = +psiM1 * rvor[ir + ji + 1] - psiP1 * rvor[ir + ji - 1];
+                        rv[ir + ji]  = -psiM1 * rdiv[ir + ji + 1] + psiP1 * rdiv[ir + ji - 1];
+                    }
+                }
+            }
+            else {
+                for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
+                    int ir = 2 * jfld * nlei1 - 1, ii = ir + nlei1;
+                    for ( int ji = 2; ji < truncation + 4 - km; ++ji ) {
+                        double chiIm = km * zlapin[ji];
+                        double psiM1 = zn[ji + 1] * zepsnm[ji] * zlapin[ji + 1];
+                        double psiP1 = zn[ji - 2] * zepsnm[ji - 1] * zlapin[ji - 1];
+                        ru[ir + ji]  = -chiIm * rdiv[ii + ji] + psiM1 * rvor[ir + ji + 1] - psiP1 * rvor[ir + ji - 1];
+                        ru[ii + ji]  = +chiIm * rdiv[ir + ji] + psiM1 * rvor[ii + ji + 1] - psiP1 * rvor[ii + ji - 1];
+                        rv[ir + ji]  = -chiIm * rvor[ii + ji] - psiM1 * rdiv[ir + ji + 1] + psiP1 * rdiv[ir + ji - 1];
+                        rv[ii + ji]  = +chiIm * rvor[ir + ji] - psiM1 * rdiv[ii + ji + 1] + psiP1 * rdiv[ii + ji - 1];
+                    }
                 }
             }
         }
-        else {
-            for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
-                int ir = 2 * jfld * nlei1 - 1, ii = ir + nlei1;
-                for ( int ji = 2; ji < truncation + 4 - km; ++ji ) {
-                    double chiIm = km * zlapin[ji];
-                    double psiM1 = zn[ji + 1] * zepsnm[ji] * zlapin[ji + 1];
-                    double psiP1 = zn[ji - 2] * zepsnm[ji - 1] * zlapin[ji - 1];
-                    ru[ir + ji]  = -chiIm * rdiv[ii + ji] + psiM1 * rvor[ir + ji + 1] - psiP1 * rvor[ir + ji - 1];
-                    ru[ii + ji]  = +chiIm * rdiv[ir + ji] + psiM1 * rvor[ii + ji + 1] - psiP1 * rvor[ii + ji - 1];
-                    rv[ir + ji]  = -chiIm * rvor[ii + ji] - psiM1 * rdiv[ir + ji + 1] + psiP1 * rdiv[ir + ji - 1];
-                    rv[ii + ji]  = +chiIm * rvor[ir + ji] - psiM1 * rdiv[ii + ji + 1] + psiP1 * rdiv[ii + ji - 1];
-                }
-            }
-        }
 
-        // copy data from internal storage back to external spectral data:
-        int ilcm = truncation - km;
-        int ioff = ( 2 * truncation - km + 3 ) * km;
-        // ioff: start index of zonal wavenumber km in spectral data
-        double za_r = 1. / util::Earth::radius();
-        for ( int j = 0; j <= ilcm; ++j ) {
-            // ilcm-j = total wavenumber
-            int inm = ioff + ( ilcm - j ) * 2;
-            for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
-                int ir = 2 * jfld * nlei1, ii = ir + nlei1;
-                int idx = inm * nb_vordiv_fields + jfld;
-                // real part:
-                U[idx] = ru[ir + j + 2] * za_r;
-                V[idx] = rv[ir + j + 2] * za_r;
-                idx += nb_vordiv_fields;
-                // imaginary part:
-                U[idx] = ru[ii + j + 2] * za_r;
-                V[idx] = rv[ii + j + 2] * za_r;
+        {
+            //ATLAS_TRACE( "copy data back to external storage" );
+            // copy data from internal storage back to external spectral data:
+            int ilcm = truncation - km;
+            int ioff = ( 2 * truncation - km + 3 ) * km;
+            // ioff: start index of zonal wavenumber km in spectral data
+            double za_r = 1. / util::Earth::radius();
+            for ( int j = 0; j <= ilcm; ++j ) {
+                // ilcm-j = total wavenumber
+                int inm = ioff + ( ilcm - j ) * 2;
+                for ( int jfld = 0; jfld < nb_vordiv_fields; ++jfld ) {
+                    int ir = 2 * jfld * nlei1, ii = ir + nlei1;
+                    int idx = inm * nb_vordiv_fields + jfld;
+                    // real part:
+                    U[idx] = ru[ir + j + 2] * za_r;
+                    V[idx] = rv[ir + j + 2] * za_r;
+                    idx += nb_vordiv_fields;
+                    // imaginary part:
+                    U[idx] = ru[ii + j + 2] * za_r;
+                    V[idx] = rv[ii + j + 2] * za_r;
+                }
             }
         }
     }
