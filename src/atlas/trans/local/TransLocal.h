@@ -11,13 +11,11 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 #include "atlas/array.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/trans/Trans.h"
-#if ATLAS_HAVE_FFTW
-#include <fftw3.h>
-#endif
 
 #define TRANSLOCAL_DGEMM2 0
 
@@ -39,6 +37,10 @@ class FieldSet;
 
 namespace atlas {
 namespace trans {
+
+namespace detail {
+struct FFTW_Data;
+}
 
 class LegendreCacheCreatorLocal;
 int fourier_truncation( const int truncation,  // truncation
@@ -186,11 +188,9 @@ private:
     std::vector<size_t> legendre_begin_;
     std::vector<size_t> legendre_sym_begin_;
     std::vector<size_t> legendre_asym_begin_;
-#if ATLAS_HAVE_FFTW
-    fftw_complex* fft_in_;
-    double* fft_out_;
-    std::vector<fftw_plan> plans_;
-#endif
+
+
+    std::unique_ptr<detail::FFTW_Data> fftw_;
 
     Cache cache_;
     Cache export_legendre_;

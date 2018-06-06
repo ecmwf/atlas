@@ -26,6 +26,11 @@
 #include "eckit/log/Bytes.h"
 #include "eckit/parser/JSON.h"
 
+#include "atlas/library/defines.h"
+#if ATLAS_HAVE_FFTW
+#include <fftw3.h>
+#endif
+
 namespace atlas {
 namespace trans {
 
@@ -217,6 +222,17 @@ int fourier_truncation( const int truncation,    // truncation
     return trc;
 }
 
+namespace detail {
+struct FFTW_Data {
+#if ATLAS_HAVE_FFTW
+    fftw_complex* in;
+    double* out;
+    std::vector<fftw_plan> plans;
+#endif
+};
+}
+
+
 // --------------------------------------------------------------------------------------------------------------------
 // Class TransLocal
 // --------------------------------------------------------------------------------------------------------------------
@@ -245,6 +261,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
     legendre_cachesize_( cache.legendre().size() ),
     fft_cache_( cache.fft().data() ),
     fft_cachesize_( cache.fft().size() ),
+    fftw_( new detail::FFTW_Data ),
     linalg_( linear_algebra_backend() ),
     warning_( TransParameters( config ).warning() ) {
     ATLAS_TRACE( "TransLocal constructor" );
@@ -478,8 +495,8 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             {
                 ATLAS_TRACE( "Fourier precomputations (FFTW)" );
                 int num_complex = ( nlonsMaxGlobal_ / 2 ) + 1;
-                fft_in_         = fftw_alloc_complex( nlats * num_complex );
-                fft_out_        = fftw_alloc_real( nlats * nlonsMaxGlobal_ );
+                fftw_->in         = fftw_alloc_complex( nlats * num_complex );
+                fftw_->out        = fftw_alloc_real( nlats * nlonsMaxGlobal_ );
 
                 if ( fft_cache_ ) {
                     Log::debug() << "Import FFTW wisdom from cache" << std::endl;
@@ -498,16 +515,16 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 //                read.close();
                 //                if ( wisdomString.length() > 0 ) { fftw_import_wisdom_from_string( &wisdomString[0u] ); }
                 if ( grid::RegularGrid( gridGlobal_ ) ) {
-                    plans_.resize( 1 );
-                    plans_[0] = fftw_plan_many_dft_c2r( 1, &nlonsMaxGlobal_, nlats, fft_in_, NULL, 1, num_complex,
-                                                        fft_out_, NULL, 1, nlonsMaxGlobal_, FFTW_ESTIMATE );
+                    fftw_->plans.resize( 1 );
+                    fftw_->plans[0] = fftw_plan_many_dft_c2r( 1, &nlonsMaxGlobal_, nlats, fftw_->in, NULL, 1, num_complex,
+                                                              fftw_->out, NULL, 1, nlonsMaxGlobal_, FFTW_ESTIMATE );
                 }
                 else {
-                    plans_.resize( nlatsLegDomain_ );
+                    fftw_->plans.resize( nlatsLegDomain_ );
                     for ( int j = 0; j < nlatsLegDomain_; j++ ) {
                         int nlonsGlobalj = gs_global.nx( jlatMinLeg_ + j );
                         //ASSERT( nlonsGlobalj > 0 && nlonsGlobalj <= nlonsMaxGlobal_ );
-                        plans_[j] = fftw_plan_dft_c2r_1d( nlonsGlobalj, fft_in_, fft_out_, FFTW_ESTIMATE );
+                        fftw_->plans[j] = fftw_plan_dft_c2r_1d( nlonsGlobalj, fftw_->in, fftw_->out, FFTW_ESTIMATE );
                     }
                 }
                 std::string file_path = TransParameters( config ).write_fft();
@@ -627,11 +644,11 @@ TransLocal::~TransLocal() {
         }
         if ( useFFT_ ) {
 #if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
-            for ( int j = 0; j < plans_.size(); j++ ) {
-                fftw_destroy_plan( plans_[j] );
+            for ( int j = 0; j < fftw_->plans.size(); j++ ) {
+                fftw_destroy_plan( fftw_->plans[j] );
             }
-            fftw_free( fft_in_ );
-            fftw_free( fft_out_ );
+            fftw_free( fftw_->in );
+            fftw_free( fftw_->out );
 #endif
         }
         else {
@@ -859,25 +876,25 @@ void TransLocal::invtrans_fourier_regular( const int nlats, const int nlons, con
                 for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                     int idx = 0;
                     for ( int jlat = 0; jlat < nlats; jlat++ ) {
-                        fft_in_[idx++][0] = scl_fourier[posMethod( jfld, 0, jlat, 0, nb_fields, nlats )];
+                        fftw_->in[idx++][0] = scl_fourier[posMethod( jfld, 0, jlat, 0, nb_fields, nlats )];
                         for ( int jm = 1; jm < num_complex; jm++, idx++ ) {
                             for ( int imag = 0; imag < 2; imag++ ) {
                                 if ( jm <= truncation_ ) {
-                                    fft_in_[idx][imag] =
+                                    fftw_->in[idx][imag] =
                                         scl_fourier[posMethod( jfld, imag, jlat, jm, nb_fields, nlats )];
                                 }
                                 else {
-                                    fft_in_[idx][imag] = 0.;
+                                    fftw_->in[idx][imag] = 0.;
                                 }
                             }
                         }
                     }
-                    fftw_execute_dft_c2r( plans_[0], fft_in_, fft_out_ );
+                    fftw_execute_dft_c2r( fftw_->plans[0], fftw_->in, fftw_->out );
                     for ( int jlat = 0; jlat < nlats; jlat++ ) {
                         for ( int jlon = 0; jlon < nlons; jlon++ ) {
                             int j = jlon + jlonMin_[0];
                             if ( j >= nlonsMaxGlobal_ ) { j -= nlonsMaxGlobal_; }
-                            gp_fields[jlon + nlons * ( jlat + nlats * jfld )] = fft_out_[j + nlonsMaxGlobal_ * jlat];
+                            gp_fields[jlon + nlons * ( jlat + nlats * jfld )] = fftw_->out[j + nlonsMaxGlobal_ * jlat];
                         }
                     }
                 }
@@ -965,18 +982,18 @@ void TransLocal::invtrans_fourier_reduced( const int nlats, const grid::Structur
                         int idx = 0;
                         //Log::info() << jlat << "in:" << std::endl;
                         int num_complex   = ( nlonsGlobal_[jlat] / 2 ) + 1;
-                        fft_in_[idx++][0] = scl_fourier[posMethod( jfld, 0, jlat, 0, nb_fields, nlats )];
-                        //Log::info() << fft_in_[0][0] << " ";
+                        fftw_->in[idx++][0] = scl_fourier[posMethod( jfld, 0, jlat, 0, nb_fields, nlats )];
+                        //Log::info() << fftw_->in[0][0] << " ";
                         for ( int jm = 1; jm < num_complex; jm++, idx++ ) {
                             for ( int imag = 0; imag < 2; imag++ ) {
                                 if ( jm <= truncation_ ) {
-                                    fft_in_[idx][imag] =
+                                    fftw_->in[idx][imag] =
                                         scl_fourier[posMethod( jfld, imag, jlat, jm, nb_fields, nlats )];
                                 }
                                 else {
-                                    fft_in_[idx][imag] = 0.;
+                                    fftw_->in[idx][imag] = 0.;
                                 }
-                                //Log::info() << fft_in_[idx][imag] << " ";
+                                //Log::info() << fftw_->in[idx][imag] << " ";
                             }
                         }
                         //Log::info() << std::endl;
@@ -984,13 +1001,13 @@ void TransLocal::invtrans_fourier_reduced( const int nlats, const grid::Structur
                         int jplan = nlatsLegDomain_ - nlatsNH_ + jlat;
                         if ( jplan >= nlatsLegDomain_ ) { jplan = nlats - 1 + nlatsLegDomain_ - nlatsSH_ - jlat; };
                         //ASSERT( jplan < nlatsLeg_ && jplan >= 0 );
-                        fftw_execute_dft_c2r( plans_[jplan], fft_in_, fft_out_ );
+                        fftw_execute_dft_c2r( fftw_->plans[jplan], fftw_->in, fftw_->out );
                         for ( int jlon = 0; jlon < g.nx( jlat ); jlon++ ) {
                             int j = jlon + jlonMin_[jlat];
                             if ( j >= nlonsGlobal_[jlat] ) { j -= nlonsGlobal_[jlat]; }
-                            //Log::info() << fft_out_[j] << " ";
+                            //Log::info() << fftw_->out[j] << " ";
                             ASSERT( j < nlonsMaxGlobal_ );
-                            gp_fields[jgp++] = fft_out_[j];
+                            gp_fields[jgp++] = fftw_->out[j];
                         }
                         //Log::info() << std::endl;
                     }

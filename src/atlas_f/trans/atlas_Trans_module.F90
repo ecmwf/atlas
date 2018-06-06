@@ -207,6 +207,7 @@ function nb_gridpoints_global( this )
 end function
 
 function grid( this )
+  use, intrinsic :: iso_c_binding, only: c_null_ptr
   use atlas_trans_c_binding
   class(atlas_Trans) :: this
   type(atlas_Grid) :: grid
@@ -216,6 +217,7 @@ function grid( this )
 #else
   THROW_ERROR
   FCKIT_SUPPRESS_UNUSED( this )
+  grid = atlas_Grid( c_null_ptr )
   FCKIT_SUPPRESS_UNUSED( grid )
 #endif
 end function
