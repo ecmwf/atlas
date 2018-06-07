@@ -712,7 +712,7 @@ void gp_transpose( const int nb_size, const int nb_fields, const double gp_tmp[]
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::invtrans_legendre( const int truncation, const int nlats, const int nb_fields,
-                                    const double scalar_spectra[], double scl_fourier[],
+                                    const int nb_vordiv_fields, const double scalar_spectra[], double scl_fourier[],
                                     const eckit::Configuration& config ) const {
     // Legendre transform:
     {
@@ -858,8 +858,8 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                     }
                 }
             }
-        }
-    }
+        }  // namespace trans
+    }      // namespace atlas
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -1101,7 +1101,7 @@ void TransLocal::invtrans_unstructured_precomp( const int truncation, const int 
                 if ( nb_vordiv_fields > 0 ) {
                     //ATLAS_TRACE( " u,v from U,V" );
                     double coslat = std::cos( lat );
-                    for ( int j = 0; j < nb_fields; j++ ) {
+                    for ( int j = 0; j < 2 * nb_vordiv_fields && j < nb_fields; j++ ) {
                         gp_fields[ip + j * grid_.size()] /= coslat;
                     }
                 }
@@ -1199,7 +1199,7 @@ void TransLocal::invtrans_unstructured( const int truncation, const int nb_field
             if ( nb_vordiv_fields > 0 ) {
                 //ATLAS_TRACE( "u,v from U,V" );
                 const double coslat = std::cos( lat );
-                for ( int j = 0; j < nb_fields; j++ ) {
+                for ( int j = 0; j < 2 * nb_vordiv_fields && j < nb_fields; j++ ) {
                     gp_fields[ip + j * grid_.size()] /= coslat;
                 }
             }
@@ -1251,7 +1251,8 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
             // ATLAS-159 workaround end
 
             // Legendre transformation:
-            invtrans_legendre( truncation, nlats, nb_scalar_fields, scalar_spectra, scl_fourier, config );
+            invtrans_legendre( truncation, nlats, nb_scalar_fields, nb_vordiv_fields, scalar_spectra, scl_fourier,
+                               config );
 
             // Fourier transformation:
             if ( grid::RegularGrid( gridGlobal_ ) ) {
@@ -1270,7 +1271,7 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
                         coslats[j] = std::cos( g.y( j ) * util::Constants::degreesToRadians() );
                     }
                     int idx = 0;
-                    for ( int jfld = 0; jfld < nb_vordiv_fields; jfld++ ) {
+                    for ( int jfld = 0; jfld < 2 * nb_vordiv_fields && jfld < nb_fields; jfld++ ) {
                         for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
                             for ( int jlon = 0; jlon < g.nx( jlat ); jlon++ ) {
                                 gp_fields[idx] /= coslats[jlat];
@@ -1327,38 +1328,71 @@ void extend_truncation( const int old_truncation, const int nb_fields, const dou
 void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spectra[], const int nb_vordiv_fields,
                            const double vorticity_spectra[], const double divergence_spectra[], double gp_fields[],
                            const eckit::Configuration& config ) const {
-    if ( config.getBool( "vdoption", false ) ) {
+    if ( config.getBool( "mergeBeforeTransform", false ) ) {
         // collect all spectral data into one array "all_spectra":
         ATLAS_TRACE( "TransLocal::invtrans" );
+        int nb_gp              = grid_.size();
+        int nb_vordiv_spec_ext = 2 * legendre_size( truncation_ + 1 ) * nb_vordiv_fields;
+        std::vector<double> U_ext;
+        std::vector<double> V_ext;
+        std::vector<double> scalar_ext;
+        if ( nb_vordiv_fields > 0 ) {
+            std::vector<double> vorticity_spectra_extended( nb_vordiv_spec_ext );
+            std::vector<double> divergence_spectra_extended( nb_vordiv_spec_ext );
+            U_ext.resize( nb_vordiv_spec_ext );
+            V_ext.resize( nb_vordiv_spec_ext );
+
+            {
+                ATLAS_TRACE( "extend vordiv" );
+                // increase truncation in vorticity_spectra and divergence_spectra:
+                extend_truncation( truncation_, nb_vordiv_fields, vorticity_spectra,
+                                   vorticity_spectra_extended.data() );
+                extend_truncation( truncation_, nb_vordiv_fields, divergence_spectra,
+                                   divergence_spectra_extended.data() );
+            }
+
+            {
+                ATLAS_TRACE( "vordiv to UV" );
+                // call vd2uv to compute u and v in spectral space
+                trans::VorDivToUV vordiv_to_UV_ext( truncation_ + 1, option::type( "local" ) );
+                vordiv_to_UV_ext.execute( nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(),
+                                          divergence_spectra_extended.data(), U_ext.data(), V_ext.data() );
+            }
+        }
+        if ( nb_scalar_fields > 0 ) {
+            int nb_scalar_ext = 2 * legendre_size( truncation_ + 1 ) * nb_scalar_fields;
+            scalar_ext.resize( nb_scalar_ext );
+            extend_truncation( truncation_, nb_scalar_fields, scalar_spectra, scalar_ext.data() );
+        }
         int nb_all_fields = 2 * nb_vordiv_fields + nb_scalar_fields;
-        int nb_all_size   = 2 * legendre_size( truncation_ ) * nb_all_fields;
+        int nb_all_size   = 2 * legendre_size( truncation_ + 1 ) * nb_all_fields;
         std::vector<double> all_spectra( nb_all_size );
         int k = 0, i = 0, j = 0, l = 0;
         {
             ATLAS_TRACE( "merge all spectra" );
-            for ( int m = 0; m <= truncation_; m++ ) {                           // zonal wavenumber
-                for ( int n = m; n <= truncation_; n++ ) {                       // total wavenumber
+            for ( int m = 0; m <= truncation_ + 1; m++ ) {                       // zonal wavenumber
+                for ( int n = m; n <= truncation_ + 1; n++ ) {                   // total wavenumber
                     for ( int imag = 0; imag < 2; imag++ ) {                     // imaginary/real part
                         for ( int jfld = 0; jfld < nb_vordiv_fields; jfld++ ) {  // vorticity fields
-                            all_spectra[k++] = vorticity_spectra[i++];
+                            all_spectra[k++] = U_ext[i++];
                         }
                         for ( int jfld = 0; jfld < nb_vordiv_fields; jfld++ ) {  // divergence fields
-                            all_spectra[k++] = divergence_spectra[j++];
+                            all_spectra[k++] = V_ext[j++];
                         }
                         for ( int jfld = 0; jfld < nb_scalar_fields; jfld++ ) {  // scalar fields
-                            all_spectra[k++] = scalar_spectra[l++];
+                            all_spectra[k++] = scalar_ext[l++];
                         }
                     }
                 }
             }
         }
-        int nb_vordiv_size = 2 * legendre_size( truncation_ ) * nb_vordiv_fields;
-        int nb_scalar_size = 2 * legendre_size( truncation_ ) * nb_scalar_fields;
+        int nb_vordiv_size = 2 * legendre_size( truncation_ + 1 ) * nb_vordiv_fields;
+        int nb_scalar_size = 2 * legendre_size( truncation_ + 1 ) * nb_scalar_fields;
         ASSERT( k == nb_all_size );
         ASSERT( i == nb_vordiv_size );
         ASSERT( j == nb_vordiv_size );
         ASSERT( l == nb_scalar_size );
-        invtrans_uv( truncation_, nb_all_fields, 0, all_spectra.data(), gp_fields, config );
+        invtrans_uv( truncation_ + 1, nb_all_fields, nb_vordiv_fields, all_spectra.data(), gp_fields, config );
     }
     else {
         ATLAS_TRACE( "TransLocal::invtrans" );

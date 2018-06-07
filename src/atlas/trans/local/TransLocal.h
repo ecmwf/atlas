@@ -134,8 +134,9 @@ private:
 #endif
     };
 
-    void invtrans_legendre( const int truncation, const int nlats, const int nb_fields, const double scalar_spectra[],
-                            double scl_fourier[], const eckit::Configuration& config ) const;
+    void invtrans_legendre( const int truncation, const int nlats, const int nb_fields, const int nb_vordiv_fields,
+                            const double scalar_spectra[], double scl_fourier[],
+                            const eckit::Configuration& config ) const;
 
     void invtrans_fourier_regular( const int nlats, const int nlons, const int nb_fields, double scl_fourier[],
                                    double gp_fields[], const eckit::Configuration& config ) const;

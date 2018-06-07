@@ -619,7 +619,6 @@ CASE( "test_trans_domain" ) {
     std::ostream& out = Log::info();
     double tolerance  = 1.e-13;
 
-    util::Config vd2uvoption( "vdoption", true );
     //Domain testdomain = ZonalBandDomain( {-90., 90.} );
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
     //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
@@ -664,7 +663,7 @@ CASE( "test_trans_domain" ) {
 
     functionspace::Spectral spectral( trc );
 
-    int nb_scalar = 1, nb_vordiv = 1;
+    int nb_scalar = 0, nb_vordiv = 1;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
     std::vector<double> sp( 2 * N * nb_scalar );
     std::vector<double> vor( 2 * N * nb_vordiv );
@@ -676,8 +675,8 @@ CASE( "test_trans_domain" ) {
     std::vector<double> rgp2_analytic( g2.size() );
 
     int icase = 0;
-    for ( int ivar_in = 0; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
-        for ( int ivar_out = 0; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
+    for ( int ivar_in = 0; ivar_in < 2; ivar_in++ ) {         // vorticity, divergence, scalar
+        for ( int ivar_out = 0; ivar_out < 2; ivar_out++ ) {  // u, v, scalar
             int nb_fld = 1;
             if ( ivar_out == 2 ) {
                 tolerance = 1.e-13;
@@ -729,7 +728,8 @@ CASE( "test_trans_domain" ) {
                                 //Log::info() << std::endl << "rgp1:";
                                 ATLAS_TRACE_SCOPE( "translocal1" )
                                 EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
-                                                                       div.data(), rgp1.data(), vd2uvoption ) );
+                                                                       div.data(), rgp1.data(),
+                                                                       util::Config( "mergeBeforeTransform", true ) ) );
 
                                 //Log::info() << std::endl << "rgp2:";
                                 ATLAS_TRACE_SCOPE( "translocal2" )
@@ -739,7 +739,7 @@ CASE( "test_trans_domain" ) {
                                 int pos = ( ivar_out * nb_vordiv + jfld );
 
                                 double rms_gen1 =
-                                    0.;  //compute_rms( g1.size(), rgp1.data() + pos * g1.size(), rgp1_analytic.data() );
+                                    compute_rms( g1.size(), rgp1.data() + pos * g1.size(), rgp1_analytic.data() );
 
                                 double rms_gen2 =
                                     compute_rms( g2.size(), rgp2.data() + pos * g2.size(), rgp2_analytic.data() );
