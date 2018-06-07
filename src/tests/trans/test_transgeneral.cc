@@ -377,7 +377,7 @@ double compute_rms( const size_t N,    // length of the arrays
 }
 
 //-----------------------------------------------------------------------------
-#if 0
+#if 1
 CASE( "test_trans_vordiv_with_translib" ) {
     Log::info() << "test_trans_vordiv_with_translib" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -387,7 +387,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     double tolerance  = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F120" );
+    Grid g( "F64" );
 
     grid::StructuredGrid gs( g );
     int ndgl = gs.ny();
@@ -623,15 +623,15 @@ CASE( "test_trans_domain" ) {
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
     //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
     //Domain testdomain1 = ZonalBandDomain( {-10., 5.} );
-    Domain testdomain1 = RectangularDomain( {-1., 1.}, {-.5, 0.} );
+    Domain testdomain1 = RectangularDomain( {-5., 5.}, {-2.5, 0.} );
     //Domain testdomain1 = RectangularDomain( {-1., 1.}, {50., 55.} );
-    Domain testdomain2 = RectangularDomain( {-1., 1.}, {-.5, 0.} );
+    Domain testdomain2 = RectangularDomain( {-5., 5.}, {-2.5, 0.} );
     // Grid: (Adjust the following line if the test takes too long!)
 
-    Grid global_grid( "O512" );
-    Grid g1( global_grid, testdomain1 );
+    Grid global_grid( "O64" );
+    //Grid g1( global_grid, testdomain1 );
     Grid g2( global_grid, testdomain2 );
-    //Grid g1( global_grid );
+    Grid g1( global_grid );
     //Grid g2( global_grid );
 
     bool fourierTrc1 = true;
@@ -640,7 +640,7 @@ CASE( "test_trans_domain" ) {
     using LinearSpacing = grid::LinearSpacing;
     //StructuredGrid g2( LinearSpacing( {0., 180.}, 181 ), LinearSpacing( {0., 45.}, 46 ) );
 
-    int trc = 511;
+    int trc = 63;
     //Log::info() << "rgp1:" << std::endl;
     if ( eckit::PathName( "legcache.bin" ).exists() ) eckit::PathName( "legcache.bin" ).unlink();
     Trace t1( Here(), "translocal1 construction" );
@@ -663,7 +663,7 @@ CASE( "test_trans_domain" ) {
 
     functionspace::Spectral spectral( trc );
 
-    int nb_scalar = 0, nb_vordiv = 1;
+    int nb_scalar = 1, nb_vordiv = 1;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
     std::vector<double> sp( 2 * N * nb_scalar );
     std::vector<double> vor( 2 * N * nb_vordiv );
@@ -675,8 +675,8 @@ CASE( "test_trans_domain" ) {
     std::vector<double> rgp2_analytic( g2.size() );
 
     int icase = 0;
-    for ( int ivar_in = 0; ivar_in < 2; ivar_in++ ) {         // vorticity, divergence, scalar
-        for ( int ivar_out = 0; ivar_out < 2; ivar_out++ ) {  // u, v, scalar
+    for ( int ivar_in = 0; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
+        for ( int ivar_out = 0; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
             int nb_fld = 1;
             if ( ivar_out == 2 ) {
                 tolerance = 1.e-13;
@@ -693,7 +693,7 @@ CASE( "test_trans_domain" ) {
                         for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
 
                             if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
-                                 icase < 10 ) {
+                                 icase < 1000 ) {
                                 auto start = std::chrono::system_clock::now();
                                 for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
                                     sp[j] = 0.;
@@ -728,8 +728,7 @@ CASE( "test_trans_domain" ) {
                                 //Log::info() << std::endl << "rgp1:";
                                 ATLAS_TRACE_SCOPE( "translocal1" )
                                 EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
-                                                                       div.data(), rgp1.data(),
-                                                                       util::Config( "mergeBeforeTransform", true ) ) );
+                                                                       div.data(), rgp1.data() ) );
 
                                 //Log::info() << std::endl << "rgp2:";
                                 ATLAS_TRACE_SCOPE( "translocal2" )

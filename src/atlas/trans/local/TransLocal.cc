@@ -1328,10 +1328,10 @@ void extend_truncation( const int old_truncation, const int nb_fields, const dou
 void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spectra[], const int nb_vordiv_fields,
                            const double vorticity_spectra[], const double divergence_spectra[], double gp_fields[],
                            const eckit::Configuration& config ) const {
-    if ( config.getBool( "mergeBeforeTransform", false ) ) {
+    int nb_gp = grid_.size();
+    if ( nb_vordiv_fields > 0 ) {
         // collect all spectral data into one array "all_spectra":
         ATLAS_TRACE( "TransLocal::invtrans" );
-        int nb_gp              = grid_.size();
         int nb_vordiv_spec_ext = 2 * legendre_size( truncation_ + 1 ) * nb_vordiv_fields;
         std::vector<double> U_ext;
         std::vector<double> V_ext;
@@ -1395,37 +1395,6 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
         invtrans_uv( truncation_ + 1, nb_all_fields, nb_vordiv_fields, all_spectra.data(), gp_fields, config );
     }
     else {
-        ATLAS_TRACE( "TransLocal::invtrans" );
-        int nb_gp              = grid_.size();
-        int nb_vordiv_spec_ext = 2 * legendre_size( truncation_ + 1 ) * nb_vordiv_fields;
-        if ( nb_vordiv_fields > 0 ) {
-            std::vector<double> vorticity_spectra_extended( nb_vordiv_spec_ext, 0. );
-            std::vector<double> divergence_spectra_extended( nb_vordiv_spec_ext, 0. );
-            std::vector<double> U_ext( nb_vordiv_spec_ext, 0. );
-            std::vector<double> V_ext( nb_vordiv_spec_ext, 0. );
-
-            {
-                ATLAS_TRACE( "extend vordiv" );
-                // increase truncation in vorticity_spectra and divergence_spectra:
-                extend_truncation( truncation_, nb_vordiv_fields, vorticity_spectra,
-                                   vorticity_spectra_extended.data() );
-                extend_truncation( truncation_, nb_vordiv_fields, divergence_spectra,
-                                   divergence_spectra_extended.data() );
-            }
-
-            {
-                ATLAS_TRACE( "vordiv to UV" );
-                // call vd2uv to compute u and v in spectral space
-                trans::VorDivToUV vordiv_to_UV_ext( truncation_ + 1, option::type( "local" ) );
-                vordiv_to_UV_ext.execute( nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(),
-                                          divergence_spectra_extended.data(), U_ext.data(), V_ext.data() );
-            }
-
-            // perform spectral transform to compute all fields in grid point space
-            invtrans_uv( truncation_ + 1, nb_vordiv_fields, nb_vordiv_fields, U_ext.data(), gp_fields, config );
-            invtrans_uv( truncation_ + 1, nb_vordiv_fields, nb_vordiv_fields, V_ext.data(),
-                         gp_fields + nb_gp * nb_vordiv_fields, config );
-        }
         if ( nb_scalar_fields > 0 ) {
             invtrans_uv( truncation_, nb_scalar_fields, 0, scalar_spectra, gp_fields + 2 * nb_gp * nb_vordiv_fields,
                          config );
