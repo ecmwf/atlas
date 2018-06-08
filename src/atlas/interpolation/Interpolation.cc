@@ -24,7 +24,15 @@ Interpolation::Interpolation( const Config& config, const FunctionSpace& source,
         Implementation* impl = interpolation::MethodFactory::build( type, config );
         impl->setup( source, target );
         return impl;
-    }() ) {}
+    }() ) {
+
+        std::string path;
+        if( config.get( "output", path ) ) {
+            std::ofstream file( path );
+            print( file );
+        }
+
+    }
 
 Interpolation::Interpolation( const Interpolation& other ) : implementation_( other.implementation_ ) {}
 

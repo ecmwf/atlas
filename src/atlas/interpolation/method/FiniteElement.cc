@@ -9,6 +9,7 @@
  */
 
 #include <cmath>
+#include <limits>
 
 #include "atlas/interpolation/method/FiniteElement.h"
 
@@ -152,6 +153,7 @@ void FiniteElement::print(std::ostream& out) const
     tgt.gather().gather( stencil_weights_loc, stencil_weights_glb );
 
     if( mpi::comm().rank() == 0 ) {
+        int precision = std::numeric_limits<double>::max_digits10;
         for( idx_t i=0; i<global_size; ++i ) {
             out << std::setw(10) << i+1 << " : ";
             for( idx_t j=0; j<stencil_size_glb(i); ++j ) {
@@ -161,7 +163,7 @@ void FiniteElement::print(std::ostream& out) const
                 out << "          ";
             }
             for( idx_t j=0; j<stencil_size_glb(i); ++j ) {
-                out << std::setw(12) << std::left <<  stencil_weights_glb(i,j);
+                out << std::setw(precision+5) << std::left <<  std::setprecision(precision) << stencil_weights_glb(i,j);
             }
             out << std::endl;
         }
@@ -293,6 +295,7 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
 
     Triplets triplets;
     Ray ray( PointXYZ{( *ocoords_ )( ip, 0 ), ( *ocoords_ )( ip, 1 ), ( *ocoords_ )( ip, 2 )} );
+    Vector3D p{ ( *ocoords_ )( ip, 0 ), ( *ocoords_ )( ip, 1 ), ( *ocoords_ )( ip, 2 ) };
     ElementEdge edge;
     idx_t single_point;
     for ( ElemIndex3::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc ) {
@@ -307,18 +310,20 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
             ASSERT( idx[i] < inp_points );
         }
 
+        const double tolerance = 1.e-12;
+
         auto on_triag_edge = [&]() {
-            if( w[0] < 1.e-15 ) {
+            if( w[0] < tolerance ) {
                 edge.idx[0] = 1;
                 edge.idx[1] = 2;
                 return true;
             }
-            if( w[1] < 1.e-15 ) {
+            if( w[1] < tolerance ) {
                 edge.idx[0] = 0;
                 edge.idx[1] = 2;
                 return true;
             }
-            if( w[2] < 1.e-15 ) {
+            if( w[2] < tolerance ) {
                 edge.idx[0] = 0;
                 edge.idx[1] = 1;
                 return true;
@@ -327,22 +332,22 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
         };
 
         auto on_quad_edge = [&]() {
-            if( w[0] < 1.e-15 && w[1] < 1.e-15 ) {
+            if( w[0] < tolerance && w[1] < tolerance ) {
                 edge.idx[0] = 2;
                 edge.idx[1] = 3;
                 return true;
             }
-            if( w[1] < 1.e-15 && w[2] < 1.e-15 ) {
+            if( w[1] < tolerance && w[2] < tolerance ) {
                 edge.idx[0] = 0;
                 edge.idx[1] = 3;
                 return true;
             }
-            if( w[2] < 1.e-15 && w[3] < 1.e-15 ) {
+            if( w[2] < tolerance && w[3] < tolerance ) {
                 edge.idx[0] = 0;
                 edge.idx[1] = 1;
                 return true;
             }
-            if( w[3] < 1.e-15 && w[0] < 1.e-15 ) {
+            if( w[3] < tolerance && w[0] < tolerance ) {
                 edge.idx[0] = 1;
                 edge.idx[1] = 2;
                 return true;
@@ -351,15 +356,21 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
         };
 
         auto on_single_point = [&]() {
-            if( w[edge.idx[0]] < 1.e-15 ) {
+            if( w[edge.idx[0]] < tolerance ) {
                 single_point = edge.idx[1];
                 return true;
             }
-            if( w[edge.idx[1]] < 1.e-15 ) {
+            if( w[edge.idx[1]] < tolerance ) {
                 single_point = edge.idx[0];
                 return true;
             }
             return false;
+        };
+
+        auto interpolate_edge = [&]( const Vector3D& p0, const Vector3D& p1 ) {
+            double t = ( p - p0 ).squaredNorm() / ( p1 - p0 ).squaredNorm();
+            w[edge.idx[0]] = t;
+            w[edge.idx[1]] = 1.-t;
         };
 
         if ( nb_cols == 3 ) {
@@ -391,6 +402,7 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
                         if( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) {
                             edge.swap();
                         }
+                        interpolate_edge( triag.p(edge.idx[0]), triag.p(edge.idx[1] ) );
                         for( size_t i = 0; i < 2; ++i ) {
                             triplets.push_back( Triplet( ip, idx[edge.idx[i]], w[edge.idx[i]] ) );
                         }
@@ -435,6 +447,7 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
                         if( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) {
                             edge.swap();
                         }
+                        interpolate_edge( quad.p(edge.idx[0]), quad.p(edge.idx[1] ) );
                         for( size_t i = 0; i < 2; ++i ) {
                             triplets.push_back( Triplet( ip, idx[edge.idx[i]], w[edge.idx[i]] ) );
                         }

@@ -55,6 +55,12 @@ public:  // types
         return s;
     }
 
+    const Vector3D& p(int i) {
+        if(i==0) return v0;
+        if(i==1) return v1;
+        if(i==2) return v2;
+    }
+
 private:  // members
     Vector3D v0;
     Vector3D v1;
