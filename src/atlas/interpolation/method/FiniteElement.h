@@ -33,6 +33,8 @@ public:
 
     virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
 
+    virtual void print( std::ostream& ) const override;
+
 protected:
     /**
    * @brief Create an interpolant sparse matrix relating two (pre-partitioned)
@@ -59,9 +61,13 @@ protected:
     mesh::MultiBlockConnectivity* connectivity_;
     std::unique_ptr<array::ArrayView<double, 2>> icoords_;
     std::unique_ptr<array::ArrayView<double, 2>> ocoords_;
+    std::unique_ptr<array::ArrayView<gidx_t, 1>> igidx_;
 
     Field target_xyz_;
     Field target_ghost_;
+
+    FunctionSpace source_;
+    FunctionSpace target_;
 };
 
 }  // namespace method

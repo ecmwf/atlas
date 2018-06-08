@@ -21,6 +21,8 @@ public:
     NearestNeighbour( const Config& config ) : KNearestNeighboursBase( config ) {}
     virtual ~NearestNeighbour() {}
 
+    virtual void print( std::ostream& ) const override {}
+
 protected:
     /**
    * @brief Create an interpolant sparse matrix relating two (pre-partitioned)

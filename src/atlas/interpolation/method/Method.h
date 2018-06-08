@@ -12,6 +12,7 @@
 
 #include <string>
 #include <vector>
+#include <iosfwd>
 
 #include "eckit/config/Configuration.h"
 #include "eckit/linalg/SparseMatrix.h"
@@ -44,10 +45,12 @@ public:
     virtual void execute( const FieldSet& source, FieldSet& target ) const;
     virtual void execute( const Field& source, Field& target ) const;
 
+    virtual void print( std::ostream& ) const = 0;
+
 protected:
-    typedef eckit::linalg::Triplet Triplet;
-    typedef std::vector<Triplet> Triplets;
-    typedef eckit::linalg::SparseMatrix Matrix;
+    using Triplet  = eckit::linalg::Triplet;
+    using Triplets = std::vector<Triplet>;
+    using Matrix   = eckit::linalg::SparseMatrix;
 
     static void normalise( Triplets& triplets );
 
@@ -58,6 +61,7 @@ protected:
     //        so do not expose here, even though only linear operators are now
     //        implemented.
     Matrix matrix_;
+
 };
 
 struct MethodFactory {

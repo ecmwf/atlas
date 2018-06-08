@@ -70,6 +70,10 @@ public:
         add_option( new SimpleOption<double>( "target-mesh-generator-angle",
                                               "target mesh generator angle option (default 0.)" ) );
         add_option( new SimpleOption<size_t>( "target-mesh-halo", "target mesh halo size (default 1)" ) );
+        add_option( new SimpleOption<bool>( "forward-interpolator-output",
+                                            "Output forward interpolator's points and weights" ) );
+        add_option( new SimpleOption<bool>( "backward-interpolator-output",
+                                            "Output backward interpolator's points and weights" ) );
     }
 };
 
@@ -146,6 +150,10 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         Log::info() << "Computing backward interpolator" << std::endl;
         interpolator_backward =
             Interpolation( option::type( interpolation_method ), tgt_functionspace, src_functionspace );
+    }
+
+    if( args.getBool( "forward-interpolator-output", false ) ) {
+        interpolator_forward.print( Log::info() );
     }
 
     // Create source FunctionSpace and fields

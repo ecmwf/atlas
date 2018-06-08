@@ -17,6 +17,7 @@
 #include "eckit/log/ProgressTimer.h"
 #include "eckit/log/Seconds.h"
 #include "eckit/mpi/Comm.h"
+#include "eckit/exception/Exceptions.h"
 
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/PointCloud.h"
@@ -32,6 +33,9 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
+#include "atlas/parallel/mpi/Buffer.h"
+#include "atlas/parallel/GatherScatter.h"
+
 
 namespace atlas {
 namespace interpolation {
@@ -48,6 +52,9 @@ static const double parametricEpsilon = 1e-15;
 
 void FiniteElement::setup( const FunctionSpace& source, const FunctionSpace& target ) {
     ATLAS_TRACE( "atlas::interpolation::method::FiniteElement::setup()" );
+
+    source_ = source;
+    target_ = target;
 
     if ( functionspace::NodeColumns tgt = target ) {
         Mesh meshTarget = tgt.mesh();
@@ -78,6 +85,89 @@ void FiniteElement::setup( const FunctionSpace& source, const FunctionSpace& tar
     setup( source );
 }
 
+struct Stencil {
+    enum { max_stencil_size = 4 };
+    Stencil() {
+        g = -1;
+        size = 0;
+    }
+    void add( gidx_t tgt, gidx_t src, double weight ) {
+        if( g >= 0 ) {
+            ASSERT( tgt == g );
+        }
+        g = tgt;
+        size_t i=size;
+        source[i] = src;
+        weights[i] = weight;
+        ++size;
+    }
+    gidx_t g;
+    std::array<gidx_t,max_stencil_size> source;
+    std::array<double,max_stencil_size> weights;
+    size_t size;
+};
+
+void FiniteElement::print(std::ostream& out) const
+{
+    functionspace::NodeColumns src (source_);
+    functionspace::NodeColumns tgt (target_);
+    if( not tgt ) NOTIMP;
+    auto gidx_src = array::make_view<gidx_t,1>( src.nodes().global_index() );
+
+    ASSERT( tgt.nodes().size() == matrix_.rows() );
+
+
+    auto field_stencil_points_loc = tgt.createField<gidx_t>( option::variables(Stencil::max_stencil_size) );
+    auto field_stencil_weigths_loc = tgt.createField<double>( option::variables(Stencil::max_stencil_size) );
+    auto field_stencil_size_loc = tgt.createField<int>();
+
+    auto stencil_points_loc = array::make_view<gidx_t,2>( field_stencil_points_loc );
+    auto stencil_weights_loc = array::make_view<double,2>( field_stencil_weigths_loc );
+    auto stencil_size_loc   = array::make_view<int,1>( field_stencil_size_loc );
+    stencil_size_loc.assign(0);
+
+    for( Matrix::const_iterator it = matrix_.begin(); it!=matrix_.end(); ++it ) {
+        int p = it.row();
+        int& i = stencil_size_loc( p );
+        stencil_points_loc( p, i ) = gidx_src( it.col() );
+        stencil_weights_loc( p, i ) = *it;
+        ++i;
+    }
+
+
+    size_t global_size = tgt.gather().glb_dof();
+
+    auto field_stencil_points_glb = tgt.createField<gidx_t>( option::variables(Stencil::max_stencil_size) | option::global(0) );
+    auto field_stencil_weights_glb = tgt.createField<double>( option::variables(Stencil::max_stencil_size) | option::global(0) );
+    auto field_stencil_size_glb = tgt.createField<int>( option::global(0) );
+
+
+
+    auto stencil_points_glb = array::make_view<gidx_t,2>( field_stencil_points_glb );
+    auto stencil_weights_glb = array::make_view<double,2>( field_stencil_weights_glb );
+    auto stencil_size_glb   = array::make_view<int,1>( field_stencil_size_glb );
+
+    tgt.gather().gather( stencil_size_loc, stencil_size_glb );
+    tgt.gather().gather( stencil_points_loc, stencil_points_glb );
+    tgt.gather().gather( stencil_weights_loc, stencil_weights_glb );
+
+    if( mpi::comm().rank() == 0 ) {
+        for( idx_t i=0; i<global_size; ++i ) {
+            out << std::setw(10) << i+1 << " : ";
+            for( idx_t j=0; j<stencil_size_glb(i); ++j ) {
+                out << std::setw(10) << stencil_points_glb(i,j);
+            }
+            for( idx_t j=stencil_size_glb(i); j<Stencil::max_stencil_size; ++j ) {
+                out << "          ";
+            }
+            for( idx_t j=0; j<stencil_size_glb(i); ++j ) {
+                out << std::setw(12) << std::left <<  stencil_weights_glb(i,j);
+            }
+            out << std::endl;
+        }
+    }
+}
+
 void FiniteElement::setup( const FunctionSpace& source ) {
     const functionspace::NodeColumns src = source;
     ASSERT( src );
@@ -99,6 +189,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
 
     icoords_.reset( new array::ArrayView<double, 2>( array::make_view<double, 2>( source_xyz ) ) );
     ocoords_.reset( new array::ArrayView<double, 2>( array::make_view<double, 2>( target_xyz_ ) ) );
+    igidx_.reset( new array::ArrayView<gidx_t, 1>( array::make_view<gidx_t, 1>( src.nodes().global_index() ) ) );
 
     connectivity_ = &meshSource.cells().node_connectivity();
 
@@ -183,17 +274,26 @@ void FiniteElement::setup( const FunctionSpace& source ) {
     matrix_.swap( A );
 }
 
+struct ElementEdge {
+    std::array<idx_t,2> idx;
+    void swap() {
+        idx_t tmp = idx[0];
+        idx[0] = idx[1];
+        idx[1] = tmp;
+    }
+};
+
 Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemIndex3::NodeList& elems,
                                                         std::ostream& failures_log ) const {
     ASSERT( elems.begin() != elems.end() );
 
     const size_t inp_points = icoords_->shape( 0 );
-    size_t idx[4];
-    double w[4];
+    std::array<size_t,4> idx;
+    std::array<double,4> w;
 
     Triplets triplets;
     Ray ray( PointXYZ{( *ocoords_ )( ip, 0 ), ( *ocoords_ )( ip, 1 ), ( *ocoords_ )( ip, 2 )} );
-
+    ElementEdge edge;
     for ( ElemIndex3::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc ) {
         const size_t elem_id = ( *itc ).value().payload();
         ASSERT( elem_id < connectivity_->rows() );
@@ -206,6 +306,48 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
             ASSERT( idx[i] < inp_points );
         }
 
+        auto on_triag_edge = [&](ElementEdge& edge) {
+            if( w[0] < 1.e-15 ) {
+                edge.idx[0] = 1;
+                edge.idx[1] = 2;
+                return true;
+            }
+            if( w[1] < 1.e-15 ) {
+                edge.idx[0] = 0;
+                edge.idx[1] = 2;
+                return true;
+            }
+            if( w[2] < 1.e-15 ) {
+                edge.idx[0] = 0;
+                edge.idx[1] = 1;
+                return true;
+            }
+            return false;
+        };
+
+        auto on_quad_edge = [&](ElementEdge& edge) {
+            if( w[0] < 1.e-15 && w[1] < 1.e-15 ) {
+                edge.idx[0] = 2;
+                edge.idx[1] = 3;
+                return true;
+            }
+            if( w[1] < 1.e-15 && w[2] < 1.e-15 ) {
+                edge.idx[0] = 0;
+                edge.idx[1] = 3;
+                return true;
+            }
+            if( w[2] < 1.e-15 && w[3] < 1.e-15 ) {
+                edge.idx[0] = 0;
+                edge.idx[1] = 1;
+                return true;
+            }
+            if( w[3] < 1.e-15 && w[0] < 1.e-15 ) {
+                edge.idx[0] = 1;
+                edge.idx[1] = 2;
+                return true;
+            }
+            return false;
+        };
         if ( nb_cols == 3 ) {
             /* triangle */
             element::Triag3D triag(
@@ -227,8 +369,18 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
                 w[1] = is.u;
                 w[2] = is.v;
 
-                for ( size_t i = 0; i < 3; ++i ) {
-                    triplets.push_back( Triplet( ip, idx[i], w[i] ) );
+                if( on_triag_edge( edge) ) {
+                    if( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) {
+                        edge.swap();
+                    }
+                    for( size_t i = 0; i < 2; ++i ) {
+                        triplets.push_back( Triplet( ip, idx[edge.idx[i]], w[edge.idx[i]] ) );
+                    }
+                }
+                else {
+                    for ( size_t i = 0; i < 3; ++i ) {
+                        triplets.push_back( Triplet( ip, idx[i], w[i] ) );
+                    }
                 }
 
                 break;  // stop looking for elements
@@ -256,8 +408,18 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
                 w[2] = is.u * is.v;
                 w[3] = ( 1. - is.u ) * is.v;
 
-                for ( size_t i = 0; i < 4; ++i ) {
-                    triplets.push_back( Triplet( ip, idx[i], w[i] ) );
+                if( on_quad_edge( edge ) ) {
+                    if( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) {
+                        edge.swap();
+                    }
+                    for( size_t i = 0; i < 2; ++i ) {
+                        triplets.push_back( Triplet( ip, idx[edge.idx[i]], w[edge.idx[i]] ) );
+                    }
+                }
+                else {
+                    for ( size_t i = 0; i < 4; ++i ) {
+                        triplets.push_back( Triplet( ip, idx[i], w[i] ) );
+                    }
                 }
                 break;  // stop looking for elements
             }

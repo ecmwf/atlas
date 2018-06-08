@@ -22,8 +22,10 @@
 
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/NodeColumns.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/mesh/Nodes.h"
 
 // for static linking
 #include "FiniteElement.h"
