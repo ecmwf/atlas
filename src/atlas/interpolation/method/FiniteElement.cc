@@ -294,6 +294,7 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
     Triplets triplets;
     Ray ray( PointXYZ{( *ocoords_ )( ip, 0 ), ( *ocoords_ )( ip, 1 ), ( *ocoords_ )( ip, 2 )} );
     ElementEdge edge;
+    idx_t single_point;
     for ( ElemIndex3::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc ) {
         const size_t elem_id = ( *itc ).value().payload();
         ASSERT( elem_id < connectivity_->rows() );
@@ -306,7 +307,7 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
             ASSERT( idx[i] < inp_points );
         }
 
-        auto on_triag_edge = [&](ElementEdge& edge) {
+        auto on_triag_edge = [&]() {
             if( w[0] < 1.e-15 ) {
                 edge.idx[0] = 1;
                 edge.idx[1] = 2;
@@ -325,7 +326,7 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
             return false;
         };
 
-        auto on_quad_edge = [&](ElementEdge& edge) {
+        auto on_quad_edge = [&]() {
             if( w[0] < 1.e-15 && w[1] < 1.e-15 ) {
                 edge.idx[0] = 2;
                 edge.idx[1] = 3;
@@ -348,6 +349,19 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
             }
             return false;
         };
+
+        auto on_single_point = [&]() {
+            if( w[edge.idx[0]] < 1.e-15 ) {
+                single_point = edge.idx[1];
+                return true;
+            }
+            if( w[edge.idx[1]] < 1.e-15 ) {
+                single_point = edge.idx[0];
+                return true;
+            }
+            return false;
+        };
+
         if ( nb_cols == 3 ) {
             /* triangle */
             element::Triag3D triag(
@@ -369,12 +383,17 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
                 w[1] = is.u;
                 w[2] = is.v;
 
-                if( on_triag_edge( edge) ) {
-                    if( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) {
-                        edge.swap();
+                if( on_triag_edge() ) {
+                    if( on_single_point() ) {
+                        triplets.push_back( Triplet( ip, idx[single_point], w[single_point] ) );
                     }
-                    for( size_t i = 0; i < 2; ++i ) {
-                        triplets.push_back( Triplet( ip, idx[edge.idx[i]], w[edge.idx[i]] ) );
+                    else {
+                        if( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) {
+                            edge.swap();
+                        }
+                        for( size_t i = 0; i < 2; ++i ) {
+                            triplets.push_back( Triplet( ip, idx[edge.idx[i]], w[edge.idx[i]] ) );
+                        }
                     }
                 }
                 else {
@@ -408,12 +427,17 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
                 w[2] = is.u * is.v;
                 w[3] = ( 1. - is.u ) * is.v;
 
-                if( on_quad_edge( edge ) ) {
-                    if( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) {
-                        edge.swap();
+                if( on_quad_edge() ) {
+                    if( on_single_point() ) {
+                        triplets.push_back( Triplet( ip, idx[single_point], w[single_point] ) );
                     }
-                    for( size_t i = 0; i < 2; ++i ) {
-                        triplets.push_back( Triplet( ip, idx[edge.idx[i]], w[edge.idx[i]] ) );
+                    else {
+                        if( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) {
+                            edge.swap();
+                        }
+                        for( size_t i = 0; i < 2; ++i ) {
+                            triplets.push_back( Triplet( ip, idx[edge.idx[i]], w[edge.idx[i]] ) );
+                        }
                     }
                 }
                 else {
