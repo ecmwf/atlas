@@ -89,12 +89,12 @@ Mesh PointCloudIO::read( const eckit::PathName& path, std::vector<std::string>& 
 
         mesh.nodes().resize( nb_pts );
 
-        mesh::Nodes& nodes             = mesh.nodes();
-        array::ArrayView<double, 2> xy = array::make_view<double, 2>( nodes.xy() );
-        array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( nodes.lonlat() );
+        mesh::Nodes& nodes                  = mesh.nodes();
+        array::ArrayView<double, 2> xy      = array::make_view<double, 2>( nodes.xy() );
+        array::ArrayView<double, 2> lonlat  = array::make_view<double, 2>( nodes.lonlat() );
         array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
-        array::ArrayView<int, 1> part = array::make_view<int, 1>( nodes.partition() );
-        part.assign(0);
+        array::ArrayView<int, 1> part       = array::make_view<int, 1>( nodes.partition() );
+        part.assign( 0 );
         // header, part 2:
         // determine columns' labels
         // (check end of first line for possible column labels, starting from
@@ -128,13 +128,13 @@ Mesh PointCloudIO::read( const eckit::PathName& path, std::vector<std::string>& 
 
             // NOTE always expects (lon,lat) order, maybe make it configurable?
             PointXY pxy;
-            iss >> pxy.x() >>pxy.y();
+            iss >> pxy.x() >> pxy.y();
 
-            xy(i,XX) = pxy.x();
-            xy(i,YY) = pxy.y();
-            lonlat(i,LON) = pxy.x();
-            lonlat(i,LAT) = pxy.y();
-            glb_idx(i) = i+1;
+            xy( i, XX )      = pxy.x();
+            xy( i, YY )      = pxy.y();
+            lonlat( i, LON ) = pxy.x();
+            lonlat( i, LAT ) = pxy.y();
+            glb_idx( i )     = i + 1;
 
             for ( j = 0; iss && j < nb_fld; ++j )
                 iss >> fields[j]( i );
@@ -264,7 +264,6 @@ void PointCloudIO::write( const eckit::PathName& path, const FieldSet& fieldset,
 }
 
 void PointCloudIO::write( const eckit::PathName& path, const std::vector<PointLonLat>& pts ) {
-
     Log::debug() << "PointCloudIO writing " << path << std::endl;
 
     std::ofstream f( path.asString().c_str() );
@@ -282,7 +281,6 @@ void PointCloudIO::write( const eckit::PathName& path, const std::vector<PointLo
 
 void PointCloudIO::write( const eckit::PathName& path, const std::vector<double>& lon, const std::vector<double>& lat,
                           const std::vector<std::vector<double>*>& vfvalues, const std::vector<std::string>& vfnames ) {
-
     Log::debug() << "PointCloudIO writing " << path << std::endl;
 
     const std::string msg( "PointCloudIO::write: " );
@@ -318,7 +316,6 @@ void PointCloudIO::write( const eckit::PathName& path, const std::vector<double>
 
 void PointCloudIO::write( const eckit::PathName& path, const int& nb_pts, const double* lon, const double* lat,
                           const int& nb_fld, const double** afvalues, const char** afnames ) {
-
     Log::debug() << "PointCloudIO writing " << path << std::endl;
 
 

@@ -316,7 +316,7 @@ class RegularGaussianGrid : public Gaussian<RegularGrid> {
 
 public:
     using grid_t::grid_t;
-    RegularGaussianGrid( int N , const Domain& = Domain() );
+    RegularGaussianGrid( int N, const Domain& = Domain() );
 
     inline double lon( size_t i ) const { return x( i ); }
 

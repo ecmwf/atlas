@@ -199,16 +199,16 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
         }
     }
     else {
-        size_t nb_cells_to_edit(0);
-        for( const auto& new_cells : build_halo.periodic_cells_local_index_ ) {
+        size_t nb_cells_to_edit( 0 );
+        for ( const auto& new_cells : build_halo.periodic_cells_local_index_ ) {
             nb_cells_to_edit += new_cells.size();
         }
         cells_to_edit.resize( nb_cells_to_edit );
-        int c{ 0 };
-        int i{ 0 };
+        int c{0};
+        int i{0};
         for ( int t = 0; t < cells.nb_types(); ++t ) {
             for ( idx_t p : build_halo.periodic_cells_local_index_[t] ) {
-               cells_to_edit[i++] = c + p;
+                cells_to_edit[i++] = c + p;
             }
             c += cells.elements( t ).size();
         }
@@ -308,7 +308,7 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem ) {
 
     const mesh::HybridElements::Connectivity& elem_nodes = mesh.cells().node_connectivity();
     auto field_flags                                     = array::make_view<int, 1>( mesh.cells().flags() );
-    auto patched = [&field_flags]( size_t e ) {
+    auto patched                                         = [&field_flags]( size_t e ) {
         using Topology = atlas::mesh::Nodes::Topology;
         return Topology::check( field_flags( e ), Topology::PATCH );
     };
@@ -699,7 +699,7 @@ public:
             buf.elem_glb_idx[p][jelem] = elem_glb_idx( ielem );
             buf.elem_part[p][jelem]    = elem_part( ielem );
             Topology::set( buf.elem_flags[p][jelem], elem_flags( ielem ) );
-            buf.elem_type[p][jelem]    = mesh.cells().type_idx( ielem );
+            buf.elem_type[p][jelem] = mesh.cells().type_idx( ielem );
             for ( size_t jnode = 0; jnode < elem_nodes->cols( ielem ); ++jnode )
                 buf.elem_nodes_id[p][jelemnode++] = compute_uid( ( *elem_nodes )( ielem, jnode ) );
         }
@@ -762,7 +762,7 @@ public:
             size_t ielem                    = elems[jelem];
             buf.elem_part[p][jelem]         = elem_part( ielem );
             Topology::set( buf.elem_flags[p][jelem], elem_flags( ielem ) | newflags );
-            buf.elem_type[p][jelem]         = mesh.cells().type_idx( ielem );
+            buf.elem_type[p][jelem] = mesh.cells().type_idx( ielem );
             std::vector<double> crds( elem_nodes->cols( ielem ) * 2 );
             for ( size_t jnode = 0; jnode < elem_nodes->cols( ielem ); ++jnode ) {
                 double crd[] = {xy( ( *elem_nodes )( ielem, jnode ), XX ), xy( ( *elem_nodes )( ielem, jnode ), YY )};
@@ -853,8 +853,8 @@ public:
                 lonlat( loc_idx, XX ) = pll.lon();
                 lonlat( loc_idx, YY ) = pll.lat();
 
-                if ( Topology::check( flags( loc_idx ), Topology::PERIODIC ) and not
-                     Topology::check( flags( loc_idx ), Topology::BC ) ) {
+                if ( Topology::check( flags( loc_idx ), Topology::PERIODIC ) and
+                     not Topology::check( flags( loc_idx ), Topology::BC ) ) {
                     status.new_periodic_ghost_points.push_back( loc_idx );
                 }
 
@@ -970,7 +970,7 @@ public:
                             loc_idx, n, uid2node[buf.elem_nodes_id[jpart][buf.elem_nodes_displs[jpart][jelem] + n]] );
                     }
 
-                    if( Topology::check( elem_type_flags( loc_idx ), Topology::PERIODIC ) ) {
+                    if ( Topology::check( elem_type_flags( loc_idx ), Topology::PERIODIC ) ) {
                         status.new_periodic_ghost_cells[t].push_back( old_size + new_elem );
                     }
                     ++new_elem;
@@ -1230,7 +1230,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
     helper.add_buffers( recvmesh );
 }
 
-BuildHalo::BuildHalo(Mesh& mesh) : mesh_( mesh ), periodic_cells_local_index_( mesh.cells().nb_types() ) {}
+BuildHalo::BuildHalo( Mesh& mesh ) : mesh_( mesh ), periodic_cells_local_index_( mesh.cells().nb_types() ) {}
 
 void BuildHalo::operator()( int nb_elems ) {
     ATLAS_TRACE( "BuildHalo" );
@@ -1275,7 +1275,7 @@ void BuildHalo::operator()( int nb_elems ) {
         }
         for ( int t = 0; t < mesh_.cells().nb_types(); ++t ) {
             for ( idx_t p : helper.status.new_periodic_ghost_cells[t] ) {
-               periodic_cells_local_index_[t].push_back( p );
+                periodic_cells_local_index_[t].push_back( p );
             }
         }
 

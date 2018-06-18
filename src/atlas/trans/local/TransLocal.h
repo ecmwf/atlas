@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include "atlas/array.h"
 #include "atlas/grid/Grid.h"

@@ -230,7 +230,7 @@ struct FFTW_Data {
     std::vector<fftw_plan> plans;
 #endif
 };
-}
+}  // namespace detail
 
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -495,8 +495,8 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             {
                 ATLAS_TRACE( "Fourier precomputations (FFTW)" );
                 int num_complex = ( nlonsMaxGlobal_ / 2 ) + 1;
-                fftw_->in         = fftw_alloc_complex( nlats * num_complex );
-                fftw_->out        = fftw_alloc_real( nlats * nlonsMaxGlobal_ );
+                fftw_->in       = fftw_alloc_complex( nlats * num_complex );
+                fftw_->out      = fftw_alloc_real( nlats * nlonsMaxGlobal_ );
 
                 if ( fft_cache_ ) {
                     Log::debug() << "Import FFTW wisdom from cache" << std::endl;
@@ -516,8 +516,9 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 //                if ( wisdomString.length() > 0 ) { fftw_import_wisdom_from_string( &wisdomString[0u] ); }
                 if ( grid::RegularGrid( gridGlobal_ ) ) {
                     fftw_->plans.resize( 1 );
-                    fftw_->plans[0] = fftw_plan_many_dft_c2r( 1, &nlonsMaxGlobal_, nlats, fftw_->in, NULL, 1, num_complex,
-                                                              fftw_->out, NULL, 1, nlonsMaxGlobal_, FFTW_ESTIMATE );
+                    fftw_->plans[0] =
+                        fftw_plan_many_dft_c2r( 1, &nlonsMaxGlobal_, nlats, fftw_->in, NULL, 1, num_complex, fftw_->out,
+                                                NULL, 1, nlonsMaxGlobal_, FFTW_ESTIMATE );
                 }
                 else {
                     fftw_->plans.resize( nlatsLegDomain_ );
@@ -546,7 +547,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 //                    write.close();
                 //                }
             }
-            // other FFT implementations should be added with #elif statements
+                // other FFT implementations should be added with #elif statements
 #else
             useFFT_               = false;  // no FFT implemented => default to dgemm
             std::string file_path = TransParameters( config ).write_fft();
@@ -981,7 +982,7 @@ void TransLocal::invtrans_fourier_reduced( const int nlats, const grid::Structur
                     for ( int jlat = 0; jlat < nlats; jlat++ ) {
                         int idx = 0;
                         //Log::info() << jlat << "in:" << std::endl;
-                        int num_complex   = ( nlonsGlobal_[jlat] / 2 ) + 1;
+                        int num_complex     = ( nlonsGlobal_[jlat] / 2 ) + 1;
                         fftw_->in[idx++][0] = scl_fourier[posMethod( jfld, 0, jlat, 0, nb_fields, nlats )];
                         //Log::info() << fftw_->in[0][0] << " ";
                         for ( int jm = 1; jm < num_complex; jm++, idx++ ) {

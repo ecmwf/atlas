@@ -413,9 +413,7 @@ Field& build_edges_partition( Mesh& mesh ) {
             // if( not domain_bdry(jedge) ) {
             bdry_edges.push_back( edge_glb_idx( jedge ) );
             p = elem_part( elem1 );
-            if( pn1 != p && pn2 == pn1 && elem_halo( elem1 ) > 0 ) {
-                p = pn1;
-            }
+            if ( pn1 != p && pn2 == pn1 && elem_halo( elem1 ) > 0 ) { p = pn1; }
             // }
         }
         else if ( p != elem_part( elem1 ) && p != elem_part( elem2 ) ) {
@@ -508,12 +506,12 @@ Field& build_edges_partition( Mesh& mesh ) {
         if ( edge_is_partition_boundary ) {
             if ( not edge_partition_is_same_as_one_of_nodes ) {
                 if ( elem1 != edge_to_elem.missing_value() ) {
-                    Log::error() << "[" << mypart << "] " << EDGE( jedge ) << " [p" << p << "] is not correct elem1[p" << elem_part( elem1 )
-                                 << "]" << std::endl;
+                    Log::error() << "[" << mypart << "] " << EDGE( jedge ) << " [p" << p << "] is not correct elem1[p"
+                                 << elem_part( elem1 ) << "]" << std::endl;
                 }
                 else {
-                    Log::error() << "[" << mypart << "] " << EDGE( jedge ) << " [p" << p << "] is not correct elem2[p" << elem_part( elem2 )
-                                 << "]" << std::endl;
+                    Log::error() << "[" << mypart << "] " << EDGE( jedge ) << " [p" << p << "] is not correct elem2[p"
+                                 << elem_part( elem2 ) << "]" << std::endl;
                 }
                 insane = 1;
             }
@@ -665,13 +663,14 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
             else {
                 std::stringstream msg;
 #ifdef DEBUGGING_PARFIELDS
-                msg << "Edge(" << recv_edge[ jedge * varsize + 2 ] << "[p" << recv_edge[ jedge * varsize + 4 ] << "] "
-                    << recv_edge[ jedge *varsize + 3 ] << "[p" << recv_edge[ jedge * varsize + 5 ] << "])";
+                msg << "Edge(" << recv_edge[jedge * varsize + 2] << "[p" << recv_edge[jedge * varsize + 4] << "] "
+                    << recv_edge[jedge * varsize + 3] << "[p" << recv_edge[jedge * varsize + 5] << "])";
 #else
                 msg << "Edge with uid " << recv_uid;
 #endif
                 msg << " requested by rank [" << jpart << "]";
-                msg << " that should be owned by " << mpi::comm().rank() << " is not found. This could be because no "
+                msg << " that should be owned by " << mpi::comm().rank()
+                    << " is not found. This could be because no "
                        "halo was built.";
                 // throw eckit::SeriousBug(msg.str(),Here());
                 Log::warning() << msg.str() << " @ " << Here() << std::endl;

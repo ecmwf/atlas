@@ -11,8 +11,8 @@
 #include "atlas/grid/Grid.h"
 
 #include <limits>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "eckit/config/Parametrisation.h"
 #include "eckit/exception/Exceptions.h"

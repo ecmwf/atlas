@@ -152,9 +152,7 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
             Interpolation( option::type( interpolation_method ), tgt_functionspace, src_functionspace );
     }
 
-    if( args.getBool( "forward-interpolator-output", false ) ) {
-        interpolator_forward.print( Log::info() );
-    }
+    if ( args.getBool( "forward-interpolator-output", false ) ) { interpolator_forward.print( Log::info() ); }
 
     // Create source FunctionSpace and fields
 

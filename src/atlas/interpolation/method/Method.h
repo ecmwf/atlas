@@ -10,9 +10,9 @@
 
 #pragma once
 
+#include <iosfwd>
 #include <string>
 #include <vector>
-#include <iosfwd>
 
 #include "eckit/config/Configuration.h"
 #include "eckit/linalg/SparseMatrix.h"
@@ -61,7 +61,6 @@ protected:
     //        so do not expose here, even though only linear operators are now
     //        implemented.
     Matrix matrix_;
-
 };
 
 struct MethodFactory {

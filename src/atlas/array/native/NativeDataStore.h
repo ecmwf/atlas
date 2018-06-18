@@ -11,8 +11,8 @@
 #pragma once
 
 
-#include <algorithm>    // std::fill
-#include <limits>       // std::numeric_limits<T>::signaling_NaN
+#include <algorithm>  // std::fill
+#include <limits>     // std::numeric_limits<T>::signaling_NaN
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/library/config.h"
 
@@ -24,27 +24,28 @@ namespace native {
 
 template <typename Value>
 static constexpr Value invalid_value() {
-    return std::numeric_limits<Value>::has_signaling_NaN ? std::numeric_limits<Value>::signaling_NaN() :
-           std::numeric_limits<Value>::has_quiet_NaN     ? std::numeric_limits<Value>::quiet_NaN()     :
-           std::numeric_limits<Value>::has_infinity      ? std::numeric_limits<Value>::infinity()      :
-                                                           std::numeric_limits<Value>::max();
+    return std::numeric_limits<Value>::has_signaling_NaN
+               ? std::numeric_limits<Value>::signaling_NaN()
+               : std::numeric_limits<Value>::has_quiet_NaN
+                     ? std::numeric_limits<Value>::quiet_NaN()
+                     : std::numeric_limits<Value>::has_infinity ? std::numeric_limits<Value>::infinity()
+                                                                : std::numeric_limits<Value>::max();
 }
 
 #if ATLAS_INIT_SNAN
-template< typename Value >
+template <typename Value>
 void initialise( Value array[], size_t size ) {
     std::fill_n( array, size, invalid_value<Value>() );
 }
 #else
-template< typename Value > void initialise( Value[], size_t ) {}
+template <typename Value>
+void initialise( Value[], size_t ) {}
 #endif
 
 template <typename Value>
 class DataStore : public ArrayDataStore {
 public:
-    DataStore( size_t size ) : data_store_( new Value[size] ), size_( size ) {
-        initialise( data_store_, size_ );
-    }
+    DataStore( size_t size ) : data_store_( new Value[size] ), size_( size ) { initialise( data_store_, size_ ); }
 
     virtual ~DataStore() override { delete[] data_store_; }
 

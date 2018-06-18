@@ -116,7 +116,7 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
 
     // Verify that all edges have been found
     auto field_flags = array::make_view<int, 1>( mesh.cells().flags() );
-    auto patch = [&field_flags]( size_t e ) {
+    auto patch       = [&field_flags]( size_t e ) {
         using Topology = atlas::mesh::Nodes::Topology;
         return Topology::check( field_flags( e ), Topology::PATCH );
     };
