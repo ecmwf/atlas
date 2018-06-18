@@ -48,6 +48,12 @@ else()
   set( ATLAS_HAVE_BOUNDSCHECKING 0 )
 endif()
 
+if( ATLAS_HAVE_INIT_SNAN )
+  set( ATLAS_HAVE_INIT_SNAN 1 )
+else()
+  set( ATLAS_HAVE_INIT_SNAN 0 )
+endif()
+
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
   set( ATLAS_HAVE_GRIDTOOLS_STORAGE 1 )
 else()

@@ -326,6 +326,8 @@ CASE( "write_read_write_field" ) {
     for ( size_t i = 0; i < field_data.size(); ++i ) {
         EXPECT( eckit::types::is_approximately_equal( funny_formula( i ), field_data( i ),
                                                       0.001 ) );  // 0.001% relative error
+        EXPECT( eckit::types::is_approximately_equal( funny_formula( i ), field_data( i ),
+                                                      0.001 ) );  // 0.001% relative error
     }
 
     // PART 4
@@ -338,6 +340,7 @@ CASE( "write_read_write_field" ) {
     EXPECT_NO_THROW( fieldset.add( field ) );
 
     functionspace::NodeColumns functionspace( mesh );
+
     EXPECT_NO_THROW( output::detail::PointCloudIO::write( "pointcloud_FieldSet.txt", fieldset, functionspace ) );
     EXPECT_NO_THROW( output::detail::PointCloudIO::write( "pointcloud_Grid.txt", mesh ) );
 
@@ -350,9 +353,6 @@ CASE( "write_read_write_field" ) {
     EXPECT( grid_from_FieldSet );
     EXPECT( grid_from_Grid );
 
-    // (guarantee different grid, to make checks useful)
-    EXPECT( grid != grid_from_FieldSet );
-    EXPECT( grid != grid_from_Grid );
 
     // PART 5
     // compare reading of reference data to:
