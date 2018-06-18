@@ -1846,8 +1846,8 @@ subroutine minloc_per_level(this,field,minimum,location)
   use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
-  type(atlas_Field), intent(out) :: minimum
-  type(atlas_Field), intent(out) :: location
+  type(atlas_Field), intent(inout) :: minimum
+  type(atlas_Field), intent(inout) :: location
   call atlas__NodesFunctionSpace__minloc_per_level(this%c_ptr(),field%c_ptr(),minimum%c_ptr(),location%c_ptr())
 end subroutine
 
@@ -1857,8 +1857,8 @@ subroutine maxloc_per_level(this,field,maximum,location)
   use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
-  type(atlas_Field), intent(out) :: maximum
-  type(atlas_Field), intent(out) :: location
+  type(atlas_Field), intent(inout) :: maximum
+  type(atlas_Field), intent(inout) :: location
   call atlas__NodesFunctionSpace__maxloc_per_level(this%c_ptr(),field%c_ptr(),maximum%c_ptr(),location%c_ptr())
 end subroutine
 
@@ -1868,7 +1868,7 @@ subroutine minimum_per_level(this,field,minimum)
   use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
-  type(atlas_Field), intent(out) :: minimum
+  type(atlas_Field), intent(inout) :: minimum
   call atlas__NodesFunctionSpace__min_per_level(this%c_ptr(),field%c_ptr(),minimum%c_ptr())
 end subroutine
 
@@ -1878,7 +1878,7 @@ subroutine maximum_per_level(this,field,maximum)
   use atlas_functionspace_NodeColumns_c_binding
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
-  type(atlas_Field), intent(out) :: maximum
+  type(atlas_Field), intent(inout) :: maximum
   call atlas__NodesFunctionSpace__max_per_level(this%c_ptr(),field%c_ptr(),maximum%c_ptr())
 end subroutine
 
@@ -1889,7 +1889,7 @@ subroutine sum_per_level(this,field,sum,N)
   use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
-  type(atlas_Field), intent(out) :: sum
+  type(atlas_Field), intent(inout) :: sum
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
   call atlas__NodesFunctionSpace__sum_per_level(this%c_ptr(),field%c_ptr(),sum%c_ptr(),opt_N)
@@ -1903,7 +1903,7 @@ subroutine order_independent_sum_per_level(this,field,sum,N)
   use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
-  type(atlas_Field), intent(out) :: sum
+  type(atlas_Field), intent(inout) :: sum
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
   call atlas__NodesFunctionSpace__oisum_per_level(this%c_ptr(),field%c_ptr(),sum%c_ptr(),opt_N)
@@ -1917,7 +1917,7 @@ subroutine mean_per_level(this,field,mean,N)
   use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
-  type(atlas_Field), intent(out) :: mean
+  type(atlas_Field), intent(inout) :: mean
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
   call atlas__NodesFunctionSpace__mean_per_level(this%c_ptr(),field%c_ptr(),mean%c_ptr(),opt_N)
