@@ -20,9 +20,11 @@ static std::array<double, 2> get_interval_y( const eckit::Parametrisation& param
     return {ymin, ymax};
 }
 
+/*
 constexpr std::array<double, 2> interval_x() {
     return {0., 360.};
 }
+*/
 }  // namespace
 
 constexpr char ZonalBandDomain::units_[];

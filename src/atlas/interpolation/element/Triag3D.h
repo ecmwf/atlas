@@ -59,6 +59,7 @@ public:  // types
         if ( i == 0 ) return v0;
         if ( i == 1 ) return v1;
         if ( i == 2 ) return v2;
+        return Vector3D();
     }
 
 private:  // members

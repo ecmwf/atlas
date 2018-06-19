@@ -774,7 +774,6 @@ void StructuredColumns::haloExchange( FieldSet& fieldset ) const {
                 break;
             default:
                 throw eckit::Exception( "Rank not supported", Here() );
-                break;
         }
     }
 }

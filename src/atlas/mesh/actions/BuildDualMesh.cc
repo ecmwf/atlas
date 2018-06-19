@@ -76,10 +76,6 @@ struct Node {
     bool operator<( const Node& other ) const { return ( g < other.g ); }
 };
 
-inline double sqr( double a ) {
-    return a * a;
-}
-
 }  // namespace
 
 array::Array* build_centroids_xy( const mesh::HybridElements&, const Field& xy );

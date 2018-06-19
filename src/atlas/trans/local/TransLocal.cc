@@ -1033,7 +1033,6 @@ void TransLocal::invtrans_unstructured_precomp( const int truncation, const int 
 
     const int nlats        = grid_.size();
     const int size_fourier = nb_fields * 2;
-    double* legendre;
     double* scl_fourier;
     double* scl_fourier_tp;
     double* fouriertp;

@@ -428,7 +428,6 @@ void NodeColumns::haloExchange( FieldSet& fieldset, bool on_device ) const {
                 break;
             default:
                 throw eckit::Exception( "Rank not supported", Here() );
-                break;
         }
     }
 }

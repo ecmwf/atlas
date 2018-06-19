@@ -40,8 +40,6 @@ FieldImpl* FieldImpl::create( const eckit::Parametrisation& params ) {
         throw eckit::Exception(
             "Could not find parameter 'creator' "
             "in Parametrisation for call to FieldImpl::create()" );
-
-    return 0;
 }
 
 FieldImpl* FieldImpl::create( const std::string& name, array::DataType datatype, const array::ArrayShape& shape ) {

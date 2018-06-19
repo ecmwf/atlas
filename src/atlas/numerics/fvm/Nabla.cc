@@ -72,7 +72,6 @@ void Nabla::gradient( const Field& field, Field& grad_field ) const {
     else {
         return gradient_of_scalar( field, grad_field );
     }
-    throw eckit::SeriousBug( "Cannot figure out if field is a scalar or vector field", Here() );
 }
 
 void Nabla::gradient_of_scalar( const Field& scalar_field, Field& grad_field ) const {

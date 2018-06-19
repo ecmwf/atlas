@@ -101,7 +101,7 @@ public:
 
         virtual bool next( PointXY& xy ) {
             NOTIMP;
-
+#if 0
             if ( j_ < grid_.ny() && i_ < grid_.nx( j_ ) ) {
                 xy = grid_.xy( i_++, j_ );
 
@@ -112,6 +112,7 @@ public:
                 return true;
             }
             return false;
+#endif
         }
 
         virtual const PointXY operator*() const { return grid_.xy( i_, j_ ); }
