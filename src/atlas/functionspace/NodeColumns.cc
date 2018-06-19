@@ -1593,7 +1593,7 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field
             }
         }
 
-        array::ArrayT<T> glb_idx_private( glb_idx.shape( 0 ), glb_idx.shape( 1 ) );
+        array::ArrayT<gidx_t> glb_idx_private( glb_idx.shape( 0 ), glb_idx.shape( 1 ) );
         array::ArrayView<gidx_t, 2> glb_idx_private_view = array::make_view<gidx_t, 2>( glb_idx_private );
         const size_t npts                                = arr.shape( 0 );
         atlas_omp_for( size_t n = 0; n < npts; ++n ) {
@@ -1692,7 +1692,7 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field
             }
         }
 
-        array::ArrayT<T> glb_idx_private( glb_idx.shape( 0 ), glb_idx.shape( 1 ) );
+        array::ArrayT<gidx_t> glb_idx_private( glb_idx.shape( 0 ), glb_idx.shape( 1 ) );
         array::ArrayView<gidx_t, 2> glb_idx_private_view = array::make_view<gidx_t, 2>( glb_idx_private );
         const size_t npts                                = arr.shape( 0 );
         atlas_omp_for( size_t n = 0; n < npts; ++n ) {
