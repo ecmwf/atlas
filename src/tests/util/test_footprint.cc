@@ -30,6 +30,10 @@ using namespace atlas::util;
 namespace atlas {
 namespace test {
 
+static std::string griduid() {
+    return "O64";
+}
+
 //-----------------------------------------------------------------------------
 
 CASE( "test_broadcast_to_self" ) {
@@ -39,7 +43,7 @@ CASE( "test_broadcast_to_self" ) {
     Field field( "field", array::make_datatype<double>(), array::make_shape( 10, 2 ) );
     Log::info() << "field.footprint = " << eckit::Bytes( field.footprint() ) << std::endl;
 
-    Grid grid( "O640" );
+    Grid grid( griduid() );
     MeshGenerator meshgen( "structured" );
     Mesh mesh = meshgen.generate( grid );
 

@@ -106,7 +106,7 @@ void rotated_flow_magnitude( const fvm::Method& fvm, Field& field, const double&
 }
 
 static std::string griduid() {
-    return "Slat80";
+    return "Slat20";
 }
 
 //-----------------------------------------------------------------------------
