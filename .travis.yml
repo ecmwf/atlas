@@ -61,16 +61,6 @@ matrix:
           sources:  ['ubuntu-toolchain-r-test']
           packages: ['g++-7', 'gcc-7', 'gfortran-7', 'libfftw3-dev', 'lcov']
 
-    - os: linux
-      compiler: gcc
-      env:
-        - CACHE_NAME=linux-pgi-openmpi
-        - CXX_COMPILER='pgc++' C_COMPILER='pgcc' Fortran_COMPILER='pgfortran'
-        - MPI='openmpi'
-        - PGI_VERSION="CommunityEdition"
-        - ECKIT_CMAKE_OPTIONS="-DRT_LIB=/usr/lib/x86_64-linux-gnu/librt.so -DCURSES_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurses.so"
-        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG -DENABLE_FORTRAN=OFF" # Fortran tests known to be broken with pgi/17.10
-
     - os: osx
       env:
         - CACHE_NAME=osx-clang-openmpi
@@ -89,6 +79,16 @@ matrix:
     #     - CXX_COMPILER='clang++' C_COMPILER='clang' Fortran_COMPILER='gfortran'
     #     - MPI=mpich
     #   osx_image: xcode9
+
+    # - os: linux
+    #   compiler: gcc
+    #   env:
+    #     - CACHE_NAME=linux-pgi-openmpi
+    #     - CXX_COMPILER='pgc++' C_COMPILER='pgcc' Fortran_COMPILER='pgfortran'
+    #     - MPI='openmpi'
+    #     - PGI_VERSION="CommunityEdition"
+    #     - ECKIT_CMAKE_OPTIONS="-DRT_LIB=/usr/lib/x86_64-linux-gnu/librt.so -DCURSES_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurses.so"
+    #     - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG -DENABLE_FORTRAN=OFF" # Fortran tests known to be broken with pgi/17.10
 
 before_install:
 
