@@ -28,7 +28,6 @@ namespace array {
 template <typename T>
 class SVector {
 public:
-
     ATLAS_HOST_DEVICE
     SVector() : data_( nullptr ), size_( 0 ), externally_allocated_( false ) {}
 
@@ -41,13 +40,13 @@ public:
     ATLAS_HOST_DEVICE
     SVector( T* data, size_t size ) : data_( data ), size_( size ) {}
 
-    SVector( size_t N ) : data_( nullptr), size_( N ), externally_allocated_( false ) {
-        if( N != 0 ) {
+    SVector( size_t N ) : data_( nullptr ), size_( N ), externally_allocated_( false ) {
+        if ( N != 0 ) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-          cudaError_t err = cudaMallocManaged( &data_, N * sizeof( T ) );
-          if ( err != cudaSuccess ) throw eckit::AssertionFailed( "failed to allocate GPU memory" );
+            cudaError_t err = cudaMallocManaged( &data_, N * sizeof( T ) );
+            if ( err != cudaSuccess ) throw eckit::AssertionFailed( "failed to allocate GPU memory" );
 #else
-          data_ = (T*)malloc( N * sizeof( T ) );
+            data_ = (T*)malloc( N * sizeof( T ) );
 #endif
         }
     }

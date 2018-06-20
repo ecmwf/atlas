@@ -39,6 +39,8 @@ public:
 
     operator bool() const { return implementation_; }
 
+    void print( std::ostream& out ) const { implementation_->print( out ); }
+
 private:
     eckit::SharedPtr<const Implementation> implementation_;
 };

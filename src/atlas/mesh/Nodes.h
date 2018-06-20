@@ -47,7 +47,8 @@ public:
             WEST     = ( 1 << 4 ),
             EAST     = ( 1 << 5 ),
             NORTH    = ( 1 << 6 ),
-            SOUTH    = ( 1 << 7 )
+            SOUTH    = ( 1 << 7 ),
+            PATCH    = ( 1 << 8 )
         };
     };
 

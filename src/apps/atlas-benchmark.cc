@@ -89,13 +89,6 @@ using namespace atlas::functionspace;
 using namespace atlas::meshgenerator;
 using atlas::AtlasTool;
 
-namespace {
-void usage( const std::string& tool ) {
-    Log::info() << "Usage: " << tool << " [OPTIONS]..." << std::endl;
-}
-
-}  // namespace
-
 //----------------------------------------------------------------------------------------------------------------------
 
 struct TimerStats {

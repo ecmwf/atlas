@@ -317,24 +317,28 @@ numerics/fvm/Method.cc
 numerics/fvm/Nabla.h
 numerics/fvm/Nabla.cc
 
+trans/Cache.h
+trans/Cache.cc
 trans/Trans.h
 trans/Trans.cc
 trans/VorDivToUV.h
 trans/VorDivToUV.cc
+trans/LegendreCacheCreator.h
+trans/LegendreCacheCreator.cc
 trans/local/TransLocal.h
 trans/local/TransLocal.cc
 trans/local/LegendrePolynomials.h
 trans/local/LegendrePolynomials.cc
-trans/local/LegendreTransforms.h
-trans/local/LegendreTransforms.cc
-trans/local/FourierTransforms.h
-trans/local/FourierTransforms.cc
 trans/local/VorDivToUVLocal.h
 trans/local/VorDivToUVLocal.cc
+trans/local/LegendreCacheCreatorLocal.h
+trans/local/LegendreCacheCreatorLocal.cc
 
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs
+  trans/ifs/LegendreCacheCreatorIFS.h
+  trans/ifs/LegendreCacheCreatorIFS.cc
   trans/ifs/TransIFS.h
   trans/ifs/TransIFS.cc
   trans/ifs/TransIFSNodeColumns.h
@@ -555,7 +559,9 @@ ecbuild_add_library( TARGET atlas
   PRIVATE_INCLUDES
     "${CGAL_INCLUDE_DIRS}"
     "${TRANSI_INCLUDE_DIRS}"
-    "${MPI_CXX_INCLUDE_DIRS}"
+
+  PUBLIC_INCLUDES "${FFTW_INCLUDES}"
+
   LIBS
     eckit_geometry
     eckit_linalg
@@ -564,9 +570,10 @@ ecbuild_add_library( TARGET atlas
     "${CGAL_LIBRARIES}"
     "${TRANSI_LIBRARIES}"
     "${FCKIT_LIBRARIES}"
+    "${FFTW_LIBRARIES}"
   DEFINITIONS
     ${ATLAS_DEFINITIONS}
- )
+)
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
   target_link_libraries( atlas gridtools::storage )

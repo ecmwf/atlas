@@ -12,6 +12,8 @@
 
 #include <string>
 
+#include "atlas/util/Config.h"
+
 namespace atlas {
 
 class Mesh;
@@ -23,13 +25,16 @@ namespace actions {
 /// Generates the cell centres on each cell
 class BuildCellCentres {
 public:
-    BuildCellCentres( const std::string& field_name = "centre" );
+    BuildCellCentres( const std::string& field_name = "centre", bool force_recompute = false );
+    BuildCellCentres( eckit::Configuration& );
 
     /// @note Correct only for Linear Triangles and Quadrilaterals
     Field& operator()( Mesh& ) const;
 
 private:
     std::string field_name_;
+    bool force_recompute_;
+    bool flatten_virtual_elements_;
 };
 
 }  // namespace actions

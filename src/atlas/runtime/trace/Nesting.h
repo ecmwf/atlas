@@ -22,7 +22,7 @@ namespace trace {
 
 class Nesting {
 public:
-    Nesting( const eckit::CodeLocation& );
+    Nesting( const eckit::CodeLocation&, const std::string& id = "" );
     ~Nesting();
     operator CallStack() const { return stack_; }
     void stop();
@@ -31,6 +31,7 @@ public:
 private:
     CallStack stack_;
     eckit::CodeLocation loc_;
+    std::string id_;
     bool running_{true};
 };
 

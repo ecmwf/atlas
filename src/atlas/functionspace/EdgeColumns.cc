@@ -526,30 +526,6 @@ const parallel::Checksum& EdgeColumns::checksum() const {
     return *checksum_;
 }
 
-namespace {
-void reverse_copy( const int variables[], const int size, std::vector<size_t>& reverse ) {
-    int r = size;
-    for ( int i = 0; i < size; ++i ) {
-        reverse[--r] = static_cast<size_t>( variables[i] );
-    }
-}
-
-void copy( const int variables[], const int size, std::vector<size_t>& cpy ) {
-    for ( int i = 0; i < size; ++i ) {
-        cpy[i] = static_cast<size_t>( variables[i] );
-    }
-}
-
-std::vector<size_t> variables_to_vector( const int variables[], const int size, bool fortran_ordering ) {
-    std::vector<size_t> vec( size );
-    if ( fortran_ordering )
-        reverse_copy( variables, size, vec );
-    else
-        copy( variables, size, vec );
-    return vec;
-}
-}  // namespace
-
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------

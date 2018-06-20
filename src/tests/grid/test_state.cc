@@ -16,7 +16,6 @@
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/JSONParser.h"
 
-#include "atlas/library/config.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
@@ -24,6 +23,7 @@
 #include "atlas/field/State.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/library/Library.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/runtime/Log.h"
 

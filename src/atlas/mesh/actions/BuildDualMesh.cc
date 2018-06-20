@@ -76,10 +76,6 @@ struct Node {
     bool operator<( const Node& other ) const { return ( g < other.g ); }
 };
 
-inline double sqr( double a ) {
-    return a * a;
-}
-
 }  // namespace
 
 array::Array* build_centroids_xy( const mesh::HybridElements&, const Field& xy );
@@ -167,7 +163,12 @@ void add_median_dual_volume_contribution_cells( const mesh::HybridElements& cell
     const array::ArrayView<double, 2> edge_centroids = array::make_view<double, 2>( edges.field( "centroids_xy" ) );
     const mesh::HybridElements::Connectivity& cell_edge_connectivity = cells.edge_connectivity();
     const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
-    auto patch = array::make_view<int, 1>( cells.field( "patch" ) );
+    auto field_flags                                                 = array::make_view<int, 1>( cells.flags() );
+
+    auto patch = [&field_flags]( size_t e ) {
+        using Topology = atlas::mesh::Nodes::Topology;
+        return Topology::check( field_flags( e ), Topology::PATCH );
+    };
 
     // special ordering for bit-identical results
     size_t nb_cells = cells.size();

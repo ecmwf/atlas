@@ -7,6 +7,15 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.15.0] - 2018-06-19
+### Changed
+- Native Array data storage uses now a raw C pointer instead of std::vector
+- Significant performance improvements to Spherical harmonics transforms
+
+### Fixed
+- Various bugs related to parallel halos
+- Bit reproducibility for parallel interpolation
+
 ## [0.14.0] - 2018-03-22
 ### Added
 - Spherical Harmonics transforms can receive a cache memory handle
@@ -30,6 +39,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.15.0]: https://github.com/ecmwf/atlas/compare/0.14.0...0.15.0
 [0.14.0]: https://github.com/ecmwf/atlas/compare/0.13.2...0.14.0
 [0.13.2]: https://github.com/ecmwf/atlas/compare/0.13.1...0.13.2
 [0.13.1]: https://github.com/ecmwf/atlas/compare/0.13.0...0.13.1

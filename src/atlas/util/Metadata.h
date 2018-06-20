@@ -57,8 +57,6 @@ public:
 
     size_t footprint() const;
 
-    void hash( eckit::Hash& ) const;
-
 private:
     void throw_exception( const std::string& ) const;
 

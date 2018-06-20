@@ -12,8 +12,8 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/MakeView.h"
-#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/library/defines.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

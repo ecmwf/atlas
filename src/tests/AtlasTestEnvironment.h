@@ -50,8 +50,8 @@ namespace test {
         if ( atlas::test::barrier_timeout( atlas::test::ATLAS_MPI_BARRIER_TIMEOUT() ) ) {                            \
             atlas::Log::warning() << "\nWARNING: Test \"" << description                                             \
                                   << "\" failed with MPI deadlock.  (${ATLAS_MPI_BARRIER_TIMEOUT}="                  \
-                                  << atlas::test::ATLAS_MPI_BARRIER_TIMEOUT()                                        \
-                                  << ").\nCalling MPI_Abort..." << std::endl;                                        \
+                                  << atlas::test::ATLAS_MPI_BARRIER_TIMEOUT() << ").\nCalling MPI_Abort..."          \
+                                  << std::endl;                                                                      \
             eckit::mpi::comm().abort();                                                                              \
         }                                                                                                            \
     }                                                                                                                \

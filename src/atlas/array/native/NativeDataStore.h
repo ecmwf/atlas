@@ -10,6 +10,9 @@
 
 #pragma once
 
+
+#include <algorithm>  // std::fill
+#include <limits>     // std::numeric_limits<T>::signaling_NaN
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/library/config.h"
 
@@ -20,34 +23,57 @@ namespace array {
 namespace native {
 
 template <typename Value>
+static constexpr Value invalid_value() {
+    return std::numeric_limits<Value>::has_signaling_NaN
+               ? std::numeric_limits<Value>::signaling_NaN()
+               : std::numeric_limits<Value>::has_quiet_NaN
+                     ? std::numeric_limits<Value>::quiet_NaN()
+                     : std::numeric_limits<Value>::has_infinity ? std::numeric_limits<Value>::infinity()
+                                                                : std::numeric_limits<Value>::max();
+}
+
+#if ATLAS_INIT_SNAN
+template <typename Value>
+void initialise( Value array[], size_t size ) {
+    std::fill_n( array, size, invalid_value<Value>() );
+}
+#else
+template <typename Value>
+void initialise( Value[], size_t ) {}
+#endif
+
+template <typename Value>
 class DataStore : public ArrayDataStore {
 public:
-    DataStore( size_t size ) : data_store_( size ) {}
+    DataStore( size_t size ) : data_store_( new Value[size] ), size_( size ) { initialise( data_store_, size_ ); }
 
-    void cloneToDevice() const {}
+    virtual ~DataStore() override { delete[] data_store_; }
 
-    void cloneFromDevice() const {}
+    virtual void cloneToDevice() const override {}
 
-    bool valid() const { return true; }
+    virtual void cloneFromDevice() const override {}
 
-    void syncHostDevice() const {}
+    virtual bool valid() const override { return true; }
 
-    bool hostNeedsUpdate() const { return false; }
+    virtual void syncHostDevice() const override {}
 
-    bool deviceNeedsUpdate() const { return false; }
+    virtual bool hostNeedsUpdate() const override { return false; }
 
-    void reactivateDeviceWriteViews() const {}
+    virtual bool deviceNeedsUpdate() const override { return false; }
 
-    void reactivateHostWriteViews() const {}
+    virtual void reactivateDeviceWriteViews() const override {}
 
-    void* voidDataStore() { return static_cast<void*>( &data_store_.front() ); }
+    virtual void reactivateHostWriteViews() const override {}
 
-    void* voidHostData() { return static_cast<void*>( &data_store_.front() ); }
+    virtual void* voidDataStore() override { return static_cast<void*>( data_store_ ); }
 
-    void* voidDeviceData() { return static_cast<void*>( &data_store_.front() ); }
+    virtual void* voidHostData() override { return static_cast<void*>( data_store_ ); }
+
+    virtual void* voidDeviceData() override { return static_cast<void*>( data_store_ ); }
 
 private:
-    std::vector<Value> data_store_;
+    Value* data_store_;
+    size_t size_;
 };
 
 //------------------------------------------------------------------------------
@@ -57,27 +83,27 @@ class WrappedDataStore : public ArrayDataStore {
 public:
     WrappedDataStore( Value* data_store ) : data_store_( data_store ) {}
 
-    void cloneToDevice() const {}
+    virtual void cloneToDevice() const override {}
 
-    void cloneFromDevice() const {}
+    virtual void cloneFromDevice() const override {}
 
-    bool valid() const { return true; }
+    virtual bool valid() const override { return true; }
 
-    void syncHostDevice() const {}
+    virtual void syncHostDevice() const override {}
 
-    bool hostNeedsUpdate() const { return true; }
+    virtual bool hostNeedsUpdate() const override { return true; }
 
-    bool deviceNeedsUpdate() const { return false; }
+    virtual bool deviceNeedsUpdate() const override { return false; }
 
-    void reactivateDeviceWriteViews() const {}
+    virtual void reactivateDeviceWriteViews() const override {}
 
-    void reactivateHostWriteViews() const {}
+    virtual void reactivateHostWriteViews() const override {}
 
-    void* voidDataStore() { return static_cast<void*>( data_store_ ); }
+    virtual void* voidDataStore() override { return static_cast<void*>( data_store_ ); }
 
-    void* voidHostData() { return static_cast<void*>( data_store_ ); }
+    virtual void* voidHostData() override { return static_cast<void*>( data_store_ ); }
 
-    void* voidDeviceData() { return static_cast<void*>( data_store_ ); }
+    virtual void* voidDeviceData() override { return static_cast<void*>( data_store_ ); }
 
 private:
     Value* data_store_;

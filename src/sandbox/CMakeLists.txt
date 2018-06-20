@@ -7,7 +7,6 @@
 # does it submit to any jurisdiction.
 
 add_subdirectory( fortran_submodule )
-add_subdirectory( fortran_modinc )
 add_subdirectory( fortran_object )
 add_subdirectory( example_fortran )
 add_subdirectory( fortran_acc_fields )

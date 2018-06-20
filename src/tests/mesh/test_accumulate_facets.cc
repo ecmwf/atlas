@@ -8,13 +8,13 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/library/config.h"
-#include "atlas/library/Library.h"
-#include "atlas/mesh/detail/AccumulateFacets.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/library/Library.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
+#include "atlas/mesh/detail/AccumulateFacets.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/util/Unique.h"
 

@@ -116,6 +116,9 @@ public:
     const Field& halo() const { return hybrid_elements_->halo(); }
     Field& halo() { return hybrid_elements_->halo(); }
 
+    const Field& flags() const { return hybrid_elements_->flags(); }
+    Field& flags() { return hybrid_elements_->flags(); }
+
     template <typename DATATYPE, int RANK>
     array::LocalView<DATATYPE, RANK, array::Intent::ReadOnly> view( const Field& ) const;
 

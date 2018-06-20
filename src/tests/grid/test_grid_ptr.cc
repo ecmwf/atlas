@@ -13,11 +13,11 @@
 #include <sstream>
 
 #include "atlas/grid/Grid.h"
-#include "atlas/runtime/Log.h"
-#include "atlas/util/Config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/util/Config.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

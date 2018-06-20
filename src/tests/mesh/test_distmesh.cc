@@ -31,8 +31,8 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 
-#include "tests/TestMeshes.h"
 #include "tests/AtlasTestEnvironment.h"
+#include "tests/TestMeshes.h"
 
 using namespace atlas;
 using namespace atlas::output;

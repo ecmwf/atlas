@@ -46,7 +46,7 @@ matrix:
       addons:
         apt:
           sources:  ['ubuntu-toolchain-r-test']
-          packages: ['g++-5', 'gcc-5', 'gfortran-5']
+          packages: ['g++-5', 'gcc-5', 'gfortran-5', 'libfftw3-dev']
 
     - os: linux
       compiler: gcc
@@ -54,21 +54,12 @@ matrix:
         - CACHE_NAME=linux-gcc7-mpich
         - CXX_COMPILER='g++-7' C_COMPILER='gcc-7' Fortran_COMPILER='gfortran-7'
         - MPI='mpich'
-        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
+        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG -DENABLE_GPROF=ON"
+        - COVERAGE=ON
       addons:
         apt:
           sources:  ['ubuntu-toolchain-r-test']
-          packages: ['g++-7', 'gcc-7', 'gfortran-7']
-
-    - os: linux
-      compiler: gcc
-      env:
-        - CACHE_NAME=linux-pgi-openmpi
-        - CXX_COMPILER='pgc++' C_COMPILER='pgcc' Fortran_COMPILER='pgfortran'
-        - MPI='openmpi'
-        - PGI_VERSION="CommunityEdition"
-        - ECKIT_CMAKE_OPTIONS="-DRT_LIB=/usr/lib/x86_64-linux-gnu/librt.so -DCURSES_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurses.so"
-        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG -DENABLE_FORTRAN=OFF" # Fortran tests known to be broken with pgi/17.10
+          packages: ['g++-7', 'gcc-7', 'gfortran-7', 'libfftw3-dev', 'lcov']
 
     - os: osx
       env:
@@ -88,6 +79,16 @@ matrix:
     #     - CXX_COMPILER='clang++' C_COMPILER='clang' Fortran_COMPILER='gfortran'
     #     - MPI=mpich
     #   osx_image: xcode9
+
+    # - os: linux
+    #   compiler: gcc
+    #   env:
+    #     - CACHE_NAME=linux-pgi-openmpi
+    #     - CXX_COMPILER='pgc++' C_COMPILER='pgcc' Fortran_COMPILER='pgfortran'
+    #     - MPI='openmpi'
+    #     - PGI_VERSION="CommunityEdition"
+    #     - ECKIT_CMAKE_OPTIONS="-DRT_LIB=/usr/lib/x86_64-linux-gnu/librt.so -DCURSES_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurses.so"
+    #     - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG -DENABLE_FORTRAN=OFF" # Fortran tests known to be broken with pgi/17.10
 
 before_install:
 
@@ -143,16 +144,6 @@ install:
       source ${DEPS_DIR}/pgi/env.sh
     fi
 
-
-  #################################################################
-  # Install CGAL
-  #################################################################
-  - |
-    ### Install CGAL
-    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
-      brew upgrade cgal || brew install cgal
-    fi
-
   #################################################################
   # Install MPI
   #################################################################
@@ -178,6 +169,24 @@ install:
       brew upgrade cmake || brew install cmake
     fi
     cmake --version
+
+  #################################################################
+  # Install FFTW
+  #################################################################
+  - |
+    ### Install FFTW
+    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
+      brew upgrade fftw || brew install fftw
+    fi
+
+  #################################################################
+  # Install CGAL
+  #################################################################
+  - |
+    ### Install CGAL
+    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
+      brew upgrade cgal || brew install cgal
+    fi
 
   #################################################################
   # Install ecbuild
@@ -231,7 +240,20 @@ script:
   #################################################################
   # Test Atlas
   #################################################################
-  - ctest
+  - ctest -VV
+
+after_success:
+
+  - |
+    if [[ "${COVERAGE}" == "ON" ]]; then
+      # Creating report
+      cd ${ATLAS_BUILD_DIR}
+      lcov --directory . --capture --output-file coverage.info # capture coverage info
+      lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+      lcov --list coverage.info #debug info
+      # Uploading report to CodeCov
+      bash <(curl -s https://codecov.io/bash) -t 9c489980-d292-499c-8615-af02df3b20d1 || echo "Codecov did not collect coverage reports"
+    fi
 
 after_failure:
 

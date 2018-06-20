@@ -80,6 +80,7 @@ public:
     Grid( const Grid& );
     Grid( const Implementation* );
     Grid( const std::string& name, const Domain& = Domain() );
+    Grid( const Grid&, const Domain& );
     Grid( const Config& );
 
     operator bool() const { return grid_; }
@@ -186,6 +187,7 @@ public:
     StructuredGrid( const std::string& name, const Domain& = Domain() );
     StructuredGrid( const Config& );
     StructuredGrid( const XSpace&, const YSpace&, const Projection& = Projection(), const Domain& = Domain() );
+    StructuredGrid( const Grid&, const Domain& );
 
     operator bool() const { return valid(); }
 
@@ -219,6 +221,8 @@ public:
     inline bool regular() const { return not reduced(); }
 
     bool periodic() const { return grid_->periodic(); }
+
+    const XSpace& xspace() const { return grid_->xspace(); }
 
     const YSpace& yspace() const { return grid_->yspace(); }
 
@@ -298,7 +302,7 @@ class ReducedGaussianGrid : public Gaussian<ReducedGrid> {
 public:
     using grid_t::grid_t;
     ReducedGaussianGrid( const std::initializer_list<long>& pl );
-    ReducedGaussianGrid( const std::vector<long>& pl, const Domain& domain = Domain() );
+    ReducedGaussianGrid( const std::vector<long>& pl, const Domain& = Domain() );
 
     operator bool() const { return valid(); }
 
@@ -312,6 +316,7 @@ class RegularGaussianGrid : public Gaussian<RegularGrid> {
 
 public:
     using grid_t::grid_t;
+    RegularGaussianGrid( int N, const Domain& = Domain() );
 
     inline double lon( size_t i ) const { return x( i ); }
 

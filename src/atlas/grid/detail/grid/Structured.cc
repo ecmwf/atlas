@@ -226,6 +226,10 @@ Structured::XSpace::Implementation::Implementation( const Spacing& spacing ) :
     nxmin_                                 = nx_[0];
 }
 
+std::string Structured::XSpace::Implementation::type() const {
+    return "linear";
+}
+
 Grid::Spec Structured::XSpace::Implementation::spec() const {
     Grid::Spec spec;
 
@@ -363,6 +367,8 @@ void Structured::crop( const Domain& dom ) {
                 jmax = std::max( j, jmax );
             }
         }
+        ASSERT( jmax >= jmin );
+
         size_t cropped_ny = jmax - jmin + 1;
         std::vector<double> cropped_y( y_.begin() + jmin, y_.begin() + jmin + cropped_ny );
         std::vector<double> cropped_dx( dx_.begin() + jmin, dx_.begin() + jmin + cropped_ny );
@@ -439,10 +445,10 @@ void Structured::computeTruePeriodicity() {
             const PointLonLat Pllmax = projection().lonlat( PointXY( xmax_[j], y_[j] ) );
 
             Point3 Pxmin;
-            util::UnitSphere::convertSphericalToCartesian(Pllmin, Pxmin );
+            util::UnitSphere::convertSphericalToCartesian( Pllmin, Pxmin );
 
             Point3 Pxmax;
-            util::UnitSphere::convertSphericalToCartesian(Pllmax, Pxmax );
+            util::UnitSphere::convertSphericalToCartesian( Pllmax, Pxmax );
 
             periodic_x_ = points_equal( Pxmin, Pxmax );
         }

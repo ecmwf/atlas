@@ -358,6 +358,7 @@ Field& build_edges_partition( Mesh& mesh ) {
     array::ArrayView<gidx_t, 1> node_gidx = array::make_view<gidx_t, 1>( nodes.global_index() );
 
     array::ArrayView<int, 1> elem_part = array::make_view<int, 1>( mesh.cells().partition() );
+    array::ArrayView<int, 1> elem_halo = array::make_view<int, 1>( mesh.cells().halo() );
 
     auto check_flags = [&]( idx_t jedge, int flag ) {
         idx_t ip1 = edge_nodes( jedge, 0 );
@@ -412,6 +413,7 @@ Field& build_edges_partition( Mesh& mesh ) {
             // if( not domain_bdry(jedge) ) {
             bdry_edges.push_back( edge_glb_idx( jedge ) );
             p = elem_part( elem1 );
+            if ( pn1 != p && pn2 == pn1 && elem_halo( elem1 ) > 0 ) { p = pn1; }
             // }
         }
         else if ( p != elem_part( elem1 ) && p != elem_part( elem2 ) ) {
@@ -504,12 +506,12 @@ Field& build_edges_partition( Mesh& mesh ) {
         if ( edge_is_partition_boundary ) {
             if ( not edge_partition_is_same_as_one_of_nodes ) {
                 if ( elem1 != edge_to_elem.missing_value() ) {
-                    Log::error() << EDGE( jedge ) << " [p" << p << "] is not correct elem1[p" << elem_part( elem1 )
-                                 << "]" << std::endl;
+                    Log::error() << "[" << mypart << "] " << EDGE( jedge ) << " [p" << p << "] is not correct elem1[p"
+                                 << elem_part( elem1 ) << "]" << std::endl;
                 }
                 else {
-                    Log::error() << EDGE( jedge ) << " [p" << p << "] is not correct elem2[p" << elem_part( elem2 )
-                                 << "]" << std::endl;
+                    Log::error() << "[" << mypart << "] " << EDGE( jedge ) << " [p" << p << "] is not correct elem2[p"
+                                 << elem_part( elem2 ) << "]" << std::endl;
                 }
                 insane = 1;
             }
@@ -538,12 +540,6 @@ Field& build_edges_partition( Mesh& mesh ) {
     //      DEBUG_VAR( "           the part is " << edge_part(jedge) );
     //#endif
     //  }
-    //  /// TODO: Make sure that the edge-partition is at least one of the
-    //  partition numbers of the
-    //  /// neighbouring elements.
-    //  /// Because of this problem, the size of the halo should be set to 2
-    //  instead of 1!!!
-    //  /// This will be addressed with JIRA issue  ATLAS-12
 
     return edges.partition();
 }
@@ -667,13 +663,14 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
             else {
                 std::stringstream msg;
 #ifdef DEBUGGING_PARFIELDS
-                msg << "Edge(" << recv_edge( jedge, 2 ) << "[p" << recv_edge( jedge, 4 ) << "] "
-                    << recv_edge( jedge, 3 ) << "[p" << recv_edge( jedge, 5 ) << "])";
+                msg << "Edge(" << recv_edge[jedge * varsize + 2] << "[p" << recv_edge[jedge * varsize + 4] << "] "
+                    << recv_edge[jedge * varsize + 3] << "[p" << recv_edge[jedge * varsize + 5] << "])";
 #else
                 msg << "Edge with uid " << recv_uid;
 #endif
                 msg << " requested by rank [" << jpart << "]";
-                msg << " that should be owned is not found. This could be because no "
+                msg << " that should be owned by " << mpi::comm().rank()
+                    << " is not found. This could be because no "
                        "halo was built.";
                 // throw eckit::SeriousBug(msg.str(),Here());
                 Log::warning() << msg.str() << " @ " << Here() << std::endl;

@@ -39,7 +39,6 @@ const Field& PointCloud::ghost() const {
 
 Field PointCloud::createField( const eckit::Configuration& options ) const {
     NOTIMP;
-    return Field();
 }
 
 Field PointCloud::createField( const Field& other, const eckit::Configuration& config ) const {

@@ -29,9 +29,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/trans/Trans.h"
-#include "atlas/trans/local/FourierTransforms.h"
-#include "atlas/trans/local/LegendrePolynomials.h"
-#include "atlas/trans/local/LegendreTransforms.h"
+#include "atlas/trans/local/TransLocal.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
 
@@ -66,156 +64,6 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
 #endif
     }
 };
-
-//-----------------------------------------------------------------------------
-
-void compute_legendre( const size_t trc,                      // truncation (in)
-                       const double& lat,                     // latitude in radians (in)
-                       array::ArrayView<double, 1>& zlfpol )  // values of
-                                                              // associated
-                                                              // Legendre
-                                                              // functions, size
-                                                              // (trc+1)*trc/2
-                                                              // (out)
-{
-    trans::compute_legendre_polynomials( trc, lat, zlfpol.data() );
-}
-
-//-----------------------------------------------------------------------------
-
-void legendre_transform( const size_t trc,                           // truncation (in)
-                         const size_t trcFT,                         // truncation for Fourier transformation (in)
-                         array::ArrayView<double, 1>& rlegReal,      // values of associated Legendre
-                                                                     // functions, size (trc+1)*trc/2
-                                                                     // (out)
-                         array::ArrayView<double, 1>& rlegImag,      // values of associated Legendre
-                                                                     // functions, size (trc+1)*trc/2
-                                                                     // (out)
-                         const array::ArrayView<double, 1>& zlfpol,  // values of associated Legendre
-                                                                     // functions, size (trc+1)*trc/2
-                                                                     // (in)
-                         const double rspecg[] )                     // spectral data, size (trc+1)*trc (in)
-{
-    trans::invtrans_legendre( trc, trcFT, trc, zlfpol.data(), 1, rspecg, rlegReal.data(), rlegImag.data() );
-}
-
-//-----------------------------------------------------------------------------
-
-double fourier_transform( const size_t trcFT, array::ArrayView<double, 1>& rlegReal,  // values of associated Legendre
-                                                                                      // functions, size (trc+1)*trc/2
-                                                                                      // (out)
-                          array::ArrayView<double, 1>& rlegImag,                      // values of associated Legendre
-                                                                                      // functions, size (trc+1)*trc/2
-                                                                                      // (out)
-                          const double lon )                                          // radians
-{
-    double gp[1];
-    trans::invtrans_fourier( trcFT, lon, 1, rlegReal.data(), rlegImag.data(), gp );
-    return gp[0];
-}
-
-//-----------------------------------------------------------------------------
-// Routine to compute the spectral transform by using a local Fourier
-// transformation
-// for a single point
-//
-// Author:
-// Andreas Mueller *ECMWF*
-//
-double spectral_transform_point( const size_t trc,        // truncation (in)
-                                 const size_t trcFT,      // truncation for Fourier transformation (in)
-                                 const double lon,        // longitude in radians (in)
-                                 const double lat,        // latitude in radians (in)
-                                 const double rspecg[] )  // spectral data, size (trc+1)*trc (in)
-{
-    int N = ( trc + 2 ) * ( trc + 1 ) / 2;
-    ATLAS_TRACE();
-    atlas::array::ArrayT<double> zlfpol_( N );
-    atlas::array::ArrayView<double, 1> zlfpol = make_view<double, 1>( zlfpol_ );
-
-    atlas::array::ArrayT<double> rlegReal_( trcFT + 1 );
-    atlas::array::ArrayView<double, 1> rlegReal = make_view<double, 1>( rlegReal_ );
-
-    atlas::array::ArrayT<double> rlegImag_( trcFT + 1 );
-    atlas::array::ArrayView<double, 1> rlegImag = make_view<double, 1>( rlegImag_ );
-
-    // Legendre transform:
-    compute_legendre( trc, lat, zlfpol );
-    legendre_transform( trc, trcFT, rlegReal, rlegImag, zlfpol, rspecg );
-
-    // Fourier transform:
-    return fourier_transform( trcFT, rlegReal, rlegImag, lon );
-}
-
-//-----------------------------------------------------------------------------
-// Routine to compute the spectral transform by using a local Fourier
-// transformation
-// for a grid (same latitude for all longitudes, allows to compute Legendre
-// functions
-// once for all longitudes)
-//
-// Author:
-// Andreas Mueller *ECMWF*
-//
-void spectral_transform_grid( const size_t trc,       // truncation (in)
-                              const size_t trcFT,     // truncation for Fourier transformation (in)
-                              const Grid grid,        // call with something like Grid("O32")
-                              const double rspecg[],  // spectral data, size (trc+1)*trc (in)
-                              double rgp[],           // resulting grid point data (out)
-                              const bool pointwise )  // use point function for unstructured mesh for
-                                                      // testing purposes
-{
-    std::ostream& out = Log::info();  // just for debugging
-    int N             = ( trc + 2 ) * ( trc + 1 ) / 2;
-    ATLAS_TRACE();
-    atlas::array::ArrayT<double> zlfpol_( N );
-    atlas::array::ArrayView<double, 1> zlfpol = make_view<double, 1>( zlfpol_ );
-
-    atlas::array::ArrayT<double> rlegReal_( trcFT + 1 );
-    atlas::array::ArrayView<double, 1> rlegReal = make_view<double, 1>( rlegReal_ );
-
-    atlas::array::ArrayT<double> rlegImag_( trcFT + 1 );
-    atlas::array::ArrayView<double, 1> rlegImag = make_view<double, 1>( rlegImag_ );
-
-    int idx = 0;
-
-    if ( grid::StructuredGrid( grid ) ) {
-        grid::StructuredGrid g( grid );
-        for ( size_t j = 0; j < g.ny(); ++j ) {
-            double lat = g.y( j ) * util::Constants::degreesToRadians();
-
-            // Legendre transform:
-            compute_legendre( trc, lat, zlfpol );
-            legendre_transform( trc, trcFT, rlegReal, rlegImag, zlfpol, rspecg );
-
-            for ( size_t i = 0; i < g.nx( j ); ++i ) {
-                double lon = g.x( i, j ) * util::Constants::degreesToRadians();
-                // Fourier transform:
-                rgp[idx++] = fourier_transform( trcFT, rlegReal, rlegImag, lon );
-            }
-        }
-    }
-    else {
-        for ( PointXY p : grid.xy() ) {
-            double lon = p.x() * util::Constants::degreesToRadians();
-            double lat = p.y() * util::Constants::degreesToRadians();
-            if ( pointwise ) {
-                // alternative for testing: use spectral_transform_point function:
-                rgp[idx++] = spectral_transform_point( trc, trcFT, lon, lat, rspecg );
-            }
-            else {
-                // Legendre transform:
-                compute_legendre( trc, lat, zlfpol );
-                legendre_transform( trc, trcFT, rlegReal, rlegImag, zlfpol, rspecg );
-
-                // Fourier transform:
-                rgp[idx++] = fourier_transform( trcFT, rlegReal, rlegImag, lon );
-            }
-        }
-    }
-
-    EXPECT( idx == grid.size() );
-}
 
 //-----------------------------------------------------------------------------
 // Routine to compute the spherical harmonics analytically at one point
@@ -427,7 +275,7 @@ double sphericalharmonics_analytic_point(
 //
 void spectral_transform_grid_analytic(
     const size_t trc,     // truncation (in)
-    const size_t trcFT,   // truncation for Fourier transformation (in)
+    bool trcFT,           // truncation for Fourier transformation (in)
     const double n,       // total wave number (implemented so far for n<4
     const double m,       // zonal wave number (implemented so far for m<4, m<n
     const int imag,       // 0: test real part, 1: test imaginary part
@@ -457,16 +305,34 @@ void spectral_transform_grid_analytic(
 
     if ( grid::StructuredGrid( grid ) ) {
         grid::StructuredGrid g( grid );
+        Grid gridGlobal;
+        grid::StructuredGrid gs_global;
+        int jlatMin = 0;
+        if ( trcFT ) {
+            gridGlobal      = Grid( grid.name() );
+            gs_global       = grid::StructuredGrid( gridGlobal );
+            int nlatsGlobal = gs_global.ny();
+            for ( int jlat = 0; jlat < nlatsGlobal; jlat++ ) {
+                if ( gs_global.y( jlat ) > g.y( 0 ) ) { jlatMin++; };
+            }
+        }
+
         int idx = 0;
         for ( size_t j = 0; j < g.ny(); ++j ) {
             double lat = g.y( j ) * util::Constants::degreesToRadians();
-
+            int ftrc   = trc + 1;
+            if ( trcFT ) {
+                ftrc = trans::fourier_truncation( trc, gs_global.nx( jlatMin + j ), gs_global.nxmax(), gs_global.ny(),
+                                                  lat, grid::RegularGrid( gs_global ) );
+            }
+            /*Log::info() << "j=" << j << " ftrc=" << ftrc << " trc=" << trc << " nx=" << gs_global.nx( jlatMin + j )
+                        << " nxmax=" << gs_global.nxmax() << " nlats=" << gs_global.ny() << " lat=" << g.y( j )
+                        << " jlatMin=" << jlatMin << std::endl;*/
             for ( size_t i = 0; i < g.nx( j ); ++i ) {
                 double lon = g.x( i, j ) * util::Constants::degreesToRadians();
 
                 // compute spherical harmonics:
-                if ( trans::fourier_truncation( trc, g.nx( j ), g.nxmax(), g.ny(), lat, grid::RegularGrid( g ) ) >=
-                     m ) {
+                if ( ftrc > m ) {
                     rgp[idx++] = sphericalharmonics_analytic_point( n, m, imag, lon, lat, ivar_in, ivar_out );
                 }
                 else {
@@ -511,198 +377,7 @@ double compute_rms( const size_t N,    // length of the arrays
 }
 
 //-----------------------------------------------------------------------------
-// Routine to test the spectral transform by comparing it with the analytically
-// derived spherical harmonics
-//
-// Author:
-// Andreas Mueller *ECMWF*
-//
-double spectral_transform_test( double trc,       // truncation
-                                double n,         // total wave number (implemented so far for n<4
-                                double m,         // zonal wave number (implemented so far for m<4, m<n
-                                int imag,         // 0: test real part, 1: test imaginary part
-                                Grid g,           // call with something like Grid("O32")
-                                bool pointwise )  // use point function for unstructured mesh for testing
-                                                  // purposes
-{
-    std::ostream& out  = Log::info();
-    int N              = ( trc + 2 ) * ( trc + 1 ) / 2;
-    auto* rspecg       = new double[2 * N];
-    auto* rgp          = new double[g.size()];
-    auto* rgp_analytic = new double[g.size()];
-
-    // compute analytic solution (this also initializes rspecg and needs to be
-    // done before the actual transform):
-    spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg, rgp_analytic, 2, 2 );
-    // perform spectral transform:
-
-    spectral_transform_grid( trc, trc, g, rspecg, rgp, pointwise );
-
-    // for( int i=0; i<g.size(); ++i ) rgp[i] = 0.;
-
-    double rms = compute_rms( g.size(), rgp, rgp_analytic );
-
-    delete[] rspecg;
-    delete[] rgp;
-    delete[] rgp_analytic;
-
-    return rms;
-}
-
-//-----------------------------------------------------------------------------
-#if 0
-CASE( "test_transgeneral_legendrepolynomials" )
-{
-  std::ostream& out = Log::info(); // just for debugging
-  out << "test_transgeneral_legendrepolynomials" << std::endl;
-/*
-  Grid g( "O10" );
-  trans::Trans trans(g,1279);
-*/
-  int trc = 1280; // truncation + 1
-  int N = (trc+2)*(trc+1)/2;
-  atlas::array::ArrayT<double> zlfpol_(N);
-  atlas::array::ArrayView<double,1> zlfpol = make_view<double,1>(zlfpol_);
-
-  double lat = std::acos(0.99312859918509488);
-  compute_legendre(trc, lat, zlfpol);
-}
-#endif
-//-----------------------------------------------------------------------------
 #if 1
-CASE( "test_transgeneral_point" ) {
-    std::ostream& out = Log::info();
-    Log::info() << "test_transgeneral_point" << std::endl;
-    double tolerance = 2.e-15;
-    // test spectral transform up to wave number 3 by comparing
-    // the result with the analytically computed spherical harmonics
-
-    Grid g = grid::UnstructuredGrid( {{50., 20.}, {30., -20.}, {179., -89.}, {-101., 70.}} );
-
-    int trc = 47;  // truncation
-
-    double rms = 0.;
-    for ( int m = 0; m <= 3; m++ ) {                   // zonal wavenumber
-        for ( int n = m; n <= 3; n++ ) {               // total wavenumber
-            for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
-                rms = spectral_transform_test( trc, n, m, imag, g, true );
-                EXPECT( rms < tolerance );
-            }
-        }
-    }
-}
-#endif
-//-----------------------------------------------------------------------------
-#if 1
-CASE( "test_transgeneral_unstructured" ) {
-    std::ostream& out = Log::info();
-    Log::info() << "test_transgeneral_unstructured" << std::endl;
-    double tolerance = 2.e-15;
-    // test spectral transform up to wave number 3 by comparing
-    // the result with the analytically computed spherical harmonics
-
-    Grid g = grid::UnstructuredGrid( new std::vector<PointXY>{{50., 20.}, {30., -20.}, {179., -89.}, {-101., 70.}} );
-
-    int trc = 47;  // truncation
-
-    double rms = 0.;
-    for ( int m = 0; m <= 3; m++ ) {                   // zonal wavenumber
-        for ( int n = m; n <= 3; n++ ) {               // total wavenumber
-            for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
-                rms = spectral_transform_test( trc, n, m, imag, g, false );
-                EXPECT( rms < tolerance );
-            }
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-
-CASE( "test_transgeneral_structured" ) {
-    std::ostream& out = Log::info();
-    Log::info() << "test_transgeneral_structured" << std::endl;
-    double tolerance = 2.e-15;
-    // test spectral transform up to wave number 3 by comparing
-    // the result with the analytically computed spherical harmonics
-
-    std::string grid_uid( "O10" );
-    grid::StructuredGrid g( grid_uid );
-
-    int trc = 47;  // truncation
-
-    double rms = 0.;
-    for ( int m = 0; m <= 3; m++ ) {                   // zonal wavenumber
-        for ( int n = m; n <= 3; n++ ) {               // total wavenumber
-            for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
-                rms = spectral_transform_test( trc, n, m, imag, g, false );
-                EXPECT( rms < tolerance );
-            }
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-
-CASE( "test_transgeneral_with_translib" ) {
-    Log::info() << "test_transgeneral_with_translib" << std::endl;
-    // test transgeneral by comparing its result with the trans library
-    // this test is based on the test_nomesh case in test_trans.cc
-
-    std::ostream& out = Log::info();
-    double tolerance  = 1.e-13;
-    Grid g( "F24" );
-    grid::StructuredGrid gs( g );
-    int trc = 47;
-#if ATLAS_HAVE_TRANS
-    trans::Trans transIFS( g, trc, util::Config( "type", "ifs" ) );
-#endif
-    functionspace::StructuredColumns gridpoints( g );
-    functionspace::Spectral spectral( trc );
-    Field spf = spectral.createField<double>( option::name( "spf" ) );
-    Field gpf = gridpoints.createField<double>( option::name( "gpf" ) );
-
-    int N = ( trc + 2 ) * ( trc + 1 ) / 2;
-    std::vector<double> rspecg( 2 * N );
-    std::vector<double> rgp( g.size() );
-    std::vector<double> rgp_analytic( g.size() );
-
-    int k = 0;
-    for ( int m = 0; m <= trc; m++ ) {                 // zonal wavenumber
-        for ( int n = m; n <= trc; n++ ) {             // total wavenumber
-            for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
-
-                if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., 2, 2 ) == 0. ) {
-                    array::ArrayView<double, 1> sp = array::make_view<double, 1>( spf );
-                    sp.assign( 0. );
-                    sp( k ) = 1.;
-                    spectral_transform_grid_analytic( trc, trc, n, m, imag, g,  //
-                                                      rspecg.data(), rgp_analytic.data(), 2, 2 );
-
-                    // compute spectral transform with the general transform:
-                    spectral_transform_grid( trc, trc, g, sp.data(), rgp.data(), false );
-                    array::ArrayView<double, 1> gp = array::make_view<double, 1>( gpf );
-
-                    double rms_gen = compute_rms( g.size(), rgp.data(), rgp_analytic.data() );
-
-                    if ( rms_gen >= tolerance ) {
-                        ATLAS_DEBUG_VAR( rms_gen );
-                        ATLAS_DEBUG_VAR( tolerance );
-                    }
-                    EXPECT( rms_gen < tolerance );
-#if ATLAS_HAVE_TRANS
-                    EXPECT_NO_THROW( transIFS.invtrans( spf, gpf ) );
-                    double rms_trans = compute_rms( g.size(), gp.data(), rgp.data() );
-                    EXPECT( rms_trans < tolerance );
-#endif
-                }
-                k++;
-            }
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-
 CASE( "test_trans_vordiv_with_translib" ) {
     Log::info() << "test_trans_vordiv_with_translib" << std::endl;
     // test transgeneral by comparing its result with the trans library
@@ -712,32 +387,37 @@ CASE( "test_trans_vordiv_with_translib" ) {
     double tolerance  = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "O12" );
+    Grid g( "F64" );
 
     grid::StructuredGrid gs( g );
     int ndgl = gs.ny();
-    int trc  = ndgl - 1;  // linear
+    //int trc  = ndgl - 1;  // linear
+    int trc = ndgl / 2. - 1;  // cubic
 #if ATLAS_HAVE_TRANS
     trans::Trans transIFS( g, trc, util::Config( "type", "ifs" ) );
+    double rav = 0.;  // compute average rms error of trans library in rav
 #endif
-    trans::Trans transLocal( g, trc, util::Config( "type", "local" ) );
+    trans::Trans transLocal1( g, trc, util::Config( "type", "local" ) );
+    trans::Trans transLocal2( g, trc, util::Config( "type", "local" ) );
+    double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 
     functionspace::Spectral spectral( trc );
     functionspace::StructuredColumns gridpoints( g );
 
-    int nb_scalar = 2, nb_vordiv = 2;
+    int nb_scalar = 1, nb_vordiv = 0;
     int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
     std::vector<double> sp( 2 * N * nb_scalar );
     std::vector<double> vor( 2 * N * nb_vordiv );
     std::vector<double> div( 2 * N * nb_vordiv );
     std::vector<double> rspecg( 2 * N );
     std::vector<double> gp( nb_all * g.size() );
-    std::vector<double> rgp( nb_all * g.size() );
+    std::vector<double> rgp1( nb_all * g.size() );
+    std::vector<double> rgp2( nb_all * g.size() );
     std::vector<double> rgp_analytic( g.size() );
 
     int icase = 0;
-    for ( int ivar_in = 0; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
-        for ( int ivar_out = 0; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
+    for ( int ivar_in = 2; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
+        for ( int ivar_out = 2; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
             int nb_fld = 1;
             if ( ivar_out == 2 ) {
                 tolerance = 1.e-13;
@@ -766,8 +446,9 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                 if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
 
                                 for ( int j = 0; j < nb_all * g.size(); j++ ) {
-                                    gp[j]  = 0.;
-                                    rgp[j] = 0.;
+                                    gp[j]   = 0.;
+                                    rgp1[j] = 0.;
+                                    rgp2[j] = 0.;
                                 }
                                 for ( int j = 0; j < g.size(); j++ ) {
                                     rgp_analytic[j] = 0.;
@@ -776,22 +457,32 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                 spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg.data(),
                                                                   rgp_analytic.data(), ivar_in, ivar_out );
 
-                                EXPECT_NO_THROW( transLocal.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
-                                                                      div.data(), rgp.data() ) );
+                                EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                       div.data(), rgp1.data() ) );
+
+                                EXPECT_NO_THROW( transLocal2.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                       div.data(), rgp2.data() ) );
 
                                 int pos = ( ivar_out * nb_vordiv + jfld );
 
-                                double rms_gen =
-                                    compute_rms( g.size(), rgp.data() + pos * g.size(), rgp_analytic.data() );
+                                double rms_gen1 =
+                                    compute_rms( g.size(), rgp1.data() + pos * g.size(), rgp_analytic.data() );
 
-                                if ( rms_gen >= tolerance ) {
+                                double rms_gen2 =
+                                    compute_rms( g.size(), rgp2.data() + pos * g.size(), rgp_analytic.data() );
+
+                                rav1 += rms_gen1;
+                                rav2 += rms_gen2;
+                                if ( !( rms_gen1 < tolerance ) || !( rms_gen2 < tolerance ) ) {
                                     Log::info()
                                         << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
                                         << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
-                                    ATLAS_DEBUG_VAR( rms_gen );
+                                    ATLAS_DEBUG_VAR( rms_gen1 );
+                                    ATLAS_DEBUG_VAR( rms_gen2 );
                                     ATLAS_DEBUG_VAR( tolerance );
                                 }
-                                EXPECT( rms_gen < tolerance );
+                                EXPECT( rms_gen1 < tolerance );
+                                EXPECT( rms_gen2 < tolerance );
                                 icase++;
 
 #if ATLAS_HAVE_TRANS
@@ -799,19 +490,22 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                                                     div.data(), gp.data() ) );
                                 double rms_trans =
                                     compute_rms( g.size(), gp.data() + pos * g.size(), rgp_analytic.data() );
+                                rav += rms_trans;
                                 double rms_diff =
-                                    compute_rms( g.size(), rgp.data() + pos * g.size(), gp.data() + pos * g.size() );
+                                    compute_rms( g.size(), rgp1.data() + pos * g.size(), gp.data() + pos * g.size() );
                                 EXPECT( rms_trans < tolerance );
-                                if ( rms_trans >= tolerance || rms_diff >= tolerance ) {
+                                if ( !( rms_trans < tolerance ) || !( rms_diff < tolerance ) ) {
                                     Log::info()
                                         << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
                                         << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
-                                    ATLAS_DEBUG_VAR( rms_gen );
+                                    ATLAS_DEBUG_VAR( rms_gen1 );
+                                    ATLAS_DEBUG_VAR( rms_gen2 );
                                     ATLAS_DEBUG_VAR( rms_trans );
                                     ATLAS_DEBUG_VAR( rms_diff );
                                     ATLAS_DEBUG_VAR( tolerance );
                                 }
 #endif
+                                EXPECT( icase < 300 );
                             }
                             k++;
                         }
@@ -821,19 +515,430 @@ CASE( "test_trans_vordiv_with_translib" ) {
         }
     }
     Log::info() << "Vordiv+scalar comparison with trans: all " << icase << " cases successfully passed!" << std::endl;
+    rav1 /= icase;
+    Log::info() << "average RMS error of transLocal1: " << rav1 << std::endl;
+    rav2 /= icase;
+    Log::info() << "average RMS error of transLocal2: " << rav2 << std::endl;
+#if ATLAS_HAVE_TRANS
+    rav /= icase;
+    Log::info() << "average RMS error of transIFS: " << rav << std::endl;
+#endif
 }
-
+#endif
 //-----------------------------------------------------------------------------
+#if 0
+CASE( "test_trans_hires" ) {
+    Log::info() << "test_trans_hires" << std::endl;
+    // test transgeneral by comparing its result with the trans library
+    // this test is based on the test_nomesh case in test_trans.cc
 
-CASE( "test_trans_invtrans" ) {
-    trans::Trans trans( Grid( "O64" ), 63, util::Config( "type", "local" ) );
+    std::ostream& out = Log::info();
+    double tolerance  = 1.e-13;
 
-    std::vector<double> rspec( trans.spectralCoefficients() );
-    std::vector<double> rgp( trans.grid().size() );
+#if ATLAS_HAVE_TRANS
+    //std::string transTypes[4] = {"localopt", "localopt2", "Local", "ifs"};
+    //std::string transTypes[2] = {"localopt2", "Local"};
+    std::string transTypes[3] = {"Local", "localopt2", "localopt"};
+    //std::string transTypes[1] = {"Local"};
+#else
+    std::string transTypes[1] = {"localopt2"};
+#endif
 
-    // TODO: rspec needs proper initial data
+    //Domain testdomain = ZonalBandDomain( {-90., 90.} );
+    //Domain testdomain = ZonalBandDomain( {-.5, .5} );
+    //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
+    //Domain testdomain = ZonalBandDomain( {-85., -86.} );
+    ///Domain testdomain = RectangularDomain( {-.01, .01}, {-.01, .01} );
+    Domain testdomain = RectangularDomain( {-1, 1}, {-1, 1} );
+    // Grid: (Adjust the following line if the test takes too long!)
+    Grid g( "F22000", testdomain );
+    Grid g_global( g.name() );
 
-    trans.invtrans( 1, rspec.data(), rgp.data() );
+    grid::StructuredGrid gs( g );
+    grid::StructuredGrid gs_global( g_global );
+    Log::info() << "nlats: " << gs.ny() << " nlons:" << gs.nxmax() << std::endl;
+    int ndgl = gs_global.ny();
+    //int trc  = ndgl - 1;  // linear
+    int trc = ndgl / 2. - 1;  // cubic
+
+    int nb_scalar = 1, nb_vordiv = 0;
+
+    for ( auto transType : transTypes ) {
+        int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
+        int icase = 0;
+        trans::Trans trans( g, trc, util::Config( "type", transType ) );
+        for ( int ivar_in = 2; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
+            for ( int ivar_out = 2; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
+                int nb_fld = 1;
+                if ( ivar_out == 2 ) { nb_fld = nb_scalar; }
+                else {
+                    nb_fld = nb_vordiv;
+                }
+                for ( int jfld = 0; jfld < 1; jfld++ ) {  // multiple fields
+                    int k = 0;
+                    for ( int m = 0; m <= trc; m++ ) {                 // zonal wavenumber
+                        for ( int n = m; n <= trc; n++ ) {             // total wavenumber
+                            for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
+
+                                if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
+                                     icase < 1 ) {
+                                    auto start = std::chrono::system_clock::now();
+                                    std::vector<double> sp( 2 * N * nb_scalar );
+                                    std::vector<double> gp( nb_all * g.size() );
+                                    if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
+                                    EXPECT_NO_THROW( trans.invtrans( nb_scalar, sp.data(), nb_vordiv, nullptr, nullptr,
+                                                                     gp.data() ) );
+                                    icase++;
+                                    auto end = std::chrono::system_clock::now();  //
+                                    std::chrono::duration<double> elapsed_seconds = end - start;
+                                    std::time_t end_time = std::chrono::system_clock::to_time_t( end );
+                                    std::string time_str = std::ctime( &end_time );
+                                    Log::info()
+                                        << transType << ": case " << icase
+                                        << ", elapsed time: " << elapsed_seconds.count()
+                                        << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
+                                }
+                                k++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Log::info() << "Vordiv+scalar comparison with trans::" << transType << ": all " << icase
+                    << " cases successfully passed!" << std::endl;
+    }
+}
+#endif
+//-----------------------------------------------------------------------------
+#if 1
+CASE( "test_trans_domain" ) {
+    Log::info() << "test_trans_domain" << std::endl;
+    // test transgeneral by comparing with analytic solution on a cropped domain
+
+    std::ostream& out = Log::info();
+    double tolerance  = 1.e-13;
+
+    //Domain testdomain = ZonalBandDomain( {-90., 90.} );
+    //Domain testdomain = ZonalBandDomain( {-.5, .5} );
+    //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
+    //Domain testdomain1 = ZonalBandDomain( {-10., 5.} );
+    Domain testdomain1 = RectangularDomain( {-5., 5.}, {-2.5, 0.} );
+    //Domain testdomain1 = RectangularDomain( {-1., 1.}, {50., 55.} );
+    Domain testdomain2 = RectangularDomain( {-5., 5.}, {-2.5, 0.} );
+    // Grid: (Adjust the following line if the test takes too long!)
+
+    Grid global_grid( "O64" );
+    //Grid g1( global_grid, testdomain1 );
+    Grid g2( global_grid, testdomain2 );
+    Grid g1( global_grid );
+    //Grid g2( global_grid );
+
+    bool fourierTrc1 = true;
+    bool fourierTrc2 = true;
+    using grid::StructuredGrid;
+    using LinearSpacing = grid::LinearSpacing;
+    //StructuredGrid g2( LinearSpacing( {0., 180.}, 181 ), LinearSpacing( {0., 45.}, 46 ) );
+
+    int trc = 63;
+    //Log::info() << "rgp1:" << std::endl;
+    if ( eckit::PathName( "legcache.bin" ).exists() ) eckit::PathName( "legcache.bin" ).unlink();
+    Trace t1( Here(), "translocal1 construction" );
+    trans::Trans transLocal1( global_grid, g1.domain(), trc,
+                              option::type( "local" ) | option::write_legendre( "legcache.bin" ) );
+    t1.stop();
+    //Log::info() << "rgp2:" << std::endl;
+    trans::Cache cache;
+    ATLAS_TRACE_SCOPE( "Read cache" ) cache = trans::LegendreCache( "legcache.bin" );
+    Trace t2( Here(), "translocal2 construction" );
+    trans::Trans transLocal2( cache, global_grid, g2.domain(), trc,
+                              option::type( "local" ) | option::write_legendre( "legcache2.bin" ) );
+    //trans::Trans transLocal2( cache, g2, trc, option::type( "local" ) );
+    //trans::Trans transLocal2( cache, g2, trc,
+    //                          option::type( "local" ) | option::no_fft() );
+    //trans::Trans transLocal2( g2, trc, option::type( "local" ) );
+    t2.stop();
+
+    double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
+
+    functionspace::Spectral spectral( trc );
+
+    int nb_scalar = 1, nb_vordiv = 1;
+    int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
+    std::vector<double> sp( 2 * N * nb_scalar );
+    std::vector<double> vor( 2 * N * nb_vordiv );
+    std::vector<double> div( 2 * N * nb_vordiv );
+    std::vector<double> rspecg( 2 * N );
+    std::vector<double> rgp1( nb_all * g1.size() );
+    std::vector<double> rgp2( nb_all * g2.size() );
+    std::vector<double> rgp1_analytic( g1.size() );
+    std::vector<double> rgp2_analytic( g2.size() );
+
+    int icase = 0;
+    for ( int ivar_in = 0; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
+        for ( int ivar_out = 0; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
+            int nb_fld = 1;
+            if ( ivar_out == 2 ) {
+                tolerance = 1.e-13;
+                nb_fld    = nb_scalar;
+            }
+            else {
+                tolerance = 2.e-6;
+                nb_fld    = nb_vordiv;
+            }
+            for ( int jfld = 0; jfld < nb_fld; jfld++ ) {  // multiple fields
+                int k = 0;
+                for ( int m = 0; m <= trc; m++ ) {                 // zonal wavenumber
+                    for ( int n = m; n <= trc; n++ ) {             // total wavenumber
+                        for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
+
+                            if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
+                                 icase < 1000 ) {
+                                auto start = std::chrono::system_clock::now();
+                                for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
+                                    sp[j] = 0.;
+                                }
+                                for ( int j = 0; j < 2 * N * nb_vordiv; j++ ) {
+                                    vor[j] = 0.;
+                                    div[j] = 0.;
+                                }
+                                if ( ivar_in == 0 ) vor[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 1 ) div[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
+
+                                for ( int j = 0; j < nb_all * g1.size(); j++ ) {
+                                    rgp1[j] = 0.;
+                                }
+                                for ( int j = 0; j < nb_all * g2.size(); j++ ) {
+                                    rgp2[j] = 0.;
+                                }
+                                for ( int j = 0; j < g1.size(); j++ ) {
+                                    rgp1_analytic[j] = 0.;
+                                }
+                                for ( int j = 0; j < g2.size(); j++ ) {
+                                    rgp2_analytic[j] = 0.;
+                                }
+
+                                spectral_transform_grid_analytic( trc, fourierTrc1, n, m, imag, g1, rspecg.data(),
+                                                                  rgp1_analytic.data(), ivar_in, ivar_out );
+
+                                spectral_transform_grid_analytic( trc, fourierTrc2, n, m, imag, g2, rspecg.data(),
+                                                                  rgp2_analytic.data(), ivar_in, ivar_out );
+
+                                //Log::info() << std::endl << "rgp1:";
+                                ATLAS_TRACE_SCOPE( "translocal1" )
+                                EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                       div.data(), rgp1.data() ) );
+
+                                //Log::info() << std::endl << "rgp2:";
+                                ATLAS_TRACE_SCOPE( "translocal2" )
+                                EXPECT_NO_THROW( transLocal2.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                       div.data(), rgp2.data() ) );
+
+                                int pos = ( ivar_out * nb_vordiv + jfld );
+
+                                double rms_gen1 =
+                                    compute_rms( g1.size(), rgp1.data() + pos * g1.size(), rgp1_analytic.data() );
+
+                                double rms_gen2 =
+                                    compute_rms( g2.size(), rgp2.data() + pos * g2.size(), rgp2_analytic.data() );
+
+                                //Log::info() << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
+                                //            << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl
+                                //            << "rgp1:";
+                                //for ( int j = 0; j < g1.size(); j++ ) {
+                                //    Log::info() << rgp1[pos * g1.size() + j] << " ";
+                                //};
+                                //Log::info() << std::endl << "rgp2:";
+                                //for ( int j = 0; j < g2.size(); j++ ) {
+                                //    Log::info() << rgp2[pos * g2.size() + j] << " ";
+                                //};
+                                //Log::info() << std::endl << "analytic1:";
+                                //for ( int j = 0; j < g1.size(); j++ ) {
+                                //    Log::info() << rgp1_analytic[j] << " ";
+                                //};
+                                //Log::info() << std::endl;
+                                rav1 += rms_gen1;
+                                rav2 += rms_gen2;
+                                if ( !( rms_gen1 < tolerance ) || !( rms_gen2 < tolerance ) ) {
+                                    Log::info()
+                                        << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
+                                        << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
+                                    ATLAS_DEBUG_VAR( rms_gen1 );
+                                    ATLAS_DEBUG_VAR( rms_gen2 );
+                                    ATLAS_DEBUG_VAR( tolerance );
+                                }
+                                EXPECT( rms_gen1 < tolerance );
+                                EXPECT( rms_gen2 < tolerance );
+                                icase++;
+                                auto end                                      = std::chrono::system_clock::now();  //
+                                std::chrono::duration<double> elapsed_seconds = end - start;
+                                std::time_t end_time = std::chrono::system_clock::to_time_t( end );
+                                std::string time_str = std::ctime( &end_time );
+                                //Log::info() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
+                                //            << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
+                            }
+                            k++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Log::info() << "Vordiv+scalar comparison with trans: all " << icase << " cases successfully passed!" << std::endl;
+    rav1 /= icase;
+    Log::info() << "average RMS error of transLocal1: " << rav1 << std::endl;
+    rav2 /= icase;
+    Log::info() << "average RMS error of transLocal2: " << rav2 << std::endl;
+}
+#endif
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+#if 0
+CASE( "test_trans_unstructured" ) {
+    Log::info() << "test_trans_unstructured" << std::endl;
+    // test transgeneral by comparing with analytic solution on an unstructured grid
+
+    std::ostream& out = Log::info();
+    double tolerance  = 1.e-13;
+
+    //Domain testdomain = RectangularDomain( {20., 25.}, {40., 60.} );
+    Domain testdomain = RectangularDomain( {0., 90.}, {0., 90.} );
+    // Grid: (Adjust the following line if the test takes too long!)
+    Grid grid_global( "F120" );
+    Grid g( grid_global, testdomain );
+    int trc = 120;
+    grid::StructuredGrid gs( g );
+    std::vector<PointXY> pts( g.size() );
+    int idx( 0 );
+    for ( size_t j = 0; j < gs.ny(); ++j ) {
+        double lat = gs.y( j );
+        for ( size_t i = 0; i < gs.nx( j ); ++i ) {
+            double lon = gs.x( i, j );
+            if ( i == j && lat > 0 ) {
+                //Log::info() << "idx=" << idx << " lon=" << lon << " lat=" << lat << std::endl;
+                pts[idx++].assign( lon, lat );
+            }
+        }
+    }
+    Grid gu = grid::UnstructuredGrid( new std::vector<PointXY>( &pts[0], &pts[idx] ) );
+    Log::info() << "gu: size=" << gu.size() << std::endl;
+    double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
+
+    int nb_scalar = 1, nb_vordiv = 1;
+    int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
+    std::vector<double> sp( 2 * N * nb_scalar );
+    std::vector<double> vor( 2 * N * nb_vordiv );
+    std::vector<double> div( 2 * N * nb_vordiv );
+    std::vector<double> rspecg( 2 * N );
+    std::vector<double> gp( nb_all * g.size() );
+    std::vector<double> rgp1( nb_all * g.size() );
+    std::vector<double> rgp2( nb_all * g.size() );
+    std::vector<double> rgp_analytic1( g.size() );
+    std::vector<double> rgp_analytic2( gu.size() );
+
+    trans::Trans transLocal1( grid_global, testdomain, trc, option::type( "local" ) );
+    trans::Trans transLocal2( gu, trc, util::Config( "type", "local" ) );
+
+    int icase = 0;
+    for ( int ivar_in = 2; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
+        for ( int ivar_out = 2; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
+            int nb_fld = 1;
+            if ( ivar_out == 2 ) {
+                tolerance = 1.e-13;
+                nb_fld    = nb_scalar;
+            }
+            else {
+                tolerance = 2.e-6;
+                nb_fld    = nb_vordiv;
+            }
+            for ( int jfld = 0; jfld < nb_fld; jfld++ ) {  // multiple fields
+                int k = 0;
+                for ( int m = 0; m <= trc; m++ ) {                 // zonal wavenumber
+                    for ( int n = m; n <= trc; n++ ) {             // total wavenumber
+                        for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
+
+                            if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
+                                 icase < 100 ) {
+                                auto start = std::chrono::system_clock::now();
+                                for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
+                                    sp[j] = 0.;
+                                }
+                                for ( int j = 0; j < 2 * N * nb_vordiv; j++ ) {
+                                    vor[j] = 0.;
+                                    div[j] = 0.;
+                                }
+                                if ( ivar_in == 0 ) vor[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 1 ) div[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
+
+                                for ( int j = 0; j < nb_all * g.size(); j++ ) {
+                                    gp[j]   = 0.;
+                                    rgp1[j] = 0.;
+                                    rgp2[j] = 0.;
+                                }
+                                for ( int j = 0; j < g.size(); j++ ) {
+                                    rgp_analytic1[j] = 0.;
+                                }
+
+                                for ( int j = 0; j < gu.size(); j++ ) {
+                                    rgp_analytic2[j] = 0.;
+                                }
+
+                                spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg.data(),
+                                                                  rgp_analytic1.data(), ivar_in, ivar_out );
+
+                                //Log::info() << icase << " m=" << m << " n=" << n << " imag=" << imag << " structured: ";
+                                EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                       div.data(), rgp1.data() ) );
+
+                                spectral_transform_grid_analytic( trc, trc, n, m, imag, gu, rspecg.data(),
+                                                                  rgp_analytic2.data(), ivar_in, ivar_out );
+
+                                //Log::info() << icase << " m=" << m << " n=" << n << " imag=" << imag << " unstructured: ";
+                                EXPECT_NO_THROW( transLocal2.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                       div.data(), rgp2.data() ) );
+
+                                int pos = ( ivar_out * nb_vordiv + jfld );
+
+                                double rms_gen1 =
+                                    compute_rms( g.size(), rgp1.data() + pos * g.size(), rgp_analytic1.data() );
+
+                                double rms_gen2 =
+                                    compute_rms( gu.size(), rgp2.data() + pos * gu.size(), rgp_analytic2.data() );
+
+                                rav1 += rms_gen1;
+                                rav2 += rms_gen2;
+                                if ( !( rms_gen1 < tolerance ) || !( rms_gen2 < tolerance ) ) {
+                                    Log::info()
+                                        << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
+                                        << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
+                                    ATLAS_DEBUG_VAR( rms_gen1 );
+                                    ATLAS_DEBUG_VAR( rms_gen2 );
+                                    ATLAS_DEBUG_VAR( tolerance );
+                                }
+                                EXPECT( rms_gen1 < tolerance );
+                                EXPECT( rms_gen2 < tolerance );
+                                icase++;
+                                auto end                                      = std::chrono::system_clock::now();  //
+                                std::chrono::duration<double> elapsed_seconds = end - start;
+                                std::time_t end_time = std::chrono::system_clock::to_time_t( end );
+                                std::string time_str = std::ctime( &end_time );
+                                //Log::info() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
+                                //            << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
+                            }
+                            k++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Log::info() << "Vordiv+scalar comparison with trans: all " << icase << " cases successfully passed!" << std::endl;
+    rav1 /= icase;
+    Log::info() << "average RMS error of transLocal1: " << rav1 << std::endl;
+    rav2 /= icase;
+    Log::info() << "average RMS error of transLocal2: " << rav2 << std::endl;
 }
 #endif
 

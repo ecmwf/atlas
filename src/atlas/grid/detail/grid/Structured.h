@@ -101,7 +101,7 @@ public:
 
         virtual bool next( PointXY& xy ) {
             NOTIMP;
-
+#if 0
             if ( j_ < grid_.ny() && i_ < grid_.nx( j_ ) ) {
                 xy = grid_.xy( i_++, j_ );
 
@@ -112,6 +112,7 @@ public:
                 return true;
             }
             return false;
+#endif
         }
 
         virtual const PointXY operator*() const { return grid_.xy( i_, j_ ); }
@@ -229,6 +230,8 @@ public:
 
             Spec spec() const;
 
+            std::string type() const;
+
         private:
             void reserve( long ny );
 
@@ -277,6 +280,8 @@ public:
 
         Spec spec() const { return impl_->spec(); }
 
+        std::string type() const { return impl_->type(); }
+
     private:
         eckit::SharedPtr<Implementation> impl_;
     };
@@ -289,6 +294,7 @@ public:
 public:
     Structured( const std::string&, XSpace, YSpace, Projection, Domain );
     Structured( XSpace, YSpace, Projection, Domain );
+    Structured( const Structured&, Domain );
 
     virtual ~Structured();
 

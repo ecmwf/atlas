@@ -220,11 +220,18 @@ void Library::Information::print( std::ostream& out ) const {
     bool feature_fortran( ATLAS_HAVE_FORTRAN );
     bool feature_OpenMP( ATLAS_HAVE_OMP );
     bool feature_Trans( ATLAS_HAVE_TRANS );
+    bool feature_FFTW( ATLAS_HAVE_FFTW );
+    bool feature_Eigen( ATLAS_HAVE_EIGEN );
     bool feature_Tesselation( ATLAS_HAVE_TESSELATION );
     bool feature_BoundsChecking( ATLAS_ARRAYVIEW_BOUNDS_CHECKING );
+    bool feature_Init_sNaN( ATLAS_INIT_SNAN );
     bool feature_MPI( false );
 #ifdef ECKIT_HAVE_MPI
     feature_MPI = true;
+#endif
+    bool feature_MKL( false );
+#ifdef ECKIT_HAVE_MKL
+    feature_MKL = true;
 #endif
     std::string array_data_store = "Native";
 #if ATLAS_HAVE_GRIDTOOLS_STORAGE
@@ -238,7 +245,11 @@ void Library::Information::print( std::ostream& out ) const {
         << "    MPI            : " << str( feature_MPI ) << '\n'
         << "    OpenMP         : " << str( feature_OpenMP ) << '\n'
         << "    BoundsChecking : " << str( feature_BoundsChecking ) << '\n'
+        << "    Init_sNaN      : " << str( feature_Init_sNaN ) << '\n'
         << "    Trans          : " << str( feature_Trans ) << '\n'
+        << "    FFTW           : " << str( feature_FFTW ) << '\n'
+        << "    Eigen          : " << str( feature_Eigen ) << '\n'
+        << "    MKL            : " << str( feature_MKL ) << '\n'
         << "    Tesselation    : " << str( feature_Tesselation ) << '\n'
         << "    ArrayDataStore : " << array_data_store << '\n'
         << "    gidx_t         : " << ATLAS_BITS_GLOBAL << " bit integer" << '\n'

@@ -26,7 +26,7 @@
 #else
 #define TRANS_DEFAULT "local"
 #endif
-#include "atlas/trans/local/VorDivToUVLocal.h"
+#include "atlas/trans/local/VorDivToUVLocal.h"  // --> recommended "local"
 
 namespace atlas {
 namespace trans {

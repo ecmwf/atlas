@@ -30,6 +30,8 @@ public:
    */
     virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
 
+    virtual void print( std::ostream& ) const override {}
+
 protected:
     size_t k_;
 };

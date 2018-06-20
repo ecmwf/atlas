@@ -52,6 +52,14 @@ public:
         return s;
     }
 
+    const Vector3D& p( int i ) {
+        if ( i == 0 ) return v00;
+        if ( i == 1 ) return v10;
+        if ( i == 2 ) return v11;
+        if ( i == 3 ) return v01;
+        throw eckit::OutOfRange(i,4,Here());
+    }
+
 private:           // members
     Vector3D v00;  // aka v0
     Vector3D v10;  // aka v1

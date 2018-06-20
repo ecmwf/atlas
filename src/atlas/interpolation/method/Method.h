@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <iosfwd>
 #include <string>
 #include <vector>
 
@@ -44,10 +45,12 @@ public:
     virtual void execute( const FieldSet& source, FieldSet& target ) const;
     virtual void execute( const Field& source, Field& target ) const;
 
+    virtual void print( std::ostream& ) const = 0;
+
 protected:
-    typedef eckit::linalg::Triplet Triplet;
-    typedef std::vector<Triplet> Triplets;
-    typedef eckit::linalg::SparseMatrix Matrix;
+    using Triplet  = eckit::linalg::Triplet;
+    using Triplets = std::vector<Triplet>;
+    using Matrix   = eckit::linalg::SparseMatrix;
 
     static void normalise( Triplets& triplets );
 

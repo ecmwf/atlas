@@ -570,10 +570,11 @@ CASE( "test_wrap" ) {
 
 CASE( "test_acc_map" ) {
     Array* ds = Array::create<double>( 2, 3, 4 );
-    if( ATLAS_HAVE_ACC ) {
+    if ( ATLAS_HAVE_ACC ) {
         EXPECT( ds->accMap() == true );
         EXPECT( ds->accMap() == true );
-    } else {
+    }
+    else {
         EXPECT( ds->accMap() == false );
     }
 }

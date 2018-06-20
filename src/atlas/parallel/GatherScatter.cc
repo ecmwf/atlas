@@ -59,10 +59,6 @@ struct Node {
     bool operator==( const Node& other ) const { return ( g == other.g ); }
 };
 
-bool operator<( const gidx_t g, const Node& n ) {
-    return ( g < n.g );
-}
-
 }  // namespace
 
 GatherScatter::GatherScatter() : name_(), is_setup_( false ) {

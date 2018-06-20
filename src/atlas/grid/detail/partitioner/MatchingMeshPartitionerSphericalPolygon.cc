@@ -46,7 +46,7 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
     const util::SphericalPolygon poly( prePartitionedMesh_.polygon( 0 ), prePartitionedMesh_.nodes().lonlat() );
 
     {
-        eckit::ProgressTimer timer( "Partitioning", grid.size(), "point", double( 10 ), atlas::Log::info() );
+        eckit::ProgressTimer timer( "Partitioning", grid.size(), "point", double( 10 ), atlas::Log::trace() );
         size_t i = 0;
 
         for ( const PointXY Pxy : grid.xy() ) {

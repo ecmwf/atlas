@@ -11,3 +11,5 @@ module unload fftw
 module unload libemos
 
 module switch gnu clang
+export FC=/usr/local/apps/gcc/6.3.0/bin/gfortran
+

@@ -194,14 +194,25 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
     if ( do_all ) {
         cells_to_edit.resize( cells_glb_idx.size() );
-        for ( size_t i = 0; i < cells_glb_idx.size(); ++i )
+        for ( size_t i = 0; i < cells_glb_idx.size(); ++i ) {
             cells_to_edit[i] = i;
+        }
     }
     else {
+        size_t nb_cells_to_edit( 0 );
+        for ( const auto& new_cells : build_halo.periodic_cells_local_index_ ) {
+            nb_cells_to_edit += new_cells.size();
+        }
+        cells_to_edit.resize( nb_cells_to_edit );
+        int c{0};
+        int i{0};
+        for ( int t = 0; t < cells.nb_types(); ++t ) {
+            for ( idx_t p : build_halo.periodic_cells_local_index_[t] ) {
+                cells_to_edit[i++] = c + p;
+            }
+            c += cells.elements( t ).size();
+        }
         glb_idx_max = cells.global_index().metadata().getLong( "max", 0 );
-        cells_to_edit.resize( build_halo.periodic_cells_local_index_.size() );
-        for ( size_t i = 0; i < cells_to_edit.size(); ++i )
-            cells_to_edit[i] = build_halo.periodic_cells_local_index_[i];
     }
 
     std::vector<gidx_t> glb_idx( cells_to_edit.size() );
@@ -296,7 +307,11 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem ) {
     }
 
     const mesh::HybridElements::Connectivity& elem_nodes = mesh.cells().node_connectivity();
-    auto patched                                         = array::make_view<int, 1>( mesh.cells().field( "patch" ) );
+    auto field_flags                                     = array::make_view<int, 1>( mesh.cells().flags() );
+    auto patched                                         = [&field_flags]( size_t e ) {
+        using Topology = atlas::mesh::Nodes::Topology;
+        return Topology::check( field_flags( e ), Topology::PATCH );
+    };
 
     size_t nb_elems = mesh.cells().size();
     for ( size_t elem = 0; elem < nb_elems; ++elem ) {
@@ -497,6 +512,8 @@ public:
 
         std::vector<std::vector<int>> elem_part;
 
+        std::vector<std::vector<int>> elem_flags;
+
         std::vector<std::vector<int>> elem_type;
 
         Buffers( Mesh& mesh ) {
@@ -511,6 +528,7 @@ public:
             elem_nodes_id.resize( mpi_size );
             elem_nodes_displs.resize( mpi_size );
             elem_part.resize( mpi_size );
+            elem_flags.resize( mpi_size );
             elem_type.resize( mpi_size );
         }
 
@@ -556,6 +574,7 @@ public:
             comm.allToAll( send.elem_nodes_id, recv.elem_nodes_id );
             comm.allToAll( send.elem_part, recv.elem_part );
             comm.allToAll( send.elem_type, recv.elem_type );
+            comm.allToAll( send.elem_flags, recv.elem_flags );
             comm.allToAll( send.elem_nodes_displs, recv.elem_nodes_displs );
         }
     }
@@ -577,6 +596,7 @@ public:
     array::ArrayView<int, 1> ghost;
     mesh::HybridElements::Connectivity* elem_nodes;
     array::ArrayView<int, 1> elem_part;
+    array::ArrayView<int, 1> elem_flags;
     array::ArrayView<gidx_t, 1> elem_glb_idx;
 
     std::vector<int> bdry_nodes;
@@ -598,6 +618,7 @@ public:
         ghost( array::make_view<int, 1>( mesh.nodes().ghost() ) ),
         elem_nodes( &mesh.cells().node_connectivity() ),
         elem_part( array::make_view<int, 1>( mesh.cells().partition() ) ),
+        elem_flags( array::make_view<int, 1>( mesh.cells().flags() ) ),
         elem_glb_idx( array::make_view<gidx_t, 1>( mesh.cells().global_index() ) ),
         compute_uid( mesh ) {
         halo = 0;
@@ -618,6 +639,7 @@ public:
 
         elem_nodes   = &mesh.cells().node_connectivity();
         elem_part    = array::make_view<int, 1>( mesh.cells().partition() );
+        elem_flags   = array::make_view<int, 1>( mesh.cells().flags() );
         elem_glb_idx = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
     }
 
@@ -665,6 +687,7 @@ public:
 
         buf.elem_glb_idx[p].resize( nb_elems );
         buf.elem_part[p].resize( nb_elems );
+        buf.elem_flags[p].resize( nb_elems, Topology::NONE );
         buf.elem_type[p].resize( nb_elems );
         buf.elem_nodes_id[p].resize( nb_elem_nodes );
         buf.elem_nodes_displs[p].resize( nb_elems );
@@ -675,7 +698,8 @@ public:
 
             buf.elem_glb_idx[p][jelem] = elem_glb_idx( ielem );
             buf.elem_part[p][jelem]    = elem_part( ielem );
-            buf.elem_type[p][jelem]    = mesh.cells().type_idx( ielem );
+            Topology::set( buf.elem_flags[p][jelem], elem_flags( ielem ) );
+            buf.elem_type[p][jelem] = mesh.cells().type_idx( ielem );
             for ( size_t jnode = 0; jnode < elem_nodes->cols( ielem ); ++jnode )
                 buf.elem_nodes_id[p][jelemnode++] = compute_uid( ( *elem_nodes )( ielem, jnode ) );
         }
@@ -728,6 +752,7 @@ public:
 
         buf.elem_glb_idx[p].resize( nb_elems );
         buf.elem_part[p].resize( nb_elems );
+        buf.elem_flags[p].resize( nb_elems, Topology::NONE );
         buf.elem_type[p].resize( nb_elems );
         buf.elem_nodes_id[p].resize( nb_elem_nodes );
         buf.elem_nodes_displs[p].resize( nb_elems );
@@ -736,7 +761,8 @@ public:
             buf.elem_nodes_displs[p][jelem] = jelemnode;
             size_t ielem                    = elems[jelem];
             buf.elem_part[p][jelem]         = elem_part( ielem );
-            buf.elem_type[p][jelem]         = mesh.cells().type_idx( ielem );
+            Topology::set( buf.elem_flags[p][jelem], elem_flags( ielem ) | newflags );
+            buf.elem_type[p][jelem] = mesh.cells().type_idx( ielem );
             std::vector<double> crds( elem_nodes->cols( ielem ) * 2 );
             for ( size_t jnode = 0; jnode < elem_nodes->cols( ielem ); ++jnode ) {
                 double crd[] = {xy( ( *elem_nodes )( ielem, jnode ), XX ), xy( ( *elem_nodes )( ielem, jnode ), YY )};
@@ -751,7 +777,7 @@ public:
         }
     }
 
-    void add_nodes( Buffers& buf, bool periodic ) {
+    void add_nodes( Buffers& buf ) {
         ATLAS_TRACE();
 
         const size_t mpi_size = mpi::comm().size();
@@ -827,7 +853,10 @@ public:
                 lonlat( loc_idx, XX ) = pll.lon();
                 lonlat( loc_idx, YY ) = pll.lat();
 
-                if ( periodic ) status.new_periodic_ghost_points.push_back( loc_idx );
+                if ( Topology::check( flags( loc_idx ), Topology::PERIODIC ) and
+                     not Topology::check( flags( loc_idx ), Topology::BC ) ) {
+                    status.new_periodic_ghost_points.push_back( loc_idx );
+                }
 
                 // make sure new node was not already there
                 {
@@ -849,7 +878,7 @@ public:
         }
     }
 
-    void add_elements( Buffers& buf, bool periodic ) {
+    void add_elements( Buffers& buf ) {
         ATLAS_TRACE();
 
         const size_t mpi_size = mpi::comm().size();
@@ -924,7 +953,7 @@ public:
             auto elem_type_glb_idx = elements.view<gidx_t, 1>( mesh.cells().global_index() );
             auto elem_type_part    = elements.view<int, 1>( mesh.cells().partition() );
             auto elem_type_halo    = elements.view<int, 1>( mesh.cells().halo() );
-            auto elem_type_patch   = elements.view<int, 1>( mesh.cells().field( "patch" ) );
+            auto elem_type_flags   = elements.view<int, 1>( mesh.cells().flags() );
 
             // Copy information in new elements
             size_t new_elem( 0 );
@@ -935,22 +964,24 @@ public:
                     elem_type_glb_idx( loc_idx ) = std::abs( buf.elem_glb_idx[jpart][jelem] );
                     elem_type_part( loc_idx )    = buf.elem_part[jpart][jelem];
                     elem_type_halo( loc_idx )    = halo + 1;
-                    elem_type_patch( loc_idx )   = 0;
-                    for ( size_t n = 0; n < node_connectivity.cols(); ++n )
+                    elem_type_flags( loc_idx )   = buf.elem_flags[jpart][jelem];
+                    for ( size_t n = 0; n < node_connectivity.cols(); ++n ) {
                         node_connectivity.set(
                             loc_idx, n, uid2node[buf.elem_nodes_id[jpart][buf.elem_nodes_displs[jpart][jelem] + n]] );
+                    }
 
-                    if ( periodic ) { status.new_periodic_ghost_cells[t].push_back( old_size + new_elem ); }
-
+                    if ( Topology::check( elem_type_flags( loc_idx ), Topology::PERIODIC ) ) {
+                        status.new_periodic_ghost_cells[t].push_back( old_size + new_elem );
+                    }
                     ++new_elem;
                 }
             }
         }
     }
 
-    void add_buffers( Buffers& buf, bool periodic = false ) {
-        add_nodes( buf, periodic );
-        add_elements( buf, periodic );
+    void add_buffers( Buffers& buf ) {
+        add_nodes( buf );
+        add_elements( buf );
         update();
     }
 };
@@ -1196,8 +1227,10 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 #ifdef DEBUG_OUTPUT
     Log::debug() << "recv: \n" << recvmesh << std::endl;
 #endif
-    helper.add_buffers( recvmesh, /* periodic = */ true );
+    helper.add_buffers( recvmesh );
 }
+
+BuildHalo::BuildHalo( Mesh& mesh ) : mesh_( mesh ), periodic_cells_local_index_( mesh.cells().nb_types() ) {}
 
 void BuildHalo::operator()( int nb_elems ) {
     ATLAS_TRACE( "BuildHalo" );
@@ -1240,12 +1273,10 @@ void BuildHalo::operator()( int nb_elems ) {
         for ( idx_t p : helper.status.new_periodic_ghost_points ) {
             periodic_points_local_index_.push_back( p );
         }
-        int c( 0 );
         for ( int t = 0; t < mesh_.cells().nb_types(); ++t ) {
             for ( idx_t p : helper.status.new_periodic_ghost_cells[t] ) {
-                periodic_cells_local_index_.push_back( c + p );
+                periodic_cells_local_index_[t].push_back( p );
             }
-            c += mesh_.cells().elements( t ).size();
         }
 
         std::stringstream ss;
@@ -1268,6 +1299,7 @@ void BuildHalo::operator()( int nb_elems ) {
 
     make_nodes_global_index_human_readable( *this, mesh_.nodes(),
                                             /*do_all*/ false );
+
     make_cells_global_index_human_readable( *this, mesh_.cells(),
                                             /*do_all*/ false );
     //  renumber_nodes_glb_idx (mesh_.nodes());

@@ -32,8 +32,8 @@
 #include "atlas/util/MicroDeg.h"
 #include "atlas/util/Unique.h"
 
-#include "tests/TestMeshes.h"
 #include "tests/AtlasTestEnvironment.h"
+#include "tests/TestMeshes.h"
 
 using namespace atlas::output;
 using namespace atlas::util;

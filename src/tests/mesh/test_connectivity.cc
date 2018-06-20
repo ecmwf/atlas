@@ -8,10 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/library/defines.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
-#include "atlas/library/defines.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

@@ -82,6 +82,7 @@ public:
 
         virtual bool next( PointXY& xy ) {
             NOTIMP;
+#if 0
             if ( n_ != grid_.points_->size() ) {
                 xy = grid_.xy( n_++ );
                 return true;
@@ -89,6 +90,7 @@ public:
             else {
                 return false;
             }
+#endif
         }
 
         virtual const PointXY operator*() const { return grid_.xy( n_ ); }

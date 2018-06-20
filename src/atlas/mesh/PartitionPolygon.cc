@@ -27,13 +27,18 @@ util::Polygon::edge_set_t compute_edges( const detail::MeshImpl& mesh, size_t ha
         const Elements& elements = mesh.cells().elements( t );
 
         const BlockConnectivity& conn = elements.node_connectivity();
-        auto field_patch              = elements.view<int, 1>( elements.field( "patch" ) );
-        auto field_halo               = elements.view<int, 1>( elements.field( "halo" ) );
+        auto field_flags              = elements.view<int, 1>( elements.flags() );
+        auto field_halo               = elements.view<int, 1>( elements.halo() );
+
+        auto patch = [&field_flags]( size_t e ) {
+            using Topology = atlas::mesh::Nodes::Topology;
+            return Topology::check( field_flags( e ), Topology::PATCH );
+        };
 
         const size_t nb_nodes = elements.nb_nodes();
 
         for ( size_t j = 0; j < elements.size(); ++j ) {
-            if ( field_patch( j ) == 0 && field_halo( j ) <= halo ) {
+            if ( patch( j ) == 0 && field_halo( j ) <= halo ) {
                 for ( size_t k = 0; k < nb_nodes; ++k ) {
                     util::Polygon::edge_t edge( conn( j, k ), conn( j, ( k + 1 ) % nb_nodes ) );
                     if ( !edges.erase( edge.reverse() ) ) { edges.insert( edge ); }

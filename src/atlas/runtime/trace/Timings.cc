@@ -340,7 +340,6 @@ std::string TimingsRegistry::filter_filepath( const std::string& filepath ) cons
     std::regex filepath_re( "(.*)?/atlas/src/(.*)" );
     std::smatch matches;
     std::string filtered( "" );
-    bool is_atlas = false;
     if ( std::regex_search( filepath, matches, filepath_re ) ) {
         // filtered = matches[2];
         filtered = "[atlas] ";

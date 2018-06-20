@@ -149,7 +149,6 @@ std::string Checksum::execute( const array::ArrayView<DATA_TYPE, LRANK>& lfield 
         Log::error() << "lfield.shape(0) = " << lfield.shape( 0 );
         NOTIMP;  // Need to implement with parallel ranks > 1
     }
-    return std::string( "" );
 }
 
 // ------------------------------------------------------------------

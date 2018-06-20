@@ -49,5 +49,12 @@ ecbuild_add_test( TARGET atlas_test_transgeneral
   SOURCES   test_transgeneral.cc
   LIBS      atlas
   ENVIRONMENT ATLAS_TRACE_REPORT=1
+  CONDITION ATLAS_HAVE_FFTW
+)
+
+ecbuild_add_test( TARGET atlas_test_trans_localcache
+  SOURCES   test_trans_localcache.cc
+  LIBS      atlas
+  ENVIRONMENT ATLAS_TRACE_REPORT=1
 )
 

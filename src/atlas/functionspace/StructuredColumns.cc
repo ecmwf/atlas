@@ -86,7 +86,7 @@ public:
         return false;
     }
 
-    bool operator==( const GridPoint& other ) const { return ( j == other.j && i == other.i ); }
+    //bool operator==( const GridPoint& other ) const { return ( j == other.j && i == other.i ); }
 };
 
 struct GridPointSet {
@@ -774,7 +774,6 @@ void StructuredColumns::haloExchange( FieldSet& fieldset ) const {
                 break;
             default:
                 throw eckit::Exception( "Rank not supported", Here() );
-                break;
         }
     }
 }

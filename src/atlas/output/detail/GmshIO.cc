@@ -502,7 +502,6 @@ mesh::ElementType* make_element_type( int type ) {
     if ( type == TRIAG ) return new mesh::temporary::Triangle();
     if ( type == LINE ) return new mesh::temporary::Line();
     throw eckit::SeriousBug( "Element type not supported", Here() );
-    return 0;
 }
 }  // namespace
 
@@ -753,13 +752,13 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
     file << nb_nodes << "\n";
     double xyz[3] = {0., 0., 0.};
     for ( size_t n = 0; n < nb_nodes; ++n ) {
-        int g = glb_idx( n );
+        gidx_t g = glb_idx( n );
 
         for ( size_t d = 0; d < surfdim; ++d )
             xyz[d] = coords( n, d );
 
         if ( binary ) {
-            file.write( reinterpret_cast<const char*>( &g ), sizeof( int ) );
+            file.write( reinterpret_cast<const char*>( &g ), sizeof( gidx_t ) );
             file.write( reinterpret_cast<const char*>( &xyz ), sizeof( double ) * 3 );
         }
         else {
@@ -956,7 +955,7 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Node
     bool binary( !options.get<bool>( "ascii" ) );
     if ( binary ) mode |= std::ios_base::binary;
     bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
-    GmshFile file( file_path, mode, gather ? -1 : atlas::mpi::comm().rank() );
+    GmshFile file( file_path, mode, gather ? -1 : int(atlas::mpi::comm().rank()) );
 
     // Header
     if ( is_new_file ) { write_header_ascii( file ); }
@@ -995,7 +994,7 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Stru
 
     bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
 
-    GmshFile file( file_path, mode, gather ? -1 : atlas::mpi::comm().rank() );
+    GmshFile file( file_path, mode, gather ? -1 : int(atlas::mpi::comm().rank()) );
 
     // Header
     if ( is_new_file ) write_header_ascii( file );

@@ -43,12 +43,12 @@ size_t eval_idx( size_t pos, std::array<size_t, Rank>& strides, FirstDim first )
 
 template <int Rank, typename FirstDim, typename SecondDim>
 size_t eval_idx( size_t pos, std::array<size_t, Rank>& strides, FirstDim first, SecondDim second ) {
-    return first * strides[pos] + eval_idx<Rank>( pos+1, strides, second );
+    return first * strides[pos] + eval_idx<Rank>( pos + 1, strides, second );
 }
 
 template <int Rank, typename FirstDim, typename SecondDim, typename ThirdDim>
 size_t eval_idx( size_t pos, std::array<size_t, Rank>& strides, FirstDim first, SecondDim second, ThirdDim third ) {
-    return first * strides[pos] + eval_idx<Rank>( pos+1, strides, second, third );
+    return first * strides[pos] + eval_idx<Rank>( pos + 1, strides, second, third );
 }
 
 template <typename DATA_TYPE, int Rank, int Dim>

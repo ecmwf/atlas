@@ -49,14 +49,14 @@ static void set_uninitialized_fields_to_zero( HybridElements& elems, size_t begi
     IndexView<int, 1> remote_index    = make_indexview<int, 1>( elems.remote_index() );
     ArrayView<int, 1> partition       = make_view<int, 1>( elems.partition() );
     ArrayView<int, 1> halo            = make_view<int, 1>( elems.halo() );
-    ArrayView<int, 1> patch           = make_view<int, 1>( elems.field( "patch" ) );
+    ArrayView<int, 1> flags           = make_view<int, 1>( elems.flags() );
 
     for ( size_t j = begin; j < elems.size(); ++j ) {
         global_index( j ) = 0;
         remote_index( j ) = 0;
         partition( j )    = 0;
         halo( j )         = 0;
-        patch( j )        = 0;
+        flags( j )        = 0;
     }
 }
 }  // namespace
@@ -68,7 +68,7 @@ HybridElements::HybridElements() : size_( 0 ), elements_size_(), elements_begin_
     add( Field( "remote_idx", make_datatype<int>(), make_shape( size() ) ) );
     add( Field( "partition", make_datatype<int>(), make_shape( size() ) ) );
     add( Field( "halo", make_datatype<int>(), make_shape( size() ) ) );
-    add( Field( "patch", make_datatype<int>(), make_shape( size() ) ) );
+    add( Field( "flags", make_datatype<int>(), make_shape( size() ) ) );
     set_uninitialized_fields_to_zero( *this, 0 );
 
     node_connectivity_ = &add( new Connectivity( "node" ) );

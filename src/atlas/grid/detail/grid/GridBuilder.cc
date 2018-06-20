@@ -70,14 +70,21 @@ int regex_match_impl( const std::string& string, const std::string& regex, std::
 class Regex {
 public:
     Regex( const std::string& regex, bool use_case = true ) : regex_( regex ), use_case_( use_case ) {}
+/*
+    // unused
     bool match( const std::string& string ) const {
         std::vector<std::string> substr;
         return regex_match_impl( string, regex_, substr, false, use_case_ );
     }
+*/
     bool match( const std::string& string, std::vector<std::string>& substr ) const {
         return regex_match_impl( string, regex_, substr, true, use_case_ );
     }
+
+/*
+    // unused
     operator std::string() const { return regex_; }
+*/
 
 private:
     std::string regex_;
@@ -183,8 +190,6 @@ const Grid::Implementation* GridBuilder::create( const Grid::Config& config ) co
     else {
         throw eckit::BadParameter( "name or type in configuration don't exist", Here() );
     }
-
-    return nullptr;
 }
 
 bool GridBuilder::match( const std::string& string, std::vector<std::string>& matches, int& id ) const {

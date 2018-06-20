@@ -92,7 +92,6 @@ CASE( "test_functionspace_StructuredColumns_no_halo" ) {
 
 CASE( "test_functionspace_StructuredColumns_halo" ) {
     ATLAS_DEBUG_VAR( mpi::comm().size() );
-    int root = 0;
     //  grid::StructuredGrid grid(
     //      grid::StructuredGrid::XSpace( {0.,360.} , {2,4,6,6,4,2} , false ),
     //      grid::StructuredGrid::YSpace( grid::LinearSpacing( {80.,-80.}, 6 ) ),

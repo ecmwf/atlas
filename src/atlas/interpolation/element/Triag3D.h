@@ -12,6 +12,7 @@
 
 #include <limits>
 
+#include "eckit/exception/Exceptions.h"
 #include "atlas/interpolation/Vector3D.h"
 #include "atlas/interpolation/method/Intersect.h"
 #include "atlas/util/Point.h"
@@ -53,6 +54,13 @@ public:  // types
     friend std::ostream& operator<<( std::ostream& s, const Triag3D& p ) {
         p.print( s );
         return s;
+    }
+
+    const Vector3D& p( int i ) {
+        if ( i == 0 ) return v0;
+        if ( i == 1 ) return v1;
+        if ( i == 2 ) return v2;
+        throw eckit::OutOfRange(i,3,Here());
     }
 
 private:  // members

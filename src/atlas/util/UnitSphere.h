@@ -23,5 +23,5 @@ using eckit::geometry::UnitSphere;
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace util
-} // namespace atlas
+}  // namespace util
+}  // namespace atlas

@@ -119,6 +119,9 @@ public:  // methods
     const Field& halo() const { return field( "halo" ); }
     Field& halo() { return field( "halo" ); }
 
+    const Field& flags() const { return field( "flags" ); }
+    Field& flags() { return field( "flags" ); }
+
     // -- Modifiers
 
     /// @brief Add a new element type with given number of elements

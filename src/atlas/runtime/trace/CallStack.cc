@@ -9,8 +9,8 @@ namespace atlas {
 namespace runtime {
 namespace trace {
 
-void CallStack::push_front( const eckit::CodeLocation& loc ) {
-    stack_.push_front( std::hash<std::string>{}( loc.asString() ) );
+void CallStack::push_front( const eckit::CodeLocation& loc, const std::string& id ) {
+    stack_.push_front( std::hash<std::string>{}( loc.asString() + id ) );
 }
 
 void CallStack::pop_front() {

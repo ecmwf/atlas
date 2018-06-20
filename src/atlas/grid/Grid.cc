@@ -11,6 +11,7 @@
 #include "atlas/grid/Grid.h"
 
 #include <limits>
+#include <string>
 #include <vector>
 
 #include "eckit/config/Parametrisation.h"
@@ -34,6 +35,11 @@ Grid::Grid( const Grid::Implementation* grid ) : grid_( grid ) {}
 
 Grid::Grid( const std::string& shortname, const Domain& domain ) {
     grid_ = Grid::Implementation::create( shortname, Config( "domain", domain.spec() ) );
+}
+
+Grid::Grid( const Grid& grid, const Grid::Domain& domain ) {
+    ASSERT( grid );
+    grid_ = Grid::Implementation::create( *grid.get(), domain );
 }
 
 Grid::Grid( const Config& p ) {
@@ -89,11 +95,18 @@ StructuredGrid::StructuredGrid( const XSpace& xspace, const YSpace& yspace, cons
     Grid( new detail::grid::Structured( xspace, yspace, projection, domain ) ),
     grid_( structured_grid( get() ) ) {}
 
+StructuredGrid::StructuredGrid( const Grid& grid, const Grid::Domain& domain ) :
+    Grid( grid, domain ),
+    grid_( structured_grid( get() ) ) {}
+
 ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx, const Domain& domain ) :
     ReducedGaussianGrid::grid_t( detail::grid::reduced_gaussian( nx, domain ) ) {}
 
 ReducedGaussianGrid::ReducedGaussianGrid( const std::initializer_list<long>& nx ) :
     ReducedGaussianGrid( std::vector<long>( nx ) ) {}
+
+RegularGaussianGrid::RegularGaussianGrid( int N, const Grid::Domain& domain ) :
+    RegularGaussianGrid::grid_t( "F" + std::to_string( N ), domain ) {}
 
 }  // namespace grid
 }  // namespace atlas

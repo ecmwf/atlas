@@ -137,6 +137,17 @@ CASE( "test_reducedgaussian" ) {
     EXPECT( N640.size() == custom.size() );
 }
 
+CASE( "test_cropping previous case" ) {
+    StructuredGrid grid( "N32" );
+    EXPECT( grid.ny() == 64 );
+    EXPECT( grid.size() == 6114 );
+
+    StructuredGrid cropped( grid, RectangularDomain( {-27, 45}, {33, 73} ) );
+    EXPECT( cropped.ny() == 14 );
+    EXPECT( cropped.size() == 267 );
+}
+
+
 //-----------------------------------------------------------------------------
 
 }  // namespace test

@@ -9,6 +9,7 @@
  */
 
 #include "atlas/option/TransOptions.h"
+#include "atlas/grid.h"
 
 // ----------------------------------------------------------------------------
 
@@ -32,7 +33,8 @@ flt::flt( bool flt ) {
 }
 
 fft::fft( FFT fft ) {
-    static const std::map<FFT, std::string> FFT_to_string = {{FFT::FFT992, "FFT992"}, {FFT::FFTW, "FFTW"}};
+    static const std::map<FFT, std::string> FFT_to_string = {
+        {FFT::OFF, "OFF"}, {FFT::FFT992, "FFT992"}, {FFT::FFTW, "FFTW"}};
     set( "fft", FFT_to_string.at( fft ) );
 }
 
@@ -52,8 +54,20 @@ read_legendre::read_legendre( const eckit::PathName& filepath ) {
     set( "read_legendre", filepath );
 }
 
+write_fft::write_fft( const eckit::PathName& filepath ) {
+    set( "write_fft", filepath );
+}
+
+read_fft::read_fft( const eckit::PathName& filepath ) {
+    set( "read_fft", filepath );
+}
+
 nproma::nproma( int nproma ) {
     set( "nproma", nproma );
+}
+
+warning::warning( int warning ) {
+    set( "warning", warning );
 }
 
 // ----------------------------------------------------------------------------
