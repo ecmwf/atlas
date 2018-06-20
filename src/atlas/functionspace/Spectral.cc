@@ -287,7 +287,6 @@ void Spectral::scatter( const Field& global, Field& local ) const {
 std::string Spectral::checksum( const FieldSet& fieldset ) const {
     eckit::MD5 md5;
     NOTIMP;
-    return md5;
 }
 std::string Spectral::checksum( const Field& field ) const {
     FieldSet fieldset;

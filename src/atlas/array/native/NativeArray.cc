@@ -69,7 +69,6 @@ Array* Array::create( DataType datatype, const ArrayShape& shape ) {
             throw eckit::BadParameter( err.str(), Here() );
         }
     }
-    return 0;
 }
 
 template <typename Value>
