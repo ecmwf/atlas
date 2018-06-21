@@ -35,7 +35,7 @@ namespace atlas {
 namespace trans {
 
 namespace {
-static TransBuilderGrid<TransLocal> builder( "local" );
+static TransBuilderGrid<TransLocal> builder( "local", "local" );
 }  // namespace
 
 namespace {

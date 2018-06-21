@@ -151,17 +151,9 @@ public:
 
     static bool has( const std::string& name );
 
-    static void backend( const std::string& );
-
-    static std::string backend();
-
-    static void config( const eckit::Configuration& );
-
-    static const eckit::Configuration& config();
-
 private:
     std::string name_;
-    static util::Config default_options_;
+    std::string backend_;
     virtual Trans_t* make( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
                            const eckit::Configuration& ) {
         return nullptr;
@@ -171,7 +163,8 @@ private:
     }
 
 protected:
-    TransFactory( const std::string& );
+    TransFactory();
+    TransFactory( const std::string& name, const std::string& backend );
     virtual ~TransFactory();
 };
 
@@ -188,7 +181,7 @@ class TransBuilderFunctionSpace : public TransFactory {
     }
 
 public:
-    TransBuilderFunctionSpace( const std::string& name ) : TransFactory( name ) {}
+    TransBuilderFunctionSpace( const std::string& name, const std::string& backend ) : TransFactory( name, backend ) {}
 };
 
 template <class T>
@@ -202,7 +195,7 @@ class TransBuilderGrid : public TransFactory {
     }
 
 public:
-    TransBuilderGrid( const std::string& name ) : TransFactory( name ) {}
+    TransBuilderGrid( const std::string& name, const std::string& backend ) : TransFactory( name, backend ) {}
 };
 
 //----------------------------------------------------------------------------------------------------------------------

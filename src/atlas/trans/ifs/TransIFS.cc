@@ -35,7 +35,7 @@ namespace atlas {
 namespace trans {
 
 namespace {
-static TransBuilderGrid<TransIFS> builder( "ifs" );
+static TransBuilderGrid<TransIFS> builder( "ifs", "ifs" );
 }
 
 class TransParameters {

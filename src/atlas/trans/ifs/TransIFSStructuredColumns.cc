@@ -30,7 +30,7 @@ TransIFSStructuredColumns::TransIFSStructuredColumns( const Cache& cache, const 
 TransIFSStructuredColumns::~TransIFSStructuredColumns() {}
 
 namespace {
-static TransBuilderFunctionSpace<TransIFSStructuredColumns> builder( "ifs(StructuredColumns,Spectral)" );
+static TransBuilderFunctionSpace<TransIFSStructuredColumns> builder( "ifs(StructuredColumns,Spectral)", "ifs" );
 }
 
 }  // namespace trans

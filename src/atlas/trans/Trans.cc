@@ -19,13 +19,6 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/Trans.h"
 
-// For factory registration only:
-#if ATLAS_HAVE_TRANS
-#include "atlas/trans/ifs/TransIFSNodeColumns.h"
-#include "atlas/trans/ifs/TransIFSStructuredColumns.h"
-#endif
-#include "atlas/trans/local/TransLocal.h"  // --> recommended "local"
-
 namespace {
 struct default_backend {
 #if ATLAS_HAVE_TRANS
@@ -46,40 +39,35 @@ private:
 namespace atlas {
 namespace trans {
 
-util::Config TransFactory::default_options_ = util::Config( "type", default_backend::instance().value );
+
+class TransBackend {
+public:
+    static void list( std::ostream& );
+    static bool has( const std::string& name );
+    static void backend( const std::string& );
+    static std::string backend();
+    static void config( const eckit::Configuration& );
+    static const eckit::Configuration& config();
+private:
+    static util::Config default_options_;
+};
+
+util::Config TransBackend::default_options_ = util::Config( "type", default_backend::instance().value );
 
 TransImpl::~TransImpl() {}
 
 namespace {
 
 static eckit::Mutex* local_mutex               = 0;
+static std::map<std::string, int> *b = 0;
 static std::map<std::string, TransFactory*>* m = 0;
 static pthread_once_t once                     = PTHREAD_ONCE_INIT;
 
 static void init() {
     local_mutex = new eckit::Mutex();
+    b           = new std::map<std::string, int>();
     m           = new std::map<std::string, TransFactory*>();
 }
-
-template <typename T>
-void load_builder_functionspace() {
-    TransBuilderFunctionSpace<T>( "tmp" );
-}
-template <typename T>
-void load_builder_grid() {
-    TransBuilderGrid<T>( "tmp" );
-}
-
-struct force_link {
-    force_link() {
-#if ATLAS_HAVE_TRANS
-        load_builder_functionspace<TransIFSNodeColumns>();
-        load_builder_functionspace<TransIFSStructuredColumns>();
-        load_builder_grid<TransIFS>();
-#endif
-        load_builder_grid<TransLocal>();
-    }
-};
 
 TransFactory& factory( const std::string& name ) {
     std::map<std::string, TransFactory*>::const_iterator j = m->find( name );
@@ -95,62 +83,69 @@ TransFactory& factory( const std::string& name ) {
 
 }  // namespace
 
-TransFactory::TransFactory( const std::string& name ) : name_( name ) {
+TransFactory::TransFactory( const std::string& name, const std::string& backend ) : name_( name ), backend_( backend ) {
     pthread_once( &once, init );
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
     ASSERT( m->find( name ) == m->end() );
     ( *m )[name] = this;
+
+    if( b->find( backend ) == b->end() ) ( *b )[backend] = 0;
+    ( *b )[backend]++;
 }
 
 TransFactory::~TransFactory() {
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
     m->erase( name_ );
+    ( *b )[backend_]--;
+    if ( ( *b )[backend_] == 0 ) b->erase( backend_ );
 }
 
 bool TransFactory::has( const std::string& name ) {
     pthread_once( &once, init );
-
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-
-    static force_link static_linking;
-
     return ( m->find( name ) != m->end() );
 }
 
-void TransFactory::backend( const std::string& backend ) {
+bool TransBackend::has( const std::string& name ) {
+    pthread_once( &once, init );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    return ( b->find( name ) != b->end() );
+}
+
+void TransBackend::backend( const std::string& backend ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
     default_options_.set( "type", backend );
 }
 
-std::string TransFactory::backend() {
+std::string TransBackend::backend() {
     return default_options_.getString( "type" );
 }
 
-const eckit::Configuration& TransFactory::config() {
+const eckit::Configuration& TransBackend::config() {
     return default_options_;
 }
 
-void TransFactory::config( const eckit::Configuration& config ) {
+void TransBackend::config( const eckit::Configuration& config ) {
     std::string type = default_options_.getString( "type" );
     default_options_ = config;
     if ( not config.has( "type" ) ) { default_options_.set( "type", type ); }
 }
 
-void TransFactory::list( std::ostream& out ) {
+void TransBackend::list( std::ostream& out ) {
     pthread_once( &once, init );
-
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-
-    static force_link static_linking;
-
     const char* sep = "";
-    for ( std::map<std::string, TransFactory*>::const_iterator j = m->begin(); j != m->end(); ++j ) {
+    for( std::map<std::string,int>::const_iterator j = b->begin(); j != b->end(); ++j ) {
         out << sep << ( *j ).first;
         sep = ", ";
     }
+}
+
+void TransFactory::list( std::ostream& out ) {
+    TransBackend::list( out );
 }
 
 Trans::Implementation* TransFactory::build( const FunctionSpace& gp, const FunctionSpace& sp,
@@ -169,13 +164,22 @@ Trans::Implementation* TransFactory::build( const Cache& cache, const FunctionSp
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    static force_link static_linking;
-
-    util::Config options = default_options_;
+    util::Config options = TransBackend::config();
     options.set( config );
 
+    std::string backend = options.getString( "type" );
+
+    Log::debug() << "Looking for TransFactory [" << backend << "]" << std::endl;
+    if( ! TransBackend::has( backend ) ) {
+      Log::error() << "No TransFactory for [" << backend << "]" << std::endl;
+      Log::error() << "TransFactories are :" << std::endl;
+      TransBackend::list( Log::error() );
+      Log::error() << std::endl;
+      throw eckit::SeriousBug( std::string( "No TransFactory called ") + backend );
+    }
+
     std::string suffix( "(" + gp.type() + "," + sp.type() + ")" );
-    std::string name = options.getString( "type" ) + suffix;
+    std::string name = backend + suffix;
 
     Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
 
@@ -207,37 +211,44 @@ Trans::Implementation* TransFactory::build( const Cache& cache, const Grid& grid
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    static force_link static_linking;
-
-    util::Config options = default_options_;
+    util::Config options = TransBackend::config();
     options.set( config );
 
-    std::string name = options.getString( "type" );
+    std::string backend = options.getString( "type" );
 
-    Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
+    Log::debug() << "Looking for TransFactory [" << backend << "]" << std::endl;
+    if( ! TransBackend::has( backend ) ) {
+        Log::error() << "No TransFactory for [" << backend << "]" << std::endl;
+        Log::error() << "TransFactories are :" << std::endl;
+        TransBackend::list( Log::error() );
+        Log::error() << std::endl;
+        throw eckit::SeriousBug( std::string( "No TransFactory called ") + backend );
+    }
+
+    std::string name = backend;
 
     return factory( name ).make( cache, grid, domain, truncation, options );
 }
 
 bool Trans::hasBackend( const std::string& backend ) {
-    return TransFactory::has( backend );
+    return TransBackend::has( backend );
 }
 
 void Trans::backend( const std::string& backend ) {
     ASSERT( hasBackend( backend ) );
-    TransFactory::backend( backend );
+    TransBackend::backend( backend );
 }
 
 std::string Trans::backend() {
-    return TransFactory::backend();
+    return TransBackend::backend();
 }
 
 const eckit::Configuration& Trans::config() {
-    return TransFactory::config();
+    return TransBackend::config();
 }
 
 void Trans::config( const eckit::Configuration& options ) {
-    TransFactory::config( options );
+    TransBackend::config( options );
 }
 
 namespace {
