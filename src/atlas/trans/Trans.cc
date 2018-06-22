@@ -48,6 +48,7 @@ public:
     static std::string backend();
     static void config( const eckit::Configuration& );
     static const eckit::Configuration& config();
+
 private:
     static util::Config default_options_;
 };
@@ -59,7 +60,7 @@ TransImpl::~TransImpl() {}
 namespace {
 
 static eckit::Mutex* local_mutex               = 0;
-static std::map<std::string, int> *b = 0;
+static std::map<std::string, int>* b           = 0;
 static std::map<std::string, TransFactory*>* m = 0;
 static pthread_once_t once                     = PTHREAD_ONCE_INIT;
 
@@ -91,7 +92,7 @@ TransFactory::TransFactory( const std::string& name, const std::string& backend 
     ASSERT( m->find( name ) == m->end() );
     ( *m )[name] = this;
 
-    if( b->find( backend ) == b->end() ) ( *b )[backend] = 0;
+    if ( b->find( backend ) == b->end() ) ( *b )[backend] = 0;
     ( *b )[backend]++;
 }
 
@@ -138,7 +139,7 @@ void TransBackend::list( std::ostream& out ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
     const char* sep = "";
-    for( std::map<std::string,int>::const_iterator j = b->begin(); j != b->end(); ++j ) {
+    for ( std::map<std::string, int>::const_iterator j = b->begin(); j != b->end(); ++j ) {
         out << sep << ( *j ).first;
         sep = ", ";
     }
@@ -170,12 +171,12 @@ Trans::Implementation* TransFactory::build( const Cache& cache, const FunctionSp
     std::string backend = options.getString( "type" );
 
     Log::debug() << "Looking for TransFactory [" << backend << "]" << std::endl;
-    if( ! TransBackend::has( backend ) ) {
-      Log::error() << "No TransFactory for [" << backend << "]" << std::endl;
-      Log::error() << "TransFactories are :" << std::endl;
-      TransBackend::list( Log::error() );
-      Log::error() << std::endl;
-      throw eckit::SeriousBug( std::string( "No TransFactory called ") + backend );
+    if ( !TransBackend::has( backend ) ) {
+        Log::error() << "No TransFactory for [" << backend << "]" << std::endl;
+        Log::error() << "TransFactories are :" << std::endl;
+        TransBackend::list( Log::error() );
+        Log::error() << std::endl;
+        throw eckit::SeriousBug( std::string( "No TransFactory called " ) + backend );
     }
 
     std::string suffix( "(" + gp.type() + "," + sp.type() + ")" );
@@ -217,12 +218,12 @@ Trans::Implementation* TransFactory::build( const Cache& cache, const Grid& grid
     std::string backend = options.getString( "type" );
 
     Log::debug() << "Looking for TransFactory [" << backend << "]" << std::endl;
-    if( ! TransBackend::has( backend ) ) {
+    if ( !TransBackend::has( backend ) ) {
         Log::error() << "No TransFactory for [" << backend << "]" << std::endl;
         Log::error() << "TransFactories are :" << std::endl;
         TransBackend::list( Log::error() );
         Log::error() << std::endl;
-        throw eckit::SeriousBug( std::string( "No TransFactory called ") + backend );
+        throw eckit::SeriousBug( std::string( "No TransFactory called " ) + backend );
     }
 
     std::string name = backend;
