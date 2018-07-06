@@ -274,8 +274,8 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_functionspace_EdgeColumns__final_auto(this)
-  type(atlas_functionspace_EdgeColumns) :: this
+ATLAS_FINAL subroutine atlas_functionspace_EdgeColumns__final_auto(this)
+  type(atlas_functionspace_EdgeColumns), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_functionspace_EdgeColumns__final_auto"
 #endif

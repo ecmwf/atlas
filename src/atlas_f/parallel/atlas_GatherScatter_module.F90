@@ -609,8 +609,8 @@ end subroutine GatherScatter__scatter_real64_r3_r3
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_GatherScatter__final_auto(this)
-  type(atlas_GatherScatter) :: this
+ATLAS_FINAL subroutine atlas_GatherScatter__final_auto(this)
+  type(atlas_GatherScatter), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_GatherScatter__final_auto"
 #endif

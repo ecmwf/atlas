@@ -98,8 +98,8 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_fvm_Method__final_auto(this)
-  type(atlas_fvm_Method) :: this
+ATLAS_FINAL subroutine atlas_fvm_Method__final_auto(this)
+  type(atlas_fvm_Method), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_fvm_Method__final_auto"
 #endif

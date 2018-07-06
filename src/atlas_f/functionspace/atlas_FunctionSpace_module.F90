@@ -109,7 +109,7 @@ function create_field_args(this,kind,name,levels,variables,global,owner) result(
   if( present(variables) ) call options%set("variables",variables)
 
   field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
-  
+
   call field%return()
   call options%final()
 end function
@@ -200,8 +200,8 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_FunctionSpace__final_auto(this)
-  type(atlas_FunctionSpace) :: this
+ATLAS_FINAL subroutine atlas_FunctionSpace__final_auto(this)
+  type(atlas_FunctionSpace), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_FunctionSpace__final_auto"
 #endif

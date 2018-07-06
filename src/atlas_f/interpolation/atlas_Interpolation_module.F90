@@ -86,8 +86,8 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Interpolation__final_auto(this)
-  type(atlas_Interpolation) :: this
+ATLAS_FINAL subroutine atlas_Interpolation__final_auto(this)
+  type(atlas_Interpolation), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_Interpolation__final_auto"
 #endif

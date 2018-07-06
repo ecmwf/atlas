@@ -111,7 +111,7 @@ subroutine atlas_State__add(this,field)
   class(atlas_Field), intent(in) :: field
   call atlas__State__add(this%c_ptr(),field%c_ptr())
 end subroutine
- 
+
 subroutine atlas_State__remove(this,name)
   use fckit_c_interop_module, only: c_str
   use atlas_state_c_binding
@@ -168,8 +168,8 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_State__final_auto(this)
-  type(atlas_State) :: this
+ATLAS_FINAL subroutine atlas_State__final_auto(this)
+  type(atlas_State), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_State__final_auto"
 #endif

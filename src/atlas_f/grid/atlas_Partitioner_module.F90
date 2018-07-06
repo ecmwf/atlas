@@ -98,8 +98,8 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Partitioner__final_auto(this)
-  type(atlas_Partitioner) :: this
+ATLAS_FINAL subroutine atlas_Partitioner__final_auto(this)
+  type(atlas_Partitioner), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_Partitioner__final_auto"
 #endif

@@ -175,8 +175,8 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_functionspace_Spectral__final_auto(this)
-  type(atlas_functionspace_Spectral) :: this
+ATLAS_FINAL subroutine atlas_functionspace_Spectral__final_auto(this)
+  type(atlas_functionspace_Spectral), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_functionspace_Spectral__final_auto"
 #endif

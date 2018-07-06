@@ -370,8 +370,8 @@ end function Metadata__json
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Metadata__final_auto(this)
-  type(atlas_Metadata) :: this
+ATLAS_FINAL subroutine atlas_Metadata__final_auto(this)
+  type(atlas_Metadata), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_Metadata__final_auto"
 #endif

@@ -160,7 +160,7 @@ interface
 end interface
 
 contains
-  
+
 subroutine assignment_operator_hook(this,other)
   class(atlas_Connectivity) :: this
   class(fckit_owned_object) :: other
@@ -470,7 +470,7 @@ subroutine set_access(this)
     call atlas__connectivity__register_ctxt  ( this%c_ptr(), c_loc(this%access) )
     call atlas__connectivity__register_update( this%c_ptr(), c_funloc(update_access_c) )
     call atlas__connectivity__register_delete( this%c_ptr(), c_funloc(delete_access_c) )
-    
+
     this%access%connectivity_ptr = this%c_ptr()
     call update_access(this%access)
   endif
@@ -550,8 +550,8 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Connectivity__final_auto(this)
-  type(atlas_Connectivity) :: this
+ATLAS_FINAL subroutine atlas_Connectivity__final_auto(this)
+  type(atlas_Connectivity), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_Connectivity__final_auto"
 #endif
@@ -563,8 +563,8 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_MultiBlockConnectivity__final_auto(this)
-  type(atlas_MultiBlockConnectivity) :: this
+ATLAS_FINAL subroutine atlas_MultiBlockConnectivity__final_auto(this)
+  type(atlas_MultiBlockConnectivity), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_MultiBlockConnectivity__final_auto"
 #endif

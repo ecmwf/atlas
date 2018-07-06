@@ -182,8 +182,8 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Output__final_auto(this)
-  type(atlas_Output) :: this
+ATLAS_FINAL subroutine atlas_Output__final_auto(this)
+  type(atlas_Output), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_Output__final_auto"
 #endif
