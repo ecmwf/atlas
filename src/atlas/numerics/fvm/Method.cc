@@ -25,6 +25,7 @@
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
 
@@ -58,13 +59,9 @@ double get_radius( const eckit::Parametrisation& params ) {
 
 }  // namespace
 
-Method::Method( Mesh& mesh ) : Method::Method( mesh, util::NoConfig() ) {
-    setup();
-}
+Method::Method( Mesh& mesh ) : Method::Method( mesh, util::NoConfig() ) {}
 
-Method::Method( Mesh& mesh, const mesh::Halo& halo ) : Method::Method( mesh, util::Config( "halo", halo.size() ) ) {
-    setup();
-}
+Method::Method( Mesh& mesh, const mesh::Halo& halo ) : Method::Method( mesh, util::Config( "halo", halo.size() ) ) {}
 
 Method::Method( Mesh& mesh, const eckit::Configuration& params ) :
     mesh_( mesh ),
@@ -77,16 +74,17 @@ Method::Method( Mesh& mesh, const eckit::Configuration& params ) :
 }
 
 void Method::setup() {
+    ATLAS_TRACE( "fvm::Method::setup " );
     util::Config node_columns_config;
     node_columns_config.set( "halo", halo_.size() );
     if ( levels_ ) node_columns_config.set( "levels", levels_ );
     node_columns_ = functionspace::NodeColumns( mesh(), node_columns_config );
     if ( edges_.size() == 0 ) {
-        build_edges( mesh() );
-        build_pole_edges( mesh() );
-        build_edges_parallel_fields( mesh() );
-        build_median_dual_mesh( mesh() );
-        build_node_to_edge_connectivity( mesh() );
+        ATLAS_TRACE_SCOPE( "build_edges" ) build_edges( mesh() );
+        ATLAS_TRACE_SCOPE( "build_pole_edges" ) build_pole_edges( mesh() );
+        ATLAS_TRACE_SCOPE( "build_edges_parallel_fields" ) build_edges_parallel_fields( mesh() );
+        ATLAS_TRACE_SCOPE( "build_median_dual_mesh" ) build_median_dual_mesh( mesh() );
+        ATLAS_TRACE_SCOPE( "build_node_to_edge_connectivity" ) build_node_to_edge_connectivity( mesh() );
 
         const size_t nnodes = nodes_.size();
 
