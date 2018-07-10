@@ -14,6 +14,7 @@
 ! -----------------------------------------------------------------------------
 
 module fcta_Mesh_fixture
+use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
 end module fcta_Mesh_fixture
@@ -25,14 +26,12 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_Mesh,fcta_Mesh_fixture)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-use atlas_module
   call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-use atlas_module
   call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
@@ -41,7 +40,6 @@ END_TESTSUITE_FINALIZE
 !!! WARNING ! THIS IS DEPRECATED AND SHOULD NOT BE USED AS EXAMPLE !!!!
 
 TEST( test_mesh_nodes )
-use atlas_module
 implicit none
 
   type(atlas_Mesh) :: mesh

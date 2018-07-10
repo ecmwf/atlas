@@ -14,6 +14,7 @@
 ! -----------------------------------------------------------------------------
 
 module fctest_atlas_Config_fixture
+use atlas_module
 implicit none
 
 end module fctest_atlas_Config_fixture
@@ -25,21 +26,18 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_Config,fctest_atlas_Config_fixture)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-use atlas_module
   call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-use atlas_module
 call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
 
 TEST( test_parametrisation )
-use atlas_module
 
   type(atlas_Config) :: params
   type(atlas_Config) :: nested
@@ -140,7 +138,6 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST(test_parametrisation_json_string)
-use atlas_module
  type(atlas_Config) :: params
  type(atlas_Config), allocatable :: records(:)
  type(atlas_JSON) :: json
@@ -170,7 +167,6 @@ use atlas_module
 END_TEST
 
 TEST(test_parametrisation_json_file)
-use atlas_module
  type(atlas_Config) :: params
  type(atlas_Config), allocatable :: records(:)
  type(atlas_Config) :: location
@@ -220,7 +216,6 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST(test_json_file)
-use atlas_module
  type(atlas_JSON) :: json
  type(atlas_Config) :: config
 

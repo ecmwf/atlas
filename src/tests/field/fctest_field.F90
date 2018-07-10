@@ -14,6 +14,7 @@
 ! -----------------------------------------------------------------------------
 
 module fcta_Field_fixture
+use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
 end module
@@ -25,23 +26,22 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_Field,fcta_Field_fixture)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-  use atlas_module
   call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-  use atlas_module
   call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
 
 TEST( test_field_name )
-use atlas_module
 implicit none
+
   type(atlas_Field) :: field
+
   field = atlas_Field("field",atlas_real(c_double),(/10/))
   FCTEST_CHECK_EQUAL( field%name() , "field" )
   call field%final() ! memory leak if not finalized!
@@ -50,8 +50,8 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_field_owners)
-use atlas_module
 implicit none
+
   type(atlas_Field) :: f
   type(atlas_Field) :: f2
   type(atlas_State) :: state
@@ -85,8 +85,8 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_field_size )
-use atlas_module
 implicit none
+
   integer, pointer :: fdata_int(:,:)
   real(c_float),  pointer :: fdata_real32(:,:)
   real(c_double), pointer :: fdata_real64(:,:)
@@ -134,8 +134,8 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_fieldset )
-use atlas_module
 implicit none
+
   type(atlas_FieldSet) :: fieldset
   type(atlas_Field) :: field
 
@@ -162,6 +162,7 @@ implicit none
   FCTEST_CHECK_EQUAL( field%name(), "field_2" )
   call fieldset%final()
   write(0,*) "test_fieldset end"
+
 END_TEST
 
 ! -----------------------------------------------------------------------------

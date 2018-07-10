@@ -14,6 +14,7 @@
 ! -----------------------------------------------------------------------------
 
 module fcta_FunctionSpace_fxt
+use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
 character(len=1024) :: msg
@@ -28,14 +29,12 @@ TESTSUITE_WITH_FIXTURE(fcta_FunctionSpace,fcta_FunctionSpace_fxt)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-use atlas_module
   call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-use atlas_module
   call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
@@ -43,7 +42,6 @@ END_TESTSUITE_FINALIZE
 
 TEST( test_nodes )
 #if 1
-use atlas_module
 type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
@@ -142,7 +140,6 @@ END_TEST
 
 TEST( test_nodescolumns )
 #if 1
-use atlas_module
 type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
@@ -252,7 +249,6 @@ END_TEST
 
 TEST( test_collectives )
 #if 1
-use atlas_module
 use fckit_mpi_module
 type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
@@ -377,7 +373,6 @@ END_TEST
 
 TEST( test_edges )
 #if 1
-use atlas_module
 type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
@@ -497,7 +492,6 @@ END_TEST
 
 TEST( test_structuredcolumns )
 #if 1
-use atlas_module
 type(atlas_StructuredGrid) :: grid
 type(atlas_functionspace_StructuredColumns) :: fs
 type(atlas_functionspace) :: fs_base
