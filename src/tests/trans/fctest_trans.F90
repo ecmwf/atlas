@@ -12,7 +12,6 @@
 ! -----------------------------------------------------------------------------
 
 module fctest_atlas_trans_fixture
-use atlas_module
 use iso_c_binding
 implicit none
 character(len=1024) :: msg
@@ -25,12 +24,14 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_trans,fctest_atlas_trans_fixture)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
+use atlas_module
   call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
+use atlas_module
   write(0,*) "FINALIZE"
   call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
@@ -38,6 +39,7 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_trans )
+use atlas_module
   type(atlas_StructuredGrid) :: grid
   type(atlas_StructuredGrid) :: trans_grid
   type(atlas_MeshGenerator) :: meshgenerator
@@ -211,6 +213,7 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_trans_nomesh )
+use atlas_module
   type(atlas_StructuredGrid) :: grid
   type(atlas_Trans) :: trans
   type(atlas_functionspace_StructuredColumns) :: gridpoints_fs
@@ -304,6 +307,7 @@ TEST( test_trans_nomesh )
 END_TEST
 
 TEST( test_transdwarf )
+use atlas_module
 type(atlas_StructuredGrid) :: grid
 type(atlas_Trans) :: trans
 type(atlas_functionspace_StructuredColumns) :: gridpoints
@@ -359,6 +363,7 @@ call grid%final()
 END_TEST
 
 TEST( test_spectral_only )
+use atlas_module
 type(atlas_functionspace_Spectral) :: spectral
 type(atlas_Field) :: field
 integer :: jfld, nfld

@@ -14,7 +14,6 @@
 ! -----------------------------------------------------------------------------
 
 module fctest_atlas_State_Fixture
-use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
 
@@ -31,12 +30,14 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_State,fctest_atlas_State_Fixture)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
+use atlas_module
   call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
+use atlas_module
   call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
@@ -44,6 +45,7 @@ END_TESTSUITE_FINALIZE
 
 TEST( test_state_fields )
 #if 1
+use atlas_module
 type(atlas_State) :: state
 type(atlas_Field) :: temperature_field
 type(atlas_Field) :: pressure_field
@@ -112,6 +114,7 @@ END_TEST
 
 TEST( test_state_factory )
 #if 1
+use atlas_module
 type(atlas_State) :: state
 
 ! Create a new state
@@ -126,6 +129,7 @@ END_TEST
 
 TEST( test_state_metadata )
 #if 1
+use atlas_module
 type(atlas_State) :: state
 type(atlas_Metadata) :: state_metadata
 

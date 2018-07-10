@@ -14,7 +14,6 @@
 ! -----------------------------------------------------------------------------
 
 module fcta_Field_wrap_fixture
-use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
 end module
@@ -26,18 +25,21 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_Field_wrap,fcta_Field_wrap_fixture)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
+use atlas_module
   call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
+use atlas_module
   call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
 
 TEST( test_field_wrapdata)
+use atlas_module
 implicit none
 
   real(c_double), allocatable :: existing_data(:,:,:)
@@ -79,6 +81,7 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_field_wrapdataslice)
+use atlas_module
 implicit none
 
   real(c_double), allocatable :: existing_data(:,:,:,:)
