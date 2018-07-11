@@ -25,12 +25,14 @@
 #include "atlas/mesh.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/meshgenerator.h"
+#include "atlas/numerics/fvm/Method.h"
 #include "atlas/output/detail/GmshIO.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Config.h"
+#include "atlas/parallel/omp/omp.h"
 
 //------------------------------------------------------------------------------
 
@@ -60,10 +62,12 @@ private:
 
 //-----------------------------------------------------------------------------
 
+static int halo_default() { return 2; }
+
 Tool::Tool( int argc, char** argv ) : AtlasTool( argc, argv ) {
     add_option( new SimpleOption<std::string>(
         "grid", "Grid unique identifier\n" + indent() + "     Example values: N80, F40, O24, L32" ) );
-    add_option( new SimpleOption<long>( "halo", "Number of halos (default=1" ) );
+    add_option( new SimpleOption<long>( "halo", "Number of halos (default="+std::to_string(halo_default())+")" ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -90,18 +94,23 @@ void Tool::execute( const Args& args ) {
 
     if ( !grid ) return;
 
-    Log::debug() << "Domain: " << grid.domain() << std::endl;
-    Log::debug() << "Periodic: " << grid.periodic() << std::endl;
+    size_t halo = args.getLong( "halo", halo_default() );
+
+    Log::info() << "Configuration" << std::endl;
+    Log::info() << "~~~~~~~~~~~~~" << std::endl;
+    Log::info() << "  Grid   : " << grid.name() << std::endl;
+    Log::info() << "  Halo   : " << halo << std::endl;
+    Log::info() << "  MPI    : " << mpi::comm().size() << std::endl;
+    Log::info() << "  OpenMP : " << atlas_omp_get_max_threads() << std::endl;
 
     MeshGenerator meshgenerator( "structured", util::Config( "partitioner", "equal_regions" ) );
-
-    size_t halo = args.getLong( "halo", 1 );
 
     size_t iterations = 1;
     for ( size_t i = 0; i < iterations; ++i ) {
         ATLAS_TRACE( "iteration" );
         Mesh mesh = meshgenerator.generate( grid );
-        mesh::actions::build_halo( mesh, halo );
+        numerics::fvm::Method fvm( mesh, mesh::Halo( halo ) );
+        // mesh::actions::build_halo( mesh, halo );
         mpi::comm().barrier();
     }
     timer.stop();
