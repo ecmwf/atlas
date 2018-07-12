@@ -6,7 +6,9 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-ecbuild_add_executable(
+if( HAVE_FORTRAN )
+
+  ecbuild_add_executable(
     TARGET  atlas-interpolation-fortran
     SOURCES atlas-interpolation-fortran.F90
     LIBS    atlas_f
@@ -14,3 +16,4 @@ ecbuild_add_executable(
     NOINSTALL
 )
 
+endif()
