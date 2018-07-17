@@ -1,8 +1,11 @@
 module atlas_mpi_module
+use fckit_mpi_module, only : fckit_mpi_comm
 private
 
 public :: atlas_mpi_comm
 public :: atlas_mpi_set_comm
+
+private :: fckit_mpi_comm
 
 contains
 

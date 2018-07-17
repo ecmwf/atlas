@@ -686,8 +686,8 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Field__final_auto(this)
-  type(atlas_Field) :: this
+ATLAS_FINAL subroutine atlas_Field__final_auto(this)
+  type(atlas_Field), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_Field__final_auto"
 #endif

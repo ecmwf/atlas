@@ -87,8 +87,8 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_MeshGenerator__final_auto(this)
-  type(atlas_MeshGenerator) :: this
+ATLAS_FINAL subroutine atlas_MeshGenerator__final_auto(this)
+  type(atlas_MeshGenerator), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_MeshGenerator__final_auto"
 #endif

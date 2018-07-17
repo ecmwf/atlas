@@ -35,7 +35,7 @@ namespace atlas {
 namespace trans {
 
 namespace {
-static TransBuilderGrid<TransLocal> builder( "local" );
+static TransBuilderGrid<TransLocal> builder( "local", "local" );
 }  // namespace
 
 namespace {
@@ -461,7 +461,6 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                     export_legendre_    = LegendreCache( sizeof( double ) * ( size_sym + size_asym ) );
                     legendre_cachesize_ = export_legendre_.legendre().size();
                     legendre_cache_     = export_legendre_.legendre().data();
-                    legendre_cache_     = std::malloc( legendre_cachesize_ );
                     ReadCache legendre( legendre_cache_ );
                     legendre_sym_  = legendre.read<double>( size_sym );
                     legendre_asym_ = legendre.read<double>( size_asym );

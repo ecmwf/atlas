@@ -76,8 +76,8 @@ end function
 
 ! ----------------------------------------------------------------------------------------
 
-subroutine atlas_GridDistribution__final_auto(this)
-  type(atlas_GridDistribution) :: this
+ATLAS_FINAL subroutine atlas_GridDistribution__final_auto(this)
+  type(atlas_GridDistribution), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_GridDistribution__final_auto"
 #endif

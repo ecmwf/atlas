@@ -18,18 +18,9 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI"  AND
 endif()
 
 if( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
-  if( NOT CMAKE_Fortran_COMPILER_VERSION
-      AND CMAKE_C_COMPILER_ID MATCHES "Intel" )
-    set( CMAKE_Fortran_COMPILER_VERSION ${CMAKE_C_COMPILER_VERSION} )
-  endif()
-  if( CMAKE_Fortran_COMPILER_VERSION VERSION_EQUAL 18.0 )
-    set( atlas_fctest_parametrisation_DISABLED TRUE )
-    ecbuild_warn( "Intel Fortran compiler version tested 18.0 has a internal compiler error "
-                  "when compiling atlas_fctest_parametrisation. "
-                  "Disabling this tests..." )
-  endif()
+  # ATLAS-170 workaround internal compiler error
+  ecbuild_remove_fortran_flags( "-g" )
 endif()
-
 
 ######################################################
 

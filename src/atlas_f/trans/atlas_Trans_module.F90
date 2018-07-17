@@ -538,8 +538,8 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Trans__final_auto(this)
-  type(atlas_Trans) :: this
+ATLAS_FINAL subroutine atlas_Trans__final_auto(this)
+  type(atlas_Trans), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_Trans__final_auto"
 #endif

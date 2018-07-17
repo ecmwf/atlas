@@ -248,48 +248,48 @@ end function
 ! -----------------------------------------------------------------------------
 ! Destructor
 
-subroutine atlas_Grid__final_auto(this)
-  type(atlas_Grid) :: this
+ATLAS_FINAL subroutine atlas_Grid__final_auto(this)
+  type(atlas_Grid), intent(inout) :: this
 #if FCKIT_FINAL_NOT_PROPAGATING
   call this%final()
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
-subroutine atlas_StructuredGrid__final_auto(this)
-  type(atlas_StructuredGrid) :: this
+ATLAS_FINAL subroutine atlas_StructuredGrid__final_auto(this)
+  type(atlas_StructuredGrid), intent(inout) :: this
 #if FCKIT_FINAL_NOT_PROPAGATING
   call this%final()
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
-subroutine atlas_GaussianGrid__final_auto(this)
-  type(atlas_GaussianGrid) :: this
+ATLAS_FINAL subroutine atlas_GaussianGrid__final_auto(this)
+  type(atlas_GaussianGrid), intent(inout) :: this
 #if FCKIT_FINAL_NOT_PROPAGATING
   call this%final()
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
-subroutine atlas_ReducedGaussianGrid__final_auto(this)
-  type(atlas_ReducedGaussianGrid) :: this
+ATLAS_FINAL subroutine atlas_ReducedGaussianGrid__final_auto(this)
+  type(atlas_ReducedGaussianGrid), intent(inout) :: this
 #if FCKIT_FINAL_NOT_PROPAGATING
   call this%final()
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
-subroutine atlas_RegularLonLatGrid__final_auto(this)
-  type(atlas_RegularLonLatGrid) :: this
+ATLAS_FINAL subroutine atlas_RegularLonLatGrid__final_auto(this)
+  type(atlas_RegularLonLatGrid), intent(inout) :: this
 #if FCKIT_FINAL_NOT_PROPAGATING
   call this%final()
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
-subroutine atlas_RegularGaussianGrid__final_auto(this)
-  type(atlas_RegularGaussianGrid) :: this
+ATLAS_FINAL subroutine atlas_RegularGaussianGrid__final_auto(this)
+  type(atlas_RegularGaussianGrid), intent(inout) :: this
 #if FCKIT_FINAL_NOT_PROPAGATING
   call this%final()
 #endif

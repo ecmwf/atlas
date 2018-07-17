@@ -125,8 +125,8 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_ElementType__final_auto(this)
-  type(atlas_ElementType) :: this
+ATLAS_FINAL subroutine atlas_ElementType__final_auto(this)
+  type(atlas_ElementType), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_ElementType__final_auto"
 #endif

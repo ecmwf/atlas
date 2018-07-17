@@ -66,8 +66,8 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Method__final_auto(this)
-  type(atlas_Method) :: this
+ATLAS_FINAL subroutine atlas_Method__final_auto(this)
+  type(atlas_Method), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_Method__final_auto"
 #endif

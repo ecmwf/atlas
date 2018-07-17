@@ -57,7 +57,7 @@ contains
   generic :: get => get_config, get_config_list, get_int32, get_logical, get_real32, get_real64, &
                     get_string, get_array_int32, get_array_int64, get_array_real32, get_array_real64
   procedure :: json => atlas_Config__json
-  
+
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_Config__final_auto
 #endif
@@ -86,7 +86,7 @@ contains
 ! -----------------------------------------------------------------------------
 ! Config routines
 
-subroutine atlas_Config__final_auto(this)
+ATLAS_FINAL subroutine atlas_Config__final_auto(this)
   type(atlas_Config), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_Config__final_auto"

@@ -7,8 +7,8 @@
 # does it submit to any jurisdiction.
 
 ecbuild_add_executable(
-    TARGET  atlas-benchmark-build-halo
-    SOURCES atlas-benchmark-build-halo.cc
+    TARGET  atlas-benchmark-ifs-setup
+    SOURCES atlas-benchmark-ifs-setup.cc
     LIBS    atlas
 #    NOINSTALL
 )

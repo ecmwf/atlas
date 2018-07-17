@@ -280,8 +280,8 @@ end subroutine HaloExchange__execute_real64_r4
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_HaloExchange__final_auto(this)
-  type(atlas_HaloExchange) :: this
+ATLAS_FINAL subroutine atlas_HaloExchange__final_auto(this)
+  type(atlas_HaloExchange), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_HaloExchange__final_auto"
 #endif

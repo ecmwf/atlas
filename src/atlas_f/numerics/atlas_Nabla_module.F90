@@ -112,8 +112,8 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Nabla__final_auto(this)
-  type(atlas_Nabla) :: this
+ATLAS_FINAL subroutine atlas_Nabla__final_auto(this)
+  type(atlas_Nabla), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_Nabla__final_auto"
 #endif

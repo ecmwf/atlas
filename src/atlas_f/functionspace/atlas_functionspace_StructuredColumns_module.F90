@@ -300,8 +300,8 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine StructuredColumns__final_auto(this)
-  type(atlas_functionspace_StructuredColumns) :: this
+ATLAS_FINAL subroutine StructuredColumns__final_auto(this)
+  type(atlas_functionspace_StructuredColumns), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_functionspace_StructuredColumns__final_auto"
 #endif

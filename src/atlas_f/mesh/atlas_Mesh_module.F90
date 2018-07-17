@@ -45,7 +45,7 @@ contains
   procedure, public :: cells => Mesh__cells
   procedure, public :: edges => Mesh__edges
   procedure, public :: footprint
-  
+
   procedure, public :: clone_to_device
   procedure, public :: clone_from_device
   procedure, public :: sync_host_device
@@ -146,8 +146,8 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Mesh__final_auto(this)
-  type(atlas_Mesh) :: this
+ATLAS_FINAL subroutine atlas_Mesh__final_auto(this)
+  type(atlas_Mesh), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_Mesh__final_auto"
 #endif

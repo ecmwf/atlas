@@ -148,8 +148,8 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_FieldSet__final_auto(this)
-  type(atlas_FieldSet) :: this
+ATLAS_FINAL subroutine atlas_FieldSet__final_auto(this)
+  type(atlas_FieldSet), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_FieldSet__final_auto"
 #endif

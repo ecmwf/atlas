@@ -267,8 +267,8 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_HybridElements__final_auto(this)
-  type(atlas_HybridElements) :: this
+ATLAS_FINAL subroutine atlas_HybridElements__final_auto(this)
+  type(atlas_HybridElements), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_HybridElements__final_auto"
 #endif

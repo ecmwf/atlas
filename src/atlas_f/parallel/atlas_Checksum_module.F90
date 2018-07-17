@@ -256,8 +256,8 @@ end function Checksum__execute_real64_r3
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_Checksum__final_auto(this)
-  type(atlas_Checksum) :: this
+ATLAS_FINAL subroutine atlas_Checksum__final_auto(this)
+  type(atlas_Checksum), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_Checksum__final_auto"
 #endif

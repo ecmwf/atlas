@@ -46,8 +46,8 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine atlas_mesh_Edges__final_auto(this)
-  type(atlas_mesh_Edges) :: this
+ATLAS_FINAL subroutine atlas_mesh_Edges__final_auto(this)
+  type(atlas_mesh_Edges), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
   write(0,*) "atlas_mesh_Edges__final_auto"
 #endif

@@ -28,7 +28,7 @@ TransIFSNodeColumns::TransIFSNodeColumns( const Cache& cache, const functionspac
 TransIFSNodeColumns::~TransIFSNodeColumns() {}
 
 namespace {
-static TransBuilderFunctionSpace<TransIFSNodeColumns> builder( "ifs(NodeColumns,Spectral)" );
+static TransBuilderFunctionSpace<TransIFSNodeColumns> builder( "ifs(NodeColumns,Spectral)", "ifs" );
 }
 
 }  // namespace trans
