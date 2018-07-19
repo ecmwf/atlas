@@ -44,7 +44,7 @@ public:
     Domain( const Implementation* );
     Domain( const eckit::Parametrisation& );
 
-    operator bool() { return true; }
+    operator bool() { return domain_; }
 
     /// Type of the domain
     std::string type() const;

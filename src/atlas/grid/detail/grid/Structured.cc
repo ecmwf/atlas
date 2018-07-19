@@ -78,11 +78,11 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
     }
     npts_ = size_t( std::accumulate( nx_.begin(), nx_.end(), 0 ) );
 
-    if ( not domain.empty() ) { crop( domain ); }
+    if ( domain ) { crop( domain ); }
 
     computeTruePeriodicity();
 
-    if ( domain.global() )
+    if ( domain && domain.global() )
         domain_ = Domain( Grid::Config( "type", "global" ) );
     else
         computeDomain();
@@ -429,7 +429,7 @@ void Structured::crop( const Domain& dom ) {
 
 void Structured::computeTruePeriodicity() {
     if ( projection_.strictlyRegional() ) { periodic_x_ = false; }
-    else if ( domain_.global() ) {
+    else if ( domain_ && domain_.global() ) {
         periodic_x_ = true;
     }
     else {

@@ -20,7 +20,7 @@ using ZD = atlas::domain::ZonalBandDomain;
 
 namespace atlas {
 
-Domain::Domain() : domain_( new domain::EmptyDomain() ) {}
+Domain::Domain() : domain_() {}
 
 Domain::Domain( const Domain& domain ) : domain_( domain.domain_ ) {}
 
