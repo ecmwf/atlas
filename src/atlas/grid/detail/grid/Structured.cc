@@ -99,7 +99,7 @@ void Structured::computeDomain() {
             domain_ = Domain( config );
         }
     }
-    else if ( domain_.empty() ) {
+    else if ( not domain_ ) {
         Grid::Config config;
         config.set( "type", "rectangular" );
         config.set( "xmin", xmin_[0] );

@@ -34,7 +34,9 @@ Grid::Grid( const Grid& grid ) : grid_( grid.grid_ ) {}
 Grid::Grid( const Grid::Implementation* grid ) : grid_( grid ) {}
 
 Grid::Grid( const std::string& shortname, const Domain& domain ) {
-    grid_ = Grid::Implementation::create( shortname, Config( "domain", domain.spec() ) );
+    Config config;
+    if ( domain ) config.set( "domain", domain.spec() );
+    grid_ = Grid::Implementation::create( shortname, config );
 }
 
 Grid::Grid( const Grid& grid, const Grid::Domain& domain ) {
