@@ -147,6 +147,34 @@ CASE( "test_cropping previous case" ) {
     EXPECT( cropped.size() == 267 );
 }
 
+CASE( "cropping with line at north pole" ) {
+    StructuredGrid grid( "L16", RectangularDomain( {0, 360}, {90, 90} ) );
+    EXPECT( grid.ny() == 1 );
+    EXPECT( grid.nx( 0 ) == 64 );
+    EXPECT( grid.size() == 64 );
+}
+
+CASE( "cropping with line at south pole" ) {
+    StructuredGrid grid( "L16", RectangularDomain( {0, 360}, {-90, -90} ) );
+    EXPECT( grid.ny() == 1 );
+    EXPECT( grid.nx( 0 ) == 64 );
+    EXPECT( grid.size() == 64 );
+}
+
+CASE( "cropping with line at equator" ) {
+    StructuredGrid grid( "L16", RectangularDomain( {0, 360}, {0, 0} ) );
+    EXPECT( grid.ny() == 1 );
+    EXPECT( grid.nx( 0 ) == 64 );
+    EXPECT( grid.size() == 64 );
+}
+
+CASE( "cropping single point at equator" ) {
+    StructuredGrid grid( "L16", RectangularDomain( {0, 0}, {0, 0} ) );
+    EXPECT( grid.ny() == 1 );
+    EXPECT( grid.nx( 0 ) == 1 );
+    EXPECT( grid.size() == 1 );
+}
+
 
 //-----------------------------------------------------------------------------
 
