@@ -623,7 +623,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                     << "WARNING: Precomputations for spectral transforms could take a long time as there's no structure"
                        " to take advantage of!!!"
                     << std::endl
-                    << "The precomputed values may and consume at least "
+                    << "The precomputed values consume at least "
                     << eckit::Bytes( sizeof( double ) * legendre_size( truncation_ ) * grid_.size() ) << " ("
                     << eckit::Bytes( sizeof( double ) * legendre_size( truncation_ ) ) << " for each of "
                     << grid_.size() << " grid points )" << std::endl
