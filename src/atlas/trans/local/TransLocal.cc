@@ -62,7 +62,7 @@ public:
 
     bool global() const { return config_.getBool( "global", false ); }
 
-    int warning() const { return config_.getLong( "warning", 0 ); }
+    int warning() const { return config_.getLong( "warning", 1 ); }
 
     int fft() const {
         static const std::map<std::string, int> string_to_FFT = {{"OFF", (int)option::FFT::OFF},
@@ -176,9 +176,27 @@ int num_n( const int truncation, const int m, const bool symmetric ) {
     return len;
 }
 
+class AllocationFailed : public eckit::Exception {
+public:
+    AllocationFailed( size_t bytes, const eckit::CodeLocation& );
+
+private:
+    static std::string error_message( size_t bytes ) {
+        std::stringstream ss;
+        ss << "AllocationFailed: Could not allocate " << eckit::Bytes( bytes );
+        return ss.str();
+    }
+};
+
+AllocationFailed::AllocationFailed( size_t bytes, const eckit::CodeLocation& loc ) :
+    Exception( error_message( bytes ), loc ) {}
+
+
 void alloc_aligned( double*& ptr, size_t n ) {
     const size_t alignment = 64 * sizeof( double );
-    posix_memalign( (void**)&ptr, alignment, sizeof( double ) * n );
+    size_t bytes           = sizeof( double ) * n;
+    int err                = posix_memalign( (void**)&ptr, alignment, bytes );
+    if ( err ) { throw AllocationFailed( bytes, Here() ); }
 }
 
 void free_aligned( double*& ptr ) {
@@ -272,7 +290,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
     int nlonsMax      = 0;
     int neqtr         = 0;
     useFFT_           = TransParameters( config ).fft();
-    unstruct_precomp_ = true;
+    unstruct_precomp_ = ( config.has( "precompute" ) ? precompute_ : false );
     no_symmetry_      = false;
     nlatsNH_          = 0;
     nlatsSH_          = 0;
@@ -601,9 +619,15 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             ATLAS_TRACE( "Legendre precomputations (unstructured)" );
 
             if ( warning() ) {
-                Log::warning() << "WARNING: Precomputations for spectral transforms could take a long time and consume "
-                                  "a lot of memory (unstructured grid approach)! Results may contain aliasing errors."
-                               << std::endl;
+                Log::warning()
+                    << "WARNING: Precomputations for spectral transforms could take a long time as there's no structure"
+                       " to take advantage of!!!"
+                    << std::endl
+                    << "The precomputed values may and consume at least "
+                    << eckit::Bytes( sizeof( double ) * legendre_size( truncation_ ) * grid_.size() ) << " ("
+                    << eckit::Bytes( sizeof( double ) * legendre_size( truncation_ ) ) << " for each of "
+                    << grid_.size() << " grid points )" << std::endl
+                    << "Furthermore, results may contain aliasing errors." << std::endl;
             }
 
             std::vector<double> lats( grid_.size() );
