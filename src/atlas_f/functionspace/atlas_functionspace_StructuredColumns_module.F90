@@ -68,8 +68,15 @@ contains
   procedure :: i_end_halo
 
   procedure :: xy
+    !! Return xy coordinate field
   procedure :: partition
+    !! Return partition field
   procedure :: global_index
+    !! Return global_index field
+  procedure :: index_i
+    !! Return index_i field
+  procedure :: index_j
+    !! Return index_j field
 
   procedure, private :: set_index
 
@@ -273,12 +280,27 @@ function partition(this) result(field)
   call field%return()
 end function
 
-
 function global_index(this) result(field)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   field = atlas_Field( atlas__fs__StructuredColumns__global_index(this%c_ptr()) )
+  call field%return()
+end function
+
+function index_i(this) result(field)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  field = atlas_Field( atlas__fs__StructuredColumns__index_i(this%c_ptr()) )
+  call field%return()
+end function
+
+function index_j(this) result(field)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  field = atlas_Field( atlas__fs__StructuredColumns__index_j(this%c_ptr()) )
   call field%return()
 end function
 
