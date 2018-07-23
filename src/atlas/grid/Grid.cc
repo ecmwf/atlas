@@ -76,6 +76,10 @@ UnstructuredGrid::UnstructuredGrid( std::initializer_list<PointXY> xy ) :
     Grid( new UnstructuredGrid::grid_t( xy ) ),
     grid_( unstructured_grid( get() ) ) {}
 
+UnstructuredGrid::UnstructuredGrid( const Grid& grid, const Grid::Domain& domain ) :
+    Grid( new UnstructuredGrid::grid_t( *grid.get(), domain ) ),
+    grid_( unstructured_grid( get() ) ) {}
+
 inline const StructuredGrid::grid_t* structured_grid( const Grid::Implementation* grid ) {
     return dynamic_cast<const StructuredGrid::grid_t*>( grid );
 }

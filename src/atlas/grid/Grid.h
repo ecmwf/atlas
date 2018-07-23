@@ -152,6 +152,7 @@ public:
     UnstructuredGrid( std::vector<PointXY>* );   // takes ownership
     UnstructuredGrid( std::vector<PointXY>&& );  // move constructor
     UnstructuredGrid( std::initializer_list<PointXY> );
+    UnstructuredGrid( const Grid&, const Domain& );  // Create a new unstructured grid!
 
     operator bool() const { return valid(); }
 

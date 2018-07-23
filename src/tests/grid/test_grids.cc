@@ -25,6 +25,7 @@
 #include "tests/AtlasTestEnvironment.h"
 
 using StructuredGrid      = atlas::grid::StructuredGrid;
+using UnstructuredGrid    = atlas::grid::UnstructuredGrid;
 using Grid                = atlas::Grid;
 using Regular             = atlas::grid::RegularGrid;
 using ReducedGaussianGrid = atlas::grid::ReducedGaussianGrid;
@@ -173,6 +174,22 @@ CASE( "cropping single point at equator" ) {
     EXPECT( grid.ny() == 1 );
     EXPECT( grid.nx( 0 ) == 1 );
     EXPECT( grid.size() == 1 );
+}
+
+CASE( "Create cropped unstructured grid using rectangular domain" ) {
+    StructuredGrid agrid( "L8" );
+    auto domain = RectangularDomain( {-27, 45}, {33, 73} );
+    StructuredGrid sgrid( agrid, domain );
+    UnstructuredGrid ugrid( agrid, domain );
+    EXPECT( ugrid.size() == sgrid.size() );
+}
+
+CASE( "Create cropped unstructured grid using zonal domain" ) {
+    StructuredGrid agrid( "L8" );
+    auto domain = ZonalBandDomain( {33, 73} );
+    StructuredGrid sgrid( agrid, domain );
+    UnstructuredGrid ugrid( agrid, domain );
+    EXPECT( ugrid.size() == sgrid.size() );
 }
 
 

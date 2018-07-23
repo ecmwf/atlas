@@ -16,6 +16,7 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -154,10 +155,14 @@ public:
         size_t n_;
     };
 
+
 public:  // methods
     static std::string static_type() { return "unstructured"; }
     virtual std::string name() const;
     virtual std::string type() const { return static_type(); }
+
+    /// Constructor converting any Grid with domain to an unstructured grid
+    Unstructured( const Grid&, Domain );
 
     /// Constructor taking a list of parameters
     Unstructured( const Config& );
