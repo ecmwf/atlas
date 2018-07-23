@@ -192,6 +192,16 @@ CASE( "Create cropped unstructured grid using zonal domain" ) {
     EXPECT( ugrid.size() == sgrid.size() );
 }
 
+CASE( "Create unstructured from unstructured" ) {
+    StructuredGrid agrid( "L8" );
+    UnstructuredGrid global_unstructured( agrid, Domain() );
+    EXPECT( UnstructuredGrid( global_unstructured ) );
+    EXPECT( global_unstructured.size() == agrid.size() );
+    auto domain = ZonalBandDomain( {33, 73} );
+    UnstructuredGrid ugrid( global_unstructured, domain );
+    EXPECT( ugrid.size() == StructuredGrid( agrid, domain ).size() );
+}
+
 
 //-----------------------------------------------------------------------------
 
