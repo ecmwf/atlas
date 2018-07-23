@@ -794,7 +794,7 @@ CASE( "test_trans_domain" ) {
 #endif
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-#if 0
+#if 1
 CASE( "test_trans_unstructured" ) {
     Log::info() << "test_trans_unstructured" << std::endl;
     // test transgeneral by comparing with analytic solution on an unstructured grid
@@ -838,7 +838,9 @@ CASE( "test_trans_unstructured" ) {
     std::vector<double> rgp_analytic2( gu.size() );
 
     trans::Trans transLocal1( grid_global, testdomain, trc, option::type( "local" ) );
-    trans::Trans transLocal2( gu, trc, util::Config( "type", "local" ) );
+
+    // ATLAS-173 : This should also work with precompute = true, ans should give same.
+    trans::Trans transLocal2( gu, trc, option::type( "local" ) | util::Config( "precompute", false ) );
 
     int icase = 0;
     for ( int ivar_in = 2; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
