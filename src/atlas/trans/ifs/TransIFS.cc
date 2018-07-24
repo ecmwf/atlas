@@ -311,7 +311,7 @@ struct PackNodeColumns {
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
                 NOTIMP;
-                break;
+                //break;
         }
     }
 
@@ -375,7 +375,7 @@ struct PackStructuredColumns {
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
                 NOTIMP;
-                break;
+                //break;
         }
     }
 
@@ -418,7 +418,7 @@ struct PackSpectral {
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
                 NOTIMP;
-                break;
+                //break;
         }
     }
 
@@ -468,7 +468,7 @@ struct UnpackNodeColumns {
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
                 NOTIMP;
-                break;
+                //break;
         }
     }
 
@@ -532,7 +532,7 @@ struct UnpackStructuredColumns {
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
                 NOTIMP;
-                break;
+                //break;
         }
     }
 
@@ -575,7 +575,7 @@ struct UnpackSpectral {
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
                 NOTIMP;
-                break;
+                //break;
         }
     }
 

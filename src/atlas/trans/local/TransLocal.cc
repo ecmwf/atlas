@@ -44,23 +44,27 @@ public:
     TransParameters( const eckit::Configuration& config ) : config_( config ) {}
     ~TransParameters() {}
 
-    bool scalar_derivatives() const { return config_.getBool( "scalar_derivatives", false ); }
+    /*
+     * For the future
+     */
+    //    bool scalar_derivatives() const { return config_.getBool( "scalar_derivatives", false ); }
 
-    bool wind_EW_derivatives() const { return config_.getBool( "wind_EW_derivatives", false ); }
+    //    bool wind_EW_derivatives() const { return config_.getBool( "wind_EW_derivatives", false ); }
 
-    bool vorticity_divergence_fields() const { return config_.getBool( "vorticity_divergence_fields", false ); }
+    //    bool vorticity_divergence_fields() const { return config_.getBool( "vorticity_divergence_fields", false ); }
 
-    std::string read_legendre() const { return config_.getString( "read_legendre", "" ); }
+    //    std::string read_legendre() const { return config_.getString( "read_legendre", "" ); }
+    //    bool global() const { return config_.getBool( "global", false ); }
+
+    //    std::string read_fft() const { return config_.getString( "read_fft", "" ); }
+
 
     std::string write_legendre() const { return config_.getString( "write_legendre", "" ); }
 
-    bool export_legendre() const { return config_.getBool( "export_legendre", false ); }
-
-    std::string read_fft() const { return config_.getString( "read_fft", "" ); }
-
     std::string write_fft() const { return config_.getString( "write_fft", "" ); }
 
-    bool global() const { return config_.getBool( "global", false ); }
+
+    bool export_legendre() const { return config_.getBool( "export_legendre", false ); }
 
     int warning() const { return config_.getLong( "warning", 1 ); }
 
@@ -89,12 +93,6 @@ struct ReadCache {
         T* v = (T*)( begin + pos );
         pos += size * sizeof( T );
         return v;
-    }
-
-    Grid read_grid() {
-        long& size = *read<long>( 1 );
-        char* json = read<char>( size );
-        return Grid( eckit::YAMLConfiguration( std::string( json, size ) ) );
     }
 
     char* begin;
@@ -145,10 +143,10 @@ struct FFTW_Wisdom {
     FFTW_Wisdom() { wisdom = fftw_export_wisdom_to_string(); }
     ~FFTW_Wisdom() { free( wisdom ); }
 };
-std::ostream& operator<<( std::ostream& out, const FFTW_Wisdom& w ) {
-    out << w.wisdom;
-    return out;
-}
+//std::ostream& operator<<( std::ostream& out, const FFTW_Wisdom& w ) {
+//    out << w.wisdom;
+//    return out;
+//}
 #endif
 
 }  // namespace
@@ -162,10 +160,10 @@ size_t legendre_size( const size_t truncation ) {
     return ( truncation + 2 ) * ( truncation + 1 ) / 2;
 }
 
-int nlats_northernHemisphere( const int nlats ) {
-    return ceil( nlats / 2. );
-    // using ceil here should make it possible to have odd number of latitudes (with the centre latitude being the equator)
-}
+//int nlats_northernHemisphere( const int nlats ) {
+//    return ceil( nlats / 2. );
+//    // using ceil here should make it possible to have odd number of latitudes (with the centre latitude being the equator)
+//}
 
 int num_n( const int truncation, const int m, const bool symmetric ) {
     int len = 0;
