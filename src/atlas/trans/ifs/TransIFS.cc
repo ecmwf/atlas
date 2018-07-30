@@ -796,7 +796,8 @@ void TransIFS::__dirtrans( const functionspace::NodeColumns& gp, const FieldSet&
         transform.nscalar             = nfld;
         transform.rgp                 = rgp.data<double>();
         transform.rspscalar           = rspec.data<double>();
-
+        transform.ngpblks             = ngptot();
+        transform.nproma              = 1;
         TRANS_CHECK(::trans_dirtrans( &transform ) );
     }
 

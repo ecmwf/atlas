@@ -160,6 +160,7 @@ TEST( test_trans )
 
   windfield = nodes_fs%create_field(name="wind",kind=atlas_real(c_double),levels=nlev,variables=3)
   call windfield%data(wind)
+  wind(:,:,:) = 0._c_double
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
   vorfield = spectral_fs%create_field(name="vorticity",kind=atlas_real(c_double),levels=nlev)
@@ -313,6 +314,7 @@ type(atlas_FieldSet) :: gpfields, spfields
 integer :: jfld, nfld
 character(len=10) :: fieldname
 real(c_double) :: norm
+real(c_double), pointer :: gvar(:)
 
 grid = atlas_StructuredGrid("O24")
 trans = atlas_Trans(grid,23)
@@ -329,6 +331,9 @@ do jfld=1,nfld
 
   ! Read global field data
   ! ...
+  FCTEST_CHECK_EQUAL( fieldg%rank(), 1 )
+  call fieldg%data(gvar)
+  gvar(:) = 0.
 
   call gridpoints%scatter(fieldg,field)
 
