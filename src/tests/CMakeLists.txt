@@ -53,8 +53,11 @@ macro( atlas_add_cuda_test )
     set_property( TARGET ${_PAR_TARGET} PROPERTY BUILD_WITH_INSTALL_RPATH FALSE )
     set_property( TARGET ${_PAR_TARGET} PROPERTY SKIP_BUILD_RPATH         FALSE )
 
-    add_test (${_PAR_TARGET} ${_PAR_TARGET})
-
+    if( CMAKE_CROSSCOMPILING_EMULATOR )
+      add_test ( NAME ${_PAR_TARGET} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} ${_PAR_TARGET} )
+    else()
+      add_test ( NAME ${_PAR_TARGET} COMMAND ${_PAR_TARGET} )
+    endif()
   endif()
 endmacro()
 
