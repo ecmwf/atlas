@@ -48,6 +48,7 @@ public:  // types
         virtual const IteratorXY& operator++()                   = 0;
         virtual bool operator==( const IteratorXY& other ) const = 0;
         virtual bool operator!=( const IteratorXY& other ) const = 0;
+        virtual ~IteratorXY() {}
     };
 
     class IteratorLonLat {
@@ -57,6 +58,7 @@ public:  // types
         virtual const IteratorLonLat& operator++()                   = 0;
         virtual bool operator==( const IteratorLonLat& other ) const = 0;
         virtual bool operator!=( const IteratorLonLat& other ) const = 0;
+        virtual ~IteratorLonLat() {}
     };
 
 public:  // methods
