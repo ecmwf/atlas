@@ -25,6 +25,7 @@
 #include "eckit/linalg/Matrix.h"
 #include "eckit/log/Bytes.h"
 #include "eckit/parser/JSON.h"
+#include "eckit/types/FloatCompare.h"
 
 #include "atlas/library/defines.h"
 #if ATLAS_HAVE_FFTW
@@ -313,9 +314,9 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             // assumptions: latitudes in g.y(j) are monotone and decreasing
             // no assumption on whether we have 0, 1 or 2 latitudes at the equator
             double lat = g.y( j );
-            if ( lat > 0. ) { nlatsNH_++; }
-            if ( lat == 0. ) { neqtr++; }
-            if ( lat < 0. ) { nlatsSH_++; }
+            if ( eckit::types::is_strictly_greater( lat, 0. ) ) { nlatsNH_++; }
+            if ( eckit::types::is_approximately_equal( lat, 0. ) ) { neqtr++; }
+            if ( eckit::types::is_strictly_greater( 0., lat ) ) { nlatsSH_++; }
         }
         if ( neqtr > 0 ) {
             nlatsNH_++;
