@@ -276,8 +276,8 @@ double sphericalharmonics_analytic_point(
 void spectral_transform_grid_analytic(
     const size_t trc,     // truncation (in)
     bool trcFT,           // truncation for Fourier transformation (in)
-    const double n,       // total wave number (implemented so far for n<4
-    const double m,       // zonal wave number (implemented so far for m<4, m<n
+    const double n,       // total wave number (implemented so far for n<4)
+    const double m,       // zonal wave number (implemented so far for m<4, m<n)
     const int imag,       // 0: test real part, 1: test imaginary part
     const Grid grid,      // call with something like Grid("O32")
     double rspecg[],      // spectral data, size (trc+1)*trc (out)
@@ -615,9 +615,9 @@ CASE( "test_trans_hires" ) {
 CASE( "test_trans_domain" ) {
     Log::info() << "test_trans_domain" << std::endl;
     // test transgeneral by comparing with analytic solution on a cropped domain
+    // this test also includes testing caching
 
     std::ostream& out = Log::info();
-    double tolerance  = 1.e-13;
 
     //Domain testdomain = ZonalBandDomain( {-90., 90.} );
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
@@ -635,10 +635,14 @@ CASE( "test_trans_domain" ) {
     //Grid g2( global_grid );
 
     bool fourierTrc1 = true;
-    bool fourierTrc2 = true;
+    bool fourierTrc2 = false;
+    // fourierTrc1, fourierTrc2: need to be false if no global grid can be constructed
+    //                           (like for grids created with LinearSpacing)
+
     using grid::StructuredGrid;
-    using LinearSpacing = grid::LinearSpacing;
-    //StructuredGrid g2( LinearSpacing( {0., 180.}, 181 ), LinearSpacing( {0., 45.}, 46 ) );
+    //using LinearSpacing = grid::LinearSpacing;
+    //StructuredGrid g2( LinearSpacing( {0., 180.}, 3 ), LinearSpacing( {89., 90.}, 2 ) );
+    // when using LinearSpacing: set fourierTrc2 to false
 
     int trc = 63;
     //Log::info() << "rgp1:" << std::endl;
@@ -674,11 +678,16 @@ CASE( "test_trans_domain" ) {
     std::vector<double> rgp1_analytic( g1.size() );
     std::vector<double> rgp2_analytic( g2.size() );
 
+    StructuredGrid gs1( g1 );
+    StructuredGrid gs2( g2 );
+    double latPole   = 89.9999999;
+    bool gridHasPole = gs1.y( 0 ) > latPole || gs2.y( 0 ) > latPole;
+    double tolerance;
     int icase = 0;
     for ( int ivar_in = 0; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
         for ( int ivar_out = 0; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
             int nb_fld = 1;
-            if ( ivar_out == 2 ) {
+            if ( ivar_out == 2 && !gridHasPole ) {
                 tolerance = 1.e-13;
                 nb_fld    = nb_scalar;
             }
@@ -749,13 +758,200 @@ CASE( "test_trans_domain" ) {
                                 //for ( int j = 0; j < g1.size(); j++ ) {
                                 //    Log::info() << rgp1[pos * g1.size() + j] << " ";
                                 //};
+                                //Log::info() << std::endl << "analytic1:";
+                                //for ( int j = 0; j < g1.size(); j++ ) {
+                                //    Log::info() << rgp1_analytic[j] << " ";
+                                //};
                                 //Log::info() << std::endl << "rgp2:";
                                 //for ( int j = 0; j < g2.size(); j++ ) {
                                 //    Log::info() << rgp2[pos * g2.size() + j] << " ";
                                 //};
+                                //Log::info() << std::endl << "analytic2:";
+                                //for ( int j = 0; j < g2.size(); j++ ) {
+                                //    Log::info() << rgp2_analytic[j] << " ";
+                                //};
+                                //Log::info() << std::endl;
+                                rav1 += rms_gen1;
+                                rav2 += rms_gen2;
+                                if ( !( rms_gen1 < tolerance ) || !( rms_gen2 < tolerance ) ) {
+                                    Log::info()
+                                        << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
+                                        << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl;
+                                    ATLAS_DEBUG_VAR( rms_gen1 );
+                                    ATLAS_DEBUG_VAR( rms_gen2 );
+                                    ATLAS_DEBUG_VAR( tolerance );
+                                }
+                                EXPECT( rms_gen1 < tolerance );
+                                EXPECT( rms_gen2 < tolerance );
+                                icase++;
+                                auto end                                      = std::chrono::system_clock::now();  //
+                                std::chrono::duration<double> elapsed_seconds = end - start;
+                                std::time_t end_time = std::chrono::system_clock::to_time_t( end );
+                                std::string time_str = std::ctime( &end_time );
+                                //Log::info() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
+                                //            << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
+                            }
+                            k++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Log::info() << "Vordiv+scalar comparison with trans: all " << icase << " cases successfully passed!" << std::endl;
+    rav1 /= icase;
+    Log::info() << "average RMS error of transLocal1: " << rav1 << std::endl;
+    rav2 /= icase;
+    Log::info() << "average RMS error of transLocal2: " << rav2 << std::endl;
+}
+//-----------------------------------------------------------------------------
+CASE( "test_trans_pole" ) {
+    Log::info() << "test_trans_pole" << std::endl;
+    // test transform at the pole and with LinearSpacing grids
+    // not using caching in this test because not useful for LinearSpacing grids
+
+    std::ostream& out = Log::info();
+
+    //Domain testdomain = ZonalBandDomain( {-90., 90.} );
+    //Domain testdomain = ZonalBandDomain( {-.5, .5} );
+    //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
+    //Domain testdomain1 = ZonalBandDomain( {-10., 5.} );
+    Domain testdomain1 = RectangularDomain( {-5., 5.}, {-2.5, 0.} );
+    //Domain testdomain1 = RectangularDomain( {-1., 1.}, {50., 55.} );
+    Domain testdomain2 = RectangularDomain( {-5., 5.}, {-2.5, 0.} );
+    // Grid: (Adjust the following line if the test takes too long!)
+
+    Grid global_grid1( "L3" );
+    Grid global_grid2( "L3" );
+    //Grid g1( global_grid, testdomain1 );
+    //Grid g2( global_grid, testdomain2 );
+    Grid g1( global_grid1 );
+    //Grid g2( global_grid2 );
+
+    bool fourierTrc1 = true;
+    bool fourierTrc2 = false;
+    // fourierTrc1, fourierTrc2: need to be false if no global grid can be constructed
+    //                           (like for grids created with LinearSpacing)
+
+    using grid::StructuredGrid;
+    using LinearSpacing = grid::LinearSpacing;
+    StructuredGrid g2( LinearSpacing( {0., 180.}, 3 ), LinearSpacing( {89., 90.}, 2 ) );
+    // when using LinearSpacing: set fourierTrc2 to false
+
+    int trc = 2;
+    Trace t1( Here(), "translocal1 construction" );
+    trans::Trans transLocal1( global_grid1, g1.domain(), trc, option::type( "local" ) );
+    t1.stop();
+    Trace t2( Here(), "translocal2 construction" );
+    trans::Trans transLocal2( g2, trc, option::type( "local" ) );
+    t2.stop();
+
+    double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
+
+    functionspace::Spectral spectral( trc );
+
+    int nb_scalar = 1, nb_vordiv = 1;
+    int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
+    std::vector<double> sp( 2 * N * nb_scalar );
+    std::vector<double> vor( 2 * N * nb_vordiv );
+    std::vector<double> div( 2 * N * nb_vordiv );
+    std::vector<double> rspecg( 2 * N );
+    std::vector<double> rgp1( nb_all * g1.size() );
+    std::vector<double> rgp2( nb_all * g2.size() );
+    std::vector<double> rgp1_analytic( g1.size() );
+    std::vector<double> rgp2_analytic( g2.size() );
+
+    StructuredGrid gs1( g1 );
+    StructuredGrid gs2( g2 );
+    double latPole   = 89.9999999;
+    bool gridHasPole = gs1.y( 0 ) > latPole || gs2.y( 0 ) > latPole;
+    double tolerance;
+    int icase = 0;
+    for ( int ivar_in = 0; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
+        for ( int ivar_out = 0; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
+            int nb_fld = 1;
+            if ( ivar_out == 2 && !gridHasPole ) {
+                tolerance = 1.e-13;
+                nb_fld    = nb_scalar;
+            }
+            else {
+                tolerance = 2.e-6;
+                nb_fld    = nb_vordiv;
+            }
+            for ( int jfld = 0; jfld < nb_fld; jfld++ ) {  // multiple fields
+                int k = 0;
+                for ( int m = 0; m <= trc; m++ ) {                 // zonal wavenumber
+                    for ( int n = m; n <= trc; n++ ) {             // total wavenumber
+                        for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
+
+                            if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
+                                 icase < 1000 ) {
+                                auto start = std::chrono::system_clock::now();
+                                for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
+                                    sp[j] = 0.;
+                                }
+                                for ( int j = 0; j < 2 * N * nb_vordiv; j++ ) {
+                                    vor[j] = 0.;
+                                    div[j] = 0.;
+                                }
+                                if ( ivar_in == 0 ) vor[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 1 ) div[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
+
+                                for ( int j = 0; j < nb_all * g1.size(); j++ ) {
+                                    rgp1[j] = 0.;
+                                }
+                                for ( int j = 0; j < nb_all * g2.size(); j++ ) {
+                                    rgp2[j] = 0.;
+                                }
+                                for ( int j = 0; j < g1.size(); j++ ) {
+                                    rgp1_analytic[j] = 0.;
+                                }
+                                for ( int j = 0; j < g2.size(); j++ ) {
+                                    rgp2_analytic[j] = 0.;
+                                }
+
+                                spectral_transform_grid_analytic( trc, fourierTrc1, n, m, imag, g1, rspecg.data(),
+                                                                  rgp1_analytic.data(), ivar_in, ivar_out );
+
+                                spectral_transform_grid_analytic( trc, fourierTrc2, n, m, imag, g2, rspecg.data(),
+                                                                  rgp2_analytic.data(), ivar_in, ivar_out );
+
+                                //Log::info() << std::endl << "rgp1:";
+                                ATLAS_TRACE_SCOPE( "translocal1" )
+                                EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                       div.data(), rgp1.data() ) );
+
+                                //Log::info() << std::endl << "rgp2:";
+                                ATLAS_TRACE_SCOPE( "translocal2" )
+                                EXPECT_NO_THROW( transLocal2.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
+                                                                       div.data(), rgp2.data() ) );
+
+                                int pos = ( ivar_out * nb_vordiv + jfld );
+
+                                double rms_gen1 =
+                                    compute_rms( g1.size(), rgp1.data() + pos * g1.size(), rgp1_analytic.data() );
+
+                                double rms_gen2 =
+                                    compute_rms( g2.size(), rgp2.data() + pos * g2.size(), rgp2_analytic.data() );
+
+                                //Log::info() << "Case " << icase << " ivar_in=" << ivar_in << " ivar_out=" << ivar_out
+                                //            << " m=" << m << " n=" << n << " imag=" << imag << " k=" << k << std::endl
+                                //            << "rgp1:";
+                                //for ( int j = 0; j < g1.size(); j++ ) {
+                                //    Log::info() << rgp1[pos * g1.size() + j] << " ";
+                                //};
                                 //Log::info() << std::endl << "analytic1:";
                                 //for ( int j = 0; j < g1.size(); j++ ) {
                                 //    Log::info() << rgp1_analytic[j] << " ";
+                                //};
+                                //Log::info() << std::endl << "rgp2:";
+                                //for ( int j = 0; j < g2.size(); j++ ) {
+                                //    Log::info() << rgp2[pos * g2.size() + j] << " ";
+                                //};
+                                //Log::info() << std::endl << "analytic2:";
+                                //for ( int j = 0; j < g2.size(); j++ ) {
+                                //    Log::info() << rgp2_analytic[j] << " ";
                                 //};
                                 //Log::info() << std::endl;
                                 rav1 += rms_gen1;
@@ -793,7 +989,6 @@ CASE( "test_trans_domain" ) {
 }
 #endif
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
 #if 1
 CASE( "test_trans_unstructured" ) {
     Log::info() << "test_trans_unstructured" << std::endl;
@@ -805,9 +1000,9 @@ CASE( "test_trans_unstructured" ) {
     //Domain testdomain = RectangularDomain( {20., 25.}, {40., 60.} );
     Domain testdomain = RectangularDomain( {0., 90.}, {0., 90.} );
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid grid_global( "F120" );
+    Grid grid_global( "F32" );
     Grid g( grid_global, testdomain );
-    int trc = 120;
+    int trc = 31;
     grid::StructuredGrid gs( g );
     std::vector<PointXY> pts( g.size() );
     int idx( 0 );
@@ -843,8 +1038,8 @@ CASE( "test_trans_unstructured" ) {
     trans::Trans transLocal2( gu, trc, option::type( "local" ) | util::Config( "precompute", false ) );
 
     int icase = 0;
-    for ( int ivar_in = 2; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
-        for ( int ivar_out = 2; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
+    for ( int ivar_in = 0; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
+        for ( int ivar_out = 0; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
             int nb_fld = 1;
             if ( ivar_out == 2 ) {
                 tolerance = 1.e-13;
@@ -861,7 +1056,7 @@ CASE( "test_trans_unstructured" ) {
                         for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
 
                             if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
-                                 icase < 100 ) {
+                                 icase < 1000 ) {
                                 auto start = std::chrono::system_clock::now();
                                 for ( int j = 0; j < 2 * N * nb_scalar; j++ ) {
                                     sp[j] = 0.;
@@ -887,17 +1082,19 @@ CASE( "test_trans_unstructured" ) {
                                     rgp_analytic2[j] = 0.;
                                 }
 
-                                spectral_transform_grid_analytic( trc, trc, n, m, imag, g, rspecg.data(),
+                                spectral_transform_grid_analytic( trc, false, n, m, imag, g, rspecg.data(),
                                                                   rgp_analytic1.data(), ivar_in, ivar_out );
 
                                 //Log::info() << icase << " m=" << m << " n=" << n << " imag=" << imag << " structured: ";
+                                ATLAS_TRACE_SCOPE( "structured" )
                                 EXPECT_NO_THROW( transLocal1.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
                                                                        div.data(), rgp1.data() ) );
 
-                                spectral_transform_grid_analytic( trc, trc, n, m, imag, gu, rspecg.data(),
+                                spectral_transform_grid_analytic( trc, false, n, m, imag, gu, rspecg.data(),
                                                                   rgp_analytic2.data(), ivar_in, ivar_out );
 
                                 //Log::info() << icase << " m=" << m << " n=" << n << " imag=" << imag << " unstructured: ";
+                                ATLAS_TRACE_SCOPE( "unstructured" )
                                 EXPECT_NO_THROW( transLocal2.invtrans( nb_scalar, sp.data(), nb_vordiv, vor.data(),
                                                                        div.data(), rgp2.data() ) );
 
@@ -944,7 +1141,7 @@ CASE( "test_trans_unstructured" ) {
 }
 #endif
 
-    //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 #if 0
 CASE( "test_trans_fourier_truncation" ) {
