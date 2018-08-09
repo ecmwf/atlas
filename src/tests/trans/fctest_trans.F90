@@ -13,6 +13,7 @@
 
 module fctest_atlas_trans_fixture
 use atlas_module
+use fckit_module
 use iso_c_binding
 implicit none
 character(len=1024) :: msg
@@ -25,6 +26,7 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_trans,fctest_atlas_trans_fixture)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
+  call fckit_main%init()
   call atlas_library%initialise()
 END_TESTSUITE_INIT
 
