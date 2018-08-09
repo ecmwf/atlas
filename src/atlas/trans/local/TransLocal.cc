@@ -31,6 +31,12 @@
 #include <fftw3.h>
 #endif
 
+// move latitudes at the poles to the following latitude:
+// (otherwise we would divide by zero when computing u,v from U,V)
+double latPole = 89.9999999;
+// (latPole=89.9999999 seems to produce the best accuracy. Moving it further away
+//  or closer to the pole both increase the errors!)
+
 namespace atlas {
 namespace trans {
 
@@ -351,7 +357,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         else {
             Log::debug() << "Grid has " << nlats << " latitudes. Global grid has " << nlatsGlobal_ << std::endl;
         }
-        if ( useGlobalLeg ) { nlatsLeg_ = nlatsGlobal_ / 2; }
+        if ( useGlobalLeg ) { nlatsLeg_ = ( nlatsGlobal_ + 1 ) / 2; }
         else {
             nlatsLeg_        = nlatsLegDomain_;
             nlatsLegReduced_ = nlatsLeg_;
@@ -432,12 +438,18 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         std::vector<double> lons( nlonsMax );
         if ( nlatsNH_ >= nlatsSH_ || useGlobalLeg ) {
             for ( size_t j = 0; j < nlatsLeg_; ++j ) {
-                lats[j] = gsLeg.y( j ) * util::Constants::degreesToRadians();
+                double lat = gsLeg.y( j );
+                if ( lat > latPole ) { lat = latPole; }
+                if ( lat < -latPole ) { lat = -latPole; }
+                lats[j] = lat * util::Constants::degreesToRadians();
             }
         }
         else {
             for ( size_t j = nlats - 1, idx = 0; idx < nlatsLeg_; --j, ++idx ) {
-                lats[idx] = -gsLeg.y( j ) * util::Constants::degreesToRadians();
+                double lat = gsLeg.y( j );
+                if ( lat > latPole ) { lat = latPole; }
+                if ( lat < -latPole ) { lat = -latPole; }
+                lats[idx] = -lat * util::Constants::degreesToRadians();
             }
         }
         for ( size_t j = 0; j < nlonsMax; ++j ) {
@@ -562,7 +574,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 //                    write.close();
                 //                }
             }
-                // other FFT implementations should be added with #elif statements
+            // other FFT implementations should be added with #elif statements
 #else
             useFFT_               = false;  // no FFT implemented => default to dgemm
             std::string file_path = TransParameters( config ).write_fft();
@@ -880,8 +892,8 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                     }
                 }
             }
-        }  // namespace trans
-    }      // namespace atlas
+        }
+    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -1287,15 +1299,20 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
             {
                 if ( nb_vordiv_fields > 0 ) {
                     ATLAS_TRACE( "compute u,v from U,V" );
-                    std::vector<double> coslats( nlats );
+                    std::vector<double> coslatinvs( nlats );
                     for ( size_t j = 0; j < nlats; ++j ) {
-                        coslats[j] = std::cos( g.y( j ) * util::Constants::degreesToRadians() );
+                        double lat = g.y( j );
+                        if ( lat > latPole ) { lat = latPole; }
+                        if ( lat < -latPole ) { lat = -latPole; }
+                        double coslat = std::cos( lat * util::Constants::degreesToRadians() );
+                        coslatinvs[j] = 1. / coslat;
+                        //Log::info() << "lat=" << g.y( j ) << " coslat=" << coslat << std::endl;
                     }
                     int idx = 0;
                     for ( int jfld = 0; jfld < 2 * nb_vordiv_fields && jfld < nb_fields; jfld++ ) {
                         for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
                             for ( int jlon = 0; jlon < g.nx( jlat ); jlon++ ) {
-                                gp_fields[idx] /= coslats[jlat];
+                                gp_fields[idx] *= coslatinvs[jlat];
                                 idx++;
                             }
                         }
