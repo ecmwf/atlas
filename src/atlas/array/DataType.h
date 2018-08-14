@@ -64,6 +64,7 @@ public:
     DataType( const DataType& );
     std::string str() const { return kind_to_str( kind_ ); }
     kind_t kind() const { return kind_; }
+    size_t size() const { return ( kind_ == KIND_UINT64 ) ? 8 : std::abs( kind_ ); }
 
     friend bool operator==( DataType dt1, DataType dt2 );
     friend bool operator!=( DataType dt1, DataType dt2 );
