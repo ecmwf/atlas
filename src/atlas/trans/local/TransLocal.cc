@@ -314,9 +314,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             // assumptions: latitudes in g.y(j) are monotone and decreasing
             // no assumption on whether we have 0, 1 or 2 latitudes at the equator
             double lat = g.y( j );
-            if ( eckit::types::is_strictly_greater( lat, 0. ) ) { nlatsNH_++; }
-            if ( eckit::types::is_approximately_equal( lat, 0. ) ) { neqtr++; }
-            if ( eckit::types::is_strictly_greater( 0., lat ) ) { nlatsSH_++; }
+            ( eckit::types::is_approximately_equal( lat, 0. ) ? neqtr : ( lat < 0 ? nlatsSH_ : nlatsNH_ ) )++;
         }
         if ( neqtr > 0 ) {
             nlatsNH_++;
@@ -372,7 +370,10 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         //Log::info() << std::endl;
         int jlatMinLeg_ = jlatMin_;
         if ( nlatsNH_ < nlatsSH_ ) { jlatMinLeg_ += nlatsNH_ - nlatsSH_; };
-        if ( jlatMin_ > nlatsGlobal_ / 2 ) { jlatMinLeg_ -= 2 * ( jlatMin_ - nlatsGlobal_ / 2 ); };
+        if ( jlatMin_ >= ( nlatsGlobal_ + 1 ) / 2 ) {
+            jlatMinLeg_ -= 2 * ( jlatMin_ - ( nlatsGlobal_ + 1 ) / 2 );
+            if ( nlatsGlobal_ % 2 == 1 ) { jlatMinLeg_--; }
+        };
         if ( useGlobalLeg ) { nlatsLegReduced_ = jlatMinLeg_ + nlatsLegDomain_; }
 
         // reduce truncation towards the pole for reduced meshes:
