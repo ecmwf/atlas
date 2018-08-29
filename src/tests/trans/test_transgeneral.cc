@@ -875,7 +875,7 @@ CASE( "test_trans_pole" ) {
                 nb_fld    = nb_scalar;
             }
             else {
-                tolerance = 2.e-6;
+                tolerance = 2.e-5;
                 nb_fld    = nb_vordiv;
             }
             for ( int jfld = 0; jfld < nb_fld; jfld++ ) {  // multiple fields
