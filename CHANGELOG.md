@@ -7,6 +7,19 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.15.2] - 2018-08-31
+### Changed
+- Initialisation of Fields to signalling NaN in debug builds, uninitialised in
+  non-debug builds (used to be initialised to zero as part of std::vector construction)
+
+### Added
+- Implementation of cropped unstructured grids so that spectral transforms to
+  unstructured grids are allowed
+
+### Fixed
+- Spectral transforms to grids including pole and equator
+- Build with gridtools CUDA backend
+
 ## [0.15.1] - 2018-07-17
 ### Fixed
 - Compilation for Intel 18 debug
@@ -45,6 +58,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.15.2]: https://github.com/ecmwf/atlas/compare/0.15.1...0.15.2
 [0.15.1]: https://github.com/ecmwf/atlas/compare/0.15.0...0.15.1
 [0.15.0]: https://github.com/ecmwf/atlas/compare/0.14.0...0.15.0
 [0.14.0]: https://github.com/ecmwf/atlas/compare/0.13.2...0.14.0
