@@ -13,6 +13,7 @@
 
 module fctest_atlas_trans_fixture
 use atlas_module
+use fckit_module
 use iso_c_binding
 implicit none
 character(len=1024) :: msg
@@ -25,6 +26,7 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_trans,fctest_atlas_trans_fixture)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
+  call fckit_main%init()
   call atlas_library%initialise()
 END_TESTSUITE_INIT
 
@@ -160,6 +162,7 @@ TEST( test_trans )
 
   windfield = nodes_fs%create_field(name="wind",kind=atlas_real(c_double),levels=nlev,variables=3)
   call windfield%data(wind)
+  wind(:,:,:) = 0._c_double
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
   vorfield = spectral_fs%create_field(name="vorticity",kind=atlas_real(c_double),levels=nlev)
@@ -313,6 +316,7 @@ type(atlas_FieldSet) :: gpfields, spfields
 integer :: jfld, nfld
 character(len=10) :: fieldname
 real(c_double) :: norm
+real(c_double), pointer :: gvar(:)
 
 grid = atlas_StructuredGrid("O24")
 trans = atlas_Trans(grid,23)
@@ -329,6 +333,9 @@ do jfld=1,nfld
 
   ! Read global field data
   ! ...
+  FCTEST_CHECK_EQUAL( fieldg%rank(), 1 )
+  call fieldg%data(gvar)
+  gvar(:) = 0.
 
   call gridpoints%scatter(fieldg,field)
 

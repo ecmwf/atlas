@@ -27,6 +27,7 @@
 #include "atlas/trans/Trans.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
+#include "atlas/array.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

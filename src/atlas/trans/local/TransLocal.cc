@@ -25,11 +25,18 @@
 #include "eckit/linalg/Matrix.h"
 #include "eckit/log/Bytes.h"
 #include "eckit/parser/JSON.h"
+#include "eckit/types/FloatCompare.h"
 
 #include "atlas/library/defines.h"
 #if ATLAS_HAVE_FFTW
 #include <fftw3.h>
 #endif
+
+// move latitudes at the poles to the following latitude:
+// (otherwise we would divide by zero when computing u,v from U,V)
+double latPole = 89.9999999;
+// (latPole=89.9999999 seems to produce the best accuracy. Moving it further away
+//  or closer to the pole both increase the errors!)
 
 namespace atlas {
 namespace trans {
@@ -44,25 +51,29 @@ public:
     TransParameters( const eckit::Configuration& config ) : config_( config ) {}
     ~TransParameters() {}
 
-    bool scalar_derivatives() const { return config_.getBool( "scalar_derivatives", false ); }
+    /*
+     * For the future
+     */
+    //    bool scalar_derivatives() const { return config_.getBool( "scalar_derivatives", false ); }
 
-    bool wind_EW_derivatives() const { return config_.getBool( "wind_EW_derivatives", false ); }
+    //    bool wind_EW_derivatives() const { return config_.getBool( "wind_EW_derivatives", false ); }
 
-    bool vorticity_divergence_fields() const { return config_.getBool( "vorticity_divergence_fields", false ); }
+    //    bool vorticity_divergence_fields() const { return config_.getBool( "vorticity_divergence_fields", false ); }
 
-    std::string read_legendre() const { return config_.getString( "read_legendre", "" ); }
+    //    std::string read_legendre() const { return config_.getString( "read_legendre", "" ); }
+    //    bool global() const { return config_.getBool( "global", false ); }
+
+    //    std::string read_fft() const { return config_.getString( "read_fft", "" ); }
+
 
     std::string write_legendre() const { return config_.getString( "write_legendre", "" ); }
 
-    bool export_legendre() const { return config_.getBool( "export_legendre", false ); }
-
-    std::string read_fft() const { return config_.getString( "read_fft", "" ); }
-
     std::string write_fft() const { return config_.getString( "write_fft", "" ); }
 
-    bool global() const { return config_.getBool( "global", false ); }
 
-    int warning() const { return config_.getLong( "warning", 0 ); }
+    bool export_legendre() const { return config_.getBool( "export_legendre", false ); }
+
+    int warning() const { return config_.getLong( "warning", 1 ); }
 
     int fft() const {
         static const std::map<std::string, int> string_to_FFT = {{"OFF", (int)option::FFT::OFF},
@@ -89,12 +100,6 @@ struct ReadCache {
         T* v = (T*)( begin + pos );
         pos += size * sizeof( T );
         return v;
-    }
-
-    Grid read_grid() {
-        long& size = *read<long>( 1 );
-        char* json = read<char>( size );
-        return Grid( eckit::YAMLConfiguration( std::string( json, size ) ) );
     }
 
     char* begin;
@@ -145,10 +150,10 @@ struct FFTW_Wisdom {
     FFTW_Wisdom() { wisdom = fftw_export_wisdom_to_string(); }
     ~FFTW_Wisdom() { free( wisdom ); }
 };
-std::ostream& operator<<( std::ostream& out, const FFTW_Wisdom& w ) {
-    out << w.wisdom;
-    return out;
-}
+//std::ostream& operator<<( std::ostream& out, const FFTW_Wisdom& w ) {
+//    out << w.wisdom;
+//    return out;
+//}
 #endif
 
 }  // namespace
@@ -162,10 +167,10 @@ size_t legendre_size( const size_t truncation ) {
     return ( truncation + 2 ) * ( truncation + 1 ) / 2;
 }
 
-int nlats_northernHemisphere( const int nlats ) {
-    return ceil( nlats / 2. );
-    // using ceil here should make it possible to have odd number of latitudes (with the centre latitude being the equator)
-}
+//int nlats_northernHemisphere( const int nlats ) {
+//    return ceil( nlats / 2. );
+//    // using ceil here should make it possible to have odd number of latitudes (with the centre latitude being the equator)
+//}
 
 int num_n( const int truncation, const int m, const bool symmetric ) {
     int len = 0;
@@ -176,9 +181,27 @@ int num_n( const int truncation, const int m, const bool symmetric ) {
     return len;
 }
 
+class AllocationFailed : public eckit::Exception {
+public:
+    AllocationFailed( size_t bytes, const eckit::CodeLocation& );
+
+private:
+    static std::string error_message( size_t bytes ) {
+        std::stringstream ss;
+        ss << "AllocationFailed: Could not allocate " << eckit::Bytes( bytes );
+        return ss.str();
+    }
+};
+
+AllocationFailed::AllocationFailed( size_t bytes, const eckit::CodeLocation& loc ) :
+    Exception( error_message( bytes ), loc ) {}
+
+
 void alloc_aligned( double*& ptr, size_t n ) {
     const size_t alignment = 64 * sizeof( double );
-    posix_memalign( (void**)&ptr, alignment, sizeof( double ) * n );
+    size_t bytes           = sizeof( double ) * n;
+    int err                = posix_memalign( (void**)&ptr, alignment, bytes );
+    if ( err ) { throw AllocationFailed( bytes, Here() ); }
 }
 
 void free_aligned( double*& ptr ) {
@@ -272,7 +295,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
     int nlonsMax      = 0;
     int neqtr         = 0;
     useFFT_           = TransParameters( config ).fft();
-    unstruct_precomp_ = true;
+    unstruct_precomp_ = ( config.has( "precompute" ) ? precompute_ : false );
     no_symmetry_      = false;
     nlatsNH_          = 0;
     nlatsSH_          = 0;
@@ -291,9 +314,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             // assumptions: latitudes in g.y(j) are monotone and decreasing
             // no assumption on whether we have 0, 1 or 2 latitudes at the equator
             double lat = g.y( j );
-            if ( lat > 0. ) { nlatsNH_++; }
-            if ( lat == 0. ) { neqtr++; }
-            if ( lat < 0. ) { nlatsSH_++; }
+            ( eckit::types::is_approximately_equal( lat, 0. ) ? neqtr : ( lat < 0 ? nlatsSH_ : nlatsNH_ ) )++;
         }
         if ( neqtr > 0 ) {
             nlatsNH_++;
@@ -335,7 +356,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         else {
             Log::debug() << "Grid has " << nlats << " latitudes. Global grid has " << nlatsGlobal_ << std::endl;
         }
-        if ( useGlobalLeg ) { nlatsLeg_ = nlatsGlobal_ / 2; }
+        if ( useGlobalLeg ) { nlatsLeg_ = ( nlatsGlobal_ + 1 ) / 2; }
         else {
             nlatsLeg_        = nlatsLegDomain_;
             nlatsLegReduced_ = nlatsLeg_;
@@ -349,7 +370,10 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         //Log::info() << std::endl;
         int jlatMinLeg_ = jlatMin_;
         if ( nlatsNH_ < nlatsSH_ ) { jlatMinLeg_ += nlatsNH_ - nlatsSH_; };
-        if ( jlatMin_ > nlatsGlobal_ / 2 ) { jlatMinLeg_ -= 2 * ( jlatMin_ - nlatsGlobal_ / 2 ); };
+        if ( jlatMin_ >= ( nlatsGlobal_ + 1 ) / 2 ) {
+            jlatMinLeg_ -= 2 * ( jlatMin_ - ( nlatsGlobal_ + 1 ) / 2 );
+            if ( nlatsGlobal_ % 2 == 1 ) { jlatMinLeg_--; }
+        };
         if ( useGlobalLeg ) { nlatsLegReduced_ = jlatMinLeg_ + nlatsLegDomain_; }
 
         // reduce truncation towards the pole for reduced meshes:
@@ -416,12 +440,18 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         std::vector<double> lons( nlonsMax );
         if ( nlatsNH_ >= nlatsSH_ || useGlobalLeg ) {
             for ( size_t j = 0; j < nlatsLeg_; ++j ) {
-                lats[j] = gsLeg.y( j ) * util::Constants::degreesToRadians();
+                double lat = gsLeg.y( j );
+                if ( lat > latPole ) { lat = latPole; }
+                if ( lat < -latPole ) { lat = -latPole; }
+                lats[j] = lat * util::Constants::degreesToRadians();
             }
         }
         else {
             for ( size_t j = nlats - 1, idx = 0; idx < nlatsLeg_; --j, ++idx ) {
-                lats[idx] = -gsLeg.y( j ) * util::Constants::degreesToRadians();
+                double lat = gsLeg.y( j );
+                if ( lat > latPole ) { lat = latPole; }
+                if ( lat < -latPole ) { lat = -latPole; }
+                lats[idx] = -lat * util::Constants::degreesToRadians();
             }
         }
         for ( size_t j = 0; j < nlonsMax; ++j ) {
@@ -546,7 +576,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 //                    write.close();
                 //                }
             }
-                // other FFT implementations should be added with #elif statements
+            // other FFT implementations should be added with #elif statements
 #else
             useFFT_               = false;  // no FFT implemented => default to dgemm
             std::string file_path = TransParameters( config ).write_fft();
@@ -601,9 +631,15 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             ATLAS_TRACE( "Legendre precomputations (unstructured)" );
 
             if ( warning() ) {
-                Log::warning() << "WARNING: Precomputations for spectral transforms could take a long time and consume "
-                                  "a lot of memory (unstructured grid approach)! Results may contain aliasing errors."
-                               << std::endl;
+                Log::warning()
+                    << "WARNING: Precomputations for spectral transforms could take a long time as there's no structure"
+                       " to take advantage of!!!"
+                    << std::endl
+                    << "The precomputed values consume at least "
+                    << eckit::Bytes( sizeof( double ) * legendre_size( truncation_ ) * grid_.size() ) << " ("
+                    << eckit::Bytes( sizeof( double ) * legendre_size( truncation_ ) ) << " for each of "
+                    << grid_.size() << " grid points )" << std::endl
+                    << "Furthermore, results may contain aliasing errors." << std::endl;
             }
 
             std::vector<double> lats( grid_.size() );
@@ -858,8 +894,8 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                     }
                 }
             }
-        }  // namespace trans
-    }      // namespace atlas
+        }
+    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -1265,15 +1301,20 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
             {
                 if ( nb_vordiv_fields > 0 ) {
                     ATLAS_TRACE( "compute u,v from U,V" );
-                    std::vector<double> coslats( nlats );
+                    std::vector<double> coslatinvs( nlats );
                     for ( size_t j = 0; j < nlats; ++j ) {
-                        coslats[j] = std::cos( g.y( j ) * util::Constants::degreesToRadians() );
+                        double lat = g.y( j );
+                        if ( lat > latPole ) { lat = latPole; }
+                        if ( lat < -latPole ) { lat = -latPole; }
+                        double coslat = std::cos( lat * util::Constants::degreesToRadians() );
+                        coslatinvs[j] = 1. / coslat;
+                        //Log::info() << "lat=" << g.y( j ) << " coslat=" << coslat << std::endl;
                     }
                     int idx = 0;
                     for ( int jfld = 0; jfld < 2 * nb_vordiv_fields && jfld < nb_fields; jfld++ ) {
                         for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
                             for ( int jlon = 0; jlon < g.nx( jlat ); jlon++ ) {
-                                gp_fields[idx] /= coslats[jlat];
+                                gp_fields[idx] *= coslatinvs[jlat];
                                 idx++;
                             }
                         }

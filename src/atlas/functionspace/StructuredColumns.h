@@ -95,6 +95,8 @@ public:
     Field partition() const { return field_partition_; }
     Field global_index() const { return field_global_index_; }
     Field remote_index() const { return field_remote_index_; }
+    Field index_i() const { return field_index_i_; }
+    Field index_j() const { return field_index_j_; }
 
 private:  // methods
     size_t config_size( const eckit::Configuration& config ) const;
@@ -121,6 +123,8 @@ private:  // data
     Field field_partition_;
     Field field_global_index_;
     Field field_remote_index_;
+    Field field_index_i_;
+    Field field_index_j_;
 
     class Map2to1 {
     public:
@@ -303,6 +307,8 @@ int atlas__fs__StructuredColumns__i_end_halo( const detail::StructuredColumns* T
 field::FieldImpl* atlas__fs__StructuredColumns__xy( const detail::StructuredColumns* This );
 field::FieldImpl* atlas__fs__StructuredColumns__partition( const detail::StructuredColumns* This );
 field::FieldImpl* atlas__fs__StructuredColumns__global_index( const detail::StructuredColumns* This );
+field::FieldImpl* atlas__fs__StructuredColumns__index_i( const detail::StructuredColumns* This );
+field::FieldImpl* atlas__fs__StructuredColumns__index_j( const detail::StructuredColumns* This );
 }
 
 }  // namespace functionspace

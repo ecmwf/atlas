@@ -412,10 +412,14 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     field_partition_    = Field( "partition", array::make_datatype<int>(), array::make_shape( size_halo_ ) );
     field_global_index_ = Field( "glb_idx", array::make_datatype<gidx_t>(), array::make_shape( size_halo_ ) );
     field_remote_index_ = Field( "remote_idx", array::make_datatype<idx_t>(), array::make_shape( size_halo_ ) );
+    field_index_i_      = Field( "index_i", array::make_datatype<idx_t>(), array::make_shape( size_halo_ ) );
+    field_index_j_      = Field( "index_j", array::make_datatype<idx_t>(), array::make_shape( size_halo_ ) );
 
     auto part       = array::make_view<int, 1>( field_partition_ );
     auto global_idx = array::make_view<gidx_t, 1>( field_global_index_ );
     auto remote_idx = array::make_view<idx_t, 1>( field_remote_index_ );
+    auto index_i    = array::make_indexview<idx_t, 1>( field_index_i_ );
+    auto index_j    = array::make_indexview<idx_t, 1>( field_index_j_ );
 
     for ( const GridPoint& gp : gridpoints ) {
         bool in_domain( false );
@@ -432,6 +436,8 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
             global_idx( gp.r ) = compute_g( gp.i, gp.j );
             part( gp.r )       = compute_p( gp.i, gp.j );
         }
+        index_i( gp.r ) = gp.i;
+        index_j( gp.r ) = gp.j;
     }
 
     ATLAS_TRACE_SCOPE( "Parallelisation ..." ) {
@@ -943,6 +949,14 @@ field::FieldImpl* atlas__fs__StructuredColumns__partition( const detail::Structu
 
 field::FieldImpl* atlas__fs__StructuredColumns__global_index( const detail::StructuredColumns* This ) {
     return This->global_index().get();
+}
+
+field::FieldImpl* atlas__fs__StructuredColumns__index_i( const detail::StructuredColumns* This ) {
+    return This->index_i().get();
+}
+
+field::FieldImpl* atlas__fs__StructuredColumns__index_j( const detail::StructuredColumns* This ) {
+    return This->index_j().get();
 }
 }
 // ----------------------------------------------------------------------------

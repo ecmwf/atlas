@@ -113,7 +113,7 @@ public:
 
 class warning : public util::Config {
 public:
-    warning( int );
+    warning( int = 1 );
 };
 
 // ----------------------------------------------------------------------------

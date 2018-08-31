@@ -11,13 +11,17 @@
 #include "atlas/grid/detail/grid/Unstructured.h"
 
 #include <limits>
+#include <memory>
 
 #include "eckit/memory/Builder.h"
+#include "eckit/types/FloatCompare.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
+#include "atlas/grid/Iterator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/option.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 
@@ -40,6 +44,64 @@ Unstructured::Unstructured( const Mesh& m ) : Grid(), points_( new std::vector<P
     for ( size_t n = 0; n < npts; ++n ) {
         p[n].assign( xy( n, XX ), xy( n, YY ) );
     }
+}
+
+
+namespace {
+class Normalise {
+public:
+    Normalise( const RectangularDomain& domain ) :
+        degrees_( domain.units() == "degrees" ),
+        xmin_( domain.xmin() ),
+        xmax_( domain.xmax() ),
+        eps_( 1e-11 ) {}
+
+    double operator()( double x ) const {
+        if ( degrees_ ) {
+            while ( eckit::types::is_strictly_greater<double>( xmin_, x, eps_ ) ) {
+                x += 360.;
+            }
+            while ( eckit::types::is_strictly_greater<double>( x, xmax_, eps_ ) ) {
+                x -= 360.;
+            }
+        }
+        return x;
+    }
+
+private:
+    const bool degrees_;
+    const double xmin_;
+    const double xmax_;
+    const double eps_;
+};
+}  // namespace
+
+
+Unstructured::Unstructured( const Grid& grid, Domain domain ) : Grid() {
+    domain_ = domain;
+    points_.reset( new std::vector<PointXY> );
+    points_->reserve( grid.size() );
+    if ( not domain_ ) { domain_ = Domain( option::type( "global" ) ); }
+    atlas::grid::IteratorXY it( grid.xy_begin() );
+    PointXY p;
+    if ( RectangularDomain( domain_ ) ) {
+        auto normalise = Normalise( RectangularDomain( domain_ ) );
+        while ( it.next( p ) ) {
+            p.x() = normalise( p.x() );
+            if ( domain_.contains( p ) ) { points_->emplace_back( p ); }
+        }
+    }
+    else if ( ZonalBandDomain( domain_ ) ) {
+        while ( it.next( p ) ) {
+            if ( domain_.contains( p ) ) { points_->emplace_back( p ); }
+        }
+    }
+    else {
+        while ( it.next( p ) ) {
+            points_->emplace_back( p );
+        }
+    }
+    points_->shrink_to_fit();
 }
 
 Unstructured::Unstructured( const util::Config& p ) : Grid() {

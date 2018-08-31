@@ -82,7 +82,7 @@ const Grid* Grid::create( const Grid& grid, const Domain& domain ) {
         return new Structured( g.name(), g.xspace(), g.yspace(), g.projection(), domain );
     }
     else {
-        NOTIMP;
+        return new Unstructured( grid, domain );
     }
 }
 

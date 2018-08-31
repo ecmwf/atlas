@@ -25,6 +25,7 @@
 #include "tests/AtlasTestEnvironment.h"
 
 using StructuredGrid      = atlas::grid::StructuredGrid;
+using UnstructuredGrid    = atlas::grid::UnstructuredGrid;
 using Grid                = atlas::Grid;
 using Regular             = atlas::grid::RegularGrid;
 using ReducedGaussianGrid = atlas::grid::ReducedGaussianGrid;
@@ -145,6 +146,60 @@ CASE( "test_cropping previous case" ) {
     StructuredGrid cropped( grid, RectangularDomain( {-27, 45}, {33, 73} ) );
     EXPECT( cropped.ny() == 14 );
     EXPECT( cropped.size() == 267 );
+}
+
+CASE( "cropping with line at north pole" ) {
+    StructuredGrid grid( "L16", RectangularDomain( {0, 360}, {90, 90} ) );
+    EXPECT( grid.ny() == 1 );
+    EXPECT( grid.nx( 0 ) == 64 );
+    EXPECT( grid.size() == 64 );
+}
+
+CASE( "cropping with line at south pole" ) {
+    StructuredGrid grid( "L16", RectangularDomain( {0, 360}, {-90, -90} ) );
+    EXPECT( grid.ny() == 1 );
+    EXPECT( grid.nx( 0 ) == 64 );
+    EXPECT( grid.size() == 64 );
+}
+
+CASE( "cropping with line at equator" ) {
+    StructuredGrid grid( "L16", RectangularDomain( {0, 360}, {0, 0} ) );
+    EXPECT( grid.ny() == 1 );
+    EXPECT( grid.nx( 0 ) == 64 );
+    EXPECT( grid.size() == 64 );
+}
+
+CASE( "cropping single point at equator" ) {
+    StructuredGrid grid( "L16", RectangularDomain( {0, 0}, {0, 0} ) );
+    EXPECT( grid.ny() == 1 );
+    EXPECT( grid.nx( 0 ) == 1 );
+    EXPECT( grid.size() == 1 );
+}
+
+CASE( "Create cropped unstructured grid using rectangular domain" ) {
+    StructuredGrid agrid( "L8" );
+    auto domain = RectangularDomain( {-27, 45}, {33, 73} );
+    StructuredGrid sgrid( agrid, domain );
+    UnstructuredGrid ugrid( agrid, domain );
+    EXPECT( ugrid.size() == sgrid.size() );
+}
+
+CASE( "Create cropped unstructured grid using zonal domain" ) {
+    StructuredGrid agrid( "L8" );
+    auto domain = ZonalBandDomain( {33, 73} );
+    StructuredGrid sgrid( agrid, domain );
+    UnstructuredGrid ugrid( agrid, domain );
+    EXPECT( ugrid.size() == sgrid.size() );
+}
+
+CASE( "Create unstructured from unstructured" ) {
+    StructuredGrid agrid( "L8" );
+    UnstructuredGrid global_unstructured( agrid, Domain() );
+    EXPECT( UnstructuredGrid( global_unstructured ) );
+    EXPECT( global_unstructured.size() == agrid.size() );
+    auto domain = ZonalBandDomain( {33, 73} );
+    UnstructuredGrid ugrid( global_unstructured, domain );
+    EXPECT( ugrid.size() == StructuredGrid( agrid, domain ).size() );
 }
 
 

@@ -34,7 +34,9 @@ Grid::Grid( const Grid& grid ) : grid_( grid.grid_ ) {}
 Grid::Grid( const Grid::Implementation* grid ) : grid_( grid ) {}
 
 Grid::Grid( const std::string& shortname, const Domain& domain ) {
-    grid_ = Grid::Implementation::create( shortname, Config( "domain", domain.spec() ) );
+    Config config;
+    if ( domain ) config.set( "domain", domain.spec() );
+    grid_ = Grid::Implementation::create( shortname, config );
 }
 
 Grid::Grid( const Grid& grid, const Grid::Domain& domain ) {
@@ -72,6 +74,10 @@ UnstructuredGrid::UnstructuredGrid( std::vector<PointXY>&& xy ) :
 
 UnstructuredGrid::UnstructuredGrid( std::initializer_list<PointXY> xy ) :
     Grid( new UnstructuredGrid::grid_t( xy ) ),
+    grid_( unstructured_grid( get() ) ) {}
+
+UnstructuredGrid::UnstructuredGrid( const Grid& grid, const Grid::Domain& domain ) :
+    Grid( new UnstructuredGrid::grid_t( *grid.get(), domain ) ),
     grid_( unstructured_grid( get() ) ) {}
 
 inline const StructuredGrid::grid_t* structured_grid( const Grid::Implementation* grid ) {

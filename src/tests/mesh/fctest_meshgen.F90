@@ -125,6 +125,7 @@ END_TESTSUITE_FINALIZE
 
 
 TEST( test_meshgen )
+  use, intrinsic :: iso_c_binding
   use atlas_module
   implicit none
   type(atlas_StructuredGrid) :: grid

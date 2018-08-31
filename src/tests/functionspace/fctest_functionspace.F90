@@ -499,9 +499,13 @@ type(atlas_functionspace_StructuredColumns) :: fs_struct
 integer :: i, j
 character(len=10) str
 
-type(atlas_Field) field
-type(atlas_Field) field_xy
-real(8), pointer :: xy(:,:), x(:)
+type(atlas_Field) :: field
+type(atlas_Field) :: field_xy
+type(atlas_Field) :: field_global_index
+type(atlas_Field) :: field_index_j
+real(8), pointer  :: xy(:,:), x(:)
+integer(ATLAS_KIND_GIDX), pointer :: global_index(:)
+integer(ATLAS_KIND_IDX), pointer  :: index_j(:)
 integer, parameter :: XX=1
 
 grid = atlas_StructuredGrid("O8")
@@ -512,14 +516,19 @@ field = fs%create_field(name="field",kind=atlas_real(8))
 FCTEST_CHECK_EQUAL( field%owners(), 1 )
 field_xy = fs%xy()
 FCTEST_CHECK_EQUAL( field_xy%owners(), 2 )
-call field%host_data(x)
-call field_xy%host_data(xy)
+call field%data(x)
+call field_xy%data(xy)
+field_global_index = fs%global_index()
+call field_global_index%data(global_index)
+
+field_index_j = fs%index_j()
+call field_index_j%data(index_j)
 
 do j=fs%j_begin_halo(),fs%j_end_halo()
   write(str,'(I4,A)') j, ' : '
   call atlas_log%info(str,newl=.false.)
   do i=fs%i_begin_halo(j),fs%i_end_halo(j)
-    write(str,'(I4)') fs%index(i,j)
+    write(str,'(I4)') global_index( fs%index(i,j) )
     call atlas_log%info(str,newl=.false.)
     x(fs%index(i,j)) = xy(XX,fs%index(i,j))
   enddo
@@ -547,6 +556,7 @@ FCTEST_CHECK_EQUAL( field%owners(), 1 )
 call field%final()
 FCTEST_CHECK_EQUAL( field_xy%owners(), 1 )
 call field_xy%final()
+call field_global_index%final()
 call fs%final()
 call fs_base%final()
 call grid%final()
