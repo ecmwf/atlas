@@ -79,8 +79,6 @@ void handle_error( const eckit::Exception& exception, const int errorCode ) {
 
 using eckit::AssertionFailed;
 using eckit::BackTrace;
-using eckit::CodeLocation;
-using eckit::Exception;
 using eckit::Exception;
 using eckit::NotImplemented;
 using eckit::OutOfRange;
@@ -119,13 +117,13 @@ char* atlas__Error_msg() {
 template <typename EXCEPTION>
 EXCEPTION create_exception( char* msg, char* file, int line, char* function ) {
     if ( file && std::string( file ).size() && std::string( msg ).size() )
-        return EXCEPTION( std::string( msg ), CodeLocation( file, line, function ) );
+        return EXCEPTION( std::string( msg ), eckit::CodeLocation( file, line, function ) );
     else if ( file && std::string( file ).size() )
-        return EXCEPTION( std::string(), CodeLocation( file, line, function ) );
+        return EXCEPTION( std::string(), eckit::CodeLocation( file, line, function ) );
     else if ( std::string( msg ).size() )
-        return EXCEPTION( std::string( msg ), CodeLocation() );
+        return EXCEPTION( std::string( msg ), eckit::CodeLocation() );
     else
-        return EXCEPTION( std::string(), CodeLocation() );
+        return EXCEPTION( std::string(), eckit::CodeLocation() );
 }
 
 void atlas__throw_exception( char* msg, char* file, int line, char* function ) {
@@ -166,7 +164,7 @@ void atlas__abort( char* msg, char* file, int line, char* function ) {
 
     if ( file && std::string( file ).size() )
         Log::error() << "-----------------------------------------\n"
-                     << "LOCATION: " << CodeLocation( file, line, function ) << "\n";
+                     << "LOCATION: " << eckit::CodeLocation( file, line, function ) << "\n";
 
     Log::error() << "-----------------------------------------\n"
                  << "BACKTRACE\n"

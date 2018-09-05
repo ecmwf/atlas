@@ -17,11 +17,11 @@
 #include "atlas/runtime/trace/Nesting.h"
 #include "atlas/runtime/trace/StopWatch.h"
 #include "atlas/runtime/trace/Timings.h"
+#include "atlas/runtime/trace/CodeLocation.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
 namespace eckit {
-class CodeLocation;
 class Configuration;
 }  // namespace eckit
 
@@ -45,9 +45,9 @@ public:  // static methods
     static std::string report( const eckit::Configuration& config );
 
 public:
-    TraceT( const eckit::CodeLocation& );
-    TraceT( const eckit::CodeLocation&, const std::string& title );
-    TraceT( const eckit::CodeLocation&, const std::string& title, const Labels& );
+    TraceT( const CodeLocation& );
+    TraceT( const CodeLocation&, const std::string& title );
+    TraceT( const CodeLocation&, const std::string& title, const Labels& );
 
     ~TraceT();
 
@@ -76,7 +76,7 @@ private:  // member functions
 private:  // member data
     bool running_{true};
     StopWatch stopwatch_;
-    eckit::CodeLocation loc_;
+    CodeLocation loc_;
     std::string title_;
     Identifier id_;
     Nesting nesting_;
@@ -87,7 +87,7 @@ private:  // member data
 // Definitions
 
 template <typename TraceTraits>
-inline TraceT<TraceTraits>::TraceT( const eckit::CodeLocation& loc, const std::string& title ) :
+inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc, const std::string& title ) :
     loc_( loc ),
     title_( title ),
     nesting_( loc, title ) {
@@ -95,7 +95,7 @@ inline TraceT<TraceTraits>::TraceT( const eckit::CodeLocation& loc, const std::s
 }
 
 template <typename TraceTraits>
-inline TraceT<TraceTraits>::TraceT( const eckit::CodeLocation& loc ) :
+inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc ) :
     loc_( loc ),
     title_( loc_ ? loc_.func() : "" ),
     nesting_( loc_ ) {
@@ -103,7 +103,7 @@ inline TraceT<TraceTraits>::TraceT( const eckit::CodeLocation& loc ) :
 }
 
 template <typename TraceTraits>
-inline TraceT<TraceTraits>::TraceT( const eckit::CodeLocation& loc, const std::string& title, const Labels& labels ) :
+inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc, const std::string& title, const Labels& labels ) :
     loc_( loc ),
     title_( title ),
     nesting_( loc, title ),

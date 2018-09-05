@@ -1,5 +1,6 @@
 program atlas_interpolation_fortran
 use atlas_module
+use atlas_trace_module
 implicit none
 
 type(atlas_Grid)                      :: grid_A
@@ -17,9 +18,11 @@ type(atlas_Output)                    :: gmsh
 type(atlas_Config)                    :: interpolation_config
 type(atlas_Interpolation)             :: interpolation_AB
 type(atlas_Interpolation)             :: interpolation_BA
+type(atlas_Trace)                     :: trace
 
 call atlas_library%initialise()
 
+trace = atlas_Trace( "atlas-interpolation-fortran.F90", __LINE__, "Complete execution", "total", "bugger" )
 ! Setup a meshgenerator
 meshgenerator = atlas_MeshGenerator()
 
@@ -92,6 +95,8 @@ call mesh_A%final()
 call mesh_B%final()
 call grid_A%final()
 call grid_B%final()
+
+call trace%final()
 
 call atlas_library%finalise()
 contains

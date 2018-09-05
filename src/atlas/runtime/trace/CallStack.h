@@ -4,7 +4,7 @@
 #include <list>
 #include <string>
 
-namespace eckit {
+namespace atlas {
 class CodeLocation;
 }
 
@@ -13,14 +13,14 @@ namespace runtime {
 namespace trace {
 
 /// @class CallStack
-/// Instances of CallStack can keep track of nested eckit::CodeLocations
+/// Instances of CallStack can keep track of nested CodeLocations
 class CallStack {
 public:
     using const_iterator         = std::list<size_t>::const_iterator;
     using const_reverse_iterator = std::list<size_t>::const_reverse_iterator;
 
 public:
-    void push_front( const eckit::CodeLocation&, const std::string& id = "" );
+    void push_front( const CodeLocation&, const std::string& id = "" );
     void pop_front();
 
     const_iterator begin() const { return stack_.begin(); }

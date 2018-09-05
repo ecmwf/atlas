@@ -3,13 +3,13 @@
 
 #include <functional>
 
-#include "eckit/log/CodeLocation.h"
+#include "atlas/runtime/trace/CodeLocation.h"
 
 namespace atlas {
 namespace runtime {
 namespace trace {
 
-void CallStack::push_front( const eckit::CodeLocation& loc, const std::string& id ) {
+void CallStack::push_front( const CodeLocation& loc, const std::string& id ) {
     stack_.push_front( std::hash<std::string>{}( loc.asString() + id ) );
 }
 

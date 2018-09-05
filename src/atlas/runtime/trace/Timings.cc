@@ -22,7 +22,9 @@
 
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/trace/CallStack.h"
+#include "atlas/runtime/trace/CodeLocation.h"
 #include "atlas/util/Config.h"
+#include "atlas/runtime/Log.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -38,7 +40,7 @@ private:
     std::vector<double> max_timings_;
     std::vector<double> var_timings_;
     std::vector<std::string> titles_;
-    std::vector<eckit::CodeLocation> locations_;
+    std::vector<CodeLocation> locations_;
     std::vector<long> nest_;
     std::vector<CallStack> stack_;
     std::map<size_t, size_t> index_;
@@ -53,7 +55,7 @@ public:
         return registry;
     }
 
-    size_t add( const eckit::CodeLocation&, const CallStack& stack, const std::string& title, const Timings::Labels& );
+    size_t add( const CodeLocation&, const CallStack& stack, const std::string& title, const Timings::Labels& );
 
     void update( size_t idx, double seconds );
 
@@ -65,7 +67,7 @@ private:
     std::string filter_filepath( const std::string& filepath ) const;
 };
 
-size_t TimingsRegistry::add( const eckit::CodeLocation& loc, const CallStack& stack, const std::string& title,
+size_t TimingsRegistry::add( const CodeLocation& loc, const CallStack& stack, const std::string& title,
                              const Timings::Labels& labels ) {
     size_t key = stack.hash();
     auto it    = index_.find( key );
@@ -337,6 +339,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
 }
 
 std::string TimingsRegistry::filter_filepath( const std::string& filepath ) const {
+    return filepath;
     std::regex filepath_re( "(.*)?/atlas/src/(.*)" );
     std::smatch matches;
     std::string filtered( "" );

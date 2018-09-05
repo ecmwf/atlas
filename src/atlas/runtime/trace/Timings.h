@@ -18,7 +18,7 @@
 namespace eckit {
 class Configuration;
 }
-namespace eckit {
+namespace atlas {
 class CodeLocation;
 }
 
@@ -31,7 +31,7 @@ class CallStack;
 class Timings {
 public:
     using Configuration = eckit::Configuration;
-    using CodeLocation  = eckit::CodeLocation;
+    using CodeLocation  = atlas::CodeLocation;
     using Identifier    = size_t;
     using Labels        = std::vector<std::string>;
 

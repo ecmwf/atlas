@@ -29,14 +29,14 @@ public:
         return state;
     }
     operator CallStack() const { return stack_; }
-    CallStack& push( const eckit::CodeLocation& loc, const std::string& id ) {
+    CallStack& push( const CodeLocation& loc, const std::string& id ) {
         stack_.push_front( loc, id );
         return stack_;
     }
     void pop() { stack_.pop_front(); }
 };
 
-Nesting::Nesting( const eckit::CodeLocation& loc, const std::string& id ) :
+Nesting::Nesting( const CodeLocation& loc, const std::string& id ) :
     loc_( loc ),
     id_( id ),
     stack_( NestingState::instance().push( loc, id ) ) {}

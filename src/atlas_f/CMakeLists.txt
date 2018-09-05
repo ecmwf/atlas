@@ -160,6 +160,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/Checksum.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/runtime/ErrorHandling.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_read_file.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/Library.h)
+generate_fortran_bindings(FORTRAN_BINDINGS runtime/atlas_trace.h MODULE atlas_trace_c_binding OUTPUT atlas_trace_c_binding.f90 )
 
 preprocess_fypp( atlas_f_src field/atlas_Field_module.F90 )
 
@@ -216,6 +217,8 @@ ecbuild_add_library( TARGET atlas_f
         internals/atlas_write_to_fortran_unit.F90
         internals/Library.h
         internals/Library.cc
+        runtime/atlas_trace.cc
+        runtime/atlas_Trace_module.F90
 
   PRIVATE_INCLUDES
         ${FCKIT_INCLUDE_DIRS}

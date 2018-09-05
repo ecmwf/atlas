@@ -10,8 +10,7 @@
 
 #pragma once
 
-#include "eckit/log/CodeLocation.h"
-
+#include "atlas/runtime/trace/CodeLocation.h"
 #include "atlas/runtime/trace/CallStack.h"
 
 //-----------------------------------------------------------------------------------------------------------
@@ -22,7 +21,7 @@ namespace trace {
 
 class Nesting {
 public:
-    Nesting( const eckit::CodeLocation&, const std::string& id = "" );
+    Nesting( const CodeLocation&, const std::string& id = "" );
     ~Nesting();
     operator CallStack() const { return stack_; }
     void stop();
@@ -30,7 +29,7 @@ public:
 
 private:
     CallStack stack_;
-    eckit::CodeLocation loc_;
+    CodeLocation loc_;
     std::string id_;
     bool running_{true};
 };
