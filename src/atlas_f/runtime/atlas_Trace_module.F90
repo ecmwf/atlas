@@ -9,7 +9,6 @@ implicit none
 private :: fckit_object
 
 public :: atlas_Trace
-public :: string
 
 
 private
@@ -42,10 +41,6 @@ interface atlas_Trace
   module procedure atlas_Trace__labels_4
   module procedure atlas_Trace__labels_5
 end interface
-
-type string
-  character(len=:), allocatable :: str
-end type
 
 !========================================================
 contains
