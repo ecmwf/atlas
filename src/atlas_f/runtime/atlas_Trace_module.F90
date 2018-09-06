@@ -2,11 +2,11 @@
 
 module atlas_Trace_module
 
-use fckit_object_module, only : fckit_object
+use fckit_shared_object_module, only : fckit_shared_object
 
 implicit none
 
-private :: fckit_object
+private :: fckit_shared_object
 
 public :: atlas_Trace
 
@@ -17,7 +17,7 @@ private
 ! atlas_Trace                !
 !-----------------------------
 
-type, extends(fckit_object) :: atlas_Trace
+type, extends(fckit_shared_object) :: atlas_Trace
 contains
 ! Public methods
 
