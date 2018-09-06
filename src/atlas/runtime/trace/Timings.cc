@@ -339,7 +339,6 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
 }
 
 std::string TimingsRegistry::filter_filepath( const std::string& filepath ) const {
-    return filepath;
     std::regex filepath_re( "(.*)?/atlas/src/(.*)" );
     std::smatch matches;
     std::string filtered( "" );
