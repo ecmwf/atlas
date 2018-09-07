@@ -12,3 +12,13 @@ ecbuild_add_test( TARGET atlas_test_trace
   ENVIRONMENT ATLAS_TRACE_REPORT=1
   OMP         2
 )
+
+if( HAVE_FCTEST )
+
+add_fctest( TARGET atlas_fctest_trace
+  SOURCES     fctest_trace.F90
+  LIBS        atlas_f
+  ENVIRONMENT ATLAS_TRACE_REPORT=1
+)
+
+endif()

@@ -55,6 +55,7 @@ function atlas_Trace__loc(file,line,title) result(this)
   integer          , intent(in) :: line
   character(len=*) , intent(in) :: title
   call this%reset_c_ptr( new_atlas_Trace( c_str(file), line, c_str(title) ), fckit_c_deleter(delete_atlas_Trace) )
+  call this%return()
 end function
 
 function atlas_Trace__labels_1(file,line,title,label) result(this)

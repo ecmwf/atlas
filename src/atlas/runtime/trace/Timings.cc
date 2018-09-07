@@ -290,14 +290,14 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
 
     for ( size_t j = 0; j < size(); ++j ) {
         auto& tot   = tot_timings_[j];
-        auto& min   = min_timings_[j];
         auto& max   = max_timings_[j];
+        auto& min   = std::min( max, min_timings_[j] );
         auto& count = counts_[j];
         auto& title = titles_[j];
         auto& loc   = locations_[j];
         auto& nest  = nest_[j];
         auto std    = std::sqrt( var_timings_[j] );
-        auto avg    = tot / double( count );
+        auto avg    = ( count == 0 ? 0. : tot / double( count ) );
 
         // mpi::comm().allReduceInPlace(min,eckit::mpi::min());
         // mpi::comm().allReduceInPlace(max,eckit::mpi::max());
