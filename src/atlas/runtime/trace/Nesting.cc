@@ -16,48 +16,6 @@ namespace atlas {
 namespace runtime {
 namespace trace {
 
-class NestingState {
-private:
-    NestingState() {}
-    CallStack stack_;
-
-public:
-    NestingState( NestingState const& ) = delete;
-    void operator=( NestingState const& ) = delete;
-    static NestingState& instance() {
-        static NestingState state;
-        return state;
-    }
-    operator CallStack() const { return stack_; }
-    CallStack& push( const CodeLocation& loc, const std::string& id ) {
-        stack_.push_front( loc, id );
-        return stack_;
-    }
-    void pop() { stack_.pop_front(); }
-};
-
-Nesting::Nesting( const CodeLocation& loc, const std::string& id ) :
-    loc_( loc ),
-    id_( id ),
-    stack_( NestingState::instance().push( loc, id ) ) {}
-
-Nesting::~Nesting() {
-    stop();
-}
-
-void Nesting::stop() {
-    if ( running_ ) {
-        NestingState::instance().pop();
-        running_ = false;
-    }
-}
-
-void Nesting::start() {
-    if ( not running_ ) {
-        NestingState::instance().push( loc_, id_ );
-        running_ = true;
-    }
-}
 
 }  // namespace trace
 }  // namespace runtime

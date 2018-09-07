@@ -13,11 +13,14 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
+#include <string>
 
 #include "atlas/runtime/trace/Nesting.h"
+#include "atlas/runtime/trace/CallStack.h"
 #include "atlas/runtime/trace/StopWatch.h"
 #include "atlas/runtime/trace/Timings.h"
 #include "atlas/runtime/trace/CodeLocation.h"
+#include "atlas/parallel/omp/omp.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -73,13 +76,15 @@ private:  // member functions
 
     void registerTimer();
 
+    static std::string formatTitle( const std::string& );
+
 private:  // member data
-    bool running_{true};
+    bool running_{false};
     StopWatch stopwatch_;
     CodeLocation loc_;
     std::string title_;
     Identifier id_;
-    Nesting nesting_;
+    CallStack callstack_;
     Labels labels_;
 };
 
@@ -87,18 +92,24 @@ private:  // member data
 // Definitions
 
 template <typename TraceTraits>
+inline std::string TraceT<TraceTraits>::formatTitle( const std::string& _title) {
+    std::string title = _title; 
+      + ( Barriers::state() ? " [b]" : "" )
+      + ( atlas_omp_get_num_threads() > 1 ? " @thread[" + std::to_string(atlas_omp_get_thread_num()) + "]" : "" );
+    return title;
+}
+
+template <typename TraceTraits>
 inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc, const std::string& title ) :
     loc_( loc ),
-    title_( title ),
-    nesting_( loc, title ) {
+    title_( formatTitle(title) ) {
     start();
 }
 
 template <typename TraceTraits>
 inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc ) :
     loc_( loc ),
-    title_( loc_ ? loc_.func() : "" ),
-    nesting_( loc_ ) {
+    title_( loc_ ? loc_.func() : "" ) {
     start();
 }
 
@@ -106,7 +117,6 @@ template <typename TraceTraits>
 inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc, const std::string& title, const Labels& labels ) :
     loc_( loc ),
     title_( title ),
-    nesting_( loc, title ),
     labels_( labels ) {
     start();
 }
@@ -123,7 +133,10 @@ inline void TraceT<TraceTraits>::barrier() const {
 
 template <typename TraceTraits>
 inline void TraceT<TraceTraits>::registerTimer() {
-    id_ = Timings::add( loc_, nesting_, title_ + ( Barriers::state() ? " [b]" : "" ), labels_ );
+    std::string title = title_ 
+      + ( Barriers::state() ? " [b]" : "" )
+      + ( atlas_omp_get_num_threads() > 1 ? " @thread[" + std::to_string(atlas_omp_get_thread_num()) + "]" : "" );
+    id_ = Timings::add( loc_, callstack_, title, labels_ );
 }
 
 template <typename TraceTraits>
@@ -138,10 +151,16 @@ inline bool TraceT<TraceTraits>::running() const {
 
 template <typename TraceTraits>
 inline void TraceT<TraceTraits>::start() {
-    registerTimer();
-    Tracing::start( title_ );
-    barrier();
-    stopwatch_.start();
+    if( Control::enabled() ) {
+        running_ = true;
+        if( not callstack_ ) {
+          callstack_ = CurrentCallStack::instance().push( loc_, title_ );
+        }
+        registerTimer();
+        Tracing::start( title_ );
+        barrier();
+        stopwatch_.start();
+    }
 }
 
 template <typename TraceTraits>
@@ -149,7 +168,7 @@ inline void TraceT<TraceTraits>::stop() {
     if ( running_ ) {
         barrier();
         stopwatch_.stop();
-        nesting_.stop();
+        CurrentCallStack::instance().pop();
         updateTimings();
         Tracing::stop( title_, stopwatch_.elapsed() );
         running_ = false;
@@ -161,7 +180,7 @@ inline void TraceT<TraceTraits>::pause() {
     if ( running_ ) {
         barrier();
         stopwatch_.stop();
-        nesting_.stop();
+        CurrentCallStack::instance().pop();
     }
 }
 
@@ -169,7 +188,7 @@ template <typename TraceTraits>
 inline void TraceT<TraceTraits>::resume() {
     if ( running_ ) {
         barrier();
-        nesting_.start();
+        CurrentCallStack::instance().push( loc_, title_ );
         stopwatch_.start();
     }
 }

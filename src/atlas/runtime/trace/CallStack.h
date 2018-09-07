@@ -32,6 +32,8 @@ public:
     size_t hash() const;
     size_t size() const { return stack_.size(); }
 
+    operator bool() const { return not stack_.empty(); }
+
 private:
     std::list<size_t> stack_;
     mutable size_t hash_{0};

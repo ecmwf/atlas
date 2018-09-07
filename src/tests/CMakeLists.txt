@@ -64,6 +64,7 @@ endmacro()
 
 add_subdirectory( array )
 add_subdirectory( util )
+add_subdirectory( runtime )
 add_subdirectory( parallel )
 add_subdirectory( field )
 add_subdirectory( grid )

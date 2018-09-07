@@ -15,6 +15,7 @@
 #include "eckit/log/Channel.h"
 
 #include "atlas/library/Library.h"
+#include "atlas/parallel/omp/omp.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -23,6 +24,10 @@ namespace runtime {
 namespace trace {
 
 //-----------------------------------------------------------------------------------------------------------
+
+bool Control::enabled() {
+    return atlas_omp_get_thread_num() == 0;
+}
 
 class LoggingState {
 private:
@@ -71,6 +76,7 @@ std::ostream& Logging::channel() {
 bool Logging::enabled() {
     return LoggingState::instance();
 }
+
 void Logging::start( const std::string& title ) {
     if ( enabled() ) channel() << title << " ..." << std::endl;
 }
