@@ -17,6 +17,7 @@ if( HAVE_FCTEST )
 
 add_fctest( TARGET atlas_fctest_trace
   SOURCES     fctest_trace.F90
+  LINKER_LANGUAGE Fortran
   LIBS        atlas_f
   ENVIRONMENT ATLAS_TRACE_REPORT=1
 )
