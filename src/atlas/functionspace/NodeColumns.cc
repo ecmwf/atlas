@@ -835,9 +835,11 @@ void dispatch_order_independent_sum( const NodeColumns& fs, const Field& field, 
         Field surface_field = fs.createField<T>( option::name( "surface" ) | option::levels( false ) );
         auto surface        = array::make_view<T, 1>( surface_field );
 
-        for ( size_t n = 0; n < arr.shape( 0 ); ++n ) {
+        const size_t N0 = std::min( surface.shape( 0 ), arr.shape( 0 ) );
+        const size_t N1 = arr.shape( 1 );
+        for ( size_t n = 0; n < N0; ++n ) {
             surface( n ) = 0;
-            for ( size_t l = 0; l < arr.shape( 1 ); ++l ) {
+            for ( size_t l = 0; l < N1; ++l ) {
                 surface( n ) += arr( n, l );
             }
         }
