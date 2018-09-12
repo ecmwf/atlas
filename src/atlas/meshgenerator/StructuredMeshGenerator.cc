@@ -989,9 +989,9 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
         ++jnode;
     }
 
+    mesh.metadata().set<size_t>( "nb_nodes_including_halo[0]", nodes.size() );
     nodes.metadata().set<size_t>( "NbRealPts", size_t( nnodes - nnewnodes ) );
     nodes.metadata().set<size_t>( "NbVirtualPts", size_t( nnewnodes ) );
-
     nodes.global_index().metadata().set( "human_readable", true );
     nodes.global_index().metadata().set( "min", 1 );
     nodes.global_index().metadata().set( "max", max_glb_idx );

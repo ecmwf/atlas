@@ -34,3 +34,8 @@ ecbuild_add_test( TARGET atlas_test_pointcloud
   SOURCES  test_pointcloud.cc
   LIBS     atlas
 )
+
+ecbuild_add_test( TARGET atlas_test_reduced_halo
+  SOURCES test_reduced_halo.cc
+  LIBS    atlas
+)

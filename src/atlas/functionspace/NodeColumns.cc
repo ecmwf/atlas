@@ -233,7 +233,7 @@ NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration& config ) :
     mesh_( mesh ),
     nodes_( mesh_.nodes() ),
     nb_levels_( config.getInt( "levels", 0 ) ),
-    nb_nodes_( nodes_.size() ) {
+    nb_nodes_( 0 ) {
     ATLAS_TRACE();
     if ( config.has( "halo" ) ) { halo_ = mesh::Halo( config.getInt( "halo" ) ); }
     else {

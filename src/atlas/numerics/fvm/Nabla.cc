@@ -82,8 +82,8 @@ void Nabla::gradient_of_scalar( const Field& scalar_field, Field& grad_field ) c
     const mesh::Edges& edges = fvm_->mesh().edges();
     const mesh::Nodes& nodes = fvm_->mesh().nodes();
 
-    const size_t nnodes = nodes.size();
-    const size_t nedges = edges.size();
+    const size_t nnodes = fvm_->node_columns().nb_nodes();
+    const size_t nedges = fvm_->edge_columns().nb_edges();
     const size_t nlev   = scalar_field.levels() ? scalar_field.levels() : 1;
     if ( ( grad_field.levels() ? grad_field.levels() : 1 ) != nlev )
         throw eckit::AssertionFailed( "gradient field should have same number of levels", Here() );
