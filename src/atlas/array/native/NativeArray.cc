@@ -135,14 +135,6 @@ void ArrayT<Value>::resize( const ArrayShape& _shape ) {
         msg << "Cannot resize existing Array with rank " << rank() << " with a shape of rank " << _shape.size();
         throw eckit::BadParameter( msg.str(), Here() );
     }
-    for ( size_t j = 0; j < rank(); ++j ) {
-        if ( _shape[j] < shape( j ) ) {
-            std::stringstream msg;
-            msg << "Cannot resize existing array by shrinking dimension " << j << " from " << shape( j ) << " to "
-                << _shape[j];
-            throw eckit::BadParameter( msg.str(), Here() );
-        }
-    }
 
     Array* resized = Array::create<Value>( _shape );
 

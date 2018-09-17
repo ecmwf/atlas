@@ -288,6 +288,10 @@ public:
 
     IrregularConnectivityImpl* gpu_object_ptr() { return gpu_clone_.gpu_object_ptr(); }
     void dump( std::ostream& os ) const;
+    friend std::ostream& operator<< ( std::ostream& os, const IrregularConnectivityImpl& p ) {
+        p.dump( os );
+        return os;
+    }
 
 protected:
     bool owns() { return owns_; }

@@ -130,6 +130,7 @@ void IrregularConnectivityImpl::clear() {
         data_[_counts_] = nullptr;
         // std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a=0;});
     }
+    rows_ = 0;
     maxcols_ = 0;
     mincols_ = std::numeric_limits<size_t>::max();
     on_update();
@@ -458,19 +459,20 @@ MultiBlockConnectivityImpl::~MultiBlockConnectivityImpl() {
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::clear() {
-    // TODO
-    //  IrregularConnectivity::clear();
-    //  if( owns() )
-    //  {
-    //    block_displs_.resize(1);
-    //    block_displs_[0]=0ul;
-    //    block_cols_.clear();
-    //  }
-    //  blocks_ = 0;
-    //  block_displs_ = 0;
-    //  block_cols_ = 0;
-    //  block_.clear();
+    IrregularConnectivityImpl::clear();
+    if( owns() ) {
+        block_displs_->resize( 1 );
+        block_cols_->resize( 1 );
+        block_displs_view_ = array::make_view<size_t, 1>( *( block_displs_ ) );
+        block_cols_view_   = array::make_view<size_t, 1>( *( block_cols_ ) );
+        block_displs_view_( 0 ) = 0ul;
+    }
+    blocks_ = 0;
+    block_ = array::Vector<BlockConnectivityImpl*>( 0 );
+    block_view_ = make_host_vector_view( block_ );
 }
+
+
 
 void MultiBlockConnectivityImpl::cloneToDevice() {
     IrregularConnectivityImpl::cloneToDevice();
