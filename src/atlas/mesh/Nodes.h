@@ -48,7 +48,8 @@ public:
             EAST     = ( 1 << 5 ),
             NORTH    = ( 1 << 6 ),
             SOUTH    = ( 1 << 7 ),
-            PATCH    = ( 1 << 8 )
+            PATCH    = ( 1 << 8 ),
+            POLE     = ( 1 << 9)
         };
     };
 
@@ -88,6 +89,12 @@ public:  // methods
 
     const Field& ghost() const { return ghost_; }
     Field& ghost() { return ghost_; }
+
+    const Field& flags() const { return flags_; }
+    Field& flags() { return flags_; }
+
+    const Field& halo() const { return halo_; }
+    Field& halo() { return halo_; }
 
     /// @brief Node to Edge connectivity table
     const Connectivity& edge_connectivity() const;
@@ -149,6 +156,8 @@ private:
     Field xy_;
     Field lonlat_;
     Field ghost_;
+    Field flags_;
+    Field halo_;
 
     // Cached shortcuts to specific connectivities in connectivities_
     Connectivity* edge_connectivity_;
