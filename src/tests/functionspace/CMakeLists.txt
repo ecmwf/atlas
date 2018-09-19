@@ -8,6 +8,10 @@
 
 if( HAVE_FCTEST )
 
+  if( NOT HAVE_TRANS )
+    set( TRANSI_HAVE_MPI 1 )
+  endif()
+
   add_fctest( TARGET atlas_fctest_functionspace
     MPI             4
     CONDITION       ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI

@@ -24,7 +24,7 @@
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
-#include "atlas/mesh/detail/PeriodicTransform.h"
+#include "atlas/util/PeriodicTransform.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
@@ -45,7 +45,7 @@
 // #define ATLAS_103
 // #define ATLAS_103_SORT
 
-using atlas::mesh::detail::PeriodicTransform;
+using atlas::util::PeriodicTransform;
 using atlas::mesh::detail::accumulate_facets;
 using atlas::util::LonLatMicroDeg;
 using atlas::util::UniqueLonLat;
@@ -280,12 +280,12 @@ class BuildHaloHelper;
 void increase_halo( Mesh& mesh );
 void increase_halo_interior( BuildHaloHelper& );
 
-class EastWest : public PeriodicTransform {
+class EastWest : public util::PeriodicTransform {
 public:
     EastWest() { x_translation_ = -360.; }
 };
 
-class WestEast : public PeriodicTransform {
+class WestEast : public util::PeriodicTransform {
 public:
     WestEast() { x_translation_ = 360.; }
 };
@@ -710,7 +710,7 @@ public:
 
     template <typename NodeContainer, typename ElementContainer>
     void fill_sendbuffer( Buffers& buf, const NodeContainer& nodes_uid, const ElementContainer& elems,
-                          const PeriodicTransform& transform, int newflags, const int p ) {
+                          const util::PeriodicTransform& transform, int newflags, const int p ) {
         // ATLAS_TRACE();
 
         int nb_nodes = nodes_uid.size();
@@ -1161,7 +1161,7 @@ private:
 };
 
 void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& periodic_points,
-                             const PeriodicTransform& transform, int newflags ) {
+                             const util::PeriodicTransform& transform, int newflags ) {
     helper.update();
     // if (helper.node_to_elem.size() == 0 ) !!! NOT ALLOWED !!! (atlas_test_halo
     // will fail)

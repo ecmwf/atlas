@@ -17,7 +17,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/mesh/detail/PeriodicTransform.h"
+#include "atlas/util/PeriodicTransform.h"
 #include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
@@ -25,7 +25,7 @@
 #include "atlas/util/LonLatMicroDeg.h"
 
 using Topology = atlas::mesh::Nodes::Topology;
-using atlas::mesh::detail::PeriodicTransform;
+using atlas::util::PeriodicTransform;
 using atlas::util::LonLatMicroDeg;
 
 namespace atlas {

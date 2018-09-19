@@ -24,9 +24,12 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/MicroDeg.h"
+#include "atlas/util/PeriodicTransform.h"
 
 namespace atlas {
 namespace util {
+
+class PeriodicTransform;
 
 // ----------------------------------------------------------------------------
 
@@ -51,6 +54,10 @@ uidx_t unique_lonlat( const double& lon, const double& lat );
 uidx_t unique_lonlat( const double lonlat[] );
 uidx_t unique_lonlat( const array::LocalView<double, 1>& lonlat );
 
+/// @brief Compute unique positive index from lon-lat coordinates in degrees
+/// @return uidx_t Return type depends on ATLAS_BITS_GLOBAL [32/64] bits
+uidx_t unique_lonlat( const double& lon, const double& lat, const PeriodicTransform& );
+
 /// @brief Compute unique positive index from lon-lat coordinates in degrees.
 /// coordinates are stored in order:
 /// [ x1, y1,   x2, y2,   ... ,   xn, yn ]
@@ -66,7 +73,7 @@ public:
     /// @brief Constructor, needs nodes functionspace to cache the lonlat field
     UniqueLonLat( const mesh::Nodes& );
 
-    /// @brief Constructor, needs nodes functionspace to cache the lonlat field
+    /// @brief Constructor
     UniqueLonLat( const Mesh& );
 
     /// @brief Compute unique positive index of a node defined by node index.
@@ -78,6 +85,12 @@ public:
     //  degenerate to a line.
     /// @return uidx_t Return type depends on ATLAS_BITS_GLOBAL [32/64] bits
     uidx_t operator()( const mesh::Connectivity::Row& elem_nodes ) const;
+
+    /// @brief Compute unique positive index of element defined by node indices.
+    /// The assumption is that the elements exist in a lon-lat domain and don't
+    //  degenerate to a line.
+    /// @return uidx_t Return type depends on ATLAS_BITS_GLOBAL [32/64] bits
+    uidx_t operator()( const mesh::Connectivity::Row& elem_nodes, const PeriodicTransform& transform ) const;
 
     /// @brief Compute unique positive index of element defined by node indices.
     /// The assumption is that the elements exist in a lon-lat domain and don't
