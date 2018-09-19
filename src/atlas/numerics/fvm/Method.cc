@@ -75,14 +75,14 @@ Method::Method( Mesh& mesh, const eckit::Configuration& params ) :
 
 void Method::setup() {
     ATLAS_TRACE( "fvm::Method::setup " );
-    util::Config node_columns_config;
-    node_columns_config.set( "halo", halo_.size() );
-    if ( levels_ ) node_columns_config.set( "levels", levels_ );
-    node_columns_ = functionspace::NodeColumns( mesh(), node_columns_config );
-    if ( edges_.size() == 0 ) {
-        ATLAS_TRACE_SCOPE( "build_edges" ) build_edges( mesh() );
-        ATLAS_TRACE_SCOPE( "build_pole_edges" ) build_pole_edges( mesh() );
-        ATLAS_TRACE_SCOPE( "build_edges_parallel_fields" ) build_edges_parallel_fields( mesh() );
+    util::Config config;
+    config.set( "halo", halo_.size() );
+    if ( levels_ ) config.set( "levels", levels_ );
+    config.set( "pole_edges", true );
+    node_columns_ = functionspace::NodeColumns( mesh(), config );
+    edge_columns_ = functionspace::EdgeColumns( mesh(), config );
+
+    {
         ATLAS_TRACE_SCOPE( "build_median_dual_mesh" ) build_median_dual_mesh( mesh() );
         ATLAS_TRACE_SCOPE( "build_node_to_edge_connectivity" ) build_node_to_edge_connectivity( mesh() );
 
@@ -114,30 +114,7 @@ void Method::setup() {
                 }
             }
         }
-
-        // Metrics
-        if ( 0 ) {
-            const size_t nedges                          = edges_.size();
-            const array::ArrayView<double, 2> lonlat_deg = array::make_view<double, 2>( nodes_.lonlat() );
-            array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>( nodes_.field( "dual_volumes" ) );
-            array::ArrayView<double, 2> dual_normals = array::make_view<double, 2>( edges_.field( "dual_normals" ) );
-
-            const double deg2rad = M_PI / 180.;
-            atlas_omp_parallel_for( size_t jnode = 0; jnode < nnodes; ++jnode ) {
-                double y  = lonlat_deg( jnode, LAT ) * deg2rad;
-                double hx = radius_ * std::cos( y );
-                double hy = radius_;
-                double G  = hx * hy;
-                dual_volumes( jnode ) *= std::pow( deg2rad, 2 ) * G;
-            }
-
-            atlas_omp_parallel_for( size_t jedge = 0; jedge < nedges; ++jedge ) {
-                dual_normals( jedge, LON ) *= deg2rad;
-                dual_normals( jedge, LAT ) *= deg2rad;
-            }
-        }
     }
-    edge_columns_ = functionspace::EdgeColumns( mesh() );
 }
 
 // ------------------------------------------------------------------------------------------

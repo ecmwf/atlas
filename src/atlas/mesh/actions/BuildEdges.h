@@ -12,8 +12,14 @@
 
 #include <string>
 
+namespace eckit {
+    class Configuration;
+}
 namespace atlas {
 class Mesh;
+namespace util {
+class Config;
+}
 namespace mesh {
 namespace detail {
 class MeshImpl;
@@ -26,6 +32,7 @@ namespace mesh {
 namespace actions {
 
 void build_edges( Mesh& mesh );
+void build_edges( Mesh& mesh, const eckit::Configuration& );
 void build_pole_edges( Mesh& mesh );
 void build_element_to_edge_connectivity( Mesh& mesh );
 void build_node_to_edge_connectivity( Mesh& mesh );

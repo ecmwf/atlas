@@ -33,7 +33,7 @@
 #include "atlas/util/MicroDeg.h"
 #include "atlas/util/Unique.h"
 
-using atlas::mesh::detail::accumulate_facets;
+using atlas::mesh::detail::accumulate_facets_ordered_by_halo;
 using Topology = atlas::mesh::Nodes::Topology;
 using atlas::util::UniqueLonLat;
 using atlas::util::microdeg;
@@ -72,16 +72,13 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
     }
 
     size_t nb_edges                                            = mesh.edges().size();
-    mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh.edges().cell_connectivity();
-    mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
+    const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh.edges().cell_connectivity();
+    const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
 
-    bool has_pole_edges( false );
-    std::shared_ptr<array::ArrayView<int, 1>> is_pole_edge;
-    if ( mesh.edges().has_field( "is_pole_edge" ) ) {
-        has_pole_edges = true;
-        is_pole_edge   = std::shared_ptr<array::ArrayView<int, 1>>(
-            new array::ArrayView<int, 1>( array::make_view<int, 1>( mesh.edges().field( "is_pole_edge" ) ) ) );
-    }
+    auto edge_flags = array::make_view<int,1>( mesh.edges().flags() );
+    auto is_pole_edge = [&]( size_t e ) {
+        return Topology::check( edge_flags(e), Topology::POLE );
+    };
 
     // Sort edges for bit-reproducibility
     std::vector<Sort> edge_sort;
@@ -103,11 +100,21 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
             idx_t elem = edge_cell_connectivity( iedge, j );
 
             if ( elem != edge_cell_connectivity.missing_value() ) {
+                ASSERT( edge_cnt[elem] < cell_edge_connectivity.cols( elem ) );
                 cell_edge_connectivity.set( elem, edge_cnt[elem]++, iedge );
             }
             else {
-                if ( !( has_pole_edges && ( *is_pole_edge )( iedge ) ) ) {
-                    if ( j == 0 ) throw eckit::SeriousBug( "edge has no element connected", Here() );
+                if ( not is_pole_edge( iedge ) ) {
+                    if ( j == 0 ) {
+                        auto node_gidx = array::make_view<gidx_t,1>( mesh.nodes().global_index() );
+                        std::stringstream ss;
+                        ss << "Edge [" 
+                           << node_gidx( edge_node_connectivity(jedge,0) ) << ", "
+                           << node_gidx( edge_node_connectivity(jedge,1) ) << "] "
+                           << "has no element connected.";
+                        Log::info() << ss.str() << std::endl;
+//                        throw eckit::SeriousBug( ss.str(), Here() );
+                    }
                 }
             }
         }
@@ -143,7 +150,10 @@ void build_node_to_edge_connectivity( Mesh& mesh ) {
     mesh::Nodes& nodes    = mesh.nodes();
     const size_t nb_edges = mesh.edges().size();
 
-    mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
+    mesh::Nodes::Connectivity& node_to_edge = nodes.edge_connectivity();
+    node_to_edge.clear();
+
+    const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
 
     std::vector<size_t> to_edge_size( nodes.size(), 0 );
     for ( size_t jedge = 0; jedge < nb_edges; ++jedge ) {
@@ -152,8 +162,8 @@ void build_node_to_edge_connectivity( Mesh& mesh ) {
         }
     }
 
-    mesh::Nodes::Connectivity& node_to_edge = nodes.edge_connectivity();
     node_to_edge.add( nodes.size(), to_edge_size.data() );
+
     for ( size_t jnode = 0; jnode < nodes.size(); ++jnode )
         to_edge_size[jnode] = 0;
 
@@ -165,12 +175,108 @@ void build_node_to_edge_connectivity( Mesh& mesh ) {
 
     for ( size_t jedge = 0; jedge < nb_edges; ++jedge ) {
         size_t iedge = edge_sort[jedge].i;
+        ASSERT( iedge < nb_edges );
         for ( size_t j = 0; j < 2; ++j ) {
             idx_t node = edge_node_connectivity( iedge, j );
             node_to_edge.set( node, to_edge_size[node]++, iedge );
         }
     }
 }
+
+class AccumulatePoleEdges {
+    enum
+    {
+        NORTH = 0,
+        SOUTH = 1
+    };
+    const array::ArrayView<double, 2> xy   ;
+    const array::ArrayView<int,    1> flags;
+    const array::ArrayView<int,    1> part ;
+    const array::ArrayView<int,    1> halo ;
+    const size_t nb_nodes;
+    std::vector<std::set<int>> pole_nodes;
+public:
+    AccumulatePoleEdges( mesh::Nodes& nodes ) :
+        xy   (array::make_view<double, 2>( nodes.xy() )),
+        flags(array::make_view<int,    1>( nodes.flags() )),
+        part (array::make_view<int,    1>( nodes.partition() )),
+        halo (array::make_view<int,    1>( nodes.halo() )),
+        nb_nodes( nodes.size() ),
+        pole_nodes( 2 )
+    {
+        double min[2], max[2];
+        min[XX] = std::numeric_limits<double>::max();
+        min[YY] = std::numeric_limits<double>::max();
+        max[XX] = -std::numeric_limits<double>::max();
+        max[YY] = -std::numeric_limits<double>::max();
+        for ( size_t node = 0; node < nb_nodes; ++node ) {
+            min[XX] = std::min( min[XX], xy( node, XX ) );
+            min[YY] = std::min( min[YY], xy( node, YY ) );
+            max[XX] = std::max( max[XX], xy( node, XX ) );
+            max[YY] = std::max( max[YY], xy( node, YY ) );
+        }
+
+        ATLAS_TRACE_MPI( ALLREDUCE ) {
+            mpi::comm().allReduceInPlace( min, 2, eckit::mpi::min() );
+            mpi::comm().allReduceInPlace( max, 2, eckit::mpi::max() );
+        }
+
+        double tol = 1e-6;
+
+        // Collect all nodes closest to poles
+        for ( size_t node = 0; node < nb_nodes; ++node ) {
+            if ( std::abs( xy( node, YY ) - max[YY] ) < tol ) { pole_nodes[NORTH].insert( node ); }
+            else if ( std::abs( xy( node, YY ) - min[YY] ) < tol ) {
+                pole_nodes[SOUTH].insert( node );
+            }
+        }
+
+        // Sanity check
+        {
+            for ( size_t NS = 0; NS < 2; ++NS ) {
+                int npart = -1;
+                for ( std::set<int>::iterator it = pole_nodes[NS].begin(); it != pole_nodes[NS].end(); ++it ) {
+                    int node = *it;
+                    if ( npart == -1 )
+                        npart = part( node );
+                    else if ( part( node ) != npart ) {
+                        // Not implemented yet, when pole-lattitude is split.
+                        std::stringstream msg;
+                        msg << "Split pole-latitude is not supported yet...  node " << node << "[p" << part( node )
+                            << "] should belong to part " << npart;
+                        throw eckit::NotImplemented( msg.str(), Here() );
+                    }
+                }
+            }
+        }
+    }
+    void compute_pole_edges( int _halo, std::vector<idx_t>& pole_edge_nodes, size_t& nb_pole_edges ) {
+        // Create connections over the poles and store in pole_edge_nodes
+        nb_pole_edges = 0;
+        for ( size_t NS = 0; NS < 2; ++NS ) {
+            for ( std::set<int>::iterator it = pole_nodes[NS].begin(); it != pole_nodes[NS].end(); ++it ) {
+                int node = *it;
+                if ( !Topology::check( flags( node ), Topology::PERIODIC | Topology::GHOST ) ) {
+                    int x2 = microdeg( xy( node, XX ) + 180. );
+                    for ( std::set<int>::iterator itr = pole_nodes[NS].begin(); itr != pole_nodes[NS].end(); ++itr ) {
+                        int other_node = *itr;
+                        if ( microdeg( xy( other_node, XX ) ) == x2 ) {
+                            if ( !Topology::check( flags( other_node ), Topology::PERIODIC ) ) {
+
+                                if( halo(node) == _halo && halo(other_node) == _halo ) {
+
+                                    pole_edge_nodes.push_back( node );
+                                    pole_edge_nodes.push_back( other_node );
+                                    ++nb_pole_edges;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
 
 void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_nodes, size_t& nb_pole_edges ) {
     enum
@@ -179,9 +285,10 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
         SOUTH = 1
     };
 
-    array::ArrayView<double, 2> xy = array::make_view<double, 2>( nodes.xy() );
-    array::ArrayView<int, 1> flags = array::make_view<int, 1>( nodes.field( "flags" ) );
-    array::ArrayView<int, 1> part  = array::make_view<int, 1>( nodes.partition() );
+    const auto xy    = array::make_view<double, 2>( nodes.xy() );
+    const auto flags = array::make_view<int,    1>( nodes.flags() );
+    const auto part  = array::make_view<int,    1>( nodes.partition() );
+    const auto halo  = array::make_view<int,    1>( nodes.halo() );
     const size_t nb_nodes          = nodes.size();
 
     double min[2], max[2];
@@ -281,65 +388,210 @@ struct ComputeUniquePoleEdgeIndex {
 };
 
 void build_edges( Mesh& mesh ) {
-    mesh::Nodes& nodes            = mesh.nodes();
-    array::ArrayView<int, 1> part = array::make_view<int, 1>( nodes.partition() );
+   build_edges( mesh, util::NoConfig() );
+}
+
+void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
+    ATLAS_TRACE("BuildEdges");
+
+    int mesh_halo(0);
+    mesh.metadata().get("halo",mesh_halo);
+
+    if( mesh.metadata().has("built_edges_for_halo") ) {
+        int edges_halo = mesh.metadata().getInt("built_edges_for_halo");
+        if( edges_halo == mesh_halo ) {
+            // Nothing to be done here
+            return;
+        }
+    }
+
+    bool has_pole_edges = config.getInt("pole_edges",false);
+
+
+    mesh::Nodes& nodes = mesh.nodes();
+    auto node_part = array::make_view<int, 1>( nodes.partition() );
 
     size_t nb_nodes = nodes.size();
+
+    mesh.edges().clear();
+
+    size_t edge_start{0};
+    size_t edge_end{0};
 
     // storage for edge-to-node-connectivity shape=(nb_edges,2)
     std::vector<idx_t> edge_nodes_data;
     std::vector<idx_t> edge_to_elem_data;
+    std::vector<idx_t> edge_halo_offsets;
     size_t nb_edges;
     size_t nb_inner_edges;
     idx_t missing_value;
 
-    accumulate_facets( mesh.cells(), mesh.nodes(), edge_nodes_data, edge_to_elem_data, nb_edges, nb_inner_edges,
-                       missing_value );
-    // Build edges
-    mesh.edges().add( new mesh::temporary::Line(), nb_edges, edge_nodes_data.data() );
-    mesh::HybridElements::Connectivity& edge_nodes = mesh.edges().node_connectivity();
-    mesh::HybridElements::Connectivity& cell_nodes = mesh.cells().node_connectivity();
+    accumulate_facets_ordered_by_halo( mesh.cells(), mesh.nodes(), edge_nodes_data, edge_to_elem_data, 
+                                       nb_edges, nb_inner_edges, missing_value, edge_halo_offsets );
 
-    UniqueLonLat compute_uid( mesh );
+    std::shared_ptr<AccumulatePoleEdges> pole_edge_accumulator;
+    if( has_pole_edges ) {
+        pole_edge_accumulator = std::make_shared<AccumulatePoleEdges>( nodes );
+    }
 
-    array::IndexView<idx_t, 1> edge_ridx     = array::make_indexview<idx_t, 1>( mesh.edges().remote_index() );
-    array::ArrayView<int, 1> edge_part       = array::make_view<int, 1>( mesh.edges().partition() );
-    array::ArrayView<gidx_t, 1> edge_glb_idx = array::make_view<gidx_t, 1>( mesh.edges().global_index() );
+    for( int halo=0; halo<=mesh_halo; ++halo ) {
 
-    ASSERT( cell_nodes.missing_value() == missing_value );
-    for ( size_t edge = 0; edge < nb_edges; ++edge ) {
-        const int ip1 = edge_nodes( edge, 0 );
-        const int ip2 = edge_nodes( edge, 1 );
-        if ( compute_uid( ip1 ) > compute_uid( ip2 ) ) {
-            idx_t swapped[2] = {ip2, ip1};
-            edge_nodes.set( edge, swapped );
+        edge_start = edge_end;
+        edge_end += ( edge_halo_offsets[halo+1] - edge_halo_offsets[halo] );
+
+        // Build edges
+        mesh.edges().add( new mesh::temporary::Line(), ( edge_end - edge_start ), edge_nodes_data.data() + edge_halo_offsets[halo]*2 );
+        auto& edge_nodes = mesh.edges().node_connectivity();
+        const auto& cell_nodes = mesh.cells().node_connectivity();
+
+        UniqueLonLat compute_uid( mesh );
+
+        auto edge_ridx    = array::make_indexview<idx_t, 1>( mesh.edges().remote_index() );
+        auto edge_part    = array::make_view<int, 1>( mesh.edges().partition() );
+        auto edge_glb_idx = array::make_view<gidx_t, 1>( mesh.edges().global_index() );
+        auto edge_halo    = array::make_view<int,1>( mesh.edges().halo() );
+        auto edge_flags    = array::make_view<int,1>( mesh.edges().flags() );
+
+        ASSERT( cell_nodes.missing_value() == missing_value );
+        for ( size_t edge = edge_start; edge < edge_end; ++edge ) {
+            const size_t iedge = edge_halo_offsets[halo] + ( edge - edge_start );
+            const int ip1 = edge_nodes( edge, 0 );
+            const int ip2 = edge_nodes( edge, 1 );
+            if ( compute_uid( ip1 ) > compute_uid( ip2 ) ) {
+                idx_t swapped[2] = {ip2, ip1};
+                edge_nodes.set( edge, swapped );
+            }
+
+            ASSERT( size_t( edge_nodes( edge, 0 ) ) < nb_nodes );
+            ASSERT( size_t( edge_nodes( edge, 1 ) ) < nb_nodes );
+            edge_glb_idx( edge ) = compute_uid( edge_nodes.row( edge ) );
+            edge_part( edge )    = std::min( node_part( edge_nodes( edge, 0 ) ), node_part( edge_nodes( edge, 1 ) ) );
+            edge_ridx( edge )    = edge;
+            edge_halo( edge )    = halo;
+            edge_flags( edge)    = 0;
+
+            const idx_t e1 = edge_to_elem_data[2 * iedge + 0];
+            const idx_t e2 = edge_to_elem_data[2 * iedge + 1];
+
+            ASSERT( e1 != cell_nodes.missing_value() );
+            if ( e2 == cell_nodes.missing_value() ) {
+                // do nothing
+            }
+            else if ( compute_uid( cell_nodes.row( e1 ) ) > compute_uid( cell_nodes.row( e2 ) ) ) {
+                edge_to_elem_data[iedge * 2 + 0] = e2;
+                edge_to_elem_data[iedge * 2 + 1] = e1;
+            }
         }
 
-        ASSERT( size_t( edge_nodes( edge, 0 ) ) < nb_nodes );
-        ASSERT( size_t( edge_nodes( edge, 1 ) ) < nb_nodes );
-        edge_glb_idx( edge ) = compute_uid( edge_nodes.row( edge ) );
-        edge_part( edge )    = std::min( part( edge_nodes( edge, 0 ) ), part( edge_nodes( edge, 1 ) ) );
-        edge_ridx( edge )    = edge;
+        mesh.edges().cell_connectivity().add( (edge_end - edge_start), 2, edge_to_elem_data.data() + edge_halo_offsets[halo]*2 );        
 
-        const idx_t e1 = edge_to_elem_data[2 * edge + 0];
-        const idx_t e2 = edge_to_elem_data[2 * edge + 1];
+        if( has_pole_edges ) {
+            size_t nb_pole_edges;
+            std::vector<idx_t> pole_edge_nodes;
 
-        ASSERT( e1 != cell_nodes.missing_value() );
-        if ( e2 == cell_nodes.missing_value() ) {
-            // do nothing
-        }
-        else if ( compute_uid( cell_nodes.row( e1 ) ) > compute_uid( cell_nodes.row( e2 ) ) ) {
-            edge_to_elem_data[edge * 2 + 0] = e2;
-            edge_to_elem_data[edge * 2 + 1] = e1;
+            pole_edge_accumulator->compute_pole_edges( halo, pole_edge_nodes, nb_pole_edges );
+
+            if( nb_pole_edges ) {
+                edge_start = edge_end;
+                edge_end += nb_pole_edges;
+
+                mesh.edges().add( new mesh::temporary::Line(), nb_pole_edges, pole_edge_nodes.data() );
+
+                auto edge_ridx    = array::make_indexview<int, 1>( mesh.edges().remote_index() );
+                auto edge_part    = array::make_view<int, 1>( mesh.edges().partition() );
+                auto edge_glb_idx = array::make_view<gidx_t, 1>( mesh.edges().global_index() );
+                auto edge_halo    = array::make_view<int, 1>( mesh.edges().halo() );
+                auto edge_flags   = array::make_view<int, 1>( mesh.edges().flags() );
+
+                auto set_pole_edge = [&edge_flags]( size_t e ) {
+                    Topology::set( edge_flags(e), Topology::POLE );
+                };
+
+                auto& edge_nodes = mesh.edges().node_connectivity();
+
+                mesh.edges().cell_connectivity().add( nb_pole_edges, 2 );
+
+                size_t cnt = 0;
+                ComputeUniquePoleEdgeIndex compute_uid( nodes );
+                for ( size_t edge = edge_start; edge < edge_end; ++edge ) {
+                    idx_t ip1      = pole_edge_nodes[cnt++];
+                    idx_t ip2      = pole_edge_nodes[cnt++];
+                    idx_t enodes[] = {ip1, ip2};
+                    edge_nodes.set( edge, enodes );
+                    edge_glb_idx( edge ) = compute_uid( edge_nodes.row( edge ) );
+                    edge_part( edge )    = std::min( node_part( edge_nodes( edge, 0 ) ), node_part( edge_nodes( edge, 1 ) ) );
+                    edge_ridx( edge )    = edge;
+                    edge_halo( edge )    = halo;
+                    set_pole_edge( edge );
+                }
+            }
         }
     }
 
-    mesh.edges().cell_connectivity().add( nb_edges, 2, edge_to_elem_data.data() );
+    mesh.edges().metadata().set("pole_edges",has_pole_edges);
+
 
     build_element_to_edge_connectivity( mesh );
+
+    mesh::HybridElements::Connectivity& cell_edges = mesh.cells().edge_connectivity();
+    auto cell_halo = array::make_view<int,1>( mesh.cells().halo() );
+    auto cell_flags = array::make_view<int,1>( mesh.cells().flags() );
+    auto cell_patch = [&cell_flags]( size_t e ) {
+        using Topology = atlas::mesh::Nodes::Topology;
+        return Topology::check( cell_flags( e ), Topology::PATCH );
+    };
+    auto edge_halo    = array::make_view<int,1>( mesh.edges().halo() );
+    int max_halo=0;
+    for( size_t jcell=0; jcell < mesh.cells().size(); ++jcell )
+    {
+        if( not cell_patch( jcell ) ) {
+            int halo = cell_halo(jcell);
+            max_halo = std::max( halo, max_halo );
+            for( size_t jedge=0; jedge < cell_edges.cols( jcell ); ++jedge ) {
+               auto iedge = cell_edges( jcell, jedge );
+               ASSERT( edge_halo( iedge ) <= halo );
+            }
+        }
+    }
+
+    std::vector<int> nb_edges_including_halo( max_halo+1 );
+
+{
+    const auto& edge_nodes = mesh.edges().node_connectivity();
+    int nb_edges = mesh.edges().size();
+    for( int jedge=0; jedge< nb_edges; ++jedge ) {
+        nb_edges_including_halo[ edge_halo(jedge) ] = jedge+1;
+        if( jedge>0 ) ASSERT( edge_halo(jedge) >= edge_halo(jedge-1) );
+    }
+}
+
+    for( int i=0; i<=max_halo; ++i ) {
+        if( i > 0 ) ASSERT( nb_edges_including_halo[i] > nb_edges_including_halo[i-1] );
+        std::stringstream ss;
+        ss << "nb_edges_including_halo[" << i << "]";
+        mesh.metadata().set( ss.str(), nb_edges_including_halo[i] );
+    }
+
+    mesh.metadata().set( "built_edges_for_halo", mesh_halo );
+
+    // Backwards compatibility for code that reads "is_pole_edge" field instead of checking the flags
+    {
+        if( has_pole_edges ) {
+            if ( !mesh.edges().has_field( "is_pole_edge" ) ) {
+                mesh.edges().add( Field( "is_pole_edge", array::make_datatype<int>(), array::make_shape( mesh.edges().size() ) ) );
+            }
+            auto edge_flags    = array::make_view<int, 1>( mesh.edges().flags() );
+            auto is_pole_edge = array::make_view<int, 1>( mesh.edges().field( "is_pole_edge" ) );
+            int nb_edges = mesh.edges().size();
+            for( int jedge=0; jedge<nb_edges; ++jedge ) {
+                is_pole_edge( jedge ) = Topology::check( edge_flags(jedge), Topology::POLE );
+            }
+        }
+    }
 }
 
 void build_pole_edges( Mesh& mesh ) {
+    ATLAS_TRACE();
     mesh::Nodes& nodes          = mesh.nodes();
     mesh::HybridElements& edges = mesh.edges();
 
@@ -354,16 +606,16 @@ void build_pole_edges( Mesh& mesh ) {
     if ( !edges.has_field( "is_pole_edge" ) )
         edges.add( Field( "is_pole_edge", array::make_datatype<int>(), array::make_shape( edges.size() ) ) );
 
-    array::ArrayView<int, 1> node_part = array::make_view<int, 1>( nodes.partition() );
+    auto node_part = array::make_view<int, 1>( nodes.partition() );
 
-    array::ArrayView<gidx_t, 1> edge_glb_idx = array::make_view<gidx_t, 1>( edges.global_index() );
-    array::ArrayView<int, 1> edge_part       = array::make_view<int, 1>( edges.partition() );
-    array::IndexView<int, 1> edge_ridx       = array::make_indexview<int, 1>( edges.remote_index() );
-    array::ArrayView<int, 1> is_pole_edge    = array::make_view<int, 1>( edges.field( "is_pole_edge" ) );
+    auto edge_glb_idx = array::make_view<gidx_t, 1>( edges.global_index() );
+    auto edge_part    = array::make_view<int, 1>( edges.partition() );
+    auto edge_ridx    = array::make_indexview<int, 1>( edges.remote_index() );
+    auto is_pole_edge = array::make_view<int, 1>( edges.field( "is_pole_edge" ) );
 
-    mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
-    MultiBlockConnectivity& edge_to_elem           = edges.cell_connectivity();
-    edge_to_elem.add( nb_pole_edges, 2 );
+    auto& edge_nodes = edges.node_connectivity();
+
+    edges.cell_connectivity().add( nb_pole_edges, 2 );
 
     for ( size_t edge = 0; edge < nb_cell_edges; ++edge ) {
         is_pole_edge( edge ) = 0;

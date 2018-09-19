@@ -123,7 +123,7 @@ void build_median_dual_mesh( Mesh& mesh ) {
         nodes_fs.haloExchange( nodes.field( "dual_volumes" ) );
     }
 
-    functionspace::EdgeColumns edges_fs( mesh, Halo( mesh ) );
+    functionspace::EdgeColumns edges_fs( mesh );
     {
         ATLAS_TRACE( "halo-exchange dual_normals" );
         edges_fs.haloExchange( edges.field( "dual_normals" ) );

@@ -60,6 +60,35 @@ CASE( "halo nodes" ) {
 
 //-----------------------------------------------------------------------------
 
+CASE( "halo edges" ) {
+
+    Grid grid( "O8" );
+    std::vector<int> halos {0, 1, 2, 3, 4};
+    std::vector<int> edges {1559, 1649, 1739, 1829, 1919};
+
+    for( bool reduce : {false, true} ) {
+
+        for( bool with_pole_edges : {false, true} ) {
+           int pole_edges = with_pole_edges ? StructuredGrid(grid).nx().front() : 0;
+
+            SECTION( std::string( reduce ? "reduced " : "increased ") + std::string( with_pole_edges ? "with_pole_edges" : "without_pole_edges" ) ) {
+
+                Mesh mesh = StructuredMeshGenerator().generate( grid );
+                EXPECT( mesh.edges().size() == 0 );
+
+                for( int h : ( reduce ? reversed(halos) : halos ) ) {
+                    EdgeColumns fs( mesh, option::halo(h) | util::Config( "pole_edges", with_pole_edges ) );
+                    if( mpi::comm().size() == 1 ) {
+                        EXPECT( fs.nb_edges() == edges[h] + pole_edges );
+                    }
+                }
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 }  // namespace test
 }  // namespace atlas
 

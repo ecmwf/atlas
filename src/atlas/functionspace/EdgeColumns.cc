@@ -21,6 +21,7 @@
 #include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/actions/BuildHalo.h"
+#include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/parallel/Checksum.h"
@@ -235,66 +236,37 @@ array::ArrayShape EdgeColumns::config_shape( const eckit::Configuration& config 
     return shape;
 }
 
-EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& params ) :
+EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config ) :
     mesh_( mesh ),
-    nb_levels_( 0 ),
     edges_( mesh_.edges() ),
+    nb_levels_( config.getInt( "levels", 0 ) ),
     nb_edges_( 0 ) {
-    nb_levels_ = config_levels( params );
+    ATLAS_TRACE();
+    if ( config.has( "halo" ) ) { halo_ = mesh::Halo( config.getInt( "halo" ) ); }
+    else {
+        halo_ = mesh::Halo( mesh_ );
+    }
 
-    size_t mesh_halo( 0 );
-    mesh.metadata().get( "halo", mesh_halo );
+    auto get_nb_edges_from_metadata = [&]() {
+        size_t _nb_edges(0);
+        std::stringstream ss;
+        ss << "nb_edges_including_halo[" << halo_.size() << "]";
+        mesh_.metadata().get( ss.str(), _nb_edges );
+        return _nb_edges;
+    };
 
-    size_t halo = mesh_halo;
-    params.get( "halo", halo );
+    mesh::actions::build_periodic_boundaries( mesh_ );
 
-    ASSERT( mesh_halo == halo );
-
-    constructor();
-}
-
-EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo& halo, const eckit::Configuration& params ) :
-    mesh_( mesh ),
-    nb_levels_( 0 ),
-    edges_( mesh_.edges() ),
-    nb_edges_( 0 ) {
-    size_t mesh_halo_size_;
-    mesh.metadata().get( "halo", mesh_halo_size_ );
-    ASSERT( mesh_halo_size_ == halo.size() );
-
-    nb_levels_ = config_levels( params );
-
-    constructor();
-}
-
-EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo& halo ) :
-    mesh_( mesh ),
-    nb_levels_( 0 ),
-    edges_( mesh_.edges() ),
-    nb_edges_( 0 ) {
-    size_t mesh_halo_size_;
-    mesh.metadata().get( "halo", mesh_halo_size_ );
-    ASSERT( mesh_halo_size_ == halo.size() );
-    constructor();
-}
-
-void EdgeColumns::constructor() {
-    ATLAS_TRACE( "EdgeColumns()" );
-
-    nb_edges_ = mesh().edges().size();
-
-    //  ATLAS_TRACE_SCOPE("HaloExchange") {
-    //    halo_exchange_ = EdgeColumnsHaloExchangeCache::instance().get( mesh_ );
-    //  }
-
-    //  ATLAS_TRACE_SCOPE("Setup gather_scatter") {
-    //    gather_scatter_.reset( EdgeColumnsGatherScatterCache::instance().get(
-    //    mesh_ ) );
-    //  }
-
-    // ATLAS_TRACE_SCOPE("Setup checksum") {
-    //   checksum_.reset( EdgeColumnsChecksumCache::instance().get( mesh_ ) );
-    // }
+    if ( halo_.size() > 0 ) {
+         mesh::actions::build_halo( mesh_, halo_.size() );
+         nb_edges_ = get_nb_edges_from_metadata();
+    }
+    if ( !nb_edges_ ) {
+        mesh::actions::build_edges( mesh_, config );
+        mesh::actions::build_edges_parallel_fields( mesh_ );
+        nb_edges_ = get_nb_edges_from_metadata();
+    }
+    ASSERT( nb_edges_ );
 }
 
 EdgeColumns::~EdgeColumns() {}
@@ -702,12 +674,8 @@ EdgeColumns::EdgeColumns( const FunctionSpace& functionspace ) :
     FunctionSpace( functionspace ),
     functionspace_( dynamic_cast<const detail::EdgeColumns*>( get() ) ) {}
 
-EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo& halo, const eckit::Configuration& config ) :
-    FunctionSpace( new detail::EdgeColumns( mesh, halo, config ) ),
-    functionspace_( dynamic_cast<const detail::EdgeColumns*>( get() ) ) {}
-
-EdgeColumns::EdgeColumns( const Mesh& mesh, const mesh::Halo& halo ) :
-    FunctionSpace( new detail::EdgeColumns( mesh, halo ) ),
+EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config ) :
+    FunctionSpace( new detail::EdgeColumns( mesh, config ) ),
     functionspace_( dynamic_cast<const detail::EdgeColumns*>( get() ) ) {}
 
 EdgeColumns::EdgeColumns( const Mesh& mesh ) :
