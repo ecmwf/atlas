@@ -10,6 +10,7 @@
 
 #include <algorithm>
 
+#include "atlas/array.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
@@ -27,7 +28,6 @@
 #include "atlas/trans/Trans.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
-#include "atlas/array.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

@@ -51,7 +51,7 @@ Nabla::~Nabla() {}
 void Nabla::setup() {
     const mesh::Edges& edges = fvm_->mesh().edges();
 
-    const size_t nedges = edges.size();
+    const size_t nedges = fvm_->edge_columns().nb_edges();
 
     const array::ArrayView<int, 1> edge_is_pole = array::make_view<int, 1>( edges.field( "is_pole_edge" ) );
 
@@ -82,8 +82,8 @@ void Nabla::gradient_of_scalar( const Field& scalar_field, Field& grad_field ) c
     const mesh::Edges& edges = fvm_->mesh().edges();
     const mesh::Nodes& nodes = fvm_->mesh().nodes();
 
-    const size_t nnodes = nodes.size();
-    const size_t nedges = edges.size();
+    const size_t nnodes = fvm_->node_columns().nb_nodes();
+    const size_t nedges = fvm_->edge_columns().nb_edges();
     const size_t nlev   = scalar_field.levels() ? scalar_field.levels() : 1;
     if ( ( grad_field.levels() ? grad_field.levels() : 1 ) != nlev )
         throw eckit::AssertionFailed( "gradient field should have same number of levels", Here() );
@@ -126,11 +126,13 @@ void Nabla::gradient_of_scalar( const Field& scalar_field, Field& grad_field ) c
                 grad( jnode, jlev, LAT ) = 0.;
             }
             for ( size_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
-                const int iedge  = node2edge( jnode, jedge );
-                const double add = node2edge_sign( jnode, jedge );
-                for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
-                    grad( jnode, jlev, LON ) += add * avgS( iedge, jlev, LON );
-                    grad( jnode, jlev, LAT ) += add * avgS( iedge, jlev, LAT );
+                const int iedge = node2edge( jnode, jedge );
+                if ( iedge < nedges ) {
+                    const double add = node2edge_sign( jnode, jedge );
+                    for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
+                        grad( jnode, jlev, LON ) += add * avgS( iedge, jlev, LON );
+                        grad( jnode, jlev, LAT ) += add * avgS( iedge, jlev, LAT );
+                    }
                 }
             }
             const double y        = lonlat_deg( jnode, LAT ) * deg2rad;
@@ -154,8 +156,8 @@ void Nabla::gradient_of_vector( const Field& vector_field, Field& grad_field ) c
     const mesh::Edges& edges = fvm_->mesh().edges();
     const mesh::Nodes& nodes = fvm_->mesh().nodes();
 
-    const size_t nnodes = nodes.size();
-    const size_t nedges = edges.size();
+    const size_t nnodes = fvm_->node_columns().nb_nodes();
+    const size_t nedges = fvm_->edge_columns().nb_edges();
     const size_t nlev   = vector_field.levels();
     if ( vector_field.levels() != nlev )
         throw eckit::AssertionFailed( "gradient field should have same number of levels", Here() );
@@ -217,12 +219,14 @@ void Nabla::gradient_of_vector( const Field& vector_field, Field& grad_field ) c
             }
             for ( size_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
                 const int iedge = node2edge( jnode, jedge );
-                double add      = node2edge_sign( jnode, jedge );
-                for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
-                    grad( jnode, jlev, LONdLON ) += add * avgS( iedge, jlev, LONdLON );
-                    grad( jnode, jlev, LONdLAT ) += add * avgS( iedge, jlev, LONdLAT );
-                    grad( jnode, jlev, LATdLON ) += add * avgS( iedge, jlev, LATdLON );
-                    grad( jnode, jlev, LATdLAT ) += add * avgS( iedge, jlev, LATdLAT );
+                if ( iedge < nedges ) {
+                    double add = node2edge_sign( jnode, jedge );
+                    for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
+                        grad( jnode, jlev, LONdLON ) += add * avgS( iedge, jlev, LONdLON );
+                        grad( jnode, jlev, LONdLAT ) += add * avgS( iedge, jlev, LONdLAT );
+                        grad( jnode, jlev, LATdLON ) += add * avgS( iedge, jlev, LATdLON );
+                        grad( jnode, jlev, LATdLAT ) += add * avgS( iedge, jlev, LATdLAT );
+                    }
                 }
             }
             const double y        = lonlat_deg( jnode, LAT ) * deg2rad;
@@ -257,8 +261,8 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
     const mesh::Edges& edges = fvm_->mesh().edges();
     const mesh::Nodes& nodes = fvm_->mesh().nodes();
 
-    const size_t nnodes = nodes.size();
-    const size_t nedges = edges.size();
+    const size_t nnodes = fvm_->node_columns().nb_nodes();
+    const size_t nedges = fvm_->edge_columns().nb_edges();
     const size_t nlev   = vector_field.levels();
     if ( div_field.levels() != nlev )
         throw eckit::AssertionFailed( "divergence field should have same number of levels", Here() );
@@ -315,10 +319,12 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
                 div( jnode, jlev ) = 0.;
             }
             for ( size_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
-                int iedge  = node2edge( jnode, jedge );
-                double add = node2edge_sign( jnode, jedge );
-                for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
-                    div( jnode, jlev ) += add * ( avgS( iedge, jlev, LON ) + avgS( iedge, jlev, LAT ) );
+                int iedge = node2edge( jnode, jedge );
+                if ( iedge < nedges ) {
+                    double add = node2edge_sign( jnode, jedge );
+                    for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
+                        div( jnode, jlev ) += add * ( avgS( iedge, jlev, LON ) + avgS( iedge, jlev, LAT ) );
+                    }
                 }
             }
             const double y = lonlat_deg( jnode, LAT ) * deg2rad;
@@ -337,8 +343,8 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
     const mesh::Edges& edges = fvm_->mesh().edges();
     const mesh::Nodes& nodes = fvm_->mesh().nodes();
 
-    const size_t nnodes = nodes.size();
-    const size_t nedges = edges.size();
+    const size_t nnodes = fvm_->node_columns().nb_nodes();
+    const size_t nedges = fvm_->edge_columns().nb_edges();
     const size_t nlev   = vector_field.levels();
     if ( curl_field.levels() != nlev )
         throw eckit::AssertionFailed( "curl field should have same number of levels", Here() );
@@ -395,9 +401,11 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
             }
             for ( size_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
                 size_t iedge = node2edge( jnode, jedge );
-                double add   = node2edge_sign( jnode, jedge );
-                for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
-                    curl( jnode, jlev ) += add * ( avgS( iedge, jlev, LAT ) - avgS( iedge, jlev, LON ) );
+                if ( iedge < nedges ) {
+                    double add = node2edge_sign( jnode, jedge );
+                    for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
+                        curl( jnode, jlev ) += add * ( avgS( iedge, jlev, LAT ) - avgS( iedge, jlev, LON ) );
+                    }
                 }
             }
             double y      = lonlat_deg( jnode, LAT ) * deg2rad;

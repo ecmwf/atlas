@@ -14,9 +14,6 @@
 
 namespace atlas {
 namespace runtime {
-namespace trace {
-
-
-}  // namespace trace
+namespace trace {}  // namespace trace
 }  // namespace runtime
 }  // namespace atlas

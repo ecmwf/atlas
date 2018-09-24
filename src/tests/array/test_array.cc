@@ -214,8 +214,8 @@ CASE( "test_resize_throw" ) {
     Array* ds = Array::create<double>( 32, 5, 33 );
 
     EXPECT_NO_THROW( ds->resize( 32, 5, 33 ) );
-    EXPECT_THROWS_AS( ds->resize( 32, 4, 33 ), eckit::BadParameter );
-    EXPECT_THROWS_AS( ds->resize( 32, 5, 32 ), eckit::BadParameter );
+    EXPECT_NO_THROW( ds->resize( 32, 4, 33 ) );
+    EXPECT_NO_THROW( ds->resize( 32, 5, 32 ) );
     EXPECT_THROWS_AS( ds->resize( 32, 5, 33, 4 ), eckit::BadParameter );
 
     delete ds;

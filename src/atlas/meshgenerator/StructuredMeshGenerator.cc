@@ -792,12 +792,13 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
     mesh.nodes().resize( nnodes );
     mesh::Nodes& nodes = mesh.nodes();
 
-    array::ArrayView<double, 2> xy      = array::make_view<double, 2>( nodes.xy() );
-    array::ArrayView<double, 2> lonlat  = array::make_view<double, 2>( nodes.lonlat() );
-    array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
-    array::ArrayView<int, 1> part       = array::make_view<int, 1>( nodes.partition() );
-    array::ArrayView<int, 1> ghost      = array::make_view<int, 1>( nodes.ghost() );
-    array::ArrayView<int, 1> flags      = array::make_view<int, 1>( nodes.field( "flags" ) );
+    auto xy      = array::make_view<double, 2>( nodes.xy() );
+    auto lonlat  = array::make_view<double, 2>( nodes.lonlat() );
+    auto glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
+    auto part    = array::make_view<int, 1>( nodes.partition() );
+    auto ghost   = array::make_view<int, 1>( nodes.ghost() );
+    auto flags   = array::make_view<int, 1>( nodes.flags() );
+    auto halo    = array::make_view<int, 1>( nodes.halo() );
 
     bool stagger = options.get<bool>( "stagger" );
 
@@ -837,6 +838,7 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
                     part( jnode ) = mypart;
                     // part(jnode)      = parts.at( offset_glb.at(jlat) );
                     ghost( jnode ) = 1;
+                    halo( jnode )  = 0;
                     ghost_nodes.push_back( GhostNode( jlat, rg.nx( jlat ), jnode ) );
                     ++jnode;
                 }
@@ -895,6 +897,7 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
                 glb_idx( inode ) = n + 1;
                 part( inode )    = parts.at( n );
                 ghost( inode )   = 0;
+                halo( inode )    = 0;
                 Topology::reset( flags( inode ) );
                 if ( jlat == 0 && !include_north_pole ) {
                     Topology::set( flags( inode ), Topology::BC | Topology::NORTH );
@@ -932,6 +935,7 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
                 //        part(inode)      = parts.at( offset_glb.at(jlat) );
                 part( inode )  = mypart;  // The actual part will be fixed later
                 ghost( inode ) = 1;
+                halo( inode )  = 0;
                 Topology::reset( flags( inode ) );
                 Topology::set( flags( inode ), Topology::BC | Topology::EAST );
                 Topology::set( flags( inode ), Topology::GHOST );
@@ -961,6 +965,7 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
         glb_idx( inode ) = periodic_glb.at( rg.ny() - 1 ) + 2;
         part( inode )    = mypart;
         ghost( inode )   = 0;
+        halo( inode )    = 0;
         Topology::reset( flags( inode ) );
         Topology::set( flags( inode ), Topology::NORTH );
         ++jnode;
@@ -984,14 +989,15 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
         glb_idx( inode ) = periodic_glb.at( rg.ny() - 1 ) + 3;
         part( inode )    = mypart;
         ghost( inode )   = 0;
+        halo( inode )    = 0;
         Topology::reset( flags( inode ) );
         Topology::set( flags( inode ), Topology::SOUTH );
         ++jnode;
     }
 
+    mesh.metadata().set<size_t>( "nb_nodes_including_halo[0]", nodes.size() );
     nodes.metadata().set<size_t>( "NbRealPts", size_t( nnodes - nnewnodes ) );
     nodes.metadata().set<size_t>( "NbVirtualPts", size_t( nnewnodes ) );
-
     nodes.global_index().metadata().set( "human_readable", true );
     nodes.global_index().metadata().set( "min", 1 );
     nodes.global_index().metadata().set( "max", max_glb_idx );

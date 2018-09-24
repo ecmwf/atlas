@@ -21,10 +21,10 @@
 #include "eckit/filesystem/PathName.h"
 
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/runtime/trace/CallStack.h"
 #include "atlas/runtime/trace/CodeLocation.h"
 #include "atlas/util/Config.h"
-#include "atlas/runtime/Log.h"
 
 //-----------------------------------------------------------------------------------------------------------
 

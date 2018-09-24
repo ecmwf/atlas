@@ -10,11 +10,11 @@
 
 #pragma once
 
+#include <array>
 #include "atlas/util/LonLatMicroDeg.h"
 
 namespace atlas {
-namespace mesh {
-namespace detail {
+namespace util {
 
 class PeriodicTransform {
 protected:
@@ -22,6 +22,7 @@ protected:
 
 public:
     PeriodicTransform() { x_translation_ = 360.; }
+    PeriodicTransform( const double& translation ) { x_translation_ = translation; }
 
     void operator()( double source[2], double dest[2], double direction, double scale = 1. ) const {
         dest[0] = source[0] + direction * x_translation_ * scale;
@@ -47,8 +48,12 @@ public:
         inplace.set_lon( inplace.lon() + direction * util::microdeg( x_translation_ ) );
         // inplace.set_lat( inplace.lat() ); null operation
     }
+
+    void operator()( std::array<double, 2>& inplace ) const {
+        inplace[0] = inplace[0] + x_translation_;
+        // inplace[1] = inplace[1]; null operation
+    }
 };
 
-}  // namespace detail
-}  // namespace mesh
+}  // namespace util
 }  // namespace atlas

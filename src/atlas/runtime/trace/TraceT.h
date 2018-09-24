@@ -13,14 +13,13 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
-#include <string>
 
-#include "atlas/runtime/trace/Nesting.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/trace/CallStack.h"
+#include "atlas/runtime/trace/CodeLocation.h"
+#include "atlas/runtime/trace/Nesting.h"
 #include "atlas/runtime/trace/StopWatch.h"
 #include "atlas/runtime/trace/Timings.h"
-#include "atlas/runtime/trace/CodeLocation.h"
-#include "atlas/parallel/omp/omp.h"
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -92,24 +91,22 @@ private:  // member data
 // Definitions
 
 template <typename TraceTraits>
-inline std::string TraceT<TraceTraits>::formatTitle( const std::string& _title) {
-    std::string title = _title; 
-      + ( Barriers::state() ? " [b]" : "" )
-      + ( atlas_omp_get_num_threads() > 1 ? " @thread[" + std::to_string(atlas_omp_get_thread_num()) + "]" : "" );
+inline std::string TraceT<TraceTraits>::formatTitle( const std::string& _title ) {
+    std::string title = _title;
+    +( Barriers::state() ? " [b]" : "" ) +
+        ( atlas_omp_get_num_threads() > 1 ? " @thread[" + std::to_string( atlas_omp_get_thread_num() ) + "]" : "" );
     return title;
 }
 
 template <typename TraceTraits>
 inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc, const std::string& title ) :
     loc_( loc ),
-    title_( formatTitle(title) ) {
+    title_( formatTitle( title ) ) {
     start();
 }
 
 template <typename TraceTraits>
-inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc ) :
-    loc_( loc ),
-    title_( loc_ ? loc_.func() : "" ) {
+inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc ) : loc_( loc ), title_( loc_ ? loc_.func() : "" ) {
     start();
 }
 
@@ -133,9 +130,9 @@ inline void TraceT<TraceTraits>::barrier() const {
 
 template <typename TraceTraits>
 inline void TraceT<TraceTraits>::registerTimer() {
-    std::string title = title_ 
-      + ( Barriers::state() ? " [b]" : "" )
-      + ( atlas_omp_get_num_threads() > 1 ? " @thread[" + std::to_string(atlas_omp_get_thread_num()) + "]" : "" );
+    std::string title =
+        title_ + ( Barriers::state() ? " [b]" : "" ) +
+        ( atlas_omp_get_num_threads() > 1 ? " @thread[" + std::to_string( atlas_omp_get_thread_num() ) + "]" : "" );
     id_ = Timings::add( loc_, callstack_, title, labels_ );
 }
 
@@ -151,11 +148,9 @@ inline bool TraceT<TraceTraits>::running() const {
 
 template <typename TraceTraits>
 inline void TraceT<TraceTraits>::start() {
-    if( Control::enabled() ) {
+    if ( Control::enabled() ) {
         running_ = true;
-        if( not callstack_ ) {
-          callstack_ = CurrentCallStack::instance().push( loc_, title_ );
-        }
+        if ( not callstack_ ) { callstack_ = CurrentCallStack::instance().push( loc_, title_ ); }
         registerTimer();
         Tracing::start( title_ );
         barrier();

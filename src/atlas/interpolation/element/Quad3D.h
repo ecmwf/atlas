@@ -57,7 +57,7 @@ public:
         if ( i == 1 ) return v10;
         if ( i == 2 ) return v11;
         if ( i == 3 ) return v01;
-        throw eckit::OutOfRange(i,4,Here());
+        throw eckit::OutOfRange( i, 4, Here() );
     }
 
 private:           // members

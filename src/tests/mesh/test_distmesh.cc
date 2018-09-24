@@ -67,7 +67,7 @@ CASE( "test_distribute_t63" ) {
     //  meshgenerator::StructuredMeshGenerator generate( util::Config
     //      ("nb_parts",1)
     //      ("part",0) );
-    meshgenerator::StructuredMeshGenerator generate;
+    meshgenerator::StructuredMeshGenerator generate( util::Config( "partitioner", "equal_regions" ) );
 
     // long lon[] = {4,6,8,8,8};
     // test::TestGrid grid(5,lon);
@@ -83,8 +83,11 @@ CASE( "test_distribute_t63" ) {
     mesh::actions::build_periodic_boundaries( m );
     mesh::actions::build_halo( m, 1 );
     // mesh::actions::renumber_nodes_glb_idx(m.nodes());
-    mesh::actions::build_edges( m );
-    mesh::actions::build_pole_edges( m );
+    mesh::actions::build_edges( m, util::Config( "pole_edges", true ) );
+
+    Gmsh( "dist.msh", util::Config( "ghost", true ) ).write( m );
+
+
     mesh::actions::build_edges_parallel_fields( m );
     mesh::actions::build_median_dual_mesh( m );
 

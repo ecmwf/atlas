@@ -485,8 +485,9 @@ util/MicroDeg.h
 mesh/IsGhostNode.h
 util/LonLatMicroDeg.h
 util/CoordinateEnums.h
-mesh/detail/PeriodicTransform.h
+util/PeriodicTransform.h
 util/Unique.h
+util/Unique.cc
 #parallel/detail/MPLArrayView.h
 )
 

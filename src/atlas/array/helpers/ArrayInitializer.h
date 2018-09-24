@@ -43,7 +43,8 @@ struct array_initializer_impl {
 
     template <typename... DimIndex>
     static void apply( ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& array_resized, DimIndex... idxs ) {
-        for ( size_t i = 0; i < orig.shape( Dim ); ++i ) {
+        const size_t N = std::min( array_resized.shape( Dim ), orig.shape( Dim ) );
+        for ( size_t i = 0; i < N; ++i ) {
             array_initializer_impl<Value, Rank, Dim + 1>::apply( std::move( orig ), std::move( array_resized ), idxs...,
                                                                  i );
         }

@@ -79,7 +79,7 @@ function atlas_Output__cptr(cptr) result(this)
   call this%return()
 end function
 
-function atlas_output_Gmsh__pathname_mode(file,mode,coordinates,levels,gather) result(this)
+function atlas_output_Gmsh__pathname_mode(file,mode,coordinates,levels,gather,ghost) result(this)
   use fckit_c_interop_module, only : c_str
   use atlas_output_gmsh_c_binding
   type(atlas_Output) :: this
@@ -88,6 +88,7 @@ function atlas_output_Gmsh__pathname_mode(file,mode,coordinates,levels,gather) r
   character(len=*), intent(in), optional :: coordinates
   integer, intent(in), optional :: levels(:)
   logical, intent(in), optional :: gather
+  logical, intent(in), optional :: ghost
   character(len=1) :: opt_mode
   type(atlas_Config) :: opt_config
   opt_config = atlas_Config()
@@ -96,6 +97,7 @@ function atlas_output_Gmsh__pathname_mode(file,mode,coordinates,levels,gather) r
   if( present(coordinates) ) call opt_config%set("coordinates",coordinates)
   if( present(levels) )      call opt_config%set("levels",levels)
   if( present(gather) )      call opt_config%set("gather",gather)
+  if( present(ghost) )       call opt_config%set("ghost",ghost)
   call this%reset_c_ptr( atlas__output__Gmsh__create_pathname_mode_config(c_str(file),c_str(opt_mode),opt_config%c_ptr()) )
   call this%return()
   call opt_config%final()

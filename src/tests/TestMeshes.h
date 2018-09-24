@@ -22,7 +22,8 @@ namespace atlas {
 namespace test {
 
 Mesh generate_mesh( const StructuredGrid& grid ) {
-    meshgenerator::StructuredMeshGenerator generate;
+    auto config = util::Config( "partitioner", "equal_regions" );
+    meshgenerator::StructuredMeshGenerator generate( config );
     return generate( grid );
 }
 

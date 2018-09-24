@@ -10,15 +10,11 @@
 
 #pragma once
 
-#include <string>
-
+namespace eckit {
+class Configuration;
+}  // namespace eckit
 namespace atlas {
 class Mesh;
-namespace mesh {
-namespace detail {
-class MeshImpl;
-}
-}  // namespace mesh
 }  // namespace atlas
 
 namespace atlas {
@@ -26,19 +22,33 @@ namespace mesh {
 namespace actions {
 
 void build_edges( Mesh& mesh );
+void build_edges( Mesh& mesh, const eckit::Configuration& );
 void build_pole_edges( Mesh& mesh );
 void build_element_to_edge_connectivity( Mesh& mesh );
 void build_node_to_edge_connectivity( Mesh& mesh );
 
 // ------------------------------------------------------------------
-// C wrapper interfaces to C++ routines
-extern "C" {
-void atlas__build_edges( mesh::detail::MeshImpl* mesh );
-void atlas__build_pole_edges( mesh::detail::MeshImpl* mesh );
-void atlas__build_node_to_edge_connectivity( mesh::detail::MeshImpl* mesh );
-}
-// ------------------------------------------------------------------
 
 }  // namespace actions
 }  // namespace mesh
 }  // namespace atlas
+
+// ------------------------------------------------------------------
+
+namespace atlas {
+namespace mesh {
+namespace detail {
+class MeshImpl;
+}  // namespace detail
+}  // namespace mesh
+}  // namespace atlas
+
+
+// C wrapper interfaces to C++ routines
+extern "C" {
+void atlas__build_edges( atlas::mesh::detail::MeshImpl* mesh );
+void atlas__build_pole_edges( atlas::mesh::detail::MeshImpl* mesh );
+void atlas__build_node_to_edge_connectivity( atlas::mesh::detail::MeshImpl* mesh );
+}
+
+// ------------------------------------------------------------------

@@ -38,21 +38,21 @@ endif()
 
 ecbuild_add_test( TARGET atlas_test_parfields
   MPI        2
-  CONDITION  ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
+  CONDITION  ECKIT_HAVE_MPI
   SOURCES    test_parfields.cc
   LIBS       atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_halo
   MPI        5
-  CONDITION  ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
+  CONDITION  ECKIT_HAVE_MPI
   SOURCES    test_halo.cc ../TestMeshes.h
   LIBS       atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_distmesh
   MPI        5
-  CONDITION  ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
+  CONDITION  ECKIT_HAVE_MPI
   SOURCES    test_distmesh.cc ../TestMeshes.h
   LIBS       atlas
 )

@@ -380,15 +380,31 @@ type(atlas_functionspace_EdgeColumns) :: fs
 type(atlas_Field) :: field, template
 type(atlas_mesh_Edges) :: edges
 integer :: halo_size, nb_edges
+type( atlas_trace ) :: trace
+type( atlas_trace ) :: trace_a
+type( atlas_trace ) :: trace_b
+
+type( atlas_Output ) :: gmsh
+
+trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_edges")
 halo_size = 0
 
 grid = atlas_StructuredGrid("N24")
 meshgenerator = atlas_MeshGenerator()
 mesh = meshgenerator%generate(grid)
+
+gmsh = atlas_Output_gmsh("test_edges.msh")
+call gmsh%write(mesh)
+call gmsh%final()
+
 FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
 edges = mesh%edges()
 FCTEST_CHECK_EQUAL( edges%owners(), 3 ) ! Mesh holds 2 references (facets == edges)
+
+trace_a = atlas_Trace("fctest_functionspace.F90",__LINE__,"EdgeColumns, no-levels")
 fs = atlas_functionspace_EdgeColumns(mesh)
+call trace_a%final()
+
 FCTEST_CHECK_EQUAL( mesh%owners(), 2 )
 FCTEST_CHECK_EQUAL( edges%owners(), 3 )
 edges = fs%edges()
@@ -473,7 +489,9 @@ FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%final()
 call template%final()
 
+trace_b = atlas_Trace("fctest_functionspace.F90",__LINE__,"EdgeColumns, 5 levels")
 fs = atlas_functionspace_EdgeColumns(mesh,levels=5)
+call trace_b%final()
 field = fs%create_field(atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
@@ -485,6 +503,9 @@ call fs%final()
 call edges%final()
 call mesh%final()
 call grid%final()
+
+call trace%final()
+
 #else
 #warning test test_edges disabled
 #endif

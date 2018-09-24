@@ -233,16 +233,12 @@ NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration& config ) :
     mesh_( mesh ),
     nodes_( mesh_.nodes() ),
     nb_levels_( config.getInt( "levels", 0 ) ),
-    nb_nodes_( nodes_.size() ) {
+    nb_nodes_( 0 ) {
     ATLAS_TRACE();
     if ( config.has( "halo" ) ) { halo_ = mesh::Halo( config.getInt( "halo" ) ); }
     else {
         halo_ = mesh::Halo( mesh );
     }
-    constructor();
-}
-
-void NodeColumns::constructor() {
     ASSERT( mesh_ );
     mesh::actions::build_nodes_parallel_fields( mesh_.nodes() );
     mesh::actions::build_periodic_boundaries( mesh_ );
@@ -258,22 +254,6 @@ void NodeColumns::constructor() {
         ss << "nb_nodes_including_halo[" << halo_.size() << "]";
         if ( !mesh_.metadata().get( ss.str(), nb_nodes_ ) ) { nb_nodes_ = mesh_.nodes().size(); }
     }
-
-    //   ATLAS_TRACE_SCOPE("HaloExchange") {
-    //     halo_exchange_.reset(
-    //     NodeColumnsHaloExchangeCache::instance().get(mesh_,halo_.size()) );
-    //   }
-
-    //   ATLAS_TRACE_SCOPE("GatherScatter") {
-    //     gather_scatter_.reset(
-    //     NodeColumnsGatherScatterCache::instance().get(mesh_) );
-    //   }
-
-    //   ATLAS_TRACE_SCOPE("Checksum") {
-    //     checksum_.reset( NodeColumnsChecksumCache::instance().get(mesh_) );
-    //   }
-
-    //   nb_nodes_global_ = gather().glb_dof();
 }
 
 NodeColumns::~NodeColumns() {}

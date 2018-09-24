@@ -42,8 +42,6 @@ namespace detail {
 
 class EdgeColumns : public FunctionSpaceImpl {
 public:
-    EdgeColumns( const Mesh&, const mesh::Halo&, const eckit::Configuration& );
-    EdgeColumns( const Mesh&, const mesh::Halo& );
     EdgeColumns( const Mesh&, const eckit::Configuration& = util::NoConfig() );
 
     virtual ~EdgeColumns();
@@ -87,7 +85,6 @@ public:
     const parallel::Checksum& checksum() const;
 
 private:  // methods
-    void constructor();
     size_t config_size( const eckit::Configuration& config ) const;
     array::DataType config_datatype( const eckit::Configuration& ) const;
     std::string config_name( const eckit::Configuration& ) const;
@@ -100,6 +97,7 @@ private:         // data
     Mesh mesh_;  // non-const because functionspace may modify mesh
     size_t nb_levels_;
     mesh::HybridElements& edges_;  // non-const because functionspace may modify mesh
+    mesh::Halo halo_;
     size_t nb_edges_;
     mutable long nb_edges_global_{-1};
     mutable eckit::SharedPtr<parallel::GatherScatter> gather_scatter_;  // without ghost
@@ -152,8 +150,7 @@ class EdgeColumns : public FunctionSpace {
 public:
     EdgeColumns();
     EdgeColumns( const FunctionSpace& );
-    EdgeColumns( const Mesh&, const mesh::Halo&, const eckit::Configuration& );
-    EdgeColumns( const Mesh& mesh, const mesh::Halo& );
+    EdgeColumns( const Mesh&, const eckit::Configuration& );
     EdgeColumns( const Mesh& mesh );
 
     operator bool() const { return valid(); }

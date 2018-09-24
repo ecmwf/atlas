@@ -24,7 +24,6 @@
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
-#include "atlas/mesh/detail/PeriodicTransform.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
@@ -33,6 +32,7 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/MicroDeg.h"
+#include "atlas/util/PeriodicTransform.h"
 #include "atlas/util/Unique.h"
 
 //#define DEBUG_OUTPUT
@@ -45,9 +45,9 @@
 // #define ATLAS_103
 // #define ATLAS_103_SORT
 
-using atlas::mesh::detail::PeriodicTransform;
 using atlas::mesh::detail::accumulate_facets;
 using atlas::util::LonLatMicroDeg;
+using atlas::util::PeriodicTransform;
 using atlas::util::UniqueLonLat;
 using atlas::util::microdeg;
 using Topology = atlas::mesh::Nodes::Topology;
@@ -280,12 +280,12 @@ class BuildHaloHelper;
 void increase_halo( Mesh& mesh );
 void increase_halo_interior( BuildHaloHelper& );
 
-class EastWest : public PeriodicTransform {
+class EastWest : public util::PeriodicTransform {
 public:
     EastWest() { x_translation_ = -360.; }
 };
 
-class WestEast : public PeriodicTransform {
+class WestEast : public util::PeriodicTransform {
 public:
     WestEast() { x_translation_ = 360.; }
 };
@@ -594,6 +594,7 @@ public:
     array::IndexView<int, 1> ridx;
     array::ArrayView<int, 1> flags;
     array::ArrayView<int, 1> ghost;
+    array::ArrayView<int, 1> halo;
     mesh::HybridElements::Connectivity* elem_nodes;
     array::ArrayView<int, 1> elem_part;
     array::ArrayView<int, 1> elem_flags;
@@ -603,7 +604,7 @@ public:
     Node2Elem node_to_elem;
     Uid2Node uid2node;
     UniqueLonLat compute_uid;
-    size_t halo;
+    size_t halosize;
 
 public:
     BuildHaloHelper( BuildHalo& builder, Mesh& _mesh ) :
@@ -614,15 +615,16 @@ public:
         glb_idx( array::make_view<gidx_t, 1>( mesh.nodes().global_index() ) ),
         part( array::make_view<int, 1>( mesh.nodes().partition() ) ),
         ridx( array::make_indexview<int, 1>( mesh.nodes().remote_index() ) ),
-        flags( array::make_view<int, 1>( mesh.nodes().field( "flags" ) ) ),
+        flags( array::make_view<int, 1>( mesh.nodes().flags() ) ),
+        halo( array::make_view<int, 1>( mesh.nodes().halo() ) ),
         ghost( array::make_view<int, 1>( mesh.nodes().ghost() ) ),
         elem_nodes( &mesh.cells().node_connectivity() ),
         elem_part( array::make_view<int, 1>( mesh.cells().partition() ) ),
         elem_flags( array::make_view<int, 1>( mesh.cells().flags() ) ),
         elem_glb_idx( array::make_view<gidx_t, 1>( mesh.cells().global_index() ) ),
         compute_uid( mesh ) {
-        halo = 0;
-        mesh.metadata().get( "halo", halo );
+        halosize = 0;
+        mesh.metadata().get( "halo", halosize );
         // update();
     }
 
@@ -634,8 +636,9 @@ public:
         glb_idx            = array::make_view<gidx_t, 1>( nodes.global_index() );
         part               = array::make_view<int, 1>( nodes.partition() );
         ridx               = array::make_indexview<int, 1>( nodes.remote_index() );
-        flags              = array::make_view<int, 1>( nodes.field( "flags" ) );
+        flags              = array::make_view<int, 1>( nodes.flags() );
         ghost              = array::make_view<int, 1>( nodes.ghost() );
+        halo               = array::make_view<int, 1>( nodes.halo() );
 
         elem_nodes   = &mesh.cells().node_connectivity();
         elem_part    = array::make_view<int, 1>( mesh.cells().partition() );
@@ -707,7 +710,7 @@ public:
 
     template <typename NodeContainer, typename ElementContainer>
     void fill_sendbuffer( Buffers& buf, const NodeContainer& nodes_uid, const ElementContainer& elems,
-                          const PeriodicTransform& transform, int newflags, const int p ) {
+                          const util::PeriodicTransform& transform, int newflags, const int p ) {
         // ATLAS_TRACE();
 
         int nb_nodes = nodes_uid.size();
@@ -825,7 +828,8 @@ public:
         // Resize nodes
         // ------------
         nodes.resize( nb_nodes + nb_new_nodes );
-        flags   = array::make_view<int, 1>( nodes.field( "flags" ) );
+        flags   = array::make_view<int, 1>( nodes.flags() );
+        halo    = array::make_view<int, 1>( nodes.halo() );
         glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
         part    = array::make_view<int, 1>( nodes.partition() );
         ridx    = array::make_indexview<int, 1>( nodes.remote_index() );
@@ -840,7 +844,8 @@ public:
         int new_node = 0;
         for ( size_t jpart = 0; jpart < mpi_size; ++jpart ) {
             for ( size_t n = 0; n < rfn_idx[jpart].size(); ++n ) {
-                int loc_idx = nb_nodes + new_node;
+                int loc_idx     = nb_nodes + new_node;
+                halo( loc_idx ) = halosize + 1;
                 Topology::reset( flags( loc_idx ), buf.node_flags[jpart][rfn_idx[jpart][n]] );
                 ghost( loc_idx )   = Topology::check( flags( loc_idx ), Topology::GHOST );
                 glb_idx( loc_idx ) = buf.node_glb_idx[jpart][rfn_idx[jpart][n]];
@@ -963,7 +968,7 @@ public:
                     int loc_idx                  = new_elems_pos + new_elem;
                     elem_type_glb_idx( loc_idx ) = std::abs( buf.elem_glb_idx[jpart][jelem] );
                     elem_type_part( loc_idx )    = buf.elem_part[jpart][jelem];
-                    elem_type_halo( loc_idx )    = halo + 1;
+                    elem_type_halo( loc_idx )    = halosize + 1;
                     elem_type_flags( loc_idx )   = buf.elem_flags[jpart][jelem];
                     for ( size_t n = 0; n < node_connectivity.cols(); ++n ) {
                         node_connectivity.set(
@@ -1078,7 +1083,7 @@ void increase_halo_interior( BuildHaloHelper& helper ) {
 
     // 1) Find boundary nodes of this partition:
 
-    accumulate_partition_bdry_nodes( helper.mesh, helper.halo, helper.bdry_nodes );
+    accumulate_partition_bdry_nodes( helper.mesh, helper.halosize, helper.bdry_nodes );
     const std::vector<int>& bdry_nodes = helper.bdry_nodes;
 
     // 2) Communicate uid of these boundary nodes to other partitions
@@ -1128,8 +1133,7 @@ void increase_halo_interior( BuildHaloHelper& helper ) {
 
 class PeriodicPoints {
 public:
-    PeriodicPoints( Mesh& mesh, int flag, size_t N ) :
-        flags_( array::make_view<int, 1>( mesh.nodes().field( "flags" ) ) ) {
+    PeriodicPoints( Mesh& mesh, int flag, size_t N ) : flags_( array::make_view<int, 1>( mesh.nodes().flags() ) ) {
         flag_ = flag;
         N_    = N;
     }
@@ -1156,7 +1160,7 @@ private:
 };
 
 void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& periodic_points,
-                             const PeriodicTransform& transform, int newflags ) {
+                             const util::PeriodicTransform& transform, int newflags ) {
     helper.update();
     // if (helper.node_to_elem.size() == 0 ) !!! NOT ALLOWED !!! (atlas_test_halo
     // will fail)
@@ -1172,7 +1176,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
     // 1) Find boundary nodes of this partition:
 
-    if ( !helper.bdry_nodes.size() ) accumulate_partition_bdry_nodes( helper.mesh, helper.halo, helper.bdry_nodes );
+    if ( !helper.bdry_nodes.size() ) accumulate_partition_bdry_nodes( helper.mesh, helper.halosize, helper.bdry_nodes );
 
     std::vector<int> bdry_nodes = filter_nodes( helper.bdry_nodes, periodic_points );
 

@@ -17,16 +17,16 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/mesh/detail/PeriodicTransform.h"
 #include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatMicroDeg.h"
+#include "atlas/util/PeriodicTransform.h"
 
 using Topology = atlas::mesh::Nodes::Topology;
-using atlas::mesh::detail::PeriodicTransform;
 using atlas::util::LonLatMicroDeg;
+using atlas::util::PeriodicTransform;
 
 namespace atlas {
 namespace mesh {

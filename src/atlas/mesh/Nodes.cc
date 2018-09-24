@@ -33,21 +33,11 @@ Nodes::Nodes() : size_( 0 ) {
     lonlat_ = add( Field( "lonlat", make_datatype<double>(), make_shape( size(), 2 ) ) );
     lonlat_.set_variables( 2 );
     ghost_ = add( Field( "ghost", make_datatype<int>(), make_shape( size() ) ) );
+    flags_ = add( Field( "flags", make_datatype<int>(), make_shape( size() ) ) );
+    halo_  = add( Field( "halo", make_datatype<int>(), make_shape( size() ) ) );
 
     edge_connectivity_ = &add( new Connectivity( "edge" ) );
     cell_connectivity_ = &add( new Connectivity( "cell" ) );
-
-    add( Field( "flags", make_datatype<int>(), make_shape( size() ) ) );
-
-    array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( global_index() );
-    array::ArrayView<int, 1> part       = array::make_view<int, 1>( partition() );
-    array::ArrayView<int, 1> flags      = array::make_view<int, 1>( field( "flags" ) );
-
-    for ( size_t n = 0; n < size(); ++n ) {
-        glb_idx( n ) = 1 + n;
-        part( n )    = mpi::comm().rank();
-        flags( n )   = 0;
-    }
 }
 
 Nodes::Connectivity& Nodes::add( Connectivity* connectivity ) {
@@ -91,25 +81,28 @@ Field& Nodes::field( const std::string& name ) {
 }
 
 void Nodes::resize( size_t size ) {
-    size_t previous_size = size_;
-    size_                = size;
-    for ( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it ) {
-        Field& field            = it->second;
-        array::ArrayShape shape = field.shape();
-        shape[0]                = size_;
-        field.resize( shape );
-    }
+    if ( size != size_ ) {
+        size_t previous_size = size_;
+        size_                = size;
+        for ( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it ) {
+            Field& field            = it->second;
+            array::ArrayShape shape = field.shape();
+            shape[0]                = size_;
+            field.resize( shape );
+        }
 
-    array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( global_index() );
-    array::ArrayView<int, 1> part       = array::make_view<int, 1>( partition() );
-    array::ArrayView<int, 1> flags      = array::make_view<int, 1>( field( "flags" ) );
+        auto glb_idx = array::make_view<gidx_t, 1>( global_index() );
+        auto part    = array::make_view<int, 1>( partition() );
+        auto flag    = array::make_view<int, 1>( flags() );
+        auto _halo   = array::make_view<int, 1>( halo() );
 
-    const int mpi_rank = mpi::comm().rank();
-    for ( size_t n = previous_size; n < size_; ++n ) {
-        glb_idx( n ) = 1 + n;
-        part( n )    = mpi_rank;
-        ;
-        flags( n ) = 0;
+        const int mpi_rank = mpi::comm().rank();
+        for ( size_t n = previous_size; n < size_; ++n ) {
+            glb_idx( n ) = 1 + n;
+            part( n )    = mpi_rank;
+            flag( n )    = 0;
+            _halo( n )   = std::numeric_limits<int>::max();
+        }
     }
 }
 
