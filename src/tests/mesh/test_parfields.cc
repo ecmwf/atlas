@@ -185,6 +185,7 @@ CASE( "test2" ) {
     util::Config meshgen_options;
     meshgen_options.set( "angle", 27.5 );
     meshgen_options.set( "triangulate", false );
+    meshgen_options.set( "partitioner", "equal_regions" );
     meshgenerator::StructuredMeshGenerator generate( meshgen_options );
     Mesh m = generate( Grid( "N32" ) );
     mesh::actions::build_parallel_fields( m );
