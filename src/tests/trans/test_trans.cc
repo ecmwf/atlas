@@ -292,8 +292,8 @@ CASE( "test_spectral_fields" ) {
 
     Field spf = spectral.createField<double>( option::name( "spf" ) );
     Field gpf = nodal.createField<double>( option::name( "gpf" ) );
-    
-    array::make_view<double,1>( gpf ).assign(0);
+
+    array::make_view<double, 1>( gpf ).assign( 0 );
 
     EXPECT_NO_THROW( trans.dirtrans( gpf, spf ) );
     EXPECT_NO_THROW( trans.invtrans( spf, gpf ) );
@@ -388,7 +388,7 @@ CASE( "test_trans_using_grid" ) {
     Field spf = sp.createField<double>( option::name( "spf" ) );
     Field gpf = gp.createField<double>( option::name( "gpf" ) );
 
-    array::make_view<double,1>( gpf ).assign(0); 
+    array::make_view<double, 1>( gpf ).assign( 0 );
 
     EXPECT_NO_THROW( trans.dirtrans( gpf, spf ) );
     EXPECT_NO_THROW( trans.invtrans( spf, gpf ) );
@@ -416,7 +416,7 @@ CASE( "test_trans_using_functionspace_NodeColumns" ) {
     Field spf = sp.createField<double>( option::name( "spf" ) );
     Field gpf = gp.createField<double>( option::name( "gpf" ) );
 
-    array::make_view<double,1>( gpf ).assign(0);  
+    array::make_view<double, 1>( gpf ).assign( 0 );
 
     EXPECT_NO_THROW( trans.dirtrans( gpf, spf ) );
     EXPECT_NO_THROW( trans.invtrans( spf, gpf ) );
@@ -444,7 +444,7 @@ CASE( "test_trans_using_functionspace_StructuredColumns" ) {
     Field spf = sp.createField<double>( option::name( "spf" ) );
     Field gpf = gp.createField<double>( option::name( "gpf" ) );
 
-    array::make_view<double,1>( gpf ).assign(0);  
+    array::make_view<double, 1>( gpf ).assign( 0 );
 
     EXPECT_NO_THROW( trans.dirtrans( gpf, spf ) );
     EXPECT_NO_THROW( trans.invtrans( spf, gpf ) );

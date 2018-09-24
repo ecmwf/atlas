@@ -126,8 +126,8 @@ void Nabla::gradient_of_scalar( const Field& scalar_field, Field& grad_field ) c
                 grad( jnode, jlev, LAT ) = 0.;
             }
             for ( size_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
-                const int iedge  = node2edge( jnode, jedge );
-                if( iedge < nedges ) {
+                const int iedge = node2edge( jnode, jedge );
+                if ( iedge < nedges ) {
                     const double add = node2edge_sign( jnode, jedge );
                     for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
                         grad( jnode, jlev, LON ) += add * avgS( iedge, jlev, LON );
@@ -219,8 +219,8 @@ void Nabla::gradient_of_vector( const Field& vector_field, Field& grad_field ) c
             }
             for ( size_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
                 const int iedge = node2edge( jnode, jedge );
-                if( iedge < nedges ) {
-                    double add      = node2edge_sign( jnode, jedge );
+                if ( iedge < nedges ) {
+                    double add = node2edge_sign( jnode, jedge );
                     for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
                         grad( jnode, jlev, LONdLON ) += add * avgS( iedge, jlev, LONdLON );
                         grad( jnode, jlev, LONdLAT ) += add * avgS( iedge, jlev, LONdLAT );
@@ -319,8 +319,8 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
                 div( jnode, jlev ) = 0.;
             }
             for ( size_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
-                int iedge  = node2edge( jnode, jedge );
-                if( iedge < nedges ) {
+                int iedge = node2edge( jnode, jedge );
+                if ( iedge < nedges ) {
                     double add = node2edge_sign( jnode, jedge );
                     for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
                         div( jnode, jlev ) += add * ( avgS( iedge, jlev, LON ) + avgS( iedge, jlev, LAT ) );
@@ -401,8 +401,8 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
             }
             for ( size_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
                 size_t iedge = node2edge( jnode, jedge );
-                if( iedge < nedges ) {
-                    double add   = node2edge_sign( jnode, jedge );
+                if ( iedge < nedges ) {
+                    double add = node2edge_sign( jnode, jedge );
                     for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
                         curl( jnode, jlev ) += add * ( avgS( iedge, jlev, LAT ) - avgS( iedge, jlev, LON ) );
                     }

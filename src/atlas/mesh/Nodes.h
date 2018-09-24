@@ -49,7 +49,7 @@ public:
             NORTH    = ( 1 << 6 ),
             SOUTH    = ( 1 << 7 ),
             PATCH    = ( 1 << 8 ),
-            POLE     = ( 1 << 9)
+            POLE     = ( 1 << 9 )
         };
     };
 

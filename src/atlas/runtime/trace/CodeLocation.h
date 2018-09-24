@@ -11,29 +11,26 @@
 #pragma once
 
 #include <cstring>
-#include "eckit/log/CodeLocation.h"
 #include "atlas/runtime/Log.h"
+#include "eckit/log/CodeLocation.h"
 
 namespace atlas {
 
 class CodeLocation {
 public:
-    CodeLocation( const CodeLocation& loc ) :
-       CodeLocation( loc.file(), loc.line(), loc.func(), loc.stored_ ) {
-    }
-    CodeLocation( const eckit::CodeLocation& loc ) : loc_(loc), stored_(false) {
-    }
-    CodeLocation( const char* file, int line, const char* function, bool store=false ) :
-      stored_( store ) {
-        if( stored_ ) {
-            if( file ) {
-                file_str_ = std::string(file);
-                file_ = file_str_.c_str();
+    CodeLocation( const CodeLocation& loc ) : CodeLocation( loc.file(), loc.line(), loc.func(), loc.stored_ ) {}
+    CodeLocation( const eckit::CodeLocation& loc ) : loc_( loc ), stored_( false ) {}
+    CodeLocation( const char* file, int line, const char* function, bool store = false ) : stored_( store ) {
+        if ( stored_ ) {
+            if ( file ) {
+                file_str_ = std::string( file );
+                file_     = file_str_.c_str();
             }
-            if( function ) {
-                function_str_ = std::string(function);
-                function_ = function_str_.c_str();
-            } else { // workaround until ECKIT-356 is resolved
+            if ( function ) {
+                function_str_ = std::string( function );
+                function_     = function_str_.c_str();
+            }
+            else {  // workaround until ECKIT-356 is resolved
                 function_ = "";
             }
             loc_ = eckit::CodeLocation( file_, line, function_ );
@@ -42,9 +39,7 @@ public:
             loc_ = eckit::CodeLocation( file, line, function );
         }
     }
-    operator const eckit::CodeLocation& () const {
-        return loc_;
-    }
+    operator const eckit::CodeLocation&() const { return loc_; }
 
     /// conversion to bool for checking if location was set
     operator bool() const { return loc_; }
@@ -53,17 +48,21 @@ public:
     /// accessor to line
     int line() const { return loc_.line(); }
     /// accessor to file
-    const char * file() const { return loc_.file(); }
+    const char* file() const { return loc_.file(); }
     /// accessor to function
-    const char * func() const { return loc_.func(); }
-    friend std::ostream& operator<<( std::ostream& s, const CodeLocation& loc ) { s << loc.loc_; return s; }
+    const char* func() const { return loc_.func(); }
+    friend std::ostream& operator<<( std::ostream& s, const CodeLocation& loc ) {
+        s << loc.loc_;
+        return s;
+    }
+
 private:
     eckit::CodeLocation loc_;
-    bool stored_ = false;
-    const char* file_ = nullptr;
+    bool stored_          = false;
+    const char* file_     = nullptr;
     const char* function_ = nullptr;
     std::string file_str_;
     std::string function_str_;
 };
 
-}
+}  // namespace atlas

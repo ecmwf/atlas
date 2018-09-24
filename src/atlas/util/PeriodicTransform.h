@@ -49,11 +49,10 @@ public:
         // inplace.set_lat( inplace.lat() ); null operation
     }
 
-    void operator()( std::array<double,2>& inplace ) const {
+    void operator()( std::array<double, 2>& inplace ) const {
         inplace[0] = inplace[0] + x_translation_;
         // inplace[1] = inplace[1]; null operation
     }
-
 };
 
 }  // namespace util

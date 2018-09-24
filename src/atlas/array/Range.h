@@ -104,6 +104,7 @@ public:
     int end() const { return end_; }
 
     Range() : Range( 0, 0 ) {}
+
 private:
     int start_;
     int end_;

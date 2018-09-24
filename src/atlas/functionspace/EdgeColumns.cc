@@ -20,8 +20,8 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildEdges.h"
+#include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/parallel/Checksum.h"
@@ -248,7 +248,7 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config )
     }
 
     auto get_nb_edges_from_metadata = [&]() {
-        size_t _nb_edges(0);
+        size_t _nb_edges( 0 );
         std::stringstream ss;
         ss << "nb_edges_including_halo[" << halo_.size() << "]";
         mesh_.metadata().get( ss.str(), _nb_edges );
@@ -258,8 +258,8 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config )
     mesh::actions::build_periodic_boundaries( mesh_ );
 
     if ( halo_.size() > 0 ) {
-         mesh::actions::build_halo( mesh_, halo_.size() );
-         nb_edges_ = get_nb_edges_from_metadata();
+        mesh::actions::build_halo( mesh_, halo_.size() );
+        nb_edges_ = get_nb_edges_from_metadata();
     }
     if ( !nb_edges_ ) {
         mesh::actions::build_edges( mesh_, config );

@@ -34,7 +34,7 @@ Nodes::Nodes() : size_( 0 ) {
     lonlat_.set_variables( 2 );
     ghost_ = add( Field( "ghost", make_datatype<int>(), make_shape( size() ) ) );
     flags_ = add( Field( "flags", make_datatype<int>(), make_shape( size() ) ) );
-    halo_ = add( Field( "halo", make_datatype<int>(), make_shape( size() ) ) );
+    halo_  = add( Field( "halo", make_datatype<int>(), make_shape( size() ) ) );
 
     edge_connectivity_ = &add( new Connectivity( "edge" ) );
     cell_connectivity_ = &add( new Connectivity( "cell" ) );
@@ -81,7 +81,7 @@ Field& Nodes::field( const std::string& name ) {
 }
 
 void Nodes::resize( size_t size ) {
-    if( size != size_ ) {
+    if ( size != size_ ) {
         size_t previous_size = size_;
         size_                = size;
         for ( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it ) {
@@ -91,10 +91,10 @@ void Nodes::resize( size_t size ) {
             field.resize( shape );
         }
 
-        auto glb_idx = array::make_view<gidx_t,1>( global_index() );
-        auto part    = array::make_view<int,   1>( partition() );
-        auto flag    = array::make_view<int,   1>( flags() );
-        auto _halo   = array::make_view<int,   1>( halo() );
+        auto glb_idx = array::make_view<gidx_t, 1>( global_index() );
+        auto part    = array::make_view<int, 1>( partition() );
+        auto flag    = array::make_view<int, 1>( flags() );
+        auto _halo   = array::make_view<int, 1>( halo() );
 
         const int mpi_rank = mpi::comm().rank();
         for ( size_t n = previous_size; n < size_; ++n ) {

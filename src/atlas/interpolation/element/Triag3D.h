@@ -12,10 +12,10 @@
 
 #include <limits>
 
-#include "eckit/exception/Exceptions.h"
 #include "atlas/interpolation/Vector3D.h"
 #include "atlas/interpolation/method/Intersect.h"
 #include "atlas/util/Point.h"
+#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace interpolation {
@@ -60,7 +60,7 @@ public:  // types
         if ( i == 0 ) return v0;
         if ( i == 1 ) return v1;
         if ( i == 2 ) return v2;
-        throw eckit::OutOfRange(i,3,Here());
+        throw eckit::OutOfRange( i, 3, Here() );
     }
 
 private:  // members

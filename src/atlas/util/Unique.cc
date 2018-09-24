@@ -7,7 +7,7 @@
  * granted to it by virtue of its status as an intergovernmental organisation
  * nor does it submit to any jurisdiction.
  */
- 
+
 #include "atlas/util/Unique.h"
 #include "atlas/util/PeriodicTransform.h"
 
@@ -15,12 +15,12 @@ namespace atlas {
 namespace util {
 
 uidx_t unique_lonlat( const double& lon, const double& lat, const PeriodicTransform& transform ) {
-    std::array<double,2> lonlat{lon,lat};
+    std::array<double, 2> lonlat{lon, lat};
     transform( lonlat );
     return detail::uniqueT<uidx_t>( microdeg( lonlat[LON] ), microdeg( lonlat[LAT] ) );
 }
 
-uidx_t UniqueLonLat::operator()( const mesh::Connectivity::Row& elem_nodes, const PeriodicTransform& transform) const {
+uidx_t UniqueLonLat::operator()( const mesh::Connectivity::Row& elem_nodes, const PeriodicTransform& transform ) const {
     double centroid[2];
     centroid[XX] = 0.;
     centroid[YY] = 0.;
@@ -33,7 +33,6 @@ uidx_t UniqueLonLat::operator()( const mesh::Connectivity::Row& elem_nodes, cons
     centroid[YY] /= static_cast<double>( npts );
     return unique_lonlat( centroid[XX], centroid[YY], transform );
 }
-
 
 
 }  // namespace util

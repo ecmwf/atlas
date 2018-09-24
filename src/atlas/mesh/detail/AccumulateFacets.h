@@ -37,9 +37,10 @@ void accumulate_facets( const mesh::HybridElements& cells, const mesh::Nodes& no
 
 // currently only supports 2D meshes. Little work needed for 3D.
 void accumulate_facets_ordered_by_halo( const mesh::HybridElements& cells, const mesh::Nodes& nodes,
-                        std::vector<idx_t>& facet_nodes_data,  // shape(nb_facets,nb_nodes_per_facet)
-                        std::vector<idx_t>& connectivity_facet_to_elem, size_t& nb_facets, size_t& nb_inner_facets,
-                        idx_t& missing_value, std::vector<idx_t>& halo_offsets );
+                                        std::vector<idx_t>& facet_nodes_data,  // shape(nb_facets,nb_nodes_per_facet)
+                                        std::vector<idx_t>& connectivity_facet_to_elem, size_t& nb_facets,
+                                        size_t& nb_inner_facets, idx_t& missing_value,
+                                        std::vector<idx_t>& halo_offsets );
 
 }  // namespace detail
 }  // namespace mesh

@@ -8,8 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/runtime/Trace.h"
 #include "atlas/parallel/omp/omp.h"
+#include "atlas/runtime/Trace.h"
 #include "tests/AtlasTestEnvironment.h"
 
 
@@ -17,7 +17,6 @@ namespace atlas {
 namespace test {
 
 CASE( "test elapsed" ) {
-
     auto trace = Trace( Here() );
 
     EXPECT( trace.running() );
@@ -42,16 +41,16 @@ CASE( "test elapsed" ) {
 }
 
 CASE( "test trace OpenMP" ) {
-  atlas_omp_parallel_for( int i=0; i<10; ++i ) {
-      auto trace = Trace( Here(), "loop" );
-      if( ATLAS_HAVE_OMP ) {
-        trace.stop();
-        if( atlas_omp_get_thread_num() > 0 ) {
-            EXPECT( trace.elapsed() == 0. );
-        } else {
-            EXPECT( trace.elapsed() != 0. );        }
-      }
-  }
+    atlas_omp_parallel_for( int i = 0; i < 10; ++i ) {
+        auto trace = Trace( Here(), "loop" );
+        if ( ATLAS_HAVE_OMP ) {
+            trace.stop();
+            if ( atlas_omp_get_thread_num() > 0 ) { EXPECT( trace.elapsed() == 0. ); }
+            else {
+                EXPECT( trace.elapsed() != 0. );
+            }
+        }
+    }
 }
 
 }  // namespace test

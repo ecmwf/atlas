@@ -70,7 +70,7 @@ int regex_match_impl( const std::string& string, const std::string& regex, std::
 class Regex {
 public:
     Regex( const std::string& regex, bool use_case = true ) : regex_( regex ), use_case_( use_case ) {}
-/*
+    /*
     // unused
     bool match( const std::string& string ) const {
         std::vector<std::string> substr;
@@ -81,7 +81,7 @@ public:
         return regex_match_impl( string, regex_, substr, true, use_case_ );
     }
 
-/*
+    /*
     // unused
     operator std::string() const { return regex_; }
 */

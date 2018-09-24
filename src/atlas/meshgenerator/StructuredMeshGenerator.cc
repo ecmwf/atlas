@@ -838,7 +838,7 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
                     part( jnode ) = mypart;
                     // part(jnode)      = parts.at( offset_glb.at(jlat) );
                     ghost( jnode ) = 1;
-                    halo( jnode )    = 0;
+                    halo( jnode )  = 0;
                     ghost_nodes.push_back( GhostNode( jlat, rg.nx( jlat ), jnode ) );
                     ++jnode;
                 }

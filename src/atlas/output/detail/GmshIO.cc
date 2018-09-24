@@ -955,7 +955,7 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Node
     bool binary( !options.get<bool>( "ascii" ) );
     if ( binary ) mode |= std::ios_base::binary;
     bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
-    GmshFile file( file_path, mode, gather ? -1 : int(atlas::mpi::comm().rank()) );
+    GmshFile file( file_path, mode, gather ? -1 : int( atlas::mpi::comm().rank() ) );
 
     // Header
     if ( is_new_file ) { write_header_ascii( file ); }
@@ -994,7 +994,7 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Stru
 
     bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
 
-    GmshFile file( file_path, mode, gather ? -1 : int(atlas::mpi::comm().rank()) );
+    GmshFile file( file_path, mode, gather ? -1 : int( atlas::mpi::comm().rank() ) );
 
     // Header
     if ( is_new_file ) write_header_ascii( file );

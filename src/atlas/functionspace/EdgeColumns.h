@@ -42,8 +42,6 @@ namespace detail {
 
 class EdgeColumns : public FunctionSpaceImpl {
 public:
-    // EdgeColumns( const Mesh&, const mesh::Halo&, const eckit::Configuration& );
-    // EdgeColumns( const Mesh&, const mesh::Halo& );
     EdgeColumns( const Mesh&, const eckit::Configuration& = util::NoConfig() );
 
     virtual ~EdgeColumns();

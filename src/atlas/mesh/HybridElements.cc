@@ -109,7 +109,8 @@ void HybridElements::resize( size_t size ) {
 void HybridElements::remove_field( const std::string& name ) {
     if ( !has_field( name ) ) {
         std::stringstream msg;
-        msg << "Trying to remove field `" << name << "' in HybridElements, but no field with this name is present in HybridElements.";
+        msg << "Trying to remove field `" << name
+            << "' in HybridElements, but no field with this name is present in HybridElements.";
         throw eckit::Exception( msg.str(), Here() );
     }
     fields_.erase( name );
@@ -118,7 +119,8 @@ void HybridElements::remove_field( const std::string& name ) {
 const Field& HybridElements::field( const std::string& name ) const {
     if ( !has_field( name ) ) {
         std::stringstream msg;
-        msg << "Trying to access field `" << name << "' in HybridElements, but no field with this name is present in HybridElements.";
+        msg << "Trying to access field `" << name
+            << "' in HybridElements, but no field with this name is present in HybridElements.";
         throw eckit::Exception( msg.str(), Here() );
     }
     return fields_.find( name )->second;

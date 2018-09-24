@@ -23,7 +23,6 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
-#include "atlas/util/PeriodicTransform.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -31,31 +30,32 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/PeriodicTransform.h"
 #include "atlas/util/Unique.h"
 
 #define EDGE( jedge )                                                                                     \
     "Edge(" << node_gidx( edge_nodes( jedge, 0 ) ) << "[p" << node_part( edge_nodes( jedge, 0 ) ) << "] " \
             << node_gidx( edge_nodes( jedge, 1 ) ) << "[p" << node_part( edge_nodes( jedge, 1 ) ) << "])"
 
-//#define DEBUGGING_PARFIELDS 
+//#define DEBUGGING_PARFIELDS
 #ifdef DEBUGGING_PARFIELDS
 #define own1 2419089
 #define own2 2423185
-#define OWNED_EDGE( jedge )                                                                   \
+#define OWNED_EDGE( jedge )                                                                             \
     ( ( node_gidx( edge_nodes( jedge, 0 ) ) == own1 && node_gidx( edge_nodes( jedge, 1 ) ) == own2 ) || \
       ( node_gidx( edge_nodes( jedge, 0 ) ) == own2 && node_gidx( edge_nodes( jedge, 1 ) ) == own1 ) )
 #define per1 -1
 #define per2 -1
-#define PERIODIC_EDGE( jedge )                                                                \
+#define PERIODIC_EDGE( jedge )                                                                          \
     ( ( node_gidx( edge_nodes( jedge, 0 ) ) == per1 && node_gidx( edge_nodes( jedge, 1 ) ) == per2 ) || \
       ( node_gidx( edge_nodes( jedge, 0 ) ) == per2 && node_gidx( edge_nodes( jedge, 1 ) ) == per1 ) )
-#define find1 805 // 1697
-#define find2 901 // 1698
-#define FIND_EDGE( jedge )                                                                      \
+#define find1 805  // 1697
+#define find2 901  // 1698
+#define FIND_EDGE( jedge )                                                                                \
     ( ( node_gidx( edge_nodes( jedge, 0 ) ) == find1 && node_gidx( edge_nodes( jedge, 1 ) ) == find2 ) || \
       ( node_gidx( edge_nodes( jedge, 0 ) ) == find2 && node_gidx( edge_nodes( jedge, 1 ) ) == find1 ) )
 #define find_gidx 689849552510167040
-#define FIND_GIDX( UID ) ( (UID) == find_gidx )
+#define FIND_GIDX( UID ) ( ( UID ) == find_gidx )
 #endif
 
 using Topology = atlas::mesh::Nodes::Topology;
@@ -344,9 +344,9 @@ Field& build_edges_partition( Mesh& mesh ) {
     size_t mypart = mpi::comm().rank();
     size_t nparts = mpi::comm().size();
 
-    mesh::HybridElements& edges              = mesh.edges();
-    auto edge_part          = array::make_view<int, 1>( edges.partition() );
-    const auto edge_glb_idx = array::make_view<gidx_t, 1>( edges.global_index() );
+    mesh::HybridElements& edges = mesh.edges();
+    auto edge_part              = array::make_view<int, 1>( edges.partition() );
+    const auto edge_glb_idx     = array::make_view<gidx_t, 1>( edges.global_index() );
 
     const auto& edge_nodes   = edges.node_connectivity();
     const auto& edge_to_elem = edges.cell_connectivity();
@@ -398,14 +398,12 @@ Field& build_edges_partition( Mesh& mesh ) {
     PeriodicTransform transform_periodic_west( +360. );
     UniqueLonLat _compute_uid( mesh );
     auto compute_uid = [&]( idx_t jedge ) -> gidx_t {
-        if( periodic_east( jedge ) ) {
-            return - _compute_uid( edge_nodes.row( jedge ), transform_periodic_east );
-        }
-        else if( periodic_west_bdry( jedge ) ) {
+        if ( periodic_east( jedge ) ) { return -_compute_uid( edge_nodes.row( jedge ), transform_periodic_east ); }
+        else if ( periodic_west_bdry( jedge ) ) {
             return _compute_uid( edge_nodes.row( jedge ) );
         }
-        else if( periodic_west( jedge ) ) {
-            return - _compute_uid( edge_nodes.row( jedge ), transform_periodic_west );
+        else if ( periodic_west( jedge ) ) {
+            return -_compute_uid( edge_nodes.row( jedge ), transform_periodic_west );
         }
         else {
             return _compute_uid( edge_nodes.row( jedge ) );
@@ -413,41 +411,41 @@ Field& build_edges_partition( Mesh& mesh ) {
     };
 
 
-
     // should be unit-test
     {
         ASSERT( util::unique_lonlat( 360., 0., transform_periodic_east ) == util::unique_lonlat( 0., 0. ) );
-        ASSERT( util::unique_lonlat( 0., 0., transform_periodic_west )   == util::unique_lonlat( 360., 0. ) );
+        ASSERT( util::unique_lonlat( 0., 0., transform_periodic_west ) == util::unique_lonlat( 360., 0. ) );
     }
 
 
-
     for ( size_t jedge = 0; jedge < nb_edges; ++jedge ) {
-        gidx_t edge_gidx = compute_uid( jedge );
-        global_to_local[ edge_gidx ] = jedge;
+        gidx_t edge_gidx           = compute_uid( jedge );
+        global_to_local[edge_gidx] = jedge;
 
 #ifdef DEBUGGING_PARFIELDS
-        if( FIND_EDGE( jedge ) ) {
-            std::cout << "[" << mypart  << "] " << EDGE(jedge) << " has gidx " << edge_gidx << std::endl;
-            if( periodic_east(jedge) ) {
+        if ( FIND_EDGE( jedge ) ) {
+            std::cout << "[" << mypart << "] " << EDGE( jedge ) << " has gidx " << edge_gidx << std::endl;
+            if ( periodic_east( jedge ) ) {
                 //std::cout << "[" << mypart  << "] " << EDGE(jedge) << " is periodic_east " << std::endl;
             }
-            else if( periodic_west(jedge) ) {
-                std::cout << "[" << mypart  << "] " << EDGE(jedge) << " is periodic_west " << std::endl;
+            else if ( periodic_west( jedge ) ) {
+                std::cout << "[" << mypart << "] " << EDGE( jedge ) << " is periodic_west " << std::endl;
             }
             else {
-                std::cout << "[" << mypart  << "] " << EDGE(jedge) << " is not periodic" << std::endl;
+                std::cout << "[" << mypart << "] " << EDGE( jedge ) << " is not periodic" << std::endl;
             }
         }
-        if( FIND_GIDX( edge_gidx ) ) std::cout << "[" << mypart  << "] " << "has " << EDGE(jedge) << " with gidx " << edge_gidx << std::endl;
+        if ( FIND_GIDX( edge_gidx ) )
+            std::cout << "[" << mypart << "] "
+                      << "has " << EDGE( jedge ) << " with gidx " << edge_gidx << std::endl;
 #endif
 
-        idx_t ip1       = edge_nodes( jedge, 0 );
-        idx_t ip2       = edge_nodes( jedge, 1 );
-        int pn1         = node_part( ip1 );
-        int pn2         = node_part( ip2 );
-        int y1          = util::microdeg( xy( ip1, YY ) );
-        int y2          = util::microdeg( xy( ip2, YY ) );
+        idx_t ip1 = edge_nodes( jedge, 0 );
+        idx_t ip2 = edge_nodes( jedge, 1 );
+        int pn1   = node_part( ip1 );
+        int pn2   = node_part( ip2 );
+        int y1    = util::microdeg( xy( ip1, YY ) );
+        int y2    = util::microdeg( xy( ip2, YY ) );
         int p;
         if ( y1 == y2 ) {
             int x1 = util::microdeg( xy( ip1, XX ) );
@@ -458,42 +456,46 @@ Field& build_edges_partition( Mesh& mesh ) {
             p = ( y1 > y2 ) ? pn1 : pn2;
         }
 
-        idx_t elem1 = edge_to_elem( jedge, 0 );
-        idx_t elem2 = edge_to_elem( jedge, 1 );
+        idx_t elem1   = edge_to_elem( jedge, 0 );
+        idx_t elem2   = edge_to_elem( jedge, 1 );
         idx_t missing = edge_to_elem.missing_value();
         if ( elem1 == missing && elem2 == missing ) {
             // Don't attempt to change p
         }
-        else if( elem1 == missing ) {
+        else if ( elem1 == missing ) {
             NOTIMP;
         }
         else if ( elem2 == missing ) {
-            if( pn1 == pn2 ) {
-                p = pn1;
-            }
-            else if( periodic_east( jedge ) ) {
+            if ( pn1 == pn2 ) { p = pn1; }
+            else if ( periodic_east( jedge ) ) {
 #ifdef DEBUGGING_PARFIELDS
-                //if( FIND_EDGE( jedge ) ) std::cout << "[" << mypart  << "] " << "periodic_east" << std::endl; 
+            //if( FIND_EDGE( jedge ) ) std::cout << "[" << mypart  << "] " << "periodic_east" << std::endl;
 #endif
                 bdry_edges.push_back( edge_gidx );
                 p = -1;
             }
-            else if( periodic_west_bdry( jedge ) ) {
+            else if ( periodic_west_bdry( jedge ) ) {
 #ifdef DEBUGGING_PARFIELDS
-                if( FIND_EDGE( jedge ) ) std::cout << "[" << mypart  << "] " << "periodic_west_bdry" << std::endl; 
+                if ( FIND_EDGE( jedge ) )
+                    std::cout << "[" << mypart << "] "
+                              << "periodic_west_bdry" << std::endl;
 #endif
                 p = elem_part( elem1 );
             }
-            else if( periodic_west( jedge ) ) {
+            else if ( periodic_west( jedge ) ) {
 #ifdef DEBUGGING_PARFIELDS
-                if( FIND_EDGE( jedge ) ) std::cout << "[" << mypart  << "] " << "periodic_west" << std::endl; 
+                if ( FIND_EDGE( jedge ) )
+                    std::cout << "[" << mypart << "] "
+                              << "periodic_west" << std::endl;
 #endif
                 bdry_edges.push_back( edge_gidx );
                 p = -1;
             }
-            else if( domain_bdry( jedge ) ) {
+            else if ( domain_bdry( jedge ) ) {
 #ifdef DEBUGGING_PARFIELDS
-                if( FIND_EDGE( jedge ) ) std::cout << "[" << mypart  << "] " << "domain_bdry" << std::endl; 
+                if ( FIND_EDGE( jedge ) )
+                    std::cout << "[" << mypart << "] "
+                              << "domain_bdry" << std::endl;
 #endif
                 p = elem_part( elem1 );
             }
@@ -533,23 +535,26 @@ Field& build_edges_partition( Mesh& mesh ) {
     for ( int p = 0; p < mpi_size; ++p ) {
         auto view = recv_bdry_edges_from_parts[p];
         for ( int j = 0; j < view.size(); ++j ) {
-            gidx_t gidx = view[j];
-            gidx_t master_gidx = std::abs(gidx);
+            gidx_t gidx        = view[j];
+            gidx_t master_gidx = std::abs( gidx );
             if ( global_to_local.count( master_gidx ) ) {
                 idx_t iedge = global_to_local[master_gidx];
 #ifdef DEBUGGING_PARFIELDS
-                if( FIND_GIDX( master_gidx) ) std::cout << "[" << mypart << "] found " << EDGE(iedge) << std::endl;
+                if ( FIND_GIDX( master_gidx ) ) std::cout << "[" << mypart << "] found " << EDGE( iedge ) << std::endl;
 #endif
                 if ( not is_bdry_edge( master_gidx ) ) {
                     send_gidx[p].push_back( gidx );
                     send_part[p].push_back( edge_part( iedge ) );
 #ifdef DEBUGGING_PARFIELDS
-                    if( FIND_EDGE( iedge ) ) {
-                        std::cout << "[" << mypart << "] found " << EDGE(iedge) " for part " << p << std::endl;
+                    if ( FIND_EDGE( iedge ) ) {
+                        std::cout << "[" << mypart << "] found " << EDGE( iedge ) " for part " << p << std::endl;
                     }
 #endif
-                } else { // boundary edge with nodes of different rank
-                    idx_t ielem = ( edge_to_elem( iedge, 0 ) != edge_to_elem.missing_value() ? edge_to_elem( iedge, 0 ) : edge_to_elem( iedge, 1 ) );
+                }
+                else {  // boundary edge with nodes of different rank
+                    idx_t ielem =
+                        ( edge_to_elem( iedge, 0 ) != edge_to_elem.missing_value() ? edge_to_elem( iedge, 0 )
+                                                                                   : edge_to_elem( iedge, 1 ) );
                     send_bdry_gidx[p].push_back( gidx );
                     send_bdry_elem_part[p].push_back( elem_part( ielem ) );
                     send_bdry_elem_gidx[p].push_back( elem_gidx( ielem ) );
@@ -582,24 +587,25 @@ Field& build_edges_partition( Mesh& mesh ) {
     mpi::comm().allToAll( send_bdry_elem_part, recv_bdry_elem_part );
     mpi::comm().allToAll( send_bdry_elem_gidx, recv_bdry_elem_gidx );
     for ( int p = 0; p < mpi_size; ++p ) {
-        const auto& recv_bdry_gidx_p = recv_bdry_gidx[p];
+        const auto& recv_bdry_gidx_p      = recv_bdry_gidx[p];
         const auto& recv_bdry_elem_part_p = recv_bdry_elem_part[p];
         const auto& recv_bdry_elem_gidx_p = recv_bdry_elem_gidx[p];
         for ( int j = 0; j < recv_bdry_gidx_p.size(); ++j ) {
-            idx_t iedge        = global_to_local[recv_bdry_gidx_p[j]];
-            idx_t e1 = ( edge_to_elem( iedge, 0 ) != edge_to_elem.missing_value() ? edge_to_elem( iedge, 0 ) : edge_to_elem( iedge, 1 ) );
-            if( elem_gidx(e1) != recv_bdry_elem_gidx_p[j] ) {
-                idx_t ip1       = edge_nodes( iedge, 0 );
-                idx_t ip2       = edge_nodes( iedge, 1 );
-                int pn1         = node_part( ip1 );
-                int pn2         = node_part( ip2 );
-                int y1          = util::microdeg( xy( ip1, YY ) );
-                int y2          = util::microdeg( xy( ip2, YY ) );
+            idx_t iedge = global_to_local[recv_bdry_gidx_p[j]];
+            idx_t e1    = ( edge_to_elem( iedge, 0 ) != edge_to_elem.missing_value() ? edge_to_elem( iedge, 0 )
+                                                                                  : edge_to_elem( iedge, 1 ) );
+            if ( elem_gidx( e1 ) != recv_bdry_elem_gidx_p[j] ) {
+                idx_t ip1 = edge_nodes( iedge, 0 );
+                idx_t ip2 = edge_nodes( iedge, 1 );
+                int pn1   = node_part( ip1 );
+                int pn2   = node_part( ip2 );
+                int y1    = util::microdeg( xy( ip1, YY ) );
+                int y2    = util::microdeg( xy( ip2, YY ) );
                 int ped;
                 if ( y1 == y2 ) {
                     int x1 = util::microdeg( xy( ip1, XX ) );
                     int x2 = util::microdeg( xy( ip2, XX ) );
-                    ped      = ( x1 < x2 ) ? pn1 : pn2;
+                    ped    = ( x1 < x2 ) ? pn1 : pn2;
                 }
                 else {
                     ped = ( y1 > y2 ) ? pn1 : pn2;
@@ -655,12 +661,14 @@ Field& build_edges_partition( Mesh& mesh ) {
         if ( edge_is_partition_boundary ) {
             if ( not edge_partition_is_same_as_one_of_nodes ) {
                 if ( elem1 != edge_to_elem.missing_value() ) {
-                    Log::error() << "[" << mypart << "] " << EDGE( jedge ) << " [p" << p << "] at partition_boundary is not correct. elem1[p"
-                                 << elem_part( elem1 ) << "]" << std::endl;
+                    Log::error() << "[" << mypart << "] " << EDGE( jedge ) << " [p" << p
+                                 << "] at partition_boundary is not correct. elem1[p" << elem_part( elem1 ) << "]"
+                                 << std::endl;
                 }
                 else {
-                    Log::error() << "[" << mypart << "] " << EDGE( jedge ) << " [p" << p << "] at partition_boundary is not correct elem2[p"
-                                 << elem_part( elem2 ) << "]" << std::endl;
+                    Log::error() << "[" << mypart << "] " << EDGE( jedge ) << " [p" << p
+                                 << "] at partition_boundary is not correct elem2[p" << elem_part( elem2 ) << "]"
+                                 << std::endl;
                 }
                 insane = 1;
             }

@@ -125,17 +125,12 @@ void accumulate_facets( const mesh::HybridElements& cells, const mesh::Nodes& no
     }
 }
 
-struct CellsRange {
-  size_t t;
-  size_t begin;
-  size_t end;
-};
-
-
-void accumulate_facets_in_range( std::vector<array::Range>& range, const mesh::HybridElements& cells, const mesh::Nodes& nodes,
-                        std::vector<idx_t>& facet_nodes_data,  // shape(nb_facets,nb_nodes_per_facet)
-                        std::vector<idx_t>& connectivity_facet_to_elem, size_t& nb_facets, size_t& nb_inner_facets,
-                        idx_t& missing_value, std::vector<std::vector<idx_t>>& node_to_facet ) {
+void accumulate_facets_in_range( std::vector<array::Range>& range, const mesh::HybridElements& cells,
+                                 const mesh::Nodes& nodes,
+                                 std::vector<idx_t>& facet_nodes_data,  // shape(nb_facets,nb_nodes_per_facet)
+                                 std::vector<idx_t>& connectivity_facet_to_elem, size_t& nb_facets,
+                                 size_t& nb_inner_facets, idx_t& missing_value,
+                                 std::vector<std::vector<idx_t>>& node_to_facet ) {
     ATLAS_TRACE();
     if ( connectivity_facet_to_elem.size() == 0 ) { connectivity_facet_to_elem.reserve( 6 * cells.size() ); }
     if ( facet_nodes_data.size() == 0 ) { facet_nodes_data.reserve( 6 * cells.size() ); }
@@ -180,9 +175,9 @@ void accumulate_facets_in_range( std::vector<array::Range>& range, const mesh::H
         }
 
         std::vector<idx_t> facet_nodes( nb_nodes_in_facet );
-        
+
         const size_t e_start = range[t].start();
-        const size_t e_end   = range[t].end(); 
+        const size_t e_end   = range[t].end();
 
         for ( size_t e = e_start; e < e_end; ++e ) {
             if ( patch( e ) ) continue;
@@ -234,35 +229,36 @@ void accumulate_facets_in_range( std::vector<array::Range>& range, const mesh::H
 }
 
 void accumulate_facets_ordered_by_halo( const mesh::HybridElements& cells, const mesh::Nodes& nodes,
-                        std::vector<idx_t>& facet_nodes_data,  // shape(nb_facets,nb_nodes_per_facet)
-                        std::vector<idx_t>& connectivity_facet_to_elem, size_t& nb_facets, size_t& nb_inner_facets,
-                        idx_t& missing_value, std::vector<idx_t>& halo_offsets ) {
+                                        std::vector<idx_t>& facet_nodes_data,  // shape(nb_facets,nb_nodes_per_facet)
+                                        std::vector<idx_t>& connectivity_facet_to_elem, size_t& nb_facets,
+                                        size_t& nb_inner_facets, idx_t& missing_value,
+                                        std::vector<idx_t>& halo_offsets ) {
     ATLAS_TRACE();
 
-    static int MAXHALO = 20;
-    std::vector< std::vector< array::Range > > ranges( MAXHALO, std::vector< array::Range>( cells.nb_types() ) );
+    static int MAXHALO = 50;
+    std::vector<std::vector<array::Range>> ranges( MAXHALO, std::vector<array::Range>( cells.nb_types() ) );
 
     int maxhalo{0};
     for ( size_t t = 0; t < cells.nb_types(); ++t ) {
-        const mesh::Elements& elements            = cells.elements( t );
-        auto elem_halo                            = elements.view<int, 1>( elements.halo() );
-        size_t nb_elems                           = elements.size();
+        const mesh::Elements& elements = cells.elements( t );
+        auto elem_halo                 = elements.view<int, 1>( elements.halo() );
+        size_t nb_elems                = elements.size();
 
         int halo{0};
         int begin{0};
         int end{0};
         for ( size_t e = 0; e < nb_elems; ++e ) {
             ASSERT( elem_halo( e ) >= halo );
-            if( elem_halo( e ) > halo ) {
-                end = e;
-                ranges[halo][t] = array::Range{ begin, end };
-                begin = end;
+            if ( elem_halo( e ) > halo ) {
+                end             = e;
+                ranges[halo][t] = array::Range{begin, end};
+                begin           = end;
                 ++halo;
             }
         }
-        end = nb_elems;
-        ranges[halo][t] = array::Range{ begin, end };
-        maxhalo = std::max(halo,maxhalo);
+        end             = nb_elems;
+        ranges[halo][t] = array::Range{begin, end};
+        maxhalo         = std::max( halo, maxhalo );
     }
 
 
@@ -276,8 +272,9 @@ void accumulate_facets_ordered_by_halo( const mesh::HybridElements& cells, const
 
 
     halo_offsets = std::vector<idx_t>{0};
-    for( int h=0; h<=maxhalo; ++h ) {
-        accumulate_facets_in_range( ranges[h], cells, nodes, facet_nodes_data, connectivity_facet_to_elem, nb_facets, nb_inner_facets, missing_value, node_to_facet );
+    for ( int h = 0; h <= maxhalo; ++h ) {
+        accumulate_facets_in_range( ranges[h], cells, nodes, facet_nodes_data, connectivity_facet_to_elem, nb_facets,
+                                    nb_inner_facets, missing_value, node_to_facet );
         halo_offsets.emplace_back( nb_facets );
     }
 }

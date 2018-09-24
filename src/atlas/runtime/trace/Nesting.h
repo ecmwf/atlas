@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "atlas/runtime/trace/CodeLocation.h"
 #include "atlas/runtime/trace/CallStack.h"
+#include "atlas/runtime/trace/CodeLocation.h"
 #include "atlas/runtime/trace/Logging.h"
 
 //-----------------------------------------------------------------------------------------------------------
@@ -34,11 +34,11 @@ public:
     }
     operator CallStack() const { return stack_; }
     CallStack& push( const CodeLocation& loc, const std::string& id ) {
-        if( Control::enabled() ) stack_.push_front( loc, id );
+        if ( Control::enabled() ) stack_.push_front( loc, id );
         return stack_;
     }
     void pop() {
-        if( Control::enabled() ) stack_.pop_front();
+        if ( Control::enabled() ) stack_.pop_front();
     }
 };
 

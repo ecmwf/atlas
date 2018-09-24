@@ -24,7 +24,6 @@
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
-#include "atlas/util/PeriodicTransform.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
@@ -33,6 +32,7 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/MicroDeg.h"
+#include "atlas/util/PeriodicTransform.h"
 #include "atlas/util/Unique.h"
 
 //#define DEBUG_OUTPUT
@@ -45,9 +45,9 @@
 // #define ATLAS_103
 // #define ATLAS_103_SORT
 
-using atlas::util::PeriodicTransform;
 using atlas::mesh::detail::accumulate_facets;
 using atlas::util::LonLatMicroDeg;
+using atlas::util::PeriodicTransform;
 using atlas::util::UniqueLonLat;
 using atlas::util::microdeg;
 using Topology = atlas::mesh::Nodes::Topology;
@@ -844,8 +844,8 @@ public:
         int new_node = 0;
         for ( size_t jpart = 0; jpart < mpi_size; ++jpart ) {
             for ( size_t n = 0; n < rfn_idx[jpart].size(); ++n ) {
-                int loc_idx = nb_nodes + new_node;
-                halo( loc_idx ) = halosize+1;
+                int loc_idx     = nb_nodes + new_node;
+                halo( loc_idx ) = halosize + 1;
                 Topology::reset( flags( loc_idx ), buf.node_flags[jpart][rfn_idx[jpart][n]] );
                 ghost( loc_idx )   = Topology::check( flags( loc_idx ), Topology::GHOST );
                 glb_idx( loc_idx ) = buf.node_glb_idx[jpart][rfn_idx[jpart][n]];
@@ -1133,8 +1133,7 @@ void increase_halo_interior( BuildHaloHelper& helper ) {
 
 class PeriodicPoints {
 public:
-    PeriodicPoints( Mesh& mesh, int flag, size_t N ) :
-        flags_( array::make_view<int, 1>( mesh.nodes().flags() ) ) {
+    PeriodicPoints( Mesh& mesh, int flag, size_t N ) : flags_( array::make_view<int, 1>( mesh.nodes().flags() ) ) {
         flag_ = flag;
         N_    = N;
     }

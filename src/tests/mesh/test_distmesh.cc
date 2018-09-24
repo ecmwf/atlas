@@ -30,7 +30,6 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/option.h"
 
 #include "tests/AtlasTestEnvironment.h"
 #include "tests/TestMeshes.h"
@@ -68,7 +67,7 @@ CASE( "test_distribute_t63" ) {
     //  meshgenerator::StructuredMeshGenerator generate( util::Config
     //      ("nb_parts",1)
     //      ("part",0) );
-    meshgenerator::StructuredMeshGenerator generate(util::Config("partitioner","equal_regions") );
+    meshgenerator::StructuredMeshGenerator generate( util::Config( "partitioner", "equal_regions" ) );
 
     // long lon[] = {4,6,8,8,8};
     // test::TestGrid grid(5,lon);
@@ -86,7 +85,7 @@ CASE( "test_distribute_t63" ) {
     // mesh::actions::renumber_nodes_glb_idx(m.nodes());
     mesh::actions::build_edges( m, util::Config( "pole_edges", true ) );
 
-    Gmsh( "dist.msh", util::Config("ghost",true) ).write( m );    
+    Gmsh( "dist.msh", util::Config( "ghost", true ) ).write( m );
 
 
     mesh::actions::build_edges_parallel_fields( m );

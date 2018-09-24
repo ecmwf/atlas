@@ -26,8 +26,8 @@ using atlas::Field;
 using atlas::FunctionSpace;
 using atlas::array::ArrayView;
 using atlas::array::LocalView;
-using atlas::array::make_view;
 using atlas::array::make_shape;
+using atlas::array::make_view;
 using atlas::functionspace::NodeColumns;
 using atlas::functionspace::Spectral;
 using atlas::functionspace::StructuredColumns;
@@ -109,16 +109,16 @@ void trans_check( const int code, const char* msg, const eckit::CodeLocation& lo
 
 
 static int compute_nfld( const Field& f ) {
-    int nfld=1;
-    for( int i=1; i<f.rank(); ++i ) {
-      nfld *= f.shape(i);
+    int nfld = 1;
+    for ( int i = 1; i < f.rank(); ++i ) {
+        nfld *= f.shape( i );
     }
     return nfld;
 }
 
 static int compute_nfld( const FieldSet& f ) {
     int nfld = 0;
-    for( int i=0; i<f.size(); ++i ) {
+    for ( int i = 0; i < f.size(); ++i ) {
         nfld += compute_nfld( f[i] );
     }
     return nfld;
@@ -779,11 +779,10 @@ void TransIFS::__dirtrans( const functionspace::NodeColumns& gp, const Field& gp
 
 void TransIFS::__dirtrans( const functionspace::NodeColumns& gp, const FieldSet& gpfields, const Spectral& sp,
                            FieldSet& spfields, const eckit::Configuration& ) const {
-
     assertCompatibleDistributions( gp, sp );
 
     // Count total number of fields and do sanity checks
-    const int nfld = compute_nfld( gpfields );
+    const int nfld          = compute_nfld( gpfields );
     const int trans_sp_nfld = compute_nfld( spfields );
 
     if ( nfld != trans_sp_nfld ) {
@@ -793,8 +792,8 @@ void TransIFS::__dirtrans( const functionspace::NodeColumns& gp, const FieldSet&
     // Arrays Trans expects
     std::vector<double> rgp( nfld * ngptot() );
     std::vector<double> rsp( nspec2() * nfld );
-    auto rgpview = LocalView<double,2>( rgp.data(), make_shape( nfld, ngptot() ) );
-    auto rspview = LocalView<double,2>( rsp.data(), make_shape( nspec2(), nfld ) );
+    auto rgpview = LocalView<double, 2>( rgp.data(), make_shape( nfld, ngptot() ) );
+    auto rspview = LocalView<double, 2>( rsp.data(), make_shape( nspec2(), nfld ) );
 
     // Pack gridpoints
     {
@@ -824,7 +823,6 @@ void TransIFS::__dirtrans( const functionspace::NodeColumns& gp, const FieldSet&
 
 void TransIFS::__dirtrans( const StructuredColumns& gp, const Field& gpfield, const Spectral& sp, Field& spfield,
                            const eckit::Configuration& ) const {
-
     ASSERT( gpfield.functionspace() == 0 || functionspace::StructuredColumns( gpfield.functionspace() ) );
     ASSERT( spfield.functionspace() == 0 || functionspace::Spectral( spfield.functionspace() ) );
 
@@ -841,8 +839,8 @@ void TransIFS::__dirtrans( const StructuredColumns& gp, const Field& gpfield, co
     // Arrays Trans expects
     std::vector<double> rgp( nfld * ngptot() );
     std::vector<double> rsp( nspec2() * nfld );
-    auto rgpview = LocalView<double,2>( rgp.data(), make_shape( nfld, ngptot() ) );
-    auto rspview = LocalView<double,2>( rsp.data(), make_shape( nspec2(), nfld ) );
+    auto rgpview = LocalView<double, 2>( rgp.data(), make_shape( nfld, ngptot() ) );
+    auto rspview = LocalView<double, 2>( rsp.data(), make_shape( nspec2(), nfld ) );
 
     // Pack gridpoints
     {
@@ -866,12 +864,10 @@ void TransIFS::__dirtrans( const StructuredColumns& gp, const Field& gpfield, co
         UnpackSpectral unpack( rspview );
         unpack( spfield );
     }
-
 }
 
 void TransIFS::__dirtrans( const StructuredColumns& gp, const FieldSet& gpfields, const Spectral& sp,
                            FieldSet& spfields, const eckit::Configuration& ) const {
-
     assertCompatibleDistributions( gp, sp );
 
     // Count total number of fields and do sanity checks
@@ -889,8 +885,8 @@ void TransIFS::__dirtrans( const StructuredColumns& gp, const FieldSet& gpfields
     // Arrays Trans expects
     std::vector<double> rgp( nfld * ngptot() );
     std::vector<double> rsp( nspec2() * nfld );
-    auto rgpview = LocalView<double,2>( rgp.data(), make_shape( nfld, ngptot() ) );
-    auto rspview = LocalView<double,2>( rsp.data(), make_shape( nspec2(), nfld ) );
+    auto rgpview = LocalView<double, 2>( rgp.data(), make_shape( nfld, ngptot() ) );
+    auto rspview = LocalView<double, 2>( rsp.data(), make_shape( nspec2(), nfld ) );
 
     // Pack gridpoints
     {
@@ -930,12 +926,11 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const Field& spfield, const 
 
 void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, const functionspace::NodeColumns& gp,
                                 FieldSet& gradfields, const eckit::Configuration& config ) const {
-
     assertCompatibleDistributions( gp, sp );
 
     // Count total number of fields and do sanity checks
     const int nb_gridpoint_field = compute_nfld( gradfields );
-    const int nfld = compute_nfld( spfields );
+    const int nfld               = compute_nfld( spfields );
 
     if ( nb_gridpoint_field != 2 * nfld )  // factor 2 because N-S and E-W derivatives
         throw eckit::SeriousBug(
@@ -947,8 +942,8 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, co
     // Allocate space for
     std::vector<double> rgp( 3 * nfld * ngptot() );  // (scalars) + (NS ders) + (EW ders)
     std::vector<double> rsp( nspec2() * nfld );
-    auto rgpview = LocalView<double,2>( rgp.data(), make_shape(3 *  nfld, ngptot() ) );
-    auto rspview = LocalView<double,2>( rsp.data(), make_shape( nspec2(), nfld ) );
+    auto rgpview = LocalView<double, 2>( rgp.data(), make_shape( 3 * nfld, ngptot() ) );
+    auto rspview = LocalView<double, 2>( rsp.data(), make_shape( nspec2(), nfld ) );
 
 
     // Pack spectral fields
@@ -976,9 +971,9 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, co
         for ( size_t dim = 0; dim < 2; ++dim ) {
             for ( size_t jfld = 0; jfld < gradfields.size(); ++jfld ) {
                 const size_t nb_nodes = gradfields[jfld].shape( 0 );
-                const size_t nlev = gradfields[jfld].levels();
-                if( nlev ) {
-                    auto field = make_view<double,3>( gradfields[jfld] );
+                const size_t nlev     = gradfields[jfld].levels();
+                if ( nlev ) {
+                    auto field = make_view<double, 3>( gradfields[jfld] );
                     for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
                         int n = 0;
                         for ( size_t jnode = 0; jnode < nb_nodes; ++jnode ) {
@@ -991,8 +986,8 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, co
                     }
                 }
                 else {
-                    auto field = make_view<double,2>( gradfields[jfld] );
-                    int n = 0;
+                    auto field = make_view<double, 2>( gradfields[jfld] );
+                    int n      = 0;
                     for ( size_t jnode = 0; jnode < nb_nodes; ++jnode ) {
                         if ( !is_ghost( jnode ) ) {
                             field( jnode, 1 - dim ) = rgpview( f, n );
@@ -1022,12 +1017,11 @@ void TransIFS::__invtrans( const Spectral& sp, const Field& spfield, const funct
 
 void TransIFS::__invtrans( const Spectral& sp, const FieldSet& spfields, const functionspace::NodeColumns& gp,
                            FieldSet& gpfields, const eckit::Configuration& config ) const {
-
     assertCompatibleDistributions( gp, sp );
 
 
     // Count total number of fields and do sanity checks
-    const int nfld = compute_nfld( gpfields );
+    const int nfld               = compute_nfld( gpfields );
     const int nb_spectral_fields = compute_nfld( spfields );
 
     if ( nfld != nb_spectral_fields )
@@ -1068,7 +1062,6 @@ void TransIFS::__invtrans( const Spectral& sp, const FieldSet& spfields, const f
 void TransIFS::__invtrans( const functionspace::Spectral& sp, const Field& spfield,
                            const functionspace::StructuredColumns& gp, Field& gpfield,
                            const eckit::Configuration& config ) const {
-
     assertCompatibleDistributions( gp, sp );
 
     ASSERT( gpfield.functionspace() == 0 || functionspace::StructuredColumns( gpfield.functionspace() ) );
@@ -1084,8 +1077,8 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const Field& spfie
     // Arrays Trans expects
     std::vector<double> rgp( nfld * ngptot() );
     std::vector<double> rsp( nspec2() * nfld );
-    auto rgpview = LocalView<double,2>( rgp.data(), make_shape( nfld, ngptot() ) );
-    auto rspview = LocalView<double,2>( rsp.data(), make_shape( nspec2(), nfld ) );
+    auto rgpview = LocalView<double, 2>( rgp.data(), make_shape( nfld, ngptot() ) );
+    auto rspview = LocalView<double, 2>( rsp.data(), make_shape( nspec2(), nfld ) );
 
     // Pack spectral fields
     {
@@ -1116,7 +1109,6 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const Field& spfie
 void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& spfields,
                            const functionspace::StructuredColumns& gp, FieldSet& gpfields,
                            const eckit::Configuration& config ) const {
-
     assertCompatibleDistributions( gp, sp );
 
     // Count total number of fields and do sanity checks
@@ -1138,8 +1130,8 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& sp
     // Arrays Trans expects
     std::vector<double> rgp( nfld * ngptot() );
     std::vector<double> rsp( nspec2() * nfld );
-    auto rgpview = LocalView<double,2>( rgp.data(), make_shape( nfld, ngptot() ) );
-    auto rspview = LocalView<double,2>( rsp.data(), make_shape( nspec2(), nfld ) );
+    auto rgpview = LocalView<double, 2>( rgp.data(), make_shape( nfld, ngptot() ) );
+    auto rspview = LocalView<double, 2>( rsp.data(), make_shape( nspec2(), nfld ) );
 
     // Pack spectral fields
     {
@@ -1170,7 +1162,6 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& sp
 
 void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, const Field& gpwind, const Spectral& sp,
                                        Field& spvor, Field& spdiv, const eckit::Configuration& ) const {
-
     assertCompatibleDistributions( gp, sp );
 
     // Count total number of fields and do sanity checks
@@ -1179,7 +1170,7 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
         throw eckit::SeriousBug( "invtrans: vorticity not compatible with divergence.", Here() );
     if ( spdiv.shape( 1 ) != spvor.shape( 1 ) )
         throw eckit::SeriousBug( "invtrans: vorticity not compatible with divergence.", Here() );
-    const size_t nwindfld = compute_nfld( gpwind);
+    const size_t nwindfld = compute_nfld( gpwind );
     if ( nwindfld != 2 * nfld && nwindfld != 3 * nfld )
         throw eckit::SeriousBug( "dirtrans: wind field is not compatible with vorticity, divergence.", Here() );
 
@@ -1198,7 +1189,7 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
     std::vector<double> rgp( 2 * nfld * ngptot() );
     std::vector<double> rspvor( nspec2() * nfld );
     std::vector<double> rspdiv( nspec2() * nfld );
-    auto rgpview    = LocalView<double, 2>( rgp.data(),    make_shape( 2 * nfld, ngptot() ) );
+    auto rgpview    = LocalView<double, 2>( rgp.data(), make_shape( 2 * nfld, ngptot() ) );
     auto rspvorview = LocalView<double, 2>( rspvor.data(), make_shape( nspec2(), nfld ) );
     auto rspdivview = LocalView<double, 2>( rspdiv.data(), make_shape( nspec2(), nfld ) );
 
@@ -1223,15 +1214,15 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
     }
 
     // Pack spectral fields
-    UnpackSpectral unpack_vor( rspvorview ); unpack_vor( spvor );
-    UnpackSpectral unpack_div( rspdivview ); unpack_div( spdiv );
-
+    UnpackSpectral unpack_vor( rspvorview );
+    unpack_vor( spvor );
+    UnpackSpectral unpack_div( rspdivview );
+    unpack_div( spdiv );
 }
 
 void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, const Field& spdiv,
                                        const functionspace::NodeColumns& gp, Field& gpwind,
                                        const eckit::Configuration& config ) const {
-
     assertCompatibleDistributions( gp, sp );
 
     // Count total number of fields and do sanity checks
@@ -1261,13 +1252,15 @@ void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, c
     std::vector<double> rgp( 2 * nfld * ngptot() );
     std::vector<double> rspvor( nspec2() * nfld );
     std::vector<double> rspdiv( nspec2() * nfld );
-    auto rgpview    = LocalView<double, 2>( rgp.data(),    make_shape( 2 * nfld, ngptot() ) );
+    auto rgpview    = LocalView<double, 2>( rgp.data(), make_shape( 2 * nfld, ngptot() ) );
     auto rspvorview = LocalView<double, 2>( rspvor.data(), make_shape( nspec2(), nfld ) );
     auto rspdivview = LocalView<double, 2>( rspdiv.data(), make_shape( nspec2(), nfld ) );
 
     // Pack spectral fields
-    PackSpectral pack_vor( rspvorview ); pack_vor( spvor );
-    PackSpectral pack_div( rspdivview ); pack_div( spdiv );
+    PackSpectral pack_vor( rspvorview );
+    pack_vor( spvor );
+    PackSpectral pack_div( rspdivview );
+    pack_div( spdiv );
 
     // Do transform
     {
@@ -1449,8 +1442,7 @@ int atlas__Trans__truncation( const TransIFS* This ) {
 }
 
 const Grid::Implementation* atlas__Trans__grid( const TransIFS* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( This->grid() );
-                          return This->grid().get(); );
+    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( This->grid() ); return This->grid().get(); );
     return nullptr;
 }
 
