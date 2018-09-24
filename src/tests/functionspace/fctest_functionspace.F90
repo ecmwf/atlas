@@ -41,7 +41,7 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_nodes )
-#if 1
+#if 0
 type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
@@ -139,7 +139,7 @@ END_TEST
 
 
 TEST( test_nodescolumns )
-#if 1
+#if 0
 type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_Mesh) :: mesh
@@ -248,7 +248,7 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_collectives )
-#if 1
+#if 0
 use fckit_mpi_module
 type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
@@ -512,7 +512,7 @@ call trace%final()
 END_TEST
 
 TEST( test_structuredcolumns )
-#if 1
+#if 0
 type(atlas_StructuredGrid) :: grid
 type(atlas_functionspace_StructuredColumns) :: fs
 type(atlas_functionspace) :: fs_base
