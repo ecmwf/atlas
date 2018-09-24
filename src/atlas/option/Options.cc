@@ -64,6 +64,10 @@ radius::radius( const std::string& key ) {
     }
 }
 
+pole_edges::pole_edges( bool _pole_edges ) {
+    set( "pole_edges", _pole_edges );
+}
+
 // ----------------------------------------------------------------------------
 
 }  // namespace option

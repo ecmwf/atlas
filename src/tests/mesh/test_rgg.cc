@@ -418,10 +418,10 @@ CASE( "test_meshgen_ghost_at_end" ) {
     cfg.set( "part", 1 );
     cfg.set( "nb_parts", 8 );
     meshgenerator::StructuredMeshGenerator meshgenerator( cfg );
-    Mesh mesh                            = meshgenerator.generate( grid );
-    const array::ArrayView<int, 1> part  = array::make_view<int, 1>( mesh.nodes().partition() );
-    const array::ArrayView<int, 1> ghost = array::make_view<int, 1>( mesh.nodes().ghost() );
-    const array::ArrayView<int, 1> flags = array::make_view<int, 1>( mesh.nodes().field( "flags" ) );
+    Mesh mesh        = meshgenerator.generate( grid );
+    const auto part  = array::make_view<int, 1>( mesh.nodes().partition() );
+    const auto ghost = array::make_view<int, 1>( mesh.nodes().ghost() );
+    const auto flags = array::make_view<int, 1>( mesh.nodes().flags() );
 
     Log::info() << "partition = [ ";
     for ( size_t jnode = 0; jnode < part.size(); ++jnode ) {

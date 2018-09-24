@@ -627,13 +627,10 @@ Field& build_edges_partition( Mesh& mesh ) {
     }
 
     // Sanity check
-    std::shared_ptr<array::ArrayView<int, 1>> is_pole_edge;
+    auto edge_flags     = array::make_view<int, 1>( edges.flags() );
+    auto is_pole_edge   = [&]( size_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
     bool has_pole_edges = false;
-    if ( edges.has_field( "is_pole_edge" ) ) {
-        has_pole_edges = true;
-        is_pole_edge   = std::shared_ptr<array::ArrayView<int, 1>>(
-            new array::ArrayView<int, 1>( array::make_view<int, 1>( edges.field( "is_pole_edge" ) ) ) );
-    }
+    mesh.edges().metadata().get( "pole_edges", has_pole_edges );
     int insane = 0;
     for ( size_t jedge = 0; jedge < nb_edges; ++jedge ) {
         idx_t ip1   = edge_nodes( jedge, 0 );
@@ -643,7 +640,7 @@ Field& build_edges_partition( Mesh& mesh ) {
         int p       = edge_part( jedge );
         int pn1     = node_part( ip1 );
         int pn2     = node_part( ip2 );
-        if ( has_pole_edges && ( *is_pole_edge )( jedge ) ) {
+        if ( has_pole_edges && is_pole_edge( jedge ) ) {
             if ( p != pn1 || p != pn2 ) {
                 Log::error() << "pole edge " << EDGE( jedge ) << " [p" << p << "] is not correct" << std::endl;
                 insane = 1;
@@ -718,19 +715,16 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
     const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
 
     array::ArrayView<double, 2> xy = array::make_view<double, 2>( nodes.xy() );
-    array::ArrayView<int, 1> flags = array::make_view<int, 1>( nodes.field( "flags" ) );
+    array::ArrayView<int, 1> flags = array::make_view<int, 1>( nodes.flags() );
 #ifdef DEBUGGING_PARFIELDS
     array::ArrayView<gidx_t, 1> node_gidx = array::make_view<gidx_t, 1>( nodes.global_index() );
     array::ArrayView<int, 1> node_part    = array::make_view<int, 1>( nodes.partition() );
 #endif
 
-    std::shared_ptr<array::ArrayView<int, 1>> is_pole_edge;
+    auto edge_flags     = array::make_view<int, 1>( edges.flags() );
+    auto is_pole_edge   = [&]( size_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
     bool has_pole_edges = false;
-    if ( edges.has_field( "is_pole_edge" ) ) {
-        has_pole_edges = true;
-        is_pole_edge   = std::shared_ptr<array::ArrayView<int, 1>>(
-            new array::ArrayView<int, 1>( array::make_view<int, 1>( edges.field( "is_pole_edge" ) ) ) );
-    }
+    mesh.edges().metadata().get( "pole_edges", has_pole_edges );
 
     const int nb_edges = edges.size();
 
@@ -747,7 +741,7 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
         int ip2      = edge_nodes( jedge, 1 );
         centroid[XX] = 0.5 * ( xy( ip1, XX ) + xy( ip2, XX ) );
         centroid[YY] = 0.5 * ( xy( ip1, YY ) + xy( ip2, YY ) );
-        if ( has_pole_edges && ( *is_pole_edge )( jedge ) ) { centroid[YY] = centroid[YY] > 0 ? 90. : -90.; }
+        if ( has_pole_edges && is_pole_edge( jedge ) ) { centroid[YY] = centroid[YY] > 0 ? 90. : -90.; }
 
         bool needed( false );
 
@@ -864,13 +858,10 @@ Field& build_edges_global_idx( Mesh& mesh ) {
 
     const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
     array::ArrayView<double, 2> xy                       = array::make_view<double, 2>( mesh.nodes().xy() );
-    std::shared_ptr<array::ArrayView<int, 1>> is_pole_edge;
+    auto edge_flags                                      = array::make_view<int, 1>( edges.flags() );
+    auto is_pole_edge   = [&]( size_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
     bool has_pole_edges = false;
-    if ( edges.has_field( "is_pole_edge" ) ) {
-        has_pole_edges = true;
-        is_pole_edge   = std::shared_ptr<array::ArrayView<int, 1>>(
-            new array::ArrayView<int, 1>( array::make_view<int, 1>( edges.field( "is_pole_edge" ) ) ) );
-    }
+    mesh.edges().metadata().get( "pole_edges", has_pole_edges );
 
     /*
  * Sorting following edge_gidx will define global order of
@@ -884,7 +875,7 @@ Field& build_edges_global_idx( Mesh& mesh ) {
         if ( edge_gidx( jedge ) <= 0 ) {
             centroid[XX] = 0.5 * ( xy( edge_nodes( jedge, 0 ), XX ) + xy( edge_nodes( jedge, 1 ), XX ) );
             centroid[YY] = 0.5 * ( xy( edge_nodes( jedge, 0 ), YY ) + xy( edge_nodes( jedge, 1 ), YY ) );
-            if ( has_pole_edges && ( *is_pole_edge )( jedge ) ) { centroid[YY] = centroid[YY] > 0 ? 90. : -90.; }
+            if ( has_pole_edges && is_pole_edge( jedge ) ) { centroid[YY] = centroid[YY] > 0 ? 90. : -90.; }
             edge_gidx( jedge ) = util::unique_lonlat( centroid );
         }
     }

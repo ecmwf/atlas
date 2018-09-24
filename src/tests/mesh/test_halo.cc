@@ -110,10 +110,6 @@ CASE( "test_custom" ) {
     mesh::actions::build_nodes_parallel_fields( m.nodes() );
     mesh::actions::build_periodic_boundaries( m );
     mesh::actions::build_halo( m, 1 );
-    // mesh::actions::build_edges(m);
-    // mesh::actions::build_pole_edges(m);
-    // mesh::actions::build_edges_parallel_fields(m.function_space("edges"),m.nodes());
-    // mesh::actions::build_centroid_dual_mesh(m);
 
     std::stringstream filename;
     filename << "custom.msh";

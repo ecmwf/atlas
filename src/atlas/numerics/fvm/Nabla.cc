@@ -53,13 +53,14 @@ void Nabla::setup() {
 
     const size_t nedges = fvm_->edge_columns().nb_edges();
 
-    const array::ArrayView<int, 1> edge_is_pole = array::make_view<int, 1>( edges.field( "is_pole_edge" ) );
+    const auto edge_flags = array::make_view<int, 1>( edges.flags() );
+    auto is_pole_edge     = [&]( size_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
 
     // Filter pole_edges out of all edges
     std::vector<size_t> tmp( nedges );
     size_t c( 0 );
     for ( size_t jedge = 0; jedge < nedges; ++jedge ) {
-        if ( edge_is_pole( jedge ) ) tmp[c++] = jedge;
+        if ( is_pole_edge( jedge ) ) tmp[c++] = jedge;
     }
     pole_edges_.clear();
     pole_edges_.reserve( c );
@@ -170,11 +171,12 @@ void Nabla::gradient_of_vector( const Field& vector_field, Field& grad_field ) c
                     ? array::make_view<double, 3>( grad_field ).slice( Range::all(), Range::all(), Range::all() )
                     : array::make_view<double, 2>( grad_field ).slice( Range::all(), Range::dummy(), Range::all() );
 
-    const array::ArrayView<double, 2> lonlat_deg     = array::make_view<double, 2>( nodes.lonlat() );
-    const array::ArrayView<double, 1> dual_volumes   = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
-    const array::ArrayView<double, 2> dual_normals   = array::make_view<double, 2>( edges.field( "dual_normals" ) );
-    const array::ArrayView<int, 1> edge_is_pole      = array::make_view<int, 1>( edges.field( "is_pole_edge" ) );
-    const array::ArrayView<double, 2> node2edge_sign = array::make_view<double, 2>( nodes.field( "node2edge_sign" ) );
+    const auto lonlat_deg     = array::make_view<double, 2>( nodes.lonlat() );
+    const auto dual_volumes   = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
+    const auto dual_normals   = array::make_view<double, 2>( edges.field( "dual_normals" ) );
+    const auto node2edge_sign = array::make_view<double, 2>( nodes.field( "node2edge_sign" ) );
+    const auto edge_flags     = array::make_view<int, 1>( edges.flags() );
+    auto is_pole_edge         = [&]( size_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
 
     const mesh::Connectivity& node2edge           = nodes.edge_connectivity();
     const mesh::MultiBlockConnectivity& edge2node = edges.node_connectivity();
@@ -196,7 +198,7 @@ void Nabla::gradient_of_vector( const Field& vector_field, Field& grad_field ) c
         atlas_omp_for( size_t jedge = 0; jedge < nedges; ++jedge ) {
             int ip1    = edge2node( jedge, 0 );
             int ip2    = edge2node( jedge, 1 );
-            double pbc = 1. - 2. * edge_is_pole( jedge );
+            double pbc = 1. - 2. * is_pole_edge( jedge );
 
             for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
                 double avg[2]                = {( vector( ip1, jlev, LON ) + pbc * vector( ip2, jlev, LON ) ) * 0.5,
@@ -274,11 +276,13 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
     auto div = div_field.levels() ? array::make_view<double, 2>( div_field ).slice( Range::all(), Range::all() )
                                   : array::make_view<double, 1>( div_field ).slice( Range::all(), Range::dummy() );
 
-    const auto lonlat_deg                         = array::make_view<double, 2>( nodes.lonlat() );
-    const auto dual_volumes                       = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
-    const auto dual_normals                       = array::make_view<double, 2>( edges.field( "dual_normals" ) );
-    const auto edge_is_pole                       = array::make_view<int, 1>( edges.field( "is_pole_edge" ) );
-    const auto node2edge_sign                     = array::make_view<double, 2>( nodes.field( "node2edge_sign" ) );
+    const auto lonlat_deg     = array::make_view<double, 2>( nodes.lonlat() );
+    const auto dual_volumes   = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
+    const auto dual_normals   = array::make_view<double, 2>( edges.field( "dual_normals" ) );
+    const auto node2edge_sign = array::make_view<double, 2>( nodes.field( "node2edge_sign" ) );
+    const auto edge_flags     = array::make_view<int, 1>( edges.flags() );
+    auto is_pole_edge         = [&]( size_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
+
     const mesh::Connectivity& node2edge           = nodes.edge_connectivity();
     const mesh::MultiBlockConnectivity& edge2node = edges.node_connectivity();
 
@@ -296,7 +300,7 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
             double cosy1 = std::cos( y1 );
             double cosy2 = std::cos( y2 );
 
-            double pbc = 1. - edge_is_pole( jedge );
+            double pbc = 1. - is_pole_edge( jedge );
 
             for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
                 double avg[2] = {
@@ -359,8 +363,9 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
     const auto lonlat_deg     = array::make_view<double, 2>( nodes.lonlat() );
     const auto dual_volumes   = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
     const auto dual_normals   = array::make_view<double, 2>( edges.field( "dual_normals" ) );
-    const auto edge_is_pole   = array::make_view<int, 1>( edges.field( "is_pole_edge" ) );
     const auto node2edge_sign = array::make_view<double, 2>( nodes.field( "node2edge_sign" ) );
+    const auto edge_flags     = array::make_view<int, 1>( edges.flags() );
+    auto is_pole_edge         = [&]( size_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
 
     const mesh::Connectivity& node2edge           = nodes.edge_connectivity();
     const mesh::MultiBlockConnectivity& edge2node = edges.node_connectivity();
@@ -379,7 +384,7 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
             double rcosy1 = radius * std::cos( y1 );
             double rcosy2 = radius * std::cos( y2 );
 
-            double pbc = 1 - edge_is_pole( jedge );
+            double pbc = 1 - is_pole_edge( jedge );
 
             for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
                 double avg[2] = {( rcosy1 * vector( ip1, jlev, LON ) + rcosy2 * vector( ip2, jlev, LON ) ) * 0.5 *

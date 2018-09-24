@@ -70,7 +70,7 @@ CASE( "halo edges" ) {
                 EXPECT( mesh.edges().size() == 0 );
 
                 for ( int h : ( reduce ? reversed( halos ) : halos ) ) {
-                    EdgeColumns fs( mesh, option::halo( h ) | util::Config( "pole_edges", with_pole_edges ) );
+                    EdgeColumns fs( mesh, option::halo( h ) | option::pole_edges( with_pole_edges ) );
                     if ( mpi::comm().size() == 1 ) { EXPECT( fs.nb_edges() == edges[h] + pole_edges ); }
                 }
             }

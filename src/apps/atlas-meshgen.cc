@@ -17,6 +17,7 @@
 #include <sstream>
 #include <vector>
 
+#include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
 #include "atlas/library/Library.h"
@@ -209,10 +210,8 @@ void Meshgen2Gmsh::execute( const Args& args ) {
                        << std::endl;
         Log::warning() << "units: " << grid.projection().units() << std::endl;
     }
-    if ( edges ) {
-        build_edges( mesh );
-        build_pole_edges( mesh );
-        build_edges_parallel_fields( mesh );
+    if ( edges && grid.projection().units() == "degrees" ) {
+        functionspace::EdgeColumns edges_fs( mesh, option::halo( halo ) );
         if ( brick )
             build_brick_dual_mesh( grid, mesh );
         else

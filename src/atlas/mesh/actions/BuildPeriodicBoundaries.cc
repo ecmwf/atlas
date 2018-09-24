@@ -35,6 +35,7 @@ namespace actions {
 typedef gidx_t uid_t;
 
 void build_periodic_boundaries( Mesh& mesh ) {
+    ATLAS_TRACE();
     bool periodic = false;
     mesh.metadata().get( "periodic", periodic );
     if ( !periodic ) {
@@ -42,14 +43,14 @@ void build_periodic_boundaries( Mesh& mesh ) {
 
         mesh::Nodes& nodes = mesh.nodes();
 
-        array::ArrayView<int, 1> flags = array::make_view<int, 1>( nodes.field( "flags" ) );
-        array::IndexView<int, 1> ridx  = array::make_indexview<int, 1>( nodes.remote_index() );
-        array::ArrayView<int, 1> part  = array::make_view<int, 1>( nodes.partition() );
-        array::ArrayView<int, 1> ghost = array::make_view<int, 1>( nodes.ghost() );
+        auto flags = array::make_view<int, 1>( nodes.flags() );
+        auto ridx  = array::make_indexview<int, 1>( nodes.remote_index() );
+        auto part  = array::make_view<int, 1>( nodes.partition() );
+        auto ghost = array::make_view<int, 1>( nodes.ghost() );
 
         int nb_nodes = nodes.size();
 
-        array::ArrayView<double, 2> xy = array::make_view<double, 2>( nodes.xy() );
+        auto xy = array::make_view<double, 2>( nodes.xy() );
 
         // Identify my master and slave nodes on own partition
         // master nodes are at x=0,  slave nodes are at x=2pi

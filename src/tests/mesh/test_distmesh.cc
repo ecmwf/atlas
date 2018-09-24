@@ -83,7 +83,7 @@ CASE( "test_distribute_t63" ) {
     mesh::actions::build_periodic_boundaries( m );
     mesh::actions::build_halo( m, 1 );
     // mesh::actions::renumber_nodes_glb_idx(m.nodes());
-    mesh::actions::build_edges( m, util::Config( "pole_edges", true ) );
+    mesh::actions::build_edges( m );
 
     Gmsh( "dist.msh", util::Config( "ghost", true ) ).write( m );
 
@@ -105,7 +105,7 @@ CASE( "test_distribute_t63" ) {
 
     const array::ArrayView<int, 1> part  = array::make_view<int, 1>( m.nodes().partition() );
     const array::ArrayView<int, 1> ghost = array::make_view<int, 1>( m.nodes().ghost() );
-    const array::ArrayView<int, 1> flags = array::make_view<int, 1>( m.nodes().field( "flags" ) );
+    const array::ArrayView<int, 1> flags = array::make_view<int, 1>( m.nodes().flags() );
 
     Log::info() << "partition = [ ";
     for ( size_t jnode = 0; jnode < part.size(); ++jnode ) {

@@ -18,7 +18,9 @@
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
+#include "atlas/domain.h"
 #include "atlas/field/Field.h"
+#include "atlas/grid.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
@@ -400,7 +402,11 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
         }
     }
 
-    bool has_pole_edges = config.getInt( "pole_edges", false );
+    bool pole_edges{false};
+    if ( grid::StructuredGrid grid = mesh.grid() ) {
+        if ( Domain domain = grid.domain() ) { pole_edges = domain.global(); }
+    }
+    config.get( "pole_edges", pole_edges );
 
 
     mesh::Nodes& nodes = mesh.nodes();
@@ -425,7 +431,7 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
                                        nb_inner_edges, missing_value, edge_halo_offsets );
 
     std::shared_ptr<AccumulatePoleEdges> pole_edge_accumulator;
-    if ( has_pole_edges ) { pole_edge_accumulator = std::make_shared<AccumulatePoleEdges>( nodes ); }
+    if ( pole_edges ) { pole_edge_accumulator = std::make_shared<AccumulatePoleEdges>( nodes ); }
 
     for ( int halo = 0; halo <= mesh_halo; ++halo ) {
         edge_start = edge_end;
@@ -479,7 +485,7 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
         mesh.edges().cell_connectivity().add( ( edge_end - edge_start ), 2,
                                               edge_to_elem_data.data() + edge_halo_offsets[halo] * 2 );
 
-        if ( has_pole_edges ) {
+        if ( pole_edges ) {
             size_t nb_pole_edges;
             std::vector<idx_t> pole_edge_nodes;
 
@@ -506,10 +512,10 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
                 size_t cnt = 0;
                 ComputeUniquePoleEdgeIndex compute_uid( nodes );
                 for ( size_t edge = edge_start; edge < edge_end; ++edge ) {
-                    idx_t ip1      = pole_edge_nodes[cnt++];
-                    idx_t ip2      = pole_edge_nodes[cnt++];
-                    idx_t enodes[] = {ip1, ip2};
-                    edge_nodes.set( edge, enodes );
+                    idx_t ip1 = pole_edge_nodes[cnt++];
+                    idx_t ip2 = pole_edge_nodes[cnt++];
+                    std::array<idx_t, 2> enodes{ip1, ip2};
+                    edge_nodes.set( edge, enodes.data() );
                     edge_glb_idx( edge ) = compute_uid( edge_nodes.row( edge ) );
                     edge_part( edge ) =
                         std::min( node_part( edge_nodes( edge, 0 ) ), node_part( edge_nodes( edge, 1 ) ) );
@@ -521,7 +527,7 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
         }
     }
 
-    mesh.edges().metadata().set( "pole_edges", has_pole_edges );
+    mesh.edges().metadata().set( "pole_edges", pole_edges );
 
 
     build_element_to_edge_connectivity( mesh );
@@ -566,9 +572,9 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
 
     mesh.metadata().set( "built_edges_for_halo", mesh_halo );
 
-    // Backwards compatibility for code that reads "is_pole_edge" field instead of checking the flags
+    // Backwards compatibility for code that reads "is_pole_edge" field instead of checking the flags, only Fortran would do it
     {
-        if ( has_pole_edges ) {
+        if ( pole_edges ) {
             if ( !mesh.edges().has_field( "is_pole_edge" ) ) {
                 mesh.edges().add(
                     Field( "is_pole_edge", array::make_datatype<int>(), array::make_shape( mesh.edges().size() ) ) );
@@ -585,47 +591,9 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
 
 void build_pole_edges( Mesh& mesh ) {
     ATLAS_TRACE();
-    mesh::Nodes& nodes          = mesh.nodes();
-    mesh::HybridElements& edges = mesh.edges();
-
-    size_t nb_cell_edges = edges.size();
-
-    size_t nb_pole_edges;
-    std::vector<idx_t> pole_edge_nodes;
-    accumulate_pole_edges( nodes, pole_edge_nodes, nb_pole_edges );
-
-    edges.add( new mesh::temporary::Line(), nb_pole_edges, pole_edge_nodes.data() );
-
-    if ( !edges.has_field( "is_pole_edge" ) )
-        edges.add( Field( "is_pole_edge", array::make_datatype<int>(), array::make_shape( edges.size() ) ) );
-
-    auto node_part = array::make_view<int, 1>( nodes.partition() );
-
-    auto edge_glb_idx = array::make_view<gidx_t, 1>( edges.global_index() );
-    auto edge_part    = array::make_view<int, 1>( edges.partition() );
-    auto edge_ridx    = array::make_indexview<int, 1>( edges.remote_index() );
-    auto is_pole_edge = array::make_view<int, 1>( edges.field( "is_pole_edge" ) );
-
-    auto& edge_nodes = edges.node_connectivity();
-
-    edges.cell_connectivity().add( nb_pole_edges, 2 );
-
-    for ( size_t edge = 0; edge < nb_cell_edges; ++edge ) {
-        is_pole_edge( edge ) = 0;
-    }
-
-    size_t cnt = 0;
-    ComputeUniquePoleEdgeIndex compute_uid( nodes );
-    for ( size_t edge = nb_cell_edges; edge < nb_cell_edges + nb_pole_edges; ++edge ) {
-        idx_t ip1      = pole_edge_nodes[cnt++];
-        idx_t ip2      = pole_edge_nodes[cnt++];
-        idx_t enodes[] = {ip1, ip2};
-        edge_nodes.set( edge, enodes );
-        edge_glb_idx( edge ) = compute_uid( edge_nodes.row( edge ) );
-        edge_part( edge )    = std::min( node_part( edge_nodes( edge, 0 ) ), node_part( edge_nodes( edge, 1 ) ) );
-        edge_ridx( edge )    = edge;
-        is_pole_edge( edge ) = 1;
-    }
+    Log::info() << "ATLAS_WARNING: Deprecation warning: build_pole_edges is no longer required.\n"
+                << "It is automatically inferred within atlas_build_edges" << std::endl;
+    Log::info() << "The 'build_pole_edges' function will be removed in a future version" << std::endl;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -636,7 +604,9 @@ void atlas__build_edges( Mesh::Implementation* mesh ) {
     ATLAS_ERROR_HANDLING( Mesh m( mesh ); build_edges( m ); );
 }
 void atlas__build_pole_edges( Mesh::Implementation* mesh ) {
-    ATLAS_ERROR_HANDLING( Mesh m( mesh ); build_pole_edges( m ); );
+    Log::info() << "ATLAS_WARNING: Deprecation warning: atlas_build_pole_edges is no longer required.\n"
+                << "It is automatically inferred within atlas_build_edges" << std::endl;
+    Log::info() << "The 'atlas_build_pole_edges' function will be removed in a future version" << std::endl;
 }
 void atlas__build_node_to_edge_connectivity( Mesh::Implementation* mesh ) {
     ATLAS_ERROR_HANDLING( Mesh m( mesh ); build_node_to_edge_connectivity( m ); );

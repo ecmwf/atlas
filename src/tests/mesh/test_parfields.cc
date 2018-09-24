@@ -70,10 +70,10 @@ CASE( "test1" ) {
 
     mesh::Nodes& nodes = m.nodes();
     nodes.resize( 10 );
-    array::ArrayView<double, 2> xy      = make_view<double, 2>( nodes.xy() );
-    array::ArrayView<gidx_t, 1> glb_idx = make_view<gidx_t, 1>( nodes.global_index() );
-    array::ArrayView<int, 1> part       = make_view<int, 1>( nodes.partition() );
-    array::ArrayView<int, 1> flags      = make_view<int, 1>( nodes.field( "flags" ) );
+    auto xy      = make_view<double, 2>( nodes.xy() );
+    auto glb_idx = make_view<gidx_t, 1>( nodes.global_index() );
+    auto part    = make_view<int, 1>( nodes.partition() );
+    auto flags   = make_view<int, 1>( nodes.flags() );
     flags.assign( Topology::NONE );
 
     // This is typically available

@@ -151,6 +151,7 @@ public:
 private:
     Mesh mesh;
     functionspace::NodeColumns nodes_fs;
+    functionspace::NodeColumns edges_fs;
     Field scalar_field;
     Field grad_field;
 
@@ -304,8 +305,7 @@ void AtlasBenchmark::setup() {
     }
 
     ATLAS_TRACE_SCOPE( "Create node_fs" ) { nodes_fs = functionspace::NodeColumns( mesh, option::halo( halo ) ); }
-    ATLAS_TRACE_SCOPE( "build_edges" ) { build_edges( mesh ); }
-    ATLAS_TRACE_SCOPE( "build_pole_edges" ) { build_pole_edges( mesh ); }
+    ATLAS_TRACE_SCOPE( "Create edges_fs" ) { edges_fs = functionspace::EdgeColumns( mesh, option::halo( halo ) ); }
 
     // mesh.polygon(0).outputPythonScript("plot_polygon.py");
     //  atlas::output::Output gmsh = atlas::output::Gmsh( "edges.msh",
@@ -316,7 +316,6 @@ void AtlasBenchmark::setup() {
     //  util::Config("ghost",true)("edges",false)("elements",true) );
     //  gmsh.write( mesh );
 
-    ATLAS_TRACE_SCOPE( "build_edges_parallel_fiels" ) { build_edges_parallel_fields( mesh ); }
     ATLAS_TRACE_SCOPE( "build_median_dual_mesh" ) { build_median_dual_mesh( mesh ); }
     ATLAS_TRACE_SCOPE( "build_node_to_edge_connectivity" ) { build_node_to_edge_connectivity( mesh ); }
 
@@ -352,7 +351,6 @@ void AtlasBenchmark::setup() {
     }
     dz = height / static_cast<double>( nlev );
 
-    auto edge_is_pole                             = array::make_view<int, 1>( mesh.edges().field( "is_pole_edge" ) );
     const mesh::Connectivity& node2edge           = mesh.nodes().edge_connectivity();
     const mesh::MultiBlockConnectivity& edge2node = mesh.edges().node_connectivity();
     auto node2edge_sign                           = array::make_view<double, 2>( mesh.nodes().add(
@@ -369,16 +367,19 @@ void AtlasBenchmark::setup() {
         }
     }
 
+    auto edge_flags   = array::make_view<int, 1>( mesh.edges().flags() );
+    auto is_pole_edge = [&]( size_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
+
     vector<int> tmp( nedges );
     int c( 0 );
     for ( size_t jedge = 0; jedge < nedges; ++jedge ) {
-        if ( edge_is_pole( jedge ) ) tmp[c++] = jedge;
+        if ( is_pole_edge( jedge ) ) tmp[c++] = jedge;
     }
     pole_edges.reserve( c );
     for ( int jedge = 0; jedge < c; ++jedge )
         pole_edges.push_back( tmp[jedge] );
 
-    auto flags = array::make_view<int, 1>( mesh.nodes().field( "flags" ) );
+    auto flags = array::make_view<int, 1>( mesh.nodes().flags() );
     is_ghost.reserve( nnodes );
     for ( size_t jnode = 0; jnode < nnodes; ++jnode ) {
         is_ghost.push_back( Topology::check( flags( jnode ), Topology::GHOST ) );

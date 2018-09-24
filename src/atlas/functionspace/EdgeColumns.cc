@@ -255,6 +255,7 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config )
         return _nb_edges;
     };
 
+    mesh::actions::build_nodes_parallel_fields( mesh_.nodes() );
     mesh::actions::build_periodic_boundaries( mesh_ );
 
     if ( halo_.size() > 0 ) {

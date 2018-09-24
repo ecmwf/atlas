@@ -247,7 +247,7 @@ CASE( "test_build_edges" ) {
     Mesh mesh = generator.generate( grid );
 
     // Accumulate facets of cells ( edges in 2D )
-    mesh::actions::build_edges( mesh );
+    mesh::actions::build_edges( mesh, option::pole_edges( false ) );
 
     idx_t edge_nodes_check[] = {
         0,  21, 21, 22, 22, 1,  1,  0,  22, 23, 23, 2,  2,  1,  3,  25, 25, 26, 26, 4,  4,  3,  26, 27, 27, 5,  5,
@@ -487,22 +487,28 @@ CASE( "test_build_edges" ) {
 CASE( "test_build_edges_triangles_only" ) {
     Grid grid( "O2" );
     meshgenerator::StructuredMeshGenerator generator(
-        Config( "angle", 29.0 )( "triangulate", false )( "ghost_at_end", false ) );
+        Config( "angle", 29.0 )( "triangulate", true )( "ghost_at_end", false ) );
     Mesh mesh = generator.generate( grid );
 
     // Accumulate facets of cells ( edges in 2D )
-    mesh::actions::build_edges( mesh );
+    mesh::actions::build_edges( mesh, option::pole_edges( false ) );
 
     {
         const MultiBlockConnectivity& elem_edge_connectivity = mesh.cells().edge_connectivity();
+        const MultiBlockConnectivity& elem_node_connectivity = mesh.cells().node_connectivity();
         for ( size_t jelem = 0; jelem < mesh.cells().size(); ++jelem ) {
-            std::cout << jelem << " : ";
+            std::cout << jelem << " : edges (  ";
             for ( size_t jedge = 0; jedge < elem_edge_connectivity.cols( jelem ); ++jedge ) {
                 std::cout << elem_edge_connectivity( jelem, jedge ) << "  ";
             }
-            std::cout << std::endl;
+            std::cout << ")     |    nodes ( ";
+            for ( size_t jnode = 0; jnode < elem_node_connectivity.cols( jelem ); ++jnode ) {
+                std::cout << elem_node_connectivity( jelem, jnode ) << "  ";
+            }
+            std::cout << ")" << std::endl;
         }
     }
+    std::cout << "( if you see all -1 entries, those are patch elements at the pole )" << std::endl;
 }
 
 //-----------------------------------------------------------------------------

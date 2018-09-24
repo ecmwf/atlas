@@ -78,7 +78,6 @@ void Method::setup() {
     util::Config config;
     config.set( "halo", halo_.size() );
     if ( levels_ ) config.set( "levels", levels_ );
-    config.set( "pole_edges", true );
     node_columns_ = functionspace::NodeColumns( mesh(), config );
     edge_columns_ = functionspace::EdgeColumns( mesh(), config );
 
@@ -88,10 +87,12 @@ void Method::setup() {
 
         const size_t nnodes = nodes_.size();
 
+        auto edge_flags   = array::make_view<int, 1>( edges_.flags() );
+        using Topology    = mesh::Nodes::Topology;
+        auto is_pole_edge = [&]( size_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
+
         // Compute sign
         {
-            const array::ArrayView<int, 1> is_pole_edge = array::make_view<int, 1>( edges_.field( "is_pole_edge" ) );
-
             const mesh::Connectivity& node_edge_connectivity           = nodes_.edge_connectivity();
             const mesh::MultiBlockConnectivity& edge_node_connectivity = edges_.node_connectivity();
             if ( !nodes_.has_field( "node2edge_sign" ) ) {
