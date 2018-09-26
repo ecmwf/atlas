@@ -197,7 +197,9 @@ private:
     }
 #else
     template <typename... Ints>
-    void check_bounds( Ints... ) const {}
+    void check_bounds( Ints... idx ) const {
+        static_assert( sizeof...( idx ) == Rank, "Expected number of indices is different from rank of array" );
+    }
 #endif
 
     template <typename... Ints>
