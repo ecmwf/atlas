@@ -249,6 +249,47 @@ CASE( "test_functionspace_StructuredColumns_halo" ) {
 
 //-----------------------------------------------------------------------------
 
+CASE( "test_functionspace_StructuredColumns_halo" ) {
+
+    std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
+
+    grid::StructuredGrid grid( gridname );
+
+    int halo = eckit::Resource<int>( "--halo", 2 );
+    util::Config config;
+    config.set( "halo", halo );
+    config.set( "levels", 10);
+    functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
+    auto for_ij = fs.for_ij();
+
+    Field field = fs.createField<long>( option::name( "field" ) );
+
+    auto value = array::make_view<long, 2>( field );
+    auto xy    = array::make_view<double, 2>( fs.xy() );
+
+    for ( idx_t j = fs.j_begin(); j < fs.j_end(); ++j ) {
+        for ( idx_t i = fs.i_begin( j ); i < fs.i_end( j ); ++i ) {
+            idx_t n    = fs.index( i, j );
+            for( idx_t k = 0; k < fs.levels(); ++ k ) {
+                value( n, k ) = util::microdeg( xy( n, XX ) );
+            }
+        }
+    }
+
+    ATLAS_TRACE_SCOPE( "control each value " )
+    for_ij( [=]( idx_t i, idx_t j ) {
+        idx_t n            = fs.index( i, j );
+        for( idx_t k = 0; k < fs.levels(); ++ k ) {
+            EXPECT( value( n, k ) == util::microdeg( xy( n, XX ) ) );
+        }
+    } );
+
+    PointXY dp {180., 45.};
+
+}
+
+//-----------------------------------------------------------------------------
+
 }  // namespace test
 }  // namespace atlas
 

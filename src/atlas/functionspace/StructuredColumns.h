@@ -72,6 +72,8 @@ public:
     size_t sizeHalo() const { return size_halo_; }
     size_t size() const { return size_halo_; }
 
+    size_t levels() const { return nb_levels_; }
+
     std::string checksum( const FieldSet& ) const;
     std::string checksum( const Field& ) const;
 
@@ -235,6 +237,8 @@ public:
     size_t sizeOwned() const { return functionspace_->sizeOwned(); }
     size_t sizeHalo() const { return functionspace_->sizeHalo(); }
 
+    size_t levels() const { return functionspace_->levels(); }
+
     const grid::StructuredGrid& grid() const { return functionspace_->grid(); }
 
     void gather( const FieldSet&, FieldSet& ) const;
@@ -267,6 +271,50 @@ public:
     Field partition() const { return functionspace_->partition(); }
     Field global_index() const { return functionspace_->global_index(); }
     Field remote_index() const { return functionspace_->remote_index(); }
+    Field index_i() const { return functionspace_->index_i(); }
+    Field index_j() const { return functionspace_->index_j(); }
+
+    class For {
+    public:
+        For( const StructuredColumns& fs ) : fs_(fs) {}
+    protected:
+        const StructuredColumns& fs_;
+    };
+
+    class For_ij : public For {
+    public:
+        using For::For;
+
+        template <typename Functor>
+        void operator()( const Functor& f ) const {
+            for ( auto j = fs_.j_begin(); j < fs_.j_end(); ++j ) {
+                for ( auto i = fs_.i_begin( j ); i < fs_.i_end( j ); ++i ) {
+                   f(i,j);
+                }
+            }
+        }
+    };
+
+    class For_n : public For {
+    public:
+        using For::For;
+
+        template <typename Functor>
+        void operator()( const Functor& f ) const {
+            const auto size = fs_.sizeOwned();
+            for ( auto n = 0*size; n < size; ++n ) {
+                f(n);
+            }
+        }
+    };
+
+    For_ij for_ij() const {
+       return For_ij( *this );
+    }
+
+    For_n for_n() const {
+       return For_n( *this );
+    }
 
 private:
     const detail::StructuredColumns* functionspace_;
