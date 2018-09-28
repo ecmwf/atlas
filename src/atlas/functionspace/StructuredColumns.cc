@@ -259,8 +259,6 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
         }
     }
 
-    int halo = config.getInt( "halo", 0 );
-
     GridPointSet gridpoints;
     for ( idx_t j = j_begin_; j < j_end_; ++j ) {
         for ( idx_t i = i_begin_[j]; i < i_end_[j]; ++i ) {
@@ -271,6 +269,8 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     ASSERT( gridpoints.size() == owned );
 
     size_owned_ = gridpoints.size();
+
+    int halo = config.getInt( "halo", 0 );
 
     j_begin_halo_ = j_begin_ - halo;
     j_end_halo_   = j_end_ + halo;
@@ -371,6 +371,10 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
         double eps = 1.e-12;
         for ( idx_t j = j_begin_; j < j_end_; ++j ) {
             for ( idx_t i : {i_begin_[j], i_end_[j] - 1} ) {
+
+                // Following line only, increases periodic halo on the east side by 1
+                if( i == grid_.nx(j)-1 ) ++i;
+
                 double x = grid_.x( i, j );
                 for ( idx_t jj = j - halo; jj <= j + halo; ++jj ) {
                     jmin     = std::min( jmin, jj );
@@ -379,6 +383,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
                     while ( compute_x( ii, jj ) < x - eps ) {
                         ii++;
                     }
+
                     idx_t i_minus_halo  = ii - halo;
                     idx_t i_plus_halo   = ( x + eps > compute_x( ii, jj ) ) ? ii + halo : ii + std::max( 0, halo - 1 );
                     imin                = std::min( imin, i_minus_halo );
