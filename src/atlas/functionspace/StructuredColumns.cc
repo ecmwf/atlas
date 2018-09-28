@@ -218,8 +218,8 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     grid_( grid ),
     nb_levels_( 0 ) {
     ATLAS_TRACE( "Generating StructuredColumns..." );
-    nb_levels_ = config_levels( config );
-    bool periodic_points = config.getInt("periodic_points",false);
+    nb_levels_           = config_levels( config );
+    bool periodic_points = config.getInt( "periodic_points", false );
     if ( not grid_ ) { throw eckit::BadCast( "Grid is not a grid::Structured type", Here() ); }
     const eckit::mpi::Comm& comm = mpi::comm();
 
@@ -372,9 +372,8 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
         double eps = 1.e-12;
         for ( idx_t j = j_begin_; j < j_end_; ++j ) {
             for ( idx_t i : {i_begin_[j], i_end_[j] - 1} ) {
-
                 // Following line only, increases periodic halo on the east side by 1
-                if( periodic_points && i == grid_.nx(j)-1 ) ++i;
+                if ( periodic_points && i == grid_.nx( j ) - 1 ) ++i;
 
                 double x = grid_.x( i, j );
                 for ( idx_t jj = j - halo; jj <= j + halo; ++jj ) {

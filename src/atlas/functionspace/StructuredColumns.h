@@ -276,7 +276,8 @@ public:
 
     class For {
     public:
-        For( const StructuredColumns& fs ) : fs_(fs) {}
+        For( const StructuredColumns& fs ) : fs_( fs ) {}
+
     protected:
         const StructuredColumns& fs_;
     };
@@ -289,7 +290,7 @@ public:
         void operator()( const Functor& f ) const {
             for ( auto j = fs_.j_begin(); j < fs_.j_end(); ++j ) {
                 for ( auto i = fs_.i_begin( j ); i < fs_.i_end( j ); ++i ) {
-                   f(i,j);
+                    f( i, j );
                 }
             }
         }
@@ -302,19 +303,15 @@ public:
         template <typename Functor>
         void operator()( const Functor& f ) const {
             const auto size = fs_.sizeOwned();
-            for ( auto n = 0*size; n < size; ++n ) {
-                f(n);
+            for ( auto n = 0 * size; n < size; ++n ) {
+                f( n );
             }
         }
     };
 
-    For_ij for_ij() const {
-       return For_ij( *this );
-    }
+    For_ij for_ij() const { return For_ij( *this ); }
 
-    For_n for_n() const {
-       return For_n( *this );
-    }
+    For_n for_n() const { return For_n( *this ); }
 
 private:
     const detail::StructuredColumns* functionspace_;
