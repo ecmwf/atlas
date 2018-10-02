@@ -22,7 +22,8 @@ foreach(test
         test_grid_ptr
         test_grids
         test_rotation
-        test_state)
+        test_state
+        test_grid_hash)
 
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas )
 
