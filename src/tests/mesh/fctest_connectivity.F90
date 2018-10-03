@@ -26,11 +26,12 @@ TEST( test_connectivity )
 #if 1
   use fckit_module
   use atlas_connectivity_module
+  use atlas_kinds_module
   use, intrinsic :: iso_c_binding
 
   implicit none
   type(atlas_Connectivity) :: connectivity
-  integer(c_int), pointer :: padded(:,:), row(:), data(:,:)
+  integer(ATLAS_KIND_IDX), pointer :: padded(:,:), row(:), data(:,:)
   integer(c_size_t), pointer :: cols(:)
   integer(c_int) :: ncols
 
@@ -167,12 +168,13 @@ END_TEST
 TEST( test_multiblockconnectivity )
   use fckit_module
   use atlas_connectivity_module
+  use atlas_kinds_module
   use, intrinsic :: iso_c_binding
 
   implicit none
   type(atlas_MultiBlockConnectivity) :: multiblock
   type(atlas_BlockConnectivity) :: block
-  integer(c_int), pointer :: data(:,:), padded(:,:)
+  integer(ATLAS_KIND_IDX), pointer :: data(:,:), padded(:,:)
   integer(c_size_t), pointer :: cols(:)
 
   type(atlas_Connectivity) :: base

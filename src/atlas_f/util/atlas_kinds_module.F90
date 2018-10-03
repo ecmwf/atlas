@@ -27,7 +27,13 @@ integer, parameter :: ATLAS_KIND_GIDX = c_long
 #error ATLAS_BITS_GLOBAL must be either 32 or 64
 #endif
 
+#if ATLAS_BITS_LOCAL == 32
 integer, parameter :: ATLAS_KIND_IDX = c_int
+#elif ATLAS_BITS_LOCAL == 64
+integer, parameter :: ATLAS_KIND_IDX = c_long
+#else
+#error ATLAS_BITS_LOCAL must be either 32 or 64
+#endif
 
 integer, parameter :: ATLAS_KIND_REAL64 = c_double
 integer, parameter :: ATLAS_KIND_REAL32 = c_float

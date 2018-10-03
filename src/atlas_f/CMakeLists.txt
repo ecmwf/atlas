@@ -37,9 +37,16 @@ function(generate_fortran_bindings output filename)
     set( _PAR_MODULE "atlas_${base}_c_binding" )
   endif()
 
+  set( FINT32 "integer(c_int)"  )
+  set( FINT64 "integer(c_long)" )
+  set( F_GIDX ${FINT${ATLAS_BITS_GLOBAL}} )
+  set( F_IDX ${FINT${ATLAS_BITS_LOCAL}} )
+
   add_custom_command(
     OUTPUT ${outfile}
-    COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile} -m ${_PAR_MODULE}
+    COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+            -o ${outfile} -m ${_PAR_MODULE}
+            -t '{"idx_t":"${F_IDX}","gidx_t":"${F_GIDX}"}'
     DEPENDS ${filename} )
   set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
 endfunction()

@@ -151,6 +151,12 @@ namespace array {
     template IndexView<int, RANK> make_host_indexview<int, RANK, Intent::ReadOnly>( const Array& );                    \
     template IndexView<int, RANK> make_host_indexview<int, RANK, Intent::ReadWrite>( const Array& );                   \
                                                                                                                        \
+    template IndexView<long, RANK> make_indexview<long, RANK, Intent::ReadOnly>( const Array& );                       \
+    template IndexView<long, RANK> make_indexview<long, RANK, Intent::ReadWrite>( const Array& );                      \
+                                                                                                                       \
+    template IndexView<long, RANK> make_host_indexview<long, RANK, Intent::ReadOnly>( const Array& );                  \
+    template IndexView<long, RANK> make_host_indexview<long, RANK, Intent::ReadWrite>( const Array& );                 \
+                                                                                                                       \
     namespace gridtools {                                                                                              \
     template data_view_tt<int, RANK, ::gridtools::access_mode::ReadOnly>                                               \
     make_gt_host_view<int, RANK, Intent::ReadOnly>( const Array& array );                                              \

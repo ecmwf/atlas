@@ -212,7 +212,7 @@ protected:
 private:
     void ctor( const Grid&, long nsmax, const eckit::Configuration& );
 
-    void ctor_rgg( const long nlat, const long pl[], long nsmax, const eckit::Configuration& );
+    void ctor_rgg( const long nlat, const idx_t pl[], long nsmax, const eckit::Configuration& );
 
     void ctor_lonlat( const long nlon, const long nlat, long nsmax, const eckit::Configuration& );
 

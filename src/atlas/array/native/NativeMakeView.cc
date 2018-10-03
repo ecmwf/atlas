@@ -115,6 +115,16 @@ template IndexView<int, 1> make_host_indexview<int, 1, Intent::ReadWrite>( const
 template IndexView<int, 2> make_host_indexview<int, 2, Intent::ReadOnly>( const Array& );
 template IndexView<int, 2> make_host_indexview<int, 2, Intent::ReadWrite>( const Array& );
 
+template IndexView<long, 1> make_indexview<long, 1, Intent::ReadOnly>( const Array& );
+template IndexView<long, 1> make_indexview<long, 1, Intent::ReadWrite>( const Array& );
+template IndexView<long, 2> make_indexview<long, 2, Intent::ReadOnly>( const Array& );
+template IndexView<long, 2> make_indexview<long, 2, Intent::ReadWrite>( const Array& );
+
+template IndexView<long, 1> make_host_indexview<long, 1, Intent::ReadOnly>( const Array& );
+template IndexView<long, 1> make_host_indexview<long, 1, Intent::ReadWrite>( const Array& );
+template IndexView<long, 2> make_host_indexview<long, 2, Intent::ReadOnly>( const Array& );
+template IndexView<long, 2> make_host_indexview<long, 2, Intent::ReadWrite>( const Array& );
+
 // For each Rank in [1..9]
 EXPLICIT_TEMPLATE_INSTANTIATION( 1 )
 EXPLICIT_TEMPLATE_INSTANTIATION( 2 )

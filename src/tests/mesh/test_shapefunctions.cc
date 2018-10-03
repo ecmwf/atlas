@@ -713,7 +713,7 @@ CASE( "test_functionspace" ) {
     elem_connectivity( 3, 3 ) = 34;
 
     /// Access the data
-    atlas::IndexView<int, 2> triag_node_connectivity = make_IndexView( element_node_connectivity, fs, 0 );
+    atlas::IndexView<idx_t, 2> triag_node_connectivity = make_IndexView( element_node_connectivity, fs, 0 );
     EXPECT( triag_node_connectivity.shape( 0 ) == 2 );
     EXPECT( triag_node_connectivity.shape( 1 ) == 3 );
     EXPECT( triag_node_connectivity( 0, 0 ) == 1 );
@@ -726,7 +726,7 @@ CASE( "test_functionspace" ) {
     BOOST_CHECK_THROW( triag_node_connectivity( 0, 3 ),
                        eckit::OutOfRange );  // should fail (OUT OF RANGE)
 
-    atlas::IndexView<int, 2> quad_node_connectivity = make_IndexView( element_node_connectivity, fs, 1 );
+    atlas::IndexView<idx_t, 2> quad_node_connectivity = make_IndexView( element_node_connectivity, fs, 1 );
   EXPECT( quad_node_connectivity.shape(0 == 2 );
   EXPECT( quad_node_connectivity.shape(1 == 4 );
   EXPECT( quad_node_connectivity(0,0 == 21 );

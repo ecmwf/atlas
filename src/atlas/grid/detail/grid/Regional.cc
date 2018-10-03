@@ -211,7 +211,7 @@ public:
         YSpace yspace( LinearSpacing( y.min, y.max, y.N, y.endpoint ) );
 
         bool with_endpoint = true;
-        XSpace xspace( {x.min, x.max}, std::vector<long>( y.N, x.N ), with_endpoint );
+        XSpace xspace( {x.min, x.max}, std::vector<idx_t>( y.N, x.N ), with_endpoint );
 
         return new StructuredGrid::grid_t( xspace, yspace, projection, domain( config ) );
     }
@@ -256,7 +256,7 @@ public:
 
         YSpace yspace( LinearSpacing( y.min, y.max, y.N, true ) );
 
-        XSpace xspace( {0., 360.}, std::vector<long>( y.N, nx ), false );
+        XSpace xspace( {0., 360.}, std::vector<idx_t>( y.N, nx ), false );
 
         return new StructuredGrid::grid_t( xspace, yspace, projection, domain( config ) );
     }

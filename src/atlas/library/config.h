@@ -21,9 +21,13 @@ typedef long gidx_t;
 
 /// @typedef idx_t
 /// Integer type for indices in connectivity tables
+#if ( ATLAS_BITS_LOCAL == 32 )
 typedef int idx_t;
+#else
+typedef long idx_t;
+#endif
 
 /// @typedef uidx_t
 /// Integer type for unique indices
-typedef long uidx_t;
+typedef gidx_t uidx_t;
 }

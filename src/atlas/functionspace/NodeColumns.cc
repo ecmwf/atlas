@@ -136,7 +136,7 @@ private:
         mesh.metadata().get( ss.str(), nb_nodes );
 
         value->setup( array::make_view<int, 1>( mesh.nodes().partition() ).data(),
-                      array::make_view<int, 1>( mesh.nodes().remote_index() ).data(), REMOTE_IDX_BASE, nb_nodes );
+                      array::make_view<idx_t, 1>( mesh.nodes().remote_index() ).data(), REMOTE_IDX_BASE, nb_nodes );
 
         return value;
     }
@@ -186,7 +186,7 @@ private:
         }
 
         value->setup( array::make_view<int, 1>( mesh.nodes().partition() ).data(),
-                      array::make_view<int, 1>( mesh.nodes().remote_index() ).data(), REMOTE_IDX_BASE,
+                      array::make_view<idx_t, 1>( mesh.nodes().remote_index() ).data(), REMOTE_IDX_BASE,
                       array::make_view<gidx_t, 1>( mesh.nodes().global_index() ).data(), mask.data(),
                       mesh.nodes().size() );
         return value;

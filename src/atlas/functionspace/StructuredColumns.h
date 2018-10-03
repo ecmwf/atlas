@@ -338,7 +338,7 @@ void atlas__fs__StructuredColumns__halo_exchange_field( const detail::Structured
                                                         const field::FieldImpl* field );
 void atlas__fs__StructuredColumns__halo_exchange_fieldset( const detail::StructuredColumns* This,
                                                            const field::FieldSetImpl* fieldset );
-void atlas__fs__StructuredColumns__index_host( const detail::StructuredColumns* This, int*& data, int& i_min,
+void atlas__fs__StructuredColumns__index_host( const detail::StructuredColumns* This, idx_t*& data, int& i_min,
                                                int& i_max, int& j_min, int& j_max );
 int atlas__fs__StructuredColumns__j_begin( const detail::StructuredColumns* This );
 int atlas__fs__StructuredColumns__j_end( const detail::StructuredColumns* This );

@@ -131,7 +131,7 @@ public:  // methods
     /// @param [in] base         values of remote_idx start at "base"
     /// @param [in] glb_idx      List of global indices
     /// @param [in] parsize      size of given lists
-    void setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[],
+    void setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                 const size_t parsize );
 
     /// @brief Setup
@@ -142,7 +142,7 @@ public:  // methods
     /// @param [in] parsize      size of given lists
     /// @param [in] mask         Mask indices not to include in the communication
     ///                          pattern (0=include,1=exclude)
-    void setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[], const int mask[],
+    void setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[], const int mask[],
                 const size_t parsize );
 
     template <typename DATA_TYPE>
@@ -183,9 +183,9 @@ public:  // methods
     void scatter( const array::ArrayView<DATA_TYPE, GRANK>& gdata, array::ArrayView<DATA_TYPE, LRANK>& ldata,
                   const size_t root = 0 ) const;
 
-    int glb_dof() const { return glbcnt_; }
+    gidx_t glb_dof() const { return glbcnt_; }
 
-    int loc_dof() const { return loccnt_; }
+    idx_t loc_dof() const { return loccnt_; }
 
 private:  // methods
     template <typename DATA_TYPE>
@@ -473,9 +473,9 @@ void GatherScatter::scatter( const array::ArrayView<DATA_TYPE, GRANK>& gdata, ar
 extern "C" {
 GatherScatter* atlas__GatherScatter__new();
 void atlas__GatherScatter__delete( GatherScatter* This );
-void atlas__GatherScatter__setup32( GatherScatter* This, int part[], int remote_idx[], int base, int glb_idx[],
+void atlas__GatherScatter__setup32( GatherScatter* This, int part[], idx_t remote_idx[], int base, int glb_idx[],
                                     int parsize );
-void atlas__GatherScatter__setup64( GatherScatter* This, int part[], int remote_idx[], int base, long glb_idx[],
+void atlas__GatherScatter__setup64( GatherScatter* This, int part[], idx_t remote_idx[], int base, long glb_idx[],
                                     int parsize );
 int atlas__GatherScatter__glb_dof( GatherScatter* This );
 void atlas__GatherScatter__gather_int( GatherScatter* This, int ldata[], int lvar_strides[], int lvar_shape[],

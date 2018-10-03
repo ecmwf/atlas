@@ -252,6 +252,7 @@ void Library::Information::print( std::ostream& out ) const {
         << "    MKL            : " << str( feature_MKL ) << '\n'
         << "    Tesselation    : " << str( feature_Tesselation ) << '\n'
         << "    ArrayDataStore : " << array_data_store << '\n'
+        << "    idx_t          : " << ATLAS_BITS_LOCAL << " bit integer" << '\n'
         << "    gidx_t         : " << ATLAS_BITS_GLOBAL << " bit integer" << '\n'
         << " \n";
 

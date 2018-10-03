@@ -249,7 +249,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
         proc[jpart] = jpart;
     // <---------
 
-    auto ridx       = array::make_indexview<int, 1>( nodes.remote_index() );
+    auto ridx       = array::make_indexview<idx_t, 1>( nodes.remote_index() );
     auto part       = array::make_view<int, 1>( nodes.partition() );
     auto gidx       = array::make_view<gidx_t, 1>( nodes.global_index() );
     size_t nb_nodes = nodes.size();
@@ -709,7 +709,7 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
 
     mesh::HybridElements& edges = mesh.edges();
 
-    array::IndexView<int, 1> edge_ridx = array::make_indexview<int, 1>( edges.remote_index() );
+    auto edge_ridx = array::make_indexview<idx_t, 1>( edges.remote_index() );
 
     const array::ArrayView<int, 1> edge_part             = array::make_view<int, 1>( edges.partition() );
     const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();

@@ -145,8 +145,11 @@ void FieldImpl::set_functionspace( const FunctionSpace& functionspace ) {
 namespace {
 template <typename Value>
 void atlas__Field__host_data_specf( FieldImpl* This, Value*& data, int& rank, int*& shapef, int*& stridesf ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); This->array().accMap(); data = This->host_data<Value>();
-                          shapef                                       = const_cast<int*>( This->shapef().data() );
+    ATLAS_ERROR_HANDLING( ASSERT( This ); if ( This->datatype() != array::make_datatype<Value>() ) {
+        throw eckit::Exception( "Datatype mismatch for accessing field data" );
+    } This->array()
+                                              .accMap();
+                          data = This->host_data<Value>(); shapef = const_cast<int*>( This->shapef().data() );
                           stridesf = const_cast<int*>( This->stridesf().data() ); rank = This->shapef().size(); );
 }
 }  // namespace

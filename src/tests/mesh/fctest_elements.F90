@@ -41,6 +41,8 @@ TEST( test_hybridelements )
   use atlas_Elements_module
   use atlas_connectivity_module
   use atlas_field_module
+  use atlas_kinds_module
+
   use, intrinsic :: iso_c_binding
 
   implicit none
@@ -49,7 +51,7 @@ TEST( test_hybridelements )
   type(atlas_Field) :: field, field2
   type(atlas_Elements) :: elements
   type(atlas_ElementType) :: element_type
-  integer(c_int), pointer :: data(:,:)
+  integer(ATLAS_KIND_IDX), pointer :: data(:,:)
   integer(c_size_t) :: jfield
 
   write(*,*) "test_hybridelements starting"
@@ -177,6 +179,7 @@ TEST( test_elements )
   use atlas_Elements_module
   use atlas_connectivity_module
   use atlas_field_module
+  use atlas_kinds_module
   use, intrinsic :: iso_c_binding
 
   implicit none
@@ -184,7 +187,7 @@ TEST( test_elements )
   type(atlas_BlockConnectivity) :: node_connectivity
   type(atlas_Elements) :: elements
   type(atlas_ElementType) :: element_type
-  integer(c_int), pointer :: data(:,:)
+  integer(ATLAS_KIND_IDX), pointer :: data(:,:)
 
   write(*,*) "test_elements starting"
 

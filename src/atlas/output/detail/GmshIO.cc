@@ -672,7 +672,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
                 part =
                     std::max( part, *std::max_element( tags + 3, tags + ntags - 1 ) );  // one positive, others negative
 
-            int enodes[4];
+            idx_t enodes[4];
 
             switch ( etype ) {
                 case ( QUAD ):

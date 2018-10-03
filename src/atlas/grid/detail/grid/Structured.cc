@@ -53,7 +53,7 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
         projection_ = Projection();
 
     y_.assign( yspace_.begin(), yspace_.end() );
-    size_t ny = y_.size();
+    idx_t ny = y_.size();
 
     if ( xspace_.ny() == 1 && yspace_.size() > 1 ) {
         nx_.resize( ny, xspace_.nx()[0] );
@@ -71,12 +71,12 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
     ASSERT( nx_.size() == ny );
 
     // Further setup
-    nxmin_ = nxmax_ = static_cast<size_t>( nx_.front() );
-    for ( size_t j = 1; j < ny; ++j ) {
-        nxmin_ = std::min( static_cast<size_t>( nx_[j] ), nxmin_ );
-        nxmax_ = std::max( static_cast<size_t>( nx_[j] ), nxmax_ );
+    nxmin_ = nxmax_ = nx_.front();
+    for ( idx_t j = 1; j < ny; ++j ) {
+        nxmin_ = std::min( nx_[j], nxmin_ );
+        nxmax_ = std::max( nx_[j], nxmax_ );
     }
-    npts_ = size_t( std::accumulate( nx_.begin(), nx_.end(), 0 ) );
+    npts_ = std::accumulate( nx_.begin(), nx_.end(), idx_t{0} );
 
     if ( domain ) { crop( domain ); }
 
@@ -117,7 +117,7 @@ Structured::XSpace::XSpace() : impl_( nullptr ) {}
 
 Structured::XSpace::XSpace( const XSpace& xspace ) : impl_( xspace.impl_ ) {}
 
-Structured::XSpace::XSpace( const std::array<double, 2>& interval, const std::vector<long>& N, bool endpoint ) :
+Structured::XSpace::XSpace( const std::array<double, 2>& interval, const std::vector<idx_t>& N, bool endpoint ) :
     impl_( new Implementation( interval, N, endpoint ) ) {}
 
 Structured::XSpace::XSpace( const Spacing& spacing ) : impl_( new Implementation( spacing ) ) {}
@@ -133,7 +133,7 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
     config_xspace.get( "type", xspace_type );
     ASSERT( xspace_type == "linear" );
 
-    std::vector<long> v_N;
+    std::vector<idx_t> v_N;
     std::vector<double> v_start;
     std::vector<double> v_end;
     std::vector<double> v_length;
@@ -142,7 +142,7 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
     config_xspace.get( "end[]", v_end );
     config_xspace.get( "length[]", v_length );
 
-    size_t ny =
+    idx_t ny =
         std::max( v_N.size(), std::max( v_start.size(), std::max( v_end.size(), std::max( v_length.size(), 1ul ) ) ) );
     reserve( ny );
 
@@ -151,10 +151,10 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
     if ( not v_end.empty() ) ASSERT( v_end.size() == ny );
     if ( not v_length.empty() ) ASSERT( v_length.size() == ny );
 
-    nxmin_ = std::numeric_limits<size_t>::max();
+    nxmin_ = std::numeric_limits<idx_t>::max();
     nxmax_ = 0;
 
-    for ( size_t j = 0; j < ny; ++j ) {
+    for ( idx_t j = 0; j < ny; ++j ) {
         if ( not v_N.empty() ) config_xspace.set( "N", v_N[j] );
         if ( not v_start.empty() ) config_xspace.set( "start", v_start[j] );
         if ( not v_end.empty() ) config_xspace.set( "end", v_end[j] );
@@ -164,19 +164,19 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
         xmax_.push_back( xspace.end );
         nx_.push_back( xspace.N );
         dx_.push_back( xspace.step );
-        nxmin_ = std::min( nxmin_, size_t( nx_[j] ) );
-        nxmax_ = std::max( nxmax_, size_t( nx_[j] ) );
+        nxmin_ = std::min( nxmin_, nx_[j] );
+        nxmax_ = std::max( nxmax_, nx_[j] );
     }
 }
 
 Structured::XSpace::Implementation::Implementation( const std::vector<Config>& config_list ) {
     reserve( config_list.size() );
 
-    nxmin_ = std::numeric_limits<size_t>::max();
+    nxmin_ = std::numeric_limits<idx_t>::max();
     nxmax_ = 0;
 
     std::string xspace_type;
-    for ( size_t j = 0; j < ny(); ++j ) {
+    for ( idx_t j = 0; j < ny(); ++j ) {
         config_list[j].get( "type", xspace_type );
         ASSERT( xspace_type == "linear" );
         spacing::LinearSpacing::Params xspace( config_list[j] );
@@ -184,12 +184,12 @@ Structured::XSpace::Implementation::Implementation( const std::vector<Config>& c
         xmax_.push_back( xspace.end );
         nx_.push_back( xspace.N );
         dx_.push_back( xspace.step );
-        nxmin_ = std::min( nxmin_, size_t( nx_[j] ) );
-        nxmax_ = std::max( nxmax_, size_t( nx_[j] ) );
+        nxmin_ = std::min( nxmin_, nx_[j] );
+        nxmax_ = std::max( nxmax_, nx_[j] );
     }
 }
 
-void Structured::XSpace::Implementation::Implementation::reserve( long ny ) {
+void Structured::XSpace::Implementation::Implementation::reserve( idx_t ny ) {
     ny_ = ny;
     nx_.reserve( ny );
     xmin_.reserve( ny );
@@ -197,19 +197,19 @@ void Structured::XSpace::Implementation::Implementation::reserve( long ny ) {
     dx_.reserve( ny );
 }
 
-Structured::XSpace::Implementation::Implementation( const std::array<double, 2>& interval, const std::vector<long>& N,
+Structured::XSpace::Implementation::Implementation( const std::array<double, 2>& interval, const std::vector<idx_t>& N,
                                                     bool endpoint ) :
     ny_( N.size() ),
     nx_( N ),
     xmin_( ny_, interval[0] ),
     xmax_( ny_, interval[1] ),
     dx_( ny_ ) {
-    nxmin_        = std::numeric_limits<size_t>::max();
+    nxmin_        = std::numeric_limits<idx_t>::max();
     nxmax_        = 0;
     double length = interval[1] - interval[0];
-    for ( size_t j = 0; j < ny_; ++j ) {
-        nxmin_ = std::min( nxmin_, size_t( nx_[j] ) );
-        nxmax_ = std::max( nxmax_, size_t( nx_[j] ) );
+    for ( idx_t j = 0; j < ny_; ++j ) {
+        nxmin_ = std::min( nxmin_, nx_[j] );
+        nxmax_ = std::max( nxmax_, nx_[j] );
         dx_[j] = endpoint ? length / double( nx_[j] - 1 ) : length / double( nx_[j] );
     }
 }
@@ -239,14 +239,14 @@ Grid::Spec Structured::XSpace::Implementation::spec() const {
 
     double xmin = xmin_[0];
     double xmax = xmax_[0];
-    long nx     = nx_[0];
+    idx_t nx    = nx_[0];
     double dx   = dx_[0];
 
     ASSERT( xmin_.size() == ny_ );
     ASSERT( xmax_.size() == ny_ );
     ASSERT( nx_.size() == ny_ );
 
-    for ( size_t j = 1; j < ny_; ++j ) {
+    for ( idx_t j = 1; j < ny_; ++j ) {
         same_xmin = same_xmin && ( xmin_[j] == xmin );
         same_xmax = same_xmax && ( xmax_[j] == xmax );
         same_nx   = same_nx && ( nx_[j] == nx );
@@ -313,29 +313,29 @@ void Structured::crop( const Domain& dom ) {
         const double cropped_ymin = zonal_domain.ymin();
         const double cropped_ymax = zonal_domain.ymax();
 
-        size_t jmin = ny();
-        size_t jmax = 0;
-        for ( size_t j = 0; j < ny(); ++j ) {
+        idx_t jmin = ny();
+        idx_t jmax = 0;
+        for ( idx_t j = 0; j < ny(); ++j ) {
             if ( zonal_domain.contains_y( y( j ) ) ) {
                 jmin = std::min( j, jmin );
                 jmax = std::max( j, jmax );
             }
         }
-        size_t cropped_ny = jmax - jmin + 1;
+        idx_t cropped_ny = jmax - jmin + 1;
         std::vector<double> cropped_y( y_.begin() + jmin, y_.begin() + jmin + cropped_ny );
         std::vector<double> cropped_xmin( xmin_.begin() + jmin, xmin_.begin() + jmin + cropped_ny );
         std::vector<double> cropped_xmax( xmax_.begin() + jmin, xmax_.begin() + jmin + cropped_ny );
         std::vector<double> cropped_dx( dx_.begin() + jmin, dx_.begin() + jmin + cropped_ny );
-        std::vector<long> cropped_nx( nx_.begin() + jmin, nx_.begin() + jmin + cropped_ny );
+        std::vector<idx_t> cropped_nx( nx_.begin() + jmin, nx_.begin() + jmin + cropped_ny );
         ASSERT( cropped_nx.size() == cropped_ny );
 
-        size_t cropped_nxmin, cropped_nxmax;
-        cropped_nxmin = cropped_nxmax = static_cast<size_t>( cropped_nx.front() );
-        for ( size_t j = 1; j < cropped_ny; ++j ) {
-            cropped_nxmin = std::min( static_cast<size_t>( cropped_nx[j] ), cropped_nxmin );
-            cropped_nxmax = std::max( static_cast<size_t>( cropped_nx[j] ), cropped_nxmax );
+        idx_t cropped_nxmin, cropped_nxmax;
+        cropped_nxmin = cropped_nxmax = cropped_nx.front();
+        for ( idx_t j = 1; j < cropped_ny; ++j ) {
+            cropped_nxmin = std::min( cropped_nx[j], cropped_nxmin );
+            cropped_nxmax = std::max( cropped_nx[j], cropped_nxmax );
         }
-        size_t cropped_npts = size_t( std::accumulate( cropped_nx.begin(), cropped_nx.end(), 0 ) );
+        idx_t cropped_npts = std::accumulate( cropped_nx.begin(), cropped_nx.end(), idx_t{0} );
 
         Spacing cropped_yspace(
             new spacing::CustomSpacing( cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax} ) );
@@ -359,9 +359,9 @@ void Structured::crop( const Domain& dom ) {
         const double cropped_ymax = rect_domain.ymax();
 
         // Cropping in Y
-        size_t jmin = ny();
-        size_t jmax = 0;
-        for ( size_t j = 0; j < ny(); ++j ) {
+        idx_t jmin = ny();
+        idx_t jmax = 0;
+        for ( idx_t j = 0; j < ny(); ++j ) {
             if ( rect_domain.contains_y( y( j ) ) ) {
                 jmin = std::min( j, jmin );
                 jmax = std::max( j, jmax );
@@ -369,19 +369,19 @@ void Structured::crop( const Domain& dom ) {
         }
         ASSERT( jmax >= jmin );
 
-        size_t cropped_ny = jmax - jmin + 1;
+        idx_t cropped_ny = jmax - jmin + 1;
         std::vector<double> cropped_y( y_.begin() + jmin, y_.begin() + jmin + cropped_ny );
         std::vector<double> cropped_dx( dx_.begin() + jmin, dx_.begin() + jmin + cropped_ny );
 
         std::vector<double> cropped_xmin( cropped_ny, std::numeric_limits<double>::max() );
         std::vector<double> cropped_xmax( cropped_ny, -std::numeric_limits<double>::max() );
-        std::vector<long> cropped_nx( cropped_ny );
+        std::vector<idx_t> cropped_nx( cropped_ny );
 
         // Cropping in X
         Normalise normalise( rect_domain );
-        for ( size_t j = jmin, jcropped = 0; j <= jmax; ++j, ++jcropped ) {
-            size_t n = 0;
-            for ( size_t i = 0; i < nx( j ); ++i ) {
+        for ( idx_t j = jmin, jcropped = 0; j <= jmax; ++j, ++jcropped ) {
+            idx_t n = 0;
+            for ( idx_t i = 0; i < nx( j ); ++i ) {
                 const double _x = normalise( x( i, j ) );
                 if ( rect_domain.contains_x( _x ) ) {
                     cropped_xmin[jcropped] = std::min( cropped_xmin[jcropped], _x );
@@ -394,14 +394,14 @@ void Structured::crop( const Domain& dom ) {
 
         // Complete structures
 
-        size_t cropped_nxmin, cropped_nxmax;
-        cropped_nxmin = cropped_nxmax = static_cast<size_t>( cropped_nx.front() );
+        idx_t cropped_nxmin, cropped_nxmax;
+        cropped_nxmin = cropped_nxmax = cropped_nx.front();
 
-        for ( size_t j = 1; j < cropped_ny; ++j ) {
-            cropped_nxmin = std::min( static_cast<size_t>( cropped_nx[j] ), cropped_nxmin );
-            cropped_nxmax = std::max( static_cast<size_t>( cropped_nx[j] ), cropped_nxmax );
+        for ( idx_t j = 1; j < cropped_ny; ++j ) {
+            cropped_nxmin = std::min( cropped_nx[j], cropped_nxmin );
+            cropped_nxmax = std::max( cropped_nx[j], cropped_nxmax );
         }
-        size_t cropped_npts = size_t( std::accumulate( cropped_nx.begin(), cropped_nx.end(), 0 ) );
+        idx_t cropped_npts = std::accumulate( cropped_nx.begin(), cropped_nx.end(), idx_t{0} );
 
         Spacing cropped_yspace(
             new spacing::CustomSpacing( cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax} ) );
@@ -435,7 +435,7 @@ void Structured::computeTruePeriodicity() {
     else {
         // domain could be zonal band
 
-        size_t j = ny() / 2;
+        idx_t j = ny() / 2;
         if ( xmin_[j] + ( nx_[j] - 1 ) * dx_[j] == xmax_[j] ) {
             periodic_x_ = false;  // This would lead to duplicated points
         }
@@ -465,7 +465,10 @@ std::string Structured::type() const {
 
 void Structured::hash( eckit::Hash& h ) const {
     h.add( y().data(), sizeof( double ) * y().size() );
-    h.add( nx().data(), sizeof( long ) * ny() );
+
+    // We can use nx() directly, but it could change the hash
+    std::vector<long> hashed_nx( nx().begin(), nx().end() );
+    h.add( hashed_nx.data(), sizeof( long ) * ny() );
 
     // also add lonmin and lonmax
     h.add( xmin_.data(), sizeof( double ) * xmin_.size() );
@@ -564,7 +567,7 @@ long atlas__grid__Structured__nx( Structured* This, long jlat ) {
     return 0;
 }
 
-void atlas__grid__Structured__nx_array( Structured* This, const long*& nx_array, size_t& size ) {
+void atlas__grid__Structured__nx_array( Structured* This, const idx_t*& nx_array, size_t& size ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); nx_array = This->nx().data(); size = This->nx().size(); );
 }
 

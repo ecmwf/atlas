@@ -43,7 +43,7 @@ StructuredGrid::grid_t* create_lonlat( long nlon, long nlat, Shift shift,
     double start_x                   = ( shifted_x ? 0.5 : 0.0 ) * 360.0 / double( nlon );
     std::array<double, 2> interval_x = {start_x, start_x + 360.};
     bool no_endpoint                 = false;
-    XSpace xspace( interval_x, std::vector<long>( nlat, nlon ), no_endpoint );
+    XSpace xspace( interval_x, std::vector<idx_t>( nlat, nlon ), no_endpoint );
 
     // spacing is uniform in y
     // If shifted_y, the whole interval is shifted by -dy/2, and last latitude

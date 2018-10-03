@@ -591,7 +591,7 @@ public:
     array::ArrayView<double, 2> lonlat;
     array::ArrayView<gidx_t, 1> glb_idx;
     array::ArrayView<int, 1> part;
-    array::IndexView<int, 1> ridx;
+    array::IndexView<idx_t, 1> ridx;
     array::ArrayView<int, 1> flags;
     array::ArrayView<int, 1> ghost;
     array::ArrayView<int, 1> halo;
@@ -614,7 +614,7 @@ public:
         lonlat( array::make_view<double, 2>( mesh.nodes().lonlat() ) ),
         glb_idx( array::make_view<gidx_t, 1>( mesh.nodes().global_index() ) ),
         part( array::make_view<int, 1>( mesh.nodes().partition() ) ),
-        ridx( array::make_indexview<int, 1>( mesh.nodes().remote_index() ) ),
+        ridx( array::make_indexview<idx_t, 1>( mesh.nodes().remote_index() ) ),
         flags( array::make_view<int, 1>( mesh.nodes().flags() ) ),
         halo( array::make_view<int, 1>( mesh.nodes().halo() ) ),
         ghost( array::make_view<int, 1>( mesh.nodes().ghost() ) ),
@@ -635,7 +635,7 @@ public:
         lonlat             = array::make_view<double, 2>( nodes.lonlat() );
         glb_idx            = array::make_view<gidx_t, 1>( nodes.global_index() );
         part               = array::make_view<int, 1>( nodes.partition() );
-        ridx               = array::make_indexview<int, 1>( nodes.remote_index() );
+        ridx               = array::make_indexview<idx_t, 1>( nodes.remote_index() );
         flags              = array::make_view<int, 1>( nodes.flags() );
         ghost              = array::make_view<int, 1>( nodes.ghost() );
         halo               = array::make_view<int, 1>( nodes.halo() );
@@ -832,7 +832,7 @@ public:
         halo    = array::make_view<int, 1>( nodes.halo() );
         glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
         part    = array::make_view<int, 1>( nodes.partition() );
-        ridx    = array::make_indexview<int, 1>( nodes.remote_index() );
+        ridx    = array::make_indexview<idx_t, 1>( nodes.remote_index() );
         xy      = array::make_view<double, 2>( nodes.xy() );
         lonlat  = array::make_view<double, 2>( nodes.lonlat() );
         ghost   = array::make_view<int, 1>( nodes.ghost() );
@@ -1214,7 +1214,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
         atlas::mpi::BufferView<uid_t> recv_bdry_nodes_uid = recv_bdry_nodes_uid_from_parts[jpart];
 
-        std::vector<int> found_bdry_elems;
+        std::vector<idx_t> found_bdry_elems;
         std::set<uid_t> found_bdry_nodes_uid;
 
         accumulate_elements( helper.mesh, recv_bdry_nodes_uid, helper.uid2node, helper.node_to_elem, found_bdry_elems,

@@ -275,7 +275,7 @@ MultiBlockConnectivity* atlas__mesh__HybridElements__cell_connectivity( HybridEl
 size_t atlas__mesh__HybridElements__size( const HybridElements* This );
 void atlas__mesh__HybridElements__add_elements( HybridElements* This, ElementType* elementtype, size_t nb_elements );
 void atlas__mesh__HybridElements__add_elements_with_nodes( HybridElements* This, ElementType* elementtype,
-                                                           size_t nb_elements, int node_connectivity[],
+                                                           size_t nb_elements, idx_t node_connectivity[],
                                                            int fortran_array );
 void atlas__mesh__HybridElements__add_field( HybridElements* This, field::FieldImpl* field );
 int atlas__mesh__HybridElements__has_field( const HybridElements* This, char* name );

@@ -194,28 +194,28 @@ public:
 
     bool valid() const { return grid_; }
 
-    inline size_t ny() const { return grid_->ny(); }
+    inline idx_t ny() const { return grid_->ny(); }
 
-    inline size_t nx( size_t j ) const { return grid_->nx( j ); }
+    inline idx_t nx( idx_t j ) const { return grid_->nx( j ); }
 
-    inline const std::vector<long>& nx() const { return grid_->nx(); }
+    inline const std::vector<idx_t>& nx() const { return grid_->nx(); }
 
     inline size_t nxmax() const { return grid_->nxmax(); }
 
     inline const std::vector<double>& y() const { return grid_->y(); }
 
-    inline double x( size_t i, size_t j ) const { return grid_->x( i, j ); }
+    inline double x( idx_t i, idx_t j ) const { return grid_->x( i, j ); }
 
-    inline double y( size_t j ) const { return grid_->y( j ); }
+    inline double y( idx_t j ) const { return grid_->y( j ); }
 
     using Grid::xy;
-    void xy( size_t i, size_t j, double xy[] ) const { grid_->xy( i, j, xy ); }
+    void xy( idx_t i, idx_t j, double xy[] ) const { grid_->xy( i, j, xy ); }
 
-    void lonlat( size_t i, size_t j, double lonlat[] ) const { grid_->lonlat( i, j, lonlat ); }
+    void lonlat( idx_t i, idx_t j, double lonlat[] ) const { grid_->lonlat( i, j, lonlat ); }
 
-    PointXY xy( size_t i, size_t j ) const { return PointXY( x( i, j ), y( j ) ); }
+    PointXY xy( idx_t i, idx_t j ) const { return PointXY( x( i, j ), y( j ) ); }
 
-    PointLonLat lonlat( size_t i, size_t j ) const { return grid_->lonlat( i, j ); }
+    PointLonLat lonlat( idx_t i, idx_t j ) const { return grid_->lonlat( i, j ); }
 
     inline bool reduced() const { return grid_->reduced(); }
 
@@ -256,9 +256,9 @@ public:
 
     size_t nx() const { return nxmax(); }
 
-    inline double x( size_t i ) const { return x( i, 0 ); }
+    inline double x( idx_t i ) const { return x( i, 0 ); }
 
-    PointXY xy( size_t i, size_t j ) const { return PointXY( x( i ), y( j ) ); }
+    PointXY xy( idx_t i, idx_t j ) const { return PointXY( x( i ), y( j ) ); }
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -270,11 +270,11 @@ public:
 
     long N() const { return Grid::ny() / 2; }
 
-    inline double lon( size_t i, size_t j ) const { return Grid::x( i, j ); }
+    inline double lon( idx_t i, idx_t j ) const { return Grid::x( i, j ); }
 
-    inline double lat( size_t j ) const { return Grid::y( j ); }
+    inline double lat( idx_t j ) const { return Grid::y( j ); }
 
-    PointLonLat lonlat( size_t i, size_t j ) const { return Grid::xy( i, j ); }
+    PointLonLat lonlat( idx_t i, idx_t j ) const { return Grid::xy( i, j ); }
 
 protected:
     bool gaussian() const {
@@ -302,8 +302,9 @@ class ReducedGaussianGrid : public Gaussian<ReducedGrid> {
 
 public:
     using grid_t::grid_t;
-    ReducedGaussianGrid( const std::initializer_list<long>& pl );
+    ReducedGaussianGrid( const std::initializer_list<idx_t>& pl );
     ReducedGaussianGrid( const std::vector<long>& pl, const Domain& = Domain() );
+    ReducedGaussianGrid( const std::vector<int>& pl, const Domain& = Domain() );
 
     operator bool() const { return valid(); }
 
@@ -319,11 +320,11 @@ public:
     using grid_t::grid_t;
     RegularGaussianGrid( int N, const Domain& = Domain() );
 
-    inline double lon( size_t i ) const { return x( i ); }
+    inline double lon( idx_t i ) const { return x( i ); }
 
-    inline double lat( size_t j ) const { return y( j ); }
+    inline double lat( idx_t j ) const { return y( j ); }
 
-    PointLonLat lonlat( size_t i, size_t j ) const { return xy( i, j ); }
+    PointLonLat lonlat( idx_t i, idx_t j ) const { return xy( i, j ); }
 
     operator bool() const { return valid(); }
 
@@ -341,11 +342,11 @@ public:
 
     bool valid() const { return RegularGrid::valid() && global_lonlat(); }
 
-    inline double lon( size_t i ) const { return x( i ); }
+    inline double lon( idx_t i ) const { return x( i ); }
 
-    inline double lat( size_t j ) const { return y( j ); }
+    inline double lat( idx_t j ) const { return y( j ); }
 
-    PointLonLat lonlat( size_t i, size_t j ) const { return xy( i, j ); }
+    PointLonLat lonlat( idx_t i, idx_t j ) const { return xy( i, j ); }
 
     bool standard() const { return standard_lon() && standard_lat(); }
     bool shifted() const { return shifted_lon() && shifted_lat(); }

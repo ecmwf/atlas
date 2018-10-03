@@ -28,7 +28,8 @@ namespace classic_gaussian {
 
 //-----------------------------------------------------------------------------
 
-void points_per_latitude_npole_equator( const size_t N, long nlon[] ) {
+template <typename Int>
+void points_per_latitude_npole_equator_impl( const size_t N, Int nlon[] ) {
     std::stringstream Nstream;
     Nstream << N;
     std::string Nstr = Nstream.str();
@@ -43,12 +44,31 @@ void points_per_latitude_npole_equator( const size_t N, long nlon[] ) {
 
 //-----------------------------------------------------------------------------
 
-void points_per_latitude_npole_spole( const size_t N, long nlon[] ) {
+template <typename Int>
+void points_per_latitude_npole_spole_impl( const size_t N, Int nlon[] ) {
     points_per_latitude_npole_equator( N, nlon );
     size_t end = 2 * N - 1;
     for ( size_t jlat = 0; jlat < N; ++jlat ) {
         nlon[end--] = nlon[jlat];
     }
+}
+
+//-----------------------------------------------------------------------------
+
+void points_per_latitude_npole_equator( const size_t N, long nlon[] ) {
+    points_per_latitude_npole_equator_impl( N, nlon );
+}
+void points_per_latitude_npole_equator( const size_t N, int nlon[] ) {
+    points_per_latitude_npole_equator_impl( N, nlon );
+}
+
+//-----------------------------------------------------------------------------
+
+void points_per_latitude_npole_spole( const size_t N, long nlon[] ) {
+    points_per_latitude_npole_spole_impl( N, nlon );
+}
+void points_per_latitude_npole_spole( const size_t N, int nlon[] ) {
+    points_per_latitude_npole_spole_impl( N, nlon );
 }
 
 //-----------------------------------------------------------------------------

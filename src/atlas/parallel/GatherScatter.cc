@@ -25,30 +25,31 @@ namespace parallel {
 
 namespace {
 struct IsGhostPoint {
-    IsGhostPoint( const int part[], const int ridx[], const int base, const int N ) {
+    IsGhostPoint( const int part[], const idx_t ridx[], const idx_t base, const int N ) {
         part_   = part;
         ridx_   = ridx;
         base_   = base;
         mypart_ = mpi::comm().rank();
     }
 
-    bool operator()( int idx ) {
+    bool operator()( idx_t idx ) {
         if ( part_[idx] != mypart_ ) return true;
         if ( ridx_[idx] != base_ + idx ) return true;
         return false;
     }
     int mypart_;
     const int* part_;
-    const int* ridx_;
-    int base_;
+    const idx_t* ridx_;
+    idx_t base_;
 };
 
 struct Node {
-    gidx_t p, i;
+    int p;
+    idx_t i;
     gidx_t g;
 
     Node() {}
-    Node( gidx_t gid, int part, int idx ) {
+    Node( gidx_t gid, int part, idx_t idx ) {
         g = gid;
         p = part;
         i = idx;
@@ -71,7 +72,7 @@ GatherScatter::GatherScatter( const std::string& name ) : name_( name ), is_setu
     nproc  = mpi::comm().size();
 }
 
-void GatherScatter::setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[],
+void GatherScatter::setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                            const int mask[], const size_t parsize ) {
     ATLAS_TRACE( "GatherScatter::setup" );
 
@@ -157,7 +158,7 @@ void GatherScatter::setup( const int part[], const int remote_idx[], const int b
     is_setup_ = true;
 }
 
-void GatherScatter::setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[],
+void GatherScatter::setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                            const size_t parsize ) {
     std::vector<int> mask( parsize );
     IsGhostPoint is_ghost( part, remote_idx, base, parsize );
@@ -177,7 +178,7 @@ void atlas__GatherScatter__delete( GatherScatter* This ) {
     delete This;
 }
 
-void atlas__GatherScatter__setup32( GatherScatter* This, int part[], int remote_idx[], int base, int glb_idx[],
+void atlas__GatherScatter__setup32( GatherScatter* This, int part[], idx_t remote_idx[], int base, int glb_idx[],
                                     int parsize ) {
 #if ATLAS_BITS_GLOBAL == 32
     This->setup( part, remote_idx, base, glb_idx, parsize );
@@ -190,7 +191,7 @@ void atlas__GatherScatter__setup32( GatherScatter* This, int part[], int remote_
 #endif
 }
 
-void atlas__GatherScatter__setup64( GatherScatter* This, int part[], int remote_idx[], int base, long glb_idx[],
+void atlas__GatherScatter__setup64( GatherScatter* This, int part[], idx_t remote_idx[], int base, long glb_idx[],
                                     int parsize ) {
 #if ATLAS_BITS_GLOBAL == 64
     This->setup( part, remote_idx, base, glb_idx, parsize );

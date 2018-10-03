@@ -25,7 +25,7 @@ supported = [
     'size_t',
     'float',
     'double',
-    '_Bool'
+    '_Bool',
 ]
 
 c2ftype = {
@@ -36,7 +36,7 @@ c2ftype = {
     'size_t':'integer(c_size_t)',
     'float':'real(c_float)',
     'double':'real(c_double)',
-    "_Bool":"logical(c_bool)",
+    '_Bool':'logical(c_bool)',
 }
 
 ftype2use = {
@@ -282,10 +282,19 @@ parser = ArgumentParser()
 parser.add_argument("file", type=str, help="file to parse")
 parser.add_argument("-o", "--output", type=str, help="output")
 parser.add_argument("-m", "--module", type=str, help="module")
+parser.add_argument("-t", "--types", type=str, help='e.g. {"idx_t":"integer(c_int)","gidx_t":"integer(c_long)"}' )
 parsed = parser.parse_args()
 input  = parsed.file
 output = parsed.output
 module = parsed.module
+
+if( parsed.types ) :
+    import json
+    extra_types = json.loads( str(parsed.types) )
+    for k in extra_types:
+        supported.append(k)
+        c2ftype[k] = extra_types[k]
+
 if not module:
     module = output
     module = str(re.sub(r'(.+)(\..+)',r'\1',module))

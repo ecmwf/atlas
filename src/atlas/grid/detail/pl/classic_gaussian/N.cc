@@ -29,8 +29,18 @@ void PointsPerLatitude::assign( long nlon[], const size_t size ) const {
         nlon[jlat] = nlon_[jlat];
 }
 
+void PointsPerLatitude::assign( int nlon[], const size_t size ) const {
+    ASSERT( size >= nlon_.size() );
+    for ( size_t jlat = 0; jlat < nlon_.size(); ++jlat )
+        nlon[jlat] = nlon_[jlat];
+}
+
 void PointsPerLatitude::assign( std::vector<long>& nlon ) const {
     nlon = nlon_;
+}
+
+void PointsPerLatitude::assign( std::vector<int>& nlon ) const {
+    nlon.assign( nlon_.begin(), nlon_.end() );
 }
 
 template <typename CONCRETE>

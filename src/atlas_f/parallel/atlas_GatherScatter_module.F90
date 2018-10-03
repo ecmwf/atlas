@@ -5,6 +5,7 @@ module atlas_gatherscatter_module
 use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
 use fckit_array_module, only : array_stride, array_view1d
 use fckit_object_module, only : fckit_object
+use atlas_kinds_module, only : ATLAS_KIND_IDX
 
 implicit none
 
@@ -128,7 +129,7 @@ subroutine GatherScatter__setup32(this, part, remote_idx, glb_idx)
   use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
-  integer(c_int), intent(in) :: remote_idx(:)
+  integer(ATLAS_KIND_IDX), intent(in) :: remote_idx(:)
   integer(c_int), intent(in) :: glb_idx(:)
   call atlas__GatherScatter__setup32( this%c_ptr(), part, remote_idx, 1, &
     &                        glb_idx, size(part) )
@@ -138,7 +139,7 @@ subroutine GatherScatter__setup64(this, part, remote_idx, glb_idx )
   use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
-  integer(c_int), intent(in) :: remote_idx(:)
+  integer(ATLAS_KIND_IDX), intent(in) :: remote_idx(:)
   integer(c_long), intent(in) :: glb_idx(:)
   call atlas__GatherScatter__setup64( this%c_ptr(), part, remote_idx, 1, &
     &                        glb_idx, size(part) )

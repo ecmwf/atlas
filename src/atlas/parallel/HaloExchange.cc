@@ -24,22 +24,22 @@ namespace parallel {
 
 namespace {
 struct IsGhostPoint {
-    IsGhostPoint( const int part[], const int ridx[], const int base, const int N ) {
+    IsGhostPoint( const int part[], const idx_t ridx[], const idx_t base, const int N ) {
         part_   = part;
         ridx_   = ridx;
         base_   = base;
         mypart_ = mpi::comm().rank();
     }
 
-    bool operator()( size_t idx ) {
+    bool operator()( idx_t idx ) {
         if ( part_[idx] != mypart_ ) return true;
-        if ( size_t( ridx_[idx] ) != base_ + idx ) return true;
+        if ( ridx_[idx] != base_ + idx ) return true;
         return false;
     }
     int mypart_;
     const int* part_;
-    const int* ridx_;
-    int base_;
+    const idx_t* ridx_;
+    idx_t base_;
 };
 }  // namespace
 
@@ -53,7 +53,7 @@ HaloExchange::HaloExchange( const std::string& name ) : name_( name ), is_setup_
     nproc  = mpi::comm().size();
 }
 
-void HaloExchange::setup( const int part[], const int remote_idx[], const int base, const size_t parsize ) {
+void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int base, const size_t parsize ) {
     ATLAS_TRACE( "HaloExchange::setup" );
 
     parsize_ = parsize;
@@ -185,7 +185,7 @@ void atlas__HaloExchange__delete( HaloExchange* This ) {
     delete This;
 }
 
-void atlas__HaloExchange__setup( HaloExchange* This, int part[], int remote_idx[], int base, int size ) {
+void atlas__HaloExchange__setup( HaloExchange* This, int part[], idx_t remote_idx[], int base, int size ) {
     This->setup( part, remote_idx, base, size );
 }
 

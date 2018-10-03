@@ -108,8 +108,11 @@ StructuredGrid::StructuredGrid( const Grid& grid, const Grid::Domain& domain ) :
 ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx, const Domain& domain ) :
     ReducedGaussianGrid::grid_t( detail::grid::reduced_gaussian( nx, domain ) ) {}
 
-ReducedGaussianGrid::ReducedGaussianGrid( const std::initializer_list<long>& nx ) :
-    ReducedGaussianGrid( std::vector<long>( nx ) ) {}
+ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<int>& nx, const Domain& domain ) :
+    ReducedGaussianGrid::grid_t( detail::grid::reduced_gaussian( nx, domain ) ) {}
+
+ReducedGaussianGrid::ReducedGaussianGrid( const std::initializer_list<idx_t>& nx ) :
+    ReducedGaussianGrid( std::vector<idx_t>( nx ) ) {}
 
 RegularGaussianGrid::RegularGaussianGrid( int N, const Grid::Domain& domain ) :
     RegularGaussianGrid::grid_t( "F" + std::to_string( N ), domain ) {}

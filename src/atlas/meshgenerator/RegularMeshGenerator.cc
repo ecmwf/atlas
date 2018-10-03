@@ -361,22 +361,22 @@ void RegularMeshGenerator::generate_mesh( const grid::RegularGrid& rg, const std
 
     // define nodes and associated properties
     mesh.nodes().resize( nnodes );
-    mesh::Nodes& nodes                  = mesh.nodes();
-    array::ArrayView<double, 2> xy      = array::make_view<double, 2>( nodes.xy() );
-    array::ArrayView<double, 2> lonlat  = array::make_view<double, 2>( nodes.lonlat() );
-    array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
-    array::IndexView<int, 1> remote_idx = array::make_indexview<int, 1>( nodes.remote_index() );
-    array::ArrayView<int, 1> part       = array::make_view<int, 1>( nodes.partition() );
-    array::ArrayView<int, 1> ghost      = array::make_view<int, 1>( nodes.ghost() );
-    array::ArrayView<int, 1> flags      = array::make_view<int, 1>( nodes.flags() );
+    mesh::Nodes& nodes = mesh.nodes();
+    auto xy            = array::make_view<double, 2>( nodes.xy() );
+    auto lonlat        = array::make_view<double, 2>( nodes.lonlat() );
+    auto glb_idx       = array::make_view<gidx_t, 1>( nodes.global_index() );
+    auto remote_idx    = array::make_indexview<idx_t, 1>( nodes.remote_index() );
+    auto part          = array::make_view<int, 1>( nodes.partition() );
+    auto ghost         = array::make_view<int, 1>( nodes.ghost() );
+    auto flags         = array::make_view<int, 1>( nodes.flags() );
 
     // define cells and associated properties
     mesh.cells().add( new mesh::temporary::Quadrilateral(), ncells );
     int quad_begin                                        = mesh.cells().elements( 0 ).begin();
-    array::ArrayView<int, 1> cells_part                   = array::make_view<int, 1>( mesh.cells().partition() );
+    auto cells_part                                       = array::make_view<int, 1>( mesh.cells().partition() );
     mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
 
-    int quad_nodes[4];
+    idx_t quad_nodes[4];
     int jcell = quad_begin;
     int inode, inode_nonghost, inode_ghost;
 

@@ -7,6 +7,7 @@ use atlas_Connectivity_module, only: atlas_MultiBlockConnectivity
 use atlas_Field_module, only: atlas_Field
 use atlas_ElementType_module, only: atlas_ElementType
 use atlas_Elements_module, only: atlas_Elements
+use atlas_kinds_module, only: ATLAS_KIND_IDX
 
 implicit none
 
@@ -34,8 +35,11 @@ contains
   procedure, public ::  edge_connectivity
   procedure, public ::  cell_connectivity
 
+#if ATLAS_BITS_LOCAL != 32
+  generic, public :: add => add_elements, add_elements_with_nodes, add_field, add_elements_with_nodes_int32
+#else
   generic, public :: add => add_elements, add_elements_with_nodes, add_field
-
+#endif
   generic, public :: field => field_by_idx_size_t, field_by_idx_int, field_by_name
 
   generic, public :: elements => elements_int, elements_size_t
@@ -52,6 +56,9 @@ contains
 ! Private methods
   procedure, private :: add_elements
   procedure, private :: add_elements_with_nodes
+#if ATLAS_BITS_LOCAL != 32
+  procedure, private :: add_elements_with_nodes_int32
+#endif
   procedure, private :: add_field
   procedure, private :: field_by_idx_int
   procedure, private :: field_by_idx_size_t
@@ -141,10 +148,27 @@ subroutine add_elements_with_nodes(this,elementtype,nb_elements,node_connectivit
   class(atlas_HybridElements), intent(inout) :: this
   type(atlas_ElementType), intent(in) :: elementtype
   integer(c_size_t), intent(in) :: nb_elements
-  integer(c_int), intent(in) :: node_connectivity(:)
+  integer(ATLAS_KIND_IDX), intent(in) :: node_connectivity(:)
   call atlas__mesh__HybridElements__add_elements_with_nodes(this%c_ptr(),&
     & elementtype%c_ptr(),nb_elements,node_connectivity,1)
 end subroutine
+
+#if ATLAS_BITS_LOCAL != 32
+subroutine add_elements_with_nodes_int32(this,elementtype,nb_elements,node_connectivity)
+  use, intrinsic :: iso_c_binding
+  use atlas_hybridelements_c_binding
+  class(atlas_HybridElements), intent(inout) :: this
+  type(atlas_ElementType), intent(in) :: elementtype
+  integer(c_size_t), intent(in) :: nb_elements
+  integer(c_int), intent(in) :: node_connectivity(:)
+  integer(ATLAS_KIND_IDX), allocatable :: idx_node_connectivity(:)
+  allocate( idx_node_connectivity( nb_elements * elementtype%nb_nodes() ) )
+  idx_node_connectivity(:) = node_connectivity(:)
+  call atlas__mesh__HybridElements__add_elements_with_nodes(this%c_ptr(),&
+    & elementtype%c_ptr(),nb_elements,idx_node_connectivity,1)
+  deallocate( idx_node_connectivity )
+end subroutine
+#endif
 
 subroutine add_field(this,field)
   use atlas_hybridelements_c_binding

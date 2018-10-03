@@ -39,6 +39,8 @@ void IndexView<Value, Rank>::dump( std::ostream& os ) const {
 
 template class IndexView<int, 1>;
 template class IndexView<int, 2>;
+template class IndexView<long, 1>;
+template class IndexView<long, 2>;
 
 //------------------------------------------------------------------------------------------------------
 

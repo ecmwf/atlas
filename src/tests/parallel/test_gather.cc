@@ -44,7 +44,7 @@ struct Fixture {
             case 0: {  //./----> extra ghost point with nonstandard gidx
                 int part_c[]    = {2, 0, 0, 0, 1, 2};
                 part            = vec( part_c );
-                int ridx_c[]    = {4, 1, 2, 3, 1, 3};
+                idx_t ridx_c[]  = {4, 1, 2, 3, 1, 3};
                 ridx            = vec( ridx_c );
                 gidx_t gidx_c[] = {9, 1, 2, 3, 4, 20};
                 gidx            = vec( gidx_c );
@@ -53,7 +53,7 @@ struct Fixture {
             case 1: {
                 int part_c[]    = {0, 1, 1, 1, 2, 2};
                 part            = vec( part_c );
-                int ridx_c[]    = {3, 1, 2, 3, 2, 3};
+                idx_t ridx_c[]  = {3, 1, 2, 3, 2, 3};
                 ridx            = vec( ridx_c );
                 gidx_t gidx_c[] = {3, 4, 5, 6, 7, 8};
                 gidx            = vec( gidx_c );
@@ -62,7 +62,7 @@ struct Fixture {
             case 2: {
                 int part_c[]    = {1, 1, 2, 2, 2, 0, 0};
                 part            = vec( part_c );
-                int ridx_c[]    = {2, 3, 2, 3, 4, 1, 2};
+                idx_t ridx_c[]  = {2, 3, 2, 3, 4, 1, 2};
                 ridx            = vec( ridx_c );
                 gidx_t gidx_c[] = {5, 6, 7, 8, 9, 1, 2};
                 gidx            = vec( gidx_c );
@@ -74,7 +74,7 @@ struct Fixture {
     parallel::GatherScatter gather_scatter;
     std::vector<int> nb_nodes;
     std::vector<int> part;
-    std::vector<int> ridx;
+    std::vector<idx_t> ridx;
     std::vector<gidx_t> gidx;
 
     int Nl;

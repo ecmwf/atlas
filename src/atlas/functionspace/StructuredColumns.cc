@@ -911,7 +911,7 @@ void atlas__fs__StructuredColumns__checksum_field( const detail::StructuredColum
                           checksum = new char[size + 1]; allocated = true; strcpy( checksum, checksum_str.c_str() ); );
 }
 
-void atlas__fs__StructuredColumns__index_host( const detail::StructuredColumns* This, int*& data, int& i_min,
+void atlas__fs__StructuredColumns__index_host( const detail::StructuredColumns* This, idx_t*& data, int& i_min,
                                                int& i_max, int& j_min, int& j_max ) {
     ASSERT( This );
     ATLAS_ERROR_HANDLING( data  = const_cast<detail::StructuredColumns*>( This )->ij2gp_.data_.data();

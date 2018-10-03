@@ -44,7 +44,7 @@ void build_periodic_boundaries( Mesh& mesh ) {
         mesh::Nodes& nodes = mesh.nodes();
 
         auto flags = array::make_view<int, 1>( nodes.flags() );
-        auto ridx  = array::make_indexview<int, 1>( nodes.remote_index() );
+        auto ridx  = array::make_indexview<idx_t, 1>( nodes.remote_index() );
         auto part  = array::make_view<int, 1>( nodes.partition() );
         auto ghost = array::make_view<int, 1>( nodes.ghost() );
 

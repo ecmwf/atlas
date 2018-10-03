@@ -2,13 +2,14 @@
 
 module atlas_haloexchange_module
 
-use, intrinsic :: iso_c_binding, only : c_ptr, c_long, c_float, c_double
+use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
 use fckit_array_module, only : array_stride, array_view1d
 use fckit_object_module, only : fckit_object
+use atlas_kinds_module, only : ATLAS_KIND_IDX
 
 implicit none
 
-private :: c_ptr, c_long, c_float, c_double
+private :: c_ptr, c_int, c_long, c_float, c_double
 private :: array_stride, array_view1d
 private :: fckit_object
 
@@ -104,8 +105,8 @@ end subroutine atlas_HaloExchange__delete
 subroutine HaloExchange__setup(this, part, remote_idx)
   use atlas_haloexchange_c_binding
   class(atlas_HaloExchange), intent(in) :: this
-  integer, intent(in) :: part(:)
-  integer, intent(in) :: remote_idx(:)
+  integer(c_int), intent(in) :: part(:)
+  integer(ATLAS_KIND_IDX), intent(in) :: remote_idx(:)
   call atlas__HaloExchange__setup( this%c_ptr(), part, remote_idx, 1, size(part) )
 end subroutine HaloExchange__setup
 

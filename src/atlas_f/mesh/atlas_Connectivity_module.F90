@@ -5,6 +5,7 @@ module atlas_connectivity_module
 use, intrinsic :: iso_c_binding, only : c_int, c_size_t, c_ptr, c_null_ptr
 use fckit_owned_object_module, only : fckit_owned_object
 use fckit_object_module, only : fckit_object
+use atlas_kinds_module, only : ATLAS_KIND_IDX
 implicit none
 
 private :: c_ptr
@@ -48,12 +49,17 @@ contains
   procedure, public :: data     => atlas_Connectivity__data
   procedure, public :: row      => atlas_Connectivity__row
   procedure, public :: missing_value  => atlas_Connectivity__missing_value
-  procedure, private :: add_values_args_int => atlas_Connectivity__add_values_args_int
+  procedure, private :: add_values_args_idx => atlas_Connectivity__add_values_args_idx
+#if ATLAS_BITS_LOCAL != 32
+  procedure, private :: add_values_args_int32 => atlas_Connectivity__add_values_args_int32
+#define _add_values_args_int32  , add_values_args_int32
+#else
+#define _add_values_args_int32
+#endif
   procedure, private :: add_values_args_size_t => atlas_Connectivity__add_values_args_size_t
   procedure, private :: add_missing_args_int => atlas_Connectivity__add_missing_args_int
   procedure, private :: add_missing_args_size_t => atlas_Connectivity__add_missing_args_size_t
-  generic, public :: add => add_values_args_int, add_values_args_size_t, add_missing_args_int, add_missing_args_size_t
-
+  generic, public :: add => add_values_args_idx, add_values_args_size_t, add_missing_args_int, add_missing_args_size_t _add_values_args_int32
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_Connectivity__final_auto
 #endif
@@ -111,19 +117,19 @@ end interface
 !-------------------------------
 
 type :: atlas_ConnectivityAccessRow
-  integer, pointer :: col(:)
+  integer(ATLAS_KIND_IDX), pointer :: col(:)
 contains
 end type
 
 type :: atlas_ConnectivityAccess
-  integer(c_int),    private, pointer :: values_(:) => null()
+  integer(ATLAS_KIND_IDX),    private, pointer :: values_(:) => null()
   integer(c_size_t), private, pointer :: displs_(:) => null()
   integer(c_size_t), public,  pointer :: cols(:)    => null()
   type(atlas_ConnectivityAccessRow), public, pointer :: row(:) => null()
   integer(c_size_t), private :: rows_
-  integer, private, pointer :: padded_(:,:) => null()
+  integer(ATLAS_KIND_IDX), private, pointer :: padded_(:,:) => null()
   integer(c_size_t), private :: maxcols_, mincols_
-  integer(c_int), private :: missing_value_
+  integer(ATLAS_KIND_IDX), private :: missing_value_
   type(c_ptr), private :: connectivity_ptr = c_null_ptr
 contains
   procedure, public :: rows  => access_rows
@@ -215,7 +221,7 @@ end function
 
 pure function access_value(this,c,r) result(val)
   use, intrinsic :: iso_c_binding, only : c_int, c_size_t
-  integer(c_int) :: val
+  integer(ATLAS_KIND_IDX) :: val
   class(atlas_ConnectivityAccess), intent(in) :: this
   integer(c_size_t), intent(in) :: r,c
   val = this%values_(c+this%displs_(r))
@@ -230,7 +236,7 @@ end function
 
 pure function atlas_Connectivity__value_args_size_t(this,c,r) result(val)
   use, intrinsic :: iso_c_binding, only : c_size_t, c_int
-  integer(c_int) :: val
+  integer(ATLAS_KIND_IDX) :: val
   class(atlas_Connectivity), intent(in) :: this
   integer(c_size_t), intent(in) :: r,c
   val = this%access%values_(c+this%access%displs_(r))
@@ -238,7 +244,7 @@ end function
 
 pure function atlas_Connectivity__value_args_int(this,c,r) result(val)
   use, intrinsic :: iso_c_binding, only : c_int
-  integer(c_int) :: val
+  integer(ATLAS_KIND_IDX) :: val
   class(atlas_Connectivity), intent(in) :: this
   integer(c_int), intent(in) :: r,c
   val = this%access%values_(c+this%access%displs_(r))
@@ -253,7 +259,7 @@ end function
 
 function atlas_Connectivity__missing_value(this) result(val)
   use atlas_connectivity_c_binding
-  integer(c_int) :: val
+  integer(ATLAS_KIND_IDX) :: val
   class(atlas_Connectivity), intent(in) :: this
   val = atlas__Connectivity__missing_value(this%c_ptr())
 end function
@@ -283,31 +289,32 @@ end function
 subroutine atlas_Connectivity__padded_data(this, padded, cols)
   use, intrinsic :: iso_c_binding, only : c_int, c_size_t
   class(atlas_Connectivity), intent(inout) :: this
-  integer(c_int), pointer, intent(inout) :: padded(:,:)
+  integer(ATLAS_KIND_IDX), pointer, intent(inout) :: padded(:,:)
   integer(c_size_t), pointer, intent(inout), optional :: cols(:)
   if( .not. associated(this%access%padded_) ) call update_padded(this%access)
   padded => this%access%padded_
   if( present(cols) ) cols => this%access%cols
 end subroutine
 
-function c_loc_int32(x)
+function c_loc_idx(x)
   use, intrinsic :: iso_c_binding
-  integer(c_int), target :: x
-  type(c_ptr) :: c_loc_int32
-  c_loc_int32 = c_loc(x)
+  integer(ATLAS_KIND_IDX), target :: x
+  type(c_ptr) :: c_loc_idx
+  c_loc_idx = c_loc(x)
 end function
+
 
 subroutine atlas_Connectivity__data(this, data, ncols)
   use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_loc
   class(atlas_Connectivity), intent(in) :: this
-  integer(c_int), pointer, intent(inout) :: data(:,:)
+  integer(ATLAS_KIND_IDX), pointer, intent(inout) :: data(:,:)
   integer(c_int), intent(out), optional :: ncols
   integer(c_int) :: maxcols
 
   maxcols = this%maxcols()
   if( maxcols == this%mincols() ) then
     if( size(this%access%values_) > 0 ) then
-      call c_f_pointer (c_loc_int32(this%access%values_(1)), data, &
+      call c_f_pointer (c_loc_idx(this%access%values_(1)), data, &
           & (/maxcols,int(this%access%rows_,c_int)/))
       if( present(ncols) ) then
         ncols = maxcols
@@ -323,7 +330,7 @@ subroutine atlas_Connectivity__row(this, row_idx, row, cols)
   use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_Connectivity), intent(in) :: this
   integer(c_int), intent(in) :: row_idx
-  integer(c_int), pointer, intent(inout) :: row(:)
+  integer(ATLAS_KIND_IDX), pointer, intent(inout) :: row(:)
   integer(c_int), intent(out) ::  cols
   row  => this%access%values_(this%access%displs_(row_idx)+1:this%access%displs_(row_idx+1)+1)
   cols =  this%access%cols(row_idx)
@@ -333,21 +340,36 @@ subroutine atlas_Connectivity__add_values_args_size_t(this,rows,cols,values)
   use atlas_connectivity_c_binding
   use, intrinsic :: iso_c_binding, only : c_size_t, c_int
   class(atlas_Connectivity), intent(in) :: this
-  integer(c_size_t) :: rows
-  integer(c_size_t) :: cols
-  integer(c_int) :: values(:)
+  integer(c_size_t), intent(in) :: rows
+  integer(c_size_t), intent(in) :: cols
+  integer(ATLAS_KIND_IDX) :: values(:)
   call atlas__connectivity__add_values(this%c_ptr(),rows,cols,values)
 end subroutine
 
-subroutine atlas_Connectivity__add_values_args_int(this,rows,cols,values)
+subroutine atlas_Connectivity__add_values_args_idx(this,rows,cols,values)
   use atlas_connectivity_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_Connectivity), intent(in) :: this
-  integer(c_int) :: rows
-  integer(c_int) :: cols
-  integer(c_int) :: values(:)
+  integer(c_int), intent(in) :: rows
+  integer(c_int), intent(in) :: cols
+  integer(ATLAS_KIND_IDX), intent(in) :: values(:)
   call atlas__connectivity__add_values(this%c_ptr(),int(rows,c_size_t),int(cols,c_size_t),values)
 end subroutine
+
+#if ATLAS_BITS_LOCAL != 32
+subroutine atlas_Connectivity__add_values_args_int32(this,rows,cols,values)
+  use atlas_connectivity_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
+  class(atlas_Connectivity), intent(in) :: this
+  integer(c_int), intent(in) :: rows
+  integer(c_int), intent(in) :: cols
+  integer(c_int), intent(in) :: values(:)
+  integer(ATLAS_KIND_IDX) :: idx_values(rows*cols)
+  idx_values(:) = values(:)
+  call atlas__connectivity__add_values(this%c_ptr(),int(rows,c_size_t),int(cols,c_size_t),idx_values)
+end subroutine
+#endif
+
 
 subroutine atlas_Connectivity__add_missing_args_size_t(this,rows,cols)
   use atlas_connectivity_c_binding
@@ -423,7 +445,7 @@ subroutine atlas_BlockConnectivity__data(this,data)
   use atlas_connectivity_c_binding
   use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_size_t, c_f_pointer
   class(atlas_BlockConnectivity), intent(in) :: this
-  integer(c_int), pointer, intent(inout) :: data(:,:)
+  integer(ATLAS_KIND_IDX), pointer, intent(inout) :: data(:,:)
   type(c_ptr) :: data_cptr
   integer(c_size_t) :: rows
   integer(c_size_t) :: cols
@@ -449,8 +471,7 @@ end function
 
 function atlas_BlockConnectivity__missing_value(this) result(val)
   use atlas_connectivity_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int
-  integer(c_int) :: val
+  integer(ATLAS_KIND_IDX) :: val
   class(atlas_BlockConnectivity), intent(in) :: this
   val = atlas__BlockConnectivity__missing_value(this%c_ptr()) + 1
 end function

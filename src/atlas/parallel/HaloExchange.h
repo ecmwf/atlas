@@ -50,7 +50,7 @@ public:
 public:  // methods
     const std::string& name() const { return name_; }
 
-    void setup( const int part[], const int remote_idx[], const int base, size_t size );
+    void setup( const int part[], const idx_t remote_idx[], const int base, size_t size );
 
     //  template <typename DATA_TYPE>
     //  void execute( DATA_TYPE field[], size_t nb_vars ) const;
@@ -254,7 +254,7 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
 extern "C" {
 HaloExchange* atlas__HaloExchange__new();
 void atlas__HaloExchange__delete( HaloExchange* This );
-void atlas__HaloExchange__setup( HaloExchange* This, int part[], int remote_idx[], int base, int size );
+void atlas__HaloExchange__setup( HaloExchange* This, int part[], idx_t remote_idx[], int base, int size );
 void atlas__HaloExchange__execute_strided_int( HaloExchange* This, int field[], int var_strides[], int var_shape[],
                                                int var_rank );
 void atlas__HaloExchange__execute_strided_long( HaloExchange* This, long field[], int var_strides[], int var_shape[],

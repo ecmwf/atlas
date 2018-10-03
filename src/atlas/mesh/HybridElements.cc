@@ -46,7 +46,7 @@ namespace {
 
 static void set_uninitialized_fields_to_zero( HybridElements& elems, size_t begin ) {
     ArrayView<gidx_t, 1> global_index = make_view<gidx_t, 1>( elems.global_index() );
-    IndexView<int, 1> remote_index    = make_indexview<int, 1>( elems.remote_index() );
+    IndexView<idx_t, 1> remote_index  = make_indexview<idx_t, 1>( elems.remote_index() );
     ArrayView<int, 1> partition       = make_view<int, 1>( elems.partition() );
     ArrayView<int, 1> halo            = make_view<int, 1>( elems.halo() );
     ArrayView<int, 1> flags           = make_view<int, 1>( elems.flags() );
@@ -65,7 +65,7 @@ static void set_uninitialized_fields_to_zero( HybridElements& elems, size_t begi
 
 HybridElements::HybridElements() : size_( 0 ), elements_size_(), elements_begin_( 1, 0ul ), type_idx_() {
     add( Field( "glb_idx", make_datatype<gidx_t>(), make_shape( size() ) ) );
-    add( Field( "remote_idx", make_datatype<int>(), make_shape( size() ) ) );
+    add( Field( "remote_idx", make_datatype<idx_t>(), make_shape( size() ) ) );
     add( Field( "partition", make_datatype<int>(), make_shape( size() ) ) );
     add( Field( "halo", make_datatype<int>(), make_shape( size() ) ) );
     add( Field( "flags", make_datatype<int>(), make_shape( size() ) ) );
@@ -357,7 +357,7 @@ void atlas__mesh__HybridElements__add_elements( HybridElements* This, ElementTyp
 }
 
 void atlas__mesh__HybridElements__add_elements_with_nodes( HybridElements* This, ElementType* elementtype,
-                                                           size_t nb_elements, int node_connectivity[],
+                                                           size_t nb_elements, idx_t node_connectivity[],
                                                            int fortran_array ) {
     This->add( elementtype, nb_elements, node_connectivity, fortran_array );
 }

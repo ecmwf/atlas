@@ -187,6 +187,7 @@ ecbuild_add_option( FEATURE EIGEN
 ### Type for Global indices and unique point id's
 
 set( ATLAS_BITS_GLOBAL 64 )
+set( ATLAS_BITS_LOCAL 32 )
 
 ### Bounds checking
 if( ${CMAKE_BUILD_TYPE} MATCHES "Debug" )

@@ -30,5 +30,6 @@
 #define ATLAS_HOST
 #endif
 
+#define ATLAS_BITS_LOCAL @ATLAS_BITS_LOCAL@
 
 #endif

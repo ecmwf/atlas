@@ -32,8 +32,15 @@ public:
     /// @param size of lats vector
     void assign( long nlon[], const size_t size ) const;
 
+    /// @pre nlats has enough allocated memory to store the latitudes
+    /// @param size of lats vector
+    void assign( int nlon[], const size_t size ) const;
+
     /// @post resizes the vector to the number of latitutes
     void assign( std::vector<long>& nlon ) const;
+
+    /// @post resizes the vector to the number of latitutes
+    void assign( std::vector<int>& nlon ) const;
 
     size_t N() const { return nlon_.size(); }
 

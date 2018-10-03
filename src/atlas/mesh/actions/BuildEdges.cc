@@ -497,7 +497,7 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
 
                 mesh.edges().add( new mesh::temporary::Line(), nb_pole_edges, pole_edge_nodes.data() );
 
-                auto edge_ridx    = array::make_indexview<int, 1>( mesh.edges().remote_index() );
+                auto edge_ridx    = array::make_indexview<idx_t, 1>( mesh.edges().remote_index() );
                 auto edge_part    = array::make_view<int, 1>( mesh.edges().partition() );
                 auto edge_glb_idx = array::make_view<gidx_t, 1>( mesh.edges().global_index() );
                 auto edge_halo    = array::make_view<int, 1>( mesh.edges().halo() );

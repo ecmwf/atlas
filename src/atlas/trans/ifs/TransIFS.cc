@@ -703,7 +703,7 @@ void TransIFS::ctor_spectral_only( long truncation, const eckit::Configuration& 
     TRANS_CHECK(::trans_setup( trans_.get() ) );
 }
 
-void TransIFS::ctor_rgg( const long nlat, const long pl[], long truncation, const eckit::Configuration& config ) {
+void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, const eckit::Configuration& config ) {
     TransParameters p( *this, config );
     std::vector<int> nloen( nlat );
     for ( long jlat = 0; jlat < nlat; ++jlat )

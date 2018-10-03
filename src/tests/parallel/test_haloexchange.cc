@@ -112,30 +112,30 @@ struct Fixture {
         N              = nb_nodes[mpi::comm().rank()];
         switch ( mpi::comm().rank() ) {
             case 0: {
-                int part_c[] = {2, 0, 0, 0, 1};
-                part         = vec( part_c );
-                int ridx_c[] = {4, 1, 2, 3, 1};
-                ridx         = vec( ridx_c );
-                POD gidx_c[] = {0, 1, 2, 3, 0};
-                gidx         = vec( gidx_c );
+                int part_c[]   = {2, 0, 0, 0, 1};
+                part           = vec( part_c );
+                idx_t ridx_c[] = {4, 1, 2, 3, 1};
+                ridx           = vec( ridx_c );
+                POD gidx_c[]   = {0, 1, 2, 3, 0};
+                gidx           = vec( gidx_c );
                 break;
             }
             case 1: {
-                int part_c[] = {0, 1, 1, 1, 2, 2};
-                part         = vec( part_c );
-                int ridx_c[] = {3, 1, 2, 3, 2, 3};
-                ridx         = vec( ridx_c );
-                POD gidx_c[] = {0, 4, 5, 6, 0, 0};
-                gidx         = vec( gidx_c );
+                int part_c[]   = {0, 1, 1, 1, 2, 2};
+                part           = vec( part_c );
+                idx_t ridx_c[] = {3, 1, 2, 3, 2, 3};
+                ridx           = vec( ridx_c );
+                POD gidx_c[]   = {0, 4, 5, 6, 0, 0};
+                gidx           = vec( gidx_c );
                 break;
             }
             case 2: {
-                int part_c[] = {1, 1, 2, 2, 2, 0, 0};
-                part         = vec( part_c );
-                int ridx_c[] = {2, 3, 2, 3, 4, 1, 2};
-                ridx         = vec( ridx_c );
-                POD gidx_c[] = {0, 0, 7, 8, 9, 0, 0};
-                gidx         = vec( gidx_c );
+                int part_c[]   = {1, 1, 2, 2, 2, 0, 0};
+                part           = vec( part_c );
+                idx_t ridx_c[] = {2, 3, 2, 3, 4, 1, 2};
+                ridx           = vec( ridx_c );
+                POD gidx_c[]   = {0, 0, 7, 8, 9, 0, 0};
+                gidx           = vec( gidx_c );
                 break;
             }
         }
@@ -144,7 +144,7 @@ struct Fixture {
     parallel::HaloExchange halo_exchange;
     std::vector<int> nb_nodes;
     std::vector<int> part;
-    std::vector<int> ridx;
+    std::vector<idx_t> ridx;
     std::vector<POD> gidx;
 
     int N;

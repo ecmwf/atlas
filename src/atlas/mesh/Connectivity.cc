@@ -14,7 +14,7 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/array/Vector.h"
-#include "atlas/library/defines.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/runtime/ErrorHandling.h"
 
@@ -855,7 +855,7 @@ public:
 
     // TODO : For now return host-view raw data to Fortran, but this should be
     //        reviewed to also possibly return device-view data
-    int* values() { return array::make_view<int, 1>( *connectivity_.data_[Connectivity::_values_] ).data(); }
+    idx_t* values() { return array::make_view<idx_t, 1>( *connectivity_.data_[Connectivity::_values_] ).data(); }
     size_t* displs() { return array::make_view<size_t, 1>( *connectivity_.data_[Connectivity::_displs_] ).data(); }
     size_t* counts() { return array::make_view<size_t, 1>( *connectivity_.data_[Connectivity::_counts_] ).data(); }
 
@@ -910,13 +910,13 @@ void atlas__Connectivity__counts( Connectivity* This, size_t*& counts, size_t& s
     size   = This->rows();
 }
 
-void atlas__Connectivity__values( Connectivity* This, int*& values, size_t& size ) {
+void atlas__Connectivity__values( Connectivity* This, idx_t*& values, size_t& size ) {
     ConnectivityPrivateAccess access( *This );
     values = access.values();
     size   = This->rows() ? access.displs()[This->rows()] + 1 : 0;
 }
 
-void atlas__Connectivity__add_values( Connectivity* This, size_t rows, size_t cols, int values[] ) {
+void atlas__Connectivity__add_values( Connectivity* This, size_t rows, size_t cols, idx_t values[] ) {
     This->add( rows, cols, values, true );
 }
 
@@ -928,7 +928,7 @@ size_t atlas__Connectivity__rows( const Connectivity* This ) {
     return This->rows();
 }
 
-int atlas__Connectivity__missing_value( const Connectivity* This ) {
+idx_t atlas__Connectivity__missing_value( const Connectivity* This ) {
     return This->missing_value() TO_FORTRAN;
 }
 
@@ -963,12 +963,12 @@ size_t atlas__BlockConnectivity__cols( const BlockConnectivityImpl* This ) {
     return This->cols();
 }
 
-int atlas__BlockConnectivity__missing_value( const BlockConnectivityImpl* This ) {
+idx_t atlas__BlockConnectivity__missing_value( const BlockConnectivityImpl* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
     return This->missing_value();
 }
 
-void atlas__BlockConnectivity__data( BlockConnectivityImpl* This, int*& data, size_t& rows, size_t& cols ) {
+void atlas__BlockConnectivity__data( BlockConnectivityImpl* This, idx_t*& data, size_t& rows, size_t& cols ) {
     ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
     data = This->data();
     rows = This->rows();

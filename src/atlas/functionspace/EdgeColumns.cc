@@ -92,7 +92,7 @@ private:
         mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
         value->setup( array::make_view<int, 1>( mesh.edges().partition() ).data(),
-                      array::make_view<int, 1>( mesh.edges().remote_index() ).data(), REMOTE_IDX_BASE,
+                      array::make_view<idx_t, 1>( mesh.edges().remote_index() ).data(), REMOTE_IDX_BASE,
                       mesh.edges().size() );
         return value;
     }
@@ -126,7 +126,7 @@ private:
         mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
         value->setup( array::make_view<int, 1>( mesh.edges().partition() ).data(),
-                      array::make_view<int, 1>( mesh.edges().remote_index() ).data(), REMOTE_IDX_BASE,
+                      array::make_view<idx_t, 1>( mesh.edges().remote_index() ).data(), REMOTE_IDX_BASE,
                       array::make_view<gidx_t, 1>( mesh.edges().global_index() ).data(), mesh.edges().size() );
         return value;
     }

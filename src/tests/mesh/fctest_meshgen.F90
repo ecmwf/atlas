@@ -138,7 +138,7 @@ TEST( test_meshgen )
   type(atlas_functionspace_EdgeColumns) :: functionspace_edges
   type(atlas_HaloExchange) :: halo_exchange
   type(atlas_Output) :: gmsh
-  integer(c_int), pointer :: ridx(:)
+  integer(ATLAS_KIND_IDX), pointer :: ridx(:)
   real(c_double), pointer :: arr1d(:), arr2d(:,:)
   integer :: i, nnodes, nghost
 

@@ -45,18 +45,18 @@ class IsGhost {
 public:
     IsGhost( const mesh::Nodes& nodes ) :
         part_( make_view<int, 1>( nodes.partition() ) ),
-        ridx_( make_indexview<int, 1>( nodes.remote_index() ) ),
+        ridx_( make_indexview<idx_t, 1>( nodes.remote_index() ) ),
         mypart_( mpi::comm().rank() ) {}
 
-    bool operator()( size_t idx ) const {
+    bool operator()( idx_t idx ) const {
         if ( part_( idx ) != mypart_ ) return true;
-        if ( ridx_( idx ) != (int)idx ) return true;
+        if ( ridx_( idx ) != idx ) return true;
         return false;
     }
 
 private:
     array::ArrayView<int, 1> part_;
-    IndexView<int, 1> ridx_;
+    IndexView<idx_t, 1> ridx_;
     int mypart_;
 };
 
@@ -127,7 +127,7 @@ CASE( "test1" ) {
 
     EXPECT( nodes.has_field( "remote_idx" ) );
 
-    IndexView<int, 1> loc = make_indexview<int, 1>( nodes.remote_index() );
+    auto loc = make_indexview<idx_t, 1>( nodes.remote_index() );
     EXPECT( loc( 0 ) == 0 );
     EXPECT( loc( 1 ) == 1 );
     EXPECT( loc( 2 ) == 2 );

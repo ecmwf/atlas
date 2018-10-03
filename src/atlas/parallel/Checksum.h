@@ -46,7 +46,7 @@ public:  // methods
     ///                          To Checksum everything, set to val > max value in
     ///                          domain
     /// @param [in] parsize      size of given lists
-    void setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[], const int parsize );
+    void setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[], const int parsize );
 
     /// @brief Setup
     /// @param [in] part         List of partitions
@@ -56,7 +56,7 @@ public:  // methods
     /// @param [in] mask         Mask indices not to include in the communication
     ///                          pattern (0=include,1=exclude)
     /// @param [in] parsize      size of given lists
-    void setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[], const int mask[],
+    void setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[], const int mask[],
                 const int parsize );
 
     /// @brief Setup
@@ -156,8 +156,8 @@ std::string Checksum::execute( const array::ArrayView<DATA_TYPE, LRANK>& lfield 
 extern "C" {
 Checksum* atlas__Checksum__new();
 void atlas__Checksum__delete( Checksum* This );
-void atlas__Checksum__setup32( Checksum* This, int part[], int remote_idx[], int base, int glb_idx[], int parsize );
-void atlas__Checksum__setup64( Checksum* This, int part[], int remote_idx[], int base, long glb_idx[], int parsize );
+void atlas__Checksum__setup32( Checksum* This, int part[], idx_t remote_idx[], int base, int glb_idx[], int parsize );
+void atlas__Checksum__setup64( Checksum* This, int part[], idx_t remote_idx[], int base, long glb_idx[], int parsize );
 void atlas__Checksum__execute_strided_int( Checksum* This, int lfield[], int lvar_strides[], int lvar_extents[],
                                            int lvar_rank, char* checksum );
 void atlas__Checksum__execute_strided_float( Checksum* This, float lfield[], int lvar_strides[], int lvar_extents[],

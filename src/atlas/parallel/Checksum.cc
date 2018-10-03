@@ -23,7 +23,7 @@ Checksum::Checksum( const std::string& name ) : name_( name ) {
     is_setup_ = false;
 }
 
-void Checksum::setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[],
+void Checksum::setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                       const int parsize ) {
     parsize_ = parsize;
     gather_.reset( new GatherScatter() );
@@ -31,7 +31,7 @@ void Checksum::setup( const int part[], const int remote_idx[], const int base, 
     is_setup_ = true;
 }
 
-void Checksum::setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[],
+void Checksum::setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                       const int mask[], const int parsize ) {
     parsize_ = parsize;
     gather_.reset( new GatherScatter() );
@@ -55,7 +55,7 @@ void atlas__Checksum__delete( Checksum* This ) {
     delete This;
 }
 
-void atlas__Checksum__setup32( Checksum* This, int part[], int remote_idx[], int base, int glb_idx[], int parsize ) {
+void atlas__Checksum__setup32( Checksum* This, int part[], idx_t remote_idx[], int base, int glb_idx[], int parsize ) {
 #if ATLAS_BITS_GLOBAL == 32
     This->setup( part, remote_idx, base, glb_idx, parsize );
 #else
@@ -67,7 +67,7 @@ void atlas__Checksum__setup32( Checksum* This, int part[], int remote_idx[], int
 #endif
 }
 
-void atlas__Checksum__setup64( Checksum* This, int part[], int remote_idx[], int base, long glb_idx[], int parsize ) {
+void atlas__Checksum__setup64( Checksum* This, int part[], idx_t remote_idx[], int base, long glb_idx[], int parsize ) {
 #if ATLAS_BITS_GLOBAL == 64
     This->setup( part, remote_idx, base, glb_idx, parsize );
 #else

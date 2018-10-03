@@ -120,6 +120,8 @@ CASE( "test_custom" ) {
 
     auto lonlat = array::make_view<double, 2>( m.nodes().lonlat() );
 
+#if ATLAS_BITS_GLOBAL == 64
+
     std::vector<uidx_t> check;
     switch ( mpi::comm().rank() ) {
         case 0:
@@ -211,7 +213,7 @@ CASE( "test_custom" ) {
         EXPECT( uid.size() == check.size() );
         EXPECT( uid == check );
     }
-
+#endif
     //  FunctionSpace& edges = m.function_space("edges");
     //  array::array::ArrayView<double,1> dual_volumes  ( nodes.field(
     //  "dual_volumes" ) );

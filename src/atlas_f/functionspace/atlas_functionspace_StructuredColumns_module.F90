@@ -9,6 +9,7 @@ use atlas_Field_module, only: atlas_Field
 use atlas_FieldSet_module, only: atlas_FieldSet
 use atlas_Grid_module, only: atlas_Grid
 use atlas_Config_module, only: atlas_Config
+use atlas_kinds_module, only : ATLAS_KIND_IDX
 use fckit_owned_object_module, only : fckit_owned_object
 
 implicit none
@@ -41,7 +42,7 @@ TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_StructuredColumns
 !   August-2015 Willem Deconinck     *ECMWF*
 
 !------------------------------------------------------------------------------
-  integer(c_int), pointer, public :: index(:,:)
+  integer(ATLAS_KIND_IDX), pointer, public :: index(:,:)
 
 contains
 
@@ -185,7 +186,7 @@ subroutine set_index(this)
   use atlas_functionspace_StructuredColumns_c_binding
   class(atlas_functionspace_StructuredColumns), intent(inout) :: this
   type(c_ptr) :: index_cptr
-  integer(c_int), pointer :: index_fptr(:)
+  integer(ATLAS_KIND_IDX), pointer :: index_fptr(:)
   integer(c_int) :: i_min, i_max, j_min, j_max
   integer(c_int) :: ni, nj
   call atlas__fs__StructuredColumns__index_host( this%c_ptr(), index_cptr, i_min, i_max, j_min, j_max )

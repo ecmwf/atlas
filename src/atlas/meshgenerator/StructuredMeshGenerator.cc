@@ -1026,8 +1026,8 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
     int jtriag      = 0;
     int quad_begin  = mesh.cells().elements( 0 ).begin();
     int triag_begin = mesh.cells().elements( 1 ).begin();
-    int quad_nodes[4];
-    int triag_nodes[3];
+    idx_t quad_nodes[4];
+    idx_t triag_nodes[3];
 
     for ( int jlat = region.north; jlat < region.south; ++jlat ) {
         int ilat  = jlat - region.north;

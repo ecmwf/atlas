@@ -26,7 +26,7 @@ namespace mesh {
 
 Nodes::Nodes() : size_( 0 ) {
     global_index_ = add( Field( "glb_idx", make_datatype<gidx_t>(), make_shape( size() ) ) );
-    remote_index_ = add( Field( "remote_idx", make_datatype<int>(), make_shape( size() ) ) );
+    remote_index_ = add( Field( "remote_idx", make_datatype<idx_t>(), make_shape( size() ) ) );
     partition_    = add( Field( "partition", make_datatype<int>(), make_shape( size() ) ) );
     xy_           = add( Field( "xy", make_datatype<double>(), make_shape( size(), 2 ) ) );
     xy_.set_variables( 2 );

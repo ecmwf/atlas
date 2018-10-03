@@ -393,7 +393,7 @@ CASE( "cells_add_add" ) {
 
     HybridElements::Connectivity& conn = cells.node_connectivity();
 
-    int nodes[] = {0, 1, 2, 3};
+    idx_t nodes[] = {0, 1, 2, 3};
 
     conn.set( 0, nodes );
 
