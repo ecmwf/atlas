@@ -117,8 +117,14 @@ Structured::XSpace::XSpace() : impl_( nullptr ) {}
 
 Structured::XSpace::XSpace( const XSpace& xspace ) : impl_( xspace.impl_ ) {}
 
-Structured::XSpace::XSpace( const std::array<double, 2>& interval, const std::vector<idx_t>& N, bool endpoint ) :
+template< typename NVector >
+Structured::XSpace::XSpace( const std::array<double, 2>& interval, const NVector& N, bool endpoint ) :
     impl_( new Implementation( interval, N, endpoint ) ) {}
+template Structured::XSpace::XSpace( const std::array<double, 2>& interval, const std::vector<int>& N, bool endpoint );
+template Structured::XSpace::XSpace( const std::array<double, 2>& interval, const std::vector<long>& N, bool endpoint );
+
+Structured::XSpace::XSpace( const std::array<double, 2>& interval, std::initializer_list<int>&& N, bool endpoint ) : 
+  XSpace( interval, std::vector<int>{N}, endpoint ) {}
 
 Structured::XSpace::XSpace( const Spacing& spacing ) : impl_( new Implementation( spacing ) ) {}
 
@@ -197,10 +203,11 @@ void Structured::XSpace::Implementation::Implementation::reserve( idx_t ny ) {
     dx_.reserve( ny );
 }
 
-Structured::XSpace::Implementation::Implementation( const std::array<double, 2>& interval, const std::vector<idx_t>& N,
+template < typename NVector >
+Structured::XSpace::Implementation::Implementation( const std::array<double, 2>& interval, const NVector& N,
                                                     bool endpoint ) :
     ny_( N.size() ),
-    nx_( N ),
+    nx_( N.begin(), N.end() ),
     xmin_( ny_, interval[0] ),
     xmax_( ny_, interval[1] ),
     dx_( ny_ ) {
@@ -213,6 +220,12 @@ Structured::XSpace::Implementation::Implementation( const std::array<double, 2>&
         dx_[j] = endpoint ? length / double( nx_[j] - 1 ) : length / double( nx_[j] );
     }
 }
+template Structured::XSpace::Implementation::Implementation( const std::array<double, 2>& interval, const std::vector<int>& N, bool endpoint );
+template Structured::XSpace::Implementation::Implementation( const std::array<double, 2>& interval, const std::vector<long>& N, bool endpoint );
+
+Structured::XSpace::Implementation::Implementation( const std::array<double, 2>& interval, std::initializer_list<int>&& N,
+                                                    bool endpoint ) : Implementation( interval, std::vector<int>{N}, endpoint ) {}
+
 
 Structured::XSpace::Implementation::Implementation( const Spacing& spacing ) :
     ny_( 1 ),
