@@ -60,7 +60,7 @@ public:
 class ComputeNorth {
     std::vector<double> y_;
     double dy_;
-    constexpr double tol() const { return 0.5e-6; }
+    static constexpr double tol() { return 0.5e-6; }
 
 public:
     ComputeNorth( const grid::StructuredGrid& grid ) {
@@ -90,7 +90,7 @@ public:
 class ComputeWest {
     std::vector<double> dx;
     std::vector<double> xref;
-    constexpr double tol() const { return 0.5e-6; }
+    static constexpr double tol() { return 0.5e-6; }
     idx_t ny;
 
 public:
