@@ -69,7 +69,7 @@ interface
   end subroutine external_acc_routine
 end interface
 
-field = atlas_Field(kind=atlas_real(8),shape=[5,3])
+field = atlas_Field(kind=atlas_real(4),shape=[5,3])
 
 call field%data(view)
 view(:,:) = 0
