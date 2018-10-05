@@ -172,30 +172,30 @@ void EdgeColumns::set_field_metadata( const eckit::Configuration& config, Field&
     bool global( false );
     if ( config.get( "global", global ) ) {
         if ( global ) {
-            size_t owner( 0 );
+            idx_t owner( 0 );
             config.get( "owner", owner );
             field.metadata().set( "owner", owner );
         }
     }
     field.metadata().set( "global", global );
 
-    size_t levels( nb_levels_ );
+    idx_t levels( nb_levels_ );
     config.get( "levels", levels );
     field.set_levels( levels );
 
-    size_t variables( 0 );
+    idx_t variables( 0 );
     config.get( "variables", variables );
     field.set_variables( variables );
 }
 
-size_t EdgeColumns::config_size( const eckit::Configuration& config ) const {
-    size_t size = nb_edges();
+idx_t EdgeColumns::config_size( const eckit::Configuration& config ) const {
+    idx_t size = nb_edges();
     bool global( false );
     if ( config.get( "global", global ) ) {
         if ( global ) {
-            size_t owner( 0 );
+            idx_t owner( 0 );
             config.get( "owner", owner );
-            size_t _nb_edges_global( nb_edges_global() );
+            idx_t _nb_edges_global( nb_edges_global() );
             size = ( mpi::comm().rank() == owner ? _nb_edges_global : 0 );
         }
     }
@@ -214,8 +214,8 @@ std::string EdgeColumns::config_name( const eckit::Configuration& config ) const
     return name;
 }
 
-size_t EdgeColumns::config_levels( const eckit::Configuration& config ) const {
-    size_t levels( nb_levels_ );
+idx_t EdgeColumns::config_levels( const eckit::Configuration& config ) const {
+    idx_t levels( nb_levels_ );
     config.get( "levels", levels );
     return levels;
 }
@@ -225,11 +225,11 @@ array::ArrayShape EdgeColumns::config_shape( const eckit::Configuration& config 
 
     shape.push_back( config_size( config ) );
 
-    size_t levels( nb_levels_ );
+    idx_t levels( nb_levels_ );
     config.get( "levels", levels );
     if ( levels > 0 ) shape.push_back( levels );
 
-    size_t variables( 0 );
+    idx_t variables( 0 );
     config.get( "variables", variables );
     if ( variables > 0 ) shape.push_back( variables );
 
@@ -248,7 +248,7 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config )
     }
 
     auto get_nb_edges_from_metadata = [&]() {
-        size_t _nb_edges( 0 );
+        idx_t _nb_edges( 0 );
         std::stringstream ss;
         ss << "nb_edges_including_halo[" << halo_.size() << "]";
         mesh_.metadata().get( ss.str(), _nb_edges );
@@ -282,18 +282,18 @@ std::string EdgeColumns::distribution() const {
     return mesh().metadata().getString( "distribution" );
 }
 
-size_t EdgeColumns::nb_edges() const {
+idx_t EdgeColumns::nb_edges() const {
     return nb_edges_;
 }
 
-size_t EdgeColumns::nb_edges_global() const {
+idx_t EdgeColumns::nb_edges_global() const {
     if ( nb_edges_global_ >= 0 ) return nb_edges_global_;
     nb_edges_global_ = gather().glb_dof();
     return nb_edges_global_;
 }
 
 Field EdgeColumns::createField( const eckit::Configuration& options ) const {
-    size_t nb_edges = config_size( options );
+    idx_t nb_edges = config_size( options );
     Field field( config_name( options ), config_datatype( options ), config_shape( options ) );
     set_field_metadata( options, field );
     return field;
@@ -305,7 +305,7 @@ Field EdgeColumns::createField( const Field& other, const eckit::Configuration& 
 }
 
 void EdgeColumns::haloExchange( FieldSet& fieldset ) const {
-    for ( size_t f = 0; f < fieldset.size(); ++f ) {
+    for ( idx_t f = 0; f < fieldset.size(); ++f ) {
         Field& field = fieldset[f];
         if ( field.datatype() == array::DataType::kind<int>() ) {
             halo_exchange().execute<int, 2>( field.array(), false );
@@ -337,11 +337,11 @@ const parallel::HaloExchange& EdgeColumns::halo_exchange() const {
 void EdgeColumns::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const {
     ASSERT( local_fieldset.size() == global_fieldset.size() );
 
-    for ( size_t f = 0; f < local_fieldset.size(); ++f ) {
+    for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& loc       = local_fieldset[f];
         Field& glb             = global_fieldset[f];
-        const size_t nb_fields = 1;
-        size_t root( 0 );
+        const idx_t nb_fields = 1;
+        idx_t root( 0 );
         glb.metadata().get( "owner", root );
         if ( loc.datatype() == array::DataType::kind<int>() ) {
             parallel::Field<int const> loc_field( make_leveled_view<int>( loc ) );
@@ -389,11 +389,11 @@ const parallel::GatherScatter& EdgeColumns::scatter() const {
 void EdgeColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const {
     ASSERT( local_fieldset.size() == global_fieldset.size() );
 
-    for ( size_t f = 0; f < local_fieldset.size(); ++f ) {
+    for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& glb       = global_fieldset[f];
         Field& loc             = local_fieldset[f];
-        const size_t nb_fields = 1;
-        size_t root( 0 );
+        const idx_t nb_fields = 1;
+        idx_t root( 0 );
         glb.metadata().get( "owner", root );
 
         if ( loc.datatype() == array::DataType::kind<int>() ) {
@@ -437,10 +437,10 @@ std::string checksum_3d_field( const parallel::Checksum& checksum, const Field& 
     array::ArrayView<T, 3> values = array::make_view<T, 3>( field );
     array::ArrayT<T> surface_field( field.shape( 0 ), field.shape( 2 ) );
     array::ArrayView<T, 2> surface = array::make_view<T, 2>( surface_field );
-    for ( size_t n = 0; n < values.shape( 0 ); ++n ) {
-        for ( size_t j = 0; j < surface.shape( 1 ); ++j ) {
+    for ( idx_t n = 0; n < values.shape( 0 ); ++n ) {
+        for ( idx_t j = 0; j < surface.shape( 1 ); ++j ) {
             surface( n, j ) = 0.;
-            for ( size_t l = 0; l < values.shape( 1 ); ++l )
+            for ( idx_t l = 0; l < values.shape( 1 ); ++l )
                 surface( n, j ) += values( n, l, j );
         }
     }
@@ -456,7 +456,7 @@ std::string checksum_2d_field( const parallel::Checksum& checksum, const Field& 
 
 std::string EdgeColumns::checksum( const FieldSet& fieldset ) const {
     eckit::MD5 md5;
-    for ( size_t f = 0; f < fieldset.size(); ++f ) {
+    for ( idx_t f = 0; f < fieldset.size(); ++f ) {
         const Field& field = fieldset[f];
         if ( field.datatype() == array::DataType::kind<int>() ) {
             if ( field.levels() )
@@ -683,11 +683,11 @@ EdgeColumns::EdgeColumns( const Mesh& mesh ) :
     FunctionSpace( new detail::EdgeColumns( mesh ) ),
     functionspace_( dynamic_cast<const detail::EdgeColumns*>( get() ) ) {}
 
-size_t EdgeColumns::nb_edges() const {
+idx_t EdgeColumns::nb_edges() const {
     return functionspace_->nb_edges();
 }
 
-size_t EdgeColumns::nb_edges_global() const {  // Only on MPI rank 0, will this be different from 0
+idx_t EdgeColumns::nb_edges_global() const {  // Only on MPI rank 0, will this be different from 0
     return functionspace_->nb_edges_global();
 }
 

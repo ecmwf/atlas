@@ -61,11 +61,11 @@ std::string checksum_3d_field( const parallel::Checksum& checksum, const Field& 
     array::LocalView<T, 3> values = make_leveled_view<T>( field );
     array::ArrayT<T> surface_field( values.shape( 0 ), values.shape( 2 ) );
     array::ArrayView<T, 2> surface = array::make_view<T, 2>( surface_field );
-    const size_t npts              = values.shape( 0 );
-    atlas_omp_for( size_t n = 0; n < npts; ++n ) {
-        for ( size_t j = 0; j < surface.shape( 1 ); ++j ) {
+    const idx_t npts              = values.shape( 0 );
+    atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
+        for ( idx_t j = 0; j < surface.shape( 1 ); ++j ) {
             surface( n, j ) = 0.;
-            for ( size_t l = 0; l < values.shape( 1 ); ++l )
+            for ( idx_t l = 0; l < values.shape( 1 ); ++l )
                 surface( n, j ) += values( n, l, j );
         }
     }
@@ -99,7 +99,7 @@ public:
         return inserted.second;
     }
 
-    size_t size() const { return set.size(); }
+    idx_t size() const { return set.size(); }
 
     using const_iterator = std::set<GridPoint>::const_iterator;
 
@@ -115,18 +115,18 @@ void StructuredColumns::set_field_metadata( const eckit::Configuration& config, 
     bool global( false );
     if ( config.get( "global", global ) ) {
         if ( global ) {
-            size_t owner( 0 );
+            idx_t owner( 0 );
             config.get( "owner", owner );
             field.metadata().set( "owner", owner );
         }
     }
     field.metadata().set( "global", global );
 
-    size_t levels( nb_levels_ );
+    idx_t levels( nb_levels_ );
     config.get( "levels", levels );
     field.set_levels( levels );
 
-    size_t variables( 0 );
+    idx_t variables( 0 );
     config.get( "variables", variables );
     field.set_variables( variables );
 }
@@ -143,8 +143,8 @@ std::string StructuredColumns::config_name( const eckit::Configuration& config )
     return name;
 }
 
-size_t StructuredColumns::config_levels( const eckit::Configuration& config ) const {
-    size_t levels( nb_levels_ );
+idx_t StructuredColumns::config_levels( const eckit::Configuration& config ) const {
+    idx_t levels( nb_levels_ );
     config.get( "levels", levels );
     return levels;
 }
@@ -154,11 +154,11 @@ array::ArrayShape StructuredColumns::config_shape( const eckit::Configuration& c
 
     shape.push_back( config_size( config ) );
 
-    size_t levels( nb_levels_ );
+    idx_t levels( nb_levels_ );
     config.get( "levels", levels );
     if ( levels > 0 ) shape.push_back( levels );
 
-    size_t variables( 0 );
+    idx_t variables( 0 );
     config.get( "variables", variables );
     if ( variables > 0 ) shape.push_back( variables );
 
@@ -190,12 +190,12 @@ void StructuredColumns::IndexRange::print( std::ostream& out ) const {
     out << '\n';
 }
 
-size_t StructuredColumns::config_size( const eckit::Configuration& config ) const {
-    size_t size = size_halo_;
+idx_t StructuredColumns::config_size( const eckit::Configuration& config ) const {
+    idx_t size = size_halo_;
     bool global( false );
     if ( config.get( "global", global ) ) {
         if ( global ) {
-            size_t owner( 0 );
+            idx_t owner( 0 );
             config.get( "owner", owner );
             size = ( mpi::comm().rank() == owner ? grid_.size() : 0 );
         }
@@ -246,10 +246,10 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     j_end_   = std::numeric_limits<idx_t>::min();
     i_begin_.resize( grid_.ny(), std::numeric_limits<idx_t>::max() );
     i_end_.resize( grid_.ny(), std::numeric_limits<idx_t>::min() );
-    size_t c( 0 );
-    size_t owned( 0 );
-    for ( size_t j = 0; j < grid_.ny(); ++j ) {
-        for ( size_t i = 0; i < grid_.nx( j ); ++i, ++c ) {
+    idx_t c( 0 );
+    idx_t owned( 0 );
+    for ( idx_t j = 0; j < grid_.ny(); ++j ) {
+        for ( idx_t i = 0; i < grid_.nx( j ); ++i, ++c ) {
             if ( distribution.partition( c ) == mpi_rank ) {
                 j_begin_    = std::min<idx_t>( j_begin_, j );
                 j_end_      = std::max<idx_t>( j_end_, j + 1 );
@@ -322,8 +322,8 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     };
 
     std::vector<gidx_t> global_offsets( grid_.ny() );
-    size_t grid_idx = 0;
-    for ( size_t j = 0; j < grid_.ny(); ++j ) {
+    idx_t grid_idx = 0;
+    for ( idx_t j = 0; j < grid_.ny(); ++j ) {
         global_offsets[j] = grid_idx;
         grid_idx += grid_.nx( j );
     }
@@ -431,7 +431,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
         if ( gp.j >= 0 && gp.j < grid_.ny() ) {
             if ( gp.i >= 0 && gp.i < grid_.nx( gp.j ) ) {
                 in_domain          = true;
-                size_t k           = global_offsets[gp.j] + gp.i;
+                idx_t k           = global_offsets[gp.j] + gp.i;
                 part( gp.r )       = distribution.partition( k );
                 global_idx( gp.r ) = k + 1;
                 remote_idx( gp.r ) = gp.r;
@@ -456,7 +456,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
 
             std::set<int> others_set;
             others_set.insert( mpi_rank );
-            for ( size_t i = size_owned_; i < size_halo_; ++i ) {
+            for ( idx_t i = size_owned_; i < size_halo_; ++i ) {
                 others_set.insert( p( i ) );
             }
             std::vector<int> others( others_set.begin(), others_set.end() );
@@ -465,9 +465,9 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
 
             comm.allGatherv( others.begin(), others.end(), recv_others );
 
-            std::vector<size_t> counts( recv_others.counts.begin(), recv_others.counts.end() );
-            std::vector<size_t> displs( recv_others.displs.begin(), recv_others.displs.end() );
-            std::vector<size_t> values( recv_others.buffer.begin(), recv_others.buffer.end() );
+            std::vector<idx_t> counts( recv_others.counts.begin(), recv_others.counts.end() );
+            std::vector<idx_t> displs( recv_others.displs.begin(), recv_others.displs.end() );
+            std::vector<idx_t> values( recv_others.buffer.begin(), recv_others.buffer.end() );
             return std::unique_ptr<Mesh::PartitionGraph>(
                 new Mesh::PartitionGraph( values.data(), mpi_size, displs.data(), counts.data() ) );
         };
@@ -485,48 +485,48 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
             const int mpi_rank           = int( comm.rank() );
 
             auto neighbours = graph.nearestNeighbours( mpi_rank );
-            std::map<int, size_t> part_to_neighbour;
-            for ( size_t j = 0; j < neighbours.size(); ++j ) {
+            std::map<int, idx_t> part_to_neighbour;
+            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
                 part_to_neighbour[neighbours[j]] = j;
             }
-            std::vector<size_t> halo_per_neighbour( neighbours.size(), 0 );
-            for ( size_t i = size_owned_; i < size_halo_; ++i ) {
+            std::vector<idx_t> halo_per_neighbour( neighbours.size(), 0 );
+            for ( idx_t i = size_owned_; i < size_halo_; ++i ) {
                 halo_per_neighbour[part_to_neighbour[p( i )]]++;
             }
 
             std::vector<std::vector<gidx_t>> g_per_neighbour( neighbours.size() );
-            for ( size_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
                 g_per_neighbour[j].reserve( halo_per_neighbour[j] );
             }
-            for ( size_t j = size_owned_; j < size_halo_; ++j ) {
+            for ( idx_t j = size_owned_; j < size_halo_; ++j ) {
                 g_per_neighbour[part_to_neighbour[p( j )]].push_back( g( j ) );
             }
-            std::vector<std::vector<size_t>> r_per_neighbour( neighbours.size() );
-            for ( size_t j = 0; j < neighbours.size(); ++j ) {
+            std::vector<std::vector<idx_t>> r_per_neighbour( neighbours.size() );
+            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
                 r_per_neighbour[j].resize( halo_per_neighbour[j] );
             }
 
             std::vector<eckit::mpi::Request> send_requests( neighbours.size() );
             std::vector<eckit::mpi::Request> recv_requests( neighbours.size() );
 
-            std::vector<size_t> recv_size( neighbours.size() );
+            std::vector<idx_t> recv_size( neighbours.size() );
             int tag = 0;
-            for ( size_t j = 0; j < neighbours.size(); ++j ) {
-                size_t g_per_neighbour_size = g_per_neighbour[j].size();
+            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
+                idx_t g_per_neighbour_size = g_per_neighbour[j].size();
                 send_requests[j]            = comm.iSend( g_per_neighbour_size, neighbours[j], tag );
                 recv_requests[j]            = comm.iReceive( recv_size[j], neighbours[j], tag );
             }
 
-            for ( size_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
                 comm.wait( send_requests[j] );
             }
 
-            for ( size_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
                 comm.wait( recv_requests[j] );
             }
 
             std::vector<std::vector<gidx_t>> recv_g_per_neighbour( neighbours.size() );
-            for ( size_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
                 recv_g_per_neighbour[j].resize( recv_size[j] );
 
                 send_requests[j] =
@@ -535,12 +535,12 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
                     comm.iReceive( recv_g_per_neighbour[j].data(), recv_g_per_neighbour[j].size(), neighbours[j], tag );
             }
 
-            std::vector<std::vector<size_t>> send_r_per_neighbour( neighbours.size() );
-            std::map<gidx_t, size_t> g_to_r;
-            for ( size_t j = 0; j < size_owned_; ++j ) {
+            std::vector<std::vector<idx_t>> send_r_per_neighbour( neighbours.size() );
+            std::map<gidx_t, idx_t> g_to_r;
+            for ( idx_t j = 0; j < size_owned_; ++j ) {
                 g_to_r[g( j )] = j;
             }
-            for ( size_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
                 send_r_per_neighbour[j].reserve( recv_size[j] );
 
                 comm.wait( recv_requests[j] );  // wait for recv_g_per_neighbour[j]
@@ -549,7 +549,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
                 }
             }
 
-            for ( size_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
                 comm.wait( send_requests[j] );
                 send_requests[j] =
                     comm.iSend( send_r_per_neighbour[j].data(), send_r_per_neighbour[j].size(), neighbours[j], tag );
@@ -557,17 +557,17 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
                     comm.iReceive( r_per_neighbour[j].data(), r_per_neighbour[j].size(), neighbours[j], tag );
             }
 
-            for ( size_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
                 comm.wait( recv_requests[j] );
             }
 
-            std::vector<size_t> counters( neighbours.size(), 0 );
-            for ( size_t j = size_owned_; j < size_halo_; ++j ) {
-                size_t neighbour = part_to_neighbour[p( j )];
+            std::vector<idx_t> counters( neighbours.size(), 0 );
+            for ( idx_t j = size_owned_; j < size_halo_; ++j ) {
+                idx_t neighbour = part_to_neighbour[p( j )];
                 remote_idx( j )  = r_per_neighbour[neighbour][counters[neighbour]++];
             }
 
-            for ( size_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
                 comm.wait( send_requests[j] );
             }
         }
@@ -597,17 +597,11 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
 StructuredColumns::~StructuredColumns() {}
 // ----------------------------------------------------------------------------
 
-size_t StructuredColumns::footprint() const {
-    size_t size = sizeof( *this );
-    // TODO
-    return size;
-}
-
 // ----------------------------------------------------------------------------
 // Create Field
 // ----------------------------------------------------------------------------
 Field StructuredColumns::createField( const eckit::Configuration& options ) const {
-    size_t npts = config_size( options );
+    idx_t npts = config_size( options );
     Field field( config_name( options ), config_datatype( options ), config_shape( options ) );
     set_field_metadata( options, field );
     return field;
@@ -625,11 +619,11 @@ Field StructuredColumns::createField( const Field& other, const eckit::Configura
 void StructuredColumns::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const {
     ASSERT( local_fieldset.size() == global_fieldset.size() );
 
-    for ( size_t f = 0; f < local_fieldset.size(); ++f ) {
+    for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& loc       = local_fieldset[f];
         Field& glb             = global_fieldset[f];
-        const size_t nb_fields = 1;
-        size_t root( 0 );
+        const idx_t nb_fields = 1;
+        idx_t root( 0 );
         glb.metadata().get( "owner", root );
 
         if ( loc.datatype() == array::DataType::kind<int>() ) {
@@ -676,11 +670,11 @@ void StructuredColumns::gather( const Field& local, Field& global ) const {
 void StructuredColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const {
     ASSERT( local_fieldset.size() == global_fieldset.size() );
 
-    for ( size_t f = 0; f < local_fieldset.size(); ++f ) {
+    for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& glb       = global_fieldset[f];
         Field& loc             = local_fieldset[f];
-        const size_t nb_fields = 1;
-        size_t root( 0 );
+        const idx_t nb_fields = 1;
+        idx_t root( 0 );
         glb.metadata().get( "owner", root );
 
         if ( loc.datatype() == array::DataType::kind<int>() ) {
@@ -726,7 +720,7 @@ void StructuredColumns::scatter( const Field& global, Field& local ) const {
 
 std::string StructuredColumns::checksum( const FieldSet& fieldset ) const {
     eckit::MD5 md5;
-    for ( size_t f = 0; f < fieldset.size(); ++f ) {
+    for ( idx_t f = 0; f < fieldset.size(); ++f ) {
         const Field& field = fieldset[f];
         if ( field.datatype() == array::DataType::kind<int>() )
             md5 << checksum_3d_field<int>( *checksum_, field );
@@ -768,7 +762,7 @@ void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exc
 }  // namespace
 
 void StructuredColumns::haloExchange( FieldSet& fieldset ) const {
-    for ( size_t f = 0; f < fieldset.size(); ++f ) {
+    for ( idx_t f = 0; f < fieldset.size(); ++f ) {
         Field& field = fieldset[f];
         switch ( field.rank() ) {
             case 1:
@@ -793,6 +787,12 @@ void StructuredColumns::haloExchange( Field& field ) const {
     FieldSet fieldset;
     fieldset.add( field );
     haloExchange( fieldset );
+}
+
+size_t StructuredColumns::footprint() const {
+    size_t size = sizeof( *this );
+    // TODO
+    return size;
 }
 
 }  // namespace detail

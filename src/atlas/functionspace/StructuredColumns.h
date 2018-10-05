@@ -68,11 +68,11 @@ public:
     void haloExchange( FieldSet& ) const;
     void haloExchange( Field& ) const;
 
-    size_t sizeOwned() const { return size_owned_; }
-    size_t sizeHalo() const { return size_halo_; }
-    size_t size() const { return size_halo_; }
+    idx_t sizeOwned() const { return size_owned_; }
+    idx_t sizeHalo() const { return size_halo_; }
+    idx_t size() const { return size_halo_; }
 
-    size_t levels() const { return nb_levels_; }
+    idx_t levels() const { return nb_levels_; }
 
     std::string checksum( const FieldSet& ) const;
     std::string checksum( const Field& ) const;
@@ -101,20 +101,20 @@ public:
     Field index_j() const { return field_index_j_; }
 
 private:  // methods
-    size_t config_size( const eckit::Configuration& config ) const;
+    idx_t config_size( const eckit::Configuration& config ) const;
     array::DataType config_datatype( const eckit::Configuration& ) const;
     std::string config_name( const eckit::Configuration& ) const;
-    size_t config_levels( const eckit::Configuration& ) const;
+    idx_t config_levels( const eckit::Configuration& ) const;
     array::ArrayShape config_shape( const eckit::Configuration& ) const;
     void set_field_metadata( const eckit::Configuration&, Field& ) const;
-    size_t footprint() const;
+    virtual size_t footprint() const;
 
 private:  // data
     std::string distribution_;
 
-    size_t size_owned_;
-    size_t size_halo_;
-    size_t nb_levels_;
+    idx_t size_owned_;
+    idx_t size_halo_;
+    idx_t nb_levels_;
 
     const grid::StructuredGrid grid_;
     parallel::GatherScatter* gather_scatter_;
@@ -185,7 +185,7 @@ private:  // data
 
         idx_t missing() const { return std::numeric_limits<idx_t>::max() - 1; }
 
-        size_t size() const { return data_.size(); }
+        idx_t size() const { return data_.size(); }
 
         void resize( idx_t min, idx_t max ) {
             min_ = min;
@@ -233,11 +233,11 @@ public:
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
 
-    size_t size() const { return functionspace_->size(); }
-    size_t sizeOwned() const { return functionspace_->sizeOwned(); }
-    size_t sizeHalo() const { return functionspace_->sizeHalo(); }
+    idx_t size() const { return functionspace_->size(); }
+    idx_t sizeOwned() const { return functionspace_->sizeOwned(); }
+    idx_t sizeHalo() const { return functionspace_->sizeHalo(); }
 
-    size_t levels() const { return functionspace_->levels(); }
+    idx_t levels() const { return functionspace_->levels(); }
 
     const grid::StructuredGrid& grid() const { return functionspace_->grid(); }
 

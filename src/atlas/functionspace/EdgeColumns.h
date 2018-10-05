@@ -50,9 +50,9 @@ public:
 
     virtual std::string distribution() const;
 
-    size_t nb_edges() const;
-    size_t nb_edges_global() const;  // Only on MPI rank 0, will this be different from 0
-    std::vector<size_t> nb_edges_global_foreach_rank() const;
+    idx_t nb_edges() const;
+    idx_t nb_edges_global() const;  // Only on MPI rank 0, will this be different from 0
+    std::vector<idx_t> nb_edges_global_foreach_rank() const;
 
     const Mesh& mesh() const { return mesh_; }
     Mesh& mesh() { return mesh_; }
@@ -85,20 +85,20 @@ public:
     const parallel::Checksum& checksum() const;
 
 private:  // methods
-    size_t config_size( const eckit::Configuration& config ) const;
+    idx_t config_size( const eckit::Configuration& config ) const;
     array::DataType config_datatype( const eckit::Configuration& ) const;
     std::string config_name( const eckit::Configuration& ) const;
-    size_t config_levels( const eckit::Configuration& ) const;
+    idx_t config_levels( const eckit::Configuration& ) const;
     array::ArrayShape config_shape( const eckit::Configuration& ) const;
     void set_field_metadata( const eckit::Configuration&, Field& ) const;
-    size_t footprint() const;
+    virtual size_t footprint() const;
 
 private:         // data
     Mesh mesh_;  // non-const because functionspace may modify mesh
-    size_t nb_levels_;
+    idx_t nb_levels_;
     mesh::HybridElements& edges_;  // non-const because functionspace may modify mesh
     mesh::Halo halo_;
-    size_t nb_edges_;
+    idx_t nb_edges_;
     mutable long nb_edges_global_{-1};
     mutable eckit::SharedPtr<parallel::GatherScatter> gather_scatter_;  // without ghost
     mutable eckit::SharedPtr<parallel::HaloExchange> halo_exchange_;
@@ -156,8 +156,8 @@ public:
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
 
-    size_t nb_edges() const;
-    size_t nb_edges_global() const;  // Only on MPI rank 0, will this be different from 0
+    idx_t nb_edges() const;
+    idx_t nb_edges_global() const;  // Only on MPI rank 0, will this be different from 0
 
     const Mesh& mesh() const;
 

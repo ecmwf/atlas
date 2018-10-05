@@ -233,7 +233,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
     bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
     bool binary( !gmsh_options.get<bool>( "ascii" ) );
     size_t nlev                      = std::max<int>( 1, field.levels() );
-    size_t ndata                     = std::min( function_space.nb_nodes(), field.shape( 0 ) );
+    size_t ndata                     = std::min<idx_t>( function_space.nb_nodes(), field.shape( 0 ) );
     size_t nvars                     = std::max<int>( 1, field.variables() );
     array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( function_space.nodes().global_index() );
     Field gidx_glb;
@@ -246,7 +246,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
 
         field_glb = function_space.createField( field, option::global() );
         function_space.gather( field, field_glb );
-        ndata = std::min( function_space.nb_nodes_global(), field_glb.shape( 0 ) );
+        ndata = std::min<idx_t>( function_space.nb_nodes_global(), field_glb.shape( 0 ) );
     }
 
     std::vector<long> lev = get_levels( nlev, gmsh_options );
@@ -281,7 +281,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
     bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
     bool binary( !gmsh_options.get<bool>( "ascii" ) );
     size_t nlev  = std::max<int>( 1, field.levels() );
-    size_t ndata = std::min( function_space.sizeOwned(), field.shape( 0 ) );
+    size_t ndata = std::min<idx_t>( function_space.sizeOwned(), field.shape( 0 ) );
     size_t nvars = std::max<int>( 1, field.variables() );
     auto gidx    = array::make_view<gidx_t, 1>( function_space.global_index() );
     Field gidx_glb;

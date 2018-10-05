@@ -204,7 +204,7 @@ CASE( "test_functionspace_NodeColumns" ) {
         double sum;
         double mean;
         double stddev;
-        size_t N;
+        idx_t N;
         gidx_t gidx_max;
         gidx_t gidx_min;
 
@@ -259,7 +259,7 @@ CASE( "test_functionspace_NodeColumns" ) {
         std::vector<double> sum;
         std::vector<double> mean;
         std::vector<double> stddev;
-        size_t N;
+        idx_t N;
         std::vector<gidx_t> gidx_max;
         std::vector<gidx_t> gidx_min;
 
@@ -311,10 +311,10 @@ CASE( "test_functionspace_NodeColumns" ) {
         double sum;
         double mean;
         double stddev;
-        size_t N;
+        idx_t N;
         gidx_t gidx_max;
         gidx_t gidx_min;
-        size_t level;
+        idx_t level;
 
         EXPECT( field.levels() == nb_levels );
 
@@ -392,10 +392,10 @@ CASE( "test_functionspace_NodeColumns" ) {
         std::vector<double> sum;
         std::vector<double> mean;
         std::vector<double> stddev;
-        size_t N;
+        idx_t N;
         std::vector<gidx_t> gidx_max;
         std::vector<gidx_t> gidx_min;
-        std::vector<size_t> levels;
+        std::vector<idx_t> levels;
 
         array::ArrayView<double, 3> vec_arr = array::make_view<double, 3>( field );
         vec_arr.assign( mpi::comm().rank() + 1 );
