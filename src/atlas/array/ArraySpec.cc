@@ -12,16 +12,17 @@
 
 #include "eckit/exception/Exceptions.h"
 
+#include "atlas/library/config.h"
 #include "atlas/array/ArrayUtil.h"
 
 namespace atlas {
 namespace array {
 
 namespace {
-size_t compute_allocated_size( size_t size, int alignment ) {
-    int div                = size / alignment;
-    int mod                = size % alignment;
-    size_t _allocated_size = div * alignment;
+idx_t compute_allocated_size( idx_t size, idx_t alignment ) {
+    idx_t div                = size / alignment;
+    idx_t mod                = size % alignment;
+    idx_t _allocated_size = div * alignment;
     if ( mod > 0 ) _allocated_size += alignment;
     return _allocated_size;
 }
@@ -92,7 +93,7 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, cons
         strides_[j] = strides[j];
         layout_[j]  = layout[j];
         size_ *= shape_[j];
-        if ( layout_[j] != size_t( j ) ) { default_layout_ = false; }
+        if ( layout_[j] != idx_t( j ) ) { default_layout_ = false; }
     }
     allocated_size_ = compute_allocated_size( shape_[layout_[0]] * strides_[layout_[0]], alignment );
     contiguous_     = ( size_ == allocated_size_ );
@@ -101,7 +102,7 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, cons
 const std::vector<int>& ArraySpec::shapef() const {
     if ( shapef_.empty() ) {
         shapef_.resize( rank_ );
-        for ( size_t j = 0; j < rank_; ++j ) {
+        for ( idx_t j = 0; j < rank_; ++j ) {
             shapef_[j] = shape_[rank_ - 1 - layout_[j]];
         }
     }

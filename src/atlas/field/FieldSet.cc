@@ -81,7 +81,7 @@ int atlas__FieldSet__has_field( const FieldSetImpl* This, char* name ) {
     return 0;
 }
 
-size_t atlas__FieldSet__size( const FieldSetImpl* This ) {
+idx_t atlas__FieldSet__size( const FieldSetImpl* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->size(); );
     return 0;
 }
@@ -91,7 +91,7 @@ FieldImpl* atlas__FieldSet__field_by_name( FieldSetImpl* This, char* name ) {
     return NULL;
 }
 
-FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, size_t idx ) {
+FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, idx_t idx ) {
     ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->operator[]( idx ).get(); );
     return NULL;
 }

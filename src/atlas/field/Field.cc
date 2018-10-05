@@ -162,7 +162,7 @@ void Field::resize( const array::ArrayShape& shape ) {
     field_->resize( shape );
 }
 
-void Field::insert( size_t idx1, size_t size1 ) {
+void Field::insert( idx_t idx1, idx_t size1 ) {
     field_->insert( idx1, size1 );
 }
 
@@ -187,22 +187,22 @@ const array::ArrayStrides& Field::strides() const {
 }
 
 /// @brief Shape of this field associated to index 'i'
-size_t Field::shape( size_t i ) const {
+idx_t Field::shape( idx_t i ) const {
     return field_->shape( i );
 }
 
 /// @brief Stride of this field associated to index 'i'
-size_t Field::stride( size_t i ) const {
+idx_t Field::stride( idx_t i ) const {
     return field_->stride( i );
 }
 
 /// @brief Number of values stored in this field
-size_t Field::size() const {
+idx_t Field::size() const {
     return field_->size();
 }
 
 /// @brief Rank of field
-size_t Field::rank() const {
+idx_t Field::rank() const {
     return field_->rank();
 }
 
@@ -217,18 +217,18 @@ void Field::dump( std::ostream& os ) const {
 }
 
 /// Metadata that is more intrinsic to the Field, and queried often
-void Field::set_levels( size_t n ) {
+void Field::set_levels( idx_t n ) {
     field_->set_levels( n );
 }
-size_t Field::levels() const {
+idx_t Field::levels() const {
     return field_->levels();
 }
 
 /// Metadata that is more intrinsic to the Field, and queried often
-void Field::set_variables( size_t n ) {
+void Field::set_variables( idx_t n ) {
     field_->set_variables( n );
 }
-size_t Field::variables() const {
+idx_t Field::variables() const {
     return field_->variables();
 }
 

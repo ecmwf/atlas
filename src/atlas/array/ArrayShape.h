@@ -4,7 +4,7 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an size_tergovernmental organisation
+ * granted to it by virtue of its status as an intergovernmental organisation
  * nor does it submit to any jurisdiction.
  */
 
@@ -12,6 +12,7 @@
 
 #include <stddef.h>
 #include <vector>
+#include "atlas/library/config.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -28,32 +29,32 @@ private:
     int alignment_;
 };
 
-class ArrayShape : public std::vector<size_t> {
+class ArrayShape : public std::vector<idx_t> {
 private:
-    using Base = std::vector<size_t>;
+    using Base = std::vector<idx_t>;
 
 public:
     ArrayShape() {}
     ArrayShape( Base&& base ) : Base( std::forward<Base>( base ) ) {}
-    ArrayShape( std::initializer_list<size_t> list ) : Base( list ) {}
+    ArrayShape( std::initializer_list<idx_t> list ) : Base( list ) {}
 };
 
-inline ArrayShape make_shape( std::initializer_list<size_t> sizes ) {
+inline ArrayShape make_shape( std::initializer_list<idx_t> sizes ) {
     return ArrayShape( sizes );
 }
-inline ArrayShape make_shape( size_t size1 ) {
+inline ArrayShape make_shape( idx_t size1 ) {
     return ArrayShape{size1};
 }
-inline ArrayShape make_shape( size_t size1, size_t size2 ) {
+inline ArrayShape make_shape( idx_t size1, idx_t size2 ) {
     return ArrayShape{size1, size2};
 }
-inline ArrayShape make_shape( size_t size1, size_t size2, size_t size3 ) {
+inline ArrayShape make_shape( idx_t size1, idx_t size2, idx_t size3 ) {
     return ArrayShape{size1, size2, size3};
 }
-inline ArrayShape make_shape( size_t size1, size_t size2, size_t size3, size_t size4 ) {
+inline ArrayShape make_shape( idx_t size1, idx_t size2, idx_t size3, idx_t size4 ) {
     return ArrayShape{size1, size2, size3, size4};
 }
-inline ArrayShape make_shape( size_t size1, size_t size2, size_t size3, size_t size4, size_t size5 ) {
+inline ArrayShape make_shape( idx_t size1, idx_t size2, idx_t size3, idx_t size4, idx_t size5 ) {
     return ArrayShape{size1, size2, size3, size4, size5};
 }
 

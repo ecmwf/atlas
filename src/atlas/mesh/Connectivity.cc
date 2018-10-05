@@ -33,15 +33,15 @@ namespace mesh {
 IrregularConnectivityImpl::IrregularConnectivityImpl( const std::string& name ) :
     owns_( true ),
     data_{array::Array::create<idx_t>( 0 ),    // values
-          array::Array::create<size_t>( 1 ),   // displs
-          array::Array::create<size_t>( 1 )},  // counts
+          array::Array::create<idx_t>( 1 ),   // displs
+          array::Array::create<idx_t>( 1 )},  // counts
     values_view_( array::make_host_view<idx_t, 1>( *( data_[_values_] ) ) ),
-    displs_view_( array::make_host_view<size_t, 1>( *( data_[_displs_] ) ) ),
-    counts_view_( array::make_host_view<size_t, 1>( *( data_[_counts_] ) ) ),
+    displs_view_( array::make_host_view<idx_t, 1>( *( data_[_displs_] ) ) ),
+    counts_view_( array::make_host_view<idx_t, 1>( *( data_[_counts_] ) ) ),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
     rows_( 0 ),
     maxcols_( 0 ),
-    mincols_( std::numeric_limits<size_t>::max() ),
+    mincols_( std::numeric_limits<idx_t>::max() ),
     ctxt_( 0 ),
     callback_update_( 0 ),
     callback_delete_( 0 ),
@@ -53,9 +53,9 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( const std::string& name ) 
 
 // -----------------------------------------------------------------------------
 
-size_t get_total_size_counts( size_t rows, size_t counts[] ) {
-    size_t total_size = 0;
-    for ( size_t j = 0; j < rows; ++j ) {
+idx_t get_total_size_counts( idx_t rows, idx_t counts[] ) {
+    idx_t total_size = 0;
+    for ( idx_t j = 0; j < rows; ++j ) {
         total_size += counts[j];
     }
     return total_size;
@@ -63,14 +63,14 @@ size_t get_total_size_counts( size_t rows, size_t counts[] ) {
 
 // -----------------------------------------------------------------------------
 
-IrregularConnectivityImpl::IrregularConnectivityImpl( idx_t values[], size_t rows, size_t displs[], size_t counts[] ) :
+IrregularConnectivityImpl::IrregularConnectivityImpl( idx_t values[], idx_t rows, idx_t displs[], idx_t counts[] ) :
     owns_( false ),
     data_{array::Array::wrap<idx_t>( values, array::ArrayShape{get_total_size_counts( rows, counts )} ),
-          array::Array::wrap<size_t>( displs, array::ArrayShape{rows} ),
-          array::Array::wrap<size_t>( counts, array::ArrayShape{rows} )},
+          array::Array::wrap<idx_t>( displs, array::ArrayShape{rows} ),
+          array::Array::wrap<idx_t>( counts, array::ArrayShape{rows} )},
     values_view_( array::make_view<idx_t, 1>( *( data_[_values_] ) ) ),
-    displs_view_( array::make_view<size_t, 1>( *( data_[_displs_] ) ) ),
-    counts_view_( array::make_view<size_t, 1>( *( data_[_counts_] ) ) ),
+    displs_view_( array::make_view<idx_t, 1>( *( data_[_displs_] ) ) ),
+    counts_view_( array::make_view<idx_t, 1>( *( data_[_counts_] ) ) ),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
     rows_( rows ),
     ctxt_( 0 ),
@@ -78,8 +78,8 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( idx_t values[], size_t row
     callback_delete_( 0 ),
     gpu_clone_( this ) {
     maxcols_ = 0;
-    mincols_ = std::numeric_limits<size_t>::max();
-    for ( size_t j = 0; j < rows; ++j ) {
+    mincols_ = std::numeric_limits<idx_t>::max();
+    for ( idx_t j = 0; j < rows; ++j ) {
         maxcols_ = std::max( maxcols_, counts[j] );
         mincols_ = std::min( mincols_, counts[j] );
     }
@@ -119,8 +119,8 @@ void IrregularConnectivityImpl::clear() {
         data_[_values_]->resize( 0 );
         data_[_displs_]->resize( 1 );
         data_[_counts_]->resize( 1 );
-        displs_view_      = array::make_view<size_t, 1>( *( data_[_displs_] ) );
-        counts_view_      = array::make_view<size_t, 1>( *( data_[_counts_] ) );
+        displs_view_      = array::make_view<idx_t, 1>( *( data_[_displs_] ) );
+        counts_view_      = array::make_view<idx_t, 1>( *( data_[_counts_] ) );
         displs_view_( 0 ) = 0;
         counts_view_( 0 ) = 0;
     }
@@ -132,7 +132,7 @@ void IrregularConnectivityImpl::clear() {
     }
     rows_    = 0;
     maxcols_ = 0;
-    mincols_ = std::numeric_limits<size_t>::max();
+    mincols_ = std::numeric_limits<idx_t>::max();
     on_update();
 }
 
@@ -148,42 +148,42 @@ void IrregularConnectivityImpl::on_update() {
     if ( ctxt_ && callback_update_ ) callback_update_( ctxt_ );
 }
 
-void IrregularConnectivityImpl::resize( size_t old_size, size_t new_size, bool initialize, const idx_t values[],
+void IrregularConnectivityImpl::resize( idx_t old_size, idx_t new_size, bool initialize, const idx_t values[],
                                         bool fortran_array ) {
     data_[_values_]->resize( new_size );
     values_view_ = array::make_view<idx_t, 1>( *( data_[_values_] ) );
-    // TODO WILLEM isnt this if the other way around?
+
     idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
     if ( initialize ) {
-        for ( size_t j = 0, c = old_size; c < new_size; ++c, ++j ) {
+        for ( idx_t j = 0, c = old_size; c < new_size; ++c, ++j ) {
             values_view_( c ) = values[j] + add_base;
         }
     }
     else {
-        for ( size_t j = old_size; j < new_size; ++j ) {
+        for ( idx_t j = old_size; j < new_size; ++j ) {
             values_view_( j ) = missing_value() TO_FORTRAN;
         }
     }
 }
 
 //------------------------------------------------------------------------------------------------------
-void IrregularConnectivityImpl::add( size_t rows, size_t cols, const idx_t values[], bool fortran_array ) {
+void IrregularConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[], bool fortran_array ) {
     if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
-    size_t old_size = data_[_values_]->size();
+    idx_t old_size = data_[_values_]->size();
 
     if ( rows_ == 0 ) old_size = 0;
 
-    size_t new_size = old_size + rows * cols;
-    size_t new_rows = rows_ + rows;
+    idx_t new_size = old_size + rows * cols;
+    idx_t new_rows = rows_ + rows;
 
     ASSERT( data_[_displs_] != 0 );
     ASSERT( data_[_counts_] != 0 );
     data_[_displs_]->resize( new_rows + 1 );
     data_[_counts_]->resize( new_rows + 1 );
-    displs_view_ = array::make_view<size_t, 1>( *( data_[_displs_] ) );
-    counts_view_ = array::make_view<size_t, 1>( *( data_[_counts_] ) );
+    displs_view_ = array::make_view<idx_t, 1>( *( data_[_displs_] ) );
+    counts_view_ = array::make_view<idx_t, 1>( *( data_[_counts_] ) );
 
-    for ( size_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
+    for ( idx_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
         displs_view_( rows_ + 1 ) = displs_view_( rows_ ) + cols;
         counts_view_( rows_ )     = cols;
     }
@@ -201,16 +201,16 @@ void IrregularConnectivityImpl::add( size_t rows, size_t cols, const idx_t value
 void IrregularConnectivityImpl::add( const BlockConnectivityImpl& block ) {
     if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
     bool fortran_array  = FORTRAN_BASE;
-    const size_t rows   = block.rows();
-    const size_t cols   = block.cols();
+    const idx_t rows   = block.rows();
+    const idx_t cols   = block.cols();
     const idx_t* values = block.data();
 
     std::vector<idx_t> values_vector;
     if ( !block.values_view_.contiguous() ) {
         values_vector.resize( rows * cols );
         values = values_vector.data();
-        for ( int i = 0, c = 0; i < rows; ++i ) {
-            for ( int j = 0; j < cols; ++j ) {
+        for ( idx_t i = 0, c = 0; i < rows; ++i ) {
+            for ( idx_t j = 0; j < cols; ++j ) {
                 values_vector[c++] = block( i, j );
             }
         }
@@ -222,19 +222,19 @@ void IrregularConnectivityImpl::add( const BlockConnectivityImpl& block ) {
 
 //------------------------------------------------------------------------------------------------------
 
-void IrregularConnectivityImpl::add( size_t rows, const size_t cols[] ) {
+void IrregularConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
     if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
-    size_t old_size = data_[_values_]->size();
-    size_t new_size = old_size;
-    for ( size_t j = 0; j < rows; ++j )
+    idx_t old_size = data_[_values_]->size();
+    idx_t new_size = old_size;
+    for ( idx_t j = 0; j < rows; ++j )
         new_size += cols[j];
-    size_t new_rows = rows_ + rows;
+    idx_t new_rows = rows_ + rows;
     data_[_displs_]->resize( new_rows + 1 );
     data_[_counts_]->resize( new_rows + 1 );
-    displs_view_ = array::make_view<size_t, 1>( *( data_[_displs_] ) );
-    counts_view_ = array::make_view<size_t, 1>( *( data_[_counts_] ) );
+    displs_view_ = array::make_view<idx_t, 1>( *( data_[_displs_] ) );
+    counts_view_ = array::make_view<idx_t, 1>( *( data_[_counts_] ) );
 
-    for ( size_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
+    for ( idx_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
         // TODO isnt this a bug ? I dont understand
         displs_view_( rows_ + 1 ) = displs_view_( rows_ ) + cols[j];
         counts_view_( rows_ )     = cols[j];
@@ -249,23 +249,23 @@ void IrregularConnectivityImpl::add( size_t rows, const size_t cols[] ) {
 
 //------------------------------------------------------------------------------------------------------
 
-void IrregularConnectivityImpl::add( size_t rows, size_t cols ) {
+void IrregularConnectivityImpl::add( idx_t rows, idx_t cols ) {
     if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
-    size_t old_size = data_[_values_]->size();
+    idx_t old_size = data_[_values_]->size();
 
     if ( rows_ == 0 ) old_size = 0;
 
-    size_t new_size = old_size + rows * cols;
-    size_t new_rows = rows_ + rows;
+    idx_t new_size = old_size + rows * cols;
+    idx_t new_rows = rows_ + rows;
 
     ASSERT( data_[_displs_] != 0 );
     ASSERT( data_[_counts_] != 0 );
     data_[_displs_]->resize( new_rows + 1 );
     data_[_counts_]->resize( new_rows + 1 );
-    displs_view_ = array::make_view<size_t, 1>( *( data_[_displs_] ) );
-    counts_view_ = array::make_view<size_t, 1>( *( data_[_counts_] ) );
+    displs_view_ = array::make_view<idx_t, 1>( *( data_[_displs_] ) );
+    counts_view_ = array::make_view<idx_t, 1>( *( data_[_counts_] ) );
 
-    for ( size_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
+    for ( idx_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
         displs_view_( rows_ + 1 ) = displs_view_( rows_ ) + cols;
         counts_view_( rows_ )     = cols;
     }
@@ -282,20 +282,20 @@ void IrregularConnectivityImpl::add( size_t rows, size_t cols ) {
 
 //------------------------------------------------------------------------------------------------------
 
-void IrregularConnectivityImpl::insert( size_t position, size_t rows, size_t cols, const idx_t values[],
+void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols, const idx_t values[],
                                         bool fortran_array ) {
     if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
-    size_t position_displs = displs_view_( position );
+    idx_t position_displs = displs_view_( position );
     data_[_displs_]->insert( position, rows );
     data_[_counts_]->insert( position, rows );
-    displs_view_ = array::make_view<size_t, 1>( *( data_[_displs_] ) );
-    counts_view_ = array::make_view<size_t, 1>( *( data_[_counts_] ) );
+    displs_view_ = array::make_view<idx_t, 1>( *( data_[_displs_] ) );
+    counts_view_ = array::make_view<idx_t, 1>( *( data_[_counts_] ) );
 
     displs_view_( position ) = position_displs;
-    for ( size_t jrow = position; jrow < position + rows; ++jrow ) {
+    for ( idx_t jrow = position; jrow < position + rows; ++jrow ) {
         counts_view_( jrow ) = cols;
     }
-    for ( size_t jrow = position; jrow < displs_view_.size() - 1; ++jrow ) {
+    for ( idx_t jrow = position; jrow < displs_view_.size() - 1; ++jrow ) {
         displs_view_( jrow + 1 ) = displs_view_( jrow ) + counts_view_( jrow );
     }
     maxcols_ = std::max( maxcols_, cols );
@@ -305,13 +305,13 @@ void IrregularConnectivityImpl::insert( size_t position, size_t rows, size_t col
     values_view_ = array::make_view<idx_t, 1>( *( data_[_values_] ) );
 
     if ( values == NULL ) {
-        for ( size_t c = position_displs; c < position_displs + rows * cols; ++c ) {
+        for ( idx_t c = position_displs; c < position_displs + rows * cols; ++c ) {
             values_view_( c ) = missing_value() TO_FORTRAN;
         }
     }
     else {
         idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
-        for ( size_t c = position_displs; c < position_displs + rows * cols; ++c ) {
+        for ( idx_t c = position_displs; c < position_displs + rows * cols; ++c ) {
             values_view_( c ) = values[c - position_displs] + add_base;
         }
     }
@@ -322,15 +322,15 @@ void IrregularConnectivityImpl::insert( size_t position, size_t rows, size_t col
 
 //------------------------------------------------------------------------------------------------------
 
-void IrregularConnectivityImpl::insert( size_t position, size_t rows, size_t cols ) {
+void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols ) {
     IrregularConnectivityImpl::insert( position, rows, cols, NULL, false );
 }
 
 //------------------------------------------------------------------------------------------------------
 
-void IrregularConnectivityImpl::insert( size_t position, size_t rows, const size_t cols[] ) {
+void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t cols[] ) {
     if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
-    size_t position_displs = displs_view_( position );
+    idx_t position_displs = displs_view_( position );
 
     if ( rows_ == 0 ) {
         if ( position > 1 ) {
@@ -342,27 +342,27 @@ void IrregularConnectivityImpl::insert( size_t position, size_t rows, const size
         data_[_displs_]->insert( position, rows );
         data_[_counts_]->insert( position, rows );
     }
-    displs_view_ = array::make_view<size_t, 1>( *( data_[_displs_] ) );
-    counts_view_ = array::make_view<size_t, 1>( *( data_[_counts_] ) );
+    displs_view_ = array::make_view<idx_t, 1>( *( data_[_displs_] ) );
+    counts_view_ = array::make_view<idx_t, 1>( *( data_[_counts_] ) );
 
     displs_view_( position ) = position_displs;
-    for ( size_t jrow = position; jrow < position + rows; ++jrow ) {
+    for ( idx_t jrow = position; jrow < position + rows; ++jrow ) {
         counts_view_( jrow ) = cols[jrow - position];
         maxcols_             = std::max( maxcols_, counts_view_( jrow ) );
         mincols_             = std::min( mincols_, counts_view_( jrow ) );
     }
-    for ( size_t jrow = position; jrow < displs_view_.size() - 1; ++jrow ) {
+    for ( idx_t jrow = position; jrow < displs_view_.size() - 1; ++jrow ) {
         displs_view_( jrow + 1 ) = displs_view_( jrow ) + counts_view_( jrow );
     }
 
-    size_t insert_size( 0 );
-    for ( size_t j = 0; j < rows; ++j )
+    idx_t insert_size( 0 );
+    for ( idx_t j = 0; j < rows; ++j )
         insert_size += cols[j];
 
     data_[_values_]->insert( position_displs, insert_size );
     values_view_ = array::make_view<idx_t, 1>( *( data_[_values_] ) );
 
-    for ( size_t c = position_displs; c < position_displs + insert_size; ++c ) {
+    for ( idx_t c = position_displs; c < position_displs + insert_size; ++c ) {
         values_view_( c ) = missing_value() TO_FORTRAN;
     }
 
@@ -373,15 +373,15 @@ void IrregularConnectivityImpl::insert( size_t position, size_t rows, const size
 void IrregularConnectivityImpl::cloneToDevice() {
     std::for_each( data_.begin(), data_.end(), []( array::Array* a ) { a->cloneToDevice(); } );
     values_view_ = array::make_device_view<idx_t, 1>( *( data_[_values_] ) );
-    displs_view_ = array::make_device_view<size_t, 1>( *( data_[_displs_] ) );
-    counts_view_ = array::make_device_view<size_t, 1>( *( data_[_counts_] ) );
+    displs_view_ = array::make_device_view<idx_t, 1>( *( data_[_displs_] ) );
+    counts_view_ = array::make_device_view<idx_t, 1>( *( data_[_counts_] ) );
     gpu_clone_.cloneToDevice();
 }
 void IrregularConnectivityImpl::cloneFromDevice() {
     std::for_each( data_.begin(), data_.end(), []( array::Array* a ) { a->cloneFromDevice(); } );
     values_view_ = array::make_host_view<idx_t, 1>( *( data_[_values_] ) );
-    displs_view_ = array::make_host_view<size_t, 1>( *( data_[_displs_] ) );
-    counts_view_ = array::make_host_view<size_t, 1>( *( data_[_counts_] ) );
+    displs_view_ = array::make_host_view<idx_t, 1>( *( data_[_displs_] ) );
+    counts_view_ = array::make_host_view<idx_t, 1>( *( data_[_counts_] ) );
 }
 void IrregularConnectivityImpl::syncHostDevice() const {
     std::for_each( data_.begin(), data_.end(), []( array::Array* a ) { a->syncHostDevice(); } );
@@ -418,18 +418,18 @@ void IrregularConnectivityImpl::dump( std::ostream& os ) const {
 
 //------------------------------------------------------------------------------------------------------
 
-MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows,
-size_t displs[], size_t counts[], size_t blocks, size_t block_displs[], size_t
+MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], idx_t rows,
+idx_t displs[], idx_t counts[], idx_t blocks, idx_t block_displs[], idx_t
 block_cols[] )
   : IrregularConnectivity(values,rows,displs,counts),
     blocks_(blocks),
-    block_displs_(array::Array::wrap<size_t>(block_displs,
+    block_displs_(array::Array::wrap<idx_t>(block_displs,
 array::ArrayShape{blocks})),
-    block_cols_(array::Array::wrap<size_t>(block_cols,
+    block_cols_(array::Array::wrap<idx_t>(block_cols,
 array::ArrayShape{blocks})),
     block_(blocks),
-    block_displs_view_(array::make_view<size_t, 1>(*block_displs_)),
-    block_cols_view_(array::make_view<size_t, 1>(*block_cols_))
+    block_displs_view_(array::make_view<idx_t, 1>(*block_displs_)),
+    block_cols_view_(array::make_view<idx_t, 1>(*block_cols_))
 {
   rebuild_block_connectivity();
 }
@@ -439,10 +439,10 @@ array::ArrayShape{blocks})),
 MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( const std::string& name ) :
     IrregularConnectivityImpl( name ),
     blocks_( 0 ),
-    block_displs_( array::Array::create<size_t>( 1 ) ),
-    block_cols_( array::Array::create<size_t>( 1 ) ),
-    block_displs_view_( array::make_view<size_t, 1>( *block_displs_ ) ),
-    block_cols_view_( array::make_view<size_t, 1>( *block_cols_ ) ),
+    block_displs_( array::Array::create<idx_t>( 1 ) ),
+    block_cols_( array::Array::create<idx_t>( 1 ) ),
+    block_displs_view_( array::make_view<idx_t, 1>( *block_displs_ ) ),
+    block_cols_view_( array::make_view<idx_t, 1>( *block_cols_ ) ),
     block_( 0 ),
     block_view_( make_host_vector_view( block_ ) ),
     gpu_clone_( this ) {
@@ -463,8 +463,8 @@ void MultiBlockConnectivityImpl::clear() {
     if ( owns() ) {
         block_displs_->resize( 1 );
         block_cols_->resize( 1 );
-        block_displs_view_      = array::make_view<size_t, 1>( *( block_displs_ ) );
-        block_cols_view_        = array::make_view<size_t, 1>( *( block_cols_ ) );
+        block_displs_view_      = array::make_view<idx_t, 1>( *( block_displs_ ) );
+        block_cols_view_        = array::make_view<idx_t, 1>( *( block_cols_ ) );
         block_displs_view_( 0 ) = 0ul;
     }
     blocks_     = 0;
@@ -477,8 +477,8 @@ void MultiBlockConnectivityImpl::cloneToDevice() {
     IrregularConnectivityImpl::cloneToDevice();
     block_displs_->cloneToDevice();
     block_cols_->cloneToDevice();
-    block_displs_view_ = array::make_device_view<size_t, 1>( *( block_displs_ ) );
-    block_cols_view_   = array::make_device_view<size_t, 1>( *( block_cols_ ) );
+    block_displs_view_ = array::make_device_view<idx_t, 1>( *( block_displs_ ) );
+    block_cols_view_   = array::make_device_view<idx_t, 1>( *( block_cols_ ) );
 
     block_.cloneToDevice();
     block_view_ = make_device_vector_view( block_ );
@@ -490,8 +490,8 @@ void MultiBlockConnectivityImpl::cloneFromDevice() {
     IrregularConnectivityImpl::cloneFromDevice();
     block_displs_->cloneFromDevice();
     block_cols_->cloneFromDevice();
-    block_displs_view_ = array::make_host_view<size_t, 1>( *( block_displs_ ) );
-    block_cols_view_   = array::make_host_view<size_t, 1>( *( block_cols_ ) );
+    block_displs_view_ = array::make_host_view<idx_t, 1>( *( block_displs_ ) );
+    block_cols_view_   = array::make_host_view<idx_t, 1>( *( block_cols_ ) );
 
     block_.cloneFromDevice();
     block_view_ = make_host_vector_view( block_ );
@@ -519,15 +519,15 @@ bool MultiBlockConnectivityImpl::deviceNeedsUpdate() const {
 
 //------------------------------------------------------------------------------------------------------
 
-void MultiBlockConnectivityImpl::add( size_t rows, size_t cols, const idx_t values[], bool fortran_array ) {
+void MultiBlockConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[], bool fortran_array ) {
     if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
-    size_t old_rows = this->rows();
+    idx_t old_rows = this->rows();
     IrregularConnectivityImpl::add( rows, cols, values, fortran_array );
 
     block_displs_->insert( block_displs_->size(), 1 );
     block_cols_->insert( block_cols_->size(), 1 );
-    block_displs_view_ = array::make_view<size_t, 1>( *block_displs_ );
-    block_cols_view_   = array::make_view<size_t, 1>( *block_cols_ );
+    block_displs_view_ = array::make_view<idx_t, 1>( *block_displs_ );
+    block_cols_view_   = array::make_view<idx_t, 1>( *block_cols_ );
     blocks_++;
     block_displs_view_( block_displs_view_.size() - 1 ) = old_rows + rows;
     block_cols_view_( block_cols_view_.size() - 2 )     = cols;
@@ -546,15 +546,15 @@ void MultiBlockConnectivityImpl::add( const BlockConnectivityImpl& block ) {
 
 //------------------------------------------------------------------------------------------------------
 
-void MultiBlockConnectivityImpl::add( size_t rows, size_t cols ) {
+void MultiBlockConnectivityImpl::add( idx_t rows, idx_t cols ) {
     if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
-    size_t old_rows = this->rows();
+    idx_t old_rows = this->rows();
     IrregularConnectivityImpl::add( rows, cols );
 
     block_displs_->insert( block_displs_->size(), 1 );
     block_cols_->insert( block_cols_->size(), 1 );
-    block_displs_view_ = array::make_view<size_t, 1>( *block_displs_ );
-    block_cols_view_   = array::make_view<size_t, 1>( *block_cols_ );
+    block_displs_view_ = array::make_view<idx_t, 1>( *block_displs_ );
+    block_cols_view_   = array::make_view<idx_t, 1>( *block_cols_ );
     blocks_++;
     block_displs_view_( block_displs_view_.size() - 1 ) = old_rows + rows;
     block_cols_view_( block_cols_view_.size() - 2 )     = cols;
@@ -564,13 +564,13 @@ void MultiBlockConnectivityImpl::add( size_t rows, size_t cols ) {
 
 //------------------------------------------------------------------------------------------------------
 
-void MultiBlockConnectivityImpl::add( size_t rows, const size_t cols[] ) {
+void MultiBlockConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
     if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
-    size_t min      = std::numeric_limits<size_t>::max();
-    size_t max      = 0;
-    size_t old_rows = this->rows();
+    idx_t min      = std::numeric_limits<idx_t>::max();
+    idx_t max      = 0;
+    idx_t old_rows = this->rows();
 
-    for ( size_t j = 0; j < rows; ++j ) {
+    for ( idx_t j = 0; j < rows; ++j ) {
         min = std::min( min, cols[j] );
         max = std::min( max, cols[j] );
     }
@@ -582,8 +582,8 @@ void MultiBlockConnectivityImpl::add( size_t rows, const size_t cols[] ) {
 
     block_displs_->insert( block_displs_->size(), 1 );
     block_cols_->insert( block_cols_->size(), 1 );
-    block_displs_view_ = array::make_view<size_t, 1>( *block_displs_ );
-    block_cols_view_   = array::make_view<size_t, 1>( *block_cols_ );
+    block_displs_view_ = array::make_view<idx_t, 1>( *block_displs_ );
+    block_cols_view_   = array::make_view<idx_t, 1>( *block_cols_ );
     blocks_++;
     block_displs_view_( block_displs_view_.size() - 1 ) = old_rows;
     block_cols_view_( block_cols_view_.size() - 2 )     = max;
@@ -593,7 +593,7 @@ void MultiBlockConnectivityImpl::add( size_t rows, const size_t cols[] ) {
 
 //------------------------------------------------------------------------------------------------------
 
-void MultiBlockConnectivityImpl::insert( size_t position, size_t rows, size_t cols, const idx_t values[],
+void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols, const idx_t values[],
                                          bool fortran_array ) {
     if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
 
@@ -606,7 +606,7 @@ void MultiBlockConnectivityImpl::insert( size_t position, size_t rows, size_t co
     ASSERT( blk_idx >= 0l );
     ASSERT( cols == block( blk_idx ).cols() );
 
-    for ( size_t jblk = blk_idx; jblk < blocks_; ++jblk )
+    for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk )
         block_displs_view_( jblk + 1 ) += rows;
 
     IrregularConnectivityImpl::insert( position, rows, cols, values, fortran_array );
@@ -615,7 +615,7 @@ void MultiBlockConnectivityImpl::insert( size_t position, size_t rows, size_t co
 
 //------------------------------------------------------------------------------------------------------
 
-void MultiBlockConnectivityImpl::insert( size_t position, size_t rows, size_t cols ) {
+void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols ) {
     if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
 
     long blk_idx = blocks_;
@@ -627,18 +627,18 @@ void MultiBlockConnectivityImpl::insert( size_t position, size_t rows, size_t co
 
     IrregularConnectivityImpl::insert( position, rows, cols );
 
-    for ( size_t jblk = blk_idx; jblk < blocks_; ++jblk )
+    for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk )
         block_displs_view_( jblk + 1 ) += rows;
     rebuild_block_connectivity();
 }
 
 //------------------------------------------------------------------------------------------------------
 
-void MultiBlockConnectivityImpl::insert( size_t position, size_t rows, const size_t cols[] ) {
+void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t cols[] ) {
     if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
-    size_t min = std::numeric_limits<size_t>::max();
-    size_t max = 0;
-    for ( size_t j = 0; j < rows; ++j ) {
+    idx_t min = std::numeric_limits<idx_t>::max();
+    idx_t max = 0;
+    for ( idx_t j = 0; j < rows; ++j ) {
         min = std::min( min, cols[j] );
         max = std::min( max, cols[j] );
     }
@@ -656,7 +656,7 @@ void MultiBlockConnectivityImpl::insert( size_t position, size_t rows, const siz
 
     IrregularConnectivityImpl::insert( position, rows, cols );
 
-    for ( size_t jblk = blk_idx; jblk < blocks_; ++jblk )
+    for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk )
         block_displs_view_( jblk + 1 ) += rows;
     rebuild_block_connectivity();
 }
@@ -667,7 +667,7 @@ void MultiBlockConnectivityImpl::rebuild_block_connectivity() {
     block_.resize( blocks_, 0 );
     block_view_ = make_host_vector_view( block_ );
 
-    for ( size_t b = 0; b < blocks_; ++b ) {
+    for ( idx_t b = 0; b < blocks_; ++b ) {
         if ( block_view_[b] ) {
             block_view_[b]->rebuild( block_displs_view_( b + 1 ) - block_displs_view_( b ),  // rows
                                      block_cols_view_( b ),                                  // cols
@@ -689,7 +689,7 @@ size_t MultiBlockConnectivityImpl::footprint() const {
     size += block_displs_->footprint();
     size += block_cols_->footprint();
 
-    for ( size_t j = 0; j < block_.size(); ++j ) {
+    for ( idx_t j = 0; j < block_.size(); ++j ) {
         size += block_view_[j]->footprint();
     }
     return size;
@@ -708,7 +708,7 @@ BlockConnectivityImpl::BlockConnectivityImpl() :
 
 //------------------------------------------------------------------------------------------------------
 
-BlockConnectivityImpl::BlockConnectivityImpl( size_t rows, size_t cols, const std::initializer_list<idx_t>& values ) :
+BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, const std::initializer_list<idx_t>& values ) :
     owns_( true ),
     values_( array::Array::create<idx_t>( 1, 1 ) ),
     values_view_( array::make_view<idx_t, 2>( *values_ ) ),
@@ -721,8 +721,8 @@ BlockConnectivityImpl::BlockConnectivityImpl( size_t rows, size_t cols, const st
     values_view_   = array::make_view<idx_t, 2>( *values_ );
     idx_t add_base = FORTRAN_BASE;
     auto v         = values.begin();
-    for ( size_t i = 0; i < rows_; ++i ) {
-        for ( size_t j = 0; j < cols_; ++j ) {
+    for ( idx_t i = 0; i < rows_; ++i ) {
+        for ( idx_t j = 0; j < cols_; ++j ) {
             values_view_( i, j ) = *( v++ ) + add_base;
         }
     }
@@ -731,7 +731,7 @@ BlockConnectivityImpl::BlockConnectivityImpl( size_t rows, size_t cols, const st
 
 //------------------------------------------------------------------------------------------------------
 
-BlockConnectivityImpl::BlockConnectivityImpl( size_t rows, size_t cols, idx_t values[] ) :
+BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t values[] ) :
     owns_( true ),
     values_( array::Array::create<idx_t>( 1, 1 ) ),
     values_view_( array::make_view<idx_t, 2>( *values_ ) ),
@@ -745,8 +745,8 @@ BlockConnectivityImpl::BlockConnectivityImpl( size_t rows, size_t cols, idx_t va
     if ( values_->size() ) {
         idx_t add_base = FORTRAN_BASE;
         idx_t* v       = &values[0];
-        for ( size_t i = 0; i < rows_; ++i ) {
-            for ( size_t j = 0; j < cols_; ++j ) {
+        for ( idx_t i = 0; i < rows_; ++i ) {
+            for ( idx_t j = 0; j < cols_; ++j ) {
                 values_view_( i, j ) = *( v++ ) + add_base;
             }
         }
@@ -755,7 +755,7 @@ BlockConnectivityImpl::BlockConnectivityImpl( size_t rows, size_t cols, idx_t va
 
 //------------------------------------------------------------------------------------------------------
 
-BlockConnectivityImpl::BlockConnectivityImpl( size_t rows, size_t cols, idx_t values[], bool dummy ) :
+BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t values[], bool dummy ) :
     owns_( false ),
     values_( array::Array::wrap<idx_t>( values, array::ArrayShape{rows, cols} ) ),
     values_view_( array::make_view<idx_t, 2>( *values_ ) ),
@@ -775,7 +775,7 @@ BlockConnectivityImpl::~BlockConnectivityImpl() {
 
 //------------------------------------------------------------------------------------------------------
 
-void BlockConnectivityImpl::rebuild( size_t rows, size_t cols, idx_t values[] ) {
+void BlockConnectivityImpl::rebuild( idx_t rows, idx_t cols, idx_t values[] ) {
     ASSERT( not owns_ );
     rows_ = rows;
     cols_ = cols;
@@ -787,7 +787,7 @@ void BlockConnectivityImpl::rebuild( size_t rows, size_t cols, idx_t values[] ) 
 
 //------------------------------------------------------------------------------------------------------
 
-void BlockConnectivityImpl::add( size_t rows, size_t cols, const idx_t values[], bool fortran_array ) {
+void BlockConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[], bool fortran_array ) {
     if ( !owns_ ) throw eckit::AssertionFailed( "BlockConnectivity must be owned to be resized directly" );
     if ( cols_ != 0 && cols_ != cols )
         throw eckit::AssertionFailed(
@@ -799,8 +799,8 @@ void BlockConnectivityImpl::add( size_t rows, size_t cols, const idx_t values[],
 
     idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
 
-    for ( size_t i = 0, i_old = rows_; i < rows; ++i, ++i_old ) {
-        for ( size_t j = 0; j < cols; ++j ) {
+    for ( idx_t i = 0, i_old = rows_; i < rows; ++i, ++i_old ) {
+        for ( idx_t j = 0; j < cols; ++j ) {
             values_view_( i_old, j ) = values[i * cols + j] + add_base;
         }
     }
@@ -856,8 +856,8 @@ public:
     // TODO : For now return host-view raw data to Fortran, but this should be
     //        reviewed to also possibly return device-view data
     idx_t* values() { return array::make_view<idx_t, 1>( *connectivity_.data_[Connectivity::_values_] ).data(); }
-    size_t* displs() { return array::make_view<size_t, 1>( *connectivity_.data_[Connectivity::_displs_] ).data(); }
-    size_t* counts() { return array::make_view<size_t, 1>( *connectivity_.data_[Connectivity::_counts_] ).data(); }
+    idx_t* displs() { return array::make_view<idx_t, 1>( *connectivity_.data_[Connectivity::_displs_] ).data(); }
+    idx_t* counts() { return array::make_view<idx_t, 1>( *connectivity_.data_[Connectivity::_counts_] ).data(); }
 
     const char* name() { return connectivity_.name_; }
 
@@ -898,33 +898,33 @@ void atlas__connectivity__register_delete( Connectivity* This, Connectivity::cal
     access.callback_delete() = callback;
 }
 
-void atlas__Connectivity__displs( Connectivity* This, size_t*& displs, size_t& size ) {
+void atlas__Connectivity__displs( Connectivity* This, idx_t*& displs, idx_t& size ) {
     ConnectivityPrivateAccess access( *This );
     displs = access.displs();
     size   = This->rows() + 1;
 }
 
-void atlas__Connectivity__counts( Connectivity* This, size_t*& counts, size_t& size ) {
+void atlas__Connectivity__counts( Connectivity* This, idx_t*& counts, idx_t& size ) {
     ConnectivityPrivateAccess access( *This );
     counts = access.counts();
     size   = This->rows();
 }
 
-void atlas__Connectivity__values( Connectivity* This, idx_t*& values, size_t& size ) {
+void atlas__Connectivity__values( Connectivity* This, idx_t*& values, idx_t& size ) {
     ConnectivityPrivateAccess access( *This );
     values = access.values();
     size   = This->rows() ? access.displs()[This->rows()] + 1 : 0;
 }
 
-void atlas__Connectivity__add_values( Connectivity* This, size_t rows, size_t cols, idx_t values[] ) {
+void atlas__Connectivity__add_values( Connectivity* This, idx_t rows, idx_t cols, idx_t values[] ) {
     This->add( rows, cols, values, true );
 }
 
-void atlas__Connectivity__add_missing( Connectivity* This, size_t rows, size_t cols ) {
+void atlas__Connectivity__add_missing( Connectivity* This, idx_t rows, idx_t cols ) {
     This->add( rows, cols );
 }
 
-size_t atlas__Connectivity__rows( const Connectivity* This ) {
+idx_t atlas__Connectivity__rows( const Connectivity* This ) {
     return This->rows();
 }
 
@@ -938,11 +938,11 @@ MultiBlockConnectivity* atlas__MultiBlockConnectivity__create() {
     return connectivity;
 }
 
-size_t atlas__MultiBlockConnectivity__blocks( const MultiBlockConnectivity* This ) {
+idx_t atlas__MultiBlockConnectivity__blocks( const MultiBlockConnectivity* This ) {
     return This->blocks();
 }
 
-BlockConnectivityImpl* atlas__MultiBlockConnectivity__block( MultiBlockConnectivity* This, size_t block_idx ) {
+BlockConnectivityImpl* atlas__MultiBlockConnectivity__block( MultiBlockConnectivity* This, idx_t block_idx ) {
     ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
     BlockConnectivityImpl* block = &This->block( block_idx );
     ASSERT( block != 0 );
@@ -953,12 +953,12 @@ void atlas__BlockConnectivity__delete( BlockConnectivityImpl* This ) {
     ATLAS_ERROR_HANDLING( delete This );
 }
 
-size_t atlas__BlockConnectivity__rows( const BlockConnectivityImpl* This ) {
+idx_t atlas__BlockConnectivity__rows( const BlockConnectivityImpl* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
     return This->rows();
 }
 
-size_t atlas__BlockConnectivity__cols( const BlockConnectivityImpl* This ) {
+idx_t atlas__BlockConnectivity__cols( const BlockConnectivityImpl* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
     return This->cols();
 }
@@ -968,7 +968,7 @@ idx_t atlas__BlockConnectivity__missing_value( const BlockConnectivityImpl* This
     return This->missing_value();
 }
 
-void atlas__BlockConnectivity__data( BlockConnectivityImpl* This, idx_t*& data, size_t& rows, size_t& cols ) {
+void atlas__BlockConnectivity__data( BlockConnectivityImpl* This, idx_t*& data, idx_t& rows, idx_t& cols ) {
     ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
     data = This->data();
     rows = This->rows();

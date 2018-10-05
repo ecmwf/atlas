@@ -21,11 +21,11 @@
 ///
 /// Example 1:
 ///     int[] array = { 1, 2, 3, 4, 5, 6, 7, 8, 9};
-///     int[2] strides = { 3, 1 };
-///     int[2] shape = { 3, 3 };
+///     idx_t[2] strides = { 3, 1 };
+///     idx_t[2] shape = { 3, 3 };
 ///     ArrayView<int,2> matrix( array, shape, strides );
-///     for( size_t i=0; i<matrix.shape(0); ++i ) {
-///       for( size_t j=0; j<matrix.shape(1); ++j ) {
+///     for( idx_t i=0; i<matrix.shape(0); ++i ) {
+///       for( idx_t j=0; j<matrix.shape(1); ++j ) {
 ///         matrix(i,j) *= 10;
 ///       }
 ///     }
@@ -35,7 +35,7 @@
 ///
 /// Example 2:
 ///     int[] array = { 1, 2, 3, 4, 5, 6, 7, 8, 9};
-///     int[2] shape = { 3, 3 };
+///     idx_t[2] shape = { 3, 3 };
 ///     ArrayView<int,2> matrix( array, shape );
 /// which is identical for this matrix to previous Example 1
 ///

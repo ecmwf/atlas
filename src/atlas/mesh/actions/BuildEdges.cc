@@ -49,12 +49,12 @@ namespace actions {
 namespace {  // anonymous
 struct Sort {
     Sort() {}
-    Sort( gidx_t gid, int idx ) {
+    Sort( gidx_t gid, idx_t idx ) {
         g = gid;
         i = idx;
     }
     gidx_t g;
-    int i;
+    idx_t i;
     bool operator<( const Sort& other ) const { return ( g < other.g ); }
 };
 }  // anonymous namespace
@@ -86,7 +86,7 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
     {
         UniqueLonLat compute_uid( mesh );
 
-        for ( size_t jedge = 0; jedge < nb_edges; ++jedge )
+        for ( idx_t jedge = 0; jedge < nb_edges; ++jedge )
             edge_sort.emplace_back( Sort( compute_uid( edge_node_connectivity.row( jedge ) ), jedge ) );
 
         std::sort( edge_sort.data(), edge_sort.data() + nb_edges );
@@ -147,35 +147,35 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
 
 void build_node_to_edge_connectivity( Mesh& mesh ) {
     mesh::Nodes& nodes    = mesh.nodes();
-    const size_t nb_edges = mesh.edges().size();
+    const idx_t nb_edges = mesh.edges().size();
 
     mesh::Nodes::Connectivity& node_to_edge = nodes.edge_connectivity();
     node_to_edge.clear();
 
     const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
 
-    std::vector<size_t> to_edge_size( nodes.size(), 0 );
-    for ( size_t jedge = 0; jedge < nb_edges; ++jedge ) {
-        for ( int j = 0; j < 2; ++j ) {
+    std::vector<idx_t> to_edge_size( nodes.size(), 0 );
+    for ( idx_t jedge = 0; jedge < nb_edges; ++jedge ) {
+        for ( idx_t j = 0; j < 2; ++j ) {
             ++to_edge_size[edge_node_connectivity( jedge, j )];
         }
     }
 
     node_to_edge.add( nodes.size(), to_edge_size.data() );
 
-    for ( size_t jnode = 0; jnode < nodes.size(); ++jnode )
+    for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode )
         to_edge_size[jnode] = 0;
 
     UniqueLonLat compute_uid( mesh );
     std::vector<Sort> edge_sort( nb_edges );
-    for ( size_t jedge = 0; jedge < nb_edges; ++jedge )
+    for ( idx_t jedge = 0; jedge < nb_edges; ++jedge )
         edge_sort[jedge] = Sort( compute_uid( edge_node_connectivity.row( jedge ) ), jedge );
     std::stable_sort( edge_sort.data(), edge_sort.data() + nb_edges );
 
-    for ( size_t jedge = 0; jedge < nb_edges; ++jedge ) {
-        size_t iedge = edge_sort[jedge].i;
+    for ( idx_t jedge = 0; jedge < nb_edges; ++jedge ) {
+        idx_t iedge = edge_sort[jedge].i;
         ASSERT( iedge < nb_edges );
-        for ( size_t j = 0; j < 2; ++j ) {
+        for ( idx_t j = 0; j < 2; ++j ) {
             idx_t node = edge_node_connectivity( iedge, j );
             node_to_edge.set( node, to_edge_size[node]++, iedge );
         }

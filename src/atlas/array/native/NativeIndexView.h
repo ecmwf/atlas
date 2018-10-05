@@ -120,7 +120,7 @@ public:
 #endif
 
 public:
-    IndexView( Value* data, const size_t shape[Rank] );
+    IndexView( Value* data, const idx_t shape[Rank] );
 
     // -- Access methods
 
@@ -139,17 +139,17 @@ private:
     // -- Private methods
 
     template <int Dim, typename Int, typename... Ints>
-    constexpr int index_part( Int idx, Ints... next_idx ) const {
+    constexpr idx_t index_part( Int idx, Ints... next_idx ) const {
         return idx * strides_[Dim] + index_part<Dim + 1>( next_idx... );
     }
 
     template <int Dim, typename Int>
-    constexpr int index_part( Int last_idx ) const {
+    constexpr idx_t index_part( Int last_idx ) const {
         return last_idx * strides_[Dim];
     }
 
     template <typename... Ints>
-    constexpr int index( Ints... idx ) const {
+    constexpr idx_t index( Ints... idx ) const {
         return index_part<0>( idx... );
     }
 
@@ -172,25 +172,25 @@ private:
 
     template <int Dim, typename Int, typename... Ints>
     void check_bounds_part( Int idx, Ints... next_idx ) const {
-        if ( size_t( idx ) >= shape_[Dim] ) { throw_OutOfRange( "IndexView", array_dim<Dim>(), idx, shape_[Dim] ); }
+        if ( idx_t( idx ) >= shape_[Dim] ) { throw_OutOfRange( "IndexView", array_dim<Dim>(), idx, shape_[Dim] ); }
         check_bounds_part<Dim + 1>( next_idx... );
     }
 
     template <int Dim, typename Int>
     void check_bounds_part( Int last_idx ) const {
-        if ( size_t( last_idx ) >= shape_[Dim] ) {
+        if ( idx_t( last_idx ) >= shape_[Dim] ) {
             throw_OutOfRange( "IndexView", array_dim<Dim>(), last_idx, shape_[Dim] );
         }
     }
 
-    size_t size() const { return shape_[0]; }
+    idx_t size() const { return shape_[0]; }
 
     void dump( std::ostream& os ) const;
 
 private:
     Value* data_;
-    size_t strides_[Rank];
-    size_t shape_[Rank];
+    idx_t strides_[Rank];
+    idx_t shape_[Rank];
 };
 
 //------------------------------------------------------------------------------------------------------

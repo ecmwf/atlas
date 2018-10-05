@@ -3,6 +3,7 @@
 module atlas_FieldSet_module
 
 use fckit_owned_object_module, only: fckit_owned_object
+use atlas_kinds_module, only : ATLAS_KIND_IDX
 
 implicit none
 
@@ -36,9 +37,9 @@ contains
   procedure, public :: has_field
   procedure, private :: field_by_name
   procedure, private :: field_by_idx_int
-  procedure, private :: field_by_idx_size_t
+  procedure, private :: field_by_idx_long
   procedure, public :: add
-  generic :: field => field_by_name, field_by_idx_int, field_by_idx_size_t
+  generic :: field => field_by_name, field_by_idx_int, field_by_idx_long
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_FieldSet__final_auto
@@ -106,10 +107,9 @@ function has_field(this,name) result(flag)
 end function
 
 function FieldSet__size(this) result(nb_fields)
-  use, intrinsic :: iso_c_binding, only: c_size_t
   use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(in) :: this
-  integer(c_size_t) :: nb_fields
+  integer(ATLAS_KIND_IDX) :: nb_fields
   nb_fields = atlas__FieldSet__size(this%c_ptr())
 end function
 
@@ -124,25 +124,25 @@ function field_by_name(this,name) result(field)
   call field%return()
 end function
 
-function field_by_idx_size_t(this,idx) result(field)
-  use, intrinsic :: iso_c_binding, only: c_size_t
+function field_by_idx_long(this,idx) result(field)
+  use, intrinsic :: iso_c_binding, only: c_long
   use atlas_fieldset_c_binding
   use atlas_Field_module, only: atlas_Field
   class(atlas_FieldSet), intent(in) :: this
-  integer(c_size_t), intent(in) :: idx
+  integer(c_long), intent(in) :: idx
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), idx-1_c_size_t) ) ! C index
+  field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), int(idx-1_c_long,ATLAS_KIND_IDX) ) ) ! C index
   call field%return()
 end function
 
 function field_by_idx_int(this,idx) result(field)
-  use, intrinsic :: iso_c_binding, only: c_size_t, c_int
+  use, intrinsic :: iso_c_binding, only: c_int
   use atlas_fieldset_c_binding
   use atlas_Field_module, only: atlas_Field
   class(atlas_FieldSet), intent(in) :: this
   integer(c_int), intent(in) :: idx
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), int(idx-1,c_size_t) ) ) ! C index
+  field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), int(idx-1_c_int,ATLAS_KIND_IDX) ) ) ! C index
   call field%return()
 end function
 

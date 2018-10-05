@@ -27,7 +27,7 @@ FieldImpl* FieldCreatorArraySpec::createField( const eckit::Parametrisation& par
     if ( !params.get( "shape", shape ) )
         throw eckit::Exception( "Could not find parameter 'shape' in Parametrisation" );
 
-    std::vector<size_t> s( shape.size() );
+    std::vector<idx_t> s( shape.size() );
 
     bool fortran( false );
     params.get( "fortran", fortran );

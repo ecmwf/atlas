@@ -137,7 +137,7 @@ public:
 private:
     template <typename... Args>
     struct array {
-        using type = typename std::array<size_t, SliceRank<Args...>::value>;
+        using type = typename std::array<idx_t, SliceRank<Args...>::value>;
     };
 
     template <typename ReturnType, bool ToScalar = false>

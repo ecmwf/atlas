@@ -40,7 +40,7 @@ public:  // methods
     /// Constructs an empty FieldSet
     FieldSetImpl( const std::string& name = "untitled" );
 
-    size_t size() const { return fields_.size(); }
+    idx_t size() const { return fields_.size(); }
     bool empty() const { return !fields_.size(); }
 
     void clear();
@@ -48,17 +48,17 @@ public:  // methods
     const std::string& name() const { return name_; }
     std::string& name() { return name_; }
 
-    const Field& operator[]( const size_t& i ) const { return field( i ); }
-    Field& operator[]( const size_t& i ) { return field( i ); }
+    const Field& operator[]( const idx_t& i ) const { return field( i ); }
+    Field& operator[]( const idx_t& i ) { return field( i ); }
 
     const Field& operator[]( const std::string& name ) const { return field( name ); }
     Field& operator[]( const std::string& name ) { return field( name ); }
 
-    const Field& field( const size_t& i ) const {
+    const Field& field( const idx_t& i ) const {
         ASSERT( i < size() );
         return fields_[i];
     }
-    Field& field( const size_t& i ) {
+    Field& field( const idx_t& i ) {
         ASSERT( i < size() );
         return fields_[i];
     }
@@ -81,7 +81,7 @@ public:  // methods
 protected:                                 // data
     std::vector<Field> fields_;            ///< field storage
     std::string name_;                     ///< internal name
-    std::map<std::string, size_t> index_;  ///< name-to-index map, to refer fields by name
+    std::map<std::string, idx_t> index_;  ///< name-to-index map, to refer fields by name
 };
 
 // C wrapper interfaces to C++ routines
@@ -90,9 +90,9 @@ FieldSetImpl* atlas__FieldSet__new( char* name );
 void atlas__FieldSet__delete( FieldSetImpl* This );
 void atlas__FieldSet__add_field( FieldSetImpl* This, FieldImpl* field );
 int atlas__FieldSet__has_field( const FieldSetImpl* This, char* name );
-size_t atlas__FieldSet__size( const FieldSetImpl* This );
+idx_t atlas__FieldSet__size( const FieldSetImpl* This );
 FieldImpl* atlas__FieldSet__field_by_name( FieldSetImpl* This, char* name );
-FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, size_t idx );
+FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, idx_t idx );
 }
 
 }  // namespace field
@@ -113,7 +113,7 @@ public:  // methods
     FieldSet( const Implementation* );
     FieldSet( const FieldSet& );
 
-    size_t size() const { return fieldset_->size(); }
+    idx_t size() const { return fieldset_->size(); }
     bool empty() const { return fieldset_->empty(); }
 
     void clear() { fieldset_->clear(); }
@@ -121,14 +121,14 @@ public:  // methods
     const std::string& name() const { return fieldset_->name(); }
     std::string& name() { return fieldset_->name(); }
 
-    const Field& operator[]( const size_t& i ) const { return fieldset_->operator[]( i ); }
-    Field& operator[]( const size_t& i ) { return fieldset_->operator[]( i ); }
+    const Field& operator[]( const idx_t& i ) const { return fieldset_->operator[]( i ); }
+    Field& operator[]( const idx_t& i ) { return fieldset_->operator[]( i ); }
 
     const Field& operator[]( const std::string& name ) const { return fieldset_->operator[]( name ); }
     Field& operator[]( const std::string& name ) { return fieldset_->operator[]( name ); }
 
-    const Field& field( const size_t& i ) const { return fieldset_->field( i ); }
-    Field& field( const size_t& i ) { return fieldset_->field( i ); }
+    const Field& field( const idx_t& i ) const { return fieldset_->field( i ); }
+    Field& field( const idx_t& i ) { return fieldset_->field( i ); }
 
     std::vector<std::string> field_names() const { return fieldset_->field_names(); }
 

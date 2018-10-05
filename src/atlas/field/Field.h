@@ -122,7 +122,7 @@ public:
     /// @brief Resize field to given shape
     void resize( const array::ArrayShape& shape );
 
-    void insert( size_t idx1, size_t size1 );
+    void insert( idx_t idx1, idx_t size1 );
 
     /// @brief Shape of this field in Fortran style (reverse order of C style)
     const std::vector<int>& shapef() const;
@@ -137,16 +137,16 @@ public:
     const array::ArrayStrides& strides() const;
 
     /// @brief Shape of this field associated to index 'i'
-    size_t shape( size_t i ) const;
+    idx_t shape( idx_t i ) const;
 
     /// @brief Stride of this field associated to index 'i'
-    size_t stride( size_t i ) const;
+    idx_t stride( idx_t i ) const;
 
     /// @brief Number of values stored in this field
-    size_t size() const;
+    idx_t size() const;
 
     /// @brief Rank of field
-    size_t rank() const;
+    idx_t rank() const;
 
     /// @brief Number of bytes occupied by the values of this field
     double bytes() const;
@@ -158,12 +158,12 @@ public:
     void dump( std::ostream& os ) const;
 
     /// Metadata that is more intrinsic to the Field, and queried often
-    void set_levels( size_t n );
-    size_t levels() const;
+    void set_levels( idx_t n );
+    idx_t levels() const;
 
     /// Metadata that is more intrinsic to the Field, and queried often
-    void set_variables( size_t n );
-    size_t variables() const;
+    void set_variables( idx_t n );
+    idx_t variables() const;
 
     void set_functionspace( const FunctionSpace& functionspace );
     const FunctionSpace& functionspace() const;
