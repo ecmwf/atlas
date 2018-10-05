@@ -308,7 +308,7 @@ public:
 
     virtual ~Structured();
 
-    virtual size_t size() const override { return npts_; }
+    virtual idx_t size() const override { return npts_; }
 
     virtual Spec spec() const override;
 
@@ -430,20 +430,20 @@ Structured* atlas__grid__regular__ShiftedLonLat( long nx, long ny );
 Structured* atlas__grid__regular__ShiftedLon( long nx, long ny );
 Structured* atlas__grid__regular__ShiftedLat( long nx, long ny );
 
-void atlas__grid__Structured__nx_array( Structured* This, const idx_t*& nx, size_t& size );
-long atlas__grid__Structured__nx( Structured* This, long j );
-long atlas__grid__Structured__ny( Structured* This );
-long atlas__grid__Structured__nxmin( Structured* This );
-long atlas__grid__Structured__nxmax( Structured* This );
-long atlas__grid__Structured__size( Structured* This );
-double atlas__grid__Structured__y( Structured* This, long j );
-double atlas__grid__Structured__x( Structured* This, long i, long j );
-void atlas__grid__Structured__xy( Structured* This, long i, long j, double crd[] );
-void atlas__grid__Structured__lonlat( Structured* This, long i, long j, double crd[] );
-void atlas__grid__Structured__y_array( Structured* This, const double*& lats, size_t& size );
+void atlas__grid__Structured__nx_array( Structured* This, const idx_t*& nx, idx_t& size );
+idx_t atlas__grid__Structured__nx( Structured* This, idx_t j );
+idx_t atlas__grid__Structured__ny( Structured* This );
+idx_t atlas__grid__Structured__nxmin( Structured* This );
+idx_t atlas__grid__Structured__nxmax( Structured* This );
+idx_t atlas__grid__Structured__size( Structured* This );
+double atlas__grid__Structured__y( Structured* This, idx_t j );
+double atlas__grid__Structured__x( Structured* This, idx_t i, idx_t j );
+void atlas__grid__Structured__xy( Structured* This, idx_t i, idx_t j, double crd[] );
+void atlas__grid__Structured__lonlat( Structured* This, idx_t i, idx_t j, double crd[] );
+void atlas__grid__Structured__y_array( Structured* This, const double*& lats, idx_t& size );
 int atlas__grid__Structured__reduced( Structured* This );
 
-long atlas__grid__Gaussian__N( Structured* This );
+idx_t atlas__grid__Gaussian__N( Structured* This );
 }
 
 }  // namespace grid

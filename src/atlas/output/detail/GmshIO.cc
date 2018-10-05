@@ -57,7 +57,7 @@ public:
             if ( atlas::mpi::comm().rank() == 0 ) {
                 PathName par_path( file_path );
                 std::ofstream par_file( par_path.localPath(), std::ios_base::out );
-                for ( size_t p = 0; p < atlas::mpi::comm().size(); ++p ) {
+                for ( int p = 0; p < atlas::mpi::comm().size(); ++p ) {
                     PathName loc_path( file_path );
                     // loc_path = loc_path.baseName(false) + "_p" + to_str(p) + ".msh";
                     loc_path = loc_path.baseName( false ) + ".msh.p" + std::to_string( p );
@@ -125,15 +125,15 @@ void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1> gidx,
     int ndata = data.shape( 0 );
     int nvars = data.shape( 1 );
     if ( nvars == 1 ) {
-        for ( size_t n = 0; n < ndata; ++n ) {
+        for ( idx_t n = 0; n < ndata; ++n ) {
             out << gidx( n ) << " " << data( n, 0 ) << "\n";
         }
     }
     else if ( nvars <= 3 ) {
         std::vector<DATATYPE> data_vec( 3, 0. );
-        for ( size_t n = 0; n < ndata; ++n ) {
+        for ( idx_t n = 0; n < ndata; ++n ) {
             out << gidx( n );
-            for ( size_t v = 0; v < nvars; ++v )
+            for ( idx_t v = 0; v < nvars; ++v )
                 data_vec[v] = data( n, v );
             for ( int v = 0; v < 3; ++v )
                 out << " " << data_vec[v];
@@ -143,7 +143,7 @@ void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1> gidx,
     else if ( nvars <= 9 ) {
         std::vector<DATATYPE> data_vec( 9, 0. );
         if ( nvars == 4 ) {
-            for ( size_t n = 0; n < ndata; ++n ) {
+            for ( int n = 0; n < ndata; ++n ) {
                 for ( int i = 0; i < 2; ++i ) {
                     for ( int j = 0; j < 2; ++j ) {
                         data_vec[i * 3 + j] = data( n, i * 2 + j );
@@ -156,7 +156,7 @@ void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1> gidx,
             }
         }
         else if ( nvars == 9 ) {
-            for ( size_t n = 0; n < ndata; ++n ) {
+            for ( int n = 0; n < ndata; ++n ) {
                 for ( int i = 0; i < 3; ++i ) {
                     for ( int j = 0; j < 3; ++j ) {
                         data_vec[i * 3 + j] = data( n, i * 2 + j );
@@ -183,7 +183,7 @@ std::vector<long> get_levels( int nlev, const Metadata& gmsh_options ) {
     gmsh_options.get( "levels", gmsh_levels );
     if ( gmsh_levels.empty() || nlev == 1 ) {
         lev.resize( nlev );
-        for ( size_t ilev = 0; ilev < nlev; ++ilev )
+        for ( idx_t ilev = 0; ilev < nlev; ++ilev )
             lev[ilev] = ilev;
     }
     else {
@@ -232,9 +232,9 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
 
     bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
     bool binary( !gmsh_options.get<bool>( "ascii" ) );
-    size_t nlev                      = std::max<int>( 1, field.levels() );
-    size_t ndata                     = std::min<idx_t>( function_space.nb_nodes(), field.shape( 0 ) );
-    size_t nvars                     = std::max<int>( 1, field.variables() );
+    idx_t nlev                      = std::max<idx_t>( 1, field.levels() );
+    idx_t ndata                     = std::min<idx_t>( function_space.nb_nodes(), field.shape( 0 ) );
+    idx_t nvars                     = std::max<idx_t>( 1, field.variables() );
     array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( function_space.nodes().global_index() );
     Field gidx_glb;
     Field field_glb;
@@ -250,8 +250,8 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
     }
 
     std::vector<long> lev = get_levels( nlev, gmsh_options );
-    for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
-        size_t jlev = lev[ilev];
+    for ( idx_t ilev = 0; ilev < lev.size(); ++ilev ) {
+        idx_t jlev = lev[ilev];
         if ( ( gather && atlas::mpi::comm().rank() == 0 ) || !gather ) {
             out << "$NodeData\n";
             out << "1\n";
@@ -280,9 +280,9 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
 
     bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
     bool binary( !gmsh_options.get<bool>( "ascii" ) );
-    size_t nlev  = std::max<int>( 1, field.levels() );
-    size_t ndata = std::min<idx_t>( function_space.sizeOwned(), field.shape( 0 ) );
-    size_t nvars = std::max<int>( 1, field.variables() );
+    idx_t nlev  = std::max<idx_t>( 1, field.levels() );
+    idx_t ndata = std::min<idx_t>( function_space.sizeOwned(), field.shape( 0 ) );
+    idx_t nvars = std::max<idx_t>( 1, field.variables() );
     auto gidx    = array::make_view<gidx_t, 1>( function_space.global_index() );
     Field gidx_glb;
     Field field_glb;
@@ -298,15 +298,15 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
     }
 
     std::vector<long> lev = get_levels( nlev, gmsh_options );
-    for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
-        size_t jlev       = lev[ilev];
+    for ( idx_t ilev = 0; ilev < lev.size(); ++ilev ) {
+        idx_t jlev       = lev[ilev];
         char field_lev[6] = {0, 0, 0, 0, 0, 0};
 
         if ( field.levels() ) { std::sprintf( field_lev, "[%03lu]", jlev ); }
 
         double time = field.metadata().has( "time" ) ? field.metadata().get<double>( "time" ) : 0.;
 
-        int step = field.metadata().has( "step" ) ? field.metadata().get<size_t>( "step" ) : 0;
+        int step = field.metadata().has( "step" ) ? field.metadata().get<int>( "step" ) : 0;
 
         out << "$NodeData\n";
         out << "1\n";
@@ -523,7 +523,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
         std::getline( file, line );
 
     // Create nodes
-    size_t nb_nodes;
+    idx_t nb_nodes;
     file >> nb_nodes;
 
     mesh.nodes().resize( nb_nodes );
@@ -545,7 +545,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
     gidx_t max_glb_idx = 0;
     while ( binary && file.peek() == '\n' )
         file.get();
-    for ( size_t n = 0; n < nb_nodes; ++n ) {
+    for ( idx_t n = 0; n < nb_nodes; ++n ) {
         if ( binary ) {
             file.read( reinterpret_cast<char*>( &g ), sizeof( int ) );
             file.read( reinterpret_cast<char*>( &xyz ), sizeof( double ) * 3 );
@@ -567,7 +567,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
         zmax            = std::max( z, zmax );
     }
     if ( xmax < 4 * M_PI && zmax == 0. ) {
-        for ( size_t n = 0; n < nb_nodes; ++n ) {
+        for ( idx_t n = 0; n < nb_nodes; ++n ) {
             coords( n, XX ) *= rad2deg;
             coords( n, YY ) *= rad2deg;
         }
@@ -728,7 +728,7 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
     array::ArrayView<double, 2> coords  = array::make_view<double, 2>( nodes.field( nodes_field ) );
     array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
 
-    const size_t surfdim = coords.shape( 1 );  // nb of variables in coords
+    const idx_t surfdim = coords.shape( 1 );  // nb of variables in coords
 
     ASSERT( surfdim == 2 || surfdim == 3 );
 
@@ -747,14 +747,14 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
         write_header_ascii( file );
 
     // Nodes
-    const size_t nb_nodes = nodes.size();
+    const idx_t nb_nodes = nodes.size();
     file << "$Nodes\n";
     file << nb_nodes << "\n";
     double xyz[3] = {0., 0., 0.};
-    for ( size_t n = 0; n < nb_nodes; ++n ) {
+    for ( idx_t n = 0; n < nb_nodes; ++n ) {
         gidx_t g = glb_idx( n );
 
-        for ( size_t d = 0; d < surfdim; ++d )
+        for ( idx_t d = 0; d < surfdim; ++d )
             xyz[d] = coords( n, d );
 
         if ( binary ) {
@@ -775,13 +775,13 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
         if ( options.get<bool>( "elements" ) ) grouped_elements.push_back( &mesh.cells() );
         if ( options.get<bool>( "edges" ) ) grouped_elements.push_back( &mesh.edges() );
 
-        size_t nb_elements( 0 );
-        for ( size_t jgroup = 0; jgroup < grouped_elements.size(); ++jgroup ) {
+        idx_t nb_elements( 0 );
+        for ( idx_t jgroup = 0; jgroup < grouped_elements.size(); ++jgroup ) {
             const mesh::HybridElements& hybrid = *grouped_elements[jgroup];
             nb_elements += hybrid.size();
             if ( !include_ghost ) {
                 const array::ArrayView<int, 1> hybrid_halo = array::make_view<int, 1>( hybrid.halo() );
-                for ( size_t e = 0; e < hybrid.size(); ++e ) {
+                for ( idx_t e = 0; e < hybrid.size(); ++e ) {
                     if ( hybrid_halo( e ) ) --nb_elements;
                 }
             }
@@ -789,9 +789,9 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
 
         file << nb_elements << "\n";
 
-        for ( size_t jgroup = 0; jgroup < grouped_elements.size(); ++jgroup ) {
+        for ( idx_t jgroup = 0; jgroup < grouped_elements.size(); ++jgroup ) {
             const mesh::HybridElements& hybrid = *grouped_elements[jgroup];
-            for ( size_t etype = 0; etype < hybrid.nb_types(); ++etype ) {
+            for ( idx_t etype = 0; etype < hybrid.nb_types(); ++etype ) {
                 const mesh::Elements& elements        = hybrid.elements( etype );
                 const mesh::ElementType& element_type = elements.element_type();
                 int gmsh_elem_type;
@@ -811,9 +811,9 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                 auto elems_halo      = elements.view<int, 1>( elements.halo() );
 
                 if ( binary ) {
-                    size_t nb_elems = elements.size();
+                    idx_t nb_elems = elements.size();
                     if ( !include_ghost ) {
-                        for ( size_t elem = 0; elem < elements.size(); ++elem ) {
+                        for ( idx_t elem = 0; elem < elements.size(); ++elem ) {
                             if ( elems_halo( elem ) ) --nb_elems;
                         }
                     }
@@ -828,11 +828,11 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                     data[2]         = 1;
                     data[3]         = 1;
                     size_t datasize = sizeof( int ) * ( 5 + node_connectivity.cols() );
-                    for ( size_t elem = 0; elem < elements.size(); ++elem ) {
+                    for ( idx_t elem = 0; elem < elements.size(); ++elem ) {
                         if ( include_ghost || !elems_halo( elem ) ) {
                             data[0] = elems_glb_idx( elem );
                             data[4] = elems_partition( elem );
-                            for ( size_t n = 0; n < node_connectivity.cols(); ++n )
+                            for ( idx_t n = 0; n < node_connectivity.cols(); ++n )
                                 data[5 + n] = glb_idx( node_connectivity( elem, n ) );
                             file.write( reinterpret_cast<const char*>( &data ), datasize );
                         }
@@ -842,10 +842,10 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                     std::stringstream ss_elem_info;
                     ss_elem_info << " " << gmsh_elem_type << " 4 1 1 1 ";
                     std::string elem_info = ss_elem_info.str();
-                    for ( size_t elem = 0; elem < elements.size(); ++elem ) {
+                    for ( idx_t elem = 0; elem < elements.size(); ++elem ) {
                         if ( include_ghost || !elems_halo( elem ) ) {
                             file << elems_glb_idx( elem ) << elem_info << elems_partition( elem );
-                            for ( size_t n = 0; n < node_connectivity.cols(); ++n ) {
+                            for ( idx_t n = 0; n < node_connectivity.cols(); ++n ) {
                                 file << " " << glb_idx( node_connectivity( elem, n ) );
                             }
                             file << "\n";
@@ -961,7 +961,7 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Node
     if ( is_new_file ) { write_header_ascii( file ); }
 
     // field::Fields
-    for ( size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {
+    for ( idx_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {
         const Field& field = fieldset[field_idx];
         Log::debug() << "writing field " << field.name() << " to gmsh file " << file_path << std::endl;
 
@@ -1000,7 +1000,7 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Stru
     if ( is_new_file ) write_header_ascii( file );
 
     // field::Fields
-    for ( size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {
+    for ( idx_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {
         const Field& field = fieldset[field_idx];
         Log::debug() << "writing field " << field.name() << " to gmsh file " << file_path << std::endl;
 

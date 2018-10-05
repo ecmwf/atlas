@@ -39,9 +39,9 @@ Unstructured::Unstructured( const Mesh& m ) : Grid(), points_( new std::vector<P
 
     auto xy                 = array::make_view<double, 2>( m.nodes().xy() );
     std::vector<PointXY>& p = *points_;
-    const size_t npts       = p.size();
+    const idx_t npts       = p.size();
 
-    for ( size_t n = 0; n < npts; ++n ) {
+    for ( idx_t n = 0; n < npts; ++n ) {
         p[n].assign( xy( n, XX ), xy( n, YY ) );
     }
 }
@@ -150,7 +150,7 @@ void Unstructured::hash( eckit::Hash& h ) const {
     const std::vector<PointXY>& pts = *points_;
     h.add( &pts[0], sizeof( PointXY ) * pts.size() );
 
-    for ( size_t i = 0; i < pts.size(); i++ ) {
+    for ( idx_t i = 0, N = pts.size(); i < N; i++ ) {
         const PointXY& p = pts[i];
         h << p.x() << p.y();
     }
@@ -158,7 +158,7 @@ void Unstructured::hash( eckit::Hash& h ) const {
     projection().hash( h );
 }
 
-size_t Unstructured::size() const {
+idx_t Unstructured::size() const {
     ASSERT( points_ );
     return points_->size();
 }
@@ -175,7 +175,7 @@ Grid::Spec Unstructured::spec() const {
 
     std::unique_ptr<IteratorXY> it( xy_begin() );
     std::vector<double> coords( 2 * size() );
-    size_t c( 0 );
+    idx_t c( 0 );
     PointXY xy;
     while ( it->next( xy ) ) {
         coords[c++] = xy.x();

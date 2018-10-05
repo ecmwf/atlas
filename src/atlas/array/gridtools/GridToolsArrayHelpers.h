@@ -32,7 +32,7 @@ namespace array {
 namespace gridtools {
 
 template <unsigned int Rank>
-std::array<unsigned int, Rank> get_array_from_vector( std::vector<size_t> const& values ) {
+std::array<unsigned int, Rank> get_array_from_vector( std::vector<idx_t> const& values ) {
     std::array<unsigned int, Rank> array;
     std::copy( values.begin(), values.end(), array.begin() );
     return array;
@@ -180,12 +180,12 @@ wrap_gt_storage( Value* data, std::array<unsigned int, Rank>&& shape, std::array
     return ds;
 }
 
-constexpr size_t zero( std::size_t ) {
+constexpr idx_t zero( idx_t ) {
     return 0;
 }
 
-template <size_t... Is>
-ArrayShape make_null_strides(::gridtools::gt_integer_sequence<size_t, Is...> ) {
+template <idx_t... Is>
+ArrayShape make_null_strides(::gridtools::gt_integer_sequence<idx_t, Is...> ) {
     return make_strides( {zero( Is )...} );
 }
 
@@ -240,7 +240,7 @@ ArraySpec ATLAS_HOST make_spec( DataStore* gt_data_store_ptr, Dims... dims ) {
     else {
         return ArraySpec(
             make_shape( {dims...} ),
-            make_null_strides( typename ::gridtools::make_gt_integer_sequence<size_t, sizeof...( dims )>::type() ) );
+            make_null_strides( typename ::gridtools::make_gt_integer_sequence<idx_t, sizeof...( dims )>::type() ) );
     }
 }
 #endif

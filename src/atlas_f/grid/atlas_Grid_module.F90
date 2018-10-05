@@ -504,11 +504,11 @@ end function
 
 function Structured__nx_array(this) result(nx)
   use atlas_grid_Structured_c_binding
-  use, intrinsic :: iso_c_binding , only : c_long, c_size_t, c_f_pointer
+  use, intrinsic :: iso_c_binding , only : c_long, c_f_pointer
   class(atlas_StructuredGrid), intent(in) :: this
   integer(ATLAS_KIND_IDX), pointer        :: nx(:)
   type   (c_ptr)                          :: nx_c_ptr
-  integer(c_size_t)                       :: nx_size
+  integer(ATLAS_KIND_IDX)                 :: nx_size
   call atlas__grid__Structured__nx_array(this%c_ptr(), nx_c_ptr, nx_size)
   call c_f_pointer(nx_c_ptr , nx , (/nx_size/))
 end function
@@ -558,11 +558,11 @@ end function
 
 function Structured__y_array(this) result(y)
   use atlas_grid_Structured_c_binding
-  use, intrinsic :: iso_c_binding , only : c_double, c_size_t, c_f_pointer
+  use, intrinsic :: iso_c_binding , only : c_double, c_f_pointer
   class(atlas_StructuredGrid), intent(in) :: this
   real   (c_double)       , pointer    :: y(:)
   type   (c_ptr)                       :: y_c_ptr
-  integer(c_size_t)                    :: y_size
+  integer(ATLAS_KIND_IDX)              :: y_size
   call atlas__grid__Structured__y_array(this%c_ptr(), &
       & y_c_ptr, y_size)
   call c_f_pointer (y_c_ptr, y, (/y_size/))

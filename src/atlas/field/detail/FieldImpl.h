@@ -108,7 +108,7 @@ public:  // Destructor
     /// @brief Resize field to given shape
     void resize( const array::ArrayShape& );
 
-    void insert( size_t idx1, size_t size1 );
+    void insert( idx_t idx1, idx_t size1 );
 
     /// @brief Shape of this field in Fortran style (reverse order of C style)
     const std::vector<int>& shapef() const { return array_->shapef(); }
@@ -123,16 +123,16 @@ public:  // Destructor
     const array::ArrayStrides& strides() const { return array_->strides(); }
 
     /// @brief Shape of this field associated to index 'i'
-    size_t shape( size_t i ) const { return array_->shape( i ); }
+    idx_t shape( idx_t i ) const { return array_->shape( i ); }
 
     /// @brief Stride of this field associated to index 'i'
-    size_t stride( size_t i ) const { return array_->stride( i ); }
+    idx_t stride( idx_t i ) const { return array_->stride( i ); }
 
     /// @brief Number of values stored in this field
-    size_t size() const { return array_->size(); }
+    idx_t size() const { return array_->size(); }
 
     /// @brief Rank of field
-    size_t rank() const { return array_->rank(); }
+    idx_t rank() const { return array_->rank(); }
 
     /// @brief Number of bytes occupied by the values of this field
     double bytes() const { return array_->bytes(); }
@@ -144,10 +144,10 @@ public:  // Destructor
     void dump( std::ostream& os ) const;
 
     /// Metadata that is more intrinsic to the Field, and queried often
-    void set_levels( size_t n ) { metadata().set( "levels", n ); }
-    void set_variables( size_t n ) { metadata().set( "variables", n ); }
-    size_t levels() const { return metadata().get<size_t>( "levels" ); }
-    size_t variables() const { return metadata().get<size_t>( "variables" ); }
+    void set_levels( idx_t n ) { metadata().set( "levels", n ); }
+    void set_variables( idx_t n ) { metadata().set( "variables", n ); }
+    idx_t levels() const { return metadata().get<idx_t>( "levels" ); }
+    idx_t variables() const { return metadata().get<idx_t>( "variables" ); }
 
     void set_functionspace( const FunctionSpace& );
     const FunctionSpace& functionspace() const { return functionspace_; }

@@ -19,8 +19,8 @@ template<int ParallelDim, int RANK>
 struct get_buffer_index{
     template<typename DATA_TYPE>
     ATLAS_HOST_DEVICE
-    static size_t apply(const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite>& field,
-                           const size_t node_cnt, const size_t var1_idx) {
+    static idx_t apply(const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite>& field,
+                           const idx_t node_cnt, const idx_t var1_idx) {
         return field.data_view().template length<RANK-1>() * field.data_view().template length<RANK-2>() * node_cnt +
                 field.data_view().template length<RANK-1>() * var1_idx;
     }
@@ -30,20 +30,20 @@ template<int ParallelDim>
 struct get_buffer_index<ParallelDim, 2>{
     template<typename DATA_TYPE>
     ATLAS_HOST_DEVICE
-    static size_t apply(const array::ArrayView<DATA_TYPE, 2, array::Intent::ReadWrite>& field,
-                           const size_t node_cnt, const size_t var1_idx) {
+    static idx_t apply(const array::ArrayView<DATA_TYPE, 2, array::Intent::ReadWrite>& field,
+                           const idx_t node_cnt, const idx_t var1_idx) {
         return field.data_view().template length<1>() * node_cnt + var1_idx;
     }
 };
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
-__global__ void pack_kernel(const int sendcnt, const int* sendmap_ptr, const size_t sendmap_size,
+__global__ void pack_kernel(const int sendcnt, const int* sendmap_ptr, const idx_t sendmap_size,
          const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer_ptr,
-         const size_t send_buffer_size, const typename std::enable_if<RANK==1, int>::type = 0) {
+         const idx_t send_buffer_size, const typename std::enable_if<RANK==1, int>::type = 0) {
     const array::SVector<int> sendmap(const_cast<int*>(sendmap_ptr), sendmap_size);
     array::SVector<DATA_TYPE> send_buffer(const_cast<DATA_TYPE*>(send_buffer_ptr), send_buffer_size);
 
-    const size_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
+    const idx_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
 
     if(node_cnt >= sendcnt) return;
 
@@ -51,56 +51,56 @@ __global__ void pack_kernel(const int sendcnt, const int* sendmap_ptr, const siz
 }
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
-__global__ void pack_kernel(const int sendcnt,  const int* sendmap_ptr, const size_t sendmap_size,
+__global__ void pack_kernel(const int sendcnt,  const int* sendmap_ptr, const idx_t sendmap_size,
          const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer_ptr,
-         const size_t send_buffer_size, const typename std::enable_if<RANK>=2, int>::type = 0) {
+         const idx_t send_buffer_size, const typename std::enable_if<RANK>=2, int>::type = 0) {
     const array::SVector<int> sendmap(const_cast<int*>(sendmap_ptr), sendmap_size);
     array::SVector<DATA_TYPE> send_buffer(const_cast<DATA_TYPE*>(send_buffer_ptr), send_buffer_size);
 
-    const size_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
-    const size_t var1_idx = blockIdx.y*blockDim.y + threadIdx.y;
+    const idx_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
+    const idx_t var1_idx = blockIdx.y*blockDim.y + threadIdx.y;
 
     if(node_cnt >= sendcnt || var1_idx >= field.data_view().template length<1>() ) return;
 
-    size_t buff_idx = get_buffer_index<ParallelDim, RANK>::apply(field, node_cnt, var1_idx);
-    const size_t node_idx = sendmap[node_cnt];
+    idx_t buff_idx = get_buffer_index<ParallelDim, RANK>::apply(field, node_cnt, var1_idx);
+    const idx_t node_idx = sendmap[node_cnt];
 
     halo_packer_impl<0, (RANK>=3) ? (RANK-2) : 0, 2>::apply(buff_idx, node_idx, field, send_buffer, node_idx,var1_idx);
 }
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
-__global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
-         const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
+__global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const idx_t recvmap_size,
+         const DATA_TYPE* recv_buffer_ptr, const idx_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
          array::Intent::ReadWrite> field, const typename std::enable_if<RANK==1, int>::type = 0) {
 
     const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
     const array::SVector<DATA_TYPE> recv_buffer(const_cast<DATA_TYPE*>(recv_buffer_ptr), recv_buffer_size);
 
-    size_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
+    idx_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
 
     if(node_cnt >= recvcnt) return;
 
-    const size_t node_idx = recvmap[node_cnt];
+    const idx_t node_idx = recvmap[node_cnt];
 
     field(node_idx) = recv_buffer[node_cnt];
 }
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
-__global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const size_t recvmap_size,
-         const DATA_TYPE* recv_buffer_ptr, const size_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
+__global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const idx_t recvmap_size,
+         const DATA_TYPE* recv_buffer_ptr, const idx_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
          array::Intent::ReadWrite> field, const typename std::enable_if<RANK>=2, int>::type = 0) {
 
     const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
     const array::SVector<DATA_TYPE> recv_buffer(const_cast<DATA_TYPE*>(recv_buffer_ptr), recv_buffer_size);
 
-    const size_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
-    const size_t var1_idx = blockIdx.y*blockDim.y + threadIdx.y;
+    const idx_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
+    const idx_t var1_idx = blockIdx.y*blockDim.y + threadIdx.y;
 
     if(node_cnt >= recvcnt || var1_idx >= field.data_view().template length<1>() ) return;
 
-    const size_t node_idx = recvmap[node_cnt];
+    const idx_t node_idx = recvmap[node_cnt];
 
-    size_t buff_idx = get_buffer_index<ParallelDim, RANK>::apply(field, node_cnt, var1_idx);
+    idx_t buff_idx = get_buffer_index<ParallelDim, RANK>::apply(field, node_cnt, var1_idx);
 
     halo_unpacker_impl<0, (RANK>=3) ? (RANK-2) : 0, 2>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,var1_idx);
 }

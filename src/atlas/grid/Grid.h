@@ -88,7 +88,7 @@ public:
     bool operator==( const Grid& other ) const { return uid() == other.uid(); }
     bool operator!=( const Grid& other ) const { return uid() != other.uid(); }
 
-    size_t size() const { return grid_->size(); }
+    idx_t size() const { return grid_->size(); }
 
     const Projection& projection() const { return grid_->projection(); }
     const Domain& domain() const { return grid_->domain(); }
@@ -159,15 +159,15 @@ public:
     bool valid() const { return grid_; }
 
     using Grid::xy;
-    void xy( size_t n, double xy[] ) const {
+    void xy( idx_t n, double xy[] ) const {
         PointXY _xy = grid_->xy( n );
         xy[0]       = _xy.x();
         xy[1]       = _xy.y();
     }
 
-    PointXY xy( size_t n ) const { return grid_->xy( n ); }
+    PointXY xy( idx_t n ) const { return grid_->xy( n ); }
 
-    PointLonLat lonlat( size_t n ) const { return grid_->lonlat( n ); }
+    PointLonLat lonlat( idx_t n ) const { return grid_->lonlat( n ); }
 
 private:
     const grid_t* grid_;
@@ -200,7 +200,7 @@ public:
 
     inline const std::vector<idx_t>& nx() const { return grid_->nx(); }
 
-    inline size_t nxmax() const { return grid_->nxmax(); }
+    inline idx_t nxmax() const { return grid_->nxmax(); }
 
     inline const std::vector<double>& y() const { return grid_->y(); }
 
@@ -254,7 +254,7 @@ public:
 
     bool valid() const { return StructuredGrid::valid() && regular(); }
 
-    size_t nx() const { return nxmax(); }
+    idx_t nx() const { return nxmax(); }
 
     inline double x( idx_t i ) const { return x( i, 0 ); }
 

@@ -38,9 +38,9 @@ public:
         externally_allocated_( other.externally_allocated_ ) {}
 
     ATLAS_HOST_DEVICE
-    SVector( T* data, size_t size ) : data_( data ), size_( size ) {}
+    SVector( T* data, idx_t size ) : data_( data ), size_( size ) {}
 
-    SVector( size_t N ) : data_( nullptr ), size_( N ), externally_allocated_( false ) {
+    SVector( idx_t N ) : data_( nullptr ), size_( N ), externally_allocated_( false ) {
         if ( N != 0 ) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
             cudaError_t err = cudaMallocManaged( &data_, N * sizeof( T ) );
@@ -81,31 +81,31 @@ public:
     T const* data() const { return data_; }
 
     ATLAS_HOST_DEVICE
-    T& operator()( const size_t idx ) {
+    T& operator()( const idx_t idx ) {
         assert( data_ && idx < size_ );
         return data_[idx];
     }
     ATLAS_HOST_DEVICE
-    T const& operator()( const size_t idx ) const {
-        assert( data_ && idx < size_ );
-        return data_[idx];
-    }
-
-    ATLAS_HOST_DEVICE
-    T& operator[]( const size_t idx ) {
-        assert( data_ && idx < size_ );
-        return data_[idx];
-    }
-    ATLAS_HOST_DEVICE
-    T const& operator[]( const size_t idx ) const {
+    T const& operator()( const idx_t idx ) const {
         assert( data_ && idx < size_ );
         return data_[idx];
     }
 
     ATLAS_HOST_DEVICE
-    size_t size() const { return size_; }
+    T& operator[]( const idx_t idx ) {
+        assert( data_ && idx < size_ );
+        return data_[idx];
+    }
+    ATLAS_HOST_DEVICE
+    T const& operator[]( const idx_t idx ) const {
+        assert( data_ && idx < size_ );
+        return data_[idx];
+    }
 
-    void resize_impl( size_t N ) {
+    ATLAS_HOST_DEVICE
+    idx_t size() const { return size_; }
+
+    void resize_impl( idx_t N ) {
         assert( N >= size_ );
         if ( N == size_ ) return;
 
@@ -124,14 +124,14 @@ public:
         data_ = d_;
     }
 
-    void resize( size_t N ) {
+    void resize( idx_t N ) {
         resize_impl( N );
         size_ = N;
     }
 
 private:
     T* data_;
-    size_t size_;
+    idx_t size_;
     bool externally_allocated_;
 };
 

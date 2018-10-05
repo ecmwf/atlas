@@ -36,7 +36,7 @@ void LocalView<Value, Rank, AccessMode>::dump( std::ostream& os ) const {
     const value_type* data_ = data();
     os << "size: " << size() << " , values: ";
     os << "[ ";
-    for ( size_t j = 0; j < size(); ++j )
+    for ( idx_t j = 0; j < size(); ++j )
         os << data_[j] << " ";
     os << "]";
 }

@@ -86,7 +86,7 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     bool log_statistics = false;
     args.get( "log-statistics", log_statistics );
 
-    size_t log_rank = 0;
+    idx_t log_rank = 0;
     args.get( "log-rank", log_rank );
 
     if ( eckit::mpi::comm().rank() != log_rank ) { Log::reset(); }
@@ -100,7 +100,7 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     option = args.get( "source-gridname", option ) ? option : "O16";
     Grid src_grid( option );
 
-    size_t source_mesh_halo = 0;
+    idx_t source_mesh_halo = 0;
     args.get( "source-mesh-halo", source_mesh_halo );
 
     interpolation::PartitionedMesh src( args.get( "source-mesh-partitioner", option ) ? option : "equal_regions",
@@ -111,7 +111,7 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     option = args.get( "target-gridname", option ) ? option : "O32";
     Grid tgt_grid( option );
 
-    size_t target_mesh_halo = 0;
+    idx_t target_mesh_halo = 0;
     args.get( "target-mesh-halo", target_mesh_halo );
 
     interpolation::PartitionedMesh tgt( args.get( "target-mesh-partitioner", option ) ? option : "spherical-polygon",
@@ -167,7 +167,7 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         array::ArrayView<double, 2> lonlat       = array::make_view<double, 2>( src.mesh().nodes().lonlat() );
         array::ArrayView<double, 1> src_scalar_1 = array::make_view<double, 1>( src_fields[0] ),
                                     src_scalar_2 = array::make_view<double, 1>( src_fields[1] );
-        for ( size_t j = 0; j < src.mesh().nodes().size(); ++j ) {
+        for ( idx_t j = 0; j < src.mesh().nodes().size(); ++j ) {
             const double lon = deg2rad * lonlat( j, 0 );  // (lon)
             const double lat = deg2rad * lonlat( j, 1 );  // (lat)
             const double c2 = std::cos( lat ), s1 = std::sin( ( lon - c_lon ) / 2. ),
@@ -184,7 +184,7 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     }
 
     FieldSet tgt_fields;
-    for ( size_t i = 0; i < src_fields.size(); ++i ) {
+    for ( idx_t i = 0; i < src_fields.size(); ++i ) {
         tgt_fields.add( tgt_functionspace.createField<double>( option::name( src_fields[i].name() ) ) );
     }
 
@@ -212,9 +212,9 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     // Report simple statistics (on source & target)
     if ( log_statistics ) {
         double meanA, minA, maxA, meanB, minB, maxB;
-        size_t nA, nB;
+        idx_t nA, nB;
 
-        for ( size_t i = 0; i < src_fields.size(); ++i ) {
+        for ( idx_t i = 0; i < src_fields.size(); ++i ) {
             src_functionspace.minimum( src_fields[i], minA );
             src_functionspace.maximum( src_fields[i], maxA );
             src_functionspace.mean( src_fields[i], meanA, nA );

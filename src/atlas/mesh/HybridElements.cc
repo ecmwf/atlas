@@ -44,14 +44,14 @@ namespace mesh {
 
 namespace {
 
-static void set_uninitialized_fields_to_zero( HybridElements& elems, size_t begin ) {
+static void set_uninitialized_fields_to_zero( HybridElements& elems, idx_t begin ) {
     ArrayView<gidx_t, 1> global_index = make_view<gidx_t, 1>( elems.global_index() );
     IndexView<idx_t, 1> remote_index  = make_indexview<idx_t, 1>( elems.remote_index() );
     ArrayView<int, 1> partition       = make_view<int, 1>( elems.partition() );
     ArrayView<int, 1> halo            = make_view<int, 1>( elems.halo() );
     ArrayView<int, 1> flags           = make_view<int, 1>( elems.flags() );
 
-    for ( size_t j = begin; j < elems.size(); ++j ) {
+    for ( idx_t j = begin; j < elems.size(); ++j ) {
         global_index( j ) = 0;
         remote_index( j ) = 0;
         partition( j )    = 0;
@@ -93,8 +93,8 @@ Field HybridElements::add( const Field& field ) {
     return field;
 }
 
-void HybridElements::resize( size_t size ) {
-    size_t old_size = size_;
+void HybridElements::resize( idx_t size ) {
+    idx_t old_size = size_;
     size_           = size;
     for ( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it ) {
         Field& field            = it->second;
@@ -130,9 +130,9 @@ Field& HybridElements::field( const std::string& name ) {
     return const_cast<Field&>( static_cast<const HybridElements*>( this )->field( name ) );
 }
 
-const Field& HybridElements::field( size_t idx ) const {
+const Field& HybridElements::field( idx_t idx ) const {
     ASSERT( idx < nb_fields() );
-    size_t c( 0 );
+    idx_t c( 0 );
     for ( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
         if ( idx == c ) {
             const Field& field = it->second;
@@ -143,7 +143,7 @@ const Field& HybridElements::field( size_t idx ) const {
     throw eckit::SeriousBug( "Should not be here!", Here() );
 }
 
-Field& HybridElements::field( size_t idx ) {
+Field& HybridElements::field( idx_t idx ) {
     return const_cast<Field&>( static_cast<const HybridElements*>( this )->field( idx ) );
 }
 
@@ -152,27 +152,27 @@ HybridElements::Connectivity& HybridElements::add( Connectivity* connectivity ) 
     return *connectivity;
 }
 
-size_t HybridElements::add( const ElementType* element_type, size_t nb_elements,
+idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements,
                             const std::vector<idx_t>& connectivity ) {
     return add( element_type, nb_elements, connectivity.data() );
 }
 
-size_t HybridElements::add( const ElementType* element_type, size_t nb_elements, const idx_t connectivity[] ) {
+idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements, const idx_t connectivity[] ) {
     return add( element_type, nb_elements, connectivity, false );
 }
 
-size_t HybridElements::add( const ElementType* element_type, size_t nb_elements, const idx_t connectivity[],
+idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements, const idx_t connectivity[],
                             bool fortran_array ) {
     eckit::SharedPtr<const ElementType> etype( element_type );
 
-    size_t old_size = size();
-    size_t new_size = old_size + nb_elements;
+    idx_t old_size = size();
+    idx_t new_size = old_size + nb_elements;
 
-    size_t nb_nodes = etype->nb_nodes();
+    idx_t nb_nodes = etype->nb_nodes();
 
     type_idx_.resize( new_size );
 
-    for ( size_t e = old_size; e < new_size; ++e ) {
+    for ( idx_t e = old_size; e < new_size; ++e ) {
         type_idx_[e] = element_types_.size();
     }
 
@@ -181,14 +181,14 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements,
 
     element_types_.push_back( etype );
     elements_.resize( element_types_.size() );
-    for ( size_t t = 0; t < nb_types(); ++t ) {
+    for ( idx_t t = 0; t < nb_types(); ++t ) {
         if ( elements_[t] )
             elements_[t]->rebuild();
         else
             elements_[t].reset( new Elements( *this, t ) );
     }
 
-    //  for( size_t t=0; t<nb_types()-1; ++t )
+    //  for( idx_t t=0; t<nb_types()-1; ++t )
     //  {
     //    elements_[t]->rebuild();
     //  }
@@ -202,17 +202,17 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements,
     return element_types_.size() - 1;
 }
 
-size_t HybridElements::add( const ElementType* element_type, size_t nb_elements ) {
+idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements ) {
     eckit::SharedPtr<const ElementType> etype( element_type );
 
-    size_t old_size = size();
-    size_t new_size = old_size + nb_elements;
+    idx_t old_size = size();
+    idx_t new_size = old_size + nb_elements;
 
-    size_t nb_nodes = etype->nb_nodes();
+    idx_t nb_nodes = etype->nb_nodes();
 
     type_idx_.resize( new_size );
 
-    for ( size_t e = old_size; e < new_size; ++e ) {
+    for ( idx_t e = old_size; e < new_size; ++e ) {
         type_idx_[e] = element_types_.size();
     }
 
@@ -221,7 +221,7 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements 
 
     element_types_.push_back( etype );
     elements_.resize( element_types_.size() );
-    for ( size_t t = 0; t < nb_types(); ++t ) {
+    for ( idx_t t = 0; t < nb_types(); ++t ) {
         elements_[t].reset( new Elements( *this, t ) );
     }
 
@@ -230,29 +230,29 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements 
     return element_types_.size() - 1;
 }
 
-size_t HybridElements::add( const Elements& elems ) {
+idx_t HybridElements::add( const Elements& elems ) {
     bool fortran_array = true;
     return add( &elems.element_type(), elems.size(), elems.node_connectivity().data(), fortran_array );
 }
 
-const std::string& HybridElements::name( size_t elem_idx ) const {
+const std::string& HybridElements::name( idx_t elem_idx ) const {
     return element_types_[type_idx_[elem_idx]]->name();
 }
 
-size_t HybridElements::elemtype_nb_nodes( size_t elem_idx ) const {
+idx_t HybridElements::elemtype_nb_nodes( idx_t elem_idx ) const {
     return element_type( type_idx( elem_idx ) ).nb_nodes();
 }
 
-size_t HybridElements::elemtype_nb_edges( size_t elem_idx ) const {
+idx_t HybridElements::elemtype_nb_edges( idx_t elem_idx ) const {
     return element_type( type_idx( elem_idx ) ).nb_edges();
 }
 
-void HybridElements::insert( size_t type_idx, size_t position, size_t nb_elements ) {
+void HybridElements::insert( idx_t type_idx, idx_t position, idx_t nb_elements ) {
     type_idx_.insert( type_idx_.begin() + position, nb_elements, type_idx );
     elements_size_[type_idx] += nb_elements;
-    for ( size_t jtype = type_idx + 1; jtype < nb_types() + 1; ++jtype )
+    for ( idx_t jtype = type_idx + 1; jtype < nb_types() + 1; ++jtype )
         elements_begin_[jtype] += nb_elements;
-    for ( size_t t = 0; t < nb_types(); ++t ) {
+    for ( idx_t t = 0; t < nb_types(); ++t ) {
         elements_[t]->rebuild();
     }
     node_connectivity_->insert( position, nb_elements, element_types_[type_idx]->nb_nodes() );
@@ -309,8 +309,8 @@ size_t HybridElements::footprint() const {
     for ( ConnectivityMap::const_iterator it = connectivities_.begin(); it != connectivities_.end(); ++it ) {
         size += ( *it ).second->footprint();
     }
-    size += elements_size_.capacity() * sizeof( size_t );
-    size += elements_begin_.capacity() * sizeof( size_t );
+    size += elements_size_.capacity() * sizeof( idx_t );
+    size += elements_begin_.capacity() * sizeof( idx_t );
 
     size += metadata_.footprint();
 
@@ -348,16 +348,16 @@ MultiBlockConnectivity* atlas__mesh__HybridElements__cell_connectivity( HybridEl
     return connectivity;
 }
 
-size_t atlas__mesh__HybridElements__size( const HybridElements* This ) {
+idx_t atlas__mesh__HybridElements__size( const HybridElements* This ) {
     return This->size();
 }
 
-void atlas__mesh__HybridElements__add_elements( HybridElements* This, ElementType* elementtype, size_t nb_elements ) {
+void atlas__mesh__HybridElements__add_elements( HybridElements* This, ElementType* elementtype, idx_t nb_elements ) {
     This->add( elementtype, nb_elements );
 }
 
 void atlas__mesh__HybridElements__add_elements_with_nodes( HybridElements* This, ElementType* elementtype,
-                                                           size_t nb_elements, idx_t node_connectivity[],
+                                                           idx_t nb_elements, idx_t node_connectivity[],
                                                            int fortran_array ) {
     This->add( elementtype, nb_elements, node_connectivity, fortran_array );
 }
@@ -377,7 +377,7 @@ int atlas__mesh__HybridElements__nb_types( const HybridElements* This ) {
     return This->nb_types();
 }
 
-field::FieldImpl* atlas__mesh__HybridElements__field_by_idx( HybridElements* This, size_t idx ) {
+field::FieldImpl* atlas__mesh__HybridElements__field_by_idx( HybridElements* This, idx_t idx ) {
     field::FieldImpl* field( 0 );
     ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->field( idx ).get(); );
     return field;
@@ -413,7 +413,7 @@ field::FieldImpl* atlas__mesh__HybridElements__halo( HybridElements* This ) {
     return field;
 }
 
-Elements* atlas__mesh__HybridElements__elements( HybridElements* This, size_t idx ) {
+Elements* atlas__mesh__HybridElements__elements( HybridElements* This, idx_t idx ) {
     Elements* elements( 0 );
     ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); elements = &This->elements( idx ); );
     return elements;

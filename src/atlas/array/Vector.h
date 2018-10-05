@@ -28,9 +28,9 @@ namespace array {
 template <typename T>
 class Vector {
 public:
-    Vector( size_t N = 0 ) : data_( N ? new T[N] : nullptr ), data_gpu_( nullptr ), size_( N ) {}
+    Vector( idx_t N = 0 ) : data_( N ? new T[N] : nullptr ), data_gpu_( nullptr ), size_( N ) {}
 
-    void resize_impl( size_t N ) {
+    void resize_impl( idx_t N ) {
         if ( data_gpu_ ) throw eckit::AssertionFailed( "we can not resize a vector after has been cloned to device" );
         assert( N >= size_ );
         if ( N == size_ ) return;
@@ -43,12 +43,12 @@ public:
         data_ = d_;
     }
 
-    void resize( size_t N ) {
+    void resize( idx_t N ) {
         resize_impl( N );
         size_ = N;
     }
 
-    void resize( size_t N, T val ) {
+    void resize( idx_t N, T val ) {
         resize_impl( N );
         for ( unsigned int c = size_; c < N; ++c ) {
             data_[c] = val;
@@ -64,7 +64,7 @@ public:
 
             T* buff = new T[size_];
 
-            for ( size_t i = 0; i < size(); ++i ) {
+            for ( idx_t i = 0; i < size(); ++i ) {
                 data_[i]->cloneToDevice();
                 buff[i] = data_[i]->gpu_object_ptr();
             }
@@ -78,7 +78,7 @@ public:
         else {
             assert( size_gpu_ == size_ );
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-            for ( size_t i = 0; i < size(); ++i ) {
+            for ( idx_t i = 0; i < size(); ++i ) {
                 data_[i]->cloneToDevice();
                 assert( data_gpu_[i] == data_[i]->gpu_object_ptr() );
             }
@@ -90,7 +90,7 @@ public:
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
 
-        for ( size_t i = 0; i < size(); ++i ) {
+        for ( idx_t i = 0; i < size(); ++i ) {
             data_[i]->cloneFromDevice();
         }
 #endif
@@ -101,13 +101,13 @@ public:
     T* data() { return data_; }
     T* data_gpu() { return data_gpu_; }
 
-    size_t size() const { return size_; }
+    idx_t size() const { return size_; }
 
 private:
     T* data_;
     T* data_gpu_;
-    size_t size_;
-    size_t size_gpu_;
+    idx_t size_;
+    idx_t size_gpu_;
 };
 
 template <typename T>
@@ -117,14 +117,14 @@ public:
     VectorView( Vector<T> const& vector, T* data ) : vector_( &vector ), data_( data ), size_( vector.size() ) {}
 
     ATLAS_HOST_DEVICE
-    T& operator[]( size_t idx ) {
+    T& operator[]( idx_t idx ) {
         assert( idx < size_ );
 
         return data_[idx];
     }
 
     ATLAS_HOST_DEVICE
-    T const& operator[]( size_t idx ) const {
+    T const& operator[]( idx_t idx ) const {
         assert( idx < size_ );
         return data_[idx];
     }
@@ -132,14 +132,14 @@ public:
     T base() { return *data_; }
 
     ATLAS_HOST_DEVICE
-    size_t size() const { return size_; }
+    idx_t size() const { return size_; }
 
     bool is_valid( Vector<T>& vector ) { return ( &vector ) == vector_ && ( data_ != NULL ); }
 
 public:
     Vector<T> const* vector_;
     T* data_;
-    size_t size_;
+    idx_t size_;
 };
 
 template <typename T>

@@ -75,7 +75,7 @@ static Polyhedron_3* create_convex_hull_from_points( const std::vector<Point3>& 
     // insertion from a vector :
 
     std::vector<Point_3> vertices( pts.size() );
-    for ( size_t i = 0; i < vertices.size(); ++i )
+    for ( idx_t i = 0, size = vertices.size(); i < size; ++i )
         vertices[i] = Point_3( pts[i]( XX ), pts[i]( YY ), pts[i]( ZZ ) );
 
     // compute convex hull of non-collinear points
@@ -100,7 +100,7 @@ static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, Point
 
     /* triangles */
 
-    const size_t nb_triags = poly.size_of_facets();
+    const idx_t nb_triags = poly.size_of_facets();
     mesh.cells().add( new mesh::temporary::Triangle(), nb_triags );
     mesh::HybridElements::Connectivity& triag_nodes = mesh.cells().node_connectivity();
     array::ArrayView<gidx_t, 1> triag_gidx          = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
@@ -112,11 +112,11 @@ static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, Point
 
     Log::debug() << "Inserting triags (" << eckit::BigNum( nb_triags ) << ")" << std::endl;
 
-    size_t tidx = 0;
+    idx_t tidx = 0;
     for ( Polyhedron_3::Facet_const_iterator f = poly.facets_begin(); f != poly.facets_end(); ++f ) {
         // loop  over half-edges and take each vertex()
 
-        size_t iedge                                              = 0;
+        idx_t iedge                                              = 0;
         Polyhedron_3::Halfedge_around_facet_const_circulator edge = f->facet_begin();
         do {
             Polyhedron_3::Vertex_const_handle vh = edge->vertex();
@@ -164,7 +164,7 @@ static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, Point
 #else
 
 struct Polyhedron_3 {
-    size_t size_of_vertices() const { return 0; }
+    idx_t size_of_vertices() const { return 0; }
 };
 
 static Polyhedron_3* create_convex_hull_from_points( const std::vector<Point3>& pts ) {

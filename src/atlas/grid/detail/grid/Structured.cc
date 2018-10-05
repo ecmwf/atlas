@@ -570,54 +570,54 @@ public:
 
 extern "C" {
 
-long atlas__grid__Structured__ny( Structured* This ) {
+idx_t atlas__grid__Structured__ny( Structured* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->ny(); );
     return 0;
 }
 
-long atlas__grid__Structured__nx( Structured* This, long jlat ) {
+idx_t atlas__grid__Structured__nx( Structured* This, idx_t jlat ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nx( jlat ); );
     return 0;
 }
 
-void atlas__grid__Structured__nx_array( Structured* This, const idx_t*& nx_array, size_t& size ) {
+void atlas__grid__Structured__nx_array( Structured* This, const idx_t*& nx_array, idx_t& size ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); nx_array = This->nx().data(); size = This->nx().size(); );
 }
 
-long atlas__grid__Structured__nxmax( Structured* This ) {
+idx_t atlas__grid__Structured__nxmax( Structured* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nxmax(); );
     return 0;
 }
 
-long atlas__grid__Structured__nxmin( Structured* This ) {
+idx_t atlas__grid__Structured__nxmin( Structured* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nxmin(); );
     return 0;
 }
 
-long atlas__grid__Structured__size( Structured* This ) {
+idx_t atlas__grid__Structured__size( Structured* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->size(); );
     return 0;
 }
 
-double atlas__grid__Structured__y( Structured* This, long j ) {
+double atlas__grid__Structured__y( Structured* This, idx_t j ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->y( j ); );
     return 0.;
 }
 
-double atlas__grid__Structured__x( Structured* This, long i, long j ) {
+double atlas__grid__Structured__x( Structured* This, idx_t i, idx_t j ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->x( i, j ); );
     return 0.;
 }
 
-void atlas__grid__Structured__xy( Structured* This, long i, long j, double crd[] ) {
+void atlas__grid__Structured__xy( Structured* This, idx_t i, idx_t j, double crd[] ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); This->xy( i, j, crd ); );
 }
 
-void atlas__grid__Structured__lonlat( Structured* This, long i, long j, double crd[] ) {
+void atlas__grid__Structured__lonlat( Structured* This, idx_t i, idx_t j, double crd[] ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); This->lonlat( i, j, crd ); );
 }
 
-void atlas__grid__Structured__y_array( Structured* This, const double*& y_array, size_t& size ) {
+void atlas__grid__Structured__y_array( Structured* This, const double*& y_array, idx_t& size ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); y_array = This->y().data(); size = This->y().size(); );
 }
 
@@ -661,7 +661,7 @@ Structured* atlas__grid__regular__ShiftedLat( long nlon, long nlat ) {
     NOTIMP;
 }
 
-long atlas__grid__Gaussian__N( Structured* This ) {
+idx_t atlas__grid__Gaussian__N( Structured* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); GaussianGrid gaussian( This ); ASSERT( gaussian ); return gaussian.N(); );
     return 0;
 }

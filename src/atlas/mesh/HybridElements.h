@@ -59,19 +59,19 @@ public:  // methods
     //-- Accessors
 
     /// @brief Number of elements
-    size_t size() const;
+    idx_t size() const;
 
     /// @brief Number of nodes for given element
-    size_t nb_nodes( size_t elem_idx ) const;
+    idx_t nb_nodes( idx_t elem_idx ) const;
 
     /// @brief Number of edges for given element
-    size_t nb_edges( size_t elem_idx ) const;
+    idx_t nb_edges( idx_t elem_idx ) const;
 
     /// @brief Element type index for given element
-    size_t type_idx( size_t elem_idx ) const;
+    idx_t type_idx( idx_t elem_idx ) const;
 
     /// @brief Element type name for given element
-    const std::string& name( size_t elem_idx ) const;
+    const std::string& name( idx_t elem_idx ) const;
 
     /// @brief Element to Node connectivity table
     const HybridElements::Connectivity& node_connectivity() const;
@@ -86,23 +86,23 @@ public:  // methods
     HybridElements::Connectivity& cell_connectivity();
 
     /// @brief Number of types present in HybridElements
-    size_t nb_types() const;
+    idx_t nb_types() const;
 
     /// @brief The element_type description for given type
-    const ElementType& element_type( size_t type_idx ) const;
+    const ElementType& element_type( idx_t type_idx ) const;
 
     /// @brief Sub-elements convenience class for given type
     /// This allows optimized access to connectivities and loops.
-    const Elements& elements( size_t type_idx ) const;
-    Elements& elements( size_t type_idx );
+    const Elements& elements( idx_t type_idx ) const;
+    Elements& elements( idx_t type_idx );
 
     const Field& field( const std::string& name ) const;
     Field& field( const std::string& name );
     bool has_field( const std::string& name ) const { return ( fields_.find( name ) != fields_.end() ); }
 
-    const Field& field( size_t ) const;
-    Field& field( size_t );
-    size_t nb_fields() const { return fields_.size(); }
+    const Field& field( idx_t ) const;
+    Field& field( idx_t );
+    idx_t nb_fields() const { return fields_.size(); }
 
     const util::Metadata& metadata() const { return metadata_; }
     util::Metadata& metadata() { return metadata_; }
@@ -126,33 +126,33 @@ public:  // methods
 
     /// @brief Add a new element type with given number of elements
     /// @return type_idx of the added element type
-    size_t add( const ElementType*, size_t nb_elements );
+    idx_t add( const ElementType*, idx_t nb_elements );
 
     /// @brief Add a new element type with given number of elements and
     /// node-connectivity
     /// @return type_idx of the added element type
-    size_t add( const ElementType*, size_t nb_elements, const std::vector<idx_t>& node_connectivity );
+    idx_t add( const ElementType*, idx_t nb_elements, const std::vector<idx_t>& node_connectivity );
 
     /// @brief Add a new element type with given number of elements and
     /// node-connectivity
     /// @return type_idx of the added element type
-    size_t add( const ElementType*, size_t nb_elements, const idx_t node_connectivity[] );
+    idx_t add( const ElementType*, idx_t nb_elements, const idx_t node_connectivity[] );
 
     /// @brief Add a new element type with given number of elements and
     /// node-connectivity
     /// @return type_idx of the added element type
-    size_t add( const ElementType*, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array );
+    idx_t add( const ElementType*, idx_t nb_elements, const idx_t node_connectivity[], bool fortran_array );
 
     /// @brief Add a new element type from existing Elements.
     /// Data will be copied.
     /// @return type_idx of the added element type
-    size_t add( const Elements& );
+    idx_t add( const Elements& );
 
     Field add( const Field& field );
 
     void remove_field( const std::string& name );
 
-    void insert( size_t type_idx, size_t position, size_t nb_elements = 1 );
+    void insert( idx_t type_idx, idx_t position, idx_t nb_elements = 1 );
 
     void cloneToDevice() const;
 
@@ -170,24 +170,24 @@ private:  // -- types
     typedef std::map<std::string, eckit::SharedPtr<Connectivity>> ConnectivityMap;
 
 private:  // -- methods
-    void resize( size_t size );
+    void resize( idx_t size );
 
-    size_t elemtype_nb_nodes( size_t elem_idx ) const;
-    size_t elemtype_nb_edges( size_t elem_idx ) const;
+    idx_t elemtype_nb_nodes( idx_t elem_idx ) const;
+    idx_t elemtype_nb_edges( idx_t elem_idx ) const;
 
     Connectivity& add( Connectivity* );
 
 private:  // -- Data
           // -- Total number of elements
-    size_t size_;
+    idx_t size_;
 
     // -- Data: one value per type
-    std::vector<size_t> elements_size_;
-    std::vector<size_t> elements_begin_;
+    std::vector<idx_t> elements_size_;
+    std::vector<idx_t> elements_begin_;
     std::vector<eckit::SharedPtr<const ElementType>> element_types_;
 
     // -- Data: one value per element
-    std::vector<size_t> type_idx_;
+    std::vector<idx_t> type_idx_;
 
     // -- Sub elements
     std::vector<eckit::SharedPtr<Elements>> elements_;
@@ -207,15 +207,15 @@ private:  // -- Data
 
 // -----------------------------------------------------------------------------------------------------
 
-inline size_t HybridElements::size() const {
+inline idx_t HybridElements::size() const {
     return size_;
 }
 
-inline size_t HybridElements::nb_types() const {
+inline idx_t HybridElements::nb_types() const {
     return element_types_.size();
 }
 
-inline const ElementType& HybridElements::element_type( size_t type_idx ) const {
+inline const ElementType& HybridElements::element_type( idx_t type_idx ) const {
     return *element_types_[type_idx].get();
 }
 
@@ -243,23 +243,23 @@ inline HybridElements::Connectivity& HybridElements::cell_connectivity() {
     return *cell_connectivity_;
 }
 
-inline const Elements& HybridElements::elements( size_t type_idx ) const {
+inline const Elements& HybridElements::elements( idx_t type_idx ) const {
     return *elements_[type_idx].get();
 }
 
-inline Elements& HybridElements::elements( size_t type_idx ) {
+inline Elements& HybridElements::elements( idx_t type_idx ) {
     return *elements_[type_idx].get();
 }
 
-inline size_t HybridElements::nb_nodes( size_t elem_idx ) const {
+inline idx_t HybridElements::nb_nodes( idx_t elem_idx ) const {
     return node_connectivity_->rows() ? node_connectivity_->cols( elem_idx ) : elemtype_nb_nodes( elem_idx );
 }
 
-inline size_t HybridElements::nb_edges( size_t elem_idx ) const {
+inline idx_t HybridElements::nb_edges( idx_t elem_idx ) const {
     return edge_connectivity_->rows() ? edge_connectivity_->cols( elem_idx ) : elemtype_nb_edges( elem_idx );
 }
 
-inline size_t HybridElements::type_idx( size_t elem_idx ) const {
+inline idx_t HybridElements::type_idx( idx_t elem_idx ) const {
     return type_idx_[elem_idx];
 }
 
@@ -272,23 +272,23 @@ MultiBlockConnectivity* atlas__mesh__HybridElements__node_connectivity( HybridEl
 MultiBlockConnectivity* atlas__mesh__HybridElements__edge_connectivity( HybridElements* This );
 MultiBlockConnectivity* atlas__mesh__HybridElements__cell_connectivity( HybridElements* This );
 
-size_t atlas__mesh__HybridElements__size( const HybridElements* This );
-void atlas__mesh__HybridElements__add_elements( HybridElements* This, ElementType* elementtype, size_t nb_elements );
+idx_t atlas__mesh__HybridElements__size( const HybridElements* This );
+void atlas__mesh__HybridElements__add_elements( HybridElements* This, ElementType* elementtype, idx_t nb_elements );
 void atlas__mesh__HybridElements__add_elements_with_nodes( HybridElements* This, ElementType* elementtype,
-                                                           size_t nb_elements, idx_t node_connectivity[],
+                                                           idx_t nb_elements, idx_t node_connectivity[],
                                                            int fortran_array );
 void atlas__mesh__HybridElements__add_field( HybridElements* This, field::FieldImpl* field );
 int atlas__mesh__HybridElements__has_field( const HybridElements* This, char* name );
 int atlas__mesh__HybridElements__nb_fields( const HybridElements* This );
 int atlas__mesh__HybridElements__nb_types( const HybridElements* This );
 field::FieldImpl* atlas__mesh__HybridElements__field_by_name( HybridElements* This, char* name );
-field::FieldImpl* atlas__mesh__HybridElements__field_by_idx( HybridElements* This, size_t idx );
+field::FieldImpl* atlas__mesh__HybridElements__field_by_idx( HybridElements* This, idx_t idx );
 field::FieldImpl* atlas__mesh__HybridElements__global_index( HybridElements* This );
 field::FieldImpl* atlas__mesh__HybridElements__remote_index( HybridElements* This );
 field::FieldImpl* atlas__mesh__HybridElements__partition( HybridElements* This );
 field::FieldImpl* atlas__mesh__HybridElements__halo( HybridElements* This );
 
-Elements* atlas__mesh__HybridElements__elements( HybridElements* This, size_t idx );
+Elements* atlas__mesh__HybridElements__elements( HybridElements* This, idx_t idx );
 }
 
 }  // namespace mesh

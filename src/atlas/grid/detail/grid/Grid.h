@@ -20,6 +20,7 @@
 #include "atlas/projection/Projection.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
+#include "atlas/library/config.h"
 
 namespace eckit {
 class Hash;
@@ -100,7 +101,7 @@ public:  // methods
     /// @return number of grid points
     /// @note This methods should have constant access time, if necessary derived
     //        classes should compute it at construction
-    virtual size_t size() const = 0;
+    virtual idx_t size() const = 0;
 
     virtual Spec spec() const = 0;
 

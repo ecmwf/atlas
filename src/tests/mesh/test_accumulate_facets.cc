@@ -41,8 +41,8 @@ CASE( "test_accumulate_facets" ) {
     // storage for edge-to-cell-connectivity shape=(nb_edges,2)
     std::vector<idx_t> edge_to_cell_data;
 
-    size_t nb_edges;
-    size_t nb_inner_edges;
+    idx_t nb_edges;
+    idx_t nb_inner_edges;
     idx_t missing_value;
 
     // Accumulate facets of cells ( edges in 2D )
@@ -268,7 +268,7 @@ CASE( "test_build_edges" ) {
         const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
         EXPECT( mesh.projection().units() == "degrees" );
         const util::UniqueLonLat compute_uid( mesh );
-        for ( size_t jedge = 0; jedge < mesh.edges().size(); ++jedge ) {
+        for ( idx_t jedge = 0; jedge < mesh.edges().size(); ++jedge ) {
             if ( compute_uid( edge_nodes_check[2 * jedge + 0] ) < compute_uid( edge_nodes_check[2 * jedge + 1] ) ) {
                 EXPECT( edge_nodes_check[2 * jedge + 0] == edge_node_connectivity( jedge, 0 ) );
                 EXPECT( edge_nodes_check[2 * jedge + 1] == edge_node_connectivity( jedge, 1 ) );
@@ -456,7 +456,7 @@ CASE( "test_build_edges" ) {
         const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
         const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh.edges().cell_connectivity();
         const util::UniqueLonLat compute_uid( mesh );
-        for ( size_t jedge = 0; jedge < mesh.edges().size(); ++jedge ) {
+        for ( idx_t jedge = 0; jedge < mesh.edges().size(); ++jedge ) {
             idx_t e1 = edge_to_cell_check[2 * jedge + 0];
             idx_t e2 = edge_to_cell_check[2 * jedge + 1];
             if ( e2 == edge_cell_connectivity.missing_value() ||
@@ -474,9 +474,9 @@ CASE( "test_build_edges" ) {
 
     {
         const MultiBlockConnectivity& elem_edge_connectivity = mesh.cells().edge_connectivity();
-        for ( size_t jelem = 0; jelem < mesh.cells().size(); ++jelem ) {
+        for ( idx_t jelem = 0; jelem < mesh.cells().size(); ++jelem ) {
             std::cout << jelem << " : ";
-            for ( size_t jedge = 0; jedge < elem_edge_connectivity.cols( jelem ); ++jedge ) {
+            for ( idx_t jedge = 0; jedge < elem_edge_connectivity.cols( jelem ); ++jedge ) {
                 std::cout << elem_edge_connectivity( jelem, jedge ) << "  ";
             }
             std::cout << std::endl;
@@ -496,13 +496,13 @@ CASE( "test_build_edges_triangles_only" ) {
     {
         const MultiBlockConnectivity& elem_edge_connectivity = mesh.cells().edge_connectivity();
         const MultiBlockConnectivity& elem_node_connectivity = mesh.cells().node_connectivity();
-        for ( size_t jelem = 0; jelem < mesh.cells().size(); ++jelem ) {
+        for ( idx_t jelem = 0; jelem < mesh.cells().size(); ++jelem ) {
             std::cout << jelem << " : edges (  ";
-            for ( size_t jedge = 0; jedge < elem_edge_connectivity.cols( jelem ); ++jedge ) {
+            for ( idx_t jedge = 0; jedge < elem_edge_connectivity.cols( jelem ); ++jedge ) {
                 std::cout << elem_edge_connectivity( jelem, jedge ) << "  ";
             }
             std::cout << ")     |    nodes ( ";
-            for ( size_t jnode = 0; jnode < elem_node_connectivity.cols( jelem ); ++jnode ) {
+            for ( idx_t jnode = 0; jnode < elem_node_connectivity.cols( jelem ); ++jnode ) {
                 std::cout << elem_node_connectivity( jelem, jnode ) << "  ";
             }
             std::cout << ")" << std::endl;

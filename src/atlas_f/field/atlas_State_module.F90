@@ -4,7 +4,7 @@ module atlas_State_module
 
 use fckit_owned_object_module, only: fckit_owned_object
 use atlas_Field_module, only: atlas_Field
-
+use atlas_kinds_module, only: ATLAS_KIND_IDX
 implicit none
 
 private :: fckit_owned_object
@@ -134,7 +134,7 @@ end function
 
 function atlas_State__size(this) result(size)
   use atlas_state_c_binding
-  integer :: size
+  integer(ATLAS_KIND_IDX) :: size
   class(atlas_State), intent(in) :: this
   size = atlas__State__size(this%c_ptr())
 end function
@@ -154,7 +154,7 @@ function atlas_State__field_by_index(this,index) result(field)
   type(atlas_Field) :: field
   class(atlas_State), intent(in) :: this
   integer, intent(in) :: index
-  field = atlas_Field( atlas__State__field_by_index(this%c_ptr(),index-1) )
+  field = atlas_Field( atlas__State__field_by_index(this%c_ptr(),int(index-1,ATLAS_KIND_IDX)) )
   call field%return()
 end function
 

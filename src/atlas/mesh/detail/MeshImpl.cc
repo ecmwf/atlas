@@ -96,11 +96,11 @@ void MeshImpl::setGrid( const Grid& grid ) {
     if ( not projection_ ) projection_ = grid_->projection();
 }
 
-size_t MeshImpl::nb_partitions() const {
+idx_t MeshImpl::nb_partitions() const {
     return mpi::comm().size();
 }
 
-size_t MeshImpl::partition() const {
+idx_t MeshImpl::partition() const {
     return mpi::comm().rank();
 }
 
@@ -137,7 +137,7 @@ PartitionGraph::Neighbours MeshImpl::nearestNeighbourPartitions() const {
     return partitionGraph().nearestNeighbours( partition() );
 }
 
-const PartitionPolygon& MeshImpl::polygon( size_t halo ) const {
+const PartitionPolygon& MeshImpl::polygon( idx_t halo ) const {
     if ( halo >= polygons_.size() ) { polygons_.resize( halo + 1 ); }
     if ( not polygons_[halo] ) {
         int mesh_halo = 0;

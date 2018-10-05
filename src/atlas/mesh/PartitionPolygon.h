@@ -41,11 +41,11 @@ public:  // methods
     //-- Constructors
 
     /// @brief Construct "size" polygon
-    PartitionPolygon( const detail::MeshImpl& mesh, size_t halo );
+    PartitionPolygon( const detail::MeshImpl& mesh, idx_t halo );
 
     //-- Accessors
 
-    size_t halo() const { return halo_; }
+    idx_t halo() const { return halo_; }
 
     /// @brief Return the memory footprint of the Polygon
     size_t footprint() const;
@@ -62,7 +62,7 @@ private:
 
 private:
     const detail::MeshImpl& mesh_;
-    size_t halo_;
+    idx_t halo_;
 };
 
 //------------------------------------------------------------------------------------------------------

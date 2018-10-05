@@ -53,7 +53,7 @@ HaloExchange::HaloExchange( const std::string& name ) : name_( name ), is_setup_
     nproc  = mpi::comm().size();
 }
 
-void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int base, const size_t parsize ) {
+void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int base, const idx_t parsize ) {
     ATLAS_TRACE( "HaloExchange::setup" );
 
     parsize_ = parsize;

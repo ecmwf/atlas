@@ -330,24 +330,24 @@ void atlas__functionspace__StructuredColumns__gather( const detail::StructuredCo
 void atlas__functionspace__StructuredColumns__scatter( const detail::StructuredColumns* This,
                                                        const field::FieldImpl* global, field::FieldImpl* local );
 void atlas__fs__StructuredColumns__checksum_fieldset( const detail::StructuredColumns* This,
-                                                      const field::FieldSetImpl* fieldset, char*& checksum, int& size,
+                                                      const field::FieldSetImpl* fieldset, char*& checksum, idx_t& size,
                                                       int& allocated );
 void atlas__fs__StructuredColumns__checksum_field( const detail::StructuredColumns* This, const field::FieldImpl* field,
-                                                   char*& checksum, int& size, int& allocated );
+                                                   char*& checksum, idx_t& size, int& allocated );
 void atlas__fs__StructuredColumns__halo_exchange_field( const detail::StructuredColumns* This,
                                                         const field::FieldImpl* field );
 void atlas__fs__StructuredColumns__halo_exchange_fieldset( const detail::StructuredColumns* This,
                                                            const field::FieldSetImpl* fieldset );
-void atlas__fs__StructuredColumns__index_host( const detail::StructuredColumns* This, idx_t*& data, int& i_min,
-                                               int& i_max, int& j_min, int& j_max );
-int atlas__fs__StructuredColumns__j_begin( const detail::StructuredColumns* This );
-int atlas__fs__StructuredColumns__j_end( const detail::StructuredColumns* This );
-int atlas__fs__StructuredColumns__i_begin( const detail::StructuredColumns* This, int j );
-int atlas__fs__StructuredColumns__i_end( const detail::StructuredColumns* This, int j );
-int atlas__fs__StructuredColumns__j_begin_halo( const detail::StructuredColumns* This );
-int atlas__fs__StructuredColumns__j_end_halo( const detail::StructuredColumns* This );
-int atlas__fs__StructuredColumns__i_begin_halo( const detail::StructuredColumns* This, int j );
-int atlas__fs__StructuredColumns__i_end_halo( const detail::StructuredColumns* This, int j );
+void atlas__fs__StructuredColumns__index_host( const detail::StructuredColumns* This, idx_t*& data, idx_t& i_min,
+                                               idx_t& i_max, idx_t& j_min, idx_t& j_max );
+idx_t atlas__fs__StructuredColumns__j_begin( const detail::StructuredColumns* This );
+idx_t atlas__fs__StructuredColumns__j_end( const detail::StructuredColumns* This );
+idx_t atlas__fs__StructuredColumns__i_begin( const detail::StructuredColumns* This, idx_t j );
+idx_t atlas__fs__StructuredColumns__i_end( const detail::StructuredColumns* This, idx_t j );
+idx_t atlas__fs__StructuredColumns__j_begin_halo( const detail::StructuredColumns* This );
+idx_t atlas__fs__StructuredColumns__j_end_halo( const detail::StructuredColumns* This );
+idx_t atlas__fs__StructuredColumns__i_begin_halo( const detail::StructuredColumns* This, idx_t j );
+idx_t atlas__fs__StructuredColumns__i_end_halo( const detail::StructuredColumns* This, idx_t j );
 
 field::FieldImpl* atlas__fs__StructuredColumns__xy( const detail::StructuredColumns* This );
 field::FieldImpl* atlas__fs__StructuredColumns__partition( const detail::StructuredColumns* This );

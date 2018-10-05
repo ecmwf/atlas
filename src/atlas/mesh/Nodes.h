@@ -57,7 +57,7 @@ public:  // methods
          //-- Constructors
     /// @brief Construct "size" nodes
     Nodes();
-    //  Nodes(size_t size);
+    //  Nodes(idx_t size);
 
     //-- Accessors
 
@@ -65,9 +65,9 @@ public:  // methods
     Field& field( const std::string& name );
     bool has_field( const std::string& name ) const { return ( fields_.find( name ) != fields_.end() ); }
 
-    const Field& field( size_t ) const;
-    Field& field( size_t );
-    size_t nb_fields() const { return fields_.size(); }
+    const Field& field( idx_t ) const;
+    Field& field( idx_t );
+    idx_t nb_fields() const { return fields_.size(); }
 
     const util::Metadata& metadata() const { return metadata_; }
     util::Metadata& metadata() { return metadata_; }
@@ -109,13 +109,13 @@ public:  // methods
 
     bool has_connectivity( std::string name ) const { return connectivities_.count( name ); }
 
-    size_t size() const { return size_; }
+    idx_t size() const { return size_; }
 
     // -- Modifiers
 
     Field add( const Field& );
 
-    void resize( size_t );
+    void resize( idx_t );
 
     void remove_field( const std::string& name );
 
@@ -143,7 +143,7 @@ private:
     typedef std::map<std::string, eckit::SharedPtr<Connectivity>> ConnectivityMap;
 
 private:
-    size_t size_;
+    idx_t size_;
     FieldMap fields_;
     ConnectivityMap connectivities_;
 
@@ -183,14 +183,14 @@ inline Nodes::Connectivity& Nodes::cell_connectivity() {
 extern "C" {
 Nodes* atlas__mesh__Nodes__create();
 void atlas__mesh__Nodes__delete( Nodes* This );
-size_t atlas__mesh__Nodes__size( Nodes* This );
-void atlas__mesh__Nodes__resize( Nodes* This, size_t size );
-size_t atlas__mesh__Nodes__nb_fields( Nodes* This );
+idx_t atlas__mesh__Nodes__size( Nodes* This );
+void atlas__mesh__Nodes__resize( Nodes* This, idx_t size );
+idx_t atlas__mesh__Nodes__nb_fields( Nodes* This );
 void atlas__mesh__Nodes__add_field( Nodes* This, field::FieldImpl* field );
 void atlas__mesh__Nodes__remove_field( Nodes* This, char* name );
 int atlas__mesh__Nodes__has_field( Nodes* This, char* name );
 field::FieldImpl* atlas__mesh__Nodes__field_by_name( Nodes* This, char* name );
-field::FieldImpl* atlas__mesh__Nodes__field_by_idx( Nodes* This, size_t idx );
+field::FieldImpl* atlas__mesh__Nodes__field_by_idx( Nodes* This, idx_t idx );
 util::Metadata* atlas__mesh__Nodes__metadata( Nodes* This );
 void atlas__mesh__Nodes__str( Nodes* This, char*& str, int& size );
 IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity( Nodes* This );

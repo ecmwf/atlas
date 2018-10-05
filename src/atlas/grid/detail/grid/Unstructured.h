@@ -68,7 +68,7 @@ public:
 
     private:
         const Unstructured& grid_;
-        size_t n_;
+        idx_t n_;
     };
 
     class IteratorXYPredicated : public Grid::IteratorXY {
@@ -115,8 +115,8 @@ public:
     private:
         const Unstructured& grid_;
         Grid::IteratorXY::Predicate p_;
-        size_t size_;
-        size_t n_;
+        idx_t size_;
+        idx_t n_;
     };
 
     class IteratorLonLat : public Grid::IteratorLonLat {
@@ -152,7 +152,7 @@ public:
 
     private:
         const Unstructured& grid_;
-        size_t n_;
+        idx_t n_;
     };
 
 
@@ -181,13 +181,13 @@ public:  // methods
 
     virtual ~Unstructured();
 
-    virtual size_t size() const;
+    virtual idx_t size() const;
 
     virtual Spec spec() const;
 
-    PointXY xy( size_t n ) const { return ( *points_ )[n]; }
+    PointXY xy( idx_t n ) const { return ( *points_ )[n]; }
 
-    PointLonLat lonlat( size_t n ) const { return projection_.lonlat( ( *points_ )[n] ); }
+    PointLonLat lonlat( idx_t n ) const { return projection_.lonlat( ( *points_ )[n] ); }
 
     virtual IteratorXY* xy_begin() const { return new IteratorXY( *this ); }
     virtual IteratorXY* xy_end() const { return new IteratorXY( *this, false ); }

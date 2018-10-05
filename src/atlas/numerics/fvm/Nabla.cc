@@ -280,7 +280,7 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
     const auto dual_volumes   = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
     const auto dual_normals   = array::make_view<double, 2>( edges.field( "dual_normals" ) );
     const auto node2edge_sign = array::make_view<double, 2>( nodes.field( "node2edge_sign" ) );
-    const auto edge_flags     = array::make_view<idx_t, 1>( edges.flags() );
+    const auto edge_flags     = array::make_view<int, 1>( edges.flags() );
     auto is_pole_edge         = [&]( idx_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
 
     const mesh::Connectivity& node2edge           = nodes.edge_connectivity();

@@ -43,8 +43,8 @@ struct array_initializer_impl {
 
     template <typename... DimIndex>
     static void apply( ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& array_resized, DimIndex... idxs ) {
-        const size_t N = std::min( array_resized.shape( Dim ), orig.shape( Dim ) );
-        for ( size_t i = 0; i < N; ++i ) {
+        const idx_t N = std::min( array_resized.shape( Dim ), orig.shape( Dim ) );
+        for ( idx_t i = 0; i < N; ++i ) {
             array_initializer_impl<Value, Rank, Dim + 1>::apply( std::move( orig ), std::move( array_resized ), idxs...,
                                                                  i );
         }
@@ -98,7 +98,7 @@ struct array_initializer_partitioned_val_impl {
     template <typename... DimIndexPair>
     static void apply( ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& dest, unsigned int pos,
                        unsigned int offset, DimIndexPair... idxs ) {
-        for ( size_t i = 0; i < orig.shape( Dim ); ++i ) {
+        for ( idx_t i = 0; i < orig.shape( Dim ); ++i ) {
             unsigned int displ = i;
             if ( Dim == PartDim && i >= pos ) { displ += offset; }
             std::pair<int, int> pair_idx{i, displ};

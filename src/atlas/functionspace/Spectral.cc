@@ -82,7 +82,7 @@ void Spectral::set_field_metadata( const eckit::Configuration& config, Field& fi
     bool global( false );
     if ( config.get( "global", global ) ) {
         if ( global ) {
-            size_t owner( 0 );
+            idx_t owner( 0 );
             config.get( "owner", owner );
             field.metadata().set( "owner", owner );
         }
@@ -93,12 +93,12 @@ void Spectral::set_field_metadata( const eckit::Configuration& config, Field& fi
     field.set_variables( 0 );
 }
 
-size_t Spectral::config_size( const eckit::Configuration& config ) const {
-    size_t size = nb_spectral_coefficients();
+idx_t Spectral::config_size( const eckit::Configuration& config ) const {
+    idx_t size = nb_spectral_coefficients();
     bool global( false );
     if ( config.get( "global", global ) ) {
         if ( global ) {
-            size_t owner( 0 );
+            idx_t owner( 0 );
             config.get( "owner", owner );
             size = ( mpi::comm().rank() == owner ? nb_spectral_coefficients_global() : 0 );
         }
@@ -143,11 +143,11 @@ size_t Spectral::footprint() const {
     return size;
 }
 
-size_t Spectral::nb_spectral_coefficients() const {
+idx_t Spectral::nb_spectral_coefficients() const {
     return parallelisation_->nb_spectral_coefficients();
 }
 
-size_t Spectral::nb_spectral_coefficients_global() const {
+idx_t Spectral::nb_spectral_coefficients_global() const {
     return parallelisation_->nb_spectral_coefficients_global();
 }
 
@@ -163,8 +163,8 @@ std::string Spectral::config_name( const eckit::Configuration& config ) const {
     return name;
 }
 
-size_t Spectral::config_levels( const eckit::Configuration& config ) const {
-    size_t levels( nb_levels_ );
+idx_t Spectral::config_levels( const eckit::Configuration& config ) const {
+    idx_t levels( nb_levels_ );
     config.get( "levels", levels );
     return levels;
 }
@@ -172,10 +172,10 @@ size_t Spectral::config_levels( const eckit::Configuration& config ) const {
 Field Spectral::createField( const eckit::Configuration& options ) const {
     array::ArrayShape array_shape;
 
-    size_t nb_spec_coeffs = config_size( options );
+    idx_t nb_spec_coeffs = config_size( options );
     array_shape.push_back( nb_spec_coeffs );
 
-    size_t levels = config_levels( options );
+    idx_t levels = config_levels( options );
     if ( levels ) array_shape.push_back( levels );
 
     Field field = Field( config_name( options ), config_datatype( options ), array_shape );
@@ -191,7 +191,7 @@ Field Spectral::createField( const Field& other, const eckit::Configuration& con
 void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const {
     ASSERT( local_fieldset.size() == global_fieldset.size() );
 
-    for ( size_t f = 0; f < local_fieldset.size(); ++f ) {
+    for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& loc = local_fieldset[f];
         if ( loc.datatype() != array::DataType::str<double>() ) {
             std::stringstream err;
@@ -202,14 +202,14 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
 
 #if ATLAS_HAVE_TRANS
         Field& glb  = global_fieldset[f];
-        size_t root = 0;
+        idx_t root = 0;
         glb.metadata().get( "owner", root );
         ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
         if ( mpi::comm().rank() == root ) ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
         std::vector<int> nto( 1, root + 1 );
         if ( loc.rank() > 1 ) {
             nto.resize( loc.stride( 0 ) );
-            for ( size_t i = 0; i < nto.size(); ++i )
+            for ( idx_t i = 0; i < nto.size(); ++i )
                 nto[i] = root + 1;
         }
 
@@ -238,7 +238,7 @@ void Spectral::gather( const Field& local, Field& global ) const {
 void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const {
     ASSERT( local_fieldset.size() == global_fieldset.size() );
 
-    for ( size_t f = 0; f < local_fieldset.size(); ++f ) {
+    for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& glb = global_fieldset[f];
         Field& loc       = local_fieldset[f];
         if ( loc.datatype() != array::DataType::str<double>() ) {
@@ -249,14 +249,14 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
         }
 
 #if ATLAS_HAVE_TRANS
-        size_t root = 0;
+        idx_t root = 0;
         glb.metadata().get( "owner", root );
         ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
         if ( mpi::comm().rank() == root ) ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
         std::vector<int> nfrom( 1, root + 1 );
         if ( loc.rank() > 1 ) {
             nfrom.resize( loc.stride( 0 ) );
-            for ( size_t i = 0; i < nfrom.size(); ++i )
+            for ( idx_t i = 0; i < nfrom.size(); ++i )
                 nfrom[i] = root + 1;
         }
 
@@ -352,7 +352,7 @@ Spectral::Spectral( const eckit::Configuration& config ) :
     FunctionSpace( new detail::Spectral( config ) ),
     functionspace_( dynamic_cast<const detail::Spectral*>( get() ) ) {}
 
-Spectral::Spectral( const size_t truncation, const eckit::Configuration& config ) :
+Spectral::Spectral( const int truncation, const eckit::Configuration& config ) :
     FunctionSpace( new detail::Spectral( truncation, config ) ),
     functionspace_( dynamic_cast<const detail::Spectral*>( get() ) ) {}
 
@@ -360,11 +360,11 @@ Spectral::Spectral( const trans::Trans& trans, const eckit::Configuration& confi
     FunctionSpace( new detail::Spectral( trans, config ) ),
     functionspace_( dynamic_cast<const detail::Spectral*>( get() ) ) {}
 
-size_t Spectral::nb_spectral_coefficients() const {
+idx_t Spectral::nb_spectral_coefficients() const {
     return functionspace_->nb_spectral_coefficients();
 }
 
-size_t Spectral::nb_spectral_coefficients_global() const {
+idx_t Spectral::nb_spectral_coefficients_global() const {
     return functionspace_->nb_spectral_coefficients_global();
 }
 

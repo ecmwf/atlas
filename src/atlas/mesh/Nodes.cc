@@ -80,9 +80,9 @@ Field& Nodes::field( const std::string& name ) {
     return const_cast<Field&>( static_cast<const Nodes*>( this )->field( name ) );
 }
 
-void Nodes::resize( size_t size ) {
+void Nodes::resize( idx_t size ) {
     if ( size != size_ ) {
-        size_t previous_size = size_;
+        idx_t previous_size = size_;
         size_                = size;
         for ( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it ) {
             Field& field            = it->second;
@@ -97,7 +97,7 @@ void Nodes::resize( size_t size ) {
         auto _halo   = array::make_view<int, 1>( halo() );
 
         const int mpi_rank = mpi::comm().rank();
-        for ( size_t n = previous_size; n < size_; ++n ) {
+        for ( idx_t n = previous_size; n < size_; ++n ) {
             glb_idx( n ) = 1 + n;
             part( n )    = mpi_rank;
             flag( n )    = 0;
@@ -106,9 +106,9 @@ void Nodes::resize( size_t size ) {
     }
 }
 
-const Field& Nodes::field( size_t idx ) const {
+const Field& Nodes::field( idx_t idx ) const {
     ASSERT( idx < nb_fields() );
-    size_t c( 0 );
+    idx_t c( 0 );
     for ( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
         if ( idx == c ) {
             const Field& field = it->second;
@@ -120,7 +120,7 @@ const Field& Nodes::field( size_t idx ) const {
     static Field f;
     return f;
 }
-Field& Nodes::field( size_t idx ) {
+Field& Nodes::field( idx_t idx ) {
     return const_cast<Field&>( static_cast<const Nodes*>( this )->field( idx ) );
 }
 
@@ -128,7 +128,7 @@ void Nodes::print( std::ostream& os ) const {
     os << "Nodes[\n";
     os << "\t size=" << size() << ",\n";
     os << "\t fields=\n";
-    for ( size_t i = 0; i < nb_fields(); ++i ) {
+    for ( idx_t i = 0; i < nb_fields(); ++i ) {
         os << "\t\t" << field( i );
         if ( i != nb_fields() - 1 ) os << ",";
         os << "\n";
@@ -202,14 +202,14 @@ void atlas__mesh__Nodes__delete( Nodes* This ) {
     ATLAS_ERROR_HANDLING( delete This );
 }
 
-size_t atlas__mesh__Nodes__size( Nodes* This ) {
+idx_t atlas__mesh__Nodes__size( Nodes* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->size(); );
     return 0;
 }
-void atlas__mesh__Nodes__resize( Nodes* This, size_t size ) {
+void atlas__mesh__Nodes__resize( Nodes* This, idx_t size ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); This->resize( size ); );
 }
-size_t atlas__mesh__Nodes__nb_fields( Nodes* This ) {
+idx_t atlas__mesh__Nodes__nb_fields( Nodes* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nb_fields(); );
     return 0;
 }
@@ -232,7 +232,7 @@ field::FieldImpl* atlas__mesh__Nodes__field_by_name( Nodes* This, char* name ) {
     return 0;
 }
 
-field::FieldImpl* atlas__mesh__Nodes__field_by_idx( Nodes* This, size_t idx ) {
+field::FieldImpl* atlas__mesh__Nodes__field_by_idx( Nodes* This, idx_t idx ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->field( idx ).get(); );
     return 0;
 }

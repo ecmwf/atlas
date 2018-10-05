@@ -131,7 +131,7 @@ void FieldImpl::resize( const array::ArrayShape& shape ) {
     array_->resize( shape );
 }
 
-void FieldImpl::insert( size_t idx1, size_t size1 ) {
+void FieldImpl::insert( idx_t idx1, idx_t size1 ) {
     array_->insert( idx1, size1 );
 }
 
@@ -158,7 +158,7 @@ extern "C" {
 
 FieldImpl* atlas__Field__wrap_int_specf( const char* name, int data[], int rank, int shapef[], int stridesf[] ) {
     ATLAS_ERROR_HANDLING( array::ArrayShape shape; shape.resize( rank ); array::ArrayStrides strides;
-                          strides.resize( rank ); size_t jf = rank - 1; for ( int j = 0; j < rank; ++j ) {
+                          strides.resize( rank ); idx_t jf = rank - 1; for ( int j = 0; j < rank; ++j ) {
                               shape[j]   = shapef[jf];
                               strides[j] = stridesf[jf];
                               --jf;
@@ -174,7 +174,7 @@ FieldImpl* atlas__Field__wrap_int_specf( const char* name, int data[], int rank,
 
 FieldImpl* atlas__Field__wrap_long_specf( const char* name, long data[], int rank, int shapef[], int stridesf[] ) {
     ATLAS_ERROR_HANDLING( array::ArrayShape shape; shape.resize( rank ); array::ArrayStrides strides;
-                          strides.resize( rank ); size_t jf = rank - 1; for ( int j = 0; j < rank; ++j ) {
+                          strides.resize( rank ); idx_t jf = rank - 1; for ( int j = 0; j < rank; ++j ) {
                               shape[j]   = shapef[jf];
                               strides[j] = stridesf[jf];
                               --jf;
@@ -190,7 +190,7 @@ FieldImpl* atlas__Field__wrap_long_specf( const char* name, long data[], int ran
 
 FieldImpl* atlas__Field__wrap_float_specf( const char* name, float data[], int rank, int shapef[], int stridesf[] ) {
     ATLAS_ERROR_HANDLING( array::ArrayShape shape; shape.resize( rank ); array::ArrayStrides strides;
-                          strides.resize( rank ); size_t jf = rank - 1; for ( int j = 0; j < rank; ++j ) {
+                          strides.resize( rank ); idx_t jf = rank - 1; for ( int j = 0; j < rank; ++j ) {
                               shape[j]   = shapef[jf];
                               strides[j] = stridesf[jf];
                               --jf;
@@ -206,7 +206,7 @@ FieldImpl* atlas__Field__wrap_float_specf( const char* name, float data[], int r
 
 FieldImpl* atlas__Field__wrap_double_specf( const char* name, double data[], int rank, int shapef[], int stridesf[] ) {
     ATLAS_ERROR_HANDLING( array::ArrayShape shape; shape.resize( rank ); array::ArrayStrides strides;
-                          strides.resize( rank ); size_t jf = rank - 1; for ( int j = 0; j < rank; ++j ) {
+                          strides.resize( rank ); idx_t jf = rank - 1; for ( int j = 0; j < rank; ++j ) {
                               shape[j]   = shapef[jf];
                               strides[j] = stridesf[jf];
                               --jf;

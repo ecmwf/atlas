@@ -135,14 +135,14 @@ array::Array* build_centroids_xy( const mesh::HybridElements& elements, const Fi
     const array::ArrayView<double, 2> xy  = array::make_view<double, 2>( field_xy );
     array::Array* array_centroids         = array::Array::create<double>( array::make_shape( elements.size(), 2 ) );
     array::ArrayView<double, 2> centroids = array::make_view<double, 2>( *array_centroids );
-    size_t nb_elems                       = elements.size();
+    idx_t nb_elems                       = elements.size();
     const mesh::HybridElements::Connectivity& elem_nodes = elements.node_connectivity();
-    for ( size_t e = 0; e < nb_elems; ++e ) {
+    for ( idx_t e = 0; e < nb_elems; ++e ) {
         centroids( e, XX )               = 0.;
         centroids( e, YY )               = 0.;
-        const size_t nb_nodes_per_elem   = elem_nodes.cols( e );
+        const idx_t nb_nodes_per_elem   = elem_nodes.cols( e );
         const double average_coefficient = 1. / static_cast<double>( nb_nodes_per_elem );
-        for ( size_t n = 0; n < nb_nodes_per_elem; ++n ) {
+        for ( idx_t n = 0; n < nb_nodes_per_elem; ++n ) {
             centroids( e, XX ) += xy( elem_nodes( e, n ), XX );
             centroids( e, YY ) += xy( elem_nodes( e, n ), YY );
         }
@@ -165,30 +165,30 @@ void add_median_dual_volume_contribution_cells( const mesh::HybridElements& cell
     const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
     auto field_flags                                                 = array::make_view<int, 1>( cells.flags() );
 
-    auto patch = [&field_flags]( size_t e ) {
+    auto patch = [&field_flags]( idx_t e ) {
         using Topology = atlas::mesh::Nodes::Topology;
         return Topology::check( field_flags( e ), Topology::PATCH );
     };
 
     // special ordering for bit-identical results
-    size_t nb_cells = cells.size();
+    idx_t nb_cells = cells.size();
     std::vector<Node> ordering( nb_cells );
-    for ( size_t jcell = 0; jcell < nb_cells; ++jcell )
+    for ( idx_t jcell = 0; jcell < nb_cells; ++jcell )
         ordering[jcell] =
             Node( util::unique_lonlat( cell_centroids( jcell, XX ), cell_centroids( jcell, YY ) ), jcell );
     std::sort( ordering.data(), ordering.data() + nb_cells );
 
-    for ( size_t jcell = 0; jcell < nb_cells; ++jcell ) {
+    for ( idx_t jcell = 0; jcell < nb_cells; ++jcell ) {
         idx_t icell = ordering[jcell].i;
         if ( patch( icell ) ) continue;
         double x0 = cell_centroids( icell, XX );
         double y0 = cell_centroids( icell, YY );
 
-        for ( size_t jedge = 0; jedge < cell_edge_connectivity.cols( icell ); ++jedge ) {
+        for ( idx_t jedge = 0; jedge < cell_edge_connectivity.cols( icell ); ++jedge ) {
             idx_t iedge = cell_edge_connectivity( icell, jedge );
             double x1   = edge_centroids( iedge, XX );
             double y1   = edge_centroids( iedge, YY );
-            for ( size_t jnode = 0; jnode < 2; ++jnode ) {
+            for ( idx_t jnode = 0; jnode < 2; ++jnode ) {
                 idx_t inode       = edge_node_connectivity( iedge, jnode );
                 double x2         = xy( inode, XX );
                 double y2         = xy( inode, YY );
@@ -209,9 +209,9 @@ void add_median_dual_volume_contribution_poles( const mesh::HybridElements& edge
     const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
     const mesh::HybridElements::Connectivity& edge_cell_connectivity = edges.cell_connectivity();
 
-    const size_t nb_edges = edges.size();
+    const idx_t nb_edges = edges.size();
     std::map<idx_t, std::vector<idx_t>> node_to_bdry_edge;
-    for ( size_t jedge = 0; jedge < nb_edges; ++jedge ) {
+    for ( idx_t jedge = 0; jedge < nb_edges; ++jedge ) {
         if ( edge_cell_connectivity( jedge, 0 ) != edge_cell_connectivity.missing_value() &&
              edge_cell_connectivity( jedge, 1 ) == edge_cell_connectivity.missing_value() ) {
             node_to_bdry_edge[edge_node_connectivity( jedge, 0 )].push_back( jedge );
@@ -225,13 +225,13 @@ void add_median_dual_volume_contribution_poles( const mesh::HybridElements& edge
 
     std::map<idx_t, std::vector<idx_t>>::iterator it;
     for ( it = node_to_bdry_edge.begin(); it != node_to_bdry_edge.end(); ++it ) {
-        const size_t jnode             = ( *it ).first;
+        const idx_t jnode             = ( *it ).first;
         std::vector<idx_t>& bdry_edges = ( *it ).second;
         const double x0                = xy( jnode, XX );
         const double y0                = xy( jnode, YY );
         double x1, y1, y2;
-        for ( size_t jedge = 0; jedge < bdry_edges.size(); ++jedge ) {
-            const size_t iedge = bdry_edges[jedge];
+        for ( idx_t jedge = 0; jedge < bdry_edges.size(); ++jedge ) {
+            const idx_t iedge = bdry_edges[jedge];
             x1                 = edge_centroids( iedge, XX );
             y1                 = edge_centroids( iedge, YY );
 
@@ -256,7 +256,7 @@ void build_dual_normals( Mesh& mesh ) {
 
     mesh::Nodes& nodes          = mesh.nodes();
     mesh::HybridElements& edges = mesh.edges();
-    const size_t nb_edges       = edges.size();
+    const idx_t nb_edges       = edges.size();
 
     array::ArrayView<double, 2> node_xy = array::make_view<double, 2>( nodes.xy() );
     double min[2], max[2];
@@ -272,7 +272,7 @@ void build_dual_normals( Mesh& mesh ) {
     const mesh::HybridElements::Connectivity& edge_cell_connectivity = edges.cell_connectivity();
 
     std::map<idx_t, std::vector<idx_t>> node_to_bdry_edge;
-    for ( size_t jedge = 0; jedge < nb_edges; ++jedge ) {
+    for ( idx_t jedge = 0; jedge < nb_edges; ++jedge ) {
         if ( edge_cell_connectivity( jedge, 0 ) != edge_cell_connectivity.missing_value() &&
              edge_cell_connectivity( jedge, 1 ) == edge_cell_connectivity.missing_value() ) {
             node_to_bdry_edge[edge_node_connectivity( jedge, 0 )].push_back( jedge );
@@ -280,16 +280,16 @@ void build_dual_normals( Mesh& mesh ) {
         }
     }
 
-    for ( size_t edge = 0; edge < nb_edges; ++edge ) {
+    for ( idx_t edge = 0; edge < nb_edges; ++edge ) {
         if ( edge_cell_connectivity( edge, 0 ) == edge_cell_connectivity.missing_value() ) {
             // this is a pole edge
             // only compute for one node
-            for ( size_t n = 0; n < 2; ++n ) {
+            for ( idx_t n = 0; n < 2; ++n ) {
                 idx_t node                     = edge_node_connectivity( edge, n );
                 std::vector<idx_t>& bdry_edges = node_to_bdry_edge[node];
                 double x[2];
-                size_t cnt = 0;
-                for ( size_t jedge = 0; jedge < bdry_edges.size(); ++jedge ) {
+                idx_t cnt = 0;
+                for ( idx_t jedge = 0; jedge < bdry_edges.size(); ++jedge ) {
                     idx_t bdry_edge = bdry_edges[jedge];
                     if ( std::abs( edge_centroids( bdry_edge, YY ) - max[YY] ) < tol ) {
                         edge_centroids( edge, YY ) = 90.;
@@ -349,13 +349,13 @@ void make_dual_normals_outward( Mesh& mesh ) {
     const mesh::HybridElements::Connectivity& edge_cell_connectivity = edges.cell_connectivity();
     const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
     array::ArrayView<double, 2> dual_normals = array::make_view<double, 2>( edges.field( "dual_normals" ) );
-    const size_t nb_edges                    = edges.size();
+    const idx_t nb_edges                    = edges.size();
 
-    for ( size_t edge = 0; edge < nb_edges; ++edge ) {
+    for ( idx_t edge = 0; edge < nb_edges; ++edge ) {
         if ( edge_cell_connectivity( edge, 0 ) != edge_cell_connectivity.missing_value() ) {
             // Make normal point from node 1 to node 2
-            const size_t ip1 = edge_node_connectivity( edge, 0 );
-            const size_t ip2 = edge_node_connectivity( edge, 1 );
+            const idx_t ip1 = edge_node_connectivity( edge, 0 );
+            const idx_t ip2 = edge_node_connectivity( edge, 1 );
             double dx        = node_xy( ip2, XX ) - node_xy( ip1, XX );
             double dy        = node_xy( ip2, YY ) - node_xy( ip1, YY );
             if ( dx * dual_normals( edge, XX ) + dy * dual_normals( edge, YY ) < 0 ) {
@@ -380,14 +380,14 @@ void build_brick_dual_mesh( const Grid& grid, Mesh& mesh ) {
 
         int c = 0;
         int n = 0;
-        for ( size_t jlat = 0; jlat < g.ny(); ++jlat ) {
+        for ( idx_t jlat = 0; jlat < g.ny(); ++jlat ) {
             double lat  = g.y( jlat );
             double latN = ( jlat == 0 ) ? 90. : 0.5 * ( lat + g.y( jlat - 1 ) );
             double latS = ( jlat == g.ny() - 1 ) ? -90. : 0.5 * ( lat + g.y( jlat + 1 ) );
             double dlat = ( latN - latS );
             double dlon = 360. / static_cast<double>( g.nx( jlat ) );
 
-            for ( size_t jlon = 0; jlon < g.nx( jlat ); ++jlon ) {
+            for ( idx_t jlon = 0; jlon < g.nx( jlat ); ++jlon ) {
                 while ( gidx( c ) != n + 1 )
                     c++;
                 ASSERT( xy( c, XX ) == g.x( jlon, jlat ) );

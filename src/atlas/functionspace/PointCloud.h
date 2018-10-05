@@ -33,7 +33,7 @@ public:
     virtual std::string distribution() const;
     const Field& lonlat() const { return lonlat_; }
     const Field& ghost() const;
-    size_t size() const { return lonlat_.shape( 0 ); }
+    idx_t size() const { return lonlat_.shape( 0 ); }
 
     /// @brief Create a spectral field
     using FunctionSpaceImpl::createField;
@@ -60,7 +60,7 @@ public:
 
     const Field& lonlat() const { return functionspace_->lonlat(); }
     const Field& ghost() const { return functionspace_->ghost(); }
-    size_t size() const { return functionspace_->size(); }
+    idx_t size() const { return functionspace_->size(); }
 
 private:
     const detail::PointCloud* functionspace_;

@@ -104,7 +104,7 @@ Field& State::field( const std::string& name ) {
     return const_cast<Field&>( static_cast<const State*>( this )->field( name ) );
 }
 
-const Field& State::field( const size_t idx ) const {
+const Field& State::field( const idx_t idx ) const {
     if ( idx >= fields_.size() ) {
         std::stringstream msg;
         msg << "Trying to access field in State with index " << idx << ", but there exist only " << fields_.size()
@@ -112,12 +112,12 @@ const Field& State::field( const size_t idx ) const {
         throw eckit::Exception( msg.str(), Here() );
     }
     FieldMap::const_iterator it = fields_.begin();
-    for ( size_t i = 0; i < idx; ++i )
+    for ( idx_t i = 0; i < idx; ++i )
         ++it;
     return it->second;
 }
 
-Field& State::field( const size_t idx ) {
+Field& State::field( const idx_t idx ) {
     return const_cast<Field&>( static_cast<const State*>( this )->field( idx ) );
 }
 
@@ -250,14 +250,14 @@ FieldImpl* atlas__State__field_by_name( State* This, const char* name ) {
     return field;
 }
 
-FieldImpl* atlas__State__field_by_index( State* This, int index ) {
+FieldImpl* atlas__State__field_by_index( State* This, idx_t index ) {
     ASSERT( This );
     FieldImpl* field( 0 );
     ATLAS_ERROR_HANDLING( field = This->field( index ).get() );
     return field;
 }
 
-int atlas__State__size( const State* This ) {
+idx_t atlas__State__size( const State* This ) {
     ASSERT( This );
     int nb_fields( 0 );
     ATLAS_ERROR_HANDLING( nb_fields = This->size(); );

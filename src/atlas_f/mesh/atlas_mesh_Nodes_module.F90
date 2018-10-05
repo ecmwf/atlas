@@ -2,16 +2,17 @@
 
 module atlas_mesh_Nodes_module
 
-use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t, c_int
+use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_long
 use fckit_owned_object_module, only: fckit_owned_object
 use atlas_Metadata_module, only: atlas_Metadata
 use atlas_Field_module, only: atlas_Field
 use atlas_Connectivity_module, only: atlas_Connectivity
+use atlas_kinds_module, only : ATLAS_KIND_IDX
 
 implicit none
 
 private :: fckit_owned_object
-private :: c_ptr, c_size_t, c_int
+private :: c_ptr, c_int
 private :: atlas_Metadata
 private :: atlas_Field
 private :: atlas_Connectivity
@@ -26,7 +27,8 @@ private
 TYPE, extends(fckit_owned_object) :: atlas_mesh_Nodes
 contains
 procedure, public :: size => atlas_mesh_Nodes__size
-procedure, public :: resize
+procedure, private :: resize_int, resize_long
+generic, public :: resize => resize_int, resize_long
 procedure, private :: add_field
 procedure, private :: add_connectivity
 generic, public :: add => &
@@ -34,10 +36,10 @@ generic, public :: add => &
     & add_connectivity
 procedure, public :: remove_field
 procedure, private :: field_by_idx_int
-procedure, private :: field_by_idx_size_t
+procedure, private :: field_by_idx_long
 procedure, private :: field_by_name
 generic, public :: field => &
-    & field_by_idx_size_t, field_by_idx_int, &
+    & field_by_idx_long, field_by_idx_int, &
     & field_by_name
 procedure, public :: nb_fields
 procedure, public :: has_field
@@ -87,7 +89,7 @@ end function
 
 function atlas_mesh_Nodes__size(this) result(val)
   use atlas_nodes_c_binding
-  integer(c_size_t) :: val
+  integer(ATLAS_KIND_IDX) :: val
   class(atlas_mesh_Nodes), intent(in) :: this
   val = atlas__mesh__Nodes__size(this%c_ptr())
 end function
@@ -147,7 +149,7 @@ end subroutine
 
 function nb_fields(this) result(val)
   use atlas_nodes_c_binding
-  integer(c_size_t) :: val
+  integer(ATLAS_KIND_IDX) :: val
   class(atlas_mesh_Nodes), intent(in) :: this
   val = atlas__mesh__Nodes__nb_fields(this%c_ptr())
 end function
@@ -175,22 +177,23 @@ function field_by_name(this,name) result(field)
   call field%return()
 end function
 
-function field_by_idx_size_t(this,idx) result(field)
+function field_by_idx_long(this,idx) result(field)
   use atlas_nodes_c_binding
+  use, intrinsic :: iso_c_binding, only: c_long
   type(atlas_Field) :: field
   class(atlas_mesh_Nodes), intent(in) :: this
-  integer(c_size_t), intent(in) :: idx
-  field = atlas_Field( atlas__mesh__Nodes__field_by_idx(this%c_ptr(),idx-1_c_size_t) )
+  integer(c_long), intent(in) :: idx
+  field = atlas_Field( atlas__mesh__Nodes__field_by_idx(this%c_ptr(),int(idx-1_c_long,ATLAS_KIND_IDX) ) )
   call field%return()
 end function
 
 function field_by_idx_int(this,idx) result(field)
   use atlas_nodes_c_binding
-  use, intrinsic :: iso_c_binding, only: c_size_t, c_int
+  use, intrinsic :: iso_c_binding, only: c_int
   type(atlas_Field) :: field
   class(atlas_mesh_Nodes), intent(in) :: this
   integer(c_int), intent(in) :: idx
-  field = atlas_Field( atlas__mesh__Nodes__field_by_idx(this%c_ptr(),int(idx-1,c_size_t)) )
+  field = atlas_Field( atlas__mesh__Nodes__field_by_idx(this%c_ptr(),int(idx-1_c_long,ATLAS_KIND_IDX) ) )
   call field%return()
 end function
 
@@ -249,11 +252,20 @@ function metadata(this)
   call metadata%reset_c_ptr( atlas__mesh__Nodes__metadata(this%c_ptr()) )
 end function
 
-subroutine resize(this,size)
+subroutine resize_int(this,size)
+  use, intrinsic :: iso_c_binding
   use atlas_nodes_c_binding
   class(atlas_mesh_Nodes), intent(in) :: this
-  integer(c_size_t), intent(in) :: size
-  call atlas__mesh__Nodes__resize(this%c_ptr(),size)
+  integer(c_int), intent(in) :: size
+  call atlas__mesh__Nodes__resize(this%c_ptr(),int(size,ATLAS_KIND_IDX))
+end subroutine
+
+subroutine resize_long(this,size)
+  use, intrinsic :: iso_c_binding
+  use atlas_nodes_c_binding
+  class(atlas_mesh_Nodes), intent(in) :: this
+  integer(c_long), intent(in) :: size
+  call atlas__mesh__Nodes__resize(this%c_ptr(),int(size,ATLAS_KIND_IDX))
 end subroutine
 
 function str(this)

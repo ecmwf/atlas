@@ -87,8 +87,8 @@ public:  // methods
     /// @brief Return the memory footprint of the mesh
     size_t footprint() const;
 
-    size_t partition() const;
-    size_t nb_partitions() const;
+    idx_t partition() const;
+    idx_t nb_partitions() const;
 
     void cloneToDevice() const;
 
@@ -102,7 +102,7 @@ public:  // methods
 
     PartitionGraph::Neighbours nearestNeighbourPartitions() const;
 
-    const PartitionPolygon& polygon( size_t halo = 0 ) const;
+    const PartitionPolygon& polygon( idx_t halo = 0 ) const;
 
     const Grid& grid() const { return *grid_; }
 
@@ -135,7 +135,7 @@ private:  // members
 
     eckit::SharedPtr<HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
 
-    size_t dimensionality_;
+    idx_t dimensionality_;
 
     Projection projection_;
 

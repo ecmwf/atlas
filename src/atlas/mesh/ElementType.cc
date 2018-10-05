@@ -45,12 +45,12 @@ const char* atlas__mesh__ElementType__name( const ElementType* This ) {
     return 0;
 }
 
-size_t atlas__mesh__ElementType__nb_nodes( const ElementType* This ) {
+idx_t atlas__mesh__ElementType__nb_nodes( const ElementType* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nb_nodes() );
     return 0;
 }
 
-size_t atlas__mesh__ElementType__nb_edges( const ElementType* This ) {
+idx_t atlas__mesh__ElementType__nb_edges( const ElementType* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nb_edges() );
     return 0;
 }

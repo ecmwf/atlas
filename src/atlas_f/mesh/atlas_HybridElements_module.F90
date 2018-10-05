@@ -36,13 +36,16 @@ contains
   procedure, public ::  cell_connectivity
 
 #if ATLAS_BITS_LOCAL != 32
-  generic, public :: add => add_elements, add_elements_with_nodes, add_field, add_elements_with_nodes_int32
+  generic, public :: add => add_elements_int, add_elements_long, add_elements_with_nodes_int, &
+      & add_elements_with_nodes_long, add_field, &
+      & add_elements_with_nodes_int_int32, add_elements_with_nodes_long_int32
 #else
-  generic, public :: add => add_elements, add_elements_with_nodes, add_field
+  generic, public :: add => add_elements_int, add_elements_long, add_elements_with_nodes_int, &
+      & add_elements_with_nodes_long, add_field
 #endif
-  generic, public :: field => field_by_idx_size_t, field_by_idx_int, field_by_name
+  generic, public :: field => field_by_idx_long, field_by_idx_int, field_by_name
 
-  generic, public :: elements => elements_int, elements_size_t
+  generic, public :: elements => elements_int, elements_long
 
   procedure, public :: nb_fields
   procedure, public :: has_field
@@ -54,18 +57,21 @@ contains
   procedure, public :: nb_types
 
 ! Private methods
-  procedure, private :: add_elements
-  procedure, private :: add_elements_with_nodes
+  procedure, private :: add_elements_int
+  procedure, private :: add_elements_long
+  procedure, private :: add_elements_with_nodes_int
+  procedure, private :: add_elements_with_nodes_long
 #if ATLAS_BITS_LOCAL != 32
-  procedure, private :: add_elements_with_nodes_int32
+  procedure, private :: add_elements_with_nodes_int_int32
+  procedure, private :: add_elements_with_nodes_long_int32
 #endif
   procedure, private :: add_field
   procedure, private :: field_by_idx_int
-  procedure, private :: field_by_idx_size_t
+  procedure, private :: field_by_idx_long
   procedure, private :: field_by_name
 
   procedure, private :: elements_int
-  procedure, private :: elements_size_t
+  procedure, private :: elements_long
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_HybridElements__final_auto
@@ -101,7 +107,7 @@ end function
 function atlas_HybridElements__size(this) result(val)
   use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
-  integer(c_size_t) :: val
+  integer(ATLAS_KIND_IDX) :: val
   class(atlas_HybridElements), intent(in) :: this
   val = atlas__mesh__HybridElements__size(this%c_ptr())
 end function
@@ -133,39 +139,74 @@ function cell_connectivity(this) result(connectivity)
   call connectivity%return()
 end function
 
-subroutine add_elements(this,elementtype,nb_elements)
+subroutine add_elements_int(this,elementtype,nb_elements)
   use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   class(atlas_HybridElements), intent(inout) :: this
   type(atlas_ElementType) :: elementtype
-  integer(c_size_t) :: nb_elements
-  call atlas__mesh__HybridElements__add_elements(this%c_ptr(),elementtype%c_ptr(),nb_elements)
+  integer(c_int) :: nb_elements
+  call atlas__mesh__HybridElements__add_elements(this%c_ptr(),elementtype%c_ptr(),int(nb_elements,ATLAS_KIND_IDX))
 end subroutine
 
-subroutine add_elements_with_nodes(this,elementtype,nb_elements,node_connectivity)
+subroutine add_elements_long(this,elementtype,nb_elements)
+  use, intrinsic :: iso_c_binding
+  use atlas_hybridelements_c_binding
+  class(atlas_HybridElements), intent(inout) :: this
+  type(atlas_ElementType) :: elementtype
+  integer(c_long) :: nb_elements
+  call atlas__mesh__HybridElements__add_elements(this%c_ptr(),elementtype%c_ptr(),int(nb_elements,ATLAS_KIND_IDX))
+end subroutine
+
+subroutine add_elements_with_nodes_int(this,elementtype,nb_elements,node_connectivity)
   use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   class(atlas_HybridElements), intent(inout) :: this
   type(atlas_ElementType), intent(in) :: elementtype
-  integer(c_size_t), intent(in) :: nb_elements
+  integer(c_int), intent(in) :: nb_elements
   integer(ATLAS_KIND_IDX), intent(in) :: node_connectivity(:)
   call atlas__mesh__HybridElements__add_elements_with_nodes(this%c_ptr(),&
-    & elementtype%c_ptr(),nb_elements,node_connectivity,1)
+    & elementtype%c_ptr(),int(nb_elements,ATLAS_KIND_IDX),node_connectivity,1)
+end subroutine
+
+subroutine add_elements_with_nodes_long(this,elementtype,nb_elements,node_connectivity)
+  use, intrinsic :: iso_c_binding
+  use atlas_hybridelements_c_binding
+  class(atlas_HybridElements), intent(inout) :: this
+  type(atlas_ElementType), intent(in) :: elementtype
+  integer(c_long), intent(in) :: nb_elements
+  integer(ATLAS_KIND_IDX), intent(in) :: node_connectivity(:)
+  call atlas__mesh__HybridElements__add_elements_with_nodes(this%c_ptr(),&
+    & elementtype%c_ptr(),int(nb_elements,ATLAS_KIND_IDX),node_connectivity,1)
 end subroutine
 
 #if ATLAS_BITS_LOCAL != 32
-subroutine add_elements_with_nodes_int32(this,elementtype,nb_elements,node_connectivity)
+subroutine add_elements_with_nodes_int_int32(this,elementtype,nb_elements,node_connectivity)
   use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   class(atlas_HybridElements), intent(inout) :: this
   type(atlas_ElementType), intent(in) :: elementtype
-  integer(c_size_t), intent(in) :: nb_elements
+  integer(c_int), intent(in) :: nb_elements
   integer(c_int), intent(in) :: node_connectivity(:)
   integer(ATLAS_KIND_IDX), allocatable :: idx_node_connectivity(:)
   allocate( idx_node_connectivity( nb_elements * elementtype%nb_nodes() ) )
   idx_node_connectivity(:) = node_connectivity(:)
   call atlas__mesh__HybridElements__add_elements_with_nodes(this%c_ptr(),&
-    & elementtype%c_ptr(),nb_elements,idx_node_connectivity,1)
+    & elementtype%c_ptr(),int(nb_elements,ATLAS_KIND_IDX),idx_node_connectivity,1)
+  deallocate( idx_node_connectivity )
+end subroutine
+
+subroutine add_elements_with_nodes_long_int32(this,elementtype,nb_elements,node_connectivity)
+  use, intrinsic :: iso_c_binding
+  use atlas_hybridelements_c_binding
+  class(atlas_HybridElements), intent(inout) :: this
+  type(atlas_ElementType), intent(in) :: elementtype
+  integer(c_long), intent(in) :: nb_elements
+  integer(c_int), intent(in) :: node_connectivity(:)
+  integer(ATLAS_KIND_IDX), allocatable :: idx_node_connectivity(:)
+  allocate( idx_node_connectivity( nb_elements * elementtype%nb_nodes() ) )
+  idx_node_connectivity(:) = node_connectivity(:)
+  call atlas__mesh__HybridElements__add_elements_with_nodes(this%c_ptr(),&
+    & elementtype%c_ptr(),int(nb_elements,ATLAS_KIND_IDX),idx_node_connectivity,1)
   deallocate( idx_node_connectivity )
 end subroutine
 #endif
@@ -181,7 +222,7 @@ end subroutine
 function nb_types(this) result(val)
   use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
-  integer(c_size_t) :: val
+  integer(ATLAS_KIND_IDX) :: val
   class(atlas_HybridElements), intent(in) :: this
   val = atlas__mesh__HybridElements__nb_types(this%c_ptr())
 end function
@@ -189,7 +230,7 @@ end function
 function nb_fields(this) result(val)
   use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
-  integer(c_size_t) :: val
+  integer(ATLAS_KIND_IDX) :: val
   class(atlas_HybridElements), intent(in) :: this
   val = atlas__mesh__HybridElements__nb_fields(this%c_ptr())
 end function
@@ -217,13 +258,13 @@ function field_by_name(this,name) result(field)
   call field%return()
 end function
 
-function field_by_idx_size_t(this,idx) result(field)
+function field_by_idx_long(this,idx) result(field)
   use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   type(atlas_Field) :: field
   class(atlas_HybridElements), intent(in) :: this
-  integer(c_size_t), intent(in) :: idx
-  field = atlas_Field( atlas__mesh__HybridElements__field_by_idx(this%c_ptr(),idx-1_c_size_t) )
+  integer(c_long), intent(in) :: idx
+  field = atlas_Field( atlas__mesh__HybridElements__field_by_idx(this%c_ptr(),int(idx-1_c_long,ATLAS_KIND_IDX) ) )
   call field%return()
 end function
 
@@ -233,7 +274,7 @@ function field_by_idx_int(this,idx) result(field)
   type(atlas_Field) :: field
   class(atlas_HybridElements), intent(in) :: this
   integer(c_int), intent(in) :: idx
-  field = atlas_Field( atlas__mesh__HybridElements__field_by_idx(this%c_ptr(),int(idx-1,c_size_t)) )
+  field = atlas_Field( atlas__mesh__HybridElements__field_by_idx(this%c_ptr(),int(idx-1_c_int,ATLAS_KIND_IDX) ) )
   call field%return()
 end function
 
@@ -269,13 +310,13 @@ function halo(this) result(field)
   call field%return()
 end function
 
-function elements_size_t(this,idx) result(elements)
+function elements_long(this,idx) result(elements)
   use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   type(atlas_Elements) :: elements
   class(atlas_HybridElements), intent(in) :: this
-  integer(c_size_t), intent(in) :: idx
-  elements = atlas_Elements( atlas__mesh__HybridElements__elements(this%c_ptr(),idx-1_c_size_t) )
+  integer(c_long), intent(in) :: idx
+  elements = atlas_Elements( atlas__mesh__HybridElements__elements(this%c_ptr(),int(idx-1_c_long,ATLAS_KIND_IDX) ) )
   call elements%return()
 end function
 
@@ -285,7 +326,7 @@ function elements_int(this,idx) result(elements)
   type(atlas_Elements) :: elements
   class(atlas_HybridElements), intent(in) :: this
   integer(c_int), intent(in) :: idx
-  elements = atlas_Elements( atlas__mesh__HybridElements__elements(this%c_ptr(),int(idx-1,c_size_t)) )
+  elements = atlas_Elements( atlas__mesh__HybridElements__elements(this%c_ptr(),int(idx-1_c_int,ATLAS_KIND_IDX) ) )
   call elements%return()
 end function
 

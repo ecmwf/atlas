@@ -3,7 +3,7 @@
 module atlas_ElementType_module
 
 use fckit_owned_object_module, only : fckit_owned_object
-
+use atlas_kinds_module, only : ATLAS_KIND_IDX
 implicit none
 
 private :: fckit_owned_object
@@ -83,17 +83,15 @@ function atlas_Line__constructor() result(this)
 end function
 
 function nb_nodes(this)
-  use, intrinsic :: iso_c_binding, only : c_size_t
   use atlas_elementtype_c_binding
-  integer(c_size_t) :: nb_nodes
+  integer(ATLAS_KIND_IDX) :: nb_nodes
   class(atlas_ElementType), intent(in) :: this
   nb_nodes = atlas__mesh__ElementType__nb_nodes(this%c_ptr())
 end function
 
 function nb_edges(this)
-  use, intrinsic :: iso_c_binding, only : c_size_t
   use atlas_elementtype_c_binding
-  integer(c_size_t) :: nb_edges
+  integer(ATLAS_KIND_IDX) :: nb_edges
   class(atlas_ElementType), intent(in) :: this
   nb_edges = atlas__mesh__ElementType__nb_edges(this%c_ptr())
 end function

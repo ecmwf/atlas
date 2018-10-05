@@ -194,8 +194,8 @@ CASE( "test2" ) {
 
     test::IsGhost is_ghost( nodes );
 
-    size_t nb_ghost = 0;
-    for ( size_t jnode = 0; jnode < nodes.size(); ++jnode ) {
+    idx_t nb_ghost = 0;
+    for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
         if ( is_ghost( jnode ) ) ++nb_ghost;
     }
 
@@ -206,7 +206,7 @@ CASE( "test2" ) {
     mesh::actions::build_periodic_boundaries( m );
 
     int nb_periodic = -nb_ghost;
-    for ( size_t jnode = 0; jnode < nodes.size(); ++jnode ) {
+    for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
         if ( is_ghost( jnode ) ) ++nb_periodic;
     }
 

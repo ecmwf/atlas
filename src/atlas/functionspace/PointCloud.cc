@@ -19,7 +19,7 @@ namespace detail {
 PointCloud::PointCloud( const std::vector<PointXY>& points ) {
     lonlat_     = Field( "lonlat", array::make_datatype<double>(), array::make_shape( points.size(), 2 ) );
     auto lonlat = array::make_view<double, 2>( lonlat_ );
-    for ( size_t j = 0; j < points.size(); ++j ) {
+    for ( idx_t j = 0, size = points.size(); j < size; ++j ) {
         lonlat( j, 0 ) = points[j].x();
         lonlat( j, 1 ) = points[j].y();
     }

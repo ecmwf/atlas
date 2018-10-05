@@ -42,27 +42,27 @@ void ExtendNodesGlobal::operator()( const Grid& grid, Mesh& mesh ) const {
 
     mesh::Nodes& nodes = mesh.nodes();
 
-    const size_t nb_real_pts      = nodes.size();
-    const size_t nb_extension_pts = extended_pts.size();
+    const idx_t nb_real_pts      = nodes.size();
+    const idx_t nb_extension_pts = extended_pts.size();
 
-    size_t new_size = nodes.size() + extended_pts.size();
+    idx_t new_size = nodes.size() + extended_pts.size();
 
     nodes.resize( new_size );  // resizes the fields
 
-    const size_t nb_total_pts = nodes.size();
+    const idx_t nb_total_pts = nodes.size();
 
     ASSERT( nb_total_pts == nb_real_pts + nb_extension_pts );
 
-    nodes.metadata().set<size_t>( "NbRealPts", nb_real_pts );
-    nodes.metadata().set<size_t>( "NbVirtualPts", nb_extension_pts );
+    nodes.metadata().set<idx_t>( "NbRealPts", nb_real_pts );
+    nodes.metadata().set<idx_t>( "NbVirtualPts", nb_extension_pts );
 
     array::ArrayView<double, 2> xyz    = array::make_view<double, 2>( nodes.field( "xyz" ) );
     array::ArrayView<double, 2> xy     = array::make_view<double, 2>( nodes.xy() );
     array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( nodes.lonlat() );
     array::ArrayView<gidx_t, 1> gidx   = array::make_view<gidx_t, 1>( nodes.global_index() );
 
-    for ( size_t i = 0; i < nb_extension_pts; ++i ) {
-        const size_t n        = nb_real_pts + i;
+    for ( idx_t i = 0; i < nb_extension_pts; ++i ) {
+        const idx_t n        = nb_real_pts + i;
         const PointLonLat pLL = grid.projection().lonlat( extended_pts[i] );
 
         PointXYZ pXYZ;

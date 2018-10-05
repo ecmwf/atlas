@@ -33,7 +33,7 @@ TEST( test_connectivity )
   type(atlas_Connectivity) :: connectivity
   integer(ATLAS_KIND_IDX), pointer :: padded(:,:), row(:), data(:,:)
   integer(ATLAS_KIND_IDX), pointer :: cols(:)
-  integer(ATLAS_KIND_IDX) :: ncols
+  integer(c_int) :: ncols
 
   call fckit_log%info("test_connectivity starting")
 
@@ -205,7 +205,7 @@ TEST( test_multiblockconnectivity )
   FCTEST_CHECK_EQUAL(multiblock%maxcols(),4)
   FCTEST_CHECK_EQUAL(multiblock%blocks(), 2)
 
-  block = multiblock%block(1)
+  block = multiblock%block(1_ATLAS_KIND_IDX)
   !FCTEST_CHECK_EQUAL( block%owners(), 2 )
 
   FCTEST_CHECK_EQUAL( block%rows(), 2 )
@@ -221,7 +221,7 @@ TEST( test_multiblockconnectivity )
   FCTEST_CHECK_EQUAL(data(3,2), 7)
   FCTEST_CHECK_EQUAL(data(4,2), 8)
 
-  block = multiblock%block(2)
+  block = multiblock%block(2_ATLAS_KIND_IDX)
   !FCTEST_CHECK_EQUAL( block%owners(), 2 )
 
   FCTEST_CHECK_EQUAL( block%rows(), 2 )

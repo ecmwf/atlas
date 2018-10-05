@@ -15,20 +15,20 @@ namespace atlas {
 namespace array {
 
 template <int cnt, int DimSkip, typename DATA_TYPE, int RANK, array::Intent AccessMode>
-constexpr typename std::enable_if<( cnt == RANK ), size_t>::type get_var_size_impl(
+constexpr typename std::enable_if<( cnt == RANK ), idx_t>::type get_var_size_impl(
     array::ArrayView<DATA_TYPE, RANK, AccessMode>& field ) {
     return 1;
 }
 
 template <int cnt, int DimSkip, typename DATA_TYPE, int RANK, array::Intent AccessMode>
-constexpr typename std::enable_if<( cnt != RANK ), size_t>::type get_var_size_impl(
+constexpr typename std::enable_if<( cnt != RANK ), idx_t>::type get_var_size_impl(
     array::ArrayView<DATA_TYPE, RANK, AccessMode>& field ) {
     return ( cnt == DimSkip ) ? get_var_size_impl<cnt + 1, DimSkip>( field )
                               : get_var_size_impl<cnt + 1, DimSkip>( field ) * field.template shape<cnt>();
 }
 
 template <int DimSkip, typename DATA_TYPE, int RANK, array::Intent AccessMode>
-constexpr size_t get_var_size( array::ArrayView<DATA_TYPE, RANK, AccessMode>& field ) {
+constexpr idx_t get_var_size( array::ArrayView<DATA_TYPE, RANK, AccessMode>& field ) {
     return get_var_size_impl<0, DimSkip>( field );
 }
 

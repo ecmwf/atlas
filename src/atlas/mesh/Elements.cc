@@ -28,21 +28,21 @@ void Elements::rebuild() {
     end_      = hybrid_elements_->elements_begin_[type_idx_ + 1];
 }
 
-Elements::Elements( HybridElements& elements, size_t type_idx ) :
+Elements::Elements( HybridElements& elements, idx_t type_idx ) :
     owns_( false ),
     hybrid_elements_( &elements ),
     type_idx_( type_idx ) {
     rebuild();
 }
 
-Elements::Elements( ElementType* element_type, size_t nb_elements, const std::vector<idx_t>& node_connectivity ) :
+Elements::Elements( ElementType* element_type, idx_t nb_elements, const std::vector<idx_t>& node_connectivity ) :
     owns_( true ) {
     hybrid_elements_ = new HybridElements();
     type_idx_        = hybrid_elements_->add( element_type, nb_elements, node_connectivity.data() );
     rebuild();
 }
 
-Elements::Elements( ElementType* element_type, size_t nb_elements, const idx_t node_connectivity[],
+Elements::Elements( ElementType* element_type, idx_t nb_elements, const idx_t node_connectivity[],
                     bool fortran_array ) :
     owns_( true ) {
     hybrid_elements_ = new HybridElements();
@@ -156,8 +156,8 @@ array::LocalView<long, 2, array::Intent::ReadWrite> Elements::view( Field& field
         array::Range{begin(), begin() + size()}, array::Range::all() );
 }
 
-size_t Elements::add( const size_t nb_elements ) {
-    size_t position = size();
+idx_t Elements::add( const idx_t nb_elements ) {
+    idx_t position = size();
     hybrid_elements_->insert( type_idx_, end(), nb_elements );
     return position;
 }
@@ -170,17 +170,17 @@ void atlas__mesh__Elements__delete( Elements* This ) {
     ATLAS_ERROR_HANDLING( delete This );
 }
 
-size_t atlas__mesh__Elements__size( const Elements* This ) {
+idx_t atlas__mesh__Elements__size( const Elements* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
     return This->size();
 }
 
-size_t atlas__mesh__Elements__begin( const Elements* This ) {
+idx_t atlas__mesh__Elements__begin( const Elements* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
     return This->begin();
 }
 
-size_t atlas__mesh__Elements__end( const Elements* This ) {
+idx_t atlas__mesh__Elements__end( const Elements* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
     return This->end();
 }
@@ -213,7 +213,7 @@ int atlas__mesh__Elements__nb_fields( const Elements* This ) {
     return This->nb_fields();
 }
 
-field::FieldImpl* atlas__mesh__Elements__field_by_idx( Elements* This, size_t idx ) {
+field::FieldImpl* atlas__mesh__Elements__field_by_idx( Elements* This, idx_t idx ) {
     field::FieldImpl* field( 0 );
     ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->field( idx ).get(); );
     return field;
@@ -255,7 +255,7 @@ const ElementType* atlas__mesh__Elements__element_type( const Elements* This ) {
     return element_type;
 }
 
-void atlas__mesh__Elements__add( Elements* This, size_t nb_elements ) {
+void atlas__mesh__Elements__add( Elements* This, idx_t nb_elements ) {
     ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); This->add( nb_elements ); );
 }
 }

@@ -2,7 +2,7 @@
 
 module atlas_functionspace_StructuredColumns_module
 
-use, intrinsic :: iso_c_binding, only : c_ptr, c_int
+use, intrinsic :: iso_c_binding, only : c_ptr
 use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
 use atlas_functionspace_module, only : atlas_FunctionSpace
 use atlas_Field_module, only: atlas_Field
@@ -14,7 +14,7 @@ use fckit_owned_object_module, only : fckit_owned_object
 
 implicit none
 
-private :: c_ptr, c_int
+private :: c_ptr
 private :: c_str, c_ptr_to_string, c_ptr_free
 private :: atlas_FunctionSpace
 private :: atlas_Field
@@ -153,12 +153,14 @@ subroutine scatter(this,global,local)
 end subroutine
 
 function checksum_fieldset(this,fieldset) result(checksum)
+  use, intrinsic :: iso_c_binding
   use atlas_functionspace_StructuredColumns_c_binding
   character(len=:), allocatable :: checksum
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: fieldset
   type(c_ptr) :: checksum_cptr
-  integer :: checksum_size, checksum_allocated
+  integer(ATLAS_KIND_IDX) :: checksum_size
+  integer(c_int) :: checksum_allocated
   call atlas__fs__StructuredColumns__checksum_fieldset( &
     & this%c_ptr(),fieldset%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
   allocate(character(len=checksum_size) :: checksum )
@@ -168,12 +170,14 @@ end function
 
 
 function checksum_field(this,field) result(checksum)
+  use, intrinsic :: iso_c_binding
   use atlas_functionspace_StructuredColumns_c_binding
   character(len=:), allocatable :: checksum
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(c_ptr) :: checksum_cptr
-  integer :: checksum_size, checksum_allocated
+  integer(ATLAS_KIND_IDX) :: checksum_size
+  integer(c_int) :: checksum_allocated
   call atlas__fs__StructuredColumns__checksum_field( &
       & this%c_ptr(),field%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
   allocate(character(len=checksum_size) :: checksum )
@@ -182,13 +186,13 @@ function checksum_field(this,field) result(checksum)
 end function
 
 subroutine set_index(this)
-  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_f_pointer
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_f_pointer
   use atlas_functionspace_StructuredColumns_c_binding
   class(atlas_functionspace_StructuredColumns), intent(inout) :: this
   type(c_ptr) :: index_cptr
   integer(ATLAS_KIND_IDX), pointer :: index_fptr(:)
-  integer(c_int) :: i_min, i_max, j_min, j_max
-  integer(c_int) :: ni, nj
+  integer(ATLAS_KIND_IDX) :: i_min, i_max, j_min, j_max
+  integer(ATLAS_KIND_IDX) :: ni, nj
   call atlas__fs__StructuredColumns__index_host( this%c_ptr(), index_cptr, i_min, i_max, j_min, j_max )
   ni = i_max-i_min+1;
   nj = j_max-j_min+1;
@@ -197,70 +201,62 @@ subroutine set_index(this)
 end subroutine
 
 function j_begin(this) result(j)
-  use, intrinsic :: iso_c_binding, only : c_int
   use atlas_functionspace_StructuredColumns_c_binding
-  integer(c_int) :: j
+  integer(ATLAS_KIND_IDX) :: j
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   j = atlas__fs__StructuredColumns__j_begin(this%c_ptr())
 end function
 
 function j_end(this) result(j)
-  use, intrinsic :: iso_c_binding, only : c_int
   use atlas_functionspace_StructuredColumns_c_binding
-  integer(c_int) :: j
+  integer(ATLAS_KIND_IDX) :: j
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   j = atlas__fs__StructuredColumns__j_end(this%c_ptr())
 end function
 
 function i_begin(this,j) result(i)
-  use, intrinsic :: iso_c_binding, only : c_int
   use atlas_functionspace_StructuredColumns_c_binding
-  integer(c_int) :: i
-  integer(c_int), intent(in) :: j
+  integer(ATLAS_KIND_IDX) :: i
+  integer(ATLAS_KIND_IDX), intent(in) :: j
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   i = atlas__fs__StructuredColumns__i_begin(this%c_ptr(),j)
 end function
 
 function i_end(this,j) result(i)
-  use, intrinsic :: iso_c_binding, only : c_int
   use atlas_functionspace_StructuredColumns_c_binding
-  integer(c_int) :: i
-  integer(c_int), intent(in) :: j
+  integer(ATLAS_KIND_IDX) :: i
+  integer(ATLAS_KIND_IDX), intent(in) :: j
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   i = atlas__fs__StructuredColumns__i_end(this%c_ptr(),j)
 end function
 
 
 function j_begin_halo(this) result(j)
-  use, intrinsic :: iso_c_binding, only : c_int
   use atlas_functionspace_StructuredColumns_c_binding
-  integer(c_int) :: j
+  integer(ATLAS_KIND_IDX) :: j
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   j = atlas__fs__StructuredColumns__j_begin_halo(this%c_ptr())
 end function
 
 function j_end_halo(this) result(j)
-  use, intrinsic :: iso_c_binding, only : c_int
   use atlas_functionspace_StructuredColumns_c_binding
-  integer(c_int) :: j
+  integer(ATLAS_KIND_IDX) :: j
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   j = atlas__fs__StructuredColumns__j_end_halo(this%c_ptr())
 end function
 
 function i_begin_halo(this,j) result(i)
-  use, intrinsic :: iso_c_binding, only : c_int
   use atlas_functionspace_StructuredColumns_c_binding
-  integer(c_int) :: i
-  integer(c_int), intent(in) :: j
+  integer(ATLAS_KIND_IDX) :: i
+  integer(ATLAS_KIND_IDX), intent(in) :: j
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   i = atlas__fs__StructuredColumns__i_begin_halo(this%c_ptr(),j)
 end function
 
 function i_end_halo(this,j) result(i)
-  use, intrinsic :: iso_c_binding, only : c_int
   use atlas_functionspace_StructuredColumns_c_binding
-  integer(c_int) :: i
-  integer(c_int), intent(in) :: j
+  integer(ATLAS_KIND_IDX) :: i
+  integer(ATLAS_KIND_IDX), intent(in) :: j
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   i = atlas__fs__StructuredColumns__i_end_halo(this%c_ptr(),j)
 end function

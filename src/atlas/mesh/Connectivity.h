@@ -203,19 +203,19 @@ public:
 
     /// @brief Number of rows in the connectivity table
     ATLAS_HOST_DEVICE
-    size_t rows() const { return rows_; }
+    idx_t rows() const { return rows_; }
 
     /// @brief Number of columns for specified row in the connectivity table
     ATLAS_HOST_DEVICE
-    size_t cols( size_t row_idx ) const { return counts_view_( row_idx ); }
+    idx_t cols( idx_t row_idx ) const { return counts_view_( row_idx ); }
 
     /// @brief Maximum value for number of columns over all rows
     ATLAS_HOST_DEVICE
-    size_t maxcols() const { return maxcols_; }
+    idx_t maxcols() const { return maxcols_; }
 
     /// @brief Minimum value for number of columns over all rows
     ATLAS_HOST_DEVICE
-    size_t mincols() const { return mincols_; }
+    idx_t mincols() const { return mincols_; }
 
     /// @brief Access to connectivity table elements for given row and column
     /// The returned index has base 0 regardless if ATLAS_HAVE_FORTRAN is defined.
@@ -378,11 +378,11 @@ public:
 /// No resizing can be performed as data is not owned.
 MultiBlockConnectivity(
     idx_t values[],
-    size_t rows,
-    size_t displs[],
-    size_t counts[],
-    size_t blocks, size_t block_displs[],
-    size_t block_cols[] );
+    idx_t rows,
+    idx_t displs[],
+    idx_t counts[],
+    idx_t blocks, idx_t block_displs[],
+    idx_t block_cols[] );
 */
     virtual ~MultiBlockConnectivityImpl();
 

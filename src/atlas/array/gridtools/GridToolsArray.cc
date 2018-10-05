@@ -138,7 +138,7 @@ public:
                     err << "shape not recognized";
                 else {
                     err << "Layout < ";
-                    for ( size_t j = 0; j < layout.size(); ++j )
+                    for ( idx_t j = 0; j < layout.size(); ++j )
                         err << layout[j] << " ";
                     err << "> not implemented in Atlas.";
                 }
@@ -186,23 +186,23 @@ private:
 //------------------------------------------------------------------------------
 
 template <typename Value>
-Array* Array::create( size_t dim0 ) {
+Array* Array::create( idx_t dim0 ) {
     return new ArrayT<Value>( dim0 );
 }
 template <typename Value>
-Array* Array::create( size_t dim0, size_t dim1 ) {
+Array* Array::create( idx_t dim0, idx_t dim1 ) {
     return new ArrayT<Value>( dim0, dim1 );
 }
 template <typename Value>
-Array* Array::create( size_t dim0, size_t dim1, size_t dim2 ) {
+Array* Array::create( idx_t dim0, idx_t dim1, idx_t dim2 ) {
     return new ArrayT<Value>( dim0, dim1, dim2 );
 }
 template <typename Value>
-Array* Array::create( size_t dim0, size_t dim1, size_t dim2, size_t dim3 ) {
+Array* Array::create( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3 ) {
     return new ArrayT<Value>( dim0, dim1, dim2, dim3 );
 }
 template <typename Value>
-Array* Array::create( size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4 ) {
+Array* Array::create( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim4 ) {
     return new ArrayT<Value>( dim0, dim1, dim2, dim3, dim4 );
 }
 template <typename Value>
@@ -342,7 +342,7 @@ bool ArrayT<Value>::accMap() const {
 //------------------------------------------------------------------------------
 
 template <typename Value>
-void ArrayT<Value>::insert( size_t idx1, size_t size1 ) {
+void ArrayT<Value>::insert( idx_t idx1, idx_t size1 ) {
     // if( hostNeedsUpdate() ) {
     //    cloneFromDevice();
     //}
@@ -365,27 +365,27 @@ void ArrayT<Value>::insert( size_t idx1, size_t size1 ) {
 //------------------------------------------------------------------------------
 
 template <typename Value>
-void ArrayT<Value>::resize( size_t dim0 ) {
+void ArrayT<Value>::resize( idx_t dim0 ) {
     ArrayT_impl<Value>( *this ).resize_variadic( dim0 );
 }
 
 template <typename Value>
-void ArrayT<Value>::resize( size_t dim0, size_t dim1 ) {
+void ArrayT<Value>::resize( idx_t dim0, idx_t dim1 ) {
     ArrayT_impl<Value>( *this ).resize_variadic( dim0, dim1 );
 }
 
 template <typename Value>
-void ArrayT<Value>::resize( size_t dim0, size_t dim1, size_t dim2 ) {
+void ArrayT<Value>::resize( idx_t dim0, idx_t dim1, idx_t dim2 ) {
     ArrayT_impl<Value>( *this ).resize_variadic( dim0, dim1, dim2 );
 }
 
 template <typename Value>
-void ArrayT<Value>::resize( size_t dim0, size_t dim1, size_t dim2, size_t dim3 ) {
+void ArrayT<Value>::resize( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3 ) {
     ArrayT_impl<Value>( *this ).resize_variadic( dim0, dim1, dim2, dim3 );
 }
 
 template <typename Value>
-void ArrayT<Value>::resize( size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4 ) {
+void ArrayT<Value>::resize( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim4 ) {
     ArrayT_impl<Value>( *this ).resize_variadic( dim0, dim1, dim2, dim3, dim4 );
 }
 
@@ -464,23 +464,23 @@ ArrayT<Value>::ArrayT( ArrayDataStore* ds, const ArraySpec& spec ) {
 }
 
 template <typename Value>
-ArrayT<Value>::ArrayT( size_t dim0 ) {
+ArrayT<Value>::ArrayT( idx_t dim0 ) {
     ArrayT_impl<Value>( *this ).construct( dim0 );
 }
 template <typename Value>
-ArrayT<Value>::ArrayT( size_t dim0, size_t dim1 ) {
+ArrayT<Value>::ArrayT( idx_t dim0, idx_t dim1 ) {
     ArrayT_impl<Value>( *this ).construct( dim0, dim1 );
 }
 template <typename Value>
-ArrayT<Value>::ArrayT( size_t dim0, size_t dim1, size_t dim2 ) {
+ArrayT<Value>::ArrayT( idx_t dim0, idx_t dim1, idx_t dim2 ) {
     ArrayT_impl<Value>( *this ).construct( dim0, dim1, dim2 );
 }
 template <typename Value>
-ArrayT<Value>::ArrayT( size_t dim0, size_t dim1, size_t dim2, size_t dim3 ) {
+ArrayT<Value>::ArrayT( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3 ) {
     ArrayT_impl<Value>( *this ).construct( dim0, dim1, dim2, dim3 );
 }
 template <typename Value>
-ArrayT<Value>::ArrayT( size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4 ) {
+ArrayT<Value>::ArrayT( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim4 ) {
     ArrayT_impl<Value>( *this ).construct( dim0, dim1, dim2, dim3, dim4 );
 }
 
@@ -516,35 +516,35 @@ template class ArrayT<float>;
 template class ArrayT<double>;
 template class ArrayT<unsigned long>;
 
-template Array* Array::create<int>( size_t );
-template Array* Array::create<long>( size_t );
-template Array* Array::create<float>( size_t );
-template Array* Array::create<double>( size_t );
-template Array* Array::create<long unsigned>( size_t );
+template Array* Array::create<int>( idx_t );
+template Array* Array::create<long>( idx_t );
+template Array* Array::create<float>( idx_t );
+template Array* Array::create<double>( idx_t );
+template Array* Array::create<long unsigned>( idx_t );
 
-template Array* Array::create<int>( size_t, size_t );
-template Array* Array::create<long>( size_t, size_t );
-template Array* Array::create<float>( size_t, size_t );
-template Array* Array::create<double>( size_t, size_t );
-template Array* Array::create<long unsigned>( size_t, size_t );
+template Array* Array::create<int>( idx_t, idx_t );
+template Array* Array::create<long>( idx_t, idx_t );
+template Array* Array::create<float>( idx_t, idx_t );
+template Array* Array::create<double>( idx_t, idx_t );
+template Array* Array::create<long unsigned>( idx_t, idx_t );
 
-template Array* Array::create<int>( size_t, size_t, size_t );
-template Array* Array::create<long>( size_t, size_t, size_t );
-template Array* Array::create<float>( size_t, size_t, size_t );
-template Array* Array::create<double>( size_t, size_t, size_t );
-template Array* Array::create<long unsigned>( size_t, size_t, size_t );
+template Array* Array::create<int>( idx_t, idx_t, idx_t );
+template Array* Array::create<long>( idx_t, idx_t, idx_t );
+template Array* Array::create<float>( idx_t, idx_t, idx_t );
+template Array* Array::create<double>( idx_t, idx_t, idx_t );
+template Array* Array::create<long unsigned>( idx_t, idx_t, idx_t );
 
-template Array* Array::create<int>( size_t, size_t, size_t, size_t );
-template Array* Array::create<long>( size_t, size_t, size_t, size_t );
-template Array* Array::create<float>( size_t, size_t, size_t, size_t );
-template Array* Array::create<double>( size_t, size_t, size_t, size_t );
-template Array* Array::create<long unsigned>( size_t, size_t, size_t, size_t );
+template Array* Array::create<int>( idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<long>( idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<float>( idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<double>( idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<long unsigned>( idx_t, idx_t, idx_t, idx_t );
 
-template Array* Array::create<int>( size_t, size_t, size_t, size_t, size_t );
-template Array* Array::create<long>( size_t, size_t, size_t, size_t, size_t );
-template Array* Array::create<float>( size_t, size_t, size_t, size_t, size_t );
-template Array* Array::create<double>( size_t, size_t, size_t, size_t, size_t );
-template Array* Array::create<long unsigned>( size_t, size_t, size_t, size_t, size_t );
+template Array* Array::create<int>( idx_t, idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<long>( idx_t, idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<float>( idx_t, idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<double>( idx_t, idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<long unsigned>( idx_t, idx_t, idx_t, idx_t, idx_t );
 
 template Array* Array::create<int>( const ArrayShape& );
 template Array* Array::create<long>( const ArrayShape& );

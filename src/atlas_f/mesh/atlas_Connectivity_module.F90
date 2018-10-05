@@ -45,8 +45,13 @@ contains
   procedure, public :: maxcols  => atlas_Connectivity__maxcols
   procedure, public :: mincols  => atlas_Connectivity__mincols
   procedure, public :: padded_data     => atlas_Connectivity__padded_data
-  procedure, public :: data     => atlas_Connectivity__data
-  procedure, public :: row      => atlas_Connectivity__row
+  procedure, private :: atlas_Connectivity__data
+  procedure, private :: atlas_Connectivity__data_int
+  procedure, private :: atlas_Connectivity__data_long
+  generic, public :: data     => atlas_Connectivity__data, atlas_Connectivity__data_int, atlas_Connectivity__data_long
+  procedure, private :: atlas_Connectivity__row_int
+  procedure, private :: atlas_Connectivity__row_long
+  generic, public :: row      => atlas_Connectivity__row_int, atlas_Connectivity__row_long
   procedure, public :: missing_value  => atlas_Connectivity__missing_value
   procedure, private :: add_values_args_idx => atlas_Connectivity__add_values_args_idx
 #if ATLAS_BITS_LOCAL != 32
@@ -58,7 +63,8 @@ contains
   procedure, private :: add_values_args_long => atlas_Connectivity__add_values_args_long
   procedure, private :: add_missing_args_int => atlas_Connectivity__add_missing_args_int
   procedure, private :: add_missing_args_long => atlas_Connectivity__add_missing_args_long
-  generic, public :: add => add_values_args_idx, add_values_args_long, add_missing_args_int, add_missing_args_long _add_values_args_int32
+  generic, public :: add => add_values_args_idx, add_values_args_long, add_missing_args_int, &
+    & add_missing_args_long _add_values_args_int32
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_Connectivity__final_auto
 #endif
@@ -298,35 +304,77 @@ function c_loc_idx(x)
   c_loc_idx = c_loc(x)
 end function
 
-
-subroutine atlas_Connectivity__data(this, data, ncols)
-  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_loc
+subroutine atlas_Connectivity__data(this, data)
+  use, intrinsic :: iso_c_binding, only : c_f_pointer, c_loc, c_int
   class(atlas_Connectivity), intent(in) :: this
   integer(ATLAS_KIND_IDX), pointer, intent(inout) :: data(:,:)
-  integer(c_int), intent(out), optional :: ncols
-  integer(c_int) :: maxcols
+  integer(ATLAS_KIND_IDX) :: maxcols
 
   maxcols = this%maxcols()
   if( maxcols == this%mincols() ) then
     if( size(this%access%values_) > 0 ) then
       call c_f_pointer (c_loc_idx(this%access%values_(1)), data, &
-          & (/maxcols,int(this%access%rows_,c_int)/))
-      if( present(ncols) ) then
-        ncols = maxcols
-      endif
+          & (/maxcols,this%access%rows_/))
     endif
   else
     write(0,*) "ERROR: Cannot point connectivity pointer data(:,:) to irregular table"
   endif
 end subroutine
 
+subroutine atlas_Connectivity__data_int(this, data, ncols)
+  use, intrinsic :: iso_c_binding, only : c_f_pointer, c_loc, c_int
+  class(atlas_Connectivity), intent(in) :: this
+  integer(ATLAS_KIND_IDX), pointer, intent(inout) :: data(:,:)
+  integer(c_int), intent(out) :: ncols
+  integer(ATLAS_KIND_IDX) :: maxcols
 
-subroutine atlas_Connectivity__row(this, row_idx, row, cols)
+  maxcols = this%maxcols()
+  if( maxcols == this%mincols() ) then
+    if( size(this%access%values_) > 0 ) then
+      call c_f_pointer (c_loc_idx(this%access%values_(1)), data, &
+          & (/maxcols,this%access%rows_/))
+      ncols = maxcols
+    endif
+  else
+    write(0,*) "ERROR: Cannot point connectivity pointer data(:,:) to irregular table"
+  endif
+end subroutine
+
+subroutine atlas_Connectivity__data_long(this, data, ncols)
+  use, intrinsic :: iso_c_binding, only : c_f_pointer, c_loc, c_long
+  class(atlas_Connectivity), intent(in) :: this
+  integer(ATLAS_KIND_IDX), pointer, intent(inout) :: data(:,:)
+  integer(c_long), intent(out) :: ncols
+  integer(ATLAS_KIND_IDX) :: maxcols
+
+  maxcols = this%maxcols()
+  if( maxcols == this%mincols() ) then
+    if( size(this%access%values_) > 0 ) then
+      call c_f_pointer (c_loc_idx(this%access%values_(1)), data, &
+          & (/maxcols,this%access%rows_/))
+      ncols = maxcols
+    endif
+  else
+    write(0,*) "ERROR: Cannot point connectivity pointer data(:,:) to irregular table"
+  endif
+end subroutine
+
+subroutine atlas_Connectivity__row_int(this, row_idx, row, cols)
   use, intrinsic :: iso_c_binding, only : c_int
   class(atlas_Connectivity), intent(in) :: this
   integer(c_int), intent(in) :: row_idx
   integer(ATLAS_KIND_IDX), pointer, intent(inout) :: row(:)
   integer(c_int), intent(out) ::  cols
+  row  => this%access%values_(this%access%displs_(row_idx)+1:this%access%displs_(row_idx+1)+1)
+  cols =  this%access%cols(row_idx)
+end subroutine
+
+subroutine atlas_Connectivity__row_long(this, row_idx, row, cols)
+  use, intrinsic :: iso_c_binding, only : c_long
+  class(atlas_Connectivity), intent(in) :: this
+  integer(c_long), intent(in) :: row_idx
+  integer(ATLAS_KIND_IDX), pointer, intent(inout) :: row(:)
+  integer(c_long), intent(out) ::  cols
   row  => this%access%values_(this%access%displs_(row_idx)+1:this%access%displs_(row_idx+1)+1)
   cols =  this%access%cols(row_idx)
 end subroutine
