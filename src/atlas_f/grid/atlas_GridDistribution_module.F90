@@ -63,10 +63,12 @@ end function
 
 function atlas_GridDistribution__ctor( part, part0 ) result(this)
   use atlas_distribution_c_binding
+  use atlas_kinds_module, only : ATLAS_KIND_IDX
   type(atlas_GridDistribution) :: this
   integer, intent(in) :: part(:)
   integer, intent(in), optional :: part0
-  integer:: npts, opt_part0
+  integer(ATLAS_KIND_IDX) :: npts
+  integer :: opt_part0
   opt_part0 = 0
   if( present(part0) ) opt_part0 = part0
   npts = size(part)

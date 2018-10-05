@@ -47,7 +47,7 @@ CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard( con
 
     cb.nx         = rg.nx();
     cb.ny         = rg.ny();
-    size_t nparts = nb_partitions();
+    idx_t nparts = nb_partitions();
 
     if ( nbands_ > 0 ) { cb.nbands = nbands_; }
     else {

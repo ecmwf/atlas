@@ -50,11 +50,11 @@ namespace partitioner {
 
 Partitioner::Partitioner() : nb_partitions_( mpi::comm().size() ) {}
 
-Partitioner::Partitioner( const size_t nb_partitions ) : nb_partitions_( nb_partitions ) {}
+Partitioner::Partitioner( const idx_t nb_partitions ) : nb_partitions_( nb_partitions ) {}
 
 Partitioner::~Partitioner() {}
 
-size_t Partitioner::nb_partitions() const {
+idx_t Partitioner::nb_partitions() const {
     return nb_partitions_;
 }
 
@@ -140,7 +140,7 @@ Partitioner* PartitionerFactory::build( const std::string& name ) {
     return ( *j ).second->make();
 }
 
-Partitioner* PartitionerFactory::build( const std::string& name, const size_t nb_partitions ) {
+Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_partitions ) {
     pthread_once( &once, init );
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );

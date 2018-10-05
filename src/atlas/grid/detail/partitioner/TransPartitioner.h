@@ -30,7 +30,7 @@ public:
     /// @brief Constructor
     TransPartitioner();
 
-    TransPartitioner( const size_t nb_partitions );
+    TransPartitioner( const idx_t nb_partitions );
 
     virtual ~TransPartitioner();
 

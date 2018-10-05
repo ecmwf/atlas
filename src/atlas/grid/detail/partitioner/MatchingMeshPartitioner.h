@@ -25,7 +25,7 @@ class MatchingMeshPartitioner : public Partitioner {
 public:
     MatchingMeshPartitioner() : Partitioner() { NOTIMP; }
 
-    MatchingMeshPartitioner( const size_t nb_partitions ) : Partitioner( nb_partitions ) { NOTIMP; }
+    MatchingMeshPartitioner( const idx_t nb_partitions ) : Partitioner( nb_partitions ) { NOTIMP; }
 
     MatchingMeshPartitioner( const Mesh& mesh ) : Partitioner( mesh.nb_partitions() ), prePartitionedMesh_( mesh ) {}
 

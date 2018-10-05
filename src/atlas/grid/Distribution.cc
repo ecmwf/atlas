@@ -40,19 +40,19 @@ Distribution::impl_t::impl_t( const Grid& grid, const Partitioner& partitioner )
     partitioner.partition( grid, part_.data() );
     nb_partitions_ = partitioner.nb_partitions();
     nb_pts_.resize( nb_partitions_, 0 );
-    for ( size_t j = 0; j < part_.size(); ++j )
+    for ( idx_t j = 0, size = part_.size(); j < size; ++j )
         ++nb_pts_[part_[j]];
     max_pts_ = *std::max_element( nb_pts_.begin(), nb_pts_.end() );
     min_pts_ = *std::min_element( nb_pts_.begin(), nb_pts_.end() );
     type_    = distribution_type( nb_partitions_, partitioner );
 }
 
-Distribution::impl_t::impl_t( size_t npts, int part[], int part0 ) {
+Distribution::impl_t::impl_t( idx_t npts, int part[], int part0 ) {
     part_.assign( part, part + npts );
     std::set<int> partset( part_.begin(), part_.end() );
     nb_partitions_ = partset.size();
     nb_pts_.resize( nb_partitions_, 0 );
-    for ( size_t j = 0; j < part_.size(); ++j ) {
+    for ( idx_t j = 0, size = part_.size(); j < size; ++j ) {
         part_[j] -= part0;
         ++nb_pts_[part_[j]];
     }
@@ -64,7 +64,7 @@ Distribution::impl_t::impl_t( size_t npts, int part[], int part0 ) {
 void Distribution::impl_t::print( std::ostream& s ) const {
     s << "Distribution( "
       << "type: " << type_ << ", nbPoints: " << part_.size() << ", nbPartitions: " << nb_pts_.size() << ", parts : [";
-    for ( size_t i = 0; i < part_.size(); i++ ) {
+    for ( idx_t i = 0, size = part_.size(); i < size; i++ ) {
         if ( i != 0 ) s << ',';
         s << part_[i];
     }
@@ -82,9 +82,9 @@ Distribution::Distribution( const Grid& grid ) : impl_( new impl_t( grid ) ) {}
 Distribution::Distribution( const Grid& grid, const Partitioner& partitioner ) :
     impl_( new impl_t( grid, partitioner ) ) {}
 
-Distribution::Distribution( size_t npts, int part[], int part0 ) : impl_( new impl_t( npts, part, part0 ) ) {}
+Distribution::Distribution( idx_t npts, int part[], int part0 ) : impl_( new impl_t( npts, part, part0 ) ) {}
 
-Distribution::impl_t* atlas__GridDistribution__new( int npts, int part[], int part0 ) {
+Distribution::impl_t* atlas__GridDistribution__new( idx_t npts, int part[], int part0 ) {
     return new Distribution::impl_t( npts, part, part0 );
 }
 

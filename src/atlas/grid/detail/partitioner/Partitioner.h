@@ -27,19 +27,19 @@ public:
 
 public:
     Partitioner();
-    Partitioner( const size_t nb_partitions );
+    Partitioner( const idx_t nb_partitions );
     virtual ~Partitioner();
 
     virtual void partition( const Grid& grid, int part[] ) const = 0;
 
     Distribution partition( const Grid& grid ) const;
 
-    size_t nb_partitions() const;
+    idx_t nb_partitions() const;
 
     virtual std::string type() const = 0;
 
 private:
-    size_t nb_partitions_;
+    idx_t nb_partitions_;
 };
 
 // ------------------------------------------------------------------
@@ -54,7 +54,7 @@ public:
    * \return Partitioner
    */
     static Partitioner* build( const std::string& );
-    static Partitioner* build( const std::string&, const size_t nb_partitions );
+    static Partitioner* build( const std::string&, const idx_t nb_partitions );
 
     /*!
    * \brief list all registered partioner builders
@@ -65,7 +65,7 @@ public:
 private:
     std::string name_;
     virtual Partitioner* make()                             = 0;
-    virtual Partitioner* make( const size_t nb_partitions ) = 0;
+    virtual Partitioner* make( const idx_t nb_partitions ) = 0;
 
 protected:
     PartitionerFactory( const std::string& );
@@ -78,7 +78,7 @@ template <class T>
 class PartitionerBuilder : public PartitionerFactory {
     virtual Partitioner* make() { return new T(); }
 
-    virtual Partitioner* make( const size_t nb_partitions ) { return new T( nb_partitions ); }
+    virtual Partitioner* make( const idx_t nb_partitions ) { return new T( nb_partitions ); }
 
 public:
     PartitionerBuilder( const std::string& name ) : PartitionerFactory( name ) {}

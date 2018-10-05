@@ -33,7 +33,7 @@ public:
     Partitioner() {}
     Partitioner( const Implementation* );
     Partitioner( const std::string& type );
-    Partitioner( const std::string& type, const size_t nb_partitions );
+    Partitioner( const std::string& type, const idx_t nb_partitions );
     Partitioner( const Config& );
 
     operator bool() const { return partitioner_; }
@@ -42,7 +42,7 @@ public:
 
     Distribution partition( const Grid& grid ) const { return Distribution( grid, *this ); }
 
-    size_t nb_partitions() const { return partitioner_->nb_partitions(); }
+    idx_t nb_partitions() const { return partitioner_->nb_partitions(); }
 
     std::string type() const { return partitioner_->type(); }
 

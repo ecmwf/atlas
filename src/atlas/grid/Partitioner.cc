@@ -26,7 +26,7 @@ Partitioner::Partitioner( const detail::partitioner::Partitioner* partitioner ) 
 
 Partitioner::Partitioner( const std::string& type ) : partitioner_( Factory::build( type ) ) {}
 
-Partitioner::Partitioner( const std::string& type, const size_t nb_partitions ) :
+Partitioner::Partitioner( const std::string& type, const idx_t nb_partitions ) :
     partitioner_( Factory::build( type, nb_partitions ) ) {}
 
 namespace {

@@ -32,7 +32,7 @@ TransPartitioner::TransPartitioner() : Partitioner() {
     }
 }
 
-TransPartitioner::TransPartitioner( const size_t N ) : Partitioner( N ) {
+TransPartitioner::TransPartitioner( const idx_t N ) : Partitioner( N ) {
     EqualRegionsPartitioner eqreg( nb_partitions() );
     nbands_ = eqreg.nb_bands();
     nregions_.resize( nbands_ );
@@ -51,7 +51,7 @@ void TransPartitioner::partition( const Grid& grid, int part[] ) const {
         throw eckit::BadCast( "Grid is not a grid::Structured type. Cannot partition using IFS trans", Here() );
 
     trans::TransIFS t( grid );
-    if ( nb_partitions() != size_t( t.nproc() ) ) {
+    if ( nb_partitions() != idx_t( t.nproc() ) ) {
         std::stringstream msg;
         msg << "Requested to partition grid with TransPartitioner in " << nb_partitions()
             << " partitions, but "

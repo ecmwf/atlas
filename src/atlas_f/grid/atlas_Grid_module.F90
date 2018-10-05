@@ -234,16 +234,16 @@ contains
 
 pure function c_idx_32(f_idx) result(c_idx)
     use, intrinsic :: iso_c_binding, only : c_long
-    integer(c_long) :: c_idx
+    integer(ATLAS_KIND_IDX) :: c_idx
     integer(c_long), intent(in) :: f_idx
-    c_idx = f_idx - 1_c_long
+    c_idx = int(f_idx,ATLAS_KIND_IDX) - 1_ATLAS_KIND_IDX
 end function
 
 pure function c_idx_64(f_idx) result(c_idx)
     use, intrinsic :: iso_c_binding, only : c_long, c_int
-    integer(c_long) :: c_idx
+    integer(ATLAS_KIND_IDX) :: c_idx
     integer(c_int), intent(in) :: f_idx
-    c_idx = f_idx - 1_c_long
+    c_idx = int(f_idx,ATLAS_KIND_IDX) - 1_ATLAS_KIND_IDX
 end function
 
 ! -----------------------------------------------------------------------------
