@@ -152,7 +152,7 @@ implicit none
   field = atlas_Field("field_2",atlas_integer(),(/2,10/))
   call fieldset%add( field )
 
-  FCTEST_CHECK_EQUAL( fieldset%size(), 3_c_size_t )
+  FCTEST_CHECK_EQUAL( fieldset%size(), 3 )
 
   field = fieldset%field(1)
   FCTEST_CHECK_EQUAL( field%name(), "field_0" )

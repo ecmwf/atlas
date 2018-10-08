@@ -43,8 +43,6 @@ TEST( test_hybridelements )
   use atlas_field_module
   use atlas_kinds_module
 
-  use, intrinsic :: iso_c_binding
-
   implicit none
   type(atlas_mesh_Cells) :: cells
   type(atlas_MultiBlockConnectivity) :: node_connectivity
@@ -52,17 +50,17 @@ TEST( test_hybridelements )
   type(atlas_Elements) :: elements
   type(atlas_ElementType) :: element_type
   integer(ATLAS_KIND_IDX), pointer :: data(:,:)
-  integer(c_size_t) :: jfield
+  integer(ATLAS_KIND_IDX) :: jfield
 
   write(*,*) "test_hybridelements starting"
 
   cells = atlas_mesh_Cells()
   FCTEST_CHECK_EQUAL( cells%owners(), 1 )
 
-  FCTEST_CHECK_EQUAL( cells%size(), 0_c_size_t )
+  FCTEST_CHECK_EQUAL( cells%size(), 0 )
   node_connectivity = cells%node_connectivity()
   FCTEST_CHECK_EQUAL( node_connectivity%owners(), 2 )
-  FCTEST_CHECK_EQUAL( node_connectivity%rows(), 0_c_size_t )
+  FCTEST_CHECK_EQUAL( node_connectivity%rows(), 0 )
   FCTEST_CHECK( cells%has_field("glb_idx") )
   FCTEST_CHECK( cells%has_field("partition") )
   FCTEST_CHECK( cells%has_field("remote_idx") )
@@ -97,7 +95,7 @@ TEST( test_hybridelements )
 
 
 
-  call cells%add( atlas_Triangle(), 5_c_size_t , &
+  call cells%add( atlas_Triangle(), 5 , &
         &  [  1,  2  ,3, &
         &     4,  5,  6, &
         &     7,  8,  9, &
@@ -105,10 +103,10 @@ TEST( test_hybridelements )
         &    13, 14, 15  ] )
 
 
-  FCTEST_CHECK_EQUAL( cells%size(), 5_c_size_t )
-  FCTEST_CHECK_EQUAL( cells%nb_types(), 1_c_size_t )
-  FCTEST_CHECK_EQUAL( node_connectivity%rows(),    5_c_size_t )
-  FCTEST_CHECK_EQUAL( node_connectivity%maxcols(), 3_c_size_t )
+  FCTEST_CHECK_EQUAL( cells%size(), 5 )
+  FCTEST_CHECK_EQUAL( cells%nb_types(), 1 )
+  FCTEST_CHECK_EQUAL( node_connectivity%rows(),    5 )
+  FCTEST_CHECK_EQUAL( node_connectivity%maxcols(), 3 )
 
   call node_connectivity%data(data)
 
@@ -128,19 +126,19 @@ TEST( test_hybridelements )
   FCTEST_CHECK_EQUAL( data(2,5) , 14 )
   FCTEST_CHECK_EQUAL( data(3,5) , 15 )
 
-  call cells%add( atlas_Quadrilateral(), 2_c_size_t , &
+  call cells%add( atlas_Quadrilateral(), 2 , &
         &  [  16, 17, 18, 19, &
         &     20, 21, 22, 23  ] )
 
-  FCTEST_CHECK_EQUAL( cells%nb_types(), 2_c_size_t )
-  FCTEST_CHECK_EQUAL( cells%size(), 7_c_size_t )
-  FCTEST_CHECK_EQUAL( node_connectivity%rows(),    7_c_size_t )
-  FCTEST_CHECK_EQUAL( node_connectivity%mincols(), 3_c_size_t )
-  FCTEST_CHECK_EQUAL( node_connectivity%maxcols(), 4_c_size_t )
+  FCTEST_CHECK_EQUAL( cells%nb_types(), 2 )
+  FCTEST_CHECK_EQUAL( cells%size(), 7 )
+  FCTEST_CHECK_EQUAL( node_connectivity%rows(),    7 )
+  FCTEST_CHECK_EQUAL( node_connectivity%mincols(), 3 )
+  FCTEST_CHECK_EQUAL( node_connectivity%maxcols(), 4 )
 
   elements = cells%elements(1)
   FCTEST_CHECK_EQUAL( elements%owners(), 2 )
-  FCTEST_CHECK_EQUAL( elements%size(), 5_c_size_t )
+  FCTEST_CHECK_EQUAL( elements%size(), 5 )
   element_type = elements%element_type()
 
   ! Should print ERROR
@@ -192,21 +190,21 @@ TEST( test_elements )
   write(*,*) "test_elements starting"
 
   cells = atlas_mesh_Cells()
-  call cells%add( atlas_Triangle(), 5_c_size_t , &
+  call cells%add( atlas_Triangle(), 5 , &
         &  [  1,  2  ,3, &
         &     4,  5,  6, &
         &     7,  8,  9, &
         &    10, 11, 12, &
         &    13, 14, 15  ] )
 
-  call cells%add( atlas_Quadrilateral(), 2_c_size_t , &
+  call cells%add( atlas_Quadrilateral(), 2 , &
         &  [  16, 17, 18, 19, &
         &     20, 21, 22, 23  ] )
 
   elements = cells%elements(1)
 
-  FCTEST_CHECK_EQUAL( elements%begin(), 1_c_size_t )
-  FCTEST_CHECK_EQUAL( elements%end(), 5_c_size_t )
+  FCTEST_CHECK_EQUAL( elements%begin(), 1 )
+  FCTEST_CHECK_EQUAL( elements%end(), 5 )
 
   element_type = elements%element_type()
   FCTEST_CHECK_EQUAL( element_type%owners(), 2 )
@@ -214,8 +212,8 @@ TEST( test_elements )
   node_connectivity = elements%node_connectivity()
   !FCTEST_CHECK_EQUAL( node_connectivity%owners(), 2 )
 
-  FCTEST_CHECK_EQUAL( element_type%nb_nodes(), 3_c_size_t )
-  FCTEST_CHECK_EQUAL( element_type%nb_edges(), 3_c_size_t )
+  FCTEST_CHECK_EQUAL( element_type%nb_nodes(), 3 )
+  FCTEST_CHECK_EQUAL( element_type%nb_edges(), 3 )
   FCTEST_CHECK_EQUAL( element_type%name(), "Triangle" )
   FCTEST_CHECK( element_type%parametric() )
 
@@ -240,14 +238,14 @@ TEST( test_elements )
 
   elements = cells%elements(2)
 
-  FCTEST_CHECK_EQUAL( elements%begin(), 6_c_size_t )
-  FCTEST_CHECK_EQUAL( elements%end(), 7_c_size_t )
+  FCTEST_CHECK_EQUAL( elements%begin(), 6 )
+  FCTEST_CHECK_EQUAL( elements%end(), 7 )
 
   element_type = elements%element_type()
   FCTEST_CHECK_EQUAL( element_type%owners(), 2 )
 
-  FCTEST_CHECK_EQUAL( element_type%nb_nodes(), 4_c_size_t )
-  FCTEST_CHECK_EQUAL( element_type%nb_edges(), 4_c_size_t )
+  FCTEST_CHECK_EQUAL( element_type%nb_nodes(), 4 )
+  FCTEST_CHECK_EQUAL( element_type%nb_edges(), 4 )
   FCTEST_CHECK_EQUAL( element_type%name(), "Quadrilateral" )
   FCTEST_CHECK( element_type%parametric() )
 
@@ -271,8 +269,8 @@ TEST( test_elements )
   ! Add elements to triangles
   elements = cells%elements(1)
   call elements%add(2)
-  FCTEST_CHECK_EQUAL( elements%begin(), 1_c_size_t )
-  FCTEST_CHECK_EQUAL( elements%end(), 7_c_size_t )
+  FCTEST_CHECK_EQUAL( elements%begin(), 1 )
+  FCTEST_CHECK_EQUAL( elements%end(), 7 )
 
   node_connectivity = elements%node_connectivity()
   call node_connectivity%data(data)
@@ -286,8 +284,8 @@ TEST( test_elements )
 
 
   elements = cells%elements(2)
-  FCTEST_CHECK_EQUAL( elements%begin(), 8_c_size_t )
-  FCTEST_CHECK_EQUAL( elements%end(), 9_c_size_t )
+  FCTEST_CHECK_EQUAL( elements%begin(), 8 )
+  FCTEST_CHECK_EQUAL( elements%end(), 9 )
 
 
   call elements%final()

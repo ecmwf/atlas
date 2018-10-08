@@ -220,7 +220,6 @@ end subroutine
 
 
 function nb_types(this) result(val)
-  use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_HybridElements), intent(in) :: this
@@ -228,7 +227,6 @@ function nb_types(this) result(val)
 end function
 
 function nb_fields(this) result(val)
-  use, intrinsic :: iso_c_binding
   use atlas_hybridelements_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_HybridElements), intent(in) :: this

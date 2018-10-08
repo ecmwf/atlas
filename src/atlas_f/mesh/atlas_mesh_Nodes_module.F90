@@ -27,7 +27,8 @@ private
 TYPE, extends(fckit_owned_object) :: atlas_mesh_Nodes
 contains
 procedure, public :: size => atlas_mesh_Nodes__size
-procedure, private :: resize_int, resize_long
+procedure, private :: resize_int
+procedure, private :: resize_long
 generic, public :: resize => resize_int, resize_long
 procedure, private :: add_field
 procedure, private :: add_connectivity
