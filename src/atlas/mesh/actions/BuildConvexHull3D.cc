@@ -116,7 +116,7 @@ static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, Point
     for ( Polyhedron_3::Facet_const_iterator f = poly.facets_begin(); f != poly.facets_end(); ++f ) {
         // loop  over half-edges and take each vertex()
 
-        idx_t iedge                                              = 0;
+        idx_t iedge                                               = 0;
         Polyhedron_3::Halfedge_around_facet_const_circulator edge = f->facet_begin();
         do {
             Polyhedron_3::Vertex_const_handle vh = edge->vertex();

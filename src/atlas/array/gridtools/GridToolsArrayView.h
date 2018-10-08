@@ -104,10 +104,14 @@ public:
     const idx_t* shape() const { return shape_; }
 
     template <typename Int>
-    idx_t shape( Int idx ) const { return shape_[idx]; }
+    idx_t shape( Int idx ) const {
+        return shape_[idx];
+    }
 
     template <typename Int>
-    idx_t stride( Int idx ) const { return strides_[idx]; }
+    idx_t stride( Int idx ) const {
+        return strides_[idx];
+    }
 
     template <typename... Args>
     typename slice_t<Args...>::type slice( Args... args ) {

@@ -32,7 +32,7 @@ namespace mesh {
 
 IrregularConnectivityImpl::IrregularConnectivityImpl( const std::string& name ) :
     owns_( true ),
-    data_{array::Array::create<idx_t>( 0 ),    // values
+    data_{array::Array::create<idx_t>( 0 ),   // values
           array::Array::create<idx_t>( 1 ),   // displs
           array::Array::create<idx_t>( 1 )},  // counts
     values_view_( array::make_host_view<idx_t, 1>( *( data_[_values_] ) ) ),
@@ -201,8 +201,8 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[
 void IrregularConnectivityImpl::add( const BlockConnectivityImpl& block ) {
     if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
     bool fortran_array  = FORTRAN_BASE;
-    const idx_t rows   = block.rows();
-    const idx_t cols   = block.cols();
+    const idx_t rows    = block.rows();
+    const idx_t cols    = block.cols();
     const idx_t* values = block.data();
 
     std::vector<idx_t> values_vector;

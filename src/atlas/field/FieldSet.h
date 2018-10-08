@@ -78,9 +78,9 @@ public:  // methods
     const_iterator cbegin() const { return fields_.begin(); }
     const_iterator cend() const { return fields_.end(); }
 
-protected:                                 // data
-    std::vector<Field> fields_;            ///< field storage
-    std::string name_;                     ///< internal name
+protected:                                // data
+    std::vector<Field> fields_;           ///< field storage
+    std::string name_;                    ///< internal name
     std::map<std::string, idx_t> index_;  ///< name-to-index map, to refer fields by name
 };
 

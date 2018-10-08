@@ -39,7 +39,7 @@ Unstructured::Unstructured( const Mesh& m ) : Grid(), points_( new std::vector<P
 
     auto xy                 = array::make_view<double, 2>( m.nodes().xy() );
     std::vector<PointXY>& p = *points_;
-    const idx_t npts       = p.size();
+    const idx_t npts        = p.size();
 
     for ( idx_t n = 0; n < npts; ++n ) {
         p[n].assign( xy( n, XX ), xy( n, YY ) );

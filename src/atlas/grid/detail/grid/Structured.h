@@ -201,12 +201,12 @@ public:
     class XSpace {
         class Implementation : public eckit::Owned {
         public:
-
             // Constructor NVector can be either std::vector<int> or std::vector<long>
-            template< typename NVector >
+            template <typename NVector>
             Implementation( const std::array<double, 2>& interval, const NVector& N, bool endpoint = true );
 
-            Implementation( const std::array<double, 2>& interval, std::initializer_list<int>&& N, bool endpoint = true );
+            Implementation( const std::array<double, 2>& interval, std::initializer_list<int>&& N,
+                            bool endpoint = true );
 
             Implementation( const Spacing& );
 
@@ -259,7 +259,7 @@ public:
         XSpace( const Spacing& );
 
         // Constructor NVector can be either std::vector<int> or std::vector<long> or initializer list
-        template< typename NVector >
+        template <typename NVector>
         XSpace( const std::array<double, 2>& interval, const NVector& N, bool endpoint = true );
 
         XSpace( const std::array<double, 2>& interval, std::initializer_list<int>&& N, bool endpoint = true );

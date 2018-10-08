@@ -143,11 +143,15 @@ public:
 
     const idx_t* shape() const { return shape_.data(); }
 
-    template< typename Int >
-    idx_t shape( Int idx ) const { return shape_[idx]; }
+    template <typename Int>
+    idx_t shape( Int idx ) const {
+        return shape_[idx];
+    }
 
-    template< typename Int >
-    idx_t stride( Int idx ) const { return strides_[idx]; }
+    template <typename Int>
+    idx_t stride( Int idx ) const {
+        return strides_[idx];
+    }
 
     value_type const* data() const { return data_; }
 

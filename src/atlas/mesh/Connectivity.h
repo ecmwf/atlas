@@ -39,7 +39,9 @@
 namespace atlas {
 namespace mesh {
 
-constexpr size_t MAX_STRING_SIZE() { return 60; }
+constexpr size_t MAX_STRING_SIZE() {
+    return 60;
+}
 
 template <typename ConnectivityImpl>
 class ConnectivityInterface : public eckit::Owned, public ConnectivityImpl {
@@ -143,13 +145,15 @@ public:
     ATLAS_HOST_DEVICE
     ConnectivityRow( idx_t* data, idx_t size ) : data_( data ), size_( size ) {}
 
-    template< typename Int >
-    ATLAS_HOST_DEVICE
-    idx_t operator()( Int i ) const { return data_[i] FROM_FORTRAN; }
+    template <typename Int>
+    ATLAS_HOST_DEVICE idx_t operator()( Int i ) const {
+        return data_[i] FROM_FORTRAN;
+    }
 
-    template< typename Int >
-    ATLAS_HOST_DEVICE
-    Index operator()( Int i ) { return INDEX_REF( data_ + i ); }
+    template <typename Int>
+    ATLAS_HOST_DEVICE Index operator()( Int i ) {
+        return INDEX_REF( data_ + i );
+    }
 
     ATLAS_HOST_DEVICE
     idx_t size() const { return size_; }
@@ -626,8 +630,7 @@ inline idx_t MultiBlockConnectivityImpl::operator()( idx_t row_idx, idx_t col_id
     return IrregularConnectivityImpl::operator()( row_idx, col_idx );
 }
 
-inline idx_t MultiBlockConnectivityImpl::operator()( idx_t block_idx, idx_t block_row_idx,
-                                                     idx_t block_col_idx ) const {
+inline idx_t MultiBlockConnectivityImpl::operator()( idx_t block_idx, idx_t block_row_idx, idx_t block_col_idx ) const {
     return block( block_idx )( block_row_idx, block_col_idx );
 }
 

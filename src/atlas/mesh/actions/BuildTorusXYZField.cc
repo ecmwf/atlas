@@ -43,7 +43,7 @@ Field& BuildTorusXYZField::operator()( mesh::Nodes& nodes, const Domain& dom, do
     const double ymax = domain.ymax();
 
     if ( !nodes.has_field( name_ ) ) {
-        const idx_t npts                        = nodes.size();
+        const idx_t npts                         = nodes.size();
         const array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( nodes.xy() );
         array::ArrayView<double, 2> xyz          = array::make_view<double, 2>(
             nodes.add( Field( name_, array::make_datatype<double>(), array::make_shape( npts, 3 ) ) ) );

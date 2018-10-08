@@ -93,10 +93,10 @@ public:
 
     virtual void resize( const ArrayShape& shape ) = 0;
 
-    virtual void resize( idx_t size0 )                                                         = 0;
-    virtual void resize( idx_t size0, idx_t size1 )                                           = 0;
-    virtual void resize( idx_t size0, idx_t size1, idx_t size2 )                             = 0;
-    virtual void resize( idx_t size0, idx_t size1, idx_t size2, idx_t size3 )               = 0;
+    virtual void resize( idx_t size0 )                                                     = 0;
+    virtual void resize( idx_t size0, idx_t size1 )                                        = 0;
+    virtual void resize( idx_t size0, idx_t size1, idx_t size2 )                           = 0;
+    virtual void resize( idx_t size0, idx_t size1, idx_t size2, idx_t size3 )              = 0;
     virtual void resize( idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4 ) = 0;
 
     virtual void insert( idx_t idx1, idx_t size1 ) = 0;

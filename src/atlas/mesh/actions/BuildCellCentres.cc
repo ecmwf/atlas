@@ -51,7 +51,7 @@ Field& BuildCellCentres::operator()( Mesh& mesh ) const {
         if ( nodes.metadata().has( "NbRealPts" ) ) { firstVirtualPoint = nodes.metadata().get<idx_t>( "NbRealPts" ); }
 
         idx_t nb_cells = mesh.cells().size();
-        auto centroids  = array::make_view<double, 2>( mesh.cells().field( field_name_ ) );
+        auto centroids = array::make_view<double, 2>( mesh.cells().field( field_name_ ) );
         const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
 
         for ( idx_t e = 0; e < nb_cells; ++e ) {

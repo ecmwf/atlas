@@ -95,7 +95,8 @@ struct default_layout_t {
         using type = ::gridtools::layout_map<Indices...>;
     };
 
-    using type = typename get_layout<typename ::gridtools::make_gt_integer_sequence<::gridtools::uint_t, Rank>::type>::type;
+    using type =
+        typename get_layout<typename ::gridtools::make_gt_integer_sequence<::gridtools::uint_t, Rank>::type>::type;
 };
 
 template <typename Value, typename LayoutMap>
@@ -138,7 +139,7 @@ struct get_shape_component {
         ATLAS_HOST_DEVICE constexpr static Value apply( StorageInfoPtr a ) {
             static_assert( (::gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value ),
                            "Error: not a storage_info" );
-        return a->template unaligned_dim<Idx>();
+            return a->template unaligned_dim<Idx>();
         }
     };
 };
@@ -176,10 +177,10 @@ wrap_gt_storage( Value* data, std::array<idx_t, Rank>&& shape, std::array<idx_t,
     static_assert( ( Rank > 0 ), "Error: can not create storages without any dimension" );
     typedef gridtools::storage_traits::storage_info_t<0, Rank, ::gridtools::zero_halo<Rank>> storage_info_ty;
     typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
-    std::array<::gridtools::uint_t,Rank> _shape;
-    std::array<::gridtools::uint_t,Rank> _strides;
-    for( unsigned int i=0; i<Rank; ++i ) {
-        _shape[i] = shape[i];
+    std::array<::gridtools::uint_t, Rank> _shape;
+    std::array<::gridtools::uint_t, Rank> _strides;
+    for ( unsigned int i = 0; i < Rank; ++i ) {
+        _shape[i]   = shape[i];
         _strides[i] = strides[i];
     }
     storage_info_ty si( _shape, _strides );
@@ -236,8 +237,7 @@ ArraySpec ATLAS_HOST make_spec( DataStore* gt_data_store_ptr, Dims... dims ) {
 
         ArraySpec spec(
             ArrayShape{(idx_t)dims...},
-            seq::template apply<ArrayStrides, get_stride_component<idx_t>::template get_component>(
-                storage_info_ptr ),
+            seq::template apply<ArrayStrides, get_stride_component<idx_t>::template get_component>( storage_info_ptr ),
             seq::template apply<ArrayLayout, get_layout_map_component<idx_t, Layout>::template get_component>(),
             ArrayAlignment( Alignment::value ) );
         ASSERT( spec.allocatedSize() == storage_info_ptr->padded_total_length() );

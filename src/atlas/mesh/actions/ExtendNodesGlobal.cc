@@ -62,7 +62,7 @@ void ExtendNodesGlobal::operator()( const Grid& grid, Mesh& mesh ) const {
     array::ArrayView<gidx_t, 1> gidx   = array::make_view<gidx_t, 1>( nodes.global_index() );
 
     for ( idx_t i = 0; i < nb_extension_pts; ++i ) {
-        const idx_t n        = nb_real_pts + i;
+        const idx_t n         = nb_real_pts + i;
         const PointLonLat pLL = grid.projection().lonlat( extended_pts[i] );
 
         PointXYZ pXYZ;

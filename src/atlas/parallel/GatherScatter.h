@@ -152,9 +152,9 @@ public:  // methods
                  const idx_t root ) const;
 
     template <typename DATA_TYPE>
-    void gather( const DATA_TYPE ldata[], const idx_t lvar_strides[], const idx_t lvar_shape[],
-                 const idx_t lvar_rank, DATA_TYPE gdata[], const idx_t gvar_strides[], const idx_t gvar_shape[],
-                 const idx_t gvar_rank, const idx_t root = 0 ) const;
+    void gather( const DATA_TYPE ldata[], const idx_t lvar_strides[], const idx_t lvar_shape[], const idx_t lvar_rank,
+                 DATA_TYPE gdata[], const idx_t gvar_strides[], const idx_t gvar_shape[], const idx_t gvar_rank,
+                 const idx_t root = 0 ) const;
 
     template <typename DATA_TYPE>
     void gather( parallel::Field<DATA_TYPE const> lfields[], parallel::Field<DATA_TYPE> gfields[],
@@ -175,9 +175,9 @@ public:  // methods
                   const idx_t root ) const;
 
     template <typename DATA_TYPE>
-    void scatter( const DATA_TYPE gdata[], const idx_t gvar_strides[], const idx_t gvar_shape[],
-                  const idx_t gvar_rank, DATA_TYPE ldata[], const idx_t lvar_strides[], const idx_t lvar_shape[],
-                  const idx_t lvar_rank, const idx_t root = 0 ) const;
+    void scatter( const DATA_TYPE gdata[], const idx_t gvar_strides[], const idx_t gvar_shape[], const idx_t gvar_rank,
+                  DATA_TYPE ldata[], const idx_t lvar_strides[], const idx_t lvar_shape[], const idx_t lvar_rank,
+                  const idx_t root = 0 ) const;
 
     template <typename DATA_TYPE, int GRANK, int LRANK>
     void scatter( const array::ArrayView<DATA_TYPE, GRANK>& gdata, array::ArrayView<DATA_TYPE, LRANK>& ldata,
@@ -228,14 +228,14 @@ void GatherScatter::gather( parallel::Field<DATA_TYPE const> lfields[], parallel
     if ( !is_setup_ ) { throw eckit::SeriousBug( "GatherScatter was not setup", Here() ); }
 
     for ( idx_t jfield = 0; jfield < nb_fields; ++jfield ) {
-        const idx_t lvar_size = std::accumulate( lfields[jfield].var_shape.data(),
-                                                  lfields[jfield].var_shape.data() + lfields[jfield].var_rank, 1,
-                                                  std::multiplies<idx_t>() );
-        const idx_t gvar_size = std::accumulate( gfields[jfield].var_shape.data(),
-                                                  gfields[jfield].var_shape.data() + gfields[jfield].var_rank, 1,
-                                                  std::multiplies<idx_t>() );
-        const int loc_size     = loccnt_ * lvar_size;
-        const int glb_size     = glb_cnt( root ) * gvar_size;
+        const idx_t lvar_size =
+            std::accumulate( lfields[jfield].var_shape.data(),
+                             lfields[jfield].var_shape.data() + lfields[jfield].var_rank, 1, std::multiplies<idx_t>() );
+        const idx_t gvar_size =
+            std::accumulate( gfields[jfield].var_shape.data(),
+                             gfields[jfield].var_shape.data() + gfields[jfield].var_rank, 1, std::multiplies<idx_t>() );
+        const int loc_size = loccnt_ * lvar_size;
+        const int glb_size = glb_cnt( root ) * gvar_size;
         std::vector<DATA_TYPE> loc_buffer( loc_size );
         std::vector<DATA_TYPE> glb_buffer( glb_size );
         std::vector<int> glb_displs( nproc );
@@ -369,7 +369,7 @@ void GatherScatter::unpack_recv_buffer( const std::vector<int>& recvmap, const D
                                         const parallel::Field<DATA_TYPE>& field ) const {
     const idx_t recvcnt = recvmap.size();
 
-    int ibuf                 = 0;
+    int ibuf                = 0;
     const idx_t recv_stride = field.var_strides[0] * field.var_shape[0];
 
     switch ( field.var_rank ) {

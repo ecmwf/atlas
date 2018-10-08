@@ -196,8 +196,8 @@ void Nabla::gradient_of_vector( const Field& vector_field, Field& grad_field ) c
 
     atlas_omp_parallel {
         atlas_omp_for( idx_t jedge = 0; jedge < nedges; ++jedge ) {
-            idx_t ip1    = edge2node( jedge, 0 );
-            idx_t ip2    = edge2node( jedge, 1 );
+            idx_t ip1  = edge2node( jedge, 0 );
+            idx_t ip2  = edge2node( jedge, 1 );
             double pbc = 1. - 2. * is_pole_edge( jedge );
 
             for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
@@ -244,8 +244,8 @@ void Nabla::gradient_of_vector( const Field& vector_field, Field& grad_field ) c
     }
     // Fix wrong node2edge_sign for vector quantities
     for ( idx_t jedge = 0; jedge < pole_edges_.size(); ++jedge ) {
-        const idx_t iedge       = pole_edges_[jedge];
-        const idx_t jnode       = edge2node( iedge, 1 );
+        const idx_t iedge     = pole_edges_[jedge];
+        const idx_t jnode     = edge2node( iedge, 1 );
         const double metric_y = 1. / ( dual_volumes( jnode ) * scale );
         for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
             grad( jnode, jlev, LONdLAT ) -= 2. * avgS( iedge, jlev, LONdLAT ) * metric_y;
@@ -293,8 +293,8 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
 
     atlas_omp_parallel {
         atlas_omp_for( idx_t jedge = 0; jedge < nedges; ++jedge ) {
-            idx_t ip1   = edge2node( jedge, 0 );
-            idx_t ip2   = edge2node( jedge, 1 );
+            idx_t ip1    = edge2node( jedge, 0 );
+            idx_t ip2    = edge2node( jedge, 1 );
             double y1    = lonlat_deg( ip1, LAT ) * deg2rad;
             double y2    = lonlat_deg( ip2, LAT ) * deg2rad;
             double cosy1 = std::cos( y1 );
@@ -377,8 +377,8 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
 
     atlas_omp_parallel {
         atlas_omp_for( idx_t jedge = 0; jedge < nedges; ++jedge ) {
-            idx_t ip1    = edge2node( jedge, 0 );
-            idx_t ip2    = edge2node( jedge, 1 );
+            idx_t ip1     = edge2node( jedge, 0 );
+            idx_t ip2     = edge2node( jedge, 1 );
             double y1     = lonlat_deg( ip1, LAT ) * deg2rad;
             double y2     = lonlat_deg( ip2, LAT ) * deg2rad;
             double rcosy1 = radius * std::cos( y1 );

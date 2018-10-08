@@ -201,7 +201,7 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
         }
 
 #if ATLAS_HAVE_TRANS
-        Field& glb  = global_fieldset[f];
+        Field& glb = global_fieldset[f];
         idx_t root = 0;
         glb.metadata().get( "owner", root );
         ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );

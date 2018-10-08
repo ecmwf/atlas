@@ -64,9 +64,7 @@ private:  // methods
     template <int N, int P>
     void create_mappings_impl( std::vector<int>& send_map, std::vector<int>& recv_map, idx_t nb_vars ) const;
 
-    idx_t index( idx_t i, idx_t j, idx_t k, idx_t ni, idx_t nj, idx_t nk ) const {
-        return ( i + ni * ( j + nj * k ) );
-    }
+    idx_t index( idx_t i, idx_t j, idx_t k, idx_t ni, idx_t nj, idx_t nk ) const { return ( i + ni * ( j + nj * k ) ); }
 
     idx_t index( idx_t i, idx_t j, idx_t ni, idx_t nj ) const { return ( i + ni * j ); }
 
@@ -117,7 +115,7 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
 
     int tag                   = 1;
     constexpr int parallelDim = array::get_parallel_dim<ParallelDim>( field_hv );
-    idx_t var_size           = array::get_var_size<parallelDim>( field_hv );
+    idx_t var_size            = array::get_var_size<parallelDim>( field_hv );
     int send_size             = sendcnt_ * var_size;
     int recv_size             = recvcnt_ * var_size;
 

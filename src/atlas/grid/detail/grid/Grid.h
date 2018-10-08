@@ -17,10 +17,10 @@
 #include "eckit/memory/Owned.h"
 
 #include "atlas/domain/Domain.h"
+#include "atlas/library/config.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
-#include "atlas/library/config.h"
 
 namespace eckit {
 class Hash;

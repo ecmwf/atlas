@@ -75,7 +75,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
     //     and could receive different gidx for different tasks
 
     // unused // int mypart = mpi::comm().rank();
-    int nparts  = mpi::comm().size();
+    int nparts = mpi::comm().size();
     idx_t root = 0;
 
     array::ArrayView<gidx_t, 1> nodes_glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
@@ -180,7 +180,7 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
                                              bool do_all ) {
     ATLAS_TRACE();
 
-    int nparts  = mpi::comm().size();
+    int nparts = mpi::comm().size();
     idx_t root = 0;
 
     array::ArrayView<gidx_t, 1> cells_glb_idx = array::make_view<gidx_t, 1>( cells.global_index() );
@@ -422,7 +422,7 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node ) {
     mesh::Nodes& nodes                  = mesh.nodes();
     array::ArrayView<double, 2> xy      = array::make_view<double, 2>( nodes.xy() );
     array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
-    idx_t nb_nodes                     = nodes.size();
+    idx_t nb_nodes                      = nodes.size();
 
     UniqueLonLat compute_uid( mesh );
 
@@ -697,7 +697,7 @@ public:
         idx_t jelemnode( 0 );
         for ( idx_t jelem = 0; jelem < nb_elems; ++jelem ) {
             buf.elem_nodes_displs[p][jelem] = jelemnode;
-            idx_t ielem                    = elems[jelem];
+            idx_t ielem                     = elems[jelem];
 
             buf.elem_glb_idx[p][jelem] = elem_glb_idx( ielem );
             buf.elem_part[p][jelem]    = elem_part( ielem );
@@ -762,7 +762,7 @@ public:
         idx_t jelemnode( 0 );
         for ( idx_t jelem = 0; jelem < nb_elems; ++jelem ) {
             buf.elem_nodes_displs[p][jelem] = jelemnode;
-            idx_t ielem                    = elems[jelem];
+            idx_t ielem                     = elems[jelem];
             buf.elem_part[p][jelem]         = elem_part( ielem );
             Topology::set( buf.elem_flags[p][jelem], elem_flags( ielem ) | newflags );
             buf.elem_type[p][jelem] = mesh.cells().type_idx( ielem );
@@ -887,7 +887,7 @@ public:
         ATLAS_TRACE();
 
         const idx_t mpi_size = mpi::comm().size();
-        auto cell_gidx        = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
+        auto cell_gidx       = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
         // Elements might be duplicated from different Tasks. We need to identify
         // unique entries
         int nb_elems = mesh.cells().size();
@@ -964,7 +964,7 @@ public:
             idx_t new_elem( 0 );
             for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
                 for ( idx_t e = 0; e < elems[jpart].size(); ++e ) {
-                    idx_t jelem                 = elems[jpart][e];
+                    idx_t jelem                  = elems[jpart][e];
                     int loc_idx                  = new_elems_pos + new_elem;
                     elem_type_glb_idx( loc_idx ) = std::abs( buf.elem_glb_idx[jpart][jelem] );
                     elem_type_part( loc_idx )    = buf.elem_part[jpart][jelem];
@@ -1012,8 +1012,8 @@ void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uid_t>&
     }
 
     const idx_t mpi_size = comm.size();
-    const int counts_tag  = 0;
-    const int buffer_tag  = 1;
+    const int counts_tag = 0;
+    const int buffer_tag = 1;
 
     std::vector<eckit::mpi::Request> counts_requests;
     counts_requests.reserve( neighbours.size() );

@@ -95,7 +95,7 @@ Field HybridElements::add( const Field& field ) {
 
 void HybridElements::resize( idx_t size ) {
     idx_t old_size = size_;
-    size_           = size;
+    size_          = size;
     for ( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it ) {
         Field& field            = it->second;
         array::ArrayShape shape = field.shape();
@@ -153,7 +153,7 @@ HybridElements::Connectivity& HybridElements::add( Connectivity* connectivity ) 
 }
 
 idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements,
-                            const std::vector<idx_t>& connectivity ) {
+                           const std::vector<idx_t>& connectivity ) {
     return add( element_type, nb_elements, connectivity.data() );
 }
 
@@ -162,7 +162,7 @@ idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements, c
 }
 
 idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements, const idx_t connectivity[],
-                            bool fortran_array ) {
+                           bool fortran_array ) {
     eckit::SharedPtr<const ElementType> etype( element_type );
 
     idx_t old_size = size();

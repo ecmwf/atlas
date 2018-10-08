@@ -283,7 +283,7 @@ idx_t NodeColumns::config_nb_nodes( const eckit::Configuration& config ) const {
             idx_t owner( 0 );
             config.get( "owner", owner );
             idx_t _nb_nodes_global = nb_nodes_global();
-            size                    = ( mpi::comm().rank() == owner ? _nb_nodes_global : 0 );
+            size                   = ( mpi::comm().rank() == owner ? _nb_nodes_global : 0 );
         }
     }
     return size;
@@ -421,8 +421,8 @@ void NodeColumns::gather( const FieldSet& local_fieldset, FieldSet& global_field
     ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
-        const Field& loc       = local_fieldset[f];
-        Field& glb             = global_fieldset[f];
+        const Field& loc      = local_fieldset[f];
+        Field& glb            = global_fieldset[f];
         const idx_t nb_fields = 1;
         idx_t root( 0 );
         glb.metadata().get( "owner", root );
@@ -474,8 +474,8 @@ void NodeColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fiel
     ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
-        const Field& glb       = global_fieldset[f];
-        Field& loc             = local_fieldset[f];
+        const Field& glb      = global_fieldset[f];
+        Field& loc            = local_fieldset[f];
         const idx_t nb_fields = 1;
         idx_t root( 0 );
         glb.metadata().get( "owner", root );
@@ -522,7 +522,7 @@ std::string checksum_3d_field( const parallel::Checksum& checksum, const Field& 
     array::LocalView<T, 3> values = make_leveled_view<T>( field );
     array::ArrayT<T> surface_field( values.shape( 0 ), values.shape( 2 ) );
     array::ArrayView<T, 2> surface = array::make_view<T, 2>( surface_field );
-    const idx_t npts              = values.shape( 0 );
+    const idx_t npts               = values.shape( 0 );
     atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
         for ( idx_t j = 0; j < surface.shape( 1 ); ++j ) {
             surface( n, j ) = 0.;
@@ -600,7 +600,7 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, T& result, idx_t& 
     const mesh::IsGhostNode is_ghost( fs.nodes() );
     const array::LocalView<T, 2> arr = make_leveled_scalar_view<T>( field );
     T local_sum                      = 0;
-    const idx_t npts                = std::min<idx_t>( arr.shape( 0 ), fs.nb_nodes() );
+    const idx_t npts                 = std::min<idx_t>( arr.shape( 0 ), fs.nb_nodes() );
   atlas_omp_pragma( omp parallel for default(shared) reduction(+:local_sum) )
   for( idx_t n=0; n<npts; ++n ) {
       if ( !is_ghost( n ) ) {
@@ -789,7 +789,7 @@ void sum_per_level( const NodeColumns& fs, const Field& field, Field& sum, idx_t
 
 template <typename DATATYPE>
 void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& field, DATATYPE& result, idx_t& N ) {
-    idx_t root  = 0;
+    idx_t root   = 0;
     Field global = fs.createField( field, option::global() );
     fs.gather( field, global );
     result   = 0;
@@ -888,7 +888,7 @@ template <typename T>
 void dispatch_order_independent_sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, idx_t& N ) {
     if ( field.levels() ) {
         const idx_t nvar = field.variables();
-        const auto arr    = make_leveled_view<T>( field );
+        const auto arr   = make_leveled_view<T>( field );
 
         Field surface_field =
             fs.createField<T>( option::name( "surface" ) | option::variables( nvar ) | option::levels( false ) );
@@ -968,7 +968,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
         }
     }
 
-    idx_t root  = 0;
+    idx_t root   = 0;
     Field global = fs.createField( field, option::name( "global" ) | option::global() );
 
     fs.gather( field, global );
@@ -1027,7 +1027,7 @@ void order_independent_sum_per_level( const NodeColumns& fs, const Field& field,
 template <typename T>
 void dispatch_minimum( const NodeColumns& fs, const Field& field, std::vector<T>& min ) {
     const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
-    const idx_t nvar                = arr.shape( 2 );
+    const idx_t nvar                 = arr.shape( 2 );
     min.resize( nvar );
     std::vector<T> local_minimum( nvar, std::numeric_limits<T>::max() );
     atlas_omp_parallel {
@@ -1088,7 +1088,7 @@ void minimum( const NodeColumns& fs, const Field& field, std::vector<T>& min ) {
 template <typename T>
 void dispatch_maximum( const NodeColumns& fs, const Field& field, std::vector<T>& max ) {
     const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
-    const idx_t nvar                = arr.shape( 2 );
+    const idx_t nvar                 = arr.shape( 2 );
     max.resize( nvar );
     std::vector<T> local_maximum( nvar, -std::numeric_limits<T>::max() );
     atlas_omp_parallel {
@@ -1288,7 +1288,7 @@ template <typename T>
 void dispatch_minimum_and_location( const NodeColumns& fs, const Field& field, std::vector<T>& min,
                                     std::vector<gidx_t>& glb_idx, std::vector<idx_t>& level ) {
     array::LocalView<T, 3> arr = make_leveled_view<T>( field );
-    idx_t nvar                = arr.shape( 2 );
+    idx_t nvar                 = arr.shape( 2 );
     min.resize( nvar );
     glb_idx.resize( nvar );
     level.resize( nvar );
@@ -1391,7 +1391,7 @@ template <typename T>
 void dispatch_maximum_and_location( const NodeColumns& fs, const Field& field, std::vector<T>& max,
                                     std::vector<gidx_t>& glb_idx, std::vector<idx_t>& level ) {
     array::LocalView<T, 3> arr = make_leveled_view<T>( field );
-    idx_t nvar                = arr.shape( 2 );
+    idx_t nvar                 = arr.shape( 2 );
     max.resize( nvar );
     glb_idx.resize( nvar );
     level.resize( nvar );
@@ -1549,8 +1549,8 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field
     min_field.resize( shape );
     glb_idx_field.resize( shape );
     const idx_t nvar = arr.shape( 2 );
-    auto min          = make_per_level_view<T>( min_field );
-    auto glb_idx      = make_per_level_view<gidx_t>( glb_idx_field );
+    auto min         = make_per_level_view<T>( min_field );
+    auto glb_idx     = make_per_level_view<gidx_t>( glb_idx_field );
 
     for ( idx_t l = 0; l < min.shape( 0 ); ++l ) {
         for ( idx_t j = 0; j < min.shape( 1 ); ++j ) {
@@ -1570,7 +1570,7 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field
 
         array::ArrayT<gidx_t> glb_idx_private( glb_idx.shape( 0 ), glb_idx.shape( 1 ) );
         array::ArrayView<gidx_t, 2> glb_idx_private_view = array::make_view<gidx_t, 2>( glb_idx_private );
-        const idx_t npts                                = arr.shape( 0 );
+        const idx_t npts                                 = arr.shape( 0 );
         atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
             for ( idx_t l = 0; l < arr.shape( 1 ); ++l ) {
                 for ( idx_t j = 0; j < nvar; ++j ) {
@@ -1648,8 +1648,8 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field
     max_field.resize( shape );
     glb_idx_field.resize( shape );
     const idx_t nvar = arr.shape( 2 );
-    auto max          = make_per_level_view<T>( max_field );
-    auto glb_idx      = make_per_level_view<gidx_t>( glb_idx_field );
+    auto max         = make_per_level_view<T>( max_field );
+    auto glb_idx     = make_per_level_view<gidx_t>( glb_idx_field );
 
     for ( idx_t l = 0; l < max.shape( 0 ); ++l ) {
         for ( idx_t j = 0; j < max.shape( 1 ); ++j ) {
@@ -1669,7 +1669,7 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field
 
         array::ArrayT<gidx_t> glb_idx_private( glb_idx.shape( 0 ), glb_idx.shape( 1 ) );
         array::ArrayView<gidx_t, 2> glb_idx_private_view = array::make_view<gidx_t, 2>( glb_idx_private );
-        const idx_t npts                                = arr.shape( 0 );
+        const idx_t npts                                 = arr.shape( 0 );
         atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
             for ( idx_t l = 0; l < arr.shape( 1 ); ++l ) {
                 for ( idx_t j = 0; j < nvar; ++j ) {

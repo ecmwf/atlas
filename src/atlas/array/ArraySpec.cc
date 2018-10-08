@@ -12,16 +12,16 @@
 
 #include "eckit/exception/Exceptions.h"
 
-#include "atlas/library/config.h"
 #include "atlas/array/ArrayUtil.h"
+#include "atlas/library/config.h"
 
 namespace atlas {
 namespace array {
 
 namespace {
 idx_t compute_allocated_size( idx_t size, idx_t alignment ) {
-    idx_t div                = size / alignment;
-    idx_t mod                = size % alignment;
+    idx_t div             = size / alignment;
+    idx_t mod             = size % alignment;
     idx_t _allocated_size = div * alignment;
     if ( mod > 0 ) _allocated_size += alignment;
     return _allocated_size;

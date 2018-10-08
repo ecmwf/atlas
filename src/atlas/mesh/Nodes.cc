@@ -83,7 +83,7 @@ Field& Nodes::field( const std::string& name ) {
 void Nodes::resize( idx_t size ) {
     if ( size != size_ ) {
         idx_t previous_size = size_;
-        size_                = size;
+        size_               = size;
         for ( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it ) {
             Field& field            = it->second;
             array::ArrayShape shape = field.shape();

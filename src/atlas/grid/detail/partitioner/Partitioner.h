@@ -64,7 +64,7 @@ public:
 
 private:
     std::string name_;
-    virtual Partitioner* make()                             = 0;
+    virtual Partitioner* make()                            = 0;
     virtual Partitioner* make( const idx_t nb_partitions ) = 0;
 
 protected:

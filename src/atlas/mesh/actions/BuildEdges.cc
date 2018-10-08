@@ -73,7 +73,7 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
         cell_edge_connectivity.add( nb_elements, nb_edges_per_elem, init.data() );
     }
 
-    idx_t nb_edges                                                  = mesh.edges().size();
+    idx_t nb_edges                                                   = mesh.edges().size();
     const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh.edges().cell_connectivity();
     const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
 
@@ -146,7 +146,7 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
 }
 
 void build_node_to_edge_connectivity( Mesh& mesh ) {
-    mesh::Nodes& nodes    = mesh.nodes();
+    mesh::Nodes& nodes   = mesh.nodes();
     const idx_t nb_edges = mesh.edges().size();
 
     mesh::Nodes::Connectivity& node_to_edge = nodes.edge_connectivity();
@@ -282,10 +282,10 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
         SOUTH = 1
     };
 
-    const auto xy         = array::make_view<double, 2>( nodes.xy() );
-    const auto flags      = array::make_view<int, 1>( nodes.flags() );
-    const auto part       = array::make_view<int, 1>( nodes.partition() );
-    const auto halo       = array::make_view<int, 1>( nodes.halo() );
+    const auto xy        = array::make_view<double, 2>( nodes.xy() );
+    const auto flags     = array::make_view<int, 1>( nodes.flags() );
+    const auto part      = array::make_view<int, 1>( nodes.partition() );
+    const auto halo      = array::make_view<int, 1>( nodes.halo() );
     const idx_t nb_nodes = nodes.size();
 
     double min[2], max[2];
@@ -454,8 +454,8 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
         ASSERT( cell_nodes.missing_value() == missing_value );
         for ( idx_t edge = edge_start; edge < edge_end; ++edge ) {
             const idx_t iedge = edge_halo_offsets[halo] + ( edge - edge_start );
-            const int ip1      = edge_nodes( edge, 0 );
-            const int ip2      = edge_nodes( edge, 1 );
+            const int ip1     = edge_nodes( edge, 0 );
+            const int ip2     = edge_nodes( edge, 1 );
             if ( compute_uid( ip1 ) > compute_uid( ip2 ) ) {
                 idx_t swapped[2] = {ip2, ip1};
                 edge_nodes.set( edge, swapped );

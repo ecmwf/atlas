@@ -61,7 +61,7 @@ std::string checksum_3d_field( const parallel::Checksum& checksum, const Field& 
     array::LocalView<T, 3> values = make_leveled_view<T>( field );
     array::ArrayT<T> surface_field( values.shape( 0 ), values.shape( 2 ) );
     array::ArrayView<T, 2> surface = array::make_view<T, 2>( surface_field );
-    const idx_t npts              = values.shape( 0 );
+    const idx_t npts               = values.shape( 0 );
     atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
         for ( idx_t j = 0; j < surface.shape( 1 ); ++j ) {
             surface( n, j ) = 0.;
@@ -431,7 +431,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
         if ( gp.j >= 0 && gp.j < grid_.ny() ) {
             if ( gp.i >= 0 && gp.i < grid_.nx( gp.j ) ) {
                 in_domain          = true;
-                idx_t k           = global_offsets[gp.j] + gp.i;
+                idx_t k            = global_offsets[gp.j] + gp.i;
                 part( gp.r )       = distribution.partition( k );
                 global_idx( gp.r ) = k + 1;
                 remote_idx( gp.r ) = gp.r;
@@ -513,8 +513,8 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
             int tag = 0;
             for ( idx_t j = 0; j < neighbours.size(); ++j ) {
                 idx_t g_per_neighbour_size = g_per_neighbour[j].size();
-                send_requests[j]            = comm.iSend( g_per_neighbour_size, neighbours[j], tag );
-                recv_requests[j]            = comm.iReceive( recv_size[j], neighbours[j], tag );
+                send_requests[j]           = comm.iSend( g_per_neighbour_size, neighbours[j], tag );
+                recv_requests[j]           = comm.iReceive( recv_size[j], neighbours[j], tag );
             }
 
             for ( idx_t j = 0; j < neighbours.size(); ++j ) {
@@ -564,7 +564,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
             std::vector<idx_t> counters( neighbours.size(), 0 );
             for ( idx_t j = size_owned_; j < size_halo_; ++j ) {
                 idx_t neighbour = part_to_neighbour[p( j )];
-                remote_idx( j )  = r_per_neighbour[neighbour][counters[neighbour]++];
+                remote_idx( j ) = r_per_neighbour[neighbour][counters[neighbour]++];
             }
 
             for ( idx_t j = 0; j < neighbours.size(); ++j ) {
@@ -620,8 +620,8 @@ void StructuredColumns::gather( const FieldSet& local_fieldset, FieldSet& global
     ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
-        const Field& loc       = local_fieldset[f];
-        Field& glb             = global_fieldset[f];
+        const Field& loc      = local_fieldset[f];
+        Field& glb            = global_fieldset[f];
         const idx_t nb_fields = 1;
         idx_t root( 0 );
         glb.metadata().get( "owner", root );
@@ -671,8 +671,8 @@ void StructuredColumns::scatter( const FieldSet& global_fieldset, FieldSet& loca
     ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
-        const Field& glb       = global_fieldset[f];
-        Field& loc             = local_fieldset[f];
+        const Field& glb      = global_fieldset[f];
+        Field& loc            = local_fieldset[f];
         const idx_t nb_fields = 1;
         idx_t root( 0 );
         glb.metadata().get( "owner", root );

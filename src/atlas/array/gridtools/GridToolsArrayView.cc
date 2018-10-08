@@ -31,7 +31,7 @@ struct host_device_array {
 
     ATLAS_HOST_DEVICE const T* data() const { return data_; }
 
-    T operator[](int i) const { return data_[i]; }
+    T operator[]( int i ) const { return data_[i]; }
 
     T data_[Rank];
 };
@@ -64,18 +64,18 @@ ArrayView<Value, Rank, AccessMode>::ArrayView( data_view_t data_view, const Arra
         auto storage_info_ =
             *( ( reinterpret_cast<data_store_t*>( const_cast<void*>( array.storage() ) ) )->get_storage_info_ptr() );
 
-        auto stridest = seq::template apply<host_device_array<ArrayStrides::value_type, Rank>,
-                                            atlas::array::gridtools::get_stride_component<
-                                                ArrayStrides::value_type>::template get_component>(
+        auto stridest = seq::template apply<
+            host_device_array<ArrayStrides::value_type, Rank>,
+            atlas::array::gridtools::get_stride_component<ArrayStrides::value_type>::template get_component>(
             &( storage_info_ ) );
-        auto shapet = seq::template apply<host_device_array<ArrayShape::value_type, Rank>,
-                                            atlas::array::gridtools::get_shape_component<
-                                                ArrayStrides::value_type>::template get_component>(
+        auto shapet = seq::template apply<
+            host_device_array<ArrayShape::value_type, Rank>,
+            atlas::array::gridtools::get_shape_component<ArrayStrides::value_type>::template get_component>(
             &( storage_info_ ) );
 
-        for( int i=0; i<Rank; ++i ) {
+        for ( int i = 0; i < Rank; ++i ) {
             strides_[i] = stridest[i];
-            shape_[i] = shapet[i];
+            shape_[i]   = shapet[i];
         }
 
         size_ = storage_info_.total_length();

@@ -159,7 +159,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes ) {
     UniqueLonLat compute_uid( nodes );
 
     // unused // int mypart = mpi::comm().rank();
-    int nparts  = mpi::comm().size();
+    int nparts = mpi::comm().size();
     idx_t root = 0;
 
     array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
@@ -249,9 +249,9 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
         proc[jpart] = jpart;
     // <---------
 
-    auto ridx       = array::make_indexview<idx_t, 1>( nodes.remote_index() );
-    auto part       = array::make_view<int, 1>( nodes.partition() );
-    auto gidx       = array::make_view<gidx_t, 1>( nodes.global_index() );
+    auto ridx      = array::make_indexview<idx_t, 1>( nodes.remote_index() );
+    auto part      = array::make_view<int, 1>( nodes.partition() );
+    auto gidx      = array::make_view<gidx_t, 1>( nodes.global_index() );
     idx_t nb_nodes = nodes.size();
 
     idx_t varsize = 2;
@@ -291,7 +291,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
 
     for ( idx_t jpart = 0; jpart < nparts; ++jpart ) {
         const std::vector<uid_t>& recv_node = recv_needed[proc[jpart]];
-        const idx_t nb_recv_nodes          = idx_t(recv_node.size()) / varsize;
+        const idx_t nb_recv_nodes           = idx_t( recv_node.size() ) / varsize;
         // array::ArrayView<uid_t,2> recv_node( make_view( Array::wrap(shape,
         // recv_needed[ proc[jpart] ].data()) ),
         //     array::make_shape(recv_needed[ proc[jpart] ].size()/varsize,varsize)
@@ -317,7 +317,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
 
     for ( idx_t jpart = 0; jpart < nparts; ++jpart ) {
         const std::vector<int>& recv_node = recv_found[proc[jpart]];
-        const idx_t nb_recv_nodes        = recv_node.size() / 2;
+        const idx_t nb_recv_nodes         = recv_node.size() / 2;
         // array::ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
         //     array::make_shape(recv_found[ proc[jpart] ].size()/2,2) );
         for ( idx_t jnode = 0; jnode < nb_recv_nodes; ++jnode ) {
@@ -800,7 +800,7 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
     std::map<uid_t, int>::iterator found;
     for ( idx_t jpart = 0; jpart < nparts; ++jpart ) {
         const std::vector<uid_t>& recv_edge = recv_needed[jpart];
-        const idx_t nb_recv_edges          = idx_t(recv_edge.size()) / varsize;
+        const idx_t nb_recv_edges           = idx_t( recv_edge.size() ) / varsize;
         // array::ArrayView<uid_t,2> recv_edge( recv_needed[ jpart ].data(),
         //     array::make_shape(recv_needed[ jpart ].size()/varsize,varsize) );
         for ( idx_t jedge = 0; jedge < nb_recv_edges; ++jedge ) {
@@ -833,7 +833,7 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
 
     for ( idx_t jpart = 0; jpart < nparts; ++jpart ) {
         const std::vector<int>& recv_edge = recv_found[jpart];
-        const idx_t nb_recv_edges        = recv_edge.size() / 2;
+        const idx_t nb_recv_edges         = recv_edge.size() / 2;
         // array::ArrayView<int,2> recv_edge( recv_found[ jpart ].data(),
         //     array::make_shape(recv_found[ jpart ].size()/2,2) );
         for ( idx_t jedge = 0; jedge < nb_recv_edges; ++jedge ) {
@@ -848,7 +848,7 @@ Field& build_edges_global_idx( Mesh& mesh ) {
 
     UniqueLonLat compute_uid( mesh );
 
-    int nparts  = mpi::comm().size();
+    int nparts = mpi::comm().size();
     idx_t root = 0;
 
     mesh::HybridElements& edges = mesh.edges();

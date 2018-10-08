@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include "eckit/memory/Owned.h"
 #include "atlas/library/config.h"
+#include "eckit/memory/Owned.h"
 
 namespace atlas {
 namespace mesh {

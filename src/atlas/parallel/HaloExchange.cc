@@ -142,11 +142,11 @@ void execute_halo_exchange( HaloExchange* This, Value field[], int var_strides[]
     // WARNING: Only works if there is only one parallel dimension AND being
     // slowest moving
 
-    array::ArrayShape shape{ This->backdoor.parsize };
+    array::ArrayShape shape{This->backdoor.parsize};
     for ( int j = 0; j < var_rank; ++j )
         shape.push_back( var_extents[j] );
 
-    array::ArrayStrides strides{ var_extents[0] * var_strides[0] };
+    array::ArrayStrides strides{var_extents[0] * var_strides[0]};
     for ( int j = 0; j < var_rank; ++j )
         strides.push_back( var_strides[j] );
 

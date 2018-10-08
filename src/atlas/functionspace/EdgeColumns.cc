@@ -338,8 +338,8 @@ void EdgeColumns::gather( const FieldSet& local_fieldset, FieldSet& global_field
     ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
-        const Field& loc       = local_fieldset[f];
-        Field& glb             = global_fieldset[f];
+        const Field& loc      = local_fieldset[f];
+        Field& glb            = global_fieldset[f];
         const idx_t nb_fields = 1;
         idx_t root( 0 );
         glb.metadata().get( "owner", root );
@@ -390,8 +390,8 @@ void EdgeColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fiel
     ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
-        const Field& glb       = global_fieldset[f];
-        Field& loc             = local_fieldset[f];
+        const Field& glb      = global_fieldset[f];
+        Field& loc            = local_fieldset[f];
         const idx_t nb_fields = 1;
         idx_t root( 0 );
         glb.metadata().get( "owner", root );
