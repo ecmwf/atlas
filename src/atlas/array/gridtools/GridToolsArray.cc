@@ -167,7 +167,7 @@ public:
 
         if ( array_.valid() ) array_.syncHostDevice();
 
-        Array* resized = Array::create<Value>( ArrayShape{(unsigned int)c...} );
+        Array* resized = Array::create<Value>( ArrayShape{(idx_t)c...} );
 
         array_initializer<sizeof...( c )>::apply( array_, *resized );
         array_.replace( *resized );
