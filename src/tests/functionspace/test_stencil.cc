@@ -81,6 +81,12 @@ CASE( "test horizontal stencil" ) {
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
 
     grid::StructuredGrid grid( gridname );
+    int halo = eckit::Resource<int>( "--halo", 2 );
+    util::Config config;
+    config.set( "halo", halo );
+    config.set( "levels", 9 );
+    config.set( "periodic_points", true );
+    functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
 
     double tol = 0.5e-6;
 
@@ -99,29 +105,12 @@ CASE( "test horizontal stencil" ) {
         Log::info() << p << std::endl;
         compute_stencil( p.x(), p.y(), stencil );
         for ( idx_t j = 0; j < stencil.width(); ++j ) {
-            // Log::info() << stencil.i(j) << " " << stencil.j(j) << "   --   "
-            //             << glb_idx( fs.index( stencil.i(j), stencil.j(j) ) ) << std::endl;
-            if ( stencil.j( j ) < 0 || stencil.j( j ) >= grid.ny() ) {
-                // ignore
-            }
-            else {
-                Log::info() << stencil.i( j ) << " " << stencil.j( j ) << "   --   "
-                            << "x,y = " << grid.x( stencil.i( j ), stencil.j( j ) ) << "   "
-                            << grid.xy( stencil.i( j ), stencil.j( j ) ) << std::endl;
-            }
+            Log::info() << stencil.i( j ) << " " << stencil.j( j ) << "   --   "
+                        << "x,y = "
+                        << fs.compute_xy( stencil.i( j ), stencil.j( j ) ) << std::endl;
         }
         Log::info() << std::endl;
     }
-
-    int halo = eckit::Resource<int>( "--halo", 2 );
-    util::Config config;
-    config.set( "halo", halo );
-    config.set( "levels", 9 );
-    config.set( "periodic_points", true );
-    functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
-
-
-    //}
 }
 
 CASE( "test vertical stencil" ) {

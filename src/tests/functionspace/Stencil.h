@@ -61,32 +61,40 @@ class ComputeNorth {
     std::vector<double> y_;
     double dy_;
     static constexpr double tol() { return 0.5e-6; }
+    static constexpr double halo() { return 5; }
     idx_t ny_;
 
 public:
     ComputeNorth( const grid::StructuredGrid& grid ) {
         ny_ = grid.ny();
-        y_.resize( ny_ );
+        y_.resize( ny_ + 2 * halo() );
+        ASSERT( halo() < ny_ );
+        idx_t north_pole_included = 90. - std::abs(grid.y().front()) < tol();
+        idx_t south_pole_included = 90. - std::abs(grid.y().back()) < tol();
+
+        for ( idx_t j = -halo(); j < 0; ++j ) {
+            idx_t jj = -j - 1 + north_pole_included;
+            y_[halo() + j] = 180. - grid.y( jj ) + tol();
+        }
         for ( idx_t j = 0; j < ny_; ++j ) {
-            y_[j] = grid.y( j ) + tol();
+            y_[halo() + j] = grid.y( j ) + tol();
+        }
+        for ( idx_t j = ny_; j < ny_ + halo(); ++j ) {
+            idx_t jj = 2*ny_ -j - 1 - south_pole_included ;
+            y_[halo() + j] =  -180. - grid.y( jj ) + tol();
         }
         dy_ = std::abs( grid.y( 1 ) - grid.y( 0 ) );
     }
+
     idx_t operator()( double y ) const {
-        idx_t j = std::floor( ( y_[0] - y ) / dy_ );
-#ifndef NDEBUG
-        ASSERT( j >= -1 );
-        ASSERT( j < ny_ );
-#endif
-        constexpr idx_t zero = 0;
-        while ( j < ny_ &&  y_[std::max( j, zero )] > y ) {
+        idx_t j = std::floor( ( y_[halo()+0] - y ) / dy_ );
+        while ( y_[ halo() + j ] > y ) {
             ++j;
         }
-        if ( j >= 0 ) {
-            do {
-                --j;
-            } while ( j >= ny_ || y_[j] < y );
-        }
+        do {
+            --j;
+        } while ( y_[ halo() + j ] < y );
+
         return j;
     }
 };
@@ -95,27 +103,33 @@ class ComputeWest {
     std::vector<double> dx;
     std::vector<double> xref;
     static constexpr double tol() { return 0.5e-6; }
-    idx_t ny;
+    static constexpr double halo() { return 5; }
+    idx_t ny_;
 
 public:
     ComputeWest( const grid::StructuredGrid& grid ) {
-        if ( not grid::RegularGrid( grid ) &&
-             std::abs( std::max( std::abs( grid.y().front() ), std::abs( grid.y().back() ) ) - 90. ) < tol() ) {
-            throw eckit::NotImplemented( "ComputeWest not yet implemented for irregular grids with latitudes at pole",
-                                         Here() );
+        idx_t north_pole_included = 90. - std::abs(grid.y().front()) < tol();
+        idx_t south_pole_included = 90. - std::abs(grid.y().back()) < tol();
+        ny_ = grid.ny();
+        dx.resize( ny_ + 2 * halo() );
+        xref.resize( ny_ + 2 * halo() );
+        for ( idx_t j = -halo(); j < 0; ++j ) {
+            idx_t jj = -j - 1 + north_pole_included;
+            dx[halo() + j] = grid.x( 1, jj ) - grid.x( 0, jj);
+            xref[halo() + j] = grid.x( 0, jj ) - tol();
         }
-        dx.resize( grid.ny() );
-        xref.resize( grid.ny() );
-        for ( idx_t j = 0; j < grid.ny(); ++j ) {
-            dx[j]   = std::abs( grid.x( 1, j ) - grid.x( 0, j ) );
-            xref[j] = grid.x( 0, j ) - tol();
+        for ( idx_t j = 0; j < ny_; ++j ) {
+            dx[halo() + j]   = std::abs( grid.x( 1, j ) - grid.x( 0, j) );
+            xref[halo() + j] = grid.x( 0, j ) - tol();
         }
-        ny = grid.ny();
+        for ( idx_t j = ny_; j < ny_ + halo(); ++j ) {
+            idx_t jj = 2*ny_ -j - 1 - south_pole_included ;
+            dx[halo() + j]   = std::abs( grid.x( 1, jj ) - grid.x( 0, jj) );
+            xref[halo() + j] = grid.x( 0, jj ) - tol();
+        }
     }
     idx_t operator()( const double& x, idx_t j ) const {
-        idx_t jj{j};
-        if ( jj < 0 ) { jj = -j - 1; }
-        if ( jj >= ny ) { jj = ny - 1 - ( jj - ny ); }
+        idx_t jj = halo() + j;
         idx_t i = std::floor( ( x - xref[jj] ) / dx[jj] );
         return i;
     }
