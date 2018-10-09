@@ -69,31 +69,31 @@ public:
         ny_ = grid.ny();
         y_.resize( ny_ + 2 * halo() );
         ASSERT( halo() < ny_ );
-        idx_t north_pole_included = 90. - std::abs(grid.y().front()) < tol();
-        idx_t south_pole_included = 90. - std::abs(grid.y().back()) < tol();
+        idx_t north_pole_included = 90. - std::abs( grid.y().front() ) < tol();
+        idx_t south_pole_included = 90. - std::abs( grid.y().back() ) < tol();
 
         for ( idx_t j = -halo(); j < 0; ++j ) {
-            idx_t jj = -j - 1 + north_pole_included;
+            idx_t jj       = -j - 1 + north_pole_included;
             y_[halo() + j] = 180. - grid.y( jj ) + tol();
         }
         for ( idx_t j = 0; j < ny_; ++j ) {
             y_[halo() + j] = grid.y( j ) + tol();
         }
         for ( idx_t j = ny_; j < ny_ + halo(); ++j ) {
-            idx_t jj = 2*ny_ -j - 1 - south_pole_included ;
-            y_[halo() + j] =  -180. - grid.y( jj ) + tol();
+            idx_t jj       = 2 * ny_ - j - 1 - south_pole_included;
+            y_[halo() + j] = -180. - grid.y( jj ) + tol();
         }
         dy_ = std::abs( grid.y( 1 ) - grid.y( 0 ) );
     }
 
     idx_t operator()( double y ) const {
-        idx_t j = std::floor( ( y_[halo()+0] - y ) / dy_ );
-        while ( y_[ halo() + j ] > y ) {
+        idx_t j = std::floor( ( y_[halo() + 0] - y ) / dy_ );
+        while ( y_[halo() + j] > y ) {
             ++j;
         }
         do {
             --j;
-        } while ( y_[ halo() + j ] < y );
+        } while ( y_[halo() + j] < y );
 
         return j;
     }
@@ -108,29 +108,29 @@ class ComputeWest {
 
 public:
     ComputeWest( const grid::StructuredGrid& grid ) {
-        idx_t north_pole_included = 90. - std::abs(grid.y().front()) < tol();
-        idx_t south_pole_included = 90. - std::abs(grid.y().back()) < tol();
-        ny_ = grid.ny();
+        idx_t north_pole_included = 90. - std::abs( grid.y().front() ) < tol();
+        idx_t south_pole_included = 90. - std::abs( grid.y().back() ) < tol();
+        ny_                       = grid.ny();
         dx.resize( ny_ + 2 * halo() );
         xref.resize( ny_ + 2 * halo() );
         for ( idx_t j = -halo(); j < 0; ++j ) {
-            idx_t jj = -j - 1 + north_pole_included;
-            dx[halo() + j] = grid.x( 1, jj ) - grid.x( 0, jj);
+            idx_t jj         = -j - 1 + north_pole_included;
+            dx[halo() + j]   = grid.x( 1, jj ) - grid.x( 0, jj );
             xref[halo() + j] = grid.x( 0, jj ) - tol();
         }
         for ( idx_t j = 0; j < ny_; ++j ) {
-            dx[halo() + j]   = std::abs( grid.x( 1, j ) - grid.x( 0, j) );
+            dx[halo() + j]   = std::abs( grid.x( 1, j ) - grid.x( 0, j ) );
             xref[halo() + j] = grid.x( 0, j ) - tol();
         }
         for ( idx_t j = ny_; j < ny_ + halo(); ++j ) {
-            idx_t jj = 2*ny_ -j - 1 - south_pole_included ;
-            dx[halo() + j]   = std::abs( grid.x( 1, jj ) - grid.x( 0, jj) );
+            idx_t jj         = 2 * ny_ - j - 1 - south_pole_included;
+            dx[halo() + j]   = std::abs( grid.x( 1, jj ) - grid.x( 0, jj ) );
             xref[halo() + j] = grid.x( 0, jj ) - tol();
         }
     }
     idx_t operator()( const double& x, idx_t j ) const {
         idx_t jj = halo() + j;
-        idx_t i = std::floor( ( x - xref[jj] ) / dx[jj] );
+        idx_t i  = std::floor( ( x - xref[jj] ) / dx[jj] );
         return i;
     }
 };

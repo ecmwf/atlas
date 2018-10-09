@@ -106,8 +106,7 @@ CASE( "test horizontal stencil" ) {
         compute_stencil( p.x(), p.y(), stencil );
         for ( idx_t j = 0; j < stencil.width(); ++j ) {
             Log::info() << stencil.i( j ) << " " << stencil.j( j ) << "   --   "
-                        << "x,y = "
-                        << fs.compute_xy( stencil.i( j ), stencil.j( j ) ) << std::endl;
+                        << "x,y = " << fs.compute_xy( stencil.i( j ), stencil.j( j ) ) << std::endl;
         }
         Log::info() << std::endl;
     }

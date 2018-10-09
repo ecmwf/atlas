@@ -223,9 +223,9 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     if ( not grid_ ) { throw eckit::BadCast( "Grid is not a grid::Structured type", Here() ); }
     const eckit::mpi::Comm& comm = mpi::comm();
 
-    ny_ = grid_.ny();
-    north_pole_included_ = 90. - grid_.y(0) == 0.;
-    south_pole_included_ = 90. + grid_.y(ny_-1) == 0;
+    ny_                  = grid_.ny();
+    north_pole_included_ = 90. - grid_.y( 0 ) == 0.;
+    south_pole_included_ = 90. + grid_.y( ny_ - 1 ) == 0;
 
 
     grid::Partitioner partitioner( p );
@@ -596,19 +596,19 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
 
 void StructuredColumns::compute_xy( idx_t i, idx_t j, PointXY& xy ) const {
     idx_t jj;
-    if( j < 0 ) {
-        jj = -j - 1 + north_pole_included_;
-        xy.y() = 180. - grid_.y(jj);
+    if ( j < 0 ) {
+        jj     = -j - 1 + north_pole_included_;
+        xy.y() = 180. - grid_.y( jj );
     }
     else if ( j >= ny_ ) {
-        jj = 2*ny_ -j - 1 - south_pole_included_ ;
-        xy.y() = -180. - grid_.y(jj);
+        jj     = 2 * ny_ - j - 1 - south_pole_included_;
+        xy.y() = -180. - grid_.y( jj );
     }
     else {
-        jj = j;
-        xy.y() = grid_.y(jj);
+        jj     = j;
+        xy.y() = grid_.y( jj );
     }
-    xy.x() = grid_.x(i,jj);
+    xy.x() = grid_.x( i, jj );
 }
 
 

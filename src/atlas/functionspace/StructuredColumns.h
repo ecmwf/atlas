@@ -100,8 +100,12 @@ public:
     Field index_i() const { return field_index_i_; }
     Field index_j() const { return field_index_j_; }
 
-    void compute_xy( idx_t i, idx_t j, PointXY& xy) const;
-    PointXY compute_xy( idx_t i, idx_t j) const { PointXY xy; compute_xy(i,j,xy); return xy; }
+    void compute_xy( idx_t i, idx_t j, PointXY& xy ) const;
+    PointXY compute_xy( idx_t i, idx_t j ) const {
+        PointXY xy;
+        compute_xy( i, j, xy );
+        return xy;
+    }
 
 private:  // methods
     idx_t config_size( const eckit::Configuration& config ) const;
@@ -281,8 +285,8 @@ public:
     Field index_i() const { return functionspace_->index_i(); }
     Field index_j() const { return functionspace_->index_j(); }
 
-    void compute_xy( idx_t i, idx_t j, PointXY& xy ) const { return functionspace_->compute_xy(i,j,xy); }
-    PointXY compute_xy( idx_t i, idx_t j) const { return functionspace_->compute_xy(i,j); }
+    void compute_xy( idx_t i, idx_t j, PointXY& xy ) const { return functionspace_->compute_xy( i, j, xy ); }
+    PointXY compute_xy( idx_t i, idx_t j ) const { return functionspace_->compute_xy( i, j ); }
 
     class For {
     public:
