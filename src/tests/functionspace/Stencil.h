@@ -61,11 +61,13 @@ class ComputeNorth {
     std::vector<double> y_;
     double dy_;
     static constexpr double tol() { return 0.5e-6; }
+    idx_t ny_;
 
 public:
     ComputeNorth( const grid::StructuredGrid& grid ) {
-        y_.resize( grid.ny() );
-        for ( idx_t j = 0; j < grid.ny(); ++j ) {
+        ny_ = grid.ny();
+        y_.resize( ny_ );
+        for ( idx_t j = 0; j < ny_; ++j ) {
             y_[j] = grid.y( j ) + tol();
         }
         dy_ = std::abs( grid.y( 1 ) - grid.y( 0 ) );
@@ -74,14 +76,16 @@ public:
         idx_t j = std::floor( ( y_[0] - y ) / dy_ );
 #ifndef NDEBUG
         ASSERT( j >= -1 );
+        ASSERT( j < ny_ );
 #endif
-        while ( y_[std::max( j, idx_t{0} )] > y ) {
+        constexpr idx_t zero = 0;
+        while ( j < ny_ &&  y_[std::max( j, zero )] > y ) {
             ++j;
         }
         if ( j >= 0 ) {
             do {
                 --j;
-            } while ( j >= y_.size() || y_[j] < y );
+            } while ( j >= ny_ || y_[j] < y );
         }
         return j;
     }
