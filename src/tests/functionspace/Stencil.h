@@ -149,7 +149,6 @@ public:
     constexpr idx_t width() const { return StencilWidth; }
 };
 
-
 // @class ComputeHorizontalStencil
 // @brief Compute stencil in horizontal direction (i,j)
 //
@@ -201,6 +200,103 @@ public:
     template <typename stencil_t>
     void operator()( const double& x, const double& y, stencil_t& stencil ) const {
         operator()( x, y, stencil.i_begin_, stencil.j_begin_ );
+    }
+};
+
+class CubicStructuredInterpolation {
+    ComputeHorizontalStencil compute_horizontal_stencil_;
+    functionspace::StructuredColumns fs_;
+    static constexpr idx_t stencil_width() { return 4; }
+    bool limiter_{true};
+
+public:
+    CubicStructuredInterpolation( const functionspace::StructuredColumns& fs ) :
+        fs_( fs ),
+        compute_horizontal_stencil_( fs.grid(), stencil_width() ) {}
+    template <typename weights_t>
+    void compute_weights( const double x, const double y, weights_t& weights ) const {
+        HorizontalStencil<stencil_width()> stencil;
+        compute_horizontal_stencil_( x, y, stencil );
+        compute_weights( x, y, stencil, weights );
+    }
+
+    struct Weights {
+        std::array<std::array<double, 4>, 4> weights_i_foreach_j;
+        std::array<double, 4> weights_j;
+    };
+
+    template <typename stencil_t, typename weights_t>
+    void compute_weights( const double x, const double y, const stencil_t& stencil, weights_t& weights ) const {
+        PointXY P1, P2;
+        std::array<double, 4> yvec;
+        for ( idx_t j = 0; j < stencil_width(); ++j ) {
+            auto& weights_i = weights.weights_i_foreach_j[j];
+            fs_.compute_xy( stencil.i( j ) + 1, stencil.j( j ), P1 );
+            fs_.compute_xy( stencil.i( j ) + 2, stencil.j( j ), P2 );
+            double alpha     = ( P2.x() - x ) / ( P2.x() - P1.x() );
+            double alpha_sqr = alpha * alpha;
+            weights_i[0]     = -alpha * ( 1. - alpha_sqr ) / 6.;
+            weights_i[1]     = 0.5 * alpha * ( 1. + alpha ) * ( 2. - alpha );
+            weights_i[2]     = 0.5 * ( 1. - alpha_sqr ) * ( 2. - alpha );
+            weights_i[3]     = 1. - weights_i[0] - weights_i[1] - weights_i[2];
+            yvec[j]          = P1.y();
+            //Log::info() << weights_i[0] << weights_i[1] << weights_i[2]  << weights_i[3] ;
+        }
+        double dl12 = yvec[0] - yvec[1];
+        double dl13 = yvec[0] - yvec[2];
+        double dl14 = yvec[0] - yvec[3];
+        double dl23 = yvec[1] - yvec[2];
+        double dl24 = yvec[1] - yvec[3];
+        double dl34 = yvec[2] - yvec[3];
+        double dcl1 = dl12 * dl13 * dl14;
+        double dcl2 = -dl12 * dl23 * dl24;
+        double dcl3 = dl13 * dl23 * dl34;
+
+        double dl1 = y - yvec[0];
+        double dl2 = y - yvec[1];
+        double dl3 = y - yvec[2];
+        double dl4 = y - yvec[3];
+
+        auto& weights_j = weights.weights_j;
+        weights_j[0]    = ( dl2 * dl3 * dl4 ) / dcl1;
+        weights_j[1]    = ( dl1 * dl3 * dl4 ) / dcl2;
+        weights_j[2]    = ( dl1 * dl2 * dl4 ) / dcl3;
+        weights_j[3]    = 1. - weights_j[0] - weights_j[1] - weights_j[2];
+    }
+
+    template <typename stencil_t, typename weights_t, typename array_t>
+    void interpolate( const stencil_t& stencil, const weights_t& weights, const array_t& input, double& output ) {
+        std::array<double, 4> output_j;
+        std::fill( std::begin( output_j ), std::end( output_j ), 0 );
+        double maxval = std::numeric_limits<double>::lowest();
+        double minval = std::numeric_limits<double>::max();
+        for ( idx_t j = 0; j < stencil_width(); ++j ) {
+            auto& weights_i = weights.weights_i_foreach_j[j];
+            for ( idx_t i = 0; i < stencil_width(); ++i ) {
+                idx_t n    = fs_.index( stencil.i( j ) + i, stencil.j( j ) );
+                double inp = input( n );
+                output_j[j] += weights_i[i] * inp;
+                maxval = std::max( maxval, inp );
+                minval = std::min( minval, inp );
+            }
+        }
+        output          = 0.;
+        auto& weights_j = weights.weights_j;
+        for ( idx_t j = 0; j < stencil_width(); ++j ) {
+            output += weights_j[j] * output_j[j];
+        }
+        if ( limiter_ ) { output = std::min( maxval, std::max( minval, output ) ); }
+    }
+
+    template <typename array_t>
+    double operator()( const double x, const double y, const array_t& input ) {
+        HorizontalStencil<stencil_width()> stencil;
+        compute_horizontal_stencil_( x, y, stencil );
+        Weights weights;
+        compute_weights( x, y, stencil, weights );
+        double output;
+        interpolate( stencil, weights, input, output );
+        return output;
     }
 };
 

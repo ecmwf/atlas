@@ -124,6 +124,38 @@ CASE( "test vertical stencil" ) {
 
 //-----------------------------------------------------------------------------
 
+CASE( "test horizontal cubic interpolation" ) {
+    //if ( mpi::comm().size() == 1 ) {
+    std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
+
+    grid::StructuredGrid grid( gridname );
+    int halo = eckit::Resource<int>( "--halo", 2 );
+    util::Config config;
+    config.set( "halo", halo );
+    config.set( "levels", 9 );
+    config.set( "periodic_points", true );
+    functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
+
+    Field field = fs.createField<double>( option::levels( 0 ) );
+    auto f      = array::make_view<double, 1>( field );
+    auto xy     = array::make_view<double, 2>( fs.xy() );
+
+    for ( idx_t j = 0; j < fs.size(); ++j ) {
+        f( j ) = xy( j, XX );
+    }
+
+    CubicStructuredInterpolation cubic_interpolation( fs );
+
+    auto departure_points = {
+        PointXY( 0.13257, 45.6397 ),
+    };
+    for ( auto p : departure_points ) {
+        Log::info() << p << "  -->  " << cubic_interpolation( p.x(), p.y(), f ) << std::endl;
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 
 CASE( "ifs method to find nearest grid point" ) {
     // see satrad/module/gaussgrid.F90
