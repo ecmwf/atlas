@@ -11,12 +11,15 @@
 #include <algorithm>
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/types/Types.h"
+#include "eckit/linalg/Vector.h"
+#include "eckit/linalg/LinearAlgebra.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/functionspace/PointCloud.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
@@ -156,7 +159,99 @@ CASE( "test horizontal cubic interpolation" ) {
 
 //-----------------------------------------------------------------------------
 
+bool operator==( const eckit::linalg::Triplet& t1, const eckit::linalg::Triplet& t2 ) {
 
+    if( t1.row() != t2.row() ) return false;
+    if( t1.col() != t2.col() ) return false;
+    if( t1.value() != t2.value() ) return false;
+
+    return true;
+}
+bool operator!=( const eckit::linalg::Triplet& t1, const eckit::linalg::Triplet& t2 ) {
+    return !( t1 == t2 );
+}
+bool operator==( const std::vector<eckit::linalg::Triplet>& t1, const std::vector<eckit::linalg::Triplet>& t2 ) {
+
+    if( t1.size() != t2.size() ) return false;
+    for( idx_t i=0; i<t1.size(); ++i ) {
+        if( t1[i] != t2[i] ) return false;
+    }
+    return true;
+}
+std::ostream& operator<<( std::ostream& out, const array::LocalView<double,1>& array ) {
+    out << "{ ";
+    for( idx_t i=0; i<array.size(); ++i ) {
+        out << array(i);
+        if( i < array.size()-1 ) {
+            out << ",";
+        }
+        out << " ";
+    }
+    out << "}";
+    return out;
+}
+
+//-----------------------------------------------------------------------------
+
+CASE( "test horizontal cubic interpolation triplets" ) {
+    //if ( mpi::comm().size() == 1 ) {
+    std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
+
+    grid::StructuredGrid grid( gridname );
+    int halo = eckit::Resource<int>( "--halo", 2 );
+    util::Config config;
+    config.set( "halo", halo );
+    config.set( "levels", 9 );
+    config.set( "periodic_points", true );
+    functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
+
+    Field field = fs.createField<double>( option::levels( 0 ) );
+    auto f      = array::make_view<double, 1>( field );
+    auto xy     = array::make_view<double, 2>( fs.xy() );
+
+    for ( idx_t j = 0; j < fs.size(); ++j ) {
+        f( j ) = xy( j, XX );
+    }
+
+    CubicStructuredInterpolation cubic_interpolation( fs );
+
+    auto departure_points = functionspace::PointCloud{ {
+        { 0.13257, 45.6397 },
+        { 360., -90. },
+    }};
+    auto departure_lonlat = array::make_view<double,2>( departure_points.lonlat() );
+
+    CubicStructuredInterpolation::WorkSpace ws;
+    CubicStructuredInterpolation::Triplets triplets;
+    for( idx_t row = 0; row < departure_points.size(); ++row ) {
+        auto triplets_row = cubic_interpolation.compute_triplets( row, departure_lonlat(row,XX), departure_lonlat(row,YY), ws ); 
+        Log::info() << departure_lonlat.slice(row, array::Range::all()) << "  -->  {\n";
+        for( auto triplet : triplets_row ) {
+            Log::info() << "    " << triplet << " ,\n";
+        }
+        Log::info() << " } " << std::endl;
+        std::copy( triplets_row.begin(), triplets_row.end(), std::back_inserter( triplets ) );
+    }
+
+    auto triplets2 = cubic_interpolation.reserve_triplets(departure_points.size());
+    for( idx_t row = 0; row < departure_points.size(); ++row ) {
+        cubic_interpolation.insert_triplets( row, departure_lonlat(row,XX), departure_lonlat(row,YY), triplets2, ws );
+    }
+
+    EXPECT( triplets2 == triplets );
+
+
+    eckit::linalg::SparseMatrix matrix( departure_points.size(), fs.size(), triplets2 );
+    Log::info() << matrix << std::endl;
+
+    std::vector<double> tgt(departure_points.size());
+    eckit::linalg::Vector v_src( const_cast<double*>( f.data() ), f.size() );
+    eckit::linalg::Vector v_tgt( tgt.data(), tgt.size() );
+    eckit::linalg::LinearAlgebra::backend().spmv( matrix, v_src, v_tgt );
+    Log::info() << "output = " << tgt << std::endl;
+}
+
+//-----------------------------------------------------------------------------
 CASE( "ifs method to find nearest grid point" ) {
     // see satrad/module/gaussgrid.F90
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );

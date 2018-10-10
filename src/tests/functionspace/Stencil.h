@@ -14,6 +14,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/MicroDeg.h"
+#include "eckit/linalg/SparseMatrix.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -207,6 +208,7 @@ class CubicStructuredInterpolation {
     ComputeHorizontalStencil compute_horizontal_stencil_;
     functionspace::StructuredColumns fs_;
     static constexpr idx_t stencil_width() { return 4; }
+    static constexpr idx_t stencil_size() { return stencil_width()*stencil_width(); }
     bool limiter_{true};
 
 public:
@@ -240,7 +242,6 @@ public:
             weights_i[2]     = 0.5 * ( 1. - alpha_sqr ) * ( 2. - alpha );
             weights_i[3]     = 1. - weights_i[0] - weights_i[1] - weights_i[2];
             yvec[j]          = P1.y();
-            //Log::info() << weights_i[0] << weights_i[1] << weights_i[2]  << weights_i[3] ;
         }
         double dl12 = yvec[0] - yvec[1];
         double dl13 = yvec[0] - yvec[2];
@@ -271,7 +272,7 @@ public:
         double maxval = std::numeric_limits<double>::lowest();
         double minval = std::numeric_limits<double>::max();
         for ( idx_t j = 0; j < stencil_width(); ++j ) {
-            auto& weights_i = weights.weights_i_foreach_j[j];
+            const auto& weights_i = weights.weights_i_foreach_j[j];
             for ( idx_t i = 0; i < stencil_width(); ++i ) {
                 idx_t n    = fs_.index( stencil.i( j ) + i, stencil.j( j ) );
                 double inp = input( n );
@@ -281,7 +282,7 @@ public:
             }
         }
         output          = 0.;
-        auto& weights_j = weights.weights_j;
+        const auto& weights_j = weights.weights_j;
         for ( idx_t j = 0; j < stencil_width(); ++j ) {
             output += weights_j[j] * output_j[j];
         }
@@ -297,6 +298,41 @@ public:
         double output;
         interpolate( stencil, weights, input, output );
         return output;
+    }
+
+    struct WorkSpace {
+        HorizontalStencil<4> stencil;
+        Weights weights;
+    };
+
+    using Triplet  = eckit::linalg::Triplet;
+    using Triplets = std::vector<Triplet>;
+
+    // Thread private workspace
+    Triplets compute_triplets( const idx_t row, const double x, const double y, WorkSpace& ws ) {
+        Triplets triplets; triplets.reserve( stencil_size() );
+        insert_triplets( row, x, y, triplets, ws );
+        return triplets;
+    }
+
+    Triplets reserve_triplets( size_t N ) {
+        Triplets triplets;
+        triplets.reserve( N * stencil_size() );
+        return triplets;
+    }
+
+    void insert_triplets( const idx_t row, const double x, const double y, Triplets& triplets, WorkSpace& ws ) {
+        compute_horizontal_stencil_( x, y, ws.stencil );
+        compute_weights( x, y, ws.stencil, ws.weights );
+        const auto& wj = ws.weights.weights_j;
+        for ( idx_t j = 0; j < stencil_width(); ++j ) {
+            const auto& wi = ws.weights.weights_i_foreach_j[j];
+            for ( idx_t i = 0; i < stencil_width(); ++i ) {
+                idx_t col = fs_.index( ws.stencil.i( j ) + i, ws.stencil.j( j ) );
+                double w = wi[i]*wj[j];
+                triplets.emplace_back( row, col, w );
+            }
+        }
     }
 };
 

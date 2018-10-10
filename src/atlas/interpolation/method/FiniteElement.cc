@@ -207,8 +207,8 @@ void FiniteElement::setup( const FunctionSpace& source ) {
 
     // weights -- one per vertex of element, triangles (3) or quads (4)
 
-    std::vector<eckit::linalg::Triplet> weights_triplets;  // structure to fill-in sparse matrix
-    weights_triplets.reserve( out_npts * 4 );              // preallocate space as if all elements where quads
+    Triplets weights_triplets;                   // structure to fill-in sparse matrix
+    weights_triplets.reserve( out_npts * 4 );    // preallocate space as if all elements where quads
 
     // search nearest k cell centres
 
