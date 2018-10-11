@@ -21,12 +21,43 @@
 #include "eckit/mpi/Comm.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/testing/Test.h"
+#include "eckit/types/Types.h"
 
 #include "atlas/library/Library.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/runtime/trace/StopWatch.h"
 #include "atlas/util/Config.h"
+
+// namespace eckit {
+// template <typename T, std::size_t N>
+// inline std::ostream& __print_list( std::ostream& s, const std::array<T, N>& t, eckit::VectorPrintSimple ) {
+//     s << '[';
+//     for ( eckit::Ordinal i = 0; i < t.size(); i++ ) {
+//         if ( i != 0 ) s << ',';
+//         s << t[i];
+//     }
+//     s << ']';
+//     return s;
+// }
+// }  // namespace eckit
+
+// namespace std {
+
+// // n.b. This overload needs to go either in the namespace std:: (which contains
+// //      ostream, vector), the global namespace, or the namespace containing T.
+// //      Otherwise it will not be found when doing lookups.
+// //
+// //  --> Probably best to put it in std::. It is acceptable to add "template
+// //      specializations for any standard library template" if the "declaration
+// //      depends on user-defined types".
+
+// template <class T, std::size_t N>
+// inline std::ostream& operator<<( std::ostream& s, const std::array<T, N>& v ) {
+//     return eckit::__print_list( s, v, typename eckit::VectorPrintSelector<T>::selector() );
+// }
+// }  // namespace std
+
 
 namespace atlas {
 namespace test {

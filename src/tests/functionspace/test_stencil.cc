@@ -9,17 +9,18 @@
  */
 
 #include <algorithm>
+#include "eckit/linalg/LinearAlgebra.h"
+#include "eckit/linalg/Vector.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/types/Types.h"
-#include "eckit/linalg/Vector.h"
-#include "eckit/linalg/LinearAlgebra.h"
 
+#include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/functionspace/PointCloud.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
@@ -41,6 +42,16 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
+std::vector<double> vertical_coordinates( idx_t nlev ) {
+    std::vector<double> zcoord( nlev + 2 );
+    zcoord[0]        = 0.;
+    zcoord[nlev + 1] = 1.;
+    double dzcoord   = 1. / double( nlev );
+    for ( idx_t jlev = 1; jlev <= nlev; ++jlev ) {
+        zcoord[jlev] = jlev * dzcoord - 0.5 * dzcoord;
+    }
+    return zcoord;
+}
 
 CASE( "test finding of North-West grid point" ) {
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
@@ -116,14 +127,57 @@ CASE( "test horizontal stencil" ) {
 }
 
 CASE( "test vertical stencil" ) {
-    idx_t nlev = 10;
-    std::vector<double> zcoord( nlev + 2 );
-    double dzcoord = 1. / double( nlev + 1 );
-    for ( idx_t jlev = 0; jlev <= nlev + 1; ++jlev ) {
-        zcoord[jlev] = jlev * dzcoord;
+    idx_t nlev     = 10;
+    auto zcoord    = vertical_coordinates( nlev );
+    double dzcoord = 1. / double( nlev );
+
+    ATLAS_DEBUG_VAR( zcoord );
+
+    ComputeVertical compute_vertical( zcoord );
+
+    const double eps = 1.e-14;
+
+    for ( idx_t k = 1; k <= nlev; ++k ) {
+        idx_t k_expected = std::max( 1, std::min( nlev - 1, k ) );
+        EXPECT( compute_vertical( zcoord[k] ) == k_expected );
+        EXPECT( compute_vertical( zcoord[k] - eps ) == k_expected );
+        EXPECT( compute_vertical( zcoord[k] + eps ) == k_expected );
+        EXPECT( compute_vertical( zcoord[k] + 0.5 * dzcoord ) == k_expected );
+    }
+    EXPECT( compute_vertical( zcoord[0] ) == 1 );
+    EXPECT( compute_vertical( zcoord[nlev + 1] ) == nlev - 1 );
+
+    ComputeVerticalStencil compute_vertical_stencil( zcoord, 4 );
+    std::vector<double> departure_points{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    for ( auto p : departure_points ) {
+        VerticalStencil<4> stencil;
+        compute_vertical_stencil( p, stencil );
+        Log::info() << p << "   :    ";
+        for ( idx_t k = 0; k < stencil.width(); ++k ) {
+            Log::info() << stencil.k( k ) << " ";
+        }
+        Log::info() << std::endl;
     }
 }
 
+CASE( "test vertical cubic interpolation" ) {
+    idx_t nlev  = 10;
+    auto zcoord = vertical_coordinates( nlev );
+
+    CubicVerticalInterpolation interpolate( zcoord, util::Config( "boundaries", true ) );
+    std::vector<double> departure_points{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.3246};
+    array::ArrayT<double> array( nlev + 2 );
+    auto view = array::make_view<double, 1>( array );
+    for ( idx_t k = 0; k <= nlev + 1; ++k ) {
+        view( k ) = 100. * zcoord[k];
+    }
+    //view(0) = -9999.;
+    //view(nlev+1) = -9999.;
+
+    for ( auto p : departure_points ) {
+        Log::info() << p << "   :    " << interpolate( p, view ) << std::endl;
+    }
+}
 
 //-----------------------------------------------------------------------------
 
@@ -160,10 +214,9 @@ CASE( "test horizontal cubic interpolation" ) {
 //-----------------------------------------------------------------------------
 
 bool operator==( const eckit::linalg::Triplet& t1, const eckit::linalg::Triplet& t2 ) {
-
-    if( t1.row() != t2.row() ) return false;
-    if( t1.col() != t2.col() ) return false;
-    if( t1.value() != t2.value() ) return false;
+    if ( t1.row() != t2.row() ) return false;
+    if ( t1.col() != t2.col() ) return false;
+    if ( t1.value() != t2.value() ) return false;
 
     return true;
 }
@@ -171,20 +224,17 @@ bool operator!=( const eckit::linalg::Triplet& t1, const eckit::linalg::Triplet&
     return !( t1 == t2 );
 }
 bool operator==( const std::vector<eckit::linalg::Triplet>& t1, const std::vector<eckit::linalg::Triplet>& t2 ) {
-
-    if( t1.size() != t2.size() ) return false;
-    for( idx_t i=0; i<t1.size(); ++i ) {
-        if( t1[i] != t2[i] ) return false;
+    if ( t1.size() != t2.size() ) return false;
+    for ( idx_t i = 0; i < t1.size(); ++i ) {
+        if ( t1[i] != t2[i] ) return false;
     }
     return true;
 }
-std::ostream& operator<<( std::ostream& out, const array::LocalView<double,1>& array ) {
+std::ostream& operator<<( std::ostream& out, const array::LocalView<double, 1>& array ) {
     out << "{ ";
-    for( idx_t i=0; i<array.size(); ++i ) {
-        out << array(i);
-        if( i < array.size()-1 ) {
-            out << ",";
-        }
+    for ( idx_t i = 0; i < array.size(); ++i ) {
+        out << array( i );
+        if ( i < array.size() - 1 ) { out << ","; }
         out << " ";
     }
     out << "}";
@@ -215,27 +265,29 @@ CASE( "test horizontal cubic interpolation triplets" ) {
 
     CubicStructuredInterpolation cubic_interpolation( fs );
 
-    auto departure_points = functionspace::PointCloud{ {
-        { 0.13257, 45.6397 },
-        { 360., -90. },
+    auto departure_points = functionspace::PointCloud{{
+        {0.13257, 45.6397},
+        {360., -90.},
     }};
-    auto departure_lonlat = array::make_view<double,2>( departure_points.lonlat() );
+    auto departure_lonlat = array::make_view<double, 2>( departure_points.lonlat() );
 
     CubicStructuredInterpolation::WorkSpace ws;
     CubicStructuredInterpolation::Triplets triplets;
-    for( idx_t row = 0; row < departure_points.size(); ++row ) {
-        auto triplets_row = cubic_interpolation.compute_triplets( row, departure_lonlat(row,XX), departure_lonlat(row,YY), ws ); 
-        Log::info() << departure_lonlat.slice(row, array::Range::all()) << "  -->  {\n";
-        for( auto triplet : triplets_row ) {
+    for ( idx_t row = 0; row < departure_points.size(); ++row ) {
+        auto triplets_row =
+            cubic_interpolation.compute_triplets( row, departure_lonlat( row, XX ), departure_lonlat( row, YY ), ws );
+        Log::info() << departure_lonlat.slice( row, array::Range::all() ) << "  -->  {\n";
+        for ( auto triplet : triplets_row ) {
             Log::info() << "    " << triplet << " ,\n";
         }
         Log::info() << " } " << std::endl;
         std::copy( triplets_row.begin(), triplets_row.end(), std::back_inserter( triplets ) );
     }
 
-    auto triplets2 = cubic_interpolation.reserve_triplets(departure_points.size());
-    for( idx_t row = 0; row < departure_points.size(); ++row ) {
-        cubic_interpolation.insert_triplets( row, departure_lonlat(row,XX), departure_lonlat(row,YY), triplets2, ws );
+    auto triplets2 = cubic_interpolation.reserve_triplets( departure_points.size() );
+    for ( idx_t row = 0; row < departure_points.size(); ++row ) {
+        cubic_interpolation.insert_triplets( row, departure_lonlat( row, XX ), departure_lonlat( row, YY ), triplets2,
+                                             ws );
     }
 
     EXPECT( triplets2 == triplets );
@@ -244,7 +296,7 @@ CASE( "test horizontal cubic interpolation triplets" ) {
     eckit::linalg::SparseMatrix matrix( departure_points.size(), fs.size(), triplets2 );
     Log::info() << matrix << std::endl;
 
-    std::vector<double> tgt(departure_points.size());
+    std::vector<double> tgt( departure_points.size() );
     eckit::linalg::Vector v_src( const_cast<double*>( f.data() ), f.size() );
     eckit::linalg::Vector v_tgt( tgt.data(), tgt.size() );
     eckit::linalg::LinearAlgebra::backend().spmv( matrix, v_src, v_tgt );
@@ -252,6 +304,7 @@ CASE( "test horizontal cubic interpolation triplets" ) {
 }
 
 //-----------------------------------------------------------------------------
+
 CASE( "ifs method to find nearest grid point" ) {
     // see satrad/module/gaussgrid.F90
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
@@ -278,6 +331,9 @@ CASE( "ifs method to find nearest grid point" ) {
     EXPECT( kgrib_lon == 0 );
     EXPECT( kgrib_lat == 0 );
 }
+
+//-----------------------------------------------------------------------------
+
 
 }  // namespace test
 }  // namespace atlas

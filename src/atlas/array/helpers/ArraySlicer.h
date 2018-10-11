@@ -131,7 +131,9 @@ public:
     template <typename... Args>
     typename Slice<Args...>::type apply( const Args... args ) const {
         using slicer_t = Slicer<typename Slice<Args...>::type, ( SliceRank<Args...>::value == 0 )>;
-        static_assert( View::RANK <= sizeof...( Args ), "Not enough arguments passed to slice() function. Pehaps you forgot to add a array::Range::all()" );
+        static_assert(
+            View::RANK <= sizeof...( Args ),
+            "Not enough arguments passed to slice() function. Pehaps you forgot to add a array::Range::all()" );
         return slicer_t::apply( view_, args... );
     }
 

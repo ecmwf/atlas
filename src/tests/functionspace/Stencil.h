@@ -16,6 +16,7 @@
 #include "atlas/util/MicroDeg.h"
 #include "eckit/linalg/SparseMatrix.h"
 
+#include "eckit/types/Types.h"
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace eckit;
@@ -26,35 +27,70 @@ namespace atlas {
 namespace test {
 
 
+// @class ComputeVertical
+// @brief Helper to compute vertical level below
+//
+//
+//  IFS full levels for regular distribution ( level 0 and nlev+1 are added for boundary conditions )
+//  0      :  0.0
+//  jlev   :  jlev*dz - 0.5*dz
+//  nlev   :  nlev*dz - 0.5*dz
+//  nlev+1 :  1.0
+
 class ComputeVertical {
+    std::vector<double> zcoord_;
     std::vector<idx_t> nvaux_;
     idx_t nlev_;
     idx_t nlevaux_;
+    double rlevaux_;
 
 public:
     ComputeVertical( const std::vector<double>& zcoord ) {
-        nlev_          = zcoord.size() - 2;
-        double dzcoord = zcoord.back() - zcoord.front();
+        nlev_ = zcoord.size() - 2;
+        zcoord_.resize( nlev_ + 2 );
+        double dzcoord       = zcoord.back() - zcoord.front();
+        constexpr double tol = 1.e-12;
         ASSERT( dzcoord > 0 );
-        for ( idx_t jlev = 0; jlev <= nlev_; ++jlev ) {
-            dzcoord = std::min( dzcoord, zcoord[jlev + 1] - zcoord[jlev] );
+        for ( idx_t jlev = 0; jlev < nlev_; ++jlev ) {
+            dzcoord       = std::min( dzcoord, zcoord[jlev + 1] - zcoord[jlev] );
+            zcoord_[jlev] = zcoord[jlev] - tol;
         }
-        nlevaux_ = std::round( 2. / dzcoord + 0.5 ) + 1;
-        nvaux_.resize( nlevaux_ + 1 );
-        double dzaux = 1. / double( nlevaux_ );
+        zcoord_.back() = zcoord.back() - tol;
 
-        double zaux = 0.;
+        nlevaux_ = std::round( 2. / dzcoord + 0.5 ) + 1;
+        rlevaux_ = double( nlevaux_ );
+        nvaux_.resize( nlevaux_ + 1 );
+        double dzaux = ( zcoord[nlev_ + 1] - zcoord[0] ) / rlevaux_;
+
+        idx_t iref = 1;
         for ( idx_t jlevaux = 0; jlevaux <= nlevaux_; ++jlevaux ) {
-            for ( idx_t jlev = 0; jlev <= nlev_; ++jlev ) {
-                if ( zaux <= zcoord[jlev + 1] ) {
-                    nvaux_[jlevaux] = jlev;
-                    break;
-                }
-            }
-            zaux += dzaux;
+            if ( jlevaux * dzaux >= zcoord[iref + 1] && iref < nlev_ - 1 ) { ++iref; }
+            nvaux_[jlevaux] = iref;
         }
+        // for( idx_t jlevaux = 0; jlevaux <= nlevaux_; ++jlevaux ) {
+        //     idx_t i = nvaux_[jlevaux];
+        //     Log::info() << jlevaux << "  " << jlevaux*dzaux << "   -->   [ " << zcoord[i] << " , " << zcoord[i+1] << "]" << std::endl;
+        // }
+        // ATLAS_DEBUG_VAR( nvaux_ );
     }
-    idx_t operator()( double z ) { return nvaux_[std::floor( z * nlevaux_ )]; }
+
+    idx_t operator()( double z ) const {
+        idx_t idx = std::floor( z * rlevaux_ );
+#ifndef NDEBUG
+        ASSERT( idx < nvaux_.size() && idx >= 0 );
+#endif
+        // ATLAS_DEBUG_VAR( idx );
+        idx = nvaux_[idx];
+        // ATLAS_DEBUG_VAR( z );
+        // ATLAS_DEBUG_VAR( zcoord_[idx] );
+        // ATLAS_DEBUG_VAR( idx );
+        if ( idx < nlev_ - 1 && z > zcoord_[idx + 1] ) {
+            ++idx;
+            // ATLAS_DEBUG();
+        }
+        return idx;
+        //return nvaux_[idx];
+    }
 };
 
 
@@ -150,6 +186,7 @@ public:
     constexpr idx_t width() const { return StencilWidth; }
 };
 
+
 // @class ComputeHorizontalStencil
 // @brief Compute stencil in horizontal direction (i,j)
 //
@@ -204,11 +241,180 @@ public:
     }
 };
 
+template <idx_t StencilWidth>
+class VerticalStencil {
+    friend class ComputeVerticalStencil;
+    idx_t k_begin_;
+
+public:
+    idx_t k( idx_t offset ) const { return k_begin_ + offset; }
+    constexpr idx_t width() const { return StencilWidth; }
+};
+
+class ComputeVerticalStencil {
+    ComputeVertical compute_vertical_;
+    idx_t stencil_width_;
+    idx_t stencil_begin_;
+
+public:
+    ComputeVerticalStencil( const std::vector<double>& zcoord, idx_t stencil_width ) :
+        compute_vertical_( zcoord ),
+        stencil_width_( stencil_width ) {
+        stencil_begin_ = stencil_width_ - idx_t( double( stencil_width_ ) / 2. + 1. );
+    }
+
+    void operator()( const double& z, idx_t& k ) const { k = compute_vertical_( z ) - stencil_begin_; }
+    VerticalStencil<4> operator()( const double& z ) const {
+        VerticalStencil<4> stencil;
+        operator()( z, stencil );
+        return stencil;
+    }
+    template <typename stencil_t>
+    void operator()( const double& z, stencil_t& stencil ) const {
+        operator()( z, stencil.k_begin_ );
+    }
+};
+
+class CubicVerticalInterpolation {
+    ComputeVerticalStencil compute_vertical_stencil_;
+    idx_t boundaries_;
+    std::vector<double> zcoord_;
+    idx_t nlev_;
+    static constexpr idx_t stencil_width() { return 4; }
+    static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
+    bool limiter_{false};
+    idx_t first_level_;
+    idx_t last_level_;
+
+public:
+    CubicVerticalInterpolation( const std::vector<double>& zcoord,
+                                const eckit::Configuration& config = util::NoConfig() ) :
+        compute_vertical_stencil_( zcoord, stencil_width() ),
+        boundaries_( config.getBool( "boundaries", false ) ),
+        zcoord_( zcoord ),
+        nlev_( zcoord.size() - boundaries_ * 2 ),
+        first_level_( 0 ),
+        last_level_( nlev_ - 1 ) {
+        if ( boundaries_ ) {
+            ++first_level_;
+            ++last_level_;
+        }
+    }
+    struct Weights {
+        std::array<double, 4> weights_k;
+    };
+
+    template <typename stencil_t, typename weights_t>
+    void compute_weights( const double z, const stencil_t& stencil, weights_t& weights ) const {
+        auto& w = weights.weights_k;
+
+        std::array<double, 4> zvec;
+        for ( idx_t k = 0; k < 4; ++k ) {
+            zvec[k] = zcoord_[stencil.k( k )];
+        }
+
+        if ( boundaries_ ) {
+            auto quadratic_interpolation = [z]( const double zvec[], double w[] ) {
+                double d01 = zvec[0] - zvec[1];
+                double d02 = zvec[0] - zvec[2];
+                double d12 = zvec[1] - zvec[2];
+                double dc0 = d01 * d02;
+                double dc1 = -d01 * d12;
+                double d0  = z - zvec[0];
+                double d1  = z - zvec[1];
+                double d2  = z - zvec[2];
+                w[0]       = ( d1 * d2 ) / dc0;
+                w[1]       = ( d0 * d2 ) / dc1;
+                w[2]       = 1. - w[0] - w[1];
+            };
+
+            if ( z < zcoord_[first_level_] or z > zcoord_[last_level_] ) {
+                // linear extrapolation
+                // lev0   lev1   lev2   lev3            lev(n-2)  lev(n-1) lev(n)  lev(n+1)
+                //  X   +  |      |      X      or         X        |        |  +    X
+                //  w=0                 w=0               w=0                       w=0
+                w[3] = 0.;
+                w[2] = ( z - zvec[1] ) / ( zvec[2] - zvec[1] );
+                w[1] = 1. - w[2];
+                w[0] = 0.;
+                return;
+            }
+            else if ( z < zcoord_[first_level_ + 1] ) {
+                // quadratic interpolation
+                // lev0   lev1   lev2   lev3
+                //  X      |  +   |      |
+                //  w=0
+                quadratic_interpolation( zvec.data() + 1, w.data() + 1 );
+                w[0] = 0.;
+                return;
+            }
+            else if ( z > zcoord_[last_level_ - 1] ) {
+                // quadratic interpolation
+                // lev(n-2)  lev(n-1) lev(n)  lev(n+1)
+                //   |        |   +    |       X
+                //                            w=0
+                quadratic_interpolation( zvec.data(), w.data() );
+                w[3] = 0.;
+                return;
+            }
+        }
+
+        // cubic interpolation
+        // lev(k+0)   lev(k+1)   lev(k+2)   lev(k+3)
+        //    |          |     x    |          |
+        double d01 = zvec[0] - zvec[1];
+        double d02 = zvec[0] - zvec[2];
+        double d03 = zvec[0] - zvec[3];
+        double d12 = zvec[1] - zvec[2];
+        double d13 = zvec[1] - zvec[3];
+        double d23 = zvec[2] - zvec[3];
+        double dc0 = d01 * d02 * d03;
+        double dc1 = -d01 * d12 * d13;
+        double dc2 = d02 * d12 * d23;
+
+        double d0 = z - zvec[0];
+        double d1 = z - zvec[1];
+        double d2 = z - zvec[2];
+        double d3 = z - zvec[3];
+
+        w[0] = ( d1 * d2 * d3 ) / dc0;
+        w[1] = ( d0 * d2 * d3 ) / dc1;
+        w[2] = ( d0 * d1 * d3 ) / dc2;
+        w[3] = 1. - w[0] - w[1] - w[2];
+    }
+
+    template <typename stencil_t, typename weights_t, typename array_t>
+    void interpolate( const stencil_t& stencil, const weights_t& weights, const array_t& input, double& output ) const {
+        double maxval = std::numeric_limits<double>::lowest();
+        double minval = std::numeric_limits<double>::max();
+        output        = 0.;
+        const auto& w = weights.weights_k;
+        for ( idx_t k = 0; k < stencil_width(); ++k ) {
+            double f = input( stencil.k( k ) );
+            output += w[k] * f;
+            maxval = std::max( maxval, f );
+            minval = std::min( minval, f );
+        }
+        if ( limiter_ ) { output = std::min( maxval, std::max( minval, output ) ); }
+    }
+
+    template <typename array_t>
+    double operator()( const double z, const array_t& input ) const {
+        VerticalStencil<stencil_width()> stencil;
+        compute_vertical_stencil_( z, stencil );
+        Weights weights;
+        compute_weights( z, stencil, weights );
+        double output;
+        interpolate( stencil, weights, input, output );
+        return output;
+    }
+};
+
 class CubicStructuredInterpolation {
     ComputeHorizontalStencil compute_horizontal_stencil_;
     functionspace::StructuredColumns fs_;
     static constexpr idx_t stencil_width() { return 4; }
-    static constexpr idx_t stencil_size() { return stencil_width()*stencil_width(); }
+    static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
     bool limiter_{true};
 
 public:
@@ -235,13 +441,15 @@ public:
             auto& weights_i = weights.weights_i_foreach_j[j];
             fs_.compute_xy( stencil.i( j ) + 1, stencil.j( j ), P1 );
             fs_.compute_xy( stencil.i( j ) + 2, stencil.j( j ), P2 );
-            double alpha     = ( P2.x() - x ) / ( P2.x() - P1.x() );
-            double alpha_sqr = alpha * alpha;
-            weights_i[0]     = -alpha * ( 1. - alpha_sqr ) / 6.;
-            weights_i[1]     = 0.5 * alpha * ( 1. + alpha ) * ( 2. - alpha );
-            weights_i[2]     = 0.5 * ( 1. - alpha_sqr ) * ( 2. - alpha );
-            weights_i[3]     = 1. - weights_i[0] - weights_i[1] - weights_i[2];
-            yvec[j]          = P1.y();
+            double alpha               = ( P2.x() - x ) / ( P2.x() - P1.x() );
+            double alpha_sqr           = alpha * alpha;
+            double two_minus_alpha     = 2. - alpha;
+            double one_minus_alpha_sqr = 1. - alpha_sqr;
+            weights_i[0]               = -alpha * one_minus_alpha_sqr / 6.;
+            weights_i[1]               = 0.5 * alpha * ( 1. + alpha ) * two_minus_alpha;
+            weights_i[2]               = 0.5 * one_minus_alpha_sqr * two_minus_alpha;
+            weights_i[3]               = 1. - weights_i[0] - weights_i[1] - weights_i[2];
+            yvec[j]                    = P1.y();
         }
         double dl12 = yvec[0] - yvec[1];
         double dl13 = yvec[0] - yvec[2];
@@ -281,7 +489,7 @@ public:
                 minval = std::min( minval, inp );
             }
         }
-        output          = 0.;
+        output                = 0.;
         const auto& weights_j = weights.weights_j;
         for ( idx_t j = 0; j < stencil_width(); ++j ) {
             output += weights_j[j] * output_j[j];
@@ -310,7 +518,8 @@ public:
 
     // Thread private workspace
     Triplets compute_triplets( const idx_t row, const double x, const double y, WorkSpace& ws ) {
-        Triplets triplets; triplets.reserve( stencil_size() );
+        Triplets triplets;
+        triplets.reserve( stencil_size() );
         insert_triplets( row, x, y, triplets, ws );
         return triplets;
     }
@@ -329,7 +538,7 @@ public:
             const auto& wi = ws.weights.weights_i_foreach_j[j];
             for ( idx_t i = 0; i < stencil_width(); ++i ) {
                 idx_t col = fs_.index( ws.stencil.i( j ) + i, ws.stencil.j( j ) );
-                double w = wi[i]*wj[j];
+                double w  = wi[i] * wj[j];
                 triplets.emplace_back( row, col, w );
             }
         }
