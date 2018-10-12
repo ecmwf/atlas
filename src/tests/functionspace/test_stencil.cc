@@ -334,6 +334,51 @@ CASE( "ifs method to find nearest grid point" ) {
 
 //-----------------------------------------------------------------------------
 
+CASE( "test 3d cubic interpolation" ) {
+    //if ( mpi::comm().size() == 1 ) {
+    std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
+    idx_t nlev           = 10;
+
+    grid::StructuredGrid grid( gridname );
+    int halo = eckit::Resource<int>( "--halo", 2 );
+    util::Config config;
+    config.set( "halo", halo );
+    config.set( "levels", nlev );
+    config.set( "periodic_points", true );
+    config.set( "boundaries", true );
+    functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
+
+    auto zcoord = vertical_coordinates( nlev );
+
+    // CubicVerticalInterpolation interpolate( zcoord, util::Config("boundaries",true) );
+    // std::vector<double> departure_points{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.3246};
+    // array::ArrayT<double> array( nlev + 2 );
+    // auto view = array::make_view<double, 1>( array );
+    // for ( idx_t k = 0; k <= nlev + 1; ++k ) {
+    //     view( k ) = 100. * zcoord[k];
+    // }
+    //view(0) = -9999.;
+    //view(nlev+1) = -9999.;
+
+    Field field = fs.createField<double>();
+    auto f      = array::make_view<double, 2>( field );
+    auto xy     = array::make_view<double, 2>( fs.xy() );
+
+    for ( idx_t n = 0; n < fs.size(); ++n ) {
+        for ( idx_t k = 1; k <= nlev; ++k ) {
+            f( n, k ) = xy( n, XX ) + zcoord[k];
+        }
+    }
+
+    Cubic3DInterpolation cubic_interpolation( fs, zcoord );
+
+    auto departure_points = {
+        PointXYZ( 0.13257, 45.6397, 0.5 ),
+    };
+    for ( auto p : departure_points ) {
+        Log::info() << p << "  -->  " << cubic_interpolation( p.x(), p.y(), p.z(), f ) << std::endl;
+    }
+}
 
 }  // namespace test
 }  // namespace atlas
