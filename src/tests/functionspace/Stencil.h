@@ -26,6 +26,50 @@ using namespace atlas::util;
 namespace atlas {
 namespace test {
 
+class Vertical {
+    idx_t k_begin_;
+    idx_t k_end_;
+    idx_t size_;
+    idx_t halo_;
+    bool boundaries_;
+    std::vector<double> z_;
+
+public:
+    idx_t k_begin() const { return k_begin_; }
+    idx_t k_end() const { return k_end_; }
+    bool boundaries() const { return boundaries_; }
+    idx_t size() const { return size_; }
+
+    template <typename Int>
+    double operator()( const Int k ) const {
+        return z_[k];
+    }
+
+    template <typename Int>
+    double operator[]( const Int k ) const {
+        return z_[k];
+    }
+
+    template <typename Vector>
+    Vertical( idx_t levels, const Vector& z, const util::Config& config = util::NoConfig() ) {
+        size_       = levels;
+        boundaries_ = config.getBool( "boundaries", false );
+        k_begin_    = 0;
+        k_end_      = size_;
+        if ( boundaries_ ) {
+            size_ += 2;
+            ++k_begin_;
+            k_end_ = size_ - 1;
+        }
+        ASSERT( size_ == z.size() );
+        z_.resize( size_ );
+        for ( idx_t k = 0; k < size_; ++k ) {
+            z_[k] = z[k];
+        }
+    }
+
+    const std::vector<double>& zcoord() const { return z_; }
+};
 
 // @class ComputeVertical
 // @brief Helper to compute vertical level below
@@ -45,17 +89,19 @@ class ComputeVertical {
     double rlevaux_;
 
 public:
-    ComputeVertical( const std::vector<double>& zcoord ) {
+    template <typename Vector>
+    ComputeVertical( const Vector& zcoord ) {
         nlev_ = zcoord.size() - 2;
         zcoord_.resize( nlev_ + 2 );
-        double dzcoord       = zcoord.back() - zcoord.front();
+        double dzcoord       = std::numeric_limits<double>::max();
         constexpr double tol = 1.e-12;
         ASSERT( dzcoord > 0 );
         for ( idx_t jlev = 0; jlev < nlev_; ++jlev ) {
             dzcoord       = std::min( dzcoord, zcoord[jlev + 1] - zcoord[jlev] );
             zcoord_[jlev] = zcoord[jlev] - tol;
         }
-        zcoord_.back() = zcoord.back() - tol;
+        zcoord_[nlev_]     = zcoord_[nlev_] - tol;
+        zcoord_[nlev_ + 1] = zcoord_[nlev_ + 1] - tol;
 
         nlevaux_ = std::round( 2. / dzcoord + 0.5 ) + 1;
         rlevaux_ = double( nlevaux_ );
@@ -67,11 +113,6 @@ public:
             if ( jlevaux * dzaux >= zcoord[iref + 1] && iref < nlev_ - 1 ) { ++iref; }
             nvaux_[jlevaux] = iref;
         }
-        // for( idx_t jlevaux = 0; jlevaux <= nlevaux_; ++jlevaux ) {
-        //     idx_t i = nvaux_[jlevaux];
-        //     Log::info() << jlevaux << "  " << jlevaux*dzaux << "   -->   [ " << zcoord[i] << " , " << zcoord[i+1] << "]" << std::endl;
-        // }
-        // ATLAS_DEBUG_VAR( nvaux_ );
     }
 
     idx_t operator()( double z ) const {
@@ -257,7 +298,8 @@ class ComputeVerticalStencil {
     idx_t stencil_begin_;
 
 public:
-    ComputeVerticalStencil( const std::vector<double>& zcoord, idx_t stencil_width ) :
+    template <typename Vector>
+    ComputeVerticalStencil( const Vector& zcoord, idx_t stencil_width ) :
         compute_vertical_( zcoord ),
         stencil_width_( stencil_width ) {
         stencil_begin_ = stencil_width_ - idx_t( double( stencil_width_ ) / 2. + 1. );
@@ -277,9 +319,8 @@ public:
 
 class CubicVerticalInterpolation {
     ComputeVerticalStencil compute_vertical_stencil_;
-    idx_t boundaries_;
-    std::vector<double> zcoord_;
-    idx_t nlev_;
+    Vertical vertical_;
+    bool boundaries_;
     static constexpr idx_t stencil_width() { return 4; }
     static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
     bool limiter_{false};
@@ -287,19 +328,12 @@ class CubicVerticalInterpolation {
     idx_t last_level_;
 
 public:
-    CubicVerticalInterpolation( const std::vector<double>& zcoord,
-                                const eckit::Configuration& config = util::NoConfig() ) :
-        compute_vertical_stencil_( zcoord, stencil_width() ),
-        boundaries_( config.getBool( "boundaries", false ) ),
-        zcoord_( zcoord ),
-        nlev_( zcoord.size() - boundaries_ * 2 ),
-        first_level_( 0 ),
-        last_level_( nlev_ - 1 ) {
-        if ( boundaries_ ) {
-            ++first_level_;
-            ++last_level_;
-        }
-    }
+    CubicVerticalInterpolation( const Vertical& vertical ) :
+        compute_vertical_stencil_( vertical, stencil_width() ),
+        vertical_( vertical ),
+        boundaries_( vertical.boundaries() ),
+        first_level_( vertical_.k_begin() ),
+        last_level_( vertical_.k_end() - 1 ) {}
     struct Weights {
         std::array<double, 4> weights_k;
     };
@@ -315,10 +349,11 @@ public:
 
         std::array<double, 4> zvec;
         for ( idx_t k = 0; k < 4; ++k ) {
-            zvec[k] = zcoord_[stencil.k( k )];
+            zvec[k] = vertical_( stencil.k( k ) );
         }
 
         if ( boundaries_ ) {
+            NOTIMP;
             auto quadratic_interpolation = [z]( const double zvec[], double w[] ) {
                 double d01 = zvec[0] - zvec[1];
                 double d02 = zvec[0] - zvec[2];
@@ -333,7 +368,7 @@ public:
                 w[2]       = 1. - w[0] - w[1];
             };
 
-            if ( z < zcoord_[first_level_] or z > zcoord_[last_level_] ) {
+            if ( z < vertical_( first_level_ ) or z > vertical_( last_level_ ) ) {
                 // linear extrapolation
                 // lev0   lev1   lev2   lev3            lev(n-2)  lev(n-1) lev(n)  lev(n+1)
                 //  X   +  |      |      X      or         X        |        |  +    X
@@ -344,7 +379,7 @@ public:
                 w[0] = 0.;
                 return;
             }
-            else if ( z < zcoord_[first_level_ + 1] ) {
+            else if ( z < vertical_( first_level_ + 1 ) ) {
                 // quadratic interpolation
                 // lev0   lev1   lev2   lev3
                 //  X      |  +   |      |
@@ -353,7 +388,7 @@ public:
                 w[0] = 0.;
                 return;
             }
-            else if ( z > zcoord_[last_level_ - 1] ) {
+            else if ( z > vertical_( last_level_ - 1 ) ) {
                 // quadratic interpolation
                 // lev(n-2)  lev(n-1) lev(n)  lev(n+1)
                 //   |        |   +    |       X
@@ -422,7 +457,7 @@ class CubicStructuredInterpolation {
     functionspace::StructuredColumns fs_;
     static constexpr idx_t stencil_width() { return 4; }
     static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
-    bool limiter_{true};
+    bool limiter_{false};
 
 public:
     CubicStructuredInterpolation( const functionspace::StructuredColumns& fs ) :
@@ -604,11 +639,10 @@ public:
 
     using Stencil = Stencil3D<4>;
 
-    Cubic3DInterpolation( const functionspace::StructuredColumns& fs, const std::vector<double>& zcoord,
-                          const eckit::Configuration& config = util::NoConfig() ) :
+    Cubic3DInterpolation( const functionspace::StructuredColumns& fs, const Vertical& vertical ) :
         fs_( fs ),
         horizontal_interpolation_( fs.grid() ),
-        vertical_interpolation_( zcoord, config ) {}
+        vertical_interpolation_( vertical ) {}
 
     template <typename stencil_t>
     void compute_stencil( const double x, const double y, const double z, stencil_t& stencil ) const {

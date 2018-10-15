@@ -42,7 +42,7 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-std::vector<double> vertical_coordinates( idx_t nlev ) {
+std::vector<double> IFS_vertical_coordinates( idx_t nlev ) {
     std::vector<double> zcoord( nlev + 2 );
     zcoord[0]        = 0.;
     zcoord[nlev + 1] = 1.;
@@ -51,6 +51,23 @@ std::vector<double> vertical_coordinates( idx_t nlev ) {
         zcoord[jlev] = jlev * dzcoord - 0.5 * dzcoord;
     }
     return zcoord;
+}
+
+std::vector<double> zrange( idx_t nlev, double min, double max ) {
+    std::vector<double> zcoord( nlev );
+    double dzcoord = ( max - min ) / double( nlev - 1 );
+    for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
+        zcoord[jlev] = min + jlev * dzcoord;
+    }
+    return zcoord;
+}
+
+double cubic( double x, double min, double max ) {
+    double x0   = min;
+    double x1   = 0.5 * ( max + min );
+    double x2   = max;
+    double xmax = 0.5 * ( x0 + x1 );
+    return ( x - x0 ) * ( x - x1 ) * ( x - x2 ) / ( ( xmax - x0 ) * ( xmax - x1 ) * ( xmax - x2 ) );
 }
 
 CASE( "test finding of North-West grid point" ) {
@@ -128,7 +145,7 @@ CASE( "test horizontal stencil" ) {
 
 CASE( "test vertical stencil" ) {
     idx_t nlev     = 10;
-    auto zcoord    = vertical_coordinates( nlev );
+    auto zcoord    = IFS_vertical_coordinates( nlev );
     double dzcoord = 1. / double( nlev );
 
     ATLAS_DEBUG_VAR( zcoord );
@@ -161,21 +178,22 @@ CASE( "test vertical stencil" ) {
 }
 
 CASE( "test vertical cubic interpolation" ) {
-    idx_t nlev  = 10;
-    auto zcoord = vertical_coordinates( nlev );
+    idx_t nlev    = 10;
+    auto vertical = Vertical{nlev, IFS_vertical_coordinates( nlev - 2 ), util::Config( "boundaries", false )};
 
-    CubicVerticalInterpolation interpolate( zcoord, util::Config( "boundaries", true ) );
+    CubicVerticalInterpolation interpolate( vertical );
     std::vector<double> departure_points{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.3246};
     array::ArrayT<double> array( nlev + 2 );
     auto view = array::make_view<double, 1>( array );
     for ( idx_t k = 0; k <= nlev + 1; ++k ) {
-        view( k ) = 100. * zcoord[k];
+        view( k ) = cubic( vertical( k ), 0., 1. );
     }
     //view(0) = -9999.;
     //view(nlev+1) = -9999.;
 
     for ( auto p : departure_points ) {
         Log::info() << p << "   :    " << interpolate( p, view ) << std::endl;
+        EXPECT( eckit::types::is_approximately_equal( interpolate( p, view ), cubic( p, 0., 1. ) ) );
     }
 }
 
@@ -197,8 +215,12 @@ CASE( "test horizontal cubic interpolation" ) {
     auto f      = array::make_view<double, 1>( field );
     auto xy     = array::make_view<double, 2>( fs.xy() );
 
+    auto fx  = []( double x ) { return cubic( x, 0., 360. ); };
+    auto fy  = []( double y ) { return cubic( y, -90., 90. ); };
+    auto fxy = [fx, fy]( double x, double y ) { return fx( x ) * fy( y ); };
+
     for ( idx_t j = 0; j < fs.size(); ++j ) {
-        f( j ) = xy( j, XX );
+        f( j ) = fxy( xy( j, XX ), xy( j, YY ) );
     }
 
     CubicStructuredInterpolation cubic_interpolation( fs );
@@ -208,6 +230,7 @@ CASE( "test horizontal cubic interpolation" ) {
     };
     for ( auto p : departure_points ) {
         Log::info() << p << "  -->  " << cubic_interpolation( p.x(), p.y(), f ) << std::endl;
+        EXPECT( eckit::types::is_approximately_equal( cubic_interpolation( p.x(), p.y(), f ), fxy( p.x(), p.y() ) ) );
     }
 }
 
@@ -265,10 +288,11 @@ CASE( "test horizontal cubic interpolation triplets" ) {
 
     CubicStructuredInterpolation cubic_interpolation( fs );
 
-    auto departure_points = functionspace::PointCloud{{
-        {0.13257, 45.6397},
-        {360., -90.},
-    }};
+    auto departure_points = functionspace::PointCloud{PointXY(),
+                                                      {
+                                                          {0.13257, 45.6397},
+                                                          {360., -90.},
+                                                      }};
     auto departure_lonlat = array::make_view<double, 2>( departure_points.lonlat() );
 
     CubicStructuredInterpolation::WorkSpace ws;
@@ -285,13 +309,15 @@ CASE( "test horizontal cubic interpolation triplets" ) {
     }
 
     auto triplets2 = cubic_interpolation.reserve_triplets( departure_points.size() );
-    for ( idx_t row = 0; row < departure_points.size(); ++row ) {
-        cubic_interpolation.insert_triplets( row, departure_lonlat( row, XX ), departure_lonlat( row, YY ), triplets2,
-                                             ws );
+    {
+        idx_t row{0};
+        for ( auto p : departure_points.iterate().xy() ) {
+            cubic_interpolation.insert_triplets( row++, p.x(), p.y(), triplets2, ws );
+        }
     }
 
-    EXPECT( triplets2 == triplets );
 
+    EXPECT( triplets2 == triplets );
 
     eckit::linalg::SparseMatrix matrix( departure_points.size(), fs.size(), triplets2 );
     Log::info() << matrix << std::endl;
@@ -337,46 +363,55 @@ CASE( "ifs method to find nearest grid point" ) {
 CASE( "test 3d cubic interpolation" ) {
     //if ( mpi::comm().size() == 1 ) {
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
-    idx_t nlev           = 10;
+    idx_t nlev           = 11;
+
+    Vertical vertical( nlev, zrange( nlev, 0., 1. ), util::Config( "boundaries", false ) );
+    Log::info() << zrange( nlev, 0., 1. ) << std::endl;
+    ;
 
     grid::StructuredGrid grid( gridname );
     int halo = eckit::Resource<int>( "--halo", 2 );
     util::Config config;
     config.set( "halo", halo );
-    config.set( "levels", nlev );
     config.set( "periodic_points", true );
-    config.set( "boundaries", true );
+    config.set( "levels", vertical.size() );
     functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
-
-    auto zcoord = vertical_coordinates( nlev );
-
-    // CubicVerticalInterpolation interpolate( zcoord, util::Config("boundaries",true) );
-    // std::vector<double> departure_points{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.3246};
-    // array::ArrayT<double> array( nlev + 2 );
-    // auto view = array::make_view<double, 1>( array );
-    // for ( idx_t k = 0; k <= nlev + 1; ++k ) {
-    //     view( k ) = 100. * zcoord[k];
-    // }
-    //view(0) = -9999.;
-    //view(nlev+1) = -9999.;
 
     Field field = fs.createField<double>();
     auto f      = array::make_view<double, 2>( field );
     auto xy     = array::make_view<double, 2>( fs.xy() );
 
+    auto fx   = []( double x ) { return cubic( x, 0., 360. ); };
+    auto fy   = []( double y ) { return cubic( y, -90., 90. ); };
+    auto fz   = []( double z ) { return cubic( z, 0., 1. ); };
+    auto fxyz = [fx, fy, fz]( double x, double y, double z ) { return fx( x ) * fy( y ) * fz( z ); };
     for ( idx_t n = 0; n < fs.size(); ++n ) {
-        for ( idx_t k = 1; k <= nlev; ++k ) {
-            f( n, k ) = xy( n, XX ) + zcoord[k];
+        for ( idx_t k = vertical.k_begin(); k < vertical.k_end(); ++k ) {
+            double x  = xy( n, XX );
+            double y  = xy( n, YY );
+            double z  = vertical( k );
+            f( n, k ) = fxyz( x, y, z );
         }
     }
 
-    Cubic3DInterpolation cubic_interpolation( fs, zcoord );
+    Cubic3DInterpolation cubic_interpolation( fs, vertical );
 
-    auto departure_points = {
-        PointXYZ( 0.13257, 45.6397, 0.5 ),
-    };
-    for ( auto p : departure_points ) {
-        Log::info() << p << "  -->  " << cubic_interpolation( p.x(), p.y(), p.z(), f ) << std::endl;
+    auto departure_points = functionspace::PointCloud(
+        PointXYZ(), {
+                        {90., -45., 0.25}, {0., -45., 0.25},  {180., -45., 0.25}, {360., -45., 0.25}, {90., -90., 0.25},
+                        {90., 0., 0.25},   {90., 90., 0.25},  {10., -45., 0.25},  {20., -45., 0.25},  {30., -45., 0.25},
+                        {40., -45., 0.25}, {50., -45., 0.25}, {60., -45., 0.25},  {70., -45., 0.25},  {80., -45., 0.25},
+                        {90., -45., 0.25}, {10., -10., 0.25}, {20., -20., 0.25},  {30., -30., 0.25},  {40., -40., 0.25},
+                        {50., -50., 0.25}, {60., -60., 0.25}, {70., -70., 0.25},  {80., -80., 0.25},  {90., -90., 0.25},
+                        {60., -60., 0.6},  {90., -45., 0.16}, {90., -45., 0.6},   {90., -45., 1.},    {90., -45., 0.},
+                        {90., -45., 0.1},
+                    } );
+
+    for ( auto p : departure_points.iterate().xyz() ) {
+        double interpolated = cubic_interpolation( p.x(), p.y(), p.z(), f );
+        double exact        = fxyz( p.x(), p.y(), p.z() );
+        Log::info() << p << "  -->  " << interpolated << std::endl;
+        EXPECT( eckit::types::is_approximately_equal( interpolated, exact ) );
     }
 }
 

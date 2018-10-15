@@ -16,12 +16,26 @@ namespace functionspace {
 
 namespace detail {
 
+PointCloud::PointCloud( PointXY, const std::vector<PointXY>& points ) : PointCloud( points ) {}
+
 PointCloud::PointCloud( const std::vector<PointXY>& points ) {
     lonlat_     = Field( "lonlat", array::make_datatype<double>(), array::make_shape( points.size(), 2 ) );
     auto lonlat = array::make_view<double, 2>( lonlat_ );
     for ( idx_t j = 0, size = points.size(); j < size; ++j ) {
         lonlat( j, 0 ) = points[j].x();
         lonlat( j, 1 ) = points[j].y();
+    }
+}
+
+PointCloud::PointCloud( PointXYZ, const std::vector<PointXYZ>& points ) {
+    lonlat_       = Field( "lonlat", array::make_datatype<double>(), array::make_shape( points.size(), 2 ) );
+    vertical_     = Field( "vertical", array::make_datatype<double>(), array::make_shape( points.size() ) );
+    auto lonlat   = array::make_view<double, 2>( lonlat_ );
+    auto vertical = array::make_view<double, 1>( vertical_ );
+    for ( idx_t j = 0, size = points.size(); j < size; ++j ) {
+        lonlat( j, 0 ) = points[j].x();
+        lonlat( j, 1 ) = points[j].y();
+        vertical( j )  = points[j].z();
     }
 }
 
@@ -49,6 +63,55 @@ std::string PointCloud::distribution() const {
     return std::string( "serial" );
 }
 
+atlas::functionspace::detail::PointCloud::IteratorXYZ::IteratorXYZ( const atlas::functionspace::detail::PointCloud& fs,
+                                                                    bool begin ) :
+    fs_( fs ),
+    xy_( array::make_view<double, 2>( fs_.lonlat() ) ),
+    z_( array::make_view<double, 1>( fs_.vertical() ) ),
+    n_( begin ? 0 : fs_.size() ) {}
+
+bool atlas::functionspace::detail::PointCloud::IteratorXYZ::next( PointXYZ& xyz ) {
+    if ( n_ < fs_.size() ) {
+        xyz.x() = xy_( n_, 0 );
+        xyz.y() = xy_( n_, 1 );
+        xyz.z() = z_( n_ );
+        ++n_;
+        return true;
+    }
+    return false;
+}
+
+atlas::functionspace::detail::PointCloud::IteratorXY::IteratorXY( const atlas::functionspace::detail::PointCloud& fs,
+                                                                  bool begin ) :
+    fs_( fs ),
+    xy_( array::make_view<double, 2>( fs_.lonlat() ) ),
+    n_( begin ? 0 : fs_.size() ) {}
+
+bool atlas::functionspace::detail::PointCloud::IteratorXY::next( PointXY& xyz ) {
+    if ( n_ < fs_.size() ) {
+        xyz.x() = xy_( n_, 0 );
+        xyz.y() = xy_( n_, 1 );
+        ++n_;
+        return true;
+    }
+    return false;
+}
+
+const PointXY atlas::functionspace::detail::PointCloud::IteratorXY::operator*() const {
+    PointXY xy;
+    xy.x() = xy_( n_, 0 );
+    xy.y() = xy_( n_, 1 );
+    return xy;
+}
+
+const PointXYZ atlas::functionspace::detail::PointCloud::IteratorXYZ::operator*() const {
+    PointXYZ xyz;
+    xyz.x() = xy_( n_, 0 );
+    xyz.y() = xy_( n_, 1 );
+    xyz.z() = z_( n_ );
+    return xyz;
+}
+
 }  // namespace detail
 
 PointCloud::PointCloud( const FunctionSpace& functionspace ) :
@@ -62,6 +125,15 @@ PointCloud::PointCloud( const Field& points ) :
 PointCloud::PointCloud( const std::vector<PointXY>& points ) :
     FunctionSpace( new detail::PointCloud( points ) ),
     functionspace_( dynamic_cast<const detail::PointCloud*>( get() ) ) {}
+
+PointCloud::PointCloud( PointXY p, const std::vector<PointXY>& points ) :
+    FunctionSpace( new detail::PointCloud( p, points ) ),
+    functionspace_( dynamic_cast<const detail::PointCloud*>( get() ) ) {}
+
+PointCloud::PointCloud( PointXYZ p, const std::vector<PointXYZ>& points ) :
+    FunctionSpace( new detail::PointCloud( p, points ) ),
+    functionspace_( dynamic_cast<const detail::PointCloud*>( get() ) ) {}
+
 
 }  // namespace functionspace
 }  // namespace atlas
