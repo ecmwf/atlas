@@ -78,8 +78,10 @@ CASE( "test finding of North-West grid point" ) {
 
     constexpr double tol = 0.5e-6;
 
-    ComputeNorth compute_j_north( grid );
-    ComputeWest compute_i_west( grid );
+    constexpr idx_t halo = 2;
+
+    ComputeNorth compute_j_north( grid, halo );
+    ComputeWest compute_i_west( grid, halo );
 
     struct IJ {
         idx_t i;
@@ -120,8 +122,7 @@ CASE( "test horizontal stencil" ) {
     config.set( "periodic_points", true );
     functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
 
-    constexpr int stencil_width = 4;
-    HorizontalStencil<stencil_width> stencil;
+    CubicHorizontalInterpolation::Stencil stencil;
 
     ComputeHorizontalStencil compute_stencil( grid, stencil.width() );
 
@@ -222,7 +223,7 @@ CASE( "test horizontal cubic interpolation" ) {
         f( j ) = fxy( xy( j, XX ), xy( j, YY ) );
     }
 
-    CubicStructuredInterpolation cubic_interpolation( fs );
+    CubicHorizontalInterpolation cubic_interpolation( fs );
 
     auto departure_points = {
         PointXY( 0.13257, 45.6397 ),
@@ -285,7 +286,7 @@ CASE( "test horizontal cubic interpolation triplets" ) {
         f( j ) = xy( j, XX );
     }
 
-    CubicStructuredInterpolation cubic_interpolation( fs );
+    CubicHorizontalInterpolation cubic_interpolation( fs );
 
     auto departure_points = functionspace::PointCloud{PointXY(),
                                                       {
@@ -294,8 +295,8 @@ CASE( "test horizontal cubic interpolation triplets" ) {
                                                       }};
     auto departure_lonlat = array::make_view<double, 2>( departure_points.lonlat() );
 
-    CubicStructuredInterpolation::WorkSpace ws;
-    CubicStructuredInterpolation::Triplets triplets;
+    CubicHorizontalInterpolation::WorkSpace ws;
+    CubicHorizontalInterpolation::Triplets triplets;
     for ( idx_t row = 0; row < departure_points.size(); ++row ) {
         auto triplets_row =
             cubic_interpolation.compute_triplets( row, departure_lonlat( row, XX ), departure_lonlat( row, YY ), ws );

@@ -138,44 +138,44 @@ class ComputeNorth {
     std::vector<double> y_;
     double dy_;
     static constexpr double tol() { return 0.5e-6; }
-    static constexpr idx_t halo() { return 5; }
+    idx_t halo_;
     idx_t ny_;
 
 public:
-    ComputeNorth( const grid::StructuredGrid& grid ) {
+    ComputeNorth( const grid::StructuredGrid& grid, idx_t halo ) {
         ASSERT( grid );
         if ( not grid.domain().global() ) {
             throw eckit::NotImplemented( "Only implemented for global grids", Here() );
         }
-
-        ny_ = grid.ny();
-        y_.resize( ny_ + 2 * halo() );
-        ASSERT( halo() < ny_ );
+        halo_ = halo;
+        ny_   = grid.ny();
+        y_.resize( ny_ + 2 * halo_ );
+        ASSERT( halo_ < ny_ );
         idx_t north_pole_included = 90. - std::abs( grid.y().front() ) < tol();
         idx_t south_pole_included = 90. - std::abs( grid.y().back() ) < tol();
 
-        for ( idx_t j = -halo(); j < 0; ++j ) {
-            idx_t jj       = -j - 1 + north_pole_included;
-            y_[halo() + j] = 180. - grid.y( jj ) + tol();
+        for ( idx_t j = -halo_; j < 0; ++j ) {
+            idx_t jj      = -j - 1 + north_pole_included;
+            y_[halo_ + j] = 180. - grid.y( jj ) + tol();
         }
         for ( idx_t j = 0; j < ny_; ++j ) {
-            y_[halo() + j] = grid.y( j ) + tol();
+            y_[halo_ + j] = grid.y( j ) + tol();
         }
-        for ( idx_t j = ny_; j < ny_ + halo(); ++j ) {
-            idx_t jj       = 2 * ny_ - j - 1 - south_pole_included;
-            y_[halo() + j] = -180. - grid.y( jj ) + tol();
+        for ( idx_t j = ny_; j < ny_ + halo_; ++j ) {
+            idx_t jj      = 2 * ny_ - j - 1 - south_pole_included;
+            y_[halo_ + j] = -180. - grid.y( jj ) + tol();
         }
         dy_ = std::abs( grid.y( 1 ) - grid.y( 0 ) );
     }
 
     idx_t operator()( double y ) const {
-        idx_t j = static_cast<idx_t>( std::floor( ( y_[halo() + 0] - y ) / dy_ ) );
-        while ( y_[halo() + j] > y ) {
+        idx_t j = static_cast<idx_t>( std::floor( ( y_[halo_ + 0] - y ) / dy_ ) );
+        while ( y_[halo_ + j] > y ) {
             ++j;
         }
         do {
             --j;
-        } while ( y_[halo() + j] < y );
+        } while ( y_[halo_ + j] < y );
 
         return j;
     }
@@ -184,38 +184,39 @@ public:
 class ComputeWest {
     std::vector<double> dx;
     std::vector<double> xref;
-    static constexpr double tol() { return 0.5e-6; }
-    static constexpr idx_t halo() { return 5; }
+    idx_t halo_;  // halo in north-south direction
     idx_t ny_;
+    static constexpr double tol() { return 0.5e-6; }
 
 public:
-    ComputeWest( const grid::StructuredGrid& grid ) {
+    ComputeWest( const grid::StructuredGrid& grid, idx_t halo = 0 ) {
         ASSERT( grid );
         if ( not grid.domain().global() ) {
             throw eckit::NotImplemented( "Only implemented for global grids", Here() );
         }
+        halo_                     = halo;
         idx_t north_pole_included = 90. - std::abs( grid.y().front() ) < tol();
         idx_t south_pole_included = 90. - std::abs( grid.y().back() ) < tol();
         ny_                       = grid.ny();
-        dx.resize( ny_ + 2 * halo() );
-        xref.resize( ny_ + 2 * halo() );
-        for ( idx_t j = -halo(); j < 0; ++j ) {
-            idx_t jj         = -j - 1 + north_pole_included;
-            dx[halo() + j]   = grid.x( 1, jj ) - grid.x( 0, jj );
-            xref[halo() + j] = grid.x( 0, jj ) - tol();
+        dx.resize( ny_ + 2 * halo_ );
+        xref.resize( ny_ + 2 * halo_ );
+        for ( idx_t j = -halo_; j < 0; ++j ) {
+            idx_t jj        = -j - 1 + north_pole_included;
+            dx[halo_ + j]   = grid.x( 1, jj ) - grid.x( 0, jj );
+            xref[halo_ + j] = grid.x( 0, jj ) - tol();
         }
         for ( idx_t j = 0; j < ny_; ++j ) {
-            dx[halo() + j]   = std::abs( grid.x( 1, j ) - grid.x( 0, j ) );
-            xref[halo() + j] = grid.x( 0, j ) - tol();
+            dx[halo_ + j]   = std::abs( grid.x( 1, j ) - grid.x( 0, j ) );
+            xref[halo_ + j] = grid.x( 0, j ) - tol();
         }
-        for ( idx_t j = ny_; j < ny_ + halo(); ++j ) {
-            idx_t jj         = 2 * ny_ - j - 1 - south_pole_included;
-            dx[halo() + j]   = std::abs( grid.x( 1, jj ) - grid.x( 0, jj ) );
-            xref[halo() + j] = grid.x( 0, jj ) - tol();
+        for ( idx_t j = ny_; j < ny_ + halo_; ++j ) {
+            idx_t jj        = 2 * ny_ - j - 1 - south_pole_included;
+            dx[halo_ + j]   = std::abs( grid.x( 1, jj ) - grid.x( 0, jj ) );
+            xref[halo_ + j] = grid.x( 0, jj ) - tol();
         }
     }
     idx_t operator()( const double& x, idx_t j ) const {
-        idx_t jj = halo() + j;
+        idx_t jj = halo_ + j;
         idx_t i  = static_cast<idx_t>( std::floor( ( x - xref[jj] ) / dx[jj] ) );
         return i;
     }
@@ -260,6 +261,7 @@ public:
 //         x        x        x         x       j + 3
 
 class ComputeHorizontalStencil {
+    idx_t halo_;
     ComputeNorth compute_north_;
     ComputeWest compute_west_;
     idx_t stencil_width_;
@@ -267,8 +269,9 @@ class ComputeHorizontalStencil {
 
 public:
     ComputeHorizontalStencil( const grid::StructuredGrid& grid, idx_t stencil_width ) :
-        compute_north_( grid ),
-        compute_west_( grid ),
+        halo_( ( stencil_width + 1 ) / 2 ),
+        compute_north_( grid, halo_ ),
+        compute_west_( grid, halo_ ),
         stencil_width_( stencil_width ) {
         stencil_begin_ = stencil_width_ - idx_t( double( stencil_width_ ) / 2. + 1. );
     }
@@ -278,11 +281,6 @@ public:
         for ( idx_t jj = 0; jj < stencil_width_; ++jj ) {
             i[jj] = compute_west_( x, j + jj ) - stencil_begin_;
         }
-    }
-    HorizontalStencil<4> operator()( const double& x, const double& y ) const {
-        HorizontalStencil<4> stencil;
-        operator()( x, y, stencil );
-        return stencil;
     }
     template <typename stencil_t>
     void operator()( const double& x, const double& y, stencil_t& stencil ) const {
@@ -314,11 +312,7 @@ public:
     }
 
     void operator()( const double& z, idx_t& k ) const { k = compute_vertical_( z ) - stencil_begin_; }
-    VerticalStencil<4> operator()( const double& z ) const {
-        VerticalStencil<4> stencil;
-        operator()( z, stencil );
-        return stencil;
-    }
+
     template <typename stencil_t>
     void operator()( const double& z, stencil_t& stencil ) const {
         operator()( z, stencil.k_begin_ );
@@ -459,7 +453,7 @@ public:
     }
 };
 
-class CubicStructuredInterpolation {
+class CubicHorizontalInterpolation {
     functionspace::StructuredColumns fs_;
     ComputeHorizontalStencil compute_horizontal_stencil_;
     static constexpr idx_t stencil_width() { return 4; }
@@ -467,7 +461,10 @@ class CubicStructuredInterpolation {
     bool limiter_{false};
 
 public:
-    CubicStructuredInterpolation( const functionspace::StructuredColumns& fs ) :
+    using Stencil = HorizontalStencil<4>;
+
+public:
+    CubicHorizontalInterpolation( const functionspace::StructuredColumns& fs ) :
         fs_( fs ),
         compute_horizontal_stencil_( fs.grid(), stencil_width() ) {}
     template <typename weights_t>
@@ -632,7 +629,7 @@ public:
 
 class Cubic3DInterpolation {
     functionspace::StructuredColumns fs_;
-    CubicStructuredInterpolation horizontal_interpolation_;
+    CubicHorizontalInterpolation horizontal_interpolation_;
     CubicVerticalInterpolation vertical_interpolation_;
     static constexpr idx_t stencil_width() { return 4; }
     static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
