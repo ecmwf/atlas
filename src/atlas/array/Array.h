@@ -212,5 +212,10 @@ private:
     mutable bool acc_map_{false};
 };
 
+extern template class ArrayT<float>;
+extern template class ArrayT<double>;
+extern template class ArrayT<int>;
+extern template class ArrayT<long>;
+
 }  // namespace array
 }  // namespace atlas

@@ -38,8 +38,8 @@ namespace interpolation {
 namespace {
 
 typedef std::map<std::string, MethodFactory*> MethodFactoryMap_t;
-static MethodFactoryMap_t* m     = 0;
-static eckit::Mutex* local_mutex = 0;
+static MethodFactoryMap_t* m     = nullptr;
+static eckit::Mutex* local_mutex = nullptr;
 static pthread_once_t once       = PTHREAD_ONCE_INIT;
 
 static void init() {

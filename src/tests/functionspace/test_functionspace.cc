@@ -66,7 +66,7 @@ CASE( "test_functionspace_NodeColumns" ) {
 
     // grid.reset();
 
-    size_t nb_levels = 10;
+    idx_t nb_levels = 10;
 
     functionspace::NodeColumns nodes_fs( mesh, option::halo( 1 ) | option::levels( nb_levels ) );
     // NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
@@ -141,7 +141,7 @@ CASE( "test_functionspace_NodeColumns" ) {
 
     Field field                  = nodes_fs.createField<int>( option::name( "partition" ) );
     array::ArrayView<int, 2> arr = array::make_view<int, 2>( field );
-    arr.assign( mpi::comm().rank() );
+    arr.assign( int( mpi::comm().rank() ) );
     // field->dump( Log::info() );
     nodes_fs.haloExchange( field );
     // field->dump( Log::info() );
@@ -149,7 +149,7 @@ CASE( "test_functionspace_NodeColumns" ) {
     Field field2 = nodes_fs.createField<int>( option::name( "partition2" ) | option::variables( 2 ) );
     Log::info() << "field2.rank() = " << field2.rank() << std::endl;
     array::ArrayView<int, 3> arr2 = array::make_view<int, 3>( field2 );
-    arr2.assign( mpi::comm().rank() );
+    arr2.assign( int( mpi::comm().rank() ) );
 
     // field2->dump( Log::info() );
     nodes_fs.haloExchange( field2 );
@@ -175,7 +175,7 @@ CASE( "test_functionspace_NodeColumns" ) {
     Log::info() << "glb_field.shape(0) = " << glb_field.shape( 0 ) << std::endl;
 
     EXPECT( glb_field.metadata().get<bool>( "global" ) == true );
-    EXPECT( glb_field.metadata().get<int>( "owner" ) == root );
+    EXPECT( glb_field.metadata().get<int>( "owner" ) == int( root ) );
 
     // glb_field->dump( Log::info() );
 
@@ -386,7 +386,7 @@ CASE( "test_functionspace_NodeColumns" ) {
     if ( 1 ) {
         const Field& field                  = columns_vector_field;
         const functionspace::NodeColumns fs = nodes_fs;
-        size_t nvar                         = field.variables();
+        idx_t nvar                          = field.variables();
         std::vector<double> max;
         std::vector<double> min;
         std::vector<double> sum;
@@ -467,9 +467,9 @@ CASE( "test_functionspace_NodeColumns" ) {
 }
 
 CASE( "test_SpectralFunctionSpace" ) {
-    size_t truncation = 159;
-    size_t nb_levels  = 10;
-    size_t nspec2g    = ( truncation + 1 ) * ( truncation + 2 );
+    idx_t truncation = 159;
+    idx_t nb_levels  = 10;
+    idx_t nspec2g    = ( truncation + 1 ) * ( truncation + 2 );
 
     Spectral spectral_fs( truncation );
 
@@ -504,10 +504,10 @@ CASE( "test_SpectralFunctionSpace" ) {
 
 CASE( "test_SpectralFunctionSpace_trans_dist" ) {
     trans::Trans trans( Grid( "F80" ), 159 );
-    size_t nb_levels( 10 );
+    idx_t nb_levels( 10 );
 
     Spectral spectral_fs( trans );
-    size_t nspec2 = spectral_fs.nb_spectral_coefficients();
+    idx_t nspec2 = spectral_fs.nb_spectral_coefficients();
 
     Field surface_scalar_field = spectral_fs.createField<double>( option::name( "scalar" ) );
 
@@ -543,11 +543,11 @@ CASE( "test_SpectralFunctionSpace_trans_dist" ) {
     // == eckit::testing::make_view(columns_scalar_shape,columns_scalar_shape+2));
 }
 CASE( "test_SpectralFunctionSpace_trans_global" ) {
-    size_t nb_levels( 10 );
-    size_t truncation = 159;
+    idx_t nb_levels( 10 );
+    idx_t truncation = 159;
 
     Spectral spectral_fs( truncation, option::levels( nb_levels ) );
-    size_t nspec2g = spectral_fs.nb_spectral_coefficients_global();
+    idx_t nspec2g = spectral_fs.nb_spectral_coefficients_global();
 
     Field surface_scalar_field =
         spectral_fs.createField<double>( option::name( "scalar" ) | option::levels( false ) | option::global() );

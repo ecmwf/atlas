@@ -65,15 +65,15 @@ extern "C" {
 FieldSetImpl* atlas__FieldSet__new( char* name ) {
     ATLAS_ERROR_HANDLING( FieldSetImpl* fset = new FieldSetImpl( std::string( name ) ); fset->name() = name;
                           return fset; );
-    return NULL;
+    return nullptr;
 }
 
 void atlas__FieldSet__delete( FieldSetImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); delete This; );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); delete This; );
 }
 
 void atlas__FieldSet__add_field( FieldSetImpl* This, FieldImpl* field ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); This->add( field ); );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); This->add( field ); );
 }
 
 int atlas__FieldSet__has_field( const FieldSetImpl* This, char* name ) {
@@ -82,18 +82,18 @@ int atlas__FieldSet__has_field( const FieldSetImpl* This, char* name ) {
 }
 
 idx_t atlas__FieldSet__size( const FieldSetImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->size(); );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->size(); );
     return 0;
 }
 
 FieldImpl* atlas__FieldSet__field_by_name( FieldSetImpl* This, char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->field( std::string( name ) ).get(); );
-    return NULL;
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->field( std::string( name ) ).get(); );
+    return nullptr;
 }
 
 FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, idx_t idx ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->operator[]( idx ).get(); );
-    return NULL;
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->operator[]( idx ).get(); );
+    return nullptr;
 }
 }
 //-----------------------------------------------------------------------------

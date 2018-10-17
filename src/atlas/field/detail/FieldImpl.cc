@@ -169,7 +169,7 @@ FieldImpl* atlas__Field__wrap_int_specf( const char* name, int data[], int rank,
                               field->attach();
                           } field->detach();
                           ASSERT( field ); return field; );
-    return 0;
+    return nullptr;
 }
 
 FieldImpl* atlas__Field__wrap_long_specf( const char* name, long data[], int rank, int shapef[], int stridesf[] ) {
@@ -185,7 +185,7 @@ FieldImpl* atlas__Field__wrap_long_specf( const char* name, long data[], int ran
                               field->attach();
                           } field->detach();
                           ASSERT( field ); return field; );
-    return 0;
+    return nullptr;
 }
 
 FieldImpl* atlas__Field__wrap_float_specf( const char* name, float data[], int rank, int shapef[], int stridesf[] ) {
@@ -217,7 +217,7 @@ FieldImpl* atlas__Field__wrap_double_specf( const char* name, double data[], int
                               field->attach();
                           } field->detach();
                           ASSERT( field ); return field; );
-    return 0;
+    return nullptr;
 }
 
 FieldImpl* atlas__Field__create( eckit::Parametrisation* params ) {
@@ -228,7 +228,7 @@ FieldImpl* atlas__Field__create( eckit::Parametrisation* params ) {
     } field->detach();
 
                           ASSERT( field ); return field; );
-    return 0;
+    return nullptr;
 }
 
 void atlas__Field__delete( FieldImpl* This ) {
@@ -237,7 +237,7 @@ void atlas__Field__delete( FieldImpl* This ) {
 
 const char* atlas__Field__name( FieldImpl* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->name().c_str(); );
-    return 0;
+    return nullptr;
 }
 
 void atlas__Field__datatype( FieldImpl* This, char*& datatype, int& size, int& allocated ) {
@@ -272,7 +272,7 @@ int atlas__Field__levels( FieldImpl* This ) {
 
 util::Metadata* atlas__Field__metadata( FieldImpl* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->metadata(); );
-    return 0;
+    return nullptr;
 }
 
 int atlas__Field__has_functionspace( FieldImpl* This ) {
@@ -282,7 +282,7 @@ int atlas__Field__has_functionspace( FieldImpl* This ) {
 
 const functionspace::FunctionSpaceImpl* atlas__Field__functionspace( FieldImpl* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->functionspace().get(); );
-    return 0;
+    return nullptr;
 }
 
 void atlas__Field__shapef( FieldImpl* This, int*& shape, int& rank ) {

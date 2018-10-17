@@ -42,9 +42,9 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( const std::string& name ) 
     rows_( 0 ),
     maxcols_( 0 ),
     mincols_( std::numeric_limits<idx_t>::max() ),
-    ctxt_( 0 ),
-    callback_update_( 0 ),
-    callback_delete_( 0 ),
+    ctxt_( nullptr ),
+    callback_update_( nullptr ),
+    callback_delete_( nullptr ),
     gpu_clone_( this ) {
     rename( name );
     displs_view_( 0 ) = 0;
@@ -73,9 +73,9 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( idx_t values[], idx_t rows
     counts_view_( array::make_view<idx_t, 1>( *( data_[_counts_] ) ) ),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
     rows_( rows ),
-    ctxt_( 0 ),
-    callback_update_( 0 ),
-    callback_delete_( 0 ),
+    ctxt_( nullptr ),
+    callback_update_( nullptr ),
+    callback_delete_( nullptr ),
     gpu_clone_( this ) {
     maxcols_ = 0;
     mincols_ = std::numeric_limits<idx_t>::max();
@@ -95,7 +95,7 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( const IrregularConnectivit
     rows_( other.rows_ ),
     maxcols_( other.maxcols_ ),
     mincols_( other.mincols_ ),
-    ctxt_( 0 ),
+    ctxt_( nullptr ),
     gpu_clone_( this ) {}
 
 //------------------------------------------------------------------------------------------------------
@@ -107,7 +107,7 @@ IrregularConnectivityImpl::~IrregularConnectivityImpl() {
         std::for_each( data_.begin(), data_.end(), []( array::Array* a ) {
             assert( a );
             delete a;
-            a = 0;
+            a = nullptr;
         } );
     }
 }
@@ -176,8 +176,8 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[
     idx_t new_size = old_size + rows * cols;
     idx_t new_rows = rows_ + rows;
 
-    ASSERT( data_[_displs_] != 0 );
-    ASSERT( data_[_counts_] != 0 );
+    ASSERT( data_[_displs_] != nullptr );
+    ASSERT( data_[_counts_] != nullptr );
     data_[_displs_]->resize( new_rows + 1 );
     data_[_counts_]->resize( new_rows + 1 );
     displs_view_ = array::make_view<idx_t, 1>( *( data_[_displs_] ) );
@@ -242,7 +242,7 @@ void IrregularConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
         mincols_                  = std::min( mincols_, cols[j] );
     }
 
-    resize( old_size, new_size, false, NULL, false );
+    resize( old_size, new_size, false, nullptr, false );
 
     on_update();
 }
@@ -258,8 +258,8 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols ) {
     idx_t new_size = old_size + rows * cols;
     idx_t new_rows = rows_ + rows;
 
-    ASSERT( data_[_displs_] != 0 );
-    ASSERT( data_[_counts_] != 0 );
+    ASSERT( data_[_displs_] != nullptr );
+    ASSERT( data_[_counts_] != nullptr );
     data_[_displs_]->resize( new_rows + 1 );
     data_[_counts_]->resize( new_rows + 1 );
     displs_view_ = array::make_view<idx_t, 1>( *( data_[_displs_] ) );
@@ -274,7 +274,7 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols ) {
     mincols_ = std::min( mincols_, cols );
 
     const bool dummy_arg_fortran_array = false;
-    const idx_t* dummy_arg_values      = NULL;
+    const idx_t* dummy_arg_values      = nullptr;
     resize( old_size, new_size, false, dummy_arg_values, dummy_arg_fortran_array );
 
     on_update();
@@ -304,7 +304,7 @@ void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols, 
     data_[_values_]->insert( position_displs, rows * cols );
     values_view_ = array::make_view<idx_t, 1>( *( data_[_values_] ) );
 
-    if ( values == NULL ) {
+    if ( values == nullptr ) {
         for ( idx_t c = position_displs; c < position_displs + rows * cols; ++c ) {
             values_view_( c ) = missing_value() TO_FORTRAN;
         }
@@ -323,7 +323,7 @@ void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols, 
 //------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols ) {
-    IrregularConnectivityImpl::insert( position, rows, cols, NULL, false );
+    IrregularConnectivityImpl::insert( position, rows, cols, nullptr, false );
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -869,7 +869,7 @@ private:
 
 extern "C" {
 Connectivity* atlas__Connectivity__create() {
-    Connectivity* connectivity = 0;
+    Connectivity* connectivity = nullptr;
     ATLAS_ERROR_HANDLING( connectivity = new Connectivity(); );
     return connectivity;
 }
@@ -933,7 +933,7 @@ idx_t atlas__Connectivity__missing_value( const Connectivity* This ) {
 }
 
 MultiBlockConnectivity* atlas__MultiBlockConnectivity__create() {
-    MultiBlockConnectivity* connectivity = 0;
+    MultiBlockConnectivity* connectivity = nullptr;
     ATLAS_ERROR_HANDLING( connectivity = new MultiBlockConnectivity(); );
     return connectivity;
 }
@@ -943,9 +943,9 @@ idx_t atlas__MultiBlockConnectivity__blocks( const MultiBlockConnectivity* This 
 }
 
 BlockConnectivityImpl* atlas__MultiBlockConnectivity__block( MultiBlockConnectivity* This, idx_t block_idx ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ) );
     BlockConnectivityImpl* block = &This->block( block_idx );
-    ASSERT( block != 0 );
+    ASSERT( block != nullptr );
     return block;
 }
 
@@ -954,22 +954,22 @@ void atlas__BlockConnectivity__delete( BlockConnectivityImpl* This ) {
 }
 
 idx_t atlas__BlockConnectivity__rows( const BlockConnectivityImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ) );
     return This->rows();
 }
 
 idx_t atlas__BlockConnectivity__cols( const BlockConnectivityImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ) );
     return This->cols();
 }
 
 idx_t atlas__BlockConnectivity__missing_value( const BlockConnectivityImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ) );
     return This->missing_value();
 }
 
 void atlas__BlockConnectivity__data( BlockConnectivityImpl* This, idx_t*& data, idx_t& rows, idx_t& cols ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ) );
     data = This->data();
     rows = This->rows();
     cols = This->cols();
@@ -977,7 +977,7 @@ void atlas__BlockConnectivity__data( BlockConnectivityImpl* This, idx_t*& data, 
 
 const char* atlas__Connectivity__name( Connectivity* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return ConnectivityPrivateAccess( *This ).name(); );
-    return 0;
+    return nullptr;
 }
 
 void atlas__Connectivity__rename( Connectivity* This, const char* name ) {

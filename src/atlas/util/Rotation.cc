@@ -18,9 +18,6 @@
 #include "atlas/util/UnitSphere.h"
 #include "eckit/config/Parametrisation.h"
 
-// Temporary option to activate implementation by RMI during ESCAPE
-#define OLD_IMPLEMENTATION 0
-
 namespace atlas {
 namespace util {
 
@@ -104,10 +101,6 @@ Rotation::Rotation( const PointLonLat& south_pole, double rotation_angle ) {
 }
 
 Rotation::Rotation( const eckit::Parametrisation& p ) {
-#if OLD_IMPLEMENTATION
-    npole_ = {0., 90.};
-#endif
-
     // get rotation angle
     p.get( "rotation_angle", angle_ );
 
@@ -199,11 +192,6 @@ inline PointXYZ rotate_geocentric( const PointXYZ& p, const RotationMatrix& R ) 
 }
 
 void Rotation::rotate( double crd[] ) const {
-#if OLD_IMPLEMENTATION
-    rotate_old( crd );
-    return;
-#endif
-
     if ( !rotated_ ) { return; }
     else if ( rotation_angle_only_ ) {
         crd[LON] -= angle_;
@@ -224,11 +212,6 @@ void Rotation::rotate( double crd[] ) const {
 }
 
 void Rotation::unrotate( double crd[] ) const {
-#if OLD_IMPLEMENTATION
-    unrotate_old( crd );
-    return;
-#endif
-
     if ( !rotated_ ) { return; }
     else if ( rotation_angle_only_ ) {
         crd[LON] += angle_;

@@ -58,15 +58,30 @@
 // }
 // }  // namespace std
 
+namespace eckit {
+namespace types {
+extern template bool is_approximately_equal( float a, float b, float epsilon, int maxUlpsDiff );
+extern template bool is_approximately_equal( double a, double b, double epsilon, int maxUlpsDiff );
+}  // namespace types
+
+}  // namespace eckit
 
 namespace atlas {
 namespace test {
 
+using eckit::types::is_approximately_equal;
+
 //----------------------------------------------------------------------------------------------------------------------
+
+#ifdef MAYBE_UNUSED
+#elif defined( __GNUC__ )
+#define MAYBE_UNUSED __attribute__( ( unused ) )
+#elif
+#define MAYBE_UNUSED
+#endif
 
 // Redefine macro's defined in "eckit/testing/Test.h" to include trace
 // information
-
 #undef CASE
 #define CASE( description )                                                                                          \
     void UNIQUE_NAME2( test_, __LINE__ )( std::string&, int&, int );                                                 \
@@ -86,8 +101,8 @@ namespace test {
             eckit::mpi::comm().abort();                                                                              \
         }                                                                                                            \
     }                                                                                                                \
-    void UNIQUE_NAME2( traced_test_, __LINE__ )( std::string & _test_subsection, int& _num_subsections,              \
-                                                 int _subsection )
+    void UNIQUE_NAME2( traced_test_, __LINE__ )( MAYBE_UNUSED std::string & _test_subsection,                        \
+                                                 MAYBE_UNUSED int& _num_subsections, MAYBE_UNUSED int _subsection )
 
 #undef SECTION
 #define SECTION( name )                                                                          \

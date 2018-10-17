@@ -268,7 +268,7 @@ class Gaussian : public Grid {
 public:
     using Grid::Grid;
 
-    long N() const { return Grid::ny() / 2; }
+    idx_t N() const { return Grid::ny() / 2; }
 
     inline double lon( idx_t i, idx_t j ) const { return Grid::x( i, j ); }
 

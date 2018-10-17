@@ -272,6 +272,18 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
 }
 // ----------------------------------------------------------------------------
 
+void print_field_lev( char field_lev[], int jlev ) {
+    std::sprintf( field_lev, "[%03d]", jlev );
+}
+
+void print_field_lev( char field_lev[], long jlev ) {
+    std::sprintf( field_lev, "[%03ld]", jlev );
+}
+
+void print_field_lev( char field_lev[], unsigned long jlev ) {
+    std::sprintf( field_lev, "[%03lu]", jlev );
+}
+
 // ----------------------------------------------------------------------------
 template <typename DATATYPE>
 void write_field_nodes( const Metadata& gmsh_options, const functionspace::StructuredColumns& function_space,
@@ -302,7 +314,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
         idx_t jlev        = lev[ilev];
         char field_lev[6] = {0, 0, 0, 0, 0, 0};
 
-        if ( field.levels() ) { std::sprintf( field_lev, "[%03lu]", jlev ); }
+        if ( field.levels() ) { print_field_lev( field_lev, jlev ); }
 
         double time = field.metadata().has( "time" ) ? field.metadata().get<double>( "time" ) : 0.;
 

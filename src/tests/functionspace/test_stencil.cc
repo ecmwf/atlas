@@ -37,6 +37,7 @@ using namespace eckit;
 using namespace atlas::functionspace;
 using namespace atlas::util;
 
+
 namespace atlas {
 namespace test {
 
@@ -118,8 +119,6 @@ CASE( "test horizontal stencil" ) {
     config.set( "levels", 9 );
     config.set( "periodic_points", true );
     functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
-
-    double tol = 0.5e-6;
 
     constexpr int stencil_width = 4;
     HorizontalStencil<stencil_width> stencil;
@@ -230,7 +229,7 @@ CASE( "test horizontal cubic interpolation" ) {
     };
     for ( auto p : departure_points ) {
         Log::info() << p << "  -->  " << cubic_interpolation( p.x(), p.y(), f ) << std::endl;
-        EXPECT( eckit::types::is_approximately_equal( cubic_interpolation( p.x(), p.y(), f ), fxy( p.x(), p.y() ) ) );
+        EXPECT( is_approximately_equal( cubic_interpolation( p.x(), p.y(), f ), fxy( p.x(), p.y() ) ) );
     }
 }
 
@@ -239,7 +238,7 @@ CASE( "test horizontal cubic interpolation" ) {
 bool operator==( const eckit::linalg::Triplet& t1, const eckit::linalg::Triplet& t2 ) {
     if ( t1.row() != t2.row() ) return false;
     if ( t1.col() != t2.col() ) return false;
-    if ( t1.value() != t2.value() ) return false;
+    if ( !is_approximately_equal( t1.value(), t2.value() ) ) return false;
 
     return true;
 }
@@ -248,7 +247,7 @@ bool operator!=( const eckit::linalg::Triplet& t1, const eckit::linalg::Triplet&
 }
 bool operator==( const std::vector<eckit::linalg::Triplet>& t1, const std::vector<eckit::linalg::Triplet>& t2 ) {
     if ( t1.size() != t2.size() ) return false;
-    for ( idx_t i = 0; i < t1.size(); ++i ) {
+    for ( size_t i = 0; i < t1.size(); ++i ) {
         if ( t1[i] != t2[i] ) return false;
     }
     return true;
@@ -347,12 +346,12 @@ CASE( "ifs method to find nearest grid point" ) {
         }
 
         auto iterator = std::min_element( pdlat.begin(), pdlat.end() );
-        kgrib_lat     = ( iterator - pdlat.begin() );
+        kgrib_lat     = static_cast<idx_t>( iterator - pdlat.begin() );
 
         double zfirstlon = grid.x( 0, kgrib_lat );
         double zdlon     = grid.x( 1, kgrib_lat ) - zfirstlon;
         double zsafelon  = std::fmod( x - zfirstlon + 720., 360. );
-        kgrib_lon        = std::fmod( std::round( zsafelon / zdlon ), grid.nx( kgrib_lat ) );
+        kgrib_lon        = static_cast<idx_t>( std::fmod( std::round( zsafelon / zdlon ), grid.nx( kgrib_lat ) ) );
     }
     EXPECT( kgrib_lon == 0 );
     EXPECT( kgrib_lat == 0 );

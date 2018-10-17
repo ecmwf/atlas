@@ -30,7 +30,6 @@ class Vertical {
     idx_t k_begin_;
     idx_t k_end_;
     idx_t size_;
-    idx_t halo_;
     bool boundaries_;
     std::vector<double> z_;
 
@@ -103,7 +102,7 @@ public:
         zcoord_[nlev_]     = zcoord_[nlev_] - tol;
         zcoord_[nlev_ + 1] = zcoord_[nlev_ + 1] - tol;
 
-        nlevaux_ = std::round( 2. / dzcoord + 0.5 ) + 1;
+        nlevaux_ = static_cast<idx_t>( std::round( 2. / dzcoord + 0.5 ) + 1 );
         rlevaux_ = double( nlevaux_ );
         nvaux_.resize( nlevaux_ + 1 );
         double dzaux = ( zcoord[nlev_ + 1] - zcoord[0] ) / rlevaux_;
@@ -116,9 +115,9 @@ public:
     }
 
     idx_t operator()( double z ) const {
-        idx_t idx = std::floor( z * rlevaux_ );
+        idx_t idx = static_cast<idx_t>( std::floor( z * rlevaux_ ) );
 #ifndef NDEBUG
-        ASSERT( idx < nvaux_.size() && idx >= 0 );
+        ASSERT( idx < static_cast<idx_t>( nvaux_.size() ) && idx >= 0 );
 #endif
         // ATLAS_DEBUG_VAR( idx );
         idx = nvaux_[idx];
@@ -139,11 +138,16 @@ class ComputeNorth {
     std::vector<double> y_;
     double dy_;
     static constexpr double tol() { return 0.5e-6; }
-    static constexpr double halo() { return 5; }
+    static constexpr idx_t halo() { return 5; }
     idx_t ny_;
 
 public:
     ComputeNorth( const grid::StructuredGrid& grid ) {
+        ASSERT( grid );
+        if ( not grid.domain().global() ) {
+            throw eckit::NotImplemented( "Only implemented for global grids", Here() );
+        }
+
         ny_ = grid.ny();
         y_.resize( ny_ + 2 * halo() );
         ASSERT( halo() < ny_ );
@@ -165,7 +169,7 @@ public:
     }
 
     idx_t operator()( double y ) const {
-        idx_t j = std::floor( ( y_[halo() + 0] - y ) / dy_ );
+        idx_t j = static_cast<idx_t>( std::floor( ( y_[halo() + 0] - y ) / dy_ ) );
         while ( y_[halo() + j] > y ) {
             ++j;
         }
@@ -181,11 +185,15 @@ class ComputeWest {
     std::vector<double> dx;
     std::vector<double> xref;
     static constexpr double tol() { return 0.5e-6; }
-    static constexpr double halo() { return 5; }
+    static constexpr idx_t halo() { return 5; }
     idx_t ny_;
 
 public:
     ComputeWest( const grid::StructuredGrid& grid ) {
+        ASSERT( grid );
+        if ( not grid.domain().global() ) {
+            throw eckit::NotImplemented( "Only implemented for global grids", Here() );
+        }
         idx_t north_pole_included = 90. - std::abs( grid.y().front() ) < tol();
         idx_t south_pole_included = 90. - std::abs( grid.y().back() ) < tol();
         ny_                       = grid.ny();
@@ -208,7 +216,7 @@ public:
     }
     idx_t operator()( const double& x, idx_t j ) const {
         idx_t jj = halo() + j;
-        idx_t i  = std::floor( ( x - xref[jj] ) / dx[jj] );
+        idx_t i  = static_cast<idx_t>( std::floor( ( x - xref[jj] ) / dx[jj] ) );
         return i;
     }
 };
@@ -353,7 +361,6 @@ public:
         }
 
         if ( boundaries_ ) {
-            NOTIMP;
             auto quadratic_interpolation = [z]( const double zvec[], double w[] ) {
                 double d01 = zvec[0] - zvec[1];
                 double d02 = zvec[0] - zvec[2];
@@ -453,8 +460,8 @@ public:
 };
 
 class CubicStructuredInterpolation {
-    ComputeHorizontalStencil compute_horizontal_stencil_;
     functionspace::StructuredColumns fs_;
+    ComputeHorizontalStencil compute_horizontal_stencil_;
     static constexpr idx_t stencil_width() { return 4; }
     static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
     bool limiter_{false};

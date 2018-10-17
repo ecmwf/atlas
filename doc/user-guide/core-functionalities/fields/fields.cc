@@ -8,7 +8,6 @@
 using atlas::Field;
 using atlas::FieldSet;
 using atlas::Log;
-using atlas::array::ArrayView;
 using atlas::array::make_datatype;
 using atlas::array::make_shape;
 using atlas::array::make_view;

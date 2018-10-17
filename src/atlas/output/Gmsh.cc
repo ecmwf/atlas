@@ -254,13 +254,13 @@ void Gmsh::write( const FieldSet& fields, const FunctionSpace& functionspace,
 extern "C" {
 
 Gmsh* atlas__output__Gmsh__create_pathname_mode( const char* pathname, const char* mode ) {
-    Gmsh* gmsh( 0 );
+    Gmsh* gmsh( nullptr );
     ATLAS_ERROR_HANDLING( gmsh = new Gmsh( std::string( pathname ), std::string( mode ) ) );
     return gmsh;
 }
 Gmsh* atlas__output__Gmsh__create_pathname_mode_config( const char* pathname, const char* mode,
                                                         const Parametrisation* params ) {
-    Gmsh* gmsh( 0 );
+    Gmsh* gmsh( nullptr );
     ATLAS_ERROR_HANDLING( gmsh = new Gmsh( std::string( pathname ), std::string( mode ), *params ) );
     return gmsh;
 }

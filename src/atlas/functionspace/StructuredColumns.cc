@@ -77,7 +77,6 @@ public:
     idx_t i, j;
     idx_t r;
 
-    GridPoint() {}
     GridPoint( idx_t _i, idx_t _j ) : i( _i ), j( _j ) {}
 
     bool operator<( const GridPoint& other ) const {
@@ -95,11 +94,11 @@ public:
     std::set<GridPoint> set;
     bool insert( idx_t i, idx_t j ) {
         auto inserted = set.insert( GridPoint( i, j ) );
-        if ( inserted.second ) { const_cast<GridPoint&>( *inserted.first ).r = set.size() - 1; }
+        if ( inserted.second ) { const_cast<GridPoint&>( *inserted.first ).r = static_cast<idx_t>( set.size() - 1 ); }
         return inserted.second;
     }
 
-    idx_t size() const { return set.size(); }
+    idx_t size() const { return static_cast<idx_t>( set.size() ); }
 
     using const_iterator = std::set<GridPoint>::const_iterator;
 
@@ -197,7 +196,7 @@ idx_t StructuredColumns::config_size( const eckit::Configuration& config ) const
         if ( global ) {
             idx_t owner( 0 );
             config.get( "owner", owner );
-            size = ( mpi::comm().rank() == owner ? grid_.size() : 0 );
+            size = ( static_cast<idx_t>( mpi::comm().rank() ) == owner ? grid_.size() : 0 );
         }
     }
     return size;
@@ -215,8 +214,8 @@ StructuredColumns::StructuredColumns( const Grid& grid, const eckit::Configurati
 
 StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner& p,
                                       const eckit::Configuration& config ) :
-    grid_( grid ),
-    nb_levels_( 0 ) {
+    nb_levels_( 0 ),
+    grid_( grid ) {
     ATLAS_TRACE( "Generating StructuredColumns..." );
     nb_levels_           = config_levels( config );
     bool periodic_points = config.getInt( "periodic_points", false );
@@ -245,7 +244,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     ATLAS_TRACE_SCOPE( "Partitioning grid ..." ) { distribution = grid::Distribution( grid, partitioner ); }
     distribution_ = distribution.type();
 
-    int mpi_rank = mpi::comm().rank();
+    int mpi_rank = int( mpi::comm().rank() );
 
     j_begin_ = std::numeric_limits<idx_t>::max();
     j_end_   = std::numeric_limits<idx_t>::min();
@@ -296,10 +295,10 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
 
     std::function<idx_t( idx_t )> compute_j;
     compute_j = [this, &compute_j]( idx_t j ) -> idx_t {
-        if ( j < 0 ) { j = ( grid_.y( 0 ) == 90 ) ? -j : -j - 1; }
+        if ( j < 0 ) { j = ( grid_.y( 0 ) == 90. ) ? -j : -j - 1; }
         else if ( j >= grid_.ny() ) {
             idx_t jlast = grid_.ny() - 1;
-            j           = ( grid_.y( jlast ) == -90 ) ? jlast - 1 - ( j - grid_.ny() ) : jlast - ( j - grid_.ny() );
+            j           = ( grid_.y( jlast ) == -90. ) ? jlast - 1 - ( j - grid_.ny() ) : jlast - ( j - grid_.ny() );
         }
         if ( j < 0 or j >= grid_.ny() ) { j = compute_j( j ); }
         return j;
@@ -319,9 +318,8 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     auto compute_y = [this, &compute_j]( idx_t j ) -> double {
         idx_t jj;
         double y;
-        jj             = compute_j( j );
-        const idx_t ny = grid_.ny();
-        y              = ( j < 0 ) ? 90. + ( 90. - grid_.y( jj ) )
+        jj = compute_j( j );
+        y  = ( j < 0 ) ? 90. + ( 90. - grid_.y( jj ) )
                       : ( j >= grid_.ny() ) ? -90. + ( -90. - grid_.y( jj ) ) : grid_.y( jj );
         return y;
     };
@@ -436,7 +434,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
         if ( gp.j >= 0 && gp.j < grid_.ny() ) {
             if ( gp.i >= 0 && gp.i < grid_.nx( gp.j ) ) {
                 in_domain          = true;
-                idx_t k            = global_offsets[gp.j] + gp.i;
+                gidx_t k           = global_offsets[gp.j] + gp.i;
                 part( gp.r )       = distribution.partition( k );
                 global_idx( gp.r ) = k + 1;
                 remote_idx( gp.r ) = gp.r;
@@ -486,12 +484,12 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
             auto g = array::make_view<gidx_t, 1>( global_index() );
 
             const eckit::mpi::Comm& comm = mpi::comm();
-            const int mpi_size           = int( comm.size() );
             const int mpi_rank           = int( comm.rank() );
 
-            auto neighbours = graph.nearestNeighbours( mpi_rank );
+            auto neighbours           = graph.nearestNeighbours( mpi_rank );
+            const idx_t nb_neighbours = static_cast<idx_t>( neighbours.size() );
             std::map<int, idx_t> part_to_neighbour;
-            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < nb_neighbours; ++j ) {
                 part_to_neighbour[neighbours[j]] = j;
             }
             std::vector<idx_t> halo_per_neighbour( neighbours.size(), 0 );
@@ -500,14 +498,14 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
             }
 
             std::vector<std::vector<gidx_t>> g_per_neighbour( neighbours.size() );
-            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < nb_neighbours; ++j ) {
                 g_per_neighbour[j].reserve( halo_per_neighbour[j] );
             }
             for ( idx_t j = size_owned_; j < size_halo_; ++j ) {
                 g_per_neighbour[part_to_neighbour[p( j )]].push_back( g( j ) );
             }
             std::vector<std::vector<idx_t>> r_per_neighbour( neighbours.size() );
-            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < nb_neighbours; ++j ) {
                 r_per_neighbour[j].resize( halo_per_neighbour[j] );
             }
 
@@ -516,22 +514,22 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
 
             std::vector<idx_t> recv_size( neighbours.size() );
             int tag = 0;
-            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
-                idx_t g_per_neighbour_size = g_per_neighbour[j].size();
+            for ( idx_t j = 0; j < nb_neighbours; ++j ) {
+                idx_t g_per_neighbour_size = static_cast<idx_t>( g_per_neighbour[j].size() );
                 send_requests[j]           = comm.iSend( g_per_neighbour_size, neighbours[j], tag );
                 recv_requests[j]           = comm.iReceive( recv_size[j], neighbours[j], tag );
             }
 
-            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < nb_neighbours; ++j ) {
                 comm.wait( send_requests[j] );
             }
 
-            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < nb_neighbours; ++j ) {
                 comm.wait( recv_requests[j] );
             }
 
             std::vector<std::vector<gidx_t>> recv_g_per_neighbour( neighbours.size() );
-            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < nb_neighbours; ++j ) {
                 recv_g_per_neighbour[j].resize( recv_size[j] );
 
                 send_requests[j] =
@@ -545,7 +543,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
             for ( idx_t j = 0; j < size_owned_; ++j ) {
                 g_to_r[g( j )] = j;
             }
-            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < nb_neighbours; ++j ) {
                 send_r_per_neighbour[j].reserve( recv_size[j] );
 
                 comm.wait( recv_requests[j] );  // wait for recv_g_per_neighbour[j]
@@ -554,7 +552,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
                 }
             }
 
-            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < nb_neighbours; ++j ) {
                 comm.wait( send_requests[j] );
                 send_requests[j] =
                     comm.iSend( send_r_per_neighbour[j].data(), send_r_per_neighbour[j].size(), neighbours[j], tag );
@@ -562,7 +560,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
                     comm.iReceive( r_per_neighbour[j].data(), r_per_neighbour[j].size(), neighbours[j], tag );
             }
 
-            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < nb_neighbours; ++j ) {
                 comm.wait( recv_requests[j] );
             }
 
@@ -572,7 +570,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
                 remote_idx( j ) = r_per_neighbour[neighbour][counters[neighbour]++];
             }
 
-            for ( idx_t j = 0; j < neighbours.size(); ++j ) {
+            for ( idx_t j = 0; j < nb_neighbours; ++j ) {
                 comm.wait( send_requests[j] );
             }
         }
@@ -624,7 +622,6 @@ StructuredColumns::~StructuredColumns() {}
 // Create Field
 // ----------------------------------------------------------------------------
 Field StructuredColumns::createField( const eckit::Configuration& options ) const {
-    idx_t npts = config_size( options );
     Field field( config_name( options ), config_datatype( options ), config_shape( options ) );
     set_field_metadata( options, field );
     return field;
@@ -877,7 +874,7 @@ extern "C" {
 const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid(
     const Grid::Implementation* grid, const eckit::Configuration* config ) {
     ATLAS_ERROR_HANDLING( return new detail::StructuredColumns( Grid( grid ), grid::Partitioner(), *config ); );
-    return 0;
+    return nullptr;
 }
 
 void atlas__functionspace__StructuredColumns__delete( detail::StructuredColumns* This ) {
@@ -892,7 +889,7 @@ field::FieldImpl* atlas__fs__StructuredColumns__create_field( const detail::Stru
         field->attach();
     } field->detach();
                           return field; );
-    return 0;
+    return nullptr;
 }
 
 void atlas__functionspace__StructuredColumns__gather( const detail::StructuredColumns* This,
@@ -922,16 +919,18 @@ void atlas__fs__StructuredColumns__checksum_fieldset( const detail::StructuredCo
                                                       int& allocated ) {
     ASSERT( This );
     ASSERT( fieldset );
-    ATLAS_ERROR_HANDLING( std::string checksum_str( This->checksum( fieldset ) ); size = checksum_str.size();
-                          checksum = new char[size + 1]; allocated = true; strcpy( checksum, checksum_str.c_str() ); );
+    ATLAS_ERROR_HANDLING( std::string checksum_str( This->checksum( fieldset ) );
+                          size = static_cast<idx_t>( checksum_str.size() ); checksum = new char[size + 1];
+                          allocated = true; strcpy( checksum, checksum_str.c_str() ); );
 }
 
 void atlas__fs__StructuredColumns__checksum_field( const detail::StructuredColumns* This, const field::FieldImpl* field,
                                                    char*& checksum, idx_t& size, int& allocated ) {
     ASSERT( This );
     ASSERT( field );
-    ATLAS_ERROR_HANDLING( std::string checksum_str( This->checksum( field ) ); size = checksum_str.size();
-                          checksum = new char[size + 1]; allocated = true; strcpy( checksum, checksum_str.c_str() ); );
+    ATLAS_ERROR_HANDLING( std::string checksum_str( This->checksum( field ) );
+                          size = static_cast<idx_t>( checksum_str.size() ); checksum = new char[size + 1];
+                          allocated = true; strcpy( checksum, checksum_str.c_str() ); );
 }
 
 void atlas__fs__StructuredColumns__index_host( const detail::StructuredColumns* This, idx_t*& data, idx_t& i_min,

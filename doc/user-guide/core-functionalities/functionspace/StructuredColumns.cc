@@ -10,7 +10,6 @@
 #include "atlas/util/CoordinateEnums.h"
 
 using namespace atlas;
-using atlas::array::ArrayView;
 using atlas::array::make_view;
 using atlas::functionspace::StructuredColumns;
 using atlas::meshgenerator::StructuredMeshGenerator;

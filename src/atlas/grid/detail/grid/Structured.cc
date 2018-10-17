@@ -53,7 +53,7 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
         projection_ = Projection();
 
     y_.assign( yspace_.begin(), yspace_.end() );
-    idx_t ny = y_.size();
+    idx_t ny{static_cast<idx_t>( y_.size() )};
 
     if ( xspace_.ny() == 1 && yspace_.size() > 1 ) {
         nx_.resize( ny, xspace_.nx()[0] );
@@ -343,7 +343,7 @@ void Structured::crop( const Domain& dom ) {
         std::vector<double> cropped_xmax( xmax_.begin() + jmin, xmax_.begin() + jmin + cropped_ny );
         std::vector<double> cropped_dx( dx_.begin() + jmin, dx_.begin() + jmin + cropped_ny );
         std::vector<idx_t> cropped_nx( nx_.begin() + jmin, nx_.begin() + jmin + cropped_ny );
-        ASSERT( cropped_nx.size() == cropped_ny );
+        ASSERT( idx_t( cropped_nx.size() ) == cropped_ny );
 
         idx_t cropped_nxmin, cropped_nxmax;
         cropped_nxmin = cropped_nxmax = cropped_nx.front();
@@ -452,7 +452,7 @@ void Structured::computeTruePeriodicity() {
         // domain could be zonal band
 
         idx_t j = ny() / 2;
-        if ( xmin_[j] + ( nx_[j] - 1 ) * dx_[j] == xmax_[j] ) {
+        if ( std::abs( xmin_[j] + ( nx_[j] - 1 ) * dx_[j] - xmax_[j] ) < 1.e-11 ) {
             periodic_x_ = false;  // This would lead to duplicated points
         }
         else {
@@ -530,7 +530,7 @@ public:
            << "Structured grid";
     }
 
-    virtual const Implementation* create( const std::string& name, const Config& config ) const {
+    virtual const Implementation* create( const std::string& /* name */, const Config& ) const {
         throw eckit::NotImplemented( "Cannot create structured grid from name", Here() );
     }
 
@@ -584,7 +584,7 @@ idx_t atlas__grid__Structured__nx( Structured* This, idx_t jlat ) {
 }
 
 void atlas__grid__Structured__nx_array( Structured* This, const idx_t*& nx_array, idx_t& size ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); nx_array = This->nx().data(); size = This->nx().size(); );
+    ATLAS_ERROR_HANDLING( ASSERT( This ); nx_array = This->nx().data(); size = idx_t( This->nx().size() ); );
 }
 
 idx_t atlas__grid__Structured__nxmax( Structured* This ) {
@@ -621,7 +621,7 @@ void atlas__grid__Structured__lonlat( Structured* This, idx_t i, idx_t j, double
 }
 
 void atlas__grid__Structured__y_array( Structured* This, const double*& y_array, idx_t& size ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); y_array = This->y().data(); size = This->y().size(); );
+    ATLAS_ERROR_HANDLING( ASSERT( This ); y_array = This->y().data(); size = idx_t( This->y().size() ); );
 }
 
 int atlas__grid__Structured__reduced( Structured* This ) {
@@ -633,14 +633,14 @@ const Structured* atlas__grid__Structured( char* identifier ) {
     ATLAS_ERROR_HANDLING( ASSERT( identifier ); const Structured* grid = dynamic_cast<const Structured*>(
                                                     Grid::create( std::string( identifier ) ) );
                           ASSERT( grid ); return grid; );
-    return 0;
+    return nullptr;
 }
 
 const Structured* atlas__grid__Structured__config( util::Config* conf ) {
     ATLAS_ERROR_HANDLING( ASSERT( conf );
                           const Structured* grid = dynamic_cast<const Structured*>( Grid::create( *conf ) );
                           ASSERT( grid ); return grid; );
-    return 0;
+    return nullptr;
 }
 
 void atlas__grid__Structured__delete( Structured* This ) {

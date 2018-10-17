@@ -204,7 +204,7 @@ CASE( "test_custom" ) {
             check.clear();
     }
     std::vector<uidx_t> uid( m.nodes().size() );
-    for ( size_t j = 0; j < m.nodes().size(); ++j ) {
+    for ( idx_t j = 0; j < m.nodes().size(); ++j ) {
         uid[j] = util::unique_lonlat( lonlat( j, 0 ), lonlat( j, 1 ) );
     }
     if ( check.size() && mpi::comm().size() == 5 ) {
