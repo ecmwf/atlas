@@ -72,6 +72,18 @@ public:
         return gt_data_view_( c... );
     }
 
+    template <typename Int, bool EnableBool = true>
+    ATLAS_HOST_DEVICE typename std::enable_if<( Rank == 1 && EnableBool ), const value_type&>::type operator[](
+        Int idx ) const {
+        return gt_data_view_( idx );
+    }
+
+    template <typename Int, bool EnableBool = true>
+    ATLAS_HOST_DEVICE typename std::enable_if<( Rank == 1 && EnableBool ), value_type&>::type operator[]( Int idx ) {
+        check_bounds( idx );
+        return gt_data_view_( idx );
+    }
+
     template <unsigned int Dim>
     ATLAS_HOST_DEVICE idx_t shape() const {
         return gt_data_view_.template length<Dim>();

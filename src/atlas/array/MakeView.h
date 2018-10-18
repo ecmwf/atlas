@@ -38,7 +38,24 @@ extern template IndexView<idx_t, 1> make_indexview<idx_t, 1>( const Array& );
     extern template LocalView<double, Rank, Intent::ReadOnly> make_view<double, Rank, Intent::ReadOnly>(               \
         const double data[], const ArrayShape& );                                                                      \
     extern template LocalView<double, Rank, Intent::ReadWrite> make_view<double, Rank, Intent::ReadWrite>(             \
-        const double data[], const ArrayShape& );
+        const double data[], const ArrayShape& );                                                                      \
+                                                                                                                       \
+    extern template LocalView<int, Rank, Intent::ReadOnly> make_view<int, Rank, Intent::ReadOnly>( const int data[],   \
+                                                                                                   size_t );           \
+    extern template LocalView<int, Rank, Intent::ReadWrite> make_view<int, Rank, Intent::ReadWrite>( const int data[], \
+                                                                                                     size_t );         \
+    extern template LocalView<long, Rank, Intent::ReadOnly> make_view<long, Rank, Intent::ReadOnly>(                   \
+        const long data[], size_t );                                                                                   \
+    extern template LocalView<long, Rank, Intent::ReadWrite> make_view<long, Rank, Intent::ReadWrite>(                 \
+        const long data[], size_t );                                                                                   \
+    extern template LocalView<float, Rank, Intent::ReadOnly> make_view<float, Rank, Intent::ReadOnly>(                 \
+        const float data[], size_t );                                                                                  \
+    extern template LocalView<float, Rank, Intent::ReadWrite> make_view<float, Rank, Intent::ReadWrite>(               \
+        const float data[], size_t );                                                                                  \
+    extern template LocalView<double, Rank, Intent::ReadOnly> make_view<double, Rank, Intent::ReadOnly>(               \
+        const double data[], size_t );                                                                                 \
+    extern template LocalView<double, Rank, Intent::ReadWrite> make_view<double, Rank, Intent::ReadWrite>(             \
+        const double data[], size_t );
 
 // For each NDims in [1..9]
 EXPLICIT_TEMPLATE_INSTANTIATION( 1 )
