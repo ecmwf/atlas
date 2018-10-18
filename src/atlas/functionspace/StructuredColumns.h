@@ -74,6 +74,8 @@ public:
 
     idx_t levels() const { return nb_levels_; }
 
+    idx_t halo() const { return halo_; }
+
     std::string checksum( const FieldSet& ) const;
     std::string checksum( const Field& ) const;
 
@@ -122,6 +124,7 @@ private:  // data
     idx_t size_owned_;
     idx_t size_halo_;
     idx_t nb_levels_;
+    idx_t halo_;
 
     const grid::StructuredGrid grid_;
     parallel::GatherScatter* gather_scatter_;
@@ -249,6 +252,8 @@ public:
     idx_t sizeHalo() const { return functionspace_->sizeHalo(); }
 
     idx_t levels() const { return functionspace_->levels(); }
+
+    idx_t halo() const { return functionspace_->halo(); }
 
     const grid::StructuredGrid& grid() const { return functionspace_->grid(); }
 

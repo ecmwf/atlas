@@ -276,6 +276,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     size_owned_ = gridpoints.size();
 
     int halo = config.getInt( "halo", 0 );
+    halo_    = halo;
 
     j_begin_halo_ = j_begin_ - halo;
     j_end_halo_   = j_end_ + halo;

@@ -30,7 +30,7 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/MicroDeg.h"
 
-#include "Stencil.h"
+#include "CubicInterpolationPrototype.h"
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace eckit;
@@ -136,8 +136,8 @@ CASE( "test horizontal stencil" ) {
         Log::info() << p << std::endl;
         compute_stencil( p.x(), p.y(), stencil );
         for ( idx_t j = 0; j < stencil.width(); ++j ) {
-            Log::info() << stencil.i( j ) << " " << stencil.j( j ) << "   --   "
-                        << "x,y = " << fs.compute_xy( stencil.i( j ), stencil.j( j ) ) << std::endl;
+            Log::info() << stencil.i( 0, j ) << " " << stencil.j( j ) << "   --   "
+                        << "x,y = " << fs.compute_xy( stencil.i( 0, j ), stencil.j( j ) ) << std::endl;
         }
         Log::info() << std::endl;
     }
@@ -145,9 +145,10 @@ CASE( "test horizontal stencil" ) {
 
 
 CASE( "test vertical stencil" ) {
-    SECTION( "Initialize ComputeVertical from raw data (as e.g. given from IFS)" ) {
+    SECTION( "Initialize ComputeLower from raw data (as e.g. given from IFS)" ) {
         double z[] = {0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.};
-        EXPECT_NO_THROW( ComputeVertical( array::make_view<double, 1>( z, {sizeof( z ) / sizeof( z[0] )} ) ) );
+        EXPECT_NO_THROW(
+            ComputeLower{Vertical( 5, array::make_view<double, 1>( z, 7 ), util::Config( "boundaries", true ) )} );
     }
 
 
@@ -155,31 +156,36 @@ CASE( "test vertical stencil" ) {
     auto zcoord    = IFS_vertical_coordinates( nlev );
     double dzcoord = 1. / double( nlev );
 
+    auto vertical = Vertical( nlev, zcoord, util::Config( "boundaries", true ) );
 
-    ComputeVertical compute_vertical( zcoord );
+    SECTION( "Test compute_lower works as expected " ) {
+        ComputeLower compute_lower( vertical );
 
-    const double eps = 1.e-14;
+        const double eps = 1.e-14;
 
-    for ( idx_t k = 1; k <= nlev; ++k ) {
-        idx_t k_expected = std::max( 1, std::min( nlev - 1, k ) );
-        EXPECT( compute_vertical( zcoord[k] ) == k_expected );
-        EXPECT( compute_vertical( zcoord[k] - eps ) == k_expected );
-        EXPECT( compute_vertical( zcoord[k] + eps ) == k_expected );
-        EXPECT( compute_vertical( zcoord[k] + 0.5 * dzcoord ) == k_expected );
-    }
-    EXPECT( compute_vertical( zcoord[0] ) == 1 );
-    EXPECT( compute_vertical( zcoord[nlev + 1] ) == nlev - 1 );
-
-    ComputeVerticalStencil compute_vertical_stencil( zcoord, 4 );
-    std::vector<double> departure_points{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
-    for ( auto p : departure_points ) {
-        VerticalStencil<4> stencil;
-        compute_vertical_stencil( p, stencil );
-        Log::info() << p << "   :    ";
-        for ( idx_t k = 0; k < stencil.width(); ++k ) {
-            Log::info() << stencil.k( k ) << " ";
+        for ( idx_t k = 1; k <= nlev; ++k ) {
+            idx_t k_expected = std::max( 1, std::min( nlev - 1, k ) );
+            EXPECT( compute_lower( zcoord[k] ) == k_expected );
+            EXPECT( compute_lower( zcoord[k] - eps ) == k_expected );
+            EXPECT( compute_lower( zcoord[k] + eps ) == k_expected );
+            EXPECT( compute_lower( zcoord[k] + 0.5 * dzcoord ) == k_expected );
         }
-        Log::info() << std::endl;
+        EXPECT( compute_lower( zcoord[0] ) == 1 );
+        EXPECT( compute_lower( zcoord[nlev + 1] ) == nlev - 1 );
+    }
+
+    SECTION( "Compute vertical stencil" ) {
+        ComputeVerticalStencil compute_vertical_stencil( vertical, 4 );
+        std::vector<double> departure_points{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+        for ( auto p : departure_points ) {
+            CubicVerticalInterpolation::Stencil stencil;
+            compute_vertical_stencil( p, stencil );
+            Log::info() << p << "   :    ";
+            for ( idx_t k = 0; k < stencil.width(); ++k ) {
+                Log::info() << stencil.k( k ) << " ";
+            }
+            Log::info() << std::endl;
+        }
     }
 }
 

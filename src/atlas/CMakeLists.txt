@@ -100,6 +100,10 @@ grid/Spacing.h
 grid/Partitioner.h
 grid/Partitioner.cc
 grid/Iterator.h
+grid/Vertical.h
+grid/Stencil.h
+grid/StencilComputer.h
+grid/StencilComputer.cc
 
 grid/detail/grid/GridBuilder.h
 grid/detail/grid/GridBuilder.cc

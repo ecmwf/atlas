@@ -1,23 +1,11 @@
-#include "eckit/memory/ScopedPtr.h"
-#include "eckit/types/Types.h"
-
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
-#include "atlas/field/Field.h"
-#include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/library/Library.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/meshgenerator/MeshGenerator.h"
-#include "atlas/output/Gmsh.h"
-#include "atlas/parallel/mpi/mpi.h"
-#include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/MicroDeg.h"
+#include "atlas/grid/Stencil.h"
+#include "atlas/grid/StencilComputer.h"
+#include "atlas/grid/Vertical.h"
 #include "eckit/linalg/SparseMatrix.h"
-
-#include "eckit/types/Types.h"
-#include "tests/AtlasTestEnvironment.h"
 
 using namespace eckit;
 using namespace atlas::functionspace;
@@ -26,303 +14,11 @@ using namespace atlas::util;
 namespace atlas {
 namespace test {
 
-class Vertical {
-    idx_t k_begin_;
-    idx_t k_end_;
-    idx_t size_;
-    bool boundaries_;
-    std::vector<double> z_;
-
-public:
-    idx_t k_begin() const { return k_begin_; }
-    idx_t k_end() const { return k_end_; }
-    bool boundaries() const { return boundaries_; }
-    idx_t size() const { return size_; }
-
-    template <typename Int>
-    double operator()( const Int k ) const {
-        return z_[k];
-    }
-
-    template <typename Int>
-    double operator[]( const Int k ) const {
-        return z_[k];
-    }
-
-    template <typename Vector>
-    Vertical( idx_t levels, const Vector& z, const util::Config& config = util::NoConfig() ) {
-        size_       = levels;
-        boundaries_ = config.getBool( "boundaries", false );
-        k_begin_    = 0;
-        k_end_      = size_;
-        if ( boundaries_ ) {
-            size_ += 2;
-            ++k_begin_;
-            k_end_ = size_ - 1;
-        }
-        ASSERT( size_ == z.size() );
-        z_.resize( size_ );
-        for ( idx_t k = 0; k < size_; ++k ) {
-            z_[k] = z[k];
-        }
-    }
-
-    const std::vector<double>& zcoord() const { return z_; }
-};
-
-// @class ComputeVertical
-// @brief Helper to compute vertical level below
-//
-//
-//  IFS full levels for regular distribution ( level 0 and nlev+1 are added for boundary conditions )
-//  0      :  0.0
-//  jlev   :  jlev*dz - 0.5*dz
-//  nlev   :  nlev*dz - 0.5*dz
-//  nlev+1 :  1.0
-
-class ComputeVertical {
-    std::vector<double> zcoord_;
-    std::vector<idx_t> nvaux_;
-    idx_t nlev_;
-    idx_t nlevaux_;
-    double rlevaux_;
-
-public:
-    template <typename Vector>
-    ComputeVertical( const Vector& zcoord ) {
-        nlev_ = zcoord.size() - 2;
-        zcoord_.resize( nlev_ + 2 );
-        double dzcoord       = std::numeric_limits<double>::max();
-        constexpr double tol = 1.e-12;
-        ASSERT( dzcoord > 0 );
-        for ( idx_t jlev = 0; jlev < nlev_; ++jlev ) {
-            dzcoord       = std::min( dzcoord, zcoord[jlev + 1] - zcoord[jlev] );
-            zcoord_[jlev] = zcoord[jlev] - tol;
-        }
-        zcoord_[nlev_]     = zcoord_[nlev_] - tol;
-        zcoord_[nlev_ + 1] = zcoord_[nlev_ + 1] - tol;
-
-        nlevaux_ = static_cast<idx_t>( std::round( 2. / dzcoord + 0.5 ) + 1 );
-        rlevaux_ = double( nlevaux_ );
-        nvaux_.resize( nlevaux_ + 1 );
-        double dzaux = ( zcoord[nlev_ + 1] - zcoord[0] ) / rlevaux_;
-
-        idx_t iref = 1;
-        for ( idx_t jlevaux = 0; jlevaux <= nlevaux_; ++jlevaux ) {
-            if ( jlevaux * dzaux >= zcoord[iref + 1] && iref < nlev_ - 1 ) { ++iref; }
-            nvaux_[jlevaux] = iref;
-        }
-    }
-
-    idx_t operator()( double z ) const {
-        idx_t idx = static_cast<idx_t>( std::floor( z * rlevaux_ ) );
-#ifndef NDEBUG
-        ASSERT( idx < static_cast<idx_t>( nvaux_.size() ) && idx >= 0 );
-#endif
-        // ATLAS_DEBUG_VAR( idx );
-        idx = nvaux_[idx];
-        // ATLAS_DEBUG_VAR( z );
-        // ATLAS_DEBUG_VAR( zcoord_[idx] );
-        // ATLAS_DEBUG_VAR( idx );
-        if ( idx < nlev_ - 1 && z > zcoord_[idx + 1] ) {
-            ++idx;
-            // ATLAS_DEBUG();
-        }
-        return idx;
-        //return nvaux_[idx];
-    }
-};
-
-
-class ComputeNorth {
-    std::vector<double> y_;
-    double dy_;
-    static constexpr double tol() { return 0.5e-6; }
-    idx_t halo_;
-    idx_t ny_;
-
-public:
-    ComputeNorth( const grid::StructuredGrid& grid, idx_t halo ) {
-        ASSERT( grid );
-        if ( not grid.domain().global() ) {
-            throw eckit::NotImplemented( "Only implemented for global grids", Here() );
-        }
-        halo_ = halo;
-        ny_   = grid.ny();
-        y_.resize( ny_ + 2 * halo_ );
-        ASSERT( halo_ < ny_ );
-        idx_t north_pole_included = 90. - std::abs( grid.y().front() ) < tol();
-        idx_t south_pole_included = 90. - std::abs( grid.y().back() ) < tol();
-
-        for ( idx_t j = -halo_; j < 0; ++j ) {
-            idx_t jj      = -j - 1 + north_pole_included;
-            y_[halo_ + j] = 180. - grid.y( jj ) + tol();
-        }
-        for ( idx_t j = 0; j < ny_; ++j ) {
-            y_[halo_ + j] = grid.y( j ) + tol();
-        }
-        for ( idx_t j = ny_; j < ny_ + halo_; ++j ) {
-            idx_t jj      = 2 * ny_ - j - 1 - south_pole_included;
-            y_[halo_ + j] = -180. - grid.y( jj ) + tol();
-        }
-        dy_ = std::abs( grid.y( 1 ) - grid.y( 0 ) );
-    }
-
-    idx_t operator()( double y ) const {
-        idx_t j = static_cast<idx_t>( std::floor( ( y_[halo_ + 0] - y ) / dy_ ) );
-        while ( y_[halo_ + j] > y ) {
-            ++j;
-        }
-        do {
-            --j;
-        } while ( y_[halo_ + j] < y );
-
-        return j;
-    }
-};
-
-class ComputeWest {
-    std::vector<double> dx;
-    std::vector<double> xref;
-    idx_t halo_;  // halo in north-south direction
-    idx_t ny_;
-    static constexpr double tol() { return 0.5e-6; }
-
-public:
-    ComputeWest( const grid::StructuredGrid& grid, idx_t halo = 0 ) {
-        ASSERT( grid );
-        if ( not grid.domain().global() ) {
-            throw eckit::NotImplemented( "Only implemented for global grids", Here() );
-        }
-        halo_                     = halo;
-        idx_t north_pole_included = 90. - std::abs( grid.y().front() ) < tol();
-        idx_t south_pole_included = 90. - std::abs( grid.y().back() ) < tol();
-        ny_                       = grid.ny();
-        dx.resize( ny_ + 2 * halo_ );
-        xref.resize( ny_ + 2 * halo_ );
-        for ( idx_t j = -halo_; j < 0; ++j ) {
-            idx_t jj        = -j - 1 + north_pole_included;
-            dx[halo_ + j]   = grid.x( 1, jj ) - grid.x( 0, jj );
-            xref[halo_ + j] = grid.x( 0, jj ) - tol();
-        }
-        for ( idx_t j = 0; j < ny_; ++j ) {
-            dx[halo_ + j]   = std::abs( grid.x( 1, j ) - grid.x( 0, j ) );
-            xref[halo_ + j] = grid.x( 0, j ) - tol();
-        }
-        for ( idx_t j = ny_; j < ny_ + halo_; ++j ) {
-            idx_t jj        = 2 * ny_ - j - 1 - south_pole_included;
-            dx[halo_ + j]   = std::abs( grid.x( 1, jj ) - grid.x( 0, jj ) );
-            xref[halo_ + j] = grid.x( 0, jj ) - tol();
-        }
-    }
-    idx_t operator()( const double& x, idx_t j ) const {
-        idx_t jj = halo_ + j;
-        idx_t i  = static_cast<idx_t>( std::floor( ( x - xref[jj] ) / dx[jj] ) );
-        return i;
-    }
-};
-
-class ComputeHorizontalStencil;
-
-template <idx_t StencilWidth>
-class HorizontalStencil {
-    friend class ComputeHorizontalStencil;
-    std::array<idx_t, StencilWidth> i_begin_;
-    idx_t j_begin_;
-
-public:
-    idx_t i( idx_t offset ) const { return i_begin_[offset]; }
-    idx_t j( idx_t offset ) const { return j_begin_ + offset; }
-    constexpr idx_t width() const { return StencilWidth; }
-};
-
-
-// @class ComputeHorizontalStencil
-// @brief Compute stencil in horizontal direction (i,j)
-//
-// Given a stencil width, the stencil for a given P{x,y} is:
-//
-//        i[0]     i[1]     i[2]    i[3]
-//         x        x        x         x       j + 0
-//          x       x       x        x         j + 1
-//                     P
-//          x       x       x        x         j + 2
-//         x        x        x         x       j + 3
-//
-//   In case the x-component of P is aligned with any
-//   stencil, gridpoint, the stencil will assume the grid point
-//   is on the point P's left side:
-//
-//        i[0]     i[1]     i[2]    i[3]
-//         x        x        x         x       j + 0
-//          x       x       x        x         j + 1
-//                  P
-//          x       x       x        x         j + 2
-//         x        x        x         x       j + 3
-
-class ComputeHorizontalStencil {
-    idx_t halo_;
-    ComputeNorth compute_north_;
-    ComputeWest compute_west_;
-    idx_t stencil_width_;
-    idx_t stencil_begin_;
-
-public:
-    ComputeHorizontalStencil( const grid::StructuredGrid& grid, idx_t stencil_width ) :
-        halo_( ( stencil_width + 1 ) / 2 ),
-        compute_north_( grid, halo_ ),
-        compute_west_( grid, halo_ ),
-        stencil_width_( stencil_width ) {
-        stencil_begin_ = stencil_width_ - idx_t( double( stencil_width_ ) / 2. + 1. );
-    }
-    template <typename Vector>
-    void operator()( const double& x, const double& y, Vector& i, idx_t& j ) const {
-        j = compute_north_( y ) - stencil_begin_;
-        for ( idx_t jj = 0; jj < stencil_width_; ++jj ) {
-            i[jj] = compute_west_( x, j + jj ) - stencil_begin_;
-        }
-    }
-    template <typename stencil_t>
-    void operator()( const double& x, const double& y, stencil_t& stencil ) const {
-        operator()( x, y, stencil.i_begin_, stencil.j_begin_ );
-    }
-};
-
-template <idx_t StencilWidth>
-class VerticalStencil {
-    friend class ComputeVerticalStencil;
-    idx_t k_begin_;
-
-public:
-    idx_t k( idx_t offset ) const { return k_begin_ + offset; }
-    constexpr idx_t width() const { return StencilWidth; }
-};
-
-class ComputeVerticalStencil {
-    ComputeVertical compute_vertical_;
-    idx_t stencil_width_;
-    idx_t stencil_begin_;
-
-public:
-    template <typename Vector>
-    ComputeVerticalStencil( const Vector& zcoord, idx_t stencil_width ) :
-        compute_vertical_( zcoord ),
-        stencil_width_( stencil_width ) {
-        stencil_begin_ = stencil_width_ - idx_t( double( stencil_width_ ) / 2. + 1. );
-    }
-
-    void operator()( const double& z, idx_t& k ) const { k = compute_vertical_( z ) - stencil_begin_; }
-
-    template <typename stencil_t>
-    void operator()( const double& z, stencil_t& stencil ) const {
-        operator()( z, stencil.k_begin_ );
-    }
-};
+//-----------------------------------------------------------------------------
 
 class CubicVerticalInterpolation {
     ComputeVerticalStencil compute_vertical_stencil_;
     Vertical vertical_;
-    bool boundaries_;
     static constexpr idx_t stencil_width() { return 4; }
     static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
     bool limiter_{false};
@@ -333,12 +29,12 @@ public:
     CubicVerticalInterpolation( const Vertical& vertical ) :
         compute_vertical_stencil_( vertical, stencil_width() ),
         vertical_( vertical ),
-        boundaries_( vertical.boundaries() ),
         first_level_( vertical_.k_begin() ),
         last_level_( vertical_.k_end() - 1 ) {}
     struct Weights {
         std::array<double, 4> weights_k;
     };
+    using Stencil = VerticalStencil<4>;
 
     template <typename stencil_t>
     void compute_stencil( const double z, stencil_t& stencil ) const {
@@ -354,7 +50,7 @@ public:
             zvec[k] = vertical_( stencil.k( k ) );
         }
 
-        if ( boundaries_ ) {
+        if ( vertical_.boundaries() ) {
             auto quadratic_interpolation = [z]( const double zvec[], double w[] ) {
                 double d01 = zvec[0] - zvec[1];
                 double d02 = zvec[0] - zvec[2];
@@ -429,11 +125,11 @@ public:
         output        = 0.;
         const auto& w = weights.weights_k;
         for ( idx_t k = 0; k < stencil_width(); ++k ) {
-            output += w[k] * input( stencil.k( k ) );
+            output += w[k] * input[stencil.k( k )];
         }
         if ( limiter_ ) {
-            double f1     = input( stencil.k( 1 ) );
-            double f2     = input( stencil.k( 2 ) );
+            double f1     = input[stencil.k( 1 )];
+            double f2     = input[stencil.k( 2 )];
             double maxval = std::max( f1, f2 );
             double minval = std::min( f1, f2 );
             ;
@@ -452,6 +148,8 @@ public:
         return output;
     }
 };
+
+//-----------------------------------------------------------------------------
 
 class CubicHorizontalInterpolation {
     functionspace::StructuredColumns fs_;
@@ -490,8 +188,8 @@ public:
         std::array<double, 4> yvec;
         for ( idx_t j = 0; j < stencil_width(); ++j ) {
             auto& weights_i = weights.weights_i[j];
-            fs_.compute_xy( stencil.i( j ) + 1, stencil.j( j ), P1 );
-            fs_.compute_xy( stencil.i( j ) + 2, stencil.j( j ), P2 );
+            fs_.compute_xy( stencil.i( 1, j ), stencil.j( j ), P1 );
+            fs_.compute_xy( stencil.i( 2, j ), stencil.j( j ), P2 );
             double alpha               = ( P2.x() - x ) / ( P2.x() - P1.x() );
             double alpha_sqr           = alpha * alpha;
             double two_minus_alpha     = 2. - alpha;
@@ -526,42 +224,42 @@ public:
 
     template <typename stencil_t, typename weights_t, typename array_t>
     void interpolate( const stencil_t& stencil, const weights_t& weights, const array_t& input, double& output ) {
-        std::array<double, 4> output_j;
-        std::array<idx_t, stencil_size()> index;
-        std::fill( std::begin( output_j ), std::end( output_j ), 0 );
+        std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;
+        const auto& weights_j = weights.weights_j;
+        output                = 0.;
         for ( idx_t j = 0; j < stencil_width(); ++j ) {
             const auto& weights_i = weights.weights_i[j];
             for ( idx_t i = 0; i < stencil_width(); ++i ) {
-                idx_t n = fs_.index( stencil.i( j ) + i, stencil.j( j ) );
-                output_j[j] += weights_i[i] * input( n );
-                index[stencil_width() * j + i] = n;
+                idx_t n = fs_.index( stencil.i( i, j ), stencil.j( j ) );
+                output += weights_i[i] * weights_j[j] * input[n];
+                index[j][i] = n;
             }
         }
-        output                = 0.;
-        const auto& weights_j = weights.weights_j;
-        for ( idx_t j = 0; j < stencil_width(); ++j ) {
-            output += weights_j[j] * output_j[j];
-        }
-        if ( limiter_ ) {
-            // Limit output to max/min of values in stencil marked by '*'
-            //         x        x        x         x
-            //              x     *-----*     x
-            //                   /   P  |
-            //          x       *------ *        x
-            //        x        x        x         x
-            double maxval = std::numeric_limits<double>::lowest();
-            double minval = std::numeric_limits<double>::max();
-            for ( idx_t j = 1; j < 3; ++j ) {
-                for ( idx_t i = 1; i < 3; ++i ) {
-                    idx_t n    = index[stencil_width() * j + i];
-                    double val = input( n );
-                    maxval     = std::max( maxval, val );
-                    minval     = std::min( minval, val );
-                }
-            }
-            output = std::min( maxval, std::max( minval, output ) );
-        }
+
+        if ( limiter_ ) { limit( output, index, input ); }
     }
+
+    template <typename array_t>
+    void limit( double& output, const std::array<std::array<idx_t, 4>, 4>& index, const array_t& input ) {
+        // Limit output to max/min of values in stencil marked by '*'
+        //         x        x        x         x
+        //              x     *-----*     x
+        //                   /   P  |
+        //          x       *------ *        x
+        //        x        x        x         x
+        double maxval = std::numeric_limits<double>::lowest();
+        double minval = std::numeric_limits<double>::max();
+        for ( idx_t j = 1; j < 3; ++j ) {
+            for ( idx_t i = 1; i < 3; ++i ) {
+                idx_t n    = index[j][i];
+                double val = input[n];
+                maxval     = std::max( maxval, val );
+                minval     = std::min( minval, val );
+            }
+        }
+        output = std::min( maxval, std::max( minval, output ) );
+    }
+
 
     template <typename array_t>
     double operator()( const double x, const double y, const array_t& input ) {
@@ -603,7 +301,7 @@ public:
         for ( idx_t j = 0; j < stencil_width(); ++j ) {
             const auto& wi = ws.weights.weights_i[j];
             for ( idx_t i = 0; i < stencil_width(); ++i ) {
-                idx_t col = fs_.index( ws.stencil.i( j ) + i, ws.stencil.j( j ) );
+                idx_t col = fs_.index( ws.stencil.i( i, j ), ws.stencil.j( j ) );
                 double w  = wi[i] * wj[j];
                 triplets.emplace_back( row, col, w );
             }
@@ -611,21 +309,7 @@ public:
     }
 };
 
-
-template <idx_t StencilWidth>
-class Stencil3D {
-    friend class ComputeHorizontalStencil;
-    friend class ComputeVerticalStencil;
-    std::array<idx_t, StencilWidth> i_begin_;
-    idx_t j_begin_;
-    idx_t k_begin_;
-
-public:
-    idx_t i( idx_t offset ) const { return i_begin_[offset]; }
-    idx_t j( idx_t offset ) const { return j_begin_ + offset; }
-    idx_t k( idx_t offset ) const { return k_begin_ + offset; }
-    constexpr idx_t width() const { return StencilWidth; }
-};
+//-----------------------------------------------------------------------------
 
 class Cubic3DInterpolation {
     functionspace::StructuredColumns fs_;
@@ -676,7 +360,7 @@ public:
         for ( idx_t j = 0; j < stencil_width(); ++j ) {
             const auto& wi = weights.weights_i[j];
             for ( idx_t i = 0; i < stencil_width(); ++i ) {
-                idx_t n = fs_.index( stencil.i( j ) + i, stencil.j( j ) );
+                idx_t n = fs_.index( stencil.i( i, j ), stencil.j( j ) );
                 for ( idx_t k = 0; k < stencil_width(); ++k ) {
                     output += wi[i] * wj[j] * wk[k] * input( n, stencil.k( k ) );
                 }
@@ -695,6 +379,8 @@ public:
         return output;
     }
 };
+
+//-----------------------------------------------------------------------------
 
 }  // namespace test
 }  // namespace atlas
