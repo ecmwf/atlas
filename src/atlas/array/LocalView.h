@@ -126,6 +126,18 @@ public:
         return data_[index( idx... )];
     }
 
+    template <typename Int, bool EnableBool = true>
+    typename std::enable_if<( Rank == 1 && EnableBool ), const value_type&>::type operator[]( Int idx ) const {
+        check_bounds( idx );
+        return data_[idx];
+    }
+
+    template <typename Int, bool EnableBool = true>
+    typename std::enable_if<( Rank == 1 && EnableBool ), value_type&>::type operator[]( Int idx ) {
+        check_bounds( idx );
+        return data_[idx];
+    }
+
     idx_t size() const { return size_; }
 
     template <typename Int>

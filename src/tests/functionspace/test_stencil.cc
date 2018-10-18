@@ -143,12 +143,18 @@ CASE( "test horizontal stencil" ) {
     }
 }
 
+
 CASE( "test vertical stencil" ) {
+    SECTION( "Initialize ComputeVertical from raw data (as e.g. given from IFS)" ) {
+        double z[] = {0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.};
+        EXPECT_NO_THROW( ComputeVertical( array::make_view<double, 1>( z, {sizeof( z ) / sizeof( z[0] )} ) ) );
+    }
+
+
     idx_t nlev     = 10;
     auto zcoord    = IFS_vertical_coordinates( nlev );
     double dzcoord = 1. / double( nlev );
 
-    ATLAS_DEBUG_VAR( zcoord );
 
     ComputeVertical compute_vertical( zcoord );
 
@@ -411,7 +417,7 @@ CASE( "test 3d cubic interpolation" ) {
         double interpolated = cubic_interpolation( p.x(), p.y(), p.z(), f );
         double exact        = fxyz( p.x(), p.y(), p.z() );
         Log::info() << p << "  -->  " << interpolated << std::endl;
-        EXPECT( eckit::types::is_approximately_equal( interpolated, exact ) );
+        EXPECT( is_approximately_equal( interpolated, exact ) );
     }
 }
 

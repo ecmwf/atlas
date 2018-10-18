@@ -285,7 +285,7 @@ private:
         ++i_view;
     }
     template <int Dim, typename Strides>
-    static void update_strides( View& view, Strides& strides, int& /*i_view*/, int& i_slice,
+    static void update_strides( View& /*view*/, Strides& strides, int& /*i_view*/, int& i_slice,
                                 const RangeDummy& /*range*/ ) {
         strides[i_slice] = 0;
         ++i_slice;

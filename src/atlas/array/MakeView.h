@@ -2,6 +2,7 @@
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
+#include "atlas/array/LocalView.h"
 #include "atlas/array_fwd.h"
 
 namespace atlas {
@@ -20,7 +21,24 @@ extern template IndexView<idx_t, 1> make_indexview<idx_t, 1>( const Array& );
     extern template ArrayView<double, Rank, Intent::ReadOnly> make_view<double, Rank, Intent::ReadOnly>(               \
         const Array& );                                                                                                \
     extern template ArrayView<double, Rank, Intent::ReadWrite> make_view<double, Rank, Intent::ReadWrite>(             \
-        const Array& );
+        const Array& );                                                                                                \
+                                                                                                                       \
+    extern template LocalView<int, Rank, Intent::ReadOnly> make_view<int, Rank, Intent::ReadOnly>(                     \
+        const int data[], const ArrayShape& );                                                                         \
+    extern template LocalView<int, Rank, Intent::ReadWrite> make_view<int, Rank, Intent::ReadWrite>(                   \
+        const int data[], const ArrayShape& );                                                                         \
+    extern template LocalView<long, Rank, Intent::ReadOnly> make_view<long, Rank, Intent::ReadOnly>(                   \
+        const long data[], const ArrayShape& );                                                                        \
+    extern template LocalView<long, Rank, Intent::ReadWrite> make_view<long, Rank, Intent::ReadWrite>(                 \
+        const long data[], const ArrayShape& );                                                                        \
+    extern template LocalView<float, Rank, Intent::ReadOnly> make_view<float, Rank, Intent::ReadOnly>(                 \
+        const float data[], const ArrayShape& );                                                                       \
+    extern template LocalView<float, Rank, Intent::ReadWrite> make_view<float, Rank, Intent::ReadWrite>(               \
+        const float data[], const ArrayShape& );                                                                       \
+    extern template LocalView<double, Rank, Intent::ReadOnly> make_view<double, Rank, Intent::ReadOnly>(               \
+        const double data[], const ArrayShape& );                                                                      \
+    extern template LocalView<double, Rank, Intent::ReadWrite> make_view<double, Rank, Intent::ReadWrite>(             \
+        const double data[], const ArrayShape& );
 
 // For each NDims in [1..9]
 EXPLICIT_TEMPLATE_INSTANTIATION( 1 )

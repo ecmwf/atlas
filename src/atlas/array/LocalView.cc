@@ -43,6 +43,12 @@ void LocalView<Value, Rank, AccessMode>::dump( std::ostream& os ) const {
 
 //------------------------------------------------------------------------------------------------------
 
+template <typename Value, unsigned int Rank, Intent AccessMode>
+LocalView<Value, Rank, AccessMode> make_view( const Value data[], const ArrayShape& shape ) {
+    return LocalView<Value, Rank, AccessMode>( data, shape );
+}
+
+
 }  // namespace array
 }  // namespace atlas
 
@@ -50,17 +56,34 @@ void LocalView<Value, Rank, AccessMode>::dump( std::ostream& os ) const {
 // Explicit instantiation
 namespace atlas {
 namespace array {
-#define EXPLICIT_TEMPLATE_INSTANTIATION( Rank )                       \
-    template class LocalView<int, Rank, Intent::ReadOnly>;            \
-    template class LocalView<int, Rank, Intent::ReadWrite>;           \
-    template class LocalView<long, Rank, Intent::ReadOnly>;           \
-    template class LocalView<long, Rank, Intent::ReadWrite>;          \
-    template class LocalView<long unsigned, Rank, Intent::ReadOnly>;  \
-    template class LocalView<long unsigned, Rank, Intent::ReadWrite>; \
-    template class LocalView<float, Rank, Intent::ReadOnly>;          \
-    template class LocalView<float, Rank, Intent::ReadWrite>;         \
-    template class LocalView<double, Rank, Intent::ReadOnly>;         \
-    template class LocalView<double, Rank, Intent::ReadWrite>;
+#define EXPLICIT_TEMPLATE_INSTANTIATION( Rank )                                                                        \
+    template class LocalView<int, Rank, Intent::ReadOnly>;                                                             \
+    template class LocalView<int, Rank, Intent::ReadWrite>;                                                            \
+    template class LocalView<long, Rank, Intent::ReadOnly>;                                                            \
+    template class LocalView<long, Rank, Intent::ReadWrite>;                                                           \
+    template class LocalView<long unsigned, Rank, Intent::ReadOnly>;                                                   \
+    template class LocalView<long unsigned, Rank, Intent::ReadWrite>;                                                  \
+    template class LocalView<float, Rank, Intent::ReadOnly>;                                                           \
+    template class LocalView<float, Rank, Intent::ReadWrite>;                                                          \
+    template class LocalView<double, Rank, Intent::ReadOnly>;                                                          \
+    template class LocalView<double, Rank, Intent::ReadWrite>;                                                         \
+    template LocalView<int, Rank, Intent::ReadOnly> make_view<int, Rank, Intent::ReadOnly>( const int data[],          \
+                                                                                            const ArrayShape& );       \
+    template LocalView<int, Rank, Intent::ReadWrite> make_view<int, Rank, Intent::ReadWrite>( const int data[],        \
+                                                                                              const ArrayShape& );     \
+    template LocalView<long, Rank, Intent::ReadOnly> make_view<long, Rank, Intent::ReadOnly>( const long data[],       \
+                                                                                              const ArrayShape& );     \
+    template LocalView<long, Rank, Intent::ReadWrite> make_view<long, Rank, Intent::ReadWrite>( const long data[],     \
+                                                                                                const ArrayShape& );   \
+    template LocalView<float, Rank, Intent::ReadOnly> make_view<float, Rank, Intent::ReadOnly>( const float data[],    \
+                                                                                                const ArrayShape& );   \
+    template LocalView<float, Rank, Intent::ReadWrite> make_view<float, Rank, Intent::ReadWrite>( const float data[],  \
+                                                                                                  const ArrayShape& ); \
+    template LocalView<double, Rank, Intent::ReadOnly> make_view<double, Rank, Intent::ReadOnly>( const double data[], \
+                                                                                                  const ArrayShape& ); \
+    template LocalView<double, Rank, Intent::ReadWrite> make_view<double, Rank, Intent::ReadWrite>(                    \
+        const double data[], const ArrayShape& );
+
 
 // For each NDims in [1..9]
 EXPLICIT_TEMPLATE_INSTANTIATION( 1 )
