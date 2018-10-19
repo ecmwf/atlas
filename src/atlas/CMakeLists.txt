@@ -101,6 +101,7 @@ grid/Partitioner.h
 grid/Partitioner.cc
 grid/Iterator.h
 grid/Vertical.h
+grid/Vertical.cc
 grid/Stencil.h
 grid/StencilComputer.h
 grid/StencilComputer.cc

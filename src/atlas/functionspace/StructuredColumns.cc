@@ -214,10 +214,17 @@ StructuredColumns::StructuredColumns( const Grid& grid, const eckit::Configurati
 
 StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner& p,
                                       const eckit::Configuration& config ) :
-    nb_levels_( 0 ),
+    StructuredColumns( grid, Vertical( config ), p, config ) {}
+
+StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical, const eckit::Configuration& config ) :
+    StructuredColumns( grid, vertical, grid::Partitioner(), config ) {}
+
+StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical, const grid::Partitioner& p,
+                                      const eckit::Configuration& config ) :
+    vertical_( vertical ),
+    nb_levels_( vertical_.size() ),
     grid_( grid ) {
     ATLAS_TRACE( "Generating StructuredColumns..." );
-    nb_levels_           = config_levels( config );
     bool periodic_points = config.getInt( "periodic_points", false );
     if ( not grid_ ) { throw eckit::BadCast( "Grid is not a grid::Structured type", Here() ); }
     const eckit::mpi::Comm& comm = mpi::comm();
@@ -593,6 +600,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     }
 }
 
+
 void StructuredColumns::compute_xy( idx_t i, idx_t j, PointXY& xy ) const {
     idx_t jj;
     if ( j < 0 ) {
@@ -835,6 +843,15 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     FunctionSpace( new detail::StructuredColumns( grid, partitioner, config ) ),
     functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {}
 
+StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical, const eckit::Configuration& config ) :
+    FunctionSpace( new detail::StructuredColumns( grid, vertical, config ) ),
+    functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {}
+
+StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical, const grid::Partitioner& partitioner,
+                                      const eckit::Configuration& config ) :
+    FunctionSpace( new detail::StructuredColumns( grid, vertical, partitioner, config ) ),
+    functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {}
+
 void StructuredColumns::gather( const FieldSet& local, FieldSet& global ) const {
     functionspace_->gather( local, global );
 }
@@ -870,6 +887,16 @@ std::string StructuredColumns::checksum( const Field& field ) const {
 // ----------------------------------------------------------------------------
 // Fortran interfaces
 // ----------------------------------------------------------------------------
+
+namespace detail {
+struct StructuredColumnsFortranAccess {
+    detail::StructuredColumns::Map2to1& ij2gp_;
+    StructuredColumnsFortranAccess( const detail::StructuredColumns& fs ) :
+        ij2gp_( const_cast<detail::StructuredColumns&>( fs ).ij2gp_ ) {}
+};
+}  // namespace detail
+
+
 extern "C" {
 
 const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid(
@@ -937,9 +964,10 @@ void atlas__fs__StructuredColumns__checksum_field( const detail::StructuredColum
 void atlas__fs__StructuredColumns__index_host( const detail::StructuredColumns* This, idx_t*& data, idx_t& i_min,
                                                idx_t& i_max, idx_t& j_min, idx_t& j_max ) {
     ASSERT( This );
-    ATLAS_ERROR_HANDLING( data  = const_cast<detail::StructuredColumns*>( This )->ij2gp_.data_.data();
-                          i_min = This->ij2gp_.i_min_ + 1; i_max = This->ij2gp_.i_max_ + 1;
-                          j_min = This->ij2gp_.j_min_ + 1; j_max = This->ij2gp_.j_max_ + 1; );
+    auto _This = detail::StructuredColumnsFortranAccess{*This};
+    ATLAS_ERROR_HANDLING( data = _This.ij2gp_.data_.data(); i_min = _This.ij2gp_.i_min_ + 1;
+                          i_max = _This.ij2gp_.i_max_ + 1; j_min = _This.ij2gp_.j_min_ + 1;
+                          j_max                                  = _This.ij2gp_.j_max_ + 1; );
 }
 
 idx_t atlas__fs__StructuredColumns__j_begin( const detail::StructuredColumns* This ) {

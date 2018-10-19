@@ -71,6 +71,29 @@ double cubic( double x, double min, double max ) {
     return ( x - x0 ) * ( x - x1 ) * ( x - x2 ) / ( ( xmax - x0 ) * ( xmax - x1 ) * ( xmax - x2 ) );
 }
 
+CASE( "test vertical;  default" ) {
+    Vertical vertical;
+    EXPECT( vertical.size() == 0 );
+    EXPECT( vertical.k_begin() == 0 );
+    EXPECT( vertical.k_end() == 0 );
+    EXPECT( vertical.boundaries() == false );
+}
+CASE( "test vertical;  config levels without boundaries" ) {
+    Vertical vertical( option::levels( 10 ) );
+    EXPECT( vertical.size() == 10 );
+    EXPECT( vertical.k_begin() == 0 );
+    EXPECT( vertical.k_end() == 10 );
+    EXPECT( vertical.boundaries() == false );
+}
+CASE( "test vertical;  config levels with boundaries" ) {
+    Vertical vertical( option::levels( 10 ) | util::Config( "boundaries", true ) );
+    EXPECT( vertical.size() == 12 );
+    EXPECT( vertical.k_begin() == 1 );
+    EXPECT( vertical.k_end() == 11 );
+    EXPECT( vertical.boundaries() == true );
+}
+
+
 CASE( "test finding of North-West grid point" ) {
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
 
@@ -386,8 +409,7 @@ CASE( "test 3d cubic interpolation" ) {
     util::Config config;
     config.set( "halo", halo );
     config.set( "periodic_points", true );
-    config.set( "levels", vertical.size() );
-    functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
+    functionspace::StructuredColumns fs( grid, vertical, grid::Partitioner( "equal_regions" ), config );
 
     Field field = fs.createField<double>();
     auto f      = array::make_view<double, 2>( field );
@@ -398,15 +420,15 @@ CASE( "test 3d cubic interpolation" ) {
     auto fz   = []( double z ) { return cubic( z, 0., 1. ); };
     auto fxyz = [fx, fy, fz]( double x, double y, double z ) { return fx( x ) * fy( y ) * fz( z ); };
     for ( idx_t n = 0; n < fs.size(); ++n ) {
-        for ( idx_t k = vertical.k_begin(); k < vertical.k_end(); ++k ) {
+        for ( idx_t k = fs.vertical().k_begin(); k < fs.vertical().k_end(); ++k ) {
             double x  = xy( n, XX );
             double y  = xy( n, YY );
-            double z  = vertical( k );
+            double z  = fs.vertical()( k );
             f( n, k ) = fxyz( x, y, z );
         }
     }
 
-    Cubic3DInterpolation cubic_interpolation( fs, vertical );
+    Cubic3DInterpolation cubic_interpolation( fs );
 
     auto departure_points = functionspace::PointCloud(
         PointXYZ(), {

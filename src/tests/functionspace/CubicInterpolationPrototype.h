@@ -327,10 +327,10 @@ public:
 
     using Stencil = Stencil3D<4>;
 
-    Cubic3DInterpolation( const functionspace::StructuredColumns& fs, const Vertical& vertical ) :
+    Cubic3DInterpolation( const functionspace::StructuredColumns& fs ) :
         fs_( fs ),
         horizontal_interpolation_( fs.grid() ),
-        vertical_interpolation_( vertical ) {}
+        vertical_interpolation_( fs.vertical() ) {}
 
     template <typename stencil_t>
     void compute_stencil( const double x, const double y, const double z, stencil_t& stencil ) const {

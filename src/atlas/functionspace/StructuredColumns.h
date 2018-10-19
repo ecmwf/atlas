@@ -17,6 +17,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
+#include "atlas/grid/Vertical.h"
 #include "atlas/library/config.h"
 #include "atlas/option.h"
 #include "atlas/util/Config.h"
@@ -47,6 +48,11 @@ public:
     StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
 
     StructuredColumns( const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig() );
+
+    StructuredColumns( const Grid&, const Vertical&, const eckit::Configuration& = util::NoConfig() );
+
+    StructuredColumns( const Grid&, const Vertical&, const grid::Partitioner&,
+                       const eckit::Configuration& = util::NoConfig() );
 
     virtual ~StructuredColumns();
 
@@ -79,6 +85,9 @@ public:
     std::string checksum( const FieldSet& ) const;
     std::string checksum( const Field& ) const;
 
+
+    const Vertical& vertical() const { return vertical_; }
+
     const grid::StructuredGrid& grid() const { return grid_; }
 
     idx_t i_begin( idx_t j ) const { return i_begin_[j]; }
@@ -92,6 +101,9 @@ public:
 
     idx_t j_begin_halo() const { return j_begin_halo_; }
     idx_t j_end_halo() const { return j_end_halo_; }
+
+    idx_t k_begin() const { return vertical_.k_begin(); }
+    idx_t k_end() const { return vertical_.k_end(); }
 
     idx_t index( idx_t i, idx_t j ) const { return ij2gp_( i, j ); }
 
@@ -121,9 +133,11 @@ private:  // methods
 private:  // data
     std::string distribution_;
 
+    const Vertical vertical_;
+    idx_t nb_levels_;
+
     idx_t size_owned_;
     idx_t size_halo_;
-    idx_t nb_levels_;
     idx_t halo_;
 
     const grid::StructuredGrid grid_;
@@ -225,7 +239,7 @@ private:  // data
     idx_t south_pole_included_;
     idx_t ny_;
 
-public:
+    friend struct StructuredColumnsFortranAccess;
     Map2to1 ij2gp_;
 };
 
@@ -241,6 +255,9 @@ public:
     StructuredColumns( const FunctionSpace& );
     StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
     StructuredColumns( const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig() );
+    StructuredColumns( const Grid&, const Vertical&, const eckit::Configuration& = util::NoConfig() );
+    StructuredColumns( const Grid&, const Vertical&, const grid::Partitioner&,
+                       const eckit::Configuration& = util::NoConfig() );
 
     static std::string type() { return detail::StructuredColumns::static_type(); }
 
@@ -254,6 +271,8 @@ public:
     idx_t levels() const { return functionspace_->levels(); }
 
     idx_t halo() const { return functionspace_->halo(); }
+
+    const Vertical& vertical() const { return functionspace_->vertical(); }
 
     const grid::StructuredGrid& grid() const { return functionspace_->grid(); }
 
@@ -282,6 +301,9 @@ public:
 
     idx_t j_begin_halo() const { return functionspace_->j_begin_halo(); }
     idx_t j_end_halo() const { return functionspace_->j_end_halo(); }
+
+    idx_t k_begin() const { return functionspace_->k_begin(); }
+    idx_t k_end() const { return functionspace_->k_end(); }
 
     Field xy() const { return functionspace_->xy(); }
     Field partition() const { return functionspace_->partition(); }
