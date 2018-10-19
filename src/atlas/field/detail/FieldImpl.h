@@ -135,7 +135,7 @@ public:  // Destructor
     size_t rank() const { return array_->rank(); }
 
     /// @brief Number of bytes occupied by the values of this field
-    double bytes() const { return array_->bytes(); }
+    size_t bytes() const { return array_->bytes(); }
 
     /// @brief Output information of field
     friend std::ostream& operator<<( std::ostream& os, const FieldImpl& v );
