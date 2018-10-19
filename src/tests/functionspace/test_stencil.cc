@@ -411,20 +411,23 @@ CASE( "test 3d cubic interpolation" ) {
     config.set( "periodic_points", true );
     functionspace::StructuredColumns fs( grid, vertical, grid::Partitioner( "equal_regions" ), config );
 
-    Field field = fs.createField<double>();
-    auto f      = array::make_view<double, 2>( field );
-    auto xy     = array::make_view<double, 2>( fs.xy() );
+    Field field   = fs.createField<double>();
+    auto f        = array::make_view<double, 2>( field );
+    auto xy       = array::make_view<double, 2>( fs.xy() );
+    const auto& z = fs.vertical();
 
-    auto fx   = []( double x ) { return cubic( x, 0., 360. ); };
-    auto fy   = []( double y ) { return cubic( y, -90., 90. ); };
-    auto fz   = []( double z ) { return cubic( z, 0., 1. ); };
-    auto fxyz = [fx, fy, fz]( double x, double y, double z ) { return fx( x ) * fy( y ) * fz( z ); };
+    auto fx = []( double x ) { return cubic( x, 0., 360. ); };
+    auto fy = []( double y ) { return cubic( y, -90., 90. ); };
+    auto fz = []( double z ) { return cubic( z, 0., 1. ); };
+    auto fp = [fx, fy, fz]( const PointXYZ& p ) { return fx( p.x() ) * fy( p.y() ) * fz( p.z() ); };
     for ( idx_t n = 0; n < fs.size(); ++n ) {
-        for ( idx_t k = fs.vertical().k_begin(); k < fs.vertical().k_end(); ++k ) {
-            double x  = xy( n, XX );
-            double y  = xy( n, YY );
-            double z  = fs.vertical()( k );
-            f( n, k ) = fxyz( x, y, z );
+        for ( idx_t k = fs.k_begin(); k < fs.k_end(); ++k ) {
+            PointXYZ p{
+                xy( n, XX ),
+                xy( n, YY ),
+                z( k ),
+            };
+            f( n, k ) = fp( p );
         }
     }
 
@@ -442,8 +445,8 @@ CASE( "test 3d cubic interpolation" ) {
                     } );
 
     for ( auto p : departure_points.iterate().xyz() ) {
-        double interpolated = cubic_interpolation( p.x(), p.y(), p.z(), f );
-        double exact        = fxyz( p.x(), p.y(), p.z() );
+        double interpolated = cubic_interpolation( p, f );
+        double exact        = fp( p );
         Log::info() << p << "  -->  " << interpolated << std::endl;
         EXPECT( is_approximately_equal( interpolated, exact ) );
     }

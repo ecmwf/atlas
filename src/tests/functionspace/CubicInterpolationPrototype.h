@@ -378,6 +378,17 @@ public:
         interpolate( stencil, weights, input, output );
         return output;
     }
+
+    template <typename point_t, typename array_t>
+    double operator()( const point_t& p, const array_t& input ) {
+        Stencil stencil;
+        Weights weights;
+        compute_stencil( p[0], p[1], p[2], stencil );
+        compute_weights( p[0], p[1], p[2], stencil, weights );
+        double output;
+        interpolate( stencil, weights, input, output );
+        return output;
+    }
 };
 
 //-----------------------------------------------------------------------------
