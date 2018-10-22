@@ -45,7 +45,7 @@ ecbuild_add_test( TARGET atlas_test_reduced_halo
 )
 
 ecbuild_add_test( TARGET atlas_test_stencil
-  SOURCES  test_stencil.cc CubicInterpolationPrototype.h
+  SOURCES  test_stencil.cc
   LIBS     atlas
 )
 

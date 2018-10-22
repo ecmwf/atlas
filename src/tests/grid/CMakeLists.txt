@@ -21,6 +21,7 @@ foreach(test
         test_field
         test_grid_ptr
         test_grids
+        test_vertical
         test_rotation
         test_state
         test_grid_hash)
