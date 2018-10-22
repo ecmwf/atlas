@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/interpolation/method/KNearestNeighbours.h"
+#include "atlas/interpolation/method/knn/KNearestNeighbours.h"
 
 #include "eckit/log/Plural.h"
 #include "eckit/log/Timer.h"

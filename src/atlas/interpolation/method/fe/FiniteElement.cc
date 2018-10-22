@@ -11,7 +11,7 @@
 #include <cmath>
 #include <limits>
 
-#include "atlas/interpolation/method/FiniteElement.h"
+#include "atlas/interpolation/method/fe/FiniteElement.h"
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/geometry/Point3.h"

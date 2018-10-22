@@ -28,9 +28,9 @@
 #include "atlas/runtime/Trace.h"
 
 // for static linking
-#include "FiniteElement.h"
-#include "KNearestNeighbours.h"
-#include "NearestNeighbour.h"
+#include "fe/FiniteElement.h"
+#include "knn/KNearestNeighbours.h"
+#include "knn/NearestNeighbour.h"
 
 namespace atlas {
 namespace interpolation {
@@ -99,10 +99,10 @@ Method* MethodFactory::build( const std::string& name, const Method::Config& con
 void Method::execute( const FieldSet& fieldsSource, FieldSet& fieldsTarget ) const {
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
 
-    const size_t N = fieldsSource.size();
+    const idx_t N = fieldsSource.size();
     ASSERT( N == fieldsTarget.size() );
 
-    for ( size_t i = 0; i < fieldsSource.size(); ++i ) {
+    for ( idx_t i = 0; i < fieldsSource.size(); ++i ) {
         Log::debug() << "Method::execute() on field " << ( i + 1 ) << '/' << N << "..." << std::endl;
 
         const Field& src = fieldsSource[i];

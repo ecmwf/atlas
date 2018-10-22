@@ -10,7 +10,7 @@
 
 #include "eckit/config/Resource.h"
 
-#include "atlas/interpolation/method/KNearestNeighboursBase.h"
+#include "atlas/interpolation/method/knn/KNearestNeighboursBase.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"

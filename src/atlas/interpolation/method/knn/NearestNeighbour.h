@@ -10,30 +10,28 @@
 
 #pragma once
 
-#include "atlas/interpolation/method/KNearestNeighboursBase.h"
+#include "atlas/interpolation/method/knn/KNearestNeighboursBase.h"
 
 namespace atlas {
 namespace interpolation {
 namespace method {
 
-class KNearestNeighbours : public KNearestNeighboursBase {
+class NearestNeighbour : public KNearestNeighboursBase {
 public:
-    KNearestNeighbours( const Config& config );
-    virtual ~KNearestNeighbours() {}
-
-    /**
-   * @brief Create an interpolant sparse matrix relating two (pre-partitioned)
-   * meshes,
-   * using the k-nearest neighbours method
-   * @param source functionspace containing source elements
-   * @param target functionspace containing target points
-   */
-    virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
+    NearestNeighbour( const Config& config ) : KNearestNeighboursBase( config ) {}
+    virtual ~NearestNeighbour() override {}
 
     virtual void print( std::ostream& ) const override {}
 
 protected:
-    size_t k_;
+    /**
+   * @brief Create an interpolant sparse matrix relating two (pre-partitioned)
+   * meshes,
+   * using nearest neighbour method
+   * @param source functionspace containing source elements
+   * @param target functionspace containing target points
+   */
+    virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
 };
 
 }  // namespace method
