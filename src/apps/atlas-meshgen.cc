@@ -72,14 +72,9 @@ private:
     bool brick;
     bool stats;
     bool info;
-    bool with_pole;
-    bool stitch_pole;
     bool ghost;
     bool binary;
     std::string identifier;
-    std::vector<long> reg_nlon_nlat;
-    std::vector<long> fgg_nlon_nlat;
-    std::vector<long> rgg_nlon;
     PathName path_in;
     PathName path_out;
 };
@@ -164,7 +159,7 @@ void Meshgen2Gmsh::execute( const Args& args ) {
         try {
             grid = Grid( key );
         }
-        catch ( eckit::BadParameter& e ) {
+        catch ( eckit::BadParameter& ) {
         }
     }
     else if ( path_in.path().size() ) {
@@ -173,7 +168,7 @@ void Meshgen2Gmsh::execute( const Args& args ) {
         try {
             grid = Grid( Config( path_in ) );
         }
-        catch ( eckit::BadParameter& e ) {
+        catch ( eckit::BadParameter& ) {
         }
     }
     else {
@@ -241,7 +236,7 @@ void Meshgen2Gmsh::execute( const Args& args ) {
     if ( info ) {
         Log::info() << "Partitioning graph: \n" << mesh.partitionGraph() << std::endl;
         Log::info() << "Mesh partition footprint: " << eckit::Bytes( mesh.footprint() ) << std::endl;
-        for ( size_t jhalo = 0; jhalo <= halo; ++jhalo ) {
+        for ( idx_t jhalo = 0; jhalo <= halo; ++jhalo ) {
             mesh.polygon( jhalo ).outputPythonScript( "polygon_halo" + std::to_string( jhalo ) + ".py" );
         }
     }
