@@ -149,7 +149,7 @@ public:
     size_t rank() const;
 
     /// @brief Number of bytes occupied by the values of this field
-    double bytes() const;
+    size_t bytes() const;
 
     /// @brief Output information of field
     friend std::ostream& operator<<( std::ostream& os, const Field& v );
