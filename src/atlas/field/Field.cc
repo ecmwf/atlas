@@ -207,7 +207,7 @@ idx_t Field::rank() const {
 }
 
 /// @brief Number of bytes occupied by the values of this field
-double Field::bytes() const {
+size_t Field::bytes() const {
     return field_->bytes();
 }
 
