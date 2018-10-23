@@ -39,7 +39,7 @@ using eckit::types::is_approximately_equal;
 #ifdef MAYBE_UNUSED
 #elif defined( __GNUC__ )
 #define MAYBE_UNUSED __attribute__( ( unused ) )
-#elif
+#else
 #define MAYBE_UNUSED
 #endif
 
