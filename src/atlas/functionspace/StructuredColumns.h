@@ -71,8 +71,8 @@ public:
     void scatter( const FieldSet&, FieldSet& ) const;
     void scatter( const Field&, Field& ) const;
 
-    void haloExchange( FieldSet& ) const;
-    void haloExchange( Field& ) const;
+    virtual void haloExchange( FieldSet&, bool on_device = false ) const;
+    virtual void haloExchange( Field&, bool on_device = false ) const;
 
     idx_t sizeOwned() const { return size_owned_; }
     idx_t sizeHalo() const { return size_halo_; }
@@ -282,8 +282,8 @@ public:
     void scatter( const FieldSet&, FieldSet& ) const;
     void scatter( const Field&, Field& ) const;
 
-    void haloExchange( FieldSet& ) const;
-    void haloExchange( Field& ) const;
+    virtual void haloExchange( FieldSet&, bool on_device = false ) const;
+    virtual void haloExchange( Field&, bool on_device = false ) const;
 
     std::string checksum( const FieldSet& ) const;
     std::string checksum( const Field& ) const;

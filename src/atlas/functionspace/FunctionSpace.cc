@@ -76,6 +76,14 @@ atlas::Field FunctionSpaceImpl::createField( const atlas::Field& field ) const {
     return createField( field, util::NoConfig() );
 }
 
+void FunctionSpaceImpl::haloExchange( FieldSet&, bool ) const {
+    NOTIMP;
+}
+
+void FunctionSpaceImpl::haloExchange( Field&, bool ) const {
+    NOTIMP;
+}
+
 Field NoFunctionSpace::createField( const eckit::Configuration& ) const {
     NOTIMP;
 }
@@ -117,6 +125,14 @@ Field FunctionSpace::createField( const Field& other, const eckit::Configuration
 
 std::string FunctionSpace::distribution() const {
     return functionspace_->distribution();
+}
+
+void FunctionSpace::haloExchange( Field& field, bool on_device ) const {
+    return functionspace_->haloExchange( field, on_device );
+}
+
+void FunctionSpace::haloExchange( FieldSet& fields, bool on_device ) const {
+    return functionspace_->haloExchange( fields, on_device );
 }
 
 // ------------------------------------------------------------------

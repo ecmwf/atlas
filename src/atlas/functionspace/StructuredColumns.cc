@@ -790,7 +790,7 @@ void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exc
 }
 }  // namespace
 
-void StructuredColumns::haloExchange( FieldSet& fieldset ) const {
+void StructuredColumns::haloExchange( FieldSet& fieldset, bool ) const {
     for ( idx_t f = 0; f < fieldset.size(); ++f ) {
         Field& field = fieldset[f];
         switch ( field.rank() ) {
@@ -812,7 +812,7 @@ void StructuredColumns::haloExchange( FieldSet& fieldset ) const {
     }
 }
 
-void StructuredColumns::haloExchange( Field& field ) const {
+void StructuredColumns::haloExchange( Field& field, bool ) const {
     FieldSet fieldset;
     fieldset.add( field );
     haloExchange( fieldset );
@@ -868,12 +868,12 @@ void StructuredColumns::scatter( const Field& global, Field& local ) const {
     functionspace_->scatter( global, local );
 }
 
-void StructuredColumns::haloExchange( FieldSet& fields ) const {
-    functionspace_->haloExchange( fields );
+void StructuredColumns::haloExchange( FieldSet& fields, bool on_device ) const {
+    functionspace_->haloExchange( fields, on_device );
 }
 
-void StructuredColumns::haloExchange( Field& field ) const {
-    functionspace_->haloExchange( field );
+void StructuredColumns::haloExchange( Field& field, bool on_device ) const {
+    functionspace_->haloExchange( field, on_device );
 }
 
 std::string StructuredColumns::checksum( const FieldSet& fieldset ) const {

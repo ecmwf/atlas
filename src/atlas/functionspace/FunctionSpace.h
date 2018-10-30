@@ -20,6 +20,10 @@
 #include "atlas/util/Config.h"
 
 namespace atlas {
+class FieldSet;
+}
+
+namespace atlas {
 namespace functionspace {
 
 #define FunctionspaceT_nonconst typename FunctionSpaceImpl::remove_const<FunctionSpaceT>::type
@@ -76,6 +80,9 @@ public:
     FunctionspaceT_const* cast() const;
 
     virtual std::string distribution() const = 0;
+
+    virtual void haloExchange( FieldSet&, bool /*on_device*/ = false ) const;
+    virtual void haloExchange( Field&, bool /* on_device*/ = false ) const;
 
 private:
     util::Metadata metadata_;
@@ -166,6 +173,9 @@ public:
 
     template <typename DATATYPE>
     Field createField( const eckit::Configuration& = util::NoConfig() ) const;
+
+    void haloExchange( FieldSet&, bool on_device = false ) const;
+    void haloExchange( Field&, bool on_device = false ) const;
 };
 
 template <typename DATATYPE>
