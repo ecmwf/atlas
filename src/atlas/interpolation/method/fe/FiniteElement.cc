@@ -62,13 +62,15 @@ void FiniteElement::setup( const FunctionSpace& source, const FunctionSpace& tar
             Mesh meshTarget = tgt.mesh();
 
             // generate 3D point coordinates
-            target_xyz_   = mesh::actions::BuildXYZField( "xyz" )( meshTarget );
-            target_ghost_ = meshTarget.nodes().ghost();
+            target_xyz_    = mesh::actions::BuildXYZField( "xyz" )( meshTarget );
+            target_ghost_  = meshTarget.nodes().ghost();
+            target_lonlat_ = meshTarget.nodes().lonlat();
         }
         else if ( functionspace::PointCloud tgt = target ) {
-            const idx_t N = tgt.size();
-            target_xyz_   = Field( "xyz", array::make_datatype<double>(), array::make_shape( N, 3 ) );
-            target_ghost_ = tgt.ghost();
+            const idx_t N  = tgt.size();
+            target_xyz_    = Field( "xyz", array::make_datatype<double>(), array::make_shape( N, 3 ) );
+            target_ghost_  = tgt.ghost();
+            target_lonlat_ = tgt.lonlat();
             array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( tgt.lonlat() );
             array::ArrayView<double, 2> xyz    = array::make_view<double, 2>( target_xyz_ );
             PointXYZ p2;
@@ -193,6 +195,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
 
     array::ArrayView<int, 1> out_ghosts = array::make_view<int, 1>( target_ghost_ );
 
+    array::ArrayView<double, 2> out_lonlat = array::make_view<double, 2>( target_lonlat_ );
 
     idx_t Nelements                    = meshSource.cells().size();
     const double maxFractionElemsToTry = 0.2;
@@ -238,9 +241,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
                 failures.push_back( ip );
                 Log::debug() << "------------------------------------------------------"
                                 "---------------------\n";
-                PointLonLat pll;
-                util::Earth::convertCartesianToSpherical( p, pll );
-                if ( pll.lon() < 0 ) pll.lon() += 360.;
+                const PointLonLat pll{out_lonlat( ip, 0 ), out_lonlat( ip, 1 )};
                 Log::debug() << "Failed to project point (lon,lat)=" << pll << '\n';
                 Log::debug() << failures_log.str();
             }
@@ -254,10 +255,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
         std::ostringstream msg;
         msg << "Rank " << eckit::mpi::comm().rank() << " failed to project points:\n";
         for ( std::vector<size_t>::const_iterator i = failures.begin(); i != failures.end(); ++i ) {
-            const PointXYZ p{( *ocoords_ )( *i, 0 ), ( *ocoords_ )( *i, 1 ), ( *ocoords_ )( *i, 2 )};  // lookup point
-            PointLonLat pll;
-            util::Earth::convertCartesianToSpherical( p, pll );
-            if ( pll.lon() < 0 ) pll.lon() += 360.;
+            const PointLonLat pll{out_lonlat( *i, 0 ), out_lonlat( *i, 1 )};  // lookup point
             msg << "\t(lon,lat) = " << pll << "\n";
         }
 
@@ -288,8 +286,9 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
     std::array<double, 4> w;
 
     Triplets triplets;
+    triplets.reserve( 4 );
     Ray ray( PointXYZ{( *ocoords_ )( ip, 0 ), ( *ocoords_ )( ip, 1 ), ( *ocoords_ )( ip, 2 )} );
-    Vector3D p{( *ocoords_ )( ip, 0 ), ( *ocoords_ )( ip, 1 ), ( *ocoords_ )( ip, 2 )};
+    const Vector3D p{( *ocoords_ )( ip, 0 ), ( *ocoords_ )( ip, 1 ), ( *ocoords_ )( ip, 2 )};
     ElementEdge edge;
     idx_t single_point;
     for ( ElemIndex3::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc ) {
@@ -304,22 +303,25 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
             ASSERT( idx[i] < inp_points );
         }
 
-        const double tolerance = 1.e-12;
+        constexpr double tolerance = 1.e-12;
 
         auto on_triag_edge = [&]() {
             if ( w[0] < tolerance ) {
                 edge.idx[0] = 1;
                 edge.idx[1] = 2;
+                w[0]        = 0.;
                 return true;
             }
             if ( w[1] < tolerance ) {
                 edge.idx[0] = 0;
                 edge.idx[1] = 2;
+                w[1]        = 0.;
                 return true;
             }
             if ( w[2] < tolerance ) {
                 edge.idx[0] = 0;
                 edge.idx[1] = 1;
+                w[2]        = 0.;
                 return true;
             }
             return false;
@@ -329,21 +331,29 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
             if ( w[0] < tolerance && w[1] < tolerance ) {
                 edge.idx[0] = 2;
                 edge.idx[1] = 3;
+                w[0]        = 0.;
+                w[1]        = 0.;
                 return true;
             }
             if ( w[1] < tolerance && w[2] < tolerance ) {
                 edge.idx[0] = 0;
                 edge.idx[1] = 3;
+                w[1]        = 0.;
+                w[2]        = 0.;
                 return true;
             }
             if ( w[2] < tolerance && w[3] < tolerance ) {
                 edge.idx[0] = 0;
                 edge.idx[1] = 1;
+                w[2]        = 0.;
+                w[3]        = 0.;
                 return true;
             }
             if ( w[3] < tolerance && w[0] < tolerance ) {
                 edge.idx[0] = 1;
                 edge.idx[1] = 2;
+                w[3]        = 0.;
+                w[0]        = 0.;
                 return true;
             }
             return false;
@@ -351,20 +361,36 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
 
         auto on_single_point = [&]() {
             if ( w[edge.idx[0]] < tolerance ) {
-                single_point = edge.idx[1];
+                single_point   = edge.idx[1];
+                w[edge.idx[0]] = 0.;
                 return true;
             }
             if ( w[edge.idx[1]] < tolerance ) {
-                single_point = edge.idx[0];
+                single_point   = edge.idx[0];
+                w[edge.idx[1]] = 0.;
                 return true;
             }
             return false;
         };
 
         auto interpolate_edge = [&]( const Vector3D& p0, const Vector3D& p1 ) {
-            double t       = ( p - p0 ).squaredNorm() / ( p1 - p0 ).squaredNorm();
-            w[edge.idx[0]] = t;
-            w[edge.idx[1]] = 1. - t;
+            /*
+             * Given points p0,p1 defining the edge, and point p, find projected point pt
+             * on edge to compute interpolation weights.
+             *                  p
+             *                  |`.
+             *                  |  `.v
+             *                  |    `.
+             *  p1--------------pt-----p0
+             *                  <--d----
+             */
+            Vector3D d     = ( p1 - p0 ) / ( p1 - p0 ).norm();
+            Vector3D v     = p - p0;
+            double t       = v.dot( d );
+            Vector3D pt    = p0 + d * t;
+            t              = ( pt - p0 ).norm() / ( p1 - p0 ).norm();
+            w[edge.idx[0]] = 1. - t;
+            w[edge.idx[1]] = t;
         };
 
         if ( nb_cols == 3 ) {
@@ -389,20 +415,18 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
                 w[2] = is.v;
 
                 if ( on_triag_edge() ) {
-                    if ( on_single_point() ) {
-                        triplets.push_back( Triplet( ip, idx[single_point], w[single_point] ) );
-                    }
+                    if ( on_single_point() ) { triplets.emplace_back( ip, idx[single_point], w[single_point] ); }
                     else {
                         if ( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) { edge.swap(); }
                         interpolate_edge( triag.p( edge.idx[0] ), triag.p( edge.idx[1] ) );
                         for ( size_t i = 0; i < 2; ++i ) {
-                            triplets.push_back( Triplet( ip, idx[edge.idx[i]], w[edge.idx[i]] ) );
+                            triplets.emplace_back( ip, idx[edge.idx[i]], w[edge.idx[i]] );
                         }
                     }
                 }
                 else {
                     for ( size_t i = 0; i < 3; ++i ) {
-                        triplets.push_back( Triplet( ip, idx[i], w[i] ) );
+                        triplets.emplace_back( ip, idx[i], w[i] );
                     }
                 }
 
@@ -432,20 +456,18 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
                 w[3] = ( 1. - is.u ) * is.v;
 
                 if ( on_quad_edge() ) {
-                    if ( on_single_point() ) {
-                        triplets.push_back( Triplet( ip, idx[single_point], w[single_point] ) );
-                    }
+                    if ( on_single_point() ) { triplets.emplace_back( ip, idx[single_point], w[single_point] ); }
                     else {
                         if ( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) { edge.swap(); }
                         interpolate_edge( quad.p( edge.idx[0] ), quad.p( edge.idx[1] ) );
                         for ( size_t i = 0; i < 2; ++i ) {
-                            triplets.push_back( Triplet( ip, idx[edge.idx[i]], w[edge.idx[i]] ) );
+                            triplets.emplace_back( ip, idx[edge.idx[i]], w[edge.idx[i]] );
                         }
                     }
                 }
                 else {
                     for ( size_t i = 0; i < 4; ++i ) {
-                        triplets.push_back( Triplet( ip, idx[i], w[i] ) );
+                        triplets.emplace_back( ip, idx[i], w[i] );
                     }
                 }
                 break;  // stop looking for elements

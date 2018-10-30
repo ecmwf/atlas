@@ -63,6 +63,7 @@ protected:
     std::unique_ptr<array::ArrayView<double, 2>> ocoords_;
     std::unique_ptr<array::ArrayView<gidx_t, 1>> igidx_;
 
+    Field target_lonlat_;
     Field target_xyz_;
     Field target_ghost_;
 
