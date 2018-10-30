@@ -17,6 +17,7 @@
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/mesh/Nodes.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Polygon.h"
 
@@ -38,6 +39,7 @@ double cross_product_analog( const PointLonLat& A, const PointLonLat& B, const P
 Polygon::Polygon() {}
 
 Polygon::Polygon( const Polygon::edge_set_t& edges ) {
+    ATLAS_TRACE();
     // get external edges by attempting to remove reversed edges, if any
     edge_set_t extEdges;
     for ( const edge_t& e : edges ) {
