@@ -18,6 +18,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildCellCentres.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
@@ -44,6 +45,7 @@ Field& BuildCellCentres::operator()( Mesh& mesh ) const {
         recompute = true;
     }
     if ( recompute ) {
+        ATLAS_TRACE( "BuildCellCentres" );
         mesh::Nodes& nodes                 = mesh.nodes();
         array::ArrayView<double, 2> coords = array::make_view<double, 2>( nodes.field( "xyz" ) );
 

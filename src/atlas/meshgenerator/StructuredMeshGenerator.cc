@@ -165,7 +165,7 @@ void StructuredMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
     const grid::StructuredGrid rg = grid::StructuredGrid( grid );
     if ( !rg ) throw eckit::BadCast( "Structured can only work with a Structured", Here() );
 
-    size_t nb_parts = options.get<size_t>( "nb_parts" );
+    idx_t nb_parts = options.get<idx_t>( "nb_parts" );
 
     std::string partitioner_type = "trans";
     options.get( "partitioner", partitioner_type );
@@ -192,7 +192,7 @@ void StructuredMeshGenerator::generate( const Grid& grid, const grid::Distributi
 
     ASSERT( !mesh.generated() );
 
-    if ( grid.size() != distribution.partition().size() ) {
+    if ( grid.size() != idx_t( distribution.partition().size() ) ) {
         std::stringstream msg;
         msg << "Number of points in grid (" << grid.size()
             << ") different from "
@@ -201,7 +201,7 @@ void StructuredMeshGenerator::generate( const Grid& grid, const grid::Distributi
         throw eckit::AssertionFailed( msg.str(), Here() );
     }
 
-    int mypart = options.get<size_t>( "part" );
+    idx_t mypart = options.get<idx_t>( "part" );
 
 // show distribution
 #if DEBUG_OUTPUT
@@ -244,8 +244,8 @@ Find min and max latitudes used by this part.
 */
     n             = 0;
     int lat_north = -1;
-    for ( size_t jlat = 0; jlat < rg.ny(); ++jlat ) {
-        for ( size_t jlon = 0; jlon < rg.nx( jlat ); ++jlon ) {
+    for ( idx_t jlat = 0; jlat < rg.ny(); ++jlat ) {
+        for ( idx_t jlon = 0; jlon < rg.nx( jlat ); ++jlon ) {
             if ( parts.at( n ) == mypart ) {
                 lat_north = jlat;
                 goto end_north;
@@ -271,7 +271,7 @@ end_south:
     std::vector<int> offset( rg.ny(), 0 );
 
     n = 0;
-    for ( size_t jlat = 0; jlat < rg.ny(); ++jlat ) {
+    for ( idx_t jlat = 0; jlat < rg.ny(); ++jlat ) {
         offset.at( jlat ) = n;
         n += rg.nx( jlat );
     };
@@ -280,7 +280,7 @@ end_south:
 We need to connect to next region
 */
     if ( lat_north - 1 >= 0 && rg.nx( lat_north - 1 ) > 0 ) --lat_north;
-    if ( size_t( lat_south + 1 ) <= rg.ny() - 1 && rg.nx( lat_south + 1 ) > 0 ) ++lat_south;
+    if ( idx_t( lat_south + 1 ) <= rg.ny() - 1 && rg.nx( lat_south + 1 ) > 0 ) ++lat_south;
     region.lat_begin.resize( rg.ny(), -1 );
     region.lat_end.resize( rg.ny(), -1 );
     region.nb_lat_elems.resize( rg.ny(), 0 );

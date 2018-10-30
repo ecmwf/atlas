@@ -108,19 +108,45 @@ void Method::execute( const FieldSet& fieldsSource, FieldSet& fieldsTarget ) con
         const Field& src = fieldsSource[i];
         Field& tgt       = fieldsTarget[i];
 
-        eckit::linalg::Vector v_src( const_cast<double*>( src.data<double>() ), src.shape( 0 ) );
-        eckit::linalg::Vector v_tgt( tgt.data<double>(), tgt.shape( 0 ) );
+        ASSERT( src.datatype() == tgt.datatype() );
+        ASSERT( src.rank() == tgt.rank() );
+        ASSERT( src.array().contiguous() );
+        ASSERT( tgt.array().contiguous() );
 
+        if( src.datatype() != array::make_datatype<double>() ) {
+            throw eckit::NotImplemented( "Only double precision interpolation is currently implemented", Here() );
+        }
+        if( src.rank() != 1 ) {
+            throw eckit::NotImplemented( "Only 1-dimensionally indexed interpolation is currently implemented", Here() );
+        }
+
+        eckit::linalg::Vector v_src( array::make_view<double,1>( src ).data(), src.shape( 0 ) );
+        eckit::linalg::Vector v_tgt( array::make_view<double,1>( tgt ).data(), tgt.shape( 0 ) );
+
+        ASSERT( ! matrix_.empty() );
         eckit::linalg::LinearAlgebra::backend().spmv( matrix_, v_src, v_tgt );
     }
 }
 
-void Method::execute( const Field& fieldSource, Field& fieldTarget ) const {
+void Method::execute( const Field& src, Field& tgt ) const {
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
 
-    eckit::linalg::Vector v_src( const_cast<Field&>( fieldSource ).data<double>(), fieldSource.shape( 0 ) ),
-        v_tgt( fieldTarget.data<double>(), fieldTarget.shape( 0 ) );
+    ASSERT( src.datatype() == tgt.datatype() );
+    ASSERT( src.rank() == tgt.rank() );
+    ASSERT( src.array().contiguous() );
+    ASSERT( tgt.array().contiguous() );
 
+    if( src.datatype() != array::make_datatype<double>() ) {
+        throw eckit::NotImplemented( "Only double precision interpolation is currently implemented", Here() );
+    }
+    if( src.rank() != 1 ) {
+        throw eckit::NotImplemented( "Only 1-dimensionally indexed interpolation is currently implemented", Here() );
+    }
+
+    eckit::linalg::Vector v_src( array::make_view<double,1>( src ).data(), src.shape( 0 ) );
+    eckit::linalg::Vector v_tgt( array::make_view<double,1>( tgt ).data(), tgt.shape( 0 ) );
+
+    ASSERT( ! matrix_.empty() );
     eckit::linalg::LinearAlgebra::backend().spmv( matrix_, v_src, v_tgt );
 }
 
