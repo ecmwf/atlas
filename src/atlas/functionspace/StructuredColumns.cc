@@ -384,19 +384,55 @@ StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical
         for ( idx_t j = j_begin_; j < j_end_; ++j ) {
             for ( idx_t i : {i_begin_[j], i_end_[j] - 1} ) {
                 // Following line only, increases periodic halo on the east side by 1
-                if ( periodic_points && i == grid_.nx( j ) - 1 ) ++i;
+                if ( periodic_points && i == grid_.nx( j ) - 1 ) { ++i; }
 
-                double x = grid_.x( i, j );
+                double x      = grid_.x( i, j );
+                double x_next = grid_.x( i + 1, j );
+                double x_prev = grid_.x( i - 1, j );
                 for ( idx_t jj = j - halo; jj <= j + halo; ++jj ) {
-                    jmin     = std::min( jmin, jj );
-                    jmax     = std::max( jmax, jj );
+                    idx_t last = grid_.nx( compute_j( jj ) ) - 1;
+                    if ( i == grid_.nx( j ) ) { ++last; }
+
+                    jmin = std::min( jmin, jj );
+                    jmax = std::max( jmax, jj );
+                    // Compute ii as index less-equal of x
+                    //
+                    //              x(i,j)
+                    //    |-----|-----|-----|-----|
+                    // ii-halo       ii
+                    //
+                    //                 x(i,j)
+                    //    |-----|-----|--+--|-----|
+                    // ii-halo       ii
+
                     idx_t ii = -halo;
                     while ( compute_x( ii, jj ) < x - eps ) {
                         ii++;
                     }
 
-                    idx_t i_minus_halo  = ii - halo;
-                    idx_t i_plus_halo   = ( x + eps > compute_x( ii, jj ) ) ? ii + halo : ii + std::max( 0, halo - 1 );
+                    // ATLAS-186 workaround
+                    // This while should not have to be there, but is here because of
+                    // the MatchingMeshDomainDecomposition algorithm. that may lead to points
+                    // left of the point ii.
+                    while ( compute_x( ii - 1, jj ) > x_prev + eps ) {
+                        --ii;
+                    }
+
+                    idx_t i_minus_halo = ii - halo;
+
+                    // Compute ii as index less-equal of x_next
+                    //
+                    //               x(i,j) x_next(i,j)
+                    //   |-----|-----|-+---|-+---|-----|
+                    // ii-halo            iii       iii+halo
+                    //
+                    idx_t iii = ii;
+                    while ( compute_x( iii + 1, jj ) < x_next - eps ) {
+                        ++iii;
+                    }
+                    iii               = std::min( iii, last );
+                    idx_t i_plus_halo = iii + halo;
+
                     imin                = std::min( imin, i_minus_halo );
                     imax                = std::max( imax, i_plus_halo );
                     i_begin_halo_( jj ) = std::min( i_begin_halo_( jj ), i_minus_halo );
