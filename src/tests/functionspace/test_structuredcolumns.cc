@@ -91,7 +91,7 @@ CASE( "test_functionspace_StructuredColumns_no_halo" ) {
     gmsh.write( field );
 }
 
-CASE( "test_functionspace_StructuredColumns_halo" ) {
+CASE( "test_functionspace_StructuredColumns_halo with output" ) {
     ATLAS_DEBUG_VAR( mpi::comm().size() );
     //  grid::StructuredGrid grid(
     //      grid::StructuredGrid::XSpace( {0.,360.} , {2,4,6,6,4,2} , false ),
@@ -106,6 +106,7 @@ CASE( "test_functionspace_StructuredColumns_halo" ) {
     int halo = eckit::Resource<int>( "--halo", 2 );
     util::Config config;
     config.set( "halo", halo );
+    config.set( "periodic_points", true );
     functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
 
     Field field = fs.createField<long>( option::name( "field" ) );
@@ -250,7 +251,7 @@ CASE( "test_functionspace_StructuredColumns_halo" ) {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_functionspace_StructuredColumns_halo" ) {
+CASE( "test_functionspace_StructuredColumns_halo checks without output" ) {
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
 
     grid::StructuredGrid grid( gridname );
@@ -285,9 +286,7 @@ CASE( "test_functionspace_StructuredColumns_halo" ) {
         }
     } );
 
-    PointXY dp{180., 45.};
 }
-
 //-----------------------------------------------------------------------------
 
 

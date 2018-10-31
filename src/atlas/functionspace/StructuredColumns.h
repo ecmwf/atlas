@@ -105,7 +105,10 @@ public:
     idx_t k_begin() const { return vertical_.k_begin(); }
     idx_t k_end() const { return vertical_.k_end(); }
 
-    idx_t index( idx_t i, idx_t j ) const { return ij2gp_( i, j ); }
+    idx_t index( idx_t i, idx_t j ) const {
+        check_bounds( i, j );
+        return ij2gp_( i, j );
+    }
 
     Field xy() const { return field_xy_; }
     Field partition() const { return field_partition_; }
@@ -129,6 +132,12 @@ private:  // methods
     array::ArrayShape config_shape( const eckit::Configuration& ) const;
     void set_field_metadata( const eckit::Configuration&, Field& ) const;
     virtual size_t footprint() const;
+    void check_bounds( idx_t i, idx_t j ) const {
+#if ATLAS_ARRAYVIEW_BOUNDS_CHECKING
+        if ( j < j_begin_halo() || j >= j_end_halo() ) { throw eckit::Exception( "j out of range" ); }
+        if ( i < i_begin_halo( j ) || i >= i_end_halo( j ) ) { throw eckit::Exception( "i out of range" ); }
+#endif
+    }
 
 private:  // data
     std::string distribution_;
@@ -178,7 +187,7 @@ private:  // data
 
         void set( idx_t i, idx_t j, idx_t n ) { data_[( i - i_min_ ) + ( j - j_min_ ) * j_stride_] = n + 1; }
 
-        idx_t missing() const { return std::numeric_limits<idx_t>::max() - 1; }
+        static idx_t missing() { return std::numeric_limits<idx_t>::max() - 1; }
 
     private:
         void print( std::ostream& ) const;
