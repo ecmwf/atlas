@@ -22,16 +22,16 @@ uidx_t unique_lonlat( const double& lon, const double& lat, const PeriodicTransf
 
 uidx_t UniqueLonLat::operator()( const mesh::Connectivity::Row& elem_nodes, const PeriodicTransform& transform ) const {
     double centroid[2];
-    centroid[XX] = 0.;
-    centroid[YY] = 0.;
-    size_t npts  = elem_nodes.size();
+    centroid[LON] = 0.;
+    centroid[LAT] = 0.;
+    size_t npts   = elem_nodes.size();
     for ( size_t jnode = 0; jnode < npts; ++jnode ) {
-        centroid[XX] += xy( elem_nodes( jnode ), XX );
-        centroid[YY] += xy( elem_nodes( jnode ), YY );
+        centroid[LON] += lonlat( elem_nodes( jnode ), LON );
+        centroid[LAT] += lonlat( elem_nodes( jnode ), LAT );
     }
-    centroid[XX] /= static_cast<double>( npts );
-    centroid[YY] /= static_cast<double>( npts );
-    return unique_lonlat( centroid[XX], centroid[YY], transform );
+    centroid[LON] /= static_cast<double>( npts );
+    centroid[LAT] /= static_cast<double>( npts );
+    return unique_lonlat( centroid[LON], centroid[LAT], transform );
 }
 
 

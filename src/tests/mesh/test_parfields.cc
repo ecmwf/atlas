@@ -71,6 +71,7 @@ CASE( "test1" ) {
     mesh::Nodes& nodes = m.nodes();
     nodes.resize( 10 );
     auto xy      = make_view<double, 2>( nodes.xy() );
+    auto lonlat  = make_view<double, 2>( nodes.lonlat() );
     auto glb_idx = make_view<gidx_t, 1>( nodes.global_index() );
     auto part    = make_view<int, 1>( nodes.partition() );
     auto flags   = make_view<int, 1>( nodes.flags() );
@@ -122,6 +123,11 @@ CASE( "test1" ) {
     xy( 9, XX ) = 360.;
     xy( 9, YY ) = -80.;
     Topology::set( flags( 9 ), Topology::BC | Topology::EAST );
+
+    for ( idx_t n = 0; n < xy.shape( 0 ); ++n ) {
+        lonlat( n, LON ) = xy( n, XX );
+        lonlat( n, LAT ) = xy( n, YY );
+    }
 
     mesh::actions::build_parallel_fields( m );
 

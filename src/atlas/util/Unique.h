@@ -103,7 +103,7 @@ public:
 
 private:
     const mesh::Nodes* nodes;
-    array::ArrayView<double, 2> xy;
+    array::ArrayView<double, 2> lonlat;
 };
 
 // ----------------------------------------------------------------------------
@@ -201,59 +201,54 @@ inline uidx_t unique_lonlat( const double elem_lonlat[], size_t npts ) {
 
 inline UniqueLonLat::UniqueLonLat( const Mesh& mesh ) :
     nodes( &mesh.nodes() ),
-    xy( array::make_view<double, 2>( nodes->xy() ) ) {
-    ASSERT( mesh.projection().units() == "degrees" );
+    lonlat( array::make_view<double, 2>( nodes->lonlat() ) ) {
     update();
 }
 
 inline UniqueLonLat::UniqueLonLat( const mesh::Nodes& _nodes ) :
     nodes( &_nodes ),
-    xy( array::make_view<double, 2>( nodes->xy() ) ) {
+    lonlat( array::make_view<double, 2>( nodes->lonlat() ) ) {
     update();
 }
 
 inline uidx_t UniqueLonLat::operator()( int node ) const {
-    return unique_lonlat( xy( node, XX ), xy( node, YY ) );
+    return unique_lonlat( lonlat( node, LON ), lonlat( node, LAT ) );
 }
 
 inline uidx_t UniqueLonLat::operator()( const mesh::Connectivity::Row& elem_nodes ) const {
     double centroid[2];
-    centroid[XX] = 0.;
-    centroid[YY] = 0.;
-    size_t npts  = elem_nodes.size();
+    centroid[LON] = 0.;
+    centroid[LAT] = 0.;
+    size_t npts   = elem_nodes.size();
     for ( size_t jnode = 0; jnode < npts; ++jnode ) {
-        centroid[XX] += xy( elem_nodes( jnode ), XX );
-        centroid[YY] += xy( elem_nodes( jnode ), YY );
+        centroid[LON] += lonlat( elem_nodes( jnode ), LON );
+        centroid[LAT] += lonlat( elem_nodes( jnode ), LAT );
     }
-    centroid[XX] /= static_cast<double>( npts );
-    centroid[YY] /= static_cast<double>( npts );
+    centroid[LON] /= static_cast<double>( npts );
+    centroid[LAT] /= static_cast<double>( npts );
 
     // FIXME: this should be `unique_lonlat( centroid )`
     //        but this causes some weird behavior in parallelisation
-    return unique_lonlat( centroid[XX], centroid[YY] );
+    return unique_lonlat( centroid[LON], centroid[LAT] );
     //  return detail::unique32( microdeg(centroid[XX]), microdeg(centroid[YY]) );
 }
 
 inline uidx_t UniqueLonLat::operator()( const int elem_nodes[], size_t npts ) const {
     double centroid[2];
-    centroid[XX] = 0.;
-    centroid[YY] = 0.;
+    centroid[LON] = 0.;
+    centroid[LAT] = 0.;
     for ( size_t jnode = 0; jnode < npts; ++jnode ) {
-        centroid[XX] += xy( elem_nodes[jnode], XX );
-        centroid[YY] += xy( elem_nodes[jnode], YY );
+        centroid[LON] += lonlat( elem_nodes[jnode], LON );
+        centroid[LAT] += lonlat( elem_nodes[jnode], LAT );
     }
-    centroid[XX] /= static_cast<double>( npts );
-    centroid[YY] /= static_cast<double>( npts );
+    centroid[LON] /= static_cast<double>( npts );
+    centroid[LAT] /= static_cast<double>( npts );
 
-    // FIXME: this should be `unique_lonlat( centroid )`
-    //        but this causes some weird behavior in parallelisation
-
-    return unique_lonlat( centroid[XX], centroid[YY] );
-    //  return detail::unique32( microdeg(centroid[XX]), microdeg(centroid[YY]) );
+    return unique_lonlat( centroid[LON], centroid[LAT] );
 }
 
 inline void UniqueLonLat::update() {
-    xy = array::make_view<double, 2>( nodes->xy() );
+    lonlat = array::make_view<double, 2>( nodes->lonlat() );
 }
 
 // ----------------------------------------------------------------------------
