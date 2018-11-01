@@ -56,7 +56,6 @@ struct Parse_llc_step : ConfigParser {
 
         double centre[] = {centre_lonlat[0], centre_lonlat[1]};
         p.lonlat2xy( centre );
-        ATLAS_DEBUG_VAR( PointXY( centre ) );
 
         double lx = x.step * double( x.N - 1 );
         double ly = y.step * double( y.N - 1 );

@@ -11,7 +11,7 @@
 #include <cmath>
 #include <limits>
 
-#include "atlas/interpolation/method/structured/CubicStructured2D.h"
+#include "atlas/interpolation/method/structured/Bicubic.h"
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/geometry/Point3.h"
@@ -42,18 +42,19 @@ namespace method {
 
 namespace {
 
-MethodBuilder<CubicStructured2D> __builder( "structured-bicubic" );
+MethodBuilder<Bicubic> __builder1( "structured-bicubic" );
+MethodBuilder<Bicubic> __builder2( "bicubic" );
 
 }  // namespace
 
-void CubicStructured2D::setup( const FunctionSpace& source, const FunctionSpace& target ) {
+void Bicubic::setup( const FunctionSpace& source, const FunctionSpace& target ) {
     ATLAS_TRACE( "atlas::interpolation::method::CubicStructured2D::setup()" );
 
     source_ = source;
     target_ = target;
 
     if ( functionspace::NodeColumns tgt = target ) {
-        target_xy_    = tgt.mesh().nodes().xy();
+        target_xy_    = tgt.mesh().nodes().lonlat();
         target_ghost_ = tgt.mesh().nodes().ghost();
     }
     else if ( functionspace::PointCloud tgt = target ) {
@@ -67,7 +68,7 @@ void CubicStructured2D::setup( const FunctionSpace& source, const FunctionSpace&
     setup( source );
 }
 
-void CubicStructured2D::print( std::ostream& out ) const {
+void Bicubic::print( std::ostream& out ) const {
     ASSERT( not matrix_.empty() );
 
     functionspace::NodeColumns src( source_ );
@@ -130,7 +131,7 @@ void CubicStructured2D::print( std::ostream& out ) const {
     }
 }
 
-void CubicStructured2D::setup( const FunctionSpace& source ) {
+void Bicubic::setup( const FunctionSpace& source ) {
     src_ = source;
     ASSERT( src_ );
     ASSERT( src_.halo() >= 2 );
@@ -152,6 +153,12 @@ void CubicStructured2D::setup( const FunctionSpace& source ) {
                                            Log::debug() );
             for ( idx_t n = 0; n < out_npts; ++n, ++progress ) {
                 PointXY p{xy( n, XX ), xy( n, YY )};
+                while ( p.x() < 0. ) {
+                    p.x() += 360.;
+                }
+                while ( p.x() >= 360. ) {
+                    p.x() -= 360.;
+                }
                 if ( not ghost( n ) ) { insert_triplets( n, p, triplets, workspace ); }
             }
         }

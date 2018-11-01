@@ -27,13 +27,13 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-class CubicStructured2D : public Method {
+class Bicubic : public Method {
 public:
-    CubicStructured2D( const Config& config ) : Method( config ), matrix_free_{false} {
+    Bicubic( const Config& config ) : Method( config ), matrix_free_{false} {
         config.get( "matrix_free", matrix_free_ );
     }
 
-    virtual ~CubicStructured2D() override {}
+    virtual ~Bicubic() override {}
 
     virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
 
