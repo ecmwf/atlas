@@ -23,6 +23,7 @@ namespace atlas {
 class Field;
 class FieldSet;
 class FunctionSpace;
+class Grid;
 }  // namespace atlas
 
 namespace atlas {
@@ -42,10 +43,15 @@ public:
    */
     virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
 
+    virtual void setup( const Grid& source, const Grid& target ) = 0;
+
     virtual void execute( const FieldSet& source, FieldSet& target ) const;
     virtual void execute( const Field& source, Field& target ) const;
 
     virtual void print( std::ostream& ) const = 0;
+
+    virtual const FunctionSpace& source() const = 0;
+    virtual const FunctionSpace& target() const = 0;
 
 protected:
     using Triplet  = eckit::linalg::Triplet;

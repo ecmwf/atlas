@@ -66,9 +66,9 @@ public:
 class ComputeNorth {
     std::vector<double> y_;
     double dy_;
-    static constexpr double tol() { return 0.5e-6; }
     idx_t halo_;
     idx_t ny_;
+    static constexpr double tol() { return 0.5e-6; }
 
 public:
     ComputeNorth() = default;

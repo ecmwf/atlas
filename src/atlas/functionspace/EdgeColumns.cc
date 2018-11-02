@@ -293,7 +293,6 @@ idx_t EdgeColumns::nb_edges_global() const {
 }
 
 Field EdgeColumns::createField( const eckit::Configuration& options ) const {
-    idx_t nb_edges = config_size( options );
     Field field( config_name( options ), config_datatype( options ), config_shape( options ) );
     set_field_metadata( options, field );
     return field;
@@ -321,6 +320,7 @@ void EdgeColumns::haloExchange( FieldSet& fieldset ) const {
         }
         else
             throw eckit::Exception( "datatype not supported", Here() );
+        field.set_dirty( false );
     }
 }
 void EdgeColumns::haloExchange( Field& field ) const {

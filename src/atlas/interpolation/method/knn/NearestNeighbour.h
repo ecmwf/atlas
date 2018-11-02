@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/method/knn/KNearestNeighboursBase.h"
 
 namespace atlas {
@@ -32,6 +33,15 @@ protected:
    * @param target functionspace containing target points
    */
     virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
+
+    virtual void setup( const Grid& source, const Grid& target ) override;
+
+    virtual const FunctionSpace& source() const override { return source_; }
+    virtual const FunctionSpace& target() const override { return target_; }
+
+private:
+    FunctionSpace source_;
+    FunctionSpace target_;
 };
 
 }  // namespace method

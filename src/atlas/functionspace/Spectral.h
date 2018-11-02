@@ -69,6 +69,8 @@ public:  // methods
     idx_t nb_spectral_coefficients_global() const;
     int truncation() const { return truncation_; }
 
+    virtual idx_t size() const { return nb_spectral_coefficients(); }
+
 private:  // methods
     array::DataType config_datatype( const eckit::Configuration& ) const;
     std::string config_name( const eckit::Configuration& ) const;

@@ -29,9 +29,11 @@ class FiniteElement : public Method {
 public:
     FiniteElement( const Config& config ) : Method( config ) {}
 
-    virtual ~FiniteElement() {}
+    virtual ~FiniteElement() override {}
 
     virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
+
+    virtual void setup( const Grid& source, const Grid& target ) override;
 
     virtual void print( std::ostream& ) const override;
 
@@ -56,6 +58,9 @@ protected:
    * weights
    */
     Triplets projectPointToElements( size_t ip, const ElemIndex3::NodeList& elems, std::ostream& failures_log ) const;
+
+    virtual const FunctionSpace& source() const override { return source_; }
+    virtual const FunctionSpace& target() const override { return target_; }
 
 protected:
     mesh::MultiBlockConnectivity* connectivity_;

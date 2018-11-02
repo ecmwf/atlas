@@ -19,6 +19,7 @@ namespace atlas {
 class Field;
 class FieldSet;
 class FunctionSpace;
+class Grid;
 }  // namespace atlas
 
 namespace atlas {
@@ -31,6 +32,7 @@ public:
     Interpolation() {}
     Interpolation( const Interpolation& );
     Interpolation( const Config&, const FunctionSpace& source, const FunctionSpace& target );
+    Interpolation( const Config&, const Grid& source, const Grid& target );
 
     void execute( const FieldSet& source, FieldSet& target ) const { get()->execute( source, target ); }
     void execute( const Field& source, Field& target ) const { get()->execute( source, target ); }
@@ -40,6 +42,9 @@ public:
     operator bool() const { return implementation_; }
 
     void print( std::ostream& out ) const { implementation_->print( out ); }
+
+    const FunctionSpace& source() const { return implementation_->source(); }
+    const FunctionSpace& target() const { return implementation_->target(); }
 
 private:
     eckit::SharedPtr<const Implementation> implementation_;

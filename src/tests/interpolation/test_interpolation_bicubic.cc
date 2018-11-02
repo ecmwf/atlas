@@ -25,6 +25,7 @@
 
 using atlas::functionspace::NodeColumns;
 using atlas::functionspace::StructuredColumns;
+using atlas::util::Config;
 
 namespace atlas {
 namespace test {
@@ -40,7 +41,7 @@ std::string output_gridname( const std::string& default_grid ) {
 }
 
 Grid rotated_mercator() {
-    util::Config gridspec;
+    Config gridspec;
     gridspec.set( "type", "regional" );
     gridspec.set( "nx", 50 );
     gridspec.set( "ny", 40 );
@@ -48,7 +49,7 @@ Grid rotated_mercator() {
     gridspec.set( "dy", 50000 );
     gridspec.set( "lonlat(centre)", std::vector<double>{4., 50} );
     gridspec.set( "projection", [] {
-        util::Config projection;
+        Config projection;
         projection.set( "type", "rotated_mercator" );
         projection.set( "north_pole", std::vector<double>{-176., 40.} );
         return projection;
@@ -57,7 +58,7 @@ Grid rotated_mercator() {
 }
 
 Grid lambert() {
-    util::Config gridspec;
+    Config gridspec;
     gridspec.set( "type", "regional" );
     gridspec.set( "nx", 50 );
     gridspec.set( "ny", 40 );
@@ -65,7 +66,7 @@ Grid lambert() {
     gridspec.set( "dy", 50000 );
     gridspec.set( "lonlat(centre)", std::vector<double>{4., 50} );
     gridspec.set( "projection", [] {
-        util::Config projection;
+        Config projection;
         projection.set( "type", "lambert" );
         projection.set( "latitude1", 50. );
         projection.set( "longitude0", 4. );
@@ -75,10 +76,10 @@ Grid lambert() {
 }
 
 Grid rotated( const std::string& name ) {
-    util::Config gridspec;
+    Config gridspec;
     gridspec.set( "name", name );
     gridspec.set( "projection", [] {
-        util::Config projection;
+        Config projection;
         projection.set( "type", "rotated_lonlat" );
         projection.set( "north_pole", std::vector<double>{-176., 40.} );
         return projection;
@@ -92,7 +93,7 @@ FunctionSpace output_functionspace( const Grid& grid ) {
     return NodeColumns{output_mesh};
 }
 
-auto vortex_rollup = []( double lon, double lat, double t ) {
+double vortex_rollup( double lon, double lat, double t ) {
     // lon and lat in degrees!
 
     // Formula found in "A Lagrangian Particle Method with Remeshing for Tracer Transport on the Sphere"
@@ -115,32 +116,27 @@ auto vortex_rollup = []( double lon, double lat, double t ) {
     return q;
 };
 
-CASE( "test_interpolation_cubic_structured" ) {
+CASE( "test_interpolation_cubic_structured using functionspace API" ) {
     Grid grid( input_gridname( "O32" ) );
-    StructuredColumns fs( grid, option::halo( 2 ) );
+
+    // Cubic interpolation requires a StructuredColumns functionspace with 2 halos
+    StructuredColumns input_fs( grid, option::halo( 2 ) );
 
     auto test = [&]( const FunctionSpace& output_fs ) {
+        // The output functionspace can currently be either NodeColumns or PointCloud
 
-        Interpolation interpolation( option::type( "structured-bicubic" ), fs, output_fs );
+        Interpolation interpolation( option::type( "bicubic" ), input_fs, output_fs );
 
-        Field field_source = fs.createField<double>( option::name( "source" ) );
+        Field field_source = input_fs.createField<double>( option::name( "source" ) );
         Field field_target = output_fs.createField<double>( option::name( "target" ) );
 
-        auto lonlat = array::make_view<double, 2>( fs.xy() );
+        auto lonlat = array::make_view<double, 2>( input_fs.xy() );
         auto source = array::make_view<double, 1>( field_source );
-        for ( idx_t n = 0; n < fs.size(); ++n ) {
+        for ( idx_t n = 0; n < input_fs.size(); ++n ) {
             source( n ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 1. );
         }
 
         interpolation.execute( field_source, field_target );
-
-        output_fs.haloExchange( field_target );
-
-        output::Gmsh gmsh( "cubic-output-section" + std::to_string( _subsection ) + ".msh",
-                           util::Config( "coordinates", "xy" ) );
-        gmsh.write( NodeColumns( output_fs ).mesh() );
-        gmsh.write( field_target );
-
     };
 
     SECTION( "Interpolate from " + grid.name() + " to " + output_gridname( "O64" ) ) {
@@ -155,8 +151,92 @@ CASE( "test_interpolation_cubic_structured" ) {
     SECTION( "Interpolate from " + grid.name() + " to rotaded_mercator" ) {
         EXPECT_NO_THROW( test( output_functionspace( rotated_mercator() ) ) );
     }
-}  // namespace test
+}
 
+CASE( "test_interpolation_cubic_structured using grid API" ) {
+    // Using the grid API we can hide interpolation method specific requirements
+    // such as which functionspace needs to be set-up.
+    // Currently the assumption is that grids are serial
+
+    Grid input_grid( input_gridname( "O32" ) );
+
+    auto test = [&]( const Grid& output_grid ) {
+
+        Interpolation interpolation( option::type( "bicubic" ), input_grid, output_grid );
+
+        // Allocate and initialise own memory here to show possibilities
+        // Note that allocated size must be possibly enlarged depending on interpolation method
+        // bicubic allocates stencil halo
+        std::vector<double> src_data( interpolation.source().size() );
+        std::vector<double> tgt_data( interpolation.target().size() );
+
+        idx_t n{0};
+        for ( auto p : input_grid.lonlat() ) {
+            src_data[n++] = vortex_rollup( p.lon(), p.lat(), 1. );
+        }
+
+        // Wrap memory in atlas Fields and interpolate
+        Field field_source{"source", src_data.data(), array::make_shape( src_data.size() )};
+        Field field_target{"target", tgt_data.data(), array::make_shape( tgt_data.size() )};
+
+        interpolation.execute( field_source, field_target );
+
+        ATLAS_TRACE_SCOPE( "output" ) {
+            output::Gmsh gmsh( "bicubic-output-section" + std::to_string( _subsection ) + ".msh",
+                               Config( "coordinates", "xy" ) );
+            gmsh.write( MeshGenerator( "structured" ).generate( output_grid ) );
+            gmsh.write( field_target, StructuredColumns( output_grid ) );
+        }
+    };
+
+    SECTION( "Interpolate from " + input_grid.name() + " to " + output_gridname( "O64" ) ) {
+        EXPECT_NO_THROW( test( Grid{output_gridname( "O64" )} ) );
+    }
+    SECTION( "Interpolate from " + input_grid.name() + " to rotated " + output_gridname( "O64" ) ) {
+        EXPECT_NO_THROW( test( rotated( output_gridname( "O64" ) ) ) );
+    }
+    SECTION( "Interpolate from " + input_grid.name() + " to lambert" ) {
+        ;
+        EXPECT_NO_THROW( test( lambert() ) );
+    }
+    SECTION( "Interpolate from " + input_grid.name() + " to rotaded_mercator" ) {
+        EXPECT_NO_THROW( test( rotated_mercator() ) );
+    }
+}
+
+CASE( "test_interpolation_cubic_structured using fs API multiple levels" ) {
+    Grid input_grid( input_gridname( "O32" ) );
+    Grid output_grid( output_gridname( "O64" ) );
+
+    // Cubic interpolation requires a StructuredColumns functionspace with 2 halos
+    StructuredColumns input_fs( input_grid, option::halo( 2 ) | option::levels( 3 ) );
+
+    MeshGenerator meshgen( "structured" );
+    Mesh output_mesh        = meshgen.generate( input_grid );
+    FunctionSpace output_fs = NodeColumns{output_mesh, option::levels( 3 )};
+
+    Interpolation interpolation( option::type( "bicubic" ), input_fs, output_fs );
+
+    Field field_source = input_fs.createField<double>( option::name( "source" ) );
+    Field field_target = output_fs.createField<double>( option::name( "target" ) );
+
+    auto lonlat = array::make_view<double, 2>( input_fs.xy() );
+    auto source = array::make_view<double, 2>( field_source );
+    for ( idx_t n = 0; n < input_fs.size(); ++n ) {
+        for ( idx_t k = 0; k < 3; ++k ) {
+            source( n, k ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
+        }
+    };
+    interpolation.execute( field_source, field_target );
+
+    ATLAS_TRACE_SCOPE( "output" ) {
+        output::Gmsh gmsh( "bicubic-multilevel-output-section" + std::to_string( _subsection ) + ".msh",
+                           Config( "coordinates", "xy" ) );
+        gmsh.write( output_mesh );
+        output_fs.haloExchange( field_target );
+        gmsh.write( field_target );
+    }
+}
 
 }  // namespace test
 }  // namespace atlas

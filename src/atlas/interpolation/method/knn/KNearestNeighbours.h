@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/method/knn/KNearestNeighboursBase.h"
 
 namespace atlas {
@@ -32,7 +33,15 @@ public:
 
     virtual void print( std::ostream& ) const override {}
 
-protected:
+    virtual void setup( const Grid& source, const Grid& target ) override;
+
+    virtual const FunctionSpace& source() const override { return source_; }
+    virtual const FunctionSpace& target() const override { return target_; }
+
+private:
+    FunctionSpace source_;
+    FunctionSpace target_;
+
     size_t k_;
 };
 

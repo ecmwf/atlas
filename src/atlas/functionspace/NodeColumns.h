@@ -252,6 +252,8 @@ public:
     /// @param [out] N         Number of values used to create the means
     void meanAndStandardDeviationPerLevel( const Field&, Field& mean, Field& stddev, idx_t& N ) const;
 
+    virtual idx_t size() const { return nb_nodes_; }
+
 private:  // methods
     void constructor();
 

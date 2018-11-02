@@ -76,7 +76,7 @@ public:
 
     idx_t sizeOwned() const { return size_owned_; }
     idx_t sizeHalo() const { return size_halo_; }
-    idx_t size() const { return size_halo_; }
+    virtual idx_t size() const { return size_halo_; }
 
     idx_t levels() const { return nb_levels_; }
 
@@ -128,6 +128,7 @@ public:
     }
 
     virtual size_t footprint() const;
+
 
 private:  // methods
     idx_t config_size( const eckit::Configuration& config ) const;

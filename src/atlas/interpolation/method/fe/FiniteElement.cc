@@ -18,10 +18,10 @@
 #include "eckit/log/Plural.h"
 #include "eckit/log/ProgressTimer.h"
 #include "eckit/log/Seconds.h"
-#include "eckit/mpi/Comm.h"
 
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/PointCloud.h"
+#include "atlas/grid.h"
 #include "atlas/interpolation/element/Quad3D.h"
 #include "atlas/interpolation/element/Triag3D.h"
 #include "atlas/interpolation/method/Ray.h"
@@ -29,8 +29,10 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildCellCentres.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/Buffer.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -50,6 +52,23 @@ MethodBuilder<FiniteElement> __builder( "finite-element" );
 static const double parametricEpsilon = 1e-15;
 
 }  // namespace
+
+
+void FiniteElement::setup( const Grid& source, const Grid& target ) {
+    if ( mpi::comm().size() > 1 ) { NOTIMP; }
+    auto functionspace = []( const Grid& grid ) {
+        Mesh mesh;
+        if ( grid::StructuredGrid{grid} ) {
+            mesh = MeshGenerator( "structured", util::Config( "three_dimensional", true ) ).generate( grid );
+        }
+        else {
+            mesh = MeshGenerator( "delaunay" ).generate( grid );
+        }
+        return functionspace::NodeColumns( mesh );
+    };
+
+    setup( functionspace( source ), functionspace( target ) );
+}
 
 void FiniteElement::setup( const FunctionSpace& source, const FunctionSpace& target ) {
     ATLAS_TRACE( "atlas::interpolation::method::FiniteElement::setup()" );

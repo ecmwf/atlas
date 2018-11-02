@@ -10,6 +10,7 @@
 
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/array.h"
+#include "atlas/grid.h"
 
 namespace atlas {
 namespace functionspace {
@@ -43,6 +44,18 @@ PointCloud::PointCloud( const Field& lonlat ) : lonlat_( lonlat ) {}
 
 PointCloud::PointCloud( const Field& lonlat, const Field& ghost ) : lonlat_( lonlat ), ghost_( ghost ) {}
 
+PointCloud::PointCloud( const Grid& grid ) {
+    lonlat_     = Field( "lonlat", array::make_datatype<double>(), array::make_shape( grid.size(), 2 ) );
+    auto lonlat = array::make_view<double, 2>( lonlat_ );
+
+    idx_t j{0};
+    for ( auto p : grid.lonlat() ) {
+        lonlat( j, 0 ) = p.lon();
+        lonlat( j, 1 ) = p.lat();
+        ++j;
+    }
+}
+
 const Field& PointCloud::ghost() const {
     if ( not ghost_ ) {
         ghost_ = Field( "ghost", array::make_datatype<int>(), array::make_shape( size() ) );
@@ -51,7 +64,7 @@ const Field& PointCloud::ghost() const {
     return ghost_;
 }
 
-Field PointCloud::createField( const eckit::Configuration& options ) const {
+Field PointCloud::createField( const eckit::Configuration& ) const {
     NOTIMP;
 }
 
@@ -132,6 +145,10 @@ PointCloud::PointCloud( PointXY p, const std::vector<PointXY>& points ) :
 
 PointCloud::PointCloud( PointXYZ p, const std::vector<PointXYZ>& points ) :
     FunctionSpace( new detail::PointCloud( p, points ) ),
+    functionspace_( dynamic_cast<const detail::PointCloud*>( get() ) ) {}
+
+PointCloud::PointCloud( const Grid& grid ) :
+    FunctionSpace( new detail::PointCloud( grid ) ),
     functionspace_( dynamic_cast<const detail::PointCloud*>( get() ) ) {}
 
 

@@ -84,6 +84,8 @@ public:
     virtual void haloExchange( FieldSet&, bool /*on_device*/ = false ) const;
     virtual void haloExchange( Field&, bool /* on_device*/ = false ) const;
 
+    virtual idx_t size() const = 0;
+
 private:
     util::Metadata metadata_;
 };
@@ -127,6 +129,7 @@ public:
 
     virtual Field createField( const eckit::Configuration& ) const;
     virtual Field createField( const Field&, const eckit::Configuration& ) const;
+    virtual idx_t size() const { return 0; }
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -176,6 +179,8 @@ public:
 
     void haloExchange( FieldSet&, bool on_device = false ) const;
     void haloExchange( Field&, bool on_device = false ) const;
+
+    idx_t size() const { return functionspace_->size(); };
 };
 
 template <typename DATATYPE>
