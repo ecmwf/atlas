@@ -16,6 +16,8 @@
 #include "atlas/util/Point.h"
 
 namespace atlas {
+class Grid;
+
 namespace functionspace {
 
 //------------------------------------------------------------------------------------------------------
@@ -29,6 +31,7 @@ public:
     PointCloud( PointXYZ, const std::vector<PointXYZ>& );
     PointCloud( const Field& lonlat );
     PointCloud( const Field& lonlat, const Field& ghost );
+    PointCloud( const Grid& );
     virtual ~PointCloud() {}
     virtual std::string type() const { return "PointCloud"; }
     virtual operator bool() const { return true; }
@@ -37,7 +40,7 @@ public:
     const Field& lonlat() const { return lonlat_; }
     const Field& vertical() const { return vertical_; }
     const Field& ghost() const;
-    idx_t size() const { return lonlat_.shape( 0 ); }
+    virtual idx_t size() const { return lonlat_.shape( 0 ); }
 
     /// @brief Create a spectral field
     using FunctionSpaceImpl::createField;
@@ -155,13 +158,13 @@ public:
     PointCloud( const std::vector<PointXY>& );
     PointCloud( PointXY, const std::vector<PointXY>& );
     PointCloud( PointXYZ, const std::vector<PointXYZ>& );
+    PointCloud( const Grid& grid );
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
 
     const Field& lonlat() const { return functionspace_->lonlat(); }
     const Field& ghost() const { return functionspace_->ghost(); }
-    idx_t size() const { return functionspace_->size(); }
 
     detail::PointCloud::Iterate iterate() const { return functionspace_->iterate(); }
 

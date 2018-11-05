@@ -20,6 +20,7 @@
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/interpolation.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator/MeshGenerator.h"
@@ -181,10 +182,10 @@ CASE( "test horizontal cubic interpolation triplets" ) {
     CubicHorizontalInterpolation cubic_interpolation( fs );
 
     auto departure_points = PointCloud{PointXY(),
-                                                      {
-                                                          {0.13257, 45.6397},
-                                                          {360., -90.},
-                                                      }};
+                                       {
+                                           {0.13257, 45.6397},
+                                           {360., -90.},
+                                       }};
     auto departure_lonlat = make_view<double, 2>( departure_points.lonlat() );
 
     CubicHorizontalInterpolation::WorkSpace ws;

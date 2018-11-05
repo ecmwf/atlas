@@ -35,6 +35,8 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int part
     const int mpi_rank           = int( comm.rank() );
     const int mpi_size           = int( comm.size() );
 
+    ATLAS_TRACE( "MatchingMeshPartitionerLonLatPolygon::partition" );
+
     ASSERT( grid.domain().global() );
 
     Log::debug() << "MatchingMeshPartitionerLonLatPolygon::partition" << std::endl;

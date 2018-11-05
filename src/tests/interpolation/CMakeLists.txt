@@ -17,7 +17,12 @@ ecbuild_add_test( TARGET atlas_test_interpolation_finite_element
   LIBS      atlas
 )
 
-ecbuild_add_test( TARGET atlas_test_interpolation_cubic
-  SOURCES  test_interpolation_cubic.cc CubicInterpolationPrototype.h
+ecbuild_add_test( TARGET atlas_test_interpolation_cubic_prototype
+  SOURCES  test_interpolation_cubic_prototype.cc CubicInterpolationPrototype.h
+  LIBS     atlas
+)
+
+ecbuild_add_test( TARGET atlas_test_interpolation_bicubic
+  SOURCES  test_interpolation_bicubic.cc
   LIBS     atlas
 )

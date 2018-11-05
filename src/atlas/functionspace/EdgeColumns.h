@@ -84,6 +84,8 @@ public:
     std::string checksum( const Field& ) const;
     const parallel::Checksum& checksum() const;
 
+    virtual idx_t size() const { return nb_edges_; }
+
 private:  // methods
     idx_t config_size( const eckit::Configuration& config ) const;
     array::DataType config_datatype( const eckit::Configuration& ) const;

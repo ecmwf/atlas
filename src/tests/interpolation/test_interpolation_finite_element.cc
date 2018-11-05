@@ -52,14 +52,14 @@ CASE( "test_interpolation_finite_element" ) {
 
     auto func = []( double x ) -> double { return std::sin( x * M_PI / 180. ); };
 
-    Interpolation interpolation( Config( "type", "finite-element" ), fs, pointcloud );
+    Interpolation interpolation( option::type( "finite-element" ), fs, pointcloud );
 
     Field field_source = fs.createField<double>( option::name( "source" ) );
     Field field_target( "target", array::make_datatype<double>(), array::make_shape( pointcloud.size() ) );
 
     auto lonlat = array::make_view<double, 2>( fs.nodes().lonlat() );
     auto source = array::make_view<double, 1>( field_source );
-    for ( size_t j = 0; j < fs.nodes().size(); ++j ) {
+    for ( idx_t j = 0; j < fs.nodes().size(); ++j ) {
         source( j ) = func( lonlat( j, LON ) );
     }
 
@@ -70,7 +70,7 @@ CASE( "test_interpolation_finite_element" ) {
     auto check = std::vector<double>{func( 00. ), func( 10. ), func( 20. ), func( 30. ), func( 40. ),
                                      func( 50. ), func( 60. ), func( 70. ), func( 80. ), func( 90. )};
 
-    for ( size_t j = 0; j < pointcloud.size(); ++j ) {
+    for ( idx_t j = 0; j < pointcloud.size(); ++j ) {
         static double interpolation_tolerance = 1.e-4;
         Log::info() << target( j ) << "  " << check[j] << std::endl;
         EXPECT( eckit::types::is_approximately_equal( target( j ), check[j], interpolation_tolerance ) );

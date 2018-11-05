@@ -244,6 +244,14 @@ size_t Field::footprint() const {
     return field_->footprint();
 }
 
+bool Field::dirty() const {
+    return field_->dirty();
+}
+
+void Field::set_dirty( bool value ) {
+    return field_->set_dirty( value );
+}
+
 // -- dangerous methods
 template <>
 double const* Field::host_data() const {

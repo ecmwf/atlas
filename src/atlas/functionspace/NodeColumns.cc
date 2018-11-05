@@ -381,6 +381,7 @@ void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exc
     }
     else
         throw eckit::Exception( "datatype not supported", Here() );
+    field.set_dirty( false );
 }
 }  // namespace
 

@@ -72,7 +72,11 @@ public:
 
     Vector3D operator-() const { return Vector3D( -x(), -y(), -z() ); }
 
-    double norm() const { return sqrt( squaredNorm() ); }
+    Vector3D operator/( double a ) const { return Vector3D( x() / a, y() / a, z() / a ); }
+
+    Vector3D operator*( double a ) const { return Vector3D( x() * a, y() * a, z() * a ); }
+
+    double norm() const { return std::sqrt( squaredNorm() ); }
 
     double squaredNorm() const { return x() * x() + y() * y() + z() * z(); }
 

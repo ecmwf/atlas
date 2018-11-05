@@ -22,7 +22,7 @@ namespace method {
 class KNearestNeighboursBase : public Method {
 public:
     KNearestNeighboursBase( const Config& config ) : Method( config ) {}
-    virtual ~KNearestNeighboursBase() {}
+    virtual ~KNearestNeighboursBase() override {}
 
 protected:
     void buildPointSearchTree( Mesh& meshSource );

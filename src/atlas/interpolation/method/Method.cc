@@ -28,9 +28,9 @@
 #include "atlas/runtime/Trace.h"
 
 // for static linking
-#include "FiniteElement.h"
-#include "KNearestNeighbours.h"
-#include "NearestNeighbour.h"
+#include "fe/FiniteElement.h"
+#include "knn/KNearestNeighbours.h"
+#include "knn/NearestNeighbour.h"
 
 namespace atlas {
 namespace interpolation {
@@ -96,32 +96,119 @@ Method* MethodFactory::build( const std::string& name, const Method::Config& con
     return ( *j ).second->make( config );
 }
 
+namespace {
+void interpolate_field( const Field& src, Field& tgt, const eckit::linalg::SparseMatrix& matrix ) {
+    ASSERT( src.datatype() == tgt.datatype() );
+    ASSERT( src.rank() == tgt.rank() );
+    ASSERT( src.levels() == tgt.levels() );
+    ASSERT( src.variables() == tgt.variables() );
+    ASSERT( src.array().contiguous() );
+    ASSERT( tgt.array().contiguous() );
+
+    if ( src.datatype() != array::make_datatype<double>() ) {
+        throw eckit::NotImplemented( "Only double precision interpolation is currently implemented", Here() );
+    }
+
+    ASSERT( !matrix.empty() );
+    ASSERT( tgt.shape( 0 ) == static_cast<idx_t>( matrix.rows() ) );
+    ASSERT( src.shape( 0 ) == static_cast<idx_t>( matrix.cols() ) );
+
+    const auto outer  = matrix.outer();
+    const auto index  = matrix.inner();
+    const auto weight = matrix.data();
+    idx_t rows        = matrix.rows();
+
+    bool eckit_linalg_backend = false;
+
+    if ( src.rank() == 1 ) {
+        if ( eckit_linalg_backend ) {
+            eckit::linalg::Vector v_src( array::make_view<double, 1>( src ).data(), src.shape( 0 ) );
+            eckit::linalg::Vector v_tgt( array::make_view<double, 1>( tgt ).data(), tgt.shape( 0 ) );
+            eckit::linalg::LinearAlgebra::backend().spmv( matrix, v_src, v_tgt );
+        }
+        else {
+            auto v_src = array::make_view<double, 1>( src );
+            auto v_tgt = array::make_view<double, 1>( tgt );
+
+            atlas_omp_parallel_for( idx_t r = 0; r < rows; ++r ) {
+                v_tgt( r ) = 0.;
+                for ( idx_t c = outer[r]; c < outer[r + 1]; ++c ) {
+                    idx_t n  = index[c];
+                    double w = weight[c];
+                    v_tgt( r ) += w * v_src( n );
+                }
+            }
+        }
+    }
+    else {
+        if ( src.rank() == 2 ) {
+            auto v_src = array::make_view<double, 2>( src );
+            auto v_tgt = array::make_view<double, 2>( tgt );
+
+            idx_t Nk = src.shape( 1 );
+
+            atlas_omp_parallel_for( idx_t r = 0; r < rows; ++r ) {
+                for ( idx_t k = 0; k < Nk; ++k ) {
+                    v_tgt( r, k ) = 0.;
+                }
+                for ( idx_t c = outer[r]; c < outer[r + 1]; ++c ) {
+                    idx_t n  = index[c];
+                    double w = weight[c];
+                    for ( idx_t k = 0; k < Nk; ++k )
+                        v_tgt( r, k ) += w * v_src( n, k );
+                }
+            }
+        }
+        if ( src.rank() == 3 ) {
+            auto v_src = array::make_view<double, 3>( src );
+            auto v_tgt = array::make_view<double, 3>( tgt );
+
+            idx_t Nk = src.shape( 1 );
+            idx_t Nl = src.shape( 2 );
+
+            atlas_omp_parallel_for( idx_t r = 0; r < rows; ++r ) {
+                for ( idx_t k = 0; k < Nk; ++k ) {
+                    for ( idx_t l = 0; l < Nl; ++l ) {
+                        v_tgt( r, k, l ) = 0.;
+                    }
+                }
+                for ( idx_t c = outer[r]; c < outer[r + 1]; ++c ) {
+                    idx_t n  = index[c];
+                    double w = weight[c];
+                    for ( idx_t k = 0; k < Nk; ++k )
+                        for ( idx_t l = 0; l < Nl; ++l )
+                            v_tgt( r, k, l ) += w * v_src( n, k, l );
+                }
+            }
+        }
+    }
+    tgt.set_dirty();
+}
+}  // namespace
+
 void Method::execute( const FieldSet& fieldsSource, FieldSet& fieldsTarget ) const {
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
 
-    const size_t N = fieldsSource.size();
+    const idx_t N = fieldsSource.size();
     ASSERT( N == fieldsTarget.size() );
 
-    for ( size_t i = 0; i < fieldsSource.size(); ++i ) {
+    for ( idx_t i = 0; i < fieldsSource.size(); ++i ) {
         Log::debug() << "Method::execute() on field " << ( i + 1 ) << '/' << N << "..." << std::endl;
 
         const Field& src = fieldsSource[i];
         Field& tgt       = fieldsTarget[i];
 
-        eckit::linalg::Vector v_src( const_cast<double*>( src.data<double>() ), src.shape( 0 ) );
-        eckit::linalg::Vector v_tgt( tgt.data<double>(), tgt.shape( 0 ) );
-
-        eckit::linalg::LinearAlgebra::backend().spmv( matrix_, v_src, v_tgt );
+        if ( src.dirty() ) { source().haloExchange( const_cast<Field&>( src ) ); }
+        interpolate_field( src, tgt, matrix_ );
     }
 }
 
-void Method::execute( const Field& fieldSource, Field& fieldTarget ) const {
+void Method::execute( const Field& src, Field& tgt ) const {
+    if ( src.dirty() ) { source().haloExchange( const_cast<Field&>( src ) ); }
+
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
 
-    eckit::linalg::Vector v_src( const_cast<Field&>( fieldSource ).data<double>(), fieldSource.shape( 0 ) ),
-        v_tgt( fieldTarget.data<double>(), fieldTarget.shape( 0 ) );
-
-    eckit::linalg::LinearAlgebra::backend().spmv( matrix_, v_src, v_tgt );
+    interpolate_field( src, tgt, matrix_ );
 }
 
 void Method::normalise( Triplets& triplets ) {

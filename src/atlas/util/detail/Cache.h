@@ -29,6 +29,8 @@ public:
 
     Cache( const std::string& name ) : name_( name ) {}
 
+    virtual ~Cache() {}
+
     eckit::SharedPtr<value_type> get_or_create( const key_type& key, const creator_type& creator ) {
         std::lock_guard<std::mutex> guard( lock_ );
         auto it = map_.find( key );

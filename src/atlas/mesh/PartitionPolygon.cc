@@ -13,6 +13,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
@@ -20,6 +21,7 @@ namespace mesh {
 
 namespace {
 util::Polygon::edge_set_t compute_edges( const detail::MeshImpl& mesh, idx_t halo ) {
+    ATLAS_TRACE( "PartitionPolygon" );
     // extract partition boundary edges by always attempting first to`
     // remove a reversed edge from a neighbouring element, if any
     util::Polygon::edge_set_t edges;

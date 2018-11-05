@@ -365,24 +365,26 @@ interpolation/element/Quad3D.cc
 interpolation/element/Quad3D.h
 interpolation/element/Triag3D.cc
 interpolation/element/Triag3D.h
-interpolation/method/FiniteElement.cc
-interpolation/method/FiniteElement.h
 interpolation/method/Intersect.cc
 interpolation/method/Intersect.h
-interpolation/method/KNearestNeighbours.cc
-interpolation/method/KNearestNeighbours.h
-interpolation/method/KNearestNeighboursBase.cc
-interpolation/method/KNearestNeighboursBase.h
 interpolation/method/Method.cc
 interpolation/method/Method.h
-interpolation/method/NearestNeighbour.cc
-interpolation/method/NearestNeighbour.h
 interpolation/method/PointIndex3.cc
 interpolation/method/PointIndex3.h
 interpolation/method/PointSet.cc
 interpolation/method/PointSet.h
 interpolation/method/Ray.cc
 interpolation/method/Ray.h
+interpolation/method/fe/FiniteElement.cc
+interpolation/method/fe/FiniteElement.h
+interpolation/method/knn/KNearestNeighbours.cc
+interpolation/method/knn/KNearestNeighbours.h
+interpolation/method/knn/KNearestNeighboursBase.cc
+interpolation/method/knn/KNearestNeighboursBase.h
+interpolation/method/knn/NearestNeighbour.cc
+interpolation/method/knn/NearestNeighbour.h
+interpolation/method/structured/Bicubic.cc
+interpolation/method/structured/Bicubic.h
 )
 
 
