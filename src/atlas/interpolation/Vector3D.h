@@ -31,7 +31,7 @@ namespace interpolation {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-#if ATLAS_HAVE_EIGENz
+#if ATLAS_HAVE_EIGEN
 
 typedef Eigen::Vector3d Vector3D;
 

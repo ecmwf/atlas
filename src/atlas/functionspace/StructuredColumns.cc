@@ -1078,7 +1078,7 @@ void StructuredColumns::haloExchange( Field& field, bool ) const {
 size_t StructuredColumns::footprint() const {
     size_t size = sizeof( *this );
     size += ij2gp_.footprint();
-    //if ( field_xy_ ) size += field_xy_.footprint();
+    if ( field_xy_ ) size += field_xy_.footprint();
     if ( field_partition_ ) size += field_partition_.footprint();
     if ( field_global_index_ ) size += field_global_index_.footprint();
     if ( field_remote_index_ ) size += field_remote_index_.footprint();
