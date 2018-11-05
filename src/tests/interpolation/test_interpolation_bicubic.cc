@@ -212,7 +212,7 @@ CASE( "test_interpolation_cubic_structured using fs API multiple levels" ) {
     StructuredColumns input_fs( input_grid, option::halo( 2 ) | option::levels( 3 ) );
 
     MeshGenerator meshgen( "structured" );
-    Mesh output_mesh        = meshgen.generate( input_grid );
+    Mesh output_mesh        = meshgen.generate( output_grid );
     FunctionSpace output_fs = NodeColumns{output_mesh, option::levels( 3 )};
 
     Interpolation interpolation( option::type( "bicubic" ), input_fs, output_fs );
@@ -237,6 +237,61 @@ CASE( "test_interpolation_cubic_structured using fs API multiple levels" ) {
         gmsh.write( field_target );
     }
 }
+
+
+/// @brief Compute magnitude of flow with rotation-angle beta
+/// (beta=0 --> zonal, beta=pi/2 --> meridional)
+Field rotated_flow( const StructuredColumns& fs, const double& beta ) {
+    const double radius  = util::Earth::radius();
+    const double USCAL   = 20.;
+    const double pvel    = USCAL / radius;
+    const double deg2rad = M_PI / 180.;
+
+    array::ArrayView<double, 2> lonlat_deg = array::make_view<double, 2>( fs.xy() );
+
+    Field field                     = fs.createField<double>( option::vector() );
+    array::ArrayView<double, 2> var = array::make_view<double, 2>( field );
+
+    idx_t nnodes = var.shape( 0 );
+    for ( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
+        double x = lonlat_deg( jnode, LON ) * deg2rad;
+        double y = lonlat_deg( jnode, LAT ) * deg2rad;
+        double Ux =
+            pvel * ( std::cos( beta ) + std::tan( y ) * std::cos( x ) * std::sin( beta ) ) * radius * std::cos( y );
+        double Uy         = -pvel * std::sin( x ) * std::sin( beta ) * radius;
+        var( jnode, LON ) = Ux;
+        var( jnode, LAT ) = Uy;
+    }
+    return field;
+}
+
+CASE( "test_interpolation_cubic_structured for vectors" ) {
+    Grid input_grid( input_gridname( "O32" ) );
+    Grid output_grid( output_gridname( "O64" ) );
+
+    // Cubic interpolation requires a StructuredColumns functionspace with 2 halos
+    StructuredColumns input_fs( input_grid, option::halo( 2 ) );
+
+    MeshGenerator meshgen( "structured" );
+    Mesh output_mesh        = meshgen.generate( output_grid );
+    FunctionSpace output_fs = NodeColumns{output_mesh};
+
+    Interpolation interpolation( option::type( "bicubic" ), input_fs, output_fs );
+
+    Field field_source = rotated_flow( input_fs, M_PI_4 );
+    Field field_target = output_fs.createField<double>( option::name( "target" ) | option::vector() );
+
+    interpolation.execute( field_source, field_target );
+
+    ATLAS_TRACE_SCOPE( "output" ) {
+        output::Gmsh gmsh( "bicubic-vector-output-section" + std::to_string( _subsection ) + ".msh",
+                           Config( "coordinates", "xy" ) );
+        gmsh.write( output_mesh );
+        output_fs.haloExchange( field_target );
+        gmsh.write( field_target );
+    }
+}
+
 
 }  // namespace test
 }  // namespace atlas

@@ -1027,19 +1027,99 @@ std::string StructuredColumns::checksum( const Field& field ) const {
 }
 
 namespace {
+
+
 template <int RANK>
-void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exchange ) {
+struct FixupHaloForVectors {
+    FixupHaloForVectors( const StructuredColumns& ) {}
+    template <typename DATATYPE>
+    void apply( Field& field ) {
+        std::string type = field.metadata().getString( "type", "scalar" );
+        if ( type == "vector " ) { NOTIMP; }
+    }
+};
+
+template <>
+struct FixupHaloForVectors<2> {
+    static constexpr int RANK = 2;
+    const StructuredColumns& fs;
+    FixupHaloForVectors( const StructuredColumns& _fs ) : fs( _fs ) {}
+
+    template <typename DATATYPE>
+    void apply( Field& field ) {
+        std::string type = field.metadata().getString( "type", "scalar" );
+        if ( type == "vector" ) {
+            auto array = array::make_view<DATATYPE, RANK>( field );
+            for ( idx_t j = fs.j_begin_halo(); j < 0; ++j ) {
+                for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
+                    idx_t n        = fs.index( i, j );
+                    array( n, XX ) = -array( n, XX );
+                    array( n, YY ) = -array( n, YY );
+                }
+            }
+            for ( idx_t j = fs.grid().ny(); j < fs.j_end_halo(); ++j ) {
+                for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
+                    idx_t n        = fs.index( i, j );
+                    array( n, XX ) = -array( n, XX );
+                    array( n, YY ) = -array( n, YY );
+                }
+            }
+        }
+    }
+};
+
+template <>
+struct FixupHaloForVectors<3> {
+    static constexpr int RANK = 3;
+    const StructuredColumns& fs;
+    FixupHaloForVectors( const StructuredColumns& _fs ) : fs( _fs ) {}
+
+    template <typename DATATYPE>
+    void apply( Field& field ) {
+        std::string type = field.metadata().getString( "type", "scalar" );
+        if ( type == "vector" ) {
+            auto array = array::make_view<DATATYPE, RANK>( field );
+            for ( idx_t j = fs.j_begin_halo(); j < 0; ++j ) {
+                for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
+                    idx_t n = fs.index( i, j );
+                    for ( idx_t k = fs.k_begin(); k < fs.k_end(); ++k ) {
+                        array( n, k, XX ) = -array( n, k, XX );
+                        array( n, k, YY ) = -array( n, k, YY );
+                    }
+                }
+            }
+            for ( idx_t j = fs.grid().ny(); j < fs.j_end_halo(); ++j ) {
+                for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
+                    idx_t n = fs.index( i, j );
+                    for ( idx_t k = fs.k_begin(); k < fs.k_end(); ++k ) {
+                        array( n, k, XX ) = -array( n, k, XX );
+                        array( n, k, YY ) = -array( n, k, YY );
+                    }
+                }
+            }
+        }
+    }
+};
+
+
+template <int RANK>
+void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exchange, const StructuredColumns& fs ) {
+    FixupHaloForVectors<RANK> fixup_halos( fs );
     if ( field.datatype() == array::DataType::kind<int>() ) {
         halo_exchange.template execute<int, RANK>( field.array(), false );
+        fixup_halos.template apply<int>( field );
     }
     else if ( field.datatype() == array::DataType::kind<long>() ) {
         halo_exchange.template execute<long, RANK>( field.array(), false );
+        fixup_halos.template apply<long>( field );
     }
     else if ( field.datatype() == array::DataType::kind<float>() ) {
         halo_exchange.template execute<float, RANK>( field.array(), false );
+        fixup_halos.template apply<float>( field );
     }
     else if ( field.datatype() == array::DataType::kind<double>() ) {
         halo_exchange.template execute<double, RANK>( field.array(), false );
+        fixup_halos.template apply<double>( field );
     }
     else
         throw eckit::Exception( "datatype not supported", Here() );
@@ -1052,16 +1132,16 @@ void StructuredColumns::haloExchange( FieldSet& fieldset, bool ) const {
         Field& field = fieldset[f];
         switch ( field.rank() ) {
             case 1:
-                dispatch_haloExchange<1>( field, halo_exchange() );
+                dispatch_haloExchange<1>( field, halo_exchange(), *this );
                 break;
             case 2:
-                dispatch_haloExchange<2>( field, halo_exchange() );
+                dispatch_haloExchange<2>( field, halo_exchange(), *this );
                 break;
             case 3:
-                dispatch_haloExchange<3>( field, halo_exchange() );
+                dispatch_haloExchange<3>( field, halo_exchange(), *this );
                 break;
             case 4:
-                dispatch_haloExchange<4>( field, halo_exchange() );
+                dispatch_haloExchange<4>( field, halo_exchange(), *this );
                 break;
             default:
                 throw eckit::Exception( "Rank not supported", Here() );

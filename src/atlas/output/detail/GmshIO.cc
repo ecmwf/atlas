@@ -742,6 +742,9 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
 
     const idx_t surfdim = coords.shape( 1 );  // nb of variables in coords
 
+    bool include_patch = ( surfdim == 3 );
+
+
     ASSERT( surfdim == 2 || surfdim == 3 );
 
     Log::debug() << "writing mesh to gmsh file " << file_path << std::endl;
@@ -791,11 +794,18 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
         for ( idx_t jgroup = 0; jgroup < grouped_elements.size(); ++jgroup ) {
             const mesh::HybridElements& hybrid = *grouped_elements[jgroup];
             nb_elements += hybrid.size();
-            if ( !include_ghost ) {
-                const array::ArrayView<int, 1> hybrid_halo = array::make_view<int, 1>( hybrid.halo() );
-                for ( idx_t e = 0; e < hybrid.size(); ++e ) {
-                    if ( hybrid_halo( e ) ) --nb_elements;
-                }
+            const array::ArrayView<int, 1> hybrid_halo  = array::make_view<int, 1>( hybrid.halo() );
+            const array::ArrayView<int, 1> hybrid_flags = array::make_view<int, 1>( hybrid.flags() );
+            auto hybrid_patch                           = [&]( idx_t e ) {
+                return mesh::Nodes::Topology::check( hybrid_flags( e ), mesh::Nodes::Topology::PATCH );
+            };
+            auto exclude = [&]( idx_t e ) {
+                if ( !include_ghost && hybrid_halo( e ) ) return true;
+                if ( !include_patch && hybrid_patch( e ) ) return true;
+                return false;
+            };
+            for ( idx_t e = 0; e < hybrid.size(); ++e ) {
+                if ( exclude( e ) ) --nb_elements;
             }
         }
 

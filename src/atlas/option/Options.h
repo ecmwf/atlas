@@ -48,6 +48,13 @@ public:
 
 // ----------------------------------------------------------------------------
 
+class vector : public util::Config {
+public:
+    vector( size_t = 2 );
+};
+
+// ----------------------------------------------------------------------------
+
 class name : public util::Config {
 public:
     name( const std::string& );

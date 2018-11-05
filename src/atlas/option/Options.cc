@@ -53,6 +53,11 @@ variables::variables( size_t _variables ) {
     set( "variables", _variables );
 }
 
+vector::vector( size_t _components ) {
+    set( "variables", _components );
+    set( "type", "vector" );
+}
+
 radius::radius( double _radius ) {
     set( "radius", _radius );
 }
