@@ -42,19 +42,18 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-std::vector<double> IFS_vertical_coordinates( idx_t nlev ) {
-    std::vector<double> zcoord( nlev + 2 );
-    zcoord[0]        = 0.;
-    zcoord[nlev + 1] = 1.;
-    double dzcoord   = 1. / double( nlev );
-    for ( idx_t jlev = 1; jlev <= nlev; ++jlev ) {
-        zcoord[jlev] = jlev * dzcoord - 0.5 * dzcoord;
+std::vector<double> IFS_full_levels_uniform( idx_t nlev ) {
+    std::vector<double> zcoord( nlev );
+    double dzcoord = 1. / double( nlev );
+    for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
+        zcoord[jlev] = 0.5 * dzcoord + jlev * dzcoord;
     }
     return zcoord;
 }
 
 std::vector<double> zrange( idx_t nlev, double min, double max ) {
     std::vector<double> zcoord( nlev );
+
     double dzcoord = ( max - min ) / double( nlev - 1 );
     for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
         zcoord[jlev] = min + jlev * dzcoord;
@@ -72,21 +71,25 @@ double cubic( double x, double min, double max ) {
 
 CASE( "test vertical cubic interpolation" ) {
     idx_t nlev    = 10;
-    auto vertical = Vertical{nlev, IFS_vertical_coordinates( nlev - 2 ), Config( "boundaries", false )};
-
-    CubicVerticalInterpolation interpolate( vertical );
+    auto vertical = Vertical{nlev, IFS_full_levels_uniform( nlev )};
+    bool limiter  = true;
+    CubicVerticalInterpolation interpolate( vertical, util::Config( "limiter", limiter ) );
     std::vector<double> departure_points{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.3246};
-    array::ArrayT<double> array( nlev + 2 );
+    array::ArrayT<double> array( nlev );
     auto view = array::make_view<double, 1>( array );
-    for ( idx_t k = 0; k <= nlev + 1; ++k ) {
+    Log::info() << "source:" << std::endl;
+    for ( idx_t k = 0; k < nlev; ++k ) {
         view( k ) = cubic( vertical( k ), 0., 1. );
+        Log::info() << "  " << vertical( k ) << " : " << view( k ) << std::endl;
     }
-    //view(0) = -9999.;
-    //view(nlev+1) = -9999.;
 
+    Log::info() << "interpolation:" << std::endl;
     for ( auto p : departure_points ) {
-        Log::info() << p << "   :    " << interpolate( p, view ) << std::endl;
-        EXPECT( eckit::types::is_approximately_equal( interpolate( p, view ), cubic( p, 0., 1. ) ) );
+        Log::info() << "  " << std::setw( 6 ) << p << " :    " << std::setw( 12 ) << interpolate( p, view )
+                    << "     expected : " << cubic( p, 0., 1. ) << std::endl;
+        if ( p >= vertical.front() && p <= vertical.back() && !limiter ) {
+            EXPECT( eckit::types::is_approximately_equal( interpolate( p, view ), cubic( p, 0., 1. ) ) );
+        }
     }
 }
 
@@ -229,7 +232,7 @@ CASE( "test 3d cubic interpolation" ) {
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
     idx_t nlev           = 11;
 
-    Vertical vertical( nlev, zrange( nlev, 0., 1. ), Config( "boundaries", false ) );
+    Vertical vertical( nlev, zrange( nlev, 0., 1. ) );
     Log::info() << zrange( nlev, 0., 1. ) << std::endl;
     ;
 
@@ -249,6 +252,7 @@ CASE( "test 3d cubic interpolation" ) {
     auto fy = []( double y ) { return cubic( y, -90., 90. ); };
     auto fz = []( double z ) { return cubic( z, 0., 1. ); };
     auto fp = [fx, fy, fz]( const PointXYZ& p ) { return fx( p.x() ) * fy( p.y() ) * fz( p.z() ); };
+
     for ( idx_t n = 0; n < fs.size(); ++n ) {
         for ( idx_t k = fs.k_begin(); k < fs.k_end(); ++k ) {
             PointXYZ p{

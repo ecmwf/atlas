@@ -165,12 +165,32 @@ class ComputeVerticalStencil {
     idx_t stencil_width_;
     idx_t stencil_begin_;
 
+    idx_t clip_begin_;
+    idx_t clip_end_;
+    double vertical_min_;
+    double vertical_max_;
+
 public:
     ComputeVerticalStencil( const Vertical& vertical, idx_t stencil_width );
 
     template <typename stencil_t>
     void operator()( const double& z, stencil_t& stencil ) const {
-        stencil.k_begin_ = compute_lower_( z ) - stencil_begin_;
+        idx_t k_begin = compute_lower_( z ) - stencil_begin_;
+        idx_t k_end   = k_begin + stencil_width_;
+        idx_t move    = 0;
+
+        if ( k_begin < clip_begin_ ) {
+            move = k_begin - clip_begin_;
+            if ( z < vertical_min_ ) {
+                --k_begin;
+                --move;
+            }
+        }
+        else if ( k_end > clip_end_ ) {
+            move = k_end - clip_end_;
+        }
+        stencil.k_begin_    = k_begin - move;
+        stencil.k_interval_ = stencil_begin_ + move;
     }
 };
 
