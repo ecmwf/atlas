@@ -34,6 +34,8 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
     const int mpi_rank           = int( comm.rank() );
     const int mpi_size           = int( comm.size() );
 
+    ATLAS_TRACE( "MatchingMeshPartitionerSphericalPolygon::partition" );
+
     ASSERT( grid.domain().global() );
 
     Log::debug() << "MatchingMeshPartitionerSphericalPolygon::partition" << std::endl;
@@ -44,6 +46,11 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
     bool includesSouthPole = ( mpi_rank == mpi_size - 1 );
 
     const util::SphericalPolygon poly( prePartitionedMesh_.polygon( 0 ), prePartitionedMesh_.nodes().lonlat() );
+    const double maxlat = poly.coordinatesMax().lat();
+    const double minlat = poly.coordinatesMin().lat();
+    auto at_the_pole    = [&]( const PointLonLat& P ) {
+        return ( includesNorthPole && P.lat() >= maxlat ) || ( includesSouthPole && P.lat() < minlat );
+    };
 
     {
         eckit::ProgressTimer timer( "Partitioning", grid.size(), "point", double( 10 ), atlas::Log::trace() );
@@ -51,11 +58,8 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
 
         for ( const PointXY Pxy : grid.xy() ) {
             ++timer;
-            const PointLonLat P  = grid.projection().lonlat( Pxy );
-            const bool atThePole = ( includesNorthPole && P.lat() >= poly.coordinatesMax().lat() ) ||
-                                   ( includesSouthPole && P.lat() < poly.coordinatesMin().lat() );
-
-            partitioning[i++] = atThePole || poly.contains( P ) ? mpi_rank : -1;
+            const PointLonLat P = grid.projection().lonlat( Pxy );
+            partitioning[i++]   = at_the_pole( P ) || poly.contains( P ) ? mpi_rank : -1;
         }
     }
 

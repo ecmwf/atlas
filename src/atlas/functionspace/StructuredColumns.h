@@ -71,12 +71,12 @@ public:
     void scatter( const FieldSet&, FieldSet& ) const;
     void scatter( const Field&, Field& ) const;
 
-    void haloExchange( FieldSet& ) const;
-    void haloExchange( Field& ) const;
+    virtual void haloExchange( FieldSet&, bool on_device = false ) const;
+    virtual void haloExchange( Field&, bool on_device = false ) const;
 
     idx_t sizeOwned() const { return size_owned_; }
     idx_t sizeHalo() const { return size_halo_; }
-    idx_t size() const { return size_halo_; }
+    virtual idx_t size() const { return size_halo_; }
 
     idx_t levels() const { return nb_levels_; }
 
@@ -105,12 +105,18 @@ public:
     idx_t k_begin() const { return vertical_.k_begin(); }
     idx_t k_end() const { return vertical_.k_end(); }
 
-    idx_t index( idx_t i, idx_t j ) const { return ij2gp_( i, j ); }
+    idx_t index( idx_t i, idx_t j ) const {
+        check_bounds( i, j );
+        return ij2gp_( i, j );
+    }
 
     Field xy() const { return field_xy_; }
     Field partition() const { return field_partition_; }
     Field global_index() const { return field_global_index_; }
-    Field remote_index() const { return field_remote_index_; }
+    Field remote_index() const {
+        if ( not field_remote_index_ ) { create_remote_index(); }
+        return field_remote_index_;
+    }
     Field index_i() const { return field_index_i_; }
     Field index_j() const { return field_index_j_; }
 
@@ -121,6 +127,9 @@ public:
         return xy;
     }
 
+    virtual size_t footprint() const;
+
+
 private:  // methods
     idx_t config_size( const eckit::Configuration& config ) const;
     array::DataType config_datatype( const eckit::Configuration& ) const;
@@ -128,7 +137,20 @@ private:  // methods
     idx_t config_levels( const eckit::Configuration& ) const;
     array::ArrayShape config_shape( const eckit::Configuration& ) const;
     void set_field_metadata( const eckit::Configuration&, Field& ) const;
-    virtual size_t footprint() const;
+
+    void check_bounds( idx_t i, idx_t j ) const {
+#if ATLAS_ARRAYVIEW_BOUNDS_CHECKING
+        if ( j < j_begin_halo() || j >= j_end_halo() ) { throw eckit::Exception( "j out of range" ); }
+        if ( i < i_begin_halo( j ) || i >= i_end_halo( j ) ) { throw eckit::Exception( "i out of range" ); }
+#endif
+    }
+
+    const parallel::GatherScatter& gather() const;
+    const parallel::GatherScatter& scatter() const;
+    const parallel::Checksum& checksum() const;
+    const parallel::HaloExchange& halo_exchange() const;
+
+    void create_remote_index() const;
 
 private:  // data
     std::string distribution_;
@@ -141,14 +163,14 @@ private:  // data
     idx_t halo_;
 
     const grid::StructuredGrid grid_;
-    parallel::GatherScatter* gather_scatter_;
-    parallel::HaloExchange* halo_exchange_;
-    parallel::Checksum* checksum_;
+    mutable eckit::SharedPtr<parallel::GatherScatter> gather_scatter_;
+    mutable eckit::SharedPtr<parallel::Checksum> checksum_;
+    mutable eckit::SharedPtr<parallel::HaloExchange> halo_exchange_;
 
     Field field_xy_;
     Field field_partition_;
     Field field_global_index_;
-    Field field_remote_index_;
+    mutable Field field_remote_index_;
     Field field_index_i_;
     Field field_index_j_;
 
@@ -178,7 +200,9 @@ private:  // data
 
         void set( idx_t i, idx_t j, idx_t n ) { data_[( i - i_min_ ) + ( j - j_min_ ) * j_stride_] = n + 1; }
 
-        idx_t missing() const { return std::numeric_limits<idx_t>::max() - 1; }
+        static idx_t missing() { return std::numeric_limits<idx_t>::max() - 1; }
+
+        size_t footprint() const;
 
     private:
         void print( std::ostream& ) const;
@@ -209,7 +233,7 @@ private:  // data
 
         idx_t missing() const { return std::numeric_limits<idx_t>::max() - 1; }
 
-        idx_t size() const { return data_.size(); }
+        idx_t size() const { return idx_t( data_.size() ); }
 
         void resize( idx_t min, idx_t max ) {
             min_ = min;
@@ -282,8 +306,8 @@ public:
     void scatter( const FieldSet&, FieldSet& ) const;
     void scatter( const Field&, Field& ) const;
 
-    void haloExchange( FieldSet& ) const;
-    void haloExchange( Field& ) const;
+    virtual void haloExchange( FieldSet&, bool on_device = false ) const;
+    virtual void haloExchange( Field&, bool on_device = false ) const;
 
     std::string checksum( const FieldSet& ) const;
     std::string checksum( const Field& ) const;
@@ -314,6 +338,8 @@ public:
 
     void compute_xy( idx_t i, idx_t j, PointXY& xy ) const { return functionspace_->compute_xy( i, j, xy ); }
     PointXY compute_xy( idx_t i, idx_t j ) const { return functionspace_->compute_xy( i, j ); }
+
+    size_t footprint() const { return functionspace_->footprint(); }
 
     class For {
     public:

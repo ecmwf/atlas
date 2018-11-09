@@ -171,6 +171,10 @@ public:
     /// @brief Return the memory footprint of the Field
     size_t footprint() const;
 
+    bool dirty() const;
+
+    void set_dirty( bool = true );
+
     // -- dangerous methods
     template <typename DATATYPE>
     DATATYPE const* host_data() const;

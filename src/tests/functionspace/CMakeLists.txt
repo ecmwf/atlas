@@ -49,3 +49,21 @@ ecbuild_add_test( TARGET atlas_test_stencil
   LIBS     atlas
 )
 
+ecbuild_add_executable( TARGET atlas_test_stencil_parallel
+  SOURCES  test_stencil_parallel.cc
+  LIBS     atlas
+  NOINSTALL
+)
+
+ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi4
+  COMMAND $<TARGET_FILE:atlas_test_stencil_parallel>
+  MPI 4
+  CONDITION ECKIT_HAVE_MPI
+)
+
+ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi16
+  COMMAND $<TARGET_FILE:atlas_test_stencil_parallel>
+  MPI 16
+  CONDITION ECKIT_HAVE_MPI
+)
+

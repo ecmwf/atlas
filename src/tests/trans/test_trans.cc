@@ -317,7 +317,7 @@ CASE( "test_nomesh" ) {
     trans::Trans trans( g, 47 );
 
     functionspace::Spectral spectral( trans );
-    functionspace::StructuredColumns gridpoints( g );
+    functionspace::StructuredColumns gridpoints( g, grid::Partitioner( "trans" ) );
 
     Field spfg = spectral.createField<double>( option::name( "spf" ) | option::global() );
     Field spf  = spectral.createField<double>( option::name( "spf" ) );
@@ -367,7 +367,7 @@ CASE( "test_trans_factory" ) {
     trans::TransFactory::list( Log::info() );
     Log::info() << std::endl;
 
-    functionspace::StructuredColumns gp( Grid( "O48" ) );
+    functionspace::StructuredColumns gp( Grid( "O48" ), grid::Partitioner( "trans" ) );
     functionspace::Spectral sp( 47 );
 
     trans::Trans trans1 = trans::Trans( gp, sp );
@@ -382,7 +382,7 @@ CASE( "test_trans_using_grid" ) {
 
     trans::Trans trans( Grid( "O48" ), 47 );
 
-    functionspace::StructuredColumns gp( trans.grid() );
+    functionspace::StructuredColumns gp( trans.grid(), grid::Partitioner( "trans" ) );
     functionspace::Spectral sp( trans.truncation() );
 
     Field spf = sp.createField<double>( option::name( "spf" ) );
@@ -436,7 +436,7 @@ CASE( "test_trans_using_functionspace_NodeColumns" ) {
 CASE( "test_trans_using_functionspace_StructuredColumns" ) {
     Log::info() << "test_trans_using_functionspace_StructuredColumns" << std::endl;
 
-    functionspace::StructuredColumns gp( Grid( "O48" ) );
+    functionspace::StructuredColumns gp( Grid( "O48" ), grid::Partitioner( "trans" ) );
     functionspace::Spectral sp( 47 );
 
     trans::Trans trans( gp, sp );

@@ -66,15 +66,18 @@ public:
 class ComputeNorth {
     std::vector<double> y_;
     double dy_;
-    static constexpr double tol() { return 0.5e-6; }
     idx_t halo_;
     idx_t ny_;
+    static constexpr double tol() { return 0.5e-6; }
 
 public:
+    ComputeNorth() = default;
+
     ComputeNorth( const grid::StructuredGrid& grid, idx_t halo );
 
     idx_t operator()( double y ) const {
         idx_t j = static_cast<idx_t>( std::floor( ( y_[halo_ + 0] - y ) / dy_ ) );
+        j       = std::max<idx_t>( halo_, std::min<idx_t>( j, halo_ + ny_ - 1 ) );
         while ( y_[halo_ + j] > y ) {
             ++j;
         }
@@ -96,6 +99,8 @@ class ComputeWest {
     static constexpr double tol() { return 0.5e-6; }
 
 public:
+    ComputeWest() = default;
+
     ComputeWest( const grid::StructuredGrid& grid, idx_t halo = 0 );
 
     idx_t operator()( const double& x, idx_t j ) const {
@@ -139,6 +144,8 @@ class ComputeHorizontalStencil {
     idx_t stencil_begin_;
 
 public:
+    ComputeHorizontalStencil() = default;
+
     ComputeHorizontalStencil( const grid::StructuredGrid& grid, idx_t stencil_width );
 
     template <typename stencil_t>

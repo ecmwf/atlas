@@ -20,7 +20,22 @@ namespace atlas {
 Interpolation::Interpolation( const Config& config, const FunctionSpace& source, const FunctionSpace& target ) :
     implementation_( [&]() -> Implementation* {
         std::string type;
-        config.get( "type", type );
+        ASSERT( config.get( "type", type ) );
+        Implementation* impl = interpolation::MethodFactory::build( type, config );
+        impl->setup( source, target );
+        return impl;
+    }() ) {
+    std::string path;
+    if ( config.get( "output", path ) ) {
+        std::ofstream file( path );
+        print( file );
+    }
+}
+
+Interpolation::Interpolation( const Config& config, const Grid& source, const Grid& target ) :
+    implementation_( [&]() -> Implementation* {
+        std::string type;
+        ASSERT( config.get( "type", type ) );
         Implementation* impl = interpolation::MethodFactory::build( type, config );
         impl->setup( source, target );
         return impl;

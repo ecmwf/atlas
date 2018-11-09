@@ -11,9 +11,12 @@
 #include "eckit/log/Plural.h"
 
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/interpolation/method/NearestNeighbour.h"
+#include "atlas/grid.h"
+#include "atlas/interpolation/method/knn/NearestNeighbour.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
+#include "atlas/meshgenerator.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 
@@ -27,7 +30,25 @@ MethodBuilder<NearestNeighbour> __builder( "nearest-neighbour" );
 
 }  // namespace
 
+void NearestNeighbour::setup( const Grid& source, const Grid& target ) {
+    if ( mpi::comm().size() > 1 ) { NOTIMP; }
+    auto functionspace = []( const Grid& grid ) -> FunctionSpace {
+        Mesh mesh;
+        if ( grid::StructuredGrid( grid ) ) {
+            mesh = MeshGenerator( "structured", util::Config( "three_dimensional" ) ).generate( grid );
+        }
+        else {
+            mesh = MeshGenerator( "delaunay" ).generate( grid );
+        }
+        return functionspace::NodeColumns( mesh );
+    };
+
+    setup( functionspace( source ), functionspace( target ) );
+}
+
 void NearestNeighbour::setup( const FunctionSpace& source, const FunctionSpace& target ) {
+    source_                        = source;
+    target_                        = target;
     functionspace::NodeColumns src = source;
     functionspace::NodeColumns tgt = target;
     ASSERT( src );

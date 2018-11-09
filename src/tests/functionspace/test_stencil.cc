@@ -22,6 +22,8 @@
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Stencil.h"
+#include "atlas/grid/StencilComputer.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator/MeshGenerator.h"
@@ -29,8 +31,6 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/MicroDeg.h"
-#include "atlas/grid/StencilComputer.h"
-#include "atlas/grid/Stencil.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

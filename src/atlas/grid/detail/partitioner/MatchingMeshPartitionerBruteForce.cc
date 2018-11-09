@@ -23,6 +23,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
@@ -72,6 +73,9 @@ bool point_in_quadrilateral( const PointLonLat& P, const PointLonLat& A, const P
 }  // namespace
 
 void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int partitioning[] ) const {
+    ATLAS_TRACE( "MatchingMeshPartitionerBruteForce::partition" );
+
+
     eckit::mpi::Comm& comm = eckit::mpi::comm();
     const int mpi_rank     = int( comm.rank() );
 

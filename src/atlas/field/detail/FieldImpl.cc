@@ -82,6 +82,14 @@ size_t FieldImpl::footprint() const {
     return size;
 }
 
+bool FieldImpl::dirty() const {
+    return metadata().getBool( "dirty", true );
+}
+
+void FieldImpl::set_dirty( bool value ) {
+    metadata().set( "dirty", value );
+}
+
 void FieldImpl::dump( std::ostream& os ) const {
     print( os, true );
 }

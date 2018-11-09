@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/log/Bytes.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/types/Types.h"
 
@@ -37,12 +38,15 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 CASE( "test_functionspace_StructuredColumns_no_halo" ) {
-    int root = 0;
-    Grid grid( "O8" );
+    int root             = 0;
+    std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
+    Grid grid( gridname );
     util::Config config;
     config.set( "halo", 0 );
     config.set( "periodic_points", true );
     functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
+    ATLAS_DEBUG_VAR( fs.size() );
+    ATLAS_DEBUG_VAR( eckit::Bytes( fs.footprint() ) );
 
     Field field     = fs.createField<double>( option::name( "field" ) );
     Field field_glb = fs.createField<double>( option::name( "field_global" ) | option::global( root ) );
@@ -84,14 +88,15 @@ CASE( "test_functionspace_StructuredColumns_no_halo" ) {
             EXPECT( value_glb( j ) == check[j] );
         }
     }
+    ATLAS_TRACE_SCOPE( "output gmsh" ) {
+            output::Gmsh gmsh( "structured.msh" );
 
-    output::Gmsh gmsh( "structured.msh" );
-
-    gmsh.write( MeshGenerator( "structured" ).generate( grid ) );
-    gmsh.write( field );
+            gmsh.write( MeshGenerator( "structured" ).generate( grid ) );
+            gmsh.write( field );
+        }
 }
 
-CASE( "test_functionspace_StructuredColumns_halo" ) {
+CASE( "test_functionspace_StructuredColumns_halo with output" ) {
     ATLAS_DEBUG_VAR( mpi::comm().size() );
     //  grid::StructuredGrid grid(
     //      grid::StructuredGrid::XSpace( {0.,360.} , {2,4,6,6,4,2} , false ),
@@ -106,6 +111,7 @@ CASE( "test_functionspace_StructuredColumns_halo" ) {
     int halo = eckit::Resource<int>( "--halo", 2 );
     util::Config config;
     config.set( "halo", halo );
+    config.set( "periodic_points", true );
     functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
 
     Field field = fs.createField<long>( option::name( "field" ) );
@@ -129,128 +135,130 @@ CASE( "test_functionspace_StructuredColumns_halo" ) {
 
     // EXPECT( fs.checksum(field) == "cef2694016492d408fa157b7c59ce741" );
 
-    eckit::PathName filepath( "test_functionspace_StructuredColumns_halo_p" + std::to_string( mpi::comm().rank() ) +
-                              ".py" );
+    ATLAS_TRACE_SCOPE( "Output python" ) {
+            eckit::PathName filepath( "test_functionspace_StructuredColumns_halo_p" +
+                                      std::to_string( mpi::comm().rank() ) + ".py" );
 
-    std::ofstream f( filepath.asString().c_str(), std::ios::trunc );
+            std::ofstream f( filepath.asString().c_str(), std::ios::trunc );
 
-    f << "\n"
-         "import matplotlib.pyplot as plt"
-         "\n"
-         "from matplotlib.path import Path"
-         "\n"
-         "import matplotlib.patches as patches"
-         "\n"
-         ""
-         "\n"
-         "from itertools import cycle"
-         "\n"
-         "import matplotlib.cm as cm"
-         "\n"
-         "import numpy as np"
-         "\n"
-         ""
-         "\n"
-         "fig = plt.figure(figsize=(20,10))"
-         "\n"
-         "ax = fig.add_subplot(111,aspect='equal')"
-         "\n"
-         "";
+            f << "\n"
+                 "import matplotlib.pyplot as plt"
+                 "\n"
+                 "from matplotlib.path import Path"
+                 "\n"
+                 "import matplotlib.patches as patches"
+                 "\n"
+                 ""
+                 "\n"
+                 "from itertools import cycle"
+                 "\n"
+                 "import matplotlib.cm as cm"
+                 "\n"
+                 "import numpy as np"
+                 "\n"
+                 ""
+                 "\n"
+                 "fig = plt.figure(figsize=(20,10))"
+                 "\n"
+                 "ax = fig.add_subplot(111,aspect='equal')"
+                 "\n"
+                 "";
 
-    double xmin = std::numeric_limits<double>::max();
-    double xmax = -std::numeric_limits<double>::max();
-    double ymin = std::numeric_limits<double>::max();
-    double ymax = -std::numeric_limits<double>::max();
-    f << "\n"
-         "x = [";
-    for ( idx_t j = fs.j_begin_halo(); j < fs.j_end_halo(); ++j ) {
-        for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
-            idx_t n = fs.index( i, j );
-            f << xy( n, XX ) << ", ";
-            xmin = std::min( xmin, xy( n, XX ) );
-            xmax = std::max( xmax, xy( n, XX ) );
+            double xmin = std::numeric_limits<double>::max();
+            double xmax = -std::numeric_limits<double>::max();
+            double ymin = std::numeric_limits<double>::max();
+            double ymax = -std::numeric_limits<double>::max();
+            f << "\n"
+                 "x = [";
+            for ( idx_t j = fs.j_begin_halo(); j < fs.j_end_halo(); ++j ) {
+                for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
+                    idx_t n = fs.index( i, j );
+                    f << xy( n, XX ) << ", ";
+                    xmin = std::min( xmin, xy( n, XX ) );
+                    xmax = std::max( xmax, xy( n, XX ) );
+                }
+            }
+            f << "]";
+
+            f << "\n"
+                 "y = [";
+            for ( idx_t j = fs.j_begin_halo(); j < fs.j_end_halo(); ++j ) {
+                for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
+                    idx_t n = fs.index( i, j );
+                    f << xy( n, YY ) << ", ";
+                    ymin = std::min( ymin, xy( n, YY ) );
+                    ymax = std::max( ymax, xy( n, YY ) );
+                }
+            }
+            f << "]";
+
+            f << "\n"
+                 "g = [";
+            for ( idx_t j = fs.j_begin_halo(); j < fs.j_end_halo(); ++j ) {
+                for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
+                    idx_t n = fs.index( i, j );
+                    f << g( n ) << ", ";
+                }
+            }
+            f << "]";
+
+            f << "\n"
+                 "p = [";
+            for ( idx_t j = fs.j_begin_halo(); j < fs.j_end_halo(); ++j ) {
+                for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
+                    idx_t n = fs.index( i, j );
+                    f << p( n ) << ", ";
+                }
+            }
+            f << "]";
+
+            f << "\n"
+                 "r = [";
+            for ( idx_t j = fs.j_begin_halo(); j < fs.j_end_halo(); ++j ) {
+                for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
+                    idx_t n = fs.index( i, j );
+                    f << r( n ) << ", ";
+                }
+            }
+            f << "]";
+
+            f << "\n"
+                 ""
+                 "\n"
+                 "c = [ cm.Paired( float(pp%13)/12. ) for pp in p ]"
+                 "\n"
+                 "ax.scatter(x, y, color=c, marker='o')"
+                 "\n"
+                 "for i in range("
+              << fs.size()
+              << "):"
+                 "\n"
+                 "  ax.annotate(g[i], (x[i],y[i]), fontsize=8)"
+                 "\n"
+                 "";
+            f << "\n"
+                 "ax.set_xlim( "
+              << std::min( 0., xmin ) << "-5, " << std::max( 360., xmax )
+              << "+5)"
+                 "\n"
+                 "ax.set_ylim( "
+              << std::min( -90., ymin ) << "-5, " << std::max( 90., ymax )
+              << "+5)"
+                 "\n"
+                 "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
+                 "\n"
+                 "ax.set_yticks([-90,-45,0,45,90])"
+                 "\n"
+                 "plt.grid()"
+                 "\n"
+                 "plt.show()"
+                 "\n";
         }
-    }
-    f << "]";
-
-    f << "\n"
-         "y = [";
-    for ( idx_t j = fs.j_begin_halo(); j < fs.j_end_halo(); ++j ) {
-        for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
-            idx_t n = fs.index( i, j );
-            f << xy( n, YY ) << ", ";
-            ymin = std::min( ymin, xy( n, YY ) );
-            ymax = std::max( ymax, xy( n, YY ) );
-        }
-    }
-    f << "]";
-
-    f << "\n"
-         "g = [";
-    for ( idx_t j = fs.j_begin_halo(); j < fs.j_end_halo(); ++j ) {
-        for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
-            idx_t n = fs.index( i, j );
-            f << g( n ) << ", ";
-        }
-    }
-    f << "]";
-
-    f << "\n"
-         "p = [";
-    for ( idx_t j = fs.j_begin_halo(); j < fs.j_end_halo(); ++j ) {
-        for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
-            idx_t n = fs.index( i, j );
-            f << p( n ) << ", ";
-        }
-    }
-    f << "]";
-
-    f << "\n"
-         "r = [";
-    for ( idx_t j = fs.j_begin_halo(); j < fs.j_end_halo(); ++j ) {
-        for ( idx_t i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); ++i ) {
-            idx_t n = fs.index( i, j );
-            f << r( n ) << ", ";
-        }
-    }
-    f << "]";
-
-    f << "\n"
-         ""
-         "\n"
-         "c = [ cm.Paired( float(pp%13)/12. ) for pp in p ]"
-         "\n"
-         "ax.scatter(x, y, color=c, marker='o')"
-         "\n"
-         "for i in range("
-      << fs.size()
-      << "):"
-         "\n"
-         "  ax.annotate(g[i], (x[i],y[i]), fontsize=8)"
-         "\n"
-         "";
-    f << "\n"
-         "ax.set_xlim( "
-      << std::min( 0., xmin ) << "-5, " << std::max( 360., xmax )
-      << "+5)"
-         "\n"
-         "ax.set_ylim( "
-      << std::min( -90., ymin ) << "-5, " << std::max( 90., ymax )
-      << "+5)"
-         "\n"
-         "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
-         "\n"
-         "ax.set_yticks([-90,-45,0,45,90])"
-         "\n"
-         "plt.grid()"
-         "\n"
-         "plt.show()"
-         "\n";
 }
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_functionspace_StructuredColumns_halo" ) {
+CASE( "test_functionspace_StructuredColumns_halo checks without output" ) {
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
 
     grid::StructuredGrid grid( gridname );
@@ -284,8 +292,6 @@ CASE( "test_functionspace_StructuredColumns_halo" ) {
             EXPECT( value( n, k ) == util::microdeg( xy( n, XX ) ) );
         }
     } );
-
-    PointXY dp{180., 45.};
 }
 
 //-----------------------------------------------------------------------------
