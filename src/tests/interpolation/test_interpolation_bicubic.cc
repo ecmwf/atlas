@@ -238,6 +238,61 @@ CASE( "test_interpolation_cubic_structured using fs API multiple levels" ) {
     }
 }
 
+CASE( "test_interpolation_cubic_structured using fs API for fieldset" ) {
+    Grid input_grid( input_gridname( "O32" ) );
+    Grid output_grid( output_gridname( "O64" ) );
+
+    // Cubic interpolation requires a StructuredColumns functionspace with 2 halos
+    StructuredColumns input_fs( input_grid, option::halo( 2 ) | option::levels( 3 ) );
+
+    MeshGenerator meshgen( "structured" );
+    Mesh output_mesh        = meshgen.generate( output_grid );
+    FunctionSpace output_fs = NodeColumns{output_mesh, option::levels( 3 )};
+
+    auto lonlat = array::make_view<double, 2>( input_fs.xy() );
+
+    FieldSet fields_source;
+    FieldSet fields_target;
+    using Value = float;
+    for ( idx_t f = 0; f < 3; ++f ) {
+        auto field_source = fields_source.add( input_fs.createField<Value>() );
+        fields_target.add( output_fs.createField<Value>() );
+
+        auto source = array::make_view<Value, 2>( field_source );
+        for ( idx_t n = 0; n < input_fs.size(); ++n ) {
+            for ( idx_t k = 0; k < 3; ++k ) {
+                source( n, k ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
+            }
+        };
+    }
+
+    SECTION( "with matrix" ) {
+        Interpolation interpolation( option::type( "bicubic" ), input_fs, output_fs );
+        interpolation.execute( fields_source, fields_target );
+
+        ATLAS_TRACE_SCOPE( "output" ) {
+            output::Gmsh gmsh( "bicubic-multilevel-fieldset-output-section" + std::to_string( _subsection ) + ".msh",
+                               Config( "coordinates", "xy" ) );
+            gmsh.write( output_mesh );
+            output_fs.haloExchange( fields_target );
+            gmsh.write( fields_target );
+        }
+    }
+
+
+    SECTION( "matrix free" ) {
+        Interpolation interpolation( option::type( "bicubic" ) | Config( "matrix_free", true ), input_fs, output_fs );
+        interpolation.execute( fields_source, fields_target );
+        ATLAS_TRACE_SCOPE( "output" ) {
+            output::Gmsh gmsh( "bicubic-multilevel-fieldset-output-section" + std::to_string( _subsection ) + ".msh",
+                               Config( "coordinates", "xy" ) );
+            gmsh.write( output_mesh );
+            output_fs.haloExchange( fields_target );
+            gmsh.write( fields_target );
+        }
+    }
+}
+
 
 /// @brief Compute magnitude of flow with rotation-angle beta
 /// (beta=0 --> zonal, beta=pi/2 --> meridional)

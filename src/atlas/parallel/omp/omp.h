@@ -24,9 +24,9 @@ void atlas_omp_set_nested( int nested );
 int atlas_omp_get_nested( void );
 
 #if ATLAS_HAVE_OMP
-#define __ATLAS_OMP_STR( x ) #x
-#define __ATLAS_OMP_STRINGIFY( x ) __ATLAS_OMP_STR( x )
-#define atlas_omp_pragma( x ) _Pragma( __ATLAS_OMP_STRINGIFY( x ) )
+#define ATLAS_OMP_STR( x ) #x
+#define ATLAS_OMP_STRINGIFY( x ) ATLAS_OMP_STR( x )
+#define atlas_omp_pragma( x ) _Pragma( ATLAS_OMP_STRINGIFY( x ) )
 #else
 #define atlas_omp_pragma( x )
 #endif
@@ -48,12 +48,12 @@ private:
     bool once_;
 };
 
-#define __atlas_omp_scoped( T, VAR, VAL ) for ( atlas_omp_scoped_helper<T> VAR( VAL ); VAR.once(); VAR.done() )
+#define _atlas_omp_scoped( T, VAR, VAL ) for ( atlas_omp_scoped_helper<T> VAR( VAL ); VAR.once(); VAR.done() )
 
-#define atlas_omp_critical_ordered                                           \
-    __atlas_omp_scoped(const size_t, _nthreads, atlas_omp_get_num_threads()) \
+#define atlas_omp_critical_ordered                                          \
+    _atlas_omp_scoped(const size_t, _nthreads, atlas_omp_get_num_threads()) \
     atlas_omp_pragma( omp for ordered schedule(static,1) )\
     for( size_t _thread=0; _thread<_nthreads.value; ++_thread )\
       atlas_omp_pragma( omp ordered )
 
-#undef __atlas_omp_scoped
+#undef _atlas_omp_scoped
