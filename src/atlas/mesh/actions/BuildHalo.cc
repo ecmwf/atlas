@@ -47,9 +47,9 @@
 
 using atlas::mesh::detail::accumulate_facets;
 using atlas::util::LonLatMicroDeg;
+using atlas::util::microdeg;
 using atlas::util::PeriodicTransform;
 using atlas::util::UniqueLonLat;
-using atlas::util::microdeg;
 using Topology = atlas::mesh::Nodes::Topology;
 
 namespace atlas {

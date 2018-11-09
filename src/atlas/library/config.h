@@ -30,4 +30,4 @@ typedef long idx_t;
 /// @typedef uidx_t
 /// Integer type for unique indices
 typedef gidx_t uidx_t;
-}
+}  // namespace atlas

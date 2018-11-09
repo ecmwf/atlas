@@ -469,7 +469,7 @@ Field& build_edges_partition( Mesh& mesh ) {
             if ( pn1 == pn2 ) { p = pn1; }
             else if ( periodic_east( jedge ) ) {
 #ifdef DEBUGGING_PARFIELDS
-            //if( FIND_EDGE( jedge ) ) std::cout << "[" << mypart  << "] " << "periodic_east" << std::endl;
+                //if( FIND_EDGE( jedge ) ) std::cout << "[" << mypart  << "] " << "periodic_east" << std::endl;
 #endif
                 bdry_edges.push_back( edge_gidx );
                 p = -1;

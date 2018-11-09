@@ -161,7 +161,6 @@ CASE( "test_interpolation_cubic_structured using grid API" ) {
     Grid input_grid( input_gridname( "O32" ) );
 
     auto test = [&]( const Grid& output_grid ) {
-
         Interpolation interpolation( option::type( "bicubic" ), input_grid, output_grid );
 
         // Allocate and initialise own memory here to show possibilities
