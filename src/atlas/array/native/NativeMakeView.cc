@@ -1,4 +1,6 @@
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"

@@ -11,7 +11,6 @@
 #pragma once
 
 #include "atlas/projection/detail/ProjectionImpl.h"
-#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace projection {

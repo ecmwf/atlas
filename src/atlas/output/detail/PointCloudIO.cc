@@ -26,6 +26,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/output/detail/PointCloudIO.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
@@ -87,7 +88,7 @@ Mesh PointCloudIO::read( const eckit::PathName& path, std::vector<std::string>& 
         if ( nb_pts == 0 ) throw eckit::BadValue( msg + " invalid number of points (failed: nb_pts>0)" );
         if ( nb_columns < 2 ) throw eckit::BadValue( msg + " invalid number of columns (failed: nb_columns>=2)" );
 
-        mesh.nodes().resize( nb_pts );
+        mesh.nodes().resize( static_cast<idx_t>( nb_pts ) );
 
         mesh::Nodes& nodes                  = mesh.nodes();
         array::ArrayView<double, 2> xy      = array::make_view<double, 2>( nodes.xy() );
@@ -115,8 +116,8 @@ Mesh PointCloudIO::read( const eckit::PathName& path, std::vector<std::string>& 
 
         std::vector<array::ArrayView<double, 1>> fields;
         for ( size_t j = 0; j < nb_fld; ++j ) {
-            fields.emplace_back( array::make_view<double, 1>(
-                nodes.add( Field( vfnames[j], array::make_datatype<double>(), array::make_shape( nb_pts ) ) ) ) );
+            fields.emplace_back( array::make_view<double, 1>( nodes.add( Field(
+                vfnames[j], array::make_datatype<double>(), array::make_shape( static_cast<idx_t>( nb_pts ) ) ) ) ) );
         }
 
         size_t i, j;  // (index for node/row and field/column, out of scope to check
@@ -177,7 +178,7 @@ void PointCloudIO::write( const eckit::PathName& path, const Mesh& mesh ) {
     // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
     std::vector<std::string> vfnames;
     std::vector<array::ArrayView<double, 1>> vfvalues;
-    for ( size_t i = 0; i < nodes.nb_fields(); ++i ) {
+    for ( idx_t i = 0; i < nodes.nb_fields(); ++i ) {
         const Field& field = nodes.field( i );
         if ( field.shape( 0 ) == lonlat.shape( 0 ) && field.shape( 1 ) == 1 &&
              field.datatype() == array::DataType::real64() )  // FIXME: no support for
@@ -230,7 +231,7 @@ void PointCloudIO::write( const eckit::PathName& path, const FieldSet& fieldset,
     // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
     std::vector<std::string> vfnames;
     std::vector<array::ArrayView<double, 1>> vfvalues;
-    for ( size_t i = 0; i < fieldset.size(); ++i ) {
+    for ( idx_t i = 0; i < fieldset.size(); ++i ) {
         const Field& field = fieldset[i];
         if ( field.shape( 0 ) == lonlat.shape( 0 ) && field.rank() == 1 &&
              field.name() != "glb_idx" )  // FIXME: no support for non-int types!

@@ -21,6 +21,8 @@
 #include "eckit/mpi/Comm.h"
 
 #include "atlas/array/ArrayView.h"
+#include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/functionspace/StructuredColumns.h"

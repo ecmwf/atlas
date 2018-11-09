@@ -9,7 +9,6 @@
  */
 
 #include "atlas/option/TransOptions.h"
-#include "atlas/grid.h"
 
 // ----------------------------------------------------------------------------
 

@@ -37,6 +37,8 @@ runtime/Log.cc
 runtime/Trace.h
 runtime/trace/CallStack.h
 runtime/trace/CallStack.cc
+runtime/trace/CodeLocation.cc
+runtime/trace/CodeLocation.h
 runtime/trace/TraceT.h
 runtime/trace/Nesting.cc
 runtime/trace/Nesting.h
@@ -359,7 +361,9 @@ list( APPEND atlas_interpolation_srcs
 interpolation.h
 interpolation/Interpolation.h
 interpolation/Interpolation.cc
+interpolation/Vector2D.cc
 interpolation/Vector2D.h
+interpolation/Vector3D.cc
 interpolation/Vector3D.h
 interpolation/element/Quad3D.cc
 interpolation/element/Quad3D.h
@@ -404,6 +408,7 @@ array/ArrayUtil.h
 array/ArrayView.h
 array/ArrayViewUtil.h
 array/ArrayViewDefs.h
+array/DataType.cc
 array/DataType.h
 array/IndexView.h
 array/LocalView.cc

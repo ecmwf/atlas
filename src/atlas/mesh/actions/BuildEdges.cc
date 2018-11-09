@@ -30,6 +30,7 @@
 #include "atlas/mesh/detail/AccumulateFacets.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/MicroDeg.h"
@@ -555,8 +556,7 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
     std::vector<int> nb_edges_including_halo( max_halo + 1 );
 
     {
-        const auto& edge_nodes = mesh.edges().node_connectivity();
-        int nb_edges           = mesh.edges().size();
+        int nb_edges = mesh.edges().size();
         for ( int jedge = 0; jedge < nb_edges; ++jedge ) {
             nb_edges_including_halo[edge_halo( jedge )] = jedge + 1;
             if ( jedge > 0 ) ASSERT( edge_halo( jedge ) >= edge_halo( jedge - 1 ) );

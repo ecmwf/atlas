@@ -54,6 +54,7 @@ void debug_parallel_what( const eckit::CodeLocation&, const std::string& );
 
 #include <sstream>
 #include "atlas/util/detail/BlackMagic.h"
+#include "eckit/log/CodeLocation.h"
 
 #define ATLAS_DEBUG_HERE()                                           \
     do {                                                             \

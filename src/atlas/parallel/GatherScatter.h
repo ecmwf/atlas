@@ -19,7 +19,6 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/library/config.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace parallel {
@@ -443,10 +442,6 @@ void GatherScatter::gather( const array::ArrayView<DATA_TYPE, LRANK>& ldata, arr
         gather( lfields.data(), gfields.data(), 1, root );
     }
     else {
-        ATLAS_DEBUG_VAR( parsize_ );
-        ATLAS_DEBUG_VAR( ldata.shape( 0 ) );
-        ATLAS_DEBUG_VAR( glb_cnt( root ) );
-        ATLAS_DEBUG_VAR( gdata.shape( 0 ) );
         NOTIMP;  // Need to implement with parallel ranks > 1
     }
 }
@@ -460,10 +455,6 @@ void GatherScatter::scatter( const array::ArrayView<DATA_TYPE, GRANK>& gdata, ar
         scatter( gfields.data(), lfields.data(), 1, root );
     }
     else {
-        ATLAS_DEBUG_VAR( parsize_ );
-        ATLAS_DEBUG_VAR( ldata.shape( 0 ) );
-        ATLAS_DEBUG_VAR( glb_cnt( root ) );
-        ATLAS_DEBUG_VAR( gdata.shape( 0 ) );
         NOTIMP;  // Need to implement with parallel ranks > 1
     }
 }

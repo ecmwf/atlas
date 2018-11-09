@@ -25,6 +25,8 @@ class ArraySpec;
 
 class ArrayShape;
 
+class ArrayStrides;
+
 class Array;
 
 template <typename Value>

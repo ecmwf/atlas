@@ -17,6 +17,8 @@
 #include "eckit/utils/MD5.h"
 
 #include "atlas/array/ArrayView.h"
+#include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/library/config.h"
@@ -33,6 +35,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/detail/Cache.h"
+
 
 #undef atlas_omp_critical_ordered
 #define atlas_omp_critical_ordered atlas_omp_critical

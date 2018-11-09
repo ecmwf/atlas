@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <iostream>
+#include <iosfwd>
 
 #include "atlas/domain/Domain.h"
 #include "atlas/domain/detail/RectangularDomain.h"

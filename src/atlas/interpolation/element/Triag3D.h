@@ -10,12 +10,12 @@
 
 #pragma once
 
+#include <iosfwd>
 #include <limits>
 
 #include "atlas/interpolation/Vector3D.h"
 #include "atlas/interpolation/method/Intersect.h"
 #include "atlas/util/Point.h"
-#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace interpolation {
@@ -45,11 +45,7 @@ public:  // types
 
     double area() const;
 
-    void print( std::ostream& s ) const {
-        s << "Triag3D["
-          << "v0=(" << v0[0] << ", " << v0[1] << ", " << v0[2] << "), v1=(" << v1[0] << ", " << v1[1] << ", " << v1[2]
-          << "), v2=(" << v2[0] << ", " << v2[1] << ", " << v2[2] << ")]";
-    }
+    void print( std::ostream& s ) const;
 
     friend std::ostream& operator<<( std::ostream& s, const Triag3D& p ) {
         p.print( s );
@@ -60,8 +56,10 @@ public:  // types
         if ( i == 0 ) return v0;
         if ( i == 1 ) return v1;
         if ( i == 2 ) return v2;
-        throw eckit::OutOfRange( i, 3, Here() );
+        throw_OutOfRange( i, 3 );
     }
+
+    [[noreturn]] static void throw_OutOfRange( unsigned long long index, unsigned long long max );
 
 private:  // members
     Vector3D v0;

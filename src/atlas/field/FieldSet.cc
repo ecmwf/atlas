@@ -8,8 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/field/FieldSet.h"
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/runtime/ErrorHandling.h"
 
@@ -47,6 +49,10 @@ Field& FieldSetImpl::field( const std::string& name ) const {
         throw eckit::OutOfRange( msg, Here() );
     }
     return const_cast<Field&>( fields_[index_.at( name )] );
+}
+
+void FieldSetImpl::throw_OutOfRange( idx_t index, idx_t max ) {
+    throw eckit::OutOfRange( index, max, Here() );
 }
 
 std::vector<std::string> FieldSetImpl::field_names() const {

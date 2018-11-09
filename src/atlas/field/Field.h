@@ -13,6 +13,9 @@
 
 #pragma once
 
+#include <iosfwd>
+#include <string>
+
 #include "atlas/array/ArrayShape.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
@@ -23,21 +26,6 @@ class Parametrisation;
 namespace atlas {
 namespace field {
 class FieldImpl;
-}
-}  // namespace atlas
-namespace atlas {
-namespace array {
-class Array;
-}
-}  // namespace atlas
-namespace atlas {
-namespace array {
-class ArraySpec;
-}
-}  // namespace atlas
-namespace atlas {
-namespace array {
-class ArrayStrides;
 }
 }  // namespace atlas
 namespace atlas {

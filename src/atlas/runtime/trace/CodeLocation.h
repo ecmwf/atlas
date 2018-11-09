@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include <cstring>
-#include "atlas/runtime/Log.h"
+#include <iosfwd>
+#include <string>
 #include "eckit/log/CodeLocation.h"
 
 namespace atlas {
@@ -29,9 +29,6 @@ public:
             if ( function ) {
                 function_str_ = std::string( function );
                 function_     = function_str_.c_str();
-            }
-            else {  // workaround until ECKIT-356 is resolved
-                function_ = "";
             }
             loc_ = eckit::CodeLocation( file_, line, function_ );
         }
@@ -51,10 +48,7 @@ public:
     const char* file() const { return loc_.file(); }
     /// accessor to function
     const char* func() const { return loc_.func(); }
-    friend std::ostream& operator<<( std::ostream& s, const CodeLocation& loc ) {
-        s << loc.loc_;
-        return s;
-    }
+    friend std::ostream& operator<<( std::ostream& s, const CodeLocation& loc );
 
 private:
     eckit::CodeLocation loc_;

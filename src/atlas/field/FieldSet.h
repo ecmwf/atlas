@@ -40,7 +40,7 @@ public:  // methods
     /// Constructs an empty FieldSet
     FieldSetImpl( const std::string& name = "untitled" );
 
-    idx_t size() const { return fields_.size(); }
+    idx_t size() const { return static_cast<idx_t>( fields_.size() ); }
     bool empty() const { return !fields_.size(); }
 
     void clear();
@@ -55,11 +55,11 @@ public:  // methods
     Field& operator[]( const std::string& name ) { return field( name ); }
 
     const Field& field( const idx_t& i ) const {
-        ASSERT( i < size() );
+        if ( i >= size() ) throw_OutOfRange( i, size() );
         return fields_[i];
     }
     Field& field( const idx_t& i ) {
-        ASSERT( i < size() );
+        if ( i >= size() ) throw_OutOfRange( i, size() );
         return fields_[i];
     }
 
@@ -82,6 +82,9 @@ protected:                                // data
     std::vector<Field> fields_;           ///< field storage
     std::string name_;                    ///< internal name
     std::map<std::string, idx_t> index_;  ///< name-to-index map, to refer fields by name
+
+private:
+    [[noreturn]] static void throw_OutOfRange( idx_t index, idx_t max );
 };
 
 // C wrapper interfaces to C++ routines

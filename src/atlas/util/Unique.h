@@ -11,7 +11,6 @@
 #pragma once
 
 #include <cmath>
-#include <sstream>
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/LocalView.h"

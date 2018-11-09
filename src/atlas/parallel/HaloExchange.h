@@ -29,7 +29,7 @@
 #include "atlas/array/ArrayViewUtil.h"
 #include "atlas/array/SVector.h"
 #include "atlas/array_fwd.h"
-#include "atlas/runtime/Log.h"
+#include "atlas/library/config.h"
 
 #ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
 #include "atlas/parallel/HaloExchangeCUDA.h"

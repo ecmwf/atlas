@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <iostream>
+#include <iosfwd>
 
 #include "atlas/domain/detail/Domain.h"
 

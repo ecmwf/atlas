@@ -9,6 +9,7 @@
  */
 
 #include <cmath>
+#include <iostream>
 
 #include "eckit/exception/Exceptions.h"
 
@@ -89,6 +90,11 @@ double Quad3D::area() const {
 
     return T013.area() + T231.area();
 }
+
+void Quad3D::throw_OutOfRange( unsigned long long index, unsigned long long max ) {
+    throw eckit::OutOfRange( index, max, Here() );
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------
 

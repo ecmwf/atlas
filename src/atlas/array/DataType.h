@@ -10,10 +10,8 @@
 
 #pragma once
 
-#include <sstream>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -57,6 +55,9 @@ private:
     static std::string real32_str() { return "real32"; }
     static std::string real64_str() { return "real64"; }
     static std::string uint64_str() { return "uint64"; }
+
+    [[noreturn]] static void throw_not_recognised( kind_t );
+    [[noreturn]] static void throw_not_recognised( std::string datatype );
 
 public:
     DataType( const std::string& );
@@ -171,7 +172,7 @@ inline DataType::kind_t DataType::str_to_kind( const std::string& datatype ) {
     else if ( datatype == "real64" )
         kind = KIND_REAL64;
     else {
-        throw eckit::Exception( "datatype " + datatype + " not recognised.", Here() );
+        throw_not_recognised( datatype );
     }
     return kind;
 }
@@ -188,9 +189,7 @@ inline std::string DataType::kind_to_str( kind_t kind ) {
         case KIND_REAL64:
             return real64_str();
         default:
-            std::stringstream msg;
-            msg << "kind " << kind << " not recognised.";
-            throw eckit::Exception( msg.str(), Here() );
+            throw_not_recognised( kind );
     }
 }
 inline bool DataType::kind_valid( kind_t kind ) {

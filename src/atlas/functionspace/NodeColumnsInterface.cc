@@ -9,6 +9,7 @@
  */
 
 #include "atlas/functionspace/NodeColumnsInterface.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/field/detail/FieldImpl.h"
 #include "atlas/runtime/ErrorHandling.h"
 

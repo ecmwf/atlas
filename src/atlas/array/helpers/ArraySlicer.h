@@ -10,9 +10,11 @@
 
 #pragma once
 
+#include <array>
+
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/Range.h"
-#include "atlas/runtime/Log.h"
+#include "atlas/library/config.h"
 
 namespace atlas {
 namespace array {
@@ -251,7 +253,6 @@ private:
         int i_slice( 0 );
         int i_view( 0 );
         shape_part<0>( view, result, i_view, i_slice, args... );
-        ASSERT( i_view == view.rank() );
         return result;
     }
 
@@ -309,7 +310,6 @@ private:
         int i_slice( 0 );
         int i_view( 0 );
         strides_part<0>( view, result, i_view, i_slice, args... );
-        ASSERT( i_view == view.rank() );
         return result;
     }
 

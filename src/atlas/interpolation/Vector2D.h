@@ -10,9 +10,6 @@
 
 #pragma once
 
-#include <cmath>
-#include <iostream>
-
 #include "atlas/library/config.h"
 
 #if ATLAS_HAVE_EIGEN
@@ -23,6 +20,11 @@
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
+
+#else
+
+#include <cmath>
+#include <iosfwd>
 
 #endif
 
@@ -75,7 +77,7 @@ public:
 
     double cross( const Vector2D& other ) const { return x() * other.y() - y() * other.x(); }
 
-    void print( std::ostream& s ) const { s << "[" << x() << "," << y() << "]"; }
+    void print( std::ostream& s ) const;
 
     friend std::ostream& operator<<( std::ostream& s, const Vector2D& p ) {
         p.print( s );

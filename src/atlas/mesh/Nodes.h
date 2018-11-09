@@ -16,7 +16,6 @@
 #include <map>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 

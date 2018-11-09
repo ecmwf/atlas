@@ -19,7 +19,6 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/Log.h"
 #include "atlas/util/Checksum.h"
 
 namespace atlas {
@@ -146,7 +145,6 @@ std::string Checksum::execute( const array::ArrayView<DATA_TYPE, LRANK>& lfield 
         return execute( lfield.data(), lvarstrides.data(), lvarextents.data(), lvarstrides.size() );
     }
     else {
-        Log::error() << "lfield.shape(0) = " << lfield.shape( 0 );
         NOTIMP;  // Need to implement with parallel ranks > 1
     }
 }
