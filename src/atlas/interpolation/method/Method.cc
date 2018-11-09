@@ -103,9 +103,6 @@ void interpolate_field( const Field& src, Field& tgt, const eckit::linalg::Spars
     ASSERT( src.rank() == tgt.rank() );
     ASSERT( src.levels() == tgt.levels() );
     ASSERT( src.variables() == tgt.variables() );
-    ASSERT( src.array().contiguous() );
-    ASSERT( tgt.array().contiguous() );
-
 
     ASSERT( !matrix.empty() );
     ASSERT( tgt.shape( 0 ) == static_cast<idx_t>( matrix.rows() ) );
@@ -124,6 +121,9 @@ void interpolate_field( const Field& src, Field& tgt, const eckit::linalg::Spars
                 throw eckit::NotImplemented(
                     "Only double precision interpolation is currently implemented with eckit backend", Here() );
             }
+            ASSERT( src.array().contiguous() );
+            ASSERT( tgt.array().contiguous() );
+
             eckit::linalg::Vector v_src( array::make_view<double, 1>( src ).data(), src.shape( 0 ) );
             eckit::linalg::Vector v_tgt( array::make_view<double, 1>( tgt ).data(), tgt.shape( 0 ) );
             eckit::linalg::LinearAlgebra::backend().spmv( matrix, v_src, v_tgt );
