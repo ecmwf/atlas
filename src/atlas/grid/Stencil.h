@@ -35,10 +35,18 @@ template <idx_t StencilWidth>
 class VerticalStencil {
     friend class ComputeVerticalStencil;
     idx_t k_begin_;
-
+    idx_t k_interval_;
+    // within the stencil, a point falls in a certain interval.
+    // e.g. for a cubic stencil:
+    // +  |-----|-----|-----|      --> k_interval_ = -1
+    //    |--+--|-----|-----|      --> k_interval_ = 0
+    //    |-----|--+--|-----|      --> k_interval_ = 1 (the centred case)
+    //    |-----|-----|--+--|      --> k_interval_ = 2
+    //    |-----|-----|-----|  +   --> k_interval_ = 3
 public:
     idx_t k( idx_t offset ) const { return k_begin_ + offset; }
     constexpr idx_t width() const { return StencilWidth; }
+    idx_t k_interval() const { return k_interval_; }
 };
 
 //-----------------------------------------------------------------------------
@@ -50,12 +58,14 @@ class Stencil3D {
     std::array<idx_t, StencilWidth> i_begin_;
     idx_t j_begin_;
     idx_t k_begin_;
+    idx_t k_interval_;
 
 public:
     idx_t i( idx_t offset_i, idx_t offset_j ) const { return i_begin_[offset_j] + offset_i; }
     idx_t j( idx_t offset ) const { return j_begin_ + offset; }
     idx_t k( idx_t offset ) const { return k_begin_ + offset; }
     constexpr idx_t width() const { return StencilWidth; }
+    idx_t k_interval() const { return k_interval_; }
 };
 
 //---------------------------------------------------------------------------------------------------------------------

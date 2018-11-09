@@ -23,8 +23,10 @@ std::vector<double> linspace( double start, double end, idx_t N, bool endpoint )
     double step;
     if ( endpoint && N > 1 )
         step = ( end - start ) / double( N - 1 );
-    else if( N > 0 )
+    else if ( N > 0 )
         step = ( end - start ) / double( N );
+    else
+        step = 0.;
 
     for ( idx_t i = 0; i < N; ++i ) {
         x_[i] = start + i * step;
@@ -32,26 +34,17 @@ std::vector<double> linspace( double start, double end, idx_t N, bool endpoint )
     return x_;
 }
 
-bool get_boundaries( const util::Config& config ) {
-    return config.getBool( "boundaries", false );
-}
-
 idx_t get_levels( const util::Config& config ) {
     return config.getInt( "levels", 0 );
 }
 
-idx_t get_size( const util::Config& config ) {
-    idx_t levels = get_levels( config );
-    idx_t size   = levels ? levels + 2 * idx_t{get_boundaries( config )} : 0;
-    return size;
-}
 
 }  // namespace
 
 //---------------------------------------------------------------------------------------------------------------------
 
 Vertical::Vertical( const util::Config& config ) :
-    Vertical( get_levels( config ), linspace( 0., 1., get_size( config ), true ), config ) {}
+    Vertical( get_levels( config ), linspace( 0., 1., get_levels( config ), true ), config ) {}
 
 //---------------------------------------------------------------------------------------------------------------------
 

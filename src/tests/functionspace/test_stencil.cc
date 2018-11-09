@@ -45,12 +45,10 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 std::vector<double> IFS_vertical_coordinates( idx_t nlev ) {
-    std::vector<double> zcoord( nlev + 2 );
-    zcoord[0]        = 0.;
-    zcoord[nlev + 1] = 1.;
-    double dzcoord   = 1. / double( nlev );
-    for ( idx_t jlev = 1; jlev <= nlev; ++jlev ) {
-        zcoord[jlev] = jlev * dzcoord - 0.5 * dzcoord;
+    std::vector<double> zcoord( nlev );
+    double dzcoord = 1. / double( nlev );
+    for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
+        zcoord[jlev] = 0.5 * dzcoord + jlev * dzcoord;
     }
     return zcoord;
 }
@@ -71,6 +69,7 @@ double cubic( double x, double min, double max ) {
     double xmax = 0.5 * ( x0 + x1 );
     return ( x - x0 ) * ( x - x1 ) * ( x - x2 ) / ( ( xmax - x0 ) * ( xmax - x1 ) * ( xmax - x2 ) );
 }
+
 
 CASE( "test finding of North-West grid point" ) {
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
@@ -144,12 +143,13 @@ CASE( "test horizontal stencil" ) {
     }
 }
 
+//-----------------------------------------------------------------------------
 
 CASE( "test vertical stencil" ) {
     SECTION( "Initialize ComputeLower from raw data (as e.g. given from IFS)" ) {
-        double z[] = {0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.};
+        double z[] = {0.1, 0.3, 0.5, 0.7, 0.9};
         EXPECT_NO_THROW(
-            ComputeLower{Vertical( 5, array::make_view<double, 1>( z, 7 ), util::Config( "boundaries", true ) )} );
+            ComputeLower{Vertical( 5, array::make_view<double, 1>( z, 5 ), std::vector<double>{0., 1.} )} );
     }
 
 
@@ -157,22 +157,20 @@ CASE( "test vertical stencil" ) {
     auto zcoord    = IFS_vertical_coordinates( nlev );
     double dzcoord = 1. / double( nlev );
 
-    auto vertical = Vertical( nlev, zcoord, util::Config( "boundaries", true ) );
+    auto vertical = Vertical( nlev, zcoord, std::vector<double>{0., 1.} );
 
     SECTION( "Test compute_lower works as expected " ) {
         ComputeLower compute_lower( vertical );
 
         const double eps = 1.e-14;
 
-        for ( idx_t k = 1; k <= nlev; ++k ) {
-            idx_t k_expected = std::max( 1, std::min( nlev - 1, k ) );
+        for ( idx_t k = 0; k < nlev; ++k ) {
+            idx_t k_expected = std::max( 0, std::min( nlev - 1, k ) );
             EXPECT( compute_lower( zcoord[k] ) == k_expected );
             EXPECT( compute_lower( zcoord[k] - eps ) == k_expected );
             EXPECT( compute_lower( zcoord[k] + eps ) == k_expected );
             EXPECT( compute_lower( zcoord[k] + 0.5 * dzcoord ) == k_expected );
         }
-        EXPECT( compute_lower( zcoord[0] ) == 1 );
-        EXPECT( compute_lower( zcoord[nlev + 1] ) == nlev - 1 );
     }
 
     SECTION( "Compute vertical stencil" ) {
@@ -183,16 +181,29 @@ CASE( "test vertical stencil" ) {
             compute_vertical_stencil( p, stencil );
             Log::info() << p << "   :    ";
             for ( idx_t k = 0; k < stencil.width(); ++k ) {
-                Log::info() << stencil.k( k ) << " ";
+                Log::info() << stencil.k( k ) << "[" << vertical[stencil.k( k )] << "] ";
             }
-            Log::info() << std::endl;
+            Log::info() << "     interval = " << stencil.k_interval() << std::endl;
+            if ( p < vertical[0] ) { EXPECT( stencil.k_interval() == -1 ); }
+            else if ( p < vertical[1] ) {
+                EXPECT( stencil.k_interval() == 0 );
+            }
+            else if ( p > vertical[nlev - 1] ) {
+                EXPECT( stencil.k_interval() == 3 );
+            }
+            else if ( p > vertical[nlev - 2] ) {
+                EXPECT( stencil.k_interval() == 2 );
+            }
+            else {
+                EXPECT( stencil.k_interval() == 1 );
+            }
         }
     }
 }
 
-
 //-----------------------------------------------------------------------------
 
+#if 1
 CASE( "ifs method to find nearest grid point" ) {
     // see satrad/module/gaussgrid.F90
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
@@ -219,7 +230,7 @@ CASE( "ifs method to find nearest grid point" ) {
     EXPECT( kgrib_lon == 0 );
     EXPECT( kgrib_lat == 0 );
 }
-
+#endif
 //-----------------------------------------------------------------------------
 
 }  // namespace test

@@ -378,7 +378,6 @@ void test_rank2_l1( Fixture& f ) {
 #else
          array::make_strides(6, 2, 1)
 #endif
-
     } ) );
 
     arr_t.syncHostDevice();

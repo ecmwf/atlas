@@ -87,6 +87,41 @@ public:
     }
 };
 
+class PointLonLat;
+
+class NormaliseLongitude {
+public:
+    // Normalise longitude between (west - eps, east - eps ) with west = 0., east = 360.
+    constexpr NormaliseLongitude() : west_( -eps_ ), east_( 360. - eps_ ) {}
+
+    // Normalise longitude between ( west-eps, east-eps )  with east = west + 360
+    constexpr NormaliseLongitude( double west ) : west_( west - eps_ ), east_( west + 360. - eps_ ) {}
+
+    // Normalise longitude between ( west-eps, east+eps )
+    constexpr NormaliseLongitude( double west, double east ) : west_( west - eps_ ), east_( east + eps_ ) {}
+
+    double operator()( double lon ) const {
+        while ( lon < west_ ) {
+            lon += 360.;
+        }
+        while ( lon > east_ ) {
+            lon -= 360.;
+        }
+        return lon;
+    }
+
+    void operator()( PointLonLat& p ) const;
+
+
+private:
+    const double west_;
+    const double east_;
+
+public:
+    static constexpr double eps_ = 1.e-11;
+};
+
+
 class PointLonLat : public Point2 {
     using array_t = std::array<double, 2>;
 
@@ -117,6 +152,26 @@ public:
         x_[1] *= a;
         return *this;
     }
+
+    void normalise() {
+        constexpr NormaliseLongitude normalize_from_zero;
+        normalize_from_zero( *this );
+    }
+
+    void normalise( double west ) {
+        NormaliseLongitude normalize_from_west( west );
+        normalize_from_west( *this );
+    }
+
+    void normalise( double west, double east ) {
+        NormaliseLongitude normalize_between_west_and_east( west, east );
+        normalize_between_west_and_east( *this );
+    }
 };
+
+inline void NormaliseLongitude::operator()( PointLonLat& p ) const {
+    p.lon() = operator()( p.lon() );
+}
+
 
 }  // namespace atlas

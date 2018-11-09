@@ -13,26 +13,24 @@
 namespace atlas {
 
 ComputeLower::ComputeLower( const Vertical& z ) {
-    nlev_ = z.size() - 2;
-    z_.resize( nlev_ + 2 );
+    nlev_ = z.size();
+    z_.resize( nlev_ );
     double dz            = std::numeric_limits<double>::max();
     constexpr double tol = 1.e-12;
     ASSERT( dz > 0 );
     for ( idx_t jlev = 0; jlev < nlev_; ++jlev ) {
-        dz       = std::min( dz, z[jlev + 1] - z[jlev] );
+        if ( jlev + 1 < nlev_ ) { dz = std::min( dz, z[jlev + 1] - z[jlev] ); }
         z_[jlev] = z[jlev] - tol;
     }
-    z_[nlev_]     = z_[nlev_] - tol;
-    z_[nlev_ + 1] = z_[nlev_ + 1] - tol;
 
-    nlevaux_ = static_cast<idx_t>( std::round( 2. / dz + 0.5 ) + 1 );
+    nlevaux_ = static_cast<idx_t>( std::round( 2. * ( z.max() - z.min() ) / dz + 0.5 ) + 1 );
     rlevaux_ = double( nlevaux_ );
     nvaux_.resize( nlevaux_ + 1 );
-    double dzaux = ( z[nlev_ + 1] - z[0] ) / rlevaux_;
+    double dzaux = ( z.max() - z.min() ) / rlevaux_;
 
-    idx_t iref = 1;
+    idx_t iref = 0;
     for ( idx_t jlevaux = 0; jlevaux <= nlevaux_; ++jlevaux ) {
-        if ( jlevaux * dzaux >= z[iref + 1] && iref < nlev_ - 1 ) { ++iref; }
+        if ( iref + 1 < nlev_ && jlevaux * dzaux >= z[iref + 1] ) { ++iref; }
         nvaux_[jlevaux] = iref;
     }
 }
@@ -98,6 +96,10 @@ ComputeVerticalStencil::ComputeVerticalStencil( const Vertical& vertical, idx_t 
     compute_lower_( vertical ),
     stencil_width_( stencil_width ) {
     stencil_begin_ = stencil_width_ - idx_t( double( stencil_width_ ) / 2. + 1. );
+    clip_begin_    = 0;
+    clip_end_      = vertical.size();
+    vertical_min_  = vertical[clip_begin_];
+    vertical_max_  = vertical[clip_end_ - 1];
 }
 
 

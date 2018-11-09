@@ -31,6 +31,9 @@ class BiCubicKernel;
 
 class Bicubic : public Method {
 public:
+    using Kernel = detail::BiCubicKernel;
+
+public:
     Bicubic( const Config& config );
 
     virtual ~Bicubic() override {}
@@ -43,11 +46,22 @@ public:
 
     virtual void execute( const Field& src, Field& tgt ) const override;
 
+    virtual void execute( const FieldSet& src, FieldSet& tgt ) const override;
+
+
 protected:
     void setup( const FunctionSpace& source );
 
     virtual const FunctionSpace& source() const override { return source_; }
+
     virtual const FunctionSpace& target() const override { return target_; }
+
+private:
+    template <typename Value, int Rank>
+    void execute_impl( const FieldSet& src, FieldSet& tgt ) const;
+
+    template <typename Value, int Rank>
+    void execute_impl( const Field& src, Field& tgt ) const;
 
 protected:
     Field target_lonlat_;
@@ -58,7 +72,6 @@ protected:
 
     bool matrix_free_;
 
-    using Kernel = detail::BiCubicKernel;
     std::unique_ptr<Kernel> kernel_;
 };
 

@@ -135,62 +135,171 @@ public:
     }
 
     template <typename stencil_t, typename weights_t, typename array_t>
-    void interpolate( const stencil_t& stencil, const weights_t& weights, const array_t& input, double& output ) const {
+    typename array_t::value_type interpolate( const stencil_t& stencil, const weights_t& weights,
+                                              const array_t& input ) const {
+        using Value = typename array_t::value_type;
+
         std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;
         const auto& weights_j = weights.weights_j;
-        output                = 0.;
+        Value output          = 0.;
         for ( idx_t j = 0; j < stencil_width(); ++j ) {
             const auto& weights_i = weights.weights_i[j];
             for ( idx_t i = 0; i < stencil_width(); ++i ) {
                 idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
-                output += weights_i[i] * weights_j[j] * input[n];
+                Value w = weights_i[i] * weights_j[j];
+                output += w * input[n];
                 index[j][i] = n;
             }
         }
 
         if ( limiter_ ) { limit( output, index, input ); }
+        return output;
     }
 
     template <typename array_t>
-    void limit( double& output, const std::array<std::array<idx_t, 4>, 4>& index, const array_t& input ) const {
+    void limit( typename array_t::value_type& output, const std::array<std::array<idx_t, 4>, 4>& index,
+                const array_t& input ) const {
+        using Scalar = typename array_t::value_type;
         // Limit output to max/min of values in stencil marked by '*'
         //         x        x        x         x
         //              x     *-----*     x
         //                   /   P  |
         //          x       *------ *        x
         //        x        x        x         x
-        double maxval = std::numeric_limits<double>::lowest();
-        double minval = std::numeric_limits<double>::max();
+        Scalar maxval = std::numeric_limits<Scalar>::lowest();
+        Scalar minval = std::numeric_limits<Scalar>::max();
         for ( idx_t j = 1; j < 3; ++j ) {
             for ( idx_t i = 1; i < 3; ++i ) {
                 idx_t n    = index[j][i];
-                double val = input[n];
+                Scalar val = input[n];
                 maxval     = std::max( maxval, val );
                 minval     = std::min( minval, val );
             }
         }
-        output = std::min( maxval, std::max( minval, output ) );
+        if ( output < minval ) { output = minval; }
+        else if ( output > maxval ) {
+            output = maxval;
+        }
+    }
+
+
+    template <typename stencil_t, typename weights_t, typename Value, int Rank>
+    typename std::enable_if<( Rank == 1 ), void>::type interpolate( const stencil_t& stencil, const weights_t& weights,
+                                                                    const array::ArrayView<Value, Rank>& input,
+                                                                    array::ArrayView<Value, Rank>& output,
+                                                                    idx_t r ) const {
+        std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;
+        const auto& weights_j = weights.weights_j;
+        output( r )           = 0.;
+        for ( idx_t j = 0; j < stencil_width(); ++j ) {
+            const auto& weights_i = weights.weights_i[j];
+            for ( idx_t i = 0; i < stencil_width(); ++i ) {
+                idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
+                Value w = static_cast<Value>( weights_i[i] * weights_j[j] );
+                output( r ) += w * input[n];
+                index[j][i] = n;
+            }
+        }
+
+        if ( limiter_ ) { limit( index, input, output, r ); }
+    }
+
+    template <typename Value, int Rank>
+    typename std::enable_if<( Rank == 1 ), void>::type limit( const std::array<std::array<idx_t, 4>, 4>& index,
+                                                              const array::ArrayView<Value, Rank>& input,
+                                                              array::ArrayView<Value, Rank>& output, idx_t r ) const {
+        // Limit output to max/min of values in stencil marked by '*'
+        //         x        x        x         x
+        //              x     *-----*     x
+        //                   /   P  |
+        //          x       *------ *        x
+        //        x        x        x         x
+        Value maxval = std::numeric_limits<Value>::lowest();
+        Value minval = std::numeric_limits<Value>::max();
+        for ( idx_t j = 1; j < 3; ++j ) {
+            for ( idx_t i = 1; i < 3; ++i ) {
+                idx_t n   = index[j][i];
+                Value val = input[n];
+                maxval    = std::max( maxval, val );
+                minval    = std::min( minval, val );
+            }
+        }
+        if ( output( r ) < minval ) { output( r ) = minval; }
+        else if ( output( r ) > maxval ) {
+            output( r ) = maxval;
+        }
+    }
+
+
+    template <typename stencil_t, typename weights_t, typename Value, int Rank>
+    typename std::enable_if<( Rank == 2 ), void>::type interpolate( const stencil_t& stencil, const weights_t& weights,
+                                                                    const array::ArrayView<Value, Rank>& input,
+                                                                    array::ArrayView<Value, Rank>& output,
+                                                                    idx_t r ) const {
+        std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;
+        const auto& weights_j = weights.weights_j;
+        const idx_t Nk        = output.shape( 1 );
+        for ( idx_t k = 0; k < Nk; ++k ) {
+            output( r, k ) = 0.;
+        }
+        for ( idx_t j = 0; j < stencil_width(); ++j ) {
+            const auto& weights_i = weights.weights_i[j];
+            for ( idx_t i = 0; i < stencil_width(); ++i ) {
+                idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
+                Value w = static_cast<Value>( weights_i[i] * weights_j[j] );
+                for ( idx_t k = 0; k < Nk; ++k ) {
+                    output( r, k ) += w * input( n, k );
+                }
+                index[j][i] = n;
+            }
+        }
+
+        if ( limiter_ ) { limit( index, input, output, r ); }
+    }
+
+    template <typename Value, int Rank>
+    typename std::enable_if<( Rank == 2 ), void>::type limit( const std::array<std::array<idx_t, 4>, 4>& index,
+                                                              const array::ArrayView<Value, Rank>& input,
+                                                              array::ArrayView<Value, Rank>& output, idx_t r ) const {
+        // Limit output to max/min of values in stencil marked by '*'
+        //         x        x        x         x
+        //              x     *-----*     x
+        //                   /   P  |
+        //          x       *------ *        x
+        //        x        x        x         x
+        for ( idx_t k = 0; k < output.shape( 1 ); ++k ) {
+            Value maxval = std::numeric_limits<Value>::lowest();
+            Value minval = std::numeric_limits<Value>::max();
+            for ( idx_t j = 1; j < 3; ++j ) {
+                for ( idx_t i = 1; i < 3; ++i ) {
+                    idx_t n   = index[j][i];
+                    Value val = input( n, k );
+                    maxval    = std::max( maxval, val );
+                    minval    = std::min( minval, val );
+                }
+            }
+            if ( output( r, k ) < minval ) { output( r, k ) = minval; }
+            else if ( output( r, k ) > maxval ) {
+                output( r, k ) = maxval;
+            }
+        }
     }
 
 
     template <typename array_t>
-    double operator()( const double x, const double y, const array_t& input ) const {
+    typename array_t::value_type operator()( const double x, const double y, const array_t& input ) const {
         Stencil stencil;
-        compute_horizontal_stencil_( x, y, stencil );
+        compute_stencil( x, y, stencil );
         Weights weights;
         compute_weights( x, y, stencil, weights );
-        double output;
-        interpolate( stencil, weights, input, output );
-        return output;
+        return interpolate( stencil, weights, input );
     }
 
     template <typename array_t>
-    double interpolate( const PointLonLat& p, const array_t& input, WorkSpace& ws ) const {
+    typename array_t::value_type interpolate( const PointLonLat& p, const array_t& input, WorkSpace& ws ) const {
         compute_stencil( p.lon(), p.lat(), ws.stencil );
         compute_weights( p.lon(), p.lat(), ws.stencil, ws.weights );
-        double output;
-        interpolate( ws.stencil, ws.weights, input, output );
-        return output;
+        return interpolate( ws.stencil, ws.weights, input );
     }
 
     // Thread private workspace
@@ -207,6 +316,8 @@ public:
         return triplets;
     }
 
+    Triplets allocate_triplets( size_t N ) { return Triplets( N * stencil_size() ); }
+
     void insert_triplets( const idx_t row, const PointXY& p, Triplets& triplets, WorkSpace& ws ) const {
         insert_triplets( row, p.x(), p.y(), triplets, ws );
     }
@@ -215,12 +326,14 @@ public:
         compute_horizontal_stencil_( x, y, ws.stencil );
         compute_weights( x, y, ws.stencil, ws.weights );
         const auto& wj = ws.weights.weights_j;
+
+        idx_t pos = row * stencil_size();
         for ( idx_t j = 0; j < stencil_width(); ++j ) {
             const auto& wi = ws.weights.weights_i[j];
             for ( idx_t i = 0; i < stencil_width(); ++i ) {
-                idx_t col = src_.index( ws.stencil.i( i, j ), ws.stencil.j( j ) );
-                double w  = wi[i] * wj[j];
-                triplets.emplace_back( row, col, w );
+                idx_t col       = src_.index( ws.stencil.i( i, j ), ws.stencil.j( j ) );
+                double w        = wi[i] * wj[j];
+                triplets[pos++] = Triplet( row, col, w );
             }
         }
     }
@@ -337,64 +450,165 @@ void Bicubic::setup( const FunctionSpace& source ) {
         auto ghost  = array::make_view<int, 1>( target_ghost_ );
         auto lonlat = array::make_view<double, 2>( target_lonlat_ );
 
-        auto triplets = kernel_->reserve_triplets( out_npts );
+        auto triplets = kernel_->allocate_triplets( out_npts );
 
-        Kernel::WorkSpace workspace;
-        ATLAS_TRACE_SCOPE( "Computing interpolation matrix" ) {
-            eckit::ProgressTimer progress( "Computing interpolation weights", out_npts, "point", double( 5 ),
-                                           Log::debug() );
-            for ( idx_t n = 0; n < out_npts; ++n, ++progress ) {
-                PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
-                while ( p.lon() < 0. ) {
-                    p.lon() += 360.;
+        constexpr NormaliseLongitude normalise;
+        ATLAS_TRACE_SCOPE( "Precomputing interpolation matrix" ) {
+            atlas_omp_parallel {
+                Kernel::WorkSpace workspace;
+                atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
+                    if ( not ghost( n ) ) {
+                        PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
+                        normalise( p );
+                        kernel_->insert_triplets( n, p, triplets, workspace );
+                    }
                 }
-                while ( p.lon() >= 360. ) {
-                    p.lon() -= 360.;
-                }
-                if ( not ghost( n ) ) { kernel_->insert_triplets( n, p, triplets, workspace ); }
             }
+            // fill sparse matrix and return
+            Matrix A( out_npts, inp_npts, triplets );
+            matrix_.swap( A );
         }
-
-        // fill sparse matrix and return
-        Matrix A( out_npts, inp_npts, triplets );
-        matrix_.swap( A );
-    }
-    else {
-        //NOTIMP;
     }
 }
 
-void Bicubic::execute( const Field& src, Field& tgt ) const {
+void Bicubic::execute( const Field& src_field, Field& tgt_field ) const {
     if ( not matrix_free_ ) {
-        Method::execute( src, tgt );
+        Method::execute( src_field, tgt_field );
         return;
     }
 
-    if ( src.dirty() ) { source().haloExchange( const_cast<Field&>( src ) ); }
+    if ( src_field.dirty() ) { source().haloExchange( const_cast<Field&>( src_field ) ); }
 
     ATLAS_TRACE( "atlas::interpolation::method::Bicubic::execute()" );
 
+    array::DataType datatype = src_field.datatype();
+    int rank                 = src_field.rank();
+
+    ASSERT( tgt_field.datatype() == datatype );
+    ASSERT( tgt_field.rank() == rank );
+
+    if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 1 ) {
+        execute_impl<double, 1>( src_field, tgt_field );
+    }
+    if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 1 ) {
+        execute_impl<float, 1>( src_field, tgt_field );
+    }
+    if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 2 ) {
+        execute_impl<double, 2>( src_field, tgt_field );
+    }
+    if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 2 ) {
+        execute_impl<float, 2>( src_field, tgt_field );
+    }
+
+    tgt_field.set_dirty();
+}
+
+void Bicubic::execute( const FieldSet& src_fields, FieldSet& tgt_fields ) const {
+    if ( not matrix_free_ ) {
+        Method::execute( src_fields, tgt_fields );
+        return;
+    }
+
+    ATLAS_TRACE( "atlas::interpolation::method::Bicubic::execute()" );
+
+    const idx_t N = src_fields.size();
+    ASSERT( N == tgt_fields.size() );
+
+    if ( N == 0 ) return;
+
+    for ( idx_t i = 0; i < N; ++i ) {
+        if ( src_fields[i].dirty() ) { source().haloExchange( const_cast<Field&>( src_fields[i] ) ); }
+    }
+
+    array::DataType datatype = src_fields[0].datatype();
+    int rank                 = src_fields[0].rank();
+
+    for ( idx_t i = 0; i < N; ++i ) {
+        ASSERT( src_fields[i].datatype() == datatype );
+        ASSERT( src_fields[i].rank() == rank );
+        ASSERT( tgt_fields[i].datatype() == datatype );
+        ASSERT( tgt_fields[i].rank() == rank );
+    }
+
+    if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 1 ) {
+        execute_impl<double, 1>( src_fields, tgt_fields );
+    }
+    if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 1 ) {
+        execute_impl<float, 1>( src_fields, tgt_fields );
+    }
+    if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 2 ) {
+        execute_impl<double, 2>( src_fields, tgt_fields );
+    }
+    if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 2 ) {
+        execute_impl<float, 2>( src_fields, tgt_fields );
+    }
+
+    for ( idx_t i = 0; i < N; ++i ) {
+        tgt_fields[i].set_dirty();
+    }
+}
+
+template <typename Value, int Rank>
+void Bicubic::execute_impl( const FieldSet& src_fields, FieldSet& tgt_fields ) const {
+    const idx_t N  = src_fields.size();
     idx_t out_npts = target_lonlat_.shape( 0 );
 
     auto ghost  = array::make_view<int, 1>( target_ghost_ );
     auto lonlat = array::make_view<double, 2>( target_lonlat_ );
-    auto source = array::make_view<double, 1>( src );
-    auto target = array::make_view<double, 1>( tgt );
 
-    Kernel::WorkSpace workspace;
-    for ( idx_t n = 0; n < out_npts; ++n ) {
-        PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
-        while ( p.lon() < 0. ) {
-            p.lon() += 360.;
-        }
-        while ( p.lon() >= 360. ) {
-            p.lon() -= 360.;
-        }
-        if ( not ghost( n ) ) { target( n ) = kernel_->interpolate( p, source, workspace ); }
+    std::vector<array::ArrayView<Value, Rank> > src_view;
+    std::vector<array::ArrayView<Value, Rank> > tgt_view;
+    src_view.reserve( N );
+    tgt_view.reserve( N );
+
+    for ( idx_t i = 0; i < N; ++i ) {
+        src_view.emplace_back( array::make_view<Value, Rank>( src_fields[i] ) );
+        tgt_view.emplace_back( array::make_view<Value, Rank>( tgt_fields[i] ) );
     }
-    tgt.set_dirty();
+
+    constexpr NormaliseLongitude normalise( 0., 360. );  // includes 360 as well!
+    atlas_omp_parallel {
+        Kernel::Stencil stencil;
+        Kernel::Weights weights;
+        atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
+            if ( not ghost( n ) ) {
+                PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
+                normalise( p );
+                kernel_->compute_stencil( p.lon(), p.lat(), stencil );
+                kernel_->compute_weights( p.lon(), p.lat(), stencil, weights );
+                for ( idx_t i = 0; i < N; ++i ) {
+                    kernel_->interpolate( stencil, weights, src_view[i], tgt_view[i], n );
+                }
+            }
+        }
+    }
 }
 
+template <typename Value, int Rank>
+void Bicubic::execute_impl( const Field& src_field, Field& tgt_field ) const {
+    idx_t out_npts = target_lonlat_.shape( 0 );
+
+    auto ghost  = array::make_view<int, 1>( target_ghost_ );
+    auto lonlat = array::make_view<double, 2>( target_lonlat_ );
+
+    const auto src_view = array::make_view<Value, Rank>( src_field );
+    auto tgt_view       = array::make_view<Value, Rank>( tgt_field );
+
+    constexpr NormaliseLongitude normalise( 0., 360. );  // includes 360 as well!
+    atlas_omp_parallel {
+        Kernel::Stencil stencil;
+        Kernel::Weights weights;
+        atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
+            if ( not ghost( n ) ) {
+                PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
+                normalise( p );
+                kernel_->compute_stencil( p.lon(), p.lat(), stencil );
+                kernel_->compute_weights( p.lon(), p.lat(), stencil, weights );
+                kernel_->interpolate( stencil, weights, src_view, tgt_view, n );
+            }
+        }
+    }
+}
 
 }  // namespace method
 }  // namespace interpolation

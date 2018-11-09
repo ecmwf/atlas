@@ -18,34 +18,28 @@ namespace atlas {
 namespace grid {
 namespace spacing {
 
+// clang-format off
+
 /// @brief Linear spacing in interval
 ///
-/// There are N equally spaced points in the closed interval [start, stop] or
-/// the
-/// half-open interval [start, stop) (depending on whether endpoint is True or
-/// False)
+/// There are N equally spaced points in the closed interval [start, stop] or the
+/// half-open interval [start, stop) (depending on whether endpoint is True or False)
 ///
 /// Using the constructor LinearSpacing( start, end, N, endpoint ) we can create
-///
-///    LinearSpacing( 2, 3, 5, true  )                    -->  { 2.0 , 2.25 ,
-///    2.5 , 2.75 , 3.0 }
-///    LinearSpacing( 2, 3, 5, false )                    -->  { 2.0 , 2.2  ,
-///    2.4 , 2.6  , 2.8 }
+///    LinearSpacing( 2, 3, 5, true  )                    -->  { 2.0 , 2.25 , 2.5 , 2.75 , 3.0 }
+///    LinearSpacing( 2, 3, 5, false )                    -->  { 2.0 , 2.2  , 2.4 , 2.6  , 2.8 }
 ///
 /// Configuration parameters can be passed as well with following keys:
 ///
-///    {"start":2 , "end":3, "N":5, "endpoint":true }     --> { 2.0 , 2.25 , 2.5
-///    , 2.75 , 3.0 }
-///    {"start":2 , "end":3, "N":5, "endpoint":false}     --> { 2.0 , 2.2  , 2.4
-///    , 2.6  , 2.8 }
+///    {"start":2 , "end":3, "N":5, "endpoint":true }     --> { 2.0 , 2.25 , 2.5 , 2.75 , 3.0 }
+///    {"start":2 , "end":3, "N":5, "endpoint":false}     --> { 2.0 , 2.2  , 2.4 , 2.6  , 2.8 }
 ///
-/// Instead of the "end" key, you can provide the "length" key, to achieve the
-/// same results:
+/// Instead of the "end" key, you can provide the "length" key, to achieve the same results:
 ///
-///    {"start":2 , "length":1, "N":5, "endpoint":true }  --> { 2.0 , 2.25 , 2.5
-///    , 2.75 , 3.0 }
-///    {"start":2 , "length":1, "N":5, "endpoint":false}  --> { 2.0 , 2.2  , 2.4
-///    , 2.6  , 2.8 }
+///    {"start":2 , "length":1, "N":5, "endpoint":true }  --> { 2.0 , 2.25 , 2.5 , 2.75 , 3.0 }
+///    {"start":2 , "length":1, "N":5, "endpoint":false}  --> { 2.0 , 2.2  , 2.4 , 2.6  , 2.8 }
+
+// clang-format on
 
 class LinearSpacing : public Spacing {
 public:

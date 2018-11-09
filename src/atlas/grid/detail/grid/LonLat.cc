@@ -49,13 +49,15 @@ StructuredGrid::grid_t* create_lonlat( long nlon, long nlat, Shift shift,
     // If shifted_y, the whole interval is shifted by -dy/2, and last latitude
     // would be -90-dy/2 (below -90!!!), if endpoint=true.
     // Instead, we set endpoint=false so that last latitude is -90+dy/2 instead.
-    Grid::Config config_spacing;
-    config_spacing.set( "type", "linear" );
-    config_spacing.set( "start", 90.0 - ( shifted_y ? 90.0 / double( nlat ) : 0.0 ) );
-    config_spacing.set( "end", -90.0 - ( shifted_y ? 90.0 / double( nlat ) : 0.0 ) );
-    config_spacing.set( "endpoint", shifted_y ? false : true );
-    config_spacing.set( "N", nlat );
-    Spacing yspace( config_spacing );
+    Spacing yspace( [&] {
+        Grid::Config config_spacing;
+        config_spacing.set( "type", "linear" );
+        config_spacing.set( "start", 90.0 - ( shifted_y ? 90.0 / double( nlat ) : 0.0 ) );
+        config_spacing.set( "end", -90.0 - ( shifted_y ? 90.0 / double( nlat ) : 0.0 ) );
+        config_spacing.set( "endpoint", shifted_y ? false : true );
+        config_spacing.set( "N", nlat );
+        return config_spacing;
+    }() );
 
     Projection projection;
     Grid::Config config_projection;

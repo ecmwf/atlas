@@ -31,12 +31,7 @@ public:
 
 #if !ATLAS_HAVE_FORTRAN
     // Stubs for what fckit::Log provides
-    enum Style
-    {
-        SIMPLE    = 0,
-        PREFIX    = 1,
-        TIMESTAMP = 2
-    };
+    enum Style{SIMPLE = 0, PREFIX = 1, TIMESTAMP = 2};
     static void addFortranUnit( int unit, Style = PREFIX, const char* prefix = "" ) { /*NOTIMP*/
     }
     static void setFortranUnit( int unit, Style = PREFIX, const char* prefix = "" ) { /*NOTIMP*/
