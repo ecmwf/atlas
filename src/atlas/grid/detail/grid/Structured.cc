@@ -293,27 +293,16 @@ class Normalise {
 public:
     Normalise( const RectangularDomain& domain ) :
         degrees_( domain.units() == "degrees" ),
-        xmin_( domain.xmin() ),
-        xmax_( domain.xmax() ),
-        eps_( 1e-11 ) {}
+        normalise_( domain.xmin(), domain.xmax() ) {}
 
     double operator()( double x ) const {
-        if ( degrees_ ) {
-            while ( eckit::types::is_strictly_greater<double>( xmin_, x, eps_ ) ) {
-                x += 360.;
-            }
-            while ( eckit::types::is_strictly_greater<double>( x, xmax_, eps_ ) ) {
-                x -= 360.;
-            }
-        }
+        if ( degrees_ ) { x = normalise_( x ); }
         return x;
     }
 
 private:
     const bool degrees_;
-    const double xmin_;
-    const double xmax_;
-    const double eps_;
+    NormaliseLongitude normalise_;
 };
 }  // namespace
 

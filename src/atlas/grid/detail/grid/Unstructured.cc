@@ -30,7 +30,7 @@ namespace grid {
 namespace detail {
 namespace grid {
 
-eckit::ConcreteBuilderT1<Grid, Unstructured> builder_Unstructured( Unstructured::static_type() );
+static eckit::ConcreteBuilderT1<Grid, Unstructured> builder_Unstructured( Unstructured::static_type() );
 
 Unstructured::Unstructured( const Mesh& m ) : Grid(), points_( new std::vector<PointXY>( m.nodes().size() ) ) {
     util::Config config_domain;
@@ -39,7 +39,7 @@ Unstructured::Unstructured( const Mesh& m ) : Grid(), points_( new std::vector<P
 
     auto xy                 = array::make_view<double, 2>( m.nodes().xy() );
     std::vector<PointXY>& p = *points_;
-    const idx_t npts        = p.size();
+    const idx_t npts        = static_cast<idx_t>( p.size() );
 
     for ( idx_t n = 0; n < npts; ++n ) {
         p[n].assign( xy( n, XX ), xy( n, YY ) );
@@ -52,27 +52,16 @@ class Normalise {
 public:
     Normalise( const RectangularDomain& domain ) :
         degrees_( domain.units() == "degrees" ),
-        xmin_( domain.xmin() ),
-        xmax_( domain.xmax() ),
-        eps_( 1e-11 ) {}
+        normalise_( domain.xmin(), domain.xmax() ) {}
 
     double operator()( double x ) const {
-        if ( degrees_ ) {
-            while ( eckit::types::is_strictly_greater<double>( xmin_, x, eps_ ) ) {
-                x += 360.;
-            }
-            while ( eckit::types::is_strictly_greater<double>( x, xmax_, eps_ ) ) {
-                x -= 360.;
-            }
-        }
+        if ( degrees_ ) { x = normalise_( x ); }
         return x;
     }
 
 private:
     const bool degrees_;
-    const double xmin_;
-    const double xmax_;
-    const double eps_;
+    NormaliseLongitude normalise_;
 };
 }  // namespace
 
@@ -104,7 +93,7 @@ Unstructured::Unstructured( const Grid& grid, Domain domain ) : Grid() {
     points_->shrink_to_fit();
 }
 
-Unstructured::Unstructured( const util::Config& p ) : Grid() {
+Unstructured::Unstructured( const util::Config& ) : Grid() {
     util::Config config_domain;
     config_domain.set( "type", "global" );
     domain_ = Domain( config_domain );
@@ -150,7 +139,7 @@ void Unstructured::hash( eckit::Hash& h ) const {
     const std::vector<PointXY>& pts = *points_;
     h.add( &pts[0], sizeof( PointXY ) * pts.size() );
 
-    for ( idx_t i = 0, N = pts.size(); i < N; i++ ) {
+    for ( idx_t i = 0, N = static_cast<idx_t>( pts.size() ); i < N; i++ ) {
         const PointXY& p = pts[i];
         h << p.x() << p.y();
     }
@@ -160,7 +149,7 @@ void Unstructured::hash( eckit::Hash& h ) const {
 
 idx_t Unstructured::size() const {
     ASSERT( points_ );
-    return points_->size();
+    return static_cast<idx_t>( points_->size() );
 }
 
 Grid::Spec Unstructured::spec() const {

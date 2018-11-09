@@ -112,13 +112,19 @@ CASE( "test_wrap_rawdata_through_array" ) {
 }
 
 CASE( "test_wrap_rawdata_direct" ) {
-    std::vector<double> rawdata( 20, 8. );
+    std::vector<double> rawdata( 10 * 2, 8. );
     Field field( "wrapped", rawdata.data(), array::make_shape( 10, 2 ) );
 
     EXPECT( field.array().owners() == 1 );
     const array::ArrayView<double, 2> cfieldv = array::make_view<double, 2>( field );
     EXPECT( cfieldv( 9, 1 ) == 8. );
 }
+
+CASE( "test_wrap_rawdata_through_field" ) {
+    std::vector<double> rawdata( 10 * 2, 8. );
+    Field field( "name", rawdata.data(), array::make_shape( 10, 2 ) );
+}
+
 
 //-----------------------------------------------------------------------------
 

@@ -36,7 +36,7 @@ if( HAVE_FCTEST )
 
 endif()
 
-foreach( test earth flags footprint indexview polygon )
+foreach( test earth flags footprint indexview polygon point )
   ecbuild_add_test( TARGET atlas_test_${test}
     SOURCES test_${test}.cc
     LIBS atlas
