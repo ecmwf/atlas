@@ -790,10 +790,16 @@ void StructuredColumns::create_remote_index() const {
             // TODO: using c++14 we can create a polymorphic lambda to avoid duplicated
             // code in the two branches of following if.
             if ( comm.size() == 1 ) {
-                std::vector<idx_t> g_to_r( size_owned_ );
+                std::vector<idx_t> g_to_r( size_owned_ + 1 );
 
                 ATLAS_TRACE_SCOPE( "g_to_r (using vector)" )
                 for ( idx_t j = 0; j < size_owned_; ++j ) {
+#if ATLAS_ARRAYVIEW_BOUNDS_CHECKING
+                    if ( g( j ) >= size_owned_ + 1 ) {
+                        ATLAS_DEBUG_VAR( g( j ) );
+                        throw eckit::OutOfRange( g( j ), size_owned_ + 1, Here() );
+                    }
+#endif
                     g_to_r[g( j )] = j;
                 }
                 for ( idx_t j = 0; j < nb_neighbours; ++j ) {
