@@ -180,7 +180,7 @@ public:
     void haloExchange( FieldSet&, bool on_device = false ) const;
     void haloExchange( Field&, bool on_device = false ) const;
 
-    idx_t size() const { return functionspace_->size(); };
+    idx_t size() const { return functionspace_->size(); }
 };
 
 template <typename DATATYPE>

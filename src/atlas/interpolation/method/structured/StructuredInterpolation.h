@@ -13,10 +13,6 @@
 #include "atlas/interpolation/method/Method.h"
 
 #include <memory>
-#include <string>
-
-#include "eckit/config/Configuration.h"
-#include "eckit/memory/NonCopyable.h"
 
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
@@ -25,18 +21,12 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-namespace detail {
-class BiCubicKernel;
-}
-
-class Bicubic : public Method {
+template <typename Kernel>
+class StructuredInterpolation : public Method {
 public:
-    using Kernel = detail::BiCubicKernel;
+    StructuredInterpolation( const Config& config );
 
-public:
-    Bicubic( const Config& config );
-
-    virtual ~Bicubic() override {}
+    virtual ~StructuredInterpolation() override {}
 
     virtual void setup( const Grid& source, const Grid& target ) override;
 
@@ -58,10 +48,10 @@ protected:
 
 private:
     template <typename Value, int Rank>
-    void execute_impl( const FieldSet& src, FieldSet& tgt ) const;
+    void execute_impl( const Kernel& kernel, const FieldSet& src, FieldSet& tgt ) const;
 
     template <typename Value, int Rank>
-    void execute_impl( const Field& src, Field& tgt ) const;
+    void execute_impl( const Kernel& kernel, const Field& src, Field& tgt ) const;
 
 protected:
     Field target_lonlat_;
@@ -75,6 +65,9 @@ protected:
     std::unique_ptr<Kernel> kernel_;
 };
 
+
 }  // namespace method
 }  // namespace interpolation
 }  // namespace atlas
+
+#include "StructuredInterpolation.tcc"
