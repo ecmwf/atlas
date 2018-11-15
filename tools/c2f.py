@@ -350,7 +350,7 @@ intf += "interface\n\n"
 for statement in code.statements():
     try:
         intf += Function(statement).fortran_interface()+"\n"
-    except ParsingFailed( e ):
+    except ParsingFailed as e:
         print("\n\n"+"-"*80+"\n"+"Automatic generation of Fortran bindings failed for file\n\n"+
               "    "+input+"\n\n"+"ParsingFailed for statement:\n\n"+
               "    "+statement+"\n\nError: "+str(e)+"\n"+"-"*80+"\n")
