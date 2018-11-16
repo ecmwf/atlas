@@ -20,6 +20,13 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
   )
 
+  add_fctest( TARGET atlas_fctest_field_view
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_field_view.F90
+    LIBS            atlas_f
+    OMP             3
+  )
+
   add_fctest( TARGET atlas_fctest_field_host
     CONDITION       ATLAS_HAVE_GRIDTOOLS_STORAGE AND ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
     LINKER_LANGUAGE Fortran
