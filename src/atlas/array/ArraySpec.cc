@@ -35,7 +35,7 @@ ArraySpec::ArraySpec( const ArrayShape& shape ) : ArraySpec( shape, ArrayAlignme
 ArraySpec::ArraySpec( const ArrayShape& shape, ArrayAlignment&& alignment ) {
     if ( int( alignment ) > 1 ) NOTIMP;  // innermost dimension needs to be padded
 
-    rank_ = shape.size();
+    rank_ = static_cast<int>( shape.size() );
     size_ = 1;
     shape_.resize( rank_ );
     strides_.resize( rank_ );
@@ -49,6 +49,10 @@ ArraySpec::ArraySpec( const ArrayShape& shape, ArrayAlignment&& alignment ) {
     allocated_size_ = compute_allocated_size( size_, alignment );
     contiguous_     = true;
     default_layout_ = true;
+
+#ifdef ATLAS_HAVE_FORTRAN
+    allocate_fortran_specs();
+#endif
 };
 
 ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides ) :
@@ -58,7 +62,7 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, Arra
     if ( shape.size() != strides.size() )
         throw eckit::BadParameter( "dimensions of shape and stride don't match", Here() );
 
-    rank_ = shape.size();
+    rank_ = static_cast<int>( shape.size() );
     size_ = 1;
     shape_.resize( rank_ );
     strides_.resize( rank_ );
@@ -72,6 +76,10 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, Arra
     allocated_size_ = compute_allocated_size( shape_[0] * strides_[0], alignment );
     contiguous_     = ( size_ == allocated_size_ );
     default_layout_ = true;
+
+#ifdef ATLAS_HAVE_FORTRAN
+    allocate_fortran_specs();
+#endif
 }
 
 ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, const ArrayLayout& layout ) :
@@ -82,7 +90,7 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, cons
     if ( shape.size() != strides.size() )
         throw eckit::BadParameter( "dimensions of shape and stride don't match", Here() );
 
-    rank_ = shape.size();
+    rank_ = static_cast<int>( shape.size() );
     size_ = 1;
     shape_.resize( rank_ );
     strides_.resize( rank_ );
@@ -97,24 +105,27 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, cons
     }
     allocated_size_ = compute_allocated_size( shape_[layout_[0]] * strides_[layout_[0]], alignment );
     contiguous_     = ( size_ == allocated_size_ );
+
+#ifdef ATLAS_HAVE_FORTRAN
+    allocate_fortran_specs();
+#endif
 }
 
 const std::vector<int>& ArraySpec::shapef() const {
-    if ( shapef_.empty() ) {
-        shapef_.resize( rank_ );
-        for ( idx_t j = 0; j < rank_; ++j ) {
-            shapef_[j] = shape_[rank_ - 1 - layout_[j]];
-        }
-    }
     return shapef_;
 }
 
 const std::vector<int>& ArraySpec::stridesf() const {
-    if ( stridesf_.empty() ) {
-        stridesf_.resize( strides().size() );
-        std::reverse_copy( strides().begin(), strides().end(), stridesf_.begin() );
-    }
     return stridesf_;
+}
+
+void ArraySpec::allocate_fortran_specs() {
+    shapef_.resize( rank_ );
+    for ( idx_t j = 0; j < rank_; ++j ) {
+        shapef_[j] = shape_[rank_ - 1 - layout_[j]];
+    }
+    stridesf_.resize( strides_.size() );
+    std::reverse_copy( strides_.begin(), strides_.end(), stridesf_.begin() );
 }
 
 }  // namespace array
