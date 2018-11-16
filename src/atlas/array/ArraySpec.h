@@ -33,8 +33,8 @@ private:
     ArrayStrides strides_;
     ArrayLayout layout_;
     ArrayAlignment alignment_;
-    mutable std::vector<int> shapef_;
-    mutable std::vector<int> stridesf_;
+    std::vector<int> shapef_;
+    std::vector<int> stridesf_;
     bool contiguous_;
     bool default_layout_;
 
@@ -57,6 +57,9 @@ public:
     const std::vector<int>& stridesf() const;
     bool contiguous() const { return contiguous_; }
     bool hasDefaultLayout() const { return default_layout_; }
+
+private:
+    void allocate_fortran_specs();
 };
 
 //------------------------------------------------------------------------------------------------------
