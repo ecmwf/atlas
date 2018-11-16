@@ -7,6 +7,10 @@
 #include "atlas/grid/Vertical.h"
 #include "eckit/linalg/SparseMatrix.h"
 
+
+#include "atlas/runtime/Log.h"
+#include "eckit/types/Types.h"
+
 using namespace eckit;
 using namespace atlas::functionspace;
 using namespace atlas::util;
@@ -379,6 +383,7 @@ public:
         output         = 0.;
         const auto& wj = weights.weights_j;
         const auto& wk = weights.weights_k;
+
         for ( idx_t j = 0; j < stencil_width(); ++j ) {
             const auto& wi = weights.weights_i[j];
             for ( idx_t i = 0; i < stencil_width(); ++i ) {

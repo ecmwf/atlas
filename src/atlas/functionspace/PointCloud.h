@@ -147,6 +147,8 @@ private:
     mutable Field ghost_;
 };
 
+//------------------------------------------------------------------------------------------------------
+
 }  // namespace detail
 
 //------------------------------------------------------------------------------------------------------
@@ -164,6 +166,7 @@ public:
     bool valid() const { return functionspace_; }
 
     const Field& lonlat() const { return functionspace_->lonlat(); }
+    const Field& vertical() const { return functionspace_->vertical(); }
     const Field& ghost() const { return functionspace_->ghost(); }
 
     detail::PointCloud::Iterate iterate() const { return functionspace_->iterate(); }

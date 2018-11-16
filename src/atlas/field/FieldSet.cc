@@ -20,7 +20,7 @@ namespace field {
 
 //------------------------------------------------------------------------------------------------------
 
-FieldSetImpl::FieldSetImpl( const std::string& name ) : name_() {}
+FieldSetImpl::FieldSetImpl( const std::string& /*name*/ ) : name_() {}
 
 void FieldSetImpl::clear() {
     index_.clear();
@@ -113,6 +113,10 @@ FieldSet::FieldSet( const std::string& name ) : fieldset_( new Implementation( n
 FieldSet::FieldSet( const Implementation* fieldset ) : fieldset_( const_cast<Implementation*>( fieldset ) ) {}
 
 FieldSet::FieldSet( const FieldSet& fieldset ) : fieldset_( fieldset.fieldset_ ) {}
+
+FieldSet::FieldSet( const Field& field ) : fieldset_( new Implementation() ) {
+    fieldset_->add( field );
+}
 
 //------------------------------------------------------------------------------------------------------
 

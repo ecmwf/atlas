@@ -16,21 +16,30 @@
 
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/grid/Vertical.h"
 
 namespace atlas {
 namespace interpolation {
 namespace method {
 
-template <typename Kernel>
-class StructuredInterpolation : public Method {
-public:
-    StructuredInterpolation( const Config& config );
+/**
+ * @class StructuredInterpolation3D
+ *
+ * Three-dimensional interpolation making use of Structure of grid.
+ */
 
-    virtual ~StructuredInterpolation() override {}
+template <typename Kernel>
+class StructuredInterpolation3D : public Method {
+public:
+    StructuredInterpolation3D( const Config& config );
+
+    virtual ~StructuredInterpolation3D() override {}
 
     virtual void setup( const Grid& source, const Grid& target ) override;
 
     virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
+
+    virtual void setup( const FunctionSpace& source, const Field& target ) override;
 
     virtual void print( std::ostream& ) const override;
 
@@ -50,12 +59,12 @@ private:
     template <typename Value, int Rank>
     void execute_impl( const Kernel& kernel, const FieldSet& src, FieldSet& tgt ) const;
 
-    template <typename Value, int Rank>
-    void execute_impl( const Kernel& kernel, const Field& src, Field& tgt ) const;
-
 protected:
-    Field target_lonlat_;
     Field target_ghost_;
+    Field target_lonlat_;
+    Field target_vertical_;
+
+    Field target_3d_;
 
     FunctionSpace source_;
     FunctionSpace target_;
@@ -70,4 +79,4 @@ protected:
 }  // namespace interpolation
 }  // namespace atlas
 
-#include "StructuredInterpolation.tcc"
+#include "StructuredInterpolation3D.tcc"

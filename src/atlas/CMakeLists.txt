@@ -387,10 +387,14 @@ interpolation/method/knn/KNearestNeighboursBase.cc
 interpolation/method/knn/KNearestNeighboursBase.h
 interpolation/method/knn/NearestNeighbour.cc
 interpolation/method/knn/NearestNeighbour.h
-interpolation/method/structured/StructuredInterpolation.tcc
-interpolation/method/structured/StructuredInterpolation.h
+interpolation/method/structured/StructuredInterpolation2D.tcc
+interpolation/method/structured/StructuredInterpolation2D.h
+interpolation/method/structured/StructuredInterpolation3D.tcc
+interpolation/method/structured/StructuredInterpolation3D.h
 interpolation/method/structured/kernels/BicubicKernel.h
+interpolation/method/structured/kernels/TricubicKernel.h
 interpolation/method/structured/Bicubic.cc
+interpolation/method/structured/Tricubic.cc
 )
 
 

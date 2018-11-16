@@ -48,6 +48,8 @@ class ComputeLower {
     double rlevaux_;
 
 public:
+    ComputeLower() = default;
+
     ComputeLower( const Vertical& z );
 
     idx_t operator()( double z ) const {
@@ -171,6 +173,8 @@ class ComputeVerticalStencil {
     double vertical_max_;
 
 public:
+    ComputeVerticalStencil() = default;
+
     ComputeVerticalStencil( const Vertical& vertical, idx_t stencil_width );
 
     template <typename stencil_t>

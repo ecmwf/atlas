@@ -47,7 +47,50 @@ Interpolation::Interpolation( const Config& config, const Grid& source, const Gr
     }
 }
 
+Interpolation::Interpolation( const Config& config, const FunctionSpace& source, const Field& target ) :
+    implementation_( [&]() -> Implementation* {
+        std::string type;
+        ASSERT( config.get( "type", type ) );
+        Implementation* impl = interpolation::MethodFactory::build( type, config );
+        impl->setup( source, target );
+        return impl;
+    }() ) {
+    std::string path;
+    if ( config.get( "output", path ) ) {
+        std::ofstream file( path );
+        print( file );
+    }
+}
+
 Interpolation::Interpolation( const Interpolation& other ) : implementation_( other.implementation_ ) {}
+
+void Interpolation::execute( const FieldSet& source, FieldSet& target ) const {
+    get()->execute( source, target );
+}
+
+void Interpolation::execute( const Field& source, Field& target ) const {
+    get()->execute( source, target );
+}
+
+const Interpolation::Implementation* Interpolation::get() const {
+    return implementation_.get();
+}
+
+void Interpolation::print( std::ostream& out ) const {
+    implementation_->print( out );
+}
+
+const FunctionSpace& Interpolation::source() const {
+    return implementation_->source();
+}
+
+const FunctionSpace& Interpolation::target() const {
+    return implementation_->target();
+}
+
+atlas::Interpolation::operator bool() const {
+    return implementation_;
+}
 
 extern "C" {
 Interpolation::Implementation* atlas__Interpolation__new( const eckit::Parametrisation* config,
@@ -56,6 +99,19 @@ Interpolation::Implementation* atlas__Interpolation__new( const eckit::Parametri
     Interpolation::Implementation* interpolator;
     {
         Interpolation im( *config, FunctionSpace( source ), FunctionSpace( target ) );
+        interpolator = const_cast<Interpolation::Implementation*>( im.get() );
+        interpolator->attach();
+    }
+    interpolator->detach();
+    return interpolator;
+}
+
+Interpolation::Implementation* atlas__Interpolation__new_tgt_field( const eckit::Parametrisation* config,
+                                                                    const functionspace::FunctionSpaceImpl* source,
+                                                                    const field::FieldImpl* target ) {
+    Interpolation::Implementation* interpolator;
+    {
+        Interpolation im( *config, FunctionSpace( source ), Field( target ) );
         interpolator = const_cast<Interpolation::Implementation*>( im.get() );
         interpolator->attach();
     }

@@ -116,6 +116,8 @@ public:  // methods
     FieldSet( const Implementation* );
     FieldSet( const FieldSet& );
 
+    FieldSet( const Field& );
+
     idx_t size() const { return fieldset_->size(); }
     bool empty() const { return fieldset_->empty(); }
 

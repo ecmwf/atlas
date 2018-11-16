@@ -30,6 +30,8 @@ class BicubicKernel {
     using Triplets = std::vector<Triplet>;
 
 public:
+    BicubicKernel() = default;
+
     BicubicKernel( const functionspace::StructuredColumns& fs ) {
         src_ = fs;
         ASSERT( src_ );

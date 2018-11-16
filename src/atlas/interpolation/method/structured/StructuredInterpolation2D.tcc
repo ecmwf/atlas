@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "StructuredInterpolation.h"
+#include "StructuredInterpolation2D.h"
 
 
 #include "eckit/exception/Exceptions.h"
@@ -35,7 +35,7 @@ namespace method {
 
 
 template <typename Kernel>
-StructuredInterpolation<Kernel>::StructuredInterpolation( const Method::Config& config ) :
+StructuredInterpolation2D<Kernel>::StructuredInterpolation2D( const Method::Config& config ) :
     Method( config ),
     matrix_free_{false} {
     config.get( "matrix_free", matrix_free_ );
@@ -43,7 +43,7 @@ StructuredInterpolation<Kernel>::StructuredInterpolation( const Method::Config& 
 
 
 template <typename Kernel>
-void StructuredInterpolation<Kernel>::setup( const Grid& source, const Grid& target ) {
+void StructuredInterpolation2D<Kernel>::setup( const Grid& source, const Grid& target ) {
     if ( mpi::comm().size() > 1 ) { NOTIMP; }
 
 
@@ -56,7 +56,7 @@ void StructuredInterpolation<Kernel>::setup( const Grid& source, const Grid& tar
 
 
 template <typename Kernel>
-void StructuredInterpolation<Kernel>::setup( const FunctionSpace& source, const FunctionSpace& target ) {
+void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, const FunctionSpace& target ) {
     ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::setup()" );
 
     source_ = source;
@@ -79,13 +79,13 @@ void StructuredInterpolation<Kernel>::setup( const FunctionSpace& source, const 
 
 
 template <typename Kernel>
-void StructuredInterpolation<Kernel>::print( std::ostream& ) const {
+void StructuredInterpolation2D<Kernel>::print( std::ostream& ) const {
     NOTIMP;
 }
 
 
 template <typename Kernel>
-void StructuredInterpolation<Kernel>::setup( const FunctionSpace& source ) {
+void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
     kernel_.reset( new Kernel( source ) );
 
     if ( not matrix_free_ ) {
@@ -118,41 +118,14 @@ void StructuredInterpolation<Kernel>::setup( const FunctionSpace& source ) {
 
 
 template <typename Kernel>
-void StructuredInterpolation<Kernel>::execute( const Field& src_field, Field& tgt_field ) const {
-    if ( not matrix_free_ ) {
-        Method::execute( src_field, tgt_field );
-        return;
-    }
-
-    if ( src_field.dirty() ) { source().haloExchange( const_cast<Field&>( src_field ) ); }
-
-    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::execute()" );
-
-    array::DataType datatype = src_field.datatype();
-    int rank                 = src_field.rank();
-
-    ASSERT( tgt_field.datatype() == datatype );
-    ASSERT( tgt_field.rank() == rank );
-
-    if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 1 ) {
-        execute_impl<double, 1>( *kernel_, src_field, tgt_field );
-    }
-    if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 1 ) {
-        execute_impl<float, 1>( *kernel_, src_field, tgt_field );
-    }
-    if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 2 ) {
-        execute_impl<double, 2>( *kernel_, src_field, tgt_field );
-    }
-    if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 2 ) {
-        execute_impl<float, 2>( *kernel_, src_field, tgt_field );
-    }
-
-    tgt_field.set_dirty();
+void StructuredInterpolation2D<Kernel>::execute( const Field& src_field, Field& tgt_field ) const {
+    FieldSet tgt( tgt_field );
+    execute( FieldSet( src_field ), tgt );
 }
 
 
 template <typename Kernel>
-void StructuredInterpolation<Kernel>::execute( const FieldSet& src_fields, FieldSet& tgt_fields ) const {
+void StructuredInterpolation2D<Kernel>::execute( const FieldSet& src_fields, FieldSet& tgt_fields ) const {
     if ( not matrix_free_ ) {
         Method::execute( src_fields, tgt_fields );
         return;
@@ -200,8 +173,8 @@ void StructuredInterpolation<Kernel>::execute( const FieldSet& src_fields, Field
 
 template <typename Kernel>
 template <typename Value, int Rank>
-void StructuredInterpolation<Kernel>::execute_impl( const Kernel& kernel, const FieldSet& src_fields,
-                                                    FieldSet& tgt_fields ) const {
+void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, const FieldSet& src_fields,
+                                                      FieldSet& tgt_fields ) const {
     const idx_t N  = src_fields.size();
     idx_t out_npts = target_lonlat_.shape( 0 );
 
@@ -231,35 +204,6 @@ void StructuredInterpolation<Kernel>::execute_impl( const Kernel& kernel, const 
                 for ( idx_t i = 0; i < N; ++i ) {
                     kernel.interpolate( stencil, weights, src_view[i], tgt_view[i], n );
                 }
-            }
-        }
-    }
-}
-
-
-template <typename Kernel>
-template <typename Value, int Rank>
-void StructuredInterpolation<Kernel>::execute_impl( const Kernel& kernel, const Field& src_field,
-                                                    Field& tgt_field ) const {
-    idx_t out_npts = target_lonlat_.shape( 0 );
-
-    auto ghost  = array::make_view<int, 1>( target_ghost_ );
-    auto lonlat = array::make_view<double, 2>( target_lonlat_ );
-
-    const auto src_view = array::make_view<Value, Rank>( src_field );
-    auto tgt_view       = array::make_view<Value, Rank>( tgt_field );
-
-    constexpr NormaliseLongitude normalise( 0., 360. );  // includes 360 as well!
-    atlas_omp_parallel {
-        typename Kernel::Stencil stencil;
-        typename Kernel::Weights weights;
-        atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
-            if ( not ghost( n ) ) {
-                PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
-                normalise( p );
-                kernel.compute_stencil( p.lon(), p.lat(), stencil );
-                kernel.compute_weights( p.lon(), p.lat(), stencil, weights );
-                kernel.interpolate( stencil, weights, src_view, tgt_view, n );
             }
         }
     }

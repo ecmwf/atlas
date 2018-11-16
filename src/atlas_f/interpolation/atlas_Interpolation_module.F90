@@ -41,6 +41,7 @@ END TYPE atlas_Interpolation
 interface atlas_Interpolation
   module procedure atlas_Interpolation__cptr
   module procedure atlas_Interpolation__config_funcspace
+  module procedure atlas_Interpolation__config_funcspace_field
 end interface
 
 !========================================================
@@ -63,6 +64,19 @@ function atlas_Interpolation__config_funcspace(config,source,target) result(this
   class(atlas_FunctionSpace), intent(in) :: source
   class(atlas_FunctionSpace), intent(in) :: target
   this = atlas_Interpolation__cptr(atlas__interpolation__new(config%c_ptr(),source%c_ptr(),target%c_ptr()))
+  call this%return()
+end function
+
+function atlas_Interpolation__config_funcspace_field(config,source,target) result(this)
+  use atlas_Interpolation_c_binding
+  use atlas_Config_module, only : atlas_Config
+  use atlas_FunctionSpace_module, only : atlas_FunctionSpace
+  use atlas_Field_module, only : atlas_Field
+  type(atlas_Interpolation) :: this
+  type(atlas_Config), intent(in) :: config
+  class(atlas_FunctionSpace), intent(in) :: source
+  class(atlas_Field), intent(in) :: target
+  this = atlas_Interpolation__cptr(atlas__interpolation__new_tgt_field(config%c_ptr(),source%c_ptr(),target%c_ptr()))
   call this%return()
 end function
 

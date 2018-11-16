@@ -96,97 +96,124 @@ Method* MethodFactory::build( const std::string& name, const Method::Config& con
     return ( *j ).second->make( config );
 }
 
-namespace {
-template <typename Value>
-void interpolate_field( const Field& src, Field& tgt, const eckit::linalg::SparseMatrix& matrix ) {
+void Method::check_compatibility( const Field& src, const Field& tgt ) const {
     ASSERT( src.datatype() == tgt.datatype() );
     ASSERT( src.rank() == tgt.rank() );
     ASSERT( src.levels() == tgt.levels() );
     ASSERT( src.variables() == tgt.variables() );
 
-    ASSERT( !matrix.empty() );
-    ASSERT( tgt.shape( 0 ) == static_cast<idx_t>( matrix.rows() ) );
-    ASSERT( src.shape( 0 ) == static_cast<idx_t>( matrix.cols() ) );
+    ASSERT( !matrix_.empty() );
+    ASSERT( tgt.shape( 0 ) == static_cast<idx_t>( matrix_.rows() ) );
+    ASSERT( src.shape( 0 ) == static_cast<idx_t>( matrix_.cols() ) );
+}
 
-    const auto outer  = matrix.outer();
-    const auto index  = matrix.inner();
-    const auto weight = matrix.data();
-    idx_t rows        = static_cast<idx_t>( matrix.rows() );
+template <typename Value>
+void Method::interpolate_field( const Field& src, Field& tgt ) const {
+    check_compatibility( src, tgt );
+    if ( src.rank() == 1 ) { interpolate_field_rank1<Value>( src, tgt ); }
+    if ( src.rank() == 2 ) { interpolate_field_rank2<Value>( src, tgt ); }
+    if ( src.rank() == 3 ) { interpolate_field_rank3<Value>( src, tgt ); }
+}
 
-    bool eckit_linalg_backend = false;
+template <typename Value>
+void Method::interpolate_field_rank1( const Field& src, Field& tgt ) const {
+    const auto outer  = matrix_.outer();
+    const auto index  = matrix_.inner();
+    const auto weight = matrix_.data();
+    idx_t rows        = static_cast<idx_t>( matrix_.rows() );
 
-    if ( src.rank() == 1 ) {
-        if ( eckit_linalg_backend ) {
-            if ( src.datatype() != array::make_datatype<double>() ) {
-                throw eckit::NotImplemented(
-                    "Only double precision interpolation is currently implemented with eckit backend", Here() );
-            }
-            ASSERT( src.array().contiguous() );
-            ASSERT( tgt.array().contiguous() );
-
-            eckit::linalg::Vector v_src( array::make_view<double, 1>( src ).data(), src.shape( 0 ) );
-            eckit::linalg::Vector v_tgt( array::make_view<double, 1>( tgt ).data(), tgt.shape( 0 ) );
-            eckit::linalg::LinearAlgebra::backend().spmv( matrix, v_src, v_tgt );
+    if ( use_eckit_linalg_spmv_ ) {
+        if ( src.datatype() != array::make_datatype<double>() ) {
+            throw eckit::NotImplemented(
+                "Only double precision interpolation is currently implemented with eckit backend", Here() );
         }
-        else {
-            auto v_src = array::make_view<Value, 1>( src );
-            auto v_tgt = array::make_view<Value, 1>( tgt );
+        ASSERT( src.array().contiguous() );
+        ASSERT( tgt.array().contiguous() );
 
-            atlas_omp_parallel_for( idx_t r = 0; r < rows; ++r ) {
-                v_tgt( r ) = 0.;
-                for ( idx_t c = outer[r]; c < outer[r + 1]; ++c ) {
-                    idx_t n = index[c];
-                    Value w = static_cast<Value>( weight[c] );
-                    v_tgt( r ) += w * v_src( n );
-                }
-            }
-        }
+        eckit::linalg::Vector v_src( array::make_view<double, 1>( src ).data(), src.shape( 0 ) );
+        eckit::linalg::Vector v_tgt( array::make_view<double, 1>( tgt ).data(), tgt.shape( 0 ) );
+        eckit::linalg::LinearAlgebra::backend().spmv( matrix_, v_src, v_tgt );
     }
     else {
-        if ( src.rank() == 2 ) {
-            auto v_src = array::make_view<Value, 2>( src );
-            auto v_tgt = array::make_view<Value, 2>( tgt );
+        auto v_src = array::make_view<Value, 1>( src );
+        auto v_tgt = array::make_view<Value, 1>( tgt );
 
-            idx_t Nk = src.shape( 1 );
-
-            atlas_omp_parallel_for( idx_t r = 0; r < rows; ++r ) {
-                for ( idx_t k = 0; k < Nk; ++k ) {
-                    v_tgt( r, k ) = 0.;
-                }
-                for ( idx_t c = outer[r]; c < outer[r + 1]; ++c ) {
-                    idx_t n = index[c];
-                    Value w = static_cast<Value>( weight[c] );
-                    for ( idx_t k = 0; k < Nk; ++k )
-                        v_tgt( r, k ) += w * v_src( n, k );
-                }
-            }
-        }
-        if ( src.rank() == 3 ) {
-            auto v_src = array::make_view<Value, 3>( src );
-            auto v_tgt = array::make_view<Value, 3>( tgt );
-
-            idx_t Nk = src.shape( 1 );
-            idx_t Nl = src.shape( 2 );
-
-            atlas_omp_parallel_for( idx_t r = 0; r < rows; ++r ) {
-                for ( idx_t k = 0; k < Nk; ++k ) {
-                    for ( idx_t l = 0; l < Nl; ++l ) {
-                        v_tgt( r, k, l ) = 0.;
-                    }
-                }
-                for ( idx_t c = outer[r]; c < outer[r + 1]; ++c ) {
-                    idx_t n = index[c];
-                    Value w = static_cast<Value>( weight[c] );
-                    for ( idx_t k = 0; k < Nk; ++k )
-                        for ( idx_t l = 0; l < Nl; ++l )
-                            v_tgt( r, k, l ) += w * v_src( n, k, l );
-                }
+        atlas_omp_parallel_for( idx_t r = 0; r < rows; ++r ) {
+            v_tgt( r ) = 0.;
+            for ( idx_t c = outer[r]; c < outer[r + 1]; ++c ) {
+                idx_t n = index[c];
+                Value w = static_cast<Value>( weight[c] );
+                v_tgt( r ) += w * v_src( n );
             }
         }
     }
-    tgt.set_dirty();
 }
-}  // namespace
+
+template <typename Value>
+void Method::interpolate_field_rank2( const Field& src, Field& tgt ) const {
+    const auto outer  = matrix_.outer();
+    const auto index  = matrix_.inner();
+    const auto weight = matrix_.data();
+    idx_t rows        = static_cast<idx_t>( matrix_.rows() );
+
+    auto v_src = array::make_view<Value, 2>( src );
+    auto v_tgt = array::make_view<Value, 2>( tgt );
+
+    idx_t Nk = src.shape( 1 );
+
+    atlas_omp_parallel_for( idx_t r = 0; r < rows; ++r ) {
+        for ( idx_t k = 0; k < Nk; ++k ) {
+            v_tgt( r, k ) = 0.;
+        }
+        for ( idx_t c = outer[r]; c < outer[r + 1]; ++c ) {
+            idx_t n = index[c];
+            Value w = static_cast<Value>( weight[c] );
+            for ( idx_t k = 0; k < Nk; ++k )
+                v_tgt( r, k ) += w * v_src( n, k );
+        }
+    }
+}
+
+
+template <typename Value>
+void Method::interpolate_field_rank3( const Field& src, Field& tgt ) const {
+    const auto outer  = matrix_.outer();
+    const auto index  = matrix_.inner();
+    const auto weight = matrix_.data();
+    idx_t rows        = static_cast<idx_t>( matrix_.rows() );
+
+    auto v_src = array::make_view<Value, 3>( src );
+    auto v_tgt = array::make_view<Value, 3>( tgt );
+
+    idx_t Nk = src.shape( 1 );
+    idx_t Nl = src.shape( 2 );
+
+    atlas_omp_parallel_for( idx_t r = 0; r < rows; ++r ) {
+        for ( idx_t k = 0; k < Nk; ++k ) {
+            for ( idx_t l = 0; l < Nl; ++l ) {
+                v_tgt( r, k, l ) = 0.;
+            }
+        }
+        for ( idx_t c = outer[r]; c < outer[r + 1]; ++c ) {
+            idx_t n = index[c];
+            Value w = static_cast<Value>( weight[c] );
+            for ( idx_t k = 0; k < Nk; ++k )
+                for ( idx_t l = 0; l < Nl; ++l )
+                    v_tgt( r, k, l ) += w * v_src( n, k, l );
+        }
+    }
+}
+
+
+Method::Method( const Method::Config& config ) {
+    std::string spmv = "";
+    config.get( "spmv", spmv );
+    use_eckit_linalg_spmv_ = ( spmv == "eckit" );
+}
+
+void Method::setup( const FunctionSpace& /*source*/, const Field& /*target*/ ) {
+    NOTIMP;
+}
 
 void Method::execute( const FieldSet& fieldsSource, FieldSet& fieldsTarget ) const {
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
@@ -196,14 +223,7 @@ void Method::execute( const FieldSet& fieldsSource, FieldSet& fieldsTarget ) con
 
     for ( idx_t i = 0; i < fieldsSource.size(); ++i ) {
         Log::debug() << "Method::execute() on field " << ( i + 1 ) << '/' << N << "..." << std::endl;
-
-        const Field& src = fieldsSource[i];
-        Field& tgt       = fieldsTarget[i];
-
-        if ( src.dirty() ) { source().haloExchange( const_cast<Field&>( src ) ); }
-
-        if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) { interpolate_field<double>( src, tgt, matrix_ ); }
-        if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) { interpolate_field<float>( src, tgt, matrix_ ); }
+        Method::execute( fieldsSource[i], fieldsTarget[i] );
     }
 }
 
@@ -212,8 +232,10 @@ void Method::execute( const Field& src, Field& tgt ) const {
 
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
 
-    if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) { interpolate_field<double>( src, tgt, matrix_ ); }
-    if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) { interpolate_field<float>( src, tgt, matrix_ ); }
+    if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) { interpolate_field<double>( src, tgt ); }
+    if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) { interpolate_field<float>( src, tgt ); }
+
+    tgt.set_dirty();
 }
 
 void Method::normalise( Triplets& triplets ) {

@@ -8,20 +8,20 @@
  * nor does it submit to any jurisdiction. and Interpolation
  */
 
-#include "StructuredInterpolation2D.h"
-#include "kernels/BicubicKernel.h"
+#include "StructuredInterpolation3D.h"
+#include "kernels/TricubicKernel.h"
 
 
 namespace atlas {
 namespace interpolation {
 namespace method {
 
-using Bicubic = StructuredInterpolation2D<BicubicKernel>;
+using Tricubic = StructuredInterpolation3D<TricubicKernel>;
 
 namespace {
 
-static MethodBuilder<Bicubic> __builder1( "structured-bicubic" );
-static MethodBuilder<Bicubic> __builder2( "bicubic" );
+static MethodBuilder<Tricubic> __builder1( "structured-tricubic" );
+static MethodBuilder<Tricubic> __builder2( "tricubic" );
 
 }  // namespace
 

@@ -243,8 +243,8 @@ CASE( "test 3d cubic interpolation" ) {
     config.set( "periodic_points", true );
     StructuredColumns fs( grid, vertical, Partitioner( "equal_regions" ), config );
 
-    Field field   = fs.createField<double>();
-    auto f        = array::make_view<double, 2>( field );
+    Field input   = fs.createField<double>();
+    auto f        = array::make_view<double, 2>( input );
     auto xy       = array::make_view<double, 2>( fs.xy() );
     const auto& z = fs.vertical();
 
@@ -263,8 +263,8 @@ CASE( "test 3d cubic interpolation" ) {
             f( n, k ) = fp( p );
         }
     }
+    input.set_dirty( false );  // to avoid halo-exchange
 
-    Cubic3DInterpolation cubic_interpolation( fs );
 
     auto departure_points = PointCloud(
         PointXYZ(), {
@@ -277,11 +277,81 @@ CASE( "test 3d cubic interpolation" ) {
                         {90., -45., 0.1},
                     } );
 
-    for ( auto p : departure_points.iterate().xyz() ) {
-        double interpolated = cubic_interpolation( p, f );
-        double exact        = fp( p );
-        Log::info() << p << "  -->  " << interpolated << std::endl;
-        EXPECT( is_approximately_equal( interpolated, exact ) );
+    SECTION( "prototype" ) {
+        Cubic3DInterpolation cubic_interpolation( fs );
+
+        for ( auto p : departure_points.iterate().xyz() ) {
+            double interpolated = cubic_interpolation( p, f );
+            double exact        = fp( p );
+            Log::info() << p << "  -->  " << interpolated << "      [exact] " << exact << std::endl;
+            EXPECT( is_approximately_equal( interpolated, exact ) );
+        }
+    }
+
+    SECTION( "official version" ) {
+        auto matrix_free = Config( "matrix_free", true );
+        Interpolation interpolation( option::type( "tricubic" ) | matrix_free, fs, departure_points );
+
+        Field output = Field( "output", make_datatype<double>(), make_shape( departure_points.size() ) );
+        interpolation.execute( input, output );
+
+        auto output_view = array::make_view<double, 1>( output );
+        idx_t n{0};
+        for ( auto p : departure_points.iterate().xyz() ) {
+            double interpolated = output_view( n++ );
+            double exact        = fp( p );
+            Log::info() << p << "  -->  " << interpolated << "      [exact] " << exact << std::endl;
+            EXPECT( is_approximately_equal( interpolated, exact ) );
+        }
+    }
+
+    SECTION( "SL-like" ) {
+        auto matrix_free = Config( "matrix_free", true );
+
+        auto dp_field = fs.createField<double>( option::variables( 3 ) );
+
+        {
+            auto iterator     = departure_points.iterate().xyz().begin();
+            auto iterator_end = departure_points.iterate().xyz().end();
+            auto dp           = array::make_view<double, 3>( dp_field );
+            for ( idx_t n = 0; n < dp.shape( 0 ); ++n ) {
+                for ( idx_t k = 0; k < dp.shape( 1 ); ++k ) {
+                    PointXYZ p{0, 0, 0};
+                    if ( iterator != iterator_end ) {
+                        p = *iterator;
+                        ++iterator;
+                    }
+                    dp( n, k, LON ) = p.x();
+                    dp( n, k, LAT ) = p.y();
+                    dp( n, k, ZZ )  = p.z();
+                }
+            }
+        }
+        Interpolation interpolation( option::type( "tricubic" ) | matrix_free, fs, dp_field );
+
+        Field output = fs.createField<double>();
+        interpolation.execute( input, output );
+
+        auto output_view = array::make_view<double, 2>( output );
+
+
+        auto iterator     = departure_points.iterate().xyz().begin();
+        auto iterator_end = departure_points.iterate().xyz().end();
+
+        for ( idx_t n = 0; n < output_view.shape( 0 ); ++n ) {
+            for ( idx_t k = 0; k < output_view.shape( 1 ); ++k ) {
+                PointXYZ p{0, 0, 0};
+                if ( iterator != iterator_end ) {
+                    p = *iterator;
+                    ++iterator;
+
+                    double interpolated = output_view( n, k );
+                    double exact        = fp( p );
+                    Log::info() << p << "  -->  " << interpolated << "      [exact] " << exact << std::endl;
+                    EXPECT( is_approximately_equal( interpolated, exact ) );
+                }
+            }
+        }
     }
 }
 

@@ -10,16 +10,22 @@
 
 #pragma once
 
-#include "eckit/config/Configuration.h"
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/interpolation/method/Method.h"
+
+namespace eckit {
+class Parametrisation;
+}
 
 namespace atlas {
 class Field;
 class FieldSet;
 class FunctionSpace;
 class Grid;
+namespace interpolation {
+class Method;
+}
 }  // namespace atlas
 
 namespace atlas {
@@ -27,27 +33,28 @@ namespace atlas {
 class Interpolation {
 public:
     using Implementation = interpolation::Method;
-    using Config         = Implementation::Config;
+    using Config         = eckit::Parametrisation;
 
     Interpolation() {}
     Interpolation( const Interpolation& );
     Interpolation( const Config&, const FunctionSpace& source, const FunctionSpace& target );
+    Interpolation( const Config&, const FunctionSpace& source, const Field& target );
     Interpolation( const Config&, const Grid& source, const Grid& target );
 
-    void execute( const FieldSet& source, FieldSet& target ) const { get()->execute( source, target ); }
-    void execute( const Field& source, Field& target ) const { get()->execute( source, target ); }
+    void execute( const FieldSet& source, FieldSet& target ) const;
+    void execute( const Field& source, Field& target ) const;
 
-    const Implementation* get() const { return implementation_.get(); }
+    const Implementation* get() const;
 
-    operator bool() const { return implementation_; }
+    operator bool() const;
 
-    void print( std::ostream& out ) const { implementation_->print( out ); }
+    void print( std::ostream& out ) const;
 
-    const FunctionSpace& source() const { return implementation_->source(); }
-    const FunctionSpace& target() const { return implementation_->target(); }
+    const FunctionSpace& source() const;
+    const FunctionSpace& target() const;
 
 private:
-    eckit::SharedPtr<const Implementation> implementation_;
+    eckit::SharedPtr<Implementation> implementation_;
 };
 
 /// C-interface
@@ -65,6 +72,11 @@ extern "C" {
 Interpolation::Implementation* atlas__Interpolation__new( const eckit::Parametrisation* config,
                                                           const functionspace::FunctionSpaceImpl* source,
                                                           const functionspace::FunctionSpaceImpl* target );
+
+Interpolation::Implementation* atlas__Interpolation__new_tgt_field( const eckit::Parametrisation* config,
+                                                                    const functionspace::FunctionSpaceImpl* source,
+                                                                    const field::FieldImpl* target );
+
 void atlas__Interpolation__delete( Interpolation::Implementation* This );
 void atlas__Interpolation__execute_field( Interpolation::Implementation* This, const field::FieldImpl* source,
                                           field::FieldImpl* target );

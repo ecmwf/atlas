@@ -33,7 +33,7 @@ class Method : public eckit::Owned {
 public:
     typedef eckit::Parametrisation Config;
 
-    Method( const Config& config ) : config_( config ) {}
+    Method( const Config& );
     virtual ~Method() {}
 
     /**
@@ -44,6 +44,8 @@ public:
     virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
 
     virtual void setup( const Grid& source, const Grid& target ) = 0;
+
+    virtual void setup( const FunctionSpace& source, const Field& target );
 
     virtual void execute( const FieldSet& source, FieldSet& target ) const;
     virtual void execute( const Field& source, Field& target ) const;
@@ -60,13 +62,30 @@ protected:
 
     static void normalise( Triplets& triplets );
 
-    const Config& config_;
+    //const Config& config_;
 
     // NOTE : Matrix-free or non-linear interpolation operators do not have
     // matrices,
     //        so do not expose here, even though only linear operators are now
     //        implemented.
     Matrix matrix_;
+
+    bool use_eckit_linalg_spmv_;
+
+private:
+    template <typename Value>
+    void interpolate_field( const Field& src, Field& tgt ) const;
+
+    template <typename Value>
+    void interpolate_field_rank1( const Field& src, Field& tgt ) const;
+
+    template <typename Value>
+    void interpolate_field_rank2( const Field& src, Field& tgt ) const;
+
+    template <typename Value>
+    void interpolate_field_rank3( const Field& src, Field& tgt ) const;
+
+    void check_compatibility( const Field& src, const Field& tgt ) const;
 };
 
 struct MethodFactory {
