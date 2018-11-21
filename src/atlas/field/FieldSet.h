@@ -87,6 +87,9 @@ private:
     [[noreturn]] static void throw_OutOfRange( idx_t index, idx_t max );
 };
 
+
+class FieldImpl;
+
 // C wrapper interfaces to C++ routines
 extern "C" {
 FieldSetImpl* atlas__FieldSet__new( char* name );

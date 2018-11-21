@@ -12,9 +12,15 @@
 
 #include "eckit/memory/Owned.h"
 
-#include "atlas/grid/Distribution.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/mesh/Mesh.h"
+#include "atlas/library/config.h"
+
+namespace atlas {
+class Grid;
+class Mesh;
+namespace grid {
+class Distribution;
+}  // namespace grid
+}  // namespace atlas
 
 namespace atlas {
 namespace grid {

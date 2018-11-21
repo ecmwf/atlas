@@ -20,7 +20,7 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/domain.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
@@ -38,8 +38,8 @@
 
 using atlas::mesh::detail::accumulate_facets_ordered_by_halo;
 using Topology = atlas::mesh::Nodes::Topology;
-using atlas::util::microdeg;
 using atlas::util::UniqueLonLat;
+using atlas::util::microdeg;
 
 namespace atlas {
 namespace mesh {

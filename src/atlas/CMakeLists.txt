@@ -123,6 +123,9 @@ grid/detail/grid/LonLat.cc
 grid/detail/grid/Regional.h
 grid/detail/grid/Regional.cc
 
+grid/detail/distribution/DistributionImpl.h
+grid/detail/distribution/DistributionImpl.cc
+
 grid/detail/partitioner/CheckerboardPartitioner.cc
 grid/detail/partitioner/CheckerboardPartitioner.h
 grid/detail/partitioner/EqualRegionsPartitioner.cc
@@ -294,6 +297,8 @@ field/State.h
 field/State.cc
 field/detail/FieldImpl.h
 field/detail/FieldImpl.cc
+field/detail/FieldInterface.h
+field/detail/FieldInterface.cc
 )
 
 list( APPEND atlas_functionspace_srcs
@@ -304,14 +309,20 @@ functionspace/FunctionSpace.h
 functionspace/FunctionSpace.cc
 functionspace/NodeColumns.h
 functionspace/NodeColumns.cc
-functionspace/NodeColumnsInterface.h
-functionspace/NodeColumnsInterface.cc
 functionspace/StructuredColumns.h
 functionspace/StructuredColumns.cc
 functionspace/Spectral.h
 functionspace/Spectral.cc
 functionspace/PointCloud.h
 functionspace/PointCloud.cc
+functionspace/detail/FunctionSpaceImpl.h
+functionspace/detail/FunctionSpaceImpl.cc
+functionspace/detail/FunctionSpaceInterface.h
+functionspace/detail/FunctionSpaceInterface.cc
+functionspace/detail/NodeColumnsInterface.h
+functionspace/detail/NodeColumnsInterface.cc
+functionspace/detail/StructuredColumnsInterface.h
+functionspace/detail/StructuredColumnsInterface.cc
 )
 
 list( APPEND atlas_numerics_srcs

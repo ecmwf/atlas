@@ -15,6 +15,7 @@
 #include "eckit/exception/Exceptions.h"
 
 #include "atlas/grid/detail/partitioner/Partitioner.h"
+#include "atlas/mesh/Mesh.h"
 
 namespace atlas {
 namespace grid {

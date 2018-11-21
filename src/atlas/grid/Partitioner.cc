@@ -9,9 +9,14 @@
  */
 
 #include "atlas/grid/Partitioner.h"
+#include "atlas/grid/Distribution.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/grid/detail/distribution/DistributionImpl.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace grid {
@@ -47,6 +52,10 @@ void Partitioner::partition( const Grid& grid, int part[] ) const {
     partitioner_->partition( grid, part );
 }
 
+Distribution Partitioner::partition( const Grid& grid ) const {
+    return Distribution( grid, *this );
+}
+
 MatchingMeshPartitioner::MatchingMeshPartitioner() : Partitioner() {}
 
 grid::detail::partitioner::Partitioner* matching_mesh_partititioner( const Mesh& mesh,
@@ -55,6 +64,10 @@ grid::detail::partitioner::Partitioner* matching_mesh_partititioner( const Mesh&
     config.get( "type", type );
     return MatchedPartitionerFactory::build( type, mesh );
 }
+
+MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh ) :
+    MatchingMeshPartitioner( mesh, util::NoConfig() ) {}
+
 
 MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh, const Config& config ) :
     Partitioner( matching_mesh_partititioner( mesh, config ) ) {}
@@ -84,12 +97,12 @@ detail::partitioner::Partitioner* atlas__grid__MatchingMeshPartitioner__new( con
     return p;
 }
 
-Distribution::impl_t* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This,
-                                                           const Grid::Implementation* grid ) {
-    Distribution::impl_t* d;
+Distribution::Implementation* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This,
+                                                                   const Grid::Implementation* grid ) {
+    Distribution::Implementation* d;
     {
         Distribution distribution = This->partition( Grid( grid ) );
-        d                         = const_cast<Distribution::impl_t*>( distribution.get() );
+        d                         = const_cast<Distribution::Implementation*>( distribution.get() );
         d->attach();
     }
     d->detach();

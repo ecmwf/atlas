@@ -11,6 +11,7 @@ use atlas_Grid_module, only: atlas_Grid
 use atlas_Config_module, only: atlas_Config
 use atlas_kinds_module, only : ATLAS_KIND_IDX
 use fckit_owned_object_module, only : fckit_owned_object
+use atlas_GridDistribution_module, only : atlas_GridDistribution
 
 implicit none
 
@@ -20,6 +21,7 @@ private :: atlas_FunctionSpace
 private :: atlas_Field
 private :: atlas_FieldSet
 private :: atlas_Grid
+private :: atlas_GridDistribution
 private :: atlas_Config
 private :: fckit_owned_object
 
@@ -90,6 +92,7 @@ END TYPE atlas_functionspace_StructuredColumns
 interface atlas_functionspace_StructuredColumns
   module procedure StructuredColumns__cptr
   module procedure StructuredColumns__grid
+  module procedure StructuredColumns__grid_dist
 end interface
 
 
@@ -135,6 +138,25 @@ function StructuredColumns__grid(grid, halo, levels) result(this)
   call config%final()
   call this%return()
 end function
+
+function StructuredColumns__grid_dist(grid, distribution, halo, levels) result(this)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_functionspace_StructuredColumns) :: this
+  class(atlas_Grid), intent(in) :: grid
+  type(atlas_griddistribution), intent(in) :: distribution
+  integer, optional :: halo
+  integer, optional :: levels
+  type(atlas_Config) :: config
+  config = empty_config() ! Due to PGI compiler bug, we have to do this instead of "config = atlas_Config()""
+  if( present(halo) )   call config%set("halo",halo)
+  if( present(levels) ) call config%set("levels",levels)
+  call this%reset_c_ptr( atlas__functionspace__StructuredColumns__new__grid_dist( &
+      & grid%c_ptr(), distribution%c_ptr(), config%c_ptr() ) )
+  call this%set_index()
+  call config%final()
+  call this%return()
+end function
+
 
 subroutine gather(this,local,global)
   use atlas_functionspace_StructuredColumns_c_binding

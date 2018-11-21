@@ -19,6 +19,7 @@
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
+#include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
@@ -38,8 +39,8 @@ namespace meshgenerator {
 
 namespace {
 
-static eckit::Mutex* local_mutex                       = 0;
-static std::map<std::string, MeshGeneratorFactory*>* m = 0;
+static eckit::Mutex* local_mutex                       = nullptr;
+static std::map<std::string, MeshGeneratorFactory*>* m = nullptr;
 static pthread_once_t once                             = PTHREAD_ONCE_INIT;
 
 static void init() {
@@ -94,14 +95,16 @@ Mesh MeshGeneratorImpl::generate( const Grid& grid, const grid::Distribution& di
 //----------------------------------------------------------------------------------------------------------------------
 
 void MeshGeneratorImpl::generateGlobalElementNumbering( Mesh& mesh ) const {
-    size_t loc_nb_elems = mesh.cells().size();
-    std::vector<size_t> elem_counts( mpi::comm().size() );
-    std::vector<int> elem_displs( mpi::comm().size() );
+    idx_t mpi_size = static_cast<idx_t>( mpi::comm().size() );
+
+    gidx_t loc_nb_elems = mesh.cells().size();
+    std::vector<gidx_t> elem_counts( mpi_size );
+    std::vector<gidx_t> elem_displs( mpi_size );
 
     ATLAS_TRACE_MPI( ALLGATHER ) { mpi::comm().allGather( loc_nb_elems, elem_counts.begin(), elem_counts.end() ); }
 
     elem_displs.at( 0 ) = 0;
-    for ( size_t jpart = 1; jpart < mpi::comm().size(); ++jpart ) {
+    for ( idx_t jpart = 1; jpart < mpi_size; ++jpart ) {
         elem_displs.at( jpart ) = elem_displs.at( jpart - 1 ) + elem_counts.at( jpart - 1 );
     }
 
@@ -109,11 +112,11 @@ void MeshGeneratorImpl::generateGlobalElementNumbering( Mesh& mesh ) const {
 
     array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
 
-    for ( size_t jelem = 0; jelem < mesh.cells().size(); ++jelem ) {
+    for ( idx_t jelem = 0; jelem < mesh.cells().size(); ++jelem ) {
         glb_idx( jelem ) = gid++;
     }
 
-    size_t max_glb_idx = std::accumulate( elem_counts.begin(), elem_counts.end(), size_t( 0 ) );
+    gidx_t max_glb_idx = std::accumulate( elem_counts.begin(), elem_counts.end(), gidx_t( 0 ) );
 
     mesh.cells().global_index().metadata().set( "human_readable", true );
     mesh.cells().global_index().metadata().set( "min", 1 );
@@ -213,7 +216,7 @@ void atlas__MeshGenerator__delete( MeshGenerator::Implementation* This ) {
 }
 
 const MeshGenerator::Implementation* atlas__MeshGenerator__create_noconfig( const char* name ) {
-    const MeshGenerator::Implementation* meshgenerator( 0 );
+    const MeshGenerator::Implementation* meshgenerator( nullptr );
     ATLAS_ERROR_HANDLING( {
         MeshGenerator m( std::string{name} );
         meshgenerator = m.get();
@@ -224,7 +227,7 @@ const MeshGenerator::Implementation* atlas__MeshGenerator__create_noconfig( cons
 
 const MeshGenerator::Implementation* atlas__MeshGenerator__create( const char* name,
                                                                    const eckit::Parametrisation* params ) {
-    const MeshGenerator::Implementation* meshgenerator( 0 );
+    const MeshGenerator::Implementation* meshgenerator( nullptr );
     ATLAS_ERROR_HANDLING( ASSERT( params ); {
         MeshGenerator m( std::string( name ), *params );
         meshgenerator = m.get();
@@ -233,9 +236,9 @@ const MeshGenerator::Implementation* atlas__MeshGenerator__create( const char* n
     return meshgenerator;
 }
 
-Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist( const MeshGenerator::Implementation* This,
-                                                                     const Grid::Implementation* grid,
-                                                                     const grid::Distribution::impl_t* distribution ) {
+Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist(
+    const MeshGenerator::Implementation* This, const Grid::Implementation* grid,
+    const grid::Distribution::Implementation* distribution ) {
     ATLAS_ERROR_HANDLING( Mesh::Implementation * m; {
         Mesh mesh = This->generate( Grid( grid ), grid::Distribution( distribution ) );
         mesh.get()->attach();

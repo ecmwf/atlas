@@ -22,6 +22,10 @@
 // Forward declarations
 
 namespace atlas {
+namespace array {
+class ArrayShape;
+}
+
 namespace mesh {
 class Nodes;
 }

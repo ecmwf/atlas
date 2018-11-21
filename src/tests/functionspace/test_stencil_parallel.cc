@@ -11,6 +11,7 @@
 #include "atlas/array.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/grid/Stencil.h"
 #include "atlas/grid/StencilComputer.h"
 #include "atlas/library/Library.h"

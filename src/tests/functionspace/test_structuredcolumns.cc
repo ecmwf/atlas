@@ -18,6 +18,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator/MeshGenerator.h"

@@ -34,8 +34,8 @@ using eckit::Parametrisation;
 namespace atlas {
 namespace output {
 
-static eckit::Mutex* local_mutex                = 0;
-static std::map<std::string, OutputFactory*>* m = 0;
+static eckit::Mutex* local_mutex                = nullptr;
+static std::map<std::string, OutputFactory*>* m = nullptr;
 static pthread_once_t once                      = PTHREAD_ONCE_INIT;
 
 static void init() {
@@ -153,7 +153,7 @@ void atlas__Output__delete( OutputImpl* This ) {
 
 const OutputImpl* atlas__Output__create( const char* factory_key, Stream* stream,
                                          const eckit::Parametrisation* params ) {
-    const OutputImpl* output( 0 );
+    const OutputImpl* output( nullptr );
     ATLAS_ERROR_HANDLING(
         // ASSERT(stream);
         ASSERT( params ); {

@@ -10,7 +10,8 @@
 
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/array.h"
-#include "atlas/grid.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/option/Options.h"
 
 namespace atlas {
 namespace functionspace {

@@ -23,7 +23,11 @@
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/util/Metadata.h"
 
-#include "atlas/field/detail/FieldImpl.h"  // only included for Fortran interface
+namespace atlas {
+namespace field {
+class FieldImpl;
+}
+}  // namespace atlas
 
 namespace atlas {
 class Mesh;

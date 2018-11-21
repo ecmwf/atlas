@@ -22,6 +22,7 @@
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/grid/Stencil.h"
 #include "atlas/grid/StencilComputer.h"
 #include "atlas/library/Library.h"
@@ -201,7 +202,7 @@ CASE( "test vertical stencil" ) {
     }
 }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
 #if 1
 CASE( "ifs method to find nearest grid point" ) {

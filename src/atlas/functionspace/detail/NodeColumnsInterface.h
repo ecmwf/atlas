@@ -16,7 +16,8 @@
 namespace atlas {
 namespace field {
 class FieldSetImpl;
-}
+class FieldImpl;
+}  // namespace field
 }  // namespace atlas
 
 namespace atlas {

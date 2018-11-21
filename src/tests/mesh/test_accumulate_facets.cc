@@ -16,6 +16,7 @@
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
 #include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/option.h"
 #include "atlas/util/Unique.h"
 
 #include "tests/AtlasTestEnvironment.h"

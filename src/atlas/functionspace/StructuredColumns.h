@@ -7,7 +7,6 @@
  * granted to it by virtue of its status as an intergovernmental organisation
  * nor does it submit to any jurisdiction.
  */
-
 #pragma once
 
 #include <array>
@@ -15,12 +14,15 @@
 #include "atlas/array/DataType.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/Partitioner.h"
 #include "atlas/grid/Vertical.h"
 #include "atlas/library/config.h"
 #include "atlas/option.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Point.h"
+
+namespace eckit {
+class Configuration;
+}
 
 namespace atlas {
 namespace parallel {
@@ -31,10 +33,17 @@ class Checksum;
 }  // namespace atlas
 
 namespace atlas {
+class Field;
 class FieldSet;
-namespace field {
-class FieldSetImpl;
-}
+class Grid;
+}  // namespace atlas
+
+namespace atlas {
+namespace grid {
+class Distribution;
+class Partitioner;
+class StructuredGrid;
+}  // namespace grid
 }  // namespace atlas
 
 namespace atlas {
@@ -48,6 +57,8 @@ public:
     StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
 
     StructuredColumns( const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig() );
+
+    StructuredColumns( const Grid&, const grid::Distribution&, const eckit::Configuration& = util::NoConfig() );
 
     StructuredColumns( const Grid&, const Vertical&, const eckit::Configuration& = util::NoConfig() );
 
@@ -88,7 +99,7 @@ public:
 
     const Vertical& vertical() const { return vertical_; }
 
-    const grid::StructuredGrid& grid() const { return grid_; }
+    const grid::StructuredGrid& grid() const;
 
     idx_t i_begin( idx_t j ) const { return i_begin_[j]; }
     idx_t i_end( idx_t j ) const { return i_end_[j]; }
@@ -162,7 +173,7 @@ private:  // data
     idx_t size_halo_;
     idx_t halo_;
 
-    const grid::StructuredGrid grid_;
+    const grid::StructuredGrid* grid_;
     mutable eckit::SharedPtr<parallel::GatherScatter> gather_scatter_;
     mutable eckit::SharedPtr<parallel::Checksum> checksum_;
     mutable eckit::SharedPtr<parallel::HaloExchange> halo_exchange_;
@@ -265,6 +276,8 @@ private:  // data
 
     friend struct StructuredColumnsFortranAccess;
     Map2to1 ij2gp_;
+
+    void setup( const grid::Distribution& distribution, const eckit::Configuration& config );
 };
 
 // -------------------------------------------------------------------
@@ -382,46 +395,12 @@ public:
 
 private:
     const detail::StructuredColumns* functionspace_;
+    void setup( const Grid& grid, const Vertical& vertical, const grid::Distribution& distribution,
+                const eckit::Configuration& config );
 };
 
 // -------------------------------------------------------------------
-// C wrapper interfaces to C++ routines
-extern "C" {
-const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid(
-    const Grid::Implementation* grid, const eckit::Configuration* config );
-void atlas__functionspace__StructuredColumns__delete( detail::StructuredColumns* This );
-field::FieldImpl* atlas__fs__StructuredColumns__create_field( const detail::StructuredColumns* This,
-                                                              const eckit::Configuration* options );
-void atlas__functionspace__StructuredColumns__gather( const detail::StructuredColumns* This,
-                                                      const field::FieldImpl* local, field::FieldImpl* global );
-void atlas__functionspace__StructuredColumns__scatter( const detail::StructuredColumns* This,
-                                                       const field::FieldImpl* global, field::FieldImpl* local );
-void atlas__fs__StructuredColumns__checksum_fieldset( const detail::StructuredColumns* This,
-                                                      const field::FieldSetImpl* fieldset, char*& checksum, idx_t& size,
-                                                      int& allocated );
-void atlas__fs__StructuredColumns__checksum_field( const detail::StructuredColumns* This, const field::FieldImpl* field,
-                                                   char*& checksum, idx_t& size, int& allocated );
-void atlas__fs__StructuredColumns__halo_exchange_field( const detail::StructuredColumns* This,
-                                                        const field::FieldImpl* field );
-void atlas__fs__StructuredColumns__halo_exchange_fieldset( const detail::StructuredColumns* This,
-                                                           const field::FieldSetImpl* fieldset );
-void atlas__fs__StructuredColumns__index_host( const detail::StructuredColumns* This, idx_t*& data, idx_t& i_min,
-                                               idx_t& i_max, idx_t& j_min, idx_t& j_max );
-idx_t atlas__fs__StructuredColumns__j_begin( const detail::StructuredColumns* This );
-idx_t atlas__fs__StructuredColumns__j_end( const detail::StructuredColumns* This );
-idx_t atlas__fs__StructuredColumns__i_begin( const detail::StructuredColumns* This, idx_t j );
-idx_t atlas__fs__StructuredColumns__i_end( const detail::StructuredColumns* This, idx_t j );
-idx_t atlas__fs__StructuredColumns__j_begin_halo( const detail::StructuredColumns* This );
-idx_t atlas__fs__StructuredColumns__j_end_halo( const detail::StructuredColumns* This );
-idx_t atlas__fs__StructuredColumns__i_begin_halo( const detail::StructuredColumns* This, idx_t j );
-idx_t atlas__fs__StructuredColumns__i_end_halo( const detail::StructuredColumns* This, idx_t j );
 
-field::FieldImpl* atlas__fs__StructuredColumns__xy( const detail::StructuredColumns* This );
-field::FieldImpl* atlas__fs__StructuredColumns__partition( const detail::StructuredColumns* This );
-field::FieldImpl* atlas__fs__StructuredColumns__global_index( const detail::StructuredColumns* This );
-field::FieldImpl* atlas__fs__StructuredColumns__index_i( const detail::StructuredColumns* This );
-field::FieldImpl* atlas__fs__StructuredColumns__index_j( const detail::StructuredColumns* This );
-}
 
 }  // namespace functionspace
 }  // namespace atlas

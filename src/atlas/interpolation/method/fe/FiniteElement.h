@@ -18,6 +18,7 @@
 #include "eckit/memory/NonCopyable.h"
 
 #include "atlas/array/ArrayView.h"
+#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/method/PointIndex3.h"
 #include "atlas/mesh/Elements.h"
 

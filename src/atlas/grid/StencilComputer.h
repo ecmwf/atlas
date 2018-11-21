@@ -10,10 +10,16 @@
 
 #pragma once
 
+#include <cmath>
 #include <vector>
-#include "atlas/grid/Grid.h"
 #include "atlas/grid/Vertical.h"
 #include "atlas/library/config.h"
+
+namespace atlas {
+namespace grid {
+class StructuredGrid;
+}
+}  // namespace atlas
 
 namespace atlas {
 

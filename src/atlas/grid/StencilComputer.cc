@@ -9,6 +9,7 @@
  */
 
 #include "atlas/grid/StencilComputer.h"
+#include "atlas/grid/Grid.h"
 
 namespace atlas {
 

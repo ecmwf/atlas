@@ -22,6 +22,13 @@ namespace atlas {
 class Field;
 class FieldSet;
 class Mesh;
+namespace field {
+class FieldImpl;
+class FieldSetImpl;
+}  // namespace field
+namespace functionspace {
+class FunctionSpaceImpl;
+}
 }  // namespace atlas
 
 namespace atlas {

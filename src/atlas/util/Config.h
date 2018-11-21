@@ -12,10 +12,8 @@
 #include <initializer_list>
 #include <string>
 
-#include "eckit/config/Parametrisation.h"
+#include "eckit/config/LocalConfiguration.h"
 #include "eckit/utils/Hash.h"
-
-#include "atlas/util/Metadata.h"
 
 namespace eckit {
 class PathName;

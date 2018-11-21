@@ -149,12 +149,12 @@ public:
     UnstructuredGrid( const Grid& );
     UnstructuredGrid( const Config& );
     UnstructuredGrid( const Grid::Implementation* );
-    UnstructuredGrid( std::vector<PointXY>* );   // takes ownership
-    UnstructuredGrid( std::vector<PointXY>&& );  // move constructor
+    UnstructuredGrid( std::vector<PointXY>* );  // takes ownership
     UnstructuredGrid( std::initializer_list<PointXY> );
     UnstructuredGrid( const Grid&, const Domain& );  // Create a new unstructured grid!
 
     operator bool() const { return valid(); }
+    UnstructuredGrid( std::vector<PointXY>&& );  // move constructor
 
     bool valid() const { return grid_; }
 

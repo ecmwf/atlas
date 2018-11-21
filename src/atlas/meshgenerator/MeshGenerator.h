@@ -13,28 +13,47 @@
 #include <iosfwd>
 #include <string>
 
-#include "eckit/config/Parametrisation.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
-#include "atlas/grid/Distribution.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/mesh/Mesh.h"
 #include "atlas/util/Config.h"
 
 namespace eckit {
 class Hash;
-}
+class Parametrisation;
+}  // namespace eckit
 
 namespace atlas {
 class Mesh;
-}
+class Grid;
+class Projection;
+}  // namespace atlas
 
 namespace atlas {
 namespace grid {
 class Distribution;
-}
+class DistributionImpl;
+}  // namespace grid
 }  // namespace atlas
+
+namespace atlas {
+namespace grid {
+namespace detail {
+namespace grid {
+class Grid;
+}  // namespace grid
+}  // namespace detail
+}  // namespace grid
+using GridImpl = grid::detail::grid::Grid;
+}  // namespace atlas
+namespace atlas {
+namespace mesh {
+namespace detail {
+class MeshImpl;
+}  // namespace detail
+}  // namespace mesh
+}  // namespace atlas
+
 
 namespace atlas {
 namespace meshgenerator {
@@ -113,11 +132,10 @@ extern "C" {
 void atlas__MeshGenerator__delete( MeshGeneratorImpl* This );
 const MeshGeneratorImpl* atlas__MeshGenerator__create_noconfig( const char* name );
 const MeshGeneratorImpl* atlas__MeshGenerator__create( const char* name, const eckit::Parametrisation* params );
-Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist( const MeshGeneratorImpl* This,
-                                                                     const Grid::Implementation* grid,
-                                                                     const grid::Distribution::impl_t* distribution );
-Mesh::Implementation* atlas__MeshGenerator__generate__grid( const MeshGeneratorImpl* This,
-                                                            const Grid::Implementation* grid );
+mesh::detail::MeshImpl* atlas__MeshGenerator__generate__grid_griddist( const MeshGeneratorImpl* This,
+                                                                       const GridImpl* grid,
+                                                                       const grid::DistributionImpl* distribution );
+mesh::detail::MeshImpl* atlas__MeshGenerator__generate__grid( const MeshGeneratorImpl* This, const GridImpl* grid );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

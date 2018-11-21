@@ -12,9 +12,43 @@
 
 #include "eckit/memory/SharedPtr.h"
 
-#include "atlas/grid/Distribution.h"
-#include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
+
+namespace eckit {
+class Parametrisation;
+}
+
+namespace atlas {
+namespace grid {
+class Distribution;
+class DistributionImpl;
+
+namespace detail {
+namespace partitioner {
+class Partitioner;
+}  // namespace partitioner
+}  // namespace detail
+}  // namespace grid
+}  // namespace atlas
+
+namespace atlas {
+namespace mesh {
+namespace detail {
+class MeshImpl;
+}
+}  // namespace mesh
+}  // namespace atlas
+
+namespace atlas {
+namespace grid {
+namespace detail {
+namespace grid {
+class Grid;
+}  // namespace grid
+}  // namespace detail
+}  // namespace grid
+using GridImpl = grid::detail::grid::Grid;
+}  // namespace atlas
 
 namespace atlas {
 namespace grid {
@@ -40,7 +74,7 @@ public:
 
     void partition( const Grid& grid, int part[] ) const;
 
-    Distribution partition( const Grid& grid ) const { return Distribution( grid, *this ); }
+    Distribution partition( const Grid& grid ) const;
 
     idx_t nb_partitions() const { return partitioner_->nb_partitions(); }
 
@@ -63,18 +97,18 @@ public:
 
 public:
     MatchingMeshPartitioner();
-    MatchingMeshPartitioner( const Mesh& mesh, const Config& config = util::NoConfig() );
+    MatchingMeshPartitioner( const Mesh& mesh );
+    MatchingMeshPartitioner( const Mesh& mesh, const Config& config );
 };
 
 // ------------------------------------------------------------------
 
 extern "C" {
 Partitioner::Implementation* atlas__grid__Partitioner__new( const Partitioner::Config* config );
-Partitioner::Implementation* atlas__grid__MatchingMeshPartitioner__new( const Mesh::Implementation* mesh,
+Partitioner::Implementation* atlas__grid__MatchingMeshPartitioner__new( const mesh::detail::MeshImpl* mesh,
                                                                         const Partitioner::Config* config );
 void atlas__grid__Partitioner__delete( Partitioner::Implementation* This );
-Distribution::impl_t* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This,
-                                                           const Grid::Implementation* grid );
+DistributionImpl* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This, const GridImpl* grid );
 }
 
 }  // namespace grid

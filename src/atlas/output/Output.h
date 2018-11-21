@@ -27,7 +27,12 @@ class PathName;
 
 namespace atlas {
 class Mesh;
+namespace mesh {
+namespace detail {
+class MeshImpl;
 }
+}  // namespace mesh
+}  // namespace atlas
 
 namespace atlas {
 class Field;
@@ -158,7 +163,7 @@ extern "C" {
 void atlas__Output__delete( OutputImpl* This );
 const OutputImpl* atlas__Output__create( const char* factory_key, Stream* stream,
                                          const eckit::Parametrisation* params );
-void atlas__Output__write_mesh( const OutputImpl* This, Mesh::Implementation* mesh,
+void atlas__Output__write_mesh( const OutputImpl* This, mesh::detail::MeshImpl* mesh,
                                 const eckit::Parametrisation* params );
 void atlas__Output__write_fieldset( const OutputImpl* This, const field::FieldSetImpl* fieldset,
                                     const eckit::Parametrisation* params );

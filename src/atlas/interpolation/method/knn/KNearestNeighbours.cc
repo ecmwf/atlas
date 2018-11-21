@@ -14,7 +14,7 @@
 #include "eckit/log/Timer.h"
 
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/grid.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/meshgenerator.h"

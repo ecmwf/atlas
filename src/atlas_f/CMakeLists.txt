@@ -107,7 +107,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Structured.h
     MODULE    atlas_grid_Structured_c_binding
     OUTPUT    grid_Structured_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Distribution.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/distribution/DistributionImpl.h
+    MODULE atlas_distribution_c_binding
+    OUTPUT distribution_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Partitioner.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/detail/MeshIntf.h
     MODULE    atlas_mesh_c_binding
@@ -129,18 +131,20 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Gmsh.h
   MODULE    atlas_output_gmsh_c_binding
   OUTPUT    outout_Gmsh_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/State.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/detail/FieldImpl.h
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/detail/FieldInterface.h
     MODULE    atlas_field_c_binding
     OUTPUT    field_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/FieldSet.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/FunctionSpace.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/FunctionSpaceInterface.h
+    MODULE atlas_functionspace_c_binding
+    OUTPUT functionspace_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h
     MODULE    atlas_functionspace_Spectral_c_binding
     OUTPUT    functionspace_Spectral_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/StructuredColumns.h
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/StructuredColumnsInterface.h
     MODULE    atlas_functionspace_StructuredColumns_c_binding
     OUTPUT    functionspace_StructuredColumns_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/NodeColumnsInterface.h
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/NodeColumnsInterface.h
     MODULE    atlas_functionspace_NodeColumns_c_binding
     OUTPUT    functionspace_NodeColumns_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeColumns.h
