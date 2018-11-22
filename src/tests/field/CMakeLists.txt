@@ -25,6 +25,7 @@ if( HAVE_FCTEST )
     SOURCES         fctest_field_view.F90
     LIBS            atlas_f
     OMP             3
+    CONDITION       ATLAS_HAVE_OMP
   )
 
   add_fctest( TARGET atlas_fctest_field_host
