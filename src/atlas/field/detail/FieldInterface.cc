@@ -229,13 +229,33 @@ void atlas__Field__set_functionspace( FieldImpl* This, const functionspace::Func
 }
 
 void atlas__Field__clone_to_device( FieldImpl* This ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); );
     This->cloneToDevice();
 }
+
 void atlas__Field__clone_from_device( FieldImpl* This ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); );
     This->cloneFromDevice();
 }
+
 void atlas__Field__sync_host_device( FieldImpl* This ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); );
     This->syncHostDevice();
+}
+
+void atlas__Field__set_dirty( FieldImpl* This, int value ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); );
+    This->set_dirty( value );
+}
+
+int atlas__Field__dirty( FieldImpl* This ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); );
+    return This->dirty();
+}
+
+void atlas__Field__halo_exchange( FieldImpl* This, int on_device ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); );
+    return This->haloExchange( on_device );
 }
 }
 

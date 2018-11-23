@@ -41,6 +41,9 @@ contains
   procedure, public :: add
   generic :: field => field_by_name, field_by_idx_int, field_by_idx_long
 
+  procedure, public :: set_dirty
+  procedure, public :: halo_exchange
+
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_FieldSet__final_auto
 #endif
@@ -145,6 +148,41 @@ function field_by_idx_int(this,idx) result(field)
   field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), int(idx-1_c_int,ATLAS_KIND_IDX) ) ) ! C index
   call field%return()
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine halo_exchange(this,on_device)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_fieldset_c_binding
+  class(atlas_FieldSet), intent(inout) :: this
+  logical, optional :: on_device
+  integer(c_int) :: on_device_int
+  on_device_int = 0
+  if( present(on_device) ) then
+    if( on_device ) on_device_int = 1
+  endif
+  call atlas__FieldSet__halo_exchange(this%c_ptr(), on_device_int)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine set_dirty(this,value)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_fieldset_c_binding
+  class(atlas_FieldSet), intent(inout) :: this
+  logical, optional, intent(in) :: value
+  integer(c_int) :: value_int
+  if( present(value) ) then
+      if( value ) then
+          value_int = 1
+      else
+          value_int = 0
+      endif
+  else
+      value_int = 1
+  endif
+  call atlas__FieldSet__set_dirty(this%c_ptr(), value_int)
+end subroutine
 
 !-------------------------------------------------------------------------------
 

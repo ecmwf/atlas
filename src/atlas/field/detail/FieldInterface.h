@@ -16,6 +16,12 @@
 #include "atlas/field/detail/FieldImpl.h"
 
 namespace atlas {
+namespace functionspace {
+class FunctionSpaceImpl;
+}
+}  // namespace atlas
+
+namespace atlas {
 namespace field {
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -62,6 +68,9 @@ int atlas__Field__device_needs_update( const FieldImpl* This );
 void atlas__Field__clone_to_device( FieldImpl* This );
 void atlas__Field__clone_from_device( FieldImpl* This );
 void atlas__Field__sync_host_device( FieldImpl* This );
+void atlas__Field__set_dirty( FieldImpl* This, int value );
+void atlas__Field__halo_exchange( FieldImpl* This, int on_device );
+int atlas__Field__dirty( FieldImpl* This );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

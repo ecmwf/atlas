@@ -65,16 +65,16 @@ public:
     StructuredColumns( const Grid&, const Vertical&, const grid::Partitioner&,
                        const eckit::Configuration& = util::NoConfig() );
 
-    virtual ~StructuredColumns();
+    virtual ~StructuredColumns() override;
 
     static std::string static_type() { return "StructuredColumns"; }
-    virtual std::string type() const { return static_type(); }
-    virtual std::string distribution() const;
+    virtual std::string type() const override { return static_type(); }
+    virtual std::string distribution() const override;
 
     /// @brief Create a Structured field
-    virtual Field createField( const eckit::Configuration& ) const;
+    virtual Field createField( const eckit::Configuration& ) const override;
 
-    virtual Field createField( const Field&, const eckit::Configuration& ) const;
+    virtual Field createField( const Field&, const eckit::Configuration& ) const override;
 
     void gather( const FieldSet&, FieldSet& ) const;
     void gather( const Field&, Field& ) const;
@@ -82,12 +82,12 @@ public:
     void scatter( const FieldSet&, FieldSet& ) const;
     void scatter( const Field&, Field& ) const;
 
-    virtual void haloExchange( FieldSet&, bool on_device = false ) const;
-    virtual void haloExchange( Field&, bool on_device = false ) const;
+    virtual void haloExchange( const FieldSet&, bool on_device = false ) const override;
+    virtual void haloExchange( const Field&, bool on_device = false ) const override;
 
     idx_t sizeOwned() const { return size_owned_; }
     idx_t sizeHalo() const { return size_halo_; }
-    virtual idx_t size() const { return size_halo_; }
+    virtual idx_t size() const override { return size_halo_; }
 
     idx_t levels() const { return nb_levels_; }
 
@@ -138,7 +138,7 @@ public:
         return xy;
     }
 
-    virtual size_t footprint() const;
+    virtual size_t footprint() const override;
 
 
 private:  // methods
@@ -318,9 +318,6 @@ public:
 
     void scatter( const FieldSet&, FieldSet& ) const;
     void scatter( const Field&, Field& ) const;
-
-    virtual void haloExchange( FieldSet&, bool on_device = false ) const;
-    virtual void haloExchange( Field&, bool on_device = false ) const;
 
     std::string checksum( const FieldSet& ) const;
     std::string checksum( const Field& ) const;

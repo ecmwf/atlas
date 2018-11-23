@@ -54,9 +54,6 @@ contains
   procedure, public :: mesh
   procedure, public :: edges
 
-  procedure, private :: halo_exchange_fieldset
-  procedure, private :: halo_exchange_field
-  generic, public :: halo_exchange => halo_exchange_field, halo_exchange_fieldset
   procedure, public :: get_halo_exchange
 
   procedure, private :: gather_fieldset
@@ -143,24 +140,6 @@ function edges(this)
   call edges%reset_c_ptr( atlas__fs__EdgeColumns__edges(this%c_ptr()) )
   call edges%return()
 end function
-
-!------------------------------------------------------------------------------
-
-subroutine halo_exchange_fieldset(this,fieldset)
-  use atlas_functionspace_EdgeColumns_c_binding
-  class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  type(atlas_FieldSet), intent(inout) :: fieldset
-  call atlas__fs__EdgeColumns__halo_exchange_fieldset(this%c_ptr(),fieldset%c_ptr())
-end subroutine
-
-!------------------------------------------------------------------------------
-
-subroutine halo_exchange_field(this,field)
-  use atlas_functionspace_EdgeColumns_c_binding
-  class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  type(atlas_Field), intent(inout) :: field
-  call atlas__fs__EdgeColumns__halo_exchange_field(this%c_ptr(),field%c_ptr())
-end subroutine
 
 !------------------------------------------------------------------------------
 

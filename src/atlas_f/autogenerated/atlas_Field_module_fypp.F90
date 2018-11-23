@@ -52,6 +52,10 @@ contains
   procedure :: kind => Field__kind
   generic :: shape => shape_array, shape_idx
 
+  procedure :: halo_exchange
+  procedure :: dirty
+  procedure :: set_dirty
+
   procedure :: rename
   procedure :: set_levels
   procedure :: set_functionspace
@@ -379,7 +383,7 @@ subroutine array_c_to_f_int32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(1)
   integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -415,7 +419,7 @@ subroutine array_c_to_f_int64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(1)
   integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -451,7 +455,7 @@ subroutine array_c_to_f_real32_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(1)
   integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -487,7 +491,7 @@ subroutine array_c_to_f_real64_r1(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(1)
   integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -523,7 +527,7 @@ subroutine array_c_to_f_logical32_r1(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(1)
   integer :: j
 
-  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 1 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -559,7 +563,7 @@ subroutine array_c_to_f_int32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(2)
   integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -595,7 +599,7 @@ subroutine array_c_to_f_int64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(2)
   integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -631,7 +635,7 @@ subroutine array_c_to_f_real32_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(2)
   integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -667,7 +671,7 @@ subroutine array_c_to_f_real64_r2(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(2)
   integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -703,7 +707,7 @@ subroutine array_c_to_f_logical32_r2(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(2)
   integer :: j
 
-  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 2 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -739,7 +743,7 @@ subroutine array_c_to_f_int32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(3)
   integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -775,7 +779,7 @@ subroutine array_c_to_f_int64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(3)
   integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -811,7 +815,7 @@ subroutine array_c_to_f_real32_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(3)
   integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -847,7 +851,7 @@ subroutine array_c_to_f_real64_r3(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(3)
   integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -883,7 +887,7 @@ subroutine array_c_to_f_logical32_r3(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(3)
   integer :: j
 
-  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 3 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -919,7 +923,7 @@ subroutine array_c_to_f_int32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(4)
   integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -955,7 +959,7 @@ subroutine array_c_to_f_int64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_f
   integer :: eshape(4)
   integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -991,7 +995,7 @@ subroutine array_c_to_f_real32_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(4)
   integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -1027,7 +1031,7 @@ subroutine array_c_to_f_real64_r4(array_cptr,rank,shape_cptr,strides_cptr,array_
   integer :: eshape(4)
   integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -1063,7 +1067,7 @@ subroutine array_c_to_f_logical32_r4(array_cptr,rank,shape_cptr,strides_cptr,arr
   integer :: eshape(4)
   integer :: j
 
-  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",178))
+  if( rank /= 4 ) call atlas_abort("Rank mismatch",atlas_code_location("atlas_Field_module.F90",182))
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -2240,7 +2244,7 @@ integer function atlas_real(kind)
   else if (kind == c_float) then
     atlas_real = ATLAS_KIND_REAL32
   else
-    call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",282))
+    call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",286))
   end if
 end function
 
@@ -2256,7 +2260,7 @@ integer function atlas_integer(kind)
     else if (kind == c_long) then
       atlas_integer = ATLAS_KIND_INT64
     else
-      call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",298))
+      call atlas_abort("Unsupported real kind",atlas_code_location("atlas_Field_module.F90",302))
     end if
   end if
 end function
@@ -2283,7 +2287,7 @@ function atlas_data_type(kind)
   else if( kind == ATLAS_KIND_REAL64 ) then
     atlas_data_type = "real64"
   else
-    call atlas_abort("cannot convert kind to data_type",atlas_code_location("atlas_Field_module.F90",325))
+    call atlas_abort("cannot convert kind to data_type",atlas_code_location("atlas_Field_module.F90",329))
   endif
 end function
 
@@ -3120,6 +3124,57 @@ subroutine sync_host_device(this)
   class(atlas_Field), intent(inout) :: this
   call atlas__Field__sync_host_device(this%c_ptr())
 end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine halo_exchange(this,on_device)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  logical, optional :: on_device
+  integer(c_int) :: on_device_int
+  on_device_int = 0
+  if( present(on_device) ) then
+    if( on_device ) on_device_int = 1
+  endif
+  call atlas__Field__halo_exchange(this%c_ptr(), on_device_int)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine set_dirty(this,value)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  logical, optional, intent(in) :: value
+  integer(c_int) :: value_int
+  if( present(value) ) then
+      if( value ) then
+          value_int = 1
+      else
+          value_int = 0
+      endif
+  else
+      value_int = 1
+  endif
+  call atlas__Field__set_dirty(this%c_ptr(), value_int)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+function dirty(this) result(value)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  logical :: value
+  integer(c_int) :: value_int
+  value_int = atlas__Field__dirty(this%c_ptr())
+  if( value_int == 0 ) then
+    value = .false.
+  else
+    value = .true.
+  endif
+end function
 
 !-------------------------------------------------------------------------------
 

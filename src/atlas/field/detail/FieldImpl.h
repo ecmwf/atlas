@@ -160,7 +160,7 @@ public:  // Destructor
 
     bool dirty() const;
 
-    void set_dirty( bool = true );
+    void set_dirty( bool = true ) const;
 
     // -- dangerous methods
     template <typename DATATYPE>
@@ -197,6 +197,8 @@ public:  // Destructor
     bool deviceNeedsUpdate() const { return array_->deviceNeedsUpdate(); }
     void reactivateDeviceWriteViews() const { array_->reactivateDeviceWriteViews(); }
     void reactivateHostWriteViews() const { array_->reactivateHostWriteViews(); }
+
+    void haloExchange( bool on_device = false ) const;
 
 private:  // methods
     void print( std::ostream& os, bool dump = false ) const;

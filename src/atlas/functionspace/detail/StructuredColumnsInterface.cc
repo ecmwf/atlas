@@ -76,16 +76,6 @@ void atlas__functionspace__StructuredColumns__scatter( const detail::StructuredC
                           This->scatter( g, l ); );
 }
 
-void atlas__fs__StructuredColumns__halo_exchange_field( const detail::StructuredColumns* This,
-                                                        const field::FieldImpl* field ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( field ); Field f( field ); This->haloExchange( f ); );
-}
-
-void atlas__fs__StructuredColumns__halo_exchange_fieldset( const detail::StructuredColumns* This,
-                                                           const field::FieldSetImpl* fieldset ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( fieldset ); FieldSet f( fieldset ); This->haloExchange( f ); );
-}
-
 void atlas__fs__StructuredColumns__checksum_fieldset( const detail::StructuredColumns* This,
                                                       const field::FieldSetImpl* fieldset, char*& checksum, idx_t& size,
                                                       int& allocated ) {
@@ -157,6 +147,14 @@ field::FieldImpl* atlas__fs__StructuredColumns__index_i( const detail::Structure
 
 field::FieldImpl* atlas__fs__StructuredColumns__index_j( const detail::StructuredColumns* This ) {
     return This->index_j().get();
+}
+
+idx_t atlas__fs__StructuredColumns__size( const detail::StructuredColumns* This ) {
+    return This->size();
+}
+
+idx_t atlas__fs__StructuredColumns__sizeOwned( const detail::StructuredColumns* This ) {
+    return This->sizeOwned();
 }
 }
 

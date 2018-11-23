@@ -62,6 +62,9 @@ protected:
 
     static void normalise( Triplets& triplets );
 
+    void haloExchange( const FieldSet& ) const;
+    void haloExchange( const Field& ) const;
+
     //const Config& config_;
 
     // NOTE : Matrix-free or non-linear interpolation operators do not have

@@ -57,12 +57,10 @@ void atlas__fs__StructuredColumns__checksum_fieldset( const detail::StructuredCo
                                                       int& allocated );
 void atlas__fs__StructuredColumns__checksum_field( const detail::StructuredColumns* This, const field::FieldImpl* field,
                                                    char*& checksum, idx_t& size, int& allocated );
-void atlas__fs__StructuredColumns__halo_exchange_field( const detail::StructuredColumns* This,
-                                                        const field::FieldImpl* field );
-void atlas__fs__StructuredColumns__halo_exchange_fieldset( const detail::StructuredColumns* This,
-                                                           const field::FieldSetImpl* fieldset );
 void atlas__fs__StructuredColumns__index_host( const detail::StructuredColumns* This, idx_t*& data, idx_t& i_min,
                                                idx_t& i_max, idx_t& j_min, idx_t& j_max );
+idx_t atlas__fs__StructuredColumns__size( const detail::StructuredColumns* This );
+idx_t atlas__fs__StructuredColumns__sizeOwned( const detail::StructuredColumns* This );
 idx_t atlas__fs__StructuredColumns__j_begin( const detail::StructuredColumns* This );
 idx_t atlas__fs__StructuredColumns__j_end( const detail::StructuredColumns* This );
 idx_t atlas__fs__StructuredColumns__i_begin( const detail::StructuredColumns* This, idx_t j );

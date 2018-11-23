@@ -78,6 +78,9 @@ public:  // methods
     const_iterator cbegin() const { return fields_.begin(); }
     const_iterator cend() const { return fields_.end(); }
 
+    void haloExchange( bool on_device = false ) const;
+    void set_dirty( bool = true ) const;
+
 protected:                                // data
     std::vector<Field> fields_;           ///< field storage
     std::string name_;                    ///< internal name
@@ -99,6 +102,8 @@ int atlas__FieldSet__has_field( const FieldSetImpl* This, char* name );
 idx_t atlas__FieldSet__size( const FieldSetImpl* This );
 FieldImpl* atlas__FieldSet__field_by_name( FieldSetImpl* This, char* name );
 FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, idx_t idx );
+void atlas__FieldSet__set_dirty( FieldSetImpl* This, int value );
+void atlas__FieldSet__halo_exchange( FieldSetImpl* This, int on_device );
 }
 
 }  // namespace field
@@ -152,6 +157,9 @@ public:  // methods
     const_iterator end() const { return fieldset_->end(); }
     const_iterator cbegin() const { return fieldset_->begin(); }
     const_iterator cend() const { return fieldset_->end(); }
+
+    void haloExchange( bool on_device = false ) const { fieldset_->haloExchange( on_device ); }
+    void set_dirty( bool = true ) const;
 
 private:  // data
     eckit::SharedPtr<Implementation> fieldset_;

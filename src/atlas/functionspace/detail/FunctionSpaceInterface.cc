@@ -12,9 +12,11 @@
 #include "FunctionSpaceImpl.h"
 
 #include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/field/detail/FieldImpl.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace functionspace {
@@ -28,8 +30,8 @@ void atlas__FunctionSpace__delete( FunctionSpaceImpl* This ) {
 }
 
 void atlas__FunctionSpace__name( const FunctionSpaceImpl* This, char*& name, int& size ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); std::string s = This->type(); size = s.size() + 1; name = new char[size];
-                          strcpy( name, s.c_str() ); );
+    ATLAS_ERROR_HANDLING( ASSERT( This ); std::string s = This->type(); size = static_cast<int>( s.size() + 1 );
+                          name = new char[size]; strcpy( name, s.c_str() ); );
 }
 
 field::FieldImpl* atlas__FunctionSpace__create_field( const FunctionSpaceImpl* This,
@@ -58,6 +60,18 @@ field::FieldImpl* atlas__FunctionSpace__create_field_template( const FunctionSpa
     }
     field->detach();
     return field;
+}
+
+//------------------------------------------------------------------------------
+
+void atlas__FunctionSpace__halo_exchange_field( const FunctionSpaceImpl* This, field::FieldImpl* field ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( field ); Field f( field ); This->haloExchange( f ); );
+}
+
+//------------------------------------------------------------------------------
+
+void atlas__FunctionSpace__halo_exchange_fieldset( const FunctionSpaceImpl* This, field::FieldSetImpl* fieldset ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( fieldset ); FieldSet f( fieldset ); This->haloExchange( f ); );
 }
 }
 

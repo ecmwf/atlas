@@ -11,12 +11,15 @@
 #pragma once
 
 
-#include "atlas/field/Field.h"
-#include "atlas/util/Config.h"
-#include "atlas/util/Metadata.h"
+namespace eckit {
+class Configuration;
+}
 
 namespace atlas {
-class FieldSet;
+namespace field {
+class FieldImpl;
+class FieldSetImpl;
+}  // namespace field
 }  // namespace atlas
 
 namespace atlas {
@@ -34,6 +37,8 @@ field::FieldImpl* atlas__FunctionSpace__create_field( const FunctionSpaceImpl* T
 field::FieldImpl* atlas__FunctionSpace__create_field_template( const FunctionSpaceImpl* This,
                                                                const field::FieldImpl* field_template,
                                                                const eckit::Configuration* options );
+void atlas__FunctionSpace__halo_exchange_field( const FunctionSpaceImpl* This, field::FieldImpl* field );
+void atlas__FunctionSpace__halo_exchange_fieldset( const FunctionSpaceImpl* This, field::FieldSetImpl* fieldset );
 }
 
 //------------------------------------------------------------------------------------------------------

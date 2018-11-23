@@ -228,7 +228,7 @@ void Method::execute( const FieldSet& fieldsSource, FieldSet& fieldsTarget ) con
 }
 
 void Method::execute( const Field& src, Field& tgt ) const {
-    if ( src.dirty() ) { source().haloExchange( const_cast<Field&>( src ) ); }
+    haloExchange( src );
 
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
 
@@ -251,6 +251,15 @@ void Method::normalise( Triplets& triplets ) {
     for ( size_t j = 0; j < triplets.size(); ++j ) {
         triplets[j].value() *= invSum;
     }
+}
+
+void Method::haloExchange( const FieldSet& fields ) const {
+    for ( auto& field : fields ) {
+        haloExchange( field );
+    }
+}
+void Method::haloExchange( const Field& field ) const {
+    source().haloExchange( field );
 }
 
 }  // namespace interpolation

@@ -82,8 +82,8 @@ bool FieldImpl::dirty() const {
     return metadata().getBool( "dirty", true );
 }
 
-void FieldImpl::set_dirty( bool value ) {
-    metadata().set( "dirty", value );
+void FieldImpl::set_dirty( bool value ) const {
+    const_cast<FieldImpl&>( *this ).metadata().set( "dirty", value );
 }
 
 void FieldImpl::dump( std::ostream& os ) const {
@@ -146,6 +146,15 @@ void FieldImpl::set_functionspace( const FunctionSpace& functionspace ) {
 const FunctionSpace& FieldImpl::functionspace() const {
     return *functionspace_;
 }
+
+void FieldImpl::haloExchange( bool on_device ) const {
+    if ( dirty() ) {
+        ASSERT( functionspace() );
+        functionspace().haloExchange( Field( this ), on_device );
+        set_dirty( false );
+    }
+}
+
 
 // ------------------------------------------------------------------
 

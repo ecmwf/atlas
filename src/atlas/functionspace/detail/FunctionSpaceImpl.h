@@ -86,8 +86,8 @@ public:
 
     virtual std::string distribution() const = 0;
 
-    virtual void haloExchange( FieldSet&, bool /*on_device*/ = false ) const;
-    virtual void haloExchange( Field&, bool /* on_device*/ = false ) const;
+    virtual void haloExchange( const FieldSet&, bool /*on_device*/ = false ) const;
+    virtual void haloExchange( const Field&, bool /* on_device*/ = false ) const;
 
     virtual idx_t size() const = 0;
 

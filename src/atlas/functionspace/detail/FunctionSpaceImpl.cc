@@ -29,11 +29,11 @@ atlas::Field FunctionSpaceImpl::createField( const atlas::Field& field ) const {
     return createField( field, util::NoConfig() );
 }
 
-void FunctionSpaceImpl::haloExchange( FieldSet&, bool ) const {
+void FunctionSpaceImpl::haloExchange( const FieldSet&, bool ) const {
     NOTIMP;
 }
 
-void FunctionSpaceImpl::haloExchange( Field&, bool ) const {
+void FunctionSpaceImpl::haloExchange( const Field&, bool ) const {
     NOTIMP;
 }
 

@@ -305,30 +305,30 @@ Field EdgeColumns::createField( const Field& other, const eckit::Configuration& 
                         option::variables( other.variables() ) | config );
 }
 
-void EdgeColumns::haloExchange( FieldSet& fieldset ) const {
+void EdgeColumns::haloExchange( const FieldSet& fieldset, bool on_device ) const {
     for ( idx_t f = 0; f < fieldset.size(); ++f ) {
-        Field& field = fieldset[f];
+        Field& field = const_cast<FieldSet&>( fieldset )[f];
         if ( field.datatype() == array::DataType::kind<int>() ) {
-            halo_exchange().execute<int, 2>( field.array(), false );
+            halo_exchange().execute<int, 2>( field.array(), on_device );
         }
         else if ( field.datatype() == array::DataType::kind<long>() ) {
-            halo_exchange().execute<long, 2>( field.array(), false );
+            halo_exchange().execute<long, 2>( field.array(), on_device );
         }
         else if ( field.datatype() == array::DataType::kind<float>() ) {
-            halo_exchange().execute<float, 2>( field.array(), false );
+            halo_exchange().execute<float, 2>( field.array(), on_device );
         }
         else if ( field.datatype() == array::DataType::kind<double>() ) {
-            halo_exchange().execute<double, 2>( field.array(), false );
+            halo_exchange().execute<double, 2>( field.array(), on_device );
         }
         else
             throw eckit::Exception( "datatype not supported", Here() );
         field.set_dirty( false );
     }
 }
-void EdgeColumns::haloExchange( Field& field ) const {
+void EdgeColumns::haloExchange( const Field& field, bool on_device ) const {
     FieldSet fieldset;
     fieldset.add( field );
-    haloExchange( fieldset );
+    haloExchange( fieldset, on_device );
 }
 const parallel::HaloExchange& EdgeColumns::halo_exchange() const {
     if ( halo_exchange_ ) return *halo_exchange_;
@@ -699,14 +699,6 @@ const Mesh& EdgeColumns::mesh() const {
 
 const mesh::HybridElements& EdgeColumns::edges() const {
     return functionspace_->edges();
-}
-
-void EdgeColumns::haloExchange( FieldSet& fieldset ) const {
-    functionspace_->haloExchange( fieldset );
-}
-
-void EdgeColumns::haloExchange( Field& field ) const {
-    functionspace_->haloExchange( field );
 }
 
 const parallel::HaloExchange& EdgeColumns::halo_exchange() const {

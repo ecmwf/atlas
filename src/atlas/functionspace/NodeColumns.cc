@@ -388,9 +388,9 @@ void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exc
 }
 }  // namespace
 
-void NodeColumns::haloExchange( FieldSet& fieldset, bool on_device ) const {
+void NodeColumns::haloExchange( const FieldSet& fieldset, bool on_device ) const {
     for ( idx_t f = 0; f < fieldset.size(); ++f ) {
-        Field& field = fieldset[f];
+        Field& field = const_cast<FieldSet&>( fieldset )[f];
         switch ( field.rank() ) {
             case 1:
                 dispatch_haloExchange<1>( field, halo_exchange(), on_device );
@@ -410,7 +410,7 @@ void NodeColumns::haloExchange( FieldSet& fieldset, bool on_device ) const {
     }
 }
 
-void NodeColumns::haloExchange( Field& field, bool on_device ) const {
+void NodeColumns::haloExchange( const Field& field, bool on_device ) const {
     FieldSet fieldset;
     fieldset.add( field );
     haloExchange( fieldset, on_device );
@@ -2089,11 +2089,11 @@ const mesh::Halo& NodeColumns::halo() const {
     return functionspace_->halo();
 }
 
-void NodeColumns::haloExchange( FieldSet& fieldset, bool on_device ) const {
+void NodeColumns::haloExchange( const FieldSet& fieldset, bool on_device ) const {
     functionspace_->haloExchange( fieldset, on_device );
 }
 
-void NodeColumns::haloExchange( Field& field, bool on_device ) const {
+void NodeColumns::haloExchange( const Field& field, bool on_device ) const {
     functionspace_->haloExchange( field, on_device );
 }
 

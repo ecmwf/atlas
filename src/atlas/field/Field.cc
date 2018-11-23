@@ -13,6 +13,7 @@
 
 #include "atlas/field/Field.h"
 #include "atlas/field/detail/FieldImpl.h"
+#include "atlas/functionspace/FunctionSpace.h"
 
 namespace atlas {
 
@@ -248,8 +249,12 @@ bool Field::dirty() const {
     return field_->dirty();
 }
 
-void Field::set_dirty( bool value ) {
+void Field::set_dirty( bool value ) const {
     return field_->set_dirty( value );
+}
+
+void Field::haloExchange( bool on_device ) const {
+    field_->haloExchange( on_device );
 }
 
 // -- dangerous methods

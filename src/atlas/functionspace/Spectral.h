@@ -40,16 +40,16 @@ public:
 
     Spectral( const trans::Trans&, const eckit::Configuration& = util::NoConfig() );
 
-    virtual ~Spectral();
+    virtual ~Spectral() override;
 
-    virtual std::string type() const { return "Spectral"; }
+    virtual std::string type() const override { return "Spectral"; }
 
-    virtual std::string distribution() const;
+    virtual std::string distribution() const override;
 
     /// @brief Create a spectral field
     using FunctionSpaceImpl::createField;
-    virtual Field createField( const eckit::Configuration& ) const;
-    virtual Field createField( const Field&, const eckit::Configuration& ) const;
+    virtual Field createField( const eckit::Configuration& ) const override;
+    virtual Field createField( const Field&, const eckit::Configuration& ) const override;
 
     void gather( const FieldSet&, FieldSet& ) const;
     void gather( const Field&, Field& ) const;
@@ -69,7 +69,7 @@ public:  // methods
     idx_t nb_spectral_coefficients_global() const;
     int truncation() const { return truncation_; }
 
-    virtual idx_t size() const { return nb_spectral_coefficients(); }
+    virtual idx_t size() const override { return nb_spectral_coefficients(); }
 
 private:  // methods
     array::DataType config_datatype( const eckit::Configuration& ) const;
@@ -77,7 +77,7 @@ private:  // methods
     idx_t config_size( const eckit::Configuration& ) const;
     idx_t config_levels( const eckit::Configuration& ) const;
     void set_field_metadata( const eckit::Configuration&, Field& ) const;
-    size_t footprint() const;
+    size_t footprint() const override;
 
 private:  // data
     idx_t nb_levels_;

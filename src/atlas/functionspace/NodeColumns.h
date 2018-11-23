@@ -54,12 +54,12 @@ public:
     NodeColumns( Mesh mesh, const eckit::Configuration& );
     NodeColumns( Mesh mesh );
 
-    virtual ~NodeColumns();
+    virtual ~NodeColumns() override;
 
     static std::string static_type() { return "NodeColumns"; }
-    virtual std::string type() const { return static_type(); }
+    virtual std::string type() const override { return static_type(); }
 
-    virtual std::string distribution() const;
+    virtual std::string distribution() const override;
 
     idx_t nb_nodes() const;
     idx_t nb_nodes_global() const;  // All MPI ranks will have same output
@@ -75,16 +75,16 @@ public:
     using FunctionSpaceImpl::createField;
 
     /// @brief Create a field
-    virtual Field createField( const eckit::Configuration& ) const;
+    virtual Field createField( const eckit::Configuration& ) const override;
 
-    virtual Field createField( const Field&, const eckit::Configuration& ) const;
+    virtual Field createField( const Field&, const eckit::Configuration& ) const override;
 
     // -- Parallelisation aware methods
 
     const mesh::Halo& halo() const { return halo_; }
 
-    void haloExchange( FieldSet&, bool on_device = false ) const;
-    void haloExchange( Field&, bool on_device = false ) const;
+    void haloExchange( const FieldSet&, bool on_device = false ) const override;
+    void haloExchange( const Field&, bool on_device = false ) const override;
     const parallel::HaloExchange& halo_exchange() const;
 
     void gather( const FieldSet&, FieldSet& ) const;
@@ -255,7 +255,7 @@ public:
     /// @param [out] N         Number of values used to create the means
     void meanAndStandardDeviationPerLevel( const Field&, Field& mean, Field& stddev, idx_t& N ) const;
 
-    virtual idx_t size() const { return nb_nodes_; }
+    virtual idx_t size() const override { return nb_nodes_; }
 
 private:  // methods
     void constructor();
@@ -267,7 +267,7 @@ private:  // methods
     array::ArrayShape config_shape( const eckit::Configuration& ) const;
     void set_field_metadata( const eckit::Configuration&, Field& ) const;
 
-    virtual size_t footprint() const { return 0; }
+    virtual size_t footprint() const override { return 0; }
 
 private:                  // data
     Mesh mesh_;           // non-const because functionspace may modify mesh
@@ -473,8 +473,8 @@ public:
 
     const mesh::Halo& halo() const;
 
-    void haloExchange( FieldSet&, bool on_device = false ) const;
-    void haloExchange( Field&, bool on_device = false ) const;
+    void haloExchange( const FieldSet&, bool on_device = false ) const;
+    void haloExchange( const Field&, bool on_device = false ) const;
     const parallel::HaloExchange& halo_exchange() const;
 
     void gather( const FieldSet&, FieldSet& ) const;

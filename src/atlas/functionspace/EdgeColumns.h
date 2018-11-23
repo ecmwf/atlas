@@ -44,11 +44,11 @@ class EdgeColumns : public FunctionSpaceImpl {
 public:
     EdgeColumns( const Mesh&, const eckit::Configuration& = util::NoConfig() );
 
-    virtual ~EdgeColumns();
+    virtual ~EdgeColumns() override;
 
-    virtual std::string type() const { return "Edges"; }
+    virtual std::string type() const override { return "Edges"; }
 
-    virtual std::string distribution() const;
+    virtual std::string distribution() const override;
 
     idx_t nb_edges() const;
     idx_t nb_edges_global() const;  // Only on MPI rank 0, will this be different from 0
@@ -62,14 +62,14 @@ public:
 
     // -- Field creation methods
 
-    virtual Field createField( const eckit::Configuration& ) const;
+    virtual Field createField( const eckit::Configuration& ) const override;
 
-    virtual Field createField( const Field&, const eckit::Configuration& ) const;
+    virtual Field createField( const Field&, const eckit::Configuration& ) const override;
 
     // -- Parallelisation aware methods
 
-    void haloExchange( FieldSet& ) const;
-    void haloExchange( Field& ) const;
+    virtual void haloExchange( const FieldSet&, bool on_device = false ) const override;
+    virtual void haloExchange( const Field&, bool on_device = false ) const override;
     const parallel::HaloExchange& halo_exchange() const;
 
     void gather( const FieldSet&, FieldSet& ) const;
@@ -84,7 +84,7 @@ public:
     std::string checksum( const Field& ) const;
     const parallel::Checksum& checksum() const;
 
-    virtual idx_t size() const { return nb_edges_; }
+    virtual idx_t size() const override { return nb_edges_; }
 
 private:  // methods
     idx_t config_size( const eckit::Configuration& config ) const;
@@ -93,7 +93,7 @@ private:  // methods
     idx_t config_levels( const eckit::Configuration& ) const;
     array::ArrayShape config_shape( const eckit::Configuration& ) const;
     void set_field_metadata( const eckit::Configuration&, Field& ) const;
-    virtual size_t footprint() const;
+    virtual size_t footprint() const override;
 
 private:         // data
     Mesh mesh_;  // non-const because functionspace may modify mesh
@@ -166,9 +166,6 @@ public:
     const mesh::HybridElements& edges() const;
 
     // -- Parallelisation aware methods
-
-    void haloExchange( FieldSet& ) const;
-    void haloExchange( Field& ) const;
     const parallel::HaloExchange& halo_exchange() const;
 
     void gather( const FieldSet&, FieldSet& ) const;

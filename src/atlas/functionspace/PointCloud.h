@@ -32,20 +32,20 @@ public:
     PointCloud( const Field& lonlat );
     PointCloud( const Field& lonlat, const Field& ghost );
     PointCloud( const Grid& );
-    virtual ~PointCloud() {}
-    virtual std::string type() const { return "PointCloud"; }
-    virtual operator bool() const { return true; }
-    virtual size_t footprint() const { return sizeof( *this ); }
-    virtual std::string distribution() const;
+    virtual ~PointCloud() override {}
+    virtual std::string type() const override { return "PointCloud"; }
+    virtual operator bool() const override { return true; }
+    virtual size_t footprint() const override { return sizeof( *this ); }
+    virtual std::string distribution() const override;
     const Field& lonlat() const { return lonlat_; }
     const Field& vertical() const { return vertical_; }
     const Field& ghost() const;
-    virtual idx_t size() const { return lonlat_.shape( 0 ); }
+    virtual idx_t size() const override { return lonlat_.shape( 0 ); }
 
     /// @brief Create a spectral field
     using FunctionSpaceImpl::createField;
-    virtual Field createField( const eckit::Configuration& ) const;
-    virtual Field createField( const Field&, const eckit::Configuration& ) const;
+    virtual Field createField( const eckit::Configuration& ) const override;
+    virtual Field createField( const Field&, const eckit::Configuration& ) const override;
 
 
     class IteratorXYZ {

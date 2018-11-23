@@ -47,11 +47,11 @@ std::string FunctionSpace::distribution() const {
     return functionspace_->distribution();
 }
 
-void FunctionSpace::haloExchange( Field& field, bool on_device ) const {
+void FunctionSpace::haloExchange( const Field& field, bool on_device ) const {
     return functionspace_->haloExchange( field, on_device );
 }
 
-void FunctionSpace::haloExchange( FieldSet& fields, bool on_device ) const {
+void FunctionSpace::haloExchange( const FieldSet& fields, bool on_device ) const {
     return functionspace_->haloExchange( fields, on_device );
 }
 

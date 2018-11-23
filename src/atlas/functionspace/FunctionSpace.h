@@ -58,8 +58,8 @@ public:
     template <typename DATATYPE>
     Field createField() const;
 
-    void haloExchange( FieldSet&, bool on_device = false ) const;
-    void haloExchange( Field&, bool on_device = false ) const;
+    void haloExchange( const FieldSet&, bool on_device = false ) const;
+    void haloExchange( const Field&, bool on_device = false ) const;
 
     idx_t size() const { return functionspace_->size(); }
 };

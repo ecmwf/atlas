@@ -61,6 +61,10 @@ contains
   procedure :: kind => Field__kind
   generic :: shape => shape_array, shape_idx
 
+  procedure :: halo_exchange
+  procedure :: dirty
+  procedure :: set_dirty
+
   procedure :: rename
   procedure :: set_levels
   procedure :: set_functionspace
@@ -683,6 +687,57 @@ subroutine sync_host_device(this)
   class(atlas_Field), intent(inout) :: this
   call atlas__Field__sync_host_device(this%c_ptr())
 end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine halo_exchange(this,on_device)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  logical, optional :: on_device
+  integer(c_int) :: on_device_int
+  on_device_int = 0
+  if( present(on_device) ) then
+    if( on_device ) on_device_int = 1
+  endif
+  call atlas__Field__halo_exchange(this%c_ptr(), on_device_int)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine set_dirty(this,value)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  logical, optional, intent(in) :: value
+  integer(c_int) :: value_int
+  if( present(value) ) then
+      if( value ) then
+          value_int = 1
+      else
+          value_int = 0
+      endif
+  else
+      value_int = 1
+  endif
+  call atlas__Field__set_dirty(this%c_ptr(), value_int)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+function dirty(this) result(value)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  logical :: value
+  integer(c_int) :: value_int
+  value_int = atlas__Field__dirty(this%c_ptr())
+  if( value_int == 0 ) then
+    value = .false.
+  else
+    value = .true.
+  endif
+end function
 
 !-------------------------------------------------------------------------------
 

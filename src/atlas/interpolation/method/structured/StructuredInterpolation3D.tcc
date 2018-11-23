@@ -155,9 +155,7 @@ void StructuredInterpolation3D<Kernel>::execute( const FieldSet& src_fields, Fie
 
     if ( N == 0 ) return;
 
-    for ( idx_t i = 0; i < N; ++i ) {
-        if ( src_fields[i].dirty() ) { source().haloExchange( const_cast<Field&>( src_fields[i] ) ); }
-    }
+    haloExchange( src_fields );
 
     array::DataType datatype = src_fields[0].datatype();
     int rank                 = src_fields[0].rank();
@@ -177,9 +175,7 @@ void StructuredInterpolation3D<Kernel>::execute( const FieldSet& src_fields, Fie
         execute_impl<float, 2>( *kernel_, src_fields, tgt_fields );
     }
 
-    for ( idx_t i = 0; i < N; ++i ) {
-        tgt_fields[i].set_dirty();
-    }
+    tgt_fields.set_dirty();
 }
 
 

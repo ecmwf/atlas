@@ -54,9 +54,6 @@ contains
   procedure, public :: mesh
   procedure, public :: nodes
 
-  procedure, private :: halo_exchange_fieldset
-  procedure, private :: halo_exchange_field
-  generic, public :: halo_exchange => halo_exchange_fieldset, halo_exchange_field
   procedure, public :: get_halo_exchange
 
   procedure, private :: gather_fieldset
@@ -273,25 +270,6 @@ function nodes(this)
   call nodes%reset_c_ptr( atlas__NodesFunctionSpace__nodes(this%c_ptr()) )
   call nodes%return()
 end function
-
-!------------------------------------------------------------------------------
-!------------------------------------------------------------------------------
-
-subroutine halo_exchange_fieldset(this,fieldset)
-  use atlas_functionspace_NodeColumns_c_binding
-  class(atlas_functionspace_NodeColumns), intent(in) :: this
-  type(atlas_FieldSet), intent(inout) :: fieldset
-  call atlas__NodesFunctionSpace__halo_exchange_fieldset(this%c_ptr(),fieldset%c_ptr())
-end subroutine
-
-!------------------------------------------------------------------------------
-
-subroutine halo_exchange_field(this,field)
-  use atlas_functionspace_NodeColumns_c_binding
-  class(atlas_functionspace_NodeColumns), intent(in) :: this
-  type(atlas_Field), intent(inout) :: field
-  call atlas__NodesFunctionSpace__halo_exchange_field(this%c_ptr(),field%c_ptr())
-end subroutine
 
 !------------------------------------------------------------------------------
 

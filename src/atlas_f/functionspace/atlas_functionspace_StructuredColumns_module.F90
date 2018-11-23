@@ -57,10 +57,6 @@ contains
   procedure, private :: checksum_field
   generic, public :: checksum => checksum_fieldset, checksum_field
 
-  procedure, private :: halo_exchange_fieldset
-  procedure, private :: halo_exchange_field
-  generic, public :: halo_exchange => halo_exchange_fieldset, halo_exchange_field
-
   procedure :: j_begin
   procedure :: j_end
   procedure :: i_begin
@@ -69,6 +65,9 @@ contains
   procedure :: j_end_halo
   procedure :: i_begin_halo
   procedure :: i_end_halo
+
+  procedure :: size => get_size
+  procedure :: size_owned => get_size_owned
 
   procedure :: xy
     !! Return xy coordinate field
@@ -283,6 +282,20 @@ function i_end_halo(this,j) result(i)
   i = atlas__fs__StructuredColumns__i_end_halo(this%c_ptr(),j)
 end function
 
+function get_size(this) result(size)
+  use atlas_functionspace_StructuredColumns_c_binding
+  integer(ATLAS_KIND_IDX) :: size
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  size = atlas__fs__StructuredColumns__size(this%c_ptr())
+end function
+
+function get_size_owned(this) result(size)
+  use atlas_functionspace_StructuredColumns_c_binding
+  integer(ATLAS_KIND_IDX) :: size
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  size = atlas__fs__StructuredColumns__sizeOwned(this%c_ptr())
+end function
+
 function xy(this) result(field)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_Field) :: field
@@ -322,22 +335,6 @@ function index_j(this) result(field)
   field = atlas_Field( atlas__fs__StructuredColumns__index_j(this%c_ptr()) )
   call field%return()
 end function
-
-subroutine halo_exchange_fieldset(this,fieldset)
-  use atlas_functionspace_StructuredColumns_c_binding
-  class(atlas_functionspace_StructuredColumns), intent(in) :: this
-  type(atlas_FieldSet), intent(inout) :: fieldset
-  call atlas__fs__StructuredColumns__halo_exchange_fieldset(this%c_ptr(),fieldset%c_ptr())
-end subroutine
-
-!------------------------------------------------------------------------------
-
-subroutine halo_exchange_field(this,field)
-  use atlas_functionspace_StructuredColumns_c_binding
-  class(atlas_functionspace_StructuredColumns), intent(in) :: this
-  type(atlas_Field), intent(inout) :: field
-  call atlas__fs__StructuredColumns__halo_exchange_field(this%c_ptr(),field%c_ptr())
-end subroutine
 
 !-------------------------------------------------------------------------------
 

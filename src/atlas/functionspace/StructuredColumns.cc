@@ -312,7 +312,6 @@ array::ArrayShape StructuredColumns::config_shape( const eckit::Configuration& c
 
     return shape;
 }
-
 size_t StructuredColumns::Map2to1::footprint() const {
     size_t size = sizeof( *this );
     size += data_.size() * sizeof( decltype( data_ )::value_type );
@@ -325,9 +324,9 @@ void StructuredColumns::Map2to1::print( std::ostream& out ) const {
         for ( idx_t i = i_min_; i <= i_max_; ++i ) {
             idx_t v = operator()( i, j );
             if ( v == missing() )
-                out << std::setw( 4 ) << "X";
+                out << std::setw( 6 ) << "X";
             else
-                out << std::setw( 4 ) << v;
+                out << std::setw( 6 ) << v;
         }
         out << '\n';
     }
@@ -646,6 +645,10 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         }
 
         ATLAS_TRACE_SCOPE( "Fill in ij2gp " ) {
+            ATLAS_DEBUG_VAR( imin );
+            ATLAS_DEBUG_VAR( imax );
+            ATLAS_DEBUG_VAR( jmin );
+            ATLAS_DEBUG_VAR( jmax );
             ij2gp_.resize( {imin, imax}, {jmin, jmax} );
 
             for ( const GridPoint& gp : gridpoints ) {
@@ -1154,9 +1157,9 @@ void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exc
 }
 }  // namespace
 
-void StructuredColumns::haloExchange( FieldSet& fieldset, bool ) const {
+void StructuredColumns::haloExchange( const FieldSet& fieldset, bool ) const {
     for ( idx_t f = 0; f < fieldset.size(); ++f ) {
-        Field& field = fieldset[f];
+        Field& field = const_cast<FieldSet&>( fieldset )[f];
         switch ( field.rank() ) {
             case 1:
                 dispatch_haloExchange<1>( field, halo_exchange(), *this );
@@ -1176,7 +1179,7 @@ void StructuredColumns::haloExchange( FieldSet& fieldset, bool ) const {
     }
 }
 
-void StructuredColumns::haloExchange( Field& field, bool ) const {
+void StructuredColumns::haloExchange( const Field& field, bool ) const {
     FieldSet fieldset;
     fieldset.add( field );
     haloExchange( fieldset );
@@ -1236,14 +1239,6 @@ void StructuredColumns::scatter( const FieldSet& global, FieldSet& local ) const
 
 void StructuredColumns::scatter( const Field& global, Field& local ) const {
     functionspace_->scatter( global, local );
-}
-
-void StructuredColumns::haloExchange( FieldSet& fields, bool on_device ) const {
-    functionspace_->haloExchange( fields, on_device );
-}
-
-void StructuredColumns::haloExchange( Field& field, bool on_device ) const {
-    functionspace_->haloExchange( field, on_device );
 }
 
 std::string StructuredColumns::checksum( const FieldSet& fieldset ) const {

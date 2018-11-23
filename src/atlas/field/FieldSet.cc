@@ -51,6 +51,18 @@ Field& FieldSetImpl::field( const std::string& name ) const {
     return const_cast<Field&>( fields_[index_.at( name )] );
 }
 
+void FieldSetImpl::haloExchange( bool on_device ) const {
+    for ( idx_t i = 0; i < size(); ++i ) {
+        field( i ).haloExchange( on_device );
+    }
+}
+
+void FieldSetImpl::set_dirty( bool value ) const {
+    for ( idx_t i = 0; i < size(); ++i ) {
+        field( i ).set_dirty( value );
+    }
+}
+
 void FieldSetImpl::throw_OutOfRange( idx_t index, idx_t max ) {
     throw eckit::OutOfRange( index, max, Here() );
 }
@@ -101,6 +113,14 @@ FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, idx_t idx ) {
     ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->operator[]( idx ).get(); );
     return nullptr;
 }
+
+void atlas__FieldSet__set_dirty( FieldSetImpl* This, int value ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->set_dirty( value ); );
+}
+
+void atlas__FieldSet__halo_exchange( FieldSetImpl* This, int on_device ) {
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->haloExchange( on_device ); );
+}
 }
 //-----------------------------------------------------------------------------
 
@@ -116,6 +136,10 @@ FieldSet::FieldSet( const FieldSet& fieldset ) : fieldset_( fieldset.fieldset_ )
 
 FieldSet::FieldSet( const Field& field ) : fieldset_( new Implementation() ) {
     fieldset_->add( field );
+}
+
+void FieldSet::set_dirty( bool value ) const {
+    fieldset_->set_dirty( value );
 }
 
 //------------------------------------------------------------------------------------------------------
