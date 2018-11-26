@@ -64,6 +64,16 @@ public:
     idx_t size() const { return functionspace_->size(); }
 };
 
+//------------------------------------------------------------------------------------------------------
+
+extern template Field FunctionSpace::createField<float>() const;
+extern template Field FunctionSpace::createField<double>() const;
+extern template Field FunctionSpace::createField<int>() const;
+extern template Field FunctionSpace::createField<long>() const;
+extern template Field FunctionSpace::createField<float>( const eckit::Configuration& ) const;
+extern template Field FunctionSpace::createField<double>( const eckit::Configuration& ) const;
+extern template Field FunctionSpace::createField<int>( const eckit::Configuration& ) const;
+extern template Field FunctionSpace::createField<long>( const eckit::Configuration& ) const;
 
 //------------------------------------------------------------------------------------------------------
 

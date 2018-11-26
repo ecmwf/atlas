@@ -259,7 +259,7 @@ void Method::haloExchange( const FieldSet& fields ) const {
     }
 }
 void Method::haloExchange( const Field& field ) const {
-    source().haloExchange( field );
+    if( field.dirty() ) source().haloExchange( field );
 }
 
 }  // namespace interpolation

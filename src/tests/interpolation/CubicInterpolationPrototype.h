@@ -355,7 +355,7 @@ public:
 
     Cubic3DInterpolation( const functionspace::StructuredColumns& fs ) :
         fs_( fs ),
-        horizontal_interpolation_( fs.grid() ),
+        horizontal_interpolation_( fs ),
         vertical_interpolation_( fs.vertical() ) {}
 
     template <typename stencil_t>

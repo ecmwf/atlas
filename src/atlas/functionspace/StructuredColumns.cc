@@ -645,10 +645,6 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         }
 
         ATLAS_TRACE_SCOPE( "Fill in ij2gp " ) {
-            ATLAS_DEBUG_VAR( imin );
-            ATLAS_DEBUG_VAR( imax );
-            ATLAS_DEBUG_VAR( jmin );
-            ATLAS_DEBUG_VAR( jmax );
             ij2gp_.resize( {imin, imax}, {jmin, jmax} );
 
             for ( const GridPoint& gp : gridpoints ) {
@@ -704,6 +700,7 @@ void StructuredColumns::create_remote_index() const {
     for ( idx_t n = 0; n < size_owned_; ++n ) {
         remote_idx( n ) = n;
     }
+
 
     ATLAS_TRACE_SCOPE( "Parallelisation ..." ) {
         auto build_partition_graph = [this]() -> std::unique_ptr<Mesh::PartitionGraph> {
