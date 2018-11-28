@@ -211,9 +211,10 @@ list( APPEND atlas_grid_srcs
 endif()
 
 # Append CGAL_COMPLE_FLAGS only to this file ( see ATLAS-193 )
-set_source_files_properties( mesh/actions/BuildConvexHull3D.cc
-                             PROPERTIES COMPILE_FLAGS "${CGAL_COMPILE_FLAGS}" )
-
+if( CGAL_COMPILE_FLAGS )
+  set_source_files_properties( mesh/actions/BuildConvexHull3D.cc
+                               PROPERTIES COMPILE_FLAGS "${CGAL_COMPILE_FLAGS}" )
+endif()
 
 list( APPEND atlas_mesh_srcs
 mesh.h
