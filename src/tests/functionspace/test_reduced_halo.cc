@@ -8,6 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <string>
+#include <vector>
+#include <array>
 #include <algorithm>
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
@@ -33,6 +36,8 @@ Container reversed( const Container& a ) {
     return a_reversed;
 }
 
+static std::array<bool,2> false_true { false, true };
+
 //-----------------------------------------------------------------------------
 
 CASE( "halo nodes" ) {
@@ -40,7 +45,7 @@ CASE( "halo nodes" ) {
     std::vector<int> halos{0, 1, 2, 3, 4};
     std::vector<int> nodes{560, 592, 624, 656, 688};
 
-    for ( bool reduce : {false, true} ) {
+    for ( bool reduce : false_true ) {
         SECTION( std::string( reduce ? "reduced" : "increased" ) ) {
             Mesh mesh = StructuredMeshGenerator().generate( grid );
             EXPECT( mesh.nodes().size() == nodes[0] );
@@ -60,8 +65,8 @@ CASE( "halo edges" ) {
     std::vector<int> halos{0, 1, 2, 3, 4};
     std::vector<int> edges{1559, 1649, 1739, 1829, 1919};
 
-    for ( bool reduce : {false, true} ) {
-        for ( bool with_pole_edges : {false, true} ) {
+    for ( bool reduce : false_true ) {
+        for ( bool with_pole_edges : false_true ) {
             int pole_edges = with_pole_edges ? StructuredGrid( grid ).nx().front() : 0;
 
             SECTION( std::string( reduce ? "reduced " : "increased " ) +
