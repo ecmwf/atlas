@@ -24,6 +24,7 @@
 #include "atlas/option.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/NormaliseLongitude.h"
 
 namespace atlas {
 namespace grid {

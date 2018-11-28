@@ -35,6 +35,7 @@
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
+#include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -460,8 +461,7 @@ void Bicubic::setup( const FunctionSpace& source ) {
                 Kernel::WorkSpace workspace;
                 atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                     if ( not ghost( n ) ) {
-                        PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
-                        normalise( p );
+                        PointLonLat p{normalise( lonlat( n, LON ) ), lonlat( n, LAT )};
                         kernel_->insert_triplets( n, p, triplets, workspace );
                     }
                 }
@@ -574,8 +574,7 @@ void Bicubic::execute_impl( const FieldSet& src_fields, FieldSet& tgt_fields ) c
         Kernel::Weights weights;
         atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
             if ( not ghost( n ) ) {
-                PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
-                normalise( p );
+                PointLonLat p{normalise( lonlat( n, LON ) ), lonlat( n, LAT )};
                 kernel_->compute_stencil( p.lon(), p.lat(), stencil );
                 kernel_->compute_weights( p.lon(), p.lat(), stencil, weights );
                 for ( idx_t i = 0; i < N; ++i ) {
@@ -602,8 +601,7 @@ void Bicubic::execute_impl( const Field& src_field, Field& tgt_field ) const {
         Kernel::Weights weights;
         atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
             if ( not ghost( n ) ) {
-                PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
-                normalise( p );
+                PointLonLat p{normalise( lonlat( n, LON ) ), lonlat( n, LAT )};
                 kernel_->compute_stencil( p.lon(), p.lat(), stencil );
                 kernel_->compute_weights( p.lon(), p.lat(), stencil, weights );
                 kernel_->interpolate( stencil, weights, src_view, tgt_view, n );

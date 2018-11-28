@@ -22,6 +22,7 @@
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/UnitSphere.h"
 

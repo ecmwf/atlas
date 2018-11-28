@@ -170,7 +170,8 @@ void StructuredMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
     std::string partitioner_type = "equal_regions";
     options.get( "partitioner", partitioner_type );
 
-    if ( partitioner_type == "trans" && rg.ny() % 2 == 1 ) partitioner_type = "equal_regions";  // Odd number of latitudes
+    if ( partitioner_type == "trans" && rg.ny() % 2 == 1 )
+        partitioner_type = "equal_regions";  // Odd number of latitudes
     if ( nb_parts == 1 || mpi::comm().size() == 1 )
         partitioner_type = "equal_regions";  // Only one part --> Trans is slower
 
