@@ -90,6 +90,8 @@ public:
     GridPoint( idx_t _i, idx_t _j ) : i( _i ), j( _j ) {}
     GridPoint( idx_t _i, idx_t _j, idx_t _r ) : i( _i ), j( _j ), r( _r ) {}
 
+    /* No longer used:
+
     bool operator<( const GridPoint& other ) const {
         if ( j < other.j ) return true;
         if ( j == other.j ) return i < other.i;
@@ -97,6 +99,8 @@ public:
     }
 
     bool operator==( const GridPoint& other ) const { return ( j == other.j && i == other.i ); }
+
+    */
 };
 
 

@@ -8,14 +8,14 @@
 
 namespace atlas {
 
-static std::vector<std::string> Labels( int size, const char* labels[] ) {
-    std::vector<std::string> _labels;
-    _labels.reserve( size );
-    for ( int i = 0; i < size; ++i ) {
-        _labels.emplace_back( labels[i] );
-    }
-    return _labels;
-}
+//static std::vector<std::string> Labels( int size, const char* labels[] ) {
+//    std::vector<std::string> _labels;
+//    _labels.reserve( size );
+//    for ( int i = 0; i < size; ++i ) {
+//        _labels.emplace_back( labels[i] );
+//    }
+//    return _labels;
+//}
 
 extern "C" {
 
