@@ -45,6 +45,10 @@ const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__g
 const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_dist(
     const GridImpl* grid, const grid::DistributionImpl* dist, const eckit::Configuration* config );
 
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_dist_vert(
+    const GridImpl* grid, const grid::DistributionImpl* dist, const Vertical* vert,
+    const eckit::Configuration* config );
+
 void atlas__functionspace__StructuredColumns__delete( detail::StructuredColumns* This );
 field::FieldImpl* atlas__fs__StructuredColumns__create_field( const detail::StructuredColumns* This,
                                                               const eckit::Configuration* options );

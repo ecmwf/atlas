@@ -693,7 +693,7 @@ end subroutine
 subroutine halo_exchange(this,on_device)
   use, intrinsic :: iso_c_binding, only : c_int
   use atlas_field_c_binding
-  class(atlas_Field), intent(inout) :: this
+  class(atlas_Field), intent(in) :: this
   logical, optional :: on_device
   integer(c_int) :: on_device_int
   on_device_int = 0
@@ -708,7 +708,7 @@ end subroutine
 subroutine set_dirty(this,value)
   use, intrinsic :: iso_c_binding, only : c_int
   use atlas_field_c_binding
-  class(atlas_Field), intent(inout) :: this
+  class(atlas_Field), intent(in) :: this
   logical, optional, intent(in) :: value
   integer(c_int) :: value_int
   if( present(value) ) then

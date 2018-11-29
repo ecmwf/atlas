@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <fenv.h>
+
 
 #include "eckit/eckit_config.h"
 #include "eckit/filesystem/LocalPathName.h"
@@ -74,7 +76,9 @@ Library::Library() :
     info_( getEnv( "ATLAS_INFO", true ) ),
     trace_( getEnv( "ATLAS_TRACE", false ) ),
     trace_report_( getEnv( "ATLAS_TRACE_REPORT", false ) ),
-    trace_barriers_( getEnv( "ATLAS_TRACE_BARRIERS", false ) ) {}
+    trace_barriers_( getEnv( "ATLAS_TRACE_BARRIERS", false ) ) {
+    feenableexcept( FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW );
+}
 
 Library& Library::instance() {
     return libatlas;

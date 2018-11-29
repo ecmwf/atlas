@@ -48,6 +48,13 @@ const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__g
     return nullptr;
 }
 
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_dist_vert(
+    const Grid::Implementation* grid, const grid::DistributionImpl* dist, const Vertical* vert,
+    const eckit::Configuration* config ) {
+    ATLAS_ERROR_HANDLING(
+        return new detail::StructuredColumns( Grid( grid ), grid::Distribution( dist ), *vert, *config ); );
+    return nullptr;
+}
 
 void atlas__functionspace__StructuredColumns__delete( detail::StructuredColumns* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); delete This; );

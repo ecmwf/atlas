@@ -126,6 +126,9 @@ grid/detail/grid/Regional.cc
 grid/detail/distribution/DistributionImpl.h
 grid/detail/distribution/DistributionImpl.cc
 
+grid/detail/vertical/VerticalInterface.h
+grid/detail/vertical/VerticalInterface.cc
+
 grid/detail/partitioner/CheckerboardPartitioner.cc
 grid/detail/partitioner/CheckerboardPartitioner.h
 grid/detail/partitioner/EqualRegionsPartitioner.cc
@@ -402,10 +405,11 @@ interpolation/method/structured/StructuredInterpolation2D.tcc
 interpolation/method/structured/StructuredInterpolation2D.h
 interpolation/method/structured/StructuredInterpolation3D.tcc
 interpolation/method/structured/StructuredInterpolation3D.h
-interpolation/method/structured/kernels/BicubicKernel.h
-interpolation/method/structured/kernels/TricubicKernel.h
-interpolation/method/structured/Bicubic.cc
-interpolation/method/structured/Tricubic.cc
+interpolation/method/structured/kernels/CubicHorizontalKernel.h
+interpolation/method/structured/kernels/Cubic3DKernel.h
+interpolation/method/structured/kernels/CubicVerticalKernel.h
+interpolation/method/structured/Cubic2D.cc
+interpolation/method/structured/Cubic3D.cc
 )
 
 

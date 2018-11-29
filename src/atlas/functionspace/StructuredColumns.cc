@@ -12,6 +12,7 @@
 
 #include <functional>
 #include <iomanip>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 
@@ -360,6 +361,19 @@ std::string StructuredColumns::distribution() const {
     return distribution_;
 }
 
+void StructuredColumns::throw_outofbounds( idx_t i, idx_t j ) const {
+    std::stringstream ss;
+    if ( j < j_begin_halo() || j >= j_end_halo() ) {
+        ss << "OutofBounds: j out of range! : (i,j) = (" << i << "," << j << ") --- Expected: " << j_begin_halo()
+           << " <= j < " << j_end_halo();
+    }
+    if ( i < i_begin_halo( j ) || i >= i_end_halo( j ) ) {
+        ss << "OutofBounds: i out of range! : (i,j) = (" << i << "," << j << ") --- Expected: " << i_begin_halo( j )
+           << " <= i < " << i_end_halo( j );
+    }
+    throw eckit::Exception( ss.str(), Here() );
+}
+
 // ----------------------------------------------------------------------------
 // Constructor
 // ----------------------------------------------------------------------------
@@ -372,7 +386,11 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
 
 StructuredColumns::StructuredColumns( const Grid& grid, const grid::Distribution& distribution,
                                       const eckit::Configuration& config ) :
-    vertical_(),
+    StructuredColumns( grid, distribution, Vertical( config ), config ) {}
+
+StructuredColumns::StructuredColumns( const Grid& grid, const grid::Distribution& distribution,
+                                      const Vertical& vertical, const eckit::Configuration& config ) :
+    vertical_( vertical ),
     nb_levels_( vertical_.size() ),
     grid_( new grid::StructuredGrid( grid ) ) {
     setup( distribution, config );
@@ -405,6 +423,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
     bool periodic_points = config.getInt( "periodic_points", false );
     if ( not( *grid_ ) ) { throw eckit::BadCast( "Grid is not a grid::Structured type", Here() ); }
     const eckit::mpi::Comm& comm = mpi::comm();
+
 
     ny_                  = grid_->ny();
     north_pole_included_ = 90. - grid_->y( 0 ) == 0.;

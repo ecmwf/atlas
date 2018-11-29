@@ -25,18 +25,19 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-class BicubicKernel {
+class CubicHorizontalKernel {
     using Triplet  = eckit::linalg::Triplet;
     using Triplets = std::vector<Triplet>;
 
 public:
-    BicubicKernel() = default;
+    CubicHorizontalKernel() = default;
 
-    BicubicKernel( const functionspace::StructuredColumns& fs ) {
+    CubicHorizontalKernel( const functionspace::StructuredColumns& fs, const util::Config& config = util::NoConfig() ) {
         src_ = fs;
         ASSERT( src_ );
         ASSERT( src_.halo() >= 2 );
         compute_horizontal_stencil_ = ComputeHorizontalStencil( src_.grid(), stencil_width() );
+        limiter_                    = config.getBool( "limiter", false );
     }
 
 private:
@@ -85,30 +86,30 @@ public:
             auto& weights_i = weights.weights_i[j];
             src_.compute_xy( stencil.i( 1, j ), stencil.j( j ), P1 );
             src_.compute_xy( stencil.i( 2, j ), stencil.j( j ), P2 );
-            double alpha               = ( P2.x() - x ) / ( P2.x() - P1.x() );
-            double alpha_sqr           = alpha * alpha;
-            double two_minus_alpha     = 2. - alpha;
-            double one_minus_alpha_sqr = 1. - alpha_sqr;
-            weights_i[0]               = -alpha * one_minus_alpha_sqr / 6.;
-            weights_i[1]               = 0.5 * alpha * ( 1. + alpha ) * two_minus_alpha;
-            weights_i[2]               = 0.5 * one_minus_alpha_sqr * two_minus_alpha;
-            weights_i[3]               = 1. - weights_i[0] - weights_i[1] - weights_i[2];
-            yvec[j]                    = P1.y();
+            const double alpha               = ( P2.x() - x ) / ( P2.x() - P1.x() );
+            const double alpha_sqr           = alpha * alpha;
+            const double two_minus_alpha     = 2. - alpha;
+            const double one_minus_alpha_sqr = 1. - alpha_sqr;
+            weights_i[0]                     = -alpha * one_minus_alpha_sqr / 6.;
+            weights_i[1]                     = 0.5 * alpha * ( 1. + alpha ) * two_minus_alpha;
+            weights_i[2]                     = 0.5 * one_minus_alpha_sqr * two_minus_alpha;
+            weights_i[3]                     = 1. - weights_i[0] - weights_i[1] - weights_i[2];
+            yvec[j]                          = P1.y();
         }
-        double dl12 = yvec[0] - yvec[1];
-        double dl13 = yvec[0] - yvec[2];
-        double dl14 = yvec[0] - yvec[3];
-        double dl23 = yvec[1] - yvec[2];
-        double dl24 = yvec[1] - yvec[3];
-        double dl34 = yvec[2] - yvec[3];
-        double dcl1 = dl12 * dl13 * dl14;
-        double dcl2 = -dl12 * dl23 * dl24;
-        double dcl3 = dl13 * dl23 * dl34;
+        const double dl12 = yvec[0] - yvec[1];
+        const double dl13 = yvec[0] - yvec[2];
+        const double dl14 = yvec[0] - yvec[3];
+        const double dl23 = yvec[1] - yvec[2];
+        const double dl24 = yvec[1] - yvec[3];
+        const double dl34 = yvec[2] - yvec[3];
+        const double dcl1 = dl12 * dl13 * dl14;
+        const double dcl2 = -dl12 * dl23 * dl24;
+        const double dcl3 = dl13 * dl23 * dl34;
 
-        double dl1 = y - yvec[0];
-        double dl2 = y - yvec[1];
-        double dl3 = y - yvec[2];
-        double dl4 = y - yvec[3];
+        const double dl1 = y - yvec[0];
+        const double dl2 = y - yvec[1];
+        const double dl3 = y - yvec[2];
+        const double dl4 = y - yvec[3];
 
         auto& weights_j = weights.weights_j;
         weights_j[0]    = ( dl2 * dl3 * dl4 ) / dcl1;

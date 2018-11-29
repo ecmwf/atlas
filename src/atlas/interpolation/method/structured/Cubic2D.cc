@@ -9,19 +9,21 @@
  */
 
 #include "StructuredInterpolation2D.h"
-#include "kernels/BicubicKernel.h"
+#include "kernels/CubicHorizontalKernel.h"
 
 
 namespace atlas {
 namespace interpolation {
 namespace method {
 
-using Bicubic = StructuredInterpolation2D<BicubicKernel>;
+using Cubic2D = StructuredInterpolation2D<CubicHorizontalKernel>;
 
 namespace {
 
-static MethodBuilder<Bicubic> __builder1( "structured-bicubic" );
-static MethodBuilder<Bicubic> __builder2( "bicubic" );
+static MethodBuilder<Cubic2D> __builder1( "structured-cubic2D" );
+static MethodBuilder<Cubic2D> __builder2( "cubic2D" );
+static MethodBuilder<Cubic2D> __builder3( "structured-bicubic" );
+static MethodBuilder<Cubic2D> __builder4( "bicubic" );
 
 }  // namespace
 

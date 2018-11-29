@@ -9,6 +9,7 @@
  */
 
 #include "atlas/grid/Vertical.h"
+#include "eckit/types/Types.h"
 
 namespace atlas {
 
@@ -45,6 +46,12 @@ idx_t get_levels( const util::Config& config ) {
 
 Vertical::Vertical( const util::Config& config ) :
     Vertical( get_levels( config ), linspace( 0., 1., get_levels( config ), true ), config ) {}
+
+
+std::ostream& operator<<( std::ostream& os, const Vertical& v ) {
+    os << v.z_;
+    return os;
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 

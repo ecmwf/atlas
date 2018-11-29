@@ -2,7 +2,7 @@
 
 module atlas_functionspace_StructuredColumns_module
 
-use, intrinsic :: iso_c_binding, only : c_ptr
+use, intrinsic :: iso_c_binding, only : c_ptr, c_double
 use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
 use atlas_functionspace_module, only : atlas_FunctionSpace
 use atlas_Field_module, only: atlas_Field
@@ -12,16 +12,18 @@ use atlas_Config_module, only: atlas_Config
 use atlas_kinds_module, only : ATLAS_KIND_IDX
 use fckit_owned_object_module, only : fckit_owned_object
 use atlas_GridDistribution_module, only : atlas_GridDistribution
+use atlas_Vertical_module, only : atlas_Vertical
 
 implicit none
 
-private :: c_ptr
+private :: c_ptr, c_double
 private :: c_str, c_ptr_to_string, c_ptr_free
 private :: atlas_FunctionSpace
 private :: atlas_Field
 private :: atlas_FieldSet
 private :: atlas_Grid
 private :: atlas_GridDistribution
+private :: atlas_Vertical
 private :: atlas_Config
 private :: fckit_owned_object
 
@@ -92,6 +94,7 @@ interface atlas_functionspace_StructuredColumns
   module procedure StructuredColumns__cptr
   module procedure StructuredColumns__grid
   module procedure StructuredColumns__grid_dist
+  module procedure StructuredColumns__grid_dist_levels
 end interface
 
 
@@ -153,6 +156,27 @@ function StructuredColumns__grid_dist(grid, distribution, halo, levels) result(t
       & grid%c_ptr(), distribution%c_ptr(), config%c_ptr() ) )
   call this%set_index()
   call config%final()
+  call this%return()
+end function
+
+function StructuredColumns__grid_dist_levels(grid, distribution, levels, halo) result(this)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_functionspace_StructuredColumns) :: this
+  class(atlas_Grid), intent(in) :: grid
+  type(atlas_griddistribution), intent(in) :: distribution
+  integer, optional :: halo
+  real(c_double) :: levels(:)
+  type(atlas_Config) :: config
+  type(atlas_Vertical) :: vertical
+  config = empty_config() ! Due to PGI compiler bug, we have to do this insted of "config = atlas_Config()""
+  if( present(halo) )   call config%set("halo",halo)
+  call config%set("levels",size(levels))
+  vertical = atlas_Vertical(levels)
+  call this%reset_c_ptr( atlas__functionspace__StructuredColumns__new__grid_dist_vert( &
+      & grid%c_ptr(), distribution%c_ptr(), vertical%c_ptr(), config%c_ptr() ) )
+  call this%set_index()
+  call config%final()
+  call vertical%final()
   call this%return()
 end function
 

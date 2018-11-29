@@ -70,6 +70,7 @@ protected:
     FunctionSpace target_;
 
     bool matrix_free_;
+    bool limiter_;
 
     std::unique_ptr<Kernel> kernel_;
 };

@@ -60,6 +60,9 @@ public:
 
     StructuredColumns( const Grid&, const grid::Distribution&, const eckit::Configuration& = util::NoConfig() );
 
+    StructuredColumns( const Grid&, const grid::Distribution&, const Vertical&,
+                       const eckit::Configuration& = util::NoConfig() );
+
     StructuredColumns( const Grid&, const Vertical&, const eckit::Configuration& = util::NoConfig() );
 
     StructuredColumns( const Grid&, const Vertical&, const grid::Partitioner&,
@@ -151,10 +154,11 @@ private:  // methods
 
     void check_bounds( idx_t i, idx_t j ) const {
 #if ATLAS_ARRAYVIEW_BOUNDS_CHECKING
-        if ( j < j_begin_halo() || j >= j_end_halo() ) { throw eckit::Exception( "j out of range" ); }
-        if ( i < i_begin_halo( j ) || i >= i_end_halo( j ) ) { throw eckit::Exception( "i out of range" ); }
+        if ( j < j_begin_halo() || j >= j_end_halo() ) { throw_outofbounds( i, j ); }
+        if ( i < i_begin_halo( j ) || i >= i_end_halo( j ) ) { throw_outofbounds( i, j ); }
 #endif
     }
+    [[noreturn]] void throw_outofbounds( idx_t i, idx_t j ) const;
 
     const parallel::GatherScatter& gather() const;
     const parallel::GatherScatter& scatter() const;

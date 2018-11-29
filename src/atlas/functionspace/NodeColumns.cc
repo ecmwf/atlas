@@ -1036,7 +1036,7 @@ void dispatch_minimum( const NodeColumns& fs, const Field& field, std::vector<T>
     std::vector<T> local_minimum( nvar, std::numeric_limits<T>::max() );
     atlas_omp_parallel {
         std::vector<T> local_minimum_private( nvar, std::numeric_limits<T>::max() );
-        const idx_t npts = arr.shape( 0 );
+        const idx_t npts = std::min( arr.shape( 0 ), fs.size() );
         atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
             for ( idx_t l = 0; l < arr.shape( 1 ); ++l ) {
                 for ( idx_t j = 0; j < arr.shape( 2 ); ++j ) {
@@ -1097,7 +1097,7 @@ void dispatch_maximum( const NodeColumns& fs, const Field& field, std::vector<T>
     std::vector<T> local_maximum( nvar, -std::numeric_limits<T>::max() );
     atlas_omp_parallel {
         std::vector<T> local_maximum_private( nvar, -std::numeric_limits<T>::max() );
-        const idx_t npts = arr.shape( 0 );
+        const idx_t npts = std::min( arr.shape( 0 ), fs.size() );
         atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
             for ( idx_t l = 0; l < arr.shape( 1 ); ++l ) {
                 for ( idx_t j = 0; j < nvar; ++j ) {

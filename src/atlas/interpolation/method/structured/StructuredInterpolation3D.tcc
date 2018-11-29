@@ -38,8 +38,10 @@ namespace method {
 template <typename Kernel>
 StructuredInterpolation3D<Kernel>::StructuredInterpolation3D( const Method::Config& config ) :
     Method( config ),
-    matrix_free_{false} {
+    matrix_free_{false},
+    limiter_{false} {
     config.get( "matrix_free", matrix_free_ );
+    config.get("limiter", limiter_ );
 
     if ( not matrix_free_ ) {
         throw eckit::NotImplemented( "Matrix-free StructuredInterpolation3D not implemented", Here() );
@@ -102,35 +104,7 @@ void StructuredInterpolation3D<Kernel>::print( std::ostream& ) const {
 
 template <typename Kernel>
 void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source ) {
-    kernel_.reset( new Kernel( source ) );
-
-    if ( not matrix_free_ ) {
-        idx_t inp_npts = source.size();
-        idx_t out_npts = target_lonlat_.shape( 0 );
-
-        auto ghost    = array::make_view<int, 1>( target_ghost_ );
-        auto lonlat   = array::make_view<double, 2>( target_lonlat_ );
-        auto vertical = array::make_view<double, 1>( target_vertical_ );
-
-        auto triplets = kernel_->allocate_triplets( out_npts );
-
-        constexpr NormaliseLongitude normalise;
-        ATLAS_TRACE_SCOPE( "Precomputing interpolation matrix" ) {
-            atlas_omp_parallel {
-                typename Kernel::WorkSpace workspace;
-                atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
-                    if ( not ghost( n ) ) {
-                        PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
-                        normalise( p );
-                        kernel_->insert_triplets( n, p, vertical( n ), triplets, workspace );
-                    }
-                }
-            }
-            // fill sparse matrix and return
-            Matrix A( out_npts, inp_npts, triplets );
-            matrix_.swap( A );
-        }
-    }
+    kernel_.reset( new Kernel( source, util::Config("limiter",limiter_) ) );
 }
 
 
@@ -174,6 +148,12 @@ void StructuredInterpolation3D<Kernel>::execute( const FieldSet& src_fields, Fie
     if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 2 ) {
         execute_impl<float, 2>( *kernel_, src_fields, tgt_fields );
     }
+    if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 3 ) {
+        execute_impl<double, 3>( *kernel_, src_fields, tgt_fields );
+    }
+    if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 3 ) {
+        execute_impl<float, 3>( *kernel_, src_fields, tgt_fields );
+    }
 
     tgt_fields.set_dirty();
 }
@@ -183,31 +163,50 @@ template <typename Kernel>
 template <typename Value, int Rank>
 void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, const FieldSet& src_fields,
                                                       FieldSet& tgt_fields ) const {
-    if ( functionspace::PointCloud tgt = target() ) {
-        const idx_t N  = src_fields.size();
-        idx_t out_npts = target_lonlat_.shape( 0 );
 
-        auto ghost    = array::make_view<int, 1>( target_ghost_ );
-        auto lonlat   = array::make_view<double, 2>( target_lonlat_ );
-        auto vertical = array::make_view<double, 1>( target_vertical_ );
+    const idx_t N  = src_fields.size();
 
-        std::vector<array::ArrayView<Value, Rank> > src_view;
-        std::vector<array::ArrayView<Value, 1> > tgt_view;
+    auto make_src_view = [&] ( const FieldSet& src_fields ) {
+        std::vector<array::ArrayView<Value, Rank, array::Intent::ReadOnly> > src_view;
         src_view.reserve( N );
-        tgt_view.reserve( N );
-
         for ( idx_t i = 0; i < N; ++i ) {
-            src_view.emplace_back( array::make_view<Value, Rank>( src_fields[i] ) );
-            tgt_view.emplace_back( array::make_view<Value, 1>( tgt_fields[i] ) );
+            src_view.emplace_back( array::make_view<Value, Rank, array::Intent::ReadOnly>( src_fields[i] ) );
+        }
+        return src_view;
+    };
+
+    // Assertions
+    ASSERT( tgt_fields.size() == src_fields.size());
+    idx_t tgt_rank = -1;
+    for( auto& f : tgt_fields ) {
+        if( tgt_rank == -1 ) tgt_rank = f.rank();
+        if( f.rank() != tgt_rank ) {
+            throw eckit::Exception( "target fields don't all have the same rank!", Here() );
+        }
+    }
+
+    if ( functionspace::PointCloud( target() ) && tgt_rank == 1 ) {
+        const idx_t out_npts = target_lonlat_.shape( 0 );
+
+        const auto ghost    = array::make_view<int, 1, array::Intent::ReadOnly>( target_ghost_ );
+        const auto lonlat   = array::make_view<double, 2, array::Intent::ReadOnly>( target_lonlat_ );
+        const auto vertical = array::make_view<double, 1, array::Intent::ReadOnly>( target_vertical_ );
+
+        const auto src_view = make_src_view( src_fields );
+
+        constexpr int TargetRank = 1;
+        std::vector<array::ArrayView<Value, TargetRank> > tgt_view;
+        tgt_view.reserve( N );
+        for ( idx_t i = 0; i < N; ++i ) {
+            tgt_view.emplace_back( array::make_view<Value, TargetRank>( tgt_fields[i] ) );
         }
 
-        constexpr NormaliseLongitude normalise( 0., 360. );
         atlas_omp_parallel {
             typename Kernel::Stencil stencil;
             typename Kernel::Weights weights;
             atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                 if ( not ghost( n ) ) {
-                    double x = normalise( lonlat( n, LON ) );
+                    double x = lonlat( n, LON );
                     double y = lonlat( n, LAT );
                     double z = vertical( n );
                     kernel.compute_stencil( x, y, z, stencil );
@@ -219,40 +218,43 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
             }
         }
     }
-    else if ( target_3d_ ) {
-        const idx_t N  = src_fields.size();
-        idx_t out_npts = target_3d_.shape( 0 );
-        idx_t out_nlev = target_3d_.shape( 1 );
+    else if ( target_3d_ && tgt_rank == Rank ) {
+        const idx_t out_npts = target_3d_.shape( 0 );
+        const idx_t out_nlev = target_3d_.shape( 1 );
 
         const auto coords = array::make_view<double, 3, array::Intent::ReadOnly>( target_3d_ );
+        const auto src_view = make_src_view( src_fields );
 
-        std::vector<array::ArrayView<Value, Rank, array::Intent::ReadOnly> > src_view;
-        std::vector<array::ArrayView<Value, Rank> > tgt_view;
-        src_view.reserve( N );
+        constexpr int TargetRank = Rank;
+        std::vector<array::ArrayView<Value, TargetRank> > tgt_view;
         tgt_view.reserve( N );
 
         for ( idx_t i = 0; i < N; ++i ) {
-            src_view.emplace_back( array::make_view<Value, Rank, array::Intent::ReadOnly>( src_fields[i] ) );
-            tgt_view.emplace_back( array::make_view<Value, Rank>( tgt_fields[i] ) );
+            tgt_view.emplace_back( array::make_view<Value, TargetRank>( tgt_fields[i] ) );
+
+            if( Rank == 3 && ( src_fields[i].stride(Rank-1) != 1 || tgt_fields[i].stride(TargetRank-1) != 1 ) ) {
+                throw eckit::Exception( "Something will go seriously wrong if we continue from here as "
+                                        "the implementation assumes stride=1 for fastest moving index (variables).", Here());
+            }
         }
 
-        constexpr NormaliseLongitude normalise( 0., 360. );
         atlas_omp_parallel {
             typename Kernel::Stencil stencil;
             typename Kernel::Weights weights;
             atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                 for ( idx_t k = 0; k < out_nlev; ++k ) {
-                    double x = normalise( coords( n, k, LON ) );
-                    double y = coords( n, k, LAT );
-                    double z = coords( n, k, ZZ );
-                    kernel.compute_stencil( x, y, z, stencil );
-                    kernel.compute_weights( x, y, z, stencil, weights );
+                    const double* crd = &coords(n,k,0);
+                    kernel.compute_stencil( crd[LON], crd[LAT], crd[ZZ], stencil );
+                    kernel.compute_weights( crd[LON], crd[LAT], crd[ZZ], stencil, weights );
                     for ( idx_t i = 0; i < N; ++i ) {
                         kernel.interpolate( stencil, weights, src_view[i], tgt_view[i], n, k );
                     }
                 }
             }
         }
+    }
+    else {
+      NOTIMP;
     }
 }
 

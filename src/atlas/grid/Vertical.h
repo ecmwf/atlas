@@ -50,6 +50,8 @@ public:
     double front() const { return z_.front(); }
     double back() const { return z_.back(); }
 
+    /// @brief Output information of field
+    friend std::ostream& operator<<( std::ostream& os, const Vertical& v );
 
 private:
     idx_t k_begin_;
@@ -72,7 +74,7 @@ Vertical::Vertical( idx_t levels, const vector_t& z, const Interval& interval, c
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename vector_t>
-Vertical::Vertical( idx_t levels, const vector_t& z, const util::Config& config ) {
+Vertical::Vertical( idx_t levels, const vector_t& z, const util::Config& ) {
     size_    = levels;
     k_begin_ = 0;
     k_end_   = size_;

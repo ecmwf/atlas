@@ -9,19 +9,21 @@
  */
 
 #include "StructuredInterpolation3D.h"
-#include "kernels/TricubicKernel.h"
+#include "kernels/Cubic3DKernel.h"
 
 
 namespace atlas {
 namespace interpolation {
 namespace method {
 
-using Tricubic = StructuredInterpolation3D<TricubicKernel>;
+using Tricubic = StructuredInterpolation3D<Cubic3DKernel>;
 
 namespace {
 
-static MethodBuilder<Tricubic> __builder1( "structured-tricubic" );
-static MethodBuilder<Tricubic> __builder2( "tricubic" );
+static MethodBuilder<Tricubic> __builder1( "structured-cubic3D" );
+static MethodBuilder<Tricubic> __builder2( "cubic3D" );
+static MethodBuilder<Tricubic> __builder3( "structured-tricubic" );
+static MethodBuilder<Tricubic> __builder4( "tricubic" );
 
 }  // namespace
 
