@@ -179,17 +179,6 @@ public:
         return OutputView1D<Value>( data );
     }
 
-
-    template <typename stencil_t, typename weights_t, typename InputArray, typename OutputArray>
-    typename std::enable_if<( InputArray::RANK == 3 ), void>::type interpolate_vars( const stencil_t& stencil,
-                                                                                     const weights_t& weights,
-                                                                                     const InputArray& input,
-                                                                                     OutputArray&& output,
-                                                                                     const idx_t nvar ) const {
-        interpolate_vars( stencil, weights, input, output, nvar );
-    }
-
-
     template <typename stencil_t, typename weights_t, typename InputArray, typename OutputArray>
     typename std::enable_if<( InputArray::RANK == 3 ), void>::type interpolate_vars( const stencil_t& stencil,
                                                                                      const weights_t& weights,
@@ -296,7 +285,8 @@ public:
     typename std::enable_if<( InputArray::RANK == 3 && OutputArray::RANK == 3 ), void>::type interpolate(
         const stencil_t& stencil, const weights_t& weights, const InputArray& input, OutputArray& output, idx_t r,
         idx_t k ) const {
-        interpolate_vars( stencil, weights, input, make_outputview( &output( r, k, 0 ) ), output.shape( 2 ) );
+        auto output_vars = make_outputview( &output( r, k, 0 ) );
+        interpolate_vars( stencil, weights, input, output_vars, output.shape( 2 ) );
     }
 
     template <typename stencil_t, typename weights_t, typename InputArray, typename OutputArray>

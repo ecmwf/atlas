@@ -91,10 +91,10 @@ contains
 END TYPE atlas_functionspace_StructuredColumns
 
 interface atlas_functionspace_StructuredColumns
-  module procedure StructuredColumns__cptr
-  module procedure StructuredColumns__grid
-  module procedure StructuredColumns__grid_dist
-  module procedure StructuredColumns__grid_dist_levels
+  module procedure ctor_cptr
+  module procedure ctor_grid
+  module procedure ctor_grid_dist
+  module procedure ctor_grid_dist_levels
 end interface
 
 
@@ -111,7 +111,7 @@ subroutine assignment_operator_hook(this,other)
   FCKIT_SUPPRESS_UNUSED(other)
 end subroutine
 
-function StructuredColumns__cptr(cptr) result(this)
+function ctor_cptr(cptr) result(this)
   type(atlas_functionspace_StructuredColumns) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )
@@ -125,7 +125,7 @@ function empty_config() result(config)
   call config%return()
 end function
 
-function StructuredColumns__grid(grid, halo, levels) result(this)
+function ctor_grid(grid, halo, levels) result(this)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_functionspace_StructuredColumns) :: this
   class(atlas_Grid), intent(in) :: grid
@@ -141,7 +141,7 @@ function StructuredColumns__grid(grid, halo, levels) result(this)
   call this%return()
 end function
 
-function StructuredColumns__grid_dist(grid, distribution, halo, levels) result(this)
+function ctor_grid_dist(grid, distribution, halo, levels) result(this)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_functionspace_StructuredColumns) :: this
   class(atlas_Grid), intent(in) :: grid
@@ -159,7 +159,7 @@ function StructuredColumns__grid_dist(grid, distribution, halo, levels) result(t
   call this%return()
 end function
 
-function StructuredColumns__grid_dist_levels(grid, distribution, levels, halo) result(this)
+function ctor_grid_dist_levels(grid, distribution, levels, halo) result(this)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_functionspace_StructuredColumns) :: this
   class(atlas_Grid), intent(in) :: grid
