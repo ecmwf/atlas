@@ -19,6 +19,7 @@
 #include "atlas/grid/Stencil.h"
 #include "atlas/grid/StencilComputer.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {

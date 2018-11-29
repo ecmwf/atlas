@@ -28,6 +28,7 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -104,8 +105,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
                 typename Kernel::WorkSpace workspace;
                 atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                     if ( not ghost( n ) ) {
-                        PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
-                        normalise( p );
+                        PointLonLat p{normalise( lonlat( n, LON ) ), lonlat( n, LAT )};
                         kernel_->insert_triplets( n, p, triplets, workspace );
                     }
                 }
@@ -194,8 +194,7 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
         typename Kernel::Weights weights;
         atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
             if ( not ghost( n ) ) {
-                PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
-                normalise( p );
+                PointLonLat p{normalise( lonlat( n, LON ) ), lonlat( n, LAT )};
                 kernel.compute_stencil( p.lon(), p.lat(), stencil );
                 kernel.compute_weights( p.lon(), p.lat(), stencil, weights );
                 for ( idx_t i = 0; i < N; ++i ) {

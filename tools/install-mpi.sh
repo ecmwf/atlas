@@ -19,11 +19,11 @@ case "$os" in
     Darwin)
         case "$MPI" in
             mpich)
-                brew upgrade mpich || brew install mpich
+                brew ls --versions mpich || brew install mpich
                 ;;
             openmpi)
-                brew upgrade openmpi || brew install openmpi
-                echo "localhost slots=12" >> /usr/local/etc/openmpi-default-hostfile
+                brew ls --versions openmpi || brew install openmpi
+                echo "localhost slots=72" >> /usr/local/etc/openmpi-default-hostfile
                 ;;
             *)
                 echo "Unknown MPI implementation: $MPI"

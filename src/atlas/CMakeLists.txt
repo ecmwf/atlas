@@ -216,6 +216,12 @@ list( APPEND atlas_grid_srcs
 )
 endif()
 
+# Append CGAL_COMPLE_FLAGS only to this file ( see ATLAS-193 )
+if( CGAL_COMPILE_FLAGS )
+  set_source_files_properties( mesh/actions/BuildConvexHull3D.cc
+                               PROPERTIES COMPILE_FLAGS "${CGAL_COMPILE_FLAGS}" )
+endif()
+
 list( APPEND atlas_mesh_srcs
 mesh.h
 mesh/Connectivity.cc
@@ -496,6 +502,8 @@ util/LonLatPolygon.cc
 util/LonLatPolygon.h
 util/Metadata.cc
 util/Metadata.h
+util/Point.cc
+util/Point.h
 util/Polygon.cc
 util/Polygon.h
 util/Rotation.cc
@@ -525,9 +533,6 @@ util/Unique.cc
 )
 
 ### atlas c++ library
-
-ecbuild_debug_var(CGAL_LIBRARIES)
-ecbuild_debug_var(CGAL_INCLUDE_DIRS)
 
 if( NOT ATLAS_HAVE_TRANS )
   unset( TRANSI_INCLUDE_DIRS )
