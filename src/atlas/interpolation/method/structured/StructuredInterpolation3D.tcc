@@ -34,6 +34,14 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
+namespace {
+static double convert_units_multiplier( const Field& field ) {
+    std::string units = field.metadata().getString( "units", "degrees" );
+    if ( units == "degrees" ) { return 1.; }
+    if ( units == "radians" ) { return 180. / M_PI; }
+    NOTIMP;
+}
+}  // namespace
 
 template <typename Kernel>
 StructuredInterpolation3D<Kernel>::StructuredInterpolation3D( const Method::Config& config ) :
@@ -212,13 +220,14 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
             tgt_view.emplace_back( array::make_view<Value, TargetRank>( tgt_fields[i] ) );
         }
 
+        const double convert_units = convert_units_multiplier( target_lonlat_ );
         atlas_omp_parallel {
             typename Kernel::Stencil stencil;
             typename Kernel::Weights weights;
             atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                 if ( not ghost( n ) ) {
-                    double x = lonlat( n, LON );
-                    double y = lonlat( n, LAT );
+                    double x = lonlat( n, LON ) * convert_units;
+                    double y = lonlat( n, LAT ) * convert_units;
                     double z = vertical( n );
                     kernel.compute_stencil( x, y, z, stencil );
                     kernel.compute_weights( x, y, z, stencil, weights );
@@ -252,14 +261,19 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
             }
         }
 
+        const double convert_units = convert_units_multiplier( target_3d_ );
+
         atlas_omp_parallel {
             typename Kernel::Stencil stencil;
             typename Kernel::Weights weights;
             atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                 for ( idx_t k = 0; k < out_nlev; ++k ) {
-                    const double* crd = &coords( n, k, 0 );
-                    kernel.compute_stencil( crd[LON], crd[LAT], crd[ZZ], stencil );
-                    kernel.compute_weights( crd[LON], crd[LAT], crd[ZZ], stencil, weights );
+                    double x = coords( n, k, LON ) * convert_units;
+                    double y = coords( n, k, LAT ) * convert_units;
+                    double z = coords( n, k, ZZ );
+
+                    kernel.compute_stencil( x, y, z, stencil );
+                    kernel.compute_weights( x, y, z, stencil, weights );
                     for ( idx_t i = 0; i < N; ++i ) {
                         kernel.interpolate( stencil, weights, src_view[i], tgt_view[i], n, k );
                     }
@@ -292,13 +306,15 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
             }
         }
 
+        const double convert_units = convert_units_multiplier( target_xyz_[LON] );
+
         atlas_omp_parallel {
             typename Kernel::Stencil stencil;
             typename Kernel::Weights weights;
             atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                 for ( idx_t k = 0; k < out_nlev; ++k ) {
-                    const double x = xcoords( n, k );
-                    const double y = ycoords( n, k );
+                    const double x = xcoords( n, k ) * convert_units;
+                    const double y = ycoords( n, k ) * convert_units;
                     const double z = zcoords( n, k );
                     kernel.compute_stencil( x, y, z, stencil );
                     kernel.compute_weights( x, y, z, stencil, weights );
