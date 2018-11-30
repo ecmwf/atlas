@@ -79,6 +79,32 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
     setup( source );
 }
 
+template <typename Kernel>
+void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, const Field& target ) {
+    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation2D::setup(FunctionSpace source, Field target)" );
+
+    source_ = source;
+
+    if ( target.functionspace() ) { target_ = target.functionspace(); }
+
+    target_lonlat_ = target;
+
+    setup( source );
+}
+
+template <typename Kernel>
+void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, const FieldSet& target ) {
+    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::setup(FunctionSpace source,FieldSet target)" );
+
+    source_ = source;
+
+    ASSERT( target.size() >= 2 );
+    if ( target[0].functionspace() ) { target_ = target[0].functionspace(); }
+
+    target_lonlat_fields_ = target;
+
+    setup( source );
+}
 
 template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::print( std::ostream& ) const {
@@ -172,11 +198,7 @@ template <typename Kernel>
 template <typename Value, int Rank>
 void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, const FieldSet& src_fields,
                                                       FieldSet& tgt_fields ) const {
-    const idx_t N  = src_fields.size();
-    idx_t out_npts = target_lonlat_.shape( 0 );
-
-    auto ghost  = array::make_view<int, 1>( target_ghost_ );
-    auto lonlat = array::make_view<double, 2>( target_lonlat_ );
+    const idx_t N = src_fields.size();
 
     std::vector<array::ArrayView<Value, Rank> > src_view;
     std::vector<array::ArrayView<Value, Rank> > tgt_view;
@@ -187,14 +209,55 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
         src_view.emplace_back( array::make_view<Value, Rank>( src_fields[i] ) );
         tgt_view.emplace_back( array::make_view<Value, Rank>( tgt_fields[i] ) );
     }
+    if ( target_lonlat_ ) {
+        if ( target_ghost_ ) {
+            idx_t out_npts    = target_lonlat_.shape( 0 );
+            const auto ghost  = array::make_view<int, 1, array::Intent::ReadOnly>( target_ghost_ );
+            const auto lonlat = array::make_view<double, 2, array::Intent::ReadOnly>( target_lonlat_ );
 
-    constexpr NormaliseLongitude normalise( 0., 360. );  // includes 360 as well!
-    atlas_omp_parallel {
-        typename Kernel::Stencil stencil;
-        typename Kernel::Weights weights;
-        atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
-            if ( not ghost( n ) ) {
-                PointLonLat p{normalise( lonlat( n, LON ) ), lonlat( n, LAT )};
+            atlas_omp_parallel {
+                typename Kernel::Stencil stencil;
+                typename Kernel::Weights weights;
+                atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
+                    if ( not ghost( n ) ) {
+                        PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
+                        kernel.compute_stencil( p.lon(), p.lat(), stencil );
+                        kernel.compute_weights( p.lon(), p.lat(), stencil, weights );
+                        for ( idx_t i = 0; i < N; ++i ) {
+                            kernel.interpolate( stencil, weights, src_view[i], tgt_view[i], n );
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            idx_t out_npts    = target_lonlat_.shape( 0 );
+            const auto lonlat = array::make_view<double, 2, array::Intent::ReadOnly>( target_lonlat_ );
+
+            atlas_omp_parallel {
+                typename Kernel::Stencil stencil;
+                typename Kernel::Weights weights;
+                atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
+                    PointLonLat p{lonlat( n, LON ), lonlat( n, LAT )};
+                    kernel.compute_stencil( p.lon(), p.lat(), stencil );
+                    kernel.compute_weights( p.lon(), p.lat(), stencil, weights );
+                    for ( idx_t i = 0; i < N; ++i ) {
+                        kernel.interpolate( stencil, weights, src_view[i], tgt_view[i], n );
+                    }
+                }
+            }
+        }
+    }
+    else if ( not target_lonlat_fields_.empty() ) {
+        idx_t out_npts = target_lonlat_fields_[0].shape( 0 );
+        const auto lon = array::make_view<double, 1, array::Intent::ReadOnly>( target_lonlat_fields_[LON] );
+        const auto lat = array::make_view<double, 1, array::Intent::ReadOnly>( target_lonlat_fields_[LAT] );
+
+        atlas_omp_parallel {
+            typename Kernel::Stencil stencil;
+            typename Kernel::Weights weights;
+            atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
+                PointLonLat p{lon( n ), lat( n )};
                 kernel.compute_stencil( p.lon(), p.lat(), stencil );
                 kernel.compute_weights( p.lon(), p.lat(), stencil, weights );
                 for ( idx_t i = 0; i < N; ++i ) {
@@ -202,6 +265,9 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
                 }
             }
         }
+    }
+    else {
+        NOTIMP;
     }
 }
 
