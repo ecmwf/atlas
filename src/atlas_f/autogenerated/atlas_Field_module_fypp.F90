@@ -2408,6 +2408,7 @@ function atlas_Field__wrap_name_int32_r1(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_int), intent(in) :: data(:)
@@ -2417,7 +2418,7 @@ function atlas_Field__wrap_name_int32_r1(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_int32_r1(data) result(field)
@@ -2440,6 +2441,7 @@ function atlas_Field__wrap_name_int64_r1(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_long), intent(in) :: data(:)
@@ -2449,7 +2451,7 @@ function atlas_Field__wrap_name_int64_r1(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_int64_r1(data) result(field)
@@ -2472,6 +2474,7 @@ function atlas_Field__wrap_name_real32_r1(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_float), intent(in) :: data(:)
@@ -2481,7 +2484,7 @@ function atlas_Field__wrap_name_real32_r1(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_real32_r1(data) result(field)
@@ -2504,6 +2507,7 @@ function atlas_Field__wrap_name_real64_r1(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_double), intent(in) :: data(:)
@@ -2513,7 +2517,7 @@ function atlas_Field__wrap_name_real64_r1(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_real64_r1(data) result(field)
@@ -2536,6 +2540,7 @@ function atlas_Field__wrap_name_int32_r2(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_int), intent(in) :: data(:,:)
@@ -2545,7 +2550,7 @@ function atlas_Field__wrap_name_int32_r2(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_int32_r2(data) result(field)
@@ -2568,6 +2573,7 @@ function atlas_Field__wrap_name_int64_r2(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_long), intent(in) :: data(:,:)
@@ -2577,7 +2583,7 @@ function atlas_Field__wrap_name_int64_r2(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_int64_r2(data) result(field)
@@ -2600,6 +2606,7 @@ function atlas_Field__wrap_name_real32_r2(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_float), intent(in) :: data(:,:)
@@ -2609,7 +2616,7 @@ function atlas_Field__wrap_name_real32_r2(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_real32_r2(data) result(field)
@@ -2632,6 +2639,7 @@ function atlas_Field__wrap_name_real64_r2(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_double), intent(in) :: data(:,:)
@@ -2641,7 +2649,7 @@ function atlas_Field__wrap_name_real64_r2(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_real64_r2(data) result(field)
@@ -2664,6 +2672,7 @@ function atlas_Field__wrap_name_int32_r3(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_int), intent(in) :: data(:,:,:)
@@ -2673,7 +2682,7 @@ function atlas_Field__wrap_name_int32_r3(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_int32_r3(data) result(field)
@@ -2696,6 +2705,7 @@ function atlas_Field__wrap_name_int64_r3(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_long), intent(in) :: data(:,:,:)
@@ -2705,7 +2715,7 @@ function atlas_Field__wrap_name_int64_r3(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_int64_r3(data) result(field)
@@ -2728,6 +2738,7 @@ function atlas_Field__wrap_name_real32_r3(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_float), intent(in) :: data(:,:,:)
@@ -2737,7 +2748,7 @@ function atlas_Field__wrap_name_real32_r3(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_real32_r3(data) result(field)
@@ -2760,6 +2771,7 @@ function atlas_Field__wrap_name_real64_r3(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_double), intent(in) :: data(:,:,:)
@@ -2769,7 +2781,7 @@ function atlas_Field__wrap_name_real64_r3(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_real64_r3(data) result(field)
@@ -2792,6 +2804,7 @@ function atlas_Field__wrap_name_int32_r4(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_int), intent(in) :: data(:,:,:,:)
@@ -2801,7 +2814,7 @@ function atlas_Field__wrap_name_int32_r4(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_int_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_int32_r4(data) result(field)
@@ -2824,6 +2837,7 @@ function atlas_Field__wrap_name_int64_r4(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_long), intent(in) :: data(:,:,:,:)
@@ -2833,7 +2847,7 @@ function atlas_Field__wrap_name_int64_r4(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_long_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_int64_r4(data) result(field)
@@ -2856,6 +2870,7 @@ function atlas_Field__wrap_name_real32_r4(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_float), intent(in) :: data(:,:,:,:)
@@ -2865,7 +2880,7 @@ function atlas_Field__wrap_name_real32_r4(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_float_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_real32_r4(data) result(field)
@@ -2888,6 +2903,7 @@ function atlas_Field__wrap_name_real64_r4(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   real(c_double), intent(in) :: data(:,:,:,:)
@@ -2897,7 +2913,7 @@ function atlas_Field__wrap_name_real64_r4(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_double_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_real64_r4(data) result(field)

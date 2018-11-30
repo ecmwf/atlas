@@ -449,6 +449,7 @@ function atlas_Field__wrap_name_${dtype}$_r${rank}$(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   ${ftype}$, intent(in) :: data(${dim[rank]}$)
@@ -458,7 +459,7 @@ function atlas_Field__wrap_name_${dtype}$_r${rank}$(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_${ctype}$_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_${ctype}$_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_${dtype}$_r${rank}$(data) result(field)
