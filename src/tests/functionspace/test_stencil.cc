@@ -144,6 +144,38 @@ CASE( "test horizontal stencil" ) {
     }
 }
 
+CASE( "test horizontal stencil linear" ) {
+    //if ( mpi::comm().size() == 1 ) {
+    std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
+
+    grid::StructuredGrid grid( gridname );
+    //int halo = eckit::Resource<int>( "--halo", 2 );
+    util::Config config;
+    config.set( "levels", 9 );
+    config.set( "periodic_points", true );
+    functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
+
+    HorizontalStencil<2> stencil;
+
+    ComputeHorizontalStencil compute_stencil( grid, stencil.width() );
+
+    auto departure_points = {
+        PointXY( 0., 90. ), PointXY( 0., -90. ), PointXY( 0., 0. ), PointXY( 360., 0. ), PointXY( 359.9, 0. ),
+    };
+    for ( auto p : departure_points ) {
+        Log::info() << p << std::endl;
+        compute_stencil( p.x(), p.y(), stencil );
+        for ( idx_t j = 0; j < stencil.width(); ++j ) {
+            for ( idx_t i = 0; i < stencil.width(); ++i ) {
+                Log::info() << stencil.i( i, j ) << " " << stencil.j( j ) << "   --   "
+                            << "x,y = " << fs.compute_xy( stencil.i( i, j ), stencil.j( j ) ) << std::endl;
+            }
+            Log::info() << std::endl;
+        }
+    }
+}
+
+
 //-----------------------------------------------------------------------------
 
 CASE( "test vertical stencil" ) {

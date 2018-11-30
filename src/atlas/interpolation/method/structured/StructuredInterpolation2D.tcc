@@ -50,7 +50,9 @@ void StructuredInterpolation2D<Kernel>::setup( const Grid& source, const Grid& t
 
 
     ASSERT( grid::StructuredGrid( source ) );
-    FunctionSpace source_fs = functionspace::StructuredColumns( source, option::halo( kernel_->stencil_halo() ) );
+    FunctionSpace source_fs =
+        functionspace::StructuredColumns( source, option::halo( std::max( kernel_->stencil_halo(), 1 ) ) );
+    // guarantee "1" halo for pole treatment!
     FunctionSpace target_fs = functionspace::PointCloud( target );
 
     setup( source_fs, target_fs );
@@ -116,6 +118,10 @@ template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
     kernel_.reset( new Kernel( source ) );
 
+    if ( functionspace::StructuredColumns( source ).halo() < 1 ) {
+        throw eckit::Exception( "The source functionspace must have (halo >= 1) for pole treatment" );
+    }
+
     if ( not matrix_free_ ) {
         idx_t inp_npts = source.size();
         idx_t out_npts = target_lonlat_.shape( 0 );
@@ -126,6 +132,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
         auto triplets = kernel_->allocate_triplets( out_npts );
 
         constexpr NormaliseLongitude normalise;
+        //auto normalise = []( double x ) { return x; };
         ATLAS_TRACE_SCOPE( "Precomputing interpolation matrix" ) {
             atlas_omp_parallel {
                 typename Kernel::WorkSpace workspace;

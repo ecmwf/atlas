@@ -33,6 +33,22 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
+static Config scheme() {
+    Config scheme;
+    std::string scheme_str = eckit::Resource<std::string>( "--scheme", "linear" );
+    if ( scheme_str == "linear" ) {
+        scheme.set( "type", "structured-linear2D" );
+        scheme.set( "halo", 1 );
+        // The stencil does not require any halo, but we set it to 1 for pole treatment!
+    }
+    if ( scheme_str == "cubic" ) {
+        scheme.set( "type", "structured-cubic2D" );
+        scheme.set( "halo", 2 );
+    }
+    scheme.set( "name", scheme_str );
+    return scheme;
+}
+
 std::string input_gridname( const std::string& default_grid ) {
     return eckit::Resource<std::string>( "--input-grid", default_grid );
 }
@@ -117,16 +133,20 @@ double vortex_rollup( double lon, double lat, double t ) {
     return q;
 };
 
-CASE( "test_interpolation_cubic_structured using functionspace API" ) {
+CASE( "which scheme?" ) {
+    Log::info() << scheme().getString( "type" ) << std::endl;
+}
+
+CASE( "test_interpolation_structured using functionspace API" ) {
     Grid grid( input_gridname( "O32" ) );
 
     // Cubic interpolation requires a StructuredColumns functionspace with 2 halos
-    StructuredColumns input_fs( grid, option::halo( 2 ) );
+    StructuredColumns input_fs( grid, scheme() );
 
     auto test = [&]( const FunctionSpace& output_fs ) {
         // The output functionspace can currently be either NodeColumns or PointCloud
 
-        Interpolation interpolation( option::type( "bicubic" ), input_fs, output_fs );
+        Interpolation interpolation( scheme(), input_fs, output_fs );
 
         Field field_source = input_fs.createField<double>( option::name( "source" ) );
         Field field_target = output_fs.createField<double>( option::name( "target" ) );
@@ -154,7 +174,7 @@ CASE( "test_interpolation_cubic_structured using functionspace API" ) {
     }
 }
 
-CASE( "test_interpolation_cubic_structured using grid API" ) {
+CASE( "test_interpolation_structured using grid API" ) {
     // Using the grid API we can hide interpolation method specific requirements
     // such as which functionspace needs to be set-up.
     // Currently the assumption is that grids are serial
@@ -162,11 +182,11 @@ CASE( "test_interpolation_cubic_structured using grid API" ) {
     Grid input_grid( input_gridname( "O32" ) );
 
     auto test = [&]( const Grid& output_grid ) {
-        Interpolation interpolation( option::type( "bicubic" ), input_grid, output_grid );
+        Interpolation interpolation( scheme(), input_grid, output_grid );
 
         // Allocate and initialise own memory here to show possibilities
         // Note that allocated size must be possibly enlarged depending on interpolation method
-        // bicubic allocates stencil halo
+        // allocates stencil halo
         std::vector<double> src_data( interpolation.source().size() );
         std::vector<double> tgt_data( interpolation.target().size() );
 
@@ -182,8 +202,9 @@ CASE( "test_interpolation_cubic_structured using grid API" ) {
         interpolation.execute( field_source, field_target );
 
         ATLAS_TRACE_SCOPE( "output" ) {
-            output::Gmsh gmsh( "bicubic-output-section" + std::to_string( _subsection ) + ".msh",
-                               Config( "coordinates", "xy" ) );
+            output::Gmsh gmsh(
+                scheme().getString( "name" ) + "-output-section" + std::to_string( _subsection ) + ".msh",
+                Config( "coordinates", "xy" ) );
             gmsh.write( MeshGenerator( "structured" ).generate( output_grid ) );
             gmsh.write( field_target, StructuredColumns( output_grid ) );
         }
@@ -204,18 +225,18 @@ CASE( "test_interpolation_cubic_structured using grid API" ) {
     }
 }
 
-CASE( "test_interpolation_cubic_structured using fs API multiple levels" ) {
+CASE( "test_interpolation_structured using fs API multiple levels" ) {
     Grid input_grid( input_gridname( "O32" ) );
     Grid output_grid( output_gridname( "O64" ) );
 
     // Cubic interpolation requires a StructuredColumns functionspace with 2 halos
-    StructuredColumns input_fs( input_grid, option::halo( 2 ) | option::levels( 3 ) );
+    StructuredColumns input_fs( input_grid, scheme() | option::levels( 3 ) );
 
     MeshGenerator meshgen( "structured" );
     Mesh output_mesh        = meshgen.generate( output_grid );
     FunctionSpace output_fs = NodeColumns{output_mesh, option::levels( 3 )};
 
-    Interpolation interpolation( option::type( "bicubic" ), input_fs, output_fs );
+    Interpolation interpolation( scheme(), input_fs, output_fs );
 
     Field field_source = input_fs.createField<double>( option::name( "source" ) );
     Field field_target = output_fs.createField<double>( option::name( "target" ) );
@@ -230,20 +251,21 @@ CASE( "test_interpolation_cubic_structured using fs API multiple levels" ) {
     interpolation.execute( field_source, field_target );
 
     ATLAS_TRACE_SCOPE( "output" ) {
-        output::Gmsh gmsh( "bicubic-multilevel-output-section" + std::to_string( _subsection ) + ".msh",
-                           Config( "coordinates", "xy" ) );
+        output::Gmsh gmsh(
+            scheme().getString( "name" ) + "-multilevel-output-section" + std::to_string( _subsection ) + ".msh",
+            Config( "coordinates", "xy" ) );
         gmsh.write( output_mesh );
         output_fs.haloExchange( field_target );
         gmsh.write( field_target );
     }
 }
 
-CASE( "test_interpolation_cubic_structured using fs API for fieldset" ) {
+CASE( "test_interpolation_structured using fs API for fieldset" ) {
     Grid input_grid( input_gridname( "O32" ) );
     Grid output_grid( output_gridname( "O64" ) );
 
     // Cubic interpolation requires a StructuredColumns functionspace with 2 halos
-    StructuredColumns input_fs( input_grid, option::halo( 2 ) | option::levels( 3 ) );
+    StructuredColumns input_fs( input_grid, scheme() | option::levels( 3 ) );
 
     MeshGenerator meshgen( "structured" );
     Mesh output_mesh        = meshgen.generate( output_grid );
@@ -267,11 +289,12 @@ CASE( "test_interpolation_cubic_structured using fs API for fieldset" ) {
     }
 
     SECTION( "with matrix" ) {
-        Interpolation interpolation( option::type( "bicubic" ), input_fs, output_fs );
+        Interpolation interpolation( scheme(), input_fs, output_fs );
         interpolation.execute( fields_source, fields_target );
 
         ATLAS_TRACE_SCOPE( "output" ) {
-            output::Gmsh gmsh( "bicubic-multilevel-fieldset-output-section" + std::to_string( _subsection ) + ".msh",
+            output::Gmsh gmsh( scheme().getString( "name" ) + "-multilevel-fieldset-output-section" +
+                                   std::to_string( _subsection ) + ".msh",
                                Config( "coordinates", "xy" ) );
             gmsh.write( output_mesh );
             output_fs.haloExchange( fields_target );
@@ -281,10 +304,11 @@ CASE( "test_interpolation_cubic_structured using fs API for fieldset" ) {
 
 
     SECTION( "matrix free" ) {
-        Interpolation interpolation( option::type( "bicubic" ) | Config( "matrix_free", true ), input_fs, output_fs );
+        Interpolation interpolation( scheme() | Config( "matrix_free", true ), input_fs, output_fs );
         interpolation.execute( fields_source, fields_target );
         ATLAS_TRACE_SCOPE( "output" ) {
-            output::Gmsh gmsh( "bicubic-multilevel-fieldset-output-section" + std::to_string( _subsection ) + ".msh",
+            output::Gmsh gmsh( scheme().getString( "name" ) + "-multilevel-fieldset-output-section" +
+                                   std::to_string( _subsection ) + ".msh",
                                Config( "coordinates", "xy" ) );
             gmsh.write( output_mesh );
             output_fs.haloExchange( fields_target );
@@ -320,7 +344,7 @@ Field rotated_flow( const StructuredColumns& fs, const double& beta ) {
     return field;
 }
 
-CASE( "test_interpolation_cubic_structured for vectors" ) {
+CASE( "test_interpolation_structured for vectors" ) {
     Grid input_grid( input_gridname( "O32" ) );
     Grid output_grid( output_gridname( "O64" ) );
 
@@ -331,7 +355,7 @@ CASE( "test_interpolation_cubic_structured for vectors" ) {
     Mesh output_mesh        = meshgen.generate( output_grid );
     FunctionSpace output_fs = NodeColumns{output_mesh};
 
-    Interpolation interpolation( option::type( "bicubic" ), input_fs, output_fs );
+    Interpolation interpolation( scheme(), input_fs, output_fs );
 
     Field field_source = rotated_flow( input_fs, M_PI_4 );
     Field field_target = output_fs.createField<double>( option::name( "target" ) | option::vector() );
@@ -339,8 +363,9 @@ CASE( "test_interpolation_cubic_structured for vectors" ) {
     interpolation.execute( field_source, field_target );
 
     ATLAS_TRACE_SCOPE( "output" ) {
-        output::Gmsh gmsh( "bicubic-vector-output-section" + std::to_string( _subsection ) + ".msh",
-                           Config( "coordinates", "xy" ) );
+        output::Gmsh gmsh(
+            scheme().getString( "name" ) + "-vector-output-section" + std::to_string( _subsection ) + ".msh",
+            Config( "coordinates", "xy" ) );
         gmsh.write( output_mesh );
         output_fs.haloExchange( field_target );
         gmsh.write( field_target );

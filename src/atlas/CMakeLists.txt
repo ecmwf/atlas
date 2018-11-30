@@ -411,9 +411,11 @@ interpolation/method/structured/StructuredInterpolation2D.tcc
 interpolation/method/structured/StructuredInterpolation2D.h
 interpolation/method/structured/StructuredInterpolation3D.tcc
 interpolation/method/structured/StructuredInterpolation3D.h
+interpolation/method/structured/kernels/LinearHorizontalKernel.h
 interpolation/method/structured/kernels/CubicHorizontalKernel.h
 interpolation/method/structured/kernels/Cubic3DKernel.h
 interpolation/method/structured/kernels/CubicVerticalKernel.h
+interpolation/method/structured/Linear2D.cc
 interpolation/method/structured/Cubic2D.cc
 interpolation/method/structured/Cubic3D.cc
 )
