@@ -41,7 +41,7 @@ StructuredInterpolation3D<Kernel>::StructuredInterpolation3D( const Method::Conf
     matrix_free_{false},
     limiter_{false} {
     config.get( "matrix_free", matrix_free_ );
-    config.get("limiter", limiter_ );
+    config.get( "limiter", limiter_ );
 
     if ( not matrix_free_ ) {
         throw eckit::NotImplemented( "Matrix-free StructuredInterpolation3D not implemented", Here() );
@@ -83,7 +83,7 @@ void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source, cons
 
 template <typename Kernel>
 void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source, const Field& target ) {
-    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::setup()" );
+    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::setup(FunctionSpace source, Field target)" );
 
     source_ = source;
 
@@ -95,6 +95,20 @@ void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source, cons
     setup( source );
 }
 
+template <typename Kernel>
+void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source, const FieldSet& target ) {
+    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::setup(FunctionSpace source,FieldSet target)" );
+
+    source_ = source;
+
+    ASSERT( target.size() >= 3 );
+    if ( target[0].functionspace() ) { target_ = target[0].functionspace(); }
+    ASSERT( target[0].levels() );
+
+    target_xyz_ = target;
+
+    setup( source );
+}
 
 template <typename Kernel>
 void StructuredInterpolation3D<Kernel>::print( std::ostream& ) const {
@@ -104,7 +118,7 @@ void StructuredInterpolation3D<Kernel>::print( std::ostream& ) const {
 
 template <typename Kernel>
 void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source ) {
-    kernel_.reset( new Kernel( source, util::Config("limiter",limiter_) ) );
+    kernel_.reset( new Kernel( source, util::Config( "limiter", limiter_ ) ) );
 }
 
 
@@ -163,10 +177,9 @@ template <typename Kernel>
 template <typename Value, int Rank>
 void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, const FieldSet& src_fields,
                                                       FieldSet& tgt_fields ) const {
+    const idx_t N = src_fields.size();
 
-    const idx_t N  = src_fields.size();
-
-    auto make_src_view = [&] ( const FieldSet& src_fields ) {
+    auto make_src_view = [&]( const FieldSet& src_fields ) {
         std::vector<array::ArrayView<Value, Rank, array::Intent::ReadOnly> > src_view;
         src_view.reserve( N );
         for ( idx_t i = 0; i < N; ++i ) {
@@ -176,13 +189,11 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
     };
 
     // Assertions
-    ASSERT( tgt_fields.size() == src_fields.size());
+    ASSERT( tgt_fields.size() == src_fields.size() );
     idx_t tgt_rank = -1;
-    for( auto& f : tgt_fields ) {
-        if( tgt_rank == -1 ) tgt_rank = f.rank();
-        if( f.rank() != tgt_rank ) {
-            throw eckit::Exception( "target fields don't all have the same rank!", Here() );
-        }
+    for ( auto& f : tgt_fields ) {
+        if ( tgt_rank == -1 ) tgt_rank = f.rank();
+        if ( f.rank() != tgt_rank ) { throw eckit::Exception( "target fields don't all have the same rank!", Here() ); }
     }
 
     if ( functionspace::PointCloud( target() ) && tgt_rank == 1 ) {
@@ -222,7 +233,7 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
         const idx_t out_npts = target_3d_.shape( 0 );
         const idx_t out_nlev = target_3d_.shape( 1 );
 
-        const auto coords = array::make_view<double, 3, array::Intent::ReadOnly>( target_3d_ );
+        const auto coords   = array::make_view<double, 3, array::Intent::ReadOnly>( target_3d_ );
         const auto src_view = make_src_view( src_fields );
 
         constexpr int TargetRank = Rank;
@@ -232,9 +243,12 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
         for ( idx_t i = 0; i < N; ++i ) {
             tgt_view.emplace_back( array::make_view<Value, TargetRank>( tgt_fields[i] ) );
 
-            if( Rank == 3 && ( src_fields[i].stride(Rank-1) != 1 || tgt_fields[i].stride(TargetRank-1) != 1 ) ) {
-                throw eckit::Exception( "Something will go seriously wrong if we continue from here as "
-                                        "the implementation assumes stride=1 for fastest moving index (variables).", Here());
+            if ( Rank == 3 &&
+                 ( src_fields[i].stride( Rank - 1 ) != 1 || tgt_fields[i].stride( TargetRank - 1 ) != 1 ) ) {
+                throw eckit::Exception(
+                    "Something will go seriously wrong if we continue from here as "
+                    "the implementation assumes stride=1 for fastest moving index (variables).",
+                    Here() );
             }
         }
 
@@ -243,7 +257,7 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
             typename Kernel::Weights weights;
             atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                 for ( idx_t k = 0; k < out_nlev; ++k ) {
-                    const double* crd = &coords(n,k,0);
+                    const double* crd = &coords( n, k, 0 );
                     kernel.compute_stencil( crd[LON], crd[LAT], crd[ZZ], stencil );
                     kernel.compute_weights( crd[LON], crd[LAT], crd[ZZ], stencil, weights );
                     for ( idx_t i = 0; i < N; ++i ) {
@@ -253,8 +267,51 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
             }
         }
     }
+    else if ( not target_xyz_.empty() && tgt_rank == Rank ) {
+        const idx_t out_npts = target_xyz_[0].shape( 0 );
+        const idx_t out_nlev = target_xyz_[0].shape( 1 );
+
+        const auto xcoords  = array::make_view<double, 2, array::Intent::ReadOnly>( target_xyz_[LON] );
+        const auto ycoords  = array::make_view<double, 2, array::Intent::ReadOnly>( target_xyz_[LAT] );
+        const auto zcoords  = array::make_view<double, 2, array::Intent::ReadOnly>( target_xyz_[ZZ] );
+        const auto src_view = make_src_view( src_fields );
+
+        constexpr int TargetRank = Rank;
+        std::vector<array::ArrayView<Value, TargetRank> > tgt_view;
+        tgt_view.reserve( N );
+
+        for ( idx_t i = 0; i < N; ++i ) {
+            tgt_view.emplace_back( array::make_view<Value, TargetRank>( tgt_fields[i] ) );
+
+            if ( Rank == 3 &&
+                 ( src_fields[i].stride( Rank - 1 ) != 1 || tgt_fields[i].stride( TargetRank - 1 ) != 1 ) ) {
+                throw eckit::Exception(
+                    "Something will go seriously wrong if we continue from here as "
+                    "the implementation assumes stride=1 for fastest moving index (variables).",
+                    Here() );
+            }
+        }
+
+        atlas_omp_parallel {
+            typename Kernel::Stencil stencil;
+            typename Kernel::Weights weights;
+            atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
+                for ( idx_t k = 0; k < out_nlev; ++k ) {
+                    const double x = xcoords( n, k );
+                    const double y = ycoords( n, k );
+                    const double z = zcoords( n, k );
+                    kernel.compute_stencil( x, y, z, stencil );
+                    kernel.compute_weights( x, y, z, stencil, weights );
+                    for ( idx_t i = 0; i < N; ++i ) {
+                        kernel.interpolate( stencil, weights, src_view[i], tgt_view[i], n, k );
+                    }
+                }
+            }
+        }
+    }
+
     else {
-      NOTIMP;
+        NOTIMP;
     }
 }
 
