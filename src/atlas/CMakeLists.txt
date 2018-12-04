@@ -64,18 +64,20 @@ option/TransOptions.cc
 projection.h
 projection/Projection.cc
 projection/Projection.h
-projection/detail/ProjectionImpl.cc
-projection/detail/ProjectionImpl.h
-projection/detail/LonLatProjection.cc
-projection/detail/LonLatProjection.h
+projection/detail/LambertAzimuthalEqualAreaProjection.cc
+projection/detail/LambertAzimuthalEqualAreaProjection.h
 projection/detail/LambertProjection.cc
 projection/detail/LambertProjection.h
-projection/detail/SchmidtProjection.cc
-projection/detail/SchmidtProjection.h
+projection/detail/LonLatProjection.cc
+projection/detail/LonLatProjection.h
 projection/detail/MercatorProjection.cc
 projection/detail/MercatorProjection.h
-projection/detail/ProjectionFactory.h
 projection/detail/ProjectionFactory.cc
+projection/detail/ProjectionFactory.h
+projection/detail/ProjectionImpl.cc
+projection/detail/ProjectionImpl.h
+projection/detail/SchmidtProjection.cc
+projection/detail/SchmidtProjection.h
 
 domain.h
 domain/Domain.cc
