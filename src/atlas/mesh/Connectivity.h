@@ -34,6 +34,7 @@
 #include "atlas/array/Vector.h"
 #include "atlas/array/gridtools/GPUClonable.h"
 #include "atlas/array_fwd.h"
+#include "atlas/array/SVector.h"
 #include "atlas/library/config.h"
 
 namespace atlas {
@@ -466,11 +467,9 @@ private:
 
 private:
     idx_t blocks_;
-    array::Array* block_displs_;
-    array::Array* block_cols_;
+    array::SVector<idx_t> block_displs_;
+    array::SVector<idx_t> block_cols_;
 
-    array::ArrayView<idx_t, 1> block_displs_view_;
-    array::ArrayView<idx_t, 1> block_cols_view_;
     array::Vector<BlockConnectivityImpl*> block_;
     array::VectorView<BlockConnectivityImpl*> block_view_;
 
