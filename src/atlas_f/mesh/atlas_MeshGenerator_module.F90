@@ -60,7 +60,8 @@ function atlas_MeshGenerator__config(config) result(this)
     if( .not. config%get("type",meshgenerator_type) ) then
        meshgenerator_type='structured'
     endif
-    call this%reset_c_ptr( atlas__MeshGenerator__create(c_str(meshgenerator_type),config%c_ptr()) )
+    call this%reset_c_ptr( atlas__MeshGenerator__create( &
+      c_str(meshgenerator_type),config%CPTR_PGIBUG_B) )
   else
     call this%reset_c_ptr( atlas__MeshGenerator__create_noconfig(c_str('structured')) )
   endif
@@ -78,9 +79,11 @@ function atlas_MeshGenerator__generate(this,grid,distribution) result(mesh)
    class(atlas_GridDistribution), intent(in), optional :: distribution
    call mesh%reset_c_ptr() ! Somehow needed with PGI/16.7 and build-type "bit"
    if( present(distribution) ) then
-     mesh = atlas_Mesh( atlas__MeshGenerator__generate__grid_griddist(this%c_ptr(),grid%c_ptr(),distribution%c_ptr()) )
+     mesh = atlas_Mesh( atlas__MeshGenerator__generate__grid_griddist( &
+       this%CPTR_PGIBUG_A,grid%CPTR_PGIBUG_A,distribution%CPTR_PGIBUG_A) )
    else
-     mesh = atlas_Mesh( atlas__MeshGenerator__generate__grid(this%c_ptr(),grid%c_ptr()) )
+     mesh = atlas_Mesh( atlas__MeshGenerator__generate__grid( &
+       this%CPTR_PGIBUG_A,grid%CPTR_PGIBUG_A) )
    endif
    call mesh%return()
 end function

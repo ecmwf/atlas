@@ -96,10 +96,10 @@ function atlas_State__generate(generator, params) result(this)
   call this%reset_c_ptr( atlas__State__new() )
 
   if( present(params) ) then
-    call atlas__State__initialize(this%c_ptr(),c_str(generator),params%c_ptr())
+    call atlas__State__initialize(this%CPTR_PGIBUG_A,c_str(generator),params%CPTR_PGIBUG_B)
   else
     p = atlas_Config()
-    call atlas__State__initialize(this%c_ptr(),c_str(generator),p%c_ptr())
+    call atlas__State__initialize(this%CPTR_PGIBUG_A,c_str(generator),p%CPTR_PGIBUG_B)
     call p%final()
   endif
   call this%return()
@@ -109,7 +109,7 @@ subroutine atlas_State__add(this,field)
   use atlas_state_c_binding
   class(atlas_State), intent(inout) :: this
   class(atlas_Field), intent(in) :: field
-  call atlas__State__add(this%c_ptr(),field%c_ptr())
+  call atlas__State__add(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A)
 end subroutine
 
 subroutine atlas_State__remove(this,name)
@@ -117,7 +117,7 @@ subroutine atlas_State__remove(this,name)
   use atlas_state_c_binding
   class(atlas_State), intent(inout) :: this
   character(len=*), intent(in) :: name
-  call atlas__State__remove(this%c_ptr(),c_str(name))
+  call atlas__State__remove(this%CPTR_PGIBUG_A,c_str(name))
 end subroutine
 
 function atlas_State__has(this,name) result(has)
@@ -127,7 +127,7 @@ function atlas_State__has(this,name) result(has)
   class(atlas_State), intent(in) :: this
   character(len=*), intent(in) :: name
   integer :: has_int
-  has_int = atlas__State__has(this%c_ptr(),c_str(name))
+  has_int = atlas__State__has(this%CPTR_PGIBUG_A,c_str(name))
   has = .False.
   if( has_int == 1 ) has = .True.
 end function
@@ -136,7 +136,7 @@ function atlas_State__size(this) result(size)
   use atlas_state_c_binding
   integer(ATLAS_KIND_IDX) :: size
   class(atlas_State), intent(in) :: this
-  size = atlas__State__size(this%c_ptr())
+  size = atlas__State__size(this%CPTR_PGIBUG_A)
 end function
 
 function atlas_State__field_by_name(this,name) result(field)
@@ -145,7 +145,7 @@ function atlas_State__field_by_name(this,name) result(field)
   type(atlas_Field) :: field
   class(atlas_State), intent(inout) :: this
   character(len=*), intent(in) :: name
-  field = atlas_Field( atlas__State__field_by_name(this%c_ptr(),c_str(name)) )
+  field = atlas_Field( atlas__State__field_by_name(this%CPTR_PGIBUG_A,c_str(name)) )
   call field%return()
 end function
 
@@ -154,7 +154,7 @@ function atlas_State__field_by_index(this,index) result(field)
   type(atlas_Field) :: field
   class(atlas_State), intent(in) :: this
   integer, intent(in) :: index
-  field = atlas_Field( atlas__State__field_by_index(this%c_ptr(),int(index-1,ATLAS_KIND_IDX)) )
+  field = atlas_Field( atlas__State__field_by_index(this%CPTR_PGIBUG_A,int(index-1,ATLAS_KIND_IDX)) )
   call field%return()
 end function
 
@@ -163,7 +163,7 @@ function atlas_State__metadata(this) result(metadata)
   use atlas_Metadata_module, only: atlas_Metadata
   type(atlas_Metadata) :: metadata
   class(atlas_State), intent(in) :: this
-  call metadata%reset_c_ptr( atlas__State__metadata(this%c_ptr()) )
+  call metadata%reset_c_ptr( atlas__State__metadata(this%CPTR_PGIBUG_A) )
 end function
 
 !-------------------------------------------------------------------------------

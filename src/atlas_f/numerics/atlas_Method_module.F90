@@ -60,7 +60,7 @@ function atlas_Method__name(this) result(name)
   class(atlas_Method), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
-  name_c_str = atlas__Method__name(this%c_ptr())
+  name_c_str = atlas__Method__name(this%CPTR_PGIBUG_A)
   name = c_ptr_to_string(name_c_str)
 end function
 

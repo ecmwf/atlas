@@ -10,6 +10,7 @@
 ! @author Willem Deconinck
 
 #include "fckit/fctest.h"
+#include "atlas/atlas_f.h"
 
 ! -----------------------------------------------------------------------------
 
@@ -57,7 +58,7 @@ implicit none
 
   metadata = atlas_Metadata()
 
-  write(0,*) "metadata%c_ptr() = ", c_ptr_to_loc(metadata%c_ptr())
+  write(0,*) "metadata%c_ptr() = ", c_ptr_to_loc(metadata%CPTR_PGIBUG_A)
 
   call metadata%set("true",.True.)
   call metadata%set("false",.False.)

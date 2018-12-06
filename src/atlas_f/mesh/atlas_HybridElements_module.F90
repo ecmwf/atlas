@@ -109,7 +109,7 @@ function atlas_HybridElements__size(this) result(val)
   use atlas_hybridelements_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_HybridElements), intent(in) :: this
-  val = atlas__mesh__HybridElements__size(this%c_ptr())
+  val = atlas__mesh__HybridElements__size(this%CPTR_PGIBUG_A)
 end function
 
 function node_connectivity(this) result(connectivity)
@@ -117,7 +117,7 @@ function node_connectivity(this) result(connectivity)
   class(atlas_HybridElements), intent(in) :: this
   type(atlas_MultiBlockConnectivity) :: connectivity
   connectivity = atlas_MultiBlockConnectivity( &
-      atlas__mesh__HybridElements__node_connectivity(this%c_ptr()) )
+      atlas__mesh__HybridElements__node_connectivity(this%CPTR_PGIBUG_A) )
   call connectivity%return()
 end function
 
@@ -126,7 +126,7 @@ function edge_connectivity(this) result(connectivity)
   class(atlas_HybridElements), intent(in) :: this
   type(atlas_MultiBlockConnectivity) :: connectivity
   connectivity = atlas_MultiBlockConnectivity( &
-      atlas__mesh__HybridElements__edge_connectivity(this%c_ptr()) )
+      atlas__mesh__HybridElements__edge_connectivity(this%CPTR_PGIBUG_A) )
   call connectivity%return()
 end function
 
@@ -135,7 +135,7 @@ function cell_connectivity(this) result(connectivity)
   class(atlas_HybridElements), intent(in) :: this
   type(atlas_MultiBlockConnectivity) :: connectivity
   connectivity = atlas_MultiBlockConnectivity( &
-      atlas__mesh__HybridElements__cell_connectivity(this%c_ptr()) )
+      atlas__mesh__HybridElements__cell_connectivity(this%CPTR_PGIBUG_A) )
   call connectivity%return()
 end function
 
@@ -145,7 +145,7 @@ subroutine add_elements_int(this,elementtype,nb_elements)
   class(atlas_HybridElements), intent(inout) :: this
   type(atlas_ElementType) :: elementtype
   integer(c_int) :: nb_elements
-  call atlas__mesh__HybridElements__add_elements(this%c_ptr(),elementtype%c_ptr(),int(nb_elements,ATLAS_KIND_IDX))
+  call atlas__mesh__HybridElements__add_elements(this%CPTR_PGIBUG_A,elementtype%CPTR_PGIBUG_A,int(nb_elements,ATLAS_KIND_IDX))
 end subroutine
 
 subroutine add_elements_long(this,elementtype,nb_elements)
@@ -154,7 +154,7 @@ subroutine add_elements_long(this,elementtype,nb_elements)
   class(atlas_HybridElements), intent(inout) :: this
   type(atlas_ElementType) :: elementtype
   integer(c_long) :: nb_elements
-  call atlas__mesh__HybridElements__add_elements(this%c_ptr(),elementtype%c_ptr(),int(nb_elements,ATLAS_KIND_IDX))
+  call atlas__mesh__HybridElements__add_elements(this%CPTR_PGIBUG_A,elementtype%CPTR_PGIBUG_A,int(nb_elements,ATLAS_KIND_IDX))
 end subroutine
 
 subroutine add_elements_with_nodes_int(this,elementtype,nb_elements,node_connectivity)
@@ -164,8 +164,8 @@ subroutine add_elements_with_nodes_int(this,elementtype,nb_elements,node_connect
   type(atlas_ElementType), intent(in) :: elementtype
   integer(c_int), intent(in) :: nb_elements
   integer(ATLAS_KIND_IDX), intent(in) :: node_connectivity(:)
-  call atlas__mesh__HybridElements__add_elements_with_nodes(this%c_ptr(),&
-    & elementtype%c_ptr(),int(nb_elements,ATLAS_KIND_IDX),node_connectivity,1)
+  call atlas__mesh__HybridElements__add_elements_with_nodes(this%CPTR_PGIBUG_A,&
+    & elementtype%CPTR_PGIBUG_A,int(nb_elements,ATLAS_KIND_IDX),node_connectivity,1)
 end subroutine
 
 subroutine add_elements_with_nodes_long(this,elementtype,nb_elements,node_connectivity)
@@ -175,8 +175,8 @@ subroutine add_elements_with_nodes_long(this,elementtype,nb_elements,node_connec
   type(atlas_ElementType), intent(in) :: elementtype
   integer(c_long), intent(in) :: nb_elements
   integer(ATLAS_KIND_IDX), intent(in) :: node_connectivity(:)
-  call atlas__mesh__HybridElements__add_elements_with_nodes(this%c_ptr(),&
-    & elementtype%c_ptr(),int(nb_elements,ATLAS_KIND_IDX),node_connectivity,1)
+  call atlas__mesh__HybridElements__add_elements_with_nodes(this%CPTR_PGIBUG_A,&
+    & elementtype%CPTR_PGIBUG_A,int(nb_elements,ATLAS_KIND_IDX),node_connectivity,1)
 end subroutine
 
 #if ATLAS_BITS_LOCAL != 32
@@ -190,8 +190,8 @@ subroutine add_elements_with_nodes_int_int32(this,elementtype,nb_elements,node_c
   integer(ATLAS_KIND_IDX), allocatable :: idx_node_connectivity(:)
   allocate( idx_node_connectivity( nb_elements * elementtype%nb_nodes() ) )
   idx_node_connectivity(:) = node_connectivity(:)
-  call atlas__mesh__HybridElements__add_elements_with_nodes(this%c_ptr(),&
-    & elementtype%c_ptr(),int(nb_elements,ATLAS_KIND_IDX),idx_node_connectivity,1)
+  call atlas__mesh__HybridElements__add_elements_with_nodes(this%CPTR_PGIBUG_A,&
+    & elementtype%CPTR_PGIBUG_A,int(nb_elements,ATLAS_KIND_IDX),idx_node_connectivity,1)
   deallocate( idx_node_connectivity )
 end subroutine
 
@@ -205,8 +205,8 @@ subroutine add_elements_with_nodes_long_int32(this,elementtype,nb_elements,node_
   integer(ATLAS_KIND_IDX), allocatable :: idx_node_connectivity(:)
   allocate( idx_node_connectivity( nb_elements * elementtype%nb_nodes() ) )
   idx_node_connectivity(:) = node_connectivity(:)
-  call atlas__mesh__HybridElements__add_elements_with_nodes(this%c_ptr(),&
-    & elementtype%c_ptr(),int(nb_elements,ATLAS_KIND_IDX),idx_node_connectivity,1)
+  call atlas__mesh__HybridElements__add_elements_with_nodes(this%CPTR_PGIBUG_A,&
+    & elementtype%CPTR_PGIBUG_A,int(nb_elements,ATLAS_KIND_IDX),idx_node_connectivity,1)
   deallocate( idx_node_connectivity )
 end subroutine
 #endif
@@ -215,7 +215,7 @@ subroutine add_field(this,field)
   use atlas_hybridelements_c_binding
   class(atlas_HybridElements), intent(inout) :: this
   type(atlas_Field), intent(in) :: field
-  call atlas__mesh__HybridElements__add_field(this%c_ptr(), field%c_ptr())
+  call atlas__mesh__HybridElements__add_field(this%CPTR_PGIBUG_A, field%CPTR_PGIBUG_A)
 end subroutine
 
 
@@ -223,14 +223,14 @@ function nb_types(this) result(val)
   use atlas_hybridelements_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_HybridElements), intent(in) :: this
-  val = atlas__mesh__HybridElements__nb_types(this%c_ptr())
+  val = atlas__mesh__HybridElements__nb_types(this%CPTR_PGIBUG_A)
 end function
 
 function nb_fields(this) result(val)
   use atlas_hybridelements_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_HybridElements), intent(in) :: this
-  val = atlas__mesh__HybridElements__nb_fields(this%c_ptr())
+  val = atlas__mesh__HybridElements__nb_fields(this%CPTR_PGIBUG_A)
 end function
 
 function has_field(this,name) result(val)
@@ -239,7 +239,7 @@ function has_field(this,name) result(val)
   logical :: val
   class(atlas_HybridElements), intent(in) :: this
   character(len=*), intent(in) :: name
-  if( atlas__mesh__HybridElements__has_field(this%c_ptr(),c_str(name)) == 0 ) then
+  if( atlas__mesh__HybridElements__has_field(this%CPTR_PGIBUG_A,c_str(name)) == 0 ) then
     val = .False.
   else
     val = .True.
@@ -252,7 +252,7 @@ function field_by_name(this,name) result(field)
   type(atlas_Field) :: field
   class(atlas_HybridElements), intent(in) :: this
   character(len=*), intent(in) :: name
-  field = atlas_Field( atlas__mesh__HybridElements__field_by_name(this%c_ptr(),c_str(name)) )
+  field = atlas_Field( atlas__mesh__HybridElements__field_by_name(this%CPTR_PGIBUG_A,c_str(name)) )
   call field%return()
 end function
 
@@ -262,7 +262,7 @@ function field_by_idx_long(this,idx) result(field)
   type(atlas_Field) :: field
   class(atlas_HybridElements), intent(in) :: this
   integer(c_long), intent(in) :: idx
-  field = atlas_Field( atlas__mesh__HybridElements__field_by_idx(this%c_ptr(),int(idx-1_c_long,ATLAS_KIND_IDX) ) )
+  field = atlas_Field( atlas__mesh__HybridElements__field_by_idx(this%CPTR_PGIBUG_A,int(idx-1_c_long,ATLAS_KIND_IDX) ) )
   call field%return()
 end function
 
@@ -272,7 +272,7 @@ function field_by_idx_int(this,idx) result(field)
   type(atlas_Field) :: field
   class(atlas_HybridElements), intent(in) :: this
   integer(c_int), intent(in) :: idx
-  field = atlas_Field( atlas__mesh__HybridElements__field_by_idx(this%c_ptr(),int(idx-1_c_int,ATLAS_KIND_IDX) ) )
+  field = atlas_Field( atlas__mesh__HybridElements__field_by_idx(this%CPTR_PGIBUG_A,int(idx-1_c_int,ATLAS_KIND_IDX) ) )
   call field%return()
 end function
 
@@ -280,7 +280,7 @@ function global_index(this) result(field)
   use atlas_hybridelements_c_binding
   type(atlas_Field) :: field
   class(atlas_HybridElements), intent(in) :: this
-  field = atlas_Field( atlas__mesh__HybridElements__global_index(this%c_ptr()) )
+  field = atlas_Field( atlas__mesh__HybridElements__global_index(this%CPTR_PGIBUG_A) )
   call field%return()
 end function
 
@@ -288,7 +288,7 @@ function remote_index(this) result(field)
   use atlas_hybridelements_c_binding
   type(atlas_Field) :: field
   class(atlas_HybridElements), intent(in) :: this
-  field = atlas_Field( atlas__mesh__HybridElements__remote_index(this%c_ptr()) )
+  field = atlas_Field( atlas__mesh__HybridElements__remote_index(this%CPTR_PGIBUG_A) )
   call field%return()
 end function
 
@@ -296,7 +296,7 @@ function partition(this) result(field)
   use atlas_hybridelements_c_binding
   type(atlas_Field) :: field
   class(atlas_HybridElements), intent(in) :: this
-  field = atlas_Field( atlas__mesh__HybridElements__partition(this%c_ptr()) )
+  field = atlas_Field( atlas__mesh__HybridElements__partition(this%CPTR_PGIBUG_A) )
   call field%return()
 end function
 
@@ -304,7 +304,7 @@ function halo(this) result(field)
   use atlas_hybridelements_c_binding
   type(atlas_Field) :: field
   class(atlas_HybridElements), intent(in) :: this
-  field = atlas_Field( atlas__mesh__HybridElements__halo(this%c_ptr()) )
+  field = atlas_Field( atlas__mesh__HybridElements__halo(this%CPTR_PGIBUG_A) )
   call field%return()
 end function
 
@@ -314,7 +314,7 @@ function elements_long(this,idx) result(elements)
   type(atlas_Elements) :: elements
   class(atlas_HybridElements), intent(in) :: this
   integer(c_long), intent(in) :: idx
-  elements = atlas_Elements( atlas__mesh__HybridElements__elements(this%c_ptr(),int(idx-1_c_long,ATLAS_KIND_IDX) ) )
+  elements = atlas_Elements( atlas__mesh__HybridElements__elements(this%CPTR_PGIBUG_A,int(idx-1_c_long,ATLAS_KIND_IDX) ) )
   call elements%return()
 end function
 
@@ -324,7 +324,7 @@ function elements_int(this,idx) result(elements)
   type(atlas_Elements) :: elements
   class(atlas_HybridElements), intent(in) :: this
   integer(c_int), intent(in) :: idx
-  elements = atlas_Elements( atlas__mesh__HybridElements__elements(this%c_ptr(),int(idx-1_c_int,ATLAS_KIND_IDX) ) )
+  elements = atlas_Elements( atlas__mesh__HybridElements__elements(this%CPTR_PGIBUG_A,int(idx-1_c_int,ATLAS_KIND_IDX) ) )
   call elements%return()
 end function
 
