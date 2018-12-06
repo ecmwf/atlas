@@ -32,6 +32,9 @@ public:
     SVector() : data_( nullptr ), size_( 0 ), externally_allocated_( false ) {}
 
     ATLAS_HOST_DEVICE
+    SVector(const T* data, const idx_t size) : data_(data), size_(size), externally_allocated_( true ) {}
+
+    ATLAS_HOST_DEVICE
     SVector( SVector const& other ) :
         data_( other.data_ ),
         size_( other.size_ ),
