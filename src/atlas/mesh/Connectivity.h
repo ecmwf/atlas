@@ -480,6 +480,7 @@ public:
     /// @brief Destructor
     ~BlockConnectivityImpl();
 
+    ATLAS_HOST_DEVICE
     idx_t index(idx_t i, idx_t j) const;
 
     void rebuild( idx_t rows, idx_t cols, idx_t values[] );
