@@ -40,15 +40,18 @@ public:
     ATLAS_HOST_DEVICE
     SVector( T* data, idx_t size ) : data_( data ), size_( size ) {}
 
-    SVector( idx_t N ) : data_( nullptr ), size_( N ), externally_allocated_( false ) {
+    void allocate(T*& data, idx_t N) {
         if ( N != 0 ) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
             cudaError_t err = cudaMallocManaged( &data_, N * sizeof( T ) );
             if ( err != cudaSuccess ) throw eckit::AssertionFailed( "failed to allocate GPU memory" );
 #else
-            data_ = (T*)malloc( N * sizeof( T ) );
+            data = (T*)malloc( N * sizeof( T ) );
 #endif
         }
+    }
+    SVector( idx_t N ) : data_( nullptr ), size_( N ), externally_allocated_( false ) {
+        allocate(data_,N);
     }
     ATLAS_HOST_DEVICE
     ~SVector() {
@@ -69,11 +72,33 @@ public:
             if ( err != cudaSuccess ) throw eckit::AssertionFailed( "failed to free GPU memory" );
 
 #else
-            free( data_ );
+            free( data );
 #endif
-            data_ = NULL;
+            data = NULL;
         }
     }
+
+    void insert(idx_t pos, idx_t dimsize) {
+        T* data;
+        allocate(data, size_ + dimsize);
+
+        for(unsigned int c=0; c < pos; ++c) {
+            data[c] = data_[c];
+        }
+        for(unsigned int c=pos; c < size_; ++c) {
+            data[c+dimsize] = data_[c];
+        }
+
+        T* oldptr = data_;
+        data_ = data;
+        delete_managedmem(oldptr);
+        size_+= dimsize;
+    }
+
+    size_t footprint() const {
+        return sizeof(T) * size_;
+    }
+
     ATLAS_HOST_DEVICE
     T* data() { return data_; }
 
@@ -106,18 +131,11 @@ public:
     idx_t size() const { return size_; }
 
     void resize_impl( idx_t N ) {
-        assert( N >= size_ );
         if ( N == size_ ) return;
 
-        T* d_;
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-        cudaError_t err = cudaMallocManaged( &d_, sizeof( T ) * N );
-        if ( err != cudaSuccess ) throw eckit::AssertionFailed( "failed to allocate GPU memory" );
-
-#else
-        d_ = (T*)malloc( sizeof( T ) * N );
-#endif
-        for ( unsigned int c = 0; c < size_; ++c ) {
+        T* d_ = nullptr;
+        allocate(d_,N);
+        for ( unsigned int c = 0; c < std::min(size_, N); ++c ) {
             d_[c] = data_[c];
         }
         delete_managedmem( data_ );

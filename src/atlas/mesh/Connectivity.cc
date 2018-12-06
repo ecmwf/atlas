@@ -439,33 +439,26 @@ array::ArrayShape{blocks})),
 MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( const std::string& name ) :
     IrregularConnectivityImpl( name ),
     blocks_( 0 ),
-    block_displs_( array::Array::create<idx_t>( 1 ) ),
-    block_cols_( array::Array::create<idx_t>( 1 ) ),
-    block_displs_view_( array::make_view<idx_t, 1>( *block_displs_ ) ),
-    block_cols_view_( array::make_view<idx_t, 1>( *block_cols_ ) ),
+    block_displs_(1),
+    block_cols_( 1 ),
     block_( 0 ),
     block_view_( make_host_vector_view( block_ ) ),
     gpu_clone_( this ) {
-    block_displs_view_( 0 ) = 0;
+    block_displs_( 0 ) = 0;
 }
 
 //------------------------------------------------------------------------------------------------------
 
-MultiBlockConnectivityImpl::~MultiBlockConnectivityImpl() {
-    if ( block_displs_ ) delete block_displs_;
-    if ( block_cols_ ) delete block_cols_;
-}
+MultiBlockConnectivityImpl::~MultiBlockConnectivityImpl() {}
 
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::clear() {
     IrregularConnectivityImpl::clear();
     if ( owns() ) {
-        block_displs_->resize( 1 );
-        block_cols_->resize( 1 );
-        block_displs_view_      = array::make_view<idx_t, 1>( *( block_displs_ ) );
-        block_cols_view_        = array::make_view<idx_t, 1>( *( block_cols_ ) );
-        block_displs_view_( 0 ) = 0ul;
+        block_displs_.resize( 1 );
+        block_cols_.resize( 1 );
+        block_displs_( 0 ) = 0ul;
     }
     blocks_     = 0;
     block_      = array::Vector<BlockConnectivityImpl*>( 0 );
@@ -475,10 +468,6 @@ void MultiBlockConnectivityImpl::clear() {
 
 void MultiBlockConnectivityImpl::cloneToDevice() {
     IrregularConnectivityImpl::cloneToDevice();
-    block_displs_->cloneToDevice();
-    block_cols_->cloneToDevice();
-    block_displs_view_ = array::make_device_view<idx_t, 1>( *( block_displs_ ) );
-    block_cols_view_   = array::make_device_view<idx_t, 1>( *( block_cols_ ) );
 
     block_.cloneToDevice();
     block_view_ = make_device_vector_view( block_ );
@@ -488,10 +477,6 @@ void MultiBlockConnectivityImpl::cloneToDevice() {
 
 void MultiBlockConnectivityImpl::cloneFromDevice() {
     IrregularConnectivityImpl::cloneFromDevice();
-    block_displs_->cloneFromDevice();
-    block_cols_->cloneFromDevice();
-    block_displs_view_ = array::make_host_view<idx_t, 1>( *( block_displs_ ) );
-    block_cols_view_   = array::make_host_view<idx_t, 1>( *( block_cols_ ) );
 
     block_.cloneFromDevice();
     block_view_ = make_host_vector_view( block_ );
@@ -499,22 +484,18 @@ void MultiBlockConnectivityImpl::cloneFromDevice() {
 
 void MultiBlockConnectivityImpl::syncHostDevice() const {
     IrregularConnectivityImpl::syncHostDevice();
-    block_displs_->syncHostDevice();
-    block_cols_->syncHostDevice();
 }
 
 bool MultiBlockConnectivityImpl::valid() const {
-    return IrregularConnectivityImpl::valid() && block_displs_->valid() && block_cols_->valid();
+    return IrregularConnectivityImpl::valid();
 }
 
 bool MultiBlockConnectivityImpl::hostNeedsUpdate() const {
-    return IrregularConnectivityImpl::hostNeedsUpdate() && block_displs_->hostNeedsUpdate() &&
-           block_cols_->hostNeedsUpdate();
+    return IrregularConnectivityImpl::hostNeedsUpdate();
 }
 
 bool MultiBlockConnectivityImpl::deviceNeedsUpdate() const {
-    return IrregularConnectivityImpl::deviceNeedsUpdate() && block_displs_->deviceNeedsUpdate() &&
-           block_cols_->deviceNeedsUpdate();
+    return IrregularConnectivityImpl::deviceNeedsUpdate();
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -524,13 +505,12 @@ void MultiBlockConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values
     idx_t old_rows = this->rows();
     IrregularConnectivityImpl::add( rows, cols, values, fortran_array );
 
-    block_displs_->insert( block_displs_->size(), 1 );
-    block_cols_->insert( block_cols_->size(), 1 );
-    block_displs_view_ = array::make_view<idx_t, 1>( *block_displs_ );
-    block_cols_view_   = array::make_view<idx_t, 1>( *block_cols_ );
+    block_displs_.insert( block_displs_.size(), 1 );
+    block_cols_.insert( block_cols_.size(), 1 );
+
     blocks_++;
-    block_displs_view_( block_displs_view_.size() - 1 ) = old_rows + rows;
-    block_cols_view_( block_cols_view_.size() - 2 )     = cols;
+    block_displs_[ block_displs_.size() - 1 ] = old_rows + rows;
+    block_cols_[ block_cols_.size() - 2 ]     = cols;
 
     rebuild_block_connectivity();
 }
@@ -551,13 +531,12 @@ void MultiBlockConnectivityImpl::add( idx_t rows, idx_t cols ) {
     idx_t old_rows = this->rows();
     IrregularConnectivityImpl::add( rows, cols );
 
-    block_displs_->insert( block_displs_->size(), 1 );
-    block_cols_->insert( block_cols_->size(), 1 );
-    block_displs_view_ = array::make_view<idx_t, 1>( *block_displs_ );
-    block_cols_view_   = array::make_view<idx_t, 1>( *block_cols_ );
+    block_displs_.insert( block_displs_.size(), 1 );
+    block_cols_.insert( block_cols_.size(), 1 );
     blocks_++;
-    block_displs_view_( block_displs_view_.size() - 1 ) = old_rows + rows;
-    block_cols_view_( block_cols_view_.size() - 2 )     = cols;
+
+    block_displs_[block_displs_.size() - 1 ] = old_rows + rows;
+    block_cols_[ block_cols_.size() - 2 ]     = cols;
 
     rebuild_block_connectivity();
 }
@@ -580,13 +559,11 @@ void MultiBlockConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
             "all elements of cols[] must be identical" );
     IrregularConnectivityImpl::add( rows, cols );
 
-    block_displs_->insert( block_displs_->size(), 1 );
-    block_cols_->insert( block_cols_->size(), 1 );
-    block_displs_view_ = array::make_view<idx_t, 1>( *block_displs_ );
-    block_cols_view_   = array::make_view<idx_t, 1>( *block_cols_ );
+    block_displs_.insert( block_displs_.size(), 1 );
+    block_cols_.insert( block_cols_.size(), 1 );
     blocks_++;
-    block_displs_view_( block_displs_view_.size() - 1 ) = old_rows;
-    block_cols_view_( block_cols_view_.size() - 2 )     = max;
+    block_displs_( block_displs_.size() - 1 ) = old_rows;
+    block_cols_[ block_cols_.size() - 2 ]     = max;
 
     rebuild_block_connectivity();
 }
@@ -602,12 +579,12 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols,
     long blk_idx = blocks_;
     do {
         blk_idx--;
-    } while ( blk_idx >= 0l && block_displs_view_( blk_idx ) >= position && cols != block_cols_view_( blk_idx ) );
+    } while ( blk_idx >= 0l && block_displs_[blk_idx] >= position && cols != block_cols_[ blk_idx ] );
     ASSERT( blk_idx >= 0l );
     ASSERT( cols == block( blk_idx ).cols() );
 
     for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk )
-        block_displs_view_( jblk + 1 ) += rows;
+        block_displs_[jblk + 1] += rows;
 
     IrregularConnectivityImpl::insert( position, rows, cols, values, fortran_array );
     rebuild_block_connectivity();
@@ -621,14 +598,14 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols 
     long blk_idx = blocks_;
     do {
         blk_idx--;
-    } while ( blk_idx >= 0l && block_displs_view_( blk_idx ) >= position && cols != block_cols_view_( blk_idx ) );
+    } while ( blk_idx >= 0l && block_displs_[ blk_idx ] >= position && cols != block_cols_[ blk_idx ] );
 
     ASSERT( blk_idx >= 0l );
 
     IrregularConnectivityImpl::insert( position, rows, cols );
 
     for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk )
-        block_displs_view_( jblk + 1 ) += rows;
+        block_displs_[ jblk + 1 ] += rows;
     rebuild_block_connectivity();
 }
 
@@ -650,14 +627,14 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t
     long blk_idx = blocks_;
     do {
         blk_idx--;
-    } while ( blk_idx >= 0l && block_displs_view_( blk_idx ) >= position && max != block_cols_view_( blk_idx ) );
+    } while ( blk_idx >= 0l && block_displs_[ blk_idx ] >= position && max != block_cols_[ blk_idx ] );
 
     ASSERT( blk_idx >= 0l );
 
     IrregularConnectivityImpl::insert( position, rows, cols );
 
     for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk )
-        block_displs_view_( jblk + 1 ) += rows;
+        block_displs_[ jblk + 1 ] += rows;
     rebuild_block_connectivity();
 }
 
@@ -669,14 +646,14 @@ void MultiBlockConnectivityImpl::rebuild_block_connectivity() {
 
     for ( idx_t b = 0; b < blocks_; ++b ) {
         if ( block_view_[b] ) {
-            block_view_[b]->rebuild( block_displs_view_( b + 1 ) - block_displs_view_( b ),  // rows
-                                     block_cols_view_( b ),                                  // cols
-                                     data() + displs( block_displs_view_( b ) ) );
+            block_view_[b]->rebuild( block_displs_[ b + 1 ] - block_displs_[ b ],  // rows
+                                     block_cols_[ b ],                                  // cols
+                                     data() + displs( block_displs_[ b ] ) );
         }
         else {
-            block_view_[b] = new BlockConnectivityImpl( block_displs_view_( b + 1 ) - block_displs_view_( b ),  // rows
-                                                        block_cols_view_( b ),                                  // cols
-                                                        data() + displs( block_displs_view_( b ) ),
+            block_view_[b] = new BlockConnectivityImpl( block_displs_[ b + 1 ] - block_displs_[ b ],  // rows
+                                                        block_cols_[ b ],                                  // cols
+                                                        data() + displs( block_displs_[ b ] ),
                                                         /*own = */ false );
         }
     }
@@ -686,8 +663,8 @@ void MultiBlockConnectivityImpl::rebuild_block_connectivity() {
 
 size_t MultiBlockConnectivityImpl::footprint() const {
     size_t size = IrregularConnectivityImpl::footprint();
-    size += block_displs_->footprint();
-    size += block_cols_->footprint();
+    size += block_displs_.footprint();
+    size += block_cols_.footprint();
 
     for ( idx_t j = 0; j < block_.size(); ++j ) {
         size += block_view_[j]->footprint();
