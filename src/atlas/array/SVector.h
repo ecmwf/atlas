@@ -46,7 +46,7 @@ public:
     void allocate(T*& data, idx_t N) {
         if ( N != 0 ) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-            cudaError_t err = cudaMallocManaged( &data_, N * sizeof( T ) );
+            cudaError_t err = cudaMallocManaged( &data, N * sizeof( T ) );
             if ( err != cudaSuccess ) throw eckit::AssertionFailed( "failed to allocate GPU memory" );
 #else
             data = (T*)malloc( N * sizeof( T ) );
