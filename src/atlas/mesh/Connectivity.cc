@@ -41,8 +41,7 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( const std::string& name ) 
     mincols_( std::numeric_limits<idx_t>::max() ),
     ctxt_( nullptr ),
     callback_update_( nullptr ),
-    callback_delete_( nullptr ),
-    gpu_clone_( this ) {
+    callback_delete_( nullptr ) {
     rename( name );
     displs_[ 0 ] = 0;
     counts_[ 0 ] = 0;
@@ -70,8 +69,7 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( idx_t values[], idx_t rows
     rows_( rows ),
     ctxt_( nullptr ),
     callback_update_( nullptr ),
-    callback_delete_( nullptr ),
-    gpu_clone_( this ) {
+    callback_delete_( nullptr ) {
     maxcols_ = 0;
     mincols_ = std::numeric_limits<idx_t>::max();
     for ( idx_t j = 0; j < rows; ++j ) {
@@ -89,8 +87,7 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( const IrregularConnectivit
     rows_( other.rows_ ),
     maxcols_( other.maxcols_ ),
     mincols_( other.mincols_ ),
-    ctxt_( nullptr ),
-    gpu_clone_( this ) {}
+    ctxt_( nullptr ) {}
 
 //------------------------------------------------------------------------------------------------------
 
@@ -191,16 +188,17 @@ void IrregularConnectivityImpl::add( const BlockConnectivityImpl& block ) {
     const idx_t* values = block.data();
 
     std::vector<idx_t> values_vector;
-    if ( !block.values_view_.contiguous() ) {
-        values_vector.resize( rows * cols );
-        values = values_vector.data();
-        for ( idx_t i = 0, c = 0; i < rows; ++i ) {
-            for ( idx_t j = 0; j < cols; ++j ) {
-                values_vector[c++] = block( i, j );
-            }
-        }
-        fortran_array = false;
-    }
+    //TODO
+//    if ( !block.values_view_.contiguous() ) {
+//        values_vector.resize( rows * cols );
+//        values = values_vector.data();
+//        for ( idx_t i = 0, c = 0; i < rows; ++i ) {
+//            for ( idx_t j = 0; j < cols; ++j ) {
+//                values_vector[c++] = block( i, j );
+//            }
+//        }
+//        fortran_array = false;
+//    }
 
     add( rows, cols, values, fortran_array );
 }
@@ -345,23 +343,6 @@ void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t 
     on_update();
 }
 
-void IrregularConnectivityImpl::cloneToDevice() {
-    gpu_clone_.cloneToDevice();
-}
-void IrregularConnectivityImpl::cloneFromDevice() {
-}
-void IrregularConnectivityImpl::syncHostDevice() const {
-}
-bool IrregularConnectivityImpl::valid() const {
-    return true;
-}
-bool IrregularConnectivityImpl::hostNeedsUpdate() const {
-    return false;
-}
-bool IrregularConnectivityImpl::deviceNeedsUpdate() const {
-    return false;
-}
-
 size_t IrregularConnectivityImpl::footprint() const {
     size_t size = sizeof( *this );
     size += values_.footprint();
@@ -404,9 +385,8 @@ MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( const std::string& name 
     block_displs_(1),
     block_cols_( 1 ),
     block_( 0 ),
-    block_view_( make_host_vector_view( block_ ) ),
-    gpu_clone_( this ) {
-    block_displs_( 0 ) = 0;
+    block_view_( make_host_vector_view( block_ ) ) {
+      block_displs_( 0 ) = 0;
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -429,35 +409,28 @@ void MultiBlockConnectivityImpl::clear() {
 
 
 void MultiBlockConnectivityImpl::cloneToDevice() {
-    IrregularConnectivityImpl::cloneToDevice();
-
     block_.cloneToDevice();
     block_view_ = make_device_vector_view( block_ );
-
-    gpu_clone_.cloneToDevice();
 }
 
 void MultiBlockConnectivityImpl::cloneFromDevice() {
-    IrregularConnectivityImpl::cloneFromDevice();
-
     block_.cloneFromDevice();
     block_view_ = make_host_vector_view( block_ );
 }
 
 void MultiBlockConnectivityImpl::syncHostDevice() const {
-    IrregularConnectivityImpl::syncHostDevice();
 }
 
 bool MultiBlockConnectivityImpl::valid() const {
-    return IrregularConnectivityImpl::valid();
+    return true;
 }
 
 bool MultiBlockConnectivityImpl::hostNeedsUpdate() const {
-    return IrregularConnectivityImpl::hostNeedsUpdate();
+    return true;
 }
 
 bool MultiBlockConnectivityImpl::deviceNeedsUpdate() const {
-    return IrregularConnectivityImpl::deviceNeedsUpdate();
+    return true;
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -638,31 +611,24 @@ size_t MultiBlockConnectivityImpl::footprint() const {
 
 BlockConnectivityImpl::BlockConnectivityImpl() :
     owns_( true ),
-    values_( array::Array::create<idx_t>( 1, 1 ) ),
-    values_view_( array::make_view<idx_t, 2>( *values_ ) ),
+    values_( 0 ),
     rows_( 0 ),
     cols_( 0 ),
-    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
-    gpu_clone_( this ) {}
+    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ) {}
 
 //------------------------------------------------------------------------------------------------------
 
 BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, const std::initializer_list<idx_t>& values ) :
     owns_( true ),
-    values_( array::Array::create<idx_t>( 1, 1 ) ),
-    values_view_( array::make_view<idx_t, 2>( *values_ ) ),
+    values_( rows*cols ),
     rows_( rows ),
     cols_( cols ),
-    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
-    gpu_clone_( this ) {
-    delete values_;
-    values_        = array::Array::create<idx_t>( rows_, cols_ );
-    values_view_   = array::make_view<idx_t, 2>( *values_ );
+    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ) {
     idx_t add_base = FORTRAN_BASE;
     auto v         = values.begin();
     for ( idx_t i = 0; i < rows_; ++i ) {
         for ( idx_t j = 0; j < cols_; ++j ) {
-            values_view_( i, j ) = *( v++ ) + add_base;
+            values_[ index(i,j) ] = *( v++ ) + add_base;
         }
     }
     ASSERT( v == values.end() );
@@ -672,21 +638,16 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, const std:
 
 BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t values[] ) :
     owns_( true ),
-    values_( array::Array::create<idx_t>( 1, 1 ) ),
-    values_view_( array::make_view<idx_t, 2>( *values_ ) ),
+    values_( rows*cols ),
     rows_( rows ),
     cols_( cols ),
-    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
-    gpu_clone_( this ) {
-    delete values_;
-    values_      = array::Array::create<idx_t>( rows_, cols_ );
-    values_view_ = array::make_view<idx_t, 2>( *values_ );
-    if ( values_->size() ) {
+    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ) {
+    if ( values_.size() ) {
         idx_t add_base = FORTRAN_BASE;
         idx_t* v       = &values[0];
         for ( idx_t i = 0; i < rows_; ++i ) {
             for ( idx_t j = 0; j < cols_; ++j ) {
-                values_view_( i, j ) = *( v++ ) + add_base;
+                values_[ index(i, j) ] = *( v++ ) + add_base;
             }
         }
     }
@@ -696,21 +657,22 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t valu
 
 BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t values[], bool dummy ) :
     owns_( false ),
-    values_( array::Array::wrap<idx_t>( values, array::ArrayShape{rows, cols} ) ),
-    values_view_( array::make_view<idx_t, 2>( *values_ ) ),
+    values_( values, rows*cols ),
     rows_( rows ),
     cols_( cols ),
-    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
-    gpu_clone_( this ) {}
+    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ) {}
 
 //------------------------------------------------------------------------------------------------------
 
 BlockConnectivityImpl::~BlockConnectivityImpl() {
-    if ( owns_ ) {
-        assert( values_ );
-        delete values_;
-    }
+    //TODO owns_ not used ?
 }
+
+//------------------------------------------------------------------------------------------------------
+
+idx_t BlockConnectivityImpl::index(idx_t i, idx_t j) const
+{
+    return i*cols_ + j; }
 
 //------------------------------------------------------------------------------------------------------
 
@@ -718,10 +680,7 @@ void BlockConnectivityImpl::rebuild( idx_t rows, idx_t cols, idx_t values[] ) {
     ASSERT( not owns_ );
     rows_ = rows;
     cols_ = cols;
-    assert( values_ );
-    delete values_;
-    values_      = array::Array::wrap<idx_t>( values, array::ArrayShape{rows, cols} );
-    values_view_ = array::make_view<idx_t, 2>( *values_ );
+    values_      = array::SVector<idx_t>( values, rows * cols );
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -733,50 +692,26 @@ void BlockConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[], b
             "Cannot add values with different cols than "
             "already existing in BlockConnectivity" );
 
-    values_->resize( rows_ + rows, cols );
-    values_view_ = array::make_view<idx_t, 2>( *values_ );
-
+    values_.resize( (rows_ + rows) * cols );
+    const idx_t oldrows = rows_;
     idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
-
-    for ( idx_t i = 0, i_old = rows_; i < rows; ++i, ++i_old ) {
-        for ( idx_t j = 0; j < cols; ++j ) {
-            values_view_( i_old, j ) = values[i * cols + j] + add_base;
-        }
-    }
 
     rows_ += rows;
     cols_ = cols;
+
+    for ( idx_t i = 0; i < rows; ++i ) {
+        for ( idx_t j = 0; j < cols; ++j ) {
+            values_[ index(i+oldrows, j) ] = values[i * cols + j] + add_base;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------------------------------
 
 size_t BlockConnectivityImpl::footprint() const {
     size_t size = sizeof( *this );
-    if ( owns() ) size += values_->footprint();
+    if ( owns() ) size += values_.footprint();
     return size;
-}
-
-void BlockConnectivityImpl::cloneToDevice() {
-    values_->cloneToDevice();
-    values_view_ = array::make_device_view<idx_t, 2>( *values_ );
-    gpu_clone_.cloneToDevice();
-}
-
-void BlockConnectivityImpl::cloneFromDevice() {
-    values_->cloneFromDevice();
-    values_view_ = array::make_host_view<idx_t, 2>( *values_ );
-}
-
-bool BlockConnectivityImpl::valid() const {
-    return values_->valid();
-}
-
-bool BlockConnectivityImpl::hostNeedsUpdate() const {
-    return values_->hostNeedsUpdate();
-}
-
-bool BlockConnectivityImpl::deviceNeedsUpdate() const {
-    return values_->deviceNeedsUpdate();
 }
 
 //------------------------------------------------------------------------------------------------------

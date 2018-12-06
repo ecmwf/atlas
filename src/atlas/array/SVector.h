@@ -41,7 +41,7 @@ public:
         externally_allocated_( other.externally_allocated_ ) {}
 
     ATLAS_HOST_DEVICE
-    SVector( T* data, idx_t size ) : data_( data ), size_( size ) {}
+    SVector( T* data, idx_t size ) : data_( data ), size_( size ), externally_allocated_(true) {}
 
     void allocate(T*& data, idx_t N) {
         if ( N != 0 ) {
