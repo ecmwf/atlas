@@ -32,7 +32,6 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/Vector.h"
-#include "atlas/array/gridtools/GPUClonable.h"
 #include "atlas/array_fwd.h"
 #include "atlas/array/SVector.h"
 #include "atlas/library/config.h"
@@ -223,12 +222,6 @@ public:
     ATLAS_HOST_DEVICE
     idx_t operator()( idx_t row_idx, idx_t col_idx ) const;
 
-    /// @brief Access to raw data.
-    /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is
-    /// defined.
-//    const idx_t* data() const { return values_.data(); }
-//    idx_t* data() { return values_.data(); }
-
     idx_t size() const { return values_.size(); }
 
     ATLAS_HOST_DEVICE
@@ -282,14 +275,6 @@ public:
 
     idx_t displs( const idx_t row ) const { return displs_[ row ]; }
 
-    virtual void cloneToDevice();
-    virtual void cloneFromDevice();
-    virtual void syncHostDevice() const;
-    virtual bool valid() const;
-    virtual bool hostNeedsUpdate() const;
-    virtual bool deviceNeedsUpdate() const;
-
-    IrregularConnectivityImpl* gpu_object_ptr() { return gpu_clone_.gpu_object_ptr(); }
     void dump( std::ostream& os ) const;
     friend std::ostream& operator<<( std::ostream& os, const IrregularConnectivityImpl& p ) {
         p.dump( os );
@@ -328,7 +313,6 @@ private:
     ctxt_t ctxt_;
     callback_t callback_update_;
     callback_t callback_delete_;
-    array::gridtools::GPUClonable<IrregularConnectivityImpl> gpu_clone_;
 };
 
 // ----------------------------------------------------------------------------------------------
@@ -373,17 +357,6 @@ public:
     /// Data is owned
     MultiBlockConnectivityImpl( const std::string& name = "" );
 
-    /*
-/// @brief Construct connectivity table wrapping existing raw data.
-/// No resizing can be performed as data is not owned.
-MultiBlockConnectivity(
-    idx_t values[],
-    idx_t rows,
-    idx_t displs[],
-    idx_t counts[],
-    idx_t blocks, idx_t block_displs[],
-    idx_t block_cols[] );
-*/
     virtual ~MultiBlockConnectivityImpl();
 
     //-- Accessors
@@ -397,9 +370,6 @@ MultiBlockConnectivity(
     const BlockConnectivityImpl& block( idx_t block_idx ) const { return *( block_view_[block_idx] ); }
     ATLAS_HOST_DEVICE
     BlockConnectivityImpl& block( idx_t block_idx ) { return *( block_view_[block_idx] ); }
-
-    //  ATLAS_HOST_DEVICE
-    //  BlockConnectivityImpl* base() { return block_.base();}
 
     /// @brief Access to connectivity table elements for given row and column
     /// The row_idx counts up from 0, from block 0, as in IrregularConnectivity
@@ -455,8 +425,6 @@ MultiBlockConnectivity(
     virtual bool hostNeedsUpdate() const;
     virtual bool deviceNeedsUpdate() const;
 
-    MultiBlockConnectivityImpl* gpu_object_ptr() { return gpu_clone_.gpu_object_ptr(); }
-
 private:
     void rebuild_block_connectivity();
 
@@ -467,8 +435,6 @@ private:
 
     array::Vector<BlockConnectivityImpl*> block_;
     array::VectorView<BlockConnectivityImpl*> block_view_;
-
-    array::gridtools::GPUClonable<MultiBlockConnectivityImpl> gpu_clone_;
 };
 
 // -----------------------------------------------------------------------------------------------------
@@ -513,15 +479,16 @@ public:
     // it is compiled it for a GPU kernel
     BlockConnectivityImpl( const BlockConnectivityImpl& other ) :
         owns_( false ),
-        values_( 0 ),
-        values_view_( other.values_view_ ),
+        values_( other.values_ ),
         rows_( other.rows_ ),
         cols_( other.cols_ ),
-        missing_value_( other.missing_value_ ),
-        gpu_clone_( this ) {}
+        missing_value_( other.missing_value_ )
+    {}
 
     /// @brief Destructor
     ~BlockConnectivityImpl();
+
+    idx_t index(idx_t i, idx_t j) const;
 
     void rebuild( idx_t rows, idx_t cols, idx_t values[] );
 
@@ -544,9 +511,9 @@ public:
     /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is
     /// defined.
     ATLAS_HOST_DEVICE
-    const idx_t* data() const { return values_view_.data(); }
+    const idx_t* data() const { return values_.data(); }
     ATLAS_HOST_DEVICE
-    idx_t* data() { return values_view_.data(); }
+    idx_t* data() { return values_.data(); }
 
     ATLAS_HOST_DEVICE
     idx_t missing_value() const { return missing_value_; }
@@ -567,25 +534,15 @@ public:
     /// @note Can only be used when data is owned.
     void add( idx_t rows, idx_t cols, const idx_t values[], bool fortran_array = false );
 
-    void cloneToDevice();
-    void cloneFromDevice();
-    void syncHostDevice() const;
-    bool valid() const;
-    bool hostNeedsUpdate() const;
-    bool deviceNeedsUpdate() const;
-
     bool owns() const { return owns_; }
-    BlockConnectivityImpl* gpu_object_ptr() { return gpu_clone_.gpu_object_ptr(); }
 
 private:
     bool owns_;
-    array::Array* values_;
-    array::ArrayView<idx_t, 2> values_view_;
+    array::SVector<idx_t> values_;
 
     idx_t rows_;
     idx_t cols_;
     idx_t missing_value_;
-    array::gridtools::GPUClonable<BlockConnectivityImpl> gpu_clone_;
 };
 
 typedef ConnectivityInterface<IrregularConnectivityImpl> IrregularConnectivity;
@@ -631,17 +588,17 @@ inline idx_t MultiBlockConnectivityImpl::operator()( idx_t block_idx, idx_t bloc
 // -----------------------------------------------------------------------------------------------------
 
 inline idx_t BlockConnectivityImpl::operator()( idx_t row_idx, idx_t col_idx ) const {
-    return values_view_( row_idx, col_idx ) FROM_FORTRAN;
+    return values_[ index(row_idx, col_idx) ] FROM_FORTRAN;
 }
 
 inline void BlockConnectivityImpl::set( idx_t row_idx, const idx_t column_values[] ) {
     for ( idx_t n = 0; n < cols_; ++n ) {
-        values_view_( row_idx, n ) = column_values[n] TO_FORTRAN;
+        values_[ index(row_idx, n) ] = column_values[n] TO_FORTRAN;
     }
 }
 
 inline void BlockConnectivityImpl::set( idx_t row_idx, idx_t col_idx, const idx_t value ) {
-    values_view_( row_idx, col_idx ) = value TO_FORTRAN;
+    values_[ index(row_idx, col_idx) ] = value TO_FORTRAN;
 }
 
 // ------------------------------------------------------------------------------------------------------
