@@ -594,6 +594,10 @@ inline void BlockConnectivityImpl::set( idx_t row_idx, idx_t col_idx, const idx_
     values_[ index(row_idx, col_idx) ] = value TO_FORTRAN;
 }
 
+inline idx_t BlockConnectivityImpl::index(idx_t i, idx_t j) const {
+    return i*cols_ + j;
+}
+
 // ------------------------------------------------------------------------------------------------------
 
 extern "C" {

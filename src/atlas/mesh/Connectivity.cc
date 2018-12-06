@@ -626,12 +626,6 @@ BlockConnectivityImpl::~BlockConnectivityImpl() {
 
 //------------------------------------------------------------------------------------------------------
 
-idx_t BlockConnectivityImpl::index(idx_t i, idx_t j) const
-{
-    return i*cols_ + j; }
-
-//------------------------------------------------------------------------------------------------------
-
 void BlockConnectivityImpl::rebuild( idx_t rows, idx_t cols, idx_t values[] ) {
     ASSERT( not owns_ );
     rows_ = rows;
