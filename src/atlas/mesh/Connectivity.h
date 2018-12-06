@@ -168,10 +168,6 @@ class IrregularConnectivityImpl {
 public:
     typedef ConnectivityRow Row;
 
-    static constexpr unsigned short _values_ = 0;
-    static constexpr unsigned short _displs_ = 1;
-    static constexpr unsigned short _counts_ = 2;
-
 public:
     //-- Constructors
 
@@ -212,7 +208,7 @@ public:
 
     /// @brief Number of columns for specified row in the connectivity table
     ATLAS_HOST_DEVICE
-    idx_t cols( idx_t row_idx ) const { return counts_view_( row_idx ); }
+    idx_t cols( idx_t row_idx ) const { return counts_[ row_idx ]; }
 
     /// @brief Maximum value for number of columns over all rows
     ATLAS_HOST_DEVICE
@@ -230,10 +226,10 @@ public:
     /// @brief Access to raw data.
     /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is
     /// defined.
-    const idx_t* data() const { return values_view_.data(); }
-    idx_t* data() { return values_view_.data(); }
+//    const idx_t* data() const { return values_.data(); }
+//    idx_t* data() { return values_.data(); }
 
-    idx_t size() const { return values_view_.size(); }
+    idx_t size() const { return values_.size(); }
 
     ATLAS_HOST_DEVICE
     idx_t missing_value() const { return missing_value_; }
@@ -284,7 +280,7 @@ public:
 
     virtual size_t footprint() const;
 
-    idx_t displs( const idx_t row ) const { return displs_view_( row ); }
+    idx_t displs( const idx_t row ) const { return displs_[ row ]; }
 
     virtual void cloneToDevice();
     virtual void cloneFromDevice();
@@ -302,8 +298,8 @@ public:
 
 protected:
     bool owns() { return owns_; }
-    const idx_t* displs() const { return displs_view_.data(); }
-    const idx_t* counts() const { return counts_view_.data(); }
+    const idx_t* displs() const { return displs_.data(); }
+    const idx_t* counts() const { return counts_.data(); }
 
 private:
     void on_delete();
@@ -311,13 +307,12 @@ private:
 
 private:
     char name_[MAX_STRING_SIZE()];
-
     bool owns_;
-    std::array<array::Array*, 3> data_;
 
-    array::ArrayView<idx_t, 1> values_view_;
-    array::ArrayView<idx_t, 1> displs_view_;
-    array::ArrayView<idx_t, 1> counts_view_;
+protected:
+    array::SVector<idx_t> values_;
+    array::SVector<idx_t> displs_;
+    array::SVector<idx_t> counts_;
 
     idx_t missing_value_;
     idx_t rows_;
@@ -602,25 +597,25 @@ typedef IrregularConnectivity Connectivity;
 // -----------------------------------------------------------------------------------------------------
 
 inline idx_t IrregularConnectivityImpl::operator()( idx_t row_idx, idx_t col_idx ) const {
-    assert( counts_view_( row_idx ) > ( col_idx ) );
-    return values_view_( displs_view_( row_idx ) + col_idx ) FROM_FORTRAN;
+    assert( counts_[ row_idx ] > ( col_idx ) );
+    return values_[ displs_[ row_idx ] + col_idx ] FROM_FORTRAN;
 }
 
 inline void IrregularConnectivityImpl::set( idx_t row_idx, const idx_t column_values[] ) {
-    const idx_t N = counts_view_( row_idx );
+    const idx_t N = counts_[ row_idx ];
     for ( idx_t n = 0; n < N; ++n ) {
-        values_view_( displs_view_( row_idx ) + n ) = column_values[n] TO_FORTRAN;
+        values_[ displs_[ row_idx ] + n ] = column_values[n] TO_FORTRAN;
     }
 }
 
 inline void IrregularConnectivityImpl::set( idx_t row_idx, idx_t col_idx, const idx_t value ) {
-    assert( col_idx < counts_view_( row_idx ) );
-    values_view_( displs_view_( row_idx ) + col_idx ) = value TO_FORTRAN;
+    assert( col_idx < counts_[ row_idx ] );
+    values_[ displs_[ row_idx ] + col_idx ] = value TO_FORTRAN;
 }
 
 inline IrregularConnectivityImpl::Row IrregularConnectivityImpl::row( idx_t row_idx ) const {
-    return IrregularConnectivityImpl::Row( const_cast<idx_t*>( values_view_.data() ) + displs_view_( row_idx ),
-                                           counts_view_( row_idx ) );
+    return IrregularConnectivityImpl::Row( const_cast<idx_t*>( values_.data() ) + displs_( row_idx ),
+                                           counts_( row_idx ) );
 }
 
 // -----------------------------------------------------------------------------------------------------
