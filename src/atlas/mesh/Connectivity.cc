@@ -187,19 +187,6 @@ void IrregularConnectivityImpl::add( const BlockConnectivityImpl& block ) {
     const idx_t cols    = block.cols();
     const idx_t* values = block.data();
 
-    std::vector<idx_t> values_vector;
-    //TODO
-//    if ( !block.values_view_.contiguous() ) {
-//        values_vector.resize( rows * cols );
-//        values = values_vector.data();
-//        for ( idx_t i = 0, c = 0; i < rows; ++i ) {
-//            for ( idx_t j = 0; j < cols; ++j ) {
-//                values_vector[c++] = block( i, j );
-//            }
-//        }
-//        fortran_array = false;
-//    }
-
     add( rows, cols, values, fortran_array );
 }
 
@@ -384,8 +371,7 @@ MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( const std::string& name 
     blocks_( 0 ),
     block_displs_(1),
     block_cols_( 1 ),
-    block_( 0 ),
-    block_view_( make_host_vector_view( block_ ) ) {
+    block_( 0 ) {
       block_displs_( 0 ) = 0;
 }
 
@@ -403,34 +389,7 @@ void MultiBlockConnectivityImpl::clear() {
         block_displs_( 0 ) = 0ul;
     }
     blocks_     = 0;
-    block_      = array::Vector<BlockConnectivityImpl*>( 0 );
-    block_view_ = make_host_vector_view( block_ );
-}
-
-
-void MultiBlockConnectivityImpl::cloneToDevice() {
-    block_.cloneToDevice();
-    block_view_ = make_device_vector_view( block_ );
-}
-
-void MultiBlockConnectivityImpl::cloneFromDevice() {
-    block_.cloneFromDevice();
-    block_view_ = make_host_vector_view( block_ );
-}
-
-void MultiBlockConnectivityImpl::syncHostDevice() const {
-}
-
-bool MultiBlockConnectivityImpl::valid() const {
-    return true;
-}
-
-bool MultiBlockConnectivityImpl::hostNeedsUpdate() const {
-    return true;
-}
-
-bool MultiBlockConnectivityImpl::deviceNeedsUpdate() const {
-    return true;
+    block_      = array::SVector<BlockConnectivityImpl*>( 0 );
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -455,8 +414,6 @@ void MultiBlockConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values
 void MultiBlockConnectivityImpl::add( const BlockConnectivityImpl& block ) {
     if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
     IrregularConnectivityImpl::add( block );
-
-    block_view_ = make_host_vector_view( block_ );
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -576,17 +533,16 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::rebuild_block_connectivity() {
-    block_.resize( blocks_, 0 );
-    block_view_ = make_host_vector_view( block_ );
+    block_.resize( blocks_, nullptr );
 
     for ( idx_t b = 0; b < blocks_; ++b ) {
-        if ( block_view_[b] ) {
-            block_view_[b]->rebuild( block_displs_[ b + 1 ] - block_displs_[ b ],  // rows
+        if ( block_[b] ) {
+            block_[b]->rebuild( block_displs_[ b + 1 ] - block_displs_[ b ],  // rows
                                      block_cols_[ b ],                                  // cols
                                      values_.data() + displs( block_displs_[ b ] ) );
         }
         else {
-            block_view_[b] = new BlockConnectivityImpl( block_displs_[ b + 1 ] - block_displs_[ b ],  // rows
+            block_[b] = new BlockConnectivityImpl( block_displs_[ b + 1 ] - block_displs_[ b ],  // rows
                                                         block_cols_[ b ],                                  // cols
                                                         values_.data() + displs( block_displs_[ b ] ),
                                                         /*own = */ false );
@@ -602,7 +558,7 @@ size_t MultiBlockConnectivityImpl::footprint() const {
     size += block_cols_.footprint();
 
     for ( idx_t j = 0; j < block_.size(); ++j ) {
-        size += block_view_[j]->footprint();
+        size += block_[j]->footprint();
     }
     return size;
 }

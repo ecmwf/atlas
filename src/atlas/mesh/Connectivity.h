@@ -367,9 +367,9 @@ public:
 
     /// @brief Access to a block connectivity
     ATLAS_HOST_DEVICE
-    const BlockConnectivityImpl& block( idx_t block_idx ) const { return *( block_view_[block_idx] ); }
+    const BlockConnectivityImpl& block( idx_t block_idx ) const { return *( block_[block_idx] ); }
     ATLAS_HOST_DEVICE
-    BlockConnectivityImpl& block( idx_t block_idx ) { return *( block_view_[block_idx] ); }
+    BlockConnectivityImpl& block( idx_t block_idx ) { return *( block_[block_idx] ); }
 
     /// @brief Access to connectivity table elements for given row and column
     /// The row_idx counts up from 0, from block 0, as in IrregularConnectivity
@@ -418,13 +418,6 @@ public:
 
     virtual size_t footprint() const;
 
-    virtual void cloneToDevice();
-    virtual void cloneFromDevice();
-    virtual void syncHostDevice() const;
-    virtual bool valid() const;
-    virtual bool hostNeedsUpdate() const;
-    virtual bool deviceNeedsUpdate() const;
-
 private:
     void rebuild_block_connectivity();
 
@@ -433,8 +426,7 @@ private:
     array::SVector<idx_t> block_displs_;
     array::SVector<idx_t> block_cols_;
 
-    array::Vector<BlockConnectivityImpl*> block_;
-    array::VectorView<BlockConnectivityImpl*> block_view_;
+    array::SVector<BlockConnectivityImpl*> block_;
 };
 
 // -----------------------------------------------------------------------------------------------------
