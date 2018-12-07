@@ -389,7 +389,7 @@ void MultiBlockConnectivityImpl::clear() {
         block_displs_( 0 ) = 0ul;
     }
     blocks_     = 0;
-    block_      = array::SVector<BlockConnectivityImpl*>( 0 );
+    block_      = array::SVector<BlockConnectivityImpl>( 0 );
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -533,20 +533,12 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::rebuild_block_connectivity() {
-    block_.resize( blocks_, nullptr );
+    block_.resize( blocks_, std::move(BlockConnectivityImpl()) );
 
     for ( idx_t b = 0; b < blocks_; ++b ) {
-        if ( block_[b] ) {
-            block_[b]->rebuild( block_displs_[ b + 1 ] - block_displs_[ b ],  // rows
-                                     block_cols_[ b ],                                  // cols
-                                     values_.data() + displs( block_displs_[ b ] ) );
-        }
-        else {
-            block_[b] = new BlockConnectivityImpl( block_displs_[ b + 1 ] - block_displs_[ b ],  // rows
-                                                        block_cols_[ b ],                                  // cols
-                                                        values_.data() + displs( block_displs_[ b ] ),
-                                                        /*own = */ false );
-        }
+        block_[b].rebuild( block_displs_[ b + 1 ] - block_displs_[ b ],  // rows
+                           block_cols_[ b ],                                  // cols
+                           values_.data() + displs( block_displs_[ b ] ) );
     }
 }
 
@@ -558,7 +550,7 @@ size_t MultiBlockConnectivityImpl::footprint() const {
     size += block_cols_.footprint();
 
     for ( idx_t j = 0; j < block_.size(); ++j ) {
-        size += block_[j]->footprint();
+        size += block_[j].footprint();
     }
     return size;
 }

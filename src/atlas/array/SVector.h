@@ -167,7 +167,8 @@ public:
         size_ = N;
     }
 
-    void resize( idx_t N, T val ) {
+
+    void resize( idx_t N, T&& val ) {
         const int oldsize = size_;
         resize( N );
         for(unsigned int c=oldsize; c < size_; ++c) {
