@@ -367,9 +367,9 @@ public:
 
     /// @brief Access to a block connectivity
     ATLAS_HOST_DEVICE
-    const BlockConnectivityImpl& block( idx_t block_idx ) const { return *( block_[block_idx] ); }
+    const BlockConnectivityImpl& block( idx_t block_idx ) const { return block_[block_idx]; }
     ATLAS_HOST_DEVICE
-    BlockConnectivityImpl& block( idx_t block_idx ) { return *( block_[block_idx] ); }
+    BlockConnectivityImpl& block( idx_t block_idx ) { return block_[block_idx]; }
 
     /// @brief Access to connectivity table elements for given row and column
     /// The row_idx counts up from 0, from block 0, as in IrregularConnectivity
@@ -426,7 +426,7 @@ private:
     array::SVector<idx_t> block_displs_;
     array::SVector<idx_t> block_cols_;
 
-    array::SVector<BlockConnectivityImpl*> block_;
+    array::SVector<BlockConnectivityImpl> block_;
 };
 
 // -----------------------------------------------------------------------------------------------------
@@ -476,6 +476,9 @@ public:
         cols_( other.cols_ ),
         missing_value_( other.missing_value_ )
     {}
+
+    BlockConnectivityImpl( BlockConnectivityImpl&& ) = default;
+    BlockConnectivityImpl& operator=( const BlockConnectivityImpl& other ) = default;
 
     /// @brief Destructor
     ~BlockConnectivityImpl();
