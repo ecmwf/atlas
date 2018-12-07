@@ -619,7 +619,6 @@ BlockConnectivityImpl::~BlockConnectivityImpl() {
 //------------------------------------------------------------------------------------------------------
 
 void BlockConnectivityImpl::rebuild( idx_t rows, idx_t cols, idx_t values[] ) {
-    ASSERT( not owns_ );
     rows_ = rows;
     cols_ = cols;
     values_      = array::SVector<idx_t>( values, rows * cols );
