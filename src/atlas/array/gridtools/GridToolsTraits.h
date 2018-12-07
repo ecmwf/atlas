@@ -16,9 +16,9 @@ namespace gridtools {
 //------------------------------------------------------------------------------
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-using storage_traits = ::gridtools::storage_traits<::gridtools::enumtype::Cuda>;
+using storage_traits = ::gridtools::storage_traits<::gridtools::target::cuda>;
 #elif ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
-using storage_traits = ::gridtools::storage_traits<::gridtools::enumtype::Host>;
+using storage_traits = ::gridtools::storage_traits<::gridtools::target::x86>;
 #else
 #error ATLAS_GRIDTOOLS_STORAGE_BACKEND_<HOST,CUDA> not set
 #endif
