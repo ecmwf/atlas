@@ -247,7 +247,7 @@ CASE( "test_copy_gt_ctr" ) {
     EXPECT( hv2( 2, 1 ) == 4 );
     EXPECT( hv2( 1, 1 ) == 7 );
 
-    auto dims = hv.data_view().storage_info().dims();
+    auto dims = hv.data_view().storage_info().total_lengths();
     ATLAS_DEBUG_VAR( dims[0] );
     ATLAS_DEBUG_VAR( dims[1] );
     EXPECT( dims[0] == 3 );
