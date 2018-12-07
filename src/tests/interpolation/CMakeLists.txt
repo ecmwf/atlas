@@ -29,9 +29,9 @@ ecbuild_add_executable( TARGET atlas_test_interpolation_structured2D
 )
 
 ecbuild_add_test( TARGET atlas_test_interpolation_bilinear
-  COMMAND $<TARGET_FILE:atlas_test_interpolation_structured2D> ARGS --scheme linear
+  COMMAND atlas_test_interpolation_structured2D ARGS --scheme linear
 )
 
 ecbuild_add_test( TARGET atlas_test_interpolation_bicubic
-  COMMAND $<TARGET_FILE:atlas_test_interpolation_structured2D> ARGS --scheme cubic
+  COMMAND atlas_test_interpolation_structured2D ARGS --scheme cubic
 )
