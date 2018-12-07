@@ -38,7 +38,24 @@ public:
     SVector( SVector const& other ) :
         data_( other.data_ ),
         size_( other.size_ ),
+        externally_allocated_( true ) {}
+
+    ATLAS_HOST_DEVICE
+    SVector( SVector&& other ) :
+        data_( other.data_ ),
+        size_( other.size_ ),
         externally_allocated_( other.externally_allocated_ ) {}
+
+    ATLAS_HOST_DEVICE
+    SVector& operator=( SVector const& other ) {
+        data_ = other.data_;
+        size_ = other.size_;
+        externally_allocated_ = true;
+        return *this;
+    }
+
+    ATLAS_HOST_DEVICE
+    SVector& operator=( SVector && other ) = default;
 
     ATLAS_HOST_DEVICE
     SVector( T* data, idx_t size ) : data_( data ), size_( size ), externally_allocated_(true) {}
