@@ -342,13 +342,11 @@ CASE( "test_multi_block_connectivity_add_block" ) {
     EXPECT( mbc( 1, 2, 0 ) == 11 );
 
     const BlockConnectivity& b0 = mbc.block( 0 );
-    EXPECT( b0.owns() == false );
     EXPECT( b0( 0, 2 ) == 1 );
     EXPECT( b0( 1, 1 ) == 4 );
     EXPECT( b0( 2, 2 ) == 76 );
 
     const BlockConnectivity& b1 = mbc.block( 1 );
-    EXPECT( b1.owns() == false );
     EXPECT( b1( 0, 0 ) == 31 );
     EXPECT( b1( 1, 1 ) == 41 );
     EXPECT( b1( 2, 0 ) == 11 );
