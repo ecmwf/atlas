@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 
 namespace atlas {
@@ -40,6 +41,10 @@ public:
 
     virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
 
+    virtual void setup( const FunctionSpace& source, const Field& target ) override;
+
+    virtual void setup( const FunctionSpace& source, const FieldSet& target ) override;
+
     virtual void print( std::ostream& ) const override;
 
     virtual void execute( const Field& src, Field& tgt ) const override;
@@ -61,6 +66,8 @@ private:
 protected:
     Field target_lonlat_;
     Field target_ghost_;
+
+    FieldSet target_lonlat_fields_;
 
     FunctionSpace source_;
     FunctionSpace target_;

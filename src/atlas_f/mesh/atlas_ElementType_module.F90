@@ -86,14 +86,14 @@ function nb_nodes(this)
   use atlas_elementtype_c_binding
   integer(ATLAS_KIND_IDX) :: nb_nodes
   class(atlas_ElementType), intent(in) :: this
-  nb_nodes = atlas__mesh__ElementType__nb_nodes(this%c_ptr())
+  nb_nodes = atlas__mesh__ElementType__nb_nodes(this%CPTR_PGIBUG_A)
 end function
 
 function nb_edges(this)
   use atlas_elementtype_c_binding
   integer(ATLAS_KIND_IDX) :: nb_edges
   class(atlas_ElementType), intent(in) :: this
-  nb_edges = atlas__mesh__ElementType__nb_edges(this%c_ptr())
+  nb_edges = atlas__mesh__ElementType__nb_edges(this%CPTR_PGIBUG_A)
 end function
 
 function name(this)
@@ -103,7 +103,7 @@ function name(this)
   character(len=:), allocatable :: name
   class(atlas_ElementType) :: this
   type(c_ptr) :: name_c_str
-  name_c_str = atlas__mesh__ElementType__name(this%c_ptr())
+  name_c_str = atlas__mesh__ElementType__name(this%CPTR_PGIBUG_A)
   name = c_ptr_to_string(name_c_str)
 end function
 
@@ -113,7 +113,7 @@ function parametric(this)
   logical :: parametric
   class(atlas_ElementType), intent(in) :: this
   integer(c_int) :: parametric_int
-  parametric_int = atlas__mesh__ElementType__parametric(this%c_ptr())
+  parametric_int = atlas__mesh__ElementType__parametric(this%CPTR_PGIBUG_A)
   if( parametric_int == 0 ) then
     parametric = .False.
   else

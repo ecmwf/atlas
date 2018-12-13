@@ -15,6 +15,8 @@ function( create_cuda_wrapper variable )
   get_filename_component(directory ${_PAR_SOURCE} DIRECTORY)
   get_filename_component(base      ${_PAR_SOURCE} NAME_WE)
   get_filename_component(name      ${_PAR_SOURCE} NAME)
+  get_filename_component(abspath   ${_PAR_SOURCE} ABSOLUTE)
+
   if( directory )
     set(cuda_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${directory}/${base}.cu)
   else()
@@ -25,7 +27,9 @@ function( create_cuda_wrapper variable )
 "
 #include \"atlas/${directory}/${name}\"
 ")
-  file(WRITE ${cuda_wrapper} "${content}")
+  if( ${abspath} IS_NEWER_THAN ${cuda_wrapper} )
+    file(WRITE ${cuda_wrapper} "${content}")
+  endif()
 endfunction()
 
 

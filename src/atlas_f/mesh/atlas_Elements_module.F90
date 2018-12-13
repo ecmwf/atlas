@@ -73,7 +73,7 @@ function atlas_Elements__size(this) result(val)
   use atlas_elements_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_Elements), intent(in) :: this
-  val = atlas__mesh__Elements__size(this%c_ptr())
+  val = atlas__mesh__Elements__size(this%CPTR_PGIBUG_A)
 end function
 
 function node_connectivity(this) result(connectivity)
@@ -82,7 +82,7 @@ function node_connectivity(this) result(connectivity)
   class(atlas_Elements), intent(in) :: this
   type(atlas_BlockConnectivity) :: connectivity
   connectivity = atlas_BlockConnectivity( &
-      atlas__mesh__Elements__node_connectivity(this%c_ptr()) )
+      atlas__mesh__Elements__node_connectivity(this%CPTR_PGIBUG_A) )
   !call connectivity%return()
 end function
 
@@ -92,7 +92,7 @@ function edge_connectivity(this) result(connectivity)
   class(atlas_Elements), intent(in) :: this
   type(atlas_BlockConnectivity) :: connectivity
   connectivity = atlas_BlockConnectivity( &
-      atlas__mesh__Elements__edge_connectivity(this%c_ptr()) )
+      atlas__mesh__Elements__edge_connectivity(this%CPTR_PGIBUG_A) )
   !call connectivity%return()
 end function
 
@@ -102,7 +102,7 @@ function cell_connectivity(this) result(connectivity)
   class(atlas_Elements), intent(in) :: this
   type(atlas_BlockConnectivity) :: connectivity
   connectivity = atlas_BlockConnectivity( &
-      atlas__mesh__Elements__cell_connectivity(this%c_ptr()) )
+      atlas__mesh__Elements__cell_connectivity(this%CPTR_PGIBUG_A) )
   !call connectivity%return()
 end function
 
@@ -112,7 +112,7 @@ function element_type(this) result(etype)
   class(atlas_Elements), intent(in) :: this
   type(atlas_ElementType) :: etype
   etype = atlas_ElementType( &
-      atlas__mesh__Elements__element_type(this%c_ptr()) )
+      atlas__mesh__Elements__element_type(this%CPTR_PGIBUG_A) )
   call etype%return()
 end function
 
@@ -121,7 +121,7 @@ subroutine add_elements_long(this,nb_elements)
   use atlas_elements_c_binding
   class(atlas_Elements), intent(inout) :: this
   integer(c_long) :: nb_elements
-  call atlas__mesh__Elements__add(this%c_ptr(),int(nb_elements,ATLAS_KIND_IDX))
+  call atlas__mesh__Elements__add(this%CPTR_PGIBUG_A,int(nb_elements,ATLAS_KIND_IDX))
 end subroutine
 
 subroutine add_elements_int(this,nb_elements)
@@ -129,14 +129,14 @@ subroutine add_elements_int(this,nb_elements)
   use atlas_elements_c_binding
   class(atlas_Elements), intent(inout) :: this
   integer(c_int) :: nb_elements
-  call atlas__mesh__Elements__add(this%c_ptr(),int(nb_elements,ATLAS_KIND_IDX))
+  call atlas__mesh__Elements__add(this%CPTR_PGIBUG_A,int(nb_elements,ATLAS_KIND_IDX))
 end subroutine
 
 function nb_fields(this) result(val)
   use atlas_elements_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_Elements), intent(in) :: this
-  val = atlas__mesh__Elements__nb_fields(this%c_ptr())
+  val = atlas__mesh__Elements__nb_fields(this%CPTR_PGIBUG_A)
 end function
 
 function has_field(this,name) result(val)
@@ -145,7 +145,7 @@ function has_field(this,name) result(val)
   logical :: val
   class(atlas_Elements), intent(in) :: this
   character(len=*), intent(in) :: name
-  if( atlas__mesh__Elements__has_field(this%c_ptr(),c_str(name)) == 0 ) then
+  if( atlas__mesh__Elements__has_field(this%CPTR_PGIBUG_A,c_str(name)) == 0 ) then
     val = .False.
   else
     val = .True.
@@ -159,7 +159,7 @@ function field_by_name(this,name) result(field)
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
   character(len=*), intent(in) :: name
-  field = atlas_Field( atlas__mesh__Elements__field_by_name(this%c_ptr(),c_str(name)) )
+  field = atlas_Field( atlas__mesh__Elements__field_by_name(this%CPTR_PGIBUG_A,c_str(name)) )
   call field%return()
 end function
 
@@ -170,7 +170,7 @@ function field_by_idx_long(this,idx) result(field)
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
   integer(c_long), intent(in) :: idx
-  field = atlas_Field( atlas__mesh__Elements__field_by_idx(this%c_ptr(),int(idx-1_c_long,ATLAS_KIND_IDX) ) )
+  field = atlas_Field( atlas__mesh__Elements__field_by_idx(this%CPTR_PGIBUG_A,int(idx-1_c_long,ATLAS_KIND_IDX) ) )
   call field%return()
 end function
 
@@ -181,7 +181,7 @@ function field_by_idx_int(this,idx) result(field)
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
   integer(c_int), intent(in) :: idx
-  field = atlas_Field( atlas__mesh__Elements__field_by_idx(this%c_ptr(),int(idx-1_c_int,ATLAS_KIND_IDX) ) )
+  field = atlas_Field( atlas__mesh__Elements__field_by_idx(this%CPTR_PGIBUG_A,int(idx-1_c_int,ATLAS_KIND_IDX) ) )
   call field%return()
 end function
 
@@ -190,7 +190,7 @@ function global_index(this) result(field)
   use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
-  field = atlas_Field( atlas__mesh__Elements__global_index(this%c_ptr()) )
+  field = atlas_Field( atlas__mesh__Elements__global_index(this%CPTR_PGIBUG_A) )
   call field%return()
 end function
 
@@ -199,7 +199,7 @@ function remote_index(this) result(field)
   use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
-  field = atlas_Field( atlas__mesh__Elements__remote_index(this%c_ptr()) )
+  field = atlas_Field( atlas__mesh__Elements__remote_index(this%CPTR_PGIBUG_A) )
   call field%return()
 end function
 
@@ -208,7 +208,7 @@ function partition(this) result(field)
   use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
-  field = atlas_Field( atlas__mesh__Elements__partition(this%c_ptr()) )
+  field = atlas_Field( atlas__mesh__Elements__partition(this%CPTR_PGIBUG_A) )
   call field%return()
 end function
 
@@ -217,7 +217,7 @@ function halo(this) result(field)
   use atlas_Field_module, only: atlas_Field
   type(atlas_Field) :: field
   class(atlas_Elements), intent(in) :: this
-  field = atlas_Field( atlas__mesh__Elements__halo(this%c_ptr()) )
+  field = atlas_Field( atlas__mesh__Elements__halo(this%CPTR_PGIBUG_A) )
   call field%return()
 end function
 
@@ -225,14 +225,14 @@ function atlas_Elements__begin(this) result(val)
   use atlas_elements_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_Elements), intent(in) :: this
-  val = atlas__mesh__Elements__begin(this%c_ptr()) + 1
+  val = atlas__mesh__Elements__begin(this%CPTR_PGIBUG_A) + 1
 end function
 
 function atlas_Elements__end(this) result(val)
   use atlas_elements_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_Elements), intent(in) :: this
-  val = atlas__mesh__Elements__end(this%c_ptr())
+  val = atlas__mesh__Elements__end(this%CPTR_PGIBUG_A)
 end function
 
 !-------------------------------------------------------------------------------

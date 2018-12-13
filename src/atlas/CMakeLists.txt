@@ -411,9 +411,11 @@ interpolation/method/structured/StructuredInterpolation2D.tcc
 interpolation/method/structured/StructuredInterpolation2D.h
 interpolation/method/structured/StructuredInterpolation3D.tcc
 interpolation/method/structured/StructuredInterpolation3D.h
+interpolation/method/structured/kernels/LinearHorizontalKernel.h
 interpolation/method/structured/kernels/CubicHorizontalKernel.h
 interpolation/method/structured/kernels/Cubic3DKernel.h
 interpolation/method/structured/kernels/CubicVerticalKernel.h
+interpolation/method/structured/Linear2D.cc
 interpolation/method/structured/Cubic2D.cc
 interpolation/method/structured/Cubic3D.cc
 )
@@ -442,6 +444,7 @@ array/LocalView.cc
 array/LocalView.h
 array/Range.h
 array/Vector.h
+array/SVector.h
 array/helpers/ArrayInitializer.h
 array/helpers/ArrayAssigner.h
 array/helpers/ArrayWriter.h
@@ -529,6 +532,8 @@ util/CoordinateEnums.h
 util/PeriodicTransform.h
 util/Unique.h
 util/Unique.cc
+util/Allocate.h
+util/Allocate.cc
 #parallel/detail/MPLArrayView.h
 )
 
