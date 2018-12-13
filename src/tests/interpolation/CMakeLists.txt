@@ -22,7 +22,16 @@ ecbuild_add_test( TARGET atlas_test_interpolation_cubic_prototype
   LIBS     atlas
 )
 
-ecbuild_add_test( TARGET atlas_test_interpolation_bicubic
-  SOURCES  test_interpolation_bicubic.cc
+ecbuild_add_executable( TARGET atlas_test_interpolation_structured2D
+  SOURCES  test_interpolation_structured2D.cc
   LIBS     atlas
+  NOINSTALL
+)
+
+ecbuild_add_test( TARGET atlas_test_interpolation_bilinear
+  COMMAND atlas_test_interpolation_structured2D ARGS --scheme linear
+)
+
+ecbuild_add_test( TARGET atlas_test_interpolation_bicubic
+  COMMAND atlas_test_interpolation_structured2D ARGS --scheme cubic
 )

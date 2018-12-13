@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/grid/Vertical.h"
 
@@ -41,6 +42,8 @@ public:
 
     virtual void setup( const FunctionSpace& source, const Field& target ) override;
 
+    virtual void setup( const FunctionSpace& source, const FieldSet& target ) override;
+
     virtual void print( std::ostream& ) const override;
 
     virtual void execute( const Field& src, Field& tgt ) const override;
@@ -65,6 +68,8 @@ protected:
     Field target_vertical_;
 
     Field target_3d_;
+
+    FieldSet target_xyz_;
 
     FunctionSpace source_;
     FunctionSpace target_;

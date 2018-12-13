@@ -213,7 +213,7 @@ subroutine access_host_data_${dtype}$_r${rank}$(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__host_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_${ctype}$_specf(this%CPTR_PGIBUG_A, field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
 
@@ -226,7 +226,7 @@ subroutine access_device_data_${dtype}$_r${rank}$(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__device_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__device_data_${ctype}$_specf(this%CPTR_PGIBUG_A, field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
 
@@ -246,7 +246,7 @@ subroutine access_host_data_${dtype}$_r${rank}$_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__host_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__host_data_${ctype}$_specf(this%CPTR_PGIBUG_A, field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
@@ -260,7 +260,7 @@ subroutine access_device_data_${dtype}$_r${rank}$_shape(this, field, shape)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__device_data_${ctype}$_specf(this%c_ptr(), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__device_data_${ctype}$_specf(this%CPTR_PGIBUG_A, field_cptr, rank, shape_cptr, strides_cptr)
   call c_f_pointer( field_cptr, field, shape )
 end subroutine
 
@@ -346,7 +346,7 @@ function atlas_Field__create(params) result(field)
   use atlas_field_c_binding
   type(atlas_Field) :: field
   class(atlas_Config), intent(in) :: params
-  field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
+  field = atlas_Field__cptr( atlas__Field__create(params%CPTR_PGIBUG_B) )
   call field%return()
 end function
 
@@ -369,7 +369,7 @@ function atlas_Field__create_name_kind_shape_int32(name,kind,shape) result(field
   call params%set("datatype",atlas_data_type(kind))
   call params%set("name",name)
 
-  field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
+  field = atlas_Field__cptr( atlas__Field__create(params%CPTR_PGIBUG_B) )
   call params%final()
   call field%return()
 end function
@@ -393,7 +393,7 @@ function atlas_Field__create_name_kind_shape_int64(name,kind,shape) result(field
   call params%set("datatype",atlas_data_type(kind))
   call params%set("name",name)
 
-  field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
+  field = atlas_Field__cptr( atlas__Field__create(params%CPTR_PGIBUG_B) )
   call params%final()
   call field%return()
 end function
@@ -415,7 +415,7 @@ function atlas_Field__create_kind_shape_int32(kind,shape) result(field)
   call params%set("fortran",.True.)
   call params%set("datatype",atlas_data_type(kind))
 
-  field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
+  field = atlas_Field__cptr( atlas__Field__create(params%CPTR_PGIBUG_B) )
   call params%final()
   call field%return()
 end function
@@ -435,7 +435,7 @@ function atlas_Field__create_kind_shape_int64(kind,shape) result(field)
   call params%set("fortran",.True.)
   call params%set("datatype",atlas_data_type(kind))
 
-  field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
+  field = atlas_Field__cptr( atlas__Field__create(params%CPTR_PGIBUG_B) )
   call params%final()
   call field%return()
 end function
@@ -449,6 +449,7 @@ function atlas_Field__wrap_name_${dtype}$_r${rank}$(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
   use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  use fckit_c_interop_module, only : c_str
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   ${ftype}$, intent(in) :: data(${dim[rank]}$)
@@ -458,7 +459,7 @@ function atlas_Field__wrap_name_${dtype}$_r${rank}$(name,data) result(field)
   shapef = shape(data)
   stridesf = array_strides(data)
   data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_${ctype}$_specf(name,data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( atlas__Field__wrap_${ctype}$_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
   call field%return()
 end function
 function atlas_Field__wrap_${dtype}$_r${rank}$(data) result(field)
@@ -489,7 +490,7 @@ function Field__name(this) result(field_name)
   class(atlas_Field), intent(in) :: this
   character(len=:), allocatable :: field_name
   type(c_ptr) :: field_name_c_str
-  field_name_c_str = atlas__Field__name(this%c_ptr())
+  field_name_c_str = atlas__Field__name(this%CPTR_PGIBUG_A)
   field_name = c_ptr_to_string(field_name_c_str)
 end function Field__name
 
@@ -499,7 +500,7 @@ function Field__functionspace(this) result(functionspace)
   use atlas_field_c_binding
   type(fckit_owned_object) :: functionspace
   class(atlas_Field), intent(in) :: this
-  call functionspace%reset_c_ptr( atlas__Field__functionspace(this%c_ptr()) )
+  call functionspace%reset_c_ptr( atlas__Field__functionspace(this%CPTR_PGIBUG_A) )
   call functionspace%return()
 end function Field__functionspace
 
@@ -514,7 +515,7 @@ function Field__datatype(this) result(datatype)
   type(c_ptr) :: datatype_cptr
   integer(c_int) :: datatype_size
   integer(c_int) :: datatype_allocated
-  call atlas__Field__datatype(this%c_ptr(),datatype_cptr,datatype_size,datatype_allocated)
+  call atlas__Field__datatype(this%CPTR_PGIBUG_A,datatype_cptr,datatype_size,datatype_allocated)
   allocate(character(len=datatype_size) :: datatype )
   datatype= c_ptr_to_string(datatype_cptr)
   if( datatype_allocated == 1 ) call c_ptr_free(datatype_cptr)
@@ -526,7 +527,7 @@ function Field__size(this) result(fieldsize)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer :: fieldsize
-  fieldsize = atlas__Field__size(this%c_ptr())
+  fieldsize = atlas__Field__size(this%CPTR_PGIBUG_A)
 end function Field__size
 
 !-------------------------------------------------------------------------------
@@ -535,7 +536,7 @@ function Field__rank(this) result(rank)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer :: rank
-  rank = atlas__Field__rank(this%c_ptr())
+  rank = atlas__Field__rank(this%CPTR_PGIBUG_A)
 end function Field__rank
 
 !-------------------------------------------------------------------------------
@@ -545,7 +546,7 @@ function Field__bytes(this) result(bytes)
   use, intrinsic :: iso_c_binding, only : c_double
   class(atlas_Field), intent(in) :: this
   real(c_double) :: bytes
-  bytes = atlas__Field__bytes(this%c_ptr())
+  bytes = atlas__Field__bytes(this%CPTR_PGIBUG_A)
 end function Field__bytes
 
 !-------------------------------------------------------------------------------
@@ -554,7 +555,7 @@ function Field__kind(this) result(kind)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer :: kind
-  kind = atlas__Field__kind(this%c_ptr())
+  kind = atlas__Field__kind(this%CPTR_PGIBUG_A)
 end function Field__kind
 
 !-------------------------------------------------------------------------------
@@ -563,7 +564,7 @@ function Field__levels(this) result(levels)
   use atlas_field_c_binding
   class(atlas_Field), intent(in) :: this
   integer :: levels
-  levels = atlas__Field__levels(this%c_ptr())
+  levels = atlas__Field__levels(this%CPTR_PGIBUG_A)
 end function Field__levels
 
 !-------------------------------------------------------------------------------
@@ -573,7 +574,7 @@ function Field__metadata(this) result(metadata)
   use atlas_metadata_module
   class(atlas_Field), intent(in) :: this
   type(atlas_Metadata) :: Metadata
-  call metadata%reset_c_ptr( atlas__Field__metadata(this%c_ptr()) )
+  call metadata%reset_c_ptr( atlas__Field__metadata(this%CPTR_PGIBUG_A) )
 end function Field__metadata
 
 !-------------------------------------------------------------------------------
@@ -586,7 +587,7 @@ function Field__shape_array(this) result(shape)
   type(c_ptr) :: shape_c_ptr
   integer, pointer :: shape_f_ptr(:)
   integer(c_int) :: field_rank
-  call atlas__Field__shapef(this%c_ptr(), shape_c_ptr, field_rank)
+  call atlas__Field__shapef(this%CPTR_PGIBUG_A, shape_c_ptr, field_rank)
   call c_f_pointer ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
   allocate( shape(field_rank) )
   shape(:) = shape_f_ptr(:)
@@ -603,7 +604,7 @@ function Field__shape_idx(this,idx) result(shape_val)
   type(c_ptr) :: shape_c_ptr
   integer, pointer :: shape_f_ptr(:)
   integer(c_int) :: field_rank
-  call atlas__Field__shapef(this%c_ptr(), shape_c_ptr, field_rank)
+  call atlas__Field__shapef(this%CPTR_PGIBUG_A, shape_c_ptr, field_rank)
   call c_f_pointer ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
   if( idx > field_rank ) call atlas_throw_outofrange("shape",idx,field_rank, &
 & atlas_code_location(filename,__LINE__))
@@ -616,7 +617,7 @@ subroutine set_levels(this,nb_levels)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
   integer, intent(in) :: nb_levels
-  call atlas__field__set_levels(this%c_ptr(),nb_levels)
+  call atlas__field__set_levels(this%CPTR_PGIBUG_A,nb_levels)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -626,7 +627,7 @@ subroutine rename(this,name)
   use fckit_c_interop_module, only : c_str
   class(atlas_Field), intent(inout) :: this
   character(len=*), intent(in) :: name
-  call atlas__field__rename(this%c_ptr(),c_str(name))
+  call atlas__field__rename(this%CPTR_PGIBUG_A,c_str(name))
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -635,7 +636,7 @@ subroutine set_functionspace(this,functionspace)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
   class(fckit_owned_object), intent(in) :: functionspace
-  call atlas__field__set_functionspace(this%c_ptr(),functionspace%c_ptr())
+  call atlas__field__set_functionspace(this%CPTR_PGIBUG_A,functionspace%CPTR_PGIBUG_A)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -644,7 +645,7 @@ function host_needs_update(this)
   use atlas_field_c_binding
   logical :: host_needs_update
   class(atlas_Field), intent(in) :: this
-  if( atlas__Field__host_needs_update(this%c_ptr()) == 1 ) then
+  if( atlas__Field__host_needs_update(this%CPTR_PGIBUG_A) == 1 ) then
     host_needs_update = .true.
   else
     host_needs_update = .false.
@@ -657,7 +658,7 @@ function device_needs_update(this)
   use atlas_field_c_binding
   logical :: device_needs_update
   class(atlas_Field), intent(in) :: this
-  if( atlas__Field__device_needs_update(this%c_ptr()) == 1 ) then
+  if( atlas__Field__device_needs_update(this%CPTR_PGIBUG_A) == 1 ) then
     device_needs_update = .true.
   else
     device_needs_update = .false.
@@ -669,7 +670,7 @@ end function
 subroutine clone_to_device(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
-  call atlas__Field__clone_to_device(this%c_ptr())
+  call atlas__Field__clone_to_device(this%CPTR_PGIBUG_A)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -677,7 +678,7 @@ end subroutine
 subroutine clone_from_device(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
-  call atlas__Field__clone_from_device(this%c_ptr())
+  call atlas__Field__clone_from_device(this%CPTR_PGIBUG_A)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -685,7 +686,7 @@ end subroutine
 subroutine sync_host_device(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
-  call atlas__Field__sync_host_device(this%c_ptr())
+  call atlas__Field__sync_host_device(this%CPTR_PGIBUG_A)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -700,7 +701,7 @@ subroutine halo_exchange(this,on_device)
   if( present(on_device) ) then
     if( on_device ) on_device_int = 1
   endif
-  call atlas__Field__halo_exchange(this%c_ptr(), on_device_int)
+  call atlas__Field__halo_exchange(this%CPTR_PGIBUG_A, on_device_int)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -720,7 +721,7 @@ subroutine set_dirty(this,value)
   else
       value_int = 1
   endif
-  call atlas__Field__set_dirty(this%c_ptr(), value_int)
+  call atlas__Field__set_dirty(this%CPTR_PGIBUG_A, value_int)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -731,7 +732,7 @@ function dirty(this) result(value)
   class(atlas_Field), intent(inout) :: this
   logical :: value
   integer(c_int) :: value_int
-  value_int = atlas__Field__dirty(this%c_ptr())
+  value_int = atlas__Field__dirty(this%CPTR_PGIBUG_A)
   if( value_int == 0 ) then
     value = .false.
   else

@@ -6,6 +6,7 @@ use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_null_ptr
 use fckit_owned_object_module, only : fckit_owned_object
 use fckit_object_module, only : fckit_object
 use atlas_kinds_module, only : ATLAS_KIND_IDX
+use atlas_allocate_module, only : atlas_allocate_managedmem, atlas_deallocate_managedmem
 implicit none
 
 private :: c_ptr
@@ -13,6 +14,8 @@ private :: c_int
 private :: c_null_ptr
 private :: fckit_owned_object
 private :: fckit_object
+private :: atlas_allocate_managedmem
+private :: atlas_deallocate_managedmem
 
 public :: atlas_Connectivity
 public :: atlas_MultiBlockConnectivity
@@ -207,7 +210,7 @@ function Connectivity_constructor(name) result(this)
   call this%reset_c_ptr( atlas__Connectivity__create() )
   call this%set_access()
   if( present(name) ) then
-    call atlas__Connectivity__rename(this%c_ptr(),c_str(name))
+    call atlas__Connectivity__rename(this%CPTR_PGIBUG_A,c_str(name))
   endif
   call this%return()
 end function
@@ -220,7 +223,7 @@ function atlas_Connectivity__name(this) result(name)
   class(atlas_Connectivity), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
-  name_c_str = atlas__Connectivity__name(this%c_ptr())
+  name_c_str = atlas__Connectivity__name(this%CPTR_PGIBUG_A)
   name = c_ptr_to_string(name_c_str)
 end function
 
@@ -265,7 +268,7 @@ function atlas_Connectivity__missing_value(this) result(val)
   use atlas_connectivity_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_Connectivity), intent(in) :: this
-  val = atlas__Connectivity__missing_value(this%c_ptr())
+  val = atlas__Connectivity__missing_value(this%CPTR_PGIBUG_A)
 end function
 
 pure function atlas_Connectivity__cols(this,r) result(val)
@@ -386,7 +389,7 @@ subroutine atlas_Connectivity__add_values_args_long(this,rows,cols,values)
   integer(c_long), intent(in) :: rows
   integer(c_long), intent(in) :: cols
   integer(ATLAS_KIND_IDX) :: values(:)
-  call atlas__connectivity__add_values(this%c_ptr(),int(rows,ATLAS_KIND_IDX),int(cols,ATLAS_KIND_IDX),values)
+  call atlas__connectivity__add_values(this%CPTR_PGIBUG_A,int(rows,ATLAS_KIND_IDX),int(cols,ATLAS_KIND_IDX),values)
 end subroutine
 
 subroutine atlas_Connectivity__add_values_args_idx(this,rows,cols,values)
@@ -396,7 +399,7 @@ subroutine atlas_Connectivity__add_values_args_idx(this,rows,cols,values)
   integer(c_int), intent(in) :: rows
   integer(c_int), intent(in) :: cols
   integer(ATLAS_KIND_IDX), intent(in) :: values(:)
-  call atlas__connectivity__add_values(this%c_ptr(),int(rows,ATLAS_KIND_IDX),int(cols,ATLAS_KIND_IDX),values)
+  call atlas__connectivity__add_values(this%CPTR_PGIBUG_A,int(rows,ATLAS_KIND_IDX),int(cols,ATLAS_KIND_IDX),values)
 end subroutine
 
 #if ATLAS_BITS_LOCAL != 32
@@ -409,7 +412,7 @@ subroutine atlas_Connectivity__add_values_args_int32(this,rows,cols,values)
   integer(c_int), intent(in) :: values(:)
   integer(ATLAS_KIND_IDX) :: idx_values(rows*cols)
   idx_values(:) = values(:)
-  call atlas__connectivity__add_values(this%c_ptr(),int(rows,ATLAS_KIND_IDX),int(cols,ATLAS_KIND_IDX),idx_values)
+  call atlas__connectivity__add_values(this%CPTR_PGIBUG_A,int(rows,ATLAS_KIND_IDX),int(cols,ATLAS_KIND_IDX),idx_values)
 end subroutine
 #endif
 
@@ -420,7 +423,7 @@ subroutine atlas_Connectivity__add_missing_args_long(this,rows,cols)
   class(atlas_Connectivity), intent(in) :: this
   integer(c_long) :: rows
   integer(c_long) :: cols
-  call atlas__connectivity__add_missing(this%c_ptr(),int(rows,ATLAS_KIND_IDX),int(cols,ATLAS_KIND_IDX))
+  call atlas__connectivity__add_missing(this%CPTR_PGIBUG_A,int(rows,ATLAS_KIND_IDX),int(cols,ATLAS_KIND_IDX))
 end subroutine
 
 subroutine atlas_Connectivity__add_missing_args_int(this,rows,cols)
@@ -429,7 +432,7 @@ subroutine atlas_Connectivity__add_missing_args_int(this,rows,cols)
   class(atlas_Connectivity), intent(in) :: this
   integer(c_int) :: rows
   integer(c_int) :: cols
-  call atlas__connectivity__add_missing(this%c_ptr(),int(rows,ATLAS_KIND_IDX),int(cols,ATLAS_KIND_IDX))
+  call atlas__connectivity__add_missing(this%CPTR_PGIBUG_A,int(rows,ATLAS_KIND_IDX),int(cols,ATLAS_KIND_IDX))
 end subroutine
 
 !========================================================
@@ -452,7 +455,7 @@ function MultiBlockConnectivity_constructor(name) result(this)
   call this%reset_c_ptr( atlas__MultiBlockConnectivity__create() )
   call this%set_access()
   if( present(name) ) then
-    call atlas__Connectivity__rename(this%c_ptr(),c_str(name))
+    call atlas__Connectivity__rename(this%CPTR_PGIBUG_A,c_str(name))
   endif
   call this%return()
 end function
@@ -461,7 +464,7 @@ function atlas_MultiBlockConnectivity__blocks(this) result(val)
   use atlas_connectivity_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_MultiBlockConnectivity), intent(in) :: this
-  val = atlas__MultiBlockConnectivity__blocks(this%c_ptr())
+  val = atlas__MultiBlockConnectivity__blocks(this%CPTR_PGIBUG_A)
 end function
 
 function atlas_MultiBlockConnectivity__block(this,block_idx) result(block)
@@ -469,7 +472,8 @@ function atlas_MultiBlockConnectivity__block(this,block_idx) result(block)
   type(atlas_BlockConnectivity) :: block
   class(atlas_MultiBlockConnectivity), intent(in) :: this
   integer(ATLAS_KIND_IDX) :: block_idx
-  call block%reset_c_ptr( atlas__MultiBlockConnectivity__block(this%c_ptr(),int(block_idx-1_ATLAS_KIND_IDX,ATLAS_KIND_IDX) ) )
+  call block%reset_c_ptr( atlas__MultiBlockConnectivity__block( &
+    this%CPTR_PGIBUG_A,int(block_idx-1_ATLAS_KIND_IDX,ATLAS_KIND_IDX) ) )
 end function
 
 !========================================================
@@ -490,7 +494,7 @@ subroutine atlas_BlockConnectivity__data(this,data)
   type(c_ptr) :: data_cptr
   integer(ATLAS_KIND_IDX) :: rows
   integer(ATLAS_KIND_IDX) :: cols
-  call atlas__BlockConnectivity__data(this%c_ptr(),data_cptr,rows,cols)
+  call atlas__BlockConnectivity__data(this%CPTR_PGIBUG_A,data_cptr,rows,cols)
   call c_f_pointer (data_cptr, data, [cols,rows])
 end subroutine
 
@@ -498,21 +502,21 @@ function atlas_BlockConnectivity__rows(this) result(val)
   use atlas_connectivity_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_BlockConnectivity), intent(in) :: this
-  val = atlas__BlockConnectivity__rows(this%c_ptr())
+  val = atlas__BlockConnectivity__rows(this%CPTR_PGIBUG_A)
 end function
 
 function atlas_BlockConnectivity__cols(this) result(val)
   use atlas_connectivity_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_BlockConnectivity), intent(in) :: this
-  val = atlas__BlockConnectivity__cols(this%c_ptr())
+  val = atlas__BlockConnectivity__cols(this%CPTR_PGIBUG_A)
 end function
 
 function atlas_BlockConnectivity__missing_value(this) result(val)
   use atlas_connectivity_c_binding
   integer(ATLAS_KIND_IDX) :: val
   class(atlas_BlockConnectivity), intent(in) :: this
-  val = atlas__BlockConnectivity__missing_value(this%c_ptr()) + 1
+  val = atlas__BlockConnectivity__missing_value(this%CPTR_PGIBUG_A) + 1
 end function
 
 !========================================================
@@ -522,16 +526,16 @@ subroutine set_access(this)
   class(atlas_Connectivity), intent(inout) :: this
   type(c_ptr) :: ctxt
   integer(c_int) :: have_ctxt
-  have_ctxt = atlas__connectivity__ctxt(this%c_ptr(),ctxt)
+  have_ctxt = atlas__connectivity__ctxt(this%CPTR_PGIBUG_A,ctxt)
   if( have_ctxt == 1 ) then
     call c_f_pointer(ctxt,this%access)
   else
     allocate( this%access )
-    call atlas__connectivity__register_ctxt  ( this%c_ptr(), c_loc(this%access) )
-    call atlas__connectivity__register_update( this%c_ptr(), c_funloc(update_access_c) )
-    call atlas__connectivity__register_delete( this%c_ptr(), c_funloc(delete_access_c) )
+    call atlas__connectivity__register_ctxt  ( this%CPTR_PGIBUG_A, c_loc(this%access) )
+    call atlas__connectivity__register_update( this%CPTR_PGIBUG_A, c_funloc(update_access_c) )
+    call atlas__connectivity__register_delete( this%CPTR_PGIBUG_A, c_funloc(delete_access_c) )
 
-    this%access%connectivity_ptr = this%c_ptr()
+    this%access%connectivity_ptr = this%CPTR_PGIBUG_A
     call update_access(this%access)
   endif
 end subroutine
@@ -581,8 +585,8 @@ end subroutine
 subroutine update_padded(this)
   class(atlas_ConnectivityAccess), intent(inout) :: this
   integer(ATLAS_KIND_IDX) :: jrow, jcol
-  if( associated(this%padded_) ) deallocate(this%padded_)
-  allocate(this%padded_(this%maxcols_,this%rows()))
+  if( associated(this%padded_) ) call atlas_deallocate_managedmem( this%padded_ )
+  call atlas_allocate_managedmem( this%padded_, [this%maxcols_,this%rows()] )
   this%padded_(:,:) = this%missing_value_
   do jrow=1,this%rows()
     do jcol=1,this%cols(jrow)
@@ -604,7 +608,7 @@ subroutine delete_access(this)
   use atlas_connectivity_c_binding
   type(atlas_ConnectivityAccess), intent(inout) :: this
   if( associated( this%row ) )    deallocate(this%row)
-  if( associated( this%padded_) ) deallocate(this%padded_)
+  if( associated( this%padded_) ) call atlas_deallocate_managedmem(this%padded_)
 end subroutine
 
 !-------------------------------------------------------------------------------

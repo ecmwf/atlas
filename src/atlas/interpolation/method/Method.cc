@@ -215,6 +215,10 @@ void Method::setup( const FunctionSpace& /*source*/, const Field& /*target*/ ) {
     NOTIMP;
 }
 
+void Method::setup( const FunctionSpace& /*source*/, const FieldSet& /*target*/ ) {
+    NOTIMP;
+}
+
 void Method::execute( const FieldSet& fieldsSource, FieldSet& fieldsTarget ) const {
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
 
@@ -259,7 +263,7 @@ void Method::haloExchange( const FieldSet& fields ) const {
     }
 }
 void Method::haloExchange( const Field& field ) const {
-    if( field.dirty() ) source().haloExchange( field );
+    if ( field.dirty() ) source().haloExchange( field );
 }
 
 }  // namespace interpolation

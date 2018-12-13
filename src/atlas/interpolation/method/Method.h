@@ -42,10 +42,9 @@ public:
    * @param target functionspace containing target points
    */
     virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
-
-    virtual void setup( const Grid& source, const Grid& target ) = 0;
-
+    virtual void setup( const Grid& source, const Grid& target )                   = 0;
     virtual void setup( const FunctionSpace& source, const Field& target );
+    virtual void setup( const FunctionSpace& source, const FieldSet& target );
 
     virtual void execute( const FieldSet& source, FieldSet& target ) const;
     virtual void execute( const Field& source, Field& target ) const;

@@ -62,6 +62,22 @@ Interpolation::Interpolation( const Config& config, const FunctionSpace& source,
     }
 }
 
+Interpolation::Interpolation( const Interpolation::Config& config, const FunctionSpace& source,
+                              const FieldSet& target ) :
+    implementation_( [&]() -> Implementation* {
+        std::string type;
+        ASSERT( config.get( "type", type ) );
+        Implementation* impl = interpolation::MethodFactory::build( type, config );
+        impl->setup( source, target );
+        return impl;
+    }() ) {
+    std::string path;
+    if ( config.get( "output", path ) ) {
+        std::ofstream file( path );
+        print( file );
+    }
+}
+
 Interpolation::Interpolation( const Interpolation& other ) : implementation_( other.implementation_ ) {}
 
 void Interpolation::execute( const FieldSet& source, FieldSet& target ) const {
@@ -112,6 +128,19 @@ Interpolation::Implementation* atlas__Interpolation__new_tgt_field( const eckit:
     Interpolation::Implementation* interpolator;
     {
         Interpolation im( *config, FunctionSpace( source ), Field( target ) );
+        interpolator = const_cast<Interpolation::Implementation*>( im.get() );
+        interpolator->attach();
+    }
+    interpolator->detach();
+    return interpolator;
+}
+
+Interpolation::Implementation* atlas__Interpolation__new_tgt_fieldset( const eckit::Parametrisation* config,
+                                                                       const functionspace::FunctionSpaceImpl* source,
+                                                                       const field::FieldSetImpl* target ) {
+    Interpolation::Implementation* interpolator;
+    {
+        Interpolation im( *config, FunctionSpace( source ), FieldSet( target ) );
         interpolator = const_cast<Interpolation::Implementation*>( im.get() );
         interpolator->attach();
     }

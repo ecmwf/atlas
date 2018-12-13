@@ -35,6 +35,14 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
+namespace {
+static double convert_units_multiplier( const Field& field ) {
+    std::string units = field.metadata().getString( "units", "degrees" );
+    if ( units == "degrees" ) { return 1.; }
+    if ( units == "radians" ) { return 180. / M_PI; }
+    NOTIMP;
+}
+}  // namespace
 
 template <typename Kernel>
 StructuredInterpolation2D<Kernel>::StructuredInterpolation2D( const Method::Config& config ) :
@@ -50,7 +58,9 @@ void StructuredInterpolation2D<Kernel>::setup( const Grid& source, const Grid& t
 
 
     ASSERT( grid::StructuredGrid( source ) );
-    FunctionSpace source_fs = functionspace::StructuredColumns( source, option::halo( kernel_->stencil_halo() ) );
+    FunctionSpace source_fs =
+        functionspace::StructuredColumns( source, option::halo( std::max( kernel_->stencil_halo(), 1 ) ) );
+    // guarantee "1" halo for pole treatment!
     FunctionSpace target_fs = functionspace::PointCloud( target );
 
     setup( source_fs, target_fs );
@@ -79,6 +89,32 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
     setup( source );
 }
 
+template <typename Kernel>
+void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, const Field& target ) {
+    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation2D::setup(FunctionSpace source, Field target)" );
+
+    source_ = source;
+
+    if ( target.functionspace() ) { target_ = target.functionspace(); }
+
+    target_lonlat_ = target;
+
+    setup( source );
+}
+
+template <typename Kernel>
+void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, const FieldSet& target ) {
+    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::setup(FunctionSpace source,FieldSet target)" );
+
+    source_ = source;
+
+    ASSERT( target.size() >= 2 );
+    if ( target[0].functionspace() ) { target_ = target[0].functionspace(); }
+
+    target_lonlat_fields_ = target;
+
+    setup( source );
+}
 
 template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::print( std::ostream& ) const {
@@ -90,6 +126,10 @@ template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
     kernel_.reset( new Kernel( source ) );
 
+    if ( functionspace::StructuredColumns( source ).halo() < 1 ) {
+        throw eckit::Exception( "The source functionspace must have (halo >= 1) for pole treatment" );
+    }
+
     if ( not matrix_free_ ) {
         idx_t inp_npts = source.size();
         idx_t out_npts = target_lonlat_.shape( 0 );
@@ -97,15 +137,18 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
         auto ghost  = array::make_view<int, 1>( target_ghost_ );
         auto lonlat = array::make_view<double, 2>( target_lonlat_ );
 
+        double convert_units = convert_units_multiplier( target_lonlat_ );
+
         auto triplets = kernel_->allocate_triplets( out_npts );
 
         constexpr NormaliseLongitude normalise;
+        //auto normalise = []( double x ) { return x; };
         ATLAS_TRACE_SCOPE( "Precomputing interpolation matrix" ) {
             atlas_omp_parallel {
                 typename Kernel::WorkSpace workspace;
                 atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                     if ( not ghost( n ) ) {
-                        PointLonLat p{normalise( lonlat( n, LON ) ), lonlat( n, LAT )};
+                        PointLonLat p{normalise( lonlat( n, LON ) ) * convert_units, lonlat( n, LAT ) * convert_units};
                         kernel_->insert_triplets( n, p, triplets, workspace );
                     }
                 }
@@ -172,11 +215,7 @@ template <typename Kernel>
 template <typename Value, int Rank>
 void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, const FieldSet& src_fields,
                                                       FieldSet& tgt_fields ) const {
-    const idx_t N  = src_fields.size();
-    idx_t out_npts = target_lonlat_.shape( 0 );
-
-    auto ghost  = array::make_view<int, 1>( target_ghost_ );
-    auto lonlat = array::make_view<double, 2>( target_lonlat_ );
+    const idx_t N = src_fields.size();
 
     std::vector<array::ArrayView<Value, Rank> > src_view;
     std::vector<array::ArrayView<Value, Rank> > tgt_view;
@@ -187,14 +226,58 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
         src_view.emplace_back( array::make_view<Value, Rank>( src_fields[i] ) );
         tgt_view.emplace_back( array::make_view<Value, Rank>( tgt_fields[i] ) );
     }
+    if ( target_lonlat_ ) {
+        double convert_units = convert_units_multiplier( target_lonlat_ );
 
-    constexpr NormaliseLongitude normalise( 0., 360. );  // includes 360 as well!
-    atlas_omp_parallel {
-        typename Kernel::Stencil stencil;
-        typename Kernel::Weights weights;
-        atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
-            if ( not ghost( n ) ) {
-                PointLonLat p{normalise( lonlat( n, LON ) ), lonlat( n, LAT )};
+        if ( target_ghost_ ) {
+            idx_t out_npts    = target_lonlat_.shape( 0 );
+            const auto ghost  = array::make_view<int, 1, array::Intent::ReadOnly>( target_ghost_ );
+            const auto lonlat = array::make_view<double, 2, array::Intent::ReadOnly>( target_lonlat_ );
+
+            atlas_omp_parallel {
+                typename Kernel::Stencil stencil;
+                typename Kernel::Weights weights;
+                atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
+                    if ( not ghost( n ) ) {
+                        PointLonLat p{lonlat( n, LON ) * convert_units, lonlat( n, LAT ) * convert_units};
+                        kernel.compute_stencil( p.lon(), p.lat(), stencil );
+                        kernel.compute_weights( p.lon(), p.lat(), stencil, weights );
+                        for ( idx_t i = 0; i < N; ++i ) {
+                            kernel.interpolate( stencil, weights, src_view[i], tgt_view[i], n );
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            idx_t out_npts    = target_lonlat_.shape( 0 );
+            const auto lonlat = array::make_view<double, 2, array::Intent::ReadOnly>( target_lonlat_ );
+
+            atlas_omp_parallel {
+                typename Kernel::Stencil stencil;
+                typename Kernel::Weights weights;
+                atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
+                    PointLonLat p{lonlat( n, LON ) * convert_units, lonlat( n, LAT ) * convert_units};
+                    kernel.compute_stencil( p.lon(), p.lat(), stencil );
+                    kernel.compute_weights( p.lon(), p.lat(), stencil, weights );
+                    for ( idx_t i = 0; i < N; ++i ) {
+                        kernel.interpolate( stencil, weights, src_view[i], tgt_view[i], n );
+                    }
+                }
+            }
+        }
+    }
+    else if ( not target_lonlat_fields_.empty() ) {
+        idx_t out_npts       = target_lonlat_fields_[0].shape( 0 );
+        const auto lon       = array::make_view<double, 1, array::Intent::ReadOnly>( target_lonlat_fields_[LON] );
+        const auto lat       = array::make_view<double, 1, array::Intent::ReadOnly>( target_lonlat_fields_[LAT] );
+        double convert_units = convert_units_multiplier( target_lonlat_fields_[LON] );
+
+        atlas_omp_parallel {
+            typename Kernel::Stencil stencil;
+            typename Kernel::Weights weights;
+            atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
+                PointLonLat p{lon( n ) * convert_units, lat( n ) * convert_units};
                 kernel.compute_stencil( p.lon(), p.lat(), stencil );
                 kernel.compute_weights( p.lon(), p.lat(), stencil, weights );
                 for ( idx_t i = 0; i < N; ++i ) {
@@ -203,8 +286,10 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
             }
         }
     }
+    else {
+        NOTIMP;
+    }
 }
-
 
 }  // namespace method
 }  // namespace interpolation

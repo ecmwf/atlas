@@ -90,7 +90,7 @@ subroutine add(this,field)
   use atlas_Field_module, only: atlas_Field
   class(atlas_FieldSet), intent(in) :: this
   type(atlas_Field), intent(in) :: field
-  call atlas__FieldSet__add_field(this%c_ptr(), field%c_ptr())
+  call atlas__FieldSet__add_field(this%CPTR_PGIBUG_A, field%CPTR_PGIBUG_A)
 end subroutine
 
 function has_field(this,name) result(flag)
@@ -101,7 +101,7 @@ function has_field(this,name) result(flag)
   character(len=*), intent(in) :: name
   logical :: flag
   integer(c_int) :: rc
-  rc = atlas__FieldSet__has_field(this%c_ptr(), c_str(name))
+  rc = atlas__FieldSet__has_field(this%CPTR_PGIBUG_A, c_str(name))
   if( rc == 0 ) then
     flag = .False.
   else
@@ -113,7 +113,7 @@ function FieldSet__size(this) result(nb_fields)
   use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(in) :: this
   integer(ATLAS_KIND_IDX) :: nb_fields
-  nb_fields = atlas__FieldSet__size(this%c_ptr())
+  nb_fields = atlas__FieldSet__size(this%CPTR_PGIBUG_A)
 end function
 
 function field_by_name(this,name) result(field)
@@ -123,7 +123,7 @@ function field_by_name(this,name) result(field)
   class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_name(this%c_ptr(), c_str(name) ) )
+  field = atlas_Field( atlas__FieldSet__field_by_name(this%CPTR_PGIBUG_A, c_str(name) ) )
   call field%return()
 end function
 
@@ -134,7 +134,7 @@ function field_by_idx_long(this,idx) result(field)
   class(atlas_FieldSet), intent(in) :: this
   integer(c_long), intent(in) :: idx
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), int(idx-1_c_long,ATLAS_KIND_IDX) ) ) ! C index
+  field = atlas_Field( atlas__FieldSet__field_by_idx(this%CPTR_PGIBUG_A, int(idx-1_c_long,ATLAS_KIND_IDX) ) ) ! C index
   call field%return()
 end function
 
@@ -145,7 +145,7 @@ function field_by_idx_int(this,idx) result(field)
   class(atlas_FieldSet), intent(in) :: this
   integer(c_int), intent(in) :: idx
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), int(idx-1_c_int,ATLAS_KIND_IDX) ) ) ! C index
+  field = atlas_Field( atlas__FieldSet__field_by_idx(this%CPTR_PGIBUG_A, int(idx-1_c_int,ATLAS_KIND_IDX) ) ) ! C index
   call field%return()
 end function
 
@@ -161,7 +161,7 @@ subroutine halo_exchange(this,on_device)
   if( present(on_device) ) then
     if( on_device ) on_device_int = 1
   endif
-  call atlas__FieldSet__halo_exchange(this%c_ptr(), on_device_int)
+  call atlas__FieldSet__halo_exchange(this%CPTR_PGIBUG_A, on_device_int)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -181,7 +181,7 @@ subroutine set_dirty(this,value)
   else
       value_int = 1
   endif
-  call atlas__FieldSet__set_dirty(this%c_ptr(), value_int)
+  call atlas__FieldSet__set_dirty(this%CPTR_PGIBUG_A, value_int)
 end subroutine
 
 !-------------------------------------------------------------------------------

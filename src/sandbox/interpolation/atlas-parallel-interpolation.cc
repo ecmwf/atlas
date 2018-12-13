@@ -149,7 +149,14 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     Log::info() << "Partitioning source grid, halo of " << eckit::Plural( source_mesh_halo, "element" ) << std::endl;
     src.partition( src_grid );
     FunctionSpace src_functionspace;
-    if ( interpolation_method == "structured-bicubic" || interpolation_method == "bicubic" ) {
+    bool structured = false;
+    for( auto& is_structured : {"structured-bicubic","bicubic","structured-bilinear","bilinear"} ){
+        if( interpolation_method == is_structured ) {
+            structured = true;
+            break;
+        }
+    }
+    if ( structured ) {
         src_functionspace =
             functionspace::StructuredColumns{src.mesh().grid(), option::halo( std::max( 2, source_mesh_halo ) ) |
                                                                     util::Config( "periodic_points", true )};

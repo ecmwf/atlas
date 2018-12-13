@@ -237,7 +237,7 @@ function constructor(mesh,halo,levels) result(this)
   config = atlas_Config()
   if( present(halo) )   call config%set("halo",halo)
   if( present(levels) ) call config%set("levels",levels)
-  call this%reset_c_ptr( atlas__NodesFunctionSpace__new(mesh%c_ptr(),config%c_ptr()) )
+  call this%reset_c_ptr( atlas__NodesFunctionSpace__new(mesh%CPTR_PGIBUG_A,config%CPTR_PGIBUG_B) )
   call config%final()
   call this%return()
 end function
@@ -248,7 +248,7 @@ function nb_nodes(this)
   use atlas_functionspace_NodeColumns_c_binding
   integer :: nb_nodes
   class(atlas_functionspace_NodeColumns), intent(in) :: this
-  nb_nodes = atlas__NodesFunctionSpace__nb_nodes(this%c_ptr())
+  nb_nodes = atlas__NodesFunctionSpace__nb_nodes(this%CPTR_PGIBUG_A)
 end function
 
 !------------------------------------------------------------------------------
@@ -257,7 +257,7 @@ function mesh(this)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Mesh) :: mesh
   class(atlas_functionspace_NodeColumns), intent(in) :: this
-  call mesh%reset_c_ptr( atlas__NodesFunctionSpace__mesh(this%c_ptr()) )
+  call mesh%reset_c_ptr( atlas__NodesFunctionSpace__mesh(this%CPTR_PGIBUG_A) )
   call mesh%return()
 end function
 
@@ -267,7 +267,7 @@ function nodes(this)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_mesh_Nodes) :: nodes
   class(atlas_functionspace_NodeColumns), intent(in) :: this
-  call nodes%reset_c_ptr( atlas__NodesFunctionSpace__nodes(this%c_ptr()) )
+  call nodes%reset_c_ptr( atlas__NodesFunctionSpace__nodes(this%CPTR_PGIBUG_A) )
   call nodes%return()
 end function
 
@@ -277,7 +277,7 @@ function get_gather(this) result(gather)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_GatherScatter) :: gather
   class(atlas_functionspace_NodeColumns), intent(in) :: this
-  call gather%reset_c_ptr( atlas__NodesFunctioNSpace__get_gather(this%c_ptr()) )
+  call gather%reset_c_ptr( atlas__NodesFunctioNSpace__get_gather(this%CPTR_PGIBUG_A) )
 end function
 
 !------------------------------------------------------------------------------
@@ -286,7 +286,7 @@ function get_scatter(this) result(gather)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_GatherScatter) :: gather
   class(atlas_functionspace_NodeColumns), intent(in) :: this
-  call gather%reset_c_ptr( atlas__NodesFunctioNSpace__get_scatter(this%c_ptr()) )
+  call gather%reset_c_ptr( atlas__NodesFunctioNSpace__get_scatter(this%CPTR_PGIBUG_A) )
 end function
 
 !------------------------------------------------------------------------------
@@ -296,7 +296,7 @@ subroutine gather_fieldset(this,local,global)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: local
   type(atlas_FieldSet), intent(inout) :: global
-  call atlas__NodesFunctionSpace__gather_fieldset(this%c_ptr(),local%c_ptr(),global%c_ptr())
+  call atlas__NodesFunctionSpace__gather_fieldset(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -306,7 +306,7 @@ subroutine gather_field(this,local,global)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: local
   type(atlas_Field), intent(inout) :: global
-  call atlas__NodesFunctionSpace__gather_field(this%c_ptr(),local%c_ptr(),global%c_ptr())
+  call atlas__NodesFunctionSpace__gather_field(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -316,7 +316,7 @@ subroutine scatter_fieldset(this,global,local)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: global
   type(atlas_FieldSet), intent(inout) :: local
-  call atlas__NodesFunctionSpace__scatter_fieldset(this%c_ptr(),global%c_ptr(),local%c_ptr())
+  call atlas__NodesFunctionSpace__scatter_fieldset(this%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -326,7 +326,7 @@ subroutine scatter_field(this,global,local)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: global
   type(atlas_Field), intent(inout) :: local
-  call atlas__NodesFunctionSpace__scatter_field(this%c_ptr(),global%c_ptr(),local%c_ptr())
+  call atlas__NodesFunctionSpace__scatter_field(this%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -335,7 +335,7 @@ function get_halo_exchange(this) result(halo_exchange)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_HaloExchange) :: halo_exchange
   class(atlas_functionspace_NodeColumns), intent(in) :: this
-  call halo_exchange%reset_c_ptr( atlas__NodesFunctioNSpace__get_halo_exchange(this%c_ptr()) )
+  call halo_exchange%reset_c_ptr( atlas__NodesFunctioNSpace__get_halo_exchange(this%CPTR_PGIBUG_A) )
 end function
 
 !------------------------------------------------------------------------------
@@ -344,7 +344,7 @@ function get_checksum(this) result(checksum)
   use atlas_functionspace_NodeColumns_c_binding
   type(atlas_Checksum) :: checksum
   class(atlas_functionspace_NodeColumns), intent(in) :: this
-  call checksum%reset_c_ptr( atlas__NodesFunctioNSpace__get_checksum(this%c_ptr()) )
+  call checksum%reset_c_ptr( atlas__NodesFunctioNSpace__get_checksum(this%CPTR_PGIBUG_A) )
 end function
 
 !------------------------------------------------------------------------------
@@ -357,7 +357,8 @@ function checksum_fieldset(this,fieldset) result(checksum)
   type(atlas_FieldSet), intent(in) :: fieldset
   type(c_ptr) :: checksum_cptr
   integer :: checksum_size, checksum_allocated
-  call atlas__NodesFunctionSpace__checksum_fieldset(this%c_ptr(),fieldset%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
+  call atlas__NodesFunctionSpace__checksum_fieldset( &
+    this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A,checksum_cptr,checksum_size,checksum_allocated)
   allocate(character(len=checksum_size) :: checksum )
   checksum = c_ptr_to_string(checksum_cptr)
   if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
@@ -373,7 +374,8 @@ function checksum_field(this,field) result(checksum)
   type(atlas_Field), intent(in) :: field
   type(c_ptr) :: checksum_cptr
   integer :: checksum_size, checksum_allocated
-  call atlas__NodesFunctionSpace__checksum_field(this%c_ptr(),field%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
+  call atlas__NodesFunctionSpace__checksum_field( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,checksum_cptr,checksum_size,checksum_allocated)
   allocate(character(len=checksum_size) :: checksum )
   checksum = c_ptr_to_string(checksum_cptr)
   if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
@@ -387,7 +389,7 @@ subroutine minimum_real32_r0(this,field,minimum)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: minimum
-  call atlas__NodesFunctionSpace__min_float(this%c_ptr(),field%c_ptr(),minimum)
+  call atlas__NodesFunctionSpace__min_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -401,7 +403,7 @@ subroutine minimum_real32_r1(this,field,minimum)
   type(c_ptr) :: min_cptr
   real(c_float), pointer :: min_fptr(:)
   integer :: min_size
-  call atlas__NodesFunctionSpace__min_arr_float(this%c_ptr(),field%c_ptr(),min_cptr,min_size)
+  call atlas__NodesFunctionSpace__min_arr_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   allocate(minimum(min_size))
   minimum(:) = min_fptr(:)
@@ -416,7 +418,7 @@ subroutine maximum_real32_r0(this,field,maximum)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: maximum
-  call atlas__NodesFunctionSpace__max_float(this%c_ptr(),field%c_ptr(),maximum)
+  call atlas__NodesFunctionSpace__max_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -430,7 +432,7 @@ subroutine maximum_real32_r1(this,field,maximum)
   type(c_ptr) :: max_cptr
   real(c_float), pointer :: max_fptr(:)
   integer :: max_size
-  call atlas__NodesFunctionSpace__max_arr_float(this%c_ptr(),field%c_ptr(),max_cptr,max_size)
+  call atlas__NodesFunctionSpace__max_arr_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   allocate(maximum(max_size))
   maximum(:) = max_fptr(:)
@@ -447,7 +449,7 @@ subroutine minloc_real32_r0(this,field,minimum,location)
   real(c_float), intent(out) :: minimum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
   integer(c_long) :: loc
-  call atlas__NodesFunctionSpace__minloc_float(this%c_ptr(),field%c_ptr(),minimum,loc)
+  call atlas__NodesFunctionSpace__minloc_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum,loc)
   location = loc
 end subroutine
 
@@ -461,7 +463,7 @@ subroutine maxloc_real32_r0(this,field,maximum,location)
   real(c_float), intent(out) :: maximum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
   integer(c_long) :: loc
-  call atlas__NodesFunctionSpace__maxloc_float(this%c_ptr(),field%c_ptr(),maximum,loc)
+  call atlas__NodesFunctionSpace__maxloc_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum,loc)
   location = loc
 end subroutine
 
@@ -478,7 +480,7 @@ subroutine minloc_real32_r1(this,field,minimum,location)
   real(c_float), pointer :: min_fptr(:)
   integer(c_long),pointer :: loc_fptr(:)
   integer :: min_size
-  call atlas__NodesFunctionSpace__minloc_arr_float(this%c_ptr(),field%c_ptr(),min_cptr,loc_cptr,min_size)
+  call atlas__NodesFunctionSpace__minloc_arr_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,loc_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/min_size/))
   allocate(minimum(min_size))
@@ -502,7 +504,7 @@ subroutine maxloc_real32_r1(this,field,maximum,location)
   real(c_float), pointer :: max_fptr(:)
   integer(c_long),pointer :: loc_fptr(:)
   integer :: max_size
-  call atlas__NodesFunctionSpace__maxloc_arr_float(this%c_ptr(),field%c_ptr(),max_cptr,loc_cptr,max_size)
+  call atlas__NodesFunctionSpace__maxloc_arr_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,loc_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/max_size/))
   allocate(maximum(max_size))
@@ -523,7 +525,7 @@ subroutine sum_real32_r0(this,field,sum,N)
   real(c_float), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__sum_float(this%c_ptr(),field%c_ptr(),sum,opt_N)
+  call atlas__NodesFunctionSpace__sum_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -541,7 +543,7 @@ subroutine sum_real32_r1(this,field,sum,N)
   real(c_float), pointer :: sum_fptr(:)
   integer :: sum_size
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__sum_arr_float(this%c_ptr(),field%c_ptr(),sum_cptr,sum_size,opt_N)
+  call atlas__NodesFunctionSpace__sum_arr_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum_cptr,sum_size,opt_N)
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
@@ -559,7 +561,7 @@ subroutine order_independent_sum_real32_r0(this,field,sum,N)
   real(c_float), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__oisum_float(this%c_ptr(),field%c_ptr(),sum,opt_N)
+  call atlas__NodesFunctionSpace__oisum_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -577,7 +579,7 @@ subroutine order_independent_sum_real32_r1(this,field,sum,N)
   real(c_float), pointer :: sum_fptr(:)
   integer :: sum_size
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__oisum_arr_float(this%c_ptr(),field%c_ptr(),sum_cptr,sum_size,opt_N)
+  call atlas__NodesFunctionSpace__oisum_arr_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum_cptr,sum_size,opt_N)
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
@@ -595,7 +597,7 @@ subroutine mean_real32_r0(this,field,mean,N)
   real(c_float), intent(out) :: mean
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_float(this%c_ptr(),field%c_ptr(),mean,opt_N)
+  call atlas__NodesFunctionSpace__mean_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -613,7 +615,7 @@ subroutine mean_real32_r1(this,field,mean,N)
   real(c_float), pointer :: mean_fptr(:)
   integer :: mean_size
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_arr_float(this%c_ptr(),field%c_ptr(),mean_cptr,mean_size,opt_N)
+  call atlas__NodesFunctionSpace__mean_arr_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean_cptr,mean_size,opt_N)
   call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
   allocate(mean(mean_size))
   mean(:) = mean_fptr(:)
@@ -632,7 +634,8 @@ subroutine mean_and_stddev_real32_r0(this,field,mean,stddev,N)
   real(c_float), intent(out) :: stddev
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_and_stddev_float(this%c_ptr(),field%c_ptr(),mean,stddev,opt_N)
+  call atlas__NodesFunctionSpace__mean_and_stddev_float( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean,stddev,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -651,7 +654,8 @@ subroutine mean_and_stddev_real32_r1(this,field,mean,stddev,N)
   real(c_float), pointer :: mean_fptr(:), stddev_fptr(:)
   integer :: varsize
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_and_stddev_arr_float(this%c_ptr(),field%c_ptr(),mean_cptr,stddev_cptr,varsize,opt_N)
+  call atlas__NodesFunctionSpace__mean_and_stddev_arr_float( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean_cptr,stddev_cptr,varsize,opt_N)
   call c_f_pointer(mean_cptr,mean_fptr,(/varsize/))
   call c_f_pointer(stddev_cptr,stddev_fptr,(/varsize/))
   allocate(mean(varsize))
@@ -671,7 +675,7 @@ subroutine minimum_real64_r0(this,field,minimum)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: minimum
-  call atlas__NodesFunctionSpace__min_double(this%c_ptr(),field%c_ptr(),minimum)
+  call atlas__NodesFunctionSpace__min_double(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -686,7 +690,8 @@ subroutine minimum_real64_r1(this,field,minimum)
   type(c_ptr) :: min_cptr
   real(c_double), pointer :: min_fptr(:)
   integer :: min_size
-  call atlas__NodesFunctionSpace__min_arr_double(this%c_ptr(),field%c_ptr(),min_cptr,min_size)
+  call atlas__NodesFunctionSpace__min_arr_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   allocate(minimum(min_size))
   minimum(:) = min_fptr(:)
@@ -701,7 +706,8 @@ subroutine maximum_real64_r0(this,field,maximum)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: maximum
-  call atlas__NodesFunctionSpace__max_double(this%c_ptr(),field%c_ptr(),maximum)
+  call atlas__NodesFunctionSpace__max_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -715,7 +721,8 @@ subroutine maximum_real64_r1(this,field,maximum)
   type(c_ptr) :: max_cptr
   real(c_double), pointer :: max_fptr(:)
   integer :: max_size
-  call atlas__NodesFunctionSpace__max_arr_double(this%c_ptr(),field%c_ptr(),max_cptr,max_size)
+  call atlas__NodesFunctionSpace__max_arr_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   allocate(maximum(max_size))
   maximum(:) = max_fptr(:)
@@ -732,7 +739,8 @@ subroutine minloc_real64_r0(this,field,minimum,location)
   real(c_double), intent(out) :: minimum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
   integer(c_long) :: loc
-  call atlas__NodesFunctionSpace__minloc_double(this%c_ptr(),field%c_ptr(),minimum,loc)
+  call atlas__NodesFunctionSpace__minloc_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum,loc)
   location = loc
 end subroutine
 
@@ -746,7 +754,8 @@ subroutine maxloc_real64_r0(this,field,maximum,location)
   real(c_double), intent(out) :: maximum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
   integer(c_long) :: loc
-  call atlas__NodesFunctionSpace__maxloc_double(this%c_ptr(),field%c_ptr(),maximum,loc)
+  call atlas__NodesFunctionSpace__maxloc_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum,loc)
   location = loc
 end subroutine
 
@@ -763,7 +772,8 @@ subroutine minloc_real64_r1(this,field,minimum,location)
   real(c_double), pointer :: min_fptr(:)
   integer(c_long),pointer :: loc_fptr(:)
   integer :: min_size
-  call atlas__NodesFunctionSpace__minloc_arr_double(this%c_ptr(),field%c_ptr(),min_cptr,loc_cptr,min_size)
+  call atlas__NodesFunctionSpace__minloc_arr_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,loc_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/min_size/))
   allocate(minimum(min_size))
@@ -787,7 +797,8 @@ subroutine maxloc_real64_r1(this,field,maximum,location)
   real(c_double), pointer :: max_fptr(:)
   integer(c_long),pointer :: loc_fptr(:)
   integer :: max_size
-  call atlas__NodesFunctionSpace__maxloc_arr_double(this%c_ptr(),field%c_ptr(),max_cptr,loc_cptr,max_size)
+  call atlas__NodesFunctionSpace__maxloc_arr_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,loc_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/max_size/))
   allocate(maximum(max_size))
@@ -808,7 +819,7 @@ subroutine sum_real64_r0(this,field,sum,N)
   real(c_double), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__sum_double(this%c_ptr(),field%c_ptr(),sum,opt_N)
+  call atlas__NodesFunctionSpace__sum_double(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -825,7 +836,8 @@ subroutine sum_real64_r1(this,field,sum,N)
   real(c_double), pointer :: sum_fptr(:)
   integer :: sum_size
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__sum_arr_double(this%c_ptr(),field%c_ptr(),sum_cptr,sum_size,opt_N)
+  call atlas__NodesFunctionSpace__sum_arr_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum_cptr,sum_size,opt_N)
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
@@ -843,7 +855,8 @@ subroutine order_independent_sum_real64_r0(this,field,sum,N)
   real(c_double), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__oisum_double(this%c_ptr(),field%c_ptr(),sum,opt_N)
+  call atlas__NodesFunctionSpace__oisum_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -860,7 +873,8 @@ subroutine order_independent_sum_real64_r1(this,field,sum,N)
   real(c_double), pointer :: sum_fptr(:)
   integer :: sum_size
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__oisum_arr_double(this%c_ptr(),field%c_ptr(),sum_cptr,sum_size,opt_N)
+  call atlas__NodesFunctionSpace__oisum_arr_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum_cptr,sum_size,opt_N)
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
@@ -878,7 +892,8 @@ subroutine mean_real64_r0(this,field,mean,N)
   real(c_double), intent(out) :: mean
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_double(this%c_ptr(),field%c_ptr(),mean,opt_N)
+  call atlas__NodesFunctionSpace__mean_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -895,7 +910,8 @@ subroutine mean_real64_r1(this,field,mean,N)
   real(c_double), pointer :: mean_fptr(:)
   integer :: mean_size
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_arr_double(this%c_ptr(),field%c_ptr(),mean_cptr,mean_size,opt_N)
+  call atlas__NodesFunctionSpace__mean_arr_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean_cptr,mean_size,opt_N)
   call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
   allocate(mean(mean_size))
   mean(:) = mean_fptr(:)
@@ -914,7 +930,8 @@ subroutine mean_and_stddev_real64_r0(this,field,mean,stddev,N)
   real(c_double), intent(out) :: stddev
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_and_stddev_double(this%c_ptr(),field%c_ptr(),mean,stddev,opt_N)
+  call atlas__NodesFunctionSpace__mean_and_stddev_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean,stddev,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -932,7 +949,8 @@ subroutine mean_and_stddev_real64_r1(this,field,mean,stddev,N)
   real(c_double), pointer :: mean_fptr(:), stddev_fptr(:)
   integer :: varsize
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_and_stddev_arr_double(this%c_ptr(),field%c_ptr(),mean_cptr,stddev_cptr,varsize,opt_N)
+  call atlas__NodesFunctionSpace__mean_and_stddev_arr_double( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean_cptr,stddev_cptr,varsize,opt_N)
   call c_f_pointer(mean_cptr,mean_fptr,(/varsize/))
   call c_f_pointer(stddev_cptr,stddev_fptr,(/varsize/))
   allocate(mean(varsize))
@@ -952,7 +970,7 @@ subroutine minimum_int64_r0(this,field,minimum)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: minimum
-  call atlas__NodesFunctionSpace__min_long(this%c_ptr(),field%c_ptr(),minimum)
+  call atlas__NodesFunctionSpace__min_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -966,7 +984,7 @@ subroutine minimum_int64_r1(this,field,minimum)
   type(c_ptr) :: min_cptr
   integer(c_long), pointer :: min_fptr(:)
   integer :: min_size
-  call atlas__NodesFunctionSpace__min_arr_long(this%c_ptr(),field%c_ptr(),min_cptr,min_size)
+  call atlas__NodesFunctionSpace__min_arr_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   allocate(minimum(min_size))
   minimum(:) = min_fptr(:)
@@ -981,7 +999,7 @@ subroutine maximum_int64_r0(this,field,maximum)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: maximum
-  call atlas__NodesFunctionSpace__max_long(this%c_ptr(),field%c_ptr(),maximum)
+  call atlas__NodesFunctionSpace__max_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -995,7 +1013,7 @@ subroutine maximum_int64_r1(this,field,maximum)
   type(c_ptr) :: max_cptr
   integer(c_long), pointer :: max_fptr(:)
   integer :: max_size
-  call atlas__NodesFunctionSpace__max_arr_long(this%c_ptr(),field%c_ptr(),max_cptr,max_size)
+  call atlas__NodesFunctionSpace__max_arr_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   allocate(maximum(max_size))
   maximum(:) = max_fptr(:)
@@ -1012,7 +1030,7 @@ subroutine minloc_int64_r0(this,field,minimum,location)
   integer(c_long), intent(out) :: minimum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
   integer(c_long) :: loc
-  call atlas__NodesFunctionSpace__minloc_long(this%c_ptr(),field%c_ptr(),minimum,loc)
+  call atlas__NodesFunctionSpace__minloc_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum,loc)
   location = loc
 end subroutine
 
@@ -1026,7 +1044,7 @@ subroutine maxloc_int64_r0(this,field,maximum,location)
   integer(c_long), intent(out) :: maximum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
   integer(c_long) :: loc
-  call atlas__NodesFunctionSpace__maxloc_long(this%c_ptr(),field%c_ptr(),maximum,loc)
+  call atlas__NodesFunctionSpace__maxloc_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum,loc)
   location = loc
 end subroutine
 
@@ -1043,7 +1061,7 @@ subroutine minloc_int64_r1(this,field,minimum,location)
   integer(c_long), pointer :: min_fptr(:)
   integer(c_long),pointer :: loc_fptr(:)
   integer :: min_size
-  call atlas__NodesFunctionSpace__minloc_arr_long(this%c_ptr(),field%c_ptr(),min_cptr,loc_cptr,min_size)
+  call atlas__NodesFunctionSpace__minloc_arr_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,loc_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/min_size/))
   allocate(minimum(min_size))
@@ -1067,7 +1085,7 @@ subroutine maxloc_int64_r1(this,field,maximum,location)
   integer(c_long), pointer :: max_fptr(:)
   integer(c_long),pointer :: loc_fptr(:)
   integer :: max_size
-  call atlas__NodesFunctionSpace__maxloc_arr_long(this%c_ptr(),field%c_ptr(),max_cptr,loc_cptr,max_size)
+  call atlas__NodesFunctionSpace__maxloc_arr_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,loc_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/max_size/))
   allocate(maximum(max_size))
@@ -1088,7 +1106,7 @@ subroutine sum_int64_r0(this,field,sum,N)
   integer(c_long), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__sum_long(this%c_ptr(),field%c_ptr(),sum,opt_N)
+  call atlas__NodesFunctionSpace__sum_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1105,7 +1123,7 @@ subroutine sum_int64_r1(this,field,sum,N)
   integer(c_long), pointer :: sum_fptr(:)
   integer :: sum_size
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__sum_arr_long(this%c_ptr(),field%c_ptr(),sum_cptr,sum_size,opt_N)
+  call atlas__NodesFunctionSpace__sum_arr_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum_cptr,sum_size,opt_N)
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
@@ -1123,7 +1141,7 @@ subroutine mean_int64_r0(this,field,mean,N)
   integer(c_long), intent(out) :: mean
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_long(this%c_ptr(),field%c_ptr(),mean,opt_N)
+  call atlas__NodesFunctionSpace__mean_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1140,7 +1158,7 @@ subroutine mean_int64_r1(this,field,mean,N)
   integer(c_long), pointer :: mean_fptr(:)
   integer :: mean_size
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_arr_long(this%c_ptr(),field%c_ptr(),mean_cptr,mean_size,opt_N)
+  call atlas__NodesFunctionSpace__mean_arr_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean_cptr,mean_size,opt_N)
   call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
   allocate(mean(mean_size))
   mean(:) = mean_fptr(:)
@@ -1159,7 +1177,8 @@ subroutine mean_and_stddev_int64_r0(this,field,mean,stddev,N)
   integer(c_long), intent(out) :: stddev
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_and_stddev_long(this%c_ptr(),field%c_ptr(),mean,stddev,opt_N)
+  call atlas__NodesFunctionSpace__mean_and_stddev_long( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean,stddev,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1177,7 +1196,8 @@ subroutine mean_and_stddev_int64_r1(this,field,mean,stddev,N)
   integer(c_long), pointer :: mean_fptr(:), stddev_fptr(:)
   integer :: varsize
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_and_stddev_arr_long(this%c_ptr(),field%c_ptr(),mean_cptr,stddev_cptr,varsize,opt_N)
+  call atlas__NodesFunctionSpace__mean_and_stddev_arr_long( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean_cptr,stddev_cptr,varsize,opt_N)
   call c_f_pointer(mean_cptr,mean_fptr,(/varsize/))
   call c_f_pointer(stddev_cptr,stddev_fptr,(/varsize/))
   allocate(mean(varsize))
@@ -1197,7 +1217,7 @@ subroutine minimum_int32_r0(this,field,minimum)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: minimum
-  call atlas__NodesFunctionSpace__min_int(this%c_ptr(),field%c_ptr(),minimum)
+  call atlas__NodesFunctionSpace__min_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1211,7 +1231,7 @@ subroutine minimum_int32_r1(this,field,minimum)
   type(c_ptr) :: min_cptr
   integer(c_int), pointer :: min_fptr(:)
   integer :: min_size
-  call atlas__NodesFunctionSpace__min_arr_int(this%c_ptr(),field%c_ptr(),min_cptr,min_size)
+  call atlas__NodesFunctionSpace__min_arr_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   allocate(minimum(min_size))
   minimum(:) = min_fptr(:)
@@ -1226,7 +1246,7 @@ subroutine maximum_int32_r0(this,field,maximum)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: maximum
-  call atlas__NodesFunctionSpace__max_int(this%c_ptr(),field%c_ptr(),maximum)
+  call atlas__NodesFunctionSpace__max_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1240,7 +1260,7 @@ subroutine maximum_int32_r1(this,field,maximum)
   type(c_ptr) :: max_cptr
   integer(c_int), pointer :: max_fptr(:)
   integer :: max_size
-  call atlas__NodesFunctionSpace__max_arr_int(this%c_ptr(),field%c_ptr(),max_cptr,max_size)
+  call atlas__NodesFunctionSpace__max_arr_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   allocate(maximum(max_size))
   maximum(:) = max_fptr(:)
@@ -1257,7 +1277,7 @@ subroutine minloc_int32_r0(this,field,minimum,location)
   integer(c_int), intent(out) :: minimum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
   integer(c_long) :: loc
-  call atlas__NodesFunctionSpace__minloc_int(this%c_ptr(),field%c_ptr(),minimum,loc)
+  call atlas__NodesFunctionSpace__minloc_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum,loc)
   location = loc
 end subroutine
 
@@ -1271,7 +1291,7 @@ subroutine maxloc_int32_r0(this,field,maximum,location)
   integer(c_int), intent(out) :: maximum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
   integer(c_long) :: loc
-  call atlas__NodesFunctionSpace__maxloc_int(this%c_ptr(),field%c_ptr(),maximum,loc)
+  call atlas__NodesFunctionSpace__maxloc_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum,loc)
   location = loc
 end subroutine
 
@@ -1288,7 +1308,7 @@ subroutine minloc_int32_r1(this,field,minimum,location)
   integer(c_int), pointer :: min_fptr(:)
   integer(c_long),pointer :: loc_fptr(:)
   integer :: min_size
-  call atlas__NodesFunctionSpace__minloc_arr_int(this%c_ptr(),field%c_ptr(),min_cptr,loc_cptr,min_size)
+  call atlas__NodesFunctionSpace__minloc_arr_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,loc_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/min_size/))
   allocate(minimum(min_size))
@@ -1312,7 +1332,7 @@ subroutine maxloc_int32_r1(this,field,maximum,location)
   integer(c_int), pointer :: max_fptr(:)
   integer(c_long),pointer :: loc_fptr(:)
   integer :: max_size
-  call atlas__NodesFunctionSpace__maxloc_arr_int(this%c_ptr(),field%c_ptr(),max_cptr,loc_cptr,max_size)
+  call atlas__NodesFunctionSpace__maxloc_arr_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,loc_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/max_size/))
   allocate(maximum(max_size))
@@ -1333,7 +1353,7 @@ subroutine sum_int32_r0(this,field,sum,N)
   integer(c_int), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__sum_int(this%c_ptr(),field%c_ptr(),sum,opt_N)
+  call atlas__NodesFunctionSpace__sum_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1350,7 +1370,7 @@ subroutine sum_int32_r1(this,field,sum,N)
   integer(c_int), pointer :: sum_fptr(:)
   integer :: sum_size
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__sum_arr_int(this%c_ptr(),field%c_ptr(),sum_cptr,sum_size,opt_N)
+  call atlas__NodesFunctionSpace__sum_arr_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum_cptr,sum_size,opt_N)
   call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
   allocate(sum(sum_size))
   sum(:) = sum_fptr(:)
@@ -1368,7 +1388,7 @@ subroutine mean_int32_r0(this,field,mean,N)
   integer(c_int), intent(out) :: mean
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_int(this%c_ptr(),field%c_ptr(),mean,opt_N)
+  call atlas__NodesFunctionSpace__mean_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1385,7 +1405,7 @@ subroutine mean_int32_r1(this,field,mean,N)
   integer(c_int), pointer :: mean_fptr(:)
   integer :: mean_size
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_arr_int(this%c_ptr(),field%c_ptr(),mean_cptr,mean_size,opt_N)
+  call atlas__NodesFunctionSpace__mean_arr_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean_cptr,mean_size,opt_N)
   call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
   allocate(mean(mean_size))
   mean(:) = mean_fptr(:)
@@ -1404,7 +1424,7 @@ subroutine mean_and_stddev_int32_r0(this,field,mean,stddev,N)
   integer(c_int), intent(out) :: stddev
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_and_stddev_int(this%c_ptr(),field%c_ptr(),mean,stddev,opt_N)
+  call atlas__NodesFunctionSpace__mean_and_stddev_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean,stddev,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1422,7 +1442,8 @@ subroutine mean_and_stddev_int32_r1(this,field,mean,stddev,N)
   integer(c_int), pointer :: mean_fptr(:), stddev_fptr(:)
   integer :: varsize
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_and_stddev_arr_int(this%c_ptr(),field%c_ptr(),mean_cptr,stddev_cptr,varsize,opt_N)
+  call atlas__NodesFunctionSpace__mean_and_stddev_arr_int( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean_cptr,stddev_cptr,varsize,opt_N)
   call c_f_pointer(mean_cptr,mean_fptr,(/varsize/))
   call c_f_pointer(stddev_cptr,stddev_fptr,(/varsize/))
   allocate(mean(varsize))
@@ -1446,7 +1467,7 @@ subroutine minloclev_real32_r0(this,field,minimum,location,level)
   integer(c_int), intent(out), optional :: level
   integer(c_long) :: loc
   integer(c_int) :: opt_lev
-  call atlas__NodesFunctionSpace__minloclev_float(this%c_ptr(),field%c_ptr(),minimum,loc,opt_lev)
+  call atlas__NodesFunctionSpace__minloclev_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum,loc,opt_lev)
   location = loc
   if( present(level) ) level = opt_lev
 end subroutine
@@ -1463,7 +1484,7 @@ subroutine maxloclev_real32_r0(this,field,maximum,location,level)
   integer(c_int), intent(out), optional :: level
   integer(c_long) :: loc
   integer(c_int) :: opt_lev
-  call atlas__NodesFunctionSpace__maxloclev_float(this%c_ptr(),field%c_ptr(),maximum,loc,opt_lev)
+  call atlas__NodesFunctionSpace__maxloclev_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum,loc,opt_lev)
   location = loc
   if( present(level) ) level = opt_lev
 end subroutine
@@ -1483,7 +1504,7 @@ subroutine minloclev_real32_r1(this,field,minimum,location,level)
   integer(c_long),pointer :: loc_fptr(:)
   integer(c_long),pointer :: lev_fptr(:)
   integer :: min_size
-  call atlas__NodesFunctionSpace__minloclev_arr_float(this%c_ptr(),field%c_ptr(),min_cptr,loc_cptr,lev_cptr,min_size)
+  call atlas__NodesFunctionSpace__minloclev_arr_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,loc_cptr,lev_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/min_size/))
   allocate(minimum(min_size))
@@ -1515,7 +1536,7 @@ subroutine maxloclev_real32_r1(this,field,maximum,location,level)
   integer(c_long),pointer :: loc_fptr(:)
   integer(c_long),pointer :: lev_fptr(:)
   integer :: max_size
-  call atlas__NodesFunctionSpace__maxloclev_arr_float(this%c_ptr(),field%c_ptr(),max_cptr,loc_cptr,lev_cptr,max_size)
+  call atlas__NodesFunctionSpace__maxloclev_arr_float(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,loc_cptr,lev_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/max_size/))
   allocate(maximum(max_size))
@@ -1544,7 +1565,7 @@ subroutine minloclev_real64_r0(this,field,minimum,location,level)
   integer(c_int), intent(out), optional :: level
   integer(c_long) :: loc
   integer(c_int) :: opt_lev
-  call atlas__NodesFunctionSpace__minloclev_double(this%c_ptr(),field%c_ptr(),minimum,loc,opt_lev)
+  call atlas__NodesFunctionSpace__minloclev_double(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum,loc,opt_lev)
   location = loc
   if( present(level) ) level = opt_lev
 end subroutine
@@ -1561,7 +1582,7 @@ subroutine maxloclev_real64_r0(this,field,maximum,location,level)
   integer(c_int), intent(out), optional :: level
   integer(c_long) :: loc
   integer(c_int) :: opt_lev
-  call atlas__NodesFunctionSpace__maxloclev_double(this%c_ptr(),field%c_ptr(),maximum,loc,opt_lev)
+  call atlas__NodesFunctionSpace__maxloclev_double(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum,loc,opt_lev)
   location = loc
   if( present(level) ) level = opt_lev
 end subroutine
@@ -1581,7 +1602,7 @@ subroutine minloclev_real64_r1(this,field,minimum,location,level)
   integer(c_long),pointer :: loc_fptr(:)
   integer(c_long),pointer :: lev_fptr(:)
   integer :: min_size
-  call atlas__NodesFunctionSpace__minloclev_arr_double(this%c_ptr(),field%c_ptr(),min_cptr,loc_cptr,lev_cptr,min_size)
+  call atlas__NodesFunctionSpace__minloclev_arr_double(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,loc_cptr,lev_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/min_size/))
   allocate(minimum(min_size))
@@ -1613,7 +1634,7 @@ subroutine maxloclev_real64_r1(this,field,maximum,location,level)
   integer(c_long),pointer :: loc_fptr(:)
   integer(c_long),pointer :: lev_fptr(:)
   integer :: max_size
-  call atlas__NodesFunctionSpace__maxloclev_arr_double(this%c_ptr(),field%c_ptr(),max_cptr,loc_cptr,lev_cptr,max_size)
+  call atlas__NodesFunctionSpace__maxloclev_arr_double(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,loc_cptr,lev_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/max_size/))
   allocate(maximum(max_size))
@@ -1642,7 +1663,7 @@ subroutine minloclev_int64_r0(this,field,minimum,location,level)
   integer(c_int), intent(out), optional :: level
   integer(c_long) :: loc
   integer(c_int) :: opt_lev
-  call atlas__NodesFunctionSpace__minloclev_long(this%c_ptr(),field%c_ptr(),minimum,loc,opt_lev)
+  call atlas__NodesFunctionSpace__minloclev_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum,loc,opt_lev)
   location = loc
   if( present(level) ) level = opt_lev
 end subroutine
@@ -1659,7 +1680,7 @@ subroutine maxloclev_int64_r0(this,field,maximum,location,level)
   integer(c_int), intent(out), optional :: level
   integer(c_long) :: loc
   integer(c_int) :: opt_lev
-  call atlas__NodesFunctionSpace__maxloclev_long(this%c_ptr(),field%c_ptr(),maximum,loc,opt_lev)
+  call atlas__NodesFunctionSpace__maxloclev_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum,loc,opt_lev)
   location = loc
   if( present(level) ) level = opt_lev
 end subroutine
@@ -1679,7 +1700,7 @@ subroutine minloclev_int64_r1(this,field,minimum,location,level)
   integer(c_long),pointer :: loc_fptr(:)
   integer(c_long),pointer :: lev_fptr(:)
   integer :: min_size
-  call atlas__NodesFunctionSpace__minloclev_arr_long(this%c_ptr(),field%c_ptr(),min_cptr,loc_cptr,lev_cptr,min_size)
+  call atlas__NodesFunctionSpace__minloclev_arr_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,loc_cptr,lev_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/min_size/))
   allocate(minimum(min_size))
@@ -1711,7 +1732,7 @@ subroutine maxloclev_int64_r1(this,field,maximum,location,level)
   integer(c_long),pointer :: loc_fptr(:)
   integer(c_long),pointer :: lev_fptr(:)
   integer :: max_size
-  call atlas__NodesFunctionSpace__maxloclev_arr_long(this%c_ptr(),field%c_ptr(),max_cptr,loc_cptr,lev_cptr,max_size)
+  call atlas__NodesFunctionSpace__maxloclev_arr_long(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,loc_cptr,lev_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/max_size/))
   allocate(maximum(max_size))
@@ -1739,7 +1760,7 @@ subroutine minloclev_int32_r0(this,field,minimum,location,level)
   integer(ATLAS_KIND_GIDX), intent(out) :: location
   integer(c_int), intent(out) :: level
   integer(c_long) :: loc
-  call atlas__NodesFunctionSpace__minloclev_int(this%c_ptr(),field%c_ptr(),minimum,loc,level)
+  call atlas__NodesFunctionSpace__minloclev_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum,loc,level)
   location = loc
 end subroutine
 
@@ -1754,7 +1775,7 @@ subroutine maxloclev_int32_r0(this,field,maximum,location,level)
   integer(ATLAS_KIND_GIDX), intent(out) :: location
   integer(c_int), intent(out) :: level
   integer(c_long) :: loc
-  call atlas__NodesFunctionSpace__maxloclev_int(this%c_ptr(),field%c_ptr(),maximum,loc,level)
+  call atlas__NodesFunctionSpace__maxloclev_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum,loc,level)
   location = loc
 end subroutine
 
@@ -1773,7 +1794,7 @@ subroutine minloclev_int32_r1(this,field,minimum,location,level)
   integer(c_long),pointer :: loc_fptr(:)
   integer(c_int),pointer :: lev_fptr(:)
   integer :: min_size
-  call atlas__NodesFunctionSpace__minloclev_arr_int(this%c_ptr(),field%c_ptr(),min_cptr,loc_cptr,lev_cptr,min_size)
+  call atlas__NodesFunctionSpace__minloclev_arr_int(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,loc_cptr,lev_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/min_size/))
   call c_f_pointer(lev_cptr,lev_fptr,(/min_size/))
@@ -1803,7 +1824,8 @@ subroutine maxloclev_int32_r1(this,field,maximum,location,level)
   integer(c_long),pointer :: loc_fptr(:)
   integer(c_int),pointer :: lev_fptr(:)
   integer :: max_size
-  call atlas__NodesFunctionSpace__maxloclev_arr_int(this%c_ptr(),field%c_ptr(),max_cptr,loc_cptr,lev_cptr,max_size)
+  call atlas__NodesFunctionSpace__maxloclev_arr_int( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,loc_cptr,lev_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/max_size/))
   call c_f_pointer(lev_cptr,lev_fptr,(/max_size/))
@@ -1826,7 +1848,8 @@ subroutine minloc_per_level(this,field,minimum,location)
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(inout) :: minimum
   type(atlas_Field), intent(inout) :: location
-  call atlas__NodesFunctionSpace__minloc_per_level(this%c_ptr(),field%c_ptr(),minimum%c_ptr(),location%c_ptr())
+  call atlas__NodesFunctionSpace__minloc_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum%CPTR_PGIBUG_A,location%CPTR_PGIBUG_A)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1837,7 +1860,8 @@ subroutine maxloc_per_level(this,field,maximum,location)
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(inout) :: maximum
   type(atlas_Field), intent(inout) :: location
-  call atlas__NodesFunctionSpace__maxloc_per_level(this%c_ptr(),field%c_ptr(),maximum%c_ptr(),location%c_ptr())
+  call atlas__NodesFunctionSpace__maxloc_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum%CPTR_PGIBUG_A,location%CPTR_PGIBUG_A)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1847,7 +1871,8 @@ subroutine minimum_per_level(this,field,minimum)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(inout) :: minimum
-  call atlas__NodesFunctionSpace__min_per_level(this%c_ptr(),field%c_ptr(),minimum%c_ptr())
+  call atlas__NodesFunctionSpace__min_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum%CPTR_PGIBUG_A)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1857,7 +1882,8 @@ subroutine maximum_per_level(this,field,maximum)
   class(atlas_functionspace_NodeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(inout) :: maximum
-  call atlas__NodesFunctionSpace__max_per_level(this%c_ptr(),field%c_ptr(),maximum%c_ptr())
+  call atlas__NodesFunctionSpace__max_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum%CPTR_PGIBUG_A)
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -1870,7 +1896,8 @@ subroutine sum_per_level(this,field,sum,N)
   type(atlas_Field), intent(inout) :: sum
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__sum_per_level(this%c_ptr(),field%c_ptr(),sum%c_ptr(),opt_N)
+  call atlas__NodesFunctionSpace__sum_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum%CPTR_PGIBUG_A,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1884,7 +1911,8 @@ subroutine order_independent_sum_per_level(this,field,sum,N)
   type(atlas_Field), intent(inout) :: sum
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__oisum_per_level(this%c_ptr(),field%c_ptr(),sum%c_ptr(),opt_N)
+  call atlas__NodesFunctionSpace__oisum_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum%CPTR_PGIBUG_A,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1898,7 +1926,8 @@ subroutine mean_per_level(this,field,mean,N)
   type(atlas_Field), intent(inout) :: mean
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_per_level(this%c_ptr(),field%c_ptr(),mean%c_ptr(),opt_N)
+  call atlas__NodesFunctionSpace__mean_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean%CPTR_PGIBUG_A,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 
@@ -1914,7 +1943,7 @@ subroutine mean_and_stddev_per_level(this,field,mean,stddev,N)
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
   call atlas__NodesFunctionSpace__mean_and_stddev_per_level( &
-    & this%c_ptr(),field%c_ptr(),mean%c_ptr(),stddev%c_ptr(),opt_N)
+    & this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean%CPTR_PGIBUG_A,stddev%CPTR_PGIBUG_A,opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 

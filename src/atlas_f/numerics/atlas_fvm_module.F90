@@ -67,10 +67,12 @@ function atlas_fvm_Method__mesh_config(mesh,config) result(this)
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    call this%reset_c_ptr( atlas__numerics__fvm__Method__new(mesh%c_ptr(),config%c_ptr()) )
+    call this%reset_c_ptr( atlas__numerics__fvm__Method__new(mesh%CPTR_PGIBUG_A, &
+      config%CPTR_PGIBUG_B) )
   else
     opt_config = atlas_Config()
-    call this%reset_c_ptr( atlas__numerics__fvm__Method__new(mesh%c_ptr(),opt_config%c_ptr()) )
+    call this%reset_c_ptr( atlas__numerics__fvm__Method__new(mesh%CPTR_PGIBUG_A, &
+      opt_config%CPTR_PGIBUG_B) )
     call opt_config%final()
   endif
   call this%return()
@@ -82,7 +84,7 @@ function node_columns(this)
   type(atlas_functionspace_NodeColumns) :: node_columns
   class(atlas_fvm_Method) :: this
   node_columns = atlas_functionspace_NodeColumns( &
-    & atlas__numerics__fvm__Method__functionspace_nodes(this%c_ptr()) )
+    & atlas__numerics__fvm__Method__functionspace_nodes(this%CPTR_PGIBUG_A) )
   call node_columns%return()
 end function
 
@@ -92,7 +94,7 @@ function edge_columns(this)
   type(atlas_functionspace_EdgeColumns) :: edge_columns
   class(atlas_fvm_Method) :: this
   edge_columns = atlas_functionspace_EdgeColumns( &
-    & atlas__numerics__fvm__Method__functionspace_edges(this%c_ptr()) )
+    & atlas__numerics__fvm__Method__functionspace_edges(this%CPTR_PGIBUG_A) )
   call edge_columns%return()
 end function
 

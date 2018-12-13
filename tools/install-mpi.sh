@@ -85,6 +85,7 @@ case "$os" in
                   ${SCRIPTDIR}/reduce-output.sh make -j4
                   ${SCRIPTDIR}/reduce-output.sh make install
                   MPI_INSTALLED=true
+                  echo "localhost slots=72" >> ${PREFIX}/etc/openmpi-default-hostfile
                   cd -
                 fi
                 ;;
