@@ -444,6 +444,7 @@ array/LocalView.cc
 array/LocalView.h
 array/Range.h
 array/Vector.h
+array/SVector.h
 array/helpers/ArrayInitializer.h
 array/helpers/ArrayAssigner.h
 array/helpers/ArrayWriter.h
@@ -531,6 +532,8 @@ util/CoordinateEnums.h
 util/PeriodicTransform.h
 util/Unique.h
 util/Unique.cc
+util/Allocate.h
+util/Allocate.cc
 #parallel/detail/MPLArrayView.h
 )
 

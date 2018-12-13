@@ -32,8 +32,8 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/Vector.h"
-#include "atlas/array/gridtools/GPUClonable.h"
 #include "atlas/array_fwd.h"
+#include "atlas/array/SVector.h"
 #include "atlas/library/config.h"
 
 namespace atlas {
@@ -167,10 +167,6 @@ class IrregularConnectivityImpl {
 public:
     typedef ConnectivityRow Row;
 
-    static constexpr unsigned short _values_ = 0;
-    static constexpr unsigned short _displs_ = 1;
-    static constexpr unsigned short _counts_ = 2;
-
 public:
     //-- Constructors
 
@@ -211,7 +207,7 @@ public:
 
     /// @brief Number of columns for specified row in the connectivity table
     ATLAS_HOST_DEVICE
-    idx_t cols( idx_t row_idx ) const { return counts_view_( row_idx ); }
+    idx_t cols( idx_t row_idx ) const { return counts_[ row_idx ]; }
 
     /// @brief Maximum value for number of columns over all rows
     ATLAS_HOST_DEVICE
@@ -226,13 +222,7 @@ public:
     ATLAS_HOST_DEVICE
     idx_t operator()( idx_t row_idx, idx_t col_idx ) const;
 
-    /// @brief Access to raw data.
-    /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is
-    /// defined.
-    const idx_t* data() const { return values_view_.data(); }
-    idx_t* data() { return values_view_.data(); }
-
-    idx_t size() const { return values_view_.size(); }
+    idx_t size() const { return values_.size(); }
 
     ATLAS_HOST_DEVICE
     idx_t missing_value() const { return missing_value_; }
@@ -283,16 +273,8 @@ public:
 
     virtual size_t footprint() const;
 
-    idx_t displs( const idx_t row ) const { return displs_view_( row ); }
+    idx_t displs( const idx_t row ) const { return displs_[ row ]; }
 
-    virtual void cloneToDevice();
-    virtual void cloneFromDevice();
-    virtual void syncHostDevice() const;
-    virtual bool valid() const;
-    virtual bool hostNeedsUpdate() const;
-    virtual bool deviceNeedsUpdate() const;
-
-    IrregularConnectivityImpl* gpu_object_ptr() { return gpu_clone_.gpu_object_ptr(); }
     void dump( std::ostream& os ) const;
     friend std::ostream& operator<<( std::ostream& os, const IrregularConnectivityImpl& p ) {
         p.dump( os );
@@ -301,8 +283,8 @@ public:
 
 protected:
     bool owns() { return owns_; }
-    const idx_t* displs() const { return displs_view_.data(); }
-    const idx_t* counts() const { return counts_view_.data(); }
+    const idx_t* displs() const { return displs_.data(); }
+    const idx_t* counts() const { return counts_.data(); }
 
 private:
     void on_delete();
@@ -310,13 +292,12 @@ private:
 
 private:
     char name_[MAX_STRING_SIZE()];
-
     bool owns_;
-    std::array<array::Array*, 3> data_;
 
-    array::ArrayView<idx_t, 1> values_view_;
-    array::ArrayView<idx_t, 1> displs_view_;
-    array::ArrayView<idx_t, 1> counts_view_;
+protected:
+    array::SVector<idx_t> values_;
+    array::SVector<idx_t> displs_;
+    array::SVector<idx_t> counts_;
 
     idx_t missing_value_;
     idx_t rows_;
@@ -332,7 +313,6 @@ private:
     ctxt_t ctxt_;
     callback_t callback_update_;
     callback_t callback_delete_;
-    array::gridtools::GPUClonable<IrregularConnectivityImpl> gpu_clone_;
 };
 
 // ----------------------------------------------------------------------------------------------
@@ -377,17 +357,6 @@ public:
     /// Data is owned
     MultiBlockConnectivityImpl( const std::string& name = "" );
 
-    /*
-/// @brief Construct connectivity table wrapping existing raw data.
-/// No resizing can be performed as data is not owned.
-MultiBlockConnectivity(
-    idx_t values[],
-    idx_t rows,
-    idx_t displs[],
-    idx_t counts[],
-    idx_t blocks, idx_t block_displs[],
-    idx_t block_cols[] );
-*/
     virtual ~MultiBlockConnectivityImpl();
 
     //-- Accessors
@@ -398,12 +367,9 @@ MultiBlockConnectivity(
 
     /// @brief Access to a block connectivity
     ATLAS_HOST_DEVICE
-    const BlockConnectivityImpl& block( idx_t block_idx ) const { return *( block_view_[block_idx] ); }
+    const BlockConnectivityImpl& block( idx_t block_idx ) const { return block_[block_idx]; }
     ATLAS_HOST_DEVICE
-    BlockConnectivityImpl& block( idx_t block_idx ) { return *( block_view_[block_idx] ); }
-
-    //  ATLAS_HOST_DEVICE
-    //  BlockConnectivityImpl* base() { return block_.base();}
+    BlockConnectivityImpl& block( idx_t block_idx ) { return block_[block_idx]; }
 
     /// @brief Access to connectivity table elements for given row and column
     /// The row_idx counts up from 0, from block 0, as in IrregularConnectivity
@@ -452,29 +418,15 @@ MultiBlockConnectivity(
 
     virtual size_t footprint() const;
 
-    virtual void cloneToDevice();
-    virtual void cloneFromDevice();
-    virtual void syncHostDevice() const;
-    virtual bool valid() const;
-    virtual bool hostNeedsUpdate() const;
-    virtual bool deviceNeedsUpdate() const;
-
-    MultiBlockConnectivityImpl* gpu_object_ptr() { return gpu_clone_.gpu_object_ptr(); }
-
 private:
     void rebuild_block_connectivity();
 
 private:
     idx_t blocks_;
-    array::Array* block_displs_;
-    array::Array* block_cols_;
+    array::SVector<idx_t> block_displs_;
+    array::SVector<idx_t> block_cols_;
 
-    array::ArrayView<idx_t, 1> block_displs_view_;
-    array::ArrayView<idx_t, 1> block_cols_view_;
-    array::Vector<BlockConnectivityImpl*> block_;
-    array::VectorView<BlockConnectivityImpl*> block_view_;
-
-    array::gridtools::GPUClonable<MultiBlockConnectivityImpl> gpu_clone_;
+    array::SVector<BlockConnectivityImpl> block_;
 };
 
 // -----------------------------------------------------------------------------------------------------
@@ -519,15 +471,20 @@ public:
     // it is compiled it for a GPU kernel
     BlockConnectivityImpl( const BlockConnectivityImpl& other ) :
         owns_( false ),
-        values_( 0 ),
-        values_view_( other.values_view_ ),
+        values_( other.values_ ),
         rows_( other.rows_ ),
         cols_( other.cols_ ),
-        missing_value_( other.missing_value_ ),
-        gpu_clone_( this ) {}
+        missing_value_( other.missing_value_ )
+    {}
+
+    BlockConnectivityImpl( BlockConnectivityImpl&& ) = default;
+    BlockConnectivityImpl& operator=( const BlockConnectivityImpl& other ) = default;
 
     /// @brief Destructor
     ~BlockConnectivityImpl();
+
+    ATLAS_HOST_DEVICE
+    idx_t index(idx_t i, idx_t j) const;
 
     void rebuild( idx_t rows, idx_t cols, idx_t values[] );
 
@@ -550,9 +507,9 @@ public:
     /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is
     /// defined.
     ATLAS_HOST_DEVICE
-    const idx_t* data() const { return values_view_.data(); }
+    const idx_t* data() const { return values_.data(); }
     ATLAS_HOST_DEVICE
-    idx_t* data() { return values_view_.data(); }
+    idx_t* data() { return values_.data(); }
 
     ATLAS_HOST_DEVICE
     idx_t missing_value() const { return missing_value_; }
@@ -573,25 +530,15 @@ public:
     /// @note Can only be used when data is owned.
     void add( idx_t rows, idx_t cols, const idx_t values[], bool fortran_array = false );
 
-    void cloneToDevice();
-    void cloneFromDevice();
-    void syncHostDevice() const;
-    bool valid() const;
-    bool hostNeedsUpdate() const;
-    bool deviceNeedsUpdate() const;
-
     bool owns() const { return owns_; }
-    BlockConnectivityImpl* gpu_object_ptr() { return gpu_clone_.gpu_object_ptr(); }
 
 private:
     bool owns_;
-    array::Array* values_;
-    array::ArrayView<idx_t, 2> values_view_;
+    array::SVector<idx_t> values_;
 
     idx_t rows_;
     idx_t cols_;
     idx_t missing_value_;
-    array::gridtools::GPUClonable<BlockConnectivityImpl> gpu_clone_;
 };
 
 typedef ConnectivityInterface<IrregularConnectivityImpl> IrregularConnectivity;
@@ -603,25 +550,25 @@ typedef IrregularConnectivity Connectivity;
 // -----------------------------------------------------------------------------------------------------
 
 inline idx_t IrregularConnectivityImpl::operator()( idx_t row_idx, idx_t col_idx ) const {
-    assert( counts_view_( row_idx ) > ( col_idx ) );
-    return values_view_( displs_view_( row_idx ) + col_idx ) FROM_FORTRAN;
+    assert( counts_[ row_idx ] > ( col_idx ) );
+    return values_[ displs_[ row_idx ] + col_idx ] FROM_FORTRAN;
 }
 
 inline void IrregularConnectivityImpl::set( idx_t row_idx, const idx_t column_values[] ) {
-    const idx_t N = counts_view_( row_idx );
+    const idx_t N = counts_[ row_idx ];
     for ( idx_t n = 0; n < N; ++n ) {
-        values_view_( displs_view_( row_idx ) + n ) = column_values[n] TO_FORTRAN;
+        values_[ displs_[ row_idx ] + n ] = column_values[n] TO_FORTRAN;
     }
 }
 
 inline void IrregularConnectivityImpl::set( idx_t row_idx, idx_t col_idx, const idx_t value ) {
-    assert( col_idx < counts_view_( row_idx ) );
-    values_view_( displs_view_( row_idx ) + col_idx ) = value TO_FORTRAN;
+    assert( col_idx < counts_[ row_idx ] );
+    values_[ displs_[ row_idx ] + col_idx ] = value TO_FORTRAN;
 }
 
 inline IrregularConnectivityImpl::Row IrregularConnectivityImpl::row( idx_t row_idx ) const {
-    return IrregularConnectivityImpl::Row( const_cast<idx_t*>( values_view_.data() ) + displs_view_( row_idx ),
-                                           counts_view_( row_idx ) );
+    return IrregularConnectivityImpl::Row( const_cast<idx_t*>( values_.data() ) + displs_( row_idx ),
+                                           counts_( row_idx ) );
 }
 
 // -----------------------------------------------------------------------------------------------------
@@ -637,17 +584,21 @@ inline idx_t MultiBlockConnectivityImpl::operator()( idx_t block_idx, idx_t bloc
 // -----------------------------------------------------------------------------------------------------
 
 inline idx_t BlockConnectivityImpl::operator()( idx_t row_idx, idx_t col_idx ) const {
-    return values_view_( row_idx, col_idx ) FROM_FORTRAN;
+    return values_[ index(row_idx, col_idx) ] FROM_FORTRAN;
 }
 
 inline void BlockConnectivityImpl::set( idx_t row_idx, const idx_t column_values[] ) {
     for ( idx_t n = 0; n < cols_; ++n ) {
-        values_view_( row_idx, n ) = column_values[n] TO_FORTRAN;
+        values_[ index(row_idx, n) ] = column_values[n] TO_FORTRAN;
     }
 }
 
 inline void BlockConnectivityImpl::set( idx_t row_idx, idx_t col_idx, const idx_t value ) {
-    values_view_( row_idx, col_idx ) = value TO_FORTRAN;
+    values_[ index(row_idx, col_idx) ] = value TO_FORTRAN;
+}
+
+inline idx_t BlockConnectivityImpl::index(idx_t i, idx_t j) const {
+    return i*cols_ + j;
 }
 
 // ------------------------------------------------------------------------------------------------------

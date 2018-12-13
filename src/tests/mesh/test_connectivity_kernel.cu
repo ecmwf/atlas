@@ -25,10 +25,8 @@ namespace test {
 
 
 __global__
-void kernel_block(BlockConnectivityImpl* conn_, bool* result)
+void kernel_block(BlockConnectivityImpl conn, bool* result)
 {
-    BlockConnectivityImpl& conn = *conn_;
-
     *result &= (conn.rows() == 2);
     *result &= (conn.cols() == 5);
 
@@ -38,10 +36,8 @@ void kernel_block(BlockConnectivityImpl* conn_, bool* result)
 }
 
 __global__
-void kernel_irr(IrregularConnectivityImpl* conn_, bool* result)
+void kernel_irr(IrregularConnectivityImpl conn, bool* result)
 {
-
-    IrregularConnectivityImpl& conn = *conn_;
 
     *result = true;
 
@@ -58,10 +54,8 @@ void kernel_irr(IrregularConnectivityImpl* conn_, bool* result)
 }
 
 __global__
-void kernel_multiblock(MultiBlockConnectivityImpl* conn_, bool* result)
+void kernel_multiblock(MultiBlockConnectivityImpl conn, bool* result)
 {
-
-    MultiBlockConnectivityImpl& conn = *conn_;
 
     *result = true;
 
@@ -108,10 +102,7 @@ CASE( "test_block_connectivity" )
     EXPECT(conn(1,3) == 84);
     EXPECT(conn(1,4) == 45);
 
-    conn.cloneToDevice();
-    EXPECT( !conn.deviceNeedsUpdate() );
-
-    kernel_block<<<1,1>>>(conn.gpu_object_ptr(), result);
+    kernel_block<<<1,1>>>(conn, result);
 
     cudaDeviceSynchronize();
 
@@ -120,7 +111,6 @@ CASE( "test_block_connectivity" )
     // copy back, although not strickly needed since the gpu copy does not modify values,
     // but for the sake of testing it
 
-    conn.cloneFromDevice();
     EXPECT((conn)(0,4) == 356 );
 }
 
@@ -140,10 +130,7 @@ CASE( "test_irregular_connectivity" )
     cudaMallocManaged(&result, sizeof(bool));
     *result = true;
 
-    conn.cloneToDevice();
-    EXPECT( !conn.deviceNeedsUpdate() );
-
-    kernel_irr<<<1,1>>>(conn.gpu_object_ptr(), result);
+    kernel_irr<<<1,1>>>(conn, result);
 
     cudaDeviceSynchronize();
 
@@ -151,7 +138,6 @@ CASE( "test_irregular_connectivity" )
 
     // copy back, although not strickly needed since the gpu copy does not modify values,
     // but for the sake of testing it
-    conn.cloneFromDevice();
     EXPECT(conn(0,1) == 3 IN_FORTRAN);
 
 }
@@ -172,10 +158,7 @@ CASE( "test_multiblock_connectivity" )
     cudaMallocManaged(&result, sizeof(bool));
     *result = true;
 
-    conn.cloneToDevice();
-    EXPECT( !conn.deviceNeedsUpdate() );
-
-    kernel_multiblock<<<1,1>>>(conn.gpu_object_ptr(), result);
+    kernel_multiblock<<<1,1>>>(conn, result);
 
     cudaDeviceSynchronize();
 
@@ -183,7 +166,6 @@ CASE( "test_multiblock_connectivity" )
 
     // copy back, although not strickly needed since the gpu copy does not modify values,
     // but for the sake of testing it
-    conn.cloneFromDevice();
     EXPECT(conn.block(0)(0,0) == 1 IN_FORTRAN);
 
 }

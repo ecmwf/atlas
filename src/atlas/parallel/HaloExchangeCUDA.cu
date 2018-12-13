@@ -8,6 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/parallel/HaloExchangeCUDA.h"
 #include "atlas/parallel/HaloExchangeImpl.h"
 #include "atlas/array/SVector.h"
