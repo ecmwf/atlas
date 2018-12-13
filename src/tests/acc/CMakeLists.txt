@@ -9,8 +9,10 @@
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAVE_CUDA AND ENABLE_TESTS AND HAVE_FCTEST AND ATLAS_HAVE_ACC )
 
-  set_source_files_properties( fctest_unified_memory_with_openacc.F90 PROPERTIES COMPILE_FLAGS "-acc -ta=tesla,nordc" )
+  string (REPLACE ";" " " ACC_Fortran_FLAGS_STR "${ACC_Fortran_FLAGS}")
 
+
+  set_source_files_properties( fctest_unified_memory_with_openacc.F90 PROPERTIES COMPILE_FLAGS ${ACC_Fortran_FLAGS_STR} )
   add_fctest( 
     TARGET atlas_test_unified_memory_with_openacc
     SOURCES fctest_unified_memory_with_openacc.F90
@@ -18,7 +20,16 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAVE_CUDA AND ENABLE_TESTS AND HA
     LIBS atlas_f
     LINKER_LANGUAGE Fortran
   )
+  target_link_libraries( atlas_test_unified_memory_with_openacc ${ACC_Fortran_FLAGS} )
 
-  target_link_libraries( atlas_test_unified_memory_with_openacc "${ACC_Fortran_FLAGS}" )
+
+  add_fctest( 
+    TARGET atlas_test_connectivity_openacc
+    SOURCES fctest_connectivity_openacc.F90
+    LIBS atlas_f
+    LINKER_LANGUAGE Fortran
+  )
+  target_link_libraries( atlas_test_connectivity_openacc ${ACC_Fortran_FLAGS} )
+  set_target_properties( atlas_test_connectivity_openacc PROPERTIES COMPILE_FLAGS "${ACC_Fortran_FLAGS_STR}" )
 
 endif()

@@ -6,6 +6,7 @@ use, intrinsic :: iso_c_binding, only : c_int, c_ptr, c_null_ptr
 use fckit_owned_object_module, only : fckit_owned_object
 use fckit_object_module, only : fckit_object
 use atlas_kinds_module, only : ATLAS_KIND_IDX
+use atlas_allocate_module, only : atlas_allocate_managedmem, atlas_deallocate_managedmem
 implicit none
 
 private :: c_ptr
@@ -13,6 +14,8 @@ private :: c_int
 private :: c_null_ptr
 private :: fckit_owned_object
 private :: fckit_object
+private :: atlas_allocate_managedmem
+private :: atlas_deallocate_managedmem
 
 public :: atlas_Connectivity
 public :: atlas_MultiBlockConnectivity
@@ -582,8 +585,8 @@ end subroutine
 subroutine update_padded(this)
   class(atlas_ConnectivityAccess), intent(inout) :: this
   integer(ATLAS_KIND_IDX) :: jrow, jcol
-  if( associated(this%padded_) ) deallocate(this%padded_)
-  allocate(this%padded_(this%maxcols_,this%rows()))
+  if( associated(this%padded_) ) call atlas_deallocate_managedmem( this%padded_ )
+  call atlas_allocate_managedmem( this%padded_, [this%maxcols_,this%rows()] )
   this%padded_(:,:) = this%missing_value_
   do jrow=1,this%rows()
     do jcol=1,this%cols(jrow)
@@ -605,7 +608,7 @@ subroutine delete_access(this)
   use atlas_connectivity_c_binding
   type(atlas_ConnectivityAccess), intent(inout) :: this
   if( associated( this%row ) )    deallocate(this%row)
-  if( associated( this%padded_) ) deallocate(this%padded_)
+  if( associated( this%padded_) ) call atlas_deallocate_managedmem(this%padded_)
 end subroutine
 
 !-------------------------------------------------------------------------------

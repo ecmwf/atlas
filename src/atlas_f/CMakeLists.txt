@@ -165,6 +165,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/interpolation/Interpolation.
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/ifs/TransIFS.h
   MODULE    atlas_trans_c_binding
   OUTPUT    trans_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Allocate.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Metadata.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Config.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/detail/GmshIO.h)
@@ -196,6 +197,7 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_Config_module.F90
         util/atlas_Metadata_module.F90
         util/atlas_Error_module.F90
+        util/atlas_allocate_module.F90
         output/atlas_output_module.F90
         functionspace/atlas_FunctionSpace_module.F90
         functionspace/atlas_functionspace_EdgeColumns_module.F90
