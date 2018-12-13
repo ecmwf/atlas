@@ -1,3 +1,6 @@
+#include <fstream>
+#include <cstring>
+
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/runtime/Main.h"

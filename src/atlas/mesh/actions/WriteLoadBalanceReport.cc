@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <numeric>
 
 #include "eckit/filesystem/PathName.h"
 

@@ -11,6 +11,7 @@
 #pragma once
 
 #include <functional>
+#include <initializer_list>
 
 #include "eckit/memory/SharedPtr.h"
 

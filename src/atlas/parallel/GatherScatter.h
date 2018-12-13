@@ -12,6 +12,7 @@
 
 #include <stdexcept>
 #include <vector>
+#include <numeric>
 
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
@@ -219,7 +220,7 @@ private:  // data
     int glb_cnt( idx_t root ) const { return myproc == root ? glbcnt_ : 0; }
 };
 
-////////////////////////////////////////////////////////////////////////////////
+//--------------------------------------------------------------------------------------------------
 
 template <typename DATA_TYPE>
 void GatherScatter::gather( parallel::Field<DATA_TYPE const> lfields[], parallel::Field<DATA_TYPE> gfields[],
@@ -495,7 +496,7 @@ void atlas__GatherScatter__scatter_double( GatherScatter* This, double gdata[], 
                                            int lvar_rank );
 }
 
-// ------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 
 // typedef GatherScatter Gather;
 

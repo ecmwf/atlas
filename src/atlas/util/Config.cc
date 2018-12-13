@@ -12,6 +12,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <fstream>
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"

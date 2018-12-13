@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <fstream>
+
 #include "atlas/output/Output.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"

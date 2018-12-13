@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <fstream>
+
 #include "atlas/mesh/PartitionPolygon.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"

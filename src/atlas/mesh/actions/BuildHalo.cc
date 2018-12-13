@@ -12,6 +12,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
+#include <numeric>
 
 #include "atlas/array.h"
 #include "atlas/array/IndexView.h"

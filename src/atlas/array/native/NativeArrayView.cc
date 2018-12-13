@@ -9,6 +9,7 @@
  */
 
 #include <iostream>
+#include <initializer_list>
 
 #include "eckit/exception/Exceptions.h"
 

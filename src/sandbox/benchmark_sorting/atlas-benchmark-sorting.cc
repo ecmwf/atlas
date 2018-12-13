@@ -16,6 +16,7 @@
 #include <limits>
 #include <memory>
 #include <sstream>
+#include <numeric>
 #include <vector>
 
 #include "eckit/exception/Exceptions.h"
@@ -215,7 +216,7 @@ void Tool::execute( const Args& args ) {
         try {
             grid = Grid( key );
         }
-        catch ( eckit::BadParameter& e ) {
+        catch ( eckit::BadParameter& ) {
         }
     }
     else {

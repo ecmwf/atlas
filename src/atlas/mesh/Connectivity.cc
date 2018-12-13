@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <algorithm>
 #include <limits>
 
 #include "atlas/array.h"

@@ -1,3 +1,5 @@
+#include "eckit/eckit_version.h"
+
 #include "atlas/library/Library.h"
 #include "atlas_f/internals/Library.h"
 

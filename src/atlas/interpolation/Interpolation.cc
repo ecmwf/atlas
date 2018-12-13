@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <fstream>
+
 #include "eckit/exception/Exceptions.h"
 
 #include "atlas/field/Field.h"

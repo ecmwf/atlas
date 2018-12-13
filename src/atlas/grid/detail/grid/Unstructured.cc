@@ -12,6 +12,7 @@
 
 #include <limits>
 #include <memory>
+#include <initializer_list>
 
 #include "eckit/memory/Builder.h"
 #include "eckit/types/FloatCompare.h"

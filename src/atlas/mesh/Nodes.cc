@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <algorithm>
+
 #include "atlas/mesh/Nodes.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"

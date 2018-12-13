@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <string>
+#include <fstream>
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/memory/ScopedPtr.h"

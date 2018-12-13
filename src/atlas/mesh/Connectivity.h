@@ -23,7 +23,9 @@
 
 #pragma once
 
+#include <cstring>
 #include <array>
+#include <initializer_list>
 
 #include "eckit/memory/Owned.h"
 

@@ -15,6 +15,7 @@
 #include <limits>
 #include <regex>
 #include <sstream>
+#include <iomanip>
 #include <string>
 
 #include "eckit/config/Configuration.h"

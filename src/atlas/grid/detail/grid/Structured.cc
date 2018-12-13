@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <numeric>
 
 #include "eckit/types/FloatCompare.h"
 

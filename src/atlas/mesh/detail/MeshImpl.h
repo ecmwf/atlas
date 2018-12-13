@@ -11,6 +11,7 @@
 #pragma once
 
 #include <iosfwd>
+#include <memory>
 
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"

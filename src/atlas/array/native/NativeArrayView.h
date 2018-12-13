@@ -53,6 +53,7 @@
 #include <cstddef>
 #include <initializer_list>
 #include <type_traits>
+#include <iostream>
 
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/ArrayViewDefs.h"

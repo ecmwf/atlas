@@ -11,6 +11,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 #include "eckit/memory/Owned.h"
 
