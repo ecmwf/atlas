@@ -287,7 +287,6 @@ Array* Array::create( DataType datatype, const ArrayShape& shape ) {
             throw eckit::BadParameter( err.str(), Here() );
         }
     }
-    return 0;
 }
 
 Array* Array::create( DataType datatype, const ArrayShape& shape, const ArrayLayout& layout ) {
@@ -309,7 +308,6 @@ Array* Array::create( DataType datatype, const ArrayShape& shape, const ArrayLay
             throw eckit::BadParameter( err.str(), Here() );
         }
     }
-    return 0;
 }
 
 //------------------------------------------------------------------------------
