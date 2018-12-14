@@ -51,7 +51,6 @@ public:
         return *this;
     }
 
-    ATLAS_HOST_DEVICE
     SVector& operator=( SVector && other ) = default;
 
     ATLAS_HOST_DEVICE
