@@ -9,10 +9,10 @@
  */
 
 #include <cstdarg>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <fstream>
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
@@ -64,9 +64,9 @@ Config Config::operator|( const Config& other ) const {
 
 Config& Config::set( const eckit::LocalConfiguration& other ) {
     eckit::ValueMap otherval = other.get();
-
+    eckit::Value& root       = const_cast<eckit::Value&>( get() );
     for ( eckit::ValueMap::const_iterator vit = otherval.begin(); vit != otherval.end(); ++vit ) {
-        root_[vit->first] = vit->second;
+        root[vit->first] = vit->second;
     }
     return *this;
 }

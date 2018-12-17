@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/grid/detail/partitioner/Partitioner.h"

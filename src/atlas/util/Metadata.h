@@ -10,11 +10,10 @@
 
 #pragma once
 
+#include <string>
+
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/config/Parametrisation.h"
-#include "eckit/utils/Hash.h"
-
-#include <string>
 
 namespace atlas {
 namespace util {

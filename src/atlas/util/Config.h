@@ -13,11 +13,11 @@
 #include <string>
 
 #include "eckit/config/LocalConfiguration.h"
-#include "eckit/utils/Hash.h"
 
 namespace eckit {
 class PathName;
-}
+class Hash;
+}  // namespace eckit
 
 namespace atlas {
 namespace util {

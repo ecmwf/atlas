@@ -1,10 +1,13 @@
 #include "atlas_trace.h"
+
 #include <string>
 #include <vector>
+
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/runtime/trace/CodeLocation.h"
-#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 

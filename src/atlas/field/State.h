@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include <map>
+
 #include "atlas/field/Field.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Metadata.h"

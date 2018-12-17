@@ -12,6 +12,9 @@
 
 #include <cmath>
 #include <vector>
+
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/grid/Vertical.h"
 #include "atlas/library/config.h"
 

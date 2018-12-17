@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "eckit/memory/Owned.h"
 
 #include "atlas/library/config.h"

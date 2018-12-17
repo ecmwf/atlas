@@ -13,7 +13,6 @@
 #include <array>
 #include <memory>
 
-#include "eckit/memory/Builder.h"
 #include "eckit/utils/Hash.h"
 
 #include "atlas/grid/Spacing.h"

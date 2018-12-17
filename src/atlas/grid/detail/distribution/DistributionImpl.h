@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "eckit/memory/Owned.h"

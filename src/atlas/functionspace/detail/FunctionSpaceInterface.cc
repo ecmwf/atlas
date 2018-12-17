@@ -8,8 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "FunctionSpaceInterface.h"
+#include <cstring>
+
 #include "FunctionSpaceImpl.h"
+#include "FunctionSpaceInterface.h"
 
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"

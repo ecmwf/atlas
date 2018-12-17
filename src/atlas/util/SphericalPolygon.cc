@@ -13,6 +13,7 @@
 #include <iostream>
 #include <limits>
 
+#include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/util/CoordinateEnums.h"

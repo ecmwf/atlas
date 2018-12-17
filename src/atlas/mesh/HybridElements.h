@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <map>
+
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 

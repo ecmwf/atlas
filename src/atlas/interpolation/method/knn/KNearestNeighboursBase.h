@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "eckit/memory/ScopedPtr.h"
+#include <memory>
 
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/interpolation/method/PointIndex3.h"
@@ -27,7 +27,7 @@ public:
 protected:
     void buildPointSearchTree( Mesh& meshSource );
 
-    eckit::ScopedPtr<PointIndex3> pTree_;
+    std::unique_ptr<PointIndex3> pTree_;
 };
 
 }  // namespace method

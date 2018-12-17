@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <cstring>
 
 #include "atlas/field/Field.h"
 #include "atlas/field/detail/FieldImpl.h"

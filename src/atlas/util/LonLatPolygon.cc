@@ -14,6 +14,8 @@
 #include <iostream>
 #include <limits>
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatPolygon.h"
 

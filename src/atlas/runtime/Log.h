@@ -31,7 +31,12 @@ public:
 
 #if !ATLAS_HAVE_FORTRAN
     // Stubs for what fckit::Log provides
-    enum Style{SIMPLE = 0, PREFIX = 1, TIMESTAMP = 2};
+    enum Style
+    {
+        SIMPLE    = 0,
+        PREFIX    = 1,
+        TIMESTAMP = 2
+    };
     static void addFortranUnit( int unit, Style = PREFIX, const char* prefix = "" ) { /*NOTIMP*/
     }
     static void setFortranUnit( int unit, Style = PREFIX, const char* prefix = "" ) { /*NOTIMP*/
@@ -45,16 +50,18 @@ public:
 
 std::string backtrace();
 
-namespace detail {
-void debug_parallel_here( const eckit::CodeLocation& );
-void debug_parallel_what( const eckit::CodeLocation&, const std::string& );
-}  // namespace detail
-
 }  // namespace atlas
 
 #include <sstream>
 #include "atlas/util/detail/BlackMagic.h"
 #include "eckit/log/CodeLocation.h"
+
+namespace atlas {
+namespace detail {
+void debug_parallel_here( const eckit::CodeLocation& );
+void debug_parallel_what( const eckit::CodeLocation&, const std::string& );
+}  // namespace detail
+}  // namespace atlas
 
 #define ATLAS_DEBUG_HERE()                                           \
     do {                                                             \

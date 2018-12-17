@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/option/Options.h"
 #include "atlas/util/Earth.h"
 

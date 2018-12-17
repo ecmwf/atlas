@@ -1,3 +1,5 @@
+#include "eckit/utils/Hash.h"
+
 #include "atlas/domain/detail/EmptyDomain.h"
 
 namespace atlas {

@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include <cassert>
 #include <vector>
+
 #include "atlas/library/config.h"
 #include "atlas/util/Config.h"
 
@@ -78,7 +80,7 @@ Vertical::Vertical( idx_t levels, const vector_t& z, const util::Config& ) {
     size_    = levels;
     k_begin_ = 0;
     k_end_   = size_;
-    ASSERT( size_ == static_cast<idx_t>( z.size() ) );
+    assert( size_ == static_cast<idx_t>( z.size() ) );
     z_.resize( size_ );
     for ( idx_t k = 0; k < size_; ++k ) {
         z_[k] = z[k];
