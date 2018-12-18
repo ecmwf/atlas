@@ -12,7 +12,6 @@
 
 #include <memory>
 
-#include "eckit/config/Configuration.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
