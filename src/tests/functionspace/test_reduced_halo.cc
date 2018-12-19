@@ -8,17 +8,17 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <algorithm>
+#include <array>
 #include <string>
 #include <vector>
-#include <array>
-#include <algorithm>
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "tests/AtlasTestEnvironment.h"
 
@@ -36,7 +36,7 @@ Container reversed( const Container& a ) {
     return a_reversed;
 }
 
-static std::array<bool,2> false_true { false, true };
+static std::array<bool, 2> false_true{false, true};
 
 //-----------------------------------------------------------------------------
 

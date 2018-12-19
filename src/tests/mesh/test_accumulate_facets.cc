@@ -15,7 +15,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/option.h"
 #include "atlas/util/Unique.h"
 
@@ -31,8 +31,7 @@ namespace test {
 
 CASE( "test_accumulate_facets" ) {
     Grid grid( "O2" );
-    meshgenerator::StructuredMeshGenerator generator(
-        Config( "angle", 29.0 )( "triangulate", false )( "ghost_at_end", false ) );
+    StructuredMeshGenerator generator( Config( "angle", 29.0 )( "triangulate", false )( "ghost_at_end", false ) );
 
     Mesh mesh = generator.generate( grid );
 
@@ -243,8 +242,7 @@ CASE( "test_accumulate_facets" ) {
 CASE( "test_build_edges" ) {
     idx_t missing_value = -1;
     Grid grid( "O2" );
-    meshgenerator::StructuredMeshGenerator generator(
-        Config( "angle", 29.0 )( "triangulate", false )( "ghost_at_end", false ) );
+    StructuredMeshGenerator generator( Config( "angle", 29.0 )( "triangulate", false )( "ghost_at_end", false ) );
     Mesh mesh = generator.generate( grid );
 
     // Accumulate facets of cells ( edges in 2D )
@@ -487,8 +485,7 @@ CASE( "test_build_edges" ) {
 
 CASE( "test_build_edges_triangles_only" ) {
     Grid grid( "O2" );
-    meshgenerator::StructuredMeshGenerator generator(
-        Config( "angle", 29.0 )( "triangulate", true )( "ghost_at_end", false ) );
+    StructuredMeshGenerator generator( Config( "angle", 29.0 )( "triangulate", true )( "ghost_at_end", false ) );
     Mesh mesh = generator.generate( grid );
 
     // Accumulate facets of cells ( edges in 2D )

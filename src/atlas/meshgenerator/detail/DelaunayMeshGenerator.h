@@ -11,6 +11,7 @@
 #pragma once
 
 #include "atlas/meshgenerator/MeshGenerator.h"
+#include "atlas/meshgenerator/detail/MeshGeneratorImpl.h"
 
 namespace atlas {
 class Mesh;
@@ -27,7 +28,7 @@ public:
     DelaunayMeshGenerator();
     DelaunayMeshGenerator( const eckit::Parametrisation& p );
 
-    virtual ~DelaunayMeshGenerator();
+    virtual ~DelaunayMeshGenerator() override;
 
 private:  // methods
     virtual void hash( eckit::Hash& ) const override;

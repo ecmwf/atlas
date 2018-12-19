@@ -22,7 +22,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -192,7 +192,7 @@ CASE( "test2" ) {
     meshgen_options.set( "angle", 27.5 );
     meshgen_options.set( "triangulate", false );
     meshgen_options.set( "partitioner", "equal_regions" );
-    meshgenerator::StructuredMeshGenerator generate( meshgen_options );
+    StructuredMeshGenerator generate( meshgen_options );
     Mesh m = generate( Grid( "N32" ) );
     mesh::actions::build_parallel_fields( m );
 

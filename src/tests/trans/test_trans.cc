@@ -26,7 +26,7 @@
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
@@ -254,7 +254,7 @@ CASE( "test_distribution" ) {
 CASE( "test_generate_mesh" ) {
     Log::info() << "test_generate_mesh" << std::endl;
     Grid g( "O80" );
-    meshgenerator::StructuredMeshGenerator generate( atlas::util::Config( "angle", 0 )( "triangulate", true ) );
+    StructuredMeshGenerator generate( atlas::util::Config( "angle", 0 )( "triangulate", true ) );
 
     Mesh m_default = generate( g );
 
@@ -282,7 +282,7 @@ CASE( "test_spectral_fields" ) {
     Log::info() << "test_spectral_fields" << std::endl;
 
     Grid g( "O48" );
-    meshgenerator::StructuredMeshGenerator generate( atlas::util::Config( "angle", 0 )( "triangulate", false ) );
+    StructuredMeshGenerator generate( atlas::util::Config( "angle", 0 )( "triangulate", false ) );
     Mesh m = generate( g );
 
     trans::Trans trans( g, 47 );

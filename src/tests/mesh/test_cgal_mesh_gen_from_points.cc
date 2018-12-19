@@ -18,7 +18,7 @@
 #include "atlas/library/Library.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/meshgenerator/DelaunayMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 
 using namespace atlas;
@@ -36,7 +36,7 @@ int main( int argc, char** argv ) {
     Grid grid( "L33x11" );
 
     // Build a mesh from grid
-    DelaunayMeshGenerator generate;
+    MeshGenerator generate( "delaunay" );
     Mesh mesh = generate( grid );
 
     Gmsh gmsh( "earth.msh", util::Config( "coordinates", "xyz" ) );

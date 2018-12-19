@@ -11,6 +11,7 @@
 #pragma once
 
 #include "atlas/meshgenerator/MeshGenerator.h"
+#include "atlas/meshgenerator/detail/MeshGeneratorImpl.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Metadata.h"
 
@@ -31,8 +32,6 @@ class Distribution;
 
 namespace atlas {
 namespace meshgenerator {
-
-namespace detail {
 
 struct Region;
 
@@ -63,15 +62,6 @@ private:
 
 private:
     util::Metadata options;
-};
-
-}  // namespace detail
-
-class StructuredMeshGenerator : public MeshGenerator {
-public:
-    StructuredMeshGenerator( const eckit::Parametrisation& config = util::NoConfig() ) :
-        MeshGenerator( "structured", config ) {}
-    StructuredMeshGenerator( const MeshGenerator& m ) : MeshGenerator( m ) {}
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -12,16 +12,11 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/value/CompositeParams.h"
 
-#include "atlas/array/DataType.h"
-#include "atlas/array/MakeView.h"
+#include "atlas/array.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/field/State.h"
 #include "atlas/grid.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/library/Library.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 
@@ -31,7 +26,6 @@ using namespace std;
 using namespace eckit;
 using namespace atlas;
 using namespace atlas::grid;
-using namespace atlas::meshgenerator;
 
 //-----------------------------------------------------------------------------
 

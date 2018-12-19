@@ -67,7 +67,7 @@ CASE( "test_distribute_t63" ) {
     //  meshgenerator::StructuredMeshGenerator generate( util::Config
     //      ("nb_parts",1)
     //      ("part",0) );
-    meshgenerator::StructuredMeshGenerator generate( util::Config( "partitioner", "equal_regions" ) );
+    StructuredMeshGenerator generate( util::Config( "partitioner", "equal_regions" ) );
 
     // long lon[] = {4,6,8,8,8};
     // test::TestGrid grid(5,lon);

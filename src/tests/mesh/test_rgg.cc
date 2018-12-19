@@ -27,7 +27,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
@@ -214,7 +214,7 @@ CASE( "test_rgg_meshgen_one_part" ) {
     //  generate.options.set("part",    0);
     DISABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
         ENABLE {
-            meshgenerator::StructuredMeshGenerator generate( default_opts( "3d", true )( "include_pole", false ) );
+            StructuredMeshGenerator generate( default_opts( "3d", true )( "include_pole", false ) );
             m = generate( atlas::test::debug_grid() );
             EXPECT( m.nodes().size() == 156 );
             EXPECT( m.cells().elements( 0 ).size() == 134 );
@@ -228,7 +228,7 @@ CASE( "test_rgg_meshgen_one_part" ) {
         }
 
         ENABLE {
-            meshgenerator::StructuredMeshGenerator generate( default_opts( "3d", false )( "include_pole", false ) );
+            StructuredMeshGenerator generate( default_opts( "3d", false )( "include_pole", false ) );
             m = generate( atlas::test::debug_grid() );
             EXPECT( m.nodes().size() == 166 );
             EXPECT( m.cells().elements( 0 ).size() == 134 );
@@ -242,7 +242,7 @@ CASE( "test_rgg_meshgen_one_part" ) {
         }
 
         ENABLE {
-            meshgenerator::StructuredMeshGenerator generate( default_opts( "3d", true )( "include_pole", true ) );
+            StructuredMeshGenerator generate( default_opts( "3d", true )( "include_pole", true ) );
             m = generate( atlas::test::debug_grid() );
             EXPECT( m.nodes().size() == 158 );
             EXPECT( m.cells().elements( 0 ).size() == 134 );
@@ -258,7 +258,7 @@ CASE( "test_rgg_meshgen_one_part" ) {
         Mesh mesh;
 
         ENABLE {
-            meshgenerator::StructuredMeshGenerator generate( default_opts( "3d", false )( "include_pole", false ) );
+            StructuredMeshGenerator generate( default_opts( "3d", false )( "include_pole", false ) );
             int nlat   = 2;
             long lon[] = {4, 6};
             mesh       = generate( test::minimal_grid( nlat, lon ) );
@@ -273,7 +273,7 @@ CASE( "test_rgg_meshgen_one_part" ) {
         }
         // 3 latitudes
         ENABLE {
-            meshgenerator::StructuredMeshGenerator generate( default_opts( "3d", false )( "include_pole", false ) );
+            StructuredMeshGenerator generate( default_opts( "3d", false )( "include_pole", false ) );
             int nlat   = 3;
             long lon[] = {4, 6, 8};
             mesh       = generate( test::minimal_grid( nlat, lon ) );
@@ -284,7 +284,7 @@ CASE( "test_rgg_meshgen_one_part" ) {
         }
         // 4 latitudes
         ENABLE {
-            meshgenerator::StructuredMeshGenerator generate( default_opts( "3d", false )( "include_pole", false ) );
+            StructuredMeshGenerator generate( default_opts( "3d", false )( "include_pole", false ) );
             int nlat   = 4;
             long lon[] = {4, 6, 8, 10};
             mesh       = generate( test::minimal_grid( nlat, lon ) );
@@ -295,7 +295,7 @@ CASE( "test_rgg_meshgen_one_part" ) {
         }
         // 5 latitudes WIP
         ENABLE {
-            meshgenerator::StructuredMeshGenerator generate( default_opts( "3d", false )( "include_pole", false ) );
+            StructuredMeshGenerator generate( default_opts( "3d", false )( "include_pole", false ) );
             int nlat   = 5;
             long lon[] = {6, 10, 18, 22, 22};
             mesh       = generate( test::minimal_grid( nlat, lon ) );
@@ -339,8 +339,8 @@ ASSERT(0);
     for ( size_t p = 0; p < nb_parts; ++p ) {
         ATLAS_DEBUG_VAR( p );
 
-        meshgenerator::StructuredMeshGenerator generate( util::Config( "partitioner", "equal_regions" )(
-            "nb_parts", nb_parts )( "part", p )( "include_pole", false )( "3d", false ) );
+        StructuredMeshGenerator generate( util::Config( "partitioner", "equal_regions" )( "nb_parts", nb_parts )(
+            "part", p )( "include_pole", false )( "3d", false ) );
         ATLAS_DEBUG_HERE();
 
         Mesh m = generate( grid );
@@ -417,7 +417,7 @@ CASE( "test_meshgen_ghost_at_end" ) {
     atlas::util::Config cfg;
     cfg.set( "part", 1 );
     cfg.set( "nb_parts", 8 );
-    meshgenerator::StructuredMeshGenerator meshgenerator( cfg );
+    StructuredMeshGenerator meshgenerator( cfg );
     Mesh mesh        = meshgenerator.generate( grid );
     const auto part  = array::make_view<int, 1>( mesh.nodes().partition() );
     const auto ghost = array::make_view<int, 1>( mesh.nodes().ghost() );

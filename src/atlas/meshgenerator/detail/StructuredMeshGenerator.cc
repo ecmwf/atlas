@@ -31,7 +31,8 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
+#include "atlas/meshgenerator/detail/StructuredMeshGenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
@@ -46,7 +47,6 @@ using Topology = atlas::mesh::Nodes::Topology;
 
 namespace atlas {
 namespace meshgenerator {
-namespace detail {
 
 namespace {
 static double to_rad = M_PI / 180.;
@@ -470,9 +470,9 @@ We need to connect to next region
                 else
                     throw Exception( "Should not try to make a quadrilateral!", Here() );
             }
-            // ------------------------------------------------
-            // END RULES
-            // ------------------------------------------------
+                // ------------------------------------------------
+                // END RULES
+                // ------------------------------------------------
 
 #if DEBUG_OUTPUT
             ATLAS_DEBUG_VAR( jelem );
@@ -1160,11 +1160,11 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
     }
 
     if ( include_south_pole ) {
-        int jlat    = rg.ny() - 1;
-        int ilat    = region.south - region.north;
-        int ip1     = 0;
-        size_t nlon = rg.nx( jlat ) + 1 - ( periodic_east_west ? 0 : 1 );
-        for ( size_t ip2 = 1; ip2 < nlon; ++ip2 ) {
+        int jlat   = rg.ny() - 1;
+        int ilat   = region.south - region.north;
+        int ip1    = 0;
+        idx_t nlon = rg.nx( jlat ) + 1 - ( periodic_east_west ? 0 : 1 );
+        for ( idx_t ip2 = 1; ip2 < nlon; ++ip2 ) {
             jcell          = triag_begin + jtriag++;
             int ip3        = ip2 - 1;
             triag_nodes[0] = node_numbering.at( jsouth + ip1 );
@@ -1226,8 +1226,7 @@ void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, con
 
 namespace {
 static MeshGeneratorBuilder<StructuredMeshGenerator> __Structured( "structured" );
-}
+}  // namespace
 
-}  // namespace detail
 }  // namespace meshgenerator
 }  // namespace atlas

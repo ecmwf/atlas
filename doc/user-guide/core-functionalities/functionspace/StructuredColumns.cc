@@ -5,14 +5,14 @@
 #include "atlas/grid.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/CoordinateEnums.h"
 
 using namespace atlas;
+using atlas::StructuredMeshGenerator;
 using atlas::array::make_view;
 using atlas::functionspace::StructuredColumns;
-using atlas::meshgenerator::StructuredMeshGenerator;
 using atlas::output::Gmsh;
 
 int main( int argc, char* argv[] ) {

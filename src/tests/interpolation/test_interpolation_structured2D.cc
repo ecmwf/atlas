@@ -18,7 +18,7 @@
 #include "atlas/interpolation.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/meshgenerator/MeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/CoordinateEnums.h"
 

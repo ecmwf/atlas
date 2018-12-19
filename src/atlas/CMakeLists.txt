@@ -269,18 +269,24 @@ mesh/actions/BuildStatistics.h
 mesh/actions/BuildXYZField.cc
 mesh/actions/BuildXYZField.h
 mesh/actions/WriteLoadBalanceReport.cc
-
-meshgenerator.h
-meshgenerator/DelaunayMeshGenerator.h
-meshgenerator/DelaunayMeshGenerator.cc
-meshgenerator/MeshGenerator.cc
-meshgenerator/MeshGenerator.h
-meshgenerator/StructuredMeshGenerator.h
-meshgenerator/StructuredMeshGenerator.cc
-meshgenerator/RegularMeshGenerator.cc
-meshgenerator/RegularMeshGenerator.h
 mesh/actions/BuildTorusXYZField.h
 mesh/actions/BuildTorusXYZField.cc
+
+meshgenerator.h
+meshgenerator/MeshGenerator.cc
+meshgenerator/MeshGenerator.h
+meshgenerator/detail/DelaunayMeshGenerator.h
+meshgenerator/detail/DelaunayMeshGenerator.cc
+meshgenerator/detail/StructuredMeshGenerator.h
+meshgenerator/detail/StructuredMeshGenerator.cc
+meshgenerator/detail/RegularMeshGenerator.cc
+meshgenerator/detail/RegularMeshGenerator.h
+meshgenerator/detail/MeshGeneratorFactory.cc
+meshgenerator/detail/MeshGeneratorFactory.h
+meshgenerator/detail/MeshGeneratorImpl.cc
+meshgenerator/detail/MeshGeneratorImpl.h
+meshgenerator/detail/MeshGeneratorInterface.cc
+meshgenerator/detail/MeshGeneratorInterface.h
 )
 
 list( APPEND atlas_output_srcs
@@ -522,6 +528,12 @@ util/detail/Debug.h
 list( APPEND atlas_internals_srcs
 mesh/detail/AccumulateFacets.h
 mesh/detail/AccumulateFacets.cc
+util/Object.h
+util/Object.cc
+util/ObjectHandle.h
+util/ObjectHandle.cc
+util/ObjectFactory.h
+util/ObjectFactory.cc
 util/Bitflags.h
 util/Checksum.h
 util/Checksum.cc

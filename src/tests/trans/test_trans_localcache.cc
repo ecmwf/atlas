@@ -15,7 +15,6 @@
 
 #include "atlas/grid.h"
 #include "atlas/library/Library.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"

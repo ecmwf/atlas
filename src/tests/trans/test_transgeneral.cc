@@ -24,7 +24,7 @@
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
@@ -1329,7 +1329,7 @@ CASE( "test_trans_unstructured" ) {
 }
 #endif
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
 #if 0
 CASE( "test_trans_fourier_truncation" ) {

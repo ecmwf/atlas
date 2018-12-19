@@ -14,7 +14,7 @@
 
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
@@ -87,7 +87,7 @@ CASE( "test_from_string_O32_with_domain" ) {
     EXPECT( structured.nx().front() == 6 );
 
     output::Gmsh gmsh( "test_grid_ptr_O32_subdomain.msh" );
-    Mesh mesh = meshgenerator::StructuredMeshGenerator().generate( grid );
+    Mesh mesh = StructuredMeshGenerator().generate( grid );
     gmsh.write( mesh );
 }
 
@@ -127,7 +127,7 @@ CASE( "test_structured_1" ) {
     EXPECT( regular.y().back() == -90. );
 
     output::Gmsh gmsh( "test_grid_ptr.msh" );
-    Mesh mesh = meshgenerator::StructuredMeshGenerator().generate( grid );
+    Mesh mesh = StructuredMeshGenerator().generate( grid );
     gmsh.write( mesh );
 }
 
@@ -141,7 +141,7 @@ CASE( "test_structured_2" ) {
     EXPECT( grid );
 
     output::Gmsh gmsh( "test_grid_ptr_structured_2.msh" );
-    Mesh mesh = meshgenerator::StructuredMeshGenerator().generate( grid );
+    Mesh mesh = StructuredMeshGenerator().generate( grid );
     gmsh.write( mesh );
 
     Log::info() << grid.spec() << std::endl;

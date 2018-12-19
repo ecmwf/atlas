@@ -21,7 +21,8 @@
 #include "atlas/mesh/actions/BuildConvexHull3D.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/mesh/actions/ExtendNodesGlobal.h"
-#include "atlas/meshgenerator/DelaunayMeshGenerator.h"
+#include "atlas/meshgenerator/detail/DelaunayMeshGenerator.h"
+#include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -35,7 +36,7 @@ namespace meshgenerator {
 
 DelaunayMeshGenerator::DelaunayMeshGenerator() {}
 
-DelaunayMeshGenerator::DelaunayMeshGenerator( const eckit::Parametrisation& p ) {}
+DelaunayMeshGenerator::DelaunayMeshGenerator( const eckit::Parametrisation& ) {}
 
 DelaunayMeshGenerator::~DelaunayMeshGenerator() {}
 
@@ -64,7 +65,7 @@ void DelaunayMeshGenerator::generate( const Grid& g, Mesh& mesh ) const {
     createNodes( g, mesh );
 
     array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( mesh.nodes().global_index() );
-    for ( size_t jnode = 0; jnode < mesh.nodes().size(); ++jnode ) {
+    for ( idx_t jnode = 0; jnode < mesh.nodes().size(); ++jnode ) {
         gidx( jnode ) = jnode + 1;
     }
 
@@ -75,12 +76,12 @@ void DelaunayMeshGenerator::generate( const Grid& g, Mesh& mesh ) const {
 }
 
 void DelaunayMeshGenerator::createNodes( const Grid& grid, Mesh& mesh ) const {
-    size_t nb_nodes = grid.size();
+    idx_t nb_nodes = grid.size();
     mesh.nodes().resize( nb_nodes );
 
     array::ArrayView<double, 2> xy     = array::make_view<double, 2>( mesh.nodes().xy() );
     array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( mesh.nodes().lonlat() );
-    size_t jnode( 0 );
+    idx_t jnode( 0 );
     Projection projection = grid.projection();
     PointLonLat Pll;
     for ( PointXY Pxy : grid.xy() ) {

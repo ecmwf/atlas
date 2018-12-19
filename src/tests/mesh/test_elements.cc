@@ -24,7 +24,7 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/runtime/Log.h"
 
 #include "tests/AtlasTestEnvironment.h"

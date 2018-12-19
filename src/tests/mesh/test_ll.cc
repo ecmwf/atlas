@@ -11,7 +11,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -24,7 +24,7 @@ namespace test {
 
 CASE( "test_ll_meshgen_one_part" ) {
     Grid g( "L5" );
-    Mesh m = meshgenerator::StructuredMeshGenerator().generate( g );
+    Mesh m = StructuredMeshGenerator().generate( g );
     output::Gmsh( "L5.msh" ).write( m );
 }
 

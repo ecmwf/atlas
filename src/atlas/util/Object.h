@@ -8,8 +8,14 @@
  * nor does it submit to any jurisdiction.
  */
 
-/// @author Willem Deconinck
-
 #pragma once
 
-#include "atlas/meshgenerator/MeshGenerator.h"
+#include "eckit/memory/Owned.h"
+
+namespace atlas {
+namespace util {
+
+class Object : public eckit::Owned {};
+
+}  // namespace util
+}  // namespace atlas

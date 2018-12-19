@@ -8,8 +8,4 @@
  * nor does it submit to any jurisdiction.
  */
 
-/// @author Willem Deconinck
-
-#pragma once
-
-#include "atlas/meshgenerator/MeshGenerator.h"
+#include "atlas/util/Object.h"

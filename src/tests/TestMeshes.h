@@ -11,19 +11,18 @@
 #include "atlas/grid.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 using namespace atlas;
 using namespace atlas::grid;
-// using namespace atlas::grid::detail::grid::reduced;
 
 namespace atlas {
 namespace test {
 
 Mesh generate_mesh( const StructuredGrid& grid ) {
     auto config = util::Config( "partitioner", "equal_regions" );
-    meshgenerator::StructuredMeshGenerator generate( config );
+    StructuredMeshGenerator generate( config );
     return generate( grid );
 }
 

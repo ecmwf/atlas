@@ -21,7 +21,7 @@
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
 
@@ -38,7 +38,7 @@ namespace test {
 
 CASE( "test_functionspace_NodeColumns_no_halo" ) {
     Grid grid( "O8" );
-    Mesh mesh = meshgenerator::StructuredMeshGenerator().generate( grid );
+    Mesh mesh = StructuredMeshGenerator().generate( grid );
     functionspace::NodeColumns nodes_fs( mesh );
     Field field( nodes_fs.createField<int>() );
     array::ArrayView<int, 1> value = array::make_view<int, 1>( field );
@@ -61,7 +61,7 @@ CASE( "test_functionspace_NodeColumns" ) {
 
     grid::ReducedGaussianGrid grid( {4, 8, 8, 4} );
 
-    meshgenerator::StructuredMeshGenerator generator;
+    StructuredMeshGenerator generator;
     // generator.options.set("3d",true);
     Mesh mesh = generator.generate( grid );
 

@@ -21,7 +21,7 @@
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/option.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -129,7 +129,7 @@ CASE( "test_invtrans_ifsStyle" ) {
 
     // Output
     {
-        Mesh mesh = meshgenerator::StructuredMeshGenerator().generate( g );
+        Mesh mesh = StructuredMeshGenerator().generate( g );
         functionspace::StructuredColumns gp( g );
         output::Gmsh gmsh( grid_uid + "-grid.msh" );
         Field scalar( "scalar", rgp.data(), array::make_shape( gp.size() ) );
@@ -145,7 +145,7 @@ CASE( "test_invtrans_ifsStyle" ) {
 CASE( "test_invtrans_grad" ) {
     std::string grid_uid( "O48" );
     grid::StructuredGrid g( grid_uid );
-    Mesh mesh = meshgenerator::StructuredMeshGenerator().generate( g );
+    Mesh mesh = StructuredMeshGenerator().generate( g );
     long N    = g.ny() / 2;
     trans::Trans trans( g, 2 * N - 1 );
     functionspace::NodeColumns gp( mesh );
@@ -169,7 +169,7 @@ CASE( "test_invtrans_grad" ) {
 
     // Output
     {
-        Mesh mesh = meshgenerator::StructuredMeshGenerator().generate( g );
+        Mesh mesh = StructuredMeshGenerator().generate( g );
         functionspace::StructuredColumns gp( g );
         output::Gmsh gmsh( grid_uid + "-nodes.msh" );
         gmsh.write( mesh );

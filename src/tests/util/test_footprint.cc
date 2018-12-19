@@ -18,7 +18,7 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/MeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Metadata.h"
 

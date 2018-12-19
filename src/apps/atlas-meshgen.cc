@@ -31,7 +31,7 @@
 #include "atlas/mesh/actions/BuildStatistics.h"
 #include "atlas/mesh/actions/BuildTorusXYZField.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
-#include "atlas/meshgenerator/MeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/output/detail/GmshIO.h"
 #include "atlas/parallel/mpi/mpi.h"

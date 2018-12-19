@@ -10,10 +10,7 @@
 
 #pragma once
 
-#include <string>
-
-#include "atlas/util/Config.h"
-#include "atlas/util/ObjectHandle.h"
+#include "atlas/util/Object.h"
 
 namespace eckit {
 class Hash;
@@ -34,37 +31,35 @@ class Distribution;
 
 namespace atlas {
 namespace meshgenerator {
-class MeshGeneratorImpl;
-}
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class MeshGenerator : public util::ObjectHandle<meshgenerator::MeshGeneratorImpl> {
+class MeshGeneratorImpl : public util::Object {
 public:
-    using Parameters = atlas::util::Config;
+    MeshGeneratorImpl();
 
-public:
-    using Handle::Handle;
-    MeshGenerator( const std::string&, const eckit::Parametrisation& = util::NoConfig() );
+    virtual ~MeshGeneratorImpl();
 
-    void hash( eckit::Hash& ) const;
+    virtual void hash( eckit::Hash& ) const = 0;
+
+    virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const = 0;
+    virtual void generate( const Grid&, Mesh& ) const                            = 0;
 
     Mesh generate( const Grid&, const grid::Distribution& ) const;
     Mesh generate( const Grid& ) const;
 
     Mesh operator()( const Grid&, const grid::Distribution& ) const;
     Mesh operator()( const Grid& ) const;
+
+protected:
+    void generateGlobalElementNumbering( Mesh& mesh ) const;
+    void setProjection( Mesh&, const Projection& ) const;
+    void setGrid( Mesh&, const Grid&, const grid::Distribution& ) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-// Shorthands
-class StructuredMeshGenerator : public MeshGenerator {
-public:
-    using MeshGenerator::MeshGenerator;
-    StructuredMeshGenerator( const eckit::Parametrisation& config = util::NoConfig() ) :
-        MeshGenerator( "structured", config ) {}
-};
+}  // namespace meshgenerator
 
 //----------------------------------------------------------------------------------------------------------------------
 
