@@ -1,6 +1,5 @@
 #pragma once
 
-#include "atlas/domain/Domain.h"
 #include "atlas/domain/detail/ZonalBandDomain.h"
 
 namespace atlas {

@@ -1,3 +1,7 @@
+
+#include "eckit/exception/Exceptions.h"
+
+#include "atlas/domain/detail/DomainFactory.h"
 #include "atlas/domain/detail/ZonalBandDomain.h"
 
 namespace atlas {
@@ -75,7 +79,9 @@ bool ZonalBandDomain::containsSouthPole() const {
     return ymin_tol_ <= -90.;
 }
 
-register_BuilderT1( Domain, ZonalBandDomain, ZonalBandDomain::static_type() );
+namespace {
+static DomainBuilder<ZonalBandDomain> register_builder( ZonalBandDomain::static_type() );
+}
 
 }  // namespace domain
 }  // namespace atlas

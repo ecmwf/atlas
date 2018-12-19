@@ -3,7 +3,6 @@
 #include <array>
 #include <iosfwd>
 
-#include "atlas/domain/Domain.h"
 #include "atlas/domain/detail/RectangularDomain.h"
 
 namespace atlas {

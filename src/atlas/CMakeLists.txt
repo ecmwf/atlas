@@ -90,6 +90,8 @@ domain/detail/GlobalDomain.h
 domain/detail/GlobalDomain.cc
 domain/detail/ZonalBandDomain.h
 domain/detail/ZonalBandDomain.cc
+domain/detail/DomainFactory.h
+domain/detail/DomainFactory.cc
 
 grid.h
 grid/Grid.cc

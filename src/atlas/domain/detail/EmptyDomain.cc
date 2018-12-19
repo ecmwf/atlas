@@ -1,5 +1,7 @@
+#include "eckit/exception/Exceptions.h"
 #include "eckit/utils/Hash.h"
 
+#include "atlas/domain/detail/DomainFactory.h"
 #include "atlas/domain/detail/EmptyDomain.h"
 
 namespace atlas {
@@ -27,7 +29,9 @@ std::string EmptyDomain::units() const {
     NOTIMP;
 }
 
-register_BuilderT1( Domain, EmptyDomain, EmptyDomain::static_type() );
+namespace {
+static DomainBuilder<EmptyDomain> register_builder( EmptyDomain::static_type() );
+}
 
 }  // namespace domain
 }  // namespace atlas

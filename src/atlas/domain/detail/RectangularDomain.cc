@@ -1,5 +1,8 @@
 #include <utility>
 
+#include "eckit/exception/Exceptions.h"
+
+#include "atlas/domain/detail/DomainFactory.h"
 #include "atlas/domain/detail/RectangularDomain.h"
 
 namespace atlas {
@@ -107,7 +110,9 @@ bool RectangularDomain::containsSouthPole() const {
     return unit_degrees_ && ymin_tol_ <= -90.;
 }
 
-register_BuilderT1( Domain, RectangularDomain, RectangularDomain::static_type() );
+namespace {
+static DomainBuilder<RectangularDomain> register_builder( RectangularDomain::static_type() );
+}
 
 }  // namespace domain
 }  // namespace atlas

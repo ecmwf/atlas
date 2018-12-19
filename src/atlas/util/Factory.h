@@ -15,6 +15,10 @@
 #include <string>
 #include <vector>
 
+namespace eckit {
+class Parametrisation;
+}
+
 namespace atlas {
 namespace util {
 
@@ -77,6 +81,7 @@ protected:
     static FactoryRegistryT<T>& registry() { return FactoryRegistryT<T>::instance(); }
 };
 
+//----------------------------------------------------------------------------------------------------------------------
 
 }  // namespace util
 }  // namespace atlas

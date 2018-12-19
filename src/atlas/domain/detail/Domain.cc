@@ -1,21 +1,22 @@
 #include "eckit/exception/Exceptions.h"
 
 #include "atlas/domain/detail/Domain.h"
+#include "atlas/domain/detail/DomainFactory.h"
 #include "atlas/projection/Projection.h"
 
 namespace atlas {
 namespace domain {
 
-Domain* Domain::create() {
+const Domain* Domain::create() {
     // default: global domain
     util::Config projParams;
     projParams.set( "type", "global" );
     return Domain::create( projParams );
 }
 
-Domain* Domain::create( const eckit::Parametrisation& p ) {
+const Domain* Domain::create( const eckit::Parametrisation& p ) {
     std::string domain_type;
-    if ( p.get( "type", domain_type ) ) { return eckit::Factory<Domain>::instance().get( domain_type ).create( p ); }
+    if ( p.get( "type", domain_type ) ) { return DomainFactory::build( domain_type, p ); }
 
     // should return error here
     throw eckit::BadParameter( "type missing in Params", Here() );
