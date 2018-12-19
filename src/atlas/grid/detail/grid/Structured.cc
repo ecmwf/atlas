@@ -19,6 +19,7 @@
 #include "atlas/domain/Domain.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/runtime/ErrorHandling.h"
@@ -504,8 +505,9 @@ Grid::Spec Structured::spec() const {
     return grid_spec;
 }
 
-// --------------------------------------------------------------------
+    // --------------------------------------------------------------------
 
+#if 1
 namespace {  // anonymous
 
 static class structured : public GridBuilder {
@@ -559,6 +561,7 @@ public:
 } structured_;
 
 }  // anonymous namespace
+#endif
 
 // --------------------------------------------------------------------
 
@@ -659,6 +662,10 @@ idx_t atlas__grid__Gaussian__N( Structured* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); GaussianGrid gaussian( This ); ASSERT( gaussian ); return gaussian.N(); );
     return 0;
 }
+}
+
+namespace {
+GridFactoryBuilder<Structured> __register_Structured( Structured::static_type() );
 }
 
 }  // namespace grid

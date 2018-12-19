@@ -55,6 +55,7 @@ public:
     const T* get() const { return reinterpret_cast<const T*>( object_ ); }
     ObjectHandle() = default;
     ObjectHandle( const T* object ) : ObjectHandleBase( object ) {}
+    ObjectHandle( const ObjectHandle& handle ) : ObjectHandleBase( reinterpret_cast<const Object*>( handle.get() ) ) {}
 };
 
 }  // namespace util

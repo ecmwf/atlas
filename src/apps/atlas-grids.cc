@@ -17,21 +17,20 @@
 #include <sstream>
 #include <vector>
 
-#include "atlas/grid.h"
-#include "atlas/library/Library.h"
-#include "atlas/runtime/AtlasTool.h"
-#include "atlas/runtime/Log.h"
-
 #include "eckit/config/Resource.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/log/Bytes.h"
 #include "eckit/log/Log.h"
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Factory.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/Tokenizer.h"
 #include "eckit/runtime/Main.h"
+
+#include "atlas/grid.h"
+#include "atlas/grid/detail/grid/GridFactory.h"
+#include "atlas/library/Library.h"
+#include "atlas/runtime/AtlasTool.h"
+#include "atlas/runtime/Log.h"
 
 using namespace atlas;
 using namespace atlas::grid;
@@ -102,11 +101,10 @@ void AtlasGrids::execute( const Args& args ) {
         Log::error() << "Option wrong or missing after '" << key << "'" << std::endl;
     }
     if ( list ) {
-        std::vector<std::string> keys = Factory<Grid::Implementation>::instance().keys();
         Log::info() << "usage: atlas-grids GRID [OPTION]... [--help]\n" << std::endl;
         Log::info() << "Available grids:" << std::endl;
-        for ( size_t i = 0; i < keys.size(); ++i ) {
-            Log::info() << "  -- " << keys[i] << std::endl;
+        for ( const auto& key : GridFactory::keys() ) {
+            Log::info() << "  -- " << key << std::endl;
         }
     }
 
@@ -115,7 +113,7 @@ void AtlasGrids::execute( const Args& args ) {
         try {
             grid = Grid( key );
         }
-        catch ( eckit::BadParameter& err ) {
+        catch ( eckit::BadParameter& ) {
         }
 
         if ( !grid ) return;
@@ -175,7 +173,7 @@ void AtlasGrids::execute( const Args& args ) {
         if ( rtable ) {
             std::stringstream stream;
             stream << "&NAMRGRI\n";
-            for ( size_t j = 0; j < grid.ny(); ++j )
+            for ( idx_t j = 0; j < grid.ny(); ++j )
                 stream << " NRGRI(" << std::setfill( '0' ) << std::setw( 5 ) << 1 + j << ")=" << std::setfill( ' ' )
                        << std::setw( 5 ) << grid.nx( j ) << ",\n";
             stream << "/" << std::flush;

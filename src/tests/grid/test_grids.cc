@@ -12,8 +12,6 @@
 #include <iomanip>
 #include <sstream>
 
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Factory.h"
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/grid.h"

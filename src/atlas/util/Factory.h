@@ -13,68 +13,68 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include <vector>
 
 namespace atlas {
 namespace util {
 
-class ObjectFactory;
+class FactoryBase;
 
-class ObjectFactoryRegistry {
+class FactoryRegistry {
 protected:
-    ObjectFactoryRegistry( const std::string& factory );
-    ~ObjectFactoryRegistry();
+    FactoryRegistry( const std::string& factory );
+    ~FactoryRegistry();
 
 private:
     mutable std::mutex mutex_;
-    std::map<std::string, ObjectFactory*> factories_;
+    std::map<std::string, FactoryBase*> factories_;
     std::string factory_;
 
 public:
+    std::vector<std::string> keys() const;
     void list( std::ostream& ) const;
     bool has( const std::string& builder ) const;
-    void add( const std::string& builder, ObjectFactory* );
+    void add( const std::string& builder, FactoryBase* );
     void remove( const std::string& builder );
-    ObjectFactory* get( const std::string& builder ) const;
+    FactoryBase* get( const std::string& builder ) const;
 };
 
 template <typename T>
-struct ObjectFactoryRegistryT : public ObjectFactoryRegistry {
+struct FactoryRegistryT : public FactoryRegistry {
 public:
-    static ObjectFactoryRegistryT<T>& instance() {
-        static ObjectFactoryRegistryT<T> env( T::classname() );
+    static FactoryRegistryT<T>& instance() {
+        static FactoryRegistryT<T> env( T::classname() );
         return env;
     }
 
 private:
-    ObjectFactoryRegistryT( const std::string& factory ) : ObjectFactoryRegistry( factory ) {}
+    FactoryRegistryT( const std::string& factory ) : FactoryRegistry( factory ) {}
 };
 
-class ObjectFactory {
+class FactoryBase {
 private:
-    ObjectFactoryRegistry& registry_;
+    FactoryRegistry& registry_;
     std::string builder_;
 
 protected:
-    ObjectFactory( ObjectFactoryRegistry&, const std::string& builder );
-    virtual ~ObjectFactory();
-    friend class ObjectFactoryRegistry;
+    FactoryBase( FactoryRegistry&, const std::string& builder );
+    virtual ~FactoryBase();
+    friend class FactoryRegistry;
 };
 
 template <typename T>
-class ObjectFactoryT : public ObjectFactory {
+class Factory : public FactoryBase {
 public:
-    using Factory = ObjectFactoryT<T>;
-
-public:
+    static std::vector<std::string> keys() { return registry().keys(); }
     static void list( std::ostream& out ) { return registry().list( out ); }
     static bool has( const std::string& builder ) { return registry().has( builder ); }
     static T* get( const std::string& builder ) { return dynamic_cast<T*>( registry().get( builder ) ); }
 
-    ObjectFactoryT( const std::string& builder = "" ) : ObjectFactory( registry(), builder ) {}
+    Factory( const std::string& builder = "" ) : FactoryBase( registry(), builder ) {}
 
 protected:
-    virtual ~ObjectFactoryT() = default;
-    static ObjectFactoryRegistryT<T>& registry() { return ObjectFactoryRegistryT<T>::instance(); }
+    virtual ~Factory() = default;
+    static FactoryRegistryT<T>& registry() { return FactoryRegistryT<T>::instance(); }
 };
 
 

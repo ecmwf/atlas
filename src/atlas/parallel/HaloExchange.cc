@@ -11,6 +11,7 @@
 /// @author Willem Deconinck
 /// @date   Nov 2013
 
+#include <memory>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
@@ -150,7 +151,7 @@ void execute_halo_exchange( HaloExchange* This, Value field[], int var_strides[]
     for ( int j = 0; j < var_rank; ++j )
         strides.push_back( var_strides[j] );
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap( field, array::ArraySpec{shape, strides} ) );
+    std::unique_ptr<array::Array> arr( array::Array::wrap( field, array::ArraySpec{shape, strides} ) );
 
     switch ( arr->rank() ) {
         case 1: {

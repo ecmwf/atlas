@@ -16,6 +16,7 @@
 #include "eckit/parser/Tokenizer.h"
 #include "eckit/utils/Translator.h"
 
+#include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
 
@@ -174,7 +175,7 @@ GridBuilder::~GridBuilder() {
 }
 
 const Grid::Implementation* GridBuilder::create( const Grid::Config& config ) const {
-    eckit::Factory<Grid::Implementation>& fact = eckit::Factory<Grid::Implementation>::instance();
+    //eckit::Factory<Grid::Implementation>& fact = eckit::Factory<Grid::Implementation>::instance();
 
     std::string name;
     if ( config.get( "name", name ) ) {  // ignore any further configuration
@@ -182,7 +183,7 @@ const Grid::Implementation* GridBuilder::create( const Grid::Config& config ) co
     }
 
     std::string type;
-    if ( config.get( "type", type ) && fact.exists( type ) ) { return fact.get( type ).create( config ); }
+    if ( config.get( "type", type ) && GridFactory::has( type ) ) { return GridFactory::build( type, config ); }
 
     if ( name.size() ) { Log::error() << "name provided: " << name << std::endl; }
     if ( type.size() ) { Log::error() << "type provided: " << type << std::endl; }

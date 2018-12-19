@@ -16,34 +16,39 @@
 #include "atlas/util/Factory.h"
 
 namespace atlas {
-namespace meshgenerator {
+namespace grid {
+
+namespace detail {
+namespace grid {
+class Grid;
+}
+}  // namespace detail
+using GridImpl = detail::grid::Grid;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class MeshGeneratorImpl;
-class MeshGeneratorFactory : public util::Factory<MeshGeneratorFactory> {
+class GridFactory : public util::Factory<GridFactory> {
 public:
-    static std::string classname() { return "MeshGeneratorFactory"; }
-    static const MeshGeneratorImpl* build( const std::string& );
-    static const MeshGeneratorImpl* build( const std::string&, const eckit::Parametrisation& );
+    static std::string classname() { return "GridFactory"; }
+    static const GridImpl* build( const std::string&, const util::Config& );
     using Factory::Factory;
 
 private:
-    virtual const MeshGeneratorImpl* make( const eckit::Parametrisation& ) = 0;
+    virtual const GridImpl* make( const util::Config& ) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
 template <class T>
-class MeshGeneratorBuilder : public MeshGeneratorFactory {
+class GridFactoryBuilder : public GridFactory {
 private:
-    virtual const MeshGeneratorImpl* make( const eckit::Parametrisation& param ) { return new T( param ); }
+    virtual const GridImpl* make( const util::Config& config ) override { return T::create( config ); }
 
 public:
-    using MeshGeneratorFactory::MeshGeneratorFactory;
+    using GridFactory::GridFactory;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // namespace meshgenerator
+}  // namespace grid
 }  // namespace atlas

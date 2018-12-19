@@ -27,26 +27,26 @@
 
 namespace atlas {
 
-Grid::Grid() : grid_( nullptr ) {}
+// Grid::Grid() : Handle() {}
 
-Grid::Grid( const Grid& grid ) : grid_( grid.grid_ ) {}
+//Grid::Grid( const Grid& grid ) : Handle( grid ) {}
 
-Grid::Grid( const Grid::Implementation* grid ) : grid_( grid ) {}
+//Grid::Grid( const Grid::Implementation* grid ) : grid_( grid ) {}
 
-Grid::Grid( const std::string& shortname, const Domain& domain ) {
-    Config config;
-    if ( domain ) config.set( "domain", domain.spec() );
-    grid_ = Grid::Implementation::create( shortname, config );
-}
+Grid::Grid( const std::string& shortname, const Domain& domain ) :
+    Handle( [&] {
+        Config config;
+        if ( domain ) config.set( "domain", domain.spec() );
+        return Grid::Implementation::create( shortname, config );
+    }() ) {}
 
-Grid::Grid( const Grid& grid, const Grid::Domain& domain ) {
-    ASSERT( grid );
-    grid_ = Grid::Implementation::create( *grid.get(), domain );
-}
+Grid::Grid( const Grid& grid, const Grid::Domain& domain ) :
+    Handle( [&] {
+        ASSERT( grid );
+        return Grid::Implementation::create( *grid.get(), domain );
+    }() ) {}
 
-Grid::Grid( const Config& p ) {
-    grid_ = Grid::Implementation::create( p );
-}
+Grid::Grid( const Config& p ) : Handle( Grid::Implementation::create( p ) ) {}
 
 namespace grid {
 
@@ -54,7 +54,7 @@ inline const UnstructuredGrid::grid_t* unstructured_grid( const Grid::Implementa
     return dynamic_cast<const UnstructuredGrid::grid_t*>( grid );
 }
 
-UnstructuredGrid::UnstructuredGrid() : Grid(), grid_( nullptr ) {}
+UnstructuredGrid::UnstructuredGrid() : Grid() {}
 
 UnstructuredGrid::UnstructuredGrid( const Grid& grid ) : Grid( grid ), grid_( unstructured_grid( get() ) ) {}
 

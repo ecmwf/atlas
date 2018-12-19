@@ -22,7 +22,6 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/ArrayViewDefs.h"
@@ -39,9 +38,6 @@ namespace atlas {
 namespace parallel {
 
 class HaloExchange : public eckit::Owned {
-public:  // types
-    typedef eckit::SharedPtr<HaloExchange> Ptr;
-
 public:
     HaloExchange();
     HaloExchange( const std::string& name );

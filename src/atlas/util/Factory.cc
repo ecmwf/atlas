@@ -13,19 +13,21 @@
 #include "eckit/exception/Exceptions.h"
 
 #include "atlas/runtime/Log.h"
-#include "atlas/util/ObjectFactory.h"
+#include "atlas/util/Factory.h"
+
+#define DEBUG_FACTORY_REGISTRATION
 
 using lock_guard = std::lock_guard<std::mutex>;
 
 namespace atlas {
 namespace util {
 
-bool ObjectFactoryRegistry::has( const std::string& builder ) const {
+bool FactoryRegistry::has( const std::string& builder ) const {
     lock_guard lock( mutex_ );
     return ( factories_.find( builder ) != factories_.end() );
 }
 
-ObjectFactory* ObjectFactoryRegistry::get( const std::string& builder ) const {
+FactoryBase* FactoryRegistry::get( const std::string& builder ) const {
     lock_guard lock( mutex_ );
     auto iterator = factories_.find( builder );
 
@@ -42,29 +44,46 @@ ObjectFactory* ObjectFactoryRegistry::get( const std::string& builder ) const {
     }
 }
 
-void ObjectFactoryRegistry::add( const std::string& builder, ObjectFactory* factory ) {
+void FactoryRegistry::add( const std::string& builder, FactoryBase* factory ) {
     lock_guard lock( mutex_ );
     ASSERT( factories_.find( builder ) == factories_.end() );
     factories_[builder] = factory;
-    Log::info() << "Registered " << builder << " in " << factory_ << std::endl;
+#ifdef DEBUG_FACTORY_REGISTRATION
+    std::cout << "Registered " << builder << " in " << factory_ << std::endl;
+#endif
 }
 
-void ObjectFactoryRegistry::remove( const std::string& builder ) {
+void FactoryRegistry::remove( const std::string& builder ) {
     lock_guard lock( mutex_ );
     factories_.erase( builder );
+#ifdef DEBUG_FACTORY_REGISTRATION
+    std::cout << "Unregistered " << builder << " from " << factory_ << std::endl;
+#endif
 }
 
-ObjectFactoryRegistry::ObjectFactoryRegistry( const std::string& factory ) : factory_( factory ) {
-    Log::info() << "Created Registry" << factory << std::endl;
+FactoryRegistry::FactoryRegistry( const std::string& factory ) : factory_( factory ) {
+#ifdef DEBUG_FACTORY_REGISTRATION
+    std::cout << "Created " << factory << std::endl;
+#endif
 }
 
-ObjectFactoryRegistry::~ObjectFactoryRegistry() {
+FactoryRegistry::~FactoryRegistry() {
     while ( not factories_.empty() ) {
         delete factories_.begin()->second;  // will remove itself from registry in its destructor
     }
 }
 
-void ObjectFactoryRegistry::list( std::ostream& out ) const {
+std::vector<std::string> FactoryRegistry::keys() const {
+    lock_guard lock( mutex_ );
+    std::vector<std::string> _keys;
+    _keys.reserve( factories_.size() );
+    for ( const auto& key_value : factories_ ) {
+        _keys.emplace_back( key_value.first );
+    }
+    return _keys;
+}
+
+void FactoryRegistry::list( std::ostream& out ) const {
     lock_guard lock( mutex_ );
     const char* sep = "";
     for ( const auto& map_pair : factories_ ) {
@@ -76,13 +95,13 @@ void ObjectFactoryRegistry::list( std::ostream& out ) const {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-ObjectFactory::ObjectFactory( ObjectFactoryRegistry& registry, const std::string& builder ) :
+FactoryBase::FactoryBase( FactoryRegistry& registry, const std::string& builder ) :
     registry_( registry ),
     builder_( builder ) {
     if ( not builder_.empty() ) { registry_.add( builder, this ); }
 }
 
-ObjectFactory::~ObjectFactory() {
+FactoryBase::~FactoryBase() {
     if ( not builder_.empty() ) { registry_.remove( builder_ ); }
 }
 

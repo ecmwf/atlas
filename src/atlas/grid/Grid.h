@@ -13,14 +13,13 @@
 #include <functional>
 #include <initializer_list>
 
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/domain/Domain.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/grid/detail/grid/Structured.h"
 #include "atlas/grid/detail/grid/Unstructured.h"
 #include "atlas/projection/Projection.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
 class Hash;
@@ -30,15 +29,14 @@ namespace atlas {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class Grid {
+class Grid : public util::ObjectHandle<grid::detail::grid::Grid> {
 public:
-    using Implementation = grid::detail::grid::Grid;
-    using Config         = Implementation::Config;
-    using Spec           = Implementation::Spec;
-    using Domain         = atlas::Domain;
-    using Projection     = atlas::Projection;
-    using PointXY        = atlas::PointXY;      // must be sizeof(double)*2
-    using PointLonLat    = atlas::PointLonLat;  // must be sizeof(double)*2
+    using Config      = Implementation::Config;
+    using Spec        = Implementation::Spec;
+    using Domain      = atlas::Domain;
+    using Projection  = atlas::Projection;
+    using PointXY     = atlas::PointXY;      // must be sizeof(double)*2
+    using PointLonLat = atlas::PointLonLat;  // must be sizeof(double)*2
 
     class IterateXY {
     public:
@@ -73,38 +71,32 @@ public:
     };
 
 public:
-    IterateXY xy( IterateXY::Predicate p ) const { return IterateXY( *grid_, p ); }
-    IterateXY xy() const { return IterateXY( *grid_ ); }
-    IterateLonLat lonlat() const { return IterateLonLat( *grid_ ); }
+    IterateXY xy( IterateXY::Predicate p ) const { return IterateXY( *get(), p ); }
+    IterateXY xy() const { return IterateXY( *get() ); }
+    IterateLonLat lonlat() const { return IterateLonLat( *get() ); }
 
-    Grid();
-    Grid( const Grid& );
-    Grid( const Implementation* );
+    using Handle::Handle;
+    Grid() = default;
     Grid( const std::string& name, const Domain& = Domain() );
     Grid( const Grid&, const Domain& );
     Grid( const Config& );
 
-    operator bool() const { return grid_; }
+    //    operator bool() const { return grid_; }
 
     bool operator==( const Grid& other ) const { return uid() == other.uid(); }
     bool operator!=( const Grid& other ) const { return uid() != other.uid(); }
 
-    idx_t size() const { return grid_->size(); }
+    idx_t size() const { return get()->size(); }
 
-    const Projection& projection() const { return grid_->projection(); }
-    const Domain& domain() const { return grid_->domain(); }
-    std::string name() const { return grid_->name(); }
-    std::string uid() const { return grid_->uid(); }
+    const Projection& projection() const { return get()->projection(); }
+    const Domain& domain() const { return get()->domain(); }
+    std::string name() const { return get()->name(); }
+    std::string uid() const { return get()->uid(); }
 
     /// Adds to the hash the information that makes this Grid unique
-    void hash( eckit::Hash& h ) const { return grid_->hash( h ); }
+    void hash( eckit::Hash& h ) const { return get()->hash( h ); }
 
-    Spec spec() const { return grid_->spec(); }
-
-    const Implementation* get() const { return grid_.get(); }
-
-private:
-    eckit::SharedPtr<const Implementation> grid_;
+    Spec spec() const { return get()->spec(); }
 };
 
 namespace grid {

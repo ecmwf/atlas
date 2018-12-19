@@ -110,6 +110,8 @@ grid/StencilComputer.cc
 
 grid/detail/grid/GridBuilder.h
 grid/detail/grid/GridBuilder.cc
+grid/detail/grid/GridFactory.h
+grid/detail/grid/GridFactory.cc
 grid/detail/grid/Grid.h
 grid/detail/grid/Grid.cc
 grid/detail/grid/Structured.cc
@@ -532,8 +534,8 @@ util/Object.h
 util/Object.cc
 util/ObjectHandle.h
 util/ObjectHandle.cc
-util/ObjectFactory.h
-util/ObjectFactory.cc
+util/Factory.h
+util/Factory.cc
 util/Bitflags.h
 util/Checksum.h
 util/Checksum.cc

@@ -13,7 +13,6 @@
 #include <vector>
 
 #include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
 #include "eckit/utils/Translator.h"
 
 #include "atlas/array/ArrayView.h"
@@ -25,9 +24,6 @@ namespace atlas {
 namespace parallel {
 
 class Checksum : public eckit::Owned {
-public:  // types
-    typedef eckit::SharedPtr<Checksum> Ptr;
-
 public:
     Checksum();
     Checksum( const std::string& name );

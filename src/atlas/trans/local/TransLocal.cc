@@ -9,8 +9,11 @@
  */
 
 #include "atlas/trans/local/TransLocal.h"
+
 #include <cmath>
 #include <cstdlib>
+#include <fstream>
+
 #include "atlas/array.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -92,17 +95,17 @@ private:
 
 struct ReadCache {
     ReadCache( const void* cache ) {
-        begin = (char*)cache;
+        begin = reinterpret_cast<const char*>( cache );
         pos   = 0;
     }
     template <typename T>
     T* read( size_t size ) {
-        T* v = (T*)( begin + pos );
+        const T* v = reinterpret_cast<const T*>( begin + pos );
         pos += size * sizeof( T );
-        return v;
+        return const_cast<T*>( v );
     }
 
-    char* begin;
+    const char* begin;
     size_t pos;
 };
 
@@ -210,14 +213,14 @@ void free_aligned( double*& ptr ) {
 }
 
 int add_padding( int n ) {
-    return std::ceil( n / 8. ) * 8;
+    return int( std::ceil( n / 8. ) ) * 8;
 }
 
 }  // namespace
 
 int fourier_truncation( const int truncation,    // truncation
                         const int nx,            // number of longitudes
-                        const int nxmax,         // maximum nx
+                        const int /*nxmax*/,     // maximum nx
                         const int ndgl,          // number of latitudes
                         const double lat,        // latitude in radian
                         const bool fullgrid ) {  // regular grid
@@ -546,8 +549,8 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 if ( grid::RegularGrid( gridGlobal_ ) ) {
                     fftw_->plans.resize( 1 );
                     fftw_->plans[0] =
-                        fftw_plan_many_dft_c2r( 1, &nlonsMaxGlobal_, nlats, fftw_->in, NULL, 1, num_complex, fftw_->out,
-                                                NULL, 1, nlonsMaxGlobal_, FFTW_ESTIMATE );
+                        fftw_plan_many_dft_c2r( 1, &nlonsMaxGlobal_, nlats, fftw_->in, nullptr, 1, num_complex,
+                                                fftw_->out, nullptr, 1, nlonsMaxGlobal_, FFTW_ESTIMATE );
                 }
                 else {
                     fftw_->plans.resize( nlatsLegDomain_ );
@@ -576,7 +579,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 //                    write.close();
                 //                }
             }
-            // other FFT implementations should be added with #elif statements
+                // other FFT implementations should be added with #elif statements
 #else
             useFFT_               = false;  // no FFT implemented => default to dgemm
             std::string file_path = TransParameters( config ).write_fft();

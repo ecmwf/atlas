@@ -10,16 +10,17 @@
 
 #include "atlas/grid/detail/grid/Unstructured.h"
 
+#include <initializer_list>
 #include <limits>
 #include <memory>
-#include <initializer_list>
 
-#include "eckit/memory/Builder.h"
+//#include "eckit/memory/Builder.h"
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Iterator.h"
+#include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/option.h"
@@ -32,7 +33,12 @@ namespace grid {
 namespace detail {
 namespace grid {
 
-static eckit::ConcreteBuilderT1<Grid, Unstructured> builder_Unstructured( Unstructured::static_type() );
+//static eckit::ConcreteBuilderT1<Grid, Unstructured> builder_Unstructured( Unstructured::static_type() );
+
+namespace {
+static GridFactoryBuilder<Unstructured> __register_Unstructured( Unstructured::static_type() );
+}
+
 
 Unstructured::Unstructured( const Mesh& m ) : Grid(), points_( new std::vector<PointXY>( m.nodes().size() ) ) {
     util::Config config_domain;
