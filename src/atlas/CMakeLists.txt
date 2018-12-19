@@ -151,6 +151,8 @@ grid/detail/partitioner/Partitioner.h
 
 grid/detail/spacing/Spacing.cc
 grid/detail/spacing/Spacing.h
+grid/detail/spacing/SpacingFactory.cc
+grid/detail/spacing/SpacingFactory.h
 grid/detail/spacing/CustomSpacing.h
 grid/detail/spacing/CustomSpacing.cc
 grid/detail/spacing/LinearSpacing.h

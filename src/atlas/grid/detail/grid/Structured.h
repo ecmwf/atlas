@@ -13,6 +13,9 @@
 #include <array>
 #include <memory>
 
+#include "eckit/exception/Exceptions.h"
+#include "eckit/memory/SharedPtr.h"
+
 #include "atlas/grid/Spacing.h"
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/library/config.h"

@@ -9,6 +9,7 @@
  */
 
 #include <cmath>
+#include <iomanip>
 #include <limits>
 
 #include "atlas/interpolation/method/fe/FiniteElement.h"

@@ -11,17 +11,57 @@
 #include "atlas/grid/Spacing.h"
 #include "atlas/grid/detail/spacing/GaussianSpacing.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
+#include "atlas/grid/detail/spacing/Spacing.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace grid {
 
-Spacing::Spacing() : spacing_( nullptr ) {}
+Spacing::Spacing( const eckit::Parametrisation& p ) : Handle( atlas::grid::spacing::Spacing::create( p ) ) {}
 
-Spacing::Spacing( const Spacing& other ) : spacing_( other.spacing_ ) {}
+size_t Spacing::size() const {
+    return get()->size();
+}
 
-Spacing::Spacing( const spacing::Spacing* spacing ) : spacing_( spacing ) {}
+double Spacing::operator[]( size_t i ) const {
+    return get()->operator[]( i );
+}
 
-Spacing::Spacing( const eckit::Parametrisation& p ) : spacing_( atlas::grid::spacing::Spacing::create( p ) ) {}
+Spacing::const_iterator Spacing::begin() const {
+    return get()->begin();
+}
+
+Spacing::const_iterator Spacing::end() const {
+    return get()->end();
+}
+
+double Spacing::front() const {
+    return get()->front();
+}
+
+double Spacing::back() const {
+    return get()->back();
+}
+
+Spacing::Interval Spacing::interval() const {
+    return get()->interval();
+}
+
+double Spacing::min() const {
+    return get()->min();
+}
+
+double Spacing::max() const {
+    return get()->max();
+}
+
+std::string Spacing::type() const {
+    return get()->type();
+}
+
+Spacing::Spec Spacing::spec() const {
+    return get()->spec();
+}
 
 LinearSpacing::LinearSpacing( double start, double stop, long N, bool endpoint ) :
     Spacing( new atlas::grid::spacing::LinearSpacing( start, stop, N, endpoint ) ) {}

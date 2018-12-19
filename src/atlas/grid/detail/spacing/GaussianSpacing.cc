@@ -12,6 +12,7 @@
 #include "eckit/exception/Exceptions.h"
 
 #include "atlas/grid/detail/spacing/GaussianSpacing.h"
+#include "atlas/grid/detail/spacing/SpacingFactory.h"
 #include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
 
 namespace atlas {
@@ -67,7 +68,9 @@ GaussianSpacing::Spec GaussianSpacing::spec() const {
     return spacing_specs;
 }
 
-register_BuilderT1( Spacing, GaussianSpacing, GaussianSpacing::static_type() );
+namespace {
+static SpacingBuilder<GaussianSpacing> __builder( GaussianSpacing::static_type() );
+}
 
 }  // namespace spacing
 }  // namespace grid

@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "LonLat.h"
 
 #include "eckit/utils/Translator.h"

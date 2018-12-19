@@ -11,6 +11,7 @@
 #include <cassert>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -34,7 +35,6 @@
 
 using namespace atlas;
 using namespace atlas::grid;
-using eckit::Factory;
 using eckit::JSON;
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -15,6 +15,8 @@
 #include "eckit/config/Parametrisation.h"
 #include "eckit/exception/Exceptions.h"
 
+#include "atlas/grid/detail/spacing/SpacingFactory.h"
+
 namespace atlas {
 namespace grid {
 namespace spacing {
@@ -55,7 +57,9 @@ CustomSpacing::Spec CustomSpacing::spec() const {
     return spacing_specs;
 }
 
-register_BuilderT1( Spacing, CustomSpacing, CustomSpacing::static_type() );
+namespace {
+static SpacingBuilder<CustomSpacing> __builder( CustomSpacing::static_type() );
+}
 
 }  // namespace spacing
 }  // namespace grid

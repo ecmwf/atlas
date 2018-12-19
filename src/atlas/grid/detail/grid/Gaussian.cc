@@ -1,6 +1,7 @@
 #include "Gaussian.h"
 
 #include <cmath>
+#include <iomanip>
 #include <limits>
 
 #include "eckit/utils/Translator.h"

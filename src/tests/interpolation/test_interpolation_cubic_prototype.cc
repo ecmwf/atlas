@@ -9,6 +9,8 @@
  */
 
 #include <algorithm>
+#include <iomanip>
+
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Vector.h"
 #include "eckit/types/Types.h"

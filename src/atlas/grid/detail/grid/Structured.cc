@@ -11,9 +11,11 @@
 #include "Structured.h"
 
 #include <algorithm>
+#include <iomanip>
 #include <limits>
 #include <numeric>
 
+#include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
 

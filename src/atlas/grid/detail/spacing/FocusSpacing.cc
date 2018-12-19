@@ -14,6 +14,7 @@
 #include "eckit/exception/Exceptions.h"
 
 #include "atlas/grid/detail/spacing/FocusSpacing.h"
+#include "atlas/grid/detail/spacing/SpacingFactory.h"
 
 namespace atlas {
 namespace grid {
@@ -64,7 +65,9 @@ FocusSpacing::Spec FocusSpacing::spec() const {
     return spacing_specs;
 }
 
-register_BuilderT1( Spacing, FocusSpacing, FocusSpacing::static_type() );
+namespace {
+static SpacingBuilder<FocusSpacing> __builder( FocusSpacing::static_type() );
+}
 
 }  // namespace spacing
 }  // namespace grid
