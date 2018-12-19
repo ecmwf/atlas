@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "atlas/grid/detail/grid/Grid.h"
+#include "atlas/util/Point.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 

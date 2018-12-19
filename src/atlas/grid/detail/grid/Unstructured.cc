@@ -14,8 +14,8 @@
 #include <limits>
 #include <memory>
 
-//#include "eckit/memory/Builder.h"
 #include "eckit/types/FloatCompare.h"
+#include "eckit/utils/Hash.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"

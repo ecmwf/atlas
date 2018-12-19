@@ -8,7 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/utils/Hash.h"
+
 #include "atlas/projection/detail/LonLatProjection.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace projection {
@@ -33,8 +36,10 @@ void LonLatProjectionT<Rotation>::hash( eckit::Hash& hsh ) const {
     rotation_.hash( hsh );
 }
 
-register_BuilderT1( ProjectionImpl, LonLatProjection, LonLatProjection::static_type() );
-register_BuilderT1( ProjectionImpl, RotatedLonLatProjection, RotatedLonLatProjection::static_type() );
+namespace {
+static ProjectionBuilder<LonLatProjection> register_1( LonLatProjection::static_type() );
+static ProjectionBuilder<RotatedLonLatProjection> register_2( RotatedLonLatProjection::static_type() );
+}  // namespace
 
 }  // namespace detail
 }  // namespace projection

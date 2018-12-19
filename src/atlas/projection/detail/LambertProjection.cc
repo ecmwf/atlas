@@ -10,7 +10,11 @@
 
 #include <cmath>
 
+#include "eckit/exception/Exceptions.h"
+#include "eckit/utils/Hash.h"
+
 #include "atlas/projection/detail/LambertProjection.h"
+#include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
 
@@ -107,7 +111,9 @@ void LambertProjection::hash( eckit::Hash& hsh ) const {
     hsh.add( radius_ );
 }
 
-register_BuilderT1( ProjectionImpl, LambertProjection, LambertProjection::static_type() );
+namespace {
+static ProjectionBuilder<LambertProjection> register_projection( LambertProjection::static_type() );
+}  // namespace
 
 }  // namespace detail
 }  // namespace projection

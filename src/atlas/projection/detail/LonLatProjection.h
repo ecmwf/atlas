@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 
 namespace atlas {
@@ -52,8 +53,8 @@ private:
     Rotation rotation_;
 };
 
-typedef LonLatProjectionT<NotRotated> LonLatProjection;
-typedef LonLatProjectionT<Rotated> RotatedLonLatProjection;
+using LonLatProjection        = LonLatProjectionT<NotRotated>;
+using RotatedLonLatProjection = LonLatProjectionT<Rotated>;
 
 // --------------------------------------------------------------------------------------------------------------------
 

@@ -12,35 +12,40 @@
 
 #include <string>
 
-#include "eckit/config/Parametrisation.h"
-#include "eckit/memory/SharedPtr.h"
-#include "eckit/utils/Hash.h"
-
-#include "atlas/projection/detail/ProjectionImpl.h"
-#include "atlas/util/Point.h"
+#include "atlas/util/ObjectHandle.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 
 // Forward declarations
 namespace eckit {
 class Parametrisation;
-}
+class Hash;
+}  // namespace eckit
 
 //---------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 
+class PointLonLat;
+class PointXY;
+
 //---------------------------------------------------------------------------------------------------------------------
+namespace util {
+class Config;
+}
+namespace projection {
+namespace detail {
+class ProjectionImpl;
+}
+}  // namespace projection
 
-class Projection {
+class Projection : public util::ObjectHandle<projection::detail::ProjectionImpl> {
 public:
-    using Implementation = projection::detail::ProjectionImpl;
-    using Spec           = Implementation::Spec;
+    using Spec = util::Config;
 
 public:
-    Projection();
-    Projection( const Projection& );
-    Projection( const Implementation* );
+    using Handle::Handle;
+    Projection() = default;
     Projection( const eckit::Parametrisation& );
 
     void xy2lonlat( double crd[] ) const;
@@ -55,42 +60,10 @@ public:
 
     std::string units() const;
 
-    operator bool() const;
-
-    std::string type() const { return projection_->type(); }
+    std::string type() const;
 
     void hash( eckit::Hash& ) const;
-
-private:
-    eckit::SharedPtr<Implementation> projection_;
 };
-
-//---------------------------------------------------------------------------------------------------------------------
-
-inline void Projection::xy2lonlat( double crd[] ) const {
-    return projection_->xy2lonlat( crd );
-}
-inline void Projection::lonlat2xy( double crd[] ) const {
-    return projection_->lonlat2xy( crd );
-}
-inline PointLonLat Projection::lonlat( const PointXY& xy ) const {
-    return projection_->lonlat( xy );
-}
-inline PointXY Projection::xy( const PointLonLat& lonlat ) const {
-    return projection_->xy( lonlat );
-}
-inline bool Projection::strictlyRegional() const {
-    return projection_->strictlyRegional();
-}
-inline Projection::Spec Projection::spec() const {
-    return projection_->spec();
-}
-inline std::string Projection::units() const {
-    return projection_->units();
-}
-inline Projection::operator bool() const {
-    return projection_->operator bool();
-}
 
 //---------------------------------------------------------------------------------------------------------------------
 

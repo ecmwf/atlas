@@ -15,6 +15,7 @@
 #include <numeric>
 
 #include "eckit/types/FloatCompare.h"
+#include "eckit/utils/Hash.h"
 
 #include "atlas/domain/Domain.h"
 #include "atlas/grid/Grid.h"

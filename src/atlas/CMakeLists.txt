@@ -76,6 +76,8 @@ projection/detail/SchmidtProjection.cc
 projection/detail/SchmidtProjection.h
 projection/detail/MercatorProjection.cc
 projection/detail/MercatorProjection.h
+projection/detail/ProjectionFactory.h
+projection/detail/ProjectionFactory.cc
 
 domain.h
 domain/Domain.cc

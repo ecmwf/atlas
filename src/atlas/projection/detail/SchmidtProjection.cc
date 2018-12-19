@@ -10,7 +10,13 @@
 
 #include <cmath>
 
+#include "eckit/config/Parametrisation.h"
+#include "eckit/exception/Exceptions.h"
+#include "eckit/utils/Hash.h"
+
+#include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/projection/detail/SchmidtProjection.h"
+#include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 
 namespace {
@@ -72,8 +78,10 @@ void SchmidtProjectionT<Rotation>::hash( eckit::Hash& hsh ) const {
     hsh.add( c_ );
 }
 
-register_BuilderT1( ProjectionImpl, SchmidtProjection, SchmidtProjection::static_type() );
-register_BuilderT1( ProjectionImpl, RotatedSchmidtProjection, RotatedSchmidtProjection::static_type() );
+namespace {
+static ProjectionBuilder<SchmidtProjection> register_1( SchmidtProjection::static_type() );
+static ProjectionBuilder<RotatedSchmidtProjection> register_2( RotatedSchmidtProjection::static_type() );
+}  // namespace
 
 }  // namespace detail
 }  // namespace projection

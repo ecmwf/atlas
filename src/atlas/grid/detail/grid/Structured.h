@@ -13,12 +13,11 @@
 #include <array>
 #include <memory>
 
-#include "eckit/utils/Hash.h"
-
 #include "atlas/grid/Spacing.h"
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/library/config.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace grid {

@@ -10,7 +10,11 @@
 
 #include <cmath>
 
+#include "eckit/config/Parametrisation.h"
+#include "eckit/utils/Hash.h"
+
 #include "atlas/projection/detail/MercatorProjection.h"
+#include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
 
@@ -87,8 +91,10 @@ void MercatorProjectionT<Rotation>::hash( eckit::Hash& hsh ) const {
     hsh.add( radius_ );
 }
 
-register_BuilderT1( ProjectionImpl, MercatorProjection, MercatorProjection::static_type() );
-register_BuilderT1( ProjectionImpl, RotatedMercatorProjection, RotatedMercatorProjection::static_type() );
+namespace {
+static ProjectionBuilder<MercatorProjection> register_1( MercatorProjection::static_type() );
+static ProjectionBuilder<RotatedMercatorProjection> register_2( RotatedMercatorProjection::static_type() );
+}  // namespace
 
 }  // namespace detail
 }  // namespace projection

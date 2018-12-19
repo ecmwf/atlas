@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <cstring>
+
 #include "NodeColumnsInterface.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/field/detail/FieldImpl.h"

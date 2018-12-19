@@ -20,9 +20,11 @@
 #include <memory>
 #include <vector>
 
-#include "eckit/utils/Hash.h"
+
+#include "eckit/exception/Exceptions.h"
 
 #include "atlas/grid/detail/grid/Grid.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 class Mesh;

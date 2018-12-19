@@ -9,10 +9,11 @@
  */
 
 #include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <limits>
-#include <stdexcept>
 #include <numeric>
+#include <stdexcept>
 
 #include "atlas/array.h"
 #include "atlas/array/IndexView.h"
@@ -48,9 +49,9 @@
 
 using atlas::mesh::detail::accumulate_facets;
 using atlas::util::LonLatMicroDeg;
-using atlas::util::microdeg;
 using atlas::util::PeriodicTransform;
 using atlas::util::UniqueLonLat;
+using atlas::util::microdeg;
 using Topology = atlas::mesh::Nodes::Topology;
 
 namespace atlas {

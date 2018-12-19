@@ -12,29 +12,32 @@
 
 #include <array>
 
-#include "eckit/config/Parametrisation.h"
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/utils/Hash.h"
-
-#include "atlas/util/Config.h"
+#include "atlas/util/Object.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/Rotation.h"
+
+namespace eckit {
+class Parametrisation;
+class Hash;
+}  // namespace eckit
+
+namespace atlas {
+namespace util {
+class Config;
+}
+}  // namespace atlas
 
 namespace atlas {
 namespace projection {
 namespace detail {
 
-class ProjectionImpl : public eckit::Owned {
+class ProjectionImpl : public util::Object {
 public:
-    using ARG1      = const eckit::Parametrisation&;
-    using builder_t = eckit::BuilderT1<ProjectionImpl>;
-    using Spec      = atlas::util::Config;
+    using Spec = atlas::util::Config;
     static std::string className() { return "atlas.Projection"; }
 
 public:
-    static ProjectionImpl* create();  // creates the LonLatProjection
-    static ProjectionImpl* create( const eckit::Parametrisation& p );
+    static const ProjectionImpl* create( const eckit::Parametrisation& p );
 
     ProjectionImpl() {}
     virtual ~ProjectionImpl() {}  // destructor should be virtual
@@ -97,9 +100,9 @@ public:
     static std::string classNamePrefix() { return ""; }  // deliberately empty
     static std::string typePrefix() { return ""; }       // deliberately empty
 
-    void rotate( double crd[] ) const { /* do nothing */
+    void rotate( double* ) const { /* do nothing */
     }
-    void unrotate( double crd[] ) const { /* do nothing */
+    void unrotate( double* ) const { /* do nothing */
     }
 
     bool rotated() const { return false; }

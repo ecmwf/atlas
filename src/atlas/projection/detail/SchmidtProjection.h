@@ -45,8 +45,8 @@ private:
     Rotation rotation_;
 };
 
-typedef SchmidtProjectionT<NotRotated> SchmidtProjection;
-typedef SchmidtProjectionT<Rotated> RotatedSchmidtProjection;
+using SchmidtProjection        = SchmidtProjectionT<NotRotated>;
+using RotatedSchmidtProjection = SchmidtProjectionT<Rotated>;
 
 }  // namespace detail
 }  // namespace projection
