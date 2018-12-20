@@ -63,8 +63,6 @@ public:  // types
     };
 
 public:  // methods
-    static std::string className();
-
     static const Grid* create( const Config& );
 
     static const Grid* create( const std::string& name, const Config& = Config() );

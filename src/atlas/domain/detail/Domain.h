@@ -30,7 +30,6 @@ namespace domain {
 class Domain : public util::Object {
 public:
     using Spec = util::Config;
-    static std::string className() { return "atlas.Domain"; }
 
 public:
     static const Domain* create();  // Create a global domain

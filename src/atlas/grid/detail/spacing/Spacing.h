@@ -35,8 +35,6 @@ public:
     using Interval       = std::array<double, 2>;
     using Spec           = atlas::util::Config;
 
-    static std::string className() { return "atlas.Spacing"; }
-
 public:
     static const Spacing* create( const eckit::Parametrisation& params );
 

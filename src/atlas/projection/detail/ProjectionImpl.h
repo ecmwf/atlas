@@ -34,7 +34,6 @@ namespace detail {
 class ProjectionImpl : public util::Object {
 public:
     using Spec = atlas::util::Config;
-    static std::string className() { return "atlas.Projection"; }
 
 public:
     static const ProjectionImpl* create( const eckit::Parametrisation& p );

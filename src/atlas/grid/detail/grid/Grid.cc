@@ -32,10 +32,6 @@ static void checkSizeOfPoint() {
     ASSERT( sizeof( PointXY ) == 2 * sizeof( double ) );
 }
 
-std::string Grid::className() {
-    return "atlas.Grid";
-}
-
 const Grid* Grid::create( const Config& config ) {
     std::string name;
     if ( config.get( "name", name ) ) { return create( name, config ); }
