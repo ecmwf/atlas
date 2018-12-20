@@ -13,12 +13,12 @@
 
 #include "PointsPerLatitude.h"
 
-#include "eckit/memory/ScopedPtr.h"
+#include <memory>
+
+#include "eckit/exception/Exceptions.h"
 
 #include "atlas/grid/detail/pl/classic_gaussian/N.h"
 
-using eckit::Factory;
-using eckit::ScopedPtr;
 
 namespace atlas {
 namespace grid {
@@ -33,8 +33,8 @@ void points_per_latitude_npole_equator_impl( const size_t N, Int nlon[] ) {
     std::stringstream Nstream;
     Nstream << N;
     std::string Nstr = Nstream.str();
-    if ( Factory<PointsPerLatitude>::instance().exists( Nstr ) ) {
-        ScopedPtr<PointsPerLatitude> pl( Factory<PointsPerLatitude>::instance().get( Nstr ).create() );
+    if ( PointsPerLatitudeFactory::has( Nstr ) ) {
+        std::unique_ptr<const PointsPerLatitude> pl( PointsPerLatitudeFactory::build( Nstr ) );
         pl->assign( nlon, N );
     }
     else {

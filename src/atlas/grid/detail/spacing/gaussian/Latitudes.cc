@@ -12,11 +12,11 @@
 /// @date Jan 2014
 
 #include <limits>
+#include <memory>
 
-#include "eckit/memory/ScopedPtr.h"
+#include "eckit/exception/Exceptions.h"
 
 #include "atlas/array.h"
-#include "atlas/array/MakeView.h"
 #include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
 #include "atlas/grid/detail/spacing/gaussian/N.h"
 #include "atlas/library/config.h"
@@ -24,9 +24,8 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
-using eckit::ConcreteBuilderT0;
-using eckit::Factory;
-using eckit::ScopedPtr;
+//using eckit::ConcreteBuilderT0;
+//using eckit::Factory;
 
 using atlas::array::Array;
 using atlas::array::ArrayView;
@@ -47,10 +46,14 @@ void gaussian_latitudes_npole_equator( const size_t N, double lats[] ) {
     std::stringstream Nstream;
     Nstream << N;
     std::string Nstr = Nstream.str();
-    if ( Factory<GaussianLatitudes>::instance().exists( Nstr ) ) {
-        ScopedPtr<GaussianLatitudes> gl( Factory<GaussianLatitudes>::instance().get( Nstr ).create() );
+    if ( GaussianLatitudesFactory::has( Nstr ) ) {
+        std::unique_ptr<const GaussianLatitudes> gl( GaussianLatitudesFactory::build( Nstr ) );
         gl->assign( lats, N );
     }
+    //    if ( Factory<GaussianLatitudes>::instance().exists( Nstr ) ) {
+    //        std::unique_ptr<GaussianLatitudes> gl( Factory<GaussianLatitudes>::instance().get( Nstr ).create() );
+    //        gl->assign( lats, N );
+    //    }
     else {
         std::vector<double> weights( N );
         compute_gaussian_quadrature_npole_equator( N, lats, weights.data() );
