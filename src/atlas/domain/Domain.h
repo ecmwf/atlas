@@ -11,6 +11,7 @@
 #pragma once
 
 #include <array>
+#include <string>
 
 #include "atlas/util/ObjectHandle.h"
 
