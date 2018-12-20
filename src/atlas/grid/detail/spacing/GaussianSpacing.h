@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "atlas/grid/detail/spacing/Spacing.h"
 
 namespace atlas {

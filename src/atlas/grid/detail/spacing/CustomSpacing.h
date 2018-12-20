@@ -11,6 +11,7 @@
 #pragma once
 
 #include <array>
+#include <string>
 
 #include "atlas/grid/detail/spacing/Spacing.h"
 
