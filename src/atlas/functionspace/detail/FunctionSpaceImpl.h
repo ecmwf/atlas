@@ -12,7 +12,7 @@
 
 #include <string>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 
 #include "atlas/library/config.h"
 
@@ -36,7 +36,7 @@ namespace functionspace {
 
 /// @brief FunctionSpace class helps to interprete Fields.
 /// @note  Abstract base class
-class FunctionSpaceImpl : public eckit::Owned {
+class FunctionSpaceImpl : public util::Object {
 private:
     template <typename T>
     struct remove_const {

@@ -16,7 +16,7 @@
 
 #include <string>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 
 #include "atlas/field/Field.h"
 
@@ -43,7 +43,7 @@ namespace field {
  *         );
  * \endcode
  */
-class FieldCreator : public eckit::Owned {
+class FieldCreator : public util::Object {
 public:
     FieldCreator();
 

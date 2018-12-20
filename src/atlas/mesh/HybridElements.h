@@ -18,7 +18,7 @@
 
 #include <map>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/field/Field.h"
@@ -51,7 +51,7 @@ namespace mesh {
 // -------------------------------------------------------------------------------
 
 /// @brief HybridElements class that describes elements of different types
-class HybridElements : public eckit::Owned {
+class HybridElements : public util::Object {
     friend class Elements;
 
 public:

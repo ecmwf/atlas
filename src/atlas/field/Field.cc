@@ -20,365 +20,315 @@ namespace atlas {
 // ------------------------------------------------------------------
 
 std::ostream& operator<<( std::ostream& os, const Field& f ) {
-    os << ( *f.field_ );
+    os << ( *f.get() );
     return os;
 }
 
-Field::Field() : field_( nullptr ) {}
-
-Field::Field( const Field& field ) : field_( field.field_ ) {
-    field_->attach();
-}
-
-Field::Field( const Implementation* field ) : field_( const_cast<Implementation*>( field ) ) {
-    field_->attach();
-}
-
-Field::Field( const eckit::Parametrisation& config ) : field_( Implementation::create( config ) ) {
-    field_->attach();
-}
+Field::Field( const eckit::Parametrisation& config ) : Handle( Implementation::create( config ) ) {}
 
 Field::Field( const std::string& name, array::DataType datatype, const array::ArrayShape& shape ) :
-    field_( Implementation::create( name, datatype, shape ) ) {
-    field_->attach();
-}
+    Handle( Implementation::create( name, datatype, shape ) ) {}
 
-Field::Field( const std::string& name, array::Array* array ) : field_( Implementation::create( name, array ) ) {
-    field_->attach();
-}
+Field::Field( const std::string& name, array::Array* array ) : Handle( Implementation::create( name, array ) ) {}
 
 template <>
 Field::Field( const std::string& name, double* data, const array::ArraySpec& spec ) :
-    field_( Implementation::wrap( name, data, spec ) ) {
-    field_->attach();
-}
+    Handle( Implementation::wrap( name, data, spec ) ) {}
 
 template <>
 Field::Field( const std::string& name, double* data, const array::ArrayShape& shape ) :
-    field_( Implementation::wrap( name, data, shape ) ) {
-    field_->attach();
-}
+    Handle( Implementation::wrap( name, data, shape ) ) {}
 
 template <>
 Field::Field( const std::string& name, float* data, const array::ArraySpec& spec ) :
-    field_( Implementation::wrap( name, data, spec ) ) {
-    field_->attach();
-}
+    Handle( Implementation::wrap( name, data, spec ) ) {}
 
 template <>
 Field::Field( const std::string& name, float* data, const array::ArrayShape& shape ) :
-    field_( Implementation::wrap( name, data, shape ) ) {
-    field_->attach();
-}
+    Handle( Implementation::wrap( name, data, shape ) ) {}
 
 template <>
 Field::Field( const std::string& name, long* data, const array::ArraySpec& spec ) :
-    field_( Implementation::wrap( name, data, spec ) ) {
-    field_->attach();
-}
+    Handle( Implementation::wrap( name, data, spec ) ) {}
 
 template <>
 Field::Field( const std::string& name, long* data, const array::ArrayShape& shape ) :
-    field_( Implementation::wrap( name, data, shape ) ) {
-    field_->attach();
-}
+    Handle( Implementation::wrap( name, data, shape ) ) {}
 
 template <>
 Field::Field( const std::string& name, int* data, const array::ArraySpec& spec ) :
-    field_( Implementation::wrap( name, data, spec ) ) {
-    field_->attach();
-}
+    Handle( Implementation::wrap( name, data, spec ) ) {}
 
 template <>
 Field::Field( const std::string& name, int* data, const array::ArrayShape& shape ) :
-    field_( Implementation::wrap( name, data, shape ) ) {
-    field_->attach();
-}
-
-Field::~Field() {
-    if ( field_ ) {
-        field_->detach();
-        if ( not field_->owners() ) { delete field_; }
-    }
-}
-
-const Field& Field::operator=( const Field& other ) {
-    if ( field_ != other.field_ ) {
-        if ( field_ ) {
-            if ( not field_->owners() ) { delete field_; }
-        }
-        field_ = other.field_;
-        field_->attach();
-    }
-    return *this;
-}
+    Handle( Implementation::wrap( name, data, shape ) ) {}
 
 /// @brief Implicit conversion to Array
 Field::operator const array::Array&() const {
-    return field_->array();
+    return get()->array();
 }
 Field::operator array::Array&() {
-    return field_->array();
+    return get()->array();
 }
 
 const array::Array& Field::array() const {
-    return field_->array();
+    return get()->array();
 }
 array::Array& Field::array() {
-    return field_->array();
+    return get()->array();
 }
 
 // -- Accessors
 
 /// @brief Access to raw data
 void* Field::storage() {
-    return field_->storage();
+    return get()->storage();
 }
 
 /// @brief Internal data type of field
 array::DataType Field::datatype() const {
-    return field_->datatype();
+    return get()->datatype();
 }
 
 /// @brief Name associated to this field
 const std::string& Field::name() const {
-    return field_->name();
+    return get()->name();
 }
 
 /// @brief Rename this field
 void Field::rename( const std::string& name ) {
-    field_->rename( name );
+    get()->rename( name );
 }
 
 /// @brief Access to metadata associated to this field
 const util::Metadata& Field::metadata() const {
-    return field_->metadata();
+    return get()->metadata();
 }
 util::Metadata& Field::metadata() {
-    return field_->metadata();
+    return get()->metadata();
 }
 
 /// @brief Resize field to given shape
 void Field::resize( const array::ArrayShape& shape ) {
-    field_->resize( shape );
+    get()->resize( shape );
 }
 
 void Field::insert( idx_t idx1, idx_t size1 ) {
-    field_->insert( idx1, size1 );
+    get()->insert( idx1, size1 );
 }
 
 /// @brief Shape of this field in Fortran style (reverse order of C style)
 const std::vector<int>& Field::shapef() const {
-    return field_->shapef();
+    return get()->shapef();
 }
 
 /// @brief Strides of this field in Fortran style (reverse order of C style)
 const std::vector<int>& Field::stridesf() const {
-    return field_->stridesf();
+    return get()->stridesf();
 }
 
 /// @brief Shape of this field (reverse order of Fortran style)
 const array::ArrayShape& Field::shape() const {
-    return field_->shape();
+    return get()->shape();
 }
 
 /// @brief Strides of this field
 const array::ArrayStrides& Field::strides() const {
-    return field_->strides();
+    return get()->strides();
 }
 
 /// @brief Shape of this field associated to index 'i'
 idx_t Field::shape( idx_t i ) const {
-    return field_->shape( i );
+    return get()->shape( i );
 }
 
 /// @brief Stride of this field associated to index 'i'
 idx_t Field::stride( idx_t i ) const {
-    return field_->stride( i );
+    return get()->stride( i );
 }
 
 /// @brief Number of values stored in this field
 idx_t Field::size() const {
-    return field_->size();
+    return get()->size();
 }
 
 /// @brief Rank of field
 idx_t Field::rank() const {
-    return field_->rank();
+    return get()->rank();
 }
 
 /// @brief Number of bytes occupied by the values of this field
 size_t Field::bytes() const {
-    return field_->bytes();
+    return get()->bytes();
 }
 
 /// @brief Output information of field plus raw data
 void Field::dump( std::ostream& os ) const {
-    field_->dump( os );
+    get()->dump( os );
 }
 
 /// Metadata that is more intrinsic to the Field, and queried often
 void Field::set_levels( idx_t n ) {
-    field_->set_levels( n );
+    get()->set_levels( n );
 }
 idx_t Field::levels() const {
-    return field_->levels();
+    return get()->levels();
 }
 
 /// Metadata that is more intrinsic to the Field, and queried often
 void Field::set_variables( idx_t n ) {
-    field_->set_variables( n );
+    get()->set_variables( n );
 }
 idx_t Field::variables() const {
-    return field_->variables();
+    return get()->variables();
 }
 
 void Field::set_functionspace( const FunctionSpace& functionspace ) {
-    field_->set_functionspace( functionspace );
+    get()->set_functionspace( functionspace );
 }
 const FunctionSpace& Field::functionspace() const {
-    return field_->functionspace();
+    return get()->functionspace();
 }
 
 /// @brief Return the memory footprint of the Field
 size_t Field::footprint() const {
-    return field_->footprint();
+    return get()->footprint();
 }
 
 bool Field::dirty() const {
-    return field_->dirty();
+    return get()->dirty();
 }
 
 void Field::set_dirty( bool value ) const {
-    return field_->set_dirty( value );
+    return get()->set_dirty( value );
 }
 
 void Field::haloExchange( bool on_device ) const {
-    field_->haloExchange( on_device );
+    get()->haloExchange( on_device );
 }
 
 // -- dangerous methods
 template <>
 double const* Field::host_data() const {
-    return field_->host_data<double>();
+    return get()->host_data<double>();
 }
 template <>
 double* Field::host_data() {
-    return field_->host_data<double>();
+    return get()->host_data<double>();
 }
 template <>
 double const* Field::device_data() const {
-    return field_->device_data<double>();
+    return get()->device_data<double>();
 }
 template <>
 double* Field::device_data() {
-    return field_->device_data<double>();
+    return get()->device_data<double>();
 }
 template <>
 double const* Field::data() const {
-    return field_->host_data<double>();
+    return get()->host_data<double>();
 }
 template <>
 double* Field::data() {
-    return field_->host_data<double>();
+    return get()->host_data<double>();
 }
 
 template <>
 float const* Field::host_data() const {
-    return field_->host_data<float>();
+    return get()->host_data<float>();
 }
 template <>
 float* Field::host_data() {
-    return field_->host_data<float>();
+    return get()->host_data<float>();
 }
 template <>
 float const* Field::device_data() const {
-    return field_->device_data<float>();
+    return get()->device_data<float>();
 }
 template <>
 float* Field::device_data() {
-    return field_->device_data<float>();
+    return get()->device_data<float>();
 }
 template <>
 float const* Field::data() const {
-    return field_->host_data<float>();
+    return get()->host_data<float>();
 }
 template <>
 float* Field::data() {
-    return field_->host_data<float>();
+    return get()->host_data<float>();
 }
 
 template <>
 long const* Field::host_data() const {
-    return field_->host_data<long>();
+    return get()->host_data<long>();
 }
 template <>
 long* Field::host_data() {
-    return field_->host_data<long>();
+    return get()->host_data<long>();
 }
 template <>
 long const* Field::device_data() const {
-    return field_->device_data<long>();
+    return get()->device_data<long>();
 }
 template <>
 long* Field::device_data() {
-    return field_->device_data<long>();
+    return get()->device_data<long>();
 }
 template <>
 long const* Field::data() const {
-    return field_->host_data<long>();
+    return get()->host_data<long>();
 }
 template <>
 long* Field::data() {
-    return field_->host_data<long>();
+    return get()->host_data<long>();
 }
 
 template <>
 int const* Field::host_data() const {
-    return field_->host_data<int>();
+    return get()->host_data<int>();
 }
 template <>
 int* Field::host_data() {
-    return field_->host_data<int>();
+    return get()->host_data<int>();
 }
 template <>
 int const* Field::device_data() const {
-    return field_->device_data<int>();
+    return get()->device_data<int>();
 }
 template <>
 int* Field::device_data() {
-    return field_->device_data<int>();
+    return get()->device_data<int>();
 }
 template <>
 int const* Field::data() const {
-    return field_->host_data<int>();
+    return get()->host_data<int>();
 }
 template <>
 int* Field::data() {
-    return field_->host_data<int>();
+    return get()->host_data<int>();
 }
 
 // -- Methods related to host-device synchronisation, requires gridtools_storage
 void Field::cloneToDevice() const {
-    field_->cloneToDevice();
+    get()->cloneToDevice();
 }
 void Field::cloneFromDevice() const {
-    field_->cloneFromDevice();
+    get()->cloneFromDevice();
 }
 void Field::syncHostDevice() const {
-    field_->syncHostDevice();
+    get()->syncHostDevice();
 }
 bool Field::hostNeedsUpdate() const {
-    return field_->hostNeedsUpdate();
+    return get()->hostNeedsUpdate();
 }
 bool Field::deviceNeedsUpdate() const {
-    return field_->deviceNeedsUpdate();
+    return get()->deviceNeedsUpdate();
 }
 void Field::reactivateDeviceWriteViews() const {
-    field_->reactivateDeviceWriteViews();
+    get()->reactivateDeviceWriteViews();
 }
 void Field::reactivateHostWriteViews() const {
-    field_->reactivateHostWriteViews();
+    get()->reactivateHostWriteViews();
 }
 
 // ------------------------------------------------------------------

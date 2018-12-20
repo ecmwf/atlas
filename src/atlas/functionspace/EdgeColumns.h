@@ -12,6 +12,7 @@
 
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 #include "atlas/mesh/Halo.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/option.h"

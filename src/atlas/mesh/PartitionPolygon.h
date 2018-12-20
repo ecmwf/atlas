@@ -16,7 +16,7 @@
 
 #include <vector>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 
 #include "atlas/library/config.h"
 #include "atlas/util/Config.h"
@@ -36,7 +36,7 @@ namespace mesh {
 /**
  * @brief Polygon class that holds the boundary of a mesh partition
  */
-class PartitionPolygon : public util::Polygon, public eckit::Owned {
+class PartitionPolygon : public util::Polygon, public util::Object {
 public:  // methods
     //-- Constructors
 

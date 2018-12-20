@@ -16,7 +16,7 @@
 
 #include "eckit/config/Configuration.h"
 #include "eckit/linalg/SparseMatrix.h"
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 #include "eckit/memory/SharedPtr.h"
 
 namespace atlas {
@@ -29,7 +29,7 @@ class Grid;
 namespace atlas {
 namespace interpolation {
 
-class Method : public eckit::Owned {
+class Method : public util::Object {
 public:
     typedef eckit::Parametrisation Config;
 

@@ -13,6 +13,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {

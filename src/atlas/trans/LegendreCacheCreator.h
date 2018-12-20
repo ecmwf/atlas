@@ -12,7 +12,7 @@
 
 #include <memory>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/trans/Trans.h"
@@ -32,7 +32,7 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
-class LegendreCacheCreatorImpl : public eckit::Owned {
+class LegendreCacheCreatorImpl : public util::Object {
 public:
     virtual ~LegendreCacheCreatorImpl() = 0;
 

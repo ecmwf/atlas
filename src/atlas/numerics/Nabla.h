@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 #include "eckit/memory/SharedPtr.h"
 
 namespace eckit {
@@ -33,7 +33,7 @@ class Field;
 namespace atlas {
 namespace numerics {
 
-class NablaImpl : public eckit::Owned {
+class NablaImpl : public util::Object {
 public:
     NablaImpl( const Method&, const eckit::Parametrisation& );
     virtual ~NablaImpl();

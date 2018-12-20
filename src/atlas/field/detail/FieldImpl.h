@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 
 #include "atlas/array.h"
 #include "atlas/array/ArrayUtil.h"
@@ -36,7 +36,7 @@ namespace field {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class FieldImpl : public eckit::Owned {
+class FieldImpl : public util::Object {
 public:  // Static methods
     /// @brief Create field from parametrisation
     static FieldImpl* create( const eckit::Parametrisation& );
@@ -51,11 +51,6 @@ public:  // Static methods
 
     /// @brief Create field with given name, and take ownership of given Array
     static FieldImpl* create( const std::string& name, array::Array* );
-
-    /// @brief Create field with given name, and share ownership of given Array
-    /// @note nawd: Not so sure we should go this route
-    /// static FieldImpl* create( const std::string& name, const
-    /// eckit::SharedPtr<Array>& );
 
     /// @brief Create field by wrapping existing data, Datatype of template and
     /// ArraySpec
@@ -73,10 +68,6 @@ private:  // Private constructors to force use of static create functions
 
     /// Transfer ownership of Array
     FieldImpl( const std::string& name, array::Array* );
-
-    /// Share ownership of Array
-    /// @note We could go this route...
-    /// Field(const std::string& name, const eckit::SharedPtr<Array>& );
 
 public:  // Destructor
     virtual ~FieldImpl();

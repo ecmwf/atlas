@@ -14,7 +14,7 @@
 #include <string>
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/serialisation/FileStream.h"
 
@@ -58,7 +58,7 @@ typedef eckit::PathName PathName;
 
 // -----------------------------------------------------------------------------
 
-class OutputImpl : public eckit::Owned {
+class OutputImpl : public util::Object {
 public:
     typedef atlas::util::Config Parameters;
 

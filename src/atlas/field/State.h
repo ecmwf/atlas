@@ -18,7 +18,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Metadata.h"
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 #include "eckit/memory/SharedPtr.h"
 
 namespace eckit {
@@ -31,7 +31,7 @@ namespace field {
 /**
  * \brief State class that owns a collection of fields
  */
-class State : public eckit::Owned {
+class State : public util::Object {
 public:  // types
     typedef eckit::SharedPtr<State> Ptr;
 
@@ -79,7 +79,7 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-class StateGenerator : public eckit::Owned {
+class StateGenerator : public util::Object {
 public:
     StateGenerator( const eckit::Parametrisation& = util::Config() );
 

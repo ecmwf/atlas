@@ -8,62 +8,65 @@
  * nor does it submit to any jurisdiction.
  */
 
+
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/field/Field.h"
+#include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 
 namespace atlas {
 
-FunctionSpace::FunctionSpace() : functionspace_( new functionspace::NoFunctionSpace() ) {}
+FunctionSpace::FunctionSpace() : Handle( new functionspace::NoFunctionSpace() ) {}
 
-FunctionSpace::FunctionSpace( const Implementation* functionspace ) : functionspace_( functionspace ) {}
-
-FunctionSpace::FunctionSpace( const FunctionSpace& functionspace ) : functionspace_( functionspace.functionspace_ ) {}
 
 std::string FunctionSpace::type() const {
-    return functionspace_->type();
+    return get()->type();
 }
 
 FunctionSpace::operator bool() const {
-    return functionspace_->operator bool();
+    return get()->operator bool();
 }
 
 size_t FunctionSpace::footprint() const {
-    return functionspace_->footprint();
+    return get()->footprint();
 }
 
 Field FunctionSpace::createField( const eckit::Configuration& config ) const {
-    return functionspace_->createField( config );
+    return get()->createField( config );
 }
 
 Field FunctionSpace::createField( const Field& other ) const {
-    return functionspace_->createField( other );
+    return get()->createField( other );
 }
 
 Field FunctionSpace::createField( const Field& other, const eckit::Configuration& config ) const {
-    return functionspace_->createField( other, config );
+    return get()->createField( other, config );
 }
 
 std::string FunctionSpace::distribution() const {
-    return functionspace_->distribution();
+    return get()->distribution();
 }
 
 void FunctionSpace::haloExchange( const Field& field, bool on_device ) const {
-    return functionspace_->haloExchange( field, on_device );
+    return get()->haloExchange( field, on_device );
+}
+
+idx_t FunctionSpace::size() const {
+    return get()->size();
 }
 
 void FunctionSpace::haloExchange( const FieldSet& fields, bool on_device ) const {
-    return functionspace_->haloExchange( fields, on_device );
+    return get()->haloExchange( fields, on_device );
 }
 
 
 template <typename DATATYPE>
 Field FunctionSpace::createField() const {
-    return functionspace_->createField<DATATYPE>();
+    return get()->createField<DATATYPE>();
 }
 
 template <typename DATATYPE>
 Field FunctionSpace::createField( const eckit::Configuration& options ) const {
-    return functionspace_->createField<DATATYPE>( options );
+    return get()->createField<DATATYPE>( options );
 }
 
 template Field FunctionSpace::createField<double>() const;

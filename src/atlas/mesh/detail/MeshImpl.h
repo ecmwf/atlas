@@ -13,7 +13,7 @@
 #include <iosfwd>
 #include <memory>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/mesh/PartitionPolygon.h"
@@ -49,7 +49,7 @@ namespace detail {
 
 class MeshObserver;
 
-class MeshImpl : public eckit::Owned {
+class MeshImpl : public util::Object {
 public:  // methods
     /// @brief Construct a empty MeshImpl
     explicit MeshImpl();

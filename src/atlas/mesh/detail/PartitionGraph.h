@@ -13,7 +13,7 @@
 #include <iosfwd>
 
 #include "atlas/library/config.h"
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 #include "eckit/memory/SharedPtr.h"
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ class MeshImpl;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class PartitionGraph : public eckit::Owned {
+class PartitionGraph : public util::Object {
 public:
     using Neighbours = std::vector<idx_t>;
 

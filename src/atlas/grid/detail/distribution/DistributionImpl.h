@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 
 #include "atlas/library/config.h"
 
@@ -27,7 +27,7 @@ class Partitioner;
 namespace atlas {
 namespace grid {
 
-class DistributionImpl : public eckit::Owned {
+class DistributionImpl : public util::Object {
 public:
     DistributionImpl( const Grid& );
 

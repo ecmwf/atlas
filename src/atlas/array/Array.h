@@ -13,7 +13,7 @@
 #include <vector>
 #include <memory>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
@@ -33,7 +33,7 @@ class ArrayT_impl;
 
 // --------------------------------------------------------------------------------------------
 
-class Array : public eckit::Owned {
+class Array : public util::Object {
 public:
     virtual ~Array();
 

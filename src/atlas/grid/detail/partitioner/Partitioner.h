@@ -12,7 +12,7 @@
 
 #include <string>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 
 #include "atlas/library/config.h"
 
@@ -29,7 +29,7 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-class Partitioner : public eckit::Owned {
+class Partitioner : public util::Object {
 public:
     using Grid = atlas::Grid;
 

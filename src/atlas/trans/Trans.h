@@ -11,7 +11,7 @@
 #pragma once
 
 #include "eckit/log/CodeLocation.h"
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/trans/Cache.h"
@@ -35,7 +35,7 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
-class TransImpl : public eckit::Owned {
+class TransImpl : public util::Object {
 public:
     virtual ~TransImpl() = 0;
 

@@ -27,7 +27,7 @@
 #include <array>
 #include <initializer_list>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
@@ -46,7 +46,7 @@ constexpr size_t MAX_STRING_SIZE() {
 }
 
 template <typename ConnectivityImpl>
-class ConnectivityInterface : public eckit::Owned, public ConnectivityImpl {
+class ConnectivityInterface : public util::Object, public ConnectivityImpl {
     using ConnectivityImpl::ConnectivityImpl;
     using eckit::Owned::Owned;
 };

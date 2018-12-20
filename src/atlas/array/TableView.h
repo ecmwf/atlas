@@ -139,7 +139,7 @@ private:
 // ------------------------------------------------------------------------------------------------------
 
 template <bool ReadOnly>
-class TableView : public eckit::Owned {
+class TableView : public util::Object {
 #if ATLAS_HAVE_FORTRAN
     using Index = typename std::conditional<ReadOnly, idx_t, detail::TableIndex>::type;
 #else

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/Halo.h"
 #include "atlas/mesh/Mesh.h"

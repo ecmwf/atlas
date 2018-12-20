@@ -16,7 +16,7 @@
 #include <map>
 #include <string>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/field/Field.h"
@@ -31,7 +31,7 @@ namespace mesh {
  * \brief Nodes class that owns a collection of fields defined in nodes of the
  * mesh
  */
-class Nodes : public eckit::Owned {
+class Nodes : public util::Object {
 public:
     typedef IrregularConnectivity Connectivity;
 

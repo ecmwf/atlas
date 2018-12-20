@@ -12,45 +12,39 @@
 
 #include <string>
 
-#include "eckit/memory/SharedPtr.h"
-
-#include "atlas/functionspace/detail/FunctionSpaceImpl.h"
+#include "atlas/library/config.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
 class Configuration;
 }
 
 namespace atlas {
+class Field;
 class FieldSet;
+namespace functionspace {
+class FunctionSpaceImpl;
 }
+}  // namespace atlas
 
 namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-class FunctionSpace {
+class FunctionSpace : public util::ObjectHandle<functionspace::FunctionSpaceImpl> {
 public:
-    using Implementation = functionspace::FunctionSpaceImpl;
-
-private:
-    eckit::SharedPtr<const Implementation> functionspace_;
-
-public:
+    using Handle::Handle;
     FunctionSpace();
-    FunctionSpace( const Implementation* );
-    FunctionSpace( const FunctionSpace& );
 
     std::string type() const;
     operator bool() const;
     size_t footprint() const;
     std::string distribution() const;
 
-    const Implementation* get() const { return functionspace_.get(); }
+    Field createField( const eckit::Configuration& ) const;
 
-    atlas::Field createField( const eckit::Configuration& ) const;
-
-    atlas::Field createField( const atlas::Field& ) const;
-    atlas::Field createField( const atlas::Field&, const eckit::Configuration& ) const;
+    Field createField( const Field& ) const;
+    Field createField( const Field&, const eckit::Configuration& ) const;
 
     template <typename DATATYPE>
     Field createField( const eckit::Configuration& ) const;
@@ -61,7 +55,7 @@ public:
     void haloExchange( const FieldSet&, bool on_device = false ) const;
     void haloExchange( const Field&, bool on_device = false ) const;
 
-    idx_t size() const { return functionspace_->size(); }
+    idx_t size() const;
 };
 
 //------------------------------------------------------------------------------------------------------

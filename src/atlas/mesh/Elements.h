@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/Connectivity.h"
@@ -34,7 +34,7 @@ namespace mesh {
 // ------------------------------------------------------------------------------------------------------
 
 /// @brief Describe elements of a single type
-class Elements : public eckit::Owned {
+class Elements : public util::Object {
 public:
     // typedef atlas::mesh::BlockConnectivity Connectivity;
 public:

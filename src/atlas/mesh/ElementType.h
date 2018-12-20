@@ -16,7 +16,7 @@
 #include <string>
 
 #include "atlas/library/config.h"
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 
 namespace atlas {
 namespace mesh {
@@ -25,7 +25,7 @@ namespace mesh {
  * \brief ElementType class (abstract) that provides access to geometric
  * information of an element
  */
-class ElementType : public eckit::Owned {
+class ElementType : public util::Object {
 public:  // methods
     static ElementType* create( const std::string& );
 

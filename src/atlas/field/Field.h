@@ -19,6 +19,7 @@
 #include "atlas/array/ArrayShape.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
 class Parametrisation;
@@ -39,17 +40,10 @@ class FunctionSpace;
 
 namespace atlas {
 
-class Field {
+class Field : public util::ObjectHandle<field::FieldImpl> {
 public:
-    using Implementation = field::FieldImpl;
-
-private:
-    Implementation* field_{nullptr};
-
-public:
-    Field();
-    Field( const Field& );
-    Field( const Implementation* );
+    using Handle::Handle;
+    Field() = default;
 
     /// @brief Create field from parametrisation
     Field( const eckit::Parametrisation& );
@@ -70,8 +64,6 @@ public:
     template <typename DATATYPE>
     Field( const std::string& name, DATATYPE* data, const array::ArrayShape& );
 
-    ~Field();
-
     // -- Conversion
 
     /// @brief Implicit conversion to Array
@@ -81,13 +73,7 @@ public:
     const array::Array& array() const;
     array::Array& array();
 
-    bool valid() const { return field_; }
-    operator bool() const { return valid(); }
-
-    Implementation* get() { return field_; }
-    const Implementation* get() const { return field_; }
-
-    const Field& operator=( const Field& );
+    bool valid() const { return get() != nullptr; }
 
     // -- Accessors
 

@@ -14,7 +14,7 @@
 
 #include "eckit/io/Buffer.h"
 #include "eckit/io/DataHandle.h"
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/util/Config.h"
@@ -36,7 +36,7 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
-class VorDivToUVImpl : public eckit::Owned {
+class VorDivToUVImpl : public util::Object {
 public:
     virtual ~VorDivToUVImpl() = 0;
 

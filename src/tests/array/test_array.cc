@@ -205,8 +205,7 @@ CASE( "test_spec_layout_rev" ) {
 
     delete ds;
 
-    EXPECT_THROWS_AS( Array::create<double>( make_shape( 4, 5, 6, 2 ), make_layout( 0, 1, 3, 2 ) ),
-                      eckit::BadParameter );
+    EXPECT_THROWS_AS( Array::create<double>( make_shape( 4, 5, 6, 2 ), make_layout( 0, 1, 3, 2 ) ), eckit::Exception );
 }
 #endif
 
@@ -216,7 +215,7 @@ CASE( "test_resize_throw" ) {
     EXPECT_NO_THROW( ds->resize( 32, 5, 33 ) );
     EXPECT_NO_THROW( ds->resize( 32, 4, 33 ) );
     EXPECT_NO_THROW( ds->resize( 32, 5, 32 ) );
-    EXPECT_THROWS_AS( ds->resize( 32, 5, 33, 4 ), eckit::BadParameter );
+    EXPECT_THROWS_AS( ds->resize( 32, 5, 33, 4 ), eckit::Exception );
 
     delete ds;
 }
@@ -419,7 +418,7 @@ CASE( "test_insert" ) {
 CASE( "test_insert_throw" ) {
     Array* ds = Array::create<double>( 7, 5, 8 );
 
-    EXPECT_THROWS_AS( ds->insert( 8, 2 ), eckit::BadParameter );
+    EXPECT_THROWS_AS( ds->insert( 8, 2 ), eckit::Exception );
 }
 
 CASE( "test_wrap_storage" ) {

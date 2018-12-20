@@ -95,7 +95,7 @@ void atlas__FieldSet__add_field( FieldSetImpl* This, FieldImpl* field ) {
 }
 
 int atlas__FieldSet__has_field( const FieldSetImpl* This, char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->has_field( std::string( name ) ); );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->has_field( std::string( name ) ); );
     return 0;
 }
 
@@ -128,18 +128,14 @@ void atlas__FieldSet__halo_exchange( FieldSetImpl* This, int on_device ) {
 
 //------------------------------------------------------------------------------------------------------
 
-FieldSet::FieldSet( const std::string& name ) : fieldset_( new Implementation( name ) ) {}
+FieldSet::FieldSet( const std::string& name ) : Handle( new Implementation( name ) ) {}
 
-FieldSet::FieldSet( const Implementation* fieldset ) : fieldset_( const_cast<Implementation*>( fieldset ) ) {}
-
-FieldSet::FieldSet( const FieldSet& fieldset ) : fieldset_( fieldset.fieldset_ ) {}
-
-FieldSet::FieldSet( const Field& field ) : fieldset_( new Implementation() ) {
-    fieldset_->add( field );
+FieldSet::FieldSet( const Field& field ) : Handle( new Implementation() ) {
+    get()->add( field );
 }
 
 void FieldSet::set_dirty( bool value ) const {
-    fieldset_->set_dirty( value );
+    get()->set_dirty( value );
 }
 
 //------------------------------------------------------------------------------------------------------
