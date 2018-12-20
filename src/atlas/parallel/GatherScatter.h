@@ -10,10 +10,11 @@
 
 #pragma once
 
+#include <numeric>
 #include <stdexcept>
 #include <vector>
-#include <numeric>
 
+#include "eckit/exception/Exceptions.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
@@ -319,7 +320,7 @@ void GatherScatter::scatter( const DATA_TYPE gdata[], const idx_t gvar_strides[]
 template <typename DATA_TYPE>
 void GatherScatter::pack_send_buffer( const parallel::Field<DATA_TYPE const>& field, const std::vector<int>& sendmap,
                                       DATA_TYPE send_buffer[] ) const {
-    const idx_t sendcnt = sendmap.size();
+    const idx_t sendcnt = static_cast<idx_t>( sendmap.size() );
 
     idx_t ibuf              = 0;
     const idx_t send_stride = field.var_strides[0] * field.var_shape[0];
@@ -367,7 +368,7 @@ void GatherScatter::pack_send_buffer( const parallel::Field<DATA_TYPE const>& fi
 template <typename DATA_TYPE>
 void GatherScatter::unpack_recv_buffer( const std::vector<int>& recvmap, const DATA_TYPE recv_buffer[],
                                         const parallel::Field<DATA_TYPE>& field ) const {
-    const idx_t recvcnt = recvmap.size();
+    const idx_t recvcnt = static_cast<idx_t>( recvmap.size() );
 
     int ibuf                = 0;
     const idx_t recv_stride = field.var_strides[0] * field.var_shape[0];

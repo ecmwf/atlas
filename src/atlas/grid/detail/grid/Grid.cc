@@ -12,7 +12,6 @@
 
 #include <vector>
 
-#include "eckit/memory/Factory.h"
 #include "eckit/utils/MD5.h"
 
 #include "atlas/grid.h"
