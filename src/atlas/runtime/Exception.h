@@ -34,7 +34,7 @@ inline void Assert( bool success, const char* msg, const char* file, int line, c
     if ( not success ) { throw_AssertionFailed( msg, eckit::CodeLocation( file, line, func ) ); }
 }
 }  // namespace detail
-#define ATLAS_ASSERT( a ) ::atlas::detail::Assert( !( a ), #a, __FILE__, __LINE__, __func__ )
+#define ATLAS_ASSERT( a ) ::atlas::detail::Assert( a, #a, __FILE__, __LINE__, __func__ )
 #define ATLAS_NOTIMPLEMENTED ::atlas::throw_NotImplemented( Here() )
 
 }  // namespace atlas
