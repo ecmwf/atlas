@@ -25,7 +25,7 @@ class LegendreCacheCreatorLocal : public trans::LegendreCacheCreatorImpl {
 public:
     LegendreCacheCreatorLocal( const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
 
-    virtual ~LegendreCacheCreatorLocal();
+    virtual ~LegendreCacheCreatorLocal() override;
 
     virtual bool supported() const override;
 

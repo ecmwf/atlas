@@ -26,7 +26,7 @@ Checksum::Checksum( const std::string& name ) : name_( name ) {
 void Checksum::setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                       const int parsize ) {
     parsize_ = parsize;
-    gather_.reset( new GatherScatter() );
+    gather_  = util::ObjectHandle<GatherScatter>( new GatherScatter() );
     gather_->setup( part, remote_idx, base, glb_idx, parsize );
     is_setup_ = true;
 }
@@ -34,12 +34,12 @@ void Checksum::setup( const int part[], const idx_t remote_idx[], const int base
 void Checksum::setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                       const int mask[], const int parsize ) {
     parsize_ = parsize;
-    gather_.reset( new GatherScatter() );
+    gather_  = util::ObjectHandle<GatherScatter>( new GatherScatter() );
     gather_->setup( part, remote_idx, base, glb_idx, mask, parsize );
     is_setup_ = true;
 }
 
-void Checksum::setup( const eckit::SharedPtr<GatherScatter>& gather ) {
+void Checksum::setup( const util::ObjectHandle<GatherScatter>& gather ) {
     gather_   = gather;
     parsize_  = gather->parsize_;
     is_setup_ = true;

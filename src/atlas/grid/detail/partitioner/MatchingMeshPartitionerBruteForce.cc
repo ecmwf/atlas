@@ -12,6 +12,7 @@
 
 #include <vector>
 
+#include "eckit/exception/Exceptions.h"
 #include "eckit/geometry/Point2.h"
 #include "eckit/log/ProgressTimer.h"
 #include "eckit/mpi/Comm.h"

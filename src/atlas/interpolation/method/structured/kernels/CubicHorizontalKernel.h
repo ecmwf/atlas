@@ -11,13 +11,13 @@
 #include <cmath>
 #include <limits>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/linalg/Triplet.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Stencil.h"
 #include "atlas/grid/StencilComputer.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Point.h"
@@ -35,8 +35,8 @@ public:
 
     CubicHorizontalKernel( const functionspace::StructuredColumns& fs, const util::Config& config = util::NoConfig() ) {
         src_ = fs;
-        ASSERT( src_ );
-        ASSERT( src_.halo() >= 2 );
+        ATLAS_ASSERT( src_ );
+        ATLAS_ASSERT( src_.halo() >= 2 );
         compute_horizontal_stencil_ = ComputeHorizontalStencil( src_.grid(), stencil_width() );
         limiter_                    = config.getBool( "limiter", false );
     }

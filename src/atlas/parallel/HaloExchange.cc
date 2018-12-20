@@ -171,7 +171,7 @@ void execute_halo_exchange( HaloExchange* This, Value field[], int var_strides[]
             break;
         }
         default:
-            throw eckit::AssertionFailed( "Rank not supported in halo exchange" );
+            throw_NotImplemented( "Rank not supported in halo exchange", Here() );
     }
 }
 }  // namespace

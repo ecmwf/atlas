@@ -12,6 +12,7 @@
 
 #include <vector>
 
+#include "eckit/exception/Exceptions.h"
 #include "eckit/log/ProgressTimer.h"
 
 #include "atlas/grid/Grid.h"

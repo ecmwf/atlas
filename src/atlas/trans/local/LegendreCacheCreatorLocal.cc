@@ -9,14 +9,18 @@
  */
 
 #include "atlas/trans/local/LegendreCacheCreatorLocal.h"
+
 #include <sstream>
 #include <string>
+
+#include "eckit/exception/Exceptions.h"
+#include "eckit/types/FloatCompare.h"
+#include "eckit/utils/MD5.h"
+
 #include "atlas/grid.h"
 #include "atlas/option.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/trans/local/TransLocal.h"
-#include "eckit/types/FloatCompare.h"
-#include "eckit/utils/MD5.h"
 
 namespace atlas {
 namespace trans {

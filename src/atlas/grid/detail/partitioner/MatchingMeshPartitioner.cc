@@ -8,31 +8,26 @@
  * nor does it submit to any jurisdiction.
  */
 
-#pragma once
+#include "eckit/exception/Exceptions.h"
 
-#include <vector>
-
-#include "atlas/grid/detail/partitioner/Partitioner.h"
-#include "atlas/mesh/Mesh.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
 
 namespace atlas {
 namespace grid {
 namespace detail {
 namespace partitioner {
 
-class MatchingMeshPartitioner : public Partitioner {
-public:
-    MatchingMeshPartitioner();
+MatchingMeshPartitioner::MatchingMeshPartitioner() : Partitioner() {
+    NOTIMP;
+}
 
-    MatchingMeshPartitioner( const idx_t nb_partitions );
+MatchingMeshPartitioner::MatchingMeshPartitioner( const idx_t nb_partitions ) : Partitioner( nb_partitions ) {
+    NOTIMP;
+}
 
-    MatchingMeshPartitioner( const Mesh& mesh );
-
-    virtual ~MatchingMeshPartitioner() override {}
-
-protected:
-    const Mesh prePartitionedMesh_;
-};
+MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh ) :
+    Partitioner( mesh.nb_partitions() ),
+    prePartitionedMesh_( mesh ) {}
 
 }  // namespace partitioner
 }  // namespace detail

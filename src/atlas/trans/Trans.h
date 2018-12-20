@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "eckit/log/CodeLocation.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
@@ -166,6 +167,8 @@ protected:
     TransFactory();
     TransFactory( const std::string& name, const std::string& backend );
     virtual ~TransFactory();
+
+    static void throw_SeriousBug( const char* msg, const eckit::CodeLocation& );
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -177,7 +180,7 @@ class TransBuilderFunctionSpace : public TransFactory {
         return new T( cache, gp, sp, config );
     }
     virtual Trans_t* make( const Cache&, const Grid&, const Domain&, int, const eckit::Configuration& ) {
-        throw eckit::SeriousBug( "This function should not be called", Here() );
+        throw_SeriousBug( "This function should not be called", Here() );
     }
 
 public:
@@ -191,7 +194,7 @@ class TransBuilderGrid : public TransFactory {
         return new T( cache, grid, domain, truncation, config );
     }
     virtual Trans_t* make( const Cache&, const FunctionSpace&, const FunctionSpace&, const eckit::Configuration& ) {
-        throw eckit::SeriousBug( "This function should not be called", Here() );
+        throw_SeriousBug( "This function should not be called", Here() );
     }
 
 public:

@@ -10,6 +10,7 @@
 
 #include "eckit/os/BackTrace.h"
 
+#include "atlas/library/Library.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 
@@ -34,5 +35,19 @@ void debug_parallel_what( const eckit::CodeLocation& here, const std::string& wh
 }
 
 }  // namespace detail
+
+Log::Channel& Log::info() {
+    return atlas::Library::instance().infoChannel();
+}
+
+Log::Channel& Log::trace() {
+    return atlas::Library::instance().traceChannel();
+}
+
+Log::Channel& Log::debug() {
+    return atlas::Library::instance().debugChannel();
+}
+
+// namespace detail
 
 }  // namespace atlas

@@ -1,5 +1,7 @@
 #include "Regional.h"
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/runtime/Log.h"
 

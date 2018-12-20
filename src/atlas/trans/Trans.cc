@@ -103,6 +103,10 @@ TransFactory::~TransFactory() {
     if ( ( *b )[backend_] == 0 ) b->erase( backend_ );
 }
 
+void TransFactory::throw_SeriousBug( const char* msg, const eckit::CodeLocation& loc ) {
+    throw eckit::SeriousBug( msg, loc );
+}
+
 bool TransFactory::has( const std::string& name ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );

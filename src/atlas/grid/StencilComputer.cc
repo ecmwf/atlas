@@ -10,6 +10,7 @@
 
 #include "atlas/grid/StencilComputer.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 
@@ -18,7 +19,7 @@ ComputeLower::ComputeLower( const Vertical& z ) {
     z_.resize( nlev_ );
     double dz            = std::numeric_limits<double>::max();
     constexpr double tol = 1.e-12;
-    ASSERT( dz > 0 );
+    ATLAS_ASSERT( dz > 0 );
     for ( idx_t jlev = 0; jlev < nlev_; ++jlev ) {
         if ( jlev + 1 < nlev_ ) { dz = std::min( dz, z[jlev + 1] - z[jlev] ); }
         z_[jlev] = z[jlev] - tol;
@@ -37,12 +38,12 @@ ComputeLower::ComputeLower( const Vertical& z ) {
 }
 
 ComputeNorth::ComputeNorth( const grid::StructuredGrid& grid, idx_t halo ) {
-    ASSERT( grid );
-    if ( not grid.domain().global() ) { throw eckit::NotImplemented( "Only implemented for global grids", Here() ); }
+    ATLAS_ASSERT( grid );
+    if ( not grid.domain().global() ) { throw_NotImplemented( "Only implemented for global grids", Here() ); }
     halo_ = halo;
     ny_   = grid.ny();
     y_.resize( ny_ + 2 * halo_ );
-    ASSERT( halo_ < ny_ );
+    ATLAS_ASSERT( halo_ < ny_ );
     idx_t north_pole_included = 90. - std::abs( grid.y().front() ) < tol();
     idx_t south_pole_included = 90. - std::abs( grid.y().back() ) < tol();
 
@@ -61,8 +62,8 @@ ComputeNorth::ComputeNorth( const grid::StructuredGrid& grid, idx_t halo ) {
 }
 
 ComputeWest::ComputeWest( const grid::StructuredGrid& grid, idx_t halo ) {
-    ASSERT( grid );
-    if ( not grid.domain().global() ) { throw eckit::NotImplemented( "Only implemented for global grids", Here() ); }
+    ATLAS_ASSERT( grid );
+    if ( not grid.domain().global() ) { throw_NotImplemented( "Only implemented for global grids", Here() ); }
     halo_                     = halo;
     idx_t north_pole_included = 90. - std::abs( grid.y().front() ) < tol();
     idx_t south_pole_included = 90. - std::abs( grid.y().back() ) < tol();

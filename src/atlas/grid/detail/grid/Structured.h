@@ -13,7 +13,6 @@
 #include <array>
 #include <memory>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/grid/Spacing.h"
@@ -101,21 +100,7 @@ public:
             }
         }
 
-        virtual bool next( PointXY& xy ) {
-            NOTIMP;
-#if 0
-            if ( j_ < grid_.ny() && i_ < grid_.nx( j_ ) ) {
-                xy = grid_.xy( i_++, j_ );
-
-                if ( i_ == grid_.nx( j_ ) ) {
-                    j_++;
-                    i_ = 0;
-                }
-                return true;
-            }
-            return false;
-#endif
-        }
+        virtual bool next( PointXY& xy );
 
         virtual const PointXY operator*() const { return grid_.xy( i_, j_ ); }
 

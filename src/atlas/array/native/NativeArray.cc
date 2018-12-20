@@ -6,6 +6,7 @@
 #include "atlas/array/helpers/ArrayInitializer.h"
 #include "atlas/array/helpers/ArrayWriter.h"
 #include "atlas/array/native/NativeDataStore.h"
+#include "atlas/runtime/Exception.h"
 
 using namespace atlas::array::helpers;
 
@@ -66,7 +67,7 @@ Array* Array::create( DataType datatype, const ArrayShape& shape ) {
         default: {
             std::stringstream err;
             err << "data kind " << datatype.kind() << " not recognised.";
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_NotImplemented( err.str(), Here() );
         }
     }
 }
@@ -105,7 +106,7 @@ ArrayT<Value>::ArrayT( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim
 
 template <typename Value>
 ArrayT<Value>::ArrayT( const ArrayShape& shape ) {
-    ASSERT( shape.size() > 0 );
+    ATLAS_ASSERT( shape.size() > 0 );
     idx_t size = 1;
     for ( idx_t j = 0; j < shape.size(); ++j )
         size *= shape[j];
@@ -118,12 +119,12 @@ ArrayT<Value>::ArrayT( const ArrayShape& shape, const ArrayLayout& layout ) {
     spec_       = ArraySpec( shape );
     data_store_ = std::unique_ptr<ArrayDataStore>( new native::DataStore<Value>( spec_.size() ) );
     for ( idx_t j = 0; j < layout.size(); ++j )
-        ASSERT( spec_.layout()[j] == layout[j] );
+        ATLAS_ASSERT( spec_.layout()[j] == layout[j] );
 }
 
 template <typename Value>
 ArrayT<Value>::ArrayT( const ArraySpec& spec ) {
-    if ( not spec.contiguous() ) NOTIMP;
+    if ( not spec.contiguous() ) ATLAS_NOTIMPLEMENTED;
     spec_       = spec;
     data_store_ = std::unique_ptr<ArrayDataStore>( new native::DataStore<Value>( spec_.size() ) );
 }
@@ -133,7 +134,7 @@ void ArrayT<Value>::resize( const ArrayShape& _shape ) {
     if ( rank() != _shape.size() ) {
         std::stringstream msg;
         msg << "Cannot resize existing Array with rank " << rank() << " with a shape of rank " << _shape.size();
-        throw eckit::BadParameter( msg.str(), Here() );
+        throw_Exception( msg.str(), Here() );
     }
 
     Array* resized = Array::create<Value>( _shape );
@@ -167,7 +168,7 @@ void ArrayT<Value>::resize( const ArrayShape& _shape ) {
             array_initializer<9>::apply( *this, *resized );
             break;
         default:
-            NOTIMP;
+            ATLAS_NOTIMPLEMENTED;
     }
 
     replace( *resized );
@@ -177,9 +178,7 @@ void ArrayT<Value>::resize( const ArrayShape& _shape ) {
 template <typename Value>
 void ArrayT<Value>::insert( idx_t idx1, idx_t size1 ) {
     ArrayShape nshape = shape();
-    if ( idx1 > nshape[0] ) {
-        throw eckit::BadParameter( "Cannot insert into an array at a position beyond its size", Here() );
-    }
+    if ( idx1 > nshape[0] ) { throw_Exception( "Cannot insert into an array at a position beyond its size", Here() ); }
     nshape[0] += size1;
 
     Array* resized = Array::create<Value>( nshape );
@@ -245,7 +244,7 @@ void ArrayT<Value>::dump( std::ostream& out ) const {
             make_host_view<Value, 9, Intent::ReadOnly>( *this ).dump( out );
             break;
         default:
-            NOTIMP;
+            ATLAS_NOTIMPLEMENTED;
     }
 }
 
@@ -255,7 +254,7 @@ template <typename Value>
 size_t ArrayT<Value>::footprint() const {
     size_t size = sizeof( *this );
     size += bytes();
-    if ( not contiguous() ) NOTIMP;
+    if ( not contiguous() ) ATLAS_NOTIMPLEMENTED;
     return size;
 }
 

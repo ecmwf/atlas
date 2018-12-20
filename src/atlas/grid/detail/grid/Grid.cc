@@ -12,6 +12,7 @@
 
 #include <vector>
 
+#include "eckit/exception/Exceptions.h"
 #include "eckit/utils/MD5.h"
 
 #include "atlas/grid.h"

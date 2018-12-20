@@ -77,7 +77,7 @@ public:
         static EdgeColumnsHaloExchangeCache inst;
         return inst;
     }
-    eckit::SharedPtr<value_type> get_or_create( const Mesh& mesh ) {
+    util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
         creator_type creator = std::bind( &EdgeColumnsHaloExchangeCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
@@ -111,7 +111,7 @@ public:
         static EdgeColumnsGatherScatterCache inst;
         return inst;
     }
-    eckit::SharedPtr<value_type> get_or_create( const Mesh& mesh ) {
+    util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
         creator_type creator = std::bind( &EdgeColumnsGatherScatterCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
@@ -145,7 +145,7 @@ public:
         static EdgeColumnsChecksumCache inst;
         return inst;
     }
-    eckit::SharedPtr<value_type> get_or_create( const Mesh& mesh ) {
+    util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
         creator_type creator = std::bind( &EdgeColumnsChecksumCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
@@ -161,7 +161,7 @@ private:
     static value_type* create( const Mesh& mesh ) {
         mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
-        eckit::SharedPtr<parallel::GatherScatter> gather(
+        util::ObjectHandle<parallel::GatherScatter> gather(
             EdgeColumnsGatherScatterCache::instance().get_or_create( mesh ) );
         value->setup( gather );
         return value;

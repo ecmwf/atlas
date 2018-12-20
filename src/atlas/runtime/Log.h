@@ -1,6 +1,5 @@
 #pragma once
 
-#include "atlas/library/Library.h"
 #include "atlas/library/config.h"
 
 #if ATLAS_HAVE_FORTRAN
@@ -25,9 +24,9 @@ class Log : public detail::LogBase {
 public:
     using Channel = eckit::Channel;  // derives from std::ostream
 
-    static Channel& info() { return atlas::Library::instance().infoChannel(); }
-    static Channel& trace() { return atlas::Library::instance().traceChannel(); }
-    static Channel& debug() { return atlas::Library::instance().debugChannel(); }
+    static Channel& info();
+    static Channel& trace();
+    static Channel& debug();
 
 #if !ATLAS_HAVE_FORTRAN
     // Stubs for what fckit::Log provides

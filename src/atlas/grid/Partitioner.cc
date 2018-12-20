@@ -8,9 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/grid/Partitioner.h"
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/distribution/DistributionImpl.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/mesh/Mesh.h"

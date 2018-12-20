@@ -10,13 +10,14 @@
 
 #pragma once
 
+#include <sstream>
+#include <string>
 #include <vector>
-
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/array.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
+#include "atlas/runtime/Exception.h"
 
 //------------------------------------------------------------------------------
 
@@ -80,7 +81,7 @@ struct array_initializer {
             default: {
                 std::stringstream err;
                 err << "data kind " << orig.datatype().kind() << " not recognised.";
-                throw eckit::BadParameter( err.str(), Here() );
+                throw_NotImplemented( err.str(), Here() );
             }
         }
     }
@@ -157,7 +158,7 @@ struct array_initializer_partitioned_impl {
             default: {
                 std::stringstream err;
                 err << "data kind " << orig.datatype().kind() << " not recognised.";
-                throw eckit::BadParameter( err.str(), Here() );
+                throw_NotImplemented( err.str(), Here() );
             }
         }
     }
@@ -190,7 +191,7 @@ struct array_initializer_partitioned {
             default: {
                 std::stringstream err;
                 err << "too high Rank";
-                throw eckit::BadParameter( err.str(), Here() );
+                throw_NotImplemented( err.str(), Here() );
             }
         }
     }

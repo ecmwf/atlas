@@ -20,9 +20,6 @@
 #include <memory>
 #include <vector>
 
-
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/util/Point.h"
 
@@ -83,18 +80,7 @@ public:
             if ( begin ) {}
         }
 
-        virtual bool next( PointXY& xy ) {
-            NOTIMP;
-#if 0
-            if ( n_ != grid_.points_->size() ) {
-                xy = grid_.xy( n_++ );
-                return true;
-            }
-            else {
-                return false;
-            }
-#endif
-        }
+        virtual bool next( PointXY& xy );
 
         virtual const PointXY operator*() const { return grid_.xy( n_ ); }
 

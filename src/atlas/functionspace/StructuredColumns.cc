@@ -24,6 +24,7 @@
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
+#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/parallel/GatherScatter.h"
@@ -138,7 +139,7 @@ public:
         static StructuredColumnsHaloExchangeCache inst;
         return inst;
     }
-    eckit::SharedPtr<value_type> get_or_create( const detail::StructuredColumns& grid ) {
+    util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& grid ) {
         creator_type creator = std::bind( &StructuredColumnsHaloExchangeCache::create, &grid );
         return Base::get_or_create( key( grid ), creator );
     }
@@ -175,7 +176,7 @@ public:
         static StructuredColumnsGatherScatterCache inst;
         return inst;
     }
-    eckit::SharedPtr<value_type> get_or_create( const detail::StructuredColumns& grid ) {
+    util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& grid ) {
         creator_type creator = std::bind( &StructuredColumnsGatherScatterCache::create, &grid );
         return Base::get_or_create( key( grid ), creator );
     }
@@ -213,7 +214,7 @@ public:
         static StructuredColumnsChecksumCache inst;
         return inst;
     }
-    eckit::SharedPtr<value_type> get_or_create( const detail::StructuredColumns& grid ) {
+    util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& grid ) {
         creator_type creator = std::bind( &StructuredColumnsChecksumCache::create, &grid );
         return Base::get_or_create( key( grid ), creator );
     }
@@ -229,7 +230,7 @@ private:
     static value_type* create( const detail::StructuredColumns* grid ) {
         //mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
-        eckit::SharedPtr<parallel::GatherScatter> gather(
+        util::ObjectHandle<parallel::GatherScatter> gather(
             StructuredColumnsGatherScatterCache::instance().get_or_create( *grid ) );
         value->setup( gather );
         return value;

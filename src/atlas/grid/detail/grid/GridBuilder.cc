@@ -13,6 +13,7 @@
 #include <regex.h>
 #include <iomanip>
 
+#include "eckit/exception/Exceptions.h"
 #include "eckit/parser/Tokenizer.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"

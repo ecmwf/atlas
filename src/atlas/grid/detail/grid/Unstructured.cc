@@ -14,6 +14,7 @@
 #include <limits>
 #include <memory>
 
+#include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
 
@@ -186,6 +187,19 @@ Grid::Spec Unstructured::spec() const {
 
 void Unstructured::print( std::ostream& os ) const {
     os << "Unstructured(Npts:" << size() << ")";
+}
+
+bool Unstructured::IteratorXYPredicated::next( PointXY& /*xy*/ ) {
+    NOTIMP;
+#if 0
+    if ( n_ != grid_.points_->size() ) {
+        xy = grid_.xy( n_++ );
+        return true;
+    }
+    else {
+        return false;
+    }
+#endif
 }
 
 }  // namespace grid

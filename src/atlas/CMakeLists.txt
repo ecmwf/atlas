@@ -140,6 +140,7 @@ grid/detail/partitioner/CheckerboardPartitioner.h
 grid/detail/partitioner/EqualRegionsPartitioner.cc
 grid/detail/partitioner/EqualRegionsPartitioner.h
 grid/detail/partitioner/MatchingMeshPartitioner.h
+grid/detail/partitioner/MatchingMeshPartitioner.cc
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.cc
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h
 grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.cc
@@ -458,6 +459,7 @@ array/LocalView.cc
 array/LocalView.h
 array/Range.h
 array/Vector.h
+array/Vector.cc
 array/SVector.h
 array/helpers/ArrayInitializer.h
 array/helpers/ArrayAssigner.h
@@ -509,6 +511,8 @@ parallel/HaloExchangeImpl.h
 parallel/mpi/Buffer.h
 runtime/ErrorHandling.cc
 runtime/ErrorHandling.h
+runtime/Exception.cc
+runtime/Exception.h
 util/Config.cc
 util/Config.h
 util/Constants.h

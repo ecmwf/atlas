@@ -14,7 +14,6 @@
 #include <cstddef>
 
 #include "atlas/library/config.h"
-#include "atlas/runtime/ErrorHandling.h"
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
 #include <cuda_runtime.h>
@@ -22,6 +21,10 @@
 
 namespace atlas {
 namespace array {
+
+namespace detail {
+[[noreturn]] void throw_AssertionFailed( const char* msg );
+}
 
 //------------------------------------------------------------------------------
 
@@ -31,7 +34,7 @@ public:
     Vector( idx_t N = 0 ) : data_( N ? new T[N] : nullptr ), data_gpu_( nullptr ), size_( N ) {}
 
     void resize_impl( idx_t N ) {
-        if ( data_gpu_ ) throw eckit::AssertionFailed( "we can not resize a vector after has been cloned to device" );
+        if ( data_gpu_ ) detail::throw_AssertionFailed( "we can not resize a vector after has been cloned to device" );
         assert( N >= size_ );
         if ( N == size_ ) return;
 
@@ -113,7 +116,7 @@ private:
 template <typename T>
 class VectorView {
 public:
-    VectorView() : vector_( NULL ), data_( NULL ), size_( 0 ) {}
+    VectorView() : vector_( nullptr ), data_( nullptr ), size_( 0 ) {}
     VectorView( Vector<T> const& vector, T* data ) : vector_( &vector ), data_( data ), size_( vector.size() ) {}
 
     ATLAS_HOST_DEVICE
@@ -134,7 +137,7 @@ public:
     ATLAS_HOST_DEVICE
     idx_t size() const { return size_; }
 
-    bool is_valid( Vector<T>& vector ) { return ( &vector ) == vector_ && ( data_ != NULL ); }
+    bool is_valid( Vector<T>& vector ) { return ( &vector ) == vector_ && ( data_ != nullptr ); }
 
 public:
     Vector<T> const* vector_;

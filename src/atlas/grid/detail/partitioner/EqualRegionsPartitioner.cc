@@ -17,6 +17,8 @@
 #include <iostream>
 #include <vector>
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/grid/Grid.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"

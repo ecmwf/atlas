@@ -11,12 +11,11 @@
 #include <cmath>
 #include <limits>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/array/ArrayView.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Stencil.h"
 #include "atlas/grid/StencilComputer.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Point.h"
 
@@ -31,9 +30,9 @@ class Cubic3DKernel {
 public:
     Cubic3DKernel( const functionspace::StructuredColumns& fs, const util::Config& config = util::NoConfig() ) {
         src_ = fs;
-        ASSERT( src_ );
-        ASSERT( src_.halo() >= 2 );
-        ASSERT( src_.vertical().size() );
+        ATLAS_ASSERT( src_ );
+        ATLAS_ASSERT( src_.halo() >= 2 );
+        ATLAS_ASSERT( src_.vertical().size() );
         horizontal_interpolation_ = CubicHorizontalKernel( src_, config );
         vertical_interpolation_   = CubicVerticalKernel( fs.vertical(), config );
         limiter_                  = config.getBool( "limiter", false );
@@ -292,25 +291,25 @@ public:
     template <typename stencil_t, typename weights_t, typename InputArray, typename OutputArray>
     typename std::enable_if<( InputArray::RANK == 2 && OutputArray::RANK == 3 ), void>::type interpolate(
         const stencil_t&, const weights_t&, const InputArray&, OutputArray&, idx_t /*r*/, idx_t /*k*/ ) const {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 
     template <typename stencil_t, typename weights_t, typename InputArray, typename OutputArray>
     typename std::enable_if<( InputArray::RANK == 3 && OutputArray::RANK == 1 ), void>::type interpolate(
         const stencil_t&, const weights_t&, const InputArray&, OutputArray&, idx_t /*r*/ ) const {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 
     template <typename stencil_t, typename weights_t, typename InputArray, typename OutputArray>
     typename std::enable_if<( InputArray::RANK == 3 && OutputArray::RANK == 1 ), void>::type interpolate(
         const stencil_t&, const weights_t&, const InputArray&, OutputArray&, idx_t /*r*/, idx_t /*k*/ ) const {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 
     template <typename stencil_t, typename weights_t, typename InputArray, typename OutputArray>
     typename std::enable_if<( InputArray::RANK == 3 && OutputArray::RANK == 2 ), void>::type interpolate(
         const stencil_t&, const weights_t&, const InputArray&, OutputArray&, idx_t /*r*/, idx_t /*k*/ ) const {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 };
 

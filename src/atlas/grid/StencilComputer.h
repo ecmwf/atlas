@@ -13,10 +13,9 @@
 #include <cmath>
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/grid/Vertical.h"
 #include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
@@ -64,7 +63,7 @@ public:
     idx_t operator()( double z ) const {
         idx_t idx = static_cast<idx_t>( std::floor( z * rlevaux_ ) );
 #ifndef NDEBUG
-        ASSERT( idx < static_cast<idx_t>( nvaux_.size() ) && idx >= 0 );
+        ATLAS_ASSERT( idx < static_cast<idx_t>( nvaux_.size() ) && idx >= 0 );
 #endif
         idx = nvaux_[idx];
         if ( idx < nlev_ - 1 && z > z_[idx + 1] ) { ++idx; }

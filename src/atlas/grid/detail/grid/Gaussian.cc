@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iomanip>
 #include <limits>
+#include <ostream>
 
 #include "eckit/utils/Translator.h"
 

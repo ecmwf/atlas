@@ -10,6 +10,8 @@
 
 #include <cmath>
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/domain/detail/GlobalDomain.h"
 #include "atlas/domain/detail/RectangularDomain.h"

@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/mesh/Halo.h"
@@ -102,9 +100,9 @@ private:         // data
     mesh::Halo halo_;
     idx_t nb_edges_;
     mutable long nb_edges_global_{-1};
-    mutable eckit::SharedPtr<parallel::GatherScatter> gather_scatter_;  // without ghost
-    mutable eckit::SharedPtr<parallel::HaloExchange> halo_exchange_;
-    mutable eckit::SharedPtr<parallel::Checksum> checksum_;
+    mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;  // without ghost
+    mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
+    mutable util::ObjectHandle<parallel::Checksum> checksum_;
 };
 
 // -------------------------------------------------------------------

@@ -5,6 +5,7 @@
 #include <numeric>
 #include <vector>
 
+#include "eckit/exception/Exceptions.h"
 #include "eckit/utils/Hash.h"
 
 #include "atlas/array/Array.h"

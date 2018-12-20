@@ -13,8 +13,6 @@
 #include "StructuredInterpolation2D.h"
 
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
@@ -25,6 +23,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -40,7 +39,7 @@ static double convert_units_multiplier( const Field& field ) {
     std::string units = field.metadata().getString( "units", "degrees" );
     if ( units == "degrees" ) { return 1.; }
     if ( units == "radians" ) { return 180. / M_PI; }
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 }  // namespace
 
@@ -54,10 +53,10 @@ StructuredInterpolation2D<Kernel>::StructuredInterpolation2D( const Method::Conf
 
 template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) { NOTIMP; }
+    if ( mpi::comm().size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
 
 
-    ASSERT( grid::StructuredGrid( source ) );
+    ATLAS_ASSERT( grid::StructuredGrid( source ) );
     FunctionSpace source_fs =
         functionspace::StructuredColumns( source, option::halo( std::max( kernel_->stencil_halo(), 1 ) ) );
     // guarantee "1" halo for pole treatment!
@@ -83,7 +82,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
         target_ghost_  = tgt.ghost();
     }
     else {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 
     setup( source );
@@ -108,7 +107,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
 
     source_ = source;
 
-    ASSERT( target.size() >= 2 );
+    ATLAS_ASSERT( target.size() >= 2 );
     if ( target[0].functionspace() ) { target_ = target[0].functionspace(); }
 
     target_lonlat_fields_ = target;
@@ -118,7 +117,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
 
 template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::print( std::ostream& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 
@@ -178,7 +177,7 @@ void StructuredInterpolation2D<Kernel>::execute( const FieldSet& src_fields, Fie
     ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::execute()" );
 
     const idx_t N = src_fields.size();
-    ASSERT( N == tgt_fields.size() );
+    ATLAS_ASSERT( N == tgt_fields.size() );
 
     if ( N == 0 ) return;
 
@@ -188,10 +187,10 @@ void StructuredInterpolation2D<Kernel>::execute( const FieldSet& src_fields, Fie
     int rank                 = src_fields[0].rank();
 
     for ( idx_t i = 0; i < N; ++i ) {
-        ASSERT( src_fields[i].datatype() == datatype );
-        ASSERT( src_fields[i].rank() == rank );
-        ASSERT( tgt_fields[i].datatype() == datatype );
-        ASSERT( tgt_fields[i].rank() == rank );
+        ATLAS_ASSERT( src_fields[i].datatype() == datatype );
+        ATLAS_ASSERT( src_fields[i].rank() == rank );
+        ATLAS_ASSERT( tgt_fields[i].datatype() == datatype );
+        ATLAS_ASSERT( tgt_fields[i].rank() == rank );
     }
 
     if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 1 ) {
@@ -287,7 +286,7 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
         }
     }
     else {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 }
 

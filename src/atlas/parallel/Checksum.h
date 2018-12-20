@@ -12,18 +12,19 @@
 
 #include <vector>
 
-#include "eckit/memory/Owned.h"
 #include "eckit/utils/Translator.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Checksum.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace atlas {
 namespace parallel {
 
-class Checksum : public eckit::Owned {
+class Checksum : public util::Object {
 public:
     Checksum();
     Checksum( const std::string& name );
@@ -55,7 +56,7 @@ public:  // methods
                 const int parsize );
 
     /// @brief Setup
-    void setup( const eckit::SharedPtr<GatherScatter>& );
+    void setup( const util::ObjectHandle<GatherScatter>& );
 
     template <typename DATA_TYPE>
     std::string execute( const DATA_TYPE lfield[], const int lvar_strides[], const int lvar_extents[],
@@ -73,7 +74,7 @@ public:  // methods
 
 private:  // data
     std::string name_;
-    eckit::SharedPtr<GatherScatter> gather_;
+    util::ObjectHandle<GatherScatter> gather_;
     bool is_setup_;
     size_t parsize_;
 };
@@ -83,7 +84,7 @@ std::string Checksum::execute( const DATA_TYPE data[], const int var_strides[], 
                                const int var_rank ) const {
     size_t root = 0;
 
-    if ( !is_setup_ ) { throw eckit::SeriousBug( "Checksum was not setup", Here() ); }
+    if ( !is_setup_ ) { throw_SeriousBug( "Checksum was not setup", Here() ); }
     std::vector<util::checksum_t> local_checksums( parsize_ );
     int var_size = var_extents[0] * var_strides[0];
 
@@ -141,7 +142,7 @@ std::string Checksum::execute( const array::ArrayView<DATA_TYPE, LRANK>& lfield 
         return execute( lfield.data(), lvarstrides.data(), lvarextents.data(), lvarstrides.size() );
     }
     else {
-        NOTIMP;  // Need to implement with parallel ranks > 1
+        ATLAS_NOTIMPLEMENTED;  // Need to implement with parallel ranks > 1
     }
 }
 

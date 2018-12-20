@@ -11,11 +11,11 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <numeric>
 #include <vector>
 
-#include "eckit/memory/SharedPtr.h"
-#include "eckit/runtime/Main.h"
+#include "eckit/exception/Exceptions.h"
 #include "eckit/utils/Hash.h"
 
 #include "atlas/array.h"
@@ -56,7 +56,7 @@ static double to_deg = 180. * M_1_PI;
 struct Region {
     int north;
     int south;
-    eckit::SharedPtr<array::Array> elems;
+    std::unique_ptr<array::Array> elems;
     int ntriags;
     int nquads;
     int nnodes;

@@ -2,6 +2,7 @@
 
 #include "LonLat.h"
 
+#include "eckit/exception/Exceptions.h"
 #include "eckit/utils/Translator.h"
 
 #include "atlas/grid/detail/grid/GridBuilder.h"

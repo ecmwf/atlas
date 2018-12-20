@@ -1501,5 +1501,11 @@ void atlas__Trans__invtrans_grad_field( const TransIFS* This, const field::Field
 }
 }
 
+namespace detail {
+void Assert( int code, const char* msg, const char* file, int line, const char* func ) {
+    ::eckit::Assert( code, msg, file, line, func );
+}
+}  // namespace detail
+
 }  // namespace trans
 }  // namespace atlas

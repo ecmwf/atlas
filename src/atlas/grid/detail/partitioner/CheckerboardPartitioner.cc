@@ -7,6 +7,8 @@
 #include <iostream>
 #include <vector>
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/grid/Grid.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/MicroDeg.h"

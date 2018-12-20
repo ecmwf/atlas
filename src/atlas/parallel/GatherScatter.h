@@ -14,13 +14,11 @@
 #include <stdexcept>
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/array/ArrayView.h"
 #include "atlas/library/config.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
+#include "atlas/util/Object.h"
 
 namespace atlas {
 namespace parallel {
@@ -117,7 +115,7 @@ public:
     idx_t var_rank;
 };
 
-class GatherScatter : public eckit::Owned {
+class GatherScatter : public util::Object {
 public:
     GatherScatter();
     GatherScatter( const std::string& name );
@@ -226,7 +224,7 @@ private:  // data
 template <typename DATA_TYPE>
 void GatherScatter::gather( parallel::Field<DATA_TYPE const> lfields[], parallel::Field<DATA_TYPE> gfields[],
                             idx_t nb_fields, const idx_t root ) const {
-    if ( !is_setup_ ) { throw eckit::SeriousBug( "GatherScatter was not setup", Here() ); }
+    if ( !is_setup_ ) { throw_SeriousBug( "GatherScatter was not setup", Here() ); }
 
     for ( idx_t jfield = 0; jfield < nb_fields; ++jfield ) {
         const idx_t lvar_size =
@@ -272,7 +270,7 @@ void GatherScatter::gather( const DATA_TYPE ldata[], const idx_t lvar_strides[],
 template <typename DATA_TYPE>
 void GatherScatter::scatter( parallel::Field<DATA_TYPE const> gfields[], parallel::Field<DATA_TYPE> lfields[],
                              const idx_t nb_fields, const idx_t root ) const {
-    if ( !is_setup_ ) { throw eckit::SeriousBug( "GatherScatter was not setup", Here() ); }
+    if ( !is_setup_ ) { throw_SeriousBug( "GatherScatter was not setup", Here() ); }
 
     for ( idx_t jfield = 0; jfield < nb_fields; ++jfield ) {
         const int lvar_size =
@@ -361,7 +359,7 @@ void GatherScatter::pack_send_buffer( const parallel::Field<DATA_TYPE const>& fi
             }
             break;
         default:
-            NOTIMP;
+            ATLAS_NOTIMPLEMENTED;
     }
 }
 
@@ -408,7 +406,7 @@ void GatherScatter::unpack_recv_buffer( const std::vector<int>& recvmap, const D
             }
             break;
         default:
-            NOTIMP;
+            ATLAS_NOTIMPLEMENTED;
     }
 }
 
@@ -444,7 +442,7 @@ void GatherScatter::gather( const array::ArrayView<DATA_TYPE, LRANK>& ldata, arr
         gather( lfields.data(), gfields.data(), 1, root );
     }
     else {
-        NOTIMP;  // Need to implement with parallel ranks > 1
+        ATLAS_NOTIMPLEMENTED;  // Need to implement with parallel ranks > 1
     }
 }
 
@@ -457,7 +455,7 @@ void GatherScatter::scatter( const array::ArrayView<DATA_TYPE, GRANK>& gdata, ar
         scatter( gfields.data(), lfields.data(), 1, root );
     }
     else {
-        NOTIMP;  // Need to implement with parallel ranks > 1
+        ATLAS_NOTIMPLEMENTED;  // Need to implement with parallel ranks > 1
     }
 }
 

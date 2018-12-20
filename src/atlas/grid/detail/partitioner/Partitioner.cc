@@ -13,6 +13,7 @@
 #include <map>
 #include <string>
 
+#include "eckit/exception/Exceptions.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 

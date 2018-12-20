@@ -13,9 +13,8 @@
 #include <mutex>
 #include <string>
 
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/runtime/Log.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace atlas {
 namespace util {
@@ -31,11 +30,11 @@ public:
 
     virtual ~Cache() {}
 
-    eckit::SharedPtr<value_type> get_or_create( const key_type& key, const creator_type& creator ) {
+    ObjectHandle<value_type> get_or_create( const key_type& key, const creator_type& creator ) {
         std::lock_guard<std::mutex> guard( lock_ );
         auto it = map_.find( key );
         if ( it != map_.end() ) {
-            eckit::SharedPtr<value_type> value = it->second;
+            ObjectHandle<value_type> value = it->second;
             if ( value ) {
                 Log::debug() << "Key \"" << key << "\" was found in cache \"" << name_ << "\"" << std::endl;
                 return value;
@@ -46,7 +45,7 @@ public:
             }
         }
         Log::debug() << "Key \"" << key << "\" not found in cache \"" << name_ << "\" , creating new" << std::endl;
-        eckit::SharedPtr<value_type> value( creator() );
+        ObjectHandle<value_type> value( creator() );
         map_[key] = value;
         return value;
     }
@@ -65,7 +64,7 @@ public:
 private:
     std::string name_;
     std::mutex lock_;
-    std::map<key_type, eckit::SharedPtr<value_type>> map_;
+    std::map<key_type, ObjectHandle<value_type>> map_;
 };
 
 }  // namespace util

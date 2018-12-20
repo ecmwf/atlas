@@ -18,6 +18,7 @@
 #include "atlas/library/config.h"
 #include "atlas/option.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/ObjectHandle.h"
 #include "atlas/util/Point.h"
 
 namespace eckit {
@@ -178,9 +179,9 @@ private:  // data
     idx_t halo_;
 
     const grid::StructuredGrid* grid_;
-    mutable eckit::SharedPtr<parallel::GatherScatter> gather_scatter_;
-    mutable eckit::SharedPtr<parallel::Checksum> checksum_;
-    mutable eckit::SharedPtr<parallel::HaloExchange> halo_exchange_;
+    mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;
+    mutable util::ObjectHandle<parallel::Checksum> checksum_;
+    mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
 
     Field field_xy_;
     Field field_partition_;

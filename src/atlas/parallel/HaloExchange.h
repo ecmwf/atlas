@@ -20,8 +20,7 @@
 #include "atlas/parallel/HaloExchangeImpl.h"
 #include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "eckit/exception/Exceptions.h"
-#include "eckit/memory/Owned.h"
+
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/ArrayViewDefs.h"
@@ -29,6 +28,8 @@
 #include "atlas/array/SVector.h"
 #include "atlas/array_fwd.h"
 #include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
+#include "atlas/util/Object.h"
 
 #ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
 #include "atlas/parallel/HaloExchangeCUDA.h"
@@ -37,7 +38,7 @@
 namespace atlas {
 namespace parallel {
 
-class HaloExchange : public eckit::Owned {
+class HaloExchange : public util::Object {
 public:
     HaloExchange();
     HaloExchange( const std::string& name );
@@ -103,7 +104,7 @@ public:
 
 template <typename DATA_TYPE, int RANK, typename ParallelDim>
 void HaloExchange::execute( array::Array& field, bool on_device ) const {
-    if ( !is_setup_ ) { throw eckit::SeriousBug( "HaloExchange was not setup", Here() ); }
+    if ( !is_setup_ ) { throw_SeriousBug( "HaloExchange was not setup", Here() ); }
 
     ATLAS_TRACE( "HaloExchange", {"halo-exchange"} );
 

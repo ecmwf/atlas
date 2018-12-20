@@ -8,8 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/functionspace/PointCloud.h"
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/array.h"
+#include "atlas/functionspace/PointCloud.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/option/Options.h"
 
