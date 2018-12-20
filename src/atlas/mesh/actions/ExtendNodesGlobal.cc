@@ -12,6 +12,7 @@
 
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Iterator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/util/CoordinateEnums.h"

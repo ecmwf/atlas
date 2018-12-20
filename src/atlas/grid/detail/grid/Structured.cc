@@ -20,7 +20,7 @@
 #include "eckit/utils/Hash.h"
 
 #include "atlas/domain/Domain.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
@@ -137,6 +137,10 @@ Structured::XSpace::XSpace( const Spacing& spacing ) : impl_( new Implementation
 Structured::XSpace::XSpace( const Config& config ) : impl_( new Implementation( config ) ) {}
 
 Structured::XSpace::XSpace( const std::vector<Config>& config ) : impl_( new Implementation( config ) ) {}
+
+Grid::Spec Structured::XSpace::spec() const {
+    return impl_->spec();
+}
 
 Structured::XSpace::Implementation::Implementation( const Config& config ) {
     Config config_xspace( config );

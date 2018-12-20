@@ -17,8 +17,8 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
@@ -107,7 +107,7 @@ CASE( "test_functionspace_StructuredColumns_halo with output" ) {
 
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
 
-    grid::StructuredGrid grid( gridname );
+    StructuredGrid grid( gridname );
 
     int halo = eckit::Resource<int>( "--halo", 2 );
     util::Config config;
@@ -262,7 +262,7 @@ CASE( "test_functionspace_StructuredColumns_halo with output" ) {
 CASE( "test_functionspace_StructuredColumns_halo checks without output" ) {
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
 
-    grid::StructuredGrid grid( gridname );
+    StructuredGrid grid( gridname );
 
     int halo = eckit::Resource<int>( "--halo", 2 );
     util::Config config;

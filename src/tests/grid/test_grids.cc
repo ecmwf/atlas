@@ -22,11 +22,7 @@
 
 #include "tests/AtlasTestEnvironment.h"
 
-using StructuredGrid      = atlas::grid::StructuredGrid;
-using UnstructuredGrid    = atlas::grid::UnstructuredGrid;
-using Grid                = atlas::Grid;
-using Regular             = atlas::grid::RegularGrid;
-using ReducedGaussianGrid = atlas::grid::ReducedGaussianGrid;
+using Grid = atlas::Grid;
 
 namespace atlas {
 namespace test {
@@ -43,7 +39,7 @@ CASE( "test_factory" ) {
 }
 
 CASE( "test_regular_gg" ) {
-    Regular grid( "F32" );
+    RegularGrid grid( "F32" );
 
     EXPECT( grid.ny() == 64 );
     EXPECT( grid.size() == 8192 );
@@ -66,7 +62,7 @@ CASE( "test_reduced_gg" ) {
     EXPECT( grid.ny() == 64 );
     EXPECT( grid.size() == 6114 );
 
-    grid = grid::ReducedGaussianGrid( {4, 6, 8, 8, 6, 4} );
+    grid = ReducedGaussianGrid( {4, 6, 8, 8, 6, 4} );
 
     EXPECT( grid.ny() == 6 );
     EXPECT( grid.size() == 8 + 12 + 16 );
@@ -87,7 +83,7 @@ CASE( "test_regular_ll" ) {
     size_t nlat = 16;
     std::stringstream name;
     name << "Slat" << nlon << "x" << nlat;
-    Regular grid( name.str() );
+    RegularGrid grid( name.str() );
 
     EXPECT( grid.nx() == nlon );
     EXPECT( grid.ny() == nlat );
@@ -116,11 +112,11 @@ CASE( "test_regular_ll" ) {
     EXPECT( grid.size() == 512 );
     // EXPECT(gridptr->type() == "shifted_lat");
 
-    Regular ll_poles( "L4x3" );
+    RegularGrid ll_poles( "L4x3" );
     EXPECT( ll_poles.nx() == 4 );
     EXPECT( ll_poles.ny() == 3 );
 
-    Regular ll_nopoles( "Slat4x2" );
+    RegularGrid ll_nopoles( "Slat4x2" );
     EXPECT( ll_nopoles.nx() == 4 );
     EXPECT( ll_nopoles.ny() == 2 );
     EXPECT( eckit::types::is_approximately_equal( ll_nopoles.y( 0 ), 45. ) );   // tolerance was previously 1.e-5

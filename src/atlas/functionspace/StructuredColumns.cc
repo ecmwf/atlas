@@ -22,8 +22,8 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/field/detail/FieldImpl.h"
 #include "atlas/grid/Distribution.h"
-#include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/Checksum.h"
@@ -397,7 +397,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Distribution
                                       const Vertical& vertical, const eckit::Configuration& config ) :
     vertical_( vertical ),
     nb_levels_( vertical_.size() ),
-    grid_( new grid::StructuredGrid( grid ) ) {
+    grid_( new StructuredGrid( grid ) ) {
     setup( distribution, config );
 }
 
@@ -408,7 +408,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical
                                       const eckit::Configuration& config ) :
     vertical_( vertical ),
     nb_levels_( vertical_.size() ),
-    grid_( new grid::StructuredGrid( grid ) ) {
+    grid_( new StructuredGrid( grid ) ) {
     grid::Partitioner partitioner( p );
     if ( not partitioner ) {
         if ( grid_->domain().global() ) { partitioner = grid::Partitioner( "equal_regions" ); }
@@ -1073,7 +1073,7 @@ std::string StructuredColumns::checksum( const Field& field ) const {
     return checksum( fieldset );
 }
 
-const grid::StructuredGrid& StructuredColumns::grid() const {
+const StructuredGrid& StructuredColumns::grid() const {
     return *grid_;
 }
 

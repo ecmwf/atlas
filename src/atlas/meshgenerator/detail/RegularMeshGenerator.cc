@@ -5,7 +5,6 @@
 #include <numeric>
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/utils/Hash.h"
 
 #include "atlas/array/Array.h"
@@ -13,8 +12,8 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Distribution.h"
-#include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
@@ -24,6 +23,7 @@
 #include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
 #include "atlas/meshgenerator/detail/RegularMeshGenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 
@@ -90,10 +90,10 @@ void RegularMeshGenerator::configure_defaults() {
 }
 
 void RegularMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
-    ASSERT( !mesh.generated() );
+    ATLAS_ASSERT( !mesh.generated() );
 
-    const grid::RegularGrid rg = grid::RegularGrid( grid );
-    if ( !rg ) throw eckit::BadCast( "RegularMeshGenerator can only work with a Regular grid", Here() );
+    const RegularGrid rg = RegularGrid( grid );
+    if ( !rg ) throw_Exception( "RegularMeshGenerator can only work with a Regular grid", Here() );
 
     size_t nb_parts = options.get<size_t>( "nb_parts" );
 
@@ -116,10 +116,10 @@ void RegularMeshGenerator::hash( eckit::Hash& h ) const {
 }
 
 void RegularMeshGenerator::generate( const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const {
-    const grid::RegularGrid rg = grid::RegularGrid( grid );
-    if ( !rg ) throw eckit::BadCast( "Grid could not be cast to a Regular", Here() );
+    const auto rg = RegularGrid( grid );
+    if ( !rg ) throw_Exception( "Grid could not be cast to a Regular", Here() );
 
-    ASSERT( !mesh.generated() );
+    ATLAS_ASSERT( !mesh.generated() );
 
     if ( grid.size() != distribution.partition().size() ) {
         std::stringstream msg;
@@ -127,7 +127,7 @@ void RegularMeshGenerator::generate( const Grid& grid, const grid::Distribution&
             << ") different from "
                "number of points in grid distribution ("
             << distribution.partition().size() << ")";
-        throw eckit::AssertionFailed( msg.str(), Here() );
+        throw_AssertionFailed( msg.str(), Here() );
     }
 
     // clone some grid properties
@@ -136,7 +136,7 @@ void RegularMeshGenerator::generate( const Grid& grid, const grid::Distribution&
     generate_mesh( rg, distribution, mesh );
 }
 
-void RegularMeshGenerator::generate_mesh( const grid::RegularGrid& rg, const std::vector<int>& parts,
+void RegularMeshGenerator::generate_mesh( const RegularGrid& rg, const std::vector<int>& parts,
                                           // const Region& region,
                                           Mesh& mesh ) const {
     int mypart = options.get<size_t>( "part" );

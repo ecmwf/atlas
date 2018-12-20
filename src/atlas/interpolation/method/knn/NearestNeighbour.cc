@@ -34,7 +34,7 @@ void NearestNeighbour::setup( const Grid& source, const Grid& target ) {
     if ( mpi::comm().size() > 1 ) { NOTIMP; }
     auto functionspace = []( const Grid& grid ) -> FunctionSpace {
         Mesh mesh;
-        if ( grid::StructuredGrid( grid ) ) {
+        if ( StructuredGrid( grid ) ) {
             mesh = MeshGenerator( "structured", util::Config( "three_dimensional" ) ).generate( grid );
         }
         else {

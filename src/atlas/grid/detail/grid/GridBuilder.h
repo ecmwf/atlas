@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "atlas/grid/Grid.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace grid {

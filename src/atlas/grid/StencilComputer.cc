@@ -9,7 +9,7 @@
  */
 
 #include "atlas/grid/StencilComputer.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/runtime/Exception.h"
 
 namespace atlas {
@@ -37,7 +37,7 @@ ComputeLower::ComputeLower( const Vertical& z ) {
     }
 }
 
-ComputeNorth::ComputeNorth( const grid::StructuredGrid& grid, idx_t halo ) {
+ComputeNorth::ComputeNorth( const StructuredGrid& grid, idx_t halo ) {
     ATLAS_ASSERT( grid );
     if ( not grid.domain().global() ) { throw_NotImplemented( "Only implemented for global grids", Here() ); }
     halo_ = halo;
@@ -61,7 +61,7 @@ ComputeNorth::ComputeNorth( const grid::StructuredGrid& grid, idx_t halo ) {
     dy_ = std::abs( grid.y( 1 ) - grid.y( 0 ) );
 }
 
-ComputeWest::ComputeWest( const grid::StructuredGrid& grid, idx_t halo ) {
+ComputeWest::ComputeWest( const StructuredGrid& grid, idx_t halo ) {
     ATLAS_ASSERT( grid );
     if ( not grid.domain().global() ) { throw_NotImplemented( "Only implemented for global grids", Here() ); }
     halo_                     = halo;
@@ -86,7 +86,7 @@ ComputeWest::ComputeWest( const grid::StructuredGrid& grid, idx_t halo ) {
     }
 }
 
-ComputeHorizontalStencil::ComputeHorizontalStencil( const grid::StructuredGrid& grid, idx_t stencil_width ) :
+ComputeHorizontalStencil::ComputeHorizontalStencil( const StructuredGrid& grid, idx_t stencil_width ) :
     halo_( ( stencil_width + 1 ) / 2 ),
     compute_north_( grid, halo_ ),
     compute_west_( grid, halo_ ),

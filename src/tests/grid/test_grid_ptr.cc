@@ -12,7 +12,8 @@
 #include <iomanip>
 #include <sstream>
 
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/Iterator.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
@@ -21,10 +22,8 @@
 
 #include "tests/AtlasTestEnvironment.h"
 
-using Grid           = atlas::Grid;
-using StructuredGrid = atlas::grid::StructuredGrid;
-using RegularGrid    = atlas::grid::RegularGrid;
-using Config         = atlas::util::Config;
+using Grid   = atlas::Grid;
+using Config = atlas::util::Config;
 
 namespace atlas {
 namespace test {

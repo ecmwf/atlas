@@ -32,8 +32,8 @@ std::string truncate( const std::string& str ) {
 
 std::string hash( const Grid& grid ) {
     eckit::MD5 h;
-    if ( grid::StructuredGrid( grid ) && not grid.projection() ) {
-        auto g = grid::StructuredGrid( grid );
+    if ( StructuredGrid( grid ) && not grid.projection() ) {
+        auto g = StructuredGrid( grid );
         h.add( g.y().data(), g.y().size() * sizeof( double ) );
     }
     else {
@@ -57,17 +57,15 @@ std::string LegendreCacheCreatorIFS::uid() const {
     if ( unique_identifier_.empty() ) {
         std::ostringstream stream;
         stream << "ifs-T" << truncation_ << "-";
-        if ( grid::GaussianGrid( grid_ ) ) {
-            if ( grid::RegularGaussianGrid( grid_ ) ) {
-                stream << "RegularGaussianN" << grid::GaussianGrid( grid_ ).N();
-            }
+        if ( GaussianGrid( grid_ ) ) {
+            if ( RegularGaussianGrid( grid_ ) ) { stream << "RegularGaussianN" << GaussianGrid( grid_ ).N(); }
             else {
-                stream << "ReducedGaussianN" << grid::GaussianGrid( grid_ ).N() << "-PL";
+                stream << "ReducedGaussianN" << GaussianGrid( grid_ ).N() << "-PL";
                 stream << hash( grid_ );
             }
         }
-        else if ( grid::RegularLonLatGrid( grid_ ) ) {
-            auto g = grid::RegularLonLatGrid( grid_ );
+        else if ( RegularLonLatGrid( grid_ ) ) {
+            auto g = RegularLonLatGrid( grid_ );
             if ( g.standard() || g.shifted() ) { stream << ( g.standard() ? "L" : "S" ) << g.nx() << "x" << g.ny(); }
             else {
                 // We cannot make more assumptions on reusability for different grids
@@ -87,9 +85,9 @@ std::string LegendreCacheCreatorIFS::uid() const {
 LegendreCacheCreatorIFS::~LegendreCacheCreatorIFS() {}
 
 bool LegendreCacheCreatorIFS::supported() const {
-    if ( grid::GaussianGrid( grid_ ) ) { return true; }
-    else if ( grid::RegularLonLatGrid( grid_ ) ) {
-        auto g = grid::RegularLonLatGrid( grid_ );
+    if ( GaussianGrid( grid_ ) ) { return true; }
+    else if ( RegularLonLatGrid( grid_ ) ) {
+        auto g = RegularLonLatGrid( grid_ );
         if ( g.standard() || g.shifted() ) { return true; }
     }
     return false;

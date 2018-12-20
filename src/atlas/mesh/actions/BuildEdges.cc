@@ -20,7 +20,7 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/domain.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
@@ -404,7 +404,7 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
     }
 
     bool pole_edges{false};
-    if ( grid::StructuredGrid grid = mesh.grid() ) {
+    if ( StructuredGrid grid = mesh.grid() ) {
         if ( Domain domain = grid.domain() ) { pole_edges = domain.global(); }
     }
     config.get( "pole_edges", pole_edges );

@@ -18,7 +18,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
@@ -60,7 +60,7 @@ void StructuredInterpolation3D<Kernel>::setup( const Grid& source, const Grid& t
     if ( mpi::comm().size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
 
 
-    ATLAS_ASSERT( grid::StructuredGrid( source ) );
+    ATLAS_ASSERT( StructuredGrid( source ) );
     FunctionSpace source_fs = functionspace::StructuredColumns( source, option::halo( kernel_->stencil_halo() ) );
     FunctionSpace target_fs = functionspace::PointCloud( target );
 

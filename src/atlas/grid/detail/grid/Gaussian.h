@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "atlas/grid.h"
+#include "atlas/grid/StructuredGrid.h"
 
 namespace atlas {
 namespace grid {

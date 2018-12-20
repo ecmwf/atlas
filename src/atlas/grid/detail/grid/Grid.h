@@ -16,7 +16,6 @@
 #include "atlas/domain/Domain.h"
 #include "atlas/library/config.h"
 #include "atlas/projection/Projection.h"
-#include "atlas/util/Config.h"
 #include "atlas/util/Object.h"
 
 namespace eckit {
@@ -25,6 +24,9 @@ class Hash;
 namespace atlas {
 class PointXY;
 class PointLonLat;
+namespace util {
+class Config;
+};
 }  // namespace atlas
 
 namespace atlas {
@@ -65,7 +67,9 @@ public:  // types
 public:  // methods
     static const Grid* create( const Config& );
 
-    static const Grid* create( const std::string& name, const Config& = Config() );
+    static const Grid* create( const std::string& name );
+
+    static const Grid* create( const std::string& name, const Config& );
 
     static const Grid* create( const Grid&, const Domain& );
 

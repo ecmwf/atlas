@@ -13,12 +13,12 @@
 #include <sstream>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/MD5.h"
 
 #include "atlas/grid.h"
 #include "atlas/option.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/trans/local/TransLocal.h"
 
@@ -38,8 +38,8 @@ std::string truncate( const std::string& str ) {
 
 std::string hash( const Grid& grid ) {
     eckit::MD5 h;
-    if ( grid::StructuredGrid( grid ) && not grid.projection() ) {
-        auto g = grid::StructuredGrid( grid );
+    if ( StructuredGrid( grid ) && not grid.projection() ) {
+        auto g = StructuredGrid( grid );
         h.add( g.y().data(), g.y().size() * sizeof( double ) );
     }
     else {
@@ -67,14 +67,14 @@ std::string LegendreCacheCreatorLocal::uid() const {
             stream << "grid-" << hash( grid_ );
         };
         stream << "local-T" << truncation_ << "-";
-        grid::StructuredGrid structured( grid_ );
-        if ( grid::GaussianGrid( grid_ ) ) {
+        StructuredGrid structured( grid_ );
+        if ( GaussianGrid( grid_ ) ) {
             // Same cache for any global Gaussian grid
-            stream << "GaussianN" << grid::GaussianGrid( grid_ ).N();
+            stream << "GaussianN" << GaussianGrid( grid_ ).N();
         }
-        else if ( grid::RegularLonLatGrid( grid_ ) ) {
+        else if ( RegularLonLatGrid( grid_ ) ) {
             // Same cache for any global regular grid
-            auto g = grid::RegularLonLatGrid( grid_ );
+            auto g = RegularLonLatGrid( grid_ );
 
             const double dy_2 = 90. / double( g.ny() );
             bool shifted_lat  = eckit::types::is_approximately_equal( g.y().front(), 90. - dy_2 ) &&
@@ -94,9 +94,9 @@ std::string LegendreCacheCreatorLocal::uid() const {
                 give_up();
             }
         }
-        else if ( grid::RegularGrid( grid_ ) && not grid_.projection() && structured.yspace().type() == "linear" ) {
+        else if ( RegularGrid( grid_ ) && not grid_.projection() && structured.yspace().type() == "linear" ) {
             RectangularDomain domain( grid_.domain() );
-            ASSERT( domain );
+            ATLAS_ASSERT( domain );
             stream << "Regional";
             stream << "-south" << domain.ymin();
             stream << "-north" << domain.ymax();
@@ -120,7 +120,7 @@ LegendreCacheCreatorLocal::LegendreCacheCreatorLocal( const Grid& grid, int trun
     config_( config ) {}
 
 bool LegendreCacheCreatorLocal::supported() const {
-    if ( not grid::StructuredGrid( grid_ ) ) return false;
+    if ( not StructuredGrid( grid_ ) ) return false;
     if ( grid_.projection() ) return false;
     return true;
 }

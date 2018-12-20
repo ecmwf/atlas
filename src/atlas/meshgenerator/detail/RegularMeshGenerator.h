@@ -11,12 +11,12 @@ class Parametrisation;
 }
 
 namespace atlas {
+class RegularGrid;
 class Mesh;
-}
+}  // namespace atlas
 
 namespace atlas {
 namespace grid {
-class RegularGrid;
 class Distribution;
 }  // namespace grid
 }  // namespace atlas
@@ -40,7 +40,7 @@ private:
 
     void configure_defaults();
 
-    void generate_mesh( const atlas::grid::RegularGrid&, const std::vector<int>& parts, Mesh& m ) const;
+    void generate_mesh( const RegularGrid&, const std::vector<int>& parts, Mesh& m ) const;
 
 private:
     util::Metadata options;

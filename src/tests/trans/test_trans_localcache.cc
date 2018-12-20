@@ -36,8 +36,6 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
     }
 };
 
-using grid::GaussianGrid;
-using grid::StructuredGrid;
 using trans::Cache;
 using trans::LegendreCache;
 using trans::LegendreCacheCreator;

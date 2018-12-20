@@ -15,6 +15,7 @@
 
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/meshgenerator.h"
@@ -42,7 +43,7 @@ void KNearestNeighbours::setup( const Grid& source, const Grid& target ) {
     if ( mpi::comm().size() > 1 ) { NOTIMP; }
     auto functionspace = []( const Grid& grid ) -> FunctionSpace {
         Mesh mesh;
-        if ( grid::StructuredGrid( grid ) ) {
+        if ( StructuredGrid( grid ) ) {
             mesh = MeshGenerator( "structured", util::Config( "three_dimensional", true ) ).generate( grid );
         }
         else {

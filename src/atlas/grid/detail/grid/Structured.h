@@ -13,12 +13,11 @@
 #include <array>
 #include <memory>
 
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/grid/Spacing.h"
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/library/config.h"
-#include "atlas/util/Config.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -185,7 +184,7 @@ public:
 
 public:
     class XSpace {
-        class Implementation : public eckit::Owned {
+        class Implementation : public util::Object {
         public:
             // Constructor NVector can be either std::vector<int> or std::vector<long>
             template <typename NVector>
@@ -274,12 +273,12 @@ public:
         /// Value of longitude increment
         const std::vector<double>& dx() const { return impl_->dx(); }
 
-        Spec spec() const { return impl_->spec(); }
+        Spec spec() const;
 
         std::string type() const { return impl_->type(); }
 
     private:
-        eckit::SharedPtr<Implementation> impl_;
+        util::ObjectHandle<XSpace::Implementation> impl_;
     };
 
     using YSpace = Spacing;
@@ -292,7 +291,7 @@ public:
     Structured( XSpace, YSpace, Projection, Domain );
     Structured( const Structured&, Domain );
 
-    virtual ~Structured();
+    virtual ~Structured() override;
 
     virtual idx_t size() const override { return npts_; }
 
@@ -307,7 +306,7 @@ public:
 
     virtual std::string type() const override;
 
-    inline idx_t ny() const { return y_.size(); }
+    inline idx_t ny() const { return static_cast<idx_t>( y_.size() ); }
 
     inline idx_t nx( idx_t j ) const { return static_cast<idx_t>( nx_[j] ); }
 

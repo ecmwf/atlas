@@ -7,9 +7,9 @@
 #include <iostream>
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
 
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/StructuredGrid.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/MicroDeg.h"
 
@@ -43,7 +43,7 @@ CheckerboardPartitioner::CheckerboardPartitioner( int N, int nbands, bool checke
 CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard( const Grid& grid ) const {
     // grid dimensions
     const RegularGrid rg( grid );
-    if ( !rg ) throw eckit::BadValue( "Checkerboard Partitioner only works for Regular grids.", Here() );
+    if ( !rg ) throw_Exception( "Checkerboard Partitioner only works for Regular grids.", Here() );
 
     Checkerboard cb;
 
@@ -66,7 +66,7 @@ CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard( con
         }
     }
     if ( checkerboard_ && nparts % cb.nbands != 0 )
-        throw eckit::BadValue( "number of bands doesn't divide number of partitions", Here() );
+        throw_Exception( "number of bands doesn't divide number of partitions", Here() );
 
     return cb;
 }

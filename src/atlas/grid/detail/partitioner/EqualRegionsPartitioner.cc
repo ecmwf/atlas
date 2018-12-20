@@ -17,11 +17,11 @@
 #include <iostream>
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
-
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/Iterator.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/MicroDeg.h"
@@ -536,7 +536,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
     else {
         ATLAS_TRACE( "EqualRegionsPartitioner::partition" );
 
-        ASSERT( grid.projection().units() == "degrees" );
+        ATLAS_ASSERT( grid.projection().units() == "degrees" );
 
         const auto& comm = mpi::comm();
         int mpi_rank     = comm.rank();
@@ -556,10 +556,10 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
         if ( StructuredGrid( grid ) ) {
             // The grid comes sorted from north to south and west to east by
             // construction
-            // Assert to make sure.
+            // ATLAS_ASSERT to make sure.
             StructuredGrid structured_grid( grid );
-            ASSERT( structured_grid.y( 1 ) < structured_grid.y( 0 ) );
-            ASSERT( structured_grid.x( 1, 0 ) > structured_grid.x( 0, 0 ) );
+            ATLAS_ASSERT( structured_grid.y( 1 ) < structured_grid.y( 0 ) );
+            ATLAS_ASSERT( structured_grid.x( 1, 0 ) > structured_grid.x( 0, 0 ) );
 
             ATLAS_TRACE( "Take shortcut" );
             int n( 0 );

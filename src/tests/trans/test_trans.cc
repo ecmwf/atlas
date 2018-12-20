@@ -103,7 +103,7 @@ CASE( "test_trans_distribution_matches_atlas" ) {
     // Create grid and trans object
     Grid g( "N80" );
 
-    EXPECT( grid::StructuredGrid( g ).ny() == 160 );
+    EXPECT( StructuredGrid( g ).ny() == 160 );
 
     auto trans_partitioner = new TransPartitioner();
     grid::Partitioner partitioner( trans_partitioner );

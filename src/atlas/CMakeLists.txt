@@ -98,6 +98,10 @@ domain/detail/DomainFactory.cc
 grid.h
 grid/Grid.cc
 grid/Grid.h
+grid/StructuredGrid.cc
+grid/StructuredGrid.h
+grid/UnstructuredGrid.cc
+grid/UnstructuredGrid.h
 
 grid/Distribution.cc
 grid/Distribution.h
@@ -106,6 +110,7 @@ grid/Spacing.h
 grid/Partitioner.h
 grid/Partitioner.cc
 grid/Iterator.h
+grid/Iterator.cc
 grid/Vertical.h
 grid/Vertical.cc
 grid/Stencil.h

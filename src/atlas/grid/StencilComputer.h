@@ -18,9 +18,7 @@
 #include "atlas/runtime/Exception.h"
 
 namespace atlas {
-namespace grid {
 class StructuredGrid;
-}
 }  // namespace atlas
 
 namespace atlas {
@@ -83,7 +81,7 @@ class ComputeNorth {
 public:
     ComputeNorth() = default;
 
-    ComputeNorth( const grid::StructuredGrid& grid, idx_t halo );
+    ComputeNorth( const StructuredGrid& grid, idx_t halo );
 
     idx_t operator()( double y ) const {
         idx_t j = static_cast<idx_t>( std::floor( ( y_[halo_ + 0] - y ) / dy_ ) );
@@ -111,7 +109,7 @@ class ComputeWest {
 public:
     ComputeWest() = default;
 
-    ComputeWest( const grid::StructuredGrid& grid, idx_t halo = 0 );
+    ComputeWest( const StructuredGrid& grid, idx_t halo = 0 );
 
     idx_t operator()( const double& x, idx_t j ) const {
         idx_t jj = halo_ + j;
@@ -156,7 +154,7 @@ class ComputeHorizontalStencil {
 public:
     ComputeHorizontalStencil() = default;
 
-    ComputeHorizontalStencil( const grid::StructuredGrid& grid, idx_t stencil_width );
+    ComputeHorizontalStencil( const StructuredGrid& grid, idx_t stencil_width );
 
     template <typename stencil_t>
     void operator()( const double& x, const double& y, stencil_t& stencil ) const {

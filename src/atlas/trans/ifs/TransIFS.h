@@ -16,6 +16,7 @@
 
 #include "atlas/array/LocalView.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/trans/Trans.h"
 
 //-----------------------------------------------------------------------------
@@ -406,7 +407,7 @@ public:
 private:
     friend class functionspace::detail::Spectral;
     mutable std::shared_ptr<::Trans_t> trans_;
-    grid::StructuredGrid grid_;
+    StructuredGrid grid_;
     const void* cache_{nullptr};
     size_t cachesize_{0};
 };

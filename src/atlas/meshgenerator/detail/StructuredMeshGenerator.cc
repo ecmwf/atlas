@@ -23,8 +23,8 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Distribution.h"
-#include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
@@ -162,7 +162,7 @@ void StructuredMeshGenerator::configure_defaults() {
 void StructuredMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
     ASSERT( !mesh.generated() );
 
-    const grid::StructuredGrid rg = grid::StructuredGrid( grid );
+    const StructuredGrid rg = StructuredGrid( grid );
     if ( !rg ) throw eckit::BadCast( "Structured can only work with a Structured", Here() );
 
     idx_t nb_parts = options.get<idx_t>( "nb_parts" );
@@ -188,7 +188,7 @@ void StructuredMeshGenerator::hash( Hash& h ) const {
 void StructuredMeshGenerator::generate( const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const {
     ATLAS_TRACE();
 
-    const grid::StructuredGrid rg = grid::StructuredGrid( grid );
+    const StructuredGrid rg = StructuredGrid( grid );
     if ( !rg ) throw eckit::BadCast( "Grid could not be cast to a Structured", Here() );
 
     ASSERT( !mesh.generated() );
@@ -227,8 +227,8 @@ void StructuredMeshGenerator::generate( const Grid& grid, const grid::Distributi
     generate_mesh( rg, distribution, region, mesh );
 }
 
-void StructuredMeshGenerator::generate_region( const grid::StructuredGrid& rg, const std::vector<int>& parts,
-                                               int mypart, Region& region ) const {
+void StructuredMeshGenerator::generate_region( const StructuredGrid& rg, const std::vector<int>& parts, int mypart,
+                                               Region& region ) const {
     ATLAS_TRACE();
 
     double max_angle       = options.get<double>( "angle" );
@@ -686,7 +686,7 @@ struct GhostNode {
 };
 }  // namespace
 
-void StructuredMeshGenerator::generate_mesh( const grid::StructuredGrid& rg, const std::vector<int>& parts,
+void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std::vector<int>& parts,
                                              const Region& region, Mesh& mesh ) const {
     ATLAS_TRACE();
 

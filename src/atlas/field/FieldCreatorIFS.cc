@@ -10,6 +10,7 @@
 
 #include "atlas/field/FieldCreatorIFS.h"
 
+#include <cmath>
 #include <sstream>
 
 #include "eckit/config/Parametrisation.h"

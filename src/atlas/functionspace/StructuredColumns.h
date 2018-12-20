@@ -37,13 +37,13 @@ namespace atlas {
 class Field;
 class FieldSet;
 class Grid;
+class StructuredGrid;
 }  // namespace atlas
 
 namespace atlas {
 namespace grid {
 class Distribution;
 class Partitioner;
-class StructuredGrid;
 }  // namespace grid
 }  // namespace atlas
 
@@ -103,7 +103,7 @@ public:
 
     const Vertical& vertical() const { return vertical_; }
 
-    const grid::StructuredGrid& grid() const;
+    const StructuredGrid& grid() const;
 
     idx_t i_begin( idx_t j ) const { return i_begin_[j]; }
     idx_t i_end( idx_t j ) const { return i_end_[j]; }
@@ -178,7 +178,7 @@ private:  // data
     idx_t size_halo_;
     idx_t halo_;
 
-    const grid::StructuredGrid* grid_;
+    const StructuredGrid* grid_;
     mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;
     mutable util::ObjectHandle<parallel::Checksum> checksum_;
     mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
@@ -316,7 +316,7 @@ public:
 
     const Vertical& vertical() const { return functionspace_->vertical(); }
 
-    const grid::StructuredGrid& grid() const { return functionspace_->grid(); }
+    const StructuredGrid& grid() const { return functionspace_->grid(); }
 
     void gather( const FieldSet&, FieldSet& ) const;
     void gather( const Field&, Field& ) const;

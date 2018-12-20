@@ -16,6 +16,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Iterator.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"

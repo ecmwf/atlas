@@ -680,11 +680,11 @@ void TransIFS::ctor( const Grid& grid, long truncation, const eckit::Configurati
         delete p;
     } );
 
-    if ( auto gg = grid::GaussianGrid( grid ) ) {
+    if ( auto gg = GaussianGrid( grid ) ) {
         ctor_rgg( gg.ny(), gg.nx().data(), truncation, config );
         return;
     }
-    if ( auto ll = grid::RegularLonLatGrid( grid ) ) {
+    if ( auto ll = RegularLonLatGrid( grid ) ) {
         if ( ll.standard() || ll.shifted() ) {
             ctor_lonlat( ll.nx(), ll.ny(), truncation, config );
             return;

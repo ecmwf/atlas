@@ -55,17 +55,17 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-static grid::ReducedGaussianGrid debug_grid() {
+static ReducedGaussianGrid debug_grid() {
     return {6, 10, 18, 22, 22, 22, 22, 18, 10, 6};
 }
 
-static grid::StructuredGrid minimal_grid( int N, long lon[] ) {
+static StructuredGrid minimal_grid( int N, long lon[] ) {
     std::vector<long> nx( 2 * N );
     for ( long j = 0; j < N; ++j ) {
         nx[j]                 = lon[j];
         nx[nx.size() - 1 - j] = nx[j];
     }
-    return grid::ReducedGaussianGrid( nx );
+    return ReducedGaussianGrid( nx );
 }
 
 double compute_lonlat_area( Mesh& mesh ) {
@@ -314,7 +314,7 @@ CASE( "test_rgg_meshgen_many_parts" ) {
     //  int nlat=10;
     //  long lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
     //  test::MinimalGrid grid(nlat,lon);
-    grid::StructuredGrid grid = Grid( "N32" );
+    StructuredGrid grid = Grid( "N32" );
     // RegularGrid grid(128,64);
 
     /*

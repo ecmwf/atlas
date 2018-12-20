@@ -14,14 +14,6 @@
 #include <cstdlib>
 #include <fstream>
 
-#include "atlas/array.h"
-#include "atlas/option.h"
-#include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/ErrorHandling.h"
-#include "atlas/runtime/Log.h"
-#include "atlas/trans/VorDivToUV.h"
-#include "atlas/trans/local/LegendrePolynomials.h"
-#include "atlas/util/Constants.h"
 #include "eckit/config/YAMLConfiguration.h"
 #include "eckit/eckit_config.h"
 #include "eckit/linalg/LinearAlgebra.h"
@@ -29,6 +21,17 @@
 #include "eckit/log/Bytes.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/types/FloatCompare.h"
+
+#include "atlas/array.h"
+#include "atlas/grid/Iterator.h"
+#include "atlas/grid/StructuredGrid.h"
+#include "atlas/option.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/trans/VorDivToUV.h"
+#include "atlas/trans/local/LegendrePolynomials.h"
+#include "atlas/util/Constants.h"
 
 #include "atlas/library/defines.h"
 #if ATLAS_HAVE_FFTW
@@ -307,8 +310,8 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
     nlatsLegReduced_  = 0;
     bool useGlobalLeg = true;
     bool no_nest      = false;
-    if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
-        grid::StructuredGrid g( grid_ );
+    if ( StructuredGrid( grid_ ) && not grid_.projection() ) {
+        StructuredGrid g( grid_ );
         nlats    = g.ny();
         nlonsMax = g.nxmax();
 
@@ -330,7 +333,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
 
         gridGlobal_ = grid;
         if ( not gridGlobal_.domain().global() ) {
-            if ( grid::RegularGrid( grid_ ) ) {
+            if ( RegularGrid( grid_ ) ) {
                 // non-nested regular grid
                 no_nest         = true;
                 no_symmetry_    = true;
@@ -347,10 +350,10 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             }
         }
 
-        grid::StructuredGrid gs_global( gridGlobal_ );
+        StructuredGrid gs_global( gridGlobal_ );
         ASSERT( gs_global );  // assert structured grid
-        grid::StructuredGrid gsLeg = ( useGlobalLeg ? gs_global : g );
-        nlonsMaxGlobal_            = gs_global.nxmax();
+        StructuredGrid gsLeg = ( useGlobalLeg ? gs_global : g );
+        nlonsMaxGlobal_      = gs_global.nxmax();
         jlonMin_.resize( 1 );
         jlonMin_[0]  = 0;
         jlatMin_     = 0;
@@ -391,7 +394,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             for ( int jlat = 0; jlat < nlatsGlobal_ / 2; jlat++ ) {
                 double lat = gs_global.y( jlat ) * util::Constants::degreesToRadians();
                 int nmen = fourier_truncation( truncation_, gs_global.nx( jlat ), gs_global.nxmax(), nlatsGlobal_, lat,
-                                               grid::RegularGrid( gs_global ) );
+                                               RegularGrid( gs_global ) );
                 nmen     = std::max( nmen0, nmen );
                 int ndgluj = nlatsLeg_ - std::min( nlatsLeg_, nlatsLeg_ + jlatMinLeg_ - jlat );
                 if ( useGlobalLeg ) { ndgluj = std::max( jlatMinLeg_, jlat ); }
@@ -419,7 +422,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             if ( nlonsMax < fft_threshold * nlonsMaxGlobal_ ) { useFFT_ = false; }
             else {
                 // need to use FFT with cropped grid
-                if ( grid::RegularGrid( gridGlobal_ ) ) {
+                if ( RegularGrid( gridGlobal_ ) ) {
                     for ( size_t jlon = 0; jlon < nlonsMaxGlobal_; ++jlon ) {
                         if ( gs_global.x( jlon, 0 ) < lonmin ) { jlonMin_[0]++; }
                     }
@@ -546,7 +549,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 //                }
                 //                read.close();
                 //                if ( wisdomString.length() > 0 ) { fftw_import_wisdom_from_string( &wisdomString[0u] ); }
-                if ( grid::RegularGrid( gridGlobal_ ) ) {
+                if ( RegularGrid( gridGlobal_ ) ) {
                     fftw_->plans.resize( 1 );
                     fftw_->plans[0] =
                         fftw_plan_many_dft_c2r( 1, &nlonsMaxGlobal_, nlats, fftw_->in, nullptr, 1, num_complex,
@@ -676,7 +679,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const long truncat
 // --------------------------------------------------------------------------------------------------------------------
 
 TransLocal::~TransLocal() {
-    if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
+    if ( StructuredGrid( grid_ ) && not grid_.projection() ) {
         if ( not legendre_cache_ ) {
             free_aligned( legendre_sym_ );
             free_aligned( legendre_asym_ );
@@ -1005,7 +1008,7 @@ void TransLocal::invtrans_fourier_regular( const int nlats, const int nlons, con
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans_fourier_reduced( const int nlats, const grid::StructuredGrid g, const int nb_fields,
+void TransLocal::invtrans_fourier_reduced( const int nlats, const StructuredGrid& g, const int nb_fields,
                                            double scl_fourier[], double gp_fields[],
                                            const eckit::Configuration& config ) const {
     // Fourier transformation:
@@ -1273,8 +1276,8 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
         int nb_fields = nb_scalar_fields;
 
         // Transform
-        if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
-            auto g = grid::StructuredGrid( grid_ );
+        if ( StructuredGrid( grid_ ) && not grid_.projection() ) {
+            auto g = StructuredGrid( grid_ );
             ATLAS_TRACE( "invtrans_uv structured" );
             int nlats            = g.ny();
             int nlons            = g.nxmax();
@@ -1293,7 +1296,7 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
                                config );
 
             // Fourier transformation:
-            if ( grid::RegularGrid( gridGlobal_ ) ) {
+            if ( RegularGrid( gridGlobal_ ) ) {
                 invtrans_fourier_regular( nlats, nlons, nb_fields, scl_fourier, gp_fields, config );
             }
             else {

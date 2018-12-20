@@ -20,7 +20,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
@@ -367,7 +367,7 @@ void make_dual_normals_outward( Mesh& mesh ) {
 }
 
 void build_brick_dual_mesh( const Grid& grid, Mesh& mesh ) {
-    auto g = grid::StructuredGrid( grid );
+    auto g = StructuredGrid( grid );
     if ( g ) {
         if ( mpi::comm().size() != 1 )
             throw eckit::UserError( "Cannot build_brick_dual_mesh with more than 1 task", Here() );

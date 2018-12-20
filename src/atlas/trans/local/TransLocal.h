@@ -31,6 +31,7 @@ class LinearAlgebra;
 namespace atlas {
 class Field;
 class FieldSet;
+class StructuredGrid;
 }  // namespace atlas
 
 //-----------------------------------------------------------------------------
@@ -72,7 +73,7 @@ public:
     TransLocal( const Cache&, const Grid&, const Domain&, const long truncation,
                 const eckit::Configuration& = util::NoConfig() );
 
-    virtual ~TransLocal();
+    virtual ~TransLocal() override;
 
     virtual int truncation() const override { return truncation_; }
     virtual size_t spectralCoefficients() const override { return ( truncation_ + 1 ) * ( truncation_ + 2 ); }
@@ -141,8 +142,8 @@ private:
     void invtrans_fourier_regular( const int nlats, const int nlons, const int nb_fields, double scl_fourier[],
                                    double gp_fields[], const eckit::Configuration& config ) const;
 
-    void invtrans_fourier_reduced( const int nlats, const grid::StructuredGrid g, const int nb_fields,
-                                   double scl_fourier[], double gp_fields[], const eckit::Configuration& config ) const;
+    void invtrans_fourier_reduced( const int nlats, const StructuredGrid& g, const int nb_fields, double scl_fourier[],
+                                   double gp_fields[], const eckit::Configuration& config ) const;
 
     void invtrans_unstructured_precomp( const int truncation, const int nb_scalar_fields, const int nb_vordiv_fields,
                                         const double scalar_spectra[], double gp_fields[],

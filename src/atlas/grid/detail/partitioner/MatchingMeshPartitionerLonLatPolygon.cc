@@ -16,6 +16,7 @@
 #include "eckit/log/ProgressTimer.h"
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Iterator.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"

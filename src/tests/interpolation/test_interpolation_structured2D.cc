@@ -15,6 +15,7 @@
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Iterator.h"
 #include "atlas/interpolation.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"

@@ -21,10 +21,10 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/Stencil.h"
 #include "atlas/grid/StencilComputer.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
@@ -75,7 +75,7 @@ double cubic( double x, double min, double max ) {
 CASE( "test finding of North-West grid point" ) {
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
 
-    grid::StructuredGrid grid( gridname );
+    StructuredGrid grid( gridname );
 
     constexpr double tol = 0.5e-6;
 
@@ -115,7 +115,7 @@ CASE( "test horizontal stencil" ) {
     //if ( mpi::comm().size() == 1 ) {
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
 
-    grid::StructuredGrid grid( gridname );
+    StructuredGrid grid( gridname );
     int halo = eckit::Resource<int>( "--halo", 2 );
     util::Config config;
     config.set( "halo", halo );
@@ -148,7 +148,7 @@ CASE( "test horizontal stencil linear" ) {
     //if ( mpi::comm().size() == 1 ) {
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
 
-    grid::StructuredGrid grid( gridname );
+    StructuredGrid grid( gridname );
     //int halo = eckit::Resource<int>( "--halo", 2 );
     util::Config config;
     config.set( "levels", 9 );
@@ -240,7 +240,7 @@ CASE( "test vertical stencil" ) {
 CASE( "ifs method to find nearest grid point" ) {
     // see satrad/module/gaussgrid.F90
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
-    grid::StructuredGrid grid( gridname );
+    StructuredGrid grid( gridname );
 
     auto p = PointXY{0., grid.y( 0 )};
     idx_t kgrib_lat, kgrib_lon;

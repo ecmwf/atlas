@@ -14,24 +14,27 @@
 #include <string>
 #include <vector>
 
-#include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/domain/Domain.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Iterator.h"
 #include "atlas/grid/Spacing.h"
-#include "atlas/grid/detail/grid/Gaussian.h"
-#include "atlas/grid/detail/grid/Structured.h"
 #include "atlas/projection/Projection.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {
 
-// Grid::Grid() : Handle() {}
+Grid::IterateXY Grid::xy( Grid::IterateXY::Predicate p ) const {
+    return Grid::IterateXY( *get(), p );
+}
 
-//Grid::Grid( const Grid& grid ) : Handle( grid ) {}
+Grid::IterateXY Grid::xy() const {
+    return Grid::IterateXY( *get() );
+}
 
-//Grid::Grid( const Grid::Implementation* grid ) : grid_( grid ) {}
+Grid::IterateLonLat Grid::lonlat() const {
+    return Grid::IterateLonLat( *get() );
+}
 
 Grid::Grid( const std::string& shortname, const Domain& domain ) :
     Handle( [&] {
@@ -42,80 +45,38 @@ Grid::Grid( const std::string& shortname, const Domain& domain ) :
 
 Grid::Grid( const Grid& grid, const Grid::Domain& domain ) :
     Handle( [&] {
-        ASSERT( grid );
+        ATLAS_ASSERT( grid );
         return Grid::Implementation::create( *grid.get(), domain );
     }() ) {}
 
 Grid::Grid( const Config& p ) : Handle( Grid::Implementation::create( p ) ) {}
 
-namespace grid {
-
-inline const UnstructuredGrid::grid_t* unstructured_grid( const Grid::Implementation* grid ) {
-    return dynamic_cast<const UnstructuredGrid::grid_t*>( grid );
+idx_t Grid::size() const {
+    return get()->size();
 }
 
-UnstructuredGrid::UnstructuredGrid() : Grid() {}
-
-UnstructuredGrid::UnstructuredGrid( const Grid& grid ) : Grid( grid ), grid_( unstructured_grid( get() ) ) {}
-
-UnstructuredGrid::UnstructuredGrid( const Grid::Implementation* grid ) :
-    Grid( grid ),
-    grid_( unstructured_grid( get() ) ) {}
-
-UnstructuredGrid::UnstructuredGrid( const Config& grid ) : Grid( grid ), grid_( unstructured_grid( get() ) ) {}
-
-UnstructuredGrid::UnstructuredGrid( std::vector<PointXY>* xy ) :
-    Grid( new UnstructuredGrid::grid_t( xy ) ),
-    grid_( unstructured_grid( get() ) ) {}
-
-UnstructuredGrid::UnstructuredGrid( std::vector<PointXY>&& xy ) :
-    Grid( new UnstructuredGrid::grid_t( std::forward<std::vector<PointXY>>( xy ) ) ),
-    grid_( unstructured_grid( get() ) ) {}
-
-UnstructuredGrid::UnstructuredGrid( std::initializer_list<PointXY> xy ) :
-    Grid( new UnstructuredGrid::grid_t( xy ) ),
-    grid_( unstructured_grid( get() ) ) {}
-
-UnstructuredGrid::UnstructuredGrid( const Grid& grid, const Grid::Domain& domain ) :
-    Grid( new UnstructuredGrid::grid_t( *grid.get(), domain ) ),
-    grid_( unstructured_grid( get() ) ) {}
-
-inline const StructuredGrid::grid_t* structured_grid( const Grid::Implementation* grid ) {
-    return dynamic_cast<const StructuredGrid::grid_t*>( grid );
+const Grid::Projection& Grid::projection() const {
+    return get()->projection();
 }
 
-StructuredGrid::StructuredGrid() : Grid(), grid_( nullptr ) {}
+const Grid::Domain& Grid::domain() const {
+    return get()->domain();
+}
 
-StructuredGrid::StructuredGrid( const Grid& grid ) : Grid( grid ), grid_( structured_grid( get() ) ) {}
+std::string Grid::name() const {
+    return get()->name();
+}
 
-StructuredGrid::StructuredGrid( const Grid::Implementation* grid ) : Grid( grid ), grid_( structured_grid( get() ) ) {}
+std::string Grid::uid() const {
+    return get()->uid();
+}
 
-StructuredGrid::StructuredGrid( const std::string& grid, const Domain& domain ) :
-    Grid( grid, domain ),
-    grid_( structured_grid( get() ) ) {}
+void Grid::hash( eckit::Hash& h ) const {
+    return get()->hash( h );
+}
 
-StructuredGrid::StructuredGrid( const Config& grid ) : Grid( grid ), grid_( structured_grid( get() ) ) {}
+Grid::Spec Grid::spec() const {
+    return get()->spec();
+}
 
-StructuredGrid::StructuredGrid( const XSpace& xspace, const YSpace& yspace, const Projection& projection,
-                                const Domain& domain ) :
-    Grid( new detail::grid::Structured( xspace, yspace, projection, domain ) ),
-    grid_( structured_grid( get() ) ) {}
-
-StructuredGrid::StructuredGrid( const Grid& grid, const Grid::Domain& domain ) :
-    Grid( grid, domain ),
-    grid_( structured_grid( get() ) ) {}
-
-ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx, const Domain& domain ) :
-    ReducedGaussianGrid::grid_t( detail::grid::reduced_gaussian( nx, domain ) ) {}
-
-ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<int>& nx, const Domain& domain ) :
-    ReducedGaussianGrid::grid_t( detail::grid::reduced_gaussian( nx, domain ) ) {}
-
-ReducedGaussianGrid::ReducedGaussianGrid( const std::initializer_list<idx_t>& nx ) :
-    ReducedGaussianGrid( std::vector<idx_t>( nx ) ) {}
-
-RegularGaussianGrid::RegularGaussianGrid( int N, const Grid::Domain& domain ) :
-    RegularGaussianGrid::grid_t( "F" + std::to_string( N ), domain ) {}
-
-}  // namespace grid
 }  // namespace atlas

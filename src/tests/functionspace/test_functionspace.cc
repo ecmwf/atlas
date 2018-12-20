@@ -18,6 +18,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -59,7 +60,7 @@ CASE( "test_functionspace_NodeColumns_no_halo" ) {
 CASE( "test_functionspace_NodeColumns" ) {
     // ScopedPtr<grid::Grid> grid( Grid::create("O2") );
 
-    grid::ReducedGaussianGrid grid( {4, 8, 8, 4} );
+    ReducedGaussianGrid grid( {4, 8, 8, 4} );
 
     StructuredMeshGenerator generator;
     // generator.options.set("3d",true);

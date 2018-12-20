@@ -51,7 +51,7 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
 
 /// @brief Compute magnitude of flow with rotation-angle beta
 /// (beta=0 --> zonal, beta=pi/2 --> meridional)
-static void rotated_flow_magnitude( grid::StructuredGrid& grid, double var[], const double& beta ) {
+static void rotated_flow_magnitude( StructuredGrid& grid, double var[], const double& beta ) {
     const double radius  = util::Earth::radius();
     const double USCAL   = 20.;
     const double pvel    = USCAL / radius;
@@ -97,7 +97,7 @@ void rotated_flow_magnitude( const functionspace::NodeColumns& fs, Field& field,
 
 CASE( "test_invtrans_ifsStyle" ) {
     std::string grid_uid( "O80" );
-    grid::StructuredGrid g( grid_uid );
+    StructuredGrid g( grid_uid );
     long N = g.ny() / 2;
     trans::TransIFS trans( g, 2 * N - 1 );
     Log::info() << "Trans initialized" << std::endl;
@@ -144,7 +144,7 @@ CASE( "test_invtrans_ifsStyle" ) {
 
 CASE( "test_invtrans_grad" ) {
     std::string grid_uid( "O48" );
-    grid::StructuredGrid g( grid_uid );
+    StructuredGrid g( grid_uid );
     Mesh mesh = StructuredMeshGenerator().generate( g );
     long N    = g.ny() / 2;
     trans::Trans trans( g, 2 * N - 1 );

@@ -303,14 +303,14 @@ void spectral_transform_grid_analytic(
     for ( int jm = 0; jm < grid.size(); jm++ )
         rgp[jm] = 0.;
 
-    if ( grid::StructuredGrid( grid ) ) {
-        grid::StructuredGrid g( grid );
+    if ( StructuredGrid( grid ) ) {
+        StructuredGrid g( grid );
         Grid gridGlobal;
-        grid::StructuredGrid gs_global;
+        StructuredGrid gs_global;
         int jlatMin = 0;
         if ( trcFT ) {
             gridGlobal      = Grid( grid.name() );
-            gs_global       = grid::StructuredGrid( gridGlobal );
+            gs_global       = StructuredGrid( gridGlobal );
             int nlatsGlobal = gs_global.ny();
             for ( int jlat = 0; jlat < nlatsGlobal; jlat++ ) {
                 if ( gs_global.y( jlat ) > g.y( 0 ) ) { jlatMin++; };
@@ -323,7 +323,7 @@ void spectral_transform_grid_analytic(
             int ftrc   = trc + 1;
             if ( trcFT ) {
                 ftrc = trans::fourier_truncation( trc, gs_global.nx( jlatMin + j ), gs_global.nxmax(), gs_global.ny(),
-                                                  lat, grid::RegularGrid( gs_global ) );
+                                                  lat, RegularGrid( gs_global ) );
             }
             /*Log::info() << "j=" << j << " ftrc=" << ftrc << " trc=" << trc << " nx=" << gs_global.nx( jlatMin + j )
                         << " nxmax=" << gs_global.nxmax() << " nlats=" << gs_global.ny() << " lat=" << g.y( j )
@@ -389,7 +389,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     // Grid: (Adjust the following line if the test takes too long!)
     Grid g( "F64" );
 
-    grid::StructuredGrid gs( g );
+    StructuredGrid gs( g );
     int ndgl = gs.ny();
     //int trc  = ndgl - 1;  // linear
     int trc = ndgl / 2. - 1;  // cubic
@@ -639,7 +639,6 @@ CASE( "test_trans_domain" ) {
     // fourierTrc1, fourierTrc2: need to be false if no global grid can be constructed
     //                           (like for grids created with LinearSpacing)
 
-    using grid::StructuredGrid;
     //using LinearSpacing = grid::LinearSpacing;
     //StructuredGrid g2( LinearSpacing( {0., 180.}, 3 ), LinearSpacing( {89., 90.}, 2 ) );
     // when using LinearSpacing: set fourierTrc2 to false
@@ -833,7 +832,6 @@ CASE( "test_trans_pole" ) {
     // fourierTrc1, fourierTrc2: need to be false if no global grid can be constructed
     //                           (like for grids created with LinearSpacing)
 
-    using grid::StructuredGrid;
     using LinearSpacing = grid::LinearSpacing;
     StructuredGrid g2( LinearSpacing( {0., 180.}, 3 ), LinearSpacing( {89., 90.}, 2 ) );
     // when using LinearSpacing: set fourierTrc2 to false
@@ -1019,7 +1017,6 @@ CASE( "test_trans_southpole" ) {
     // fourierTrc1, fourierTrc2: need to be false if no global grid can be constructed
     //                           (like for grids created with LinearSpacing)
 
-    using grid::StructuredGrid;
     using LinearSpacing = grid::LinearSpacing;
     //StructuredGrid g2( LinearSpacing( {0., 10.}, 2 ), LinearSpacing( {-10., -90.}, 9 ) );
     // when using LinearSpacing: set fourierTrc2 to false
@@ -1191,7 +1188,7 @@ CASE( "test_trans_unstructured" ) {
     Grid grid_global( "F32" );
     Grid g( grid_global, testdomain );
     int trc = 31;
-    grid::StructuredGrid gs( g );
+    StructuredGrid gs( g );
     std::vector<PointXY> pts( g.size() );
     int idx( 0 );
     for ( size_t j = 0; j < gs.ny(); ++j ) {
@@ -1204,7 +1201,7 @@ CASE( "test_trans_unstructured" ) {
             }
         }
     }
-    Grid gu = grid::UnstructuredGrid( new std::vector<PointXY>( &pts[0], &pts[idx] ) );
+    Grid gu = UnstructuredGrid( new std::vector<PointXY>( &pts[0], &pts[idx] ) );
     Log::info() << "gu: size=" << gu.size() << std::endl;
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 

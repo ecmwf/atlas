@@ -1,13 +1,13 @@
 #include "Regional.h"
 
-#include "eckit/exception/Exceptions.h"
-
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 using atlas::grid::LinearSpacing;
-using XSpace = atlas::grid::StructuredGrid::XSpace;
-using YSpace = atlas::grid::StructuredGrid::YSpace;
+using XSpace = atlas::StructuredGrid::XSpace;
+using YSpace = atlas::StructuredGrid::YSpace;
 
 namespace atlas {
 namespace grid {
@@ -99,7 +99,7 @@ struct Parse_bounds_lonlat : ConfigParser {
                 errmsg << "\n"
                           "p.bool() = "
                        << bool( p );
-                throw eckit::BadParameter( errmsg.str(), Here() );
+                throw_Exception( errmsg.str(), Here() );
             }
         }
 
@@ -191,7 +191,7 @@ public:
     }
 
     virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
-        eckit::NotImplemented( "There are no named regional grids implemented.", Here() );
+        throw_NotImplemented( "There are no named regional grids implemented.", Here() );
         return nullptr;
     }
 
@@ -206,7 +206,7 @@ public:
         // Read grid configuration
         ConfigParser::Parsed x, y;
         if ( not ConfigParser::parse( projection, config, x, y ) ) {
-            throw eckit::BadParameter( "Could not parse configuration for RegularRegional grid", Here() );
+            throw_Exception( "Could not parse configuration for RegularRegional grid", Here() );
         }
 
         YSpace yspace( LinearSpacing( y.min, y.max, y.N, y.endpoint ) );
@@ -231,7 +231,7 @@ public:
     }
 
     virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
-        eckit::NotImplemented( "There are no named zonal_band grids implemented.", Here() );
+        throw_NotImplemented( "There are no named zonal_band grids implemented.", Here() );
         return nullptr;
     }
 
@@ -243,15 +243,13 @@ public:
             if ( config.get( "projection", config_proj ) ) { projection = Projection( config_proj ); }
         }
 
-        ASSERT( projection.units() == "degrees" );
+        ATLAS_ASSERT( projection.units() == "degrees" );
 
         // Read grid configuration
         ConfigParser::Parsed y;
         long nx;
-        if ( not config.get( "nx", nx ) )
-            throw eckit::BadParameter( "Parameter 'nx' missing in configuration", Here() );
-        if ( not config.get( "ny", y.N ) )
-            throw eckit::BadParameter( "Parameter 'ny' missing in configuration", Here() );
+        if ( not config.get( "nx", nx ) ) throw_Exception( "Parameter 'nx' missing in configuration", Here() );
+        if ( not config.get( "ny", y.N ) ) throw_Exception( "Parameter 'ny' missing in configuration", Here() );
         if ( not( config.get( "ymin", y.min ) or config.get( "south", y.min ) ) ) y.min = -90.;
         if ( not( config.get( "ymax", y.max ) or config.get( "north", y.max ) ) ) y.max = 90.;
 
