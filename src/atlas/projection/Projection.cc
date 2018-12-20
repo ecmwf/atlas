@@ -10,13 +10,21 @@
 
 #include "eckit/utils/Hash.h"
 
+#include "atlas/option/Options.h"
 #include "atlas/projection/Projection.h"
+#include "atlas/projection/detail/LonLatProjection.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {
 
+Projection::Projection() : Handle( new projection::detail::LonLatProjection() ) {}
+
 Projection::Projection( const eckit::Parametrisation& p ) : Handle( Implementation::create( p ) ) {}
+
+atlas::Projection::operator bool() const {
+    return get()->operator bool();
+}
 
 void Projection::hash( eckit::Hash& h ) const {
     return get()->hash( h );

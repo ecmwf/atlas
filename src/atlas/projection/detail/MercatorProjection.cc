@@ -9,11 +9,13 @@
  */
 
 #include <cmath>
+#include <functional>
 
 #include "eckit/config/Parametrisation.h"
 #include "eckit/utils/Hash.h"
 
 #include "atlas/projection/detail/MercatorProjection.h"
+#include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
@@ -78,7 +80,7 @@ typename MercatorProjectionT<Rotation>::Spec MercatorProjectionT<Rotation>::spec
     Spec proj_spec;
     proj_spec.set( "type", static_type() );
     proj_spec.set( "longitude0", lon0_ );
-    if ( radius_ != util::Earth::radius() ) proj_spec.set( "radius", radius_ );
+    if ( std::not_equal_to<double>()( radius_, util::Earth::radius() ) ) { proj_spec.set( "radius", radius_ ); }
     rotation_.spec( proj_spec );
     return proj_spec;
 }

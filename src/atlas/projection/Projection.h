@@ -45,8 +45,10 @@ public:
 
 public:
     using Handle::Handle;
-    Projection() = default;
+    Projection();
     Projection( const eckit::Parametrisation& );
+
+    operator bool() const;
 
     void xy2lonlat( double crd[] ) const;
     void lonlat2xy( double crd[] ) const;

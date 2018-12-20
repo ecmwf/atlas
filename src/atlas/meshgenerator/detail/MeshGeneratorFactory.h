@@ -23,7 +23,7 @@ namespace meshgenerator {
 class MeshGeneratorImpl;
 class MeshGeneratorFactory : public util::Factory<MeshGeneratorFactory> {
 public:
-    static std::string classname() { return "MeshGeneratorFactory"; }
+    static std::string className() { return "MeshGeneratorFactory"; }
     static const MeshGeneratorImpl* build( const std::string& );
     static const MeshGeneratorImpl* build( const std::string&, const eckit::Parametrisation& );
     using Factory::Factory;

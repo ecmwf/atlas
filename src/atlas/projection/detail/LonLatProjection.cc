@@ -11,6 +11,7 @@
 #include "eckit/utils/Hash.h"
 
 #include "atlas/projection/detail/LonLatProjection.h"
+#include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {

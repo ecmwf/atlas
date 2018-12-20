@@ -24,7 +24,7 @@ class Domain;
 
 class DomainFactory : public util::Factory<DomainFactory> {
 public:
-    static std::string classname() { return "DomainFactory"; }
+    static std::string className() { return "DomainFactory"; }
     static const Domain* build( const std::string& );
     static const Domain* build( const std::string&, const eckit::Parametrisation& );
     using Factory::Factory;

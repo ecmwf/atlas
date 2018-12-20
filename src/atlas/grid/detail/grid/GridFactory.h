@@ -29,7 +29,7 @@ using GridImpl = detail::grid::Grid;
 
 class GridFactory : public util::Factory<GridFactory> {
 public:
-    static std::string classname() { return "GridFactory"; }
+    static std::string className() { return "GridFactory"; }
     static const GridImpl* build( const std::string&, const util::Config& );
     using Factory::Factory;
 

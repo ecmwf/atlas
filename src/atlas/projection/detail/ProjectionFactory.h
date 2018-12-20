@@ -26,7 +26,7 @@ namespace projection {
 
 class ProjectionFactory : public util::Factory<ProjectionFactory> {
 public:
-    static std::string classname() { return "ProjectionFactory"; }
+    static std::string className() { return "ProjectionFactory"; }
     static const Projection::Implementation* build( const std::string& );
     static const Projection::Implementation* build( const std::string&, const eckit::Parametrisation& );
     using Factory::Factory;

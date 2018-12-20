@@ -24,7 +24,7 @@ namespace spacing {
 class Spacing;
 class SpacingFactory : public util::Factory<SpacingFactory> {
 public:
-    static std::string classname() { return "SpacingFactory"; }
+    static std::string className() { return "SpacingFactory"; }
     static const Spacing* build( const std::string& );
     static const Spacing* build( const std::string&, const eckit::Parametrisation& );
     using Factory::Factory;

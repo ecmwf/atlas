@@ -47,7 +47,7 @@ template <typename T>
 struct FactoryRegistryT : public FactoryRegistry {
 public:
     static FactoryRegistryT<T>& instance() {
-        static FactoryRegistryT<T> env( T::classname() );
+        static FactoryRegistryT<T> env( T::className() );
         return env;
     }
 

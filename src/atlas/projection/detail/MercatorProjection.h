@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 
 namespace atlas {

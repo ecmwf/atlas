@@ -9,11 +9,13 @@
  */
 
 #include <cmath>
+#include <functional>
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/utils/Hash.h"
 
 #include "atlas/projection/detail/LambertProjection.h"
+#include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
@@ -54,7 +56,7 @@ LambertProjection::LambertProjection( const eckit::Parametrisation& params ) {
 
 void LambertProjection::setup() {
     // setup (derived) constants
-    is_tangent_ = ( lat1_ == lat2_ );
+    is_tangent_ = std::equal_to<double>()( lat1_, lat2_ );
     if ( is_tangent_ ) { n_ = std::sin( D2R( lat1_ ) ); }
     else {
         n_ = std::log( std::cos( D2R( lat1_ ) ) / std::cos( D2R( lat2_ ) ) ) /
@@ -99,7 +101,7 @@ LambertProjection::Spec LambertProjection::spec() const {
     proj_spec.set( "latitude1", lat1_ );
     proj_spec.set( "latitude2", lat2_ );
     proj_spec.set( "longitude0", lon0_ );
-    if ( radius_ != util::Earth::radius() ) proj_spec.set( "radius", radius_ );
+    if ( std::not_equal_to<double>()( radius_, util::Earth::radius() ) ) proj_spec.set( "radius", radius_ );
     return proj_spec;
 }
 

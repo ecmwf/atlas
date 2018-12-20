@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 
 namespace atlas {
@@ -23,7 +22,7 @@ public:
     LambertProjection( const eckit::Parametrisation& p );
 
     // destructor
-    ~LambertProjection() {}
+    ~LambertProjection() override {}
 
     // class name
     static std::string static_type() { return "lambert"; }
