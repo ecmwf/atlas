@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include <cstring>
 #include <array>
+#include <cstring>
 #include <initializer_list>
 
 #include "atlas/util/Object.h"
@@ -33,9 +33,9 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/IndexView.h"
+#include "atlas/array/SVector.h"
 #include "atlas/array/Vector.h"
 #include "atlas/array_fwd.h"
-#include "atlas/array/SVector.h"
 #include "atlas/library/config.h"
 
 namespace atlas {
@@ -48,7 +48,7 @@ constexpr size_t MAX_STRING_SIZE() {
 template <typename ConnectivityImpl>
 class ConnectivityInterface : public util::Object, public ConnectivityImpl {
     using ConnectivityImpl::ConnectivityImpl;
-    using eckit::Owned::Owned;
+    using util::Object::Object;
 };
 
 // Classes defined in this file:
@@ -103,14 +103,11 @@ public:
     };
 
 public:
+    ATLAS_HOST_DEVICE ConnectivityIndex( const ConnectivityIndex& other ) { set( other.get() ); }
     ATLAS_HOST_DEVICE ConnectivityIndex( idx_t* idx ) : idx_( idx ) {}
     ATLAS_HOST_DEVICE void set( const idx_t& value ) { *( idx_ ) = value + BASE; }
     ATLAS_HOST_DEVICE idx_t get() const { return *(idx_)-BASE; }
-    ATLAS_HOST_DEVICE void operator              =( const idx_t& value ) { set( value ); }
-    ATLAS_HOST_DEVICE ConnectivityIndex& operator=( const ConnectivityIndex& other ) {
-        set( other.get() );
-        return *this;
-    }
+    ATLAS_HOST_DEVICE void operator=( const idx_t& value ) { set( value ); }
     ATLAS_HOST_DEVICE ConnectivityIndex& operator+( const idx_t& value ) {
         *( idx_ ) += value;
         return *this;
@@ -209,7 +206,7 @@ public:
 
     /// @brief Number of columns for specified row in the connectivity table
     ATLAS_HOST_DEVICE
-    idx_t cols( idx_t row_idx ) const { return counts_[ row_idx ]; }
+    idx_t cols( idx_t row_idx ) const { return counts_[row_idx]; }
 
     /// @brief Maximum value for number of columns over all rows
     ATLAS_HOST_DEVICE
@@ -275,7 +272,7 @@ public:
 
     virtual size_t footprint() const;
 
-    idx_t displs( const idx_t row ) const { return displs_[ row ]; }
+    idx_t displs( const idx_t row ) const { return displs_[row]; }
 
     void dump( std::ostream& os ) const;
     friend std::ostream& operator<<( std::ostream& os, const IrregularConnectivityImpl& p ) {
@@ -476,8 +473,7 @@ public:
         values_( other.values_ ),
         rows_( other.rows_ ),
         cols_( other.cols_ ),
-        missing_value_( other.missing_value_ )
-    {}
+        missing_value_( other.missing_value_ ) {}
 
     BlockConnectivityImpl( BlockConnectivityImpl&& ) = default;
     BlockConnectivityImpl& operator=( const BlockConnectivityImpl& other ) = default;
@@ -486,7 +482,7 @@ public:
     ~BlockConnectivityImpl();
 
     ATLAS_HOST_DEVICE
-    idx_t index(idx_t i, idx_t j) const;
+    idx_t index( idx_t i, idx_t j ) const;
 
     void rebuild( idx_t rows, idx_t cols, idx_t values[] );
 
@@ -552,20 +548,20 @@ typedef IrregularConnectivity Connectivity;
 // -----------------------------------------------------------------------------------------------------
 
 inline idx_t IrregularConnectivityImpl::operator()( idx_t row_idx, idx_t col_idx ) const {
-    assert( counts_[ row_idx ] > ( col_idx ) );
-    return values_[ displs_[ row_idx ] + col_idx ] FROM_FORTRAN;
+    assert( counts_[row_idx] > ( col_idx ) );
+    return values_[displs_[row_idx] + col_idx] FROM_FORTRAN;
 }
 
 inline void IrregularConnectivityImpl::set( idx_t row_idx, const idx_t column_values[] ) {
-    const idx_t N = counts_[ row_idx ];
+    const idx_t N = counts_[row_idx];
     for ( idx_t n = 0; n < N; ++n ) {
-        values_[ displs_[ row_idx ] + n ] = column_values[n] TO_FORTRAN;
+        values_[displs_[row_idx] + n] = column_values[n] TO_FORTRAN;
     }
 }
 
 inline void IrregularConnectivityImpl::set( idx_t row_idx, idx_t col_idx, const idx_t value ) {
-    assert( col_idx < counts_[ row_idx ] );
-    values_[ displs_[ row_idx ] + col_idx ] = value TO_FORTRAN;
+    assert( col_idx < counts_[row_idx] );
+    values_[displs_[row_idx] + col_idx] = value TO_FORTRAN;
 }
 
 inline IrregularConnectivityImpl::Row IrregularConnectivityImpl::row( idx_t row_idx ) const {
@@ -586,21 +582,21 @@ inline idx_t MultiBlockConnectivityImpl::operator()( idx_t block_idx, idx_t bloc
 // -----------------------------------------------------------------------------------------------------
 
 inline idx_t BlockConnectivityImpl::operator()( idx_t row_idx, idx_t col_idx ) const {
-    return values_[ index(row_idx, col_idx) ] FROM_FORTRAN;
+    return values_[index( row_idx, col_idx )] FROM_FORTRAN;
 }
 
 inline void BlockConnectivityImpl::set( idx_t row_idx, const idx_t column_values[] ) {
     for ( idx_t n = 0; n < cols_; ++n ) {
-        values_[ index(row_idx, n) ] = column_values[n] TO_FORTRAN;
+        values_[index( row_idx, n )] = column_values[n] TO_FORTRAN;
     }
 }
 
 inline void BlockConnectivityImpl::set( idx_t row_idx, idx_t col_idx, const idx_t value ) {
-    values_[ index(row_idx, col_idx) ] = value TO_FORTRAN;
+    values_[index( row_idx, col_idx )] = value TO_FORTRAN;
 }
 
-inline idx_t BlockConnectivityImpl::index(idx_t i, idx_t j) const {
-    return i*cols_ + j;
+inline idx_t BlockConnectivityImpl::index( idx_t i, idx_t j ) const {
+    return i * cols_ + j;
 }
 
 // ------------------------------------------------------------------------------------------------------

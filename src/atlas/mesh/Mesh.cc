@@ -14,13 +14,9 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Mesh::Mesh() : impl_( new Implementation() ) {}
+Mesh::Mesh() : Handle( new Implementation() ) {}
 
-Mesh::Mesh( const Mesh& mesh ) : impl_( mesh.impl_ ) {}
-
-Mesh::Mesh( const Implementation* impl ) : impl_( const_cast<Implementation*>( impl ) ) {}
-
-Mesh::Mesh( eckit::Stream& stream ) : impl_( new Implementation( stream ) ) {}
+Mesh::Mesh( eckit::Stream& stream ) : Handle( new Implementation( stream ) ) {}
 
 //----------------------------------------------------------------------------------------------------------------------
 

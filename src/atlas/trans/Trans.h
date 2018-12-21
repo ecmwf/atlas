@@ -10,12 +10,11 @@
 
 #pragma once
 
-#include "eckit/log/CodeLocation.h"
-#include "atlas/util/Object.h"
-#include "eckit/memory/SharedPtr.h"
-
+#include "atlas/runtime/Exception.h"
 #include "atlas/trans/Cache.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -124,26 +123,28 @@ public:
 
 class TransFactory {
 protected:
-    using Trans_t = const TransImpl;
+    using Trans_t = TransImpl;
 
 public:
     /*!
    * \brief build Trans
    * \return TransImpl
    */
-    static Trans_t* build( const FunctionSpace& gp, const FunctionSpace& sp,
-                           const eckit::Configuration& = util::Config() );
-    static Trans_t* build( const Grid&, int truncation, const eckit::Configuration& = util::Config() );
+    static const Trans_t* build( const FunctionSpace& gp, const FunctionSpace& sp,
+                                 const eckit::Configuration& = util::Config() );
+    static const Trans_t* build( const Grid&, int truncation, const eckit::Configuration& = util::Config() );
 
-    static Trans_t* build( const Grid&, const Domain&, int truncation, const eckit::Configuration& = util::Config() );
+    static const Trans_t* build( const Grid&, const Domain&, int truncation,
+                                 const eckit::Configuration& = util::Config() );
 
-    static Trans_t* build( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
-                           const eckit::Configuration& = util::Config() );
+    static const Trans_t* build( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
+                                 const eckit::Configuration& = util::Config() );
 
-    static Trans_t* build( const Cache&, const Grid&, int truncation, const eckit::Configuration& = util::Config() );
+    static const Trans_t* build( const Cache&, const Grid&, int truncation,
+                                 const eckit::Configuration& = util::Config() );
 
-    static Trans_t* build( const Cache&, const Grid&, const Domain&, int truncation,
-                           const eckit::Configuration& = util::Config() );
+    static const Trans_t* build( const Cache&, const Grid&, const Domain&, int truncation,
+                                 const eckit::Configuration& = util::Config() );
 
     /*!
    * \brief list all registered trans implementations
@@ -155,11 +156,12 @@ public:
 private:
     std::string name_;
     std::string backend_;
-    virtual Trans_t* make( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
-                           const eckit::Configuration& ) {
+    virtual const Trans_t* make( const Cache&, const FunctionSpace& /*gp*/, const FunctionSpace& /*sp*/,
+                                 const eckit::Configuration& ) {
         return nullptr;
     }
-    virtual Trans_t* make( const Cache&, const Grid& gp, const Domain&, int truncation, const eckit::Configuration& ) {
+    virtual const Trans_t* make( const Cache&, const Grid& /*gp*/, const Domain&, int /*truncation*/,
+                                 const eckit::Configuration& ) {
         return nullptr;
     }
 
@@ -167,19 +169,17 @@ protected:
     TransFactory();
     TransFactory( const std::string& name, const std::string& backend );
     virtual ~TransFactory();
-
-    static void throw_SeriousBug( const char* msg, const eckit::CodeLocation& );
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
 template <class T>
 class TransBuilderFunctionSpace : public TransFactory {
-    virtual Trans_t* make( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp,
-                           const eckit::Configuration& config ) {
+    virtual const Trans_t* make( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp,
+                                 const eckit::Configuration& config ) {
         return new T( cache, gp, sp, config );
     }
-    virtual Trans_t* make( const Cache&, const Grid&, const Domain&, int, const eckit::Configuration& ) {
+    virtual const Trans_t* make( const Cache&, const Grid&, const Domain&, int, const eckit::Configuration& ) {
         throw_SeriousBug( "This function should not be called", Here() );
     }
 
@@ -203,13 +203,7 @@ public:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Trans {
-public:
-    using Implementation = const TransImpl;
-
-private:
-    eckit::SharedPtr<Implementation> impl_;
-
+class Trans : public util::ObjectHandle<TransImpl> {
 public:
     static bool hasBackend( const std::string& );
     static void backend( const std::string& );
@@ -217,9 +211,8 @@ public:
     static void config( const eckit::Configuration& );
     static const eckit::Configuration& config();
 
-    Trans();
-    Trans( Implementation* );
-    Trans( const Trans& );
+    using Handle::Handle;
+    Trans() = default;
 
     Trans( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig() );
     Trans( const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
@@ -231,8 +224,6 @@ public:
     Trans( const Cache&, const Grid&, const Domain&, int truncation, const eckit::Configuration& = util::NoConfig() );
 
     void hash( eckit::Hash& ) const;
-    Implementation* get() const { return impl_.get(); }
-    operator bool() const { return impl_.owners(); }
 
     int truncation() const;
     size_t spectralCoefficients() const;
