@@ -37,6 +37,9 @@ void LonLatProjectionT<Rotation>::hash( eckit::Hash& hsh ) const {
     rotation_.hash( hsh );
 }
 
+template class LonLatProjectionT<NotRotated>;
+template class LonLatProjectionT<Rotated>;
+
 namespace {
 static ProjectionBuilder<LonLatProjection> register_1( LonLatProjection::static_type() );
 static ProjectionBuilder<RotatedLonLatProjection> register_2( RotatedLonLatProjection::static_type() );

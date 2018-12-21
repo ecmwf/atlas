@@ -93,6 +93,9 @@ void MercatorProjectionT<Rotation>::hash( eckit::Hash& hsh ) const {
     hsh.add( radius_ );
 }
 
+template class MercatorProjectionT<NotRotated>;
+template class MercatorProjectionT<Rotated>;
+
 namespace {
 static ProjectionBuilder<MercatorProjection> register_1( MercatorProjection::static_type() );
 static ProjectionBuilder<RotatedMercatorProjection> register_2( RotatedMercatorProjection::static_type() );

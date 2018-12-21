@@ -41,6 +41,13 @@ SchmidtProjectionT<Rotation>::SchmidtProjectionT( const eckit::Parametrisation& 
         throw eckit::BadParameter( "stretching_factor missing in Params", Here() );
 }
 
+// constructor
+template <typename Rotation>
+SchmidtProjectionT<Rotation>::SchmidtProjectionT( ) :
+    ProjectionImpl(),
+    rotation_( util::NoConfig() ) {
+}
+
 template <typename Rotation>
 void SchmidtProjectionT<Rotation>::xy2lonlat( double crd[] ) const {
     // stretch
@@ -77,6 +84,9 @@ void SchmidtProjectionT<Rotation>::hash( eckit::Hash& hsh ) const {
     rotation_.hash( hsh );
     hsh.add( c_ );
 }
+
+template class SchmidtProjectionT<NotRotated>;
+template class SchmidtProjectionT<Rotated>;
 
 namespace {
 static ProjectionBuilder<SchmidtProjection> register_1( SchmidtProjection::static_type() );
