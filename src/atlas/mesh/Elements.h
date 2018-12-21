@@ -16,11 +16,10 @@
 
 #pragma once
 
-#include "atlas/util/Object.h"
-
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/mesh/HybridElements.h"
+#include "atlas/util/Object.h"
 
 namespace atlas {
 namespace mesh {

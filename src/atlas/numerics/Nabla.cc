@@ -39,34 +39,28 @@ static void init() {
 namespace atlas {
 namespace numerics {
 
-NablaImpl::NablaImpl( const Method& method, const eckit::Parametrisation& p ) {}
+NablaImpl::NablaImpl( const Method& method, const eckit::Parametrisation& ) {}
 
 NablaImpl::~NablaImpl() {}
 
-Nabla::Nabla() : nabla_( nullptr ) {}
-
-Nabla::Nabla( const Nabla::nabla_t* nabla ) : nabla_( nabla ) {}
-
-Nabla::Nabla( const Nabla& nabla ) : nabla_( nabla.nabla_ ) {}
-
-Nabla::Nabla( const Method& method, const eckit::Parametrisation& p ) : nabla_( NablaFactory::build( method, p ) ) {}
+Nabla::Nabla( const Method& method, const eckit::Parametrisation& p ) : Handle( NablaFactory::build( method, p ) ) {}
 
 Nabla::Nabla( const Method& method ) : Nabla( method, util::NoConfig() ) {}
 
 void Nabla::gradient( const Field& scalar, Field& grad ) const {
-    nabla_->gradient( scalar, grad );
+    get()->gradient( scalar, grad );
 }
 
 void Nabla::divergence( const Field& vector, Field& div ) const {
-    nabla_->divergence( vector, div );
+    get()->divergence( vector, div );
 }
 
 void Nabla::curl( const Field& vector, Field& curl ) const {
-    nabla_->curl( vector, curl );
+    get()->curl( vector, curl );
 }
 
 void Nabla::laplacian( const Field& scalar, Field& laplacian ) const {
-    nabla_->laplacian( scalar, laplacian );
+    get()->laplacian( scalar, laplacian );
 }
 
 namespace {
@@ -144,12 +138,12 @@ const NablaImpl* NablaFactory::build( const Method& method, const eckit::Paramet
 
 extern "C" {
 
-void atlas__Nabla__delete( Nabla::nabla_t* This ) {
+void atlas__Nabla__delete( Nabla::Implementation* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); delete This; );
 }
 
-const Nabla::nabla_t* atlas__Nabla__create( const Method* method, const eckit::Parametrisation* params ) {
-    const Nabla::nabla_t* nabla( 0 );
+const Nabla::Implementation* atlas__Nabla__create( const Method* method, const eckit::Parametrisation* params ) {
+    const Nabla::Implementation* nabla( nullptr );
     ATLAS_ERROR_HANDLING( ASSERT( method ); ASSERT( params ); {
         Nabla n( *method, *params );
         nabla = n.get();
@@ -158,22 +152,24 @@ const Nabla::nabla_t* atlas__Nabla__create( const Method* method, const eckit::P
     return nabla;
 }
 
-void atlas__Nabla__gradient( const Nabla::nabla_t* This, const field::FieldImpl* scalar, field::FieldImpl* grad ) {
+void atlas__Nabla__gradient( const Nabla::Implementation* This, const field::FieldImpl* scalar,
+                             field::FieldImpl* grad ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( scalar ); ASSERT( grad ); Field fgrad( grad );
                           This->gradient( scalar, fgrad ); );
 }
 
-void atlas__Nabla__divergence( const Nabla::nabla_t* This, const field::FieldImpl* vector, field::FieldImpl* div ) {
+void atlas__Nabla__divergence( const Nabla::Implementation* This, const field::FieldImpl* vector,
+                               field::FieldImpl* div ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( vector ); ASSERT( div ); Field fdiv( div );
                           This->divergence( vector, fdiv ); );
 }
 
-void atlas__Nabla__curl( const Nabla::nabla_t* This, const field::FieldImpl* vector, field::FieldImpl* curl ) {
+void atlas__Nabla__curl( const Nabla::Implementation* This, const field::FieldImpl* vector, field::FieldImpl* curl ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( vector ); ASSERT( curl ); Field fcurl( curl );
                           This->curl( vector, fcurl ); );
 }
 
-void atlas__Nabla__laplacian( const Nabla::nabla_t* This, const field::FieldImpl* scalar,
+void atlas__Nabla__laplacian( const Nabla::Implementation* This, const field::FieldImpl* scalar,
                               field::FieldImpl* laplacian ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( scalar ); ASSERT( laplacian ); Field flaplacian( laplacian );
                           This->laplacian( scalar, flaplacian ); );

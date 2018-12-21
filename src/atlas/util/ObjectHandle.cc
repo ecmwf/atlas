@@ -21,6 +21,10 @@ namespace util {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+int ObjectHandleBase::owners() const {
+    return static_cast<int>( object_->owners() );
+}
+
 void ObjectHandleBase::release() {
     object_->lock();
     object_->detach(); /* lock/unlock in detach() isn't sufficient, else there is race
@@ -37,12 +41,17 @@ void ObjectHandleBase::release() {
 }
 
 void ObjectHandleBase::assign( const ObjectHandleBase& other ) {
+    assign( other.object_ );
+}
+
+void ObjectHandleBase::assign( const Object* other ) {
     if ( object_ ) { release(); }
 
-    object_ = other.object_;
+    object_ = const_cast<Object*>( other );
 
     attach();
 }
+
 
 void ObjectHandleBase::attach() {
     if ( !null() ) object_->attach();

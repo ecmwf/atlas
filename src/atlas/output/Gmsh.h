@@ -38,7 +38,7 @@ public:
 // -----------------------------------------------------------------------------
 
 namespace detail {
-class Gmsh : public Output::output_t {
+class Gmsh : public OutputImpl {
 public:
     Gmsh( Stream& );
     Gmsh( Stream&, const eckit::Parametrisation& );

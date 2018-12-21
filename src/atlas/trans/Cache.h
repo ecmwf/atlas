@@ -14,7 +14,8 @@
 
 #include "eckit/filesystem/PathName.h"
 #include "eckit/io/Buffer.h"
-#include "eckit/memory/SharedPtr.h"
+
+#include "atlas/util/ObjectHandle.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -41,6 +42,7 @@ namespace trans {
 class TransCacheEntry {
 public:
     operator bool() const { return size() != 0; }
+    virtual ~TransCacheEntry()       = default;
     virtual size_t size() const      = 0;
     virtual const void* data() const = 0;
 };
@@ -82,7 +84,7 @@ private:
 class TransCacheOwnedMemoryEntry final : public TransCacheEntry {
 public:
     TransCacheOwnedMemoryEntry( size_t size );
-    ~TransCacheOwnedMemoryEntry();
+    virtual ~TransCacheOwnedMemoryEntry() override;
     virtual const void* data() const override { return data_; }
     virtual size_t size() const override { return size_; }
 
@@ -109,7 +111,7 @@ protected:
     Cache( const TransImpl* );
 
 private:
-    eckit::SharedPtr<const TransImpl> trans_;
+    util::ObjectHandle<const TransImpl> trans_;
     //    const TransImpl*                 trans_ = nullptr;
     std::shared_ptr<TransCacheEntry> legendre_;
     std::shared_ptr<TransCacheEntry> fft_;

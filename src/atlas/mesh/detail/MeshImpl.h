@@ -13,13 +13,12 @@
 #include <iosfwd>
 #include <memory>
 
-#include "atlas/util/Object.h"
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/mesh/PartitionPolygon.h"
 #include "atlas/mesh/detail/PartitionGraph.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/util/Metadata.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -130,15 +129,15 @@ private:  // methods
 private:  // members
     util::Metadata metadata_;
 
-    eckit::SharedPtr<Nodes> nodes_;
+    util::ObjectHandle<Nodes> nodes_;
     // dimensionality : 2D | 3D
     //                  --------
-    eckit::SharedPtr<HybridElements> cells_;   //                  2D | 3D
-    eckit::SharedPtr<HybridElements> facets_;  //                  1D | 2D
-    eckit::SharedPtr<HybridElements> ridges_;  //                  0D | 1D
-    eckit::SharedPtr<HybridElements> peaks_;   //                  NA | 0D
+    util::ObjectHandle<HybridElements> cells_;   //                  2D | 3D
+    util::ObjectHandle<HybridElements> facets_;  //                  1D | 2D
+    util::ObjectHandle<HybridElements> ridges_;  //                  0D | 1D
+    util::ObjectHandle<HybridElements> peaks_;   //                  NA | 0D
 
-    eckit::SharedPtr<HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
+    util::ObjectHandle<HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
 
     idx_t dimensionality_;
 
@@ -146,9 +145,9 @@ private:  // members
 
     std::unique_ptr<Grid> grid_;
 
-    mutable eckit::SharedPtr<PartitionGraph> partition_graph_;
+    mutable util::ObjectHandle<PartitionGraph> partition_graph_;
 
-    mutable std::vector<eckit::SharedPtr<PartitionPolygon>> polygons_;
+    mutable std::vector<util::ObjectHandle<PartitionPolygon>> polygons_;
 
     mutable std::vector<MeshObserver*> mesh_observers_;
 };

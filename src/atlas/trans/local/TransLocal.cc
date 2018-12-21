@@ -16,6 +16,7 @@
 
 #include "eckit/config/YAMLConfiguration.h"
 #include "eckit/eckit_config.h"
+#include "eckit/io/DataHandle.h"
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Matrix.h"
 #include "eckit/log/Bytes.h"

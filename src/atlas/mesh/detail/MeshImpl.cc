@@ -30,16 +30,15 @@ namespace detail {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-MeshImpl::MeshImpl( eckit::Stream& s ) {
+MeshImpl::MeshImpl( eckit::Stream& ) {
     NOTIMP;
 }
 
-void MeshImpl::encode( eckit::Stream& s ) const {
+void MeshImpl::encode( eckit::Stream& ) const {
     NOTIMP;
 }
 
-MeshImpl::MeshImpl() : dimensionality_( 2 ) {
-    nodes_.reset( new mesh::Nodes() );
+MeshImpl::MeshImpl() : nodes_( new mesh::Nodes() ), dimensionality_( 2 ) {
     createElements();
 }
 
@@ -49,7 +48,7 @@ MeshImpl::~MeshImpl() {
     }
 }
 
-void MeshImpl::print( std::ostream& os ) const {}
+void MeshImpl::print( std::ostream& ) const {}
 
 size_t MeshImpl::footprint() const {
     size_t size = sizeof( *this );

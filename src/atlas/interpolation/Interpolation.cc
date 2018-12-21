@@ -20,7 +20,7 @@
 namespace atlas {
 
 Interpolation::Interpolation( const Config& config, const FunctionSpace& source, const FunctionSpace& target ) :
-    implementation_( [&]() -> Implementation* {
+    Handle( [&]() -> Implementation* {
         std::string type;
         ASSERT( config.get( "type", type ) );
         Implementation* impl = interpolation::MethodFactory::build( type, config );
@@ -35,7 +35,7 @@ Interpolation::Interpolation( const Config& config, const FunctionSpace& source,
 }
 
 Interpolation::Interpolation( const Config& config, const Grid& source, const Grid& target ) :
-    implementation_( [&]() -> Implementation* {
+    Handle( [&]() -> Implementation* {
         std::string type;
         ASSERT( config.get( "type", type ) );
         Implementation* impl = interpolation::MethodFactory::build( type, config );
@@ -50,7 +50,7 @@ Interpolation::Interpolation( const Config& config, const Grid& source, const Gr
 }
 
 Interpolation::Interpolation( const Config& config, const FunctionSpace& source, const Field& target ) :
-    implementation_( [&]() -> Implementation* {
+    Handle( [&]() -> Implementation* {
         std::string type;
         ASSERT( config.get( "type", type ) );
         Implementation* impl = interpolation::MethodFactory::build( type, config );
@@ -66,7 +66,7 @@ Interpolation::Interpolation( const Config& config, const FunctionSpace& source,
 
 Interpolation::Interpolation( const Interpolation::Config& config, const FunctionSpace& source,
                               const FieldSet& target ) :
-    implementation_( [&]() -> Implementation* {
+    Handle( [&]() -> Implementation* {
         std::string type;
         ASSERT( config.get( "type", type ) );
         Implementation* impl = interpolation::MethodFactory::build( type, config );
@@ -80,8 +80,6 @@ Interpolation::Interpolation( const Interpolation::Config& config, const Functio
     }
 }
 
-Interpolation::Interpolation( const Interpolation& other ) : implementation_( other.implementation_ ) {}
-
 void Interpolation::execute( const FieldSet& source, FieldSet& target ) const {
     get()->execute( source, target );
 }
@@ -90,24 +88,16 @@ void Interpolation::execute( const Field& source, Field& target ) const {
     get()->execute( source, target );
 }
 
-const Interpolation::Implementation* Interpolation::get() const {
-    return implementation_.get();
-}
-
 void Interpolation::print( std::ostream& out ) const {
-    implementation_->print( out );
+    get()->print( out );
 }
 
 const FunctionSpace& Interpolation::source() const {
-    return implementation_->source();
+    return get()->source();
 }
 
 const FunctionSpace& Interpolation::target() const {
-    return implementation_->target();
-}
-
-atlas::Interpolation::operator bool() const {
-    return implementation_;
+    return get()->target();
 }
 
 extern "C" {

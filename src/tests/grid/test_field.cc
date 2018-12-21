@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/memory/SharedPtr.h"
+
 #include "eckit/runtime/Tool.h"
 #include "eckit/value/CompositeParams.h"
 
@@ -19,6 +19,7 @@
 #include "atlas/library/Library.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/ObjectHandle.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -97,7 +98,7 @@ CASE( "test_implicit_conversion" ) {
 
 CASE( "test_wrap_rawdata_through_array" ) {
     std::vector<double> rawdata( 20, 8. );
-    SharedPtr<array::Array> array( array::Array::wrap( rawdata.data(), array::make_shape( 10, 2 ) ) );
+    util::ObjectHandle<array::Array> array( array::Array::wrap( rawdata.data(), array::make_shape( 10, 2 ) ) );
     Field field( "wrapped", array.get() );
 
     EXPECT( array->owners() == 2 );

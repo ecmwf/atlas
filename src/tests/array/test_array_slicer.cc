@@ -8,8 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/array/helpers/ArraySlicer.h"

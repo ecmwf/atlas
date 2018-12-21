@@ -123,33 +123,29 @@ LegendreCacheCreator::Implementation* LegendreCacheCreatorFactory::build( const 
     return factory( name ).make( grid, truncation, options );
 }
 
-LegendreCacheCreator::LegendreCacheCreator() {}
-
-LegendreCacheCreator::LegendreCacheCreator( Implementation* impl ) : impl_( impl ) {}
 
 LegendreCacheCreator::LegendreCacheCreator( const Grid& grid, int truncation, const eckit::Configuration& config ) :
-    impl_( LegendreCacheCreatorFactory::build( grid, truncation, config ) ) {}
+    Handle( LegendreCacheCreatorFactory::build( grid, truncation, config ) ) {}
 
-LegendreCacheCreator::LegendreCacheCreator( const LegendreCacheCreator& creator ) : impl_( creator.impl_ ) {}
 
 bool LegendreCacheCreator::supported() const {
-    return impl_->supported();
+    return get()->supported();
 }
 
 std::string LegendreCacheCreator::uid() const {
-    return impl_->uid();
+    return get()->uid();
 }
 
 void LegendreCacheCreator::create( const std::string& path ) const {
-    impl_->create( path );
+    get()->create( path );
 }
 
 Cache LegendreCacheCreator::create() const {
-    return impl_->create();
+    return get()->create();
 }
 
 size_t LegendreCacheCreator::estimate() const {
-    return impl_->estimate();
+    return get()->estimate();
 }
 
 }  // namespace trans

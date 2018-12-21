@@ -19,11 +19,12 @@
 #include <map>
 
 #include "atlas/util/Object.h"
-#include "eckit/memory/SharedPtr.h"
+#include "atlas/util/ObjectHandle.h"
 
 #include "atlas/field/Field.h"
-#include "atlas/mesh/Connectivity.h"
 #include "atlas/util/Metadata.h"
+
+#include "atlas/mesh/Connectivity.h"
 
 namespace atlas {
 namespace field {
@@ -43,6 +44,15 @@ namespace atlas {
 namespace mesh {
 class Elements;
 }
+}  // namespace atlas
+
+namespace atlas {
+namespace mesh {
+template <class T>
+class ConnectivityInterface;
+class MultiBlockConnectivityImpl;
+using MultiBlockConnectivity = ConnectivityInterface<MultiBlockConnectivityImpl>;
+}  // namespace mesh
 }  // namespace atlas
 
 namespace atlas {
@@ -108,7 +118,7 @@ public:  // methods
 
     const Field& field( idx_t ) const;
     Field& field( idx_t );
-    idx_t nb_fields() const { return fields_.size(); }
+    idx_t nb_fields() const { return static_cast<idx_t>( fields_.size() ); }
 
     const util::Metadata& metadata() const { return metadata_; }
     util::Metadata& metadata() { return metadata_; }
@@ -173,7 +183,7 @@ public:  // methods
 
 private:  // -- types
     typedef std::map<std::string, Field> FieldMap;
-    typedef std::map<std::string, eckit::SharedPtr<Connectivity>> ConnectivityMap;
+    typedef std::map<std::string, util::ObjectHandle<Connectivity>> ConnectivityMap;
 
 private:  // -- methods
     void resize( idx_t size );
@@ -190,13 +200,13 @@ private:  // -- Data
     // -- Data: one value per type
     std::vector<idx_t> elements_size_;
     std::vector<idx_t> elements_begin_;
-    std::vector<eckit::SharedPtr<const ElementType>> element_types_;
+    std::vector<util::ObjectHandle<const ElementType>> element_types_;
 
     // -- Data: one value per element
     std::vector<idx_t> type_idx_;
 
     // -- Sub elements
-    std::vector<eckit::SharedPtr<Elements>> elements_;
+    std::vector<util::ObjectHandle<Elements>> elements_;
 
     // -- Fields and connectivities
     FieldMap fields_;
@@ -218,7 +228,7 @@ inline idx_t HybridElements::size() const {
 }
 
 inline idx_t HybridElements::nb_types() const {
-    return element_types_.size();
+    return static_cast<idx_t>( element_types_.size() );
 }
 
 inline const ElementType& HybridElements::element_type( idx_t type_idx ) const {

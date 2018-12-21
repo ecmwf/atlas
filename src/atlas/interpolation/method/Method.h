@@ -14,10 +14,9 @@
 #include <string>
 #include <vector>
 
+#include "atlas/util/Object.h"
 #include "eckit/config/Configuration.h"
 #include "eckit/linalg/SparseMatrix.h"
-#include "atlas/util/Object.h"
-#include "eckit/memory/SharedPtr.h"
 
 namespace atlas {
 class Field;

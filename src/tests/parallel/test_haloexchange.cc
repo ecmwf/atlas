@@ -10,9 +10,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include <sstream>
-
-#include "eckit/memory/SharedPtr.h"
 
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
@@ -236,17 +235,17 @@ void test_rank1_strided_v1( Fixture& f ) {
     // (i.e. we are only selecting and exchanging the first component of the
     // field)
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<POD>( arrv_t.data(),
-                                                                 array::ArraySpec {
-                                                                     array::make_shape( f.N, 1 ),
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( arrv_t.data(),
+                                                                array::ArraySpec {
+                                                                    array::make_shape( f.N, 1 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-                                                                         array::make_strides( 32, 1 )
-                                                                 }
+                                                                        array::make_strides( 32, 1 )
+                                                                }
 #else
-                                                                         array::make_strides( 2, 1 )
-                                                                 }
+                                                                        array::make_strides( 2, 1 )
+                                                                }
 #endif
-                                                                 ) );
+                                                                ) );
 
     arr->syncHostDevice();
 
@@ -291,7 +290,7 @@ void test_rank1_strided_v2( Fixture& f ) {
     // (i.e. we are only selecting and exchanging the first component of the
     // field)
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<POD>( &( arrv_t( 0, 1 ) ), array::ArraySpec {
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( &( arrv_t( 0, 1 ) ), array::ArraySpec {
         array::make_shape( f.N, 1 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
             array::make_strides( 32, 1 )
@@ -371,7 +370,7 @@ void test_rank2_l1( Fixture& f ) {
     }
     arr_t.syncHostDevice();
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<POD>( arrv_t.data(), array::ArraySpec {
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( arrv_t.data(), array::ArraySpec {
         array::make_shape( f.N, 1, 2 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
             array::make_strides( 96, 32, 1 )
@@ -432,7 +431,7 @@ void test_rank2_l2_v2( Fixture& f ) {
         }
     }
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<POD>( &arrv_t( 0, 1, 1 ), array::ArraySpec {
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( &arrv_t( 0, 1, 1 ), array::ArraySpec {
         array::make_shape( f.N, 1, 1 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
             array::make_strides( 192, 32, 1 )
@@ -489,7 +488,7 @@ void test_rank2_v2( Fixture& f ) {
         }
     }
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<POD>( &arrv_t( 0, 0, 1 ), array::ArraySpec {
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( &arrv_t( 0, 0, 1 ), array::ArraySpec {
         array::make_shape( f.N, 3, 1 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
             array::make_strides( 192, 32, 2 )
@@ -536,7 +535,7 @@ void test_rank2_v2( Fixture& f ) {
 }
 
 void test_rank0_wrap( Fixture& f ) {
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<POD>( f.gidx.data(), array::make_shape( f.N ) ) );
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( f.gidx.data(), array::make_shape( f.N ) ) );
     array::ArrayView<POD, 1> arrv = array::make_view<POD, 1>( *arr );
 
     arr->syncHostDevice();

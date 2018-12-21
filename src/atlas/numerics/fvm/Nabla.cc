@@ -37,7 +37,7 @@ static NablaBuilder<Nabla> __fvm_nabla( "fvm" );
 }
 
 Nabla::Nabla( const numerics::Method& method, const eckit::Parametrisation& p ) :
-    atlas::numerics::Nabla::nabla_t( method, p ) {
+    atlas::numerics::NablaImpl( method, p ) {
     fvm_ = dynamic_cast<const fvm::Method*>( &method );
     if ( !fvm_ ) throw eckit::BadCast( "atlas::numerics::fvm::Nabla needs a atlas::numerics::fvm::Method", Here() );
     Log::debug() << "Nabla constructed for method " << fvm_->name() << " with "

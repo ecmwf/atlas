@@ -12,12 +12,9 @@
 
 #include <memory>
 
-#include "eckit/io/Buffer.h"
-#include "eckit/io/DataHandle.h"
-#include "atlas/util/Object.h"
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/util/Config.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -83,8 +80,8 @@ public:
 
 private:
     std::string name_;
-    virtual VorDivToUVImpl* make( const FunctionSpace& sp, const eckit::Configuration& ) { return nullptr; }
-    virtual VorDivToUVImpl* make( int truncation, const eckit::Configuration& ) { return nullptr; }
+    virtual VorDivToUVImpl* make( const FunctionSpace& sp, const eckit::Configuration& ) = 0;
+    virtual VorDivToUVImpl* make( int truncation, const eckit::Configuration& )          = 0;
 
 protected:
     VorDivToUVFactory( const std::string& );
@@ -108,24 +105,15 @@ public:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class VorDivToUV {
+class VorDivToUV : public util::ObjectHandle<VorDivToUVImpl> {
 public:
-    using Implementation = VorDivToUVImpl;
-
-private:
-    eckit::SharedPtr<Implementation> impl_;
-
-public:
-    VorDivToUV();
-    VorDivToUV( Implementation* );
-    VorDivToUV( const VorDivToUV& );
+    using Handle::Handle;
+    VorDivToUV() = default;
 
     VorDivToUV( const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig() );
     VorDivToUV( int truncation, const eckit::Configuration& = util::NoConfig() );
 
     void hash( eckit::Hash& ) const;
-    const Implementation* get() const { return impl_.get(); }
-    operator bool() const { return impl_.owners(); }
 
     int truncation() const;
 

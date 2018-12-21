@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/memory/SharedPtr.h"
+#include <memory>
 
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
@@ -549,7 +549,7 @@ CASE( "test_wrap" ) {
         }
     }
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<int>(
+    std::unique_ptr<array::Array> arr( array::Array::wrap<int>(
         arrv_t.data(), array::ArraySpec{array::make_shape( 3 ), array::make_strides( arr_t.stride( 0 ) )} ) );
 
     EXPECT( arr->shape( 0 ) == 3 );

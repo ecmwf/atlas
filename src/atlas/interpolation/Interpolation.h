@@ -10,9 +10,8 @@
 
 #pragma once
 
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/interpolation/method/Method.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
 class Parametrisation;
@@ -30,13 +29,12 @@ class Method;
 
 namespace atlas {
 
-class Interpolation {
+class Interpolation : public util::ObjectHandle<interpolation::Method> {
 public:
-    using Implementation = interpolation::Method;
-    using Config         = eckit::Parametrisation;
+    using Config = eckit::Parametrisation;
 
-    Interpolation() {}
-    Interpolation( const Interpolation& );
+    using Handle::Handle;
+    Interpolation() = default;
 
     // Setup Interpolation from source to target function space
     Interpolation( const Config&, const FunctionSpace& source, const FunctionSpace& target );
@@ -54,17 +52,10 @@ public:
 
     void execute( const Field& source, Field& target ) const;
 
-    const Implementation* get() const;
-
-    operator bool() const;
-
     void print( std::ostream& out ) const;
 
     const FunctionSpace& source() const;
     const FunctionSpace& target() const;
-
-private:
-    eckit::SharedPtr<Implementation> implementation_;
 };
 
 /// C-interface

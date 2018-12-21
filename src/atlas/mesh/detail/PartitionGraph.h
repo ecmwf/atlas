@@ -11,10 +11,10 @@
 #pragma once
 
 #include <iosfwd>
+#include <vector>
 
 #include "atlas/library/config.h"
 #include "atlas/util/Object.h"
-#include "eckit/memory/SharedPtr.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 

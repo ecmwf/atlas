@@ -149,20 +149,14 @@ VorDivToUV::Implementation* VorDivToUVFactory::build( int truncation, const ecki
     return factory( name ).make( truncation, config );
 }
 
-VorDivToUV::VorDivToUV() {}
-
-VorDivToUV::VorDivToUV( Implementation* impl ) : impl_( impl ) {}
-
 VorDivToUV::VorDivToUV( const FunctionSpace& sp, const eckit::Configuration& config ) :
-    impl_( VorDivToUVFactory::build( sp, config ) ) {}
+    Handle( VorDivToUVFactory::build( sp, config ) ) {}
 
 VorDivToUV::VorDivToUV( int truncation, const eckit::Configuration& config ) :
-    impl_( VorDivToUVFactory::build( truncation, config ) ) {}
-
-VorDivToUV::VorDivToUV( const VorDivToUV& other ) : impl_( other.impl_ ) {}
+    Handle( VorDivToUVFactory::build( truncation, config ) ) {}
 
 int VorDivToUV::truncation() const {
-    return impl_->truncation();
+    return get()->truncation();
 }
 
 // -- IFS type fields --
@@ -172,7 +166,7 @@ int VorDivToUV::truncation() const {
 
 void VorDivToUV::execute( const int nb_coeff, const int nb_fields, const double vorticity[], const double divergence[],
                           double U[], double V[], const eckit::Configuration& config ) const {
-    impl_->execute( nb_coeff, nb_fields, vorticity, divergence, U, V, config );
+    get()->execute( nb_coeff, nb_fields, vorticity, divergence, U, V, config );
 }
 
 }  // namespace trans

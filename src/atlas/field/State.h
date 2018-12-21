@@ -19,7 +19,6 @@
 #include "atlas/util/Config.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Object.h"
-#include "eckit/memory/SharedPtr.h"
 
 namespace eckit {
 class Parametrisation;
@@ -32,9 +31,6 @@ namespace field {
  * \brief State class that owns a collection of fields
  */
 class State : public util::Object {
-public:  // types
-    typedef eckit::SharedPtr<State> Ptr;
-
 public:  // methods
          //-- Constructors
     State();

@@ -11,8 +11,8 @@
 #include <map>
 
 #include "eckit/exception/Exceptions.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 // #include "tests/TestMeshes.h"
 #include "atlas/mpi/mpi.h"
@@ -225,18 +225,16 @@ private:
     std::vector<monomial_type> mononomials_;
 };
 
-class ShapeFunction : public eckit::Owned {
-public:
-    typedef eckit::SharedPtr<ShapeFunction> Ptr;
+class ShapeFunction : public util::Object {
 
 public:
     ShapeFunction() {}
     virtual ~ShapeFunction() {}
 };
 
-class ElementType : public eckit::Owned {
+class ElementType : public util::Object {
 public:
-    typedef eckit::SharedPtr<ElementType> Ptr;
+    typedef util::ObjectHandle<ElementType> Ptr;
     typedef std::vector<ElementType::Ptr> Vector;
 
 public:
@@ -339,9 +337,7 @@ public:
     }
 };
 
-class Nodes : public eckit::Owned {
-public:
-    typedef eckit::SharedPtr<Nodes> Ptr;
+class Nodes : public util::Object {
 
 public:
     Nodes() {

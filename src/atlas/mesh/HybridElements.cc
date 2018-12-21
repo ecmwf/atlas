@@ -11,7 +11,6 @@
 #include <algorithm>
 
 #include "eckit/log/Bytes.h"
-#include "eckit/memory/SharedPtr.h"
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
@@ -163,7 +162,7 @@ idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements, c
 
 idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements, const idx_t connectivity[],
                            bool fortran_array ) {
-    eckit::SharedPtr<const ElementType> etype( element_type );
+    util::ObjectHandle<const ElementType> etype( element_type );
 
     idx_t old_size = size();
     idx_t new_size = old_size + nb_elements;
@@ -185,16 +184,8 @@ idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements, c
         if ( elements_[t] )
             elements_[t]->rebuild();
         else
-            elements_[t].reset( new Elements( *this, t ) );
+            elements_[t] = util::ObjectHandle<Elements>( new Elements( *this, t ) );
     }
-
-    //  for( idx_t t=0; t<nb_types()-1; ++t )
-    //  {
-    //    elements_[t]->rebuild();
-    //  }
-    //  element_types_.push_back( etype );
-    //  elements_.push_back( eckit::SharedPtr<Elements>(new
-    //  Elements(*this,type_idx_.back())) );
 
     node_connectivity_->add( nb_elements, nb_nodes, connectivity, fortran_array );
 
@@ -203,7 +194,7 @@ idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements, c
 }
 
 idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements ) {
-    eckit::SharedPtr<const ElementType> etype( element_type );
+    util::ObjectHandle<const ElementType> etype( element_type );
 
     idx_t old_size = size();
     idx_t new_size = old_size + nb_elements;
@@ -222,7 +213,7 @@ idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements ) 
     element_types_.push_back( etype );
     elements_.resize( element_types_.size() );
     for ( idx_t t = 0; t < nb_types(); ++t ) {
-        elements_[t].reset( new Elements( *this, t ) );
+        elements_[t] = util::ObjectHandle<Elements>( new Elements( *this, t ) );
     }
 
     node_connectivity_->add( nb_elements, nb_nodes );

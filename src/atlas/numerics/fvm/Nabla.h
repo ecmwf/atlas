@@ -30,7 +30,7 @@ namespace atlas {
 namespace numerics {
 namespace fvm {
 
-class Nabla : public atlas::numerics::Nabla::nabla_t {
+class Nabla : public atlas::numerics::NablaImpl {
 public:
     Nabla( const atlas::numerics::Method&, const eckit::Parametrisation& );
     virtual ~Nabla();

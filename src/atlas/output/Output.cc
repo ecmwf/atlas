@@ -47,38 +47,32 @@ OutputImpl::OutputImpl() {}
 
 OutputImpl::~OutputImpl() {}
 
-Output::Output() : output_( nullptr ) {}
-
-Output::Output( const output_t* output ) : output_( output ) {}
-
-Output::Output( const Output& output ) : output_( output.output_ ) {}
-
 Output::Output( const std::string& key, Stream& stream, const eckit::Parametrisation& params ) :
-    output_( OutputFactory::build( key, stream, params ) ) {}
+    Handle( OutputFactory::build( key, stream, params ) ) {}
 
 /// Write mesh file
 void Output::write( const Mesh& m, const eckit::Parametrisation& c ) const {
-    return output_->write( m, c );
+    return get()->write( m, c );
 }
 
 /// Write field to file
 void Output::write( const Field& f, const eckit::Parametrisation& c ) const {
-    return output_->write( f, c );
+    return get()->write( f, c );
 }
 
 /// Write fieldset to file using FunctionSpace
 void Output::write( const FieldSet& f, const eckit::Parametrisation& c ) const {
-    return output_->write( f, c );
+    return get()->write( f, c );
 }
 
 /// Write field to file using Functionspace
 void Output::write( const Field& f, const FunctionSpace& fs, const eckit::Parametrisation& c ) const {
-    return output_->write( f, fs, c );
+    return get()->write( f, fs, c );
 }
 
 /// Write fieldset to file using FunctionSpace
 void Output::write( const FieldSet& f, const FunctionSpace& fs, const eckit::Parametrisation& c ) const {
-    return output_->write( f, fs, c );
+    return get()->write( f, fs, c );
 }
 
 OutputFactory::OutputFactory( const std::string& name ) : name_( name ) {

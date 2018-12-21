@@ -31,10 +31,18 @@ public:
 
     operator bool() const { return object_ != nullptr; }
 
+    void reset( const Object* other ) {
+        if ( object_ != other ) { assign( other ); }
+    }
+
+    int owners() const;
+
 private:
     void release();
 
     void assign( const ObjectHandleBase& other );
+
+    void assign( const Object* other );
 
     void attach();
 
@@ -60,6 +68,7 @@ public:
     T* operator->() { return get(); }
     const T& operator*() const { return *get(); }
     T& operator*() { return *get(); }
+    void reset( const T* object ) { ObjectHandleBase::reset( reinterpret_cast<const Object*>( object ) ); }
 };
 
 }  // namespace util

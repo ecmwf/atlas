@@ -148,14 +148,14 @@ void Gmsh::setGmshConfiguration( detail::GmshIO& gmsh, const Gmsh::Configuration
 
 // -----------------------------------------------------------------------------
 
-Gmsh::Gmsh( Stream& stream ) {
+Gmsh::Gmsh( Stream& ) {
     defaults();
     NOTIMP;
 }
 
 // -----------------------------------------------------------------------------
 
-Gmsh::Gmsh( Stream& stream, const eckit::Parametrisation& config ) {
+Gmsh::Gmsh( Stream&, const eckit::Parametrisation& config ) {
     defaults();
     merge( config_, config );
     NOTIMP;
