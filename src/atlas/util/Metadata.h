@@ -38,7 +38,7 @@ public:
     template <typename ValueT>
     ValueT get( const std::string& name ) const {
         ValueT value;
-        if ( not eckit::LocalConfiguration::get( name, value ) ) throw_exception( name );
+        if ( not eckit::LocalConfiguration::get( name, value ) ) throw_not_found( name );
         return value;
     }
 
@@ -57,7 +57,7 @@ public:
     size_t footprint() const;
 
 private:
-    void throw_exception( const std::string& ) const;
+    [[noreturn]] void throw_not_found( const std::string& ) const;
 
     Metadata( const eckit::Value& );
 };

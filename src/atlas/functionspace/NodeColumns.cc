@@ -16,7 +16,7 @@
 
 #include "eckit/utils/MD5.h"
 
-#include "atlas/array/ArrayView.h"
+#include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"

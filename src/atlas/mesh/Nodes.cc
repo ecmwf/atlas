@@ -10,9 +10,10 @@
 
 #include <algorithm>
 
-#include "atlas/mesh/Nodes.h"
-#include "atlas/array/MakeView.h"
+#include "atlas/array.h"
 #include "atlas/field/Field.h"
+#include "atlas/mesh/Connectivity.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
@@ -98,7 +99,7 @@ void Nodes::resize( idx_t size ) {
         auto flag    = array::make_view<int, 1>( flags() );
         auto _halo   = array::make_view<int, 1>( halo() );
 
-        const int mpi_rank = mpi::comm().rank();
+        const int mpi_rank = static_cast<int>( mpi::comm().rank() );
         for ( idx_t n = previous_size; n < size_; ++n ) {
             glb_idx( n ) = 1 + n;
             part( n )    = mpi_rank;
@@ -189,7 +190,7 @@ void Nodes::syncHostDevice() const {
 extern "C" {
 
 Nodes* atlas__mesh__Nodes__create() {
-    Nodes* nodes( 0 );
+    Nodes* nodes( nullptr );
     ATLAS_ERROR_HANDLING( nodes = new Nodes() );
     return nodes;
 }
@@ -225,39 +226,39 @@ int atlas__mesh__Nodes__has_field( Nodes* This, char* name ) {
 
 field::FieldImpl* atlas__mesh__Nodes__field_by_name( Nodes* This, char* name ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->field( std::string( name ) ).get(); );
-    return 0;
+    return nullptr;
 }
 
 field::FieldImpl* atlas__mesh__Nodes__field_by_idx( Nodes* This, idx_t idx ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return This->field( idx ).get(); );
-    return 0;
+    return nullptr;
 }
 
 util::Metadata* atlas__mesh__Nodes__metadata( Nodes* This ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->metadata(); );
-    return 0;
+    return nullptr;
 }
 
 void atlas__mesh__Nodes__str( Nodes* This, char*& str, int& size ) {
-    ATLAS_ERROR_HANDLING( std::stringstream ss; ss << *This; std::string s = ss.str(); size = s.size();
-                          str = new char[size + 1]; strcpy( str, s.c_str() ); );
+    ATLAS_ERROR_HANDLING( std::stringstream ss; ss << *This; std::string s = ss.str();
+                          size = static_cast<int>( s.size() ); str = new char[size + 1]; strcpy( str, s.c_str() ); );
 }
 
 IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity( Nodes* This ) {
-    IrregularConnectivity* connectivity( 0 );
+    IrregularConnectivity* connectivity( nullptr );
     ATLAS_ERROR_HANDLING( connectivity = &This->edge_connectivity() );
     return connectivity;
 }
 
 IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity( Nodes* This ) {
-    IrregularConnectivity* connectivity( 0 );
+    IrregularConnectivity* connectivity( nullptr );
     ATLAS_ERROR_HANDLING( connectivity = &This->cell_connectivity() );
     return connectivity;
 }
 
 IrregularConnectivity* atlas__mesh__Nodes__connectivity( Nodes* This, char* name ) {
     ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->connectivity( std::string( name ) ); );
-    return 0;
+    return nullptr;
 }
 
 void atlas__mesh__Nodes__add_connectivity( Nodes* This, IrregularConnectivity* connectivity ) {
@@ -265,38 +266,38 @@ void atlas__mesh__Nodes__add_connectivity( Nodes* This, IrregularConnectivity* c
 }
 
 field::FieldImpl* atlas__mesh__Nodes__xy( Nodes* This ) {
-    field::FieldImpl* field( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->xy().get(); );
+    field::FieldImpl* field( nullptr );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); field = This->xy().get(); );
     return field;
 }
 
 field::FieldImpl* atlas__mesh__Nodes__lonlat( Nodes* This ) {
-    field::FieldImpl* field( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->lonlat().get(); );
+    field::FieldImpl* field( nullptr );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); field = This->lonlat().get(); );
     return field;
 }
 
 field::FieldImpl* atlas__mesh__Nodes__global_index( Nodes* This ) {
-    field::FieldImpl* field( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->global_index().get(); );
+    field::FieldImpl* field( nullptr );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); field = This->global_index().get(); );
     return field;
 }
 
 field::FieldImpl* atlas__mesh__Nodes__remote_index( Nodes* This ) {
-    field::FieldImpl* field( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->remote_index().get(); );
+    field::FieldImpl* field( nullptr );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); field = This->remote_index().get(); );
     return field;
 }
 
 field::FieldImpl* atlas__mesh__Nodes__partition( Nodes* This ) {
-    field::FieldImpl* field( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->partition().get(); );
+    field::FieldImpl* field( nullptr );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); field = This->partition().get(); );
     return field;
 }
 
 field::FieldImpl* atlas__mesh__Nodes__ghost( Nodes* This ) {
-    field::FieldImpl* field( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->ghost().get(); );
+    field::FieldImpl* field( nullptr );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); field = This->ghost().get(); );
     return field;
 }
 }

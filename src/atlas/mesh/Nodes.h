@@ -17,12 +17,20 @@
 #include <string>
 
 #include "atlas/util/Object.h"
-#include "eckit/memory/SharedPtr.h"
+#include "atlas/util/ObjectHandle.h"
 
 #include "atlas/field/Field.h"
-#include "atlas/mesh/Connectivity.h"
 #include "atlas/util/Bitflags.h"
 #include "atlas/util/Metadata.h"
+
+namespace atlas {
+namespace mesh {
+template <class T>
+class ConnectivityInterface;
+class IrregularConnectivityImpl;
+using IrregularConnectivity = ConnectivityInterface<IrregularConnectivityImpl>;
+}  // namespace mesh
+}  // namespace atlas
 
 namespace atlas {
 namespace mesh {
@@ -33,7 +41,7 @@ namespace mesh {
  */
 class Nodes : public util::Object {
 public:
-    typedef IrregularConnectivity Connectivity;
+    using Connectivity = IrregularConnectivity;
 
     class Topology : public util::Bitflags {
     public:
@@ -66,7 +74,7 @@ public:  // methods
 
     const Field& field( idx_t ) const;
     Field& field( idx_t );
-    idx_t nb_fields() const { return fields_.size(); }
+    idx_t nb_fields() const { return static_cast<idx_t>( fields_.size() ); }
 
     const util::Metadata& metadata() const { return metadata_; }
     util::Metadata& metadata() { return metadata_; }
@@ -118,7 +126,7 @@ public:  // methods
 
     void remove_field( const std::string& name );
 
-    Connectivity& add( mesh::Connectivity* );
+    Connectivity& add( Connectivity* );
 
     /// @brief Return the memory footprint of the Nodes
     size_t footprint() const;
@@ -139,7 +147,7 @@ private:
 
 private:
     typedef std::map<std::string, Field> FieldMap;
-    typedef std::map<std::string, eckit::SharedPtr<Connectivity>> ConnectivityMap;
+    typedef std::map<std::string, util::ObjectHandle<Connectivity>> ConnectivityMap;
 
 private:
     idx_t size_;

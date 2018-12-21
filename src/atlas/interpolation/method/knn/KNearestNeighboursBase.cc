@@ -11,6 +11,7 @@
 #include "eckit/config/Resource.h"
 #include "eckit/log/TraceTimer.h"
 
+#include "atlas/array.h"
 #include "atlas/interpolation/method/knn/KNearestNeighboursBase.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Nodes.h"

@@ -12,15 +12,17 @@
 
 #include <string>
 
-#include "eckit/memory/SharedPtr.h"
 
-#include "atlas/grid/detail/partitioner/Partitioner.h"
+#include "atlas/library/config.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
 class Parametrisation;
 }
 
 namespace atlas {
+class Grid;
+class Mesh;
 namespace grid {
 class Distribution;
 class DistributionImpl;
@@ -57,7 +59,7 @@ namespace grid {
 
 // ------------------------------------------------------------------
 
-class Partitioner {
+class Partitioner : public util::ObjectHandle<detail::partitioner::Partitioner> {
 public:
     using Config         = eckit::Parametrisation;
     using Implementation = detail::partitioner::Partitioner;
@@ -66,26 +68,19 @@ public:
     static bool exists( const std::string& type );
 
 public:
-    Partitioner() {}
-    Partitioner( const Implementation* );
+    using Handle::Handle;
+    Partitioner() = default;
     Partitioner( const std::string& type );
     Partitioner( const std::string& type, const idx_t nb_partitions );
     Partitioner( const Config& );
-
-    operator bool() const { return partitioner_; }
 
     void partition( const Grid& grid, int part[] ) const;
 
     Distribution partition( const Grid& grid ) const;
 
-    idx_t nb_partitions() const { return partitioner_->nb_partitions(); }
+    idx_t nb_partitions() const;
 
-    std::string type() const { return partitioner_->type(); }
-
-    Implementation const* get() const { return partitioner_.get(); }
-
-private:
-    eckit::SharedPtr<const Implementation> partitioner_;
+    std::string type() const;
 };
 
 // ------------------------------------------------------------------

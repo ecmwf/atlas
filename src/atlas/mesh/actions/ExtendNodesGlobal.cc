@@ -10,6 +10,7 @@
 
 #include "atlas/mesh/actions/ExtendNodesGlobal.h"
 
+#include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"

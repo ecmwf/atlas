@@ -10,6 +10,7 @@
 
 #include "eckit/log/Plural.h"
 
+#include "atlas/array.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
 #include "atlas/interpolation/method/knn/NearestNeighbour.h"

@@ -16,6 +16,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 
+#include "atlas/array.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"

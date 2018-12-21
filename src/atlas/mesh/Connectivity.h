@@ -539,11 +539,10 @@ private:
     idx_t missing_value_;
 };
 
-typedef ConnectivityInterface<IrregularConnectivityImpl> IrregularConnectivity;
-typedef ConnectivityInterface<MultiBlockConnectivityImpl> MultiBlockConnectivity;
-typedef BlockConnectivityImpl BlockConnectivity;
-
-typedef IrregularConnectivity Connectivity;
+using IrregularConnectivity  = ConnectivityInterface<IrregularConnectivityImpl>;
+using MultiBlockConnectivity = ConnectivityInterface<MultiBlockConnectivityImpl>;
+using BlockConnectivity      = BlockConnectivityImpl;
+using Connectivity           = IrregularConnectivity;
 
 // -----------------------------------------------------------------------------------------------------
 

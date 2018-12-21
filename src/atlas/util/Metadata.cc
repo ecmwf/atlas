@@ -28,10 +28,10 @@ using std::string;
 namespace atlas {
 namespace util {
 
-void Metadata::throw_exception( const std::string& name ) const {
+void Metadata::throw_not_found( const std::string& name ) const {
     std::stringstream msg;
     msg << "Could not find metadata \"" << name << "\"";
-    throw eckit::OutOfRange( msg.str(), Here() );
+    throw eckit::Exception( msg.str(), Here() );
 }
 
 size_t Metadata::footprint() const {
@@ -58,7 +58,7 @@ void Metadata::broadcast( Metadata& dest ) {
 
 void Metadata::broadcast( Metadata& dest, const size_t root ) {
     std::string buffer;
-    int buffer_size;
+    int buffer_size{0};
     if ( atlas::mpi::comm().rank() == root ) {
         std::stringstream s;
         eckit::JSON json( s );
@@ -90,7 +90,7 @@ void Metadata::broadcast( Metadata& dest ) const {
 
 void Metadata::broadcast( Metadata& dest, const size_t root ) const {
     std::string buffer;
-    int buffer_size;
+    int buffer_size{0};
     if ( atlas::mpi::comm().rank() == root ) {
         std::stringstream s;
         eckit::JSON json( s );
@@ -129,54 +129,54 @@ void atlas__Metadata__delete( Metadata* This ) {
 }
 
 void atlas__Metadata__set_int( Metadata* This, const char* name, int value ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); This->set( std::string( name ), long( value ) ) );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); This->set( std::string( name ), long( value ) ) );
 }
 void atlas__Metadata__set_long( Metadata* This, const char* name, long value ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); This->set( std::string( name ), value ); );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); This->set( std::string( name ), value ); );
 }
 void atlas__Metadata__set_float( Metadata* This, const char* name, float value ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); This->set( std::string( name ), double( value ) ); );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); This->set( std::string( name ), double( value ) ); );
 }
 void atlas__Metadata__set_double( Metadata* This, const char* name, double value ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); This->set( std::string( name ), value ); );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); This->set( std::string( name ), value ); );
 }
 void atlas__Metadata__set_string( Metadata* This, const char* name, const char* value ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); This->set( std::string( name ), std::string( value ) ); );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); This->set( std::string( name ), std::string( value ) ); );
 }
 void atlas__Metadata__set_array_int( Metadata* This, const char* name, int value[], int size ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); std::vector<int> v; v.assign( value, value + size );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); std::vector<int> v; v.assign( value, value + size );
                           This->set( std::string( name ), v ); );
 }
 void atlas__Metadata__set_array_long( Metadata* This, const char* name, long value[], int size ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); std::vector<long> v; v.assign( value, value + size );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); std::vector<long> v; v.assign( value, value + size );
                           This->set( std::string( name ), v ); );
 }
 void atlas__Metadata__set_array_float( Metadata* This, const char* name, float value[], int size ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); std::vector<float> v; v.assign( value, value + size );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); std::vector<float> v; v.assign( value, value + size );
                           This->set( std::string( name ), v ); );
 }
 void atlas__Metadata__set_array_double( Metadata* This, const char* name, double value[], int size ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); std::vector<double> v; v.assign( value, value + size );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); std::vector<double> v; v.assign( value, value + size );
                           This->set( std::string( name ), v ); );
 }
 int atlas__Metadata__get_int( Metadata* This, const char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->get<long>( std::string( name ) ) );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->get<long>( std::string( name ) ) );
     return 0;
 }
 long atlas__Metadata__get_long( Metadata* This, const char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->get<long>( std::string( name ) ); );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->get<long>( std::string( name ) ); );
     return 0;
 }
 float atlas__Metadata__get_float( Metadata* This, const char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->get<double>( std::string( name ) ); );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->get<double>( std::string( name ) ); );
     return 0;
 }
 double atlas__Metadata__get_double( Metadata* This, const char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->get<double>( std::string( name ) ); );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->get<double>( std::string( name ) ); );
     return 0;
 }
 void atlas__Metadata__get_string( Metadata* This, const char* name, char* output_str, int max_len ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); std::string s = This->get<std::string>( std::string( name ) );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); std::string s = This->get<std::string>( std::string( name ) );
                           if ( s.size() > size_t( max_len ) ) {
                               std::stringstream msg;
                               msg << "Cannot copy string `" << s << "` of metadata `" << name
@@ -186,40 +186,40 @@ void atlas__Metadata__get_string( Metadata* This, const char* name, char* output
                               throw eckit::OutOfRange( msg.str(), Here() );
                           } strcpy( output_str, s.c_str() );
                           return );
-    output_str = NULL;
+    output_str = nullptr;
 }
 void atlas__Metadata__get_array_int( Metadata* This, const char* name, int*& value, int& size, int& allocated ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr );
                           std::vector<int> v = This->get<std::vector<int>>( std::string( name ) ); size = v.size();
                           value = new int[size]; for ( size_t j = 0; j < v.size(); ++j ) value[j] = v[j];
                           allocated                                                               = true; );
 }
 void atlas__Metadata__get_array_long( Metadata* This, const char* name, long*& value, int& size, int& allocated ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr );
                           std::vector<long> v = This->get<std::vector<long>>( std::string( name ) ); size = v.size();
                           value = new long[size]; for ( size_t j = 0; j < v.size(); ++j ) value[j] = v[j];
                           allocated                                                                = true; );
 }
 void atlas__Metadata__get_array_float( Metadata* This, const char* name, float*& value, int& size, int& allocated ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr );
                           std::vector<float> v = This->get<std::vector<float>>( std::string( name ) ); size = v.size();
                           value = new float[size]; for ( size_t j = 0; j < v.size(); ++j ) value[j] = v[j];
                           allocated                                                                 = true; );
 }
 void atlas__Metadata__get_array_double( Metadata* This, const char* name, double*& value, int& size, int& allocated ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr );
                           std::vector<double> v = This->get<std::vector<double>>( std::string( name ) );
                           size = v.size(); value                           = new double[size];
                           for ( size_t j = 0; j < v.size(); ++j ) value[j] = v[j]; allocated = true; );
 }
 
 int atlas__Metadata__has( Metadata* This, const char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->has( std::string( name ) ); );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->has( std::string( name ) ); );
     return 0;
 }
 
 void atlas__Metadata__print( Metadata* This, std::ostream* channel ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); ASSERT( channel != NULL ); *channel << *This; );
+    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); ASSERT( channel != nullptr ); *channel << *This; );
 }
 
 void atlas__Metadata__json( Metadata* This, char*& json, int& size, int& allocated ) {

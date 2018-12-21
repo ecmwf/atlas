@@ -13,6 +13,7 @@
 #include "eckit/log/Plural.h"
 #include "eckit/log/Timer.h"
 
+#include "atlas/array.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/StructuredGrid.h"

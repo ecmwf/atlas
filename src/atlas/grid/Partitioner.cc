@@ -29,12 +29,10 @@ bool Partitioner::exists( const std::string& type ) {
     return Factory::has( type );
 }
 
-Partitioner::Partitioner( const detail::partitioner::Partitioner* partitioner ) : partitioner_( partitioner ) {}
-
-Partitioner::Partitioner( const std::string& type ) : partitioner_( Factory::build( type ) ) {}
+Partitioner::Partitioner( const std::string& type ) : Handle( Factory::build( type ) ) {}
 
 Partitioner::Partitioner( const std::string& type, const idx_t nb_partitions ) :
-    partitioner_( Factory::build( type, nb_partitions ) ) {}
+    Handle( Factory::build( type, nb_partitions ) ) {}
 
 namespace {
 detail::partitioner::Partitioner* partitioner_from_config( const Partitioner::Config& config ) {
@@ -47,15 +45,23 @@ detail::partitioner::Partitioner* partitioner_from_config( const Partitioner::Co
 }
 }  // namespace
 
-Partitioner::Partitioner( const Config& config ) : partitioner_( partitioner_from_config( config ) ) {}
+Partitioner::Partitioner( const Config& config ) : Handle( partitioner_from_config( config ) ) {}
 
 void Partitioner::partition( const Grid& grid, int part[] ) const {
     ATLAS_TRACE();
-    partitioner_->partition( grid, part );
+    get()->partition( grid, part );
 }
 
 Distribution Partitioner::partition( const Grid& grid ) const {
     return Distribution( grid, *this );
+}
+
+idx_t Partitioner::nb_partitions() const {
+    return get()->nb_partitions();
+}
+
+std::string Partitioner::type() const {
+    return get()->type();
 }
 
 MatchingMeshPartitioner::MatchingMeshPartitioner() : Partitioner() {}

@@ -12,10 +12,9 @@
 
 #include <vector>
 
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/grid/detail/distribution/DistributionImpl.h"
 #include "atlas/library/config.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace atlas {
 class Grid;
@@ -29,16 +28,12 @@ class Partitioner;
 namespace atlas {
 namespace grid {
 
-class Distribution {
+class Distribution : public util::ObjectHandle<DistributionImpl> {
     friend class Partitioner;
 
 public:
-    using Implementation = DistributionImpl;
-
-public:
-    Distribution();
-    Distribution( const Implementation* );
-    Distribution( const Distribution& );
+    using Handle::Handle;
+    Distribution() = default;
 
     Distribution( const Grid& );
 
@@ -66,11 +61,6 @@ public:
     const std::string& type() const;
 
     friend std::ostream& operator<<( std::ostream& os, const Distribution& distribution );
-
-    const Implementation* get() const;
-
-private:
-    eckit::SharedPtr<const Implementation> impl_;
 };
 
 }  // namespace grid
