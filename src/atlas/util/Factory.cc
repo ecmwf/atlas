@@ -15,7 +15,7 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Factory.h"
 
-#define DEBUG_FACTORY_REGISTRATION
+// #define DEBUG_FACTORY_REGISTRATION
 
 using lock_guard = std::lock_guard<std::mutex>;
 
