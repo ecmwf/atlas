@@ -10,6 +10,7 @@ module unload eccodes
 module unload emos
 module unload fftw
 module unload libemos
+module unload metview
 
 module load cmake/3.10.2
 
