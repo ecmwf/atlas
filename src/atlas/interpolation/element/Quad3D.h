@@ -44,9 +44,7 @@ public:
 
     double area() const;
 
-    void print( std::ostream& s ) const {
-        s << "Quad3D[v00=" << v00 << ",v10=" << v10 << ",v11=" << v11 << ",v01=" << v01 << "]";
-    }
+    void print( std::ostream& ) const;
 
     friend std::ostream& operator<<( std::ostream& s, const Quad3D& p ) {
         p.print( s );
