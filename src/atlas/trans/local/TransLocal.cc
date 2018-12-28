@@ -15,7 +15,7 @@
 #include <fstream>
 
 #include "eckit/config/YAMLConfiguration.h"
-#include "eckit/eckit_config.h"
+#include "eckit/eckit.h"
 #include "eckit/io/DataHandle.h"
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Matrix.h"

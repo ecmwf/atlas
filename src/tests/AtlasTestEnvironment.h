@@ -16,7 +16,7 @@
 
 #include "eckit/config/LibEcKit.h"
 #include "eckit/config/Resource.h"
-#include "eckit/eckit_config.h"
+#include "eckit/eckit.h"
 #include "eckit/log/PrefixTarget.h"
 #include "eckit/mpi/Comm.h"
 #include "eckit/runtime/Main.h"
