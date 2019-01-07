@@ -31,36 +31,12 @@ Field::Field( const std::string& name, array::DataType datatype, const array::Ar
 
 Field::Field( const std::string& name, array::Array* array ) : Handle( Implementation::create( name, array ) ) {}
 
-template <>
-Field::Field( const std::string& name, double* data, const array::ArraySpec& spec ) :
+template <typename DATATYPE>
+Field::Field( const std::string& name, DATATYPE* data, const array::ArraySpec& spec ) :
     Handle( Implementation::wrap( name, data, spec ) ) {}
 
-template <>
-Field::Field( const std::string& name, double* data, const array::ArrayShape& shape ) :
-    Handle( Implementation::wrap( name, data, shape ) ) {}
-
-template <>
-Field::Field( const std::string& name, float* data, const array::ArraySpec& spec ) :
-    Handle( Implementation::wrap( name, data, spec ) ) {}
-
-template <>
-Field::Field( const std::string& name, float* data, const array::ArrayShape& shape ) :
-    Handle( Implementation::wrap( name, data, shape ) ) {}
-
-template <>
-Field::Field( const std::string& name, long* data, const array::ArraySpec& spec ) :
-    Handle( Implementation::wrap( name, data, spec ) ) {}
-
-template <>
-Field::Field( const std::string& name, long* data, const array::ArrayShape& shape ) :
-    Handle( Implementation::wrap( name, data, shape ) ) {}
-
-template <>
-Field::Field( const std::string& name, int* data, const array::ArraySpec& spec ) :
-    Handle( Implementation::wrap( name, data, spec ) ) {}
-
-template <>
-Field::Field( const std::string& name, int* data, const array::ArrayShape& shape ) :
+template <typename DATATYPE>
+Field::Field( const std::string& name, DATATYPE* data, const array::ArrayShape& shape ) :
     Handle( Implementation::wrap( name, data, shape ) ) {}
 
 /// @brief Implicit conversion to Array
@@ -208,104 +184,29 @@ void Field::haloExchange( bool on_device ) const {
 }
 
 // -- dangerous methods
-template <>
-double const* Field::host_data() const {
-    return get()->host_data<double>();
+template <typename DATATYPE>
+DATATYPE const* Field::data() const {
+    return get()->host_data<DATATYPE>();
 }
-template <>
-double* Field::host_data() {
-    return get()->host_data<double>();
+template <typename DATATYPE>
+DATATYPE* Field::data() {
+    return get()->host_data<DATATYPE>();
 }
-template <>
-double const* Field::device_data() const {
-    return get()->device_data<double>();
+template <typename DATATYPE>
+DATATYPE const* Field::host_data() const {
+    return get()->host_data<DATATYPE>();
 }
-template <>
-double* Field::device_data() {
-    return get()->device_data<double>();
+template <typename DATATYPE>
+DATATYPE* Field::host_data() {
+    return get()->host_data<DATATYPE>();
 }
-template <>
-double const* Field::data() const {
-    return get()->host_data<double>();
+template <typename DATATYPE>
+DATATYPE const* Field::device_data() const {
+    return get()->device_data<DATATYPE>();
 }
-template <>
-double* Field::data() {
-    return get()->host_data<double>();
-}
-
-template <>
-float const* Field::host_data() const {
-    return get()->host_data<float>();
-}
-template <>
-float* Field::host_data() {
-    return get()->host_data<float>();
-}
-template <>
-float const* Field::device_data() const {
-    return get()->device_data<float>();
-}
-template <>
-float* Field::device_data() {
-    return get()->device_data<float>();
-}
-template <>
-float const* Field::data() const {
-    return get()->host_data<float>();
-}
-template <>
-float* Field::data() {
-    return get()->host_data<float>();
-}
-
-template <>
-long const* Field::host_data() const {
-    return get()->host_data<long>();
-}
-template <>
-long* Field::host_data() {
-    return get()->host_data<long>();
-}
-template <>
-long const* Field::device_data() const {
-    return get()->device_data<long>();
-}
-template <>
-long* Field::device_data() {
-    return get()->device_data<long>();
-}
-template <>
-long const* Field::data() const {
-    return get()->host_data<long>();
-}
-template <>
-long* Field::data() {
-    return get()->host_data<long>();
-}
-
-template <>
-int const* Field::host_data() const {
-    return get()->host_data<int>();
-}
-template <>
-int* Field::host_data() {
-    return get()->host_data<int>();
-}
-template <>
-int const* Field::device_data() const {
-    return get()->device_data<int>();
-}
-template <>
-int* Field::device_data() {
-    return get()->device_data<int>();
-}
-template <>
-int const* Field::data() const {
-    return get()->host_data<int>();
-}
-template <>
-int* Field::data() {
-    return get()->host_data<int>();
+template <typename DATATYPE>
+DATATYPE* Field::device_data() {
+    return get()->device_data<DATATYPE>();
 }
 
 // -- Methods related to host-device synchronisation, requires gridtools_storage
@@ -332,5 +233,41 @@ void Field::reactivateHostWriteViews() const {
 }
 
 // ------------------------------------------------------------------
+
+template Field::Field( const std::string&, float*, const array::ArraySpec& );
+template Field::Field( const std::string&, float*, const array::ArrayShape& );
+template Field::Field( const std::string&, double*, const array::ArraySpec& );
+template Field::Field( const std::string&, double*, const array::ArrayShape& );
+template Field::Field( const std::string&, long*, const array::ArraySpec& );
+template Field::Field( const std::string&, long*, const array::ArrayShape& );
+template Field::Field( const std::string&, int*, const array::ArraySpec& );
+template Field::Field( const std::string&, int*, const array::ArrayShape& );
+template double const* Field::data() const;
+template double* Field::data();
+template float const* Field::data() const;
+template float* Field::data();
+template long const* Field::data() const;
+template long* Field::data();
+template int const* Field::data() const;
+template int* Field::data();
+template double const* Field::host_data() const;
+template double* Field::host_data();
+template float const* Field::host_data() const;
+template float* Field::host_data();
+template long const* Field::host_data() const;
+template long* Field::host_data();
+template int const* Field::host_data() const;
+template int* Field::host_data();
+template double const* Field::device_data() const;
+template double* Field::device_data();
+template float const* Field::device_data() const;
+template float* Field::device_data();
+template long const* Field::device_data() const;
+template long* Field::device_data();
+template int const* Field::device_data() const;
+template int* Field::device_data();
+
+// ------------------------------------------------------------------
+
 
 }  // namespace atlas

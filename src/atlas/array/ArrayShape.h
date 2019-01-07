@@ -43,20 +43,27 @@ public:
 inline ArrayShape make_shape( std::initializer_list<idx_t> sizes ) {
     return ArrayShape( sizes );
 }
-inline ArrayShape make_shape( idx_t size1 ) {
-    return ArrayShape{size1};
+template <typename Int>
+inline ArrayShape make_shape( Int size1 ) {
+    return ArrayShape{static_cast<idx_t>( size1 )};
 }
-inline ArrayShape make_shape( idx_t size1, idx_t size2 ) {
-    return ArrayShape{size1, size2};
+template <typename Int1, typename Int2>
+inline ArrayShape make_shape( Int1 size1, Int2 size2 ) {
+    return ArrayShape{static_cast<idx_t>( size1 ), static_cast<idx_t>( size2 )};
 }
-inline ArrayShape make_shape( idx_t size1, idx_t size2, idx_t size3 ) {
-    return ArrayShape{size1, size2, size3};
+template <typename Int1, typename Int2, typename Int3>
+inline ArrayShape make_shape( Int1 size1, Int2 size2, Int3 size3 ) {
+    return ArrayShape{static_cast<idx_t>( size1 ), static_cast<idx_t>( size2 ), static_cast<idx_t>( size3 )};
 }
-inline ArrayShape make_shape( idx_t size1, idx_t size2, idx_t size3, idx_t size4 ) {
-    return ArrayShape{size1, size2, size3, size4};
+template <typename Int1, typename Int2, typename Int3, typename Int4>
+inline ArrayShape make_shape( Int1 size1, Int2 size2, Int3 size3, Int4 size4 ) {
+    return ArrayShape{static_cast<idx_t>( size1 ), static_cast<idx_t>( size2 ), static_cast<idx_t>( size3 ),
+                      static_cast<idx_t>( size4 )};
 }
-inline ArrayShape make_shape( idx_t size1, idx_t size2, idx_t size3, idx_t size4, idx_t size5 ) {
-    return ArrayShape{size1, size2, size3, size4, size5};
+template <typename Int1, typename Int2, typename Int3, typename Int4, typename Int5>
+inline ArrayShape make_shape( Int1 size1, Int2 size2, Int3 size3, Int4 size4, Int5 size5 ) {
+    return ArrayShape{static_cast<idx_t>( size1 ), static_cast<idx_t>( size2 ), static_cast<idx_t>( size3 ),
+                      static_cast<idx_t>( size4 ), static_cast<idx_t>( size5 )};
 }
 
 //------------------------------------------------------------------------------------------------------

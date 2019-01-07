@@ -19,6 +19,7 @@
 #include "atlas/array/ArrayShape.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
@@ -175,6 +176,39 @@ public:
     void reactivateDeviceWriteViews() const;
     void reactivateHostWriteViews() const;
 };
+
+extern template Field::Field( const std::string&, float*, const array::ArraySpec& );
+extern template Field::Field( const std::string&, float*, const array::ArrayShape& );
+extern template Field::Field( const std::string&, double*, const array::ArraySpec& );
+extern template Field::Field( const std::string&, double*, const array::ArrayShape& );
+extern template Field::Field( const std::string&, long*, const array::ArraySpec& );
+extern template Field::Field( const std::string&, long*, const array::ArrayShape& );
+extern template Field::Field( const std::string&, int*, const array::ArraySpec& );
+extern template Field::Field( const std::string&, int*, const array::ArrayShape& );
+extern template double const* Field::data() const;
+extern template double* Field::data();
+extern template float const* Field::data() const;
+extern template float* Field::data();
+extern template long const* Field::data() const;
+extern template long* Field::data();
+extern template int const* Field::data() const;
+extern template int* Field::data();
+extern template double const* Field::host_data() const;
+extern template double* Field::host_data();
+extern template float const* Field::host_data() const;
+extern template float* Field::host_data();
+extern template long const* Field::host_data() const;
+extern template long* Field::host_data();
+extern template int const* Field::host_data() const;
+extern template int* Field::host_data();
+extern template double const* Field::device_data() const;
+extern template double* Field::device_data();
+extern template float const* Field::device_data() const;
+extern template float* Field::device_data();
+extern template long const* Field::device_data() const;
+extern template long* Field::device_data();
+extern template int const* Field::device_data() const;
+extern template int* Field::device_data();
 
 //------------------------------------------------------------------------------------------------------
 

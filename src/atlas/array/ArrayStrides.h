@@ -30,23 +30,27 @@ public:
     ArrayStrides( Base&& base ) : Base( std::forward<Base>( base ) ) {}
 };
 
-inline ArrayStrides make_strides( std::initializer_list<idx_t> list ) {
-    return ArrayStrides( list );
+template <typename Int>
+inline ArrayStrides make_strides( Int size1 ) {
+    return ArrayStrides{static_cast<idx_t>( size1 )};
 }
-inline ArrayStrides make_strides( idx_t size1 ) {
-    return ArrayStrides{size1};
+template <typename Int1, typename Int2>
+inline ArrayStrides make_strides( Int1 size1, Int2 size2 ) {
+    return ArrayStrides{static_cast<idx_t>( size1 ), static_cast<idx_t>( size2 )};
 }
-inline ArrayStrides make_strides( idx_t size1, idx_t size2 ) {
-    return ArrayStrides{size1, size2};
+template <typename Int1, typename Int2, typename Int3>
+inline ArrayStrides make_strides( Int1 size1, Int2 size2, Int3 size3 ) {
+    return ArrayStrides{static_cast<idx_t>( size1 ), static_cast<idx_t>( size2 ), static_cast<idx_t>( size3 )};
 }
-inline ArrayStrides make_strides( idx_t size1, idx_t size2, idx_t size3 ) {
-    return ArrayStrides{size1, size2, size3};
+template <typename Int1, typename Int2, typename Int3, typename Int4>
+inline ArrayStrides make_strides( Int1 size1, Int2 size2, Int3 size3, Int4 size4 ) {
+    return ArrayStrides{static_cast<idx_t>( size1 ), static_cast<idx_t>( size2 ), static_cast<idx_t>( size3 ),
+                        static_cast<idx_t>( size4 )};
 }
-inline ArrayStrides make_strides( idx_t size1, idx_t size2, idx_t size3, idx_t size4 ) {
-    return ArrayStrides{size1, size2, size3, size4};
-}
-inline ArrayStrides make_strides( idx_t size1, idx_t size2, idx_t size3, idx_t size4, idx_t size5 ) {
-    return ArrayStrides{size1, size2, size3, size4, size5};
+template <typename Int1, typename Int2, typename Int3, typename Int4, typename Int5>
+inline ArrayStrides make_strides( Int1 size1, Int2 size2, Int3 size3, Int4 size4, Int5 size5 ) {
+    return ArrayStrides{static_cast<idx_t>( size1 ), static_cast<idx_t>( size2 ), static_cast<idx_t>( size3 ),
+                        static_cast<idx_t>( size4 ), static_cast<idx_t>( size5 )};
 }
 
 //------------------------------------------------------------------------------------------------------
