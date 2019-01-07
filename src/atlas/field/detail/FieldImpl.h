@@ -210,12 +210,16 @@ FieldImpl* FieldImpl::create( const std::string& name, const array::ArrayShape& 
 
 template <typename DATATYPE>
 FieldImpl* FieldImpl::wrap( const std::string& name, DATATYPE* data, const array::ArraySpec& spec ) {
-    return create( name, array::Array::wrap( data, spec ) );
+    FieldImpl* wrapped = create( name, array::Array::wrap( data, spec ) );
+    wrapped->set_dirty( false );
+    return wrapped;
 }
 
 template <typename DATATYPE>
 FieldImpl* FieldImpl::wrap( const std::string& name, DATATYPE* data, const array::ArrayShape& shape ) {
-    return create( name, array::Array::wrap( data, shape ) );
+    FieldImpl* wrapped = create( name, array::Array::wrap( data, shape ) );
+    wrapped->set_dirty( false );
+    return wrapped;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
