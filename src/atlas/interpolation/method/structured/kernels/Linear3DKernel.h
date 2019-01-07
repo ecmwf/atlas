@@ -19,45 +19,41 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Point.h"
 
-#include "CubicHorizontalKernel.h"
-#include "CubicVerticalKernel.h"
+#include "LinearHorizontalKernel.h"
+#include "LinearVerticalKernel.h"
 
 namespace atlas {
 namespace interpolation {
 namespace method {
 
-class Cubic3DKernel {
+class Linear3DKernel {
 public:
-    Cubic3DKernel( const functionspace::StructuredColumns& fs, const util::Config& config = util::NoConfig() ) {
+    Linear3DKernel( const functionspace::StructuredColumns& fs, const util::Config& config = util::NoConfig() ) {
         src_ = fs;
         ATLAS_ASSERT( src_ );
-        ATLAS_ASSERT( src_.halo() >= 2 );
+        ATLAS_ASSERT( src_.halo() >= 0 );
         ATLAS_ASSERT( src_.vertical().size() );
-        horizontal_interpolation_ = CubicHorizontalKernel( src_, config );
-        vertical_interpolation_   = CubicVerticalKernel( fs.vertical(), config );
-        limiter_                  = config.getBool( "limiter", false );
+        horizontal_interpolation_ = LinearHorizontalKernel( src_, config );
+        vertical_interpolation_   = LinearVerticalKernel( fs.vertical(), config );
     }
 
 private:
     functionspace::StructuredColumns src_;
-    CubicHorizontalKernel horizontal_interpolation_;
-    CubicVerticalKernel vertical_interpolation_;
-    bool limiter_{false};
+    LinearHorizontalKernel horizontal_interpolation_;
+    LinearVerticalKernel vertical_interpolation_;
 
 public:
-    static std::string className() { return "Cubic3DKernel"; }
-    static constexpr idx_t stencil_width() { return 4; }
+    static std::string className() { return "Linear3DKernel"; }
+    static constexpr idx_t stencil_width() { return 2; }
     static constexpr idx_t stencil_size() { return stencil_width() * stencil_width() * stencil_width(); }
-    static constexpr idx_t stencil_halo() {
-        return static_cast<idx_t>( static_cast<double>( stencil_width() ) / 2. + 0.5 );
-    }
+    static constexpr idx_t stencil_halo() { return 0; }
 
 public:
-    using Stencil = Stencil3D<4>;
+    using Stencil = Stencil3D<2>;
     struct Weights {
-        std::array<std::array<double, 4>, 4> weights_i;
-        std::array<double, 4> weights_j;
-        std::array<double, 4> weights_k;
+        std::array<std::array<double, 2>, 2> weights_i;
+        std::array<double, 2> weights_j;
+        std::array<double, 2> weights_k;
     };
 
 public:
@@ -109,52 +105,7 @@ public:
                 index[j][i] = n;
             }
         }
-
-        if ( limiter_ ) { limit_scalar( output, index, stencil, input ); }
         return output;
-    }
-
-    template <typename array_t, typename stencil_t>
-    typename std::enable_if<( array_t::RANK == 2 ), void>::type limit_scalar(
-        typename array_t::value_type& output, const std::array<std::array<idx_t, 4>, 4>& index,
-        const stencil_t& stencil, const array_t& input ) const {
-        using Scalar = typename array_t::value_type;
-        // Limit output to max/min of values in stencil marked by '*'
-        //         x        x        x         x
-        //              x     *-----*     x
-        //                   /   P  |
-        //          x       *------ *        x
-        //        x        x        x         x
-        idx_t k = stencil.k_interval();
-        idx_t k1, k2;
-        if ( k < 0 ) { k1 = k2 = 0; }
-        else if ( k > 2 ) {
-            k1 = k2 = 3;
-        }
-        else {
-            k1 = k;
-            k2 = k + 1;
-        }
-
-        Scalar maxval = std::numeric_limits<Scalar>::lowest();
-        Scalar minval = std::numeric_limits<Scalar>::max();
-        for ( idx_t j = 1; j < 3; ++j ) {
-            for ( idx_t i = 1; i < 3; ++i ) {
-                idx_t n = index[j][i];
-
-                Scalar f1 = input( n, stencil.k( k1 ) );
-                Scalar f2 = input( n, stencil.k( k2 ) );
-
-                maxval = std::max( maxval, f1 );
-                maxval = std::max( maxval, f2 );
-                minval = std::min( minval, f1 );
-                minval = std::min( minval, f2 );
-            }
-        }
-        if ( output < minval ) { output = minval; }
-        else if ( output > maxval ) {
-            output = maxval;
-        }
     }
 
     template <typename Value>
@@ -213,59 +164,7 @@ public:
                 index[j][i] = n;
             }
         }
-
-        if ( limiter_ ) { limit_vars( index, stencil, input, output, nvar ); }
     }
-
-    template <typename InputArray, typename OutputArray, typename stencil_t>
-    typename std::enable_if<( InputArray::RANK == 3 ), void>::type limit_vars(
-        const std::array<std::array<idx_t, 4>, 4>& index, const stencil_t& stencil, const InputArray& input,
-        OutputArray& output, const idx_t nvar ) const {
-        // Limit output to max/min of values in stencil marked by '*'
-        //         x        x        x         x
-        //              x     *-----*     x
-        //                   /   P  |
-        //          x       *------ *        x
-        //        x        x        x         x
-
-        using Value = typename InputArray::value_type;
-
-        const idx_t k = stencil.k_interval();
-        idx_t k1, k2;
-        if ( k < 0 ) { k1 = k2 = stencil.k( 0 ); }
-        else if ( k > 2 ) {
-            k1 = k2 = stencil.k( 3 );
-        }
-        else {
-            k1 = stencil.k( k );
-            k2 = k1 + 1;
-        }
-
-        for ( idx_t v = 0; v < nvar; ++v ) {
-            Value limited = output[v];
-            Value maxval  = std::numeric_limits<Value>::lowest();
-            Value minval  = std::numeric_limits<Value>::max();
-            for ( idx_t j = 1; j < 3; ++j ) {
-                for ( idx_t i = 1; i < 3; ++i ) {
-                    idx_t n = index[j][i];
-
-                    Value f1 = input( n, k1, v );
-                    Value f2 = input( n, k2, v );
-
-                    maxval = std::max( maxval, f1 );
-                    maxval = std::max( maxval, f2 );
-                    minval = std::min( minval, f1 );
-                    minval = std::min( minval, f2 );
-                }
-            }
-            if ( limited < minval ) { limited = minval; }
-            else if ( limited > maxval ) {
-                limited = maxval;
-            }
-            output[v] = limited;
-        }
-    }
-
 
     template <typename stencil_t, typename weights_t, typename InputArray, typename OutputArray>
     typename std::enable_if<( InputArray::RANK == 2 && OutputArray::RANK == 1 ), void>::type interpolate(

@@ -47,6 +47,7 @@ private:
     bool limiter_{false};
 
 public:
+    static std::string className() { return "CubicHorizontalKernel"; }
     static constexpr idx_t stencil_width() { return 4; }
     static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
     static constexpr idx_t stencil_halo() {

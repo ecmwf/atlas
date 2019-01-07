@@ -44,6 +44,7 @@ private:
     ComputeHorizontalStencil compute_horizontal_stencil_;
 
 public:
+    static std::string className() { return "LinearHorizontalKernel"; }
     static constexpr idx_t stencil_width() { return 2; }
     static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
     static constexpr idx_t stencil_halo() { return 0; }

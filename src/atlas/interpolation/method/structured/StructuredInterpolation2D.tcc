@@ -91,7 +91,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
 
 template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, const Field& target ) {
-    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation2D::setup(FunctionSpace source, Field target)" );
+    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::setup(FunctionSpace source, Field target)" );
 
     source_ = source;
 
@@ -104,7 +104,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
 
 template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, const FieldSet& target ) {
-    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::setup(FunctionSpace source,FieldSet target)" );
+    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::setup(FunctionSpace source,FieldSet target)" );
 
     source_ = source;
 
@@ -175,7 +175,7 @@ void StructuredInterpolation2D<Kernel>::execute( const FieldSet& src_fields, Fie
         return;
     }
 
-    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::execute()" );
+    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::execute()" );
 
     const idx_t N = src_fields.size();
     ATLAS_ASSERT( N == tgt_fields.size() );

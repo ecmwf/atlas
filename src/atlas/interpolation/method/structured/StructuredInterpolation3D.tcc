@@ -70,7 +70,7 @@ void StructuredInterpolation3D<Kernel>::setup( const Grid& source, const Grid& t
 
 template <typename Kernel>
 void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source, const FunctionSpace& target ) {
-    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::setup()" );
+    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::setup()" );
 
     source_ = source;
     target_ = target;
@@ -89,7 +89,7 @@ void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source, cons
 
 template <typename Kernel>
 void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source, const Field& target ) {
-    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::setup(FunctionSpace source, Field target)" );
+    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::setup(FunctionSpace source, Field target)" );
 
     source_ = source;
 
@@ -103,7 +103,7 @@ void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source, cons
 
 template <typename Kernel>
 void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source, const FieldSet& target ) {
-    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::setup(FunctionSpace source,FieldSet target)" );
+    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::setup(FunctionSpace source,FieldSet target)" );
 
     source_ = source;
 
@@ -142,7 +142,7 @@ void StructuredInterpolation3D<Kernel>::execute( const FieldSet& src_fields, Fie
         return;
     }
 
-    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::execute()" );
+    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::execute()" );
 
     const idx_t N = src_fields.size();
     ATLAS_ASSERT( N == tgt_fields.size() );
