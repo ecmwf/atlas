@@ -28,14 +28,15 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-class CubicHorizontalKernel {
+class QuasiCubicHorizontalKernel {
     using Triplet  = eckit::linalg::Triplet;
     using Triplets = std::vector<Triplet>;
 
 public:
-    CubicHorizontalKernel() = default;
+    QuasiCubicHorizontalKernel() = default;
 
-    CubicHorizontalKernel( const functionspace::StructuredColumns& fs, const util::Config& config = util::NoConfig() ) {
+    QuasiCubicHorizontalKernel( const functionspace::StructuredColumns& fs,
+                                const util::Config& config = util::NoConfig() ) {
         src_ = fs;
         ATLAS_ASSERT( src_ );
         ATLAS_ASSERT( src_.halo() >= 2 );
@@ -51,7 +52,7 @@ protected:
 public:
     static std::string className() { return "CubicHorizontalKernel"; }
     static constexpr idx_t stencil_width() { return 4; }
-    static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
+    static constexpr idx_t stencil_size() { return 12; }
     static constexpr idx_t stencil_halo() {
         return static_cast<idx_t>( static_cast<double>( stencil_width() ) / 2. + 0.5 );
     }
@@ -81,12 +82,24 @@ public:
         compute_weights( x, y, stencil, weights );
     }
 
-
     template <typename stencil_t, typename weights_t>
     void compute_weights( const double x, const double y, const stencil_t& stencil, weights_t& weights ) const {
         PointXY P1, P2;
         std::array<double, 4> yvec;
-        for ( idx_t j = 0; j < stencil_width(); ++j ) {
+
+        // Compute x-direction weights LINEAR for outer rows  ( j = {0,3} )
+        for ( idx_t j = 0; j < 4; j += 3 ) {
+            auto& weights_i = weights.weights_i[j];
+            src_.compute_xy( stencil.i( 1, j ), stencil.j( j ), P1 );
+            src_.compute_xy( stencil.i( 2, j ), stencil.j( j ), P2 );
+            const double alpha = ( P2.x() - x ) / ( P2.x() - P1.x() );
+            weights_i[1]       = alpha;
+            weights_i[2]       = 1. - alpha;
+            yvec[j]            = P1.y();
+        }
+
+        // Compute x-direction weights CUBIC for inner rows ( j = {1,2} )
+        for ( idx_t j = 1; j < 3; ++j ) {
             auto& weights_i = weights.weights_i[j];
             src_.compute_xy( stencil.i( 1, j ), stencil.j( j ), P1 );
             src_.compute_xy( stencil.i( 2, j ), stencil.j( j ), P2 );
@@ -100,6 +113,8 @@ public:
             weights_i[3]                     = 1. - weights_i[0] - weights_i[1] - weights_i[2];
             yvec[j]                          = P1.y();
         }
+
+        // Compute weights in y-direction
         const double dl12 = yvec[0] - yvec[1];
         const double dl13 = yvec[0] - yvec[2];
         const double dl14 = yvec[0] - yvec[3];
@@ -130,7 +145,18 @@ public:
         std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;
         const auto& weights_j = weights.weights_j;
         Value output          = 0.;
-        for ( idx_t j = 0; j < stencil_width(); ++j ) {
+        // LINEAR for outer rows  ( j = {0,3} )
+        for ( idx_t j = 0; j < 4; j += 3 ) {
+            const auto& weights_i = weights.weights_i[j];
+            for ( idx_t i : {1, 2} ) {
+                idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
+                Value w = weights_i[i] * weights_j[j];
+                output += w * input[n];
+                index[j][i] = n;
+            }
+        }
+        // CUBIC for inner rows ( j = {1,2} )
+        for ( idx_t j = 1; j < 3; ++j ) {
             const auto& weights_i = weights.weights_i[j];
             for ( idx_t i = 0; i < stencil_width(); ++i ) {
                 idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
@@ -179,11 +205,23 @@ public:
         std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;
         const auto& weights_j = weights.weights_j;
         output( r )           = 0.;
-        for ( idx_t j = 0; j < stencil_width(); ++j ) {
+
+        // LINEAR for outer rows  ( j = {0,3} )
+        for ( idx_t j = 0; j < 4; j += 3 ) {
+            const auto& weights_i = weights.weights_i[j];
+            for ( idx_t i = 1; i < 3; ++i ) {  // i = {1,2}
+                idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
+                Value w = weights_i[i] * weights_j[j];
+                output( r ) += w * input[n];
+                index[j][i] = n;
+            }
+        }
+        // CUBIC for inner rows ( j = {1,2} )
+        for ( idx_t j = 1; j < 3; ++j ) {
             const auto& weights_i = weights.weights_i[j];
             for ( idx_t i = 0; i < stencil_width(); ++i ) {
                 idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
-                Value w = static_cast<Value>( weights_i[i] * weights_j[j] );
+                Value w = weights_i[i] * weights_j[j];
                 output( r ) += w * input[n];
                 index[j][i] = n;
             }
@@ -218,7 +256,6 @@ public:
         }
     }
 
-
     template <typename stencil_t, typename weights_t, typename Value, int Rank>
     typename std::enable_if<( Rank == 2 ), void>::type interpolate( const stencil_t& stencil, const weights_t& weights,
                                                                     const array::ArrayView<Value, Rank>& input,
@@ -230,11 +267,25 @@ public:
         for ( idx_t k = 0; k < Nk; ++k ) {
             output( r, k ) = 0.;
         }
-        for ( idx_t j = 0; j < stencil_width(); ++j ) {
+
+        // LINEAR for outer rows  ( j = {0,3} )
+        for ( idx_t j = 0; j < 4; j += 3 ) {
+            const auto& weights_i = weights.weights_i[j];
+            for ( idx_t i = 1; i < 3; ++i ) {  // i = {1,2}
+                idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
+                Value w = weights_i[i] * weights_j[j];
+                for ( idx_t k = 0; k < Nk; ++k ) {
+                    output( r, k ) += w * input( n, k );
+                }
+                index[j][i] = n;
+            }
+        }
+        // CUBIC for inner rows ( j = {1,2} )
+        for ( idx_t j = 1; j < 3; ++j ) {
             const auto& weights_i = weights.weights_i[j];
             for ( idx_t i = 0; i < stencil_width(); ++i ) {
                 idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
-                Value w = static_cast<Value>( weights_i[i] * weights_j[j] );
+                Value w = weights_i[i] * weights_j[j];
                 for ( idx_t k = 0; k < Nk; ++k ) {
                     output( r, k ) += w * input( n, k );
                 }
@@ -316,7 +367,19 @@ public:
         const auto& wj = ws.weights.weights_j;
 
         idx_t pos = row * stencil_size();
-        for ( idx_t j = 0; j < stencil_width(); ++j ) {
+
+        // LINEAR for outer rows  ( j = {0,3} )
+        for ( idx_t j = 0; j < 4; j += 3 ) {
+            const auto& wi = ws.weights.weights_i[j];
+            for ( idx_t i = 1; i < 3; ++i ) {  // i = {1,2}
+                idx_t col       = src_.index( ws.stencil.i( i, j ), ws.stencil.j( j ) );
+                double w        = wi[i] * wj[j];
+                triplets[pos++] = Triplet( row, col, w );
+            }
+        }
+
+        // CUBIC for inner rows ( j = {1,2} )
+        for ( idx_t j = 1; j < 3; ++j ) {
             const auto& wi = ws.weights.weights_i[j];
             for ( idx_t i = 0; i < stencil_width(); ++i ) {
                 idx_t col       = src_.index( ws.stencil.i( i, j ), ws.stencil.j( j ) );

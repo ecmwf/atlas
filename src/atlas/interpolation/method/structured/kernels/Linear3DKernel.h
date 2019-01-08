@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction. and Interpolation
  */
 
+#pragma once
+
 #include <cmath>
 #include <limits>
 
