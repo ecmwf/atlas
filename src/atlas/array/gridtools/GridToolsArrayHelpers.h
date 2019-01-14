@@ -95,8 +95,7 @@ struct default_layout_t {
         using type = ::gridtools::layout_map<Indices...>;
     };
 
-    using type =
-        typename get_layout<::gridtools::make_gt_integer_sequence<::gridtools::uint_t, Rank> >::type;
+    using type = typename get_layout<::gridtools::make_gt_integer_sequence<::gridtools::uint_t, Rank>>::type;
 };
 
 template <typename Value, typename LayoutMap>
@@ -194,8 +193,8 @@ constexpr idx_t zero( idx_t ) {
 }
 
 template <idx_t... Is>
-ArrayShape make_null_strides(::gridtools::gt_integer_sequence<idx_t, Is...> ) {
-    return make_strides( {zero( Is )...} );
+ArrayStrides make_null_strides(::gridtools::gt_integer_sequence<idx_t, Is...> ) {
+    return make_strides( zero( Is )... );
 }
 
 template <typename UInt>
@@ -232,8 +231,7 @@ ArraySpec ATLAS_HOST make_spec( DataStore* gt_data_store_ptr, Dims... dims ) {
         using Layout          = typename DataStore::storage_info_t::layout_t;
         using Alignment       = typename DataStore::storage_info_t::alignment_t;
 
-        using seq =
-            my_apply_gt_integer_sequence<::gridtools::make_gt_integer_sequence<int, sizeof...( dims )> >;
+        using seq = my_apply_gt_integer_sequence<::gridtools::make_gt_integer_sequence<int, sizeof...( dims )>>;
 
         ArraySpec spec(
             ArrayShape{(idx_t)dims...},
@@ -244,9 +242,8 @@ ArraySpec ATLAS_HOST make_spec( DataStore* gt_data_store_ptr, Dims... dims ) {
         return spec;
     }
     else {
-        return ArraySpec(
-            make_shape( {dims...} ),
-            make_null_strides( ::gridtools::make_gt_integer_sequence<idx_t, sizeof...( dims )>() ) );
+        return ArraySpec( make_shape( {dims...} ),
+                          make_null_strides(::gridtools::make_gt_integer_sequence<idx_t, sizeof...( dims )>() ) );
     }
 }
 #endif
