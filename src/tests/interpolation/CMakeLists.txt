@@ -35,3 +35,8 @@ ecbuild_add_test( TARGET atlas_test_interpolation_bilinear
 ecbuild_add_test( TARGET atlas_test_interpolation_bicubic
   COMMAND atlas_test_interpolation_structured2D ARGS --scheme cubic
 )
+
+ecbuild_add_test( TARGET atlas_test_interpolation_biquasicubic
+  COMMAND atlas_test_interpolation_structured2D ARGS --scheme quasicubic
+)
+

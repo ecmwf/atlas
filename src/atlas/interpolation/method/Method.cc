@@ -12,7 +12,6 @@
 
 #include <map>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Vector.h"
 #include "eckit/log/Timer.h"
@@ -24,6 +23,7 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 
@@ -68,7 +68,7 @@ MethodFactory::MethodFactory( const std::string& name ) : name_( name ) {
 
     if ( m->find( name ) != m->end() ) { throw eckit::SeriousBug( "MethodFactory duplicate '" + name + "'" ); }
 
-    ASSERT( m->find( name ) == m->end() );
+    ATLAS_ASSERT( m->find( name ) == m->end() );
     ( *m )[name] = this;
 }
 
@@ -97,14 +97,14 @@ Method* MethodFactory::build( const std::string& name, const Method::Config& con
 }
 
 void Method::check_compatibility( const Field& src, const Field& tgt ) const {
-    ASSERT( src.datatype() == tgt.datatype() );
-    ASSERT( src.rank() == tgt.rank() );
-    ASSERT( src.levels() == tgt.levels() );
-    ASSERT( src.variables() == tgt.variables() );
+    ATLAS_ASSERT( src.datatype() == tgt.datatype() );
+    ATLAS_ASSERT( src.rank() == tgt.rank() );
+    ATLAS_ASSERT( src.levels() == tgt.levels() );
+    ATLAS_ASSERT( src.variables() == tgt.variables() );
 
-    ASSERT( !matrix_.empty() );
-    ASSERT( tgt.shape( 0 ) == static_cast<idx_t>( matrix_.rows() ) );
-    ASSERT( src.shape( 0 ) == static_cast<idx_t>( matrix_.cols() ) );
+    ATLAS_ASSERT( !matrix_.empty() );
+    ATLAS_ASSERT( tgt.shape( 0 ) == static_cast<idx_t>( matrix_.rows() ) );
+    ATLAS_ASSERT( src.shape( 0 ) == static_cast<idx_t>( matrix_.cols() ) );
 }
 
 template <typename Value>
@@ -127,8 +127,8 @@ void Method::interpolate_field_rank1( const Field& src, Field& tgt ) const {
             throw eckit::NotImplemented(
                 "Only double precision interpolation is currently implemented with eckit backend", Here() );
         }
-        ASSERT( src.array().contiguous() );
-        ASSERT( tgt.array().contiguous() );
+        ATLAS_ASSERT( src.array().contiguous() );
+        ATLAS_ASSERT( tgt.array().contiguous() );
 
         eckit::linalg::Vector v_src( array::make_view<double, 1>( src ).data(), src.shape( 0 ) );
         eckit::linalg::Vector v_tgt( array::make_view<double, 1>( tgt ).data(), tgt.shape( 0 ) );
@@ -212,18 +212,18 @@ Method::Method( const Method::Config& config ) {
 }
 
 void Method::setup( const FunctionSpace& /*source*/, const Field& /*target*/ ) {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 void Method::setup( const FunctionSpace& /*source*/, const FieldSet& /*target*/ ) {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 void Method::execute( const FieldSet& fieldsSource, FieldSet& fieldsTarget ) const {
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
 
     const idx_t N = fieldsSource.size();
-    ASSERT( N == fieldsTarget.size() );
+    ATLAS_ASSERT( N == fieldsTarget.size() );
 
     for ( idx_t i = 0; i < fieldsSource.size(); ++i ) {
         Log::debug() << "Method::execute() on field " << ( i + 1 ) << '/' << N << "..." << std::endl;

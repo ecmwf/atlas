@@ -46,6 +46,10 @@ static Config scheme() {
         scheme.set( "type", "structured-cubic2D" );
         scheme.set( "halo", 2 );
     }
+    if ( scheme_str == "quasicubic" ) {
+        scheme.set( "type", "structured-quasicubic2D" );
+        scheme.set( "halo", 2 );
+    }
     scheme.set( "name", scheme_str );
     return scheme;
 }
@@ -158,6 +162,8 @@ CASE( "test_interpolation_structured using functionspace API" ) {
             source( n ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 1. );
         }
 
+        EXPECT( field_source.dirty() );
+
         interpolation.execute( field_source, field_target );
     };
 
@@ -200,6 +206,13 @@ CASE( "test_interpolation_structured using grid API" ) {
         Field field_source{"source", src_data.data(), array::make_shape( src_data.size() )};
         Field field_target{"target", tgt_data.data(), array::make_shape( tgt_data.size() )};
 
+        // Wrapping data does not set the field to have dirty halo's
+        {
+            EXPECT( not field_source.dirty() );
+            field_source.set_dirty();
+        }
+
+        EXPECT( field_source.dirty() );
         interpolation.execute( field_source, field_target );
 
         ATLAS_TRACE_SCOPE( "output" ) {
