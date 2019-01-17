@@ -5,3 +5,6 @@ doc/html
 doc/latex
 *.sublime-workspace
 .nfs*
+build/*
+install/*
+env.sh

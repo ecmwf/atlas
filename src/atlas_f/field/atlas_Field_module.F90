@@ -1,14 +1,14 @@
 #include "atlas/atlas_f.h"
 
-#:setvar ranks [1,2,3,4]
-#:setvar dim   ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
-#:setvar ftypes ['integer(c_int)','integer(c_long)','real(c_float)','real(c_double)', 'logical']
-#:setvar ctypes ['int','long','float','double', 'int']
-#:setvar dtypes ['int32', 'int64', 'real32', 'real64', 'logical32']
-#:setvar types list(zip(dtypes,ftypes,ctypes))
+#:set ranks  = [1,2,3,4]
+#:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
+#:set ftypes = ['integer(c_int)','integer(c_long)','real(c_float)','real(c_double)', 'logical']
+#:set ctypes = ['int','long','float','double', 'int']
+#:set dtypes = ['int32', 'int64', 'real32', 'real64', 'logical32']
+#:set types  = list(zip(dtypes,ftypes,ctypes))
 
 #:def atlas_abort(string)
-atlas_abort("${string}$",atlas_code_location("atlas_Field_module.F90",${_LINE_}$))
+atlas_abort( "${string}$", atlas_code_location( "${_FILE_}$", ${_LINE_}$) )
 #:enddef
 
 module atlas_field_module
@@ -24,10 +24,7 @@ public :: atlas_integer
 public :: atlas_logical
 public :: atlas_data_type
 
-character(len=*), parameter :: filename = 'atlas_Field_module.F90'
-
 private
-
 
 !------------------------------------------------------------------------------
 TYPE, extends(fckit_owned_object) :: atlas_Field
@@ -607,7 +604,7 @@ function Field__shape_idx(this,idx) result(shape_val)
   call atlas__Field__shapef(this%CPTR_PGIBUG_A, shape_c_ptr, field_rank)
   call c_f_pointer ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
   if( idx > field_rank ) call atlas_throw_outofrange("shape",idx,field_rank, &
-& atlas_code_location(filename,__LINE__))
+& atlas_code_location("${_FILE_}",__LINE__))
   shape_val = shape_f_ptr(idx)
 end function Field__shape_idx
 
