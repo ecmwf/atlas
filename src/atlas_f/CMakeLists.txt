@@ -7,7 +7,8 @@
 # does it submit to any jurisdiction.
 
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/atlas_f.h.in
-                ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h )
+                ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h @ONLY )
+set( atlas_f_h ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h )
 
 install( FILES
   ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h
@@ -127,9 +128,6 @@ generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_read_file.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/Library.h)
 generate_fortran_bindings(FORTRAN_BINDINGS runtime/atlas_trace.h MODULE atlas_trace_c_binding OUTPUT atlas_trace_c_binding.f90 )
 
-fckit_preprocess_fypp( atlas_f_src SOURCES field/atlas_Field_module.F90 )
-
-ecbuild_debug_var( atlas_f_src )
 
 ### atlas fortran lib
 ecbuild_add_library( TARGET atlas_f
@@ -137,7 +135,6 @@ ecbuild_add_library( TARGET atlas_f
     CONDITION CMAKE_Fortran_COMPILER_LOADED
     SOURCES
         ${FORTRAN_BINDINGS}
-        ${atlas_f_src}
         atlas_module.F90
         util/atlas_kinds_module.F90
         util/atlas_JSON_module.F90
@@ -153,6 +150,7 @@ ecbuild_add_library( TARGET atlas_f
         functionspace/atlas_functionspace_Spectral_module.F90
         field/atlas_FieldSet_module.F90
         field/atlas_State_module.F90
+        field/atlas_Field_module.fypp.F90
         grid/atlas_Grid_module.F90
         grid/atlas_GridDistribution_module.F90
         grid/atlas_Vertical_module.F90
@@ -189,3 +187,5 @@ ecbuild_add_library( TARGET atlas_f
 
   LIBS atlas fckit
 )
+
+fckit_target_preprocess_fypp( atlas_f DEPENDS ${atlas_f_h} )

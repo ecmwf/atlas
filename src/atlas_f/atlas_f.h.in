@@ -13,12 +13,7 @@
 #define ATLAS_BITS_GLOBAL @ATLAS_BITS_GLOBAL@
 #define ATLAS_BITS_LOCAL @ATLAS_BITS_LOCAL@
 
-#ifdef FCKIT_FINAL
 #define ATLAS_FINAL FCKIT_FINAL
-#else
-! Compatibility with fckit < v0.5.1
-#define ATLAS_FINAL
-#endif
 
 #ifndef PGIBUG_ATLAS_197
 #define CPTR_PGIBUG_A c_ptr()
@@ -30,4 +25,98 @@
 // clang-format on
 #endif
 
+#endif
+
+#ifdef ALWAYS_IGNORE_THIS_WITH_NORMAL_PREPROCESSOR
+#:mute
+
+
+#:def ATLAS_ABORT( string )
+#!   Abort with message
+#!   Usage:
+#!      if( condition ) @{ ATLAS_ABORT( "error message" ) }@
+#!
+  call fckit_exception%abort( ${string}$, "${_FILE_}$", ${_LINE_}$ )
+#:enddef
+
+#:def ENABLE_ATLAS_ABORT()
+#!   Use this macro in the "use <module>" location to enable 
+#!   Usage:
+#!        @:ENABLE_ATLAS_ABORT()
+  use fckit_exception_module, only : fckit_exception
+#:enddef
+
+
+#:def ENABLE_ATLAS_ASSERT()
+#!   Use this macro in the "use <module>" location to enable 
+#!   Usage:
+#!        @:ENABLE_ATLAS_ABORT()
+  use fckit_exception_module, only : fckit_exception
+#:enddef
+
+#:def ATLAS_ASSERT( cond )
+#!   Assert condition evaluates to .True. , otherwise abort
+#!   Usage:
+#!      @:ATLAS_ASSERT( cond )
+#!   or inline:
+#!      @{ ATLAS_ASSERT( cond ) }@
+#!
+if (.not. (${cond}$)) then
+  call fckit_exception%abort( '${cond.replace("'", "''")}$', "${_FILE_}$", ${_LINE_}$ )
+end if
+#:enddef
+
+#:def ENABLE_ATLAS_TRACE()
+#!   Use this macro in the "use <module>" location to enable 
+#!   Usage:
+#!        @:ENABLE_ATLAS_TRACE()
+  use atlas_trace_module, only : atlas_Trace
+#:enddef
+#:def ATLAS_TRACE( title, labels = None )
+#!   Create a right-hand-side atlas_Trace object in a nicer way
+#!   Usage:
+#!      type( atlas_Trace ) :: trace
+#!      trace = @{ ATLAS_TRACE( "title" ) }@
+#!      ...
+#!      call trace%final()
+#!
+#!   or with labels:
+#!      type( atlas_Trace ) :: trace
+#!      trace = @{ ATLAS_TRACE( "title", {"label1","label2"} ) }@
+#!      ...
+#!      call trace%final()
+#!
+  #:if labels is not None
+    atlas_Trace( "${_FILE_}$", ${_LINE_}$, ${title}$, ${labels}$ )
+  #:else
+    atlas_Trace( "${_FILE_}$", ${_LINE_}$, ${title}$ )
+  #:endif
+#:enddef
+
+#:def ATLAS_TRACE_BEGIN( trace, title, labels = None )
+#!   Create a right-hand-side atlas_Trace object in a nicer way
+#!   Usage:
+#!      type( atlas_Trace ) :: trace
+#!      trace = @{ ATLAS_TRACE( "title" ) }@
+#!      ...
+#!      call trace%final()
+#!
+#!   or with labels:
+#!      type( atlas_Trace ) :: trace
+#!      trace = @{ ATLAS_TRACE( "title", {"label1","label2"} ) }@
+#!      ...
+#!      call trace%final()
+#!
+  #:if labels is not None
+    ${trace}$ = atlas_Trace( "${_FILE_}$", ${_LINE_}$, ${title}$, ${labels}$ )
+  #:else
+    ${trace}$ = atlas_Trace( "${_FILE_}$", ${_LINE_}$, ${title}$ )
+  #:endif
+#:enddef
+
+#:def ATLAS_TRACE_END( trace )
+  call ${trace}$ % final()
+#:enddef
+
+#:endmute
 #endif

@@ -1,4 +1,4 @@
-#include "atlas/atlas_f.h"
+#:include "atlas/atlas_f.h"
 
 #:set ranks  = [1,2,3,4]
 #:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
