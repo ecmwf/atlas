@@ -8,7 +8,6 @@
 
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/atlas_f.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h @ONLY )
-set( atlas_f_h ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h )
 
 install( FILES
   ${CMAKE_CURRENT_BINARY_DIR}/../atlas/atlas_f.h
@@ -188,4 +187,4 @@ ecbuild_add_library( TARGET atlas_f
   LIBS atlas fckit
 )
 
-fckit_target_preprocess_fypp( atlas_f DEPENDS ${atlas_f_h} )
+fckit_target_preprocess_fypp( atlas_f DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/atlas_f.h.in )
