@@ -10,14 +10,14 @@
 ! @author Willem Deconinck
 
 #include "fckit/fctest.h"
-#:include "atlas/atlas_f.h"
+#:include "atlas/atlas_f.fypp"
 
 ! -----------------------------------------------------------------------------
 
 module fcta_trace_fixture
 use atlas_module
 use, intrinsic :: iso_c_binding
-@:ENABLE_ATLAS_TRACE()
+@:ENABLE_ATLAS_MACROS()
 implicit none
 contains
 end module

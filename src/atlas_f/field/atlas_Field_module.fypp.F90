@@ -1,4 +1,5 @@
-#:include "atlas/atlas_f.h"
+
+#:include "atlas/atlas_f.fypp"
 
 #:set ranks  = [1,2,3,4]
 #:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
@@ -6,16 +7,18 @@
 #:set ctypes = ['int','long','float','double', 'int']
 #:set dtypes = ['int32', 'int64', 'real32', 'real64', 'logical32']
 #:set types  = list(zip(dtypes,ftypes,ctypes))
+#:set integer_ftypes = ['integer(c_int)','integer(c_long)']
+#:set integer_ctypes = ['int','long']
+#:set integer_dtypes = ['int32', 'int64']
+#:set integer_types  = list(zip(integer_dtypes,integer_ftypes,integer_ctypes))
 
-#:def atlas_abort(string)
-atlas_abort( "${string}$", atlas_code_location( "${_FILE_}$", ${_LINE_}$) )
-#:enddef
+#include "atlas/atlas_f.h"
 
 module atlas_field_module
 
 use fckit_owned_object_module, only : fckit_owned_object
-use atlas_Error_module, only: atlas_code_location, atlas_abort, atlas_throw_outofrange
 use atlas_Config_module, only: atlas_Config
+
 implicit none
 
 public :: atlas_Field
@@ -119,10 +122,10 @@ END TYPE atlas_Field
 interface atlas_Field
   module procedure atlas_Field__cptr
   module procedure atlas_Field__create
-  module procedure atlas_Field__create_name_kind_shape_int32
-  module procedure atlas_Field__create_name_kind_shape_int64
-  module procedure atlas_Field__create_kind_shape_int32
-  module procedure atlas_Field__create_kind_shape_int64
+#:for dtype in integer_dtypes
+  module procedure atlas_Field__create_name_kind_shape_${dtype}$
+  module procedure atlas_Field__create_kind_shape_${dtype}$
+#:endfor
 
 #:for rank in ranks
 #:for dtype in dtypes[:-1]  #! skip logical types
@@ -152,7 +155,6 @@ end interface
 
 
 private :: fckit_owned_object
-private :: atlas_code_location, atlas_abort, atlas_throw_outofrange
 private :: atlas_Config
 
 !========================================================
@@ -164,7 +166,7 @@ contains
 !-------------------------------------------------------------------------------
 subroutine array_c_to_f_${dtype}$_r${rank}$(array_cptr,rank,shape_cptr,strides_cptr,array_fptr)
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_double, c_long, c_float, c_f_pointer
-
+  @:ENABLE_ATLAS_MACROS()
   type(c_ptr), intent(in) :: array_cptr
   integer(c_int), intent(in) :: rank
   type(c_ptr), intent(in) :: shape_cptr
@@ -176,7 +178,9 @@ subroutine array_c_to_f_${dtype}$_r${rank}$(array_cptr,rank,shape_cptr,strides_c
   integer :: eshape(${rank}$)
   integer :: j
 
-  if( rank /= ${rank}$ ) call ${atlas_abort("Rank mismatch")}$
+  if( rank /= ${rank}$ ) then
+    @:ATLAS_ABORT("Rank mismatch")
+  endif
 
   call c_f_pointer ( shape_cptr,   shape ,   [rank] )
   call c_f_pointer ( strides_cptr, strides , [rank] )
@@ -274,13 +278,14 @@ end subroutine
 
 integer function atlas_real(kind)
   use, intrinsic :: iso_c_binding, only : c_double, c_float
+  @:ENABLE_ATLAS_MACROS()
   integer :: kind
   if (kind == c_double) then
     atlas_real = ATLAS_KIND_REAL64
   else if (kind == c_float) then
     atlas_real = ATLAS_KIND_REAL32
   else
-    call ${atlas_abort("Unsupported real kind")}$
+    @:ATLAS_ABORT("Unsupported real kind")
   end if
 end function
 
@@ -288,6 +293,7 @@ end function
 
 integer function atlas_integer(kind)
   use, intrinsic :: iso_c_binding, only : c_int, c_long
+  @:ENABLE_ATLAS_MACROS()
   integer, optional :: kind
   atlas_integer = ATLAS_KIND_INT32
   if ( present(kind) ) then
@@ -296,7 +302,7 @@ integer function atlas_integer(kind)
     else if (kind == c_long) then
       atlas_integer = ATLAS_KIND_INT64
     else
-      call ${atlas_abort("Unsupported real kind")}$
+      @:ATLAS_ABORT("Unsupported integer kind")
     end if
   end if
 end function
@@ -312,6 +318,7 @@ end function
 !-------------------------------------------------------------------------------
 
 function atlas_data_type(kind)
+  @:ENABLE_ATLAS_MACROS()
   character(len=6) :: atlas_data_type
   integer, intent(in) :: kind
   if( kind == ATLAS_KIND_INT32 ) then
@@ -323,7 +330,7 @@ function atlas_data_type(kind)
   else if( kind == ATLAS_KIND_REAL64 ) then
     atlas_data_type = "real64"
   else
-    call ${atlas_abort("cannot convert kind to data_type")}$
+    @:ATLAS_ABORT("cannot convert kind to data_type")
   endif
 end function
 
@@ -349,60 +356,14 @@ end function
 
 !-------------------------------------------------------------------------------
 
-function atlas_Field__create_name_kind_shape_int32(name,kind,shape) result(field)
+#:for dtype, ftype, ctype in integer_types
+function atlas_Field__create_name_kind_shape_${dtype}$(name,kind,shape) result(field)
   use atlas_field_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int
+  use, intrinsic :: iso_c_binding, only : c_int, c_long
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
-  integer, intent(in) :: kind
-  integer(c_int), intent(in) :: shape(:)
-
-  type(atlas_Config) :: params
-
-  params = atlas_Config()
-  call params%set("creator","ArraySpec")
-  call params%set("shape",shape)
-  call params%set("fortran",.True.)
-  call params%set("datatype",atlas_data_type(kind))
-  call params%set("name",name)
-
-  field = atlas_Field__cptr( atlas__Field__create(params%CPTR_PGIBUG_B) )
-  call params%final()
-  call field%return()
-end function
-
-!-------------------------------------------------------------------------------
-
-function atlas_Field__create_name_kind_shape_int64(name,kind,shape) result(field)
-  use atlas_field_c_binding
-  use, intrinsic :: iso_c_binding, only : c_long
-  type(atlas_Field) :: field
-  character(len=*), intent(in) :: name
-  integer, intent(in) :: kind
-  integer(c_long), intent(in) :: shape(:)
-
-  type(atlas_Config) :: params
-
-  params = atlas_Config()
-  call params%set("creator","ArraySpec")
-  call params%set("shape",shape)
-  call params%set("fortran",.True.)
-  call params%set("datatype",atlas_data_type(kind))
-  call params%set("name",name)
-
-  field = atlas_Field__cptr( atlas__Field__create(params%CPTR_PGIBUG_B) )
-  call params%final()
-  call field%return()
-end function
-
-!-------------------------------------------------------------------------------
-
-function atlas_Field__create_kind_shape_int32(kind,shape) result(field)
-  use atlas_field_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int
-  type(atlas_Field) :: field
   integer(c_int), intent(in) :: kind
-  integer, intent(in) :: shape(:)
+  ${ftype}$, intent(in) :: shape(:)
 
   type(atlas_Config) :: params
 
@@ -411,18 +372,21 @@ function atlas_Field__create_kind_shape_int32(kind,shape) result(field)
   call params%set("shape",shape)
   call params%set("fortran",.True.)
   call params%set("datatype",atlas_data_type(kind))
+  call params%set("name",name)
 
   field = atlas_Field__cptr( atlas__Field__create(params%CPTR_PGIBUG_B) )
   call params%final()
   call field%return()
 end function
 
-function atlas_Field__create_kind_shape_int64(kind,shape) result(field)
+!-------------------------------------------------------------------------------
+
+function atlas_Field__create_kind_shape_${dtype}$(kind,shape) result(field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_int, c_long
   type(atlas_Field) :: field
   integer(c_int), intent(in) :: kind
-  integer(c_long), intent(in) :: shape(:)
+  ${ftype}$, intent(in) :: shape(:)
 
   type(atlas_Config) :: params
 
@@ -436,7 +400,7 @@ function atlas_Field__create_kind_shape_int64(kind,shape) result(field)
   call params%final()
   call field%return()
 end function
-
+#:endfor
 
 !-------------------------------------------------------------------------------
 
@@ -595,6 +559,7 @@ end function Field__shape_array
 function Field__shape_idx(this,idx) result(shape_val)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_f_pointer
+  @:ENABLE_ATLAS_MACROS()
   integer :: shape_val
   class(atlas_Field), intent(in) :: this
   integer, intent(in) :: idx
@@ -603,8 +568,7 @@ function Field__shape_idx(this,idx) result(shape_val)
   integer(c_int) :: field_rank
   call atlas__Field__shapef(this%CPTR_PGIBUG_A, shape_c_ptr, field_rank)
   call c_f_pointer ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
-  if( idx > field_rank ) call atlas_throw_outofrange("shape",idx,field_rank, &
-& atlas_code_location("${_FILE_}",__LINE__))
+  @:ATLAS_ASSERT( idx > field_rank )
   shape_val = shape_f_ptr(idx)
 end function Field__shape_idx
 
