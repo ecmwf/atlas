@@ -66,7 +66,7 @@ implicit none
 
   type(atlas_Trace) :: trace
 
-  trace = atlas_Trace("${_FILE_}$",__LINE__,"test_trace")
+  trace = atlas_Trace("${_FILE_}$",${_LINE_}$,"test_trace")
 
   FCTEST_CHECK( trace%running() )
 
