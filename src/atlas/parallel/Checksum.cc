@@ -94,6 +94,11 @@ void atlas__Checksum__execute_strided_double( Checksum* This, double lfield[], i
     std::strcpy( checksum, This->execute( lfield, lvar_strides, lvar_extents, lvar_rank ).c_str() );
 }
 
+void atlas__Checksum__execute_strided_long( Checksum* This, long lfield[], int lvar_strides[], int lvar_extents[],
+                                              int lvar_rank, char* checksum ) {
+    std::strcpy( checksum, This->execute( lfield, lvar_strides, lvar_extents, lvar_rank ).c_str() );
+}
+
 // const char* atlas__Checksum__execute_strided_double (Checksum* This,
 //                                            double lfield[], int
 //                                            lvar_strides[], int

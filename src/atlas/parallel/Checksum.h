@@ -159,6 +159,8 @@ void atlas__Checksum__execute_strided_float( Checksum* This, float lfield[], int
                                              int lvar_rank, char* checksum );
 void atlas__Checksum__execute_strided_double( Checksum* This, double lfield[], int lvar_strides[], int lvar_extents[],
                                               int lvar_rank, char* checksum );
+void atlas__Checksum__execute_strided_long( Checksum* This, long lfield[], int lvar_strides[], int lvar_extents[],
+                                              int lvar_rank, char* checksum );
 }
 // ------------------------------------------------------------------
 

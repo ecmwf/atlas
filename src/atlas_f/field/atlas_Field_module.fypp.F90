@@ -1,18 +1,7 @@
+#include "atlas/atlas_f.h"
 
 #:include "atlas/atlas_f.fypp"
-
-#:set ranks  = [1,2,3,4]
-#:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
-#:set ftypes = ['integer(c_int)','integer(c_long)','real(c_float)','real(c_double)', 'logical']
-#:set ctypes = ['int','long','float','double', 'int']
-#:set dtypes = ['int32', 'int64', 'real32', 'real64', 'logical32']
-#:set types  = list(zip(dtypes,ftypes,ctypes))
-#:set integer_ftypes = ['integer(c_int)','integer(c_long)']
-#:set integer_ctypes = ['int','long']
-#:set integer_dtypes = ['int32', 'int64']
-#:set integer_types  = list(zip(integer_dtypes,integer_ftypes,integer_ctypes))
-
-#include "atlas/atlas_f.h"
+#:include "internals/atlas_generics.fypp"
 
 module atlas_field_module
 
@@ -568,7 +557,7 @@ function Field__shape_idx(this,idx) result(shape_val)
   integer(c_int) :: field_rank
   call atlas__Field__shapef(this%CPTR_PGIBUG_A, shape_c_ptr, field_rank)
   call c_f_pointer ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
-  @:ATLAS_ASSERT( idx > field_rank )
+  @:ATLAS_ASSERT( idx <= field_rank )
   shape_val = shape_f_ptr(idx)
 end function Field__shape_idx
 
