@@ -179,13 +179,10 @@ size_t legendre_size( const size_t truncation ) {
 //    // using ceil here should make it possible to have odd number of latitudes (with the centre latitude being the equator)
 //}
 
-int num_n( const int truncation, const int m, const bool symmetric ) {
-    int len = 0;
-    if ( symmetric ) { len = ( truncation - m + 2 ) / 2; }
-    else {
-        len = ( truncation - m + 1 ) / 2;
-    }
-    return len;
+size_t num_n( const int truncation, const int m, const bool symmetric ) {
+    int len = ( truncation - m + (symmetric ? 2 : 1) ) / 2;
+    ASSERT(len >= 0);
+    return size_t(len);
 }
 
 class AllocationFailed : public eckit::Exception {
@@ -216,8 +213,20 @@ void free_aligned( double*& ptr ) {
     ptr = nullptr;
 }
 
-int add_padding( int n ) {
-    return int( std::ceil( n / 8. ) ) * 8;
+void alloc_aligned( double*& ptr, size_t n, const char* msg ) {
+    ASSERT(msg);
+    Log::debug() << "TransLocal: allocating '" << msg << "': " << eckit::Bytes(sizeof( double ) * n) << std::endl;
+    alloc_aligned(ptr, n);
+}
+
+void free_aligned( double*& ptr, const char* msg ) {
+    ASSERT(msg);
+    Log::debug() << "TransLocal: dellocating '" << msg << "'" << std::endl;
+    free_aligned(ptr);
+}
+
+size_t add_padding( size_t n ) {
+    return size_t( std::ceil( n / 8. ) ) * 8;
 }
 
 }  // namespace
@@ -472,15 +481,16 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
 
         // precomputations for Legendre polynomials:
         {
-            int size_sym  = 0;
-            int size_asym = 0;
+            const auto nlatsLeg = size_t(nlatsLeg_);
+            size_t size_sym  = 0;
+            size_t size_asym = 0;
             legendre_sym_begin_.resize( truncation_ + 3 );
             legendre_asym_begin_.resize( truncation_ + 3 );
             legendre_sym_begin_[0]  = 0;
             legendre_asym_begin_[0] = 0;
             for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
-                size_sym += add_padding( num_n( truncation_ + 1, jm, true ) * nlatsLeg_ );
-                size_asym += add_padding( num_n( truncation_ + 1, jm, false ) * nlatsLeg_ );
+                size_sym  += add_padding( num_n( truncation_ + 1, jm, true )  * nlatsLeg );
+                size_asym += add_padding( num_n( truncation_ + 1, jm, false ) * nlatsLeg );
                 legendre_sym_begin_[jm + 1]  = size_sym;
                 legendre_asym_begin_[jm + 1] = size_asym;
             }
@@ -495,7 +505,11 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             else {
                 if ( TransParameters( config ).export_legendre() ) {
                     ASSERT( not cache_.legendre() );
-                    export_legendre_    = LegendreCache( sizeof( double ) * ( size_sym + size_asym ) );
+
+                    double bytes = sizeof( double ) * ( size_sym + size_asym );
+                    Log::debug() << "Allocating " << eckit::Bytes(bytes) << " (LegendreCache)" << std::endl;
+                    export_legendre_ = LegendreCache(bytes);
+
                     legendre_cachesize_ = export_legendre_.legendre().size();
                     legendre_cache_     = export_legendre_.legendre().data();
                     ReadCache legendre( legendre_cache_ );
@@ -503,8 +517,8 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                     legendre_asym_ = legendre.read<double>( size_asym );
                 }
                 else {
-                    alloc_aligned( legendre_sym_, size_sym );
-                    alloc_aligned( legendre_asym_, size_asym );
+                    alloc_aligned( legendre_sym_, size_sym, "symmetric" );
+                    alloc_aligned( legendre_asym_, size_asym, "assymmetric" );
                 }
 
                 ATLAS_TRACE_SCOPE( "Legendre precomputations (structured)" ) {
@@ -600,7 +614,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 << "WARNING: Spectral transform results may contain aliasing errors. This will be addressed soon."
                 << std::endl;
 
-            alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlonsMax );
+            alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlonsMax, "Fourier coeffs." );
 #if !TRANSLOCAL_DGEMM2
             {
                 ATLAS_TRACE( "Fourier precomputations (NoFFT)" );
@@ -650,7 +664,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             }
 
             std::vector<double> lats( grid_.size() );
-            alloc_aligned( legendre_, legendre_size( truncation_ ) * grid_.size() );
+            alloc_aligned( legendre_, legendre_size( truncation_ ) * grid_.size(), "Legendre coeffs." );
             int j( 0 );
             for ( PointLonLat p : grid_.lonlat() ) {
                 lats[j++] = p.lat() * util::Constants::degreesToRadians();
@@ -682,8 +696,8 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const long truncat
 TransLocal::~TransLocal() {
     if ( StructuredGrid( grid_ ) && not grid_.projection() ) {
         if ( not legendre_cache_ ) {
-            free_aligned( legendre_sym_ );
-            free_aligned( legendre_asym_ );
+            free_aligned( legendre_sym_, "symmetric" );
+            free_aligned( legendre_asym_, "assymmetric" );
         }
         if ( useFFT_ ) {
 #if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
@@ -695,11 +709,13 @@ TransLocal::~TransLocal() {
 #endif
         }
         else {
-            free_aligned( fourier_ );
+            free_aligned( fourier_, "Fourier coeffs." );
         }
     }
     else {
-        if ( unstruct_precomp_ ) { free_aligned( legendre_ ); }
+        if ( unstruct_precomp_ ) {
+            free_aligned( legendre_, "Legendre coeffs." );
+        }
     }
 }
 
@@ -763,10 +779,9 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                      << nlatsGlobal_ / 2 << std::endl;
         ATLAS_TRACE( "Inverse Legendre Transform (GEMM)" );
         for ( int jm = 0; jm <= truncation_; jm++ ) {
-            int size_sym  = num_n( truncation_ + 1, jm, true );
-            int size_asym = num_n( truncation_ + 1, jm, false );
-            int n_imag    = 2;
-            if ( jm == 0 ) { n_imag = 1; }
+            size_t size_sym  = num_n( truncation_ + 1, jm, true );
+            size_t size_asym = num_n( truncation_ + 1, jm, false );
+            const int n_imag = (jm ? 2 : 1);
             int size_fourier = nb_fields * n_imag * ( nlatsLegReduced_ - nlat0_[jm] );
             if ( size_fourier > 0 ) {
                 auto posFourier = [&]( int jfld, int imag, int jlat, int jm, int nlatsH ) {
