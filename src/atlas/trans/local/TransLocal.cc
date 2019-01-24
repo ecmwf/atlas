@@ -507,7 +507,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                     ASSERT( not cache_.legendre() );
 
                     double bytes = sizeof( double ) * ( size_sym + size_asym );
-                    Log::debug() << "Allocating " << eckit::Bytes(bytes) << " (LegendreCache)" << std::endl;
+                    Log::debug() << "TransLocal: allocating LegendreCache: " << eckit::Bytes(bytes) << std::endl;
                     export_legendre_ = LegendreCache(bytes);
 
                     legendre_cachesize_ = export_legendre_.legendre().size();
@@ -518,7 +518,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 }
                 else {
                     alloc_aligned( legendre_sym_, size_sym, "symmetric" );
-                    alloc_aligned( legendre_asym_, size_asym, "assymmetric" );
+                    alloc_aligned( legendre_asym_, size_asym, "asymmetric" );
                 }
 
                 ATLAS_TRACE_SCOPE( "Legendre precomputations (structured)" ) {
@@ -697,7 +697,7 @@ TransLocal::~TransLocal() {
     if ( StructuredGrid( grid_ ) && not grid_.projection() ) {
         if ( not legendre_cache_ ) {
             free_aligned( legendre_sym_, "symmetric" );
-            free_aligned( legendre_asym_, "assymmetric" );
+            free_aligned( legendre_asym_, "asymmetric" );
         }
         if ( useFFT_ ) {
 #if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
