@@ -1033,7 +1033,7 @@ void TransLocal::invtrans_fourier_reduced( const int nlats, const StructuredGrid
 #if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
         {
             {
-                ATLAS_TRACE( "Inverse Fourier Transform (FFTW, ReducedGid)" );
+                ATLAS_TRACE( "Inverse Fourier Transform (FFTW, ReducedGrid)" );
                 int jgp = 0;
                 for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                     for ( int jlat = 0; jlat < nlats; jlat++ ) {
