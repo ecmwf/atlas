@@ -161,11 +161,11 @@ void compute_legendre_polynomials(
     auto legendre_size = [&]( int truncation ) { return ( truncation + 2 ) * ( truncation + 1 ) / 2; };
     std::vector<double> legpol( legendre_size( trc ) );
     std::vector<double> zfn( ( trc + 1 ) * ( trc + 1 ) );
-    auto idxmn = [&]( int jm, int jn ) { return ( 2 * trc + 3 - jm ) * jm / 2 + jn - jm; };
+    auto idxmn = [&]( size_t jm, size_t jn ) { return ( 2 * trc + 3 - jm ) * jm / 2 + jn - jm; };
     compute_zfn( trc, zfn.data() );
 
     // Loop over latitudes:
-    for ( int jlat = 0; jlat < nlats; ++jlat ) {
+    for ( size_t jlat = 0; jlat < size_t(nlats); ++jlat ) {
         // compute legendre polynomials for current latitude:
         compute_legendre_polynomials_lat( trc, lats[jlat], legpol.data(), zfn.data() );
 
@@ -173,15 +173,13 @@ void compute_legendre_polynomials(
         {
             //ATLAS_TRACE( "add to global arrays" );
 
-            for ( int jm = 0; jm <= trc; jm++ ) {
-                int is1 = 0, ia1 = 0;
-                for ( int jn = jm; jn <= trc; jn++ ) {
-                    if ( ( jn - jm ) % 2 == 0 ) { is1++; }
-                    else {
-                        ia1++;
-                    }
+            for ( size_t jm = 0; jm <= trc; jm++ ) {
+                size_t is1 = 0, ia1 = 0;
+                for ( size_t jn = jm; jn <= trc; jn++ ) {
+                    ( jn - jm ) % 2 ? ia1++ : is1++;
                 }
-                int is2 = 0, ia2 = 0;
+
+                size_t is2 = 0, ia2 = 0;
                 // the choice between the following two code lines determines whether
                 // total wavenumbers are summed in an ascending or descending order.
                 // The trans library in IFS uses descending order because it should
@@ -189,13 +187,14 @@ void compute_legendre_polynomials(
                 // This also needs to be changed when splitting the spectral data in
                 // TransLocal::invtrans_uv!
                 //for ( int jn = jm; jn <= trc; jn++ ) {
-                for ( int jn = trc; jn >= jm; jn-- ) {
+                for ( long ljn = long(trc), ljm = long(jm); ljn >= ljm; ljn-- ) {
+                    size_t jn = size_t(ljn);
                     if ( ( jn - jm ) % 2 == 0 ) {
-                        int is      = leg_start_sym[jm] + is1 * jlat + is2++;
+                        size_t is   = leg_start_sym[jm] + is1 * jlat + is2++;
                         leg_sym[is] = legpol[idxmn( jm, jn )];
                     }
                     else {
-                        int ia       = leg_start_asym[jm] + ia1 * jlat + ia2++;
+                        size_t ia    = leg_start_asym[jm] + ia1 * jlat + ia2++;
                         leg_asym[ia] = legpol[idxmn( jm, jn )];
                     }
                 }
