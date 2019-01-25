@@ -17,11 +17,12 @@ namespace util {
 uidx_t unique_lonlat( const double& lon, const double& lat, const PeriodicTransform& transform ) {
     std::array<double, 2> lonlat{lon, lat};
     transform( lonlat );
-    return detail::uniqueT<uidx_t>( microdeg( lonlat[LON] ), microdeg( lonlat[LAT] ) );
+    return unique_lonlat( lonlat );
 }
 
+
 uidx_t UniqueLonLat::operator()( const mesh::Connectivity::Row& elem_nodes, const PeriodicTransform& transform ) const {
-    double centroid[2];
+    std::array<double, 2> centroid;
     centroid[LON] = 0.;
     centroid[LAT] = 0.;
     size_t npts   = elem_nodes.size();
@@ -31,7 +32,8 @@ uidx_t UniqueLonLat::operator()( const mesh::Connectivity::Row& elem_nodes, cons
     }
     centroid[LON] /= static_cast<double>( npts );
     centroid[LAT] /= static_cast<double>( npts );
-    return unique_lonlat( centroid[LON], centroid[LAT], transform );
+    transform( centroid );
+    return unique_lonlat( centroid );
 }
 
 
