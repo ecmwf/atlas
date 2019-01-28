@@ -1,6 +1,7 @@
 Atlas
 =====
 
+[![atlas release version](https://img.shields.io/github/release/ecmwf/atlas.svg)](https://github.com/ecmwf/atlas/releases/latest)
 [![travis master](https://img.shields.io/travis/ecmwf/atlas/master.svg?label=master&logo=travis)](http://travis-ci.org/ecmwf/atlas "master")
 [![travis develop](https://img.shields.io/travis/ecmwf/atlas/develop.svg?label=develop&logo=travis)](http://travis-ci.org/ecmwf/atlas "develop")
 [![codecov](https://codecov.io/gh/ecmwf/atlas/branch/develop/graph/badge.svg)](https://codecov.io/gh/ecmwf/atlas)
