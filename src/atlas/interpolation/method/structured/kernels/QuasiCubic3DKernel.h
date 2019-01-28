@@ -30,6 +30,7 @@ namespace interpolation {
 namespace method {
 
 struct QuasiCubicLinearPoints {
+    constexpr QuasiCubicLinearPoints() {}
     static constexpr std::array<idx_t, 2> j{1, 2};
     static constexpr std::array<idx_t, 2> jj{0, 3};
     static constexpr std::array<idx_t, 2> jw{4, 5};
@@ -113,7 +114,7 @@ public:
         {
             PointXY P1, P2;
             std::array<double, 2> yvec;
-            constexpr QuasiCubicLinearPoints pts;
+            constexpr QuasiCubicLinearPoints pts{};
             // Top and bottom row x-direction
             for ( idx_t l = 0; l < 2; ++l ) {
                 idx_t j         = pts.j[l];   // index in stencil
@@ -180,7 +181,7 @@ public:
         }
         // Horizontally Linear part for outer levels ( k = {0,3} )
         {
-            constexpr QuasiCubicLinearPoints pts;
+            constexpr QuasiCubicLinearPoints pts{};
             // Outer levels: (linear in i, linear in j) -- > 8 points
             for ( idx_t m = 0; m < 2; ++m ) {
                 idx_t j         = pts.j[m];   // index in stencil ( j = {1,2} )
@@ -329,7 +330,7 @@ public:
         }
         // Horizontally Linear part for outer levels ( k = {0,3} )
         {
-            constexpr QuasiCubicLinearPoints pts;
+            constexpr QuasiCubicLinearPoints pts{};
             // Outer levels: (linear in i, linear in j) -- > 8 points
             for ( idx_t m = 0; m < 2; ++m ) {
                 idx_t j         = pts.j[m];   // index in stencil ( j = {1,2} )
