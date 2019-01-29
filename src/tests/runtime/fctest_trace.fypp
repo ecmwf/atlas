@@ -10,12 +10,14 @@
 ! @author Willem Deconinck
 
 #include "fckit/fctest.h"
+#:include "atlas/atlas_f.fypp"
 
 ! -----------------------------------------------------------------------------
 
 module fcta_trace_fixture
 use atlas_module
 use, intrinsic :: iso_c_binding
+@:ENABLE_ATLAS_MACROS()
 implicit none
 contains
 end module
@@ -28,15 +30,15 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_trace,fcta_trace_fixture)
 
 subroutine sub2()
   type(atlas_Trace) :: trace
-  trace = atlas_Trace("fctest_trace.F90",__LINE__,"sub2")
+  @:ATLAS_TRACE_BEGIN( trace, "sub2" )
   FCTEST_CHECK( trace%running() )
-  call trace%final()
+  @:ATLAS_TRACE_END( trace )
 end subroutine
 
 subroutine sub1()
   integer :: i
   type(atlas_Trace) :: trace
-  trace = atlas_Trace("fctest_trace.F90",__LINE__,"sub1")
+  trace = @{ ATLAS_TRACE( "sub1" ) }@
   FCTEST_CHECK( trace%running() )
 
   do i=1,10
@@ -64,7 +66,7 @@ implicit none
 
   type(atlas_Trace) :: trace
 
-  trace = atlas_Trace("fctest_trace.F90",__LINE__,"test_trace")
+  trace = atlas_Trace("${_FILE_}$",${_LINE_}$,"test_trace")
 
   FCTEST_CHECK( trace%running() )
 

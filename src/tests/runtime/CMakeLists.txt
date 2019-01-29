@@ -16,7 +16,7 @@ ecbuild_add_test( TARGET atlas_test_trace
 if( HAVE_FCTEST )
 
 add_fctest( TARGET atlas_fctest_trace
-  SOURCES     fctest_trace.F90
+  SOURCES     fctest_trace.fypp
   LINKER_LANGUAGE Fortran
   LIBS        atlas_f
   ENVIRONMENT ATLAS_TRACE_REPORT=1

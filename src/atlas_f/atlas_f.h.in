@@ -13,12 +13,7 @@
 #define ATLAS_BITS_GLOBAL @ATLAS_BITS_GLOBAL@
 #define ATLAS_BITS_LOCAL @ATLAS_BITS_LOCAL@
 
-#ifdef FCKIT_FINAL
 #define ATLAS_FINAL FCKIT_FINAL
-#else
-! Compatibility with fckit < v0.5.1
-#define ATLAS_FINAL
-#endif
 
 #ifndef PGIBUG_ATLAS_197
 #define CPTR_PGIBUG_A c_ptr()
