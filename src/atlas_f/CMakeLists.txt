@@ -147,12 +147,12 @@ ecbuild_add_library( TARGET atlas_f
         output/atlas_output_module.F90
         functionspace/atlas_FunctionSpace_module.F90
         functionspace/atlas_functionspace_EdgeColumns_module.F90
-        functionspace/atlas_functionspace_NodeColumns_module.fypp.F90
+        functionspace/atlas_functionspace_NodeColumns_module.fypp
         functionspace/atlas_functionspace_StructuredColumns_module.F90
         functionspace/atlas_functionspace_Spectral_module.F90
         field/atlas_FieldSet_module.F90
         field/atlas_State_module.F90
-        field/atlas_Field_module.fypp.F90
+        field/atlas_Field_module.fypp
         grid/atlas_Grid_module.F90
         grid/atlas_GridDistribution_module.F90
         grid/atlas_Vertical_module.F90
@@ -172,9 +172,9 @@ ecbuild_add_library( TARGET atlas_f
         numerics/atlas_Nabla_module.F90
         interpolation/atlas_Interpolation_module.F90
         parallel/atlas_mpi_module.F90
-        parallel/atlas_GatherScatter_module.fypp.F90
-        parallel/atlas_Checksum_module.fypp.F90
-        parallel/atlas_HaloExchange_module.fypp.F90
+        parallel/atlas_GatherScatter_module.fypp
+        parallel/atlas_Checksum_module.fypp
+        parallel/atlas_HaloExchange_module.fypp
         trans/atlas_Trans_module.F90
         internals/atlas_read_file.h
         internals/atlas_read_file.cc

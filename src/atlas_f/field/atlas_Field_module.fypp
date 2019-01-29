@@ -106,7 +106,7 @@ contains
   final :: atlas_Field__final_auto
 #endif
 
-END TYPE atlas_Field
+END TYPE
 
 interface atlas_Field
   module procedure atlas_Field__cptr
