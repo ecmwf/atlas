@@ -31,14 +31,14 @@ template <typename Value, unsigned int Rank, unsigned int Dim>
 struct array_assigner_impl {
     template <typename View, typename... DimIndex>
     static void apply( View& arr, Value value, DimIndex... idxs ) {
-        for ( size_t i = 0; i < arr.shape( Dim ); ++i ) {
+        for ( idx_t i = 0; i < arr.shape( Dim ); ++i ) {
             array_assigner_impl<Value, Rank, Dim + 1>::apply( arr, value, idxs..., i );
         }
     }
 
     template <typename View, typename Iterator, typename... DimIndex>
     static void apply( View& arr, Iterator& it, DimIndex... idxs ) {
-        for ( size_t i = 0; i < arr.shape( Dim ); ++i ) {
+        for ( idx_t i = 0; i < arr.shape( Dim ); ++i ) {
             array_assigner_impl<Value, Rank, Dim + 1>::apply( arr, it, idxs..., i );
         }
     }

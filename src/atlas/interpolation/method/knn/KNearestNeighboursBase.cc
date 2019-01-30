@@ -38,14 +38,14 @@ void KNearestNeighboursBase::buildPointSearchTree( Mesh& meshSource ) {
     if ( fastBuildKDTrees ) {
         std::vector<PointIndex3::Value> pidx;
         pidx.reserve( meshSource.nodes().size() );
-        for ( size_t ip = 0; ip < meshSource.nodes().size(); ++ip ) {
+        for ( idx_t ip = 0; ip < meshSource.nodes().size(); ++ip ) {
             PointIndex3::Point p{coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 )};
             pidx.push_back( PointIndex3::Value( p, ip ) );
         }
         pTree_->build( pidx.begin(), pidx.end() );
     }
     else {
-        for ( size_t ip = 0; ip < meshSource.nodes().size(); ++ip ) {
+        for ( idx_t ip = 0; ip < meshSource.nodes().size(); ++ip ) {
             PointIndex3::Point p{coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 )};
             pTree_->insert( PointIndex3::Value( p, ip ) );
         }

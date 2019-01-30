@@ -130,7 +130,7 @@ void GatherScatter::setup( const int part[], const idx_t remote_idx[], const int
     }
     glbcounts_.assign( nproc, 0 );
     glbdispls_.assign( nproc, 0 );
-    for ( idx_t n = 0; n < node_sort.size(); ++n ) {
+    for ( size_t n = 0; n < node_sort.size(); ++n ) {
         ++glbcounts_[node_sort[n].p];
     }
     glbdispls_[0] = 0;
@@ -147,11 +147,13 @@ void GatherScatter::setup( const int part[], const idx_t remote_idx[], const int
     locmap_.clear();
     locmap_.resize( loccnt_ );
     std::vector<int> idx( nproc, 0 );
-    for ( idx_t n = 0; n < node_sort.size(); ++n ) {
-        idx_t jproc                             = node_sort[n].p;
-        glbmap_[glbdispls_[jproc] + idx[jproc]] = n;
+    
+    int n{0};
+    for( const auto& node : node_sort ) {
+        idx_t jproc                             = node.p;
+        glbmap_[glbdispls_[jproc] + idx[jproc]] = n++;
 
-        if ( jproc == myproc ) locmap_[idx[jproc]] = node_sort[n].i;
+        if ( jproc == myproc ) locmap_[idx[jproc]] = node.i;
 
         ++idx[jproc];
     }

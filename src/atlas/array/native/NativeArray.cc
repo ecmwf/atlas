@@ -108,7 +108,7 @@ template <typename Value>
 ArrayT<Value>::ArrayT( const ArrayShape& shape ) {
     ATLAS_ASSERT( shape.size() > 0 );
     idx_t size = 1;
-    for ( idx_t j = 0; j < shape.size(); ++j )
+    for ( size_t j = 0; j < shape.size(); ++j )
         size *= shape[j];
     data_store_ = std::unique_ptr<ArrayDataStore>( new native::DataStore<Value>( size ) );
     spec_       = ArraySpec( shape );
@@ -118,7 +118,7 @@ template <typename Value>
 ArrayT<Value>::ArrayT( const ArrayShape& shape, const ArrayLayout& layout ) {
     spec_       = ArraySpec( shape );
     data_store_ = std::unique_ptr<ArrayDataStore>( new native::DataStore<Value>( spec_.size() ) );
-    for ( idx_t j = 0; j < layout.size(); ++j )
+    for ( size_t j = 0; j < layout.size(); ++j )
         ATLAS_ASSERT( spec_.layout()[j] == layout[j] );
 }
 
@@ -131,7 +131,7 @@ ArrayT<Value>::ArrayT( const ArraySpec& spec ) {
 
 template <typename Value>
 void ArrayT<Value>::resize( const ArrayShape& _shape ) {
-    if ( rank() != _shape.size() ) {
+    if ( rank() != static_cast<idx_t>(_shape.size()) ) {
         std::stringstream msg;
         msg << "Cannot resize existing Array with rank " << rank() << " with a shape of rank " << _shape.size();
         throw_Exception( msg.str(), Here() );

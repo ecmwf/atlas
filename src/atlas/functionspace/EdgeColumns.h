@@ -96,8 +96,8 @@ private:  // methods
 
 private:         // data
     Mesh mesh_;  // non-const because functionspace may modify mesh
-    idx_t nb_levels_;
     mesh::HybridElements& edges_;  // non-const because functionspace may modify mesh
+    idx_t nb_levels_;
     mesh::Halo halo_;
     idx_t nb_edges_;
     mutable long nb_edges_global_{-1};

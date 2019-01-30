@@ -57,9 +57,9 @@ static void rotated_flow_magnitude( StructuredGrid& grid, double var[], const do
     const double pvel    = USCAL / radius;
     const double deg2rad = M_PI / 180.;
 
-    size_t n( 0 );
-    for ( size_t jlat = 0; jlat < grid.ny(); ++jlat ) {
-        for ( size_t jlon = 0; jlon < grid.nx( jlat ); ++jlon ) {
+    idx_t n( 0 );
+    for ( idx_t jlat = 0; jlat < grid.ny(); ++jlat ) {
+        for ( idx_t jlon = 0; jlon < grid.nx( jlat ); ++jlon ) {
             const double x = grid.x( jlon, jlat ) * deg2rad;
             const double y = grid.y( jlat ) * deg2rad;
             const double Ux =
@@ -146,7 +146,7 @@ CASE( "test_invtrans_grad" ) {
     std::string grid_uid( "O48" );
     StructuredGrid g( grid_uid );
     Mesh mesh = StructuredMeshGenerator().generate( g );
-    long N    = g.ny() / 2;
+    idx_t N    = g.ny() / 2;
     trans::Trans trans( g, 2 * N - 1 );
     functionspace::NodeColumns gp( mesh );
     functionspace::Spectral sp( trans );

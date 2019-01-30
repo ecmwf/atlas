@@ -67,7 +67,7 @@ struct validate_impl {
     template <typename... Int>
     static void apply( array::ArrayView<DATA_TYPE, Rank>& arrv, DATA_TYPE arr_c[], std::array<size_t, Rank>& strides,
                        Int... dims ) {
-        for ( size_t cnt = 0; cnt < arrv.template shape<Rank - Dim>(); ++cnt ) {
+        for ( idx_t cnt = 0; cnt < arrv.template shape<Rank - Dim>(); ++cnt ) {
             validate_impl<DATA_TYPE, Rank, Dim - 1>::apply( arrv, arr_c, strides, dims..., cnt );
         }
     }
@@ -98,7 +98,7 @@ struct validate {
         strides[Rank - 1] = 1;
         compute_strides<Rank - 1>::apply( arrv, strides );
 
-        for ( size_t i = 0; i < arrv.template shape<0>(); ++i ) {
+        for ( idx_t i = 0; i < arrv.template shape<0>(); ++i ) {
             validate_impl<DATA_TYPE, Rank, Rank - 1>::apply( arrv, arr_c, strides, i );
         }
     }

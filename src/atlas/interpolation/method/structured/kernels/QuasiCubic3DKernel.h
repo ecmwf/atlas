@@ -281,7 +281,6 @@ public:
         using Value = typename InputArray::value_type;
 
         std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;
-        const auto& wj = weights.weights_j;
         const auto& wk = weights.weights_k;
 
         const Value* _input_;

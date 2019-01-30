@@ -74,7 +74,7 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
         xmax_ = xspace_.xmax();
     }
 
-    ASSERT( nx_.size() == ny );
+    ASSERT( static_cast<idx_t>( nx_.size() ) == ny );
 
     // Further setup
     nxmin_ = nxmax_ = nx_.front();
@@ -162,10 +162,10 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
         std::max( v_N.size(), std::max( v_start.size(), std::max( v_end.size(), std::max( v_length.size(), 1ul ) ) ) );
     reserve( ny );
 
-    if ( not v_N.empty() ) ASSERT( v_N.size() == ny );
-    if ( not v_start.empty() ) ASSERT( v_start.size() == ny );
-    if ( not v_end.empty() ) ASSERT( v_end.size() == ny );
-    if ( not v_length.empty() ) ASSERT( v_length.size() == ny );
+    if ( not v_N.empty() ) ASSERT( static_cast<idx_t>( v_N.size() ) == ny );
+    if ( not v_start.empty() ) ASSERT( static_cast<idx_t>( v_start.size() ) == ny );
+    if ( not v_end.empty() ) ASSERT( static_cast<idx_t>( v_end.size() ) == ny );
+    if ( not v_length.empty() ) ASSERT( static_cast<idx_t>( v_length.size() ) == ny );
 
     nxmin_ = std::numeric_limits<idx_t>::max();
     nxmax_ = 0;
@@ -268,13 +268,13 @@ Grid::Spec Structured::XSpace::Implementation::spec() const {
     idx_t nx    = nx_[0];
     double dx   = dx_[0];
 
-    ASSERT( xmin_.size() == ny_ );
-    ASSERT( xmax_.size() == ny_ );
-    ASSERT( nx_.size() == ny_ );
+    ASSERT( static_cast<idx_t>( xmin_.size() ) == ny_ );
+    ASSERT( static_cast<idx_t>( xmax_.size() ) == ny_ );
+    ASSERT( static_cast<idx_t>( nx_.size() ) == ny_ );
 
     for ( idx_t j = 1; j < ny_; ++j ) {
-        same_xmin = same_xmin && ( xmin_[j] == xmin );
-        same_xmax = same_xmax && ( xmax_[j] == xmax );
+        same_xmin = same_xmin && ( eckit::types::is_approximately_equal( xmin_[j], xmin ) );
+        same_xmax = same_xmax && ( eckit::types::is_approximately_equal( xmax_[j], xmax ) );
         same_nx   = same_nx && ( nx_[j] == nx );
     }
 

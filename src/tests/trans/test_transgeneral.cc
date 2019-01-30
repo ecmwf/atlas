@@ -274,7 +274,7 @@ double sphericalharmonics_analytic_point(
 // Andreas Mueller *ECMWF*
 //
 void spectral_transform_grid_analytic(
-    const size_t trc,     // truncation (in)
+    const int trc,     // truncation (in)
     bool trcFT,           // truncation for Fourier transformation (in)
     const double n,       // total wave number (implemented so far for n<4)
     const double m,       // zonal wave number (implemented so far for m<4, m<n)
@@ -318,7 +318,7 @@ void spectral_transform_grid_analytic(
         }
 
         int idx = 0;
-        for ( size_t j = 0; j < g.ny(); ++j ) {
+        for ( idx_t j = 0; j < g.ny(); ++j ) {
             double lat = g.y( j ) * util::Constants::degreesToRadians();
             int ftrc   = trc + 1;
             if ( trcFT ) {
@@ -328,7 +328,7 @@ void spectral_transform_grid_analytic(
             /*Log::info() << "j=" << j << " ftrc=" << ftrc << " trc=" << trc << " nx=" << gs_global.nx( jlatMin + j )
                         << " nxmax=" << gs_global.nxmax() << " nlats=" << gs_global.ny() << " lat=" << g.y( j )
                         << " jlatMin=" << jlatMin << std::endl;*/
-            for ( size_t i = 0; i < g.nx( j ); ++i ) {
+            for ( idx_t i = 0; i < g.nx( j ); ++i ) {
                 double lon = g.x( i, j ) * util::Constants::degreesToRadians();
 
                 // compute spherical harmonics:
@@ -364,7 +364,7 @@ double compute_rms( const size_t N,    // length of the arrays
                     double array2[] )  // second of the two arrays
 {
     double rms = 0., rmax = 0.;
-    for ( int idx = 0; idx < N; idx++ ) {
+    for ( size_t idx = 0; idx < N; idx++ ) {
         double diff = array1[idx] - array2[idx];
         rms += diff * diff;
         rmax = std::max( rmax, std::abs( array2[idx] ) );
@@ -383,7 +383,6 @@ CASE( "test_trans_vordiv_with_translib" ) {
     // test transgeneral by comparing its result with the trans library
     // this test is based on the test_nomesh case in test_trans.cc
 
-    std::ostream& out = Log::info();
     double tolerance  = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
@@ -617,8 +616,6 @@ CASE( "test_trans_domain" ) {
     // test transgeneral by comparing with analytic solution on a cropped domain
     // this test also includes testing caching
 
-    std::ostream& out = Log::info();
-
     //Domain testdomain = ZonalBandDomain( {-90., 90.} );
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
     //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
@@ -809,8 +806,6 @@ CASE( "test_trans_pole" ) {
     // test transform at the pole and with LinearSpacing grids
     // not using caching in this test because not useful for LinearSpacing grids
 
-    std::ostream& out = Log::info();
-
     //Domain testdomain = ZonalBandDomain( {-90., 90.} );
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
     //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
@@ -992,7 +987,6 @@ CASE( "test_trans_southpole" ) {
     Log::info() << "test_trans_southpole" << std::endl;
     // test created for MIR-283 (limited area domain on the southern hemisphere with L-grid)
 
-    std::ostream& out = Log::info();
 
     //Domain testdomain = ZonalBandDomain( {-90., 90.} );
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
@@ -1017,7 +1011,7 @@ CASE( "test_trans_southpole" ) {
     // fourierTrc1, fourierTrc2: need to be false if no global grid can be constructed
     //                           (like for grids created with LinearSpacing)
 
-    using LinearSpacing = grid::LinearSpacing;
+    //using LinearSpacing = grid::LinearSpacing;
     //StructuredGrid g2( LinearSpacing( {0., 10.}, 2 ), LinearSpacing( {-10., -90.}, 9 ) );
     // when using LinearSpacing: set fourierTrc2 to false
 
@@ -1179,7 +1173,6 @@ CASE( "test_trans_unstructured" ) {
     Log::info() << "test_trans_unstructured" << std::endl;
     // test transgeneral by comparing with analytic solution on an unstructured grid
 
-    std::ostream& out = Log::info();
     double tolerance  = 1.e-13;
 
     //Domain testdomain = RectangularDomain( {20., 25.}, {40., 60.} );
@@ -1190,10 +1183,10 @@ CASE( "test_trans_unstructured" ) {
     int trc = 31;
     StructuredGrid gs( g );
     std::vector<PointXY> pts( g.size() );
-    int idx( 0 );
-    for ( size_t j = 0; j < gs.ny(); ++j ) {
+    idx_t idx( 0 );
+    for ( idx_t j = 0; j < gs.ny(); ++j ) {
         double lat = gs.y( j );
-        for ( size_t i = 0; i < gs.nx( j ); ++i ) {
+        for ( idx_t i = 0; i < gs.nx( j ); ++i ) {
             double lon = gs.x( i, j );
             if ( i == j && lat > 0 ) {
                 //Log::info() << "idx=" << idx << " lon=" << lon << " lat=" << lat << std::endl;

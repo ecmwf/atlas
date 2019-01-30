@@ -243,7 +243,7 @@ void Nabla::gradient_of_vector( const Field& vector_field, Field& grad_field ) c
         }
     }
     // Fix wrong node2edge_sign for vector quantities
-    for ( idx_t jedge = 0; jedge < pole_edges_.size(); ++jedge ) {
+    for ( size_t jedge = 0; jedge < pole_edges_.size(); ++jedge ) {
         const idx_t iedge     = pole_edges_[jedge];
         const idx_t jnode     = edge2node( iedge, 1 );
         const double metric_y = 1. / ( dual_volumes( jnode ) * scale );

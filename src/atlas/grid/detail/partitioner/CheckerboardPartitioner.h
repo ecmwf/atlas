@@ -31,8 +31,8 @@ public:
 
 private:
     struct Checkerboard {
-        size_t nbands;  // number of bands
-        size_t nx, ny;  // grid dimensions
+        idx_t nbands;  // number of bands
+        idx_t nx, ny;  // grid dimensions
     };
 
     Checkerboard checkerboard( const Grid& ) const;
@@ -46,7 +46,7 @@ private:
     void check() const;
 
 private:
-    size_t nbands_;      // number of bands from configuration
+    idx_t nbands_;      // number of bands from configuration
     bool checkerboard_;  // exact (true) or approximate (false) checkerboard
 };
 

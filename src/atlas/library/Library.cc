@@ -72,8 +72,8 @@ Library::Library() :
     debug_( eckit::system::Library::debug() ),
     info_( getEnv( "ATLAS_INFO", true ) ),
     trace_( getEnv( "ATLAS_TRACE", false ) ),
-    trace_report_( getEnv( "ATLAS_TRACE_REPORT", false ) ),
-    trace_barriers_( getEnv( "ATLAS_TRACE_BARRIERS", false ) ) {}
+    trace_barriers_( getEnv( "ATLAS_TRACE_BARRIERS", false ) ),
+    trace_report_( getEnv( "ATLAS_TRACE_REPORT", false ) ) {}
 
 Library& Library::instance() {
     return libatlas;
@@ -125,7 +125,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
     if ( not info_ ) info_channel_.reset();
 
     // Summary
-    if ( getEnv( "ATLAS_LOG_RANK", 0 ) == mpi::comm().rank() ) {
+    if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::comm().rank() ) ) {
         std::ostream& out = Log::debug();
         out << "Executable        [" << Main::instance().name() << "]\n";
         out << " \n";

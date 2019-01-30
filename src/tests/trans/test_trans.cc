@@ -65,7 +65,7 @@ void read_rspecg( trans::TransImpl& trans, std::vector<double>& rspecg, std::vec
     nfld = 2;
     if ( mpi::comm().rank() == 0 ) {
         rspecg.resize( nfld * trans.spectralCoefficients() );
-        for ( int i = 0; i < trans.spectralCoefficients(); ++i ) {
+        for ( size_t i = 0; i < trans.spectralCoefficients(); ++i ) {
             rspecg[i * nfld + 0] = ( i == 0 ? 1. : 0. );  // scalar field 1
             rspecg[i * nfld + 1] = ( i == 0 ? 2. : 0. );  // scalar field 2
         }
@@ -116,8 +116,8 @@ CASE( "test_trans_distribution_matches_atlas" ) {
     EXPECT( trans.truncation() == 159 );
 
     // -------------- do checks -------------- //
-    EXPECT( t->nproc == mpi::comm().size() );
-    EXPECT( t->myproc == mpi::comm().rank() + 1 );
+    EXPECT( t->nproc == int( mpi::comm().size() ) );
+    EXPECT( t->myproc == int( mpi::comm().rank() + 1 ) );
 
     if ( mpi::comm().rank() == 0 )  // all tasks do the same, so only one needs to check
     {
@@ -128,12 +128,12 @@ CASE( "test_trans_distribution_matches_atlas" ) {
         EXPECT( t->n_regions_NS == trans_partitioner->nb_bands() );
         EXPECT( t->n_regions_EW == max_nb_regions_EW );
 
-        EXPECT( distribution.nb_partitions() == mpi::comm().size() );
-        EXPECT( distribution.partition().size() == g.size() );
+        EXPECT( distribution.nb_partitions() == idx_t( mpi::comm().size() ) );
+        EXPECT( idx_t( distribution.partition().size() ) == g.size() );
 
         std::vector<int> npts( distribution.nb_partitions(), 0 );
 
-        for ( size_t j = 0; j < g.size(); ++j )
+        for ( idx_t j = 0; j < g.size(); ++j )
             ++npts[distribution.partition( j )];
 
         EXPECT( t->ngptotg == g.size() );
@@ -270,7 +270,7 @@ CASE( "test_generate_mesh" ) {
     array::ArrayView<int, 1> p_trans   = array::make_view<int, 1>( m_trans.nodes().partition() );
     array::ArrayView<int, 1> p_eqreg   = array::make_view<int, 1>( m_eqreg.nodes().partition() );
 
-    for ( size_t j = 0; j < p_default.shape( 0 ); ++j ) {
+    for ( idx_t j = 0; j < p_default.shape( 0 ); ++j ) {
         EXPECT( p_default( j ) == p_trans( j ) );
         EXPECT( p_default( j ) == p_eqreg( j ) );
     }
@@ -335,7 +335,7 @@ CASE( "test_nomesh" ) {
     if ( mpi::comm().rank() == 0 ) {
         array::ArrayView<double, 1> sp = array::make_view<double, 1>( spf );
         EXPECT( eckit::types::is_approximately_equal( sp( 0 ), 4., 0.001 ) );
-        for ( size_t jp = 0; jp < sp.size(); ++jp ) {
+        for ( idx_t jp = 0; jp < sp.size(); ++jp ) {
             Log::debug() << "sp(" << jp << ")   :   " << sp( jp ) << std::endl;
         }
     }
@@ -346,7 +346,7 @@ CASE( "test_nomesh" ) {
 
     if ( mpi::comm().rank() == 0 ) {
         array::ArrayView<double, 1> gpg = array::make_view<double, 1>( gpfg );
-        for ( size_t jp = 0; jp < gpg.size(); ++jp ) {
+        for ( idx_t jp = 0; jp < gpg.size(); ++jp ) {
             EXPECT( eckit::types::is_approximately_equal( gpg( jp ), 4., 0.001 ) );
             Log::debug() << "gpg(" << jp << ")   :   " << gpg( jp ) << std::endl;
         }
@@ -481,7 +481,7 @@ CASE( "test_trans_MIR_lonlat" ) {
 CASE( "test_trans_VorDivToUV" ) {
     int nfld = 1;                          // TODO: test for nfld>1
     std::vector<int> truncation_array{1};  // truncation_array{159,160,1279};
-    for ( int i = 0; i < truncation_array.size(); ++i ) {
+    for ( size_t i = 0; i < truncation_array.size(); ++i ) {
         int truncation = truncation_array[i];
         int nspec2     = ( truncation + 1 ) * ( truncation + 2 );
 

@@ -158,6 +158,8 @@ TEST( test_meshgen )
 
   nnodes = nodes%size()
 
+  FCTEST_CHECK_EQUAL( nnodes, 3672 )
+
   field = nodes%field("remote_idx")
   call field%data(ridx)
   nghost = 0

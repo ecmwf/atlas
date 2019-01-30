@@ -82,7 +82,6 @@ private:  // methods
 
 private:  // data
     idx_t nb_levels_;
-
     int truncation_;
 
     class Parallelisation;

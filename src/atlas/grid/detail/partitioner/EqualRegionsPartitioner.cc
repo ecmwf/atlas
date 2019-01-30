@@ -530,7 +530,7 @@ void EqualRegionsPartitioner::partition( int nb_nodes, NodeInt nodes[], int part
 
 void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
     if ( N_ == 1 ) {  // trivial solution, so much faster
-        for ( size_t j = 0; j < grid.size(); ++j )
+        for ( idx_t j = 0; j < grid.size(); ++j )
             part[j] = 0;
     }
     else {
@@ -539,8 +539,8 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
         ATLAS_ASSERT( grid.projection().units() == "degrees" );
 
         const auto& comm = mpi::comm();
-        int mpi_rank     = comm.rank();
-        int mpi_size     = comm.size();
+        int mpi_rank     = static_cast<int>( comm.rank() );
+        int mpi_size     = static_cast<int>( comm.size() );
 
         std::vector<NodeInt> nodes( grid.size() );
         int* nodes_buffer = reinterpret_cast<int*>( nodes.data() );
@@ -563,9 +563,9 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
 
             ATLAS_TRACE( "Take shortcut" );
             int n( 0 );
-            for ( size_t j = 0; j < structured_grid.ny(); ++j ) {
+            for ( idx_t j = 0; j < structured_grid.ny(); ++j ) {
                 double y = microdeg( structured_grid.y( j ) );
-                for ( size_t i = 0; i < structured_grid.nx( j ); ++i, ++n ) {
+                for ( idx_t i = 0; i < structured_grid.nx( j ); ++i, ++n ) {
                     nodes[n].x = microdeg( structured_grid.x( i, j ) );
                     nodes[n].y = y;
                     nodes[n].n = n;
@@ -608,8 +608,8 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                             }
                         }
                         else {
-                            int i( 0 );
-                            int j( 0 );
+                            idx_t i( 0 );
+                            idx_t j( 0 );
                             for ( PointXY point : grid.xy() ) {
                                 if ( i >= w_begin && i < w_end ) {
                                     w_nodes[j].x = microdeg( point.x() );

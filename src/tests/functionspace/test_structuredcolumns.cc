@@ -39,7 +39,7 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 CASE( "test_functionspace_StructuredColumns_no_halo" ) {
-    int root             = 0;
+    size_t root             = 0;
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
     Grid grid( gridname );
     util::Config config;
@@ -84,8 +84,8 @@ CASE( "test_functionspace_StructuredColumns_no_halo" ) {
             4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
             4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
 
-        EXPECT( value_glb.size() == check.size() );
-        for ( size_t j = 0; j < value_glb.size(); ++j ) {
+        EXPECT( value_glb.size() == idx_t( check.size() ) );
+        for ( idx_t j = 0; j < value_glb.size(); ++j ) {
             EXPECT( value_glb( j ) == check[j] );
         }
     }

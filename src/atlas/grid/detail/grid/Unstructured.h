@@ -38,10 +38,11 @@ public:
     public:
         IteratorXY( const Unstructured& grid, bool begin = true ) :
             grid_( grid ),
-            n_( begin ? 0 : grid_.points_->size() ) {}
+            size_( static_cast<idx_t>( grid_.points_->size() ) ),
+            n_( begin ? 0 : size_ ) {}
 
         virtual bool next( PointXY& xy ) {
-            if ( n_ != grid_.points_->size() ) {
+            if ( n_ != size_ ) {
                 xy = grid_.xy( n_++ );
                 return true;
             }
@@ -67,6 +68,7 @@ public:
 
     private:
         const Unstructured& grid_;
+        idx_t size_;
         idx_t n_;
     };
 
@@ -75,8 +77,8 @@ public:
         IteratorXYPredicated( const Unstructured& grid, Grid::IteratorXY::Predicate p, bool begin = true ) :
             grid_( grid ),
             p_( p ),
-            size_( grid_.points_->size() ),
-            n_( begin ? 0 : grid_.points_->size() ) {
+            size_( static_cast<idx_t>( grid_.points_->size() ) ),
+            n_( begin ? 0 : size_ ) {
             if ( begin ) {}
         }
 
@@ -111,10 +113,11 @@ public:
     public:
         IteratorLonLat( const Unstructured& grid, bool begin = true ) :
             grid_( grid ),
-            n_( begin ? 0 : grid_.points_->size() ) {}
+            size_( static_cast<idx_t>( grid_.points_->size() ) ),
+            n_( begin ? 0 : size_ ) {}
 
         virtual bool next( PointLonLat& lonlat ) {
-            if ( n_ != grid_.points_->size() ) {
+            if ( n_ != size_ ) {
                 lonlat = grid_.lonlat( n_++ );
                 return true;
             }
@@ -140,6 +143,7 @@ public:
 
     private:
         const Unstructured& grid_;
+        idx_t size_;
         idx_t n_;
     };
 

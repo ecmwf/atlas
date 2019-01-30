@@ -38,8 +38,11 @@ void build_periodic_boundaries( Mesh& mesh ) {
     ATLAS_TRACE();
     bool periodic = false;
     mesh.metadata().get( "periodic", periodic );
+    
+    auto mpi_size = static_cast<idx_t>( mpi::comm().size() );
+    auto mypart = static_cast<idx_t>( mpi::comm().rank() );
+    
     if ( !periodic ) {
-        int mypart = mpi::comm().rank();
 
         mesh::Nodes& nodes = mesh.nodes();
 
@@ -85,20 +88,20 @@ void build_periodic_boundaries( Mesh& mesh ) {
             }
         }
 
-        std::vector<std::vector<int>> found_master( mpi::comm().size() );
-        std::vector<std::vector<int>> send_slave_idx( mpi::comm().size() );
+        std::vector<std::vector<int>> found_master( mpi_size );
+        std::vector<std::vector<int>> send_slave_idx( mpi_size );
 
         // Find masters on other tasks to send to me
         {
             int sendcnt = slave_nodes.size();
-            std::vector<int> recvcounts( mpi::comm().size() );
+            std::vector<int> recvcounts( mpi_size );
 
             ATLAS_TRACE_MPI( ALLGATHER ) { mpi::comm().allGather( sendcnt, recvcounts.begin(), recvcounts.end() ); }
 
-            std::vector<int> recvdispls( mpi::comm().size() );
+            std::vector<int> recvdispls( mpi_size );
             recvdispls[0] = 0;
             int recvcnt   = recvcounts[0];
-            for ( idx_t jproc = 1; jproc < mpi::comm().size(); ++jproc ) {
+            for ( idx_t jproc = 1; jproc < mpi_size; ++jproc ) {
                 recvdispls[jproc] = recvdispls[jproc - 1] + recvcounts[jproc - 1];
                 recvcnt += recvcounts[jproc];
             }
@@ -110,7 +113,7 @@ void build_periodic_boundaries( Mesh& mesh ) {
             }
 
             PeriodicTransform transform;
-            for ( idx_t jproc = 0; jproc < mpi::comm().size(); ++jproc ) {
+            for ( idx_t jproc = 0; jproc < mpi_size; ++jproc ) {
                 found_master.reserve( master_nodes.size() );
                 send_slave_idx.reserve( master_nodes.size() );
                 array::LocalView<int, 2> recv_slave( recvbuf.data() + recvdispls[jproc],
@@ -130,11 +133,11 @@ void build_periodic_boundaries( Mesh& mesh ) {
         }
 
         // Fill in data to communicate
-        std::vector<std::vector<int>> recv_slave_idx( mpi::comm().size() );
-        std::vector<std::vector<int>> send_master_part( mpi::comm().size() );
-        std::vector<std::vector<int>> recv_master_part( mpi::comm().size() );
-        std::vector<std::vector<int>> send_master_ridx( mpi::comm().size() );
-        std::vector<std::vector<int>> recv_master_ridx( mpi::comm().size() );
+        std::vector<std::vector<int>> recv_slave_idx( mpi_size );
+        std::vector<std::vector<int>> send_master_part( mpi_size );
+        std::vector<std::vector<int>> recv_master_part( mpi_size );
+        std::vector<std::vector<int>> send_master_ridx( mpi_size );
+        std::vector<std::vector<int>> recv_master_ridx( mpi_size );
 
         //  std::vector< std::vector<int> > send_slave_part( mpi::comm().size() );
         //  std::vector< std::vector<int> > recv_slave_part( mpi::comm().size() );
@@ -142,11 +145,11 @@ void build_periodic_boundaries( Mesh& mesh ) {
         //  std::vector< std::vector<int> > recv_slave_ridx( mpi::comm().size() );
 
         {
-            for ( idx_t jproc = 0; jproc < mpi::comm().size(); ++jproc ) {
-                int nb_found_master = found_master[jproc].size();
+            for ( idx_t jproc = 0; jproc < mpi_size; ++jproc ) {
+                idx_t nb_found_master = static_cast<idx_t>( found_master[jproc].size() );
                 send_master_part[jproc].resize( nb_found_master );
                 send_master_ridx[jproc].resize( nb_found_master );
-                for ( int jnode = 0; jnode < nb_found_master; ++jnode ) {
+                for ( idx_t jnode = 0; jnode < nb_found_master; ++jnode ) {
                     int loc_idx                    = found_master[jproc][jnode];
                     send_master_part[jproc][jnode] = part( loc_idx );
                     send_master_ridx[jproc][jnode] = loc_idx;
@@ -177,10 +180,10 @@ void build_periodic_boundaries( Mesh& mesh ) {
 
         // Fill in periodic
         // unused // int nb_recv_master = 0;
-        for ( idx_t jproc = 0; jproc < mpi::comm().size(); ++jproc ) {
-            idx_t nb_recv = recv_slave_idx[jproc].size();
+        for ( idx_t jproc = 0; jproc < mpi_size; ++jproc ) {
+            idx_t nb_recv = static_cast<idx_t>( recv_slave_idx[jproc].size() );
             for ( idx_t jnode = 0; jnode < nb_recv; ++jnode ) {
-                int slave_idx     = recv_slave_idx[jproc][jnode];
+                idx_t slave_idx     = recv_slave_idx[jproc][jnode];
                 part( slave_idx ) = recv_master_part[jproc][jnode];
                 ridx( slave_idx ) = recv_master_ridx[jproc][jnode];
             }

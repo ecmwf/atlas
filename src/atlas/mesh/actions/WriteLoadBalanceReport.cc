@@ -189,7 +189,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs ) {
             ofs << std::setw( idt ) << "gedges";
         }
         ofs << "\n";
-        for ( size_t jpart = 0; jpart < npart; ++jpart ) {
+        for ( idx_t jpart = 0; jpart < npart; ++jpart ) {
             ofs << std::setw( 6 ) << jpart;
             ofs << std::setw( idt ) << nb_total_nodes[jpart];
             ofs << std::setw( idt ) << nb_owned_nodes[jpart];

@@ -59,12 +59,12 @@ namespace mesh {
 namespace actions {
 
 struct Entity {
-    Entity( gidx_t gid, int idx ) {
+    Entity( gidx_t gid, idx_t idx ) {
         g = gid;
         i = idx;
     }
     gidx_t g;
-    gidx_t i;
+    idx_t i;
     bool operator<( const Entity& other ) const { return ( g < other.g ); }
 };
 
@@ -77,7 +77,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
     //     and could receive different gidx for different tasks
 
     // unused // int mypart = mpi::comm().rank();
-    int nparts = mpi::comm().size();
+    int nparts = static_cast<int>( mpi::comm().size() );
     idx_t root = 0;
 
     array::ArrayView<gidx_t, 1> nodes_glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
@@ -98,12 +98,12 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
     else {
         glb_idx_max = nodes.global_index().metadata().getLong( "max", 0 );
         points_to_edit.resize( build_halo.periodic_points_local_index_.size() );
-        for ( idx_t i = 0; i < points_to_edit.size(); ++i )
+        for ( size_t i = 0; i < points_to_edit.size(); ++i )
             points_to_edit[i] = build_halo.periodic_points_local_index_[i];
     }
 
     std::vector<gidx_t> glb_idx( points_to_edit.size() );
-    int nb_nodes = glb_idx.size();
+    idx_t nb_nodes = static_cast<idx_t>( glb_idx.size() );
     for ( idx_t i = 0; i < nb_nodes; ++i )
         glb_idx[i] = nodes_glb_idx( points_to_edit[i] );
 
@@ -148,14 +148,16 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
     // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
     std::vector<Entity> node_sort;
     node_sort.reserve( glb_nb_nodes );
-    for ( idx_t jnode = 0; jnode < glb_idx_gathered.size(); ++jnode ) {
+    const idx_t nb_glb_idx_gathered = static_cast<idx_t>( glb_idx_gathered.size() );
+    for ( idx_t jnode = 0; jnode < nb_glb_idx_gathered; ++jnode ) {
         node_sort.push_back( Entity( glb_idx_gathered[jnode], jnode ) );
     }
 
     ATLAS_TRACE_SCOPE( "sort on rank 0" ) { std::sort( node_sort.begin(), node_sort.end() ); }
 
     gidx_t gid = glb_idx_max + 1;
-    for ( idx_t jnode = 0; jnode < node_sort.size(); ++jnode ) {
+    const idx_t nb_node_sort = static_cast<idx_t>( node_sort.size() );
+    for ( idx_t jnode = 0; jnode < nb_node_sort; ++jnode ) {
         if ( jnode > 0 && node_sort[jnode].g != node_sort[jnode - 1].g ) { ++gid; }
         int inode               = node_sort[jnode].i;
         glb_idx_gathered[inode] = gid;
@@ -164,7 +166,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
     // 3) Scatter renumbered back
     ATLAS_TRACE_MPI( SCATTER ) {
         mpi::comm().scatterv( glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), glb_idx.data(),
-                              glb_idx.size(), root );
+                              static_cast<int>( glb_idx.size() ), root );
     }
 
     for ( int jnode = 0; jnode < nb_nodes; ++jnode ) {
@@ -182,7 +184,7 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
                                              bool do_all ) {
     ATLAS_TRACE();
 
-    int nparts = mpi::comm().size();
+    int nparts = static_cast<idx_t>( mpi::comm().size() );
     idx_t root = 0;
 
     array::ArrayView<gidx_t, 1> cells_glb_idx = array::make_view<gidx_t, 1>( cells.global_index() );
@@ -218,7 +220,7 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
     }
 
     std::vector<gidx_t> glb_idx( cells_to_edit.size() );
-    int nb_cells = glb_idx.size();
+    const idx_t nb_cells = static_cast<idx_t>( glb_idx.size() );
     for ( idx_t i = 0; i < nb_cells; ++i )
         glb_idx[i] = cells_glb_idx( cells_to_edit[i] );
 
@@ -228,7 +230,7 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
     std::vector<int> recvdispls( mpi::comm().size() );
 
     ATLAS_TRACE_MPI( GATHER ) { mpi::comm().gather( nb_cells, recvcounts, root ); }
-    int glb_nb_cells = std::accumulate( recvcounts.begin(), recvcounts.end(), 0 );
+    idx_t glb_nb_cells = std::accumulate( recvcounts.begin(), recvcounts.end(), 0 );
 
     recvdispls[0] = 0;
     for ( int jpart = 1; jpart < nparts; ++jpart ) {  // start at 1
@@ -244,23 +246,23 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
     // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
     std::vector<Entity> cell_sort;
     cell_sort.reserve( glb_nb_cells );
-    for ( idx_t jnode = 0; jnode < glb_idx_gathered.size(); ++jnode ) {
-        cell_sort.push_back( Entity( glb_idx_gathered[jnode], jnode ) );
+    for ( idx_t jcell = 0; jcell < glb_nb_cells; ++jcell ) {
+        cell_sort.push_back( Entity( glb_idx_gathered[jcell], jcell ) );
     }
 
     ATLAS_TRACE_SCOPE( "sort on rank 0" ) { std::sort( cell_sort.begin(), cell_sort.end() ); }
 
     gidx_t gid = glb_idx_max + 1;
-    for ( idx_t jcell = 0; jcell < cell_sort.size(); ++jcell ) {
+    for ( idx_t jcell = 0; jcell < glb_nb_cells; ++jcell ) {
         if ( jcell > 0 && cell_sort[jcell].g != cell_sort[jcell - 1].g ) { ++gid; }
-        int icell               = cell_sort[jcell].i;
+        idx_t icell               = cell_sort[jcell].i;
         glb_idx_gathered[icell] = gid;
     }
 
     // 3) Scatter renumbered back
     ATLAS_TRACE_MPI( SCATTER ) {
         mpi::comm().scatterv( glb_idx_gathered.data(), recvcounts.data(), recvdispls.data(), glb_idx.data(),
-                              glb_idx.size(), root );
+                              static_cast<int>( glb_idx.size() ), root );
     }
 
     for ( int jcell = 0; jcell < nb_cells; ++jcell ) {
@@ -297,13 +299,10 @@ typedef std::vector<std::vector<idx_t>> Node2Elem;
 void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem ) {
     ATLAS_TRACE();
 
-    auto cell_gidx = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
-    auto node_gidx = array::make_view<gidx_t, 1>( mesh.nodes().global_index() );
-
     const mesh::Nodes& nodes = mesh.nodes();
 
     node2elem.resize( nodes.size() );
-    for ( idx_t jnode = 0; jnode < node2elem.size(); ++jnode ) {
+    for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
         node2elem[jnode].clear();
         node2elem[jnode].reserve( 12 );
     }
@@ -398,7 +397,7 @@ public:
 
     std::string str() const {
         std::stringstream stream;
-        for ( idx_t jnote = 0; jnote < notes.size(); ++jnote ) {
+        for ( size_t jnote = 0; jnote < notes.size(); ++jnote ) {
             if ( jnote > 0 ) stream << "\n";
             stream << notes[jnote];
         }
@@ -417,7 +416,7 @@ private:
     std::vector<std::string> notes;
 };
 
-typedef std::map<uid_t, int> Uid2Node;
+typedef std::map<uid_t, idx_t> Uid2Node;
 void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node ) {
     ATLAS_TRACE();
     Notification notes;
@@ -451,22 +450,22 @@ void accumulate_elements( const Mesh& mesh, const mpi::BufferView<uid_t>& reques
     const mesh::HybridElements::Connectivity& elem_nodes = mesh.cells().node_connectivity();
     const auto elem_part                                 = array::make_view<int, 1>( mesh.cells().partition() );
 
-    idx_t nb_nodes       = request_node_uid.size();
-    const idx_t mpi_rank = mpi::comm().rank();
+    const idx_t nb_nodes = mesh.nodes().size();
+    const idx_t nb_request_nodes       = static_cast<idx_t>( request_node_uid.size() );
+    const int mpi_rank = static_cast<int>( mpi::comm().rank() );
 
     std::set<idx_t> found_elements_set;
 
-    for ( idx_t jnode = 0; jnode < nb_nodes; ++jnode ) {
+    for ( idx_t jnode = 0; jnode < nb_request_nodes; ++jnode ) {
         uid_t uid = request_node_uid( jnode );
 
-        int inode = -1;
+        idx_t inode = -1;
         // search and get node index for uid
         Uid2Node::const_iterator found = uid2node.find( uid );
         if ( found != uid2node.end() ) { inode = found->second; }
-        if ( inode != -1 && idx_t( inode ) < node2elem.size() ) {
-            for ( idx_t jelem = 0; jelem < node2elem[inode].size(); ++jelem ) {
-                idx_t e = node2elem[inode][jelem];
-                if ( idx_t( elem_part( e ) ) == mpi_rank ) { found_elements_set.insert( e ); }
+        if ( inode != -1 && inode < nb_nodes ) {
+            for( const idx_t e : node2elem[inode] ) {
+                if ( elem_part( e ) == mpi_rank ) { found_elements_set.insert( e ); }
             }
         }
     }
@@ -478,8 +477,7 @@ void accumulate_elements( const Mesh& mesh, const mpi::BufferView<uid_t>& reques
 
     // Collect all nodes
     new_nodes_uid.clear();
-    for ( idx_t jelem = 0; jelem < found_elements.size(); ++jelem ) {
-        idx_t e = found_elements[jelem];
+    for( const idx_t e : found_elements ) {
 
         idx_t nb_elem_nodes = elem_nodes.cols( e );
         for ( idx_t n = 0; n < nb_elem_nodes; ++n ) {
@@ -488,7 +486,7 @@ void accumulate_elements( const Mesh& mesh, const mpi::BufferView<uid_t>& reques
     }
 
     // Remove nodes we already have in the request-buffer
-    for ( idx_t jnode = 0; jnode < nb_nodes; ++jnode ) {
+    for ( idx_t jnode = 0; jnode < nb_request_nodes; ++jnode ) {
         new_nodes_uid.erase( request_node_uid( jnode ) );
     }
 }
@@ -518,8 +516,8 @@ public:
 
         std::vector<std::vector<int>> elem_type;
 
-        Buffers( Mesh& mesh ) {
-            const idx_t mpi_size = mpi::comm().size();
+        Buffers( Mesh& ) {
+            const idx_t mpi_size = static_cast<idx_t>( mpi::comm().size() );
 
             node_part.resize( mpi_size );
             node_ridx.resize( mpi_size );
@@ -535,13 +533,13 @@ public:
         }
 
         void print( std::ostream& os ) const {
-            const idx_t mpi_size = mpi::comm().size();
+            const idx_t mpi_size = static_cast<idx_t>( mpi::comm().size() );
             os << "Nodes\n"
                << "-----\n";
             idx_t n( 0 );
             for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
-                for ( idx_t jnode = 0; jnode < node_glb_idx[jpart].size(); ++jnode ) {
-                    os << std::setw( 4 ) << n++ << " : " << node_glb_idx[jpart][jnode] << "\n";
+                for( auto g : node_glb_idx[jpart] ) {
+                    os << std::setw( 4 ) << n++ << " : " << g << "\n";
                 }
             }
             os << std::flush;
@@ -549,7 +547,8 @@ public:
                << "-----\n";
             idx_t e( 0 );
             for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
-                for ( idx_t jelem = 0; jelem < elem_glb_idx[jpart].size(); ++jelem ) {
+                const idx_t nb_elem = static_cast<idx_t>( elem_glb_idx[jpart].size() );
+                for ( idx_t jelem = 0; jelem < nb_elem; ++jelem ) {
                     os << std::setw( 4 ) << e++ << " :  [ t" << elem_type[jpart][jelem] << " -- p"
                        << elem_part[jpart][jelem] << "]  " << elem_glb_idx[jpart][jelem] << "\n";
                 }
@@ -595,8 +594,8 @@ public:
     array::ArrayView<int, 1> part;
     array::IndexView<idx_t, 1> ridx;
     array::ArrayView<int, 1> flags;
-    array::ArrayView<int, 1> ghost;
     array::ArrayView<int, 1> halo;
+    array::ArrayView<int, 1> ghost;
     mesh::HybridElements::Connectivity* elem_nodes;
     array::ArrayView<int, 1> elem_part;
     array::ArrayView<int, 1> elem_flags;
@@ -652,14 +651,14 @@ public:
     void fill_sendbuffer( Buffers& buf, const NodeContainer& nodes_uid, const ElementContainer& elems, const int p ) {
         // ATLAS_TRACE();
 
-        int nb_nodes = nodes_uid.size();
+        idx_t nb_nodes = static_cast<idx_t>( nodes_uid.size() );
         buf.node_glb_idx[p].resize( nb_nodes );
         buf.node_part[p].resize( nb_nodes );
         buf.node_ridx[p].resize( nb_nodes );
         buf.node_flags[p].resize( nb_nodes, Topology::NONE );
         buf.node_xy[p].resize( 2 * nb_nodes );
 
-        int jnode = 0;
+        idx_t jnode = 0;
         typename NodeContainer::iterator it;
         for ( it = nodes_uid.begin(); it != nodes_uid.end(); ++it, ++jnode ) {
             uid_t uid = *it;
@@ -667,7 +666,7 @@ public:
             Uid2Node::iterator found = uid2node.find( uid );
             if ( found != uid2node.end() )  // Point exists inside domain
             {
-                int node                       = found->second;
+                idx_t node                     = found->second;
                 buf.node_glb_idx[p][jnode]     = glb_idx( node );
                 buf.node_part[p][jnode]        = part( node );
                 buf.node_ridx[p][jnode]        = ridx( node );
@@ -682,7 +681,7 @@ public:
             }
         }
 
-        idx_t nb_elems = elems.size();
+        idx_t nb_elems = static_cast<idx_t>( elems.size() );
 
         idx_t nb_elem_nodes( 0 );
         for ( idx_t jelem = 0; jelem < nb_elems; ++jelem ) {
@@ -715,7 +714,7 @@ public:
                           const util::PeriodicTransform& transform, int newflags, const int p ) {
         // ATLAS_TRACE();
 
-        int nb_nodes = nodes_uid.size();
+        idx_t nb_nodes = static_cast<idx_t>( nodes_uid.size() );
         buf.node_glb_idx[p].resize( nb_nodes );
         buf.node_part[p].resize( nb_nodes );
         buf.node_ridx[p].resize( nb_nodes );
@@ -747,7 +746,7 @@ public:
             }
         }
 
-        idx_t nb_elems = elems.size();
+        idx_t nb_elems = static_cast<idx_t>( elems.size() );
 
         idx_t nb_elem_nodes( 0 );
         for ( idx_t jelem = 0; jelem < nb_elems; ++jelem ) {
@@ -785,7 +784,7 @@ public:
     void add_nodes( Buffers& buf ) {
         ATLAS_TRACE();
 
-        const idx_t mpi_size = mpi::comm().size();
+        const idx_t mpi_size = static_cast<idx_t>( mpi::comm().size() );
 
         mesh::Nodes& nodes = mesh.nodes();
         int nb_nodes       = nodes.size();
@@ -820,7 +819,8 @@ public:
 
         int nb_new_nodes = 0;
         for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
-            for ( idx_t n = 0; n < buf.node_glb_idx[jpart].size(); ++n ) {
+            const idx_t nb_nodes_on_part = static_cast<idx_t>( buf.node_glb_idx[jpart].size() );
+            for ( idx_t n = 0; n < nb_nodes_on_part; ++n ) {
                 double crd[] = {buf.node_xy[jpart][n * 2 + XX], buf.node_xy[jpart][n * 2 + YY]};
                 if ( not node_already_exists( util::unique_lonlat( crd ) ) ) { rfn_idx[jpart].push_back( n ); }
             }
@@ -845,7 +845,7 @@ public:
         // -------------
         int new_node = 0;
         for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
-            for ( idx_t n = 0; n < rfn_idx[jpart].size(); ++n ) {
+            for ( size_t n = 0; n < rfn_idx[jpart].size(); ++n ) {
                 int loc_idx     = nb_nodes + new_node;
                 halo( loc_idx ) = halosize + 1;
                 Topology::reset( flags( loc_idx ), buf.node_flags[jpart][rfn_idx[jpart][n]] );
@@ -888,7 +888,7 @@ public:
     void add_elements( Buffers& buf ) {
         ATLAS_TRACE();
 
-        const idx_t mpi_size = mpi::comm().size();
+        const idx_t mpi_size = static_cast<idx_t>( mpi::comm().size() );
         auto cell_gidx       = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
         // Elements might be duplicated from different Tasks. We need to identify
         // unique entries
@@ -919,14 +919,15 @@ public:
         if ( not status.new_periodic_ghost_cells.size() )
             status.new_periodic_ghost_cells.resize( mesh.cells().nb_types() );
 
-        std::vector<std::vector<int>> received_new_elems( mpi_size );
+        std::vector<std::vector<idx_t>> received_new_elems( mpi_size );
         for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
             received_new_elems[jpart].reserve( buf.elem_glb_idx[jpart].size() );
         }
 
         idx_t nb_new_elems( 0 );
         for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
-            for ( idx_t e = 0; e < buf.elem_glb_idx[jpart].size(); ++e ) {
+            const idx_t nb_elems_from_part = static_cast<idx_t>( buf.elem_glb_idx[jpart].size() );
+            for ( idx_t e = 0; e < nb_elems_from_part; ++e ) {
                 if ( element_already_exists( buf.elem_glb_idx[jpart][e] ) == false ) {
                     received_new_elems[jpart].push_back( e );
                 }
@@ -939,8 +940,7 @@ public:
         std::vector<idx_t> nb_elements_of_type( mesh.cells().nb_types(), 0 );
 
         for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
-            for ( idx_t jelem = 0; jelem < received_new_elems[jpart].size(); ++jelem ) {
-                int ielem = received_new_elems[jpart][jelem];
+            for( const idx_t ielem : received_new_elems[jpart] ) {
                 elements_of_type[buf.elem_type[jpart][ielem]][jpart].push_back( ielem );
                 ++nb_elements_of_type[buf.elem_type[jpart][ielem]];
             }
@@ -965,8 +965,7 @@ public:
             // Copy information in new elements
             idx_t new_elem( 0 );
             for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
-                for ( idx_t e = 0; e < elems[jpart].size(); ++e ) {
-                    idx_t jelem                  = elems[jpart][e];
+                for( const idx_t jelem : elems[jpart] ) {
                     int loc_idx                  = new_elems_pos + new_elem;
                     elem_type_glb_idx( loc_idx ) = std::abs( buf.elem_glb_idx[jpart][jelem] );
                     elem_type_part( loc_idx )    = buf.elem_part[jpart][jelem];
@@ -1087,14 +1086,15 @@ void increase_halo_interior( BuildHaloHelper& helper ) {
 
     accumulate_partition_bdry_nodes( helper.mesh, helper.halosize, helper.bdry_nodes );
     const std::vector<int>& bdry_nodes = helper.bdry_nodes;
-
+    const idx_t nb_bdry_nodes = static_cast<idx_t>( bdry_nodes.size() );
+    
     // 2) Communicate uid of these boundary nodes to other partitions
 
     std::vector<uid_t> send_bdry_nodes_uid( bdry_nodes.size() );
-    for ( idx_t jnode = 0; jnode < bdry_nodes.size(); ++jnode )
+    for ( idx_t jnode = 0; jnode < nb_bdry_nodes; ++jnode )
         send_bdry_nodes_uid[jnode] = helper.compute_uid( bdry_nodes[jnode] );
 
-    idx_t mpi_size = mpi::comm().size();
+    idx_t mpi_size = static_cast<idx_t>( mpi::comm().size() );
     atlas::mpi::Buffer<uid_t, 1> recv_bdry_nodes_uid_from_parts( mpi_size );
 
     gather_bdry_nodes( helper, send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts );
@@ -1180,13 +1180,14 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
     if ( !helper.bdry_nodes.size() ) accumulate_partition_bdry_nodes( helper.mesh, helper.halosize, helper.bdry_nodes );
 
-    std::vector<int> bdry_nodes = filter_nodes( helper.bdry_nodes, periodic_points );
+    std::vector<idx_t> bdry_nodes = filter_nodes( helper.bdry_nodes, periodic_points );
+    const idx_t nb_bdry_nodes = static_cast<idx_t>( bdry_nodes.size() );
 
     // 2) Compute transformed uid of these boundary nodes and send to other
     // partitions
 
-    std::vector<uid_t> send_bdry_nodes_uid( bdry_nodes.size() );
-    for ( idx_t jnode = 0; jnode < bdry_nodes.size(); ++jnode ) {
+    std::vector<uid_t> send_bdry_nodes_uid( nb_bdry_nodes );
+    for ( idx_t jnode = 0; jnode < nb_bdry_nodes; ++jnode ) {
         double crd[] = {helper.xy( bdry_nodes[jnode], XX ), helper.xy( bdry_nodes[jnode], YY )};
         transform( crd, +1 );
         // Log::info() << " crd  " << crd[0] << "  " << crd[1] <<  "       uid " <<

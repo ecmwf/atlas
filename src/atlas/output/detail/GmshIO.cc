@@ -50,14 +50,15 @@ static double rad2deg = util::Constants::radiansToDegrees();
 
 class GmshFile : public std::ofstream {
 public:
-    GmshFile( const PathName& file_path, std::ios_base::openmode mode, int part = atlas::mpi::comm().rank() ) {
+    GmshFile( const PathName& file_path, std::ios_base::openmode mode, int part = static_cast<int>(mpi::comm().rank()) ) {
         PathName par_path( file_path );
+        int mpi_size = static_cast<int>( mpi::comm().size() );
         if ( atlas::mpi::comm().size() == 1 || part == -1 ) { std::ofstream::open( par_path.localPath(), mode ); }
         else {
             if ( atlas::mpi::comm().rank() == 0 ) {
                 PathName par_path( file_path );
                 std::ofstream par_file( par_path.localPath(), std::ios_base::out );
-                for ( int p = 0; p < atlas::mpi::comm().size(); ++p ) {
+                for ( int p = 0; p < mpi_size; ++p ) {
                     PathName loc_path( file_path );
                     // loc_path = loc_path.baseName(false) + "_p" + to_str(p) + ".msh";
                     loc_path = loc_path.baseName( false ) + ".msh.p" + std::to_string( p );
@@ -177,13 +178,13 @@ void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1> gidx,
     }
 }
 
-std::vector<long> get_levels( int nlev, const Metadata& gmsh_options ) {
-    std::vector<long> lev;
-    std::vector<long> gmsh_levels;
+std::vector<int> get_levels( int nlev, const Metadata& gmsh_options ) {
+    std::vector<int> lev;
+    std::vector<int> gmsh_levels;
     gmsh_options.get( "levels", gmsh_levels );
     if ( gmsh_levels.empty() || nlev == 1 ) {
         lev.resize( nlev );
-        for ( idx_t ilev = 0; ilev < nlev; ++ilev )
+        for ( int ilev = 0; ilev < nlev; ++ilev )
             lev[ilev] = ilev;
     }
     else {
@@ -231,7 +232,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
     Log::debug() << "writing NodeColumns field " << field.name() << " defined in NodeColumns..." << std::endl;
 
     bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
-    bool binary( !gmsh_options.get<bool>( "ascii" ) );
+    // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
     idx_t nlev                       = std::max<idx_t>( 1, field.levels() );
     idx_t ndata                      = std::min<idx_t>( function_space.nb_nodes(), field.shape( 0 ) );
     idx_t nvars                      = std::max<idx_t>( 1, field.variables() );
@@ -249,9 +250,9 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
         ndata = std::min<idx_t>( function_space.nb_nodes_global(), field_glb.shape( 0 ) );
     }
 
-    std::vector<long> lev = get_levels( nlev, gmsh_options );
-    for ( idx_t ilev = 0; ilev < lev.size(); ++ilev ) {
-        idx_t jlev = lev[ilev];
+    std::vector<int> lev = get_levels( nlev, gmsh_options );
+    for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
+        int jlev = lev[ilev];
         if ( ( gather && atlas::mpi::comm().rank() == 0 ) || !gather ) {
             out << "$NodeData\n";
             out << "1\n";
@@ -276,6 +277,7 @@ void print_field_lev( char field_lev[], int jlev ) {
     std::sprintf( field_lev, "[%03d]", jlev );
 }
 
+/* unused
 void print_field_lev( char field_lev[], long jlev ) {
     std::sprintf( field_lev, "[%03ld]", jlev );
 }
@@ -283,6 +285,7 @@ void print_field_lev( char field_lev[], long jlev ) {
 void print_field_lev( char field_lev[], unsigned long jlev ) {
     std::sprintf( field_lev, "[%03lu]", jlev );
 }
+**/
 
 // ----------------------------------------------------------------------------
 template <typename DATATYPE>
@@ -291,7 +294,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
     Log::debug() << "writing StructuredColumns field " << field.name() << "..." << std::endl;
 
     bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
-    bool binary( !gmsh_options.get<bool>( "ascii" ) );
+    // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
     idx_t nlev  = std::max<idx_t>( 1, field.levels() );
     idx_t ndata = std::min<idx_t>( function_space.sizeOwned(), field.shape( 0 ) );
     idx_t nvars = std::max<idx_t>( 1, field.variables() );
@@ -309,16 +312,12 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
         ndata = field_glb.shape( 0 );
     }
 
-    std::vector<long> lev = get_levels( nlev, gmsh_options );
-    for ( idx_t ilev = 0; ilev < lev.size(); ++ilev ) {
-        idx_t jlev        = lev[ilev];
+    std::vector<int> lev = get_levels( nlev, gmsh_options );
+    for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
+        int jlev        = lev[ilev];
         char field_lev[6] = {0, 0, 0, 0, 0, 0};
 
         if ( field.levels() ) { print_field_lev( field_lev, jlev ); }
-
-        double time = field.metadata().has( "time" ) ? field.metadata().get<double>( "time" ) : 0.;
-
-        int step = field.metadata().has( "step" ) ? field.metadata().get<int>( "step" ) : 0;
 
         out << "$NodeData\n";
         out << "1\n";
@@ -791,11 +790,10 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
         if ( options.get<bool>( "edges" ) ) grouped_elements.push_back( &mesh.edges() );
 
         idx_t nb_elements( 0 );
-        for ( idx_t jgroup = 0; jgroup < grouped_elements.size(); ++jgroup ) {
-            const mesh::HybridElements& hybrid = *grouped_elements[jgroup];
-            nb_elements += hybrid.size();
-            const array::ArrayView<int, 1> hybrid_halo  = array::make_view<int, 1>( hybrid.halo() );
-            const array::ArrayView<int, 1> hybrid_flags = array::make_view<int, 1>( hybrid.flags() );
+        for( const mesh::HybridElements* hybrid : grouped_elements ) {
+            nb_elements += hybrid->size();
+            const array::ArrayView<int, 1> hybrid_halo  = array::make_view<int, 1>( hybrid->halo() );
+            const array::ArrayView<int, 1> hybrid_flags = array::make_view<int, 1>( hybrid->flags() );
             auto hybrid_patch                           = [&]( idx_t e ) {
                 return mesh::Nodes::Topology::check( hybrid_flags( e ), mesh::Nodes::Topology::PATCH );
             };
@@ -804,17 +802,18 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                 if ( !include_patch && hybrid_patch( e ) ) return true;
                 return false;
             };
-            for ( idx_t e = 0; e < hybrid.size(); ++e ) {
-                if ( exclude( e ) ) --nb_elements;
+            for ( idx_t e = 0; e < hybrid->size(); ++e ) {
+                if ( exclude( e ) ) {
+                    --nb_elements;
+                }
             }
         }
 
         file << nb_elements << "\n";
 
-        for ( idx_t jgroup = 0; jgroup < grouped_elements.size(); ++jgroup ) {
-            const mesh::HybridElements& hybrid = *grouped_elements[jgroup];
-            for ( idx_t etype = 0; etype < hybrid.nb_types(); ++etype ) {
-                const mesh::Elements& elements        = hybrid.elements( etype );
+        for( const mesh::HybridElements* hybrid : grouped_elements ) {
+            for ( idx_t etype = 0; etype < hybrid->nb_types(); ++etype ) {
+                const mesh::Elements& elements        = hybrid->elements( etype );
                 const mesh::ElementType& element_type = elements.element_type();
                 int gmsh_elem_type;
                 if ( element_type.name() == "Line" )
@@ -850,7 +849,7 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                     data[2]         = 1;
                     data[3]         = 1;
                     size_t datasize = sizeof( int ) * ( 5 + node_connectivity.cols() );
-                    for ( idx_t elem = 0; elem < elements.size(); ++elem ) {
+                    for ( idx_t elem = 0; elem < nb_elems; ++elem ) {
                         if ( include_ghost || !elems_halo( elem ) ) {
                             data[0] = elems_glb_idx( elem );
                             data[4] = elems_partition( elem );

@@ -47,11 +47,11 @@ namespace test {
 double dual_volume( Mesh& mesh ) {
     mesh::Nodes& nodes = mesh.nodes();
     mesh::IsGhostNode is_ghost_node( nodes );
-    int nb_nodes                             = nodes.size();
+    idx_t nb_nodes                             = nodes.size();
     array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
     double area                              = 0;
 
-    for ( int node = 0; node < nb_nodes; ++node ) {
+    for ( idx_t node = 0; node < nb_nodes; ++node ) {
         if ( !is_ghost_node( node ) ) { area += dual_volumes( node ); }
     }
 
@@ -108,19 +108,19 @@ CASE( "test_distribute_t63" ) {
     const array::ArrayView<int, 1> flags = array::make_view<int, 1>( m.nodes().flags() );
 
     Log::info() << "partition = [ ";
-    for ( size_t jnode = 0; jnode < part.size(); ++jnode ) {
+    for ( idx_t jnode = 0; jnode < part.size(); ++jnode ) {
         Log::info() << part( jnode ) << " ";
     }
     Log::info() << "]" << std::endl;
 
     Log::info() << "ghost     = [ ";
-    for ( size_t jnode = 0; jnode < part.size(); ++jnode ) {
+    for ( idx_t jnode = 0; jnode < part.size(); ++jnode ) {
         Log::info() << ghost( jnode ) << " ";
     }
     Log::info() << "]" << std::endl;
 
     Log::info() << "flags     = [ ";
-    for ( size_t jnode = 0; jnode < part.size(); ++jnode ) {
+    for ( idx_t jnode = 0; jnode < part.size(); ++jnode ) {
         Log::info() << mesh::Nodes::Topology::check( flags( jnode ), mesh::Nodes::Topology::GHOST ) << " ";
         EXPECT( mesh::Nodes::Topology::check( flags( jnode ), mesh::Nodes::Topology::GHOST ) == ghost( jnode ) );
     }

@@ -70,10 +70,10 @@ public:
         T* data;
         util::allocate_managedmem(data, size_ + dimsize);
 
-        for(unsigned int c=0; c < pos; ++c) {
+        for(idx_t c=0; c < pos; ++c) {
             data[c] = data_[c];
         }
-        for(unsigned int c=pos; c < size_; ++c) {
+        for(idx_t c=pos; c < size_; ++c) {
             data[c+dimsize] = data_[c];
         }
 
@@ -123,7 +123,7 @@ public:
 
         T* d_ = nullptr;
         util::allocate_managedmem(d_,N);
-        for ( unsigned int c = 0; c < std::min(size_, N); ++c ) {
+        for ( idx_t c = 0; c < std::min(size_, N); ++c ) {
             d_[c] = data_[c];
         }
         util::delete_managedmem( data_ );
@@ -139,7 +139,7 @@ public:
     void resize( idx_t N, T&& val ) {
         const int oldsize = size_;
         resize( N );
-        for(unsigned int c=oldsize; c < size_; ++c) {
+        for(idx_t c=oldsize; c < size_; ++c) {
             data_[c] = val;
         }
     }

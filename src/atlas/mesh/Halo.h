@@ -31,11 +31,11 @@ public:
     Halo() {}
     Halo( const Mesh& mesh );
     Halo( const detail::MeshImpl& mesh );
-    Halo( const long size ) : size_( size ) {}
-    long size() const;
+    Halo( const int size ) : size_( size ) {}
+    int size() const;
 
 private:
-    long size_{-1};
+    int size_{-1};
 };
 
 }  // namespace mesh

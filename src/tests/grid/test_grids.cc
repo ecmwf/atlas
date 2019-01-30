@@ -79,8 +79,8 @@ CASE( "test_reduced_gg_ifs" ) {
 
 CASE( "test_regular_ll" ) {
     // Constructor for N=8
-    size_t nlon = 32;
-    size_t nlat = 16;
+    idx_t nlon = 32;
+    idx_t nlat = 16;
     std::stringstream name;
     name << "Slat" << nlon << "x" << nlat;
     RegularGrid grid( name.str() );
@@ -89,10 +89,10 @@ CASE( "test_regular_ll" ) {
     EXPECT( grid.ny() == nlat );
     EXPECT( grid.size() == 512 );
     // EXPECT(grid.type() == "shifted_lat");
-    EXPECT( grid.y( 0 ) == 90. - 0.5 * ( 180. / 16. ) );
-    EXPECT( grid.y( grid.ny() - 1 ) == -90. + 0.5 * ( 180. / 16. ) );
-    EXPECT( grid.x( 0 ) == 0. );
-    EXPECT( grid.x( grid.nx() - 1 ) == 360. - 360. / 32. );
+    EXPECT( is_approximately_equal( grid.y( 0 ) , 90. - 0.5 * ( 180. / 16. ) ) );
+    EXPECT( is_approximately_equal( grid.y( grid.ny() - 1 ), -90. + 0.5 * ( 180. / 16. ) ) );
+    EXPECT( is_approximately_equal( grid.x( 0 ), 0. ) );
+    EXPECT( is_approximately_equal( grid.x( grid.nx() - 1 ), 360. - 360. / 32. ) );
 
     // Construct using builders/factories
 
@@ -119,10 +119,10 @@ CASE( "test_regular_ll" ) {
     RegularGrid ll_nopoles( "Slat4x2" );
     EXPECT( ll_nopoles.nx() == 4 );
     EXPECT( ll_nopoles.ny() == 2 );
-    EXPECT( eckit::types::is_approximately_equal( ll_nopoles.y( 0 ), 45. ) );   // tolerance was previously 1.e-5
-    EXPECT( eckit::types::is_approximately_equal( ll_nopoles.y( 1 ), -45. ) );  // tolerance was previously 1.e-5
-    EXPECT( eckit::types::is_approximately_equal( ll_nopoles.x( 0 ), 0. ) );    // tolerance was previously 1.e-5
-    EXPECT( eckit::types::is_approximately_equal( ll_nopoles.x( 1 ), 90. ) );   // tolerance was previously 1.e-5
+    EXPECT( is_approximately_equal( ll_nopoles.y( 0 ), 45. ) );   // tolerance was previously 1.e-5
+    EXPECT( is_approximately_equal( ll_nopoles.y( 1 ), -45. ) );  // tolerance was previously 1.e-5
+    EXPECT( is_approximately_equal( ll_nopoles.x( 0 ), 0. ) );    // tolerance was previously 1.e-5
+    EXPECT( is_approximately_equal( ll_nopoles.x( 1 ), 90. ) );   // tolerance was previously 1.e-5
 }
 
 CASE( "test_reducedgaussian" ) {

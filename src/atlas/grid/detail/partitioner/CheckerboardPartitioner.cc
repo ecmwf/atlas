@@ -55,7 +55,7 @@ CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard( con
     else {
         // default number of bands
         double zz = std::sqrt( (double)( nparts * cb.ny ) / cb.nx );  // aim at +/-square regions
-        cb.nbands = (int)zz + 0.5;
+        cb.nbands = (idx_t)zz + 0.5;
         if ( cb.nbands < 1 ) cb.nbands = 1;            // at least one band
         if ( cb.nbands > nparts ) cb.nbands = nparts;  // not more bands than procs
 
@@ -151,7 +151,7 @@ Number of gridpoints per band
     // for each band, select gridpoints belonging to that band, and sort them
     // according to X first
     size_t offset = 0;
-    size_t jpart  = 0;
+    int jpart  = 0;
     for ( size_t iband = 0; iband < nbands; iband++ ) {
         // sort according to X first
         std::sort( nodes + offset, nodes + offset + ngpb[iband], compare_X_Y );
@@ -192,7 +192,7 @@ std::cout << std::endl;
 void CheckerboardPartitioner::partition( const Grid& grid, int part[] ) const {
     if ( nb_partitions() == 1 )  // trivial solution, so much faster
     {
-        for ( size_t j = 0; j < grid.size(); ++j )
+        for ( idx_t j = 0; j < grid.size(); ++j )
             part[j] = 0;
     }
     else {
@@ -201,11 +201,11 @@ void CheckerboardPartitioner::partition( const Grid& grid, int part[] ) const {
         std::vector<NodeInt> nodes( grid.size() );
         int n( 0 );
 
-        for ( size_t iy = 0; iy < cb.ny; ++iy ) {
-            for ( size_t ix = 0; ix < cb.nx; ++ix ) {
-                nodes[n].x = ix;
-                nodes[n].y = iy;
-                nodes[n].n = n;
+        for ( idx_t iy = 0; iy < cb.ny; ++iy ) {
+            for ( idx_t ix = 0; ix < cb.nx; ++ix ) {
+                nodes[n].x = static_cast<int>( ix );
+                nodes[n].y = static_cast<int>( iy );
+                nodes[n].n = static_cast<int>( n );
                 ++n;
             }
         }

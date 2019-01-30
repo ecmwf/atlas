@@ -17,6 +17,7 @@
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/utils/Hash.h"
+#include "eckit/types/FloatCompare.h"
 
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
@@ -60,9 +61,9 @@ struct Region {
     int ntriags;
     int nquads;
     int nnodes;
-    std::vector<int> lat_begin;
-    std::vector<int> lat_end;
-    std::vector<int> nb_lat_elems;
+    std::vector<idx_t> lat_begin;
+    std::vector<idx_t> lat_end;
+    std::vector<idx_t> nb_lat_elems;
 };
 
 StructuredMeshGenerator::StructuredMeshGenerator( const eckit::Parametrisation& p ) {
@@ -234,8 +235,8 @@ void StructuredMeshGenerator::generate_region( const StructuredGrid& rg, const s
     double max_angle       = options.get<double>( "angle" );
     bool triangulate_quads = options.get<bool>( "triangulate" );
     bool three_dimensional = options.get<bool>( "3d" );
-    bool has_north_pole    = rg.y().front() == 90;
-    bool has_south_pole    = rg.y().back() == -90;
+    bool has_north_pole    = eckit::types::is_approximately_equal( rg.y().front(), 90. );
+    bool has_south_pole    = eckit::types::is_approximately_equal( rg.y().back() , -90.);
     bool unique_pole = options.get<bool>( "unique_pole" ) && three_dimensional && has_north_pole && has_south_pole;
     bool periodic_east_west = rg.periodic();
 
@@ -244,7 +245,7 @@ void StructuredMeshGenerator::generate_region( const StructuredGrid& rg, const s
 Find min and max latitudes used by this part.
 */
     n             = 0;
-    int lat_north = -1;
+    idx_t lat_north = -1;
     for ( idx_t jlat = 0; jlat < rg.ny(); ++jlat ) {
         for ( idx_t jlon = 0; jlon < rg.nx( jlat ); ++jlon ) {
             if ( parts.at( n ) == mypart ) {
@@ -257,9 +258,9 @@ Find min and max latitudes used by this part.
 end_north:
 
     n             = rg.size() - 1;
-    int lat_south = -1;
-    for ( int jlat = rg.ny() - 1; jlat >= 0; --jlat ) {
-        for ( int jlon = rg.nx( jlat ) - 1; jlon >= 0; --jlon ) {
+    idx_t lat_south = -1;
+    for ( idx_t jlat = rg.ny() - 1; jlat >= 0; --jlat ) {
+        for ( idx_t jlon = rg.nx( jlat ) - 1; jlon >= 0; --jlon ) {
             if ( parts.at( n ) == mypart ) {
                 lat_south = jlat;
                 goto end_south;
@@ -269,7 +270,7 @@ end_north:
     }
 end_south:
 
-    std::vector<int> offset( rg.ny(), 0 );
+    std::vector<idx_t> offset( rg.ny(), 0 );
 
     n = 0;
     for ( idx_t jlat = 0; jlat < rg.ny(); ++jlat ) {
@@ -300,11 +301,11 @@ We need to connect to next region
     elemview.assign( -1 );
 
     bool stagger = options.get<bool>( "stagger" );
-    for ( int jlat = lat_north; jlat < lat_south; ++jlat ) {
+    for ( idx_t jlat = lat_north; jlat < lat_south; ++jlat ) {
         //    std::stringstream filename; filename << "/tmp/debug/"<<jlat;
 
-        size_t ilat, latN, latS;
-        size_t ipN1, ipN2, ipS1, ipS2;
+        idx_t ilat, latN, latS;
+        idx_t ipN1, ipN2, ipS1, ipS2;
         double xN1, xN2, yN, xS1, xS2, yS;
         double dN1S2, dS1N2;  // dN2S2;
         bool try_make_triangle_up, try_make_triangle_down, try_make_quad;
@@ -319,22 +320,22 @@ We need to connect to next region
         yN   = rg.y( latN );
         yS   = rg.y( latS );
 
-        size_t beginN, beginS, endN, endS;
+        idx_t beginN, beginS, endN, endS;
 
         beginN = 0;
         endN   = rg.nx( latN ) - ( periodic_east_west ? 0 : 1 );
-        if ( yN == 90 && unique_pole ) endN = beginN;
+        if ( eckit::types::is_approximately_equal( yN, 90.) && unique_pole ) endN = beginN;
 
         beginS = 0;
         endS   = rg.nx( latS ) - ( periodic_east_west ? 0 : 1 );
-        if ( yS == -90 && unique_pole ) endS = beginS;
+        if ( eckit::types::is_approximately_equal( yS, -90.) && unique_pole ) endS = beginS;
 
         ipN1 = beginN;
         ipS1 = beginS;
         ipN2 = std::min( ipN1 + 1, endN );
         ipS2 = std::min( ipS1 + 1, endS );
 
-        int jelem = 0;
+        idx_t jelem = 0;
         int pE    = parts.at( offset.at( latN ) );
 
 #if DEBUG_OUTPUT
@@ -601,10 +602,10 @@ We need to connect to next region
 
                     if ( region.lat_begin.at( latN ) == -1 ) region.lat_begin.at( latN ) = ipN1;
                     if ( region.lat_begin.at( latS ) == -1 ) region.lat_begin.at( latS ) = ipS1;
-                    region.lat_begin.at( latN ) = std::min<int>( region.lat_begin.at( latN ), ipN1 );
-                    region.lat_begin.at( latS ) = std::min<int>( region.lat_begin.at( latS ), ipS1 );
-                    region.lat_end.at( latN )   = std::max<int>( region.lat_end.at( latN ), ipN1 );
-                    region.lat_end.at( latS )   = std::max<int>( region.lat_end.at( latS ), ipS2 );
+                    region.lat_begin.at( latN ) = std::min( region.lat_begin.at( latN ), ipN1 );
+                    region.lat_begin.at( latS ) = std::min( region.lat_begin.at( latS ), ipS1 );
+                    region.lat_end.at( latN )   = std::max( region.lat_end.at( latN ), ipN1 );
+                    region.lat_end.at( latS )   = std::max( region.lat_end.at( latS ), ipS2 );
                 }
                 else {
 #if DEBUG_OUTPUT
@@ -624,8 +625,8 @@ We need to connect to next region
 #if DEBUG_OUTPUT
         ATLAS_DEBUG_VAR( region.nb_lat_elems.at( jlat ) );
 #endif
-        if ( region.nb_lat_elems.at( jlat ) == 0 && latN == size_t( region.north ) ) { ++region.north; }
-        if ( region.nb_lat_elems.at( jlat ) == 0 && latS == size_t( region.south ) ) { --region.south; }
+        if ( region.nb_lat_elems.at( jlat ) == 0 && latN == region.north ) { ++region.north; }
+        if ( region.nb_lat_elems.at( jlat ) == 0 && latS == region.south ) { --region.south; }
         //    region.lat_end.at(latN) = std::min(region.lat_end.at(latN),
         //    int(rg.nx(latN)-1));
         //    region.lat_end.at(latS) = std::min(region.lat_end.at(latS),
@@ -647,10 +648,10 @@ We need to connect to next region
     for ( int jlat = region.north; jlat <= region.south; ++jlat ) {
         n                           = offset.at( jlat );
         region.lat_begin.at( jlat ) = std::max( 0, region.lat_begin.at( jlat ) );
-        for ( size_t jlon = 0; jlon < rg.nx( jlat ); ++jlon ) {
+        for ( idx_t jlon = 0; jlon < rg.nx( jlat ); ++jlon ) {
             if ( parts.at( n ) == mypart ) {
-                region.lat_begin.at( jlat ) = std::min( region.lat_begin.at( jlat ), int( jlon ) );
-                region.lat_end.at( jlat )   = std::max( region.lat_end.at( jlat ), int( jlon ) );
+                region.lat_begin.at( jlat ) = std::min( region.lat_begin.at( jlat ), jlon );
+                region.lat_end.at( jlat )   = std::max( region.lat_end.at( jlat ), jlon );
             }
             ++n;
         }
@@ -744,7 +745,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
 
     size_t node_numbering_size = nnodes;
     if ( remove_periodic_ghost_points ) {
-        for ( size_t jlat = 0; jlat < rg.ny(); ++jlat ) {
+        for ( idx_t jlat = 0; jlat < rg.ny(); ++jlat ) {
             if ( region.lat_end[jlat] >= rg.nx( jlat ) ) --nnodes;
         }
     }
@@ -768,7 +769,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
     std::vector<int> offset_loc( region.south - region.north + 1, 0 );
 
     n = 0;
-    for ( size_t jlat = 0; jlat < rg.ny(); ++jlat ) {
+    for ( idx_t jlat = 0; jlat < rg.ny(); ++jlat ) {
         offset_glb.at( jlat ) = n;
         n += rg.nx( jlat );
     };
@@ -776,7 +777,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
     std::vector<int> periodic_glb( rg.ny() );
 
     if ( include_periodic_ghost_points ) {
-        for ( size_t jlat = 0; jlat < rg.ny(); ++jlat ) {
+        for ( idx_t jlat = 0; jlat < rg.ny(); ++jlat ) {
             if ( rg.nx( jlat ) > 0 ) {
                 periodic_glb.at( jlat ) = n;
                 ++n;
@@ -784,7 +785,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
         }
     }
     else {
-        for ( size_t jlat = 0; jlat < rg.ny(); ++jlat ) {
+        for ( idx_t jlat = 0; jlat < rg.ny(); ++jlat ) {
             if ( rg.nx( jlat ) > 0 ) { periodic_glb.at( jlat ) = offset_glb.at( jlat ) + rg.nx( jlat ) - 1; }
         }
     }
@@ -803,12 +804,12 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
 
     bool stagger = options.get<bool>( "stagger" );
 
-    std::vector<int> node_numbering( node_numbering_size, -1 );
+    std::vector<idx_t> node_numbering( node_numbering_size, -1 );
     if ( options.get<bool>( "ghost_at_end" ) ) {
         std::vector<GhostNode> ghost_nodes;
         ghost_nodes.reserve( nnodes );
-        int node_number = 0;
-        int jnode       = 0;
+        idx_t node_number = 0;
+        idx_t jnode       = 0;
         l               = 0;
         ASSERT( region.south >= region.north );
         for ( int jlat = region.north; jlat <= region.south; ++jlat ) {
@@ -821,7 +822,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
                 ATLAS_DEBUG_VAR( region.lat_begin[jlat] );
                 ATLAS_DEBUG_VAR( region.lat_end[jlat] );
             }
-            for ( int jlon = region.lat_begin.at( jlat ); jlon <= region.lat_end.at( jlat ); ++jlon ) {
+            for ( idx_t jlon = region.lat_begin.at( jlat ); jlon <= region.lat_end.at( jlat ); ++jlon ) {
                 if ( jlon < rg.nx( jlat ) ) {
                     n = offset_glb.at( jlat ) + jlon;
                     if ( parts.at( n ) == mypart ) {
@@ -864,21 +865,21 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
     }
     else  // No renumbering
     {
-        for ( int jnode = 0; jnode < nnodes; ++jnode )
+        for ( idx_t jnode = 0; jnode < nnodes; ++jnode )
             node_numbering.at( jnode ) = jnode;
     }
 
-    int jnode = 0;
+    idx_t jnode = 0;
     l         = 0;
-    for ( int jlat = region.north; jlat <= region.south; ++jlat ) {
-        int ilat              = jlat - region.north;
+    for ( idx_t jlat = region.north; jlat <= region.south; ++jlat ) {
+        idx_t ilat              = jlat - region.north;
         offset_loc.at( ilat ) = l;
         l += region.lat_end.at( jlat ) - region.lat_begin.at( jlat ) + 1;
 
         double y = rg.y( jlat );
-        for ( int jlon = region.lat_begin.at( jlat ); jlon <= region.lat_end.at( jlat ); ++jlon ) {
+        for ( idx_t jlon = region.lat_begin.at( jlat ); jlon <= region.lat_end.at( jlat ); ++jlon ) {
             if ( jlon < rg.nx( jlat ) ) {
-                int inode = node_numbering.at( jnode );
+                idx_t inode = node_numbering.at( jnode );
                 n         = offset_glb.at( jlat ) + jlon;
 
                 double x = rg.x( jlon, jlat );
@@ -903,7 +904,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
                 if ( jlat == 0 && !include_north_pole ) {
                     Topology::set( flags( inode ), Topology::BC | Topology::NORTH );
                 }
-                if ( size_t( jlat ) == rg.ny() - 1 && !include_south_pole ) {
+                if ( jlat == rg.ny() - 1 && !include_south_pole ) {
                     Topology::set( flags( inode ), Topology::BC | Topology::SOUTH );
                 }
                 if ( jlon == 0 && include_periodic_ghost_points ) {
@@ -917,7 +918,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
             }
             else if ( include_periodic_ghost_points )  // add periodic point
             {
-                int inode = node_numbering.at( jnode );
+                idx_t inode = node_numbering.at( jnode );
                 // int inode_left = node_numbering.at(jnode-1);
                 double x = rg.x( rg.nx( jlat ), jlat );
                 if ( stagger && ( jlat + 1 ) % 2 == 0 ) x += 180. / static_cast<double>( rg.nx( jlat ) );
@@ -948,9 +949,9 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
         }
     };
 
-    int jnorth = -1;
+    idx_t jnorth = -1;
     if ( include_north_pole ) {
-        int inode       = node_numbering.at( jnode );
+        idx_t inode       = node_numbering.at( jnode );
         jnorth          = jnode;
         double y        = 90.;
         double x        = 180.;
@@ -972,9 +973,9 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
         ++jnode;
     }
 
-    int jsouth = -1;
+    idx_t jsouth = -1;
     if ( include_south_pole ) {
-        int inode       = node_numbering.at( jnode );
+        idx_t inode       = node_numbering.at( jnode );
         jsouth          = jnode;
         double y        = -90.;
         double x        = 180.;
@@ -1022,21 +1023,21 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
     /*
      * Fill in connectivity tables with global node indices first
      */
-    int jcell;
-    int jquad       = 0;
-    int jtriag      = 0;
-    int quad_begin  = mesh.cells().elements( 0 ).begin();
-    int triag_begin = mesh.cells().elements( 1 ).begin();
+    idx_t jcell;
+    idx_t jquad       = 0;
+    idx_t jtriag      = 0;
+    idx_t quad_begin  = mesh.cells().elements( 0 ).begin();
+    idx_t triag_begin = mesh.cells().elements( 1 ).begin();
     idx_t quad_nodes[4];
     idx_t triag_nodes[3];
 
-    for ( int jlat = region.north; jlat < region.south; ++jlat ) {
-        int ilat  = jlat - region.north;
-        int jlatN = jlat;
-        int jlatS = jlat + 1;
-        int ilatN = ilat;
-        int ilatS = ilat + 1;
-        for ( int jelem = 0; jelem < region.nb_lat_elems.at( jlat ); ++jelem ) {
+    for ( idx_t jlat = region.north; jlat < region.south; ++jlat ) {
+        idx_t ilat  = jlat - region.north;
+        idx_t jlatN = jlat;
+        idx_t jlatS = jlat + 1;
+        idx_t ilatN = ilat;
+        idx_t ilatS = ilat + 1;
+        for ( idx_t jelem = 0; jelem < region.nb_lat_elems.at( jlat ); ++jelem ) {
             const auto elem = array::make_view<int, 3>( *region.elems ).slice( ilat, jelem, Range::all() );
 
             if ( elem( 2 ) >= 0 && elem( 3 ) >= 0 )  // This is a quad
@@ -1047,9 +1048,9 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
                 quad_nodes[3] = node_numbering.at( offset_loc.at( ilatN ) + elem( 3 ) - region.lat_begin.at( jlatN ) );
 
                 if ( three_dimensional && periodic_east_west ) {
-                    if ( size_t( elem( 2 ) ) == rg.nx( jlatS ) )
+                    if ( elem( 2 ) == rg.nx( jlatS ) )
                         quad_nodes[2] = node_numbering.at( offset_loc.at( ilatS ) );
-                    if ( size_t( elem( 3 ) ) == rg.nx( jlatN ) )
+                    if ( elem( 3 ) == rg.nx( jlatN ) )
                         quad_nodes[3] = node_numbering.at( offset_loc.at( ilatN ) );
                 }
 
@@ -1069,9 +1070,9 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
                     triag_nodes[2] =
                         node_numbering.at( offset_loc.at( ilatS ) + elem( 2 ) - region.lat_begin.at( jlatS ) );
                     if ( three_dimensional && periodic_east_west ) {
-                        if ( size_t( elem( 0 ) ) == rg.nx( jlatN ) )
+                        if ( elem( 0 ) == rg.nx( jlatN ) )
                             triag_nodes[0] = node_numbering.at( offset_loc.at( ilatN ) );
-                        if ( size_t( elem( 2 ) ) == rg.nx( jlatS ) )
+                        if ( elem( 2 ) == rg.nx( jlatS ) )
                             triag_nodes[2] = node_numbering.at( offset_loc.at( ilatS ) );
                     }
                 }
@@ -1084,9 +1085,9 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
                     triag_nodes[2] =
                         node_numbering.at( offset_loc.at( ilatN ) + elem( 3 ) - region.lat_begin.at( jlatN ) );
                     if ( three_dimensional && periodic_east_west ) {
-                        if ( size_t( elem( 1 ) ) == rg.nx( jlatS ) )
+                        if ( elem( 1 ) == rg.nx( jlatS ) )
                             triag_nodes[1] = node_numbering.at( offset_loc.at( ilatS ) );
-                        if ( size_t( elem( 3 ) ) == rg.nx( jlatN ) )
+                        if ( elem( 3 ) == rg.nx( jlatN ) )
                             triag_nodes[2] = node_numbering.at( offset_loc.at( ilatN ) );
                     }
                 }
@@ -1099,12 +1100,12 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
     }
 
     if ( include_north_pole ) {
-        int ilat    = 0;
-        int ip1     = 0;
-        size_t nlon = rg.nx( 0 ) - ( periodic_east_west ? 0 : 1 );
-        for ( size_t ip2 = 0; ip2 < nlon; ++ip2 ) {
+        idx_t ilat    = 0;
+        idx_t ip1     = 0;
+        idx_t nlon = rg.nx( 0 ) - ( periodic_east_west ? 0 : 1 );
+        for ( idx_t ip2 = 0; ip2 < nlon; ++ip2 ) {
             jcell      = triag_begin + jtriag++;
-            size_t ip3 = ip2 + 1;
+            idx_t ip3 = ip2 + 1;
             if ( three_dimensional && ip3 == rg.nx( 0 ) ) ip3 = 0;
             triag_nodes[0] = node_numbering.at( jnorth + ip1 );
             triag_nodes[1] = node_numbering.at( offset_loc.at( ilat ) + ip2 );
@@ -1115,12 +1116,12 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
         }
     }
     else if ( patch_north_pole ) {
-        int jlat = 0;
-        int ilat = 0;
-        int ip1, ip2, ip3;
+        idx_t jlat = 0;
+        idx_t ilat = 0;
+        idx_t ip1, ip2, ip3;
 
-        int jforward  = 0;
-        int jbackward = rg.nx( jlat ) - 1;
+        idx_t jforward  = 0;
+        idx_t jbackward = rg.nx( jlat ) - 1;
         bool forward  = true;
 
         while ( true ) {
@@ -1160,9 +1161,9 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
     }
 
     if ( include_south_pole ) {
-        int jlat   = rg.ny() - 1;
-        int ilat   = region.south - region.north;
-        int ip1    = 0;
+        idx_t jlat   = rg.ny() - 1;
+        idx_t ilat   = region.south - region.north;
+        idx_t ip1    = 0;
         idx_t nlon = rg.nx( jlat ) + 1 - ( periodic_east_west ? 0 : 1 );
         for ( idx_t ip2 = 1; ip2 < nlon; ++ip2 ) {
             jcell          = triag_begin + jtriag++;
@@ -1178,12 +1179,12 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
         }
     }
     else if ( patch_south_pole ) {
-        int jlat = rg.ny() - 1;
-        int ilat = region.south - region.north;
-        int ip1, ip2, ip3;
+        idx_t jlat = rg.ny() - 1;
+        idx_t ilat = region.south - region.north;
+        idx_t ip1, ip2, ip3;
 
-        int jforward  = 0;
-        int jbackward = rg.nx( jlat ) - 1;
+        idx_t jforward  = 0;
+        idx_t jbackward = rg.nx( jlat ) - 1;
         bool forward  = true;
 
         while ( true ) {

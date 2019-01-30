@@ -80,12 +80,12 @@ typedef gidx_t uid_t;
 namespace {
 
 struct Node {
-    Node( gidx_t gid, int idx ) {
+    Node( gidx_t gid, idx_t idx ) {
         g = gid;
         i = idx;
     }
     gidx_t g;
-    gidx_t i;
+    idx_t i;
     bool operator<( const Node& other ) const { return ( g < other.g ); }
 };
 
@@ -213,12 +213,13 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes ) {
 
     // Assume edge gid start
     uid_t gid = 0;
-    for ( idx_t jnode = 0; jnode < node_sort.size(); ++jnode ) {
+    const idx_t nb_sorted_nodes = static_cast<idx_t>( node_sort.size() );
+    for ( idx_t jnode = 0; jnode < nb_sorted_nodes; ++jnode ) {
         if ( jnode == 0 ) { ++gid; }
         else if ( node_sort[jnode].g != node_sort[jnode - 1].g ) {
             ++gid;
         }
-        int inode       = node_sort[jnode].i;
+        idx_t inode       = node_sort[jnode].i;
         glb_id( inode ) = gid;
     }
 
@@ -237,8 +238,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes ) {
 
 Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
     ATLAS_TRACE();
-    idx_t mypart = mpi::comm().rank();
-    idx_t nparts = mpi::comm().size();
+    idx_t mypart = static_cast<idx_t>( mpi::comm().rank() );
+    idx_t nparts = static_cast<idx_t>( mpi::comm().size() );
 
     UniqueLonLat compute_uid( nodes );
 
@@ -251,7 +252,6 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
 
     auto ridx      = array::make_indexview<idx_t, 1>( nodes.remote_index() );
     auto part      = array::make_view<int, 1>( nodes.partition() );
-    auto gidx      = array::make_view<gidx_t, 1>( nodes.global_index() );
     idx_t nb_nodes = nodes.size();
 
     idx_t varsize = 2;
@@ -269,7 +269,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
         }
         else {
             ASSERT( jnode < part.shape( 0 ) );
-            if ( part( jnode ) >= (int)proc.size() ) {
+            if ( part( jnode ) >= static_cast<int>(proc.size()) ) {
                 std::stringstream msg;
                 msg << "Assertion [part(" << jnode << ") < proc.size()] failed\n"
                     << "part(" << jnode << ") = " << part( jnode ) << "\n"
@@ -341,12 +341,11 @@ Field& build_edges_partition( Mesh& mesh ) {
 
     const mesh::Nodes& nodes = mesh.nodes();
 
-    idx_t mypart = mpi::comm().rank();
-    idx_t nparts = mpi::comm().size();
+    idx_t mypart = static_cast<idx_t>( mpi::comm().rank() );
 
     mesh::HybridElements& edges = mesh.edges();
     auto edge_part              = array::make_view<int, 1>( edges.partition() );
-    const auto edge_glb_idx     = array::make_view<gidx_t, 1>( edges.global_index() );
+    //const auto edge_glb_idx     = array::make_view<gidx_t, 1>( edges.global_index() );
 
     const auto& edge_nodes   = edges.node_connectivity();
     const auto& edge_to_elem = edges.cell_connectivity();
@@ -358,7 +357,7 @@ Field& build_edges_partition( Mesh& mesh ) {
 
     const auto elem_gidx = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
     const auto elem_part = array::make_view<int, 1>( mesh.cells().partition() );
-    const auto elem_halo = array::make_view<int, 1>( mesh.cells().halo() );
+    //const auto elem_halo = array::make_view<int, 1>( mesh.cells().halo() );
 
     auto check_flags = [&]( idx_t jedge, int flag ) {
         idx_t ip1 = edge_nodes( jedge, 0 );
@@ -535,7 +534,7 @@ Field& build_edges_partition( Mesh& mesh ) {
     mpi::comm().allGatherv( bdry_edges.begin(), bdry_edges.end(), recv_bdry_edges_from_parts );
     for ( int p = 0; p < mpi_size; ++p ) {
         auto view = recv_bdry_edges_from_parts[p];
-        for ( int j = 0; j < view.size(); ++j ) {
+        for ( size_t j = 0; j < view.size(); ++j ) {
             gidx_t gidx        = view[j];
             gidx_t master_gidx = std::abs( gidx );
             if ( global_to_local.count( master_gidx ) ) {
@@ -571,9 +570,9 @@ Field& build_edges_partition( Mesh& mesh ) {
     for ( int p = 0; p < mpi_size; ++p ) {
         const auto& recv_gidx_p = recv_gidx[p];
         const auto& recv_part_p = recv_part[p];
-        for ( int j = 0; j < recv_gidx_p.size(); ++j ) {
+        for ( size_t j = 0; j < recv_gidx_p.size(); ++j ) {
             idx_t iedge        = global_to_local[recv_gidx_p[j]];
-            int prev           = edge_part( iedge );
+            // int prev           = edge_part( iedge );
             edge_part( iedge ) = recv_part_p[j];
             // if( edge_part(iedge) != prev )
             //   Log::error() << EDGE(iedge) << " part " << prev << " --> " <<
@@ -591,7 +590,7 @@ Field& build_edges_partition( Mesh& mesh ) {
         const auto& recv_bdry_gidx_p      = recv_bdry_gidx[p];
         const auto& recv_bdry_elem_part_p = recv_bdry_elem_part[p];
         const auto& recv_bdry_elem_gidx_p = recv_bdry_elem_gidx[p];
-        for ( int j = 0; j < recv_bdry_gidx_p.size(); ++j ) {
+        for ( size_t j = 0; j < recv_bdry_gidx_p.size(); ++j ) {
             idx_t iedge = global_to_local[recv_bdry_gidx_p[j]];
             idx_t e1    = ( edge_to_elem( iedge, 0 ) != edge_to_elem.missing_value() ? edge_to_elem( iedge, 0 )
                                                                                   : edge_to_elem( iedge, 1 ) );
@@ -925,7 +924,7 @@ Field& build_edges_global_idx( Mesh& mesh ) {
 
     // Assume edge gid start
     uid_t gid( 0 );
-    for ( idx_t jedge = 0; jedge < edge_sort.size(); ++jedge ) {
+    for ( size_t jedge = 0; jedge < edge_sort.size(); ++jedge ) {
         if ( jedge == 0 ) { ++gid; }
         else if ( edge_sort[jedge].g != edge_sort[jedge - 1].g ) {
             ++gid;

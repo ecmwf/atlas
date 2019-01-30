@@ -286,7 +286,6 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
     const auto xy        = array::make_view<double, 2>( nodes.xy() );
     const auto flags     = array::make_view<int, 1>( nodes.flags() );
     const auto part      = array::make_view<int, 1>( nodes.partition() );
-    const auto halo      = array::make_view<int, 1>( nodes.halo() );
     const idx_t nb_nodes = nodes.size();
 
     double min[2], max[2];

@@ -26,12 +26,13 @@ public:
     BuildHalo( Mesh& mesh );
     void operator()( int nb_elems );
 
+private:
+    Mesh& mesh_;
+    
 public:
     std::vector<idx_t> periodic_points_local_index_;
     std::vector<std::vector<idx_t>> periodic_cells_local_index_;
 
-private:
-    Mesh& mesh_;
 };
 
 /// @brief Enlarge each partition of the mesh with a halo of elements

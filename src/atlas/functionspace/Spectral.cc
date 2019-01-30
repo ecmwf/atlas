@@ -100,7 +100,7 @@ idx_t Spectral::config_size( const eckit::Configuration& config ) const {
         if ( global ) {
             idx_t owner( 0 );
             config.get( "owner", owner );
-            size = ( mpi::comm().rank() == owner ? nb_spectral_coefficients_global() : 0 );
+            size = ( idx_t(mpi::comm().rank()) == owner ? nb_spectral_coefficients_global() : 0 );
         }
     }
     return size;
@@ -114,20 +114,20 @@ Spectral::Spectral( const eckit::Configuration& config ) :
 // ----------------------------------------------------------------------
 
 Spectral::Spectral( const int truncation, const eckit::Configuration& config ) :
+    nb_levels_( 0 ),
     truncation_( truncation ),
-    parallelisation_( new Parallelisation( truncation_ ) ),
-    nb_levels_( 0 ) {
+    parallelisation_( new Parallelisation( truncation_ ) ) {
     config.get( "levels", nb_levels_ );
 }
 
 Spectral::Spectral( const trans::Trans& trans, const eckit::Configuration& config ) :
+    nb_levels_( 0 ),
     truncation_( trans.truncation() ),
 #if ATLAS_HAVE_TRANS
-    parallelisation_( new Parallelisation( dynamic_cast<const trans::TransIFS&>( *trans.get() ).trans_ ) ),
+    parallelisation_( new Parallelisation( dynamic_cast<const trans::TransIFS&>( *trans.get() ).trans_ ) ) {
 #else
-    parallelisation_( new Parallelisation( truncation_ ) ),
+    parallelisation_( new Parallelisation( truncation_ ) ) {
 #endif
-    nb_levels_( 0 ) {
     config.get( "levels", nb_levels_ );
 }
 
@@ -203,13 +203,14 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
 #if ATLAS_HAVE_TRANS
         Field& glb = global_fieldset[f];
         idx_t root = 0;
+        idx_t rank = static_cast<idx_t>( mpi::comm().rank() );
         glb.metadata().get( "owner", root );
         ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
-        if ( mpi::comm().rank() == root ) ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
+        if ( rank == root ) ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
         std::vector<int> nto( 1, root + 1 );
         if ( loc.rank() > 1 ) {
             nto.resize( loc.stride( 0 ) );
-            for ( idx_t i = 0; i < nto.size(); ++i )
+            for ( size_t i = 0; i < nto.size(); ++i )
                 nto[i] = root + 1;
         }
 
@@ -250,18 +251,20 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
 
 #if ATLAS_HAVE_TRANS
         idx_t root = 0;
+        idx_t rank = static_cast<idx_t>( mpi::comm().rank() );
+        
         glb.metadata().get( "owner", root );
         ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
-        if ( mpi::comm().rank() == root ) ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
+        if ( rank == root ) ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
         std::vector<int> nfrom( 1, root + 1 );
         if ( loc.rank() > 1 ) {
             nfrom.resize( loc.stride( 0 ) );
-            for ( idx_t i = 0; i < nfrom.size(); ++i )
+            for ( size_t i = 0; i < nfrom.size(); ++i )
                 nfrom[i] = root + 1;
         }
 
         struct ::DistSpec_t args = new_distspec( *parallelisation_ );
-        args.nfld                = nfrom.size();
+        args.nfld                = int( nfrom.size() );
         args.rspecg              = glb.data<double>();
         args.nfrom               = nfrom.data();
         args.rspec               = loc.data<double>();
@@ -284,7 +287,7 @@ void Spectral::scatter( const Field& global, Field& local ) const {
     scatter( global_fields, local_fields );
 }
 
-std::string Spectral::checksum( const FieldSet& fieldset ) const {
+std::string Spectral::checksum( const FieldSet& ) const {
     eckit::MD5 md5;
     NOTIMP;
 }
@@ -328,7 +331,7 @@ void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, in
 #if ATLAS_HAVE_TRANS
     norm_per_level.resize( std::max<int>( 1, field.levels() ) );
     struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
-    args.nfld                = norm_per_level.size();
+    args.nfld                = int( norm_per_level.size() );
     args.rspec               = field.data<double>();
     args.rnorm               = norm_per_level.data();
     args.nmaster             = rank + 1;
@@ -413,13 +416,13 @@ void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, in
 extern "C" {
 const detail::Spectral* atlas__SpectralFunctionSpace__new__config( const eckit::Configuration* config ) {
     ATLAS_ERROR_HANDLING( return new detail::Spectral( *config ); );
-    return 0;
+    return nullptr;
 }
 
 const detail::Spectral* atlas__SpectralFunctionSpace__new__trans( trans::TransImpl* trans,
                                                                   const eckit::Configuration* config ) {
     ATLAS_ERROR_HANDLING( return new detail::Spectral( trans::Trans( trans ), *config ); );
-    return 0;
+    return nullptr;
 }
 
 void atlas__SpectralFunctionSpace__delete( detail::Spectral* This ) {
@@ -434,7 +437,7 @@ field::FieldImpl* atlas__fs__Spectral__create_field( const detail::Spectral* Thi
         field->attach();
     } field->detach();
                           return field; );
-    return 0;
+    return nullptr;
 }
 
 void atlas__SpectralFunctionSpace__gather( const detail::Spectral* This, const field::FieldImpl* local,

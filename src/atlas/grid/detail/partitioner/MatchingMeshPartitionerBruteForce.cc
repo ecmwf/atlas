@@ -97,7 +97,7 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int partiti
     PointLonLat coordinatesMin = PointLonLat( lonlat_src( 0, LON ), lonlat_src( 0, LAT ) );
     PointLonLat coordinatesMax = coordinatesMin;
 
-    for ( size_t i = 0; i < lonlat_src.size(); ++i ) {
+    for ( idx_t i = 0; i < lonlat_src.size(); ++i ) {
         PointLonLat A( lonlat_src( i, LON ), lonlat_src( i, LAT ) );
         coordinatesMin = PointLonLat::componentsMin( coordinatesMin, A );
         coordinatesMax = PointLonLat::componentsMax( coordinatesMax, A );
@@ -106,30 +106,30 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int partiti
 
     {
         eckit::ProgressTimer timer( "Partitioning target", grid.size(), "point", double( 10 ), atlas::Log::trace() );
-        for ( size_t i = 0; i < grid.size(); ++i, ++timer ) {
+        for ( idx_t i = 0; i < grid.size(); ++i, ++timer ) {
             partitioning[i] = -1;
             const PointLonLat& P( coordinates[i] );
 
             if ( coordinatesMin[LON] <= P[LON] && P[LON] <= coordinatesMax[LON] && coordinatesMin[LAT] <= P[LAT] &&
                  P[LAT] <= coordinatesMax[LAT] ) {
                 const mesh::Cells& elements_src = prePartitionedMesh_.cells();
-                const size_t nb_types           = elements_src.nb_types();
+                const idx_t nb_types           = elements_src.nb_types();
                 bool found                      = false;
 
-                for ( size_t t = 0; t < nb_types && !found; ++t ) {
-                    size_t idx[4];
+                for ( idx_t t = 0; t < nb_types && !found; ++t ) {
+                    idx_t idx[4];
                     const mesh::Elements& elements      = elements_src.elements( t );
                     const mesh::BlockConnectivity& conn = elements.node_connectivity();
 
-                    const size_t nb_nodes = elements.nb_nodes();
+                    const idx_t nb_nodes = elements.nb_nodes();
                     ASSERT( ( nb_nodes == 3 && elements.name() == "Triangle" ) ||
                             ( nb_nodes == 4 && elements.name() == "Quadrilateral" ) );
 
-                    for ( size_t j = 0; j < elements.size() && !found; ++j ) {
-                        idx[0] = static_cast<size_t>( conn( j, 0 ) );
-                        idx[1] = static_cast<size_t>( conn( j, 1 ) );
-                        idx[2] = static_cast<size_t>( conn( j, 2 ) );
-                        idx[3] = nb_nodes > 3 ? static_cast<size_t>( conn( j, 3 ) ) : 0;
+                    for ( idx_t j = 0; j < elements.size() && !found; ++j ) {
+                        idx[0] = conn( j, 0 );
+                        idx[1] = conn( j, 1 );
+                        idx[2] = conn( j, 2 );
+                        idx[3] = nb_nodes > 3 ? conn( j, 3 ) : 0;
 
                         if ( ( elements.name() == "Triangle" &&
                                point_in_triangle( P, coordinates[idx[0]], coordinates[idx[1]],

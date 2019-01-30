@@ -85,7 +85,7 @@ void Method::setup() {
         ATLAS_TRACE_SCOPE( "build_median_dual_mesh" ) build_median_dual_mesh( mesh() );
         ATLAS_TRACE_SCOPE( "build_node_to_edge_connectivity" ) build_node_to_edge_connectivity( mesh() );
 
-        const size_t nnodes = nodes_.size();
+        const idx_t nnodes = nodes_.size();
 
         auto edge_flags   = array::make_view<int, 1>( edges_.flags() );
         using Topology    = mesh::Nodes::Topology;
@@ -102,10 +102,10 @@ void Method::setup() {
             array::ArrayView<double, 2> node2edge_sign =
                 array::make_view<double, 2>( nodes_.field( "node2edge_sign" ) );
 
-            atlas_omp_parallel_for( size_t jnode = 0; jnode < nnodes; ++jnode ) {
-                for ( size_t jedge = 0; jedge < node_edge_connectivity.cols( jnode ); ++jedge ) {
-                    size_t iedge = node_edge_connectivity( jnode, jedge );
-                    size_t ip1   = edge_node_connectivity( iedge, 0 );
+            atlas_omp_parallel_for( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
+                for ( idx_t jedge = 0; jedge < node_edge_connectivity.cols( jnode ); ++jedge ) {
+                    idx_t iedge = node_edge_connectivity( jnode, jedge );
+                    idx_t ip1   = edge_node_connectivity( iedge, 0 );
                     if ( jnode == ip1 )
                         node2edge_sign( jnode, jedge ) = 1.;
                     else {
@@ -121,7 +121,7 @@ void Method::setup() {
 // ------------------------------------------------------------------------------------------
 extern "C" {
 Method* atlas__numerics__fvm__Method__new( Mesh::Implementation* mesh, const eckit::Configuration* params ) {
-    Method* method( 0 );
+    Method* method( nullptr );
     ATLAS_ERROR_HANDLING( ASSERT( mesh ); Mesh m( mesh ); method = new Method( m, *params ); );
     return method;
 }
@@ -129,13 +129,13 @@ Method* atlas__numerics__fvm__Method__new( Mesh::Implementation* mesh, const eck
 const functionspace::detail::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes( Method* This ) {
     ATLAS_ERROR_HANDLING(
         ASSERT( This ); return dynamic_cast<const functionspace::detail::NodeColumns*>( This->node_columns().get() ); );
-    return 0;
+    return nullptr;
 }
 
 const functionspace::detail::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges( Method* This ) {
     ATLAS_ERROR_HANDLING(
         ASSERT( This ); return dynamic_cast<const functionspace::detail::EdgeColumns*>( This->edge_columns().get() ); );
-    return 0;
+    return nullptr;
 }
 }
 // ------------------------------------------------------------------------------------------

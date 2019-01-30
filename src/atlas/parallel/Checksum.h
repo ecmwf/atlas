@@ -136,7 +136,7 @@ void Checksum::var_info( const array::ArrayView<DATA_TYPE, RANK>& arr, std::vect
 
 template <typename DATA_TYPE, int LRANK>
 std::string Checksum::execute( const array::ArrayView<DATA_TYPE, LRANK>& lfield ) const {
-    if ( lfield.shape( 0 ) == parsize_ ) {
+    if ( size_t(lfield.shape( 0 )) == parsize_ ) {
         std::vector<int> lvarstrides, lvarextents;
         var_info( lfield, lvarstrides, lvarextents );
         return execute( lfield.data(), lvarstrides.data(), lvarextents.data(), lvarstrides.size() );

@@ -91,7 +91,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
     if ( do_all ) {
         points_to_edit.resize( nodes_glb_idx.size() );
-        for ( size_t i = 0; i < nodes_glb_idx.size(); ++i )
+        for ( idx_t i = 0; i < nodes_glb_idx.size(); ++i )
             points_to_edit[i] = i;
     }
     else {

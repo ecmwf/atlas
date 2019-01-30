@@ -105,9 +105,9 @@ Field& State::field( const std::string& name ) {
 }
 
 const Field& State::field( const idx_t idx ) const {
-    if ( idx >= fields_.size() ) {
+    if ( idx >= size() ) {
         std::stringstream msg;
-        msg << "Trying to access field in State with index " << idx << ", but there exist only " << fields_.size()
+        msg << "Trying to access field in State with index " << idx << ", but there exist only " << size()
             << " fields in State.";
         throw eckit::Exception( msg.str(), Here() );
     }
@@ -245,14 +245,14 @@ int atlas__State__has( State* This, const char* name ) {
 
 FieldImpl* atlas__State__field_by_name( State* This, const char* name ) {
     ASSERT( This );
-    FieldImpl* field( 0 );
+    FieldImpl* field( nullptr );
     ATLAS_ERROR_HANDLING( field = This->field( std::string( name ) ).get(); );
     return field;
 }
 
 FieldImpl* atlas__State__field_by_index( State* This, idx_t index ) {
     ASSERT( This );
-    FieldImpl* field( 0 );
+    FieldImpl* field( nullptr );
     ATLAS_ERROR_HANDLING( field = This->field( index ).get() );
     return field;
 }

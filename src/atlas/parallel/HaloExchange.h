@@ -179,7 +179,7 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
 template <int ParallelDim, int RANK>
 struct halo_packer {
     template <typename DATA_TYPE>
-    static void pack( const unsigned int sendcnt, array::SVector<int> const& sendmap,
+    static void pack( const int sendcnt, array::SVector<int> const& sendmap,
                       const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite>& field,
                       array::SVector<DATA_TYPE>& send_buffer ) {
         idx_t ibuf = 0;
@@ -190,7 +190,7 @@ struct halo_packer {
     }
 
     template <typename DATA_TYPE>
-    static void unpack( const unsigned int recvcnt, array::SVector<int> const& recvmap,
+    static void unpack( const int recvcnt, array::SVector<int> const& recvmap,
                         array::SVector<DATA_TYPE> const& recv_buffer, array::ArrayView<DATA_TYPE, RANK>& field ) {
         idx_t ibuf = 0;
         for ( int node_cnt = 0; node_cnt < recvcnt; ++node_cnt ) {

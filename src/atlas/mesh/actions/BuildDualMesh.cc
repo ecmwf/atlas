@@ -230,7 +230,7 @@ void add_median_dual_volume_contribution_poles( const mesh::HybridElements& edge
         const double x0                = xy( jnode, XX );
         const double y0                = xy( jnode, YY );
         double x1, y1, y2;
-        for ( idx_t jedge = 0; jedge < bdry_edges.size(); ++jedge ) {
+        for ( idx_t jedge = 0; jedge < static_cast<idx_t>( bdry_edges.size() ); ++jedge ) {
             const idx_t iedge = bdry_edges[jedge];
             x1                = edge_centroids( iedge, XX );
             y1                = edge_centroids( iedge, YY );
@@ -289,7 +289,8 @@ void build_dual_normals( Mesh& mesh ) {
                 std::vector<idx_t>& bdry_edges = node_to_bdry_edge[node];
                 double x[2];
                 idx_t cnt = 0;
-                for ( idx_t jedge = 0; jedge < bdry_edges.size(); ++jedge ) {
+                const idx_t nb_bdry_edges = static_cast<idx_t>( bdry_edges.size() );
+                for ( idx_t jedge = 0; jedge < nb_bdry_edges; ++jedge ) {
                     idx_t bdry_edge = bdry_edges[jedge];
                     if ( std::abs( edge_centroids( bdry_edge, YY ) - max[YY] ) < tol ) {
                         edge_centroids( edge, YY ) = 90.;
@@ -405,7 +406,7 @@ void build_brick_dual_mesh( const Grid& grid, Mesh& mesh ) {
     }
 }
 
-void build_centroid_dual_mesh( Mesh& mesh ) {
+void build_centroid_dual_mesh( Mesh& ) {
     NOTIMP;
     // This requires code below which has not been ported yet
 }

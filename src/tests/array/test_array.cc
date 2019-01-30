@@ -95,19 +95,19 @@ CASE( "test_localview" ) {
     EXPECT( hv.size() == 8ul * 4ul * 2ul );
 
     // Initialize fields
-    for ( size_t i = 0; i < ds->shape( 0 ); ++i ) {
-        for ( size_t j = 0; j < ds->shape( 1 ); ++j ) {
-            for ( size_t k = 0; k < ds->shape( 2 ); ++k ) {
+    for ( idx_t i = 0; i < ds->shape( 0 ); ++i ) {
+        for ( idx_t j = 0; j < ds->shape( 1 ); ++j ) {
+            for ( idx_t k = 0; k < ds->shape( 2 ); ++k ) {
                 hv( i, j, k ) = ( i * 100 ) + ( j * 10 ) + ( k );
             }
         }
     }
 
     // Check values
-    for ( size_t i = 0; i < ds->shape( 0 ); ++i ) {
+    for ( idx_t i = 0; i < ds->shape( 0 ); ++i ) {
         LocalView<double, 2> lv = hv.slice( i, Range::all(), Range::all() );
-        for ( size_t j = 0; j < lv.shape( 0 ); ++j ) {
-            for ( size_t k = 0; k < lv.shape( 1 ); ++k ) {
+        for ( idx_t j = 0; j < lv.shape( 0 ); ++j ) {
+            for ( idx_t k = 0; k < lv.shape( 1 ); ++k ) {
                 EXPECT( lv( j, k ) == ( i * 100 ) + ( j * 10 ) + ( k ) );
             }
         }
@@ -543,8 +543,8 @@ CASE( "test_wrap" ) {
     EXPECT( arr_t.rank() == 2 );
 
     array::ArrayView<int, 2> arrv_t = array::make_view<int, 2>( arr_t );
-    for ( size_t i = 0; i < arrv_t.shape( 0 ); ++i ) {
-        for ( size_t j = 0; j < arrv_t.shape( 1 ); ++j ) {
+    for ( idx_t i = 0; i < arrv_t.shape( 0 ); ++i ) {
+        for ( idx_t j = 0; j < arrv_t.shape( 1 ); ++j ) {
             arrv_t( i, j ) = i * 10 + j - 1;
         }
     }

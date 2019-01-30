@@ -69,14 +69,14 @@ void rotated_flow( const fvm::Method& fvm, Field& field, const double& beta ) {
     array::ArrayView<double, 2> lonlat_deg = array::make_view<double, 2>( fvm.mesh().nodes().lonlat() );
     array::ArrayView<double, 3> var        = array::make_view<double, 3>( field );
 
-    size_t nnodes = fvm.mesh().nodes().size();
-    for ( size_t jnode = 0; jnode < nnodes; ++jnode ) {
+    idx_t nnodes = fvm.mesh().nodes().size();
+    for ( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
         double x = lonlat_deg( jnode, LON ) * deg2rad;
         double y = lonlat_deg( jnode, LAT ) * deg2rad;
         double Ux =
             pvel * ( std::cos( beta ) + std::tan( y ) * std::cos( x ) * std::sin( beta ) ) * radius * std::cos( y );
         double Uy = -pvel * std::sin( x ) * std::sin( beta ) * radius;
-        for ( size_t jlev = 0; jlev < field.levels(); ++jlev ) {
+        for ( idx_t jlev = 0; jlev < field.levels(); ++jlev ) {
             var( jnode, jlev, LON ) = Ux;
             var( jnode, jlev, LAT ) = Uy;
         }
@@ -94,14 +94,14 @@ void rotated_flow_magnitude( const fvm::Method& fvm, Field& field, const double&
     auto lonlat_deg = array::make_view<double, 2>( fvm.mesh().nodes().lonlat() );
     auto var        = array::make_view<double, 2>( field );
 
-    size_t nnodes = fvm.mesh().nodes().size();
-    for ( size_t jnode = 0; jnode < nnodes; ++jnode ) {
+    idx_t nnodes = fvm.mesh().nodes().size();
+    for ( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
         double x = lonlat_deg( jnode, LON ) * deg2rad;
         double y = lonlat_deg( jnode, LAT ) * deg2rad;
         double Ux =
             pvel * ( std::cos( beta ) + std::tan( y ) * std::cos( x ) * std::sin( beta ) ) * radius * std::cos( y );
         double Uy = -pvel * std::sin( x ) * std::sin( beta ) * radius;
-        for ( size_t jlev = 0; jlev < field.levels(); ++jlev )
+        for ( idx_t jlev = 0; jlev < field.levels(); ++jlev )
             var( jnode, jlev ) = std::sqrt( Ux * Ux + Uy * Uy );
     }
 }
@@ -130,7 +130,7 @@ CASE( "test_build" ) {
 
 CASE( "test_grad" ) {
     Log::info() << "test_grad" << std::endl;
-    size_t nlev = 1;
+    idx_t nlev = 1;
     auto radius = option::radius( "Earth" );
     Grid grid( griduid() );
     MeshGenerator meshgenerator( "structured" );
@@ -138,7 +138,7 @@ CASE( "test_grad" ) {
     fvm::Method fvm( mesh, radius | option::levels( nlev ) );
     Nabla nabla( fvm );
 
-    size_t nnodes = mesh.nodes().size();
+    idx_t nnodes = mesh.nodes().size();
 
     FieldSet fields;
     fields.add( fvm.node_columns().createField<double>( option::name( "scalar" ) ) );
@@ -180,8 +180,8 @@ CASE( "test_grad" ) {
     auto ryder       = array::make_view<double, 2>( fields["ryder"] );
     const auto grad  = array::make_view<double, 3>( fields["grad"] );
     const auto rgrad = array::make_view<double, 3>( fields["rgrad"] );
-    for ( size_t jnode = 0; jnode < nnodes; ++jnode ) {
-        for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
+    for ( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
+        for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
             xder( jnode, jlev )  = grad( jnode, jlev, LON );
             yder( jnode, jlev )  = grad( jnode, jlev, LAT );
             rxder( jnode, jlev ) = rgrad( jnode, jlev, LON );
@@ -268,7 +268,7 @@ CASE( "test_curl" ) {
     auto windXgradY = array::make_view<double, 2>( fields["windXgradY"] );
     auto windYgradX = array::make_view<double, 2>( fields["windYgradX"] );
     auto windYgradY = array::make_view<double, 2>( fields["windYgradY"] );
-    for ( size_t j = 0; j < windX.size(); ++j ) {
+    for ( idx_t j = 0; j < windX.size(); ++j ) {
         static const idx_t lev0 = 0;
         static const idx_t XdX  = XX * 2 + XX;
         static const idx_t XdY  = XX * 2 + YY;

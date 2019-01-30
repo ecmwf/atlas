@@ -27,8 +27,8 @@ void accumulate_facets( const mesh::HybridElements& cells, const mesh::Nodes& no
     ATLAS_TRACE();
     missing_value = -1;
     std::vector<std::vector<idx_t>> node_to_facet( nodes.size() );
-    for ( idx_t j = 0; j < node_to_facet.size(); ++j ) {
-        node_to_facet[j].reserve( 6 );
+    for( auto& facet : node_to_facet ) {
+        facet.reserve( 6 );
     }
     nb_facets       = 0;
     nb_inner_facets = 0;
@@ -86,16 +86,15 @@ void accumulate_facets( const mesh::HybridElements& cells, const mesh::Nodes& no
                     facet_nodes[jnode] = elem_nodes( e, facet_node_numbering[f][jnode] );
                 }
 
-                int node = facet_nodes[0];
-                for ( idx_t jface = 0; jface < node_to_facet[node].size(); ++jface ) {
-                    int face               = node_to_facet[node][jface];
+                idx_t node = facet_nodes[0];
+                for( const idx_t face : node_to_facet[node] ) {
                     idx_t nb_matched_nodes = 0;
                     if ( nb_nodes_in_facet > 1 )  // 2D or 3D
                     {
                         for ( idx_t jnode = 0; jnode < nb_nodes_in_facet; ++jnode ) {
                             idx_t other_node = facet_nodes[jnode];
-                            for ( idx_t iface = 0; iface < node_to_facet[other_node].size(); ++iface ) {
-                                if ( node_to_facet[facet_nodes[jnode]][iface] == face ) {
+                            for( const idx_t other_face : node_to_facet[other_node] ) {
+                                if ( other_face == face ) {
                                     ++nb_matched_nodes;
                                     break;
                                 }
@@ -126,7 +125,7 @@ void accumulate_facets( const mesh::HybridElements& cells, const mesh::Nodes& no
 }
 
 void accumulate_facets_in_range( std::vector<array::Range>& range, const mesh::HybridElements& cells,
-                                 const mesh::Nodes& nodes,
+                                 const mesh::Nodes& /*nodes*/,
                                  std::vector<idx_t>& facet_nodes_data,  // shape(nb_facets,nb_nodes_per_facet)
                                  std::vector<idx_t>& connectivity_facet_to_elem, idx_t& nb_facets,
                                  idx_t& nb_inner_facets, idx_t& missing_value,
@@ -190,15 +189,14 @@ void accumulate_facets_in_range( std::vector<array::Range>& range, const mesh::H
                 }
 
                 int node = facet_nodes[0];
-                for ( idx_t jface = 0; jface < node_to_facet[node].size(); ++jface ) {
-                    int face               = node_to_facet[node][jface];
+                for ( idx_t face : node_to_facet[node] ) {
                     idx_t nb_matched_nodes = 0;
                     if ( nb_nodes_in_facet > 1 )  // 2D or 3D
                     {
                         for ( idx_t jnode = 0; jnode < nb_nodes_in_facet; ++jnode ) {
                             idx_t other_node = facet_nodes[jnode];
-                            for ( idx_t iface = 0; iface < node_to_facet[other_node].size(); ++iface ) {
-                                if ( node_to_facet[facet_nodes[jnode]][iface] == face ) {
+                            for( idx_t other_face : node_to_facet[other_node] ) {
+                                if ( other_face == face ) {
                                     ++nb_matched_nodes;
                                     break;
                                 }
@@ -264,8 +262,8 @@ void accumulate_facets_ordered_by_halo( const mesh::HybridElements& cells, const
 
     missing_value = -1;
     std::vector<std::vector<idx_t>> node_to_facet( nodes.size() );
-    for ( idx_t j = 0; j < node_to_facet.size(); ++j ) {
-        node_to_facet[j].reserve( 6 );
+    for( auto& facets: node_to_facet ) {
+        facets.reserve( 6 );
     }
     nb_facets       = 0;
     nb_inner_facets = 0;

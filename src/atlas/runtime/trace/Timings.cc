@@ -116,7 +116,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
     auto box_horizontal = []( int n ) {
         std::string s;
         s.reserve( 2 * n );
-        for ( size_t i = 0; i < n; ++i )
+        for ( int i = 0; i < n; ++i )
             s += "\u2500";
         return s;
     };
@@ -254,7 +254,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
             const auto& nest = nest_[k];
 
             const CallStack& this_stack = stack_[k];
-            const CallStack& next_stack = ( k == size() - 1 ) ? this_stack : stack_[k + 1];
+            const CallStack& next_stack = ( k == long( size() ) - 1 ) ? this_stack : stack_[k + 1];
 
             auto this_it = this_stack.rbegin();
             auto next_it = next_stack.rbegin();
@@ -275,14 +275,14 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
                     out << box_vertical;
                 else
                     out << " ";
-                for ( size_t j = 1; j < indent; ++j )
+                for ( long j = 1; j < indent; ++j )
                     out << " ";
             }
             if ( active[nest - 1] )
                 out << box_T_right;
             else
                 out << box_corner_bl;
-            for ( size_t j = 1; j < indent; ++j )
+            for ( long j = 1; j < indent; ++j )
                 out << box_horizontal( 1 );
 
             prefix_[k] = out.str();
@@ -304,7 +304,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
         // mpi::comm().allReduceInPlace(max,eckit::mpi::max());
 
         if ( not excluded( j ) ) {
-            out << std::setw( digits( size() ) ) << j << " : " << prefix_[j]  // prefix(indent,nest,next_nest)
+            out << std::setw( digits( long( size() ) ) ) << j << " : " << prefix_[j]  // prefix(indent,nest,next_nest)
                 << std::left << std::setw( max_title_length - nest * indent ) << title << sep
                 << std::string( header ? "" : "count: " ) << std::left << std::setw( max_count_length ) << count << sep
                 << std::string( header ? "" : "tot: " ) << print_time( tot ) << sep

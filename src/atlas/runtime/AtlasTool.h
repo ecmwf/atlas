@@ -35,10 +35,6 @@ using eckit::option::VectorOption;
 
 namespace atlas {
 
-static void usage( const std::string& name ) {
-    Log::info() << "dummy usage" << std::endl;
-}
-
 class AtlasTool : public eckit::Tool {
 protected:
     typedef std::vector<eckit::option::Option*> Options;

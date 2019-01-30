@@ -286,7 +286,7 @@ idx_t NodeColumns::config_nb_nodes( const eckit::Configuration& config ) const {
             idx_t owner( 0 );
             config.get( "owner", owner );
             idx_t _nb_nodes_global = nb_nodes_global();
-            size                   = ( mpi::comm().rank() == owner ? _nb_nodes_global : 0 );
+            size                   = ( idx_t( mpi::comm().rank() ) == owner ? _nb_nodes_global : 0 );
         }
     }
     return size;
@@ -972,7 +972,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
         }
     }
 
-    idx_t root   = 0;
+    size_t root   = 0;
     Field global = fs.createField( field, option::name( "global" ) | option::global() );
 
     fs.gather( field, global );
@@ -1750,7 +1750,7 @@ void mean( const NodeColumns& fs, const Field& field, T& result, idx_t& N ) {
 template <typename T>
 void mean( const NodeColumns& fs, const Field& field, std::vector<T>& result, idx_t& N ) {
     sum( fs, field, result, N );
-    for ( idx_t j = 0; j < result.size(); ++j ) {
+    for ( size_t j = 0; j < result.size(); ++j ) {
         result[j] /= static_cast<double>( N );
     }
 }
@@ -1821,7 +1821,7 @@ void mean_and_standard_deviation( const NodeColumns& fs, const Field& field, std
         }
     }
     mean( fs, squared_diff_field, sigma, N );
-    for ( idx_t j = 0; j < sigma.size(); ++j ) {
+    for ( size_t j = 0; j < sigma.size(); ++j ) {
         sigma[j] = std::sqrt( sigma[j] );
     }
 }

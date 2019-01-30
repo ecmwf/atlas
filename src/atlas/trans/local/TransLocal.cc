@@ -810,7 +810,7 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                             }
                         }
                     }
-                    ASSERT( ia == n_imag * nb_fields * size_asym && is == n_imag * nb_fields * size_sym );
+                    ASSERT( size_t(ia) == n_imag * nb_fields * size_asym && size_t(is) == n_imag * nb_fields * size_sym );
                 }
                 if ( nlatsLegReduced_ - nlat0_[jm] > 0 ) {
                     {

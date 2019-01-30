@@ -137,7 +137,7 @@ PartitionGraph::Neighbours MeshImpl::nearestNeighbourPartitions() const {
 }
 
 const PartitionPolygon& MeshImpl::polygon( idx_t halo ) const {
-    if ( halo >= polygons_.size() ) { polygons_.resize( halo + 1 ); }
+    if ( halo >= static_cast<idx_t>(polygons_.size()) ) { polygons_.resize( halo + 1 ); }
     if ( not polygons_[halo] ) {
         int mesh_halo = 0;
         metadata().get( "halo", mesh_halo );

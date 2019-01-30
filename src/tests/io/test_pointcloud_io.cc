@@ -324,7 +324,7 @@ CASE( "write_read_write_field" ) {
         /* data read from file*/ field.size() );
 
     array::ArrayView<double, 1> field_data = array::make_view<double, 1>( field );
-    for ( size_t i = 0; i < field_data.size(); ++i ) {
+    for ( idx_t i = 0; i < field_data.size(); ++i ) {
         EXPECT( eckit::types::is_approximately_equal( funny_formula( i ), field_data( i ),
                                                       0.001 ) );  // 0.001% relative error
         EXPECT( eckit::types::is_approximately_equal( funny_formula( i ), field_data( i ),

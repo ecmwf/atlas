@@ -31,7 +31,7 @@ template <typename Value, int Rank, int Dim>
 struct array_writer_impl {
     template <typename View, typename... DimIndex>
     static void apply( View& arr, std::ostream& out, DimIndex... idxs ) {
-        for ( size_t i = 0; i < arr.shape( Dim ); ++i ) {
+        for ( idx_t i = 0; i < arr.shape( Dim ); ++i ) {
             array_writer_impl<Value, Rank, Dim + 1>::apply( arr, out, idxs..., i );
             if ( i < arr.shape( Dim ) - 1 ) out << " ";
         }

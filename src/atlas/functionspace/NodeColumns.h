@@ -272,9 +272,9 @@ private:                  // data
     Mesh mesh_;           // non-const because functionspace may modify mesh
     mesh::Nodes& nodes_;  // non-const because functionspace may modify mesh
     mesh::Halo halo_;
+    idx_t nb_levels_;
     idx_t nb_nodes_;
     mutable idx_t nb_nodes_global_{-1};
-    idx_t nb_levels_;
 
     mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;  // without ghost
     mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;

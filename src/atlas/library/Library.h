@@ -60,9 +60,9 @@ public:
 protected:
     virtual const void* addr() const override;
 
+    bool debug_{false};
     bool info_{true};
     bool trace_{false};
-    bool debug_{false};
     bool trace_barriers_{false};
     bool trace_report_{false};
     mutable std::unique_ptr<eckit::Channel> info_channel_;

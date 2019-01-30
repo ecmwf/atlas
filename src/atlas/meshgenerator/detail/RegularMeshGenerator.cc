@@ -121,7 +121,7 @@ void RegularMeshGenerator::generate( const Grid& grid, const grid::Distribution&
 
     ATLAS_ASSERT( !mesh.generated() );
 
-    if ( grid.size() != distribution.partition().size() ) {
+    if ( grid.size() != static_cast<idx_t>( distribution.partition().size() ) ) {
         std::stringstream msg;
         msg << "Number of points in grid (" << grid.size()
             << ") different from "

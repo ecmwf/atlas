@@ -46,7 +46,7 @@ public:  // methods
 
     const Field& field( const idx_t idx ) const;
     Field& field( const idx_t idx );
-    idx_t size() const { return fields_.size(); }
+    idx_t size() const { return static_cast<idx_t>( fields_.size() ); }
 
     const Field& operator[]( const idx_t idx ) const { return field( idx ); }
     Field& operator[]( const idx_t idx ) { return field( idx ); }
