@@ -10,10 +10,10 @@
 
 #include <fstream>
 
-#include "atlas/mesh/PartitionPolygon.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/mesh.h"
+#include "atlas/mesh/PartitionPolygon.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"

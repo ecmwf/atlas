@@ -39,7 +39,7 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 CASE( "test_functionspace_StructuredColumns_no_halo" ) {
-    size_t root             = 0;
+    size_t root          = 0;
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
     Grid grid( gridname );
     util::Config config;

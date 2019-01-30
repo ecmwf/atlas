@@ -79,19 +79,19 @@ double compute_lonlat_area( Mesh& mesh ) {
 
     double area = 0;
     for ( idx_t e = 0; e < quads.size(); ++e ) {
-        idx_t n0    = quad_nodes( e, 0 );
-        idx_t n1    = quad_nodes( e, 1 );
-        idx_t n2    = quad_nodes( e, 2 );
-        idx_t n3    = quad_nodes( e, 3 );
+        idx_t n0  = quad_nodes( e, 0 );
+        idx_t n1  = quad_nodes( e, 1 );
+        idx_t n2  = quad_nodes( e, 2 );
+        idx_t n3  = quad_nodes( e, 3 );
         double x0 = lonlat( n0, LON ), x1 = lonlat( n1, LON ), x2 = lonlat( n2, LON ), x3 = lonlat( n3, LON );
         double y0 = lonlat( n0, LAT ), y1 = lonlat( n1, LAT ), y2 = lonlat( n2, LAT ), y3 = lonlat( n3, LAT );
         area += std::abs( x0 * ( y1 - y2 ) + x1 * ( y2 - y0 ) + x2 * ( y0 - y1 ) ) * 0.5;
         area += std::abs( x2 * ( y3 - y0 ) + x3 * ( y0 - y2 ) + x0 * ( y2 - y3 ) ) * 0.5;
     }
     for ( idx_t e = 0; e < triags.size(); ++e ) {
-        idx_t n0    = triag_nodes( e, 0 );
-        idx_t n1    = triag_nodes( e, 1 );
-        idx_t n2    = triag_nodes( e, 2 );
+        idx_t n0  = triag_nodes( e, 0 );
+        idx_t n1  = triag_nodes( e, 1 );
+        idx_t n2  = triag_nodes( e, 2 );
         double x0 = lonlat( n0, LON ), x1 = lonlat( n1, LON ), x2 = lonlat( n2, LON );
         double y0 = lonlat( n0, LAT ), y1 = lonlat( n1, LAT ), y2 = lonlat( n2, LAT );
         area += std::abs( x0 * ( y1 - y2 ) + x1 * ( y2 - y0 ) + x2 * ( y0 - y1 ) ) * 0.5;
@@ -347,8 +347,8 @@ ASSERT(0);
         ATLAS_DEBUG_HERE();
         m.metadata().set( "part", p );
         Log::info() << "generated grid " << p << std::endl;
-        array::ArrayView<int, 1> part      = array::make_view<int, 1>( m.nodes().partition() );
-        array::ArrayView<gidx_t, 1> gidx   = array::make_view<gidx_t, 1>( m.nodes().global_index() );
+        array::ArrayView<int, 1> part    = array::make_view<int, 1>( m.nodes().partition() );
+        array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( m.nodes().global_index() );
 
         area += test::compute_lonlat_area( m );
         ATLAS_DEBUG_HERE();
@@ -365,14 +365,14 @@ ASSERT(0);
         output::Gmsh( "T63.msh" ).write( m );
 
         mesh::Nodes& nodes = m.nodes();
-        idx_t nb_nodes    = nodes.size();
+        idx_t nb_nodes     = nodes.size();
 
         // Test if all nodes are connected
         {
             std::vector<int> node_elem_connections( nb_nodes, 0 );
 
             const mesh::HybridElements::Connectivity& cell_node_connectivity = m.cells().node_connectivity();
-            for ( idx_t jelem = 0; jelem < static_cast<idx_t>(m.cells().size()); ++jelem ) {
+            for ( idx_t jelem = 0; jelem < static_cast<idx_t>( m.cells().size() ); ++jelem ) {
                 for ( idx_t jnode = 0; jnode < cell_node_connectivity.cols( jelem ); ++jnode )
                     node_elem_connections[cell_node_connectivity( jelem, jnode )]++;
             }

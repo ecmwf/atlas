@@ -10,9 +10,9 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
-#include <algorithm>
 
 #include "atlas/library/config.h"
 #include "atlas/util/Allocate.h"
@@ -29,13 +29,10 @@ public:
     SVector() : data_( nullptr ), size_( 0 ), externally_allocated_( false ) {}
 
     ATLAS_HOST_DEVICE
-    SVector(const T* data, const idx_t size) : data_(data), size_(size), externally_allocated_( true ) {}
+    SVector( const T* data, const idx_t size ) : data_( data ), size_( size ), externally_allocated_( true ) {}
 
     ATLAS_HOST_DEVICE
-    SVector( SVector const& other ) :
-        data_( other.data_ ),
-        size_( other.size_ ),
-        externally_allocated_( true ) {}
+    SVector( SVector const& other ) : data_( other.data_ ), size_( other.size_ ), externally_allocated_( true ) {}
 
     ATLAS_HOST_DEVICE
     SVector( SVector&& other ) :
@@ -45,19 +42,19 @@ public:
 
     ATLAS_HOST_DEVICE
     SVector& operator=( SVector const& other ) {
-        data_ = other.data_;
-        size_ = other.size_;
+        data_                 = other.data_;
+        size_                 = other.size_;
         externally_allocated_ = true;
         return *this;
     }
 
-    SVector& operator=( SVector && other ) = default;
+    SVector& operator=( SVector&& other ) = default;
 
     ATLAS_HOST_DEVICE
-    SVector( T* data, idx_t size ) : data_( data ), size_( size ), externally_allocated_(true) {}
+    SVector( T* data, idx_t size ) : data_( data ), size_( size ), externally_allocated_( true ) {}
 
     SVector( idx_t N ) : data_( nullptr ), size_( N ), externally_allocated_( false ) {
-        util::allocate_managedmem(data_,N);
+        util::allocate_managedmem( data_, N );
     }
     ATLAS_HOST_DEVICE
     ~SVector() {
@@ -66,26 +63,24 @@ public:
 #endif
     }
 
-    void insert(idx_t pos, idx_t dimsize) {
+    void insert( idx_t pos, idx_t dimsize ) {
         T* data;
-        util::allocate_managedmem(data, size_ + dimsize);
+        util::allocate_managedmem( data, size_ + dimsize );
 
-        for(idx_t c=0; c < pos; ++c) {
+        for ( idx_t c = 0; c < pos; ++c ) {
             data[c] = data_[c];
         }
-        for(idx_t c=pos; c < size_; ++c) {
-            data[c+dimsize] = data_[c];
+        for ( idx_t c = pos; c < size_; ++c ) {
+            data[c + dimsize] = data_[c];
         }
 
         T* oldptr = data_;
-        data_ = data;
-        util::delete_managedmem(oldptr);
-        size_+= dimsize;
+        data_     = data;
+        util::delete_managedmem( oldptr );
+        size_ += dimsize;
     }
 
-    size_t footprint() const {
-        return sizeof(T) * size_;
-    }
+    size_t footprint() const { return sizeof( T ) * size_; }
 
     ATLAS_HOST_DEVICE
     T* data() { return data_; }
@@ -122,8 +117,8 @@ public:
         if ( N == size_ ) return;
 
         T* d_ = nullptr;
-        util::allocate_managedmem(d_,N);
-        for ( idx_t c = 0; c < std::min(size_, N); ++c ) {
+        util::allocate_managedmem( d_, N );
+        for ( idx_t c = 0; c < std::min( size_, N ); ++c ) {
             d_[c] = data_[c];
         }
         util::delete_managedmem( data_ );
@@ -139,7 +134,7 @@ public:
     void resize( idx_t N, T&& val ) {
         const int oldsize = size_;
         resize( N );
-        for(idx_t c=oldsize; c < size_; ++c) {
+        for ( idx_t c = oldsize; c < size_; ++c ) {
             data_[c] = val;
         }
     }

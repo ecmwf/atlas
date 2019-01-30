@@ -22,12 +22,12 @@ namespace util {
 namespace detail {
 void allocate_cudamanaged( void** ptr, size_t size );
 void deallocate_cudamanaged( void* ptr );
-}
+}  // namespace detail
 
 template <typename T>
-void allocate_managedmem(T*& data, idx_t N) {
+void allocate_managedmem( T*& data, idx_t N ) {
     if ( N != 0 ) {
-        detail::allocate_cudamanaged( reinterpret_cast<void**>(&data), static_cast<size_t>(N) * sizeof( T ) );
+        detail::allocate_cudamanaged( reinterpret_cast<void**>( &data ), static_cast<size_t>( N ) * sizeof( T ) );
     }
 }
 
@@ -42,11 +42,11 @@ void delete_managedmem( T*& data ) {
 //------------------------------------------------------------------------------
 
 extern "C" {
-    void atlas__allocate_managedmem_double(double* &a, idx_t N);
-    void atlas__allocate_managedmem_float(float* &a, idx_t N);
-    void atlas__allocate_managedmem_int(int* &a, idx_t N);
-    void atlas__allocate_managedmem_long(long* &a, idx_t N);
-    void atlas__deallocate_managedmem(void* &a);
+void atlas__allocate_managedmem_double( double*& a, idx_t N );
+void atlas__allocate_managedmem_float( float*& a, idx_t N );
+void atlas__allocate_managedmem_int( int*& a, idx_t N );
+void atlas__allocate_managedmem_long( long*& a, idx_t N );
+void atlas__deallocate_managedmem( void*& a );
 }
 
 //------------------------------------------------------------------------------

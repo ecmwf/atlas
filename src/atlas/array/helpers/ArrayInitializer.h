@@ -97,8 +97,8 @@ struct array_initializer_partitioned_val_impl {
     }
 
     template <typename... DimIndexPair>
-    static void apply( ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& dest, idx_t pos,
-                       idx_t offset, DimIndexPair... idxs ) {
+    static void apply( ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& dest, idx_t pos, idx_t offset,
+                       DimIndexPair... idxs ) {
         for ( idx_t i = 0; i < orig.shape( Dim ); ++i ) {
             idx_t displ = i;
             if ( Dim == PartDim && i >= pos ) { displ += offset; }

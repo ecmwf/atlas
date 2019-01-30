@@ -94,8 +94,8 @@ private:  // methods
     void set_field_metadata( const eckit::Configuration&, Field& ) const;
     virtual size_t footprint() const override;
 
-private:         // data
-    Mesh mesh_;  // non-const because functionspace may modify mesh
+private:                           // data
+    Mesh mesh_;                    // non-const because functionspace may modify mesh
     mesh::HybridElements& edges_;  // non-const because functionspace may modify mesh
     idx_t nb_levels_;
     mesh::Halo halo_;

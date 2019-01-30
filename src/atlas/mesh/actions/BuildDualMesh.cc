@@ -288,7 +288,7 @@ void build_dual_normals( Mesh& mesh ) {
                 idx_t node                     = edge_node_connectivity( edge, n );
                 std::vector<idx_t>& bdry_edges = node_to_bdry_edge[node];
                 double x[2];
-                idx_t cnt = 0;
+                idx_t cnt                 = 0;
                 const idx_t nb_bdry_edges = static_cast<idx_t>( bdry_edges.size() );
                 for ( idx_t jedge = 0; jedge < nb_bdry_edges; ++jedge ) {
                     idx_t bdry_edge = bdry_edges[jedge];

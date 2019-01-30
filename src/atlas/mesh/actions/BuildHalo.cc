@@ -155,7 +155,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
     ATLAS_TRACE_SCOPE( "sort on rank 0" ) { std::sort( node_sort.begin(), node_sort.end() ); }
 
-    gidx_t gid = glb_idx_max + 1;
+    gidx_t gid               = glb_idx_max + 1;
     const idx_t nb_node_sort = static_cast<idx_t>( node_sort.size() );
     for ( idx_t jnode = 0; jnode < nb_node_sort; ++jnode ) {
         if ( jnode > 0 && node_sort[jnode].g != node_sort[jnode - 1].g ) { ++gid; }
@@ -255,7 +255,7 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
     gidx_t gid = glb_idx_max + 1;
     for ( idx_t jcell = 0; jcell < glb_nb_cells; ++jcell ) {
         if ( jcell > 0 && cell_sort[jcell].g != cell_sort[jcell - 1].g ) { ++gid; }
-        idx_t icell               = cell_sort[jcell].i;
+        idx_t icell             = cell_sort[jcell].i;
         glb_idx_gathered[icell] = gid;
     }
 
@@ -450,9 +450,9 @@ void accumulate_elements( const Mesh& mesh, const mpi::BufferView<uid_t>& reques
     const mesh::HybridElements::Connectivity& elem_nodes = mesh.cells().node_connectivity();
     const auto elem_part                                 = array::make_view<int, 1>( mesh.cells().partition() );
 
-    const idx_t nb_nodes = mesh.nodes().size();
-    const idx_t nb_request_nodes       = static_cast<idx_t>( request_node_uid.size() );
-    const int mpi_rank = static_cast<int>( mpi::comm().rank() );
+    const idx_t nb_nodes         = mesh.nodes().size();
+    const idx_t nb_request_nodes = static_cast<idx_t>( request_node_uid.size() );
+    const int mpi_rank           = static_cast<int>( mpi::comm().rank() );
 
     std::set<idx_t> found_elements_set;
 
@@ -464,7 +464,7 @@ void accumulate_elements( const Mesh& mesh, const mpi::BufferView<uid_t>& reques
         Uid2Node::const_iterator found = uid2node.find( uid );
         if ( found != uid2node.end() ) { inode = found->second; }
         if ( inode != -1 && inode < nb_nodes ) {
-            for( const idx_t e : node2elem[inode] ) {
+            for ( const idx_t e : node2elem[inode] ) {
                 if ( elem_part( e ) == mpi_rank ) { found_elements_set.insert( e ); }
             }
         }
@@ -477,8 +477,7 @@ void accumulate_elements( const Mesh& mesh, const mpi::BufferView<uid_t>& reques
 
     // Collect all nodes
     new_nodes_uid.clear();
-    for( const idx_t e : found_elements ) {
-
+    for ( const idx_t e : found_elements ) {
         idx_t nb_elem_nodes = elem_nodes.cols( e );
         for ( idx_t n = 0; n < nb_elem_nodes; ++n ) {
             new_nodes_uid.insert( compute_uid( elem_nodes( e, n ) ) );
@@ -538,7 +537,7 @@ public:
                << "-----\n";
             idx_t n( 0 );
             for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
-                for( auto g : node_glb_idx[jpart] ) {
+                for ( auto g : node_glb_idx[jpart] ) {
                     os << std::setw( 4 ) << n++ << " : " << g << "\n";
                 }
             }
@@ -940,7 +939,7 @@ public:
         std::vector<idx_t> nb_elements_of_type( mesh.cells().nb_types(), 0 );
 
         for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
-            for( const idx_t ielem : received_new_elems[jpart] ) {
+            for ( const idx_t ielem : received_new_elems[jpart] ) {
                 elements_of_type[buf.elem_type[jpart][ielem]][jpart].push_back( ielem );
                 ++nb_elements_of_type[buf.elem_type[jpart][ielem]];
             }
@@ -965,7 +964,7 @@ public:
             // Copy information in new elements
             idx_t new_elem( 0 );
             for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
-                for( const idx_t jelem : elems[jpart] ) {
+                for ( const idx_t jelem : elems[jpart] ) {
                     int loc_idx                  = new_elems_pos + new_elem;
                     elem_type_glb_idx( loc_idx ) = std::abs( buf.elem_glb_idx[jpart][jelem] );
                     elem_type_part( loc_idx )    = buf.elem_part[jpart][jelem];
@@ -1086,8 +1085,8 @@ void increase_halo_interior( BuildHaloHelper& helper ) {
 
     accumulate_partition_bdry_nodes( helper.mesh, helper.halosize, helper.bdry_nodes );
     const std::vector<int>& bdry_nodes = helper.bdry_nodes;
-    const idx_t nb_bdry_nodes = static_cast<idx_t>( bdry_nodes.size() );
-    
+    const idx_t nb_bdry_nodes          = static_cast<idx_t>( bdry_nodes.size() );
+
     // 2) Communicate uid of these boundary nodes to other partitions
 
     std::vector<uid_t> send_bdry_nodes_uid( bdry_nodes.size() );
@@ -1181,7 +1180,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
     if ( !helper.bdry_nodes.size() ) accumulate_partition_bdry_nodes( helper.mesh, helper.halosize, helper.bdry_nodes );
 
     std::vector<idx_t> bdry_nodes = filter_nodes( helper.bdry_nodes, periodic_points );
-    const idx_t nb_bdry_nodes = static_cast<idx_t>( bdry_nodes.size() );
+    const idx_t nb_bdry_nodes     = static_cast<idx_t>( bdry_nodes.size() );
 
     // 2) Compute transformed uid of these boundary nodes and send to other
     // partitions

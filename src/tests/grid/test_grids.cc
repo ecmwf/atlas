@@ -89,7 +89,7 @@ CASE( "test_regular_ll" ) {
     EXPECT( grid.ny() == nlat );
     EXPECT( grid.size() == 512 );
     // EXPECT(grid.type() == "shifted_lat");
-    EXPECT( is_approximately_equal( grid.y( 0 ) , 90. - 0.5 * ( 180. / 16. ) ) );
+    EXPECT( is_approximately_equal( grid.y( 0 ), 90. - 0.5 * ( 180. / 16. ) ) );
     EXPECT( is_approximately_equal( grid.y( grid.ny() - 1 ), -90. + 0.5 * ( 180. / 16. ) ) );
     EXPECT( is_approximately_equal( grid.x( 0 ), 0. ) );
     EXPECT( is_approximately_equal( grid.x( grid.nx() - 1 ), 360. - 360. / 32. ) );

@@ -46,7 +46,7 @@ private:
     void check() const;
 
 private:
-    idx_t nbands_;      // number of bands from configuration
+    idx_t nbands_;       // number of bands from configuration
     bool checkerboard_;  // exact (true) or approximate (false) checkerboard
 };
 

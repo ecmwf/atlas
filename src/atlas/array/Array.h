@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include "atlas/util/Object.h"
 

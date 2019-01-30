@@ -11,8 +11,8 @@
 
 #include "Allocate.h"
 
-#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/library/config.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "eckit/log/CodeLocation.h"
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
@@ -26,10 +26,10 @@ namespace util {
 namespace detail {
 //------------------------------------------------------------------------------
 
-void allocate_cudamanaged( void **ptr, size_t size ) {
+void allocate_cudamanaged( void** ptr, size_t size ) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     cudaError_t err = cudaMallocManaged( ptr, size );
-    if ( err != cudaSuccess )  throw eckit::AssertionFailed( "failed to allocate GPU memory", Here() );
+    if ( err != cudaSuccess ) throw eckit::AssertionFailed( "failed to allocate GPU memory", Here() );
 #else
     *ptr = malloc( size );
 #endif
@@ -49,25 +49,25 @@ void deallocate_cudamanaged( void* ptr ) {
 }
 
 //------------------------------------------------------------------------------
-} // namespace detail
+}  // namespace detail
 //------------------------------------------------------------------------------
 
 extern "C" {
-    void atlas__allocate_managedmem_double(double* &a, int N) {
-        allocate_managedmem( a, N );
-    }
-    void atlas__allocate_managedmem_float(float* &a, int N) {
-        allocate_managedmem( a, N );
-    }
-    void atlas__allocate_managedmem_int(int* &a, int N) {
-        allocate_managedmem( a, N );
-    }
-    void atlas__allocate_managedmem_long(long* &a, int N) {
-        allocate_managedmem( a, N );
-    }
-    void atlas__deallocate_managedmem(void * &a) {
-        delete_managedmem( a );
-    }
+void atlas__allocate_managedmem_double( double*& a, int N ) {
+    allocate_managedmem( a, N );
+}
+void atlas__allocate_managedmem_float( float*& a, int N ) {
+    allocate_managedmem( a, N );
+}
+void atlas__allocate_managedmem_int( int*& a, int N ) {
+    allocate_managedmem( a, N );
+}
+void atlas__allocate_managedmem_long( long*& a, int N ) {
+    allocate_managedmem( a, N );
+}
+void atlas__deallocate_managedmem( void*& a ) {
+    delete_managedmem( a );
+}
 }
 
 //------------------------------------------------------------------------------

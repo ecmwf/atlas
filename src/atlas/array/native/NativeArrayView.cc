@@ -8,8 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <iostream>
 #include <initializer_list>
+#include <iostream>
 
 #include "eckit/exception/Exceptions.h"
 

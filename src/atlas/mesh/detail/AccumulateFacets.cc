@@ -27,7 +27,7 @@ void accumulate_facets( const mesh::HybridElements& cells, const mesh::Nodes& no
     ATLAS_TRACE();
     missing_value = -1;
     std::vector<std::vector<idx_t>> node_to_facet( nodes.size() );
-    for( auto& facet : node_to_facet ) {
+    for ( auto& facet : node_to_facet ) {
         facet.reserve( 6 );
     }
     nb_facets       = 0;
@@ -87,13 +87,13 @@ void accumulate_facets( const mesh::HybridElements& cells, const mesh::Nodes& no
                 }
 
                 idx_t node = facet_nodes[0];
-                for( const idx_t face : node_to_facet[node] ) {
+                for ( const idx_t face : node_to_facet[node] ) {
                     idx_t nb_matched_nodes = 0;
                     if ( nb_nodes_in_facet > 1 )  // 2D or 3D
                     {
                         for ( idx_t jnode = 0; jnode < nb_nodes_in_facet; ++jnode ) {
                             idx_t other_node = facet_nodes[jnode];
-                            for( const idx_t other_face : node_to_facet[other_node] ) {
+                            for ( const idx_t other_face : node_to_facet[other_node] ) {
                                 if ( other_face == face ) {
                                     ++nb_matched_nodes;
                                     break;
@@ -195,7 +195,7 @@ void accumulate_facets_in_range( std::vector<array::Range>& range, const mesh::H
                     {
                         for ( idx_t jnode = 0; jnode < nb_nodes_in_facet; ++jnode ) {
                             idx_t other_node = facet_nodes[jnode];
-                            for( idx_t other_face : node_to_facet[other_node] ) {
+                            for ( idx_t other_face : node_to_facet[other_node] ) {
                                 if ( other_face == face ) {
                                     ++nb_matched_nodes;
                                     break;
@@ -262,7 +262,7 @@ void accumulate_facets_ordered_by_halo( const mesh::HybridElements& cells, const
 
     missing_value = -1;
     std::vector<std::vector<idx_t>> node_to_facet( nodes.size() );
-    for( auto& facets: node_to_facet ) {
+    for ( auto& facets : node_to_facet ) {
         facets.reserve( 6 );
     }
     nb_facets       = 0;

@@ -147,9 +147,9 @@ void GatherScatter::setup( const int part[], const idx_t remote_idx[], const int
     locmap_.clear();
     locmap_.resize( loccnt_ );
     std::vector<int> idx( nproc, 0 );
-    
+
     int n{0};
-    for( const auto& node : node_sort ) {
+    for ( const auto& node : node_sort ) {
         idx_t jproc                             = node.p;
         glbmap_[glbdispls_[jproc] + idx[jproc]] = n++;
 

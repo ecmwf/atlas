@@ -44,8 +44,8 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( const std::string& name ) 
     callback_update_( nullptr ),
     callback_delete_( nullptr ) {
     rename( name );
-    displs_[ 0 ] = 0;
-    counts_[ 0 ] = 0;
+    displs_[0] = 0;
+    counts_[0] = 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -63,7 +63,7 @@ idx_t get_total_size_counts( idx_t rows, idx_t counts[] ) {
 IrregularConnectivityImpl::IrregularConnectivityImpl( idx_t values[], idx_t rows, idx_t displs[], idx_t counts[] ) :
     owns_( false ),
     //TODO need to create clone if pointers are not cuda managed
-    values_(values, get_total_size_counts( rows, counts )),
+    values_( values, get_total_size_counts( rows, counts ) ),
     displs_( displs, rows ),
     counts_( counts, rows ),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
@@ -81,9 +81,9 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( idx_t values[], idx_t rows
 
 IrregularConnectivityImpl::IrregularConnectivityImpl( const IrregularConnectivityImpl& other ) :
     owns_( false ),
-    values_(other.values_),
-    displs_(other.displs_),
-    counts_(other.counts_),
+    values_( other.values_ ),
+    displs_( other.displs_ ),
+    counts_( other.counts_ ),
     missing_value_( other.missing_value_ ),
     rows_( other.rows_ ),
     maxcols_( other.maxcols_ ),
@@ -110,9 +110,9 @@ void IrregularConnectivityImpl::clear() {
     }
     else {
         //TODO what to do here
-//        data_[_values_] = nullptr;
-//        data_[_displs_] = nullptr;
-//        data_[_counts_] = nullptr;
+        //        data_[_values_] = nullptr;
+        //        data_[_displs_] = nullptr;
+        //        data_[_counts_] = nullptr;
         // std::for_each(data_.begin(), data_.end(), [](array::Array* a){ a=0;});
     }
     rows_    = 0;
@@ -140,12 +140,12 @@ void IrregularConnectivityImpl::resize( idx_t old_size, idx_t new_size, bool ini
     idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
     if ( initialize ) {
         for ( idx_t j = 0, c = old_size; c < new_size; ++c, ++j ) {
-            values_[ c ] = values[j] + add_base;
+            values_[c] = values[j] + add_base;
         }
     }
     else {
         for ( idx_t j = old_size; j < new_size; ++j ) {
-            values_[ j ] = missing_value() TO_FORTRAN;
+            values_[j] = missing_value() TO_FORTRAN;
         }
     }
 }
@@ -161,14 +161,14 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[
     idx_t new_rows = rows_ + rows;
 
     //TODO what to do here
-//    ASSERT( displs_] != nullptr );
-//    ASSERT( data_[_counts_] != nullptr );
+    //    ASSERT( displs_] != nullptr );
+    //    ASSERT( data_[_counts_] != nullptr );
     displs_.resize( new_rows + 1 );
     counts_.resize( new_rows + 1 );
 
     for ( idx_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
-        displs_[ rows_ + 1 ] = displs_[ rows_ ] + cols;
-        counts_[ rows_ ]     = cols;
+        displs_[rows_ + 1] = displs_[rows_] + cols;
+        counts_[rows_]     = cols;
     }
 
     maxcols_ = std::max( maxcols_, cols );
@@ -204,10 +204,10 @@ void IrregularConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
     counts_.resize( new_rows + 1 );
 
     for ( idx_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
-        displs_[ rows_ + 1 ] = displs_[ rows_ ] + cols[j];
-        counts_[ rows_ ]     = cols[j];
-        maxcols_                  = std::max( maxcols_, cols[j] );
-        mincols_                  = std::min( mincols_, cols[j] );
+        displs_[rows_ + 1] = displs_[rows_] + cols[j];
+        counts_[rows_]     = cols[j];
+        maxcols_           = std::max( maxcols_, cols[j] );
+        mincols_           = std::min( mincols_, cols[j] );
     }
 
     resize( old_size, new_size, false, nullptr, false );
@@ -227,14 +227,14 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols ) {
     idx_t new_rows = rows_ + rows;
 
     //TODO
-//    ASSERT( data_[_displs_] != nullptr );
-//    ASSERT( data_[_counts_] != nullptr );
+    //    ASSERT( data_[_displs_] != nullptr );
+    //    ASSERT( data_[_counts_] != nullptr );
     displs_.resize( new_rows + 1 );
     counts_.resize( new_rows + 1 );
 
     for ( idx_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
-        displs_[ rows_ + 1 ] = displs_[ rows_ ] + cols;
-        counts_[ rows_ ]     = cols;
+        displs_[rows_ + 1] = displs_[rows_] + cols;
+        counts_[rows_]     = cols;
     }
 
     maxcols_ = std::max( maxcols_, cols );
@@ -252,16 +252,16 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols ) {
 void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols, const idx_t values[],
                                         bool fortran_array ) {
     if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
-    idx_t position_displs = displs_[ position ];
+    idx_t position_displs = displs_[position];
     displs_.insert( position, rows );
     counts_.insert( position, rows );
 
-    displs_[ position ] = position_displs;
+    displs_[position] = position_displs;
     for ( idx_t jrow = position; jrow < position + rows; ++jrow ) {
-        counts_[ jrow ] = cols;
+        counts_[jrow] = cols;
     }
     for ( idx_t jrow = position; jrow < displs_.size() - 1; ++jrow ) {
-        displs_[ jrow + 1 ] = displs_[ jrow ] + counts_[ jrow ];
+        displs_[jrow + 1] = displs_[jrow] + counts_[jrow];
     }
     maxcols_ = std::max( maxcols_, cols );
     mincols_ = std::min( mincols_, cols );
@@ -270,13 +270,13 @@ void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols, 
 
     if ( values == nullptr ) {
         for ( idx_t c = position_displs; c < position_displs + rows * cols; ++c ) {
-            values_[ c ] = missing_value() TO_FORTRAN;
+            values_[c] = missing_value() TO_FORTRAN;
         }
     }
     else {
         idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
         for ( idx_t c = position_displs; c < position_displs + rows * cols; ++c ) {
-            values_[ c ] = values[c - position_displs] + add_base;
+            values_[c] = values[c - position_displs] + add_base;
         }
     }
     rows_ += rows;
@@ -294,7 +294,7 @@ void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols )
 
 void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t cols[] ) {
     if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
-    idx_t position_displs = displs_[ position ];
+    idx_t position_displs = displs_[position];
 
     if ( rows_ == 0 ) {
         if ( position > 1 ) {
@@ -307,14 +307,14 @@ void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t 
         counts_.insert( position, rows );
     }
 
-    displs_[ position ] = position_displs;
+    displs_[position] = position_displs;
     for ( idx_t jrow = position; jrow < position + rows; ++jrow ) {
-        counts_[ jrow ] = cols[jrow - position];
-        maxcols_             = std::max( maxcols_, counts_[ jrow ] );
-        mincols_             = std::min( mincols_, counts_[ jrow ] );
+        counts_[jrow] = cols[jrow - position];
+        maxcols_      = std::max( maxcols_, counts_[jrow] );
+        mincols_      = std::min( mincols_, counts_[jrow] );
     }
     for ( idx_t jrow = position; jrow < displs_.size() - 1; ++jrow ) {
-        displs_[ jrow + 1 ] = displs_[ jrow ] + counts_[ jrow ];
+        displs_[jrow + 1] = displs_[jrow] + counts_[jrow];
     }
 
     idx_t insert_size( 0 );
@@ -324,7 +324,7 @@ void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t 
     values_.insert( position_displs, insert_size );
 
     for ( idx_t c = position_displs; c < position_displs + insert_size; ++c ) {
-        values_[ c ] = missing_value() TO_FORTRAN;
+        values_[c] = missing_value() TO_FORTRAN;
     }
 
     rows_ += rows;
@@ -370,10 +370,10 @@ array::ArrayShape{blocks})),
 MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( const std::string& name ) :
     IrregularConnectivityImpl( name ),
     blocks_( 0 ),
-    block_displs_(1),
+    block_displs_( 1 ),
     block_cols_( 1 ),
     block_( 0 ) {
-      block_displs_( 0 ) = 0;
+    block_displs_( 0 ) = 0;
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -389,8 +389,8 @@ void MultiBlockConnectivityImpl::clear() {
         block_cols_.resize( 1 );
         block_displs_( 0 ) = 0ul;
     }
-    blocks_     = 0;
-    block_      = array::SVector<BlockConnectivityImpl>( 0 );
+    blocks_ = 0;
+    block_  = array::SVector<BlockConnectivityImpl>( 0 );
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -404,8 +404,8 @@ void MultiBlockConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values
     block_cols_.insert( block_cols_.size(), 1 );
 
     blocks_++;
-    block_displs_[ block_displs_.size() - 1 ] = old_rows + rows;
-    block_cols_[ block_cols_.size() - 2 ]     = cols;
+    block_displs_[block_displs_.size() - 1] = old_rows + rows;
+    block_cols_[block_cols_.size() - 2]     = cols;
 
     rebuild_block_connectivity();
 }
@@ -428,8 +428,8 @@ void MultiBlockConnectivityImpl::add( idx_t rows, idx_t cols ) {
     block_cols_.insert( block_cols_.size(), 1 );
     blocks_++;
 
-    block_displs_[block_displs_.size() - 1 ] = old_rows + rows;
-    block_cols_[ block_cols_.size() - 2 ]     = cols;
+    block_displs_[block_displs_.size() - 1] = old_rows + rows;
+    block_cols_[block_cols_.size() - 2]     = cols;
 
     rebuild_block_connectivity();
 }
@@ -456,7 +456,7 @@ void MultiBlockConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
     block_cols_.insert( block_cols_.size(), 1 );
     blocks_++;
     block_displs_( block_displs_.size() - 1 ) = old_rows;
-    block_cols_[ block_cols_.size() - 2 ]     = max;
+    block_cols_[block_cols_.size() - 2]       = max;
 
     rebuild_block_connectivity();
 }
@@ -472,7 +472,7 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols,
     long blk_idx = blocks_;
     do {
         blk_idx--;
-    } while ( blk_idx >= 0l && block_displs_[blk_idx] >= position && cols != block_cols_[ blk_idx ] );
+    } while ( blk_idx >= 0l && block_displs_[blk_idx] >= position && cols != block_cols_[blk_idx] );
     ASSERT( blk_idx >= 0l );
     ASSERT( cols == block( blk_idx ).cols() );
 
@@ -491,14 +491,14 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols 
     long blk_idx = blocks_;
     do {
         blk_idx--;
-    } while ( blk_idx >= 0l && block_displs_[ blk_idx ] >= position && cols != block_cols_[ blk_idx ] );
+    } while ( blk_idx >= 0l && block_displs_[blk_idx] >= position && cols != block_cols_[blk_idx] );
 
     ASSERT( blk_idx >= 0l );
 
     IrregularConnectivityImpl::insert( position, rows, cols );
 
     for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk )
-        block_displs_[ jblk + 1 ] += rows;
+        block_displs_[jblk + 1] += rows;
     rebuild_block_connectivity();
 }
 
@@ -520,26 +520,26 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t
     long blk_idx = blocks_;
     do {
         blk_idx--;
-    } while ( blk_idx >= 0l && block_displs_[ blk_idx ] >= position && max != block_cols_[ blk_idx ] );
+    } while ( blk_idx >= 0l && block_displs_[blk_idx] >= position && max != block_cols_[blk_idx] );
 
     ASSERT( blk_idx >= 0l );
 
     IrregularConnectivityImpl::insert( position, rows, cols );
 
     for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk )
-        block_displs_[ jblk + 1 ] += rows;
+        block_displs_[jblk + 1] += rows;
     rebuild_block_connectivity();
 }
 
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::rebuild_block_connectivity() {
-    block_.resize( blocks_, std::move(BlockConnectivityImpl()) );
+    block_.resize( blocks_, std::move( BlockConnectivityImpl() ) );
 
     for ( idx_t b = 0; b < blocks_; ++b ) {
-        block_[b].rebuild( block_displs_[ b + 1 ] - block_displs_[ b ],  // rows
-                           block_cols_[ b ],                                  // cols
-                           values_.data() + displs( block_displs_[ b ] ) );
+        block_[b].rebuild( block_displs_[b + 1] - block_displs_[b],  // rows
+                           block_cols_[b],                           // cols
+                           values_.data() + displs( block_displs_[b] ) );
     }
 }
 
@@ -569,7 +569,7 @@ BlockConnectivityImpl::BlockConnectivityImpl() :
 
 BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, const std::initializer_list<idx_t>& values ) :
     owns_( true ),
-    values_( rows*cols ),
+    values_( rows * cols ),
     rows_( rows ),
     cols_( cols ),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ) {
@@ -577,7 +577,7 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, const std:
     auto v         = values.begin();
     for ( idx_t i = 0; i < rows_; ++i ) {
         for ( idx_t j = 0; j < cols_; ++j ) {
-            values_[ index(i,j) ] = *( v++ ) + add_base;
+            values_[index( i, j )] = *( v++ ) + add_base;
         }
     }
     ASSERT( v == values.end() );
@@ -587,7 +587,7 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, const std:
 
 BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t values[] ) :
     owns_( true ),
-    values_( rows*cols ),
+    values_( rows * cols ),
     rows_( rows ),
     cols_( cols ),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ) {
@@ -596,7 +596,7 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t valu
         idx_t* v       = &values[0];
         for ( idx_t i = 0; i < rows_; ++i ) {
             for ( idx_t j = 0; j < cols_; ++j ) {
-                values_[ index(i, j) ] = *( v++ ) + add_base;
+                values_[index( i, j )] = *( v++ ) + add_base;
             }
         }
     }
@@ -606,7 +606,7 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t valu
 
 BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t values[], bool dummy ) :
     owns_( false ),
-    values_( values, rows*cols ),
+    values_( values, rows * cols ),
     rows_( rows ),
     cols_( cols ),
     missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ) {}
@@ -620,9 +620,9 @@ BlockConnectivityImpl::~BlockConnectivityImpl() {
 //------------------------------------------------------------------------------------------------------
 
 void BlockConnectivityImpl::rebuild( idx_t rows, idx_t cols, idx_t values[] ) {
-    rows_ = rows;
-    cols_ = cols;
-    values_      = array::SVector<idx_t>( values, rows * cols );
+    rows_   = rows;
+    cols_   = cols;
+    values_ = array::SVector<idx_t>( values, rows * cols );
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -634,16 +634,16 @@ void BlockConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[], b
             "Cannot add values with different cols than "
             "already existing in BlockConnectivity" );
 
-    values_.resize( (rows_ + rows) * cols );
+    values_.resize( ( rows_ + rows ) * cols );
     const idx_t oldrows = rows_;
-    idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
+    idx_t add_base      = fortran_array ? 0 : FORTRAN_BASE;
 
     rows_ += rows;
     cols_ = cols;
 
     for ( idx_t i = 0; i < rows; ++i ) {
         for ( idx_t j = 0; j < cols; ++j ) {
-            values_[ index(i+oldrows, j) ] = values[i * cols + j] + add_base;
+            values_[index( i + oldrows, j )] = values[i * cols + j] + add_base;
         }
     }
 }

@@ -1,5 +1,5 @@
-#include <fstream>
 #include <cstring>
+#include <fstream>
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"

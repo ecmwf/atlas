@@ -113,7 +113,7 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int partiti
             if ( coordinatesMin[LON] <= P[LON] && P[LON] <= coordinatesMax[LON] && coordinatesMin[LAT] <= P[LAT] &&
                  P[LAT] <= coordinatesMax[LAT] ) {
                 const mesh::Cells& elements_src = prePartitionedMesh_.cells();
-                const idx_t nb_types           = elements_src.nb_types();
+                const idx_t nb_types            = elements_src.nb_types();
                 bool found                      = false;
 
                 for ( idx_t t = 0; t < nb_types && !found; ++t ) {

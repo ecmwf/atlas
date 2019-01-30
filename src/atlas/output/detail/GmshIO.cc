@@ -50,7 +50,8 @@ static double rad2deg = util::Constants::radiansToDegrees();
 
 class GmshFile : public std::ofstream {
 public:
-    GmshFile( const PathName& file_path, std::ios_base::openmode mode, int part = static_cast<int>(mpi::comm().rank()) ) {
+    GmshFile( const PathName& file_path, std::ios_base::openmode mode,
+              int part = static_cast<int>( mpi::comm().rank() ) ) {
         PathName par_path( file_path );
         int mpi_size = static_cast<int>( mpi::comm().size() );
         if ( atlas::mpi::comm().size() == 1 || part == -1 ) { std::ofstream::open( par_path.localPath(), mode ); }
@@ -314,7 +315,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
 
     std::vector<int> lev = get_levels( nlev, gmsh_options );
     for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
-        int jlev        = lev[ilev];
+        int jlev          = lev[ilev];
         char field_lev[6] = {0, 0, 0, 0, 0, 0};
 
         if ( field.levels() ) { print_field_lev( field_lev, jlev ); }
@@ -790,7 +791,7 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
         if ( options.get<bool>( "edges" ) ) grouped_elements.push_back( &mesh.edges() );
 
         idx_t nb_elements( 0 );
-        for( const mesh::HybridElements* hybrid : grouped_elements ) {
+        for ( const mesh::HybridElements* hybrid : grouped_elements ) {
             nb_elements += hybrid->size();
             const array::ArrayView<int, 1> hybrid_halo  = array::make_view<int, 1>( hybrid->halo() );
             const array::ArrayView<int, 1> hybrid_flags = array::make_view<int, 1>( hybrid->flags() );
@@ -803,15 +804,13 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                 return false;
             };
             for ( idx_t e = 0; e < hybrid->size(); ++e ) {
-                if ( exclude( e ) ) {
-                    --nb_elements;
-                }
+                if ( exclude( e ) ) { --nb_elements; }
             }
         }
 
         file << nb_elements << "\n";
 
-        for( const mesh::HybridElements* hybrid : grouped_elements ) {
+        for ( const mesh::HybridElements* hybrid : grouped_elements ) {
             for ( idx_t etype = 0; etype < hybrid->nb_types(); ++etype ) {
                 const mesh::Elements& elements        = hybrid->elements( etype );
                 const mesh::ElementType& element_type = elements.element_type();

@@ -131,7 +131,7 @@ ArrayT<Value>::ArrayT( const ArraySpec& spec ) {
 
 template <typename Value>
 void ArrayT<Value>::resize( const ArrayShape& _shape ) {
-    if ( rank() != static_cast<idx_t>(_shape.size()) ) {
+    if ( rank() != static_cast<idx_t>( _shape.size() ) ) {
         std::stringstream msg;
         msg << "Cannot resize existing Array with rank " << rank() << " with a shape of rank " << _shape.size();
         throw_Exception( msg.str(), Here() );

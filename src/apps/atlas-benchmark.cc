@@ -398,8 +398,8 @@ void AtlasBenchmark::iteration() {
     const auto V              = array::make_view<double, 1>( mesh.nodes().field( "dual_volumes" ) );
     const auto node2edge_sign = array::make_view<double, 2>( mesh.nodes().field( "to_edge_sign" ) );
 
-    auto grad         = array::make_view<double, 3>( grad_field );
-    auto avgS         = array::make_view<double, 3>( *avgS_arr );
+    auto grad = array::make_view<double, 3>( grad_field );
+    auto avgS = array::make_view<double, 3>( *avgS_arr );
 
     atlas_omp_parallel_for( idx_t jedge = 0; jedge < nedges; ++jedge ) {
         idx_t ip1 = edge2node( jedge, 0 );
@@ -419,7 +419,7 @@ void AtlasBenchmark::iteration() {
         }
         for ( idx_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
             idx_t iedge = node2edge( jnode, jedge );
-            double add   = node2edge_sign( jnode, jedge );
+            double add  = node2edge_sign( jnode, jedge );
             for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
                 grad( jnode, jlev, LON ) += add * avgS( iedge, jlev, LON );
                 grad( jnode, jlev, LAT ) += add * avgS( iedge, jlev, LAT );

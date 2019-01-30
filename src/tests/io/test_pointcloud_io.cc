@@ -9,8 +9,8 @@
  */
 
 #include <cmath>
-#include <string>
 #include <fstream>
+#include <string>
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/memory/ScopedPtr.h"

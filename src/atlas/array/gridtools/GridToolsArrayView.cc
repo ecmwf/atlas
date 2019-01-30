@@ -53,8 +53,7 @@ ArrayView<Value, Rank, AccessMode>::ArrayView( data_view_t data_view, const Arra
     data_store_orig_( array.data_store() ),
     array_( &array ) {
     if ( data_view.valid() ) {
-        using seq =
-            ::gridtools::apply_gt_integer_sequence<::gridtools::make_gt_integer_sequence<int, Rank> >;
+        using seq = ::gridtools::apply_gt_integer_sequence<::gridtools::make_gt_integer_sequence<int, Rank>>;
 
         constexpr static unsigned int ndims = data_view_t::data_store_t::storage_info_t::ndims;
 

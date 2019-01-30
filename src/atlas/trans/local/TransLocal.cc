@@ -585,7 +585,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 //                    write.close();
                 //                }
             }
-            // other FFT implementations should be added with #elif statements
+                // other FFT implementations should be added with #elif statements
 #else
             useFFT_               = false;  // no FFT implemented => default to dgemm
             std::string file_path = TransParameters( config ).write_fft();
@@ -810,7 +810,8 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                             }
                         }
                     }
-                    ASSERT( size_t(ia) == n_imag * nb_fields * size_asym && size_t(is) == n_imag * nb_fields * size_sym );
+                    ASSERT( size_t( ia ) == n_imag * nb_fields * size_asym &&
+                            size_t( is ) == n_imag * nb_fields * size_sym );
                 }
                 if ( nlatsLegReduced_ - nlat0_[jm] > 0 ) {
                     {

@@ -21,7 +21,7 @@ namespace atlas {
 static void usage( const std::string& name ) {
     Log::info() << "dummy usage" << std::endl;
 }
-}
+}  // namespace atlas
 
 namespace {
 
@@ -187,7 +187,7 @@ void atlas::AtlasTool::setupLogging() {
 
         eckit::LogTarget* logfile = new eckit::FileTarget( displayName() + ".log.p" + rankstr );
 
-        if ( int(mpi::comm().rank()) == log_rank ) {
+        if ( int( mpi::comm().rank() ) == log_rank ) {
             if ( Log::info() ) Log::info().addTarget( logfile );
             if ( Log::warning() ) Log::warning().addTarget( logfile );
             if ( Log::error() ) Log::error().addTarget( logfile );
@@ -201,7 +201,7 @@ void atlas::AtlasTool::setupLogging() {
         }
     }
     else {
-        if ( int(mpi::comm().rank()) != log_rank ) {
+        if ( int( mpi::comm().rank() ) != log_rank ) {
             if ( Log::info() ) Log::info().reset();
             if ( Log::warning() ) Log::warning().reset();
             if ( Log::error() ) Log::error().reset();

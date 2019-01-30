@@ -10,9 +10,9 @@
 
 #include <map>
 
-#include "eckit/exception/Exceptions.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/ObjectHandle.h"
+#include "eckit/exception/Exceptions.h"
 
 // #include "tests/TestMeshes.h"
 #include "atlas/mpi/mpi.h"
@@ -226,7 +226,6 @@ private:
 };
 
 class ShapeFunction : public util::Object {
-
 public:
     ShapeFunction() {}
     virtual ~ShapeFunction() {}
@@ -338,7 +337,6 @@ public:
 };
 
 class Nodes : public util::Object {
-
 public:
     Nodes() {
         npts_   = 0;

@@ -52,7 +52,7 @@ uidx_t unique_lonlat( const LonLatMicroDeg& );
 uidx_t unique_lonlat( const double& lon, const double& lat );
 uidx_t unique_lonlat( const double lonlat[] );
 uidx_t unique_lonlat( const array::LocalView<double, 1>& lonlat );
-uidx_t unique_lonlat( const std::array<double,2>& lonlat );
+uidx_t unique_lonlat( const std::array<double, 2>& lonlat );
 
 /// @brief Compute unique positive index from lon-lat coordinates in degrees
 /// @return uidx_t Return type depends on ATLAS_BITS_GLOBAL [32/64] bits
@@ -177,7 +177,7 @@ inline uidx_t unique_lonlat( const double lonlat[] ) {
     return detail::uniqueT<uidx_t>( microdeg( lonlat[LON] ), microdeg( lonlat[LAT] ) );
 }
 
-inline uidx_t unique_lonlat( const std::array<double,2>& lonlat ) {
+inline uidx_t unique_lonlat( const std::array<double, 2>& lonlat ) {
     return detail::uniqueT<uidx_t>( microdeg( lonlat[LON] ), microdeg( lonlat[LAT] ) );
 }
 
@@ -186,7 +186,7 @@ inline uidx_t unique_lonlat( const array::LocalView<double, 1>& lonlat ) {
 }
 
 inline uidx_t unique_lonlat( const double elem_lonlat[], size_t npts ) {
-    std::array<double,2> centroid { 0.,0.};
+    std::array<double, 2> centroid{0., 0.};
     for ( size_t jnode = 0; jnode < npts; ++jnode ) {
         centroid[LON] += elem_lonlat[jnode * 2 + LON];
         centroid[LAT] += elem_lonlat[jnode * 2 + LAT];
@@ -214,8 +214,8 @@ inline uidx_t UniqueLonLat::operator()( int node ) const {
 }
 
 inline uidx_t UniqueLonLat::operator()( const mesh::Connectivity::Row& elem_nodes ) const {
-    std::array<double,2> centroid{0.,0.};
-    size_t npts   = elem_nodes.size();
+    std::array<double, 2> centroid{0., 0.};
+    size_t npts = elem_nodes.size();
     for ( size_t jnode = 0; jnode < npts; ++jnode ) {
         centroid[LON] += lonlat( elem_nodes( jnode ), LON );
         centroid[LAT] += lonlat( elem_nodes( jnode ), LAT );
@@ -227,7 +227,7 @@ inline uidx_t UniqueLonLat::operator()( const mesh::Connectivity::Row& elem_node
 }
 
 inline uidx_t UniqueLonLat::operator()( const int elem_nodes[], size_t npts ) const {
-    std::array<double,2> centroid{0.,0.};
+    std::array<double, 2> centroid{0., 0.};
 
     for ( size_t jnode = 0; jnode < npts; ++jnode ) {
         centroid[LON] += lonlat( elem_nodes[jnode], LON );

@@ -37,8 +37,8 @@ std::vector<T> vec( const T ( &list )[N] ) {
 
 struct Fixture {
     Fixture() {
-        rank = static_cast<int>( mpi::comm().rank() );
-        comm_size = static_cast<int>( mpi::comm().size() );
+        rank           = static_cast<int>( mpi::comm().rank() );
+        comm_size      = static_cast<int>( mpi::comm().size() );
         int nnodes_c[] = {6, 6, 7};
         nb_nodes       = vec( nnodes_c );
         Nl             = nb_nodes[rank];

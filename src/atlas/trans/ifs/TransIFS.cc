@@ -15,13 +15,13 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/library/config.h"
 #include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/ifs/TransIFS.h"
-#include "atlas/library/config.h"
 
 using Topology = atlas::mesh::Nodes::Topology;
 using atlas::Field;
@@ -339,7 +339,7 @@ struct PackNodeColumns {
 
     void pack_1( const Field& field, idx_t ) {
         const ArrayView<double, 1> gpfield = make_view<double, 1>( field );
-        idx_t n                           = 0;
+        idx_t n                            = 0;
         for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
             if ( !is_ghost( jnode ) ) {
                 rgpview_( f, n ) = gpfield( jnode );
@@ -350,7 +350,7 @@ struct PackNodeColumns {
     }
     void pack_2( const Field& field, idx_t ) {
         const ArrayView<double, 2> gpfield = make_view<double, 2>( field );
-        const idx_t nvars                 = gpfield.shape( 1 );
+        const idx_t nvars                  = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
             for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
@@ -403,7 +403,7 @@ struct PackStructuredColumns {
 
     void pack_1( const Field& field ) {
         const ArrayView<double, 1> gpfield = make_view<double, 1>( field );
-        idx_t n                           = 0;
+        idx_t n                            = 0;
         for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
             rgpview_( f, n ) = gpfield( jnode );
             ++n;
@@ -412,7 +412,7 @@ struct PackStructuredColumns {
     }
     void pack_2( const Field& field ) {
         const ArrayView<double, 2> gpfield = make_view<double, 2>( field );
-        const idx_t nvars                 = gpfield.shape( 1 );
+        const idx_t nvars                  = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
             for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
@@ -507,7 +507,7 @@ struct UnpackNodeColumns {
     }
     void unpack_2( Field& field, idx_t ) {
         ArrayView<double, 2> gpfield = make_view<double, 2>( field );
-        const idx_t nvars           = gpfield.shape( 1 );
+        const idx_t nvars            = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
             for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
@@ -560,7 +560,7 @@ struct UnpackStructuredColumns {
 
     void unpack_1( Field& field ) {
         ArrayView<double, 1> gpfield = make_view<double, 1>( field );
-        idx_t n                     = 0;
+        idx_t n                      = 0;
         for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
             gpfield( jnode ) = rgpview_( f, n );
             ++n;
@@ -569,7 +569,7 @@ struct UnpackStructuredColumns {
     }
     void unpack_2( Field& field ) {
         ArrayView<double, 2> gpfield = make_view<double, 2>( field );
-        const idx_t nvars           = gpfield.shape( 1 );
+        const idx_t nvars            = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
             for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {

@@ -15,8 +15,8 @@
 #include <iostream>
 #include <limits>
 #include <memory>
-#include <sstream>
 #include <numeric>
+#include <sstream>
 #include <vector>
 
 #include "eckit/exception/Exceptions.h"

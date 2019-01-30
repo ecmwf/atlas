@@ -192,7 +192,7 @@ void EdgeColumns::set_field_metadata( const eckit::Configuration& config, Field&
 
 idx_t EdgeColumns::config_size( const eckit::Configuration& config ) const {
     const idx_t rank = static_cast<idx_t>( mpi::comm().rank() );
-    idx_t size = nb_edges();
+    idx_t size       = nb_edges();
     bool global( false );
     if ( config.get( "global", global ) ) {
         if ( global ) {

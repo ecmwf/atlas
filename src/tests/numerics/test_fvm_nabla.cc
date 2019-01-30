@@ -130,7 +130,7 @@ CASE( "test_build" ) {
 
 CASE( "test_grad" ) {
     Log::info() << "test_grad" << std::endl;
-    idx_t nlev = 1;
+    idx_t nlev  = 1;
     auto radius = option::radius( "Earth" );
     Grid grid( griduid() );
     MeshGenerator meshgenerator( "structured" );

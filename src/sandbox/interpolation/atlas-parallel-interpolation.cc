@@ -150,8 +150,8 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     src.partition( src_grid );
     FunctionSpace src_functionspace;
     bool structured = false;
-    for( auto& is_structured : {"structured-bicubic","bicubic","structured-bilinear","bilinear"} ){
-        if( interpolation_method == is_structured ) {
+    for ( auto& is_structured : {"structured-bicubic", "bicubic", "structured-bilinear", "bilinear"} ) {
+        if ( interpolation_method == is_structured ) {
             structured = true;
             break;
         }

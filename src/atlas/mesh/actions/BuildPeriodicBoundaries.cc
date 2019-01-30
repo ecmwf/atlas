@@ -38,12 +38,11 @@ void build_periodic_boundaries( Mesh& mesh ) {
     ATLAS_TRACE();
     bool periodic = false;
     mesh.metadata().get( "periodic", periodic );
-    
-    auto mpi_size = static_cast<idx_t>( mpi::comm().size() );
-    auto mypart = static_cast<idx_t>( mpi::comm().rank() );
-    
-    if ( !periodic ) {
 
+    auto mpi_size = static_cast<idx_t>( mpi::comm().size() );
+    auto mypart   = static_cast<idx_t>( mpi::comm().rank() );
+
+    if ( !periodic ) {
         mesh::Nodes& nodes = mesh.nodes();
 
         auto flags = array::make_view<int, 1>( nodes.flags() );
@@ -183,7 +182,7 @@ void build_periodic_boundaries( Mesh& mesh ) {
         for ( idx_t jproc = 0; jproc < mpi_size; ++jproc ) {
             idx_t nb_recv = static_cast<idx_t>( recv_slave_idx[jproc].size() );
             for ( idx_t jnode = 0; jnode < nb_recv; ++jnode ) {
-                idx_t slave_idx     = recv_slave_idx[jproc][jnode];
+                idx_t slave_idx   = recv_slave_idx[jproc][jnode];
                 part( slave_idx ) = recv_master_part[jproc][jnode];
                 ridx( slave_idx ) = recv_master_ridx[jproc][jnode];
             }

@@ -272,12 +272,11 @@ void atlas__NodesFunctionSpace__oisum_float( const NodeColumns* This, const fiel
 }
 
 void atlas__NodesFunctionSpace__oisum_long( const NodeColumns* This, const field::FieldImpl* field, long& sum,
-                                             int& N ) {
+                                            int& N ) {
     atlas__NodesFunctionSpace__sum_long( This, field, sum, N );
 }
 
-void atlas__NodesFunctionSpace__oisum_int( const NodeColumns* This, const field::FieldImpl* field, int& sum,
-                                             int& N ) {
+void atlas__NodesFunctionSpace__oisum_int( const NodeColumns* This, const field::FieldImpl* field, int& sum, int& N ) {
     atlas__NodesFunctionSpace__sum_int( This, field, sum, N );
 }
 
@@ -304,12 +303,12 @@ void atlas__NodesFunctionSpace__oisum_arr_float( const NodeColumns* This, const 
 }
 
 void atlas__NodesFunctionSpace__oisum_arr_int( const NodeColumns* This, const field::FieldImpl* field, int*& sum,
-                                                  int& size, int& N ) {
+                                               int& size, int& N ) {
     atlas__NodesFunctionSpace__sum_arr_int( This, field, sum, size, N );
 }
 
 void atlas__NodesFunctionSpace__oisum_arr_long( const NodeColumns* This, const field::FieldImpl* field, long*& sum,
-                                                  int& size, int& N ) {
+                                                int& size, int& N ) {
     atlas__NodesFunctionSpace__sum_arr_long( This, field, sum, size, N );
 }
 

@@ -274,7 +274,7 @@ double sphericalharmonics_analytic_point(
 // Andreas Mueller *ECMWF*
 //
 void spectral_transform_grid_analytic(
-    const int trc,     // truncation (in)
+    const int trc,        // truncation (in)
     bool trcFT,           // truncation for Fourier transformation (in)
     const double n,       // total wave number (implemented so far for n<4)
     const double m,       // zonal wave number (implemented so far for m<4, m<n)
@@ -383,7 +383,7 @@ CASE( "test_trans_vordiv_with_translib" ) {
     // test transgeneral by comparing its result with the trans library
     // this test is based on the test_nomesh case in test_trans.cc
 
-    double tolerance  = 1.e-13;
+    double tolerance = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
     Grid g( "F64" );
@@ -1173,7 +1173,7 @@ CASE( "test_trans_unstructured" ) {
     Log::info() << "test_trans_unstructured" << std::endl;
     // test transgeneral by comparing with analytic solution on an unstructured grid
 
-    double tolerance  = 1.e-13;
+    double tolerance = 1.e-13;
 
     //Domain testdomain = RectangularDomain( {20., 25.}, {40., 60.} );
     Domain testdomain = RectangularDomain( {0., 90.}, {0., 90.} );

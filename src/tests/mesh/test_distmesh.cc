@@ -47,7 +47,7 @@ namespace test {
 double dual_volume( Mesh& mesh ) {
     mesh::Nodes& nodes = mesh.nodes();
     mesh::IsGhostNode is_ghost_node( nodes );
-    idx_t nb_nodes                             = nodes.size();
+    idx_t nb_nodes                           = nodes.size();
     array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
     double area                              = 0;
 

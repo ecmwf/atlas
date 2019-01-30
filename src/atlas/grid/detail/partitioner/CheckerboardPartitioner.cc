@@ -151,7 +151,7 @@ Number of gridpoints per band
     // for each band, select gridpoints belonging to that band, and sort them
     // according to X first
     size_t offset = 0;
-    int jpart  = 0;
+    int jpart     = 0;
     for ( size_t iband = 0; iband < nbands; iband++ ) {
         // sort according to X first
         std::sort( nodes + offset, nodes + offset + ngpb[iband], compare_X_Y );
