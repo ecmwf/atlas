@@ -68,7 +68,7 @@ void regist() {
     load<N8000>();
 }
 
-}  // namespace spacing
+}  // namespace gaussian
 }  // namespace spacing
 }  // namespace grid
 }  // namespace atlas
