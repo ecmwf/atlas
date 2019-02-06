@@ -31,11 +31,11 @@ namespace method {
 
 struct QuasiCubicLinearPoints {
     constexpr QuasiCubicLinearPoints() {}
-    static constexpr std::array<idx_t, 2> j{1, 2};
-    static constexpr std::array<idx_t, 2> jj{0, 3};
-    static constexpr std::array<idx_t, 2> jw{4, 5};
-    static constexpr std::array<idx_t, 2> i{1, 2};
-    static constexpr std::array<idx_t, 2> ii{0, 3};
+    static constexpr std::array<idx_t, 2> j{{1, 2}};
+    static constexpr std::array<idx_t, 2> jj{{0, 3}};
+    static constexpr std::array<idx_t, 2> jw{{4, 5}};
+    static constexpr std::array<idx_t, 2> i{{1, 2}};
+    static constexpr std::array<idx_t, 2> ii{{0, 3}};
 };
 constexpr std::array<idx_t, 2> QuasiCubicLinearPoints::j;
 constexpr std::array<idx_t, 2> QuasiCubicLinearPoints::jj;
