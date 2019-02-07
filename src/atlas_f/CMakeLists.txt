@@ -169,7 +169,6 @@ ecbuild_add_library( TARGET atlas_f
         numerics/atlas_fvm_module.F90
         numerics/atlas_Nabla_module.F90
         interpolation/atlas_Interpolation_module.F90
-        parallel/atlas_mpi_module.F90
         parallel/atlas_GatherScatter_module.fypp
         parallel/atlas_Checksum_module.fypp
         parallel/atlas_HaloExchange_module.fypp

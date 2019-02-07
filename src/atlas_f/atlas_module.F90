@@ -9,8 +9,6 @@ module atlas_module
 !
 !------------------------------------------------------------------------------
 
-use atlas_mpi_module
-
 use atlas_Field_module, only: &
     & atlas_Field, &
     & atlas_real, &
@@ -153,7 +151,7 @@ subroutine atlas_init( comm )
   use atlas_library_c_binding
   use iso_fortran_env, only : stdout => output_unit
   use fckit_main_module, only: fckit_main
-  use atlas_mpi_module, only : atlas_mpi_set_comm
+  use fckit_mpi_module, only : fckit_mpi_setCommDefault
 
   integer, intent(in), optional :: comm
 
@@ -172,7 +170,7 @@ subroutine atlas_init( comm )
   endif
 
   if( present(comm) ) then
-    call atlas_mpi_set_comm(comm)
+    call fckit_mpi_setCommDefault(comm)
   endif
   call atlas__atlas_init_noargs()
 
