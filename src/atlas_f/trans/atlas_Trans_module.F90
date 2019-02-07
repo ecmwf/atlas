@@ -100,11 +100,11 @@ contains
 #define THROW_ERROR call te("atlas_Trans_module.F90",__LINE__)
 
 subroutine te(file,line)
-  use atlas_Error_module, only: atlas_code_location, atlas_throw_usererror
+  use fckit_exception_module, only : fckit_exception
   character(len=*), intent(in) :: file
   integer, intent(in) :: line
-  call atlas_throw_usererror("Cannot use atlas_Trans since atlas is compiled without" // &
-    & "ENABLE_TRANS=ON",atlas_code_location(file,line))
+  call fckit_exception%throw( "Cannot use atlas_Trans since atlas is compiled without" // &
+    & "ENABLE_TRANS=ON", file, line )
 end subroutine
 
 function atlas_Trans__ctor( grid, nsmax ) result(this)

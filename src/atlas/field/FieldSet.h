@@ -21,6 +21,7 @@
 
 #include "atlas/field/Field.h"
 #include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/ObjectHandle.h"
 
@@ -57,11 +58,11 @@ public:  // methods
     Field& operator[]( const std::string& name ) { return field( name ); }
 
     const Field& field( const idx_t& i ) const {
-        if ( i >= size() ) throw_OutOfRange( i, size() );
+        if ( i >= size() ) throw_OutOfRange( "fieldset", i, size(), Here() );
         return fields_[i];
     }
     Field& field( const idx_t& i ) {
-        if ( i >= size() ) throw_OutOfRange( i, size() );
+        if ( i >= size() ) throw_OutOfRange( "fieldset", i, size(), Here() );
         return fields_[i];
     }
 
@@ -87,9 +88,6 @@ protected:                                // data
     std::vector<Field> fields_;           ///< field storage
     std::string name_;                    ///< internal name
     std::map<std::string, idx_t> index_;  ///< name-to-index map, to refer fields by name
-
-private:
-    [[noreturn]] static void throw_OutOfRange( idx_t index, idx_t max );
 };
 
 

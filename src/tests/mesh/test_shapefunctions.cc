@@ -12,7 +12,6 @@
 
 #include "atlas/util/Object.h"
 #include "atlas/util/ObjectHandle.h"
-#include "eckit/exception/Exceptions.h"
 
 // #include "tests/TestMeshes.h"
 #include "atlas/mpi/mpi.h"
@@ -382,13 +381,13 @@ public:
 
     /// @brief Element type at index
     const ElementType& element_type( size_t idx ) const {
-        ASSERT( idx < element_types_.size() );
+        ATLAS_ASSERT( idx < element_types_.size() );
         return *element_types_[idx];
     }
 
     /// @brief Number of elements for element type at given index
     size_t nb_elements_in_element_type( size_t idx ) const {
-        ASSERT( idx < nelem_per_type_.size() );
+        ATLAS_ASSERT( idx < nelem_per_type_.size() );
         return nelem_per_type_[idx];
     }
 
@@ -423,7 +422,7 @@ public:
     void set_nb_nodes( int nb_nodes ) {
         nb_nodes_ = nb_nodes;
         if ( nproma_ == 0 ) nproma_ = 1;
-        ASSERT( nb_nodes_ % nproma_ == 0 );
+        ATLAS_ASSERT( nb_nodes_ % nproma_ == 0 );
         nblk_ = nb_nodes_ / nproma_;
     }
 
@@ -432,7 +431,7 @@ public:
         nproma_ = nproma;
         nblk_   = 0;
         if ( nb_nodes_ != 0 ) {
-            ASSERT( nb_nodes_ % nproma_ == 0 );
+            ATLAS_ASSERT( nb_nodes_ % nproma_ == 0 );
             nblk_ = nb_nodes_ / nproma_;
         }
     }
@@ -501,7 +500,7 @@ private:
             default:
                 if ( idx_type >= 0 ) return idx_type;
         }
-        throw eckit::SeriousBug( "idx_type not recognized" );
+        throw_Exception( "idx_type not recognized" );
         return 0;
     }
 
@@ -624,8 +623,8 @@ IndexView<DATA_TYPE, 2> make_IndexView( atlas::array::ArrayT<DATA_TYPE>& array, 
     size_t offset = 0;
     size_t strides[2];
     size_t shape[2];
-    ASSERT( element_type_index < elements.nb_element_types() );
-    ASSERT( array.shape( 1 ) == elements.N_max() );
+    ATLAS_ASSERT( element_type_index < elements.nb_element_types() );
+    ATLAS_ASSERT( array.shape( 1 ) == elements.N_max() );
 
     for ( int i = 0; i < element_type_index; ++i ) {
         offset += elements.nb_elements_in_element_type( i ) * elements.N_max();

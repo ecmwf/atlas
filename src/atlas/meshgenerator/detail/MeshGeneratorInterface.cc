@@ -14,7 +14,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorImpl.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 
 using atlas::Mesh;
 
@@ -26,52 +26,64 @@ namespace meshgenerator {
 extern "C" {
 
 void atlas__MeshGenerator__delete( MeshGenerator::Implementation* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); delete This; );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_MeshGenerator" );
+    delete This;
 }
 
 const MeshGenerator::Implementation* atlas__MeshGenerator__create_noconfig( const char* name ) {
     const MeshGenerator::Implementation* meshgenerator( nullptr );
-    ATLAS_ERROR_HANDLING( {
+    {
         MeshGenerator m( std::string{name} );
         meshgenerator = m.get();
         meshgenerator->attach();
-    } meshgenerator->detach(); );
+    }
+    meshgenerator->detach();
     return meshgenerator;
 }
 
 const MeshGenerator::Implementation* atlas__MeshGenerator__create( const char* name,
-                                                                   const eckit::Parametrisation* params ) {
+                                                                   const eckit::Parametrisation* config ) {
     const MeshGenerator::Implementation* meshgenerator( nullptr );
-    ATLAS_ERROR_HANDLING( ASSERT( params ); {
-        MeshGenerator m( std::string( name ), *params );
+    ATLAS_ASSERT( config );
+    {
+        MeshGenerator m( std::string( name ), *config );
         meshgenerator = m.get();
         meshgenerator->attach();
-    } meshgenerator->detach(); );
+    }
+    meshgenerator->detach();
     return meshgenerator;
 }
 
 Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist(
     const MeshGenerator::Implementation* This, const Grid::Implementation* grid,
     const grid::Distribution::Implementation* distribution ) {
-    ATLAS_ERROR_HANDLING( Mesh::Implementation * m; {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_MeshGenerator" );
+    ATLAS_ASSERT( grid != nullptr, "Cannot access uninitialisd atlas_Grid" );
+    ATLAS_ASSERT( distribution != nullptr, "Cannot access uninitialisd atlas_GridDistribution" );
+
+    Mesh::Implementation* m;
+    {
         Mesh mesh = This->generate( Grid( grid ), grid::Distribution( distribution ) );
         mesh.get()->attach();
         m = mesh.get();
-    } m->detach();
-                          return m; );
-    return nullptr;
+    }
+    m->detach();
+    return m;
 }
 
 Mesh::Implementation* atlas__MeshGenerator__generate__grid( const MeshGenerator::Implementation* This,
                                                             const Grid::Implementation* grid ) {
-    ATLAS_ERROR_HANDLING( Mesh::Implementation * m; {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_MeshGenerator" );
+    ATLAS_ASSERT( grid != nullptr, "Cannot access uninitialisd atlas_Grid" );
+    Mesh::Implementation* m;
+    {
         Mesh mesh = This->generate( Grid( grid ) );
         ;
         mesh.get()->attach();
         m = mesh.get();
-    } m->detach();
-                          return m; );
-    return nullptr;
+    }
+    m->detach();
+    return m;
 }
 }  // extern "C"
 

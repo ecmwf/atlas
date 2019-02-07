@@ -10,8 +10,6 @@
 
 #include <ostream>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/ObjectHandle.h"

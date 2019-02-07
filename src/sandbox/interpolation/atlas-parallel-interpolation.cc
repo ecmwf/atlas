@@ -214,7 +214,7 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
                 return array::make_view<double, 2>( fs.xy() );
             }
             else {
-                NOTIMP;
+                ATLAS_NOTIMPLEMENTED;
             }
         }();
         array::ArrayView<double, 1> src_scalar_1 = array::make_view<double, 1>( src_fields[0] ),

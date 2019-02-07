@@ -50,7 +50,7 @@ StructuredInterpolation3D<Kernel>::StructuredInterpolation3D( const Method::Conf
     config.get( "limiter", limiter_ );
 
     if ( not matrix_free_ ) {
-        throw eckit::NotImplemented( "Matrix-free StructuredInterpolation3D not implemented", Here() );
+        throw_NotImplemented( "Matrix-free StructuredInterpolation3D not implemented", Here() );
     }
 }
 
@@ -199,7 +199,7 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
     idx_t tgt_rank = -1;
     for ( auto& f : tgt_fields ) {
         if ( tgt_rank == -1 ) tgt_rank = f.rank();
-        if ( f.rank() != tgt_rank ) { throw eckit::Exception( "target fields don't all have the same rank!", Here() ); }
+        if ( f.rank() != tgt_rank ) { throw_Exception( "target fields don't all have the same rank!", Here() ); }
     }
 
     if ( functionspace::PointCloud( target() ) && tgt_rank == 1 ) {
@@ -252,7 +252,7 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
 
             if ( Rank == 3 &&
                  ( src_fields[i].stride( Rank - 1 ) != 1 || tgt_fields[i].stride( TargetRank - 1 ) != 1 ) ) {
-                throw eckit::Exception(
+                throw_Exception(
                     "Something will go seriously wrong if we continue from here as "
                     "the implementation assumes stride=1 for fastest moving index (variables).",
                     Here() );
@@ -297,7 +297,7 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
 
             if ( Rank == 3 &&
                  ( src_fields[i].stride( Rank - 1 ) != 1 || tgt_fields[i].stride( TargetRank - 1 ) != 1 ) ) {
-                throw eckit::Exception(
+                throw_Exception(
                     "Something will go seriously wrong if we continue from here as "
                     "the implementation assumes stride=1 for fastest moving index (variables).",
                     Here() );

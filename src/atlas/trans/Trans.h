@@ -180,7 +180,7 @@ class TransBuilderFunctionSpace : public TransFactory {
         return new T( cache, gp, sp, config );
     }
     virtual const Trans_t* make( const Cache&, const Grid&, const Domain&, int, const eckit::Configuration& ) {
-        throw_SeriousBug( "This function should not be called", Here() );
+        throw_Exception( "This function should not be called", Here() );
     }
 
 public:
@@ -194,7 +194,7 @@ class TransBuilderGrid : public TransFactory {
         return new T( cache, grid, domain, truncation, config );
     }
     virtual Trans_t* make( const Cache&, const FunctionSpace&, const FunctionSpace&, const eckit::Configuration& ) {
-        throw_SeriousBug( "This function should not be called", Here() );
+        throw_Exception( "This function should not be called", Here() );
     }
 
 public:

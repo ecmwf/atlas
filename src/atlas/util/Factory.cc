@@ -10,8 +10,7 @@
 
 #include <ostream>
 
-#include "eckit/exception/Exceptions.h"
-
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Factory.h"
 
@@ -37,7 +36,7 @@ FactoryBase* FactoryRegistry::get( const std::string& builder ) const {
         for ( const auto& map_pair : factories_ ) {
             Log::error() << "   " << map_pair.first << std::endl;
         }
-        throw eckit::SeriousBug( std::string( "No " ) + factory_ + std::string( " called " ) + builder );
+        throw_Exception( std::string( "No " ) + factory_ + std::string( " called " ) + builder );
     }
     else {
         return iterator->second;
@@ -46,7 +45,7 @@ FactoryBase* FactoryRegistry::get( const std::string& builder ) const {
 
 void FactoryRegistry::add( const std::string& builder, FactoryBase* factory ) {
     lock_guard lock( mutex_ );
-    ASSERT( factories_.find( builder ) == factories_.end() );
+    ATLAS_ASSERT( factories_.find( builder ) == factories_.end(), "Cannot find builder in factory" );
     factories_[builder] = factory;
 #ifdef DEBUG_FACTORY_REGISTRATION
     std::cout << "Registered " << builder << " in " << factory_ << std::endl;

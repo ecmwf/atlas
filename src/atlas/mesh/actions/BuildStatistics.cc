@@ -30,7 +30,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/parallel/Checksum.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
@@ -233,7 +233,9 @@ void build_statistics( Mesh& mesh ) {
 // C wrapper interfaces to C++ routines
 
 void atlas__build_statistics( Mesh::Implementation* mesh ) {
-    ATLAS_ERROR_HANDLING( Mesh m( mesh ); build_statistics( m ); );
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    Mesh m( mesh );
+    build_statistics( m );
 }
 
 // ------------------------------------------------------------------

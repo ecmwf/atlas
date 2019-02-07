@@ -22,10 +22,11 @@
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array/helpers/ArrayInitializer.h"
 #include "atlas/array_fwd.h"
+#include "atlas/runtime/Log.h"
+
 #if ATLAS_HAVE_ACC
 #include "atlas_acc_support/atlas_acc_map_data.h"
 #endif
-#include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------
 
@@ -85,14 +86,14 @@ public:
             default: {
                 std::stringstream err;
                 err << "shape not recognized";
-                throw eckit::BadParameter( err.str(), Here() );
+                throw_Exception( err.str(), Here() );
             }
         }
     }
 
     void construct( const ArrayShape& shape, const ArrayLayout& layout ) {
-        ASSERT( shape.size() > 0 );
-        ASSERT( shape.size() == layout.size() );
+        ATLAS_ASSERT( shape.size() > 0 );
+        ATLAS_ASSERT( shape.size() == layout.size() );
         switch ( shape.size() ) {
             case 1:
                 return construct( shape[0] );
@@ -138,11 +139,11 @@ public:
                     err << "shape not recognized";
                 else {
                     err << "Layout < ";
-                    for ( idx_t j = 0; j < layout.size(); ++j )
+                    for ( size_t j = 0; j < layout.size(); ++j )
                         err << layout[j] << " ";
                     err << "> not implemented in Atlas.";
                 }
-                throw eckit::BadParameter( err.str(), Here() );
+                throw_Exception( err.str(), Here() );
             }
         }
     }
@@ -162,7 +163,7 @@ public:
             std::stringstream err;
             err << "Trying to resize an array of Rank " << array_.rank() << " by dimensions with Rank "
                 << sizeof...( c ) << std::endl;
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
 
         if ( array_.valid() ) array_.syncHostDevice();
@@ -260,7 +261,7 @@ Array* Array::wrap( Value* data, const ArraySpec& spec ) {
         default: {
             std::stringstream err;
             err << "shape not recognized";
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
     }
 }
@@ -284,7 +285,7 @@ Array* Array::create( DataType datatype, const ArrayShape& shape ) {
         default: {
             std::stringstream err;
             err << "data kind " << datatype.kind() << " not recognised.";
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
     }
 }
@@ -305,7 +306,7 @@ Array* Array::create( DataType datatype, const ArrayShape& shape, const ArrayLay
         default: {
             std::stringstream err;
             err << "data kind " << datatype.kind() << " not recognised.";
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
     }
 }
@@ -344,12 +345,10 @@ void ArrayT<Value>::insert( idx_t idx1, idx_t size1 ) {
     // if( hostNeedsUpdate() ) {
     //    cloneFromDevice();
     //}
-    if ( not hasDefaultLayout() ) NOTIMP;
+    if ( not hasDefaultLayout() ) ATLAS_NOTIMPLEMENTED;
 
     ArrayShape nshape = shape();
-    if ( idx1 > nshape[0] ) {
-        throw eckit::BadParameter( "can not insert into an array at a position beyond its size", Here() );
-    }
+    if ( idx1 > nshape[0] ) { throw_Exception( "can not insert into an array at a position beyond its size", Here() ); }
     nshape[0] += size1;
 
     Array* resized = Array::create<Value>( nshape );
@@ -418,7 +417,7 @@ void ArrayT<Value>::dump( std::ostream& out ) const {
             make_host_view<Value, 9, Intent::ReadOnly>( *this ).dump( out );
             break;
         default:
-            NOTIMP;
+            ATLAS_NOTIMPLEMENTED;
     }
 }
 
@@ -447,7 +446,7 @@ void ArrayT<Value>::resize( const ArrayShape& shape ) {
         default: {
             std::stringstream err;
             err << "shape not recognized";
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
     }
 }
@@ -494,7 +493,7 @@ ArrayT<Value>::ArrayT( const ArrayShape& shape, const ArrayLayout& layout ) {
 
 template <typename Value>
 ArrayT<Value>::ArrayT( const ArraySpec& spec ) {
-    if ( not spec.contiguous() ) NOTIMP;
+    if ( not spec.contiguous() ) ATLAS_NOTIMPLEMENTED;
     ArrayT_impl<Value>( *this ).construct( spec.shape(), spec.layout() );
 }
 

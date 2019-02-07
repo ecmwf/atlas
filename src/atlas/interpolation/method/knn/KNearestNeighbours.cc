@@ -21,6 +21,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 
@@ -37,11 +38,11 @@ MethodBuilder<KNearestNeighbours> __builder( "k-nearest-neighbours" );
 KNearestNeighbours::KNearestNeighbours( const Method::Config& config ) : KNearestNeighboursBase( config ) {
     k_ = 1;
     config.get( "k-nearest-neighbours", k_ );
-    ASSERT( k_ );
+    ATLAS_ASSERT( k_ );
 }
 
 void KNearestNeighbours::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) { NOTIMP; }
+    if ( mpi::comm().size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
     auto functionspace = []( const Grid& grid ) -> FunctionSpace {
         Mesh mesh;
         if ( StructuredGrid( grid ) ) {
@@ -61,15 +62,15 @@ void KNearestNeighbours::setup( const FunctionSpace& source, const FunctionSpace
     target_                        = target;
     functionspace::NodeColumns src = source;
     functionspace::NodeColumns tgt = target;
-    ASSERT( src );
-    ASSERT( tgt );
+    ATLAS_ASSERT( src );
+    ATLAS_ASSERT( tgt );
 
     Mesh meshSource = src.mesh();
     Mesh meshTarget = tgt.mesh();
 
     // build point-search tree
     buildPointSearchTree( meshSource );
-    ASSERT( pTree_ );
+    ATLAS_ASSERT( pTree_ != nullptr );
 
     // generate 3D point coordinates
     mesh::actions::BuildXYZField( "xyz" )( meshTarget );
@@ -99,7 +100,7 @@ void KNearestNeighbours::setup( const FunctionSpace& source, const FunctionSpace
             // calculate weights (individual and total, to normalise) using distance
             // squared
             const size_t npts = nn.size();
-            ASSERT( npts );
+            ATLAS_ASSERT( npts );
             weights.resize( npts, 0 );
 
             double sum = 0;
@@ -110,12 +111,12 @@ void KNearestNeighbours::setup( const FunctionSpace& source, const FunctionSpace
                 weights[j] = 1. / ( 1. + d2 );
                 sum += weights[j];
             }
-            ASSERT( sum > 0 );
+            ATLAS_ASSERT( sum > 0 );
 
             // insert weights into the matrix
             for ( size_t j = 0; j < npts; ++j ) {
                 size_t jp = nn[j].payload();
-                ASSERT( jp < inp_npts );
+                ATLAS_ASSERT( jp < inp_npts );
                 weights_triplets.push_back( Triplet( ip, jp, weights[j] / sum ) );
             }
         }

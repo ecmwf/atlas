@@ -19,7 +19,6 @@
 #include "atlas/array/ArrayShape.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
-#include "atlas/runtime/Exception.h"
 #include "atlas/util/ObjectHandle.h"
 
 namespace eckit {

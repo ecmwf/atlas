@@ -14,18 +14,17 @@
 #include <sstream>
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/array/DataType.h"
 #include "atlas/field/detail/FieldImpl.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace field {
 
 FieldImpl* FieldCreatorArraySpec::createField( const eckit::Parametrisation& params ) const {
     std::vector<long> shape;
-    if ( !params.get( "shape", shape ) )
-        throw eckit::Exception( "Could not find parameter 'shape' in Parametrisation" );
+    if ( !params.get( "shape", shape ) ) throw_Exception( "Could not find parameter 'shape' in Parametrisation" );
 
     std::vector<idx_t> s( shape.size() );
 
@@ -45,7 +44,7 @@ FieldImpl* FieldCreatorArraySpec::createField( const eckit::Parametrisation& par
         if ( !array::DataType::kind_valid( kind ) ) {
             std::stringstream msg;
             msg << "Could not create field. kind parameter unrecognized";
-            throw eckit::Exception( msg.str() );
+            throw_Exception( msg.str() );
         }
         datatype = array::DataType( kind );
     }

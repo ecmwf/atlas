@@ -11,7 +11,6 @@
 #include <map>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 
@@ -20,14 +19,14 @@
 #include "atlas/numerics/Nabla.h"
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/numerics/fvm/Nabla.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
 
 namespace {
 
-static eckit::Mutex* local_mutex                                = 0;
-static std::map<std::string, atlas::numerics::NablaFactory*>* m = 0;
+static eckit::Mutex* local_mutex                                = nullptr;
+static std::map<std::string, atlas::numerics::NablaFactory*>* m = nullptr;
 static pthread_once_t once                                      = PTHREAD_ONCE_INIT;
 
 static void init() {
@@ -39,7 +38,7 @@ static void init() {
 namespace atlas {
 namespace numerics {
 
-NablaImpl::NablaImpl( const Method& method, const eckit::Parametrisation& ) {}
+NablaImpl::NablaImpl( const Method&, const eckit::Parametrisation& ) {}
 
 NablaImpl::~NablaImpl() {}
 
@@ -81,7 +80,7 @@ NablaFactory::NablaFactory( const std::string& name ) : name_( name ) {
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    ASSERT( m->find( name ) == m->end() );
+    ATLAS_ASSERT( m->find( name ) == m->end() );
     ( *m )[name] = this;
 }
 
@@ -130,7 +129,7 @@ const NablaImpl* NablaFactory::build( const Method& method, const eckit::Paramet
         Log::error() << "NablaFactories are:" << '\n';
         for ( j = m->begin(); j != m->end(); ++j )
             Log::error() << "   " << ( *j ).first << '\n';
-        throw eckit::SeriousBug( std::string( "No NablaFactory called " ) + method.name() );
+        throw_Exception( std::string( "No NablaFactory called " ) + method.name() );
     }
 
     return ( *j ).second->make( method, p );
@@ -139,40 +138,56 @@ const NablaImpl* NablaFactory::build( const Method& method, const eckit::Paramet
 extern "C" {
 
 void atlas__Nabla__delete( Nabla::Implementation* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); delete This; );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_numerics_Nabla" );
+    delete This;
 }
 
-const Nabla::Implementation* atlas__Nabla__create( const Method* method, const eckit::Parametrisation* params ) {
+const Nabla::Implementation* atlas__Nabla__create( const Method* method, const eckit::Parametrisation* config ) {
+    ATLAS_ASSERT( method != nullptr, "Cannot access uninitialisd atlas_numerics_Method" );
+    ATLAS_ASSERT( config != nullptr, "Cannot access uninitialisd atlas_Config" );
     const Nabla::Implementation* nabla( nullptr );
-    ATLAS_ERROR_HANDLING( ASSERT( method ); ASSERT( params ); {
-        Nabla n( *method, *params );
+    {
+        Nabla n( *method, *config );
         nabla = n.get();
         nabla->attach();
-    } nabla->detach(); );
+    }
+    nabla->detach();
     return nabla;
 }
 
 void atlas__Nabla__gradient( const Nabla::Implementation* This, const field::FieldImpl* scalar,
                              field::FieldImpl* grad ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( scalar ); ASSERT( grad ); Field fgrad( grad );
-                          This->gradient( scalar, fgrad ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_numerics_Nabla" );
+    ATLAS_ASSERT( scalar != nullptr, "Cannot access uninitialisd atlas_Field" );
+    ATLAS_ASSERT( grad != nullptr, "Cannot access uninitialisd atlas_Field" );
+    Field fgrad( grad );
+    This->gradient( scalar, fgrad );
 }
 
 void atlas__Nabla__divergence( const Nabla::Implementation* This, const field::FieldImpl* vector,
                                field::FieldImpl* div ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( vector ); ASSERT( div ); Field fdiv( div );
-                          This->divergence( vector, fdiv ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_numerics_Nabla" );
+    ATLAS_ASSERT( vector != nullptr, "Cannot access uninitialisd atlas_Field" );
+    ATLAS_ASSERT( div != nullptr, "Cannot access uninitialisd atlas_Field" );
+    Field fdiv( div );
+    This->divergence( vector, fdiv );
 }
 
 void atlas__Nabla__curl( const Nabla::Implementation* This, const field::FieldImpl* vector, field::FieldImpl* curl ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( vector ); ASSERT( curl ); Field fcurl( curl );
-                          This->curl( vector, fcurl ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_numerics_Nabla" );
+    ATLAS_ASSERT( vector != nullptr, "Cannot access uninitialisd atlas_Field" );
+    ATLAS_ASSERT( curl != nullptr, "Cannot access uninitialisd atlas_Field" );
+    Field fcurl( curl );
+    This->curl( vector, fcurl );
 }
 
 void atlas__Nabla__laplacian( const Nabla::Implementation* This, const field::FieldImpl* scalar,
                               field::FieldImpl* laplacian ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( scalar ); ASSERT( laplacian ); Field flaplacian( laplacian );
-                          This->laplacian( scalar, flaplacian ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_numerics_Nabla" );
+    ATLAS_ASSERT( scalar != nullptr, "Cannot access uninitialisd atlas_Field" );
+    ATLAS_ASSERT( laplacian != nullptr, "Cannot access uninitialisd atlas_Field" );
+    Field flaplacian( laplacian );
+    This->laplacian( scalar, flaplacian );
 }
 }
 

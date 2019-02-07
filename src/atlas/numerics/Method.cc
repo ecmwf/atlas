@@ -8,11 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
-
-#include "atlas/library/config.h"
 #include "atlas/numerics/Method.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace numerics {
@@ -22,12 +20,14 @@ namespace numerics {
 // C wrapper interfaces to C++ routines
 extern "C" {
 void atlas__Method__delete( Method* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); delete This; This = 0; );
+    ATLAS_ASSERT( This != nullptr );
+    delete This;
+    This = nullptr;
 }
 
 const char* atlas__Method__name( Method* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->name().c_str(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    return This->name().c_str();
 }
 }
 

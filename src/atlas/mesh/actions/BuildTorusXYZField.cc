@@ -10,8 +10,6 @@
 
 #include <cmath>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/array/ArrayView.h"
 #include "atlas/domain/detail/GlobalDomain.h"
 #include "atlas/domain/detail/RectangularDomain.h"
@@ -19,6 +17,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildTorusXYZField.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace mesh {
@@ -38,7 +37,7 @@ Field& BuildTorusXYZField::operator()( mesh::Nodes& nodes, const Domain& dom, do
     // respectively.
 
     auto domain = RectangularDomain( dom );
-    ASSERT( domain );
+    ATLAS_ASSERT( domain );
     const double xmin = domain.xmin();
     const double xmax = domain.xmax();
     const double ymin = domain.ymin();

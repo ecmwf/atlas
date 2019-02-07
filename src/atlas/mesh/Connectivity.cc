@@ -17,7 +17,7 @@
 #include "atlas/array/Vector.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/Connectivity.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 
 #if ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
@@ -152,7 +152,7 @@ void IrregularConnectivityImpl::resize( idx_t old_size, idx_t new_size, bool ini
 
 //------------------------------------------------------------------------------------------------------
 void IrregularConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[], bool fortran_array ) {
-    if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns_, "Connectivity must be owned to be resized directly" );
     idx_t old_size = values_.size();
 
     if ( rows_ == 0 ) old_size = 0;
@@ -161,8 +161,8 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[
     idx_t new_rows = rows_ + rows;
 
     //TODO what to do here
-    //    ASSERT( displs_] != nullptr );
-    //    ASSERT( data_[_counts_] != nullptr );
+    //    ATLAS_ASSERT( displs_] != nullptr );
+    //    ATLAS_ASSERT( data_[_counts_] != nullptr );
     displs_.resize( new_rows + 1 );
     counts_.resize( new_rows + 1 );
 
@@ -182,7 +182,7 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[
 //------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivityImpl::add( const BlockConnectivityImpl& block ) {
-    if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns_, "Connectivity must be owned to be resized directly" );
     bool fortran_array  = FORTRAN_BASE;
     const idx_t rows    = block.rows();
     const idx_t cols    = block.cols();
@@ -194,7 +194,7 @@ void IrregularConnectivityImpl::add( const BlockConnectivityImpl& block ) {
 //------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
-    if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns_, "Connectivity must be owned to be resized directly" );
     idx_t old_size = values_.size();
     idx_t new_size = old_size;
     for ( idx_t j = 0; j < rows; ++j )
@@ -218,7 +218,7 @@ void IrregularConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
 //------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivityImpl::add( idx_t rows, idx_t cols ) {
-    if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns_, "Connectivity must be owned to be resized directly" );
     idx_t old_size = values_.size();
 
     if ( rows_ == 0 ) old_size = 0;
@@ -227,8 +227,8 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols ) {
     idx_t new_rows = rows_ + rows;
 
     //TODO
-    //    ASSERT( data_[_displs_] != nullptr );
-    //    ASSERT( data_[_counts_] != nullptr );
+    //    ATLAS_ASSERT( data_[_displs_] != nullptr );
+    //    ATLAS_ASSERT( data_[_counts_] != nullptr );
     displs_.resize( new_rows + 1 );
     counts_.resize( new_rows + 1 );
 
@@ -251,7 +251,7 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols ) {
 
 void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols, const idx_t values[],
                                         bool fortran_array ) {
-    if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns_, "Connectivity must be owned to be resized directly" );
     idx_t position_displs = displs_[position];
     displs_.insert( position, rows );
     counts_.insert( position, rows );
@@ -293,7 +293,7 @@ void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols )
 //------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t cols[] ) {
-    if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns_, "Connectivity must be owned to be resized directly" );
     idx_t position_displs = displs_[position];
 
     if ( rows_ == 0 ) {
@@ -396,7 +396,7 @@ void MultiBlockConnectivityImpl::clear() {
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[], bool fortran_array ) {
-    if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns(), "MultiBlockConnectivity must be owned to be resized directly" );
     idx_t old_rows = this->rows();
     IrregularConnectivityImpl::add( rows, cols, values, fortran_array );
 
@@ -413,14 +413,14 @@ void MultiBlockConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::add( const BlockConnectivityImpl& block ) {
-    if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns(), "MultiBlockConnectivity must be owned to be resized directly" );
     IrregularConnectivityImpl::add( block );
 }
 
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::add( idx_t rows, idx_t cols ) {
-    if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns(), "MultiBlockConnectivity must be owned to be resized directly" );
     idx_t old_rows = this->rows();
     IrregularConnectivityImpl::add( rows, cols );
 
@@ -437,7 +437,7 @@ void MultiBlockConnectivityImpl::add( idx_t rows, idx_t cols ) {
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
-    if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns(), "MultiBlockConnectivity must be owned to be resized directly" );
     idx_t min      = std::numeric_limits<idx_t>::max();
     idx_t max      = 0;
     idx_t old_rows = this->rows();
@@ -446,10 +446,9 @@ void MultiBlockConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
         min = std::min( min, cols[j] );
         max = std::min( max, cols[j] );
     }
-    if ( min != max )
-        throw eckit::AssertionFailed(
-            "MultiBlockConnectivity::add(rows,cols[]): "
-            "all elements of cols[] must be identical" );
+    ATLAS_ASSERT( min == max,
+                  "MultiBlockConnectivity::add(rows,cols[]): "
+                  "all elements of cols[] must be identical" );
     IrregularConnectivityImpl::add( rows, cols );
 
     block_displs_.insert( block_displs_.size(), 1 );
@@ -465,16 +464,16 @@ void MultiBlockConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
 
 void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols, const idx_t values[],
                                          bool fortran_array ) {
-    if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns(), "MultiBlockConnectivity must be owned to be resized directly" );
 
-    ASSERT( blocks_ );
+    ATLAS_ASSERT( blocks_ );
 
     long blk_idx = blocks_;
     do {
         blk_idx--;
     } while ( blk_idx >= 0l && block_displs_[blk_idx] >= position && cols != block_cols_[blk_idx] );
-    ASSERT( blk_idx >= 0l );
-    ASSERT( cols == block( blk_idx ).cols() );
+    ATLAS_ASSERT( blk_idx >= 0l );
+    ATLAS_ASSERT( cols == block( blk_idx ).cols() );
 
     for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk )
         block_displs_[jblk + 1] += rows;
@@ -486,14 +485,14 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols,
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols ) {
-    if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns(), "MultiBlockConnectivity must be owned to be resized directly" );
 
     long blk_idx = blocks_;
     do {
         blk_idx--;
     } while ( blk_idx >= 0l && block_displs_[blk_idx] >= position && cols != block_cols_[blk_idx] );
 
-    ASSERT( blk_idx >= 0l );
+    ATLAS_ASSERT( blk_idx >= 0l );
 
     IrregularConnectivityImpl::insert( position, rows, cols );
 
@@ -505,24 +504,24 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols 
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t cols[] ) {
-    if ( !owns() ) throw eckit::AssertionFailed( "MultiBlockConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns(), "MultiBlockConnectivity must be owned to be resized directly" );
+
     idx_t min = std::numeric_limits<idx_t>::max();
     idx_t max = 0;
     for ( idx_t j = 0; j < rows; ++j ) {
         min = std::min( min, cols[j] );
         max = std::min( max, cols[j] );
     }
-    if ( min != max )
-        throw eckit::AssertionFailed(
-            "MultiBlockConnectivity::add(rows,cols[]): "
-            "all elements of cls[] must be identical" );
+    ATLAS_ASSERT( min == max,
+                  "MultiBlockConnectivity::add(rows,cols[]): "
+                  "all elements of cls[] must be identical" );
 
     long blk_idx = blocks_;
     do {
         blk_idx--;
     } while ( blk_idx >= 0l && block_displs_[blk_idx] >= position && max != block_cols_[blk_idx] );
 
-    ASSERT( blk_idx >= 0l );
+    ATLAS_ASSERT( blk_idx >= 0l );
 
     IrregularConnectivityImpl::insert( position, rows, cols );
 
@@ -580,7 +579,7 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, const std:
             values_[index( i, j )] = *( v++ ) + add_base;
         }
     }
-    ASSERT( v == values.end() );
+    ATLAS_ASSERT( v == values.end() );
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -604,7 +603,7 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t valu
 
 //------------------------------------------------------------------------------------------------------
 
-BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t values[], bool dummy ) :
+BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t values[], bool /*dummy*/ ) :
     owns_( false ),
     values_( values, rows * cols ),
     rows_( rows ),
@@ -628,11 +627,12 @@ void BlockConnectivityImpl::rebuild( idx_t rows, idx_t cols, idx_t values[] ) {
 //------------------------------------------------------------------------------------------------------
 
 void BlockConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[], bool fortran_array ) {
-    if ( !owns_ ) throw eckit::AssertionFailed( "BlockConnectivity must be owned to be resized directly" );
-    if ( cols_ != 0 && cols_ != cols )
-        throw eckit::AssertionFailed(
-            "Cannot add values with different cols than "
-            "already existing in BlockConnectivity" );
+    ATLAS_ASSERT( owns(), "BlockConnectivity must be owned to be resized directly" );
+    if ( cols_ != 0 && cols_ != cols ) {
+        ATLAS_ASSERT( false,
+                      "Cannot add values with different cols than "
+                      "already existing in BlockConnectivity" );
+    }
 
     values_.resize( ( rows_ + rows ) * cols );
     const idx_t oldrows = rows_;
@@ -684,11 +684,11 @@ private:
 extern "C" {
 Connectivity* atlas__Connectivity__create() {
     Connectivity* connectivity = nullptr;
-    ATLAS_ERROR_HANDLING( connectivity = new Connectivity(); );
+    connectivity               = new Connectivity();
     return connectivity;
 }
 void atlas__Connectivity__delete( Connectivity* This ) {
-    ATLAS_ERROR_HANDLING( delete This );
+    delete This;
 }
 
 void atlas__connectivity__register_ctxt( Connectivity* This, Connectivity::ctxt_t ctxt ) {
@@ -748,7 +748,7 @@ idx_t atlas__Connectivity__missing_value( const Connectivity* This ) {
 
 MultiBlockConnectivity* atlas__MultiBlockConnectivity__create() {
     MultiBlockConnectivity* connectivity = nullptr;
-    ATLAS_ERROR_HANDLING( connectivity = new MultiBlockConnectivity(); );
+    connectivity                         = new MultiBlockConnectivity();
     return connectivity;
 }
 
@@ -757,45 +757,46 @@ idx_t atlas__MultiBlockConnectivity__blocks( const MultiBlockConnectivity* This 
 }
 
 BlockConnectivityImpl* atlas__MultiBlockConnectivity__block( MultiBlockConnectivity* This, idx_t block_idx ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ) );
+    ATLAS_ASSERT( This != nullptr );
     BlockConnectivityImpl* block = &This->block( block_idx );
-    ASSERT( block != nullptr );
+    ATLAS_ASSERT( block != nullptr );
     return block;
 }
 
 void atlas__BlockConnectivity__delete( BlockConnectivityImpl* This ) {
-    ATLAS_ERROR_HANDLING( delete This );
+    delete This;
 }
 
 idx_t atlas__BlockConnectivity__rows( const BlockConnectivityImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ) );
+    ATLAS_ASSERT( This != nullptr );
     return This->rows();
 }
 
 idx_t atlas__BlockConnectivity__cols( const BlockConnectivityImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ) );
+    ATLAS_ASSERT( This != nullptr );
     return This->cols();
 }
 
 idx_t atlas__BlockConnectivity__missing_value( const BlockConnectivityImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ) );
+    ATLAS_ASSERT( This != nullptr );
     return This->missing_value();
 }
 
 void atlas__BlockConnectivity__data( BlockConnectivityImpl* This, idx_t*& data, idx_t& rows, idx_t& cols ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ) );
+    ATLAS_ASSERT( This != nullptr );
     data = This->data();
     rows = This->rows();
     cols = This->cols();
 }
 
 const char* atlas__Connectivity__name( Connectivity* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return ConnectivityPrivateAccess( *This ).name(); );
-    return nullptr;
+    ATLAS_ASSERT( This );
+    return ConnectivityPrivateAccess( *This ).name();
 }
 
 void atlas__Connectivity__rename( Connectivity* This, const char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); This->rename( std::string( name ) ); );
+    ATLAS_ASSERT( This );
+    This->rename( std::string( name ) );
 }
 }
 

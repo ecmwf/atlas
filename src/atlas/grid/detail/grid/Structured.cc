@@ -15,7 +15,6 @@
 #include <limits>
 #include <numeric>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
 
@@ -25,7 +24,7 @@
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Point.h"
@@ -74,7 +73,7 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
         xmax_ = xspace_.xmax();
     }
 
-    ASSERT( static_cast<idx_t>( nx_.size() ) == ny );
+    ATLAS_ASSERT( static_cast<idx_t>( nx_.size() ) == ny );
 
     // Further setup
     nxmin_ = nxmax_ = nx_.front();
@@ -147,7 +146,7 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
 
     std::string xspace_type;
     config_xspace.get( "type", xspace_type );
-    ASSERT( xspace_type == "linear" );
+    ATLAS_ASSERT( xspace_type == "linear" );
 
     std::vector<idx_t> v_N;
     std::vector<double> v_start;
@@ -162,10 +161,10 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
         std::max( v_N.size(), std::max( v_start.size(), std::max( v_end.size(), std::max( v_length.size(), 1ul ) ) ) );
     reserve( ny );
 
-    if ( not v_N.empty() ) ASSERT( static_cast<idx_t>( v_N.size() ) == ny );
-    if ( not v_start.empty() ) ASSERT( static_cast<idx_t>( v_start.size() ) == ny );
-    if ( not v_end.empty() ) ASSERT( static_cast<idx_t>( v_end.size() ) == ny );
-    if ( not v_length.empty() ) ASSERT( static_cast<idx_t>( v_length.size() ) == ny );
+    if ( not v_N.empty() ) ATLAS_ASSERT( static_cast<idx_t>( v_N.size() ) == ny );
+    if ( not v_start.empty() ) ATLAS_ASSERT( static_cast<idx_t>( v_start.size() ) == ny );
+    if ( not v_end.empty() ) ATLAS_ASSERT( static_cast<idx_t>( v_end.size() ) == ny );
+    if ( not v_length.empty() ) ATLAS_ASSERT( static_cast<idx_t>( v_length.size() ) == ny );
 
     nxmin_ = std::numeric_limits<idx_t>::max();
     nxmax_ = 0;
@@ -194,7 +193,7 @@ Structured::XSpace::Implementation::Implementation( const std::vector<Config>& c
     std::string xspace_type;
     for ( idx_t j = 0; j < ny(); ++j ) {
         config_list[j].get( "type", xspace_type );
-        ASSERT( xspace_type == "linear" );
+        ATLAS_ASSERT( xspace_type == "linear" );
         spacing::LinearSpacing::Params xspace( config_list[j] );
         xmin_.push_back( xspace.start );
         xmax_.push_back( xspace.end );
@@ -268,9 +267,9 @@ Grid::Spec Structured::XSpace::Implementation::spec() const {
     idx_t nx    = nx_[0];
     double dx   = dx_[0];
 
-    ASSERT( static_cast<idx_t>( xmin_.size() ) == ny_ );
-    ASSERT( static_cast<idx_t>( xmax_.size() ) == ny_ );
-    ASSERT( static_cast<idx_t>( nx_.size() ) == ny_ );
+    ATLAS_ASSERT( static_cast<idx_t>( xmin_.size() ) == ny_ );
+    ATLAS_ASSERT( static_cast<idx_t>( xmax_.size() ) == ny_ );
+    ATLAS_ASSERT( static_cast<idx_t>( nx_.size() ) == ny_ );
 
     for ( idx_t j = 1; j < ny_; ++j ) {
         same_xmin = same_xmin && ( eckit::types::is_approximately_equal( xmin_[j], xmin ) );
@@ -319,7 +318,7 @@ private:
 void Structured::crop( const Domain& dom ) {
     if ( dom.global() ) return;
 
-    ASSERT( dom.units() == projection().units() );
+    ATLAS_ASSERT( dom.units() == projection().units() );
 
     auto zonal_domain = ZonalBandDomain( dom );
     auto rect_domain  = RectangularDomain( dom );
@@ -342,7 +341,7 @@ void Structured::crop( const Domain& dom ) {
         std::vector<double> cropped_xmax( xmax_.begin() + jmin, xmax_.begin() + jmin + cropped_ny );
         std::vector<double> cropped_dx( dx_.begin() + jmin, dx_.begin() + jmin + cropped_ny );
         std::vector<idx_t> cropped_nx( nx_.begin() + jmin, nx_.begin() + jmin + cropped_ny );
-        ASSERT( idx_t( cropped_nx.size() ) == cropped_ny );
+        ATLAS_ASSERT( idx_t( cropped_nx.size() ) == cropped_ny );
 
         idx_t cropped_nxmin, cropped_nxmax;
         cropped_nxmin = cropped_nxmax = cropped_nx.front();
@@ -382,7 +381,7 @@ void Structured::crop( const Domain& dom ) {
                 jmax = std::max( j, jmax );
             }
         }
-        ASSERT( jmax >= jmin );
+        ATLAS_ASSERT( jmax >= jmin );
 
         idx_t cropped_ny = jmax - jmin + 1;
         std::vector<double> cropped_y( y_.begin() + jmin, y_.begin() + jmin + cropped_ny );
@@ -438,7 +437,7 @@ void Structured::crop( const Domain& dom ) {
     else {
         std::stringstream errmsg;
         errmsg << "Cannot crop the grid with domain " << dom;
-        eckit::BadParameter( errmsg.str(), Here() );
+        throw_Exception( errmsg.str(), Here() );
     }
 }
 
@@ -531,7 +530,7 @@ public:
     }
 
     virtual const Implementation* create( const std::string& /* name */, const Config& ) const {
-        throw eckit::NotImplemented( "Cannot create structured grid from name", Here() );
+        throw_NotImplemented( "Cannot create structured grid from name", Here() );
     }
 
     virtual const Implementation* create( const Config& config ) const {
@@ -546,7 +545,7 @@ public:
         if ( config.get( "domain", config_domain ) ) { domain = Domain( config_domain ); }
 
         Config config_yspace;
-        if ( not config.get( "yspace", config_yspace ) ) throw eckit::BadParameter( "yspace missing in configuration" );
+        if ( not config.get( "yspace", config_yspace ) ) throw_Exception( "yspace missing in configuration", Here() );
         yspace = Spacing( config_yspace );
 
         XSpace xspace;
@@ -559,7 +558,7 @@ public:
             xspace = XSpace( config_xspace );
         }
         else {
-            throw eckit::BadParameter( "xspace missing in configuration" );
+            throw_Exception( "xspace missing in configuration", Here() );
         }
 
         return new StructuredGrid::grid_t( xspace, yspace, projection, domain );
@@ -575,99 +574,106 @@ public:
 extern "C" {
 
 idx_t atlas__grid__Structured__ny( Structured* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->ny(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
+    return This->ny();
 }
 
 idx_t atlas__grid__Structured__nx( Structured* This, idx_t jlat ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nx( jlat ); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
+    return This->nx( jlat );
 }
 
 void atlas__grid__Structured__nx_array( Structured* This, const idx_t*& nx_array, idx_t& size ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); nx_array = This->nx().data(); size = idx_t( This->nx().size() ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
+    nx_array = This->nx().data();
+    size     = idx_t( This->nx().size() );
 }
 
 idx_t atlas__grid__Structured__nxmax( Structured* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nxmax(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
+    return This->nxmax();
 }
 
 idx_t atlas__grid__Structured__nxmin( Structured* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nxmin(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
+    return This->nxmin();
 }
 
 idx_t atlas__grid__Structured__size( Structured* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->size(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
+    return This->size();
 }
 
 double atlas__grid__Structured__y( Structured* This, idx_t j ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->y( j ); );
-    return 0.;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
+    return This->y( j );
 }
 
 double atlas__grid__Structured__x( Structured* This, idx_t i, idx_t j ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->x( i, j ); );
-    return 0.;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
+    return This->x( i, j );
 }
 
 void atlas__grid__Structured__xy( Structured* This, idx_t i, idx_t j, double crd[] ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); This->xy( i, j, crd ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
+    This->xy( i, j, crd );
 }
 
 void atlas__grid__Structured__lonlat( Structured* This, idx_t i, idx_t j, double crd[] ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); This->lonlat( i, j, crd ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
+    This->lonlat( i, j, crd );
 }
 
 void atlas__grid__Structured__y_array( Structured* This, const double*& y_array, idx_t& size ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); y_array = This->y().data(); size = idx_t( This->y().size() ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
+    y_array = This->y().data();
+    size    = idx_t( This->y().size() );
 }
 
 int atlas__grid__Structured__reduced( Structured* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->reduced(); );
-    return 1;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
+    return This->reduced();
 }
 
 const Structured* atlas__grid__Structured( char* identifier ) {
-    ATLAS_ERROR_HANDLING( ASSERT( identifier ); const Structured* grid = dynamic_cast<const Structured*>(
-                                                    Grid::create( std::string( identifier ) ) );
-                          ASSERT( grid ); return grid; );
-    return nullptr;
+    const Structured* grid = dynamic_cast<const Structured*>( Grid::create( std::string( identifier ) ) );
+    ATLAS_ASSERT( grid != nullptr );
+    return grid;
 }
 
 const Structured* atlas__grid__Structured__config( util::Config* conf ) {
-    ATLAS_ERROR_HANDLING( ASSERT( conf );
-                          const Structured* grid = dynamic_cast<const Structured*>( Grid::create( *conf ) );
-                          ASSERT( grid ); return grid; );
-    return nullptr;
+    ATLAS_ASSERT( conf != nullptr );
+    const Structured* grid = dynamic_cast<const Structured*>( Grid::create( *conf ) );
+    ATLAS_ASSERT( grid != nullptr );
+    return grid;
 }
 
 void atlas__grid__Structured__delete( Structured* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
     delete This;
 }
 
 Structured* atlas__grid__regular__RegularGaussian( long N ) {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 Structured* atlas__grid__regular__RegularLonLat( long nlon, long nlat ) {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 Structured* atlas__grid__regular__ShiftedLonLat( long nlon, long nlat ) {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 Structured* atlas__grid__regular__ShiftedLon( long nlon, long nlat ) {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 Structured* atlas__grid__regular__ShiftedLat( long nlon, long nlat ) {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 idx_t atlas__grid__Gaussian__N( Structured* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); GaussianGrid gaussian( This ); ASSERT( gaussian ); return gaussian.N(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
+    GaussianGrid gaussian( This );
+    ATLAS_ASSERT( gaussian, "This grid is not a Gaussian grid" );
+    return gaussian.N();
 }
 }
 
@@ -676,7 +682,7 @@ GridFactoryBuilder<Structured> __register_Structured( Structured::static_type() 
 }
 
 bool Structured::IteratorXYPredicated::next( PointXY& /*xy*/ ) {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 #if 0
     if ( j_ < grid_.ny() && i_ < grid_.nx( j_ ) ) {
         xy = grid_.xy( i_++, j_ );

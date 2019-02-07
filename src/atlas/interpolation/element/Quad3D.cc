@@ -11,8 +11,6 @@
 #include <cmath>
 #include <iostream>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/interpolation/element/Quad3D.h"
 #include "atlas/interpolation/element/Triag3D.h"
 #include "atlas/interpolation/method/Ray.h"
@@ -93,11 +91,6 @@ double Quad3D::area() const {
 
 void Quad3D::print( std::ostream& s ) const {
     s << "Quad3D[v00=" << v00 << ",v10=" << v10 << ",v11=" << v11 << ",v01=" << v01 << "]";
-}
-
-
-void Quad3D::throw_OutOfRange( unsigned long long index, unsigned long long max ) {
-    throw eckit::OutOfRange( index, max, Here() );
 }
 
 

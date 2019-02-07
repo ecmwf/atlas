@@ -12,8 +12,9 @@
 
 #include <string>
 
-#include "atlas/library/config.h"
 #include "eckit/log/CodeLocation.h"
+
+#include "atlas/library/config.h"
 
 namespace atlas {
 
@@ -22,19 +23,37 @@ namespace atlas {
 
 [[noreturn]] void throw_AssertionFailed( const std::string& );
 [[noreturn]] void throw_AssertionFailed( const std::string&, const eckit::CodeLocation& );
+[[noreturn]] void throw_AssertionFailed( const std::string&, const std::string&, const eckit::CodeLocation& );
 
 [[noreturn]] void throw_Exception( const std::string& );
 [[noreturn]] void throw_Exception( const std::string&, const eckit::CodeLocation& );
 
-[[noreturn]] void throw_SeriousBug( const std::string& );
-[[noreturn]] void throw_SeriousBug( const std::string&, const eckit::CodeLocation& );
+[[noreturn]] void throw_CantOpenFile( const std::string& );
+[[noreturn]] void throw_CantOpenFile( const std::string&, const eckit::CodeLocation& );
+
+[[noreturn]] void throw_OutOfRange( const std::string& varname, idx_t index, idx_t size, const eckit::CodeLocation& );
 
 namespace detail {
-inline void Assert( bool success, const char* msg, const char* file, int line, const char* func ) {
-    if ( not success ) { throw_AssertionFailed( msg, eckit::CodeLocation( file, line, func ) ); }
+inline void Assert( bool success, const char* code, const char* file, int line, const char* func ) {
+    if ( not success ) { throw_AssertionFailed( code, eckit::CodeLocation( file, line, func ) ); }
+}
+inline void Assert( bool success, const char* code, const char* msg, const char* file, int line, const char* func ) {
+    if ( not success ) { throw_AssertionFailed( code, msg, eckit::CodeLocation( file, line, func ) ); }
 }
 }  // namespace detail
-#define ATLAS_ASSERT( a ) ::atlas::detail::Assert( a, #a, __FILE__, __LINE__, __func__ )
+}  // namespace atlas
+
+#include "atlas/util/detail/BlackMagic.h"
+
 #define ATLAS_NOTIMPLEMENTED ::atlas::throw_NotImplemented( Here() )
 
-}  // namespace atlas
+#define ATLAS_ASSERT_NOMSG( code ) ::atlas::detail::Assert( ( code ), #code, __FILE__, __LINE__, __func__ )
+#define ATLAS_ASSERT_MSG( code, msg ) ::atlas::detail::Assert( ( code ), #code, msg, __FILE__, __LINE__, __func__ )
+
+#define ATLAS_ASSERT( ... ) __ATLAS_SPLICE( __ATLAS_ASSERT_, __ATLAS_NARG( __VA_ARGS__ ) )( __VA_ARGS__ )
+#define __ATLAS_ASSERT_1 ATLAS_ASSERT_NOMSG
+#define __ATLAS_ASSERT_2 ATLAS_ASSERT_MSG
+
+#define ATLAS_THROW_EXCEPTION( WHAT ) \
+    std::ostringstream ss;            \
+    ss << WHAT;

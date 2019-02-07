@@ -8,9 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
+#include "Options.h"
 
-#include "atlas/option/Options.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Earth.h"
 
 // ----------------------------------------------------------------------------
@@ -67,7 +67,7 @@ radius::radius( double _radius ) {
 radius::radius( const std::string& key ) {
     if ( key == "Earth" ) { set( "radius", util::Earth::radius() ); }
     else {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 }
 

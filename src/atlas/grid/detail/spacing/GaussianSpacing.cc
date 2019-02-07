@@ -9,11 +9,11 @@
  */
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/grid/detail/spacing/GaussianSpacing.h"
 #include "atlas/grid/detail/spacing/SpacingFactory.h"
 #include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
@@ -21,7 +21,7 @@ namespace spacing {
 
 GaussianSpacing::GaussianSpacing( long N ) {
     // perform checks
-    ASSERT( N % 2 == 0 );
+    ATLAS_ASSERT( N % 2 == 0 );
 
     // initialize latitudes during setup, to avoid repeating it.
     x_.resize( N );
@@ -34,10 +34,10 @@ GaussianSpacing::GaussianSpacing( long N ) {
 GaussianSpacing::GaussianSpacing( const eckit::Parametrisation& params ) {
     // retrieve N from params
     long N;
-    if ( !params.get( "N", N ) ) throw eckit::BadParameter( "N missing in Params", Here() );
+    if ( !params.get( "N", N ) ) throw_Exception( "N missing in Params", Here() );
 
     // perform checks
-    ASSERT( N % 2 == 0 );
+    ATLAS_ASSERT( N % 2 == 0 );
 
     // initialize latitudes during setup, to avoid repeating it.
     x_.resize( N );
@@ -55,7 +55,7 @@ GaussianSpacing::GaussianSpacing( const eckit::Parametrisation& params ) {
         start = interval[0];
         end   = interval[1];
     }
-    if ( start != 90. && end != -90. ) { NOTIMP; }
+    if ( start != 90. && end != -90. ) { ATLAS_NOTIMPLEMENTED; }
 
     min_ = std::min( start, end );
     max_ = std::max( start, end );

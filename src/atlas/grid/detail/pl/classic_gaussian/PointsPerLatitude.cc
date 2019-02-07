@@ -14,10 +14,10 @@
 #include "PointsPerLatitude.h"
 
 #include <memory>
-
-#include "eckit/exception/Exceptions.h"
+#include <sstream>
 
 #include "atlas/grid/detail/pl/classic_gaussian/N.h"
+#include "atlas/runtime/Exception.h"
 
 
 namespace atlas {
@@ -38,7 +38,7 @@ void points_per_latitude_npole_equator_impl( const size_t N, Int nlon[] ) {
         pl->assign( nlon, N );
     }
     else {
-        throw eckit::BadParameter( "gaussian::classic::PointsPerLatitude not available for N" + Nstr, Here() );
+        throw_Exception( "gaussian::classic::PointsPerLatitude not available for N" + Nstr, Here() );
     }
 }
 

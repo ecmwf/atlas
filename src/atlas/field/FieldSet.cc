@@ -8,12 +8,12 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
+#include <sstream>
 
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace field {
@@ -28,11 +28,11 @@ void FieldSetImpl::clear() {
 }
 
 Field FieldSetImpl::add( const Field& field ) {
-    if ( field.name().size() ) { index_[field.name()] = fields_.size(); }
+    if ( field.name().size() ) { index_[field.name()] = size(); }
     else {
         std::stringstream name;
-        name << name_ << "[" << fields_.size() << "]";
-        index_[name.str()] = fields_.size();
+        name << name_ << "[" << size() << "]";
+        index_[name.str()] = size();
     }
     fields_.push_back( field );
     return field;
@@ -46,7 +46,7 @@ Field& FieldSetImpl::field( const std::string& name ) const {
     if ( !has_field( name ) ) {
         const std::string msg( "FieldSet" + ( name_.length() ? " \"" + name_ + "\"" : "" ) + ": cannot find field \"" +
                                name + "\"" );
-        throw eckit::OutOfRange( msg, Here() );
+        throw_Exception( msg, Here() );
     }
     return const_cast<Field&>( fields_[index_.at( name )] );
 }
@@ -63,10 +63,6 @@ void FieldSetImpl::set_dirty( bool value ) const {
     }
 }
 
-void FieldSetImpl::throw_OutOfRange( idx_t index, idx_t max ) {
-    throw eckit::OutOfRange( index, max, Here() );
-}
-
 std::vector<std::string> FieldSetImpl::field_names() const {
     std::vector<std::string> ret;
 
@@ -81,45 +77,50 @@ std::vector<std::string> FieldSetImpl::field_names() const {
 extern "C" {
 
 FieldSetImpl* atlas__FieldSet__new( char* name ) {
-    ATLAS_ERROR_HANDLING( FieldSetImpl* fset = new FieldSetImpl( std::string( name ) ); fset->name() = name;
-                          return fset; );
-    return nullptr;
+    FieldSetImpl* fset = new FieldSetImpl( std::string( name ) );
+    fset->name()       = name;
+    return fset;
 }
 
 void atlas__FieldSet__delete( FieldSetImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); delete This; );
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    delete This;
 }
 
 void atlas__FieldSet__add_field( FieldSetImpl* This, FieldImpl* field ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); This->add( field ); );
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    ATLAS_ASSERT( field != nullptr, "Reason: Use of uninitialised atlas_Field" );
+    This->add( field );
 }
 
 int atlas__FieldSet__has_field( const FieldSetImpl* This, char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->has_field( std::string( name ) ); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    return This->has_field( std::string( name ) );
 }
 
 idx_t atlas__FieldSet__size( const FieldSetImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->size(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    return This->size();
 }
 
 FieldImpl* atlas__FieldSet__field_by_name( FieldSetImpl* This, char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->field( std::string( name ) ).get(); );
-    return nullptr;
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    return This->field( std::string( name ) ).get();
 }
 
 FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, idx_t idx ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->operator[]( idx ).get(); );
-    return nullptr;
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    return This->operator[]( idx ).get();
 }
 
 void atlas__FieldSet__set_dirty( FieldSetImpl* This, int value ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->set_dirty( value ); );
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    This->set_dirty( value );
 }
 
 void atlas__FieldSet__halo_exchange( FieldSetImpl* This, int on_device ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); return This->haloExchange( on_device ); );
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    This->haloExchange( on_device );
 }
 }
 //-----------------------------------------------------------------------------

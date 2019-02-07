@@ -19,7 +19,6 @@
 #include <vector>
 
 #include "eckit/config/Resource.h"
-#include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/log/Bytes.h"
 #include "eckit/log/Log.h"
@@ -31,6 +30,7 @@
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/library/Library.h"
 #include "atlas/runtime/AtlasTool.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 using namespace atlas;
@@ -113,7 +113,7 @@ void AtlasGrids::execute( const Args& args ) {
         try {
             grid = Grid( key );
         }
-        catch ( eckit::BadParameter& ) {
+        catch ( eckit::Exception& ) {
         }
 
         if ( !grid ) return;

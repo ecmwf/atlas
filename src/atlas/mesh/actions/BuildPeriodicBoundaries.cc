@@ -19,7 +19,7 @@
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/PeriodicTransform.h"
@@ -195,7 +195,9 @@ void build_periodic_boundaries( Mesh& mesh ) {
 // C wrapper interfaces to C++ routines
 
 void atlas__build_periodic_boundaries( Mesh::Implementation* mesh ) {
-    ATLAS_ERROR_HANDLING( Mesh m( mesh ); build_periodic_boundaries( m ); );
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    Mesh m( mesh );
+    build_periodic_boundaries( m );
 }
 // ------------------------------------------------------------------
 

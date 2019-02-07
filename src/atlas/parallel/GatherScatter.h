@@ -224,7 +224,7 @@ private:  // data
 template <typename DATA_TYPE>
 void GatherScatter::gather( parallel::Field<DATA_TYPE const> lfields[], parallel::Field<DATA_TYPE> gfields[],
                             idx_t nb_fields, const idx_t root ) const {
-    if ( !is_setup_ ) { throw_SeriousBug( "GatherScatter was not setup", Here() ); }
+    if ( !is_setup_ ) { throw_Exception( "GatherScatter was not setup", Here() ); }
 
     for ( idx_t jfield = 0; jfield < nb_fields; ++jfield ) {
         const idx_t lvar_size =
@@ -270,7 +270,7 @@ void GatherScatter::gather( const DATA_TYPE ldata[], const idx_t lvar_strides[],
 template <typename DATA_TYPE>
 void GatherScatter::scatter( parallel::Field<DATA_TYPE const> gfields[], parallel::Field<DATA_TYPE> lfields[],
                              const idx_t nb_fields, const idx_t root ) const {
-    if ( !is_setup_ ) { throw_SeriousBug( "GatherScatter was not setup", Here() ); }
+    if ( !is_setup_ ) { throw_Exception( "GatherScatter was not setup", Here() ); }
 
     for ( idx_t jfield = 0; jfield < nb_fields; ++jfield ) {
         const int lvar_size =

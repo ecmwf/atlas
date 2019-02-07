@@ -12,8 +12,6 @@
 #include <fstream>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/memory/ScopedPtr.h"
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/array/MakeView.h"
@@ -104,7 +102,7 @@ CASE( "read_inexistent_file" ) {
 
 CASE( "read_badly_formatted_file" ) {
     EXPECT( test_write_file_bad( "pointcloud.txt" ) );
-    EXPECT_THROWS_AS( output::detail::PointCloudIO::read( "pointcloud.txt" ), eckit::BadParameter );
+    EXPECT_THROWS_AS( output::detail::PointCloudIO::read( "pointcloud.txt" ), eckit::Exception );
 }
 
 CASE( "read_grid_sample_file" ) {

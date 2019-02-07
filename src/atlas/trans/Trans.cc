@@ -8,7 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/utils/Hash.h"
@@ -16,6 +15,7 @@
 #include "atlas/functionspace.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/library/defines.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/Trans.h"
 
@@ -59,9 +59,9 @@ TransImpl::~TransImpl() {}
 
 namespace {
 
-static eckit::Mutex* local_mutex               = 0;
-static std::map<std::string, int>* b           = 0;
-static std::map<std::string, TransFactory*>* m = 0;
+static eckit::Mutex* local_mutex               = nullptr;
+static std::map<std::string, int>* b           = nullptr;
+static std::map<std::string, TransFactory*>* m = nullptr;
 static pthread_once_t once                     = PTHREAD_ONCE_INIT;
 
 static void init() {
@@ -77,7 +77,7 @@ TransFactory& factory( const std::string& name ) {
         Log::error() << "TransFactories are:" << std::endl;
         for ( j = m->begin(); j != m->end(); ++j )
             Log::error() << "   " << ( *j ).first << std::endl;
-        throw eckit::SeriousBug( std::string( "No TransFactory called " ) + name );
+        throw_Exception( std::string( "No TransFactory called " ) + name );
     }
     return *j->second;
 }
@@ -89,7 +89,7 @@ TransFactory::TransFactory( const std::string& name, const std::string& backend 
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    ASSERT( m->find( name ) == m->end() );
+    ATLAS_ASSERT( m->find( name ) == m->end() );
     ( *m )[name] = this;
 
     if ( b->find( backend ) == b->end() ) ( *b )[backend] = 0;
@@ -176,7 +176,7 @@ const Trans::Implementation* TransFactory::build( const Cache& cache, const Func
         Log::error() << "TransFactories are :" << std::endl;
         TransBackend::list( Log::error() );
         Log::error() << std::endl;
-        throw eckit::SeriousBug( std::string( "No TransFactory called " ) + backend );
+        throw_Exception( std::string( "No TransFactory called " ) + backend );
     }
 
     std::string suffix( "(" + gp.type() + "," + sp.type() + ")" );
@@ -224,7 +224,7 @@ const Trans::Implementation* TransFactory::build( const Cache& cache, const Grid
         Log::error() << "TransFactories are :" << std::endl;
         TransBackend::list( Log::error() );
         Log::error() << std::endl;
-        throw eckit::SeriousBug( std::string( "No TransFactory called " ) + backend );
+        throw_Exception( std::string( "No TransFactory called " ) + backend );
     }
 
     std::string name = backend;
@@ -237,7 +237,7 @@ bool Trans::hasBackend( const std::string& backend ) {
 }
 
 void Trans::backend( const std::string& backend ) {
-    ASSERT( hasBackend( backend ) );
+    ATLAS_ASSERT( hasBackend( backend ) );
     TransBackend::backend( backend );
 }
 

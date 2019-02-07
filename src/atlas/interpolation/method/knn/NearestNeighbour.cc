@@ -18,6 +18,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 
@@ -32,7 +33,7 @@ MethodBuilder<NearestNeighbour> __builder( "nearest-neighbour" );
 }  // namespace
 
 void NearestNeighbour::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) { NOTIMP; }
+    if ( mpi::comm().size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
     auto functionspace = []( const Grid& grid ) -> FunctionSpace {
         Mesh mesh;
         if ( StructuredGrid( grid ) ) {
@@ -52,15 +53,15 @@ void NearestNeighbour::setup( const FunctionSpace& source, const FunctionSpace& 
     target_                        = target;
     functionspace::NodeColumns src = source;
     functionspace::NodeColumns tgt = target;
-    ASSERT( src );
-    ASSERT( tgt );
+    ATLAS_ASSERT( src );
+    ATLAS_ASSERT( tgt );
 
     Mesh meshSource = src.mesh();
     Mesh meshTarget = tgt.mesh();
 
     // build point-search tree
     buildPointSearchTree( meshSource );
-    ASSERT( pTree_ );
+    ATLAS_ASSERT( pTree_ != nullptr );
 
     // generate 3D point coordinates
     mesh::actions::BuildXYZField( "xyz" )( meshTarget );
@@ -86,7 +87,7 @@ void NearestNeighbour::setup( const FunctionSpace& source, const FunctionSpace& 
             size_t jp                = nn.payload();
 
             // insert the weights into the interpolant matrix
-            ASSERT( jp < inp_npts );
+            ATLAS_ASSERT( jp < inp_npts );
             weights_triplets.push_back( Triplet( ip, jp, 1 ) );
         }
     }

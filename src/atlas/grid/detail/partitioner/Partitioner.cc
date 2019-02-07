@@ -13,7 +13,6 @@
 #include <map>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 
@@ -26,6 +25,7 @@
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h"
 #include "atlas/library/config.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 #if ATLAS_HAVE_TRANS
@@ -34,8 +34,8 @@
 
 namespace {
 
-static eckit::Mutex* local_mutex                                                       = 0;
-static std::map<std::string, atlas::grid::detail::partitioner::PartitionerFactory*>* m = 0;
+static eckit::Mutex* local_mutex                                                       = nullptr;
+static std::map<std::string, atlas::grid::detail::partitioner::PartitionerFactory*>* m = nullptr;
 static pthread_once_t once                                                             = PTHREAD_ONCE_INIT;
 
 static void init() {
@@ -86,7 +86,7 @@ PartitionerFactory::PartitionerFactory( const std::string& name ) : name_( name 
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    ASSERT( m->find( name ) == m->end() );
+    ATLAS_ASSERT( m->find( name ) == m->end() );
     ( *m )[name] = this;
 }
 
@@ -135,7 +135,7 @@ Partitioner* PartitionerFactory::build( const std::string& name ) {
         Log::error() << "PartitionerFactories are:" << '\n';
         for ( j = m->begin(); j != m->end(); ++j )
             Log::error() << "   " << ( *j ).first << '\n';
-        throw eckit::SeriousBug( std::string( "No PartitionerFactory called " ) + name );
+        throw_Exception( std::string( "No PartitionerFactory called " ) + name );
     }
 
     return ( *j ).second->make();
@@ -157,7 +157,7 @@ Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_
         Log::error() << "PartitionerFactories are:" << '\n';
         for ( j = m->begin(); j != m->end(); ++j )
             Log::error() << "   " << ( *j ).first << '\n';
-        throw eckit::SeriousBug( std::string( "No PartitionerFactory called " ) + name );
+        throw_Exception( std::string( "No PartitionerFactory called " ) + name );
     }
 
     return ( *j ).second->make( nb_partitions );
@@ -180,7 +180,7 @@ grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build( const 
         return new MatchingMeshPartitionerBruteForce( partitioned );
     }
     else {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 }
 

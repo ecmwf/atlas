@@ -19,7 +19,6 @@
 #include <sstream>
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 
 #include "atlas/grid.h"
@@ -216,7 +215,7 @@ void Tool::execute( const Args& args ) {
         try {
             grid = Grid( key );
         }
-        catch ( eckit::BadParameter& ) {
+        catch ( eckit::Exception& ) {
         }
     }
     else {

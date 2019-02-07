@@ -8,12 +8,12 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 
 #include "atlas/grid/Grid.h"
 #include "atlas/library/defines.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/LegendreCacheCreator.h"
 
@@ -30,8 +30,8 @@ LegendreCacheCreatorImpl::~LegendreCacheCreatorImpl() {}
 
 namespace {
 
-static eckit::Mutex* local_mutex                              = 0;
-static std::map<std::string, LegendreCacheCreatorFactory*>* m = 0;
+static eckit::Mutex* local_mutex                              = nullptr;
+static std::map<std::string, LegendreCacheCreatorFactory*>* m = nullptr;
 static pthread_once_t once                                    = PTHREAD_ONCE_INIT;
 
 static void init() {
@@ -60,7 +60,7 @@ LegendreCacheCreatorFactory& factory( const std::string& name ) {
         Log::error() << "TransFactories are:" << std::endl;
         for ( j = m->begin(); j != m->end(); ++j )
             Log::error() << "   " << ( *j ).first << std::endl;
-        throw eckit::SeriousBug( std::string( "No LegendreCacheCreatorFactory called " ) + name );
+        throw_Exception( std::string( "No LegendreCacheCreatorFactory called " ) + name );
     }
     return *j->second;
 }
@@ -72,7 +72,7 @@ LegendreCacheCreatorFactory::LegendreCacheCreatorFactory( const std::string& nam
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    ASSERT( m->find( name ) == m->end() );
+    ATLAS_ASSERT( m->find( name ) == m->end() );
     ( *m )[name] = this;
 }
 

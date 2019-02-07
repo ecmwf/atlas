@@ -8,13 +8,12 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/array/LocalView.h"
+#include "LocalView.h"
 
 #include <iostream>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/array/helpers/ArrayAssigner.h"
+#include "atlas/runtime/Exception.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -32,7 +31,7 @@ void LocalView<Value, Rank, AccessMode>::assign( const value_type& value ) {
 
 template <typename Value, int Rank, Intent AccessMode>
 void LocalView<Value, Rank, AccessMode>::dump( std::ostream& os ) const {
-    ASSERT( contiguous() );
+    ATLAS_ASSERT( contiguous(), "Cannot dump non-contiguous view" );
     const value_type* data_ = data();
     os << "size: " << size() << " , values: ";
     os << "[ ";

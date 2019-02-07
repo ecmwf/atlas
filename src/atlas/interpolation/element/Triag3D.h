@@ -15,6 +15,7 @@
 
 #include "atlas/interpolation/Vector3D.h"
 #include "atlas/interpolation/method/Intersect.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -56,10 +57,8 @@ public:  // types
         if ( i == 0 ) return v0;
         if ( i == 1 ) return v1;
         if ( i == 2 ) return v2;
-        throw_OutOfRange( i, 3 );
+        throw_OutOfRange( "Triag3D::p(i)", i, 3, Here() );
     }
-
-    [[noreturn]] static void throw_OutOfRange( unsigned long long index, unsigned long long max );
 
 private:  // members
     Vector3D v0;

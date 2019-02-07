@@ -8,15 +8,14 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <memory>
 #include <sstream>
-
-#include "eckit/exception/Exceptions.h"
-#include "eckit/memory/ScopedPtr.h"
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/FieldCreator.h"
 #include "atlas/field/detail/FieldImpl.h"
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace field {
@@ -27,11 +26,11 @@ namespace field {
 FieldImpl* FieldImpl::create( const eckit::Parametrisation& params ) {
     std::string creator_factory;
     if ( params.get( "creator", creator_factory ) ) {
-        eckit::ScopedPtr<field::FieldCreator> creator( field::FieldCreatorFactory::build( creator_factory, params ) );
+        std::unique_ptr<field::FieldCreator> creator( field::FieldCreatorFactory::build( creator_factory, params ) );
         return creator->createField( params );
     }
     else
-        throw eckit::Exception(
+        throw_Exception(
             "Could not find parameter 'creator' "
             "in Parametrisation for call to FieldImpl::create()" );
 }
@@ -149,7 +148,7 @@ const FunctionSpace& FieldImpl::functionspace() const {
 
 void FieldImpl::haloExchange( bool on_device ) const {
     if ( dirty() ) {
-        ASSERT( functionspace() );
+        ATLAS_ASSERT( functionspace() );
         functionspace().haloExchange( Field( this ), on_device );
         set_dirty( false );
     }

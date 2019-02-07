@@ -11,9 +11,9 @@
 /// @author Willem Deconinck
 /// @date Jan 2015
 
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/grid/detail/spacing/gaussian/N.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
@@ -27,7 +27,7 @@ return "GaussianLatitudes";
 #endif
 
 void GaussianLatitudes::assign( double lats[], const size_t size ) const {
-    ASSERT( size >= lats_.size() );
+    ATLAS_ASSERT( size >= lats_.size() );
     for ( size_t jlat = 0; jlat < lats_.size(); ++jlat )
         lats[jlat] = lats_[jlat];
 }

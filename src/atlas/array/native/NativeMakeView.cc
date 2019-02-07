@@ -1,10 +1,11 @@
 
-#include "eckit/exception/Exceptions.h"
+#include <sstream>
 
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace array {
@@ -15,12 +16,12 @@ inline static void check_metadata( const Array& array ) {
     if ( array.rank() != Rank ) {
         std::stringstream err;
         err << "Number of dimensions do not match: template argument " << Rank << " expected to be " << array.rank();
-        throw eckit::BadParameter( err.str(), Here() );
+        throw_Exception( err.str(), Here() );
     }
     if ( array.datatype() != array::DataType::create<Value>() ) {
         std::stringstream err;
         err << "Data Type does not match: template argument expected to be " << array.datatype().str();
-        throw eckit::BadParameter( err.str(), Here() );
+        throw_Exception( err.str(), Here() );
     }
 }
 }  // namespace

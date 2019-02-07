@@ -11,11 +11,11 @@
 #include <cmath>
 #include <functional>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/utils/Hash.h"
 
 #include "atlas/projection/detail/LambertProjection.h"
 #include "atlas/projection/detail/ProjectionFactory.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
@@ -46,10 +46,10 @@ LambertProjection::LambertProjection( const eckit::Parametrisation& params ) {
     // check presence of radius
     if ( !params.get( "radius", radius_ ) ) radius_ = util::Earth::radius();
     // check presence of lat1 and lat2
-    if ( !params.get( "latitude1", lat1_ ) ) throw eckit::BadParameter( "latitude1 missing in Params", Here() );
+    if ( !params.get( "latitude1", lat1_ ) ) throw_Exception( "latitude1 missing in Params", Here() );
     if ( !params.get( "latitude2", lat2_ ) ) lat2_ = lat1_;
     // check presence of lon0
-    if ( !params.get( "longitude0", lon0_ ) ) throw eckit::BadParameter( "longitude0 missing in Params", Here() );
+    if ( !params.get( "longitude0", lon0_ ) ) throw_Exception( "longitude0 missing in Params", Here() );
 
     setup();
 }

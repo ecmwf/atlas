@@ -125,7 +125,6 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/detail/GmshIO.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/HaloExchange.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/GatherScatter.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/Checksum.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/runtime/ErrorHandling.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_read_file.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/Library.h)
 generate_fortran_bindings(FORTRAN_BINDINGS runtime/atlas_trace.h MODULE atlas_trace_c_binding OUTPUT atlas_trace_c_binding.f90 )
@@ -142,7 +141,6 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_JSON_module.F90
         util/atlas_Config_module.F90
         util/atlas_Metadata_module.F90
-        util/atlas_Error_module.F90
         util/atlas_allocate_module.F90
         output/atlas_output_module.F90
         functionspace/atlas_FunctionSpace_module.F90

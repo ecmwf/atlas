@@ -8,7 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/utils/Hash.h"
 
 #include "atlas/array/ArrayView.h"
@@ -53,7 +52,7 @@ void DelaunayMeshGenerator::generate( const Grid& grid, const grid::Distribution
         Log::warning() << "Delaunay triangulation does not support a GridDistribution"
                           "with more than 1 partition"
                        << std::endl;
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
         /// TODO: Read mesh on 1 MPI task, and distribute according to
         /// GridDistribution
         /// HINT: use atlas/actions/DistributeMesh

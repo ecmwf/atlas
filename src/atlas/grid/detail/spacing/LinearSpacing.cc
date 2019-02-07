@@ -11,11 +11,12 @@
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
 
 #include <cmath>
+#include <ostream>
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/grid/detail/spacing/SpacingFactory.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
@@ -36,7 +37,7 @@ LinearSpacing::Params::Params( const eckit::Parametrisation& params ) {
     //     end   = endpoint ? start + step * double(N-1) :
     //                        start + step * double(N);
     //   } else {
-    //     throw eckit::BadParameter("Invalid combination of parameters",Here());
+    //     throw_Exception("Invalid combination of parameters",Here());
     //   }
     // }
     // else
@@ -53,11 +54,11 @@ LinearSpacing::Params::Params( const eckit::Parametrisation& params ) {
             end = start + length;
         }
         else {
-            throw eckit::BadParameter( "Invalid combination of parameters", Here() );
+            throw_Exception( "Invalid combination of parameters", Here() );
         }
     }
     else {
-        throw eckit::BadParameter( "Invalid combination of parameters", Here() );
+        throw_Exception( "Invalid combination of parameters", Here() );
     }
     length = end - start;
 

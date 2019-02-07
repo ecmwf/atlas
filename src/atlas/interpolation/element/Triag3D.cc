@@ -14,7 +14,6 @@
 #include "atlas/interpolation/element/Triag3D.h"
 #include "atlas/interpolation/method/Intersect.h"
 #include "atlas/interpolation/method/Ray.h"
-#include "eckit/exception/Exceptions.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -99,10 +98,6 @@ void Triag3D::print( std::ostream& s ) const {
     s << "Triag3D["
       << "v0=(" << v0[0] << ", " << v0[1] << ", " << v0[2] << "), v1=(" << v1[0] << ", " << v1[1] << ", " << v1[2]
       << "), v2=(" << v2[0] << ", " << v2[1] << ", " << v2[2] << ")]";
-}
-
-void Triag3D::throw_OutOfRange( unsigned long long index, unsigned long long max ) {
-    throw eckit::OutOfRange( index, max, Here() );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

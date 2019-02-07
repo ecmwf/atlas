@@ -1,8 +1,8 @@
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/domain/detail/Domain.h"
 #include "atlas/domain/detail/DomainFactory.h"
 #include "atlas/projection/Projection.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace domain {
@@ -19,7 +19,7 @@ const Domain* Domain::create( const eckit::Parametrisation& p ) {
     if ( p.get( "type", domain_type ) ) { return DomainFactory::build( domain_type, p ); }
 
     // should return error here
-    throw eckit::BadParameter( "type missing in Params", Here() );
+    throw_Exception( "type missing in Params", Here() );
 }
 
 }  // namespace domain

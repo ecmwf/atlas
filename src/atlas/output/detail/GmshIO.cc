@@ -14,7 +14,6 @@
 #include <limits>
 #include <stdexcept>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 
 #include "atlas/array.h"
@@ -32,6 +31,7 @@
 #include "atlas/output/detail/GmshIO.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -171,11 +171,11 @@ void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1> gidx,
             }
         }
         else {
-            NOTIMP;
+            ATLAS_NOTIMPLEMENTED;
         }
     }
     else {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 }
 
@@ -513,14 +513,14 @@ mesh::ElementType* make_element_type( int type ) {
     if ( type == QUAD ) return new mesh::temporary::Quadrilateral();
     if ( type == TRIAG ) return new mesh::temporary::Triangle();
     if ( type == LINE ) return new mesh::temporary::Line();
-    throw eckit::SeriousBug( "Element type not supported", Here() );
+    throw_Exception( "Element type not supported", Here() );
 }
 }  // namespace
 
 void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
     std::ifstream file;
     file.open( file_path.localPath(), std::ios::in | std::ios::binary );
-    if ( !file.is_open() ) throw eckit::CantOpenFile( file_path );
+    if ( !file.is_open() ) throw_CantOpenFile( file_path );
 
     std::string line;
 
@@ -722,7 +722,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
                     break;
                 default:
                     std::cout << "etype " << etype << std::endl;
-                    throw eckit::Exception( "ERROR: element type not supported", Here() );
+                    throw_Exception( "ERROR: element type not supported", Here() );
             }
         }
     }
@@ -745,7 +745,7 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
     bool include_patch = ( surfdim == 3 );
 
 
-    ASSERT( surfdim == 2 || surfdim == 3 );
+    ATLAS_ASSERT( surfdim == 2 || surfdim == 3 );
 
     Log::debug() << "writing mesh to gmsh file " << file_path << std::endl;
 
@@ -822,7 +822,7 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                 else if ( element_type.name() == "Quadrilateral" )
                     gmsh_elem_type = 3;
                 else
-                    NOTIMP;
+                    ATLAS_NOTIMPLEMENTED;
 
                 const mesh::BlockConnectivity& node_connectivity = elements.node_connectivity();
 
@@ -926,7 +926,7 @@ void GmshIO::write( const Field& field, const PathName& file_path, openmode mode
         std::stringstream msg;
         msg << "Field [" << field.name() << "] has no functionspace";
 
-        throw eckit::AssertionFailed( msg.str(), Here() );
+        throw_AssertionFailed( msg.str(), Here() );
     }
 
     if ( functionspace::NodeColumns( field.functionspace() ) ) {
@@ -945,7 +945,7 @@ void GmshIO::write( const Field& field, const PathName& file_path, openmode mode
             << "] but requires a [functionspace::NodeColumns "
             << "or functionspace::StructuredColumns]";
 
-        throw eckit::AssertionFailed( msg.str(), Here() );
+        throw_AssertionFailed( msg.str(), Here() );
     }
 }
 // ----------------------------------------------------------------------------
@@ -1052,7 +1052,7 @@ void GmshIO::write( const FieldSet& fieldset, const FunctionSpace& funcspace, co
     else if ( functionspace::StructuredColumns( funcspace ) )
         write_delegate( fieldset, functionspace::StructuredColumns( funcspace ), file_path, mode );
     else
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
 }
 // ----------------------------------------------------------------------------
 
@@ -1064,7 +1064,7 @@ void GmshIO::write( const Field& field, const FunctionSpace& funcspace, const ec
     else if ( functionspace::StructuredColumns( funcspace ) )
         write_delegate( field, functionspace::StructuredColumns( funcspace ), file_path, mode );
     else
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
 }
 // ----------------------------------------------------------------------------
 
@@ -1115,14 +1115,14 @@ void GmshFortranInterface::atlas__write_gmsh_mesh( const Mesh::Implementation* m
 
 void GmshFortranInterface::atlas__write_gmsh_fieldset( const field::FieldSetImpl* fieldset,
                                                        functionspace::FunctionSpaceImpl* functionspace, char* file_path,
-                                                       int mode ) {
+                                                       int /*mode*/ ) {
     GmshIO writer;
     writer.write( fieldset, functionspace, PathName( file_path ) );
 }
 
 void GmshFortranInterface::atlas__write_gmsh_field( const field::FieldImpl* field,
                                                     functionspace::FunctionSpaceImpl* functionspace, char* file_path,
-                                                    int mode ) {
+                                                    int /*mode*/ ) {
     GmshIO writer;
     writer.write( field, functionspace, PathName( file_path ) );
 }

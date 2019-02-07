@@ -16,9 +16,9 @@
 #include "atlas/grid/Iterator.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
-#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
 namespace mesh {
@@ -53,7 +53,7 @@ void ExtendNodesGlobal::operator()( const Grid& grid, Mesh& mesh ) const {
 
     const idx_t nb_total_pts = nodes.size();
 
-    ASSERT( nb_total_pts == nb_real_pts + nb_extension_pts );
+    ATLAS_ASSERT( nb_total_pts == nb_real_pts + nb_extension_pts );
 
     nodes.metadata().set<idx_t>( "NbRealPts", nb_real_pts );
     nodes.metadata().set<idx_t>( "NbVirtualPts", nb_extension_pts );

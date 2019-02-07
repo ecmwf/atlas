@@ -13,7 +13,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/ElementType.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace mesh {
@@ -167,96 +167,87 @@ idx_t Elements::add( const idx_t nb_elements ) {
 extern "C" {
 
 void atlas__mesh__Elements__delete( Elements* This ) {
-    ATLAS_ERROR_HANDLING( delete This );
+    delete This;
 }
 
 idx_t atlas__mesh__Elements__size( const Elements* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
     return This->size();
 }
 
 idx_t atlas__mesh__Elements__begin( const Elements* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
     return This->begin();
 }
 
 idx_t atlas__mesh__Elements__end( const Elements* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
     return This->end();
 }
 
 BlockConnectivity* atlas__mesh__Elements__node_connectivity( Elements* This ) {
-    BlockConnectivity* connectivity( 0 );
-    ATLAS_ERROR_HANDLING( connectivity = &This->node_connectivity() );
-    return connectivity;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
+    return &This->node_connectivity();
 }
 
 BlockConnectivity* atlas__mesh__Elements__edge_connectivity( Elements* This ) {
-    BlockConnectivity* connectivity( 0 );
-    ATLAS_ERROR_HANDLING( connectivity = &This->edge_connectivity() );
-    return connectivity;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
+    return &This->edge_connectivity();
 }
 
 BlockConnectivity* atlas__mesh__Elements__cell_connectivity( Elements* This ) {
-    BlockConnectivity* connectivity( 0 );
-    ATLAS_ERROR_HANDLING( connectivity = &This->cell_connectivity() );
-    return connectivity;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
+    return &This->cell_connectivity();
 }
 
 int atlas__mesh__Elements__has_field( const Elements* This, char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
     return This->has_field( std::string( name ) );
 }
 
 int atlas__mesh__Elements__nb_fields( const Elements* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
     return This->nb_fields();
 }
 
 field::FieldImpl* atlas__mesh__Elements__field_by_idx( Elements* This, idx_t idx ) {
-    field::FieldImpl* field( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->field( idx ).get(); );
-    return field;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
+    return This->field( idx ).get();
 }
 
 field::FieldImpl* atlas__mesh__Elements__field_by_name( Elements* This, char* name ) {
-    field::FieldImpl* field( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->field( std::string( name ) ).get(); );
-    return field;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
+    return This->field( std::string( name ) ).get();
 }
 
 field::FieldImpl* atlas__mesh__Elements__global_index( Elements* This ) {
-    field::FieldImpl* field( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->global_index().get(); );
-    return field;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
+    return This->global_index().get();
 }
 
 field::FieldImpl* atlas__mesh__Elements__remote_index( Elements* This ) {
-    field::FieldImpl* field( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->remote_index().get(); );
-    return field;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
+    return This->remote_index().get();
 }
 
 field::FieldImpl* atlas__mesh__Elements__partition( Elements* This ) {
-    field::FieldImpl* field( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->partition().get(); );
-    return field;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
+    return This->partition().get();
 }
 
 field::FieldImpl* atlas__mesh__Elements__halo( Elements* This ) {
-    field::FieldImpl* field( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); field = This->halo().get(); );
-    return field;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
+    return This->halo().get();
 }
 
 const ElementType* atlas__mesh__Elements__element_type( const Elements* This ) {
-    const ElementType* element_type( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); element_type = &This->element_type(); );
-    return element_type;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
+    return &This->element_type();
 }
 
 void atlas__mesh__Elements__add( Elements* This, idx_t nb_elements ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != 0 ); This->add( nb_elements ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Elements" );
+    This->add( nb_elements );
 }
 }
 

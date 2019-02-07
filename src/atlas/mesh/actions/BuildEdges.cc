@@ -29,7 +29,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatMicroDeg.h"
@@ -101,7 +101,7 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
             idx_t elem = edge_cell_connectivity( iedge, j );
 
             if ( elem != edge_cell_connectivity.missing_value() ) {
-                ASSERT( edge_cnt[elem] < cell_edge_connectivity.cols( elem ) );
+                ATLAS_ASSERT( edge_cnt[elem] < cell_edge_connectivity.cols( elem ) );
                 cell_edge_connectivity.set( elem, edge_cnt[elem]++, iedge );
             }
             else {
@@ -113,7 +113,7 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
                            << node_gidx( edge_node_connectivity( jedge, 1 ) ) << "] "
                            << "has no element connected.";
                         Log::error() << ss.str() << std::endl;
-                        throw eckit::SeriousBug( ss.str(), Here() );
+                        throw_Exception( ss.str(), Here() );
                     }
                 }
             }
@@ -140,7 +140,7 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
                     msg << gidx( mesh.cells().node_connectivity()( jcell, jnode ) ) << " ";
                 }
                 msg << ")";
-                throw eckit::SeriousBug( msg.str(), Here() );
+                throw_Exception( msg.str(), Here() );
             }
         }
     }
@@ -175,7 +175,7 @@ void build_node_to_edge_connectivity( Mesh& mesh ) {
 
     for ( idx_t jedge = 0; jedge < nb_edges; ++jedge ) {
         idx_t iedge = edge_sort[jedge].i;
-        ASSERT( iedge < nb_edges );
+        ATLAS_ASSERT( iedge < nb_edges );
         for ( idx_t j = 0; j < 2; ++j ) {
             idx_t node = edge_node_connectivity( iedge, j );
             node_to_edge.set( node, to_edge_size[node]++, iedge );
@@ -244,7 +244,7 @@ public:
                         std::stringstream msg;
                         msg << "Split pole-latitude is not supported yet...  node " << node << "[p" << part( node )
                             << "] should belong to part " << npart;
-                        throw eckit::NotImplemented( msg.str(), Here() );
+                        throw_NotImplemented( msg.str(), Here() );
                     }
                 }
             }
@@ -329,7 +329,7 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
                     std::stringstream msg;
                     msg << "Split pole-latitude is not supported yet...  node " << node << "[p" << part( node )
                         << "] should belong to part " << npart;
-                    throw eckit::NotImplemented( msg.str(), Here() );
+                    throw_NotImplemented( msg.str(), Here() );
                 }
             }
         }
@@ -451,7 +451,7 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
         auto edge_halo    = array::make_view<int, 1>( mesh.edges().halo() );
         auto edge_flags   = array::make_view<int, 1>( mesh.edges().flags() );
 
-        ASSERT( cell_nodes.missing_value() == missing_value );
+        ATLAS_ASSERT( cell_nodes.missing_value() == missing_value );
         for ( idx_t edge = edge_start; edge < edge_end; ++edge ) {
             const idx_t iedge = edge_halo_offsets[halo] + ( edge - edge_start );
             const int ip1     = edge_nodes( edge, 0 );
@@ -461,8 +461,8 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
                 edge_nodes.set( edge, swapped );
             }
 
-            ASSERT( idx_t( edge_nodes( edge, 0 ) ) < nb_nodes );
-            ASSERT( idx_t( edge_nodes( edge, 1 ) ) < nb_nodes );
+            ATLAS_ASSERT( idx_t( edge_nodes( edge, 0 ) ) < nb_nodes );
+            ATLAS_ASSERT( idx_t( edge_nodes( edge, 1 ) ) < nb_nodes );
             edge_glb_idx( edge ) = compute_uid( edge_nodes.row( edge ) );
             edge_part( edge )    = std::min( node_part( edge_nodes( edge, 0 ) ), node_part( edge_nodes( edge, 1 ) ) );
             edge_ridx( edge )    = edge;
@@ -472,7 +472,7 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
             const idx_t e1 = edge_to_elem_data[2 * iedge + 0];
             const idx_t e2 = edge_to_elem_data[2 * iedge + 1];
 
-            ASSERT( e1 != cell_nodes.missing_value() );
+            ATLAS_ASSERT( e1 != cell_nodes.missing_value() );
             if ( e2 == cell_nodes.missing_value() ) {
                 // do nothing
             }
@@ -547,7 +547,7 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
             max_halo = std::max( halo, max_halo );
             for ( idx_t jedge = 0; jedge < cell_edges.cols( jcell ); ++jedge ) {
                 auto iedge = cell_edges( jcell, jedge );
-                ASSERT( edge_halo( iedge ) <= halo );
+                ATLAS_ASSERT( edge_halo( iedge ) <= halo );
             }
         }
     }
@@ -558,12 +558,12 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
         int nb_edges = mesh.edges().size();
         for ( int jedge = 0; jedge < nb_edges; ++jedge ) {
             nb_edges_including_halo[edge_halo( jedge )] = jedge + 1;
-            if ( jedge > 0 ) ASSERT( edge_halo( jedge ) >= edge_halo( jedge - 1 ) );
+            if ( jedge > 0 ) ATLAS_ASSERT( edge_halo( jedge ) >= edge_halo( jedge - 1 ) );
         }
     }
 
     for ( int i = 0; i <= max_halo; ++i ) {
-        if ( i > 0 ) ASSERT( nb_edges_including_halo[i] > nb_edges_including_halo[i - 1] );
+        if ( i > 0 ) ATLAS_ASSERT( nb_edges_including_halo[i] > nb_edges_including_halo[i - 1] );
         std::stringstream ss;
         ss << "nb_edges_including_halo[" << i << "]";
         mesh.metadata().set( ss.str(), nb_edges_including_halo[i] );
@@ -588,7 +588,7 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
     }
 }
 
-void build_pole_edges( Mesh& mesh ) {
+void build_pole_edges( Mesh& ) {
     ATLAS_TRACE();
     Log::info() << "ATLAS_WARNING: Deprecation warning: build_pole_edges is no longer required.\n"
                 << "It is automatically inferred within atlas_build_edges" << std::endl;
@@ -600,15 +600,19 @@ void build_pole_edges( Mesh& mesh ) {
 
 extern "C" {
 void atlas__build_edges( Mesh::Implementation* mesh ) {
-    ATLAS_ERROR_HANDLING( Mesh m( mesh ); build_edges( m ); );
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    Mesh m( mesh );
+    build_edges( m );
 }
-void atlas__build_pole_edges( Mesh::Implementation* mesh ) {
+void atlas__build_pole_edges( Mesh::Implementation* ) {
     Log::info() << "ATLAS_WARNING: Deprecation warning: atlas_build_pole_edges is no longer required.\n"
                 << "It is automatically inferred within atlas_build_edges" << std::endl;
     Log::info() << "The 'atlas_build_pole_edges' function will be removed in a future version" << std::endl;
 }
 void atlas__build_node_to_edge_connectivity( Mesh::Implementation* mesh ) {
-    ATLAS_ERROR_HANDLING( Mesh m( mesh ); build_node_to_edge_connectivity( m ); );
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    Mesh m( mesh );
+    build_node_to_edge_connectivity( m );
 }
 }
 

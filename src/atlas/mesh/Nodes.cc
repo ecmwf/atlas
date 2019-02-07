@@ -15,7 +15,7 @@
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 
@@ -49,13 +49,13 @@ Nodes::Connectivity& Nodes::add( Connectivity* connectivity ) {
 }
 
 Field Nodes::add( const Field& field ) {
-    ASSERT( field );
-    ASSERT( !field.name().empty() );
+    ATLAS_ASSERT( field );
+    ATLAS_ASSERT( !field.name().empty() );
 
     if ( has_field( field.name() ) ) {
         std::stringstream msg;
         msg << "Trying to add field '" << field.name() << "' to Nodes, but Nodes already has a field with this name.";
-        throw eckit::Exception( msg.str(), Here() );
+        throw_Exception( msg.str(), Here() );
     }
     fields_[field.name()] = field;
     return field;
@@ -65,7 +65,7 @@ void Nodes::remove_field( const std::string& name ) {
     if ( !has_field( name ) ) {
         std::stringstream msg;
         msg << "Trying to remove field `" << name << "' in Nodes, but no field with this name is present in Nodes.";
-        throw eckit::Exception( msg.str(), Here() );
+        throw_Exception( msg.str(), Here() );
     }
     fields_.erase( name );
 }
@@ -74,7 +74,7 @@ const Field& Nodes::field( const std::string& name ) const {
     if ( !has_field( name ) ) {
         std::stringstream msg;
         msg << "Trying to access field `" << name << "' in Nodes, but no field with this name is present in Nodes.";
-        throw eckit::Exception( msg.str(), Here() );
+        throw_Exception( msg.str(), Here() );
     }
     return fields_.find( name )->second;
 }
@@ -110,7 +110,7 @@ void Nodes::resize( idx_t size ) {
 }
 
 const Field& Nodes::field( idx_t idx ) const {
-    ASSERT( idx < nb_fields() );
+    ATLAS_ASSERT( idx < nb_fields() );
     idx_t c( 0 );
     for ( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
         if ( idx == c ) {
@@ -119,7 +119,7 @@ const Field& Nodes::field( idx_t idx ) const {
         }
         c++;
     }
-    eckit::SeriousBug( "Should not be here!", Here() );
+    throw_Exception( "Should not be here!", Here() );
     static Field f;
     return f;
 }
@@ -157,7 +157,7 @@ const IrregularConnectivity& Nodes::connectivity( const std::string& name ) cons
         msg << "Trying to access connectivity `" << name
             << "' in Nodes, but no connectivity with this name is present in "
                "Nodes.";
-        throw eckit::Exception( msg.str(), Here() );
+        throw_Exception( msg.str(), Here() );
     }
     return *connectivities_.find( name )->second;
 }
@@ -167,7 +167,7 @@ IrregularConnectivity& Nodes::connectivity( const std::string& name ) {
         msg << "Trying to access connectivity `" << name
             << "' in Nodes, but no connectivity with this name is present in "
                "Nodes.";
-        throw eckit::Exception( msg.str(), Here() );
+        throw_Exception( msg.str(), Here() );
     }
     return *connectivities_.find( name )->second;
 }
@@ -190,115 +190,116 @@ void Nodes::syncHostDevice() const {
 extern "C" {
 
 Nodes* atlas__mesh__Nodes__create() {
-    Nodes* nodes( nullptr );
-    ATLAS_ERROR_HANDLING( nodes = new Nodes() );
-    return nodes;
+    return new Nodes();
 }
 
 void atlas__mesh__Nodes__delete( Nodes* This ) {
-    ATLAS_ERROR_HANDLING( delete This );
+    ATLAS_ASSERT( This != nullptr );
 }
 
 idx_t atlas__mesh__Nodes__size( Nodes* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->size(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    return This->size();
 }
 void atlas__mesh__Nodes__resize( Nodes* This, idx_t size ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); This->resize( size ); );
+    ATLAS_ASSERT( This != nullptr );
+    This->resize( size );
 }
 idx_t atlas__mesh__Nodes__nb_fields( Nodes* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nb_fields(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    return This->nb_fields();
 }
 
 void atlas__mesh__Nodes__add_field( Nodes* This, field::FieldImpl* field ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( field ); This->add( field ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( field != nullptr );
+    This->add( field );
 }
 
 void atlas__mesh__Nodes__remove_field( Nodes* This, char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); This->remove_field( std::string( name ) ); );
+    ATLAS_ASSERT( This != nullptr );
+    This->remove_field( std::string( name ) );
 }
 
 int atlas__mesh__Nodes__has_field( Nodes* This, char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->has_field( std::string( name ) ); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    return This->has_field( std::string( name ) );
 }
 
 field::FieldImpl* atlas__mesh__Nodes__field_by_name( Nodes* This, char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->field( std::string( name ) ).get(); );
-    return nullptr;
+    ATLAS_ASSERT( This != nullptr );
+    return This->field( std::string( name ) ).get();
 }
 
 field::FieldImpl* atlas__mesh__Nodes__field_by_idx( Nodes* This, idx_t idx ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->field( idx ).get(); );
-    return nullptr;
+    ATLAS_ASSERT( This != nullptr );
+    return This->field( idx ).get();
 }
 
 util::Metadata* atlas__mesh__Nodes__metadata( Nodes* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->metadata(); );
-    return nullptr;
+    ATLAS_ASSERT( This != nullptr );
+    return &This->metadata();
 }
 
 void atlas__mesh__Nodes__str( Nodes* This, char*& str, int& size ) {
-    ATLAS_ERROR_HANDLING( std::stringstream ss; ss << *This; std::string s = ss.str();
-                          size = static_cast<int>( s.size() ); str = new char[size + 1]; strcpy( str, s.c_str() ); );
+    ATLAS_ASSERT( This != nullptr );
+    std::stringstream ss;
+    ss << *This;
+    std::string s = ss.str();
+    size          = static_cast<int>( s.size() );
+    str           = new char[size + 1];
+    strcpy( str, s.c_str() );
 }
 
 IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity( Nodes* This ) {
-    IrregularConnectivity* connectivity( nullptr );
-    ATLAS_ERROR_HANDLING( connectivity = &This->edge_connectivity() );
-    return connectivity;
+    ATLAS_ASSERT( This != nullptr );
+    return &This->edge_connectivity();
 }
 
 IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity( Nodes* This ) {
-    IrregularConnectivity* connectivity( nullptr );
-    ATLAS_ERROR_HANDLING( connectivity = &This->cell_connectivity() );
-    return connectivity;
+    ATLAS_ASSERT( This != nullptr );
+    return &This->cell_connectivity();
 }
 
 IrregularConnectivity* atlas__mesh__Nodes__connectivity( Nodes* This, char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->connectivity( std::string( name ) ); );
-    return nullptr;
+    ATLAS_ASSERT( This != nullptr );
+    return &This->connectivity( std::string( name ) );
 }
 
 void atlas__mesh__Nodes__add_connectivity( Nodes* This, IrregularConnectivity* connectivity ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( connectivity ); This->add( connectivity ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( connectivity != nullptr );
+    This->add( connectivity );
 }
 
 field::FieldImpl* atlas__mesh__Nodes__xy( Nodes* This ) {
-    field::FieldImpl* field( nullptr );
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); field = This->xy().get(); );
-    return field;
+    ATLAS_ASSERT( This != nullptr );
+    return This->xy().get();
 }
 
 field::FieldImpl* atlas__mesh__Nodes__lonlat( Nodes* This ) {
-    field::FieldImpl* field( nullptr );
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); field = This->lonlat().get(); );
-    return field;
+    ATLAS_ASSERT( This != nullptr );
+    return This->lonlat().get();
 }
 
 field::FieldImpl* atlas__mesh__Nodes__global_index( Nodes* This ) {
-    field::FieldImpl* field( nullptr );
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); field = This->global_index().get(); );
-    return field;
+    ATLAS_ASSERT( This != nullptr );
+    return This->global_index().get();
 }
 
 field::FieldImpl* atlas__mesh__Nodes__remote_index( Nodes* This ) {
-    field::FieldImpl* field( nullptr );
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); field = This->remote_index().get(); );
-    return field;
+    ATLAS_ASSERT( This != nullptr );
+    return This->remote_index().get();
 }
 
 field::FieldImpl* atlas__mesh__Nodes__partition( Nodes* This ) {
-    field::FieldImpl* field( nullptr );
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); field = This->partition().get(); );
-    return field;
+    ATLAS_ASSERT( This != nullptr );
+    return This->partition().get();
 }
 
 field::FieldImpl* atlas__mesh__Nodes__ghost( Nodes* This ) {
-    field::FieldImpl* field( nullptr );
-    ATLAS_ERROR_HANDLING( ASSERT( This != nullptr ); field = This->ghost().get(); );
-    return field;
+    ATLAS_ASSERT( This != nullptr );
+    return This->ghost().get();
 }
 }
 

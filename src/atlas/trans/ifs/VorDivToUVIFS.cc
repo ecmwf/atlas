@@ -8,12 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
-
+#include "atlas/trans/ifs/VorDivToUVIFS.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/trans/ifs/VorDivToUVIFS.h"
 
 using atlas::FunctionSpace;
 using atlas::functionspace::Spectral;
@@ -31,7 +30,7 @@ void trans_check( const int code, const char* msg, const eckit::CodeLocation& lo
         std::stringstream errmsg;
         errmsg << "atlas::trans ERROR: " << msg << " failed: \n";
         errmsg << ::trans_error_msg( code );
-        throw eckit::Exception( errmsg.str(), location );
+        throw_Exception( errmsg.str(), location );
     }
 }
 #define TRANS_CHECK( CALL ) trans_check( CALL, #CALL, Here() )

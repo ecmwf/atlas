@@ -19,6 +19,7 @@
 #include "atlas/grid/Iterator.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/LonLatPolygon.h"
 
@@ -38,7 +39,7 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int part
 
     ATLAS_TRACE( "MatchingMeshPartitionerLonLatPolygon::partition" );
 
-    ASSERT( grid.domain().global() );
+    ATLAS_ASSERT( grid.domain().global() );
 
     Log::debug() << "MatchingMeshPartitionerLonLatPolygon::partition" << std::endl;
 
@@ -67,7 +68,7 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int part
     comm.allReduceInPlace( partitioning, grid.size(), eckit::mpi::Operation::MAX );
     const int min = *std::min_element( partitioning, partitioning + grid.size() );
     if ( min < 0 ) {
-        throw eckit::SeriousBug(
+        throw_Exception(
             "Could not find partition for target node (source "
             "mesh does not contain all target grid points)",
             Here() );

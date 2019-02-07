@@ -11,7 +11,6 @@
 #include <map>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 
@@ -21,7 +20,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/output/Output.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 using atlas::FieldSet;
@@ -79,7 +78,7 @@ OutputFactory::OutputFactory( const std::string& name ) : name_( name ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    if ( m->find( name ) != m->end() ) { throw eckit::SeriousBug( "Duplicate OutputFactory entry " + name ); }
+    if ( m->find( name ) != m->end() ) { throw_Exception( "Duplicate OutputFactory entry " + name ); }
 
     ( *m )[name] = this;
 }
@@ -114,7 +113,7 @@ const OutputImpl* OutputFactory::build( const std::string& name, Stream& stream 
         Log::error() << "OutputFactories are:" << std::endl;
         for ( j = m->begin(); j != m->end(); ++j )
             Log::error() << "   " << ( *j ).first << std::endl;
-        throw eckit::SeriousBug( std::string( "No OutputFactory called " ) + name );
+        throw_Exception( std::string( "No OutputFactory called " ) + name );
     }
 
     return ( *j ).second->make( stream );
@@ -133,7 +132,7 @@ const OutputImpl* OutputFactory::build( const std::string& name, Stream& stream,
         Log::error() << "OutputFactories are:" << std::endl;
         for ( j = m->begin(); j != m->end(); ++j )
             Log::error() << "   " << ( *j ).first << std::endl;
-        throw eckit::SeriousBug( std::string( "No OutputFactory called " ) + name );
+        throw_Exception( std::string( "No OutputFactory called " ) + name );
     }
 
     return ( *j ).second->make( stream, param );
@@ -142,44 +141,57 @@ const OutputImpl* OutputFactory::build( const std::string& name, Stream& stream,
 extern "C" {
 
 void atlas__Output__delete( OutputImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); delete This; );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
+    delete This;
 }
 
 const OutputImpl* atlas__Output__create( const char* factory_key, Stream* stream,
-                                         const eckit::Parametrisation* params ) {
+                                         const eckit::Parametrisation* config ) {
+    ATLAS_ASSERT( config != nullptr, "Cannot access uninitialisd atlas_Config" );
     const OutputImpl* output( nullptr );
-    ATLAS_ERROR_HANDLING(
-        // ASSERT(stream);
-        ASSERT( params ); {
-            Output o( std::string{factory_key}, *stream, *params );
-            output = o.get();
-            output->attach();
-        } output->detach(); );
+    {
+        Output o( std::string{factory_key}, *stream, *config );
+        output = o.get();
+        output->attach();
+    }
+    output->detach();
     return output;
 }
 
 void atlas__Output__write_mesh( const OutputImpl* This, Mesh::Implementation* mesh, const Parametrisation* params ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( mesh ); ASSERT( params ); Mesh m( mesh );
-                          This->write( m, *params ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
+    Mesh m( mesh );
+    This->write( m, *params );
 }
 void atlas__Output__write_fieldset( const OutputImpl* This, const FieldSetImpl* fieldset,
-                                    const Parametrisation* params ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( fieldset ); ASSERT( params ); This->write( fieldset, *params ); );
+                                    const Parametrisation* config ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
+    ATLAS_ASSERT( fieldset != nullptr, "Cannot access uninitialisd atlas_FieldSet" );
+    This->write( fieldset, *config );
 }
-void atlas__Output__write_field( const OutputImpl* This, const FieldImpl* field, const Parametrisation* params ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( field ); ASSERT( params ); This->write( field, *params ); );
+void atlas__Output__write_field( const OutputImpl* This, const FieldImpl* field, const Parametrisation* config ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
+    ATLAS_ASSERT( field != nullptr, "Cannot access uninitialisd atlas_Field" );
+    ATLAS_ASSERT( config != nullptr, "Cannot access uninitialisd atlas_Config" );
+    This->write( field, *config );
 }
 void atlas__Output__write_fieldset_fs( const OutputImpl* This, const FieldSetImpl* fieldset,
                                        const functionspace::FunctionSpaceImpl* functionspace,
                                        const Parametrisation* params ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( fieldset ); ASSERT( functionspace ); ASSERT( params );
-                          This->write( fieldset, functionspace, *params ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
+    ATLAS_ASSERT( fieldset != nullptr, "Cannot access uninitialisd atlas_FieldSet" );
+    ATLAS_ASSERT( functionspace != nullptr, "Cannot access uninitialisd atlas_FunctionSpace" );
+
+    This->write( fieldset, functionspace, *params );
 }
 void atlas__Output__write_field_fs( const OutputImpl* This, const FieldImpl* field,
                                     const functionspace::FunctionSpaceImpl* functionspace,
-                                    const Parametrisation* params ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( field ); ASSERT( functionspace ); ASSERT( params );
-                          This->write( field, functionspace, *params ); );
+                                    const Parametrisation* config ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
+    ATLAS_ASSERT( field != nullptr, "Cannot access uninitialisd atlas_Field" );
+    ATLAS_ASSERT( functionspace != nullptr, "Cannot access uninitialisd atlas_FunctionSpace" );
+    ATLAS_ASSERT( config != nullptr, "Cannot access uninitialisd atlas_Config" );
+    This->write( field, functionspace, *config );
 }
 }
 

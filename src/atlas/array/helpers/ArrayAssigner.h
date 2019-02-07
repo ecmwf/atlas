@@ -11,6 +11,7 @@
 #pragma once
 
 #include "atlas/array.h"
+#include "atlas/runtime/Exception.h"
 
 //------------------------------------------------------------------------------
 
@@ -69,13 +70,13 @@ struct array_assigner {
     }
 
     static void apply( ArrayView<Value, Rank, Intent::ReadOnly>&, Value ) {
-        throw eckit::AssertionFailed( "Cannot assign ReadOnly array", Here() );
+        throw_Exception( "Cannot assign ReadOnly array", Here() );
         // TODO use SFINAE to disallow at compile time
     }
 
     template <typename Iterable>
     static void apply( ArrayView<Value, Rank, Intent::ReadOnly>&, const Iterable& ) {
-        throw eckit::AssertionFailed( "Cannot assign ReadOnly array", Here() );
+        throw_Exception( "Cannot assign ReadOnly array", Here() );
         // TODO use SFINAE to disallow at compile time
     }
 
@@ -88,11 +89,11 @@ struct array_assigner {
     static void apply( ArrayView<Value, Rank, Intent::ReadWrite>& arr, const Iterable& iterable ) {
         typename Iterable::const_iterator it = iterable.begin();
         array_assigner_impl<Value, Rank, 0u>::apply( arr, it );
-        ASSERT( it = iterable.end() );
+        ATLAS_ASSERT( it = iterable.end() );
     }
 
-    static void apply( LocalView<Value, Rank, Intent::ReadOnly>&, Value value ) {
-        throw eckit::AssertionFailed( "Cannot assign ReadOnly array", Here() );
+    static void apply( LocalView<Value, Rank, Intent::ReadOnly>&, Value ) {
+        throw_Exception( "Cannot assign ReadOnly array", Here() );
         // TODO use SFINAE to disallow at compile time
     }
 

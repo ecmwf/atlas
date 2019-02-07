@@ -10,10 +10,9 @@
 
 #include <algorithm>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace array {
@@ -33,7 +32,7 @@ ArraySpec::ArraySpec() : size_(), rank_(), allocated_size_(), contiguous_( true 
 ArraySpec::ArraySpec( const ArrayShape& shape ) : ArraySpec( shape, ArrayAlignment() ) {}
 
 ArraySpec::ArraySpec( const ArrayShape& shape, ArrayAlignment&& alignment ) {
-    if ( int( alignment ) > 1 ) NOTIMP;  // innermost dimension needs to be padded
+    if ( int( alignment ) > 1 ) ATLAS_NOTIMPLEMENTED;  // innermost dimension needs to be padded
 
     rank_ = static_cast<int>( shape.size() );
     size_ = 1;
@@ -59,8 +58,7 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides ) :
     ArraySpec( shape, strides, ArrayAlignment() ) {}
 
 ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, ArrayAlignment&& alignment ) {
-    if ( shape.size() != strides.size() )
-        throw eckit::BadParameter( "dimensions of shape and stride don't match", Here() );
+    ATLAS_ASSERT( shape.size() == strides.size(), "dimensions of shape and stride don't match" );
 
     rank_ = static_cast<int>( shape.size() );
     size_ = 1;
@@ -87,8 +85,7 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, cons
 
 ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, const ArrayLayout& layout,
                       ArrayAlignment&& alignment ) {
-    if ( shape.size() != strides.size() )
-        throw eckit::BadParameter( "dimensions of shape and stride don't match", Here() );
+    ATLAS_ASSERT( shape.size() == strides.size(), "dimensions of shape and stride don't match" );
 
     rank_ = static_cast<int>( shape.size() );
     size_ = 1;

@@ -12,10 +12,8 @@
 #include <iomanip>
 #include <limits>
 
-#include "atlas/interpolation/method/fe/FiniteElement.h"
+#include "FiniteElement.h"
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/geometry/Point3.h"
 #include "eckit/log/Plural.h"
 #include "eckit/log/ProgressTimer.h"
 #include "eckit/log/Seconds.h"
@@ -34,6 +32,7 @@
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -56,7 +55,7 @@ static const double parametricEpsilon = 1e-15;
 
 
 void FiniteElement::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) { NOTIMP; }
+    if ( mpi::comm().size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
     auto functionspace = []( const Grid& grid ) {
         Mesh mesh;
         if ( StructuredGrid{grid} ) {
@@ -103,7 +102,7 @@ void FiniteElement::setup( const FunctionSpace& source, const FunctionSpace& tar
             }
         }
         else {
-            NOTIMP;
+            ATLAS_NOTIMPLEMENTED;
         }
     }
 
@@ -120,10 +119,10 @@ struct Stencil {
 void FiniteElement::print( std::ostream& out ) const {
     functionspace::NodeColumns src( source_ );
     functionspace::NodeColumns tgt( target_ );
-    if ( not tgt ) NOTIMP;
+    if ( not tgt ) ATLAS_NOTIMPLEMENTED;
     auto gidx_src = array::make_view<gidx_t, 1>( src.nodes().global_index() );
 
-    ASSERT( tgt.nodes().size() == idx_t( matrix_.rows() ) );
+    ATLAS_ASSERT( tgt.nodes().size() == idx_t( matrix_.rows() ) );
 
 
     auto field_stencil_points_loc  = tgt.createField<gidx_t>( option::variables( Stencil::max_stencil_size ) );
@@ -182,7 +181,7 @@ void FiniteElement::print( std::ostream& out ) const {
 
 void FiniteElement::setup( const FunctionSpace& source ) {
     const functionspace::NodeColumns src = source;
-    ASSERT( src );
+    ATLAS_ASSERT( src );
 
     Mesh meshSource = src.mesh();
 
@@ -280,7 +279,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
         }
 
         Log::error() << msg.str() << std::endl;
-        throw eckit::SeriousBug( msg.str() );
+        throw_Exception( msg.str() );
     }
 
     // fill sparse matrix and return
@@ -299,7 +298,7 @@ struct ElementEdge {
 
 Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemIndex3::NodeList& elems,
                                                         std::ostream& /* failures_log */ ) const {
-    ASSERT( elems.begin() != elems.end() );
+    ATLAS_ASSERT( elems.begin() != elems.end() );
 
     const size_t inp_points = icoords_->shape( 0 );
     std::array<size_t, 4> idx;
@@ -313,14 +312,14 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
     idx_t single_point;
     for ( ElemIndex3::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc ) {
         const idx_t elem_id = idx_t( ( *itc ).value().payload() );
-        ASSERT( elem_id < connectivity_->rows() );
+        ATLAS_ASSERT( elem_id < connectivity_->rows() );
 
         const idx_t nb_cols = connectivity_->cols( elem_id );
-        ASSERT( nb_cols == 3 || nb_cols == 4 );
+        ATLAS_ASSERT( nb_cols == 3 || nb_cols == 4 );
 
         for ( idx_t i = 0; i < nb_cols; ++i ) {
             idx[i] = ( *connectivity_ )( elem_id, i );
-            ASSERT( idx[i] < inp_points );
+            ATLAS_ASSERT( idx[i] < inp_points );
         }
 
         constexpr double tolerance = 1.e-12;
@@ -423,7 +422,7 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
             const double edgeEpsilon = parametricEpsilon * std::sqrt( triag.area() );
-            ASSERT( edgeEpsilon >= 0 );
+            ATLAS_ASSERT( edgeEpsilon >= 0 );
 
             Intersect is = triag.intersects( ray, edgeEpsilon );
 
@@ -464,7 +463,7 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
             const double edgeEpsilon = parametricEpsilon * std::sqrt( quad.area() );
-            ASSERT( edgeEpsilon >= 0 );
+            ATLAS_ASSERT( edgeEpsilon >= 0 );
 
             Intersect is = quad.intersects( ray, edgeEpsilon );
 

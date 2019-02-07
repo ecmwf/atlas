@@ -28,7 +28,7 @@
 #include "atlas/mesh/detail/AccumulateFacets.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -440,7 +440,7 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node ) {
             notes.add_error( msg.str() );
         }
     }
-    if ( notes.error() ) throw eckit::SeriousBug( notes.str(), Here() );
+    if ( notes.error() ) throw_Exception( notes.str(), Here() );
 }
 
 void accumulate_elements( const Mesh& mesh, const mpi::BufferView<uid_t>& request_node_uid, const Uid2Node& uid2node,
@@ -676,7 +676,7 @@ public:
             else {
                 Log::warning() << "Node with uid " << uid << " needed by [" << p << "] was not found in ["
                                << mpi::comm().rank() << "]." << std::endl;
-                ASSERT( false );
+                ATLAS_ASSERT( false );
             }
         }
 
@@ -741,7 +741,7 @@ public:
             else {
                 Log::warning() << "Node with uid " << uid << " needed by [" << p << "] was not found in ["
                                << mpi::comm().rank() << "]." << std::endl;
-                ASSERT( false );
+                ATLAS_ASSERT( false );
             }
         }
 
@@ -875,7 +875,7 @@ public:
                             << glb_idx( loc_idx ) << "(" << xy( loc_idx, XX ) << "," << xy( loc_idx, YY ) << ")\n";
                         msg << "Existing already loc " << other << "  :  " << glb_idx( other ) << "(" << xy( other, XX )
                             << "," << xy( other, YY ) << ")\n";
-                        throw eckit::SeriousBug( msg.str(), Here() );
+                        throw_Exception( msg.str(), Here() );
                     }
                     uid2node[uid] = nb_nodes + new_node;
                 }
@@ -1315,9 +1315,9 @@ void BuildHalo::operator()( int nb_elems ) {
 // C wrapper interfaces to C++ routines
 
 void atlas__build_halo( Mesh::Implementation* mesh, int nb_elems ) {
-    // #undef ATLAS_ERROR_HANDLING
-    // #define ATLAS_ERROR_HANDLING(x) x
-    ATLAS_ERROR_HANDLING( Mesh m( mesh ); build_halo( m, nb_elems ); );
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    Mesh m( mesh );
+    build_halo( m, nb_elems );
 }
 
 // ------------------------------------------------------------------

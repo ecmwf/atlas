@@ -15,7 +15,6 @@
 #include <numeric>
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
 
@@ -41,7 +40,6 @@
 
 #define DEBUG_OUTPUT 0
 
-using namespace eckit;
 using namespace atlas::array;
 using atlas::Mesh;
 using Topology = atlas::mesh::Nodes::Topology;
@@ -161,10 +159,10 @@ void StructuredMeshGenerator::configure_defaults() {
 }
 
 void StructuredMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
-    ASSERT( !mesh.generated() );
+    ATLAS_ASSERT( !mesh.generated() );
 
     const StructuredGrid rg = StructuredGrid( grid );
-    if ( !rg ) throw eckit::BadCast( "Structured can only work with a Structured", Here() );
+    if ( !rg ) throw_Exception( "Structured can only work with a Structured", Here() );
 
     idx_t nb_parts = options.get<idx_t>( "nb_parts" );
 
@@ -181,7 +179,7 @@ void StructuredMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
     generate( grid, distribution, mesh );
 }
 
-void StructuredMeshGenerator::hash( Hash& h ) const {
+void StructuredMeshGenerator::hash( eckit::Hash& h ) const {
     h.add( "Structured" );
     options.hash( h );
 }
@@ -190,9 +188,9 @@ void StructuredMeshGenerator::generate( const Grid& grid, const grid::Distributi
     ATLAS_TRACE();
 
     const StructuredGrid rg = StructuredGrid( grid );
-    if ( !rg ) throw eckit::BadCast( "Grid could not be cast to a Structured", Here() );
+    if ( !rg ) throw_Exception( "Grid could not be cast to a Structured", Here() );
 
-    ASSERT( !mesh.generated() );
+    ATLAS_ASSERT( !mesh.generated() );
 
     if ( grid.size() != idx_t( distribution.partition().size() ) ) {
         std::stringstream msg;
@@ -200,7 +198,7 @@ void StructuredMeshGenerator::generate( const Grid& grid, const grid::Distributi
             << ") different from "
                "number of points in grid distribution ("
             << distribution.partition().size() << ")";
-        throw eckit::AssertionFailed( msg.str(), Here() );
+        throw_AssertionFailed( msg.str(), Here() );
     }
 
     idx_t mypart = options.get<idx_t>( "part" );
@@ -350,8 +348,8 @@ We need to connect to next region
             Log::info() << "-------\n";
 #endif
 
-            // ASSERT(offset.at(latN)+ipN1 < parts.size());
-            // ASSERT(offset.at(latS)+ipS1 < parts.size());
+            // ATLAS_ASSERT(offset.at(latN)+ipN1 < parts.size());
+            // ATLAS_ASSERT(offset.at(latS)+ipS1 < parts.size());
 
             int pN1, pS1, pN2, pS2;
             if ( ipN1 != rg.nx( latN ) )
@@ -443,7 +441,7 @@ We need to connect to next region
                             }
                         }
                         else {
-                            throw eckit::Exception( "Should not be here", Here() );
+                            throw_Exception( "Should not be here", Here() );
                         }
                     }
                 }
@@ -469,7 +467,7 @@ We need to connect to next region
                     try_make_triangle_down = true;
                 }
                 else
-                    throw Exception( "Should not try to make a quadrilateral!", Here() );
+                    throw_Exception( "Should not try to make a quadrilateral!", Here() );
             }
                 // ------------------------------------------------
                 // END RULES
@@ -616,7 +614,7 @@ We need to connect to next region
                 // and ipN1=ipN1;
             }
             else {
-                throw eckit::SeriousBug( "Could not detect which element to create", Here() );
+                throw_Exception( "Could not detect which element to create", Here() );
             }
             ipN2 = std::min( endN, ipN1 + 1 );
             ipS2 = std::min( endS, ipS1 + 1 );
@@ -664,7 +662,7 @@ We need to connect to next region
 
     region.nnodes = nb_region_nodes;
     if ( region.nnodes == 0 ) {
-        throw Exception(
+        throw_Exception(
             "Trying to generate mesh with too many partitions. Reduce "
             "the number of partitions.",
             Here() );
@@ -691,7 +689,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
                                              const Region& region, Mesh& mesh ) const {
     ATLAS_TRACE();
 
-    ASSERT( !mesh.generated() );
+    ATLAS_ASSERT( !mesh.generated() );
 
     int mypart = options.get<size_t>( "part" );
     int nparts = options.get<size_t>( "nb_parts" );
@@ -723,7 +721,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
                     ( !has_point_at_south_pole && include_south_pole ? 1 : 0 );
 
     if ( three_dimensional && nparts != 1 )
-        throw BadParameter( "Cannot generate three_dimensional mesh in parallel", Here() );
+        throw_Exception( "Cannot generate three_dimensional mesh in parallel", Here() );
     int nnodes  = region.nnodes;
     int ntriags = region.ntriags;
     int nquads  = region.nquads;
@@ -749,7 +747,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
             if ( region.lat_end[jlat] >= rg.nx( jlat ) ) --nnodes;
         }
     }
-    ASSERT( nnodes >= nnewnodes );
+    ATLAS_ASSERT( nnodes >= nnewnodes );
 
 #if DEBUG_OUTPUT
     ATLAS_DEBUG_VAR( include_periodic_ghost_points );
@@ -811,7 +809,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
         idx_t node_number = 0;
         idx_t jnode       = 0;
         l                 = 0;
-        ASSERT( region.south >= region.north );
+        ATLAS_ASSERT( region.south >= region.north );
         for ( int jlat = region.north; jlat <= region.south; ++jlat ) {
             int ilat              = jlat - region.north;
             offset_loc.at( ilat ) = l;
@@ -861,7 +859,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
             node_numbering.at( jnode ) = jnode;
             ++jnode;
         }
-        ASSERT( jnode == nnodes );
+        ATLAS_ASSERT( jnode == nnodes );
     }
     else  // No renumbering
     {

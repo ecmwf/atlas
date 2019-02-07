@@ -14,12 +14,11 @@
 #include <limits>
 #include <memory>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/array.h"
 #include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
 #include "atlas/grid/detail/spacing/gaussian/N.h"
 #include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -221,7 +220,7 @@ void legpol_quadrature( const int kn, const double pfn[], double& pl, double& pw
         std::stringstream s;
         s << "Could not converge gaussian latitude to accuracy [" << zeps * 1000 << "]\n";
         s << "after " << itemax << " iterations. Consequently also failed to compute quadrature weight.";
-        throw eckit::Exception( s.str(), Here() );
+        throw_Exception( s.str(), Here() );
     }
 
     pl = zxn;

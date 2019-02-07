@@ -28,7 +28,7 @@
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/omp/omp.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/detail/Cache.h"
@@ -207,7 +207,7 @@ idx_t EdgeColumns::config_size( const eckit::Configuration& config ) const {
 
 array::DataType EdgeColumns::config_datatype( const eckit::Configuration& config ) const {
     array::DataType::kind_t kind;
-    if ( !config.get( "datatype", kind ) ) throw eckit::AssertionFailed( "datatype missing", Here() );
+    if ( !config.get( "datatype", kind ) ) throw_Exception( "datatype missing", Here() );
     return array::DataType( kind );
 }
 
@@ -270,7 +270,7 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config )
         mesh::actions::build_edges_parallel_fields( mesh_ );
         nb_edges_ = get_nb_edges_from_metadata();
     }
-    ASSERT( nb_edges_ );
+    ATLAS_ASSERT( nb_edges_ );
 }
 
 EdgeColumns::~EdgeColumns() {}
@@ -322,7 +322,7 @@ void EdgeColumns::haloExchange( const FieldSet& fieldset, bool on_device ) const
             halo_exchange().execute<double, 2>( field.array(), on_device );
         }
         else
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
         field.set_dirty( false );
     }
 }
@@ -338,7 +338,7 @@ const parallel::HaloExchange& EdgeColumns::halo_exchange() const {
 }
 
 void EdgeColumns::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const {
-    ASSERT( local_fieldset.size() == global_fieldset.size() );
+    ATLAS_ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& loc      = local_fieldset[f];
@@ -367,7 +367,7 @@ void EdgeColumns::gather( const FieldSet& local_fieldset, FieldSet& global_field
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
         else
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
 }
 
@@ -390,7 +390,7 @@ const parallel::GatherScatter& EdgeColumns::scatter() const {
 }
 
 void EdgeColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const {
-    ASSERT( local_fieldset.size() == global_fieldset.size() );
+    ATLAS_ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& glb      = global_fieldset[f];
@@ -420,7 +420,7 @@ void EdgeColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fiel
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
         else
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
 
         glb.metadata().broadcast( loc.metadata(), root );
         loc.metadata().set( "global", false );
@@ -486,7 +486,7 @@ std::string EdgeColumns::checksum( const FieldSet& fieldset ) const {
                 md5 << checksum_2d_field<double>( checksum(), field );
         }
         else
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
     return md5;
 }
@@ -511,36 +511,37 @@ extern "C" {
 //------------------------------------------------------------------------------
 
 EdgeColumns* atlas__fs__EdgeColumns__new( Mesh::Implementation* mesh, const eckit::Configuration* config ) {
-    EdgeColumns* edges( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( mesh ); Mesh m( mesh ); edges = new EdgeColumns( m, *config ); );
-    return edges;
+    ATLAS_ASSERT( mesh != nullptr );
+    Mesh m( mesh );
+    return new EdgeColumns( m, *config );
 }
 
 //------------------------------------------------------------------------------
 
 void atlas__fs__EdgeColumns__delete( EdgeColumns* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); delete ( This ); );
+    ATLAS_ASSERT( This != nullptr );
+    delete ( This );
 }
 
 //------------------------------------------------------------------------------
 
 int atlas__fs__EdgeColumns__nb_edges( const EdgeColumns* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nb_edges(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    return This->nb_edges();
 }
 
 //------------------------------------------------------------------------------
 
 Mesh::Implementation* atlas__fs__EdgeColumns__mesh( EdgeColumns* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->mesh().get(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    return This->mesh().get();
 }
 
 //------------------------------------------------------------------------------
 
 mesh::Edges* atlas__fs__EdgeColumns__edges( EdgeColumns* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->edges(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    return &This->edges();
 }
 
 //------------------------------------------------------------------------------
@@ -549,13 +550,16 @@ using field::FieldImpl;
 using field::FieldSetImpl;
 
 field::FieldImpl* atlas__fs__EdgeColumns__create_field( const EdgeColumns* This, const eckit::Configuration* options ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( options ); FieldImpl * field; {
+    ATLAS_ASSERT( This );
+    ATLAS_ASSERT( options );
+    FieldImpl* field;
+    {
         Field f = This->createField( *options );
         field   = f.get();
         field->attach();
-    } field->detach();
-                          return field );
-    return 0;
+    }
+    field->detach();
+    return field;
 }
 
 //------------------------------------------------------------------------------
@@ -563,8 +567,8 @@ field::FieldImpl* atlas__fs__EdgeColumns__create_field( const EdgeColumns* This,
 field::FieldImpl* atlas__fs__EdgeColumns__create_field_template( const EdgeColumns* This,
                                                                  const field::FieldImpl* field_template,
                                                                  const eckit::Configuration* options ) {
-    ASSERT( This );
-    ASSERT( options );
+    ATLAS_ASSERT( This );
+    ATLAS_ASSERT( options );
     FieldImpl* field;
     {
         Field f = This->createField( Field( field_template ), *options );
@@ -578,91 +582,121 @@ field::FieldImpl* atlas__fs__EdgeColumns__create_field_template( const EdgeColum
 // -----------------------------------------------------------------------------------
 
 void atlas__fs__EdgeColumns__halo_exchange_fieldset( const EdgeColumns* This, field::FieldSetImpl* fieldset ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( fieldset ); FieldSet f( fieldset ); This->haloExchange( f ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( fieldset != nullptr );
+    FieldSet f( fieldset );
+    This->haloExchange( f );
 }
 
 // -----------------------------------------------------------------------------------
 
 void atlas__fs__EdgeColumns__halo_exchange_field( const EdgeColumns* This, field::FieldImpl* field ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( field ); Field f( field ); This->haloExchange( f ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( field != nullptr );
+    Field f( field );
+    This->haloExchange( f );
 }
 
 // -----------------------------------------------------------------------------------
 
 const parallel::HaloExchange* atlas__fs__EdgeColumns__get_halo_exchange( const EdgeColumns* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->halo_exchange(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    return &This->halo_exchange();
 }
 
 // -----------------------------------------------------------------------------------
 
 void atlas__fs__EdgeColumns__gather_fieldset( const EdgeColumns* This, const field::FieldSetImpl* local,
                                               field::FieldSetImpl* global ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( local ); ASSERT( global ); const FieldSet l( local );
-                          FieldSet g( global ); This->gather( l, g ); );
+    ATLAS_ASSERT( This );
+    ATLAS_ASSERT( local );
+    ATLAS_ASSERT( global );
+    const FieldSet l( local );
+    FieldSet g( global );
+    This->gather( l, g );
 }
 
 // -----------------------------------------------------------------------------------
 
 void atlas__fs__EdgeColumns__gather_field( const EdgeColumns* This, const field::FieldImpl* local,
                                            field::FieldImpl* global ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( local ); ASSERT( global ); const Field l( local ); Field g( global );
-                          This->gather( l, g ); );
+    ATLAS_ASSERT( This );
+    ATLAS_ASSERT( local );
+    ATLAS_ASSERT( global );
+    const Field l( local );
+    Field g( global );
+    This->gather( l, g );
 }
 
 // -----------------------------------------------------------------------------------
 
 const parallel::GatherScatter* atlas__fs__EdgeColumns__get_gather( const EdgeColumns* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->gather(); );
-    return 0;
+    ATLAS_ASSERT( This );
+    return &This->gather();
 }
 
 // -----------------------------------------------------------------------------------
 
 const parallel::GatherScatter* atlas__fs__EdgeColumns__get_scatter( const EdgeColumns* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->scatter(); );
-    return 0;
+    ATLAS_ASSERT( This );
+    return &This->scatter();
 }
 
 // -----------------------------------------------------------------------------------
 
 void atlas__fs__EdgeColumns__scatter_fieldset( const EdgeColumns* This, const field::FieldSetImpl* global,
                                                field::FieldSetImpl* local ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( local ); ASSERT( global ); const FieldSet g( global );
-                          FieldSet l( local ); This->scatter( g, l ); );
+    ATLAS_ASSERT( This );
+    ATLAS_ASSERT( local );
+    ATLAS_ASSERT( global );
+    const FieldSet g( global );
+    FieldSet l( local );
+    This->scatter( g, l );
 }
 
 // -----------------------------------------------------------------------------------
 
 void atlas__fs__EdgeColumns__scatter_field( const EdgeColumns* This, const field::FieldImpl* global,
                                             field::FieldImpl* local ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( global ); ASSERT( local ); const Field g( global ); Field l( local );
-                          This->scatter( g, l ); );
+    ATLAS_ASSERT( This );
+    ATLAS_ASSERT( global );
+    ATLAS_ASSERT( local );
+    const Field g( global );
+    Field l( local );
+    This->scatter( g, l );
 }
 
 // -----------------------------------------------------------------------------------
 
 const parallel::Checksum* atlas__fs__EdgeColumns__get_checksum( const EdgeColumns* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->checksum(); );
-    return 0;
+    ATLAS_ASSERT( This );
+    return &This->checksum();
 }
 
 // -----------------------------------------------------------------------------------
 
 void atlas__fs__EdgeColumns__checksum_fieldset( const EdgeColumns* This, const field::FieldSetImpl* fieldset,
                                                 char*& checksum, int& size, int& allocated ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( fieldset ); std::string checksum_str( This->checksum( fieldset ) );
-                          size = checksum_str.size(); checksum = new char[size + 1]; allocated = true;
-                          strcpy( checksum, checksum_str.c_str() ); );
+    ATLAS_ASSERT( This );
+    ATLAS_ASSERT( fieldset );
+    std::string checksum_str( This->checksum( fieldset ) );
+    size      = checksum_str.size();
+    checksum  = new char[size + 1];
+    allocated = true;
+    strcpy( checksum, checksum_str.c_str() );
 }
 
 // -----------------------------------------------------------------------------------
 
 void atlas__fs__EdgeColumns__checksum_field( const EdgeColumns* This, const field::FieldImpl* field, char*& checksum,
                                              int& size, int& allocated ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( field ); std::string checksum_str( This->checksum( field ) );
-                          size = checksum_str.size(); checksum = new char[size + 1]; allocated = true;
-                          strcpy( checksum, checksum_str.c_str() ); );
+    ATLAS_ASSERT( This );
+    ATLAS_ASSERT( field );
+    std::string checksum_str( This->checksum( field ) );
+    size      = checksum_str.size();
+    checksum  = new char[size + 1];
+    allocated = true;
+    strcpy( checksum, checksum_str.c_str() );
 }
 }
 

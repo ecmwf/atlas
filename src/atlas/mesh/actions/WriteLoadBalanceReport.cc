@@ -20,7 +20,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 
 using atlas::mesh::IsGhostNode;
 
@@ -209,7 +209,9 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs ) {
 
 // C wrapper interfaces to C++ routines
 void atlas__write_load_balance_report( Mesh::Implementation* mesh, char* filename ) {
-    ATLAS_ERROR_HANDLING( Mesh m( mesh ); write_load_balance_report( m, std::string( filename ) ); );
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    Mesh m( mesh );
+    write_load_balance_report( m, std::string( filename ) );
 }
 
 // ------------------------------------------------------------------

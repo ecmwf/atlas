@@ -13,8 +13,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -26,7 +24,7 @@
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -268,16 +266,16 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
             ridx( jnode ) = jnode;
         }
         else {
-            ASSERT( jnode < part.shape( 0 ) );
+            ATLAS_ASSERT( jnode < part.shape( 0 ) );
             if ( part( jnode ) >= static_cast<int>( proc.size() ) ) {
                 std::stringstream msg;
                 msg << "Assertion [part(" << jnode << ") < proc.size()] failed\n"
                     << "part(" << jnode << ") = " << part( jnode ) << "\n"
                     << "proc.size() = " << proc.size();
-                eckit::AssertionFailed( msg.str(), Here() );
+                throw_AssertionFailed( msg.str(), Here() );
             }
-            ASSERT( part( jnode ) < (idx_t)proc.size() );
-            ASSERT( (size_t)proc[part( jnode )] < send_needed.size() );
+            ATLAS_ASSERT( part( jnode ) < (idx_t)proc.size() );
+            ATLAS_ASSERT( (size_t)proc[part( jnode )] < send_needed.size() );
             send_needed[proc[part( jnode )]].push_back( uid );
             send_needed[proc[part( jnode )]].push_back( jnode );
             sendcnt++;
@@ -308,7 +306,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
                 msg << "[" << mpi::comm().rank() << "] "
                     << "Node requested by rank [" << jpart << "] with uid [" << uid
                     << "] that should be owned is not found";
-                throw eckit::SeriousBug( msg.str(), Here() );
+                throw_Exception( msg.str(), Here() );
             }
         }
     }
@@ -412,8 +410,8 @@ Field& build_edges_partition( Mesh& mesh ) {
 
     // should be unit-test
     {
-        ASSERT( util::unique_lonlat( 360., 0., transform_periodic_east ) == util::unique_lonlat( 0., 0. ) );
-        ASSERT( util::unique_lonlat( 0., 0., transform_periodic_west ) == util::unique_lonlat( 360., 0. ) );
+        ATLAS_ASSERT( util::unique_lonlat( 360., 0., transform_periodic_east ) == util::unique_lonlat( 0., 0. ) );
+        ATLAS_ASSERT( util::unique_lonlat( 0., 0., transform_periodic_west ) == util::unique_lonlat( 360., 0. ) );
     }
 
 
@@ -462,7 +460,7 @@ Field& build_edges_partition( Mesh& mesh ) {
             // Don't attempt to change p
         }
         else if ( elem1 == missing ) {
-            NOTIMP;
+            ATLAS_NOTIMPLEMENTED;
         }
         else if ( elem2 == missing ) {
             if ( pn1 == pn2 ) { p = pn1; }
@@ -513,7 +511,7 @@ Field& build_edges_partition( Mesh& mesh ) {
                 msg << "[" << eckit::mpi::comm().rank() << "] " << EDGE( jedge )
                     << " has nodes and elements of different rank: elem1[p" << elem_part( elem1 ) << "] elem2[p"
                     << elem_part( elem2 ) << "]";
-                throw eckit::SeriousBug( msg.str(), Here() );
+                throw_Exception( msg.str(), Here() );
             }
         }
         edge_part( jedge ) = p;
@@ -619,7 +617,7 @@ Field& build_edges_partition( Mesh& mesh ) {
                         std::stringstream msg;
                         msg << "[" << eckit::mpi::comm().rank() << "] " << EDGE( iedge )
                             << " has nodes and elements of different rank: elem1[p" << pe1 << "] elem2[p" << pe2 << "]";
-                        throw eckit::SeriousBug( msg.str(), Here() );
+                        throw_Exception( msg.str(), Here() );
                     }
                 }
                 edge_part( iedge ) = ped;
@@ -685,7 +683,7 @@ Field& build_edges_partition( Mesh& mesh ) {
         }
     }
     mpi::comm().allReduceInPlace( insane, eckit::mpi::max() );
-    if ( insane && eckit::mpi::comm().rank() == 0 ) throw eckit::Exception( "Sanity check failed", Here() );
+    if ( insane && eckit::mpi::comm().rank() == 0 ) throw_Exception( "Sanity check failed", Here() );
 
     //#ifdef DEBUGGING_PARFIELDS
     //        if( OWNED_EDGE(jedge) )
@@ -826,7 +824,7 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
                 msg << " that should be owned by " << mpi::comm().rank()
                     << " is not found. This could be because no "
                        "halo was built.";
-                // throw eckit::SeriousBug(msg.str(),Here());
+                // throw_Exception(msg.str(),Here());
                 Log::warning() << msg.str() << " @ " << Here() << std::endl;
             }
         }
@@ -951,18 +949,24 @@ Field& build_edges_global_idx( Mesh& mesh ) {
 // C wrapper interfaces to C++ routines
 
 void atlas__build_parallel_fields( Mesh::Implementation* mesh ) {
-    ATLAS_ERROR_HANDLING( Mesh m( mesh ); build_parallel_fields( m ); );
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    Mesh m( mesh );
+    build_parallel_fields( m );
 }
 void atlas__build_nodes_parallel_fields( mesh::Nodes* nodes ) {
-    ATLAS_ERROR_HANDLING( build_nodes_parallel_fields( *nodes ) );
+    ATLAS_ASSERT( nodes != nullptr, "Cannot access uninitialised atlas_mesh_Nodes" );
+    build_nodes_parallel_fields( *nodes );
 }
 
 void atlas__build_edges_parallel_fields( Mesh::Implementation* mesh ) {
-    ATLAS_ERROR_HANDLING( Mesh m( mesh ); build_edges_parallel_fields( m ); );
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    Mesh m( mesh );
+    build_edges_parallel_fields( m );
 }
 
 void atlas__renumber_nodes_glb_idx( mesh::Nodes* nodes ) {
-    ATLAS_ERROR_HANDLING( renumber_nodes_glb_idx( *nodes ) );
+    ATLAS_ASSERT( nodes != nullptr, "Cannot access uninitialised atlas_mesh_Nodes" );
+    renumber_nodes_glb_idx( *nodes );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

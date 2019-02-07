@@ -19,7 +19,7 @@
 #include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/ifs/TransIFS.h"
 
@@ -73,7 +73,7 @@ public:
     int ngpblks() const {
         int _ngptot = trans_->ngptot;
         int _nproma = nproma();
-        ASSERT( _ngptot % _nproma == 0 );  // assert _ngptot is divisable by nproma
+        ATLAS_ASSERT( _ngptot % _nproma == 0 );  // assert _ngptot is divisable by nproma
         return _ngptot / _nproma;
     }
 
@@ -88,14 +88,14 @@ std::string fieldset_functionspace( const FieldSet& fields ) {
     for ( idx_t jfld = 0; jfld < fields.size(); ++jfld ) {
         if ( functionspace == "undefined" ) functionspace = fields[jfld].functionspace().type();
         if ( fields[jfld].functionspace().type() != functionspace ) {
-            throw eckit::SeriousBug( ": fielset has fields with different functionspaces", Here() );
+            throw_Exception( ": fielset has fields with different functionspaces", Here() );
         }
     }
     return functionspace;
 }
 void assert_spectral_functionspace( const FieldSet& fields ) {
     for ( idx_t jfld = 0; jfld < fields.size(); ++jfld ) {
-        ASSERT( functionspace::Spectral( fields[jfld].functionspace() ) );
+        ATLAS_ASSERT( functionspace::Spectral( fields[jfld].functionspace() ) );
     }
 }
 
@@ -104,7 +104,7 @@ void trans_check( const int code, const char* msg, const eckit::CodeLocation& lo
         std::stringstream errmsg;
         errmsg << "atlas::trans ERROR: " << msg << " failed: \n";
         errmsg << ::trans_error_msg( code );
-        throw eckit::Exception( errmsg.str(), location );
+        throw_Exception( errmsg.str(), location );
     }
 }
 #define TRANS_CHECK( CALL ) trans_check( CALL, #CALL, Here() )
@@ -131,7 +131,7 @@ static int compute_nfld( const FieldSet& f ) {
 }  // namespace
 
 void TransIFS::dirtrans( const Field& gpfield, Field& spfield, const eckit::Configuration& config ) const {
-    ASSERT( functionspace::Spectral( spfield.functionspace() ) );
+    ATLAS_ASSERT( functionspace::Spectral( spfield.functionspace() ) );
     if ( functionspace::StructuredColumns( gpfield.functionspace() ) ) {
         __dirtrans( functionspace::StructuredColumns( gpfield.functionspace() ), gpfield,
                     functionspace::Spectral( spfield.functionspace() ), spfield, config );
@@ -141,7 +141,7 @@ void TransIFS::dirtrans( const Field& gpfield, Field& spfield, const eckit::Conf
                     functionspace::Spectral( spfield.functionspace() ), spfield, config );
     }
     else {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 }
 
@@ -158,12 +158,12 @@ void TransIFS::dirtrans( const FieldSet& gpfields, FieldSet& spfields, const eck
                     spfields, config );
     }
     else {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 }
 
 void TransIFS::invtrans( const Field& spfield, Field& gpfield, const eckit::Configuration& config ) const {
-    ASSERT( Spectral( spfield.functionspace() ) );
+    ATLAS_ASSERT( Spectral( spfield.functionspace() ) );
     if ( StructuredColumns( gpfield.functionspace() ) ) {
         __invtrans( Spectral( spfield.functionspace() ), spfield, StructuredColumns( gpfield.functionspace() ), gpfield,
                     config );
@@ -173,7 +173,7 @@ void TransIFS::invtrans( const Field& spfield, Field& gpfield, const eckit::Conf
                     config );
     }
     else {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 }
 
@@ -190,15 +190,15 @@ void TransIFS::invtrans( const FieldSet& spfields, FieldSet& gpfields, const eck
                     gpfields, config );
     }
     else {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 }
 
 // --------------------------------------------------------------------------------------------
 
 void TransIFS::invtrans_grad( const Field& spfield, Field& gradfield, const eckit::Configuration& config ) const {
-    ASSERT( Spectral( spfield.functionspace() ) );
-    ASSERT( NodeColumns( gradfield.functionspace() ) );
+    ATLAS_ASSERT( Spectral( spfield.functionspace() ) );
+    ATLAS_ASSERT( NodeColumns( gradfield.functionspace() ) );
     __invtrans_grad( Spectral( spfield.functionspace() ), spfield, NodeColumns( gradfield.functionspace() ), gradfield,
                      config );
 }
@@ -213,24 +213,24 @@ void TransIFS::invtrans_grad( const FieldSet& spfields, FieldSet& gradfields,
                          NodeColumns( gradfields[0].functionspace() ), gradfields, config );
     }
     else {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 }
 
 void TransIFS::dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Field& spdiv,
                                      const eckit::Configuration& config ) const {
-    ASSERT( Spectral( spvor.functionspace() ) );
-    ASSERT( Spectral( spdiv.functionspace() ) );
-    ASSERT( NodeColumns( gpwind.functionspace() ) );
+    ATLAS_ASSERT( Spectral( spvor.functionspace() ) );
+    ATLAS_ASSERT( Spectral( spdiv.functionspace() ) );
+    ATLAS_ASSERT( NodeColumns( gpwind.functionspace() ) );
     __dirtrans_wind2vordiv( NodeColumns( gpwind.functionspace() ), gpwind, Spectral( spvor.functionspace() ), spvor,
                             spdiv, config );
 }
 
 void TransIFS::invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
                                      const eckit::Configuration& config ) const {
-    ASSERT( Spectral( spvor.functionspace() ) );
-    ASSERT( Spectral( spdiv.functionspace() ) );
-    ASSERT( NodeColumns( gpwind.functionspace() ) );
+    ATLAS_ASSERT( Spectral( spvor.functionspace() ) );
+    ATLAS_ASSERT( Spectral( spdiv.functionspace() ) );
+    ATLAS_ASSERT( NodeColumns( gpwind.functionspace() ) );
     __invtrans_vordiv2wind( Spectral( spvor.functionspace() ), spvor, spdiv, NodeColumns( gpwind.functionspace() ),
                             gpwind, config );
 }
@@ -332,7 +332,7 @@ struct PackNodeColumns {
                 break;
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
-                NOTIMP;
+                ATLAS_NOTIMPLEMENTED;
                 //break;
         }
     }
@@ -396,7 +396,7 @@ struct PackStructuredColumns {
                 break;
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
-                NOTIMP;
+                ATLAS_NOTIMPLEMENTED;
                 //break;
         }
     }
@@ -439,7 +439,7 @@ struct PackSpectral {
                 break;
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
-                NOTIMP;
+                ATLAS_NOTIMPLEMENTED;
                 //break;
         }
     }
@@ -489,7 +489,7 @@ struct UnpackNodeColumns {
                 break;
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
-                NOTIMP;
+                ATLAS_NOTIMPLEMENTED;
                 //break;
         }
     }
@@ -553,7 +553,7 @@ struct UnpackStructuredColumns {
                 break;
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
-                NOTIMP;
+                ATLAS_NOTIMPLEMENTED;
                 //break;
         }
     }
@@ -596,7 +596,7 @@ struct UnpackSpectral {
                 break;
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
-                NOTIMP;
+                ATLAS_NOTIMPLEMENTED;
                 //break;
         }
     }
@@ -634,11 +634,11 @@ void TransIFS::assertCompatibleDistributions( const FunctionSpace& gp, const Fun
     if ( gp_dist != "trans" &&    // distribution computed by TransPartitioner
          gp_dist != "serial" &&   // serial distribution always works
          gp_dist != "custom" ) {  // trust user that he knows what he is doing
-        throw eckit::Exception( gp.type() + " functionspace has unsupported distribution (" + gp_dist +
-                                    ") "
-                                    "to do spectral transforms. Please "
-                                    "partition grid with TransPartitioner",
-                                Here() );
+        throw_Exception( gp.type() + " functionspace has unsupported distribution (" + gp_dist +
+                             ") "
+                             "to do spectral transforms. Please "
+                             "partition grid with TransPartitioner",
+                         Here() );
     }
 }
 
@@ -646,15 +646,15 @@ TransIFS::TransIFS( const Cache& cache, const Grid& grid, const long truncation,
     grid_( grid ),
     cache_( cache.legendre().data() ),
     cachesize_( cache.legendre().size() ) {
-    ASSERT( grid.domain().global() );
-    ASSERT( not grid.projection() );
+    ATLAS_ASSERT( grid.domain().global() );
+    ATLAS_ASSERT( not grid.projection() );
     ctor( grid, truncation, config );
 }
 
 TransIFS::TransIFS( const Grid& grid, const long truncation, const eckit::Configuration& config ) :
     TransIFS( Cache(), grid, truncation, config ) {
-    ASSERT( grid.domain().global() );
-    ASSERT( not grid.projection() );
+    ATLAS_ASSERT( grid.domain().global() );
+    ATLAS_ASSERT( not grid.projection() );
 }
 
 TransIFS::TransIFS( const Grid& grid, const eckit::Configuration& config ) :
@@ -664,13 +664,13 @@ TransIFS::TransIFS( const Grid& grid, const eckit::Configuration& config ) :
 TransIFS::TransIFS( const Grid& grid, const Domain& domain, const long truncation,
                     const eckit::Configuration& config ) :
     TransIFS( Cache(), grid, truncation, config ) {
-    ASSERT( domain.global() );
+    ATLAS_ASSERT( domain.global() );
 }
 
 TransIFS::TransIFS( const Cache& cache, const Grid& grid, const Domain& domain, const long truncation,
                     const eckit::Configuration& config ) :
     TransIFS( cache, grid, truncation, config ) {
-    ASSERT( domain.global() );
+    ATLAS_ASSERT( domain.global() );
 }
 
 TransIFS::~TransIFS() {}
@@ -691,7 +691,7 @@ void TransIFS::ctor( const Grid& grid, long truncation, const eckit::Configurati
             return;
         }
     }
-    throw eckit::NotImplemented( "Grid type not supported for Spectral Transforms", Here() );
+    throw_NotImplemented( "Grid type not supported for Spectral Transforms", Here() );
 }
 
 void TransIFS::ctor_spectral_only( long truncation, const eckit::Configuration& ) {
@@ -722,7 +722,7 @@ void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, con
         if ( not file.exists() ) {
             std::stringstream msg;
             msg << "File " << file << " doesn't exist";
-            throw eckit::CantOpenFile( msg.str(), Here() );
+            throw_CantOpenFile( msg.str(), Here() );
         }
         TRANS_CHECK(::trans_set_read( trans_.get(), file.asString().c_str() ) );
     }
@@ -750,7 +750,7 @@ void TransIFS::ctor_lonlat( const long nlon, const long nlat, long truncation, c
         if ( not file.exists() ) {
             std::stringstream msg;
             msg << "File " << file << " doesn't exist";
-            throw eckit::CantOpenFile( msg.str(), Here() );
+            throw_CantOpenFile( msg.str(), Here() );
         }
         TRANS_CHECK(::trans_set_read( trans_.get(), file.asString().c_str() ) );
     }
@@ -788,7 +788,7 @@ void TransIFS::__dirtrans( const functionspace::NodeColumns& gp, const FieldSet&
     const int trans_sp_nfld = compute_nfld( spfields );
 
     if ( nfld != trans_sp_nfld ) {
-        throw eckit::SeriousBug( "dirtrans: different number of gridpoint fields than spectral fields", Here() );
+        throw_Exception( "dirtrans: different number of gridpoint fields than spectral fields", Here() );
     }
 
     // Arrays Trans expects
@@ -825,16 +825,16 @@ void TransIFS::__dirtrans( const functionspace::NodeColumns& gp, const FieldSet&
 
 void TransIFS::__dirtrans( const StructuredColumns& gp, const Field& gpfield, const Spectral& sp, Field& spfield,
                            const eckit::Configuration& ) const {
-    ASSERT( gpfield.functionspace() == 0 || functionspace::StructuredColumns( gpfield.functionspace() ) );
-    ASSERT( spfield.functionspace() == 0 || functionspace::Spectral( spfield.functionspace() ) );
+    ATLAS_ASSERT( gpfield.functionspace() == 0 || functionspace::StructuredColumns( gpfield.functionspace() ) );
+    ATLAS_ASSERT( spfield.functionspace() == 0 || functionspace::Spectral( spfield.functionspace() ) );
 
     assertCompatibleDistributions( gp, sp );
 
     if ( compute_nfld( gpfield ) != compute_nfld( spfield ) ) {
-        throw eckit::SeriousBug( "dirtrans: different number of gridpoint fields than spectral fields", Here() );
+        throw_Exception( "dirtrans: different number of gridpoint fields than spectral fields", Here() );
     }
     if ( (int)gpfield.shape( 0 ) != ngptot() ) {
-        throw eckit::SeriousBug( "dirtrans: slowest moving index must be ngptot", Here() );
+        throw_Exception( "dirtrans: slowest moving index must be ngptot", Here() );
     }
     const int nfld = compute_nfld( gpfield );
 
@@ -876,13 +876,13 @@ void TransIFS::__dirtrans( const StructuredColumns& gp, const FieldSet& gpfields
     const idx_t nfld = compute_nfld( gpfields );
     for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld ) {
         const Field& f = gpfields[jfld];
-        ASSERT( f.functionspace() == 0 || functionspace::StructuredColumns( f.functionspace() ) );
+        ATLAS_ASSERT( f.functionspace() == 0 || functionspace::StructuredColumns( f.functionspace() ) );
     }
 
     const int trans_sp_nfld = compute_nfld( spfields );
 
     if ( nfld != trans_sp_nfld ) {
-        throw eckit::SeriousBug( "dirtrans: different number of gridpoint fields than spectral fields", Here() );
+        throw_Exception( "dirtrans: different number of gridpoint fields than spectral fields", Here() );
     }
     // Arrays Trans expects
     std::vector<double> rgp( nfld * ngptot() );
@@ -935,7 +935,7 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, co
     const int nfld               = compute_nfld( spfields );
 
     if ( nb_gridpoint_field != 2 * nfld )  // factor 2 because N-S and E-W derivatives
-        throw eckit::SeriousBug(
+        throw_Exception(
             "invtrans_grad: different number of gridpoint "
             "fields than spectral fields",
             Here() );
@@ -984,7 +984,7 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, co
                                 ++n;
                             }
                         }
-                        ASSERT( n == ngptot() );
+                        ATLAS_ASSERT( n == ngptot() );
                     }
                 }
                 else {
@@ -996,7 +996,7 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, co
                             ++n;
                         }
                     }
-                    ASSERT( n == ngptot() );
+                    ATLAS_ASSERT( n == ngptot() );
                 }
                 ++f;
             }
@@ -1027,7 +1027,7 @@ void TransIFS::__invtrans( const Spectral& sp, const FieldSet& spfields, const f
     const int nb_spectral_fields = compute_nfld( spfields );
 
     if ( nfld != nb_spectral_fields )
-        throw eckit::SeriousBug( "invtrans: different number of gridpoint fields than spectral fields", Here() );
+        throw_Exception( "invtrans: different number of gridpoint fields than spectral fields", Here() );
 
     // Arrays Trans expects
     std::vector<double> rgp( nfld * ngptot() );
@@ -1066,13 +1066,13 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const Field& spfie
                            const eckit::Configuration& config ) const {
     assertCompatibleDistributions( gp, sp );
 
-    ASSERT( gpfield.functionspace() == 0 || functionspace::StructuredColumns( gpfield.functionspace() ) );
-    ASSERT( spfield.functionspace() == 0 || functionspace::Spectral( spfield.functionspace() ) );
+    ATLAS_ASSERT( gpfield.functionspace() == 0 || functionspace::StructuredColumns( gpfield.functionspace() ) );
+    ATLAS_ASSERT( spfield.functionspace() == 0 || functionspace::Spectral( spfield.functionspace() ) );
     if ( compute_nfld( gpfield ) != compute_nfld( spfield ) ) {
-        throw eckit::SeriousBug( "dirtrans: different number of gridpoint fields than spectral fields", Here() );
+        throw_Exception( "dirtrans: different number of gridpoint fields than spectral fields", Here() );
     }
     if ( (int)gpfield.shape( 0 ) != ngptot() ) {
-        throw eckit::SeriousBug( "dirtrans: slowest moving index must be ngptot", Here() );
+        throw_Exception( "dirtrans: slowest moving index must be ngptot", Here() );
     }
     const int nfld = compute_nfld( gpfield );
 
@@ -1117,7 +1117,7 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& sp
     const int nfld = compute_nfld( gpfields );
     for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld ) {
         const Field& f = gpfields[jfld];
-        ASSERT( f.functionspace() == 0 || functionspace::StructuredColumns( f.functionspace() ) );
+        ATLAS_ASSERT( f.functionspace() == 0 || functionspace::StructuredColumns( f.functionspace() ) );
     }
 
     const int nb_spectral_fields = compute_nfld( spfields );
@@ -1126,7 +1126,7 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& sp
         std::stringstream msg;
         msg << "invtrans: different number of gridpoint fields than spectral fields"
             << "[ " << nfld << " != " << nb_spectral_fields << " ]";
-        throw eckit::SeriousBug( msg.str(), Here() );
+        throw_Exception( msg.str(), Here() );
     }
 
     // Arrays Trans expects
@@ -1169,23 +1169,23 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
     // Count total number of fields and do sanity checks
     const size_t nfld = compute_nfld( spvor );
     if ( spdiv.shape( 0 ) != spvor.shape( 0 ) )
-        throw eckit::SeriousBug( "invtrans: vorticity not compatible with divergence.", Here() );
+        throw_Exception( "invtrans: vorticity not compatible with divergence.", Here() );
     if ( spdiv.shape( 1 ) != spvor.shape( 1 ) )
-        throw eckit::SeriousBug( "invtrans: vorticity not compatible with divergence.", Here() );
+        throw_Exception( "invtrans: vorticity not compatible with divergence.", Here() );
     const size_t nwindfld = compute_nfld( gpwind );
     if ( nwindfld != 2 * nfld && nwindfld != 3 * nfld )
-        throw eckit::SeriousBug( "dirtrans: wind field is not compatible with vorticity, divergence.", Here() );
+        throw_Exception( "dirtrans: wind field is not compatible with vorticity, divergence.", Here() );
 
     if ( spdiv.shape( 0 ) != nspec2() ) {
         std::stringstream msg;
         msg << "dirtrans: Spectral vorticity and divergence have wrong dimension: "
                "nspec2 "
             << spdiv.shape( 0 ) << " should be " << nspec2();
-        throw eckit::SeriousBug( msg.str(), Here() );
+        throw_Exception( msg.str(), Here() );
     }
 
-    if ( spvor.size() == 0 ) throw eckit::SeriousBug( "dirtrans: spectral vorticity field is empty." );
-    if ( spdiv.size() == 0 ) throw eckit::SeriousBug( "dirtrans: spectral divergence field is empty." );
+    if ( spvor.size() == 0 ) throw_Exception( "dirtrans: spectral vorticity field is empty." );
+    if ( spdiv.size() == 0 ) throw_Exception( "dirtrans: spectral divergence field is empty." );
 
     // Arrays Trans expects
     std::vector<double> rgp( 2 * nfld * ngptot() );
@@ -1210,8 +1210,8 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
         transform.rspvor              = rspvor.data();
         transform.rspdiv              = rspdiv.data();
 
-        ASSERT( transform.rspvor );
-        ASSERT( transform.rspdiv );
+        ATLAS_ASSERT( transform.rspvor );
+        ATLAS_ASSERT( transform.rspdiv );
         TRANS_CHECK(::trans_dirtrans( &transform ) );
     }
 
@@ -1224,31 +1224,31 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
 
 void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, const Field& spdiv,
                                        const functionspace::NodeColumns& gp, Field& gpwind,
-                                       const eckit::Configuration& config ) const {
+                                       const eckit::Configuration& ) const {
     assertCompatibleDistributions( gp, sp );
 
     // Count total number of fields and do sanity checks
     const int nfld = compute_nfld( spvor );
     if ( spdiv.shape( 0 ) != spvor.shape( 0 ) )
-        throw eckit::SeriousBug( "invtrans: vorticity not compatible with divergence.", Here() );
+        throw_Exception( "invtrans: vorticity not compatible with divergence.", Here() );
     if ( spdiv.shape( 1 ) != spvor.shape( 1 ) )
-        throw eckit::SeriousBug( "invtrans: vorticity not compatible with divergence.", Here() );
+        throw_Exception( "invtrans: vorticity not compatible with divergence.", Here() );
     const int nwindfld = compute_nfld( gpwind );
     if ( nwindfld != 2 * nfld && nwindfld != 3 * nfld )
-        throw eckit::SeriousBug( "invtrans: wind field is not compatible with vorticity, divergence.", Here() );
+        throw_Exception( "invtrans: wind field is not compatible with vorticity, divergence.", Here() );
 
     if ( spdiv.shape( 0 ) != nspec2() ) {
         std::stringstream msg;
         msg << "invtrans: Spectral vorticity and divergence have wrong dimension: "
                "nspec2 "
             << spdiv.shape( 0 ) << " should be " << nspec2();
-        throw eckit::SeriousBug( msg.str(), Here() );
+        throw_Exception( msg.str(), Here() );
     }
 
-    ASSERT( spvor.rank() == 2 );
-    ASSERT( spdiv.rank() == 2 );
-    if ( spvor.size() == 0 ) throw eckit::SeriousBug( "invtrans: spectral vorticity field is empty." );
-    if ( spdiv.size() == 0 ) throw eckit::SeriousBug( "invtrans: spectral divergence field is empty." );
+    ATLAS_ASSERT( spvor.rank() == 2 );
+    ATLAS_ASSERT( spdiv.rank() == 2 );
+    if ( spvor.size() == 0 ) throw_Exception( "invtrans: spectral vorticity field is empty." );
+    if ( spdiv.size() == 0 ) throw_Exception( "invtrans: spectral divergence field is empty." );
 
     // Arrays Trans expects
     std::vector<double> rgp( 2 * nfld * ngptot() );
@@ -1272,8 +1272,8 @@ void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, c
         transform.rspvor              = rspvor.data();
         transform.rspdiv              = rspdiv.data();
 
-        ASSERT( transform.rspvor );
-        ASSERT( transform.rspdiv );
+        ATLAS_ASSERT( transform.rspvor );
+        ATLAS_ASSERT( transform.rspdiv );
         TRANS_CHECK(::trans_invtrans( &transform ) );
     }
 
@@ -1349,164 +1349,206 @@ void TransIFS::specnorm( const int nb_fields, const double spectra[], double nor
 extern "C" {
 
 TransIFS* atlas__Trans__new( const Grid::Implementation* grid, int nsmax ) {
-    TransIFS* trans( nullptr );
-    ATLAS_ERROR_HANDLING( ASSERT( grid ); trans = new TransIFS( Grid( grid ), nsmax ); );
-    return trans;
+    ATLAS_ASSERT( grid != nullptr );
+    return new TransIFS( Grid( grid ), nsmax );
 }
 
 void atlas__Trans__delete( TransIFS* This ) {
-    ASSERT( This );
-    ATLAS_ERROR_HANDLING( delete This );
+    ATLAS_ASSERT( This != nullptr );
+    delete This;
 }
 
 int atlas__Trans__handle( const TransIFS* This ) {
-    ASSERT( This );
-    ATLAS_ERROR_HANDLING(::Trans_t* t = *This; return t->handle; );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    ::Trans_t* t = *This;
+    return t->handle;
 }
 
 void atlas__Trans__distspec( const TransIFS* t, int nb_fields, int origin[], double global_spectra[],
                              double spectra[] ) {
-    ATLAS_ERROR_HANDLING( ASSERT( t ); struct ::DistSpec_t args = new_distspec( t->trans() ); args.nfld = nb_fields;
-                          args.rspecg = global_spectra; args.nfrom = origin; args.rspec = spectra;
-                          TRANS_CHECK(::trans_distspec( &args ) ); );
+    ATLAS_ASSERT( t != nullptr );
+    struct ::DistSpec_t args = new_distspec( t->trans() );
+    args.nfld                = nb_fields;
+    args.rspecg              = global_spectra;
+    args.nfrom               = origin;
+    args.rspec               = spectra;
+    TRANS_CHECK(::trans_distspec( &args ) );
 }
 
 void atlas__Trans__gathspec( const TransIFS* t, int nb_fields, int destination[], double spectra[],
                              double global_spectra[] ) {
-    ATLAS_ERROR_HANDLING( ASSERT( t ); struct ::GathSpec_t args = new_gathspec( t->trans() ); args.nfld = nb_fields;
-                          args.rspecg = global_spectra; args.nto = destination; args.rspec = spectra;
-                          TRANS_CHECK(::trans_gathspec( &args ) ); );
+    ATLAS_ASSERT( t != nullptr );
+    struct ::GathSpec_t args = new_gathspec( t->trans() );
+    args.nfld                = nb_fields;
+    args.rspecg              = global_spectra;
+    args.nto                 = destination;
+    args.rspec               = spectra;
+    TRANS_CHECK(::trans_gathspec( &args ) );
 }
 
 void atlas__Trans__distgrid( const TransIFS* t, int nb_fields, int origin[], double global_fields[], double fields[] ) {
-    ATLAS_ERROR_HANDLING( ASSERT( t ); struct ::DistGrid_t args = new_distgrid( t->trans() ); args.nfld = nb_fields;
-                          args.nfrom = origin; args.rgpg = global_fields; args.rgp = fields;
-                          TRANS_CHECK(::trans_distgrid( &args ) ); );
+    ATLAS_ASSERT( t != nullptr );
+    struct ::DistGrid_t args = new_distgrid( t->trans() );
+    args.nfld                = nb_fields;
+    args.nfrom               = origin;
+    args.rgpg                = global_fields;
+    args.rgp                 = fields;
+    TRANS_CHECK(::trans_distgrid( &args ) );
 }
 
 void atlas__Trans__gathgrid( const TransIFS* t, int nb_fields, int destination[], double fields[],
                              double global_fields[] ) {
-    ATLAS_ERROR_HANDLING( ASSERT( t ); struct ::GathGrid_t args = new_gathgrid( t->trans() ); args.nfld = nb_fields;
-                          args.nto = destination; args.rgp = fields; args.rgpg = global_fields;
-                          TRANS_CHECK(::trans_gathgrid( &args ) ); );
+    ATLAS_ASSERT( t = nullptr );
+    struct ::GathGrid_t args = new_gathgrid( t->trans() );
+    args.nfld                = nb_fields;
+    args.nto                 = destination;
+    args.rgp                 = fields;
+    args.rgpg                = global_fields;
+    TRANS_CHECK(::trans_gathgrid( &args ) );
 }
 
 void atlas__Trans__invtrans_scalar( const TransIFS* t, int nb_fields, double scalar_spectra[],
                                     double scalar_fields[] ) {
-    ATLAS_ERROR_HANDLING( ASSERT( t ); return t->invtrans( nb_fields, scalar_spectra, scalar_fields ); );
+    ATLAS_ASSERT( t != nullptr );
+    return t->invtrans( nb_fields, scalar_spectra, scalar_fields );
 }
 
 void atlas__Trans__invtrans_vordiv2wind( const TransIFS* t, int nb_fields, double vorticity_spectra[],
                                          double divergence_spectra[], double wind_fields[] ) {
-    ATLAS_ERROR_HANDLING( ASSERT( t );
-                          return t->invtrans( nb_fields, vorticity_spectra, divergence_spectra, wind_fields ); );
+    ATLAS_ASSERT( t != nullptr );
+    return t->invtrans( nb_fields, vorticity_spectra, divergence_spectra, wind_fields );
 }
 
 void atlas__Trans__dirtrans_scalar( const TransIFS* t, int nb_fields, double scalar_fields[],
                                     double scalar_spectra[] ) {
-    ATLAS_ERROR_HANDLING( ASSERT( t ); return t->dirtrans( nb_fields, scalar_fields, scalar_spectra ); );
+    ATLAS_ASSERT( t != nullptr );
+    return t->dirtrans( nb_fields, scalar_fields, scalar_spectra );
 }
 
 void atlas__Trans__dirtrans_wind2vordiv( const TransIFS* t, int nb_fields, double wind_fields[],
                                          double vorticity_spectra[], double divergence_spectra[] ) {
-    ATLAS_ERROR_HANDLING( ASSERT( t );
-                          return t->dirtrans( nb_fields, wind_fields, vorticity_spectra, divergence_spectra ); );
+    ATLAS_ASSERT( t != nullptr );
+    return t->dirtrans( nb_fields, wind_fields, vorticity_spectra, divergence_spectra );
 }
 
 void atlas__Trans__specnorm( const TransIFS* t, int nb_fields, double spectra[], double norms[], int rank ) {
-    ATLAS_ERROR_HANDLING( ASSERT( t ); return t->specnorm( nb_fields, spectra, norms, rank ); );
+    ATLAS_ASSERT( t != nullptr );
+    return t->specnorm( nb_fields, spectra, norms, rank );
 }
 
 int atlas__Trans__nspec2( const TransIFS* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->trans()->nspec2; );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    return This->trans()->nspec2;
 }
 
 int atlas__Trans__nspec2g( const TransIFS* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->trans()->nspec2g; );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    return This->trans()->nspec2g;
 }
 
 int atlas__Trans__ngptot( const TransIFS* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->trans()->ngptot; );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    return This->trans()->ngptot;
 }
 
 int atlas__Trans__ngptotg( const TransIFS* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->trans()->ngptotg; );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    return This->trans()->ngptotg;
 }
 
 int atlas__Trans__truncation( const TransIFS* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->truncation(); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr );
+    return This->truncation();
 }
 
 const Grid::Implementation* atlas__Trans__grid( const TransIFS* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( This->grid() ); return This->grid().get(); );
-    return nullptr;
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( This->grid() );
+    return This->grid().get();
 }
 
 void atlas__Trans__dirtrans_fieldset( const TransIFS* This, const field::FieldSetImpl* gpfields,
                                       field::FieldSetImpl* spfields, const eckit::Configuration* parameters ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( gpfields ); ASSERT( spfields ); ASSERT( parameters );
-                          FieldSet fspfields( spfields ); This->dirtrans( gpfields, fspfields, *parameters ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( gpfields );
+    ATLAS_ASSERT( spfields );
+    ATLAS_ASSERT( parameters );
+    FieldSet fspfields( spfields );
+    This->dirtrans( gpfields, fspfields, *parameters );
 }
 
 void atlas__Trans__dirtrans_field( const TransIFS* This, const field::FieldImpl* gpfield, field::FieldImpl* spfield,
                                    const eckit::Configuration* parameters ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( spfield ); ASSERT( gpfield ); ASSERT( parameters );
-                          Field fspfield( spfield ); This->dirtrans( gpfield, fspfield, *parameters ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( spfield );
+    ATLAS_ASSERT( gpfield );
+    ATLAS_ASSERT( parameters );
+    Field fspfield( spfield );
+    This->dirtrans( gpfield, fspfield, *parameters );
 }
 
 void atlas__Trans__invtrans_fieldset( const TransIFS* This, const field::FieldSetImpl* spfields,
                                       field::FieldSetImpl* gpfields, const eckit::Configuration* parameters ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( spfields ); ASSERT( gpfields ); ASSERT( parameters );
-                          FieldSet fgpfields( gpfields ); This->invtrans( spfields, fgpfields, *parameters ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( spfields );
+    ATLAS_ASSERT( gpfields );
+    ATLAS_ASSERT( parameters );
+    FieldSet fgpfields( gpfields );
+    This->invtrans( spfields, fgpfields, *parameters );
 }
 
 void atlas__Trans__invtrans_field( const TransIFS* This, const field::FieldImpl* spfield, field::FieldImpl* gpfield,
                                    const eckit::Configuration* parameters ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( spfield ); ASSERT( gpfield ); ASSERT( parameters );
-                          Field fgpfield( gpfield ); This->invtrans( spfield, fgpfield, *parameters ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( spfield );
+    ATLAS_ASSERT( gpfield );
+    ATLAS_ASSERT( parameters );
+    Field fgpfield( gpfield );
+    This->invtrans( spfield, fgpfield, *parameters );
 }
 
 void atlas__Trans__dirtrans_wind2vordiv_field( const TransIFS* This, const field::FieldImpl* gpwind,
                                                field::FieldImpl* spvor, field::FieldImpl* spdiv,
                                                const eckit::Configuration* parameters ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( gpwind ); ASSERT( spvor ); ASSERT( spdiv ); ASSERT( parameters );
-                          Field fspvor( spvor ); Field fspdiv( spdiv );
-                          This->dirtrans_wind2vordiv( gpwind, fspvor, fspdiv, *parameters ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( gpwind );
+    ATLAS_ASSERT( spvor );
+    ATLAS_ASSERT( spdiv );
+    ATLAS_ASSERT( parameters );
+    Field fspvor( spvor );
+    Field fspdiv( spdiv );
+    This->dirtrans_wind2vordiv( gpwind, fspvor, fspdiv, *parameters );
 }
 
 void atlas__Trans__invtrans_vordiv2wind_field( const TransIFS* This, const field::FieldImpl* spvor,
                                                const field::FieldImpl* spdiv, field::FieldImpl* gpwind,
                                                const eckit::Configuration* parameters ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( spvor ); ASSERT( spdiv ); ASSERT( gpwind ); ASSERT( parameters );
-                          Field fgpwind( gpwind ); This->invtrans_vordiv2wind( spvor, spdiv, fgpwind, *parameters ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( spvor );
+    ATLAS_ASSERT( spdiv );
+    ATLAS_ASSERT( gpwind );
+    ATLAS_ASSERT( parameters );
+    Field fgpwind( gpwind );
+    This->invtrans_vordiv2wind( spvor, spdiv, fgpwind, *parameters );
 }
 
 void atlas__Trans__invtrans( const TransIFS* This, int nb_scalar_fields, double scalar_spectra[], int nb_vordiv_fields,
                              double vorticity_spectra[], double divergence_spectra[], double gp_fields[],
                              const eckit::Configuration* parameters ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This );
-                          This->invtrans( nb_scalar_fields, scalar_spectra, nb_vordiv_fields, vorticity_spectra,
-                                          divergence_spectra, gp_fields, *parameters ); );
+    ATLAS_ASSERT( This != nullptr );
+    This->invtrans( nb_scalar_fields, scalar_spectra, nb_vordiv_fields, vorticity_spectra, divergence_spectra,
+                    gp_fields, *parameters );
 }
 
 void atlas__Trans__invtrans_grad_field( const TransIFS* This, const field::FieldImpl* spfield,
                                         field::FieldImpl* gpfield, const eckit::Configuration* config ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( spfield ); ASSERT( gpfield ); Field fgpfield( gpfield );
-                          This->invtrans_grad( spfield, fgpfield, *config ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( spfield );
+    ATLAS_ASSERT( gpfield );
+    Field fgpfield( gpfield );
+    This->invtrans_grad( spfield, fgpfield, *config );
 }
 }
-
-namespace detail {
-void Assert( int code, const char* msg, const char* file, int line, const char* func ) {
-    ::eckit::Assert( code, msg, file, line, func );
-}
-}  // namespace detail
 
 }  // namespace trans
 }  // namespace atlas

@@ -11,7 +11,7 @@
 #include "FunctionSpaceImpl.h"
 #include "atlas/field/Field.h"
 #include "atlas/option/Options.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Metadata.h"
 
 namespace atlas {
@@ -30,18 +30,19 @@ atlas::Field FunctionSpaceImpl::createField( const atlas::Field& field ) const {
 }
 
 void FunctionSpaceImpl::haloExchange( const FieldSet&, bool ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 void FunctionSpaceImpl::haloExchange( const Field&, bool ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 Field NoFunctionSpace::createField( const eckit::Configuration& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
+
 Field NoFunctionSpace::createField( const Field&, const eckit::Configuration& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 template <typename DATATYPE>

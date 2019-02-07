@@ -1,8 +1,11 @@
-#include "eckit/exception/Exceptions.h"
+
+#include <ostream>
+
 #include "eckit/utils/Hash.h"
 
 #include "atlas/domain/detail/DomainFactory.h"
 #include "atlas/domain/detail/EmptyDomain.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace domain {
@@ -26,7 +29,7 @@ void EmptyDomain::hash( eckit::Hash& h ) const {
 }
 
 std::string EmptyDomain::units() const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 namespace {

@@ -10,7 +10,6 @@
 
 #include <algorithm>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/grid/Grid.h"
@@ -20,6 +19,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/detail/MeshImpl.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 
 using atlas::Grid;
 using atlas::Projection;
@@ -31,11 +31,11 @@ namespace detail {
 //----------------------------------------------------------------------------------------------------------------------
 
 MeshImpl::MeshImpl( eckit::Stream& ) {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 void MeshImpl::encode( eckit::Stream& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 MeshImpl::MeshImpl() : nodes_( new mesh::Nodes() ), dimensionality_( 2 ) {
@@ -77,9 +77,9 @@ void MeshImpl::createElements() {
     else if ( dimensionality_ == 3 )
         edges_ = ridges_;
     else
-        throw eckit::Exception( "Invalid Mesh dimensionality", Here() );
+        throw_Exception( "Invalid Mesh dimensionality", Here() );
 
-    ASSERT( edges_.owners() == 2 );
+    ATLAS_ASSERT( edges_.owners() == 2 );
 }
 
 bool MeshImpl::generated() const {
@@ -142,7 +142,7 @@ const PartitionPolygon& MeshImpl::polygon( idx_t halo ) const {
         int mesh_halo = 0;
         metadata().get( "halo", mesh_halo );
         if ( halo > mesh_halo ) {
-            throw eckit::Exception( "Mesh does not contain a halo of size " + std::to_string( halo ) + ".", Here() );
+            throw_Exception( "Mesh does not contain a halo of size " + std::to_string( halo ) + ".", Here() );
         }
 
         polygons_[halo].reset( new PartitionPolygon( *this, halo ) );

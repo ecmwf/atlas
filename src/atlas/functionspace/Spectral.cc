@@ -18,7 +18,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/Trans.h"
 
@@ -31,7 +31,7 @@ void trans_check( const int code, const char* msg, const eckit::CodeLocation& lo
         std::stringstream errmsg;
         errmsg << "atlas::trans ERROR: " << msg << " failed: \n";
         errmsg << ::trans_error_msg( code );
-        throw eckit::Exception( errmsg.str(), location );
+        atlas::throw_Exception( errmsg.str(), location );
     }
 }
 #define TRANS_CHECK( CALL ) trans_check( CALL, #CALL, Here() )
@@ -153,7 +153,7 @@ idx_t Spectral::nb_spectral_coefficients_global() const {
 
 array::DataType Spectral::config_datatype( const eckit::Configuration& config ) const {
     array::DataType::kind_t kind;
-    if ( !config.get( "datatype", kind ) ) throw eckit::AssertionFailed( "datatype missing", Here() );
+    if ( !config.get( "datatype", kind ) ) throw_Exception( "datatype missing", Here() );
     return array::DataType( kind );
 }
 
@@ -189,7 +189,7 @@ Field Spectral::createField( const Field& other, const eckit::Configuration& con
 }
 
 void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const {
-    ASSERT( local_fieldset.size() == global_fieldset.size() );
+    ATLAS_ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& loc = local_fieldset[f];
@@ -197,7 +197,7 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
             std::stringstream err;
             err << "Cannot gather spectral field " << loc.name() << " of datatype " << loc.datatype().str() << ".";
             err << "Only " << array::DataType::str<double>() << " supported.";
-            throw eckit::BadValue( err.str() );
+            throw_Exception( err.str(), Here() );
         }
 
 #if ATLAS_HAVE_TRANS
@@ -205,8 +205,8 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
         idx_t root = 0;
         idx_t rank = static_cast<idx_t>( mpi::comm().rank() );
         glb.metadata().get( "owner", root );
-        ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
-        if ( rank == root ) ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
+        ATLAS_ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
+        if ( rank == root ) ATLAS_ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
         std::vector<int> nto( 1, root + 1 );
         if ( loc.rank() > 1 ) {
             nto.resize( loc.stride( 0 ) );
@@ -222,7 +222,7 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
         TRANS_CHECK(::trans_gathspec( &args ) );
 #else
 
-        throw eckit::Exception(
+        throw_Exception(
             "Cannot gather spectral fields because Atlas has "
             "not been compiled with TRANS support." );
 #endif
@@ -237,7 +237,7 @@ void Spectral::gather( const Field& local, Field& global ) const {
 }
 
 void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const {
-    ASSERT( local_fieldset.size() == global_fieldset.size() );
+    ATLAS_ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& glb = global_fieldset[f];
@@ -246,7 +246,7 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
             std::stringstream err;
             err << "Cannot scatter spectral field " << glb.name() << " of datatype " << glb.datatype().str() << ".";
             err << "Only " << array::DataType::str<double>() << " supported.";
-            throw eckit::BadValue( err.str() );
+            throw_Exception( err.str(), Here() );
         }
 
 #if ATLAS_HAVE_TRANS
@@ -254,8 +254,8 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
         idx_t rank = static_cast<idx_t>( mpi::comm().rank() );
 
         glb.metadata().get( "owner", root );
-        ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
-        if ( rank == root ) ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
+        ATLAS_ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
+        if ( rank == root ) ATLAS_ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
         std::vector<int> nfrom( 1, root + 1 );
         if ( loc.rank() > 1 ) {
             nfrom.resize( loc.stride( 0 ) );
@@ -273,7 +273,7 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
         glb.metadata().broadcast( loc.metadata(), root );
         loc.metadata().set( "global", false );
 #else
-        throw eckit::Exception(
+        throw_Exception(
             "Cannot scatter spectral fields because Atlas has "
             "not been compiled with TRANS support." );
 #endif
@@ -289,7 +289,7 @@ void Spectral::scatter( const Field& global, Field& local ) const {
 
 std::string Spectral::checksum( const FieldSet& ) const {
     eckit::MD5 md5;
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 std::string Spectral::checksum( const Field& field ) const {
     FieldSet fieldset;
@@ -299,7 +299,7 @@ std::string Spectral::checksum( const Field& field ) const {
 
 void Spectral::norm( const Field& field, double& norm, int rank ) const {
 #if ATLAS_HAVE_TRANS
-    ASSERT( std::max<int>( 1, field.levels() ) == 1 );
+    ATLAS_ASSERT( std::max<int>( 1, field.levels() ) == 1 );
     struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
     args.nfld                = 1;
     args.rspec               = field.data<double>();
@@ -307,14 +307,14 @@ void Spectral::norm( const Field& field, double& norm, int rank ) const {
     args.nmaster             = rank + 1;
     TRANS_CHECK(::trans_specnorm( &args ) );
 #else
-    throw eckit::Exception(
+    throw_Exception(
         "Cannot compute spectral norms because Atlas has not "
         "been compiled with TRANS support." );
 #endif
 }
 void Spectral::norm( const Field& field, double norm_per_level[], int rank ) const {
 #if ATLAS_HAVE_TRANS
-    ASSERT( std::max<int>( 1, field.levels() ) == 1 );
+    ATLAS_ASSERT( std::max<int>( 1, field.levels() ) == 1 );
     struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
     args.nfld                = std::max<int>( 1, field.levels() );
     args.rspec               = field.data<double>();
@@ -322,7 +322,7 @@ void Spectral::norm( const Field& field, double norm_per_level[], int rank ) con
     args.nmaster             = rank + 1;
     TRANS_CHECK(::trans_specnorm( &args ) );
 #else
-    throw eckit::Exception(
+    throw_Exception(
         "Cannot compute spectral norms because Atlas has not "
         "been compiled with TRANS support." );
 #endif
@@ -337,7 +337,7 @@ void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, in
     args.nmaster             = rank + 1;
     TRANS_CHECK(::trans_specnorm( &args ) );
 #else
-    throw eckit::Exception(
+    throw_Exception(
         "Cannot compute spectral norms because Atlas has not "
         "been compiled with TRANS support." );
 #endif
@@ -415,58 +415,82 @@ void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, in
 
 extern "C" {
 const detail::Spectral* atlas__SpectralFunctionSpace__new__config( const eckit::Configuration* config ) {
-    ATLAS_ERROR_HANDLING( return new detail::Spectral( *config ); );
-    return nullptr;
+    ATLAS_ASSERT( config != nullptr );
+    return new detail::Spectral( *config );
 }
 
 const detail::Spectral* atlas__SpectralFunctionSpace__new__trans( trans::TransImpl* trans,
                                                                   const eckit::Configuration* config ) {
-    ATLAS_ERROR_HANDLING( return new detail::Spectral( trans::Trans( trans ), *config ); );
-    return nullptr;
+    ATLAS_ASSERT( trans != nullptr );
+    ATLAS_ASSERT( config != nullptr );
+    return new detail::Spectral( trans::Trans( trans ), *config );
 }
 
 void atlas__SpectralFunctionSpace__delete( detail::Spectral* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); delete This; );
+    ATLAS_ASSERT( This != nullptr );
+    delete This;
 }
 
 field::FieldImpl* atlas__fs__Spectral__create_field( const detail::Spectral* This,
                                                      const eckit::Configuration* options ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( options ); field::FieldImpl * field; {
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( options );
+    field::FieldImpl* field;
+    {
         Field f = This->createField( *options );
         field   = f.get();
         field->attach();
-    } field->detach();
-                          return field; );
-    return nullptr;
+    }
+    field->detach();
+    return field;
 }
 
 void atlas__SpectralFunctionSpace__gather( const detail::Spectral* This, const field::FieldImpl* local,
                                            field::FieldImpl* global ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( global ); ASSERT( local ); const Field l( local ); Field g( global );
-                          This->gather( l, g ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( global != nullptr );
+    ATLAS_ASSERT( local != nullptr );
+    const Field l( local );
+    Field g( global );
+    This->gather( l, g );
 }
 
 void atlas__SpectralFunctionSpace__scatter( const detail::Spectral* This, const field::FieldImpl* global,
                                             field::FieldImpl* local ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( global ); ASSERT( local ); const Field g( global ); Field l( local );
-                          This->scatter( g, l ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( global != nullptr );
+    ATLAS_ASSERT( local != nullptr );
+    const Field g( global );
+    Field l( local );
+    This->scatter( g, l );
 }
 
 void atlas__SpectralFunctionSpace__gather_fieldset( const detail::Spectral* This, const field::FieldSetImpl* local,
                                                     field::FieldSetImpl* global ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( global ); ASSERT( local ); const FieldSet l( local );
-                          FieldSet g( global ); This->gather( l, g ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( global != nullptr );
+    ATLAS_ASSERT( local != nullptr );
+    const FieldSet l( local );
+    FieldSet g( global );
+    This->gather( l, g );
 }
 
 void atlas__SpectralFunctionSpace__scatter_fieldset( const detail::Spectral* This, const field::FieldSetImpl* global,
                                                      field::FieldSetImpl* local ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( global ); ASSERT( local ); const FieldSet g( global );
-                          FieldSet l( local ); This->scatter( g, l ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( global != nullptr );
+    ATLAS_ASSERT( local != nullptr );
+    const FieldSet g( global );
+    FieldSet l( local );
+    This->scatter( g, l );
 }
 
 void atlas__SpectralFunctionSpace__norm( const detail::Spectral* This, const field::FieldImpl* field, double norm[],
                                          int rank ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( field ); ASSERT( norm ); This->norm( field, norm, rank ); );
+    ATLAS_ASSERT( This != nullptr );
+    ATLAS_ASSERT( field != nullptr );
+    ATLAS_ASSERT( norm != nullptr );
+    This->norm( field, norm, rank );
 }
 }
 

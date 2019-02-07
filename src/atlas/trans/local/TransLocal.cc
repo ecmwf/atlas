@@ -28,7 +28,7 @@
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/VorDivToUV.h"
 #include "atlas/trans/local/LegendrePolynomials.h"
@@ -118,7 +118,7 @@ struct WriteCache {
         if ( file_path.exists() ) {
             std::stringstream err;
             err << "Cannot open cache file " << file_path << " for writing as it already exists. Remove first.";
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
         dh_->openForWrite( 0 );
         pos = 0;
@@ -169,31 +169,23 @@ size_t legendre_size( const size_t truncation ) {
 
 size_t num_n( const int truncation, const int m, const bool symmetric ) {
     int len = ( truncation - m + ( symmetric ? 2 : 1 ) ) / 2;
-    ASSERT( len >= 0 );
+    ATLAS_ASSERT( len >= 0 );
     return size_t( len );
 }
 
-class AllocationFailed : public eckit::Exception {
-public:
-    AllocationFailed( size_t bytes, const eckit::CodeLocation& );
 
-private:
-    static std::string error_message( size_t bytes ) {
-        std::stringstream ss;
-        ss << "AllocationFailed: Could not allocate " << eckit::Bytes( bytes );
-        return ss.str();
-    }
-};
-
-AllocationFailed::AllocationFailed( size_t bytes, const eckit::CodeLocation& loc ) :
-    Exception( error_message( bytes ), loc ) {}
+[[noreturn]] void throw_AllocationFailed( size_t bytes, const eckit::CodeLocation& loc ) {
+    std::stringstream ss;
+    ss << "AllocationFailed: Could not allocate " << eckit::Bytes( bytes );
+    throw_Exception( ss.str(), loc );
+}
 
 
 void alloc_aligned( double*& ptr, size_t n ) {
     const size_t alignment = 64 * sizeof( double );
     size_t bytes           = sizeof( double ) * n;
     int err                = posix_memalign( (void**)&ptr, alignment, bytes );
-    if ( err ) { throw AllocationFailed( bytes, Here() ); }
+    if ( err ) { throw_AllocationFailed( bytes, Here() ); }
 }
 
 void free_aligned( double*& ptr ) {
@@ -202,13 +194,13 @@ void free_aligned( double*& ptr ) {
 }
 
 void alloc_aligned( double*& ptr, size_t n, const char* msg ) {
-    ASSERT( msg );
+    ATLAS_ASSERT( msg );
     Log::debug() << "TransLocal: allocating '" << msg << "': " << eckit::Bytes( sizeof( double ) * n ) << std::endl;
     alloc_aligned( ptr, n );
 }
 
 void free_aligned( double*& ptr, const char* msg ) {
-    ASSERT( msg );
+    ATLAS_ASSERT( msg );
     Log::debug() << "TransLocal: dellocating '" << msg << "'" << std::endl;
     free_aligned( ptr );
 }
@@ -343,13 +335,13 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 useGlobalLeg    = false;
             }
             else {
-                NOTIMP;
+                ATLAS_NOTIMPLEMENTED;
                 // non-nested reduced grids are not supported
             }
         }
 
         StructuredGrid gs_global( gridGlobal_ );
-        ASSERT( gs_global );  // assert structured grid
+        ATLAS_ASSERT( gs_global );  // assert structured grid
         StructuredGrid gsLeg = ( useGlobalLeg ? gs_global : g );
         nlonsMaxGlobal_      = gs_global.nxmax();
         jlonMin_.resize( 1 );
@@ -487,12 +479,12 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 ReadCache legendre( legendre_cache_ );
                 legendre_sym_  = legendre.read<double>( size_sym );
                 legendre_asym_ = legendre.read<double>( size_asym );
-                ASSERT( legendre.pos == legendre_cachesize_ );
+                ATLAS_ASSERT( legendre.pos == legendre_cachesize_ );
                 // TODO: check this is all aligned...
             }
             else {
                 if ( TransParameters( config ).export_legendre() ) {
-                    ASSERT( not cache_.legendre() );
+                    ATLAS_ASSERT( not cache_.legendre() );
 
                     size_t bytes = sizeof( double ) * ( size_sym + size_asym );
                     Log::debug() << "TransLocal: allocating LegendreCache: " << eckit::Bytes( bytes ) << std::endl;
@@ -660,7 +652,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             compute_legendre_polynomials_all( truncation_, grid_.size(), lats.data(), legendre_ );
         }
         if ( TransParameters( config ).write_legendre().size() ) {
-            throw eckit::NotImplemented(
+            throw_NotImplemented(
                 "Caching for unstructured grids or structured grids with projections not yet implemented", Here() );
         }
     }
@@ -708,33 +700,33 @@ TransLocal::~TransLocal() {
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::invtrans( const Field& /*spfield*/, Field& /*gpfield*/, const eckit::Configuration& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::invtrans( const FieldSet& /*spfields*/, FieldSet& /*gpfields*/, const eckit::Configuration& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::invtrans_grad( const Field& /*spfield*/, Field& /*gradfield*/, const eckit::Configuration& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::invtrans_grad( const FieldSet& /*spfields*/, FieldSet& /*gradfields*/,
                                 const eckit::Configuration& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::invtrans_vordiv2wind( const Field& /*spvor*/, const Field& /*spdiv*/, Field& /*gpwind*/,
                                        const eckit::Configuration& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -810,8 +802,8 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                             }
                         }
                     }
-                    ASSERT( size_t( ia ) == n_imag * nb_fields * size_asym &&
-                            size_t( is ) == n_imag * nb_fields * size_sym );
+                    ATLAS_ASSERT( size_t( ia ) == n_imag * nb_fields * size_asym &&
+                                  size_t( is ) == n_imag * nb_fields * size_sym );
                 }
                 if ( nlatsLegReduced_ - nlat0_[jm] > 0 ) {
                     {
@@ -1032,7 +1024,7 @@ void TransLocal::invtrans_fourier_reduced( const int nlats, const StructuredGrid
                             int j = jlon + jlonMin_[jlat];
                             if ( j >= nlonsGlobal_[jlat] ) { j -= nlonsGlobal_[jlat]; }
                             //Log::info() << fftw_->out[j] << " ";
-                            ASSERT( j < nlonsMaxGlobal_ );
+                            ATLAS_ASSERT( j < nlonsMaxGlobal_ );
                             gp_fields[jgp++] = fftw_->out[j];
                         }
                         //Log::info() << std::endl;
@@ -1043,7 +1035,7 @@ void TransLocal::invtrans_fourier_reduced( const int nlats, const StructuredGrid
 #endif
     }
     else {
-        throw eckit::NotImplemented(
+        throw_NotImplemented(
             "Using dgemm in Fourier transform for reduced grids is extremely slow. Please install and use FFTW!",
             Here() );
     }
@@ -1418,10 +1410,10 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
         }
         int nb_vordiv_size = 2 * legendre_size( truncation_ + 1 ) * nb_vordiv_fields;
         int nb_scalar_size = 2 * legendre_size( truncation_ + 1 ) * nb_scalar_fields;
-        ASSERT( k == nb_all_size );
-        ASSERT( i == nb_vordiv_size );
-        ASSERT( j == nb_vordiv_size );
-        ASSERT( l == nb_scalar_size );
+        ATLAS_ASSERT( k == nb_all_size );
+        ATLAS_ASSERT( i == nb_vordiv_size );
+        ATLAS_ASSERT( j == nb_vordiv_size );
+        ATLAS_ASSERT( l == nb_scalar_size );
         invtrans_uv( truncation_ + 1, nb_all_fields, nb_vordiv_fields, all_spectra.data(), gp_fields, config );
     }
     else {
@@ -1435,7 +1427,7 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::dirtrans( const Field& gpfield, Field& spfield, const eckit::Configuration& config ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
     // Not implemented and not planned.
     // Use the TransIFS implementation instead.
 }
@@ -1443,7 +1435,7 @@ void TransLocal::dirtrans( const Field& gpfield, Field& spfield, const eckit::Co
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::dirtrans( const FieldSet& gpfields, FieldSet& spfields, const eckit::Configuration& config ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
     // Not implemented and not planned.
     // Use the TransIFS implementation instead.
 }
@@ -1452,7 +1444,7 @@ void TransLocal::dirtrans( const FieldSet& gpfields, FieldSet& spfields, const e
 
 void TransLocal::dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Field& spdiv,
                                        const eckit::Configuration& config ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
     // Not implemented and not planned.
     // Use the TransIFS implementation instead.
 }
@@ -1461,7 +1453,7 @@ void TransLocal::dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Field&
 
 void TransLocal::dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
                            const eckit::Configuration& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
     // Not implemented and not planned.
     // Use the TransIFS implementation instead.
 }
@@ -1470,7 +1462,7 @@ void TransLocal::dirtrans( const int nb_fields, const double scalar_fields[], do
 
 void TransLocal::dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[],
                            double divergence_spectra[], const eckit::Configuration& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
     // Not implemented and not planned.
     // Use the TransIFS implementation instead.
 }

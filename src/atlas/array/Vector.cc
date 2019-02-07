@@ -10,16 +10,8 @@
 
 #include "Vector.h"
 
-#include "eckit/exception/Exceptions.h"
-
 namespace atlas {
 namespace array {
-namespace detail {
-
-void throw_AssertionFailed( const char* msg ) {
-    throw eckit::AssertionFailed( msg );
-}
-
-}  // namespace detail
+namespace detail {}  // namespace detail
 }  // namespace array
 }  // namespace atlas

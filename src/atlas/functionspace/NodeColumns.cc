@@ -32,7 +32,7 @@
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/omp/omp.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/detail/Cache.h"
 
@@ -242,7 +242,7 @@ NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration& config ) :
     else {
         halo_ = mesh::Halo( mesh );
     }
-    ASSERT( mesh_ );
+    ATLAS_ASSERT( mesh_ );
     mesh::actions::build_nodes_parallel_fields( mesh_.nodes() );
     mesh::actions::build_periodic_boundaries( mesh_ );
 
@@ -316,7 +316,7 @@ void NodeColumns::set_field_metadata( const eckit::Configuration& config, Field&
 
 array::DataType NodeColumns::config_datatype( const eckit::Configuration& config ) const {
     array::DataType::kind_t kind;
-    if ( !config.get( "datatype", kind ) ) throw eckit::AssertionFailed( "datatype missing", Here() );
+    if ( !config.get( "datatype", kind ) ) throw_Exception( "datatype missing", Here() );
     return array::DataType( kind );
 }
 
@@ -383,7 +383,7 @@ void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exc
         halo_exchange.template execute<double, RANK>( field.array(), on_device );
     }
     else
-        throw eckit::Exception( "datatype not supported", Here() );
+        throw_Exception( "datatype not supported", Here() );
     field.set_dirty( false );
 }
 }  // namespace
@@ -405,7 +405,7 @@ void NodeColumns::haloExchange( const FieldSet& fieldset, bool on_device ) const
                 dispatch_haloExchange<4>( field, halo_exchange(), on_device );
                 break;
             default:
-                throw eckit::Exception( "Rank not supported", Here() );
+                throw_Exception( "Rank not supported", Here() );
         }
     }
 }
@@ -422,7 +422,7 @@ const parallel::HaloExchange& NodeColumns::halo_exchange() const {
 }
 
 void NodeColumns::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const {
-    ASSERT( local_fieldset.size() == global_fieldset.size() );
+    ATLAS_ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& loc      = local_fieldset[f];
@@ -452,7 +452,7 @@ void NodeColumns::gather( const FieldSet& local_fieldset, FieldSet& global_field
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
         else
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
 }
 
@@ -475,7 +475,7 @@ const parallel::GatherScatter& NodeColumns::scatter() const {
 }
 
 void NodeColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const {
-    ASSERT( local_fieldset.size() == global_fieldset.size() );
+    ATLAS_ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& glb      = global_fieldset[f];
@@ -505,7 +505,7 @@ void NodeColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fiel
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
         else
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
 
         glb.metadata().broadcast( loc.metadata(), root );
         loc.metadata().set( "global", false );
@@ -551,7 +551,7 @@ std::string NodeColumns::checksum( const FieldSet& fieldset ) const {
         else if ( field.datatype() == array::DataType::kind<double>() )
             md5 << checksum_3d_field<double>( checksum(), field );
         else
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
     return md5;
 }
@@ -581,7 +581,7 @@ const parallel::Checksum& NodeColumns::checksum() const {
 //      md5 << checksum.execute( field.data<float>(), field.stride(0) );
 //    else if( field.datatype() == array::DataType::kind<double>() )
 //      md5 << checksum.execute( field.data<double>(), field.stride(0) );
-//    else throw eckit::Exception("datatype not supported",Here());
+//    else throw_Exception("datatype not supported",Here());
 //  }
 //  return md5;
 //}
@@ -647,7 +647,7 @@ void sum( const NodeColumns& fs, const Field& field, T& result, idx_t& N ) {
                 return;
             }
             default:
-                throw eckit::Exception( "datatype not supported", Here() );
+                throw_Exception( "datatype not supported", Here() );
         }
     }
 }
@@ -714,7 +714,7 @@ void sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, idx
                 return;
             }
             default:
-                throw eckit::Exception( "datatype not supported", Here() );
+                throw_Exception( "datatype not supported", Here() );
         }
     }
 }
@@ -774,9 +774,7 @@ void dispatch_sum_per_level( const NodeColumns& fs, const Field& field, Field& s
 }
 
 void sum_per_level( const NodeColumns& fs, const Field& field, Field& sum, idx_t& N ) {
-    if ( field.datatype() != sum.datatype() ) {
-        throw eckit::Exception( "Field and sum are not of same datatype.", Here() );
-    }
+    if ( field.datatype() != sum.datatype() ) { throw_Exception( "Field and sum are not of same datatype.", Here() ); }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_sum_per_level<int>( fs, field, sum, N );
@@ -787,7 +785,7 @@ void sum_per_level( const NodeColumns& fs, const Field& field, Field& sum, idx_t
         case array::DataType::KIND_REAL64:
             return dispatch_sum_per_level<double>( fs, field, sum, N );
         default:
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
 }
 
@@ -861,7 +859,7 @@ void order_independent_sum( const NodeColumns& fs, const Field& field, T& result
                 return;
             }
             default:
-                throw eckit::Exception( "datatype not supported", Here() );
+                throw_Exception( "datatype not supported", Here() );
         }
     }
 }
@@ -952,7 +950,7 @@ void order_independent_sum( const NodeColumns& fs, const Field& field, std::vect
                 return;
             }
             default:
-                throw eckit::Exception( "datatype not supported", Here() );
+                throw_Exception( "datatype not supported", Here() );
         }
     }
 }
@@ -1011,9 +1009,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
 }
 
 void order_independent_sum_per_level( const NodeColumns& fs, const Field& field, Field& sum, idx_t& N ) {
-    if ( field.datatype() != sum.datatype() ) {
-        throw eckit::Exception( "Field and sum are not of same datatype.", Here() );
-    }
+    if ( field.datatype() != sum.datatype() ) { throw_Exception( "Field and sum are not of same datatype.", Here() ); }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_order_independent_sum_per_level<int>( fs, field, sum, N );
@@ -1024,7 +1020,7 @@ void order_independent_sum_per_level( const NodeColumns& fs, const Field& field,
         case array::DataType::KIND_REAL64:
             return dispatch_order_independent_sum_per_level<double>( fs, field, sum, N );
         default:
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
 }
 
@@ -1084,7 +1080,7 @@ void minimum( const NodeColumns& fs, const Field& field, std::vector<T>& min ) {
                 return;
             }
             default:
-                throw eckit::Exception( "datatype not supported", Here() );
+                throw_Exception( "datatype not supported", Here() );
         }
     }
 }
@@ -1144,7 +1140,7 @@ void maximum( const NodeColumns& fs, const Field& field, std::vector<T>& max ) {
                 return;
             }
             default:
-                throw eckit::Exception( "datatype not supported", Here() );
+                throw_Exception( "datatype not supported", Here() );
         }
     }
 }
@@ -1208,9 +1204,7 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Fiel
 }
 
 void minimum_per_level( const NodeColumns& fs, const Field& field, Field& min ) {
-    if ( field.datatype() != min.datatype() ) {
-        throw eckit::Exception( "Field and min are not of same datatype.", Here() );
-    }
+    if ( field.datatype() != min.datatype() ) { throw_Exception( "Field and min are not of same datatype.", Here() ); }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_minimum_per_level<int>( fs, field, min );
@@ -1221,7 +1215,7 @@ void minimum_per_level( const NodeColumns& fs, const Field& field, Field& min ) 
         case array::DataType::KIND_REAL64:
             return dispatch_minimum_per_level<double>( fs, field, min );
         default:
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
 }
 
@@ -1271,9 +1265,7 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Fiel
 }
 
 void maximum_per_level( const NodeColumns& fs, const Field& field, Field& max ) {
-    if ( field.datatype() != max.datatype() ) {
-        throw eckit::Exception( "Field and max are not of same datatype.", Here() );
-    }
+    if ( field.datatype() != max.datatype() ) { throw_Exception( "Field and max are not of same datatype.", Here() ); }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_maximum_per_level<int>( fs, field, max );
@@ -1284,7 +1276,7 @@ void maximum_per_level( const NodeColumns& fs, const Field& field, Field& max ) 
         case array::DataType::KIND_REAL64:
             return dispatch_maximum_per_level<double>( fs, field, max );
         default:
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
 }
 
@@ -1334,9 +1326,9 @@ void dispatch_minimum_and_location( const NodeColumns& fs, const Field& field, s
     const array::ArrayView<gidx_t, 1> global_index = array::make_view<gidx_t, 1>( fs.nodes().global_index() );
     for ( idx_t j = 0; j < nvar; ++j ) {
         gidx_t glb_idx = global_index( loc_node[j] );
-        ASSERT( glb_idx < std::numeric_limits<int>::max() );  // pairs with 64bit
-                                                              // integer for second not
-                                                              // implemented
+        ATLAS_ASSERT( glb_idx < std::numeric_limits<int>::max() );  // pairs with 64bit
+                                                                    // integer for second not
+                                                                    // implemented
         min_and_gidx_loc[j]  = std::make_pair( local_minimum[j], glb_idx );
         min_and_level_loc[j] = std::make_pair( local_minimum[j], loc_level[j] );
     }
@@ -1386,7 +1378,7 @@ void minimum_and_location( const NodeColumns& fs, const Field& field, std::vecto
                 return;
             }
             default:
-                throw eckit::Exception( "datatype not supported", Here() );
+                throw_Exception( "datatype not supported", Here() );
         }
     }
 }
@@ -1437,9 +1429,9 @@ void dispatch_maximum_and_location( const NodeColumns& fs, const Field& field, s
     const array::ArrayView<gidx_t, 1> global_index = array::make_view<gidx_t, 1>( fs.nodes().global_index() );
     for ( idx_t j = 0; j < nvar; ++j ) {
         gidx_t glb_idx = global_index( loc_node[j] );
-        ASSERT( glb_idx < std::numeric_limits<int>::max() );  // pairs with 64bit
-                                                              // integer for second not
-                                                              // implemented
+        ATLAS_ASSERT( glb_idx < std::numeric_limits<int>::max() );  // pairs with 64bit
+                                                                    // integer for second not
+                                                                    // implemented
         max_and_gidx_loc[j]  = std::make_pair( local_maximum[j], glb_idx );
         max_and_level_loc[j] = std::make_pair( local_maximum[j], loc_level[j] );
     }
@@ -1489,7 +1481,7 @@ void maximum_and_location( const NodeColumns& fs, const Field& field, std::vecto
                 return;
             }
             default:
-                throw eckit::Exception( "datatype not supported", Here() );
+                throw_Exception( "datatype not supported", Here() );
         }
     }
 }
@@ -1603,9 +1595,9 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field
     atlas_omp_parallel_for( idx_t l = 0; l < nlev; ++l ) {
         for ( idx_t j = 0; j < nvar; ++j ) {
             gidx_t gidx = global_index( glb_idx( l, j ) );
-            ASSERT( gidx < std::numeric_limits<int>::max() );  // pairs with 64bit
-                                                               // integer for second not
-                                                               // implemented
+            ATLAS_ASSERT( gidx < std::numeric_limits<int>::max() );  // pairs with 64bit
+                                                                     // integer for second not
+                                                                     // implemented
             min_and_gidx_loc[j + nvar * l] = std::make_pair( min( l, j ), gidx );
         }
     }
@@ -1621,11 +1613,9 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field
 }
 
 void minimum_and_location_per_level( const NodeColumns& fs, const Field& field, Field& min, Field& glb_idx ) {
-    if ( field.datatype() != min.datatype() ) {
-        throw eckit::Exception( "Field and min are not of same datatype.", Here() );
-    }
+    if ( field.datatype() != min.datatype() ) { throw_Exception( "Field and min are not of same datatype.", Here() ); }
     if ( glb_idx.datatype() != array::DataType::kind<gidx_t>() ) {
-        throw eckit::Exception( "glb_idx Field is not of correct datatype", Here() );
+        throw_Exception( "glb_idx Field is not of correct datatype", Here() );
     }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
@@ -1637,7 +1627,7 @@ void minimum_and_location_per_level( const NodeColumns& fs, const Field& field, 
         case array::DataType::KIND_REAL64:
             return dispatch_minimum_and_location_per_level<double>( fs, field, min, glb_idx );
         default:
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
 }
 
@@ -1703,9 +1693,9 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field
     atlas_omp_parallel_for( idx_t l = 0; l < nlev; ++l ) {
         for ( idx_t j = 0; j < nvar; ++j ) {
             gidx_t gidx = global_index( glb_idx( l, j ) );
-            ASSERT( gidx < std::numeric_limits<int>::max() );  // pairs with 64bit
-                                                               // integer for second not
-                                                               // implemented
+            ATLAS_ASSERT( gidx < std::numeric_limits<int>::max() );  // pairs with 64bit
+                                                                     // integer for second not
+                                                                     // implemented
             max_and_gidx_loc[j + nvar * l] = std::make_pair( max( l, j ), gidx );
         }
     }
@@ -1721,11 +1711,9 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field
 }
 
 void maximum_and_location_per_level( const NodeColumns& fs, const Field& field, Field& max, Field& glb_idx ) {
-    if ( field.datatype() != max.datatype() ) {
-        throw eckit::Exception( "Field and max are not of same datatype.", Here() );
-    }
+    if ( field.datatype() != max.datatype() ) { throw_Exception( "Field and max are not of same datatype.", Here() ); }
     if ( glb_idx.datatype() != array::DataType::kind<gidx_t>() ) {
-        throw eckit::Exception( "glb_idx Field is not of correct datatype", Here() );
+        throw_Exception( "glb_idx Field is not of correct datatype", Here() );
     }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
@@ -1737,7 +1725,7 @@ void maximum_and_location_per_level( const NodeColumns& fs, const Field& field, 
         case array::DataType::KIND_REAL64:
             return dispatch_maximum_and_location_per_level<double>( fs, field, max, glb_idx );
         default:
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
 }
 
@@ -1767,9 +1755,7 @@ void dispatch_mean_per_level( const NodeColumns& fs, const Field& field, Field& 
 }
 
 void mean_per_level( const NodeColumns& fs, const Field& field, Field& mean, idx_t& N ) {
-    if ( field.datatype() != mean.datatype() ) {
-        throw eckit::Exception( "Field and sum are not of same datatype.", Here() );
-    }
+    if ( field.datatype() != mean.datatype() ) { throw_Exception( "Field and sum are not of same datatype.", Here() ); }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_mean_per_level<int>( fs, field, mean, N );
@@ -1780,7 +1766,7 @@ void mean_per_level( const NodeColumns& fs, const Field& field, Field& mean, idx
         case array::DataType::KIND_REAL64:
             return dispatch_mean_per_level<double>( fs, field, mean, N );
         default:
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
 }
 
@@ -1856,10 +1842,10 @@ void dispatch_mean_and_standard_deviation_per_level( const NodeColumns& fs, cons
 void mean_and_standard_deviation_per_level( const NodeColumns& fs, const Field& field, Field& mean, Field& stddev,
                                             idx_t& N ) {
     if ( field.datatype() != mean.datatype() ) {
-        throw eckit::Exception( "Field and mean are not of same datatype.", Here() );
+        throw_Exception( "Field and mean are not of same datatype.", Here() );
     }
     if ( field.datatype() != stddev.datatype() ) {
-        throw eckit::Exception( "Field and stddev are not of same datatype.", Here() );
+        throw_Exception( "Field and stddev are not of same datatype.", Here() );
     }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
@@ -1871,7 +1857,7 @@ void mean_and_standard_deviation_per_level( const NodeColumns& fs, const Field& 
         case array::DataType::KIND_REAL64:
             return dispatch_mean_and_standard_deviation_per_level<double>( fs, field, mean, stddev, N );
         default:
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
 }
 

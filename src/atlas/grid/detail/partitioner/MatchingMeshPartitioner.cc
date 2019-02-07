@@ -8,9 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
@@ -18,11 +17,11 @@ namespace detail {
 namespace partitioner {
 
 MatchingMeshPartitioner::MatchingMeshPartitioner() : Partitioner() {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 MatchingMeshPartitioner::MatchingMeshPartitioner( const idx_t nb_partitions ) : Partitioner( nb_partitions ) {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh ) :

@@ -46,7 +46,7 @@ CASE( "test_svector" )
     cudaError_t err = cudaMallocManaged(&result, sizeof(bool));
 
     if(err != cudaSuccess)
-        throw eckit::AssertionFailed("failed to allocate GPU memory");
+        throw_AssertionFailed("failed to allocate GPU memory");
 
     *result=true;
     kernel_exe<<<1,1>>>(list_ints.data(), list_ints.size(), 0, result);
@@ -54,7 +54,7 @@ CASE( "test_svector" )
 
     err = cudaGetLastError();
     if(err != cudaSuccess)
-        throw eckit::AssertionFailed("failed to execute kernel");
+        throw_AssertionFailed("failed to execute kernel");
 
     EXPECT( *result );
     EXPECT( list_ints[0] == 4);
@@ -82,7 +82,7 @@ CASE( "test_svector_resize" )
     cudaError_t err = cudaMallocManaged(&result, sizeof(bool));
 
     if(err != cudaSuccess)
-        throw eckit::AssertionFailed("failed to allocate GPU memory");
+        throw_AssertionFailed("failed to allocate GPU memory");
 
     *result=true;
 
@@ -94,7 +94,7 @@ CASE( "test_svector_resize" )
 
     err = cudaGetLastError();
     if(err != cudaSuccess)
-        throw eckit::AssertionFailed("failed to execute kernel");
+        throw_AssertionFailed("failed to execute kernel");
 
     EXPECT( *result );
     EXPECT( list_ints[3] == 4);

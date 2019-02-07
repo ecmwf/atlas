@@ -159,7 +159,7 @@ void Meshgen2Gmsh::execute( const Args& args ) {
         try {
             grid = Grid( key );
         }
-        catch ( eckit::BadParameter& ) {
+        catch ( eckit::Exception& ) {
         }
     }
     else if ( path_in.path().size() ) {
@@ -168,7 +168,7 @@ void Meshgen2Gmsh::execute( const Args& args ) {
         try {
             grid = Grid( Config( path_in ) );
         }
-        catch ( eckit::BadParameter& ) {
+        catch ( eckit::Exception& ) {
         }
     }
     else {
@@ -192,7 +192,7 @@ void Meshgen2Gmsh::execute( const Args& args ) {
     try {
         mesh = meshgenerator.generate( grid );
     }
-    catch ( eckit::BadParameter& e ) {
+    catch ( eckit::Exception& e ) {
         Log::error() << e.what() << std::endl;
         Log::error() << e.callStack() << std::endl;
         throw e;

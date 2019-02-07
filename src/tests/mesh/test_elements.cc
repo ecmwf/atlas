@@ -12,9 +12,6 @@
 #include <iterator>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/memory/ScopedPtr.h"
-
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/library/Library.h"

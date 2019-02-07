@@ -30,11 +30,6 @@ void atlas__NodesFunctionSpace__delete( NodeColumns* This );
 int atlas__NodesFunctionSpace__nb_nodes( const NodeColumns* This );
 const Mesh::Implementation* atlas__NodesFunctionSpace__mesh( const NodeColumns* This );
 mesh::Nodes* atlas__NodesFunctionSpace__nodes( const NodeColumns* This );
-field::FieldImpl* atlas__NodesFunctionSpace__create_field( const NodeColumns* This,
-                                                           const eckit::Configuration* options );
-field::FieldImpl* atlas__NodesFunctionSpace__create_field_template( const NodeColumns* This,
-                                                                    const field::FieldImpl* field_template,
-                                                                    const eckit::Configuration* options );
 
 void atlas__NodesFunctionSpace__halo_exchange_fieldset( const NodeColumns* This, field::FieldSetImpl* fieldset );
 void atlas__NodesFunctionSpace__halo_exchange_field( const NodeColumns* This, field::FieldImpl* field );

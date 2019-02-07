@@ -8,13 +8,14 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
 
-#include "atlas/array.h"
 #include "atlas/functionspace/PointCloud.h"
+#include "atlas/array.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/option/Options.h"
+#include "atlas/runtime/Exception.h"
+
 
 namespace atlas {
 namespace functionspace {
@@ -69,7 +70,7 @@ const Field& PointCloud::ghost() const {
 }
 
 Field PointCloud::createField( const eckit::Configuration& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 Field PointCloud::createField( const Field& other, const eckit::Configuration& config ) const {

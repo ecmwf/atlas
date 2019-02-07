@@ -10,9 +10,8 @@
 
 #include <sstream>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/array/ArrayUtil.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace array {
@@ -20,7 +19,7 @@ namespace array {
 void throw_OutOfRange( const std::string& class_name, char idx_str, int idx, int max ) {
     std::ostringstream msg;
     msg << class_name << " index " << idx << " out of bounds: " << idx << " >= " << max;
-    throw eckit::OutOfRange( msg.str(), Here() );
+    throw_Exception( msg.str(), Here() );
 }
 
 }  // namespace array

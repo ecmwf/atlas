@@ -23,6 +23,7 @@
 
 #include "atlas/interpolation/method/PointIndex3.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 
 namespace atlas {
@@ -50,7 +51,7 @@ public:  // methods
     void list_unique_points( std::vector<POINT_T>& opts ) {
         ATLAS_TRACE( "Finding unique points" );
 
-        ASSERT( opts.empty() );
+        ATLAS_ASSERT( opts.empty() );
 
         opts.reserve( npts_ );
 

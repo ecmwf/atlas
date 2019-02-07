@@ -27,7 +27,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/parallel/Checksum.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Unique.h"
@@ -370,8 +370,7 @@ void make_dual_normals_outward( Mesh& mesh ) {
 void build_brick_dual_mesh( const Grid& grid, Mesh& mesh ) {
     auto g = StructuredGrid( grid );
     if ( g ) {
-        if ( mpi::comm().size() != 1 )
-            throw eckit::UserError( "Cannot build_brick_dual_mesh with more than 1 task", Here() );
+        if ( mpi::comm().size() != 1 ) throw_Exception( "Cannot build_brick_dual_mesh with more than 1 task", Here() );
 
         mesh::Nodes& nodes                       = mesh.nodes();
         array::ArrayView<double, 2> xy           = array::make_view<double, 2>( nodes.xy() );
@@ -391,8 +390,8 @@ void build_brick_dual_mesh( const Grid& grid, Mesh& mesh ) {
             for ( idx_t jlon = 0; jlon < g.nx( jlat ); ++jlon ) {
                 while ( gidx( c ) != n + 1 )
                     c++;
-                ASSERT( xy( c, XX ) == g.x( jlon, jlat ) );
-                ASSERT( xy( c, YY ) == lat );
+                ATLAS_ASSERT( xy( c, XX ) == g.x( jlon, jlat ) );
+                ATLAS_ASSERT( xy( c, YY ) == lat );
                 dual_volumes( c ) = dlon * dlat;
                 ++n;
             }
@@ -402,12 +401,12 @@ void build_brick_dual_mesh( const Grid& grid, Mesh& mesh ) {
         nodes_fs.haloExchange( nodes.field( "dual_volumes" ) );
     }
     else {
-        throw eckit::BadCast( "Cannot build_brick_dual_mesh with mesh provided grid type", Here() );
+        throw_Exception( "Cannot build_brick_dual_mesh with mesh provided grid type", Here() );
     }
 }
 
 void build_centroid_dual_mesh( Mesh& ) {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
     // This requires code below which has not been ported yet
 }
 
@@ -415,11 +414,15 @@ void build_centroid_dual_mesh( Mesh& ) {
 // C wrapper interfaces to C++ routines
 
 void atlas__build_median_dual_mesh( Mesh::Implementation* mesh ) {
-    ATLAS_ERROR_HANDLING( Mesh m( mesh ); build_median_dual_mesh( m ); );
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    Mesh m( mesh );
+    build_median_dual_mesh( m );
 }
 
 void atlas__build_centroid_dual_mesh( Mesh::Implementation* mesh ) {
-    ATLAS_ERROR_HANDLING( Mesh m( mesh ); build_centroid_dual_mesh( m ); );
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    Mesh m( mesh );
+    build_centroid_dual_mesh( m );
 }
 // ------------------------------------------------------------------
 

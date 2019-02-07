@@ -8,11 +8,11 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/parallel/HaloExchangeCUDA.h"
 #include "atlas/parallel/HaloExchangeImpl.h"
 #include "atlas/array/SVector.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace parallel {
@@ -158,19 +158,19 @@ void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, ar
   cudaError_t err = cudaGetLastError();
   if (err != cudaSuccess) {
     std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
-    throw eckit::Exception(msg);
+    throw_Exception(msg);
   }
 
   pack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap.data(), sendmap.size(), dfield, send_buffer.data(), send_buffer.size());
   err = cudaGetLastError();
   if (err != cudaSuccess)
-    throw eckit::Exception("Error launching GPU packing kernel");
+    throw_Exception("Error launching GPU packing kernel");
 
   cudaDeviceSynchronize();
   err = cudaGetLastError();
   if (err != cudaSuccess) {
     std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
-    throw eckit::Exception(msg);
+    throw_Exception(msg);
   }
 
 }
@@ -192,7 +192,7 @@ void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, a
   cudaError_t err = cudaGetLastError();
   if (err != cudaSuccess) {
     std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
-    throw eckit::Exception(msg);
+    throw_Exception(msg);
   }
 
   unpack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(recvcnt, recvmap.data(), recvmap.size(), recv_buffer.data(), recv_buffer.size(), dfield);
@@ -200,14 +200,14 @@ void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, a
   err = cudaGetLastError();
   if (err != cudaSuccess) {
     std::string msg = std::string("Error launching GPU packing kernel")+ cudaGetErrorString(err);
-    throw eckit::Exception(msg);
+    throw_Exception(msg);
   }
 
   cudaDeviceSynchronize();
   err = cudaGetLastError();
   if (err != cudaSuccess) {
     std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
-    throw eckit::Exception(msg);
+    throw_Exception(msg);
   }
 }
 

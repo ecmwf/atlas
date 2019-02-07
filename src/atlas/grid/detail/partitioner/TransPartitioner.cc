@@ -8,13 +8,14 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
+#include <sstream>
 
 #include "atlas/array.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/trans/ifs/TransIFS.h"
 
@@ -47,8 +48,7 @@ void TransPartitioner::partition( const Grid& grid, int part[] ) const {
     ATLAS_TRACE( "TransPartitioner::partition" );
 
     StructuredGrid g( grid );
-    if ( not g )
-        throw eckit::BadCast( "Grid is not a grid::Structured type. Cannot partition using IFS trans", Here() );
+    if ( not g ) throw_Exception( "Grid is not a grid::Structured type. Cannot partition using IFS trans", Here() );
 
     trans::TransIFS t( grid );
     if ( nb_partitions() != idx_t( t.nproc() ) ) {
@@ -59,7 +59,7 @@ void TransPartitioner::partition( const Grid& grid, int part[] ) const {
             << t.nproc()
             << " partitions "
                "(equal to number of MPI tasks in communicator).";
-        throw eckit::BadParameter( msg.str(), Here() );
+        throw_Exception( msg.str(), Here() );
     }
 
     int nlonmax = g.nxmax();
@@ -90,7 +90,7 @@ void TransPartitioner::partition( const Grid& grid, int part[] ) const {
                 int igl = nptrfrstlat( ja ) + jgl - nfrstlat( ja );
                 for ( int jl = nsta( jb, igl ) - 1; jl < nsta( jb, igl ) + nonl( jb, igl ) - 1; ++jl ) {
                     idx_t ind = iglobal[jgl * nlonmax + jl] - 1;
-                    if ( ind >= grid.size() ) throw eckit::OutOfRange( ind, grid.size(), Here() );
+                    if ( ind >= grid.size() ) throw_OutOfRange( "part", ind, grid.size(), Here() );
                     part[ind] = iproc;
                 }
             }

@@ -3,8 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
-
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/runtime/trace/CodeLocation.h"
@@ -52,38 +51,38 @@ Trace* new_atlas_Trace_labels_5( const char* file, int line, const char* title, 
 }
 
 void delete_atlas_Trace( Trace* This ) {
-    ASSERT( This != nullptr );
+    ATLAS_ASSERT( This != nullptr, "Cannot delete uninitialised atlas_Trace" );
     delete This;
     This = nullptr;
 }
 
 void atlas_Trace__start( Trace* This ) {
-    ASSERT( This != nullptr );
+    ATLAS_ASSERT( This != nullptr, "Cannot start uninitialised atlas_Trace" );
     This->start();
 }
 
 void atlas_Trace__stop( Trace* This ) {
-    ASSERT( This != nullptr );
+    ATLAS_ASSERT( This != nullptr, "Cannot stop uninitialised atlas_Trace" );
     This->stop();
 }
 
 void atlas_Trace__pause( Trace* This ) {
-    ASSERT( This != nullptr );
+    ATLAS_ASSERT( This != nullptr, "Cannot pause uninitialised atlas_Trace" );
     This->pause();
 }
 
 void atlas_Trace__resume( Trace* This ) {
-    ASSERT( This != nullptr );
+    ATLAS_ASSERT( This != nullptr, "Cannot resume uninitialised atlas_Trace" );
     This->resume();
 }
 
 int atlas_Trace__running( Trace* This ) {
-    ASSERT( This != nullptr );
+    ATLAS_ASSERT( This != nullptr, "Cannot check 'running' status of uninitialised atlas_Trace" );
     return This->running();
 }
 
 double atlas_Trace__elapsed( Trace* This ) {
-    ASSERT( This != nullptr );
+    ATLAS_ASSERT( This != nullptr, "Cannot check elapsed time of uninitialised atlas_Trace" );
     return This->elapsed();
 }
 

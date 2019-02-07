@@ -88,7 +88,7 @@ void Tool::execute( const Args& args ) {
         try {
             grid = Grid( key );
         }
-        catch ( eckit::BadParameter& e ) {
+        catch ( eckit::Exception& e ) {
         }
     }
     else {

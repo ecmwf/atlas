@@ -9,7 +9,7 @@
  */
 
 #include "atlas/mesh/ElementType.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
@@ -18,7 +18,7 @@ namespace mesh {
 //------------------------------------------------------------------------------
 
 ElementType* ElementType::create( const std::string& ) {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 ElementType::ElementType() {}
@@ -28,7 +28,7 @@ ElementType::~ElementType() {}
 
 extern "C" {
 void atlas__mesh__ElementType__delete( ElementType* This ) {
-    ATLAS_ERROR_HANDLING( delete This );
+    delete This;
 }
 ElementType* atlas__mesh__Triangle__create() {
     return new temporary::Triangle();
@@ -41,23 +41,23 @@ ElementType* atlas__mesh__Line__create() {
 }
 
 const char* atlas__mesh__ElementType__name( const ElementType* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->name().c_str(); );
-    return 0;
+    ATLAS_ASSERT( This );
+    return This->name().c_str();
 }
 
 idx_t atlas__mesh__ElementType__nb_nodes( const ElementType* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nb_nodes() );
-    return 0;
+    ATLAS_ASSERT( This );
+    return This->nb_nodes();
 }
 
 idx_t atlas__mesh__ElementType__nb_edges( const ElementType* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->nb_edges() );
-    return 0;
+    ATLAS_ASSERT( This );
+    return This->nb_edges();
 }
 
 int atlas__mesh__ElementType__parametric( const ElementType* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return This->parametric() );
-    return 0;
+    ATLAS_ASSERT( This );
+    return This->parametric();
 }
 }
 

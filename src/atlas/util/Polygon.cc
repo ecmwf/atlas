@@ -13,11 +13,11 @@
 #include <iostream>
 #include <limits>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/array.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Polygon.h"
@@ -46,7 +46,7 @@ Polygon::Polygon( const Polygon::edge_set_t& edges ) {
     for ( const edge_t& e : edges ) {
         if ( !extEdges.erase( e.reverse() ) ) { extEdges.insert( e ); }
     }
-    ASSERT( extEdges.size() >= 2 );
+    ATLAS_ASSERT( extEdges.size() >= 2 );
 
     // set one polygon cycle, by picking next edge with first node same as second
     // node of last edge
@@ -59,7 +59,7 @@ Polygon::Polygon( const Polygon::edge_set_t& edges ) {
         push_back( e->second );
         extEdges.erase( *e );
     }
-    ASSERT( front() == back() );
+    ATLAS_ASSERT( front() == back() );
 
     // exhaust remaining edges, should represent additional cycles, if any
     while ( !extEdges.empty() ) {
@@ -77,7 +77,7 @@ Polygon& Polygon::operator+=( const Polygon& other ) {
     // polygon can have multiple cycles, but must be connected graphs
     // Note: a 'cycle' is handled by repeating the indices, excluding (repeated)
     // last index
-    ASSERT( other.front() == other.back() );
+    ATLAS_ASSERT( other.front() == other.back() );
     const difference_type N = difference_type( other.size() ) - 1;
 
     container_t cycle( 2 * size_t( N ) );
@@ -92,7 +92,7 @@ Polygon& Polygon::operator+=( const Polygon& other ) {
         }
     }
 
-    throw eckit::AssertionFailed( "Polygon: could not merge polygons, they are not connected", Here() );
+    throw_AssertionFailed( "Polygon: could not merge polygons, they are not connected", Here() );
 }
 
 void Polygon::print( std::ostream& s ) const {
@@ -107,8 +107,8 @@ void Polygon::print( std::ostream& s ) const {
 //------------------------------------------------------------------------------------------------------
 
 PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field& lonlat, bool removeAlignedPoints ) {
-    ASSERT( poly.size() > 2 );
-    ASSERT( poly.front() == poly.back() );
+    ATLAS_ASSERT( poly.size() > 2 );
+    ATLAS_ASSERT( poly.front() == poly.back() );
 
     // Point coordinates
     // - use a bounding box to quickly discard points,
@@ -143,12 +143,12 @@ PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field&
         coordinates_.push_back( A );
     }
 
-    ASSERT( coordinates_.size() == poly.size() - nb_removed_points_due_to_alignment );
+    ATLAS_ASSERT( coordinates_.size() == poly.size() - nb_removed_points_due_to_alignment );
 }
 
 PolygonCoordinates::PolygonCoordinates( const std::vector<PointLonLat>& points ) : coordinates_( points ) {
-    ASSERT( coordinates_.size() > 2 );
-    ASSERT( eckit::geometry::points_equal( coordinates_.front(), coordinates_.back() ) );
+    ATLAS_ASSERT( coordinates_.size() > 2 );
+    ATLAS_ASSERT( eckit::geometry::points_equal( coordinates_.front(), coordinates_.back() ) );
 
     coordinatesMin_ = coordinates_.front();
     coordinatesMax_ = coordinatesMin_;

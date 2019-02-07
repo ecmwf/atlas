@@ -10,19 +10,18 @@
 
 #include <fstream>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/Interpolation.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 
 Interpolation::Interpolation( const Config& config, const FunctionSpace& source, const FunctionSpace& target ) :
     Handle( [&]() -> Implementation* {
         std::string type;
-        ASSERT( config.get( "type", type ) );
+        ATLAS_ASSERT( config.get( "type", type ) );
         Implementation* impl = interpolation::MethodFactory::build( type, config );
         impl->setup( source, target );
         return impl;
@@ -37,7 +36,7 @@ Interpolation::Interpolation( const Config& config, const FunctionSpace& source,
 Interpolation::Interpolation( const Config& config, const Grid& source, const Grid& target ) :
     Handle( [&]() -> Implementation* {
         std::string type;
-        ASSERT( config.get( "type", type ) );
+        ATLAS_ASSERT( config.get( "type", type ) );
         Implementation* impl = interpolation::MethodFactory::build( type, config );
         impl->setup( source, target );
         return impl;
@@ -52,7 +51,7 @@ Interpolation::Interpolation( const Config& config, const Grid& source, const Gr
 Interpolation::Interpolation( const Config& config, const FunctionSpace& source, const Field& target ) :
     Handle( [&]() -> Implementation* {
         std::string type;
-        ASSERT( config.get( "type", type ) );
+        ATLAS_ASSERT( config.get( "type", type ) );
         Implementation* impl = interpolation::MethodFactory::build( type, config );
         impl->setup( source, target );
         return impl;
@@ -68,7 +67,7 @@ Interpolation::Interpolation( const Interpolation::Config& config, const Functio
                               const FieldSet& target ) :
     Handle( [&]() -> Implementation* {
         std::string type;
-        ASSERT( config.get( "type", type ) );
+        ATLAS_ASSERT( config.get( "type", type ) );
         Implementation* impl = interpolation::MethodFactory::build( type, config );
         impl->setup( source, target );
         return impl;

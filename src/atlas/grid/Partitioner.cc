@@ -8,15 +8,14 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
-
+#include "atlas/grid/Partitioner.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/distribution/DistributionImpl.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Config.h"
 
@@ -38,8 +37,7 @@ namespace {
 detail::partitioner::Partitioner* partitioner_from_config( const Partitioner::Config& config ) {
     std::string type;
     long partitions = mpi::comm().size();
-    if ( not config.get( "type", type ) )
-        throw eckit::BadParameter( "'type' missing in configuration for Partitioner", Here() );
+    if ( not config.get( "type", type ) ) throw_Exception( "'type' missing in configuration for Partitioner", Here() );
     config.get( "partitions", partitions );
     return Factory::build( type, partitions );
 }

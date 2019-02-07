@@ -28,8 +28,6 @@ list( APPEND atlas_srcs
 library/config.h
 library/Library.h
 library/Library.cc
-runtime/ErrorHandling.cc
-runtime/ErrorHandling.cc
 runtime/AtlasTool.h
 runtime/AtlasTool.cc
 runtime/Log.h
@@ -521,8 +519,6 @@ parallel/HaloExchange.cc
 parallel/HaloExchange.h
 parallel/HaloExchangeImpl.h
 parallel/mpi/Buffer.h
-runtime/ErrorHandling.cc
-runtime/ErrorHandling.h
 runtime/Exception.cc
 runtime/Exception.h
 util/Config.cc

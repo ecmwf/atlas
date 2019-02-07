@@ -13,7 +13,7 @@
 
 #include "N.h"
 
-#include "eckit/exception/Exceptions.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
@@ -22,13 +22,13 @@ namespace pl {
 namespace classic_gaussian {
 
 void PointsPerLatitude::assign( long nlon[], const size_t size ) const {
-    ASSERT( size >= nlon_.size() );
+    ATLAS_ASSERT( size >= nlon_.size() );
     for ( size_t jlat = 0; jlat < nlon_.size(); ++jlat )
         nlon[jlat] = nlon_[jlat];
 }
 
 void PointsPerLatitude::assign( int nlon[], const size_t size ) const {
-    ASSERT( size >= nlon_.size() );
+    ATLAS_ASSERT( size >= nlon_.size() );
     for ( size_t jlat = 0; jlat < nlon_.size(); ++jlat )
         nlon[jlat] = nlon_[jlat];
 }

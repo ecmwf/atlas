@@ -14,8 +14,7 @@
 #include <iostream>
 #include <limits>
 
-#include "eckit/exception/Exceptions.h"
-
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatPolygon.h"
 
@@ -40,7 +39,7 @@ LonLatPolygon::LonLatPolygon( const Polygon& poly, const atlas::Field& lonlat, b
 LonLatPolygon::LonLatPolygon( const std::vector<PointLonLat>& points ) : PolygonCoordinates( points ) {}
 
 bool LonLatPolygon::contains( const PointLonLat& P ) const {
-    ASSERT( coordinates_.size() >= 2 );
+    ATLAS_ASSERT( coordinates_.size() >= 2 );
 
     // check first bounding box
     if ( coordinatesMax_.lon() <= P.lon() || P.lon() < coordinatesMin_.lon() || coordinatesMax_.lat() <= P.lat() ||

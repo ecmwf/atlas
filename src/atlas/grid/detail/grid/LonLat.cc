@@ -1,12 +1,13 @@
 #include <iomanip>
+#include <ostream>
 
 #include "LonLat.h"
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/utils/Translator.h"
 
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
@@ -95,7 +96,7 @@ StructuredGrid::grid_t* create_lonlat( const Grid::Config& config, Shift shift )
     else if ( config.get( "nx", nx ) && config.get( "ny", ny ) ) {
     }
     else {
-        throw eckit::BadParameter( "Configuration requires either N, or (nx,ny)", Here() );
+        throw_Exception( "Configuration requires either N, or (nx,ny)", Here() );
     }
 
     return create_lonlat( nx, ny, shift, config );

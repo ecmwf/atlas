@@ -29,41 +29,6 @@ use atlas_JSON_module, only: &
     & atlas_PathName
 use atlas_Metadata_module, only: &
     & atlas_Metadata
-use atlas_Error_module, only: &
-    & atlas_CodeLocation, &
-    & atlas_code_location_str, &
-    & atlas_code_location, &
-    & atlas_abort, &
-    & atlas_throw_exception, &
-    & atlas_throw_notimplemented, &
-    & atlas_throw_outofrange, &
-    & atlas_throw_seriousbug, &
-    & atlas_throw_usererror, &
-    & atlas_throw_assertionfailed, &
-    & atlas_err, &
-    & atlas_noerr, &
-    & atlas_err_clear, &
-    & atlas_err_success, &
-    & atlas_err_code, &
-    & atlas_err_msg, &
-    & atlas_err_set_aborts, &
-    & atlas_err_set_throws, &
-    & atlas_err_set_backtrace, &
-    & atlas_err_cleared, &
-    & atlas_err_noerr, &
-    & atlas_err_exception, &
-    & atlas_err_usererror, &
-    & atlas_err_seriousbug, &
-    & atlas_err_notimplemented, &
-    & atlas_err_assertionfailed, &
-    & atlas_err_badparameter, &
-    & atlas_err_outofrange, &
-    & atlas_err_stop, &
-    & atlas_err_abort, &
-    & atlas_err_cancel, &
-    & atlas_err_readerror, &
-    & atlas_err_writeerror, &
-    & atlas_err_unknown
 use atlas_HybridElements_module, only: &
     & atlas_HybridElements
 use atlas_mesh_Edges_module, only: &

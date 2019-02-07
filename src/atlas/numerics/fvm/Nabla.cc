@@ -9,7 +9,6 @@
  */
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
@@ -20,6 +19,7 @@
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/numerics/fvm/Nabla.h"
 #include "atlas/parallel/omp/omp.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 
@@ -39,7 +39,7 @@ static NablaBuilder<Nabla> __fvm_nabla( "fvm" );
 Nabla::Nabla( const numerics::Method& method, const eckit::Parametrisation& p ) :
     atlas::numerics::NablaImpl( method, p ) {
     fvm_ = dynamic_cast<const fvm::Method*>( &method );
-    if ( !fvm_ ) throw eckit::BadCast( "atlas::numerics::fvm::Nabla needs a atlas::numerics::fvm::Method", Here() );
+    if ( !fvm_ ) throw_Exception( "atlas::numerics::fvm::Nabla needs a atlas::numerics::fvm::Method", Here() );
     Log::debug() << "Nabla constructed for method " << fvm_->name() << " with "
                  << fvm_->node_columns().nb_nodes_global() << " nodes total" << std::endl;
 
@@ -87,7 +87,7 @@ void Nabla::gradient_of_scalar( const Field& scalar_field, Field& grad_field ) c
     const idx_t nedges = fvm_->edge_columns().nb_edges();
     const idx_t nlev   = scalar_field.levels() ? scalar_field.levels() : 1;
     if ( ( grad_field.levels() ? grad_field.levels() : 1 ) != nlev )
-        throw eckit::AssertionFailed( "gradient field should have same number of levels", Here() );
+        throw_AssertionFailed( "gradient field should have same number of levels", Here() );
 
     const auto scalar = scalar_field.levels()
                             ? array::make_view<double, 2>( scalar_field ).slice( Range::all(), Range::all() )
@@ -161,7 +161,7 @@ void Nabla::gradient_of_vector( const Field& vector_field, Field& grad_field ) c
     const idx_t nedges = fvm_->edge_columns().nb_edges();
     const idx_t nlev   = vector_field.levels();
     if ( vector_field.levels() != nlev )
-        throw eckit::AssertionFailed( "gradient field should have same number of levels", Here() );
+        throw_AssertionFailed( "gradient field should have same number of levels", Here() );
 
     const auto vector =
         vector_field.levels()
@@ -267,7 +267,7 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
     const idx_t nedges = fvm_->edge_columns().nb_edges();
     const idx_t nlev   = vector_field.levels();
     if ( div_field.levels() != nlev )
-        throw eckit::AssertionFailed( "divergence field should have same number of levels", Here() );
+        throw_AssertionFailed( "divergence field should have same number of levels", Here() );
 
     const auto vector =
         vector_field.levels()
@@ -350,8 +350,7 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
     const idx_t nnodes = fvm_->node_columns().nb_nodes();
     const idx_t nedges = fvm_->edge_columns().nb_edges();
     const idx_t nlev   = vector_field.levels();
-    if ( curl_field.levels() != nlev )
-        throw eckit::AssertionFailed( "curl field should have same number of levels", Here() );
+    if ( curl_field.levels() != nlev ) throw_AssertionFailed( "curl field should have same number of levels", Here() );
 
     const auto vector =
         vector_field.levels()

@@ -37,9 +37,6 @@
 #include <sstream>
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/log/Timer.h"
-
 #include "atlas/functionspace.h"
 #include "atlas/grid.h"
 #include "atlas/library/Library.h"
@@ -57,6 +54,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/AtlasTool.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"

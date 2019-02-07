@@ -10,6 +10,7 @@
 
 #include <algorithm>
 
+#include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/io/DataHandle.h"
 
@@ -86,7 +87,7 @@ void read_rspecg( Field spec ) {
         int nb_spectral_coefficients_global =
             functionspace::Spectral( spec.functionspace() ).nb_spectral_coefficients_global();
         auto view = array::make_view<double, 2>( spec );
-        ASSERT( view.shape( 1 ) >= 2 );
+        ATLAS_ASSERT( view.shape( 1 ) >= 2 );
         for ( int i = 0; i < nb_spectral_coefficients_global; ++i ) {
             view( i, 0 ) = ( i == 0 ? 1. : 0. );  // scalar field 1
             view( i, 1 ) = ( i == 0 ? 2. : 0. );  // scalar field 2
@@ -307,7 +308,7 @@ CASE( "test_spectral_fields" ) {
     EXPECT_NO_THROW( trans.invtrans( spfields, gpfields ) );
 
     gpfields.add( gpf );
-    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::SeriousBug );
+    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::Exception );
 }
 
 CASE( "test_nomesh" ) {
@@ -402,7 +403,7 @@ CASE( "test_trans_using_grid" ) {
     EXPECT_NO_THROW( trans.invtrans( spfields, gpfields ) );
 
     gpfields.add( gpf );
-    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::SeriousBug );
+    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::Exception );
 }
 
 CASE( "test_trans_using_functionspace_NodeColumns" ) {
@@ -430,7 +431,7 @@ CASE( "test_trans_using_functionspace_NodeColumns" ) {
     EXPECT_NO_THROW( trans.invtrans( spfields, gpfields ) );
 
     gpfields.add( gpf );
-    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::SeriousBug );
+    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::Exception );
 }
 
 CASE( "test_trans_using_functionspace_StructuredColumns" ) {
@@ -458,7 +459,7 @@ CASE( "test_trans_using_functionspace_StructuredColumns" ) {
     EXPECT_NO_THROW( trans.invtrans( spfields, gpfields ) );
 
     gpfields.add( gpf );
-    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::SeriousBug );
+    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::Exception );
 }
 
 CASE( "test_trans_MIR_lonlat" ) {

@@ -1,8 +1,9 @@
 
-#include "eckit/exception/Exceptions.h"
+#include <ostream>
 
 #include "atlas/domain/detail/DomainFactory.h"
 #include "atlas/domain/detail/ZonalBandDomain.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace domain {
@@ -17,9 +18,9 @@ static bool _is_global( double ymin, double ymax ) {
 static std::array<double, 2> get_interval_y( const eckit::Parametrisation& params ) {
     double ymin, ymax;
 
-    if ( !params.get( "ymin", ymin ) ) throw eckit::BadParameter( "ymin missing in Params", Here() );
+    if ( !params.get( "ymin", ymin ) ) throw_Exception( "ymin missing in Params", Here() );
 
-    if ( !params.get( "ymax", ymax ) ) throw eckit::BadParameter( "ymax missing in Params", Here() );
+    if ( !params.get( "ymax", ymax ) ) throw_Exception( "ymax missing in Params", Here() );
 
     return {ymin, ymax};
 }

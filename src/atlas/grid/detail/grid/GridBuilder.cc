@@ -13,13 +13,13 @@
 #include <regex.h>
 #include <iomanip>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/parser/Tokenizer.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/utils/Translator.h"
 
 #include "atlas/grid/detail/grid/GridFactory.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
 
@@ -53,7 +53,7 @@ int regex_match_impl( const std::string& string, const std::string& regex, std::
 
     if ( !compiled_ok ) Log::error() << "This regular expression didn't compile: \"" << regex << "\"" << std::endl;
 
-    ASSERT( compiled_ok );
+    ATLAS_ASSERT( compiled_ok );
 
     int found = !regexec( &re, string.c_str(), matchcount + 1, result, 0 );
     if ( found && use_substr ) {
@@ -134,7 +134,7 @@ GridBuilder::GridBuilder( const std::string& type ) : names_(), type_( type ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    ASSERT( typed_grids->find( type_ ) == typed_grids->end() );
+    ATLAS_ASSERT( typed_grids->find( type_ ) == typed_grids->end() );
     ( *typed_grids )[type] = this;
 }
 
@@ -142,7 +142,7 @@ GridBuilder::GridBuilder( const std::vector<std::string>& names ) : names_( name
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
     for ( const std::string& name : names_ ) {
-        ASSERT( named_grids->find( name ) == named_grids->end() );
+        ATLAS_ASSERT( named_grids->find( name ) == named_grids->end() );
         ( *named_grids )[name] = this;
     }
 }
@@ -154,11 +154,11 @@ GridBuilder::GridBuilder( const std::string& type, const std::vector<std::string
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
     for ( const std::string& name : names_ ) {
-        ASSERT( named_grids->find( name ) == named_grids->end() );
+        ATLAS_ASSERT( named_grids->find( name ) == named_grids->end() );
         ( *named_grids )[name] = this;
     }
 
-    ASSERT( typed_grids->find( type_ ) == typed_grids->end() );
+    ATLAS_ASSERT( typed_grids->find( type_ ) == typed_grids->end() );
     ( *typed_grids )[type] = this;
 }
 
@@ -167,12 +167,12 @@ GridBuilder::~GridBuilder() {
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
     for ( const std::string& name : names_ ) {
-        ASSERT( named_grids->find( name ) != named_grids->end() );
+        ATLAS_ASSERT( named_grids->find( name ) != named_grids->end() );
         ( *named_grids ).erase( name );
     }
 
     if ( not type_.empty() ) {
-        ASSERT( typed_grids->find( type_ ) != typed_grids->end() );
+        ATLAS_ASSERT( typed_grids->find( type_ ) != typed_grids->end() );
         ( *typed_grids ).erase( type_ );
     }
 }
@@ -190,9 +190,9 @@ const Grid::Implementation* GridBuilder::create( const Grid::Config& config ) co
 
     if ( name.size() ) { Log::error() << "name provided: " << name << std::endl; }
     if ( type.size() ) { Log::error() << "type provided: " << type << std::endl; }
-    if ( name.empty() && type.empty() ) { throw eckit::BadParameter( "no name or type in configuration", Here() ); }
+    if ( name.empty() && type.empty() ) { throw_Exception( "no name or type in configuration", Here() ); }
     else {
-        throw eckit::BadParameter( "name or type in configuration don't exist", Here() );
+        throw_Exception( "name or type in configuration don't exist", Here() );
     }
 }
 

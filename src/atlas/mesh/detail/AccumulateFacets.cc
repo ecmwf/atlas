@@ -8,12 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
-
+#include "atlas/mesh/detail/AccumulateFacets.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/detail/AccumulateFacets.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 
 namespace atlas {
@@ -72,7 +71,7 @@ void accumulate_facets( const mesh::HybridElements& cells, const mesh::Nodes& no
             facet_node_numbering[2][1] = 0;
         }
         else {
-            throw eckit::BadParameter( elements.name() + " is not \"Quadrilateral\" or \"Triangle\"", Here() );
+            throw_Exception( elements.name() + " is not \"Quadrilateral\" or \"Triangle\"", Here() );
         }
 
         std::vector<idx_t> facet_nodes( nb_nodes_in_facet );
@@ -170,7 +169,7 @@ void accumulate_facets_in_range( std::vector<array::Range>& range, const mesh::H
             facet_node_numbering[2][1] = 0;
         }
         else {
-            throw eckit::BadParameter( elements.name() + " is not \"Quadrilateral\" or \"Triangle\"", Here() );
+            throw_Exception( elements.name() + " is not \"Quadrilateral\" or \"Triangle\"", Here() );
         }
 
         std::vector<idx_t> facet_nodes( nb_nodes_in_facet );
@@ -246,7 +245,7 @@ void accumulate_facets_ordered_by_halo( const mesh::HybridElements& cells, const
         int begin{0};
         int end{0};
         for ( idx_t e = 0; e < nb_elems; ++e ) {
-            ASSERT( elem_halo( e ) >= halo );
+            ATLAS_ASSERT( elem_halo( e ) >= halo );
             if ( elem_halo( e ) > halo ) {
                 end             = e;
                 ranges[halo][t] = array::Range{begin, end};

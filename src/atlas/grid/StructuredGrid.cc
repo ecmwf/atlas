@@ -15,7 +15,6 @@
 #include <vector>
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/domain/Domain.h"
 #include "atlas/grid/Grid.h"

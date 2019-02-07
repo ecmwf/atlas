@@ -10,8 +10,6 @@
 
 #include <cmath>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/functionspace/EdgeColumns.h"
@@ -24,7 +22,7 @@
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/parallel/omp/omp.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
@@ -120,22 +118,21 @@ void Method::setup() {
 
 // ------------------------------------------------------------------------------------------
 extern "C" {
-Method* atlas__numerics__fvm__Method__new( Mesh::Implementation* mesh, const eckit::Configuration* params ) {
-    Method* method( nullptr );
-    ATLAS_ERROR_HANDLING( ASSERT( mesh ); Mesh m( mesh ); method = new Method( m, *params ); );
-    return method;
+Method* atlas__numerics__fvm__Method__new( Mesh::Implementation* mesh, const eckit::Configuration* config ) {
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    ATLAS_ASSERT( config != nullptr, "Cannot access uninitialised atlas_Config" );
+    Mesh m( mesh );
+    return new Method( m, *config );
 }
 
 const functionspace::detail::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes( Method* This ) {
-    ATLAS_ERROR_HANDLING(
-        ASSERT( This ); return dynamic_cast<const functionspace::detail::NodeColumns*>( This->node_columns().get() ); );
-    return nullptr;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Method" );
+    return dynamic_cast<const functionspace::detail::NodeColumns*>( This->node_columns().get() );
 }
 
 const functionspace::detail::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges( Method* This ) {
-    ATLAS_ERROR_HANDLING(
-        ASSERT( This ); return dynamic_cast<const functionspace::detail::EdgeColumns*>( This->edge_columns().get() ); );
-    return nullptr;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Method" );
+    return dynamic_cast<const functionspace::detail::EdgeColumns*>( This->edge_columns().get() );
 }
 }
 // ------------------------------------------------------------------------------------------

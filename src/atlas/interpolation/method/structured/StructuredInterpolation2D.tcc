@@ -127,7 +127,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
     kernel_.reset( new Kernel( source ) );
 
     if ( functionspace::StructuredColumns( source ).halo() < 1 ) {
-        throw eckit::Exception( "The source functionspace must have (halo >= 1) for pole treatment" );
+        throw_Exception( "The source functionspace must have (halo >= 1) for pole treatment" );
     }
 
     if ( not matrix_free_ ) {

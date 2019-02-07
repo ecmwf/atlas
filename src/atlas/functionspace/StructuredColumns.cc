@@ -32,7 +32,7 @@
 #include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Checksum.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -287,7 +287,7 @@ void StructuredColumns::set_field_metadata( const eckit::Configuration& config, 
 
 array::DataType StructuredColumns::config_datatype( const eckit::Configuration& config ) const {
     array::DataType::kind_t kind;
-    if ( !config.get( "datatype", kind ) ) throw eckit::AssertionFailed( "datatype missing", Here() );
+    if ( !config.get( "datatype", kind ) ) throw_Exception( "datatype missing", Here() );
     return array::DataType( kind );
 }
 
@@ -376,7 +376,7 @@ void StructuredColumns::throw_outofbounds( idx_t i, idx_t j ) const {
         ss << "OutofBounds: i out of range! : (i,j) = (" << i << "," << j << ") --- Expected: " << i_begin_halo( j )
            << " <= i < " << i_end_halo( j );
     }
-    throw eckit::Exception( ss.str(), Here() );
+    throw_Exception( ss.str(), Here() );
 }
 
 // ----------------------------------------------------------------------------
@@ -426,7 +426,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical
 void StructuredColumns::setup( const grid::Distribution& distribution, const eckit::Configuration& config ) {
     ATLAS_TRACE( "Generating StructuredColumns..." );
     bool periodic_points = config.getInt( "periodic_points", false );
-    if ( not( *grid_ ) ) { throw eckit::BadCast( "Grid is not a grid::Structured type", Here() ); }
+    if ( not( *grid_ ) ) { throw_Exception( "Grid is not a grid::Structured type", Here() ); }
     const eckit::mpi::Comm& comm = mpi::comm();
 
 
@@ -521,7 +521,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         jj = compute_j( j );
         ii = compute_i( i, jj );
         if ( jj != j ) {
-            ASSERT( grid_->nx( jj ) % 2 == 0 );  // assert even number of points
+            ATLAS_ASSERT( grid_->nx( jj ) % 2 == 0 );  // assert even number of points
             ii = ( ii < grid_->nx( jj ) / 2 ) ? ii + grid_->nx( jj ) / 2
                                               : ( ii >= grid_->nx( jj ) / 2 ) ? ii - grid_->nx( jj ) / 2 : ii;
         }
@@ -535,7 +535,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         jj = compute_j( j );
         ii = compute_i( i, jj );
         if ( jj != j ) {
-            ASSERT( grid_->nx( jj ) % 2 == 0 );  // assert even number of points
+            ATLAS_ASSERT( grid_->nx( jj ) % 2 == 0 );  // assert even number of points
             ii = ( ii < grid_->nx( jj ) / 2 ) ? ii + grid_->nx( jj ) / 2
                                               : ( ii >= grid_->nx( jj ) / 2 ) ? ii - grid_->nx( jj ) / 2 : ii;
         }
@@ -644,7 +644,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                 }
             }
 
-            ASSERT( gridpoints.size() == owned );
+            ATLAS_ASSERT( gridpoints.size() == owned );
 
             for ( idx_t j = j_begin_halo_; j < j_begin_; ++j ) {
                 for ( idx_t i = i_begin_halo_( j ); i < i_end_halo_( j ); ++i ) {
@@ -665,7 +665,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                 }
             }
 
-            ASSERT( gridpoints.size() == owned + extra_halo );
+            ATLAS_ASSERT( gridpoints.size() == owned + extra_halo );
         }
 
         ATLAS_TRACE_SCOPE( "Fill in ij2gp " ) {
@@ -837,7 +837,7 @@ void StructuredColumns::create_remote_index() const {
 #if ATLAS_ARRAYVIEW_BOUNDS_CHECKING
                     if ( g( j ) >= size_owned_ + 1 ) {
                         ATLAS_DEBUG_VAR( g( j ) );
-                        throw eckit::OutOfRange( g( j ), size_owned_ + 1, Here() );
+                        throw_OutOfRange( "g_to_r", g( j ), size_owned_ + 1, Here() );
                     }
 #endif
                     g_to_r[g( j )] = j;
@@ -949,7 +949,7 @@ Field StructuredColumns::createField( const Field& other, const eckit::Configura
 // Gather FieldSet
 // ----------------------------------------------------------------------------
 void StructuredColumns::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const {
-    ASSERT( local_fieldset.size() == global_fieldset.size() );
+    ATLAS_ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& loc      = local_fieldset[f];
@@ -979,7 +979,7 @@ void StructuredColumns::gather( const FieldSet& local_fieldset, FieldSet& global
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
         else
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
 }
 // ----------------------------------------------------------------------------
@@ -1000,7 +1000,7 @@ void StructuredColumns::gather( const Field& local, Field& global ) const {
 // Scatter FieldSet
 // ----------------------------------------------------------------------------
 void StructuredColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const {
-    ASSERT( local_fieldset.size() == global_fieldset.size() );
+    ATLAS_ASSERT( local_fieldset.size() == global_fieldset.size() );
 
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& glb      = global_fieldset[f];
@@ -1030,7 +1030,7 @@ void StructuredColumns::scatter( const FieldSet& global_fieldset, FieldSet& loca
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
         else
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
 
         glb.metadata().broadcast( loc.metadata(), root );
         loc.metadata().set( "global", false );
@@ -1063,7 +1063,7 @@ std::string StructuredColumns::checksum( const FieldSet& fieldset ) const {
         else if ( field.datatype() == array::DataType::kind<double>() )
             md5 << checksum_3d_field<double>( checksum(), field );
         else
-            throw eckit::Exception( "datatype not supported", Here() );
+            throw_Exception( "datatype not supported", Here() );
     }
     return md5;
 }
@@ -1086,7 +1086,7 @@ struct FixupHaloForVectors {
     template <typename DATATYPE>
     void apply( Field& field ) {
         std::string type = field.metadata().getString( "type", "scalar" );
-        if ( type == "vector " ) { NOTIMP; }
+        if ( type == "vector " ) { ATLAS_NOTIMPLEMENTED; }
     }
 };
 
@@ -1173,7 +1173,7 @@ void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exc
         fixup_halos.template apply<double>( field );
     }
     else
-        throw eckit::Exception( "datatype not supported", Here() );
+        throw_Exception( "datatype not supported", Here() );
     field.set_dirty( false );
 }
 }  // namespace
@@ -1195,7 +1195,7 @@ void StructuredColumns::haloExchange( const FieldSet& fieldset, bool ) const {
                 dispatch_haloExchange<4>( field, halo_exchange(), *this );
                 break;
             default:
-                throw eckit::Exception( "Rank not supported", Here() );
+                throw_Exception( "Rank not supported", Here() );
         }
     }
 }

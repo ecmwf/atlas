@@ -13,9 +13,9 @@
 #include <iostream>
 #include <limits>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/SphericalPolygon.h"
 
@@ -30,7 +30,7 @@ SphericalPolygon::SphericalPolygon( const Polygon& poly, const atlas::Field& lon
 SphericalPolygon::SphericalPolygon( const std::vector<PointLonLat>& points ) : PolygonCoordinates( points ) {}
 
 bool SphericalPolygon::contains( const PointLonLat& P ) const {
-    ASSERT( coordinates_.size() >= 2 );
+    ATLAS_ASSERT( coordinates_.size() >= 2 );
 
     // check first bounding box
     if ( coordinatesMax_.lon() <= P.lon() || P.lon() < coordinatesMin_.lon() ) { return false; }
@@ -50,7 +50,7 @@ bool SphericalPolygon::contains( const PointLonLat& P ) const {
         if ( APB != BPA ) {
             const double lat = util::Earth::greatCircleLatitudeGivenLongitude( A, B, P.lon() );
 
-            ASSERT( !std::isnan( lat ) );
+            ATLAS_ASSERT( !std::isnan( lat ) );
             if ( eckit::types::is_approximately_equal( P.lat(), lat ) ) { return true; }
 
             wn += ( P.lat() > lat ? -1 : 1 ) * ( APB ? -1 : 1 );

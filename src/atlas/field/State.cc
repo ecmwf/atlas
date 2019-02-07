@@ -21,7 +21,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 namespace atlas {
@@ -73,19 +73,19 @@ util::Metadata& State::metadata() {
 }
 
 Field State::add( Field field ) {
-    ASSERT( field );
+    ATLAS_ASSERT( field );
 
     if ( field.name().empty() ) {
         std::stringstream new_name;
         new_name << "field_" << std::setw( 5 ) << std::setfill( '0' ) << fields_.size();
-        ASSERT( !has( new_name.str() ) );
+        ATLAS_ASSERT( !has( new_name.str() ) );
         field.rename( new_name.str() );
     }
 
     if ( has( field.name() ) ) {
         std::stringstream msg;
         msg << "Trying to add field '" << field.name() << "' to State, but State already has a field with this name.";
-        throw eckit::Exception( msg.str(), Here() );
+        throw_AssertionFailed( msg.str(), Here() );
     }
     fields_[field.name()] = field;
     return field;
@@ -93,9 +93,9 @@ Field State::add( Field field ) {
 
 const Field& State::field( const std::string& name ) const {
     if ( !has( name ) ) {
-        std::stringstream msg;
+        std::ostringstream msg;
         msg << "Trying to access field `" << name << "' in State, but no field with this name is present in State.";
-        throw eckit::Exception( msg.str(), Here() );
+        throw_AssertionFailed( msg.str(), Here() );
     }
     return fields_.find( name )->second;
 }
@@ -106,10 +106,10 @@ Field& State::field( const std::string& name ) {
 
 const Field& State::field( const idx_t idx ) const {
     if ( idx >= size() ) {
-        std::stringstream msg;
+        std::ostringstream msg;
         msg << "Trying to access field in State with index " << idx << ", but there exist only " << size()
             << " fields in State.";
-        throw eckit::Exception( msg.str(), Here() );
+        throw_AssertionFailed( msg.str(), Here() );
     }
     FieldMap::const_iterator it = fields_.begin();
     for ( idx_t i = 0; i < idx; ++i )
@@ -135,7 +135,7 @@ void State::remove( const std::string& name ) {
     if ( fields_.find( name ) == fields_.end() ) {
         std::stringstream msg;
         msg << "Trying to remove field '" << name << "' from State, but it is not present in State.";
-        throw eckit::Exception( msg.str(), Here() );
+        throw_AssertionFailed( msg.str(), Here() );
     }
     fields_.erase( name );
 }
@@ -162,7 +162,7 @@ StateGenerator* StateGeneratorFactory::build( const std::string& name, const eck
         Log::error() << "StateFactories are:" << std::endl;
         for ( j = m->begin(); j != m->end(); ++j )
             Log::error() << "   " << ( *j ).first << std::endl;
-        throw eckit::SeriousBug( std::string( "No StateGeneratorFactory called " ) + name );
+        throw_Exception( std::string( "No StateGeneratorFactory called " ) + name, Here() );
     }
 
     return ( *j ).second->make( param );
@@ -197,7 +197,7 @@ StateGeneratorFactory::StateGeneratorFactory( const std::string& name ) : name_(
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    ASSERT( m->find( name ) == m->end() );
+    ATLAS_ASSERT( m->find( name ) == m->end() );
     ( *m )[name] = this;
 }
 
@@ -216,56 +216,47 @@ State* atlas__State__new() {
 }
 
 void atlas__State__initialize( State* This, const char* generator, const eckit::Parametrisation* params ) {
-    ASSERT( This );
-    ASSERT( params );
-    ATLAS_ERROR_HANDLING( This->initialize( std::string( generator ), *params ) );
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_State" );
+    This->initialize( std::string( generator ), *params );
 }
 
 void atlas__State__delete( State* This ) {
-    ASSERT( This );
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_State" );
     delete This;
 }
 
 void atlas__State__add( State* This, FieldImpl* field ) {
-    ASSERT( This );
-    ATLAS_ERROR_HANDLING( This->add( field ); );
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_State" );
+    This->add( field );
 }
 
 void atlas__State__remove( State* This, const char* name ) {
-    ASSERT( This );
-    ATLAS_ERROR_HANDLING( This->remove( name ); );
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_State" );
+    This->remove( name );
 }
 
 int atlas__State__has( State* This, const char* name ) {
-    ASSERT( This );
-    int has_field( 0 );
-    ATLAS_ERROR_HANDLING( has_field = This->has( name ); );
-    return has_field;
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_State" );
+    return This->has( name );
 }
 
 FieldImpl* atlas__State__field_by_name( State* This, const char* name ) {
-    ASSERT( This );
-    FieldImpl* field( nullptr );
-    ATLAS_ERROR_HANDLING( field = This->field( std::string( name ) ).get(); );
-    return field;
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_State" );
+    return This->field( std::string( name ) ).get();
 }
 
 FieldImpl* atlas__State__field_by_index( State* This, idx_t index ) {
-    ASSERT( This );
-    FieldImpl* field( nullptr );
-    ATLAS_ERROR_HANDLING( field = This->field( index ).get() );
-    return field;
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_State" );
+    return This->field( index ).get();
 }
 
 idx_t atlas__State__size( const State* This ) {
-    ASSERT( This );
-    int nb_fields( 0 );
-    ATLAS_ERROR_HANDLING( nb_fields = This->size(); );
-    return nb_fields;
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_State" );
+    return This->size();
 }
 
 util::Metadata* atlas__State__metadata( State* This ) {
-    ASSERT( This );
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_State" );
     return &This->metadata();
 }
 }

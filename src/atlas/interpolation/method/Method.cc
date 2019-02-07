@@ -66,7 +66,7 @@ MethodFactory::MethodFactory( const std::string& name ) : name_( name ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    if ( m->find( name ) != m->end() ) { throw eckit::SeriousBug( "MethodFactory duplicate '" + name + "'" ); }
+    if ( m->find( name ) != m->end() ) { throw_Exception( "MethodFactory duplicate '" + name + "'" ); }
 
     ATLAS_ASSERT( m->find( name ) == m->end() );
     ( *m )[name] = this;
@@ -90,7 +90,7 @@ Method* MethodFactory::build( const std::string& name, const Method::Config& con
         for ( j = m->begin(); j != m->end(); ++j ) {
             eckit::Log::error() << '\t' << ( *j ).first << std::endl;
         }
-        throw eckit::SeriousBug( "MethodFactory '" + name + "' not found." );
+        throw_Exception( "MethodFactory '" + name + "' not found." );
     }
 
     return ( *j ).second->make( config );
@@ -124,8 +124,8 @@ void Method::interpolate_field_rank1( const Field& src, Field& tgt ) const {
 
     if ( use_eckit_linalg_spmv_ ) {
         if ( src.datatype() != array::make_datatype<double>() ) {
-            throw eckit::NotImplemented(
-                "Only double precision interpolation is currently implemented with eckit backend", Here() );
+            throw_NotImplemented( "Only double precision interpolation is currently implemented with eckit backend",
+                                  Here() );
         }
         ATLAS_ASSERT( src.array().contiguous() );
         ATLAS_ASSERT( tgt.array().contiguous() );

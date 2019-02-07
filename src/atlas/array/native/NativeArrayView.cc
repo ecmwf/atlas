@@ -9,9 +9,7 @@
  */
 
 #include <initializer_list>
-#include <iostream>
-
-#include "eckit/exception/Exceptions.h"
+#include <ostream>
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/helpers/ArrayAssigner.h"

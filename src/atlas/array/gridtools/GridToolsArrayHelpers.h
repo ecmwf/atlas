@@ -15,14 +15,13 @@
 #include <utility>
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/array.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array_fwd.h"
 #include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 //------------------------------------------------------------------------------
@@ -46,7 +45,7 @@ struct check_dimension_lengths_impl {
             std::stringstream err;
             err << "Attempt to resize array with original size for dimension " << Dim << " of " << shape[Dim] << " by "
                 << first_dim << std::endl;
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
         check_dimension_lengths_impl<TotalDims, Dim + 1>::apply( shape, d... );
     }
@@ -61,7 +60,7 @@ struct check_dimension_lengths_impl<TotalDims, Dim,
             std::stringstream err;
             err << "Attempt to resize array with original size for dimension " << Dim - 1 << " of " << shape[Dim - 1]
                 << " by " << first_dim << std::endl;
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
     }
 };
@@ -75,7 +74,7 @@ struct check_dimension_lengths_impl<TotalDims, Dim,
             std::stringstream err;
             err << "Attempt to resize array with original size for dimension " << Dim << " of " << shape[Dim] << " by "
                 << first_dim << std::endl;
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
     }
 };
@@ -238,7 +237,7 @@ ArraySpec ATLAS_HOST make_spec( DataStore* gt_data_store_ptr, Dims... dims ) {
             seq::template apply<ArrayStrides, get_stride_component<idx_t>::template get_component>( storage_info_ptr ),
             seq::template apply<ArrayLayout, get_layout_map_component<idx_t, Layout>::template get_component>(),
             ArrayAlignment( Alignment::value ) );
-        ASSERT( spec.allocatedSize() == storage_info_ptr->padded_total_length() );
+        ATLAS_ASSERT( spec.allocatedSize() == storage_info_ptr->padded_total_length() );
         return spec;
     }
     else {

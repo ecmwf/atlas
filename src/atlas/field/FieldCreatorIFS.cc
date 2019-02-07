@@ -14,12 +14,12 @@
 #include <sstream>
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/field/detail/FieldImpl.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 namespace atlas {
@@ -32,8 +32,7 @@ FieldImpl* FieldCreatorIFS::createField( const eckit::Parametrisation& params ) 
     size_t nproma = 1;
     size_t nlev   = 1;
 
-    if ( !params.get( "ngptot", ngptot ) )
-        throw eckit::Exception( "Could not find parameter 'ngptot' in Parametrisation" );
+    if ( !params.get( "ngptot", ngptot ) ) throw_Exception( "Could not find parameter 'ngptot' in Parametrisation" );
     params.get( "nproma", nproma );
     params.get( "nlev", nlev );
     params.get( "nvar", nvar );
@@ -47,7 +46,7 @@ FieldImpl* FieldCreatorIFS::createField( const eckit::Parametrisation& params ) 
         if ( !array::DataType::kind_valid( kind ) ) {
             std::stringstream msg;
             msg << "Could not create field. kind parameter unrecognized";
-            throw eckit::Exception( msg.str() );
+            throw_Exception( msg.str() );
         }
         datatype = array::DataType( kind );
     }

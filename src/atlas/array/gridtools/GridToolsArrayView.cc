@@ -14,7 +14,7 @@
 #include "atlas/array/helpers/ArrayAssigner.h"
 #include "atlas/array/helpers/ArrayInitializer.h"
 #include "atlas/array/helpers/ArrayWriter.h"
-#include "eckit/exception/Exceptions.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace array {
@@ -99,7 +99,7 @@ void ArrayView<Value, Rank, AccessMode>::assign( const value_type& value ) {
 
 template <typename Value, int Rank, Intent AccessMode>
 void ArrayView<Value, Rank, AccessMode>::assign( const std::initializer_list<value_type>& list ) {
-    ASSERT( list.size() == size_ );
+    ATLAS_ASSERT( list.size() == size_ );
     helpers::array_assigner<Value, Rank>::apply( *this, list );
 }
 

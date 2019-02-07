@@ -12,10 +12,7 @@
 
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/geometry/Point2.h"
 #include "eckit/log/ProgressTimer.h"
-#include "eckit/mpi/Comm.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
@@ -23,6 +20,8 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -86,11 +85,11 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int partiti
     //   FIXME: THIS IS A HACK! the coordinates include North/South Pole
     //   (first/last partitions only)
 
-    ASSERT( grid.domain().global() );
+    ATLAS_ASSERT( grid.domain().global() );
     bool includesNorthPole = ( mpi_rank == 0 );
     bool includesSouthPole = ( mpi_rank == ( int( comm.size() ) - 1 ) );
 
-    ASSERT( prePartitionedMesh_.nodes().size() );
+    ATLAS_ASSERT( prePartitionedMesh_.nodes().size() );
     auto lonlat_src = array::make_view<double, 2>( prePartitionedMesh_.nodes().lonlat() );
 
     std::vector<PointLonLat> coordinates;
@@ -122,8 +121,8 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int partiti
                     const mesh::BlockConnectivity& conn = elements.node_connectivity();
 
                     const idx_t nb_nodes = elements.nb_nodes();
-                    ASSERT( ( nb_nodes == 3 && elements.name() == "Triangle" ) ||
-                            ( nb_nodes == 4 && elements.name() == "Quadrilateral" ) );
+                    ATLAS_ASSERT( ( nb_nodes == 3 && elements.name() == "Triangle" ) ||
+                                  ( nb_nodes == 4 && elements.name() == "Quadrilateral" ) );
 
                     for ( idx_t j = 0; j < elements.size() && !found; ++j ) {
                         idx[0] = conn( j, 0 );
@@ -154,7 +153,7 @@ void MatchingMeshPartitionerBruteForce::partition( const Grid& grid, int partiti
     comm.allReduceInPlace( partitioning, grid.size(), eckit::mpi::Operation::MAX );
     const int min = *std::min_element( partitioning, partitioning + grid.size() );
     if ( min < 0 ) {
-        throw eckit::SeriousBug(
+        throw_Exception(
             "Could not find partition for target node (source "
             "mesh does not contain all target grid points)",
             Here() );

@@ -14,6 +14,7 @@
 #include <cstddef>
 
 #include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
 #include <cuda_runtime.h>
@@ -21,10 +22,6 @@
 
 namespace atlas {
 namespace array {
-
-namespace detail {
-[[noreturn]] void throw_AssertionFailed( const char* msg );
-}
 
 //------------------------------------------------------------------------------
 
@@ -34,12 +31,12 @@ public:
     Vector( idx_t N = 0 ) : data_( N ? new T[N] : nullptr ), data_gpu_( nullptr ), size_( N ) {}
 
     void resize_impl( idx_t N ) {
-        if ( data_gpu_ ) detail::throw_AssertionFailed( "we can not resize a vector after has been cloned to device" );
-        assert( N >= size_ );
+        ATLAS_ASSERT( not data_gpu_, "we can not resize a vector after has been cloned to device" );
+        ATLAS_ASSERT( N >= size_ );
         if ( N == size_ ) return;
 
         T* d_ = new T[N];
-        for ( unsigned int c = 0; c < size_; ++c ) {
+        for ( idx_t c = 0; c < size_; ++c ) {
             d_[c] = data_[c];
         }
         if ( data_ ) delete[] data_;
@@ -53,7 +50,7 @@ public:
 
     void resize( idx_t N, T val ) {
         resize_impl( N );
-        for ( unsigned int c = size_; c < N; ++c ) {
+        for ( idx_t c = size_; c < N; ++c ) {
             data_[c] = val;
         }
 
@@ -79,7 +76,7 @@ public:
             size_gpu_ = size_;
         }
         else {
-            assert( size_gpu_ == size_ );
+            ATLAS_ASSERT( size_gpu_ == size_ );
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
             for ( idx_t i = 0; i < size(); ++i ) {
                 data_[i]->cloneToDevice();
@@ -89,7 +86,7 @@ public:
         }
     }
     void cloneFromDevice() {
-        assert( data_gpu_ );
+        ATLAS_ASSERT( data_gpu_ != nullptr );
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
 

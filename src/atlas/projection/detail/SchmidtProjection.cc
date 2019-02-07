@@ -11,11 +11,11 @@
 #include <cmath>
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
 #include "eckit/utils/Hash.h"
 
 #include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/projection/detail/SchmidtProjection.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 
@@ -37,8 +37,7 @@ template <typename Rotation>
 SchmidtProjectionT<Rotation>::SchmidtProjectionT( const eckit::Parametrisation& params ) :
     ProjectionImpl(),
     rotation_( params ) {
-    if ( !params.get( "stretching_factor", c_ ) )
-        throw eckit::BadParameter( "stretching_factor missing in Params", Here() );
+    if ( !params.get( "stretching_factor", c_ ) ) throw_Exception( "stretching_factor missing in Params", Here() );
 }
 
 // constructor

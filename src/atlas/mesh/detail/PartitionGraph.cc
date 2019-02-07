@@ -10,7 +10,6 @@
 
 #include <iomanip>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/log/Bytes.h"
 #include "eckit/types/FloatCompare.h"
 
@@ -44,7 +43,7 @@ PartitionGraph* build_partition_graph( const MeshImpl& mesh ) {
         polygon.push_back( xy( node, XX ) );
         polygon.push_back( xy( node, YY ) );
     }
-    ASSERT( polygon.size() >= 4 );
+    ATLAS_ASSERT( polygon.size() >= 4 );
 
     eckit::mpi::Buffer<double> recv_polygons( mpi_size );
     comm.allGatherv( polygon.begin(), polygon.end(), recv_polygons );
@@ -151,14 +150,14 @@ idx_t PartitionGraph::maximumNearestNeighbours() const {
 
 void PartitionGraph::print( std::ostream& os ) const {
     for ( idx_t jpart = 0; jpart < size(); ++jpart ) {
-        Log::info() << std::setw( 3 ) << jpart << " : ";
+        os << std::setw( 3 ) << jpart << " : ";
         for ( idx_t v : nearestNeighbours( jpart ) ) {
-            Log::info() << std::setw( 3 ) << v << " ";
+            os << std::setw( 3 ) << v << " ";
         }
-        Log::info() << '\n';
+        os << '\n';
     }
-    Log::info() << "partition graph maximum neighbours = " << maximumNearestNeighbours() << '\n';
-    Log::info() << "partition graph footprint = " << eckit::Bytes( footprint() );
+    os << "partition graph maximum neighbours = " << maximumNearestNeighbours() << '\n';
+    os << "partition graph footprint = " << eckit::Bytes( footprint() );
 }
 
 PartitionGraph::operator bool() const {

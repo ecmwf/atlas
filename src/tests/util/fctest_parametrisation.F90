@@ -15,6 +15,7 @@
 
 module fctest_atlas_Config_fixture
 use atlas_module
+use fckit_module, only : fckit_exception
 implicit none
 
 end module fctest_atlas_Config_fixture
@@ -154,8 +155,8 @@ TEST(test_parametrisation_json_string)
  call atlas_log%info(params%json())
  if( params%get("records",records) ) then
    do jrec=1,size(records)
-     if( .not. records(jrec)%get("name",name) ) call atlas_abort("name not found")
-     if( .not. records(jrec)%get("age",age) )   call atlas_abort("age not found")
+     if( .not. records(jrec)%get("name",name) ) call fckit_exception%abort("name not found")
+     if( .not. records(jrec)%get("age",age) )   call fckit_exception%abort("age not found")
      write(msg,'(2A,I0,A)') name," is ",age," years old"; call atlas_log%info(msg)
   enddo
   do jrec=1,size(records)
@@ -187,8 +188,8 @@ TEST(test_parametrisation_json_file)
 
  if( params%get("records",records) ) then
    do jrec=1,size(records)
-     if( .not. records(jrec)%get("name",name) ) call atlas_abort("name not found")
-     if( .not. records(jrec)%get("age",age) )   call atlas_abort("age not found")
+     if( .not. records(jrec)%get("name",name) ) call fckit_exception%abort("name not found")
+     if( .not. records(jrec)%get("age",age) )   call fckit_exception%abort("age not found")
      write(msg,'(2A,I0,A)') name," is ",age," years old"; call atlas_log%info(msg)
    enddo
    do jrec=1,size(records)

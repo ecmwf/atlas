@@ -18,7 +18,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/distribution/DistributionImpl.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace functionspace {
@@ -40,77 +40,72 @@ extern "C" {
 
 const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid(
     const Grid::Implementation* grid, const eckit::Configuration* config ) {
-    ATLAS_ERROR_HANDLING( return new detail::StructuredColumns( Grid( grid ), grid::Partitioner(), *config ); );
-    return nullptr;
+    return new detail::StructuredColumns( Grid( grid ), grid::Partitioner(), *config );
 }
 
 const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_dist(
     const Grid::Implementation* grid, const grid::DistributionImpl* dist, const eckit::Configuration* config ) {
-    ATLAS_ERROR_HANDLING( return new detail::StructuredColumns( Grid( grid ), grid::Distribution( dist ), *config ); );
-    return nullptr;
+    return new detail::StructuredColumns( Grid( grid ), grid::Distribution( dist ), *config );
 }
 
 const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_dist_vert(
     const Grid::Implementation* grid, const grid::DistributionImpl* dist, const Vertical* vert,
     const eckit::Configuration* config ) {
-    ATLAS_ERROR_HANDLING(
-        return new detail::StructuredColumns( Grid( grid ), grid::Distribution( dist ), *vert, *config ); );
-    return nullptr;
-}
-
-void atlas__functionspace__StructuredColumns__delete( detail::StructuredColumns* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); delete This; );
-}
-
-field::FieldImpl* atlas__fs__StructuredColumns__create_field( const detail::StructuredColumns* This,
-                                                              const eckit::Configuration* options ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); field::FieldImpl * field; {
-        Field f = This->createField( *options );
-        field   = f.get();
-        field->attach();
-    } field->detach();
-                          return field; );
-    return nullptr;
+    return new detail::StructuredColumns( Grid( grid ), grid::Distribution( dist ), *vert, *config );
 }
 
 void atlas__functionspace__StructuredColumns__gather( const detail::StructuredColumns* This,
                                                       const field::FieldImpl* local, field::FieldImpl* global ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( global ); ASSERT( local ); const Field l( local ); Field g( global );
-                          This->gather( l, g ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_functionspace_StructuredColumns" );
+    ATLAS_ASSERT( global != nullptr, "Cannot access uninitialised atlas_Field" );
+    ATLAS_ASSERT( local != nullptr, "Cannot access uninitialised atlas_Field" );
+    const Field l( local );
+    Field g( global );
+    This->gather( l, g );
 }
 
 void atlas__functionspace__StructuredColumns__scatter( const detail::StructuredColumns* This,
                                                        const field::FieldImpl* global, field::FieldImpl* local ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( global ); ASSERT( local ); const Field g( global ); Field l( local );
-                          This->scatter( g, l ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_functionspace_StructuredColumns" );
+    ATLAS_ASSERT( global != nullptr, "Cannot access uninitialised atlas_Field" );
+    ATLAS_ASSERT( local != nullptr, "Cannot access uninitialised atlas_Field" );
+    const Field g( global );
+    Field l( local );
+    This->scatter( g, l );
 }
 
 void atlas__fs__StructuredColumns__checksum_fieldset( const detail::StructuredColumns* This,
                                                       const field::FieldSetImpl* fieldset, char*& checksum, idx_t& size,
                                                       int& allocated ) {
-    ASSERT( This );
-    ASSERT( fieldset );
-    ATLAS_ERROR_HANDLING( std::string checksum_str( This->checksum( fieldset ) );
-                          size = static_cast<idx_t>( checksum_str.size() ); checksum = new char[size + 1];
-                          allocated = true; strcpy( checksum, checksum_str.c_str() ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_functionspace_StructuredColumns" );
+    ATLAS_ASSERT( fieldset != nullptr, "Cannot access uninitialised atlas_FieldSet" );
+    std::string checksum_str( This->checksum( fieldset ) );
+    size      = static_cast<idx_t>( checksum_str.size() );
+    checksum  = new char[size + 1];
+    allocated = true;
+    strcpy( checksum, checksum_str.c_str() );
 }
 
 void atlas__fs__StructuredColumns__checksum_field( const detail::StructuredColumns* This, const field::FieldImpl* field,
                                                    char*& checksum, idx_t& size, int& allocated ) {
-    ASSERT( This );
-    ASSERT( field );
-    ATLAS_ERROR_HANDLING( std::string checksum_str( This->checksum( field ) );
-                          size = static_cast<idx_t>( checksum_str.size() ); checksum = new char[size + 1];
-                          allocated = true; strcpy( checksum, checksum_str.c_str() ); );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_functionspace_StructuredColumns" );
+    ATLAS_ASSERT( field != nullptr, "Cannot access uninitialised atlas_Field" );
+    std::string checksum_str( This->checksum( field ) );
+    size      = static_cast<idx_t>( checksum_str.size() );
+    checksum  = new char[size + 1];
+    allocated = true;
+    strcpy( checksum, checksum_str.c_str() );
 }
 
 void atlas__fs__StructuredColumns__index_host( const detail::StructuredColumns* This, idx_t*& data, idx_t& i_min,
                                                idx_t& i_max, idx_t& j_min, idx_t& j_max ) {
-    ASSERT( This );
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_functionspace_StructuredColumns" );
     auto _This = detail::StructuredColumnsFortranAccess{*This};
-    ATLAS_ERROR_HANDLING( data = _This.ij2gp_.data_.data(); i_min = _This.ij2gp_.i_min_ + 1;
-                          i_max = _This.ij2gp_.i_max_ + 1; j_min = _This.ij2gp_.j_min_ + 1;
-                          j_max                                  = _This.ij2gp_.j_max_ + 1; );
+    data       = _This.ij2gp_.data_.data();
+    i_min      = _This.ij2gp_.i_min_ + 1;
+    i_max      = _This.ij2gp_.i_max_ + 1;
+    j_min      = _This.ij2gp_.j_min_ + 1;
+    j_max      = _This.ij2gp_.j_max_ + 1;
 }
 
 idx_t atlas__fs__StructuredColumns__j_begin( const detail::StructuredColumns* This ) {

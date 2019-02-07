@@ -1,9 +1,9 @@
+#include <ostream>
 #include <utility>
-
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/domain/detail/DomainFactory.h"
 #include "atlas/domain/detail/RectangularDomain.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace domain {
@@ -15,9 +15,9 @@ namespace {
 static std::array<double, 2> get_interval_x( const eckit::Parametrisation& params ) {
     double xmin, xmax;
 
-    if ( !params.get( "xmin", xmin ) ) throw eckit::BadParameter( "xmin missing in Params", Here() );
+    if ( !params.get( "xmin", xmin ) ) throw_Exception( "xmin missing in Params", Here() );
 
-    if ( !params.get( "xmax", xmax ) ) throw eckit::BadParameter( "xmax missing in Params", Here() );
+    if ( !params.get( "xmax", xmax ) ) throw_Exception( "xmax missing in Params", Here() );
 
     return {xmin, xmax};
 }
@@ -25,16 +25,16 @@ static std::array<double, 2> get_interval_x( const eckit::Parametrisation& param
 static std::array<double, 2> get_interval_y( const eckit::Parametrisation& params ) {
     double ymin, ymax;
 
-    if ( !params.get( "ymin", ymin ) ) throw eckit::BadParameter( "ymin missing in Params", Here() );
+    if ( !params.get( "ymin", ymin ) ) throw_Exception( "ymin missing in Params", Here() );
 
-    if ( !params.get( "ymax", ymax ) ) throw eckit::BadParameter( "ymax missing in Params", Here() );
+    if ( !params.get( "ymax", ymax ) ) throw_Exception( "ymax missing in Params", Here() );
 
     return {ymin, ymax};
 }
 
 static std::string get_units( const eckit::Parametrisation& params ) {
     std::string units;
-    if ( !params.get( "units", units ) ) throw eckit::BadParameter( "units missing in Params", Here() );
+    if ( !params.get( "units", units ) ) throw_Exception( "units missing in Params", Here() );
     return units;
 }
 

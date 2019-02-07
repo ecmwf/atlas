@@ -104,7 +104,7 @@ public:
 
 template <typename DATA_TYPE, int RANK, typename ParallelDim>
 void HaloExchange::execute( array::Array& field, bool on_device ) const {
-    if ( !is_setup_ ) { throw_SeriousBug( "HaloExchange was not setup", Here() ); }
+    if ( !is_setup_ ) { throw_Exception( "HaloExchange was not setup", Here() ); }
 
     ATLAS_TRACE( "HaloExchange", {"halo-exchange"} );
 
@@ -231,7 +231,7 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
 // template<typename DATA_TYPE>
 // void HaloExchange::execute( DATA_TYPE field[], idx_t nb_vars ) const
 //{
-//    throw eckit::AssertionFailed("Call not supported");
+//    throw_AssertionFailed("Call not supported");
 
 //  idx_t strides[] = {1};
 //  idx_t shape[] = {nb_vars};

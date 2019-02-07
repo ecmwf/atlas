@@ -14,7 +14,6 @@
 #include <limits>
 #include <memory>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
 
@@ -25,6 +24,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/option.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/NormaliseLongitude.h"
@@ -106,7 +106,7 @@ Unstructured::Unstructured( const util::Config& ) : Grid() {
     util::Config config_domain;
     config_domain.set( "type", "global" );
     domain_ = Domain( config_domain );
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 Unstructured::Unstructured( std::vector<PointXY>* pts ) : Grid(), points_( pts ) {
@@ -143,7 +143,7 @@ Grid::uid_t Unstructured::name() const {
 }
 
 void Unstructured::hash( eckit::Hash& h ) const {
-    ASSERT( points_ );
+    ATLAS_ASSERT( points_ != nullptr );
 
     const std::vector<PointXY>& pts = *points_;
     h.add( &pts[0], sizeof( PointXY ) * pts.size() );
@@ -157,7 +157,7 @@ void Unstructured::hash( eckit::Hash& h ) const {
 }
 
 idx_t Unstructured::size() const {
-    ASSERT( points_ );
+    ATLAS_ASSERT( points_ != nullptr );
     return static_cast<idx_t>( points_->size() );
 }
 
@@ -190,7 +190,7 @@ void Unstructured::print( std::ostream& os ) const {
 }
 
 bool Unstructured::IteratorXYPredicated::next( PointXY& /*xy*/ ) {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 #if 0
     if ( n_ != grid_.points_->size() ) {
         xy = grid_.xy( n_++ );

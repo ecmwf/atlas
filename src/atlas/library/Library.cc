@@ -8,6 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <sstream>
+#include <string>
+
 #include "eckit/eckit.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "eckit/filesystem/PathName.h"
@@ -102,9 +105,10 @@ void Library::initialise( int argc, char** argv ) {
             atlas::Log::debug().reset();
         }
         Log::debug() << "Atlas initialised eckit::Main.\n";
-        if ( eckit::mpi::comm( "world" ).size() > 1 )
+        if ( eckit::mpi::comm( "world" ).size() > 1 ) {
             Log::debug() << "--> Only MPI rank 0 is logging. Please initialise eckit::Main \n"
                             "    before to avoid this behaviour.\n";
+        }
     }
     initialise();
 }

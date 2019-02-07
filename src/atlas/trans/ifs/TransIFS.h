@@ -17,6 +17,7 @@
 #include "atlas/array/LocalView.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/StructuredGrid.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/trans/Trans.h"
 
 //-----------------------------------------------------------------------------
@@ -62,15 +63,6 @@ class TransPartitioner;
 }
 }  // namespace detail
 }  // namespace grid
-}  // namespace atlas
-
-namespace atlas {
-namespace trans {
-namespace detail {
-void Assert( int code, const char* msg, const char* file, int line, const char* func );
-#define ATLAS_TRANS_ASSERT( a ) atlas::trans::detail::Assert( !( a ), #a, __FILE__, __LINE__, __func__ )
-}  // namespace detail
-}  // namespace trans
 }  // namespace atlas
 
 
@@ -254,23 +246,23 @@ private:
 
     const int* nloen( int& size ) const {
         size = trans_->ndgl;
-        ATLAS_TRANS_ASSERT( trans_->nloen != nullptr );
+        ATLAS_ASSERT( trans_->nloen != nullptr );
         return trans_->nloen;
     }
 
     array::LocalView<int, 1> nloen() const {
-        ATLAS_TRANS_ASSERT( trans_->nloen != nullptr );
+        ATLAS_ASSERT( trans_->nloen != nullptr );
         return array::LocalView<int, 1>( trans_->nloen, array::make_shape( trans_->ndgl ) );
     }
 
     const int* n_regions( int& size ) const {
         size = trans_->n_regions_NS;
-        ATLAS_TRANS_ASSERT( trans_->n_regions != nullptr );
+        ATLAS_ASSERT( trans_->n_regions != nullptr );
         return trans_->n_regions;
     }
 
     array::LocalView<int, 1> n_regions() const {
-        ATLAS_TRANS_ASSERT( trans_->n_regions != nullptr );
+        ATLAS_ASSERT( trans_->n_regions != nullptr );
         return array::LocalView<int, 1>( trans_->n_regions, array::make_shape( trans_->n_regions_NS ) );
     }
 
