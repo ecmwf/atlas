@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <iosfwd>
+
 #include "atlas/trans/Cache.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/ObjectHandle.h"
@@ -35,6 +37,7 @@ namespace trans {
 class TransImpl;
 class Trans : public util::ObjectHandle<TransImpl> {
 public:
+    static void listBackends( std::ostream& );
     static bool hasBackend( const std::string& );
     static void backend( const std::string& );
     static std::string backend();

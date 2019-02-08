@@ -30,6 +30,10 @@ util::Config options( const eckit::Configuration& config ) {
 }
 }  // namespace
 
+void Trans::listBackends( std::ostream& out ) {
+    TransFactory::list( out );
+}
+
 bool Trans::hasBackend( const std::string& backend ) {
     return TransFactory::has( backend );
 }

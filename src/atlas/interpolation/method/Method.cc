@@ -17,6 +17,7 @@
 #include "eckit/thread/Mutex.h"
 #include "eckit/thread/Once.h"
 
+#include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
@@ -24,7 +25,6 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
-#include "atlas/array.h"
 
 namespace atlas {
 namespace interpolation {

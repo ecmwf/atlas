@@ -14,10 +14,10 @@
 #include "fe/FiniteElement.h"
 #include "knn/KNearestNeighbours.h"
 #include "knn/NearestNeighbour.h"
-#include "structured/Linear2D.h"
-#include "structured/Linear3D.h"
 #include "structured/Cubic2D.h"
 #include "structured/Cubic3D.h"
+#include "structured/Linear2D.h"
+#include "structured/Linear3D.h"
 #include "structured/QuasiCubic2D.h"
 #include "structured/QuasiCubic3D.h"
 
