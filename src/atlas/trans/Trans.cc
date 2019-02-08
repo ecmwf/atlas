@@ -8,8 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/thread/AutoLock.h"
-#include "eckit/thread/Mutex.h"
 #include "eckit/utils/Hash.h"
 
 #include "atlas/functionspace.h"
@@ -18,240 +16,11 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/Trans.h"
-
-namespace {
-struct default_backend {
-#if ATLAS_HAVE_TRANS
-    std::string value = "ifs";
-#else
-    std::string value = "local";
-#endif
-    static default_backend instance() {
-        static default_backend x;
-        return x;
-    }
-
-private:
-    default_backend() = default;
-};
-}  // namespace
+#include "atlas/trans/detail/TransFactory.h"
+#include "atlas/trans/detail/TransImpl.h"
 
 namespace atlas {
 namespace trans {
-
-
-class TransBackend {
-public:
-    static void list( std::ostream& );
-    static bool has( const std::string& name );
-    static void backend( const std::string& );
-    static std::string backend();
-    static void config( const eckit::Configuration& );
-    static const eckit::Configuration& config();
-
-private:
-    static util::Config default_options_;
-};
-
-util::Config TransBackend::default_options_ = util::Config( "type", default_backend::instance().value );
-
-TransImpl::~TransImpl() {}
-
-namespace {
-
-static eckit::Mutex* local_mutex               = nullptr;
-static std::map<std::string, int>* b           = nullptr;
-static std::map<std::string, TransFactory*>* m = nullptr;
-static pthread_once_t once                     = PTHREAD_ONCE_INIT;
-
-static void init() {
-    local_mutex = new eckit::Mutex();
-    b           = new std::map<std::string, int>();
-    m           = new std::map<std::string, TransFactory*>();
-}
-
-TransFactory& factory( const std::string& name ) {
-    std::map<std::string, TransFactory*>::const_iterator j = m->find( name );
-    if ( j == m->end() ) {
-        Log::error() << "No TransFactory for [" << name << "]" << std::endl;
-        Log::error() << "TransFactories are:" << std::endl;
-        for ( j = m->begin(); j != m->end(); ++j )
-            Log::error() << "   " << ( *j ).first << std::endl;
-        throw_Exception( std::string( "No TransFactory called " ) + name );
-    }
-    return *j->second;
-}
-
-}  // namespace
-
-TransFactory::TransFactory( const std::string& name, const std::string& backend ) : name_( name ), backend_( backend ) {
-    pthread_once( &once, init );
-
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-
-    ATLAS_ASSERT( m->find( name ) == m->end() );
-    ( *m )[name] = this;
-
-    if ( b->find( backend ) == b->end() ) ( *b )[backend] = 0;
-    ( *b )[backend]++;
-}
-
-TransFactory::~TransFactory() {
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-    m->erase( name_ );
-    ( *b )[backend_]--;
-    if ( ( *b )[backend_] == 0 ) b->erase( backend_ );
-}
-
-bool TransFactory::has( const std::string& name ) {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-    return ( m->find( name ) != m->end() );
-}
-
-bool TransBackend::has( const std::string& name ) {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-    return ( b->find( name ) != b->end() );
-}
-
-void TransBackend::backend( const std::string& backend ) {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-    default_options_.set( "type", backend );
-}
-
-std::string TransBackend::backend() {
-    return default_options_.getString( "type" );
-}
-
-const eckit::Configuration& TransBackend::config() {
-    return default_options_;
-}
-
-void TransBackend::config( const eckit::Configuration& config ) {
-    std::string type = default_options_.getString( "type" );
-    default_options_ = config;
-    if ( not config.has( "type" ) ) { default_options_.set( "type", type ); }
-}
-
-void TransBackend::list( std::ostream& out ) {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-    const char* sep = "";
-    for ( std::map<std::string, int>::const_iterator j = b->begin(); j != b->end(); ++j ) {
-        out << sep << ( *j ).first;
-        sep = ", ";
-    }
-}
-
-void TransFactory::list( std::ostream& out ) {
-    TransBackend::list( out );
-}
-
-const Trans::Implementation* TransFactory::build( const FunctionSpace& gp, const FunctionSpace& sp,
-                                                  const eckit::Configuration& config ) {
-    return build( Cache(), gp, sp, config );
-}
-
-const Trans::Implementation* TransFactory::build( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp,
-                                                  const eckit::Configuration& config ) {
-    if ( cache.trans() ) {
-        Log::debug() << "Creating Trans from cache, ignoring any other arguments" << std::endl;
-        return cache.trans();
-    }
-
-    pthread_once( &once, init );
-
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-
-    util::Config options = TransBackend::config();
-    options.set( config );
-
-    std::string backend = options.getString( "type" );
-
-    Log::debug() << "Looking for TransFactory [" << backend << "]" << std::endl;
-    if ( !TransBackend::has( backend ) ) {
-        Log::error() << "No TransFactory for [" << backend << "]" << std::endl;
-        Log::error() << "TransFactories are :" << std::endl;
-        TransBackend::list( Log::error() );
-        Log::error() << std::endl;
-        throw_Exception( std::string( "No TransFactory called " ) + backend );
-    }
-
-    std::string suffix( "(" + gp.type() + "," + sp.type() + ")" );
-    std::string name = backend + suffix;
-
-    Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
-
-    return factory( name ).make( cache, gp, sp, options );
-}
-
-const Trans::Implementation* TransFactory::build( const Grid& grid, int truncation,
-                                                  const eckit::Configuration& config ) {
-    return build( Cache(), grid, truncation, config );
-}
-
-const Trans::Implementation* TransFactory::build( const Grid& grid, const Domain& domain, int truncation,
-                                                  const eckit::Configuration& config ) {
-    return build( Cache(), grid, domain, truncation, config );
-}
-
-const Trans::Implementation* TransFactory::build( const Cache& cache, const Grid& grid, int truncation,
-                                                  const eckit::Configuration& config ) {
-    return build( cache, grid, grid.domain(), truncation, config );
-}
-
-const Trans::Implementation* TransFactory::build( const Cache& cache, const Grid& grid, const Domain& domain,
-                                                  int truncation, const eckit::Configuration& config ) {
-    if ( cache.trans() ) {
-        Log::debug() << "Creating Trans from cache, ignoring any other arguments" << std::endl;
-        return cache.trans();
-    }
-
-    pthread_once( &once, init );
-
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-
-    util::Config options = TransBackend::config();
-    options.set( config );
-
-    std::string backend = options.getString( "type" );
-
-    Log::debug() << "Looking for TransFactory [" << backend << "]" << std::endl;
-    if ( !TransBackend::has( backend ) ) {
-        Log::error() << "No TransFactory for [" << backend << "]" << std::endl;
-        Log::error() << "TransFactories are :" << std::endl;
-        TransBackend::list( Log::error() );
-        Log::error() << std::endl;
-        throw_Exception( std::string( "No TransFactory called " ) + backend );
-    }
-
-    std::string name = backend;
-
-    return factory( name ).make( cache, grid, domain, truncation, options );
-}
-
-bool Trans::hasBackend( const std::string& backend ) {
-    return TransBackend::has( backend );
-}
-
-void Trans::backend( const std::string& backend ) {
-    ATLAS_ASSERT( hasBackend( backend ) );
-    TransBackend::backend( backend );
-}
-
-std::string Trans::backend() {
-    return TransBackend::backend();
-}
-
-const eckit::Configuration& Trans::config() {
-    return TransBackend::config();
-}
-
-void Trans::config( const eckit::Configuration& options ) {
-    TransBackend::config( options );
-}
 
 namespace {
 util::Config options( const eckit::Configuration& config ) {
@@ -261,6 +30,26 @@ util::Config options( const eckit::Configuration& config ) {
 }
 }  // namespace
 
+bool Trans::hasBackend( const std::string& backend ) {
+    return TransFactory::has( backend );
+}
+
+void Trans::backend( const std::string& backend ) {
+    ATLAS_ASSERT( hasBackend( backend ) );
+    TransFactory::backend( backend );
+}
+
+std::string Trans::backend() {
+    return TransFactory::backend();
+}
+
+const eckit::Configuration& Trans::config() {
+    return TransFactory::config();
+}
+
+void Trans::config( const eckit::Configuration& _config ) {
+    TransFactory::config( _config );
+}
 
 Trans::Trans( const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& config ) :
     Handle( TransFactory::build( gp, sp, config ) ) {}

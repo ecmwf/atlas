@@ -12,20 +12,11 @@
 #include <cstdlib>
 
 #include "eckit/io/DataHandle.h"
-#include "eckit/thread/AutoLock.h"
-#include "eckit/thread/Mutex.h"
 
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/trans/Trans.h"
-
-namespace {
-static eckit::Mutex* local_mutex = nullptr;
-static pthread_once_t once       = PTHREAD_ONCE_INIT;
-static void init() {
-    local_mutex = new eckit::Mutex();
-}
-}  // namespace
 
 namespace atlas {
 namespace trans {
@@ -84,10 +75,7 @@ Cache::operator bool() const {
     return trans_ || bool( legendre() );
 }
 
-Cache::~Cache() {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-}
+Cache::~Cache() {}
 
 TransCache::TransCache( const Trans& trans ) : Cache( trans.get() ) {}
 

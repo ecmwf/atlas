@@ -11,6 +11,7 @@
 #include "atlas/trans/ifs/TransIFSStructuredColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/trans/detail/TransFactory.h"
 
 namespace atlas {
 namespace trans {

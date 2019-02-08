@@ -21,6 +21,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/trans/detail/TransFactory.h"
 #include "atlas/trans/ifs/TransIFS.h"
 
 using Topology = atlas::mesh::Nodes::Topology;

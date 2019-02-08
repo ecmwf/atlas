@@ -18,7 +18,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/trans/Trans.h"
+#include "atlas/trans/detail/TransImpl.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations

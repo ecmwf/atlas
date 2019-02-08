@@ -32,6 +32,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/trans/VorDivToUV.h"
+#include "atlas/trans/detail/TransFactory.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

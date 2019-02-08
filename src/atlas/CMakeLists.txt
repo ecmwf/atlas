@@ -378,7 +378,10 @@ trans/local/VorDivToUVLocal.h
 trans/local/VorDivToUVLocal.cc
 trans/local/LegendreCacheCreatorLocal.h
 trans/local/LegendreCacheCreatorLocal.cc
-
+trans/detail/TransFactory.h
+trans/detail/TransFactory.cc
+trans/detail/TransImpl.h
+trans/detail/TransImpl.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs

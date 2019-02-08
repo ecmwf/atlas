@@ -31,6 +31,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/VorDivToUV.h"
+#include "atlas/trans/detail/TransFactory.h"
 #include "atlas/trans/local/LegendrePolynomials.h"
 #include "atlas/util/Constants.h"
 
@@ -41,7 +42,7 @@
 
 // move latitudes at the poles to the following latitude:
 // (otherwise we would divide by zero when computing u,v from U,V)
-double latPole = 89.9999999;
+static constexpr double latPole = 89.9999999;
 // (latPole=89.9999999 seems to produce the best accuracy. Moving it further away
 //  or closer to the pole both increase the errors!)
 

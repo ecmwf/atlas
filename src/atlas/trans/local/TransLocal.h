@@ -15,7 +15,7 @@
 
 #include "atlas/array.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/trans/Trans.h"
+#include "atlas/trans/detail/TransImpl.h"
 
 #define TRANSLOCAL_DGEMM2 0
 
@@ -133,7 +133,7 @@ private:
 #else
         return jfld + nb_fields * ( jlat + nlats * ( imag + 2 * ( jm ) ) );
 #endif
-    };
+    }
 
     void invtrans_legendre( const int truncation, const int nlats, const int nb_fields, const int nb_vordiv_fields,
                             const double scalar_spectra[], double scl_fourier[],

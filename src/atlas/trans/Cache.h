@@ -112,7 +112,6 @@ protected:
 
 private:
     util::ObjectHandle<const TransImpl> trans_;
-    //    const TransImpl*                 trans_ = nullptr;
     std::shared_ptr<TransCacheEntry> legendre_;
     std::shared_ptr<TransCacheEntry> fft_;
 };
