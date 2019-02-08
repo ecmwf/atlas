@@ -8,6 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
+#include <cuda_runtime.h>
+
 #include "atlas/library/config.h"
 #include "tests/AtlasTestEnvironment.h"
 #include "atlas/array/SVector.h"

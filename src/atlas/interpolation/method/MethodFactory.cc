@@ -28,7 +28,6 @@ namespace interpolation {
 namespace {
 
 void force_link() {
-    Log::error() << "force_link" << std::endl;
     static struct Link {
         Link() {
             MethodBuilder<method::FiniteElement>();

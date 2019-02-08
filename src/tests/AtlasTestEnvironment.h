@@ -24,6 +24,7 @@
 #include "eckit/types/Types.h"
 
 #include "atlas/library/Library.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/runtime/trace/StopWatch.h"
