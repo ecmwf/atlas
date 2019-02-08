@@ -1,17 +1,26 @@
+#if 0
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+// clang-format off
+#endif
+ 
 #ifndef atlas_f_h
 #define atlas_f_h
 
 #include "fckit/fckit.h"
 
-#if 0
-// clang-format off
-#endif
 
-#define ATLAS_HAVE_OMP @ATLAS_HAVE_OMP@
-#define ATLAS_HAVE_TRANS @ATLAS_HAVE_TRANS@
-#define ATLAS_HAVE_ACC @ATLAS_HAVE_ACC@
+#define ATLAS_HAVE_OMP    @ATLAS_HAVE_OMP@
+#define ATLAS_HAVE_TRANS  @ATLAS_HAVE_TRANS@
+#define ATLAS_HAVE_ACC    @ATLAS_HAVE_ACC@
 #define ATLAS_BITS_GLOBAL @ATLAS_BITS_GLOBAL@
-#define ATLAS_BITS_LOCAL @ATLAS_BITS_LOCAL@
+#define ATLAS_BITS_LOCAL  @ATLAS_BITS_LOCAL@
 
 #define ATLAS_FINAL FCKIT_FINAL
 
@@ -19,10 +28,6 @@
 #define CPTR_PGIBUG_A c_ptr()
 #define CPTR_PGIBUG_B c_ptr()
 #define PGIBUG_ATLAS_197 0
-#endif
-
-#if 0
-// clang-format on
 #endif
 
 #endif

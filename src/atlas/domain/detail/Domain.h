@@ -1,13 +1,11 @@
 /*
-
-The Domain class describes the extent of a grid in projected "grid coordinates"
-
-daand:
-  - I simply removed the original Domain.h, which only described boxes in
-(lon,lat)-space.
-  - The Domain class has become a purely abstract class to allow for other
-domain shapes (circular, frame, and what not...)
-  - I didn't implement hashes, (copy) constructors, comparators, etc. for now.
+ * (C) Copyright 2013 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 #pragma once

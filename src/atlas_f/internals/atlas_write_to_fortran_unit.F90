@@ -1,3 +1,11 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
 subroutine atlas_write_to_fortran_unit(unit,msg_cptr) bind(C)
   use, intrinsic :: iso_c_binding, only: c_int, c_ptr
   use fckit_c_interop_module, only : c_ptr_to_string
