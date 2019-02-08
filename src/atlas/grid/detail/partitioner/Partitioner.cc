@@ -18,6 +18,7 @@
 
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Partitioner.h"
+#include "atlas/grid/detail/partitioner/CheckerboardPartitioner.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
@@ -73,6 +74,7 @@ void load_builder() {
 struct force_link {
     force_link() {
         load_builder<EqualRegionsPartitioner>();
+        load_builder<CheckerboardPartitioner>();
 #if ATLAS_HAVE_TRANS
         load_builder<TransPartitioner>();
 #endif

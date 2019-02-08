@@ -8,24 +8,24 @@
  * nor does it submit to any jurisdiction. and Interpolation
  */
 
-#include "StructuredInterpolation2D.h"
-#include "kernels/CubicHorizontalKernel.h"
+#include "Cubic2D.h"
 
+#include "atlas/interpolation/method/MethodFactory.h"
 
 namespace atlas {
 namespace interpolation {
 namespace method {
 
-using Cubic2D = StructuredInterpolation2D<CubicHorizontalKernel>;
-
 namespace {
 
-static MethodBuilder<Cubic2D> __builder1( "structured-cubic2D" );
-static MethodBuilder<Cubic2D> __builder2( "cubic2D" );
-static MethodBuilder<Cubic2D> __builder3( "structured-bicubic" );
-static MethodBuilder<Cubic2D> __builder4( "bicubic" );
+MethodBuilder<Cubic2D> __builder1( "structured-cubic2D" );
+MethodBuilder<Cubic2D> __builder2( "cubic2D" );
+MethodBuilder<Cubic2D> __builder3( "structured-bicubic" );
+MethodBuilder<Cubic2D> __builder4( "bicubic" );
 
 }  // namespace
+
+Cubic2D::Cubic2D( const Config& config ) : StructuredInterpolation2D<CubicHorizontalKernel>( config ) {}
 
 }  // namespace method
 }  // namespace interpolation

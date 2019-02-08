@@ -8,24 +8,24 @@
  * nor does it submit to any jurisdiction. and Interpolation
  */
 
-#include "StructuredInterpolation3D.h"
-#include "kernels/Linear3DKernel.h"
+#include "Linear3D.h"
 
+#include "atlas/interpolation/method/MethodFactory.h"
 
 namespace atlas {
 namespace interpolation {
 namespace method {
 
-using Linear3D = StructuredInterpolation3D<Linear3DKernel>;
-
 namespace {
 
-static MethodBuilder<Linear3D> __builder1( "structured-linear3D" );
-static MethodBuilder<Linear3D> __builder2( "linear3D" );
-static MethodBuilder<Linear3D> __builder3( "structured-trilinear" );
-static MethodBuilder<Linear3D> __builder4( "trilinear" );
+MethodBuilder<Linear3D> __builder1( "structured-linear3D" );
+MethodBuilder<Linear3D> __builder2( "linear3D" );
+MethodBuilder<Linear3D> __builder3( "structured-trilinear" );
+MethodBuilder<Linear3D> __builder4( "trilinear" );
 
 }  // namespace
+
+Linear3D::Linear3D( const Config& config ) : StructuredInterpolation3D<Linear3DKernel>( config ) {}
 
 }  // namespace method
 }  // namespace interpolation

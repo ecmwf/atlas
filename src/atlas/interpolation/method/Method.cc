@@ -10,8 +10,6 @@
 
 #include "atlas/interpolation/method/Method.h"
 
-#include <map>
-
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Vector.h"
 #include "eckit/log/Timer.h"
@@ -26,75 +24,10 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
-
-// for static linking
-#include "fe/FiniteElement.h"
-#include "knn/KNearestNeighbours.h"
-#include "knn/NearestNeighbour.h"
+#include "atlas/array.h"
 
 namespace atlas {
 namespace interpolation {
-
-namespace {
-
-typedef std::map<std::string, MethodFactory*> MethodFactoryMap_t;
-static MethodFactoryMap_t* m     = nullptr;
-static eckit::Mutex* local_mutex = nullptr;
-static pthread_once_t once       = PTHREAD_ONCE_INIT;
-
-static void init() {
-    local_mutex = new eckit::Mutex();
-    m           = new MethodFactoryMap_t();
-}
-
-template <typename T>
-void load_builder() {
-    MethodBuilder<T>( "tmp" );
-}
-
-struct force_link {
-    force_link() {
-        load_builder<method::FiniteElement>();
-        load_builder<method::KNearestNeighbours>();
-        load_builder<method::NearestNeighbour>();
-    }
-};
-
-}  // namespace
-
-MethodFactory::MethodFactory( const std::string& name ) : name_( name ) {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-
-    if ( m->find( name ) != m->end() ) { throw_Exception( "MethodFactory duplicate '" + name + "'" ); }
-
-    ATLAS_ASSERT( m->find( name ) == m->end() );
-    ( *m )[name] = this;
-}
-
-MethodFactory::~MethodFactory() {
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-    m->erase( name_ );
-}
-
-Method* MethodFactory::build( const std::string& name, const Method::Config& config ) {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-
-    force_link();
-
-    MethodFactoryMap_t::const_iterator j = m->find( name );
-    if ( j == m->end() ) {
-        eckit::Log::error() << "MethodFactory '" << name << "' not found." << std::endl;
-        eckit::Log::error() << "MethodFactories are:" << std::endl;
-        for ( j = m->begin(); j != m->end(); ++j ) {
-            eckit::Log::error() << '\t' << ( *j ).first << std::endl;
-        }
-        throw_Exception( "MethodFactory '" + name + "' not found." );
-    }
-
-    return ( *j ).second->make( config );
-}
 
 void Method::check_compatibility( const Field& src, const Field& tgt ) const {
     ATLAS_ASSERT( src.datatype() == tgt.datatype() );

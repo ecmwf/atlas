@@ -62,6 +62,8 @@ private:
     template <typename Value, int Rank>
     void execute_impl( const Kernel& kernel, const FieldSet& src, FieldSet& tgt ) const;
 
+    static double convert_units_multiplier( const Field& field );
+
 protected:
     Field target_ghost_;
     Field target_lonlat_;

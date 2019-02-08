@@ -13,6 +13,7 @@
 #include "atlas/array.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
+#include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/knn/NearestNeighbour.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"

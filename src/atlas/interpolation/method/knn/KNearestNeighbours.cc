@@ -17,6 +17,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/StructuredGrid.h"
+#include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/meshgenerator.h"

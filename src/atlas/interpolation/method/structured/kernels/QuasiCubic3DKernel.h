@@ -37,11 +37,6 @@ struct QuasiCubicLinearPoints {
     static constexpr std::array<idx_t, 2> i{{1, 2}};
     static constexpr std::array<idx_t, 2> ii{{0, 3}};
 };
-constexpr std::array<idx_t, 2> QuasiCubicLinearPoints::j;
-constexpr std::array<idx_t, 2> QuasiCubicLinearPoints::jj;
-constexpr std::array<idx_t, 2> QuasiCubicLinearPoints::jw;
-constexpr std::array<idx_t, 2> QuasiCubicLinearPoints::i;
-constexpr std::array<idx_t, 2> QuasiCubicLinearPoints::ii;
 
 class QuasiCubic3DKernel {
 public:

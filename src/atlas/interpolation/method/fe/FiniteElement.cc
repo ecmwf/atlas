@@ -23,6 +23,7 @@
 #include "atlas/grid.h"
 #include "atlas/interpolation/element/Quad3D.h"
 #include "atlas/interpolation/element/Triag3D.h"
+#include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/Ray.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Nodes.h"

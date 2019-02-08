@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <ostream>
+#include <iostream>
 
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"

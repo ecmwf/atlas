@@ -89,24 +89,5 @@ private:
     void check_compatibility( const Field& src, const Field& tgt ) const;
 };
 
-struct MethodFactory {
-    static Method* build( const std::string& name, const Method::Config& );
-
-protected:
-    std::string name_;
-    virtual Method* make( const Method::Config& ) = 0;
-
-    MethodFactory( const std::string& );
-    virtual ~MethodFactory();
-};
-
-template <class T>
-struct MethodBuilder : public MethodFactory {
-    MethodBuilder( const std::string& name ) : MethodFactory( name ) {}
-
-private:
-    virtual Method* make( const Method::Config& config ) { return new T( config ); }
-};
-
 }  // namespace interpolation
 }  // namespace atlas

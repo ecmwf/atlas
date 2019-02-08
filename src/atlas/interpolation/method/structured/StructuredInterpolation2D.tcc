@@ -35,14 +35,13 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-namespace {
-static double convert_units_multiplier( const Field& field ) {
+template <typename Kernel>
+double StructuredInterpolation2D<Kernel>::convert_units_multiplier( const Field& field ) {
     std::string units = field.metadata().getString( "units", "degrees" );
     if ( units == "degrees" ) { return 1.; }
     if ( units == "radians" ) { return 180. / M_PI; }
     ATLAS_NOTIMPLEMENTED;
 }
-}  // namespace
 
 template <typename Kernel>
 StructuredInterpolation2D<Kernel>::StructuredInterpolation2D( const Method::Config& config ) :

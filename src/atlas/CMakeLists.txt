@@ -414,6 +414,8 @@ interpolation/method/Intersect.cc
 interpolation/method/Intersect.h
 interpolation/method/Method.cc
 interpolation/method/Method.h
+interpolation/method/MethodFactory.cc
+interpolation/method/MethodFactory.h
 interpolation/method/PointIndex3.cc
 interpolation/method/PointIndex3.h
 interpolation/method/PointSet.cc
@@ -439,13 +441,20 @@ interpolation/method/structured/kernels/CubicHorizontalKernel.h
 interpolation/method/structured/kernels/Cubic3DKernel.h
 interpolation/method/structured/kernels/CubicVerticalKernel.h
 interpolation/method/structured/kernels/QuasiCubicHorizontalKernel.h
+interpolation/method/structured/kernels/QuasiCubic3DKernel.cc
 interpolation/method/structured/kernels/QuasiCubic3DKernel.h
 interpolation/method/structured/Linear2D.cc
+interpolation/method/structured/Linear2D.h
 interpolation/method/structured/Linear3D.cc
+interpolation/method/structured/Linear3D.h
 interpolation/method/structured/Cubic2D.cc
+interpolation/method/structured/Cubic2D.h
 interpolation/method/structured/Cubic3D.cc
+interpolation/method/structured/Cubic3D.h
 interpolation/method/structured/QuasiCubic2D.cc
+interpolation/method/structured/QuasiCubic2D.h
 interpolation/method/structured/QuasiCubic3D.cc
+interpolation/method/structured/QuasiCubic3D.h
 )
 
 

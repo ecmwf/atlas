@@ -14,6 +14,7 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/Interpolation.h"
+#include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/runtime/Exception.h"
 
 namespace atlas {

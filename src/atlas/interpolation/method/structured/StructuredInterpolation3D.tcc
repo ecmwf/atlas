@@ -32,14 +32,13 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-namespace {
-static double convert_units_multiplier( const Field& field ) {
+template <typename Kernel>
+double StructuredInterpolation3D<Kernel>::convert_units_multiplier( const Field& field ) {
     std::string units = field.metadata().getString( "units", "degrees" );
     if ( units == "degrees" ) { return 1.; }
     if ( units == "radians" ) { return 180. / M_PI; }
     ATLAS_NOTIMPLEMENTED;
 }
-}  // namespace
 
 template <typename Kernel>
 StructuredInterpolation3D<Kernel>::StructuredInterpolation3D( const Method::Config& config ) :
@@ -49,9 +48,7 @@ StructuredInterpolation3D<Kernel>::StructuredInterpolation3D( const Method::Conf
     config.get( "matrix_free", matrix_free_ );
     config.get( "limiter", limiter_ );
 
-    if ( not matrix_free_ ) {
-        throw_NotImplemented( "Matrix-free StructuredInterpolation3D not implemented", Here() );
-    }
+    if ( not matrix_free_ ) { throw_NotImplemented( "Matrix-free StructuredInterpolation3D not implemented", Here() ); }
 }
 
 

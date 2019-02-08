@@ -8,24 +8,18 @@
  * nor does it submit to any jurisdiction. and Interpolation
  */
 
-#include "Linear2D.h"
-
-#include "atlas/interpolation/method/MethodFactory.h"
+#include "QuasiCubic3DKernel.h"
 
 namespace atlas {
 namespace interpolation {
 namespace method {
 
-namespace {
-
-MethodBuilder<Linear2D> __builder1( "structured-linear2D" );
-MethodBuilder<Linear2D> __builder2( "linear2D" );
-MethodBuilder<Linear2D> __builder3( "structured-bilinear" );
-MethodBuilder<Linear2D> __builder4( "bilinear" );
-
-}  // namespace
-
-Linear2D::Linear2D( const Config& config ) : StructuredInterpolation2D<LinearHorizontalKernel>( config ) {}
+// Note: Following symbols should no longer be necessary from C++17 onwards
+constexpr std::array<idx_t, 2> QuasiCubicLinearPoints::j;
+constexpr std::array<idx_t, 2> QuasiCubicLinearPoints::jj;
+constexpr std::array<idx_t, 2> QuasiCubicLinearPoints::jw;
+constexpr std::array<idx_t, 2> QuasiCubicLinearPoints::i;
+constexpr std::array<idx_t, 2> QuasiCubicLinearPoints::ii;
 
 }  // namespace method
 }  // namespace interpolation
