@@ -30,6 +30,8 @@ SphericalPolygon::SphericalPolygon( const Polygon& poly, const atlas::Field& lon
 SphericalPolygon::SphericalPolygon( const std::vector<PointLonLat>& points ) : PolygonCoordinates( points ) {}
 
 bool SphericalPolygon::contains( const PointLonLat& P ) const {
+    using eckit::types::is_approximately_equal;
+
     ATLAS_ASSERT( coordinates_.size() >= 2 );
 
     // check first bounding box
@@ -48,10 +50,18 @@ bool SphericalPolygon::contains( const PointLonLat& P ) const {
         const bool BPA = ( B.lon() <= P.lon() && P.lon() < A.lon() );
 
         if ( APB != BPA ) {
-            const double lat = util::Earth::greatCircleLatitudeGivenLongitude( A, B, P.lon() );
+            const double lat = [&] {
+                if ( is_approximately_equal( A.lat(), B.lat() ) &&
+                     is_approximately_equal( std::abs( A.lat() ), 90. ) ) {
+                    return A.lat();
+                }
+                else {
+                    return util::Earth::greatCircleLatitudeGivenLongitude( A, B, P.lon() );
+                }
+            }();
 
             ATLAS_ASSERT( !std::isnan( lat ) );
-            if ( eckit::types::is_approximately_equal( P.lat(), lat ) ) { return true; }
+            if ( is_approximately_equal( P.lat(), lat ) ) { return true; }
 
             wn += ( P.lat() > lat ? -1 : 1 ) * ( APB ? -1 : 1 );
         }
