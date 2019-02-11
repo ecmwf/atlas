@@ -98,10 +98,11 @@ private:
 template <class T>
 class TransBuilderFunctionSpace : public TransFactory {
     virtual const TransImpl* make( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp,
-                                   const eckit::Configuration& config ) {
+                                   const eckit::Configuration& config ) override {
         return new T( cache, gp, sp, config );
     }
-    virtual const TransImpl* make( const Cache&, const Grid&, const Domain&, int, const eckit::Configuration& ) {
+    virtual const TransImpl* make( const Cache&, const Grid&, const Domain&, int,
+                                   const eckit::Configuration& ) override {
         throw_Exception( "This function should not be called", Here() );
     }
 
@@ -114,10 +115,11 @@ public:
 template <class T>
 class TransBuilderGrid : public TransFactory {
     virtual TransImpl* make( const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
-                             const eckit::Configuration& config ) {
+                             const eckit::Configuration& config ) override {
         return new T( cache, grid, domain, truncation, config );
     }
-    virtual TransImpl* make( const Cache&, const FunctionSpace&, const FunctionSpace&, const eckit::Configuration& ) {
+    virtual const TransImpl* make( const Cache&, const FunctionSpace&, const FunctionSpace&,
+                                   const eckit::Configuration& ) override {
         throw_Exception( "This function should not be called", Here() );
     }
 
