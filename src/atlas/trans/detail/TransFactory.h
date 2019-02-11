@@ -37,9 +37,6 @@ namespace trans {
 //----------------------------------------------------------------------------------------------------------------------
 
 class TransFactory : public util::Factory<TransFactory> {
-protected:
-    using Trans_t = TransImpl;
-
 public:
     static std::string className() { return "TransFactory"; }
 
@@ -48,21 +45,21 @@ public:
    * \brief build Trans
    * \return TransImpl
    */
-    static const Trans_t* build( const FunctionSpace& gp, const FunctionSpace& sp,
-                                 const eckit::Configuration& = util::Config() );
-    static const Trans_t* build( const Grid&, int truncation, const eckit::Configuration& = util::Config() );
+    static const TransImpl* build( const FunctionSpace& gp, const FunctionSpace& sp,
+                                   const eckit::Configuration& = util::Config() );
+    static const TransImpl* build( const Grid&, int truncation, const eckit::Configuration& = util::Config() );
 
-    static const Trans_t* build( const Grid&, const Domain&, int truncation,
-                                 const eckit::Configuration& = util::Config() );
+    static const TransImpl* build( const Grid&, const Domain&, int truncation,
+                                   const eckit::Configuration& = util::Config() );
 
-    static const Trans_t* build( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
-                                 const eckit::Configuration& = util::Config() );
+    static const TransImpl* build( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
+                                   const eckit::Configuration& = util::Config() );
 
-    static const Trans_t* build( const Cache&, const Grid&, int truncation,
-                                 const eckit::Configuration& = util::Config() );
+    static const TransImpl* build( const Cache&, const Grid&, int truncation,
+                                   const eckit::Configuration& = util::Config() );
 
-    static const Trans_t* build( const Cache&, const Grid&, const Domain&, int truncation,
-                                 const eckit::Configuration& = util::Config() );
+    static const TransImpl* build( const Cache&, const Grid&, const Domain&, int truncation,
+                                   const eckit::Configuration& = util::Config() );
 
     static void list( std::ostream& out );
 
@@ -86,12 +83,12 @@ private:
     std::string name_;
     std::string backend_;
 
-    virtual const Trans_t* make( const Cache&, const FunctionSpace& /*gp*/, const FunctionSpace& /*sp*/,
-                                 const eckit::Configuration& ) {
+    virtual const TransImpl* make( const Cache&, const FunctionSpace& /*gp*/, const FunctionSpace& /*sp*/,
+                                   const eckit::Configuration& ) {
         return nullptr;
     }
-    virtual const Trans_t* make( const Cache&, const Grid& /*gp*/, const Domain&, int /*truncation*/,
-                                 const eckit::Configuration& ) {
+    virtual const TransImpl* make( const Cache&, const Grid& /*gp*/, const Domain&, int /*truncation*/,
+                                   const eckit::Configuration& ) {
         return nullptr;
     }
 };
@@ -100,11 +97,11 @@ private:
 
 template <class T>
 class TransBuilderFunctionSpace : public TransFactory {
-    virtual const Trans_t* make( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp,
-                                 const eckit::Configuration& config ) {
+    virtual const TransImpl* make( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp,
+                                   const eckit::Configuration& config ) {
         return new T( cache, gp, sp, config );
     }
-    virtual const Trans_t* make( const Cache&, const Grid&, const Domain&, int, const eckit::Configuration& ) {
+    virtual const TransImpl* make( const Cache&, const Grid&, const Domain&, int, const eckit::Configuration& ) {
         throw_Exception( "This function should not be called", Here() );
     }
 
@@ -116,11 +113,11 @@ public:
 
 template <class T>
 class TransBuilderGrid : public TransFactory {
-    virtual Trans_t* make( const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
-                           const eckit::Configuration& config ) {
+    virtual TransImpl* make( const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
+                             const eckit::Configuration& config ) {
         return new T( cache, grid, domain, truncation, config );
     }
-    virtual Trans_t* make( const Cache&, const FunctionSpace&, const FunctionSpace&, const eckit::Configuration& ) {
+    virtual TransImpl* make( const Cache&, const FunctionSpace&, const FunctionSpace&, const eckit::Configuration& ) {
         throw_Exception( "This function should not be called", Here() );
     }
 
