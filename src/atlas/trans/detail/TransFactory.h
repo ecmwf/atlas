@@ -114,8 +114,8 @@ public:
 
 template <class T>
 class TransBuilderGrid : public TransFactory {
-    virtual TransImpl* make( const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
-                             const eckit::Configuration& config ) override {
+    virtual const TransImpl* make( const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
+                                   const eckit::Configuration& config ) override {
         return new T( cache, grid, domain, truncation, config );
     }
     virtual const TransImpl* make( const Cache&, const FunctionSpace&, const FunctionSpace&,
