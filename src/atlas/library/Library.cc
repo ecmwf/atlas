@@ -158,6 +158,11 @@ void Library::initialise() {
 void Library::finalise() {
     if ( ATLAS_HAVE_TRACE && trace_report_ ) { Log::info() << atlas::Trace::report() << std::endl; }
 
+    if ( getEnv( "ATLAS_FINALISES_MPI", false ) ) {
+        Log::debug() << "ATLAS_FINALISES_MPI is set: calling eckit::mpi::finaliseAllComms()" << std::endl;
+        eckit::mpi::finaliseAllComms();
+    }
+
     // Make sure that these specialised channels that wrap Log::info() are
     // destroyed before eckit::Log::info gets destroyed.
     // Just in case someone still tries to log, we reset to empty channels.
