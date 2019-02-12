@@ -299,7 +299,8 @@ std::string Spectral::checksum( const Field& field ) const {
 
 void Spectral::norm( const Field& field, double& norm, int rank ) const {
 #if ATLAS_HAVE_TRANS
-    ATLAS_ASSERT( std::min<int>( 1, field.levels() ) == 1 );
+    ATLAS_ASSERT( std::max<int>( 1, field.levels() ) == 1,
+                  "Only a single-level field can be used for computing single norm." );
     struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
     args.nfld                = 1;
     args.rspec               = field.data<double>();
@@ -314,7 +315,6 @@ void Spectral::norm( const Field& field, double& norm, int rank ) const {
 }
 void Spectral::norm( const Field& field, double norm_per_level[], int rank ) const {
 #if ATLAS_HAVE_TRANS
-    ATLAS_ASSERT( std::min<int>( 1, field.levels() ) == 1 );
     struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
     args.nfld                = std::max<int>( 1, field.levels() );
     args.rspec               = field.data<double>();
@@ -328,19 +328,7 @@ void Spectral::norm( const Field& field, double norm_per_level[], int rank ) con
 #endif
 }
 void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, int rank ) const {
-#if ATLAS_HAVE_TRANS
-    norm_per_level.resize( std::min<int>( 1, field.levels() ) );
-    struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
-    args.nfld                = int( norm_per_level.size() );
-    args.rspec               = field.data<double>();
-    args.rnorm               = norm_per_level.data();
-    args.nmaster             = rank + 1;
-    TRANS_CHECK(::trans_specnorm( &args ) );
-#else
-    throw_Exception(
-        "Cannot compute spectral norms because Atlas has not "
-        "been compiled with TRANS support." );
-#endif
+    norm( field, norm_per_level.data(), rank );
 }
 
 }  // namespace detail
