@@ -44,7 +44,7 @@ ecbuild_find_python()
 
 ecbuild_add_option( FEATURE FORTRAN
                     DESCRIPTION "Provide Fortran bindings"
-                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.5" )
+                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.6" )
 
 if( ATLAS_HAVE_FORTRAN )
 
