@@ -16,13 +16,15 @@
 
 #include "eckit/config/LibEcKit.h"
 #include "eckit/config/Resource.h"
-#include "eckit/eckit_config.h"
+#include "eckit/eckit.h"
 #include "eckit/log/PrefixTarget.h"
 #include "eckit/mpi/Comm.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/testing/Test.h"
+#include "eckit/types/Types.h"
 
 #include "atlas/library/Library.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/runtime/trace/StopWatch.h"
@@ -31,11 +33,19 @@
 namespace atlas {
 namespace test {
 
+using eckit::types::is_approximately_equal;
+
 //----------------------------------------------------------------------------------------------------------------------
+
+#ifdef MAYBE_UNUSED
+#elif defined( __GNUC__ )
+#define MAYBE_UNUSED __attribute__( ( unused ) )
+#else
+#define MAYBE_UNUSED
+#endif
 
 // Redefine macro's defined in "eckit/testing/Test.h" to include trace
 // information
-
 #undef CASE
 #define CASE( description )                                                                                          \
     void UNIQUE_NAME2( test_, __LINE__ )( std::string&, int&, int );                                                 \
@@ -55,8 +65,8 @@ namespace test {
             eckit::mpi::comm().abort();                                                                              \
         }                                                                                                            \
     }                                                                                                                \
-    void UNIQUE_NAME2( traced_test_, __LINE__ )( std::string & _test_subsection, int& _num_subsections,              \
-                                                 int _subsection )
+    void UNIQUE_NAME2( traced_test_, __LINE__ )( MAYBE_UNUSED std::string & _test_subsection,                        \
+                                                 MAYBE_UNUSED int& _num_subsections, MAYBE_UNUSED int _subsection )
 
 #undef SECTION
 #define SECTION( name )                                                                          \

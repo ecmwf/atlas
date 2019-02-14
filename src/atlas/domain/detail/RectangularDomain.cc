@@ -1,6 +1,19 @@
+/*
+ * (C) Copyright 2013 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
+
+#include <ostream>
 #include <utility>
 
+#include "atlas/domain/detail/DomainFactory.h"
 #include "atlas/domain/detail/RectangularDomain.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace domain {
@@ -12,9 +25,9 @@ namespace {
 static std::array<double, 2> get_interval_x( const eckit::Parametrisation& params ) {
     double xmin, xmax;
 
-    if ( !params.get( "xmin", xmin ) ) throw eckit::BadParameter( "xmin missing in Params", Here() );
+    if ( !params.get( "xmin", xmin ) ) throw_Exception( "xmin missing in Params", Here() );
 
-    if ( !params.get( "xmax", xmax ) ) throw eckit::BadParameter( "xmax missing in Params", Here() );
+    if ( !params.get( "xmax", xmax ) ) throw_Exception( "xmax missing in Params", Here() );
 
     return {xmin, xmax};
 }
@@ -22,16 +35,16 @@ static std::array<double, 2> get_interval_x( const eckit::Parametrisation& param
 static std::array<double, 2> get_interval_y( const eckit::Parametrisation& params ) {
     double ymin, ymax;
 
-    if ( !params.get( "ymin", ymin ) ) throw eckit::BadParameter( "ymin missing in Params", Here() );
+    if ( !params.get( "ymin", ymin ) ) throw_Exception( "ymin missing in Params", Here() );
 
-    if ( !params.get( "ymax", ymax ) ) throw eckit::BadParameter( "ymax missing in Params", Here() );
+    if ( !params.get( "ymax", ymax ) ) throw_Exception( "ymax missing in Params", Here() );
 
     return {ymin, ymax};
 }
 
 static std::string get_units( const eckit::Parametrisation& params ) {
     std::string units;
-    if ( !params.get( "units", units ) ) throw eckit::BadParameter( "units missing in Params", Here() );
+    if ( !params.get( "units", units ) ) throw_Exception( "units missing in Params", Here() );
     return units;
 }
 
@@ -107,7 +120,9 @@ bool RectangularDomain::containsSouthPole() const {
     return unit_degrees_ && ymin_tol_ <= -90.;
 }
 
-register_BuilderT1( Domain, RectangularDomain, RectangularDomain::static_type() );
+namespace {
+static DomainBuilder<RectangularDomain> register_builder( RectangularDomain::static_type() );
+}
 
 }  // namespace domain
 }  // namespace atlas

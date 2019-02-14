@@ -1,3 +1,11 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
 #include "atlas/atlas_f.h"
 
 module atlas_Partitioner_module
@@ -63,7 +71,7 @@ function atlas_Partitioner__ctor( config ) result(this)
   use atlas_partitioner_c_binding
   type(atlas_Partitioner) :: this
   type(atlas_Config) :: config
-  call this%reset_c_ptr( atlas__grid__Partitioner__new( config%c_ptr() ) )
+  call this%reset_c_ptr( atlas__grid__Partitioner__new( config%CPTR_PGIBUG_B ) )
   call this%return()
 end function
 
@@ -76,10 +84,12 @@ function atlas_MatchingMeshPartitioner__ctor( mesh, config ) result(this)
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    call this%reset_c_ptr( atlas__grid__MatchingMeshPartitioner__new( mesh%c_ptr(), config%c_ptr() ) )
+    call this%reset_c_ptr( atlas__grid__MatchingMeshPartitioner__new( &
+      mesh%CPTR_PGIBUG_A, config%CPTR_PGIBUG_B ) )
   else
     opt_config = atlas_Config()
-    call this%reset_c_ptr( atlas__grid__MatchingMeshPartitioner__new( mesh%c_ptr(), opt_config%c_ptr() ) )
+    call this%reset_c_ptr( atlas__grid__MatchingMeshPartitioner__new( &
+      mesh%CPTR_PGIBUG_A, opt_config%CPTR_PGIBUG_B ) )
     call opt_config%final()
   endif
   call this%return()
@@ -92,7 +102,7 @@ function partition(this,grid) result(distribution)
   type(atlas_GridDistribution) :: distribution
   class(atlas_Partitioner), intent(in) :: this
   class(atlas_Grid), intent(in) :: grid
-  distribution = atlas_GridDistribution( atlas__grid__Partitioner__partition( this%c_ptr(), grid%c_ptr() ) )
+  distribution = atlas_GridDistribution( atlas__grid__Partitioner__partition( this%CPTR_PGIBUG_A, grid%CPTR_PGIBUG_A ) )
   call distribution%return()
 end function
 

@@ -1,3 +1,11 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
 program atlas_interpolation_fortran
 use atlas_module
 implicit none
@@ -17,9 +25,11 @@ type(atlas_Output)                    :: gmsh
 type(atlas_Config)                    :: interpolation_config
 type(atlas_Interpolation)             :: interpolation_AB
 type(atlas_Interpolation)             :: interpolation_BA
+type(atlas_Trace)                     :: trace
 
 call atlas_library%initialise()
 
+trace = atlas_Trace( "atlas-interpolation-fortran.F90", __LINE__, "Complete execution" )
 ! Setup a meshgenerator
 meshgenerator = atlas_MeshGenerator()
 
@@ -92,6 +102,8 @@ call mesh_A%final()
 call mesh_B%final()
 call grid_A%final()
 call grid_B%final()
+
+call trace%final()
 
 call atlas_library%finalise()
 contains

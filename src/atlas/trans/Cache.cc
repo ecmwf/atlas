@@ -11,22 +11,12 @@
 #include "atlas/trans/Cache.h"
 #include <cstdlib>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/io/DataHandle.h"
-#include "eckit/thread/AutoLock.h"
-#include "eckit/thread/Mutex.h"
 
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/trans/Trans.h"
-
-namespace {
-static eckit::Mutex* local_mutex = 0;
-static pthread_once_t once       = PTHREAD_ONCE_INIT;
-static void init() {
-    local_mutex = new eckit::Mutex();
-}
-}  // namespace
 
 namespace atlas {
 namespace trans {
@@ -41,8 +31,8 @@ TransCacheFileEntry::TransCacheFileEntry( const eckit::PathName& path ) : buffer
 }
 
 TransCacheMemoryEntry::TransCacheMemoryEntry( const void* data, size_t size ) : data_( data ), size_( size ) {
-    ASSERT( data_ );
-    ASSERT( size_ );
+    ATLAS_ASSERT( data_ );
+    ATLAS_ASSERT( size_ );
 }
 
 LegendreFFTCache::LegendreFFTCache( const void* legendre_address, size_t legendre_size, const void* fft_address,
@@ -85,10 +75,7 @@ Cache::operator bool() const {
     return trans_ || bool( legendre() );
 }
 
-Cache::~Cache() {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-}
+Cache::~Cache() {}
 
 TransCache::TransCache( const Trans& trans ) : Cache( trans.get() ) {}
 

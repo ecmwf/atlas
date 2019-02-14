@@ -8,38 +8,42 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/mesh/PartitionPolygon.h"
+#include <fstream>
+
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/mesh.h"
+#include "atlas/mesh/PartitionPolygon.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
 namespace mesh {
 
 namespace {
-util::Polygon::edge_set_t compute_edges( const detail::MeshImpl& mesh, size_t halo ) {
+util::Polygon::edge_set_t compute_edges( const detail::MeshImpl& mesh, idx_t halo ) {
+    ATLAS_TRACE( "PartitionPolygon" );
     // extract partition boundary edges by always attempting first to`
     // remove a reversed edge from a neighbouring element, if any
     util::Polygon::edge_set_t edges;
-    for ( size_t t = 0; t < mesh.cells().nb_types(); ++t ) {
+    for ( idx_t t = 0; t < mesh.cells().nb_types(); ++t ) {
         const Elements& elements = mesh.cells().elements( t );
 
         const BlockConnectivity& conn = elements.node_connectivity();
         auto field_flags              = elements.view<int, 1>( elements.flags() );
         auto field_halo               = elements.view<int, 1>( elements.halo() );
 
-        auto patch = [&field_flags]( size_t e ) {
+        auto patch = [&field_flags]( idx_t e ) {
             using Topology = atlas::mesh::Nodes::Topology;
             return Topology::check( field_flags( e ), Topology::PATCH );
         };
 
-        const size_t nb_nodes = elements.nb_nodes();
+        const idx_t nb_nodes = elements.nb_nodes();
 
-        for ( size_t j = 0; j < elements.size(); ++j ) {
+        for ( idx_t j = 0; j < elements.size(); ++j ) {
             if ( patch( j ) == 0 && field_halo( j ) <= halo ) {
-                for ( size_t k = 0; k < nb_nodes; ++k ) {
+                for ( idx_t k = 0; k < nb_nodes; ++k ) {
                     util::Polygon::edge_t edge( conn( j, k ), conn( j, ( k + 1 ) % nb_nodes ) );
                     if ( !edges.erase( edge.reverse() ) ) { edges.insert( edge ); }
                 }
@@ -50,7 +54,7 @@ util::Polygon::edge_set_t compute_edges( const detail::MeshImpl& mesh, size_t ha
 }
 }  // namespace
 
-PartitionPolygon::PartitionPolygon( const detail::MeshImpl& mesh, size_t halo ) :
+PartitionPolygon::PartitionPolygon( const detail::MeshImpl& mesh, idx_t halo ) :
     util::Polygon( compute_edges( mesh, halo ) ),
     mesh_( mesh ),
     halo_( halo ) {}
@@ -77,8 +81,8 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
     comm.allReduceInPlace( xmin, eckit::mpi::min() );
     comm.allReduceInPlace( xmax, eckit::mpi::max() );
 
-    size_t count     = mesh_.nodes().size();
-    size_t count_all = count;
+    idx_t count     = mesh_.nodes().size();
+    idx_t count_all = count;
     comm.allReduceInPlace( count_all, eckit::mpi::sum() );
 
     for ( int r = 0; r < mpi_size; ++r ) {
@@ -149,9 +153,9 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
               << r << " = " << count_all
               << "\n"
                  ""
-                 //"\n" "x_" << r << " = ["; for (size_t i=0; i<count; ++i) { f <<
+                 //"\n" "x_" << r << " = ["; for (idx_t i=0; i<count; ++i) { f <<
                  // xy(i, XX) << ", "; } f << "]"
-                 //"\n" "y_" << r << " = ["; for (size_t i=0; i<count; ++i) { f <<
+                 //"\n" "y_" << r << " = ["; for (idx_t i=0; i<count; ++i) { f <<
                  // xy(i, YY) << ", "; } f << "]"
                  "\n"
                  "\n"

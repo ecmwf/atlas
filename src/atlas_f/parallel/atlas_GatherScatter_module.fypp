@@ -1,0 +1,279 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+#include "atlas/atlas_f.h"
+#:include "internals/atlas_generics.fypp"
+
+#:set ranks = [1,2,3]
+
+module atlas_gatherscatter_module
+
+use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+use fckit_array_module, only : array_stride, array_view1d
+use fckit_object_module, only : fckit_object
+use atlas_kinds_module, only : ATLAS_KIND_IDX
+
+implicit none
+
+private :: c_ptr, c_int, c_long, c_float, c_double
+private :: array_stride, array_view1d
+private :: fckit_object
+
+public :: atlas_GatherScatter
+
+private
+
+!------------------------------------------------------------------------------
+TYPE, extends(fckit_object) :: atlas_GatherScatter
+
+! Purpose :
+! -------
+!   *Gather* :
+
+! Methods :
+! -------
+!   setup : Setup using arrays detailing proc, glb_idx, remote_idx, max_glb_idx
+!   execute : Do the gather
+
+! Author :
+! ------
+!   17-Dec-2013 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+  procedure :: glb_dof => GatherScatter__glb_dof
+  procedure, private :: GatherScatter__setup32
+  procedure, private :: GatherScatter__setup64
+
+  generic :: setup => &
+      & GatherScatter__setup32, &
+      & GatherScatter__setup64
+
+  @:generic_public_interface( gather )
+  @:generic_public_interface( scatter )
+
+
+  procedure, public :: delete => atlas_GatherScatter__delete
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_GatherScatter__final_auto
+#endif
+
+END TYPE atlas_GatherScatter
+!------------------------------------------------------------------------------
+
+interface atlas_GatherScatter
+  module procedure atlas_GatherScatter__ctor
+end interface
+
+!------------------------------------------------------------------------------
+
+
+!========================================================
+contains
+!========================================================
+
+! ------------------------------------------------------------------------------
+! Gather routines
+
+function atlas_GatherScatter__ctor() result(gather)
+  use atlas_gatherscatter_c_binding
+  type(atlas_GatherScatter) :: gather
+  call gather%reset_c_ptr( atlas__GatherScatter__new() )
+end function atlas_GatherScatter__ctor
+
+subroutine atlas_GatherScatter__delete(this)
+  use atlas_gatherscatter_c_binding
+  class(atlas_GatherScatter), intent(inout) :: this
+  if ( .not. this%is_null() ) then
+    call atlas__GatherScatter__delete(this%CPTR_PGIBUG_A)
+  end if
+  call this%reset_c_ptr()
+end subroutine atlas_GatherScatter__delete
+
+
+subroutine GatherScatter__setup32(this, part, remote_idx, glb_idx)
+  use atlas_gatherscatter_c_binding
+  class(atlas_GatherScatter), intent(in) :: this
+  integer(c_int), intent(in) :: part(:)
+  integer(ATLAS_KIND_IDX), intent(in) :: remote_idx(:)
+  integer(c_int), intent(in) :: glb_idx(:)
+  call atlas__GatherScatter__setup32( this%CPTR_PGIBUG_A, part, remote_idx, 1, &
+    &                        glb_idx, size(part) )
+end subroutine GatherScatter__setup32
+
+subroutine GatherScatter__setup64(this, part, remote_idx, glb_idx )
+  use atlas_gatherscatter_c_binding
+  class(atlas_GatherScatter), intent(in) :: this
+  integer(c_int), intent(in) :: part(:)
+  integer(ATLAS_KIND_IDX), intent(in) :: remote_idx(:)
+  integer(c_long), intent(in) :: glb_idx(:)
+  call atlas__GatherScatter__setup64( this%CPTR_PGIBUG_A, part, remote_idx, 1, &
+    &                        glb_idx, size(part) )
+end subroutine GatherScatter__setup64
+
+function GatherScatter__glb_dof(this) result(glb_dof)
+  use atlas_gatherscatter_c_binding
+  class(atlas_GatherScatter), intent(in) :: this
+  integer :: glb_dof
+  glb_dof = atlas__GatherScatter__glb_dof(this%CPTR_PGIBUG_A)
+end function GatherScatter__glb_dof
+
+! -----------------------------------------------------------------------------
+
+#:for dtype,ftype,ctype in types[:4]
+
+subroutine gather_${dtype}$_r1(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
+  class(atlas_GatherScatter), intent(in) :: this
+  ${ftype}$, intent(in)  :: loc_field_data(:)
+  ${ftype}$, intent(out) :: glb_field_data(:)
+  integer :: lstrides(1), lextents(1), lrank=1
+  integer :: gstrides(1), gextents(1), grank=1
+  ${ftype}$, pointer :: lview(:), gview(:)
+  lstrides = (/ array_stride(loc_field_data,2) /)
+  lextents = (/ 1                        /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2) /)
+  gextents = (/ 1                        /)
+  gview => array_view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
+  call atlas__GatherScatter__gather_${ctype}$( this%CPTR_PGIBUG_A, &
+    &  lview, lstrides, lextents, lrank, &
+    &  gview, gstrides, gextents, grank )
+end subroutine
+
+subroutine gather_${dtype}$_r2(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
+  class(atlas_GatherScatter), intent(in) :: this
+  ${ftype}$, intent(in)  :: loc_field_data(:,:)
+  ${ftype}$, intent(out) :: glb_field_data(:,:)
+  ${ftype}$, pointer :: lview(:), gview(:)
+  integer :: lstrides(2), lextents(2), lrank=2
+  integer :: gstrides(2), gextents(2), grank=2
+  lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
+  lextents = (/ 1,                        size  (loc_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2), array_stride(glb_field_data,1) /)
+  gextents = (/ 1,                        size  (glb_field_data,1) /)
+  gview => array_view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
+  call atlas__GatherScatter__gather_${ctype}$( this%CPTR_PGIBUG_A, &
+    &  lview, lstrides, lextents, lrank, &
+    &  gview, gstrides, gextents, grank )
+end subroutine 
+
+subroutine gather_${dtype}$_r3(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
+  class(atlas_GatherScatter), intent(in) :: this
+  ${ftype}$, intent(in)  :: loc_field_data(:,:,:)
+  ${ftype}$, intent(out) :: glb_field_data(:,:,:)
+  ${ftype}$, pointer :: lview(:), gview(:)
+  integer :: lstrides(3), lextents(3), lrank=3
+  integer :: gstrides(3), gextents(3), grank=3
+  lstrides = (/ array_stride(loc_field_data,3), array_stride(loc_field_data,2) , array_stride(loc_field_data,1) /)
+  lextents = (/ 1,                        size  (loc_field_data,2) , size  (loc_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,3), array_stride(glb_field_data,2) , array_stride(glb_field_data,1) /)
+  gextents = (/ 1,                        size  (glb_field_data,2) , size  (glb_field_data,1) /)
+  gview => array_view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
+  call atlas__GatherScatter__gather_${ctype}$( this%CPTR_PGIBUG_A, &
+    &  lview, lstrides, lextents, lrank, &
+    &  gview, gstrides, gextents, grank )
+end subroutine
+
+! -----------------------------------------------------------------------------
+
+subroutine scatter_${dtype}$_r1(this, glb_field_data, loc_field_data)
+  use atlas_gatherscatter_c_binding
+  class(atlas_GatherScatter), intent(in) :: this
+  ${ftype}$, intent(in)  :: glb_field_data(:)
+  ${ftype}$, intent(out) :: loc_field_data(:)
+  ${ftype}$, pointer :: lview(:), gview(:)
+  integer :: lstrides(1), lextents(1), lrank=1
+  integer :: gstrides(1), gextents(1), grank=1
+  lstrides = (/ array_stride(loc_field_data,1) /)
+  lextents = (/ 1                        /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,1) /)
+  gextents = (/ 1                        /)
+  gview => array_view1d(glb_field_data)
+  call atlas__GatherScatter__scatter_${ctype}$( this%CPTR_PGIBUG_A, &
+    &  gview, gstrides, gextents, grank, &
+    &  lview, lstrides, lextents, lrank )
+end subroutine
+
+subroutine scatter_${dtype}$_r2(this, glb_field_data, loc_field_data)
+  use atlas_gatherscatter_c_binding
+  class(atlas_GatherScatter), intent(in) :: this
+  ${ftype}$, intent(in)  :: glb_field_data(:,:)
+  ${ftype}$, intent(out) :: loc_field_data(:,:)
+  ${ftype}$, pointer :: lview(:), gview(:)
+  integer :: lstrides(2), lextents(2), lrank=2
+  integer :: gstrides(2), gextents(2), grank=2
+  lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
+  lextents = (/ 1,                        size  (loc_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,2), array_stride(glb_field_data,1) /)
+  gextents = (/ 1,                        size  (glb_field_data,1) /)
+  gview => array_view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
+  call atlas__GatherScatter__scatter_${ctype}$( this%CPTR_PGIBUG_A, &
+    &  gview, gstrides, gextents, grank, &
+    &  lview, lstrides, lextents, lrank )
+end subroutine
+
+subroutine scatter_${dtype}$_r3(this, glb_field_data, loc_field_data)
+  use atlas_gatherscatter_c_binding
+  class(atlas_GatherScatter), intent(in) :: this
+  ${ftype}$, intent(in)  :: glb_field_data(:,:,:)
+  ${ftype}$, intent(out) :: loc_field_data(:,:,:)
+  ${ftype}$, pointer :: lview(:), gview(:)
+  integer :: lstrides(3), lextents(3), lrank=3
+  integer :: gstrides(3), gextents(3), grank=3
+  lstrides = (/ array_stride(loc_field_data,3), array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
+  lextents = (/ 1,                        size  (loc_field_data,2) , size (loc_field_data,1) /)
+  lview => array_view1d(loc_field_data)
+  gstrides = (/ array_stride(glb_field_data,3), array_stride(glb_field_data,2), array_stride(glb_field_data,1) /)
+  gextents = (/ 1,                        size  (glb_field_data,2) , size (glb_field_data,1) /)
+  gview => array_view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
+  call atlas__GatherScatter__scatter_${ctype}$( this%CPTR_PGIBUG_A, &
+    &  gview, gstrides, gextents, grank, &
+    &  lview, lstrides, lextents, lrank )
+end subroutine
+
+#:endfor
+
+!-------------------------------------------------------------------------------
+
+ATLAS_FINAL subroutine atlas_GatherScatter__final_auto(this)
+  type(atlas_GatherScatter), intent(inout) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_GatherScatter__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+! -----------------------------------------------------------------------------
+
+end module atlas_gatherscatter_module

@@ -7,6 +7,28 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.16.0] - 2018-02-14
+### Changed
+- Interpolation makes use of OpenMP
+- Cleanup of header includes
+- fypp Fortran preprocessor is ported to fckit 0.6
+
+### Added
+- Parallel structured interpolation methods (2D,3D): linear, cubic, quasicubic
+- Interpolation for multi-level and multi-variable fields
+- atlas_Trace: Fortran API and use within OpenMP parallel regions
+- StructuredColumns halo-exchange for vector fields
+- Field::halo_exchange() function
+
+### Fixed
+- Fortran compilation with PGI 18.10
+- Access to Field view within OpenMP parallel region
+- FunctionSpaces use only required halo, even if larger halo is available in mesh
+- Fixed faulty name of a Field when created through Fortran API, wrapping existing memory
+- Fix NodeColumns functionspace when mesh is created from projected grid.
+- Parallel interpolation from regular lonlat grid.
+- Spectral spherical harmonics transforms for large cases
+
 ## [0.15.2] - 2018-08-31
 ### Changed
 - Initialisation of Fields to signalling NaN in debug builds, uninitialised in
@@ -58,6 +80,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.16.0]: https://github.com/ecmwf/atlas/compare/0.15.2...0.16.0
 [0.15.2]: https://github.com/ecmwf/atlas/compare/0.15.1...0.15.2
 [0.15.1]: https://github.com/ecmwf/atlas/compare/0.15.0...0.15.1
 [0.15.0]: https://github.com/ecmwf/atlas/compare/0.14.0...0.15.0

@@ -1,3 +1,11 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
 #include "atlas/atlas_f.h"
 
 module atlas_Mesh_module
@@ -87,7 +95,7 @@ function Mesh__nodes(this) result(nodes)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Nodes) :: nodes
-  nodes = atlas_mesh_Nodes( atlas__Mesh__nodes(this%c_ptr()) )
+  nodes = atlas_mesh_Nodes( atlas__Mesh__nodes(this%CPTR_PGIBUG_A) )
   call nodes%return()
 end function
 
@@ -97,7 +105,7 @@ function Mesh__cells(this) result(cells)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Cells) :: cells
-  cells = atlas_mesh_Cells( atlas__Mesh__cells(this%c_ptr()) )
+  cells = atlas_mesh_Cells( atlas__Mesh__cells(this%CPTR_PGIBUG_A) )
   call cells%return()
 end function
 
@@ -107,7 +115,7 @@ function Mesh__edges(this) result(edges)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Edges) :: edges
-  edges = atlas_mesh_Edges( atlas__Mesh__Edges(this%c_ptr()) )
+  edges = atlas_mesh_Edges( atlas__Mesh__Edges(this%CPTR_PGIBUG_A) )
   call edges%return()
 end function
 
@@ -117,7 +125,7 @@ function footprint(this)
   use atlas_mesh_c_binding
   integer(c_size_t) :: footprint
   class(atlas_Mesh) :: this
-  footprint = atlas__Mesh__footprint(this%c_ptr())
+  footprint = atlas__Mesh__footprint(this%CPTR_PGIBUG_A)
 end function
 
 !-------------------------------------------------------------------------------
@@ -125,7 +133,7 @@ end function
 subroutine clone_to_device(this)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(inout) :: this
-  call atlas__Mesh__clone_to_device(this%c_ptr())
+  call atlas__Mesh__clone_to_device(this%CPTR_PGIBUG_A)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -133,7 +141,7 @@ end subroutine
 subroutine clone_from_device(this)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(inout) :: this
-  call atlas__Mesh__clone_from_device(this%c_ptr())
+  call atlas__Mesh__clone_from_device(this%CPTR_PGIBUG_A)
 end subroutine
 
 ! ----------------------------------------------------------------------------------------
@@ -141,7 +149,7 @@ end subroutine
 subroutine sync_host_device(this)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(inout) :: this
-  call atlas__Mesh__sync_host_device(this%c_ptr())
+  call atlas__Mesh__sync_host_device(this%CPTR_PGIBUG_A)
 end subroutine
 
 !-------------------------------------------------------------------------------

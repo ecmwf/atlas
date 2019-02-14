@@ -1,7 +1,19 @@
+/*
+ * (C) Copyright 2013 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
+
 #include "Gaussian.h"
 
 #include <cmath>
+#include <iomanip>
 #include <limits>
+#include <ostream>
 
 #include "eckit/utils/Translator.h"
 
@@ -38,7 +50,7 @@ static Spacing yspace( const Grid::Config& grid ) {
     return Spacing( config );
 }
 
-static StructuredGrid::XSpace xspace( const std::vector<long>& nx ) {
+static StructuredGrid::XSpace xspace( const std::vector<idx_t>& nx ) {
     return StructuredGrid::XSpace( {0., 360.}, nx, false );
     // XSpace( const std::array<double,2>& interval, const std::vector<long>& N,
     // bool endpoint=true );
@@ -83,7 +95,7 @@ public:
     virtual const Grid::Implementation* create( const Grid::Config& config ) const {
         long N;
         config.get( "N", N );
-        std::vector<long> nx( 2 * N );
+        std::vector<idx_t> nx( 2 * N );
         detail::pl::classic_gaussian::points_per_latitude_npole_spole( N, nx.data() );
         return new StructuredGrid::grid_t( "N" + std::to_string( N ), xspace( nx ), yspace( config ),
                                            projection( config ), domain( config ) );
@@ -124,7 +136,7 @@ public:
         long start = 20;
         config.get( "nx[0]", start );
 
-        std::vector<long> nx( 2 * N );
+        std::vector<idx_t> nx( 2 * N );
         for ( long j = 0; j < N; ++j ) {
             nx[j]             = start + 4 * j;
             nx[2 * N - 1 - j] = nx[j];
@@ -164,7 +176,7 @@ public:
     virtual const Grid::Implementation* create( const Grid::Config& config ) const {
         long N;
         config.get( "N", N );
-        std::vector<long> nx( 2 * N, 4 * N );
+        std::vector<idx_t> nx( 2 * N, 4 * N );
         return new StructuredGrid::grid_t( "F" + std::to_string( N ), xspace( nx ), yspace( config ),
                                            projection( config ), domain( config ) );
     }
@@ -193,7 +205,8 @@ StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx ) {
     yspace.set( "end", -90.0 );
     yspace.set( "N", nx.size() );
 
-    return new StructuredGrid::grid_t( xspace( nx ), Spacing( yspace ), Projection(), Domain() );
+    std::vector<idx_t> _nx( nx.begin(), nx.end() );
+    return new StructuredGrid::grid_t( xspace( _nx ), Spacing( yspace ), Projection(), Domain() );
 }
 
 StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx, const Domain& domain ) {
@@ -203,13 +216,36 @@ StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx, const Dom
     yspace.set( "end", -90.0 );
     yspace.set( "N", nx.size() );
 
-    return new StructuredGrid::grid_t( xspace( nx ), Spacing( yspace ), Projection(), domain );
+    std::vector<idx_t> _nx( nx.begin(), nx.end() );
+    return new StructuredGrid::grid_t( xspace( _nx ), Spacing( yspace ), Projection(), domain );
+}
+
+StructuredGrid::grid_t* reduced_gaussian( const std::vector<int>& nx ) {
+    Grid::Config yspace;
+    yspace.set( "type", "gaussian" );
+    yspace.set( "start", 90.0 );
+    yspace.set( "end", -90.0 );
+    yspace.set( "N", nx.size() );
+
+    std::vector<idx_t> _nx( nx.begin(), nx.end() );
+    return new StructuredGrid::grid_t( xspace( _nx ), Spacing( yspace ), Projection(), Domain() );
+}
+
+StructuredGrid::grid_t* reduced_gaussian( const std::vector<int>& nx, const Domain& domain ) {
+    Grid::Config yspace;
+    yspace.set( "type", "gaussian" );
+    yspace.set( "start", 90.0 );
+    yspace.set( "end", -90.0 );
+    yspace.set( "N", nx.size() );
+
+    std::vector<idx_t> _nx( nx.begin(), nx.end() );
+    return new StructuredGrid::grid_t( xspace( _nx ), Spacing( yspace ), Projection(), domain );
 }
 
 template <typename Int>
-inline std::vector<long> long_vector( Int nx, long ny ) {
-    std::vector<long> _nx( ny );
-    for ( long j = 0; j < ny; ++j ) {
+inline std::vector<idx_t> idx_vector( Int nx, idx_t ny ) {
+    std::vector<idx_t> _nx( ny );
+    for ( idx_t j = 0; j < ny; ++j ) {
         _nx[j] = nx[j];
     }
     return _nx;
@@ -218,11 +254,11 @@ inline std::vector<long> long_vector( Int nx, long ny ) {
 extern "C" {
 
 StructuredGrid::grid_t* atlas__grid__reduced__ReducedGaussian_int( int nx[], long ny ) {
-    return reduced_gaussian( long_vector( nx, ny ) );
+    return reduced_gaussian( idx_vector( nx, ny ) );
 }
 
 StructuredGrid::grid_t* atlas__grid__reduced__ReducedGaussian_long( long nx[], long ny ) {
-    return reduced_gaussian( long_vector( nx, ny ) );
+    return reduced_gaussian( idx_vector( nx, ny ) );
 }
 }
 

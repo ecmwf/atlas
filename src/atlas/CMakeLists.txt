@@ -28,8 +28,6 @@ list( APPEND atlas_srcs
 library/config.h
 library/Library.h
 library/Library.cc
-runtime/ErrorHandling.cc
-runtime/ErrorHandling.cc
 runtime/AtlasTool.h
 runtime/AtlasTool.cc
 runtime/Log.h
@@ -37,6 +35,8 @@ runtime/Log.cc
 runtime/Trace.h
 runtime/trace/CallStack.h
 runtime/trace/CallStack.cc
+runtime/trace/CodeLocation.cc
+runtime/trace/CodeLocation.h
 runtime/trace/TraceT.h
 runtime/trace/Nesting.cc
 runtime/trace/Nesting.h
@@ -74,6 +74,8 @@ projection/detail/SchmidtProjection.cc
 projection/detail/SchmidtProjection.h
 projection/detail/MercatorProjection.cc
 projection/detail/MercatorProjection.h
+projection/detail/ProjectionFactory.h
+projection/detail/ProjectionFactory.cc
 
 domain.h
 domain/Domain.cc
@@ -88,10 +90,16 @@ domain/detail/GlobalDomain.h
 domain/detail/GlobalDomain.cc
 domain/detail/ZonalBandDomain.h
 domain/detail/ZonalBandDomain.cc
+domain/detail/DomainFactory.h
+domain/detail/DomainFactory.cc
 
 grid.h
 grid/Grid.cc
 grid/Grid.h
+grid/StructuredGrid.cc
+grid/StructuredGrid.h
+grid/UnstructuredGrid.cc
+grid/UnstructuredGrid.h
 
 grid/Distribution.cc
 grid/Distribution.h
@@ -100,9 +108,17 @@ grid/Spacing.h
 grid/Partitioner.h
 grid/Partitioner.cc
 grid/Iterator.h
+grid/Iterator.cc
+grid/Vertical.h
+grid/Vertical.cc
+grid/Stencil.h
+grid/StencilComputer.h
+grid/StencilComputer.cc
 
 grid/detail/grid/GridBuilder.h
 grid/detail/grid/GridBuilder.cc
+grid/detail/grid/GridFactory.h
+grid/detail/grid/GridFactory.cc
 grid/detail/grid/Grid.h
 grid/detail/grid/Grid.cc
 grid/detail/grid/Structured.cc
@@ -116,11 +132,18 @@ grid/detail/grid/LonLat.cc
 grid/detail/grid/Regional.h
 grid/detail/grid/Regional.cc
 
+grid/detail/distribution/DistributionImpl.h
+grid/detail/distribution/DistributionImpl.cc
+
+grid/detail/vertical/VerticalInterface.h
+grid/detail/vertical/VerticalInterface.cc
+
 grid/detail/partitioner/CheckerboardPartitioner.cc
 grid/detail/partitioner/CheckerboardPartitioner.h
 grid/detail/partitioner/EqualRegionsPartitioner.cc
 grid/detail/partitioner/EqualRegionsPartitioner.h
 grid/detail/partitioner/MatchingMeshPartitioner.h
+grid/detail/partitioner/MatchingMeshPartitioner.cc
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.cc
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h
 grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.cc
@@ -132,6 +155,8 @@ grid/detail/partitioner/Partitioner.h
 
 grid/detail/spacing/Spacing.cc
 grid/detail/spacing/Spacing.h
+grid/detail/spacing/SpacingFactory.cc
+grid/detail/spacing/SpacingFactory.h
 grid/detail/spacing/CustomSpacing.h
 grid/detail/spacing/CustomSpacing.cc
 grid/detail/spacing/LinearSpacing.h
@@ -203,6 +228,12 @@ list( APPEND atlas_grid_srcs
 )
 endif()
 
+# Append CGAL_COMPLE_FLAGS only to this file ( see ATLAS-193 )
+if( CGAL_COMPILE_FLAGS )
+  set_source_files_properties( mesh/actions/BuildConvexHull3D.cc
+                               PROPERTIES COMPILE_FLAGS "${CGAL_COMPILE_FLAGS}" )
+endif()
+
 list( APPEND atlas_mesh_srcs
 mesh.h
 mesh/Connectivity.cc
@@ -250,18 +281,24 @@ mesh/actions/BuildStatistics.h
 mesh/actions/BuildXYZField.cc
 mesh/actions/BuildXYZField.h
 mesh/actions/WriteLoadBalanceReport.cc
-
-meshgenerator.h
-meshgenerator/DelaunayMeshGenerator.h
-meshgenerator/DelaunayMeshGenerator.cc
-meshgenerator/MeshGenerator.cc
-meshgenerator/MeshGenerator.h
-meshgenerator/StructuredMeshGenerator.h
-meshgenerator/StructuredMeshGenerator.cc
-meshgenerator/RegularMeshGenerator.cc
-meshgenerator/RegularMeshGenerator.h
 mesh/actions/BuildTorusXYZField.h
 mesh/actions/BuildTorusXYZField.cc
+
+meshgenerator.h
+meshgenerator/MeshGenerator.cc
+meshgenerator/MeshGenerator.h
+meshgenerator/detail/DelaunayMeshGenerator.h
+meshgenerator/detail/DelaunayMeshGenerator.cc
+meshgenerator/detail/StructuredMeshGenerator.h
+meshgenerator/detail/StructuredMeshGenerator.cc
+meshgenerator/detail/RegularMeshGenerator.cc
+meshgenerator/detail/RegularMeshGenerator.h
+meshgenerator/detail/MeshGeneratorFactory.cc
+meshgenerator/detail/MeshGeneratorFactory.h
+meshgenerator/detail/MeshGeneratorImpl.cc
+meshgenerator/detail/MeshGeneratorImpl.h
+meshgenerator/detail/MeshGeneratorInterface.cc
+meshgenerator/detail/MeshGeneratorInterface.h
 )
 
 list( APPEND atlas_output_srcs
@@ -287,6 +324,8 @@ field/State.h
 field/State.cc
 field/detail/FieldImpl.h
 field/detail/FieldImpl.cc
+field/detail/FieldInterface.h
+field/detail/FieldInterface.cc
 )
 
 list( APPEND atlas_functionspace_srcs
@@ -297,14 +336,20 @@ functionspace/FunctionSpace.h
 functionspace/FunctionSpace.cc
 functionspace/NodeColumns.h
 functionspace/NodeColumns.cc
-functionspace/NodeColumnsInterface.h
-functionspace/NodeColumnsInterface.cc
 functionspace/StructuredColumns.h
 functionspace/StructuredColumns.cc
 functionspace/Spectral.h
 functionspace/Spectral.cc
 functionspace/PointCloud.h
 functionspace/PointCloud.cc
+functionspace/detail/FunctionSpaceImpl.h
+functionspace/detail/FunctionSpaceImpl.cc
+functionspace/detail/FunctionSpaceInterface.h
+functionspace/detail/FunctionSpaceInterface.cc
+functionspace/detail/NodeColumnsInterface.h
+functionspace/detail/NodeColumnsInterface.cc
+functionspace/detail/StructuredColumnsInterface.h
+functionspace/detail/StructuredColumnsInterface.cc
 )
 
 list( APPEND atlas_numerics_srcs
@@ -333,7 +378,10 @@ trans/local/VorDivToUVLocal.h
 trans/local/VorDivToUVLocal.cc
 trans/local/LegendreCacheCreatorLocal.h
 trans/local/LegendreCacheCreatorLocal.cc
-
+trans/detail/TransFactory.h
+trans/detail/TransFactory.cc
+trans/detail/TransImpl.h
+trans/detail/TransImpl.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs
@@ -354,30 +402,59 @@ list( APPEND atlas_interpolation_srcs
 interpolation.h
 interpolation/Interpolation.h
 interpolation/Interpolation.cc
+interpolation/Vector2D.cc
 interpolation/Vector2D.h
+interpolation/Vector3D.cc
 interpolation/Vector3D.h
 interpolation/element/Quad3D.cc
 interpolation/element/Quad3D.h
 interpolation/element/Triag3D.cc
 interpolation/element/Triag3D.h
-interpolation/method/FiniteElement.cc
-interpolation/method/FiniteElement.h
 interpolation/method/Intersect.cc
 interpolation/method/Intersect.h
-interpolation/method/KNearestNeighbours.cc
-interpolation/method/KNearestNeighbours.h
-interpolation/method/KNearestNeighboursBase.cc
-interpolation/method/KNearestNeighboursBase.h
 interpolation/method/Method.cc
 interpolation/method/Method.h
-interpolation/method/NearestNeighbour.cc
-interpolation/method/NearestNeighbour.h
+interpolation/method/MethodFactory.cc
+interpolation/method/MethodFactory.h
 interpolation/method/PointIndex3.cc
 interpolation/method/PointIndex3.h
 interpolation/method/PointSet.cc
 interpolation/method/PointSet.h
 interpolation/method/Ray.cc
 interpolation/method/Ray.h
+interpolation/method/fe/FiniteElement.cc
+interpolation/method/fe/FiniteElement.h
+interpolation/method/knn/KNearestNeighbours.cc
+interpolation/method/knn/KNearestNeighbours.h
+interpolation/method/knn/KNearestNeighboursBase.cc
+interpolation/method/knn/KNearestNeighboursBase.h
+interpolation/method/knn/NearestNeighbour.cc
+interpolation/method/knn/NearestNeighbour.h
+interpolation/method/structured/StructuredInterpolation2D.tcc
+interpolation/method/structured/StructuredInterpolation2D.h
+interpolation/method/structured/StructuredInterpolation3D.tcc
+interpolation/method/structured/StructuredInterpolation3D.h
+interpolation/method/structured/kernels/LinearHorizontalKernel.h
+interpolation/method/structured/kernels/Linear3DKernel.h
+interpolation/method/structured/kernels/LinearVerticalKernel.h
+interpolation/method/structured/kernels/CubicHorizontalKernel.h
+interpolation/method/structured/kernels/Cubic3DKernel.h
+interpolation/method/structured/kernels/CubicVerticalKernel.h
+interpolation/method/structured/kernels/QuasiCubicHorizontalKernel.h
+interpolation/method/structured/kernels/QuasiCubic3DKernel.cc
+interpolation/method/structured/kernels/QuasiCubic3DKernel.h
+interpolation/method/structured/Linear2D.cc
+interpolation/method/structured/Linear2D.h
+interpolation/method/structured/Linear3D.cc
+interpolation/method/structured/Linear3D.h
+interpolation/method/structured/Cubic2D.cc
+interpolation/method/structured/Cubic2D.h
+interpolation/method/structured/Cubic3D.cc
+interpolation/method/structured/Cubic3D.h
+interpolation/method/structured/QuasiCubic2D.cc
+interpolation/method/structured/QuasiCubic2D.h
+interpolation/method/structured/QuasiCubic3D.cc
+interpolation/method/structured/QuasiCubic3D.h
 )
 
 
@@ -397,12 +474,15 @@ array/ArrayUtil.h
 array/ArrayView.h
 array/ArrayViewUtil.h
 array/ArrayViewDefs.h
+array/DataType.cc
 array/DataType.h
 array/IndexView.h
 array/LocalView.cc
 array/LocalView.h
 array/Range.h
 array/Vector.h
+array/Vector.cc
+array/SVector.h
 array/helpers/ArrayInitializer.h
 array/helpers/ArrayAssigner.h
 array/helpers/ArrayWriter.h
@@ -451,8 +531,8 @@ parallel/HaloExchange.cc
 parallel/HaloExchange.h
 parallel/HaloExchangeImpl.h
 parallel/mpi/Buffer.h
-runtime/ErrorHandling.cc
-runtime/ErrorHandling.h
+runtime/Exception.cc
+runtime/Exception.h
 util/Config.cc
 util/Config.h
 util/Constants.h
@@ -463,6 +543,8 @@ util/LonLatPolygon.cc
 util/LonLatPolygon.h
 util/Metadata.cc
 util/Metadata.h
+util/Point.cc
+util/Point.h
 util/Polygon.cc
 util/Polygon.h
 util/Rotation.cc
@@ -478,6 +560,12 @@ util/detail/Debug.h
 list( APPEND atlas_internals_srcs
 mesh/detail/AccumulateFacets.h
 mesh/detail/AccumulateFacets.cc
+util/Object.h
+util/Object.cc
+util/ObjectHandle.h
+util/ObjectHandle.cc
+util/Factory.h
+util/Factory.cc
 util/Bitflags.h
 util/Checksum.h
 util/Checksum.cc
@@ -485,15 +573,15 @@ util/MicroDeg.h
 mesh/IsGhostNode.h
 util/LonLatMicroDeg.h
 util/CoordinateEnums.h
-mesh/detail/PeriodicTransform.h
+util/PeriodicTransform.h
 util/Unique.h
+util/Unique.cc
+util/Allocate.h
+util/Allocate.cc
 #parallel/detail/MPLArrayView.h
 )
 
 ### atlas c++ library
-
-ecbuild_debug_var(CGAL_LIBRARIES)
-ecbuild_debug_var(CGAL_INCLUDE_DIRS)
 
 if( NOT ATLAS_HAVE_TRANS )
   unset( TRANSI_INCLUDE_DIRS )

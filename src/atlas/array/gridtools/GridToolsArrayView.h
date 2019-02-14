@@ -72,8 +72,20 @@ public:
         return gt_data_view_( c... );
     }
 
+    template <typename Int, bool EnableBool = true>
+    ATLAS_HOST_DEVICE typename std::enable_if<( Rank == 1 && EnableBool ), const value_type&>::type operator[](
+        Int idx ) const {
+        return gt_data_view_( idx );
+    }
+
+    template <typename Int, bool EnableBool = true>
+    ATLAS_HOST_DEVICE typename std::enable_if<( Rank == 1 && EnableBool ), value_type&>::type operator[]( Int idx ) {
+        check_bounds( idx );
+        return gt_data_view_( idx );
+    }
+
     template <unsigned int Dim>
-    ATLAS_HOST_DEVICE size_t shape() const {
+    ATLAS_HOST_DEVICE idx_t shape() const {
         return gt_data_view_.template length<Dim>();
     }
 
@@ -83,12 +95,12 @@ public:
     data_view_t const& data_view() const { return gt_data_view_; }
 
     template <unsigned int Dim>
-    ATLAS_HOST_DEVICE size_t stride() const {
+    ATLAS_HOST_DEVICE idx_t stride() const {
         return gt_data_view_.storage_info().template stride<Dim>();
     }
 
-    static constexpr size_t rank() { return Rank; }
-    size_t size() const { return size_; }
+    static constexpr idx_t rank() { return Rank; }
+    idx_t size() const { return size_; }
     bool valid() const;
 
     bool contiguous() const { return ( size_ == shape_[0] * strides_[0] ? true : false ); }
@@ -99,13 +111,19 @@ public:
 
     void assign( const std::initializer_list<value_type>& );
 
-    const size_t* strides() const { return strides_; }
+    const idx_t* strides() const { return strides_; }
 
-    const size_t* shape() const { return shape_; }
+    const idx_t* shape() const { return shape_; }
 
-    size_t shape( size_t idx ) const { return shape_[idx]; }
+    template <typename Int>
+    idx_t shape( Int idx ) const {
+        return shape_[idx];
+    }
 
-    size_t stride( size_t idx ) const { return strides_[idx]; }
+    template <typename Int>
+    idx_t stride( Int idx ) const {
+        return strides_[idx];
+    }
 
     template <typename... Args>
     typename slice_t<Args...>::type slice( Args... args ) {
@@ -119,9 +137,9 @@ public:
 
 private:
     data_view_t gt_data_view_;
-    size_t shape_[Rank];
-    size_t strides_[Rank];
-    size_t size_;
+    idx_t shape_[Rank];
+    idx_t strides_[Rank];
+    idx_t size_;
     ArrayDataStore const* data_store_orig_;
     Array const* array_;
 };

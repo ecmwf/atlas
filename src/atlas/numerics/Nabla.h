@@ -10,8 +10,10 @@
 
 #pragma once
 
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
+#include <string>
+
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
 class Parametrisation;
@@ -33,7 +35,7 @@ class Field;
 namespace atlas {
 namespace numerics {
 
-class NablaImpl : public eckit::Owned {
+class NablaImpl : public util::Object {
 public:
     NablaImpl( const Method&, const eckit::Parametrisation& );
     virtual ~NablaImpl();
@@ -46,17 +48,10 @@ public:
 
 // ------------------------------------------------------------------
 
-class Nabla {
+class Nabla : public util::ObjectHandle<NablaImpl> {
 public:
-    using nabla_t = NablaImpl;
-
-private:
-    eckit::SharedPtr<const nabla_t> nabla_;
-
-public:
-    Nabla();
-    Nabla( const nabla_t* );
-    Nabla( const Nabla& nabla );
+    using Handle::Handle;
+    Nabla() = default;
     Nabla( const Method& );
     Nabla( const Method&, const eckit::Parametrisation& );
 
@@ -64,8 +59,6 @@ public:
     void divergence( const Field& vector, Field& div ) const;
     void curl( const Field& vector, Field& curl ) const;
     void laplacian( const Field& scalar, Field& laplacian ) const;
-
-    const nabla_t* get() const { return nabla_.get(); }
 };
 
 // ------------------------------------------------------------------
@@ -76,7 +69,7 @@ public:
    * \brief build Nabla with factory key, constructor arguments
    * \return Nabla
    */
-    static const Nabla::nabla_t* build( const Method&, const eckit::Parametrisation& );
+    static const Nabla::Implementation* build( const Method&, const eckit::Parametrisation& );
 
     /*!
    * \brief list all registered field creators
@@ -85,7 +78,7 @@ public:
     static bool has( const std::string& name );
 
 private:
-    virtual const Nabla::nabla_t* make( const Method&, const eckit::Parametrisation& ) = 0;
+    virtual const Nabla::Implementation* make( const Method&, const eckit::Parametrisation& ) = 0;
 
 protected:
     NablaFactory( const std::string& );
@@ -103,7 +96,7 @@ public:
     NablaBuilder( const std::string& name ) : NablaFactory( name ) {}
 
 private:
-    virtual const Nabla::nabla_t* make( const Method& method, const eckit::Parametrisation& p ) {
+    virtual const Nabla::Implementation* make( const Method& method, const eckit::Parametrisation& p ) {
         return new T( method, p );
     }
 };
@@ -112,12 +105,15 @@ private:
 
 extern "C" {
 
-void atlas__Nabla__delete( Nabla::nabla_t* This );
-const Nabla::nabla_t* atlas__Nabla__create( const Method* method, const eckit::Parametrisation* params );
-void atlas__Nabla__gradient( const Nabla::nabla_t* This, const field::FieldImpl* scalar, field::FieldImpl* grad );
-void atlas__Nabla__divergence( const Nabla::nabla_t* This, const field::FieldImpl* vector, field::FieldImpl* div );
-void atlas__Nabla__curl( const Nabla::nabla_t* This, const field::FieldImpl* vector, field::FieldImpl* curl );
-void atlas__Nabla__laplacian( const Nabla::nabla_t* This, const field::FieldImpl* scalar, field::FieldImpl* laplacian );
+void atlas__Nabla__delete( Nabla::Implementation* This );
+const Nabla::Implementation* atlas__Nabla__create( const Method* method, const eckit::Parametrisation* params );
+void atlas__Nabla__gradient( const Nabla::Implementation* This, const field::FieldImpl* scalar,
+                             field::FieldImpl* grad );
+void atlas__Nabla__divergence( const Nabla::Implementation* This, const field::FieldImpl* vector,
+                               field::FieldImpl* div );
+void atlas__Nabla__curl( const Nabla::Implementation* This, const field::FieldImpl* vector, field::FieldImpl* curl );
+void atlas__Nabla__laplacian( const Nabla::Implementation* This, const field::FieldImpl* scalar,
+                              field::FieldImpl* laplacian );
 }
 
 }  // namespace numerics

@@ -135,9 +135,10 @@ TEST( test_meshgen )
   type(atlas_mesh_Edges) :: edges
   type(atlas_Field) :: field
   type(atlas_functionspace_NodeColumns) :: functionspace_nodes
+  type(atlas_functionspace_EdgeColumns) :: functionspace_edges
   type(atlas_HaloExchange) :: halo_exchange
   type(atlas_Output) :: gmsh
-  integer(c_int), pointer :: ridx(:)
+  integer(ATLAS_KIND_IDX), pointer :: ridx(:)
   real(c_double), pointer :: arr1d(:), arr2d(:,:)
   integer :: i, nnodes, nghost
 
@@ -151,14 +152,13 @@ TEST( test_meshgen )
   nodes = mesh%nodes()
   call meshgenerator%final()
 
-  call atlas_build_parallel_fields(mesh)
-  call atlas_build_periodic_boundaries(mesh)
-  call atlas_build_halo(mesh,1)
-  call atlas_build_edges(mesh)
-  call atlas_build_pole_edges(mesh)
+  functionspace_edges = atlas_functionspace_EdgeColumns(mesh,halo=1)
+  functionspace_nodes = atlas_functionspace_NodeColumns(mesh,halo=1)
   call atlas_build_median_dual_mesh(mesh)
 
   nnodes = nodes%size()
+
+  FCTEST_CHECK_EQUAL( nnodes, 3672 )
 
   field = nodes%field("remote_idx")
   call field%data(ridx)
@@ -168,6 +168,8 @@ TEST( test_meshgen )
   enddo
 
   write(0,*) "nghost =",nghost
+
+  FCTEST_CHECK_EQUAL( nghost, 144 )
 
 
   call atlas_log%info( nodes%str() )
@@ -180,12 +182,12 @@ TEST( test_meshgen )
   halo_exchange = functionspace_nodes%get_halo_exchange()
   call halo_exchange%execute(arr1d)
 
+
   edges = mesh%edges()
   field = edges%field("dual_normals")
   call field%data(arr2d)
   call field%final()
-
-  gmsh = atlas_output_Gmsh("testf2.msh")
+  gmsh = atlas_output_Gmsh("testf2.msh",ghost=.true.)
   call gmsh%write(mesh)
 
   call atlas_write_load_balance_report(mesh,"N24_loadbalance.dat")

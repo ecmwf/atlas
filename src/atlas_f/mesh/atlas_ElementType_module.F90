@@ -1,9 +1,17 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
 #include "atlas/atlas_f.h"
 
 module atlas_ElementType_module
 
 use fckit_owned_object_module, only : fckit_owned_object
-
+use atlas_kinds_module, only : ATLAS_KIND_IDX
 implicit none
 
 private :: fckit_owned_object
@@ -83,19 +91,17 @@ function atlas_Line__constructor() result(this)
 end function
 
 function nb_nodes(this)
-  use, intrinsic :: iso_c_binding, only : c_size_t
   use atlas_elementtype_c_binding
-  integer(c_size_t) :: nb_nodes
+  integer(ATLAS_KIND_IDX) :: nb_nodes
   class(atlas_ElementType), intent(in) :: this
-  nb_nodes = atlas__mesh__ElementType__nb_nodes(this%c_ptr())
+  nb_nodes = atlas__mesh__ElementType__nb_nodes(this%CPTR_PGIBUG_A)
 end function
 
 function nb_edges(this)
-  use, intrinsic :: iso_c_binding, only : c_size_t
   use atlas_elementtype_c_binding
-  integer(c_size_t) :: nb_edges
+  integer(ATLAS_KIND_IDX) :: nb_edges
   class(atlas_ElementType), intent(in) :: this
-  nb_edges = atlas__mesh__ElementType__nb_edges(this%c_ptr())
+  nb_edges = atlas__mesh__ElementType__nb_edges(this%CPTR_PGIBUG_A)
 end function
 
 function name(this)
@@ -105,7 +111,7 @@ function name(this)
   character(len=:), allocatable :: name
   class(atlas_ElementType) :: this
   type(c_ptr) :: name_c_str
-  name_c_str = atlas__mesh__ElementType__name(this%c_ptr())
+  name_c_str = atlas__mesh__ElementType__name(this%CPTR_PGIBUG_A)
   name = c_ptr_to_string(name_c_str)
 end function
 
@@ -115,7 +121,7 @@ function parametric(this)
   logical :: parametric
   class(atlas_ElementType), intent(in) :: this
   integer(c_int) :: parametric_int
-  parametric_int = atlas__mesh__ElementType__parametric(this%c_ptr())
+  parametric_int = atlas__mesh__ElementType__parametric(this%CPTR_PGIBUG_A)
   if( parametric_int == 0 ) then
     parametric = .False.
   else

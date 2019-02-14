@@ -8,22 +8,18 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/memory/SharedPtr.h"
+
 #include "eckit/runtime/Tool.h"
 #include "eckit/value/CompositeParams.h"
 
-#include "atlas/array/DataType.h"
-#include "atlas/array/MakeView.h"
+#include "atlas/array.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/field/State.h"
 #include "atlas/grid.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/library/Library.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/DelaunayMeshGenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/ObjectHandle.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -31,7 +27,6 @@ using namespace std;
 using namespace eckit;
 using namespace atlas;
 using namespace atlas::grid;
-using namespace atlas::meshgenerator;
 
 //-----------------------------------------------------------------------------
 
@@ -103,7 +98,7 @@ CASE( "test_implicit_conversion" ) {
 
 CASE( "test_wrap_rawdata_through_array" ) {
     std::vector<double> rawdata( 20, 8. );
-    SharedPtr<array::Array> array( array::Array::wrap( rawdata.data(), array::make_shape( 10, 2 ) ) );
+    util::ObjectHandle<array::Array> array( array::Array::wrap( rawdata.data(), array::make_shape( 10, 2 ) ) );
     Field field( "wrapped", array.get() );
 
     EXPECT( array->owners() == 2 );
@@ -112,13 +107,19 @@ CASE( "test_wrap_rawdata_through_array" ) {
 }
 
 CASE( "test_wrap_rawdata_direct" ) {
-    std::vector<double> rawdata( 20, 8. );
+    std::vector<double> rawdata( 10 * 2, 8. );
     Field field( "wrapped", rawdata.data(), array::make_shape( 10, 2 ) );
 
     EXPECT( field.array().owners() == 1 );
     const array::ArrayView<double, 2> cfieldv = array::make_view<double, 2>( field );
     EXPECT( cfieldv( 9, 1 ) == 8. );
 }
+
+CASE( "test_wrap_rawdata_through_field" ) {
+    std::vector<double> rawdata( 10 * 2, 8. );
+    Field field( "name", rawdata.data(), array::make_shape( 10, 2 ) );
+}
+
 
 //-----------------------------------------------------------------------------
 

@@ -10,8 +10,6 @@
 
 #include <cmath>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/functionspace/EdgeColumns.h"
@@ -24,7 +22,7 @@
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/parallel/omp/omp.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
@@ -75,23 +73,24 @@ Method::Method( Mesh& mesh, const eckit::Configuration& params ) :
 
 void Method::setup() {
     ATLAS_TRACE( "fvm::Method::setup " );
-    util::Config node_columns_config;
-    node_columns_config.set( "halo", halo_.size() );
-    if ( levels_ ) node_columns_config.set( "levels", levels_ );
-    node_columns_ = functionspace::NodeColumns( mesh(), node_columns_config );
-    if ( edges_.size() == 0 ) {
-        ATLAS_TRACE_SCOPE( "build_edges" ) build_edges( mesh() );
-        ATLAS_TRACE_SCOPE( "build_pole_edges" ) build_pole_edges( mesh() );
-        ATLAS_TRACE_SCOPE( "build_edges_parallel_fields" ) build_edges_parallel_fields( mesh() );
+    util::Config config;
+    config.set( "halo", halo_.size() );
+    if ( levels_ ) config.set( "levels", levels_ );
+    node_columns_ = functionspace::NodeColumns( mesh(), config );
+    edge_columns_ = functionspace::EdgeColumns( mesh(), config );
+
+    {
         ATLAS_TRACE_SCOPE( "build_median_dual_mesh" ) build_median_dual_mesh( mesh() );
         ATLAS_TRACE_SCOPE( "build_node_to_edge_connectivity" ) build_node_to_edge_connectivity( mesh() );
 
-        const size_t nnodes = nodes_.size();
+        const idx_t nnodes = nodes_.size();
+
+        auto edge_flags   = array::make_view<int, 1>( edges_.flags() );
+        using Topology    = mesh::Nodes::Topology;
+        auto is_pole_edge = [&]( size_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
 
         // Compute sign
         {
-            const array::ArrayView<int, 1> is_pole_edge = array::make_view<int, 1>( edges_.field( "is_pole_edge" ) );
-
             const mesh::Connectivity& node_edge_connectivity           = nodes_.edge_connectivity();
             const mesh::MultiBlockConnectivity& edge_node_connectivity = edges_.node_connectivity();
             if ( !nodes_.has_field( "node2edge_sign" ) ) {
@@ -101,10 +100,10 @@ void Method::setup() {
             array::ArrayView<double, 2> node2edge_sign =
                 array::make_view<double, 2>( nodes_.field( "node2edge_sign" ) );
 
-            atlas_omp_parallel_for( size_t jnode = 0; jnode < nnodes; ++jnode ) {
-                for ( size_t jedge = 0; jedge < node_edge_connectivity.cols( jnode ); ++jedge ) {
-                    size_t iedge = node_edge_connectivity( jnode, jedge );
-                    size_t ip1   = edge_node_connectivity( iedge, 0 );
+            atlas_omp_parallel_for( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
+                for ( idx_t jedge = 0; jedge < node_edge_connectivity.cols( jnode ); ++jedge ) {
+                    idx_t iedge = node_edge_connectivity( jnode, jedge );
+                    idx_t ip1   = edge_node_connectivity( iedge, 0 );
                     if ( jnode == ip1 )
                         node2edge_sign( jnode, jedge ) = 1.;
                     else {
@@ -114,50 +113,26 @@ void Method::setup() {
                 }
             }
         }
-
-        // Metrics
-        if ( 0 ) {
-            const size_t nedges                          = edges_.size();
-            const array::ArrayView<double, 2> lonlat_deg = array::make_view<double, 2>( nodes_.lonlat() );
-            array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>( nodes_.field( "dual_volumes" ) );
-            array::ArrayView<double, 2> dual_normals = array::make_view<double, 2>( edges_.field( "dual_normals" ) );
-
-            const double deg2rad = M_PI / 180.;
-            atlas_omp_parallel_for( size_t jnode = 0; jnode < nnodes; ++jnode ) {
-                double y  = lonlat_deg( jnode, LAT ) * deg2rad;
-                double hx = radius_ * std::cos( y );
-                double hy = radius_;
-                double G  = hx * hy;
-                dual_volumes( jnode ) *= std::pow( deg2rad, 2 ) * G;
-            }
-
-            atlas_omp_parallel_for( size_t jedge = 0; jedge < nedges; ++jedge ) {
-                dual_normals( jedge, LON ) *= deg2rad;
-                dual_normals( jedge, LAT ) *= deg2rad;
-            }
-        }
     }
-    edge_columns_ = functionspace::EdgeColumns( mesh() );
 }
 
 // ------------------------------------------------------------------------------------------
 extern "C" {
-Method* atlas__numerics__fvm__Method__new( Mesh::Implementation* mesh, const eckit::Configuration* params ) {
-    Method* method( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( mesh ); Mesh m( mesh ); method = new Method( m, *params ); );
-    return method;
+Method* atlas__numerics__fvm__Method__new( Mesh::Implementation* mesh, const eckit::Configuration* config ) {
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    ATLAS_ASSERT( config != nullptr, "Cannot access uninitialised atlas_Config" );
+    Mesh m( mesh );
+    return new Method( m, *config );
 }
 
 const functionspace::detail::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes( Method* This ) {
-    ATLAS_ERROR_HANDLING(
-        ASSERT( This ); return dynamic_cast<const functionspace::detail::NodeColumns*>( This->node_columns().get() ); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Method" );
+    return dynamic_cast<const functionspace::detail::NodeColumns*>( This->node_columns().get() );
 }
 
 const functionspace::detail::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges( Method* This ) {
-    ATLAS_ERROR_HANDLING(
-        ASSERT( This ); return dynamic_cast<const functionspace::detail::EdgeColumns*>( This->edge_columns().get() ); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Method" );
+    return dynamic_cast<const functionspace::detail::EdgeColumns*>( This->edge_columns().get() );
 }
 }
 // ------------------------------------------------------------------------------------------

@@ -11,18 +11,20 @@
 #include <iostream>
 #include <sstream>
 
+#include "eckit/config/Resource.h"
+#include "eckit/runtime/Tool.h"
+
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
-#include "atlas/meshgenerator/MeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/config/Resource.h"
-#include "eckit/exception/Exceptions.h"
-#include "eckit/runtime/Tool.h"
+
 //------------------------------------------------------------------------------------------------------
 
 using eckit::Resource;
@@ -99,7 +101,7 @@ void AtlasLoadbalance::run() {
     try {
         grid = Grid( key );
     }
-    catch ( eckit::BadParameter& err ) {
+    catch ( eckit::Exception& err ) {
     }
 
     if ( !grid ) return;

@@ -4,16 +4,14 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an size_tergovernmental organisation
+ * granted to it by virtue of its status as an intergovernmental organisation
  * nor does it submit to any jurisdiction.
  */
 
 #pragma once
 
-#include <sstream>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -58,12 +56,16 @@ private:
     static std::string real64_str() { return "real64"; }
     static std::string uint64_str() { return "uint64"; }
 
+    [[noreturn]] static void throw_not_recognised( kind_t );
+    [[noreturn]] static void throw_not_recognised( std::string datatype );
+
 public:
     DataType( const std::string& );
     DataType( long );
     DataType( const DataType& );
     std::string str() const { return kind_to_str( kind_ ); }
     kind_t kind() const { return kind_; }
+    size_t size() const { return ( kind_ == KIND_UINT64 ) ? 8 : std::abs( kind_ ); }
 
     friend bool operator==( DataType dt1, DataType dt2 );
     friend bool operator!=( DataType dt1, DataType dt2 );
@@ -170,7 +172,7 @@ inline DataType::kind_t DataType::str_to_kind( const std::string& datatype ) {
     else if ( datatype == "real64" )
         kind = KIND_REAL64;
     else {
-        throw eckit::Exception( "datatype " + datatype + " not recognised.", Here() );
+        throw_not_recognised( datatype );
     }
     return kind;
 }
@@ -187,9 +189,7 @@ inline std::string DataType::kind_to_str( kind_t kind ) {
         case KIND_REAL64:
             return real64_str();
         default:
-            std::stringstream msg;
-            msg << "kind " << kind << " not recognised.";
-            throw eckit::Exception( msg.str(), Here() );
+            throw_not_recognised( kind );
     }
 }
 inline bool DataType::kind_valid( kind_t kind ) {

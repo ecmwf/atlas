@@ -23,23 +23,23 @@ Checksum::Checksum( const std::string& name ) : name_( name ) {
     is_setup_ = false;
 }
 
-void Checksum::setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[],
+void Checksum::setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                       const int parsize ) {
     parsize_ = parsize;
-    gather_.reset( new GatherScatter() );
+    gather_  = util::ObjectHandle<GatherScatter>( new GatherScatter() );
     gather_->setup( part, remote_idx, base, glb_idx, parsize );
     is_setup_ = true;
 }
 
-void Checksum::setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[],
+void Checksum::setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                       const int mask[], const int parsize ) {
     parsize_ = parsize;
-    gather_.reset( new GatherScatter() );
+    gather_  = util::ObjectHandle<GatherScatter>( new GatherScatter() );
     gather_->setup( part, remote_idx, base, glb_idx, mask, parsize );
     is_setup_ = true;
 }
 
-void Checksum::setup( const eckit::SharedPtr<GatherScatter>& gather ) {
+void Checksum::setup( const util::ObjectHandle<GatherScatter>& gather ) {
     gather_   = gather;
     parsize_  = gather->parsize_;
     is_setup_ = true;
@@ -55,7 +55,7 @@ void atlas__Checksum__delete( Checksum* This ) {
     delete This;
 }
 
-void atlas__Checksum__setup32( Checksum* This, int part[], int remote_idx[], int base, int glb_idx[], int parsize ) {
+void atlas__Checksum__setup32( Checksum* This, int part[], idx_t remote_idx[], int base, int glb_idx[], int parsize ) {
 #if ATLAS_BITS_GLOBAL == 32
     This->setup( part, remote_idx, base, glb_idx, parsize );
 #else
@@ -67,7 +67,7 @@ void atlas__Checksum__setup32( Checksum* This, int part[], int remote_idx[], int
 #endif
 }
 
-void atlas__Checksum__setup64( Checksum* This, int part[], int remote_idx[], int base, long glb_idx[], int parsize ) {
+void atlas__Checksum__setup64( Checksum* This, int part[], idx_t remote_idx[], int base, long glb_idx[], int parsize ) {
 #if ATLAS_BITS_GLOBAL == 64
     This->setup( part, remote_idx, base, glb_idx, parsize );
 #else
@@ -91,6 +91,11 @@ void atlas__Checksum__execute_strided_float( Checksum* This, float lfield[], int
 
 void atlas__Checksum__execute_strided_double( Checksum* This, double lfield[], int lvar_strides[], int lvar_extents[],
                                               int lvar_rank, char* checksum ) {
+    std::strcpy( checksum, This->execute( lfield, lvar_strides, lvar_extents, lvar_rank ).c_str() );
+}
+
+void atlas__Checksum__execute_strided_long( Checksum* This, long lfield[], int lvar_strides[], int lvar_extents[],
+                                            int lvar_rank, char* checksum ) {
     std::strcpy( checksum, This->execute( lfield, lvar_strides, lvar_extents, lvar_rank ).c_str() );
 }
 

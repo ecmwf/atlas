@@ -8,17 +8,19 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/field/FieldSet.h"
+#include <sstream>
+
 #include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace field {
 
 //------------------------------------------------------------------------------------------------------
 
-FieldSetImpl::FieldSetImpl( const std::string& name ) : name_() {}
+FieldSetImpl::FieldSetImpl( const std::string& /*name*/ ) : name_() {}
 
 void FieldSetImpl::clear() {
     index_.clear();
@@ -26,11 +28,11 @@ void FieldSetImpl::clear() {
 }
 
 Field FieldSetImpl::add( const Field& field ) {
-    if ( field.name().size() ) { index_[field.name()] = fields_.size(); }
+    if ( field.name().size() ) { index_[field.name()] = size(); }
     else {
         std::stringstream name;
-        name << name_ << "[" << fields_.size() << "]";
-        index_[name.str()] = fields_.size();
+        name << name_ << "[" << size() << "]";
+        index_[name.str()] = size();
     }
     fields_.push_back( field );
     return field;
@@ -44,9 +46,21 @@ Field& FieldSetImpl::field( const std::string& name ) const {
     if ( !has_field( name ) ) {
         const std::string msg( "FieldSet" + ( name_.length() ? " \"" + name_ + "\"" : "" ) + ": cannot find field \"" +
                                name + "\"" );
-        throw eckit::OutOfRange( msg, Here() );
+        throw_Exception( msg, Here() );
     }
     return const_cast<Field&>( fields_[index_.at( name )] );
+}
+
+void FieldSetImpl::haloExchange( bool on_device ) const {
+    for ( idx_t i = 0; i < size(); ++i ) {
+        field( i ).haloExchange( on_device );
+    }
+}
+
+void FieldSetImpl::set_dirty( bool value ) const {
+    for ( idx_t i = 0; i < size(); ++i ) {
+        field( i ).set_dirty( value );
+    }
 }
 
 std::vector<std::string> FieldSetImpl::field_names() const {
@@ -63,37 +77,50 @@ std::vector<std::string> FieldSetImpl::field_names() const {
 extern "C" {
 
 FieldSetImpl* atlas__FieldSet__new( char* name ) {
-    ATLAS_ERROR_HANDLING( FieldSetImpl* fset = new FieldSetImpl( std::string( name ) ); fset->name() = name;
-                          return fset; );
-    return NULL;
+    FieldSetImpl* fset = new FieldSetImpl( std::string( name ) );
+    fset->name()       = name;
+    return fset;
 }
 
 void atlas__FieldSet__delete( FieldSetImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); delete This; );
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    delete This;
 }
 
 void atlas__FieldSet__add_field( FieldSetImpl* This, FieldImpl* field ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); This->add( field ); );
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    ATLAS_ASSERT( field != nullptr, "Reason: Use of uninitialised atlas_Field" );
+    This->add( field );
 }
 
 int atlas__FieldSet__has_field( const FieldSetImpl* This, char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->has_field( std::string( name ) ); );
-    return 0;
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    return This->has_field( std::string( name ) );
 }
 
-size_t atlas__FieldSet__size( const FieldSetImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->size(); );
-    return 0;
+idx_t atlas__FieldSet__size( const FieldSetImpl* This ) {
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    return This->size();
 }
 
 FieldImpl* atlas__FieldSet__field_by_name( FieldSetImpl* This, char* name ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->field( std::string( name ) ).get(); );
-    return NULL;
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    return This->field( std::string( name ) ).get();
 }
 
-FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, size_t idx ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This != NULL ); return This->operator[]( idx ).get(); );
-    return NULL;
+FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, idx_t idx ) {
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    return This->operator[]( idx ).get();
+}
+
+void atlas__FieldSet__set_dirty( FieldSetImpl* This, int value ) {
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    This->set_dirty( value );
+}
+
+void atlas__FieldSet__halo_exchange( FieldSetImpl* This, int on_device ) {
+    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+    This->haloExchange( on_device );
 }
 }
 //-----------------------------------------------------------------------------
@@ -102,11 +129,15 @@ FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, size_t idx ) {
 
 //------------------------------------------------------------------------------------------------------
 
-FieldSet::FieldSet( const std::string& name ) : fieldset_( new Implementation( name ) ) {}
+FieldSet::FieldSet( const std::string& name ) : Handle( new Implementation( name ) ) {}
 
-FieldSet::FieldSet( const Implementation* fieldset ) : fieldset_( const_cast<Implementation*>( fieldset ) ) {}
+FieldSet::FieldSet( const Field& field ) : Handle( new Implementation() ) {
+    get()->add( field );
+}
 
-FieldSet::FieldSet( const FieldSet& fieldset ) : fieldset_( fieldset.fieldset_ ) {}
+void FieldSet::set_dirty( bool value ) const {
+    get()->set_dirty( value );
+}
 
 //------------------------------------------------------------------------------------------------------
 

@@ -110,10 +110,6 @@ CASE( "test_custom" ) {
     mesh::actions::build_nodes_parallel_fields( m.nodes() );
     mesh::actions::build_periodic_boundaries( m );
     mesh::actions::build_halo( m, 1 );
-    // mesh::actions::build_edges(m);
-    // mesh::actions::build_pole_edges(m);
-    // mesh::actions::build_edges_parallel_fields(m.function_space("edges"),m.nodes());
-    // mesh::actions::build_centroid_dual_mesh(m);
 
     std::stringstream filename;
     filename << "custom.msh";
@@ -123,6 +119,8 @@ CASE( "test_custom" ) {
     //  2.*M_PI*M_PI, 1e-6 ));
 
     auto lonlat = array::make_view<double, 2>( m.nodes().lonlat() );
+
+#if ATLAS_BITS_GLOBAL == 64
 
     std::vector<uidx_t> check;
     switch ( mpi::comm().rank() ) {
@@ -206,7 +204,7 @@ CASE( "test_custom" ) {
             check.clear();
     }
     std::vector<uidx_t> uid( m.nodes().size() );
-    for ( size_t j = 0; j < m.nodes().size(); ++j ) {
+    for ( idx_t j = 0; j < m.nodes().size(); ++j ) {
         uid[j] = util::unique_lonlat( lonlat( j, 0 ), lonlat( j, 1 ) );
     }
     if ( check.size() && mpi::comm().size() == 5 ) {
@@ -215,7 +213,7 @@ CASE( "test_custom" ) {
         EXPECT( uid.size() == check.size() );
         EXPECT( uid == check );
     }
-
+#endif
     //  FunctionSpace& edges = m.function_space("edges");
     //  array::array::ArrayView<double,1> dual_volumes  ( nodes.field(
     //  "dual_volumes" ) );

@@ -12,12 +12,10 @@
 
 #include <memory>
 
-#include "eckit/config/Configuration.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/trans/Trans.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -33,7 +31,7 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
-class LegendreCacheCreatorImpl : public eckit::Owned {
+class LegendreCacheCreatorImpl : public util::Object {
 public:
     virtual ~LegendreCacheCreatorImpl() = 0;
 
@@ -50,22 +48,11 @@ public:
 
 // ------------------------------------------------------------------
 
-class LegendreCacheCreator {
+class LegendreCacheCreator : public util::ObjectHandle<LegendreCacheCreatorImpl> {
 public:
-    using Implementation = LegendreCacheCreatorImpl;
-
-private:
-    eckit::SharedPtr<Implementation> impl_;
-
-public:
-    LegendreCacheCreator();
-    LegendreCacheCreator( Implementation* );
-    LegendreCacheCreator( const LegendreCacheCreator& );
-
+    using Handle::Handle;
+    LegendreCacheCreator() = default;
     LegendreCacheCreator( const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
-
-    const Implementation* get() const { return impl_.get(); }
-    operator bool() const { return impl_.owners(); }
 
     bool supported() const;
 
@@ -97,7 +84,7 @@ public:
 
 private:
     std::string name_;
-    virtual LegendreCacheCreatorImpl* make( const Grid& gp, int truncation, const eckit::Configuration& ) {
+    virtual LegendreCacheCreatorImpl* make( const Grid& /*gp*/, int truncation, const eckit::Configuration& ) {
         return nullptr;
     }
 

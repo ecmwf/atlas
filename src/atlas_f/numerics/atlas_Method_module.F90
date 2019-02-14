@@ -1,3 +1,11 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
 #include "atlas/atlas_f.h"
 
 module atlas_Method_module
@@ -60,7 +68,7 @@ function atlas_Method__name(this) result(name)
   class(atlas_Method), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
-  name_c_str = atlas__Method__name(this%c_ptr())
+  name_c_str = atlas__Method__name(this%CPTR_PGIBUG_A)
   name = c_ptr_to_string(name_c_str)
 end function
 

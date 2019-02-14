@@ -1,0 +1,87 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+#:mute
+
+#:def ENABLE_ATLAS_MACROS()
+#!   Use this macro in the "use <module>" location to enable 
+#!   Usage:
+#!        @:ENABLE_ATLAS_MACROS()
+  use fckit_exception_module, only : fckit_exception
+  use atlas_trace_module, only : atlas_Trace
+#:enddef
+
+
+#:def ATLAS_ABORT( string )
+#!   Abort with message
+#!   Usage:
+#!      if( condition ) @{ ATLAS_ABORT( "error message" ) }@
+#!
+  call fckit_exception%abort( ${string}$, "${_FILE_}$", ${_LINE_}$ )
+#:enddef
+
+
+#:def ATLAS_ASSERT( cond )
+#!   Assert condition evaluates to .True. , otherwise abort
+#!   Usage:
+#!      @:ATLAS_ASSERT( cond )
+#!   or inline:
+#!      @{ ATLAS_ASSERT( cond ) }@
+#!
+if (.not. (${cond}$)) then
+  call fckit_exception%abort( '${cond.replace("'", "''")}$', "${_FILE_}$", ${_LINE_}$ )
+end if
+#:enddef
+
+#:def ATLAS_TRACE( title, labels = None )
+#!   Create a right-hand-side atlas_Trace object in a nicer way
+#!   Usage:
+#!      type( atlas_Trace ) :: trace
+#!      trace = @{ ATLAS_TRACE( "title" ) }@
+#!      ...
+#!      call trace%final()
+#!
+#!   or with labels:
+#!      type( atlas_Trace ) :: trace
+#!      trace = @{ ATLAS_TRACE( "title", {"label1","label2"} ) }@
+#!      ...
+#!      call trace%final()
+#!
+  #:if labels is not None
+    atlas_Trace( "${_FILE_}$", ${_LINE_}$, ${title}$, ${labels}$ )
+  #:else
+    atlas_Trace( "${_FILE_}$", ${_LINE_}$, ${title}$ )
+  #:endif
+#:enddef
+
+#:def ATLAS_TRACE_BEGIN( trace, title, labels = None )
+#!   Create a right-hand-side atlas_Trace object in a nicer way
+#!   Usage:
+#!      type( atlas_Trace ) :: trace
+#!      trace = @{ ATLAS_TRACE( "title" ) }@
+#!      ...
+#!      call trace%final()
+#!
+#!   or with labels:
+#!      type( atlas_Trace ) :: trace
+#!      trace = @{ ATLAS_TRACE( "title", {"label1","label2"} ) }@
+#!      ...
+#!      call trace%final()
+#!
+  #:if labels is not None
+    ${trace}$ = atlas_Trace( "${_FILE_}$", ${_LINE_}$, ${title}$, ${labels}$ )
+  #:else
+    ${trace}$ = atlas_Trace( "${_FILE_}$", ${_LINE_}$, ${title}$ )
+  #:endif
+#:enddef
+
+#:def ATLAS_TRACE_END( trace )
+  call ${trace}$ % final()
+#:enddef
+
+#:endmute

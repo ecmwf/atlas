@@ -11,19 +11,23 @@
 /// @author Willem Deconinck
 /// @date Jan 2015
 
+
 #include "atlas/grid/detail/spacing/gaussian/N.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
 namespace spacing {
 namespace gaussian {
 
-std::string GaussianLatitudes::className() {
-    return "GaussianLatitudes";
+#if 0
+std ::string GaussianLatitudes::className() {
+return "GaussianLatitudes";
 }
+#endif
 
 void GaussianLatitudes::assign( double lats[], const size_t size ) const {
-    ASSERT( size >= lats_.size() );
+    ATLAS_ASSERT( size >= lats_.size() );
     for ( size_t jlat = 0; jlat < lats_.size(); ++jlat )
         lats[jlat] = lats_[jlat];
 }
@@ -34,7 +38,8 @@ void GaussianLatitudes::assign( std::vector<double>& lats ) const {
 
 template <typename CONCRETE>
 void load() {
-    eckit::ConcreteBuilderT0<GaussianLatitudes, CONCRETE> builder( "tmp" );
+    //    eckit::ConcreteBuilderT0<GaussianLatitudes, CONCRETE> builder( "tmp" );
+    GaussianLatitudesBuilder<CONCRETE>();
 }
 
 void regist() {

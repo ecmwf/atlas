@@ -12,108 +12,56 @@
 
 #include <vector>
 
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
-
+#include "atlas/grid/detail/distribution/DistributionImpl.h"
 #include "atlas/library/config.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace atlas {
 class Grid;
 namespace grid {
 class Partitioner;
-}
+class DistributionImpl;
+class Partitioner;
+}  // namespace grid
 }  // namespace atlas
 
 namespace atlas {
 namespace grid {
 
-class Distribution {
+class Distribution : public util::ObjectHandle<DistributionImpl> {
     friend class Partitioner;
 
 public:
-    class impl_t : public eckit::Owned {
-    public:
-        impl_t( const Grid& );
-
-        impl_t( const Grid&, const Partitioner& );
-
-        impl_t( size_t npts, int partition[], int part0 = 0 );
-
-        virtual ~impl_t() {}
-
-        int partition( const gidx_t gidx ) const { return part_[gidx]; }
-
-        const std::vector<int>& partition() const { return part_; }
-
-        size_t nb_partitions() const { return nb_partitions_; }
-
-        operator const std::vector<int>&() const { return part_; }
-
-        const int* data() const { return part_.data(); }
-
-        const std::vector<int>& nb_pts() const { return nb_pts_; }
-
-        size_t max_pts() const { return max_pts_; }
-        size_t min_pts() const { return min_pts_; }
-
-        const std::string& type() const { return type_; }
-
-        void print( std::ostream& ) const;
-
-    private:
-        size_t nb_partitions_;
-        std::vector<int> part_;
-        std::vector<int> nb_pts_;
-        size_t max_pts_;
-        size_t min_pts_;
-        std::string type_;
-    };
-
-public:
-    Distribution();
-    Distribution( const impl_t* );
-    Distribution( const Distribution& );
+    using Handle::Handle;
+    Distribution() = default;
 
     Distribution( const Grid& );
 
     Distribution( const Grid&, const Partitioner& );
 
-    Distribution( size_t npts, int partition[], int part0 = 0 );
+    Distribution( idx_t npts, int partition[], int part0 = 0 );
 
-    ~Distribution() {}
+    ~Distribution();
 
-    int partition( const gidx_t gidx ) const { return impl_->partition( gidx ); }
+    int partition( const gidx_t gidx ) const;
 
-    const std::vector<int>& partition() const { return impl_->partition(); }
+    const std::vector<int>& partition() const;
 
-    size_t nb_partitions() const { return impl_->nb_partitions(); }
+    idx_t nb_partitions() const;
 
-    operator const std::vector<int>&() const { return *impl_; }
+    operator const std::vector<int>&() const;
 
-    const int* data() const { return impl_->data(); }
+    const int* data() const;
 
-    const std::vector<int>& nb_pts() const { return impl_->nb_pts(); }
+    const std::vector<idx_t>& nb_pts() const;
 
-    size_t max_pts() const { return impl_->max_pts(); }
-    size_t min_pts() const { return impl_->min_pts(); }
+    idx_t max_pts() const;
+    idx_t min_pts() const;
 
-    const std::string& type() const { return impl_->type(); }
+    const std::string& type() const;
 
-    friend std::ostream& operator<<( std::ostream& os, const Distribution& distribution ) {
-        distribution.impl_->print( os );
-        return os;
-    }
-
-    const impl_t* get() const { return impl_.get(); }
-
-private:
-    eckit::SharedPtr<const impl_t> impl_;
+    friend std::ostream& operator<<( std::ostream& os, const Distribution& distribution );
 };
-
-extern "C" {
-Distribution::impl_t* atlas__GridDistribution__new( int npts, int part[], int part0 );
-void atlas__GridDistribution__delete( Distribution::impl_t* This );
-}
 
 }  // namespace grid
 }  // namespace atlas

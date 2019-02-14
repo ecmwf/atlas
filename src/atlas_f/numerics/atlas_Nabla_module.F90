@@ -1,3 +1,11 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
 #include "atlas/atlas_f.h"
 
 module atlas_Nabla_module
@@ -64,10 +72,10 @@ function atlas_Nabla__method_config(method,config) result(this)
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    call this%reset_c_ptr( atlas__Nabla__create(method%c_ptr(),config%c_ptr()) )
+    call this%reset_c_ptr( atlas__Nabla__create(method%CPTR_PGIBUG_A,config%CPTR_PGIBUG_B) )
   else
     opt_config = atlas_Config()
-    call this%reset_c_ptr( atlas__Nabla__create(method%c_ptr(),opt_config%c_ptr()) )
+    call this%reset_c_ptr( atlas__Nabla__create(method%CPTR_PGIBUG_A,opt_config%CPTR_PGIBUG_B) )
     call opt_config%final()
   endif
   call this%return()
@@ -79,7 +87,7 @@ subroutine atlas_Nabla__gradient(this,scalar,grad)
   class(atlas_Nabla), intent(in) :: this
   class(atlas_Field), intent(in) :: scalar
   class(atlas_Field), intent(inout) :: grad
-  call atlas__Nabla__gradient(this%c_ptr(),scalar%c_ptr(),grad%c_ptr())
+  call atlas__Nabla__gradient(this%CPTR_PGIBUG_A,scalar%CPTR_PGIBUG_A,grad%CPTR_PGIBUG_A)
 end subroutine
 
 
@@ -89,7 +97,7 @@ subroutine atlas_Nabla__divergence(this,vector,div)
   class(atlas_Nabla), intent(in) :: this
   class(atlas_Field), intent(in) :: vector
   class(atlas_Field), intent(inout) :: div
-  call atlas__Nabla__divergence(this%c_ptr(),vector%c_ptr(),div%c_ptr())
+  call atlas__Nabla__divergence(this%CPTR_PGIBUG_A,vector%CPTR_PGIBUG_A,div%CPTR_PGIBUG_A)
 end subroutine
 
 subroutine atlas_Nabla__curl(this,vector,curl)
@@ -98,7 +106,7 @@ subroutine atlas_Nabla__curl(this,vector,curl)
   class(atlas_Nabla), intent(in) :: this
   class(atlas_Field), intent(in) :: vector
   class(atlas_Field), intent(inout) :: curl
-  call atlas__Nabla__curl(this%c_ptr(),vector%c_ptr(),curl%c_ptr())
+  call atlas__Nabla__curl(this%CPTR_PGIBUG_A,vector%CPTR_PGIBUG_A,curl%CPTR_PGIBUG_A)
 end subroutine
 
 subroutine atlas_Nabla__laplacian(this,scalar,lapl)
@@ -107,7 +115,7 @@ subroutine atlas_Nabla__laplacian(this,scalar,lapl)
   class(atlas_Nabla), intent(in) :: this
   class(atlas_Field), intent(in) :: scalar
   class(atlas_Field), intent(inout) :: lapl
-  call atlas__Nabla__laplacian(this%c_ptr(),scalar%c_ptr(),lapl%c_ptr())
+  call atlas__Nabla__laplacian(this%CPTR_PGIBUG_A,scalar%CPTR_PGIBUG_A,lapl%CPTR_PGIBUG_A)
 end subroutine
 
 !-------------------------------------------------------------------------------

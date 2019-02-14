@@ -16,7 +16,7 @@ namespace util {
 inline int microdeg( const double& deg ) {
     assert( deg < 2145. );   // Since INT_MAX ==  2147483647
     assert( deg > -2145. );  // Since INT_MIN == –2147483648
-    return int( deg * 1.e6 + 0.5 );
+    return static_cast<int>( deg * 1.e6 + 0.5 );
 }
 
 }  // namespace util

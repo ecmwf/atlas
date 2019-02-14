@@ -10,10 +10,9 @@
 
 #pragma once
 
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 #include "atlas/mesh/Halo.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/option.h"
@@ -42,19 +41,17 @@ namespace detail {
 
 class EdgeColumns : public FunctionSpaceImpl {
 public:
-    EdgeColumns( const Mesh&, const mesh::Halo&, const eckit::Configuration& );
-    EdgeColumns( const Mesh&, const mesh::Halo& );
     EdgeColumns( const Mesh&, const eckit::Configuration& = util::NoConfig() );
 
-    virtual ~EdgeColumns();
+    virtual ~EdgeColumns() override;
 
-    virtual std::string type() const { return "Edges"; }
+    virtual std::string type() const override { return "Edges"; }
 
-    virtual std::string distribution() const;
+    virtual std::string distribution() const override;
 
-    size_t nb_edges() const;
-    size_t nb_edges_global() const;  // Only on MPI rank 0, will this be different from 0
-    std::vector<size_t> nb_edges_global_foreach_rank() const;
+    idx_t nb_edges() const;
+    idx_t nb_edges_global() const;  // Only on MPI rank 0, will this be different from 0
+    std::vector<idx_t> nb_edges_global_foreach_rank() const;
 
     const Mesh& mesh() const { return mesh_; }
     Mesh& mesh() { return mesh_; }
@@ -64,14 +61,14 @@ public:
 
     // -- Field creation methods
 
-    virtual Field createField( const eckit::Configuration& ) const;
+    virtual Field createField( const eckit::Configuration& ) const override;
 
-    virtual Field createField( const Field&, const eckit::Configuration& ) const;
+    virtual Field createField( const Field&, const eckit::Configuration& ) const override;
 
     // -- Parallelisation aware methods
 
-    void haloExchange( FieldSet& ) const;
-    void haloExchange( Field& ) const;
+    virtual void haloExchange( const FieldSet&, bool on_device = false ) const override;
+    virtual void haloExchange( const Field&, bool on_device = false ) const override;
     const parallel::HaloExchange& halo_exchange() const;
 
     void gather( const FieldSet&, FieldSet& ) const;
@@ -86,25 +83,27 @@ public:
     std::string checksum( const Field& ) const;
     const parallel::Checksum& checksum() const;
 
+    virtual idx_t size() const override { return nb_edges_; }
+
 private:  // methods
-    void constructor();
-    size_t config_size( const eckit::Configuration& config ) const;
+    idx_t config_size( const eckit::Configuration& config ) const;
     array::DataType config_datatype( const eckit::Configuration& ) const;
     std::string config_name( const eckit::Configuration& ) const;
-    size_t config_levels( const eckit::Configuration& ) const;
+    idx_t config_levels( const eckit::Configuration& ) const;
     array::ArrayShape config_shape( const eckit::Configuration& ) const;
     void set_field_metadata( const eckit::Configuration&, Field& ) const;
-    size_t footprint() const;
+    virtual size_t footprint() const override;
 
-private:         // data
-    Mesh mesh_;  // non-const because functionspace may modify mesh
-    size_t nb_levels_;
+private:                           // data
+    Mesh mesh_;                    // non-const because functionspace may modify mesh
     mesh::HybridElements& edges_;  // non-const because functionspace may modify mesh
-    size_t nb_edges_;
+    idx_t nb_levels_;
+    mesh::Halo halo_;
+    idx_t nb_edges_;
     mutable long nb_edges_global_{-1};
-    mutable eckit::SharedPtr<parallel::GatherScatter> gather_scatter_;  // without ghost
-    mutable eckit::SharedPtr<parallel::HaloExchange> halo_exchange_;
-    mutable eckit::SharedPtr<parallel::Checksum> checksum_;
+    mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;  // without ghost
+    mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
+    mutable util::ObjectHandle<parallel::Checksum> checksum_;
 };
 
 // -------------------------------------------------------------------
@@ -152,24 +151,20 @@ class EdgeColumns : public FunctionSpace {
 public:
     EdgeColumns();
     EdgeColumns( const FunctionSpace& );
-    EdgeColumns( const Mesh&, const mesh::Halo&, const eckit::Configuration& );
-    EdgeColumns( const Mesh& mesh, const mesh::Halo& );
+    EdgeColumns( const Mesh&, const eckit::Configuration& );
     EdgeColumns( const Mesh& mesh );
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
 
-    size_t nb_edges() const;
-    size_t nb_edges_global() const;  // Only on MPI rank 0, will this be different from 0
+    idx_t nb_edges() const;
+    idx_t nb_edges_global() const;  // Only on MPI rank 0, will this be different from 0
 
     const Mesh& mesh() const;
 
     const mesh::HybridElements& edges() const;
 
     // -- Parallelisation aware methods
-
-    void haloExchange( FieldSet& ) const;
-    void haloExchange( Field& ) const;
     const parallel::HaloExchange& halo_exchange() const;
 
     void gather( const FieldSet&, FieldSet& ) const;

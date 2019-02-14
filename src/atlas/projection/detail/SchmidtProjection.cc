@@ -10,7 +10,13 @@
 
 #include <cmath>
 
+#include "eckit/config/Parametrisation.h"
+#include "eckit/utils/Hash.h"
+
+#include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/projection/detail/SchmidtProjection.h"
+#include "atlas/runtime/Exception.h"
+#include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 
 namespace {
@@ -31,9 +37,12 @@ template <typename Rotation>
 SchmidtProjectionT<Rotation>::SchmidtProjectionT( const eckit::Parametrisation& params ) :
     ProjectionImpl(),
     rotation_( params ) {
-    if ( !params.get( "stretching_factor", c_ ) )
-        throw eckit::BadParameter( "stretching_factor missing in Params", Here() );
+    if ( !params.get( "stretching_factor", c_ ) ) throw_Exception( "stretching_factor missing in Params", Here() );
 }
+
+// constructor
+template <typename Rotation>
+SchmidtProjectionT<Rotation>::SchmidtProjectionT() : ProjectionImpl(), rotation_( util::NoConfig() ) {}
 
 template <typename Rotation>
 void SchmidtProjectionT<Rotation>::xy2lonlat( double crd[] ) const {
@@ -72,8 +81,13 @@ void SchmidtProjectionT<Rotation>::hash( eckit::Hash& hsh ) const {
     hsh.add( c_ );
 }
 
-register_BuilderT1( ProjectionImpl, SchmidtProjection, SchmidtProjection::static_type() );
-register_BuilderT1( ProjectionImpl, RotatedSchmidtProjection, RotatedSchmidtProjection::static_type() );
+template class SchmidtProjectionT<NotRotated>;
+template class SchmidtProjectionT<Rotated>;
+
+namespace {
+static ProjectionBuilder<SchmidtProjection> register_1( SchmidtProjection::static_type() );
+static ProjectionBuilder<RotatedSchmidtProjection> register_2( RotatedSchmidtProjection::static_type() );
+}  // namespace
 
 }  // namespace detail
 }  // namespace projection

@@ -11,6 +11,7 @@
 /// @author Willem Deconinck
 /// @date   Nov 2013
 
+#include <memory>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
@@ -24,22 +25,22 @@ namespace parallel {
 
 namespace {
 struct IsGhostPoint {
-    IsGhostPoint( const int part[], const int ridx[], const int base, const int N ) {
+    IsGhostPoint( const int part[], const idx_t ridx[], const idx_t base, const int N ) {
         part_   = part;
         ridx_   = ridx;
         base_   = base;
         mypart_ = mpi::comm().rank();
     }
 
-    bool operator()( size_t idx ) {
+    bool operator()( idx_t idx ) {
         if ( part_[idx] != mypart_ ) return true;
-        if ( size_t( ridx_[idx] ) != base_ + idx ) return true;
+        if ( ridx_[idx] != base_ + idx ) return true;
         return false;
     }
     int mypart_;
     const int* part_;
-    const int* ridx_;
-    int base_;
+    const idx_t* ridx_;
+    idx_t base_;
 };
 }  // namespace
 
@@ -53,7 +54,7 @@ HaloExchange::HaloExchange( const std::string& name ) : name_( name ), is_setup_
     nproc  = mpi::comm().size();
 }
 
-void HaloExchange::setup( const int part[], const int remote_idx[], const int base, const size_t parsize ) {
+void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int base, const idx_t parsize ) {
     ATLAS_TRACE( "HaloExchange::setup" );
 
     parsize_ = parsize;
@@ -142,15 +143,15 @@ void execute_halo_exchange( HaloExchange* This, Value field[], int var_strides[]
     // WARNING: Only works if there is only one parallel dimension AND being
     // slowest moving
 
-    array::ArrayShape shape{size_t( This->backdoor.parsize )};
-    for ( size_t j = 0; j < var_rank; ++j )
+    array::ArrayShape shape{This->backdoor.parsize};
+    for ( int j = 0; j < var_rank; ++j )
         shape.push_back( var_extents[j] );
 
-    array::ArrayStrides strides{size_t( var_extents[0] * var_strides[0] )};
-    for ( size_t j = 0; j < var_rank; ++j )
+    array::ArrayStrides strides{var_extents[0] * var_strides[0]};
+    for ( int j = 0; j < var_rank; ++j )
         strides.push_back( var_strides[j] );
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap( field, array::ArraySpec{shape, strides} ) );
+    std::unique_ptr<array::Array> arr( array::Array::wrap( field, array::ArraySpec{shape, strides} ) );
 
     switch ( arr->rank() ) {
         case 1: {
@@ -170,7 +171,7 @@ void execute_halo_exchange( HaloExchange* This, Value field[], int var_strides[]
             break;
         }
         default:
-            throw eckit::AssertionFailed( "Rank not supported in halo exchange" );
+            throw_NotImplemented( "Rank not supported in halo exchange", Here() );
     }
 }
 }  // namespace
@@ -185,7 +186,7 @@ void atlas__HaloExchange__delete( HaloExchange* This ) {
     delete This;
 }
 
-void atlas__HaloExchange__setup( HaloExchange* This, int part[], int remote_idx[], int base, int size ) {
+void atlas__HaloExchange__setup( HaloExchange* This, int part[], idx_t remote_idx[], int base, int size ) {
     This->setup( part, remote_idx, base, size );
 }
 

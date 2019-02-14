@@ -13,30 +13,33 @@
 #include <functional>
 #include <string>
 
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Owned.h"
-
 #include "atlas/domain/Domain.h"
+#include "atlas/library/config.h"
 #include "atlas/projection/Projection.h"
-#include "atlas/util/Config.h"
-#include "atlas/util/Point.h"
+#include "atlas/util/Object.h"
 
 namespace eckit {
 class Hash;
 }
 namespace atlas {
+class PointXY;
+class PointLonLat;
+namespace util {
+class Config;
+};
+}  // namespace atlas
+
+namespace atlas {
 namespace grid {
 namespace detail {
 namespace grid {
 
-class Grid : public eckit::Owned {
+class Grid : public util::Object {
 public:  // types
     using Projection = atlas::Projection;
     using Domain     = atlas::Domain;
     using Config     = atlas::util::Config;
     using Spec       = atlas::util::Config;
-    using builder_t  = eckit::BuilderT1<Grid>;
-    using ARG1       = const Config&;
     using uid_t      = std::string;
     using hash_t     = std::string;
 
@@ -62,11 +65,11 @@ public:  // types
     };
 
 public:  // methods
-    static std::string className();
-
     static const Grid* create( const Config& );
 
-    static const Grid* create( const std::string& name, const Config& = Config() );
+    static const Grid* create( const std::string& name );
+
+    static const Grid* create( const std::string& name, const Config& );
 
     static const Grid* create( const Grid&, const Domain& );
 
@@ -100,7 +103,7 @@ public:  // methods
     /// @return number of grid points
     /// @note This methods should have constant access time, if necessary derived
     //        classes should compute it at construction
-    virtual size_t size() const = 0;
+    virtual idx_t size() const = 0;
 
     virtual Spec spec() const = 0;
 

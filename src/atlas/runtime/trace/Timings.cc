@@ -12,6 +12,7 @@
 #include "Timings.h"
 
 #include <cmath>
+#include <iomanip>
 #include <limits>
 #include <regex>
 #include <sstream>
@@ -21,7 +22,9 @@
 #include "eckit/filesystem/PathName.h"
 
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/runtime/trace/CallStack.h"
+#include "atlas/runtime/trace/CodeLocation.h"
 #include "atlas/util/Config.h"
 
 //-----------------------------------------------------------------------------------------------------------
@@ -38,7 +41,7 @@ private:
     std::vector<double> max_timings_;
     std::vector<double> var_timings_;
     std::vector<std::string> titles_;
-    std::vector<eckit::CodeLocation> locations_;
+    std::vector<CodeLocation> locations_;
     std::vector<long> nest_;
     std::vector<CallStack> stack_;
     std::map<size_t, size_t> index_;
@@ -53,7 +56,7 @@ public:
         return registry;
     }
 
-    size_t add( const eckit::CodeLocation&, const CallStack& stack, const std::string& title, const Timings::Labels& );
+    size_t add( const CodeLocation&, const CallStack& stack, const std::string& title, const Timings::Labels& );
 
     void update( size_t idx, double seconds );
 
@@ -65,7 +68,7 @@ private:
     std::string filter_filepath( const std::string& filepath ) const;
 };
 
-size_t TimingsRegistry::add( const eckit::CodeLocation& loc, const CallStack& stack, const std::string& title,
+size_t TimingsRegistry::add( const CodeLocation& loc, const CallStack& stack, const std::string& title,
                              const Timings::Labels& labels ) {
     size_t key = stack.hash();
     auto it    = index_.find( key );
@@ -113,7 +116,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
     auto box_horizontal = []( int n ) {
         std::string s;
         s.reserve( 2 * n );
-        for ( size_t i = 0; i < n; ++i )
+        for ( int i = 0; i < n; ++i )
             s += "\u2500";
         return s;
     };
@@ -251,7 +254,7 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
             const auto& nest = nest_[k];
 
             const CallStack& this_stack = stack_[k];
-            const CallStack& next_stack = ( k == size() - 1 ) ? this_stack : stack_[k + 1];
+            const CallStack& next_stack = ( k == long( size() ) - 1 ) ? this_stack : stack_[k + 1];
 
             auto this_it = this_stack.rbegin();
             auto next_it = next_stack.rbegin();
@@ -272,14 +275,14 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
                     out << box_vertical;
                 else
                     out << " ";
-                for ( size_t j = 1; j < indent; ++j )
+                for ( long j = 1; j < indent; ++j )
                     out << " ";
             }
             if ( active[nest - 1] )
                 out << box_T_right;
             else
                 out << box_corner_bl;
-            for ( size_t j = 1; j < indent; ++j )
+            for ( long j = 1; j < indent; ++j )
                 out << box_horizontal( 1 );
 
             prefix_[k] = out.str();
@@ -288,20 +291,20 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
 
     for ( size_t j = 0; j < size(); ++j ) {
         auto& tot   = tot_timings_[j];
-        auto& min   = min_timings_[j];
         auto& max   = max_timings_[j];
+        auto& min   = std::min( max, min_timings_[j] );
         auto& count = counts_[j];
         auto& title = titles_[j];
         auto& loc   = locations_[j];
         auto& nest  = nest_[j];
         auto std    = std::sqrt( var_timings_[j] );
-        auto avg    = tot / double( count );
+        auto avg    = ( count == 0 ? 0. : tot / double( count ) );
 
         // mpi::comm().allReduceInPlace(min,eckit::mpi::min());
         // mpi::comm().allReduceInPlace(max,eckit::mpi::max());
 
         if ( not excluded( j ) ) {
-            out << std::setw( digits( size() ) ) << j << " : " << prefix_[j]  // prefix(indent,nest,next_nest)
+            out << std::setw( digits( long( size() ) ) ) << j << " : " << prefix_[j]  // prefix(indent,nest,next_nest)
                 << std::left << std::setw( max_title_length - nest * indent ) << title << sep
                 << std::string( header ? "" : "count: " ) << std::left << std::setw( max_count_length ) << count << sep
                 << std::string( header ? "" : "tot: " ) << print_time( tot ) << sep

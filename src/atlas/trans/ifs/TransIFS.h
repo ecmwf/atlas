@@ -16,7 +16,9 @@
 
 #include "atlas/array/LocalView.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/trans/Trans.h"
+#include "atlas/grid/StructuredGrid.h"
+#include "atlas/runtime/Exception.h"
+#include "atlas/trans/detail/TransImpl.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -63,6 +65,7 @@ class TransPartitioner;
 }  // namespace grid
 }  // namespace atlas
 
+
 //-----------------------------------------------------------------------------
 
 namespace atlas {
@@ -81,7 +84,7 @@ public:
     TransIFS( const Cache&, const Grid&, const Domain&, const long truncation,
               const eckit::Configuration& = util::NoConfig() );
 
-    virtual ~TransIFS();
+    virtual ~TransIFS() override;
     operator ::Trans_t*() const { return trans(); }
     ::Trans_t* trans() const { return trans_.get(); }
 
@@ -212,7 +215,7 @@ protected:
 private:
     void ctor( const Grid&, long nsmax, const eckit::Configuration& );
 
-    void ctor_rgg( const long nlat, const long pl[], long nsmax, const eckit::Configuration& );
+    void ctor_rgg( const long nlat, const idx_t pl[], long nsmax, const eckit::Configuration& );
 
     void ctor_lonlat( const long nlon, const long nlat, long nsmax, const eckit::Configuration& );
 
@@ -243,68 +246,68 @@ private:
 
     const int* nloen( int& size ) const {
         size = trans_->ndgl;
-        ASSERT( trans_->nloen != NULL );
+        ATLAS_ASSERT( trans_->nloen != nullptr );
         return trans_->nloen;
     }
 
     array::LocalView<int, 1> nloen() const {
-        ASSERT( trans_->nloen != NULL );
+        ATLAS_ASSERT( trans_->nloen != nullptr );
         return array::LocalView<int, 1>( trans_->nloen, array::make_shape( trans_->ndgl ) );
     }
 
     const int* n_regions( int& size ) const {
         size = trans_->n_regions_NS;
-        ASSERT( trans_->n_regions != NULL );
+        ATLAS_ASSERT( trans_->n_regions != nullptr );
         return trans_->n_regions;
     }
 
     array::LocalView<int, 1> n_regions() const {
-        ASSERT( trans_->n_regions != NULL );
+        ATLAS_ASSERT( trans_->n_regions != nullptr );
         return array::LocalView<int, 1>( trans_->n_regions, array::make_shape( trans_->n_regions_NS ) );
     }
 
     const int* nfrstlat( int& size ) const {
         size = trans_->n_regions_NS;
-        if ( trans_->nfrstlat == NULL ) ::trans_inquire( trans_.get(), "nfrstlat" );
+        if ( trans_->nfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nfrstlat" );
         return trans_->nfrstlat;
     }
 
     array::LocalView<int, 1> nfrstlat() const {
-        if ( trans_->nfrstlat == NULL ) ::trans_inquire( trans_.get(), "nfrstlat" );
+        if ( trans_->nfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nfrstlat" );
         return array::LocalView<int, 1>( trans_->nfrstlat, array::make_shape( trans_->n_regions_NS ) );
     }
 
     const int* nlstlat( int& size ) const {
         size = trans_->n_regions_NS;
-        if ( trans_->nlstlat == NULL ) ::trans_inquire( trans_.get(), "nlstlat" );
+        if ( trans_->nlstlat == nullptr ) ::trans_inquire( trans_.get(), "nlstlat" );
         return trans_->nlstlat;
     }
 
     array::LocalView<int, 1> nlstlat() const {
-        if ( trans_->nlstlat == NULL ) ::trans_inquire( trans_.get(), "nlstlat" );
+        if ( trans_->nlstlat == nullptr ) ::trans_inquire( trans_.get(), "nlstlat" );
         return array::LocalView<int, 1>( trans_->nlstlat, array::make_shape( trans_->n_regions_NS ) );
     }
 
     const int* nptrfrstlat( int& size ) const {
         size = trans_->n_regions_NS;
-        if ( trans_->nptrfrstlat == NULL ) ::trans_inquire( trans_.get(), "nptrfrstlat" );
+        if ( trans_->nptrfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nptrfrstlat" );
         return trans_->nptrfrstlat;
     }
 
     array::LocalView<int, 1> nptrfrstlat() const {
-        if ( trans_->nptrfrstlat == NULL ) ::trans_inquire( trans_.get(), "nptrfrstlat" );
+        if ( trans_->nptrfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nptrfrstlat" );
         return array::LocalView<int, 1>( trans_->nptrfrstlat, array::make_shape( trans_->n_regions_NS ) );
     }
 
     const int* nsta( int& sizef2, int& sizef1 ) const {
         sizef1 = trans_->ndgl + trans_->n_regions_NS - 1;
         sizef2 = trans_->n_regions_EW;
-        if ( trans_->nsta == NULL ) ::trans_inquire( trans_.get(), "nsta" );
+        if ( trans_->nsta == nullptr ) ::trans_inquire( trans_.get(), "nsta" );
         return trans_->nsta;
     }
 
     array::LocalView<int, 2> nsta() const {
-        if ( trans_->nsta == NULL ) ::trans_inquire( trans_.get(), "nsta" );
+        if ( trans_->nsta == nullptr ) ::trans_inquire( trans_.get(), "nsta" );
         return array::LocalView<int, 2>(
             trans_->nsta, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
     }
@@ -312,46 +315,46 @@ private:
     const int* nonl( int& sizef2, int& sizef1 ) const {
         sizef1 = trans_->ndgl + trans_->n_regions_NS - 1;
         sizef2 = trans_->n_regions_EW;
-        if ( trans_->nonl == NULL ) ::trans_inquire( trans_.get(), "nonl" );
+        if ( trans_->nonl == nullptr ) ::trans_inquire( trans_.get(), "nonl" );
         return trans_->nonl;
     }
 
     array::LocalView<int, 2> nonl() const {
-        if ( trans_->nonl == NULL ) ::trans_inquire( trans_.get(), "nonl" );
+        if ( trans_->nonl == nullptr ) ::trans_inquire( trans_.get(), "nonl" );
         return array::LocalView<int, 2>(
             trans_->nonl, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
     }
 
     const int* nmyms( int& size ) const {
         size = trans_->nump;
-        if ( trans_->nmyms == NULL ) ::trans_inquire( trans_.get(), "nmyms" );
+        if ( trans_->nmyms == nullptr ) ::trans_inquire( trans_.get(), "nmyms" );
         return trans_->nmyms;
     }
 
     array::LocalView<int, 1> nmyms() const {
-        if ( trans_->nmyms == NULL ) ::trans_inquire( trans_.get(), "nmyms" );
+        if ( trans_->nmyms == nullptr ) ::trans_inquire( trans_.get(), "nmyms" );
         return array::LocalView<int, 1>( trans_->nmyms, array::make_shape( trans_->nump ) );
     }
 
     const int* nasm0( int& size ) const {
         size = trans_->nsmax + 1;  // +1 because zeroth wave included
-        if ( trans_->nasm0 == NULL ) ::trans_inquire( trans_.get(), "nasm0" );
+        if ( trans_->nasm0 == nullptr ) ::trans_inquire( trans_.get(), "nasm0" );
         return trans_->nasm0;
     }
 
     array::LocalView<int, 1> nasm0() const {
-        if ( trans_->nasm0 == NULL ) ::trans_inquire( trans_.get(), "nasm0" );
+        if ( trans_->nasm0 == nullptr ) ::trans_inquire( trans_.get(), "nasm0" );
         return array::LocalView<int, 1>( trans_->nasm0, array::make_shape( trans_->nsmax + 1 ) );
     }
 
     const int* nvalue( int& size ) const {
         size = trans_->nspec2;
-        if ( trans_->nvalue == NULL ) ::trans_inquire( trans_.get(), "nvalue" );
+        if ( trans_->nvalue == nullptr ) ::trans_inquire( trans_.get(), "nvalue" );
         return trans_->nvalue;
     }
 
     array::LocalView<int, 1> nvalue() const {
-        if ( trans_->nvalue == NULL ) ::trans_inquire( trans_.get(), "nvalue" );
+        if ( trans_->nvalue == nullptr ) ::trans_inquire( trans_.get(), "nvalue" );
         return array::LocalView<int, 1>( trans_->nvalue, array::make_shape( trans_->nspec2 ) );
     }
 
@@ -396,7 +399,7 @@ public:
 private:
     friend class functionspace::detail::Spectral;
     mutable std::shared_ptr<::Trans_t> trans_;
-    grid::StructuredGrid grid_;
+    StructuredGrid grid_;
     const void* cache_{nullptr};
     size_t cachesize_{0};
 };

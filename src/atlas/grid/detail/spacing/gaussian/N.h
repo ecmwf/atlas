@@ -13,20 +13,18 @@
 
 #pragma once
 
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Owned.h"
+#include <cstddef>
+#include <vector>
+
+#include "atlas/util/Factory.h"
 
 namespace atlas {
 namespace grid {
 namespace spacing {
 namespace gaussian {
 
-class GaussianLatitudes : public eckit::Owned {
+class GaussianLatitudes {
 public:
-    typedef eckit::BuilderT0<GaussianLatitudes> builder_t;
-
-    static std::string className();
-
     /// @pre nlats has enough allocated memory to store the latitudes
     /// @param size of lats vector
     void assign( double lats[], const size_t size ) const;
@@ -40,6 +38,25 @@ protected:
     std::vector<double> lats_;
 };
 
+class GaussianLatitudesFactory : public util::Factory<GaussianLatitudesFactory> {
+public:
+    static std::string className() { return "GaussianLatitudesFactory"; }
+    static const GaussianLatitudes* build( const std::string& builder ) { return get( builder )->make(); }
+    using Factory::Factory;
+
+private:
+    virtual const GaussianLatitudes* make() const = 0;
+};
+
+template <typename T>
+class GaussianLatitudesBuilder : public GaussianLatitudesFactory {
+public:
+    using GaussianLatitudesFactory::GaussianLatitudesFactory;
+
+private:
+    virtual const GaussianLatitudes* make() const override { return new T(); }
+};
+
 #define DECLARE_GAUSSIAN_LATITUDES( NUMBER )     \
     class N##NUMBER : public GaussianLatitudes { \
     public:                                      \
@@ -47,14 +64,16 @@ protected:
     };
 
 #define LIST( ... ) __VA_ARGS__
-#define DEFINE_GAUSSIAN_LATITUDES( NUMBER, LATS )                                        \
-    eckit::ConcreteBuilderT0<GaussianLatitudes, N##NUMBER> builder_N##NUMBER( #NUMBER ); \
-                                                                                         \
-    N##NUMBER::N##NUMBER() {                                                             \
-        size_t N     = NUMBER;                                                           \
-        double lat[] = {LATS};                                                           \
-        lats_.assign( lat, lat + N );                                                    \
+#define DEFINE_GAUSSIAN_LATITUDES( NUMBER, LATS )                            \
+    N##NUMBER::N##NUMBER() {                                                 \
+        size_t N     = NUMBER;                                               \
+        double lat[] = {LATS};                                               \
+        lats_.assign( lat, lat + N );                                        \
+    }                                                                        \
+    namespace {                                                              \
+    static GaussianLatitudesBuilder<N##NUMBER> builder_N##NUMBER( #NUMBER ); \
     }
+
 
 DECLARE_GAUSSIAN_LATITUDES( 16 );
 DECLARE_GAUSSIAN_LATITUDES( 24 );

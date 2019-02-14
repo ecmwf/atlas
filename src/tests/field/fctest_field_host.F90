@@ -47,7 +47,7 @@ real(8), pointer :: device(:,:)
 
 field = atlas_Field(kind=atlas_real(8),shape=[10,5])
 
-call field%host_data(host)
+call field%data(host)
 
 FCTEST_CHECK( .not. field%host_needs_update() )
 FCTEST_CHECK( .not. field%device_needs_update() )

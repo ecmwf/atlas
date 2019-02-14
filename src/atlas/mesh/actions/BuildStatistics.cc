@@ -10,6 +10,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <set>
@@ -28,7 +30,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
 #include "atlas/parallel/Checksum.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
@@ -152,17 +154,17 @@ void build_statistics( Mesh& mesh ) {
         array::ArrayView<double, 1> eta = array::make_view<double, 1>( mesh.cells().add(
             Field( "stats_eta", array::make_datatype<double>(), array::make_shape( mesh.cells().size() ) ) ) );
 
-        for ( size_t jtype = 0; jtype < mesh.cells().nb_types(); ++jtype ) {
+        for ( idx_t jtype = 0; jtype < mesh.cells().nb_types(); ++jtype ) {
             const mesh::Elements& elements      = mesh.cells().elements( jtype );
             const BlockConnectivity& elem_nodes = elements.node_connectivity();
-            const size_t nb_elems               = elements.size();
+            const idx_t nb_elems                = elements.size();
 
             if ( elements.element_type().name() == "Triangle" ) {
-                for ( size_t jelem = 0; jelem < nb_elems; ++jelem ) {
-                    size_t ielem = elements.begin() + jelem;
-                    size_t ip1   = elem_nodes( jelem, 0 );
-                    size_t ip2   = elem_nodes( jelem, 1 );
-                    size_t ip3   = elem_nodes( jelem, 2 );
+                for ( idx_t jelem = 0; jelem < nb_elems; ++jelem ) {
+                    idx_t ielem = elements.begin() + jelem;
+                    idx_t ip1   = elem_nodes( jelem, 0 );
+                    idx_t ip2   = elem_nodes( jelem, 1 );
+                    idx_t ip3   = elem_nodes( jelem, 2 );
                     PointLonLat p1( lonlat( ip1, LON ), lonlat( ip1, LAT ) );
                     PointLonLat p2( lonlat( ip2, LON ), lonlat( ip2, LAT ) );
                     PointLonLat p3( lonlat( ip3, LON ), lonlat( ip3, LAT ) );
@@ -175,12 +177,12 @@ void build_statistics( Mesh& mesh ) {
                 }
             }
             if ( elements.element_type().name() == "Quadrilateral" ) {
-                for ( size_t jelem = 0; jelem < nb_elems; ++jelem ) {
-                    size_t ielem = elements.begin() + jelem;
-                    size_t ip1   = elem_nodes( jelem, 0 );
-                    size_t ip2   = elem_nodes( jelem, 1 );
-                    size_t ip3   = elem_nodes( jelem, 2 );
-                    size_t ip4   = elem_nodes( jelem, 3 );
+                for ( idx_t jelem = 0; jelem < nb_elems; ++jelem ) {
+                    idx_t ielem = elements.begin() + jelem;
+                    idx_t ip1   = elem_nodes( jelem, 0 );
+                    idx_t ip2   = elem_nodes( jelem, 1 );
+                    idx_t ip3   = elem_nodes( jelem, 2 );
+                    idx_t ip4   = elem_nodes( jelem, 3 );
 
                     PointLonLat p1( lonlat( ip1, LON ), lonlat( ip1, LAT ) );
                     PointLonLat p2( lonlat( ip2, LON ), lonlat( ip2, LAT ) );
@@ -211,7 +213,7 @@ void build_statistics( Mesh& mesh ) {
         array::ArrayView<double, 1> dual_delta_sph = array::make_view<double, 1>( nodes.add(
             Field( "dual_delta_sph", array::make_datatype<double>(), array::make_shape( nodes.size(), 1 ) ) ) );
 
-        for ( size_t jnode = 0; jnode < nodes.size(); ++jnode ) {
+        for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
             const double lat        = util::Constants::degreesToRadians() * lonlat( jnode, LAT );
             const double hx         = util::Constants::degreesToRadians() * util::Earth::radius() * std::cos( lat );
             const double hy         = util::Constants::degreesToRadians() * util::Earth::radius();
@@ -219,7 +221,7 @@ void build_statistics( Mesh& mesh ) {
         }
 
         if ( mpi::comm().size() == 1 ) {
-            for ( size_t jnode = 0; jnode < nodes.size(); ++jnode ) {
+            for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
                 ofs << std::setw( idt ) << dual_delta_sph( jnode ) << "\n";
             }
         }
@@ -231,7 +233,9 @@ void build_statistics( Mesh& mesh ) {
 // C wrapper interfaces to C++ routines
 
 void atlas__build_statistics( Mesh::Implementation* mesh ) {
-    ATLAS_ERROR_HANDLING( Mesh m( mesh ); build_statistics( m ); );
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    Mesh m( mesh );
+    build_statistics( m );
 }
 
 // ------------------------------------------------------------------

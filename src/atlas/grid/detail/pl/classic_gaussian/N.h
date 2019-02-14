@@ -13,8 +13,10 @@
 
 #pragma once
 
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Owned.h"
+#include <cstddef>
+#include <vector>
+
+#include "atlas/util/Factory.h"
 
 namespace atlas {
 namespace grid {
@@ -22,24 +24,48 @@ namespace detail {
 namespace pl {
 namespace classic_gaussian {
 
-class PointsPerLatitude : public eckit::Owned {
+class PointsPerLatitude {
 public:
-    typedef eckit::BuilderT0<PointsPerLatitude> builder_t;
-
-    static std::string className();
-
     /// @pre nlats has enough allocated memory to store the latitudes
     /// @param size of lats vector
     void assign( long nlon[], const size_t size ) const;
 
+    /// @pre nlats has enough allocated memory to store the latitudes
+    /// @param size of lats vector
+    void assign( int nlon[], const size_t size ) const;
+
     /// @post resizes the vector to the number of latitutes
     void assign( std::vector<long>& nlon ) const;
+
+    /// @post resizes the vector to the number of latitutes
+    void assign( std::vector<int>& nlon ) const;
 
     size_t N() const { return nlon_.size(); }
 
 protected:
     std::vector<long> nlon_;
 };
+
+
+class PointsPerLatitudeFactory : public util::Factory<PointsPerLatitudeFactory> {
+public:
+    static std::string className() { return "PointsPerLatitudeFactory"; }
+    static const PointsPerLatitude* build( const std::string& builder ) { return get( builder )->make(); }
+    using Factory::Factory;
+
+private:
+    virtual const PointsPerLatitude* make() const = 0;
+};
+
+template <typename T>
+class PointsPerLatitudeBuilder : public PointsPerLatitudeFactory {
+public:
+    using PointsPerLatitudeFactory::PointsPerLatitudeFactory;
+
+private:
+    virtual const PointsPerLatitude* make() const override { return new T(); }
+};
+
 
 #define DECLARE_POINTS_PER_LATITUDE( NUMBER )    \
     class N##NUMBER : public PointsPerLatitude { \
@@ -48,14 +74,16 @@ protected:
     };
 
 #define LIST( ... ) __VA_ARGS__
-#define DEFINE_POINTS_PER_LATITUDE( NUMBER, NLON )                                       \
-    eckit::ConcreteBuilderT0<PointsPerLatitude, N##NUMBER> builder_N##NUMBER( #NUMBER ); \
-                                                                                         \
-    N##NUMBER::N##NUMBER() {                                                             \
-        size_t N    = NUMBER;                                                            \
-        long nlon[] = {NLON};                                                            \
-        nlon_.assign( nlon, nlon + N );                                                  \
+#define DEFINE_POINTS_PER_LATITUDE( NUMBER, NLON )                           \
+    N##NUMBER::N##NUMBER() {                                                 \
+        size_t N    = NUMBER;                                                \
+        long nlon[] = {NLON};                                                \
+        nlon_.assign( nlon, nlon + N );                                      \
+    }                                                                        \
+    namespace {                                                              \
+    static PointsPerLatitudeBuilder<N##NUMBER> builder_N##NUMBER( #NUMBER ); \
     }
+
 
 DECLARE_POINTS_PER_LATITUDE( 16 );
 DECLARE_POINTS_PER_LATITUDE( 24 );

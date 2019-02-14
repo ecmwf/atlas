@@ -12,7 +12,9 @@
 
 #pragma once
 
+#include <cstddef>
 #include "atlas/array/ArrayViewDefs.h"
+
 
 namespace atlas {
 namespace array {
@@ -20,6 +22,10 @@ namespace array {
 class DataType;
 
 class ArraySpec;
+
+class ArrayShape;
+
+class ArrayStrides;
 
 class Array;
 
@@ -29,11 +35,20 @@ class ArrayT;
 template <typename Value, int RANK, Intent AccessMode>
 class ArrayView;
 
+template <typename Value, int RANK, Intent AccessMode>
+class LocalView;
+
 template <typename Value, int RANK>
 class IndexView;
 
 template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
 ArrayView<Value, NDims, AccessMode> make_view( const Array& array );
+
+template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
+LocalView<Value, NDims, AccessMode> make_view( const Value data[], const ArrayShape& );
+
+template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
+LocalView<Value, NDims, AccessMode> make_view( const Value data[], size_t );
 
 template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
 ArrayView<Value, NDims, AccessMode> make_host_view( const Array& array );

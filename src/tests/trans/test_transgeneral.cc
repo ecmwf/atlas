@@ -24,7 +24,7 @@
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
@@ -274,7 +274,7 @@ double sphericalharmonics_analytic_point(
 // Andreas Mueller *ECMWF*
 //
 void spectral_transform_grid_analytic(
-    const size_t trc,     // truncation (in)
+    const int trc,        // truncation (in)
     bool trcFT,           // truncation for Fourier transformation (in)
     const double n,       // total wave number (implemented so far for n<4)
     const double m,       // zonal wave number (implemented so far for m<4, m<n)
@@ -303,14 +303,14 @@ void spectral_transform_grid_analytic(
     for ( int jm = 0; jm < grid.size(); jm++ )
         rgp[jm] = 0.;
 
-    if ( grid::StructuredGrid( grid ) ) {
-        grid::StructuredGrid g( grid );
+    if ( StructuredGrid( grid ) ) {
+        StructuredGrid g( grid );
         Grid gridGlobal;
-        grid::StructuredGrid gs_global;
+        StructuredGrid gs_global;
         int jlatMin = 0;
         if ( trcFT ) {
             gridGlobal      = Grid( grid.name() );
-            gs_global       = grid::StructuredGrid( gridGlobal );
+            gs_global       = StructuredGrid( gridGlobal );
             int nlatsGlobal = gs_global.ny();
             for ( int jlat = 0; jlat < nlatsGlobal; jlat++ ) {
                 if ( gs_global.y( jlat ) > g.y( 0 ) ) { jlatMin++; };
@@ -318,17 +318,17 @@ void spectral_transform_grid_analytic(
         }
 
         int idx = 0;
-        for ( size_t j = 0; j < g.ny(); ++j ) {
+        for ( idx_t j = 0; j < g.ny(); ++j ) {
             double lat = g.y( j ) * util::Constants::degreesToRadians();
             int ftrc   = trc + 1;
             if ( trcFT ) {
                 ftrc = trans::fourier_truncation( trc, gs_global.nx( jlatMin + j ), gs_global.nxmax(), gs_global.ny(),
-                                                  lat, grid::RegularGrid( gs_global ) );
+                                                  lat, RegularGrid( gs_global ) );
             }
             /*Log::info() << "j=" << j << " ftrc=" << ftrc << " trc=" << trc << " nx=" << gs_global.nx( jlatMin + j )
                         << " nxmax=" << gs_global.nxmax() << " nlats=" << gs_global.ny() << " lat=" << g.y( j )
                         << " jlatMin=" << jlatMin << std::endl;*/
-            for ( size_t i = 0; i < g.nx( j ); ++i ) {
+            for ( idx_t i = 0; i < g.nx( j ); ++i ) {
                 double lon = g.x( i, j ) * util::Constants::degreesToRadians();
 
                 // compute spherical harmonics:
@@ -364,7 +364,7 @@ double compute_rms( const size_t N,    // length of the arrays
                     double array2[] )  // second of the two arrays
 {
     double rms = 0., rmax = 0.;
-    for ( int idx = 0; idx < N; idx++ ) {
+    for ( size_t idx = 0; idx < N; idx++ ) {
         double diff = array1[idx] - array2[idx];
         rms += diff * diff;
         rmax = std::max( rmax, std::abs( array2[idx] ) );
@@ -383,13 +383,12 @@ CASE( "test_trans_vordiv_with_translib" ) {
     // test transgeneral by comparing its result with the trans library
     // this test is based on the test_nomesh case in test_trans.cc
 
-    std::ostream& out = Log::info();
-    double tolerance  = 1.e-13;
+    double tolerance = 1.e-13;
 
     // Grid: (Adjust the following line if the test takes too long!)
     Grid g( "F64" );
 
-    grid::StructuredGrid gs( g );
+    StructuredGrid gs( g );
     int ndgl = gs.ny();
     //int trc  = ndgl - 1;  // linear
     int trc = ndgl / 2. - 1;  // cubic
@@ -617,8 +616,6 @@ CASE( "test_trans_domain" ) {
     // test transgeneral by comparing with analytic solution on a cropped domain
     // this test also includes testing caching
 
-    std::ostream& out = Log::info();
-
     //Domain testdomain = ZonalBandDomain( {-90., 90.} );
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
     //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
@@ -639,7 +636,6 @@ CASE( "test_trans_domain" ) {
     // fourierTrc1, fourierTrc2: need to be false if no global grid can be constructed
     //                           (like for grids created with LinearSpacing)
 
-    using grid::StructuredGrid;
     //using LinearSpacing = grid::LinearSpacing;
     //StructuredGrid g2( LinearSpacing( {0., 180.}, 3 ), LinearSpacing( {89., 90.}, 2 ) );
     // when using LinearSpacing: set fourierTrc2 to false
@@ -810,8 +806,6 @@ CASE( "test_trans_pole" ) {
     // test transform at the pole and with LinearSpacing grids
     // not using caching in this test because not useful for LinearSpacing grids
 
-    std::ostream& out = Log::info();
-
     //Domain testdomain = ZonalBandDomain( {-90., 90.} );
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
     //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
@@ -833,7 +827,6 @@ CASE( "test_trans_pole" ) {
     // fourierTrc1, fourierTrc2: need to be false if no global grid can be constructed
     //                           (like for grids created with LinearSpacing)
 
-    using grid::StructuredGrid;
     using LinearSpacing = grid::LinearSpacing;
     StructuredGrid g2( LinearSpacing( {0., 180.}, 3 ), LinearSpacing( {89., 90.}, 2 ) );
     // when using LinearSpacing: set fourierTrc2 to false
@@ -994,7 +987,6 @@ CASE( "test_trans_southpole" ) {
     Log::info() << "test_trans_southpole" << std::endl;
     // test created for MIR-283 (limited area domain on the southern hemisphere with L-grid)
 
-    std::ostream& out = Log::info();
 
     //Domain testdomain = ZonalBandDomain( {-90., 90.} );
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
@@ -1019,8 +1011,7 @@ CASE( "test_trans_southpole" ) {
     // fourierTrc1, fourierTrc2: need to be false if no global grid can be constructed
     //                           (like for grids created with LinearSpacing)
 
-    using grid::StructuredGrid;
-    using LinearSpacing = grid::LinearSpacing;
+    //using LinearSpacing = grid::LinearSpacing;
     //StructuredGrid g2( LinearSpacing( {0., 10.}, 2 ), LinearSpacing( {-10., -90.}, 9 ) );
     // when using LinearSpacing: set fourierTrc2 to false
 
@@ -1182,8 +1173,7 @@ CASE( "test_trans_unstructured" ) {
     Log::info() << "test_trans_unstructured" << std::endl;
     // test transgeneral by comparing with analytic solution on an unstructured grid
 
-    std::ostream& out = Log::info();
-    double tolerance  = 1.e-13;
+    double tolerance = 1.e-13;
 
     //Domain testdomain = RectangularDomain( {20., 25.}, {40., 60.} );
     Domain testdomain = RectangularDomain( {0., 90.}, {0., 90.} );
@@ -1191,12 +1181,12 @@ CASE( "test_trans_unstructured" ) {
     Grid grid_global( "F32" );
     Grid g( grid_global, testdomain );
     int trc = 31;
-    grid::StructuredGrid gs( g );
+    StructuredGrid gs( g );
     std::vector<PointXY> pts( g.size() );
-    int idx( 0 );
-    for ( size_t j = 0; j < gs.ny(); ++j ) {
+    idx_t idx( 0 );
+    for ( idx_t j = 0; j < gs.ny(); ++j ) {
         double lat = gs.y( j );
-        for ( size_t i = 0; i < gs.nx( j ); ++i ) {
+        for ( idx_t i = 0; i < gs.nx( j ); ++i ) {
             double lon = gs.x( i, j );
             if ( i == j && lat > 0 ) {
                 //Log::info() << "idx=" << idx << " lon=" << lon << " lat=" << lat << std::endl;
@@ -1204,7 +1194,7 @@ CASE( "test_trans_unstructured" ) {
             }
         }
     }
-    Grid gu = grid::UnstructuredGrid( new std::vector<PointXY>( &pts[0], &pts[idx] ) );
+    Grid gu = UnstructuredGrid( new std::vector<PointXY>( &pts[0], &pts[idx] ) );
     Log::info() << "gu: size=" << gu.size() << std::endl;
     double rav1 = 0., rav2 = 0.;  // compute average rms errors of transLocal1 and transLocal2
 
@@ -1329,7 +1319,7 @@ CASE( "test_trans_unstructured" ) {
 }
 #endif
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
 #if 0
 CASE( "test_trans_fourier_truncation" ) {

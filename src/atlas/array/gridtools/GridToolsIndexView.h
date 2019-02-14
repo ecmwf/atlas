@@ -115,13 +115,13 @@ public:
         return gt_data_view_( c... ) FROM_FORTRAN;
     }
 
-    size_t size() const { return size_; }
+    idx_t size() const { return size_; }
 
     void dump( std::ostream& os ) const;
 
 private:
     data_view_t gt_data_view_;
-    size_t size_;
+    idx_t size_;
 
 #undef INDEX_REF
 #undef TO_FORTRAN

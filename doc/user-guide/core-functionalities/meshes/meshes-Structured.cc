@@ -1,13 +1,13 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/Config.h"
 
 using atlas::Grid;
 using atlas::Mesh;
-using atlas::meshgenerator::StructuredMeshGenerator;
+using atlas::StructuredMeshGenerator;
 using atlas::output::Gmsh;
 using atlas::util::Config;
 

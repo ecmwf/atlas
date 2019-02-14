@@ -11,6 +11,7 @@
 #include <cassert>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -18,12 +19,12 @@
 #include <vector>
 
 #include "eckit/config/Resource.h"
-#include "eckit/exception/Exceptions.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/runtime/Tool.h"
 
 #include "atlas/grid/detail/spacing/GaussianSpacing.h"
 #include "atlas/library/Library.h"
+#include "atlas/runtime/Exception.h"
 
 //------------------------------------------------------------------------------------------------------
 

@@ -20,9 +20,8 @@
 #include <memory>
 #include <vector>
 
-#include "eckit/utils/Hash.h"
-
 #include "atlas/grid/detail/grid/Grid.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 class Mesh;
@@ -39,10 +38,11 @@ public:
     public:
         IteratorXY( const Unstructured& grid, bool begin = true ) :
             grid_( grid ),
-            n_( begin ? 0 : grid_.points_->size() ) {}
+            size_( static_cast<idx_t>( grid_.points_->size() ) ),
+            n_( begin ? 0 : size_ ) {}
 
         virtual bool next( PointXY& xy ) {
-            if ( n_ != grid_.points_->size() ) {
+            if ( n_ != size_ ) {
                 xy = grid_.xy( n_++ );
                 return true;
             }
@@ -68,7 +68,8 @@ public:
 
     private:
         const Unstructured& grid_;
-        size_t n_;
+        idx_t size_;
+        idx_t n_;
     };
 
     class IteratorXYPredicated : public Grid::IteratorXY {
@@ -76,23 +77,12 @@ public:
         IteratorXYPredicated( const Unstructured& grid, Grid::IteratorXY::Predicate p, bool begin = true ) :
             grid_( grid ),
             p_( p ),
-            size_( grid_.points_->size() ),
-            n_( begin ? 0 : grid_.points_->size() ) {
+            size_( static_cast<idx_t>( grid_.points_->size() ) ),
+            n_( begin ? 0 : size_ ) {
             if ( begin ) {}
         }
 
-        virtual bool next( PointXY& xy ) {
-            NOTIMP;
-#if 0
-            if ( n_ != grid_.points_->size() ) {
-                xy = grid_.xy( n_++ );
-                return true;
-            }
-            else {
-                return false;
-            }
-#endif
-        }
+        virtual bool next( PointXY& xy );
 
         virtual const PointXY operator*() const { return grid_.xy( n_ ); }
 
@@ -115,18 +105,19 @@ public:
     private:
         const Unstructured& grid_;
         Grid::IteratorXY::Predicate p_;
-        size_t size_;
-        size_t n_;
+        idx_t size_;
+        idx_t n_;
     };
 
     class IteratorLonLat : public Grid::IteratorLonLat {
     public:
         IteratorLonLat( const Unstructured& grid, bool begin = true ) :
             grid_( grid ),
-            n_( begin ? 0 : grid_.points_->size() ) {}
+            size_( static_cast<idx_t>( grid_.points_->size() ) ),
+            n_( begin ? 0 : size_ ) {}
 
         virtual bool next( PointLonLat& lonlat ) {
-            if ( n_ != grid_.points_->size() ) {
+            if ( n_ != size_ ) {
                 lonlat = grid_.lonlat( n_++ );
                 return true;
             }
@@ -152,7 +143,8 @@ public:
 
     private:
         const Unstructured& grid_;
-        size_t n_;
+        idx_t size_;
+        idx_t n_;
     };
 
 
@@ -181,13 +173,13 @@ public:  // methods
 
     virtual ~Unstructured();
 
-    virtual size_t size() const;
+    virtual idx_t size() const;
 
     virtual Spec spec() const;
 
-    PointXY xy( size_t n ) const { return ( *points_ )[n]; }
+    PointXY xy( idx_t n ) const { return ( *points_ )[n]; }
 
-    PointLonLat lonlat( size_t n ) const { return projection_.lonlat( ( *points_ )[n] ); }
+    PointLonLat lonlat( idx_t n ) const { return projection_.lonlat( ( *points_ )[n] ); }
 
     virtual IteratorXY* xy_begin() const { return new IteratorXY( *this ); }
     virtual IteratorXY* xy_end() const { return new IteratorXY( *this, false ); }

@@ -44,7 +44,7 @@ ecbuild_find_python()
 
 ecbuild_add_option( FEATURE FORTRAN
                     DESCRIPTION "Provide Fortran bindings"
-                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.5" )
+                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.6" )
 
 if( ATLAS_HAVE_FORTRAN )
 
@@ -123,6 +123,9 @@ if( ATLAS_HAVE_TESSELATION )
     list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
     if ( TARGET CGAL::CGAL )
       list( APPEND CGAL_LIBRARIES CGAL::CGAL ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
+      # Reset INTERFACE_COMPILE_OPTIONS ( see ATLAS-193 )
+      get_target_property( CGAL_COMPILE_FLAGS CGAL::CGAL INTERFACE_COMPILE_OPTIONS )
+      set_target_properties( CGAL::CGAL PROPERTIES INTERFACE_COMPILE_OPTIONS "" )
     else()
       list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
     endif()
@@ -187,6 +190,7 @@ ecbuild_add_option( FEATURE EIGEN
 ### Type for Global indices and unique point id's
 
 set( ATLAS_BITS_GLOBAL 64 )
+set( ATLAS_BITS_LOCAL 32 )
 
 ### Bounds checking
 if( ${CMAKE_BUILD_TYPE} MATCHES "Debug" )

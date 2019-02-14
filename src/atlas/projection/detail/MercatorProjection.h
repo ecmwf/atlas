@@ -52,8 +52,8 @@ private:
     Rotation rotation_;
 };
 
-typedef MercatorProjectionT<NotRotated> MercatorProjection;
-typedef MercatorProjectionT<Rotated> RotatedMercatorProjection;
+using MercatorProjection        = MercatorProjectionT<NotRotated>;
+using RotatedMercatorProjection = MercatorProjectionT<Rotated>;
 
 }  // namespace detail
 }  // namespace projection

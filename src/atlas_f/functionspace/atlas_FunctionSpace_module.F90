@@ -1,15 +1,25 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
 #include "atlas/atlas_f.h"
 
 module atlas_functionspace_module
 
 use fckit_owned_object_module, only : fckit_owned_object
 use atlas_field_module, only : atlas_Field
+use atlas_fieldset_module, only : atlas_FieldSet
 use atlas_config_module, only : atlas_Config
 
 implicit none
 
 private :: fckit_owned_object
 private :: atlas_Field
+private :: atlas_FieldSet
 private :: atlas_Config
 
 public :: atlas_FunctionSpace
@@ -42,11 +52,16 @@ contains
   procedure, private :: deprecated_create_field_1 ! deprecated
   procedure, private :: deprecated_create_field_2 ! deprecated
 
+  procedure, private :: halo_exchange_field
+  procedure, private :: halo_exchange_fieldset
+
   generic, public :: create_field => &
     & create_field_args, &
     & create_field_template, &
     & deprecated_create_field_1, &
     & deprecated_create_field_2
+
+  generic, public :: halo_exchange => halo_exchange_field, halo_exchange_fieldset
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_FunctionSpace__final_auto
@@ -78,7 +93,7 @@ function atlas_FunctionSpace__name(this) result(name)
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
   integer :: size
-  call atlas__FunctionSpace__name(this%c_ptr(), name_c_str, size )
+  call atlas__FunctionSpace__name(this%CPTR_PGIBUG_A, name_c_str, size )
   name = c_ptr_to_string(name_c_str)
   call c_ptr_free(name_c_str)
 end function
@@ -108,7 +123,7 @@ function create_field_args(this,kind,name,levels,variables,global,owner) result(
   if( present(levels) )    call options%set("levels",levels)
   if( present(variables) ) call options%set("variables",variables)
 
-  field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
+  field = atlas_Field( atlas__FunctionSpace__create_field( this%CPTR_PGIBUG_A, options%CPTR_PGIBUG_B ) )
 
   call field%return()
   call options%final()
@@ -135,12 +150,30 @@ function create_field_template(this,template,name,global,owner) result(field)
   if( present(global) )    call options%set("global",global)
 
   field = atlas_Field( atlas__FunctionSpace__create_field_template( &
-    & this%c_ptr(), template%c_ptr(),options%c_ptr()) )
+    & this%CPTR_PGIBUG_A, template%CPTR_PGIBUG_A,options%CPTR_PGIBUG_B) )
 
   call options%final()
 
   call field%return()
 end function
+
+!------------------------------------------------------------------------------
+
+subroutine halo_exchange_fieldset(this,fieldset)
+  use atlas_functionspace_c_binding
+  class(atlas_Functionspace), intent(in) :: this
+  type(atlas_FieldSet), intent(inout) :: fieldset
+  call atlas__FunctionSpace__halo_exchange_fieldset(this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine halo_exchange_field(this,field)
+  use atlas_functionspace_c_binding
+  class(atlas_Functionspace), intent(in) :: this
+  type(atlas_Field), intent(inout) :: field
+  call atlas__FunctionSpace__halo_exchange_field(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A)
+end subroutine
 
 !------------------------------------------------------------------------------
 
@@ -169,7 +202,7 @@ function deprecated_create_field_1(this,name,kind,levels,vars) result(field)
   opt_variables = sum(vars)
   call options%set("variables",opt_variables)
 
-  field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
+  field = atlas_Field( atlas__FunctionSpace__create_field( this%CPTR_PGIBUG_A, options%CPTR_PGIBUG_B ) )
 
   call options%final()
 
@@ -192,7 +225,7 @@ function deprecated_create_field_2(this,require_name,kind,levels) result(field)
   call options%set("name",require_name)
   call options%set("levels",levels)
 
-  field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
+  field = atlas_Field( atlas__FunctionSpace__create_field( this%CPTR_PGIBUG_A, options%CPTR_PGIBUG_B ) )
   call options%final()
 
   call field%return()

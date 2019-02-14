@@ -10,9 +10,8 @@
 
 #include <map>
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 // #include "tests/TestMeshes.h"
 #include "atlas/mpi/mpi.h"
@@ -225,18 +224,15 @@ private:
     std::vector<monomial_type> mononomials_;
 };
 
-class ShapeFunction : public eckit::Owned {
-public:
-    typedef eckit::SharedPtr<ShapeFunction> Ptr;
-
+class ShapeFunction : public util::Object {
 public:
     ShapeFunction() {}
     virtual ~ShapeFunction() {}
 };
 
-class ElementType : public eckit::Owned {
+class ElementType : public util::Object {
 public:
-    typedef eckit::SharedPtr<ElementType> Ptr;
+    typedef util::ObjectHandle<ElementType> Ptr;
     typedef std::vector<ElementType::Ptr> Vector;
 
 public:
@@ -339,10 +335,7 @@ public:
     }
 };
 
-class Nodes : public eckit::Owned {
-public:
-    typedef eckit::SharedPtr<Nodes> Ptr;
-
+class Nodes : public util::Object {
 public:
     Nodes() {
         npts_   = 0;
@@ -388,13 +381,13 @@ public:
 
     /// @brief Element type at index
     const ElementType& element_type( size_t idx ) const {
-        ASSERT( idx < element_types_.size() );
+        ATLAS_ASSERT( idx < element_types_.size() );
         return *element_types_[idx];
     }
 
     /// @brief Number of elements for element type at given index
     size_t nb_elements_in_element_type( size_t idx ) const {
-        ASSERT( idx < nelem_per_type_.size() );
+        ATLAS_ASSERT( idx < nelem_per_type_.size() );
         return nelem_per_type_[idx];
     }
 
@@ -429,7 +422,7 @@ public:
     void set_nb_nodes( int nb_nodes ) {
         nb_nodes_ = nb_nodes;
         if ( nproma_ == 0 ) nproma_ = 1;
-        ASSERT( nb_nodes_ % nproma_ == 0 );
+        ATLAS_ASSERT( nb_nodes_ % nproma_ == 0 );
         nblk_ = nb_nodes_ / nproma_;
     }
 
@@ -438,7 +431,7 @@ public:
         nproma_ = nproma;
         nblk_   = 0;
         if ( nb_nodes_ != 0 ) {
-            ASSERT( nb_nodes_ % nproma_ == 0 );
+            ATLAS_ASSERT( nb_nodes_ % nproma_ == 0 );
             nblk_ = nb_nodes_ / nproma_;
         }
     }
@@ -507,7 +500,7 @@ private:
             default:
                 if ( idx_type >= 0 ) return idx_type;
         }
-        throw eckit::SeriousBug( "idx_type not recognized" );
+        throw_Exception( "idx_type not recognized" );
         return 0;
     }
 
@@ -630,8 +623,8 @@ IndexView<DATA_TYPE, 2> make_IndexView( atlas::array::ArrayT<DATA_TYPE>& array, 
     size_t offset = 0;
     size_t strides[2];
     size_t shape[2];
-    ASSERT( element_type_index < elements.nb_element_types() );
-    ASSERT( array.shape( 1 ) == elements.N_max() );
+    ATLAS_ASSERT( element_type_index < elements.nb_element_types() );
+    ATLAS_ASSERT( array.shape( 1 ) == elements.N_max() );
 
     for ( int i = 0; i < element_type_index; ++i ) {
         offset += elements.nb_elements_in_element_type( i ) * elements.N_max();
@@ -713,7 +706,7 @@ CASE( "test_functionspace" ) {
     elem_connectivity( 3, 3 ) = 34;
 
     /// Access the data
-    atlas::IndexView<int, 2> triag_node_connectivity = make_IndexView( element_node_connectivity, fs, 0 );
+    atlas::IndexView<idx_t, 2> triag_node_connectivity = make_IndexView( element_node_connectivity, fs, 0 );
     EXPECT( triag_node_connectivity.shape( 0 ) == 2 );
     EXPECT( triag_node_connectivity.shape( 1 ) == 3 );
     EXPECT( triag_node_connectivity( 0, 0 ) == 1 );
@@ -726,7 +719,7 @@ CASE( "test_functionspace" ) {
     BOOST_CHECK_THROW( triag_node_connectivity( 0, 3 ),
                        eckit::OutOfRange );  // should fail (OUT OF RANGE)
 
-    atlas::IndexView<int, 2> quad_node_connectivity = make_IndexView( element_node_connectivity, fs, 1 );
+    atlas::IndexView<idx_t, 2> quad_node_connectivity = make_IndexView( element_node_connectivity, fs, 1 );
   EXPECT( quad_node_connectivity.shape(0 == 2 );
   EXPECT( quad_node_connectivity.shape(1 == 4 );
   EXPECT( quad_node_connectivity(0,0 == 21 );

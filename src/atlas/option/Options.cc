@@ -8,7 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/option/Options.h"
+#include "Options.h"
+
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Earth.h"
 
 // ----------------------------------------------------------------------------
@@ -53,6 +55,11 @@ variables::variables( size_t _variables ) {
     set( "variables", _variables );
 }
 
+vector::vector( size_t _components ) {
+    set( "variables", _components );
+    set( "type", "vector" );
+}
+
 radius::radius( double _radius ) {
     set( "radius", _radius );
 }
@@ -60,8 +67,12 @@ radius::radius( double _radius ) {
 radius::radius( const std::string& key ) {
     if ( key == "Earth" ) { set( "radius", util::Earth::radius() ); }
     else {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
+}
+
+pole_edges::pole_edges( bool _pole_edges ) {
+    set( "pole_edges", _pole_edges );
 }
 
 // ----------------------------------------------------------------------------

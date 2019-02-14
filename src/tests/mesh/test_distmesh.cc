@@ -47,11 +47,11 @@ namespace test {
 double dual_volume( Mesh& mesh ) {
     mesh::Nodes& nodes = mesh.nodes();
     mesh::IsGhostNode is_ghost_node( nodes );
-    int nb_nodes                             = nodes.size();
+    idx_t nb_nodes                           = nodes.size();
     array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
     double area                              = 0;
 
-    for ( int node = 0; node < nb_nodes; ++node ) {
+    for ( idx_t node = 0; node < nb_nodes; ++node ) {
         if ( !is_ghost_node( node ) ) { area += dual_volumes( node ); }
     }
 
@@ -67,7 +67,7 @@ CASE( "test_distribute_t63" ) {
     //  meshgenerator::StructuredMeshGenerator generate( util::Config
     //      ("nb_parts",1)
     //      ("part",0) );
-    meshgenerator::StructuredMeshGenerator generate;
+    StructuredMeshGenerator generate( util::Config( "partitioner", "equal_regions" ) );
 
     // long lon[] = {4,6,8,8,8};
     // test::TestGrid grid(5,lon);
@@ -84,7 +84,10 @@ CASE( "test_distribute_t63" ) {
     mesh::actions::build_halo( m, 1 );
     // mesh::actions::renumber_nodes_glb_idx(m.nodes());
     mesh::actions::build_edges( m );
-    mesh::actions::build_pole_edges( m );
+
+    Gmsh( "dist.msh", util::Config( "ghost", true ) ).write( m );
+
+
     mesh::actions::build_edges_parallel_fields( m );
     mesh::actions::build_median_dual_mesh( m );
 
@@ -102,22 +105,22 @@ CASE( "test_distribute_t63" ) {
 
     const array::ArrayView<int, 1> part  = array::make_view<int, 1>( m.nodes().partition() );
     const array::ArrayView<int, 1> ghost = array::make_view<int, 1>( m.nodes().ghost() );
-    const array::ArrayView<int, 1> flags = array::make_view<int, 1>( m.nodes().field( "flags" ) );
+    const array::ArrayView<int, 1> flags = array::make_view<int, 1>( m.nodes().flags() );
 
     Log::info() << "partition = [ ";
-    for ( size_t jnode = 0; jnode < part.size(); ++jnode ) {
+    for ( idx_t jnode = 0; jnode < part.size(); ++jnode ) {
         Log::info() << part( jnode ) << " ";
     }
     Log::info() << "]" << std::endl;
 
     Log::info() << "ghost     = [ ";
-    for ( size_t jnode = 0; jnode < part.size(); ++jnode ) {
+    for ( idx_t jnode = 0; jnode < part.size(); ++jnode ) {
         Log::info() << ghost( jnode ) << " ";
     }
     Log::info() << "]" << std::endl;
 
     Log::info() << "flags     = [ ";
-    for ( size_t jnode = 0; jnode < part.size(); ++jnode ) {
+    for ( idx_t jnode = 0; jnode < part.size(); ++jnode ) {
         Log::info() << mesh::Nodes::Topology::check( flags( jnode ), mesh::Nodes::Topology::GHOST ) << " ";
         EXPECT( mesh::Nodes::Topology::check( flags( jnode ), mesh::Nodes::Topology::GHOST ) == ghost( jnode ) );
     }

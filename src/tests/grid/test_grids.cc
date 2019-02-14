@@ -12,8 +12,6 @@
 #include <iomanip>
 #include <sstream>
 
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Factory.h"
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/grid.h"
@@ -24,11 +22,7 @@
 
 #include "tests/AtlasTestEnvironment.h"
 
-using StructuredGrid      = atlas::grid::StructuredGrid;
-using UnstructuredGrid    = atlas::grid::UnstructuredGrid;
-using Grid                = atlas::Grid;
-using Regular             = atlas::grid::RegularGrid;
-using ReducedGaussianGrid = atlas::grid::ReducedGaussianGrid;
+using Grid = atlas::Grid;
 
 namespace atlas {
 namespace test {
@@ -45,7 +39,7 @@ CASE( "test_factory" ) {
 }
 
 CASE( "test_regular_gg" ) {
-    Regular grid( "F32" );
+    RegularGrid grid( "F32" );
 
     EXPECT( grid.ny() == 64 );
     EXPECT( grid.size() == 8192 );
@@ -68,7 +62,7 @@ CASE( "test_reduced_gg" ) {
     EXPECT( grid.ny() == 64 );
     EXPECT( grid.size() == 6114 );
 
-    grid = grid::ReducedGaussianGrid( {4, 6, 8, 8, 6, 4} );
+    grid = ReducedGaussianGrid( {4, 6, 8, 8, 6, 4} );
 
     EXPECT( grid.ny() == 6 );
     EXPECT( grid.size() == 8 + 12 + 16 );
@@ -85,20 +79,20 @@ CASE( "test_reduced_gg_ifs" ) {
 
 CASE( "test_regular_ll" ) {
     // Constructor for N=8
-    size_t nlon = 32;
-    size_t nlat = 16;
+    idx_t nlon = 32;
+    idx_t nlat = 16;
     std::stringstream name;
     name << "Slat" << nlon << "x" << nlat;
-    Regular grid( name.str() );
+    RegularGrid grid( name.str() );
 
     EXPECT( grid.nx() == nlon );
     EXPECT( grid.ny() == nlat );
     EXPECT( grid.size() == 512 );
     // EXPECT(grid.type() == "shifted_lat");
-    EXPECT( grid.y( 0 ) == 90. - 0.5 * ( 180. / 16. ) );
-    EXPECT( grid.y( grid.ny() - 1 ) == -90. + 0.5 * ( 180. / 16. ) );
-    EXPECT( grid.x( 0 ) == 0. );
-    EXPECT( grid.x( grid.nx() - 1 ) == 360. - 360. / 32. );
+    EXPECT( is_approximately_equal( grid.y( 0 ), 90. - 0.5 * ( 180. / 16. ) ) );
+    EXPECT( is_approximately_equal( grid.y( grid.ny() - 1 ), -90. + 0.5 * ( 180. / 16. ) ) );
+    EXPECT( is_approximately_equal( grid.x( 0 ), 0. ) );
+    EXPECT( is_approximately_equal( grid.x( grid.nx() - 1 ), 360. - 360. / 32. ) );
 
     // Construct using builders/factories
 
@@ -118,17 +112,17 @@ CASE( "test_regular_ll" ) {
     EXPECT( grid.size() == 512 );
     // EXPECT(gridptr->type() == "shifted_lat");
 
-    Regular ll_poles( "L4x3" );
+    RegularGrid ll_poles( "L4x3" );
     EXPECT( ll_poles.nx() == 4 );
     EXPECT( ll_poles.ny() == 3 );
 
-    Regular ll_nopoles( "Slat4x2" );
+    RegularGrid ll_nopoles( "Slat4x2" );
     EXPECT( ll_nopoles.nx() == 4 );
     EXPECT( ll_nopoles.ny() == 2 );
-    EXPECT( eckit::types::is_approximately_equal( ll_nopoles.y( 0 ), 45. ) );   // tolerance was previously 1.e-5
-    EXPECT( eckit::types::is_approximately_equal( ll_nopoles.y( 1 ), -45. ) );  // tolerance was previously 1.e-5
-    EXPECT( eckit::types::is_approximately_equal( ll_nopoles.x( 0 ), 0. ) );    // tolerance was previously 1.e-5
-    EXPECT( eckit::types::is_approximately_equal( ll_nopoles.x( 1 ), 90. ) );   // tolerance was previously 1.e-5
+    EXPECT( is_approximately_equal( ll_nopoles.y( 0 ), 45. ) );   // tolerance was previously 1.e-5
+    EXPECT( is_approximately_equal( ll_nopoles.y( 1 ), -45. ) );  // tolerance was previously 1.e-5
+    EXPECT( is_approximately_equal( ll_nopoles.x( 0 ), 0. ) );    // tolerance was previously 1.e-5
+    EXPECT( is_approximately_equal( ll_nopoles.x( 1 ), 90. ) );   // tolerance was previously 1.e-5
 }
 
 CASE( "test_reducedgaussian" ) {

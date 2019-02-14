@@ -10,27 +10,36 @@
 
 #include "atlas/grid/detail/grid/Unstructured.h"
 
+#include <initializer_list>
 #include <limits>
 #include <memory>
 
-#include "eckit/memory/Builder.h"
 #include "eckit/types/FloatCompare.h"
+#include "eckit/utils/Hash.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Iterator.h"
+#include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/option.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/NormaliseLongitude.h"
 
 namespace atlas {
 namespace grid {
 namespace detail {
 namespace grid {
 
-eckit::ConcreteBuilderT1<Grid, Unstructured> builder_Unstructured( Unstructured::static_type() );
+//static eckit::ConcreteBuilderT1<Grid, Unstructured> builder_Unstructured( Unstructured::static_type() );
+
+namespace {
+static GridFactoryBuilder<Unstructured> __register_Unstructured( Unstructured::static_type() );
+}
+
 
 Unstructured::Unstructured( const Mesh& m ) : Grid(), points_( new std::vector<PointXY>( m.nodes().size() ) ) {
     util::Config config_domain;
@@ -39,9 +48,9 @@ Unstructured::Unstructured( const Mesh& m ) : Grid(), points_( new std::vector<P
 
     auto xy                 = array::make_view<double, 2>( m.nodes().xy() );
     std::vector<PointXY>& p = *points_;
-    const size_t npts       = p.size();
+    const idx_t npts        = static_cast<idx_t>( p.size() );
 
-    for ( size_t n = 0; n < npts; ++n ) {
+    for ( idx_t n = 0; n < npts; ++n ) {
         p[n].assign( xy( n, XX ), xy( n, YY ) );
     }
 }
@@ -52,27 +61,16 @@ class Normalise {
 public:
     Normalise( const RectangularDomain& domain ) :
         degrees_( domain.units() == "degrees" ),
-        xmin_( domain.xmin() ),
-        xmax_( domain.xmax() ),
-        eps_( 1e-11 ) {}
+        normalise_( domain.xmin(), domain.xmax() ) {}
 
     double operator()( double x ) const {
-        if ( degrees_ ) {
-            while ( eckit::types::is_strictly_greater<double>( xmin_, x, eps_ ) ) {
-                x += 360.;
-            }
-            while ( eckit::types::is_strictly_greater<double>( x, xmax_, eps_ ) ) {
-                x -= 360.;
-            }
-        }
+        if ( degrees_ ) { x = normalise_( x ); }
         return x;
     }
 
 private:
     const bool degrees_;
-    const double xmin_;
-    const double xmax_;
-    const double eps_;
+    NormaliseLongitude normalise_;
 };
 }  // namespace
 
@@ -104,11 +102,11 @@ Unstructured::Unstructured( const Grid& grid, Domain domain ) : Grid() {
     points_->shrink_to_fit();
 }
 
-Unstructured::Unstructured( const util::Config& p ) : Grid() {
+Unstructured::Unstructured( const util::Config& ) : Grid() {
     util::Config config_domain;
     config_domain.set( "type", "global" );
     domain_ = Domain( config_domain );
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 Unstructured::Unstructured( std::vector<PointXY>* pts ) : Grid(), points_( pts ) {
@@ -145,12 +143,12 @@ Grid::uid_t Unstructured::name() const {
 }
 
 void Unstructured::hash( eckit::Hash& h ) const {
-    ASSERT( points_ );
+    ATLAS_ASSERT( points_ != nullptr );
 
     const std::vector<PointXY>& pts = *points_;
     h.add( &pts[0], sizeof( PointXY ) * pts.size() );
 
-    for ( size_t i = 0; i < pts.size(); i++ ) {
+    for ( idx_t i = 0, N = static_cast<idx_t>( pts.size() ); i < N; i++ ) {
         const PointXY& p = pts[i];
         h << p.x() << p.y();
     }
@@ -158,9 +156,9 @@ void Unstructured::hash( eckit::Hash& h ) const {
     projection().hash( h );
 }
 
-size_t Unstructured::size() const {
-    ASSERT( points_ );
-    return points_->size();
+idx_t Unstructured::size() const {
+    ATLAS_ASSERT( points_ != nullptr );
+    return static_cast<idx_t>( points_->size() );
 }
 
 Grid::Spec Unstructured::spec() const {
@@ -175,7 +173,7 @@ Grid::Spec Unstructured::spec() const {
 
     std::unique_ptr<IteratorXY> it( xy_begin() );
     std::vector<double> coords( 2 * size() );
-    size_t c( 0 );
+    idx_t c( 0 );
     PointXY xy;
     while ( it->next( xy ) ) {
         coords[c++] = xy.x();
@@ -189,6 +187,19 @@ Grid::Spec Unstructured::spec() const {
 
 void Unstructured::print( std::ostream& os ) const {
     os << "Unstructured(Npts:" << size() << ")";
+}
+
+bool Unstructured::IteratorXYPredicated::next( PointXY& /*xy*/ ) {
+    ATLAS_NOTIMPLEMENTED;
+#if 0
+    if ( n_ != grid_.points_->size() ) {
+        xy = grid_.xy( n_++ );
+        return true;
+    }
+    else {
+        return false;
+    }
+#endif
 }
 
 }  // namespace grid

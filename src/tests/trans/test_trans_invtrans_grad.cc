@@ -10,6 +10,7 @@
 
 #include <algorithm>
 
+#include "atlas/array.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
@@ -20,14 +21,13 @@
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/option.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
-#include "atlas/array.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -51,15 +51,15 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
 
 /// @brief Compute magnitude of flow with rotation-angle beta
 /// (beta=0 --> zonal, beta=pi/2 --> meridional)
-static void rotated_flow_magnitude( grid::StructuredGrid& grid, double var[], const double& beta ) {
+static void rotated_flow_magnitude( StructuredGrid& grid, double var[], const double& beta ) {
     const double radius  = util::Earth::radius();
     const double USCAL   = 20.;
     const double pvel    = USCAL / radius;
     const double deg2rad = M_PI / 180.;
 
-    size_t n( 0 );
-    for ( size_t jlat = 0; jlat < grid.ny(); ++jlat ) {
-        for ( size_t jlon = 0; jlon < grid.nx( jlat ); ++jlon ) {
+    idx_t n( 0 );
+    for ( idx_t jlat = 0; jlat < grid.ny(); ++jlat ) {
+        for ( idx_t jlon = 0; jlon < grid.nx( jlat ); ++jlon ) {
             const double x = grid.x( jlon, jlat ) * deg2rad;
             const double y = grid.y( jlat ) * deg2rad;
             const double Ux =
@@ -97,7 +97,7 @@ void rotated_flow_magnitude( const functionspace::NodeColumns& fs, Field& field,
 
 CASE( "test_invtrans_ifsStyle" ) {
     std::string grid_uid( "O80" );
-    grid::StructuredGrid g( grid_uid );
+    StructuredGrid g( grid_uid );
     long N = g.ny() / 2;
     trans::TransIFS trans( g, 2 * N - 1 );
     Log::info() << "Trans initialized" << std::endl;
@@ -129,7 +129,7 @@ CASE( "test_invtrans_ifsStyle" ) {
 
     // Output
     {
-        Mesh mesh = meshgenerator::StructuredMeshGenerator().generate( g );
+        Mesh mesh = StructuredMeshGenerator().generate( g );
         functionspace::StructuredColumns gp( g );
         output::Gmsh gmsh( grid_uid + "-grid.msh" );
         Field scalar( "scalar", rgp.data(), array::make_shape( gp.size() ) );
@@ -144,9 +144,9 @@ CASE( "test_invtrans_ifsStyle" ) {
 
 CASE( "test_invtrans_grad" ) {
     std::string grid_uid( "O48" );
-    grid::StructuredGrid g( grid_uid );
-    Mesh mesh = meshgenerator::StructuredMeshGenerator().generate( g );
-    long N    = g.ny() / 2;
+    StructuredGrid g( grid_uid );
+    Mesh mesh = StructuredMeshGenerator().generate( g );
+    idx_t N   = g.ny() / 2;
     trans::Trans trans( g, 2 * N - 1 );
     functionspace::NodeColumns gp( mesh );
     functionspace::Spectral sp( trans );
@@ -169,7 +169,7 @@ CASE( "test_invtrans_grad" ) {
 
     // Output
     {
-        Mesh mesh = meshgenerator::StructuredMeshGenerator().generate( g );
+        Mesh mesh = StructuredMeshGenerator().generate( g );
         functionspace::StructuredColumns gp( g );
         output::Gmsh gmsh( grid_uid + "-nodes.msh" );
         gmsh.write( mesh );

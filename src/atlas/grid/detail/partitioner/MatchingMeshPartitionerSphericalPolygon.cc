@@ -15,8 +15,10 @@
 #include "eckit/log/ProgressTimer.h"
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Iterator.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/SphericalPolygon.h"
 
@@ -34,7 +36,9 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
     const int mpi_rank           = int( comm.rank() );
     const int mpi_size           = int( comm.size() );
 
-    ASSERT( grid.domain().global() );
+    ATLAS_TRACE( "MatchingMeshPartitionerSphericalPolygon::partition" );
+
+    ATLAS_ASSERT( grid.domain().global() );
 
     Log::debug() << "MatchingMeshPartitionerSphericalPolygon::partition" << std::endl;
 
@@ -44,6 +48,11 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
     bool includesSouthPole = ( mpi_rank == mpi_size - 1 );
 
     const util::SphericalPolygon poly( prePartitionedMesh_.polygon( 0 ), prePartitionedMesh_.nodes().lonlat() );
+    const double maxlat = poly.coordinatesMax().lat();
+    const double minlat = poly.coordinatesMin().lat();
+    auto at_the_pole    = [&]( const PointLonLat& P ) {
+        return ( includesNorthPole && P.lat() >= maxlat ) || ( includesSouthPole && P.lat() < minlat );
+    };
 
     {
         eckit::ProgressTimer timer( "Partitioning", grid.size(), "point", double( 10 ), atlas::Log::trace() );
@@ -51,11 +60,8 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
 
         for ( const PointXY Pxy : grid.xy() ) {
             ++timer;
-            const PointLonLat P  = grid.projection().lonlat( Pxy );
-            const bool atThePole = ( includesNorthPole && P.lat() >= poly.coordinatesMax().lat() ) ||
-                                   ( includesSouthPole && P.lat() < poly.coordinatesMin().lat() );
-
-            partitioning[i++] = atThePole || poly.contains( P ) ? mpi_rank : -1;
+            const PointLonLat P = grid.projection().lonlat( Pxy );
+            partitioning[i++]   = at_the_pole( P ) || poly.contains( P ) ? mpi_rank : -1;
         }
     }
 
@@ -63,7 +69,7 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
     comm.allReduceInPlace( partitioning, grid.size(), eckit::mpi::Operation::MAX );
     const int min = *std::min_element( partitioning, partitioning + grid.size() );
     if ( min < 0 ) {
-        throw eckit::SeriousBug(
+        throw_Exception(
             "Could not find partition for target node (source "
             "mesh does not contain all target grid points)",
             Here() );

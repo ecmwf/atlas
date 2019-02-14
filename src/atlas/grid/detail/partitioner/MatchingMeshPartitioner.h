@@ -12,9 +12,8 @@
 
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/grid/detail/partitioner/Partitioner.h"
+#include "atlas/mesh/Mesh.h"
 
 namespace atlas {
 namespace grid {
@@ -23,13 +22,13 @@ namespace partitioner {
 
 class MatchingMeshPartitioner : public Partitioner {
 public:
-    MatchingMeshPartitioner() : Partitioner() { NOTIMP; }
+    MatchingMeshPartitioner();
 
-    MatchingMeshPartitioner( const size_t nb_partitions ) : Partitioner( nb_partitions ) { NOTIMP; }
+    MatchingMeshPartitioner( const idx_t nb_partitions );
 
-    MatchingMeshPartitioner( const Mesh& mesh ) : Partitioner( mesh.nb_partitions() ), prePartitionedMesh_( mesh ) {}
+    MatchingMeshPartitioner( const Mesh& mesh );
 
-    virtual ~MatchingMeshPartitioner() {}
+    virtual ~MatchingMeshPartitioner() override {}
 
 protected:
     const Mesh prePartitionedMesh_;

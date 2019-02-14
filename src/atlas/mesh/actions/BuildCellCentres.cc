@@ -18,6 +18,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildCellCentres.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
@@ -44,32 +45,33 @@ Field& BuildCellCentres::operator()( Mesh& mesh ) const {
         recompute = true;
     }
     if ( recompute ) {
+        ATLAS_TRACE( "BuildCellCentres" );
         mesh::Nodes& nodes                 = mesh.nodes();
         array::ArrayView<double, 2> coords = array::make_view<double, 2>( nodes.field( "xyz" ) );
 
-        size_t firstVirtualPoint = std::numeric_limits<size_t>::max();
-        if ( nodes.metadata().has( "NbRealPts" ) ) { firstVirtualPoint = nodes.metadata().get<size_t>( "NbRealPts" ); }
+        idx_t firstVirtualPoint = std::numeric_limits<idx_t>::max();
+        if ( nodes.metadata().has( "NbRealPts" ) ) { firstVirtualPoint = nodes.metadata().get<idx_t>( "NbRealPts" ); }
 
-        size_t nb_cells = mesh.cells().size();
-        auto centroids  = array::make_view<double, 2>( mesh.cells().field( field_name_ ) );
+        idx_t nb_cells = mesh.cells().size();
+        auto centroids = array::make_view<double, 2>( mesh.cells().field( field_name_ ) );
         const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
 
-        for ( size_t e = 0; e < nb_cells; ++e ) {
+        for ( idx_t e = 0; e < nb_cells; ++e ) {
             centroids( e, XX ) = 0.;
             centroids( e, YY ) = 0.;
             centroids( e, ZZ ) = 0.;
 
-            const size_t nb_cell_nodes = cell_node_connectivity.cols( e );
+            const idx_t nb_cell_nodes = cell_node_connectivity.cols( e );
 
             // check for degenerate elements (less than three unique nodes)
             // NOTE: this is not a proper check but it is very robust
             eckit::types::CompareApproximatelyEqual<double> approx( 1.e-9 );
 
-            int nb_equal_nodes = 0;
-            for ( size_t ni = 0; ni < nb_cell_nodes - 1; ++ni ) {
+            idx_t nb_equal_nodes = 0;
+            for ( idx_t ni = 0; ni < nb_cell_nodes - 1; ++ni ) {
                 idx_t i = cell_node_connectivity( e, ni );
                 Point3 Pi( coords( i, XX ), coords( i, YY ), coords( i, ZZ ) );
-                for ( size_t nj = ni + 1; nj < nb_cell_nodes; ++nj ) {
+                for ( idx_t nj = ni + 1; nj < nb_cell_nodes; ++nj ) {
                     idx_t j = cell_node_connectivity( e, nj );
                     Point3 Pj( coords( j, XX ), coords( j, YY ), coords( j, ZZ ) );
                     if ( approx( Pi[XX], Pj[XX] ) && approx( Pi[YY], Pj[YY] ) && approx( Pi[ZZ], Pj[ZZ] ) ) {
@@ -78,14 +80,14 @@ Field& BuildCellCentres::operator()( Mesh& mesh ) const {
                 }
             }
 
-            int nb_unique_nodes = int( nb_cell_nodes ) - nb_equal_nodes;
+            idx_t nb_unique_nodes = idx_t( nb_cell_nodes ) - nb_equal_nodes;
             if ( nb_unique_nodes < 3 ) { continue; }
 
             if ( flatten_virtual_elements_ ) {
                 // calculate centroid by averaging coordinates (uses only "real" nodes)
-                size_t nb_real_nodes = 0;
-                for ( size_t n = 0; n < nb_cell_nodes; ++n ) {
-                    const size_t i = size_t( cell_node_connectivity( e, n ) );
+                idx_t nb_real_nodes = 0;
+                for ( idx_t n = 0; n < nb_cell_nodes; ++n ) {
+                    const idx_t i = cell_node_connectivity( e, n );
                     if ( i < firstVirtualPoint ) {
                         ++nb_real_nodes;
                         centroids( e, XX ) += coords( i, XX );
@@ -103,9 +105,9 @@ Field& BuildCellCentres::operator()( Mesh& mesh ) const {
             }
             else {
                 const double average_coefficient = 1. / static_cast<double>( nb_cell_nodes );
-                for ( size_t n = 0; n < nb_cell_nodes; ++n ) {
-                    const size_t i = size_t( cell_node_connectivity( e, n ) );
-                    for ( size_t d = 0; d < 3; ++d ) {
+                for ( idx_t n = 0; n < nb_cell_nodes; ++n ) {
+                    const idx_t i = cell_node_connectivity( e, n );
+                    for ( idx_t d = 0; d < 3; ++d ) {
                         centroids( e, d ) += coords( i, d ) * average_coefficient;
                     }
                 }

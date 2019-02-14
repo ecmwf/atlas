@@ -13,7 +13,7 @@
 #include <sstream>
 
 #include "atlas/domain.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
 
@@ -37,7 +37,6 @@ CASE( "test_domain_rectangular" ) {
 
 CASE( "test_domain_rectangular_tolerance" ) {
     using grid::LinearSpacing;
-    using grid::StructuredGrid;
 
     Domain domain        = RectangularDomain( {-27, 45}, {33, 73} );
     RectangularDomain rd = domain;

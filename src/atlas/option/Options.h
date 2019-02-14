@@ -48,6 +48,13 @@ public:
 
 // ----------------------------------------------------------------------------
 
+class vector : public util::Config {
+public:
+    vector( size_t = 2 );
+};
+
+// ----------------------------------------------------------------------------
+
 class name : public util::Config {
 public:
     name( const std::string& );
@@ -83,6 +90,13 @@ class radius : public util::Config {
 public:
     radius( double );
     radius( const std::string& = "Earth" );
+};
+
+// ---------------------------------
+
+class pole_edges : public util::Config {
+public:
+    pole_edges( bool = true );
 };
 
 // ----------------------------------------------------------------------------

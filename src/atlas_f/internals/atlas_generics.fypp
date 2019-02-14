@@ -1,0 +1,83 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+#:mute
+
+#:set ranks  = [1,2,3,4]
+#:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
+
+#:set ftypes = ['integer(c_int)','integer(c_long)','real(c_float)','real(c_double)', 'logical']
+#:set ctypes = ['int','long','float','double', 'int']
+#:set dtypes = ['int32', 'int64', 'real32', 'real64', 'logical32']
+#:set types  = list(zip(dtypes,ftypes,ctypes))
+
+#:set integer_ftypes = ['integer(c_int)','integer(c_long)']
+#:set integer_ctypes = ['int','long']
+#:set integer_dtypes = ['int32', 'int64']
+#:set integer_types  = list(zip(integer_dtypes,integer_ftypes,integer_ctypes))
+
+#:set real_ftypes = ['real(c_float)','real(c_double)']
+#:set real_ctypes = ['float','double']
+#:set real_dtypes = ['real32', 'real64']
+#:set real_types  = list(zip(real_dtypes,real_ftypes,real_ctypes))
+
+#:def generic_public_interface( interface, prefix = None )
+#:if prefix is None
+#:set prefix = interface
+#:endif
+#:set counter = 0
+#:for rank in ranks
+#:for dtype in dtypes[:4]
+  procedure, private :: ${prefix}$_${dtype}$_r${rank}$
+  #:set counter = counter + 1
+#:endfor
+#:endfor
+#:set last = counter
+#:set counter = 1
+  generic, public :: ${interface}$ => &
+#:for rank in ranks
+#:for dtype in dtypes[:4]
+    & ${prefix}$_${dtype}$_r${rank}$#{if counter < last}#, & #{endif}#
+    #:set counter = counter + 1
+#:endfor
+#:endfor
+#:enddef
+
+
+#:def generic_public_interface_2( interface, prefix1, prefix2 )
+#:set counter = 0
+#:for rank in ranks
+#:for dtype in dtypes[:4]
+  procedure, private :: ${prefix1}$_${dtype}$_r${rank}$
+  #:set counter = counter + 1
+#:endfor
+#:endfor
+#:for rank in ranks
+#:for dtype in dtypes[:4]
+  procedure, private :: ${prefix2}$_${dtype}$_r${rank}$
+  #:set counter = counter + 1
+#:endfor
+#:endfor
+#:set last = counter
+#:set counter = 1
+  generic, public :: ${interface}$ => &
+#:for rank in ranks
+#:for dtype in dtypes[:4]
+    & ${prefix1}$_${dtype}$_r${rank}$#{if counter < last}#, & #{endif}#
+    #:set counter = counter + 1
+#:endfor
+#:endfor
+#:for rank in ranks
+#:for dtype in dtypes[:4]
+    & ${prefix2}$_${dtype}$_r${rank}$#{if counter < last}#, & #{endif}#
+    #:set counter = counter + 1
+#:endfor
+#:endfor
+#:enddef
+
+#:endmute

@@ -8,12 +8,12 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 
 #include "atlas/grid/Grid.h"
 #include "atlas/library/defines.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/LegendreCacheCreator.h"
 
@@ -30,8 +30,8 @@ LegendreCacheCreatorImpl::~LegendreCacheCreatorImpl() {}
 
 namespace {
 
-static eckit::Mutex* local_mutex                              = 0;
-static std::map<std::string, LegendreCacheCreatorFactory*>* m = 0;
+static eckit::Mutex* local_mutex                              = nullptr;
+static std::map<std::string, LegendreCacheCreatorFactory*>* m = nullptr;
 static pthread_once_t once                                    = PTHREAD_ONCE_INIT;
 
 static void init() {
@@ -60,7 +60,7 @@ LegendreCacheCreatorFactory& factory( const std::string& name ) {
         Log::error() << "TransFactories are:" << std::endl;
         for ( j = m->begin(); j != m->end(); ++j )
             Log::error() << "   " << ( *j ).first << std::endl;
-        throw eckit::SeriousBug( std::string( "No LegendreCacheCreatorFactory called " ) + name );
+        throw_Exception( std::string( "No LegendreCacheCreatorFactory called " ) + name );
     }
     return *j->second;
 }
@@ -72,7 +72,7 @@ LegendreCacheCreatorFactory::LegendreCacheCreatorFactory( const std::string& nam
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    ASSERT( m->find( name ) == m->end() );
+    ATLAS_ASSERT( m->find( name ) == m->end() );
     ( *m )[name] = this;
 }
 
@@ -123,33 +123,29 @@ LegendreCacheCreator::Implementation* LegendreCacheCreatorFactory::build( const 
     return factory( name ).make( grid, truncation, options );
 }
 
-LegendreCacheCreator::LegendreCacheCreator() {}
-
-LegendreCacheCreator::LegendreCacheCreator( Implementation* impl ) : impl_( impl ) {}
 
 LegendreCacheCreator::LegendreCacheCreator( const Grid& grid, int truncation, const eckit::Configuration& config ) :
-    impl_( LegendreCacheCreatorFactory::build( grid, truncation, config ) ) {}
+    Handle( LegendreCacheCreatorFactory::build( grid, truncation, config ) ) {}
 
-LegendreCacheCreator::LegendreCacheCreator( const LegendreCacheCreator& creator ) : impl_( creator.impl_ ) {}
 
 bool LegendreCacheCreator::supported() const {
-    return impl_->supported();
+    return get()->supported();
 }
 
 std::string LegendreCacheCreator::uid() const {
-    return impl_->uid();
+    return get()->uid();
 }
 
 void LegendreCacheCreator::create( const std::string& path ) const {
-    impl_->create( path );
+    get()->create( path );
 }
 
 Cache LegendreCacheCreator::create() const {
-    return impl_->create();
+    return get()->create();
 }
 
 size_t LegendreCacheCreator::estimate() const {
-    return impl_->estimate();
+    return get()->estimate();
 }
 
 }  // namespace trans

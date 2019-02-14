@@ -10,134 +10,41 @@
 
 #pragma once
 
-#include <iosfwd>
 #include <string>
 
-#include "eckit/config/Parametrisation.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
-
-#include "atlas/grid/Distribution.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/mesh/Mesh.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
 class Hash;
-}
+class Parametrisation;
+}  // namespace eckit
 
 namespace atlas {
 class Mesh;
-}
+class Grid;
+class Projection;
+}  // namespace atlas
 
 namespace atlas {
 namespace grid {
 class Distribution;
-}
+}  // namespace grid
 }  // namespace atlas
 
 namespace atlas {
 namespace meshgenerator {
-
-//----------------------------------------------------------------------------------------------------------------------
-
-class MeshGeneratorImpl : public eckit::Owned {
-public:
-    MeshGeneratorImpl();
-
-    virtual ~MeshGeneratorImpl();
-
-    virtual void hash( eckit::Hash& ) const = 0;
-
-    virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const = 0;
-    virtual void generate( const Grid&, Mesh& ) const                            = 0;
-
-    Mesh generate( const Grid&, const grid::Distribution& ) const;
-    Mesh generate( const Grid& ) const;
-
-    Mesh operator()( const Grid&, const grid::Distribution& ) const;
-    Mesh operator()( const Grid& ) const;
-
-protected:
-    void generateGlobalElementNumbering( Mesh& mesh ) const;
-    void setProjection( Mesh&, const Projection& ) const;
-    void setGrid( Mesh&, const Grid&, const grid::Distribution& ) const;
-};
-
-//----------------------------------------------------------------------------------------------------------------------
-
-class MeshGeneratorFactory {
-public:
-    /*!
-   * \brief build MeshGenerator with factory key, and default options
-   * \return mesh generator
-   */
-    static const MeshGeneratorImpl* build( const std::string& );
-
-    /*!
-   * \brief build MeshGenerator with factory key inside parametrisation,
-   * and options specified in parametrisation as well
-   * \return mesh generator
-   */
-    static const MeshGeneratorImpl* build( const std::string&, const eckit::Parametrisation& );
-
-    /*!
-   * \brief list all registered mesh generators
-   */
-    static void list( std::ostream& );
-
-private:
-    std::string name_;
-    virtual const MeshGeneratorImpl* make()                                = 0;
-    virtual const MeshGeneratorImpl* make( const eckit::Parametrisation& ) = 0;
-
-protected:
-    MeshGeneratorFactory( const std::string& );
-    virtual ~MeshGeneratorFactory();
-};
-
-//----------------------------------------------------------------------------------------------------------------------
-
-template <class T>
-class MeshGeneratorBuilder : public MeshGeneratorFactory {
-    virtual const MeshGeneratorImpl* make() { return new T(); }
-    virtual const MeshGeneratorImpl* make( const eckit::Parametrisation& param ) { return new T( param ); }
-
-public:
-    MeshGeneratorBuilder( const std::string& name ) : MeshGeneratorFactory( name ) {}
-};
-
-//----------------------------------------------------------------------------------------------------------------------
-
-extern "C" {
-void atlas__MeshGenerator__delete( MeshGeneratorImpl* This );
-const MeshGeneratorImpl* atlas__MeshGenerator__create_noconfig( const char* name );
-const MeshGeneratorImpl* atlas__MeshGenerator__create( const char* name, const eckit::Parametrisation* params );
-Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist( const MeshGeneratorImpl* This,
-                                                                     const Grid::Implementation* grid,
-                                                                     const grid::Distribution::impl_t* distribution );
-Mesh::Implementation* atlas__MeshGenerator__generate__grid( const MeshGeneratorImpl* This,
-                                                            const Grid::Implementation* grid );
+class MeshGeneratorImpl;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // namespace meshgenerator
-
-//----------------------------------------------------------------------------------------------------------------------
-
-class MeshGenerator {
+class MeshGenerator : public util::ObjectHandle<meshgenerator::MeshGeneratorImpl> {
 public:
-    using Implementation = meshgenerator::MeshGeneratorImpl;
-    typedef atlas::util::Config Parameters;
-
-private:
-    eckit::SharedPtr<const Implementation> meshgenerator_;
+    using Parameters = atlas::util::Config;
 
 public:
-    MeshGenerator();
-    MeshGenerator( const Implementation* );
-    MeshGenerator( const MeshGenerator& );
+    using Handle::Handle;
     MeshGenerator( const std::string&, const eckit::Parametrisation& = util::NoConfig() );
 
     void hash( eckit::Hash& ) const;
@@ -147,8 +54,16 @@ public:
 
     Mesh operator()( const Grid&, const grid::Distribution& ) const;
     Mesh operator()( const Grid& ) const;
+};
 
-    const Implementation* get() const { return meshgenerator_.get(); }
+//----------------------------------------------------------------------------------------------------------------------
+
+// Shorthands
+class StructuredMeshGenerator : public MeshGenerator {
+public:
+    using MeshGenerator::MeshGenerator;
+    StructuredMeshGenerator( const eckit::Parametrisation& config = util::NoConfig() ) :
+        MeshGenerator( "structured", config ) {}
 };
 
 //----------------------------------------------------------------------------------------------------------------------

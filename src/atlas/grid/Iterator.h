@@ -10,7 +10,10 @@
 
 #pragma once
 
+#include <memory>
+
 #include "atlas/grid/detail/grid/Grid.h"
+#include "atlas/util/Point.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -64,6 +67,40 @@ private:
 };
 
 //---------------------------------------------------------------------------------------------------------------------
+
+class IterateXY {
+public:
+    using iterator       = grid::IteratorXY;
+    using const_iterator = iterator;
+    using Predicate      = std::function<bool( long )>;
+    using Grid           = detail::grid::Grid;
+
+public:
+    IterateXY( const Grid& grid, Predicate p ) : grid_( grid ), p_( p ), use_p_( true ) {}
+    IterateXY( const Grid& grid ) : grid_( grid ) {}
+    iterator begin() const;
+    iterator end() const;
+
+private:
+    const Grid& grid_;
+    Predicate p_;
+    bool use_p_{false};
+};
+
+class IterateLonLat {
+public:
+    using iterator       = IteratorLonLat;
+    using const_iterator = iterator;
+    using Grid           = detail::grid::Grid;
+
+public:
+    IterateLonLat( const Grid& grid ) : grid_( grid ) {}
+    iterator begin() const;
+    iterator end() const;
+
+private:
+    const Grid& grid_;
+};
 
 }  // namespace grid
 }  // namespace atlas

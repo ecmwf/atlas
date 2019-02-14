@@ -10,9 +10,11 @@
 
 #pragma once
 
+#include <array>
+
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/Range.h"
-#include "atlas/runtime/Log.h"
+#include "atlas/library/config.h"
 
 namespace atlas {
 namespace array {
@@ -131,13 +133,16 @@ public:
     template <typename... Args>
     typename Slice<Args...>::type apply( const Args... args ) const {
         using slicer_t = Slicer<typename Slice<Args...>::type, ( SliceRank<Args...>::value == 0 )>;
+        static_assert(
+            View::RANK <= sizeof...( Args ),
+            "Not enough arguments passed to slice() function. Pehaps you forgot to add a array::Range::all()" );
         return slicer_t::apply( view_, args... );
     }
 
 private:
     template <typename... Args>
     struct array {
-        using type = typename std::array<size_t, SliceRank<Args...>::value>;
+        using type = typename std::array<idx_t, SliceRank<Args...>::value>;
     };
 
     template <typename ReturnType, bool ToScalar = false>
@@ -248,7 +253,6 @@ private:
         int i_slice( 0 );
         int i_view( 0 );
         shape_part<0>( view, result, i_view, i_slice, args... );
-        ASSERT( i_view == view.rank() );
         return result;
     }
 
@@ -282,7 +286,7 @@ private:
         ++i_view;
     }
     template <int Dim, typename Strides>
-    static void update_strides( View& view, Strides& strides, int& /*i_view*/, int& i_slice,
+    static void update_strides( View& /*view*/, Strides& strides, int& /*i_view*/, int& i_slice,
                                 const RangeDummy& /*range*/ ) {
         strides[i_slice] = 0;
         ++i_slice;
@@ -306,7 +310,6 @@ private:
         int i_slice( 0 );
         int i_view( 0 );
         strides_part<0>( view, result, i_view, i_slice, args... );
-        ASSERT( i_view == view.rank() );
         return result;
     }
 

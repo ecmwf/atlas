@@ -28,11 +28,11 @@
 #include "atlas/numerics/fvm/Method.h"
 #include "atlas/output/detail/GmshIO.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Config.h"
-#include "atlas/parallel/omp/omp.h"
 
 //------------------------------------------------------------------------------
 
@@ -62,12 +62,15 @@ private:
 
 //-----------------------------------------------------------------------------
 
-static int halo_default() { return 2; }
+static int halo_default() {
+    return 2;
+}
 
 Tool::Tool( int argc, char** argv ) : AtlasTool( argc, argv ) {
     add_option( new SimpleOption<std::string>(
         "grid", "Grid unique identifier\n" + indent() + "     Example values: N80, F40, O24, L32" ) );
-    add_option( new SimpleOption<long>( "halo", "Number of halos (default="+std::to_string(halo_default())+")" ) );
+    add_option(
+        new SimpleOption<long>( "halo", "Number of halos (default=" + std::to_string( halo_default() ) + ")" ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -85,7 +88,7 @@ void Tool::execute( const Args& args ) {
         try {
             grid = Grid( key );
         }
-        catch ( eckit::BadParameter& e ) {
+        catch ( eckit::Exception& e ) {
         }
     }
     else {

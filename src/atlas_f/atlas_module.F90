@@ -1,3 +1,11 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
 #include "atlas/atlas_f.h"
 
 module atlas_module
@@ -8,8 +16,6 @@ module atlas_module
 !              for structured grids and unstructured meshes
 !
 !------------------------------------------------------------------------------
-
-use atlas_mpi_module
 
 use atlas_Field_module, only: &
     & atlas_Field, &
@@ -29,41 +35,6 @@ use atlas_JSON_module, only: &
     & atlas_PathName
 use atlas_Metadata_module, only: &
     & atlas_Metadata
-use atlas_Error_module, only: &
-    & atlas_CodeLocation, &
-    & atlas_code_location_str, &
-    & atlas_code_location, &
-    & atlas_abort, &
-    & atlas_throw_exception, &
-    & atlas_throw_notimplemented, &
-    & atlas_throw_outofrange, &
-    & atlas_throw_seriousbug, &
-    & atlas_throw_usererror, &
-    & atlas_throw_assertionfailed, &
-    & atlas_err, &
-    & atlas_noerr, &
-    & atlas_err_clear, &
-    & atlas_err_success, &
-    & atlas_err_code, &
-    & atlas_err_msg, &
-    & atlas_err_set_aborts, &
-    & atlas_err_set_throws, &
-    & atlas_err_set_backtrace, &
-    & atlas_err_cleared, &
-    & atlas_err_noerr, &
-    & atlas_err_exception, &
-    & atlas_err_usererror, &
-    & atlas_err_seriousbug, &
-    & atlas_err_notimplemented, &
-    & atlas_err_assertionfailed, &
-    & atlas_err_badparameter, &
-    & atlas_err_outofrange, &
-    & atlas_err_stop, &
-    & atlas_err_abort, &
-    & atlas_err_cancel, &
-    & atlas_err_readerror, &
-    & atlas_err_writeerror, &
-    & atlas_err_unknown
 use atlas_HybridElements_module, only: &
     & atlas_HybridElements
 use atlas_mesh_Edges_module, only: &
@@ -145,6 +116,8 @@ use atlas_mesh_actions_module, only: &
 use atlas_output_module, only: &
     & atlas_Output, &
     & atlas_output_Gmsh
+use atlas_trace_module, only : &
+    & atlas_Trace
 
 use fckit_log_module,  only: atlas_log => fckit_log
 
@@ -186,7 +159,7 @@ subroutine atlas_init( comm )
   use atlas_library_c_binding
   use iso_fortran_env, only : stdout => output_unit
   use fckit_main_module, only: fckit_main
-  use atlas_mpi_module, only : atlas_mpi_set_comm
+  use fckit_mpi_module, only : fckit_mpi_setCommDefault
 
   integer, intent(in), optional :: comm
 
@@ -205,7 +178,7 @@ subroutine atlas_init( comm )
   endif
 
   if( present(comm) ) then
-    call atlas_mpi_set_comm(comm)
+    call fckit_mpi_setCommDefault(comm)
   endif
   call atlas__atlas_init_noargs()
 

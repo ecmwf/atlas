@@ -9,9 +9,15 @@
  */
 
 #include "atlas/grid/Partitioner.h"
+#include "atlas/grid/Distribution.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/grid/detail/distribution/DistributionImpl.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace grid {
@@ -22,29 +28,38 @@ bool Partitioner::exists( const std::string& type ) {
     return Factory::has( type );
 }
 
-Partitioner::Partitioner( const detail::partitioner::Partitioner* partitioner ) : partitioner_( partitioner ) {}
+Partitioner::Partitioner( const std::string& type ) : Handle( Factory::build( type ) ) {}
 
-Partitioner::Partitioner( const std::string& type ) : partitioner_( Factory::build( type ) ) {}
-
-Partitioner::Partitioner( const std::string& type, const size_t nb_partitions ) :
-    partitioner_( Factory::build( type, nb_partitions ) ) {}
+Partitioner::Partitioner( const std::string& type, const idx_t nb_partitions ) :
+    Handle( Factory::build( type, nb_partitions ) ) {}
 
 namespace {
 detail::partitioner::Partitioner* partitioner_from_config( const Partitioner::Config& config ) {
     std::string type;
     long partitions = mpi::comm().size();
-    if ( not config.get( "type", type ) )
-        throw eckit::BadParameter( "'type' missing in configuration for Partitioner", Here() );
+    if ( not config.get( "type", type ) ) throw_Exception( "'type' missing in configuration for Partitioner", Here() );
     config.get( "partitions", partitions );
     return Factory::build( type, partitions );
 }
 }  // namespace
 
-Partitioner::Partitioner( const Config& config ) : partitioner_( partitioner_from_config( config ) ) {}
+Partitioner::Partitioner( const Config& config ) : Handle( partitioner_from_config( config ) ) {}
 
 void Partitioner::partition( const Grid& grid, int part[] ) const {
     ATLAS_TRACE();
-    partitioner_->partition( grid, part );
+    get()->partition( grid, part );
+}
+
+Distribution Partitioner::partition( const Grid& grid ) const {
+    return Distribution( grid, *this );
+}
+
+idx_t Partitioner::nb_partitions() const {
+    return get()->nb_partitions();
+}
+
+std::string Partitioner::type() const {
+    return get()->type();
 }
 
 MatchingMeshPartitioner::MatchingMeshPartitioner() : Partitioner() {}
@@ -55,6 +70,10 @@ grid::detail::partitioner::Partitioner* matching_mesh_partititioner( const Mesh&
     config.get( "type", type );
     return MatchedPartitionerFactory::build( type, mesh );
 }
+
+MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh ) :
+    MatchingMeshPartitioner( mesh, util::NoConfig() ) {}
+
 
 MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh, const Config& config ) :
     Partitioner( matching_mesh_partititioner( mesh, config ) ) {}
@@ -84,12 +103,12 @@ detail::partitioner::Partitioner* atlas__grid__MatchingMeshPartitioner__new( con
     return p;
 }
 
-Distribution::impl_t* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This,
-                                                           const Grid::Implementation* grid ) {
-    Distribution::impl_t* d;
+Distribution::Implementation* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This,
+                                                                   const Grid::Implementation* grid ) {
+    Distribution::Implementation* d;
     {
         Distribution distribution = This->partition( Grid( grid ) );
-        d                         = const_cast<Distribution::impl_t*>( distribution.get() );
+        d                         = const_cast<Distribution::Implementation*>( distribution.get() );
         d->attach();
     }
     d->detach();

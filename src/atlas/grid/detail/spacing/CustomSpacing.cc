@@ -13,7 +13,9 @@
 #include <algorithm>
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
+
+#include "atlas/grid/detail/spacing/SpacingFactory.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
@@ -29,7 +31,7 @@ CustomSpacing::CustomSpacing( const eckit::Parametrisation& params ) {
     params.get( "values", x_ );
 
     size_t N;
-    if ( params.get( "N", N ) ) { ASSERT( x_.size() == N ); }
+    if ( params.get( "N", N ) ) { ATLAS_ASSERT( x_.size() == N ); }
     N = x_.size();
 
     std::vector<double> interval;
@@ -55,7 +57,9 @@ CustomSpacing::Spec CustomSpacing::spec() const {
     return spacing_specs;
 }
 
-register_BuilderT1( Spacing, CustomSpacing, CustomSpacing::static_type() );
+namespace {
+static SpacingBuilder<CustomSpacing> __builder( CustomSpacing::static_type() );
+}
 
 }  // namespace spacing
 }  // namespace grid

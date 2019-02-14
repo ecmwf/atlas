@@ -1,0 +1,803 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+#include "atlas/atlas_f.h"
+#:include "internals/atlas_generics.fypp"
+
+#:set ranks = [0,1]
+
+module atlas_functionspace_NodeColumns_module
+
+use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
+use atlas_functionspace_module, only : atlas_FunctionSpace
+use atlas_Field_module, only: atlas_Field
+use atlas_FieldSet_module, only: atlas_FieldSet
+use atlas_Mesh_module, only: atlas_Mesh
+use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
+use atlas_GatherScatter_module, only: atlas_GatherScatter
+use atlas_HaloExchange_module, only: atlas_HaloExchange
+use atlas_Checksum_module, only: atlas_Checksum
+use atlas_Config_module, only: atlas_Config
+use atlas_kinds_module, only: ATLAS_KIND_GIDX
+
+implicit none
+
+private :: c_str, c_ptr_to_string, c_ptr_free
+private :: atlas_FunctionSpace
+private :: atlas_Field
+private :: atlas_FieldSet
+private :: atlas_mesh_Nodes
+private :: atlas_GatherScatter
+private :: atlas_HaloExchange
+private :: atlas_Checksum
+private :: atlas_Mesh
+private :: atlas_Config
+private :: ATLAS_KIND_GIDX
+
+public :: atlas_functionspace_NodeColumns
+
+private
+
+!------------------------------------------------------------------------------
+TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_NodeColumns
+
+! Purpose :
+! -------
+!   *atlas_functionspace_NodeColumns* : Interpretes fields defined in nodes
+
+! Methods :
+! -------
+
+! Author :
+! ------
+!   August-2015 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+
+
+  procedure, public :: nb_nodes
+  procedure, public :: mesh
+  procedure, public :: nodes
+
+  procedure, public :: get_halo_exchange
+
+  procedure, private :: gather_fieldset
+  procedure, private :: gather_field
+  generic, public :: gather => gather_fieldset, gather_field
+  procedure, public :: get_gather
+
+  procedure, private :: scatter_fieldset
+  procedure, private :: scatter_field
+  generic, public :: scatter => scatter_fieldset, scatter_field
+  procedure, public :: get_scatter
+
+  procedure, private :: checksum_fieldset
+  procedure, private :: checksum_field
+  generic, public :: checksum => checksum_fieldset, checksum_field
+  procedure, public :: get_checksum
+
+
+  procedure, public :: minimum_per_level
+
+  procedure, public :: maximum_per_level
+
+  procedure, public :: minimum_and_location_per_level => &
+    & minloc_per_level
+
+  procedure, public :: maximum_and_location_per_level => &
+    & maxloc_per_level
+
+  procedure, public :: sum_per_level
+
+  procedure, public :: order_independent_sum_per_level
+
+  procedure, public :: mean_per_level
+
+  @:generic_public_interface( minimum )
+  @:generic_public_interface( maximum )
+  @:generic_public_interface_2( minimum_and_location, prefix1=minloc, prefix2=minloclev )
+  @:generic_public_interface_2( maximum_and_location, prefix1=maxloc, prefix2=maxloclev )
+  @:generic_public_interface( sum )
+  @:generic_public_interface( order_independent_sum )
+  @:generic_public_interface( mean )
+  @:generic_public_interface( mean_and_standard_deviation, prefix=mean_and_stddev )
+
+  procedure, public :: mean_and_standard_deviation_per_level => &
+    & mean_and_stddev_per_level
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_functionspace_NodeColumns__final_auto
+#endif
+
+END TYPE atlas_functionspace_NodeColumns
+
+interface atlas_functionspace_NodeColumns
+  module procedure constructor__cptr
+  module procedure constructor
+end interface
+
+!------------------------------------------------------------------------------
+
+!========================================================
+contains
+!========================================================
+
+!------------------------------------------------------------------------------
+
+function constructor__cptr(cptr) result(this)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  type(atlas_functionspace_NodeColumns) :: this
+  type(c_ptr), intent(in) :: cptr
+  call this%reset_c_ptr( cptr )
+  call this%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function constructor(mesh,halo,levels) result(this)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_functionspace_NodeColumns) :: this
+  type(atlas_Mesh), intent(inout) :: mesh
+  integer, intent(in), optional :: halo
+  integer, intent(in), optional :: levels
+  type(atlas_Config) :: config
+  config = atlas_Config()
+  if( present(halo) )   call config%set("halo",halo)
+  if( present(levels) ) call config%set("levels",levels)
+  call this%reset_c_ptr( atlas__NodesFunctionSpace__new(mesh%CPTR_PGIBUG_A,config%CPTR_PGIBUG_B) )
+  call config%final()
+  call this%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function nb_nodes(this)
+  use atlas_functionspace_NodeColumns_c_binding
+  integer :: nb_nodes
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  nb_nodes = atlas__NodesFunctionSpace__nb_nodes(this%CPTR_PGIBUG_A)
+end function
+
+!------------------------------------------------------------------------------
+
+function mesh(this)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_Mesh) :: mesh
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  call mesh%reset_c_ptr( atlas__NodesFunctionSpace__mesh(this%CPTR_PGIBUG_A) )
+  call mesh%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function nodes(this)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_mesh_Nodes) :: nodes
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  call nodes%reset_c_ptr( atlas__NodesFunctionSpace__nodes(this%CPTR_PGIBUG_A) )
+  call nodes%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function get_gather(this) result(gather)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_GatherScatter) :: gather
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  call gather%reset_c_ptr( atlas__NodesFunctioNSpace__get_gather(this%CPTR_PGIBUG_A) )
+end function
+
+!------------------------------------------------------------------------------
+
+function get_scatter(this) result(gather)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_GatherScatter) :: gather
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  call gather%reset_c_ptr( atlas__NodesFunctioNSpace__get_scatter(this%CPTR_PGIBUG_A) )
+end function
+
+!------------------------------------------------------------------------------
+
+subroutine gather_fieldset(this,local,global)
+  use atlas_functionspace_NodeColumns_c_binding
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_FieldSet), intent(in) :: local
+  type(atlas_FieldSet), intent(inout) :: global
+  call atlas__NodesFunctionSpace__gather_fieldset(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine gather_field(this,local,global)
+  use atlas_functionspace_NodeColumns_c_binding
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field), intent(in) :: local
+  type(atlas_Field), intent(inout) :: global
+  call atlas__NodesFunctionSpace__gather_field(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine scatter_fieldset(this,global,local)
+  use atlas_functionspace_NodeColumns_c_binding
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_FieldSet), intent(in) :: global
+  type(atlas_FieldSet), intent(inout) :: local
+  call atlas__NodesFunctionSpace__scatter_fieldset(this%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine scatter_field(this,global,local)
+  use atlas_functionspace_NodeColumns_c_binding
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field), intent(in) :: global
+  type(atlas_Field), intent(inout) :: local
+  call atlas__NodesFunctionSpace__scatter_field(this%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+function get_halo_exchange(this) result(halo_exchange)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_HaloExchange) :: halo_exchange
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  call halo_exchange%reset_c_ptr( atlas__NodesFunctioNSpace__get_halo_exchange(this%CPTR_PGIBUG_A) )
+end function
+
+!------------------------------------------------------------------------------
+
+function get_checksum(this) result(checksum)
+  use atlas_functionspace_NodeColumns_c_binding
+  type(atlas_Checksum) :: checksum
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  call checksum%reset_c_ptr( atlas__NodesFunctioNSpace__get_checksum(this%CPTR_PGIBUG_A) )
+end function
+
+!------------------------------------------------------------------------------
+
+function checksum_fieldset(this,fieldset) result(checksum)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  character(len=:), allocatable :: checksum
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_FieldSet), intent(in) :: fieldset
+  type(c_ptr) :: checksum_cptr
+  integer :: checksum_size, checksum_allocated
+  call atlas__NodesFunctionSpace__checksum_fieldset( &
+    this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A,checksum_cptr,checksum_size,checksum_allocated)
+  allocate(character(len=checksum_size) :: checksum )
+  checksum = c_ptr_to_string(checksum_cptr)
+  if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
+end function
+
+!------------------------------------------------------------------------------
+
+function checksum_field(this,field) result(checksum)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  character(len=:), allocatable :: checksum
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  type(c_ptr) :: checksum_cptr
+  integer :: checksum_size, checksum_allocated
+  call atlas__NodesFunctionSpace__checksum_field( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,checksum_cptr,checksum_size,checksum_allocated)
+  allocate(character(len=checksum_size) :: checksum )
+  checksum = c_ptr_to_string(checksum_cptr)
+  if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
+end function
+
+!------------------------------------------------------------------------------
+
+#:for dtype,ftype,ctype in types[:4]
+subroutine minimum_${dtype}$_r0(this,field,minimum)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, intent(out) :: minimum
+  call atlas__NodesFunctionSpace__min_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine minimum_${dtype}$_r1(this,field,minimum)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$,c_ptr,c_f_pointer
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, allocatable, intent(out) :: minimum(:)
+  type(c_ptr) :: min_cptr
+  ${ftype}$, pointer :: min_fptr(:)
+  integer :: min_size
+  call atlas__NodesFunctionSpace__min_arr_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,min_size)
+  call c_f_pointer(min_cptr,min_fptr,(/min_size/))
+  allocate(minimum(min_size))
+  minimum(:) = min_fptr(:)
+  call c_ptr_free(min_cptr)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine maximum_${dtype}$_r0(this,field,maximum)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, intent(out) :: maximum
+  call atlas__NodesFunctionSpace__max_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine maximum_${dtype}$_r1(this,field,maximum)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$, c_ptr, c_f_pointer
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, allocatable, intent(out) :: maximum(:)
+  type(c_ptr) :: max_cptr
+  ${ftype}$, pointer :: max_fptr(:)
+  integer :: max_size
+  call atlas__NodesFunctionSpace__max_arr_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,max_size)
+  call c_f_pointer(max_cptr,max_fptr,(/max_size/))
+  allocate(maximum(max_size))
+  maximum(:) = max_fptr(:)
+  call c_ptr_free(max_cptr)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine minloc_${dtype}$_r0(this,field,minimum,location)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$, c_long
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, intent(out) :: minimum
+  integer(ATLAS_KIND_GIDX), intent(out) :: location
+  integer(c_long) :: loc
+  call atlas__NodesFunctionSpace__minloc_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum,loc)
+  location = loc
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine maxloc_${dtype}$_r0(this,field,maximum,location)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$, c_long
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, intent(out) :: maximum
+  integer(ATLAS_KIND_GIDX), intent(out) :: location
+  integer(c_long) :: loc
+  call atlas__NodesFunctionSpace__maxloc_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum,loc)
+  location = loc
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine minloc_${dtype}$_r1(this,field,minimum,location)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$, c_ptr, c_f_pointer, c_long
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, allocatable, intent(out) :: minimum(:)
+  integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
+  type(c_ptr) :: min_cptr, loc_cptr
+  ${ftype}$, pointer :: min_fptr(:)
+  integer(c_long),pointer :: loc_fptr(:)
+  integer :: min_size
+  call atlas__NodesFunctionSpace__minloc_arr_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,loc_cptr,min_size)
+  call c_f_pointer(min_cptr,min_fptr,(/min_size/))
+  call c_f_pointer(loc_cptr,loc_fptr,(/min_size/))
+  allocate(minimum(min_size))
+  allocate(location(min_size))
+  minimum(:) = min_fptr(:)
+  location(:) = loc_fptr(:)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine maxloc_${dtype}$_r1(this,field,maximum,location)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$, c_ptr, c_f_pointer, c_long
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, allocatable, intent(out) :: maximum(:)
+  integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
+  type(c_ptr) :: max_cptr, loc_cptr
+  ${ftype}$, pointer :: max_fptr(:)
+  integer(c_long),pointer :: loc_fptr(:)
+  integer :: max_size
+  call atlas__NodesFunctionSpace__maxloc_arr_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,loc_cptr,max_size)
+  call c_f_pointer(max_cptr,max_fptr,(/max_size/))
+  call c_f_pointer(loc_cptr,loc_fptr,(/max_size/))
+  allocate(maximum(max_size))
+  allocate(location(max_size))
+  maximum(:) = max_fptr(:)
+  location(:) = loc_fptr(:)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine sum_${dtype}$_r0(this,field,sum,N)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$, c_int
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, intent(out) :: sum
+  integer(c_int), intent(out), optional :: N
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__sum_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum,opt_N)
+  if( present(N) ) N = opt_N
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine sum_${dtype}$_r1(this,field,sum,N)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$, c_int, c_ptr, c_f_pointer
+  use fckit_c_interop_module, only : c_ptr_free
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, allocatable, intent(out) :: sum(:)
+  integer(c_int), intent(out), optional :: N
+  type(c_ptr) :: sum_cptr
+  ${ftype}$, pointer :: sum_fptr(:)
+  integer :: sum_size
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__sum_arr_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum_cptr,sum_size,opt_N)
+  call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
+  allocate(sum(sum_size))
+  sum(:) = sum_fptr(:)
+  call c_ptr_free(sum_cptr)
+  if( present(N) ) N = opt_N
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine mean_${dtype}$_r0(this,field,mean,N)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, intent(out) :: mean
+  integer(c_int), intent(out), optional :: N
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__mean_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean,opt_N)
+  if( present(N) ) N = opt_N
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine mean_${dtype}$_r1(this,field,mean,N)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$, c_int, c_ptr, c_f_pointer
+  use fckit_c_interop_module, only : c_ptr_free
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, allocatable, intent(out) :: mean(:)
+  integer(c_int), intent(out), optional :: N
+  type(c_ptr) :: mean_cptr
+  ${ftype}$, pointer :: mean_fptr(:)
+  integer :: mean_size
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__mean_arr_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean_cptr,mean_size,opt_N)
+  call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
+  allocate(mean(mean_size))
+  mean(:) = mean_fptr(:)
+  call c_ptr_free(mean_cptr)
+  if( present(N) ) N = opt_N
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine mean_and_stddev_${dtype}$_r0(this,field,mean,stddev,N)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$, c_int
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, intent(out) :: mean
+  ${ftype}$, intent(out) :: stddev
+  integer(c_int), intent(out), optional :: N
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__mean_and_stddev_${ctype}$( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean,stddev,opt_N)
+  if( present(N) ) N = opt_N
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine mean_and_stddev_${dtype}$_r1(this,field,mean,stddev,N)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$, c_int ,c_ptr, c_f_pointer
+  use fckit_c_interop_module, only : c_ptr_free
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, allocatable, intent(out) :: mean(:)
+  ${ftype}$, allocatable, intent(out) :: stddev(:)
+  integer(c_int), intent(out), optional :: N
+  type(c_ptr) :: mean_cptr, stddev_cptr
+  ${ftype}$, pointer :: mean_fptr(:), stddev_fptr(:)
+  integer :: varsize
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__mean_and_stddev_arr_${ctype}$( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean_cptr,stddev_cptr,varsize,opt_N)
+  call c_f_pointer(mean_cptr,mean_fptr,(/varsize/))
+  call c_f_pointer(stddev_cptr,stddev_fptr,(/varsize/))
+  allocate(mean(varsize))
+  allocate(stddev(varsize))
+  mean(:) = mean_fptr(:)
+  stddev(:) = stddev_fptr(:)
+  call c_ptr_free(mean_cptr)
+  call c_ptr_free(stddev_cptr)
+  if( present(N) ) N = opt_N
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine minloclev_${dtype}$_r0(this,field,minimum,location,level)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, intent(out) :: minimum
+  integer(ATLAS_KIND_GIDX), intent(out) :: location
+  integer(c_int), intent(out) :: level
+  integer(c_long) :: loc
+  integer(c_int) :: opt_lev
+  call atlas__NodesFunctionSpace__minloclev_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum,loc,opt_lev)
+  location = loc
+  level = opt_lev
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine maxloclev_${dtype}$_r0(this,field,maximum,location,level)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, intent(out) :: maximum
+  integer(ATLAS_KIND_GIDX), intent(out) :: location
+  integer(c_int), intent(out) :: level
+  integer(c_long) :: loc
+  integer(c_int) :: opt_lev
+  call atlas__NodesFunctionSpace__maxloclev_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum,loc,opt_lev)
+  location = loc
+  level = opt_lev
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine minloclev_${dtype}$_r1(this,field,minimum,location,level)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_${ctype}$, c_long, c_ptr, c_f_pointer
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, allocatable, intent(out) :: minimum(:)
+  integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
+  integer(c_int), allocatable, intent(out) :: level(:)
+  type(c_ptr) :: min_cptr, loc_cptr, lev_cptr
+  ${ftype}$, pointer :: min_fptr(:)
+  integer(c_long),pointer :: loc_fptr(:)
+  integer(c_long),pointer :: lev_fptr(:)
+  integer :: min_size
+  call atlas__NodesFunctionSpace__minloclev_arr_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,loc_cptr,lev_cptr,min_size)
+  call c_f_pointer(min_cptr,min_fptr,(/min_size/))
+  call c_f_pointer(loc_cptr,loc_fptr,(/min_size/))
+  allocate(minimum(min_size))
+  allocate(location(min_size))
+  minimum(:) = min_fptr(:)
+  location(:) = loc_fptr(:)
+  call c_f_pointer(lev_cptr,lev_fptr,(/min_size/))
+  allocate(level(min_size))
+  level(:) = lev_fptr(:)
+  call c_ptr_free(min_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine maxloclev_${dtype}$_r1(this,field,maximum,location,level)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$, c_int, c_long , c_f_pointer, c_ptr
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, allocatable, intent(out) :: maximum(:)
+  integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
+  integer(c_int), allocatable, intent(out) :: level(:)
+  type(c_ptr) :: max_cptr, loc_cptr, lev_cptr
+  ${ftype}$, pointer :: max_fptr(:)
+  integer(c_long),pointer :: loc_fptr(:)
+  integer(c_long),pointer :: lev_fptr(:)
+  integer :: max_size
+  call atlas__NodesFunctionSpace__maxloclev_arr_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,loc_cptr,lev_cptr,max_size)
+  call c_f_pointer(max_cptr,max_fptr,(/max_size/))
+  call c_f_pointer(loc_cptr,loc_fptr,(/max_size/))
+  allocate(maximum(max_size))
+  allocate(location(max_size))
+  maximum(:) = max_fptr(:)
+  location(:) = loc_fptr(:)
+  call c_f_pointer(lev_cptr,lev_fptr,(/max_size/))
+  allocate(level(max_size))
+  level(:) = lev_fptr(:)
+  call c_ptr_free(max_cptr)
+  call c_ptr_free(loc_cptr)
+  call c_ptr_free(lev_cptr)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine order_independent_sum_${dtype}$_r0(this,field,sum,N)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$, c_int
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, intent(out) :: sum
+  integer(c_int), intent(out), optional :: N
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__oisum_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum,opt_N)
+  if( present(N) ) N = opt_N
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine order_independent_sum_${dtype}$_r1(this,field,sum,N)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_${ctype}$, c_int, c_ptr, c_f_pointer
+  use fckit_c_interop_module, only : c_ptr_free
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field) :: field
+  ${ftype}$, allocatable, intent(out) :: sum(:)
+  integer(c_int), intent(out), optional :: N
+  type(c_ptr) :: sum_cptr
+  ${ftype}$, pointer :: sum_fptr(:)
+  integer :: sum_size
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__oisum_arr_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum_cptr,sum_size,opt_N)
+  call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
+  allocate(sum(sum_size))
+  sum(:) = sum_fptr(:)
+  call c_ptr_free(sum_cptr)
+  if( present(N) ) N = opt_N
+end subroutine
+
+#:endfor
+
+!------------------------------------------------------------------------------
+
+subroutine minloc_per_level(this,field,minimum,location)
+  use atlas_functionspace_NodeColumns_c_binding
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  type(atlas_Field), intent(inout) :: minimum
+  type(atlas_Field), intent(inout) :: location
+  call atlas__NodesFunctionSpace__minloc_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum%CPTR_PGIBUG_A,location%CPTR_PGIBUG_A)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine maxloc_per_level(this,field,maximum,location)
+  use atlas_functionspace_NodeColumns_c_binding
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  type(atlas_Field), intent(inout) :: maximum
+  type(atlas_Field), intent(inout) :: location
+  call atlas__NodesFunctionSpace__maxloc_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum%CPTR_PGIBUG_A,location%CPTR_PGIBUG_A)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine minimum_per_level(this,field,minimum)
+  use atlas_functionspace_NodeColumns_c_binding
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  type(atlas_Field), intent(inout) :: minimum
+  call atlas__NodesFunctionSpace__min_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,minimum%CPTR_PGIBUG_A)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine maximum_per_level(this,field,maximum)
+  use atlas_functionspace_NodeColumns_c_binding
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  type(atlas_Field), intent(inout) :: maximum
+  call atlas__NodesFunctionSpace__max_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,maximum%CPTR_PGIBUG_A)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine sum_per_level(this,field,sum,N)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  type(atlas_Field), intent(inout) :: sum
+  integer(c_int), intent(out), optional :: N
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__sum_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum%CPTR_PGIBUG_A,opt_N)
+  if( present(N) ) N = opt_N
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine order_independent_sum_per_level(this,field,sum,N)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  type(atlas_Field), intent(inout) :: sum
+  integer(c_int), intent(out), optional :: N
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__oisum_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,sum%CPTR_PGIBUG_A,opt_N)
+  if( present(N) ) N = opt_N
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine mean_per_level(this,field,mean,N)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  type(atlas_Field), intent(inout) :: mean
+  integer(c_int), intent(out), optional :: N
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__mean_per_level( &
+    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean%CPTR_PGIBUG_A,opt_N)
+  if( present(N) ) N = opt_N
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine mean_and_stddev_per_level(this,field,mean,stddev,N)
+  use atlas_functionspace_NodeColumns_c_binding
+  use, intrinsic :: iso_c_binding
+  class(atlas_functionspace_NodeColumns), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  type(atlas_Field), intent(inout) :: mean
+  type(atlas_Field), intent(inout) :: stddev
+  integer(c_int), intent(out), optional :: N
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__mean_and_stddev_per_level( &
+    & this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,mean%CPTR_PGIBUG_A,stddev%CPTR_PGIBUG_A,opt_N)
+  if( present(N) ) N = opt_N
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+ATLAS_FINAL subroutine atlas_functionspace_NodeColumns__final_auto(this)
+  type(atlas_functionspace_NodeColumns), intent(inout) :: this
+#if FCKIT_FINAL_DEBUGGING
+  write(0,*) "atlas_functionspace_NodeColumns__final_auto"
+#endif
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+!------------------------------------------------------------------------------
+
+end module atlas_functionspace_NodeColumns_module
+

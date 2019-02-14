@@ -11,7 +11,7 @@
 #include "atlas/grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 
 #include "tests/AtlasTestEnvironment.h"
@@ -31,7 +31,7 @@ CASE( "test_create_mesh" ) {
     util::Config opts;
     opts.set( "3d", true );            ///< creates links along date-line
     opts.set( "include_pole", true );  ///< triangulate the pole point
-    meshgenerator::StructuredMeshGenerator generate( opts );
+    StructuredMeshGenerator generate( opts );
 
     // opts.set("nb_parts",1); // default = 1
     // opts.set("part",    0); // default = 0

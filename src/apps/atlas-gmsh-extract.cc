@@ -18,12 +18,12 @@
 #include <vector>
 
 #include "eckit/config/Resource.h"
-#include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/runtime/Tool.h"
 
 #include "atlas/library/Library.h"
+#include "atlas/runtime/Exception.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -107,7 +107,7 @@ public:
             }
         }
 
-        if ( in_files.empty() ) throw UserError( "missing input filename, parameter -i\n" + help_str, Here() );
+        if ( in_files.empty() ) throw_Exception( "missing input filename, parameter -i\n" + help_str, Here() );
     }
 
 private:
@@ -131,7 +131,7 @@ void gmsh_extract::run() {
     std::ofstream out_file;
     if ( !out_filename.empty() ) {
         out_file.open( out_filename.c_str(), std::ios::out | std::ios::binary );
-        if ( !out_file.is_open() ) throw eckit::CantOpenFile( out_filename );
+        if ( !out_file.is_open() ) throw_CantOpenFile( out_filename );
     }
 
     std::ostream& out = out_filename.empty() ? std::cout : out_file;
@@ -146,7 +146,7 @@ void gmsh_extract::run() {
 
         std::ifstream in_file;
         in_file.open( gmsh_file.localPath(), std::ios::in | std::ios::binary );
-        if ( !in_file.is_open() ) throw eckit::CantOpenFile( gmsh_file );
+        if ( !in_file.is_open() ) throw_CantOpenFile( gmsh_file );
 
         std::string line;
         std::string ctxt = "";

@@ -15,12 +15,6 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
   )
 
-  add_fctest( TARGET atlas_fctest_error
-    LINKER_LANGUAGE Fortran
-    SOURCES         fctest_error.F90
-    LIBS            atlas_f
-  )
-
  add_fctest( TARGET atlas_fctest_parametrisation
    CONDITION       NOT atlas_fctest_parametrisation_DISABLED
    LINKER_LANGUAGE Fortran
@@ -36,7 +30,7 @@ if( HAVE_FCTEST )
 
 endif()
 
-foreach( test earth flags footprint indexview polygon )
+foreach( test earth flags footprint indexview polygon point )
   ecbuild_add_test( TARGET atlas_test_${test}
     SOURCES test_${test}.cc
     LIBS atlas

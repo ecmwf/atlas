@@ -10,9 +10,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include <sstream>
-
-#include "eckit/memory/SharedPtr.h"
 
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
@@ -68,7 +67,7 @@ struct validate_impl {
     template <typename... Int>
     static void apply( array::ArrayView<DATA_TYPE, Rank>& arrv, DATA_TYPE arr_c[], std::array<size_t, Rank>& strides,
                        Int... dims ) {
-        for ( size_t cnt = 0; cnt < arrv.template shape<Rank - Dim>(); ++cnt ) {
+        for ( idx_t cnt = 0; cnt < arrv.template shape<Rank - Dim>(); ++cnt ) {
             validate_impl<DATA_TYPE, Rank, Dim - 1>::apply( arrv, arr_c, strides, dims..., cnt );
         }
     }
@@ -99,7 +98,7 @@ struct validate {
         strides[Rank - 1] = 1;
         compute_strides<Rank - 1>::apply( arrv, strides );
 
-        for ( size_t i = 0; i < arrv.template shape<0>(); ++i ) {
+        for ( idx_t i = 0; i < arrv.template shape<0>(); ++i ) {
             validate_impl<DATA_TYPE, Rank, Rank - 1>::apply( arrv, arr_c, strides, i );
         }
     }
@@ -112,30 +111,30 @@ struct Fixture {
         N              = nb_nodes[mpi::comm().rank()];
         switch ( mpi::comm().rank() ) {
             case 0: {
-                int part_c[] = {2, 0, 0, 0, 1};
-                part         = vec( part_c );
-                int ridx_c[] = {4, 1, 2, 3, 1};
-                ridx         = vec( ridx_c );
-                POD gidx_c[] = {0, 1, 2, 3, 0};
-                gidx         = vec( gidx_c );
+                int part_c[]   = {2, 0, 0, 0, 1};
+                part           = vec( part_c );
+                idx_t ridx_c[] = {4, 1, 2, 3, 1};
+                ridx           = vec( ridx_c );
+                POD gidx_c[]   = {0, 1, 2, 3, 0};
+                gidx           = vec( gidx_c );
                 break;
             }
             case 1: {
-                int part_c[] = {0, 1, 1, 1, 2, 2};
-                part         = vec( part_c );
-                int ridx_c[] = {3, 1, 2, 3, 2, 3};
-                ridx         = vec( ridx_c );
-                POD gidx_c[] = {0, 4, 5, 6, 0, 0};
-                gidx         = vec( gidx_c );
+                int part_c[]   = {0, 1, 1, 1, 2, 2};
+                part           = vec( part_c );
+                idx_t ridx_c[] = {3, 1, 2, 3, 2, 3};
+                ridx           = vec( ridx_c );
+                POD gidx_c[]   = {0, 4, 5, 6, 0, 0};
+                gidx           = vec( gidx_c );
                 break;
             }
             case 2: {
-                int part_c[] = {1, 1, 2, 2, 2, 0, 0};
-                part         = vec( part_c );
-                int ridx_c[] = {2, 3, 2, 3, 4, 1, 2};
-                ridx         = vec( ridx_c );
-                POD gidx_c[] = {0, 0, 7, 8, 9, 0, 0};
-                gidx         = vec( gidx_c );
+                int part_c[]   = {1, 1, 2, 2, 2, 0, 0};
+                part           = vec( part_c );
+                idx_t ridx_c[] = {2, 3, 2, 3, 4, 1, 2};
+                ridx           = vec( ridx_c );
+                POD gidx_c[]   = {0, 0, 7, 8, 9, 0, 0};
+                gidx           = vec( gidx_c );
                 break;
             }
         }
@@ -144,7 +143,7 @@ struct Fixture {
     parallel::HaloExchange halo_exchange;
     std::vector<int> nb_nodes;
     std::vector<int> part;
-    std::vector<int> ridx;
+    std::vector<idx_t> ridx;
     std::vector<POD> gidx;
 
     int N;
@@ -236,17 +235,17 @@ void test_rank1_strided_v1( Fixture& f ) {
     // (i.e. we are only selecting and exchanging the first component of the
     // field)
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<POD>( arrv_t.data(),
-                                                                 array::ArraySpec {
-                                                                     array::make_shape( f.N, 1 ),
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( arrv_t.data(),
+                                                                array::ArraySpec {
+                                                                    array::make_shape( f.N, 1 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-                                                                         array::make_strides( 32, 1 )
-                                                                 }
+                                                                        array::make_strides( 32, 1 )
+                                                                }
 #else
-                                                                         array::make_strides( 2, 1 )
-                                                                 }
+                                                                        array::make_strides( 2, 1 )
+                                                                }
 #endif
-                                                                 ) );
+                                                                ) );
 
     arr->syncHostDevice();
 
@@ -291,7 +290,7 @@ void test_rank1_strided_v2( Fixture& f ) {
     // (i.e. we are only selecting and exchanging the first component of the
     // field)
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<POD>( &( arrv_t( 0, 1 ) ), array::ArraySpec {
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( &( arrv_t( 0, 1 ) ), array::ArraySpec {
         array::make_shape( f.N, 1 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
             array::make_strides( 32, 1 )
@@ -371,14 +370,13 @@ void test_rank2_l1( Fixture& f ) {
     }
     arr_t.syncHostDevice();
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<POD>( arrv_t.data(), array::ArraySpec {
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( arrv_t.data(), array::ArraySpec {
         array::make_shape( f.N, 1, 2 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
             array::make_strides( 96, 32, 1 )
 #else
          array::make_strides(6, 2, 1)
 #endif
-
     } ) );
 
     arr_t.syncHostDevice();
@@ -433,7 +431,7 @@ void test_rank2_l2_v2( Fixture& f ) {
         }
     }
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<POD>( &arrv_t( 0, 1, 1 ), array::ArraySpec {
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( &arrv_t( 0, 1, 1 ), array::ArraySpec {
         array::make_shape( f.N, 1, 1 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
             array::make_strides( 192, 32, 1 )
@@ -490,7 +488,7 @@ void test_rank2_v2( Fixture& f ) {
         }
     }
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<POD>( &arrv_t( 0, 0, 1 ), array::ArraySpec {
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( &arrv_t( 0, 0, 1 ), array::ArraySpec {
         array::make_shape( f.N, 3, 1 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
             array::make_strides( 192, 32, 2 )
@@ -537,7 +535,7 @@ void test_rank2_v2( Fixture& f ) {
 }
 
 void test_rank0_wrap( Fixture& f ) {
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<POD>( f.gidx.data(), array::make_shape( f.N ) ) );
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( f.gidx.data(), array::make_shape( f.N ) ) );
     array::ArrayView<POD, 1> arrv = array::make_view<POD, 1>( *arr );
 
     arr->syncHostDevice();

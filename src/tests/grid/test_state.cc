@@ -11,7 +11,6 @@
 #include <cmath>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/JSONParser.h"
@@ -25,6 +24,7 @@
 #include "atlas/library/Library.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 #include "tests/AtlasTestEnvironment.h"
@@ -49,11 +49,11 @@ public:
 // ---  Implementation (in .cc file)
 void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p ) const {
     const util::Config* params = dynamic_cast<const util::Config*>( &p );
-    if ( !params ) { throw eckit::Exception( "Parametrisation has to be of atlas::util::Config type" ); }
+    if ( !params ) { throw_Exception( "Parametrisation has to be of atlas::util::Config type" ); }
 
     util::Config geometry;
     if ( !params->get( "geometry", geometry ) ) {
-        throw eckit::BadParameter( "Could not find 'geometry' in Parametrisation", Here() );
+        throw_Exception( "Could not find 'geometry' in Parametrisation", Here() );
     }
 
     std::string grid_uid;
@@ -62,7 +62,7 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
         if ( !geometry.has( "ngptot" ) ) { geometry.set( "ngptot", grid.size() ); }
     }
 
-    if ( !geometry.has( "ngptot" ) ) { throw eckit::BadParameter( "Could not find 'ngptot' in Parametrisation" ); }
+    if ( !geometry.has( "ngptot" ) ) { throw_Exception( "Could not find 'ngptot' in Parametrisation" ); }
 
     std::vector<util::Config> fields;
     if ( params->get( "fields", fields ) ) {
@@ -120,7 +120,7 @@ CASE( "state" ) {
 
 CASE( "state_generator" ) {
     EXPECT( StateGeneratorFactory::has( "MyStateGenerator" ) );
-    eckit::ScopedPtr<StateGenerator> stategenerator( StateGeneratorFactory::build( "MyStateGenerator" ) );
+    std::unique_ptr<StateGenerator> stategenerator( StateGeneratorFactory::build( "MyStateGenerator" ) );
 }
 
 CASE( "state_create" ) {

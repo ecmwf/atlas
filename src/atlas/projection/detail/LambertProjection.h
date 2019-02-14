@@ -22,7 +22,7 @@ public:
     LambertProjection( const eckit::Parametrisation& p );
 
     // destructor
-    ~LambertProjection() {}
+    ~LambertProjection() override {}
 
     // class name
     static std::string static_type() { return "lambert"; }

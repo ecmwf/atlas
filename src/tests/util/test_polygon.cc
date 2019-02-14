@@ -22,8 +22,8 @@ namespace test {
 
 CASE( "test_polygon_something" ) {
     using util::SphericalPolygon;
-    using p = PointLonLat;
-    typedef std::pair<p, bool> point_inside_t;
+    using p              = PointLonLat;
+    using point_inside_t = std::pair<p, bool>;
 
     SphericalPolygon poly( std::vector<PointLonLat>{
         p( 122.143, 35.9951 ),  p( 120, 30.4576 ),      p( 118.125, 24.9199 ),  p( 116.471, 19.3822 ),

@@ -14,7 +14,6 @@
 #include <limits>
 #include <stdexcept>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 
 #include "atlas/array.h"
@@ -32,6 +31,7 @@
 #include "atlas/output/detail/GmshIO.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -50,14 +50,16 @@ static double rad2deg = util::Constants::radiansToDegrees();
 
 class GmshFile : public std::ofstream {
 public:
-    GmshFile( const PathName& file_path, std::ios_base::openmode mode, int part = atlas::mpi::comm().rank() ) {
+    GmshFile( const PathName& file_path, std::ios_base::openmode mode,
+              int part = static_cast<int>( mpi::comm().rank() ) ) {
         PathName par_path( file_path );
+        int mpi_size = static_cast<int>( mpi::comm().size() );
         if ( atlas::mpi::comm().size() == 1 || part == -1 ) { std::ofstream::open( par_path.localPath(), mode ); }
         else {
             if ( atlas::mpi::comm().rank() == 0 ) {
                 PathName par_path( file_path );
                 std::ofstream par_file( par_path.localPath(), std::ios_base::out );
-                for ( size_t p = 0; p < atlas::mpi::comm().size(); ++p ) {
+                for ( int p = 0; p < mpi_size; ++p ) {
                     PathName loc_path( file_path );
                     // loc_path = loc_path.baseName(false) + "_p" + to_str(p) + ".msh";
                     loc_path = loc_path.baseName( false ) + ".msh.p" + std::to_string( p );
@@ -125,15 +127,15 @@ void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1> gidx,
     int ndata = data.shape( 0 );
     int nvars = data.shape( 1 );
     if ( nvars == 1 ) {
-        for ( size_t n = 0; n < ndata; ++n ) {
+        for ( idx_t n = 0; n < ndata; ++n ) {
             out << gidx( n ) << " " << data( n, 0 ) << "\n";
         }
     }
     else if ( nvars <= 3 ) {
         std::vector<DATATYPE> data_vec( 3, 0. );
-        for ( size_t n = 0; n < ndata; ++n ) {
+        for ( idx_t n = 0; n < ndata; ++n ) {
             out << gidx( n );
-            for ( size_t v = 0; v < nvars; ++v )
+            for ( idx_t v = 0; v < nvars; ++v )
                 data_vec[v] = data( n, v );
             for ( int v = 0; v < 3; ++v )
                 out << " " << data_vec[v];
@@ -143,7 +145,7 @@ void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1> gidx,
     else if ( nvars <= 9 ) {
         std::vector<DATATYPE> data_vec( 9, 0. );
         if ( nvars == 4 ) {
-            for ( size_t n = 0; n < ndata; ++n ) {
+            for ( int n = 0; n < ndata; ++n ) {
                 for ( int i = 0; i < 2; ++i ) {
                     for ( int j = 0; j < 2; ++j ) {
                         data_vec[i * 3 + j] = data( n, i * 2 + j );
@@ -156,7 +158,7 @@ void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1> gidx,
             }
         }
         else if ( nvars == 9 ) {
-            for ( size_t n = 0; n < ndata; ++n ) {
+            for ( int n = 0; n < ndata; ++n ) {
                 for ( int i = 0; i < 3; ++i ) {
                     for ( int j = 0; j < 3; ++j ) {
                         data_vec[i * 3 + j] = data( n, i * 2 + j );
@@ -169,21 +171,21 @@ void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1> gidx,
             }
         }
         else {
-            NOTIMP;
+            ATLAS_NOTIMPLEMENTED;
         }
     }
     else {
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
     }
 }
 
-std::vector<long> get_levels( int nlev, const Metadata& gmsh_options ) {
-    std::vector<long> lev;
-    std::vector<long> gmsh_levels;
+std::vector<int> get_levels( int nlev, const Metadata& gmsh_options ) {
+    std::vector<int> lev;
+    std::vector<int> gmsh_levels;
     gmsh_options.get( "levels", gmsh_levels );
     if ( gmsh_levels.empty() || nlev == 1 ) {
         lev.resize( nlev );
-        for ( size_t ilev = 0; ilev < nlev; ++ilev )
+        for ( int ilev = 0; ilev < nlev; ++ilev )
             lev[ilev] = ilev;
     }
     else {
@@ -231,10 +233,10 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
     Log::debug() << "writing NodeColumns field " << field.name() << " defined in NodeColumns..." << std::endl;
 
     bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
-    bool binary( !gmsh_options.get<bool>( "ascii" ) );
-    size_t nlev                      = std::max<int>( 1, field.levels() );
-    size_t ndata                     = std::min( function_space.nb_nodes(), field.shape( 0 ) );
-    size_t nvars                     = std::max<int>( 1, field.variables() );
+    // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
+    idx_t nlev                       = std::max<idx_t>( 1, field.levels() );
+    idx_t ndata                      = std::min<idx_t>( function_space.nb_nodes(), field.shape( 0 ) );
+    idx_t nvars                      = std::max<idx_t>( 1, field.variables() );
     array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( function_space.nodes().global_index() );
     Field gidx_glb;
     Field field_glb;
@@ -246,12 +248,12 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
 
         field_glb = function_space.createField( field, option::global() );
         function_space.gather( field, field_glb );
-        ndata = std::min( function_space.nb_nodes_global(), field_glb.shape( 0 ) );
+        ndata = std::min<idx_t>( function_space.nb_nodes_global(), field_glb.shape( 0 ) );
     }
 
-    std::vector<long> lev = get_levels( nlev, gmsh_options );
+    std::vector<int> lev = get_levels( nlev, gmsh_options );
     for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
-        size_t jlev = lev[ilev];
+        int jlev = lev[ilev];
         if ( ( gather && atlas::mpi::comm().rank() == 0 ) || !gather ) {
             out << "$NodeData\n";
             out << "1\n";
@@ -272,6 +274,20 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
 }
 // ----------------------------------------------------------------------------
 
+void print_field_lev( char field_lev[], int jlev ) {
+    std::sprintf( field_lev, "[%03d]", jlev );
+}
+
+/* unused
+void print_field_lev( char field_lev[], long jlev ) {
+    std::sprintf( field_lev, "[%03ld]", jlev );
+}
+
+void print_field_lev( char field_lev[], unsigned long jlev ) {
+    std::sprintf( field_lev, "[%03lu]", jlev );
+}
+**/
+
 // ----------------------------------------------------------------------------
 template <typename DATATYPE>
 void write_field_nodes( const Metadata& gmsh_options, const functionspace::StructuredColumns& function_space,
@@ -279,11 +295,11 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
     Log::debug() << "writing StructuredColumns field " << field.name() << "..." << std::endl;
 
     bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
-    bool binary( !gmsh_options.get<bool>( "ascii" ) );
-    size_t nlev  = std::max<int>( 1, field.levels() );
-    size_t ndata = std::min( function_space.sizeOwned(), field.shape( 0 ) );
-    size_t nvars = std::max<int>( 1, field.variables() );
-    auto gidx    = array::make_view<gidx_t, 1>( function_space.global_index() );
+    // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
+    idx_t nlev  = std::max<idx_t>( 1, field.levels() );
+    idx_t ndata = std::min<idx_t>( function_space.sizeOwned(), field.shape( 0 ) );
+    idx_t nvars = std::max<idx_t>( 1, field.variables() );
+    auto gidx   = array::make_view<gidx_t, 1>( function_space.global_index() );
     Field gidx_glb;
     Field field_glb;
     if ( gather ) {
@@ -297,16 +313,12 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
         ndata = field_glb.shape( 0 );
     }
 
-    std::vector<long> lev = get_levels( nlev, gmsh_options );
+    std::vector<int> lev = get_levels( nlev, gmsh_options );
     for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
-        size_t jlev       = lev[ilev];
+        int jlev          = lev[ilev];
         char field_lev[6] = {0, 0, 0, 0, 0, 0};
 
-        if ( field.levels() ) { std::sprintf( field_lev, "[%03lu]", jlev ); }
-
-        double time = field.metadata().has( "time" ) ? field.metadata().get<double>( "time" ) : 0.;
-
-        int step = field.metadata().has( "step" ) ? field.metadata().get<size_t>( "step" ) : 0;
+        if ( field.levels() ) { print_field_lev( field_lev, jlev ); }
 
         out << "$NodeData\n";
         out << "1\n";
@@ -501,14 +513,14 @@ mesh::ElementType* make_element_type( int type ) {
     if ( type == QUAD ) return new mesh::temporary::Quadrilateral();
     if ( type == TRIAG ) return new mesh::temporary::Triangle();
     if ( type == LINE ) return new mesh::temporary::Line();
-    throw eckit::SeriousBug( "Element type not supported", Here() );
+    throw_Exception( "Element type not supported", Here() );
 }
 }  // namespace
 
 void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
     std::ifstream file;
     file.open( file_path.localPath(), std::ios::in | std::ios::binary );
-    if ( !file.is_open() ) throw eckit::CantOpenFile( file_path );
+    if ( !file.is_open() ) throw_CantOpenFile( file_path );
 
     std::string line;
 
@@ -523,7 +535,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
         std::getline( file, line );
 
     // Create nodes
-    size_t nb_nodes;
+    idx_t nb_nodes;
     file >> nb_nodes;
 
     mesh.nodes().resize( nb_nodes );
@@ -545,7 +557,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
     gidx_t max_glb_idx = 0;
     while ( binary && file.peek() == '\n' )
         file.get();
-    for ( size_t n = 0; n < nb_nodes; ++n ) {
+    for ( idx_t n = 0; n < nb_nodes; ++n ) {
         if ( binary ) {
             file.read( reinterpret_cast<char*>( &g ), sizeof( int ) );
             file.read( reinterpret_cast<char*>( &xyz ), sizeof( double ) * 3 );
@@ -567,7 +579,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
         zmax            = std::max( z, zmax );
     }
     if ( xmax < 4 * M_PI && zmax == 0. ) {
-        for ( size_t n = 0; n < nb_nodes; ++n ) {
+        for ( idx_t n = 0; n < nb_nodes; ++n ) {
             coords( n, XX ) *= rad2deg;
             coords( n, YY ) *= rad2deg;
         }
@@ -672,7 +684,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
                 part =
                     std::max( part, *std::max_element( tags + 3, tags + ntags - 1 ) );  // one positive, others negative
 
-            int enodes[4];
+            idx_t enodes[4];
 
             switch ( etype ) {
                 case ( QUAD ):
@@ -710,7 +722,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
                     break;
                 default:
                     std::cout << "etype " << etype << std::endl;
-                    throw eckit::Exception( "ERROR: element type not supported", Here() );
+                    throw_Exception( "ERROR: element type not supported", Here() );
             }
         }
     }
@@ -728,9 +740,12 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
     array::ArrayView<double, 2> coords  = array::make_view<double, 2>( nodes.field( nodes_field ) );
     array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
 
-    const size_t surfdim = coords.shape( 1 );  // nb of variables in coords
+    const idx_t surfdim = coords.shape( 1 );  // nb of variables in coords
 
-    ASSERT( surfdim == 2 || surfdim == 3 );
+    bool include_patch = ( surfdim == 3 );
+
+
+    ATLAS_ASSERT( surfdim == 2 || surfdim == 3 );
 
     Log::debug() << "writing mesh to gmsh file " << file_path << std::endl;
 
@@ -747,14 +762,14 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
         write_header_ascii( file );
 
     // Nodes
-    const size_t nb_nodes = nodes.size();
+    const idx_t nb_nodes = nodes.size();
     file << "$Nodes\n";
     file << nb_nodes << "\n";
     double xyz[3] = {0., 0., 0.};
-    for ( size_t n = 0; n < nb_nodes; ++n ) {
+    for ( idx_t n = 0; n < nb_nodes; ++n ) {
         gidx_t g = glb_idx( n );
 
-        for ( size_t d = 0; d < surfdim; ++d )
+        for ( idx_t d = 0; d < surfdim; ++d )
             xyz[d] = coords( n, d );
 
         if ( binary ) {
@@ -775,24 +790,29 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
         if ( options.get<bool>( "elements" ) ) grouped_elements.push_back( &mesh.cells() );
         if ( options.get<bool>( "edges" ) ) grouped_elements.push_back( &mesh.edges() );
 
-        size_t nb_elements( 0 );
-        for ( size_t jgroup = 0; jgroup < grouped_elements.size(); ++jgroup ) {
-            const mesh::HybridElements& hybrid = *grouped_elements[jgroup];
-            nb_elements += hybrid.size();
-            if ( !include_ghost ) {
-                const array::ArrayView<int, 1> hybrid_halo = array::make_view<int, 1>( hybrid.halo() );
-                for ( size_t e = 0; e < hybrid.size(); ++e ) {
-                    if ( hybrid_halo( e ) ) --nb_elements;
-                }
+        idx_t nb_elements( 0 );
+        for ( const mesh::HybridElements* hybrid : grouped_elements ) {
+            nb_elements += hybrid->size();
+            const array::ArrayView<int, 1> hybrid_halo  = array::make_view<int, 1>( hybrid->halo() );
+            const array::ArrayView<int, 1> hybrid_flags = array::make_view<int, 1>( hybrid->flags() );
+            auto hybrid_patch                           = [&]( idx_t e ) {
+                return mesh::Nodes::Topology::check( hybrid_flags( e ), mesh::Nodes::Topology::PATCH );
+            };
+            auto exclude = [&]( idx_t e ) {
+                if ( !include_ghost && hybrid_halo( e ) ) return true;
+                if ( !include_patch && hybrid_patch( e ) ) return true;
+                return false;
+            };
+            for ( idx_t e = 0; e < hybrid->size(); ++e ) {
+                if ( exclude( e ) ) { --nb_elements; }
             }
         }
 
         file << nb_elements << "\n";
 
-        for ( size_t jgroup = 0; jgroup < grouped_elements.size(); ++jgroup ) {
-            const mesh::HybridElements& hybrid = *grouped_elements[jgroup];
-            for ( size_t etype = 0; etype < hybrid.nb_types(); ++etype ) {
-                const mesh::Elements& elements        = hybrid.elements( etype );
+        for ( const mesh::HybridElements* hybrid : grouped_elements ) {
+            for ( idx_t etype = 0; etype < hybrid->nb_types(); ++etype ) {
+                const mesh::Elements& elements        = hybrid->elements( etype );
                 const mesh::ElementType& element_type = elements.element_type();
                 int gmsh_elem_type;
                 if ( element_type.name() == "Line" )
@@ -802,7 +822,7 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                 else if ( element_type.name() == "Quadrilateral" )
                     gmsh_elem_type = 3;
                 else
-                    NOTIMP;
+                    ATLAS_NOTIMPLEMENTED;
 
                 const mesh::BlockConnectivity& node_connectivity = elements.node_connectivity();
 
@@ -811,9 +831,9 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                 auto elems_halo      = elements.view<int, 1>( elements.halo() );
 
                 if ( binary ) {
-                    size_t nb_elems = elements.size();
+                    idx_t nb_elems = elements.size();
                     if ( !include_ghost ) {
-                        for ( size_t elem = 0; elem < elements.size(); ++elem ) {
+                        for ( idx_t elem = 0; elem < elements.size(); ++elem ) {
                             if ( elems_halo( elem ) ) --nb_elems;
                         }
                     }
@@ -828,11 +848,11 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                     data[2]         = 1;
                     data[3]         = 1;
                     size_t datasize = sizeof( int ) * ( 5 + node_connectivity.cols() );
-                    for ( size_t elem = 0; elem < elements.size(); ++elem ) {
+                    for ( idx_t elem = 0; elem < nb_elems; ++elem ) {
                         if ( include_ghost || !elems_halo( elem ) ) {
                             data[0] = elems_glb_idx( elem );
                             data[4] = elems_partition( elem );
-                            for ( size_t n = 0; n < node_connectivity.cols(); ++n )
+                            for ( idx_t n = 0; n < node_connectivity.cols(); ++n )
                                 data[5 + n] = glb_idx( node_connectivity( elem, n ) );
                             file.write( reinterpret_cast<const char*>( &data ), datasize );
                         }
@@ -842,10 +862,10 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                     std::stringstream ss_elem_info;
                     ss_elem_info << " " << gmsh_elem_type << " 4 1 1 1 ";
                     std::string elem_info = ss_elem_info.str();
-                    for ( size_t elem = 0; elem < elements.size(); ++elem ) {
+                    for ( idx_t elem = 0; elem < elements.size(); ++elem ) {
                         if ( include_ghost || !elems_halo( elem ) ) {
                             file << elems_glb_idx( elem ) << elem_info << elems_partition( elem );
-                            for ( size_t n = 0; n < node_connectivity.cols(); ++n ) {
+                            for ( idx_t n = 0; n < node_connectivity.cols(); ++n ) {
                                 file << " " << glb_idx( node_connectivity( elem, n ) );
                             }
                             file << "\n";
@@ -906,7 +926,7 @@ void GmshIO::write( const Field& field, const PathName& file_path, openmode mode
         std::stringstream msg;
         msg << "Field [" << field.name() << "] has no functionspace";
 
-        throw eckit::AssertionFailed( msg.str(), Here() );
+        throw_AssertionFailed( msg.str(), Here() );
     }
 
     if ( functionspace::NodeColumns( field.functionspace() ) ) {
@@ -925,7 +945,7 @@ void GmshIO::write( const Field& field, const PathName& file_path, openmode mode
             << "] but requires a [functionspace::NodeColumns "
             << "or functionspace::StructuredColumns]";
 
-        throw eckit::AssertionFailed( msg.str(), Here() );
+        throw_AssertionFailed( msg.str(), Here() );
     }
 }
 // ----------------------------------------------------------------------------
@@ -955,13 +975,13 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Node
     bool binary( !options.get<bool>( "ascii" ) );
     if ( binary ) mode |= std::ios_base::binary;
     bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
-    GmshFile file( file_path, mode, gather ? -1 : int(atlas::mpi::comm().rank()) );
+    GmshFile file( file_path, mode, gather ? -1 : int( atlas::mpi::comm().rank() ) );
 
     // Header
     if ( is_new_file ) { write_header_ascii( file ); }
 
     // field::Fields
-    for ( size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {
+    for ( idx_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {
         const Field& field = fieldset[field_idx];
         Log::debug() << "writing field " << field.name() << " to gmsh file " << file_path << std::endl;
 
@@ -994,13 +1014,13 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Stru
 
     bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
 
-    GmshFile file( file_path, mode, gather ? -1 : int(atlas::mpi::comm().rank()) );
+    GmshFile file( file_path, mode, gather ? -1 : int( atlas::mpi::comm().rank() ) );
 
     // Header
     if ( is_new_file ) write_header_ascii( file );
 
     // field::Fields
-    for ( size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {
+    for ( idx_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {
         const Field& field = fieldset[field_idx];
         Log::debug() << "writing field " << field.name() << " to gmsh file " << file_path << std::endl;
 
@@ -1032,7 +1052,7 @@ void GmshIO::write( const FieldSet& fieldset, const FunctionSpace& funcspace, co
     else if ( functionspace::StructuredColumns( funcspace ) )
         write_delegate( fieldset, functionspace::StructuredColumns( funcspace ), file_path, mode );
     else
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
 }
 // ----------------------------------------------------------------------------
 
@@ -1044,7 +1064,7 @@ void GmshIO::write( const Field& field, const FunctionSpace& funcspace, const ec
     else if ( functionspace::StructuredColumns( funcspace ) )
         write_delegate( field, functionspace::StructuredColumns( funcspace ), file_path, mode );
     else
-        NOTIMP;
+        ATLAS_NOTIMPLEMENTED;
 }
 // ----------------------------------------------------------------------------
 
@@ -1095,14 +1115,14 @@ void GmshFortranInterface::atlas__write_gmsh_mesh( const Mesh::Implementation* m
 
 void GmshFortranInterface::atlas__write_gmsh_fieldset( const field::FieldSetImpl* fieldset,
                                                        functionspace::FunctionSpaceImpl* functionspace, char* file_path,
-                                                       int mode ) {
+                                                       int /*mode*/ ) {
     GmshIO writer;
     writer.write( fieldset, functionspace, PathName( file_path ) );
 }
 
 void GmshFortranInterface::atlas__write_gmsh_field( const field::FieldImpl* field,
                                                     functionspace::FunctionSpaceImpl* functionspace, char* file_path,
-                                                    int mode ) {
+                                                    int /*mode*/ ) {
     GmshIO writer;
     writer.write( field, functionspace, PathName( file_path ) );
 }

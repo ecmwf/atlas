@@ -10,86 +10,65 @@
 
 #include <algorithm>
 
-#include "atlas/grid/Distribution.h"
+#include "Distribution.h"
+
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
+#include "atlas/grid/detail/distribution/DistributionImpl.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace grid {
 
-namespace {
-std::string distribution_type( int N, const Partitioner& p = Partitioner() ) {
-    if ( N == 1 ) { return "serial"; }
-    if ( not p ) { return "custom"; }
-    return p.type();
-}
-}  // namespace
-
-Distribution::impl_t::impl_t( const Grid& grid ) :
-    nb_partitions_( 1 ),
-    part_( grid.size(), 0 ),
-    nb_pts_( nb_partitions_, grid.size() ),
-    max_pts_( grid.size() ),
-    min_pts_( grid.size() ),
-    type_( distribution_type( nb_partitions_ ) ) {}
-
-Distribution::impl_t::impl_t( const Grid& grid, const Partitioner& partitioner ) {
-    part_.resize( grid.size() );
-    partitioner.partition( grid, part_.data() );
-    nb_partitions_ = partitioner.nb_partitions();
-    nb_pts_.resize( nb_partitions_, 0 );
-    for ( size_t j = 0; j < part_.size(); ++j )
-        ++nb_pts_[part_[j]];
-    max_pts_ = *std::max_element( nb_pts_.begin(), nb_pts_.end() );
-    min_pts_ = *std::min_element( nb_pts_.begin(), nb_pts_.end() );
-    type_    = distribution_type( nb_partitions_, partitioner );
-}
-
-Distribution::impl_t::impl_t( size_t npts, int part[], int part0 ) {
-    part_.assign( part, part + npts );
-    std::set<int> partset( part_.begin(), part_.end() );
-    nb_partitions_ = partset.size();
-    nb_pts_.resize( nb_partitions_, 0 );
-    for ( size_t j = 0; j < part_.size(); ++j ) {
-        part_[j] -= part0;
-        ++nb_pts_[part_[j]];
-    }
-    max_pts_ = *std::max_element( nb_pts_.begin(), nb_pts_.end() );
-    min_pts_ = *std::min_element( nb_pts_.begin(), nb_pts_.end() );
-    type_    = distribution_type( nb_partitions_ );
-}
-
-void Distribution::impl_t::print( std::ostream& s ) const {
-    s << "Distribution( "
-      << "type: " << type_ << ", nbPoints: " << part_.size() << ", nbPartitions: " << nb_pts_.size() << ", parts : [";
-    for ( size_t i = 0; i < part_.size(); i++ ) {
-        if ( i != 0 ) s << ',';
-        s << part_[i];
-    }
-    s << ']';
-}
-
-Distribution::Distribution() : impl_( nullptr ) {}
-
-Distribution::Distribution( const impl_t* impl ) : impl_( impl ) {}
-
-Distribution::Distribution( const Distribution& other ) : impl_( other.impl_ ) {}
-
-Distribution::Distribution( const Grid& grid ) : impl_( new impl_t( grid ) ) {}
+Distribution::Distribution( const Grid& grid ) : Handle( new Implementation( grid ) ) {}
 
 Distribution::Distribution( const Grid& grid, const Partitioner& partitioner ) :
-    impl_( new impl_t( grid, partitioner ) ) {}
+    Handle( new Implementation( grid, partitioner ) ) {}
 
-Distribution::Distribution( size_t npts, int part[], int part0 ) : impl_( new impl_t( npts, part, part0 ) ) {}
+Distribution::Distribution( idx_t npts, int part[], int part0 ) : Handle( new Implementation( npts, part, part0 ) ) {}
 
-Distribution::impl_t* atlas__GridDistribution__new( int npts, int part[], int part0 ) {
-    return new Distribution::impl_t( npts, part, part0 );
+Distribution::~Distribution() {}
+
+int Distribution::partition( const gidx_t gidx ) const {
+    return get()->partition( gidx );
 }
 
-void atlas__GridDistribution__delete( Distribution::impl_t* This ) {
-    delete This;
+const std::vector<int>& Distribution::partition() const {
+    return get()->partition();
+}
+
+idx_t Distribution::nb_partitions() const {
+    return get()->nb_partitions();
+}
+
+const int* Distribution::data() const {
+    return get()->data();
+}
+
+const std::vector<idx_t>& Distribution::nb_pts() const {
+    return get()->nb_pts();
+}
+
+idx_t Distribution::max_pts() const {
+    return get()->max_pts();
+}
+
+idx_t Distribution::min_pts() const {
+    return get()->min_pts();
+}
+
+const std::string& Distribution::type() const {
+    return get()->type();
+}
+
+std::ostream& operator<<( std::ostream& os, const Distribution& distribution ) {
+    distribution.get()->print( os );
+    return os;
+}
+
+atlas::grid::Distribution::operator const std::vector<int>&() const {
+    return *get();
 }
 
 }  // namespace grid

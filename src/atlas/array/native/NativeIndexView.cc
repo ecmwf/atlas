@@ -20,7 +20,7 @@ namespace array {
 //------------------------------------------------------------------------------------------------------
 
 template <typename Value, int Rank>
-IndexView<Value, Rank>::IndexView( Value* data, const size_t shape[1] ) : data_( const_cast<Value*>( data ) ) {
+IndexView<Value, Rank>::IndexView( Value* data, const idx_t shape[1] ) : data_( const_cast<Value*>( data ) ) {
     strides_[0] = 1;
     shape_[0]   = shape[0];
 }
@@ -29,7 +29,7 @@ template <typename Value, int Rank>
 void IndexView<Value, Rank>::dump( std::ostream& os ) const {
     os << "size: " << size() << " , values: ";
     os << "[ ";
-    for ( size_t j = 0; j < size(); ++j )
+    for ( idx_t j = 0; j < size(); ++j )
         os << ( *this )( j ) << " ";
     os << "]" << std::endl;
 }
@@ -39,6 +39,8 @@ void IndexView<Value, Rank>::dump( std::ostream& os ) const {
 
 template class IndexView<int, 1>;
 template class IndexView<int, 2>;
+template class IndexView<long, 1>;
+template class IndexView<long, 2>;
 
 //------------------------------------------------------------------------------------------------------
 

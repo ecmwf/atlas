@@ -1,3 +1,11 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
 #include "atlas/atlas_f.h"
 
 module atlas_output_module
@@ -79,7 +87,7 @@ function atlas_Output__cptr(cptr) result(this)
   call this%return()
 end function
 
-function atlas_output_Gmsh__pathname_mode(file,mode,coordinates,levels,gather) result(this)
+function atlas_output_Gmsh__pathname_mode(file,mode,coordinates,levels,gather,ghost) result(this)
   use fckit_c_interop_module, only : c_str
   use atlas_output_gmsh_c_binding
   type(atlas_Output) :: this
@@ -88,6 +96,7 @@ function atlas_output_Gmsh__pathname_mode(file,mode,coordinates,levels,gather) r
   character(len=*), intent(in), optional :: coordinates
   integer, intent(in), optional :: levels(:)
   logical, intent(in), optional :: gather
+  logical, intent(in), optional :: ghost
   character(len=1) :: opt_mode
   type(atlas_Config) :: opt_config
   opt_config = atlas_Config()
@@ -96,7 +105,9 @@ function atlas_output_Gmsh__pathname_mode(file,mode,coordinates,levels,gather) r
   if( present(coordinates) ) call opt_config%set("coordinates",coordinates)
   if( present(levels) )      call opt_config%set("levels",levels)
   if( present(gather) )      call opt_config%set("gather",gather)
-  call this%reset_c_ptr( atlas__output__Gmsh__create_pathname_mode_config(c_str(file),c_str(opt_mode),opt_config%c_ptr()) )
+  if( present(ghost) )       call opt_config%set("ghost",ghost)
+  call this%reset_c_ptr( atlas__output__Gmsh__create_pathname_mode_config(c_str(file),c_str(opt_mode),&
+     opt_config%CPTR_PGIBUG_B) )
   call this%return()
   call opt_config%final()
 end function
@@ -108,10 +119,10 @@ subroutine write_mesh(this,mesh,config)
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    call atlas__output__write_mesh(this%c_ptr(),mesh%c_ptr(),config%c_ptr())
+    call atlas__output__write_mesh(this%CPTR_PGIBUG_A,mesh%CPTR_PGIBUG_A,config%CPTR_PGIBUG_B)
   else
     opt_config = atlas_Config()
-    call atlas__output__write_mesh(this%c_ptr(),mesh%c_ptr(),opt_config%c_ptr())
+    call atlas__output__write_mesh(this%CPTR_PGIBUG_A,mesh%CPTR_PGIBUG_A,opt_config%CPTR_PGIBUG_B)
     call opt_config%final()
   endif
 end subroutine
@@ -124,10 +135,12 @@ subroutine write_field_fs(this,field,functionspace,config)
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    call atlas__output__write_field_fs(this%c_ptr(),field%c_ptr(),functionspace%c_ptr(),config%c_ptr())
+    call atlas__output__write_field_fs(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,functionspace%CPTR_PGIBUG_A, &
+       config%CPTR_PGIBUG_B)
   else
     opt_config = atlas_Config()
-    call atlas__output__write_field_fs(this%c_ptr(),field%c_ptr(),functionspace%c_ptr(),opt_config%c_ptr())
+    call atlas__output__write_field_fs(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,functionspace%CPTR_PGIBUG_A, &
+      opt_config%CPTR_PGIBUG_B)
     call opt_config%final()
   endif
 end subroutine
@@ -140,10 +153,12 @@ subroutine write_fieldset_fs(this,fieldset,functionspace,config)
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    call atlas__output__write_fieldset_fs(this%c_ptr(),fieldset%c_ptr(),functionspace%c_ptr(),config%c_ptr())
+    call atlas__output__write_fieldset_fs(this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A,functionspace%CPTR_PGIBUG_A, &
+      config%CPTR_PGIBUG_B)
   else
     opt_config = atlas_Config()
-    call atlas__output__write_fieldset_fs(this%c_ptr(),fieldset%c_ptr(),functionspace%c_ptr(),opt_config%c_ptr())
+    call atlas__output__write_fieldset_fs(this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A,functionspace%CPTR_PGIBUG_A, &
+      opt_config%CPTR_PGIBUG_B)
     call opt_config%final()
   endif
 end subroutine
@@ -156,10 +171,12 @@ subroutine write_field(this,field,config)
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    call atlas__output__write_field(this%c_ptr(),field%c_ptr(),config%c_ptr())
+    call atlas__output__write_field(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A, &
+      config%CPTR_PGIBUG_B)
   else
     opt_config = atlas_Config()
-    call atlas__output__write_field(this%c_ptr(),field%c_ptr(),opt_config%c_ptr())
+    call atlas__output__write_field(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A, &
+      opt_config%CPTR_PGIBUG_B)
     call opt_config%final()
   endif
 end subroutine
@@ -172,10 +189,12 @@ subroutine write_fieldset(this,fieldset,config)
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    call atlas__output__write_fieldset(this%c_ptr(),fieldset%c_ptr(),config%c_ptr())
+    call atlas__output__write_fieldset(this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A, &
+      config%CPTR_PGIBUG_B)
   else
     opt_config = atlas_Config()
-    call atlas__output__write_fieldset(this%c_ptr(),fieldset%c_ptr(),opt_config%c_ptr())
+    call atlas__output__write_fieldset(this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A, &
+      opt_config%CPTR_PGIBUG_B)
     call opt_config%final()
   endif
 end subroutine

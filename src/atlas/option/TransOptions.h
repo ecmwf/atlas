@@ -12,6 +12,10 @@
 
 #include "atlas/util/Config.h"
 
+namespace eckit {
+class PathName;
+}
+
 // ----------------------------------------------------------------------------
 
 namespace atlas {

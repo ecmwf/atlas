@@ -13,18 +13,22 @@
 
 #include "N.h"
 
+#include "atlas/runtime/Exception.h"
+
 namespace atlas {
 namespace grid {
 namespace detail {
 namespace pl {
 namespace classic_gaussian {
 
-std::string PointsPerLatitude::className() {
-    return "atlas.grid.reduced.pl.classic_gaussian.PointsPerLatitude";
+void PointsPerLatitude::assign( long nlon[], const size_t size ) const {
+    ATLAS_ASSERT( size >= nlon_.size() );
+    for ( size_t jlat = 0; jlat < nlon_.size(); ++jlat )
+        nlon[jlat] = nlon_[jlat];
 }
 
-void PointsPerLatitude::assign( long nlon[], const size_t size ) const {
-    ASSERT( size >= nlon_.size() );
+void PointsPerLatitude::assign( int nlon[], const size_t size ) const {
+    ATLAS_ASSERT( size >= nlon_.size() );
     for ( size_t jlat = 0; jlat < nlon_.size(); ++jlat )
         nlon[jlat] = nlon_[jlat];
 }
@@ -33,9 +37,13 @@ void PointsPerLatitude::assign( std::vector<long>& nlon ) const {
     nlon = nlon_;
 }
 
+void PointsPerLatitude::assign( std::vector<int>& nlon ) const {
+    nlon.assign( nlon_.begin(), nlon_.end() );
+}
+
 template <typename CONCRETE>
 void load() {
-    eckit::ConcreteBuilderT0<PointsPerLatitude, CONCRETE> builder( "tmp" );
+    PointsPerLatitudeBuilder<CONCRETE>();
 }
 
 void regist() {

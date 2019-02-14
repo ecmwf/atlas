@@ -19,7 +19,7 @@
 #include <array>
 #include <type_traits>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 
 #include "atlas/array.h"
 #include "atlas/library/config.h"
@@ -52,7 +52,7 @@ namespace array {
 /// In the first mode of construction, the connectivity table cannot be resized.
 /// In the second mode of construction, resizing is possible
 
-class Table : public eckit::Owned {
+class Table : public util::Object {
 private:
     static constexpr unsigned short _values_ = 0;
     static constexpr unsigned short _displs_ = 1;

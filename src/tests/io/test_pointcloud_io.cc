@@ -9,10 +9,9 @@
  */
 
 #include <cmath>
+#include <fstream>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/memory/ScopedPtr.h"
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/array/MakeView.h"
@@ -103,7 +102,7 @@ CASE( "read_inexistent_file" ) {
 
 CASE( "read_badly_formatted_file" ) {
     EXPECT( test_write_file_bad( "pointcloud.txt" ) );
-    EXPECT_THROWS_AS( output::detail::PointCloudIO::read( "pointcloud.txt" ), eckit::BadParameter );
+    EXPECT_THROWS_AS( output::detail::PointCloudIO::read( "pointcloud.txt" ), eckit::Exception );
 }
 
 CASE( "read_grid_sample_file" ) {
@@ -323,7 +322,7 @@ CASE( "write_read_write_field" ) {
         /* data read from file*/ field.size() );
 
     array::ArrayView<double, 1> field_data = array::make_view<double, 1>( field );
-    for ( size_t i = 0; i < field_data.size(); ++i ) {
+    for ( idx_t i = 0; i < field_data.size(); ++i ) {
         EXPECT( eckit::types::is_approximately_equal( funny_formula( i ), field_data( i ),
                                                       0.001 ) );  // 0.001% relative error
         EXPECT( eckit::types::is_approximately_equal( funny_formula( i ), field_data( i ),

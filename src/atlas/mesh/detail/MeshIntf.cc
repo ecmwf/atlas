@@ -10,7 +10,7 @@
 
 #include "atlas/mesh/detail/MeshIntf.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace mesh {
@@ -23,39 +23,42 @@ Mesh::Implementation* atlas__Mesh__new() {
 }
 
 void atlas__Mesh__delete( Mesh::Implementation* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
     delete This;
 }
 
 Nodes* atlas__Mesh__nodes( Mesh::Implementation* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->nodes(); );
-    return nullptr;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
+    return &This->nodes();
 }
 
 Edges* atlas__Mesh__edges( Mesh::Implementation* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->edges(); );
-    return nullptr;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
+    return &This->edges();
 }
 
 Cells* atlas__Mesh__cells( Mesh::Implementation* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); return &This->cells(); );
-    return nullptr;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
+    return &This->cells();
 }
 
 size_t atlas__Mesh__footprint( Mesh::Implementation* This ) {
-    size_t size( 0 );
-    ATLAS_ERROR_HANDLING( ASSERT( This ); size = This->footprint(); );
-    return size;
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
+    return This->footprint();
 }
 
 void atlas__Mesh__clone_to_device( Mesh::Implementation* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
     This->cloneToDevice();
 }
 
 void atlas__Mesh__clone_from_device( Mesh::Implementation* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
     This->cloneFromDevice();
 }
 
 void atlas__Mesh__sync_host_device( Mesh::Implementation* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
     This->syncHostDevice();
 }
 

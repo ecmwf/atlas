@@ -13,4 +13,3 @@
 #pragma once
 
 #include "atlas/meshgenerator/MeshGenerator.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"

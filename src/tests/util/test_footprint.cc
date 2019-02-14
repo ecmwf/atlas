@@ -18,7 +18,7 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/MeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Metadata.h"
 
@@ -50,14 +50,14 @@ CASE( "test_broadcast_to_self" ) {
     Log::info() << "Footprint for mesh generated from grid " << grid.name() << std::endl;
     Log::info() << "mesh.footprint = " << eckit::Bytes( mesh.footprint() ) << std::endl;
     Log::info() << "    .nodes.footprint = " << eckit::Bytes( mesh.nodes().footprint() ) << std::endl;
-    for ( size_t f = 0; f < mesh.nodes().nb_fields(); ++f ) {
+    for ( idx_t f = 0; f < mesh.nodes().nb_fields(); ++f ) {
         Log::info() << "          ." + mesh.nodes().field( f ).name() + ".footprint = "
                     << eckit::Bytes( mesh.nodes().field( f ).footprint() ) << std::endl;
     }
 
     Log::info() << "    .cells.footprint = " << eckit::Bytes( mesh.cells().footprint() ) << std::endl;
 
-    for ( size_t f = 0; f < mesh.cells().nb_fields(); ++f ) {
+    for ( idx_t f = 0; f < mesh.cells().nb_fields(); ++f ) {
         Log::info() << "          ." + mesh.cells().field( f ).name() + ".footprint = "
                     << eckit::Bytes( mesh.cells().field( f ).footprint() ) << std::endl;
     }

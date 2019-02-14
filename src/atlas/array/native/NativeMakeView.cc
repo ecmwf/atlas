@@ -1,8 +1,20 @@
+/*
+ * (C) Copyright 2013 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
+
+#include <sstream>
 
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace array {
@@ -13,12 +25,12 @@ inline static void check_metadata( const Array& array ) {
     if ( array.rank() != Rank ) {
         std::stringstream err;
         err << "Number of dimensions do not match: template argument " << Rank << " expected to be " << array.rank();
-        throw eckit::BadParameter( err.str(), Here() );
+        throw_Exception( err.str(), Here() );
     }
     if ( array.datatype() != array::DataType::create<Value>() ) {
         std::stringstream err;
         err << "Data Type does not match: template argument expected to be " << array.datatype().str();
-        throw eckit::BadParameter( err.str(), Here() );
+        throw_Exception( err.str(), Here() );
     }
 }
 }  // namespace
@@ -114,6 +126,16 @@ template IndexView<int, 1> make_host_indexview<int, 1, Intent::ReadOnly>( const 
 template IndexView<int, 1> make_host_indexview<int, 1, Intent::ReadWrite>( const Array& );
 template IndexView<int, 2> make_host_indexview<int, 2, Intent::ReadOnly>( const Array& );
 template IndexView<int, 2> make_host_indexview<int, 2, Intent::ReadWrite>( const Array& );
+
+template IndexView<long, 1> make_indexview<long, 1, Intent::ReadOnly>( const Array& );
+template IndexView<long, 1> make_indexview<long, 1, Intent::ReadWrite>( const Array& );
+template IndexView<long, 2> make_indexview<long, 2, Intent::ReadOnly>( const Array& );
+template IndexView<long, 2> make_indexview<long, 2, Intent::ReadWrite>( const Array& );
+
+template IndexView<long, 1> make_host_indexview<long, 1, Intent::ReadOnly>( const Array& );
+template IndexView<long, 1> make_host_indexview<long, 1, Intent::ReadWrite>( const Array& );
+template IndexView<long, 2> make_host_indexview<long, 2, Intent::ReadOnly>( const Array& );
+template IndexView<long, 2> make_host_indexview<long, 2, Intent::ReadWrite>( const Array& );
 
 // For each Rank in [1..9]
 EXPLICIT_TEMPLATE_INSTANTIATION( 1 )

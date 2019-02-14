@@ -8,7 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/utils/Hash.h"
@@ -16,6 +15,7 @@
 #include "atlas/functionspace.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/library/defines.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/trans/VorDivToUV.h"
 
@@ -35,8 +35,8 @@ VorDivToUVImpl::~VorDivToUVImpl() {}
 
 namespace {
 
-static eckit::Mutex* local_mutex                    = 0;
-static std::map<std::string, VorDivToUVFactory*>* m = 0;
+static eckit::Mutex* local_mutex                    = nullptr;
+static std::map<std::string, VorDivToUVFactory*>* m = nullptr;
 static pthread_once_t once                          = PTHREAD_ONCE_INIT;
 
 static void init() {
@@ -65,7 +65,7 @@ VorDivToUVFactory& factory( const std::string& name ) {
         Log::error() << "VorDivToUVFactory are:" << std::endl;
         for ( j = m->begin(); j != m->end(); ++j )
             Log::error() << "   " << ( *j ).first << std::endl;
-        throw eckit::SeriousBug( std::string( "No VorDivToUVFactory called " ) + name );
+        throw_Exception( std::string( "No VorDivToUVFactory called " ) + name );
     }
     return *j->second;
 }
@@ -77,7 +77,7 @@ VorDivToUVFactory::VorDivToUVFactory( const std::string& name ) : name_( name ) 
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    ASSERT( m->find( name ) == m->end() );
+    ATLAS_ASSERT( m->find( name ) == m->end() );
     ( *m )[name] = this;
 }
 
@@ -149,20 +149,14 @@ VorDivToUV::Implementation* VorDivToUVFactory::build( int truncation, const ecki
     return factory( name ).make( truncation, config );
 }
 
-VorDivToUV::VorDivToUV() {}
-
-VorDivToUV::VorDivToUV( Implementation* impl ) : impl_( impl ) {}
-
 VorDivToUV::VorDivToUV( const FunctionSpace& sp, const eckit::Configuration& config ) :
-    impl_( VorDivToUVFactory::build( sp, config ) ) {}
+    Handle( VorDivToUVFactory::build( sp, config ) ) {}
 
 VorDivToUV::VorDivToUV( int truncation, const eckit::Configuration& config ) :
-    impl_( VorDivToUVFactory::build( truncation, config ) ) {}
-
-VorDivToUV::VorDivToUV( const VorDivToUV& other ) : impl_( other.impl_ ) {}
+    Handle( VorDivToUVFactory::build( truncation, config ) ) {}
 
 int VorDivToUV::truncation() const {
-    return impl_->truncation();
+    return get()->truncation();
 }
 
 // -- IFS type fields --
@@ -172,7 +166,7 @@ int VorDivToUV::truncation() const {
 
 void VorDivToUV::execute( const int nb_coeff, const int nb_fields, const double vorticity[], const double divergence[],
                           double U[], double V[], const eckit::Configuration& config ) const {
-    impl_->execute( nb_coeff, nb_fields, vorticity, divergence, U, V, config );
+    get()->execute( nb_coeff, nb_fields, vorticity, divergence, U, V, config );
 }
 
 }  // namespace trans

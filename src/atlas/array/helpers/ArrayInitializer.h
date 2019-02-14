@@ -10,13 +10,14 @@
 
 #pragma once
 
+#include <sstream>
+#include <string>
 #include <vector>
-
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/array.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
+#include "atlas/runtime/Exception.h"
 
 //------------------------------------------------------------------------------
 
@@ -26,15 +27,15 @@ namespace helpers {
 
 //------------------------------------------------------------------------------
 
-template <unsigned int Rank>
+template <idx_t Rank>
 struct array_initializer;
 
-template <unsigned int PartDim>
+template <idx_t PartDim>
 struct array_initializer_partitioned;
 
 //------------------------------------------------------------------------------
 
-template <typename Value, unsigned int Rank, unsigned int Dim>
+template <typename Value, idx_t Rank, idx_t Dim>
 struct array_initializer_impl {
     static void apply( Array const& orig, Array& array_resized ) {
         array_initializer_impl<Value, Rank, Dim>::apply( make_view<Value, Rank>( orig ),
@@ -43,7 +44,8 @@ struct array_initializer_impl {
 
     template <typename... DimIndex>
     static void apply( ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& array_resized, DimIndex... idxs ) {
-        for ( size_t i = 0; i < orig.shape( Dim ); ++i ) {
+        const idx_t N = std::min( array_resized.shape( Dim ), orig.shape( Dim ) );
+        for ( idx_t i = 0; i < N; ++i ) {
             array_initializer_impl<Value, Rank, Dim + 1>::apply( std::move( orig ), std::move( array_resized ), idxs...,
                                                                  i );
         }
@@ -52,7 +54,7 @@ struct array_initializer_impl {
 
 //------------------------------------------------------------------------------
 
-template <typename Value, unsigned int Rank>
+template <typename Value, idx_t Rank>
 struct array_initializer_impl<Value, Rank, Rank> {
     template <typename... DimIndex>
     static void apply( ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& array_resized, DimIndex... idxs ) {
@@ -62,7 +64,7 @@ struct array_initializer_impl<Value, Rank, Rank> {
 
 //------------------------------------------------------------------------------
 
-template <unsigned int Rank>
+template <idx_t Rank>
 struct array_initializer {
     static void apply( Array const& orig, Array& array_resized ) {
         switch ( orig.datatype().kind() ) {
@@ -79,7 +81,7 @@ struct array_initializer {
             default: {
                 std::stringstream err;
                 err << "data kind " << orig.datatype().kind() << " not recognised.";
-                throw eckit::BadParameter( err.str(), Here() );
+                throw_NotImplemented( err.str(), Here() );
             }
         }
     }
@@ -87,20 +89,20 @@ struct array_initializer {
 
 //------------------------------------------------------------------------------
 
-template <typename Value, unsigned int Rank, unsigned int Dim, unsigned int PartDim>
+template <typename Value, idx_t Rank, idx_t Dim, idx_t PartDim>
 struct array_initializer_partitioned_val_impl {
-    static void apply( Array const& orig, Array& dest, unsigned int pos, unsigned int offset ) {
+    static void apply( Array const& orig, Array& dest, idx_t pos, idx_t offset ) {
         array_initializer_partitioned_val_impl<Value, Rank, Dim, PartDim>::apply(
             make_view<Value, Rank>( orig ), make_view<Value, Rank>( dest ), pos, offset );
     }
 
     template <typename... DimIndexPair>
-    static void apply( ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& dest, unsigned int pos,
-                       unsigned int offset, DimIndexPair... idxs ) {
-        for ( size_t i = 0; i < orig.shape( Dim ); ++i ) {
-            unsigned int displ = i;
+    static void apply( ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& dest, idx_t pos, idx_t offset,
+                       DimIndexPair... idxs ) {
+        for ( idx_t i = 0; i < orig.shape( Dim ); ++i ) {
+            idx_t displ = i;
             if ( Dim == PartDim && i >= pos ) { displ += offset; }
-            std::pair<int, int> pair_idx{i, displ};
+            std::pair<idx_t, idx_t> pair_idx{i, displ};
             array_initializer_partitioned_val_impl<Value, Rank, Dim + 1, PartDim>::apply(
                 std::move( orig ), std::move( dest ), pos, offset, idxs..., pair_idx );
         }
@@ -122,11 +124,11 @@ struct array_initializer_partitioned_val_impl {
 
 //------------------------------------------------------------------------------
 
-template <typename Value, unsigned int Rank, unsigned int PartDim>
+template <typename Value, idx_t Rank, idx_t PartDim>
 struct array_initializer_partitioned_val_impl<Value, Rank, Rank, PartDim> {
     template <typename... DimIndexPair>
-    static void apply( ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& dest, unsigned int pos,
-                       unsigned int offset, DimIndexPair... idxs ) {
+    static void apply( ArrayView<Value, Rank> const&& orig, ArrayView<Value, Rank>&& dest, idx_t /*pos*/,
+                       idx_t /*offset*/, DimIndexPair... idxs ) {
         // Log::info() << print_array(std::array<int,Rank>{std::get<0>(idxs)...}) <<
         // " --> " << print_array(std::array<int,Rank>{std::get<1>(idxs)...}) << "
         // " <<  orig(std::get<0>(idxs)...) << std::endl;
@@ -136,9 +138,9 @@ struct array_initializer_partitioned_val_impl<Value, Rank, Rank, PartDim> {
 
 //------------------------------------------------------------------------------
 
-template <unsigned int Rank, unsigned int PartDim>
+template <idx_t Rank, idx_t PartDim>
 struct array_initializer_partitioned_impl {
-    static void apply( Array const& orig, Array& dest, unsigned int pos, unsigned int offset ) {
+    static void apply( Array const& orig, Array& dest, idx_t pos, idx_t offset ) {
         switch ( orig.datatype().kind() ) {
             case DataType::KIND_REAL64:
                 return array_initializer_partitioned_val_impl<double, Rank, 0, PartDim>::apply( orig, dest, pos,
@@ -156,7 +158,7 @@ struct array_initializer_partitioned_impl {
             default: {
                 std::stringstream err;
                 err << "data kind " << orig.datatype().kind() << " not recognised.";
-                throw eckit::BadParameter( err.str(), Here() );
+                throw_NotImplemented( err.str(), Here() );
             }
         }
     }
@@ -164,9 +166,9 @@ struct array_initializer_partitioned_impl {
 
 //------------------------------------------------------------------------------
 
-template <unsigned int PartDim>
+template <idx_t PartDim>
 struct array_initializer_partitioned {
-    static void apply( Array const& orig, Array& dest, unsigned int pos, unsigned int offset ) {
+    static void apply( Array const& orig, Array& dest, idx_t pos, idx_t offset ) {
         switch ( orig.rank() ) {
             case 1:
                 return array_initializer_partitioned_impl<1, PartDim>::apply( orig, dest, pos, offset );
@@ -189,7 +191,7 @@ struct array_initializer_partitioned {
             default: {
                 std::stringstream err;
                 err << "too high Rank";
-                throw eckit::BadParameter( err.str(), Here() );
+                throw_NotImplemented( err.str(), Here() );
             }
         }
     }

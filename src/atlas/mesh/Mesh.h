@@ -12,9 +12,8 @@
 
 #include <iosfwd>
 
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/mesh/detail/MeshImpl.h"
+#include "atlas/util/ObjectHandle.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 // Forward declarations
@@ -50,9 +49,8 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Mesh {
+class Mesh : public util::ObjectHandle<mesh::detail::MeshImpl> {
 public:
-    using Implementation = mesh::detail::MeshImpl;
     using Nodes          = mesh::Nodes;
     using Cells          = mesh::Cells;
     using Edges          = mesh::Edges;
@@ -61,71 +59,65 @@ public:
     using Polygon        = mesh::PartitionPolygon;
 
 public:
+    using Handle::Handle;
     Mesh();
-    Mesh( const Mesh& );
-    Mesh( const Implementation* );
 
     /// @brief Construct a mesh from a Stream (serialization)
     explicit Mesh( eckit::Stream& );
 
     /// @brief Serialization to Stream
-    void encode( eckit::Stream& s ) const { return impl_->encode( s ); }
+    void encode( eckit::Stream& s ) const { return get()->encode( s ); }
 
-    void print( std::ostream& out ) const { impl_->print( out ); }
+    void print( std::ostream& out ) const { get()->print( out ); }
 
-    const util::Metadata& metadata() const { return impl_->metadata(); }
-    util::Metadata& metadata() { return impl_->metadata(); }
+    const util::Metadata& metadata() const { return get()->metadata(); }
+    util::Metadata& metadata() { return get()->metadata(); }
 
-    const Nodes& nodes() const { return impl_->nodes(); }
-    Nodes& nodes() { return impl_->nodes(); }
+    const Nodes& nodes() const { return get()->nodes(); }
+    Nodes& nodes() { return get()->nodes(); }
 
-    const Cells& cells() const { return impl_->cells(); }
+    const Cells& cells() const { return get()->cells(); }
     Cells& cells() {
-        return impl_->cells();
+        return get()->cells();
         ;
     }
 
-    const Edges& edges() const { return impl_->edges(); }
-    Edges& edges() { return impl_->edges(); }
+    const Edges& edges() const { return get()->edges(); }
+    Edges& edges() { return get()->edges(); }
 
-    const HybridElements& facets() const { return impl_->facets(); }
-    HybridElements& facets() { return impl_->facets(); }
+    const HybridElements& facets() const { return get()->facets(); }
+    HybridElements& facets() { return get()->facets(); }
 
-    const HybridElements& ridges() const { return impl_->ridges(); }
-    HybridElements& ridges() { return impl_->ridges(); }
+    const HybridElements& ridges() const { return get()->ridges(); }
+    HybridElements& ridges() { return get()->ridges(); }
 
-    const HybridElements& peaks() const { return impl_->peaks(); }
-    HybridElements& peaks() { return impl_->peaks(); }
+    const HybridElements& peaks() const { return get()->peaks(); }
+    HybridElements& peaks() { return get()->peaks(); }
 
-    bool generated() const { return impl_->generated(); }
+    bool generated() const { return get()->generated(); }
 
     /// @brief Return the memory footprint of the mesh
-    size_t footprint() const { return impl_->footprint(); }
+    size_t footprint() const { return get()->footprint(); }
 
-    size_t partition() const { return impl_->partition(); }
+    idx_t partition() const { return get()->partition(); }
 
-    size_t nb_partitions() const { return impl_->nb_partitions(); }
+    idx_t nb_partitions() const { return get()->nb_partitions(); }
 
-    void cloneToDevice() const { impl_->cloneToDevice(); }
+    void cloneToDevice() const { get()->cloneToDevice(); }
 
-    void cloneFromDevice() const { impl_->cloneFromDevice(); }
+    void cloneFromDevice() const { get()->cloneFromDevice(); }
 
-    void syncHostDevice() const { impl_->syncHostDevice(); }
+    void syncHostDevice() const { get()->syncHostDevice(); }
 
-    const Projection& projection() const { return impl_->projection(); }
+    const Projection& projection() const { return get()->projection(); }
 
-    const PartitionGraph& partitionGraph() const { return impl_->partitionGraph(); }
+    const PartitionGraph& partitionGraph() const { return get()->partitionGraph(); }
 
-    PartitionGraph::Neighbours nearestNeighbourPartitions() const { return impl_->nearestNeighbourPartitions(); }
+    PartitionGraph::Neighbours nearestNeighbourPartitions() const { return get()->nearestNeighbourPartitions(); }
 
-    const Implementation* get() const { return impl_.get(); }
-    Implementation* get() { return impl_.get(); }
+    const Polygon& polygon( idx_t halo = 0 ) const { return get()->polygon( halo ); }
 
-    const Polygon& polygon( size_t halo = 0 ) const { return impl_->polygon( halo ); }
-
-    const Grid& grid() const { return impl_->grid(); }
-
-    operator bool() const { return impl_; }
+    const Grid& grid() const { return get()->grid(); }
 
 private:  // methods
     friend std::ostream& operator<<( std::ostream& s, const Mesh& p ) {
@@ -134,11 +126,8 @@ private:  // methods
     }
 
     friend class meshgenerator::MeshGeneratorImpl;
-    void setProjection( const Projection& p ) { impl_->setProjection( p ); }
-    void setGrid( const Grid& p ) { impl_->setGrid( p ); }
-
-private:
-    eckit::SharedPtr<Implementation> impl_;
+    void setProjection( const Projection& p ) { get()->setProjection( p ); }
+    void setGrid( const Grid& p ) { get()->setGrid( p ); }
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -12,14 +12,14 @@
 
 #include <string>
 
-#include "eckit/memory/Owned.h"
+#include "atlas/util/Object.h"
 
 namespace atlas {
 namespace numerics {
 
 /// @brief Method class
 /// @note  Abstract base class
-class Method : public eckit::Owned {
+class Method : public util::Object {
 public:
     Method() {}
     virtual ~Method()                = 0;

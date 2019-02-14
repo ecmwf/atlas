@@ -13,11 +13,12 @@
 
 #pragma once
 
+#include <map>
+
 #include "atlas/field/Field.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Metadata.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
+#include "atlas/util/Object.h"
 
 namespace eckit {
 class Parametrisation;
@@ -29,10 +30,7 @@ namespace field {
 /**
  * \brief State class that owns a collection of fields
  */
-class State : public eckit::Owned {
-public:  // types
-    typedef eckit::SharedPtr<State> Ptr;
-
+class State : public util::Object {
 public:  // methods
          //-- Constructors
     State();
@@ -46,12 +44,12 @@ public:  // methods
     bool has( const std::string& name ) const { return ( fields_.find( name ) != fields_.end() ); }
     std::vector<std::string> field_names() const;
 
-    const Field& field( const size_t idx ) const;
-    Field& field( const size_t idx );
-    size_t size() const { return fields_.size(); }
+    const Field& field( const idx_t idx ) const;
+    Field& field( const idx_t idx );
+    idx_t size() const { return static_cast<idx_t>( fields_.size() ); }
 
-    const Field& operator[]( const size_t idx ) const { return field( idx ); }
-    Field& operator[]( const size_t idx ) { return field( idx ); }
+    const Field& operator[]( const idx_t idx ) const { return field( idx ); }
+    Field& operator[]( const idx_t idx ) { return field( idx ); }
 
     const Field& operator[]( const std::string& name ) const { return field( name ); }
     Field& operator[]( const std::string& name ) { return field( name ); }
@@ -77,7 +75,7 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-class StateGenerator : public eckit::Owned {
+class StateGenerator : public util::Object {
 public:
     StateGenerator( const eckit::Parametrisation& = util::Config() );
 
@@ -131,8 +129,8 @@ void atlas__State__add( State* This, FieldImpl* field );
 void atlas__State__remove( State* This, const char* name );
 int atlas__State__has( State* This, const char* name );
 FieldImpl* atlas__State__field_by_name( State* This, const char* name );
-FieldImpl* atlas__State__field_by_index( State* This, int index );
-int atlas__State__size( const State* This );
+FieldImpl* atlas__State__field_by_index( State* This, idx_t index );
+idx_t atlas__State__size( const State* This );
 util::Metadata* atlas__State__metadata( State* This );
 }
 

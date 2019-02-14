@@ -16,3 +16,5 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/grid/Partitioner.h"
+#include "atlas/grid/StructuredGrid.h"
+#include "atlas/grid/UnstructuredGrid.h"

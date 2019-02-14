@@ -9,8 +9,14 @@
  */
 
 #include <cmath>
+#include <functional>
+
+#include "eckit/config/Parametrisation.h"
+#include "eckit/utils/Hash.h"
 
 #include "atlas/projection/detail/MercatorProjection.h"
+#include "atlas/projection/detail/ProjectionFactory.h"
+#include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
 
@@ -74,7 +80,7 @@ typename MercatorProjectionT<Rotation>::Spec MercatorProjectionT<Rotation>::spec
     Spec proj_spec;
     proj_spec.set( "type", static_type() );
     proj_spec.set( "longitude0", lon0_ );
-    if ( radius_ != util::Earth::radius() ) proj_spec.set( "radius", radius_ );
+    if ( std::not_equal_to<double>()( radius_, util::Earth::radius() ) ) { proj_spec.set( "radius", radius_ ); }
     rotation_.spec( proj_spec );
     return proj_spec;
 }
@@ -87,8 +93,13 @@ void MercatorProjectionT<Rotation>::hash( eckit::Hash& hsh ) const {
     hsh.add( radius_ );
 }
 
-register_BuilderT1( ProjectionImpl, MercatorProjection, MercatorProjection::static_type() );
-register_BuilderT1( ProjectionImpl, RotatedMercatorProjection, RotatedMercatorProjection::static_type() );
+template class MercatorProjectionT<NotRotated>;
+template class MercatorProjectionT<Rotated>;
+
+namespace {
+static ProjectionBuilder<MercatorProjection> register_1( MercatorProjection::static_type() );
+static ProjectionBuilder<RotatedMercatorProjection> register_2( RotatedMercatorProjection::static_type() );
+}  // namespace
 
 }  // namespace detail
 }  // namespace projection

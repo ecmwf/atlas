@@ -103,6 +103,8 @@ public:
     int start() const { return start_; }
     int end() const { return end_; }
 
+    Range() : Range( 0, 0 ) {}
+
 private:
     int start_;
     int end_;

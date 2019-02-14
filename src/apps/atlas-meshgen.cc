@@ -17,6 +17,7 @@
 #include <sstream>
 #include <vector>
 
+#include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
 #include "atlas/library/Library.h"
@@ -30,7 +31,7 @@
 #include "atlas/mesh/actions/BuildStatistics.h"
 #include "atlas/mesh/actions/BuildTorusXYZField.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
-#include "atlas/meshgenerator/MeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/output/detail/GmshIO.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -71,14 +72,9 @@ private:
     bool brick;
     bool stats;
     bool info;
-    bool with_pole;
-    bool stitch_pole;
     bool ghost;
     bool binary;
     std::string identifier;
-    std::vector<long> reg_nlon_nlat;
-    std::vector<long> fgg_nlon_nlat;
-    std::vector<long> rgg_nlon;
     PathName path_in;
     PathName path_out;
 };
@@ -163,7 +159,7 @@ void Meshgen2Gmsh::execute( const Args& args ) {
         try {
             grid = Grid( key );
         }
-        catch ( eckit::BadParameter& e ) {
+        catch ( eckit::Exception& ) {
         }
     }
     else if ( path_in.path().size() ) {
@@ -172,7 +168,7 @@ void Meshgen2Gmsh::execute( const Args& args ) {
         try {
             grid = Grid( Config( path_in ) );
         }
-        catch ( eckit::BadParameter& e ) {
+        catch ( eckit::Exception& ) {
         }
     }
     else {
@@ -196,7 +192,7 @@ void Meshgen2Gmsh::execute( const Args& args ) {
     try {
         mesh = meshgenerator.generate( grid );
     }
-    catch ( eckit::BadParameter& e ) {
+    catch ( eckit::Exception& e ) {
         Log::error() << e.what() << std::endl;
         Log::error() << e.callStack() << std::endl;
         throw e;
@@ -209,10 +205,8 @@ void Meshgen2Gmsh::execute( const Args& args ) {
                        << std::endl;
         Log::warning() << "units: " << grid.projection().units() << std::endl;
     }
-    if ( edges ) {
-        build_edges( mesh );
-        build_pole_edges( mesh );
-        build_edges_parallel_fields( mesh );
+    if ( edges && grid.projection().units() == "degrees" ) {
+        functionspace::EdgeColumns edges_fs( mesh, option::halo( halo ) );
         if ( brick )
             build_brick_dual_mesh( grid, mesh );
         else
@@ -242,7 +236,7 @@ void Meshgen2Gmsh::execute( const Args& args ) {
     if ( info ) {
         Log::info() << "Partitioning graph: \n" << mesh.partitionGraph() << std::endl;
         Log::info() << "Mesh partition footprint: " << eckit::Bytes( mesh.footprint() ) << std::endl;
-        for ( size_t jhalo = 0; jhalo <= halo; ++jhalo ) {
+        for ( idx_t jhalo = 0; jhalo <= halo; ++jhalo ) {
             mesh.polygon( jhalo ).outputPythonScript( "polygon_halo" + std::to_string( jhalo ) + ".py" );
         }
     }

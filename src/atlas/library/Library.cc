@@ -8,8 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <sstream>
+#include <string>
 
-#include "eckit/eckit_config.h"
+#include "eckit/eckit.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/log/Log.h"
@@ -73,8 +75,8 @@ Library::Library() :
     debug_( eckit::system::Library::debug() ),
     info_( getEnv( "ATLAS_INFO", true ) ),
     trace_( getEnv( "ATLAS_TRACE", false ) ),
-    trace_report_( getEnv( "ATLAS_TRACE_REPORT", false ) ),
-    trace_barriers_( getEnv( "ATLAS_TRACE_BARRIERS", false ) ) {}
+    trace_barriers_( getEnv( "ATLAS_TRACE_BARRIERS", false ) ),
+    trace_report_( getEnv( "ATLAS_TRACE_REPORT", false ) ) {}
 
 Library& Library::instance() {
     return libatlas;
@@ -103,9 +105,10 @@ void Library::initialise( int argc, char** argv ) {
             atlas::Log::debug().reset();
         }
         Log::debug() << "Atlas initialised eckit::Main.\n";
-        if ( eckit::mpi::comm( "world" ).size() > 1 )
+        if ( eckit::mpi::comm( "world" ).size() > 1 ) {
             Log::debug() << "--> Only MPI rank 0 is logging. Please initialise eckit::Main \n"
                             "    before to avoid this behaviour.\n";
+        }
     }
     initialise();
 }
@@ -126,7 +129,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
     if ( not info_ ) info_channel_.reset();
 
     // Summary
-    if ( getEnv( "ATLAS_LOG_RANK", 0 ) == mpi::comm().rank() ) {
+    if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::comm().rank() ) ) {
         std::ostream& out = Log::debug();
         out << "Executable        [" << Main::instance().name() << "]\n";
         out << " \n";
@@ -154,6 +157,11 @@ void Library::initialise() {
 
 void Library::finalise() {
     if ( ATLAS_HAVE_TRACE && trace_report_ ) { Log::info() << atlas::Trace::report() << std::endl; }
+
+    if ( getEnv( "ATLAS_FINALISES_MPI", false ) ) {
+        Log::debug() << "ATLAS_FINALISES_MPI is set: calling eckit::mpi::finaliseAllComms()" << std::endl;
+        eckit::mpi::finaliseAllComms();
+    }
 
     // Make sure that these specialised channels that wrap Log::info() are
     // destroyed before eckit::Log::info gets destroyed.
@@ -252,6 +260,7 @@ void Library::Information::print( std::ostream& out ) const {
         << "    MKL            : " << str( feature_MKL ) << '\n'
         << "    Tesselation    : " << str( feature_Tesselation ) << '\n'
         << "    ArrayDataStore : " << array_data_store << '\n'
+        << "    idx_t          : " << ATLAS_BITS_LOCAL << " bit integer" << '\n'
         << "    gidx_t         : " << ATLAS_BITS_GLOBAL << " bit integer" << '\n'
         << " \n";
 

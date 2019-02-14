@@ -13,31 +13,30 @@
 #include <array>
 #include <vector>
 
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Owned.h"
-
-#include "atlas/util/Config.h"
+#include "atlas/util/Object.h"
 
 namespace eckit {
 class Parametrisation;
 }
 
 namespace atlas {
+namespace util {
+class Config;
+}
+}  // namespace atlas
+
+namespace atlas {
 namespace grid {
 namespace spacing {
 
-class Spacing : public eckit::Owned {
+class Spacing : public util::Object {
 public:
     using const_iterator = std::vector<double>::const_iterator;
     using Interval       = std::array<double, 2>;
     using Spec           = atlas::util::Config;
 
-    using ARG1      = const eckit::Parametrisation&;
-    using builder_t = eckit::BuilderT1<Spacing>;
-    static std::string className() { return "atlas.Spacing"; }
-
 public:
-    static Spacing* create( const eckit::Parametrisation& params );
+    static const Spacing* create( const eckit::Parametrisation& params );
 
     virtual std::string type() const = 0;
 

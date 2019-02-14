@@ -24,8 +24,8 @@
 ///     int[2] strides = { 3, 1 };
 ///     int[2] shape = { 3, 3 };
 ///     LocalView<int,2> matrix( array, shape, strides );
-///     for( size_t i=0; i<matrix.shape(0); ++i ) {
-///       for( size_t j=0; j<matrix.shape(1); ++j ) {
+///     for( idx_t i=0; i<matrix.shape(0); ++i ) {
+///       for( idx_t j=0; j<matrix.shape(1); ++j ) {
 ///         matrix(i,j) *= 10;
 ///       }
 ///     }
@@ -84,17 +84,17 @@ private:
 public:
     // -- Constructors
 
-    LocalView( const value_type* data, const size_t shape[], const size_t strides[] ) :
+    LocalView( const value_type* data, const idx_t shape[], const idx_t strides[] ) :
         data_( const_cast<value_type*>( data ) ) {
         size_ = 1;
-        for ( size_t j = 0; j < Rank; ++j ) {
+        for ( idx_t j = 0; j < Rank; ++j ) {
             shape_[j]   = shape[j];
             strides_[j] = strides[j];
             size_ *= shape_[j];
         }
     }
 
-    LocalView( const value_type* data, const size_t shape[] ) : data_( const_cast<value_type*>( data ) ) {
+    LocalView( const value_type* data, const idx_t shape[] ) : data_( const_cast<value_type*>( data ) ) {
         size_ = 1;
         for ( int j = Rank - 1; j >= 0; --j ) {
             shape_[j]   = shape[j];
@@ -126,11 +126,29 @@ public:
         return data_[index( idx... )];
     }
 
-    size_t size() const { return size_; }
+    template <typename Int, bool EnableBool = true>
+    typename std::enable_if<( Rank == 1 && EnableBool ), const value_type&>::type operator[]( Int idx ) const {
+        check_bounds( idx );
+        return data_[idx];
+    }
 
-    size_t shape( size_t idx ) const { return shape_[idx]; }
+    template <typename Int, bool EnableBool = true>
+    typename std::enable_if<( Rank == 1 && EnableBool ), value_type&>::type operator[]( Int idx ) {
+        check_bounds( idx );
+        return data_[idx];
+    }
 
-    size_t stride( size_t idx ) const { return strides_[idx]; }
+    idx_t size() const { return size_; }
+
+    template <typename Int>
+    idx_t shape( Int idx ) const {
+        return shape_[idx];
+    }
+
+    template <typename Int>
+    idx_t stride( Int idx ) const {
+        return strides_[idx];
+    }
 
     value_type const* data() const { return data_; }
 
@@ -142,7 +160,7 @@ public:
 
     void dump( std::ostream& os ) const;
 
-    static constexpr size_t rank() { return Rank; }
+    static constexpr idx_t rank() { return Rank; }
 
     template <typename... Args>
     typename slice_t<Args...>::type slice( Args... args ) {
@@ -158,17 +176,17 @@ private:
     // -- Private methods
 
     template <int Dim, typename Int, typename... Ints>
-    constexpr int index_part( Int idx, Ints... next_idx ) const {
+    constexpr idx_t index_part( Int idx, Ints... next_idx ) const {
         return idx * strides_[Dim] + index_part<Dim + 1>( next_idx... );
     }
 
     template <int Dim, typename Int>
-    constexpr int index_part( Int last_idx ) const {
+    constexpr idx_t index_part( Int last_idx ) const {
         return last_idx * strides_[Dim];
     }
 
     template <typename... Ints>
-    constexpr int index( Ints... idx ) const {
+    constexpr idx_t index( Ints... idx ) const {
         return index_part<0>( idx... );
     }
 
@@ -191,13 +209,13 @@ private:
 
     template <int Dim, typename Int, typename... Ints>
     void check_bounds_part( Int idx, Ints... next_idx ) const {
-        if ( size_t( idx ) >= shape_[Dim] ) { throw_OutOfRange( "LocalView", array_dim<Dim>(), idx, shape_[Dim] ); }
+        if ( idx_t( idx ) >= shape_[Dim] ) { throw_OutOfRange( "LocalView", array_dim<Dim>(), idx, shape_[Dim] ); }
         check_bounds_part<Dim + 1>( next_idx... );
     }
 
     template <int Dim, typename Int>
     void check_bounds_part( Int last_idx ) const {
-        if ( size_t( last_idx ) >= shape_[Dim] ) {
+        if ( idx_t( last_idx ) >= shape_[Dim] ) {
             throw_OutOfRange( "LocalView", array_dim<Dim>(), last_idx, shape_[Dim] );
         }
     }
@@ -206,9 +224,9 @@ private:
     // -- Private data
 
     value_type* data_;
-    size_t size_;
-    size_t shape_[Rank];
-    size_t strides_[Rank];
+    idx_t size_;
+    idx_t shape_[Rank];
+    idx_t strides_[Rank];
 };
 
 }  // namespace array

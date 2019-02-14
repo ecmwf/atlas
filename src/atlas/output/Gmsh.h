@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <fstream>
+
 #include "atlas/output/Output.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
@@ -36,7 +38,7 @@ public:
 // -----------------------------------------------------------------------------
 
 namespace detail {
-class Gmsh : public Output::output_t {
+class Gmsh : public OutputImpl {
 public:
     Gmsh( Stream& );
     Gmsh( Stream&, const eckit::Parametrisation& );

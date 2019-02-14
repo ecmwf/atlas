@@ -22,7 +22,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -45,18 +45,18 @@ class IsGhost {
 public:
     IsGhost( const mesh::Nodes& nodes ) :
         part_( make_view<int, 1>( nodes.partition() ) ),
-        ridx_( make_indexview<int, 1>( nodes.remote_index() ) ),
+        ridx_( make_indexview<idx_t, 1>( nodes.remote_index() ) ),
         mypart_( mpi::comm().rank() ) {}
 
-    bool operator()( size_t idx ) const {
+    bool operator()( idx_t idx ) const {
         if ( part_( idx ) != mypart_ ) return true;
-        if ( ridx_( idx ) != (int)idx ) return true;
+        if ( ridx_( idx ) != idx ) return true;
         return false;
     }
 
 private:
     array::ArrayView<int, 1> part_;
-    IndexView<int, 1> ridx_;
+    IndexView<idx_t, 1> ridx_;
     int mypart_;
 };
 
@@ -70,10 +70,11 @@ CASE( "test1" ) {
 
     mesh::Nodes& nodes = m.nodes();
     nodes.resize( 10 );
-    array::ArrayView<double, 2> xy      = make_view<double, 2>( nodes.xy() );
-    array::ArrayView<gidx_t, 1> glb_idx = make_view<gidx_t, 1>( nodes.global_index() );
-    array::ArrayView<int, 1> part       = make_view<int, 1>( nodes.partition() );
-    array::ArrayView<int, 1> flags      = make_view<int, 1>( nodes.field( "flags" ) );
+    auto xy      = make_view<double, 2>( nodes.xy() );
+    auto lonlat  = make_view<double, 2>( nodes.lonlat() );
+    auto glb_idx = make_view<gidx_t, 1>( nodes.global_index() );
+    auto part    = make_view<int, 1>( nodes.partition() );
+    auto flags   = make_view<int, 1>( nodes.flags() );
     flags.assign( Topology::NONE );
 
     // This is typically available
@@ -123,11 +124,16 @@ CASE( "test1" ) {
     xy( 9, YY ) = -80.;
     Topology::set( flags( 9 ), Topology::BC | Topology::EAST );
 
+    for ( idx_t n = 0; n < xy.shape( 0 ); ++n ) {
+        lonlat( n, LON ) = xy( n, XX );
+        lonlat( n, LAT ) = xy( n, YY );
+    }
+
     mesh::actions::build_parallel_fields( m );
 
     EXPECT( nodes.has_field( "remote_idx" ) );
 
-    IndexView<int, 1> loc = make_indexview<int, 1>( nodes.remote_index() );
+    auto loc = make_indexview<idx_t, 1>( nodes.remote_index() );
     EXPECT( loc( 0 ) == 0 );
     EXPECT( loc( 1 ) == 1 );
     EXPECT( loc( 2 ) == 2 );
@@ -185,7 +191,8 @@ CASE( "test2" ) {
     util::Config meshgen_options;
     meshgen_options.set( "angle", 27.5 );
     meshgen_options.set( "triangulate", false );
-    meshgenerator::StructuredMeshGenerator generate( meshgen_options );
+    meshgen_options.set( "partitioner", "equal_regions" );
+    StructuredMeshGenerator generate( meshgen_options );
     Mesh m = generate( Grid( "N32" ) );
     mesh::actions::build_parallel_fields( m );
 
@@ -193,8 +200,8 @@ CASE( "test2" ) {
 
     test::IsGhost is_ghost( nodes );
 
-    size_t nb_ghost = 0;
-    for ( size_t jnode = 0; jnode < nodes.size(); ++jnode ) {
+    idx_t nb_ghost = 0;
+    for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
         if ( is_ghost( jnode ) ) ++nb_ghost;
     }
 
@@ -205,7 +212,7 @@ CASE( "test2" ) {
     mesh::actions::build_periodic_boundaries( m );
 
     int nb_periodic = -nb_ghost;
-    for ( size_t jnode = 0; jnode < nodes.size(); ++jnode ) {
+    for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
         if ( is_ghost( jnode ) ) ++nb_periodic;
     }
 

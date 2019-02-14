@@ -32,7 +32,6 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_fv )
-use, intrinsic :: iso_c_binding, only : c_size_t
 use atlas_module
 implicit none
 
@@ -102,7 +101,7 @@ implicit none
   call node_to_node%final()
 
   node_to_node = nodes%connectivity("node")
-  FCTEST_CHECK_EQUAL( node_to_node%rows(), 0_c_size_t )
+  FCTEST_CHECK_EQUAL( node_to_node%rows(), 0 )
   FCTEST_CHECK_EQUAL( node_to_node%name(),"node")
 
   node_to_node = nodes%connectivity("node")

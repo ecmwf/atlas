@@ -15,14 +15,13 @@
 #include <utility>
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/array.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array_fwd.h"
 #include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 //------------------------------------------------------------------------------
@@ -32,8 +31,8 @@ namespace array {
 namespace gridtools {
 
 template <unsigned int Rank>
-std::array<unsigned int, Rank> get_array_from_vector( std::vector<size_t> const& values ) {
-    std::array<unsigned int, Rank> array;
+std::array<idx_t, Rank> get_array_from_vector( std::vector<idx_t> const& values ) {
+    std::array<idx_t, Rank> array;
     std::copy( values.begin(), values.end(), array.begin() );
     return array;
 }
@@ -46,7 +45,7 @@ struct check_dimension_lengths_impl {
             std::stringstream err;
             err << "Attempt to resize array with original size for dimension " << Dim << " of " << shape[Dim] << " by "
                 << first_dim << std::endl;
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
         check_dimension_lengths_impl<TotalDims, Dim + 1>::apply( shape, d... );
     }
@@ -61,7 +60,7 @@ struct check_dimension_lengths_impl<TotalDims, Dim,
             std::stringstream err;
             err << "Attempt to resize array with original size for dimension " << Dim - 1 << " of " << shape[Dim - 1]
                 << " by " << first_dim << std::endl;
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
     }
 };
@@ -75,7 +74,7 @@ struct check_dimension_lengths_impl<TotalDims, Dim,
             std::stringstream err;
             err << "Attempt to resize array with original size for dimension " << Dim << " of " << shape[Dim] << " by "
                 << first_dim << std::endl;
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
     }
 };
@@ -95,7 +94,7 @@ struct default_layout_t {
         using type = ::gridtools::layout_map<Indices...>;
     };
 
-    using type = typename get_layout<typename ::gridtools::make_gt_integer_sequence<unsigned int, Rank>::type>::type;
+    using type = typename get_layout<::gridtools::make_gt_integer_sequence<::gridtools::uint_t, Rank>>::type;
 };
 
 template <typename Value, typename LayoutMap>
@@ -111,7 +110,7 @@ struct get_layout_map_component {
     };
 };
 
-template <typename Value, typename RankS>
+template <typename Value>
 struct get_stride_component {
     template <int Idx>
     struct get_component {
@@ -127,17 +126,20 @@ struct get_stride_component {
     };
 };
 
-template <int Idx>
+template <typename Value>
 struct get_shape_component {
-    ATLAS_HOST_DEVICE
-    constexpr get_shape_component() {}
+    template <int Idx>
+    struct get_component {
+        ATLAS_HOST_DEVICE
+        constexpr get_component() {}
 
-    template <typename StorageInfoPtr>
-    ATLAS_HOST_DEVICE constexpr static size_t apply( StorageInfoPtr a ) {
-        static_assert( (::gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value ),
-                       "Error: not a storage_info" );
-        return a->template unaligned_dim<Idx>();
-    }
+        template <typename StorageInfoPtr>
+        ATLAS_HOST_DEVICE constexpr static Value apply( StorageInfoPtr a ) {
+            static_assert( (::gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value ),
+                           "Error: not a storage_info" );
+            return a->template total_length<Idx>();
+        }
+    };
 };
 
 // indirection around C++11 sizeof... since it is buggy for nvcc and cray
@@ -169,24 +171,29 @@ create_gt_storage( UInts... dims ) {
 
 template <typename Value, unsigned int Rank>
 static gridtools::storage_traits::data_store_t<Value, gridtools::storage_traits::storage_info_t<0, Rank>>*
-wrap_gt_storage( Value* data, std::array<unsigned int, Rank>&& shape, std::array<unsigned int, Rank>&& strides ) {
+wrap_gt_storage( Value* data, std::array<idx_t, Rank>&& shape, std::array<idx_t, Rank>&& strides ) {
     static_assert( ( Rank > 0 ), "Error: can not create storages without any dimension" );
     typedef gridtools::storage_traits::storage_info_t<0, Rank, ::gridtools::zero_halo<Rank>> storage_info_ty;
     typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
-
-    storage_info_ty si( shape, strides );
+    ::gridtools::array<::gridtools::uint_t, Rank> _shape;
+    ::gridtools::array<::gridtools::uint_t, Rank> _strides;
+    for ( unsigned int i = 0; i < Rank; ++i ) {
+        _shape[i]   = shape[i];
+        _strides[i] = strides[i];
+    }
+    storage_info_ty si( _shape, _strides );
     data_store_t* ds = new data_store_t( si, data );
 
     return ds;
 }
 
-constexpr size_t zero( std::size_t ) {
+constexpr idx_t zero( idx_t ) {
     return 0;
 }
 
-template <size_t... Is>
-ArrayShape make_null_strides(::gridtools::gt_integer_sequence<size_t, Is...> ) {
-    return make_strides( {zero( Is )...} );
+template <idx_t... Is>
+ArrayStrides make_null_strides(::gridtools::gt_integer_sequence<idx_t, Is...> ) {
+    return make_strides( zero( Is )... );
 }
 
 template <typename UInt>
@@ -223,24 +230,19 @@ ArraySpec ATLAS_HOST make_spec( DataStore* gt_data_store_ptr, Dims... dims ) {
         using Layout          = typename DataStore::storage_info_t::layout_t;
         using Alignment       = typename DataStore::storage_info_t::alignment_t;
 
-        using seq =
-            my_apply_gt_integer_sequence<typename ::gridtools::make_gt_integer_sequence<int, sizeof...( dims )>::type>;
+        using seq = my_apply_gt_integer_sequence<::gridtools::make_gt_integer_sequence<int, sizeof...( dims )>>;
 
         ArraySpec spec(
-            ArrayShape{(unsigned long)dims...},
-            seq::template apply<
-                ArrayStrides,
-                get_stride_component<unsigned long, typename get_pack_size<Dims...>::type>::template get_component>(
-                storage_info_ptr ),
-            seq::template apply<ArrayLayout, get_layout_map_component<unsigned long, Layout>::template get_component>(),
+            ArrayShape{(idx_t)dims...},
+            seq::template apply<ArrayStrides, get_stride_component<idx_t>::template get_component>( storage_info_ptr ),
+            seq::template apply<ArrayLayout, get_layout_map_component<idx_t, Layout>::template get_component>(),
             ArrayAlignment( Alignment::value ) );
-        ASSERT( spec.allocatedSize() == storage_info_ptr->padded_total_length() );
+        ATLAS_ASSERT( spec.allocatedSize() == storage_info_ptr->padded_total_length() );
         return spec;
     }
     else {
-        return ArraySpec(
-            make_shape( {dims...} ),
-            make_null_strides( typename ::gridtools::make_gt_integer_sequence<size_t, sizeof...( dims )>::type() ) );
+        return ArraySpec( make_shape( {dims...} ),
+                          make_null_strides(::gridtools::make_gt_integer_sequence<idx_t, sizeof...( dims )>() ) );
     }
 }
 #endif

@@ -16,11 +16,10 @@
 
 #pragma once
 
-#include "eckit/memory/Owned.h"
-
 #include "atlas/array/ArrayView.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/mesh/HybridElements.h"
+#include "atlas/util/Object.h"
 
 namespace atlas {
 namespace mesh {
@@ -34,22 +33,22 @@ namespace mesh {
 // ------------------------------------------------------------------------------------------------------
 
 /// @brief Describe elements of a single type
-class Elements : public eckit::Owned {
+class Elements : public util::Object {
 public:
     // typedef atlas::mesh::BlockConnectivity Connectivity;
 public:
     //-- Constructors
 
     /// @brief Constructor that treats elements as sub-elements in HybridElements
-    Elements( HybridElements& elements, size_t type_idx );
+    Elements( HybridElements& elements, idx_t type_idx );
 
     /// @brief Constructor that internally creates a HybridElements that owns the
     /// data
-    Elements( ElementType*, size_t nb_elements, const std::vector<idx_t>& node_connectivity );
+    Elements( ElementType*, idx_t nb_elements, const std::vector<idx_t>& node_connectivity );
 
     /// @brief Constructor that internally creates a HybridElements that owns the
     /// data
-    Elements( ElementType*, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array = false );
+    Elements( ElementType*, idx_t nb_elements, const idx_t node_connectivity[], bool fortran_array = false );
 
     /// @brief Destructor
     virtual ~Elements();
@@ -57,16 +56,16 @@ public:
     //-- Accessors
 
     /// @brief Number of elements
-    size_t size() const;
+    idx_t size() const;
 
     /// @brief Name of this element type
     const std::string& name() const;
 
     /// @brief Number of nodes for each element type
-    size_t nb_nodes() const;
+    idx_t nb_nodes() const;
 
     /// @brief Number of edges for each element type
-    size_t nb_edges() const;
+    idx_t nb_edges() const;
 
     /// @brief Element to Node connectivity table
     const BlockConnectivity& node_connectivity() const;
@@ -88,21 +87,21 @@ public:
     //  const HybridElements& hybrid_elements() const;
 
     /// @brief Index of Elements in hybrid_elements
-    //  size_t type_idx() const;
+    //  idx_t type_idx() const;
 
     /// @brief Begin of elements in hybrid_elements
-    size_t begin() const;
+    idx_t begin() const;
 
     /// @brief End of elements in hybrid_elements
-    size_t end() const;
+    idx_t end() const;
 
     const Field& field( const std::string& name ) const { return hybrid_elements_->field( name ); }
     Field& field( const std::string& name ) { return hybrid_elements_->field( name ); }
     bool has_field( const std::string& name ) const { return hybrid_elements_->has_field( name ); }
 
-    const Field& field( size_t idx ) const { return hybrid_elements_->field( idx ); }
-    Field& field( size_t idx ) { return hybrid_elements_->field( idx ); }
-    size_t nb_fields() const { return hybrid_elements_->nb_fields(); }
+    const Field& field( idx_t idx ) const { return hybrid_elements_->field( idx ); }
+    Field& field( idx_t idx ) { return hybrid_elements_->field( idx ); }
+    idx_t nb_fields() const { return hybrid_elements_->nb_fields(); }
 
     const Field& global_index() const { return hybrid_elements_->global_index(); }
     Field& global_index() { return hybrid_elements_->global_index(); }
@@ -125,7 +124,7 @@ public:
     template <typename DATATYPE, int RANK>
     array::LocalView<DATATYPE, RANK, array::Intent::ReadWrite> view( Field& ) const;
 
-    size_t add( const size_t nb_elements );
+    idx_t add( const idx_t nb_elements );
 
 private:
     friend class HybridElements;
@@ -134,29 +133,29 @@ private:
 private:
     bool owns_;
     HybridElements* hybrid_elements_;
-    size_t size_;
-    size_t begin_;
-    size_t end_;
-    size_t type_idx_;
-    size_t nb_nodes_;
-    size_t nb_edges_;
+    idx_t size_;
+    idx_t begin_;
+    idx_t end_;
+    idx_t type_idx_;
+    idx_t nb_nodes_;
+    idx_t nb_edges_;
 };
 
 // ------------------------------------------------------------------------------------------------------
 
-inline size_t Elements::size() const {
+inline idx_t Elements::size() const {
     return size_;
 }
 
-inline size_t Elements::nb_nodes() const {
+inline idx_t Elements::nb_nodes() const {
     return nb_nodes_;
 }
 
-inline size_t Elements::nb_edges() const {
+inline idx_t Elements::nb_edges() const {
     return nb_edges_;
 }
 
-// inline size_t Elements::type_idx() const
+// inline idx_t Elements::type_idx() const
 //{
 //  return type_idx_;
 //}
@@ -230,11 +229,11 @@ inline const ElementType& Elements::element_type() const {
     return hybrid_elements_->element_type( type_idx_ );
 }
 
-inline size_t Elements::begin() const {
+inline idx_t Elements::begin() const {
     return begin_;
 }
 
-inline size_t Elements::end() const {
+inline idx_t Elements::end() const {
     return end_;
 }
 
@@ -242,22 +241,22 @@ inline size_t Elements::end() const {
 
 extern "C" {
 void atlas__mesh__Elements__delete( Elements* This );
-size_t atlas__mesh__Elements__size( const Elements* This );
-size_t atlas__mesh__Elements__begin( const Elements* This );
-size_t atlas__mesh__Elements__end( const Elements* This );
+idx_t atlas__mesh__Elements__size( const Elements* This );
+idx_t atlas__mesh__Elements__begin( const Elements* This );
+idx_t atlas__mesh__Elements__end( const Elements* This );
 BlockConnectivity* atlas__mesh__Elements__node_connectivity( Elements* This );
 BlockConnectivity* atlas__mesh__Elements__edge_connectivity( Elements* This );
 BlockConnectivity* atlas__mesh__Elements__cell_connectivity( Elements* This );
 int atlas__mesh__Elements__has_field( const Elements* This, char* name );
 int atlas__mesh__Elements__nb_fields( const Elements* This );
-field::FieldImpl* atlas__mesh__Elements__field_by_idx( Elements* This, size_t idx );
+field::FieldImpl* atlas__mesh__Elements__field_by_idx( Elements* This, idx_t idx );
 field::FieldImpl* atlas__mesh__Elements__field_by_name( Elements* This, char* name );
 field::FieldImpl* atlas__mesh__Elements__global_index( Elements* This );
 field::FieldImpl* atlas__mesh__Elements__remote_index( Elements* This );
 field::FieldImpl* atlas__mesh__Elements__partition( Elements* This );
 field::FieldImpl* atlas__mesh__Elements__halo( Elements* This );
 const ElementType* atlas__mesh__Elements__element_type( const Elements* This );
-void atlas__mesh__Elements__add( Elements* This, size_t nb_elements );
+void atlas__mesh__Elements__add( Elements* This, idx_t nb_elements );
 }
 
 //------------------------------------------------------------------------------------------------------

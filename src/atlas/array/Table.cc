@@ -8,12 +8,15 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/array/Table.h"
+#include "Table.h"
+
+#include <algorithm>
 #include <limits>
+
 #include "atlas/array.h"
 #include "atlas/array/DataType.h"
 #include "atlas/library/defines.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 
 #if ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
@@ -128,8 +131,8 @@ void Table::resize_values( size_t old_size, size_t new_size, bool initialize, co
 // ----------------------------------------------------------------------------
 
 void Table::resize_counts_and_displs( size_t size ) {
-    ASSERT( data_[_displs_] != 0 );
-    ASSERT( data_[_counts_] != 0 );
+    ATLAS_ASSERT( data_[_displs_] != 0 );
+    ATLAS_ASSERT( data_[_counts_] != 0 );
     data_[_displs_]->resize( size );
     data_[_counts_]->resize( size );
     displs_ = make_host_view<size_t, 1>( *( data_[_displs_] ) );
@@ -139,8 +142,8 @@ void Table::resize_counts_and_displs( size_t size ) {
 // ----------------------------------------------------------------------------
 
 void Table::insert_counts_and_displs( size_t position, size_t rows ) {
-    ASSERT( data_[_displs_] != 0 );
-    ASSERT( data_[_counts_] != 0 );
+    ATLAS_ASSERT( data_[_displs_] != 0 );
+    ATLAS_ASSERT( data_[_counts_] != 0 );
     data_[_displs_]->insert( position, rows );
     data_[_counts_]->insert( position, rows );
     displs_ = make_host_view<size_t, 1>( *( data_[_displs_] ) );
@@ -150,7 +153,7 @@ void Table::insert_counts_and_displs( size_t position, size_t rows ) {
 // ----------------------------------------------------------------------------
 
 void Table::resize_values( size_t size ) {
-    ASSERT( data_[_values_] != 0 );
+    ATLAS_ASSERT( data_[_values_] != 0 );
     data_[_values_]->resize( size );
     values_ = make_host_view<idx_t, 1>( *( data_[_values_] ) );
 }
@@ -158,7 +161,7 @@ void Table::resize_values( size_t size ) {
 // ----------------------------------------------------------------------------
 
 void Table::insert_values( size_t position, size_t size ) {
-    ASSERT( data_[_values_] != 0 );
+    ATLAS_ASSERT( data_[_values_] != 0 );
     data_[_values_]->insert( position, size );
     values_ = make_host_view<idx_t, 1>( *( data_[_values_] ) );
 }
@@ -166,7 +169,7 @@ void Table::insert_values( size_t position, size_t size ) {
 // ----------------------------------------------------------------------------
 
 void Table::add( size_t rows, size_t cols, const idx_t values[], bool fortran_array ) {
-    if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns_, "HybridConnectivity must be owned to be resized directly" );
     size_t old_size = size();
 
     if ( rows_ == 0 ) old_size = 0;
@@ -190,7 +193,7 @@ void Table::add( size_t rows, size_t cols, const idx_t values[], bool fortran_ar
 // ----------------------------------------------------------------------------
 
 void Table::add( size_t rows, const size_t cols[] ) {
-    if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns_, "HybridConnectivity must be owned to be resized directly" );
     size_t old_size = size();
     size_t new_size = old_size;
     for ( size_t j = 0; j < rows; ++j )
@@ -211,7 +214,7 @@ void Table::add( size_t rows, const size_t cols[] ) {
 // ----------------------------------------------------------------------------
 
 void Table::add( size_t rows, size_t cols ) {
-    if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns_, "HybridConnectivity must be owned to be resized directly" );
     size_t old_size = size();
 
     if ( rows_ == 0 ) old_size = 0;
@@ -228,14 +231,14 @@ void Table::add( size_t rows, size_t cols ) {
     mincols_ = std::min( mincols_, cols );
 
     const bool dummy_arg_fortran_array = false;
-    const idx_t* dummy_arg_values      = NULL;
+    const idx_t* dummy_arg_values      = nullptr;
     resize_values( old_size, new_size, false, dummy_arg_values, dummy_arg_fortran_array );
 }
 
 // ----------------------------------------------------------------------------
 
 void Table::insert( size_t position, size_t rows, size_t cols, const idx_t values[], bool fortran_array ) {
-    if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns_, "HybridConnectivity must be owned to be resized directly" );
     size_t position_displs = displs_( position );
     insert_counts_and_displs( position, rows );
 
@@ -251,7 +254,7 @@ void Table::insert( size_t position, size_t rows, size_t cols, const idx_t value
 
     insert_values( position_displs, rows * cols );
 
-    if ( values == NULL ) {
+    if ( values == nullptr ) {
         for ( size_t c = position_displs; c < position_displs + rows * cols; ++c ) {
             values_( c ) = missing_value() TO_FORTRAN;
         }
@@ -268,13 +271,13 @@ void Table::insert( size_t position, size_t rows, size_t cols, const idx_t value
 // ----------------------------------------------------------------------------
 
 void Table::insert( size_t position, size_t rows, size_t cols ) {
-    Table::insert( position, rows, cols, NULL, false );
+    Table::insert( position, rows, cols, nullptr, false );
 }
 
 // ----------------------------------------------------------------------------
 
 void Table::insert( size_t position, size_t rows, const size_t cols[] ) {
-    if ( !owns_ ) throw eckit::AssertionFailed( "HybridConnectivity must be owned to be resized directly" );
+    ATLAS_ASSERT( owns_, "HybridConnectivity must be owned to be resized directly" );
     size_t position_displs = displs_( position );
 
     if ( rows_ == 0 ) {

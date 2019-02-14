@@ -19,10 +19,10 @@ namespace parallel {
 template <int ParallelDim, int Cnt, int CurrentDim>
 struct halo_packer_impl {
     template <typename DATA_TYPE, int RANK, typename... Idx>
-    ATLAS_HOST_DEVICE static void apply( size_t& buf_idx, const size_t node_idx,
+    ATLAS_HOST_DEVICE static void apply( idx_t& buf_idx, const idx_t node_idx,
                                          const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite>& field,
                                          array::SVector<DATA_TYPE>& send_buffer, Idx... idxs ) {
-        for ( size_t i = 0; i < field.template shape<CurrentDim>(); ++i ) {
+        for ( idx_t i = 0; i < field.template shape<CurrentDim>(); ++i ) {
             halo_packer_impl<ParallelDim, Cnt - 1, CurrentDim + 1>::apply( buf_idx, node_idx, field, send_buffer,
                                                                            idxs..., i );
         }
@@ -32,7 +32,7 @@ struct halo_packer_impl {
 template <int ParallelDim>
 struct halo_packer_impl<ParallelDim, 0, ParallelDim> {
     template <typename DATA_TYPE, int RANK, typename... Idx>
-    ATLAS_HOST_DEVICE static void apply( size_t& buf_idx, const size_t node_idx,
+    ATLAS_HOST_DEVICE static void apply( idx_t& buf_idx, const idx_t node_idx,
                                          const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite>& field,
                                          array::SVector<DATA_TYPE>& send_buffer, Idx... idxs ) {
         send_buffer[buf_idx++] = field( idxs... );
@@ -42,7 +42,7 @@ struct halo_packer_impl<ParallelDim, 0, ParallelDim> {
 template <int ParallelDim, int Cnt>
 struct halo_packer_impl<ParallelDim, Cnt, ParallelDim> {
     template <typename DATA_TYPE, int RANK, typename... Idx>
-    ATLAS_HOST_DEVICE static void apply( size_t& buf_idx, const size_t node_idx,
+    ATLAS_HOST_DEVICE static void apply( idx_t& buf_idx, const idx_t node_idx,
                                          const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite>& field,
                                          array::SVector<DATA_TYPE>& send_buffer, Idx... idxs ) {
         halo_packer_impl<ParallelDim, Cnt - 1, ParallelDim + 1>::apply( buf_idx, node_idx, field, send_buffer, idxs...,
@@ -53,7 +53,7 @@ struct halo_packer_impl<ParallelDim, Cnt, ParallelDim> {
 template <int ParallelDim, int CurrentDim>
 struct halo_packer_impl<ParallelDim, 0, CurrentDim> {
     template <typename DATA_TYPE, int RANK, typename... Idx>
-    ATLAS_HOST_DEVICE static void apply( size_t& buf_idx, const size_t node_idx,
+    ATLAS_HOST_DEVICE static void apply( idx_t& buf_idx, const idx_t node_idx,
                                          const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite>& field,
                                          array::SVector<DATA_TYPE>& send_buffer, Idx... idxs ) {
         send_buffer[buf_idx++] = field( idxs... );
@@ -63,10 +63,10 @@ struct halo_packer_impl<ParallelDim, 0, CurrentDim> {
 template <int ParallelDim, int Cnt, int CurrentDim>
 struct halo_unpacker_impl {
     template <typename DATA_TYPE, int RANK, typename... Idx>
-    ATLAS_HOST_DEVICE static void apply( size_t& buf_idx, const size_t node_idx,
+    ATLAS_HOST_DEVICE static void apply( idx_t& buf_idx, const idx_t node_idx,
                                          array::SVector<DATA_TYPE> const& recv_buffer,
                                          array::ArrayView<DATA_TYPE, RANK>& field, Idx... idxs ) {
-        for ( size_t i = 0; i < field.template shape<CurrentDim>(); ++i ) {
+        for ( idx_t i = 0; i < field.template shape<CurrentDim>(); ++i ) {
             halo_unpacker_impl<ParallelDim, Cnt - 1, CurrentDim + 1>::apply( buf_idx, node_idx, recv_buffer, field,
                                                                              idxs..., i );
         }
@@ -76,7 +76,7 @@ struct halo_unpacker_impl {
 template <int ParallelDim>
 struct halo_unpacker_impl<ParallelDim, 0, ParallelDim> {
     template <typename DATA_TYPE, int RANK, typename... Idx>
-    ATLAS_HOST_DEVICE static void apply( size_t& buf_idx, const size_t node_idx,
+    ATLAS_HOST_DEVICE static void apply( idx_t& buf_idx, const idx_t node_idx,
                                          array::SVector<DATA_TYPE> const& recv_buffer,
                                          array::ArrayView<DATA_TYPE, RANK>& field, Idx... idxs ) {
         field( idxs... ) = recv_buffer[buf_idx++];
@@ -86,7 +86,7 @@ struct halo_unpacker_impl<ParallelDim, 0, ParallelDim> {
 template <int ParallelDim, int Cnt>
 struct halo_unpacker_impl<ParallelDim, Cnt, ParallelDim> {
     template <typename DATA_TYPE, int RANK, typename... Idx>
-    ATLAS_HOST_DEVICE static void apply( size_t& buf_idx, const size_t node_idx,
+    ATLAS_HOST_DEVICE static void apply( idx_t& buf_idx, const idx_t node_idx,
                                          array::SVector<DATA_TYPE> const& recv_buffer,
                                          array::ArrayView<DATA_TYPE, RANK>& field, Idx... idxs ) {
         halo_unpacker_impl<ParallelDim, Cnt - 1, ParallelDim + 1>::apply( buf_idx, node_idx, recv_buffer, field,
@@ -97,7 +97,7 @@ struct halo_unpacker_impl<ParallelDim, Cnt, ParallelDim> {
 template <int ParallelDim, int CurrentDim>
 struct halo_unpacker_impl<ParallelDim, 0, CurrentDim> {
     template <typename DATA_TYPE, int RANK, typename... Idx>
-    ATLAS_HOST_DEVICE static void apply( size_t& buf_idx, const size_t node_idx,
+    ATLAS_HOST_DEVICE static void apply( idx_t& buf_idx, const idx_t node_idx,
                                          array::SVector<DATA_TYPE> const& recv_buffer,
                                          array::ArrayView<DATA_TYPE, RANK>& field, Idx... idxs ) {
         field( idxs... ) = recv_buffer[buf_idx++];

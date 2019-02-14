@@ -11,7 +11,10 @@
 #pragma once
 
 #include "atlas/projection/detail/ProjectionImpl.h"
-#include "atlas/runtime/Log.h"
+
+namespace atlas {
+class Projection;
+}
 
 namespace atlas {
 namespace projection {
@@ -20,8 +23,8 @@ namespace detail {
 template <typename Rotation>
 class LonLatProjectionT : public ProjectionImpl {
 private:
-    friend class ProjectionImpl;
-    LonLatProjectionT() : ProjectionImpl() {}
+    friend class atlas::Projection;
+    LonLatProjectionT() = default;
 
 public:
     // constructor
@@ -53,8 +56,8 @@ private:
     Rotation rotation_;
 };
 
-typedef LonLatProjectionT<NotRotated> LonLatProjection;
-typedef LonLatProjectionT<Rotated> RotatedLonLatProjection;
+using LonLatProjection        = LonLatProjectionT<NotRotated>;
+using RotatedLonLatProjection = LonLatProjectionT<Rotated>;
 
 // --------------------------------------------------------------------------------------------------------------------
 

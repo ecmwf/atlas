@@ -8,8 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <map>
+
+#include "eckit/filesystem/PathName.h"
+
 #include "atlas/option/TransOptions.h"
-#include "atlas/grid.h"
 
 // ----------------------------------------------------------------------------
 

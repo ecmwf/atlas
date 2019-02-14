@@ -13,7 +13,6 @@
 #include <memory>
 #include <vector>
 #include "eckit/log/BigNum.h"
-#include "eckit/memory/ScopedPtr.h"
 
 #include "atlas/library/config.h"
 
@@ -50,10 +49,10 @@ const Point_3 origin = Point_3( CGAL::ORIGIN );
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildConvexHull3D.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 
-using namespace eckit;
 using namespace eckit::geometry;
 
 using atlas::interpolation::method::PointIndex3;
@@ -75,7 +74,7 @@ static Polyhedron_3* create_convex_hull_from_points( const std::vector<Point3>& 
     // insertion from a vector :
 
     std::vector<Point_3> vertices( pts.size() );
-    for ( size_t i = 0; i < vertices.size(); ++i )
+    for ( idx_t i = 0, size = vertices.size(); i < size; ++i )
         vertices[i] = Point_3( pts[i]( XX ), pts[i]( YY ), pts[i]( ZZ ) );
 
     // compute convex hull of non-collinear points
@@ -92,15 +91,15 @@ static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, Point
 
     mesh::Nodes& nodes = mesh.nodes();
 
-    ASSERT( points.size() == nodes.size() );
+    ATLAS_ASSERT( points.size() == size_t( nodes.size() ) );
 
     const idx_t nb_nodes = idx_t( points.size() );
 
-    ASSERT( mesh.cells().size() == 0 );
+    ATLAS_ASSERT( mesh.cells().size() == 0 );
 
     /* triangles */
 
-    const size_t nb_triags = poly.size_of_facets();
+    const idx_t nb_triags = poly.size_of_facets();
     mesh.cells().add( new mesh::temporary::Triangle(), nb_triags );
     mesh::HybridElements::Connectivity& triag_nodes = mesh.cells().node_connectivity();
     array::ArrayView<gidx_t, 1> triag_gidx          = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
@@ -112,11 +111,11 @@ static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, Point
 
     Log::debug() << "Inserting triags (" << eckit::BigNum( nb_triags ) << ")" << std::endl;
 
-    size_t tidx = 0;
+    idx_t tidx = 0;
     for ( Polyhedron_3::Facet_const_iterator f = poly.facets_begin(); f != poly.facets_end(); ++f ) {
         // loop  over half-edges and take each vertex()
 
-        size_t iedge                                              = 0;
+        idx_t iedge                                               = 0;
         Polyhedron_3::Halfedge_around_facet_const_circulator edge = f->facet_begin();
         do {
             Polyhedron_3::Vertex_const_handle vh = edge->vertex();
@@ -126,7 +125,7 @@ static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, Point
 
             idx[iedge] = points.unique( pt );
 
-            ASSERT( idx[iedge] < nb_nodes );
+            ATLAS_ASSERT( idx[iedge] < nb_nodes );
 
             vts[iedge] = vh;
 
@@ -134,7 +133,7 @@ static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, Point
             ++edge;
         } while ( edge != f->facet_begin() && iedge < 3 );
 
-        ASSERT( iedge == 3 );
+        ATLAS_ASSERT( iedge == 3 );
 
         if ( ensure_outward_normals ) /* ensure outward pointing normal */
         {
@@ -158,21 +157,21 @@ static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, Point
         ++tidx;
     }
 
-    ASSERT( tidx == nb_triags );
+    ATLAS_ASSERT( tidx == nb_triags );
 }
 
 #else
 
 struct Polyhedron_3 {
-    size_t size_of_vertices() const { return 0; }
+    idx_t size_of_vertices() const { return 0; }
 };
 
 static Polyhedron_3* create_convex_hull_from_points( const std::vector<Point3>& pts ) {
-    throw NotImplemented( "CGAL package not found -- Delaunay triangulation is disabled", Here() );
+    throw_NotImplemented( "CGAL package not found -- Delaunay triangulation is disabled", Here() );
 }
 
 static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, PointSet& points ) {
-    throw NotImplemented( "CGAL package not found -- Delaunay triangulation is disabled", Here() );
+    throw_NotImplemented( "CGAL package not found -- Delaunay triangulation is disabled", Here() );
 }
 
 #endif
@@ -198,12 +197,12 @@ void BuildConvexHull3D::operator()( Mesh& mesh ) const {
 
     // define polyhedron to hold convex hull
 
-    eckit::ScopedPtr<Polyhedron_3> poly( create_convex_hull_from_points( ipts ) );
+    std::unique_ptr<Polyhedron_3> poly( create_convex_hull_from_points( ipts ) );
 
     //    std::cout << "convex hull " << poly->size_of_vertices() << " vertices"
     //    << std::endl;
 
-    ASSERT( poly->size_of_vertices() == ipts.size() );
+    ATLAS_ASSERT( poly->size_of_vertices() == ipts.size() );
 
     cgal_polyhedron_to_atlas_mesh( mesh, *poly, points );
 }

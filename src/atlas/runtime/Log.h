@@ -1,6 +1,15 @@
+/*
+ * (C) Copyright 2013 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
+
 #pragma once
 
-#include "atlas/library/Library.h"
 #include "atlas/library/config.h"
 
 #if ATLAS_HAVE_FORTRAN
@@ -25,9 +34,9 @@ class Log : public detail::LogBase {
 public:
     using Channel = eckit::Channel;  // derives from std::ostream
 
-    static Channel& info() { return atlas::Library::instance().infoChannel(); }
-    static Channel& trace() { return atlas::Library::instance().traceChannel(); }
-    static Channel& debug() { return atlas::Library::instance().debugChannel(); }
+    static Channel& info();
+    static Channel& trace();
+    static Channel& debug();
 
 #if !ATLAS_HAVE_FORTRAN
     // Stubs for what fckit::Log provides
@@ -50,15 +59,18 @@ public:
 
 std::string backtrace();
 
-namespace detail {
-void debug_parallel_here( const eckit::CodeLocation& );
-void debug_parallel_what( const eckit::CodeLocation&, const std::string& );
-}  // namespace detail
-
 }  // namespace atlas
 
 #include <sstream>
 #include "atlas/util/detail/BlackMagic.h"
+#include "eckit/log/CodeLocation.h"
+
+namespace atlas {
+namespace detail {
+void debug_parallel_here( const eckit::CodeLocation& );
+void debug_parallel_what( const eckit::CodeLocation&, const std::string& );
+}  // namespace detail
+}  // namespace atlas
 
 #define ATLAS_DEBUG_HERE()                                           \
     do {                                                             \

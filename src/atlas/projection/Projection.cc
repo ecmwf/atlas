@@ -8,20 +8,58 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/utils/Hash.h"
+
+#include "atlas/option/Options.h"
 #include "atlas/projection/Projection.h"
+#include "atlas/projection/detail/LonLatProjection.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
 
-Projection::Projection() : projection_( Implementation::create() ) {}
+Projection::Projection() : Handle( new projection::detail::LonLatProjection() ) {}
 
-Projection::Projection( const Projection& projection ) : projection_( projection.projection_ ) {}
+Projection::Projection( const eckit::Parametrisation& p ) : Handle( Implementation::create( p ) ) {}
 
-Projection::Projection( const Implementation* projection ) : projection_( const_cast<Implementation*>( projection ) ) {}
-
-Projection::Projection( const eckit::Parametrisation& p ) : projection_( Implementation::create( p ) ) {}
+atlas::Projection::operator bool() const {
+    return get()->operator bool();
+}
 
 void Projection::hash( eckit::Hash& h ) const {
-    return projection_->hash( h );
+    return get()->hash( h );
+}
+
+void atlas::Projection::xy2lonlat( double crd[] ) const {
+    return get()->xy2lonlat( crd );
+}
+
+void atlas::Projection::lonlat2xy( double crd[] ) const {
+    return get()->lonlat2xy( crd );
+}
+
+PointLonLat atlas::Projection::lonlat( const PointXY& xy ) const {
+    return get()->lonlat( xy );
+}
+
+PointXY atlas::Projection::xy( const PointLonLat& lonlat ) const {
+    return get()->xy( lonlat );
+}
+
+bool atlas::Projection::strictlyRegional() const {
+    return get()->strictlyRegional();
+}
+
+Projection::Spec atlas::Projection::spec() const {
+    return get()->spec();
+}
+
+std::string atlas::Projection::units() const {
+    return get()->units();
+}
+
+std::string Projection::type() const {
+    return get()->type();
 }
 
 }  // namespace atlas

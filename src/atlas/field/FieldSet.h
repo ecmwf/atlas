@@ -15,12 +15,15 @@
 #pragma once
 
 #include <iterator>
+#include <map>
+#include <string>
 #include <vector>
 
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/field/Field.h"
+#include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace atlas {
 
@@ -31,16 +34,16 @@ namespace field {
 /**
  * @brief Represents a set of fields, where order is preserved
  */
-class FieldSetImpl : public eckit::Owned {
+class FieldSetImpl : public util::Object {
 public:  // types
-    typedef std::vector<Field>::iterator iterator;
-    typedef std::vector<Field>::const_iterator const_iterator;
+    using iterator       = std::vector<Field>::iterator;
+    using const_iterator = std::vector<Field>::const_iterator;
 
 public:  // methods
     /// Constructs an empty FieldSet
     FieldSetImpl( const std::string& name = "untitled" );
 
-    size_t size() const { return fields_.size(); }
+    idx_t size() const { return static_cast<idx_t>( fields_.size() ); }
     bool empty() const { return !fields_.size(); }
 
     void clear();
@@ -48,18 +51,18 @@ public:  // methods
     const std::string& name() const { return name_; }
     std::string& name() { return name_; }
 
-    const Field& operator[]( const size_t& i ) const { return field( i ); }
-    Field& operator[]( const size_t& i ) { return field( i ); }
+    const Field& operator[]( const idx_t& i ) const { return field( i ); }
+    Field& operator[]( const idx_t& i ) { return field( i ); }
 
     const Field& operator[]( const std::string& name ) const { return field( name ); }
     Field& operator[]( const std::string& name ) { return field( name ); }
 
-    const Field& field( const size_t& i ) const {
-        ASSERT( i < size() );
+    const Field& field( const idx_t& i ) const {
+        if ( i >= size() ) throw_OutOfRange( "fieldset", i, size(), Here() );
         return fields_[i];
     }
-    Field& field( const size_t& i ) {
-        ASSERT( i < size() );
+    Field& field( const idx_t& i ) {
+        if ( i >= size() ) throw_OutOfRange( "fieldset", i, size(), Here() );
         return fields_[i];
     }
 
@@ -78,11 +81,17 @@ public:  // methods
     const_iterator cbegin() const { return fields_.begin(); }
     const_iterator cend() const { return fields_.end(); }
 
-protected:                                 // data
-    std::vector<Field> fields_;            ///< field storage
-    std::string name_;                     ///< internal name
-    std::map<std::string, size_t> index_;  ///< name-to-index map, to refer fields by name
+    void haloExchange( bool on_device = false ) const;
+    void set_dirty( bool = true ) const;
+
+protected:                                // data
+    std::vector<Field> fields_;           ///< field storage
+    std::string name_;                    ///< internal name
+    std::map<std::string, idx_t> index_;  ///< name-to-index map, to refer fields by name
 };
+
+
+class FieldImpl;
 
 // C wrapper interfaces to C++ routines
 extern "C" {
@@ -90,9 +99,11 @@ FieldSetImpl* atlas__FieldSet__new( char* name );
 void atlas__FieldSet__delete( FieldSetImpl* This );
 void atlas__FieldSet__add_field( FieldSetImpl* This, FieldImpl* field );
 int atlas__FieldSet__has_field( const FieldSetImpl* This, char* name );
-size_t atlas__FieldSet__size( const FieldSetImpl* This );
+idx_t atlas__FieldSet__size( const FieldSetImpl* This );
 FieldImpl* atlas__FieldSet__field_by_name( FieldSetImpl* This, char* name );
-FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, size_t idx );
+FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, idx_t idx );
+void atlas__FieldSet__set_dirty( FieldSetImpl* This, int value );
+void atlas__FieldSet__halo_exchange( FieldSetImpl* This, int on_device );
 }
 
 }  // namespace field
@@ -102,51 +113,53 @@ FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, size_t idx );
 /**
  * @brief Represents a set of fields, where order is preserved
  */
-class FieldSet {
+class FieldSet : public util::ObjectHandle<field::FieldSetImpl> {
 public:  // types
-    using Implementation = field::FieldSetImpl;
     using iterator       = Implementation::iterator;
     using const_iterator = Implementation::const_iterator;
 
 public:  // methods
+    using Handle::Handle;
     FieldSet( const std::string& name = "untitled" );
-    FieldSet( const Implementation* );
-    FieldSet( const FieldSet& );
+    FieldSet( const Field& );
 
-    size_t size() const { return fieldset_->size(); }
-    bool empty() const { return fieldset_->empty(); }
+    idx_t size() const { return get()->size(); }
+    bool empty() const { return get()->empty(); }
 
-    void clear() { fieldset_->clear(); }
+    void clear() { get()->clear(); }
 
-    const std::string& name() const { return fieldset_->name(); }
-    std::string& name() { return fieldset_->name(); }
+    const std::string& name() const { return get()->name(); }
+    std::string& name() { return get()->name(); }
 
-    const Field& operator[]( const size_t& i ) const { return fieldset_->operator[]( i ); }
-    Field& operator[]( const size_t& i ) { return fieldset_->operator[]( i ); }
+    const Field& operator[]( const idx_t& i ) const { return get()->operator[]( i ); }
+    Field& operator[]( const idx_t& i ) { return get()->operator[]( i ); }
 
-    const Field& operator[]( const std::string& name ) const { return fieldset_->operator[]( name ); }
-    Field& operator[]( const std::string& name ) { return fieldset_->operator[]( name ); }
+    const Field& operator[]( const std::string& name ) const { return get()->operator[]( name ); }
+    Field& operator[]( const std::string& name ) { return get()->operator[]( name ); }
 
-    const Field& field( const size_t& i ) const { return fieldset_->field( i ); }
-    Field& field( const size_t& i ) { return fieldset_->field( i ); }
+    const Field& operator[]( const char* name ) const { return get()->operator[]( name ); }
+    Field& operator[]( const char* name ) { return get()->operator[]( name ); }
 
-    std::vector<std::string> field_names() const { return fieldset_->field_names(); }
+    const Field& field( const idx_t& i ) const { return get()->field( i ); }
+    Field& field( const idx_t& i ) { return get()->field( i ); }
 
-    Field add( const Field& field ) { return fieldset_->add( field ); }
+    std::vector<std::string> field_names() const { return get()->field_names(); }
 
-    bool has_field( const std::string& name ) const { return fieldset_->has_field( name ); }
+    Field add( const Field& field ) { return get()->add( field ); }
 
-    Field& field( const std::string& name ) const { return fieldset_->field( name ); }
+    bool has_field( const std::string& name ) const { return get()->has_field( name ); }
 
-    iterator begin() { return fieldset_->begin(); }
-    iterator end() { return fieldset_->end(); }
-    const_iterator begin() const { return fieldset_->begin(); }
-    const_iterator end() const { return fieldset_->end(); }
-    const_iterator cbegin() const { return fieldset_->begin(); }
-    const_iterator cend() const { return fieldset_->end(); }
+    Field& field( const std::string& name ) const { return get()->field( name ); }
 
-private:  // data
-    eckit::SharedPtr<Implementation> fieldset_;
+    iterator begin() { return get()->begin(); }
+    iterator end() { return get()->end(); }
+    const_iterator begin() const { return get()->begin(); }
+    const_iterator end() const { return get()->end(); }
+    const_iterator cbegin() const { return get()->begin(); }
+    const_iterator cend() const { return get()->end(); }
+
+    void haloExchange( bool on_device = false ) const { get()->haloExchange( on_device ); }
+    void set_dirty( bool = true ) const;
 };
 
 }  // namespace atlas

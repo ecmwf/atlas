@@ -22,10 +22,11 @@
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array/helpers/ArrayInitializer.h"
 #include "atlas/array_fwd.h"
+#include "atlas/runtime/Log.h"
+
 #if ATLAS_HAVE_ACC
 #include "atlas_acc_support/atlas_acc_map_data.h"
 #endif
-#include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------
 
@@ -85,14 +86,14 @@ public:
             default: {
                 std::stringstream err;
                 err << "shape not recognized";
-                throw eckit::BadParameter( err.str(), Here() );
+                throw_Exception( err.str(), Here() );
             }
         }
     }
 
     void construct( const ArrayShape& shape, const ArrayLayout& layout ) {
-        ASSERT( shape.size() > 0 );
-        ASSERT( shape.size() == layout.size() );
+        ATLAS_ASSERT( shape.size() > 0 );
+        ATLAS_ASSERT( shape.size() == layout.size() );
         switch ( shape.size() ) {
             case 1:
                 return construct( shape[0] );
@@ -142,7 +143,7 @@ public:
                         err << layout[j] << " ";
                     err << "> not implemented in Atlas.";
                 }
-                throw eckit::BadParameter( err.str(), Here() );
+                throw_Exception( err.str(), Here() );
             }
         }
     }
@@ -162,14 +163,12 @@ public:
             std::stringstream err;
             err << "Trying to resize an array of Rank " << array_.rank() << " by dimensions with Rank "
                 << sizeof...( c ) << std::endl;
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
-
-        check_dimension_lengths( array_.shape(), c... );
 
         if ( array_.valid() ) array_.syncHostDevice();
 
-        Array* resized = Array::create<Value>( ArrayShape{(unsigned int)c...} );
+        Array* resized = Array::create<Value>( ArrayShape{(idx_t)c...} );
 
         array_initializer<sizeof...( c )>::apply( array_, *resized );
         array_.replace( *resized );
@@ -188,23 +187,23 @@ private:
 //------------------------------------------------------------------------------
 
 template <typename Value>
-Array* Array::create( size_t dim0 ) {
+Array* Array::create( idx_t dim0 ) {
     return new ArrayT<Value>( dim0 );
 }
 template <typename Value>
-Array* Array::create( size_t dim0, size_t dim1 ) {
+Array* Array::create( idx_t dim0, idx_t dim1 ) {
     return new ArrayT<Value>( dim0, dim1 );
 }
 template <typename Value>
-Array* Array::create( size_t dim0, size_t dim1, size_t dim2 ) {
+Array* Array::create( idx_t dim0, idx_t dim1, idx_t dim2 ) {
     return new ArrayT<Value>( dim0, dim1, dim2 );
 }
 template <typename Value>
-Array* Array::create( size_t dim0, size_t dim1, size_t dim2, size_t dim3 ) {
+Array* Array::create( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3 ) {
     return new ArrayT<Value>( dim0, dim1, dim2, dim3 );
 }
 template <typename Value>
-Array* Array::create( size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4 ) {
+Array* Array::create( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim4 ) {
     return new ArrayT<Value>( dim0, dim1, dim2, dim3, dim4 );
 }
 template <typename Value>
@@ -262,7 +261,7 @@ Array* Array::wrap( Value* data, const ArraySpec& spec ) {
         default: {
             std::stringstream err;
             err << "shape not recognized";
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
     }
 }
@@ -286,10 +285,9 @@ Array* Array::create( DataType datatype, const ArrayShape& shape ) {
         default: {
             std::stringstream err;
             err << "data kind " << datatype.kind() << " not recognised.";
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
     }
-    return 0;
 }
 
 Array* Array::create( DataType datatype, const ArrayShape& shape, const ArrayLayout& layout ) {
@@ -308,10 +306,9 @@ Array* Array::create( DataType datatype, const ArrayShape& shape, const ArrayLay
         default: {
             std::stringstream err;
             err << "data kind " << datatype.kind() << " not recognised.";
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
     }
-    return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -344,16 +341,14 @@ bool ArrayT<Value>::accMap() const {
 //------------------------------------------------------------------------------
 
 template <typename Value>
-void ArrayT<Value>::insert( size_t idx1, size_t size1 ) {
+void ArrayT<Value>::insert( idx_t idx1, idx_t size1 ) {
     // if( hostNeedsUpdate() ) {
     //    cloneFromDevice();
     //}
-    if ( not hasDefaultLayout() ) NOTIMP;
+    if ( not hasDefaultLayout() ) ATLAS_NOTIMPLEMENTED;
 
     ArrayShape nshape = shape();
-    if ( idx1 > nshape[0] ) {
-        throw eckit::BadParameter( "can not insert into an array at a position beyond its size", Here() );
-    }
+    if ( idx1 > nshape[0] ) { throw_Exception( "can not insert into an array at a position beyond its size", Here() ); }
     nshape[0] += size1;
 
     Array* resized = Array::create<Value>( nshape );
@@ -367,27 +362,27 @@ void ArrayT<Value>::insert( size_t idx1, size_t size1 ) {
 //------------------------------------------------------------------------------
 
 template <typename Value>
-void ArrayT<Value>::resize( size_t dim0 ) {
+void ArrayT<Value>::resize( idx_t dim0 ) {
     ArrayT_impl<Value>( *this ).resize_variadic( dim0 );
 }
 
 template <typename Value>
-void ArrayT<Value>::resize( size_t dim0, size_t dim1 ) {
+void ArrayT<Value>::resize( idx_t dim0, idx_t dim1 ) {
     ArrayT_impl<Value>( *this ).resize_variadic( dim0, dim1 );
 }
 
 template <typename Value>
-void ArrayT<Value>::resize( size_t dim0, size_t dim1, size_t dim2 ) {
+void ArrayT<Value>::resize( idx_t dim0, idx_t dim1, idx_t dim2 ) {
     ArrayT_impl<Value>( *this ).resize_variadic( dim0, dim1, dim2 );
 }
 
 template <typename Value>
-void ArrayT<Value>::resize( size_t dim0, size_t dim1, size_t dim2, size_t dim3 ) {
+void ArrayT<Value>::resize( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3 ) {
     ArrayT_impl<Value>( *this ).resize_variadic( dim0, dim1, dim2, dim3 );
 }
 
 template <typename Value>
-void ArrayT<Value>::resize( size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4 ) {
+void ArrayT<Value>::resize( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim4 ) {
     ArrayT_impl<Value>( *this ).resize_variadic( dim0, dim1, dim2, dim3, dim4 );
 }
 
@@ -422,7 +417,7 @@ void ArrayT<Value>::dump( std::ostream& out ) const {
             make_host_view<Value, 9, Intent::ReadOnly>( *this ).dump( out );
             break;
         default:
-            NOTIMP;
+            ATLAS_NOTIMPLEMENTED;
     }
 }
 
@@ -451,7 +446,7 @@ void ArrayT<Value>::resize( const ArrayShape& shape ) {
         default: {
             std::stringstream err;
             err << "shape not recognized";
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
     }
 }
@@ -466,23 +461,23 @@ ArrayT<Value>::ArrayT( ArrayDataStore* ds, const ArraySpec& spec ) {
 }
 
 template <typename Value>
-ArrayT<Value>::ArrayT( size_t dim0 ) {
+ArrayT<Value>::ArrayT( idx_t dim0 ) {
     ArrayT_impl<Value>( *this ).construct( dim0 );
 }
 template <typename Value>
-ArrayT<Value>::ArrayT( size_t dim0, size_t dim1 ) {
+ArrayT<Value>::ArrayT( idx_t dim0, idx_t dim1 ) {
     ArrayT_impl<Value>( *this ).construct( dim0, dim1 );
 }
 template <typename Value>
-ArrayT<Value>::ArrayT( size_t dim0, size_t dim1, size_t dim2 ) {
+ArrayT<Value>::ArrayT( idx_t dim0, idx_t dim1, idx_t dim2 ) {
     ArrayT_impl<Value>( *this ).construct( dim0, dim1, dim2 );
 }
 template <typename Value>
-ArrayT<Value>::ArrayT( size_t dim0, size_t dim1, size_t dim2, size_t dim3 ) {
+ArrayT<Value>::ArrayT( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3 ) {
     ArrayT_impl<Value>( *this ).construct( dim0, dim1, dim2, dim3 );
 }
 template <typename Value>
-ArrayT<Value>::ArrayT( size_t dim0, size_t dim1, size_t dim2, size_t dim3, size_t dim4 ) {
+ArrayT<Value>::ArrayT( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim4 ) {
     ArrayT_impl<Value>( *this ).construct( dim0, dim1, dim2, dim3, dim4 );
 }
 
@@ -498,7 +493,7 @@ ArrayT<Value>::ArrayT( const ArrayShape& shape, const ArrayLayout& layout ) {
 
 template <typename Value>
 ArrayT<Value>::ArrayT( const ArraySpec& spec ) {
-    if ( not spec.contiguous() ) NOTIMP;
+    if ( not spec.contiguous() ) ATLAS_NOTIMPLEMENTED;
     ArrayT_impl<Value>( *this ).construct( spec.shape(), spec.layout() );
 }
 
@@ -518,35 +513,35 @@ template class ArrayT<float>;
 template class ArrayT<double>;
 template class ArrayT<unsigned long>;
 
-template Array* Array::create<int>( size_t );
-template Array* Array::create<long>( size_t );
-template Array* Array::create<float>( size_t );
-template Array* Array::create<double>( size_t );
-template Array* Array::create<long unsigned>( size_t );
+template Array* Array::create<int>( idx_t );
+template Array* Array::create<long>( idx_t );
+template Array* Array::create<float>( idx_t );
+template Array* Array::create<double>( idx_t );
+template Array* Array::create<long unsigned>( idx_t );
 
-template Array* Array::create<int>( size_t, size_t );
-template Array* Array::create<long>( size_t, size_t );
-template Array* Array::create<float>( size_t, size_t );
-template Array* Array::create<double>( size_t, size_t );
-template Array* Array::create<long unsigned>( size_t, size_t );
+template Array* Array::create<int>( idx_t, idx_t );
+template Array* Array::create<long>( idx_t, idx_t );
+template Array* Array::create<float>( idx_t, idx_t );
+template Array* Array::create<double>( idx_t, idx_t );
+template Array* Array::create<long unsigned>( idx_t, idx_t );
 
-template Array* Array::create<int>( size_t, size_t, size_t );
-template Array* Array::create<long>( size_t, size_t, size_t );
-template Array* Array::create<float>( size_t, size_t, size_t );
-template Array* Array::create<double>( size_t, size_t, size_t );
-template Array* Array::create<long unsigned>( size_t, size_t, size_t );
+template Array* Array::create<int>( idx_t, idx_t, idx_t );
+template Array* Array::create<long>( idx_t, idx_t, idx_t );
+template Array* Array::create<float>( idx_t, idx_t, idx_t );
+template Array* Array::create<double>( idx_t, idx_t, idx_t );
+template Array* Array::create<long unsigned>( idx_t, idx_t, idx_t );
 
-template Array* Array::create<int>( size_t, size_t, size_t, size_t );
-template Array* Array::create<long>( size_t, size_t, size_t, size_t );
-template Array* Array::create<float>( size_t, size_t, size_t, size_t );
-template Array* Array::create<double>( size_t, size_t, size_t, size_t );
-template Array* Array::create<long unsigned>( size_t, size_t, size_t, size_t );
+template Array* Array::create<int>( idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<long>( idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<float>( idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<double>( idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<long unsigned>( idx_t, idx_t, idx_t, idx_t );
 
-template Array* Array::create<int>( size_t, size_t, size_t, size_t, size_t );
-template Array* Array::create<long>( size_t, size_t, size_t, size_t, size_t );
-template Array* Array::create<float>( size_t, size_t, size_t, size_t, size_t );
-template Array* Array::create<double>( size_t, size_t, size_t, size_t, size_t );
-template Array* Array::create<long unsigned>( size_t, size_t, size_t, size_t, size_t );
+template Array* Array::create<int>( idx_t, idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<long>( idx_t, idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<float>( idx_t, idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<double>( idx_t, idx_t, idx_t, idx_t, idx_t );
+template Array* Array::create<long unsigned>( idx_t, idx_t, idx_t, idx_t, idx_t );
 
 template Array* Array::create<int>( const ArrayShape& );
 template Array* Array::create<long>( const ArrayShape& );

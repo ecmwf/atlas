@@ -21,7 +21,7 @@ class SchmidtProjectionT : public ProjectionImpl {
 public:
     // constructor
     SchmidtProjectionT( const eckit::Parametrisation& p );
-    SchmidtProjectionT() {}
+    SchmidtProjectionT();
 
     // class name
     static std::string static_type() { return Rotation::typePrefix() + "schmidt"; }
@@ -45,8 +45,8 @@ private:
     Rotation rotation_;
 };
 
-typedef SchmidtProjectionT<NotRotated> SchmidtProjection;
-typedef SchmidtProjectionT<Rotated> RotatedSchmidtProjection;
+using SchmidtProjection        = SchmidtProjectionT<NotRotated>;
+using RotatedSchmidtProjection = SchmidtProjectionT<Rotated>;
 
 }  // namespace detail
 }  // namespace projection

@@ -17,9 +17,11 @@
 #include <iostream>
 #include <vector>
 
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/Iterator.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/MicroDeg.h"
@@ -528,17 +530,17 @@ void EqualRegionsPartitioner::partition( int nb_nodes, NodeInt nodes[], int part
 
 void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
     if ( N_ == 1 ) {  // trivial solution, so much faster
-        for ( size_t j = 0; j < grid.size(); ++j )
+        for ( idx_t j = 0; j < grid.size(); ++j )
             part[j] = 0;
     }
     else {
         ATLAS_TRACE( "EqualRegionsPartitioner::partition" );
 
-        ASSERT( grid.projection().units() == "degrees" );
+        ATLAS_ASSERT( grid.projection().units() == "degrees" );
 
         const auto& comm = mpi::comm();
-        int mpi_rank     = comm.rank();
-        int mpi_size     = comm.size();
+        int mpi_rank     = static_cast<int>( comm.rank() );
+        int mpi_size     = static_cast<int>( comm.size() );
 
         std::vector<NodeInt> nodes( grid.size() );
         int* nodes_buffer = reinterpret_cast<int*>( nodes.data() );
@@ -554,16 +556,16 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
         if ( StructuredGrid( grid ) ) {
             // The grid comes sorted from north to south and west to east by
             // construction
-            // Assert to make sure.
+            // ATLAS_ASSERT to make sure.
             StructuredGrid structured_grid( grid );
-            ASSERT( structured_grid.y( 1 ) < structured_grid.y( 0 ) );
-            ASSERT( structured_grid.x( 1, 0 ) > structured_grid.x( 0, 0 ) );
+            ATLAS_ASSERT( structured_grid.y( 1 ) < structured_grid.y( 0 ) );
+            ATLAS_ASSERT( structured_grid.x( 1, 0 ) > structured_grid.x( 0, 0 ) );
 
             ATLAS_TRACE( "Take shortcut" );
             int n( 0 );
-            for ( size_t j = 0; j < structured_grid.ny(); ++j ) {
+            for ( idx_t j = 0; j < structured_grid.ny(); ++j ) {
                 double y = microdeg( structured_grid.y( j ) );
-                for ( size_t i = 0; i < structured_grid.nx( j ); ++i, ++n ) {
+                for ( idx_t i = 0; i < structured_grid.nx( j ); ++i, ++n ) {
                     nodes[n].x = microdeg( structured_grid.x( i, j ) );
                     nodes[n].y = y;
                     nodes[n].n = n;
@@ -606,8 +608,8 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                             }
                         }
                         else {
-                            int i( 0 );
-                            int j( 0 );
+                            idx_t i( 0 );
+                            idx_t j( 0 );
                             for ( PointXY point : grid.xy() ) {
                                 if ( i >= w_begin && i < w_end ) {
                                     w_nodes[j].x = microdeg( point.x() );

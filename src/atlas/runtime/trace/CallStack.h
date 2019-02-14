@@ -1,10 +1,20 @@
+/*
+ * (C) Copyright 2013 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
+
 #pragma once
 
 #include <cstddef>
 #include <list>
 #include <string>
 
-namespace eckit {
+namespace atlas {
 class CodeLocation;
 }
 
@@ -13,14 +23,14 @@ namespace runtime {
 namespace trace {
 
 /// @class CallStack
-/// Instances of CallStack can keep track of nested eckit::CodeLocations
+/// Instances of CallStack can keep track of nested CodeLocations
 class CallStack {
 public:
     using const_iterator         = std::list<size_t>::const_iterator;
     using const_reverse_iterator = std::list<size_t>::const_reverse_iterator;
 
 public:
-    void push_front( const eckit::CodeLocation&, const std::string& id = "" );
+    void push_front( const CodeLocation&, const std::string& id = "" );
     void pop_front();
 
     const_iterator begin() const { return stack_.begin(); }
@@ -31,6 +41,8 @@ public:
 
     size_t hash() const;
     size_t size() const { return stack_.size(); }
+
+    operator bool() const { return not stack_.empty(); }
 
 private:
     std::list<size_t> stack_;

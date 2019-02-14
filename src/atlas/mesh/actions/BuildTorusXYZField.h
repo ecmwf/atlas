@@ -14,6 +14,7 @@
 
 #include "atlas/domain/Domain.h"
 #include "atlas/domain/detail/RectangularDomain.h"
+#include "atlas/library/config.h"
 
 namespace atlas {
 class Field;
@@ -37,8 +38,8 @@ class BuildTorusXYZField {
 public:
     explicit BuildTorusXYZField( const std::string& name = "xyz" );
 
-    Field& operator()( Mesh&, const atlas::Domain&, double r0, double r1, int nx, int ny ) const;
-    Field& operator()( mesh::Nodes&, const atlas::Domain&, double r0, double r1, int nx, int ny ) const;
+    Field& operator()( Mesh&, const atlas::Domain&, double r0, double r1, idx_t nx, idx_t ny ) const;
+    Field& operator()( mesh::Nodes&, const atlas::Domain&, double r0, double r1, idx_t nx, idx_t ny ) const;
 
 private:
     std::string name_;

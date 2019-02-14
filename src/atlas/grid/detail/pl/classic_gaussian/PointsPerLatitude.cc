@@ -13,12 +13,12 @@
 
 #include "PointsPerLatitude.h"
 
-#include "eckit/memory/ScopedPtr.h"
+#include <memory>
+#include <sstream>
 
 #include "atlas/grid/detail/pl/classic_gaussian/N.h"
+#include "atlas/runtime/Exception.h"
 
-using eckit::Factory;
-using eckit::ScopedPtr;
 
 namespace atlas {
 namespace grid {
@@ -28,27 +28,47 @@ namespace classic_gaussian {
 
 //-----------------------------------------------------------------------------
 
-void points_per_latitude_npole_equator( const size_t N, long nlon[] ) {
+template <typename Int>
+void points_per_latitude_npole_equator_impl( const size_t N, Int nlon[] ) {
     std::stringstream Nstream;
     Nstream << N;
     std::string Nstr = Nstream.str();
-    if ( Factory<PointsPerLatitude>::instance().exists( Nstr ) ) {
-        ScopedPtr<PointsPerLatitude> pl( Factory<PointsPerLatitude>::instance().get( Nstr ).create() );
+    if ( PointsPerLatitudeFactory::has( Nstr ) ) {
+        std::unique_ptr<const PointsPerLatitude> pl( PointsPerLatitudeFactory::build( Nstr ) );
         pl->assign( nlon, N );
     }
     else {
-        throw eckit::BadParameter( "gaussian::classic::PointsPerLatitude not available for N" + Nstr, Here() );
+        throw_Exception( "gaussian::classic::PointsPerLatitude not available for N" + Nstr, Here() );
     }
 }
 
 //-----------------------------------------------------------------------------
 
-void points_per_latitude_npole_spole( const size_t N, long nlon[] ) {
+template <typename Int>
+void points_per_latitude_npole_spole_impl( const size_t N, Int nlon[] ) {
     points_per_latitude_npole_equator( N, nlon );
     size_t end = 2 * N - 1;
     for ( size_t jlat = 0; jlat < N; ++jlat ) {
         nlon[end--] = nlon[jlat];
     }
+}
+
+//-----------------------------------------------------------------------------
+
+void points_per_latitude_npole_equator( const size_t N, long nlon[] ) {
+    points_per_latitude_npole_equator_impl( N, nlon );
+}
+void points_per_latitude_npole_equator( const size_t N, int nlon[] ) {
+    points_per_latitude_npole_equator_impl( N, nlon );
+}
+
+//-----------------------------------------------------------------------------
+
+void points_per_latitude_npole_spole( const size_t N, long nlon[] ) {
+    points_per_latitude_npole_spole_impl( N, nlon );
+}
+void points_per_latitude_npole_spole( const size_t N, int nlon[] ) {
+    points_per_latitude_npole_spole_impl( N, nlon );
 }
 
 //-----------------------------------------------------------------------------

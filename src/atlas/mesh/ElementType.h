@@ -13,7 +13,10 @@
 
 #pragma once
 
-#include "eckit/memory/Owned.h"
+#include <string>
+
+#include "atlas/library/config.h"
+#include "atlas/util/Object.h"
 
 namespace atlas {
 namespace mesh {
@@ -22,7 +25,7 @@ namespace mesh {
  * \brief ElementType class (abstract) that provides access to geometric
  * information of an element
  */
-class ElementType : public eckit::Owned {
+class ElementType : public util::Object {
 public:  // methods
     static ElementType* create( const std::string& );
 
@@ -34,13 +37,13 @@ public:  // methods
     //-- Accessors
 
     virtual const std::string& name() const = 0;
-    // virtual size_t dimensionality() const = 0;
+    // virtual idx_t dimensionality() const = 0;
 
-    // virtual size_t nb_vertices() const = 0;
-    virtual size_t nb_edges() const = 0;
-    // virtual size_t nb_faces() const = 0;
+    // virtual idx_t nb_vertices() const = 0;
+    virtual idx_t nb_edges() const = 0;
+    // virtual idx_t nb_faces() const = 0;
 
-    virtual size_t nb_nodes() const = 0;
+    virtual idx_t nb_nodes() const = 0;
 
     virtual bool parametric() const = 0;
 };
@@ -65,7 +68,7 @@ public:
     {
         FACES = 1
     };
-    virtual size_t nb_faces() const { return FACES; }
+    virtual idx_t nb_faces() const { return FACES; }
 };
 
 class Edge : public ElementType {
@@ -82,8 +85,8 @@ public:
     {
         EDGES = 1
     };
-    virtual size_t nb_faces() const { return FACES; }
-    virtual size_t nb_edges() const { return EDGES; }
+    virtual idx_t nb_faces() const { return FACES; }
+    virtual idx_t nb_edges() const { return EDGES; }
 };
 
 class Vertex : public ElementType {
@@ -104,9 +107,9 @@ public:
     {
         VERTICES = 1
     };
-    virtual size_t nb_faces() const { return FACES; }
-    virtual size_t nb_edges() const { return EDGES; }
-    virtual size_t nb_vertices() const { return VERTICES; }
+    virtual idx_t nb_faces() const { return FACES; }
+    virtual idx_t nb_edges() const { return EDGES; }
+    virtual idx_t nb_vertices() const { return VERTICES; }
 };
 
 class Quadrilateral : public Face {
@@ -129,11 +132,11 @@ public:
     };
     virtual ~Quadrilateral() {}
     virtual bool parametric() const { return true; }
-    virtual size_t nb_vertices() const { return VERTICES; }
-    virtual size_t nb_edges() const { return EDGES; }
-    virtual size_t nb_nodes() const { return VERTICES; }
-    virtual size_t nb_facets() const { return FACETS; }
-    virtual size_t nb_ridges() const { return RIDGES; }
+    virtual idx_t nb_vertices() const { return VERTICES; }
+    virtual idx_t nb_edges() const { return EDGES; }
+    virtual idx_t nb_nodes() const { return VERTICES; }
+    virtual idx_t nb_facets() const { return FACETS; }
+    virtual idx_t nb_ridges() const { return RIDGES; }
     virtual const std::string& name() const {
         static std::string s( "Quadrilateral" );
         return s;
@@ -160,11 +163,11 @@ public:
     };
     virtual ~Triangle() {}
     virtual bool parametric() const { return true; }
-    virtual size_t nb_vertices() const { return VERTICES; }
-    virtual size_t nb_edges() const { return EDGES; }
-    virtual size_t nb_nodes() const { return VERTICES; }
-    virtual size_t nb_facets() const { return FACETS; }
-    virtual size_t nb_ridges() const { return RIDGES; }
+    virtual idx_t nb_vertices() const { return VERTICES; }
+    virtual idx_t nb_edges() const { return EDGES; }
+    virtual idx_t nb_nodes() const { return VERTICES; }
+    virtual idx_t nb_facets() const { return FACETS; }
+    virtual idx_t nb_ridges() const { return RIDGES; }
     virtual const std::string& name() const {
         static std::string s( "Triangle" );
         return s;
@@ -187,10 +190,10 @@ public:
     };
     virtual ~Line() {}
     virtual bool parametric() const { return true; }
-    virtual size_t nb_vertices() const { return VERTICES; }
-    virtual size_t nb_edges() const { return EDGES; }
-    virtual size_t nb_nodes() const { return VERTICES; }
-    virtual size_t nb_facets() const { return FACETS; }
+    virtual idx_t nb_vertices() const { return VERTICES; }
+    virtual idx_t nb_edges() const { return EDGES; }
+    virtual idx_t nb_nodes() const { return VERTICES; }
+    virtual idx_t nb_facets() const { return FACETS; }
     virtual const std::string& name() const {
         static std::string s( "Line" );
         return s;
@@ -204,8 +207,8 @@ ElementType* atlas__mesh__Quadrilateral__create();
 ElementType* atlas__mesh__Line__create();
 
 void atlas__mesh__ElementType__delete( ElementType* This );
-size_t atlas__mesh__ElementType__nb_nodes( const ElementType* This );
-size_t atlas__mesh__ElementType__nb_edges( const ElementType* This );
+idx_t atlas__mesh__ElementType__nb_nodes( const ElementType* This );
+idx_t atlas__mesh__ElementType__nb_edges( const ElementType* This );
 int atlas__mesh__ElementType__parametric( const ElementType* This );
 const char* atlas__mesh__ElementType__name( const ElementType* This );
 }

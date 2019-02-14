@@ -10,7 +10,6 @@
 
 #include <algorithm>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/grid/Grid.h"
@@ -20,6 +19,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/detail/MeshImpl.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 
 using atlas::Grid;
 using atlas::Projection;
@@ -30,16 +30,15 @@ namespace detail {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-MeshImpl::MeshImpl( eckit::Stream& s ) {
-    NOTIMP;
+MeshImpl::MeshImpl( eckit::Stream& ) {
+    ATLAS_NOTIMPLEMENTED;
 }
 
-void MeshImpl::encode( eckit::Stream& s ) const {
-    NOTIMP;
+void MeshImpl::encode( eckit::Stream& ) const {
+    ATLAS_NOTIMPLEMENTED;
 }
 
-MeshImpl::MeshImpl() : dimensionality_( 2 ) {
-    nodes_.reset( new mesh::Nodes() );
+MeshImpl::MeshImpl() : nodes_( new mesh::Nodes() ), dimensionality_( 2 ) {
     createElements();
 }
 
@@ -49,7 +48,7 @@ MeshImpl::~MeshImpl() {
     }
 }
 
-void MeshImpl::print( std::ostream& os ) const {}
+void MeshImpl::print( std::ostream& ) const {}
 
 size_t MeshImpl::footprint() const {
     size_t size = sizeof( *this );
@@ -78,9 +77,9 @@ void MeshImpl::createElements() {
     else if ( dimensionality_ == 3 )
         edges_ = ridges_;
     else
-        throw eckit::Exception( "Invalid Mesh dimensionality", Here() );
+        throw_Exception( "Invalid Mesh dimensionality", Here() );
 
-    ASSERT( edges_.owners() == 2 );
+    ATLAS_ASSERT( edges_.owners() == 2 );
 }
 
 bool MeshImpl::generated() const {
@@ -96,11 +95,11 @@ void MeshImpl::setGrid( const Grid& grid ) {
     if ( not projection_ ) projection_ = grid_->projection();
 }
 
-size_t MeshImpl::nb_partitions() const {
+idx_t MeshImpl::nb_partitions() const {
     return mpi::comm().size();
 }
 
-size_t MeshImpl::partition() const {
+idx_t MeshImpl::partition() const {
     return mpi::comm().rank();
 }
 
@@ -137,13 +136,13 @@ PartitionGraph::Neighbours MeshImpl::nearestNeighbourPartitions() const {
     return partitionGraph().nearestNeighbours( partition() );
 }
 
-const PartitionPolygon& MeshImpl::polygon( size_t halo ) const {
-    if ( halo >= polygons_.size() ) { polygons_.resize( halo + 1 ); }
+const PartitionPolygon& MeshImpl::polygon( idx_t halo ) const {
+    if ( halo >= static_cast<idx_t>( polygons_.size() ) ) { polygons_.resize( halo + 1 ); }
     if ( not polygons_[halo] ) {
         int mesh_halo = 0;
         metadata().get( "halo", mesh_halo );
         if ( halo > mesh_halo ) {
-            throw eckit::Exception( "Mesh does not contain a halo of size " + std::to_string( halo ) + ".", Here() );
+            throw_Exception( "Mesh does not contain a halo of size " + std::to_string( halo ) + ".", Here() );
         }
 
         polygons_[halo].reset( new PartitionPolygon( *this, halo ) );

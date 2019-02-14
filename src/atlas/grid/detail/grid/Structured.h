@@ -13,12 +13,12 @@
 #include <array>
 #include <memory>
 
-#include "eckit/memory/Builder.h"
-#include "eckit/utils/Hash.h"
-
 #include "atlas/grid/Spacing.h"
 #include "atlas/grid/detail/grid/Grid.h"
-#include "atlas/util/Config.h"
+#include "atlas/library/config.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace grid {
@@ -74,8 +74,8 @@ public:
 
     private:
         const Structured& grid_;
-        size_t i_;
-        size_t j_;
+        idx_t i_;
+        idx_t j_;
     };
 
     class IteratorXYPredicated : public Grid::IteratorXY {
@@ -99,21 +99,7 @@ public:
             }
         }
 
-        virtual bool next( PointXY& xy ) {
-            NOTIMP;
-#if 0
-            if ( j_ < grid_.ny() && i_ < grid_.nx( j_ ) ) {
-                xy = grid_.xy( i_++, j_ );
-
-                if ( i_ == grid_.nx( j_ ) ) {
-                    j_++;
-                    i_ = 0;
-                }
-                return true;
-            }
-            return false;
-#endif
-        }
+        virtual bool next( PointXY& xy );
 
         virtual const PointXY operator*() const { return grid_.xy( i_, j_ ); }
 
@@ -143,10 +129,10 @@ public:
     private:
         const Structured& grid_;
         Grid::IteratorXY::Predicate p_;
-        size_t i_;
-        size_t j_;
-        size_t n_;
-        size_t size_;
+        idx_t i_;
+        idx_t j_;
+        idx_t n_;
+        idx_t size_;
     };
 
     class IteratorLonLat : public Grid::IteratorLonLat {
@@ -192,15 +178,20 @@ public:
 
     private:
         const Structured& grid_;
-        size_t i_;
-        size_t j_;
+        idx_t i_;
+        idx_t j_;
     };
 
 public:
     class XSpace {
-        class Implementation : public eckit::Owned {
+        class Implementation : public util::Object {
         public:
-            Implementation( const std::array<double, 2>& interval, const std::vector<long>& N, bool endpoint = true );
+            // Constructor NVector can be either std::vector<int> or std::vector<long>
+            template <typename NVector>
+            Implementation( const std::array<double, 2>& interval, const NVector& N, bool endpoint = true );
+
+            Implementation( const std::array<double, 2>& interval, std::initializer_list<int>&& N,
+                            bool endpoint = true );
 
             Implementation( const Spacing& );
 
@@ -208,16 +199,16 @@ public:
 
             Implementation( const std::vector<Config>& );
 
-            size_t ny() const { return ny_; }
+            idx_t ny() const { return ny_; }
 
             // Minimum number of points across parallels (constant y)
-            size_t nxmin() const { return nxmin_; }
+            idx_t nxmin() const { return nxmin_; }
 
             // Maximum number of points across parallels (constant y)
-            size_t nxmax() const { return nxmax_; }
+            idx_t nxmax() const { return nxmax_; }
 
             /// Number of points per latitude
-            const std::vector<long>& nx() const { return nx_; }
+            const std::vector<idx_t>& nx() const { return nx_; }
 
             /// Value of minimum longitude per latitude [default=0]
             const std::vector<double>& xmin() const { return xmin_; }
@@ -233,13 +224,13 @@ public:
             std::string type() const;
 
         private:
-            void reserve( long ny );
+            void reserve( idx_t ny );
 
         private:
-            size_t ny_;
-            size_t nxmin_;
-            size_t nxmax_;
-            std::vector<long> nx_;
+            idx_t ny_;
+            idx_t nxmin_;
+            idx_t nxmax_;
+            std::vector<idx_t> nx_;
             std::vector<double> xmin_;
             std::vector<double> xmax_;
             std::vector<double> dx_;
@@ -252,22 +243,26 @@ public:
 
         XSpace( const Spacing& );
 
-        XSpace( const std::array<double, 2>& interval, const std::vector<long>& N, bool endpoint = true );
+        // Constructor NVector can be either std::vector<int> or std::vector<long> or initializer list
+        template <typename NVector>
+        XSpace( const std::array<double, 2>& interval, const NVector& N, bool endpoint = true );
+
+        XSpace( const std::array<double, 2>& interval, std::initializer_list<int>&& N, bool endpoint = true );
 
         XSpace( const Config& );
 
         XSpace( const std::vector<Config>& );
 
-        size_t ny() const { return impl_->ny(); }
+        idx_t ny() const { return impl_->ny(); }
 
         // Minimum number of points across parallels (constant y)
-        size_t nxmin() const { return impl_->nxmin(); }
+        idx_t nxmin() const { return impl_->nxmin(); }
 
         // Maximum number of points across parallels (constant y)
-        size_t nxmax() const { return impl_->nxmax(); }
+        idx_t nxmax() const { return impl_->nxmax(); }
 
         /// Number of points per latitude
-        const std::vector<long>& nx() const { return impl_->nx(); }
+        const std::vector<idx_t>& nx() const { return impl_->nx(); }
 
         /// Value of minimum longitude per latitude [default=0]
         const std::vector<double>& xmin() const { return impl_->xmin(); }
@@ -278,12 +273,12 @@ public:
         /// Value of longitude increment
         const std::vector<double>& dx() const { return impl_->dx(); }
 
-        Spec spec() const { return impl_->spec(); }
+        Spec spec() const;
 
         std::string type() const { return impl_->type(); }
 
     private:
-        eckit::SharedPtr<Implementation> impl_;
+        util::ObjectHandle<XSpace::Implementation> impl_;
     };
 
     using YSpace = Spacing;
@@ -296,47 +291,49 @@ public:
     Structured( XSpace, YSpace, Projection, Domain );
     Structured( const Structured&, Domain );
 
-    virtual ~Structured();
+    virtual ~Structured() override;
 
-    virtual size_t size() const { return npts_; }
+    virtual idx_t size() const override { return npts_; }
 
-    virtual Spec spec() const;
+    virtual Spec spec() const override;
 
     /**
    * Human readable name
    * Either the name is the one given at construction as a canonical named grid,
    * or the name "structured"
    */
-    virtual std::string name() const;
+    virtual std::string name() const override;
 
-    virtual std::string type() const;
+    virtual std::string type() const override;
 
-    inline size_t ny() const { return y_.size(); }
+    inline idx_t ny() const { return static_cast<idx_t>( y_.size() ); }
 
-    inline size_t nx( size_t j ) const { return static_cast<size_t>( nx_[j] ); }
+    inline idx_t nx( idx_t j ) const { return static_cast<idx_t>( nx_[j] ); }
 
-    inline size_t nxmax() const { return nxmax_; }
+    inline idx_t nxmax() const { return nxmax_; }
 
-    inline size_t nxmin() const { return nxmin_; }
+    inline idx_t nxmin() const { return nxmin_; }
 
-    inline const std::vector<long>& nx() const { return nx_; }
+    inline const std::vector<idx_t>& nx() const { return nx_; }
 
     inline const std::vector<double>& y() const { return y_; }
 
-    inline double x( size_t i, size_t j ) const { return xmin_[j] + static_cast<double>( i ) * dx_[j]; }
+    inline double dx( idx_t j ) const { return dx_[j]; }
 
-    inline double y( size_t j ) const { return y_[j]; }
+    inline double x( idx_t i, idx_t j ) const { return xmin_[j] + static_cast<double>( i ) * dx_[j]; }
 
-    inline void xy( size_t i, size_t j, double crd[] ) const {
+    inline double y( idx_t j ) const { return y_[j]; }
+
+    inline void xy( idx_t i, idx_t j, double crd[] ) const {
         crd[0] = x( i, j );
         crd[1] = y( j );
     }
 
-    PointXY xy( size_t i, size_t j ) const { return PointXY( x( i, j ), y( j ) ); }
+    PointXY xy( idx_t i, idx_t j ) const { return PointXY( x( i, j ), y( j ) ); }
 
-    PointLonLat lonlat( size_t i, size_t j ) const { return projection_.lonlat( xy( i, j ) ); }
+    PointLonLat lonlat( idx_t i, idx_t j ) const { return projection_.lonlat( xy( i, j ) ); }
 
-    void lonlat( size_t i, size_t j, double crd[] ) const {
+    void lonlat( idx_t i, idx_t j, double crd[] ) const {
         xy( i, j, crd );
         projection_.xy2lonlat( crd );
     }
@@ -348,22 +345,22 @@ public:
     const XSpace& xspace() const { return xspace_; }
     const YSpace& yspace() const { return yspace_; }
 
-    virtual IteratorXY* xy_begin() const { return new IteratorXY( *this ); }
-    virtual IteratorXY* xy_end() const { return new IteratorXY( *this, false ); }
-    virtual IteratorLonLat* lonlat_begin() const { return new IteratorLonLat( *this ); }
-    virtual IteratorLonLat* lonlat_end() const { return new IteratorLonLat( *this, false ); }
+    virtual IteratorXY* xy_begin() const override { return new IteratorXY( *this ); }
+    virtual IteratorXY* xy_end() const override { return new IteratorXY( *this, false ); }
+    virtual IteratorLonLat* lonlat_begin() const override { return new IteratorLonLat( *this ); }
+    virtual IteratorLonLat* lonlat_end() const override { return new IteratorLonLat( *this, false ); }
 
-    virtual IteratorXYPredicated* xy_begin( IteratorXY::Predicate p ) const {
+    virtual IteratorXYPredicated* xy_begin( IteratorXY::Predicate p ) const override {
         return new IteratorXYPredicated( *this, p );
     }
-    virtual IteratorXYPredicated* xy_end( IteratorXY::Predicate p ) const {
+    virtual IteratorXYPredicated* xy_end( IteratorXY::Predicate p ) const override {
         return new IteratorXYPredicated( *this, p, false );
     }
 
 protected:  // methods
-    virtual void print( std::ostream& ) const;
+    virtual void print( std::ostream& ) const override;
 
-    virtual void hash( eckit::Hash& ) const;
+    virtual void hash( eckit::Hash& ) const override;
 
     void computeTruePeriodicity();
 
@@ -373,19 +370,19 @@ protected:  // methods
 
 protected:
     // Minimum number of points across parallels (constant y)
-    size_t nxmin_;
+    idx_t nxmin_;
 
     // Maximum number of points across parallels (constant y)
-    size_t nxmax_;
+    idx_t nxmax_;
 
     /// Total number of unique points in the grid
-    size_t npts_;
+    idx_t npts_;
 
     /// Latitude values
     std::vector<double> y_;
 
     /// Number of points per latitude
-    std::vector<long> nx_;
+    std::vector<idx_t> nx_;
 
     /// Value of minimum longitude per latitude [default=0]
     std::vector<double> xmin_;
@@ -418,20 +415,20 @@ Structured* atlas__grid__regular__ShiftedLonLat( long nx, long ny );
 Structured* atlas__grid__regular__ShiftedLon( long nx, long ny );
 Structured* atlas__grid__regular__ShiftedLat( long nx, long ny );
 
-void atlas__grid__Structured__nx_array( Structured* This, const long*& nx, size_t& size );
-long atlas__grid__Structured__nx( Structured* This, long j );
-long atlas__grid__Structured__ny( Structured* This );
-long atlas__grid__Structured__nxmin( Structured* This );
-long atlas__grid__Structured__nxmax( Structured* This );
-long atlas__grid__Structured__size( Structured* This );
-double atlas__grid__Structured__y( Structured* This, long j );
-double atlas__grid__Structured__x( Structured* This, long i, long j );
-void atlas__grid__Structured__xy( Structured* This, long i, long j, double crd[] );
-void atlas__grid__Structured__lonlat( Structured* This, long i, long j, double crd[] );
-void atlas__grid__Structured__y_array( Structured* This, const double*& lats, size_t& size );
+void atlas__grid__Structured__nx_array( Structured* This, const idx_t*& nx, idx_t& size );
+idx_t atlas__grid__Structured__nx( Structured* This, idx_t j );
+idx_t atlas__grid__Structured__ny( Structured* This );
+idx_t atlas__grid__Structured__nxmin( Structured* This );
+idx_t atlas__grid__Structured__nxmax( Structured* This );
+idx_t atlas__grid__Structured__size( Structured* This );
+double atlas__grid__Structured__y( Structured* This, idx_t j );
+double atlas__grid__Structured__x( Structured* This, idx_t i, idx_t j );
+void atlas__grid__Structured__xy( Structured* This, idx_t i, idx_t j, double crd[] );
+void atlas__grid__Structured__lonlat( Structured* This, idx_t i, idx_t j, double crd[] );
+void atlas__grid__Structured__y_array( Structured* This, const double*& lats, idx_t& size );
 int atlas__grid__Structured__reduced( Structured* This );
 
-long atlas__grid__Gaussian__N( Structured* This );
+idx_t atlas__grid__Gaussian__N( Structured* This );
 }
 
 }  // namespace grid

@@ -18,6 +18,11 @@ namespace atlas {
 namespace runtime {
 namespace trace {
 
+class Control {
+public:
+    static bool enabled();
+};
+
 //-----------------------------------------------------------------------------------------------------------
 
 // Class used to avoid any printing before and after a timer

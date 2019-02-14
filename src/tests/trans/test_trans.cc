@@ -10,6 +10,7 @@
 
 #include <algorithm>
 
+#include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/io/DataHandle.h"
 
@@ -26,11 +27,12 @@
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/trans/VorDivToUV.h"
+#include "atlas/trans/detail/TransFactory.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -65,7 +67,7 @@ void read_rspecg( trans::TransImpl& trans, std::vector<double>& rspecg, std::vec
     nfld = 2;
     if ( mpi::comm().rank() == 0 ) {
         rspecg.resize( nfld * trans.spectralCoefficients() );
-        for ( int i = 0; i < trans.spectralCoefficients(); ++i ) {
+        for ( size_t i = 0; i < trans.spectralCoefficients(); ++i ) {
             rspecg[i * nfld + 0] = ( i == 0 ? 1. : 0. );  // scalar field 1
             rspecg[i * nfld + 1] = ( i == 0 ? 2. : 0. );  // scalar field 2
         }
@@ -86,7 +88,7 @@ void read_rspecg( Field spec ) {
         int nb_spectral_coefficients_global =
             functionspace::Spectral( spec.functionspace() ).nb_spectral_coefficients_global();
         auto view = array::make_view<double, 2>( spec );
-        ASSERT( view.shape( 1 ) >= 2 );
+        ATLAS_ASSERT( view.shape( 1 ) >= 2 );
         for ( int i = 0; i < nb_spectral_coefficients_global; ++i ) {
             view( i, 0 ) = ( i == 0 ? 1. : 0. );  // scalar field 1
             view( i, 1 ) = ( i == 0 ? 2. : 0. );  // scalar field 2
@@ -103,7 +105,7 @@ CASE( "test_trans_distribution_matches_atlas" ) {
     // Create grid and trans object
     Grid g( "N80" );
 
-    EXPECT( grid::StructuredGrid( g ).ny() == 160 );
+    EXPECT( StructuredGrid( g ).ny() == 160 );
 
     auto trans_partitioner = new TransPartitioner();
     grid::Partitioner partitioner( trans_partitioner );
@@ -116,8 +118,8 @@ CASE( "test_trans_distribution_matches_atlas" ) {
     EXPECT( trans.truncation() == 159 );
 
     // -------------- do checks -------------- //
-    EXPECT( t->nproc == mpi::comm().size() );
-    EXPECT( t->myproc == mpi::comm().rank() + 1 );
+    EXPECT( t->nproc == int( mpi::comm().size() ) );
+    EXPECT( t->myproc == int( mpi::comm().rank() + 1 ) );
 
     if ( mpi::comm().rank() == 0 )  // all tasks do the same, so only one needs to check
     {
@@ -128,12 +130,12 @@ CASE( "test_trans_distribution_matches_atlas" ) {
         EXPECT( t->n_regions_NS == trans_partitioner->nb_bands() );
         EXPECT( t->n_regions_EW == max_nb_regions_EW );
 
-        EXPECT( distribution.nb_partitions() == mpi::comm().size() );
-        EXPECT( distribution.partition().size() == g.size() );
+        EXPECT( distribution.nb_partitions() == idx_t( mpi::comm().size() ) );
+        EXPECT( idx_t( distribution.partition().size() ) == g.size() );
 
         std::vector<int> npts( distribution.nb_partitions(), 0 );
 
-        for ( size_t j = 0; j < g.size(); ++j )
+        for ( idx_t j = 0; j < g.size(); ++j )
             ++npts[distribution.partition( j )];
 
         EXPECT( t->ngptotg == g.size() );
@@ -254,7 +256,7 @@ CASE( "test_distribution" ) {
 CASE( "test_generate_mesh" ) {
     Log::info() << "test_generate_mesh" << std::endl;
     Grid g( "O80" );
-    meshgenerator::StructuredMeshGenerator generate( atlas::util::Config( "angle", 0 )( "triangulate", true ) );
+    StructuredMeshGenerator generate( atlas::util::Config( "angle", 0 )( "triangulate", true ) );
 
     Mesh m_default = generate( g );
 
@@ -270,7 +272,7 @@ CASE( "test_generate_mesh" ) {
     array::ArrayView<int, 1> p_trans   = array::make_view<int, 1>( m_trans.nodes().partition() );
     array::ArrayView<int, 1> p_eqreg   = array::make_view<int, 1>( m_eqreg.nodes().partition() );
 
-    for ( size_t j = 0; j < p_default.shape( 0 ); ++j ) {
+    for ( idx_t j = 0; j < p_default.shape( 0 ); ++j ) {
         EXPECT( p_default( j ) == p_trans( j ) );
         EXPECT( p_default( j ) == p_eqreg( j ) );
     }
@@ -282,7 +284,7 @@ CASE( "test_spectral_fields" ) {
     Log::info() << "test_spectral_fields" << std::endl;
 
     Grid g( "O48" );
-    meshgenerator::StructuredMeshGenerator generate( atlas::util::Config( "angle", 0 )( "triangulate", false ) );
+    StructuredMeshGenerator generate( atlas::util::Config( "angle", 0 )( "triangulate", false ) );
     Mesh m = generate( g );
 
     trans::Trans trans( g, 47 );
@@ -292,8 +294,8 @@ CASE( "test_spectral_fields" ) {
 
     Field spf = spectral.createField<double>( option::name( "spf" ) );
     Field gpf = nodal.createField<double>( option::name( "gpf" ) );
-    
-    array::make_view<double,1>( gpf ).assign(0);
+
+    array::make_view<double, 1>( gpf ).assign( 0 );
 
     EXPECT_NO_THROW( trans.dirtrans( gpf, spf ) );
     EXPECT_NO_THROW( trans.invtrans( spf, gpf ) );
@@ -307,7 +309,7 @@ CASE( "test_spectral_fields" ) {
     EXPECT_NO_THROW( trans.invtrans( spfields, gpfields ) );
 
     gpfields.add( gpf );
-    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::SeriousBug );
+    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::Exception );
 }
 
 CASE( "test_nomesh" ) {
@@ -317,7 +319,7 @@ CASE( "test_nomesh" ) {
     trans::Trans trans( g, 47 );
 
     functionspace::Spectral spectral( trans );
-    functionspace::StructuredColumns gridpoints( g );
+    functionspace::StructuredColumns gridpoints( g, grid::Partitioner( "trans" ) );
 
     Field spfg = spectral.createField<double>( option::name( "spf" ) | option::global() );
     Field spf  = spectral.createField<double>( option::name( "spf" ) );
@@ -335,7 +337,7 @@ CASE( "test_nomesh" ) {
     if ( mpi::comm().rank() == 0 ) {
         array::ArrayView<double, 1> sp = array::make_view<double, 1>( spf );
         EXPECT( eckit::types::is_approximately_equal( sp( 0 ), 4., 0.001 ) );
-        for ( size_t jp = 0; jp < sp.size(); ++jp ) {
+        for ( idx_t jp = 0; jp < sp.size(); ++jp ) {
             Log::debug() << "sp(" << jp << ")   :   " << sp( jp ) << std::endl;
         }
     }
@@ -346,7 +348,7 @@ CASE( "test_nomesh" ) {
 
     if ( mpi::comm().rank() == 0 ) {
         array::ArrayView<double, 1> gpg = array::make_view<double, 1>( gpfg );
-        for ( size_t jp = 0; jp < gpg.size(); ++jp ) {
+        for ( idx_t jp = 0; jp < gpg.size(); ++jp ) {
             EXPECT( eckit::types::is_approximately_equal( gpg( jp ), 4., 0.001 ) );
             Log::debug() << "gpg(" << jp << ")   :   " << gpg( jp ) << std::endl;
         }
@@ -367,7 +369,7 @@ CASE( "test_trans_factory" ) {
     trans::TransFactory::list( Log::info() );
     Log::info() << std::endl;
 
-    functionspace::StructuredColumns gp( Grid( "O48" ) );
+    functionspace::StructuredColumns gp( Grid( "O48" ), grid::Partitioner( "trans" ) );
     functionspace::Spectral sp( 47 );
 
     trans::Trans trans1 = trans::Trans( gp, sp );
@@ -382,13 +384,13 @@ CASE( "test_trans_using_grid" ) {
 
     trans::Trans trans( Grid( "O48" ), 47 );
 
-    functionspace::StructuredColumns gp( trans.grid() );
+    functionspace::StructuredColumns gp( trans.grid(), grid::Partitioner( "trans" ) );
     functionspace::Spectral sp( trans.truncation() );
 
     Field spf = sp.createField<double>( option::name( "spf" ) );
     Field gpf = gp.createField<double>( option::name( "gpf" ) );
 
-    array::make_view<double,1>( gpf ).assign(0); 
+    array::make_view<double, 1>( gpf ).assign( 0 );
 
     EXPECT_NO_THROW( trans.dirtrans( gpf, spf ) );
     EXPECT_NO_THROW( trans.invtrans( spf, gpf ) );
@@ -402,7 +404,7 @@ CASE( "test_trans_using_grid" ) {
     EXPECT_NO_THROW( trans.invtrans( spfields, gpfields ) );
 
     gpfields.add( gpf );
-    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::SeriousBug );
+    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::Exception );
 }
 
 CASE( "test_trans_using_functionspace_NodeColumns" ) {
@@ -416,7 +418,7 @@ CASE( "test_trans_using_functionspace_NodeColumns" ) {
     Field spf = sp.createField<double>( option::name( "spf" ) );
     Field gpf = gp.createField<double>( option::name( "gpf" ) );
 
-    array::make_view<double,1>( gpf ).assign(0);  
+    array::make_view<double, 1>( gpf ).assign( 0 );
 
     EXPECT_NO_THROW( trans.dirtrans( gpf, spf ) );
     EXPECT_NO_THROW( trans.invtrans( spf, gpf ) );
@@ -430,13 +432,13 @@ CASE( "test_trans_using_functionspace_NodeColumns" ) {
     EXPECT_NO_THROW( trans.invtrans( spfields, gpfields ) );
 
     gpfields.add( gpf );
-    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::SeriousBug );
+    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::Exception );
 }
 
 CASE( "test_trans_using_functionspace_StructuredColumns" ) {
     Log::info() << "test_trans_using_functionspace_StructuredColumns" << std::endl;
 
-    functionspace::StructuredColumns gp( Grid( "O48" ) );
+    functionspace::StructuredColumns gp( Grid( "O48" ), grid::Partitioner( "trans" ) );
     functionspace::Spectral sp( 47 );
 
     trans::Trans trans( gp, sp );
@@ -444,7 +446,7 @@ CASE( "test_trans_using_functionspace_StructuredColumns" ) {
     Field spf = sp.createField<double>( option::name( "spf" ) );
     Field gpf = gp.createField<double>( option::name( "gpf" ) );
 
-    array::make_view<double,1>( gpf ).assign(0);  
+    array::make_view<double, 1>( gpf ).assign( 0 );
 
     EXPECT_NO_THROW( trans.dirtrans( gpf, spf ) );
     EXPECT_NO_THROW( trans.invtrans( spf, gpf ) );
@@ -458,7 +460,7 @@ CASE( "test_trans_using_functionspace_StructuredColumns" ) {
     EXPECT_NO_THROW( trans.invtrans( spfields, gpfields ) );
 
     gpfields.add( gpf );
-    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::SeriousBug );
+    EXPECT_THROWS_AS( trans.dirtrans( gpfields, spfields ), eckit::Exception );
 }
 
 CASE( "test_trans_MIR_lonlat" ) {
@@ -481,7 +483,7 @@ CASE( "test_trans_MIR_lonlat" ) {
 CASE( "test_trans_VorDivToUV" ) {
     int nfld = 1;                          // TODO: test for nfld>1
     std::vector<int> truncation_array{1};  // truncation_array{159,160,1279};
-    for ( int i = 0; i < truncation_array.size(); ++i ) {
+    for ( size_t i = 0; i < truncation_array.size(); ++i ) {
         int truncation = truncation_array[i];
         int nspec2     = ( truncation + 1 ) * ( truncation + 2 );
 

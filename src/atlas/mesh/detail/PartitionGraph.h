@@ -11,9 +11,10 @@
 #pragma once
 
 #include <iosfwd>
+#include <vector>
 
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
+#include "atlas/library/config.h"
+#include "atlas/util/Object.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -25,17 +26,17 @@ class MeshImpl;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class PartitionGraph : public eckit::Owned {
+class PartitionGraph : public util::Object {
 public:
-    using Neighbours = std::vector<size_t>;
+    using Neighbours = std::vector<idx_t>;
 
 public:
     PartitionGraph();
-    PartitionGraph( size_t values[], size_t rows, size_t displs[], size_t counts[] );
+    PartitionGraph( idx_t values[], idx_t rows, idx_t displs[], idx_t counts[] );
     size_t footprint() const;
-    size_t size() const;
-    Neighbours nearestNeighbours( const size_t partition ) const;
-    size_t maximumNearestNeighbours() const;
+    idx_t size() const;
+    Neighbours nearestNeighbours( const idx_t partition ) const;
+    idx_t maximumNearestNeighbours() const;
     operator bool() const;
 
 private:
@@ -43,10 +44,10 @@ private:
     friend std::ostream& operator<<( std::ostream& s, const PartitionGraph& p );
 
 private:
-    std::vector<size_t> counts_;
-    std::vector<size_t> displs_;
-    std::vector<size_t> values_;
-    size_t maximum_nearest_neighbours_;
+    std::vector<idx_t> counts_;
+    std::vector<idx_t> displs_;
+    std::vector<idx_t> values_;
+    idx_t maximum_nearest_neighbours_;
 };
 
 PartitionGraph* build_partition_graph( const MeshImpl& mesh );

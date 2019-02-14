@@ -12,23 +12,19 @@
 
 #include <vector>
 
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
 #include "eckit/utils/Translator.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/Log.h"
 #include "atlas/util/Checksum.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace atlas {
 namespace parallel {
 
-class Checksum : public eckit::Owned {
-public:  // types
-    typedef eckit::SharedPtr<Checksum> Ptr;
-
+class Checksum : public util::Object {
 public:
     Checksum();
     Checksum( const std::string& name );
@@ -46,7 +42,7 @@ public:  // methods
     ///                          To Checksum everything, set to val > max value in
     ///                          domain
     /// @param [in] parsize      size of given lists
-    void setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[], const int parsize );
+    void setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[], const int parsize );
 
     /// @brief Setup
     /// @param [in] part         List of partitions
@@ -56,11 +52,11 @@ public:  // methods
     /// @param [in] mask         Mask indices not to include in the communication
     ///                          pattern (0=include,1=exclude)
     /// @param [in] parsize      size of given lists
-    void setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[], const int mask[],
+    void setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[], const int mask[],
                 const int parsize );
 
     /// @brief Setup
-    void setup( const eckit::SharedPtr<GatherScatter>& );
+    void setup( const util::ObjectHandle<GatherScatter>& );
 
     template <typename DATA_TYPE>
     std::string execute( const DATA_TYPE lfield[], const int lvar_strides[], const int lvar_extents[],
@@ -78,7 +74,7 @@ public:  // methods
 
 private:  // data
     std::string name_;
-    eckit::SharedPtr<GatherScatter> gather_;
+    util::ObjectHandle<GatherScatter> gather_;
     bool is_setup_;
     size_t parsize_;
 };
@@ -88,7 +84,7 @@ std::string Checksum::execute( const DATA_TYPE data[], const int var_strides[], 
                                const int var_rank ) const {
     size_t root = 0;
 
-    if ( !is_setup_ ) { throw eckit::SeriousBug( "Checksum was not setup", Here() ); }
+    if ( !is_setup_ ) { throw_Exception( "Checksum was not setup", Here() ); }
     std::vector<util::checksum_t> local_checksums( parsize_ );
     int var_size = var_extents[0] * var_strides[0];
 
@@ -140,14 +136,13 @@ void Checksum::var_info( const array::ArrayView<DATA_TYPE, RANK>& arr, std::vect
 
 template <typename DATA_TYPE, int LRANK>
 std::string Checksum::execute( const array::ArrayView<DATA_TYPE, LRANK>& lfield ) const {
-    if ( lfield.shape( 0 ) == parsize_ ) {
+    if ( size_t( lfield.shape( 0 ) ) == parsize_ ) {
         std::vector<int> lvarstrides, lvarextents;
         var_info( lfield, lvarstrides, lvarextents );
         return execute( lfield.data(), lvarstrides.data(), lvarextents.data(), lvarstrides.size() );
     }
     else {
-        Log::error() << "lfield.shape(0) = " << lfield.shape( 0 );
-        NOTIMP;  // Need to implement with parallel ranks > 1
+        ATLAS_NOTIMPLEMENTED;  // Need to implement with parallel ranks > 1
     }
 }
 
@@ -156,14 +151,16 @@ std::string Checksum::execute( const array::ArrayView<DATA_TYPE, LRANK>& lfield 
 extern "C" {
 Checksum* atlas__Checksum__new();
 void atlas__Checksum__delete( Checksum* This );
-void atlas__Checksum__setup32( Checksum* This, int part[], int remote_idx[], int base, int glb_idx[], int parsize );
-void atlas__Checksum__setup64( Checksum* This, int part[], int remote_idx[], int base, long glb_idx[], int parsize );
+void atlas__Checksum__setup32( Checksum* This, int part[], idx_t remote_idx[], int base, int glb_idx[], int parsize );
+void atlas__Checksum__setup64( Checksum* This, int part[], idx_t remote_idx[], int base, long glb_idx[], int parsize );
 void atlas__Checksum__execute_strided_int( Checksum* This, int lfield[], int lvar_strides[], int lvar_extents[],
                                            int lvar_rank, char* checksum );
 void atlas__Checksum__execute_strided_float( Checksum* This, float lfield[], int lvar_strides[], int lvar_extents[],
                                              int lvar_rank, char* checksum );
 void atlas__Checksum__execute_strided_double( Checksum* This, double lfield[], int lvar_strides[], int lvar_extents[],
                                               int lvar_rank, char* checksum );
+void atlas__Checksum__execute_strided_long( Checksum* This, long lfield[], int lvar_strides[], int lvar_extents[],
+                                            int lvar_rank, char* checksum );
 }
 // ------------------------------------------------------------------
 

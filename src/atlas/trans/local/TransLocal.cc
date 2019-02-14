@@ -9,23 +9,31 @@
  */
 
 #include "atlas/trans/local/TransLocal.h"
+
 #include <cmath>
 #include <cstdlib>
-#include "atlas/array.h"
-#include "atlas/option.h"
-#include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/ErrorHandling.h"
-#include "atlas/runtime/Log.h"
-#include "atlas/trans/VorDivToUV.h"
-#include "atlas/trans/local/LegendrePolynomials.h"
-#include "atlas/util/Constants.h"
+#include <fstream>
+
 #include "eckit/config/YAMLConfiguration.h"
-#include "eckit/eckit_config.h"
+#include "eckit/eckit.h"
+#include "eckit/io/DataHandle.h"
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Matrix.h"
 #include "eckit/log/Bytes.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/types/FloatCompare.h"
+
+#include "atlas/array.h"
+#include "atlas/grid/Iterator.h"
+#include "atlas/grid/StructuredGrid.h"
+#include "atlas/option.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/trans/VorDivToUV.h"
+#include "atlas/trans/detail/TransFactory.h"
+#include "atlas/trans/local/LegendrePolynomials.h"
+#include "atlas/util/Constants.h"
 
 #include "atlas/library/defines.h"
 #if ATLAS_HAVE_FFTW
@@ -34,7 +42,7 @@
 
 // move latitudes at the poles to the following latitude:
 // (otherwise we would divide by zero when computing u,v from U,V)
-double latPole = 89.9999999;
+static constexpr double latPole = 89.9999999;
 // (latPole=89.9999999 seems to produce the best accuracy. Moving it further away
 //  or closer to the pole both increase the errors!)
 
@@ -73,11 +81,11 @@ public:
 
     bool export_legendre() const { return config_.getBool( "export_legendre", false ); }
 
-    int warning() const { return config_.getLong( "warning", 1 ); }
+    int warning() const { return config_.getInt( "warning", 1 ); }
 
     int fft() const {
-        static const std::map<std::string, int> string_to_FFT = {{"OFF", (int)option::FFT::OFF},
-                                                                 {"FFTW", (int)option::FFT::FFTW}};
+        static const std::map<std::string, int> string_to_FFT = {{"OFF", static_cast<int>( option::FFT::OFF )},
+                                                                 {"FFTW", static_cast<int>( option::FFT::FFTW )}};
 #ifdef ATLAS_HAVE_FFTW
         std::string fft_default = "FFTW";
 #else
@@ -92,17 +100,17 @@ private:
 
 struct ReadCache {
     ReadCache( const void* cache ) {
-        begin = (char*)cache;
+        begin = reinterpret_cast<const char*>( cache );
         pos   = 0;
     }
     template <typename T>
     T* read( size_t size ) {
-        T* v = (T*)( begin + pos );
+        const T* v = reinterpret_cast<const T*>( begin + pos );
         pos += size * sizeof( T );
-        return v;
+        return const_cast<T*>( v );
     }
 
-    char* begin;
+    const char* begin;
     size_t pos;
 };
 
@@ -111,7 +119,7 @@ struct WriteCache {
         if ( file_path.exists() ) {
             std::stringstream err;
             err << "Cannot open cache file " << file_path << " for writing as it already exists. Remove first.";
-            throw eckit::BadParameter( err.str(), Here() );
+            throw_Exception( err.str(), Here() );
         }
         dh_->openForWrite( 0 );
         pos = 0;
@@ -144,18 +152,6 @@ struct WriteCache {
     size_t pos;
 };
 
-#if ATLAS_HAVE_FFTW
-struct FFTW_Wisdom {
-    char* wisdom;
-    FFTW_Wisdom() { wisdom = fftw_export_wisdom_to_string(); }
-    ~FFTW_Wisdom() { free( wisdom ); }
-};
-//std::ostream& operator<<( std::ostream& out, const FFTW_Wisdom& w ) {
-//    out << w.wisdom;
-//    return out;
-//}
-#endif
-
 }  // namespace
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -172,36 +168,25 @@ size_t legendre_size( const size_t truncation ) {
 //    // using ceil here should make it possible to have odd number of latitudes (with the centre latitude being the equator)
 //}
 
-int num_n( const int truncation, const int m, const bool symmetric ) {
-    int len = 0;
-    if ( symmetric ) { len = ( truncation - m + 2 ) / 2; }
-    else {
-        len = ( truncation - m + 1 ) / 2;
-    }
-    return len;
+size_t num_n( const int truncation, const int m, const bool symmetric ) {
+    int len = ( truncation - m + ( symmetric ? 2 : 1 ) ) / 2;
+    ATLAS_ASSERT( len >= 0 );
+    return size_t( len );
 }
 
-class AllocationFailed : public eckit::Exception {
-public:
-    AllocationFailed( size_t bytes, const eckit::CodeLocation& );
 
-private:
-    static std::string error_message( size_t bytes ) {
-        std::stringstream ss;
-        ss << "AllocationFailed: Could not allocate " << eckit::Bytes( bytes );
-        return ss.str();
-    }
-};
-
-AllocationFailed::AllocationFailed( size_t bytes, const eckit::CodeLocation& loc ) :
-    Exception( error_message( bytes ), loc ) {}
+[[noreturn]] void throw_AllocationFailed( size_t bytes, const eckit::CodeLocation& loc ) {
+    std::stringstream ss;
+    ss << "AllocationFailed: Could not allocate " << eckit::Bytes( bytes );
+    throw_Exception( ss.str(), loc );
+}
 
 
 void alloc_aligned( double*& ptr, size_t n ) {
     const size_t alignment = 64 * sizeof( double );
     size_t bytes           = sizeof( double ) * n;
     int err                = posix_memalign( (void**)&ptr, alignment, bytes );
-    if ( err ) { throw AllocationFailed( bytes, Here() ); }
+    if ( err ) { throw_AllocationFailed( bytes, Here() ); }
 }
 
 void free_aligned( double*& ptr ) {
@@ -209,15 +194,27 @@ void free_aligned( double*& ptr ) {
     ptr = nullptr;
 }
 
-int add_padding( int n ) {
-    return std::ceil( n / 8. ) * 8;
+void alloc_aligned( double*& ptr, size_t n, const char* msg ) {
+    ATLAS_ASSERT( msg );
+    Log::debug() << "TransLocal: allocating '" << msg << "': " << eckit::Bytes( sizeof( double ) * n ) << std::endl;
+    alloc_aligned( ptr, n );
+}
+
+void free_aligned( double*& ptr, const char* msg ) {
+    ATLAS_ASSERT( msg );
+    Log::debug() << "TransLocal: dellocating '" << msg << "'" << std::endl;
+    free_aligned( ptr );
+}
+
+size_t add_padding( size_t n ) {
+    return size_t( std::ceil( n / 8. ) ) * 8;
 }
 
 }  // namespace
 
 int fourier_truncation( const int truncation,    // truncation
                         const int nx,            // number of longitudes
-                        const int nxmax,         // maximum nx
+                        const int /*nxmax*/,     // maximum nx
                         const int ndgl,          // number of latitudes
                         const double lat,        // latitude in radian
                         const bool fullgrid ) {  // regular grid
@@ -233,13 +230,13 @@ int fourier_truncation( const int truncation,    // truncation
         double weight = 3 * ( trclin - truncation ) / ndgl;
         double sqcos  = std::pow( std::cos( lat ), 2 );
 
-        trc = ( nx - 1 ) / ( 2 + weight * sqcos );
+        trc = static_cast<int>( ( nx - 1 ) / ( 2 + weight * sqcos ) );
     }
     else {
         // cubic
         double sqcos = std::pow( std::cos( lat ), 2 );
 
-        trc = ( nx - 1 ) / ( 2 + sqcos ) - 1;
+        trc = static_cast<int>( ( nx - 1 ) / ( 2 + sqcos ) - 1 );
     }
     trc = std::min( truncation, trc );
     return trc;
@@ -277,7 +274,7 @@ bool TransLocal::warning( const eckit::Configuration& config ) const {
 TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& domain, const long truncation,
                         const eckit::Configuration& config ) :
     grid_( grid, domain ),
-    truncation_( truncation ),
+    truncation_( static_cast<int>( truncation ) ),
     precompute_( config.getBool( "precompute", true ) ),
     cache_( cache ),
     legendre_cache_( cache.legendre().data() ),
@@ -304,13 +301,13 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
     nlatsLegReduced_  = 0;
     bool useGlobalLeg = true;
     bool no_nest      = false;
-    if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
-        grid::StructuredGrid g( grid_ );
+    if ( StructuredGrid( grid_ ) && not grid_.projection() ) {
+        StructuredGrid g( grid_ );
         nlats    = g.ny();
         nlonsMax = g.nxmax();
 
         // check location of domain relative to the equator:
-        for ( size_t j = 0; j < nlats; ++j ) {
+        for ( idx_t j = 0; j < nlats; ++j ) {
             // assumptions: latitudes in g.y(j) are monotone and decreasing
             // no assumption on whether we have 0, 1 or 2 latitudes at the equator
             double lat = g.y( j );
@@ -327,7 +324,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
 
         gridGlobal_ = grid;
         if ( not gridGlobal_.domain().global() ) {
-            if ( grid::RegularGrid( grid_ ) ) {
+            if ( RegularGrid( grid_ ) ) {
                 // non-nested regular grid
                 no_nest         = true;
                 no_symmetry_    = true;
@@ -339,15 +336,15 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 useGlobalLeg    = false;
             }
             else {
-                NOTIMP;
+                ATLAS_NOTIMPLEMENTED;
                 // non-nested reduced grids are not supported
             }
         }
 
-        grid::StructuredGrid gs_global( gridGlobal_ );
-        ASSERT( gs_global );  // assert structured grid
-        grid::StructuredGrid gsLeg = ( useGlobalLeg ? gs_global : g );
-        nlonsMaxGlobal_            = gs_global.nxmax();
+        StructuredGrid gs_global( gridGlobal_ );
+        ATLAS_ASSERT( gs_global );  // assert structured grid
+        StructuredGrid gsLeg = ( useGlobalLeg ? gs_global : g );
+        nlonsMaxGlobal_      = gs_global.nxmax();
         jlonMin_.resize( 1 );
         jlonMin_[0]  = 0;
         jlatMin_     = 0;
@@ -388,7 +385,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             for ( int jlat = 0; jlat < nlatsGlobal_ / 2; jlat++ ) {
                 double lat = gs_global.y( jlat ) * util::Constants::degreesToRadians();
                 int nmen = fourier_truncation( truncation_, gs_global.nx( jlat ), gs_global.nxmax(), nlatsGlobal_, lat,
-                                               grid::RegularGrid( gs_global ) );
+                                               RegularGrid( gs_global ) );
                 nmen     = std::max( nmen0, nmen );
                 int ndgluj = nlatsLeg_ - std::min( nlatsLeg_, nlatsLeg_ + jlatMinLeg_ - jlat );
                 if ( useGlobalLeg ) { ndgluj = std::max( jlatMinLeg_, jlat ); }
@@ -416,19 +413,19 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             if ( nlonsMax < fft_threshold * nlonsMaxGlobal_ ) { useFFT_ = false; }
             else {
                 // need to use FFT with cropped grid
-                if ( grid::RegularGrid( gridGlobal_ ) ) {
-                    for ( size_t jlon = 0; jlon < nlonsMaxGlobal_; ++jlon ) {
+                if ( RegularGrid( gridGlobal_ ) ) {
+                    for ( idx_t jlon = 0; jlon < nlonsMaxGlobal_; ++jlon ) {
                         if ( gs_global.x( jlon, 0 ) < lonmin ) { jlonMin_[0]++; }
                     }
                 }
                 else {
                     nlonsGlobal_.resize( nlats );
                     jlonMin_.resize( nlats );
-                    for ( size_t jlat = 0; jlat < nlats; jlat++ ) {
+                    for ( idx_t jlat = 0; jlat < nlats; jlat++ ) {
                         double lonmin      = wrapAngle( g.x( 0, jlat ) );
                         nlonsGlobal_[jlat] = gs_global.nx( jlat + jlatMin_ );
                         jlonMin_[jlat]     = 0;
-                        for ( size_t jlon = 0; jlon < nlonsGlobal_[jlat]; ++jlon ) {
+                        for ( idx_t jlon = 0; jlon < nlonsGlobal_[jlat]; ++jlon ) {
                             if ( gs_global.x( jlon, jlat + jlatMin_ ) < lonmin ) { jlonMin_[jlat]++; }
                         }
                     }
@@ -439,7 +436,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         std::vector<double> lats( nlatsLeg_ );
         std::vector<double> lons( nlonsMax );
         if ( nlatsNH_ >= nlatsSH_ || useGlobalLeg ) {
-            for ( size_t j = 0; j < nlatsLeg_; ++j ) {
+            for ( idx_t j = 0; j < nlatsLeg_; ++j ) {
                 double lat = gsLeg.y( j );
                 if ( lat > latPole ) { lat = latPole; }
                 if ( lat < -latPole ) { lat = -latPole; }
@@ -447,14 +444,14 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             }
         }
         else {
-            for ( size_t j = nlats - 1, idx = 0; idx < nlatsLeg_; --j, ++idx ) {
+            for ( idx_t j = nlats - 1, idx = 0; idx < nlatsLeg_; --j, ++idx ) {
                 double lat = gsLeg.y( j );
                 if ( lat > latPole ) { lat = latPole; }
                 if ( lat < -latPole ) { lat = -latPole; }
                 lats[idx] = -lat * util::Constants::degreesToRadians();
             }
         }
-        for ( size_t j = 0; j < nlonsMax; ++j ) {
+        for ( idx_t j = 0; j < nlonsMax; ++j ) {
             lons[j] = g.x( j, 0 ) * util::Constants::degreesToRadians();
         }
         /*Log::info() << "lats: ";
@@ -465,15 +462,16 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
 
         // precomputations for Legendre polynomials:
         {
-            int size_sym  = 0;
-            int size_asym = 0;
+            const auto nlatsLeg = size_t( nlatsLeg_ );
+            size_t size_sym     = 0;
+            size_t size_asym    = 0;
             legendre_sym_begin_.resize( truncation_ + 3 );
             legendre_asym_begin_.resize( truncation_ + 3 );
             legendre_sym_begin_[0]  = 0;
             legendre_asym_begin_[0] = 0;
-            for ( int jm = 0; jm <= truncation_ + 1; jm++ ) {
-                size_sym += add_padding( num_n( truncation_ + 1, jm, true ) * nlatsLeg_ );
-                size_asym += add_padding( num_n( truncation_ + 1, jm, false ) * nlatsLeg_ );
+            for ( idx_t jm = 0; jm <= truncation_ + 1; jm++ ) {
+                size_sym += add_padding( num_n( truncation_ + 1, jm, /*symmetric*/ true ) * nlatsLeg );
+                size_asym += add_padding( num_n( truncation_ + 1, jm, /*symmetric*/ false ) * nlatsLeg );
                 legendre_sym_begin_[jm + 1]  = size_sym;
                 legendre_asym_begin_[jm + 1] = size_asym;
             }
@@ -482,13 +480,17 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 ReadCache legendre( legendre_cache_ );
                 legendre_sym_  = legendre.read<double>( size_sym );
                 legendre_asym_ = legendre.read<double>( size_asym );
-                ASSERT( legendre.pos == legendre_cachesize_ );
+                ATLAS_ASSERT( legendre.pos == legendre_cachesize_ );
                 // TODO: check this is all aligned...
             }
             else {
                 if ( TransParameters( config ).export_legendre() ) {
-                    ASSERT( not cache_.legendre() );
-                    export_legendre_    = LegendreCache( sizeof( double ) * ( size_sym + size_asym ) );
+                    ATLAS_ASSERT( not cache_.legendre() );
+
+                    size_t bytes = sizeof( double ) * ( size_sym + size_asym );
+                    Log::debug() << "TransLocal: allocating LegendreCache: " << eckit::Bytes( bytes ) << std::endl;
+                    export_legendre_ = LegendreCache( bytes );
+
                     legendre_cachesize_ = export_legendre_.legendre().size();
                     legendre_cache_     = export_legendre_.legendre().data();
                     ReadCache legendre( legendre_cache_ );
@@ -496,8 +498,8 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                     legendre_asym_ = legendre.read<double>( size_asym );
                 }
                 else {
-                    alloc_aligned( legendre_sym_, size_sym );
-                    alloc_aligned( legendre_asym_, size_asym );
+                    alloc_aligned( legendre_sym_, size_sym, "symmetric" );
+                    alloc_aligned( legendre_asym_, size_asym, "asymmetric" );
                 }
 
                 ATLAS_TRACE_SCOPE( "Legendre precomputations (structured)" ) {
@@ -529,7 +531,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
 
                 if ( fft_cache_ ) {
                     Log::debug() << "Import FFTW wisdom from cache" << std::endl;
-                    fftw_import_wisdom_from_string( (const char*)fft_cache_ );
+                    fftw_import_wisdom_from_string( static_cast<const char*>( fft_cache_ ) );
                 }
                 //                std::string wisdomString( "" );
                 //                std::ifstream read( "wisdom.bin" );
@@ -543,11 +545,11 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 //                }
                 //                read.close();
                 //                if ( wisdomString.length() > 0 ) { fftw_import_wisdom_from_string( &wisdomString[0u] ); }
-                if ( grid::RegularGrid( gridGlobal_ ) ) {
+                if ( RegularGrid( gridGlobal_ ) ) {
                     fftw_->plans.resize( 1 );
                     fftw_->plans[0] =
-                        fftw_plan_many_dft_c2r( 1, &nlonsMaxGlobal_, nlats, fftw_->in, NULL, 1, num_complex, fftw_->out,
-                                                NULL, 1, nlonsMaxGlobal_, FFTW_ESTIMATE );
+                        fftw_plan_many_dft_c2r( 1, &nlonsMaxGlobal_, nlats, fftw_->in, nullptr, 1, num_complex,
+                                                fftw_->out, nullptr, 1, nlonsMaxGlobal_, FFTW_ESTIMATE );
                 }
                 else {
                     fftw_->plans.resize( nlatsLegDomain_ );
@@ -576,7 +578,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 //                    write.close();
                 //                }
             }
-            // other FFT implementations should be added with #elif statements
+                // other FFT implementations should be added with #elif statements
 #else
             useFFT_               = false;  // no FFT implemented => default to dgemm
             std::string file_path = TransParameters( config ).write_fft();
@@ -593,7 +595,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 << "WARNING: Spectral transform results may contain aliasing errors. This will be addressed soon."
                 << std::endl;
 
-            alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlonsMax );
+            alloc_aligned( fourier_, 2 * ( truncation_ + 1 ) * nlonsMax, "Fourier coeffs." );
 #if !TRANSLOCAL_DGEMM2
             {
                 ATLAS_TRACE( "Fourier precomputations (NoFFT)" );
@@ -643,7 +645,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             }
 
             std::vector<double> lats( grid_.size() );
-            alloc_aligned( legendre_, legendre_size( truncation_ ) * grid_.size() );
+            alloc_aligned( legendre_, legendre_size( truncation_ ) * grid_.size(), "Legendre coeffs." );
             int j( 0 );
             for ( PointLonLat p : grid_.lonlat() ) {
                 lats[j++] = p.lat() * util::Constants::degreesToRadians();
@@ -651,7 +653,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             compute_legendre_polynomials_all( truncation_, grid_.size(), lats.data(), legendre_ );
         }
         if ( TransParameters( config ).write_legendre().size() ) {
-            throw eckit::NotImplemented(
+            throw_NotImplemented(
                 "Caching for unstructured grids or structured grids with projections not yet implemented", Here() );
         }
     }
@@ -673,14 +675,14 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const long truncat
 // --------------------------------------------------------------------------------------------------------------------
 
 TransLocal::~TransLocal() {
-    if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
+    if ( StructuredGrid( grid_ ) && not grid_.projection() ) {
         if ( not legendre_cache_ ) {
-            free_aligned( legendre_sym_ );
-            free_aligned( legendre_asym_ );
+            free_aligned( legendre_sym_, "symmetric" );
+            free_aligned( legendre_asym_, "asymmetric" );
         }
         if ( useFFT_ ) {
 #if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
-            for ( int j = 0; j < fftw_->plans.size(); j++ ) {
+            for ( idx_t j = 0, size = static_cast<idx_t>( fftw_->plans.size() ); j < size; j++ ) {
                 fftw_destroy_plan( fftw_->plans[j] );
             }
             fftw_free( fftw_->in );
@@ -688,44 +690,44 @@ TransLocal::~TransLocal() {
 #endif
         }
         else {
-            free_aligned( fourier_ );
+            free_aligned( fourier_, "Fourier coeffs." );
         }
     }
     else {
-        if ( unstruct_precomp_ ) { free_aligned( legendre_ ); }
+        if ( unstruct_precomp_ ) { free_aligned( legendre_, "Legendre coeffs." ); }
     }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans( const Field& spfield, Field& gpfield, const eckit::Configuration& config ) const {
-    NOTIMP;
+void TransLocal::invtrans( const Field& /*spfield*/, Field& /*gpfield*/, const eckit::Configuration& ) const {
+    ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans( const FieldSet& spfields, FieldSet& gpfields, const eckit::Configuration& config ) const {
-    NOTIMP;
+void TransLocal::invtrans( const FieldSet& /*spfields*/, FieldSet& /*gpfields*/, const eckit::Configuration& ) const {
+    ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans_grad( const Field& spfield, Field& gradfield, const eckit::Configuration& config ) const {
-    NOTIMP;
+void TransLocal::invtrans_grad( const Field& /*spfield*/, Field& /*gradfield*/, const eckit::Configuration& ) const {
+    ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans_grad( const FieldSet& spfields, FieldSet& gradfields,
-                                const eckit::Configuration& config ) const {
-    NOTIMP;
+void TransLocal::invtrans_grad( const FieldSet& /*spfields*/, FieldSet& /*gradfields*/,
+                                const eckit::Configuration& ) const {
+    ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
-                                       const eckit::Configuration& config ) const {
-    NOTIMP;
+void TransLocal::invtrans_vordiv2wind( const Field& /*spvor*/, const Field& /*spdiv*/, Field& /*gpwind*/,
+                                       const eckit::Configuration& ) const {
+    ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -748,18 +750,17 @@ void gp_transpose( const int nb_size, const int nb_fields, const double gp_tmp[]
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::invtrans_legendre( const int truncation, const int nlats, const int nb_fields,
-                                    const int nb_vordiv_fields, const double scalar_spectra[], double scl_fourier[],
-                                    const eckit::Configuration& config ) const {
+                                    const int /*nb_vordiv_fields*/, const double scalar_spectra[], double scl_fourier[],
+                                    const eckit::Configuration& ) const {
     // Legendre transform:
     {
         Log::debug() << "Legendre dgemm: using " << nlatsLegReduced_ - nlat0_[0] << " latitudes out of "
                      << nlatsGlobal_ / 2 << std::endl;
         ATLAS_TRACE( "Inverse Legendre Transform (GEMM)" );
         for ( int jm = 0; jm <= truncation_; jm++ ) {
-            int size_sym  = num_n( truncation_ + 1, jm, true );
-            int size_asym = num_n( truncation_ + 1, jm, false );
-            int n_imag    = 2;
-            if ( jm == 0 ) { n_imag = 1; }
+            size_t size_sym  = num_n( truncation_ + 1, jm, true );
+            size_t size_asym = num_n( truncation_ + 1, jm, false );
+            const int n_imag = ( jm ? 2 : 1 );
             int size_fourier = nb_fields * n_imag * ( nlatsLegReduced_ - nlat0_[jm] );
             if ( size_fourier > 0 ) {
                 auto posFourier = [&]( int jfld, int imag, int jlat, int jm, int nlatsH ) {
@@ -775,7 +776,7 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                 alloc_aligned( scl_fourier_asym, size_fourier );
                 {
                     //ATLAS_TRACE( "Legendre split" );
-                    int idx = 0, is = 0, ia = 0, ioff = ( 2 * truncation + 3 - jm ) * jm / 2 * nb_fields * 2;
+                    idx_t idx = 0, is = 0, ia = 0, ioff = ( 2 * truncation + 3 - jm ) * jm / 2 * nb_fields * 2;
                     // the choice between the following two code lines determines whether
                     // total wavenumbers are summed in an ascending or descending order.
                     // The trans library in IFS uses descending order because it should
@@ -802,7 +803,8 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                             }
                         }
                     }
-                    ASSERT( ia == n_imag * nb_fields * size_asym && is == n_imag * nb_fields * size_sym );
+                    ATLAS_ASSERT( size_t( ia ) == n_imag * nb_fields * size_asym &&
+                                  size_t( is ) == n_imag * nb_fields * size_sym );
                 }
                 if ( nlatsLegReduced_ - nlat0_[jm] > 0 ) {
                     {
@@ -901,7 +903,7 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::invtrans_fourier_regular( const int nlats, const int nlons, const int nb_fields, double scl_fourier[],
-                                           double gp_fields[], const eckit::Configuration& config ) const {
+                                           double gp_fields[], const eckit::Configuration& ) const {
     // Fourier transformation:
     if ( useFFT_ ) {
 #if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
@@ -947,24 +949,6 @@ void TransLocal::invtrans_fourier_regular( const int nlats, const int nlons, con
             eckit::linalg::Matrix B( scl_fourier, ( truncation_ + 1 ) * 2, nb_fields * nlats );
             eckit::linalg::Matrix C( gp_fields, nlons, nb_fields * nlats );
 
-            // BUG ATLAS-159: valgrind warns here, saying that B(1,:) is uninitialised
-            //                if workaround above labeled ATLAS-159 is not applied.
-            //
-            //                        for( int i=0; i<A.rows(); ++i ) {
-            //                          for ( int j=0; j<A.cols(); ++j ) {
-            //                            if( A(i,j) == 999.999 ) {
-            //                              ASSERT(false);
-            //                            }
-            //                          }
-            //                        }
-            //                        for ( int i=0; i<B.rows(); ++i ) {
-            //                          for( int j=0; j<B.cols(); ++j ) {
-            //                            if( B(i,j) == 999.999 ) {
-            //                              ASSERT(false);
-            //                            }
-            //                          }
-            //                        }
-
             linalg_.gemm( A, B, C );
         }
 #else
@@ -1002,16 +986,15 @@ void TransLocal::invtrans_fourier_regular( const int nlats, const int nlons, con
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans_fourier_reduced( const int nlats, const grid::StructuredGrid g, const int nb_fields,
+void TransLocal::invtrans_fourier_reduced( const int nlats, const StructuredGrid& g, const int nb_fields,
                                            double scl_fourier[], double gp_fields[],
-                                           const eckit::Configuration& config ) const {
+                                           const eckit::Configuration& ) const {
     // Fourier transformation:
-    int nlonsMax = g.nxmax();
     if ( useFFT_ ) {
 #if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
         {
             {
-                ATLAS_TRACE( "Inverse Fourier Transform (FFTW, ReducedGid)" );
+                ATLAS_TRACE( "Inverse Fourier Transform (FFTW, ReducedGrid)" );
                 int jgp = 0;
                 for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                     for ( int jlat = 0; jlat < nlats; jlat++ ) {
@@ -1042,7 +1025,7 @@ void TransLocal::invtrans_fourier_reduced( const int nlats, const grid::Structur
                             int j = jlon + jlonMin_[jlat];
                             if ( j >= nlonsGlobal_[jlat] ) { j -= nlonsGlobal_[jlat]; }
                             //Log::info() << fftw_->out[j] << " ";
-                            ASSERT( j < nlonsMaxGlobal_ );
+                            ATLAS_ASSERT( j < nlonsMaxGlobal_ );
                             gp_fields[jgp++] = fftw_->out[j];
                         }
                         //Log::info() << std::endl;
@@ -1053,7 +1036,7 @@ void TransLocal::invtrans_fourier_reduced( const int nlats, const grid::Structur
 #endif
     }
     else {
-        throw eckit::NotImplemented(
+        throw_NotImplemented(
             "Using dgemm in Fourier transform for reduced grids is extremely slow. Please install and use FFTW!",
             Here() );
     }
@@ -1063,7 +1046,7 @@ void TransLocal::invtrans_fourier_reduced( const int nlats, const grid::Structur
 
 void TransLocal::invtrans_unstructured_precomp( const int truncation, const int nb_fields, const int nb_vordiv_fields,
                                                 const double scalar_spectra[], double gp_fields[],
-                                                const eckit::Configuration& config ) const {
+                                                const eckit::Configuration& ) const {
     ATLAS_TRACE( "invtrans_uv unstructured" );
 
     const int nlats        = grid_.size();
@@ -1270,8 +1253,8 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
         int nb_fields = nb_scalar_fields;
 
         // Transform
-        if ( grid::StructuredGrid( grid_ ) && not grid_.projection() ) {
-            auto g = grid::StructuredGrid( grid_ );
+        if ( StructuredGrid( grid_ ) && not grid_.projection() ) {
+            auto g = StructuredGrid( grid_ );
             ATLAS_TRACE( "invtrans_uv structured" );
             int nlats            = g.ny();
             int nlons            = g.nxmax();
@@ -1290,7 +1273,7 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
                                config );
 
             // Fourier transformation:
-            if ( grid::RegularGrid( gridGlobal_ ) ) {
+            if ( RegularGrid( gridGlobal_ ) ) {
                 invtrans_fourier_regular( nlats, nlons, nb_fields, scl_fourier, gp_fields, config );
             }
             else {
@@ -1302,7 +1285,7 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
                 if ( nb_vordiv_fields > 0 ) {
                     ATLAS_TRACE( "compute u,v from U,V" );
                     std::vector<double> coslatinvs( nlats );
-                    for ( size_t j = 0; j < nlats; ++j ) {
+                    for ( idx_t j = 0; j < nlats; ++j ) {
                         double lat = g.y( j );
                         if ( lat > latPole ) { lat = latPole; }
                         if ( lat < -latPole ) { lat = -latPole; }
@@ -1311,9 +1294,9 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
                         //Log::info() << "lat=" << g.y( j ) << " coslat=" << coslat << std::endl;
                     }
                     int idx = 0;
-                    for ( int jfld = 0; jfld < 2 * nb_vordiv_fields && jfld < nb_fields; jfld++ ) {
-                        for ( int jlat = 0; jlat < g.ny(); jlat++ ) {
-                            for ( int jlon = 0; jlon < g.nx( jlat ); jlon++ ) {
+                    for ( idx_t jfld = 0; jfld < 2 * nb_vordiv_fields && jfld < nb_fields; jfld++ ) {
+                        for ( idx_t jlat = 0; jlat < g.ny(); jlat++ ) {
+                            for ( idx_t jlon = 0; jlon < g.nx( jlat ); jlon++ ) {
                                 gp_fields[idx] *= coslatinvs[jlat];
                                 idx++;
                             }
@@ -1428,10 +1411,10 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
         }
         int nb_vordiv_size = 2 * legendre_size( truncation_ + 1 ) * nb_vordiv_fields;
         int nb_scalar_size = 2 * legendre_size( truncation_ + 1 ) * nb_scalar_fields;
-        ASSERT( k == nb_all_size );
-        ASSERT( i == nb_vordiv_size );
-        ASSERT( j == nb_vordiv_size );
-        ASSERT( l == nb_scalar_size );
+        ATLAS_ASSERT( k == nb_all_size );
+        ATLAS_ASSERT( i == nb_vordiv_size );
+        ATLAS_ASSERT( j == nb_vordiv_size );
+        ATLAS_ASSERT( l == nb_scalar_size );
         invtrans_uv( truncation_ + 1, nb_all_fields, nb_vordiv_fields, all_spectra.data(), gp_fields, config );
     }
     else {
@@ -1445,7 +1428,7 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::dirtrans( const Field& gpfield, Field& spfield, const eckit::Configuration& config ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
     // Not implemented and not planned.
     // Use the TransIFS implementation instead.
 }
@@ -1453,7 +1436,7 @@ void TransLocal::dirtrans( const Field& gpfield, Field& spfield, const eckit::Co
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::dirtrans( const FieldSet& gpfields, FieldSet& spfields, const eckit::Configuration& config ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
     // Not implemented and not planned.
     // Use the TransIFS implementation instead.
 }
@@ -1462,7 +1445,7 @@ void TransLocal::dirtrans( const FieldSet& gpfields, FieldSet& spfields, const e
 
 void TransLocal::dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Field& spdiv,
                                        const eckit::Configuration& config ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
     // Not implemented and not planned.
     // Use the TransIFS implementation instead.
 }
@@ -1471,7 +1454,7 @@ void TransLocal::dirtrans_wind2vordiv( const Field& gpwind, Field& spvor, Field&
 
 void TransLocal::dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
                            const eckit::Configuration& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
     // Not implemented and not planned.
     // Use the TransIFS implementation instead.
 }
@@ -1480,7 +1463,7 @@ void TransLocal::dirtrans( const int nb_fields, const double scalar_fields[], do
 
 void TransLocal::dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[],
                            double divergence_spectra[], const eckit::Configuration& ) const {
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
     // Not implemented and not planned.
     // Use the TransIFS implementation instead.
 }

@@ -16,14 +16,21 @@
 #include <map>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 #include "atlas/field/Field.h"
-#include "atlas/mesh/Connectivity.h"
 #include "atlas/util/Bitflags.h"
 #include "atlas/util/Metadata.h"
+
+namespace atlas {
+namespace mesh {
+template <class T>
+class ConnectivityInterface;
+class IrregularConnectivityImpl;
+using IrregularConnectivity = ConnectivityInterface<IrregularConnectivityImpl>;
+}  // namespace mesh
+}  // namespace atlas
 
 namespace atlas {
 namespace mesh {
@@ -32,9 +39,9 @@ namespace mesh {
  * \brief Nodes class that owns a collection of fields defined in nodes of the
  * mesh
  */
-class Nodes : public eckit::Owned {
+class Nodes : public util::Object {
 public:
-    typedef IrregularConnectivity Connectivity;
+    using Connectivity = IrregularConnectivity;
 
     class Topology : public util::Bitflags {
     public:
@@ -48,7 +55,8 @@ public:
             EAST     = ( 1 << 5 ),
             NORTH    = ( 1 << 6 ),
             SOUTH    = ( 1 << 7 ),
-            PATCH    = ( 1 << 8 )
+            PATCH    = ( 1 << 8 ),
+            POLE     = ( 1 << 9 )
         };
     };
 
@@ -56,7 +64,7 @@ public:  // methods
          //-- Constructors
     /// @brief Construct "size" nodes
     Nodes();
-    //  Nodes(size_t size);
+    //  Nodes(idx_t size);
 
     //-- Accessors
 
@@ -64,9 +72,9 @@ public:  // methods
     Field& field( const std::string& name );
     bool has_field( const std::string& name ) const { return ( fields_.find( name ) != fields_.end() ); }
 
-    const Field& field( size_t ) const;
-    Field& field( size_t );
-    size_t nb_fields() const { return fields_.size(); }
+    const Field& field( idx_t ) const;
+    Field& field( idx_t );
+    idx_t nb_fields() const { return static_cast<idx_t>( fields_.size() ); }
 
     const util::Metadata& metadata() const { return metadata_; }
     util::Metadata& metadata() { return metadata_; }
@@ -89,6 +97,12 @@ public:  // methods
     const Field& ghost() const { return ghost_; }
     Field& ghost() { return ghost_; }
 
+    const Field& flags() const { return flags_; }
+    Field& flags() { return flags_; }
+
+    const Field& halo() const { return halo_; }
+    Field& halo() { return halo_; }
+
     /// @brief Node to Edge connectivity table
     const Connectivity& edge_connectivity() const;
     Connectivity& edge_connectivity();
@@ -102,17 +116,17 @@ public:  // methods
 
     bool has_connectivity( std::string name ) const { return connectivities_.count( name ); }
 
-    size_t size() const { return size_; }
+    idx_t size() const { return size_; }
 
     // -- Modifiers
 
     Field add( const Field& );
 
-    void resize( size_t );
+    void resize( idx_t );
 
     void remove_field( const std::string& name );
 
-    Connectivity& add( mesh::Connectivity* );
+    Connectivity& add( Connectivity* );
 
     /// @brief Return the memory footprint of the Nodes
     size_t footprint() const;
@@ -133,10 +147,10 @@ private:
 
 private:
     typedef std::map<std::string, Field> FieldMap;
-    typedef std::map<std::string, eckit::SharedPtr<Connectivity>> ConnectivityMap;
+    typedef std::map<std::string, util::ObjectHandle<Connectivity>> ConnectivityMap;
 
 private:
-    size_t size_;
+    idx_t size_;
     FieldMap fields_;
     ConnectivityMap connectivities_;
 
@@ -149,6 +163,8 @@ private:
     Field xy_;
     Field lonlat_;
     Field ghost_;
+    Field flags_;
+    Field halo_;
 
     // Cached shortcuts to specific connectivities in connectivities_
     Connectivity* edge_connectivity_;
@@ -174,14 +190,14 @@ inline Nodes::Connectivity& Nodes::cell_connectivity() {
 extern "C" {
 Nodes* atlas__mesh__Nodes__create();
 void atlas__mesh__Nodes__delete( Nodes* This );
-size_t atlas__mesh__Nodes__size( Nodes* This );
-void atlas__mesh__Nodes__resize( Nodes* This, size_t size );
-size_t atlas__mesh__Nodes__nb_fields( Nodes* This );
+idx_t atlas__mesh__Nodes__size( Nodes* This );
+void atlas__mesh__Nodes__resize( Nodes* This, idx_t size );
+idx_t atlas__mesh__Nodes__nb_fields( Nodes* This );
 void atlas__mesh__Nodes__add_field( Nodes* This, field::FieldImpl* field );
 void atlas__mesh__Nodes__remove_field( Nodes* This, char* name );
 int atlas__mesh__Nodes__has_field( Nodes* This, char* name );
 field::FieldImpl* atlas__mesh__Nodes__field_by_name( Nodes* This, char* name );
-field::FieldImpl* atlas__mesh__Nodes__field_by_idx( Nodes* This, size_t idx );
+field::FieldImpl* atlas__mesh__Nodes__field_by_idx( Nodes* This, idx_t idx );
 util::Metadata* atlas__mesh__Nodes__metadata( Nodes* This );
 void atlas__mesh__Nodes__str( Nodes* This, char*& str, int& size );
 IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity( Nodes* This );

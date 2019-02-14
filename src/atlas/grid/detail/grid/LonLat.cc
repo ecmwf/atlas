@@ -1,8 +1,23 @@
+/*
+ * (C) Copyright 2013 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
+
+#include <iomanip>
+#include <ostream>
+
 #include "LonLat.h"
 
 #include "eckit/utils/Translator.h"
 
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
@@ -43,19 +58,21 @@ StructuredGrid::grid_t* create_lonlat( long nlon, long nlat, Shift shift,
     double start_x                   = ( shifted_x ? 0.5 : 0.0 ) * 360.0 / double( nlon );
     std::array<double, 2> interval_x = {start_x, start_x + 360.};
     bool no_endpoint                 = false;
-    XSpace xspace( interval_x, std::vector<long>( nlat, nlon ), no_endpoint );
+    XSpace xspace( interval_x, std::vector<idx_t>( nlat, nlon ), no_endpoint );
 
     // spacing is uniform in y
     // If shifted_y, the whole interval is shifted by -dy/2, and last latitude
     // would be -90-dy/2 (below -90!!!), if endpoint=true.
     // Instead, we set endpoint=false so that last latitude is -90+dy/2 instead.
-    Grid::Config config_spacing;
-    config_spacing.set( "type", "linear" );
-    config_spacing.set( "start", 90.0 - ( shifted_y ? 90.0 / double( nlat ) : 0.0 ) );
-    config_spacing.set( "end", -90.0 - ( shifted_y ? 90.0 / double( nlat ) : 0.0 ) );
-    config_spacing.set( "endpoint", shifted_y ? false : true );
-    config_spacing.set( "N", nlat );
-    Spacing yspace( config_spacing );
+    Spacing yspace( [&] {
+        Grid::Config config_spacing;
+        config_spacing.set( "type", "linear" );
+        config_spacing.set( "start", 90.0 - ( shifted_y ? 90.0 / double( nlat ) : 0.0 ) );
+        config_spacing.set( "end", -90.0 - ( shifted_y ? 90.0 / double( nlat ) : 0.0 ) );
+        config_spacing.set( "endpoint", shifted_y ? false : true );
+        config_spacing.set( "N", nlat );
+        return config_spacing;
+    }() );
 
     Projection projection;
     Grid::Config config_projection;
@@ -89,7 +106,7 @@ StructuredGrid::grid_t* create_lonlat( const Grid::Config& config, Shift shift )
     else if ( config.get( "nx", nx ) && config.get( "ny", ny ) ) {
     }
     else {
-        throw eckit::BadParameter( "Configuration requires either N, or (nx,ny)", Here() );
+        throw_Exception( "Configuration requires either N, or (nx,ny)", Here() );
     }
 
     return create_lonlat( nx, ny, shift, config );

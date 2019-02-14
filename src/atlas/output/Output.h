@@ -14,11 +14,11 @@
 #include <string>
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
 #include "eckit/serialisation/FileStream.h"
 
 #include "atlas/util/Config.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
 class Parametrisation;
@@ -27,7 +27,12 @@ class PathName;
 
 namespace atlas {
 class Mesh;
+namespace mesh {
+namespace detail {
+class MeshImpl;
 }
+}  // namespace mesh
+}  // namespace atlas
 
 namespace atlas {
 class Field;
@@ -53,7 +58,7 @@ typedef eckit::PathName PathName;
 
 // -----------------------------------------------------------------------------
 
-class OutputImpl : public eckit::Owned {
+class OutputImpl : public util::Object {
 public:
     typedef atlas::util::Config Parameters;
 
@@ -80,17 +85,10 @@ public:
                         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 };
 
-class Output {
+class Output : public util::ObjectHandle<OutputImpl> {
 public:
-    using output_t = OutputImpl;
-
-private:
-    eckit::SharedPtr<const output_t> output_;
-
-public:
-    Output();
-    Output( const output_t* );
-    Output( const Output& );
+    using Handle::Handle;
+    Output() = default;
     Output( const std::string&, Stream&, const eckit::Parametrisation& = util::NoConfig() );
 
     /// Write mesh file
@@ -107,8 +105,6 @@ public:
 
     /// Write fieldset to file using FunctionSpace
     void write( const FieldSet&, const FunctionSpace&, const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    const output_t* get() const { return output_.get(); }
 };
 
 class OutputFactory {
@@ -158,7 +154,7 @@ extern "C" {
 void atlas__Output__delete( OutputImpl* This );
 const OutputImpl* atlas__Output__create( const char* factory_key, Stream* stream,
                                          const eckit::Parametrisation* params );
-void atlas__Output__write_mesh( const OutputImpl* This, Mesh::Implementation* mesh,
+void atlas__Output__write_mesh( const OutputImpl* This, mesh::detail::MeshImpl* mesh,
                                 const eckit::Parametrisation* params );
 void atlas__Output__write_fieldset( const OutputImpl* This, const field::FieldSetImpl* fieldset,
                                     const eckit::Parametrisation* params );

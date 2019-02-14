@@ -147,7 +147,7 @@ CASE( "test_irregular_connectivity" ) {
     EXPECT( conn( 7, 1 ) == 9 IN_FORTRAN );
     EXPECT( conn( 7, 2 ) == 4 IN_FORTRAN );
 
-    constexpr size_t cols[3] = {3, 7, 1};
+    constexpr idx_t cols[3] = {3, 7, 1};
     EXPECT( conn.cols( 2 ) == 4 );
     // insert in position 2, 3 rows with cols[3] number of columns
     conn.insert( 2, 3, cols );
@@ -240,11 +240,11 @@ CASE("test_multi_block_connectivity_default") {
       11, 12, 13, 14,
       17, 18,
       21, 24};
-  size_t displ[7] = {0, 3, 6, 10, 14, 18, 20};
-  size_t counts[7] = {3, 3, 4, 4, 4, 2, 2};
+  idx_t displ[7] = {0, 3, 6, 10, 14, 18, 20};
+  idx_t counts[7] = {3, 3, 4, 4, 4, 2, 2};
 
-  size_t block_displ[3] = {0, 2, 5};
-  size_t block_cols[3] = {3, 4, 2};
+  idx_t block_displ[3] = {0, 2, 5};
+  idx_t block_cols[3] = {3, 4, 2};
   MultiBlockConnectivity mbc(values, 7, displ, counts, 3, block_displ, block_cols);
 
   EXPECT(mbc(0, 2) ==  4  );
@@ -342,13 +342,11 @@ CASE( "test_multi_block_connectivity_add_block" ) {
     EXPECT( mbc( 1, 2, 0 ) == 11 );
 
     const BlockConnectivity& b0 = mbc.block( 0 );
-    EXPECT( b0.owns() == false );
     EXPECT( b0( 0, 2 ) == 1 );
     EXPECT( b0( 1, 1 ) == 4 );
     EXPECT( b0( 2, 2 ) == 76 );
 
     const BlockConnectivity& b1 = mbc.block( 1 );
-    EXPECT( b1.owns() == false );
     EXPECT( b1( 0, 0 ) == 31 );
     EXPECT( b1( 1, 1 ) == 41 );
     EXPECT( b1( 2, 0 ) == 11 );

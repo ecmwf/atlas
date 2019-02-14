@@ -11,13 +11,9 @@
 #pragma once
 
 #include <array>
+#include <string>
 
-#include "eckit/memory/SharedPtr.h"
-
-#include "atlas/domain/detail/Domain.h"
-#include "atlas/domain/detail/RectangularDomain.h"
-#include "atlas/domain/detail/ZonalBandDomain.h"
-#include "atlas/projection/Projection.h"
+#include "atlas/util/ObjectHandle.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -30,21 +26,26 @@ class Hash;
 //---------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
+class PointXY;
+
+namespace util {
+class Config;
+}  // namespace util
+
+namespace domain {
+class Domain;
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class Domain {
+class Domain : public util::ObjectHandle<atlas::domain::Domain> {
 public:
-    using Implementation = atlas::domain::Domain;
-    using Spec           = atlas::domain::Domain::Spec;
+    using Spec = util::Config;
 
 public:
-    Domain();
-    Domain( const Domain& );
-    Domain( const Implementation* );
+    using Handle::Handle;
+    Domain() = default;
     Domain( const eckit::Parametrisation& );
-
-    operator bool() const { return domain_; }
 
     /// Type of the domain
     std::string type() const;
@@ -78,59 +79,18 @@ public:
     /// String that defines units of the domain ("degrees" or "meters")
     std::string units() const;
 
-    /// Access pointer to implementation (PIMPL)
-    const Implementation* get() const { return domain_.get(); }
-
 private:
     /// Output to stream
     void print( std::ostream& ) const;
 
     friend std::ostream& operator<<( std::ostream& s, const Domain& d );
-
-    eckit::SharedPtr<const Implementation> domain_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
 
-inline std::string Domain::type() const {
-    return domain_.get()->type();
+namespace domain {
+class RectangularDomain;
 }
-inline bool Domain::contains( double x, double y ) const {
-    return domain_.get()->contains( x, y );
-}
-inline bool Domain::contains( const PointXY& p ) const {
-    return domain_.get()->contains( p );
-}
-inline Domain::Spec Domain::spec() const {
-    return domain_.get()->spec();
-}
-inline bool Domain::global() const {
-    return domain_.get()->global();
-}
-inline bool Domain::empty() const {
-    return domain_.get()->empty();
-}
-inline void Domain::hash( eckit::Hash& h ) const {
-    domain_.get()->hash( h );
-}
-inline bool Domain::containsNorthPole() const {
-    return domain_.get()->containsNorthPole();
-}
-inline bool Domain::containsSouthPole() const {
-    return domain_.get()->containsSouthPole();
-}
-inline void Domain::print( std::ostream& os ) const {
-    return domain_.get()->print( os );
-}
-inline std::ostream& operator<<( std::ostream& os, const Domain& d ) {
-    d.print( os );
-    return os;
-}
-inline std::string Domain::units() const {
-    return domain_.get()->units();
-}
-
-//---------------------------------------------------------------------------------------------------------------------
 
 class RectangularDomain : public Domain {
 public:
@@ -145,18 +105,18 @@ public:
     operator bool() { return domain_; }
 
     /// Checks if the x-value is contained in the domain
-    bool contains_x( double x ) const { return domain_.get()->contains_x( x ); }
+    bool contains_x( double x ) const;
 
     /// Checks if the y-value is contained in the domain
-    bool contains_y( double y ) const { return domain_.get()->contains_y( y ); }
+    bool contains_y( double y ) const;
 
-    double xmin() const { return domain_.get()->xmin(); }
-    double xmax() const { return domain_.get()->xmax(); }
-    double ymin() const { return domain_.get()->ymin(); }
-    double ymax() const { return domain_.get()->ymax(); }
+    double xmin() const;
+    double xmax() const;
+    double ymin() const;
+    double ymax() const;
 
 private:
-    eckit::SharedPtr<const ::atlas::domain::RectangularDomain> domain_;
+    const ::atlas::domain::RectangularDomain* domain_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -177,7 +137,7 @@ public:
     operator bool() { return domain_; }
 
 private:
-    eckit::SharedPtr<const ::atlas::domain::ZonalBandDomain> domain_;
+    const ::atlas::domain::ZonalBandDomain* domain_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------

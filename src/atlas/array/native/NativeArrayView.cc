@@ -8,9 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <iostream>
-
-#include "eckit/exception/Exceptions.h"
+#include <initializer_list>
+#include <ostream>
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/helpers/ArrayAssigner.h"
@@ -78,5 +77,5 @@ EXPLICIT_TEMPLATE_INSTANTIATION( 8 )
 EXPLICIT_TEMPLATE_INSTANTIATION( 9 )
 
 #undef EXPLICIT_TEMPLATE_INSTANTIATION
-}
+}  // namespace array
 }  // namespace atlas

@@ -16,6 +16,7 @@
 #include "atlas/interpolation/method/PointSet.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/runtime/Exception.h"
 
 using namespace eckit;
 
@@ -34,9 +35,9 @@ PointSet::PointSet( Mesh& mesh ) {
 
     npts_ = nodes.size();
 
-    ASSERT( npts_ > 0 );
+    ATLAS_ASSERT( npts_ > 0 );
 
-    ASSERT( nodes.has_field( "xyz" ) );
+    ATLAS_ASSERT( nodes.has_field( "xyz" ) );
 
     array::ArrayView<double, 2> coords = array::make_view<double, 2>( nodes.field( "xyz" ) );
     static bool fastBuildKDTrees       = eckit::Resource<bool>( "$ATLAS_FAST_BUILD_KDTREES", true );

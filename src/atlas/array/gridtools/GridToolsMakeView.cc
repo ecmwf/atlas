@@ -1,9 +1,22 @@
+/*
+ * (C) Copyright 2013 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
 
 #include "atlas/array/gridtools/GridToolsMakeView.h"
+
+#include <sstream>
 #include <vector>
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
+#include "atlas/runtime/Exception.h"
 
 #include "atlas/library/config.h"
 #if ATLAS_HAVE_GRIDTOOLS_STORAGE
@@ -20,12 +33,12 @@ static void check_metadata( const Array& array ) {
     if ( array.rank() != Rank ) {
         std::stringstream err;
         err << "Number of dimensions do not match: template argument " << Rank << " expected to be " << array.rank();
-        throw eckit::BadParameter( err.str(), Here() );
+        throw_Exception( err.str(), Here() );
     }
     if ( array.datatype() != array::DataType::create<Value>() ) {
         std::stringstream err;
         err << "Data Type does not match: template argument expected to be " << array.datatype().str();
-        throw eckit::BadParameter( err.str(), Here() );
+        throw_Exception( err.str(), Here() );
     }
 }
 }  // namespace
@@ -151,6 +164,12 @@ namespace array {
     template IndexView<int, RANK> make_host_indexview<int, RANK, Intent::ReadOnly>( const Array& );                    \
     template IndexView<int, RANK> make_host_indexview<int, RANK, Intent::ReadWrite>( const Array& );                   \
                                                                                                                        \
+    template IndexView<long, RANK> make_indexview<long, RANK, Intent::ReadOnly>( const Array& );                       \
+    template IndexView<long, RANK> make_indexview<long, RANK, Intent::ReadWrite>( const Array& );                      \
+                                                                                                                       \
+    template IndexView<long, RANK> make_host_indexview<long, RANK, Intent::ReadOnly>( const Array& );                  \
+    template IndexView<long, RANK> make_host_indexview<long, RANK, Intent::ReadWrite>( const Array& );                 \
+                                                                                                                       \
     namespace gridtools {                                                                                              \
     template data_view_tt<int, RANK, ::gridtools::access_mode::ReadOnly>                                               \
     make_gt_host_view<int, RANK, Intent::ReadOnly>( const Array& array );                                              \
@@ -207,5 +226,5 @@ EXPLICIT_TEMPLATE_INSTANTIATION( 8 )
 EXPLICIT_TEMPLATE_INSTANTIATION( 9 )
 
 #undef EXPLICIT_TEMPLATE_INSTANTIATION
-}
+}  // namespace array
 }  // namespace atlas

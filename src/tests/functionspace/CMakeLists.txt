@@ -8,6 +8,10 @@
 
 if( HAVE_FCTEST )
 
+  if( NOT HAVE_TRANS )
+    set( TRANSI_HAVE_MPI 1 )
+  endif()
+
   add_fctest( TARGET atlas_fctest_functionspace
     MPI             4
     CONDITION       ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
@@ -34,3 +38,32 @@ ecbuild_add_test( TARGET atlas_test_pointcloud
   SOURCES  test_pointcloud.cc
   LIBS     atlas
 )
+
+ecbuild_add_test( TARGET atlas_test_reduced_halo
+  SOURCES test_reduced_halo.cc
+  LIBS    atlas
+)
+
+ecbuild_add_test( TARGET atlas_test_stencil
+  SOURCES  test_stencil.cc
+  LIBS     atlas
+)
+
+ecbuild_add_executable( TARGET atlas_test_stencil_parallel
+  SOURCES  test_stencil_parallel.cc
+  LIBS     atlas
+  NOINSTALL
+)
+
+ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi4
+  COMMAND $<TARGET_FILE:atlas_test_stencil_parallel>
+  MPI 4
+  CONDITION ECKIT_HAVE_MPI
+)
+
+ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi16
+  COMMAND $<TARGET_FILE:atlas_test_stencil_parallel>
+  MPI 16
+  CONDITION ECKIT_HAVE_MPI
+)
+

@@ -10,9 +10,6 @@
 
 #pragma once
 
-#include <cmath>
-#include <iostream>
-
 #include "atlas/library/config.h"
 
 #if ATLAS_HAVE_EIGEN
@@ -23,6 +20,11 @@
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
+
+#else
+
+#include <cmath>
+#include <iosfwd>
 
 #endif
 
@@ -72,7 +74,11 @@ public:
 
     Vector3D operator-() const { return Vector3D( -x(), -y(), -z() ); }
 
-    double norm() const { return sqrt( squaredNorm() ); }
+    Vector3D operator/( double a ) const { return Vector3D( x() / a, y() / a, z() / a ); }
+
+    Vector3D operator*( double a ) const { return Vector3D( x() * a, y() * a, z() * a ); }
+
+    double norm() const { return std::sqrt( squaredNorm() ); }
 
     double squaredNorm() const { return x() * x() + y() * y() + z() * z(); }
 
@@ -83,7 +89,7 @@ public:
                          x() * other.y() - y() * other.x() );
     }
 
-    void print( std::ostream& s ) const { s << "[" << x() << "," << y() << "," << z() << "]"; }
+    void print( std::ostream& s ) const;
 
     friend std::ostream& operator<<( std::ostream& s, const Vector3D& p ) {
         p.print( s );

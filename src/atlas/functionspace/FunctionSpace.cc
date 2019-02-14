@@ -8,116 +8,77 @@
  * nor does it submit to any jurisdiction.
  */
 
+
 #include "atlas/functionspace/FunctionSpace.h"
-
-#include <cassert>
-#include <iostream>
-#include <limits>
-#include <sstream>
-
-#include "eckit/exception/Exceptions.h"
-#include "eckit/types/Types.h"
-
-#include "atlas/array/DataType.h"
 #include "atlas/field/Field.h"
-#include "atlas/field/detail/FieldImpl.h"
-#include "atlas/library/config.h"
-#include "atlas/mesh/actions/BuildParallelFields.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 
 namespace atlas {
-namespace functionspace {
 
-//-----------------------------------------------------------------------------
+FunctionSpace::FunctionSpace() : Handle( new functionspace::NoFunctionSpace() ) {}
 
-// C wrapper interfaces to C++ routines
-extern "C" {
-void atlas__FunctionSpace__delete( FunctionSpaceImpl* This ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); delete This; This = 0; );
-}
-
-void atlas__FunctionSpace__name( const FunctionSpaceImpl* This, char*& name, int& size ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); std::string s = This->type(); size = s.size() + 1; name = new char[size];
-                          strcpy( name, s.c_str() ); );
-}
-
-field::FieldImpl* atlas__FunctionSpace__create_field( const FunctionSpaceImpl* This,
-                                                      const eckit::Configuration* options ) {
-    ATLAS_ERROR_HANDLING( ASSERT( This ); ASSERT( options ); field::FieldImpl * field; {
-        Field f = This->createField( *options );
-        field   = f.get();
-        field->attach();
-    } field->detach();
-                          return field );
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-
-field::FieldImpl* atlas__FunctionSpace__create_field_template( const FunctionSpaceImpl* This,
-                                                               const field::FieldImpl* field_template,
-                                                               const eckit::Configuration* options ) {
-    ASSERT( This );
-    ASSERT( options );
-    field::FieldImpl* field;
-    {
-        Field f = This->createField( Field( field_template ), *options );
-        field   = f.get();
-        field->attach();
-    }
-    field->detach();
-    return field;
-}
-}
-
-// ------------------------------------------------------------------
-
-atlas::Field FunctionSpaceImpl::createField( const atlas::Field& field ) const {
-    return createField( field, util::NoConfig() );
-}
-
-Field NoFunctionSpace::createField( const eckit::Configuration& ) const {
-    NOTIMP;
-}
-Field NoFunctionSpace::createField( const Field&, const eckit::Configuration& ) const {
-    NOTIMP;
-}
-
-// ------------------------------------------------------------------
-
-}  // namespace functionspace
-
-// ------------------------------------------------------------------
-
-FunctionSpace::FunctionSpace() : functionspace_( new functionspace::NoFunctionSpace() ) {}
-
-FunctionSpace::FunctionSpace( const Implementation* functionspace ) : functionspace_( functionspace ) {}
-
-FunctionSpace::FunctionSpace( const FunctionSpace& functionspace ) : functionspace_( functionspace.functionspace_ ) {}
 
 std::string FunctionSpace::type() const {
-    return functionspace_->type();
+    return get()->type();
 }
 
 FunctionSpace::operator bool() const {
-    return functionspace_->operator bool();
+    return get()->operator bool();
 }
 
 size_t FunctionSpace::footprint() const {
-    return functionspace_->footprint();
+    return get()->footprint();
 }
 
 Field FunctionSpace::createField( const eckit::Configuration& config ) const {
-    return functionspace_->createField( config );
+    return get()->createField( config );
+}
+
+Field FunctionSpace::createField( const Field& other ) const {
+    return get()->createField( other );
 }
 
 Field FunctionSpace::createField( const Field& other, const eckit::Configuration& config ) const {
-    return functionspace_->createField( other, config );
+    return get()->createField( other, config );
 }
 
 std::string FunctionSpace::distribution() const {
-    return functionspace_->distribution();
+    return get()->distribution();
 }
+
+void FunctionSpace::haloExchange( const Field& field, bool on_device ) const {
+    return get()->haloExchange( field, on_device );
+}
+
+idx_t FunctionSpace::size() const {
+    return get()->size();
+}
+
+void FunctionSpace::haloExchange( const FieldSet& fields, bool on_device ) const {
+    return get()->haloExchange( fields, on_device );
+}
+
+
+template <typename DATATYPE>
+Field FunctionSpace::createField() const {
+    return get()->createField<DATATYPE>();
+}
+
+template <typename DATATYPE>
+Field FunctionSpace::createField( const eckit::Configuration& options ) const {
+    return get()->createField<DATATYPE>( options );
+}
+
+template Field FunctionSpace::createField<double>() const;
+template Field FunctionSpace::createField<float>() const;
+template Field FunctionSpace::createField<int>() const;
+template Field FunctionSpace::createField<long>() const;
+
+template Field FunctionSpace::createField<double>( const eckit::Configuration& ) const;
+template Field FunctionSpace::createField<float>( const eckit::Configuration& ) const;
+template Field FunctionSpace::createField<int>( const eckit::Configuration& ) const;
+template Field FunctionSpace::createField<long>( const eckit::Configuration& ) const;
+
 
 // ------------------------------------------------------------------
 

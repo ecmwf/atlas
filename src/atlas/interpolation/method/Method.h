@@ -14,25 +14,25 @@
 #include <string>
 #include <vector>
 
+#include "atlas/util/Object.h"
 #include "eckit/config/Configuration.h"
 #include "eckit/linalg/SparseMatrix.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
 
 namespace atlas {
 class Field;
 class FieldSet;
 class FunctionSpace;
+class Grid;
 }  // namespace atlas
 
 namespace atlas {
 namespace interpolation {
 
-class Method : public eckit::Owned {
+class Method : public util::Object {
 public:
     typedef eckit::Parametrisation Config;
 
-    Method( const Config& config ) : config_( config ) {}
+    Method( const Config& );
     virtual ~Method() {}
 
     /**
@@ -41,11 +41,17 @@ public:
    * @param target functionspace containing target points
    */
     virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
+    virtual void setup( const Grid& source, const Grid& target )                   = 0;
+    virtual void setup( const FunctionSpace& source, const Field& target );
+    virtual void setup( const FunctionSpace& source, const FieldSet& target );
 
     virtual void execute( const FieldSet& source, FieldSet& target ) const;
     virtual void execute( const Field& source, Field& target ) const;
 
     virtual void print( std::ostream& ) const = 0;
+
+    virtual const FunctionSpace& source() const = 0;
+    virtual const FunctionSpace& target() const = 0;
 
 protected:
     using Triplet  = eckit::linalg::Triplet;
@@ -54,32 +60,33 @@ protected:
 
     static void normalise( Triplets& triplets );
 
-    const Config& config_;
+    void haloExchange( const FieldSet& ) const;
+    void haloExchange( const Field& ) const;
+
+    //const Config& config_;
 
     // NOTE : Matrix-free or non-linear interpolation operators do not have
     // matrices,
     //        so do not expose here, even though only linear operators are now
     //        implemented.
     Matrix matrix_;
-};
 
-struct MethodFactory {
-    static Method* build( const std::string& name, const Method::Config& );
-
-protected:
-    std::string name_;
-    virtual Method* make( const Method::Config& ) = 0;
-
-    MethodFactory( const std::string& );
-    virtual ~MethodFactory();
-};
-
-template <class T>
-struct MethodBuilder : public MethodFactory {
-    MethodBuilder( const std::string& name ) : MethodFactory( name ) {}
+    bool use_eckit_linalg_spmv_;
 
 private:
-    virtual Method* make( const Method::Config& config ) { return new T( config ); }
+    template <typename Value>
+    void interpolate_field( const Field& src, Field& tgt ) const;
+
+    template <typename Value>
+    void interpolate_field_rank1( const Field& src, Field& tgt ) const;
+
+    template <typename Value>
+    void interpolate_field_rank2( const Field& src, Field& tgt ) const;
+
+    template <typename Value>
+    void interpolate_field_rank3( const Field& src, Field& tgt ) const;
+
+    void check_compatibility( const Field& src, const Field& tgt ) const;
 };
 
 }  // namespace interpolation

@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <algorithm>
 #include <iostream>
 #include <numeric>
 #include <sstream>
@@ -25,30 +26,31 @@ namespace parallel {
 
 namespace {
 struct IsGhostPoint {
-    IsGhostPoint( const int part[], const int ridx[], const int base, const int N ) {
+    IsGhostPoint( const int part[], const idx_t ridx[], const idx_t base, const int N ) {
         part_   = part;
         ridx_   = ridx;
         base_   = base;
         mypart_ = mpi::comm().rank();
     }
 
-    bool operator()( int idx ) {
+    bool operator()( idx_t idx ) {
         if ( part_[idx] != mypart_ ) return true;
         if ( ridx_[idx] != base_ + idx ) return true;
         return false;
     }
     int mypart_;
     const int* part_;
-    const int* ridx_;
-    int base_;
+    const idx_t* ridx_;
+    idx_t base_;
 };
 
 struct Node {
-    gidx_t p, i;
+    int p;
+    idx_t i;
     gidx_t g;
 
     Node() {}
-    Node( gidx_t gid, int part, int idx ) {
+    Node( gidx_t gid, int part, idx_t idx ) {
         g = gid;
         p = part;
         i = idx;
@@ -71,8 +73,8 @@ GatherScatter::GatherScatter( const std::string& name ) : name_( name ), is_setu
     nproc  = mpi::comm().size();
 }
 
-void GatherScatter::setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[],
-                           const int mask[], const size_t parsize ) {
+void GatherScatter::setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
+                           const int mask[], const idx_t parsize ) {
     ATLAS_TRACE( "GatherScatter::setup" );
 
     parsize_ = parsize;
@@ -81,12 +83,12 @@ void GatherScatter::setup( const int part[], const int remote_idx[], const int b
     glbcounts_.assign( nproc, 0 );
     glbdispls_.resize( nproc );
     glbdispls_.assign( nproc, 0 );
-    const size_t nvar = 3;
+    const idx_t nvar = 3;
 
     std::vector<gidx_t> sendnodes( parsize_ * nvar );
 
     loccnt_ = 0;
-    for ( size_t n = 0; n < parsize_; ++n ) {
+    for ( idx_t n = 0; n < parsize_; ++n ) {
         if ( !mask[n] ) {
             sendnodes[loccnt_++] = glb_idx[n];
             sendnodes[loccnt_++] = part[n];
@@ -99,7 +101,7 @@ void GatherScatter::setup( const int part[], const int remote_idx[], const int b
     glbcnt_ = std::accumulate( glbcounts_.begin(), glbcounts_.end(), 0 );
 
     glbdispls_[0] = 0;
-    for ( size_t jproc = 1; jproc < nproc; ++jproc )  // start at 1
+    for ( idx_t jproc = 1; jproc < nproc; ++jproc )  // start at 1
     {
         glbdispls_[jproc] = glbcounts_[jproc - 1] + glbdispls_[jproc - 1];
     }
@@ -111,9 +113,9 @@ void GatherScatter::setup( const int part[], const int remote_idx[], const int b
     }
 
     // Load recvnodes in sorting structure
-    size_t nb_recv_nodes = glbcnt_ / nvar;
+    idx_t nb_recv_nodes = glbcnt_ / nvar;
     std::vector<Node> node_sort( nb_recv_nodes );
-    for ( size_t n = 0; n < nb_recv_nodes; ++n ) {
+    for ( idx_t n = 0; n < nb_recv_nodes; ++n ) {
         node_sort[n].g = recvnodes[n * nvar + 0];
         node_sort[n].p = recvnodes[n * nvar + 1];
         node_sort[n].i = recvnodes[n * nvar + 2];
@@ -133,7 +135,7 @@ void GatherScatter::setup( const int part[], const int remote_idx[], const int b
     }
     glbdispls_[0] = 0;
 
-    for ( size_t jproc = 1; jproc < nproc; ++jproc )  // start at 1
+    for ( idx_t jproc = 1; jproc < nproc; ++jproc )  // start at 1
     {
         glbdispls_[jproc] = glbcounts_[jproc - 1] + glbdispls_[jproc - 1];
     }
@@ -145,11 +147,13 @@ void GatherScatter::setup( const int part[], const int remote_idx[], const int b
     locmap_.clear();
     locmap_.resize( loccnt_ );
     std::vector<int> idx( nproc, 0 );
-    for ( size_t n = 0; n < node_sort.size(); ++n ) {
-        size_t jproc                            = node_sort[n].p;
-        glbmap_[glbdispls_[jproc] + idx[jproc]] = n;
 
-        if ( jproc == myproc ) locmap_[idx[jproc]] = node_sort[n].i;
+    int n{0};
+    for ( const auto& node : node_sort ) {
+        idx_t jproc                             = node.p;
+        glbmap_[glbdispls_[jproc] + idx[jproc]] = n++;
+
+        if ( jproc == myproc ) locmap_[idx[jproc]] = node.i;
 
         ++idx[jproc];
     }
@@ -157,11 +161,11 @@ void GatherScatter::setup( const int part[], const int remote_idx[], const int b
     is_setup_ = true;
 }
 
-void GatherScatter::setup( const int part[], const int remote_idx[], const int base, const gidx_t glb_idx[],
-                           const size_t parsize ) {
+void GatherScatter::setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
+                           const idx_t parsize ) {
     std::vector<int> mask( parsize );
     IsGhostPoint is_ghost( part, remote_idx, base, parsize );
-    for ( size_t jj = 0; jj < parsize; ++jj ) {
+    for ( idx_t jj = 0; jj < parsize; ++jj ) {
         mask[jj] = is_ghost( jj ) ? 1 : 0;
     }
     setup( part, remote_idx, base, glb_idx, mask.data(), parsize );
@@ -177,7 +181,7 @@ void atlas__GatherScatter__delete( GatherScatter* This ) {
     delete This;
 }
 
-void atlas__GatherScatter__setup32( GatherScatter* This, int part[], int remote_idx[], int base, int glb_idx[],
+void atlas__GatherScatter__setup32( GatherScatter* This, int part[], idx_t remote_idx[], int base, int glb_idx[],
                                     int parsize ) {
 #if ATLAS_BITS_GLOBAL == 32
     This->setup( part, remote_idx, base, glb_idx, parsize );
@@ -190,13 +194,13 @@ void atlas__GatherScatter__setup32( GatherScatter* This, int part[], int remote_
 #endif
 }
 
-void atlas__GatherScatter__setup64( GatherScatter* This, int part[], int remote_idx[], int base, long glb_idx[],
+void atlas__GatherScatter__setup64( GatherScatter* This, int part[], idx_t remote_idx[], int base, long glb_idx[],
                                     int parsize ) {
 #if ATLAS_BITS_GLOBAL == 64
     This->setup( part, remote_idx, base, glb_idx, parsize );
 #else
     std::vector<gidx_t> glb_idx_convert( parsize );
-    for ( size_t j = 0; j < parsize; ++j ) {
+    for ( idx_t j = 0; j < parsize; ++j ) {
         glb_idx_convert[j] = glb_idx[j];
     }
     This->setup( part, remote_idx, base, glb_idx_convert.data(), parsize );
@@ -210,10 +214,10 @@ int atlas__GatherScatter__glb_dof( GatherScatter* This ) {
 void atlas__GatherScatter__gather_int( GatherScatter* This, int lfield[], int lvar_strides[], int lvar_extents[],
                                        int lvar_rank, int gfield[], int gvar_strides[], int gvar_extents[],
                                        int gvar_rank ) {
-    std::vector<size_t> lvstrides( lvar_rank );
-    std::vector<size_t> lvextents( lvar_rank );
-    std::vector<size_t> gvstrides( gvar_rank );
-    std::vector<size_t> gvextents( gvar_rank );
+    std::vector<idx_t> lvstrides( lvar_rank );
+    std::vector<idx_t> lvextents( lvar_rank );
+    std::vector<idx_t> gvstrides( gvar_rank );
+    std::vector<idx_t> gvextents( gvar_rank );
     for ( int n = 0; n < lvar_rank; ++n ) {
         lvstrides[n] = lvar_strides[n];
         lvextents[n] = lvar_extents[n];
@@ -229,10 +233,10 @@ void atlas__GatherScatter__gather_int( GatherScatter* This, int lfield[], int lv
 void atlas__GatherScatter__gather_long( GatherScatter* This, long lfield[], int lvar_strides[], int lvar_extents[],
                                         int lvar_rank, long gfield[], int gvar_strides[], int gvar_extents[],
                                         int gvar_rank ) {
-    std::vector<size_t> lvstrides( lvar_rank );
-    std::vector<size_t> lvextents( lvar_rank );
-    std::vector<size_t> gvstrides( gvar_rank );
-    std::vector<size_t> gvextents( gvar_rank );
+    std::vector<idx_t> lvstrides( lvar_rank );
+    std::vector<idx_t> lvextents( lvar_rank );
+    std::vector<idx_t> gvstrides( gvar_rank );
+    std::vector<idx_t> gvextents( gvar_rank );
     for ( int n = 0; n < lvar_rank; ++n ) {
         lvstrides[n] = lvar_strides[n];
         lvextents[n] = lvar_extents[n];
@@ -248,10 +252,10 @@ void atlas__GatherScatter__gather_long( GatherScatter* This, long lfield[], int 
 void atlas__GatherScatter__gather_float( GatherScatter* This, float lfield[], int lvar_strides[], int lvar_extents[],
                                          int lvar_rank, float gfield[], int gvar_strides[], int gvar_extents[],
                                          int gvar_rank ) {
-    std::vector<size_t> lvstrides( lvar_rank );
-    std::vector<size_t> lvextents( lvar_rank );
-    std::vector<size_t> gvstrides( gvar_rank );
-    std::vector<size_t> gvextents( gvar_rank );
+    std::vector<idx_t> lvstrides( lvar_rank );
+    std::vector<idx_t> lvextents( lvar_rank );
+    std::vector<idx_t> gvstrides( gvar_rank );
+    std::vector<idx_t> gvextents( gvar_rank );
     for ( int n = 0; n < lvar_rank; ++n ) {
         lvstrides[n] = lvar_strides[n];
         lvextents[n] = lvar_extents[n];
@@ -267,10 +271,10 @@ void atlas__GatherScatter__gather_float( GatherScatter* This, float lfield[], in
 void atlas__GatherScatter__gather_double( GatherScatter* This, double lfield[], int lvar_strides[], int lvar_extents[],
                                           int lvar_rank, double gfield[], int gvar_strides[], int gvar_extents[],
                                           int gvar_rank ) {
-    std::vector<size_t> lvstrides( lvar_rank );
-    std::vector<size_t> lvextents( lvar_rank );
-    std::vector<size_t> gvstrides( gvar_rank );
-    std::vector<size_t> gvextents( gvar_rank );
+    std::vector<idx_t> lvstrides( lvar_rank );
+    std::vector<idx_t> lvextents( lvar_rank );
+    std::vector<idx_t> gvstrides( gvar_rank );
+    std::vector<idx_t> gvextents( gvar_rank );
     for ( int n = 0; n < lvar_rank; ++n ) {
         lvstrides[n] = lvar_strides[n];
         lvextents[n] = lvar_extents[n];
@@ -286,10 +290,10 @@ void atlas__GatherScatter__gather_double( GatherScatter* This, double lfield[], 
 void atlas__GatherScatter__scatter_int( GatherScatter* This, int gfield[], int gvar_strides[], int gvar_extents[],
                                         int gvar_rank, int lfield[], int lvar_strides[], int lvar_extents[],
                                         int lvar_rank ) {
-    std::vector<size_t> lvstrides( lvar_rank );
-    std::vector<size_t> lvextents( lvar_rank );
-    std::vector<size_t> gvstrides( gvar_rank );
-    std::vector<size_t> gvextents( gvar_rank );
+    std::vector<idx_t> lvstrides( lvar_rank );
+    std::vector<idx_t> lvextents( lvar_rank );
+    std::vector<idx_t> gvstrides( gvar_rank );
+    std::vector<idx_t> gvextents( gvar_rank );
     for ( int n = 0; n < lvar_rank; ++n ) {
         lvstrides[n] = lvar_strides[n];
         lvextents[n] = lvar_extents[n];
@@ -305,10 +309,10 @@ void atlas__GatherScatter__scatter_int( GatherScatter* This, int gfield[], int g
 void atlas__GatherScatter__scatter_long( GatherScatter* This, long gfield[], int gvar_strides[], int gvar_extents[],
                                          int gvar_rank, long lfield[], int lvar_strides[], int lvar_extents[],
                                          int lvar_rank ) {
-    std::vector<size_t> lvstrides( lvar_rank );
-    std::vector<size_t> lvextents( lvar_rank );
-    std::vector<size_t> gvstrides( gvar_rank );
-    std::vector<size_t> gvextents( gvar_rank );
+    std::vector<idx_t> lvstrides( lvar_rank );
+    std::vector<idx_t> lvextents( lvar_rank );
+    std::vector<idx_t> gvstrides( gvar_rank );
+    std::vector<idx_t> gvextents( gvar_rank );
     for ( int n = 0; n < lvar_rank; ++n ) {
         lvstrides[n] = lvar_strides[n];
         lvextents[n] = lvar_extents[n];
@@ -324,10 +328,10 @@ void atlas__GatherScatter__scatter_long( GatherScatter* This, long gfield[], int
 void atlas__GatherScatter__scatter_float( GatherScatter* This, float gfield[], int gvar_strides[], int gvar_extents[],
                                           int gvar_rank, float lfield[], int lvar_strides[], int lvar_extents[],
                                           int lvar_rank ) {
-    std::vector<size_t> lvstrides( lvar_rank );
-    std::vector<size_t> lvextents( lvar_rank );
-    std::vector<size_t> gvstrides( gvar_rank );
-    std::vector<size_t> gvextents( gvar_rank );
+    std::vector<idx_t> lvstrides( lvar_rank );
+    std::vector<idx_t> lvextents( lvar_rank );
+    std::vector<idx_t> gvstrides( gvar_rank );
+    std::vector<idx_t> gvextents( gvar_rank );
     for ( int n = 0; n < lvar_rank; ++n ) {
         lvstrides[n] = lvar_strides[n];
         lvextents[n] = lvar_extents[n];
@@ -343,10 +347,10 @@ void atlas__GatherScatter__scatter_float( GatherScatter* This, float gfield[], i
 void atlas__GatherScatter__scatter_double( GatherScatter* This, double gfield[], int gvar_strides[], int gvar_extents[],
                                            int gvar_rank, double lfield[], int lvar_strides[], int lvar_extents[],
                                            int lvar_rank ) {
-    std::vector<size_t> lvstrides( lvar_rank );
-    std::vector<size_t> lvextents( lvar_rank );
-    std::vector<size_t> gvstrides( gvar_rank );
-    std::vector<size_t> gvextents( gvar_rank );
+    std::vector<idx_t> lvstrides( lvar_rank );
+    std::vector<idx_t> lvextents( lvar_rank );
+    std::vector<idx_t> gvstrides( gvar_rank );
+    std::vector<idx_t> gvextents( gvar_rank );
     for ( int n = 0; n < lvar_rank; ++n ) {
         lvstrides[n] = lvar_strides[n];
         lvextents[n] = lvar_extents[n];

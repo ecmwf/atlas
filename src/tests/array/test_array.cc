@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/memory/SharedPtr.h"
+#include <memory>
 
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
@@ -95,19 +95,19 @@ CASE( "test_localview" ) {
     EXPECT( hv.size() == 8ul * 4ul * 2ul );
 
     // Initialize fields
-    for ( size_t i = 0; i < ds->shape( 0 ); ++i ) {
-        for ( size_t j = 0; j < ds->shape( 1 ); ++j ) {
-            for ( size_t k = 0; k < ds->shape( 2 ); ++k ) {
+    for ( idx_t i = 0; i < ds->shape( 0 ); ++i ) {
+        for ( idx_t j = 0; j < ds->shape( 1 ); ++j ) {
+            for ( idx_t k = 0; k < ds->shape( 2 ); ++k ) {
                 hv( i, j, k ) = ( i * 100 ) + ( j * 10 ) + ( k );
             }
         }
     }
 
     // Check values
-    for ( size_t i = 0; i < ds->shape( 0 ); ++i ) {
+    for ( idx_t i = 0; i < ds->shape( 0 ); ++i ) {
         LocalView<double, 2> lv = hv.slice( i, Range::all(), Range::all() );
-        for ( size_t j = 0; j < lv.shape( 0 ); ++j ) {
-            for ( size_t k = 0; k < lv.shape( 1 ); ++k ) {
+        for ( idx_t j = 0; j < lv.shape( 0 ); ++j ) {
+            for ( idx_t k = 0; k < lv.shape( 1 ); ++k ) {
                 EXPECT( lv( j, k ) == ( i * 100 ) + ( j * 10 ) + ( k ) );
             }
         }
@@ -205,8 +205,7 @@ CASE( "test_spec_layout_rev" ) {
 
     delete ds;
 
-    EXPECT_THROWS_AS( Array::create<double>( make_shape( 4, 5, 6, 2 ), make_layout( 0, 1, 3, 2 ) ),
-                      eckit::BadParameter );
+    EXPECT_THROWS_AS( Array::create<double>( make_shape( 4, 5, 6, 2 ), make_layout( 0, 1, 3, 2 ) ), eckit::Exception );
 }
 #endif
 
@@ -214,9 +213,9 @@ CASE( "test_resize_throw" ) {
     Array* ds = Array::create<double>( 32, 5, 33 );
 
     EXPECT_NO_THROW( ds->resize( 32, 5, 33 ) );
-    EXPECT_THROWS_AS( ds->resize( 32, 4, 33 ), eckit::BadParameter );
-    EXPECT_THROWS_AS( ds->resize( 32, 5, 32 ), eckit::BadParameter );
-    EXPECT_THROWS_AS( ds->resize( 32, 5, 33, 4 ), eckit::BadParameter );
+    EXPECT_NO_THROW( ds->resize( 32, 4, 33 ) );
+    EXPECT_NO_THROW( ds->resize( 32, 5, 32 ) );
+    EXPECT_THROWS_AS( ds->resize( 32, 5, 33, 4 ), eckit::Exception );
 
     delete ds;
 }
@@ -247,7 +246,7 @@ CASE( "test_copy_gt_ctr" ) {
     EXPECT( hv2( 2, 1 ) == 4 );
     EXPECT( hv2( 1, 1 ) == 7 );
 
-    auto dims = hv.data_view().storage_info().dims();
+    auto dims = hv.data_view().storage_info().total_lengths();
     ATLAS_DEBUG_VAR( dims[0] );
     ATLAS_DEBUG_VAR( dims[1] );
     EXPECT( dims[0] == 3 );
@@ -419,7 +418,7 @@ CASE( "test_insert" ) {
 CASE( "test_insert_throw" ) {
     Array* ds = Array::create<double>( 7, 5, 8 );
 
-    EXPECT_THROWS_AS( ds->insert( 8, 2 ), eckit::BadParameter );
+    EXPECT_THROWS_AS( ds->insert( 8, 2 ), eckit::Exception );
 }
 
 CASE( "test_wrap_storage" ) {
@@ -544,13 +543,13 @@ CASE( "test_wrap" ) {
     EXPECT( arr_t.rank() == 2 );
 
     array::ArrayView<int, 2> arrv_t = array::make_view<int, 2>( arr_t );
-    for ( size_t i = 0; i < arrv_t.shape( 0 ); ++i ) {
-        for ( size_t j = 0; j < arrv_t.shape( 1 ); ++j ) {
+    for ( idx_t i = 0; i < arrv_t.shape( 0 ); ++i ) {
+        for ( idx_t j = 0; j < arrv_t.shape( 1 ); ++j ) {
             arrv_t( i, j ) = i * 10 + j - 1;
         }
     }
 
-    eckit::SharedPtr<array::Array> arr( array::Array::wrap<int>(
+    std::unique_ptr<array::Array> arr( array::Array::wrap<int>(
         arrv_t.data(), array::ArraySpec{array::make_shape( 3 ), array::make_strides( arr_t.stride( 0 ) )} ) );
 
     EXPECT( arr->shape( 0 ) == 3 );

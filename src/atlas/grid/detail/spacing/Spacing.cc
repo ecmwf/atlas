@@ -9,20 +9,19 @@
  */
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/grid/detail/spacing/Spacing.h"
+#include "atlas/grid/detail/spacing/SpacingFactory.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
 namespace spacing {
 
-Spacing* Spacing::create( const eckit::Parametrisation& params ) {
+const Spacing* Spacing::create( const eckit::Parametrisation& params ) {
     std::string spacingType;
-    if ( not params.get( "type", spacingType ) ) {
-        throw eckit::BadParameter( "type missing in configuration", Here() );
-    }
-    return eckit::Factory<Spacing>::instance().get( spacingType ).create( params );
+    if ( not params.get( "type", spacingType ) ) { throw_Exception( "type missing in configuration", Here() ); }
+    return SpacingFactory::build( spacingType, params );
 }
 
 }  // namespace spacing

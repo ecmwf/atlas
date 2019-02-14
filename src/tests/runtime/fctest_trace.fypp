@@ -1,0 +1,85 @@
+! (C) Copyright 2013 ECMWF.
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+! This File contains Unit Tests for testing the
+! C++ / Fortran Interfaces to the Mesh Datastructure
+! @author Willem Deconinck
+
+#include "fckit/fctest.h"
+#:include "atlas/atlas_f.fypp"
+
+! -----------------------------------------------------------------------------
+
+module fcta_trace_fixture
+use atlas_module
+use, intrinsic :: iso_c_binding
+@:ENABLE_ATLAS_MACROS()
+implicit none
+contains
+end module
+
+! -----------------------------------------------------------------------------
+
+TESTSUITE_WITH_FIXTURE(fctest_atlas_trace,fcta_trace_fixture)
+
+! -----------------------------------------------------------------------------
+
+subroutine sub2()
+  type(atlas_Trace) :: trace
+  @:ATLAS_TRACE_BEGIN( trace, "sub2" )
+  FCTEST_CHECK( trace%running() )
+  @:ATLAS_TRACE_END( trace )
+end subroutine
+
+subroutine sub1()
+  integer :: i
+  type(atlas_Trace) :: trace
+  trace = @{ ATLAS_TRACE( "sub1" ) }@
+  FCTEST_CHECK( trace%running() )
+
+  do i=1,10
+    call sub2()
+  enddo
+
+  call trace%final()
+end subroutine
+
+TESTSUITE_INIT
+  call atlas_library%initialise()
+END_TESTSUITE_INIT
+
+! -----------------------------------------------------------------------------
+
+TESTSUITE_FINALIZE
+  use fckit_main_module
+  call atlas_library%finalise()
+END_TESTSUITE_FINALIZE
+
+! -----------------------------------------------------------------------------
+
+TEST( test_trace )
+implicit none
+
+  type(atlas_Trace) :: trace
+
+  trace = atlas_Trace("${_FILE_}$",${_LINE_}$,"test_trace")
+
+  FCTEST_CHECK( trace%running() )
+
+  call sub1()
+
+  call trace%stop()
+  FCTEST_CHECK( .not. trace%running() )
+
+  call trace%final()
+
+
+END_TEST
+! -----------------------------------------------------------------------------
+
+END_TESTSUITE
+

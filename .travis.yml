@@ -67,7 +67,13 @@ matrix:
         - CXX_COMPILER='clang++' C_COMPILER='clang' Fortran_COMPILER='gfortran'
         - MPI=openmpi
         - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
-      osx_image: xcode9
+      osx_image: xcode10.1
+      addons:
+        homebrew:
+          packages:
+          - openmpi
+          - cgal
+          - fftw
 
     ##################################
     # KNOWN TO FAIL, so comment
@@ -91,16 +97,6 @@ matrix:
     #     - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG -DENABLE_FORTRAN=OFF" # Fortran tests known to be broken with pgi/17.10
 
 before_install:
-
-  #################################################################
-  # Fixes to pre-installed packages
-  #################################################################
-  - |
-    ### Fix pre-installed packages
-    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
-      brew update
-      brew list oclint || brew cask uninstall oclint # Prevent conflict with gcc
-    fi
 
   #################################################################
   # Set compilers
@@ -135,7 +131,9 @@ install:
   - |
     ### Install gcc (homebrew)
     if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
-      brew upgrade gcc || brew install gcc
+      export HOMEBREW_NO_AUTO_UPDATE=1
+      brew install gcc
+      brew link gcc
     fi
   - |
     ### Install PGI community edition
@@ -165,28 +163,26 @@ install:
         mkdir -p ${DEPS_DIR}/cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C ${DEPS_DIR}/cmake
       fi
       export PATH=${DEPS_DIR}/cmake/bin:${PATH}
-    else
-      brew upgrade cmake || brew install cmake
     fi
     cmake --version
 
   #################################################################
   # Install FFTW
   #################################################################
-  - |
-    ### Install FFTW
-    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
-      brew upgrade fftw || brew install fftw
-    fi
+  # - |
+  #   ### Install FFTW
+  #   if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
+  #     brew ls --versions fftw || brew install fftw
+  #   fi
 
   #################################################################
   # Install CGAL
   #################################################################
-  - |
-    ### Install CGAL
-    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
-      brew upgrade cgal || brew install cgal
-    fi
+  # - |
+  #   ### Install CGAL
+  #   if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
+  #     brew ls --versions cgal || brew install cgal
+  #   fi
 
   #################################################################
   # Install ecbuild
@@ -240,7 +236,7 @@ script:
   #################################################################
   # Test Atlas
   #################################################################
-  - ctest -VV
+  - ctest
 
 after_success:
 

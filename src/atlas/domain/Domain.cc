@@ -20,13 +20,7 @@ using ZD = atlas::domain::ZonalBandDomain;
 
 namespace atlas {
 
-Domain::Domain() : domain_() {}
-
-Domain::Domain( const Domain& domain ) : domain_( domain.domain_ ) {}
-
-Domain::Domain( const Implementation* domain ) : domain_( domain ) {}
-
-Domain::Domain( const eckit::Parametrisation& p ) : domain_( atlas::domain::Domain::create( p ) ) {}
+Domain::Domain( const eckit::Parametrisation& p ) : Handle( atlas::domain::Domain::create( p ) ) {}
 
 RectangularDomain::RectangularDomain( const Interval& x, const Interval& y, const std::string& units ) :
     Domain( ( RD::is_global( x, y, units ) )
@@ -36,7 +30,31 @@ RectangularDomain::RectangularDomain( const Interval& x, const Interval& y, cons
 
 RectangularDomain::RectangularDomain( const Domain& domain ) :
     Domain( domain ),
-    domain_( dynamic_cast<const atlas::domain::RectangularDomain*>( domain.get() ) ) {}
+    domain_( dynamic_cast<const atlas::domain::RectangularDomain*>( get() ) ) {}
+
+bool RectangularDomain::contains_x( double x ) const {
+    return domain_->contains_x( x );
+}
+
+bool RectangularDomain::contains_y( double y ) const {
+    return domain_->contains_y( y );
+}
+
+double RectangularDomain::xmin() const {
+    return domain_->xmin();
+}
+
+double RectangularDomain::xmax() const {
+    return domain_->xmax();
+}
+
+double RectangularDomain::ymin() const {
+    return domain_->ymin();
+}
+
+double RectangularDomain::ymax() const {
+    return domain_->ymax();
+}
 
 ZonalBandDomain::ZonalBandDomain( const Interval& y ) :
     RectangularDomain( ( ZD::is_global( y ) ) ? new atlas::domain::GlobalDomain()
@@ -44,6 +62,55 @@ ZonalBandDomain::ZonalBandDomain( const Interval& y ) :
 
 ZonalBandDomain::ZonalBandDomain( const Domain& domain ) :
     RectangularDomain( domain ),
-    domain_( dynamic_cast<const atlas::domain::ZonalBandDomain*>( domain.get() ) ) {}
+    domain_( dynamic_cast<const atlas::domain::ZonalBandDomain*>( get() ) ) {}
+
+std::string atlas::Domain::type() const {
+    return get()->type();
+}
+
+bool Domain::contains( double x, double y ) const {
+    return get()->contains( x, y );
+}
+
+bool Domain::contains( const PointXY& p ) const {
+    return get()->contains( p );
+}
+
+std::string Domain::units() const {
+    return get()->units();
+}
+
+Domain::Spec Domain::spec() const {
+    return get()->spec();
+}
+
+bool Domain::global() const {
+    return get()->global();
+}
+
+bool Domain::empty() const {
+    return get()->empty();
+}
+
+void Domain::hash( eckit::Hash& h ) const {
+    get()->hash( h );
+}
+
+bool Domain::containsNorthPole() const {
+    return get()->containsNorthPole();
+}
+
+bool Domain::containsSouthPole() const {
+    return get()->containsSouthPole();
+}
+
+void Domain::print( std::ostream& os ) const {
+    return get()->print( os );
+}
+
+std::ostream& operator<<( std::ostream& os, const Domain& d ) {
+    d.print( os );
+    return os;
+}
 
 }  // namespace atlas

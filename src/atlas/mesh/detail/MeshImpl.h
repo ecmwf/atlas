@@ -11,16 +11,20 @@
 #pragma once
 
 #include <iosfwd>
-
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
+#include <memory>
 
 #include "atlas/mesh/PartitionPolygon.h"
 #include "atlas/mesh/detail/PartitionGraph.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/util/Metadata.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 //----------------------------------------------------------------------------------------------------------------------
+
+namespace eckit {
+class Stream;
+}
 
 namespace atlas {
 class Grid;
@@ -44,7 +48,7 @@ namespace detail {
 
 class MeshObserver;
 
-class MeshImpl : public eckit::Owned {
+class MeshImpl : public util::Object {
 public:  // methods
     /// @brief Construct a empty MeshImpl
     explicit MeshImpl();
@@ -87,8 +91,8 @@ public:  // methods
     /// @brief Return the memory footprint of the mesh
     size_t footprint() const;
 
-    size_t partition() const;
-    size_t nb_partitions() const;
+    idx_t partition() const;
+    idx_t nb_partitions() const;
 
     void cloneToDevice() const;
 
@@ -102,7 +106,7 @@ public:  // methods
 
     PartitionGraph::Neighbours nearestNeighbourPartitions() const;
 
-    const PartitionPolygon& polygon( size_t halo = 0 ) const;
+    const PartitionPolygon& polygon( idx_t halo = 0 ) const;
 
     const Grid& grid() const { return *grid_; }
 
@@ -125,25 +129,25 @@ private:  // methods
 private:  // members
     util::Metadata metadata_;
 
-    eckit::SharedPtr<Nodes> nodes_;
+    util::ObjectHandle<Nodes> nodes_;
     // dimensionality : 2D | 3D
     //                  --------
-    eckit::SharedPtr<HybridElements> cells_;   //                  2D | 3D
-    eckit::SharedPtr<HybridElements> facets_;  //                  1D | 2D
-    eckit::SharedPtr<HybridElements> ridges_;  //                  0D | 1D
-    eckit::SharedPtr<HybridElements> peaks_;   //                  NA | 0D
+    util::ObjectHandle<HybridElements> cells_;   //                  2D | 3D
+    util::ObjectHandle<HybridElements> facets_;  //                  1D | 2D
+    util::ObjectHandle<HybridElements> ridges_;  //                  0D | 1D
+    util::ObjectHandle<HybridElements> peaks_;   //                  NA | 0D
 
-    eckit::SharedPtr<HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
+    util::ObjectHandle<HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
 
-    size_t dimensionality_;
+    idx_t dimensionality_;
 
     Projection projection_;
 
     std::unique_ptr<Grid> grid_;
 
-    mutable eckit::SharedPtr<PartitionGraph> partition_graph_;
+    mutable util::ObjectHandle<PartitionGraph> partition_graph_;
 
-    mutable std::vector<eckit::SharedPtr<PartitionPolygon>> polygons_;
+    mutable std::vector<util::ObjectHandle<PartitionPolygon>> polygons_;
 
     mutable std::vector<MeshObserver*> mesh_observers_;
 };

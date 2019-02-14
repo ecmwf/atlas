@@ -1,3 +1,11 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
 #include "atlas/atlas_f.h"
 
 module atlas_GridDistribution_module
@@ -63,10 +71,12 @@ end function
 
 function atlas_GridDistribution__ctor( part, part0 ) result(this)
   use atlas_distribution_c_binding
+  use atlas_kinds_module, only : ATLAS_KIND_IDX
   type(atlas_GridDistribution) :: this
   integer, intent(in) :: part(:)
   integer, intent(in), optional :: part0
-  integer:: npts, opt_part0
+  integer(ATLAS_KIND_IDX) :: npts
+  integer :: opt_part0
   opt_part0 = 0
   if( present(part0) ) opt_part0 = part0
   npts = size(part)

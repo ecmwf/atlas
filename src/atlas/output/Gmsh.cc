@@ -11,8 +11,6 @@
 #include <map>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
-
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
@@ -21,7 +19,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/output/detail/GmshIO.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 using atlas::Field;
@@ -148,17 +146,17 @@ void Gmsh::setGmshConfiguration( detail::GmshIO& gmsh, const Gmsh::Configuration
 
 // -----------------------------------------------------------------------------
 
-Gmsh::Gmsh( Stream& stream ) {
+Gmsh::Gmsh( Stream& ) {
     defaults();
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 // -----------------------------------------------------------------------------
 
-Gmsh::Gmsh( Stream& stream, const eckit::Parametrisation& config ) {
+Gmsh::Gmsh( Stream&, const eckit::Parametrisation& config ) {
     defaults();
     merge( config_, config );
-    NOTIMP;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 // -----------------------------------------------------------------------------
@@ -254,15 +252,11 @@ void Gmsh::write( const FieldSet& fields, const FunctionSpace& functionspace,
 extern "C" {
 
 Gmsh* atlas__output__Gmsh__create_pathname_mode( const char* pathname, const char* mode ) {
-    Gmsh* gmsh( 0 );
-    ATLAS_ERROR_HANDLING( gmsh = new Gmsh( std::string( pathname ), std::string( mode ) ) );
-    return gmsh;
+    return new Gmsh( std::string( pathname ), std::string( mode ) );
 }
 Gmsh* atlas__output__Gmsh__create_pathname_mode_config( const char* pathname, const char* mode,
-                                                        const Parametrisation* params ) {
-    Gmsh* gmsh( 0 );
-    ATLAS_ERROR_HANDLING( gmsh = new Gmsh( std::string( pathname ), std::string( mode ), *params ) );
-    return gmsh;
+                                                        const Parametrisation* config ) {
+    return new Gmsh( std::string( pathname ), std::string( mode ), *config );
 }
 
 }  // extern C

@@ -40,5 +40,6 @@ namespace atlas {
 namespace array {
 
 template class IndexView<int, 1>;
-}
+template class IndexView<long, 1>;
+}  // namespace array
 }  // namespace atlas

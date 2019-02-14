@@ -11,9 +11,10 @@
 #include <cmath>
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
 
 #include "atlas/grid/detail/spacing/FocusSpacing.h"
+#include "atlas/grid/detail/spacing/SpacingFactory.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
@@ -25,13 +26,12 @@ FocusSpacing::FocusSpacing( const eckit::Parametrisation& params ) {
     long N;
 
     // retrieve xmin, xmax and N from params
-    if ( !params.get( "start", xmin ) ) throw eckit::BadParameter( "start missing in Params", Here() );
-    if ( !params.get( "end", xmax ) ) throw eckit::BadParameter( "end missing in Params", Here() );
-    if ( !params.get( "N", N ) ) throw eckit::BadParameter( "N missing in Params", Here() );
+    if ( !params.get( "start", xmin ) ) throw_Exception( "start missing in Params", Here() );
+    if ( !params.get( "end", xmax ) ) throw_Exception( "end missing in Params", Here() );
+    if ( !params.get( "N", N ) ) throw_Exception( "N missing in Params", Here() );
 
     // additional parameters for focus spacing
-    if ( !params.get( "focus_factor", focus_factor_ ) )
-        throw eckit::BadParameter( "focus_factor missing in Params", Here() );
+    if ( !params.get( "focus_factor", focus_factor_ ) ) throw_Exception( "focus_factor missing in Params", Here() );
 
     x_.resize( N );
     if ( N == 1 ) { x_[0] = 0.5 * ( xmin + xmax ); }
@@ -64,7 +64,9 @@ FocusSpacing::Spec FocusSpacing::spec() const {
     return spacing_specs;
 }
 
-register_BuilderT1( Spacing, FocusSpacing, FocusSpacing::static_type() );
+namespace {
+static SpacingBuilder<FocusSpacing> __builder( FocusSpacing::static_type() );
+}
 
 }  // namespace spacing
 }  // namespace grid

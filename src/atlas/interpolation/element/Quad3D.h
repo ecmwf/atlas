@@ -10,10 +10,12 @@
 
 #pragma once
 
+#include <iosfwd>
 #include <limits>
 
 #include "atlas/interpolation/Vector3D.h"
 #include "atlas/interpolation/method/Intersect.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -43,9 +45,7 @@ public:
 
     double area() const;
 
-    void print( std::ostream& s ) const {
-        s << "Quad3D[v00=" << v00 << ",v10=" << v10 << ",v11=" << v11 << ",v01=" << v01 << "]";
-    }
+    void print( std::ostream& ) const;
 
     friend std::ostream& operator<<( std::ostream& s, const Quad3D& p ) {
         p.print( s );
@@ -57,7 +57,7 @@ public:
         if ( i == 1 ) return v10;
         if ( i == 2 ) return v11;
         if ( i == 3 ) return v01;
-        throw eckit::OutOfRange(i,4,Here());
+        throw_OutOfRange( "Quad3D::p(i)", i, 4, Here() );
     }
 
 private:           // members

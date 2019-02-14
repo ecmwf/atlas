@@ -8,27 +8,25 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/projection/detail/ProjectionImpl.h"
+#include "eckit/utils/Hash.h"
+
 #include "atlas/projection/detail/LonLatProjection.h"
+#include "atlas/projection/detail/ProjectionFactory.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
+
 
 namespace atlas {
 namespace projection {
 namespace detail {
 
-ProjectionImpl* ProjectionImpl::create() {
-    // default: no projection, i.e. stay in (lon,lat)-space
-    return new LonLatProjection();
-}
-
-ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) {
+const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) {
     std::string projectionType;
-    if ( p.get( "type", projectionType ) ) {
-        return eckit::Factory<ProjectionImpl>::instance().get( projectionType ).create( p );
-    }
+    if ( p.get( "type", projectionType ) ) { return ProjectionFactory::build( projectionType, p ); }
 
     // should return error here
-    throw eckit::BadParameter( "type missing in Params", Here() );
+    throw_Exception( "type missing in Params", Here() );
 }
 
 Rotated::Rotated( const PointLonLat& south_pole, double rotation_angle ) :

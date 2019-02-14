@@ -9,6 +9,7 @@
  */
 
 #include <cmath>
+#include <iostream>
 
 #include "atlas/interpolation/element/Triag3D.h"
 #include "atlas/interpolation/method/Intersect.h"
@@ -91,6 +92,12 @@ double Triag3D::area() const {
     Vector3D cross = edge1.cross( edge2 );
 
     return 0.5 * cross.norm();
+}
+
+void Triag3D::print( std::ostream& s ) const {
+    s << "Triag3D["
+      << "v0=(" << v0[0] << ", " << v0[1] << ", " << v0[2] << "), v1=(" << v1[0] << ", " << v1[1] << ", " << v1[2]
+      << "), v2=(" << v2[0] << ", " << v2[1] << ", " << v2[2] << ")]";
 }
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -16,3 +16,27 @@ ecbuild_add_test( TARGET atlas_test_interpolation_finite_element
   SOURCES   test_interpolation_finite_element.cc
   LIBS      atlas
 )
+
+ecbuild_add_test( TARGET atlas_test_interpolation_cubic_prototype
+  SOURCES  test_interpolation_cubic_prototype.cc CubicInterpolationPrototype.h
+  LIBS     atlas
+)
+
+ecbuild_add_executable( TARGET atlas_test_interpolation_structured2D
+  SOURCES  test_interpolation_structured2D.cc
+  LIBS     atlas
+  NOINSTALL
+)
+
+ecbuild_add_test( TARGET atlas_test_interpolation_bilinear
+  COMMAND atlas_test_interpolation_structured2D ARGS --scheme linear
+)
+
+ecbuild_add_test( TARGET atlas_test_interpolation_bicubic
+  COMMAND atlas_test_interpolation_structured2D ARGS --scheme cubic
+)
+
+ecbuild_add_test( TARGET atlas_test_interpolation_biquasicubic
+  COMMAND atlas_test_interpolation_structured2D ARGS --scheme quasicubic
+)
+

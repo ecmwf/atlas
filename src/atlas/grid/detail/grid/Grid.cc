@@ -12,12 +12,14 @@
 
 #include <vector>
 
-#include "eckit/memory/Factory.h"
 #include "eckit/utils/MD5.h"
 
 #include "atlas/grid.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/grid/detail/grid/Structured.h"
+#include "atlas/grid/detail/grid/Unstructured.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 namespace atlas {
@@ -30,11 +32,7 @@ static void checkSizeOfPoint() {
     static_assert( sizeof( PointXY ) == 2 * sizeof( double ), "Grid requires size of Point to be 2*double" );
 
     // runtime check
-    ASSERT( sizeof( PointXY ) == 2 * sizeof( double ) );
-}
-
-std::string Grid::className() {
-    return "atlas.Grid";
+    ATLAS_ASSERT( sizeof( PointXY ) == 2 * sizeof( double ) );
 }
 
 const Grid* Grid::create( const Config& config ) {
@@ -52,10 +50,14 @@ const Grid* Grid::create( const Config& config ) {
 
     if ( name.size() ) { Log::info() << "name provided: " << name << std::endl; }
     if ( type.size() ) { Log::info() << "type provided: " << type << std::endl; }
-    if ( name.empty() && type.empty() ) { throw eckit::BadParameter( "no name or type in configuration", Here() ); }
+    if ( name.empty() && type.empty() ) { throw_Exception( "no name or type in configuration", Here() ); }
     else {
-        throw eckit::BadParameter( "name or type in configuration don't exist", Here() );
+        throw_Exception( "name or type in configuration don't exist", Here() );
     }
+}
+
+const Grid* Grid::create( const std::string& name ) {
+    return create( name, util::NoConfig() );
 }
 
 const Grid* Grid::create( const std::string& name, const Grid::Config& config ) {
@@ -72,7 +74,7 @@ const Grid* Grid::create( const std::string& name, const Grid::Config& config ) 
     for ( GridBuilder::Registry::const_iterator it = registry.begin(); it != registry.end(); ++it ) {
         log << "  -  " << *it->second << "\n";
     }
-    throw eckit::BadParameter( log.str() );
+    throw_Exception( log.str() );
     //    return GridBuilder::createNamed(name);
 }
 

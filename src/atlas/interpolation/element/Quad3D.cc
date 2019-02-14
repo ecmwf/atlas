@@ -9,8 +9,7 @@
  */
 
 #include <cmath>
-
-#include "eckit/exception/Exceptions.h"
+#include <iostream>
 
 #include "atlas/interpolation/element/Quad3D.h"
 #include "atlas/interpolation/element/Triag3D.h"
@@ -89,6 +88,11 @@ double Quad3D::area() const {
 
     return T013.area() + T231.area();
 }
+
+void Quad3D::print( std::ostream& s ) const {
+    s << "Quad3D[v00=" << v00 << ",v10=" << v10 << ",v11=" << v11 << ",v01=" << v01 << "]";
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------
 

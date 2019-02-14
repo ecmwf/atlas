@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <numeric>
 
 #include "eckit/filesystem/PathName.h"
 
@@ -19,7 +20,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Exception.h"
 
 using atlas::mesh::IsGhostNode;
 
@@ -40,26 +41,26 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename ) 
 }
 
 void write_load_balance_report( const Mesh& mesh, std::ostream& ofs ) {
-    size_t npart = mpi::comm().size();
-    size_t root  = 0;
+    idx_t npart = mpi::comm().size();
+    idx_t root  = 0;
 
-    std::vector<size_t> nb_total_nodes( npart, 0 );
-    std::vector<int> nb_owned_nodes( npart, 0 );
-    std::vector<int> nb_ghost_nodes( npart, 0 );
+    std::vector<idx_t> nb_total_nodes( npart, 0 );
+    std::vector<idx_t> nb_owned_nodes( npart, 0 );
+    std::vector<idx_t> nb_ghost_nodes( npart, 0 );
     std::vector<double> ghost_ratio_nodes( npart, 0 );
 
-    std::vector<size_t> nb_total_edges( npart, 0 );
-    std::vector<int> nb_owned_edges( npart, 0 );
-    std::vector<int> nb_ghost_edges( npart, 0 );
+    std::vector<idx_t> nb_total_edges( npart, 0 );
+    std::vector<idx_t> nb_owned_edges( npart, 0 );
+    std::vector<idx_t> nb_ghost_edges( npart, 0 );
     std::vector<double> nb_ghost_ratio_edges( npart, 0 );
 
     {
         const mesh::Nodes& nodes = mesh.nodes();
         IsGhostNode is_ghost( nodes );
-        size_t nb_nodes = nodes.size();
-        int nowned( 0 );
-        int nghost( 0 );
-        for ( size_t n = 0; n < nb_nodes; ++n ) {
+        idx_t nb_nodes = nodes.size();
+        idx_t nowned( 0 );
+        idx_t nghost( 0 );
+        for ( idx_t n = 0; n < nb_nodes; ++n ) {
             if ( is_ghost( n ) )
                 ++nghost;
             else
@@ -75,7 +76,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs ) {
             mpi::comm().gather( nghost, nb_ghost_nodes, root );
         }
 
-        for ( size_t p = 0; p < npart; ++p ) {
+        for ( idx_t p = 0; p < npart; ++p ) {
             if ( nb_owned_nodes[p] ) {
                 ghost_ratio_nodes[p] =
                     static_cast<double>( nb_ghost_nodes[p] ) / static_cast<double>( nb_owned_nodes[p] );
@@ -92,10 +93,10 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs ) {
         const mesh::Nodes& nodes = mesh.nodes();
         IsGhostNode is_ghost( nodes );
         const mesh::HybridElements::Connectivity& edge_nodes = mesh.edges().node_connectivity();
-        size_t nb_edges                                      = mesh.edges().size();
-        int nowned( 0 );
-        int nghost( 0 );
-        for ( size_t j = 0; j < nb_edges; ++j ) {
+        idx_t nb_edges                                       = mesh.edges().size();
+        idx_t nowned( 0 );
+        idx_t nghost( 0 );
+        for ( idx_t j = 0; j < nb_edges; ++j ) {
             if ( is_ghost( edge_nodes( j, 0 ) ) )
                 ++nghost;
             else
@@ -188,7 +189,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs ) {
             ofs << std::setw( idt ) << "gedges";
         }
         ofs << "\n";
-        for ( size_t jpart = 0; jpart < npart; ++jpart ) {
+        for ( idx_t jpart = 0; jpart < npart; ++jpart ) {
             ofs << std::setw( 6 ) << jpart;
             ofs << std::setw( idt ) << nb_total_nodes[jpart];
             ofs << std::setw( idt ) << nb_owned_nodes[jpart];
@@ -208,7 +209,9 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs ) {
 
 // C wrapper interfaces to C++ routines
 void atlas__write_load_balance_report( Mesh::Implementation* mesh, char* filename ) {
-    ATLAS_ERROR_HANDLING( Mesh m( mesh ); write_load_balance_report( m, std::string( filename ) ); );
+    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
+    Mesh m( mesh );
+    write_load_balance_report( m, std::string( filename ) );
 }
 
 // ------------------------------------------------------------------

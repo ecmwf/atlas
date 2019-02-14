@@ -8,8 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/memory/SharedPtr.h"
-
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/array/helpers/ArraySlicer.h"
@@ -222,6 +220,11 @@ CASE( "test_array_slicer_of_slice" ) {
     auto subslice2 = subslicer.apply( Range::all(), Range::all() );
     auto subslice3 = subslicer.apply( Range::all(), 0 );
     auto subslice4 = subslicer.apply( 0, Range::to( 2 ) );
+
+    EXPECT( is_approximately_equal( double( subslice1 ), 133. ) );
+    EXPECT( subslice2.size() == slice.size() );
+    EXPECT( subslice3.size() == slice.shape( 0 ) );
+    EXPECT( subslice4.size() == 2 );
 }
 
 CASE( "test_arrayview_slice_type" ) {

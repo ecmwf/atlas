@@ -20,16 +20,16 @@
 #include "atlas/parallel/HaloExchangeImpl.h"
 #include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "eckit/exception/Exceptions.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
+
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/ArrayViewUtil.h"
 #include "atlas/array/SVector.h"
 #include "atlas/array_fwd.h"
-#include "atlas/runtime/Log.h"
+#include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
+#include "atlas/util/Object.h"
 
 #ifdef ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
 #include "atlas/parallel/HaloExchangeCUDA.h"
@@ -38,10 +38,7 @@
 namespace atlas {
 namespace parallel {
 
-class HaloExchange : public eckit::Owned {
-public:  // types
-    typedef eckit::SharedPtr<HaloExchange> Ptr;
-
+class HaloExchange : public util::Object {
 public:
     HaloExchange();
     HaloExchange( const std::string& name );
@@ -50,25 +47,23 @@ public:
 public:  // methods
     const std::string& name() const { return name_; }
 
-    void setup( const int part[], const int remote_idx[], const int base, size_t size );
+    void setup( const int part[], const idx_t remote_idx[], const int base, idx_t size );
 
     //  template <typename DATA_TYPE>
-    //  void execute( DATA_TYPE field[], size_t nb_vars ) const;
+    //  void execute( DATA_TYPE field[], idx_t nb_vars ) const;
 
     template <typename DATA_TYPE, int RANK, typename ParallelDim = array::FirstDim>
     void execute( array::Array& field, bool on_device = false ) const;
 
 private:  // methods
-    void create_mappings( std::vector<int>& send_map, std::vector<int>& recv_map, size_t nb_vars ) const;
+    void create_mappings( std::vector<int>& send_map, std::vector<int>& recv_map, idx_t nb_vars ) const;
 
     template <int N, int P>
-    void create_mappings_impl( std::vector<int>& send_map, std::vector<int>& recv_map, size_t nb_vars ) const;
+    void create_mappings_impl( std::vector<int>& send_map, std::vector<int>& recv_map, idx_t nb_vars ) const;
 
-    size_t index( size_t i, size_t j, size_t k, size_t ni, size_t nj, size_t nk ) const {
-        return ( i + ni * ( j + nj * k ) );
-    }
+    idx_t index( idx_t i, idx_t j, idx_t k, idx_t ni, idx_t nj, idx_t nk ) const { return ( i + ni * ( j + nj * k ) ); }
 
-    size_t index( size_t i, size_t j, size_t ni, size_t nj ) const { return ( i + ni * j ); }
+    idx_t index( idx_t i, idx_t j, idx_t ni, idx_t nj ) const { return ( i + ni * j ); }
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
     void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
@@ -81,8 +76,8 @@ private:  // methods
                              array::ArrayView<DATA_TYPE, RANK>& dfield, const bool on_device ) const;
 
     template <typename DATA_TYPE, int RANK>
-    void var_info( const array::ArrayView<DATA_TYPE, RANK>& arr, std::vector<size_t>& varstrides,
-                   std::vector<size_t>& varshape ) const;
+    void var_info( const array::ArrayView<DATA_TYPE, RANK>& arr, std::vector<idx_t>& varstrides,
+                   std::vector<idx_t>& varshape ) const;
 
 private:  // data
     std::string name_;
@@ -109,7 +104,7 @@ public:
 
 template <typename DATA_TYPE, int RANK, typename ParallelDim>
 void HaloExchange::execute( array::Array& field, bool on_device ) const {
-    if ( !is_setup_ ) { throw eckit::SeriousBug( "HaloExchange was not setup", Here() ); }
+    if ( !is_setup_ ) { throw_Exception( "HaloExchange was not setup", Here() ); }
 
     ATLAS_TRACE( "HaloExchange", {"halo-exchange"} );
 
@@ -117,7 +112,7 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
 
     int tag                   = 1;
     constexpr int parallelDim = array::get_parallel_dim<ParallelDim>( field_hv );
-    size_t var_size           = array::get_var_size<parallelDim>( field_hv );
+    idx_t var_size            = array::get_var_size<parallelDim>( field_hv );
     int send_size             = sendcnt_ * var_size;
     int recv_size             = recvcnt_ * var_size;
 
@@ -184,22 +179,22 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
 template <int ParallelDim, int RANK>
 struct halo_packer {
     template <typename DATA_TYPE>
-    static void pack( const unsigned int sendcnt, array::SVector<int> const& sendmap,
+    static void pack( const int sendcnt, array::SVector<int> const& sendmap,
                       const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite>& field,
                       array::SVector<DATA_TYPE>& send_buffer ) {
-        size_t ibuf = 0;
+        idx_t ibuf = 0;
         for ( int node_cnt = 0; node_cnt < sendcnt; ++node_cnt ) {
-            const size_t node_idx = sendmap[node_cnt];
+            const idx_t node_idx = sendmap[node_cnt];
             halo_packer_impl<ParallelDim, RANK, 0>::apply( ibuf, node_idx, field, send_buffer );
         }
     }
 
     template <typename DATA_TYPE>
-    static void unpack( const unsigned int recvcnt, array::SVector<int> const& recvmap,
+    static void unpack( const int recvcnt, array::SVector<int> const& recvmap,
                         array::SVector<DATA_TYPE> const& recv_buffer, array::ArrayView<DATA_TYPE, RANK>& field ) {
-        size_t ibuf = 0;
+        idx_t ibuf = 0;
         for ( int node_cnt = 0; node_cnt < recvcnt; ++node_cnt ) {
-            const size_t node_idx = recvmap[node_cnt];
+            const idx_t node_idx = recvmap[node_cnt];
             halo_unpacker_impl<ParallelDim, RANK, 0>::apply( ibuf, node_idx, recv_buffer, field );
         }
     }
@@ -234,12 +229,12 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
 }
 
 // template<typename DATA_TYPE>
-// void HaloExchange::execute( DATA_TYPE field[], size_t nb_vars ) const
+// void HaloExchange::execute( DATA_TYPE field[], idx_t nb_vars ) const
 //{
-//    throw eckit::AssertionFailed("Call not supported");
+//    throw_AssertionFailed("Call not supported");
 
-//  size_t strides[] = {1};
-//  size_t shape[] = {nb_vars};
+//  idx_t strides[] = {1};
+//  idx_t shape[] = {nb_vars};
 //  execute( field, strides, shape, 1);
 //}
 
@@ -254,7 +249,7 @@ void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buf
 extern "C" {
 HaloExchange* atlas__HaloExchange__new();
 void atlas__HaloExchange__delete( HaloExchange* This );
-void atlas__HaloExchange__setup( HaloExchange* This, int part[], int remote_idx[], int base, int size );
+void atlas__HaloExchange__setup( HaloExchange* This, int part[], idx_t remote_idx[], int base, int size );
 void atlas__HaloExchange__execute_strided_int( HaloExchange* This, int field[], int var_strides[], int var_shape[],
                                                int var_rank );
 void atlas__HaloExchange__execute_strided_long( HaloExchange* This, long field[], int var_strides[], int var_shape[],

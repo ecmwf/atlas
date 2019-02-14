@@ -1,40 +1,38 @@
 /*
-
-The Domain class describes the extent of a grid in projected "grid coordinates"
-
-daand:
-  - I simply removed the original Domain.h, which only described boxes in
-(lon,lat)-space.
-  - The Domain class has become a purely abstract class to allow for other
-domain shapes (circular, frame, and what not...)
-  - I didn't implement hashes, (copy) constructors, comparators, etc. for now.
+ * (C) Copyright 2013 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 #pragma once
 
-#include "eckit/config/Parametrisation.h"
-#include "eckit/memory/Builder.h"
-#include "eckit/memory/Owned.h"
+#include <iosfwd>
 
 #include "atlas/util/Config.h"
+#include "atlas/util/Object.h"
 #include "atlas/util/Point.h"
+
+namespace eckit {
+class Parametrisation;
+}
 
 namespace atlas {
 class Projection;
 
 namespace domain {
 
-class Domain : public eckit::Owned {
+class Domain : public util::Object {
 public:
     using Spec = util::Config;
-    typedef const eckit::Parametrisation& ARG1;
-    typedef eckit::BuilderT1<Domain> builder_t;
-    static std::string className() { return "atlas.Domain"; }
 
 public:
-    static Domain* create();  // Create a global domain
+    static const Domain* create();  // Create a global domain
 
-    static Domain* create( const eckit::Parametrisation& );
+    static const Domain* create( const eckit::Parametrisation& );
 
     virtual std::string type() const = 0;
 

@@ -1,3 +1,13 @@
+/*
+ * (C) Copyright 2013 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
+
 #pragma once
 
 #include <vector>
@@ -31,8 +41,8 @@ public:
 
 private:
     struct Checkerboard {
-        size_t nbands;  // number of bands
-        size_t nx, ny;  // grid dimensions
+        idx_t nbands;  // number of bands
+        idx_t nx, ny;  // grid dimensions
     };
 
     Checkerboard checkerboard( const Grid& ) const;
@@ -46,7 +56,7 @@ private:
     void check() const;
 
 private:
-    size_t nbands_;      // number of bands from configuration
+    idx_t nbands_;       // number of bands from configuration
     bool checkerboard_;  // exact (true) or approximate (false) checkerboard
 };
 

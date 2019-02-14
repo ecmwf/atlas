@@ -37,9 +37,6 @@
 #include <sstream>
 #include <vector>
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/log/Timer.h"
-
 #include "atlas/functionspace.h"
 #include "atlas/grid.h"
 #include "atlas/library/Library.h"
@@ -57,6 +54,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/AtlasTool.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
@@ -151,17 +149,18 @@ public:
 private:
     Mesh mesh;
     functionspace::NodeColumns nodes_fs;
+    functionspace::NodeColumns edges_fs;
     Field scalar_field;
     Field grad_field;
 
-    vector<int> pole_edges;
+    vector<idx_t> pole_edges;
     vector<bool> is_ghost;
 
-    size_t nnodes;
-    size_t nedges;
-    size_t nlev;
-    size_t niter;
-    size_t exclude;
+    idx_t nnodes;
+    idx_t nedges;
+    idx_t nlev;
+    idx_t niter;
+    idx_t exclude;
     bool output;
     long omp_threads;
     double dz;
@@ -169,7 +168,7 @@ private:
 
     TimerStats iteration_timer;
     TimerStats haloexchange_timer;
-    size_t iter;
+    idx_t iter;
     bool progress;
 
 public:
@@ -280,14 +279,14 @@ void AtlasBenchmark::initial_condition( const Field& field, const double& beta )
     auto lonlat_deg = array::make_view<double, 2>( mesh.nodes().lonlat() );
     auto var        = array::make_view<double, 2>( field );
 
-    size_t nnodes = mesh.nodes().size();
-    for ( size_t jnode = 0; jnode < nnodes; ++jnode ) {
+    idx_t nnodes = mesh.nodes().size();
+    for ( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
         double x = lonlat_deg( jnode, LON ) * deg2rad;
         double y = lonlat_deg( jnode, LAT ) * deg2rad;
         double Ux =
             pvel * ( std::cos( beta ) + std::tan( y ) * std::cos( x ) * std::sin( beta ) ) * radius * std::cos( y );
         double Uy = -pvel * std::sin( x ) * std::sin( beta ) * radius;
-        for ( size_t jlev = 0; jlev < field.levels(); ++jlev )
+        for ( idx_t jlev = 0; jlev < field.levels(); ++jlev )
             var( jnode, jlev ) = std::sqrt( Ux * Ux + Uy * Uy );
     }
 }
@@ -295,7 +294,7 @@ void AtlasBenchmark::initial_condition( const Field& field, const double& beta )
 //----------------------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::setup() {
-    size_t halo = 1;
+    idx_t halo = 1;
 
     StructuredGrid grid;
     ATLAS_TRACE_SCOPE( "Create grid" ) { grid = Grid( gridname ); }
@@ -304,8 +303,7 @@ void AtlasBenchmark::setup() {
     }
 
     ATLAS_TRACE_SCOPE( "Create node_fs" ) { nodes_fs = functionspace::NodeColumns( mesh, option::halo( halo ) ); }
-    ATLAS_TRACE_SCOPE( "build_edges" ) { build_edges( mesh ); }
-    ATLAS_TRACE_SCOPE( "build_pole_edges" ) { build_pole_edges( mesh ); }
+    ATLAS_TRACE_SCOPE( "Create edges_fs" ) { edges_fs = functionspace::EdgeColumns( mesh, option::halo( halo ) ); }
 
     // mesh.polygon(0).outputPythonScript("plot_polygon.py");
     //  atlas::output::Output gmsh = atlas::output::Gmsh( "edges.msh",
@@ -316,7 +314,6 @@ void AtlasBenchmark::setup() {
     //  util::Config("ghost",true)("edges",false)("elements",true) );
     //  gmsh.write( mesh );
 
-    ATLAS_TRACE_SCOPE( "build_edges_parallel_fiels" ) { build_edges_parallel_fields( mesh ); }
     ATLAS_TRACE_SCOPE( "build_median_dual_mesh" ) { build_median_dual_mesh( mesh ); }
     ATLAS_TRACE_SCOPE( "build_node_to_edge_connectivity" ) { build_node_to_edge_connectivity( mesh ); }
 
@@ -330,14 +327,13 @@ void AtlasBenchmark::setup() {
     auto lonlat = array::make_view<double, 2>( mesh.nodes().xy() );
     auto V      = array::make_view<double, 1>( mesh.nodes().field( "dual_volumes" ) );
     auto S      = array::make_view<double, 2>( mesh.edges().field( "dual_normals" ) );
-    auto field  = array::make_view<double, 2>( scalar_field );
 
     initial_condition( scalar_field, 0. );
 
     double radius  = 6371.22e+03;  // Earth's radius
     double height  = 80.e+03;      // Height of atmosphere
     double deg2rad = M_PI / 180.;
-    atlas_omp_parallel_for( size_t jnode = 0; jnode < nnodes; ++jnode ) {
+    atlas_omp_parallel_for( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
         lonlat( jnode, LON ) = lonlat( jnode, LON ) * deg2rad;
         lonlat( jnode, LAT ) = lonlat( jnode, LAT ) * deg2rad;
         double y             = lonlat( jnode, LAT );
@@ -346,22 +342,21 @@ void AtlasBenchmark::setup() {
         double G             = hx * hy;
         V( jnode ) *= std::pow( deg2rad, 2 ) * G;
     }
-    atlas_omp_parallel_for( size_t jedge = 0; jedge < nedges; ++jedge ) {
+    atlas_omp_parallel_for( idx_t jedge = 0; jedge < nedges; ++jedge ) {
         S( jedge, LON ) *= deg2rad;
         S( jedge, LAT ) *= deg2rad;
     }
     dz = height / static_cast<double>( nlev );
 
-    auto edge_is_pole                             = array::make_view<int, 1>( mesh.edges().field( "is_pole_edge" ) );
     const mesh::Connectivity& node2edge           = mesh.nodes().edge_connectivity();
     const mesh::MultiBlockConnectivity& edge2node = mesh.edges().node_connectivity();
     auto node2edge_sign                           = array::make_view<double, 2>( mesh.nodes().add(
         Field( "to_edge_sign", array::make_datatype<double>(), array::make_shape( nnodes, node2edge.maxcols() ) ) ) );
 
-    atlas_omp_parallel_for( size_t jnode = 0; jnode < nnodes; ++jnode ) {
-        for ( size_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
-            size_t iedge = node2edge( jnode, jedge );
-            size_t ip1   = edge2node( iedge, 0 );
+    atlas_omp_parallel_for( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
+        for ( idx_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
+            idx_t iedge = node2edge( jnode, jedge );
+            idx_t ip1   = edge2node( iedge, 0 );
             if ( jnode == ip1 )
                 node2edge_sign( jnode, jedge ) = 1.;
             else
@@ -369,18 +364,21 @@ void AtlasBenchmark::setup() {
         }
     }
 
-    vector<int> tmp( nedges );
+    auto edge_flags   = array::make_view<int, 1>( mesh.edges().flags() );
+    auto is_pole_edge = [&]( size_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
+
+    vector<idx_t> tmp( nedges );
     int c( 0 );
-    for ( size_t jedge = 0; jedge < nedges; ++jedge ) {
-        if ( edge_is_pole( jedge ) ) tmp[c++] = jedge;
+    for ( idx_t jedge = 0; jedge < nedges; ++jedge ) {
+        if ( is_pole_edge( jedge ) ) tmp[c++] = jedge;
     }
     pole_edges.reserve( c );
-    for ( int jedge = 0; jedge < c; ++jedge )
+    for ( idx_t jedge = 0; jedge < c; ++jedge )
         pole_edges.push_back( tmp[jedge] );
 
-    auto flags = array::make_view<int, 1>( mesh.nodes().field( "flags" ) );
+    auto flags = array::make_view<int, 1>( mesh.nodes().flags() );
     is_ghost.reserve( nnodes );
-    for ( size_t jnode = 0; jnode < nnodes; ++jnode ) {
+    for ( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
         is_ghost.push_back( Topology::check( flags( jnode ), Topology::GHOST ) );
     }
 }
@@ -398,38 +396,34 @@ void AtlasBenchmark::iteration() {
     const auto V              = array::make_view<double, 1>( mesh.nodes().field( "dual_volumes" ) );
     const auto node2edge_sign = array::make_view<double, 2>( mesh.nodes().field( "to_edge_sign" ) );
 
-    auto grad         = array::make_view<double, 3>( grad_field );
-    auto avgS         = array::make_view<double, 3>( *avgS_arr );
-    auto node_glb_idx = array::make_view<gidx_t, 1>( mesh.nodes().global_index() );
-    auto node_part    = array::make_view<int, 1>( mesh.nodes().partition() );
-    auto edge_part    = array::make_view<int, 1>( mesh.edges().partition() );
-    auto edge_glb_idx = array::make_view<gidx_t, 1>( mesh.edges().global_index() );
+    auto grad = array::make_view<double, 3>( grad_field );
+    auto avgS = array::make_view<double, 3>( *avgS_arr );
 
-    atlas_omp_parallel_for( size_t jedge = 0; jedge < nedges; ++jedge ) {
-        int ip1 = edge2node( jedge, 0 );
-        int ip2 = edge2node( jedge, 1 );
+    atlas_omp_parallel_for( idx_t jedge = 0; jedge < nedges; ++jedge ) {
+        idx_t ip1 = edge2node( jedge, 0 );
+        idx_t ip2 = edge2node( jedge, 1 );
 
-        for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
+        for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
             double avg               = ( field( ip1, jlev ) + field( ip2, jlev ) ) * 0.5;
             avgS( jedge, jlev, LON ) = S( jedge, LON ) * avg;
             avgS( jedge, jlev, LAT ) = S( jedge, LAT ) * avg;
         }
     }
 
-    atlas_omp_parallel_for( size_t jnode = 0; jnode < nnodes; ++jnode ) {
-        for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
+    atlas_omp_parallel_for( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
+        for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
             grad( jnode, jlev, LON ) = 0.;
             grad( jnode, jlev, LAT ) = 0.;
         }
-        for ( size_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
-            size_t iedge = node2edge( jnode, jedge );
-            double add   = node2edge_sign( jnode, jedge );
-            for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
+        for ( idx_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
+            idx_t iedge = node2edge( jnode, jedge );
+            double add  = node2edge_sign( jnode, jedge );
+            for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
                 grad( jnode, jlev, LON ) += add * avgS( iedge, jlev, LON );
                 grad( jnode, jlev, LAT ) += add * avgS( iedge, jlev, LAT );
             }
         }
-        for ( size_t jlev = 0; jlev < nlev; ++jlev ) {
+        for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
             grad( jnode, jlev, LON ) /= V( jnode );
             grad( jnode, jlev, LAT ) /= V( jnode );
         }
@@ -437,19 +431,19 @@ void AtlasBenchmark::iteration() {
     // special treatment for the north & south pole cell faces
     // Sx == 0 at pole, and Sy has same sign at both sides of pole
     for ( size_t jedge = 0; jedge < pole_edges.size(); ++jedge ) {
-        int iedge = pole_edges[jedge];
-        int ip2   = edge2node( iedge, 1 );
+        idx_t iedge = pole_edges[jedge];
+        idx_t ip2   = edge2node( iedge, 1 );
         // correct for wrong Y-derivatives in previous loop
-        for ( size_t jlev = 0; jlev < nlev; ++jlev )
+        for ( idx_t jlev = 0; jlev < nlev; ++jlev )
             grad( ip2, jlev, LAT ) += 2. * avgS( iedge, jlev, LAT ) / V( ip2 );
     }
 
     double dzi   = 1. / dz;
     double dzi_2 = 0.5 * dzi;
 
-    atlas_omp_parallel_for( size_t jnode = 0; jnode < nnodes; ++jnode ) {
+    atlas_omp_parallel_for( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
         if ( nlev > 2 ) {
-            for ( size_t jlev = 1; jlev < nlev - 1; ++jlev ) {
+            for ( idx_t jlev = 1; jlev < nlev - 1; ++jlev ) {
                 grad( jnode, jlev, ZZ ) = ( field( jnode, jlev + 1 ) - field( jnode, jlev - 1 ) ) * dzi_2;
             }
         }
@@ -498,11 +492,9 @@ double AtlasBenchmark::result() {
     double norm = 0.;
 
     nodes_fs.haloExchange( grad_field );
-    auto glb_idx = array::make_view<gidx_t, 1>( mesh.nodes().global_index() );
-    auto part    = array::make_view<int, 1>( mesh.nodes().partition() );
-    for ( size_t jnode = 0; jnode < nnodes; ++jnode ) {
+    for ( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
         if ( !is_ghost[jnode] ) {
-            for ( size_t jlev = 0; jlev < 1; ++jlev ) {
+            for ( idx_t jlev = 0; jlev < 1; ++jlev ) {
                 const double scaling = 1.e12;
                 grad( jnode, jlev, LON ) *= scaling;
                 grad( jnode, jlev, LAT ) *= scaling;

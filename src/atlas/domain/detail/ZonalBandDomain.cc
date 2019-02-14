@@ -1,4 +1,18 @@
+/*
+ * (C) Copyright 2013 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
+
+#include <ostream>
+
+#include "atlas/domain/detail/DomainFactory.h"
 #include "atlas/domain/detail/ZonalBandDomain.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace domain {
@@ -13,9 +27,9 @@ static bool _is_global( double ymin, double ymax ) {
 static std::array<double, 2> get_interval_y( const eckit::Parametrisation& params ) {
     double ymin, ymax;
 
-    if ( !params.get( "ymin", ymin ) ) throw eckit::BadParameter( "ymin missing in Params", Here() );
+    if ( !params.get( "ymin", ymin ) ) throw_Exception( "ymin missing in Params", Here() );
 
-    if ( !params.get( "ymax", ymax ) ) throw eckit::BadParameter( "ymax missing in Params", Here() );
+    if ( !params.get( "ymax", ymax ) ) throw_Exception( "ymax missing in Params", Here() );
 
     return {ymin, ymax};
 }
@@ -75,7 +89,9 @@ bool ZonalBandDomain::containsSouthPole() const {
     return ymin_tol_ <= -90.;
 }
 
-register_BuilderT1( Domain, ZonalBandDomain, ZonalBandDomain::static_type() );
+namespace {
+static DomainBuilder<ZonalBandDomain> register_builder( ZonalBandDomain::static_type() );
+}
 
 }  // namespace domain
 }  // namespace atlas

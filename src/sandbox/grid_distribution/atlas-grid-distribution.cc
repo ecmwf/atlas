@@ -17,6 +17,9 @@
 #include <sstream>
 #include <vector>
 
+#include "eckit/exception/Exceptions.h"
+#include "eckit/filesystem/PathName.h"
+
 #include "atlas/grid.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Partitioner.h"
@@ -26,8 +29,6 @@
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
-#include "eckit/exception/Exceptions.h"
-#include "eckit/filesystem/PathName.h"
 
 //------------------------------------------------------------------------------
 
@@ -79,7 +80,7 @@ void Tool::execute( const Args& args ) {
         try {
             grid = Grid( key );
         }
-        catch ( eckit::BadParameter& e ) {
+        catch ( eckit::Exception& e ) {
         }
     }
     else if ( path_in.path().size() ) {
@@ -88,7 +89,7 @@ void Tool::execute( const Args& args ) {
         try {
             grid = Grid( Config( path_in ) );
         }
-        catch ( eckit::BadParameter& e ) {
+        catch ( eckit::Exception& e ) {
         }
     }
     else {

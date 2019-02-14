@@ -11,6 +11,7 @@
 #include "atlas/trans/ifs/VorDivToUVIFS.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 using atlas::FunctionSpace;
@@ -29,7 +30,7 @@ void trans_check( const int code, const char* msg, const eckit::CodeLocation& lo
         std::stringstream errmsg;
         errmsg << "atlas::trans ERROR: " << msg << " failed: \n";
         errmsg << ::trans_error_msg( code );
-        throw eckit::Exception( errmsg.str(), location );
+        throw_Exception( errmsg.str(), location );
     }
 }
 #define TRANS_CHECK( CALL ) trans_check( CALL, #CALL, Here() )
@@ -37,8 +38,7 @@ void trans_check( const int code, const char* msg, const eckit::CodeLocation& lo
 }  // namespace
 
 void VorDivToUVIFS::execute( const int nb_coeff, const int nb_fields, const double vorticity[],
-                             const double divergence[], double U[], double V[],
-                             const eckit::Configuration& config ) const {
+                             const double divergence[], double U[], double V[], const eckit::Configuration& ) const {
     struct ::VorDivToUV_t vordiv_to_UV = new_vordiv_to_UV();
     vordiv_to_UV.rspvor                = vorticity;
     vordiv_to_UV.rspdiv                = divergence;
@@ -50,9 +50,9 @@ void VorDivToUVIFS::execute( const int nb_coeff, const int nb_fields, const doub
     TRANS_CHECK(::trans_vordiv_to_UV( &vordiv_to_UV ) );
 }
 
-VorDivToUVIFS::VorDivToUVIFS( const int truncation, const eckit::Configuration& config ) : truncation_( truncation ) {}
+VorDivToUVIFS::VorDivToUVIFS( const int truncation, const eckit::Configuration& ) : truncation_( truncation ) {}
 
-VorDivToUVIFS::VorDivToUVIFS( const FunctionSpace& fs, const eckit::Configuration& config ) :
+VorDivToUVIFS::VorDivToUVIFS( const FunctionSpace& fs, const eckit::Configuration& ) :
     truncation_( Spectral( fs ).truncation() ) {}
 
 VorDivToUVIFS::~VorDivToUVIFS() {}

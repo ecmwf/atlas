@@ -12,6 +12,7 @@
 
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 #include "atlas/library/config.h"
 #include "atlas/util/Config.h"
 
@@ -40,16 +41,16 @@ public:
 
     Spectral( const trans::Trans&, const eckit::Configuration& = util::NoConfig() );
 
-    virtual ~Spectral();
+    virtual ~Spectral() override;
 
-    virtual std::string type() const { return "Spectral"; }
+    virtual std::string type() const override { return "Spectral"; }
 
-    virtual std::string distribution() const;
+    virtual std::string distribution() const override;
 
     /// @brief Create a spectral field
     using FunctionSpaceImpl::createField;
-    virtual Field createField( const eckit::Configuration& ) const;
-    virtual Field createField( const Field&, const eckit::Configuration& ) const;
+    virtual Field createField( const eckit::Configuration& ) const override;
+    virtual Field createField( const Field&, const eckit::Configuration& ) const override;
 
     void gather( const FieldSet&, FieldSet& ) const;
     void gather( const Field&, Field& ) const;
@@ -65,21 +66,22 @@ public:
     void norm( const Field&, std::vector<double>& norm_per_level, int rank = 0 ) const;
 
 public:  // methods
-    size_t nb_spectral_coefficients() const;
-    size_t nb_spectral_coefficients_global() const;
+    idx_t nb_spectral_coefficients() const;
+    idx_t nb_spectral_coefficients_global() const;
     int truncation() const { return truncation_; }
+
+    virtual idx_t size() const override { return nb_spectral_coefficients(); }
 
 private:  // methods
     array::DataType config_datatype( const eckit::Configuration& ) const;
     std::string config_name( const eckit::Configuration& ) const;
-    size_t config_size( const eckit::Configuration& ) const;
-    size_t config_levels( const eckit::Configuration& ) const;
+    idx_t config_size( const eckit::Configuration& ) const;
+    idx_t config_levels( const eckit::Configuration& ) const;
     void set_field_metadata( const eckit::Configuration&, Field& ) const;
-    size_t footprint() const;
+    size_t footprint() const override;
 
 private:  // data
-    size_t nb_levels_;
-
+    idx_t nb_levels_;
     int truncation_;
 
     class Parallelisation;
@@ -94,7 +96,7 @@ class Spectral : public FunctionSpace {
 public:
     Spectral( const FunctionSpace& );
     Spectral( const eckit::Configuration& );
-    Spectral( const size_t truncation, const eckit::Configuration& = util::NoConfig() );
+    Spectral( const int truncation, const eckit::Configuration& = util::NoConfig() );
     Spectral( const trans::Trans&, const eckit::Configuration& = util::NoConfig() );
 
     operator bool() const { return valid(); }
@@ -113,8 +115,8 @@ public:
     void norm( const Field&, double norm_per_level[], int rank = 0 ) const;
     void norm( const Field&, std::vector<double>& norm_per_level, int rank = 0 ) const;
 
-    size_t nb_spectral_coefficients() const;
-    size_t nb_spectral_coefficients_global() const;
+    idx_t nb_spectral_coefficients() const;
+    idx_t nb_spectral_coefficients_global() const;
     int truncation() const;
 
 private:

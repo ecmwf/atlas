@@ -14,8 +14,6 @@
 #include <sstream>
 #include <string>
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/os/BackTrace.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 
@@ -23,6 +21,7 @@
 #include "atlas/field/FieldCreatorArraySpec.h"
 #include "atlas/field/FieldCreatorIFS.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 namespace {
@@ -66,9 +65,8 @@ FieldCreatorFactory::FieldCreatorFactory( const std::string& name ) : name_( nam
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
     if ( m->find( name ) != m->end() ) {
-        std::string backtrace = eckit::BackTrace::dump();
-        throw eckit::SeriousBug( "FieldCreatorFactory [" + name + "] already registered\n\nBacktrace:\n" + backtrace,
-                                 Here() );
+        throw_Exception( "FieldCreatorFactory [" + name + "] already registered\n\nBacktrace:\n" + backtrace(),
+                         Here() );
     }
     ( *m )[name] = this;
 }
@@ -106,7 +104,7 @@ FieldCreator* FieldCreatorFactory::build( const std::string& name ) {
         Log::error() << "FieldCreatorFactories are:" << '\n';
         for ( j = m->begin(); j != m->end(); ++j )
             Log::error() << "   " << ( *j ).first << '\n';
-        throw eckit::SeriousBug( std::string( "No FieldCreatorFactory called " ) + name );
+        throw_Exception( std::string( "No FieldCreatorFactory called " ) + name );
     }
 
     return ( *j ).second->make();
@@ -126,7 +124,7 @@ FieldCreator* FieldCreatorFactory::build( const std::string& name, const eckit::
         Log::error() << "FieldCreatorFactories are:" << '\n';
         for ( j = m->begin(); j != m->end(); ++j )
             Log::error() << "   " << ( *j ).first << '\n';
-        throw eckit::SeriousBug( std::string( "No FieldCreatorFactory called " ) + name );
+        throw_Exception( std::string( "No FieldCreatorFactory called " ) + name );
     }
 
     return ( *j ).second->make( param );

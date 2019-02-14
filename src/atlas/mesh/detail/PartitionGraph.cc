@@ -10,7 +10,6 @@
 
 #include <iomanip>
 
-#include "eckit/exception/Exceptions.h"
 #include "eckit/log/Bytes.h"
 #include "eckit/types/FloatCompare.h"
 
@@ -44,23 +43,23 @@ PartitionGraph* build_partition_graph( const MeshImpl& mesh ) {
         polygon.push_back( xy( node, XX ) );
         polygon.push_back( xy( node, YY ) );
     }
-    ASSERT( polygon.size() >= 4 );
+    ATLAS_ASSERT( polygon.size() >= 4 );
 
     eckit::mpi::Buffer<double> recv_polygons( mpi_size );
     comm.allGatherv( polygon.begin(), polygon.end(), recv_polygons );
 
     using PolygonXY = std::vector<PointXY>;
     std::vector<PolygonXY> polygons( mpi_size );
-    for ( size_t p = 0; p < mpi_size; ++p ) {
-        for ( size_t j = 0; j < recv_polygons.counts[p] / 2; ++j ) {
+    for ( idx_t p = 0; p < mpi_size; ++p ) {
+        for ( idx_t j = 0; j < recv_polygons.counts[p] / 2; ++j ) {
             PointXY pxy( *( recv_polygons.begin() + recv_polygons.displs[p] + 2 * j + XX ),
                          *( recv_polygons.begin() + recv_polygons.displs[p] + 2 * j + YY ) );
             polygons[p].push_back( pxy );
         }
     }
 
-    std::map<uidx_t, std::set<size_t>> uid_2_parts;
-    size_t jpart = 0;
+    std::map<uidx_t, std::set<idx_t>> uid_2_parts;
+    idx_t jpart = 0;
     for ( const PolygonXY& _polygon : polygons ) {
         for ( const PointXY& pxy : _polygon ) {
             PointLonLat pll = pxy;
@@ -71,28 +70,28 @@ PartitionGraph* build_partition_graph( const MeshImpl& mesh ) {
         }
         ++jpart;
     }
-    std::vector<std::set<size_t>> graph( mpi_size );
+    std::vector<std::set<idx_t>> graph( mpi_size );
     for ( const auto& u2p : uid_2_parts ) {
-        const std::set<size_t>& parts = u2p.second;
-        for ( size_t jpart : parts ) {
-            for ( size_t ipart : parts ) {
+        const std::set<idx_t>& parts = u2p.second;
+        for ( idx_t jpart : parts ) {
+            for ( idx_t ipart : parts ) {
                 if ( jpart != ipart ) { graph[jpart].insert( ipart ); }
             }
         }
     }
 
-    std::vector<size_t> counts( mpi_size );
-    std::vector<size_t> displs( mpi_size );
-    size_t values_size = 0;
-    for ( size_t jpart = 0; jpart < mpi_size; ++jpart ) {
+    std::vector<idx_t> counts( mpi_size );
+    std::vector<idx_t> displs( mpi_size );
+    idx_t values_size = 0;
+    for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
         counts[jpart] = graph[jpart].size();
         displs[jpart] = values_size;
         values_size += counts[jpart];
     }
-    std::vector<size_t> values;
+    std::vector<idx_t> values;
     values.reserve( values_size );
-    for ( const std::set<size_t>& graph_node : graph ) {
-        for ( size_t v : graph_node ) {
+    for ( const std::set<idx_t>& graph_node : graph ) {
+        for ( idx_t v : graph_node ) {
             values.push_back( v );
         }
     }
@@ -102,37 +101,37 @@ PartitionGraph* build_partition_graph( const MeshImpl& mesh ) {
 
 size_t PartitionGraph::footprint() const {
     size_t size = sizeof( *this );
-    size += sizeof( size_t ) * displs_.capacity();
-    size += sizeof( size_t ) * counts_.capacity();
-    size += sizeof( size_t ) * values_.capacity();
+    size += sizeof( idx_t ) * displs_.capacity();
+    size += sizeof( idx_t ) * counts_.capacity();
+    size += sizeof( idx_t ) * values_.capacity();
     return size;
 }
 
-size_t PartitionGraph::size() const {
+idx_t PartitionGraph::size() const {
     return displs_.size();
 }
 
-PartitionGraph::Neighbours PartitionGraph::nearestNeighbours( const size_t partition ) const {
+PartitionGraph::Neighbours PartitionGraph::nearestNeighbours( const idx_t partition ) const {
     return Neighbours( values_.data() + displs_[partition], values_.data() + displs_[partition] + counts_[partition] );
 }
 
 PartitionGraph::PartitionGraph() {}
 
-PartitionGraph::PartitionGraph( size_t values[], size_t rows, size_t displs[], size_t counts[] ) {
+PartitionGraph::PartitionGraph( idx_t values[], idx_t rows, idx_t displs[], idx_t counts[] ) {
     displs_.assign( displs, displs + rows );
     counts_.assign( counts, counts + rows );
     values_.assign( values, values + displs[rows - 1] + counts[rows - 1] );
 
-    for ( size_t jpart = 0; jpart < rows; ++jpart ) {
-        for ( size_t neighbour : nearestNeighbours( jpart ) ) {
+    for ( idx_t jpart = 0; jpart < rows; ++jpart ) {
+        for ( idx_t neighbour : nearestNeighbours( jpart ) ) {
             bool found( false );
-            for ( size_t nextneighbour : nearestNeighbours( neighbour ) ) {
+            for ( idx_t nextneighbour : nearestNeighbours( neighbour ) ) {
                 if ( nextneighbour == jpart ) found = true;
             }
             if ( not found ) {
                 values_.insert( values_.begin() + displs_[neighbour] + counts_[neighbour], jpart );
                 counts_[neighbour]++;
-                for ( size_t j = neighbour + 1; j < rows; ++j ) {
+                for ( idx_t j = neighbour + 1; j < rows; ++j ) {
                     displs_[j]++;
                 }
             }
@@ -140,25 +139,25 @@ PartitionGraph::PartitionGraph( size_t values[], size_t rows, size_t displs[], s
     }
 
     maximum_nearest_neighbours_ = 0;
-    for ( size_t n : counts_ ) {
+    for ( idx_t n : counts_ ) {
         maximum_nearest_neighbours_ = std::max( n, maximum_nearest_neighbours_ );
     }
 }
 
-size_t PartitionGraph::maximumNearestNeighbours() const {
+idx_t PartitionGraph::maximumNearestNeighbours() const {
     return maximum_nearest_neighbours_;
 }
 
 void PartitionGraph::print( std::ostream& os ) const {
-    for ( size_t jpart = 0; jpart < size(); ++jpart ) {
-        Log::info() << std::setw( 3 ) << jpart << " : ";
-        for ( size_t v : nearestNeighbours( jpart ) ) {
-            Log::info() << std::setw( 3 ) << v << " ";
+    for ( idx_t jpart = 0; jpart < size(); ++jpart ) {
+        os << std::setw( 3 ) << jpart << " : ";
+        for ( idx_t v : nearestNeighbours( jpart ) ) {
+            os << std::setw( 3 ) << v << " ";
         }
-        Log::info() << '\n';
+        os << '\n';
     }
-    Log::info() << "partition graph maximum neighbours = " << maximumNearestNeighbours() << '\n';
-    Log::info() << "partition graph footprint = " << eckit::Bytes( footprint() );
+    os << "partition graph maximum neighbours = " << maximumNearestNeighbours() << '\n';
+    os << "partition graph footprint = " << eckit::Bytes( footprint() );
 }
 
 PartitionGraph::operator bool() const {

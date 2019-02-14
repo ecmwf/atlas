@@ -14,13 +14,15 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
 
@@ -37,7 +39,7 @@ namespace test {
 
 CASE( "test_functionspace_NodeColumns_no_halo" ) {
     Grid grid( "O8" );
-    Mesh mesh = meshgenerator::StructuredMeshGenerator().generate( grid );
+    Mesh mesh = StructuredMeshGenerator().generate( grid );
     functionspace::NodeColumns nodes_fs( mesh );
     Field field( nodes_fs.createField<int>() );
     array::ArrayView<int, 1> value = array::make_view<int, 1>( field );
@@ -58,15 +60,15 @@ CASE( "test_functionspace_NodeColumns_no_halo" ) {
 CASE( "test_functionspace_NodeColumns" ) {
     // ScopedPtr<grid::Grid> grid( Grid::create("O2") );
 
-    grid::ReducedGaussianGrid grid( {4, 8, 8, 4} );
+    ReducedGaussianGrid grid( {4, 8, 8, 4} );
 
-    meshgenerator::StructuredMeshGenerator generator;
+    StructuredMeshGenerator generator;
     // generator.options.set("3d",true);
     Mesh mesh = generator.generate( grid );
 
     // grid.reset();
 
-    size_t nb_levels = 10;
+    idx_t nb_levels = 10;
 
     functionspace::NodeColumns nodes_fs( mesh, option::halo( 1 ) | option::levels( nb_levels ) );
     // NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
@@ -141,7 +143,7 @@ CASE( "test_functionspace_NodeColumns" ) {
 
     Field field                  = nodes_fs.createField<int>( option::name( "partition" ) );
     array::ArrayView<int, 2> arr = array::make_view<int, 2>( field );
-    arr.assign( mpi::comm().rank() );
+    arr.assign( int( mpi::comm().rank() ) );
     // field->dump( Log::info() );
     nodes_fs.haloExchange( field );
     // field->dump( Log::info() );
@@ -149,7 +151,7 @@ CASE( "test_functionspace_NodeColumns" ) {
     Field field2 = nodes_fs.createField<int>( option::name( "partition2" ) | option::variables( 2 ) );
     Log::info() << "field2.rank() = " << field2.rank() << std::endl;
     array::ArrayView<int, 3> arr2 = array::make_view<int, 3>( field2 );
-    arr2.assign( mpi::comm().rank() );
+    arr2.assign( int( mpi::comm().rank() ) );
 
     // field2->dump( Log::info() );
     nodes_fs.haloExchange( field2 );
@@ -175,7 +177,7 @@ CASE( "test_functionspace_NodeColumns" ) {
     Log::info() << "glb_field.shape(0) = " << glb_field.shape( 0 ) << std::endl;
 
     EXPECT( glb_field.metadata().get<bool>( "global" ) == true );
-    EXPECT( glb_field.metadata().get<int>( "owner" ) == root );
+    EXPECT( glb_field.metadata().get<int>( "owner" ) == int( root ) );
 
     // glb_field->dump( Log::info() );
 
@@ -204,7 +206,7 @@ CASE( "test_functionspace_NodeColumns" ) {
         double sum;
         double mean;
         double stddev;
-        size_t N;
+        idx_t N;
         gidx_t gidx_max;
         gidx_t gidx_min;
 
@@ -259,7 +261,7 @@ CASE( "test_functionspace_NodeColumns" ) {
         std::vector<double> sum;
         std::vector<double> mean;
         std::vector<double> stddev;
-        size_t N;
+        idx_t N;
         std::vector<gidx_t> gidx_max;
         std::vector<gidx_t> gidx_min;
 
@@ -311,10 +313,10 @@ CASE( "test_functionspace_NodeColumns" ) {
         double sum;
         double mean;
         double stddev;
-        size_t N;
+        idx_t N;
         gidx_t gidx_max;
         gidx_t gidx_min;
-        size_t level;
+        idx_t level;
 
         EXPECT( field.levels() == nb_levels );
 
@@ -386,16 +388,16 @@ CASE( "test_functionspace_NodeColumns" ) {
     if ( 1 ) {
         const Field& field                  = columns_vector_field;
         const functionspace::NodeColumns fs = nodes_fs;
-        size_t nvar                         = field.variables();
+        idx_t nvar                          = field.variables();
         std::vector<double> max;
         std::vector<double> min;
         std::vector<double> sum;
         std::vector<double> mean;
         std::vector<double> stddev;
-        size_t N;
+        idx_t N;
         std::vector<gidx_t> gidx_max;
         std::vector<gidx_t> gidx_min;
-        std::vector<size_t> levels;
+        std::vector<idx_t> levels;
 
         array::ArrayView<double, 3> vec_arr = array::make_view<double, 3>( field );
         vec_arr.assign( mpi::comm().rank() + 1 );
@@ -467,9 +469,9 @@ CASE( "test_functionspace_NodeColumns" ) {
 }
 
 CASE( "test_SpectralFunctionSpace" ) {
-    size_t truncation = 159;
-    size_t nb_levels  = 10;
-    size_t nspec2g    = ( truncation + 1 ) * ( truncation + 2 );
+    idx_t truncation = 159;
+    idx_t nb_levels  = 10;
+    idx_t nspec2g    = ( truncation + 1 ) * ( truncation + 2 );
 
     Spectral spectral_fs( truncation );
 
@@ -504,10 +506,10 @@ CASE( "test_SpectralFunctionSpace" ) {
 
 CASE( "test_SpectralFunctionSpace_trans_dist" ) {
     trans::Trans trans( Grid( "F80" ), 159 );
-    size_t nb_levels( 10 );
+    idx_t nb_levels( 10 );
 
     Spectral spectral_fs( trans );
-    size_t nspec2 = spectral_fs.nb_spectral_coefficients();
+    idx_t nspec2 = spectral_fs.nb_spectral_coefficients();
 
     Field surface_scalar_field = spectral_fs.createField<double>( option::name( "scalar" ) );
 
@@ -543,11 +545,11 @@ CASE( "test_SpectralFunctionSpace_trans_dist" ) {
     // == eckit::testing::make_view(columns_scalar_shape,columns_scalar_shape+2));
 }
 CASE( "test_SpectralFunctionSpace_trans_global" ) {
-    size_t nb_levels( 10 );
-    size_t truncation = 159;
+    idx_t nb_levels( 10 );
+    idx_t truncation = 159;
 
     Spectral spectral_fs( truncation, option::levels( nb_levels ) );
-    size_t nspec2g = spectral_fs.nb_spectral_coefficients_global();
+    idx_t nspec2g = spectral_fs.nb_spectral_coefficients_global();
 
     Field surface_scalar_field =
         spectral_fs.createField<double>( option::name( "scalar" ) | option::levels( false ) | option::global() );

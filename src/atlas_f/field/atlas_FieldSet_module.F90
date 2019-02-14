@@ -1,8 +1,17 @@
+! (C) Copyright 2013 ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
 #include "atlas/atlas_f.h"
 
 module atlas_FieldSet_module
 
 use fckit_owned_object_module, only: fckit_owned_object
+use atlas_kinds_module, only : ATLAS_KIND_IDX
 
 implicit none
 
@@ -36,9 +45,12 @@ contains
   procedure, public :: has_field
   procedure, private :: field_by_name
   procedure, private :: field_by_idx_int
-  procedure, private :: field_by_idx_size_t
+  procedure, private :: field_by_idx_long
   procedure, public :: add
-  generic :: field => field_by_name, field_by_idx_int, field_by_idx_size_t
+  generic :: field => field_by_name, field_by_idx_int, field_by_idx_long
+
+  procedure, public :: set_dirty
+  procedure, public :: halo_exchange
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_FieldSet__final_auto
@@ -86,7 +98,7 @@ subroutine add(this,field)
   use atlas_Field_module, only: atlas_Field
   class(atlas_FieldSet), intent(in) :: this
   type(atlas_Field), intent(in) :: field
-  call atlas__FieldSet__add_field(this%c_ptr(), field%c_ptr())
+  call atlas__FieldSet__add_field(this%CPTR_PGIBUG_A, field%CPTR_PGIBUG_A)
 end subroutine
 
 function has_field(this,name) result(flag)
@@ -97,7 +109,7 @@ function has_field(this,name) result(flag)
   character(len=*), intent(in) :: name
   logical :: flag
   integer(c_int) :: rc
-  rc = atlas__FieldSet__has_field(this%c_ptr(), c_str(name))
+  rc = atlas__FieldSet__has_field(this%CPTR_PGIBUG_A, c_str(name))
   if( rc == 0 ) then
     flag = .False.
   else
@@ -106,11 +118,10 @@ function has_field(this,name) result(flag)
 end function
 
 function FieldSet__size(this) result(nb_fields)
-  use, intrinsic :: iso_c_binding, only: c_size_t
   use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(in) :: this
-  integer(c_size_t) :: nb_fields
-  nb_fields = atlas__FieldSet__size(this%c_ptr())
+  integer(ATLAS_KIND_IDX) :: nb_fields
+  nb_fields = atlas__FieldSet__size(this%CPTR_PGIBUG_A)
 end function
 
 function field_by_name(this,name) result(field)
@@ -120,31 +131,66 @@ function field_by_name(this,name) result(field)
   class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_name(this%c_ptr(), c_str(name) ) )
+  field = atlas_Field( atlas__FieldSet__field_by_name(this%CPTR_PGIBUG_A, c_str(name) ) )
   call field%return()
 end function
 
-function field_by_idx_size_t(this,idx) result(field)
-  use, intrinsic :: iso_c_binding, only: c_size_t
+function field_by_idx_long(this,idx) result(field)
+  use, intrinsic :: iso_c_binding, only: c_long
   use atlas_fieldset_c_binding
   use atlas_Field_module, only: atlas_Field
   class(atlas_FieldSet), intent(in) :: this
-  integer(c_size_t), intent(in) :: idx
+  integer(c_long), intent(in) :: idx
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), idx-1_c_size_t) ) ! C index
+  field = atlas_Field( atlas__FieldSet__field_by_idx(this%CPTR_PGIBUG_A, int(idx-1_c_long,ATLAS_KIND_IDX) ) ) ! C index
   call field%return()
 end function
 
 function field_by_idx_int(this,idx) result(field)
-  use, intrinsic :: iso_c_binding, only: c_size_t, c_int
+  use, intrinsic :: iso_c_binding, only: c_int
   use atlas_fieldset_c_binding
   use atlas_Field_module, only: atlas_Field
   class(atlas_FieldSet), intent(in) :: this
   integer(c_int), intent(in) :: idx
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), int(idx-1,c_size_t) ) ) ! C index
+  field = atlas_Field( atlas__FieldSet__field_by_idx(this%CPTR_PGIBUG_A, int(idx-1_c_int,ATLAS_KIND_IDX) ) ) ! C index
   call field%return()
 end function
+
+!-------------------------------------------------------------------------------
+
+subroutine halo_exchange(this,on_device)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_fieldset_c_binding
+  class(atlas_FieldSet), intent(inout) :: this
+  logical, optional :: on_device
+  integer(c_int) :: on_device_int
+  on_device_int = 0
+  if( present(on_device) ) then
+    if( on_device ) on_device_int = 1
+  endif
+  call atlas__FieldSet__halo_exchange(this%CPTR_PGIBUG_A, on_device_int)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine set_dirty(this,value)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_fieldset_c_binding
+  class(atlas_FieldSet), intent(inout) :: this
+  logical, optional, intent(in) :: value
+  integer(c_int) :: value_int
+  if( present(value) ) then
+      if( value ) then
+          value_int = 1
+      else
+          value_int = 0
+      endif
+  else
+      value_int = 1
+  endif
+  call atlas__FieldSet__set_dirty(this%CPTR_PGIBUG_A, value_int)
+end subroutine
 
 !-------------------------------------------------------------------------------
 

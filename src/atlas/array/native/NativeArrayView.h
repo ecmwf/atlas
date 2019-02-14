@@ -24,8 +24,8 @@
 ///     int[2] strides = { 3, 1 };
 ///     int[2] shape = { 3, 3 };
 ///     ArrayView<int,2> matrix( array, shape, strides );
-///     for( size_t i=0; i<matrix.shape(0); ++i ) {
-///       for( size_t j=0; j<matrix.shape(1); ++j ) {
+///     for( idx_t i=0; i<matrix.shape(0); ++i ) {
+///       for( idx_t j=0; j<matrix.shape(1); ++j ) {
 ///         matrix(i,j) *= 10;
 ///       }
 ///     }
@@ -52,6 +52,7 @@
 #include <array>
 #include <cstddef>
 #include <initializer_list>
+#include <iostream>
 #include <type_traits>
 
 #include "atlas/array/ArrayUtil.h"
@@ -125,27 +126,45 @@ public:
         return data_[index( idx... )];
     }
 
+    template <typename Int, bool EnableBool = true>
+    typename std::enable_if<( Rank == 1 && EnableBool ), const value_type&>::type operator[]( Int idx ) const {
+        check_bounds( idx );
+        return data_[idx];
+    }
+
+    template <typename Int, bool EnableBool = true>
+    typename std::enable_if<( Rank == 1 && EnableBool ), value_type&>::type operator[]( Int idx ) {
+        check_bounds( idx );
+        return data_[idx];
+    }
+
     template <unsigned int Dim>
-    size_t shape() const {
+    idx_t shape() const {
         return shape( Dim );
     }
 
     template <unsigned int Dim>
-    size_t stride() const {
+    idx_t stride() const {
         return stride( Dim );
     }
 
-    size_t size() const { return size_; }
+    idx_t size() const { return size_; }
 
-    static constexpr size_t rank() { return Rank; }
+    static constexpr idx_t rank() { return Rank; }
 
-    const size_t* strides() const { return strides_.data(); }
+    const idx_t* strides() const { return strides_.data(); }
 
-    const size_t* shape() const { return shape_.data(); }
+    const idx_t* shape() const { return shape_.data(); }
 
-    size_t shape( size_t idx ) const { return shape_[idx]; }
+    template <typename Int>
+    idx_t shape( Int idx ) const {
+        return shape_[idx];
+    }
 
-    size_t stride( size_t idx ) const { return strides_[idx]; }
+    template <typename Int>
+    idx_t stride( Int idx ) const {
+        return strides_[idx];
+    }
 
     value_type const* data() const { return data_; }
 
@@ -175,17 +194,17 @@ private:
     // -- Private methods
 
     template <int Dim, typename Int, typename... Ints>
-    constexpr int index_part( Int idx, Ints... next_idx ) const {
+    constexpr idx_t index_part( Int idx, Ints... next_idx ) const {
         return idx * strides_[Dim] + index_part<Dim + 1>( next_idx... );
     }
 
     template <int Dim, typename Int>
-    constexpr int index_part( Int last_idx ) const {
+    constexpr idx_t index_part( Int last_idx ) const {
         return last_idx * strides_[Dim];
     }
 
     template <typename... Ints>
-    constexpr int index( Ints... idx ) const {
+    constexpr idx_t index( Ints... idx ) const {
         return index_part<0>( idx... );
     }
 
@@ -197,7 +216,9 @@ private:
     }
 #else
     template <typename... Ints>
-    void check_bounds( Ints... ) const {}
+    void check_bounds( Ints... idx ) const {
+        static_assert( sizeof...( idx ) == Rank, "Expected number of indices is different from rank of array" );
+    }
 #endif
 
     template <typename... Ints>
@@ -208,13 +229,13 @@ private:
 
     template <int Dim, typename Int, typename... Ints>
     void check_bounds_part( Int idx, Ints... next_idx ) const {
-        if ( size_t( idx ) >= shape_[Dim] ) { throw_OutOfRange( "ArrayView", array_dim<Dim>(), idx, shape_[Dim] ); }
+        if ( idx_t( idx ) >= shape_[Dim] ) { throw_OutOfRange( "ArrayView", array_dim<Dim>(), idx, shape_[Dim] ); }
         check_bounds_part<Dim + 1>( next_idx... );
     }
 
     template <int Dim, typename Int>
     void check_bounds_part( Int last_idx ) const {
-        if ( size_t( last_idx ) >= shape_[Dim] ) {
+        if ( idx_t( last_idx ) >= shape_[Dim] ) {
             throw_OutOfRange( "ArrayView", array_dim<Dim>(), last_idx, shape_[Dim] );
         }
     }
@@ -222,9 +243,9 @@ private:
     // -- Private data
 
     value_type* data_;
-    size_t size_;
-    std::array<size_t, Rank> shape_;
-    std::array<size_t, Rank> strides_;
+    idx_t size_;
+    std::array<idx_t, Rank> shape_;
+    std::array<idx_t, Rank> strides_;
 };
 
 //------------------------------------------------------------------------------------------------------

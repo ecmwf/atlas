@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "eckit/memory/SharedPtr.h"
+#include <array>
+#include <vector>
 
-#include "atlas/grid/detail/spacing/Spacing.h"
-#include "atlas/util/Config.h"
+#include "atlas/util/ObjectHandle.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -21,7 +21,16 @@
 namespace eckit {
 class Parametrisation;
 }
-
+namespace atlas {
+namespace util {
+class Config;
+}
+namespace grid {
+namespace spacing {
+class Spacing;
+}
+}  // namespace grid
+}  // namespace atlas
 //---------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
@@ -29,46 +38,35 @@ namespace grid {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class Spacing {
+class Spacing : public util::ObjectHandle<atlas::grid::spacing::Spacing> {
 public:
-    using Implementation = atlas::grid::spacing::Spacing;
-    using const_iterator = Implementation::const_iterator;
-    using Interval       = Implementation::Interval;
-    using Spec           = Implementation::Spec;
+    using const_iterator = std::vector<double>::const_iterator;
+    using Interval       = std::array<double, 2>;
+    using Spec           = atlas::util::Config;
 
 public:
-    Spacing();
-    Spacing( const Spacing& );
-    Spacing( const atlas::grid::spacing::Spacing* );
+    using Handle::Handle;
+    Spacing() = default;
     Spacing( const eckit::Parametrisation& );
 
-    operator bool() const { return spacing_; }
+    size_t size() const;
 
-    operator const atlas::grid::spacing::Spacing*() { return spacing_.get(); }
+    double operator[]( size_t i ) const;
 
-    size_t size() const { return spacing_.get()->size(); }
+    const_iterator begin() const;
+    const_iterator end() const;
 
-    double operator[]( size_t i ) const { return spacing_.get()->operator[]( i ); }
+    double front() const;
+    double back() const;
 
-    const_iterator begin() const { return spacing_.get()->begin(); }
-    const_iterator end() const { return spacing_.get()->end(); }
+    Interval interval() const;
 
-    double front() const { return spacing_.get()->front(); }
-    double back() const { return spacing_.get()->back(); }
+    double min() const;
+    double max() const;
 
-    Interval interval() const { return spacing_.get()->interval(); }
+    std::string type() const;
 
-    double min() const { return spacing_.get()->min(); }
-    double max() const { return spacing_.get()->max(); }
-
-    std::string type() const { return spacing_.get()->type(); }
-
-    Spec spec() const { return spacing_.get()->spec(); }
-
-    const atlas::grid::spacing::Spacing* get() const { return spacing_.get(); }
-
-private:
-    eckit::SharedPtr<const atlas::grid::spacing::Spacing> spacing_;
+    Spec spec() const;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -78,6 +76,7 @@ public:
     using Interval = std::array<double, 2>;
 
 public:
+    using Spacing::Spacing;
     LinearSpacing( double start, double stop, long N, bool endpoint = true );
     LinearSpacing( const Interval&, long N, bool endpoint = true );
 };
@@ -86,6 +85,7 @@ public:
 
 class GaussianSpacing : public Spacing {
 public:
+    using Spacing::Spacing;
     GaussianSpacing( long N );
 };
 

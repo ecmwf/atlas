@@ -15,7 +15,7 @@
 
 #include "atlas/array.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/trans/Trans.h"
+#include "atlas/trans/detail/TransImpl.h"
 
 #define TRANSLOCAL_DGEMM2 0
 
@@ -31,6 +31,7 @@ class LinearAlgebra;
 namespace atlas {
 class Field;
 class FieldSet;
+class StructuredGrid;
 }  // namespace atlas
 
 //-----------------------------------------------------------------------------
@@ -72,7 +73,7 @@ public:
     TransLocal( const Cache&, const Grid&, const Domain&, const long truncation,
                 const eckit::Configuration& = util::NoConfig() );
 
-    virtual ~TransLocal();
+    virtual ~TransLocal() override;
 
     virtual int truncation() const override { return truncation_; }
     virtual size_t spectralCoefficients() const override { return ( truncation_ + 1 ) * ( truncation_ + 2 ); }
@@ -132,7 +133,7 @@ private:
 #else
         return jfld + nb_fields * ( jlat + nlats * ( imag + 2 * ( jm ) ) );
 #endif
-    };
+    }
 
     void invtrans_legendre( const int truncation, const int nlats, const int nb_fields, const int nb_vordiv_fields,
                             const double scalar_spectra[], double scl_fourier[],
@@ -141,8 +142,8 @@ private:
     void invtrans_fourier_regular( const int nlats, const int nlons, const int nb_fields, double scl_fourier[],
                                    double gp_fields[], const eckit::Configuration& config ) const;
 
-    void invtrans_fourier_reduced( const int nlats, const grid::StructuredGrid g, const int nb_fields,
-                                   double scl_fourier[], double gp_fields[], const eckit::Configuration& config ) const;
+    void invtrans_fourier_reduced( const int nlats, const StructuredGrid& g, const int nb_fields, double scl_fourier[],
+                                   double gp_fields[], const eckit::Configuration& config ) const;
 
     void invtrans_unstructured_precomp( const int truncation, const int nb_scalar_fields, const int nb_vordiv_fields,
                                         const double scalar_spectra[], double gp_fields[],
@@ -168,18 +169,18 @@ private:
     bool unstruct_precomp_;
     bool no_symmetry_;
     int truncation_;
-    int nlatsNH_;
-    int nlatsSH_;
-    int nlatsLeg_;
-    int nlatsLegReduced_;
-    int nlatsLegDomain_;
-    std::vector<size_t> jlonMin_;
-    int jlatMin_;
-    int jlatMinLeg_;
-    int nlonsMaxGlobal_;
-    std::vector<size_t> nlonsGlobal_;
-    std::vector<int> nlat0_;
-    int nlatsGlobal_;
+    idx_t nlatsNH_;
+    idx_t nlatsSH_;
+    idx_t nlatsLeg_;
+    idx_t nlatsLegReduced_;
+    idx_t nlatsLegDomain_;
+    std::vector<idx_t> jlonMin_;
+    idx_t jlatMin_;
+    idx_t jlatMinLeg_;
+    idx_t nlonsMaxGlobal_;
+    std::vector<idx_t> nlonsGlobal_;
+    std::vector<idx_t> nlat0_;
+    idx_t nlatsGlobal_;
     bool precompute_;
     double* legendre_;
     double* legendre_sym_;
@@ -190,15 +191,14 @@ private:
     std::vector<size_t> legendre_sym_begin_;
     std::vector<size_t> legendre_asym_begin_;
 
-
-    std::unique_ptr<detail::FFTW_Data> fftw_;
-
     Cache cache_;
     Cache export_legendre_;
     const void* legendre_cache_{nullptr};
     size_t legendre_cachesize_{0};
     const void* fft_cache_{nullptr};
     size_t fft_cachesize_{0};
+
+    std::unique_ptr<detail::FFTW_Data> fftw_;
 
     const eckit::linalg::LinearAlgebra& linalg_;
     int warning_ = 0;

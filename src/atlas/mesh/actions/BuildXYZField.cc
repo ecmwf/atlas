@@ -14,6 +14,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
 
@@ -38,11 +39,12 @@ Field& BuildXYZField::operator()( mesh::Nodes& nodes ) const {
         recompute = true;
     }
     if ( recompute ) {
+        ATLAS_TRACE( "BuildXYZField" );
         array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( nodes.lonlat() );
         array::ArrayView<double, 2> xyz    = array::make_view<double, 2>( nodes.field( name_ ) );
 
         PointXYZ p2;
-        for ( size_t n = 0; n < nodes.size(); ++n ) {
+        for ( idx_t n = 0; n < nodes.size(); ++n ) {
             const PointLonLat p1( lonlat( n, 0 ), lonlat( n, 1 ) );
             util::Earth::convertSphericalToCartesian( p1, p2 );
             xyz( n, 0 ) = p2.x();

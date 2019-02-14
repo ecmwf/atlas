@@ -13,9 +13,13 @@
 
 #pragma once
 
+#include <iosfwd>
+#include <string>
+
 #include "atlas/array/ArrayShape.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
 class Parametrisation;
@@ -23,21 +27,6 @@ class Parametrisation;
 namespace atlas {
 namespace field {
 class FieldImpl;
-}
-}  // namespace atlas
-namespace atlas {
-namespace array {
-class Array;
-}
-}  // namespace atlas
-namespace atlas {
-namespace array {
-class ArraySpec;
-}
-}  // namespace atlas
-namespace atlas {
-namespace array {
-class ArrayStrides;
 }
 }  // namespace atlas
 namespace atlas {
@@ -51,17 +40,10 @@ class FunctionSpace;
 
 namespace atlas {
 
-class Field {
+class Field : public util::ObjectHandle<field::FieldImpl> {
 public:
-    using Implementation = field::FieldImpl;
-
-private:
-    Implementation* field_{nullptr};
-
-public:
-    Field();
-    Field( const Field& );
-    Field( const Implementation* );
+    using Handle::Handle;
+    Field() = default;
 
     /// @brief Create field from parametrisation
     Field( const eckit::Parametrisation& );
@@ -82,8 +64,6 @@ public:
     template <typename DATATYPE>
     Field( const std::string& name, DATATYPE* data, const array::ArrayShape& );
 
-    ~Field();
-
     // -- Conversion
 
     /// @brief Implicit conversion to Array
@@ -93,13 +73,7 @@ public:
     const array::Array& array() const;
     array::Array& array();
 
-    bool valid() const { return field_; }
-    operator bool() const { return valid(); }
-
-    Implementation* get() { return field_; }
-    const Implementation* get() const { return field_; }
-
-    const Field& operator=( const Field& );
+    bool valid() const { return get() != nullptr; }
 
     // -- Accessors
 
@@ -122,7 +96,7 @@ public:
     /// @brief Resize field to given shape
     void resize( const array::ArrayShape& shape );
 
-    void insert( size_t idx1, size_t size1 );
+    void insert( idx_t idx1, idx_t size1 );
 
     /// @brief Shape of this field in Fortran style (reverse order of C style)
     const std::vector<int>& shapef() const;
@@ -137,19 +111,19 @@ public:
     const array::ArrayStrides& strides() const;
 
     /// @brief Shape of this field associated to index 'i'
-    size_t shape( size_t i ) const;
+    idx_t shape( idx_t i ) const;
 
     /// @brief Stride of this field associated to index 'i'
-    size_t stride( size_t i ) const;
+    idx_t stride( idx_t i ) const;
 
     /// @brief Number of values stored in this field
-    size_t size() const;
+    idx_t size() const;
 
     /// @brief Rank of field
-    size_t rank() const;
+    idx_t rank() const;
 
     /// @brief Number of bytes occupied by the values of this field
-    double bytes() const;
+    size_t bytes() const;
 
     /// @brief Output information of field
     friend std::ostream& operator<<( std::ostream& os, const Field& v );
@@ -158,18 +132,24 @@ public:
     void dump( std::ostream& os ) const;
 
     /// Metadata that is more intrinsic to the Field, and queried often
-    void set_levels( size_t n );
-    size_t levels() const;
+    void set_levels( idx_t n );
+    idx_t levels() const;
 
     /// Metadata that is more intrinsic to the Field, and queried often
-    void set_variables( size_t n );
-    size_t variables() const;
+    void set_variables( idx_t n );
+    idx_t variables() const;
 
     void set_functionspace( const FunctionSpace& functionspace );
     const FunctionSpace& functionspace() const;
 
     /// @brief Return the memory footprint of the Field
     size_t footprint() const;
+
+    bool dirty() const;
+
+    void set_dirty( bool = true ) const;
+
+    void haloExchange( bool on_device = false ) const;
 
     // -- dangerous methods
     template <typename DATATYPE>
@@ -195,6 +175,39 @@ public:
     void reactivateDeviceWriteViews() const;
     void reactivateHostWriteViews() const;
 };
+
+extern template Field::Field( const std::string&, float*, const array::ArraySpec& );
+extern template Field::Field( const std::string&, float*, const array::ArrayShape& );
+extern template Field::Field( const std::string&, double*, const array::ArraySpec& );
+extern template Field::Field( const std::string&, double*, const array::ArrayShape& );
+extern template Field::Field( const std::string&, long*, const array::ArraySpec& );
+extern template Field::Field( const std::string&, long*, const array::ArrayShape& );
+extern template Field::Field( const std::string&, int*, const array::ArraySpec& );
+extern template Field::Field( const std::string&, int*, const array::ArrayShape& );
+extern template double const* Field::data() const;
+extern template double* Field::data();
+extern template float const* Field::data() const;
+extern template float* Field::data();
+extern template long const* Field::data() const;
+extern template long* Field::data();
+extern template int const* Field::data() const;
+extern template int* Field::data();
+extern template double const* Field::host_data() const;
+extern template double* Field::host_data();
+extern template float const* Field::host_data() const;
+extern template float* Field::host_data();
+extern template long const* Field::host_data() const;
+extern template long* Field::host_data();
+extern template int const* Field::host_data() const;
+extern template int* Field::host_data();
+extern template double const* Field::device_data() const;
+extern template double* Field::device_data();
+extern template float const* Field::device_data() const;
+extern template float* Field::device_data();
+extern template long const* Field::device_data() const;
+extern template long* Field::device_data();
+extern template int const* Field::device_data() const;
+extern template int* Field::device_data();
 
 //------------------------------------------------------------------------------------------------------
 

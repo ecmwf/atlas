@@ -15,7 +15,8 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
-#include "atlas/meshgenerator/StructuredMeshGenerator.h"
+#include "atlas/meshgenerator.h"
+#include "atlas/option.h"
 #include "atlas/util/Unique.h"
 
 #include "tests/AtlasTestEnvironment.h"
@@ -30,8 +31,7 @@ namespace test {
 
 CASE( "test_accumulate_facets" ) {
     Grid grid( "O2" );
-    meshgenerator::StructuredMeshGenerator generator(
-        Config( "angle", 29.0 )( "triangulate", false )( "ghost_at_end", false ) );
+    StructuredMeshGenerator generator( Config( "angle", 29.0 )( "triangulate", false )( "ghost_at_end", false ) );
 
     Mesh mesh = generator.generate( grid );
 
@@ -41,8 +41,8 @@ CASE( "test_accumulate_facets" ) {
     // storage for edge-to-cell-connectivity shape=(nb_edges,2)
     std::vector<idx_t> edge_to_cell_data;
 
-    size_t nb_edges;
-    size_t nb_inner_edges;
+    idx_t nb_edges;
+    idx_t nb_inner_edges;
     idx_t missing_value;
 
     // Accumulate facets of cells ( edges in 2D )
@@ -242,12 +242,11 @@ CASE( "test_accumulate_facets" ) {
 CASE( "test_build_edges" ) {
     idx_t missing_value = -1;
     Grid grid( "O2" );
-    meshgenerator::StructuredMeshGenerator generator(
-        Config( "angle", 29.0 )( "triangulate", false )( "ghost_at_end", false ) );
+    StructuredMeshGenerator generator( Config( "angle", 29.0 )( "triangulate", false )( "ghost_at_end", false ) );
     Mesh mesh = generator.generate( grid );
 
     // Accumulate facets of cells ( edges in 2D )
-    mesh::actions::build_edges( mesh );
+    mesh::actions::build_edges( mesh, option::pole_edges( false ) );
 
     idx_t edge_nodes_check[] = {
         0,  21, 21, 22, 22, 1,  1,  0,  22, 23, 23, 2,  2,  1,  3,  25, 25, 26, 26, 4,  4,  3,  26, 27, 27, 5,  5,
@@ -268,7 +267,7 @@ CASE( "test_build_edges" ) {
         const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
         EXPECT( mesh.projection().units() == "degrees" );
         const util::UniqueLonLat compute_uid( mesh );
-        for ( size_t jedge = 0; jedge < mesh.edges().size(); ++jedge ) {
+        for ( idx_t jedge = 0; jedge < mesh.edges().size(); ++jedge ) {
             if ( compute_uid( edge_nodes_check[2 * jedge + 0] ) < compute_uid( edge_nodes_check[2 * jedge + 1] ) ) {
                 EXPECT( edge_nodes_check[2 * jedge + 0] == edge_node_connectivity( jedge, 0 ) );
                 EXPECT( edge_nodes_check[2 * jedge + 1] == edge_node_connectivity( jedge, 1 ) );
@@ -456,7 +455,7 @@ CASE( "test_build_edges" ) {
         const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
         const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh.edges().cell_connectivity();
         const util::UniqueLonLat compute_uid( mesh );
-        for ( size_t jedge = 0; jedge < mesh.edges().size(); ++jedge ) {
+        for ( idx_t jedge = 0; jedge < mesh.edges().size(); ++jedge ) {
             idx_t e1 = edge_to_cell_check[2 * jedge + 0];
             idx_t e2 = edge_to_cell_check[2 * jedge + 1];
             if ( e2 == edge_cell_connectivity.missing_value() ||
@@ -474,9 +473,9 @@ CASE( "test_build_edges" ) {
 
     {
         const MultiBlockConnectivity& elem_edge_connectivity = mesh.cells().edge_connectivity();
-        for ( size_t jelem = 0; jelem < mesh.cells().size(); ++jelem ) {
+        for ( idx_t jelem = 0; jelem < mesh.cells().size(); ++jelem ) {
             std::cout << jelem << " : ";
-            for ( size_t jedge = 0; jedge < elem_edge_connectivity.cols( jelem ); ++jedge ) {
+            for ( idx_t jedge = 0; jedge < elem_edge_connectivity.cols( jelem ); ++jedge ) {
                 std::cout << elem_edge_connectivity( jelem, jedge ) << "  ";
             }
             std::cout << std::endl;
@@ -486,23 +485,28 @@ CASE( "test_build_edges" ) {
 
 CASE( "test_build_edges_triangles_only" ) {
     Grid grid( "O2" );
-    meshgenerator::StructuredMeshGenerator generator(
-        Config( "angle", 29.0 )( "triangulate", false )( "ghost_at_end", false ) );
+    StructuredMeshGenerator generator( Config( "angle", 29.0 )( "triangulate", true )( "ghost_at_end", false ) );
     Mesh mesh = generator.generate( grid );
 
     // Accumulate facets of cells ( edges in 2D )
-    mesh::actions::build_edges( mesh );
+    mesh::actions::build_edges( mesh, option::pole_edges( false ) );
 
     {
         const MultiBlockConnectivity& elem_edge_connectivity = mesh.cells().edge_connectivity();
-        for ( size_t jelem = 0; jelem < mesh.cells().size(); ++jelem ) {
-            std::cout << jelem << " : ";
-            for ( size_t jedge = 0; jedge < elem_edge_connectivity.cols( jelem ); ++jedge ) {
+        const MultiBlockConnectivity& elem_node_connectivity = mesh.cells().node_connectivity();
+        for ( idx_t jelem = 0; jelem < mesh.cells().size(); ++jelem ) {
+            std::cout << jelem << " : edges (  ";
+            for ( idx_t jedge = 0; jedge < elem_edge_connectivity.cols( jelem ); ++jedge ) {
                 std::cout << elem_edge_connectivity( jelem, jedge ) << "  ";
             }
-            std::cout << std::endl;
+            std::cout << ")     |    nodes ( ";
+            for ( idx_t jnode = 0; jnode < elem_node_connectivity.cols( jelem ); ++jnode ) {
+                std::cout << elem_node_connectivity( jelem, jnode ) << "  ";
+            }
+            std::cout << ")" << std::endl;
         }
     }
+    std::cout << "( if you see all -1 entries, those are patch elements at the pole )" << std::endl;
 }
 
 //-----------------------------------------------------------------------------
