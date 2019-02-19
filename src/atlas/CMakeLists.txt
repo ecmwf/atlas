@@ -272,6 +272,8 @@ mesh/actions/BuildEdges.cc
 mesh/actions/BuildEdges.h
 mesh/actions/BuildHalo.cc
 mesh/actions/BuildHalo.h
+mesh/actions/BuildNode2CellConnectivity.cc
+mesh/actions/BuildNode2CellConnectivity.h
 mesh/actions/BuildParallelFields.cc
 mesh/actions/BuildParallelFields.h
 mesh/actions/BuildPeriodicBoundaries.cc

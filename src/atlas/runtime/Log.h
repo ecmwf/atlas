@@ -59,6 +59,11 @@ public:
 
 std::string backtrace();
 
+// Non-flushing version of std::endl
+inline std::ostream& newl( std::ostream& out ) {
+    return out << '\n';
+}
+
 }  // namespace atlas
 
 #include <sstream>

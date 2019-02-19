@@ -84,7 +84,7 @@ using eckit::types::is_approximately_equal;
 //----------------------------------------------------------------------------------------------------------------------
 
 static double ATLAS_MPI_BARRIER_TIMEOUT() {
-    static int v = eckit::Resource<double>( "${ATLAS_MPI_BARRIER_TIMEOUT", 3. );
+    static double v = eckit::Resource<double>( "${ATLAS_MPI_BARRIER_TIMEOUT", 3. );
     return v;
 }
 
@@ -107,7 +107,7 @@ struct AtlasTestEnvironment {
         eckit::Main::initialise( argc, argv );
         eckit::Main::instance().taskID( eckit::mpi::comm( "world" ).rank() );
         if ( eckit::mpi::comm( "world" ).size() != 1 ) {
-            long logtask = eckit::Resource<long>( "$ATLAS_LOG_TASK", 0 );
+            long logtask = eckit::Resource<long>( "$ATLAS_LOG_RANK", 0 );
             if ( eckit::Main::instance().taskID() != logtask ) {
                 eckit::Log::info().reset();
                 eckit::Log::warning().reset();
