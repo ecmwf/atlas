@@ -120,7 +120,7 @@ public:  // types
 
 public:  // methods
     using Handle::Handle;
-    FieldSet( );
+    FieldSet();
     FieldSet( const std::string& name );
     FieldSet( const Field& );
 

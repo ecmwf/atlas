@@ -129,7 +129,7 @@ void atlas__FieldSet__halo_exchange( FieldSetImpl* This, int on_device ) {
 
 //------------------------------------------------------------------------------------------------------
 
-FieldSet::FieldSet( ) : Handle( new Implementation( ) ) {}
+FieldSet::FieldSet() : Handle( new Implementation() ) {}
 
 FieldSet::FieldSet( const std::string& name ) : Handle( new Implementation( name ) ) {}
 

@@ -1,4 +1,5 @@
 #include "atlas/grid.h"
+#include "atlas/mesh.h"
 #include "atlas/library/Library.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
@@ -6,7 +7,7 @@
 #include "atlas/util/Point.h"
 
 using namespace atlas;
-using atlas::grid::UnstructuredGrid;
+using atlas::UnstructuredGrid;
 using atlas::output::Gmsh;
 using atlas::util::Config;
 
