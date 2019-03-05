@@ -105,7 +105,7 @@ interface atlas_Field
 #:endfor
 
 #:for rank in ranks
-#:for dtype in dtypes[:-1]  #! skip logical types
+#:for dtype in dtypes
   module procedure atlas_Field__wrap_${dtype}$_r${rank}$
   module procedure atlas_Field__wrap_name_${dtype}$_r${rank}$
 #:endfor
@@ -355,7 +355,7 @@ end function
 !-------------------------------------------------------------------------------
 
 #:for rank in ranks
-#:for dtype, ftype, ctype in types[:-1]  #! skip logical types
+#:for dtype, ftype, ctype in types
 function atlas_Field__wrap_name_${dtype}$_r${rank}$(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
@@ -366,11 +366,17 @@ function atlas_Field__wrap_name_${dtype}$_r${rank}$(name,data) result(field)
   ${ftype}$, intent(in) :: data(${dim[rank]}$)
   integer(c_int) :: shapef(${rank}$)
   integer(c_int) :: stridesf(${rank}$)
+#:if ftype != "logical"
   ${ftype}$, pointer :: data1d(:)
+  data1d => array_view1d(data)
+#:else
+  integer(c_int), pointer :: data1d(:)
+  data1d => array_view1d( data, int(0,c_int) )
+#:endif
   shapef = shape(data)
   stridesf = array_strides(data)
-  data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_${ctype}$_specf(c_str(name),data1d,size(shapef),shapef, stridesf) )
+  field = atlas_Field__cptr( &
+    atlas__Field__wrap_${ctype}$_specf( c_str(name), data1d, size(shapef), shapef, stridesf ) )
   call field%return()
 end function
 function atlas_Field__wrap_${dtype}$_r${rank}$(data) result(field)
@@ -382,12 +388,18 @@ function atlas_Field__wrap_${dtype}$_r${rank}$(data) result(field)
   ${ftype}$, intent(in) :: data(${dim[rank]}$)
   integer(c_int) :: shapef(${rank}$)
   integer(c_int) :: stridesf(${rank}$)
-  ${ftype}$, pointer :: data1d(:)
+#:if ftype != "logical"
+    ${ftype}$, pointer :: data1d(:)
+    data1d => array_view1d(data)
+#:else
+    integer(c_int), pointer :: data1d(:)
+    data1d => array_view1d( data, int(0,c_int) )
+#:endif
   shapef = shape(data)
   stridesf = array_strides(data)
-  data1d => array_view1d(data)
-  field = atlas_Field__cptr( atlas__Field__wrap_${ctype}$_specf(c_str(""),data1d,size(shapef),shapef, stridesf) )
-  call field%return()
+  field = atlas_Field__cptr( &
+    atlas__Field__wrap_${ctype}$_specf( c_str(""),data1d,size(shapef),shapef, stridesf) )
+call field%return()
 end function
 #:endfor
 #:endfor

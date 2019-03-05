@@ -66,7 +66,7 @@ implicit none
   do j=1,N
     data(1,1,j) = j
   enddo
-  
+
   call field%final()
   ! ... until here
 
@@ -119,7 +119,65 @@ implicit none
   enddo
 
   call field%final()
+END_TEST
 
+! -----------------------------------------------------------------------------
+
+TEST( test_field_wrap_logical)
+implicit none
+
+  logical, allocatable :: existing_data(:,:,:)
+  logical, pointer :: data(:,:,:)
+  type(atlas_Field) :: field
+  integer(c_int) :: Ni=1
+  integer(c_int) :: Nj=1
+  integer(c_int) :: Nk=6
+  integer(c_int) :: i,j,k
+  write(0,*) "test_field_wrap_logical"
+  allocate( existing_data(Ni,Nj,Nk) )
+
+  do i=1,Ni
+    do j=1,Nj
+      do k=1,Nk
+        existing_data(i,j,k) = (mod(k,2) == 0 )
+      enddo
+    enddo
+  enddo
+
+  ! Work with fields from here
+  field = atlas_Field("wrapped",existing_data)
+
+  FCTEST_CHECK_EQUAL( field%rank()   , 3  )
+
+  FCTEST_CHECK_EQUAL( field%size()   , Ni*Nj*Nk )
+  FCTEST_CHECK_EQUAL( field%shape(1) , Ni  )
+  FCTEST_CHECK_EQUAL( field%shape(2) , Nj )
+  FCTEST_CHECK_EQUAL( field%shape(3) , Nk  )
+
+  FCTEST_CHECK_EQUAL( field%owners() , 1  )
+
+  call field%data(data)
+
+  do i=1,Ni
+    do j=1,Nj
+      do k=1,Nk
+        FCTEST_CHECK_EQUAL( data(i,j,k), (mod(k,2) == 0) )
+        data(i,j,k) = (mod(k,3) == 0 )
+      enddo
+    enddo
+  enddo
+
+  call field%final()
+  ! ... until here
+
+  ! Existing data is not deleted
+  do i=1,Ni
+    do j=1,Nj
+      do k=1,Nk
+        FCTEST_CHECK_EQUAL( data(i,j,k), (mod(k,3) == 0) )
+      enddo
+    enddo
+  enddo
 END_TEST
 
 ! -----------------------------------------------------------------------------
