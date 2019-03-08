@@ -20,7 +20,7 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAVE_CUDA AND ENABLE_TESTS AND HA
     LIBS atlas_f
     LINKER_LANGUAGE Fortran
   )
-  target_link_libraries( atlas_test_unified_memory_with_openacc ${ACC_Fortran_FLAGS} )
+  target_link_libraries( atlas_test_unified_memory_with_openacc ${ACC_Fortran_FLAGS} gridtools::storage )
 
 
   add_fctest( 

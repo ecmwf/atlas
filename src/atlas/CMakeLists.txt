@@ -639,38 +639,65 @@ ecbuild_add_library( TARGET atlas
 
   AUTO_VERSION
 
-  LINKER_LANGUAGE CXX
-
   INSTALL_HEADERS ALL
 
-  HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
+  HEADER_DESTINATION  include/atlas
 
   SOURCES
     ${source_list}
-
-  PRIVATE_INCLUDES
-    "${CGAL_INCLUDE_DIRS}"
-    "${TRANSI_INCLUDE_DIRS}"
-
-  PUBLIC_INCLUDES "${FFTW_INCLUDES}"
-
-  LIBS
-    eckit_geometry
-    eckit_linalg
-    eckit_mpi
-    eckit_option
-    "${CGAL_LIBRARIES}"
-    "${TRANSI_LIBRARIES}"
-    "${FCKIT_LIBRARIES}"
-    "${FFTW_LIBRARIES}"
-  DEFINITIONS
-    ${ATLAS_DEFINITIONS}
 )
 
+if( ATLAS_HAVE_FORTRAN )
+  target_link_libraries( atlas PUBLIC fckit )
+endif()
+
+if( ATLAS_HAVE_TRANS )
+  target_link_libraries( atlas PUBLIC transi )
+endif()
+
+if( eckit_VERSION )
+    set( eckit_link_public PUBLIC )
+else()
+    set( eckit_link_public PRIVATE )
+endif()
+
+target_link_libraries( atlas ${eckit_link_public}
+  eckit
+  eckit_geometry
+  eckit_linalg
+  eckit_mpi
+  eckit_option
+)
+if( ECKIT_INCLUDE_DIRS )
+    target_include_directories( atlas PRIVATE ${ECKIT_INCLUDE_DIRS} )
+endif()
+
+target_include_directories( atlas PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>
+    $<INSTALL_INTERFACE:include>
+)
+
+
+
+if( ATLAS_HAVE_TESSELATION )
+  target_link_libraries( atlas PRIVATE ${CGAL_LIBRARIES} )
+  target_include_directories( atlas PRIVATE ${CGAL_INCLUDE_DIRS} )
+endif()
+
+if( ATLAS_HAVE_FFTW )
+  target_link_libraries( atlas PRIVATE ${FFTW_LIBRARIES} )
+  target_include_directories( atlas PRIVATE ${FFTW_INCLUDES} )
+endif()
+
+if( ATLAS_HAVE_OMP_CXX )
+  target_link_libraries( atlas PUBLIC OpenMP::OpenMP_CXX )
+endif()
+
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
-  target_link_libraries( atlas gridtools::storage )
+  target_link_libraries( atlas PUBLIC gridtools::storage )
 endif()
 
 if( ATLAS_HAVE_ACC )
-  target_link_libraries( atlas atlas_acc_support )
+  target_link_libraries( atlas PRIVATE atlas_acc_support )
 endif()

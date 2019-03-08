@@ -86,18 +86,24 @@ if( NOT ECKIT_HAVE_MPI )
   ecbuild_warn("ecKit has been compiled without MPI. This causes Atlas to not be able to run parallel jobs.")
 endif()
 
-
 ### OMP ...
-
-ecbuild_add_option( FEATURE OMP
-                    DESCRIPTION "Support for OpenMP threaded parallelism"
-                    REQUIRED_PACKAGES "OMP COMPONENTS CXX ${Fortran}" )
-
-if( HAVE_OMP )
-  ecbuild_enable_omp()
+if( "${CMAKE_VERSION}" VERSION_LESS "3.11" )
+  if( ENABLE_OMP )
+    ecbuild_warn( "OpenMP only supported with CMake 3.11 onwards" )
+  endif()
 else()
-  ecbuild_enable_ompstubs()
+  find_package( OpenMP COMPONENTS CXX ${Fortran} )
 endif()
+ecbuild_add_option( FEATURE OMP
+                    DESCRIPTION "support for OpenMP shared memory parallelism"
+                    CONDITION OpenMP_Fortran_FOUND OR OpenMP_CXX_FOUND )
+ecbuild_add_option( FEATURE OMP_Fortran
+                    DESCRIPTION "support for Fortran OpenMP shared memory parallelism"
+                    CONDITION HAVE_OMP AND OpenMP_Fortran_FOUND )
+
+ecbuild_add_option( FEATURE OMP_CXX
+                    DESCRIPTION "support for CXX OpenMP shared memory parallelism"
+                    CONDITION HAVE_OMP AND OpenMP_CXX_FOUND )
 
 ### FFTW ...
 
@@ -254,7 +260,6 @@ ecbuild_debug_var( ATLAS_EXTRA_LIBRARIES )
 ################################################################################
 # sources
 
-include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
 include(CompileFlags)
 add_subdirectory( src )
 
@@ -305,8 +310,8 @@ ecbuild_add_resources(
 
 if( ATLAS_HAVE_FORTRAN AND ECBUILD_INSTALL_FORTRAN_MODULES )
     install( DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}
-    DESTINATION module/atlas
-    COMPONENT modules )
+             DESTINATION module/atlas
+             COMPONENT modules )
 endif()
 
 ecbuild_install_project( NAME Atlas )

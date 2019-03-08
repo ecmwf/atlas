@@ -18,7 +18,7 @@
 #define CGAL_FOUND
 #endif
 
-#define ATLAS_HAVE_OMP                       @ATLAS_HAVE_OMP@
+#define ATLAS_HAVE_OMP                       @ATLAS_HAVE_OMP_CXX@
 #define ATLAS_HAVE_ACC                       @ATLAS_HAVE_ACC@
 #define ATLAS_HAVE_TESSELATION               @ATLAS_HAVE_TESSELATION@
 #define ATLAS_HAVE_FORTRAN                   @ATLAS_HAVE_FORTRAN@
