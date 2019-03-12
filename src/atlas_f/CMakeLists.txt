@@ -94,7 +94,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/FieldSet.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/FunctionSpaceInterface.h
     MODULE atlas_functionspace_c_binding
     OUTPUT functionspace_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/SpectralInterface.h
     MODULE    atlas_functionspace_Spectral_c_binding
     OUTPUT    functionspace_Spectral_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/StructuredColumnsInterface.h

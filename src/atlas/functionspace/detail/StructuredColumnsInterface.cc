@@ -54,6 +54,17 @@ const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__g
     return new detail::StructuredColumns( Grid( grid ), grid::Distribution( dist ), *vert, *config );
 }
 
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_part(
+    const Grid::Implementation* grid, const PartitionerImpl* partitioner, const eckit::Configuration* config ) {
+    return new detail::StructuredColumns( Grid( grid ), grid::Partitioner( partitioner ), *config );
+}
+
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_part_vert(
+    const Grid::Implementation* grid, const PartitionerImpl* partitioner, const Vertical* vert,
+    const eckit::Configuration* config ) {
+    return new detail::StructuredColumns( Grid( grid ), *vert, grid::Partitioner( partitioner ), *config );
+}
+
 void atlas__functionspace__StructuredColumns__gather( const detail::StructuredColumns* This,
                                                       const field::FieldImpl* local, field::FieldImpl* global ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_functionspace_StructuredColumns" );
@@ -160,6 +171,11 @@ idx_t atlas__fs__StructuredColumns__size( const detail::StructuredColumns* This 
 idx_t atlas__fs__StructuredColumns__sizeOwned( const detail::StructuredColumns* This ) {
     return This->sizeOwned();
 }
+
+idx_t atlas__fs__StructuredColumns__levels( const detail::StructuredColumns* This ) {
+    return This->levels();
+}
+
 }
 
 // ----------------------------------------------------------------------------

@@ -238,9 +238,7 @@ private:
 
 
 const parallel::GatherScatter& StructuredColumns::gather() const {
-    if ( gather_scatter_ ) {
-        return *gather_scatter_;
-    }
+    if ( gather_scatter_ ) { return *gather_scatter_; }
     gather_scatter_ = StructuredColumnsGatherScatterCache::instance().get_or_create( *this );
     return *gather_scatter_;
 }

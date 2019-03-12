@@ -350,6 +350,8 @@ functionspace/detail/FunctionSpaceInterface.h
 functionspace/detail/FunctionSpaceInterface.cc
 functionspace/detail/NodeColumnsInterface.h
 functionspace/detail/NodeColumnsInterface.cc
+functionspace/detail/SpectralInterface.h
+functionspace/detail/SpectralInterface.cc
 functionspace/detail/StructuredColumnsInterface.h
 functionspace/detail/StructuredColumnsInterface.cc
 )

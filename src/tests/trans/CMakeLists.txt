@@ -13,6 +13,8 @@ if( HAVE_FCTEST )
       LINKER_LANGUAGE Fortran
       SOURCES         fctest_trans.F90
       LIBS            atlas_f
+      CONDITION       ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
+      MPI             4
     )
   endif()
 

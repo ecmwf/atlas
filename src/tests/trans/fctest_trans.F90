@@ -17,6 +17,7 @@ use fckit_module
 use iso_c_binding
 implicit none
 character(len=1024) :: msg
+type(fckit_mpi_comm) :: mpi
 end module fctest_atlas_trans_fixture
 
 ! -----------------------------------------------------------------------------
@@ -27,13 +28,17 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_trans,fctest_atlas_trans_fixture)
 
 TESTSUITE_INIT
   call fckit_main%init()
+  mpi = fckit_mpi_comm()
+  if( mpi%rank() /= 0 ) then
+    call fckit_log%reset()
+  endif
   call atlas_library%initialise()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-  write(0,*) "FINALIZE"
+  write(msg,*) "TESTSUITE_FINALIZE"; call fckit_log%info(msg)
   call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
@@ -81,7 +86,6 @@ TEST( test_trans )
   trans = atlas_Trans(grid,truncation)
   FCTEST_CHECK_EQUAL( grid%owners(), 3 ) ! trans tracks grid
 
-  FCTEST_CHECK_EQUAL( trans%nb_gridpoints(), int(grid%size()) )
   FCTEST_CHECK_EQUAL( trans%nb_gridpoints_global(), int(grid%size()) )
 
   trans_grid = trans%grid()
@@ -89,34 +93,34 @@ TEST( test_trans )
 
   FCTEST_CHECK( .not. trans%is_null() )
   FCTEST_CHECK_EQUAL( trans%truncation(), truncation )
-  FCTEST_CHECK_EQUAL( trans%nb_spectral_coefficients(), (truncation+1)*(truncation+2) )
+  FCTEST_CHECK_EQUAL( trans%nb_spectral_coefficients_global(), (truncation+1)*(truncation+2) )
 
   nodes = mesh%nodes()
   nodes_fs = atlas_functionspace_NodeColumns(mesh,0)
 
-  write(0,*) "nodes_fs%owners()",nodes_fs%owners()
+  write(msg,*) "nodes_fs%owners()",nodes_fs%owners(); call fckit_log%info(msg)
 
   scalarfield1 = nodes_fs%create_field(name="scalar1",kind=atlas_real(c_double),levels=nlev)
-  write(0,*) "nodes_fs%owners()",nodes_fs%owners()
+  write(msg,*) "nodes_fs%owners()",nodes_fs%owners(); call fckit_log%info(msg)
 
   scalarfield2 = nodes_fs%create_field(name="scalar2",kind=atlas_real(c_double))
-  write(0,*) "nodes_fs%owners()",nodes_fs%owners()
+  write(msg,*) "nodes_fs%owners()",nodes_fs%owners(); call fckit_log%info(msg)
 
   spectral_fs = atlas_functionspace_Spectral(trans)
-  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+  write(msg,*) "spectral_fs%owners()",spectral_fs%owners(); call fckit_log%info(msg)
 
   spectralfield1 = spectral_fs%create_field(name="spectral1",kind=atlas_real(c_double),levels=nlev)
-  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+  write(msg,*) "spectral_fs%owners()",spectral_fs%owners(); call fckit_log%info(msg)
 
   spectralfield2 = spectral_fs%create_field(name="spectral2",kind=atlas_real(c_double))
-  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+  write(msg,*) "spectral_fs%owners()",spectral_fs%owners(); call fckit_log%info(msg)
 
   call scalarfield1%data(scal1)
   call scalarfield2%data(scal2)
   call spectralfield1%data(spec1)
   call spectralfield2%data(spec2)
 
-  write(0,*) "shape = ", spectralfield2%shape()
+  write(msg,*) "shape = ", spectralfield2%shape(); call fckit_log%info(msg)
 
   ! All waves to zero except wave 1 to 3
   spec1(1:nlev,:) = 0
@@ -163,15 +167,15 @@ TEST( test_trans )
   windfield = nodes_fs%create_field(name="wind",kind=atlas_real(c_double),levels=nlev,variables=3)
   call windfield%data(wind)
   wind(:,:,:) = 0._c_double
-  write(0,*) "nodes_fs%owners()",nodes_fs%owners()
+  write(msg,*) "nodes_fs%owners()",nodes_fs%owners(); call fckit_log%info(msg)
 
   vorfield = spectral_fs%create_field(name="vorticity",kind=atlas_real(c_double),levels=nlev)
-  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+  write(msg,*) "spectral_fs%owners()",spectral_fs%owners()
 
   call vorfield%data(vor)
 
   divfield =  spectral_fs%create_field(name="divergence",kind=atlas_real(c_double),levels=nlev)
-  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+  write(msg,*) "spectral_fs%owners()",spectral_fs%owners(); call fckit_log%info(msg)
 
   call divfield%data(div)
 
@@ -183,25 +187,25 @@ TEST( test_trans )
   call spectral_fs%gather(vorfield,glb_vorfield)
   call spectral_fs%scatter(glb_vorfield,vorfield)
 
-  write(0,*) "cleaning up"
-  write(0,*) "nodes_fs%owners()",nodes_fs%owners()
-  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+  write(msg,*) "cleaning up"; call fckit_log%info(msg)
+  write(msg,*) "nodes_fs%owners()",nodes_fs%owners(); call fckit_log%info(msg)
+  write(msg,*) "spectral_fs%owners()",spectral_fs%owners(); call fckit_log%info(msg)
 
   call scalarfield1%final()
   call scalarfield2%final()
   call spectralfield1%final()
-  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+  write(msg,*) "spectral_fs%owners()",spectral_fs%owners(); call fckit_log%info(msg)
   call spectralfield2%final()
-  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+  write(msg,*) "spectral_fs%owners()",spectral_fs%owners(); call fckit_log%info(msg)
   call windfield%final()
   call vorfield%final()
   call divfield%final()
   call glb_vorfield%final()
 
-  write(0,*) "nodes_fs%owners()",nodes_fs%owners()
+  write(msg,*) "nodes_fs%owners()",nodes_fs%owners(); call fckit_log%info(msg)
   call nodes_fs%final()
 
-  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+  write(msg,*) "spectral_fs%owners()",spectral_fs%owners(); call fckit_log%info(msg)
   call spectral_fs%final()
 
   call scalarfields%final()
@@ -216,6 +220,7 @@ END_TEST
 TEST( test_trans_nomesh )
   type(atlas_StructuredGrid) :: grid
   type(atlas_Trans) :: trans
+  type(atlas_Partitioner) :: partitioner
   type(atlas_functionspace_StructuredColumns) :: gridpoints_fs
   type(atlas_functionspace_Spectral) :: spectral_fs
   type(atlas_Field)         :: scalarfield1, scalarfield2
@@ -235,7 +240,8 @@ TEST( test_trans_nomesh )
   grid = atlas_StructuredGrid("O24")
   trans = atlas_Trans(grid,truncation)
 
-  gridpoints_fs = atlas_functionspace_StructuredColumns(grid)
+  partitioner = atlas_Partitioner(type="ifs")
+  gridpoints_fs = atlas_functionspace_StructuredColumns(grid,partitioner)
   scalarfield1 = gridpoints_fs%create_field(name="scalar1",kind=atlas_real(c_double),levels=nlev)
   scalarfield2 = gridpoints_fs%create_field(name="scalar2",kind=atlas_real(c_double))
 
@@ -292,7 +298,7 @@ TEST( test_trans_nomesh )
   FCTEST_CHECK_CLOSE( spec2(4), 0._c_double, tol )
   FCTEST_CHECK_CLOSE( spec2(5), 0._c_double, tol )
 
-  write(0,*) "cleaning up"
+  write(msg,*) "cleaning up"; call fckit_log%info(msg)
 
   call scalarfield1%final()
   call scalarfield2%final()
@@ -308,6 +314,7 @@ END_TEST
 
 TEST( test_transdwarf )
 type(atlas_StructuredGrid) :: grid
+type(atlas_Partitioner) :: partitioner
 type(atlas_Trans) :: trans
 type(atlas_functionspace_StructuredColumns) :: gridpoints
 type(atlas_functionspace_Spectral) :: spectral
@@ -320,7 +327,8 @@ real(c_double), pointer :: gvar(:)
 
 grid = atlas_StructuredGrid("O24")
 trans = atlas_Trans(grid,23)
-gridpoints = atlas_functionspace_StructuredColumns(grid)
+partitioner = atlas_Partitioner("ifs")
+gridpoints = atlas_functionspace_StructuredColumns(grid,partitioner)
 spectral = atlas_functionspace_Spectral(trans)
 
 gpfields = atlas_FieldSet("gridpoint")
@@ -367,22 +375,88 @@ END_TEST
 
 TEST( test_spectral_only )
 type(atlas_functionspace_Spectral) :: spectral
-type(atlas_Field) :: field
-integer :: jfld, nfld
+type(atlas_Field) :: field, fieldg
+integer :: jfld, nfld, T
 character(len=10) :: fieldname
 real(c_double) :: norm
+integer, parameter :: RE=0
+integer, parameter :: IM=1
+integer :: jm, jn, n, m, jc
+real(c_double), pointer :: sp(:,:)
+integer, pointer :: nmyms(:), nvalue(:), nasm0(:)
 
-spectral = atlas_functionspace_Spectral(truncation=159,levels=10)
 
-field = spectral%create_field(atlas_real(c_double))
-FCTEST_CHECK_EQUAL(field%rank(), 2)
-FCTEST_CHECK_EQUAL(field%shape(1), 10)
+spectral = atlas_functionspace_Spectral(truncation=21,levels=10)
+T = spectral%truncation()
+nfld = spectral%levels()
 
 field = spectral%create_field(kind=atlas_real(c_double),levels=0)
 FCTEST_CHECK_EQUAL(field%rank(), 1)
 
+field = spectral%create_field(atlas_real(c_double))
+FCTEST_CHECK_EQUAL(field%rank(), 2)
+FCTEST_CHECK_EQUAL(field%shape(1), nfld)
+
+! Initialise distributed field, plus checks
+    call field%data(sp)
+    nmyms  => spectral%nmyms()
+    nvalue => spectral%nvalue()
+    nasm0  => spectral%nasm0()
+    jc = 1
+    do jm=1,spectral%nump()
+      m = nmyms(jm)
+      FCTEST_CHECK_EQUAL( nasm0(m), jc )
+      do jn=0,T-m
+        n = m + jn
+        FCTEST_CHECK( jc <= spectral%nb_spectral_coefficients() - 1 )
+        FCTEST_CHECK_EQUAL( nvalue(jc), n )
+        do jfld=1,nfld
+          sp(jfld,jc+RE) = sp_value(m,n,RE)
+          sp(jfld,jc+IM) = sp_value(m,n,IM)
+        enddo
+        jc = jc+2
+      enddo
+    enddo
+
+fieldg = spectral%create_field(atlas_real(c_double),global=.true.)
+call spectral%gather(field,fieldg)
+
+! Check global field (gathered matches distributed field)
+    call fieldg%data(sp)
+    T = spectral%truncation()
+    if( mpi%rank() == 0 ) then
+        write(0,*) spectral%nb_spectral_coefficients_global()
+        jc = 1
+        do m=0,T
+          do n=m,T
+            FCTEST_CHECK( jc <= spectral%nb_spectral_coefficients_global() - 1 )
+            do jfld=1,nfld
+              FCTEST_CHECK_EQUAL( sp(jfld,jc+RE), sp_value(m,n,RE) )
+              FCTEST_CHECK_EQUAL( sp(jfld,jc+IM), sp_value(m,n,IM) )
+            enddo
+            jc = jc+2
+          enddo
+        enddo
+    endif
+
 call field%final()
 call spectral%final()
+
+contains
+function sp_value(m,n,complex_component)
+  real(c_double) :: sp_value
+  integer :: m, n, complex_component
+  if( complex_component == RE ) then
+    sp_value = m*T+n
+  else
+    if( m == 0 ) then
+      sp_value = 0
+    else
+      sp_value = -m*T+n
+    endif
+  endif
+end function
+
 END_TEST
 
 

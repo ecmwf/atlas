@@ -102,6 +102,9 @@ public:
 
 extern "C" {
 Partitioner::Implementation* atlas__grid__Partitioner__new( const Partitioner::Config* config );
+
+Partitioner::Implementation* atlas__grid__Partitioner__new_type( const char* type );
+
 Partitioner::Implementation* atlas__grid__MatchingMeshPartitioner__new( const mesh::detail::MeshImpl* mesh,
                                                                         const Partitioner::Config* config );
 void atlas__grid__Partitioner__delete( Partitioner::Implementation* This );

@@ -270,7 +270,6 @@ CASE( "test_functionspace_StructuredColumns_halo checks without output" ) {
     config.set( "levels", 10 );
     config.set( "periodic_points", true );
     functionspace::StructuredColumns fs( grid, grid::Partitioner( "equal_regions" ), config );
-    auto for_ij = fs.for_ij();
 
     Field field = fs.createField<long>( option::name( "field" ) );
 
@@ -287,12 +286,19 @@ CASE( "test_functionspace_StructuredColumns_halo checks without output" ) {
     }
 
     ATLAS_TRACE_SCOPE( "control each value " )
-    for_ij( [=]( idx_t i, idx_t j ) {
-        idx_t n = fs.index( i, j );
-        for ( idx_t k = 0; k < fs.levels(); ++k ) {
-            EXPECT( value( n, k ) == util::microdeg( xy( n, XX ) ) );
-        }
-    } );
+    fs.parallel_for( [&]( idx_t n, idx_t k ) { EXPECT( value( n, k ) == util::microdeg( xy( n, XX ) ) ); } );
+    fs.parallel_for(
+        [&]( idx_t n, idx_t i, idx_t j, idx_t k ) { EXPECT( value( n, k ) == util::microdeg( grid.x( i, j ) ) ); } );
+
+    Field fieldg = fs.createField( field, option::global() );
+    fs.gather( field, fieldg );
+
+    ATLAS_TRACE_SCOPE( "control_global" ) {
+        auto valueg = array::make_view<long, 2>( fieldg );
+        fs.parallel_for( option::global(), [&]( idx_t n, idx_t i, idx_t j, idx_t k ) {
+            EXPECT( valueg( n, k ) == util::microdeg( grid.x( i, j ) ) );
+        } );
+    }
 }
 
 //-----------------------------------------------------------------------------

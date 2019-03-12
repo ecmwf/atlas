@@ -54,6 +54,7 @@ END TYPE atlas_Partitioner
 
 interface atlas_Partitioner
   module procedure atlas_Partitioner__ctor
+  module procedure atlas_Partitioner__ctor_type
 end interface
 
 interface atlas_MatchingMeshPartitioner
@@ -72,6 +73,17 @@ function atlas_Partitioner__ctor( config ) result(this)
   type(atlas_Partitioner) :: this
   type(atlas_Config) :: config
   call this%reset_c_ptr( atlas__grid__Partitioner__new( config%CPTR_PGIBUG_B ) )
+  call this%return()
+end function
+
+function atlas_Partitioner__ctor_type( type ) result(this)
+  use atlas_config_module, only : atlas_Config
+  use atlas_partitioner_c_binding
+  use fckit_C_interop_module, only : c_str
+  type(atlas_Partitioner) :: this
+  character(len=*), intent(in) :: type
+  !--------------------------------------
+  call this%reset_c_ptr( atlas__grid__Partitioner__new_type( c_str(type) ) )
   call this%return()
 end function
 

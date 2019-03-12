@@ -18,6 +18,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Config.h"
+#include "atlas/option.h"
 
 namespace atlas {
 namespace grid {
@@ -90,6 +91,18 @@ detail::partitioner::Partitioner* atlas__grid__Partitioner__new( const Partition
     p->detach();
     return p;
 }
+
+detail::partitioner::Partitioner* atlas__grid__Partitioner__new_type( const char* type ) {
+    detail::partitioner::Partitioner* p;
+    {
+        Partitioner partitioner{ option::type(type) };
+        p = const_cast<detail::partitioner::Partitioner*>( partitioner.get() );
+        p->attach();
+    }
+    p->detach();
+    return p;
+}
+
 
 detail::partitioner::Partitioner* atlas__grid__MatchingMeshPartitioner__new( const Mesh::Implementation* mesh,
                                                                              const Partitioner::Config* config ) {
