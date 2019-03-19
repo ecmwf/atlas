@@ -112,7 +112,7 @@ public:
 
     std::vector<GridPoint> set;
     bool insert( idx_t i, idx_t j ) {
-        idx_t r = set.size();
+        idx_t r = static_cast<idx_t>( set.size() );
         set.emplace_back( i, j, r );
         return true;
     }
@@ -127,9 +127,8 @@ public:
 
 }  // namespace
 
-class StructuredColumnsHaloExchangeCache : public util::Cache<std::string, parallel::HaloExchange>
-//        , public mesh::detail::MeshObserver
-{
+class StructuredColumnsHaloExchangeCache : public util::Cache<std::string, parallel::HaloExchange>,
+                                           public grid::detail::grid::GridObserver {
 private:
     using Base = util::Cache<std::string, parallel::HaloExchange>;
     StructuredColumnsHaloExchangeCache() : Base( "StructuredColumnsHaloExchangeCache" ) {}
@@ -139,34 +138,34 @@ public:
         static StructuredColumnsHaloExchangeCache inst;
         return inst;
     }
-    util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& grid ) {
-        creator_type creator = std::bind( &StructuredColumnsHaloExchangeCache::create, &grid );
-        return Base::get_or_create( key( grid ), creator );
+    util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& funcspace ) {
+        creator_type creator = std::bind( &StructuredColumnsHaloExchangeCache::create, &funcspace );
+        return Base::get_or_create( key( *funcspace.grid().get() ), creator );
     }
-    virtual void onGridDestruction( detail::StructuredColumns& grid ) { remove( key( grid ) ); }
+    virtual void onGridDestruction( grid::detail::grid::Grid& grid ) { remove( key( grid ) ); }
 
 private:
-    static Base::key_type key( const detail::StructuredColumns& grid ) {
+    static Base::key_type key( const grid::detail::grid::Grid& grid ) {
         std::ostringstream key;
         key << "grid[address=" << &grid << "]";
         return key.str();
     }
 
-    static value_type* create( const detail::StructuredColumns* grid ) {
-        //mesh.get()->attachObserver( instance() );
+    static value_type* create( const detail::StructuredColumns* funcspace ) {
+        funcspace->grid().get()->attachObserver( instance() );
 
         value_type* value = new value_type();
 
-        value->setup( array::make_view<int, 1>( grid->partition() ).data(),
-                      array::make_view<idx_t, 1>( grid->remote_index() ).data(), REMOTE_IDX_BASE, grid->sizeHalo() );
+        value->setup( array::make_view<int, 1>( funcspace->partition() ).data(),
+                      array::make_view<idx_t, 1>( funcspace->remote_index() ).data(), REMOTE_IDX_BASE,
+                      funcspace->sizeHalo() );
         return value;
     }
     virtual ~StructuredColumnsHaloExchangeCache() {}
 };
 
-class StructuredColumnsGatherScatterCache : public util::Cache<std::string, parallel::GatherScatter>
-//        , public mesh::detail::MeshObserver
-{
+class StructuredColumnsGatherScatterCache : public util::Cache<std::string, parallel::GatherScatter>,
+                                            public grid::detail::grid::GridObserver {
 private:
     using Base = util::Cache<std::string, parallel::GatherScatter>;
     StructuredColumnsGatherScatterCache() : Base( "StructuredColumnsGatherScatterCache" ) {}
@@ -176,35 +175,34 @@ public:
         static StructuredColumnsGatherScatterCache inst;
         return inst;
     }
-    util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& grid ) {
-        creator_type creator = std::bind( &StructuredColumnsGatherScatterCache::create, &grid );
-        return Base::get_or_create( key( grid ), creator );
+    util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& funcspace ) {
+        creator_type creator = std::bind( &StructuredColumnsGatherScatterCache::create, &funcspace );
+        return Base::get_or_create( key( *funcspace.grid().get() ), creator );
     }
-    virtual void onGridDestruction( detail::StructuredColumns& grid ) { remove( key( grid ) ); }
+    virtual void onGridDestruction( grid::detail::grid::Grid& grid ) { remove( key( grid ) ); }
 
 private:
-    static Base::key_type key( const detail::StructuredColumns& grid ) {
+    static Base::key_type key( const grid::detail::grid::Grid& grid ) {
         std::ostringstream key;
         key << "grid[address=" << &grid << "]";
         return key.str();
     }
 
-    static value_type* create( const detail::StructuredColumns* grid ) {
-        //mesh.get()->attachObserver( instance() );
+    static value_type* create( const detail::StructuredColumns* funcspace ) {
+        funcspace->grid().get()->attachObserver( instance() );
 
         value_type* value = new value_type();
 
-        value->setup( array::make_view<int, 1>( grid->partition() ).data(),
-                      array::make_view<idx_t, 1>( grid->remote_index() ).data(), REMOTE_IDX_BASE,
-                      array::make_view<gidx_t, 1>( grid->global_index() ).data(), grid->sizeOwned() );
+        value->setup( array::make_view<int, 1>( funcspace->partition() ).data(),
+                      array::make_view<idx_t, 1>( funcspace->remote_index() ).data(), REMOTE_IDX_BASE,
+                      array::make_view<gidx_t, 1>( funcspace->global_index() ).data(), funcspace->sizeOwned() );
         return value;
     }
     virtual ~StructuredColumnsGatherScatterCache() {}
 };
 
-class StructuredColumnsChecksumCache : public util::Cache<std::string, parallel::Checksum>
-//        , public mesh::detail::MeshObserver
-{
+class StructuredColumnsChecksumCache : public util::Cache<std::string, parallel::Checksum>,
+                                       public grid::detail::grid::GridObserver {
 private:
     using Base = util::Cache<std::string, parallel::Checksum>;
     StructuredColumnsChecksumCache() : Base( "StructuredColumnsChecksumCache" ) {}
@@ -214,24 +212,24 @@ public:
         static StructuredColumnsChecksumCache inst;
         return inst;
     }
-    util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& grid ) {
-        creator_type creator = std::bind( &StructuredColumnsChecksumCache::create, &grid );
-        return Base::get_or_create( key( grid ), creator );
+    util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& funcspace ) {
+        creator_type creator = std::bind( &StructuredColumnsChecksumCache::create, &funcspace );
+        return Base::get_or_create( key( *funcspace.grid().get() ), creator );
     }
-    //virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) { remove( key( mesh ) ); }
+    virtual void onGridDestruction( grid::detail::grid::Grid& grid ) { remove( key( grid ) ); }
 
 private:
-    static Base::key_type key( const detail::StructuredColumns& grid ) {
+    static Base::key_type key( const grid::detail::grid::Grid& grid ) {
         std::ostringstream key;
-        key << "mesh[address=" << &grid << "]";
+        key << "grid[address=" << &grid << "]";
         return key.str();
     }
 
-    static value_type* create( const detail::StructuredColumns* grid ) {
-        //mesh.get()->attachObserver( instance() );
+    static value_type* create( const detail::StructuredColumns* funcspace ) {
+        funcspace->grid().get()->attachObserver( instance() );
         value_type* value = new value_type();
         util::ObjectHandle<parallel::GatherScatter> gather(
-            StructuredColumnsGatherScatterCache::instance().get_or_create( *grid ) );
+            StructuredColumnsGatherScatterCache::instance().get_or_create( *funcspace ) );
         value->setup( gather );
         return value;
     }
@@ -240,7 +238,9 @@ private:
 
 
 const parallel::GatherScatter& StructuredColumns::gather() const {
-    if ( gather_scatter_ ) return *gather_scatter_;
+    if ( gather_scatter_ ) {
+        return *gather_scatter_;
+    }
     gather_scatter_ = StructuredColumnsGatherScatterCache::instance().get_or_create( *this );
     return *gather_scatter_;
 }
