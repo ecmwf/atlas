@@ -1,0 +1,56 @@
+######################################################################################
+#                                                                                    #
+# valgrind suppression file                                                          #
+#                                                                                    #
+#  usage: valgrind --suppressions=<path-to-this-file> --leak-check=full <executable> #
+#                                                                                    #
+######################################################################################
+
+##############################################
+#                openmpi                     #
+##############################################
+{
+   "MPI_Init use of uninitialised value"
+   Memcheck:Cond
+   ...
+   fun:PMPI_Init
+}
+{
+   "MPI_Init memory leak"
+   Memcheck:Leak
+   ...
+   fun:PMPI_Init
+}
+{
+   "MPI_Cart_create memory leak"
+    Memcheck:Leak
+   ...
+   fun:PMPI_Cart_create
+}
+{
+   "MPI memory leak"
+   Memcheck:Leak
+   ...
+   fun:progress_engine
+   fun:start_thread
+   fun:clone
+}
+{
+   "MPI_Comm_create memory leak"
+   Memcheck:Leak
+   ...
+   fun:PMPI_Comm_create
+}
+{
+   "MPI_Group_incl memory leak"
+   Memcheck:Leak
+   ...
+   fun:PMPI_Group_incl
+}
+{
+   "MPI_Cart_sub memory leak"
+   Memcheck:Leak
+   ...
+   fun:PMPI_Cart_sub
+}
+
