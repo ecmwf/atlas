@@ -41,9 +41,9 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/log/Bytes.h"
-#include "eckit/utils/Tokenizer.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/runtime/Tool.h"
+#include "eckit/utils/Tokenizer.h"
 
 //------------------------------------------------------------------------------
 

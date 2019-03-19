@@ -23,8 +23,8 @@
 #include "eckit/log/Bytes.h"
 #include "eckit/log/Log.h"
 #include "eckit/parser/JSON.h"
-#include "eckit/utils/Tokenizer.h"
 #include "eckit/runtime/Main.h"
+#include "eckit/utils/Tokenizer.h"
 
 #include "atlas/grid.h"
 #include "atlas/grid/detail/grid/GridFactory.h"

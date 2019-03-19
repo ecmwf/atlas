@@ -13,9 +13,9 @@
 #include <regex.h>
 #include <iomanip>
 
-#include "eckit/utils/Tokenizer.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
+#include "eckit/utils/Tokenizer.h"
 #include "eckit/utils/Translator.h"
 
 #include "atlas/grid/detail/grid/GridFactory.h"
