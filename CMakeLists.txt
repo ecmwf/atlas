@@ -50,7 +50,7 @@ if( ATLAS_HAVE_FORTRAN )
 
   if( FCKIT_HAVE_ECKIT )
 
-    ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module )
+    ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/module )
     set( Fortran Fortran )
 
     if( ENABLE_TESTS )
@@ -304,7 +304,9 @@ ecbuild_add_resources(
 )
 
 if( ATLAS_HAVE_FORTRAN AND ECBUILD_INSTALL_FORTRAN_MODULES )
-    install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR} DESTINATION ${INSTALL_INCLUDE_DIR} )
+    install( DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}
+    DESTINATION module/atlas
+    COMPONENT modules )
 endif()
 
 ecbuild_install_project( NAME Atlas )
