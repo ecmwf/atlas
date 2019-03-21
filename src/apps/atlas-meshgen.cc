@@ -43,7 +43,6 @@
 #include "eckit/log/Bytes.h"
 #include "eckit/runtime/Main.h"
 #include "eckit/runtime/Tool.h"
-#include "eckit/utils/Tokenizer.h"
 
 //------------------------------------------------------------------------------
 
