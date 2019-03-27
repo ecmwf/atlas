@@ -62,6 +62,7 @@ function atlas_Interpolation__cptr(cptr) result(this)
   type(atlas_Interpolation) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )
+  call this%return()
 end function
 
 function atlas_Interpolation__config_funcspace(config,source,target) result(this)

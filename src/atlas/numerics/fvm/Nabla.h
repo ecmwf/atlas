@@ -12,6 +12,7 @@
 
 #include <vector>
 
+#include "atlas/library/config.h"
 #include "atlas/numerics/Nabla.h"
 
 namespace atlas {
@@ -48,7 +49,7 @@ private:
 
 private:
     fvm::Method const* fvm_;
-    std::vector<size_t> pole_edges_;
+    std::vector<idx_t> pole_edges_;
 };
 
 // ------------------------------------------------------------------
