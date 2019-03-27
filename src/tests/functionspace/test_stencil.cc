@@ -11,7 +11,6 @@
 #include <algorithm>
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Vector.h"
-#include "eckit/memory/ScopedPtr.h"
 #include "eckit/types/Types.h"
 
 #include "atlas/array.h"

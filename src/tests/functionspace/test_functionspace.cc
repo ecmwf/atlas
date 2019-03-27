@@ -8,7 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/memory/ScopedPtr.h"
 #include "eckit/types/Types.h"
 
 #include "atlas/array/ArrayView.h"
@@ -58,7 +57,6 @@ CASE( "test_functionspace_NodeColumns_no_halo" ) {
 }
 
 CASE( "test_functionspace_NodeColumns" ) {
-    // ScopedPtr<grid::Grid> grid( Grid::create("O2") );
 
     ReducedGaussianGrid grid( {4, 8, 8, 4} );
 

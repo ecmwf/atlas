@@ -9,7 +9,6 @@
  */
 
 #include "eckit/log/Bytes.h"
-#include "eckit/memory/ScopedPtr.h"
 #include "eckit/types/Types.h"
 
 #include "atlas/array/ArrayView.h"

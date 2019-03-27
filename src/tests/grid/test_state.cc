@@ -11,7 +11,6 @@
 #include <cmath>
 #include <string>
 
-#include "eckit/memory/ScopedPtr.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/JSONParser.h"
 
