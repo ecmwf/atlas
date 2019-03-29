@@ -40,6 +40,8 @@ contains
   procedure, public :: divergence => atlas_Nabla__divergence
   procedure, public :: curl => atlas_Nabla__curl
   procedure, public :: laplacian => atlas_Nabla__laplacian
+  
+  procedure, public :: functionspace => atlas_Nabla__functionspace
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_Nabla__final_auto
@@ -117,6 +119,15 @@ subroutine atlas_Nabla__laplacian(this,scalar,lapl)
   class(atlas_Field), intent(inout) :: lapl
   call atlas__Nabla__laplacian(this%CPTR_PGIBUG_A,scalar%CPTR_PGIBUG_A,lapl%CPTR_PGIBUG_A)
 end subroutine
+
+function atlas_Nabla__functionspace(this) result(functionspace)
+  use atlas_Nabla_c_binding
+  use atlas_Functionspace_module, only : atlas_FunctionSpace
+  type(atlas_FunctionSpace) :: functionspace
+  class(atlas_Nabla), intent(in) :: this
+  call functionspace%reset_c_ptr( atlas__Nabla__functionspace(this%CPTR_PGIBUG_A) )
+  call functionspace%return()
+end function
 
 !-------------------------------------------------------------------------------
 

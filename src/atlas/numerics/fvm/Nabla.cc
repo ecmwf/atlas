@@ -42,7 +42,7 @@ Nabla::Nabla( const numerics::Method& method, const eckit::Parametrisation& p ) 
     if ( !fvm_ ) throw_Exception( "atlas::numerics::fvm::Nabla needs a atlas::numerics::fvm::Method", Here() );
     Log::debug() << "Nabla constructed for method " << fvm_->name() << " with "
                  << fvm_->node_columns().nb_nodes_global() << " nodes total" << std::endl;
-
+    fvm_->attach();
     setup();
 }
 
@@ -427,6 +427,10 @@ void Nabla::laplacian( const Field& scalar, Field& lapl ) const {
     gradient( scalar, grad );
     if ( fvm_->node_columns().halo().size() < 2 ) fvm_->node_columns().haloExchange( grad );
     divergence( grad, lapl );
+}
+
+const FunctionSpace& Nabla::functionspace() const {
+    return fvm_->node_columns();
 }
 
 }  // namespace fvm

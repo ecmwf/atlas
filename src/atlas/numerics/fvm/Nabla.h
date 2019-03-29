@@ -34,12 +34,14 @@ namespace fvm {
 class Nabla : public atlas::numerics::NablaImpl {
 public:
     Nabla( const atlas::numerics::Method&, const eckit::Parametrisation& );
-    virtual ~Nabla();
+    virtual ~Nabla() override;
 
-    void gradient( const Field& scalar, Field& grad ) const;
-    void divergence( const Field& vector, Field& div ) const;
-    void curl( const Field& vector, Field& curl ) const;
-    void laplacian( const Field& scalar, Field& laplacian ) const;
+    virtual void gradient( const Field& scalar, Field& grad ) const override;
+    virtual void divergence( const Field& vector, Field& div ) const override;
+    virtual void curl( const Field& vector, Field& curl ) const override;
+    virtual void laplacian( const Field& scalar, Field& laplacian ) const override;
+    
+    virtual const FunctionSpace& functionspace() const override;
 
 private:
     void setup();

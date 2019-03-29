@@ -27,9 +27,13 @@ namespace atlas {
 namespace field {
 class FieldImpl;
 }
+namespace functionspace {
+class FunctionSpaceImpl;
+}
 }  // namespace atlas
 namespace atlas {
 class Field;
+class FunctionSpace;
 }
 
 namespace atlas {
@@ -44,6 +48,10 @@ public:
     virtual void divergence( const Field& vector, Field& div ) const      = 0;
     virtual void curl( const Field& vector, Field& curl ) const           = 0;
     virtual void laplacian( const Field& scalar, Field& laplacian ) const = 0;
+    
+    virtual const FunctionSpace& functionspace() const = 0;
+private:
+    util::ObjectHandle<Method> method_;
 };
 
 // ------------------------------------------------------------------
@@ -114,6 +122,8 @@ void atlas__Nabla__divergence( const Nabla::Implementation* This, const field::F
 void atlas__Nabla__curl( const Nabla::Implementation* This, const field::FieldImpl* vector, field::FieldImpl* curl );
 void atlas__Nabla__laplacian( const Nabla::Implementation* This, const field::FieldImpl* scalar,
                               field::FieldImpl* laplacian );
+const functionspace::FunctionSpaceImpl* atlas__Nabla__functionspace( const Nabla::Implementation* This );
+
 }
 
 }  // namespace numerics
