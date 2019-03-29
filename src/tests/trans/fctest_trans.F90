@@ -343,7 +343,9 @@ do jfld=1,nfld
   ! ...
   FCTEST_CHECK_EQUAL( fieldg%rank(), 1 )
   call fieldg%data(gvar)
-  gvar(:) = 0.
+  if( mpi%rank() == 0 ) then
+    gvar(:) = 0.
+  endif
 
   call gridpoints%scatter(fieldg,field)
 
