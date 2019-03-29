@@ -11,6 +11,7 @@
 module atlas_Vertical_module
 
 use fckit_shared_object_module, only : fckit_shared_object, fckit_c_deleter, fckit_c_nodeleter
+use atlas_field_module, only : atlas_Field
 
 use, intrinsic :: iso_c_binding, only : c_ptr, c_double
 
@@ -41,6 +42,9 @@ TYPE, extends(fckit_shared_object) :: atlas_Vertical
 
 !------------------------------------------------------------------------------
 contains
+  procedure, public :: z
+  procedure, public :: size => vsize
+
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_Vertical__final_auto
 #endif
@@ -57,6 +61,7 @@ private :: c_ptr, c_double
 private :: fckit_shared_object
 private :: fckit_c_deleter
 private :: fckit_c_nodeleter
+private :: atlas_Field
 
 !========================================================
 contains
@@ -90,6 +95,26 @@ function atlas_Vertical__ctor_from_array( levels ) result(this)
   call this%reset_c_ptr( atlas__Vertical__new(nb_levels, levels), &
     & fckit_c_deleter(atlas__Vertical__delete) )
   call this%return()
+end function
+
+! ----------------------------------------------------------------------------------------
+
+function z( this )
+  use atlas_vertical_c_binding
+  type(atlas_Field) :: z
+  class(atlas_Vertical), intent(in) :: this
+  z = atlas_Field( atlas__Vertical__z( this%CPTR_PGIBUG_B ) )
+  call z%return()
+end function
+
+! ----------------------------------------------------------------------------------------
+
+function vsize( this )
+  use atlas_vertical_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int
+  integer(c_int) :: vsize
+  class(atlas_Vertical), intent(in) :: this
+  vsize = atlas__Vertical__size( this%CPTR_PGIBUG_B )
 end function
 
 ! ----------------------------------------------------------------------------------------

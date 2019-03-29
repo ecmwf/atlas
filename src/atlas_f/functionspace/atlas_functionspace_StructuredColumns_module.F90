@@ -85,6 +85,8 @@ contains
 
   procedure :: xy
     !! Return xy coordinate field
+  procedure :: z
+    !! Return z coordinate field
   procedure :: partition
     !! Return partition field
   procedure :: global_index
@@ -93,6 +95,8 @@ contains
     !! Return index_i field
   procedure :: index_j
     !! Return index_j field
+
+  procedure :: grid
 
   procedure, private :: set_index
 
@@ -196,6 +200,25 @@ function ctor_grid_dist_levels(grid, distribution, levels, halo) result(this)
   call this%return()
 end function
 
+function ctor_grid_dist_vertical(grid, distribution, vertical, halo) result(this)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_functionspace_StructuredColumns) :: this
+  class(atlas_Grid), intent(in) :: grid
+  type(atlas_griddistribution), intent(in) :: distribution
+  integer, optional :: halo
+  type(atlas_Vertical) :: vertical
+  type(atlas_Config) :: config
+  config = empty_config() ! Due to PGI compiler bug, we have to do this insted of "config = atlas_Config()""
+  if( present(halo) )   call config%set("halo",halo)
+  call config%set("levels",vertical%size())
+  call this%reset_c_ptr( atlas__functionspace__StructuredColumns__new__grid_dist_vert( &
+      & grid%CPTR_PGIBUG_A, distribution%CPTR_PGIBUG_A, vertical%CPTR_PGIBUG_B, &
+      & config%CPTR_PGIBUG_B ) )
+  call this%set_index()
+  call config%final()
+  call this%return()
+end function
+
 function ctor_grid_part(grid, partitioner, halo, levels) result(this)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_functionspace_StructuredColumns) :: this
@@ -233,6 +256,25 @@ function ctor_grid_part_levels(grid, partitioner, levels, halo) result(this)
   call this%set_index()
   call config%final()
   call vertical%final()
+  call this%return()
+end function
+
+function ctor_grid_part_vertical(grid, partitioner, vertical, halo) result(this)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_functionspace_StructuredColumns) :: this
+  class(atlas_Grid), intent(in) :: grid
+  type(atlas_Partitioner), intent(in) :: partitioner
+  integer, optional :: halo
+  type(atlas_Vertical) :: vertical
+  type(atlas_Config) :: config
+  config = empty_config() ! Due to PGI compiler bug, we have to do this insted of "config = atlas_Config()""
+  if( present(halo) )   call config%set("halo",halo)
+  call config%set("levels",vertical%size())
+  call this%reset_c_ptr( atlas__functionspace__StructuredColumns__new__grid_part_vert( &
+      & grid%CPTR_PGIBUG_A, partitioner%CPTR_PGIBUG_A, vertical%CPTR_PGIBUG_B, &
+      & config%CPTR_PGIBUG_B ) )
+  call this%set_index()
+  call config%final()
   call this%return()
 end function
 
@@ -391,6 +433,15 @@ function xy(this) result(field)
   call field%return()
 end function
 
+function z(this) result(field)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  field = atlas_Field( atlas__fs__StructuredColumns__z(this%CPTR_PGIBUG_A) )
+  call field%return()
+end function
+
+
 function partition(this) result(field)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_Field) :: field
@@ -421,6 +472,14 @@ function index_j(this) result(field)
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   field = atlas_Field( atlas__fs__StructuredColumns__index_j(this%CPTR_PGIBUG_A) )
   call field%return()
+end function
+
+function grid(this)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_Grid) :: grid
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  grid = atlas_Grid( atlas__fs__StructuredColumns__grid(this%CPTR_PGIBUG_A) )
+  call grid%return()
 end function
 
 !-------------------------------------------------------------------------------

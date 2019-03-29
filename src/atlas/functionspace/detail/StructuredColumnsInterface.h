@@ -95,10 +95,14 @@ idx_t atlas__fs__StructuredColumns__i_end_halo( const detail::StructuredColumns*
 idx_t atlas__fs__StructuredColumns__levels( const detail::StructuredColumns* This );
 
 field::FieldImpl* atlas__fs__StructuredColumns__xy( const detail::StructuredColumns* This );
+field::FieldImpl* atlas__fs__StructuredColumns__z( const detail::StructuredColumns* This );
 field::FieldImpl* atlas__fs__StructuredColumns__partition( const detail::StructuredColumns* This );
 field::FieldImpl* atlas__fs__StructuredColumns__global_index( const detail::StructuredColumns* This );
 field::FieldImpl* atlas__fs__StructuredColumns__index_i( const detail::StructuredColumns* This );
 field::FieldImpl* atlas__fs__StructuredColumns__index_j( const detail::StructuredColumns* This );
+
+const GridImpl* atlas__fs__StructuredColumns__grid( const detail::StructuredColumns* This );
+
 }
 
 }  // namespace functionspace

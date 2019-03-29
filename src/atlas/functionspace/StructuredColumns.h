@@ -133,6 +133,7 @@ public:
     }
 
     Field xy() const { return field_xy_; }
+    Field z() const { return vertical().z(); }
     Field partition() const { return field_partition_; }
     Field global_index() const { return field_global_index_; }
     Field remote_index() const {

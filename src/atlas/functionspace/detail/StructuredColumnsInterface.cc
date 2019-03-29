@@ -148,6 +148,18 @@ field::FieldImpl* atlas__fs__StructuredColumns__xy( const detail::StructuredColu
     return This->xy().get();
 }
 
+field::FieldImpl* atlas__fs__StructuredColumns__z( const detail::StructuredColumns* This ) {
+    ATLAS_ASSERT( This != nullptr );
+    field::FieldImpl* field;
+    {
+        Field f = This->z();
+        field   = f.get();
+        field->attach();
+    }
+    field->detach();
+    return field;
+}
+
 field::FieldImpl* atlas__fs__StructuredColumns__partition( const detail::StructuredColumns* This ) {
     return This->partition().get();
 }
@@ -176,7 +188,13 @@ idx_t atlas__fs__StructuredColumns__levels( const detail::StructuredColumns* Thi
     return This->levels();
 }
 
+const GridImpl *atlas__fs__StructuredColumns__grid(const detail::StructuredColumns *This)
+{
+    return This->grid().get();
 }
+
+}
+
 
 // ----------------------------------------------------------------------------
 
