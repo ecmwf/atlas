@@ -45,13 +45,13 @@ ecbuild_add_executable(
 ecbuild_add_executable(
   TARGET      atlas-benchmark
   SOURCES     atlas-benchmark.cc
-  LIBS        atlas
+  LIBS        atlas ${OMP_CXX}
 )
 
 ecbuild_add_executable(
   TARGET      atlas-numerics-nabla
   SOURCES     atlas-numerics-nabla.F90
-  LIBS        atlas_f
+  LIBS        atlas_f ${OMP_Fortran}
   LINKER_LANGUAGE Fortran
   CONDITION   HAVE_FORTRAN )
 

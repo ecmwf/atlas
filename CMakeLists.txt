@@ -104,6 +104,12 @@ ecbuild_add_option( FEATURE OMP_Fortran
 ecbuild_add_option( FEATURE OMP_CXX
                     DESCRIPTION "support for CXX OpenMP shared memory parallelism"
                     CONDITION HAVE_OMP AND OpenMP_CXX_FOUND )
+if( TARGET OpenMP::OpenMP_CXX )
+  set( OMP_CXX OpenMP::OpenMP_CXX )
+endif()
+if( TARGET OpenMP::OpenMP_Fortran )
+  set( OMP_Fortran OpenMP::OpenMP_Fortran )
+endif()
 
 ### FFTW ...
 
