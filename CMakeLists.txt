@@ -44,7 +44,7 @@ ecbuild_find_python()
 
 ecbuild_add_option( FEATURE FORTRAN
                     DESCRIPTION "Provide Fortran bindings"
-                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.6" )
+                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.6.2" )
 
 if( ATLAS_HAVE_FORTRAN )
 
@@ -121,7 +121,7 @@ ecbuild_add_option( FEATURE FFTW
 
 ecbuild_add_option( FEATURE TRANS
                     DESCRIPTION "Support for spectral transforms"
-                    REQUIRED_PACKAGES "PROJECT transi VERSION 0.4.1 QUIET" )
+                    REQUIRED_PACKAGES "PROJECT transi VERSION 0.4.4 QUIET" )
 
 ### tesselation ...
 
@@ -238,36 +238,22 @@ ecbuild_add_option( FEATURE SANDBOX
                     DEFAULT OFF
                     DESCRIPTION "Build the sandbox stuff" )
 
-################################################################################
-# export package info
-
-set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
-
-list( APPEND ATLAS_LIBRARIES  atlas )
-
-if( ATLAS_HAVE_FORTRAN )
-  list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
-  set( ATLAS_LIBRARIES atlas_f ${ATLAS_LIBRARIES} )
-endif()
-
-get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
-
-foreach( _tpl ${ATLAS_TPLS} )
-  string( TOUPPER ${_tpl} TPL )
-  list( APPEND ATLAS_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS}  ${${TPL}_TPL_DEFINITIONS}  )
-  list( APPEND ATLAS_EXTRA_INCLUDE_DIRS  ${${TPL}_INCLUDE_DIRS} ${${TPL}_TPL_INCLUDE_DIRS} )
-  list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
-endforeach()
-
-ecbuild_debug_var( ATLAS_EXTRA_INCLUDE_DIRS )
-ecbuild_debug_var( ATLAS_EXTRA_LIBRARIES )
-
 
 ################################################################################
 # sources
 
+set( MIR_NEEDS_TRANSI TRUE CACHE BOOL "Deprecated" INTERNAL )
+
 include(CompileFlags)
 add_subdirectory( src )
+
+################################################################################
+# export package info
+
+if( TARGET atlas_f )
+  list( APPEND ATLAS_LIBRARIES atlas_f )
+endif()
+list( APPEND ATLAS_LIBRARIES  atlas )
 
 ################################################################################
 # pkg-config
@@ -321,6 +307,60 @@ if( ATLAS_HAVE_FORTRAN AND ECBUILD_INSTALL_FORTRAN_MODULES )
     install( DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}
              DESTINATION module/atlas
              COMPONENT modules )
+endif()
+
+macro( filter_tpl _tpl )
+  string( TOUPPER ${_tpl} _TPL )
+  unset( ${_tpl}_INCLUDE_DIRS )
+  unset( ${_TPL}_INCLUDE_DIRS )
+  unset( ${_tpl}_INCLUDE_DIR )
+  unset( ${_TPL}_INCLUDE_DIR )
+  unset( ${_tpl}_LIBRARIES )
+  unset( ${_TPL}_LIBRARIES )
+  unset( ${_tpl}_LIBRARY )
+  unset( ${_TPL}_LIBRARY )
+  if( ${_tpl}_INCLUDE_DIRS )
+    unset( ${_tpl}_INCLUDE_DIRS CACHE )
+  endif()
+  if( ${_TPL}_INCLUDE_DIRS )
+    unset( ${_TPL}_INCLUDE_DIRS CACHE )
+  endif()
+  if( ${_tpl}_INCLUDE_DIR )
+    unset( ${_tpl}_INCLUDE_DIR CACHE )
+  endif()
+  if( ${_TPL}_INCLUDE_DIR )
+    unset( ${_TPL}_INCLUDE_DIR CACHE )
+  endif()
+  if( ${_tpl}_LIBRARIES )
+    unset( ${_tpl}_LIBRARIES CACHE )
+  endif()
+  if( ${_TPL}_LIBRARIES )
+    unset( ${_TPL}_LIBRARIES CACHE )
+  endif()
+  if( ${_tpl}_LIBRARY )
+    unset( ${_tpl}_LIBRARY CACHE )
+  endif()
+  if( ${_TPL}_LIBRARY )
+    unset( ${_TPL}_LIBRARY CACHE )
+  endif()
+endmacro()
+filter_tpl( fckit )
+filter_tpl( CGAL )
+filter_tpl( FFTW )
+filter_tpl( Eigen3 )
+if( (NOT MIR_NEEDS_TRANSI) OR NOT( TRANSI_VERSION VERSION_LESS 0.6 ) )
+  filter_tpl( transi )
+endif()
+get_target_property( eckit_intf_incl_dirs eckit INTERFACE_INCLUDE_DIRECTORIES )
+set( eckit_can_be_filtered FALSE )
+foreach( eckit_intf_incl_dir ${eckit_intf_incl_dirs} )
+  string(FIND ${eckit_intf_incl_dir} "eckit" _found )
+  if( NOT( _found EQUAL "-1" ) )
+    set( eckit_can_be_filtered TRUE )
+  endif()
+endforeach()
+if( eckit_can_be_filtered )
+  filter_tpl(eckit)
 endif()
 
 ecbuild_install_project( NAME Atlas )

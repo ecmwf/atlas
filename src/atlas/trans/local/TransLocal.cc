@@ -37,7 +37,7 @@
 
 #include "atlas/library/defines.h"
 #if ATLAS_HAVE_FFTW
-#include <fftw3.h>
+#include "fftw3.h"
 #endif
 
 // move latitudes at the poles to the following latitude:

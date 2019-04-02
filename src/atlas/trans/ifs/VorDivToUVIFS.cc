@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "transi/trans.h"
+
 #include "atlas/trans/ifs/VorDivToUVIFS.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/parallel/mpi/mpi.h"

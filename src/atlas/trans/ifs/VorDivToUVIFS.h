@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include "transi/trans.h"
-
 #include "atlas/trans/VorDivToUV.h"
 
 //-----------------------------------------------------------------------------

@@ -648,11 +648,20 @@ ecbuild_add_library( TARGET atlas
 )
 
 if( ATLAS_HAVE_FORTRAN )
-  target_link_libraries( atlas PUBLIC fckit )
+  target_link_libraries( atlas PRIVATE fckit )
 endif()
 
 if( ATLAS_HAVE_TRANS )
-  target_link_libraries( atlas PUBLIC transi )
+  if( TRANSI_VERSION VERSION_LESS 0.6 )
+    target_link_libraries( atlas PRIVATE transi )
+    target_include_directories( atlas PRIVATE ${TRANSI_INCLUDE_DIRS} )
+  else()
+    if( MIR_NEEDS_TRANSI )
+      target_link_libraries( atlas PUBLIC transi ) # Can become private when MIR doesn't use transi_version()
+    else()
+      target_link_libraries( atlas PRIVATE transi )
+    endif()
+  endif()
 endif()
 
 if( eckit_VERSION )
@@ -690,6 +699,10 @@ if( ATLAS_HAVE_FFTW )
   target_include_directories( atlas PRIVATE ${FFTW_INCLUDES} )
 endif()
 
+if( ATLAS_HAVE_EIGEN AND EIGEN3_INCLUDE_DIR )
+  target_include_directories( atlas PUBLIC ${EIGEN3_INCLUDE_DIR} )
+endif()
+
 if( ATLAS_HAVE_OMP_CXX )
   target_link_libraries( atlas PRIVATE OpenMP::OpenMP_CXX )
 endif()
@@ -701,3 +714,4 @@ endif()
 if( ATLAS_HAVE_ACC )
   target_link_libraries( atlas PRIVATE atlas_acc_support )
 endif()
+

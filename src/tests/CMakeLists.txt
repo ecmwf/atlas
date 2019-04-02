@@ -72,8 +72,13 @@ macro( atlas_add_cuda_test )
 endmacro()
 
 if( ECKIT_INCLUDE_DIRS ) # eckit not yet ported to CMake3
-    include_directories( ${ECKIT_INCLUDE_DIRS} )
+  include_directories( ${ECKIT_INCLUDE_DIRS} )
 endif()
+
+if( TRANSI_VERSION VERSION_LESS 0.6 )# transi not yet ported to CMake3
+  include_directories( ${TRANSI_INCLUDE_DIRS} )
+endif()
+
 add_subdirectory( acc )
 add_subdirectory( array )
 add_subdirectory( util )

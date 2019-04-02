@@ -37,6 +37,7 @@
 #include "tests/AtlasTestEnvironment.h"
 
 #if ATLAS_HAVE_TRANS
+#include "transi/trans.h"
 #include "atlas/trans/ifs/TransIFS.h"
 #include "atlas/trans/ifs/TransIFSNodeColumns.h"
 #include "atlas/trans/ifs/TransIFSStructuredColumns.h"
