@@ -14,10 +14,6 @@
 #ifndef atlas_library_defines_h
 #define atlas_library_defines_h
 
-#if @CGAL_FOUND@
-#define CGAL_FOUND
-#endif
-
 #define ATLAS_HAVE_OMP                       @ATLAS_HAVE_OMP_CXX@
 #define ATLAS_HAVE_ACC                       @ATLAS_HAVE_ACC@
 #define ATLAS_HAVE_TESSELATION               @ATLAS_HAVE_TESSELATION@

@@ -6,12 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-if( CGAL_FOUND )
-  set( CGAL_FOUND 1 )
-else()
-  set( CGAL_FOUND 0 )
-endif()
-
 if( ATLAS_HAVE_OMP_CXX )
   set( ATLAS_HAVE_OMP_CXX 1 )
 else()
