@@ -53,6 +53,8 @@ Optional dependencies:
 - gridtools-storage --- For GPU interoperability
 - transi --- For enabling IFS spherical harmonics transforms ( not open-source )
 - CGAL --- For enabling Delaunay triangulation of unstructured grids
+- Eigen3 -- For certain linear algebra operations
+- FFTW -- For enabling inverse spherical harmonics transforms (TransLocal)
 
 Installation
 ------------
@@ -83,6 +85,8 @@ TRANSI_PATH              # Path to transi prefix
 # For finding CGAL
 BOOST_ROOT               # Path to Boost prefix
 CGAL_DIR                 # Path to directory containing CGALConfig.cmake
+Eigen3_DIR               # Path to directory containing Eigen3Config.cmake
+FFTW_PATH                # Path to FFTW prefix
 ```
 
 Now proceed with installation as follows
