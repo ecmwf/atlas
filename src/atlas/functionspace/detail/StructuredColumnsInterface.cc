@@ -188,11 +188,9 @@ idx_t atlas__fs__StructuredColumns__levels( const detail::StructuredColumns* Thi
     return This->levels();
 }
 
-const GridImpl *atlas__fs__StructuredColumns__grid(const detail::StructuredColumns *This)
-{
+const GridImpl* atlas__fs__StructuredColumns__grid( const detail::StructuredColumns* This ) {
     return This->grid().get();
 }
-
 }
 
 

@@ -10,11 +10,11 @@
 
 #include "transi/trans.h"
 
-#include "atlas/trans/ifs/VorDivToUVIFS.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/trans/ifs/VorDivToUVIFS.h"
 
 using atlas::FunctionSpace;
 using atlas::functionspace::Spectral;

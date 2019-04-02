@@ -92,7 +92,7 @@ public:
     array::LocalView<int, 1, array::Intent::ReadOnly> zonal_wavenumbers() const;  // zero-based, OK
 
     idx_t levels() const { return nb_levels_; }
-    
+
     class For {
     public:
         For( const Spectral& fs, const util::Config& config = util::NoConfig() ) :

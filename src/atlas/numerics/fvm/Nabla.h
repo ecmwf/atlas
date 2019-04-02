@@ -40,7 +40,7 @@ public:
     virtual void divergence( const Field& vector, Field& div ) const override;
     virtual void curl( const Field& vector, Field& curl ) const override;
     virtual void laplacian( const Field& scalar, Field& laplacian ) const override;
-    
+
     virtual const FunctionSpace& functionspace() const override;
 
 private:

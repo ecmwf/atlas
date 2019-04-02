@@ -49,7 +49,6 @@ void atlas__SpectralFunctionSpace__nmyms( const detail::Spectral* This, const in
 void atlas__SpectralFunctionSpace__nasm0( const detail::Spectral* This, const int*& nasm0, int& size );
 void atlas__SpectralFunctionSpace__nvalue( const detail::Spectral* This, const int*& nvalue, int& size );
 void atlas__SpectralFunctionSpace__levels( const detail::Spectral* This, int& levels );
-
 }
 
 }  // namespace functionspace

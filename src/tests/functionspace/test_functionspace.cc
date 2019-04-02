@@ -57,7 +57,6 @@ CASE( "test_functionspace_NodeColumns_no_halo" ) {
 }
 
 CASE( "test_functionspace_NodeColumns" ) {
-
     ReducedGaussianGrid grid( {4, 8, 8, 4} );
 
     StructuredMeshGenerator generator;

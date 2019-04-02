@@ -54,17 +54,17 @@ Log::Channel& Log::debug() {
 
 void Log::addFortranUnit( int unit, Style style, const char* prefix ) {
 #if ATLAS_HAVE_FORTRAN
-    fckit::Log::addFortranUnit( unit, fckit::Log::Style(style), prefix );
+    fckit::Log::addFortranUnit( unit, fckit::Log::Style( style ), prefix );
 #else
-    /*NOTIMP*/
+/*NOTIMP*/
 #endif
 }
 
 void Log::setFortranUnit( int unit, Style style, const char* prefix ) {
 #if ATLAS_HAVE_FORTRAN
-    fckit::Log::setFortranUnit( unit, fckit::Log::Style(style), prefix );
+    fckit::Log::setFortranUnit( unit, fckit::Log::Style( style ), prefix );
 #else
-    /*NOTIMP*/
+/*NOTIMP*/
 #endif
 }
 

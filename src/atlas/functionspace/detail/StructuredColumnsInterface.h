@@ -102,7 +102,6 @@ field::FieldImpl* atlas__fs__StructuredColumns__index_i( const detail::Structure
 field::FieldImpl* atlas__fs__StructuredColumns__index_j( const detail::StructuredColumns* This );
 
 const GridImpl* atlas__fs__StructuredColumns__grid( const detail::StructuredColumns* This );
-
 }
 
 }  // namespace functionspace

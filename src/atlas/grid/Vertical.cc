@@ -10,9 +10,9 @@
 
 #include "eckit/types/Types.h"
 
-#include "atlas/grid/Vertical.h"
-#include "atlas/field/Field.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/field/Field.h"
+#include "atlas/grid/Vertical.h"
 
 namespace atlas {
 
@@ -50,12 +50,11 @@ idx_t get_levels( const util::Config& config ) {
 Vertical::Vertical( const util::Config& config ) :
     Vertical( get_levels( config ), linspace( 0., 1., get_levels( config ), true ), config ) {}
 
-Field Vertical::z() const
-{
-    auto zfield = Field("z",array::make_datatype<double>(),array::make_shape(size()));
-    auto zview = array::make_view<double,1>(zfield);
-    for( idx_t k=0; k<size(); ++k ) {
-        zview(k) = z_[k];
+Field Vertical::z() const {
+    auto zfield = Field( "z", array::make_datatype<double>(), array::make_shape( size() ) );
+    auto zview  = array::make_view<double, 1>( zfield );
+    for ( idx_t k = 0; k < size(); ++k ) {
+        zview( k ) = z_[k];
     }
     return zfield;
 }

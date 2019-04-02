@@ -32,7 +32,7 @@ public:
               const util::Config& config = util::NoConfig() );
 
     Vertical( const util::Config& config = util::NoConfig() );
-    
+
     Field z() const;
 
 public:

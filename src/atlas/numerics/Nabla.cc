@@ -38,9 +38,7 @@ static void init() {
 namespace atlas {
 namespace numerics {
 
-NablaImpl::NablaImpl( const Method& method, const eckit::Parametrisation& ) :
-  method_(&method) {
-}
+NablaImpl::NablaImpl( const Method& method, const eckit::Parametrisation& ) : method_( &method ) {}
 
 NablaImpl::~NablaImpl() {}
 
@@ -196,7 +194,7 @@ const functionspace::FunctionSpaceImpl* atlas__Nabla__functionspace( const Nabla
     return This->functionspace().get();
 }
 
-} // extern "C"
+}  // extern "C"
 
 }  // namespace numerics
 }  // namespace atlas

@@ -663,146 +663,176 @@ TransIFS::TransIFS( const Grid& grid, const long truncation, const eckit::Config
 TransIFS::TransIFS( const Grid& grid, const eckit::Configuration& config ) :
     TransIFS( grid, /*grid-only*/ -1, config ) {}
 
-int atlas::trans::TransIFS::handle() const { return trans_->handle; }
+int atlas::trans::TransIFS::handle() const {
+    return trans_->handle;
+}
 
-int atlas::trans::TransIFS::ndgl() const { return trans_->ndgl; }
+int atlas::trans::TransIFS::ndgl() const {
+    return trans_->ndgl;
+}
 
-int atlas::trans::TransIFS::nsmax() const { return trans_->nsmax; }
+int atlas::trans::TransIFS::nsmax() const {
+    return trans_->nsmax;
+}
 
-int atlas::trans::TransIFS::ngptot() const { return trans_->ngptot; }
+int atlas::trans::TransIFS::ngptot() const {
+    return trans_->ngptot;
+}
 
-int atlas::trans::TransIFS::ngptotg() const { return trans_->ngptotg; }
+int atlas::trans::TransIFS::ngptotg() const {
+    return trans_->ngptotg;
+}
 
-int atlas::trans::TransIFS::ngptotmx() const { return trans_->ngptotmx; }
+int atlas::trans::TransIFS::ngptotmx() const {
+    return trans_->ngptotmx;
+}
 
-int atlas::trans::TransIFS::nspec() const { return trans_->nspec; }
+int atlas::trans::TransIFS::nspec() const {
+    return trans_->nspec;
+}
 
-int atlas::trans::TransIFS::nspec2() const { return trans_->nspec2; }
+int atlas::trans::TransIFS::nspec2() const {
+    return trans_->nspec2;
+}
 
-int atlas::trans::TransIFS::nspec2g() const { return trans_->nspec2g; }
+int atlas::trans::TransIFS::nspec2g() const {
+    return trans_->nspec2g;
+}
 
-int atlas::trans::TransIFS::nspec2mx() const { return trans_->nspec2mx; }
+int atlas::trans::TransIFS::nspec2mx() const {
+    return trans_->nspec2mx;
+}
 
-int atlas::trans::TransIFS::n_regions_NS() const { return trans_->n_regions_NS; }
+int atlas::trans::TransIFS::n_regions_NS() const {
+    return trans_->n_regions_NS;
+}
 
-int atlas::trans::TransIFS::n_regions_EW() const { return trans_->n_regions_EW; }
+int atlas::trans::TransIFS::n_regions_EW() const {
+    return trans_->n_regions_EW;
+}
 
-int atlas::trans::TransIFS::nump() const { return trans_->nump; }
+int atlas::trans::TransIFS::nump() const {
+    return trans_->nump;
+}
 
-int atlas::trans::TransIFS::nproc() const { return trans_->nproc; }
+int atlas::trans::TransIFS::nproc() const {
+    return trans_->nproc;
+}
 
-int atlas::trans::TransIFS::myproc(int proc0) const { return trans_->myproc - 1 + proc0; }
+int atlas::trans::TransIFS::myproc( int proc0 ) const {
+    return trans_->myproc - 1 + proc0;
+}
 
-const int *atlas::trans::TransIFS::nloen(int &size) const {
+const int* atlas::trans::TransIFS::nloen( int& size ) const {
     size = trans_->ndgl;
     ATLAS_ASSERT( trans_->nloen != nullptr );
     return trans_->nloen;
 }
 
-const int *atlas::trans::TransIFS::n_regions(int &size) const {
+const int* atlas::trans::TransIFS::n_regions( int& size ) const {
     size = trans_->n_regions_NS;
     ATLAS_ASSERT( trans_->n_regions != nullptr );
     return trans_->n_regions;
 }
 
-const int *atlas::trans::TransIFS::nfrstlat(int &size) const {
+const int* atlas::trans::TransIFS::nfrstlat( int& size ) const {
     size = trans_->n_regions_NS;
     if ( trans_->nfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nfrstlat" );
     return trans_->nfrstlat;
 }
 
-const int *atlas::trans::TransIFS::nlstlat(int &size) const {
+const int* atlas::trans::TransIFS::nlstlat( int& size ) const {
     size = trans_->n_regions_NS;
     if ( trans_->nlstlat == nullptr ) ::trans_inquire( trans_.get(), "nlstlat" );
     return trans_->nlstlat;
 }
 
-const int *atlas::trans::TransIFS::nptrfrstlat(int &size) const {
+const int* atlas::trans::TransIFS::nptrfrstlat( int& size ) const {
     size = trans_->n_regions_NS;
     if ( trans_->nptrfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nptrfrstlat" );
     return trans_->nptrfrstlat;
 }
 
-const int *atlas::trans::TransIFS::nsta(int &sizef2, int &sizef1) const {
+const int* atlas::trans::TransIFS::nsta( int& sizef2, int& sizef1 ) const {
     sizef1 = trans_->ndgl + trans_->n_regions_NS - 1;
     sizef2 = trans_->n_regions_EW;
     if ( trans_->nsta == nullptr ) ::trans_inquire( trans_.get(), "nsta" );
     return trans_->nsta;
 }
 
-const int *atlas::trans::TransIFS::nonl(int &sizef2, int &sizef1) const {
+const int* atlas::trans::TransIFS::nonl( int& sizef2, int& sizef1 ) const {
     sizef1 = trans_->ndgl + trans_->n_regions_NS - 1;
     sizef2 = trans_->n_regions_EW;
     if ( trans_->nonl == nullptr ) ::trans_inquire( trans_.get(), "nonl" );
     return trans_->nonl;
 }
 
-const int *atlas::trans::TransIFS::nmyms(int &size) const {
+const int* atlas::trans::TransIFS::nmyms( int& size ) const {
     size = trans_->nump;
     if ( trans_->nmyms == nullptr ) ::trans_inquire( trans_.get(), "nmyms" );
     return trans_->nmyms;
 }
 
-const int *atlas::trans::TransIFS::nasm0(int &size) const {
+const int* atlas::trans::TransIFS::nasm0( int& size ) const {
     size = trans_->nsmax + 1;  // +1 because zeroth wave included
     if ( trans_->nasm0 == nullptr ) ::trans_inquire( trans_.get(), "nasm0" );
     return trans_->nasm0;
 }
 
-const int *atlas::trans::TransIFS::nvalue(int &size) const {
+const int* atlas::trans::TransIFS::nvalue( int& size ) const {
     size = trans_->nspec2;
     if ( trans_->nvalue == nullptr ) ::trans_inquire( trans_.get(), "nvalue" );
     return trans_->nvalue;
 }
 
-array::LocalView<int,1> atlas::trans::TransIFS::nvalue() const {
+array::LocalView<int, 1> atlas::trans::TransIFS::nvalue() const {
     if ( trans_->nvalue == nullptr ) ::trans_inquire( trans_.get(), "nvalue" );
     return array::LocalView<int, 1>( trans_->nvalue, array::make_shape( trans_->nspec2 ) );
 }
 
-array::LocalView<int,1> atlas::trans::TransIFS::nasm0() const {
+array::LocalView<int, 1> atlas::trans::TransIFS::nasm0() const {
     if ( trans_->nasm0 == nullptr ) ::trans_inquire( trans_.get(), "nasm0" );
     return array::LocalView<int, 1>( trans_->nasm0, array::make_shape( trans_->nsmax + 1 ) );
 }
 
-array::LocalView<int,1> atlas::trans::TransIFS::nmyms() const {
+array::LocalView<int, 1> atlas::trans::TransIFS::nmyms() const {
     if ( trans_->nmyms == nullptr ) ::trans_inquire( trans_.get(), "nmyms" );
     return array::LocalView<int, 1>( trans_->nmyms, array::make_shape( trans_->nump ) );
 }
 
-array::LocalView<int,2> atlas::trans::TransIFS::nonl() const {
+array::LocalView<int, 2> atlas::trans::TransIFS::nonl() const {
     if ( trans_->nonl == nullptr ) ::trans_inquire( trans_.get(), "nonl" );
     return array::LocalView<int, 2>(
-                trans_->nonl, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
+        trans_->nonl, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
 }
 
-array::LocalView<int,2> atlas::trans::TransIFS::nsta() const {
+array::LocalView<int, 2> atlas::trans::TransIFS::nsta() const {
     if ( trans_->nsta == nullptr ) ::trans_inquire( trans_.get(), "nsta" );
     return array::LocalView<int, 2>(
-                trans_->nsta, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
+        trans_->nsta, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
 }
 
-array::LocalView<int,1> atlas::trans::TransIFS::nptrfrstlat() const {
+array::LocalView<int, 1> atlas::trans::TransIFS::nptrfrstlat() const {
     if ( trans_->nptrfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nptrfrstlat" );
     return array::LocalView<int, 1>( trans_->nptrfrstlat, array::make_shape( trans_->n_regions_NS ) );
 }
 
-array::LocalView<int,1> atlas::trans::TransIFS::nlstlat() const {
+array::LocalView<int, 1> atlas::trans::TransIFS::nlstlat() const {
     if ( trans_->nlstlat == nullptr ) ::trans_inquire( trans_.get(), "nlstlat" );
     return array::LocalView<int, 1>( trans_->nlstlat, array::make_shape( trans_->n_regions_NS ) );
 }
 
-array::LocalView<int,1> atlas::trans::TransIFS::nfrstlat() const {
+array::LocalView<int, 1> atlas::trans::TransIFS::nfrstlat() const {
     if ( trans_->nfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nfrstlat" );
     return array::LocalView<int, 1>( trans_->nfrstlat, array::make_shape( trans_->n_regions_NS ) );
 }
 
-array::LocalView<int,1> atlas::trans::TransIFS::n_regions() const {
+array::LocalView<int, 1> atlas::trans::TransIFS::n_regions() const {
     ATLAS_ASSERT( trans_->n_regions != nullptr );
     return array::LocalView<int, 1>( trans_->n_regions, array::make_shape( trans_->n_regions_NS ) );
 }
 
-array::LocalView<int,1> atlas::trans::TransIFS::nloen() const {
+array::LocalView<int, 1> atlas::trans::TransIFS::nloen() const {
     ATLAS_ASSERT( trans_->nloen != nullptr );
     return array::LocalView<int, 1>( trans_->nloen, array::make_shape( trans_->ndgl ) );
 }
@@ -822,9 +852,13 @@ TransIFS::TransIFS( const Cache& cache, const Grid& grid, const Domain& domain, 
 
 TransIFS::~TransIFS() {}
 
-int atlas::trans::TransIFS::truncation() const { return std::max( 0, trans_->nsmax ); }
+int atlas::trans::TransIFS::truncation() const {
+    return std::max( 0, trans_->nsmax );
+}
 
-size_t atlas::trans::TransIFS::spectralCoefficients() const { return trans_->nspec2g; }
+size_t atlas::trans::TransIFS::spectralCoefficients() const {
+    return trans_->nspec2g;
+}
 
 void TransIFS::ctor( const Grid& grid, long truncation, const eckit::Configuration& config ) {
     trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, [](::Trans_t* p ) {

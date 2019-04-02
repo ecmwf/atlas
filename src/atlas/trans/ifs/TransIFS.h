@@ -21,7 +21,7 @@
 //-----------------------------------------------------------------------------
 // Forward declarations
 
-struct Trans_t; // declared in "transi/trans.h"
+struct Trans_t;  // declared in "transi/trans.h"
 
 namespace atlas {
 class Field;
