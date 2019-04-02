@@ -7,7 +7,23 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
-## [0.16.0] - 2018-02-14
+## [0.17.0] - 2019-04-02
+### Changed
+- OpenMP is now private dependency
+- Dependencies are now added in a modern CMake3 way
+- Fortran modules are installed in <install-prefix>/module/atlas
+
+### Added
+- Spectral functionspace better used in distributed context
+- Nabla now holds shared_ptr to Method
+- Fortran access to vertical coordinates from StructuredColumns
+
+### Fixed
+- Compilation with PGI/19.1 (regression)
+- Add missing halo_exchange for Fortran rank-4 arrays
+- Memory leaks with StructuredColumns
+
+## [0.16.0] - 2019-02-14
 ### Changed
 - Interpolation makes use of OpenMP
 - Cleanup of header includes
@@ -80,6 +96,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.17.0]: https://github.com/ecmwf/atlas/compare/0.16.0...0.17.0
 [0.16.0]: https://github.com/ecmwf/atlas/compare/0.15.2...0.16.0
 [0.15.2]: https://github.com/ecmwf/atlas/compare/0.15.1...0.15.2
 [0.15.1]: https://github.com/ecmwf/atlas/compare/0.15.0...0.15.1
