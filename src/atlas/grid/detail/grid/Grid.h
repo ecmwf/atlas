@@ -12,6 +12,7 @@
 
 #include <functional>
 #include <string>
+#include <vector>
 
 #include "atlas/domain/Domain.h"
 #include "atlas/library/config.h"
@@ -33,6 +34,8 @@ namespace atlas {
 namespace grid {
 namespace detail {
 namespace grid {
+
+class GridObserver;
 
 class Grid : public util::Object {
 public:  // types
@@ -114,6 +117,9 @@ public:  // methods
     virtual IteratorLonLat* lonlat_begin() const                  = 0;
     virtual IteratorLonLat* lonlat_end() const                    = 0;
 
+    void attachObserver( GridObserver& ) const;
+    void detachObserver( GridObserver& ) const;
+
 protected:  // methods
     /// Fill provided me
     virtual void print( std::ostream& ) const = 0;
@@ -134,7 +140,17 @@ private:  // members
 protected:  // members
     Projection projection_;
     Domain domain_;
+
+    mutable std::vector<GridObserver*> grid_observers_;
 };
+
+class GridObserver {
+public:
+    virtual void onGridDestruction( Grid& ) = 0;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
 
 }  // namespace grid
 }  // namespace detail

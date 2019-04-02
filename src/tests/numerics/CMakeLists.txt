@@ -8,14 +8,14 @@
 
 ecbuild_add_test( TARGET atlas_test_fvm_nabla
   SOURCES   test_fvm_nabla.cc
-  LIBS      atlas
+  LIBS      atlas ${OMP_CXX}
 )
 
 if( HAVE_FCTEST)
   add_fctest( TARGET atlas_fctest_fvm_nabla
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_fvm_nabla.F90
-    LIBS            atlas_f
+    LIBS            atlas_f ${OMP_Fortran}
   )
   
   add_fctest( TARGET atlas_fctest_ifs_setup

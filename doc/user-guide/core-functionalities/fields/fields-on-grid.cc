@@ -1,6 +1,6 @@
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/grid.h"
 #include "atlas/library/Library.h"
 #include "atlas/runtime/Log.h"
 
@@ -9,7 +9,7 @@ using atlas::Log;
 using atlas::array::make_datatype;
 using atlas::array::make_shape;
 using atlas::array::make_view;
-using atlas::grid::StructuredGrid;
+using atlas::StructuredGrid;
 
 int main( int argc, char* argv[] ) {
     atlas::Library::instance().initialise( argc, argv );

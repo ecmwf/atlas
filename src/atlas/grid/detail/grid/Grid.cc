@@ -93,7 +93,11 @@ Grid::Grid() {
     checkSizeOfPoint();
 }
 
-Grid::~Grid() {}
+Grid::~Grid() {
+    for ( GridObserver* o : grid_observers_ ) {
+        o->onGridDestruction( *this );
+    }
+}
 
 Grid::uid_t Grid::uid() const {
     if ( uid_.empty() ) { uid_ = hash(); }
@@ -107,6 +111,17 @@ std::string Grid::hash() const {
         hash_ = md5.digest();
     }
     return hash_;
+}
+
+void Grid::attachObserver( GridObserver& observer ) const {
+    if ( std::find( grid_observers_.begin(), grid_observers_.end(), &observer ) == grid_observers_.end() ) {
+        grid_observers_.push_back( &observer );
+    }
+}
+
+void Grid::detachObserver( GridObserver& observer ) const {
+    grid_observers_.erase( std::remove( grid_observers_.begin(), grid_observers_.end(), &observer ),
+                           grid_observers_.end() );
 }
 
 }  // namespace grid

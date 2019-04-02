@@ -136,7 +136,8 @@ function atlas_Config__ctor_from_json(json) result(this)
   use atlas_JSON_module
   type(atlas_Config) :: this
   class(atlas_JSON) :: json
-  call this%reset_c_ptr( atlas__Config__new_from_json(c_str(json%str())) )
+  call this%reset_c_ptr( atlas__Config__new_from_json(c_str(json%str())), &
+    & fckit_c_deleter(atlas__Config__delete) )
   call this%return()
 end function atlas_Config__ctor_from_json
 
@@ -146,7 +147,8 @@ function atlas_Config__ctor_from_file(path) result(this)
   use atlas_JSON_module
   type(atlas_Config) :: this
   class(atlas_PathName), intent(in) :: path
-  call this%reset_c_ptr( atlas__Config__new_from_file(c_str(path%str())) )
+  call this%reset_c_ptr( atlas__Config__new_from_file(c_str(path%str())), &
+    & fckit_c_deleter(atlas__Config__delete) )
   call this%return()
 end function atlas_Config__ctor_from_file
 

@@ -61,6 +61,16 @@ contains
   procedure, private :: norm_array
   generic, public :: norm => norm_scalar, norm_array
 
+  procedure, public :: truncation
+  procedure, public :: nb_spectral_coefficients
+  procedure, public :: nb_spectral_coefficients_global
+  procedure, public :: levels
+
+  procedure, public :: nump
+  procedure, public :: nmyms
+  procedure, public :: nasm0
+  procedure, public :: nvalue
+
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_functionspace_Spectral__final_auto
 #endif
@@ -181,6 +191,84 @@ subroutine norm_array(this,field,norm,rank)
   if( present(rank) ) opt_rank = rank
   call atlas__SpectralFunctionSpace__norm(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,norm,opt_rank)
 end subroutine
+
+function levels( this )
+  use atlas_functionspace_spectral_c_binding
+  integer :: levels
+  class(atlas_functionspace_Spectral) :: this
+  call atlas__SpectralFunctionSpace__levels( this%c_ptr(), levels )
+end function
+
+!-------------------------------------------------------------------------------
+! Experimental
+
+function truncation( this )
+  use atlas_functionspace_spectral_c_binding
+  integer :: truncation
+  class(atlas_functionspace_Spectral) :: this
+  call atlas__SpectralFunctionSpace__truncation( this%c_ptr(), truncation )
+end function
+
+function nb_spectral_coefficients( this )
+  use atlas_functionspace_spectral_c_binding
+  integer :: nb_spectral_coefficients
+  class(atlas_functionspace_Spectral) :: this
+  call atlas__SpectralFunctionSpace__nspec2( this%c_ptr(), nb_spectral_coefficients )
+end function
+
+
+function nb_spectral_coefficients_global( this )
+  use atlas_functionspace_spectral_c_binding
+  integer :: nb_spectral_coefficients_global
+  class(atlas_functionspace_Spectral) :: this
+  call atlas__SpectralFunctionSpace__nspec2g( this%c_ptr(), nb_spectral_coefficients_global )
+end function
+
+
+function nump( this )
+  use atlas_functionspace_spectral_c_binding
+  integer :: nump
+  class(atlas_functionspace_Spectral) :: this
+  call atlas__SpectralFunctionSpace__nump( this%c_ptr(), nump )
+end function
+
+function nmyms(this)
+  use atlas_functionspace_spectral_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
+  integer(c_int), pointer :: nmyms(:)
+  class(atlas_functionspace_Spectral), intent(in) :: this
+  type(c_ptr) :: nmyms_c_ptr
+  integer(c_int) :: size
+  call atlas__SpectralFunctionSpace__nmyms(this%c_ptr(), nmyms_c_ptr, size)
+  call c_f_pointer ( nmyms_c_ptr , nmyms , (/size/) )
+end function
+
+function nasm0(this)
+  use atlas_functionspace_spectral_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
+  integer(c_int), pointer :: nasm0(:)
+  class(atlas_functionspace_Spectral), intent(in) :: this
+  type(c_ptr) :: nasm0_c_ptr
+  integer(c_int), pointer :: nasm0_f_ptr(:)
+  integer(c_int) :: size
+  call atlas__SpectralFunctionSpace__nasm0(this%c_ptr(), nasm0_c_ptr, size)
+  call c_f_pointer ( nasm0_c_ptr , nasm0_f_ptr , (/size/) )
+  nasm0(0:) => nasm0_f_ptr(:)
+end function
+
+function nvalue(this)
+  use atlas_functionspace_spectral_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_f_pointer, c_ptr
+  integer(c_int), pointer :: nvalue(:)
+  class(atlas_functionspace_Spectral), intent(in) :: this
+  type(c_ptr) :: nvalue_c_ptr
+  integer(c_int) :: size
+  call atlas__SpectralFunctionSpace__nvalue(this%c_ptr(), nvalue_c_ptr, size)
+  call c_f_pointer ( nvalue_c_ptr , nvalue , (/size/) )
+end function
+
+
+
 
 !-------------------------------------------------------------------------------
 

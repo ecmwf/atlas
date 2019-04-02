@@ -10,14 +10,20 @@
 #pragma once
 
 #include <array>
+#include <functional>
+#include <type_traits>
 
 #include "atlas/array/DataType.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
+#include "atlas/grid/StructuredGrid.h"
 #include "atlas/grid/Vertical.h"
 #include "atlas/library/config.h"
 #include "atlas/option.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/ObjectHandle.h"
 #include "atlas/util/Point.h"
@@ -127,6 +133,7 @@ public:
     }
 
     Field xy() const { return field_xy_; }
+    Field z() const { return vertical().z(); }
     Field partition() const { return field_partition_; }
     Field global_index() const { return field_global_index_; }
     Field remote_index() const {
@@ -359,42 +366,138 @@ public:
 
     class For {
     public:
-        For( const StructuredColumns& fs ) : fs_( fs ) {}
+        For( const StructuredColumns& fs, const util::Config& config = util::NoConfig() ) :
+            fs_{fs},
+            global{config.getBool( "global", false )},
+            owner{config.getUnsigned( "owner", 0 )},
+            levels{config.getInt( "levels", fs_.levels() )} {}
 
     protected:
         const StructuredColumns& fs_;
-    };
+        bool global;
+        size_t owner;
+        idx_t levels;
 
-    class For_ij : public For {
     public:
-        using For::For;
+#define FunctorArgs( ... )                                                                                             \
+    typename std::enable_if<std::is_convertible<Functor, std::function<void( __VA_ARGS__ )>>::value, Functor>::type* = \
+        nullptr
 
-        template <typename Functor>
+
+        // Functor: void f(index,i,j,k)
+        template <typename Functor, FunctorArgs( idx_t, idx_t, idx_t, idx_t )>
         void operator()( const Functor& f ) const {
-            for ( auto j = fs_.j_begin(); j < fs_.j_end(); ++j ) {
-                for ( auto i = fs_.i_begin( j ); i < fs_.i_end( j ); ++i ) {
-                    f( i, j );
+            ATLAS_ASSERT( levels );
+            if ( global ) {
+                if ( owner == mpi::comm().rank() ) {
+                    const idx_t ny = fs_.grid().ny();
+                    std::vector<idx_t> offset( ny );
+                    offset[0] = 0;
+                    for ( idx_t j = 1; j < ny; ++j ) {
+                        offset[j] = offset[j - 1] + fs_.grid().nx( j - 1 );
+                    }
+                    atlas_omp_parallel_for( idx_t j = 0; j < ny; ++j ) {
+                        idx_t index = offset[j];
+                        for ( auto i = 0; i < fs_.grid().nx( j ); ++i, ++index ) {
+                            for ( auto k = 0; k < levels; ++k ) {
+                                f( index, i, j, k );
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                for ( auto j = fs_.j_begin(); j < fs_.j_end(); ++j ) {
+                    for ( auto i = fs_.i_begin( j ); i < fs_.i_end( j ); ++i ) {
+                        for ( auto k = 0; k < levels; ++k ) {
+                            f( fs_.index( i, j ), i, j, k );
+                        }
+                    }
                 }
             }
         }
-    };
 
-    class For_n : public For {
-    public:
-        using For::For;
-
-        template <typename Functor>
+        // Functor: void f(index,i,j)
+        template <typename Functor, FunctorArgs( idx_t, idx_t, idx_t )>
         void operator()( const Functor& f ) const {
-            const auto size = fs_.sizeOwned();
-            for ( auto n = 0 * size; n < size; ++n ) {
-                f( n );
+            ATLAS_ASSERT( levels == 0 );
+            if ( global ) {
+                if ( owner == mpi::comm().rank() ) {
+                    const idx_t ny = fs_.grid().ny();
+                    std::vector<idx_t> offset( ny );
+                    offset[0] = 0;
+                    for ( idx_t j = 1; j < ny; ++j ) {
+                        offset[j] = offset[j - 1] + fs_.grid().nx( j - 1 );
+                    }
+                    atlas_omp_parallel_for( idx_t j = 0; j < ny; ++j ) {
+                        idx_t index = offset[j];
+                        for ( idx_t i = 0; i < fs_.grid().nx( j ); ++i, ++index ) {
+                            f( index, i, j );
+                        }
+                    }
+                }
+            }
+            else {
+                for ( auto j = fs_.j_begin(); j < fs_.j_end(); ++j ) {
+                    for ( auto i = fs_.i_begin( j ); i < fs_.i_end( j ); ++i ) {
+                        f( fs_.index( i, j ), i, j );
+                    }
+                }
             }
         }
+
+        // Functor: void f(index,k)
+        template <typename Functor, FunctorArgs( idx_t, idx_t )>
+        void operator()( const Functor& f ) const {
+            ATLAS_ASSERT( levels );
+            if ( global ) {
+                if ( owner == mpi::comm().rank() ) {
+                    const idx_t size = fs_.grid().size();
+                    atlas_omp_parallel_for( idx_t n = 0; n < size; ++n ) {
+                        for ( idx_t k = 0; k < levels; ++k ) {
+                            f( n, k );
+                        }
+                    }
+                }
+            }
+            else {
+                const idx_t size = fs_.sizeOwned();
+                atlas_omp_parallel_for( idx_t n = 0; n < size; ++n ) {
+                    for ( idx_t k = 0; k < levels; ++k ) {
+                        f( n, k );
+                    }
+                }
+            }
+        }
+
+
+        // Functor: void f(index)
+        template <typename Functor, FunctorArgs( idx_t )>
+        void operator()( const Functor& f ) const {
+            ATLAS_ASSERT( levels == 0 );
+            if ( global ) {
+                if ( owner == mpi::comm().rank() ) {
+                    const idx_t size = fs_.grid().size();
+                    atlas_omp_parallel_for( idx_t n = 0; n < size; ++n ) { f( n ); }
+                }
+            }
+            else {
+                const idx_t size = fs_.sizeOwned();
+                atlas_omp_parallel_for( idx_t n = 0; n < size; ++n ) { f( n ); }
+            }
+        }
+
+#undef FunctorArgs
     };
 
-    For_ij for_ij() const { return For_ij( *this ); }
-
-    For_n for_n() const { return For_n( *this ); }
+    template <typename Functor>
+    void parallel_for( const Functor& f ) const {
+        For( *this, util::NoConfig() )( f );
+    }
+    template <typename Functor>
+    void parallel_for( const util::Config& config, const Functor& f ) const {
+        For( *this, config )( f );
+    }
 
 private:
     const detail::StructuredColumns* functionspace_;

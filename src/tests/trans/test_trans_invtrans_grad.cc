@@ -33,6 +33,7 @@
 
 #if ATLAS_HAVE_TRANS
 #include "atlas/trans/ifs/TransIFS.h"
+#include "transi/trans.h"
 #endif
 
 namespace atlas {

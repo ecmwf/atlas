@@ -198,7 +198,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
     config.set( "flatten_virtual_elements", false );
     Field cell_centres = mesh::actions::BuildCellCentres( config )( meshSource );
 
-    eckit::ScopedPtr<ElemIndex3> eTree( create_element_kdtree( cell_centres ) );
+    std::unique_ptr<ElemIndex3> eTree( create_element_kdtree( cell_centres ) );
 
     trace_setup_source.stop();
 

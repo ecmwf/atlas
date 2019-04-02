@@ -16,7 +16,7 @@
 
 #include "atlas/library/config.h"
 
-#ifdef CGAL_FOUND
+#if ATLAS_HAVE_TESSELATION
 // CGAL needs -DCGAL_NDEBUG to reach peak performance ...
 #define CGAL_NDEBUG
 
@@ -64,7 +64,7 @@ namespace actions {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-#ifdef CGAL_FOUND
+#if ATLAS_HAVE_TESSELATION
 
 static Polyhedron_3* create_convex_hull_from_points( const std::vector<Point3>& pts ) {
     ATLAS_TRACE();

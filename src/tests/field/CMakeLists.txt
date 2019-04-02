@@ -23,9 +23,9 @@ if( HAVE_FCTEST )
   add_fctest( TARGET atlas_fctest_field_view
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field_view.F90
-    LIBS            atlas_f
+    LIBS            atlas_f OpenMP::OpenMP_Fortran
     OMP             3
-    CONDITION       ATLAS_HAVE_OMP
+    CONDITION       ATLAS_HAVE_OMP_Fortran
   )
 
   add_fctest( TARGET atlas_fctest_field_host

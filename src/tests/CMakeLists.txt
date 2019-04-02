@@ -18,7 +18,17 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI"  AND
 endif()
 
 if( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
-  # ATLAS-170 workaround internal compiler error
+  ## ATLAS-170 workaround internal compiler error
+
+      ## Other workaround that makes ecbuild_remove_fortran_flags work when variables are empty
+      string( TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_CAPS )
+      if( NOT CMAKE_Fortran_FLAGS )
+          set( CMAKE_Fortran_FLAGS " " )
+      endif()
+      if( NOT CMAKE_Fortran_FLAGS_${CMAKE_BUILD_TYPE_CAPS} )
+          set( CMAKE_Fortran_FLAGS_${CMAKE_BUILD_TYPE_CAPS} " " )
+      endif()
+
   ecbuild_remove_fortran_flags( "-g" )
 endif()
 
@@ -37,7 +47,7 @@ macro( atlas_add_cuda_test )
     ecbuild_critical("Unknown keywords given to atlas_add_cuda_test(): \"${_PAR_UNPARSED_ARGUMENTS}\"")
   endif()
 
-  if( ATLAS_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAVE_CUDA AND ENABLE_TESTS )
+  if( ATLAS_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAVE_CUDA AND HAVE_TESTS )
 
     ecbuild_debug("atlas_add_cuda_test: Adding test ${_PAR_TARGET}")
 
@@ -61,6 +71,13 @@ macro( atlas_add_cuda_test )
   endif()
 endmacro()
 
+if( ECKIT_INCLUDE_DIRS ) # eckit not yet ported to CMake3
+  include_directories( ${ECKIT_INCLUDE_DIRS} )
+endif()
+
+if( TRANSI_VERSION VERSION_LESS 0.6 )# transi not yet ported to CMake3
+  include_directories( ${TRANSI_INCLUDE_DIRS} )
+endif()
 
 add_subdirectory( acc )
 add_subdirectory( array )

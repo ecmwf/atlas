@@ -34,96 +34,49 @@ void atlas__Field__data_specf( FieldImpl* This, Value*& data, int& rank, int*& s
     stridesf = const_cast<int*>( This->stridesf().data() );
     rank     = This->shapef().size();
 }
+
+template <typename Value>
+FieldImpl* atlas__Field__wrap_specf( const char* name, Value data[], int rank, int shapef[], int stridesf[] ) {
+    array::ArrayShape shape;
+    shape.resize( rank );
+    array::ArrayStrides strides;
+    strides.resize( rank );
+    idx_t jf = rank - 1;
+    for ( int j = 0; j < rank; ++j ) {
+        shape[j]   = shapef[jf];
+        strides[j] = stridesf[jf];
+        --jf;
+    }
+    FieldImpl* field;
+    {
+        Field wrapped( std::string( name ), data, array::ArraySpec( shape, strides ) );
+        field = wrapped.get();
+        field->attach();
+    }
+    field->detach();
+    ATLAS_ASSERT( field );
+    return field;
+}
+
+
 }  // namespace
 
 extern "C" {
 
 FieldImpl* atlas__Field__wrap_int_specf( const char* name, int data[], int rank, int shapef[], int stridesf[] ) {
-    array::ArrayShape shape;
-    shape.resize( rank );
-    array::ArrayStrides strides;
-    strides.resize( rank );
-    idx_t jf = rank - 1;
-    for ( int j = 0; j < rank; ++j ) {
-        shape[j]   = shapef[jf];
-        strides[j] = stridesf[jf];
-        --jf;
-    }
-    FieldImpl* field;
-    {
-        Field wrapped( std::string( name ), data, array::ArraySpec( shape, strides ) );
-        field = wrapped.get();
-        field->attach();
-    }
-    field->detach();
-    ATLAS_ASSERT( field );
-    return field;
+    return atlas__Field__wrap_specf( name, data, rank, shapef, stridesf );
 }
 
 FieldImpl* atlas__Field__wrap_long_specf( const char* name, long data[], int rank, int shapef[], int stridesf[] ) {
-    array::ArrayShape shape;
-    shape.resize( rank );
-    array::ArrayStrides strides;
-    strides.resize( rank );
-    idx_t jf = rank - 1;
-    for ( int j = 0; j < rank; ++j ) {
-        shape[j]   = shapef[jf];
-        strides[j] = stridesf[jf];
-        --jf;
-    }
-    FieldImpl* field;
-    {
-        Field wrapped( std::string( name ), data, array::ArraySpec( shape, strides ) );
-        field = wrapped.get();
-        field->attach();
-    }
-    field->detach();
-    ATLAS_ASSERT( field );
-    return field;
+    return atlas__Field__wrap_specf( name, data, rank, shapef, stridesf );
 }
 
 FieldImpl* atlas__Field__wrap_float_specf( const char* name, float data[], int rank, int shapef[], int stridesf[] ) {
-    array::ArrayShape shape;
-    shape.resize( rank );
-    array::ArrayStrides strides;
-    strides.resize( rank );
-    idx_t jf = rank - 1;
-    for ( int j = 0; j < rank; ++j ) {
-        shape[j]   = shapef[jf];
-        strides[j] = stridesf[jf];
-        --jf;
-    }
-    FieldImpl* field;
-    {
-        Field wrapped( std::string( name ), data, array::ArraySpec( shape, strides ) );
-        field = wrapped.get();
-        field->attach();
-    }
-    field->detach();
-    ATLAS_ASSERT( field );
-    return field;
+    return atlas__Field__wrap_specf( name, data, rank, shapef, stridesf );
 }
 
 FieldImpl* atlas__Field__wrap_double_specf( const char* name, double data[], int rank, int shapef[], int stridesf[] ) {
-    array::ArrayShape shape;
-    shape.resize( rank );
-    array::ArrayStrides strides;
-    strides.resize( rank );
-    idx_t jf = rank - 1;
-    for ( int j = 0; j < rank; ++j ) {
-        shape[j]   = shapef[jf];
-        strides[j] = stridesf[jf];
-        --jf;
-    }
-    FieldImpl* field;
-    {
-        Field wrapped( std::string( name ), data, array::ArraySpec( shape, strides ) );
-        field = wrapped.get();
-        field->attach();
-    }
-    field->detach();
-    ATLAS_ASSERT( field );
-    return field;
+    return atlas__Field__wrap_specf( name, data, rank, shapef, stridesf );
 }
 
 FieldImpl* atlas__Field__create( eckit::Parametrisation* params ) {

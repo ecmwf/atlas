@@ -71,6 +71,8 @@ use atlas_Grid_module, only: &
     & atlas_ReducedGaussianGrid, &
     & atlas_RegularGaussianGrid, &
     & atlas_RegularLonLatGrid
+use atlas_Vertical_module, only :&
+    & atlas_Vertical
 use atlas_functionspace_EdgeColumns_module, only: &
     & atlas_functionspace_EdgeColumns
 use atlas_functionspace_NodeColumns_module, only: &

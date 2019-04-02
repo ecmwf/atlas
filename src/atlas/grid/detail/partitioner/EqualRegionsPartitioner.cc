@@ -697,16 +697,20 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                     int work_rank = std::min( w, mpi_size - 1 );
 
                     if ( mpi_rank == w0_work_rank ) {
-                        requests.push_back( comm.iReceive( nodes_buffer + 3 * w_begin, 3 * w_size,
-                                                           /* source= */ work_rank, /* tag= */ 0 ) );
+                        if ( mpi_rank != work_rank ) {
+                            requests.push_back( comm.iReceive( nodes_buffer + 3 * w_begin, 3 * w_size,
+                                                               /* source= */ work_rank, /* tag= */ 0 ) );
+                        }
                     }
                     if ( work_rank == mpi_rank ) {
                         ATLAS_TRACE_SCOPE( "sort one bit" ) {
                             // std::cout << w << "sorting " << w_size << std::endl;
                             std::sort( nodes.data() + w_begin, nodes.data() + w_end, compare_WE_NS );
                         }
-                        comm.send( nodes_buffer + 3 * w_begin, 3 * w_size,
-                                   /* dest= */ w0_work_rank, /* tag= */ 0 );
+                        if ( mpi_rank != w0_work_rank ) {
+                            comm.send( nodes_buffer + 3 * w_begin, 3 * w_size,
+                                       /* dest= */ w0_work_rank, /* tag= */ 0 );
+                        }
                     }
                     ++w;
                 }
@@ -736,12 +740,16 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                     ++w;
                 }
                 if ( mpi_rank == 0 ) {
-                    requests.push_back( comm.iReceive( nodes_buffer + 3 * w0_begin, 3 * w0_size,
-                                                       /* source= */ w0_work_rank, /* tag= */ 0 ) );
+                    if ( mpi_rank != w0_work_rank ) {
+                        requests.push_back( comm.iReceive( nodes_buffer + 3 * w0_begin, 3 * w0_size,
+                                                           /* source= */ w0_work_rank, /* tag= */ 0 ) );
+                    }
                 }
                 if ( mpi_rank == w0_work_rank ) {
-                    comm.send( nodes_buffer + 3 * w0_begin, 3 * w0_size, /* dest= */ 0,
-                               /* tag= */ 0 );
+                    if ( mpi_rank != 0 ) {
+                        comm.send( nodes_buffer + 3 * w0_begin, 3 * w0_size, /* dest= */ 0,
+                                   /* tag= */ 0 );
+                    }
                 }
             }
             ATLAS_TRACE_MPI( WAIT ) {

@@ -272,6 +272,8 @@ mesh/actions/BuildEdges.cc
 mesh/actions/BuildEdges.h
 mesh/actions/BuildHalo.cc
 mesh/actions/BuildHalo.h
+mesh/actions/BuildNode2CellConnectivity.cc
+mesh/actions/BuildNode2CellConnectivity.h
 mesh/actions/BuildParallelFields.cc
 mesh/actions/BuildParallelFields.h
 mesh/actions/BuildPeriodicBoundaries.cc
@@ -348,6 +350,8 @@ functionspace/detail/FunctionSpaceInterface.h
 functionspace/detail/FunctionSpaceInterface.cc
 functionspace/detail/NodeColumnsInterface.h
 functionspace/detail/NodeColumnsInterface.cc
+functionspace/detail/SpectralInterface.h
+functionspace/detail/SpectralInterface.cc
 functionspace/detail/StructuredColumnsInterface.h
 functionspace/detail/StructuredColumnsInterface.cc
 )
@@ -635,38 +639,79 @@ ecbuild_add_library( TARGET atlas
 
   AUTO_VERSION
 
-  LINKER_LANGUAGE CXX
-
   INSTALL_HEADERS ALL
 
-  HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
+  HEADER_DESTINATION  include/atlas
 
   SOURCES
     ${source_list}
-
-  PRIVATE_INCLUDES
-    "${CGAL_INCLUDE_DIRS}"
-    "${TRANSI_INCLUDE_DIRS}"
-
-  PUBLIC_INCLUDES "${FFTW_INCLUDES}"
-
-  LIBS
-    eckit_geometry
-    eckit_linalg
-    eckit_mpi
-    eckit_option
-    "${CGAL_LIBRARIES}"
-    "${TRANSI_LIBRARIES}"
-    "${FCKIT_LIBRARIES}"
-    "${FFTW_LIBRARIES}"
-  DEFINITIONS
-    ${ATLAS_DEFINITIONS}
 )
 
+if( ATLAS_HAVE_FORTRAN )
+  target_link_libraries( atlas PRIVATE fckit )
+endif()
+
+if( ATLAS_HAVE_TRANS )
+  if( TRANSI_VERSION VERSION_LESS 0.6 )
+    target_link_libraries( atlas PRIVATE transi )
+    target_include_directories( atlas PRIVATE ${TRANSI_INCLUDE_DIRS} )
+  else()
+    if( MIR_NEEDS_TRANSI )
+      target_link_libraries( atlas PUBLIC transi ) # Can become private when MIR doesn't use transi_version()
+    else()
+      target_link_libraries( atlas PRIVATE transi )
+    endif()
+  endif()
+endif()
+
+if( eckit_VERSION )
+    set( eckit_link_public PUBLIC )
+else()
+    set( eckit_link_public PRIVATE )
+endif()
+
+target_link_libraries( atlas ${eckit_link_public}
+  eckit
+  eckit_geometry
+  eckit_linalg
+  eckit_mpi
+  eckit_option
+)
+if( ECKIT_INCLUDE_DIRS )
+    target_include_directories( atlas PRIVATE ${ECKIT_INCLUDE_DIRS} )
+endif()
+
+target_include_directories( atlas PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>
+    $<INSTALL_INTERFACE:include>
+)
+
+
+
+if( ATLAS_HAVE_TESSELATION )
+  target_link_libraries( atlas PRIVATE ${CGAL_LIBRARIES} )
+  target_include_directories( atlas PRIVATE ${CGAL_INCLUDE_DIRS} )
+endif()
+
+if( ATLAS_HAVE_FFTW )
+  target_link_libraries( atlas PRIVATE ${FFTW_LIBRARIES} )
+  target_include_directories( atlas PRIVATE ${FFTW_INCLUDES} )
+endif()
+
+if( ATLAS_HAVE_EIGEN AND EIGEN3_INCLUDE_DIR )
+  target_include_directories( atlas PUBLIC ${EIGEN3_INCLUDE_DIR} )
+endif()
+
+if( ATLAS_HAVE_OMP_CXX )
+  target_link_libraries( atlas PRIVATE OpenMP::OpenMP_CXX )
+endif()
+
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
-  target_link_libraries( atlas gridtools::storage )
+  target_link_libraries( atlas PUBLIC gridtools::storage )
 endif()
 
 if( ATLAS_HAVE_ACC )
-  target_link_libraries( atlas atlas_acc_support )
+  target_link_libraries( atlas PRIVATE atlas_acc_support )
 endif()
+

@@ -70,6 +70,14 @@ ecbuild_add_test(
   LIBS atlas
 )
 
+ecbuild_add_test( TARGET atlas_test_mesh_node2cell
+  MPI        4
+  CONDITION  ECKIT_HAVE_MPI
+  SOURCES    test_mesh_node2cell.cc
+  LIBS       atlas
+)
+
+
 foreach( test connectivity elements ll meshgen3d rgg )
   ecbuild_add_test( TARGET atlas_test_${test}
     SOURCES test_${test}.cc

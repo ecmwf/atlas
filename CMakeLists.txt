@@ -44,13 +44,13 @@ ecbuild_find_python()
 
 ecbuild_add_option( FEATURE FORTRAN
                     DESCRIPTION "Provide Fortran bindings"
-                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.6" )
+                    REQUIRED_PACKAGES "PROJECT fckit VERSION 0.6.2" )
 
 if( ATLAS_HAVE_FORTRAN )
 
   if( FCKIT_HAVE_ECKIT )
 
-    ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module )
+    ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/module )
     set( Fortran Fortran )
 
     if( ENABLE_TESTS )
@@ -86,17 +86,29 @@ if( NOT ECKIT_HAVE_MPI )
   ecbuild_warn("ecKit has been compiled without MPI. This causes Atlas to not be able to run parallel jobs.")
 endif()
 
-
 ### OMP ...
-
-ecbuild_add_option( FEATURE OMP
-                    DESCRIPTION "Support for OpenMP threaded parallelism"
-                    REQUIRED_PACKAGES "OMP COMPONENTS CXX ${Fortran}" )
-
-if( HAVE_OMP )
-  ecbuild_enable_omp()
+if( "${CMAKE_VERSION}" VERSION_LESS "3.11" )
+  if( ENABLE_OMP )
+    ecbuild_warn( "OpenMP only supported with CMake 3.11 onwards" )
+  endif()
 else()
-  ecbuild_enable_ompstubs()
+  find_package( OpenMP COMPONENTS CXX ${Fortran} )
+endif()
+ecbuild_add_option( FEATURE OMP
+                    DESCRIPTION "support for OpenMP shared memory parallelism"
+                    CONDITION OpenMP_Fortran_FOUND OR OpenMP_CXX_FOUND )
+ecbuild_add_option( FEATURE OMP_Fortran
+                    DESCRIPTION "support for Fortran OpenMP shared memory parallelism"
+                    CONDITION HAVE_OMP AND OpenMP_Fortran_FOUND )
+
+ecbuild_add_option( FEATURE OMP_CXX
+                    DESCRIPTION "support for CXX OpenMP shared memory parallelism"
+                    CONDITION HAVE_OMP AND OpenMP_CXX_FOUND )
+if( TARGET OpenMP::OpenMP_CXX )
+  set( OMP_CXX OpenMP::OpenMP_CXX )
+endif()
+if( TARGET OpenMP::OpenMP_Fortran )
+  set( OMP_Fortran OpenMP::OpenMP_Fortran )
 endif()
 
 ### FFTW ...
@@ -109,7 +121,7 @@ ecbuild_add_option( FEATURE FFTW
 
 ecbuild_add_option( FEATURE TRANS
                     DESCRIPTION "Support for spectral transforms"
-                    REQUIRED_PACKAGES "PROJECT transi VERSION 0.4.1 QUIET" )
+                    REQUIRED_PACKAGES "PROJECT transi VERSION 0.4.4 QUIET" )
 
 ### tesselation ...
 
@@ -226,59 +238,47 @@ ecbuild_add_option( FEATURE SANDBOX
                     DEFAULT OFF
                     DESCRIPTION "Build the sandbox stuff" )
 
-################################################################################
-# export package info
-
-set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
-
-list( APPEND ATLAS_LIBRARIES  atlas )
-
-if( ATLAS_HAVE_FORTRAN )
-  list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
-  set( ATLAS_LIBRARIES atlas_f ${ATLAS_LIBRARIES} )
-endif()
-
-get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
-
-foreach( _tpl ${ATLAS_TPLS} )
-  string( TOUPPER ${_tpl} TPL )
-  list( APPEND ATLAS_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS}  ${${TPL}_TPL_DEFINITIONS}  )
-  list( APPEND ATLAS_EXTRA_INCLUDE_DIRS  ${${TPL}_INCLUDE_DIRS} ${${TPL}_TPL_INCLUDE_DIRS} )
-  list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
-endforeach()
-
-ecbuild_debug_var( ATLAS_EXTRA_INCLUDE_DIRS )
-ecbuild_debug_var( ATLAS_EXTRA_LIBRARIES )
-
 
 ################################################################################
 # sources
 
-include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
+set( MIR_NEEDS_TRANSI TRUE CACHE BOOL "Deprecated" INTERNAL )
+
 include(CompileFlags)
 add_subdirectory( src )
 
 ################################################################################
+# export package info
+
+if( TARGET atlas_f )
+  list( APPEND ATLAS_LIBRARIES atlas_f )
+endif()
+list( APPEND ATLAS_LIBRARIES  atlas )
+
+################################################################################
 # pkg-config
 
+ecbuild_add_option( FEATURE PKGCONFIG DESCRIPTION "Atlas pkgconfig" )
 set( ATLAS_URL "https://software.ecmwf.int/wiki/display/ATLAS" )
 set( ATLAS_DESCRIPTION "Atlas framework for parallel mesh datastructures" )
 
-ecbuild_pkgconfig()
+if( ATLAS_HAVE_PKGCONFIG )
+  ecbuild_pkgconfig()
 
-ecbuild_pkgconfig(
- NAME             atlas-c++
- LANGUAGES        CXX
- LIBRARIES        atlas
-)
+  ecbuild_pkgconfig(
+    NAME             atlas-c++
+    LANGUAGES        CXX
+    LIBRARIES        atlas
+  )
 
-if( ATLAS_HAVE_FORTRAN )
- ecbuild_pkgconfig(
-   NAME             atlas-fortran
-   LANGUAGES        Fortran
-   LIBRARIES        atlas_f
-   NO_PRIVATE_INCLUDE_DIRS
- )
+  if( ATLAS_HAVE_FORTRAN )
+    ecbuild_pkgconfig(
+      NAME             atlas-fortran
+      LANGUAGES        Fortran
+      LIBRARIES        atlas_f
+      NO_PRIVATE_INCLUDE_DIRS
+    )
+  endif()
 endif()
 
 ################################################################################
@@ -304,7 +304,63 @@ ecbuild_add_resources(
 )
 
 if( ATLAS_HAVE_FORTRAN AND ECBUILD_INSTALL_FORTRAN_MODULES )
-    install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR} DESTINATION ${INSTALL_INCLUDE_DIR} )
+    install( DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}
+             DESTINATION module/atlas
+             COMPONENT modules )
+endif()
+
+macro( filter_tpl _tpl )
+  string( TOUPPER ${_tpl} _TPL )
+  unset( ${_tpl}_INCLUDE_DIRS )
+  unset( ${_TPL}_INCLUDE_DIRS )
+  unset( ${_tpl}_INCLUDE_DIR )
+  unset( ${_TPL}_INCLUDE_DIR )
+  unset( ${_tpl}_LIBRARIES )
+  unset( ${_TPL}_LIBRARIES )
+  unset( ${_tpl}_LIBRARY )
+  unset( ${_TPL}_LIBRARY )
+  if( ${_tpl}_INCLUDE_DIRS )
+    unset( ${_tpl}_INCLUDE_DIRS CACHE )
+  endif()
+  if( ${_TPL}_INCLUDE_DIRS )
+    unset( ${_TPL}_INCLUDE_DIRS CACHE )
+  endif()
+  if( ${_tpl}_INCLUDE_DIR )
+    unset( ${_tpl}_INCLUDE_DIR CACHE )
+  endif()
+  if( ${_TPL}_INCLUDE_DIR )
+    unset( ${_TPL}_INCLUDE_DIR CACHE )
+  endif()
+  if( ${_tpl}_LIBRARIES )
+    unset( ${_tpl}_LIBRARIES CACHE )
+  endif()
+  if( ${_TPL}_LIBRARIES )
+    unset( ${_TPL}_LIBRARIES CACHE )
+  endif()
+  if( ${_tpl}_LIBRARY )
+    unset( ${_tpl}_LIBRARY CACHE )
+  endif()
+  if( ${_TPL}_LIBRARY )
+    unset( ${_TPL}_LIBRARY CACHE )
+  endif()
+endmacro()
+filter_tpl( fckit )
+filter_tpl( CGAL )
+filter_tpl( FFTW )
+filter_tpl( Eigen3 )
+if( (NOT MIR_NEEDS_TRANSI) OR NOT( TRANSI_VERSION VERSION_LESS 0.6 ) )
+  filter_tpl( transi )
+endif()
+get_target_property( eckit_intf_incl_dirs eckit INTERFACE_INCLUDE_DIRECTORIES )
+set( eckit_can_be_filtered FALSE )
+foreach( eckit_intf_incl_dir ${eckit_intf_incl_dirs} )
+  string(FIND ${eckit_intf_incl_dir} "eckit" _found )
+  if( NOT( _found EQUAL "-1" ) )
+    set( eckit_can_be_filtered TRUE )
+  endif()
+endforeach()
+if( eckit_can_be_filtered )
+  filter_tpl(eckit)
 endif()
 
 ecbuild_install_project( NAME Atlas )

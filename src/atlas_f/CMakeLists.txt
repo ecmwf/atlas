@@ -94,7 +94,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/FieldSet.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/FunctionSpaceInterface.h
     MODULE atlas_functionspace_c_binding
     OUTPUT functionspace_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/SpectralInterface.h
     MODULE    atlas_functionspace_Spectral_c_binding
     OUTPUT    functionspace_Spectral_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/StructuredColumnsInterface.h
@@ -133,7 +133,6 @@ generate_fortran_bindings(FORTRAN_BINDINGS runtime/atlas_trace.h MODULE atlas_tr
 ### atlas fortran lib
 ecbuild_add_library( TARGET atlas_f
     AUTO_VERSION
-    CONDITION CMAKE_Fortran_COMPILER_LOADED
     SOURCES
         ${FORTRAN_BINDINGS}
         atlas_module.F90
@@ -183,10 +182,33 @@ ecbuild_add_library( TARGET atlas_f
 
   PRIVATE_INCLUDES
         ${FCKIT_INCLUDE_DIRS}
-
-  LIBS atlas fckit
 )
-target_include_directories( atlas_f PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> )
+
+target_link_libraries( atlas_f PRIVATE
+  atlas )
+
+target_link_libraries( atlas_f PUBLIC
+  fckit )
+
+if( ATLAS_HAVE_OMP_Fortran )
+  target_link_libraries( atlas_f PRIVATE OpenMP::OpenMP_Fortran )
+endif()
+
+target_include_directories( atlas_f PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>
+  $<INSTALL_INTERFACE:include>
+  $<INSTALL_INTERFACE:module/atlas>
+)
+target_include_directories( atlas_f PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+)
+if( ECKIT_INCLUDE_DIRS )
+  target_include_directories( atlas_f PRIVATE ${ECKIT_INCLUDE_DIRS} )
+endif()
 
 fckit_target_preprocess_fypp( atlas_f
   DEPENDS

@@ -38,7 +38,7 @@ static void init() {
 namespace atlas {
 namespace numerics {
 
-NablaImpl::NablaImpl( const Method&, const eckit::Parametrisation& ) {}
+NablaImpl::NablaImpl( const Method& method, const eckit::Parametrisation& ) : method_( &method ) {}
 
 NablaImpl::~NablaImpl() {}
 
@@ -189,7 +189,12 @@ void atlas__Nabla__laplacian( const Nabla::Implementation* This, const field::Fi
     Field flaplacian( laplacian );
     This->laplacian( scalar, flaplacian );
 }
+
+const functionspace::FunctionSpaceImpl* atlas__Nabla__functionspace( const Nabla::Implementation* This ) {
+    return This->functionspace().get();
 }
+
+}  // extern "C"
 
 }  // namespace numerics
 }  // namespace atlas

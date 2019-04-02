@@ -33,6 +33,18 @@ using GridImpl = grid::detail::grid::Grid;
 }  // namespace atlas
 
 namespace atlas {
+namespace grid {
+namespace detail {
+namespace partitioner {
+class Partitioner;
+}  // namespace partitioner
+}  // namespace detail
+}  // namespace grid
+using PartitionerImpl = grid::detail::partitioner::Partitioner;
+}  // namespace atlas
+
+
+namespace atlas {
 namespace functionspace {
 
 // -------------------------------------------------------------------
@@ -48,6 +60,16 @@ const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__g
 const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_dist_vert(
     const GridImpl* grid, const grid::DistributionImpl* dist, const Vertical* vert,
     const eckit::Configuration* config );
+
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_part(
+    const GridImpl* grid, const PartitionerImpl* dist, const eckit::Configuration* config );
+
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_part_vert(
+    const GridImpl* grid, const PartitionerImpl* dist, const Vertical* vert, const eckit::Configuration* config );
+
+void atlas__functionspace__StructuredColumns__delete( detail::StructuredColumns* This );
+field::FieldImpl* atlas__fs__StructuredColumns__create_field( const detail::StructuredColumns* This,
+                                                              const eckit::Configuration* options );
 
 void atlas__functionspace__StructuredColumns__gather( const detail::StructuredColumns* This,
                                                       const field::FieldImpl* local, field::FieldImpl* global );
@@ -70,12 +92,16 @@ idx_t atlas__fs__StructuredColumns__j_begin_halo( const detail::StructuredColumn
 idx_t atlas__fs__StructuredColumns__j_end_halo( const detail::StructuredColumns* This );
 idx_t atlas__fs__StructuredColumns__i_begin_halo( const detail::StructuredColumns* This, idx_t j );
 idx_t atlas__fs__StructuredColumns__i_end_halo( const detail::StructuredColumns* This, idx_t j );
+idx_t atlas__fs__StructuredColumns__levels( const detail::StructuredColumns* This );
 
 field::FieldImpl* atlas__fs__StructuredColumns__xy( const detail::StructuredColumns* This );
+field::FieldImpl* atlas__fs__StructuredColumns__z( const detail::StructuredColumns* This );
 field::FieldImpl* atlas__fs__StructuredColumns__partition( const detail::StructuredColumns* This );
 field::FieldImpl* atlas__fs__StructuredColumns__global_index( const detail::StructuredColumns* This );
 field::FieldImpl* atlas__fs__StructuredColumns__index_i( const detail::StructuredColumns* This );
 field::FieldImpl* atlas__fs__StructuredColumns__index_j( const detail::StructuredColumns* This );
+
+const GridImpl* atlas__fs__StructuredColumns__grid( const detail::StructuredColumns* This );
 }
 
 }  // namespace functionspace

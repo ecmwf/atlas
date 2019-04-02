@@ -47,7 +47,7 @@ ftype2use = {
     'integer(c_size_t)':'c_size_t',
     'real(c_float)':'c_float',
     'real(c_double)':'c_double',
-    'logical(c_bool)':'_Bool'
+    'logical(c_bool)':'c_bool'
 }
 
 function_signature = re.compile('''^

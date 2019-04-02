@@ -6,6 +6,11 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+if( ECKIT_INCLUDE_DIRS ) # eckit not yet ported to CMake3
+    include_directories( ${ECKIT_INCLUDE_DIRS} )
+endif()
+
+
 ecbuild_add_executable(
   TARGET      atlas-main
   OUTPUT_NAME atlas
@@ -40,13 +45,13 @@ ecbuild_add_executable(
 ecbuild_add_executable(
   TARGET      atlas-benchmark
   SOURCES     atlas-benchmark.cc
-  LIBS        atlas
+  LIBS        atlas ${OMP_CXX}
 )
 
 ecbuild_add_executable(
   TARGET      atlas-numerics-nabla
   SOURCES     atlas-numerics-nabla.F90
-  LIBS        atlas_f
+  LIBS        atlas_f ${OMP_Fortran}
   LINKER_LANGUAGE Fortran
   CONDITION   HAVE_FORTRAN )
 

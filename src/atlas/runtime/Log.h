@@ -1,36 +1,12 @@
-/*
- * (C) Copyright 2013 ECMWF.
- *
- * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
- * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation
- * nor does it submit to any jurisdiction.
- */
-
 #pragma once
 
 #include "atlas/library/config.h"
 
-#if ATLAS_HAVE_FORTRAN
-#include "fckit/Log.h"
-namespace atlas {
-namespace detail {
-typedef fckit::Log LogBase;
-}
-}  // namespace atlas
-#else
 #include "eckit/log/Log.h"
-namespace atlas {
-namespace detail {
-typedef eckit::Log LogBase;
-}
-}  // namespace atlas
-#endif
 
 namespace atlas {
 
-class Log : public detail::LogBase {
+class Log : public eckit::Log {
 public:
     using Channel = eckit::Channel;  // derives from std::ostream
 
@@ -38,23 +14,19 @@ public:
     static Channel& trace();
     static Channel& debug();
 
-#if !ATLAS_HAVE_FORTRAN
-    // Stubs for what fckit::Log provides
+    // Same as what fckit::Log provides
     enum Style
     {
         SIMPLE    = 0,
         PREFIX    = 1,
         TIMESTAMP = 2
     };
-    static void addFortranUnit( int unit, Style = PREFIX, const char* prefix = "" ) { /*NOTIMP*/
-    }
-    static void setFortranUnit( int unit, Style = PREFIX, const char* prefix = "" ) { /*NOTIMP*/
-    }
+    static void addFortranUnit( int unit, Style = PREFIX, const char* prefix = "" );
+    static void setFortranUnit( int unit, Style = PREFIX, const char* prefix = "" );
 
     // Fortran unit numbers
     static int output_unit() { return 6; }
     static int error_unit() { return 0; }
-#endif
 };
 
 std::string backtrace();

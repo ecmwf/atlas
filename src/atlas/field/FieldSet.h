@@ -120,7 +120,8 @@ public:  // types
 
 public:  // methods
     using Handle::Handle;
-    FieldSet( const std::string& name = "untitled" );
+    FieldSet();
+    FieldSet( const std::string& name );
     FieldSet( const Field& );
 
     idx_t size() const { return get()->size(); }

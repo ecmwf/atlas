@@ -9,7 +9,7 @@
 #include "atlas/atlas_f.h"
 #:include "internals/atlas_generics.fypp"
 
-#:set ranks = [1,2,3]
+#:set ranks = [1,2,3,4]
 
 module atlas_haloexchange_module
 
@@ -130,6 +130,20 @@ subroutine HaloExchange__execute_${dtype}$_r3(this, field_data)
   extents = (/ 1,                    ubound(field_data,2) , ubound(field_data,1) /)
   call atlas__HaloExchange__execute_strided_${ctype}$( this%CPTR_PGIBUG_A, view, &
     & strides, extents, 3 )
+end subroutine
+
+subroutine HaloExchange__execute_${dtype}$_r4(this, field_data)
+  use atlas_haloexchange_c_binding
+  class(atlas_HaloExchange), intent(in) :: this
+  ${ftype}$, intent(inout) :: field_data(:,:,:,:)
+  ${ftype}$, pointer :: view(:)
+  integer :: strides(4), extents(4)
+  view => array_view1d(field_data)
+  strides = (/ array_stride(field_data,4), array_stride(field_data,3), array_stride(field_data,2) , &
+               array_stride(field_data,1) /)
+  extents = (/ 1, ubound(field_data,3) , ubound(field_data,2) , ubound(field_data,1) /)
+  call atlas__HaloExchange__execute_strided_${ctype}$( this%CPTR_PGIBUG_A, view, &
+    & strides, extents, 4 )
 end subroutine
 
 #:endfor

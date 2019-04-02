@@ -14,6 +14,7 @@
 #include "atlas/grid/detail/distribution/DistributionImpl.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
@@ -90,6 +91,18 @@ detail::partitioner::Partitioner* atlas__grid__Partitioner__new( const Partition
     p->detach();
     return p;
 }
+
+detail::partitioner::Partitioner* atlas__grid__Partitioner__new_type( const char* type ) {
+    detail::partitioner::Partitioner* p;
+    {
+        Partitioner partitioner{option::type( type )};
+        p = const_cast<detail::partitioner::Partitioner*>( partitioner.get() );
+        p->attach();
+    }
+    p->detach();
+    return p;
+}
+
 
 detail::partitioner::Partitioner* atlas__grid__MatchingMeshPartitioner__new( const Mesh::Implementation* mesh,
                                                                              const Partitioner::Config* config ) {

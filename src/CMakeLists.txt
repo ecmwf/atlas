@@ -6,16 +6,16 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-if( CGAL_FOUND )
-  set( CGAL_FOUND 1 )
+if( ATLAS_HAVE_OMP_CXX )
+  set( ATLAS_HAVE_OMP_CXX 1 )
 else()
-  set( CGAL_FOUND 0 )
+  set( ATLAS_HAVE_OMP_CXX 0 )
 endif()
 
-if( ATLAS_HAVE_OMP )
-  set( ATLAS_HAVE_OMP 1 )
+if( ATLAS_HAVE_OMP_Fortran )
+  set( ATLAS_HAVE_OMP_Fortran 1 )
 else()
-  set( ATLAS_HAVE_OMP 0 )
+  set( ATLAS_HAVE_OMP_Fortran 0 )
 endif()
 
 if( ATLAS_HAVE_TESSELATION )

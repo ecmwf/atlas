@@ -13,7 +13,6 @@
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/field/detail/FieldImpl.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/option.h"
@@ -25,6 +24,7 @@
 
 #if ATLAS_HAVE_TRANS
 #include "atlas/trans/ifs/TransIFS.h"
+#include "transi/trans.h"
 namespace {
 void trans_check( const int code, const char* msg, const eckit::CodeLocation& location ) {
     if ( code != TRANS_SUCCESS ) {
@@ -41,6 +41,7 @@ void trans_check( const int code, const char* msg, const eckit::CodeLocation& lo
 namespace atlas {
 namespace functionspace {
 namespace detail {
+
 
 #if ATLAS_HAVE_TRANS
 class Spectral::Parallelisation {
@@ -61,6 +62,24 @@ public:
     int nb_spectral_coefficients_global() const { return trans_->nspec2g; }
     int nb_spectral_coefficients() const { return trans_->nspec2; }
 
+    int nump() const { return trans_->nump; }
+
+    array::LocalView<int, 1, array::Intent::ReadOnly> nvalue() const {
+        if ( trans_->nvalue == nullptr ) ::trans_inquire( trans_.get(), "nvalue" );
+        return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nvalue, array::make_shape( trans_->nspec2 ) );
+    }
+
+    array::LocalView<int, 1, array::Intent::ReadOnly> nmyms() const {
+        if ( trans_->nmyms == nullptr ) ::trans_inquire( trans_.get(), "nmyms" );
+        return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nmyms, array::make_shape( nump() ) );
+    }
+
+    array::LocalView<int, 1, array::Intent::ReadOnly> nasm0() const {
+        if ( trans_->nasm0 == nullptr ) ::trans_inquire( trans_.get(), "nasm0" );
+        return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nasm0,
+                                                                  array::make_shape( trans_->nsmax + 1 ) );
+    }
+
     std::string distribution() const { return "trans"; }
     operator ::Trans_t*() const { return trans_.get(); }
     std::shared_ptr<::Trans_t> trans_;
@@ -68,11 +87,44 @@ public:
 #else
 class Spectral::Parallelisation {
 public:
-    Parallelisation( int truncation ) : truncation_( truncation ) {}
+    Parallelisation( int truncation ) : truncation_( truncation ) {
+        // Assume serial!!!
+        nmyms_.resize( truncation_ + 1 );
+        nasm0_.resize( truncation_ + 1 );
+        nvalue_.resize( nb_spectral_coefficients() );
+        idx_t jc{0};
+        for ( idx_t m = 0; m <= truncation_; ++m ) {
+            nmyms_[m] = m;
+            nasm0_[m] = jc + 1;  // Fortran index
+            for ( idx_t n = m; n <= truncation_; ++n ) {
+                nvalue_[jc++] = n;
+                nvalue_[jc++] = n;
+            }
+        }
+        ATLAS_ASSERT( jc == nb_spectral_coefficients() );
+    }
     int nb_spectral_coefficients_global() const { return ( truncation_ + 1 ) * ( truncation_ + 2 ); }
     int nb_spectral_coefficients() const { return nb_spectral_coefficients_global(); }
     int truncation_;
     std::string distribution() const { return "serial"; }
+
+    int nump() const { return truncation_ + 1; }
+
+    array::LocalView<int, 1, array::Intent::ReadOnly> nmyms() const {
+        return array::LocalView<int, 1, array::Intent::ReadOnly>( nmyms_.data(), array::make_shape( nump() ) );
+    }
+
+    array::LocalView<int, 1, array::Intent::ReadOnly> nvalue() const {
+        return array::LocalView<int, 1, array::Intent::ReadOnly>( nvalue_.data(),
+                                                                  array::make_shape( nb_spectral_coefficients() ) );
+    }
+
+    array::LocalView<int, 1, array::Intent::ReadOnly> nasm0() const {
+        return array::LocalView<int, 1, array::Intent::ReadOnly>( nasm0_.data(), array::make_shape( truncation_ + 1 ) );
+    }
+    std::vector<int> nmyms_;
+    std::vector<int> nasm0_;
+    std::vector<int> nvalue_;
 };
 #endif
 
@@ -331,6 +383,27 @@ void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, in
     norm( field, norm_per_level.data(), rank );
 }
 
+array::LocalView<int, 1, array::Intent::ReadOnly> Spectral::zonal_wavenumbers() const {
+    return parallelisation_->nmyms();
+}
+
+int Spectral::nump() const {
+    return parallelisation_->nump();
+}
+
+array::LocalView<int, 1, array::Intent::ReadOnly> Spectral::nvalue() const {
+    return parallelisation_->nvalue();
+}
+
+array::LocalView<int, 1, array::Intent::ReadOnly> Spectral::nmyms() const {
+    return parallelisation_->nmyms();
+}
+
+array::LocalView<int, 1, array::Intent::ReadOnly> Spectral::nasm0() const {
+    return parallelisation_->nasm0();
+}
+
+
 }  // namespace detail
 
 // ----------------------------------------------------------------------
@@ -400,87 +473,6 @@ void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, in
 }
 
 // ----------------------------------------------------------------------
-
-extern "C" {
-const detail::Spectral* atlas__SpectralFunctionSpace__new__config( const eckit::Configuration* config ) {
-    ATLAS_ASSERT( config != nullptr );
-    return new detail::Spectral( *config );
-}
-
-const detail::Spectral* atlas__SpectralFunctionSpace__new__trans( trans::TransImpl* trans,
-                                                                  const eckit::Configuration* config ) {
-    ATLAS_ASSERT( trans != nullptr );
-    ATLAS_ASSERT( config != nullptr );
-    return new detail::Spectral( trans::Trans( trans ), *config );
-}
-
-void atlas__SpectralFunctionSpace__delete( detail::Spectral* This ) {
-    ATLAS_ASSERT( This != nullptr );
-    delete This;
-}
-
-field::FieldImpl* atlas__fs__Spectral__create_field( const detail::Spectral* This,
-                                                     const eckit::Configuration* options ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( options );
-    field::FieldImpl* field;
-    {
-        Field f = This->createField( *options );
-        field   = f.get();
-        field->attach();
-    }
-    field->detach();
-    return field;
-}
-
-void atlas__SpectralFunctionSpace__gather( const detail::Spectral* This, const field::FieldImpl* local,
-                                           field::FieldImpl* global ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( global != nullptr );
-    ATLAS_ASSERT( local != nullptr );
-    const Field l( local );
-    Field g( global );
-    This->gather( l, g );
-}
-
-void atlas__SpectralFunctionSpace__scatter( const detail::Spectral* This, const field::FieldImpl* global,
-                                            field::FieldImpl* local ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( global != nullptr );
-    ATLAS_ASSERT( local != nullptr );
-    const Field g( global );
-    Field l( local );
-    This->scatter( g, l );
-}
-
-void atlas__SpectralFunctionSpace__gather_fieldset( const detail::Spectral* This, const field::FieldSetImpl* local,
-                                                    field::FieldSetImpl* global ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( global != nullptr );
-    ATLAS_ASSERT( local != nullptr );
-    const FieldSet l( local );
-    FieldSet g( global );
-    This->gather( l, g );
-}
-
-void atlas__SpectralFunctionSpace__scatter_fieldset( const detail::Spectral* This, const field::FieldSetImpl* global,
-                                                     field::FieldSetImpl* local ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( global != nullptr );
-    ATLAS_ASSERT( local != nullptr );
-    const FieldSet g( global );
-    FieldSet l( local );
-    This->scatter( g, l );
-}
-
-void atlas__SpectralFunctionSpace__norm( const detail::Spectral* This, const field::FieldImpl* field, double norm[],
-                                         int rank ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( field != nullptr );
-    ATLAS_ASSERT( norm != nullptr );
-    This->norm( field, norm, rank );
-}
-}
 
 }  // namespace functionspace
 }  // namespace atlas

@@ -1,10 +1,9 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/array/ArrayView.h"
-#include "atlas/field/Field.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/field.h"
+#include "atlas/grid.h"
 #include "atlas/library/Library.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
+#include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/Log.h"
@@ -15,7 +14,8 @@ using atlas::array::make_shape;
 using atlas::array::make_view;
 using atlas::functionspace::NodeColumns;
 using atlas::gidx_t;
-using atlas::grid::StructuredGrid;
+using atlas::idx_t;
+using atlas::StructuredGrid;
 using atlas::output::Gmsh;
 
 int main( int argc, char* argv[] ) {
@@ -109,7 +109,7 @@ int main( int argc, char* argv[] ) {
     /* .... */
 
     // Operations
-    size_t N;
+    idx_t N;
     gidx_t gidx_min, gidx_max;
     double min, max, sum, mean, stddev;
 

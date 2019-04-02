@@ -40,6 +40,7 @@
 #include "atlas/trans/ifs/TransIFS.h"
 #include "atlas/trans/ifs/TransIFSNodeColumns.h"
 #include "atlas/trans/ifs/TransIFSStructuredColumns.h"
+#include "transi/trans.h"
 #endif
 
 using namespace eckit;
@@ -327,20 +328,23 @@ CASE( "test_nomesh" ) {
     Field gpfg = gridpoints.createField<double>( option::name( "gpf" ) | option::global() );
 
     array::ArrayView<double, 1> spg = array::make_view<double, 1>( spfg );
-    if ( mpi::comm().rank() == 0 ) {
-        spg.assign( 0. );
-        spg( 0 ) = 4.;
-    }
+
+    spectral.parallel_for( option::global(), [&]( int real, int imag, int n, int m ) {
+        spg( real ) = +m * spectral.truncation() + n;
+        spg( imag ) = ( n == 0 ? 0 : -m * spectral.truncation() + n );
+    } );
 
     EXPECT_NO_THROW( spectral.scatter( spfg, spf ) );
 
-    if ( mpi::comm().rank() == 0 ) {
-        array::ArrayView<double, 1> sp = array::make_view<double, 1>( spf );
-        EXPECT( eckit::types::is_approximately_equal( sp( 0 ), 4., 0.001 ) );
-        for ( idx_t jp = 0; jp < sp.size(); ++jp ) {
-            Log::debug() << "sp(" << jp << ")   :   " << sp( jp ) << std::endl;
-        }
-    }
+    array::ArrayView<double, 1> sp = array::make_view<double, 1>( spf );
+
+    spectral.parallel_for( [&]( idx_t real, idx_t imag, int n, int m ) {
+        EXPECT( int( sp( real ) ) == +m * spectral.truncation() + n );
+        EXPECT( int( sp( imag ) ) == ( n == 0 ? 0 : -m * spectral.truncation() + n ) );
+
+        sp( real ) = ( n == 0 ? 4. : 0. );
+        sp( imag ) = 0.;
+    } );
 
     EXPECT_NO_THROW( trans.invtrans( spf, gpf ) );
 
@@ -349,7 +353,7 @@ CASE( "test_nomesh" ) {
     if ( mpi::comm().rank() == 0 ) {
         array::ArrayView<double, 1> gpg = array::make_view<double, 1>( gpfg );
         for ( idx_t jp = 0; jp < gpg.size(); ++jp ) {
-            EXPECT( eckit::types::is_approximately_equal( gpg( jp ), 4., 0.001 ) );
+            EXPECT( is_approximately_equal( gpg( jp ), 4., 0.001 ) );
             Log::debug() << "gpg(" << jp << ")   :   " << gpg( jp ) << std::endl;
         }
     }
@@ -360,7 +364,10 @@ CASE( "test_nomesh" ) {
 
     EXPECT_NO_THROW( spectral.gather( spf, spfg ) );
 
-    if ( mpi::comm().rank() == 0 ) { EXPECT( eckit::types::is_approximately_equal( spg( 0 ), 4., 0.001 ) ); }
+    spectral.parallel_for( option::global(), [&]( idx_t real, idx_t imag, int n ) {
+        EXPECT( is_approximately_equal( spg( real ), ( n == 0 ? 4. : 0. ), 0.001 ) );
+        EXPECT( is_approximately_equal( spg( imag ), 0., 0.001 ) );
+    } );
 }
 
 CASE( "test_trans_factory" ) {

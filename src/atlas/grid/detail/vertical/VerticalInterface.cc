@@ -11,7 +11,10 @@
 #include <algorithm>
 
 #include "VerticalInterface.h"
+#include "atlas/field/Field.h"
+#include "atlas/field/detail/FieldImpl.h"
 #include "atlas/grid/Vertical.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 
@@ -22,6 +25,22 @@ Vertical* atlas__Vertical__new( idx_t levels, const double z[] ) {
 
 void atlas__Vertical__delete( Vertical* This ) {
     delete This;
+}
+
+field::FieldImpl* atlas__Vertical__z( const Vertical* This ) {
+    ATLAS_ASSERT( This != nullptr );
+    field::FieldImpl* field;
+    {
+        Field f = This->z();
+        field   = f.get();
+        field->attach();
+    }
+    field->detach();
+    return field;
+}
+
+int atlas__Vertical__size( const Vertical* This ) {
+    return This->size();
 }
 
 }  // namespace atlas

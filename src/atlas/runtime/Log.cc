@@ -14,6 +14,10 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 
+#if ATLAS_HAVE_FORTRAN
+#include "fckit/Log.h"
+#endif
+
 namespace atlas {
 
 std::string backtrace() {
@@ -48,6 +52,20 @@ Log::Channel& Log::debug() {
     return atlas::Library::instance().debugChannel();
 }
 
-// namespace detail
+void Log::addFortranUnit( int unit, Style style, const char* prefix ) {
+#if ATLAS_HAVE_FORTRAN
+    fckit::Log::addFortranUnit( unit, fckit::Log::Style( style ), prefix );
+#else
+/*NOTIMP*/
+#endif
+}
+
+void Log::setFortranUnit( int unit, Style style, const char* prefix ) {
+#if ATLAS_HAVE_FORTRAN
+    fckit::Log::setFortranUnit( unit, fckit::Log::Style( style ), prefix );
+#else
+/*NOTIMP*/
+#endif
+}
 
 }  // namespace atlas

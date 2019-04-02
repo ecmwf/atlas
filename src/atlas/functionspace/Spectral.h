@@ -10,10 +10,17 @@
 
 #pragma once
 
+#include <functional>
+#include <type_traits>
+
+#include "atlas/array/LocalView.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 #include "atlas/library/config.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {
@@ -34,6 +41,23 @@ namespace detail {
 // -------------------------------------------------------------------
 
 class Spectral : public FunctionSpaceImpl {
+    /*
+  Spectral data is organised as:
+     m = zonal wavenumber
+     n = total wavenumber
+  
+  const auto zonal_wavenumbers = Spectral::zonal_wavenumbers();
+  idx_t jc=0;
+  for( int jm=0; jm<zonal_wavenumbers.size(); ++jm ) {
+    int m = zonal_wavenumbers(m);
+    for( int n=m; m<=truncation; ++n ) {
+      data( jc++, jfld ) = func_real_part(m,n);
+      data( jc++, jfld ) = func_imag_part(m,n);
+    }
+  }
+  
+*/
+
 public:
     Spectral( const eckit::Configuration& );
 
@@ -65,6 +89,95 @@ public:
     void norm( const Field&, double norm_per_level[], int rank = 0 ) const;
     void norm( const Field&, std::vector<double>& norm_per_level, int rank = 0 ) const;
 
+    array::LocalView<int, 1, array::Intent::ReadOnly> zonal_wavenumbers() const;  // zero-based, OK
+
+    idx_t levels() const { return nb_levels_; }
+
+    class For {
+    public:
+        For( const Spectral& fs, const util::Config& config = util::NoConfig() ) :
+            fs_{fs},
+            truncation{fs_.truncation()},
+            zonal_wavenumbers{fs_.zonal_wavenumbers()},
+            global{config.getBool( "global", false )},
+            owner{config.getUnsigned( "owner", 0 )} {}
+
+    protected:
+        const Spectral& fs_;
+        using View = const array::LocalView<int, 1, array::Intent::ReadOnly>;
+        int truncation;
+        View zonal_wavenumbers;
+        bool global;
+        size_t owner;
+
+    public:
+#define FunctorArgs( ... )                                                                                             \
+    typename std::enable_if<std::is_convertible<Functor, std::function<void( __VA_ARGS__ )>>::value, Functor>::type* = \
+        nullptr
+
+        // Functor: void f(real,imag,n,m)
+        template <typename Functor, FunctorArgs( idx_t, idx_t, int, int )>
+        void operator()( const Functor& f ) const {
+            idx_t index = 0;
+            if ( global ) {
+                if ( owner == mpi::comm().rank() ) {
+                    atlas_omp_parallel_for( int m = 0; m <= truncation; ++m ) {
+                        for ( int n = m; n <= truncation; ++n ) {
+                            f( index, index + 1, n, m );
+                            index += 2;
+                        }
+                    }
+                }
+            }
+            else {
+                const int nb_zonal_wavenumbers{zonal_wavenumbers.size()};
+                atlas_omp_parallel_for( int jm = 0; jm < nb_zonal_wavenumbers; ++jm ) {
+                    const int m = zonal_wavenumbers( jm );
+                    for ( int n = m; n <= truncation; ++n ) {
+                        f( index, index + 1, n, m );
+                        index += 2;
+                    }
+                }
+            }
+        }
+
+        // Functor: void f(real,imag,n)
+        template <typename Functor, FunctorArgs( idx_t, idx_t, int )>
+        void operator()( const Functor& f ) const {
+            idx_t index = 0;
+            if ( global ) {
+                if ( owner == mpi::comm().rank() ) {
+                    atlas_omp_parallel_for( int m = 0; m <= truncation; ++m ) {
+                        for ( int n = m; n <= truncation; ++n ) {
+                            f( index, index + 1, n );
+                            index += 2;
+                        }
+                    }
+                }
+            }
+            else {
+                const int nb_zonal_wavenumbers{zonal_wavenumbers.size()};
+                atlas_omp_parallel_for( int jm = 0; jm < nb_zonal_wavenumbers; ++jm ) {
+                    const int m = zonal_wavenumbers( jm );
+                    for ( int n = m; n <= truncation; ++n ) {
+                        f( index, index + 1, n );
+                        index += 2;
+                    }
+                }
+            }
+        }
+#undef FunctorArgs
+    };
+    template <typename Functor>
+    void parallel_for( const Functor& f ) const {
+        For( *this, util::NoConfig() )( f );
+    }
+
+    template <typename Functor>
+    void parallel_for( const util::Config& config, const Functor& f ) const {
+        For( *this, config )( f );
+    }
+
 public:  // methods
     idx_t nb_spectral_coefficients() const;
     idx_t nb_spectral_coefficients_global() const;
@@ -79,6 +192,15 @@ private:  // methods
     idx_t config_levels( const eckit::Configuration& ) const;
     void set_field_metadata( const eckit::Configuration&, Field& ) const;
     size_t footprint() const override;
+
+
+private:  // Fortran access
+    friend struct SpectralFortranAccess;
+    int nump() const;                                                  // equivalent to nmyms().size()
+    array::LocalView<int, 1, array::Intent::ReadOnly> nvalue() const;  // Return wave number n for a given index
+    array::LocalView<int, 1, array::Intent::ReadOnly> nmyms() const;   // Return list of local zonal wavenumbers "m"
+    array::LocalView<int, 1, array::Intent::ReadOnly> nasm0() const;
+
 
 private:  // data
     idx_t nb_levels_;
@@ -118,44 +240,20 @@ public:
     idx_t nb_spectral_coefficients() const;
     idx_t nb_spectral_coefficients_global() const;
     int truncation() const;
+    idx_t levels() const { return functionspace_->levels(); }
+
+    template <typename Functor>
+    void parallel_for( const Functor& f ) const {
+        functionspace_->parallel_for( f );
+    }
+    template <typename Functor>
+    void parallel_for( const util::Config& config, const Functor& f ) const {
+        functionspace_->parallel_for( config, f );
+    }
 
 private:
     const detail::Spectral* functionspace_;
 };
-
-}  // namespace functionspace
-}  // namespace atlas
-
-// -------------------------------------------------------------------
-// C wrapper interfaces to C++ routines
-namespace atlas {
-namespace field {
-class FieldSetImpl;
-class FieldImpl;
-}  // namespace field
-namespace trans {
-class TransImpl;
-}
-namespace functionspace {
-
-extern "C" {
-const detail::Spectral* atlas__SpectralFunctionSpace__new__config( const eckit::Configuration* config );
-const detail::Spectral* atlas__SpectralFunctionSpace__new__trans( trans::TransImpl* trans,
-                                                                  const eckit::Configuration* config );
-void atlas__SpectralFunctionSpace__delete( detail::Spectral* This );
-field::FieldImpl* atlas__fs__Spectral__create_field( const detail::Spectral* This,
-                                                     const eckit::Configuration* options );
-void atlas__SpectralFunctionSpace__gather( const detail::Spectral* This, const field::FieldImpl* local,
-                                           field::FieldImpl* global );
-void atlas__SpectralFunctionSpace__gather_fieldset( const detail::Spectral* This, const field::FieldSetImpl* local,
-                                                    field::FieldSetImpl* global );
-void atlas__SpectralFunctionSpace__scatter( const detail::Spectral* This, const field::FieldImpl* global,
-                                            field::FieldImpl* local );
-void atlas__SpectralFunctionSpace__scatter_fieldset( const detail::Spectral* This, const field::FieldSetImpl* global,
-                                                     field::FieldSetImpl* local );
-void atlas__SpectralFunctionSpace__norm( const detail::Spectral* This, const field::FieldImpl* field, double norm[],
-                                         int rank );
-}
 
 }  // namespace functionspace
 }  // namespace atlas

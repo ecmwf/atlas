@@ -1,9 +1,9 @@
-#include "atlas/grid/Grid.h"
+#include "atlas/grid.h"
 #include "atlas/library/Library.h"
 #include "atlas/runtime/Log.h"
 
 using atlas::Log;
-using atlas::grid::StructuredGrid;
+using atlas::StructuredGrid;
 
 int main( int argc, char* argv[] ) {
     atlas::Library::instance().initialise( argc, argv );

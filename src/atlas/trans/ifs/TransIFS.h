@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include "transi/trans.h"
-
 #include "eckit/filesystem/PathName.h"
 
 #include "atlas/array/LocalView.h"
@@ -22,6 +20,8 @@
 
 //-----------------------------------------------------------------------------
 // Forward declarations
+
+struct Trans_t;  // declared in "transi/trans.h"
 
 namespace atlas {
 class Field;
@@ -88,8 +88,8 @@ public:
     operator ::Trans_t*() const { return trans(); }
     ::Trans_t* trans() const { return trans_.get(); }
 
-    virtual int truncation() const override { return std::max( 0, trans_->nsmax ); }
-    virtual size_t spectralCoefficients() const override { return trans_->nspec2g; }
+    virtual int truncation() const override;
+    virtual size_t spectralCoefficients() const override;
 
     virtual const Grid& grid() const override { return grid_; }
 
@@ -228,135 +228,61 @@ private:
     /// partitioning/parallelisation routines)
     TransIFS( const Grid& g, const eckit::Configuration& = util::NoConfig() );
 
-    int handle() const { return trans_->handle; }
-    int ndgl() const { return trans_->ndgl; }
-    int nsmax() const { return trans_->nsmax; }
-    int ngptot() const { return trans_->ngptot; }
-    int ngptotg() const { return trans_->ngptotg; }
-    int ngptotmx() const { return trans_->ngptotmx; }
-    int nspec() const { return trans_->nspec; }
-    int nspec2() const { return trans_->nspec2; }
-    int nspec2g() const { return trans_->nspec2g; }
-    int nspec2mx() const { return trans_->nspec2mx; }
-    int n_regions_NS() const { return trans_->n_regions_NS; }
-    int n_regions_EW() const { return trans_->n_regions_EW; }
-    int nump() const { return trans_->nump; }
-    int nproc() const { return trans_->nproc; }
-    int myproc( int proc0 = 0 ) const { return trans_->myproc - 1 + proc0; }
+    int handle() const;
+    int ndgl() const;
+    int nsmax() const;
+    int ngptot() const;
+    int ngptotg() const;
+    int ngptotmx() const;
+    int nspec() const;
+    int nspec2() const;
+    int nspec2g() const;
+    int nspec2mx() const;
+    int n_regions_NS() const;
+    int n_regions_EW() const;
+    int nump() const;
+    int nproc() const;
+    int myproc( int proc0 = 0 ) const;
 
-    const int* nloen( int& size ) const {
-        size = trans_->ndgl;
-        ATLAS_ASSERT( trans_->nloen != nullptr );
-        return trans_->nloen;
-    }
+    const int* nloen( int& size ) const;
 
-    array::LocalView<int, 1> nloen() const {
-        ATLAS_ASSERT( trans_->nloen != nullptr );
-        return array::LocalView<int, 1>( trans_->nloen, array::make_shape( trans_->ndgl ) );
-    }
+    array::LocalView<int, 1> nloen() const;
 
-    const int* n_regions( int& size ) const {
-        size = trans_->n_regions_NS;
-        ATLAS_ASSERT( trans_->n_regions != nullptr );
-        return trans_->n_regions;
-    }
+    const int* n_regions( int& size ) const;
 
-    array::LocalView<int, 1> n_regions() const {
-        ATLAS_ASSERT( trans_->n_regions != nullptr );
-        return array::LocalView<int, 1>( trans_->n_regions, array::make_shape( trans_->n_regions_NS ) );
-    }
+    array::LocalView<int, 1> n_regions() const;
 
-    const int* nfrstlat( int& size ) const {
-        size = trans_->n_regions_NS;
-        if ( trans_->nfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nfrstlat" );
-        return trans_->nfrstlat;
-    }
+    const int* nfrstlat( int& size ) const;
 
-    array::LocalView<int, 1> nfrstlat() const {
-        if ( trans_->nfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nfrstlat" );
-        return array::LocalView<int, 1>( trans_->nfrstlat, array::make_shape( trans_->n_regions_NS ) );
-    }
+    array::LocalView<int, 1> nfrstlat() const;
 
-    const int* nlstlat( int& size ) const {
-        size = trans_->n_regions_NS;
-        if ( trans_->nlstlat == nullptr ) ::trans_inquire( trans_.get(), "nlstlat" );
-        return trans_->nlstlat;
-    }
+    const int* nlstlat( int& size ) const;
 
-    array::LocalView<int, 1> nlstlat() const {
-        if ( trans_->nlstlat == nullptr ) ::trans_inquire( trans_.get(), "nlstlat" );
-        return array::LocalView<int, 1>( trans_->nlstlat, array::make_shape( trans_->n_regions_NS ) );
-    }
+    array::LocalView<int, 1> nlstlat() const;
 
-    const int* nptrfrstlat( int& size ) const {
-        size = trans_->n_regions_NS;
-        if ( trans_->nptrfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nptrfrstlat" );
-        return trans_->nptrfrstlat;
-    }
+    const int* nptrfrstlat( int& size ) const;
 
-    array::LocalView<int, 1> nptrfrstlat() const {
-        if ( trans_->nptrfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nptrfrstlat" );
-        return array::LocalView<int, 1>( trans_->nptrfrstlat, array::make_shape( trans_->n_regions_NS ) );
-    }
+    array::LocalView<int, 1> nptrfrstlat() const;
 
-    const int* nsta( int& sizef2, int& sizef1 ) const {
-        sizef1 = trans_->ndgl + trans_->n_regions_NS - 1;
-        sizef2 = trans_->n_regions_EW;
-        if ( trans_->nsta == nullptr ) ::trans_inquire( trans_.get(), "nsta" );
-        return trans_->nsta;
-    }
+    const int* nsta( int& sizef2, int& sizef1 ) const;
 
-    array::LocalView<int, 2> nsta() const {
-        if ( trans_->nsta == nullptr ) ::trans_inquire( trans_.get(), "nsta" );
-        return array::LocalView<int, 2>(
-            trans_->nsta, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
-    }
+    array::LocalView<int, 2> nsta() const;
 
-    const int* nonl( int& sizef2, int& sizef1 ) const {
-        sizef1 = trans_->ndgl + trans_->n_regions_NS - 1;
-        sizef2 = trans_->n_regions_EW;
-        if ( trans_->nonl == nullptr ) ::trans_inquire( trans_.get(), "nonl" );
-        return trans_->nonl;
-    }
+    const int* nonl( int& sizef2, int& sizef1 ) const;
 
-    array::LocalView<int, 2> nonl() const {
-        if ( trans_->nonl == nullptr ) ::trans_inquire( trans_.get(), "nonl" );
-        return array::LocalView<int, 2>(
-            trans_->nonl, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
-    }
+    array::LocalView<int, 2> nonl() const;
 
-    const int* nmyms( int& size ) const {
-        size = trans_->nump;
-        if ( trans_->nmyms == nullptr ) ::trans_inquire( trans_.get(), "nmyms" );
-        return trans_->nmyms;
-    }
+    const int* nmyms( int& size ) const;
 
-    array::LocalView<int, 1> nmyms() const {
-        if ( trans_->nmyms == nullptr ) ::trans_inquire( trans_.get(), "nmyms" );
-        return array::LocalView<int, 1>( trans_->nmyms, array::make_shape( trans_->nump ) );
-    }
+    array::LocalView<int, 1> nmyms() const;
 
-    const int* nasm0( int& size ) const {
-        size = trans_->nsmax + 1;  // +1 because zeroth wave included
-        if ( trans_->nasm0 == nullptr ) ::trans_inquire( trans_.get(), "nasm0" );
-        return trans_->nasm0;
-    }
+    const int* nasm0( int& size ) const;
 
-    array::LocalView<int, 1> nasm0() const {
-        if ( trans_->nasm0 == nullptr ) ::trans_inquire( trans_.get(), "nasm0" );
-        return array::LocalView<int, 1>( trans_->nasm0, array::make_shape( trans_->nsmax + 1 ) );
-    }
+    array::LocalView<int, 1> nasm0() const;
 
-    const int* nvalue( int& size ) const {
-        size = trans_->nspec2;
-        if ( trans_->nvalue == nullptr ) ::trans_inquire( trans_.get(), "nvalue" );
-        return trans_->nvalue;
-    }
+    const int* nvalue( int& size ) const;
 
-    array::LocalView<int, 1> nvalue() const {
-        if ( trans_->nvalue == nullptr ) ::trans_inquire( trans_.get(), "nvalue" );
-        return array::LocalView<int, 1>( trans_->nvalue, array::make_shape( trans_->nspec2 ) );
-    }
+    array::LocalView<int, 1> nvalue() const;
 
 public:
     /*!
