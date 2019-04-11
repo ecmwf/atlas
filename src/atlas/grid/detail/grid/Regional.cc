@@ -159,6 +159,24 @@ struct Parse_ll00_step : ConfigParser {
     }
 };
 
+struct Parse_ll01_step : ConfigParser { // This resembles GRIB input for "lambert_azimutal_equal_area"
+    Parse_ll01_step( const Projection& p, const Grid::Config& config ) {
+        std::vector<double> nw;
+        valid = config.get( "nx", x.N ) && config.get( "ny", y.N ) && config.get( "dx", x.step ) &&
+                config.get( "dy", y.step ) && config.get( "lonlat(xmin,ymax)", nw );  // includes rotation
+
+        if ( not valid ) return;
+
+        p.lonlat2xy( nw.data() );
+        x.min = nw[0];
+        y.max = nw[1];
+
+        x.max = x.min + x.step * ( x.N - 1 );
+        y.min = y.max - y.step * ( y.N - 1 );
+    }
+};
+
+
 template <typename Parser>
 bool ConfigParser::parse( const Projection& projection, const Grid::Config& config, Parsed& x, Parsed& y ) {
     Parser p( projection, config );
@@ -176,6 +194,9 @@ bool ConfigParser::parse( const Projection& projection, const Grid::Config& conf
 
     // centre of domain and increments  (any projection allowed)
     if ( ConfigParser::parse<Parse_llc_step>( projection, config, x, y ) ) return true;
+
+    // top-left of domain and increments (any projection allowed)
+    if ( ConfigParser::parse<Parse_ll01_step>( projection, config, x, y ) ) return true;
 
     // bottom-left of domain and increments (any projection allowed)
     if ( ConfigParser::parse<Parse_ll00_step>( projection, config, x, y ) ) return true;

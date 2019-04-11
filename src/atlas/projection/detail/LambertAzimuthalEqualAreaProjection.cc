@@ -9,12 +9,11 @@
  */
 
 
-#include "atlas/projection/detail/LambertAzimuthalEqualAreaProjection.h"
+#include "LambertAzimuthalEqualAreaProjection.h"
 
 #include <cmath>
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/exception/Exceptions.h"
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
 
@@ -22,6 +21,7 @@
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
+#include "atlas/runtime/Exception.h"
 
 
 namespace atlas {
@@ -32,9 +32,9 @@ namespace detail {
 LambertAzimuthalEqualAreaProjection::LambertAzimuthalEqualAreaProjection( const eckit::Parametrisation& params )
     : radius_(util::Earth::radius()) {
 
-    params.get("radius", radius_);
-    ASSERT(params.get("central_longitude", reference_[0]));
-    ASSERT(params.get("standard_parallel", reference_[1]));
+    if ( !params.get( "radius", radius_ ) ) radius_ = util::Earth::radius();
+    ATLAS_ASSERT(params.get("central_longitude", reference_[0]));
+    ATLAS_ASSERT(params.get("standard_parallel", reference_[1]));
 
     lambda0_ = util::Constants::degreesToRadians() * reference_[0];
     phi1_    = util::Constants::degreesToRadians() * reference_[1];
@@ -44,7 +44,19 @@ LambertAzimuthalEqualAreaProjection::LambertAzimuthalEqualAreaProjection( const 
 
 
 void LambertAzimuthalEqualAreaProjection::lonlat2xy( double crd[] ) const {
-    NOTIMP;
+
+    double dlambda = util::Constants::degreesToRadians() * ( crd[0] - reference_.lon());
+    double cos_dlambda = std::cos(dlambda);
+    double sin_dlambda = std::sin(dlambda);
+
+    double phi =util::Constants::degreesToRadians() * crd[1];
+    double sin_phi = std::sin(phi);
+    double cos_phi = std::cos(phi);
+
+    double kp = radius_ * std::sqrt(2. / (1. + sin_phi1_ * sin_phi + cos_phi1_ * cos_phi * cos_dlambda ) );
+
+    crd[0] = kp * cos_phi * sin_dlambda;
+    crd[1] = kp * (cos_phi1_ * sin_phi - sin_phi1_ * cos_phi * cos_dlambda);
 }
 
 

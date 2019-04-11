@@ -6,24 +6,9 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-if( HAVE_FCTEST )
-    foreach(test
-            fctest_griddistribution
-            fctest_state)
-
-        add_fctest( TARGET atlas_${test} SOURCES ${test}.F90 LINKER_LANGUAGE Fortran LIBS atlas_f )
-
-    endforeach()
-endif()
-
 foreach(test
-        test_domain
-        test_field
-        test_grid_ptr
-        test_grids
-        test_vertical
-        test_state
-        test_grid_hash)
+          test_rotation
+          test_projection_LAEA )
 
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas )
 
