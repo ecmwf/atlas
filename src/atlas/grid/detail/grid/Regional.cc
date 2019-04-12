@@ -159,7 +159,7 @@ struct Parse_ll00_step : ConfigParser {
     }
 };
 
-struct Parse_ll01_step : ConfigParser { // This resembles GRIB input for "lambert_azimutal_equal_area"
+struct Parse_ll01_step : ConfigParser {  // This resembles GRIB input for "lambert_azimutal_equal_area"
     Parse_ll01_step( const Projection& p, const Grid::Config& config ) {
         std::vector<double> nw;
         valid = config.get( "nx", x.N ) && config.get( "ny", y.N ) && config.get( "dx", x.step ) &&
@@ -204,7 +204,7 @@ bool ConfigParser::parse( const Projection& projection, const Grid::Config& conf
     // bounding box using two points defined in lonlat (any projection allowed)
     if ( ConfigParser::parse<Parse_ll00_ll11>( projection, config, x, y ) ) return true;
 
-    // From here on, projection must be (rotated) lonlat
+    //-------- From here on, projection must be (rotated) lonlat --------//
 
     // bounding box using 4 variables (south west north east)
     if ( ConfigParser::parse<Parse_bounds_lonlat>( projection, config, x, y ) ) return true;
@@ -240,10 +240,11 @@ public:
             throw_Exception( "Could not parse configuration for RegularRegional grid", Here() );
         }
 
-        YSpace yspace( LinearSpacing( y.min, y.max, y.N, y.endpoint ) );
+        YSpace yspace = config.getBool( "y_increasing", true ) ? LinearSpacing( y.min, y.max, y.N, y.endpoint )
+                                                               : LinearSpacing( y.max, y.min, y.N, y.endpoint );
 
         bool with_endpoint = true;
-        XSpace xspace( {x.min, x.max}, std::vector<idx_t>( y.N, x.N ), with_endpoint );
+        XSpace xspace( {x.min, x.max}, std::vector<long>( y.N, x.N ), with_endpoint );
 
         return new StructuredGrid::grid_t( xspace, yspace, projection, domain( config ) );
     }
@@ -284,9 +285,10 @@ public:
         if ( not( config.get( "ymin", y.min ) or config.get( "south", y.min ) ) ) y.min = -90.;
         if ( not( config.get( "ymax", y.max ) or config.get( "north", y.max ) ) ) y.max = 90.;
 
-        YSpace yspace( LinearSpacing( y.min, y.max, y.N, true ) );
+        YSpace yspace = config.getBool( "y_increasing", true ) ? LinearSpacing( y.min, y.max, y.N, true )
+                                                               : LinearSpacing( y.max, y.min, y.N, true );
 
-        XSpace xspace( {0., 360.}, std::vector<idx_t>( y.N, nx ), false );
+        XSpace xspace( {0., 360.}, std::vector<long>( y.N, nx ), false );
 
         return new StructuredGrid::grid_t( xspace, yspace, projection, domain( config ) );
     }

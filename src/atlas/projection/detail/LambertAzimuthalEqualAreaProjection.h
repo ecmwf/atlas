@@ -21,44 +21,34 @@ namespace detail {
 
 class LambertAzimuthalEqualAreaProjection final : public ProjectionImpl {
 public:
-
     // constructor
     LambertAzimuthalEqualAreaProjection( const eckit::Parametrisation& );
 
     // projection name
-    static std::string static_type() {
-        return "lambert_azimuthal_equal_area";
-    }
+    static std::string static_type() { return "lambert_azimuthal_equal_area"; }
 
     // projection name
-    std::string type() const override {
-        return static_type();
-    }
+    std::string type() const override { return static_type(); }
 
     // projection and inverse projection
     void xy2lonlat( double crd[] ) const override;
     void lonlat2xy( double crd[] ) const override;
 
-    bool strictlyRegional() const override {
-        return true;
-    }
+    bool strictlyRegional() const override { return true; }
 
     // specification
     Spec spec() const override;
 
-    std::string units() const override {
-        return "meters";
-    }
+    std::string units() const override { return "meters"; }
 
     void hash( eckit::Hash& ) const override;
 
 private:
-
     PointLonLat reference_;  ///< central longitude/standard parallel [degree]/[degree]
     double radius_;          ///< sphere radius
 
-    double lambda0_;   ///< central longitude [rad]
-    double phi1_;      ///< standard parallel [rad]
+    double lambda0_;  ///< central longitude [rad]
+    double phi1_;     ///< standard parallel [rad]
     double sin_phi1_;
     double cos_phi1_;
 };
@@ -67,4 +57,3 @@ private:
 }  // namespace detail
 }  // namespace projection
 }  // namespace atlas
-
