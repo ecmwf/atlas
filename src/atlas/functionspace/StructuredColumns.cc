@@ -12,6 +12,7 @@
 
 #include <sstream>
 #include <string>
+#include <iomanip>
 
 #include "eckit/utils/MD5.h"
 
