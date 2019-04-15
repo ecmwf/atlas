@@ -352,10 +352,13 @@ functionspace/detail/FunctionSpaceInterface.h
 functionspace/detail/FunctionSpaceInterface.cc
 functionspace/detail/NodeColumnsInterface.h
 functionspace/detail/NodeColumnsInterface.cc
+functionspace/detail/NodeColumns_FieldStatistics.cc
 functionspace/detail/SpectralInterface.h
 functionspace/detail/SpectralInterface.cc
 functionspace/detail/StructuredColumnsInterface.h
 functionspace/detail/StructuredColumnsInterface.cc
+functionspace/detail/StructuredColumns_setup.cc
+functionspace/detail/StructuredColumns_create_remote_index.cc
 )
 
 list( APPEND atlas_numerics_srcs
