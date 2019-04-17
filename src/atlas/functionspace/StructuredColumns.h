@@ -142,6 +142,7 @@ public:
     }
     Field index_i() const { return field_index_i_; }
     Field index_j() const { return field_index_j_; }
+    Field ghost() const { return field_ghost_; }
 
     void compute_xy( idx_t i, idx_t j, PointXY& xy ) const;
     PointXY compute_xy( idx_t i, idx_t j ) const {
@@ -197,6 +198,7 @@ private:  // data
     mutable Field field_remote_index_;
     Field field_index_i_;
     Field field_index_j_;
+    Field field_ghost_;
 
     class Map2to1 {
     public:
@@ -358,6 +360,7 @@ public:
     Field remote_index() const { return functionspace_->remote_index(); }
     Field index_i() const { return functionspace_->index_i(); }
     Field index_j() const { return functionspace_->index_j(); }
+    Field ghost() const { return functionspace_->ghost(); }
 
     void compute_xy( idx_t i, idx_t j, PointXY& xy ) const { return functionspace_->compute_xy( i, j, xy ); }
     PointXY compute_xy( idx_t i, idx_t j ) const { return functionspace_->compute_xy( i, j ); }

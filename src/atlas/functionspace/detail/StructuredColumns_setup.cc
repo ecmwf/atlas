@@ -338,13 +338,15 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
     ATLAS_TRACE_SCOPE( "Create fields" ) {
         size_halo_          = gridpoints.size();
         field_partition_    = Field( "partition", array::make_datatype<int>(), array::make_shape( size_halo_ ) );
-        field_global_index_ = Field( "glb_idx", array::make_datatype<gidx_t>(), array::make_shape( size_halo_ ) );
-        field_index_i_      = Field( "index_i", array::make_datatype<idx_t>(), array::make_shape( size_halo_ ) );
-        field_index_j_      = Field( "index_j", array::make_datatype<idx_t>(), array::make_shape( size_halo_ ) );
-        field_xy_           = Field( "xy", array::make_datatype<double>(), array::make_shape( size_halo_, 2 ) );
+        field_ghost_        = Field( "ghost",     array::make_datatype<int>(), array::make_shape( size_halo_ ) );
+        field_global_index_ = Field( "glb_idx",   array::make_datatype<gidx_t>(), array::make_shape( size_halo_ ) );
+        field_index_i_      = Field( "index_i",   array::make_datatype<idx_t>(), array::make_shape( size_halo_ ) );
+        field_index_j_      = Field( "index_j",   array::make_datatype<idx_t>(), array::make_shape( size_halo_ ) );
+        field_xy_           = Field( "xy",        array::make_datatype<double>(), array::make_shape( size_halo_, 2 ) );
 
         auto xy         = array::make_view<double, 2>( field_xy_ );
         auto part       = array::make_view<int, 1>( field_partition_ );
+        auto ghost      = array::make_view<int, 1>( field_ghost_ );
         auto global_idx = array::make_view<gidx_t, 1>( field_global_index_ );
         auto index_i    = array::make_indexview<idx_t, 1>( field_index_i_ );
         auto index_j    = array::make_indexview<idx_t, 1>( field_index_j_ );
@@ -363,11 +365,13 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                     gidx_t k           = global_offsets[gp.j] + gp.i;
                     part( gp.r )       = distribution.partition( k );
                     global_idx( gp.r ) = k + 1;
+                    ghost( gp.r )      = 0;
                 }
             }
             if ( not in_domain ) {
                 global_idx( gp.r ) = compute_g( gp.i, gp.j );
                 part( gp.r )       = compute_p( gp.i, gp.j );
+                ghost( gp.r )       = 1;
             }
             index_i( gp.r ) = gp.i;
             index_j( gp.r ) = gp.j;

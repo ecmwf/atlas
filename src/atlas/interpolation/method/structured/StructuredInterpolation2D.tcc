@@ -81,6 +81,10 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
         target_lonlat_ = tgt.lonlat();
         target_ghost_  = tgt.ghost();
     }
+    else if( functionspace::StructuredColumns tgt = target) {
+        target_lonlat_ = tgt.xy();
+        target_ghost_  = tgt.ghost();
+    }
     else {
         ATLAS_NOTIMPLEMENTED;
     }
@@ -130,10 +134,12 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
     }
 
     if ( not matrix_free_ ) {
+        ATLAS_ASSERT( target_lonlat_ );  // TODO: implement setup with target_lonlat_fields_ as well (see execute_impl)
+
         idx_t inp_npts = source.size();
         idx_t out_npts = target_lonlat_.shape( 0 );
 
-        auto ghost  = array::make_view<int, 1>( target_ghost_ );
+
         auto lonlat = array::make_view<double, 2>( target_lonlat_ );
 
         double convert_units = convert_units_multiplier( target_lonlat_ );
@@ -142,11 +148,26 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
 
         constexpr NormaliseLongitude normalise;
         //auto normalise = []( double x ) { return x; };
-        ATLAS_TRACE_SCOPE( "Precomputing interpolation matrix" ) {
-            atlas_omp_parallel {
-                typename Kernel::WorkSpace workspace;
-                atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
-                    if ( not ghost( n ) ) {
+ 
+       ATLAS_TRACE_SCOPE( "Precomputing interpolation matrix" ) {
+
+
+            if( target_ghost_ ) {
+                auto ghost  = array::make_view<int, 1>( target_ghost_ );
+                atlas_omp_parallel {
+                    typename Kernel::WorkSpace workspace;
+                    atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
+                        if ( not ghost( n ) ) {
+                            PointLonLat p{normalise( lonlat( n, LON ) ) * convert_units, lonlat( n, LAT ) * convert_units};
+                            kernel_->insert_triplets( n, p, triplets, workspace );
+                        }
+                    }
+                }
+            }
+            else {
+                atlas_omp_parallel {
+                    typename Kernel::WorkSpace workspace;
+                    atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                         PointLonLat p{normalise( lonlat( n, LON ) ) * convert_units, lonlat( n, LAT ) * convert_units};
                         kernel_->insert_triplets( n, p, triplets, workspace );
                     }
