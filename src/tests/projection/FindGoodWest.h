@@ -108,7 +108,8 @@ struct WestFinder {
                 };
                 // top,bottom
                 {
-                    for ( idx_t j : std::array<idx_t, 2>{0, grid.ny() - 1} ) {
+                    auto top_bottom = std::array<idx_t, 2>{0, grid.ny() - 1};
+                    for ( idx_t j : top_bottom ) {
                         for ( idx_t i = 0; i < grid.nx( j ); ++i ) {
                             if ( !in_bounds( i, j ) ) return false;
                         }
@@ -117,7 +118,8 @@ struct WestFinder {
                 // left, right
                 {
                     for ( idx_t j = 0; j < grid.ny(); ++j ) {
-                        for ( idx_t i : std::array<idx_t, 2>{0, grid.nx( j ) - 1} ) {
+                        auto left_right = std::array<idx_t, 2>{0, grid.nx( j ) - 1};
+                        for ( idx_t i : left_right ) {
                             if ( !in_bounds( i, j ) ) return false;
                         }
                     }
