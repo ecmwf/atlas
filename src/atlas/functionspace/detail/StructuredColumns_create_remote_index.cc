@@ -24,8 +24,8 @@
 #include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/runtime/Trace.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Trace.h"
 
 namespace atlas {
 namespace functionspace {

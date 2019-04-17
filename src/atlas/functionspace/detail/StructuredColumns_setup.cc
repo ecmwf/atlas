@@ -81,7 +81,6 @@ public:
 }  // namespace
 
 
-
 void StructuredColumns::setup( const grid::Distribution& distribution, const eckit::Configuration& config ) {
     ATLAS_TRACE( "Generating StructuredColumns..." );
     bool periodic_points = config.getInt( "periodic_points", false );
