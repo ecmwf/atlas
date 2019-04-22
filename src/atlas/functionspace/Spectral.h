@@ -96,14 +96,12 @@ public:
     class For {
     public:
         For( const Spectral& fs, const util::Config& config = util::NoConfig() ) :
-            fs_{fs},
-            truncation{fs_.truncation()},
-            zonal_wavenumbers{fs_.zonal_wavenumbers()},
+            truncation{fs.truncation()},
+            zonal_wavenumbers{fs.zonal_wavenumbers()},
             global{config.getBool( "global", false )},
             owner{config.getUnsigned( "owner", 0 )} {}
 
     protected:
-        const Spectral& fs_;
         using View = const array::LocalView<int, 1, array::Intent::ReadOnly>;
         int truncation;
         View zonal_wavenumbers;

@@ -36,8 +36,8 @@ void Method::check_compatibility( const Field& src, const Field& tgt ) const {
     ATLAS_ASSERT( src.variables() == tgt.variables() );
 
     ATLAS_ASSERT( !matrix_.empty() );
-    ATLAS_ASSERT( tgt.shape( 0 ) == static_cast<idx_t>( matrix_.rows() ) );
-    ATLAS_ASSERT( src.shape( 0 ) == static_cast<idx_t>( matrix_.cols() ) );
+    ATLAS_ASSERT( tgt.shape( 0 ) >= static_cast<idx_t>( matrix_.rows() ) );
+    ATLAS_ASSERT( src.shape( 0 ) >= static_cast<idx_t>( matrix_.cols() ) );
 }
 
 template <typename Value>

@@ -175,7 +175,7 @@ TEST(test_parametrisation_json_file)
  integer :: age
  integer :: jrec
  character(len=1024) :: msg
-
+ type(atlas_PathName) :: json_file
 
  ! Write a json file
  OPEN (UNIT=9 , FILE="fctest_parametrisation.json", STATUS='REPLACE')
@@ -183,7 +183,10 @@ TEST(test_parametrisation_json_file)
  &'"records":[{"age":42,"name":"Anne"},{"age":36,"name":"Bob"}]}'
  CLOSE(9)
 
- params = atlas_Config( atlas_PathName("fctest_parametrisation.json") )
+ json_file = atlas_PathName("fctest_parametrisation.json")
+ params = atlas_Config( json_file ) 
+! params = atlas_Config( atlas_PathName("fctest_parametrisation.json") )
+!     --> Does not work for XL compiler TODO: make reproducer
  call atlas_log%info("params = "//params%json())
 
  if( params%get("records",records) ) then
@@ -219,14 +222,18 @@ END_TEST
 TEST(test_json_file)
  type(atlas_JSON) :: json
  type(atlas_Config) :: config
-
+ type(atlas_PathName) :: json_file
  ! Write a json file
  OPEN (UNIT=9 , FILE="fctest_parametrisation.json", STATUS='REPLACE')
  write(9,'(A)') '{"location":{"city":"Reading","company":"ECMWF","street":"Shinfield Road"},'//&
  &'"records":[{"age":42,"name":"Anne"},{"age":36,"name":"Bob"}]}'
  CLOSE(9)
 
- json = atlas_JSON( atlas_PathName("fctest_parametrisation.json") )
+ json_file = atlas_PathName( "fctest_parametrisation.json" )
+ json = atlas_JSON( json_file )
+
+ ! json = atlas_JSON( atlas_PathName("fctest_parametrisation.json") )
+ !      --> Does not work with XL compiler TODO: make reproducer
 
  call atlas_log%info("json = "//json%str())
 

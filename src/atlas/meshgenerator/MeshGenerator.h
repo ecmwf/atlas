@@ -61,7 +61,6 @@ public:
 // Shorthands
 class StructuredMeshGenerator : public MeshGenerator {
 public:
-    using MeshGenerator::MeshGenerator;
     StructuredMeshGenerator( const eckit::Parametrisation& config = util::NoConfig() ) :
         MeshGenerator( "structured", config ) {}
 };

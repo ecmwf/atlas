@@ -12,8 +12,8 @@ module atlas_JSON_module
 
 implicit none
 
-public :: atlas_JSON
 public :: atlas_PathName
+public :: atlas_JSON
 
 private
 

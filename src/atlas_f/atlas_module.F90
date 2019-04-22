@@ -28,11 +28,11 @@ use atlas_FieldSet_module, only: &
     & atlas_FieldSet
 use atlas_State_module, only: &
     & atlas_State
+use atlas_JSON_module, only: &
+    & atlas_PathName, &
+    & atlas_JSON
 use atlas_Config_module, only: &
     & atlas_config
-use atlas_JSON_module, only: &
-    & atlas_JSON, &
-    & atlas_PathName
 use atlas_Metadata_module, only: &
     & atlas_Metadata
 use atlas_HybridElements_module, only: &
@@ -64,6 +64,8 @@ use atlas_Checksum_module, only: &
     & atlas_Checksum
 use atlas_Mesh_module, only: &
     & atlas_Mesh
+use atlas_GridDistribution_module, only: &
+    & atlas_GridDistribution
 use atlas_Grid_module, only: &
     & atlas_Grid , &
     & atlas_StructuredGrid, &
@@ -90,8 +92,6 @@ use atlas_kinds_module, only: &
     & ATLAS_KIND_REAL32, &
     & ATLAS_KIND_INT64, &
     & ATLAS_KIND_INT32
-use atlas_GridDistribution_module, only: &
-    & atlas_GridDistribution
 use atlas_Partitioner_module, only: &
     & atlas_Partitioner, &
     & atlas_MatchingMeshPartitioner
