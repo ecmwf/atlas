@@ -7,6 +7,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.17.1] - 2019-04-22
+### Added
+- Option to declaration of field type (vector/scalar) when creating field in FunctionSpace
+- New projection: Lambert Azimuthal Equal Area
+- StructuredInterpolation2D to target FunctionSpace StructuredColumns
+
+### Fixed
+- Compilation with IBM XL 19
+- Compilation with Intel 19
+
+
 ## [0.17.0] - 2019-04-02
 ### Changed
 - OpenMP is now private dependency
