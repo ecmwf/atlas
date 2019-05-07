@@ -15,6 +15,11 @@
 #include "atlas/library/config.h"
 #include "tests/AtlasTestEnvironment.h"
 
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
+#include "atlas/array/gridtools/GridToolsMakeView.h"
+#endif
+
+
 #ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
 #define PADDED 1

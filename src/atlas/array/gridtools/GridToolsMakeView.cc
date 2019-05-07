@@ -13,15 +13,14 @@
 #include <sstream>
 #include <vector>
 
-#include "atlas/array.h"
+#include "atlas/array/Array.h"
+#include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
-#include "atlas/runtime/Exception.h"
-
-#include "atlas/library/config.h"
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 #include "atlas/array/gridtools/GridToolsTraits.h"
-#endif
+#include "atlas/runtime/Exception.h"
+#include "atlas/library/config.h"
+
 //------------------------------------------------------------------------------
 
 namespace atlas {
@@ -45,20 +44,21 @@ static void check_metadata( const Array& array ) {
 
 namespace gridtools {
 
+
 template <typename Value, unsigned int Rank, Intent AccessMode>
-data_view_tt<Value, Rank, get_access_mode( AccessMode )> make_gt_host_view( const Array& array ) {
+typename gt_view<Value, Rank, AccessMode>::type
+make_gt_host_view( const Array& array ) {
     using storage_info_ty = storage_traits::storage_info_t<0, Rank>;
     using data_store_t    = storage_traits::data_store_t<Value, storage_info_ty>;
 
     data_store_t* ds = reinterpret_cast<data_store_t*>( const_cast<void*>( array.storage() ) );
-
     return ::gridtools::make_host_view<get_access_mode( AccessMode )>( *ds );
 }
 
 template <typename Value, unsigned int Rank, Intent AccessMode>
-data_view_tt<Value, Rank, get_access_mode( AccessMode )> make_gt_device_view( const Array& array ) {
-    typedef storage_traits::storage_info_t<0, Rank> storage_info_ty;
-    typedef storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
+typename gt_view<Value, Rank, AccessMode >::type make_gt_device_view( const Array& array ) {
+    using storage_info_ty = storage_traits::storage_info_t<0, Rank>;
+    using data_store_t    = storage_traits::data_store_t<Value, storage_info_ty>;
 
     data_store_t* ds = reinterpret_cast<data_store_t*>( const_cast<void*>( array.storage() ) );
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
@@ -67,6 +67,7 @@ data_view_tt<Value, Rank, get_access_mode( AccessMode )> make_gt_device_view( co
     return ::gridtools::make_host_view<get_access_mode( AccessMode )>( *ds );
 #endif
 }
+
 }  // namespace gridtools
 
 template <typename Value, unsigned int Rank, Intent AccessMode>
@@ -114,6 +115,7 @@ ArrayView<Value, Rank, AccessMode> make_view( const Array& array ) {
 // Explicit instantiation
 namespace atlas {
 namespace array {
+
 #define EXPLICIT_TEMPLATE_INSTANTIATION( RANK )                                                                        \
     template ArrayView<int, RANK, Intent::ReadOnly> make_view<int, RANK, Intent::ReadOnly>( const Array& );            \
     template ArrayView<int, RANK, Intent::ReadWrite> make_view<int, RANK, Intent::ReadWrite>( const Array& );          \
@@ -169,48 +171,47 @@ namespace array {
                                                                                                                        \
     template IndexView<long, RANK> make_host_indexview<long, RANK, Intent::ReadOnly>( const Array& );                  \
     template IndexView<long, RANK> make_host_indexview<long, RANK, Intent::ReadWrite>( const Array& );                 \
-                                                                                                                       \
     namespace gridtools {                                                                                              \
-    template data_view_tt<int, RANK, ::gridtools::access_mode::ReadOnly>                                               \
+    template typename gt_view<int, RANK, Intent::ReadOnly>::type                                               \
     make_gt_host_view<int, RANK, Intent::ReadOnly>( const Array& array );                                              \
-    template data_view_tt<int, RANK, ::gridtools::access_mode::ReadWrite>                                              \
+    template typename gt_view<int, RANK, Intent::ReadWrite>::type                                               \
     make_gt_host_view<int, RANK, Intent::ReadWrite>( const Array& array );                                             \
-    template data_view_tt<long, RANK, ::gridtools::access_mode::ReadOnly>                                              \
+    template typename gt_view<long, RANK, Intent::ReadOnly>::type                                               \
     make_gt_host_view<long, RANK, Intent::ReadOnly>( const Array& array );                                             \
-    template data_view_tt<long, RANK, ::gridtools::access_mode::ReadWrite>                                             \
+    template typename gt_view<long, RANK, Intent::ReadWrite>::type                                               \
     make_gt_host_view<long, RANK, Intent::ReadWrite>( const Array& array );                                            \
-    template data_view_tt<long unsigned, RANK, ::gridtools::access_mode::ReadOnly>                                     \
+    template typename gt_view<long unsigned, RANK, Intent::ReadOnly>::type                                               \
     make_gt_host_view<long unsigned, RANK, Intent::ReadOnly>( const Array& array );                                    \
-    template data_view_tt<long unsigned, RANK, ::gridtools::access_mode::ReadWrite>                                    \
+    template typename gt_view<long unsigned, RANK, Intent::ReadWrite>::type                                               \
     make_gt_host_view<long unsigned, RANK, Intent::ReadWrite>( const Array& array );                                   \
-    template data_view_tt<float, RANK, ::gridtools::access_mode::ReadOnly>                                             \
+    template typename gt_view<float, RANK, Intent::ReadOnly>::type                                               \
     make_gt_host_view<float, RANK, Intent::ReadOnly>( const Array& array );                                            \
-    template data_view_tt<float, RANK, ::gridtools::access_mode::ReadWrite>                                            \
+    template typename gt_view<float, RANK, Intent::ReadWrite>::type                                               \
     make_gt_host_view<float, RANK, Intent::ReadWrite>( const Array& array );                                           \
-    template data_view_tt<double, RANK, ::gridtools::access_mode::ReadOnly>                                            \
+    template typename gt_view<double, RANK, Intent::ReadOnly>::type                                               \
     make_gt_host_view<double, RANK, Intent::ReadOnly>( const Array& array );                                           \
-    template data_view_tt<double, RANK, ::gridtools::access_mode::ReadWrite>                                           \
+    template typename gt_view<double, RANK, Intent::ReadWrite>::type                                               \
     make_gt_host_view<double, RANK, Intent::ReadWrite>( const Array& array );                                          \
                                                                                                                        \
-    template data_view_tt<int, RANK, ::gridtools::access_mode::ReadOnly>                                               \
+    template typename gt_view<int, RANK, Intent::ReadOnly>::type                                               \
     make_gt_device_view<int, RANK, Intent::ReadOnly>( const Array& array );                                            \
-    template data_view_tt<int, RANK, ::gridtools::access_mode::ReadWrite>                                              \
+    template typename gt_view<int, RANK, Intent::ReadWrite>::type                                               \
     make_gt_device_view<int, RANK, Intent::ReadWrite>( const Array& array );                                           \
-    template data_view_tt<long, RANK, ::gridtools::access_mode::ReadOnly>                                              \
+    template typename gt_view<long, RANK, Intent::ReadOnly>::type                                               \
     make_gt_device_view<long, RANK, Intent::ReadOnly>( const Array& array );                                           \
-    template data_view_tt<long, RANK, ::gridtools::access_mode::ReadWrite>                                             \
+    template typename gt_view<long, RANK, Intent::ReadWrite>::type                                               \
     make_gt_device_view<long, RANK, Intent::ReadWrite>( const Array& array );                                          \
-    template data_view_tt<long unsigned, RANK, ::gridtools::access_mode::ReadOnly>                                     \
+    template typename gt_view<long unsigned, RANK, Intent::ReadOnly>::type                                               \
     make_gt_device_view<long unsigned, RANK, Intent::ReadOnly>( const Array& array );                                  \
-    template data_view_tt<long unsigned, RANK, ::gridtools::access_mode::ReadWrite>                                    \
+    template typename gt_view<long unsigned, RANK, Intent::ReadWrite>::type                                               \
     make_gt_device_view<long unsigned, RANK, Intent::ReadWrite>( const Array& array );                                 \
-    template data_view_tt<float, RANK, ::gridtools::access_mode::ReadOnly>                                             \
+    template typename gt_view<float, RANK, Intent::ReadOnly>::type                                               \
     make_gt_device_view<float, RANK, Intent::ReadOnly>( const Array& array );                                          \
-    template data_view_tt<float, RANK, ::gridtools::access_mode::ReadWrite>                                            \
+    template typename gt_view<float, RANK, Intent::ReadWrite>::type                                               \
     make_gt_device_view<float, RANK, Intent::ReadWrite>( const Array& array );                                         \
-    template data_view_tt<double, RANK, ::gridtools::access_mode::ReadOnly>                                            \
+    template typename gt_view<double, RANK, Intent::ReadOnly>::type                                               \
     make_gt_device_view<double, RANK, Intent::ReadOnly>( const Array& array );                                         \
-    template data_view_tt<double, RANK, ::gridtools::access_mode::ReadWrite>                                           \
+    template typename gt_view<double, RANK, Intent::ReadWrite>::type                                               \
     make_gt_device_view<double, RANK, Intent::ReadWrite>( const Array& array );                                        \
     }
 
@@ -226,5 +227,6 @@ EXPLICIT_TEMPLATE_INSTANTIATION( 8 )
 EXPLICIT_TEMPLATE_INSTANTIATION( 9 )
 
 #undef EXPLICIT_TEMPLATE_INSTANTIATION
+
 }  // namespace array
 }  // namespace atlas

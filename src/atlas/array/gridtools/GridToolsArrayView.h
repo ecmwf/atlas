@@ -14,10 +14,10 @@
 #include <cstddef>
 #include <cstring>
 
+#include "atlas/array/Array.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/LocalView.h"
-#include "atlas/array/gridtools/GridToolsMakeView.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/library/config.h"
 
@@ -25,6 +25,7 @@
 
 namespace atlas {
 namespace array {
+
 
 template <typename Value, int Rank, Intent AccessMode = Intent::ReadWrite>
 class ArrayView {
@@ -57,6 +58,7 @@ public:
     ATLAS_HOST_DEVICE
     ArrayView( const ArrayView& other );
     ArrayView( data_view_t data_view, const Array& array );
+
     value_type* data() { return gt_data_view_.data(); }
     value_type const* data() const { return gt_data_view_.data(); }
 

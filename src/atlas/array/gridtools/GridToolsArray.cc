@@ -64,6 +64,7 @@ public:
 
     template <typename... UInts, typename = ::gridtools::is_all_integral<UInts...>>
     void construct( UInts... dims ) {
+        static_assert( sizeof...(UInts) > 0, "1" );
         auto gt_storage    = create_gt_storage<Value, typename default_layout_t<sizeof...( dims )>::type>( dims... );
         using data_store_t = typename std::remove_pointer<decltype( gt_storage )>::type;
         array_.data_store_ = std::unique_ptr<ArrayDataStore>( new GridToolsDataStore<data_store_t>( gt_storage ) );
@@ -464,6 +465,7 @@ template <typename Value>
 ArrayT<Value>::ArrayT( idx_t dim0 ) {
     ArrayT_impl<Value>( *this ).construct( dim0 );
 }
+
 template <typename Value>
 ArrayT<Value>::ArrayT( idx_t dim0, idx_t dim1 ) {
     ArrayT_impl<Value>( *this ).construct( dim0, dim1 );
@@ -569,3 +571,4 @@ template Array* Array::wrap<long unsigned>( long unsigned*, const ArraySpec& );
 
 }  // namespace array
 }  // namespace atlas
+
