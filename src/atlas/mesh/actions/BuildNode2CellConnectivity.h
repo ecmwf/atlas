@@ -27,7 +27,7 @@ private:
     Mesh& mesh_;
 };
 
-void build_node_to_cell_connectivity( Mesh& mesh ) {
+inline void build_node_to_cell_connectivity( Mesh& mesh ) {
     BuildNode2CellConnectivity{mesh}();
 }
 
