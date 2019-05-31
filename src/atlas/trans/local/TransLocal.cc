@@ -324,8 +324,8 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
 
         gridGlobal_ = grid;
         if ( not gridGlobal_.domain().global() ) {
+            // The grid is not a nest of a global grid
             if ( RegularGrid( grid_ ) ) {
-                // non-nested regular grid
                 no_nest         = true;
                 no_symmetry_    = true;
                 useFFT_         = false;
@@ -336,7 +336,14 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 useGlobalLeg    = false;
             }
             else {
-                ATLAS_NOTIMPLEMENTED;
+                Log::info() << "Global grid: " <<  gridGlobal_.spec() << std::endl;
+                Log::info() << "Actual grid: " << grid_.spec() << std::endl;
+                std::stringstream log;
+                log << "Transforms to non-regular regional grids is not supported, unless it defined as a cropping of a global grid." << std::endl;
+                log << "    Input grid: " << grid.spec() << std::endl;
+                log << "    Applied domain: " << domain << std::endl;
+                log << "    Regional grid after Domain applied (the output grid): " << grid_.spec() << std::endl;
+                throw_NotImplemented( log.str(), Here() );
                 // non-nested reduced grids are not supported
             }
         }
