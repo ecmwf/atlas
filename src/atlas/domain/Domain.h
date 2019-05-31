@@ -131,7 +131,7 @@ public:
 
 public:
     using RectangularDomain::RectangularDomain;
-    ZonalBandDomain( const Interval& y );
+    ZonalBandDomain( const Interval& y, const double& west = 0. );
     ZonalBandDomain( const Domain& );
 
     operator bool() { return domain_; }

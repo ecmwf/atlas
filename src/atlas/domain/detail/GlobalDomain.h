@@ -18,6 +18,7 @@ namespace domain {
 class GlobalDomain : public ZonalBandDomain {
 public:
     GlobalDomain();
+    GlobalDomain( const double west );
     GlobalDomain( const eckit::Parametrisation& p );
 
     static std::string static_type() { return "global"; }
@@ -44,7 +45,6 @@ public:
 
 private:
     friend class ::atlas::RectangularDomain;
-    GlobalDomain( const double west );
 };
 
 }  // namespace domain

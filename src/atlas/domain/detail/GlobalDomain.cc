@@ -22,17 +22,28 @@ namespace {
 constexpr std::array<double, 2> yrange() {
     return {-90., 90.};
 }
+
+static double get_west( const eckit::Parametrisation& params ) {
+    double west = 0.;
+    params.get("west",west);
+    return west;
+}
+
 }  // namespace
 
 GlobalDomain::GlobalDomain( const double west ) : ZonalBandDomain( yrange(), west ) {}
 
 GlobalDomain::GlobalDomain() : ZonalBandDomain( yrange() ) {}
 
-GlobalDomain::GlobalDomain( const eckit::Parametrisation& ) : GlobalDomain() {}
+GlobalDomain::GlobalDomain( const eckit::Parametrisation& params ) :
+    GlobalDomain( get_west( params ) ) {}
 
 GlobalDomain::Spec GlobalDomain::spec() const {
     Spec domain_spec;
     domain_spec.set( "type", type() );
+    if( xmin() != 0. ) {
+        domain_spec.set( "west", xmin() );
+    }
     return domain_spec;
 }
 
@@ -41,7 +52,7 @@ void GlobalDomain::hash( eckit::Hash& h ) const {
 }
 
 void GlobalDomain::print( std::ostream& os ) const {
-    os << "GlobalDomain";
+    os << "GlobalDomain[west=" << xmin() << "]" ;
 }
 
 namespace {

@@ -26,7 +26,8 @@ RectangularDomain::RectangularDomain( const Interval& x, const Interval& y, cons
     Domain( ( RD::is_global( x, y, units ) )
                 ? new atlas::domain::GlobalDomain( x[0] )
                 : ( RD::is_zonal_band( x, units ) ? new atlas::domain::ZonalBandDomain( y, x[0] )
-                                                  : new atlas::domain::RectangularDomain( x, y, units ) ) ) {}
+                                                  : new atlas::domain::RectangularDomain( x, y, units ) ) ) {
+}
 
 RectangularDomain::RectangularDomain( const Domain& domain ) :
     Domain( domain ),
@@ -56,9 +57,9 @@ double RectangularDomain::ymax() const {
     return domain_->ymax();
 }
 
-ZonalBandDomain::ZonalBandDomain( const Interval& y ) :
-    RectangularDomain( ( ZD::is_global( y ) ) ? new atlas::domain::GlobalDomain()
-                                              : new atlas::domain::ZonalBandDomain( y ) ) {}
+ZonalBandDomain::ZonalBandDomain( const Interval& y, const double& west ) :
+    RectangularDomain( ( ZD::is_global( y ) ) ? new atlas::domain::GlobalDomain(west)
+                                              : new atlas::domain::ZonalBandDomain( y, west ) ) {}
 
 ZonalBandDomain::ZonalBandDomain( const Domain& domain ) :
     RectangularDomain( domain ),

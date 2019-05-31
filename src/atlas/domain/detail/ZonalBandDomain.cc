@@ -34,6 +34,12 @@ static std::array<double, 2> get_interval_y( const eckit::Parametrisation& param
     return {ymin, ymax};
 }
 
+static double get_west( const eckit::Parametrisation& params ) {
+    double west = 0.;
+    params.get("west",west);
+    return west;
+}
+
 /*
 constexpr std::array<double, 2> interval_x() {
     return {0., 360.};
@@ -49,7 +55,7 @@ bool ZonalBandDomain::is_global( const Interval& y ) {
 }
 
 ZonalBandDomain::ZonalBandDomain( const eckit::Parametrisation& params ) :
-    ZonalBandDomain( get_interval_y( params ) ) {}
+    ZonalBandDomain( get_interval_y( params ), get_west( params ) ) {}
 
 ZonalBandDomain::ZonalBandDomain( const Interval& interval_y ) : ZonalBandDomain( interval_y, /*west*/ 0. ) {}
 
@@ -69,6 +75,9 @@ ZonalBandDomain::Spec ZonalBandDomain::spec() const {
     domain_spec.set( "type", type() );
     domain_spec.set( "ymin", ymin() );
     domain_spec.set( "ymax", ymax() );
+    if( xmin() != 0. ) {
+        domain_spec.set( "west", xmin() );
+    }
     return domain_spec;
 }
 
@@ -78,7 +87,7 @@ void ZonalBandDomain::hash( eckit::Hash& h ) const {
 
 void ZonalBandDomain::print( std::ostream& os ) const {
     os << "ZonalBandDomain["
-       << "ymin=" << ymin() << ",ymax=" << ymax() << "]";
+       << "ymin=" << ymin() << ",ymax=" << ymax() << ",west=" << xmin() << "]";
 }
 
 bool ZonalBandDomain::containsNorthPole() const {
