@@ -51,7 +51,7 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
     name_( name ),
     xspace_( xspace ),
     yspace_( yspace ) {
-    // Copry members
+    // Copy members
     if ( projection )
         projection_ = projection;
     else
@@ -87,32 +87,15 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
 
     computeTruePeriodicity();
 
-    if ( domain && domain.global() )
-        domain_ = Domain( Grid::Config( "type", "global" ) );
-    else
-        computeDomain();
+    if ( not domain ) { computeDomain(); }
 }
 
 void Structured::computeDomain() {
     if ( periodic() ) {
-        if ( yspace().max() - yspace().min() == 180. ) { domain_ = Domain( Grid::Config( "type", "global" ) ); }
-        else {
-            Grid::Config config;
-            config.set( "type", "zonal_band" );
-            config.set( "ymin", yspace().min() );
-            config.set( "ymax", yspace().max() );
-            domain_ = Domain( config );
-        }
+        domain_ = ZonalBandDomain( {yspace().min(),yspace().max()}, xspace().min() );
     }
-    else if ( not domain_ ) {
-        Grid::Config config;
-        config.set( "type", "rectangular" );
-        config.set( "xmin", xmin_[0] );
-        config.set( "xmax", xmax_[0] );
-        config.set( "ymin", yspace().min() );
-        config.set( "ymax", yspace().max() );
-        config.set( "units", projection_.units() );
-        domain_ = Domain( config );
+    else {
+        domain_ = RectangularDomain( {xspace().min(),xspace().max()}, {yspace().min(),yspace().max()}, projection_.units() );
     }
 }
 
@@ -132,6 +115,8 @@ Structured::XSpace::XSpace( const std::array<double, 2>& interval, std::initiali
     XSpace( interval, std::vector<int>{N}, endpoint ) {}
 
 Structured::XSpace::XSpace( const Spacing& spacing ) : impl_( new Implementation( spacing ) ) {}
+
+Structured::XSpace::XSpace( const std::vector<Spacing>& spacings ) : impl_( new Implementation( spacings ) ) {}
 
 Structured::XSpace::XSpace( const Config& config ) : impl_( new Implementation( config ) ) {}
 
@@ -168,6 +153,8 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
 
     nxmin_ = std::numeric_limits<idx_t>::max();
     nxmax_ = 0;
+    min_   = std::numeric_limits<double>::max();
+    max_   = -std::numeric_limits<double>::max();
 
     for ( idx_t j = 0; j < ny; ++j ) {
         if ( not v_N.empty() ) config_xspace.set( "N", v_N[j] );
@@ -181,6 +168,8 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
         dx_.push_back( xspace.step );
         nxmin_ = std::min( nxmin_, nx_[j] );
         nxmax_ = std::max( nxmax_, nx_[j] );
+        min_   = std::min( min_, xspace.start );
+        max_   = std::max( max_, xspace.end );
     }
 }
 
@@ -189,6 +178,8 @@ Structured::XSpace::Implementation::Implementation( const std::vector<Config>& c
 
     nxmin_ = std::numeric_limits<idx_t>::max();
     nxmax_ = 0;
+    min_   = std::numeric_limits<double>::max();
+    max_   = -std::numeric_limits<double>::max();
 
     std::string xspace_type;
     for ( idx_t j = 0; j < ny(); ++j ) {
@@ -201,6 +192,8 @@ Structured::XSpace::Implementation::Implementation( const std::vector<Config>& c
         dx_.push_back( xspace.step );
         nxmin_ = std::min( nxmin_, nx_[j] );
         nxmax_ = std::max( nxmax_, nx_[j] );
+        min_   = std::min( min_, xspace.start );
+        max_   = std::max( max_, xspace.end );
     }
 }
 
@@ -222,11 +215,15 @@ Structured::XSpace::Implementation::Implementation( const std::array<double, 2>&
     dx_( ny_ ) {
     nxmin_        = std::numeric_limits<idx_t>::max();
     nxmax_        = 0;
+    min_          = std::numeric_limits<double>::max();
+    max_          = -std::numeric_limits<double>::max();
     double length = interval[1] - interval[0];
     for ( idx_t j = 0; j < ny_; ++j ) {
         nxmin_ = std::min( nxmin_, nx_[j] );
         nxmax_ = std::max( nxmax_, nx_[j] );
         dx_[j] = endpoint ? length / double( nx_[j] - 1 ) : length / double( nx_[j] );
+        min_   = std::min( min_, xmin_[j] );
+        max_   = std::max( max_, xmax_[j] );
     }
 }
 template Structured::XSpace::Implementation::Implementation( const std::array<double, 2>& interval,
@@ -249,7 +246,34 @@ Structured::XSpace::Implementation::Implementation( const Spacing& spacing ) :
     dx_[0]                                 = linspace.step();
     nxmax_                                 = nx_[0];
     nxmin_                                 = nx_[0];
+    min_                                   = spacing.min();
+    max_                                   = spacing.max();
 }
+
+Structured::XSpace::Implementation::Implementation( const std::vector<Spacing>& spacings ) :
+    ny_( spacings.size() ),
+    nx_( ny_ ),
+    xmin_( ny_ ),
+    xmax_( ny_ ),
+    dx_( ny_ ) {
+    nxmax_ = 0;
+    nxmin_ = std::numeric_limits<idx_t>::max();
+    min_   = std::numeric_limits<double>::max();
+    max_   = -std::numeric_limits<double>::max();
+    for ( idx_t j = 0; j < ny_; ++j ) {
+        const spacing::LinearSpacing& linspace = dynamic_cast<const spacing::LinearSpacing&>( *spacings[j].get() );
+
+        nx_[j]   = linspace.size();
+        xmin_[j] = linspace.min();
+        xmax_[j] = linspace.max();
+        dx_[j]   = linspace.step();
+        nxmin_   = std::min( nxmin_, nx_[j] );
+        nxmax_   = std::max( nxmax_, nx_[j] );
+        min_     = std::min( min_, xmin_[j] );
+        max_     = std::max( max_, xmax_[j] );
+    }
+}
+
 
 std::string Structured::XSpace::Implementation::type() const {
     return "linear";
@@ -302,7 +326,7 @@ class Normalise {
 public:
     Normalise( const RectangularDomain& domain ) :
         degrees_( domain.units() == "degrees" ),
-        normalise_( domain.xmin(), domain.xmax() ) {}
+        normalise_( domain.xmin() ) {}
 
     double operator()( double x ) const {
         if ( degrees_ ) { x = normalise_( x ); }
@@ -316,59 +340,11 @@ private:
 }  // namespace
 
 void Structured::crop( const Domain& dom ) {
-    if ( dom.global() ) return;
-
     ATLAS_ASSERT( dom.units() == projection().units() );
 
-    auto zonal_domain = ZonalBandDomain( dom );
-    auto rect_domain  = RectangularDomain( dom );
+    auto rect_domain = RectangularDomain( dom );
 
-    if ( zonal_domain ) {
-        const double cropped_ymin = zonal_domain.ymin();
-        const double cropped_ymax = zonal_domain.ymax();
-
-        idx_t jmin = ny();
-        idx_t jmax = 0;
-        for ( idx_t j = 0; j < ny(); ++j ) {
-            if ( zonal_domain.contains_y( y( j ) ) ) {
-                jmin = std::min( j, jmin );
-                jmax = std::max( j, jmax );
-            }
-        }
-        idx_t cropped_ny = jmax - jmin + 1;
-        std::vector<double> cropped_y( y_.begin() + jmin, y_.begin() + jmin + cropped_ny );
-        std::vector<double> cropped_xmin( xmin_.begin() + jmin, xmin_.begin() + jmin + cropped_ny );
-        std::vector<double> cropped_xmax( xmax_.begin() + jmin, xmax_.begin() + jmin + cropped_ny );
-        std::vector<double> cropped_dx( dx_.begin() + jmin, dx_.begin() + jmin + cropped_ny );
-        std::vector<idx_t> cropped_nx( nx_.begin() + jmin, nx_.begin() + jmin + cropped_ny );
-        ATLAS_ASSERT( idx_t( cropped_nx.size() ) == cropped_ny );
-
-        idx_t cropped_nxmin, cropped_nxmax;
-        cropped_nxmin = cropped_nxmax = cropped_nx.front();
-        for ( idx_t j = 1; j < cropped_ny; ++j ) {
-            cropped_nxmin = std::min( cropped_nx[j], cropped_nxmin );
-            cropped_nxmax = std::max( cropped_nx[j], cropped_nxmax );
-        }
-        idx_t cropped_npts = std::accumulate( cropped_nx.begin(), cropped_nx.end(), idx_t{0} );
-
-        Spacing cropped_yspace(
-            new spacing::CustomSpacing( cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax} ) );
-
-        // Modify grid
-        {
-            domain_ = dom;
-            yspace_ = cropped_yspace;
-            xmin_   = cropped_xmin;
-            xmax_   = cropped_xmax;
-            dx_     = cropped_dx;
-            nx_     = cropped_nx;
-            nxmin_  = cropped_nxmin;
-            nxmax_  = cropped_nxmax;
-            npts_   = cropped_npts;
-            y_      = cropped_y;
-        }
-    }
-    else if ( rect_domain ) {
+    if ( rect_domain ) {
         const double cropped_ymin = rect_domain.ymin();
         const double cropped_ymax = rect_domain.ymax();
 
@@ -420,10 +396,24 @@ void Structured::crop( const Domain& dom ) {
         Spacing cropped_yspace(
             new spacing::CustomSpacing( cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax} ) );
 
+        std::vector<Spacing> cropped_xspacings( cropped_ny );
+        for ( idx_t j = 0; j < cropped_ny; ++j ) {
+            cropped_xspacings[j] = new spacing::LinearSpacing( cropped_xmin[j], cropped_xmax[j], cropped_nx[j], true );
+        }
+        XSpace cropped_xspace( cropped_xspacings );
+
+        for ( idx_t j = 0; j < cropped_ny; ++j ) {
+            ATLAS_ASSERT( eckit::types::is_approximately_equal( cropped_xspace.xmin()[j], cropped_xmin[j] ) );
+            ATLAS_ASSERT( eckit::types::is_approximately_equal( cropped_xspace.xmax()[j], cropped_xmax[j] ) );
+            ATLAS_ASSERT( cropped_xspace.nxmin() == cropped_nxmin );
+            ATLAS_ASSERT( cropped_xspace.nxmax() == cropped_nxmax );
+        }
+
         // Modify grid
         {
             domain_ = dom;
             yspace_ = cropped_yspace;
+            xspace_ = cropped_xspace;
             xmin_   = cropped_xmin;
             xmax_   = cropped_xmax;
             dx_     = cropped_dx;
