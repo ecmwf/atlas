@@ -86,15 +86,13 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
     crop( domain );
 
     computeTruePeriodicity();
-
 }
 
 void Structured::computeDomain() {
-    if ( periodic() ) {
-        domain_ = ZonalBandDomain( {yspace().min(),yspace().max()}, xspace().min() );
-    }
+    if ( periodic() ) { domain_ = ZonalBandDomain( {yspace().min(), yspace().max()}, xspace().min() ); }
     else {
-        domain_ = RectangularDomain( {xspace().min(),xspace().max()}, {yspace().min(),yspace().max()}, projection_.units() );
+        domain_ = RectangularDomain( {xspace().min(), xspace().max()}, {yspace().min(), yspace().max()},
+                                     projection_.units() );
     }
 }
 
@@ -385,8 +383,8 @@ void Structured::crop( const Domain& dom ) {
             bool endpoint = true;
             if ( ZonalBandDomain( rect_domain ) ) {
                 for ( idx_t j = 0; j < cropped_ny; ++j ) {
-                    if ( eckit::types::is_approximately_equal( cropped_xmax[j] + cropped_dx[j],
-                                                               cropped_xmin[j] + 360., 1.e-10 ) ) {
+                    if ( eckit::types::is_approximately_equal( cropped_xmax[j] + cropped_dx[j], cropped_xmin[j] + 360.,
+                                                               1.e-10 ) ) {
                         cropped_xmax[j] = cropped_xmin[j] + 360.;
                         endpoint        = false;
                     }
@@ -417,7 +415,8 @@ void Structured::crop( const Domain& dom ) {
             for ( idx_t j = 0; j < cropped_ny; ++j ) {
                 ATLAS_ASSERT( eckit::types::is_approximately_equal( cropped_xspace.xmin()[j], cropped_xmin[j] ) );
                 if ( cropped_nx[j] > 1 ) {
-                    ATLAS_ASSERT( eckit::types::is_approximately_equal( cropped_xspace.dx()[j], cropped_dx[j], 1.e-10 ) );
+                    ATLAS_ASSERT(
+                        eckit::types::is_approximately_equal( cropped_xspace.dx()[j], cropped_dx[j], 1.e-10 ) );
                 }
                 ATLAS_ASSERT( cropped_xspace.nx()[j] == cropped_nx[j] );
                 ATLAS_ASSERT( cropped_xspace.nxmin() == cropped_nxmin );
@@ -444,7 +443,7 @@ void Structured::crop( const Domain& dom ) {
             throw_Exception( errmsg.str(), Here() );
         }
     }
-    domain_ = RectangularDomain( {xspace_.min(),xspace_.max()}, {yspace_.min(),yspace_.max()}, projection_.units() );
+    domain_ = RectangularDomain( {xspace_.min(), xspace_.max()}, {yspace_.min(), yspace_.max()}, projection_.units() );
 }
 
 void Structured::computeTruePeriodicity() {

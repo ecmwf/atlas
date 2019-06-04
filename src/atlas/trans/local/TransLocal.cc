@@ -335,16 +335,15 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 gridGlobal_     = grid_;
                 useGlobalLeg    = false;
             }
-            else {
-                Log::info() << "Global grid: " <<  gridGlobal_.spec() << std::endl;
-                Log::info() << "Actual grid: " << grid_.spec() << std::endl;
-                std::stringstream log;
-                log << "Transforms to non-regular regional grids is not supported, unless it defined as a cropping of a global grid." << std::endl;
+            else {  // non-nested reduced grids are not supported
+                std::ostringstream log;
+                log << "Transforms to non-regular regional grids is not supported, unless it defined as a cropping of "
+                       "a global grid."
+                    << std::endl;
                 log << "    Input grid: " << grid.spec() << std::endl;
                 log << "    Applied domain: " << domain << std::endl;
                 log << "    Regional grid after Domain applied (the output grid): " << grid_.spec() << std::endl;
                 throw_NotImplemented( log.str(), Here() );
-                // non-nested reduced grids are not supported
             }
         }
 

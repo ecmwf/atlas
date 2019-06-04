@@ -19,7 +19,8 @@ namespace gridtools {
 template <typename Value, unsigned int Rank, Intent AccessMode>
 struct gt_view {
     using type = ::gridtools::data_view<
-        gridtools::storage_traits::data_store_t<Value, gridtools::storage_traits::storage_info_t<0, Rank>>, gridtools::get_access_mode(AccessMode) >;
+        gridtools::storage_traits::data_store_t<Value, gridtools::storage_traits::storage_info_t<0, Rank>>,
+        gridtools::get_access_mode( AccessMode )>;
 };
 
 template <typename Value, unsigned int Rank, Intent AccessMode = Intent::ReadWrite>

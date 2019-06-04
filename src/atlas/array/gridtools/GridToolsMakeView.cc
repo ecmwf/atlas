@@ -14,12 +14,12 @@
 #include <vector>
 
 #include "atlas/array/Array.h"
-#include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
-#include "atlas/runtime/Exception.h"
 #include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
 
 //------------------------------------------------------------------------------
 
@@ -46,8 +46,7 @@ namespace gridtools {
 
 
 template <typename Value, unsigned int Rank, Intent AccessMode>
-typename gt_view<Value, Rank, AccessMode>::type
-make_gt_host_view( const Array& array ) {
+typename gt_view<Value, Rank, AccessMode>::type make_gt_host_view( const Array& array ) {
     using storage_info_ty = storage_traits::storage_info_t<0, Rank>;
     using data_store_t    = storage_traits::data_store_t<Value, storage_info_ty>;
 
@@ -56,7 +55,7 @@ make_gt_host_view( const Array& array ) {
 }
 
 template <typename Value, unsigned int Rank, Intent AccessMode>
-typename gt_view<Value, Rank, AccessMode >::type make_gt_device_view( const Array& array ) {
+typename gt_view<Value, Rank, AccessMode>::type make_gt_device_view( const Array& array ) {
     using storage_info_ty = storage_traits::storage_info_t<0, Rank>;
     using data_store_t    = storage_traits::data_store_t<Value, storage_info_ty>;
 
@@ -172,46 +171,46 @@ namespace array {
     template IndexView<long, RANK> make_host_indexview<long, RANK, Intent::ReadOnly>( const Array& );                  \
     template IndexView<long, RANK> make_host_indexview<long, RANK, Intent::ReadWrite>( const Array& );                 \
     namespace gridtools {                                                                                              \
-    template typename gt_view<int, RANK, Intent::ReadOnly>::type                                               \
-    make_gt_host_view<int, RANK, Intent::ReadOnly>( const Array& array );                                              \
-    template typename gt_view<int, RANK, Intent::ReadWrite>::type                                               \
-    make_gt_host_view<int, RANK, Intent::ReadWrite>( const Array& array );                                             \
-    template typename gt_view<long, RANK, Intent::ReadOnly>::type                                               \
-    make_gt_host_view<long, RANK, Intent::ReadOnly>( const Array& array );                                             \
-    template typename gt_view<long, RANK, Intent::ReadWrite>::type                                               \
-    make_gt_host_view<long, RANK, Intent::ReadWrite>( const Array& array );                                            \
-    template typename gt_view<long unsigned, RANK, Intent::ReadOnly>::type                                               \
+    template typename gt_view<int, RANK, Intent::ReadOnly>::type make_gt_host_view<int, RANK, Intent::ReadOnly>(       \
+        const Array& array );                                                                                          \
+    template typename gt_view<int, RANK, Intent::ReadWrite>::type make_gt_host_view<int, RANK, Intent::ReadWrite>(     \
+        const Array& array );                                                                                          \
+    template typename gt_view<long, RANK, Intent::ReadOnly>::type make_gt_host_view<long, RANK, Intent::ReadOnly>(     \
+        const Array& array );                                                                                          \
+    template typename gt_view<long, RANK, Intent::ReadWrite>::type make_gt_host_view<long, RANK, Intent::ReadWrite>(   \
+        const Array& array );                                                                                          \
+    template typename gt_view<long unsigned, RANK, Intent::ReadOnly>::type                                             \
     make_gt_host_view<long unsigned, RANK, Intent::ReadOnly>( const Array& array );                                    \
-    template typename gt_view<long unsigned, RANK, Intent::ReadWrite>::type                                               \
+    template typename gt_view<long unsigned, RANK, Intent::ReadWrite>::type                                            \
     make_gt_host_view<long unsigned, RANK, Intent::ReadWrite>( const Array& array );                                   \
-    template typename gt_view<float, RANK, Intent::ReadOnly>::type                                               \
-    make_gt_host_view<float, RANK, Intent::ReadOnly>( const Array& array );                                            \
-    template typename gt_view<float, RANK, Intent::ReadWrite>::type                                               \
-    make_gt_host_view<float, RANK, Intent::ReadWrite>( const Array& array );                                           \
-    template typename gt_view<double, RANK, Intent::ReadOnly>::type                                               \
-    make_gt_host_view<double, RANK, Intent::ReadOnly>( const Array& array );                                           \
-    template typename gt_view<double, RANK, Intent::ReadWrite>::type                                               \
+    template typename gt_view<float, RANK, Intent::ReadOnly>::type make_gt_host_view<float, RANK, Intent::ReadOnly>(   \
+        const Array& array );                                                                                          \
+    template typename gt_view<float, RANK, Intent::ReadWrite>::type make_gt_host_view<float, RANK, Intent::ReadWrite>( \
+        const Array& array );                                                                                          \
+    template typename gt_view<double, RANK, Intent::ReadOnly>::type make_gt_host_view<double, RANK, Intent::ReadOnly>( \
+        const Array& array );                                                                                          \
+    template typename gt_view<double, RANK, Intent::ReadWrite>::type                                                   \
     make_gt_host_view<double, RANK, Intent::ReadWrite>( const Array& array );                                          \
                                                                                                                        \
-    template typename gt_view<int, RANK, Intent::ReadOnly>::type                                               \
-    make_gt_device_view<int, RANK, Intent::ReadOnly>( const Array& array );                                            \
-    template typename gt_view<int, RANK, Intent::ReadWrite>::type                                               \
-    make_gt_device_view<int, RANK, Intent::ReadWrite>( const Array& array );                                           \
-    template typename gt_view<long, RANK, Intent::ReadOnly>::type                                               \
-    make_gt_device_view<long, RANK, Intent::ReadOnly>( const Array& array );                                           \
-    template typename gt_view<long, RANK, Intent::ReadWrite>::type                                               \
-    make_gt_device_view<long, RANK, Intent::ReadWrite>( const Array& array );                                          \
-    template typename gt_view<long unsigned, RANK, Intent::ReadOnly>::type                                               \
+    template typename gt_view<int, RANK, Intent::ReadOnly>::type make_gt_device_view<int, RANK, Intent::ReadOnly>(     \
+        const Array& array );                                                                                          \
+    template typename gt_view<int, RANK, Intent::ReadWrite>::type make_gt_device_view<int, RANK, Intent::ReadWrite>(   \
+        const Array& array );                                                                                          \
+    template typename gt_view<long, RANK, Intent::ReadOnly>::type make_gt_device_view<long, RANK, Intent::ReadOnly>(   \
+        const Array& array );                                                                                          \
+    template typename gt_view<long, RANK, Intent::ReadWrite>::type make_gt_device_view<long, RANK, Intent::ReadWrite>( \
+        const Array& array );                                                                                          \
+    template typename gt_view<long unsigned, RANK, Intent::ReadOnly>::type                                             \
     make_gt_device_view<long unsigned, RANK, Intent::ReadOnly>( const Array& array );                                  \
-    template typename gt_view<long unsigned, RANK, Intent::ReadWrite>::type                                               \
+    template typename gt_view<long unsigned, RANK, Intent::ReadWrite>::type                                            \
     make_gt_device_view<long unsigned, RANK, Intent::ReadWrite>( const Array& array );                                 \
-    template typename gt_view<float, RANK, Intent::ReadOnly>::type                                               \
-    make_gt_device_view<float, RANK, Intent::ReadOnly>( const Array& array );                                          \
-    template typename gt_view<float, RANK, Intent::ReadWrite>::type                                               \
+    template typename gt_view<float, RANK, Intent::ReadOnly>::type make_gt_device_view<float, RANK, Intent::ReadOnly>( \
+        const Array& array );                                                                                          \
+    template typename gt_view<float, RANK, Intent::ReadWrite>::type                                                    \
     make_gt_device_view<float, RANK, Intent::ReadWrite>( const Array& array );                                         \
-    template typename gt_view<double, RANK, Intent::ReadOnly>::type                                               \
+    template typename gt_view<double, RANK, Intent::ReadOnly>::type                                                    \
     make_gt_device_view<double, RANK, Intent::ReadOnly>( const Array& array );                                         \
-    template typename gt_view<double, RANK, Intent::ReadWrite>::type                                               \
+    template typename gt_view<double, RANK, Intent::ReadWrite>::type                                                   \
     make_gt_device_view<double, RANK, Intent::ReadWrite>( const Array& array );                                        \
     }
 

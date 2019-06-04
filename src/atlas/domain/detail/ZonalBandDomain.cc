@@ -36,7 +36,7 @@ static std::array<double, 2> get_interval_y( const eckit::Parametrisation& param
 
 static double get_west( const eckit::Parametrisation& params ) {
     double west = 0.;
-    params.get("west",west);
+    params.get( "west", west );
     return west;
 }
 
@@ -75,9 +75,7 @@ ZonalBandDomain::Spec ZonalBandDomain::spec() const {
     domain_spec.set( "type", type() );
     domain_spec.set( "ymin", ymin() );
     domain_spec.set( "ymax", ymax() );
-    if( xmin() != 0. ) {
-        domain_spec.set( "west", xmin() );
-    }
+    if ( xmin() != 0. ) { domain_spec.set( "west", xmin() ); }
     return domain_spec;
 }
 
