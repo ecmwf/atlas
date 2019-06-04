@@ -7,6 +7,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.17.2] - 2019-06-04
+### Fixed
+- Compilation with PGI 19.4
+- Structured Grid creation for periodic domains that do not start at 0 degrees longitude (Greenwich)
+
+
 ## [0.17.1] - 2019-04-22
 ### Added
 - Option to declaration of field type (vector/scalar) when creating field in FunctionSpace
@@ -107,6 +113,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.17.2]: https://github.com/ecmwf/atlas/compare/0.17.1...0.17.2
+[0.17.1]: https://github.com/ecmwf/atlas/compare/0.17.0...0.17.1
 [0.17.0]: https://github.com/ecmwf/atlas/compare/0.16.0...0.17.0
 [0.16.0]: https://github.com/ecmwf/atlas/compare/0.15.2...0.16.0
 [0.15.2]: https://github.com/ecmwf/atlas/compare/0.15.1...0.15.2
