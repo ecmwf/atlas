@@ -40,6 +40,10 @@ bool RectangularDomain::contains_y( double y ) const {
     return domain_->contains_y( y );
 }
 
+bool RectangularDomain::zonal_band() const {
+    return domain_->zonal_band();
+}
+
 double RectangularDomain::xmin() const {
     return domain_->xmin();
 }
@@ -56,9 +60,9 @@ double RectangularDomain::ymax() const {
     return domain_->ymax();
 }
 
-ZonalBandDomain::ZonalBandDomain( const Interval& y ) :
-    RectangularDomain( ( ZD::is_global( y ) ) ? new atlas::domain::GlobalDomain()
-                                              : new atlas::domain::ZonalBandDomain( y ) ) {}
+ZonalBandDomain::ZonalBandDomain( const Interval& y, const double& west ) :
+    RectangularDomain( ( ZD::is_global( y ) ) ? new atlas::domain::GlobalDomain( west )
+                                              : new atlas::domain::ZonalBandDomain( y, west ) ) {}
 
 ZonalBandDomain::ZonalBandDomain( const Domain& domain ) :
     RectangularDomain( domain ),

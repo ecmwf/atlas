@@ -54,7 +54,7 @@ bool RectangularDomain::is_global( const Interval& x, const Interval& y, const s
     if ( units != "degrees" ) return false;
 
     const double eps = 1.e-12;
-    return std::abs( ( x[1] - x[0] ) - 360. ) < eps && std::abs( ( y[1] - y[0] ) - 180. ) < eps;
+    return std::abs( ( x[1] - x[0] ) - 360. ) < eps && std::abs( std::abs( y[1] - y[0] ) - 180. ) < eps;
 }
 
 bool RectangularDomain::is_zonal_band( const Interval& x, const std::string& units ) {

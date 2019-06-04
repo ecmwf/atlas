@@ -236,9 +236,7 @@ void StructuredColumns::set_field_metadata( const eckit::Configuration& config, 
     config.get( "variables", variables );
     field.set_variables( variables );
 
-    if( config.has("type") ){
-        field.metadata().set("type",config.getString("type"));
-    }
+    if ( config.has( "type" ) ) { field.metadata().set( "type", config.getString( "type" ) ); }
 }
 
 array::DataType StructuredColumns::config_datatype( const eckit::Configuration& config ) const {
@@ -416,11 +414,9 @@ Field StructuredColumns::createField( const eckit::Configuration& options ) cons
 }
 
 Field StructuredColumns::createField( const Field& other, const eckit::Configuration& config ) const {
-    return createField( option::datatype( other.datatype() ) | 
-                        option::levels( other.levels() ) |
-                        option::variables( other.variables() ) | 
-                        option::type( other.metadata().getString("type","scalar") ) |
-                        config );
+    return createField( option::datatype( other.datatype() ) | option::levels( other.levels() ) |
+                        option::variables( other.variables() ) |
+                        option::type( other.metadata().getString( "type", "scalar" ) ) | config );
 }
 // ----------------------------------------------------------------------------
 

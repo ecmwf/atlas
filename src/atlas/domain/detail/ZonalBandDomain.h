@@ -34,6 +34,7 @@ public:
     // constructor
     ZonalBandDomain( const eckit::Parametrisation& );
     ZonalBandDomain( const Interval& );
+    ZonalBandDomain( const Interval&, const double west );
 
     static std::string static_type() { return "zonal_band"; }
     virtual std::string type() const override { return static_type(); }
@@ -60,7 +61,6 @@ public:
 
 protected:
     friend class ::atlas::RectangularDomain;
-    ZonalBandDomain( const Interval&, const double west );
 
 private:
     bool global_;

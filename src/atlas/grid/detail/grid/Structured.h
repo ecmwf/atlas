@@ -195,6 +195,8 @@ public:
 
             Implementation( const Spacing& );
 
+            Implementation( const std::vector<Spacing>& );
+
             Implementation( const Config& );
 
             Implementation( const std::vector<Config>& );
@@ -219,6 +221,12 @@ public:
             /// Value of longitude increment
             const std::vector<double>& dx() const { return dx_; }
 
+            /// Value of minimum x over entire grid
+            double min() const { return min_; }
+
+            /// Value of maximum x over entire grid
+            double max() const { return max_; }
+
             Spec spec() const;
 
             std::string type() const;
@@ -234,6 +242,8 @@ public:
             std::vector<double> xmin_;
             std::vector<double> xmax_;
             std::vector<double> dx_;
+            double min_;
+            double max_;
         };
 
     public:
@@ -242,6 +252,8 @@ public:
         XSpace( const XSpace& );
 
         XSpace( const Spacing& );
+
+        XSpace( const std::vector<Spacing>& );
 
         // Constructor NVector can be either std::vector<int> or std::vector<long> or initializer list
         template <typename NVector>
@@ -272,6 +284,12 @@ public:
 
         /// Value of longitude increment
         const std::vector<double>& dx() const { return impl_->dx(); }
+
+        /// Value of minimum x over entire grid
+        double min() const { return impl_->min(); }
+
+        /// Value of maximum x over entire grid
+        double max() const { return impl_->max(); }
 
         Spec spec() const;
 

@@ -16,11 +16,18 @@ namespace atlas {
 namespace array {
 namespace gridtools {
 
-template <typename Value, unsigned int Rank, Intent AccessMode = Intent::ReadWrite>
-data_view_tt<Value, Rank, get_access_mode( AccessMode )> make_gt_host_view( const Array& array );
+template <typename Value, unsigned int Rank, Intent AccessMode>
+struct gt_view {
+    using type = ::gridtools::data_view<
+        gridtools::storage_traits::data_store_t<Value, gridtools::storage_traits::storage_info_t<0, Rank>>,
+        gridtools::get_access_mode( AccessMode )>;
+};
 
 template <typename Value, unsigned int Rank, Intent AccessMode = Intent::ReadWrite>
-data_view_tt<Value, Rank, get_access_mode( AccessMode )> make_gt_device_view( const Array& array );
+typename gt_view<Value, Rank, AccessMode>::type make_gt_host_view( const Array& array );
+
+template <typename Value, unsigned int Rank, Intent AccessMode = Intent::ReadWrite>
+typename gt_view<Value, Rank, AccessMode>::type make_gt_device_view( const Array& array );
 
 }  // namespace gridtools
 }  // namespace array

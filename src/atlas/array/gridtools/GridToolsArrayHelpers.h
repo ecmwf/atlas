@@ -148,11 +148,15 @@ struct get_pack_size {
     using type = ::gridtools::static_uint<sizeof...( T )>;
 };
 
+template <typename Value, typename LayoutMap, size_t Rank>
+struct gt_storage_t {
+    using type = gridtools::storage_traits::data_store_t<
+        Value, gridtools::storage_traits::custom_layout_storage_info_t<0, LayoutMap, ::gridtools::zero_halo<Rank>>>;
+};
+
 template <typename Value, typename LayoutMap, typename... UInts>
-static gridtools::storage_traits::data_store_t<
-    Value, gridtools::storage_traits::custom_layout_storage_info_t<
-               0, LayoutMap, ::gridtools::zero_halo<get_pack_size<UInts...>::type::value>>>*
-create_gt_storage( UInts... dims ) {
+typename gt_storage_t<Value, LayoutMap, get_pack_size<UInts...>::type::value>::type* create_gt_storage(
+    UInts... dims ) {
     static_assert( ( sizeof...( dims ) > 0 ), "Error: can not create storages without any dimension" );
 
     constexpr static unsigned int rank = get_pack_size<UInts...>::type::value;
@@ -169,9 +173,14 @@ create_gt_storage( UInts... dims ) {
     return ds;
 }
 
+template <typename Value, size_t Rank>
+struct gt_wrap_storage_t {
+    using type = gridtools::storage_traits::data_store_t<Value, gridtools::storage_traits::storage_info_t<0, Rank>>;
+};
+
 template <typename Value, unsigned int Rank>
-static gridtools::storage_traits::data_store_t<Value, gridtools::storage_traits::storage_info_t<0, Rank>>*
-wrap_gt_storage( Value* data, std::array<idx_t, Rank>&& shape, std::array<idx_t, Rank>&& strides ) {
+static typename gt_wrap_storage_t<Value, Rank>::type* wrap_gt_storage( Value* data, std::array<idx_t, Rank>&& shape,
+                                                                       std::array<idx_t, Rank>&& strides ) {
     static_assert( ( Rank > 0 ), "Error: can not create storages without any dimension" );
     typedef gridtools::storage_traits::storage_info_t<0, Rank, ::gridtools::zero_halo<Rank>> storage_info_ty;
     typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;

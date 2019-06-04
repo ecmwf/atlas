@@ -110,6 +110,8 @@ public:
     /// Checks if the y-value is contained in the domain
     bool contains_y( double y ) const;
 
+    bool zonal_band() const;
+
     double xmin() const;
     double xmax() const;
     double ymin() const;
@@ -131,7 +133,7 @@ public:
 
 public:
     using RectangularDomain::RectangularDomain;
-    ZonalBandDomain( const Interval& y );
+    ZonalBandDomain( const Interval& y, const double& west = 0. );
     ZonalBandDomain( const Domain& );
 
     operator bool() { return domain_; }
