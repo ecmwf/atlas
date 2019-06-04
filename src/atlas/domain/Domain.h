@@ -110,6 +110,8 @@ public:
     /// Checks if the y-value is contained in the domain
     bool contains_y( double y ) const;
 
+    bool zonal_band() const;
+
     double xmin() const;
     double xmax() const;
     double ymin() const;

@@ -40,6 +40,10 @@ bool RectangularDomain::contains_y( double y ) const {
     return domain_->contains_y( y );
 }
 
+bool RectangularDomain::zonal_band() const {
+    return domain_->zonal_band();
+}
+
 double RectangularDomain::xmin() const {
     return domain_->xmin();
 }
