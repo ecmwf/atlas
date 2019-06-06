@@ -307,8 +307,11 @@ public:
     StructuredColumns( const FunctionSpace& );
     StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
     StructuredColumns( const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig() );
+    StructuredColumns( const Grid&, const grid::Distribution&, const eckit::Configuration& = util::NoConfig() );
     StructuredColumns( const Grid&, const Vertical&, const eckit::Configuration& = util::NoConfig() );
     StructuredColumns( const Grid&, const Vertical&, const grid::Partitioner&,
+                       const eckit::Configuration& = util::NoConfig() );
+    StructuredColumns( const Grid&, const grid::Distribution&, const Vertical&,
                        const eckit::Configuration& = util::NoConfig() );
 
     static std::string type() { return detail::StructuredColumns::static_type(); }

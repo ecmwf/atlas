@@ -44,7 +44,7 @@ using eckit::PathName;
 //------------------------------------------------------------------------------
 
 class Tool : public AtlasTool {
-    virtual void execute( const Args& args );
+    virtual int execute( const Args& args );
     virtual std::string briefDescription() {
         return "Tool to generate a python script that plots the grid-distribution "
                "of a given grid";
@@ -75,7 +75,7 @@ Tool::Tool( int argc, char** argv ) : AtlasTool( argc, argv ) {
 
 //-----------------------------------------------------------------------------
 
-void Tool::execute( const Args& args ) {
+int Tool::execute( const Args& args ) {
     Trace timer( Here(), displayName() );
     key = "";
     args.get( "grid", key );
@@ -95,7 +95,7 @@ void Tool::execute( const Args& args ) {
         Log::error() << "No grid specified." << std::endl;
     }
 
-    if ( !grid ) return;
+    if ( !grid ) return failed();
 
     size_t halo = args.getLong( "halo", halo_default() );
 
@@ -118,6 +118,7 @@ void Tool::execute( const Args& args ) {
     }
     timer.stop();
     Log::info() << Trace::report() << std::endl;
+    return success();
 }
 
 //------------------------------------------------------------------------------

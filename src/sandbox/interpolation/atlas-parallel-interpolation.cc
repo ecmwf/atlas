@@ -44,7 +44,7 @@ auto vortex_rollup = []( double lon, double lat, double t ) {
 };
 
 class AtlasParallelInterpolation : public AtlasTool {
-    void execute( const AtlasTool::Args& args );
+    int execute( const AtlasTool::Args& args );
     std::string briefDescription() { return "Demonstration of parallel interpolation"; }
     std::string usage() {
         return name() +
@@ -99,7 +99,7 @@ public:
     }
 };
 
-void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
+int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     // Get user options
     std::string option;
     bool trigs   = false;

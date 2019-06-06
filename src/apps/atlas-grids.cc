@@ -40,7 +40,7 @@ using eckit::JSON;
 
 class AtlasGrids : public AtlasTool {
     virtual bool serial() { return true; }
-    virtual void execute( const Args& args );
+    virtual int execute( const Args& args );
     virtual std::string briefDescription() { return "Catalogue of available built-in grids"; }
     virtual std::string usage() { return name() + " GRID [OPTION]... [--help,-h]"; }
     virtual std::string longDescription() {
@@ -75,7 +75,7 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-void AtlasGrids::execute( const Args& args ) {
+int AtlasGrids::execute( const Args& args ) {
     key = "";
     if ( args.count() ) key = args( 0 );
 
@@ -115,7 +115,7 @@ void AtlasGrids::execute( const Args& args ) {
         catch ( eckit::Exception& ) {
         }
 
-        if ( !grid ) return;
+        if ( !grid ) return failed();
 
         if ( info ) {
             double deg, km;
@@ -179,6 +179,7 @@ void AtlasGrids::execute( const Args& args ) {
             std::cout << stream.str() << std::endl;
         }
     }
+    return success();
 }
 
 //------------------------------------------------------------------------------------------------------

@@ -37,16 +37,16 @@ public:
     Interpolation() = default;
 
     // Setup Interpolation from source to target function space
-    Interpolation( const Config&, const FunctionSpace& source, const FunctionSpace& target );
+    Interpolation( const Config&, const FunctionSpace& source, const FunctionSpace& target ) noexcept( false );
 
     // Setup Interpolation from source to coordinates given in a field with multiple components
-    Interpolation( const Config&, const FunctionSpace& source, const Field& target );
+    Interpolation( const Config&, const FunctionSpace& source, const Field& target ) noexcept( false );
 
     // Setup Interpolation from source to coordinates given by separate fields for each component
-    Interpolation( const Config&, const FunctionSpace& source, const FieldSet& target );
+    Interpolation( const Config&, const FunctionSpace& source, const FieldSet& target ) noexcept( false );
 
     // Setup Interpolation from source grid to target grid
-    Interpolation( const Config&, const Grid& source, const Grid& target );
+    Interpolation( const Config&, const Grid& source, const Grid& target ) noexcept( false );
 
     void execute( const FieldSet& source, FieldSet& target ) const;
 

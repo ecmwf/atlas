@@ -57,7 +57,7 @@ using eckit::PathName;
 //------------------------------------------------------------------------------
 
 class Meshgen2Gmsh : public AtlasTool {
-    virtual void execute( const Args& args );
+    virtual int execute( const Args& args );
     virtual std::string briefDescription() { return "Mesh generator for Structured compatible meshes"; }
     virtual std::string usage() { return name() + " (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT [--help]"; }
 
@@ -116,7 +116,7 @@ Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
 
 //-----------------------------------------------------------------------------
 
-void Meshgen2Gmsh::execute( const Args& args ) {
+int Meshgen2Gmsh::execute( const Args& args ) {
     key = "";
     args.get( "grid.name", key );
 
@@ -148,7 +148,7 @@ void Meshgen2Gmsh::execute( const Args& args ) {
     if ( path_in_str.empty() && key.empty() ) {
         Log::warning() << "missing argument --grid.name or --grid.json" << std::endl;
         Log::warning() << "Usage: " << usage() << std::endl;
-        return;
+        return failed();
     }
 
     if ( edges ) halo = std::max( halo, 1l );
@@ -174,7 +174,7 @@ void Meshgen2Gmsh::execute( const Args& args ) {
         Log::error() << "No grid specified." << std::endl;
     }
 
-    if ( !grid ) return;
+    if ( !grid ) return failed();
 
     Log::debug() << "Domain: " << grid.domain() << std::endl;
     Log::debug() << "Periodic: " << grid.periodic() << std::endl;
@@ -239,6 +239,7 @@ void Meshgen2Gmsh::execute( const Args& args ) {
             mesh.polygon( jhalo ).outputPythonScript( "polygon_halo" + std::to_string( jhalo ) + ".py" );
         }
     }
+    return success();
 }
 
 //------------------------------------------------------------------------------

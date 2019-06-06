@@ -174,7 +174,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 //-----------------------------------------------------------------------------
 
 class Tool : public AtlasTool {
-    virtual void execute( const Args& args );
+    virtual int execute( const Args& args );
     virtual std::string briefDescription() {
         return "Tool to generate a python script that plots the grid-distribution "
                "of a given grid";
@@ -201,7 +201,7 @@ Tool::Tool( int argc, char** argv ) : AtlasTool( argc, argv ) {
 
 //-----------------------------------------------------------------------------
 
-void Tool::execute( const Args& args ) {
+int Tool::execute( const Args& args ) {
     Trace t( Here(), "main" );
 
     key = "";
@@ -222,7 +222,7 @@ void Tool::execute( const Args& args ) {
         Log::error() << "No grid specified." << std::endl;
     }
 
-    if ( !grid ) return;
+    if ( !grid ) return failed();
 
     Log::debug() << "Domain: " << grid.domain() << std::endl;
     Log::debug() << "Periodic: " << grid.periodic() << std::endl;
@@ -257,6 +257,7 @@ void Tool::execute( const Args& args ) {
     Log::info() << Trace::report( Config( "indent", 2 )( "decimals", 2 )
                                   // ("depth",5)
     );
+    return success();
 }
 
 //------------------------------------------------------------------------------

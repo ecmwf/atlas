@@ -122,7 +122,7 @@ struct TimerStats {
 //----------------------------------------------------------------------------------------------------------------------
 
 class AtlasBenchmark : public AtlasTool {
-    virtual void execute( const Args& args );
+    virtual int execute( const Args& args );
 
 public:
     AtlasBenchmark( int argc, char** argv ) : AtlasTool( argc, argv ) {
@@ -170,14 +170,11 @@ private:
     TimerStats haloexchange_timer;
     idx_t iter;
     bool progress;
-
-public:
-    int exit_code;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void AtlasBenchmark::execute( const Args& args ) {
+int AtlasBenchmark::execute( const Args& args ) {
     Trace timer( Here(), "atlas-benchmark" );
     // Timer::Logging set_channel( Log::info() );
 
@@ -265,7 +262,7 @@ void AtlasBenchmark::execute( const Args& args ) {
     double res = result();
 
     Log::info() << endl;
-    exit_code = verify( res );
+    return verify( res );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -551,7 +548,7 @@ double AtlasBenchmark::result() {
 
 int AtlasBenchmark::verify( const double& norm ) {
     Log::warning() << "Verification is not yet implemented" << endl;
-    return 1;
+    return failed();
 }
 
 //----------------------------------------------------------------------------------------------------------------------

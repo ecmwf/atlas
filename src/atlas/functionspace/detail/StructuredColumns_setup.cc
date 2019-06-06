@@ -365,16 +365,34 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                     gidx_t k           = global_offsets[gp.j] + gp.i;
                     part( gp.r )       = distribution.partition( k );
                     global_idx( gp.r ) = k + 1;
-                    ghost( gp.r )      = 0;
                 }
             }
             if ( not in_domain ) {
                 global_idx( gp.r ) = compute_g( gp.i, gp.j );
                 part( gp.r )       = compute_p( gp.i, gp.j );
-                ghost( gp.r )      = 1;
             }
             index_i( gp.r ) = gp.i;
             index_j( gp.r ) = gp.j;
+            ghost( gp.r )   = 0;
+        }
+
+        for ( idx_t j = j_begin_halo_; j < j_begin_; ++j ) {
+            for ( idx_t i = i_begin_halo_( j ); i < i_end_halo_( j ); ++i ) {
+                ghost( index( i, j ) ) = 1;
+            }
+        }
+        for ( idx_t j = j_begin_; j < j_end_; ++j ) {
+            for ( idx_t i = i_begin_halo_( j ); i < i_begin_[j]; ++i ) {
+                ghost( index( i, j ) ) = 1;
+            }
+            for ( idx_t i = i_end_[j]; i < i_end_halo_( j ); ++i ) {
+                ghost( index( i, j ) ) = 1;
+            }
+        }
+        for ( idx_t j = j_end_; j < j_end_halo_; ++j ) {
+            for ( idx_t i = i_begin_halo_( j ); i < i_end_halo_( j ); ++i ) {
+                ghost( index( i, j ) ) = 1;
+            }
         }
     }
 }

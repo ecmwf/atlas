@@ -712,6 +712,11 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Partitioner&
     FunctionSpace( new detail::StructuredColumns( grid, partitioner, config ) ),
     functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {}
 
+StructuredColumns::StructuredColumns( const Grid& grid, const grid::Distribution& distribution,
+                                      const eckit::Configuration& config ) :
+    FunctionSpace( new detail::StructuredColumns( grid, distribution, config ) ),
+    functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {}
+
 StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical, const eckit::Configuration& config ) :
     FunctionSpace( new detail::StructuredColumns( grid, vertical, config ) ),
     functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {}
@@ -719,6 +724,11 @@ StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical
 StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical, const grid::Partitioner& partitioner,
                                       const eckit::Configuration& config ) :
     FunctionSpace( new detail::StructuredColumns( grid, vertical, partitioner, config ) ),
+    functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {}
+
+StructuredColumns::StructuredColumns( const Grid& grid, const grid::Distribution& distribution,
+                                      const Vertical& vertical, const eckit::Configuration& config ) :
+    FunctionSpace( new detail::StructuredColumns( grid, distribution, vertical, config ) ),
     functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {}
 
 void StructuredColumns::gather( const FieldSet& local, FieldSet& global ) const {
