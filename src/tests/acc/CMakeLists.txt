@@ -19,6 +19,7 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAVE_CUDA AND ENABLE_TESTS AND HA
             fctest_unified_memory_with_openacc_cxx.cc
     LIBS atlas_f
     LINKER_LANGUAGE Fortran
+    ENVIRONMENT ATLAS_RUN_NGPUS=1
   )
   target_link_libraries( atlas_test_unified_memory_with_openacc ${ACC_Fortran_FLAGS} gridtools::storage )
 
@@ -28,6 +29,7 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAVE_CUDA AND ENABLE_TESTS AND HA
     SOURCES fctest_connectivity_openacc.F90
     LIBS atlas_f
     LINKER_LANGUAGE Fortran
+    ENVIRONMENT ATLAS_RUN_NGPUS=1
   )
   target_link_libraries( atlas_test_connectivity_openacc ${ACC_Fortran_FLAGS} )
   set_target_properties( atlas_test_connectivity_openacc PROPERTIES COMPILE_FLAGS "${ACC_Fortran_FLAGS_STR}" )

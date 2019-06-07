@@ -68,6 +68,9 @@ macro( atlas_add_cuda_test )
     else()
       add_test ( NAME ${_PAR_TARGET} COMMAND ${_PAR_TARGET} )
     endif()
+
+    set_property( TEST ${_PAR_TARGET} APPEND PROPERTY ENVIRONMENT "ATLAS_RUN_NGPUS=1" )
+
   endif()
 endmacro()
 

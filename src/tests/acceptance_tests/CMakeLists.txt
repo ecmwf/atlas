@@ -14,14 +14,12 @@ ecbuild_add_executable(
 
 if( HAVE_TESTS )
   ecbuild_add_option( FEATURE ACCEPTANCE_TESTS DEFAULT OFF )
-
-  if( HAVE_ACCEPTANCE_TESTS )
-      ecbuild_add_option( FEATURE ACCEPTANCE_TESTS_SMALL DEFAULT ON )
-      ecbuild_add_option( FEATURE ACCEPTANCE_TESTS_LARGE DEFAULT OFF )
-  endif()
 endif()
 
 if( HAVE_ACCEPTANCE_TESTS )
+
+set( HAVE_ACCEPTANCE_TESTS_SMALL ON )
+set( HAVE_ACCEPTANCE_TESTS_LARGE ON )
 
 if( TARGET atlas-atest-mgrids )
 

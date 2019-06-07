@@ -1,0 +1,63 @@
+#!/bin/bash
+set -e
+
+key="$1"
+case $key in
+    -n|-np)
+    ATLAS_RUN_NPROCS="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    *)    # unknown option
+    ;;
+esac
+
+command_exists() {
+  type "$1" &> /dev/null ;
+}
+
+if [ -n "${ATLAS_RUN_NTHREADS}" ]; then
+  export OMP_NUM_THREADS=${ATLAS_RUN_NTHREADS}
+fi
+
+if command_exists aprun ; then
+  LAUNCH=aprun
+  if [ -z "${ATLAS_RUN_NPROCS}" ]; then
+     LAUNCH="${LAUNCH} -n 1"
+  else
+    LAUNCH="${LAUNCH} -n ${ATLAS_RUN_NPROCS}"
+  fi
+  if [ -n "${OMP_NUM_THREADS}" ]; then
+    LAUNCH="${LAUNCH} -d ${OMP_NUM_THREADS}"
+  fi
+
+elif command_exists srun ; then
+  LAUNCH=srun
+  if [ -n "${ATLAS_RUN_NGPUS}" ]; then
+    LAUNCH="${LAUNCH} --gres=gpu:${ATLAS_RUN_NGPUS}"
+  fi
+  if [ -z "${ATLAS_RUN_NPROCS}" ]; then
+    LAUNCH="${LAUNCH} -n 1"
+  else
+    LAUNCH="${LAUNCH} -n ${ATLAS_RUN_NPROCS}"
+  fi
+
+else
+  if [[ ${ARCH:-unset} == "cray" ]]; then
+    module load cray-snplauncher
+  fi
+  if [ -z "${ATLAS_RUN_NPROCS}" ]; then
+    unset LAUNCH
+  elif command_exists mpirun ; then
+    LAUNCH="mpirun -np ${ATLAS_RUN_NPROCS}"
+  elif command_exists mpiexec; then
+    LAUNCH="mpiexec -n ${ATLAS_RUN_NPROCS}"
+  else
+    echo "No MPI driver found (mpirun,mpiexec,aprun,srun)"
+    exit 1
+  fi
+fi
+
+echo + $LAUNCH "$@"
+$LAUNCH "$@"
+

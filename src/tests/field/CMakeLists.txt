@@ -40,6 +40,7 @@ if( HAVE_FCTEST )
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field_gpu.F90 external_acc_routine.F90
     LIBS            atlas_f
+    ENVIRONMENT     ATLAS_RUN_NGPUS=1
   )
 
   if( TARGET atlas_fctest_field_device )
