@@ -9,6 +9,7 @@
  */
 
 #include <cmath>
+#include <vector>
 
 #include "eckit/types/FloatCompare.h"
 
@@ -28,21 +29,19 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-constexpr double eps() {
-    return 1.e-5;
-}
-const double d2r = atlas::util::Constants::degreesToRadians();
-const double r2d = atlas::util::Constants::radiansToDegrees();
+constexpr double eps = 1.e-5;
+constexpr double d2r = atlas::util::Constants::degreesToRadians();
+constexpr double r2d = atlas::util::Constants::radiansToDegrees();
 
-#define EXPECT_EQUIVALENT( p1, p2 )                                                                \
-    if ( std::abs( p2.lat() ) == 90. )                                                             \
-        EXPECT( eckit::types::is_approximately_equal( p1.lat(), p2.lat(), eps() ) );               \
-    else {                                                                                         \
-        EXPECT( eckit::types::is_approximately_equal( 10. + std::cos( p1.lon() * d2r ),            \
-                                                      10. + std::cos( p2.lon() * d2r ), eps() ) ); \
-        EXPECT( eckit::types::is_approximately_equal( 10. + std::sin( p1.lat() * d2r ),            \
-                                                      10. + std::sin( p2.lat() * d2r ), eps() ) ); \
-    }
+bool equivalent( const PointLonLat& p1, const PointLonLat& p2 ) {
+    using eckit::types::is_approximately_equal;
+    auto f = [=]( double lon ) { return 10. + std::cos( lon * d2r ); };
+
+    return is_approximately_equal( p1.lat(), p2.lat(), eps ) &&
+           ( std::abs( p2.lat() ) == 90. || is_approximately_equal( f( p1.lon() ), f( p2.lon() ), eps ) );
+}
+
+#define EXPECT_EQUIVALENT( p1, p2 ) EXPECT( equivalent( p1, p2 ) )
 
 //-----------------------------------------------------------------------------
 
