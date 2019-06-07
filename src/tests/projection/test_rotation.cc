@@ -119,6 +119,23 @@ private:
 
 //-----------------------------------------------------------------------------
 
+CASE( "test_rotation_construction" ) {
+    static const PointLonLat SP{0., -90.};
+    static const PointLonLat NP{180., 90.};
+
+    auto rotation_poles = {SP, NP, {0., -90.1}, {0., 90.1}};
+
+    for ( auto& p : rotation_poles ) {        
+        Rotation s( Config( "south_pole", std::vector<double>{p.lon(), p.lat()} ) );
+        Log::info() << "rotate_south_pole=" << s << std::endl;
+        EXPECT( s.rotated() == ( p != SP ) );
+
+        Rotation n( Config( "north_pole", std::vector<double>{p.lon(), p.lat()} ) );
+        Log::info() << "rotate_north_pole=" << n << std::endl;
+        EXPECT( n.rotated() == ( p != NP ) );
+    }
+}
+
 CASE( "test_rotation" ) {
     Config config;
     config.set( "north_pole", std::vector<double>{-176, 40} );

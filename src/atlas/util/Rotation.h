@@ -57,14 +57,7 @@ private:
     RotationMatrix unrotate_;  // unrotate matrix
 
     bool rotation_angle_only_;
-    bool rotated_ = {true};
-
-    // ---- Older implementation ----
-
-    void rotate_old( double crd[] ) const;
-    void unrotate_old( double crd[] ) const;
-    double cos_latrp_;  //  cos( 90 - npole_lat )
-    double sin_latrp_;  //  sin( 90 - npole_lat )
+    bool rotated_;
 };
 
 }  // namespace util

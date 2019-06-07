@@ -71,7 +71,7 @@ PointLonLat Rotation::unrotate( const PointLonLat& p ) const {
 }
 
 void Rotation::precompute() {
-    const double theta = -( 90.0 + spole_.lat() ) * Constants::degreesToRadians();
+    const double theta = -( 90. + spole_.lat() ) * Constants::degreesToRadians();
     const double phi   = -spole_.lon() * Constants::degreesToRadians();
 
     const double sin_theta = std::sin( theta );
@@ -79,12 +79,7 @@ void Rotation::precompute() {
     const double sin_phi   = std::sin( phi );
     const double cos_phi   = std::cos( phi );
 
-    // for rotate_old/unrotate_old
-    const double latrp = ( 90.0 - npole_.lat() ) * Constants::degreesToRadians();
-    sin_latrp_         = std::sin( latrp );
-    cos_latrp_         = std::cos( latrp );
-
-    auto eq = []( double a, double b ) { return eckit::types::is_approximately_equal( a, b ); };
+    auto eq = []( double a, double b ) { return eckit::types::is_approximately_equal( a, b, 1.e-12 ); };
 
     rotated_ = !eq( angle_, 0 ) || !eq( sin_theta, 0 ) || !eq( cos_theta, 1 ) || !eq( sin_phi, 0 ) || !eq( cos_phi, 1 );
     rotation_angle_only_ = eq( sin_theta, 0 ) && eq( cos_theta, 1 ) && rotated_;
@@ -158,69 +153,6 @@ Rotation::Rotation( const eckit::Parametrisation& p ) {
     precompute();
 }
 
-void Rotation::rotate_old( double crd[] ) const {
-    // coordinates of the point P on a rotated sphere with specified pole
-    double lon, lat, lont, latt;
-    double xt, yt, zt, x, y, z;
-    double cos_lon, sin_lon, cos_lat, sin_lat;
-
-    lon     = crd[LON] * Constants::degreesToRadians();
-    lat     = crd[LAT] * Constants::degreesToRadians();
-    cos_lon = std::cos( lon );
-    cos_lat = std::cos( lat );
-    sin_lon = std::sin( lon );
-    sin_lat = std::sin( lat );
-
-    // cartesian coordinates
-    x = cos_lon * cos_lat;
-    y = sin_lon * cos_lat;
-    z = sin_lat;
-
-    // tilt
-    xt = cos_latrp_ * x + sin_latrp_ * z;
-    yt = y;
-    zt = -sin_latrp_ * x + cos_latrp_ * z;
-
-    // back to spherical coordinates
-    lont = std::atan2( yt, xt ) * Constants::radiansToDegrees();
-    latt = std::asin( zt ) * Constants::radiansToDegrees();
-
-    // rotate
-    crd[LON] = lont + npole_.lon();
-    crd[LAT] = latt;
-}
-
-void Rotation::unrotate_old( double crd[] ) const {
-    // inverse operation of Projection::rotate
-
-    double lont, latt;
-    double xt, yt, zt, x, y, z;
-    double cos_lont, sin_lont, cos_latt, sin_latt;
-
-    // unrotate
-    lont = ( crd[LON] - npole_.lon() ) * Constants::degreesToRadians();
-    latt = ( crd[LAT] ) * Constants::degreesToRadians();
-
-    cos_lont = std::cos( lont );
-    cos_latt = std::cos( latt );
-    sin_lont = std::sin( lont );
-    sin_latt = std::sin( latt );
-
-    // cartesian coordinates
-    xt = cos_lont * cos_latt;
-    yt = sin_lont * cos_latt;
-    zt = sin_latt;
-
-    // untilt
-    x = cos_latrp_ * xt - sin_latrp_ * zt;
-    y = yt;
-    z = sin_latrp_ * xt + cos_latrp_ * zt;
-
-    // back to spherical coordinates
-    crd[LON] = std::atan2( y, x ) * Constants::radiansToDegrees();
-    crd[LAT] = std::asin( z ) * Constants::radiansToDegrees();
-}
-
 using RotationMatrix = std::array<std::array<double, 3>, 3>;
 
 inline PointXYZ rotate_geocentric( const PointXYZ& p, const RotationMatrix& R ) {
@@ -237,7 +169,7 @@ void Rotation::rotate( double crd[] ) const {
         return;
     }
 
-    const PointLonLat L( wrap_latitude({crd[LON], crd[LAT]}) );
+    const PointLonLat L( wrap_latitude( {crd[LON], crd[LAT]} ) );
     PointXYZ P;
     UnitSphere::convertSphericalToCartesian( L, P );
 
@@ -252,7 +184,8 @@ void Rotation::rotate( double crd[] ) const {
 
 void Rotation::unrotate( double crd[] ) const {
     if ( !rotated_ ) { return; }
-    else if ( rotation_angle_only_ ) {
+
+    if ( rotation_angle_only_ ) {
         crd[LON] += angle_;
         return;
     }
