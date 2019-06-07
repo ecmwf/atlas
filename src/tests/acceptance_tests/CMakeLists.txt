@@ -10,7 +10,6 @@ ecbuild_add_executable(
     TARGET atlas-atest-mgrids
     SOURCES atest_mgrids.cc
     LIBS atlas
-    CONDITION HAVE_TRANS
 )
 
 if( HAVE_TESTS )
@@ -27,6 +26,11 @@ if( HAVE_ACCEPTANCE_TESTS )
 if( TARGET atlas-atest-mgrids )
 
 function( atlas_atest_mgrids category case nprocs )
+
+    if( HAVE_TRANS )
+      set( PARTITIONER "--partitioner=trans" )
+    endif()
+
     string(REPLACE "/" ";" case ${case} )
     list( GET case 0 gridA )
     list( GET case 1 gridB )
@@ -44,6 +48,7 @@ function( atlas_atest_mgrids category case nprocs )
                         --display-name=${test_name}
                         --checksum=${test_name}.checksum
                         --matrix-free
+                        ${PARTITIONER}
                MPI ${n}
                OMP ${t}
             )

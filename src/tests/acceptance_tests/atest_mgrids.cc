@@ -9,12 +9,9 @@
  */
 
 #include <cmath>
-#include <fstream>
 #include <iostream>
-#include <limits>
 #include <memory>
-#include <sstream>
-#include <vector>
+#include <string>
 
 #include "eckit/log/OStreamTarget.h"
 
@@ -23,9 +20,7 @@
 #include "atlas/grid.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/mesh.h"
-#include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/meshgenerator.h"
-#include "atlas/numerics/fvm/Method.h"
 #include "atlas/option.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -43,7 +38,6 @@ double vortex_rollup( double lon, double lat, double t, double mean );
 
 class Program : public AtlasTool {
     virtual int execute( const Args& args );
-
 public:
     Program( int argc, char** argv );
 };
@@ -60,24 +54,26 @@ Program::Program( int argc, char** argv ) : AtlasTool( argc, argv ) {
     add_option( new SimpleOption<std::string>( "checksum", "File to write that will contains checksums of run" ) );
     add_option( new SimpleOption<bool>( "gmsh", "Output gmsh" ) );
     add_option( new SimpleOption<bool>( "no-validate", "Avoid validation of results to increase runtime" ) );
+    add_option( new SimpleOption<std::string>( "partitioner", "Partitioner for gridA (default=equal_regions)") );
 }
 
 //-----------------------------------------------------------------------------
-
+ 
 int Program::execute( const Args& args ) {
+
     auto matrix_free       = util::Config( "matrix_free", args.getBool( "matrix-free", false ) );
     auto ghost             = util::Config( "ghost", args.getBool( "ghost", false ) );
     auto haloA             = option::halo( args.getLong( "haloA", 2 ) );
     auto haloB             = option::halo( args.getLong( "haloB", 2 ) );
     auto checksum_filepath = args.getString( "checksum", displayName() + ".checksum" );
-
+    auto partitioner       = args.getString( "partitioner", "equal_regions" );
     auto gridA = Grid( args.getString( "gridA" ) );
     auto gridB = Grid( args.getString( "gridB" ) );
 
     auto meshgenerator = MeshGenerator( "structured" );
 
     Trace setup_A( Here(), "Setup A" );
-    auto distA = grid::Distribution( gridA, grid::Partitioner( "trans" ) );
+    auto distA = grid::Distribution( gridA, grid::Partitioner( partitioner ) );
     auto meshA = meshgenerator.generate( gridA, distA );
     functionspace::StructuredColumns fsA( gridA, distA, haloA );
     setup_A.stop();
@@ -108,7 +104,6 @@ int Program::execute( const Args& args ) {
     }
     fieldA.set_dirty();
     fieldA.haloExchange();
-
 
     Log::Channel checksums;
     checksums.addStream( Log::info() );
@@ -152,7 +147,7 @@ int Program::execute( const Args& args ) {
 
     Mesh meshB;
     if ( not args.getBool( "no-validate", false ) ) {
-        double tolerance = 1.e-12;
+        double tolerance = 1.e-8;
 
         meshB               = meshgenerator.generate( gridB, distB );
         auto norm_computerB = functionspace::NodeColumns( meshB );
@@ -166,6 +161,8 @@ int Program::execute( const Args& args ) {
         else {
             Log::error() << "Validation B failed: " << std::abs( sumB ) << " > tolerance [" << tolerance << "]"
                          << std::endl;
+            norm_computerB.orderIndependentSum( fieldB, sumB, countB );
+            Log::info() << "    order_independent_sum: " << sumB << " count = " << countB << std::endl;
             status = failed();
         }
 
@@ -180,6 +177,8 @@ int Program::execute( const Args& args ) {
         else {
             Log::error() << "Validation A failed: " << std::abs( sumA ) << " > tolerance [" << tolerance << "]"
                          << std::endl;
+            norm_computerA.orderIndependentSum( fieldA, sumA, countA );
+            Log::info() << "    order_independent_sum: " << sumA << "  count = " << countA << std::endl;
             status = failed();
         }
     }
