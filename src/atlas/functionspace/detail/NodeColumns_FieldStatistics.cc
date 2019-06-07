@@ -97,10 +97,11 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, T& result, idx_t& 
     const array::LocalView<T, 2> arr = make_leveled_scalar_view<T>( field );
     T local_sum                      = 0;
     const idx_t npts                 = std::min<idx_t>( arr.shape( 0 ), fs.nb_nodes() );
+    const idx_t nlev                 = arr.shape( 1 );
   atlas_omp_pragma( omp parallel for default(shared) reduction(+:local_sum) )
   for( idx_t n=0; n<npts; ++n ) {
       if ( !is_ghost( n ) ) {
-          for ( idx_t l = 0; l < arr.shape( 1 ); ++l )
+          for ( idx_t l = 0; l < nlev; ++l )
               local_sum += arr( n, l );
       }
   }
@@ -148,17 +149,18 @@ template <typename T>
 void dispatch_sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, idx_t& N ) {
     const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
     const mesh::IsGhostNode is_ghost( fs.nodes() );
+    const idx_t npts = std::min( arr.shape( 0 ), fs.nb_nodes() );
+    const idx_t nlev = arr.shape( 1 );
     const idx_t nvar = arr.shape( 2 );
     std::vector<T> local_sum( nvar, 0 );
     result.resize( nvar );
 
     atlas_omp_parallel {
         std::vector<T> local_sum_private( nvar, 0 );
-        const idx_t npts = arr.shape( 0 );
         atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
             if ( !is_ghost( n ) ) {
-                for ( idx_t l = 0; l < arr.shape( 1 ); ++l ) {
-                    for ( idx_t j = 0; j < arr.shape( 2 ); ++j ) {
+                for ( idx_t l = 0; l < nlev; ++l ) {
+                    for ( idx_t j = 0; j < nvar; ++j ) {
                         local_sum_private[j] += arr( n, l, j );
                     }
                 }
@@ -173,7 +175,7 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, std::vector<T>& re
 
     ATLAS_TRACE_MPI( ALLREDUCE ) { mpi::comm().allReduce( local_sum, result, eckit::mpi::sum() ); }
 
-    N = fs.nb_nodes_global() * arr.shape( 1 );
+    N = fs.nb_nodes_global() * nlev;
 }
 
 template <typename T>
@@ -223,6 +225,10 @@ void dispatch_sum_per_level( const NodeColumns& fs, const Field& field, Field& s
 
     auto arr = make_leveled_view<T>( field );
 
+    const idx_t npts = std::min( arr.shape( 0 ), fs.nb_nodes() );
+    const idx_t nlev = arr.shape( 1 );
+    const idx_t nvar = arr.shape( 2 );
+
     auto sum_per_level = make_per_level_view<T>( sum );
 
     for ( idx_t l = 0; l < sum_per_level.shape( 0 ); ++l ) {
@@ -241,11 +247,10 @@ void dispatch_sum_per_level( const NodeColumns& fs, const Field& field, Field& s
             }
         }
 
-        const idx_t npts = arr.shape( 0 );
         atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
             if ( !is_ghost( n ) ) {
-                for ( idx_t l = 0; l < arr.shape( 1 ); ++l ) {
-                    for ( idx_t j = 0; j < arr.shape( 2 ); ++j ) {
+                for ( idx_t l = 0; l < nlev; ++l ) {
+                    for ( idx_t j = 0; j < nvar; ++j ) {
                         sum_per_level_private_view( l, j ) += arr( n, l, j );
                     }
                 }
@@ -381,22 +386,24 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& fiel
 template <typename T>
 void dispatch_order_independent_sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, idx_t& N ) {
     if ( field.levels() ) {
-        const idx_t nvar = field.variables();
         const auto arr   = make_leveled_view<T>( field );
+        const idx_t npts = std::min( arr.shape( 0 ), fs.nb_nodes() );
+        const idx_t nlev = arr.shape( 1 );
+        const idx_t nvar = arr.shape( 2 );
 
         Field surface_field =
             fs.createField<T>( option::name( "surface" ) | option::variables( nvar ) | option::levels( false ) );
         auto surface = make_surface_view<T>( surface_field );
 
-        atlas_omp_for( idx_t n = 0; n < arr.shape( 0 ); ++n ) {
-            for ( idx_t j = 0; j < arr.shape( 2 ); ++j ) {
+        atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
+            for ( idx_t j = 0; j < nvar; ++j ) {
                 surface( n, j ) = 0;
             }
         }
 
-        for ( idx_t n = 0; n < arr.shape( 0 ); ++n ) {
-            for ( idx_t l = 0; l < arr.shape( 1 ); ++l ) {
-                for ( idx_t j = 0; j < arr.shape( 2 ); ++j ) {
+        for ( idx_t n = 0; n < npts; ++n ) {
+            for ( idx_t l = 0; l < nlev; ++l ) {
+                for ( idx_t j = 0; j < nvar; ++j ) {
                     surface( n, j ) += arr( n, l, j );
                 }
             }
