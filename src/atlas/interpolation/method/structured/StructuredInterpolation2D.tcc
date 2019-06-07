@@ -86,7 +86,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
         target_ghost_  = tgt.ghost();
     }
     else {
-        ATLAS_NOTIMPLEMENTED;
+        throw_NotImplemented("Only interpolation to functionspaces NodeColumns, PointCloud or StructuredColumns are implemented", Here());
     }
 
     setup( source );

@@ -22,12 +22,9 @@
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/parallel/Checksum.h"
-#include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
-#include "atlas/util/Checksum.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {

@@ -106,12 +106,14 @@ void StructuredColumns::create_remote_index() const {
             std::vector<eckit::mpi::Request> recv_requests( neighbours.size() );
 
             std::vector<idx_t> recv_size( neighbours.size() );
+            std::vector<idx_t> send_size( neighbours.size() );
+
             int tag = 0;
             ATLAS_TRACE_SCOPE( "send-receive g_per_neighbour size" )
             for ( idx_t j = 0; j < nb_neighbours; ++j ) {
-                idx_t g_per_neighbour_size = static_cast<idx_t>( g_per_neighbour[j].size() );
-                send_requests[j]           = comm.iSend( g_per_neighbour_size, neighbours[j], tag );
-                recv_requests[j]           = comm.iReceive( recv_size[j], neighbours[j], tag );
+                send_size[j]     = static_cast<idx_t>( g_per_neighbour[j].size() );
+                send_requests[j] = comm.iSend( send_size[j], neighbours[j], tag );
+                recv_requests[j] = comm.iReceive( recv_size[j], neighbours[j], tag );
             }
 
             ATLAS_TRACE_MPI( WAIT ) {
