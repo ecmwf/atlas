@@ -60,6 +60,10 @@ double RectangularDomain::ymax() const {
     return domain_->ymax();
 }
 
+ZonalBandDomain::ZonalBandDomain( const Interval& y ) :
+    RectangularDomain( ( ZD::is_global( y ) ) ? new atlas::domain::GlobalDomain()
+                                              : new atlas::domain::ZonalBandDomain( y ) ) {}
+
 ZonalBandDomain::ZonalBandDomain( const Interval& y, const double& west ) :
     RectangularDomain( ( ZD::is_global( y ) ) ? new atlas::domain::GlobalDomain( west )
                                               : new atlas::domain::ZonalBandDomain( y, west ) ) {}

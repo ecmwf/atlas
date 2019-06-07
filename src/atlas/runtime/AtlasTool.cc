@@ -102,7 +102,7 @@ static bool use_logfile;
 static std::string logfile_name;
 static std::string workdir;
 
-void atlas_terminate() {
+[[noreturn]] void atlas_terminate() {
     // This routine is called for uncaught exceptions.
     // It can be set with std::set_terminate( &atlas_terminate )
 
