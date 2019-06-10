@@ -36,7 +36,8 @@ ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 # options & dependencies
 
-ecbuild_add_cxx11_flags()
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ecbuild_find_python()
 
