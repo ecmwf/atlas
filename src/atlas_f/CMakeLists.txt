@@ -58,6 +58,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Structured.h
     MODULE    atlas_grid_Structured_c_binding
     OUTPUT    grid_Structured_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Unstructured.h
+    MODULE    atlas_grid_Unstructured_c_binding
+    OUTPUT    grid_Unstructured_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/distribution/DistributionImpl.h
     MODULE atlas_distribution_c_binding
     OUTPUT distribution_c_binding.f90 )

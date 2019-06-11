@@ -209,6 +209,12 @@ protected:
     mutable std::unique_ptr<Grid::Spec> cached_spec_;
 };
 
+extern "C" {
+const Unstructured* atlas__grid__Unstructured__points( const double lonlat[], int shapef[], int stridesf[] );
+const Unstructured* atlas__grid__Unstructured__config( util::Config* conf );
+}
+
+
 }  // namespace grid
 }  // namespace detail
 }  // namespace grid

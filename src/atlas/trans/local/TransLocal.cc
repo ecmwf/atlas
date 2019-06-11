@@ -717,29 +717,26 @@ const functionspace::Spectral& TransLocal::spectral() const {
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::invtrans( const Field& spfield, Field& gpfield, const eckit::Configuration& config ) const {
+    // VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES
+    int nb_scalar_fields      = 1;
+    const auto scalar_spectra = array::make_view<double, 1>( spfield );
+    auto gp_fields            = array::make_view<double, 1>( spfield );
 
-// VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES    
-    int nb_scalar_fields = 1;
-    const auto scalar_spectra = array::make_view<double,1>( spfield );
-    auto gp_fields = array::make_view<double,1>( spfield );
-
-    if( gp_fields.shape(0) != grid().size() ) {
-        ATLAS_DEBUG_VAR( gp_fields.shape(0) );
+    if ( gp_fields.shape( 0 ) != grid().size() ) {
+        ATLAS_DEBUG_VAR( gp_fields.shape( 0 ) );
         ATLAS_DEBUG_VAR( grid().size() );
-        ATLAS_ASSERT( gp_fields.shape(0) == grid().size() );
+        ATLAS_ASSERT( gp_fields.shape( 0 ) == grid().size() );
     }
 
     invtrans( nb_scalar_fields, scalar_spectra.data(), gp_fields.data(), config );
-
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::invtrans( const FieldSet& spfields, FieldSet& gpfields, const eckit::Configuration& config ) const {
-
-// VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES    
+    // VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES
     ATLAS_ASSERT( spfields.size() == gpfields.size() );
-    for( idx_t f=0; f<spfields.size(); ++f ) {
+    for ( idx_t f = 0; f < spfields.size(); ++f ) {
         invtrans( spfields[f], gpfields[f], config );
     }
 }
@@ -771,19 +768,18 @@ void gp_transpose( const int nb_size, const int nb_fields, const double gp_tmp[]
 
 void TransLocal::invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
                                        const eckit::Configuration& config ) const {
+    // VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES
+    int nb_vordiv_fields          = 1;
+    const auto vorticity_spectra  = array::make_view<double, 1>( spvor );
+    const auto divergence_spectra = array::make_view<double, 1>( spdiv );
+    auto gp_fields                = array::make_view<double, 2>( gpwind );
 
-// VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES    
-    int nb_vordiv_fields = 1;
-    const auto vorticity_spectra = array::make_view<double,1>( spvor );
-    const auto divergence_spectra = array::make_view<double,1>( spdiv );
-    auto gp_fields = array::make_view<double,2>( gpwind );
-
-    if( gp_fields.shape(1) == grid().size() && gp_fields.shape(0) == 2 ) {
+    if ( gp_fields.shape( 1 ) == grid().size() && gp_fields.shape( 0 ) == 2 ) {
         invtrans( nb_vordiv_fields, vorticity_spectra.data(), divergence_spectra.data(), gp_fields.data(), config );
     }
-    else if( gp_fields.shape(0) == grid().size() && gp_fields.shape(1) == 2 ) {
-        array::ArrayT<double> gpwind_t( gp_fields.shape(1), gp_fields.shape(0) );
-        auto gp_fields_t = array::make_view<double,2>( gpwind_t );
+    else if ( gp_fields.shape( 0 ) == grid().size() && gp_fields.shape( 1 ) == 2 ) {
+        array::ArrayT<double> gpwind_t( gp_fields.shape( 1 ), gp_fields.shape( 0 ) );
+        auto gp_fields_t = array::make_view<double, 2>( gpwind_t );
         invtrans( nb_vordiv_fields, vorticity_spectra.data(), divergence_spectra.data(), gp_fields_t.data(), config );
         gp_transpose( grid().size(), 2, gp_fields_t.data(), gp_fields.data() );
     }

@@ -55,6 +55,7 @@ protected:
     void generateGlobalElementNumbering( Mesh& mesh ) const;
     void setProjection( Mesh&, const Projection& ) const;
     void setGrid( Mesh&, const Grid&, const grid::Distribution& ) const;
+    void setGrid( Mesh&, const Grid&, const std::string& distribution ) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

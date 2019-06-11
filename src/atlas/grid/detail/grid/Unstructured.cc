@@ -11,9 +11,9 @@
 #include "atlas/grid/detail/grid/Unstructured.h"
 
 #include <initializer_list>
+#include <iomanip>
 #include <limits>
 #include <memory>
-#include <iomanip>
 
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
@@ -21,8 +21,8 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Iterator.h"
-#include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/option.h"
@@ -35,8 +35,6 @@ namespace atlas {
 namespace grid {
 namespace detail {
 namespace grid {
-
-//static eckit::ConcreteBuilderT1<Grid, Unstructured> builder_Unstructured( Unstructured::static_type() );
 
 namespace {
 static GridFactoryBuilder<Unstructured> __register_Unstructured( Unstructured::static_type() );
@@ -106,32 +104,27 @@ Unstructured::Unstructured( const Grid& grid, Domain domain ) : Grid() {
 
 Unstructured::Unstructured( const util::Config& config ) : Grid() {
     util::Config config_domain;
-    if( not config.get("domain", config_domain) ) {
-        config_domain.set( "type", "global" );
-    }
+    if ( not config.get( "domain", config_domain ) ) { config_domain.set( "type", "global" ); }
     domain_ = Domain( config_domain );
     std::vector<double> xy;
-    if( config.get( "xy", xy ) ) {
-        const size_t N = xy.size()/2;
+    if ( config.get( "xy", xy ) ) {
+        const size_t N = xy.size() / 2;
         points_.reset( new std::vector<PointXY> );
         points_->reserve( N );
-        for( size_t n=0; n<N; ++n ) {
-            points_->emplace_back( PointXY{xy[2*n],xy[2*n+1]} );
+        for ( size_t n = 0; n < N; ++n ) {
+            points_->emplace_back( PointXY{xy[2 * n], xy[2 * n + 1]} );
         }
-    } else {
+    }
+    else {
         std::vector<double> x;
         std::vector<double> y;
-        if( not config.get( "x", x ) ) {
-            throw_Exception("x missing from configuration");
-        }
-        if( not config.get( "y", y ) ) {
-            throw_Exception("y missing from configuration");
-        }
+        if ( not config.get( "x", x ) ) { throw_Exception( "x missing from configuration" ); }
+        if ( not config.get( "y", y ) ) { throw_Exception( "y missing from configuration" ); }
         ATLAS_ASSERT( x.size() == y.size() );
         points_.reset( new std::vector<PointXY> );
         points_->reserve( x.size() );
-        for( size_t n=0; n<x.size(); ++n ) {
-            points_->emplace_back( PointXY{x[n],y[n]} );
+        for ( size_t n = 0; n < x.size(); ++n ) {
+            points_->emplace_back( PointXY{x[n], y[n]} );
         }
     }
 }
@@ -223,7 +216,6 @@ bool Unstructured::IteratorXYPredicated::next( PointXY& /*xy*/ ) {
 #endif
 }
 
-#if 1
 namespace {  // anonymous
 
 static class unstructured : public GridBuilder {
@@ -242,14 +234,33 @@ public:
         throw_NotImplemented( "Cannot create unstructured grid from name", Here() );
     }
 
-    virtual const Implementation* create( const Config& config ) const {
-        return new Unstructured( config );
-    }
+    virtual const Implementation* create( const Config& config ) const { return new Unstructured( config ); }
 
 } unstructured_;
 
 }  // anonymous namespace
-#endif
+
+extern "C" {
+const Unstructured* atlas__grid__Unstructured__points( const double xy[], int shapef[], int stridesf[] ) {
+    size_t nb_points = shapef[1];
+    ATLAS_ASSERT( shapef[0] == 2 );
+    size_t stride_n = stridesf[1];
+    size_t stride_v = stridesf[0];
+    std::vector<PointXY> points;
+    points.reserve( nb_points );
+    for ( idx_t n = 0; n < nb_points; ++n ) {
+        points.emplace_back( PointXY{xy[n * stride_n + 0], xy[n * stride_n + 1 * stride_v]} );
+    }
+    return new Unstructured( std::move( points ) );
+}
+
+const Unstructured* atlas__grid__Unstructured__config( util::Config* conf ) {
+    ATLAS_ASSERT( conf != nullptr );
+    const Unstructured* grid = dynamic_cast<const Unstructured*>( Grid::create( *conf ) );
+    ATLAS_ASSERT( grid != nullptr );
+    return grid;
+}
+}
 
 
 }  // namespace grid

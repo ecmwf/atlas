@@ -153,7 +153,7 @@ class GlobalDomain;
 class GlobalDomain : public ZonalBandDomain {
 public:
     GlobalDomain( const double& west );
-    GlobalDomain( );
+    GlobalDomain();
     GlobalDomain( const Domain& );
 
     operator bool() { return domain_; }

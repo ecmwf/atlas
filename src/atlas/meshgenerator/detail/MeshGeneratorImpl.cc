@@ -96,6 +96,10 @@ void MeshGeneratorImpl::setGrid( Mesh& mesh, const Grid& g, const grid::Distribu
     mesh.setGrid( g );
     mesh.metadata().set( "distribution", d.type() );
 }
+void MeshGeneratorImpl::setGrid( Mesh& mesh, const Grid& g, const std::string& d ) const {
+    mesh.setGrid( g );
+    mesh.metadata().set( "distribution", d );
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 
