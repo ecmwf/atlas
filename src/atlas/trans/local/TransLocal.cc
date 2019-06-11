@@ -720,12 +720,13 @@ void TransLocal::invtrans( const Field& spfield, Field& gpfield, const eckit::Co
     // VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES
     int nb_scalar_fields      = 1;
     const auto scalar_spectra = array::make_view<double, 1>( spfield );
-    auto gp_fields            = array::make_view<double, 1>( spfield );
+    auto gp_fields            = array::make_view<double, 1>( gpfield );
 
-    if ( gp_fields.shape( 0 ) != grid().size() ) {
+    if ( gp_fields.shape( 0 ) < grid().size() ) {
+        // Hopefully the halo (if present) is appended
         ATLAS_DEBUG_VAR( gp_fields.shape( 0 ) );
         ATLAS_DEBUG_VAR( grid().size() );
-        ATLAS_ASSERT( gp_fields.shape( 0 ) == grid().size() );
+        ATLAS_ASSERT( gp_fields.shape( 0 ) < grid().size() );
     }
 
     invtrans( nb_scalar_fields, scalar_spectra.data(), gp_fields.data(), config );
