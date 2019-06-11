@@ -8,8 +8,6 @@
 
 if( HAVE_FCTEST )
 
-ecbuild_warn_var( ECKIT_HAVE_MPI )
-ecbuild_warn_var( TRANSI_HAVE_MPI )
   if( ATLAS_HAVE_TRANS )
     add_fctest( TARGET atlas_fctest_trans
       LINKER_LANGUAGE Fortran
@@ -21,14 +19,20 @@ ecbuild_warn_var( TRANSI_HAVE_MPI )
     )
   endif()
 
-#  if( ATLAS_HAVE_TRANS )
+  if( ATLAS_HAVE_TRANS )
     add_fctest( TARGET atlas_fctest_trans_invtrans_grad
       LINKER_LANGUAGE Fortran
       SOURCES         fctest_trans_invtrans_grad.F90
       LIBS            atlas_f
       ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
     )
-#  endif()
+  endif()
+
+  add_fctest( TARGET atlas_fctest_trans_unstructured
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_trans_unstructured.F90
+    LIBS            atlas_f
+  )
 
 endif()
 
