@@ -44,6 +44,19 @@ END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
 
+TEST( test_trans_backend )
+  type(atlas_Trans) :: trans
+  FCTEST_CHECK( trans%has_backend("local") )
+  FCTEST_CHECK( trans%has_backend("ifs") )
+  if( trans%has_backend("ifs") ) then
+    FCTEST_CHECK_EQUAL( trans%backend(), "ifs" )
+  else
+    FCTEST_CHECK_EQUAL( trans%backend(), "local" )
+  endif  
+END_TEST
+
+! -----------------------------------------------------------------------------
+
 TEST( test_trans )
   type(atlas_StructuredGrid) :: grid
   type(atlas_StructuredGrid) :: trans_grid
@@ -52,7 +65,7 @@ TEST( test_trans )
   type(atlas_Trans) :: trans
   type(atlas_mesh_Nodes) :: nodes
   type(atlas_functionspace_NodeColumns) :: nodes_fs
-  type(atlas_functionspace_Spectral) :: spectral_fs
+  type(atlas_functionspace_Spectral) :: spectral_fs, trans_spectral
   type(atlas_Field)         :: scalarfield1, scalarfield2
   type(atlas_Field)         :: windfield
   type(atlas_Field)         :: vorfield,divfield
@@ -86,14 +99,16 @@ TEST( test_trans )
   trans = atlas_Trans(grid,truncation)
   FCTEST_CHECK_EQUAL( grid%owners(), 3 ) ! trans tracks grid
 
-  FCTEST_CHECK_EQUAL( trans%nb_gridpoints_global(), int(grid%size()) )
+  ! FCTEST_CHECK_EQUAL( trans%nb_gridpoints_global(), int(grid%size()) )
 
   trans_grid = trans%grid()
   FCTEST_CHECK_EQUAL( trans_grid%owners(), 4 )
 
   FCTEST_CHECK( .not. trans%is_null() )
   FCTEST_CHECK_EQUAL( trans%truncation(), truncation )
-  FCTEST_CHECK_EQUAL( trans%nb_spectral_coefficients_global(), (truncation+1)*(truncation+2) )
+  
+  trans_spectral = trans%spectral()
+  FCTEST_CHECK_EQUAL( trans_spectral%nb_spectral_coefficients_global(), (truncation+1)*(truncation+2) )
 
   nodes = mesh%nodes()
   nodes_fs = atlas_functionspace_NodeColumns(mesh,0)
@@ -108,6 +123,8 @@ TEST( test_trans )
 
   spectral_fs = atlas_functionspace_Spectral(trans)
   write(msg,*) "spectral_fs%owners()",spectral_fs%owners(); call fckit_log%info(msg)
+
+  FCTEST_CHECK_EQUAL( spectral_fs%nb_spectral_coefficients_global(), (truncation+1)*(truncation+2) )
 
   spectralfield1 = spectral_fs%create_field(name="spectral1",kind=atlas_real(c_double),levels=nlev)
   write(msg,*) "spectral_fs%owners()",spectral_fs%owners(); call fckit_log%info(msg)

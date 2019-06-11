@@ -83,6 +83,10 @@ const Grid& Trans::grid() const {
     return get()->grid();
 }
 
+const functionspace::Spectral& Trans::spectral() const {
+    return get()->spectral();
+}
+
 size_t Trans::spectralCoefficients() const {
     return get()->spectralCoefficients();
 }

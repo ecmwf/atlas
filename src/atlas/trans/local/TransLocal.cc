@@ -24,12 +24,14 @@
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/array.h"
+#include "atlas/field.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/trans/Trans.h"
 #include "atlas/trans/VorDivToUV.h"
 #include "atlas/trans/detail/TransFactory.h"
 #include "atlas/trans/local/LegendrePolynomials.h"
@@ -301,6 +303,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
     nlatsLegReduced_  = 0;
     bool useGlobalLeg = true;
     bool no_nest      = false;
+
     if ( StructuredGrid( grid_ ) && not grid_.projection() ) {
         StructuredGrid g( grid_ );
         nlats    = g.ny();
@@ -663,7 +666,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 "Caching for unstructured grids or structured grids with projections not yet implemented", Here() );
         }
     }
-}  // namespace trans
+}
 
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -706,14 +709,39 @@ TransLocal::~TransLocal() {
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans( const Field& /*spfield*/, Field& /*gpfield*/, const eckit::Configuration& ) const {
-    ATLAS_NOTIMPLEMENTED;
+const functionspace::Spectral& TransLocal::spectral() const {
+    if ( not spectral_ ) { spectral_ = functionspace::Spectral( Trans( this ) ); }
+    return spectral_;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans( const FieldSet& /*spfields*/, FieldSet& /*gpfields*/, const eckit::Configuration& ) const {
-    ATLAS_NOTIMPLEMENTED;
+void TransLocal::invtrans( const Field& spfield, Field& gpfield, const eckit::Configuration& config ) const {
+
+// VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES    
+    int nb_scalar_fields = 1;
+    const auto scalar_spectra = array::make_view<double,1>( spfield );
+    auto gp_fields = array::make_view<double,1>( spfield );
+
+    if( gp_fields.shape(0) != grid().size() ) {
+        ATLAS_DEBUG_VAR( gp_fields.shape(0) );
+        ATLAS_DEBUG_VAR( grid().size() );
+        ATLAS_ASSERT( gp_fields.shape(0) == grid().size() );
+    }
+
+    invtrans( nb_scalar_fields, scalar_spectra.data(), gp_fields.data(), config );
+
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+
+void TransLocal::invtrans( const FieldSet& spfields, FieldSet& gpfields, const eckit::Configuration& config ) const {
+
+// VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES    
+    ATLAS_ASSERT( spfields.size() == gpfields.size() );
+    for( idx_t f=0; f<spfields.size(); ++f ) {
+        invtrans( spfields[f], gpfields[f], config );
+    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -731,9 +759,37 @@ void TransLocal::invtrans_grad( const FieldSet& /*spfields*/, FieldSet& /*gradfi
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans_vordiv2wind( const Field& /*spvor*/, const Field& /*spdiv*/, Field& /*gpwind*/,
-                                       const eckit::Configuration& ) const {
-    ATLAS_NOTIMPLEMENTED;
+void gp_transpose( const int nb_size, const int nb_fields, const double gp_tmp[], double gp_fields[] ) {
+    for ( int jgp = 0; jgp < nb_size; jgp++ ) {
+        for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+            gp_fields[jfld * nb_size + jgp] = gp_tmp[jgp * nb_fields + jfld];
+        }
+    }
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+
+void TransLocal::invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
+                                       const eckit::Configuration& config ) const {
+
+// VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES    
+    int nb_vordiv_fields = 1;
+    const auto vorticity_spectra = array::make_view<double,1>( spvor );
+    const auto divergence_spectra = array::make_view<double,1>( spdiv );
+    auto gp_fields = array::make_view<double,2>( gpwind );
+
+    if( gp_fields.shape(1) == grid().size() && gp_fields.shape(0) == 2 ) {
+        invtrans( nb_vordiv_fields, vorticity_spectra.data(), divergence_spectra.data(), gp_fields.data(), config );
+    }
+    else if( gp_fields.shape(0) == grid().size() && gp_fields.shape(1) == 2 ) {
+        array::ArrayT<double> gpwind_t( gp_fields.shape(1), gp_fields.shape(0) );
+        auto gp_fields_t = array::make_view<double,2>( gpwind_t );
+        invtrans( nb_vordiv_fields, vorticity_spectra.data(), divergence_spectra.data(), gp_fields_t.data(), config );
+        gp_transpose( grid().size(), 2, gp_fields_t.data(), gp_fields.data() );
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -743,15 +799,6 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
     invtrans_uv( truncation_, nb_scalar_fields, 0, scalar_spectra, gp_fields, config );
 }
 
-// --------------------------------------------------------------------------------------------------------------------
-
-void gp_transpose( const int nb_size, const int nb_fields, const double gp_tmp[], double gp_fields[] ) {
-    for ( int jgp = 0; jgp < nb_size; jgp++ ) {
-        for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
-            gp_fields[jfld * nb_size + jgp] = gp_tmp[jgp * nb_fields + jfld];
-        }
-    }
-}
 
 // --------------------------------------------------------------------------------------------------------------------
 

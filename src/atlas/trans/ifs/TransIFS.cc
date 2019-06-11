@@ -23,6 +23,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/trans/Trans.h"
 #include "atlas/trans/detail/TransFactory.h"
 #include "atlas/trans/ifs/TransIFS.h"
 
@@ -655,10 +656,7 @@ TransIFS::TransIFS( const Cache& cache, const Grid& grid, const long truncation,
 }
 
 TransIFS::TransIFS( const Grid& grid, const long truncation, const eckit::Configuration& config ) :
-    TransIFS( Cache(), grid, truncation, config ) {
-    ATLAS_ASSERT( grid.domain().global() );
-    ATLAS_ASSERT( not grid.projection() );
-}
+    TransIFS( Cache(), grid, truncation, config ) {}
 
 TransIFS::TransIFS( const Grid& grid, const eckit::Configuration& config ) :
     TransIFS( grid, /*grid-only*/ -1, config ) {}
@@ -856,8 +854,17 @@ int atlas::trans::TransIFS::truncation() const {
     return std::max( 0, trans_->nsmax );
 }
 
-size_t atlas::trans::TransIFS::spectralCoefficients() const {
+size_t TransIFS::nb_spectral_coefficients() const {
+    return trans_->nspec2;
+}
+
+size_t TransIFS::nb_spectral_coefficients_global() const {
     return trans_->nspec2g;
+}
+
+const functionspace::Spectral& TransIFS::spectral() const {
+    if ( not spectral_ ) { spectral_ = functionspace::Spectral( Trans( this ) ); }
+    return spectral_;
 }
 
 void TransIFS::ctor( const Grid& grid, long truncation, const eckit::Configuration& config ) {
@@ -877,17 +884,6 @@ void TransIFS::ctor( const Grid& grid, long truncation, const eckit::Configurati
         }
     }
     throw_NotImplemented( "Grid type not supported for Spectral Transforms", Here() );
-}
-
-void TransIFS::ctor_spectral_only( long truncation, const eckit::Configuration& ) {
-    trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, [](::Trans_t* p ) {
-        ::trans_delete( p );
-        delete p;
-    } );
-    TRANS_CHECK(::trans_new( trans_.get() ) );
-    TRANS_CHECK(::trans_set_trunc( trans_.get(), truncation ) );
-    TRANS_CHECK(::trans_use_mpi( mpi::comm().size() > 1 ) );
-    TRANS_CHECK(::trans_setup( trans_.get() ) );
 }
 
 void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, const eckit::Configuration& config ) {
@@ -1531,6 +1527,9 @@ void TransIFS::specnorm( const int nb_fields, const double spectra[], double nor
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// Moved to TransInterface
+#if 0  
+
 extern "C" {
 
 TransIFS* atlas__Trans__new( const Grid::Implementation* grid, int nsmax ) {
@@ -1734,6 +1733,7 @@ void atlas__Trans__invtrans_grad_field( const TransIFS* This, const field::Field
     This->invtrans_grad( spfield, fgpfield, *config );
 }
 }
+#endif
 
 }  // namespace trans
 }  // namespace atlas

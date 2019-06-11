@@ -10,11 +10,16 @@
 
 
 #include "TransImpl.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace trans {
 
 TransImpl::~TransImpl() {}
+
+int TransImpl::handle() const {
+    ATLAS_NOTIMPLEMENTED;
+}
 
 }  // namespace trans
 }  // namespace atlas

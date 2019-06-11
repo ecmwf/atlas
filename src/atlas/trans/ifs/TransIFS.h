@@ -13,6 +13,7 @@
 #include "eckit/filesystem/PathName.h"
 
 #include "atlas/array/LocalView.h"
+#include "atlas/functionspace/Spectral.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/runtime/Exception.h"
@@ -89,9 +90,11 @@ public:
     ::Trans_t* trans() const { return trans_.get(); }
 
     virtual int truncation() const override;
-    virtual size_t spectralCoefficients() const override;
+    virtual size_t nb_spectral_coefficients() const override;
+    virtual size_t nb_spectral_coefficients_global() const override;
 
     virtual const Grid& grid() const override { return grid_; }
+    virtual const functionspace::Spectral& spectral() const override;
 
     // pure virtual interface
 
@@ -219,8 +222,6 @@ private:
 
     void ctor_lonlat( const long nlon, const long nlat, long nsmax, const eckit::Configuration& );
 
-    void ctor_spectral_only( long truncation, const eckit::Configuration& );
-
 private:
     friend class grid::detail::partitioner::TransPartitioner;
 
@@ -328,57 +329,10 @@ private:
     StructuredGrid grid_;
     const void* cache_{nullptr};
     size_t cachesize_{0};
+
+protected:
+    mutable functionspace::Spectral spectral_;
 };
-
-//-----------------------------------------------------------------------------
-
-// C wrapper interfaces to C++ routines
-
-extern "C" {
-TransIFS* atlas__Trans__new( const Grid::Implementation* grid, int nsmax );
-void atlas__Trans__delete( TransIFS* trans );
-void atlas__Trans__distspec( const TransIFS* t, int nb_fields, int origin[], double global_spectra[],
-                             double spectra[] );
-void atlas__Trans__gathspec( const TransIFS* t, int nb_fields, int destination[], double spectra[],
-                             double global_spectra[] );
-void atlas__Trans__distgrid( const TransIFS* t, int nb_fields, int origin[], double global_fields[], double fields[] );
-void atlas__Trans__gathgrid( const TransIFS* t, int nb_fields, int destination[], double fields[],
-                             double global_fields[] );
-void atlas__Trans__invtrans( const TransIFS* t, int nb_scalar_fields, double scalar_spectra[], int nb_vordiv_fields,
-                             double vorticity_spectra[], double divergence_spectra[], double gp_fields[],
-                             const eckit::Configuration* parameters );
-void atlas__Trans__invtrans_scalar( const TransIFS* t, int nb_fields, double scalar_spectra[], double scalar_fields[] );
-void atlas__Trans__invtrans_vordiv2wind( const TransIFS* t, int nb_fields, double vorticity_spectra[],
-                                         double divergence_spectra[], double wind_fields[] );
-void atlas__Trans__dirtrans_scalar( const TransIFS* t, int nb_fields, double scalar_fields[], double scalar_spectra[] );
-void atlas__Trans__dirtrans_wind2vordiv( const TransIFS* t, int nb_fields, double wind_fields[],
-                                         double vorticity_spectra[], double divergence_spectra[] );
-void atlas__Trans__dirtrans_wind2vordiv_field( const TransIFS* This, const field::FieldImpl* gpwind,
-                                               field::FieldImpl* spvor, field::FieldImpl* spdiv,
-                                               const eckit::Configuration* parameters );
-void atlas__Trans__specnorm( const TransIFS* t, int nb_fields, double spectra[], double norms[], int rank );
-void atlas__Trans__dirtrans_fieldset( const TransIFS* This, const field::FieldSetImpl* gpfields,
-                                      field::FieldSetImpl* spfields, const eckit::Configuration* parameters );
-void atlas__Trans__dirtrans_field( const TransIFS* This, const field::FieldImpl* gpfield, field::FieldImpl* spfield,
-                                   const eckit::Configuration* parameters );
-void atlas__Trans__invtrans_fieldset( const TransIFS* This, const field::FieldSetImpl* spfields,
-                                      field::FieldSetImpl* gpfields, const eckit::Configuration* parameters );
-void atlas__Trans__invtrans_field( const TransIFS* This, const field::FieldImpl* spfield, field::FieldImpl* gpfield,
-                                   const eckit::Configuration* parameters );
-void atlas__Trans__invtrans_grad_field( const TransIFS* This, const field::FieldImpl* spfield,
-                                        field::FieldImpl* gpfield, const eckit::Configuration* parameters );
-void atlas__Trans__invtrans_vordiv2wind_field( const TransIFS* This, const field::FieldImpl* spvor,
-                                               const field::FieldImpl* spdiv, field::FieldImpl* gpwind,
-                                               const eckit::Configuration* parameters );
-
-int atlas__Trans__handle( const TransIFS* trans );
-int atlas__Trans__truncation( const TransIFS* This );
-int atlas__Trans__nspec2( const TransIFS* This );
-int atlas__Trans__nspec2g( const TransIFS* This );
-int atlas__Trans__ngptot( const TransIFS* This );
-int atlas__Trans__ngptotg( const TransIFS* This );
-const Grid::Implementation* atlas__Trans__grid( const TransIFS* This );
-}
 
 // ------------------------------------------------------------------
 

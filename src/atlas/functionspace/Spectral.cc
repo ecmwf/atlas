@@ -42,7 +42,6 @@ namespace atlas {
 namespace functionspace {
 namespace detail {
 
-
 #if ATLAS_HAVE_TRANS
 class Spectral::Parallelisation {
 public:
@@ -175,11 +174,13 @@ Spectral::Spectral( const int truncation, const eckit::Configuration& config ) :
 Spectral::Spectral( const trans::Trans& trans, const eckit::Configuration& config ) :
     nb_levels_( 0 ),
     truncation_( trans.truncation() ),
+    parallelisation_( [&trans, this]() -> Parallelisation* {
 #if ATLAS_HAVE_TRANS
-    parallelisation_( new Parallelisation( dynamic_cast<const trans::TransIFS&>( *trans.get() ).trans_ ) ) {
-#else
-    parallelisation_( new Parallelisation( truncation_ ) ) {
+        const auto* trans_ifs = dynamic_cast<const trans::TransIFS*>( trans.get() );
+        if ( trans_ifs ) { return new Parallelisation( trans_ifs->trans_ ); }
 #endif
+        return new Parallelisation( truncation_ );
+    }() ) {
     config.get( "levels", nb_levels_ );
 }
 
@@ -407,6 +408,8 @@ array::LocalView<int, 1, array::Intent::ReadOnly> Spectral::nasm0() const {
 }  // namespace detail
 
 // ----------------------------------------------------------------------
+
+Spectral::Spectral() : FunctionSpace(), functionspace_{nullptr} {}
 
 Spectral::Spectral( const FunctionSpace& functionspace ) :
     FunctionSpace( functionspace ),

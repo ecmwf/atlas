@@ -23,6 +23,9 @@ class FieldSet;
 class FunctionSpace;
 class Grid;
 class Domain;
+namespace functionspace {
+class Spectral;
+}
 }  // namespace atlas
 
 //-----------------------------------------------------------------------------
@@ -34,13 +37,19 @@ namespace trans {
 
 class TransImpl : public util::Object {
 public:
+    virtual std::string type() const { return "wrong value"; }
+
     virtual ~TransImpl() = 0;
 
     virtual int truncation() const = 0;
 
-    virtual size_t spectralCoefficients() const = 0;
+    virtual size_t nb_spectral_coefficients() const = 0;
+
+    virtual size_t nb_spectral_coefficients_global() const = 0;
 
     virtual const Grid& grid() const = 0;
+
+    virtual const functionspace::Spectral& spectral() const = 0;
 
     virtual void dirtrans( const Field& gpfield, Field& spfield,
                            const eckit::Configuration& = util::NoConfig() ) const = 0;
@@ -115,6 +124,15 @@ public:
    */
     virtual void dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[],
                            double divergence_spectra[], const eckit::Configuration& = util::NoConfig() ) const = 0;
+
+
+    // deprecated
+    virtual size_t spectralCoefficients() const { return nb_spectral_coefficients(); }
+
+private:
+    friend class TransInterface;
+    // Only for TransIFS backend
+    virtual int handle() const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
