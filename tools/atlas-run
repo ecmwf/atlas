@@ -20,7 +20,7 @@ if [ -n "${ATLAS_RUN_NTHREADS}" ]; then
   export OMP_NUM_THREADS=${ATLAS_RUN_NTHREADS}
 fi
 
-if command_exists aprun ; then
+if command_exists aprun && [[ ${EC_queue:-unset} != "nf" ]] ; then
   LAUNCH=aprun
   if [ -z "${ATLAS_RUN_NPROCS}" ]; then
      LAUNCH="${LAUNCH} -n 1"
@@ -44,6 +44,7 @@ elif command_exists srun ; then
 
 else
   if [[ ${ARCH:-unset} == "cray" ]]; then
+    echo + module load cray-snplauncher
     module load cray-snplauncher
   fi
   if [ -z "${ATLAS_RUN_NPROCS}" ]; then

@@ -242,7 +242,7 @@ ecbuild_add_option( FEATURE SANDBOX
 
 ### use of atlas-run for tests
 ecbuild_add_option( FEATURE ATLAS_RUN
-                    DEFAULT OFF
+                    DEFAULT ON
                     DESCRIPTION "Use atlas/tools/atlas-run to run atlas tests" )
 
 if( HAVE_ATLAS_RUN )
