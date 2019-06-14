@@ -1,0 +1,5 @@
+type : "zonal_band"
+nx : 5
+ny : 3
+north : 70
+south : 30

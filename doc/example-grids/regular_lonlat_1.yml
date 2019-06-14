@@ -1,0 +1,4 @@
+# Regular lonlat
+type : "regular_lonlat"
+nx : 128
+ny : 65

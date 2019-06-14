@@ -1,0 +1,12 @@
+type : "regional"
+nx : 50
+ny : 40
+dx : 50000
+dy : 50000
+lonlat(centre) : [4,50]
+projection : {
+    type : "lambert",
+    latitude1  : 50,
+    longitude0 : 4
+  }
+

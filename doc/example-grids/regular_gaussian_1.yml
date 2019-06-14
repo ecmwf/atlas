@@ -1,0 +1,4 @@
+# Regular Gaussian grid 'F4'
+
+type : "regular_gaussian"
+N : 4

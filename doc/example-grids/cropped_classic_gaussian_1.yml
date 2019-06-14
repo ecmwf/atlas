@@ -1,0 +1,9 @@
+# Classic Gaussian grid 'N16'
+
+type : "classic_gaussian"
+N    : 16
+
+domain : 
+    type : "zonal_band"
+    ymax : 90
+    ymin : 45 

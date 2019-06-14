@@ -1,0 +1,15 @@
+# Octahedral Gaussian grid 'O4'
+
+type   : "structured",
+yspace : { type : "gaussian", start : 90, end : -90, N : 8 },
+xspace : { type : "linear",  N : 16, length : 360, endpoint : false,
+    start[]: [
+       0,
+      -11.25,
+       0,
+      -11.25,
+       0,
+      -11.25,
+       0,
+      -11.25
+    ] }
