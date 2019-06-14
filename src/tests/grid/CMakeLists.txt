@@ -9,12 +9,12 @@
 if( HAVE_FCTEST )
     foreach(test
             fctest_griddistribution
-            fctest_state
-            fctest_unstructuredgrid)
+            fctest_state )
 
         add_fctest( TARGET atlas_${test} SOURCES ${test}.F90 LINKER_LANGUAGE Fortran LIBS atlas_f ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 
     endforeach()
+    add_fctest( TARGET atlas_fctest_unstructuredgrid SOURCES fctest_unstructuredgrid.F90 LINKER_LANGUAGE Fortran LIBS atlas_f CONDITION HAVE_TESSELATION )
 endif()
 
 foreach(test
