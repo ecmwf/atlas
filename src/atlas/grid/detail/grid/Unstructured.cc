@@ -170,6 +170,10 @@ void Unstructured::hash( eckit::Hash& h ) const {
     projection().hash( h );
 }
 
+Grid::Domain Unstructured::boundingBox() {
+    throw_NotImplemented( "Cannot create boundingBox from Unstructured grid", Here() );
+}
+
 idx_t Unstructured::size() const {
     ATLAS_ASSERT( points_ != nullptr );
     return static_cast<idx_t>( points_->size() );

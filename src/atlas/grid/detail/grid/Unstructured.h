@@ -195,8 +195,11 @@ public:  // methods
 private:  // methods
     virtual void print( std::ostream& ) const;
 
-    /// Hash of the lonlat array + BoundingBox
+    /// Hash of the lonlat array
     virtual void hash( eckit::Hash& ) const;
+
+    /// @return parallel/meridian limits containing the grid
+    virtual Domain boundingBox() override;
 
 protected:
     /// Storage of coordinate points

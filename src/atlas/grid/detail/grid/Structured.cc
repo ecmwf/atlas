@@ -24,8 +24,11 @@
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
+#include "atlas/interpolation/element/Quad3D.h"
+#include "atlas/interpolation/method/Ray.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/Earth.h"
 #include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/UnitSphere.h"
@@ -52,10 +55,7 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
     xspace_( xspace ),
     yspace_( yspace ) {
     // Copy members
-    if ( projection )
-        projection_ = projection;
-    else
-        projection_ = Projection();
+    projection_ = projection ? projection : Projection();
 
     y_.assign( yspace_.begin(), yspace_.end() );
     idx_t ny{static_cast<idx_t>( y_.size() )};
@@ -493,6 +493,251 @@ void Structured::hash( eckit::Hash& h ) const {
 
     // also add domain information, even though already encoded in grid.
     domain().hash( h );
+}
+
+Grid::Domain Structured::boundingBox() {
+    using eckit::types::is_approximately_lesser_or_equal;
+    using eckit::types::is_strictly_greater;
+
+    computeDomain();
+    if ( !projection_ ) {
+        return domain_;
+    }
+
+
+    // 0. setup
+    ATLAS_ASSERT( xspace_.min() <= xspace_.max() );
+    ATLAS_ASSERT( yspace_.min() <= yspace_.max() );
+
+    Point2 min;
+    Point2 max;
+    constexpr double h     = 0.001;
+    constexpr size_t Niter = 100;
+
+#if 0
+    auto derivate_forwards = [&]( PointXY P, const PointXY& H ) -> PointXY {
+        PointXY A( P );
+        PointXY B( PointXY::add( P, H ) );
+        projection_.xy2lonlat( A.data() );
+        projection_.xy2lonlat( B.data() );
+
+        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( H ) );
+    };
+
+
+    auto derivate_backwards = [&]( PointXY P, const PointXY& H ) -> PointXY {
+        PointXY A( PointXY::sub( P, H ) );
+        PointXY B( P );
+        projection_.xy2lonlat( A.data() );
+        projection_.xy2lonlat( B.data() );
+
+        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( H ) );
+    };
+#endif
+
+    auto derivate_central = [&]( PointXY P, const PointXY& H ) -> PointXY {
+        PointXY H2( PointXY::mul( H, 0.5 ) );
+        PointXY A( PointXY::sub( P, H2 ) );
+        PointXY B( PointXY::add( P, H2 ) );
+        projection_.xy2lonlat( A.data() );
+        projection_.xy2lonlat( B.data() );
+
+        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( H ) );
+    };
+
+    auto derivate = derivate_central;
+
+    // 1. determine box from projected/rotated corners
+    const std::vector<PointXY> corners{{xspace_.min(), yspace_.max()},
+                                       {xspace_.max(), yspace_.max()},
+                                       {xspace_.max(), yspace_.min()},
+                                       {xspace_.min(), yspace_.min()}};
+
+    bool first = true;
+    for ( auto& p : corners ) {
+        PointXY r( p );
+        projection_.xy2lonlat( r.data() );
+
+        min   = first ? r : Point2::componentsMin( min, r );
+        max   = first ? r : Point2::componentsMax( max, r );
+        first = false;
+    }
+
+    struct crosses_t {
+        crosses_t( const Projection& projection, const PointXY& p1, const PointXY& p2, const PointXY& p3,
+                   const PointXY& p4 ) :
+            projection_( projection ),
+            quadrilateral_( xy_to_xyz( projection, p1 ), xy_to_xyz( projection, p2 ), xy_to_xyz( projection, p3 ),
+                            xy_to_xyz( projection, p4 ) ) {}
+
+        bool operator()( const PointXY& p ) {
+            interpolation::method::Ray r( xy_to_xyz( projection_, p ) );
+            return quadrilateral_.intersects( r );
+        }
+
+    private:
+        const Projection& projection_;
+        interpolation::element::Quad3D quadrilateral_;
+
+        static PointXYZ xy_to_xyz( const Projection& projection, const PointXY& p ) {
+            PointLonLat q( p );
+            projection.xy2lonlat( q.data() );
+
+            PointXYZ r;
+            util::Earth::convertSphericalToCartesian( q, r );
+            return r;
+        }
+    } crosses( projection_, corners[0], corners[1], corners[2], corners[3] );
+
+
+    // 2. locate latitude extrema by checking if poles are included (in the
+    // projected/rotated frame) and if not, find extrema not at the corners by refining
+    // iteratively
+
+    PointXY NP{0, 90};
+    PointXY SP{0, -90};
+    projection_.lonlat2xy( NP.data() );  // un-project (or unrotate, in case of rotation)
+    projection_.lonlat2xy( SP.data() );
+
+    bool includesNorthPole = crosses( NP );
+    bool includesSouthPole = crosses( SP );
+
+    if ( !includesNorthPole || !includesSouthPole ) {
+        for ( size_t i = 0; i < corners.size(); ++i ) {
+            PointXY A = corners[i];
+            PointXY B = corners[( i + 1 ) % corners.size()];
+
+            // finite difference vector derivative (H is the perturbation vector)
+            const PointXY H{Point2::mul( Point2::normalize( Point2::sub( B, A ) ), h )};
+            double dAdy = derivate( A, H ).y();
+            double dBdy = derivate( B, H ).y();
+
+            if ( !is_strictly_greater( dAdy * dBdy, 0. ) ) {
+                for ( size_t cnt = 0; cnt < Niter; ++cnt ) {
+                    PointXY M   = PointXY::middle( A, B );
+                    double dMdy = derivate( M, H ).y();
+                    if ( is_strictly_greater( dAdy * dMdy, 0. ) ) {
+                        A    = M;
+                        dAdy = dMdy;
+                    }
+                    else if ( is_strictly_greater( dBdy * dMdy, 0. ) ) {
+                        B    = M;
+                        dBdy = dMdy;
+                    }
+                    else {
+                        break;
+                    }
+                }
+
+                PointXY middle( PointXY::middle( A, B ) );
+                projection_.xy2lonlat( middle.data() );
+
+                min = Point2::componentsMin( min, middle );
+                max = Point2::componentsMax( max, middle );
+            }
+        }
+
+        // extend by 'a small amount' (arbitrary) and limit
+        min    = Point2::sub( min, Point2{0, h} );
+        max    = Point2::add( max, Point2{0, h} );
+        min[1] = std::max( min[1], -90. );
+        max[1] = std::min( max[1], 90. );
+
+        includesNorthPole = includesNorthPole || is_approximately_lesser_or_equal( 90., max[1] );
+        includesSouthPole = includesSouthPole || is_approximately_lesser_or_equal( min[1], -90. );
+    }
+    ATLAS_ASSERT( min[1] < max[1] );
+
+
+    // 3. locate latitude extrema by checking if date line is crossed (in the
+    // projected/rotated frame), in which case we assume periodicity and if not, find
+    // extrema not at the corners by refining iteratively
+
+    bool crossesDateLine = includesNorthPole || includesSouthPole;
+
+#if 0
+    if (!crossesDateLine) {
+        PointXY A{Longitude::DATE_LINE.value(), -10.};
+        PointXY B{Longitude::DATE_LINE.value(), 10.};
+        projection_.lonlat2xy(A.data());
+        projection_.lonlat2xy(B.data());
+
+        eckit::geometry::GreatCircle GC(A, B);
+
+        for (auto x : {xspace_.min(), xspace_.max()}) {
+            if (!crossesDateLine) {
+                for (auto y : GC.latitude(x)) {
+                    PointXY DL(x, y);
+                    if ((crossesDateLine = crosses(DL))) {
+                        PointLonLat p{x, y};
+                        projection_.xy2lonlat(p.data());
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (auto y : {yspace_.max(), yspace_.min()}) {
+            if (!crossesDateLine) {
+                for (auto x : GC.longitude(y)) {
+                    PointXY DL(x, y);
+                    if ((crossesDateLine = crosses(DL))) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+#endif
+
+    if ( !crossesDateLine ) {
+        for ( size_t i = 0; i < corners.size(); ++i ) {
+            PointXY A = corners[i];
+            PointXY B = corners[( i + 1 ) % corners.size()];
+
+            // finite difference vector derivative (H is the perturbation vector)
+            const PointXY H{Point2::mul( Point2::normalize( Point2::sub( B, A ) ), h )};
+            double dAdx = derivate( A, H ).x();
+            double dBdx = derivate( B, H ).x();
+
+            if ( !is_strictly_greater( dAdx * dBdx, 0. ) ) {
+                for ( size_t cnt = 0; cnt < Niter; ++cnt ) {
+                    PointXY M   = PointXY::middle( A, B );
+                    double dMdx = derivate( M, H ).x();
+                    if ( is_strictly_greater( dAdx * dMdx, 0. ) ) {
+                        A    = M;
+                        dAdx = dMdx;
+                    }
+                    else if ( is_strictly_greater( dBdx * dMdx, 0. ) ) {
+                        B    = M;
+                        dBdx = dMdx;
+                    }
+                    else {
+                        break;
+                    }
+                }
+
+                PointXY middle( PointXY::middle( A, B ) );
+                projection_.xy2lonlat( middle.data() );
+
+                min = Point2::componentsMin( min, middle );
+                max = Point2::componentsMax( max, middle );
+            }
+        }
+
+        // extend by 'a small amount' (arbitrary) and limit
+        min    = Point2::sub( min, Point2{h, 0} );
+        max    = Point2::add( max, Point2{h, 0} );
+        max[0] = std::min( max[0], min[0] + 360. );
+
+        crossesDateLine = is_approximately_lesser_or_equal( 360., max[0] - min[0] );
+    }
+    ATLAS_ASSERT( min[0] < max[0] );
+
+
+    // 4. return bounding box
+    return crossesDateLine ? ZonalBandDomain( {min[1], max[1]} )
+                           : RectangularDomain( {min[0], max[0]}, {min[1], max[1]} );
 }
 
 Grid::Spec Structured::spec() const {
