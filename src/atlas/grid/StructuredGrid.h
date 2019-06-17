@@ -83,6 +83,7 @@ public:
     using Grid::xy;
     void xy( idx_t i, idx_t j, double xy[] ) const { grid_->xy( i, j, xy ); }
 
+    using Grid::lonlat;
     void lonlat( idx_t i, idx_t j, double lonlat[] ) const { grid_->lonlat( i, j, lonlat ); }
 
     PointXY xy( idx_t i, idx_t j ) const { return PointXY( x( i, j ), y( j ) ); }
