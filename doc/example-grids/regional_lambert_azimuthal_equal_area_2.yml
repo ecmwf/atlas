@@ -1,0 +1,20 @@
+# EFAS grid
+
+type : "regional"
+nx : 1000
+ny : 950
+dx : 5000
+dy : 5000
+lonlat(xmin,ymax) : [-35.034,66.9821]
+projection :
+    type : "lambert_azimuthal_equal_area"
+    standard_parallel : 52
+    central_longitude : 10
+y_numbering : -1
+
+
+check : 
+  size : 950000
+  lonlat(first) : [-35.034,66.9821]
+  lonlat(last)  : [41.2436,23.8962]
+  uid : 09fcf68cb6f8871668dbef411b45a559

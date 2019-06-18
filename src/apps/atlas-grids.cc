@@ -100,6 +100,10 @@ int AtlasGrids::execute( const Args& args ) {
     list = false;
     args.get( "list", list );
     if ( list ) do_run = true;
+    
+    check = false;
+    args.get( "check", check );
+    if( check && !key.empty() ) do_run = true;
 
     if ( !key.empty() && do_run == false ) {
         Log::error() << "Option wrong or missing after '" << key << "'" << std::endl;
@@ -188,6 +192,13 @@ int AtlasGrids::execute( const Args& args ) {
                           << " , "       << std::setw(10) << std::fixed << grid.xspace().max() / 1000. << " ] km" << std::endl;
               Log::info() << "   y : [ " << std::setw(10) << std::fixed << grid.yspace().min() / 1000.
                           << " , "       << std::setw(10) << std::fixed << grid.yspace().max() / 1000. << " ] km" << std::endl;
+              Log::info() << "lonlat(centre)    : " << grid.projection().lonlat(
+                { 0.5*(grid.xspace().max()+grid.xspace().min()),
+                  0.5*(grid.yspace().max()+grid.yspace().min())} ) << std::endl;
+              Log::info() << "lonlat(xmin,ymax) : " << grid.projection().lonlat( { grid.xspace().min(), grid.yspace().max()} ) << std::endl;
+              Log::info() << "lonlat(xmin,ymin) : " << grid.projection().lonlat( { grid.xspace().min(), grid.yspace().min()} ) << std::endl;
+              Log::info() << "lonlat(xmax,ymin) : " << grid.projection().lonlat( { grid.xspace().max(), grid.yspace().min()} ) << std::endl;
+              Log::info() << "lonlat(xmax,ymax) : " << grid.projection().lonlat( { grid.xspace().max(), grid.yspace().max()} ) << std::endl;
               Log::info().precision(p);
             }
             if( grid.projection().units() == "degrees" ) {

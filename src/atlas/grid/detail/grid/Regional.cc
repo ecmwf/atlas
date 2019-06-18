@@ -142,6 +142,19 @@ struct Parse_ll00_ll11 : ConfigParser {
     }
 };
 
+struct Parse_xy01_step : ConfigParser {
+    Parse_xy01_step( const Projection&, const Grid::Config& config ) {
+        valid = config.get( "nx", x.N ) && config.get( "ny", y.N ) && config.get( "dx", x.step ) &&
+                config.get( "dy", y.step ) && config.get( "xmin", x.min ) &&
+                config.get( "ymax", y.max );  // includes rotation
+
+        if ( not valid ) return;
+
+        x.max = x.min + x.step * ( x.N - 1 );
+        y.min = y.max - y.step * ( y.N - 1 );
+    }
+};
+
 struct Parse_ll00_step : ConfigParser {
     Parse_ll00_step( const Projection& p, const Grid::Config& config ) {
         std::vector<double> sw;
@@ -158,6 +171,20 @@ struct Parse_ll00_step : ConfigParser {
         y.max = y.min + y.step * ( y.N - 1 );
     }
 };
+
+struct Parse_xy00_step : ConfigParser {
+    Parse_xy00_step( const Projection&, const Grid::Config& config ) {
+        valid = config.get( "nx", x.N ) && config.get( "ny", y.N ) && config.get( "dx", x.step ) &&
+                config.get( "dy", y.step ) && config.get( "xmin", x.min ) &&
+                config.get( "ymin", y.min );
+
+        if ( not valid ) return;
+
+        x.max = x.min + x.step * ( x.N - 1 );
+        y.max = y.min + y.step * ( y.N - 1 );
+    }
+};
+
 
 struct Parse_ll01_step : ConfigParser {  // This resembles GRIB input for "lambert_azimutal_equal_area"
     Parse_ll01_step( const Projection& p, const Grid::Config& config ) {
@@ -197,9 +224,11 @@ bool ConfigParser::parse( const Projection& projection, const Grid::Config& conf
 
     // top-left of domain and increments (any projection allowed)
     if ( ConfigParser::parse<Parse_ll01_step>( projection, config, x, y ) ) return true;
-
+    if ( ConfigParser::parse<Parse_xy01_step>( projection, config, x, y ) ) return true;
+    
     // bottom-left of domain and increments (any projection allowed)
     if ( ConfigParser::parse<Parse_ll00_step>( projection, config, x, y ) ) return true;
+    if ( ConfigParser::parse<Parse_xy00_step>( projection, config, x, y ) ) return true;
 
     // bounding box using two points defined in lonlat (any projection allowed)
     if ( ConfigParser::parse<Parse_ll00_ll11>( projection, config, x, y ) ) return true;
