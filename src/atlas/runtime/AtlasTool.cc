@@ -238,7 +238,11 @@ bool atlas::AtlasTool::handle_help() {
 atlas::AtlasTool::AtlasTool( int argc, char** argv ) : eckit::Tool( argc, argv ) {
     eckit::LibEcKit::instance().setAbortHandler( [] {
         std::cerr << "[" << atlas::mpi::comm().rank() << "] "
-                  << "calling MPI_Abort, logfile: " << logfile_name << std::endl;
+                  << "calling MPI_Abort";
+        if ( not use_logfile and mpi::comm().size() > 1 ) {
+           std::cerr << ", logfile: " << logfile_name;
+        }
+        std::cerr << std::endl;
         std::this_thread::sleep_for( std::chrono::milliseconds( 3000 ) );
         atlas::mpi::comm().abort( 1 );
     } );
