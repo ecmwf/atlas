@@ -240,8 +240,7 @@ public:
             throw_Exception( "Could not parse configuration for RegularRegional grid", Here() );
         }
 
-        YSpace yspace = config.getBool( "y_increasing", true ) ? LinearSpacing( y.min, y.max, y.N, y.endpoint )
-                                                               : LinearSpacing( y.max, y.min, y.N, y.endpoint );
+        YSpace yspace = config.getInt( "y_numbering", -1 ) < 0 ? LinearSpacing( y.max, y.min, y.N, y.endpoint ) : LinearSpacing( y.min, y.max, y.N, y.endpoint );
 
         bool with_endpoint = true;
         XSpace xspace( {x.min, x.max}, std::vector<long>( y.N, x.N ), with_endpoint );
@@ -285,8 +284,8 @@ public:
         if ( not( config.get( "ymin", y.min ) or config.get( "south", y.min ) ) ) y.min = -90.;
         if ( not( config.get( "ymax", y.max ) or config.get( "north", y.max ) ) ) y.max = 90.;
 
-        YSpace yspace = config.getBool( "y_increasing", true ) ? LinearSpacing( y.min, y.max, y.N, true )
-                                                               : LinearSpacing( y.max, y.min, y.N, true );
+        YSpace yspace = config.getInt( "y_numbering", -1 ) < 0 ? LinearSpacing( y.max, y.min, y.N, true )
+                                                               : LinearSpacing( y.min, y.max, y.N, true );
 
         XSpace xspace( {0., 360.}, std::vector<long>( y.N, nx ), false );
 

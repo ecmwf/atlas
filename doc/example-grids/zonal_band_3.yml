@@ -1,3 +1,10 @@
 type : "zonal_band"
 nx   : 36
 ny   : 19
+y_numbering: +1
+
+check:
+  size : 684
+  lonlat(first) : [0,-90]
+  lonlat(last)  : [350,90]
+  uid : ae584da2de497b8065c63f73115b08f1

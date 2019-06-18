@@ -96,7 +96,7 @@ CASE( "test_grid_creation_from_GRIB" ) {
         gridspec.set( "dx", dx );
         gridspec.set( "dy", dy );
         gridspec.set( firstPointLoc, firstPointLonLat );
-        gridspec.set( "y_increasing", false );  // Always decrease y for MIR
+        gridspec.set( "y_numbering", -1 );  // Always decrease y for MIR
         gridspec.set( "projection", [&]() {
             Grid::Spec projection;
             projection.set( "type", "lambert_azimuthal_equal_area" );

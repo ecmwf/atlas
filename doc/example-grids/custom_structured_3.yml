@@ -3,12 +3,18 @@
 type     : "structured"
 yspace   : { type : "gaussian", N :8, start : 90, end : -90 }
 xspace[] :
-  - { type : "linear", N : 16, start : 0, end : 360, endpoint : false }
   - { type : "linear", N : 20, start : 0, end : 360, endpoint : false }
   - { type : "linear", N : 24, start : 0, end : 360, endpoint : false }
   - { type : "linear", N : 28, start : 0, end : 360, endpoint : false }
+  - { type : "linear", N : 32, start : 0, end : 360, endpoint : false }
+  - { type : "linear", N : 32, start : 0, end : 360, endpoint : false }
   - { type : "linear", N : 28, start : 0, end : 360, endpoint : false }
   - { type : "linear", N : 24, start : 0, end : 360, endpoint : false }
   - { type : "linear", N : 20, start : 0, end : 360, endpoint : false }
-  - { type : "linear", N : 16, start : 0, end : 360, endpoint : false }
 
+
+check :
+  size : 208
+  lonlat(first) : [0,73.7992]
+  lonlat(last)  : [342,-73.7992]
+  uid : 662bfa00f7e6e928b2ffeb10726604ef

@@ -5,3 +5,11 @@ north : -10
 south : -50
 east : 170
 west : 100
+
+y_numbering: +1
+
+check : 
+  size : 875
+  lonlat(first) : [100,-50]
+  lonlat(last)  : [170,-10]
+  uid : 4e4386c0a0f4aafc12fd45843aee9071

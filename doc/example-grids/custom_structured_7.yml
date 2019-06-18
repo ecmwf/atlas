@@ -3,3 +3,9 @@
 type   : "structured"
 yspace : { type: custom, N : 6, values : [75,45,15,-15,-45,-75], interval:[-90,90] }
 xspace : { type: linear, N : 12, start:0, end:360, endpoint:false }
+
+check : 
+  size : 72
+  lonlat(first) : [0,75]
+  lonlat(last)  : [330,-75]
+  uid : 088f8c4b8acca09987e4b8c0b0dad2c3

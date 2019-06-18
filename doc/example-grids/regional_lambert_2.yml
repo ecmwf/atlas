@@ -8,3 +8,11 @@ projection :
     type : "lambert"
     latitude1  : 25.0
     longitude0 : -95.0
+y_numbering : +1
+
+
+check : 
+  size : 151987
+  lonlat(first) : [-126.138,16.281]
+  lonlat(last)  : [-57.3811,55.4813]
+  uid : cd7e504a256290ca525b4dec75550d7a

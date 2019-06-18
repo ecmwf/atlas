@@ -7,3 +7,10 @@ domain :
     type : "zonal_band"
     ymax : 90
     ymin : 45 
+
+
+check : 
+  size : 332
+  lonlat(first) : [0,85.7606]
+  lonlat(last)  : [354,47.0696]
+  uid : 6e7924fd98acefc8b163941796739636

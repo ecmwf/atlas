@@ -3,3 +3,9 @@ nx : 5
 ny : 3
 north : 70
 south : 30
+
+check:
+  size : 15
+  lonlat(first) : [0,70]
+  lonlat(last)  : [288,30]
+  uid : 5dc6e5c29625c95e86afe4efaae17dd7

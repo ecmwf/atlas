@@ -7,3 +7,9 @@ projection :
     stretching_factor : 2.0
     north_pole        : [3.0,47.0]
 
+
+check : 
+  size : 1688
+  lonlat(first) : [3,44.8796]
+  lonlat(last)  : [-172.453,-54.9736]
+  uid : f0caeff347f57954191e8e1d7b3a05b6

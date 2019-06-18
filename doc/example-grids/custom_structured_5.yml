@@ -4,3 +4,10 @@ type       :  "structured"
 yspace     : { type : "linear", N : 9,  start : 90, end : -90 }
 xspace     : { type : "linear", N : 16, start : 0 , end :  360 , endpoint : false }
 projection : { type : "rotated_lonlat", north_pole :[3,40] }
+
+
+check :
+  size : 144
+  lonlat(first) : [3,40]
+  lonlat(last)  : [-177,-40]
+  uid : 7f70607c136c64cc9c756ea5addc261e
