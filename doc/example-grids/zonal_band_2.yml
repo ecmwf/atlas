@@ -2,8 +2,8 @@ type : "zonal_band"
 nx : 36
 ny : 7
 south : 30
-
 y_numbering: +1
+
 
 check:
   size : 252

@@ -7,8 +7,8 @@ lonlat(centre) : [4,50]
 projection :
     type       : "rotated_mercator"
     north_pole : [-176,40]
-
 y_numbering : +1
+
 
 check : 
   size : 2000

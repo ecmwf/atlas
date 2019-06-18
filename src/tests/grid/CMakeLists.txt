@@ -29,3 +29,14 @@ foreach(test
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas )
 
 endforeach()
+
+file( GLOB grids ${PROJECT_SOURCE_DIR}/doc/example-grids/*.yml )
+
+foreach( grid ${grids} )
+    get_filename_component( grid_name ${grid} NAME_WE )
+    set( test_name atlas_test_grid_${grid_name} )
+    ecbuild_add_test( TARGET ${test_name}
+        COMMAND $<TARGET_FILE:atlas-grids>
+        ARGS    ${grid} --check
+    )
+endforeach()
