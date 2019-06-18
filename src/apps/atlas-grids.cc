@@ -177,39 +177,40 @@ int AtlasGrids::execute( const Args& args ) {
                           << static_cast<int>( std::floor( 2. / 3. * grid.ny() + 0.5 ) ) - 1 << std::endl;
               Log::info() << "   spectral truncation -- cubic:       "
                           << static_cast<int>( std::floor( 0.5 * grid.ny() + 0.5 ) ) - 1 << std::endl;
-          }
-
-            PointLonLat first_point = *grid.lonlat().begin();
-            PointLonLat last_point;
-            for( const auto&& p : grid.lonlat() ) {
-              last_point = p;
             }
-            Log::info() << "   lonlat(first): " << first_point << std::endl;
-            Log::info() << "   lonlat(last) : " << last_point << std::endl;
+
+            auto precision = Log::info().precision(3);
             if( grid.projection().units() == "meters" ) {
-              auto p = Log::info().precision(2);
               Log::info() << "   x : [ " << std::setw(10) << std::fixed << grid.xspace().min() / 1000.
                           << " , "       << std::setw(10) << std::fixed << grid.xspace().max() / 1000. << " ] km" << std::endl;
               Log::info() << "   y : [ " << std::setw(10) << std::fixed << grid.yspace().min() / 1000.
                           << " , "       << std::setw(10) << std::fixed << grid.yspace().max() / 1000. << " ] km" << std::endl;
-              Log::info() << "lonlat(centre)    : " << grid.projection().lonlat(
+              if( grid.xspace().nxmax() == grid.xspace().nxmin() ) {
+                  Log::info() << "   dx : " << grid.xspace().dx()[0] / 1000. << " km" << std::endl;
+              }
+              Log::info() << "   dy : " << std::abs(grid.yspace()[1]-grid.yspace()[0]) / 1000. << " km" << std::endl;
+              Log::info() << "   lonlat(centre)    : " << grid.projection().lonlat(
                 { 0.5*(grid.xspace().max()+grid.xspace().min()),
                   0.5*(grid.yspace().max()+grid.yspace().min())} ) << std::endl;
-              Log::info() << "lonlat(xmin,ymax) : " << grid.projection().lonlat( { grid.xspace().min(), grid.yspace().max()} ) << std::endl;
-              Log::info() << "lonlat(xmin,ymin) : " << grid.projection().lonlat( { grid.xspace().min(), grid.yspace().min()} ) << std::endl;
-              Log::info() << "lonlat(xmax,ymin) : " << grid.projection().lonlat( { grid.xspace().max(), grid.yspace().min()} ) << std::endl;
-              Log::info() << "lonlat(xmax,ymax) : " << grid.projection().lonlat( { grid.xspace().max(), grid.yspace().max()} ) << std::endl;
-              Log::info().precision(p);
-            }
-            if( grid.projection().units() == "degrees" ) {
-              auto p = Log::info().precision(2);
+              Log::info() << "   lonlat(xmin,ymax) : " << grid.projection().lonlat( { grid.xspace().min(), grid.yspace().max()} ) << std::endl;
+              Log::info() << "   lonlat(xmin,ymin) : " << grid.projection().lonlat( { grid.xspace().min(), grid.yspace().min()} ) << std::endl;
+              Log::info() << "   lonlat(xmax,ymin) : " << grid.projection().lonlat( { grid.xspace().max(), grid.yspace().min()} ) << std::endl;
+              Log::info() << "   lonlat(xmax,ymax) : " << grid.projection().lonlat( { grid.xspace().max(), grid.yspace().max()} ) << std::endl;
+           }
+           if( grid.projection().units() == "degrees" ) {
               Log::info() << "   x : [ " << std::setw(10) << std::fixed << grid.xspace().min()
                           << " , "       << std::setw(10) << std::fixed << grid.xspace().max() << " ] deg" << std::endl;
               Log::info() << "   y : [ " << std::setw(10) << std::fixed << grid.yspace().min()
                           << " , "       << std::setw(10) << std::fixed << grid.yspace().max() << " ] deg" << std::endl;
-              Log::info().precision(p);
             }
-            
+            PointLonLat first_point = *grid.lonlat().begin();
+            PointLonLat last_point;
+            for( const auto p : grid.lonlat() ) {
+              last_point = p;
+            }
+            Log::info() << "   lonlat(first)     : " << first_point << std::endl;
+            Log::info() << "   lonlat(last)      : " << last_point << std::endl;
+            Log::info().precision(precision);
         }
         if ( json ) {
             std::stringstream stream;
