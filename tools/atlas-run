@@ -1,16 +1,25 @@
 #!/bin/bash
 set -e
 
-key="$1"
-case $key in
+ATLAS_RUN_MPI_ARGS=""
+
+while test $# -gt 0; do
+
+  case "$1" in
+    --*)
+    ATLAS_RUN_MPI_ARGS="${ATLAS_RUN_MPI_ARGS} $1"
+    shift # past argument
+    ;;
     -n|-np)
     ATLAS_RUN_NPROCS="$2"
     shift # past argument
     shift # past value
     ;;
     *)    # unknown option
+    break
     ;;
-esac
+  esac
+done
 
 command_exists() {
   type "$1" &> /dev/null ;
@@ -21,7 +30,7 @@ if [ -n "${ATLAS_RUN_NTHREADS}" ]; then
 fi
 
 if command_exists aprun && [[ ${EC_queue:-unset} != "nf" ]] ; then
-  LAUNCH=aprun
+  LAUNCH="aprun ${ATLAS_RUN_MPI_ARGS}"
   if [ -z "${ATLAS_RUN_NPROCS}" ]; then
      LAUNCH="${LAUNCH} -n 1"
   else
@@ -32,7 +41,7 @@ if command_exists aprun && [[ ${EC_queue:-unset} != "nf" ]] ; then
   fi
 
 elif command_exists srun ; then
-  LAUNCH=srun
+  LAUNCH="srun ${ATLAS_RUN_MPI_ARGS}"
   if [ -n "${ATLAS_RUN_NGPUS}" ]; then
     LAUNCH="${LAUNCH} --gres=gpu:${ATLAS_RUN_NGPUS}"
   fi
@@ -50,9 +59,9 @@ else
   if [ -z "${ATLAS_RUN_NPROCS}" ]; then
     unset LAUNCH
   elif command_exists mpirun ; then
-    LAUNCH="mpirun -np ${ATLAS_RUN_NPROCS}"
+    LAUNCH="mpirun ${ATLAS_RUN_MPI_ARGS} -np ${ATLAS_RUN_NPROCS}"
   elif command_exists mpiexec; then
-    LAUNCH="mpiexec -n ${ATLAS_RUN_NPROCS}"
+    LAUNCH="mpiexec ${ATLAS_RUN_MPI_ARGS} -n ${ATLAS_RUN_NPROCS}"
   else
     echo "No MPI driver found (mpirun,mpiexec,aprun,srun)"
     exit 1
