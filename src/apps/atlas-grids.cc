@@ -100,10 +100,10 @@ int AtlasGrids::execute( const Args& args ) {
     list = false;
     args.get( "list", list );
     if ( list ) do_run = true;
-    
+
     check = false;
     args.get( "check", check );
-    if( check && !key.empty() ) do_run = true;
+    if ( check && !key.empty() ) do_run = true;
 
     if ( !key.empty() && do_run == false ) {
         Log::error() << "Option wrong or missing after '" << key << "'" << std::endl;
@@ -119,12 +119,10 @@ int AtlasGrids::execute( const Args& args ) {
     if ( !key.empty() ) {
         StructuredGrid grid;
 
-        PathName spec{ key };
-        if( spec.exists() ) {
-          grid = Grid( Grid::Spec{ spec } );
-        } 
+        PathName spec{key};
+        if ( spec.exists() ) { grid = Grid( Grid::Spec{spec} ); }
         else {
-          grid = Grid( key );
+            grid = Grid( key );
         }
 
         if ( !grid ) return failed();
@@ -138,79 +136,85 @@ int AtlasGrids::execute( const Args& args ) {
                 Log::info() << "   Gaussian N number:                  " << gaussian.N() << std::endl;
             }
             Log::info() << "   number of points:                   " << grid.size() << std::endl;
-            
+
 
             size_t memsize = grid.size() * sizeof( double );
-            
+
             Log::info() << "   memory footprint per field (dp):    " << eckit::Bytes( memsize ) << std::endl;
-            
-            
-            if( not grid.projection() ) {
-              Log::info() << "   number of latitudes (N-S):          " << grid.ny() << std::endl;
-              Log::info() << "   number of longitudes (max):         " << grid.nxmax() << std::endl;
-
-              deg = ( grid.y().front() - grid.y().back() ) / ( grid.ny() - 1 );
-              km  = deg * 40075. / 360.;
-              Log::info() << "   approximate resolution N-S:         " << std::setw( 10 ) << std::fixed << deg
-                          << " deg   " << km << " km " << std::endl;
-
-              deg = 360. / static_cast<double>( grid.nx( grid.ny() / 2 ) );
-              km  = deg * 40075. / 360.;
-              Log::info() << "   approximate resolution E-W equator: " << std::setw( 10 ) << std::fixed << deg
-                          << " deg   " << km << " km " << std::endl;
-
-              deg = 360. * std::cos( grid.y( grid.ny() / 4 ) * M_PI / 180. ) /
-                    static_cast<double>( grid.nx( grid.ny() / 4 ) );
-              km = deg * 40075. / 360.;
-              Log::info() << "   approximate resolution E-W midlat:  " << std::setw( 10 ) << std::fixed << deg
-                          << " deg   " << km << " km " << std::endl;
-
-              deg = 360. * std::cos( grid.y().front() * M_PI / 180. ) / static_cast<double>( grid.nx().front() );
-              km  = deg * 40075. / 360.;
 
 
-              Log::info() << "   approximate resolution E-W pole:    " << std::setw( 10 ) << std::fixed << deg
-                          << " deg   " << km << " km " << std::endl;
+            if ( not grid.projection() ) {
+                Log::info() << "   number of latitudes (N-S):          " << grid.ny() << std::endl;
+                Log::info() << "   number of longitudes (max):         " << grid.nxmax() << std::endl;
 
-              Log::info() << "   spectral truncation -- linear:      " << grid.ny() - 1 << std::endl;
-              Log::info() << "   spectral truncation -- quadratic:   "
-                          << static_cast<int>( std::floor( 2. / 3. * grid.ny() + 0.5 ) ) - 1 << std::endl;
-              Log::info() << "   spectral truncation -- cubic:       "
-                          << static_cast<int>( std::floor( 0.5 * grid.ny() + 0.5 ) ) - 1 << std::endl;
+                deg = ( grid.y().front() - grid.y().back() ) / ( grid.ny() - 1 );
+                km  = deg * 40075. / 360.;
+                Log::info() << "   approximate resolution N-S:         " << std::setw( 10 ) << std::fixed << deg
+                            << " deg   " << km << " km " << std::endl;
+
+                deg = 360. / static_cast<double>( grid.nx( grid.ny() / 2 ) );
+                km  = deg * 40075. / 360.;
+                Log::info() << "   approximate resolution E-W equator: " << std::setw( 10 ) << std::fixed << deg
+                            << " deg   " << km << " km " << std::endl;
+
+                deg = 360. * std::cos( grid.y( grid.ny() / 4 ) * M_PI / 180. ) /
+                      static_cast<double>( grid.nx( grid.ny() / 4 ) );
+                km = deg * 40075. / 360.;
+                Log::info() << "   approximate resolution E-W midlat:  " << std::setw( 10 ) << std::fixed << deg
+                            << " deg   " << km << " km " << std::endl;
+
+                deg = 360. * std::cos( grid.y().front() * M_PI / 180. ) / static_cast<double>( grid.nx().front() );
+                km  = deg * 40075. / 360.;
+
+
+                Log::info() << "   approximate resolution E-W pole:    " << std::setw( 10 ) << std::fixed << deg
+                            << " deg   " << km << " km " << std::endl;
+
+                Log::info() << "   spectral truncation -- linear:      " << grid.ny() - 1 << std::endl;
+                Log::info() << "   spectral truncation -- quadratic:   "
+                            << static_cast<int>( std::floor( 2. / 3. * grid.ny() + 0.5 ) ) - 1 << std::endl;
+                Log::info() << "   spectral truncation -- cubic:       "
+                            << static_cast<int>( std::floor( 0.5 * grid.ny() + 0.5 ) ) - 1 << std::endl;
             }
 
-            auto precision = Log::info().precision(3);
-            if( grid.projection().units() == "meters" ) {
-              Log::info() << "   x : [ " << std::setw(10) << std::fixed << grid.xspace().min() / 1000.
-                          << " , "       << std::setw(10) << std::fixed << grid.xspace().max() / 1000. << " ] km" << std::endl;
-              Log::info() << "   y : [ " << std::setw(10) << std::fixed << grid.yspace().min() / 1000.
-                          << " , "       << std::setw(10) << std::fixed << grid.yspace().max() / 1000. << " ] km" << std::endl;
-              if( grid.xspace().nxmax() == grid.xspace().nxmin() ) {
-                  Log::info() << "   dx : " << grid.xspace().dx()[0] / 1000. << " km" << std::endl;
-              }
-              Log::info() << "   dy : " << std::abs(grid.yspace()[1]-grid.yspace()[0]) / 1000. << " km" << std::endl;
-              Log::info() << "   lonlat(centre)    : " << grid.projection().lonlat(
-                { 0.5*(grid.xspace().max()+grid.xspace().min()),
-                  0.5*(grid.yspace().max()+grid.yspace().min())} ) << std::endl;
-              Log::info() << "   lonlat(xmin,ymax) : " << grid.projection().lonlat( { grid.xspace().min(), grid.yspace().max()} ) << std::endl;
-              Log::info() << "   lonlat(xmin,ymin) : " << grid.projection().lonlat( { grid.xspace().min(), grid.yspace().min()} ) << std::endl;
-              Log::info() << "   lonlat(xmax,ymin) : " << grid.projection().lonlat( { grid.xspace().max(), grid.yspace().min()} ) << std::endl;
-              Log::info() << "   lonlat(xmax,ymax) : " << grid.projection().lonlat( { grid.xspace().max(), grid.yspace().max()} ) << std::endl;
-           }
-           if( grid.projection().units() == "degrees" ) {
-              Log::info() << "   x : [ " << std::setw(10) << std::fixed << grid.xspace().min()
-                          << " , "       << std::setw(10) << std::fixed << grid.xspace().max() << " ] deg" << std::endl;
-              Log::info() << "   y : [ " << std::setw(10) << std::fixed << grid.yspace().min()
-                          << " , "       << std::setw(10) << std::fixed << grid.yspace().max() << " ] deg" << std::endl;
+            auto precision = Log::info().precision( 3 );
+            if ( grid.projection().units() == "meters" ) {
+                Log::info() << "   x : [ " << std::setw( 10 ) << std::fixed << grid.xspace().min() / 1000. << " , "
+                            << std::setw( 10 ) << std::fixed << grid.xspace().max() / 1000. << " ] km" << std::endl;
+                Log::info() << "   y : [ " << std::setw( 10 ) << std::fixed << grid.yspace().min() / 1000. << " , "
+                            << std::setw( 10 ) << std::fixed << grid.yspace().max() / 1000. << " ] km" << std::endl;
+                if ( grid.xspace().nxmax() == grid.xspace().nxmin() ) {
+                    Log::info() << "   dx : " << grid.xspace().dx()[0] / 1000. << " km" << std::endl;
+                }
+                Log::info() << "   dy : " << std::abs( grid.yspace()[1] - grid.yspace()[0] ) / 1000. << " km"
+                            << std::endl;
+                Log::info() << "   lonlat(centre)    : "
+                            << grid.projection().lonlat( {0.5 * ( grid.xspace().max() + grid.xspace().min() ),
+                                                          0.5 * ( grid.yspace().max() + grid.yspace().min() )} )
+                            << std::endl;
+                Log::info() << "   lonlat(xmin,ymax) : "
+                            << grid.projection().lonlat( {grid.xspace().min(), grid.yspace().max()} ) << std::endl;
+                Log::info() << "   lonlat(xmin,ymin) : "
+                            << grid.projection().lonlat( {grid.xspace().min(), grid.yspace().min()} ) << std::endl;
+                Log::info() << "   lonlat(xmax,ymin) : "
+                            << grid.projection().lonlat( {grid.xspace().max(), grid.yspace().min()} ) << std::endl;
+                Log::info() << "   lonlat(xmax,ymax) : "
+                            << grid.projection().lonlat( {grid.xspace().max(), grid.yspace().max()} ) << std::endl;
+            }
+            if ( grid.projection().units() == "degrees" ) {
+                Log::info() << "   x : [ " << std::setw( 10 ) << std::fixed << grid.xspace().min() << " , "
+                            << std::setw( 10 ) << std::fixed << grid.xspace().max() << " ] deg" << std::endl;
+                Log::info() << "   y : [ " << std::setw( 10 ) << std::fixed << grid.yspace().min() << " , "
+                            << std::setw( 10 ) << std::fixed << grid.yspace().max() << " ] deg" << std::endl;
             }
             PointLonLat first_point = *grid.lonlat().begin();
             PointLonLat last_point;
-            for( const auto p : grid.lonlat() ) {
-              last_point = p;
+            for ( const auto p : grid.lonlat() ) {
+                last_point = p;
             }
             Log::info() << "   lonlat(first)     : " << first_point << std::endl;
             Log::info() << "   lonlat(last)      : " << last_point << std::endl;
-            Log::info().precision(precision);
+            Log::info().precision( precision );
         }
         if ( json ) {
             std::stringstream stream;
@@ -229,77 +233,80 @@ int AtlasGrids::execute( const Args& args ) {
             stream << "/" << std::flush;
             std::cout << stream.str() << std::endl;
         }
-        
-        if( check ) {
+
+        if ( check ) {
             bool check_failed = false;
-            Log::Channel out; out.setStream( Log::error() );
-            PathName spec{ key };
-            if( not spec.exists() ) {
-              out << "Check failed:  " << key << " is not a file" << std::endl;
-              return failed();
+            Log::Channel out;
+            out.setStream( Log::error() );
+            PathName spec{key};
+            if ( not spec.exists() ) {
+                out << "Check failed:  " << key << " is not a file" << std::endl;
+                return failed();
             }
             util::Config config_check;
-            if( not util::Config{spec}.get( "check", config_check ) ) {
-              out << "Check failed:  no \"check\" section in " << key << std::endl;
-              return failed();
+            if ( not util::Config{spec}.get( "check", config_check ) ) {
+                out << "Check failed:  no \"check\" section in " << key << std::endl;
+                return failed();
             }
 
             idx_t size;
-            if( config_check.get("size",size) ) {
-                if( grid.size() != size ) {
-                  out << "Check failed: grid size " << grid.size() << " expected to be " << size << std::endl;
-                  check_failed = true;
+            if ( config_check.get( "size", size ) ) {
+                if ( grid.size() != size ) {
+                    out << "Check failed: grid size " << grid.size() << " expected to be " << size << std::endl;
+                    check_failed = true;
                 }
             }
             else {
-              Log::warning() << "Check for size skipped" << std::endl;
+                Log::warning() << "Check for size skipped" << std::endl;
             }
 
             std::string uid;
-            if( config_check.get("uid",uid) ) {
-                if( grid.uid() != uid ) {
-                  out << "Check failed: grid uid " << grid.uid() << " expected to be " << uid << std::endl;
-                  check_failed = true;
+            if ( config_check.get( "uid", uid ) ) {
+                if ( grid.uid() != uid ) {
+                    out << "Check failed: grid uid " << grid.uid() << " expected to be " << uid << std::endl;
+                    check_failed = true;
                 }
             }
             else {
-              Log::warning() << "Check for uid skipped" << std::endl;
+                Log::warning() << "Check for uid skipped" << std::endl;
             }
 
-            
+
             auto equal = []( const PointLonLat& p, const std::vector<double>& check ) -> bool {
-              if( not eckit::types::is_approximately_equal( p.lon(), check[0], 5.e-4 ) ) return false;
-              if( not eckit::types::is_approximately_equal( p.lat(), check[1], 5.e-4 ) ) return false;
-              return true;
+                if ( not eckit::types::is_approximately_equal( p.lon(), check[0], 5.e-4 ) ) return false;
+                if ( not eckit::types::is_approximately_equal( p.lat(), check[1], 5.e-4 ) ) return false;
+                return true;
             };
-            
+
             std::vector<double> first_point_lonlat;
-            if( config_check.get("lonlat(first)",first_point_lonlat) ) {
+            if ( config_check.get( "lonlat(first)", first_point_lonlat ) ) {
                 PointLonLat first_point = *grid.lonlat().begin();
-                if( not equal( first_point, first_point_lonlat ) ) {
-                  out << "Check failed: lonlat(first) " << first_point << " expected to be " << PointLonLat( first_point_lonlat.data() ) << std::endl;
-                  check_failed = true;
+                if ( not equal( first_point, first_point_lonlat ) ) {
+                    out << "Check failed: lonlat(first) " << first_point << " expected to be "
+                        << PointLonLat( first_point_lonlat.data() ) << std::endl;
+                    check_failed = true;
                 }
             }
             else {
-              Log::warning() << "Check for lonlat(first) skipped" << std::endl;
+                Log::warning() << "Check for lonlat(first) skipped" << std::endl;
             }
 
             std::vector<double> last_point_lonlat;
-            if( config_check.get("lonlat(last)",last_point_lonlat) ) {
-              PointLonLat last_point;
-              for( const auto&& p : grid.lonlat() ) {
-                last_point = p;
-              }
-                if( not equal( last_point, last_point_lonlat ) ) {
-                  out << "Check failed: lonlat(last) " << last_point << " expected to be " << PointLonLat( last_point_lonlat.data() ) << std::endl;
-                  check_failed = true;
+            if ( config_check.get( "lonlat(last)", last_point_lonlat ) ) {
+                PointLonLat last_point;
+                for ( const auto&& p : grid.lonlat() ) {
+                    last_point = p;
+                }
+                if ( not equal( last_point, last_point_lonlat ) ) {
+                    out << "Check failed: lonlat(last) " << last_point << " expected to be "
+                        << PointLonLat( last_point_lonlat.data() ) << std::endl;
+                    check_failed = true;
                 }
             }
             else {
-              Log::warning() << "Check for lonlat(last) skipped" << std::endl;
+                Log::warning() << "Check for lonlat(last) skipped" << std::endl;
             }
-            if( check_failed ) return failed();
+            if ( check_failed ) return failed();
             Log::info() << "SUCCESS: All checks passed" << std::endl;
         }
     }

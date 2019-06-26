@@ -38,6 +38,7 @@ double vortex_rollup( double lon, double lat, double t, double mean );
 
 class Program : public AtlasTool {
     virtual int execute( const Args& args );
+
 public:
     Program( int argc, char** argv );
 };
@@ -54,21 +55,20 @@ Program::Program( int argc, char** argv ) : AtlasTool( argc, argv ) {
     add_option( new SimpleOption<std::string>( "checksum", "File to write that will contains checksums of run" ) );
     add_option( new SimpleOption<bool>( "gmsh", "Output gmsh" ) );
     add_option( new SimpleOption<bool>( "no-validate", "Avoid validation of results to increase runtime" ) );
-    add_option( new SimpleOption<std::string>( "partitioner", "Partitioner for gridA (default=equal_regions)") );
+    add_option( new SimpleOption<std::string>( "partitioner", "Partitioner for gridA (default=equal_regions)" ) );
 }
 
 //-----------------------------------------------------------------------------
- 
-int Program::execute( const Args& args ) {
 
+int Program::execute( const Args& args ) {
     auto matrix_free       = util::Config( "matrix_free", args.getBool( "matrix-free", false ) );
     auto ghost             = util::Config( "ghost", args.getBool( "ghost", false ) );
     auto haloA             = option::halo( args.getLong( "haloA", 2 ) );
     auto haloB             = option::halo( args.getLong( "haloB", 2 ) );
     auto checksum_filepath = args.getString( "checksum", displayName() + ".checksum" );
     auto partitioner       = args.getString( "partitioner", "equal_regions" );
-    auto gridA = Grid( args.getString( "gridA" ) );
-    auto gridB = Grid( args.getString( "gridB" ) );
+    auto gridA             = Grid( args.getString( "gridA" ) );
+    auto gridB             = Grid( args.getString( "gridB" ) );
 
     auto meshgenerator = MeshGenerator( "structured" );
 

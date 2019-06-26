@@ -48,7 +48,7 @@ double wrap_angle( double a ) {
     return angle.lon();
 }
 
-}  // (anonymous namespace)
+}  // namespace
 
 void Rotation::print( std::ostream& out ) const {
     out << "north_pole:" << npole_ << ", south_pole:" << spole_ << ", rotation_angle:" << angle_;

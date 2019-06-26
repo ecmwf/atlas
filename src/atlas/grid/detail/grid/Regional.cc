@@ -175,8 +175,7 @@ struct Parse_ll00_step : ConfigParser {
 struct Parse_xy00_step : ConfigParser {
     Parse_xy00_step( const Projection&, const Grid::Config& config ) {
         valid = config.get( "nx", x.N ) && config.get( "ny", y.N ) && config.get( "dx", x.step ) &&
-                config.get( "dy", y.step ) && config.get( "xmin", x.min ) &&
-                config.get( "ymin", y.min );
+                config.get( "dy", y.step ) && config.get( "xmin", x.min ) && config.get( "ymin", y.min );
 
         if ( not valid ) return;
 
@@ -225,7 +224,7 @@ bool ConfigParser::parse( const Projection& projection, const Grid::Config& conf
     // top-left of domain and increments (any projection allowed)
     if ( ConfigParser::parse<Parse_ll01_step>( projection, config, x, y ) ) return true;
     if ( ConfigParser::parse<Parse_xy01_step>( projection, config, x, y ) ) return true;
-    
+
     // bottom-left of domain and increments (any projection allowed)
     if ( ConfigParser::parse<Parse_ll00_step>( projection, config, x, y ) ) return true;
     if ( ConfigParser::parse<Parse_xy00_step>( projection, config, x, y ) ) return true;
@@ -269,7 +268,8 @@ public:
             throw_Exception( "Could not parse configuration for RegularRegional grid", Here() );
         }
 
-        YSpace yspace = config.getInt( "y_numbering", -1 ) < 0 ? LinearSpacing( y.max, y.min, y.N, y.endpoint ) : LinearSpacing( y.min, y.max, y.N, y.endpoint );
+        YSpace yspace = config.getInt( "y_numbering", -1 ) < 0 ? LinearSpacing( y.max, y.min, y.N, y.endpoint )
+                                                               : LinearSpacing( y.min, y.max, y.N, y.endpoint );
 
         bool with_endpoint = true;
         XSpace xspace( {x.min, x.max}, std::vector<long>( y.N, x.N ), with_endpoint );
