@@ -11,6 +11,8 @@
 #include <ostream>
 #include <utility>
 
+#include "eckit/utils/Hash.h"
+
 #include "atlas/domain/detail/DomainFactory.h"
 #include "atlas/domain/detail/RectangularDomain.h"
 #include "atlas/runtime/Exception.h"
@@ -109,7 +111,13 @@ void RectangularDomain::print( std::ostream& os ) const {
 }
 
 void RectangularDomain::hash( eckit::Hash& h ) const {
-    spec().hash( h );
+    auto add_double = [&]( const double& x ) { h.add( std::round( x * 1.e8 ) ); };
+    h.add( type() );
+    h.add( units() );
+    add_double( xmin() );
+    add_double( xmax() );
+    add_double( ymin() );
+    add_double( ymax() );
 }
 
 bool RectangularDomain::containsNorthPole() const {

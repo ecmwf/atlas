@@ -273,7 +273,6 @@ public:
 
         bool with_endpoint = true;
         XSpace xspace( {x.min, x.max}, std::vector<long>( y.N, x.N ), with_endpoint );
-
         return new StructuredGrid::grid_t( xspace, yspace, projection, domain( config ) );
     }
 

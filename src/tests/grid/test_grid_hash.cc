@@ -29,10 +29,10 @@ namespace test {
 
 CASE( "test_global" ) {
     auto grids = {
-        std::make_tuple( Grid( "O32" ), "79599ee4825339e0ebbcd427d79d0177" ),
-        std::make_tuple( Grid( "O32", Domain() ), "79599ee4825339e0ebbcd427d79d0177" ),
-        std::make_tuple( Grid( "O32", RectangularDomain( {0, 360}, {90, -90} ) ), "79599ee4825339e0ebbcd427d79d0177" ),
-        std::make_tuple( Grid( "O32", ZonalBandDomain( {90, -90} ) ), "79599ee4825339e0ebbcd427d79d0177" ),
+        std::make_tuple( Grid( "O32" ), "e8d76a652ea937615276383aba43c912" ),
+        std::make_tuple( Grid( "O32", Domain() ), "e8d76a652ea937615276383aba43c912" ),
+        std::make_tuple( Grid( "O32", RectangularDomain( {0, 360}, {90, -90} ) ), "e8d76a652ea937615276383aba43c912" ),
+        std::make_tuple( Grid( "O32", ZonalBandDomain( {90, -90} ) ), "e8d76a652ea937615276383aba43c912" ),
     };
 
     int c{0};

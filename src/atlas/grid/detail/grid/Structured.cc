@@ -474,15 +474,24 @@ std::string Structured::type() const {
 }
 
 void Structured::hash( eckit::Hash& h ) const {
-    h.add( y().data(), sizeof( double ) * y().size() );
+    auto add_double        = [&]( const double& x ) { h.add( std::round( x * 1.e8 ) ); };
+    auto add_double_vector = [&]( const std::vector<double>& xvec ) {
+        for ( auto& x : xvec ) {
+            add_double( x );
+        }
+    };
+    auto add_long        = [&]( const idx_t& x ) { h.add( long( x ) ); };
+    auto add_long_vector = [&]( const std::vector<idx_t>& xvec ) {
+        for ( auto& x : xvec ) {
+            add_long( x );
+        }
+    };
 
-    // We can use nx() directly, but it could change the hash
-    std::vector<long> hashed_nx( nx().begin(), nx().end() );
-    h.add( hashed_nx.data(), sizeof( long ) * ny() );
+    add_double_vector( y() );
+    add_long_vector( nx() );
 
-    // also add lonmin and lonmax
-    h.add( xmin_.data(), sizeof( double ) * xmin_.size() );
-    h.add( dx_.data(), sizeof( double ) * dx_.size() );
+    add_double_vector( xmin_ );
+    add_double_vector( dx_ );
 
     // also add projection information
     projection().hash( h );
