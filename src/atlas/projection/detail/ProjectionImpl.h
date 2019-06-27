@@ -23,6 +23,7 @@ class Hash;
 }  // namespace eckit
 
 namespace atlas {
+class Domain;
 namespace util {
 class Config;
 }
@@ -39,8 +40,8 @@ public:
 public:
     static const ProjectionImpl* create( const eckit::Parametrisation& p );
 
-    ProjectionImpl() {}
-    virtual ~ProjectionImpl() {}  // destructor should be virtual
+    ProjectionImpl()          = default;
+    virtual ~ProjectionImpl() = default;  // destructor should be virtual
 
     virtual std::string type() const = 0;
 
@@ -50,7 +51,8 @@ public:
     PointLonLat lonlat( const PointXY& ) const;
     PointXY xy( const PointLonLat& ) const;
 
-    virtual bool strictlyRegional() const = 0;
+    virtual bool strictlyRegional() const             = 0;
+    virtual Domain boundingBox( const Domain& ) const = 0;
 
     virtual Spec spec() const = 0;
 
@@ -73,13 +75,15 @@ inline PointXY ProjectionImpl::xy( const PointLonLat& lonlat ) const {
     return xy;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+
 class Rotated : public util::Rotation {
 public:
     using Spec = ProjectionImpl::Spec;
 
     Rotated( const PointLonLat& south_pole, double rotation_angle = 0. );
     Rotated( const eckit::Parametrisation& );
-    virtual ~Rotated() {}
+    virtual ~Rotated() = default;
 
     static std::string classNamePrefix() { return "Rotated"; }
     static std::string typePrefix() { return "rotated_"; }
@@ -93,9 +97,9 @@ class NotRotated {
 public:
     using Spec = ProjectionImpl::Spec;
 
-    NotRotated() {}
+    NotRotated() = default;
     NotRotated( const eckit::Parametrisation& ) {}
-    virtual ~NotRotated() {}
+    virtual ~NotRotated() = default;
 
     static std::string classNamePrefix() { return ""; }  // deliberately empty
     static std::string typePrefix() { return ""; }       // deliberately empty

@@ -164,45 +164,39 @@ inline PointXYZ rotate_geocentric( const PointXYZ& p, const RotationMatrix& R ) 
 void Rotation::rotate( double crd[] ) const {
     if ( !rotated_ ) { return; }
 
-    if ( rotation_angle_only_ ) {
-        crd[LON] -= angle_;
-        return;
+    if ( !rotation_angle_only_ ) {
+        const PointLonLat L( wrap_latitude( {crd[LON], crd[LAT]} ) );
+        PointXYZ P;
+        UnitSphere::convertSphericalToCartesian( L, P );
+
+        const PointXYZ Pt = rotate_geocentric( P, rotate_ );
+        PointLonLat Lt;
+        UnitSphere::convertCartesianToSpherical( Pt, Lt );
+
+        crd[LON] = Lt.lon();
+        crd[LAT] = Lt.lat();
     }
 
-    const PointLonLat L( wrap_latitude( {crd[LON], crd[LAT]} ) );
-    PointXYZ P;
-    UnitSphere::convertSphericalToCartesian( L, P );
-
-    const PointXYZ Pt = rotate_geocentric( P, rotate_ );
-
-    PointLonLat Lt;
-    UnitSphere::convertCartesianToSpherical( Pt, Lt );
-
-    crd[LON] = Lt.lon() - angle_;
-    crd[LAT] = Lt.lat();
+    crd[LON] -= angle_;
 }
 
 void Rotation::unrotate( double crd[] ) const {
     if ( !rotated_ ) { return; }
 
-    if ( rotation_angle_only_ ) {
-        crd[LON] += angle_;
-        return;
+    crd[LON] += angle_;
+
+    if ( !rotation_angle_only_ ) {
+        const PointLonLat Lt( crd );
+        PointXYZ Pt;
+        UnitSphere::convertSphericalToCartesian( Lt, Pt );
+
+        const PointXYZ P = rotate_geocentric( Pt, unrotate_ );
+        PointLonLat L;
+        UnitSphere::convertCartesianToSpherical( P, L );
+
+        crd[LON] = L.lon();
+        crd[LAT] = L.lat();
     }
-
-    PointLonLat Lt( crd );
-    Lt.lon() += angle_;
-
-    PointXYZ Pt;
-    UnitSphere::convertSphericalToCartesian( Lt, Pt );
-
-    const PointXYZ P = rotate_geocentric( Pt, unrotate_ );
-
-    PointLonLat L;
-    UnitSphere::convertCartesianToSpherical( P, L );
-
-    crd[LON] = L.lon();
-    crd[LAT] = L.lat();
 }
 
 }  // namespace util
