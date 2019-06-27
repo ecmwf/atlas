@@ -95,22 +95,12 @@ struct Rotation : std::array<double, 2> {
 
         RectangularDomain before({box.west(), box.east()}, {box.south(), box.north()});
         Domain after = p.boundingBox( before );
-
-        if ( after.global() ) {
-            return {};
-        }
+        ATLAS_ASSERT( after );
 
         RectangularDomain r( after );
         ATLAS_ASSERT( r );
 
-        bool zonal = ZonalBandDomain( after );
-
-        double n = std::min( 90., r.ymax() );
-        double s = std::max( -90., r.ymin() );
-        double w = zonal ? 0. : r.xmin();
-        double e = zonal ? 360. : r.xmax();
-
-        return {n, w, s, e};
+        return {r.ymax(), r.xmin(), r.ymin(), r.xmax()};
     }
 };
 
@@ -189,7 +179,9 @@ CASE("MIR-282") {
         { NiNj{ 149, 105}, Rotation(-76.,  14.),  BoundingBox{72.,    -32.,   20.,  42.} },
         { NiNj{ 240, 240}, Rotation(-30.,  -5.),  BoundingBox{ 9.875, -15.,  -20.,  14.875} },
 
+        { NiNj{  13,  12}, Rotation(-15.,  45.),  BoundingBox{27.5,  -46.5,  -28,       1.5},  true },
         { NiNj{ 321, 370}, Rotation(-15.,  45.),  BoundingBox{27.5,  -46.5,  -28,       1.5},  true },
+
         { NiNj{ 202, 235}, Rotation(  0., 130.),  BoundingBox{32.75, -86.75, -37.75,  -26.15}, false },
         { NiNj{ 409, 309}, Rotation(-35.,  15.),  BoundingBox{36.,   -51.,   -41.,     51.},   true },
 

@@ -61,6 +61,24 @@ public:
     virtual operator bool() const { return true; }
 
     virtual void hash( eckit::Hash& ) const = 0;
+
+    struct Derivate {
+        Derivate( const ProjectionImpl& p, PointLonLat H ) : projection_( p ), H_( H ) {}
+        virtual PointLonLat d( PointLonLat ) const = 0;
+        const ProjectionImpl& projection_;
+        const PointLonLat H_;
+        void xy2lonlat( double crd[] ) const { projection_.xy2lonlat( crd ); }
+    };
+
+    struct DerivateFactory {
+        static ProjectionImpl::Derivate* build( const std::string& type, const ProjectionImpl& p, PointLonLat H );
+        static void list( std::ostream& out );
+
+    protected:
+        DerivateFactory( const std::string& );
+        virtual ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointLonLat H ) = 0;
+        virtual ~DerivateFactory();
+    };
 };
 
 inline PointLonLat ProjectionImpl::lonlat( const PointXY& xy ) const {

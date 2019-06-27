@@ -8,6 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <memory>
+
+#include "eckit/thread/AutoLock.h"
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
 
@@ -17,13 +20,123 @@
 #include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Earth.h"
-
 
 namespace atlas {
 namespace projection {
 namespace detail {
+
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace {
+
+template <class T>
+struct DerivateBuilder : public ProjectionImpl::DerivateFactory {
+    DerivateBuilder( const std::string& type ) : DerivateFactory( type ) {}
+    ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointLonLat H ) { return new T( p, H ); }
+};
+
+static pthread_once_t once = PTHREAD_ONCE_INIT;
+static eckit::Mutex* mtx  = nullptr;
+
+static std::map<std::string, ProjectionImpl::DerivateFactory*>* m = nullptr;
+static void init() {
+    mtx = new eckit::Mutex();
+    m    = new std::map<std::string, ProjectionImpl::DerivateFactory*>();
+}
+
+}  // (anonymous namespace)
+
+ProjectionImpl::Derivate* ProjectionImpl::DerivateFactory::build( const std::string& type, const ProjectionImpl& p,
+                                                                  PointLonLat H ) {
+    pthread_once( &once, init );
+    eckit::AutoLock<eckit::Mutex> __lock( mtx );
+
+    auto j = m->find( type );
+    if ( j == m->end() ) {
+        list( Log::error() << "DerivateFactory: unknown '" << type << "', choices are: " );
+        throw_Exception( "DerivateFactory: unknown '" + type + "'", Here() );
+    }
+    return ( *j ).second->make( p, H );
+}
+
+void ProjectionImpl::DerivateFactory::list( std::ostream& out ) {
+    pthread_once( &once, init );
+    eckit::AutoLock<eckit::Mutex> __lock( mtx );
+
+    const char* sep = "";
+    for ( const auto& j : *m ) {
+        out << sep << j.first;
+        sep = ", ";
+    }
+}
+
+ProjectionImpl::DerivateFactory::DerivateFactory( const std::string& type ) {
+    pthread_once( &once, init );
+    eckit::AutoLock<eckit::Mutex> __lock( mtx );
+
+    if ( m->find( type ) != m->end() ) {
+        throw_Exception( "DerivateFactory: duplicate '" + type + "'", Here() );
+    }
+    ( *m )[type] = this;
+}
+
+ProjectionImpl::DerivateFactory::~DerivateFactory() {
+    eckit::AutoLock<eckit::Mutex> __lock( mtx );
+
+    for ( auto& i : *m ) {
+        delete i.second;
+    }
+    m->clear();
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace {
+
+struct DerivateForwards final : ProjectionImpl::Derivate {
+    using Derivate::Derivate;
+    PointLonLat d( PointLonLat P ) const override {
+        PointXY A( P );
+        PointXY B( PointXY::add( P, Derivate::H_ ) );
+        Derivate::xy2lonlat( A.data() );
+        Derivate::xy2lonlat( B.data() );
+        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( Derivate::H_ ) );
+    }
+};
+
+struct DerivateBackwards final : ProjectionImpl::Derivate {
+    using Derivate::Derivate;
+    PointLonLat d( PointLonLat P ) const override {
+        PointXY A( PointXY::sub( P, Derivate::H_ ) );
+        PointXY B( P );
+        Derivate::xy2lonlat( A.data() );
+        Derivate::xy2lonlat( B.data() );
+        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( Derivate::H_ ) );
+    }
+};
+
+struct DerivateCentral final : ProjectionImpl::Derivate {
+    using Derivate::Derivate;
+    PointLonLat d( PointLonLat P ) const override {
+        PointXY H2( PointXY::mul( Derivate::H_, 0.5 ) );
+        PointXY A( PointXY::sub( P, H2 ) );
+        PointXY B( PointXY::add( P, H2 ) );
+        Derivate::xy2lonlat( A.data() );
+        Derivate::xy2lonlat( B.data() );
+        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( Derivate::H_ ) );
+    }
+};
+
+DerivateBuilder<DerivateForwards> __derivate1( "forwards" );
+DerivateBuilder<DerivateBackwards> __derivate2( "backwards" );
+DerivateBuilder<DerivateCentral> __derivate3( "central" );
+
+}  // (anonymous namespace)
+
+// --------------------------------------------------------------------------------------------------------------------
 
 const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) {
     std::string projectionType;
@@ -38,66 +151,38 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
     using eckit::types::is_strictly_greater;
 
     // 0. setup
+
+    if ( domain.global() ) {
+        return domain;
+    }
     RectangularDomain rect( domain );
+    ATLAS_ASSERT( rect );
 
     PointLonLat min;
     PointLonLat max;
     constexpr double h     = 0.001;
     constexpr size_t Niter = 100;
 
-#if 0
-    auto derivate_forwards = [&]( PointXY P, const PointXY& H ) -> PointXY {
-        PointXY A( P );
-        PointXY B( PointXY::add( P, H ) );
-        xy2lonlat( A.data() );
-        xy2lonlat( B.data() );
-
-        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( H ) );
-    };
-
-
-    auto derivate_backwards = [&]( PointXY P, const PointXY& H ) -> PointXY {
-        PointXY A( PointXY::sub( P, H ) );
-        PointXY B( P );
-        xy2lonlat( A.data() );
-        xy2lonlat( B.data() );
-
-        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( H ) );
-    };
-#endif
-
-    auto derivate_central = [&]( PointXY P, const PointXY& H ) -> PointXY {
-        PointXY H2( PointXY::mul( H, 0.5 ) );
-        PointXY A( PointXY::sub( P, H2 ) );
-        PointXY B( PointXY::add( P, H2 ) );
-        xy2lonlat( A.data() );
-        xy2lonlat( B.data() );
-
-        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( H ) );
-    };
-
-    auto derivate = derivate_central;
-
     // 1. determine box from projected/rotated corners
-    const std::vector<PointXY> corners{{rect.xmin(), rect.ymax()},
-                                       {rect.xmax(), rect.ymax()},
-                                       {rect.xmax(), rect.ymin()},
-                                       {rect.xmin(), rect.ymin()}};
+
+    const std::vector<PointXY> corners{
+        {rect.xmin(), rect.ymax()}, {rect.xmax(), rect.ymax()}, {rect.xmax(), rect.ymin()}, {rect.xmin(), rect.ymin()}};
 
     bool first = true;
     for ( auto& p : corners ) {
-        PointXY r( p );
+        PointLonLat r( p );
         xy2lonlat( r.data() );
-
-        min   = first ? r : PointLonLat::componentsMin( min, r );
-        max   = first ? r : PointLonLat::componentsMax( max, r );
-        first = false;
+        auto rmin = PointLonLat::sub( r, PointLonLat{h, h} );
+        auto rmax = PointLonLat::add( r, PointLonLat{h, h} );
+        min       = first ? rmin : PointLonLat::componentsMin( min, rmin );
+        max       = first ? rmax : PointLonLat::componentsMax( max, rmax );
+        first     = false;
     }
 
     struct crosses_t {
         crosses_t( const ProjectionImpl& projection, const PointXY& p1, const PointXY& p2, const PointXY& p3,
                    const PointXY& p4 ) :
-            projection_(projection),
+            projection_( projection ),
             quadrilateral_( xy_to_xyz( projection, p1 ), xy_to_xyz( projection, p2 ), xy_to_xyz( projection, p3 ),
                             xy_to_xyz( projection, p4 ) ) {}
 
@@ -121,32 +206,33 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
     } crosses( *this, corners[0], corners[1], corners[2], corners[3] );
 
 
-    // 2. locate latitude extrema by checking if poles are included (in the
-    // projected/rotated frame) and if not, find extrema not at the corners by refining
-    // iteratively
+    // 2. locate latitude extrema by checking if poles are included (in the unrotated/un-projected frame) and if not,
+    // find extrema not at the corners by refining iteratively
 
     PointXY NP{0, 90};
     PointXY SP{0, -90};
-    lonlat2xy( NP.data() );  // un-project (or unrotate, in case of rotation)
+    lonlat2xy( NP.data() );  // unrotate/un-project
     lonlat2xy( SP.data() );
 
     bool includesNorthPole = crosses( NP );
     bool includesSouthPole = crosses( SP );
 
-    if ( !includesNorthPole || !includesSouthPole ) {
-        for ( size_t i = 0; i < corners.size(); ++i ) {
+    for ( size_t i = 0; i < corners.size(); ++i ) {
+        if ( !includesNorthPole || !includesSouthPole ) {
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
             // finite difference vector derivative (H is the perturbation vector)
-            const PointXY H{PointLonLat::mul( PointLonLat::normalize( PointLonLat::sub( B, A ) ), h )};
-            double dAdy = derivate( A, H ).y();
-            double dBdy = derivate( B, H ).y();
+            const PointXY H{PointXY::mul( PointXY::normalize( PointXY::sub( B, A ) ), h )};
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, H ) );
+
+            double dAdy = derivate->d( A ).lat();
+            double dBdy = derivate->d( B ).lat();
 
             if ( !is_strictly_greater( dAdy * dBdy, 0. ) ) {
                 for ( size_t cnt = 0; cnt < Niter; ++cnt ) {
                     PointXY M   = PointXY::middle( A, B );
-                    double dMdy = derivate( M, H ).y();
+                    double dMdy = derivate->d( M ).lat();
                     if ( is_strictly_greater( dAdy * dMdy, 0. ) ) {
                         A    = M;
                         dAdy = dMdy;
@@ -160,24 +246,25 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
                     }
                 }
 
-                PointXY middle( PointXY::middle( A, B ) );
+                // update extrema, extended by 'a small amount' (arbitrary)
+                PointLonLat middle( PointXY::middle( A, B ) );
                 xy2lonlat( middle.data() );
 
-                min = PointLonLat::componentsMin( min, middle );
-                max = PointLonLat::componentsMax( max, middle );
+                min = PointLonLat::componentsMin( min, PointLonLat::sub( middle, PointLonLat{0, h} ) );
+                if ( includesSouthPole || is_approximately_lesser_or_equal( min[1], -90. ) ) {
+                    includesSouthPole = true;
+                    min[1]            = -90.;
+                }
+
+                max = PointLonLat::componentsMax( max, PointLonLat::add( middle, PointLonLat{0, h} ) );
+                if ( includesNorthPole || is_approximately_lesser_or_equal( 90., max[1] ) ) {
+                    includesNorthPole = true;
+                    max[1]            = 90.;
+                }
             }
         }
-
-        // extend by 'a small amount' (arbitrary) and limit
-        min    = PointLonLat::sub( min, PointLonLat{0, h} );
-        max    = PointLonLat::add( max, PointLonLat{0, h} );
-        min[1] = std::max( min[1], -90. );
-        max[1] = std::min( max[1], 90. );
-
-        includesNorthPole = includesNorthPole || is_approximately_lesser_or_equal( 90., max[1] );
-        includesSouthPole = includesSouthPole || is_approximately_lesser_or_equal( min[1], -90. );
     }
-    ATLAS_ASSERT( min[1] < max[1] );
+    ATLAS_ASSERT( min < max );
 
 
     // 3. locate latitude extrema by checking if date line is crossed (in the
@@ -186,20 +273,22 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
 
     bool crossesDateLine = includesNorthPole || includesSouthPole;
 
-    if ( !crossesDateLine ) {
-        for ( size_t i = 0; i < corners.size(); ++i ) {
+    for ( size_t i = 0; i < corners.size(); ++i ) {
+        if ( !crossesDateLine ) {
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
             // finite difference vector derivative (H is the perturbation vector)
-            const PointXY H{PointLonLat::mul( PointLonLat::normalize( PointLonLat::sub( B, A ) ), h )};
-            double dAdx = derivate( A, H ).x();
-            double dBdx = derivate( B, H ).x();
+            const PointXY H{PointXY::mul( PointXY::normalize( PointXY::sub( B, A ) ), h )};
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, H ) );
+
+            double dAdx = derivate->d( A ).lon();
+            double dBdx = derivate->d( B ).lon();
 
             if ( !is_strictly_greater( dAdx * dBdx, 0. ) ) {
                 for ( size_t cnt = 0; cnt < Niter; ++cnt ) {
                     PointXY M   = PointXY::middle( A, B );
-                    double dMdx = derivate( M, H ).x();
+                    double dMdx = derivate->d( M ).lon();
                     if ( is_strictly_greater( dAdx * dMdx, 0. ) ) {
                         A    = M;
                         dAdx = dMdx;
@@ -213,27 +302,26 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
                     }
                 }
 
-                PointXY middle( PointXY::middle( A, B ) );
+                // update extrema, extended by 'a small amount' (arbitrary)
+                PointLonLat middle( PointXY::middle( A, B ) );
                 xy2lonlat( middle.data() );
 
-                min = PointLonLat::componentsMin( min, middle );
-                max = PointLonLat::componentsMax( max, middle );
+                min = PointLonLat::componentsMin( min, PointLonLat::sub( middle, PointLonLat{h, 0} ) );
+                max = PointLonLat::componentsMax( max, PointLonLat::add( middle, PointLonLat{h, 0} ) );
+                if ( is_approximately_lesser_or_equal( 360., max[0] - min[0] ) ) {
+                    crossesDateLine = true;
+                    max[0] = min[0] + 360.;
+                }
             }
         }
-
-        // extend by 'a small amount' (arbitrary) and limit
-        min    = PointLonLat::sub( min, PointLonLat{h, 0} );
-        max    = PointLonLat::add( max, PointLonLat{h, 0} );
-        max[0] = std::min( max[0], min[0] + 360. );
-
-        crossesDateLine = is_approximately_lesser_or_equal( 360., max[0] - min[0] );
     }
-    ATLAS_ASSERT( min[0] < max[0] );
+    ATLAS_ASSERT( min < max );
 
 
     // 4. return bounding box
     return crossesDateLine ? ZonalBandDomain( {min[1], max[1]} )
-                           : RectangularDomain( {min[0], max[0]}, {min[1], max[1]} );}
+                           : RectangularDomain( {min[0], max[0]}, {min[1], max[1]} );
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -256,6 +344,7 @@ void Rotated::hash( eckit::Hash& hsh ) const {
     hsh.add( southPole().lat() );
     hsh.add( rotationAngle() );
 }
+
 
 }  // namespace detail
 }  // namespace projection

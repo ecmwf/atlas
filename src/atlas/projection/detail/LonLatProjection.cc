@@ -25,52 +25,6 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
-namespace {
-
-struct Derivate {
-    Derivate( const util::Rotation& rotation, PointLonLat H ) : rotation_( rotation ), H_( H ) {}
-    virtual PointLonLat d( PointLonLat ) const = 0;
-    const util::Rotation& rotation_;
-    const PointLonLat H_;
-    void xy2lonlat( double crd[] ) const { rotation_.rotate( crd ); }
-};
-
-struct DerivateForwards final : Derivate {
-    using Derivate::Derivate;
-    PointLonLat d( PointLonLat P ) const override {
-        PointXY A( P );
-        PointXY B( PointXY::add( P, Derivate::H_ ) );
-        Derivate::xy2lonlat( A.data() );
-        Derivate::xy2lonlat( B.data() );
-        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( Derivate::H_ ) );
-    }
-};
-
-struct DerivateBackwards final : Derivate {
-    using Derivate::Derivate;
-    PointLonLat d( PointLonLat P ) const override {
-        PointXY A( PointXY::sub( P, Derivate::H_ ) );
-        PointXY B( P );
-        Derivate::xy2lonlat( A.data() );
-        Derivate::xy2lonlat( B.data() );
-        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( Derivate::H_ ) );
-    }
-};
-
-struct DerivateCentral final : Derivate {
-    using Derivate::Derivate;
-    PointLonLat d( PointLonLat P ) const override {
-        PointXY H2( PointXY::mul( Derivate::H_, 0.5 ) );
-        PointXY A( PointXY::sub( P, H2 ) );
-        PointXY B( PointXY::add( P, H2 ) );
-        Derivate::xy2lonlat( A.data() );
-        Derivate::xy2lonlat( B.data() );
-        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( Derivate::H_ ) );
-    }
-};
-
-}  // (anonymous namespace)
-
 template <typename Rotation>
 LonLatProjectionT<Rotation>::LonLatProjectionT( const eckit::Parametrisation& config ) :
     ProjectionImpl(),
@@ -110,81 +64,90 @@ Domain LonLatProjectionT<Rotation>::boundingBox( const Domain& domain ) const {
     using eckit::types::is_approximately_lesser_or_equal;
     using eckit::types::is_strictly_greater;
 
+    // 0. setup
+
+    if ( domain.global() ) {
+        return domain;
+    }
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
 
-    // 0. setup
-    Point2 min, max;
-
-    constexpr double h = 0.001;
+    PointLonLat min;
+    PointLonLat max;
+    constexpr double h     = 0.001;
+    constexpr size_t Niter = 100;
 
     // 1. determine box from rotated corners
 
-    const std::vector<PointLonLat> corners{
+    const std::vector<PointXY> corners{
         {rect.xmin(), rect.ymax()}, {rect.xmax(), rect.ymax()}, {rect.xmax(), rect.ymin()}, {rect.xmin(), rect.ymin()}};
 
     bool first = true;
     for ( auto& p : corners ) {
         PointLonLat r( rotate( p ) );
-        min   = first ? r : Point2::componentsMin( min, r );
-        max   = first ? r : Point2::componentsMax( max, r );
-        first = false;
+        auto rmin = PointLonLat::sub( r, PointLonLat{h, h} );
+        auto rmax = PointLonLat::add( r, PointLonLat{h, h} );
+        min       = first ? rmin : PointLonLat::componentsMin( min, rmin );
+        max       = first ? rmax : PointLonLat::componentsMax( max, rmax );
+        first     = false;
     }
 
+    // 2. locate latitude extrema by checking if poles are included (in the unrotated frame) and if not, find extrema
+    // not at the corners by refining iteratively
 
-    // 2. locate latitude extrema by checking if poles are included (in the
-    // unrotated frame) and if not, find extrema not at the corners by refining
-    // iteratively
+    PointXY NP{unrotate( {0., 90.} )};
+    PointXY SP{unrotate( {0., -90.} )};
 
-    PointLonLat NP{unrotate( {0., 90.} )};
-    PointLonLat SP{unrotate( {0., -90.} )};
+    bool includesNorthPole = rect.contains( NP );
+    bool includesSouthPole = rect.contains( SP );
 
-    bool includesNorthPole = domain.contains( NP.lon(), NP.lat() );
-    bool includesSouthPole = domain.contains( SP.lon(), SP.lat() );
-
-    if ( !includesNorthPole || !includesSouthPole ) {
-        for ( size_t i = 0; i < corners.size(); ++i ) {
-            PointLonLat A = corners[i];
-            PointLonLat B = corners[( i + 1 ) % corners.size()];
+    for ( size_t i = 0; i < corners.size(); ++i ) {
+        if ( !includesNorthPole || !includesSouthPole ) {
+            PointXY A = corners[i];
+            PointXY B = corners[( i + 1 ) % corners.size()];
 
             // finite difference vector derivative (H is the perturbation vector)
-            const PointLonLat H{Point2::mul( Point2::normalize( Point2::sub( B, A ) ), h )};
-            std::unique_ptr<Derivate> derivate( new DerivateCentral( this->rotation_, H) );
+            const PointXY H{PointXY::mul( PointXY::normalize( PointXY::sub( B, A ) ), h )};
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, H ) );
 
-            double derivativeAtA = derivate->d( A ).lat();
-            double derivativeAtB = derivate->d( B ).lat();
+            double dAdy = derivate->d( A ).lat();
+            double dBdy = derivate->d( B ).lat();
 
-            if ( !is_strictly_greater( derivativeAtA * derivativeAtB, 0. ) ) {
-                for ( size_t cnt = 0; cnt < 100; ++cnt ) {
-                    PointLonLat M        = PointLonLat::middle( A, B );
-                    double derivativeAtM = derivate->d( M ).lat();
-                    if ( is_strictly_greater( derivativeAtA * derivativeAtM, 0. ) ) {
-                        A             = M;
-                        derivativeAtA = derivativeAtM;
+            if ( !is_strictly_greater( dAdy * dBdy, 0. ) ) {
+                for ( size_t cnt = 0; cnt < Niter; ++cnt ) {
+                    PointXY M   = PointXY::middle( A, B );
+                    double dMdy = derivate->d( M ).lat();
+                    if ( is_strictly_greater( dAdy * dMdy, 0. ) ) {
+                        A    = M;
+                        dAdy = dMdy;
                     }
-                    else if ( is_strictly_greater( derivativeAtB * derivativeAtM, 0. ) ) {
-                        B             = M;
-                        derivativeAtB = derivativeAtM;
+                    else if ( is_strictly_greater( dBdy * dMdy, 0. ) ) {
+                        B    = M;
+                        dBdy = dMdy;
                     }
                     else {
                         break;
                     }
                 }
 
-                PointLonLat r( rotate( PointLonLat::middle( A, B ) ) );
-                min = Point2::componentsMin( min, r );
-                max = Point2::componentsMax( max, r );
+                // update extrema, extended by 'a small amount' (arbitrary)
+                PointLonLat middle( rotate( PointXY::middle( A, B ) ) );
+
+                min = PointLonLat::componentsMin( min, PointLonLat::sub( middle, PointLonLat{0, h} ) );
+                if ( includesSouthPole || is_approximately_lesser_or_equal( min[1], -90. ) ) {
+                    includesSouthPole = true;
+                    min[1]            = -90.;
+                }
+
+                max = PointLonLat::componentsMax( max, PointLonLat::add( middle, PointLonLat{0, h} ) );
+                if ( includesNorthPole || is_approximately_lesser_or_equal( 90., max[1] ) ) {
+                    includesNorthPole = true;
+                    max[1]            = 90.;
+                }
             }
         }
-
-        // extend by 'a small amount' (arbitrary)
-        min = Point2::sub( min, Point2{0, h} );
-        max = Point2::add( max, Point2{0, h} );
-
-        includesNorthPole = includesNorthPole || is_approximately_lesser_or_equal( 90., max[1] );
-        includesSouthPole = includesSouthPole || is_approximately_lesser_or_equal( min[1], -90. );
     }
-    ATLAS_ASSERT( min[1] < max[1] );
+    ATLAS_ASSERT( min < max );
 
 
     // 3. locate latitude extrema by checking if date line is crossed (in the
@@ -219,57 +182,53 @@ Domain LonLatProjectionT<Rotation>::boundingBox( const Domain& domain ) const {
         }
     }
 
-    if ( !crossesDateLine ) {
-        for ( size_t i = 0; i < corners.size(); ++i ) {
-            PointLonLat A = corners[i];
-            PointLonLat B = corners[( i + 1 ) % corners.size()];
+    for ( size_t i = 0; i < corners.size(); ++i ) {
+        if ( !crossesDateLine ) {
+            PointXY A = corners[i];
+            PointXY B = corners[( i + 1 ) % corners.size()];
 
             // finite difference vector derivative (H is the perturbation vector)
-            const PointLonLat H{Point2::mul( Point2::normalize( Point2::sub( B, A ) ), h )};
-            std::unique_ptr<Derivate> derivate( new DerivateCentral( this->rotation_, H) );
+            const PointXY H{PointXY::mul( PointXY::normalize( PointXY::sub( B, A ) ), h )};
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, H ) );
 
-            double derivativeAtA = derivate->d( A ).lon();
-            double derivativeAtB = derivate->d( B ).lon();
+            double dAdx = derivate->d( A ).lon();
+            double dBdx = derivate->d( B ).lon();
 
-            if ( !is_strictly_greater( derivativeAtA * derivativeAtB, 0. ) ) {
-                for ( size_t cnt = 0; cnt < 100; ++cnt ) {
-                    PointLonLat M        = PointLonLat::middle( A, B );
-                    double derivativeAtM = derivate->d( M ).lon();
-                    if ( is_strictly_greater( derivativeAtA * derivativeAtM, 0. ) ) {
-                        A             = M;
-                        derivativeAtA = derivativeAtM;
+            if ( !is_strictly_greater( dAdx * dBdx, 0. ) ) {
+                for ( size_t cnt = 0; cnt < Niter; ++cnt ) {
+                    PointXY M   = PointXY::middle( A, B );
+                    double dMdx = derivate->d( M ).lon();
+                    if ( is_strictly_greater( dAdx * dMdx, 0. ) ) {
+                        A    = M;
+                        dAdx = dMdx;
                     }
-                    else if ( is_strictly_greater( derivativeAtB * derivativeAtM, 0. ) ) {
-                        B             = M;
-                        derivativeAtB = derivativeAtM;
+                    else if ( is_strictly_greater( dBdx * dMdx, 0. ) ) {
+                        B    = M;
+                        dBdx = dMdx;
                     }
                     else {
                         break;
                     }
                 }
 
-                PointLonLat r( rotate( PointLonLat::middle( A, B ) ) );
-                min = Point2::componentsMin( min, r );
-                max = Point2::componentsMax( max, r );
+                // update extrema, extended by 'a small amount' (arbitrary)
+                PointLonLat middle( rotate( PointXY::middle( A, B ) ) );
+
+                min = PointLonLat::componentsMin( min, PointLonLat::sub( middle, PointLonLat{h, 0} ) );
+                max = PointLonLat::componentsMax( max, PointLonLat::add( middle, PointLonLat{h, 0} ) );
+                if ( is_approximately_lesser_or_equal( 360., max[0] - min[0] ) ) {
+                    crossesDateLine = true;
+                    max[0] = min[0] + 360.;
+                }
             }
         }
-
-        // extend by 'a small amount' (arbitrary)
-        min = Point2::sub( min, Point2{h, 0} );
-        max = Point2::add( max, Point2{h, 0} );
-
-        crossesDateLine = is_approximately_lesser_or_equal( 360., max[0] - min[0] );
     }
-    ATLAS_ASSERT( min[0] < max[0] );
+    ATLAS_ASSERT( min < max );
 
 
-    // 4. set bounding box
-    double n = includesNorthPole ? 90. : max[1];
-    double s = includesSouthPole ? -90. : min[1];
-    double w = crossesDateLine ? 0 : min[0];
-    double e = crossesDateLine ? 360. : max[0];
-
-    return RectangularDomain({w, e}, {s, n});
+    // 4. return bounding box
+    return crossesDateLine ? ZonalBandDomain( {min[1], max[1]} )
+                           : RectangularDomain( {min[0], max[0]}, {min[1], max[1]} );
 }
 
 template <typename Rotation>
