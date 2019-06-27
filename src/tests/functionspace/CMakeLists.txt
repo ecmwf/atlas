@@ -18,6 +18,7 @@ if( HAVE_FCTEST )
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_functionspace.F90
     LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 
 endif()
@@ -25,45 +26,53 @@ endif()
 ecbuild_add_test( TARGET atlas_test_functionspace
   SOURCES  test_functionspace.cc
   LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_structuredcolumns
   SOURCES  test_structuredcolumns.cc
   LIBS     atlas
   MPI 5
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   CONDITION ECKIT_HAVE_MPI
 )
 
 ecbuild_add_test( TARGET atlas_test_pointcloud
   SOURCES  test_pointcloud.cc
   LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_reduced_halo
   SOURCES test_reduced_halo.cc
   LIBS    atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_stencil
   SOURCES  test_stencil.cc
   LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_executable( TARGET atlas_test_stencil_parallel
   SOURCES  test_stencil_parallel.cc
   LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   NOINSTALL
 )
 
 ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi4
-  COMMAND $<TARGET_FILE:atlas_test_stencil_parallel>
+  COMMAND atlas_test_stencil_parallel
   MPI 4
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   CONDITION ECKIT_HAVE_MPI
 )
 
 ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi16
-  COMMAND $<TARGET_FILE:atlas_test_stencil_parallel>
+  COMMAND atlas_test_stencil_parallel
   MPI 16
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   CONDITION ECKIT_HAVE_MPI
 )
 

@@ -38,7 +38,7 @@ function( atlas_atest_mgrids category case nprocs )
         foreach( t 1 4 12 )
             set( test_name  atlas_atest_${category}_mgrids_${gridA}_to_${gridB}_n${n}_t${t} )
             ecbuild_add_test( TARGET ${test_name}
-                COMMAND $<TARGET_FILE:atlas-atest-mgrids>
+                COMMAND atlas-atest-mgrids
                 ARGS    --gridA=${gridA}
                         --gridB=${gridB}
                         --haloA=3
@@ -49,6 +49,7 @@ function( atlas_atest_mgrids category case nprocs )
                         ${PARTITIONER}
                MPI ${n}
                OMP ${t}
+               ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
             )
             list( APPEND checksums ${test_name}.checksum )
             list( APPEND case_tests ${test_name} )

@@ -38,9 +38,9 @@ endif()
 # Envisioned to become part of ecbuild_add_test with a CUDA option
 # in a future ecbuild release
 macro( atlas_add_cuda_test )
-  set( options           BOOST )
+  set( options           "" )
   set( single_value_args TARGET )
-  set( multi_value_args  SOURCES LIBS )
+  set( multi_value_args  SOURCES LIBS ENVIRONMENT )
   cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
 
   if(_PAR_UNPARSED_ARGUMENTS)
@@ -69,7 +69,9 @@ macro( atlas_add_cuda_test )
       add_test ( NAME ${_PAR_TARGET} COMMAND ${_PAR_TARGET} )
     endif()
 
-    set_property( TEST ${_PAR_TARGET} APPEND PROPERTY ENVIRONMENT "ATLAS_RUN_NGPUS=1" )
+    list( APPEND _PAR_ENVIRONMENT "ATLAS_RUN_NGPUS=1" )
+    list( REMOVE_DUPLICATES _PAR_ENVIRONMENT )
+    set_property( TEST ${_PAR_TARGET} APPEND PROPERTY ENVIRONMENT "${_PAR_ENVIRONMENT}" )
 
   endif()
 endmacro()
@@ -80,6 +82,10 @@ endif()
 
 if( TRANSI_VERSION VERSION_LESS 0.6 )# transi not yet ported to CMake3
   include_directories( ${TRANSI_INCLUDE_DIRS} )
+endif()
+
+if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+  set( ATLAS_TEST_ENVIRONMENT "ATLAS_RUN_NGPUS=1" )
 endif()
 
 add_subdirectory( acc )

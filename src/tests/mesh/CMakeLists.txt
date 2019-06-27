@@ -13,6 +13,7 @@ if( HAVE_FCTEST )
     CONDITION       NOT atlas_fctest_mesh_DISABLED
     SOURCES         fctest_mesh.F90
     LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 
   add_fctest( TARGET atlas_fctest_meshgen
@@ -20,18 +21,21 @@ if( HAVE_FCTEST )
     CONDITION       ON
     SOURCES         fctest_meshgen.F90
     LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 
   add_fctest( TARGET atlas_fctest_connectivity
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_connectivity.F90
     LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 
   add_fctest( TARGET atlas_fctest_elements
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_elements.F90
     LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 
 endif()
@@ -41,6 +45,7 @@ ecbuild_add_test( TARGET atlas_test_parfields
   CONDITION  ECKIT_HAVE_MPI
   SOURCES    test_parfields.cc
   LIBS       atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_halo
@@ -48,6 +53,7 @@ ecbuild_add_test( TARGET atlas_test_halo
   CONDITION  ECKIT_HAVE_MPI
   SOURCES    test_halo.cc ../TestMeshes.h
   LIBS       atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_distmesh
@@ -55,6 +61,7 @@ ecbuild_add_test( TARGET atlas_test_distmesh
   CONDITION  ECKIT_HAVE_MPI
   SOURCES    test_distmesh.cc ../TestMeshes.h
   LIBS       atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test(
@@ -62,12 +69,14 @@ ecbuild_add_test(
   SOURCES     test_cgal_mesh_gen_from_points.cc
   CONDITION   ATLAS_HAVE_TESSELATION
   LIBS        atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test(
   TARGET atlas_test_accumulate_facets
   SOURCES test_accumulate_facets.cc
   LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_mesh_node2cell
@@ -75,6 +84,7 @@ ecbuild_add_test( TARGET atlas_test_mesh_node2cell
   CONDITION  ECKIT_HAVE_MPI
   SOURCES    test_mesh_node2cell.cc
   LIBS       atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 
@@ -82,6 +92,7 @@ foreach( test connectivity elements ll meshgen3d rgg )
   ecbuild_add_test( TARGET atlas_test_${test}
     SOURCES test_${test}.cc
     LIBS atlas
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 endforeach()
 
@@ -89,4 +100,5 @@ atlas_add_cuda_test(
   TARGET atlas_test_connectivity_kernel
   SOURCES test_connectivity_kernel.cu
   LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )

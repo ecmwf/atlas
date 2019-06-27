@@ -15,6 +15,7 @@ if( HAVE_FCTEST )
       LIBS            atlas_f
       CONDITION       ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
       MPI             4
+      ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
     )
   endif()
 
@@ -23,6 +24,7 @@ if( HAVE_FCTEST )
       LINKER_LANGUAGE Fortran
       SOURCES         fctest_trans_invtrans_grad.F90
       LIBS            atlas_f
+      ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
     )
   endif()
 
@@ -33,18 +35,21 @@ ecbuild_add_test( TARGET atlas_test_trans
   SOURCES   test_trans.cc
   CONDITION ATLAS_HAVE_TRANS AND ECKIT_HAVE_MPI AND TRANSI_HAVE_MPI
   LIBS      atlas transi
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_trans_serial
   SOURCES   test_trans.cc
   CONDITION ATLAS_HAVE_TRANS
   LIBS      atlas transi
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_trans_invtrans_grad
   SOURCES   test_trans_invtrans_grad.cc
   CONDITION ATLAS_HAVE_TRANS
   LIBS      atlas transi
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 # Note: This duplication is needed because transi is a private library of atlas,
@@ -54,14 +59,14 @@ if( ATLAS_HAVE_TRANS )
 ecbuild_add_test( TARGET atlas_test_transgeneral
   SOURCES   test_transgeneral.cc
   LIBS      atlas transi
-  ENVIRONMENT ATLAS_TRACE_REPORT=1
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_TRACE_REPORT=1
   CONDITION ATLAS_HAVE_FFTW
 )
 else()
 ecbuild_add_test( TARGET atlas_test_transgeneral
   SOURCES   test_transgeneral.cc
   LIBS      atlas
-  ENVIRONMENT ATLAS_TRACE_REPORT=1
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_TRACE_REPORT=1
   CONDITION ATLAS_HAVE_FFTW
 )
 endif()

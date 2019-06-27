@@ -11,7 +11,7 @@ if( HAVE_FCTEST )
             fctest_griddistribution
             fctest_state)
 
-        add_fctest( TARGET atlas_${test} SOURCES ${test}.F90 LINKER_LANGUAGE Fortran LIBS atlas_f )
+        add_fctest( TARGET atlas_${test} SOURCES ${test}.F90 LINKER_LANGUAGE Fortran LIBS atlas_f ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 
     endforeach()
 endif()
@@ -26,7 +26,7 @@ foreach(test
         test_state
         test_grid_hash)
 
-    ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas )
+    ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 
 endforeach()
 
@@ -36,7 +36,8 @@ foreach( grid ${grids} )
     get_filename_component( grid_name ${grid} NAME_WE )
     set( test_name atlas_test_grid_${grid_name} )
     ecbuild_add_test( TARGET ${test_name}
-        COMMAND $<TARGET_FILE:atlas-grids>
+        COMMAND atlas-grids
         ARGS    ${grid} --check
+        ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
     )
 endforeach()

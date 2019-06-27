@@ -10,26 +10,32 @@
 ecbuild_add_test( TARGET atlas_test_array_slicer
   SOURCES  test_array_slicer.cc
   LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_array
   SOURCES  test_array.cc
   LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 #ecbuild_add_test( TARGET atlas_test_table
 #  SOURCES  test_table.cc
 #  LIBS     atlas
+#  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 #)
 
 ecbuild_add_test( TARGET atlas_test_svector
   SOURCES  test_svector.cc
   LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+
 )
 
 ecbuild_add_test( TARGET atlas_test_array_view_util
   SOURCES  test_array_view_util.cc
   LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 
@@ -41,16 +47,19 @@ atlas_add_cuda_test(
   TARGET atlas_test_array_kernel
   SOURCES test_array_kernel.cu
   LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 atlas_add_cuda_test(
   TARGET atlas_test_vector_kernel
   SOURCES test_vector_kernel.cu
   LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 atlas_add_cuda_test(
   TARGET atlas_test_svector_kernel
   SOURCES test_svector_kernel.cu
   LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 

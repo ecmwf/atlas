@@ -10,6 +10,6 @@ foreach(test
           test_rotation
           test_projection_LAEA )
 
-    ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas )
+    ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 
 endforeach()
