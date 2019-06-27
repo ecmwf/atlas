@@ -58,7 +58,6 @@ ecbuild_add_test( TARGET atlas_test_stencil
 ecbuild_add_executable( TARGET atlas_test_stencil_parallel
   SOURCES  test_stencil_parallel.cc
   LIBS     atlas
-  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   NOINSTALL
 )
 

@@ -28,7 +28,6 @@ ecbuild_add_test( TARGET atlas_test_interpolation_cubic_prototype
 ecbuild_add_executable( TARGET atlas_test_interpolation_structured2D
   SOURCES  test_interpolation_structured2D.cc
   LIBS     atlas
-  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   NOINSTALL
 )
 
