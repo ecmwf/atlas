@@ -83,14 +83,7 @@ ProjectionImpl::DerivateFactory::DerivateFactory( const std::string& type ) {
     ( *m )[type] = this;
 }
 
-ProjectionImpl::DerivateFactory::~DerivateFactory() {
-    eckit::AutoLock<eckit::Mutex> __lock( mtx );
-
-    for ( auto& i : *m ) {
-        delete i.second;
-    }
-    m->clear();
-}
+ProjectionImpl::DerivateFactory::~DerivateFactory() = default;
 
 // --------------------------------------------------------------------------------------------------------------------
 
