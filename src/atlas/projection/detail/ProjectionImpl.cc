@@ -310,10 +310,13 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
                 max = PointLonLat::componentsMax( max, PointLonLat::add( middle, PointLonLat{h, 0} ) );
                 if ( is_approximately_lesser_or_equal( 360., max[0] - min[0] ) ) {
                     crossesDateLine = true;
-                    max[0] = min[0] + 360.;
                 }
             }
         }
+    }
+
+    if ( crossesDateLine ) {
+        max[0] = min[0] + 360.;
     }
     ATLAS_ASSERT( min < max );
 
