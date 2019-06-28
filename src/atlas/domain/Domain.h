@@ -143,6 +143,25 @@ private:
     const ::atlas::domain::ZonalBandDomain* domain_;
 };
 
+
+namespace domain {
+class GlobalDomain;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class GlobalDomain : public ZonalBandDomain {
+public:
+    GlobalDomain( const double& west );
+    GlobalDomain( );
+    GlobalDomain( const Domain& );
+
+    operator bool() { return domain_; }
+
+private:
+    const ::atlas::domain::GlobalDomain* domain_;
+};
+
 //---------------------------------------------------------------------------------------------------------------------
 
 }  // namespace atlas
