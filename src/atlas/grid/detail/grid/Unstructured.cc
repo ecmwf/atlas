@@ -13,6 +13,7 @@
 #include <initializer_list>
 #include <limits>
 #include <memory>
+#include <iomanip>
 
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
@@ -21,6 +22,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
+#include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/option.h"
@@ -79,7 +81,7 @@ Unstructured::Unstructured( const Grid& grid, Domain domain ) : Grid() {
     domain_ = domain;
     points_.reset( new std::vector<PointXY> );
     points_->reserve( grid.size() );
-    if ( not domain_ ) { domain_ = Domain( option::type( "global" ) ); }
+    if ( not domain_ ) { domain_ = GlobalDomain(); }
     atlas::grid::IteratorXY it( grid.xy_begin() );
     PointXY p;
     if ( RectangularDomain( domain_ ) ) {
@@ -102,33 +104,52 @@ Unstructured::Unstructured( const Grid& grid, Domain domain ) : Grid() {
     points_->shrink_to_fit();
 }
 
-Unstructured::Unstructured( const util::Config& ) : Grid() {
+Unstructured::Unstructured( const util::Config& config ) : Grid() {
     util::Config config_domain;
-    config_domain.set( "type", "global" );
+    if( not config.get("domain", config_domain) ) {
+        config_domain.set( "type", "global" );
+    }
     domain_ = Domain( config_domain );
-    ATLAS_NOTIMPLEMENTED;
+    std::vector<double> xy;
+    if( config.get( "xy", xy ) ) {
+        const size_t N = xy.size()/2;
+        points_.reset( new std::vector<PointXY> );
+        points_->reserve( N );
+        for( size_t n=0; n<N; ++n ) {
+            points_->emplace_back( PointXY{xy[2*n],xy[2*n+1]} );
+        }
+    } else {
+        std::vector<double> x;
+        std::vector<double> y;
+        if( not config.get( "x", x ) ) {
+            throw_Exception("x missing from configuration");
+        }
+        if( not config.get( "y", y ) ) {
+            throw_Exception("y missing from configuration");
+        }
+        ATLAS_ASSERT( x.size() == y.size() );
+        points_.reset( new std::vector<PointXY> );
+        points_->reserve( x.size() );
+        for( size_t n=0; n<x.size(); ++n ) {
+            points_->emplace_back( PointXY{x[n],y[n]} );
+        }
+    }
 }
 
 Unstructured::Unstructured( std::vector<PointXY>* pts ) : Grid(), points_( pts ) {
-    util::Config config_domain;
-    config_domain.set( "type", "global" );
-    domain_ = Domain( config_domain );
+    domain_ = GlobalDomain();
 }
 
 Unstructured::Unstructured( std::vector<PointXY>&& pts ) :
     Grid(),
     points_( new std::vector<PointXY>( std::move( pts ) ) ) {
-    util::Config config_domain;
-    config_domain.set( "type", "global" );
-    domain_ = Domain( config_domain );
+    domain_ = GlobalDomain();
 }
 
 Unstructured::Unstructured( std::initializer_list<PointXY> initializer_list ) :
     Grid(),
     points_( new std::vector<PointXY>( initializer_list ) ) {
-    util::Config config_domain;
-    config_domain.set( "type", "global" );
-    domain_ = Domain( config_domain );
+    domain_ = GlobalDomain();
 }
 
 Unstructured::~Unstructured() {}
@@ -201,6 +222,35 @@ bool Unstructured::IteratorXYPredicated::next( PointXY& /*xy*/ ) {
     }
 #endif
 }
+
+#if 1
+namespace {  // anonymous
+
+static class unstructured : public GridBuilder {
+    using Implementation = atlas::Grid::Implementation;
+    using Config         = Grid::Config;
+
+public:
+    unstructured() : GridBuilder( "unstructured" ) {}
+
+    virtual void print( std::ostream& os ) const {
+        os << std::left << std::setw( 20 ) << " "
+           << "Unstructured grid";
+    }
+
+    virtual const Implementation* create( const std::string& /* name */, const Config& ) const {
+        throw_NotImplemented( "Cannot create unstructured grid from name", Here() );
+    }
+
+    virtual const Implementation* create( const Config& config ) const {
+        return new Unstructured( config );
+    }
+
+} unstructured_;
+
+}  // anonymous namespace
+#endif
+
 
 }  // namespace grid
 }  // namespace detail

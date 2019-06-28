@@ -117,10 +117,12 @@ int AtlasGrids::execute( const Args& args ) {
     }
 
     if ( !key.empty() ) {
-        StructuredGrid grid;
+        Grid grid;
 
         PathName spec{key};
-        if ( spec.exists() ) { grid = Grid( Grid::Spec{spec} ); }
+        if ( spec.exists() ) {
+            grid = Grid( Grid::Spec{spec} );
+        }
         else {
             grid = Grid( key );
         }
@@ -128,7 +130,6 @@ int AtlasGrids::execute( const Args& args ) {
         if ( !grid ) return failed();
 
         if ( info ) {
-            double deg, km;
             Log::info() << "Grid " << key << std::endl;
             Log::info() << "   name:                               " << grid.name() << std::endl;
             Log::info() << "   uid:                                " << grid.uid() << std::endl;
@@ -142,79 +143,83 @@ int AtlasGrids::execute( const Args& args ) {
 
             Log::info() << "   memory footprint per field (dp):    " << eckit::Bytes( memsize ) << std::endl;
 
+            if ( auto structuredgrid = StructuredGrid( grid ) ) {
 
-            if ( not grid.projection() ) {
-                Log::info() << "   number of latitudes (N-S):          " << grid.ny() << std::endl;
-                Log::info() << "   number of longitudes (max):         " << grid.nxmax() << std::endl;
-
-                deg = ( grid.y().front() - grid.y().back() ) / ( grid.ny() - 1 );
-                km  = deg * 40075. / 360.;
-                Log::info() << "   approximate resolution N-S:         " << std::setw( 10 ) << std::fixed << deg
-                            << " deg   " << km << " km " << std::endl;
-
-                deg = 360. / static_cast<double>( grid.nx( grid.ny() / 2 ) );
-                km  = deg * 40075. / 360.;
-                Log::info() << "   approximate resolution E-W equator: " << std::setw( 10 ) << std::fixed << deg
-                            << " deg   " << km << " km " << std::endl;
-
-                deg = 360. * std::cos( grid.y( grid.ny() / 4 ) * M_PI / 180. ) /
-                      static_cast<double>( grid.nx( grid.ny() / 4 ) );
-                km = deg * 40075. / 360.;
-                Log::info() << "   approximate resolution E-W midlat:  " << std::setw( 10 ) << std::fixed << deg
-                            << " deg   " << km << " km " << std::endl;
-
-                deg = 360. * std::cos( grid.y().front() * M_PI / 180. ) / static_cast<double>( grid.nx().front() );
-                km  = deg * 40075. / 360.;
-
-
-                Log::info() << "   approximate resolution E-W pole:    " << std::setw( 10 ) << std::fixed << deg
-                            << " deg   " << km << " km " << std::endl;
-
-                Log::info() << "   spectral truncation -- linear:      " << grid.ny() - 1 << std::endl;
-                Log::info() << "   spectral truncation -- quadratic:   "
-                            << static_cast<int>( std::floor( 2. / 3. * grid.ny() + 0.5 ) ) - 1 << std::endl;
-                Log::info() << "   spectral truncation -- cubic:       "
-                            << static_cast<int>( std::floor( 0.5 * grid.ny() + 0.5 ) ) - 1 << std::endl;
-            }
-
-            auto precision = Log::info().precision( 3 );
-            if ( grid.projection().units() == "meters" ) {
-                Log::info() << "   x : [ " << std::setw( 10 ) << std::fixed << grid.xspace().min() / 1000. << " , "
-                            << std::setw( 10 ) << std::fixed << grid.xspace().max() / 1000. << " ] km" << std::endl;
-                Log::info() << "   y : [ " << std::setw( 10 ) << std::fixed << grid.yspace().min() / 1000. << " , "
-                            << std::setw( 10 ) << std::fixed << grid.yspace().max() / 1000. << " ] km" << std::endl;
-                if ( grid.xspace().nxmax() == grid.xspace().nxmin() ) {
-                    Log::info() << "   dx : " << grid.xspace().dx()[0] / 1000. << " km" << std::endl;
+                if ( not grid.projection() ) {
+                    double deg, km;
+                    
+                    Log::info() << "   number of latitudes (N-S):          " << structuredgrid.ny() << std::endl;
+                    Log::info() << "   number of longitudes (max):         " << structuredgrid.nxmax() << std::endl;
+    
+                    deg = ( structuredgrid.y().front() - structuredgrid.y().back() ) / ( structuredgrid.ny() - 1 );
+                    km  = deg * 40075. / 360.;
+                    Log::info() << "   approximate resolution N-S:         " << std::setw( 10 ) << std::fixed << deg
+                                << " deg   " << km << " km " << std::endl;
+    
+                    deg = 360. / static_cast<double>( structuredgrid.nx( structuredgrid.ny() / 2 ) );
+                    km  = deg * 40075. / 360.;
+                    Log::info() << "   approximate resolution E-W equator: " << std::setw( 10 ) << std::fixed << deg
+                                << " deg   " << km << " km " << std::endl;
+    
+                    deg = 360. * std::cos( structuredgrid.y( structuredgrid.ny() / 4 ) * M_PI / 180. ) /
+                          static_cast<double>( structuredgrid.nx( structuredgrid.ny() / 4 ) );
+                    km = deg * 40075. / 360.;
+                    Log::info() << "   approximate resolution E-W midlat:  " << std::setw( 10 ) << std::fixed << deg
+                                << " deg   " << km << " km " << std::endl;
+    
+                    deg = 360. * std::cos( structuredgrid.y().front() * M_PI / 180. ) / static_cast<double>( structuredgrid.nx().front() );
+                    km  = deg * 40075. / 360.;
+    
+    
+                    Log::info() << "   approximate resolution E-W pole:    " << std::setw( 10 ) << std::fixed << deg
+                                << " deg   " << km << " km " << std::endl;
+    
+                    Log::info() << "   spectral truncation -- linear:      " << structuredgrid.ny() - 1 << std::endl;
+                    Log::info() << "   spectral truncation -- quadratic:   "
+                                << static_cast<int>( std::floor( 2. / 3. * structuredgrid.ny() + 0.5 ) ) - 1 << std::endl;
+                    Log::info() << "   spectral truncation -- cubic:       "
+                                << static_cast<int>( std::floor( 0.5 * structuredgrid.ny() + 0.5 ) ) - 1 << std::endl;
                 }
-                Log::info() << "   dy : " << std::abs( grid.yspace()[1] - grid.yspace()[0] ) / 1000. << " km"
-                            << std::endl;
-                Log::info() << "   lonlat(centre)    : "
-                            << grid.projection().lonlat( {0.5 * ( grid.xspace().max() + grid.xspace().min() ),
-                                                          0.5 * ( grid.yspace().max() + grid.yspace().min() )} )
-                            << std::endl;
-                Log::info() << "   lonlat(xmin,ymax) : "
-                            << grid.projection().lonlat( {grid.xspace().min(), grid.yspace().max()} ) << std::endl;
-                Log::info() << "   lonlat(xmin,ymin) : "
-                            << grid.projection().lonlat( {grid.xspace().min(), grid.yspace().min()} ) << std::endl;
-                Log::info() << "   lonlat(xmax,ymin) : "
-                            << grid.projection().lonlat( {grid.xspace().max(), grid.yspace().min()} ) << std::endl;
-                Log::info() << "   lonlat(xmax,ymax) : "
-                            << grid.projection().lonlat( {grid.xspace().max(), grid.yspace().max()} ) << std::endl;
+    
+                auto precision = Log::info().precision( 3 );
+                if ( grid.projection().units() == "meters" ) {
+                    Log::info() << "   x : [ " << std::setw( 10 ) << std::fixed << structuredgrid.xspace().min() / 1000. << " , "
+                                << std::setw( 10 ) << std::fixed << structuredgrid.xspace().max() / 1000. << " ] km" << std::endl;
+                    Log::info() << "   y : [ " << std::setw( 10 ) << std::fixed << structuredgrid.yspace().min() / 1000. << " , "
+                                << std::setw( 10 ) << std::fixed << structuredgrid.yspace().max() / 1000. << " ] km" << std::endl;
+                    if ( structuredgrid.xspace().nxmax() == structuredgrid.xspace().nxmin() ) {
+                        Log::info() << "   dx : " << structuredgrid.xspace().dx()[0] / 1000. << " km" << std::endl;
+                    }
+                    Log::info() << "   dy : " << std::abs( structuredgrid.yspace()[1] - structuredgrid.yspace()[0] ) / 1000. << " km"
+                                << std::endl;
+                    Log::info() << "   lonlat(centre)    : "
+                                << grid.projection().lonlat( {0.5 * ( structuredgrid.xspace().max() + structuredgrid.xspace().min() ),
+                                                              0.5 * ( structuredgrid.yspace().max() + structuredgrid.yspace().min() )} )
+                                << std::endl;
+                    Log::info() << "   lonlat(xmin,ymax) : "
+                                << grid.projection().lonlat( {structuredgrid.xspace().min(), structuredgrid.yspace().max()} ) << std::endl;
+                    Log::info() << "   lonlat(xmin,ymin) : "
+                                << grid.projection().lonlat( {structuredgrid.xspace().min(), structuredgrid.yspace().min()} ) << std::endl;
+                    Log::info() << "   lonlat(xmax,ymin) : "
+                                << grid.projection().lonlat( {structuredgrid.xspace().max(), structuredgrid.yspace().min()} ) << std::endl;
+                    Log::info() << "   lonlat(xmax,ymax) : "
+                                << grid.projection().lonlat( {structuredgrid.xspace().max(), structuredgrid.yspace().max()} ) << std::endl;
+                }
+                if ( grid.projection().units() == "degrees" ) {
+                    Log::info() << "   x : [ " << std::setw( 10 ) << std::fixed << structuredgrid.xspace().min() << " , "
+                                << std::setw( 10 ) << std::fixed << structuredgrid.xspace().max() << " ] deg" << std::endl;
+                    Log::info() << "   y : [ " << std::setw( 10 ) << std::fixed << structuredgrid.yspace().min() << " , "
+                                << std::setw( 10 ) << std::fixed << structuredgrid.yspace().max() << " ] deg" << std::endl;
+                }
+                PointLonLat first_point = *grid.lonlat().begin();
+                PointLonLat last_point;
+                for ( const auto p : grid.lonlat() ) {
+                    last_point = p;
+                }
+                Log::info() << "   lonlat(first)     : " << first_point << std::endl;
+                Log::info() << "   lonlat(last)      : " << last_point << std::endl;
+                Log::info().precision( precision );
             }
-            if ( grid.projection().units() == "degrees" ) {
-                Log::info() << "   x : [ " << std::setw( 10 ) << std::fixed << grid.xspace().min() << " , "
-                            << std::setw( 10 ) << std::fixed << grid.xspace().max() << " ] deg" << std::endl;
-                Log::info() << "   y : [ " << std::setw( 10 ) << std::fixed << grid.yspace().min() << " , "
-                            << std::setw( 10 ) << std::fixed << grid.yspace().max() << " ] deg" << std::endl;
-            }
-            PointLonLat first_point = *grid.lonlat().begin();
-            PointLonLat last_point;
-            for ( const auto p : grid.lonlat() ) {
-                last_point = p;
-            }
-            Log::info() << "   lonlat(first)     : " << first_point << std::endl;
-            Log::info() << "   lonlat(last)      : " << last_point << std::endl;
-            Log::info().precision( precision );
         }
         if ( json ) {
             std::stringstream stream;
@@ -225,13 +230,15 @@ int AtlasGrids::execute( const Args& args ) {
         }
 
         if ( rtable ) {
-            std::stringstream stream;
-            stream << "&NAMRGRI\n";
-            for ( idx_t j = 0; j < grid.ny(); ++j )
-                stream << " NRGRI(" << std::setfill( '0' ) << std::setw( 5 ) << 1 + j << ")=" << std::setfill( ' ' )
-                       << std::setw( 5 ) << grid.nx( j ) << ",\n";
-            stream << "/" << std::flush;
-            std::cout << stream.str() << std::endl;
+            if ( auto structuredgrid = StructuredGrid( grid ) ) {
+                std::stringstream stream;
+                stream << "&NAMRGRI\n";
+                for ( idx_t j = 0; j < structuredgrid.ny(); ++j )
+                    stream << " NRGRI(" << std::setfill( '0' ) << std::setw( 5 ) << 1 + j << ")=" << std::setfill( ' ' )
+                           << std::setw( 5 ) << structuredgrid.nx( j ) << ",\n";
+                stream << "/" << std::flush;
+                std::cout << stream.str() << std::endl;
+            }
         }
 
         if ( check ) {
@@ -294,7 +301,7 @@ int AtlasGrids::execute( const Args& args ) {
             std::vector<double> last_point_lonlat;
             if ( config_check.get( "lonlat(last)", last_point_lonlat ) ) {
                 PointLonLat last_point;
-                for ( const auto&& p : grid.lonlat() ) {
+                for ( const auto p : grid.lonlat() ) {
                     last_point = p;
                 }
                 if ( not equal( last_point, last_point_lonlat ) ) {
