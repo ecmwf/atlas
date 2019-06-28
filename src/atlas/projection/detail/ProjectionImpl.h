@@ -63,23 +63,30 @@ public:
     virtual void hash( eckit::Hash& ) const = 0;
 
     struct Derivate {
-        Derivate( const ProjectionImpl& p, PointLonLat H ) : projection_( p ), H_( H ) {}
-        virtual PointLonLat d( PointLonLat ) const = 0;
+        Derivate( const ProjectionImpl& p, PointXY A, PointXY B, double h );
+        virtual ~Derivate();
+        virtual PointLonLat d( PointXY ) const = 0;
+    protected:
         const ProjectionImpl& projection_;
-        const PointLonLat H_;
-        void xy2lonlat( double crd[] ) const { projection_.xy2lonlat( crd ); }
+        const PointXY H_;
+        const double normH_;
+        PointLonLat xy2lonlat( const PointXY& p ) const {
+            PointLonLat q( p );
+            projection_.xy2lonlat( q.data() );
+            return q;
+        }
     };
 
     struct DerivateFactory {
-        static ProjectionImpl::Derivate* build( const std::string& type, const ProjectionImpl& p, PointLonLat H );
+        static ProjectionImpl::Derivate* build( const std::string& type, const ProjectionImpl& p, PointXY A, PointXY B,
+                                                double h = 0.001 );
         static void list( std::ostream& out );
 
     protected:
         DerivateFactory( const std::string& );
-        virtual ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointLonLat H ) = 0;
+        virtual ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) = 0;
         virtual ~DerivateFactory();
-    };
-};
+    };};
 
 inline PointLonLat ProjectionImpl::lonlat( const PointXY& xy ) const {
     PointLonLat lonlat( xy );

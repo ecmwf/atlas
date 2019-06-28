@@ -35,7 +35,7 @@ namespace {
 template <class T>
 struct DerivateBuilder : public ProjectionImpl::DerivateFactory {
     DerivateBuilder( const std::string& type ) : DerivateFactory( type ) {}
-    ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointLonLat H ) { return new T( p, H ); }
+    ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) { return new T( p, A, B, h ); }
 };
 
 static pthread_once_t once = PTHREAD_ONCE_INIT;
@@ -50,16 +50,25 @@ static void init() {
 }  // (anonymous namespace)
 
 ProjectionImpl::Derivate* ProjectionImpl::DerivateFactory::build( const std::string& type, const ProjectionImpl& p,
-                                                                  PointLonLat H ) {
+                                                                  PointXY A, PointXY B, double h ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> __lock( mtx );
+
+    ATLAS_ASSERT( 0. < h );
+    if ( A.distance2( B ) < h * h ) {
+        struct DerivateDegenerate final : Derivate {
+            using Derivate::Derivate;
+            PointLonLat d( PointXY ) const override { return {}; }
+        };
+        return new DerivateDegenerate( p, A, B, h );
+    }
 
     auto j = m->find( type );
     if ( j == m->end() ) {
         list( Log::error() << "DerivateFactory: unknown '" << type << "', choices are: " );
         throw_Exception( "DerivateFactory: unknown '" + type + "'", Here() );
     }
-    return ( *j ).second->make( p, H );
+    return ( *j ).second->make( p, A, B, h );
 }
 
 void ProjectionImpl::DerivateFactory::list( std::ostream& out ) {
@@ -87,39 +96,42 @@ ProjectionImpl::DerivateFactory::~DerivateFactory() = default;
 
 // --------------------------------------------------------------------------------------------------------------------
 
+ProjectionImpl::Derivate::Derivate( const ProjectionImpl& p, PointXY A, PointXY B, double h ) :
+    projection_( p ),
+    H_{PointXY::mul( PointXY::normalize( PointXY::sub( B, A ) ), h )},
+    normH_( PointXY::norm( H_ ) ) {}
+
+ProjectionImpl::Derivate::~Derivate() = default;
+
 namespace {
 
 struct DerivateForwards final : ProjectionImpl::Derivate {
     using Derivate::Derivate;
-    PointLonLat d( PointLonLat P ) const override {
-        PointXY A( P );
-        PointXY B( PointXY::add( P, Derivate::H_ ) );
-        Derivate::xy2lonlat( A.data() );
-        Derivate::xy2lonlat( B.data() );
-        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( Derivate::H_ ) );
+    PointLonLat d( PointXY P ) const override {
+        PointXY A( xy2lonlat( P ) );
+        PointXY B( xy2lonlat( PointXY::add( P, H_ ) ) );
+        return PointXY::div( PointXY::sub( B, A ), normH_ );
     }
 };
 
 struct DerivateBackwards final : ProjectionImpl::Derivate {
     using Derivate::Derivate;
-    PointLonLat d( PointLonLat P ) const override {
-        PointXY A( PointXY::sub( P, Derivate::H_ ) );
-        PointXY B( P );
-        Derivate::xy2lonlat( A.data() );
-        Derivate::xy2lonlat( B.data() );
-        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( Derivate::H_ ) );
+    PointLonLat d( PointXY P ) const override {
+        PointXY A( xy2lonlat( PointXY::sub( P, H_ ) ) );
+        PointXY B( xy2lonlat( P ) );
+        return PointXY::div( PointXY::sub( B, A ), normH_ );
     }
 };
 
 struct DerivateCentral final : ProjectionImpl::Derivate {
-    using Derivate::Derivate;
-    PointLonLat d( PointLonLat P ) const override {
-        PointXY H2( PointXY::mul( Derivate::H_, 0.5 ) );
-        PointXY A( PointXY::sub( P, H2 ) );
-        PointXY B( PointXY::add( P, H2 ) );
-        Derivate::xy2lonlat( A.data() );
-        Derivate::xy2lonlat( B.data() );
-        return PointXY::div( PointXY::sub( B, A ), PointXY::norm( Derivate::H_ ) );
+    DerivateCentral( const ProjectionImpl& p, PointXY A, PointXY B, double h ) :
+        Derivate( p, A, B, h ),
+        H2_{PointXY::mul( H_, 0.5 )} {}
+    const PointXY H2_;
+    PointLonLat d( PointXY P ) const override {
+        PointXY A( xy2lonlat( PointXY::sub( P, H2_ ) ) );
+        PointXY B( xy2lonlat( PointXY::add( P, H2_ ) ) );
+        return PointXY::div( PointXY::sub( B, A ), normH_ );
     }
 };
 
@@ -215,10 +227,7 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
-            // finite difference vector derivative (H is the perturbation vector)
-            const PointXY H{PointXY::mul( PointXY::normalize( PointXY::sub( B, A ) ), h )};
-            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, H ) );
-
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, A, B ) );
             double dAdy = derivate->d( A ).lat();
             double dBdy = derivate->d( B ).lat();
 
@@ -271,10 +280,7 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
-            // finite difference vector derivative (H is the perturbation vector)
-            const PointXY H{PointXY::mul( PointXY::normalize( PointXY::sub( B, A ) ), h )};
-            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, H ) );
-
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, A, B ) );
             double dAdx = derivate->d( A ).lon();
             double dBdx = derivate->d( B ).lon();
 
@@ -340,7 +346,6 @@ void Rotated::hash( eckit::Hash& hsh ) const {
     hsh.add( southPole().lat() );
     hsh.add( rotationAngle() );
 }
-
 
 }  // namespace detail
 }  // namespace projection

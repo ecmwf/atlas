@@ -106,10 +106,7 @@ Domain LonLatProjectionT<Rotation>::boundingBox( const Domain& domain ) const {
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
-            // finite difference vector derivative (H is the perturbation vector)
-            const PointXY H{PointXY::mul( PointXY::normalize( PointXY::sub( B, A ) ), h )};
-            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, H ) );
-
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, A, B ) );
             double dAdy = derivate->d( A ).lat();
             double dBdy = derivate->d( B ).lat();
 
@@ -187,10 +184,7 @@ Domain LonLatProjectionT<Rotation>::boundingBox( const Domain& domain ) const {
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
-            // finite difference vector derivative (H is the perturbation vector)
-            const PointXY H{PointXY::mul( PointXY::normalize( PointXY::sub( B, A ) ), h )};
-            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, H ) );
-
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, A, B ) );
             double dAdx = derivate->d( A ).lon();
             double dBdx = derivate->d( B ).lon();
 
