@@ -61,15 +61,18 @@ ecbuild_add_executable( TARGET atlas_test_stencil_parallel
   NOINSTALL
 )
 
+set( exe_atlas_test_stencil_parallel $<TARGET_FILE:atlas_test_stencil_parallel> )
+# When ECBUILD-432 is fixed (already fixed in develop on top of ecbuild 3.0.0), we don't need TARGET_FILE
+
 ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi4
-  COMMAND atlas_test_stencil_parallel
+  COMMAND ${exe_atlas_test_stencil_parallel}
   MPI 4
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   CONDITION ECKIT_HAVE_MPI
 )
 
 ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi16
-  COMMAND atlas_test_stencil_parallel
+  COMMAND ${exe_atlas_test_stencil_parallel}
   MPI 16
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   CONDITION ECKIT_HAVE_MPI

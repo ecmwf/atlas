@@ -12,6 +12,10 @@ ecbuild_add_executable(
     LIBS atlas
 )
 
+set( exe_atlas-atest-mgrids $<TARGET_FILE:atlas-atest-mgrids> )
+# When ECBUILD-432 is fixed (already fixed in develop on top of ecbuild 3.0.0), we don't need TARGET_FILE
+
+
 if( HAVE_TESTS )
   ecbuild_add_option( FEATURE ACCEPTANCE_TESTS DEFAULT OFF )
 endif()
@@ -38,7 +42,7 @@ function( atlas_atest_mgrids category case nprocs )
         foreach( t 1 4 12 )
             set( test_name  atlas_atest_${category}_mgrids_${gridA}_to_${gridB}_n${n}_t${t} )
             ecbuild_add_test( TARGET ${test_name}
-                COMMAND atlas-atest-mgrids
+                COMMAND ${exe_atlas-atest-mgrids}
                 ARGS    --gridA=${gridA}
                         --gridB=${gridB}
                         --haloA=3

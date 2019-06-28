@@ -31,18 +31,21 @@ ecbuild_add_executable( TARGET atlas_test_interpolation_structured2D
   NOINSTALL
 )
 
+set( exe_atlas_test_interpolation_structured2D $<TARGET_FILE:atlas_test_interpolation_structured2D> )
+# When ECBUILD-432 is fixed (already fixed in develop on top of ecbuild 3.0.0), we don't need TARGET_FILE
+
 ecbuild_add_test( TARGET atlas_test_interpolation_bilinear
-  COMMAND atlas_test_interpolation_structured2D ARGS --scheme linear
+  COMMAND ${exe_atlas_test_interpolation_structured2D} ARGS --scheme linear
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_interpolation_bicubic
-  COMMAND atlas_test_interpolation_structured2D ARGS --scheme cubic
+  COMMAND ${exe_atlas_test_interpolation_structured2D} ARGS --scheme cubic
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_interpolation_biquasicubic
-  COMMAND atlas_test_interpolation_structured2D ARGS --scheme quasicubic
+  COMMAND ${exe_atlas_test_interpolation_structured2D} ARGS --scheme quasicubic
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
