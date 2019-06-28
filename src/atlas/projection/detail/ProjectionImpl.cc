@@ -35,16 +35,18 @@ namespace {
 template <class T>
 struct DerivateBuilder : public ProjectionImpl::DerivateFactory {
     DerivateBuilder( const std::string& type ) : DerivateFactory( type ) {}
-    ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) { return new T( p, A, B, h ); }
+    ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) {
+        return new T( p, A, B, h );
+    }
 };
 
 static pthread_once_t once = PTHREAD_ONCE_INIT;
-static eckit::Mutex* mtx  = nullptr;
+static eckit::Mutex* mtx   = nullptr;
 
 static std::map<std::string, ProjectionImpl::DerivateFactory*>* m = nullptr;
 static void init() {
     mtx = new eckit::Mutex();
-    m    = new std::map<std::string, ProjectionImpl::DerivateFactory*>();
+    m   = new std::map<std::string, ProjectionImpl::DerivateFactory*>();
 }
 
 }  // (anonymous namespace)
@@ -140,9 +142,9 @@ void ProjectionImpl::BoundLonLat::extend( PointLonLat p, PointLonLat eps ) {
     max_.lon() = std::min( max_.lon(), min_.lon() + 360. );
     ATLAS_ASSERT( min_ < max_ );
 
-    includesSouthPole(eckit::types::is_approximately_equal( min_.lat(), -90. ));
-    includesNorthPole(eckit::types::is_approximately_equal( max_.lat(), 90. ));
-    crossesDateLine(eckit::types::is_approximately_equal( max_.lon() - min_.lon(), 360. ));
+    includesSouthPole( eckit::types::is_approximately_equal( min_.lat(), -90. ) );
+    includesNorthPole( eckit::types::is_approximately_equal( max_.lat(), 90. ) );
+    crossesDateLine( eckit::types::is_approximately_equal( max_.lon() - min_.lon(), 360. ) );
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -196,7 +198,9 @@ DerivateBuilder<DerivateCentral> __derivate3( "central" );
 
 const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) {
     std::string projectionType;
-    if ( p.get( "type", projectionType ) ) { return ProjectionFactory::build( projectionType, p ); }
+    if ( p.get( "type", projectionType ) ) {
+        return ProjectionFactory::build( projectionType, p );
+    }
 
     // should return error here
     throw_Exception( "type missing in Params", Here() );
@@ -232,22 +236,23 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
     // 2. locate latitude extrema by checking if poles are included (in the un-projected frame) and if not, find extrema
     // not at the corners by refining iteratively
 
-    auto xyz = [=]( const PointXY& p ) -> PointXYZ {
-        static auto& projection( *this );
-        PointXYZ r;
-        util::Earth::convertSphericalToCartesian( projection.lonlat( p ), r );
-        return r;
-    };
+    {
+        auto xyz = [=]( const PointXY& p ) -> PointXYZ {
+            PointXYZ r;
+            util::Earth::convertSphericalToCartesian( this->lonlat( p ), r );
+            return r;
+        };
 
-    using interpolation::element::Quad3D;
-    using interpolation::method::Ray;
-    const Quad3D quad( xyz( corners[0] ), xyz( corners[1] ), xyz( corners[2] ), xyz( corners[3] ) );
+        using interpolation::element::Quad3D;
+        using interpolation::method::Ray;
+        const Quad3D quad( xyz( corners[0] ), xyz( corners[1] ), xyz( corners[2] ), xyz( corners[3] ) );
 
-    PointXY NP{xy( {0., 90.} )};
-    PointXY SP{xy( {0., -90.} )};
+        PointXY NP{xy( {0., 90.} )};
+        PointXY SP{xy( {0., -90.} )};
 
-    bounds.includesNorthPole( quad.intersects( Ray( xyz( NP ) ) ) );
-    bounds.includesNorthPole( quad.intersects( Ray( xyz( SP ) ) ) );
+        bounds.includesNorthPole( quad.intersects( Ray( xyz( NP ) ) ) );
+        bounds.includesNorthPole( quad.intersects( Ray( xyz( SP ) ) ) );
+    }
 
     for ( size_t i = 0; i < corners.size(); ++i ) {
         if ( !bounds.includesNorthPole() || !bounds.includesSouthPole() ) {
