@@ -13,6 +13,7 @@
 #include <array>
 #include <string>
 
+#include "atlas/util/Factory.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/Rotation.h"
@@ -98,16 +99,16 @@ public:
         }
     };
 
-    struct DerivateFactory {
+    struct DerivateFactory : public util::Factory<DerivateFactory> {
+        static std::string className() { return "DerivateFactory"; }
         static ProjectionImpl::Derivate* build( const std::string& type, const ProjectionImpl& p, PointXY A, PointXY B,
                                                 double h = 0.001 );
-        static void list( std::ostream& out );
-
     protected:
-        DerivateFactory( const std::string& );
-        virtual ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) = 0;
+        using Factory::Factory;
         virtual ~DerivateFactory();
-    };};
+        virtual ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) = 0;
+    };
+};
 
 inline PointLonLat ProjectionImpl::lonlat( const PointXY& xy ) const {
     PointLonLat lonlat( xy );
