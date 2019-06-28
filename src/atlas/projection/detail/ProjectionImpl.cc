@@ -96,6 +96,57 @@ ProjectionImpl::DerivateFactory::~DerivateFactory() = default;
 
 // --------------------------------------------------------------------------------------------------------------------
 
+ProjectionImpl::BoundLonLat::operator Domain() const {
+    return RectangularDomain( {min_[0], max_[0]}, {min_[1], max_[1]}, "degrees" );
+}
+
+bool ProjectionImpl::BoundLonLat::crossesDateLine( bool yes ) {
+    if ( ( crossesDateLine_ = crossesDateLine_ || yes ) ) {
+        max_.lon() = min_.lon() + 360.;
+    }
+    return crossesDateLine_;
+}
+
+bool ProjectionImpl::BoundLonLat::includesNorthPole( bool yes ) {
+    if ( ( includesNorthPole_ = includesNorthPole_ || yes ) ) {
+        max_.lat() = 90.;
+    }
+    crossesDateLine( includesNorthPole_ );
+    return includesNorthPole_;
+}
+
+bool ProjectionImpl::BoundLonLat::includesSouthPole( bool yes ) {
+    if ( ( includesSouthPole_ = includesSouthPole_ || yes ) ) {
+        min_.lat() = -90.;
+    }
+    crossesDateLine( includesSouthPole_ );
+    return includesSouthPole_;
+}
+
+void ProjectionImpl::BoundLonLat::extend( PointLonLat p, PointLonLat eps ) {
+    ATLAS_ASSERT( PointLonLat{} < eps );
+    if ( first_ ) {
+        min_   = PointLonLat::sub( p, eps );
+        max_   = PointLonLat::add( p, eps );
+        first_ = false;
+        return;
+    }
+
+    min_ = PointLonLat::componentsMin( min_, PointLonLat::sub( p, eps ) );
+    max_ = PointLonLat::componentsMax( max_, PointLonLat::add( p, eps ) );
+
+    min_.lat() = std::max( min_.lat(), -90. );
+    max_.lat() = std::min( max_.lat(), 90. );
+    max_.lon() = std::min( max_.lon(), min_.lon() + 360. );
+    ATLAS_ASSERT( min_ < max_ );
+
+    includesSouthPole(eckit::types::is_approximately_equal( min_.lat(), -90. ));
+    includesNorthPole(eckit::types::is_approximately_equal( max_.lat(), 90. ));
+    crossesDateLine(eckit::types::is_approximately_equal( max_.lon() - min_.lon(), 360. ));
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+
 ProjectionImpl::Derivate::Derivate( const ProjectionImpl& p, PointXY A, PointXY B, double h ) :
     projection_( p ),
     H_{PointXY::mul( PointXY::normalize( PointXY::sub( B, A ) ), h )},
@@ -152,8 +203,8 @@ const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) 
 }
 
 Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
-    using eckit::types::is_approximately_lesser_or_equal;
     using eckit::types::is_strictly_greater;
+
 
     // 0. setup
 
@@ -163,67 +214,43 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
 
-    PointLonLat min;
-    PointLonLat max;
     constexpr double h     = 0.001;
     constexpr size_t Niter = 100;
 
-    // 1. determine box from projected/rotated corners
+
+    // 1. determine box from projected corners
 
     const std::vector<PointXY> corners{
         {rect.xmin(), rect.ymax()}, {rect.xmax(), rect.ymax()}, {rect.xmax(), rect.ymin()}, {rect.xmin(), rect.ymin()}};
 
-    bool first = true;
+    BoundLonLat bounds;
     for ( auto& p : corners ) {
-        PointLonLat r( p );
-        xy2lonlat( r.data() );
-        auto rmin = PointLonLat::sub( r, PointLonLat{h, h} );
-        auto rmax = PointLonLat::add( r, PointLonLat{h, h} );
-        min       = first ? rmin : PointLonLat::componentsMin( min, rmin );
-        max       = first ? rmax : PointLonLat::componentsMax( max, rmax );
-        first     = false;
+        bounds.extend( lonlat( p ), PointLonLat{h, h} );
     }
 
-    struct crosses_t {
-        crosses_t( const ProjectionImpl& projection, const PointXY& p1, const PointXY& p2, const PointXY& p3,
-                   const PointXY& p4 ) :
-            projection_( projection ),
-            quadrilateral_( xy_to_xyz( projection, p1 ), xy_to_xyz( projection, p2 ), xy_to_xyz( projection, p3 ),
-                            xy_to_xyz( projection, p4 ) ) {}
 
-        bool operator()( const PointXY& p ) {
-            interpolation::method::Ray r( xy_to_xyz( projection_, p ) );
-            return quadrilateral_.intersects( r );
-        }
+    // 2. locate latitude extrema by checking if poles are included (in the un-projected frame) and if not, find extrema
+    // not at the corners by refining iteratively
 
-    private:
-        const ProjectionImpl& projection_;
-        interpolation::element::Quad3D quadrilateral_;
+    auto xyz = [=]( const PointXY& p ) -> PointXYZ {
+        static auto& projection( *this );
+        PointXYZ r;
+        util::Earth::convertSphericalToCartesian( projection.lonlat( p ), r );
+        return r;
+    };
 
-        static PointXYZ xy_to_xyz( const ProjectionImpl& projection, const PointXY& p ) {
-            PointLonLat q( p );
-            projection.xy2lonlat( q.data() );
+    using interpolation::element::Quad3D;
+    using interpolation::method::Ray;
+    const Quad3D quad( xyz( corners[0] ), xyz( corners[1] ), xyz( corners[2] ), xyz( corners[3] ) );
 
-            PointXYZ r;
-            util::Earth::convertSphericalToCartesian( q, r );
-            return r;
-        }
-    } crosses( *this, corners[0], corners[1], corners[2], corners[3] );
+    PointXY NP{xy( {0., 90.} )};
+    PointXY SP{xy( {0., -90.} )};
 
-
-    // 2. locate latitude extrema by checking if poles are included (in the unrotated/un-projected frame) and if not,
-    // find extrema not at the corners by refining iteratively
-
-    PointXY NP{0, 90};
-    PointXY SP{0, -90};
-    lonlat2xy( NP.data() );  // unrotate/un-project
-    lonlat2xy( SP.data() );
-
-    bool includesNorthPole = crosses( NP );
-    bool includesSouthPole = crosses( SP );
+    bounds.includesNorthPole( quad.intersects( Ray( xyz( NP ) ) ) );
+    bounds.includesNorthPole( quad.intersects( Ray( xyz( SP ) ) ) );
 
     for ( size_t i = 0; i < corners.size(); ++i ) {
-        if ( !includesNorthPole || !includesSouthPole ) {
+        if ( !bounds.includesNorthPole() || !bounds.includesSouthPole() ) {
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
@@ -249,34 +276,16 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
                 }
 
                 // update extrema, extended by 'a small amount' (arbitrary)
-                PointLonLat middle( PointXY::middle( A, B ) );
-                xy2lonlat( middle.data() );
-
-                min = PointLonLat::componentsMin( min, PointLonLat::sub( middle, PointLonLat{0, h} ) );
-                if ( includesSouthPole || is_approximately_lesser_or_equal( min[1], -90. ) ) {
-                    includesSouthPole = true;
-                    min[1]            = -90.;
-                }
-
-                max = PointLonLat::componentsMax( max, PointLonLat::add( middle, PointLonLat{0, h} ) );
-                if ( includesNorthPole || is_approximately_lesser_or_equal( 90., max[1] ) ) {
-                    includesNorthPole = true;
-                    max[1]            = 90.;
-                }
+                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{0, h} );
             }
         }
     }
-    ATLAS_ASSERT( min < max );
 
 
-    // 3. locate latitude extrema by checking if date line is crossed (in the
-    // projected/rotated frame), in which case we assume periodicity and if not, find
-    // extrema not at the corners by refining iteratively
-
-    bool crossesDateLine = includesNorthPole || includesSouthPole;
+    // 3. locate latitude extrema not at the corners by refining iteratively
 
     for ( size_t i = 0; i < corners.size(); ++i ) {
-        if ( !crossesDateLine ) {
+        if ( !bounds.crossesDateLine() ) {
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
@@ -302,27 +311,14 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
                 }
 
                 // update extrema, extended by 'a small amount' (arbitrary)
-                PointLonLat middle( PointXY::middle( A, B ) );
-                xy2lonlat( middle.data() );
-
-                min = PointLonLat::componentsMin( min, PointLonLat::sub( middle, PointLonLat{h, 0} ) );
-                max = PointLonLat::componentsMax( max, PointLonLat::add( middle, PointLonLat{h, 0} ) );
-                if ( is_approximately_lesser_or_equal( 360., max[0] - min[0] ) ) {
-                    crossesDateLine = true;
-                }
+                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{h, 0} );
             }
         }
     }
 
-    if ( crossesDateLine ) {
-        max[0] = min[0] + 360.;
-    }
-    ATLAS_ASSERT( min < max );
-
 
     // 4. return bounding box
-    return crossesDateLine ? ZonalBandDomain( {min[1], max[1]} )
-                           : RectangularDomain( {min[0], max[0]}, {min[1], max[1]} );
+    return bounds;
 }
 
 //---------------------------------------------------------------------------------------------------------------------

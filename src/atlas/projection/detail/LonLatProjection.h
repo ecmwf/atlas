@@ -55,9 +55,6 @@ public:
 
 private:
     Rotation rotation_;
-
-    PointLonLat rotate( const PointXY& ) const;
-    PointXY unrotate( const PointLonLat& ) const;
 };
 
 using LonLatProjection        = LonLatProjectionT<NotRotated>;

@@ -62,6 +62,27 @@ public:
 
     virtual void hash( eckit::Hash& ) const = 0;
 
+    struct BoundLonLat {
+        operator Domain() const;
+        void extend( PointLonLat p, PointLonLat eps );
+
+        bool crossesDateLine( bool );
+        bool includesNorthPole( bool );
+        bool includesSouthPole( bool );
+
+        bool crossesDateLine() const { return crossesDateLine_; }
+        bool includesNorthPole() const { return includesNorthPole_; }
+        bool includesSouthPole() const { return includesSouthPole_; }
+
+    private:
+        PointLonLat min_;
+        PointLonLat max_;
+        bool crossesDateLine_   = false;
+        bool includesNorthPole_ = false;
+        bool includesSouthPole_ = false;
+        bool first_             = true;
+    };
+
     struct Derivate {
         Derivate( const ProjectionImpl& p, PointXY A, PointXY B, double h );
         virtual ~Derivate();

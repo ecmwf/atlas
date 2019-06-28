@@ -31,28 +31,10 @@ LonLatProjectionT<Rotation>::LonLatProjectionT( const eckit::Parametrisation& co
     rotation_( config ) {}
 
 template <>
-PointLonLat LonLatProjectionT<NotRotated>::rotate( const PointXY& p ) const {
-    return {p};
-}
+void LonLatProjectionT<NotRotated>::xy2lonlat( double[] ) const {}
 
 template <>
-PointXY LonLatProjectionT<NotRotated>::unrotate( const PointLonLat& q ) const {
-    return {q};
-}
-
-template <typename Rotation>
-PointLonLat LonLatProjectionT<Rotation>::rotate( const PointXY& p ) const {
-    PointLonLat q( p );
-    this->xy2lonlat( q.data() );
-    return q;
-}
-
-template <typename Rotation>
-PointXY LonLatProjectionT<Rotation>::unrotate( const PointLonLat& q ) const {
-    PointLonLat p( q );
-    this->lonlat2xy( p.data() );
-    return p;
-}
+void LonLatProjectionT<NotRotated>::lonlat2xy( double[] ) const {}
 
 template <>
 Domain LonLatProjectionT<NotRotated>::boundingBox( const Domain& domain ) const {
@@ -61,8 +43,8 @@ Domain LonLatProjectionT<NotRotated>::boundingBox( const Domain& domain ) const 
 
 template <typename Rotation>
 Domain LonLatProjectionT<Rotation>::boundingBox( const Domain& domain ) const {
-    using eckit::types::is_approximately_lesser_or_equal;
     using eckit::types::is_strictly_greater;
+
 
     // 0. setup
 
@@ -72,37 +54,32 @@ Domain LonLatProjectionT<Rotation>::boundingBox( const Domain& domain ) const {
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
 
-    PointLonLat min;
-    PointLonLat max;
     constexpr double h     = 0.001;
     constexpr size_t Niter = 100;
 
-    // 1. determine box from rotated corners
+
+    // 1. determine box from projected corners
 
     const std::vector<PointXY> corners{
         {rect.xmin(), rect.ymax()}, {rect.xmax(), rect.ymax()}, {rect.xmax(), rect.ymin()}, {rect.xmin(), rect.ymin()}};
 
-    bool first = true;
+    BoundLonLat bounds;
     for ( auto& p : corners ) {
-        PointLonLat r( rotate( p ) );
-        auto rmin = PointLonLat::sub( r, PointLonLat{h, h} );
-        auto rmax = PointLonLat::add( r, PointLonLat{h, h} );
-        min       = first ? rmin : PointLonLat::componentsMin( min, rmin );
-        max       = first ? rmax : PointLonLat::componentsMax( max, rmax );
-        first     = false;
+        bounds.extend( lonlat( p ), PointLonLat{h, h} );
     }
 
-    // 2. locate latitude extrema by checking if poles are included (in the unrotated frame) and if not, find extrema
+
+    // 2. locate latitude extrema by checking if poles are included (in the un-projected frame) and if not, find extrema
     // not at the corners by refining iteratively
 
-    PointXY NP{unrotate( {0., 90.} )};
-    PointXY SP{unrotate( {0., -90.} )};
+    PointXY NP{xy( {0., 90.} )};
+    PointXY SP{xy( {0., -90.} )};
 
-    bool includesNorthPole = rect.contains( NP );
-    bool includesSouthPole = rect.contains( SP );
+    bounds.includesNorthPole( rect.contains( NP ) );
+    bounds.includesSouthPole( rect.contains( SP ) );
 
     for ( size_t i = 0; i < corners.size(); ++i ) {
-        if ( !includesNorthPole || !includesSouthPole ) {
+        if ( !bounds.includesNorthPole() || !bounds.includesSouthPole() ) {
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
@@ -128,40 +105,24 @@ Domain LonLatProjectionT<Rotation>::boundingBox( const Domain& domain ) const {
                 }
 
                 // update extrema, extended by 'a small amount' (arbitrary)
-                PointLonLat middle( rotate( PointXY::middle( A, B ) ) );
-
-                min = PointLonLat::componentsMin( min, PointLonLat::sub( middle, PointLonLat{0, h} ) );
-                if ( includesSouthPole || is_approximately_lesser_or_equal( min[1], -90. ) ) {
-                    includesSouthPole = true;
-                    min[1]            = -90.;
-                }
-
-                max = PointLonLat::componentsMax( max, PointLonLat::add( middle, PointLonLat{0, h} ) );
-                if ( includesNorthPole || is_approximately_lesser_or_equal( 90., max[1] ) ) {
-                    includesNorthPole = true;
-                    max[1]            = 90.;
-                }
+                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{0, h} );
             }
         }
     }
-    ATLAS_ASSERT( min < max );
 
 
-    // 3. locate latitude extrema by checking if date line is crossed (in the
-    // unrotated frame), in which case we assume periodicity and if not, find
-    // extrema not at the corners by refining iteratively
+    // 3. locate latitude extrema by checking if date line is crossed (in the un-projected frame), in which case we
+    // assume periodicity and if not, find extrema not at the corners by refining iteratively
 
-    bool crossesDateLine = includesNorthPole || includesSouthPole;
-
-    if ( !crossesDateLine ) {
-        PointLonLat A{unrotate( {180., -10} )};
-        PointLonLat B{unrotate( {180., 10} )};
+    if ( !bounds.crossesDateLine() ) {
+        PointLonLat A{xy( {180., -10.} )};
+        PointLonLat B{xy( {180., 10.} )};
         eckit::geometry::GreatCircle DL( A, B );
 
         for ( auto lon : {rect.xmin(), rect.xmax()} ) {
-            if ( !crossesDateLine ) {
+            if ( !bounds.crossesDateLine() ) {
                 for ( auto lat : DL.latitude( lon ) ) {
-                    if ( ( crossesDateLine = domain.contains( lon, lat ) ) ) {
+                    if ( ( bounds.crossesDateLine( domain.contains( lon, lat ) ) ) ) {
                         break;
                     }
                 }
@@ -169,9 +130,9 @@ Domain LonLatProjectionT<Rotation>::boundingBox( const Domain& domain ) const {
         }
 
         for ( auto lat : {rect.ymin(), rect.ymax()} ) {
-            if ( !crossesDateLine ) {
+            if ( !bounds.crossesDateLine() ) {
                 for ( auto lon : DL.longitude( lat ) ) {
-                    if ( ( crossesDateLine = domain.contains( lon, lat ) ) ) {
+                    if ( ( bounds.crossesDateLine( domain.contains( lon, lat ) ) ) ) {
                         break;
                     }
                 }
@@ -180,7 +141,7 @@ Domain LonLatProjectionT<Rotation>::boundingBox( const Domain& domain ) const {
     }
 
     for ( size_t i = 0; i < corners.size(); ++i ) {
-        if ( !crossesDateLine ) {
+        if ( !bounds.crossesDateLine() ) {
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
@@ -206,26 +167,14 @@ Domain LonLatProjectionT<Rotation>::boundingBox( const Domain& domain ) const {
                 }
 
                 // update extrema, extended by 'a small amount' (arbitrary)
-                PointLonLat middle( rotate( PointXY::middle( A, B ) ) );
-
-                min = PointLonLat::componentsMin( min, PointLonLat::sub( middle, PointLonLat{h, 0} ) );
-                max = PointLonLat::componentsMax( max, PointLonLat::add( middle, PointLonLat{h, 0} ) );
-                if ( is_approximately_lesser_or_equal( 360., max[0] - min[0] ) ) {
-                    crossesDateLine = true;
-                }
+                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{h, 0} );
             }
         }
     }
 
-    if ( crossesDateLine ) {
-        max[0] = min[0] + 360.;
-    }
-    ATLAS_ASSERT( min < max );
-
 
     // 4. return bounding box
-    return crossesDateLine ? ZonalBandDomain( {min[1], max[1]} )
-                           : RectangularDomain( {min[0], max[0]}, {min[1], max[1]} );
+    return bounds;
 }
 
 template <typename Rotation>
