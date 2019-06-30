@@ -131,7 +131,7 @@ bool ProjectionImpl::BoundLonLat::includesSouthPole( bool yes ) {
 }
 
 void ProjectionImpl::BoundLonLat::extend( PointLonLat p, PointLonLat eps ) {
-    ATLAS_ASSERT( PointLonLat{} < eps );
+    ATLAS_ASSERT( 0. <= eps.lon() && 0. <= eps.lat() );
 
     auto sub = PointLonLat::sub( p, eps );
     auto add = PointLonLat::add( p, eps );
@@ -142,7 +142,7 @@ void ProjectionImpl::BoundLonLat::extend( PointLonLat p, PointLonLat eps ) {
     min_.lat() = std::max( min_.lat(), -90. );
     max_.lat() = std::min( max_.lat(), 90. );
     max_.lon() = std::min( max_.lon(), min_.lon() + 360. );
-    ATLAS_ASSERT( min_ < max_ );
+    ATLAS_ASSERT( min_.lon() <= max_.lon() && min_.lat() <= max_.lat() );
 
     includesSouthPole( eckit::types::is_approximately_equal( min_.lat(), -90. ) );
     includesNorthPole( eckit::types::is_approximately_equal( max_.lat(), 90. ) );
@@ -161,7 +161,7 @@ const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) 
     throw_Exception( "type missing in Params", Here() );
 }
 
-Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
+Domain ProjectionImpl::boundingBox(const Domain& domain , double epsLonLat) const {
     using eckit::types::is_strictly_greater;
 
 
@@ -172,8 +172,8 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
     }
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
+    ATLAS_ASSERT( epsLonLat >= 0. );
 
-    constexpr double h     = 0.001;
     constexpr size_t Niter = 100;
 
 
@@ -184,7 +184,7 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
 
     BoundLonLat bounds;
     for ( auto& p : corners ) {
-        bounds.extend( lonlat( p ), PointLonLat{h, h} );
+        bounds.extend( lonlat( p ), PointLonLat{epsLonLat, epsLonLat} );
     }
 
 
@@ -236,7 +236,7 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
                 }
 
                 // update extrema, extended by 'a small amount' (arbitrary)
-                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{0, h} );
+                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{0, epsLonLat} );
             }
         }
     }
@@ -271,7 +271,7 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
                 }
 
                 // update extrema, extended by 'a small amount' (arbitrary)
-                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{h, 0} );
+                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{epsLonLat, 0} );
             }
         }
     }
