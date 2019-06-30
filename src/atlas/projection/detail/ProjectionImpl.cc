@@ -206,7 +206,7 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
         PointXY SP{xy( {0., -90.} )};
 
         bounds.includesNorthPole( quad.intersects( Ray( xyz( NP ) ) ) );
-        bounds.includesNorthPole( quad.intersects( Ray( xyz( SP ) ) ) );
+        bounds.includesSouthPole( quad.intersects( Ray( xyz( SP ) ) ) );
     }
 
     for ( size_t i = 0; i < corners.size(); ++i ) {
