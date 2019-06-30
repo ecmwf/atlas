@@ -161,7 +161,7 @@ const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) 
     throw_Exception( "type missing in Params", Here() );
 }
 
-Domain ProjectionImpl::boundingBox(const Domain& domain , double epsLonLat) const {
+Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
     using eckit::types::is_strictly_greater;
 
 
@@ -172,8 +172,8 @@ Domain ProjectionImpl::boundingBox(const Domain& domain , double epsLonLat) cons
     }
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
-    ATLAS_ASSERT( epsLonLat >= 0. );
 
+    constexpr double h     = 0.001;
     constexpr size_t Niter = 100;
 
 
@@ -184,7 +184,7 @@ Domain ProjectionImpl::boundingBox(const Domain& domain , double epsLonLat) cons
 
     BoundLonLat bounds;
     for ( auto& p : corners ) {
-        bounds.extend( lonlat( p ), PointLonLat{epsLonLat, epsLonLat} );
+        bounds.extend( lonlat( p ), PointLonLat{h, h} );
     }
 
 
@@ -236,7 +236,7 @@ Domain ProjectionImpl::boundingBox(const Domain& domain , double epsLonLat) cons
                 }
 
                 // update extrema, extended by 'a small amount' (arbitrary)
-                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{0, epsLonLat} );
+                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{0, h} );
             }
         }
     }
@@ -271,7 +271,7 @@ Domain ProjectionImpl::boundingBox(const Domain& domain , double epsLonLat) cons
                 }
 
                 // update extrema, extended by 'a small amount' (arbitrary)
-                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{epsLonLat, 0} );
+                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{h, 0} );
             }
         }
     }
