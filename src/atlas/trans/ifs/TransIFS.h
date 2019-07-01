@@ -229,7 +229,7 @@ private:
     /// partitioning/parallelisation routines)
     TransIFS( const Grid& g, const eckit::Configuration& = util::NoConfig() );
 
-    int handle() const;
+    virtual int handle() const override;
     int ndgl() const;
     int nsmax() const;
     int ngptot() const;

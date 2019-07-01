@@ -63,12 +63,12 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
 
 //-----------------------------------------------------------------------------
 
-void read_rspecg( trans::TransImpl& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int& nfld ) {
+void read_rspecg( const trans::TransImpl& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int& nfld ) {
     Log::info() << "read_rspecg ...\n";
     nfld = 2;
     if ( mpi::comm().rank() == 0 ) {
-        rspecg.resize( nfld * trans.spectralCoefficients() );
-        for ( size_t i = 0; i < trans.spectralCoefficients(); ++i ) {
+        rspecg.resize( nfld * trans.nb_spectral_coefficients_global() );
+        for ( size_t i = 0; i < trans.nb_spectral_coefficients_global(); ++i ) {
             rspecg[i * nfld + 0] = ( i == 0 ? 1. : 0. );  // scalar field 1
             rspecg[i * nfld + 1] = ( i == 0 ? 2. : 0. );  // scalar field 2
         }
