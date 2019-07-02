@@ -85,12 +85,11 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
     computeTruePeriodicity();
 }
 
-void Structured::computeDomain() {
-    if ( periodic() ) { domain_ = ZonalBandDomain( {yspace().min(), yspace().max()}, xspace().min() ); }
-    else {
-        domain_ = RectangularDomain( {xspace().min(), xspace().max()}, {yspace().min(), yspace().max()},
-                                     projection_.units() );
+Domain Structured::computeDomain() const {
+    if ( periodic() ) {
+        return ZonalBandDomain( {yspace().min(), yspace().max()}, xspace().min() );
     }
+    return RectangularDomain( {xspace().min(), xspace().max()}, {yspace().min(), yspace().max()}, projection_.units() );
 }
 
 Structured::~Structured() {}
@@ -492,9 +491,9 @@ void Structured::hash( eckit::Hash& h ) const {
     domain().hash( h );
 }
 
-Grid::Domain Structured::boundingBox() {
-    computeDomain();
-    return projection_ ? projection_.boundingBox( domain_ ) : domain_;
+Grid::Domain Structured::boundingBox() const {
+    auto domain = computeDomain();
+    return projection_ ? projection_.boundingBox( domain ) : domain;
 }
 
 Grid::Spec Structured::spec() const {
