@@ -171,7 +171,7 @@ void Unstructured::hash( eckit::Hash& h ) const {
 }
 
 Grid::Domain Unstructured::boundingBox() const {
-    throw_NotImplemented( "Cannot create boundingBox from Unstructured grid", Here() );
+    return projection_ ? projection_.boundingBox( domain_ ) : domain_;
 }
 
 idx_t Unstructured::size() const {
