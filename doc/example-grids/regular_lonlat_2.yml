@@ -1,0 +1,21 @@
+# Regular lonlat, cropped and rotated
+type : "regular_lonlat"
+nx : 360
+ny : 181
+domain :
+    type : "rectangular"
+    units : "degrees"
+    ymax : 90.
+    xmin : -10.
+    ymin : 70.
+    xmax : 10.
+projection :
+    type : "rotated_lonlat"
+    south_pole : [22., -40.]
+
+check:
+  size : 441
+  bounding_box(n,w,s,e) : [60.001, -164.730, 39.999, -151.270]
+  lonlat(first) : [-158., 40.]
+  lonlat(last) : [-164.729, 59.547]
+

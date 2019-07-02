@@ -141,22 +141,6 @@ private:
 };
 
 
-struct test_expected_rotation_t {
-    const NiNj ninj_;
-    const Rotation rotation_;
-    const BoundingBox bbox_;
-    const BoundingBox rotatedBbox_;
-
-private:
-    friend std::ostream& operator<<(std::ostream& out, const test_expected_rotation_t& test) {
-        return (out << "test:"
-                    << "\n\t" << "NiNj        = " << test.ninj_
-                    << "\n\t" << "Rotation    = " << test.rotation_
-                    << "\n\t" << "BoundingBox = " << test.bbox_
-                    << "\n\t" << "rotatedBbox = " << test.rotatedBbox_);
-    }
-};
-
 //-----------------------------------------------------------------------------
 
 CASE("MIR-282") {
@@ -190,12 +174,6 @@ CASE("MIR-282") {
         { NiNj{ 261, 66},  Rotation( 45., -120.), BoundingBox{55., -120., -10.,  140.} },
 
         { NiNj{ 4, 4},     Rotation(50.,  100.),  BoundingBox{10.,   70.,  -20.,  100.} },
-    };
-
-
-    std::vector<test_expected_rotation_t> test_expected_rotations {
-        { NiNj{21, 21}, Rotation(-40., 22.), BoundingBox{  90, -10,  70,  10}, BoundingBox{ 60, -164.730,  40, -151.270} },
-        { NiNj{21, 21}, Rotation(-40., 22.), BoundingBox{ -70, -10, -90,  10}, BoundingBox{-20,   18.370, -40,   25.630} },
     };
 
 
@@ -264,39 +242,6 @@ CASE("MIR-282") {
                 EXPECT( crop.contains( p.lat(), p.lon() ) );
             }
             Log::info() << "checked " << eckit::Plural( g.size(), "point" ) << std::endl;
-        }
-    }
-
-
-    SECTION("MIR-309: expected rotations") {
-
-        auto is_approximately_equal = [] (const BoundingBox& a, const BoundingBox& b, double eps) {
-            auto slightly_bigger = [eps](const BoundingBox& bbox) {
-
-                double n = std::min(90., bbox.north() + eps);
-                double s = std::max(-90., bbox.south() - eps);
-
-                // periodicity not considered
-                double w = bbox.west() - eps;
-                double e = bbox.east() + eps;
-
-                return BoundingBox{n, w, s, e};
-            };
-
-            return  slightly_bigger(a).contains(b) &&
-                    slightly_bigger(b).contains(a);
-        };
-
-
-        for (auto& test : test_expected_rotations) {
-            auto rotated = test.rotation_.rotate(test.bbox_);
-            Log::info() << test
-                        << "\n\t" "reference:\t" << test.rotatedBbox_
-                        << "\n\t" "calculated:\t" << rotated
-                        << std::endl;
-
-            static constexpr double eps = 0.0015;
-            EXPECT(is_approximately_equal(test.rotatedBbox_, rotated, eps));
         }
     }
 
