@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "atlas/domain.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 
 namespace atlas {
@@ -17,28 +18,29 @@ namespace projection {
 namespace detail {
 
 template <typename Rotation>
-class SchmidtProjectionT : public ProjectionImpl {
+class SchmidtProjectionT final : public ProjectionImpl {
 public:
     // constructor
     SchmidtProjectionT( const eckit::Parametrisation& p );
     SchmidtProjectionT();
 
-    // class name
+    // projection name
     static std::string static_type() { return Rotation::typePrefix() + "schmidt"; }
-    virtual std::string type() const override { return static_type(); }
+    std::string type() const override { return static_type(); }
 
     // projection and inverse projection
-    virtual void xy2lonlat( double crd[] ) const override;
-    virtual void lonlat2xy( double crd[] ) const override;
+    void xy2lonlat( double crd[] ) const override;
+    void lonlat2xy( double crd[] ) const override;
 
-    virtual bool strictlyRegional() const override { return false; }  // schmidt is global grid
+    bool strictlyRegional() const override { return false; }  // schmidt is global grid
+    Domain boundingBox( const Domain& domain ) const override { return ProjectionImpl::boundingBox( domain ); }
 
     // specification
-    virtual Spec spec() const override;
+    Spec spec() const override;
 
-    virtual std::string units() const override { return "degrees"; }
+    std::string units() const override { return "degrees"; }
 
-    virtual void hash( eckit::Hash& ) const override;
+    void hash( eckit::Hash& ) const override;
 
 private:
     double c_;  // stretching factor

@@ -63,6 +63,10 @@ const Grid::Domain& Grid::domain() const {
     return get()->domain();
 }
 
+Grid::Domain Grid::boundingBox() const {
+    return get()->boundingBox();
+}
+
 std::string Grid::name() const {
     return get()->name();
 }

@@ -8,14 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <cassert>
 #include <cmath>
-#include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <limits>
-#include <memory>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include "eckit/config/Resource.h"
@@ -23,24 +20,15 @@
 #include "eckit/log/Bytes.h"
 #include "eckit/log/Log.h"
 #include "eckit/parser/JSON.h"
-#include "eckit/runtime/Main.h"
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/grid.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
-#include "atlas/library/Library.h"
 #include "atlas/runtime/AtlasTool.h"
-#include "atlas/runtime/Exception.h"
-#include "atlas/runtime/Log.h"
-
-using namespace atlas;
-using namespace atlas::grid;
-using eckit::JSON;
-using eckit::PathName;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class AtlasGrids : public AtlasTool {
+struct AtlasGrids : public atlas::AtlasTool {
     virtual bool serial() { return true; }
     virtual int execute( const Args& args );
     virtual std::string briefDescription() { return "Catalogue of available built-in grids"; }
@@ -54,78 +42,60 @@ class AtlasGrids : public AtlasTool {
                "           Example values: N80, F40, O24, L32\n";
     }
 
-public:
     AtlasGrids( int argc, char** argv ) : AtlasTool( argc, argv ) {
         add_option(
             new SimpleOption<bool>( "list", "List all grids. The names are possible values for the GRID argument" ) );
-
         add_option( new SimpleOption<bool>( "info", "List information about GRID" ) );
-
         add_option( new SimpleOption<bool>( "json", "Export json" ) );
-
         add_option( new SimpleOption<bool>( "rtable", "Export IFS rtable" ) );
-
         add_option( new SimpleOption<bool>( "check", "Check grid" ) );
     }
-
-private:
-    bool list;
-    std::string key;
-    bool info;
-    bool json;
-    bool rtable;
-    bool do_run;
-    bool check;
 };
 
 //------------------------------------------------------------------------------------------------------
 
 int AtlasGrids::execute( const Args& args ) {
-    key = "";
-    if ( args.count() ) key = args( 0 );
+    using namespace atlas;
 
-    info = false;
+    std::string key = args.count() ? args( 0 ) : "";
+
+    bool info = false;
     args.get( "info", info );
 
-    if ( info && !key.empty() ) do_run = true;
-
-    json = false;
+    bool json = false;
     args.get( "json", json );
-    if ( json && !key.empty() ) do_run = true;
 
-    rtable = false;
+    bool rtable = false;
     args.get( "rtable", rtable );
-    if ( rtable && !key.empty() ) do_run = true;
 
-    list = false;
-    args.get( "list", list );
-    if ( list ) do_run = true;
-
-    check = false;
+    bool check = false;
     args.get( "check", check );
-    if ( check && !key.empty() ) do_run = true;
 
-    if ( !key.empty() && do_run == false ) {
+    bool list = false;
+    args.get( "list", list );
+
+    bool do_run = list || ( !key.empty() && ( info || json || rtable || check ) );
+
+    if ( !key.empty() && !do_run ) {
         Log::error() << "Option wrong or missing after '" << key << "'" << std::endl;
     }
+
     if ( list ) {
         Log::info() << "usage: atlas-grids GRID [OPTION]... [--help]\n" << std::endl;
         Log::info() << "Available grids:" << std::endl;
-        for ( const auto& key : GridFactory::keys() ) {
+        for ( const auto& key : grid::GridFactory::keys() ) {
             Log::info() << "  -- " << key << std::endl;
         }
     }
 
     if ( !key.empty() ) {
-        Grid grid;
 
-        PathName spec{key};
-        if ( spec.exists() ) { grid = Grid( Grid::Spec{spec} ); }
-        else {
-            grid = Grid( key );
+        eckit::PathName path{key};
+        Grid grid = path.exists() ? Grid( Grid::Spec{path} ) : Grid( key );
+
+        if ( !grid ) {
+            return failed();
         }
-
-        if ( !grid ) return failed();
 
         if ( info ) {
             Log::info() << "Grid " << key << std::endl;
@@ -142,6 +112,7 @@ int AtlasGrids::execute( const Args& args ) {
             Log::info() << "   memory footprint per field (dp):    " << eckit::Bytes( memsize ) << std::endl;
 
             if ( auto structuredgrid = StructuredGrid( grid ) ) {
+
                 if ( not grid.projection() ) {
                     double deg, km;
 
@@ -164,9 +135,8 @@ int AtlasGrids::execute( const Args& args ) {
                     Log::info() << "   approximate resolution E-W midlat:  " << std::setw( 10 ) << std::fixed << deg
                                 << " deg   " << km << " km " << std::endl;
 
-                    deg = 360. * std::cos( structuredgrid.y().front() * M_PI / 180. ) /
-                          static_cast<double>( structuredgrid.nx().front() );
-                    km = deg * 40075. / 360.;
+                    deg = 360. * std::cos( structuredgrid.y().front() * M_PI / 180. ) / static_cast<double>( structuredgrid.nx().front() );
+                    km  = deg * 40075. / 360.;
 
 
                     Log::info() << "   approximate resolution E-W pole:    " << std::setw( 10 ) << std::fixed << deg
@@ -174,55 +144,40 @@ int AtlasGrids::execute( const Args& args ) {
 
                     Log::info() << "   spectral truncation -- linear:      " << structuredgrid.ny() - 1 << std::endl;
                     Log::info() << "   spectral truncation -- quadratic:   "
-                                << static_cast<int>( std::floor( 2. / 3. * structuredgrid.ny() + 0.5 ) ) - 1
-                                << std::endl;
+                                << static_cast<int>( std::floor( 2. / 3. * structuredgrid.ny() + 0.5 ) ) - 1 << std::endl;
                     Log::info() << "   spectral truncation -- cubic:       "
                                 << static_cast<int>( std::floor( 0.5 * structuredgrid.ny() + 0.5 ) ) - 1 << std::endl;
                 }
 
                 auto precision = Log::info().precision( 3 );
                 if ( grid.projection().units() == "meters" ) {
-                    Log::info() << "   x : [ " << std::setw( 10 ) << std::fixed << structuredgrid.xspace().min() / 1000.
-                                << " , " << std::setw( 10 ) << std::fixed << structuredgrid.xspace().max() / 1000.
-                                << " ] km" << std::endl;
-                    Log::info() << "   y : [ " << std::setw( 10 ) << std::fixed << structuredgrid.yspace().min() / 1000.
-                                << " , " << std::setw( 10 ) << std::fixed << structuredgrid.yspace().max() / 1000.
-                                << " ] km" << std::endl;
+                    Log::info() << "   x : [ " << std::setw( 10 ) << std::fixed << structuredgrid.xspace().min() / 1000. << " , "
+                                << std::setw( 10 ) << std::fixed << structuredgrid.xspace().max() / 1000. << " ] km" << std::endl;
+                    Log::info() << "   y : [ " << std::setw( 10 ) << std::fixed << structuredgrid.yspace().min() / 1000. << " , "
+                                << std::setw( 10 ) << std::fixed << structuredgrid.yspace().max() / 1000. << " ] km" << std::endl;
                     if ( structuredgrid.xspace().nxmax() == structuredgrid.xspace().nxmin() ) {
                         Log::info() << "   dx : " << structuredgrid.xspace().dx()[0] / 1000. << " km" << std::endl;
                     }
-                    Log::info() << "   dy : "
-                                << std::abs( structuredgrid.yspace()[1] - structuredgrid.yspace()[0] ) / 1000. << " km"
+                    Log::info() << "   dy : " << std::abs( structuredgrid.yspace()[1] - structuredgrid.yspace()[0] ) / 1000. << " km"
                                 << std::endl;
                     Log::info() << "   lonlat(centre)    : "
-                                << grid.projection().lonlat(
-                                       {0.5 * ( structuredgrid.xspace().max() + structuredgrid.xspace().min() ),
-                                        0.5 * ( structuredgrid.yspace().max() + structuredgrid.yspace().min() )} )
+                                << grid.projection().lonlat( {0.5 * ( structuredgrid.xspace().max() + structuredgrid.xspace().min() ),
+                                                              0.5 * ( structuredgrid.yspace().max() + structuredgrid.yspace().min() )} )
                                 << std::endl;
                     Log::info() << "   lonlat(xmin,ymax) : "
-                                << grid.projection().lonlat(
-                                       {structuredgrid.xspace().min(), structuredgrid.yspace().max()} )
-                                << std::endl;
+                                << grid.projection().lonlat( {structuredgrid.xspace().min(), structuredgrid.yspace().max()} ) << std::endl;
                     Log::info() << "   lonlat(xmin,ymin) : "
-                                << grid.projection().lonlat(
-                                       {structuredgrid.xspace().min(), structuredgrid.yspace().min()} )
-                                << std::endl;
+                                << grid.projection().lonlat( {structuredgrid.xspace().min(), structuredgrid.yspace().min()} ) << std::endl;
                     Log::info() << "   lonlat(xmax,ymin) : "
-                                << grid.projection().lonlat(
-                                       {structuredgrid.xspace().max(), structuredgrid.yspace().min()} )
-                                << std::endl;
+                                << grid.projection().lonlat( {structuredgrid.xspace().max(), structuredgrid.yspace().min()} ) << std::endl;
                     Log::info() << "   lonlat(xmax,ymax) : "
-                                << grid.projection().lonlat(
-                                       {structuredgrid.xspace().max(), structuredgrid.yspace().max()} )
-                                << std::endl;
+                                << grid.projection().lonlat( {structuredgrid.xspace().max(), structuredgrid.yspace().max()} ) << std::endl;
                 }
                 if ( grid.projection().units() == "degrees" ) {
-                    Log::info() << "   x : [ " << std::setw( 10 ) << std::fixed << structuredgrid.xspace().min()
-                                << " , " << std::setw( 10 ) << std::fixed << structuredgrid.xspace().max() << " ] deg"
-                                << std::endl;
-                    Log::info() << "   y : [ " << std::setw( 10 ) << std::fixed << structuredgrid.yspace().min()
-                                << " , " << std::setw( 10 ) << std::fixed << structuredgrid.yspace().max() << " ] deg"
-                                << std::endl;
+                    Log::info() << "   x : [ " << std::setw( 10 ) << std::fixed << structuredgrid.xspace().min() << " , "
+                                << std::setw( 10 ) << std::fixed << structuredgrid.xspace().max() << " ] deg" << std::endl;
+                    Log::info() << "   y : [ " << std::setw( 10 ) << std::fixed << structuredgrid.yspace().min() << " , "
+                                << std::setw( 10 ) << std::fixed << structuredgrid.yspace().max() << " ] deg" << std::endl;
                 }
                 PointLonLat first_point = *grid.lonlat().begin();
                 PointLonLat last_point;
@@ -234,9 +189,10 @@ int AtlasGrids::execute( const Args& args ) {
                 Log::info().precision( precision );
             }
         }
+
         if ( json ) {
             std::stringstream stream;
-            JSON js( stream );
+            eckit::JSON js( stream );
             js.precision( 16 );
             js << grid.spec();
             std::cout << stream.str() << std::endl;
@@ -246,9 +202,10 @@ int AtlasGrids::execute( const Args& args ) {
             if ( auto structuredgrid = StructuredGrid( grid ) ) {
                 std::stringstream stream;
                 stream << "&NAMRGRI\n";
-                for ( idx_t j = 0; j < structuredgrid.ny(); ++j )
+                for ( idx_t j = 0; j < structuredgrid.ny(); ++j ) {
                     stream << " NRGRI(" << std::setfill( '0' ) << std::setw( 5 ) << 1 + j << ")=" << std::setfill( ' ' )
                            << std::setw( 5 ) << structuredgrid.nx( j ) << ",\n";
+                }
                 stream << "/" << std::flush;
                 std::cout << stream.str() << std::endl;
             }
@@ -258,13 +215,15 @@ int AtlasGrids::execute( const Args& args ) {
             bool check_failed = false;
             Log::Channel out;
             out.setStream( Log::error() );
-            PathName spec{key};
-            if ( not spec.exists() ) {
+
+            eckit::PathName path{key};
+            if ( not path.exists() ) {
                 out << "Check failed:  " << key << " is not a file" << std::endl;
                 return failed();
             }
+
             util::Config config_check;
-            if ( not util::Config{spec}.get( "check", config_check ) ) {
+            if ( not util::Config{path}.get( "check", config_check ) ) {
                 out << "Check failed:  no \"check\" section in " << key << std::endl;
                 return failed();
             }
@@ -292,16 +251,15 @@ int AtlasGrids::execute( const Args& args ) {
             }
 
 
-            auto equal = []( const PointLonLat& p, const std::vector<double>& check ) -> bool {
-                if ( not eckit::types::is_approximately_equal( p.lon(), check[0], 5.e-4 ) ) return false;
-                if ( not eckit::types::is_approximately_equal( p.lat(), check[1], 5.e-4 ) ) return false;
-                return true;
+            auto equal = []( double a, double b ) {
+                return eckit::types::is_approximately_equal( a, b, 5.e-4 );
             };
 
             std::vector<double> first_point_lonlat;
             if ( config_check.get( "lonlat(first)", first_point_lonlat ) ) {
                 PointLonLat first_point = *grid.lonlat().begin();
-                if ( not equal( first_point, first_point_lonlat ) ) {
+                if ( not equal( first_point.lon(), first_point_lonlat[0] ) or
+                     not equal( first_point.lat(), first_point_lonlat[1] ) ) {
                     out << "Check failed: lonlat(first) " << first_point << " expected to be "
                         << PointLonLat( first_point_lonlat.data() ) << std::endl;
                     check_failed = true;
@@ -317,7 +275,8 @@ int AtlasGrids::execute( const Args& args ) {
                 for ( const auto p : grid.lonlat() ) {
                     last_point = p;
                 }
-                if ( not equal( last_point, last_point_lonlat ) ) {
+                if ( not equal( last_point.lon(), last_point_lonlat[0] ) or
+                     not equal( last_point.lat(), last_point_lonlat[1] ) ) {
                     out << "Check failed: lonlat(last) " << last_point << " expected to be "
                         << PointLonLat( last_point_lonlat.data() ) << std::endl;
                     check_failed = true;
@@ -326,7 +285,33 @@ int AtlasGrids::execute( const Args& args ) {
             else {
                 Log::warning() << "Check for lonlat(last) skipped" << std::endl;
             }
-            if ( check_failed ) return failed();
+
+            std::vector<double> bbox;
+            if ( config_check.get( "bounding_box(n,w,s,e)", bbox ) && bbox.size() == 4 ) {
+                RectangularDomain rect = grid.boundingBox();
+                if ( ( check_failed = !rect ) ) {
+                    out << "Check failed: cannot calculate bounding box for " << grid.spec() << std::endl;
+                }
+                else if ( ( check_failed = !equal( rect.ymax(), bbox[0] ) ) ) {
+                    out << "Check failed: n=" << rect.ymax() << " expected to be " << bbox[0] << std::endl;
+                }
+                else if ( ( check_failed = !equal( rect.xmin(), bbox[1] ) ) ) {
+                    out << "Check failed: w=" << rect.xmin() << " expected to be " << bbox[1] << std::endl;
+                }
+                else if ( ( check_failed = !equal( rect.ymin(), bbox[2] ) ) ) {
+                    out << "Check failed: s=" << rect.ymin() << " expected to be " << bbox[2] << std::endl;
+                }
+                else if ( ( check_failed = !equal( rect.xmax(), bbox[3] ) ) ) {
+                    out << "Check failed: e=" << rect.xmax() << " expected to be " << bbox[3] << std::endl;
+                }
+            }
+            else {
+                Log::warning() << "Check for bounding_box(n,w,s,e) skipped" << std::endl;
+            }
+
+            if ( check_failed ) {
+                return failed();
+            }
             Log::info() << "SUCCESS: All checks passed" << std::endl;
         }
     }

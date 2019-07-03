@@ -380,9 +380,11 @@ protected:  // methods
 
     virtual void hash( eckit::Hash& ) const override;
 
+    virtual Domain boundingBox() const override;
+
     void computeTruePeriodicity();
 
-    void computeDomain();
+    Domain computeDomain() const;
 
     void crop( const Domain& );
 

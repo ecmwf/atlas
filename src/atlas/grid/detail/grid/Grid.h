@@ -99,6 +99,9 @@ public:  // methods
     /// @return area represented by the grid
     const Domain& domain() const { return domain_; }
 
+    /// @return parallel/meridian limits containing the grid
+    virtual Domain boundingBox() const = 0;
+
     /// @return projection (mapping between geographic coordinates and grid
     /// coordinates)
     const Projection& projection() const { return projection_; }

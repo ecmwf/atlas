@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "atlas/domain.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 
 namespace atlas {
@@ -17,29 +18,28 @@ namespace projection {
 namespace detail {
 
 template <typename Rotation>
-class MercatorProjectionT : public ProjectionImpl {
+class MercatorProjectionT final : public ProjectionImpl {
 public:
     // constructor
-    MercatorProjectionT( const eckit::Parametrisation& p );
+    MercatorProjectionT( const eckit::Parametrisation& );
 
-    // class name
+    // projection name
     static std::string static_type() { return Rotation::typePrefix() + "mercator"; }
-    virtual std::string type() const override { return static_type(); }
+    std::string type() const override { return static_type(); }
 
     // projection and inverse projection
-    virtual void xy2lonlat( double crd[] ) const override;
-    virtual void lonlat2xy( double crd[] ) const override;
+    void xy2lonlat( double crd[] ) const override;
+    void lonlat2xy( double crd[] ) const override;
 
-    virtual bool strictlyRegional() const override {
-        return true;
-    }  // Mercator projection cannot be used for global grids
+    bool strictlyRegional() const override { return true; }  // Mercator projection cannot be used for global grids
+    Domain boundingBox( const Domain& domain ) const override { return ProjectionImpl::boundingBox( domain ); }
 
     // specification
-    virtual Spec spec() const override;
+    Spec spec() const override;
 
-    virtual std::string units() const override { return "meters"; }
+    std::string units() const override { return "meters"; }
 
-    virtual void hash( eckit::Hash& ) const override;
+    void hash( eckit::Hash& ) const override;
 
 protected:
     double lon0_;        // central longitude

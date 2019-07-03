@@ -170,6 +170,10 @@ void Unstructured::hash( eckit::Hash& h ) const {
     projection().hash( h );
 }
 
+Grid::Domain Unstructured::boundingBox() const {
+    return projection_ ? projection_.boundingBox( domain_ ) : domain_;
+}
+
 idx_t Unstructured::size() const {
     ATLAS_ASSERT( points_ != nullptr );
     return static_cast<idx_t>( points_->size() );

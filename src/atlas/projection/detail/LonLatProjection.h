@@ -21,7 +21,7 @@ namespace projection {
 namespace detail {
 
 template <typename Rotation>
-class LonLatProjectionT : public ProjectionImpl {
+class LonLatProjectionT final : public ProjectionImpl {
 private:
     friend class atlas::Projection;
     LonLatProjectionT() = default;
@@ -31,26 +31,27 @@ public:
     LonLatProjectionT( const eckit::Parametrisation& );
 
     // destructor
-    ~LonLatProjectionT() {}
+    ~LonLatProjectionT() = default;
 
-    // class name
+    // projection name
     static std::string static_type() { return Rotation::typePrefix() + "lonlat"; }
-    virtual std::string type() const override { return static_type(); }
+    std::string type() const override { return static_type(); }
 
     // projection and inverse projection
-    virtual void xy2lonlat( double crd[] ) const override { rotation_.rotate( crd ); }
-    virtual void lonlat2xy( double crd[] ) const override { rotation_.unrotate( crd ); }
+    void xy2lonlat( double crd[] ) const override { rotation_.rotate( crd ); }
+    void lonlat2xy( double crd[] ) const override { rotation_.unrotate( crd ); }
 
-    virtual bool strictlyRegional() const override { return false; }
+    bool strictlyRegional() const override { return false; }
+    Domain boundingBox( const Domain& ) const override;
 
     // specification
-    virtual Spec spec() const override;
+    Spec spec() const override;
 
-    virtual std::string units() const override { return "degrees"; }
+    std::string units() const override { return "degrees"; }
 
-    virtual operator bool() const override { return rotation_.rotated(); }
+    operator bool() const override { return rotation_.rotated(); }
 
-    virtual void hash( eckit::Hash& ) const override;
+    void hash( eckit::Hash& ) const override;
 
 private:
     Rotation rotation_;
