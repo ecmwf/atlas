@@ -8,14 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <cassert>
 #include <cmath>
-#include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <limits>
-#include <memory>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include "eckit/config/Resource.h"
@@ -23,13 +20,11 @@
 #include "eckit/log/Bytes.h"
 #include "eckit/log/Log.h"
 #include "eckit/parser/JSON.h"
-#include "eckit/runtime/Main.h"
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/grid.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/runtime/AtlasTool.h"
-#include "atlas/runtime/Exception.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
