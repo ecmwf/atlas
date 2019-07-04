@@ -11,6 +11,9 @@
 #include <algorithm>
 #include <limits>
 
+#include "eckit/io/Buffer.h"
+#include "eckit/serialisation/Stream.h"
+
 #include "atlas/array.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
@@ -18,6 +21,8 @@
 #include "atlas/library/config.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/runtime/Exception.h"
+
+#include "atlas/runtime/Log.h"
 
 #if ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
@@ -89,6 +94,10 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( const IrregularConnectivit
     maxcols_( other.maxcols_ ),
     mincols_( other.mincols_ ),
     ctxt_( nullptr ) {}
+
+IrregularConnectivityImpl::IrregularConnectivityImpl( eckit::Stream& s ) {
+    decode( s );
+}
 
 //------------------------------------------------------------------------------------------------------
 
@@ -164,7 +173,7 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[
     //    ATLAS_ASSERT( displs_] != nullptr );
     //    ATLAS_ASSERT( data_[_counts_] != nullptr );
     displs_.resize( new_rows + 1 );
-    counts_.resize( new_rows + 1 );
+    counts_.resize( new_rows );
 
     for ( idx_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
         displs_[rows_ + 1] = displs_[rows_] + cols;
@@ -201,7 +210,7 @@ void IrregularConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
         new_size += cols[j];
     idx_t new_rows = rows_ + rows;
     displs_.resize( new_rows + 1 );
-    counts_.resize( new_rows + 1 );
+    counts_.resize( new_rows );
 
     for ( idx_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
         displs_[rows_ + 1] = displs_[rows_] + cols[j];
@@ -230,7 +239,7 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols ) {
     //    ATLAS_ASSERT( data_[_displs_] != nullptr );
     //    ATLAS_ASSERT( data_[_counts_] != nullptr );
     displs_.resize( new_rows + 1 );
-    counts_.resize( new_rows + 1 );
+    counts_.resize( new_rows );
 
     for ( idx_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
         displs_[rows_ + 1] = displs_[rows_] + cols;
@@ -341,6 +350,56 @@ size_t IrregularConnectivityImpl::footprint() const {
 
 void IrregularConnectivityImpl::dump( std::ostream& os ) const {
     //TODO dump
+}
+
+eckit::Stream& operator>>( eckit::Stream& s, array::SVector<idx_t>& x ) {
+    size_t size;
+    s >> size;
+    eckit::Buffer buffer( size * sizeof( idx_t ) );
+    s >> buffer;
+    idx_t* data = static_cast<idx_t*>( buffer.data() );
+    idx_t N     = static_cast<idx_t>( size );
+    x.resize( N );
+    for ( idx_t i = 0; i < N; ++i ) {
+        x( i ) = data[i];
+    }
+    return s;
+}
+
+eckit::Stream& operator<<( eckit::Stream& s, const array::SVector<idx_t>& x ) {
+    size_t size = x.size();
+    s << size;
+    eckit::Buffer buffer( reinterpret_cast<const char*>( x.data() ), size * sizeof( idx_t ) );
+    s << buffer;
+    return s;
+}
+
+void IrregularConnectivityImpl::encode( eckit::Stream& s ) const {
+    s << name();
+    s << owns_;
+    s << values_;
+    s << displs_;
+    s << counts_;
+    s << missing_value_;
+    s << rows_;
+    s << maxcols_;
+    s << mincols_;
+}
+
+
+void IrregularConnectivityImpl::decode( eckit::Stream& s ) {
+    std::string name;
+    s >> name;
+    s >> owns_;
+    s >> values_;
+    s >> displs_;
+    s >> counts_;
+    s >> missing_value_;
+    s >> rows_;
+    s >> maxcols_;
+    s >> mincols_;
+    if ( not name.empty() ) rename( name );
+    ctxt_ = nullptr;
 }
 
 //------------------------------------------------------------------------------------------------------

@@ -27,8 +27,6 @@
 #include <cstring>
 #include <initializer_list>
 
-#include "atlas/util/Object.h"
-
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/DataType.h"
@@ -37,6 +35,11 @@
 #include "atlas/array/Vector.h"
 #include "atlas/array_fwd.h"
 #include "atlas/library/config.h"
+#include "atlas/util/Object.h"
+
+namespace eckit {
+class Stream;
+}
 
 namespace atlas {
 namespace mesh {
@@ -188,6 +191,9 @@ public:
     // it is compiled it for a GPU kernel
     IrregularConnectivityImpl( const IrregularConnectivityImpl& other );
 
+    /// @brief Construct a mesh from a Stream (serialization)
+    explicit IrregularConnectivityImpl( eckit::Stream& );
+
     virtual ~IrregularConnectivityImpl();
 
     //-- Accessors
@@ -284,6 +290,22 @@ protected:
     bool owns() { return owns_; }
     const idx_t* displs() const { return displs_.data(); }
     const idx_t* counts() const { return counts_.data(); }
+
+    /// @brief Serialization to Stream
+    void encode( eckit::Stream& ) const;
+
+    /// @brief Serialization from Stream
+    void decode( eckit::Stream& );
+
+    friend eckit::Stream& operator<<( eckit::Stream& s, const IrregularConnectivityImpl& x ) {
+        x.encode( s );
+        return s;
+    }
+
+    friend eckit::Stream& operator>>( eckit::Stream& s, IrregularConnectivityImpl& x ) {
+        x.decode( s );
+        return s;
+    }
 
 private:
     void on_delete();
