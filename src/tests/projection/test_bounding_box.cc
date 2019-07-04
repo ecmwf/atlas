@@ -150,7 +150,7 @@ CASE("MIR-282") {
     std::vector<test_poles_t> test_poles {
         { NiNj{ 124, 118}, Rotation(-35.,   0.),  BoundingBox{12, -14.5, -17.25,  16.25} },
         { NiNj{ 360, 181}, Rotation(-90.,   0.),  BoundingBox(), true, true },
-        { NiNj{ 81, 56},   Rotation(-75.,  15.),  BoundingBox{75., -35.,  20.,    45.}, true },
+        { NiNj{ 81, 56},   Rotation(-75.,  15.),  BoundingBox{75.1, -35.,  20.,    45.}, true },
         { NiNj{ 111, 86},  Rotation(-35.,  15.),  BoundingBox{40., -55., -45.,    55.}, true },
         { NiNj{ 91, 76},   Rotation(-30., -15.),  BoundingBox{35., -40., -40.,    50.}, true },
         { NiNj{ 101, 81},  Rotation(-25.,   0.),  BoundingBox{40., -50., -40.,    50.}, true },
@@ -191,9 +191,8 @@ CASE("MIR-282") {
             PointLonLat NP{ r.unrotate({0., 90.}) };
             PointLonLat SP{ r.unrotate({0., -90.}) };
 
-            RectangularDomain domain{ test.bbox_ };
-            bool includesNorthPole = domain.contains(NP);
-            bool includesSouthPole = domain.contains(SP);
+            bool includesNorthPole = test.bbox_.contains(NP.lat(), NP.lon());
+            bool includesSouthPole = test.bbox_.contains(SP.lat(), SP.lon());
 
             Log::info() << "check:"
                 << "\n\t" << "NP = " << NP
