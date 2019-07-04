@@ -58,7 +58,7 @@ TEST( test_trans )
 
   grid = atlas_UnstructuredGrid( xy )
 
-  truncation = 1279
+  truncation = 21;
 
   trans = atlas_Trans(grid,truncation)
 
@@ -73,11 +73,25 @@ TEST( test_trans )
   gp_scal_field = atlas_Field(name="gridpoint_scalar",kind=atlas_real(8),shape=[10])
   gp_wind_field = atlas_Field(name="gridpoint_wind",kind=atlas_real(8),shape=[10,2])
 
+  call set_zero( sp_scal_field )
+  call set_zero( sp_vor_field )
+  call set_zero( sp_div_field )
+
   config = atlas_Config()
   call config%set("warning",0) ! turn off warnings for unstructured grids
 
   call trans%invtrans( sp_scal_field, gp_scal_field, config )
   call trans%invtrans_vordiv2wind( sp_vor_field,  sp_div_field, gp_wind_field, config )
+
+contains
+
+  subroutine set_zero( field )
+    use, intrinsic :: iso_c_binding
+    type(atlas_Field) :: field
+    real(c_double), pointer :: data(:)
+    call field%data(data)
+    data(:) = 0.
+  end subroutine
 
 END_TEST
 
