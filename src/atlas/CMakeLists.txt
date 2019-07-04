@@ -66,6 +66,8 @@ projection/Projection.cc
 projection/Projection.h
 projection/detail/LambertAzimuthalEqualAreaProjection.cc
 projection/detail/LambertAzimuthalEqualAreaProjection.h
+projection/detail/LambertConformalProjection.cc
+projection/detail/LambertConformalProjection.h
 projection/detail/LambertProjection.cc
 projection/detail/LambertProjection.h
 projection/detail/LonLatProjection.cc
