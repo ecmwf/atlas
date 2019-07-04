@@ -179,7 +179,7 @@ CASE("MIR-282") {
 
     SECTION("MIR-282: rotated_ll covering North/South poles") {
         for (auto& test : test_poles) {
-            Log::info() << test << std::endl;
+            Log::info() << '\n' << test << std::endl;
 
             const PointLonLat southPole(
                         test.rotation_.south_pole_longitude(),
@@ -191,10 +191,13 @@ CASE("MIR-282") {
             PointLonLat NP{ r.unrotate({0., 90.}) };
             PointLonLat SP{ r.unrotate({0., -90.}) };
 
-            bool includesNorthPole = test.bbox_.contains(NP.lat(), NP.lon());
-            bool includesSouthPole = test.bbox_.contains(SP.lat(), SP.lon());
+            RectangularDomain domain{ test.bbox_ };
+            bool includesNorthPole = domain.contains(NP);
+            bool includesSouthPole = domain.contains(SP);
 
             Log::info() << "check:"
+                << "\n\t" << "NP = " << NP
+                << "\n\t" << "SP = " << SP
                 << "\n\t" << "includesNorthPole? " << includesNorthPole
                 << "\n\t" << "includesSouthPole? " << includesSouthPole
                 << std::endl;
@@ -208,7 +211,7 @@ CASE("MIR-282") {
 
     SECTION("MIR-282: rotated_ll contained by cropping") {
         for (auto& test : test_poles) {
-            Log::info() << test << std::endl;
+            Log::info() << '\n' << test << std::endl;
 
             double n = test.bbox_.north();
             double s = test.bbox_.south();
