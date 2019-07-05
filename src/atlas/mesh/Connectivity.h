@@ -286,16 +286,19 @@ public:
         return os;
     }
 
+    virtual void encode( eckit::Stream& s ) const { encode_( s ); }
+    virtual void decode( eckit::Stream& s ) { decode_( s ); }
+
 protected:
     bool owns() { return owns_; }
     const idx_t* displs() const { return displs_.data(); }
     const idx_t* counts() const { return counts_.data(); }
 
     /// @brief Serialization to Stream
-    void encode( eckit::Stream& ) const;
+    void encode_( eckit::Stream& ) const;
 
     /// @brief Serialization from Stream
-    void decode( eckit::Stream& );
+    void decode_( eckit::Stream& );
 
     friend eckit::Stream& operator<<( eckit::Stream& s, const IrregularConnectivityImpl& x ) {
         x.encode( s );
@@ -378,6 +381,9 @@ public:
     /// Data is owned
     MultiBlockConnectivityImpl( const std::string& name = "" );
 
+    /// @brief Construct a mesh from a Stream (serialization)
+    explicit MultiBlockConnectivityImpl( eckit::Stream& );
+
     virtual ~MultiBlockConnectivityImpl();
 
     //-- Accessors
@@ -438,6 +444,32 @@ public:
     virtual void clear();
 
     virtual size_t footprint() const;
+
+    virtual void encode( eckit::Stream& s ) const {
+        IrregularConnectivityImpl::encode_( s );
+        encode_( s );
+    }
+    virtual void decode( eckit::Stream& s ) {
+        IrregularConnectivityImpl::decode_( s );
+        decode_( s );
+    }
+
+protected:
+    /// @brief Serialization to Stream
+    void encode_( eckit::Stream& ) const;
+
+    /// @brief Serialization from Stream
+    void decode_( eckit::Stream& );
+
+    friend eckit::Stream& operator<<( eckit::Stream& s, const MultiBlockConnectivityImpl& x ) {
+        x.encode( s );
+        return s;
+    }
+
+    friend eckit::Stream& operator>>( eckit::Stream& s, MultiBlockConnectivityImpl& x ) {
+        x.decode( s );
+        return s;
+    }
 
 private:
     void rebuild_block_connectivity();

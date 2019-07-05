@@ -127,6 +127,48 @@ CASE( "test_stream_block_connectivity" ) {
     }
 }
 
+CASE( "test_stream_multiblock_connectivity" ) {
+    eckit::ResizableBuffer b{0};
+    eckit::ResizableMemoryStream s{b};
+
+    // Create stream
+    {
+        MultiBlockConnectivity conn( "mbc" );
+        conn.add( BlockConnectivity{3, 5, {3, 7, 1, 4, 5, 6, 4, 56, 8, 4, 1, 3, 76, 4, 3}} );
+        conn.add( BlockConnectivity{3, 2, {4, 75, 65, 45, 51, 35}} );
+        s << conn;
+    }
+
+    s.rewind();
+    // Read from stream
+    {
+        MultiBlockConnectivity conn{s};
+        EXPECT( conn.name() == "mbc" );
+        EXPECT( conn.blocks() == 2 );
+        EXPECT( conn( 3, 1 ) == 75 );
+        EXPECT( conn( 4, 1 ) == 45 );
+        EXPECT( conn( 5, 0 ) == 51 );
+        EXPECT( conn( 1, 0, 1 ) == 75 );
+        EXPECT( conn( 1, 1, 1 ) == 45 );
+        EXPECT( conn( 1, 2, 0 ) == 51 );
+    }
+
+    s.rewind();
+    // Read from stream
+    {
+        MultiBlockConnectivity conn;
+        s >> conn;
+        EXPECT( conn.name() == "mbc" );
+        EXPECT( conn.blocks() == 2 );
+        EXPECT( conn( 3, 1 ) == 75 );
+        EXPECT( conn( 4, 1 ) == 45 );
+        EXPECT( conn( 5, 0 ) == 51 );
+        EXPECT( conn( 1, 0, 1 ) == 75 );
+        EXPECT( conn( 1, 1, 1 ) == 45 );
+        EXPECT( conn( 1, 2, 0 ) == 51 );
+    }
+}
+
 //-----------------------------------------------------------------------------
 
 }  // namespace test

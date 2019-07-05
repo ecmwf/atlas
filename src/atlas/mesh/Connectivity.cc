@@ -96,7 +96,7 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( const IrregularConnectivit
     ctxt_( nullptr ) {}
 
 IrregularConnectivityImpl::IrregularConnectivityImpl( eckit::Stream& s ) {
-    decode( s );
+    decode_( s );
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -374,7 +374,7 @@ eckit::Stream& operator<<( eckit::Stream& s, const array::SVector<idx_t>& x ) {
     return s;
 }
 
-void IrregularConnectivityImpl::encode( eckit::Stream& s ) const {
+void IrregularConnectivityImpl::encode_( eckit::Stream& s ) const {
     s << name();
     s << values_;
     s << displs_;
@@ -386,7 +386,7 @@ void IrregularConnectivityImpl::encode( eckit::Stream& s ) const {
 }
 
 
-void IrregularConnectivityImpl::decode( eckit::Stream& s ) {
+void IrregularConnectivityImpl::decode_( eckit::Stream& s ) {
     std::string name;
     s >> name;
     s >> values_;
@@ -432,6 +432,10 @@ MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( const std::string& name 
     block_cols_( 1 ),
     block_( 0 ) {
     block_displs_( 0 ) = 0;
+}
+
+MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( eckit::Stream& s ) : IrregularConnectivityImpl( s ) {
+    decode_( s );
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -591,7 +595,7 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::rebuild_block_connectivity() {
-    block_.resize( blocks_, std::move( BlockConnectivityImpl() ) );
+    block_.resize( blocks_, BlockConnectivityImpl() );
 
     for ( idx_t b = 0; b < blocks_; ++b ) {
         block_[b].rebuild( block_displs_[b + 1] - block_displs_[b],  // rows
@@ -611,6 +615,23 @@ size_t MultiBlockConnectivityImpl::footprint() const {
         size += block_[j].footprint();
     }
     return size;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void MultiBlockConnectivityImpl::encode_( eckit::Stream& s ) const {
+    s << blocks_;
+    s << block_displs_;
+    s << block_cols_;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void MultiBlockConnectivityImpl::decode_( eckit::Stream& s ) {
+    s >> blocks_;
+    s >> block_displs_;
+    s >> block_cols_;
+    rebuild_block_connectivity();
 }
 
 //------------------------------------------------------------------------------------------------------
