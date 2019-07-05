@@ -12,8 +12,8 @@
 
 #include <string>
 
-#include "atlas/util/ObjectHandle.h"
 #include "atlas/domain/Domain.h"
+#include "atlas/util/ObjectHandle.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 

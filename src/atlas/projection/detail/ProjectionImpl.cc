@@ -69,7 +69,7 @@ struct DerivateCentral final : ProjectionImpl::Derivate {
     }
 };
 
-}  // (anonymous namespace)
+}  // namespace
 
 ProjectionImpl::Derivate::Derivate( const ProjectionImpl& p, PointXY A, PointXY B, double h ) :
     projection_( p ),
@@ -96,7 +96,7 @@ ProjectionImpl::Derivate* ProjectionImpl::DerivateFactory::build( const std::str
     }
 
     auto factory = get( type );
-    return factory->make( p, A, B, h);
+    return factory->make( p, A, B, h );
 }
 
 ProjectionImpl::DerivateFactory::~DerivateFactory() = default;
@@ -108,24 +108,18 @@ ProjectionImpl::BoundLonLat::operator Domain() const {
 }
 
 bool ProjectionImpl::BoundLonLat::crossesDateLine( bool yes ) {
-    if ( ( crossesDateLine_ = crossesDateLine_ || yes ) ) {
-        max_.lon() = min_.lon() + 360.;
-    }
+    if ( ( crossesDateLine_ = crossesDateLine_ || yes ) ) { max_.lon() = min_.lon() + 360.; }
     return crossesDateLine_;
 }
 
 bool ProjectionImpl::BoundLonLat::includesNorthPole( bool yes ) {
-    if ( ( includesNorthPole_ = includesNorthPole_ || yes ) ) {
-        max_.lat() = 90.;
-    }
+    if ( ( includesNorthPole_ = includesNorthPole_ || yes ) ) { max_.lat() = 90.; }
     crossesDateLine( includesNorthPole_ );
     return includesNorthPole_;
 }
 
 bool ProjectionImpl::BoundLonLat::includesSouthPole( bool yes ) {
-    if ( ( includesSouthPole_ = includesSouthPole_ || yes ) ) {
-        min_.lat() = -90.;
-    }
+    if ( ( includesSouthPole_ = includesSouthPole_ || yes ) ) { min_.lat() = -90.; }
     crossesDateLine( includesSouthPole_ );
     return includesSouthPole_;
 }
@@ -135,9 +129,9 @@ void ProjectionImpl::BoundLonLat::extend( PointLonLat p, PointLonLat eps ) {
 
     auto sub = PointLonLat::sub( p, eps );
     auto add = PointLonLat::add( p, eps );
-    min_ = first_ ? sub : PointLonLat::componentsMin( min_, sub );
-    max_ = first_ ? add : PointLonLat::componentsMax( max_, add );
-    first_ = false;
+    min_     = first_ ? sub : PointLonLat::componentsMin( min_, sub );
+    max_     = first_ ? add : PointLonLat::componentsMax( max_, add );
+    first_   = false;
 
     min_.lat() = std::max( min_.lat(), -90. );
     max_.lat() = std::min( max_.lat(), 90. );
@@ -153,9 +147,7 @@ void ProjectionImpl::BoundLonLat::extend( PointLonLat p, PointLonLat eps ) {
 
 const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) {
     std::string projectionType;
-    if ( p.get( "type", projectionType ) ) {
-        return ProjectionFactory::build( projectionType, p );
-    }
+    if ( p.get( "type", projectionType ) ) { return ProjectionFactory::build( projectionType, p ); }
 
     // should return error here
     throw_Exception( "type missing in Params", Here() );
@@ -167,9 +159,7 @@ Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
 
     // 0. setup
 
-    if ( domain.global() ) {
-        return domain;
-    }
+    if ( domain.global() ) { return domain; }
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
 

@@ -86,9 +86,7 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
 }
 
 Domain Structured::computeDomain() const {
-    if ( periodic() ) {
-        return ZonalBandDomain( {yspace().min(), yspace().max()}, xspace().min() );
-    }
+    if ( periodic() ) { return ZonalBandDomain( {yspace().min(), yspace().max()}, xspace().min() ); }
     return RectangularDomain( {xspace().min(), xspace().max()}, {yspace().min(), yspace().max()}, projection_.units() );
 }
 
@@ -512,7 +510,7 @@ Grid::Spec Structured::spec() const {
     return grid_spec;
 }
 
-// --------------------------------------------------------------------
+    // --------------------------------------------------------------------
 
 #if 1
 namespace {  // anonymous

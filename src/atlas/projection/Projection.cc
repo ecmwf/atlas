@@ -50,7 +50,7 @@ bool atlas::Projection::strictlyRegional() const {
     return get()->strictlyRegional();
 }
 
-Domain Projection::boundingBox( const Domain& domain) const {
+Domain Projection::boundingBox( const Domain& domain ) const {
     return get()->boundingBox( domain );
 }
 

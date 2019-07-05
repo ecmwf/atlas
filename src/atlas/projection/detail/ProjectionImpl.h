@@ -88,6 +88,7 @@ public:
         Derivate( const ProjectionImpl& p, PointXY A, PointXY B, double h );
         virtual ~Derivate();
         virtual PointLonLat d( PointXY ) const = 0;
+
     protected:
         const ProjectionImpl& projection_;
         const PointXY H_;
@@ -103,6 +104,7 @@ public:
         static std::string className() { return "DerivateFactory"; }
         static ProjectionImpl::Derivate* build( const std::string& type, const ProjectionImpl& p, PointXY A, PointXY B,
                                                 double h = 0.001 );
+
     protected:
         using Factory::Factory;
         virtual ~DerivateFactory();
