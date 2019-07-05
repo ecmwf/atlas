@@ -376,7 +376,6 @@ eckit::Stream& operator<<( eckit::Stream& s, const array::SVector<idx_t>& x ) {
 
 void IrregularConnectivityImpl::encode( eckit::Stream& s ) const {
     s << name();
-    s << owns_;
     s << values_;
     s << displs_;
     s << counts_;
@@ -390,7 +389,6 @@ void IrregularConnectivityImpl::encode( eckit::Stream& s ) const {
 void IrregularConnectivityImpl::decode( eckit::Stream& s ) {
     std::string name;
     s >> name;
-    s >> owns_;
     s >> values_;
     s >> displs_;
     s >> counts_;
@@ -400,6 +398,7 @@ void IrregularConnectivityImpl::decode( eckit::Stream& s ) {
     s >> mincols_;
     if ( not name.empty() ) rename( name );
     ctxt_ = nullptr;
+    owns_ = true;
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -660,6 +659,10 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t valu
     }
 }
 
+BlockConnectivityImpl::BlockConnectivityImpl( eckit::Stream& s ) {
+    decode( s );
+}
+
 //------------------------------------------------------------------------------------------------------
 
 BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t values[], bool /*dummy*/ ) :
@@ -705,6 +708,21 @@ void BlockConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[], b
             values_[index( i + oldrows, j )] = values[i * cols + j] + add_base;
         }
     }
+}
+
+void BlockConnectivityImpl::encode( eckit::Stream& s ) const {
+    s << values_;
+    s << rows_;
+    s << cols_;
+    s << missing_value_;
+}
+
+void BlockConnectivityImpl::decode( eckit::Stream& s ) {
+    owns_ = true;
+    s >> values_;
+    s >> rows_;
+    s >> cols_;
+    s >> missing_value_;
 }
 
 //------------------------------------------------------------------------------------------------------

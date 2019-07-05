@@ -85,6 +85,50 @@ CASE( "test_stream_irregular_connectivity" ) {
 
 //-----------------------------------------------------------------------------
 
+CASE( "test_stream_block_connectivity" ) {
+    eckit::ResizableBuffer b{0};
+    eckit::ResizableMemoryStream s{b};
+
+    // Create stream
+    {
+        BlockConnectivity conn( 2, 3, {1, 3, 4, 3, 7, 8} );
+        s << conn;
+    }
+
+
+    s.rewind();
+    // Read from stream
+    {
+        BlockConnectivity conn( s );
+        EXPECT( conn.rows() == 2 );
+        EXPECT( conn.cols() == 3 );
+        EXPECT( conn( 0, 0 ) == 1 );
+        EXPECT( conn( 0, 1 ) == 3 );
+        EXPECT( conn( 0, 2 ) == 4 );
+        EXPECT( conn( 1, 0 ) == 3 );
+        EXPECT( conn( 1, 1 ) == 7 );
+        EXPECT( conn( 1, 2 ) == 8 );
+    }
+
+
+    s.rewind();
+    // Read from stream
+    {
+        BlockConnectivity conn;
+        s >> conn;
+        EXPECT( conn.rows() == 2 );
+        EXPECT( conn.cols() == 3 );
+        EXPECT( conn( 0, 0 ) == 1 );
+        EXPECT( conn( 0, 1 ) == 3 );
+        EXPECT( conn( 0, 2 ) == 4 );
+        EXPECT( conn( 1, 0 ) == 3 );
+        EXPECT( conn( 1, 1 ) == 7 );
+        EXPECT( conn( 1, 2 ) == 8 );
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 }  // namespace test
 }  // namespace atlas
 

@@ -500,6 +500,9 @@ public:
     BlockConnectivityImpl( BlockConnectivityImpl&& ) = default;
     BlockConnectivityImpl& operator=( const BlockConnectivityImpl& other ) = default;
 
+    /// @brief Construct a mesh from a Stream (serialization)
+    explicit BlockConnectivityImpl( eckit::Stream& );
+
     /// @brief Destructor
     ~BlockConnectivityImpl();
 
@@ -551,6 +554,23 @@ public:
     void add( idx_t rows, idx_t cols, const idx_t values[], bool fortran_array = false );
 
     bool owns() const { return owns_; }
+
+protected:
+    /// @brief Serialization to Stream
+    void encode( eckit::Stream& ) const;
+
+    /// @brief Serialization from Stream
+    void decode( eckit::Stream& );
+
+    friend eckit::Stream& operator<<( eckit::Stream& s, const BlockConnectivityImpl& x ) {
+        x.encode( s );
+        return s;
+    }
+
+    friend eckit::Stream& operator>>( eckit::Stream& s, BlockConnectivityImpl& x ) {
+        x.decode( s );
+        return s;
+    }
 
 private:
     bool owns_;
