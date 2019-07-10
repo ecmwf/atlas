@@ -61,6 +61,7 @@ elif command_exists srun ; then
   else
     LAUNCH="${LAUNCH} -n ${ATLAS_RUN_NPROCS}"
   fi
+  SLURM_EXPORT_ENV=ALL # Required to propagate environment variables to srun'd program
 
 else
   if [[ ${ARCH:-unset} == "cray" ]]; then
