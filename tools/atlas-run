@@ -37,7 +37,10 @@ if [ -n "${ATLAS_RUN_NTHREADS}" ]; then
   export OMP_NUM_THREADS=${ATLAS_RUN_NTHREADS}
 fi
 
-if command_exists aprun && [[ ${EC_queue:-unset} != "nf" ]] ; then
+if command_exists aprun            && \
+  [[ ${EC_queue:-unset} != "nf" ]] && \
+  [[ ${EC_queue:-unset} != "ns" ]]
+then
   LAUNCH="aprun ${ATLAS_RUN_MPI_ARGS}"
   if [ -z "${ATLAS_RUN_NPROCS}" ]; then
      LAUNCH="${LAUNCH} -n 1"
