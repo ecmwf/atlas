@@ -144,62 +144,17 @@ CASE( "test_grid_creation_from_GRIB" ) {
         EXPECT( n == g.size() );
     }
 
-    // Get circumscribed LonLat bounding box ( Could be turned into memberfunction of StructuredGrid )
+    // Check if bounding box is correct
     {
-        auto regulargrid = RegularGrid( g );
-        NormaliseLongitude normalised( find_good_west( regulargrid ) );
-        double maxlat = -90.;
-        double minlat = 90.;
-        double minlon = 360.;
-        double maxlon = -360.;
-        // top
-        {
-            idx_t j = 0;
-            for ( idx_t i = 0; i < regulargrid.nx(); ++i ) {
-                auto p = regulargrid.lonlat( i, j );
-                minlon = std::min( minlon, normalised( p.lon() ) );
-                maxlon = std::max( maxlon, normalised( p.lon() ) );
-                minlat = std::min( minlat, p.lat() );
-                maxlat = std::max( maxlat, p.lat() );
-            }
+        RectangularDomain bb{g.boundingBox()};
+        const double tolerance = 1.e-6;
+        EXPECT( is_approximately_equal( bb.xmin(), -90.001, tolerance ) );
+        EXPECT( is_approximately_equal( bb.xmax(), 41.883045, tolerance ) );
+        EXPECT( is_approximately_equal( bb.ymin(), 3.817356, tolerance ) );
+        EXPECT( is_approximately_equal( bb.ymax(), 76.041386, tolerance ) );
+        for ( PointLonLat p : g.lonlat() ) {
+            EXPECT( bb.contains( p ) );
         }
-        // bottom
-        {
-            idx_t j = regulargrid.ny() - 1;
-            for ( idx_t i = 0; i < regulargrid.nx(); ++i ) {
-                auto p = regulargrid.lonlat( i, j );
-                minlon = std::min( minlon, normalised( p.lon() ) );
-                maxlon = std::max( maxlon, normalised( p.lon() ) );
-                minlat = std::min( minlat, p.lat() );
-                maxlat = std::max( maxlat, p.lat() );
-            }
-        }
-        // left
-        {
-            idx_t i = 0;
-            for ( idx_t j = 0; j < regulargrid.ny(); ++j ) {
-                auto p = regulargrid.lonlat( i, j );
-                minlon = std::min( minlon, normalised( p.lon() ) );
-                maxlon = std::max( maxlon, normalised( p.lon() ) );
-                minlat = std::min( minlat, p.lat() );
-                maxlat = std::max( maxlat, p.lat() );
-            }
-        }
-        // right
-        {
-            idx_t i = regulargrid.nx() - 1;
-            for ( idx_t j = 0; j < regulargrid.ny(); ++j ) {
-                auto p = regulargrid.lonlat( i, j );
-                minlon = std::min( minlon, normalised( p.lon() ) );
-                maxlon = std::max( maxlon, normalised( p.lon() ) );
-                minlat = std::min( minlat, p.lat() );
-                maxlat = std::max( maxlat, p.lat() );
-            }
-        }
-        Log::info() << "n = " << maxlat << std::endl;
-        Log::info() << "s = " << minlat << std::endl;
-        Log::info() << "w = " << minlon << std::endl;
-        Log::info() << "e = " << maxlon << std::endl;
     }
 }
 

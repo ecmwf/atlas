@@ -49,7 +49,7 @@ double normalise( double weird, double minimum ) {
 
 
 struct BoundingBox : public std::array<double, 4> {
-    BoundingBox( double n, double w, double s, double e ) : std::array<double, 4>{n, w, s, e} {}
+    BoundingBox( double n, double w, double s, double e ) : std::array<double, 4>( {n, w, s, e} ) {}
     BoundingBox() : BoundingBox( 90, 0, -90, 360 ) {}
 
     double north() const { return operator[]( 0 ); }
@@ -81,7 +81,7 @@ struct BoundingBox : public std::array<double, 4> {
 
 
 struct Rotation : std::array<double, 2> {
-    Rotation( double lat, double lon ) : std::array<double, 2>{lon, lat} {}
+    Rotation( double lat, double lon ) : std::array<double, 2>( {lon, lat} ) {}
     double south_pole_latitude() const { return operator[]( 1 ); }
     double south_pole_longitude() const { return normalise( operator[]( 0 ), 0. ); }
     BoundingBox rotate( const BoundingBox& box ) const {
