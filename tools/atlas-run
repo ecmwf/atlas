@@ -79,6 +79,10 @@ else
   fi
 fi
 
+if [ -z "${ATLAS_RUN_NPROCS}" ]; then
+  export ECKIT_MPI_FORCE=serial
+fi
+
 echo + $LAUNCH "$@"
 $LAUNCH "$@"
 
