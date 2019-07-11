@@ -23,7 +23,6 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
 
-
 namespace atlas {
 namespace projection {
 namespace detail {
@@ -63,7 +62,7 @@ void LambertAzimuthalEqualAreaProjection::xy2lonlat( double crd[] ) const {
     const double& y = crd[1];
 
     const double rho = std::sqrt( x * x + y * y );
-    if ( eckit::types::is_approximately_equal( rho, 0. ) ) {
+    if ( std::abs( rho ) < 1.e-12 ) {
         crd[0] = reference_[0];
         crd[1] = reference_[1];
         return;
@@ -74,8 +73,17 @@ void LambertAzimuthalEqualAreaProjection::xy2lonlat( double crd[] ) const {
     double sin_c = std::sin( c );
 
     double lon_r = lambda0_ + std::atan2( x * sin_c, rho * cos_phi1_ * cos_c - y * sin_phi1_ * sin_c );
-    double lat_r = std::asin( cos_c * sin_phi1_ + y * sin_c * cos_phi1_ / rho );
-
+    double lat_r;
+    double sin_lat_r = cos_c * sin_phi1_ + y * sin_c * cos_phi1_ / rho;
+    if ( sin_lat_r > 1. ) {
+        lat_r = M_PI_2;
+    }
+    else if ( sin_lat_r < -1. ) {
+        lat_r = -M_PI_2;
+    }
+    else {
+        lat_r = std::asin( sin_lat_r );
+    }
     crd[0] = lon_r * util::Constants::radiansToDegrees();
     crd[1] = lat_r * util::Constants::radiansToDegrees();
 }
