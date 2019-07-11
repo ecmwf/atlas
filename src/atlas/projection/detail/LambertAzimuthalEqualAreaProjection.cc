@@ -75,9 +75,7 @@ void LambertAzimuthalEqualAreaProjection::xy2lonlat( double crd[] ) const {
     double lon_r = lambda0_ + std::atan2( x * sin_c, rho * cos_phi1_ * cos_c - y * sin_phi1_ * sin_c );
     double lat_r;
     double sin_lat_r = cos_c * sin_phi1_ + y * sin_c * cos_phi1_ / rho;
-    if ( sin_lat_r > 1. ) {
-        lat_r = M_PI_2;
-    }
+    if ( sin_lat_r > 1. ) { lat_r = M_PI_2; }
     else if ( sin_lat_r < -1. ) {
         lat_r = -M_PI_2;
     }

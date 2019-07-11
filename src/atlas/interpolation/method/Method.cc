@@ -60,8 +60,8 @@ void Method::interpolate_field_rank1( const Field& src, Field& tgt ) const {
             throw_NotImplemented( "Only double precision interpolation is currently implemented with eckit backend",
                                   Here() );
         }
-        ATLAS_ASSERT( src.array().contiguous() );
-        ATLAS_ASSERT( tgt.array().contiguous() );
+        ATLAS_ASSERT( src.contiguous() );
+        ATLAS_ASSERT( tgt.contiguous() );
 
         eckit::linalg::Vector v_src( array::make_view<double, 1>( src ).data(), src.shape( 0 ) );
         eckit::linalg::Vector v_tgt( array::make_view<double, 1>( tgt ).data(), tgt.shape( 0 ) );

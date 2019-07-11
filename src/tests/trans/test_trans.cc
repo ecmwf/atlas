@@ -99,7 +99,7 @@ void read_rspecg( Field spec ) {
     Log::info() << "read_rspecg ... done" << std::endl;
 }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
 #if 1
 
@@ -234,16 +234,16 @@ CASE( "test_distspec_speconly" ) {
 
     Field dist = fs.createField( glb );
 
-    if( not dist.array().contiguous() ) {
+    if ( not dist.contiguous() ) {
         EXPECT_THROWS_AS( fs.scatter( glb, dist ), eckit::Exception );
-        if( mpi::comm().size() == 1 ) {
+        if ( mpi::comm().size() == 1 ) {
             dist = glb;
             EXPECT_THROWS_AS( fs.norm( dist, specnorms ), eckit::Exception );
         }
         return;
     }
     else {
-        EXPECT_NO_THROW( fs.scatter( glb, dist) );
+        EXPECT_NO_THROW( fs.scatter( glb, dist ) );
         EXPECT_NO_THROW( fs.norm( dist, specnorms ) );
     }
 
@@ -358,15 +358,14 @@ CASE( "test_nomesh" ) {
         spg( imag ) = ( n == 0 ? 0 : -m * spectral.truncation() + n );
     } );
 
-    if( not spf.array().contiguous() ) {
+    if ( not spf.contiguous() ) {
         EXPECT_THROWS_AS( spectral.scatter( spfg, spf ), eckit::Exception );
-        if( mpi::comm().size() == 1 ) {
-            spf = spfg;
-        }
+        if ( mpi::comm().size() == 1 ) { spf = spfg; }
         else {
             return;
         }
-    } else {
+    }
+    else {
         EXPECT_NO_THROW( spectral.scatter( spfg, spf ) );
     }
 
@@ -396,11 +395,9 @@ CASE( "test_nomesh" ) {
 
     EXPECT_NO_THROW( trans.dirtrans( gpf, spf ) );
 
-    if( not spf.array().contiguous() ) {
+    if ( not spf.contiguous() ) {
         EXPECT_THROWS_AS( spectral.gather( spf, spfg ), eckit::Exception );
-        if( mpi::comm().size() == 1 ) {
-            spfg = spf;
-        }
+        if ( mpi::comm().size() == 1 ) { spfg = spf; }
         else {
             return;
         }

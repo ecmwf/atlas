@@ -608,7 +608,7 @@ CASE( "test_SpectralFunctionSpace_norm" ) {
     std::vector<double> threeD_norms( threeD_field.levels(), 0. );
 
     spectral_fs.norm( twoD_field, twoD_norm );
-    if( not threeD_field.array().contiguous() ) {
+    if ( not threeD_field.contiguous() ) {
         EXPECT_THROWS_AS( spectral_fs.norm( threeD_field, threeD_norms ), eckit::Exception );
         return;
     }
