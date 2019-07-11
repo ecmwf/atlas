@@ -81,6 +81,7 @@ else
 fi
 
 if [ -z "${ATLAS_RUN_NPROCS}" ]; then
+  echo + export ECKIT_MPI_FORCE=serial
   export ECKIT_MPI_FORCE=serial
 fi
 

@@ -267,6 +267,12 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
                 nto[i] = root + 1;
         }
 
+        if( not loc.array().contiguous() ) {
+            throw_Exception(
+                "Cannot gather field "+loc.name()+
+                " using IFS trans library as its data is not contiguous" );
+        }
+
         struct ::GathSpec_t args = new_gathspec( *parallelisation_ );
         args.nfld                = nto.size();
         args.rspecg              = glb.data<double>();
@@ -314,6 +320,12 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
             nfrom.resize( loc.stride( 0 ) );
             for ( size_t i = 0; i < nfrom.size(); ++i )
                 nfrom[i] = root + 1;
+        }
+
+        if( not loc.array().contiguous() ) {
+            throw_Exception(
+                "Cannot scatter field "+glb.name()+
+                " using IFS trans library as its data is not contiguous" );
         }
 
         struct ::DistSpec_t args = new_distspec( *parallelisation_ );
@@ -368,6 +380,11 @@ void Spectral::norm( const Field& field, double& norm, int rank ) const {
 }
 void Spectral::norm( const Field& field, double norm_per_level[], int rank ) const {
 #if ATLAS_HAVE_TRANS
+    if( not field.array().contiguous() ) {
+        throw_Exception(
+            "Cannot compute spectral norm of field "+field.name()+
+            " using IFS trans library as its data is not contiguous" );
+    }
     struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
     args.nfld                = std::max<int>( 1, field.levels() );
     args.rspec               = field.data<double>();

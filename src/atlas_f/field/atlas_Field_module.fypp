@@ -57,6 +57,7 @@ contains
   procedure :: levels => Field__levels
   procedure :: kind => Field__kind
   generic :: shape => shape_array, shape_idx
+  procedure :: contiguous
 
   procedure :: halo_exchange
   procedure :: dirty
@@ -660,6 +661,19 @@ function dirty(this) result(value)
     value = .false.
   else
     value = .true.
+  endif
+end function
+
+!-------------------------------------------------------------------------------
+
+function contiguous(this)
+  use atlas_field_c_binding
+  logical :: contiguous
+  class(atlas_Field), intent(in) :: this
+  if( atlas__Field__contiguous(this%CPTR_PGIBUG_A) == 1 ) then
+    contiguous = .true.
+  else
+    contiguous = .false.
   endif
 end function
 

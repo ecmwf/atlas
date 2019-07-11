@@ -201,6 +201,12 @@ TEST( test_trans )
   call trans%invtrans_vordiv2wind(vorfield,divfield,windfield)
 
   glb_vorfield = spectral_fs%create_field(name="vorticity",kind=atlas_real(c_double),levels=nlev,global=.true.)
+
+  if( .not. vorfield%contiguous() ) then
+    call fckit_log%error("No support for gather if fields are not contiguous")
+    return
+  endif
+
   call spectral_fs%gather(vorfield,glb_vorfield)
   call spectral_fs%scatter(glb_vorfield,vorfield)
 
@@ -378,6 +384,10 @@ call trans%invtrans(spfields,gpfields)
 do jfld=1,spfields%size()
   field = spfields%field(jfld)
   write(msg,*) "spectral field ",field%name(); call atlas_log%info(msg)
+  if( .not. field%contiguous() ) then
+    call fckit_log%error("No support for norm if fields are not contiguous")
+    return
+  endif
   call spectral%norm(field,norm)
   write(msg,*) "norm = ",norm; call atlas_log%info(msg)
 enddo
@@ -436,6 +446,11 @@ FCTEST_CHECK_EQUAL(field%shape(1), nfld)
         jc = jc+2
       enddo
     enddo
+
+if( .not. field%contiguous() ) then
+  call fckit_log%error("No support for gather if fields are not contiguous")
+  return
+endif
 
 fieldg = spectral%create_field(atlas_real(c_double),global=.true.)
 call spectral%gather(field,fieldg)
