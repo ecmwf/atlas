@@ -150,8 +150,8 @@ public:
 
 public:  // methods
     static std::string static_type() { return "unstructured"; }
-    virtual std::string name() const;
-    virtual std::string type() const { return static_type(); }
+    virtual std::string name() const override;
+    virtual std::string type() const override { return static_type(); }
 
     /// Constructor converting any Grid with domain to an unstructured grid
     Unstructured( const Grid&, Domain );
@@ -171,32 +171,32 @@ public:  // methods
     /// Constructor from initializer list
     Unstructured( std::initializer_list<PointXY> );
 
-    virtual ~Unstructured();
+    virtual ~Unstructured() override;
 
-    virtual idx_t size() const;
+    virtual idx_t size() const override;
 
-    virtual Spec spec() const;
+    virtual Spec spec() const override;
 
     PointXY xy( idx_t n ) const { return ( *points_ )[n]; }
 
     PointLonLat lonlat( idx_t n ) const { return projection_.lonlat( ( *points_ )[n] ); }
 
-    virtual IteratorXY* xy_begin() const { return new IteratorXY( *this ); }
-    virtual IteratorXY* xy_end() const { return new IteratorXY( *this, false ); }
-    virtual IteratorLonLat* lonlat_begin() const { return new IteratorLonLat( *this ); }
-    virtual IteratorLonLat* lonlat_end() const { return new IteratorLonLat( *this, false ); }
-    virtual IteratorXYPredicated* xy_begin( IteratorXY::Predicate p ) const {
+    virtual IteratorXY* xy_begin() const override { return new IteratorXY( *this ); }
+    virtual IteratorXY* xy_end() const override { return new IteratorXY( *this, false ); }
+    virtual IteratorLonLat* lonlat_begin() const override { return new IteratorLonLat( *this ); }
+    virtual IteratorLonLat* lonlat_end() const override { return new IteratorLonLat( *this, false ); }
+    virtual IteratorXYPredicated* xy_begin( IteratorXY::Predicate p ) const override {
         return new IteratorXYPredicated( *this, p );
     }
-    virtual IteratorXYPredicated* xy_end( IteratorXY::Predicate p ) const {
+    virtual IteratorXYPredicated* xy_end( IteratorXY::Predicate p ) const override {
         return new IteratorXYPredicated( *this, p, false );
     }
 
 private:  // methods
-    virtual void print( std::ostream& ) const;
+    virtual void print( std::ostream& ) const override;
 
     /// Hash of the lonlat array
-    virtual void hash( eckit::Hash& ) const;
+    virtual void hash( eckit::Hash& ) const override;
 
     /// @return parallel/meridian limits containing the grid
     virtual Domain boundingBox() const override;
