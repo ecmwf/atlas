@@ -49,6 +49,8 @@ struct AtlasGrids : public atlas::AtlasTool {
         add_option( new SimpleOption<bool>( "json", "Export json" ) );
         add_option( new SimpleOption<bool>( "rtable", "Export IFS rtable" ) );
         add_option( new SimpleOption<bool>( "check", "Check grid" ) );
+        add_option( new SimpleOption<bool>( "check-uid", "Check grid uid required" ) );
+        add_option( new SimpleOption<bool>( "check-boundingbox", "Check grid bounding_box(n,w,s,e) required" ) );
     }
 };
 
@@ -70,6 +72,12 @@ int AtlasGrids::execute( const Args& args ) {
 
     bool check = false;
     args.get( "check", check );
+
+    bool check_uid = false;
+    args.get( "check-uid", check_uid );
+
+    bool check_bbox = false;
+    args.get( "check-boundingbox", check_bbox );
 
     bool list = false;
     args.get( "list", list );
@@ -256,6 +264,10 @@ int AtlasGrids::execute( const Args& args ) {
                     check_failed = true;
                 }
             }
+            else if ( check_uid && uid.empty() ) {
+                out << "Check failed: grid uid " << grid.uid() << " was not encoded in the check" << std::endl;
+                check_failed = true;
+            }
             else {
                 Log::warning() << "Check for uid skipped" << std::endl;
             }
@@ -312,6 +324,11 @@ int AtlasGrids::execute( const Args& args ) {
                 else if ( ( check_failed = !equal( bb.east(), bbox[3] ) ) ) {
                     out << "Check failed: e=" << bb.east() << " expected to be " << bbox[3] << std::endl;
                 }
+            }
+            else if ( check_bbox && bbox.size() != 4 ) {
+                out << "Check failed: grid bounding_box(n,w,s,e) " << grid.lonlatBoundingBox()
+                    << " was not encoded in the check" << std::endl;
+                check_failed = true;
             }
             else {
                 Log::warning() << "Check for bounding_box(n,w,s,e) skipped" << std::endl;

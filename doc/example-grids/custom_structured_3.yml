@@ -18,3 +18,4 @@ check :
   lonlat(first) : [0,73.7992]
   lonlat(last)  : [342,-73.7992]
   uid : 238a876f8ddaf43100fe643f1283f78a
+  bounding_box(n,w,s,e) : [90,0,-90,360]

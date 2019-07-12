@@ -38,7 +38,7 @@ foreach( grid ${grids} )
     set( test_name atlas_test_grid_${grid_name} )
     ecbuild_add_test( TARGET ${test_name}
         COMMAND atlas-grids
-        ARGS    ${grid} --check
+        ARGS    ${grid} --check --check-uid --check-boundingbox
         ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
     )
 endforeach()
