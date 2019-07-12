@@ -50,17 +50,23 @@ std::string str( const eckit::system::Library& lib ) {
     std::string gitsha1 = lib.gitsha1();
     std::stringstream ss;
     ss << lib.name() << " version (" << lib.version() << "),";
-    if ( lib.gitsha1() != "not available" ) { ss << "  git-sha1 " << lib.gitsha1( 7 ); }
+    if ( lib.gitsha1() != "not available" ) {
+        ss << "  git-sha1 " << lib.gitsha1( 7 );
+    }
     return ss.str();
 }
 
 bool getEnv( const std::string& env, bool default_value ) {
-    if ( ::getenv( env.c_str() ) ) { return eckit::Translator<std::string, bool>()( ::getenv( env.c_str() ) ); }
+    if ( ::getenv( env.c_str() ) ) {
+        return eckit::Translator<std::string, bool>()( ::getenv( env.c_str() ) );
+    }
     return default_value;
 }
 
 int getEnv( const std::string& env, int default_value ) {
-    if ( ::getenv( env.c_str() ) ) { return eckit::Translator<std::string, int>()( ::getenv( env.c_str() ) ); }
+    if ( ::getenv( env.c_str() ) ) {
+        return eckit::Translator<std::string, int>()( ::getenv( env.c_str() ) );
+    }
     return default_value;
 }
 
@@ -124,9 +130,12 @@ void Library::initialise( const eckit::Parametrisation& config ) {
         config.get( "trace.report", trace_report_ );
     }
 
-    if ( not debug_ ) debug_channel_.reset();
-    if ( not trace_ ) trace_channel_.reset();
-    if ( not info_ ) info_channel_.reset();
+    if ( not debug_ )
+        debug_channel_.reset();
+    if ( not trace_ )
+        trace_channel_.reset();
+    if ( not info_ )
+        info_channel_.reset();
 
     // Summary
     if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::comm().rank() ) ) {
@@ -156,7 +165,9 @@ void Library::initialise() {
 }
 
 void Library::finalise() {
-    if ( ATLAS_HAVE_TRACE && trace_report_ ) { Log::info() << atlas::Trace::report() << std::endl; }
+    if ( ATLAS_HAVE_TRACE && trace_report_ ) {
+        Log::info() << atlas::Trace::report() << std::endl;
+    }
 
     if ( getEnv( "ATLAS_FINALISES_MPI", false ) ) {
         Log::debug() << "ATLAS_FINALISES_MPI is set: calling eckit::mpi::finaliseAllComms()" << std::endl;
@@ -174,7 +185,9 @@ void Library::finalise() {
 }
 
 eckit::Channel& Library::infoChannel() const {
-    if ( info_ ) { return eckit::Log::info(); }
+    if ( info_ ) {
+        return eckit::Log::info();
+    }
     else if ( !info_channel_ ) {
         info_channel_.reset( new eckit::Channel() );
     }
@@ -182,7 +195,8 @@ eckit::Channel& Library::infoChannel() const {
 }
 
 eckit::Channel& Library::traceChannel() const {
-    if ( trace_channel_ ) return *trace_channel_;
+    if ( trace_channel_ )
+        return *trace_channel_;
     if ( trace_ ) {
         trace_channel_.reset( new eckit::Channel(
             new eckit::PrefixTarget( "ATLAS_TRACE", new eckit::OStreamTarget( eckit::Log::info() ) ) ) );
@@ -194,8 +208,12 @@ eckit::Channel& Library::traceChannel() const {
 }
 
 eckit::Channel& Library::debugChannel() const {
-    if ( debug_channel_ ) { return *debug_channel_; }
-    if ( debug_ ) { debug_channel_.reset( new eckit::Channel( new eckit::PrefixTarget( "ATLAS_DEBUG" ) ) ); }
+    if ( debug_channel_ ) {
+        return *debug_channel_;
+    }
+    if ( debug_ ) {
+        debug_channel_.reset( new eckit::Channel( new eckit::PrefixTarget( "ATLAS_DEBUG" ) ) );
+    }
     else {
         debug_channel_.reset( new eckit::Channel() );
     }
@@ -267,8 +285,12 @@ void Library::Information::print( std::ostream& out ) const {
     out << "  Dependencies: "
         << "\n";
 
-    if ( Library::exists( "eckit" ) ) { out << "    " << str( Library::lookup( "eckit" ) ) << '\n'; }
-    if ( Library::exists( "fckit" ) ) { out << "    " << str( Library::lookup( "fckit" ) ) << '\n'; }
+    if ( Library::exists( "eckit" ) ) {
+        out << "    " << str( Library::lookup( "eckit" ) ) << '\n';
+    }
+    if ( Library::exists( "fckit" ) ) {
+        out << "    " << str( Library::lookup( "fckit" ) ) << '\n';
+    }
 
 #if ATLAS_HAVE_TRANS
     out << "    transi version (" << transi_version() << "), "

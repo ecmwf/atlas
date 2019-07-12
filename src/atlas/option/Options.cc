@@ -65,7 +65,9 @@ radius::radius( double _radius ) {
 }
 
 radius::radius( const std::string& key ) {
-    if ( key == "Earth" ) { set( "radius", util::Earth::radius() ); }
+    if ( key == "Earth" ) {
+        set( "radius", util::Earth::radius() );
+    }
     else {
         ATLAS_NOTIMPLEMENTED;
     }

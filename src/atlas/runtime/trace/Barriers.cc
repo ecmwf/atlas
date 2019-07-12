@@ -42,7 +42,9 @@ public:
     std::string report() const {
         std::stringstream out;
         double time = stopwatch_.elapsed();
-        if ( time ) { out << "Total time spent in mpi barriers due to load imbalance : " << time << "s" << std::endl; }
+        if ( time ) {
+            out << "Total time spent in mpi barriers due to load imbalance : " << time << "s" << std::endl;
+        }
         return out.str();
     }
 };

@@ -64,7 +64,8 @@ FieldImpl::FieldImpl( const std::string& name, array::Array* array ) : functions
 
 FieldImpl::~FieldImpl() {
     array_->detach();
-    if ( array_->owners() == 0 ) delete array_;
+    if ( array_->owners() == 0 )
+        delete array_;
     delete functionspace_;
 }
 
@@ -96,7 +97,8 @@ std::string vector_to_str( const std::vector<T>& t ) {
     std::stringstream s;
     s << '[';
     for ( size_t i = 0; i < t.size(); i++ ) {
-        if ( i != 0 ) s << ',';
+        if ( i != 0 )
+            s << ',';
         s << t[i];
     }
     s << ']';

@@ -78,7 +78,9 @@ OutputFactory::OutputFactory( const std::string& name ) : name_( name ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    if ( m->find( name ) != m->end() ) { throw_Exception( "Duplicate OutputFactory entry " + name ); }
+    if ( m->find( name ) != m->end() ) {
+        throw_Exception( "Duplicate OutputFactory entry " + name );
+    }
 
     ( *m )[name] = this;
 }

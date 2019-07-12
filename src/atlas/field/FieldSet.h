@@ -58,11 +58,13 @@ public:  // methods
     Field& operator[]( const std::string& name ) { return field( name ); }
 
     const Field& field( const idx_t& i ) const {
-        if ( i >= size() ) throw_OutOfRange( "fieldset", i, size(), Here() );
+        if ( i >= size() )
+            throw_OutOfRange( "fieldset", i, size(), Here() );
         return fields_[i];
     }
     Field& field( const idx_t& i ) {
-        if ( i >= size() ) throw_OutOfRange( "fieldset", i, size(), Here() );
+        if ( i >= size() )
+            throw_OutOfRange( "fieldset", i, size(), Here() );
         return fields_[i];
     }
 

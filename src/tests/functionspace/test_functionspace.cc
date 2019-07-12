@@ -45,7 +45,9 @@ CASE( "test_functionspace_NodeColumns_no_halo" ) {
     array::ArrayView<int, 1> ghost = array::make_view<int, 1>( mesh.nodes().ghost() );
     const size_t nb_nodes          = mesh.nodes().size();
     for ( size_t j = 0; j < nb_nodes; ++j ) {
-        if ( ghost( j ) ) { value( j ) = -1; }
+        if ( ghost( j ) ) {
+            value( j ) = -1;
+        }
         else {
             value( j ) = 1;
         }
@@ -178,7 +180,8 @@ CASE( "test_functionspace_NodeColumns" ) {
 
     // glb_field->dump( Log::info() );
 
-    if ( mpi::comm().rank() == root ) glb_field.metadata().set( "test_broadcast", 123 );
+    if ( mpi::comm().rank() == root )
+        glb_field.metadata().set( "test_broadcast", 123 );
 
     arr.assign( -1 );
     nodes_fs.scatter( glb_field, field );
@@ -553,7 +556,8 @@ CASE( "test_SpectralFunctionSpace_trans_global" ) {
 
     EXPECT( surface_scalar_field.name() == std::string( "scalar" ) );
 
-    if ( eckit::mpi::comm().rank() == 0 ) EXPECT( surface_scalar_field.size() == nspec2g );
+    if ( eckit::mpi::comm().rank() == 0 )
+        EXPECT( surface_scalar_field.size() == nspec2g );
 
     EXPECT( surface_scalar_field.rank() == 1 );
 
@@ -563,12 +567,16 @@ CASE( "test_SpectralFunctionSpace_trans_global" ) {
 
     auto surface_scalar = array::make_view<double, 1>( surface_scalar_field );
 
-    if ( eckit::mpi::comm().rank() == 0 ) { EXPECT( surface_scalar.shape( 0 ) == nspec2g ); }
+    if ( eckit::mpi::comm().rank() == 0 ) {
+        EXPECT( surface_scalar.shape( 0 ) == nspec2g );
+    }
     Field columns_scalar_field = spectral_fs.createField<double>( option::name( "scalar" ) | option::global() );
 
     EXPECT( columns_scalar_field.name() == std::string( "scalar" ) );
 
-    if ( eckit::mpi::comm().rank() == 0 ) { EXPECT( columns_scalar_field.size() == nspec2g * nb_levels ); }
+    if ( eckit::mpi::comm().rank() == 0 ) {
+        EXPECT( columns_scalar_field.size() == nspec2g * nb_levels );
+    }
     else {
         EXPECT( columns_scalar_field.size() == 0 );
     }
@@ -595,12 +603,14 @@ CASE( "test_SpectralFunctionSpace_norm" ) {
     {
         auto twoD = array::make_view<double, 1>( twoD_field );
         twoD.assign( 0. );
-        if ( mpi::comm().rank() == 0 ) twoD( 0 ) = 1.;
+        if ( mpi::comm().rank() == 0 )
+            twoD( 0 ) = 1.;
 
         auto threeD = array::make_view<double, 2>( threeD_field );
         threeD.assign( 0. );
         for ( size_t jlev = 0; jlev < nb_levels; ++jlev ) {
-            if ( mpi::comm().rank() == 0 ) threeD( 0, jlev ) = jlev;
+            if ( mpi::comm().rank() == 0 )
+                threeD( 0, jlev ) = jlev;
         }
     }
 

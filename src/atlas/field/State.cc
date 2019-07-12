@@ -123,7 +123,8 @@ Field& State::field( const idx_t idx ) {
 
 std::vector<std::string> State::field_names() const {
     std::vector<std::string> ret;
-    if ( fields_.size() ) ret.reserve( fields_.size() );
+    if ( fields_.size() )
+        ret.reserve( fields_.size() );
 
     for ( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
         ret.push_back( it->first );

@@ -35,7 +35,8 @@ size_t regex_count_parens( const std::string& string ) {
             last_was_backslash = true;
             continue;
         }
-        if ( *step == ')' && !last_was_backslash ) out++;
+        if ( *step == ')' && !last_was_backslash )
+            out++;
         last_was_backslash = false;
     }
     return out;
@@ -45,12 +46,14 @@ int regex_match_impl( const std::string& string, const std::string& regex, std::
                       bool use_substr, bool use_case ) {
     regex_t re;
     size_t matchcount = 0;
-    if ( use_substr ) matchcount = regex_count_parens( regex );
+    if ( use_substr )
+        matchcount = regex_count_parens( regex );
     regmatch_t result[matchcount + 1];
     int compiled_ok =
         !regcomp( &re, regex.c_str(), REG_EXTENDED + ( use_case ? 0 : REG_ICASE ) + ( use_substr ? 0 : REG_NOSUB ) );
 
-    if ( !compiled_ok ) Log::error() << "This regular expression didn't compile: \"" << regex << "\"" << std::endl;
+    if ( !compiled_ok )
+        Log::error() << "This regular expression didn't compile: \"" << regex << "\"" << std::endl;
 
     ATLAS_ASSERT( compiled_ok );
 
@@ -185,11 +188,19 @@ const Grid::Implementation* GridBuilder::create( const Grid::Config& config ) co
     }
 
     std::string type;
-    if ( config.get( "type", type ) && GridFactory::has( type ) ) { return GridFactory::build( type, config ); }
+    if ( config.get( "type", type ) && GridFactory::has( type ) ) {
+        return GridFactory::build( type, config );
+    }
 
-    if ( name.size() ) { Log::error() << "name provided: " << name << std::endl; }
-    if ( type.size() ) { Log::error() << "type provided: " << type << std::endl; }
-    if ( name.empty() && type.empty() ) { throw_Exception( "no name or type in configuration", Here() ); }
+    if ( name.size() ) {
+        Log::error() << "name provided: " << name << std::endl;
+    }
+    if ( type.size() ) {
+        Log::error() << "type provided: " << type << std::endl;
+    }
+    if ( name.empty() && type.empty() ) {
+        throw_Exception( "no name or type in configuration", Here() );
+    }
     else {
         throw_Exception( "name or type in configuration don't exist", Here() );
     }
@@ -198,7 +209,8 @@ const Grid::Implementation* GridBuilder::create( const Grid::Config& config ) co
 bool GridBuilder::match( const std::string& string, std::vector<std::string>& matches, int& id ) const {
     id = 0;
     for ( const std::string& name : names_ ) {
-        if ( Regex( name ).match( string, matches ) ) return true;
+        if ( Regex( name ).match( string, matches ) )
+            return true;
         ++id;
     }
     return false;

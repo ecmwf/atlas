@@ -30,7 +30,9 @@ method::Intersect Triag3D::intersects( const method::Ray& r, double edgeEpsilon,
 
     // ray is parallel to triangle (check?)
     const double det = edge1.dot( pvec );
-    if ( fabs( det ) < epsilon ) { return isect.fail(); }
+    if ( fabs( det ) < epsilon ) {
+        return isect.fail();
+    }
 
     const double invDet = 1. / det;
 
@@ -45,7 +47,9 @@ method::Intersect Triag3D::intersects( const method::Ray& r, double edgeEpsilon,
 
     if ( w < 0 ) {
         // check if far outside of triangle, in respect to diagonal edge
-        if ( w < -edgeEpsilon ) { return isect.fail(); }
+        if ( w < -edgeEpsilon ) {
+            return isect.fail();
+        }
 
         // snap to diagonal edge
         // Note: we may still be to the left of vertical edge or below the
@@ -62,7 +66,9 @@ method::Intersect Triag3D::intersects( const method::Ray& r, double edgeEpsilon,
 
         // snap to lower/upper left corners
         isect.u = 0;
-        if ( isect.v < 0 ) { isect.v = 0; }
+        if ( isect.v < 0 ) {
+            isect.v = 0;
+        }
         else if ( isect.v > 1 ) {
             isect.v = 1;
         }
@@ -76,7 +82,9 @@ method::Intersect Triag3D::intersects( const method::Ray& r, double edgeEpsilon,
 
         // snap to lower left/right corners
         isect.v = 0;
-        if ( isect.u < 0 ) { isect.u = 0; }
+        if ( isect.u < 0 ) {
+            isect.u = 0;
+        }
         else if ( isect.u > 1 ) {
             isect.u = 1;
         }

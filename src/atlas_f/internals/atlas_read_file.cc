@@ -24,7 +24,9 @@ void read_file( const eckit::PathName& p, std::ostream& out ) {
     if ( p.exists() ) {
         std::ifstream in;
         in.open( p.asString().c_str() );
-        if ( !in ) { throw_CantOpenFile( p.asString(), Here() ); }
+        if ( !in ) {
+            throw_CantOpenFile( p.asString(), Here() );
+        }
         else {
             out << in.rdbuf();
             in.close();

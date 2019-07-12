@@ -52,7 +52,9 @@ CASE( "halo nodes" ) {
 
             for ( int h : ( reduce ? reversed( halos ) : halos ) ) {
                 NodeColumns fs( mesh, option::halo( h ) );
-                if ( mpi::comm().size() == 1 ) { EXPECT( fs.nb_nodes() == nodes[h] ); }
+                if ( mpi::comm().size() == 1 ) {
+                    EXPECT( fs.nb_nodes() == nodes[h] );
+                }
             }
         }
     }
@@ -76,7 +78,9 @@ CASE( "halo edges" ) {
 
                 for ( int h : ( reduce ? reversed( halos ) : halos ) ) {
                     EdgeColumns fs( mesh, option::halo( h ) | option::pole_edges( with_pole_edges ) );
-                    if ( mpi::comm().size() == 1 ) { EXPECT( fs.nb_edges() == edges[h] + pole_edges ); }
+                    if ( mpi::comm().size() == 1 ) {
+                        EXPECT( fs.nb_edges() == edges[h] + pole_edges );
+                    }
                 }
             }
         }

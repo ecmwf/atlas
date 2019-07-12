@@ -101,7 +101,9 @@ struct array_initializer_partitioned_val_impl {
                        DimIndexPair... idxs ) {
         for ( idx_t i = 0; i < orig.shape( Dim ); ++i ) {
             idx_t displ = i;
-            if ( Dim == PartDim && i >= pos ) { displ += offset; }
+            if ( Dim == PartDim && i >= pos ) {
+                displ += offset;
+            }
             std::pair<idx_t, idx_t> pair_idx{i, displ};
             array_initializer_partitioned_val_impl<Value, Rank, Dim + 1, PartDim>::apply(
                 std::move( orig ), std::move( dest ), pos, offset, idxs..., pair_idx );

@@ -50,7 +50,9 @@ double dual_volume( const Mesh& mesh ) {
     const array::ArrayView<int, 1> is_ghost        = array::make_view<int, 1>( nodes.ghost() );
     double area                                    = 0;
     for ( int node = 0; node < nb_nodes; ++node ) {
-        if ( !is_ghost( node ) ) { area += dual_volumes( node ); }
+        if ( !is_ghost( node ) ) {
+            area += dual_volumes( node );
+        }
     }
 
     mpi::comm().allReduceInPlace( area, eckit::mpi::sum() );

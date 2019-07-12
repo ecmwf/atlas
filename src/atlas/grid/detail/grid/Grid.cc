@@ -37,7 +37,9 @@ static void checkSizeOfPoint() {
 
 const Grid* Grid::create( const Config& config ) {
     std::string name;
-    if ( config.get( "name", name ) ) { return create( name, config ); }
+    if ( config.get( "name", name ) ) {
+        return create( name, config );
+    }
 
     std::string type;
     if ( config.get( "type", type ) ) {
@@ -48,9 +50,15 @@ const Grid* Grid::create( const Config& config ) {
         }
     }
 
-    if ( name.size() ) { Log::info() << "name provided: " << name << std::endl; }
-    if ( type.size() ) { Log::info() << "type provided: " << type << std::endl; }
-    if ( name.empty() && type.empty() ) { throw_Exception( "no name or type in configuration", Here() ); }
+    if ( name.size() ) {
+        Log::info() << "name provided: " << name << std::endl;
+    }
+    if ( type.size() ) {
+        Log::info() << "type provided: " << type << std::endl;
+    }
+    if ( name.empty() && type.empty() ) {
+        throw_Exception( "no name or type in configuration", Here() );
+    }
     else {
         throw_Exception( "name or type in configuration don't exist", Here() );
     }
@@ -64,7 +72,9 @@ const Grid* Grid::create( const std::string& name, const Grid::Config& config ) 
     const GridBuilder::Registry& registry = GridBuilder::nameRegistry();
     for ( GridBuilder::Registry::const_iterator it = registry.begin(); it != registry.end(); ++it ) {
         const Grid* grid = it->second->create( name, config );
-        if ( grid ) { return grid; }
+        if ( grid ) {
+            return grid;
+        }
     }
 
     // Throw exception
@@ -100,7 +110,9 @@ Grid::~Grid() {
 }
 
 Grid::uid_t Grid::uid() const {
-    if ( uid_.empty() ) { uid_ = hash(); }
+    if ( uid_.empty() ) {
+        uid_ = hash();
+    }
     return uid_;
 }
 

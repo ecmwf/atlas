@@ -21,7 +21,9 @@ ComputeLower::ComputeLower( const Vertical& z ) {
     constexpr double tol = 1.e-12;
     ATLAS_ASSERT( dz > 0 );
     for ( idx_t jlev = 0; jlev < nlev_; ++jlev ) {
-        if ( jlev + 1 < nlev_ ) { dz = std::min( dz, z[jlev + 1] - z[jlev] ); }
+        if ( jlev + 1 < nlev_ ) {
+            dz = std::min( dz, z[jlev + 1] - z[jlev] );
+        }
         z_[jlev] = z[jlev] - tol;
     }
 
@@ -32,14 +34,18 @@ ComputeLower::ComputeLower( const Vertical& z ) {
 
     idx_t iref = 0;
     for ( idx_t jlevaux = 0; jlevaux <= nlevaux_; ++jlevaux ) {
-        if ( iref + 1 < nlev_ && jlevaux * dzaux >= z[iref + 1] ) { ++iref; }
+        if ( iref + 1 < nlev_ && jlevaux * dzaux >= z[iref + 1] ) {
+            ++iref;
+        }
         nvaux_[jlevaux] = iref;
     }
 }
 
 ComputeNorth::ComputeNorth( const StructuredGrid& grid, idx_t halo ) {
     ATLAS_ASSERT( grid );
-    if ( not grid.domain().global() ) { throw_NotImplemented( "Only implemented for global grids", Here() ); }
+    if ( not grid.domain().global() ) {
+        throw_NotImplemented( "Only implemented for global grids", Here() );
+    }
     halo_ = halo;
     ny_   = grid.ny();
     y_.resize( ny_ + 2 * halo_ );
@@ -63,7 +69,9 @@ ComputeNorth::ComputeNorth( const StructuredGrid& grid, idx_t halo ) {
 
 ComputeWest::ComputeWest( const StructuredGrid& grid, idx_t halo ) {
     ATLAS_ASSERT( grid );
-    if ( not grid.domain().global() ) { throw_NotImplemented( "Only implemented for global grids", Here() ); }
+    if ( not grid.domain().global() ) {
+        throw_NotImplemented( "Only implemented for global grids", Here() );
+    }
     halo_                     = halo;
     idx_t north_pole_included = 90. - std::abs( grid.y().front() ) < tol();
     idx_t south_pole_included = 90. - std::abs( grid.y().back() ) < tol();

@@ -49,7 +49,9 @@ template <typename T>
 array::LocalView<T, 3> make_leveled_view( const Field& field ) {
     using namespace array;
     if ( field.levels() ) {
-        if ( field.variables() ) { return make_view<T, 3>( field ).slice( Range::all(), Range::all(), Range::all() ); }
+        if ( field.variables() ) {
+            return make_view<T, 3>( field ).slice( Range::all(), Range::all(), Range::all() );
+        }
         else {
             return make_view<T, 2>( field ).slice( Range::all(), Range::all(), Range::dummy() );
         }
@@ -204,7 +206,9 @@ NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration& config ) :
     nb_levels_( config.getInt( "levels", 0 ) ),
     nb_nodes_( 0 ) {
     ATLAS_TRACE();
-    if ( config.has( "halo" ) ) { halo_ = mesh::Halo( config.getInt( "halo" ) ); }
+    if ( config.has( "halo" ) ) {
+        halo_ = mesh::Halo( config.getInt( "halo" ) );
+    }
     else {
         halo_ = mesh::Halo( mesh );
     }
@@ -221,7 +225,9 @@ NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration& config ) :
     if ( !nb_nodes_ ) {
         std::stringstream ss;
         ss << "nb_nodes_including_halo[" << halo_.size() << "]";
-        if ( !mesh_.metadata().get( ss.str(), nb_nodes_ ) ) { nb_nodes_ = mesh_.nodes().size(); }
+        if ( !mesh_.metadata().get( ss.str(), nb_nodes_ ) ) {
+            nb_nodes_ = mesh_.nodes().size();
+        }
     }
 }
 
@@ -236,8 +242,11 @@ idx_t NodeColumns::nb_nodes() const {
 }
 
 idx_t NodeColumns::nb_nodes_global() const {
-    if ( nb_nodes_global_ >= 0 ) return nb_nodes_global_;
-    if ( Grid grid = mesh().grid() ) { nb_nodes_global_ = grid.size(); }
+    if ( nb_nodes_global_ >= 0 )
+        return nb_nodes_global_;
+    if ( Grid grid = mesh().grid() ) {
+        nb_nodes_global_ = grid.size();
+    }
     else {
         nb_nodes_global_ = gather().glb_dof();
     }
@@ -282,7 +291,8 @@ void NodeColumns::set_field_metadata( const eckit::Configuration& config, Field&
 
 array::DataType NodeColumns::config_datatype( const eckit::Configuration& config ) const {
     array::DataType::kind_t kind;
-    if ( !config.get( "datatype", kind ) ) throw_Exception( "datatype missing", Here() );
+    if ( !config.get( "datatype", kind ) )
+        throw_Exception( "datatype missing", Here() );
     return array::DataType( kind );
 }
 
@@ -305,11 +315,13 @@ array::ArrayShape NodeColumns::config_shape( const eckit::Configuration& config 
 
     idx_t levels( nb_levels_ );
     config.get( "levels", levels );
-    if ( levels > 0 ) shape.push_back( levels );
+    if ( levels > 0 )
+        shape.push_back( levels );
 
     idx_t variables( 0 );
     config.get( "variables", variables );
-    if ( variables > 0 ) shape.push_back( variables );
+    if ( variables > 0 )
+        shape.push_back( variables );
 
     return shape;
 }
@@ -382,7 +394,8 @@ void NodeColumns::haloExchange( const Field& field, bool on_device ) const {
     haloExchange( fieldset, on_device );
 }
 const parallel::HaloExchange& NodeColumns::halo_exchange() const {
-    if ( halo_exchange_ ) return *halo_exchange_;
+    if ( halo_exchange_ )
+        return *halo_exchange_;
     halo_exchange_ = NodeColumnsHaloExchangeCache::instance().get_or_create( mesh_, halo_.size() );
     return *halo_exchange_;
 }
@@ -430,12 +443,14 @@ void NodeColumns::gather( const Field& local, Field& global ) const {
     gather( local_fields, global_fields );
 }
 const parallel::GatherScatter& NodeColumns::gather() const {
-    if ( gather_scatter_ ) return *gather_scatter_;
+    if ( gather_scatter_ )
+        return *gather_scatter_;
     gather_scatter_ = NodeColumnsGatherScatterCache::instance().get_or_create( mesh_ );
     return *gather_scatter_;
 }
 const parallel::GatherScatter& NodeColumns::scatter() const {
-    if ( gather_scatter_ ) return *gather_scatter_;
+    if ( gather_scatter_ )
+        return *gather_scatter_;
     gather_scatter_ = NodeColumnsGatherScatterCache::instance().get_or_create( mesh_ );
     return *gather_scatter_;
 }
@@ -528,7 +543,8 @@ std::string NodeColumns::checksum( const Field& field ) const {
 }
 
 const parallel::Checksum& NodeColumns::checksum() const {
-    if ( checksum_ ) return *checksum_;
+    if ( checksum_ )
+        return *checksum_;
     checksum_ = NodeColumnsChecksumCache::instance().get_or_create( mesh_ );
     return *checksum_;
 }

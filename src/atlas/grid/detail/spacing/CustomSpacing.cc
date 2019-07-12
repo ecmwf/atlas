@@ -31,7 +31,9 @@ CustomSpacing::CustomSpacing( const eckit::Parametrisation& params ) {
     params.get( "values", x_ );
 
     size_t N;
-    if ( params.get( "N", N ) ) { ATLAS_ASSERT( x_.size() == N ); }
+    if ( params.get( "N", N ) ) {
+        ATLAS_ASSERT( x_.size() == N );
+    }
     N = x_.size();
 
     std::vector<double> interval;

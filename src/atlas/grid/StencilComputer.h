@@ -64,7 +64,9 @@ public:
         ATLAS_ASSERT( idx < static_cast<idx_t>( nvaux_.size() ) && idx >= 0 );
 #endif
         idx = nvaux_[idx];
-        if ( idx < nlev_ - 1 && z > z_[idx + 1] ) { ++idx; }
+        if ( idx < nlev_ - 1 && z > z_[idx + 1] ) {
+            ++idx;
+        }
         return idx;
     }
 };

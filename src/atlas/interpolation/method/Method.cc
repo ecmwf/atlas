@@ -43,9 +43,15 @@ void Method::check_compatibility( const Field& src, const Field& tgt ) const {
 template <typename Value>
 void Method::interpolate_field( const Field& src, Field& tgt ) const {
     check_compatibility( src, tgt );
-    if ( src.rank() == 1 ) { interpolate_field_rank1<Value>( src, tgt ); }
-    if ( src.rank() == 2 ) { interpolate_field_rank2<Value>( src, tgt ); }
-    if ( src.rank() == 3 ) { interpolate_field_rank3<Value>( src, tgt ); }
+    if ( src.rank() == 1 ) {
+        interpolate_field_rank1<Value>( src, tgt );
+    }
+    if ( src.rank() == 2 ) {
+        interpolate_field_rank2<Value>( src, tgt );
+    }
+    if ( src.rank() == 3 ) {
+        interpolate_field_rank3<Value>( src, tgt );
+    }
 }
 
 template <typename Value>
@@ -169,8 +175,12 @@ void Method::execute( const Field& src, Field& tgt ) const {
 
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
 
-    if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) { interpolate_field<double>( src, tgt ); }
-    if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) { interpolate_field<float>( src, tgt ); }
+    if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
+        interpolate_field<double>( src, tgt );
+    }
+    if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
+        interpolate_field<float>( src, tgt );
+    }
 
     tgt.set_dirty();
 }
@@ -196,7 +206,8 @@ void Method::haloExchange( const FieldSet& fields ) const {
     }
 }
 void Method::haloExchange( const Field& field ) const {
-    if ( field.dirty() ) source().haloExchange( field );
+    if ( field.dirty() )
+        source().haloExchange( field );
 }
 
 }  // namespace interpolation

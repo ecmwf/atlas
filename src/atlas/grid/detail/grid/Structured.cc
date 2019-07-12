@@ -86,7 +86,9 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
 }
 
 Domain Structured::computeDomain() const {
-    if ( periodic() ) { return ZonalBandDomain( {yspace().min(), yspace().max()}, xspace().min() ); }
+    if ( periodic() ) {
+        return ZonalBandDomain( {yspace().min(), yspace().max()}, xspace().min() );
+    }
     return RectangularDomain( {xspace().min(), xspace().max()}, {yspace().min(), yspace().max()}, projection_.units() );
 }
 
@@ -137,10 +139,14 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
         std::max( v_N.size(), std::max( v_start.size(), std::max( v_end.size(), std::max( v_length.size(), 1ul ) ) ) );
     reserve( ny );
 
-    if ( not v_N.empty() ) ATLAS_ASSERT( static_cast<idx_t>( v_N.size() ) == ny );
-    if ( not v_start.empty() ) ATLAS_ASSERT( static_cast<idx_t>( v_start.size() ) == ny );
-    if ( not v_end.empty() ) ATLAS_ASSERT( static_cast<idx_t>( v_end.size() ) == ny );
-    if ( not v_length.empty() ) ATLAS_ASSERT( static_cast<idx_t>( v_length.size() ) == ny );
+    if ( not v_N.empty() )
+        ATLAS_ASSERT( static_cast<idx_t>( v_N.size() ) == ny );
+    if ( not v_start.empty() )
+        ATLAS_ASSERT( static_cast<idx_t>( v_start.size() ) == ny );
+    if ( not v_end.empty() )
+        ATLAS_ASSERT( static_cast<idx_t>( v_end.size() ) == ny );
+    if ( not v_length.empty() )
+        ATLAS_ASSERT( static_cast<idx_t>( v_length.size() ) == ny );
 
     nxmin_ = std::numeric_limits<idx_t>::max();
     nxmax_ = 0;
@@ -148,10 +154,14 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
     max_   = -std::numeric_limits<double>::max();
 
     for ( idx_t j = 0; j < ny; ++j ) {
-        if ( not v_N.empty() ) config_xspace.set( "N", v_N[j] );
-        if ( not v_start.empty() ) config_xspace.set( "start", v_start[j] );
-        if ( not v_end.empty() ) config_xspace.set( "end", v_end[j] );
-        if ( not v_length.empty() ) config_xspace.set( "length", v_length[j] );
+        if ( not v_N.empty() )
+            config_xspace.set( "N", v_N[j] );
+        if ( not v_start.empty() )
+            config_xspace.set( "start", v_start[j] );
+        if ( not v_end.empty() )
+            config_xspace.set( "end", v_end[j] );
+        if ( not v_length.empty() )
+            config_xspace.set( "length", v_length[j] );
         spacing::LinearSpacing::Params xspace( config_xspace );
         xmin_.push_back( xspace.start );
         xmax_.push_back( xspace.end );
@@ -295,15 +305,21 @@ Grid::Spec Structured::XSpace::Implementation::spec() const {
     bool endpoint = std::abs( ( xmax - xmin ) - ( nx - 1 ) * dx ) < 1.e-10;
 
     spec.set( "type", "linear" );
-    if ( same_xmin ) { spec.set( "start", xmin ); }
+    if ( same_xmin ) {
+        spec.set( "start", xmin );
+    }
     else {
         spec.set( "start[]", xmin_ );
     }
-    if ( same_xmax ) { spec.set( "end", xmax ); }
+    if ( same_xmax ) {
+        spec.set( "end", xmax );
+    }
     else {
         spec.set( "end[]", xmax_ );
     }
-    if ( same_nx ) { spec.set( "N", nx ); }
+    if ( same_nx ) {
+        spec.set( "N", nx );
+    }
     else {
         spec.set( "N[]", nx_ );
     }
@@ -320,7 +336,9 @@ public:
         normalise_( domain.xmin() ) {}
 
     double operator()( double x ) const {
-        if ( degrees_ ) { x = normalise_( x ); }
+        if ( degrees_ ) {
+            x = normalise_( x );
+        }
         return x;
     }
 
@@ -548,13 +566,17 @@ public:
         Domain domain;
 
         Config config_proj;
-        if ( config.get( "projection", config_proj ) ) projection = Projection( config_proj );
+        if ( config.get( "projection", config_proj ) )
+            projection = Projection( config_proj );
 
         Config config_domain;
-        if ( config.get( "domain", config_domain ) ) { domain = Domain( config_domain ); }
+        if ( config.get( "domain", config_domain ) ) {
+            domain = Domain( config_domain );
+        }
 
         Config config_yspace;
-        if ( not config.get( "yspace", config_yspace ) ) throw_Exception( "yspace missing in configuration", Here() );
+        if ( not config.get( "yspace", config_yspace ) )
+            throw_Exception( "yspace missing in configuration", Here() );
         yspace = Spacing( config_yspace );
 
         XSpace xspace;
@@ -562,7 +584,9 @@ public:
         Config config_xspace;
         std::vector<Config> config_xspace_list;
 
-        if ( config.get( "xspace[]", config_xspace_list ) ) { xspace = XSpace( config_xspace_list ); }
+        if ( config.get( "xspace[]", config_xspace_list ) ) {
+            xspace = XSpace( config_xspace_list );
+        }
         else if ( config.get( "xspace", config_xspace ) ) {
             xspace = XSpace( config_xspace );
         }

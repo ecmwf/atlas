@@ -84,7 +84,9 @@ int AtlasGrids::execute( const Args& args ) {
 
     bool do_run = list || ( !key.empty() && ( info || json || rtable || check ) );
 
-    if ( !key.empty() && !do_run ) { Log::error() << "Option wrong or missing after '" << key << "'" << std::endl; }
+    if ( !key.empty() && !do_run ) {
+        Log::error() << "Option wrong or missing after '" << key << "'" << std::endl;
+    }
 
     if ( list ) {
         Log::info() << "usage: atlas-grids GRID [OPTION]... [--help]\n" << std::endl;
@@ -98,7 +100,9 @@ int AtlasGrids::execute( const Args& args ) {
         eckit::PathName path{key};
         Grid grid = path.exists() ? Grid( Grid::Spec{path} ) : Grid( key );
 
-        if ( !grid ) { return failed(); }
+        if ( !grid ) {
+            return failed();
+        }
 
         if ( info ) {
             Log::info() << "Grid " << key << std::endl;
@@ -334,7 +338,9 @@ int AtlasGrids::execute( const Args& args ) {
                 Log::warning() << "Check for bounding_box(n,w,s,e) skipped" << std::endl;
             }
 
-            if ( check_failed ) { return failed(); }
+            if ( check_failed ) {
+                return failed();
+            }
             Log::info() << "SUCCESS: All checks passed" << std::endl;
         }
     }

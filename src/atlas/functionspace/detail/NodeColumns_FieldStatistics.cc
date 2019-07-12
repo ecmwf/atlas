@@ -39,7 +39,9 @@ template <typename T>
 array::LocalView<T, 3> make_leveled_view( const Field& field ) {
     using namespace array;
     if ( field.levels() ) {
-        if ( field.variables() ) { return make_view<T, 3>( field ).slice( Range::all(), Range::all(), Range::all() ); }
+        if ( field.variables() ) {
+            return make_view<T, 3>( field ).slice( Range::all(), Range::all(), Range::all() );
+        }
         else {
             return make_view<T, 2>( field ).slice( Range::all(), Range::all(), Range::dummy() );
         }
@@ -112,7 +114,9 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, T& result, idx_t& 
 
 template <typename T>
 void sum( const NodeColumns& fs, const Field& field, T& result, idx_t& N ) {
-    if ( field.datatype() == array::DataType::kind<T>() ) { return dispatch_sum( fs, field, result, N ); }
+    if ( field.datatype() == array::DataType::kind<T>() ) {
+        return dispatch_sum( fs, field, result, N );
+    }
     else {
         switch ( field.datatype().kind() ) {
             case array::DataType::KIND_INT32: {
@@ -180,7 +184,9 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, std::vector<T>& re
 
 template <typename T>
 void sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, idx_t& N ) {
-    if ( field.datatype() == array::DataType::kind<T>() ) { return dispatch_sum( fs, field, result, N ); }
+    if ( field.datatype() == array::DataType::kind<T>() ) {
+        return dispatch_sum( fs, field, result, N );
+    }
     else {
         switch ( field.datatype().kind() ) {
             case array::DataType::KIND_INT32: {
@@ -271,7 +277,9 @@ void dispatch_sum_per_level( const NodeColumns& fs, const Field& field, Field& s
 }
 
 void sum_per_level( const NodeColumns& fs, const Field& field, Field& sum, idx_t& N ) {
-    if ( field.datatype() != sum.datatype() ) { throw_Exception( "Field and sum are not of same datatype.", Here() ); }
+    if ( field.datatype() != sum.datatype() ) {
+        throw_Exception( "Field and sum are not of same datatype.", Here() );
+    }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_sum_per_level<int>( fs, field, sum, N );
@@ -508,7 +516,9 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
 }
 
 void order_independent_sum_per_level( const NodeColumns& fs, const Field& field, Field& sum, idx_t& N ) {
-    if ( field.datatype() != sum.datatype() ) { throw_Exception( "Field and sum are not of same datatype.", Here() ); }
+    if ( field.datatype() != sum.datatype() ) {
+        throw_Exception( "Field and sum are not of same datatype.", Here() );
+    }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_order_independent_sum_per_level<int>( fs, field, sum, N );
@@ -551,7 +561,9 @@ void dispatch_minimum( const NodeColumns& fs, const Field& field, std::vector<T>
 
 template <typename T>
 void minimum( const NodeColumns& fs, const Field& field, std::vector<T>& min ) {
-    if ( field.datatype() == array::DataType::kind<T>() ) { return dispatch_minimum( fs, field, min ); }
+    if ( field.datatype() == array::DataType::kind<T>() ) {
+        return dispatch_minimum( fs, field, min );
+    }
     else {
         switch ( field.datatype().kind() ) {
             case array::DataType::KIND_INT32: {
@@ -611,7 +623,9 @@ void dispatch_maximum( const NodeColumns& fs, const Field& field, std::vector<T>
 
 template <typename T>
 void maximum( const NodeColumns& fs, const Field& field, std::vector<T>& max ) {
-    if ( field.datatype() == array::DataType::kind<T>() ) { return dispatch_maximum( fs, field, max ); }
+    if ( field.datatype() == array::DataType::kind<T>() ) {
+        return dispatch_maximum( fs, field, max );
+    }
     else {
         switch ( field.datatype().kind() ) {
             case array::DataType::KIND_INT32: {
@@ -703,7 +717,9 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Fiel
 }
 
 void minimum_per_level( const NodeColumns& fs, const Field& field, Field& min ) {
-    if ( field.datatype() != min.datatype() ) { throw_Exception( "Field and min are not of same datatype.", Here() ); }
+    if ( field.datatype() != min.datatype() ) {
+        throw_Exception( "Field and min are not of same datatype.", Here() );
+    }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_minimum_per_level<int>( fs, field, min );
@@ -764,7 +780,9 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Fiel
 }
 
 void maximum_per_level( const NodeColumns& fs, const Field& field, Field& max ) {
-    if ( field.datatype() != max.datatype() ) { throw_Exception( "Field and max are not of same datatype.", Here() ); }
+    if ( field.datatype() != max.datatype() ) {
+        throw_Exception( "Field and max are not of same datatype.", Here() );
+    }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_maximum_per_level<int>( fs, field, max );
@@ -1112,7 +1130,9 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field
 }
 
 void minimum_and_location_per_level( const NodeColumns& fs, const Field& field, Field& min, Field& glb_idx ) {
-    if ( field.datatype() != min.datatype() ) { throw_Exception( "Field and min are not of same datatype.", Here() ); }
+    if ( field.datatype() != min.datatype() ) {
+        throw_Exception( "Field and min are not of same datatype.", Here() );
+    }
     if ( glb_idx.datatype() != array::DataType::kind<gidx_t>() ) {
         throw_Exception( "glb_idx Field is not of correct datatype", Here() );
     }
@@ -1210,7 +1230,9 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field
 }
 
 void maximum_and_location_per_level( const NodeColumns& fs, const Field& field, Field& max, Field& glb_idx ) {
-    if ( field.datatype() != max.datatype() ) { throw_Exception( "Field and max are not of same datatype.", Here() ); }
+    if ( field.datatype() != max.datatype() ) {
+        throw_Exception( "Field and max are not of same datatype.", Here() );
+    }
     if ( glb_idx.datatype() != array::DataType::kind<gidx_t>() ) {
         throw_Exception( "glb_idx Field is not of correct datatype", Here() );
     }
@@ -1254,7 +1276,9 @@ void dispatch_mean_per_level( const NodeColumns& fs, const Field& field, Field& 
 }
 
 void mean_per_level( const NodeColumns& fs, const Field& field, Field& mean, idx_t& N ) {
-    if ( field.datatype() != mean.datatype() ) { throw_Exception( "Field and sum are not of same datatype.", Here() ); }
+    if ( field.datatype() != mean.datatype() ) {
+        throw_Exception( "Field and sum are not of same datatype.", Here() );
+    }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_mean_per_level<int>( fs, field, mean, N );

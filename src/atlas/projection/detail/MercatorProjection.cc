@@ -47,9 +47,11 @@ MercatorProjectionT<Rotation>::MercatorProjectionT( const eckit::Parametrisation
     ProjectionImpl(),
     rotation_( params ) {
     // check presence of radius
-    if ( !params.get( "radius", radius_ ) ) radius_ = util::Earth::radius();
+    if ( !params.get( "radius", radius_ ) )
+        radius_ = util::Earth::radius();
     // check presence of lon0
-    if ( !params.get( "longitude0", lon0_ ) ) lon0_ = 0.0;
+    if ( !params.get( "longitude0", lon0_ ) )
+        lon0_ = 0.0;
 
     inv_radius_ = 1. / radius_;
 }
@@ -80,7 +82,9 @@ typename MercatorProjectionT<Rotation>::Spec MercatorProjectionT<Rotation>::spec
     Spec proj_spec;
     proj_spec.set( "type", static_type() );
     proj_spec.set( "longitude0", lon0_ );
-    if ( std::not_equal_to<double>()( radius_, util::Earth::radius() ) ) { proj_spec.set( "radius", radius_ ); }
+    if ( std::not_equal_to<double>()( radius_, util::Earth::radius() ) ) {
+        proj_spec.set( "radius", radius_ );
+    }
     rotation_.spec( proj_spec );
     return proj_spec;
 }

@@ -48,7 +48,9 @@ RectangularLonLatDomain LonLatProjectionT<Rotation>::lonlatBoundingBox( const Do
 
     // 0. setup
 
-    if ( domain.global() ) { return domain; }
+    if ( domain.global() ) {
+        return domain;
+    }
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
 
@@ -120,7 +122,9 @@ RectangularLonLatDomain LonLatProjectionT<Rotation>::lonlatBoundingBox( const Do
         for ( auto lon : {rect.xmin(), rect.xmax()} ) {
             if ( !bounds.crossesDateLine() ) {
                 for ( auto lat : DL.latitude( lon ) ) {
-                    if ( ( bounds.crossesDateLine( domain.contains( lon, lat ) ) ) ) { break; }
+                    if ( ( bounds.crossesDateLine( domain.contains( lon, lat ) ) ) ) {
+                        break;
+                    }
                 }
             }
         }
@@ -128,7 +132,9 @@ RectangularLonLatDomain LonLatProjectionT<Rotation>::lonlatBoundingBox( const Do
         for ( auto lat : {rect.ymin(), rect.ymax()} ) {
             if ( !bounds.crossesDateLine() ) {
                 for ( auto lon : DL.longitude( lat ) ) {
-                    if ( ( bounds.crossesDateLine( domain.contains( lon, lat ) ) ) ) { break; }
+                    if ( ( bounds.crossesDateLine( domain.contains( lon, lat ) ) ) ) {
+                        break;
+                    }
                 }
             }
         }

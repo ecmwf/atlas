@@ -123,9 +123,12 @@ double polar_colat( int N ) {
     // Given N, determine the colatitude of the North polar spherical cap.
     //
     double polar_c( 0 );
-    if ( N == 1 ) polar_c = M_PI;
-    if ( N == 2 ) polar_c = 0.5 * M_PI;
-    if ( N > 2 ) polar_c = sradius_of_cap( area_of_ideal_region( N ) );
+    if ( N == 1 )
+        polar_c = M_PI;
+    if ( N == 2 )
+        polar_c = 0.5 * M_PI;
+    if ( N > 2 )
+        polar_c = sradius_of_cap( area_of_ideal_region( N ) );
     return polar_c;
 }
 
@@ -446,14 +449,18 @@ void EqualRegionsPartitioner::where( int partition, int& band, int& sector ) con
 }
 
 bool compare_NS_WE( const EqualRegionsPartitioner::NodeInt& node1, const EqualRegionsPartitioner::NodeInt& node2 ) {
-    if ( node1.y > node2.y ) return true;
-    if ( node1.y == node2.y ) return ( node1.x < node2.x );
+    if ( node1.y > node2.y )
+        return true;
+    if ( node1.y == node2.y )
+        return ( node1.x < node2.x );
     return false;
 }
 
 bool compare_WE_NS( const EqualRegionsPartitioner::NodeInt& node1, const EqualRegionsPartitioner::NodeInt& node2 ) {
-    if ( node1.x < node2.x ) return true;
-    if ( node1.x == node2.x ) return ( node1.y > node2.y );
+    if ( node1.x < node2.x )
+        return true;
+    if ( node1.x == node2.x )
+        return ( node1.y > node2.y );
     return false;
 }
 
@@ -579,7 +586,8 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
             for ( int w = 0; w < nb_workers; ++w ) {
                 int w_begin = w * grid.size() / N_;
                 int w_end   = ( w + 1 ) * grid.size() / N_;
-                if ( w == nb_workers - 1 ) w_end = grid.size();
+                if ( w == nb_workers - 1 )
+                    w_end = grid.size();
                 size_t w_size = w_end - w_begin;
 
                 int work_rank = std::min( w, mpi_size - 1 );
@@ -636,7 +644,8 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                 for ( int w = 0; w < nb_workers; ++w ) {
                     int w_begin = w * grid.size() / N_;
                     int w_end   = ( w + 1 ) * grid.size() / N_;
-                    if ( w == nb_workers - 1 ) w_end = grid.size();
+                    if ( w == nb_workers - 1 )
+                        w_end = grid.size();
                     if ( w != 0 ) {
                         std::inplace_merge( nodes.begin(), nodes.begin() + w_begin, nodes.begin() + w_end,
                                             compare_NS_WE );

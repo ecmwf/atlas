@@ -54,7 +54,9 @@ public:
               int part = static_cast<int>( mpi::comm().rank() ) ) {
         PathName par_path( file_path );
         int mpi_size = static_cast<int>( mpi::comm().size() );
-        if ( atlas::mpi::comm().size() == 1 || part == -1 ) { std::ofstream::open( par_path.localPath(), mode ); }
+        if ( atlas::mpi::comm().size() == 1 || part == -1 ) {
+            std::ofstream::open( par_path.localPath(), mode );
+        }
         else {
             if ( atlas::mpi::comm().rank() == 0 ) {
                 PathName par_path( file_path );
@@ -108,13 +110,17 @@ template <typename T>
 array::LocalView<T, 2> make_level_view( const Field& field, int ndata, int jlev ) {
     using namespace array;
     if ( field.levels() ) {
-        if ( field.variables() ) { return make_view<T, 3>( field ).slice( Range::to( ndata ), jlev, Range::all() ); }
+        if ( field.variables() ) {
+            return make_view<T, 3>( field ).slice( Range::to( ndata ), jlev, Range::all() );
+        }
         else {
             return make_view<T, 2>( field ).slice( Range::to( ndata ), jlev, Range::dummy() );
         }
     }
     else {
-        if ( field.variables() ) { return make_view<T, 2>( field ).slice( Range::to( ndata ), Range::all() ); }
+        if ( field.variables() ) {
+            return make_view<T, 2>( field ).slice( Range::to( ndata ), Range::all() );
+        }
         else {
             return make_view<T, 1>( field ).slice( Range::to( ndata ), Range::dummy() );
         }
@@ -318,7 +324,9 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
         int jlev          = lev[ilev];
         char field_lev[6] = {0, 0, 0, 0, 0, 0};
 
-        if ( field.levels() ) { print_field_lev( field_lev, jlev ); }
+        if ( field.levels() ) {
+            print_field_lev( field_lev, jlev );
+        }
 
         out << "$NodeData\n";
         out << "1\n";
@@ -510,9 +518,12 @@ Mesh GmshIO::read( const PathName& file_path ) const {
 
 namespace {
 mesh::ElementType* make_element_type( int type ) {
-    if ( type == QUAD ) return new mesh::temporary::Quadrilateral();
-    if ( type == TRIAG ) return new mesh::temporary::Triangle();
-    if ( type == LINE ) return new mesh::temporary::Line();
+    if ( type == QUAD )
+        return new mesh::temporary::Quadrilateral();
+    if ( type == TRIAG )
+        return new mesh::temporary::Triangle();
+    if ( type == LINE )
+        return new mesh::temporary::Line();
     throw_Exception( "Element type not supported", Here() );
 }
 }  // namespace
@@ -520,7 +531,8 @@ mesh::ElementType* make_element_type( int type ) {
 void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
     std::ifstream file;
     file.open( file_path.localPath(), std::ios::in | std::ios::binary );
-    if ( !file.is_open() ) throw_CantOpenFile( file_path );
+    if ( !file.is_open() )
+        throw_CantOpenFile( file_path );
 
     std::string line;
 
@@ -752,7 +764,8 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
     bool binary = !options.get<bool>( "ascii" );
 
     openmode mode = std::ios::out;
-    if ( binary ) mode = std::ios::out | std::ios::binary;
+    if ( binary )
+        mode = std::ios::out | std::ios::binary;
     GmshFile file( file_path, mode, part );
 
     // Header
@@ -780,15 +793,18 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
             file << g << " " << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << "\n";
         }
     }
-    if ( binary ) file << "\n";
+    if ( binary )
+        file << "\n";
     file << "$EndNodes\n";
 
     // Elements
     file << "$Elements\n";
     {
         std::vector<const mesh::HybridElements*> grouped_elements;
-        if ( options.get<bool>( "elements" ) ) grouped_elements.push_back( &mesh.cells() );
-        if ( options.get<bool>( "edges" ) ) grouped_elements.push_back( &mesh.edges() );
+        if ( options.get<bool>( "elements" ) )
+            grouped_elements.push_back( &mesh.cells() );
+        if ( options.get<bool>( "edges" ) )
+            grouped_elements.push_back( &mesh.edges() );
 
         idx_t nb_elements( 0 );
         for ( const mesh::HybridElements* hybrid : grouped_elements ) {
@@ -799,12 +815,16 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                 return mesh::Nodes::Topology::check( hybrid_flags( e ), mesh::Nodes::Topology::PATCH );
             };
             auto exclude = [&]( idx_t e ) {
-                if ( !include_ghost && hybrid_halo( e ) ) return true;
-                if ( !include_patch && hybrid_patch( e ) ) return true;
+                if ( !include_ghost && hybrid_halo( e ) )
+                    return true;
+                if ( !include_patch && hybrid_patch( e ) )
+                    return true;
                 return false;
             };
             for ( idx_t e = 0; e < hybrid->size(); ++e ) {
-                if ( exclude( e ) ) { --nb_elements; }
+                if ( exclude( e ) ) {
+                    --nb_elements;
+                }
             }
         }
 
@@ -834,7 +854,8 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                     idx_t nb_elems = elements.size();
                     if ( !include_ghost ) {
                         for ( idx_t elem = 0; elem < elements.size(); ++elem ) {
-                            if ( elems_halo( elem ) ) --nb_elems;
+                            if ( elems_halo( elem ) )
+                                --nb_elems;
                         }
                     }
 
@@ -875,7 +896,8 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
             }
         }
     }
-    if ( binary ) file << "\n";
+    if ( binary )
+        file << "\n";
     file << "$EndElements\n";
     file << std::flush;
 
@@ -973,12 +995,15 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Node
                              const PathName& file_path, openmode mode ) const {
     bool is_new_file = ( mode != std::ios_base::app || !file_path.exists() );
     bool binary( !options.get<bool>( "ascii" ) );
-    if ( binary ) mode |= std::ios_base::binary;
+    if ( binary )
+        mode |= std::ios_base::binary;
     bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
     GmshFile file( file_path, mode, gather ? -1 : int( atlas::mpi::comm().rank() ) );
 
     // Header
-    if ( is_new_file ) { write_header_ascii( file ); }
+    if ( is_new_file ) {
+        write_header_ascii( file );
+    }
 
     // field::Fields
     for ( idx_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {
@@ -1010,14 +1035,16 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Stru
     bool is_new_file = ( mode != std::ios_base::app || !file_path.exists() );
     bool binary( !options.get<bool>( "ascii" ) );
 
-    if ( binary ) mode |= std::ios_base::binary;
+    if ( binary )
+        mode |= std::ios_base::binary;
 
     bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
 
     GmshFile file( file_path, mode, gather ? -1 : int( atlas::mpi::comm().rank() ) );
 
     // Header
-    if ( is_new_file ) write_header_ascii( file );
+    if ( is_new_file )
+        write_header_ascii( file );
 
     // field::Fields
     for ( idx_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {

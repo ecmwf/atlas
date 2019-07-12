@@ -37,7 +37,9 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename ) 
 
     write_load_balance_report( mesh, ofs );
 
-    if ( mpi::comm().rank() == 0 ) { ofs.close(); }
+    if ( mpi::comm().rank() == 0 ) {
+        ofs.close();
+    }
 }
 
 void write_load_balance_report( const Mesh& mesh, std::ostream& ofs ) {

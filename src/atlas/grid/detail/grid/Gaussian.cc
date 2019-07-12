@@ -28,13 +28,17 @@ static eckit::Translator<std::string, int> to_int;
 
 static Projection projection( const Grid::Config& grid ) {
     Grid::Config config;
-    if ( grid.get( "projection", config ) ) { return Projection( config ); }
+    if ( grid.get( "projection", config ) ) {
+        return Projection( config );
+    }
     return Projection();
 }
 
 static Domain domain( const Grid::Config& grid ) {
     Grid::Config config;
-    if ( grid.get( "domain", config ) ) { return Domain( config ); }
+    if ( grid.get( "domain", config ) ) {
+        return Domain( config );
+    }
     return Domain();
 }
 

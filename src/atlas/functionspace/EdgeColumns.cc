@@ -50,7 +50,9 @@ template <typename T>
 array::LocalView<T, 3> make_leveled_view( const Field& field ) {
     using namespace array;
     if ( field.levels() ) {
-        if ( field.variables() ) { return make_view<T, 3>( field ).slice( Range::all(), Range::all(), Range::all() ); }
+        if ( field.variables() ) {
+            return make_view<T, 3>( field ).slice( Range::all(), Range::all(), Range::all() );
+        }
         else {
             return make_view<T, 2>( field ).slice( Range::all(), Range::all(), Range::dummy() );
         }
@@ -207,7 +209,8 @@ idx_t EdgeColumns::config_size( const eckit::Configuration& config ) const {
 
 array::DataType EdgeColumns::config_datatype( const eckit::Configuration& config ) const {
     array::DataType::kind_t kind;
-    if ( !config.get( "datatype", kind ) ) throw_Exception( "datatype missing", Here() );
+    if ( !config.get( "datatype", kind ) )
+        throw_Exception( "datatype missing", Here() );
     return array::DataType( kind );
 }
 
@@ -230,11 +233,13 @@ array::ArrayShape EdgeColumns::config_shape( const eckit::Configuration& config 
 
     idx_t levels( nb_levels_ );
     config.get( "levels", levels );
-    if ( levels > 0 ) shape.push_back( levels );
+    if ( levels > 0 )
+        shape.push_back( levels );
 
     idx_t variables( 0 );
     config.get( "variables", variables );
-    if ( variables > 0 ) shape.push_back( variables );
+    if ( variables > 0 )
+        shape.push_back( variables );
 
     return shape;
 }
@@ -245,7 +250,9 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config )
     nb_levels_( config.getInt( "levels", 0 ) ),
     nb_edges_( 0 ) {
     ATLAS_TRACE();
-    if ( config.has( "halo" ) ) { halo_ = mesh::Halo( config.getInt( "halo" ) ); }
+    if ( config.has( "halo" ) ) {
+        halo_ = mesh::Halo( config.getInt( "halo" ) );
+    }
     else {
         halo_ = mesh::Halo( mesh_ );
     }
@@ -290,7 +297,8 @@ idx_t EdgeColumns::nb_edges() const {
 }
 
 idx_t EdgeColumns::nb_edges_global() const {
-    if ( nb_edges_global_ >= 0 ) return nb_edges_global_;
+    if ( nb_edges_global_ >= 0 )
+        return nb_edges_global_;
     nb_edges_global_ = gather().glb_dof();
     return nb_edges_global_;
 }
@@ -332,7 +340,8 @@ void EdgeColumns::haloExchange( const Field& field, bool on_device ) const {
     haloExchange( fieldset, on_device );
 }
 const parallel::HaloExchange& EdgeColumns::halo_exchange() const {
-    if ( halo_exchange_ ) return *halo_exchange_;
+    if ( halo_exchange_ )
+        return *halo_exchange_;
     halo_exchange_ = EdgeColumnsHaloExchangeCache::instance().get_or_create( mesh_ );
     return *halo_exchange_;
 }
@@ -379,12 +388,14 @@ void EdgeColumns::gather( const Field& local, Field& global ) const {
     gather( local_fields, global_fields );
 }
 const parallel::GatherScatter& EdgeColumns::gather() const {
-    if ( gather_scatter_ ) return *gather_scatter_;
+    if ( gather_scatter_ )
+        return *gather_scatter_;
     gather_scatter_ = EdgeColumnsGatherScatterCache::instance().get_or_create( mesh_ );
     return *gather_scatter_;
 }
 const parallel::GatherScatter& EdgeColumns::scatter() const {
-    if ( gather_scatter_ ) return *gather_scatter_;
+    if ( gather_scatter_ )
+        return *gather_scatter_;
     gather_scatter_ = EdgeColumnsGatherScatterCache::instance().get_or_create( mesh_ );
     return *gather_scatter_;
 }
@@ -497,7 +508,8 @@ std::string EdgeColumns::checksum( const Field& field ) const {
 }
 
 const parallel::Checksum& EdgeColumns::checksum() const {
-    if ( checksum_ ) return *checksum_;
+    if ( checksum_ )
+        return *checksum_;
     checksum_ = EdgeColumnsChecksumCache::instance().get_or_create( mesh_ );
     return *checksum_;
 }

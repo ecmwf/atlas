@@ -138,7 +138,8 @@ int Meshgen2Gmsh::execute( const Args& args ) {
     args.get( "binary", binary );
 
     std::string path_in_str = "";
-    if ( args.get( "grid.json", path_in_str ) ) path_in = path_in_str;
+    if ( args.get( "grid.json", path_in_str ) )
+        path_in = path_in_str;
 
     if ( args.count() )
         path_out = args( 0 );
@@ -151,7 +152,8 @@ int Meshgen2Gmsh::execute( const Args& args ) {
         return failed();
     }
 
-    if ( edges ) halo = std::max( halo, 1l );
+    if ( edges )
+        halo = std::max( halo, 1l );
 
     StructuredGrid grid;
     if ( key.size() ) {
@@ -174,7 +176,8 @@ int Meshgen2Gmsh::execute( const Args& args ) {
         Log::error() << "No grid specified." << std::endl;
     }
 
-    if ( !grid ) return failed();
+    if ( !grid )
+        return failed();
 
     Log::debug() << "Domain: " << grid.domain() << std::endl;
     Log::debug() << "Periodic: " << grid.periodic() << std::endl;
@@ -183,7 +186,8 @@ int Meshgen2Gmsh::execute( const Args& args ) {
     std::string Implementationype = ( RegularGrid( grid ) ? "regular" : "structured" );
     args.get( "generator", Implementationype );
     eckit::LocalConfiguration meshgenerator_config( args );
-    if ( mpi::comm().size() > 1 || edges ) meshgenerator_config.set( "3d", false );
+    if ( mpi::comm().size() > 1 || edges )
+        meshgenerator_config.set( "3d", false );
 
     MeshGenerator meshgenerator( Implementationype, meshgenerator_config );
 
@@ -197,7 +201,9 @@ int Meshgen2Gmsh::execute( const Args& args ) {
         throw e;
     }
 
-    if ( grid.projection().units() == "degrees" ) { functionspace::NodeColumns nodes_fs( mesh, option::halo( halo ) ); }
+    if ( grid.projection().units() == "degrees" ) {
+        functionspace::NodeColumns nodes_fs( mesh, option::halo( halo ) );
+    }
     else {
         Log::warning() << "Not yet implemented: building halo's with projections "
                           "not defined in degrees"
@@ -212,7 +218,9 @@ int Meshgen2Gmsh::execute( const Args& args ) {
             build_median_dual_mesh( mesh );
     }
 
-    if ( stats ) { build_statistics( mesh ); }
+    if ( stats ) {
+        build_statistics( mesh );
+    }
 
     bool torus = false;
     args.get( "torus", torus );

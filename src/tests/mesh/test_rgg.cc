@@ -401,7 +401,9 @@ ASSERT(0);
     }
 
     for ( size_t gid = 1; gid <= all_owned.size(); ++gid ) {
-        if ( all_owned[gid - 1] == -1 ) { Log::error() << "node " << gid << " is not owned by anyone" << std::endl; }
+        if ( all_owned[gid - 1] == -1 ) {
+            Log::error() << "node " << gid << " is not owned by anyone" << std::endl;
+        }
     }
     EXPECT( nb_owned == grid.size() );
 

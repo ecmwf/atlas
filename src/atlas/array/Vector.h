@@ -33,13 +33,15 @@ public:
     void resize_impl( idx_t N ) {
         ATLAS_ASSERT( not data_gpu_, "we can not resize a vector after has been cloned to device" );
         ATLAS_ASSERT( N >= size_ );
-        if ( N == size_ ) return;
+        if ( N == size_ )
+            return;
 
         T* d_ = new T[N];
         for ( idx_t c = 0; c < size_; ++c ) {
             d_[c] = data_[c];
         }
-        if ( data_ ) delete[] data_;
+        if ( data_ )
+            delete[] data_;
         data_ = d_;
     }
 

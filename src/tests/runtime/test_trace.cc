@@ -45,7 +45,9 @@ CASE( "test trace OpenMP" ) {
         auto trace = Trace( Here(), "loop" );
         if ( ATLAS_HAVE_OMP ) {
             trace.stop();
-            if ( atlas_omp_get_thread_num() > 0 ) { EXPECT( trace.elapsed() == 0. ); }
+            if ( atlas_omp_get_thread_num() > 0 ) {
+                EXPECT( trace.elapsed() == 0. );
+            }
             else {
                 EXPECT( trace.elapsed() != 0. );
             }

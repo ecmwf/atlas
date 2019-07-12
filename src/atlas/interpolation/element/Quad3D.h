@@ -53,10 +53,14 @@ public:
     }
 
     const Vector3D& p( int i ) {
-        if ( i == 0 ) return v00;
-        if ( i == 1 ) return v10;
-        if ( i == 2 ) return v11;
-        if ( i == 3 ) return v01;
+        if ( i == 0 )
+            return v00;
+        if ( i == 1 )
+            return v10;
+        if ( i == 2 )
+            return v11;
+        if ( i == 3 )
+            return v01;
         throw_OutOfRange( "Quad3D::p(i)", i, 4, Here() );
     }
 

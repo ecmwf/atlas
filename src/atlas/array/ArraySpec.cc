@@ -22,7 +22,8 @@ idx_t compute_allocated_size( idx_t size, idx_t alignment ) {
     idx_t div             = size / alignment;
     idx_t mod             = size % alignment;
     idx_t _allocated_size = div * alignment;
-    if ( mod > 0 ) _allocated_size += alignment;
+    if ( mod > 0 )
+        _allocated_size += alignment;
     return _allocated_size;
 }
 }  // namespace
@@ -32,7 +33,8 @@ ArraySpec::ArraySpec() : size_(), rank_(), allocated_size_(), contiguous_( true 
 ArraySpec::ArraySpec( const ArrayShape& shape ) : ArraySpec( shape, ArrayAlignment() ) {}
 
 ArraySpec::ArraySpec( const ArrayShape& shape, ArrayAlignment&& alignment ) {
-    if ( int( alignment ) > 1 ) ATLAS_NOTIMPLEMENTED;  // innermost dimension needs to be padded
+    if ( int( alignment ) > 1 )
+        ATLAS_NOTIMPLEMENTED;  // innermost dimension needs to be padded
 
     rank_ = static_cast<int>( shape.size() );
     size_ = 1;
@@ -98,7 +100,9 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, cons
         strides_[j] = strides[j];
         layout_[j]  = layout[j];
         size_ *= shape_[j];
-        if ( layout_[j] != idx_t( j ) ) { default_layout_ = false; }
+        if ( layout_[j] != idx_t( j ) ) {
+            default_layout_ = false;
+        }
     }
     allocated_size_ = compute_allocated_size( shape_[layout_[0]] * strides_[layout_[0]], alignment );
     contiguous_     = ( size_ == allocated_size_ );

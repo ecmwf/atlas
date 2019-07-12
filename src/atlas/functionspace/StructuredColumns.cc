@@ -47,7 +47,9 @@ template <typename T>
 array::LocalView<T, 3> make_leveled_view( const Field& field ) {
     using namespace array;
     if ( field.levels() ) {
-        if ( field.variables() ) { return make_view<T, 3>( field ).slice( Range::all(), Range::all(), Range::all() ); }
+        if ( field.variables() ) {
+            return make_view<T, 3>( field ).slice( Range::all(), Range::all(), Range::all() );
+        }
         else {
             return make_view<T, 2>( field ).slice( Range::all(), Range::all(), Range::dummy() );
         }
@@ -192,25 +194,30 @@ private:
 
 
 const parallel::GatherScatter& StructuredColumns::gather() const {
-    if ( gather_scatter_ ) { return *gather_scatter_; }
+    if ( gather_scatter_ ) {
+        return *gather_scatter_;
+    }
     gather_scatter_ = StructuredColumnsGatherScatterCache::instance().get_or_create( *this );
     return *gather_scatter_;
 }
 
 const parallel::GatherScatter& StructuredColumns::scatter() const {
-    if ( gather_scatter_ ) return *gather_scatter_;
+    if ( gather_scatter_ )
+        return *gather_scatter_;
     gather_scatter_ = StructuredColumnsGatherScatterCache::instance().get_or_create( *this );
     return *gather_scatter_;
 }
 
 const parallel::Checksum& StructuredColumns::checksum() const {
-    if ( checksum_ ) return *checksum_;
+    if ( checksum_ )
+        return *checksum_;
     checksum_ = StructuredColumnsChecksumCache::instance().get_or_create( *this );
     return *checksum_;
 }
 
 const parallel::HaloExchange& StructuredColumns::halo_exchange() const {
-    if ( halo_exchange_ ) return *halo_exchange_;
+    if ( halo_exchange_ )
+        return *halo_exchange_;
     halo_exchange_ = StructuredColumnsHaloExchangeCache::instance().get_or_create( *this );
     return *halo_exchange_;
 }
@@ -236,12 +243,15 @@ void StructuredColumns::set_field_metadata( const eckit::Configuration& config, 
     config.get( "variables", variables );
     field.set_variables( variables );
 
-    if ( config.has( "type" ) ) { field.metadata().set( "type", config.getString( "type" ) ); }
+    if ( config.has( "type" ) ) {
+        field.metadata().set( "type", config.getString( "type" ) );
+    }
 }
 
 array::DataType StructuredColumns::config_datatype( const eckit::Configuration& config ) const {
     array::DataType::kind_t kind;
-    if ( !config.get( "datatype", kind ) ) throw_Exception( "datatype missing", Here() );
+    if ( !config.get( "datatype", kind ) )
+        throw_Exception( "datatype missing", Here() );
     return array::DataType( kind );
 }
 
@@ -264,11 +274,13 @@ array::ArrayShape StructuredColumns::config_shape( const eckit::Configuration& c
 
     idx_t levels( nb_levels_ );
     config.get( "levels", levels );
-    if ( levels > 0 ) shape.push_back( levels );
+    if ( levels > 0 )
+        shape.push_back( levels );
 
     idx_t variables( 0 );
     config.get( "variables", variables );
-    if ( variables > 0 ) shape.push_back( variables );
+    if ( variables > 0 )
+        shape.push_back( variables );
 
     return shape;
 }
@@ -365,7 +377,9 @@ StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical
     grid_( new StructuredGrid( grid ) ) {
     grid::Partitioner partitioner( p );
     if ( not partitioner ) {
-        if ( grid_->domain().global() ) { partitioner = grid::Partitioner( "equal_regions" ); }
+        if ( grid_->domain().global() ) {
+            partitioner = grid::Partitioner( "equal_regions" );
+        }
         else {
             partitioner = grid::Partitioner( "checkerboard" );
         }
@@ -561,7 +575,9 @@ struct FixupHaloForVectors {
     template <typename DATATYPE>
     void apply( Field& field ) {
         std::string type = field.metadata().getString( "type", "scalar" );
-        if ( type == "vector " ) { ATLAS_NOTIMPLEMENTED; }
+        if ( type == "vector " ) {
+            ATLAS_NOTIMPLEMENTED;
+        }
     }
 };
 
@@ -684,12 +700,18 @@ void StructuredColumns::haloExchange( const Field& field, bool ) const {
 size_t StructuredColumns::footprint() const {
     size_t size = sizeof( *this );
     size += ij2gp_.footprint();
-    if ( field_xy_ ) size += field_xy_.footprint();
-    if ( field_partition_ ) size += field_partition_.footprint();
-    if ( field_global_index_ ) size += field_global_index_.footprint();
-    if ( field_remote_index_ ) size += field_remote_index_.footprint();
-    if ( field_index_i_ ) size += field_index_i_.footprint();
-    if ( field_index_j_ ) size += field_index_j_.footprint();
+    if ( field_xy_ )
+        size += field_xy_.footprint();
+    if ( field_partition_ )
+        size += field_partition_.footprint();
+    if ( field_global_index_ )
+        size += field_global_index_.footprint();
+    if ( field_remote_index_ )
+        size += field_remote_index_.footprint();
+    if ( field_index_i_ )
+        size += field_index_i_.footprint();
+    if ( field_index_j_ )
+        size += field_index_j_.footprint();
     return size;
 }
 

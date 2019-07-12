@@ -134,7 +134,8 @@ ArrayT<Value>::ArrayT( const ArrayShape& shape, const ArrayLayout& layout ) {
 
 template <typename Value>
 ArrayT<Value>::ArrayT( const ArraySpec& spec ) {
-    if ( not spec.contiguous() ) ATLAS_NOTIMPLEMENTED;
+    if ( not spec.contiguous() )
+        ATLAS_NOTIMPLEMENTED;
     spec_       = spec;
     data_store_ = std::unique_ptr<ArrayDataStore>( new native::DataStore<Value>( spec_.size() ) );
 }
@@ -188,7 +189,9 @@ void ArrayT<Value>::resize( const ArrayShape& _shape ) {
 template <typename Value>
 void ArrayT<Value>::insert( idx_t idx1, idx_t size1 ) {
     ArrayShape nshape = shape();
-    if ( idx1 > nshape[0] ) { throw_Exception( "Cannot insert into an array at a position beyond its size", Here() ); }
+    if ( idx1 > nshape[0] ) {
+        throw_Exception( "Cannot insert into an array at a position beyond its size", Here() );
+    }
     nshape[0] += size1;
 
     Array* resized = Array::create<Value>( nshape );
@@ -264,7 +267,8 @@ template <typename Value>
 size_t ArrayT<Value>::footprint() const {
     size_t size = sizeof( *this );
     size += bytes();
-    if ( not contiguous() ) ATLAS_NOTIMPLEMENTED;
+    if ( not contiguous() )
+        ATLAS_NOTIMPLEMENTED;
     return size;
 }
 

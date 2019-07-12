@@ -80,7 +80,8 @@ public:
 
         format = Resource<std::string>( "--format", std::string( "table" ) );
 
-        if ( N > 0 ) do_run = true;
+        if ( N > 0 )
+            do_run = true;
 
         if ( do_run == false ) {
             if ( help )
@@ -101,7 +102,8 @@ private:
 //------------------------------------------------------------------------------
 
 void AtlasGaussianLatitudes::run() {
-    if ( !do_run ) return;
+    if ( !do_run )
+        return;
 
     GaussianSpacing lats( 2 * N );
 
@@ -116,8 +118,10 @@ void AtlasGaussianLatitudes::run() {
         std::cout << "double lat[] = {" << std::endl;
         for ( int jlat = 0; jlat < end; ++jlat ) {
             std::cout << std::setw( 16 ) << std::setprecision( 12 ) << std::fixed << lats[jlat];
-            if ( jlat != end - 1 ) std::cout << ",";
-            if ( ( compact && ( jlat + 1 ) % 5 == 0 ) || !compact || jlat == end - 1 ) std::cout << std::endl;
+            if ( jlat != end - 1 )
+                std::cout << ",";
+            if ( ( compact && ( jlat + 1 ) % 5 == 0 ) || !compact || jlat == end - 1 )
+                std::cout << std::endl;
         }
         std::cout << "};" << std::endl;
     }

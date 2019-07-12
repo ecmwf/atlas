@@ -133,13 +133,15 @@ void IrregularConnectivityImpl::clear() {
 //------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivityImpl::on_delete() {
-    if ( ctxt_ && callback_delete_ ) callback_delete_( ctxt_ );
+    if ( ctxt_ && callback_delete_ )
+        callback_delete_( ctxt_ );
 }
 
 //------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivityImpl::on_update() {
-    if ( ctxt_ && callback_update_ ) callback_update_( ctxt_ );
+    if ( ctxt_ && callback_update_ )
+        callback_update_( ctxt_ );
 }
 
 void IrregularConnectivityImpl::resize( idx_t old_size, idx_t new_size, bool initialize, const idx_t values[],
@@ -164,7 +166,8 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[
     ATLAS_ASSERT( owns_, "Connectivity must be owned to be resized directly" );
     idx_t old_size = values_.size();
 
-    if ( rows_ == 0 ) old_size = 0;
+    if ( rows_ == 0 )
+        old_size = 0;
 
     idx_t new_size = old_size + rows * cols;
     idx_t new_rows = rows_ + rows;
@@ -230,7 +233,8 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols ) {
     ATLAS_ASSERT( owns_, "Connectivity must be owned to be resized directly" );
     idx_t old_size = values_.size();
 
-    if ( rows_ == 0 ) old_size = 0;
+    if ( rows_ == 0 )
+        old_size = 0;
 
     idx_t new_size = old_size + rows * cols;
     idx_t new_rows = rows_ + rows;
@@ -396,7 +400,8 @@ void IrregularConnectivityImpl::decode_( eckit::Stream& s ) {
     s >> rows_;
     s >> maxcols_;
     s >> mincols_;
-    if ( not name.empty() ) rename( name );
+    if ( not name.empty() )
+        rename( name );
     ctxt_ = nullptr;
     owns_ = true;
 }
@@ -750,7 +755,8 @@ void BlockConnectivityImpl::decode( eckit::Stream& s ) {
 
 size_t BlockConnectivityImpl::footprint() const {
     size_t size = sizeof( *this );
-    if ( owns() ) size += values_.footprint();
+    if ( owns() )
+        size += values_.footprint();
     return size;
 }
 

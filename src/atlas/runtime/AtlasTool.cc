@@ -51,7 +51,8 @@ void debug_addTarget( eckit::LogTarget* target ) {
             lib.debugChannel().addTarget( new eckit::PrefixTarget( debug_prefix( libname ), target ) );
         }
     }
-    if ( eckit::Log::debug() ) eckit::Log::debug().addTarget( target );
+    if ( eckit::Log::debug() )
+        eckit::Log::debug().addTarget( target );
 }
 
 void debug_setTarget( eckit::LogTarget* target ) {
@@ -61,29 +62,39 @@ void debug_setTarget( eckit::LogTarget* target ) {
             lib.debugChannel().setTarget( new eckit::PrefixTarget( debug_prefix( libname ), target ) );
         }
     }
-    if ( eckit::Log::debug() ) eckit::Log::debug().setTarget( target );
+    if ( eckit::Log::debug() )
+        eckit::Log::debug().setTarget( target );
 }
 
 void debug_reset() {
     for ( std::string libname : eckit::system::Library::list() ) {
         const eckit::system::Library& lib = eckit::system::Library::lookup( libname );
-        if ( lib.debug() ) { lib.debugChannel().reset(); }
+        if ( lib.debug() ) {
+            lib.debugChannel().reset();
+        }
     }
-    if ( eckit::Log::debug() ) eckit::Log::debug().reset();
+    if ( eckit::Log::debug() )
+        eckit::Log::debug().reset();
 }
 
 bool getEnv( const std::string& env, bool default_value ) {
-    if ( ::getenv( env.c_str() ) ) { return eckit::Translator<std::string, bool>()( ::getenv( env.c_str() ) ); }
+    if ( ::getenv( env.c_str() ) ) {
+        return eckit::Translator<std::string, bool>()( ::getenv( env.c_str() ) );
+    }
     return default_value;
 }
 
 int getEnv( const std::string& env, int default_value ) {
-    if ( ::getenv( env.c_str() ) ) { return eckit::Translator<std::string, int>()( ::getenv( env.c_str() ) ); }
+    if ( ::getenv( env.c_str() ) ) {
+        return eckit::Translator<std::string, int>()( ::getenv( env.c_str() ) );
+    }
     return default_value;
 }
 
 std::string getEnv( const std::string& env, const std::string& default_value ) {
-    if ( ::getenv( env.c_str() ) ) { return ::getenv( env.c_str() ); }
+    if ( ::getenv( env.c_str() ) ) {
+        return ::getenv( env.c_str() );
+    }
     return default_value;
 }
 
@@ -205,7 +216,8 @@ void atlas::AtlasTool::add_option( eckit::option::Option* option ) {
 void atlas::AtlasTool::help( std::ostream& out ) {
     out << "NAME\n" << indent() << name();
     std::string brief = briefDescription();
-    if ( brief.size() ) out << " - " << brief << '\n';
+    if ( brief.size() )
+        out << " - " << brief << '\n';
 
     std::string usg = usage();
     if ( usg.size() ) {
@@ -228,7 +240,8 @@ void atlas::AtlasTool::help( std::ostream& out ) {
 bool atlas::AtlasTool::handle_help() {
     for ( int i = 1; i < argc(); ++i ) {
         if ( argv( i ) == "--help" || argv( i ) == "-h" ) {
-            if ( taskID() == 0 ) help( std::cout );
+            if ( taskID() == 0 )
+                help( std::cout );
             return true;
         }
     }
@@ -239,7 +252,9 @@ atlas::AtlasTool::AtlasTool( int argc, char** argv ) : eckit::Tool( argc, argv )
     eckit::LibEcKit::instance().setAbortHandler( [] {
         std::cerr << "[" << atlas::mpi::comm().rank() << "] "
                   << "calling MPI_Abort";
-        if ( not use_logfile and mpi::comm().size() > 1 ) { std::cerr << ", logfile: " << logfile_name; }
+        if ( not use_logfile and mpi::comm().size() > 1 ) {
+            std::cerr << ", logfile: " << logfile_name;
+        }
         std::cerr << std::endl;
         std::this_thread::sleep_for( std::chrono::milliseconds( 3000 ) );
         atlas::mpi::comm().abort( 1 );
@@ -257,10 +272,12 @@ atlas::AtlasTool::AtlasTool( int argc, char** argv ) : eckit::Tool( argc, argv )
 
 int atlas::AtlasTool::start() {
     try {
-        if ( handle_help() ) return success();
+        if ( handle_help() )
+            return success();
 
         if ( argc() - 1 < minimumPositionalArguments() ) {
-            if ( taskID() == 0 ) std::cout << "Usage: " << usage() << std::endl;
+            if ( taskID() == 0 )
+                std::cout << "Usage: " << usage() << std::endl;
             return failed();
         }
         Options opts = options_;
@@ -314,23 +331,32 @@ void atlas::AtlasTool::setupLogging() {
         eckit::LogTarget* logfile = new eckit::FileTarget( logfile_name );
 
         if ( int( mpi::comm().rank() ) == log_rank ) {
-            if ( Log::info() ) Log::info().addTarget( logfile );
-            if ( Log::warning() ) Log::warning().addTarget( logfile );
-            if ( Log::error() ) Log::error().addTarget( logfile );
+            if ( Log::info() )
+                Log::info().addTarget( logfile );
+            if ( Log::warning() )
+                Log::warning().addTarget( logfile );
+            if ( Log::error() )
+                Log::error().addTarget( logfile );
             debug_addTarget( logfile );
         }
         else {
-            if ( Log::info() ) Log::info().setTarget( logfile );
-            if ( Log::warning() ) Log::warning().setTarget( logfile );
-            if ( Log::error() ) Log::error().setTarget( logfile );
+            if ( Log::info() )
+                Log::info().setTarget( logfile );
+            if ( Log::warning() )
+                Log::warning().setTarget( logfile );
+            if ( Log::error() )
+                Log::error().setTarget( logfile );
             debug_setTarget( logfile );
         }
     }
     else {
         if ( int( mpi::comm().rank() ) != log_rank ) {
-            if ( Log::info() ) Log::info().reset();
-            if ( Log::warning() ) Log::warning().reset();
-            if ( Log::error() ) Log::error().reset();
+            if ( Log::info() )
+                Log::info().reset();
+            if ( Log::warning() )
+                Log::warning().reset();
+            if ( Log::error() )
+                Log::error().reset();
             debug_reset();
         }
     }

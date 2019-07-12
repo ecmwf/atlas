@@ -51,7 +51,8 @@ Elements::Elements( ElementType* element_type, idx_t nb_elements, const idx_t no
 }
 
 Elements::~Elements() {
-    if ( owns_ ) delete hybrid_elements_;
+    if ( owns_ )
+        delete hybrid_elements_;
 }
 
 const std::string& Elements::name() const {

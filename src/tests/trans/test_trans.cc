@@ -54,7 +54,8 @@ namespace test {
 
 struct AtlasTransEnvironment : public AtlasTestEnvironment {
     AtlasTransEnvironment( int argc, char* argv[] ) : AtlasTestEnvironment( argc, argv ) {
-        if ( mpi::comm().size() == 1 ) trans_use_mpi( false );
+        if ( mpi::comm().size() == 1 )
+            trans_use_mpi( false );
         trans_init();
     }
 
@@ -360,7 +361,9 @@ CASE( "test_nomesh" ) {
 
     if ( not spf.contiguous() ) {
         EXPECT_THROWS_AS( spectral.scatter( spfg, spf ), eckit::Exception );
-        if ( mpi::comm().size() == 1 ) { spf = spfg; }
+        if ( mpi::comm().size() == 1 ) {
+            spf = spfg;
+        }
         else {
             return;
         }
@@ -397,7 +400,9 @@ CASE( "test_nomesh" ) {
 
     if ( not spf.contiguous() ) {
         EXPECT_THROWS_AS( spectral.gather( spf, spfg ), eckit::Exception );
-        if ( mpi::comm().size() == 1 ) { spfg = spf; }
+        if ( mpi::comm().size() == 1 ) {
+            spfg = spf;
+        }
         else {
             return;
         }

@@ -37,7 +37,8 @@ template <typename Rotation>
 SchmidtProjectionT<Rotation>::SchmidtProjectionT( const eckit::Parametrisation& params ) :
     ProjectionImpl(),
     rotation_( params ) {
-    if ( !params.get( "stretching_factor", c_ ) ) throw_Exception( "stretching_factor missing in Params", Here() );
+    if ( !params.get( "stretching_factor", c_ ) )
+        throw_Exception( "stretching_factor missing in Params", Here() );
 }
 
 // constructor

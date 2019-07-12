@@ -99,8 +99,10 @@ struct TimerStats {
     }
     void update( Trace& timer ) {
         double t = timer.elapsed();
-        if ( min < 0 ) min = t;
-        if ( max < 0 ) max = t;
+        if ( min < 0 )
+            min = t;
+        if ( max < 0 )
+            max = t;
         min = std::min( min, t );
         max = std::max( max, t );
         avg = ( avg * cnt + t ) / ( cnt + 1 );
@@ -198,7 +200,8 @@ int AtlasBenchmark::execute( const Args& args ) {
     iteration_timer    = TimerStats( "iteration" );
     haloexchange_timer = TimerStats( "halo-exchange" );
 
-    if ( omp_threads > 0 ) atlas_omp_set_num_threads( omp_threads );
+    if ( omp_threads > 0 )
+        atlas_omp_set_num_threads( omp_threads );
 
     Log::info() << "atlas-benchmark\n" << endl;
     Log::info() << Library::instance().information() << endl;
@@ -231,7 +234,8 @@ int AtlasBenchmark::execute( const Args& args ) {
                 ++tic;
             }
             if ( iter == niter - 1 ) {
-                if ( tic < 51 ) Log::info() << '*';
+                if ( tic < 51 )
+                    Log::info() << '*';
                 Log::info() << endl;
             }
         }
@@ -367,7 +371,8 @@ void AtlasBenchmark::setup() {
     vector<idx_t> tmp( nedges );
     int c( 0 );
     for ( idx_t jedge = 0; jedge < nedges; ++jedge ) {
-        if ( is_pole_edge( jedge ) ) tmp[c++] = jedge;
+        if ( is_pole_edge( jedge ) )
+            tmp[c++] = jedge;
     }
     pole_edges.reserve( c );
     for ( idx_t jedge = 0; jedge < c; ++jedge )
@@ -448,7 +453,8 @@ void AtlasBenchmark::iteration() {
             grad( jnode, 0, ZZ )        = ( field( jnode, 1 ) - field( jnode, 0 ) ) * dzi;
             grad( jnode, nlev - 1, ZZ ) = ( field( jnode, nlev - 2 ) - field( jnode, nlev - 1 ) ) * dzi;
         }
-        if ( nlev == 1 ) grad( jnode, 0, ZZ ) = 0.;
+        if ( nlev == 1 )
+            grad( jnode, 0, ZZ ) = 0.;
     }
     compute.stop();
 

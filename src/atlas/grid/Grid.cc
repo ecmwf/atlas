@@ -39,7 +39,8 @@ Grid::IterateLonLat Grid::lonlat() const {
 Grid::Grid( const std::string& shortname, const Domain& domain ) :
     Handle( [&] {
         Config config;
-        if ( domain ) config.set( "domain", domain.spec() );
+        if ( domain )
+            config.set( "domain", domain.spec() );
         return Grid::Implementation::create( shortname, config );
     }() ) {}
 

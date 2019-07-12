@@ -73,7 +73,8 @@ int Tool::execute( const Args& args ) {
     args.get( "grid.name", key );
 
     std::string path_in_str = "";
-    if ( args.get( "grid.json", path_in_str ) ) path_in = path_in_str;
+    if ( args.get( "grid.json", path_in_str ) )
+        path_in = path_in_str;
 
     StructuredGrid grid;
     if ( key.size() ) {
@@ -96,13 +97,15 @@ int Tool::execute( const Args& args ) {
         Log::error() << "No grid specified." << std::endl;
     }
 
-    if ( !grid ) return failed();
+    if ( !grid )
+        return failed();
 
     Log::debug() << "Domain: " << grid.domain() << std::endl;
     Log::debug() << "Periodic: " << grid.periodic() << std::endl;
 
     std::string partitioner_type;
-    if ( not args.get( "partitioner", partitioner_type ) ) partitioner_type = "equal_regions";
+    if ( not args.get( "partitioner", partitioner_type ) )
+        partitioner_type = "equal_regions";
 
     long N = mpi::comm().size();
     args.get( "partitions", N );

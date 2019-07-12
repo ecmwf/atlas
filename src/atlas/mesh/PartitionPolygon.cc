@@ -45,7 +45,9 @@ util::Polygon::edge_set_t compute_edges( const detail::MeshImpl& mesh, idx_t hal
             if ( patch( j ) == 0 && field_halo( j ) <= halo ) {
                 for ( idx_t k = 0; k < nb_nodes; ++k ) {
                     util::Polygon::edge_t edge( conn( j, k ), conn( j, ( k + 1 ) % nb_nodes ) );
-                    if ( !edges.erase( edge.reverse() ) ) { edges.insert( edge ); }
+                    if ( !edges.erase( edge.reverse() ) ) {
+                        edges.insert( edge );
+                    }
                 }
             }
         }

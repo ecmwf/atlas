@@ -42,7 +42,9 @@ CASE( "test_global" ) {
         SECTION( "grid: " + std::to_string( c ) ) {
             Hash h;
             grid.hash( h );
-            if ( hash.empty() ) { Log::info() << "grid " << c << "   hash = " << std::string( h ) << std::endl; }
+            if ( hash.empty() ) {
+                Log::info() << "grid " << c << "   hash = " << std::string( h ) << std::endl;
+            }
             EXPECT( std::string( h ) == hash );
         }
         c++;

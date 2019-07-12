@@ -77,7 +77,8 @@ using eckit::types::is_approximately_equal;
     if ( ( _num_subsections - 1 ) == _subsection ) {                                             \
         atlas::Log::info() << "Running section \"" << _test_subsection << "\" ..." << std::endl; \
     }                                                                                            \
-    if ( ( _num_subsections - 1 ) == _subsection ) ATLAS_TRACE_SCOPE( _test_subsection )
+    if ( ( _num_subsections - 1 ) == _subsection )                                               \
+    ATLAS_TRACE_SCOPE( _test_subsection )
 
 #ifndef SETUP
 #define SETUP( name )
@@ -97,7 +98,9 @@ static int barrier_timeout( double seconds ) {
         watch.start();
         std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
         watch.stop();
-        if ( watch.elapsed() > seconds ) { return 1; }
+        if ( watch.elapsed() > seconds ) {
+            return 1;
+        }
     }
     return 0;
 }
@@ -128,7 +131,8 @@ void debug_addTarget( eckit::LogTarget* target ) {
             lib.debugChannel().addTarget( new eckit::PrefixTarget( debug_prefix( libname ), target ) );
         }
     }
-    if ( eckit::Log::debug() ) eckit::Log::debug().addTarget( target );
+    if ( eckit::Log::debug() )
+        eckit::Log::debug().addTarget( target );
 }
 
 void debug_setTarget( eckit::LogTarget* target ) {
@@ -138,24 +142,32 @@ void debug_setTarget( eckit::LogTarget* target ) {
             lib.debugChannel().setTarget( new eckit::PrefixTarget( debug_prefix( libname ), target ) );
         }
     }
-    if ( eckit::Log::debug() ) eckit::Log::debug().setTarget( target );
+    if ( eckit::Log::debug() )
+        eckit::Log::debug().setTarget( target );
 }
 
 void debug_reset() {
     for ( std::string libname : eckit::system::Library::list() ) {
         const eckit::system::Library& lib = eckit::system::Library::lookup( libname );
-        if ( lib.debug() ) { lib.debugChannel().reset(); }
+        if ( lib.debug() ) {
+            lib.debugChannel().reset();
+        }
     }
-    if ( eckit::Log::debug() ) eckit::Log::debug().reset();
+    if ( eckit::Log::debug() )
+        eckit::Log::debug().reset();
 }
 
 bool getEnv( const std::string& env, bool default_value ) {
-    if ( ::getenv( env.c_str() ) ) { return eckit::Translator<std::string, bool>()( ::getenv( env.c_str() ) ); }
+    if ( ::getenv( env.c_str() ) ) {
+        return eckit::Translator<std::string, bool>()( ::getenv( env.c_str() ) );
+    }
     return default_value;
 }
 
 int getEnv( const std::string& env, int default_value ) {
-    if ( ::getenv( env.c_str() ) ) { return eckit::Translator<std::string, int>()( ::getenv( env.c_str() ) ); }
+    if ( ::getenv( env.c_str() ) ) {
+        return eckit::Translator<std::string, int>()( ::getenv( env.c_str() ) );
+    }
     return default_value;
 }
 

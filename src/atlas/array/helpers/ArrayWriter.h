@@ -33,7 +33,8 @@ struct array_writer_impl {
     static void apply( View& arr, std::ostream& out, DimIndex... idxs ) {
         for ( idx_t i = 0; i < arr.shape( Dim ); ++i ) {
             array_writer_impl<Value, Rank, Dim + 1>::apply( arr, out, idxs..., i );
-            if ( i < arr.shape( Dim ) - 1 ) out << " ";
+            if ( i < arr.shape( Dim ) - 1 )
+                out << " ";
         }
     }
 };

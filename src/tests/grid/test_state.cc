@@ -48,7 +48,9 @@ public:
 // ---  Implementation (in .cc file)
 void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p ) const {
     const util::Config* params = dynamic_cast<const util::Config*>( &p );
-    if ( !params ) { throw_Exception( "Parametrisation has to be of atlas::util::Config type" ); }
+    if ( !params ) {
+        throw_Exception( "Parametrisation has to be of atlas::util::Config type" );
+    }
 
     util::Config geometry;
     if ( !params->get( "geometry", geometry ) ) {
@@ -58,10 +60,14 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
     std::string grid_uid;
     if ( geometry.get( "grid", grid_uid ) ) {
         Grid grid( grid_uid );
-        if ( !geometry.has( "ngptot" ) ) { geometry.set( "ngptot", grid.size() ); }
+        if ( !geometry.has( "ngptot" ) ) {
+            geometry.set( "ngptot", grid.size() );
+        }
     }
 
-    if ( !geometry.has( "ngptot" ) ) { throw_Exception( "Could not find 'ngptot' in Parametrisation" ); }
+    if ( !geometry.has( "ngptot" ) ) {
+        throw_Exception( "Could not find 'ngptot' in Parametrisation" );
+    }
 
     std::vector<util::Config> fields;
     if ( params->get( "fields", fields ) ) {

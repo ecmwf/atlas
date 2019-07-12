@@ -28,7 +28,9 @@ void FieldSetImpl::clear() {
 }
 
 Field FieldSetImpl::add( const Field& field ) {
-    if ( field.name().size() ) { index_[field.name()] = size(); }
+    if ( field.name().size() ) {
+        index_[field.name()] = size();
+    }
     else {
         std::stringstream name;
         name << name_ << "[" << size() << "]";

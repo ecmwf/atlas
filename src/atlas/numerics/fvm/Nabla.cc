@@ -39,7 +39,8 @@ static NablaBuilder<Nabla> __fvm_nabla( "fvm" );
 Nabla::Nabla( const numerics::Method& method, const eckit::Parametrisation& p ) :
     atlas::numerics::NablaImpl( method, p ) {
     fvm_ = dynamic_cast<const fvm::Method*>( &method );
-    if ( !fvm_ ) throw_Exception( "atlas::numerics::fvm::Nabla needs a atlas::numerics::fvm::Method", Here() );
+    if ( !fvm_ )
+        throw_Exception( "atlas::numerics::fvm::Nabla needs a atlas::numerics::fvm::Method", Here() );
     Log::debug() << "Nabla constructed for method " << fvm_->name() << " with "
                  << fvm_->node_columns().nb_nodes_global() << " nodes total" << std::endl;
     fvm_->attach();
@@ -60,7 +61,8 @@ void Nabla::setup() {
     std::vector<idx_t> tmp( nedges );
     idx_t c( 0 );
     for ( idx_t jedge = 0; jedge < nedges; ++jedge ) {
-        if ( is_pole_edge( jedge ) ) tmp[c++] = jedge;
+        if ( is_pole_edge( jedge ) )
+            tmp[c++] = jedge;
     }
     pole_edges_.clear();
     pole_edges_.reserve( c );
@@ -69,7 +71,9 @@ void Nabla::setup() {
 }
 
 void Nabla::gradient( const Field& field, Field& grad_field ) const {
-    if ( field.variables() > 1 ) { return gradient_of_vector( field, grad_field ); }
+    if ( field.variables() > 1 ) {
+        return gradient_of_vector( field, grad_field );
+    }
     else {
         return gradient_of_scalar( field, grad_field );
     }
@@ -350,7 +354,8 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
     const idx_t nnodes = fvm_->node_columns().nb_nodes();
     const idx_t nedges = fvm_->edge_columns().nb_edges();
     const idx_t nlev   = vector_field.levels();
-    if ( curl_field.levels() != nlev ) throw_AssertionFailed( "curl field should have same number of levels", Here() );
+    if ( curl_field.levels() != nlev )
+        throw_AssertionFailed( "curl field should have same number of levels", Here() );
 
     const auto vector =
         vector_field.levels()
@@ -425,7 +430,8 @@ void Nabla::laplacian( const Field& scalar, Field& lapl ) const {
     Field grad( fvm_->node_columns().createField<double>( option::name( "grad" ) | option::levels( scalar.levels() ) |
                                                           option::variables( 2 ) ) );
     gradient( scalar, grad );
-    if ( fvm_->node_columns().halo().size() < 2 ) fvm_->node_columns().haloExchange( grad );
+    if ( fvm_->node_columns().halo().size() < 2 )
+        fvm_->node_columns().haloExchange( grad );
     divergence( grad, lapl );
 }
 

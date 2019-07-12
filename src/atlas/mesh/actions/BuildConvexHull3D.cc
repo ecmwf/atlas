@@ -180,7 +180,8 @@ static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, Point
 
 void BuildConvexHull3D::operator()( Mesh& mesh ) const {
     // don't tesselate meshes already with triags or quads
-    if ( mesh.cells().size() ) return;
+    if ( mesh.cells().size() )
+        return;
 
     ATLAS_TRACE();
 

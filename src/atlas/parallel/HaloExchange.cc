@@ -33,8 +33,10 @@ struct IsGhostPoint {
     }
 
     bool operator()( idx_t idx ) {
-        if ( part_[idx] != mypart_ ) return true;
-        if ( ridx_[idx] != base_ + idx ) return true;
+        if ( part_[idx] != mypart_ )
+            return true;
+        if ( ridx_[idx] != base_ + idx )
+            return true;
         return false;
     }
     int mypart_;
@@ -74,7 +76,8 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
     IsGhostPoint is_ghost( part, remote_idx, base, parsize_ );
 
     for ( int jj = 0; jj < parsize_; ++jj ) {
-        if ( is_ghost( jj ) ) ++recvcounts_[part[jj]];
+        if ( is_ghost( jj ) )
+            ++recvcounts_[part[jj]];
     }
     recvcnt_ = std::accumulate( recvcounts_.begin(), recvcounts_.end(), 0 );
 

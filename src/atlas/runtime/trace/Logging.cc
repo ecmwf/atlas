@@ -51,7 +51,8 @@ public:
 
     void set( std::ostream& channel ) { channel_ = &channel; }
     void set( bool state ) {
-        if ( state == false ) channel_ = &empty_channel();
+        if ( state == false )
+            channel_ = &empty_channel();
     }
 };
 
@@ -78,11 +79,13 @@ bool Logging::enabled() {
 }
 
 void Logging::start( const std::string& title ) {
-    if ( enabled() ) channel() << title << " ..." << std::endl;
+    if ( enabled() )
+        channel() << title << " ..." << std::endl;
 }
 
 void Logging::stop( const std::string& title, double seconds ) {
-    if ( enabled() ) channel() << title << " ... done : " << seconds << "s" << std::endl;
+    if ( enabled() )
+        channel() << title << " ... done : " << seconds << "s" << std::endl;
 }
 //-----------------------------------------------------------------------------------------------------------
 
@@ -93,7 +96,8 @@ std::ostream& NoLogging::channel() {
 //-----------------------------------------------------------------------------------------------------------
 
 void LoggingResult::stop( const std::string& title, double seconds ) {
-    if ( enabled() ) channel() << title << " : " << seconds << "s" << std::endl;
+    if ( enabled() )
+        channel() << title << " : " << seconds << "s" << std::endl;
 }
 
 //-----------------------------------------------------------------------------------------------------------

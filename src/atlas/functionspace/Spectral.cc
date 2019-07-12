@@ -64,17 +64,20 @@ public:
     int nump() const { return trans_->nump; }
 
     array::LocalView<int, 1, array::Intent::ReadOnly> nvalue() const {
-        if ( trans_->nvalue == nullptr ) ::trans_inquire( trans_.get(), "nvalue" );
+        if ( trans_->nvalue == nullptr )
+            ::trans_inquire( trans_.get(), "nvalue" );
         return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nvalue, array::make_shape( trans_->nspec2 ) );
     }
 
     array::LocalView<int, 1, array::Intent::ReadOnly> nmyms() const {
-        if ( trans_->nmyms == nullptr ) ::trans_inquire( trans_.get(), "nmyms" );
+        if ( trans_->nmyms == nullptr )
+            ::trans_inquire( trans_.get(), "nmyms" );
         return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nmyms, array::make_shape( nump() ) );
     }
 
     array::LocalView<int, 1, array::Intent::ReadOnly> nasm0() const {
-        if ( trans_->nasm0 == nullptr ) ::trans_inquire( trans_.get(), "nasm0" );
+        if ( trans_->nasm0 == nullptr )
+            ::trans_inquire( trans_.get(), "nasm0" );
         return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nasm0,
                                                                   array::make_shape( trans_->nsmax + 1 ) );
     }
@@ -177,7 +180,9 @@ Spectral::Spectral( const trans::Trans& trans, const eckit::Configuration& confi
     parallelisation_( [&trans, this]() -> Parallelisation* {
 #if ATLAS_HAVE_TRANS
         const auto* trans_ifs = dynamic_cast<const trans::TransIFS*>( trans.get() );
-        if ( trans_ifs ) { return new Parallelisation( trans_ifs->trans_ ); }
+        if ( trans_ifs ) {
+            return new Parallelisation( trans_ifs->trans_ );
+        }
 #endif
         return new Parallelisation( truncation_ );
     }() ) {
@@ -206,7 +211,8 @@ idx_t Spectral::nb_spectral_coefficients_global() const {
 
 array::DataType Spectral::config_datatype( const eckit::Configuration& config ) const {
     array::DataType::kind_t kind;
-    if ( !config.get( "datatype", kind ) ) throw_Exception( "datatype missing", Here() );
+    if ( !config.get( "datatype", kind ) )
+        throw_Exception( "datatype missing", Here() );
     return array::DataType( kind );
 }
 
@@ -229,7 +235,8 @@ Field Spectral::createField( const eckit::Configuration& options ) const {
     array_shape.push_back( nb_spec_coeffs );
 
     idx_t levels = config_levels( options );
-    if ( levels ) array_shape.push_back( levels );
+    if ( levels )
+        array_shape.push_back( levels );
 
     Field field = Field( config_name( options ), config_datatype( options ), array_shape );
 
@@ -259,7 +266,8 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
         idx_t rank = static_cast<idx_t>( mpi::comm().rank() );
         glb.metadata().get( "owner", root );
         ATLAS_ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
-        if ( rank == root ) ATLAS_ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
+        if ( rank == root )
+            ATLAS_ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
         std::vector<int> nto( 1, root + 1 );
         if ( loc.rank() > 1 ) {
             nto.resize( loc.stride( 0 ) );
@@ -313,7 +321,8 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
 
         glb.metadata().get( "owner", root );
         ATLAS_ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
-        if ( rank == root ) ATLAS_ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
+        if ( rank == root )
+            ATLAS_ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
         std::vector<int> nfrom( 1, root + 1 );
         if ( loc.rank() > 1 ) {
             nfrom.resize( loc.stride( 0 ) );

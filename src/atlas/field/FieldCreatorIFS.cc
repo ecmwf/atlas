@@ -32,14 +32,17 @@ FieldImpl* FieldCreatorIFS::createField( const eckit::Parametrisation& params ) 
     size_t nproma = 1;
     size_t nlev   = 1;
 
-    if ( !params.get( "ngptot", ngptot ) ) throw_Exception( "Could not find parameter 'ngptot' in Parametrisation" );
+    if ( !params.get( "ngptot", ngptot ) )
+        throw_Exception( "Could not find parameter 'ngptot' in Parametrisation" );
     params.get( "nproma", nproma );
     params.get( "nlev", nlev );
     params.get( "nvar", nvar );
 
     array::DataType datatype = array::DataType::create<double>();
     std::string datatype_str;
-    if ( params.get( "datatype", datatype_str ) ) { datatype = array::DataType( datatype_str ); }
+    if ( params.get( "datatype", datatype_str ) ) {
+        datatype = array::DataType( datatype_str );
+    }
     else {
         array::DataType::kind_t kind( array::DataType::kind<double>() );
         params.get( "kind", kind );

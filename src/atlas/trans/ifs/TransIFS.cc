@@ -90,7 +90,8 @@ namespace {
 std::string fieldset_functionspace( const FieldSet& fields ) {
     std::string functionspace( "undefined" );
     for ( idx_t jfld = 0; jfld < fields.size(); ++jfld ) {
-        if ( functionspace == "undefined" ) functionspace = fields[jfld].functionspace().type();
+        if ( functionspace == "undefined" )
+            functionspace = fields[jfld].functionspace().type();
         if ( fields[jfld].functionspace().type() != functionspace ) {
             throw_Exception( ": fielset has fields with different functionspaces", Here() );
         }
@@ -368,7 +369,8 @@ struct PackNodeColumns {
     }
     void pack_3( const Field& field, idx_t components ) {
         const ArrayView<double, 3> gpfield = make_view<double, 3>( field );
-        if ( not components ) components = gpfield.shape( 2 );
+        if ( not components )
+            components = gpfield.shape( 2 );
         for ( idx_t jcomp = 0; jcomp < components; ++jcomp ) {
             for ( idx_t jlev = 0; jlev < gpfield.shape( 1 ); ++jlev ) {
                 idx_t n = 0;
@@ -525,7 +527,8 @@ struct UnpackNodeColumns {
     }
     void unpack_3( Field& field, idx_t components ) {
         ArrayView<double, 3> gpfield = make_view<double, 3>( field );
-        if ( not components ) components = gpfield.shape( 2 );
+        if ( not components )
+            components = gpfield.shape( 2 );
         for ( idx_t jcomp = 0; jcomp < components; ++jcomp ) {
             for ( idx_t jlev = 0; jlev < gpfield.shape( 1 ); ++jlev ) {
                 idx_t n = 0;
@@ -735,93 +738,109 @@ const int* atlas::trans::TransIFS::n_regions( int& size ) const {
 
 const int* atlas::trans::TransIFS::nfrstlat( int& size ) const {
     size = trans_->n_regions_NS;
-    if ( trans_->nfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nfrstlat" );
+    if ( trans_->nfrstlat == nullptr )
+        ::trans_inquire( trans_.get(), "nfrstlat" );
     return trans_->nfrstlat;
 }
 
 const int* atlas::trans::TransIFS::nlstlat( int& size ) const {
     size = trans_->n_regions_NS;
-    if ( trans_->nlstlat == nullptr ) ::trans_inquire( trans_.get(), "nlstlat" );
+    if ( trans_->nlstlat == nullptr )
+        ::trans_inquire( trans_.get(), "nlstlat" );
     return trans_->nlstlat;
 }
 
 const int* atlas::trans::TransIFS::nptrfrstlat( int& size ) const {
     size = trans_->n_regions_NS;
-    if ( trans_->nptrfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nptrfrstlat" );
+    if ( trans_->nptrfrstlat == nullptr )
+        ::trans_inquire( trans_.get(), "nptrfrstlat" );
     return trans_->nptrfrstlat;
 }
 
 const int* atlas::trans::TransIFS::nsta( int& sizef2, int& sizef1 ) const {
     sizef1 = trans_->ndgl + trans_->n_regions_NS - 1;
     sizef2 = trans_->n_regions_EW;
-    if ( trans_->nsta == nullptr ) ::trans_inquire( trans_.get(), "nsta" );
+    if ( trans_->nsta == nullptr )
+        ::trans_inquire( trans_.get(), "nsta" );
     return trans_->nsta;
 }
 
 const int* atlas::trans::TransIFS::nonl( int& sizef2, int& sizef1 ) const {
     sizef1 = trans_->ndgl + trans_->n_regions_NS - 1;
     sizef2 = trans_->n_regions_EW;
-    if ( trans_->nonl == nullptr ) ::trans_inquire( trans_.get(), "nonl" );
+    if ( trans_->nonl == nullptr )
+        ::trans_inquire( trans_.get(), "nonl" );
     return trans_->nonl;
 }
 
 const int* atlas::trans::TransIFS::nmyms( int& size ) const {
     size = trans_->nump;
-    if ( trans_->nmyms == nullptr ) ::trans_inquire( trans_.get(), "nmyms" );
+    if ( trans_->nmyms == nullptr )
+        ::trans_inquire( trans_.get(), "nmyms" );
     return trans_->nmyms;
 }
 
 const int* atlas::trans::TransIFS::nasm0( int& size ) const {
     size = trans_->nsmax + 1;  // +1 because zeroth wave included
-    if ( trans_->nasm0 == nullptr ) ::trans_inquire( trans_.get(), "nasm0" );
+    if ( trans_->nasm0 == nullptr )
+        ::trans_inquire( trans_.get(), "nasm0" );
     return trans_->nasm0;
 }
 
 const int* atlas::trans::TransIFS::nvalue( int& size ) const {
     size = trans_->nspec2;
-    if ( trans_->nvalue == nullptr ) ::trans_inquire( trans_.get(), "nvalue" );
+    if ( trans_->nvalue == nullptr )
+        ::trans_inquire( trans_.get(), "nvalue" );
     return trans_->nvalue;
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nvalue() const {
-    if ( trans_->nvalue == nullptr ) ::trans_inquire( trans_.get(), "nvalue" );
+    if ( trans_->nvalue == nullptr )
+        ::trans_inquire( trans_.get(), "nvalue" );
     return array::LocalView<int, 1>( trans_->nvalue, array::make_shape( trans_->nspec2 ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nasm0() const {
-    if ( trans_->nasm0 == nullptr ) ::trans_inquire( trans_.get(), "nasm0" );
+    if ( trans_->nasm0 == nullptr )
+        ::trans_inquire( trans_.get(), "nasm0" );
     return array::LocalView<int, 1>( trans_->nasm0, array::make_shape( trans_->nsmax + 1 ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nmyms() const {
-    if ( trans_->nmyms == nullptr ) ::trans_inquire( trans_.get(), "nmyms" );
+    if ( trans_->nmyms == nullptr )
+        ::trans_inquire( trans_.get(), "nmyms" );
     return array::LocalView<int, 1>( trans_->nmyms, array::make_shape( trans_->nump ) );
 }
 
 array::LocalView<int, 2> atlas::trans::TransIFS::nonl() const {
-    if ( trans_->nonl == nullptr ) ::trans_inquire( trans_.get(), "nonl" );
+    if ( trans_->nonl == nullptr )
+        ::trans_inquire( trans_.get(), "nonl" );
     return array::LocalView<int, 2>(
         trans_->nonl, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
 }
 
 array::LocalView<int, 2> atlas::trans::TransIFS::nsta() const {
-    if ( trans_->nsta == nullptr ) ::trans_inquire( trans_.get(), "nsta" );
+    if ( trans_->nsta == nullptr )
+        ::trans_inquire( trans_.get(), "nsta" );
     return array::LocalView<int, 2>(
         trans_->nsta, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nptrfrstlat() const {
-    if ( trans_->nptrfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nptrfrstlat" );
+    if ( trans_->nptrfrstlat == nullptr )
+        ::trans_inquire( trans_.get(), "nptrfrstlat" );
     return array::LocalView<int, 1>( trans_->nptrfrstlat, array::make_shape( trans_->n_regions_NS ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nlstlat() const {
-    if ( trans_->nlstlat == nullptr ) ::trans_inquire( trans_.get(), "nlstlat" );
+    if ( trans_->nlstlat == nullptr )
+        ::trans_inquire( trans_.get(), "nlstlat" );
     return array::LocalView<int, 1>( trans_->nlstlat, array::make_shape( trans_->n_regions_NS ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nfrstlat() const {
-    if ( trans_->nfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nfrstlat" );
+    if ( trans_->nfrstlat == nullptr )
+        ::trans_inquire( trans_.get(), "nfrstlat" );
     return array::LocalView<int, 1>( trans_->nfrstlat, array::make_shape( trans_->n_regions_NS ) );
 }
 
@@ -863,7 +882,9 @@ size_t TransIFS::nb_spectral_coefficients_global() const {
 }
 
 const functionspace::Spectral& TransIFS::spectral() const {
-    if ( not spectral_ ) { spectral_ = functionspace::Spectral( Trans( this ) ); }
+    if ( not spectral_ ) {
+        spectral_ = functionspace::Spectral( Trans( this ) );
+    }
     return spectral_;
 }
 
@@ -894,7 +915,8 @@ void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, con
     TRANS_CHECK( ::trans_new( trans_.get() ) );
     TRANS_CHECK( ::trans_use_mpi( mpi::comm().size() > 1 ) );
     TRANS_CHECK( ::trans_set_resol( trans_.get(), nlat, nloen.data() ) );
-    if ( truncation >= 0 ) TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
+    if ( truncation >= 0 )
+        TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
 
     TRANS_CHECK( ::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
 
@@ -923,7 +945,8 @@ void TransIFS::ctor_lonlat( const long nlon, const long nlat, long truncation, c
     TRANS_CHECK( ::trans_new( trans_.get() ) );
     TRANS_CHECK( ::trans_use_mpi( mpi::comm().size() > 1 ) );
     TRANS_CHECK( ::trans_set_resol_lonlat( trans_.get(), nlon, nlat ) );
-    if ( truncation >= 0 ) TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
+    if ( truncation >= 0 )
+        TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
     TRANS_CHECK( ::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
 
     if ( p.read_legendre().size() && mpi::comm().size() == 1 ) {
@@ -1365,8 +1388,10 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
         throw_Exception( msg.str(), Here() );
     }
 
-    if ( spvor.size() == 0 ) throw_Exception( "dirtrans: spectral vorticity field is empty." );
-    if ( spdiv.size() == 0 ) throw_Exception( "dirtrans: spectral divergence field is empty." );
+    if ( spvor.size() == 0 )
+        throw_Exception( "dirtrans: spectral vorticity field is empty." );
+    if ( spdiv.size() == 0 )
+        throw_Exception( "dirtrans: spectral divergence field is empty." );
 
     // Arrays Trans expects
     std::vector<double> rgp( 2 * nfld * ngptot() );
@@ -1428,8 +1453,10 @@ void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, c
 
     ATLAS_ASSERT( spvor.rank() == 2 );
     ATLAS_ASSERT( spdiv.rank() == 2 );
-    if ( spvor.size() == 0 ) throw_Exception( "invtrans: spectral vorticity field is empty." );
-    if ( spdiv.size() == 0 ) throw_Exception( "invtrans: spectral divergence field is empty." );
+    if ( spvor.size() == 0 )
+        throw_Exception( "invtrans: spectral vorticity field is empty." );
+    if ( spdiv.size() == 0 )
+        throw_Exception( "invtrans: spectral divergence field is empty." );
 
     // Arrays Trans expects
     std::vector<double> rgp( 2 * nfld * ngptot() );

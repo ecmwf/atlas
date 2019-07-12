@@ -75,7 +75,8 @@ void Method::setup() {
     ATLAS_TRACE( "fvm::Method::setup " );
     util::Config config;
     config.set( "halo", halo_.size() );
-    if ( levels_ ) config.set( "levels", levels_ );
+    if ( levels_ )
+        config.set( "levels", levels_ );
     node_columns_ = functionspace::NodeColumns( mesh(), config );
     edge_columns_ = functionspace::EdgeColumns( mesh(), config );
 
@@ -108,7 +109,8 @@ void Method::setup() {
                         node2edge_sign( jnode, jedge ) = 1.;
                     else {
                         node2edge_sign( jnode, jedge ) = -1.;
-                        if ( is_pole_edge( iedge ) ) node2edge_sign( jnode, jedge ) = 1.;
+                        if ( is_pole_edge( iedge ) )
+                            node2edge_sign( jnode, jedge ) = 1.;
                     }
                 }
             }

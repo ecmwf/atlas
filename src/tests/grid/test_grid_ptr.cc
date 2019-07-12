@@ -187,7 +187,8 @@ CASE( "test_iterator_with_predicate" ) {
 
     auto filter = []( long n ) {
         bool b = ( n >= 5 && n < 10 );
-        if ( b ) Log::debug() << "n = " << n << std::endl;
+        if ( b )
+            Log::debug() << "n = " << n << std::endl;
         return b;
     };
 

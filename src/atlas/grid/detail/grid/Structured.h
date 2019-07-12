@@ -111,7 +111,8 @@ public:
                     i_ = 0;
                 }
                 ++n_;
-                if ( n_ == size_ ) return *this;
+                if ( n_ == size_ )
+                    return *this;
             } while ( not p_( n_ ) );
             return *this;
         }

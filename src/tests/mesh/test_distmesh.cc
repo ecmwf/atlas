@@ -52,7 +52,9 @@ double dual_volume( Mesh& mesh ) {
     double area                              = 0;
 
     for ( idx_t node = 0; node < nb_nodes; ++node ) {
-        if ( !is_ghost_node( node ) ) { area += dual_volumes( node ); }
+        if ( !is_ghost_node( node ) ) {
+            area += dual_volumes( node );
+        }
     }
 
     ATLAS_TRACE_MPI( ALLREDUCE ) { mpi::comm().allReduceInPlace( area, eckit::mpi::sum() ); }
@@ -94,7 +96,9 @@ CASE( "test_distribute_t63" ) {
     double computed_dual_volume = test::dual_volume( m );
     EXPECT( eckit::types::is_approximately_equal( computed_dual_volume, 360. * 180., 0.0001 ) );
     double difference = 360. * 180. - computed_dual_volume;
-    if ( difference > 1e-8 ) { std::cout << "difference = " << difference << std::endl; }
+    if ( difference > 1e-8 ) {
+        std::cout << "difference = " << difference << std::endl;
+    }
 
     Gmsh( "dist.msh" ).write( m );
 

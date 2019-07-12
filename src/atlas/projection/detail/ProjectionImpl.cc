@@ -108,18 +108,24 @@ ProjectionImpl::BoundLonLat::operator RectangularLonLatDomain() const {
 }
 
 bool ProjectionImpl::BoundLonLat::crossesDateLine( bool yes ) {
-    if ( ( crossesDateLine_ = crossesDateLine_ || yes ) ) { max_.lon() = min_.lon() + 360.; }
+    if ( ( crossesDateLine_ = crossesDateLine_ || yes ) ) {
+        max_.lon() = min_.lon() + 360.;
+    }
     return crossesDateLine_;
 }
 
 bool ProjectionImpl::BoundLonLat::includesNorthPole( bool yes ) {
-    if ( ( includesNorthPole_ = includesNorthPole_ || yes ) ) { max_.lat() = 90.; }
+    if ( ( includesNorthPole_ = includesNorthPole_ || yes ) ) {
+        max_.lat() = 90.;
+    }
     crossesDateLine( includesNorthPole_ );
     return includesNorthPole_;
 }
 
 bool ProjectionImpl::BoundLonLat::includesSouthPole( bool yes ) {
-    if ( ( includesSouthPole_ = includesSouthPole_ || yes ) ) { min_.lat() = -90.; }
+    if ( ( includesSouthPole_ = includesSouthPole_ || yes ) ) {
+        min_.lat() = -90.;
+    }
     crossesDateLine( includesSouthPole_ );
     return includesSouthPole_;
 }
@@ -147,7 +153,9 @@ void ProjectionImpl::BoundLonLat::extend( PointLonLat p, PointLonLat eps ) {
 
 const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) {
     std::string projectionType;
-    if ( p.get( "type", projectionType ) ) { return ProjectionFactory::build( projectionType, p ); }
+    if ( p.get( "type", projectionType ) ) {
+        return ProjectionFactory::build( projectionType, p );
+    }
 
     // should return error here
     throw_Exception( "type missing in Params", Here() );
@@ -159,7 +167,9 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
 
     // 0. setup
 
-    if ( domain.global() ) { return domain; }
+    if ( domain.global() ) {
+        return domain;
+    }
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
 

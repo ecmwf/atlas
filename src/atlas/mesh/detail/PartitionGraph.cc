@@ -63,8 +63,12 @@ PartitionGraph* build_partition_graph( const MeshImpl& mesh ) {
     for ( const PolygonXY& _polygon : polygons ) {
         for ( const PointXY& pxy : _polygon ) {
             PointLonLat pll = pxy;
-            if ( eckit::types::is_strictly_greater( 0., pll.lon() ) ) { pll.lon() += 360.; }
-            if ( eckit::types::is_approximately_greater_or_equal( pll.lon(), 360. ) ) { pll.lon() -= 360.; }
+            if ( eckit::types::is_strictly_greater( 0., pll.lon() ) ) {
+                pll.lon() += 360.;
+            }
+            if ( eckit::types::is_approximately_greater_or_equal( pll.lon(), 360. ) ) {
+                pll.lon() -= 360.;
+            }
             uidx_t uid = util::unique_lonlat( pll.data() );
             uid_2_parts[uid].insert( jpart );
         }
@@ -75,7 +79,9 @@ PartitionGraph* build_partition_graph( const MeshImpl& mesh ) {
         const std::set<idx_t>& parts = u2p.second;
         for ( idx_t jpart : parts ) {
             for ( idx_t ipart : parts ) {
-                if ( jpart != ipart ) { graph[jpart].insert( ipart ); }
+                if ( jpart != ipart ) {
+                    graph[jpart].insert( ipart );
+                }
             }
         }
     }
@@ -126,7 +132,8 @@ PartitionGraph::PartitionGraph( idx_t values[], idx_t rows, idx_t displs[], idx_
         for ( idx_t neighbour : nearestNeighbours( jpart ) ) {
             bool found( false );
             for ( idx_t nextneighbour : nearestNeighbours( neighbour ) ) {
-                if ( nextneighbour == jpart ) found = true;
+                if ( nextneighbour == jpart )
+                    found = true;
             }
             if ( not found ) {
                 values_.insert( values_.begin() + displs_[neighbour] + counts_[neighbour], jpart );

@@ -43,7 +43,8 @@ std::string sanitize_field_name( const std::string& s ) {
     std::replace_if( r.begin(), r.end(), ::isspace, '_' );
     r.erase( r.find_last_not_of( '_' ) + 1 );
     r.erase( 0, r.find_first_not_of( '_' ) );
-    if ( !r.length() ) r = "_";
+    if ( !r.length() )
+        r = "_";
     return r;
 }
 
@@ -70,7 +71,8 @@ Mesh PointCloudIO::read( const eckit::PathName& path, std::vector<std::string>& 
 
         // open file and read all of header & data
         std::ifstream f( path.asString().c_str() );
-        if ( !f.is_open() ) throw_CantOpenFile( path.asString() );
+        if ( !f.is_open() )
+            throw_CantOpenFile( path.asString() );
 
         // header, part 1:
         // determine number of rows/columns
@@ -85,8 +87,10 @@ Mesh PointCloudIO::read( const eckit::PathName& path, std::vector<std::string>& 
                    << ")";
             throw_Exception( errmsg.str(), Here() );
         }
-        if ( nb_pts == 0 ) throw_AssertionFailed( msg + " invalid number of points (failed: nb_pts>0)" );
-        if ( nb_columns < 2 ) throw_AssertionFailed( msg + " invalid number of columns (failed: nb_columns>=2)" );
+        if ( nb_pts == 0 )
+            throw_AssertionFailed( msg + " invalid number of points (failed: nb_pts>0)" );
+        if ( nb_columns < 2 )
+            throw_AssertionFailed( msg + " invalid number of columns (failed: nb_columns>=2)" );
 
         mesh.nodes().resize( static_cast<idx_t>( nb_pts ) );
 
@@ -172,7 +176,8 @@ void PointCloudIO::write( const eckit::PathName& path, const Mesh& mesh ) {
     const mesh::Nodes& nodes = mesh.nodes();
 
     const array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( nodes.lonlat() );
-    if ( !lonlat.size() ) throw_Exception( msg + "invalid number of points (failed: nb_pts>0)" );
+    if ( !lonlat.size() )
+        throw_Exception( msg + "invalid number of points (failed: nb_pts>0)" );
 
     // get the fields (sanitized) names and values
     // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
@@ -190,7 +195,8 @@ void PointCloudIO::write( const eckit::PathName& path, const Mesh& mesh ) {
     }
 
     std::ofstream f( path.asString().c_str() );
-    if ( !f.is_open() ) throw_CantOpenFile( path.asString() );
+    if ( !f.is_open() )
+        throw_CantOpenFile( path.asString() );
 
     const size_t Npts = lonlat.shape( 0 );
     const size_t Nfld = vfvalues.size();
@@ -225,7 +231,8 @@ void PointCloudIO::write( const eckit::PathName& path, const FieldSet& fieldset,
     ATLAS_ASSERT( fieldset.size() );
 
     array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( function_space.nodes().xy() );
-    if ( !lonlat.size() ) throw_Exception( msg + "invalid number of points (failed: nb_pts>0)" );
+    if ( !lonlat.size() )
+        throw_Exception( msg + "invalid number of points (failed: nb_pts>0)" );
 
     // get the fields (sanitized) names and values
     // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
@@ -242,7 +249,8 @@ void PointCloudIO::write( const eckit::PathName& path, const FieldSet& fieldset,
     }
 
     std::ofstream f( path.asString().c_str() );
-    if ( !f.is_open() ) throw_CantOpenFile( path.asString() );
+    if ( !f.is_open() )
+        throw_CantOpenFile( path.asString() );
     const size_t Npts = lonlat.shape( 0 ), Nfld = vfvalues.size();
 
     // header
@@ -268,7 +276,8 @@ void PointCloudIO::write( const eckit::PathName& path, const std::vector<PointLo
     Log::debug() << "PointCloudIO writing " << path << std::endl;
 
     std::ofstream f( path.asString().c_str() );
-    if ( !f.is_open() ) throw_CantOpenFile( path.asString() );
+    if ( !f.is_open() )
+        throw_CantOpenFile( path.asString() );
 
     // header
     f << "PointCloudIO\t" << pts.size() << '\t' << 2 << "\tlon\tlat\n";
@@ -286,7 +295,8 @@ void PointCloudIO::write( const eckit::PathName& path, const std::vector<double>
 
     const std::string msg( "PointCloudIO::write: " );
     const size_t Npts( lon.size() ), Nfld( vfvalues.size() );
-    if ( Npts != lat.size() ) throw_Exception( msg + "number of points inconsistent (failed: #lon == #lat)" );
+    if ( Npts != lat.size() )
+        throw_Exception( msg + "number of points inconsistent (failed: #lon == #lat)" );
     if ( Nfld != vfnames.size() )
         throw_Exception( msg + "number of fields inconsistent (failed: #vfvalues == #vfnames)" );
     for ( size_t j = 0; j < Nfld; ++j )
@@ -296,7 +306,8 @@ void PointCloudIO::write( const eckit::PathName& path, const std::vector<double>
                              "#lon == #lat == #*vfvalues[])" );
 
     std::ofstream f( path.asString().c_str() );
-    if ( !f.is_open() ) throw_CantOpenFile( path.asString() );
+    if ( !f.is_open() )
+        throw_CantOpenFile( path.asString() );
 
     // header
     f << "PointCloudIO\t" << Npts << '\t' << ( 2 + Nfld ) << "\tlon\tlat";
@@ -323,12 +334,16 @@ void PointCloudIO::write( const eckit::PathName& path, const int& nb_pts, const 
     const std::string msg( "PointCloudIO::write: " );
 
     const size_t Npts( nb_pts > 0 ? nb_pts : 0 ), Nfld( nb_fld > 0 && afvalues && afnames ? nb_fld : 0 );
-    if ( !Npts ) throw_Exception( msg + "invalid number of points (nb_nodes)" );
-    if ( !lon ) throw_Exception( msg + "invalid array describing longitude (lon)" );
-    if ( !lat ) throw_Exception( msg + "invalid array describing latitude (lat)" );
+    if ( !Npts )
+        throw_Exception( msg + "invalid number of points (nb_nodes)" );
+    if ( !lon )
+        throw_Exception( msg + "invalid array describing longitude (lon)" );
+    if ( !lat )
+        throw_Exception( msg + "invalid array describing latitude (lat)" );
 
     std::ofstream f( path.asString().c_str() );
-    if ( !f.is_open() ) throw_CantOpenFile( path.asString() );
+    if ( !f.is_open() )
+        throw_CantOpenFile( path.asString() );
 
     // header
     f << "PointCloudIO\t" << Npts << '\t' << ( 2 + Nfld ) << "\tlon\tlat";

@@ -157,7 +157,9 @@ public:
         if ( limiter_ ) {
             idx_t k = stencil.k_interval();
             idx_t k1, k2;
-            if ( k < 0 ) { k1 = k2 = 0; }
+            if ( k < 0 ) {
+                k1 = k2 = 0;
+            }
             else if ( k > 2 ) {
                 k1 = k2 = 3;
             }
@@ -272,7 +274,9 @@ public:
             }
         }
 
-        if ( limiter_ ) { limit( output, index, input ); }
+        if ( limiter_ ) {
+            limit( output, index, input );
+        }
     }
 
     template <typename array_t>

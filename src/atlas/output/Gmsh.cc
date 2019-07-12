@@ -51,7 +51,9 @@ GmshFileStream::GmshFileStream( const PathName& file_path, const char* mode, int
     else if ( std::string( mode ) == "a" )
         omode = std::ios_base::app;
 
-    if ( part < 0 || mpi::comm().size() == 1 ) { std::ofstream::open( file_path.localPath(), omode ); }
+    if ( part < 0 || mpi::comm().size() == 1 ) {
+        std::ofstream::open( file_path.localPath(), omode );
+    }
     else {
         if ( mpi::comm().rank() == 0 ) {
             PathName par_path( file_path );
@@ -122,7 +124,8 @@ std::ios_base::openmode openmode( const Gmsh::Configuration& c ) {
         omode = std::ios_base::out;
     else if ( std::string( c.openmode ) == "a" )
         omode = std::ios_base::app;
-    if ( c.binary ) omode |= std::ios::binary;
+    if ( c.binary )
+        omode |= std::ios::binary;
     return omode;
 }
 

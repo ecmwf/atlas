@@ -50,7 +50,9 @@ Field& BuildCellCentres::operator()( Mesh& mesh ) const {
         array::ArrayView<double, 2> coords = array::make_view<double, 2>( nodes.field( "xyz" ) );
 
         idx_t firstVirtualPoint = std::numeric_limits<idx_t>::max();
-        if ( nodes.metadata().has( "NbRealPts" ) ) { firstVirtualPoint = nodes.metadata().get<idx_t>( "NbRealPts" ); }
+        if ( nodes.metadata().has( "NbRealPts" ) ) {
+            firstVirtualPoint = nodes.metadata().get<idx_t>( "NbRealPts" );
+        }
 
         idx_t nb_cells = mesh.cells().size();
         auto centroids = array::make_view<double, 2>( mesh.cells().field( field_name_ ) );
@@ -81,7 +83,9 @@ Field& BuildCellCentres::operator()( Mesh& mesh ) const {
             }
 
             idx_t nb_unique_nodes = idx_t( nb_cell_nodes ) - nb_equal_nodes;
-            if ( nb_unique_nodes < 3 ) { continue; }
+            if ( nb_unique_nodes < 3 ) {
+                continue;
+            }
 
             if ( flatten_virtual_elements_ ) {
                 // calculate centroid by averaging coordinates (uses only "real" nodes)

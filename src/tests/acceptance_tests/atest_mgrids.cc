@@ -107,7 +107,9 @@ int Program::execute( const Args& args ) {
 
     Log::Channel checksums;
     checksums.addStream( Log::info() );
-    if ( mpi::comm().rank() == 0 ) { checksums.addFile( checksum_filepath ); }
+    if ( mpi::comm().rank() == 0 ) {
+        checksums.addFile( checksum_filepath );
+    }
 
     checksums << "Field A checksum before interpolation AtoB: " << fsA.checksum( fieldA ) << std::endl;
 
@@ -185,7 +187,9 @@ int Program::execute( const Args& args ) {
 
     // Gmsh output
     if ( args.getBool( "gmsh", false ) ) {
-        if ( not meshB ) { meshB = meshgenerator.generate( gridB, distB ); }
+        if ( not meshB ) {
+            meshB = meshgenerator.generate( gridB, distB );
+        }
 
         auto gmshA = output::Gmsh( displayName() + "_meshA.msh", ghost );
         gmshA.write( meshA );
@@ -218,7 +222,9 @@ double vortex_rollup( double lon, double lat, double t, double mean ) {
     const double rho          = 3. * std::sqrt( 1. - sqr( std::cos( lat ) ) * sqr( std::sin( lon - Omega * t ) ) );
     double omega              = 0.;
     double a                  = util::Earth::radius();
-    if ( rho != 0. ) { omega = 0.5 * 3 * std::sqrt( 3 ) * a * Omega * sqr( sech( rho ) ) * std::tanh( rho ) / rho; }
+    if ( rho != 0. ) {
+        omega = 0.5 * 3 * std::sqrt( 3 ) * a * Omega * sqr( sech( rho ) ) * std::tanh( rho ) / rho;
+    }
     double q = mean - std::tanh( 0.2 * rho * std::sin( lambda_prime - omega / a * t ) );
     return q;
 };

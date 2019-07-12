@@ -84,7 +84,9 @@ std::string Checksum::execute( const DATA_TYPE data[], const int var_strides[], 
                                const int var_rank ) const {
     size_t root = 0;
 
-    if ( !is_setup_ ) { throw_Exception( "Checksum was not setup", Here() ); }
+    if ( !is_setup_ ) {
+        throw_Exception( "Checksum was not setup", Here() );
+    }
     std::vector<util::checksum_t> local_checksums( parsize_ );
     int var_size = var_extents[0] * var_strides[0];
 

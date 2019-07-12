@@ -100,7 +100,9 @@ void vd2uv( const int truncation,               // truncation
                 int ij = truncation + 3 - jn;
                 if ( jn >= 0 ) {
                     zlapin[ij] = rlapin[jn];
-                    if ( jn < km ) { zepsnm[ij] = 0.; }
+                    if ( jn < km ) {
+                        zepsnm[ij] = 0.;
+                    }
                     else {
                         zepsnm[ij] = repsnm[jn + ( 2 * truncation - km + 5 ) * km / 2];
                     }

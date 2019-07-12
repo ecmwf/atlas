@@ -148,7 +148,9 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
     gidx_t gid = glb_idx_max;
     for ( size_t jnode = 0; jnode < node_sort.size(); ++jnode ) {
-        if ( jnode == 0 ) { ++gid; }
+        if ( jnode == 0 ) {
+            ++gid;
+        }
         else if ( node_sort[jnode].g != node_sort[jnode - 1].g ) {
             ++gid;
         }
@@ -208,7 +210,8 @@ int Tool::execute( const Args& args ) {
     args.get( "grid", key );
 
     std::string path_in_str = "";
-    if ( args.get( "grid", path_in_str ) ) path_in = path_in_str;
+    if ( args.get( "grid", path_in_str ) )
+        path_in = path_in_str;
 
     StructuredGrid grid;
     if ( key.size() ) {
@@ -222,7 +225,8 @@ int Tool::execute( const Args& args ) {
         Log::error() << "No grid specified." << std::endl;
     }
 
-    if ( !grid ) return failed();
+    if ( !grid )
+        return failed();
 
     Log::debug() << "Domain: " << grid.domain() << std::endl;
     Log::debug() << "Periodic: " << grid.periodic() << std::endl;

@@ -67,7 +67,9 @@ struct BoundingBox : public std::array<double, 4> {
         bool otherEmpty = !eckit::types::is_strictly_greater( other.north(), other.south() ) ||
                           !eckit::types::is_strictly_greater( other.east(), other.west() );
 
-        if ( otherEmpty ) { return contains( other.south(), other.west() ); }
+        if ( otherEmpty ) {
+            return contains( other.south(), other.west() );
+        }
 
         // check for West/East range (if non-periodic), then other's corners
         if ( east() - west() < other.east() - other.west() || east() < normalise( other.east(), west() ) ) {

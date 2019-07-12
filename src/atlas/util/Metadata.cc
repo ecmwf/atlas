@@ -69,7 +69,9 @@ void Metadata::broadcast( Metadata& dest, const size_t root ) {
 
     ATLAS_TRACE_MPI( BROADCAST ) { atlas::mpi::comm().broadcast( buffer_size, root ); }
 
-    if ( atlas::mpi::comm().rank() != root ) { buffer.resize( buffer_size ); }
+    if ( atlas::mpi::comm().rank() != root ) {
+        buffer.resize( buffer_size );
+    }
 
     ATLAS_TRACE_MPI( BROADCAST ) { atlas::mpi::comm().broadcast( buffer.begin(), buffer.end(), root ); }
 
@@ -101,7 +103,9 @@ void Metadata::broadcast( Metadata& dest, const size_t root ) const {
 
     ATLAS_TRACE_MPI( BROADCAST ) { atlas::mpi::comm().broadcast( buffer_size, root ); }
 
-    if ( atlas::mpi::comm().rank() != root ) { buffer.resize( buffer_size ); }
+    if ( atlas::mpi::comm().rank() != root ) {
+        buffer.resize( buffer_size );
+    }
 
     ATLAS_TRACE_MPI( BROADCAST ) { atlas::mpi::comm().broadcast( buffer.begin(), buffer.end(), root ); }
 

@@ -180,7 +180,8 @@ void add_median_dual_volume_contribution_cells( const mesh::HybridElements& cell
 
     for ( idx_t jcell = 0; jcell < nb_cells; ++jcell ) {
         idx_t icell = ordering[jcell].i;
-        if ( patch( icell ) ) continue;
+        if ( patch( icell ) )
+            continue;
         double x0 = cell_centroids( icell, XX );
         double y0 = cell_centroids( icell, YY );
 
@@ -370,7 +371,8 @@ void make_dual_normals_outward( Mesh& mesh ) {
 void build_brick_dual_mesh( const Grid& grid, Mesh& mesh ) {
     auto g = StructuredGrid( grid );
     if ( g ) {
-        if ( mpi::comm().size() != 1 ) throw_Exception( "Cannot build_brick_dual_mesh with more than 1 task", Here() );
+        if ( mpi::comm().size() != 1 )
+            throw_Exception( "Cannot build_brick_dual_mesh with more than 1 task", Here() );
 
         mesh::Nodes& nodes                       = mesh.nodes();
         array::ArrayView<double, 2> xy           = array::make_view<double, 2>( nodes.xy() );

@@ -79,7 +79,8 @@ public:
             p_( p ),
             size_( static_cast<idx_t>( grid_.points_->size() ) ),
             n_( begin ? 0 : size_ ) {
-            if ( begin ) {}
+            if ( begin ) {
+            }
         }
 
         virtual bool next( PointXY& xy );
@@ -89,7 +90,8 @@ public:
         virtual const Grid::IteratorXY& operator++() {
             do {
                 ++n_;
-                if ( n_ == size_ ) return *this;
+                if ( n_ == size_ )
+                    return *this;
             } while ( not p_( n_ ) );
             return *this;
         }

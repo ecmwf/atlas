@@ -54,7 +54,8 @@ CheckerboardPartitioner::CheckerboardPartitioner( int N, int nbands, bool checke
 CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard( const Grid& grid ) const {
     // grid dimensions
     const RegularGrid rg( grid );
-    if ( !rg ) throw_Exception( "Checkerboard Partitioner only works for Regular grids.", Here() );
+    if ( !rg )
+        throw_Exception( "Checkerboard Partitioner only works for Regular grids.", Here() );
 
     Checkerboard cb;
 
@@ -62,13 +63,17 @@ CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard( con
     cb.ny        = rg.ny();
     idx_t nparts = nb_partitions();
 
-    if ( nbands_ > 0 ) { cb.nbands = nbands_; }
+    if ( nbands_ > 0 ) {
+        cb.nbands = nbands_;
+    }
     else {
         // default number of bands
         double zz = std::sqrt( (double)( nparts * cb.ny ) / cb.nx );  // aim at +/-square regions
         cb.nbands = (idx_t)zz + 0.5;
-        if ( cb.nbands < 1 ) cb.nbands = 1;            // at least one band
-        if ( cb.nbands > nparts ) cb.nbands = nparts;  // not more bands than procs
+        if ( cb.nbands < 1 )
+            cb.nbands = 1;  // at least one band
+        if ( cb.nbands > nparts )
+            cb.nbands = nparts;  // not more bands than procs
 
         // true checkerboard means nbands must divide nparts
         if ( checkerboard_ ) {
@@ -85,16 +90,20 @@ CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard( con
 bool compare_Y_X( const CheckerboardPartitioner::NodeInt& node1, const CheckerboardPartitioner::NodeInt& node2 ) {
     // comparison of two locations; X1 < X2 if it's to the south, then to the
     // east.
-    if ( node1.y < node2.y ) return true;
-    if ( node1.y == node2.y ) return ( node1.x < node2.x );
+    if ( node1.y < node2.y )
+        return true;
+    if ( node1.y == node2.y )
+        return ( node1.x < node2.x );
     return false;
 }
 
 bool compare_X_Y( const CheckerboardPartitioner::NodeInt& node1, const CheckerboardPartitioner::NodeInt& node2 ) {
     // comparison of two locations; X1 < X2 if it's to the east, then to the
     // south.
-    if ( node1.x < node2.x ) return true;
-    if ( node1.x == node2.x ) return ( node1.y < node2.y );
+    if ( node1.x < node2.x )
+        return true;
+    if ( node1.x == node2.x )
+        return ( node1.y < node2.y );
     return false;
 }
 

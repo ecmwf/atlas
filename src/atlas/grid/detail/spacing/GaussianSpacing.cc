@@ -34,7 +34,8 @@ GaussianSpacing::GaussianSpacing( long N ) {
 GaussianSpacing::GaussianSpacing( const eckit::Parametrisation& params ) {
     // retrieve N from params
     long N;
-    if ( !params.get( "N", N ) ) throw_Exception( "N missing in Params", Here() );
+    if ( !params.get( "N", N ) )
+        throw_Exception( "N missing in Params", Here() );
 
     // perform checks
     ATLAS_ASSERT( N % 2 == 0 );
@@ -55,7 +56,9 @@ GaussianSpacing::GaussianSpacing( const eckit::Parametrisation& params ) {
         start = interval[0];
         end   = interval[1];
     }
-    if ( start != 90. && end != -90. ) { ATLAS_NOTIMPLEMENTED; }
+    if ( start != 90. && end != -90. ) {
+        ATLAS_NOTIMPLEMENTED;
+    }
 
     min_ = std::min( start, end );
     max_ = std::max( start, end );

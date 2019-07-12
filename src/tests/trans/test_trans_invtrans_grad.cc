@@ -43,7 +43,8 @@ namespace test {
 
 struct AtlasTransEnvironment : public AtlasTestEnvironment {
     AtlasTransEnvironment( int argc, char* argv[] ) : AtlasTestEnvironment( argc, argv ) {
-        if ( mpi::comm().size() == 1 ) trans_use_mpi( false );
+        if ( mpi::comm().size() == 1 )
+            trans_use_mpi( false );
         trans_init();
     }
 

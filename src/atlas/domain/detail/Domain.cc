@@ -25,7 +25,9 @@ const Domain* Domain::create() {
 
 const Domain* Domain::create( const eckit::Parametrisation& p ) {
     std::string domain_type;
-    if ( p.get( "type", domain_type ) ) { return DomainFactory::build( domain_type, p ); }
+    if ( p.get( "type", domain_type ) ) {
+        return DomainFactory::build( domain_type, p );
+    }
 
     // should return error here
     throw_Exception( "type missing in Params", Here() );

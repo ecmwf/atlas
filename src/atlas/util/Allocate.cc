@@ -29,7 +29,8 @@ namespace detail {
 void allocate_cudamanaged( void** ptr, size_t size ) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     cudaError_t err = cudaMallocManaged( ptr, size );
-    if ( err != cudaSuccess ) throw_AssertionFailed( "failed to allocate GPU memory", Here() );
+    if ( err != cudaSuccess )
+        throw_AssertionFailed( "failed to allocate GPU memory", Here() );
 #else
     *ptr = malloc( size );
 #endif
@@ -38,11 +39,13 @@ void allocate_cudamanaged( void** ptr, size_t size ) {
 void deallocate_cudamanaged( void* ptr ) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     cudaError_t err = cudaDeviceSynchronize();
-    if ( err != cudaSuccess ) throw_AssertionFailed( "failed to synchronize memory", Here() );
+    if ( err != cudaSuccess )
+        throw_AssertionFailed( "failed to synchronize memory", Here() );
 
     err = cudaFree( ptr );
     // The following throws an invalid device memory
-    if ( err != cudaSuccess ) throw_AssertionFailed( "failed to free GPU memory", Here() );
+    if ( err != cudaSuccess )
+        throw_AssertionFailed( "failed to free GPU memory", Here() );
 #else
     free( ptr );
 #endif

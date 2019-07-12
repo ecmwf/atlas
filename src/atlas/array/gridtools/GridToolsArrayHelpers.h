@@ -165,7 +165,9 @@ typename gt_storage_t<Value, LayoutMap, get_pack_size<UInts...>::type::value>::t
     typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
     data_store_t* ds;
-    if ( ::gridtools::accumulate( ::gridtools::multiplies(), dims... ) == 0 ) { ds = new data_store_t(); }
+    if ( ::gridtools::accumulate( ::gridtools::multiplies(), dims... ) == 0 ) {
+        ds = new data_store_t();
+    }
     else {
         storage_info_ty si( dims... );
         ds = new data_store_t( si );

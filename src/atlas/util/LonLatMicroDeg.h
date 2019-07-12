@@ -80,8 +80,10 @@ private:
 // ------------------------------------------------------------------------------------
 
 inline bool LonLatMicroDeg::operator<( const LonLatMicroDeg& other ) const {
-    if ( p_[LAT] > other.p_[LAT] ) return true;
-    if ( p_[LAT] == other.p_[LAT] ) return ( p_[LON] < other.p_[LON] );
+    if ( p_[LAT] > other.p_[LAT] )
+        return true;
+    if ( p_[LAT] == other.p_[LAT] )
+        return ( p_[LON] < other.p_[LON] );
     return false;
 }
 

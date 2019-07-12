@@ -87,8 +87,11 @@ double sphericalharmonics_analytic_point(
     double a = util::Earth::radius();
     // Fourier part of the spherical harmonics:
     double rft = 1.;
-    if ( m > 0 ) rft *= 2.;  // the famous factor 2 that noone really understands
-    if ( imag == 0 ) { rft *= loncos; }
+    if ( m > 0 )
+        rft *= 2.;  // the famous factor 2 that noone really understands
+    if ( imag == 0 ) {
+        rft *= loncos;
+    }
     else {
         rft *= -lonsin;
     }
@@ -105,36 +108,60 @@ double sphericalharmonics_analytic_point(
     // scalar:
     if ( ivar_in == 2 ) {
         if ( ivar_out == 2 ) {
-            if ( m == 0 && n == 0 ) return rft;
-            if ( m == 0 && n == 1 ) return std::sqrt( 3. ) * latsin * rft;
-            if ( m == 0 && n == 2 ) return std::sqrt( 5. ) / 2. * ( 3. * latsin * latsin - 1. ) * rft;  // sign?
+            if ( m == 0 && n == 0 )
+                return rft;
+            if ( m == 0 && n == 1 )
+                return std::sqrt( 3. ) * latsin * rft;
+            if ( m == 0 && n == 2 )
+                return std::sqrt( 5. ) / 2. * ( 3. * latsin * latsin - 1. ) * rft;  // sign?
             if ( m == 0 && n == 3 )
                 return std::sqrt( 7. ) / 2. * ( 5. * latsin * latsin - 3. ) * latsin * rft;  // sign?
-            if ( m == 1 && n == 1 ) return std::sqrt( 3. / 2. ) * latcos * rft;              // sign?
-            if ( m == 1 && n == 2 ) return std::sqrt( 15. / 2. ) * latsin * latcos * rft;    // sign?
+            if ( m == 1 && n == 1 )
+                return std::sqrt( 3. / 2. ) * latcos * rft;  // sign?
+            if ( m == 1 && n == 2 )
+                return std::sqrt( 15. / 2. ) * latsin * latcos * rft;  // sign?
             if ( m == 1 && n == 3 )
                 return std::sqrt( 21. ) / 4. * latcos * ( 5. * latsin * latsin - 1. ) * rft;  // sign?
-            if ( m == 2 && n == 2 ) return std::sqrt( 15. / 2. ) / 2. * latcos * latcos * rft;
-            if ( m == 2 && n == 3 ) return std::sqrt( 105. / 2. ) / 2. * latcos * latcos * latsin * rft;
-            if ( m == 3 && n == 3 ) return std::sqrt( 35. ) / 4. * latcos * latcos * latcos * rft;  // sign?
-            if ( m == 4 && n == 4 ) return ( 3 * std::sqrt( 17.5 ) * std::pow( latcos, 4 ) ) / 8. * rft;
-            if ( m == 5 && n == 5 ) return ( 3 * std::sqrt( 77 ) * std::pow( latcos, 5 ) ) / 16. * rft;
-            if ( m == 6 && n == 6 ) return ( std::sqrt( 3003 ) * std::pow( latcos, 6 ) ) / 32. * rft;
-            if ( m == 7 && n == 7 ) return ( 3 * std::sqrt( 357.5 ) * std::pow( latcos, 7 ) ) / 32. * rft;
-            if ( m == 8 && n == 8 ) return ( 3 * std::sqrt( 6077.5 ) * std::pow( latcos, 8 ) ) / 128. * rft;
-            if ( m == 9 && n == 9 ) return ( std::sqrt( 230945 ) * std::pow( latcos, 9 ) ) / 256. * rft;
-            if ( m == 10 && n == 10 ) return ( std::sqrt( 969969 ) * std::pow( latcos, 10 ) ) / 512. * rft;
-            if ( m == 11 && n == 11 ) return ( std::sqrt( 1.0140585e6 ) * std::pow( latcos, 11 ) ) / 512. * rft;
-            if ( m == 12 && n == 12 ) return ( 5 * std::sqrt( 676039 ) * std::pow( latcos, 12 ) ) / 2048. * rft;
-            if ( m == 13 && n == 13 ) return ( 15 * std::sqrt( 78004.5 ) * std::pow( latcos, 13 ) ) / 2048. * rft;
-            if ( m == 14 && n == 14 ) return ( 15 * std::sqrt( 323161.5 ) * std::pow( latcos, 14 ) ) / 4096. * rft;
-            if ( m == 15 && n == 15 ) return ( 3 * std::sqrt( 33393355 ) * std::pow( latcos, 15 ) ) / 8192. * rft;
-            if ( m == 16 && n == 16 ) return ( 3 * std::sqrt( 5.509903575e8 ) * std::pow( latcos, 16 ) ) / 32768. * rft;
-            if ( m == 17 && n == 17 ) return ( 15 * std::sqrt( 90751353 ) * std::pow( latcos, 17 ) ) / 65536. * rft;
-            if ( m == 18 && n == 18 ) return ( 5 * std::sqrt( 3357800061 ) * std::pow( latcos, 18 ) ) / 131072. * rft;
+            if ( m == 2 && n == 2 )
+                return std::sqrt( 15. / 2. ) / 2. * latcos * latcos * rft;
+            if ( m == 2 && n == 3 )
+                return std::sqrt( 105. / 2. ) / 2. * latcos * latcos * latsin * rft;
+            if ( m == 3 && n == 3 )
+                return std::sqrt( 35. ) / 4. * latcos * latcos * latcos * rft;  // sign?
+            if ( m == 4 && n == 4 )
+                return ( 3 * std::sqrt( 17.5 ) * std::pow( latcos, 4 ) ) / 8. * rft;
+            if ( m == 5 && n == 5 )
+                return ( 3 * std::sqrt( 77 ) * std::pow( latcos, 5 ) ) / 16. * rft;
+            if ( m == 6 && n == 6 )
+                return ( std::sqrt( 3003 ) * std::pow( latcos, 6 ) ) / 32. * rft;
+            if ( m == 7 && n == 7 )
+                return ( 3 * std::sqrt( 357.5 ) * std::pow( latcos, 7 ) ) / 32. * rft;
+            if ( m == 8 && n == 8 )
+                return ( 3 * std::sqrt( 6077.5 ) * std::pow( latcos, 8 ) ) / 128. * rft;
+            if ( m == 9 && n == 9 )
+                return ( std::sqrt( 230945 ) * std::pow( latcos, 9 ) ) / 256. * rft;
+            if ( m == 10 && n == 10 )
+                return ( std::sqrt( 969969 ) * std::pow( latcos, 10 ) ) / 512. * rft;
+            if ( m == 11 && n == 11 )
+                return ( std::sqrt( 1.0140585e6 ) * std::pow( latcos, 11 ) ) / 512. * rft;
+            if ( m == 12 && n == 12 )
+                return ( 5 * std::sqrt( 676039 ) * std::pow( latcos, 12 ) ) / 2048. * rft;
+            if ( m == 13 && n == 13 )
+                return ( 15 * std::sqrt( 78004.5 ) * std::pow( latcos, 13 ) ) / 2048. * rft;
+            if ( m == 14 && n == 14 )
+                return ( 15 * std::sqrt( 323161.5 ) * std::pow( latcos, 14 ) ) / 4096. * rft;
+            if ( m == 15 && n == 15 )
+                return ( 3 * std::sqrt( 33393355 ) * std::pow( latcos, 15 ) ) / 8192. * rft;
+            if ( m == 16 && n == 16 )
+                return ( 3 * std::sqrt( 5.509903575e8 ) * std::pow( latcos, 16 ) ) / 32768. * rft;
+            if ( m == 17 && n == 17 )
+                return ( 15 * std::sqrt( 90751353 ) * std::pow( latcos, 17 ) ) / 65536. * rft;
+            if ( m == 18 && n == 18 )
+                return ( 5 * std::sqrt( 3357800061 ) * std::pow( latcos, 18 ) ) / 131072. * rft;
             if ( m == 19 && n == 19 )
                 return ( 15 * std::sqrt( 3.829070245e8 ) * std::pow( latcos, 19 ) ) / 131072. * rft;
-            if ( m == 20 && n == 20 ) return ( 3 * std::sqrt( 156991880045 ) * std::pow( latcos, 20 ) ) / 524288. * rft;
+            if ( m == 20 && n == 20 )
+                return ( 3 * std::sqrt( 156991880045 ) * std::pow( latcos, 20 ) ) / 524288. * rft;
             if ( m == 21 && n == 21 )
                 return ( std::sqrt( 1.4465680375575e12 ) * std::pow( latcos, 21 ) ) / 524288. * rft;
             if ( m == 22 && n == 22 )
@@ -202,25 +229,34 @@ double sphericalharmonics_analytic_point(
     // vorticity:
     if ( ivar_in == 0 ) {
         if ( ivar_out == 0 ) {  // u:
-            if ( m == 0 && n == 0 ) return 0.;
+            if ( m == 0 && n == 0 )
+                return 0.;
             if ( m == 0 && n == 1 ) {
-                if ( imag == 0 ) { return std::sqrt( 3. ) * a / 2. * latcos; }
+                if ( imag == 0 ) {
+                    return std::sqrt( 3. ) * a / 2. * latcos;
+                }
                 else {
                     return 0.;
                 }
             }
             if ( m == 1 && n == 1 ) {
-                if ( imag == 0 ) { return -a * std::sqrt( 3. / 2. ) * loncos * latsin; }
+                if ( imag == 0 ) {
+                    return -a * std::sqrt( 3. / 2. ) * loncos * latsin;
+                }
                 else {
                     return a * std::sqrt( 3. / 2. ) * lonsin * latsin;
                 }
             }
         }
         else if ( ivar_out == 1 ) {  // v:
-            if ( m == 0 && n == 0 ) return 0.;
-            if ( m == 0 && n == 1 ) return 0.;
+            if ( m == 0 && n == 0 )
+                return 0.;
+            if ( m == 0 && n == 1 )
+                return 0.;
             if ( m == 1 && n == 1 ) {
-                if ( imag == 0 ) { return a * std::sqrt( 3. / 2. ) * lonsin; }
+                if ( imag == 0 ) {
+                    return a * std::sqrt( 3. / 2. ) * lonsin;
+                }
                 else {
                     return a * std::sqrt( 3. / 2. ) * loncos;
                 }
@@ -234,25 +270,34 @@ double sphericalharmonics_analytic_point(
     // divergence:
     if ( ivar_in == 1 ) {
         if ( ivar_out == 0 ) {  // u:
-            if ( m == 0 && n == 0 ) return 0.;
-            if ( m == 0 && n == 1 ) return 0.;
+            if ( m == 0 && n == 0 )
+                return 0.;
+            if ( m == 0 && n == 1 )
+                return 0.;
             if ( m == 1 && n == 1 ) {
-                if ( imag == 0 ) { return a * std::sqrt( 3. / 2. ) * lonsin; }
+                if ( imag == 0 ) {
+                    return a * std::sqrt( 3. / 2. ) * lonsin;
+                }
                 else {
                     return a * std::sqrt( 3. / 2. ) * loncos;
                 }
             }
         }
         else if ( ivar_out == 1 ) {  // v:
-            if ( m == 0 && n == 0 ) return 0.;
+            if ( m == 0 && n == 0 )
+                return 0.;
             if ( m == 0 && n == 1 ) {
-                if ( imag == 0 ) { return -std::sqrt( 3. ) * a / 2. * latcos; }
+                if ( imag == 0 ) {
+                    return -std::sqrt( 3. ) * a / 2. * latcos;
+                }
                 else {
                     return 0.;
                 }
             }
             if ( m == 1 && n == 1 ) {
-                if ( imag == 0 ) { return a * std::sqrt( 3. / 2. ) * loncos * latsin; }
+                if ( imag == 0 ) {
+                    return a * std::sqrt( 3. / 2. ) * loncos * latsin;
+                }
                 else {
                     return -a * std::sqrt( 3. / 2. ) * lonsin * latsin;  // sign?
                 }
@@ -313,7 +358,9 @@ void spectral_transform_grid_analytic(
             gs_global       = StructuredGrid( gridGlobal );
             int nlatsGlobal = gs_global.ny();
             for ( int jlat = 0; jlat < nlatsGlobal; jlat++ ) {
-                if ( gs_global.y( jlat ) > g.y( 0 ) ) { jlatMin++; };
+                if ( gs_global.y( jlat ) > g.y( 0 ) ) {
+                    jlatMin++;
+                };
             }
         }
 
@@ -369,7 +416,9 @@ double compute_rms( const size_t N,    // length of the arrays
         rms += diff * diff;
         rmax = std::max( rmax, std::abs( array2[idx] ) );
     }
-    if ( rmax == 0. ) { rms = 0.; }
+    if ( rmax == 0. ) {
+        rms = 0.;
+    }
     else {
         rms = std::sqrt( rms / N ) / rmax;
     }
@@ -440,9 +489,12 @@ CASE( "test_trans_vordiv_with_translib" ) {
                                     vor[j] = 0.;
                                     div[j] = 0.;
                                 }
-                                if ( ivar_in == 0 ) vor[k * nb_vordiv + jfld] = 1.;
-                                if ( ivar_in == 1 ) div[k * nb_vordiv + jfld] = 1.;
-                                if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
+                                if ( ivar_in == 0 )
+                                    vor[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 1 )
+                                    div[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 2 )
+                                    sp[k * nb_scalar + jfld] = 1.;
 
                                 for ( int j = 0; j < nb_all * g.size(); j++ ) {
                                     gp[j]   = 0.;
@@ -642,7 +694,8 @@ CASE( "test_trans_domain" ) {
 
     int trc = 63;
     //Log::info() << "rgp1:" << std::endl;
-    if ( eckit::PathName( "legcache.bin" ).exists() ) eckit::PathName( "legcache.bin" ).unlink();
+    if ( eckit::PathName( "legcache.bin" ).exists() )
+        eckit::PathName( "legcache.bin" ).unlink();
     Trace t1( Here(), "translocal1 construction" );
     trans::Trans transLocal1( global_grid, g1.domain(), trc,
                               option::type( "local" ) | option::write_legendre( "legcache.bin" ) );
@@ -707,9 +760,12 @@ CASE( "test_trans_domain" ) {
                                     vor[j] = 0.;
                                     div[j] = 0.;
                                 }
-                                if ( ivar_in == 0 ) vor[k * nb_vordiv + jfld] = 1.;
-                                if ( ivar_in == 1 ) div[k * nb_vordiv + jfld] = 1.;
-                                if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
+                                if ( ivar_in == 0 )
+                                    vor[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 1 )
+                                    div[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 2 )
+                                    sp[k * nb_scalar + jfld] = 1.;
 
                                 for ( int j = 0; j < nb_all * g1.size(); j++ ) {
                                     rgp1[j] = 0.;
@@ -887,9 +943,12 @@ CASE( "test_trans_pole" ) {
                                     vor[j] = 0.;
                                     div[j] = 0.;
                                 }
-                                if ( ivar_in == 0 ) vor[k * nb_vordiv + jfld] = 1.;
-                                if ( ivar_in == 1 ) div[k * nb_vordiv + jfld] = 1.;
-                                if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
+                                if ( ivar_in == 0 )
+                                    vor[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 1 )
+                                    div[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 2 )
+                                    sp[k * nb_scalar + jfld] = 1.;
 
                                 for ( int j = 0; j < nb_all * g1.size(); j++ ) {
                                     rgp1[j] = 0.;
@@ -1072,9 +1131,12 @@ CASE( "test_trans_southpole" ) {
                                     vor[j] = 0.;
                                     div[j] = 0.;
                                 }
-                                if ( ivar_in == 0 ) vor[k * nb_vordiv + jfld] = 1.;
-                                if ( ivar_in == 1 ) div[k * nb_vordiv + jfld] = 1.;
-                                if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
+                                if ( ivar_in == 0 )
+                                    vor[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 1 )
+                                    div[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 2 )
+                                    sp[k * nb_scalar + jfld] = 1.;
 
                                 for ( int j = 0; j < nb_all * g1.size(); j++ ) {
                                     rgp1[j] = 0.;
@@ -1243,9 +1305,12 @@ CASE( "test_trans_unstructured" ) {
                                     vor[j] = 0.;
                                     div[j] = 0.;
                                 }
-                                if ( ivar_in == 0 ) vor[k * nb_vordiv + jfld] = 1.;
-                                if ( ivar_in == 1 ) div[k * nb_vordiv + jfld] = 1.;
-                                if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
+                                if ( ivar_in == 0 )
+                                    vor[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 1 )
+                                    div[k * nb_vordiv + jfld] = 1.;
+                                if ( ivar_in == 2 )
+                                    sp[k * nb_scalar + jfld] = 1.;
 
                                 for ( int j = 0; j < nb_all * g.size(); j++ ) {
                                     gp[j]   = 0.;

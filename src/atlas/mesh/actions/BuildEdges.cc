@@ -129,7 +129,8 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
     };
 
     for ( idx_t jcell = 0; jcell < mesh.cells().size(); ++jcell ) {
-        if ( patch( jcell ) ) continue;
+        if ( patch( jcell ) )
+            continue;
         for ( idx_t jcol = 0; jcol < cell_edge_connectivity.cols( jcell ); ++jcol ) {
             if ( cell_edge_connectivity( jcell, jcol ) == cell_edge_connectivity.missing_value() ) {
                 const array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( mesh.nodes().global_index() );
@@ -225,7 +226,9 @@ public:
 
         // Collect all nodes closest to poles
         for ( idx_t node = 0; node < nb_nodes; ++node ) {
-            if ( std::abs( xy( node, YY ) - max[YY] ) < tol ) { pole_nodes[NORTH].insert( node ); }
+            if ( std::abs( xy( node, YY ) - max[YY] ) < tol ) {
+                pole_nodes[NORTH].insert( node );
+            }
             else if ( std::abs( xy( node, YY ) - min[YY] ) < tol ) {
                 pole_nodes[SOUTH].insert( node );
             }
@@ -310,7 +313,9 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
     // Collect all nodes closest to poles
     std::vector<std::set<int>> pole_nodes( 2 );
     for ( idx_t node = 0; node < nb_nodes; ++node ) {
-        if ( std::abs( xy( node, YY ) - max[YY] ) < tol ) { pole_nodes[NORTH].insert( node ); }
+        if ( std::abs( xy( node, YY ) - max[YY] ) < tol ) {
+            pole_nodes[NORTH].insert( node );
+        }
         else if ( std::abs( xy( node, YY ) - min[YY] ) < tol ) {
             pole_nodes[SOUTH].insert( node );
         }
@@ -404,7 +409,9 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
 
     bool pole_edges{false};
     if ( StructuredGrid grid = mesh.grid() ) {
-        if ( Domain domain = grid.domain() ) { pole_edges = domain.global(); }
+        if ( Domain domain = grid.domain() ) {
+            pole_edges = domain.global();
+        }
     }
     config.get( "pole_edges", pole_edges );
 
@@ -431,7 +438,9 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
                                        nb_inner_edges, missing_value, edge_halo_offsets );
 
     std::shared_ptr<AccumulatePoleEdges> pole_edge_accumulator;
-    if ( pole_edges ) { pole_edge_accumulator = std::make_shared<AccumulatePoleEdges>( nodes ); }
+    if ( pole_edges ) {
+        pole_edge_accumulator = std::make_shared<AccumulatePoleEdges>( nodes );
+    }
 
     for ( int halo = 0; halo <= mesh_halo; ++halo ) {
         edge_start = edge_end;
@@ -558,12 +567,14 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
         int nb_edges = mesh.edges().size();
         for ( int jedge = 0; jedge < nb_edges; ++jedge ) {
             nb_edges_including_halo[edge_halo( jedge )] = jedge + 1;
-            if ( jedge > 0 ) ATLAS_ASSERT( edge_halo( jedge ) >= edge_halo( jedge - 1 ) );
+            if ( jedge > 0 )
+                ATLAS_ASSERT( edge_halo( jedge ) >= edge_halo( jedge - 1 ) );
         }
     }
 
     for ( int i = 0; i <= max_halo; ++i ) {
-        if ( i > 0 ) ATLAS_ASSERT( nb_edges_including_halo[i] > nb_edges_including_halo[i - 1] );
+        if ( i > 0 )
+            ATLAS_ASSERT( nb_edges_including_halo[i] > nb_edges_including_halo[i - 1] );
         std::stringstream ss;
         ss << "nb_edges_including_halo[" << i << "]";
         mesh.metadata().set( ss.str(), nb_edges_including_halo[i] );

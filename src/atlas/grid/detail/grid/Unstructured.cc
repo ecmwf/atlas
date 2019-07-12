@@ -64,7 +64,9 @@ public:
         normalise_( domain.xmin(), domain.xmax() ) {}
 
     double operator()( double x ) const {
-        if ( degrees_ ) { x = normalise_( x ); }
+        if ( degrees_ ) {
+            x = normalise_( x );
+        }
         return x;
     }
 
@@ -79,19 +81,25 @@ Unstructured::Unstructured( const Grid& grid, Domain domain ) : Grid() {
     domain_ = domain;
     points_.reset( new std::vector<PointXY> );
     points_->reserve( grid.size() );
-    if ( not domain_ ) { domain_ = GlobalDomain(); }
+    if ( not domain_ ) {
+        domain_ = GlobalDomain();
+    }
     atlas::grid::IteratorXY it( grid.xy_begin() );
     PointXY p;
     if ( RectangularDomain( domain_ ) ) {
         auto normalise = Normalise( RectangularDomain( domain_ ) );
         while ( it.next( p ) ) {
             p.x() = normalise( p.x() );
-            if ( domain_.contains( p ) ) { points_->emplace_back( p ); }
+            if ( domain_.contains( p ) ) {
+                points_->emplace_back( p );
+            }
         }
     }
     else if ( ZonalBandDomain( domain_ ) ) {
         while ( it.next( p ) ) {
-            if ( domain_.contains( p ) ) { points_->emplace_back( p ); }
+            if ( domain_.contains( p ) ) {
+                points_->emplace_back( p );
+            }
         }
     }
     else {
@@ -104,7 +112,9 @@ Unstructured::Unstructured( const Grid& grid, Domain domain ) : Grid() {
 
 Unstructured::Unstructured( const util::Config& config ) : Grid() {
     util::Config config_domain;
-    if ( not config.get( "domain", config_domain ) ) { config_domain.set( "type", "global" ); }
+    if ( not config.get( "domain", config_domain ) ) {
+        config_domain.set( "type", "global" );
+    }
     domain_ = Domain( config_domain );
     std::vector<double> xy;
     if ( config.get( "xy", xy ) ) {
@@ -118,8 +128,12 @@ Unstructured::Unstructured( const util::Config& config ) : Grid() {
     else {
         std::vector<double> x;
         std::vector<double> y;
-        if ( not config.get( "x", x ) ) { throw_Exception( "x missing from configuration" ); }
-        if ( not config.get( "y", y ) ) { throw_Exception( "y missing from configuration" ); }
+        if ( not config.get( "x", x ) ) {
+            throw_Exception( "x missing from configuration" );
+        }
+        if ( not config.get( "y", y ) ) {
+            throw_Exception( "y missing from configuration" );
+        }
         ATLAS_ASSERT( x.size() == y.size() );
         points_.reset( new std::vector<PointXY> );
         points_->reserve( x.size() );
@@ -180,7 +194,8 @@ idx_t Unstructured::size() const {
 }
 
 Grid::Spec Unstructured::spec() const {
-    if ( cached_spec_ ) return *cached_spec_;
+    if ( cached_spec_ )
+        return *cached_spec_;
 
     cached_spec_.reset( new Grid::Spec );
 

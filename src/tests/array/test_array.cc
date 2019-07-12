@@ -255,7 +255,8 @@ CASE( "test_copy_gt_ctr" ) {
     ATLAS_DEBUG_VAR( dims[0] );
     ATLAS_DEBUG_VAR( dims[1] );
     EXPECT( dims[0] == 3 );
-    if ( NOT_PADDED ) EXPECT( dims[1] == 2 );
+    if ( NOT_PADDED )
+        EXPECT( dims[1] == 2 );
     delete ds;
 }
 #endif
@@ -542,7 +543,8 @@ CASE( "test_valid" ) {
 CASE( "test_wrap" ) {
     array::ArrayT<int> arr_t( 3, 2 );
     EXPECT( arr_t.shape( 0 ) == 3 );
-    if ( NOT_PADDED ) EXPECT( arr_t.stride( 0 ) == 2 );
+    if ( NOT_PADDED )
+        EXPECT( arr_t.stride( 0 ) == 2 );
     EXPECT( arr_t.shape( 1 ) == 2 );
     EXPECT( arr_t.stride( 1 ) == 1 );
     EXPECT( arr_t.rank() == 2 );

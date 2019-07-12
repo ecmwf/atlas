@@ -104,7 +104,9 @@ public:
 
 template <typename DATA_TYPE, int RANK, typename ParallelDim>
 void HaloExchange::execute( array::Array& field, bool on_device ) const {
-    if ( !is_setup_ ) { throw_Exception( "HaloExchange was not setup", Here() ); }
+    if ( !is_setup_ ) {
+        throw_Exception( "HaloExchange was not setup", Here() );
+    }
 
     ATLAS_TRACE( "HaloExchange", {"halo-exchange"} );
 
@@ -161,7 +163,9 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
     /// Wait for receiving to finish
     ATLAS_TRACE_MPI( WAIT, "mpi-wait receive" ) {
         for ( int jproc = 0; jproc < nproc; ++jproc ) {
-            if ( recvcounts_[jproc] > 0 ) { mpi::comm().wait( recv_req[jproc] ); }
+            if ( recvcounts_[jproc] > 0 ) {
+                mpi::comm().wait( recv_req[jproc] );
+            }
         }
     }
 
@@ -171,7 +175,9 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
     /// Wait for sending to finish
     ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
         for ( int jproc = 0; jproc < nproc; ++jproc ) {
-            if ( sendcounts_[jproc] > 0 ) { mpi::comm().wait( send_req[jproc] ); }
+            if ( sendcounts_[jproc] > 0 ) {
+                mpi::comm().wait( send_req[jproc] );
+            }
         }
     }
 }
