@@ -300,6 +300,7 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         Log::info() << "Writing backward interpolation results to src-back.msh" << std::endl;
         src.writeGmsh( "src-back.msh", src_fields );
     }
+    return success();
 }
 
 int main( int argc, char* argv[] ) {
