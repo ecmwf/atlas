@@ -77,6 +77,7 @@ public:
 
 public:
     using Spacing::Spacing;
+    LinearSpacing() = default;
     LinearSpacing( double start, double stop, long N, bool endpoint = true );
     LinearSpacing( const Interval&, long N, bool endpoint = true );
 };
@@ -86,6 +87,7 @@ public:
 class GaussianSpacing : public Spacing {
 public:
     using Spacing::Spacing;
+    GaussianSpacing() = default;
     GaussianSpacing( long N );
 };
 
