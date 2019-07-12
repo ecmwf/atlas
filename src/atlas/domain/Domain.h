@@ -91,7 +91,7 @@ private:
 namespace domain {
 class RectangularDomain;
 class RectangularLonLatDomain;
-}
+}  // namespace domain
 
 class RectangularDomain : public Domain {
 public:
@@ -127,10 +127,9 @@ private:
 class RectangularLonLatDomain : public RectangularDomain {
 public:
     using RectangularDomain::RectangularDomain;
-    RectangularLonLatDomain( const Interval& x, const Interval& y ) :
-        RectangularDomain( x, y, "degrees" ) {}
-    RectangularLonLatDomain( const double& north, const double& west, const double& south, const double& east) :
-        RectangularLonLatDomain( {west,east},{south,north} ) {}
+    RectangularLonLatDomain( const Interval& x, const Interval& y ) : RectangularDomain( x, y, "degrees" ) {}
+    RectangularLonLatDomain( const double& north, const double& west, const double& south, const double& east ) :
+        RectangularLonLatDomain( {west, east}, {south, north} ) {}
 
     operator bool() const { return RectangularDomain::operator bool() && units() == "degrees"; }
 

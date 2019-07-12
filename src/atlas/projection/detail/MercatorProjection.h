@@ -32,7 +32,9 @@ public:
     void lonlat2xy( double crd[] ) const override;
 
     bool strictlyRegional() const override { return true; }  // Mercator projection cannot be used for global grids
-    RectangularLonLatDomain lonlatBoundingBox( const Domain& domain ) const override { return ProjectionImpl::lonlatBoundingBox( domain ); }
+    RectangularLonLatDomain lonlatBoundingBox( const Domain& domain ) const override {
+        return ProjectionImpl::lonlatBoundingBox( domain );
+    }
 
     // specification
     Spec spec() const override;

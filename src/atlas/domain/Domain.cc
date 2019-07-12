@@ -63,12 +63,12 @@ double RectangularDomain::ymax() const {
 
 ZonalBandDomain::ZonalBandDomain( const Interval& y ) :
     RectangularLonLatDomain( ( ZD::is_global( y ) ) ? new atlas::domain::GlobalDomain()
-                                              : new atlas::domain::ZonalBandDomain( y ) ),
+                                                    : new atlas::domain::ZonalBandDomain( y ) ),
     domain_( dynamic_cast<const atlas::domain::ZonalBandDomain*>( get() ) ) {}
 
 ZonalBandDomain::ZonalBandDomain( const Interval& y, const double& west ) :
     RectangularLonLatDomain( ( ZD::is_global( y ) ) ? new atlas::domain::GlobalDomain( west )
-                                              : new atlas::domain::ZonalBandDomain( y, west ) ),
+                                                    : new atlas::domain::ZonalBandDomain( y, west ) ),
     domain_( dynamic_cast<const atlas::domain::ZonalBandDomain*>( get() ) ) {}
 
 ZonalBandDomain::ZonalBandDomain( const Domain& domain ) :

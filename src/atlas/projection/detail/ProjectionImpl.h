@@ -53,7 +53,7 @@ public:
     PointLonLat lonlat( const PointXY& ) const;
     PointXY xy( const PointLonLat& ) const;
 
-    virtual bool strictlyRegional() const             = 0;
+    virtual bool strictlyRegional() const                                    = 0;
     virtual RectangularLonLatDomain lonlatBoundingBox( const Domain& ) const = 0;
 
     virtual Spec spec() const = 0;

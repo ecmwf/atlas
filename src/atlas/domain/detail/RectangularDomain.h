@@ -78,7 +78,7 @@ private:
 class RectangularLonLatDomain : public RectangularDomain {
 public:
     RectangularLonLatDomain( const eckit::Parametrisation& config ) : RectangularDomain( config ) {}
-    RectangularLonLatDomain( const Interval& x, const Interval& y ) : RectangularDomain(x,y,"degrees") {}
+    RectangularLonLatDomain( const Interval& x, const Interval& y ) : RectangularDomain( x, y, "degrees" ) {}
     double north() const { return ymax(); }
     double south() const { return ymin(); }
     double west() const { return xmin(); }
