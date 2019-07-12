@@ -437,7 +437,9 @@ void Structured::crop( const Domain& dom ) {
             throw_Exception( errmsg.str(), Here() );
         }
     }
-    domain_ = RectangularDomain( {xspace_.min(), xspace_.max()}, {yspace_.min(), yspace_.max()}, projection_.units() );
+    domain_ =
+        dom ? dom
+            : RectangularDomain( {xspace_.min(), xspace_.max()}, {yspace_.min(), yspace_.max()}, projection_.units() );
 }
 
 void Structured::computeTruePeriodicity() {
@@ -490,8 +492,7 @@ void Structured::hash( eckit::Hash& h ) const {
 }
 
 RectangularLonLatDomain Structured::lonlatBoundingBox() const {
-    auto domain = computeDomain();
-    return projection_ ? projection_.lonlatBoundingBox( domain ) : domain;
+    return projection_ ? projection_.lonlatBoundingBox( computeDomain() ) : domain();
 }
 
 Grid::Spec Structured::spec() const {
