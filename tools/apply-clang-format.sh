@@ -8,7 +8,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-_REQUIRED_CLANG_VERSION='5.0.1'
+_REQUIRED_CLANG_VERSION='7.0.1'
 
 if ! [ -x "$(command -v clang-format)" ]; then
   echo 'Error: clang-format is not installed.' >&2

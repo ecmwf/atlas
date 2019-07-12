@@ -89,7 +89,7 @@ IndexView<Value, Rank> make_host_indexview( const Array& array ) {
 
     data_store_t* ds = reinterpret_cast<data_store_t*>( const_cast<void*>( array.storage() ) );
 
-    return IndexView<Value, Rank>(::gridtools::make_host_view<::gridtools::access_mode::ReadWrite>( *ds ) );
+    return IndexView<Value, Rank>( ::gridtools::make_host_view<::gridtools::access_mode::ReadWrite>( *ds ) );
 }
 
 // --------------------------------------------------------------------------------------------

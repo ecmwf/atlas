@@ -73,17 +73,17 @@ void debug_reset() {
 }
 
 bool getEnv( const std::string& env, bool default_value ) {
-    if (::getenv( env.c_str() ) ) { return eckit::Translator<std::string, bool>()(::getenv( env.c_str() ) ); }
+    if ( ::getenv( env.c_str() ) ) { return eckit::Translator<std::string, bool>()( ::getenv( env.c_str() ) ); }
     return default_value;
 }
 
 int getEnv( const std::string& env, int default_value ) {
-    if (::getenv( env.c_str() ) ) { return eckit::Translator<std::string, int>()(::getenv( env.c_str() ) ); }
+    if ( ::getenv( env.c_str() ) ) { return eckit::Translator<std::string, int>()( ::getenv( env.c_str() ) ); }
     return default_value;
 }
 
 std::string getEnv( const std::string& env, const std::string& default_value ) {
-    if (::getenv( env.c_str() ) ) { return ::getenv( env.c_str() ); }
+    if ( ::getenv( env.c_str() ) ) { return ::getenv( env.c_str() ); }
     return default_value;
 }
 

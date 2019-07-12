@@ -46,7 +46,7 @@ template <int Rank>
 using UintSequence = ::gridtools::make_gt_integer_sequence<unsigned int, Rank>;
 
 template <typename Value, template <class> class Storage, typename StorageInfo>
-static Array* wrap_array(::gridtools::data_store<Storage<Value>, StorageInfo>* ds, const ArraySpec& spec ) {
+static Array* wrap_array( ::gridtools::data_store<Storage<Value>, StorageInfo>* ds, const ArraySpec& spec ) {
     assert( ds );
     using data_store_t         = typename std::remove_pointer<decltype( ds )>::type;
     ArrayDataStore* data_store = new GridToolsDataStore<data_store_t>( ds );

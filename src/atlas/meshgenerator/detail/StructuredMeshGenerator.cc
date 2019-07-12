@@ -469,9 +469,9 @@ We need to connect to next region
                 else
                     throw_Exception( "Should not try to make a quadrilateral!", Here() );
             }
-                // ------------------------------------------------
-                // END RULES
-                // ------------------------------------------------
+            // ------------------------------------------------
+            // END RULES
+            // ------------------------------------------------
 
 #if DEBUG_OUTPUT
             ATLAS_DEBUG_VAR( jelem );

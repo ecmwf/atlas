@@ -48,14 +48,14 @@ public:
     Parallelisation( const std::shared_ptr<::Trans_t> other ) : trans_( other ) {}
 
     Parallelisation( int truncation ) {
-        trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, [](::Trans_t* p ) {
-            TRANS_CHECK(::trans_delete( p ) );
+        trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, []( ::Trans_t* p ) {
+            TRANS_CHECK( ::trans_delete( p ) );
             delete p;
         } );
-        TRANS_CHECK(::trans_new( trans_.get() ) );
-        TRANS_CHECK(::trans_set_trunc( trans_.get(), truncation ) );
-        TRANS_CHECK(::trans_use_mpi( mpi::comm().size() > 1 ) );
-        TRANS_CHECK(::trans_setup( trans_.get() ) );
+        TRANS_CHECK( ::trans_new( trans_.get() ) );
+        TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
+        TRANS_CHECK( ::trans_use_mpi( mpi::comm().size() > 1 ) );
+        TRANS_CHECK( ::trans_setup( trans_.get() ) );
     }
 
     int nb_spectral_coefficients_global() const { return trans_->nspec2g; }
@@ -277,7 +277,7 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
         args.rspecg              = glb.data<double>();
         args.nto                 = nto.data();
         args.rspec               = loc.data<double>();
-        TRANS_CHECK(::trans_gathspec( &args ) );
+        TRANS_CHECK( ::trans_gathspec( &args ) );
 #else
 
         throw_Exception(
@@ -331,7 +331,7 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
         args.rspecg              = glb.data<double>();
         args.nfrom               = nfrom.data();
         args.rspec               = loc.data<double>();
-        TRANS_CHECK(::trans_distspec( &args ) );
+        TRANS_CHECK( ::trans_distspec( &args ) );
 
         glb.metadata().broadcast( loc.metadata(), root );
         loc.metadata().set( "global", false );
@@ -369,7 +369,7 @@ void Spectral::norm( const Field& field, double& norm, int rank ) const {
     args.rspec               = field.data<double>();
     args.rnorm               = &norm;
     args.nmaster             = rank + 1;
-    TRANS_CHECK(::trans_specnorm( &args ) );
+    TRANS_CHECK( ::trans_specnorm( &args ) );
 #else
     throw_Exception(
         "Cannot compute spectral norms because Atlas has not "
@@ -387,7 +387,7 @@ void Spectral::norm( const Field& field, double norm_per_level[], int rank ) con
     args.rspec               = field.data<double>();
     args.rnorm               = norm_per_level;
     args.nmaster             = rank + 1;
-    TRANS_CHECK(::trans_specnorm( &args ) );
+    TRANS_CHECK( ::trans_specnorm( &args ) );
 #else
     throw_Exception(
         "Cannot compute spectral norms because Atlas has not "

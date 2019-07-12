@@ -22,7 +22,7 @@
 #include "atlas/util/detail/BlackMagic.h"
 
 #undef ATLAS_TRACE_MPI
-#define ATLAS_TRACE_MPI( ... ) ATLAS_TRACE_MPI_(::atlas::mpi::Trace, Here(), __VA_ARGS__ )
+#define ATLAS_TRACE_MPI( ... ) ATLAS_TRACE_MPI_( ::atlas::mpi::Trace, Here(), __VA_ARGS__ )
 #define ATLAS_TRACE_MPI_( Type, location, operation, ... ) \
     __ATLAS_TYPE_SCOPE( Type, location, __ATLAS_TRACE_MPI_ENUM( operation ) __ATLAS_COMMA_ARGS( __VA_ARGS__ ) )
 

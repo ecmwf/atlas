@@ -257,7 +257,7 @@ void TransIFS::invtrans( const int nb_scalar_fields, const double scalar_spectra
     args.lvordivgp           = params.vorticity_divergence_fields();
     args.nproma              = params.nproma();
     args.ngpblks             = params.ngpblks();
-    TRANS_CHECK(::trans_invtrans( &args ) );
+    TRANS_CHECK( ::trans_invtrans( &args ) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -288,7 +288,7 @@ void TransIFS::dirtrans( const int nb_fields, const double scalar_fields[], doub
     args.lglobal             = params.global();
     args.nproma              = params.nproma();
     args.ngpblks             = params.ngpblks();
-    TRANS_CHECK(::trans_dirtrans( &args ) );
+    TRANS_CHECK( ::trans_dirtrans( &args ) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -305,7 +305,7 @@ void TransIFS::dirtrans( const int nb_fields, const double wind_fields[], double
     args.lglobal             = params.global();
     args.nproma              = params.nproma();
     args.ngpblks             = params.ngpblks();
-    TRANS_CHECK(::trans_dirtrans( &args ) );
+    TRANS_CHECK( ::trans_dirtrans( &args ) );
 }
 
 }  // namespace trans
@@ -868,7 +868,7 @@ const functionspace::Spectral& TransIFS::spectral() const {
 }
 
 void TransIFS::ctor( const Grid& grid, long truncation, const eckit::Configuration& config ) {
-    trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, [](::Trans_t* p ) {
+    trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, []( ::Trans_t* p ) {
         ::trans_delete( p );
         delete p;
     } );
@@ -891,12 +891,12 @@ void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, con
     std::vector<int> nloen( nlat );
     for ( long jlat = 0; jlat < nlat; ++jlat )
         nloen[jlat] = pl[jlat];
-    TRANS_CHECK(::trans_new( trans_.get() ) );
-    TRANS_CHECK(::trans_use_mpi( mpi::comm().size() > 1 ) );
-    TRANS_CHECK(::trans_set_resol( trans_.get(), nlat, nloen.data() ) );
-    if ( truncation >= 0 ) TRANS_CHECK(::trans_set_trunc( trans_.get(), truncation ) );
+    TRANS_CHECK( ::trans_new( trans_.get() ) );
+    TRANS_CHECK( ::trans_use_mpi( mpi::comm().size() > 1 ) );
+    TRANS_CHECK( ::trans_set_resol( trans_.get(), nlat, nloen.data() ) );
+    if ( truncation >= 0 ) TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
 
-    TRANS_CHECK(::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
+    TRANS_CHECK( ::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
 
     if ( p.read_legendre().size() && mpi::comm().size() == 1 ) {
         eckit::PathName file( p.read_legendre() );
@@ -905,26 +905,26 @@ void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, con
             msg << "File " << file << " doesn't exist";
             throw_CantOpenFile( msg.str(), Here() );
         }
-        TRANS_CHECK(::trans_set_read( trans_.get(), file.asString().c_str() ) );
+        TRANS_CHECK( ::trans_set_read( trans_.get(), file.asString().c_str() ) );
     }
     if ( p.write_legendre().size() && mpi::comm().size() == 1 ) {
         eckit::PathName file( p.write_legendre() );
-        TRANS_CHECK(::trans_set_write( trans_.get(), file.asString().c_str() ) );
+        TRANS_CHECK( ::trans_set_write( trans_.get(), file.asString().c_str() ) );
     }
 
     trans_->fft    = p.fft();
     trans_->lsplit = p.split_latitudes();
     trans_->flt    = p.flt();
-    ATLAS_TRACE_SCOPE( "trans_setup" ) { TRANS_CHECK(::trans_setup( trans_.get() ) ); }
+    ATLAS_TRACE_SCOPE( "trans_setup" ) { TRANS_CHECK( ::trans_setup( trans_.get() ) ); }
 }
 
 void TransIFS::ctor_lonlat( const long nlon, const long nlat, long truncation, const eckit::Configuration& config ) {
     TransParameters p( *this, config );
-    TRANS_CHECK(::trans_new( trans_.get() ) );
-    TRANS_CHECK(::trans_use_mpi( mpi::comm().size() > 1 ) );
-    TRANS_CHECK(::trans_set_resol_lonlat( trans_.get(), nlon, nlat ) );
-    if ( truncation >= 0 ) TRANS_CHECK(::trans_set_trunc( trans_.get(), truncation ) );
-    TRANS_CHECK(::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
+    TRANS_CHECK( ::trans_new( trans_.get() ) );
+    TRANS_CHECK( ::trans_use_mpi( mpi::comm().size() > 1 ) );
+    TRANS_CHECK( ::trans_set_resol_lonlat( trans_.get(), nlon, nlat ) );
+    if ( truncation >= 0 ) TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
+    TRANS_CHECK( ::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
 
     if ( p.read_legendre().size() && mpi::comm().size() == 1 ) {
         eckit::PathName file( p.read_legendre() );
@@ -933,18 +933,18 @@ void TransIFS::ctor_lonlat( const long nlon, const long nlat, long truncation, c
             msg << "File " << file << " doesn't exist";
             throw_CantOpenFile( msg.str(), Here() );
         }
-        TRANS_CHECK(::trans_set_read( trans_.get(), file.asString().c_str() ) );
+        TRANS_CHECK( ::trans_set_read( trans_.get(), file.asString().c_str() ) );
     }
     if ( p.write_legendre().size() && mpi::comm().size() == 1 ) {
         eckit::PathName file( p.write_legendre() );
-        TRANS_CHECK(::trans_set_write( trans_.get(), file.asString().c_str() ) );
+        TRANS_CHECK( ::trans_set_write( trans_.get(), file.asString().c_str() ) );
     }
 
     trans_->fft    = p.fft();
     trans_->lsplit = p.split_latitudes();
     trans_->flt    = p.flt();
 
-    TRANS_CHECK(::trans_setup( trans_.get() ) );
+    TRANS_CHECK( ::trans_setup( trans_.get() ) );
 }
 
 // --------------------------------------------------------------------------------------------
@@ -991,7 +991,7 @@ void TransIFS::__dirtrans( const functionspace::NodeColumns& gp, const FieldSet&
         transform.nscalar             = nfld;
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
-        TRANS_CHECK(::trans_dirtrans( &transform ) );
+        TRANS_CHECK( ::trans_dirtrans( &transform ) );
     }
 
     // Unpack the spectral fields
@@ -1039,7 +1039,7 @@ void TransIFS::__dirtrans( const StructuredColumns& gp, const Field& gpfield, co
         transform.rspscalar           = rsp.data();
         transform.ngpblks             = ngptot();
         transform.nproma              = 1;
-        TRANS_CHECK(::trans_dirtrans( &transform ) );
+        TRANS_CHECK( ::trans_dirtrans( &transform ) );
     }
 
     // Unpack spectral
@@ -1085,7 +1085,7 @@ void TransIFS::__dirtrans( const StructuredColumns& gp, const FieldSet& gpfields
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
 
-        TRANS_CHECK(::trans_dirtrans( &transform ) );
+        TRANS_CHECK( ::trans_dirtrans( &transform ) );
     }
 
     // Unpack the spectral fields
@@ -1144,7 +1144,7 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, co
         transform.rspscalar           = rsp.data();
         transform.lscalarders         = true;
 
-        TRANS_CHECK(::trans_invtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans( &transform ) );
     }
 
     // Unpack the gridpoint fields
@@ -1229,7 +1229,7 @@ void TransIFS::__invtrans( const Spectral& sp, const FieldSet& spfields, const f
         transform.nscalar             = nfld;
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
-        TRANS_CHECK(::trans_invtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans( &transform ) );
     }
 
     // Unpack the gridpoint fields
@@ -1277,7 +1277,7 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const Field& spfie
         transform.rspscalar           = rsp.data();
         transform.ngpblks             = ngptot();
         transform.nproma              = 1;
-        TRANS_CHECK(::trans_invtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans( &transform ) );
     }
 
     // Unpack gridpoint fields
@@ -1330,7 +1330,7 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& sp
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
 
-        TRANS_CHECK(::trans_invtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans( &transform ) );
     }
 
     // Unpack the gridpoint fields
@@ -1393,7 +1393,7 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
 
         ATLAS_ASSERT( transform.rspvor );
         ATLAS_ASSERT( transform.rspdiv );
-        TRANS_CHECK(::trans_dirtrans( &transform ) );
+        TRANS_CHECK( ::trans_dirtrans( &transform ) );
     }
 
     // Pack spectral fields
@@ -1455,7 +1455,7 @@ void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, c
 
         ATLAS_ASSERT( transform.rspvor );
         ATLAS_ASSERT( transform.rspdiv );
-        TRANS_CHECK(::trans_invtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans( &transform ) );
     }
 
     // Unpack the gridpoint fields
@@ -1475,7 +1475,7 @@ void TransIFS::distspec( const int nb_fields, const int origin[], const double g
     args.rspecg              = global_spectra;
     args.nfrom               = origin;
     args.rspec               = spectra;
-    TRANS_CHECK(::trans_distspec( &args ) );
+    TRANS_CHECK( ::trans_distspec( &args ) );
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1487,7 +1487,7 @@ void TransIFS::gathspec( const int nb_fields, const int destination[], const dou
     args.rspecg              = global_spectra;
     args.nto                 = destination;
     args.rspec               = spectra;
-    TRANS_CHECK(::trans_gathspec( &args ) );
+    TRANS_CHECK( ::trans_gathspec( &args ) );
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1499,7 +1499,7 @@ void TransIFS::distgrid( const int nb_fields, const int origin[], const double g
     args.nfrom               = origin;
     args.rgpg                = global_fields;
     args.rgp                 = fields;
-    TRANS_CHECK(::trans_distgrid( &args ) );
+    TRANS_CHECK( ::trans_distgrid( &args ) );
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1511,7 +1511,7 @@ void TransIFS::gathgrid( const int nb_fields, const int destination[], const dou
     args.nto                 = destination;
     args.rgp                 = fields;
     args.rgpg                = global_fields;
-    TRANS_CHECK(::trans_gathgrid( &args ) );
+    TRANS_CHECK( ::trans_gathgrid( &args ) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1522,7 +1522,7 @@ void TransIFS::specnorm( const int nb_fields, const double spectra[], double nor
     args.rspec               = spectra;
     args.rnorm               = norms;
     args.nmaster             = rank + 1;
-    TRANS_CHECK(::trans_specnorm( &args ) );
+    TRANS_CHECK( ::trans_specnorm( &args ) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
