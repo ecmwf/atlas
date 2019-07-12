@@ -25,6 +25,7 @@ class Hash;
 
 namespace atlas {
 class Domain;
+class RectangularLonLatDomain;
 namespace util {
 class Config;
 }
@@ -53,7 +54,7 @@ public:
     PointXY xy( const PointLonLat& ) const;
 
     virtual bool strictlyRegional() const             = 0;
-    virtual Domain boundingBox( const Domain& ) const = 0;
+    virtual RectangularLonLatDomain lonlatBoundingBox( const Domain& ) const = 0;
 
     virtual Spec spec() const = 0;
 
@@ -64,7 +65,7 @@ public:
     virtual void hash( eckit::Hash& ) const = 0;
 
     struct BoundLonLat {
-        operator Domain() const;
+        operator RectangularLonLatDomain() const;
         void extend( PointLonLat p, PointLonLat eps );
 
         bool crossesDateLine( bool );

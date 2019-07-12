@@ -42,7 +42,7 @@ public:
     void lonlat2xy( double crd[] ) const override { rotation_.unrotate( crd ); }
 
     bool strictlyRegional() const override { return false; }
-    Domain boundingBox( const Domain& ) const override;
+    RectangularLonLatDomain lonlatBoundingBox( const Domain& ) const override;
 
     // specification
     Spec spec() const override;

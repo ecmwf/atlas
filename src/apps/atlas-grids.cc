@@ -296,21 +296,21 @@ int AtlasGrids::execute( const Args& args ) {
 
             std::vector<double> bbox;
             if ( config_check.get( "bounding_box(n,w,s,e)", bbox ) && bbox.size() == 4 ) {
-                RectangularDomain rect = grid.boundingBox();
-                if ( ( check_failed = !rect ) ) {
+                auto bb = grid.lonlatBoundingBox();
+                if ( ( check_failed = !bb ) ) {
                     out << "Check failed: cannot calculate bounding box for " << grid.spec() << std::endl;
                 }
-                else if ( ( check_failed = !equal( rect.ymax(), bbox[0] ) ) ) {
-                    out << "Check failed: n=" << rect.ymax() << " expected to be " << bbox[0] << std::endl;
+                else if ( ( check_failed = !equal( bb.north(), bbox[0] ) ) ) {
+                    out << "Check failed: n=" << bb.north() << " expected to be " << bbox[0] << std::endl;
                 }
-                else if ( ( check_failed = !equal( rect.xmin(), bbox[1] ) ) ) {
-                    out << "Check failed: w=" << rect.xmin() << " expected to be " << bbox[1] << std::endl;
+                else if ( ( check_failed = !equal( bb.west(), bbox[1] ) ) ) {
+                    out << "Check failed: w=" << bb.west() << " expected to be " << bbox[1] << std::endl;
                 }
-                else if ( ( check_failed = !equal( rect.ymin(), bbox[2] ) ) ) {
-                    out << "Check failed: s=" << rect.ymin() << " expected to be " << bbox[2] << std::endl;
+                else if ( ( check_failed = !equal( bb.south(), bbox[2] ) ) ) {
+                    out << "Check failed: s=" << bb.south() << " expected to be " << bbox[2] << std::endl;
                 }
-                else if ( ( check_failed = !equal( rect.xmax(), bbox[3] ) ) ) {
-                    out << "Check failed: e=" << rect.xmax() << " expected to be " << bbox[3] << std::endl;
+                else if ( ( check_failed = !equal( bb.east(), bbox[3] ) ) ) {
+                    out << "Check failed: e=" << bb.east() << " expected to be " << bbox[3] << std::endl;
                 }
             }
             else {

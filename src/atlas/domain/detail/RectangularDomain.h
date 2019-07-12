@@ -75,5 +75,15 @@ private:
     bool unit_degrees_;
 };
 
+class RectangularLonLatDomain : public RectangularDomain {
+public:
+    RectangularLonLatDomain( const eckit::Parametrisation& config ) : RectangularDomain( config ) {}
+    RectangularLonLatDomain( const Interval& x, const Interval& y ) : RectangularDomain(x,y,"degrees") {}
+    double north() const { return ymax(); }
+    double south() const { return ymin(); }
+    double west() const { return xmin(); }
+    double east() const { return xmax(); }
+};
+
 }  // namespace domain
 }  // namespace atlas

@@ -380,7 +380,7 @@ protected:  // methods
 
     virtual void hash( eckit::Hash& ) const override;
 
-    virtual Domain boundingBox() const override;
+    virtual RectangularLonLatDomain lonlatBoundingBox() const override;
 
     void computeTruePeriodicity();
 

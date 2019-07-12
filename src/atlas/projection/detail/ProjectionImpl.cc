@@ -103,8 +103,8 @@ ProjectionImpl::DerivateFactory::~DerivateFactory() = default;
 
 // --------------------------------------------------------------------------------------------------------------------
 
-ProjectionImpl::BoundLonLat::operator Domain() const {
-    return RectangularDomain( {min_[0], max_[0]}, {min_[1], max_[1]}, "degrees" );
+ProjectionImpl::BoundLonLat::operator RectangularLonLatDomain() const {
+    return RectangularLonLatDomain( {min_[0], max_[0]}, {min_[1], max_[1]} );
 }
 
 bool ProjectionImpl::BoundLonLat::crossesDateLine( bool yes ) {
@@ -153,7 +153,7 @@ const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) 
     throw_Exception( "type missing in Params", Here() );
 }
 
-Domain ProjectionImpl::boundingBox( const Domain& domain ) const {
+RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain ) const {
     using eckit::types::is_strictly_greater;
 
 

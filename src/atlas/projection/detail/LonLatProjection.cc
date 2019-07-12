@@ -37,12 +37,12 @@ template <>
 void LonLatProjectionT<NotRotated>::lonlat2xy( double[] ) const {}
 
 template <>
-Domain LonLatProjectionT<NotRotated>::boundingBox( const Domain& domain ) const {
+RectangularLonLatDomain LonLatProjectionT<NotRotated>::lonlatBoundingBox( const Domain& domain ) const {
     return domain;
 }
 
 template <typename Rotation>
-Domain LonLatProjectionT<Rotation>::boundingBox( const Domain& domain ) const {
+RectangularLonLatDomain LonLatProjectionT<Rotation>::lonlatBoundingBox( const Domain& domain ) const {
     using eckit::types::is_strictly_greater;
 
 

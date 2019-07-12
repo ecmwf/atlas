@@ -199,7 +199,7 @@ private:  // methods
     virtual void hash( eckit::Hash& ) const override;
 
     /// @return parallel/meridian limits containing the grid
-    virtual Domain boundingBox() const override;
+    virtual RectangularLonLatDomain lonlatBoundingBox() const override;
 
 protected:
     /// Storage of coordinate points

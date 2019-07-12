@@ -60,7 +60,7 @@ ZonalBandDomain::ZonalBandDomain( const eckit::Parametrisation& params ) :
 ZonalBandDomain::ZonalBandDomain( const Interval& interval_y ) : ZonalBandDomain( interval_y, /*west*/ 0. ) {}
 
 ZonalBandDomain::ZonalBandDomain( const Interval& interval_y, const double west ) :
-    RectangularDomain( {west, west + 360.}, interval_y, units_ ) {
+    RectangularLonLatDomain( {west, west + 360.}, interval_y ) {
     global_   = _is_global( ymin(), ymax() );
     ymin_tol_ = ymin() - 1.e-6;
     ymax_tol_ = ymax() + 1.e-6;

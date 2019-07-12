@@ -91,13 +91,13 @@ struct Rotation : std::array<double, 2> {
         atlas::Projection p( config );
 
         RectangularDomain before( {box.west(), box.east()}, {box.south(), box.north()} );
-        Domain after = p.boundingBox( before );
+        Domain after = p.lonlatBoundingBox( before );
         ATLAS_ASSERT( after );
 
-        RectangularDomain r( after );
+        RectangularLonLatDomain r( after );
         ATLAS_ASSERT( r );
 
-        return {r.ymax(), r.xmin(), r.ymin(), r.xmax()};
+        return {r.north(), r.west(), r.south(), r.east()};
     }
 };
 

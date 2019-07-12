@@ -63,8 +63,8 @@ const Grid::Domain& Grid::domain() const {
     return get()->domain();
 }
 
-Grid::Domain Grid::boundingBox() const {
-    return get()->boundingBox();
+RectangularLonLatDomain Grid::lonlatBoundingBox() const {
+    return get()->lonlatBoundingBox();
 }
 
 std::string Grid::name() const {

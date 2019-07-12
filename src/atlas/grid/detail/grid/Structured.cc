@@ -489,9 +489,9 @@ void Structured::hash( eckit::Hash& h ) const {
     domain().hash( h );
 }
 
-Grid::Domain Structured::boundingBox() const {
+RectangularLonLatDomain Structured::lonlatBoundingBox() const {
     auto domain = computeDomain();
-    return projection_ ? projection_.boundingBox( domain ) : domain;
+    return projection_ ? projection_.lonlatBoundingBox( domain ) : domain;
 }
 
 Grid::Spec Structured::spec() const {

@@ -170,8 +170,8 @@ void Unstructured::hash( eckit::Hash& h ) const {
     projection().hash( h );
 }
 
-Grid::Domain Unstructured::boundingBox() const {
-    return projection_ ? projection_.boundingBox( domain_ ) : domain_;
+RectangularLonLatDomain Unstructured::lonlatBoundingBox() const {
+    return projection_ ? projection_.lonlatBoundingBox( domain_ ) : domain_;
 }
 
 idx_t Unstructured::size() const {

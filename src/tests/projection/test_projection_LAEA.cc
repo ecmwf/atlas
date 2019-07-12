@@ -146,12 +146,12 @@ CASE( "test_grid_creation_from_GRIB" ) {
 
     // Check if bounding box is correct
     {
-        RectangularDomain bb{g.boundingBox()};
+        RectangularLonLatDomain bb{g.lonlatBoundingBox()};
         const double tolerance = 1.e-6;
-        EXPECT( is_approximately_equal( bb.xmin(), -90.001, tolerance ) );
-        EXPECT( is_approximately_equal( bb.xmax(), 41.883045, tolerance ) );
-        EXPECT( is_approximately_equal( bb.ymin(), 3.817356, tolerance ) );
-        EXPECT( is_approximately_equal( bb.ymax(), 76.041386, tolerance ) );
+        EXPECT( is_approximately_equal( bb.west(), -90.001, tolerance ) );
+        EXPECT( is_approximately_equal( bb.east(), 41.883045, tolerance ) );
+        EXPECT( is_approximately_equal( bb.south(), 3.817356, tolerance ) );
+        EXPECT( is_approximately_equal( bb.north(), 76.041386, tolerance ) );
         for ( PointLonLat p : g.lonlat() ) {
             EXPECT( bb.contains( p ) );
         }

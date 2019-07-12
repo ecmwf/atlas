@@ -58,7 +58,7 @@ public:
     PointXY xy( const PointLonLat& ) const;
 
     bool strictlyRegional() const;
-    Domain boundingBox( const Domain& ) const;
+    RectangularLonLatDomain lonlatBoundingBox( const Domain& ) const;
 
     Spec spec() const;
 

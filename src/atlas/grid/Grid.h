@@ -73,7 +73,7 @@ public:
 
     const Projection& projection() const;
     const Domain& domain() const;
-    Domain boundingBox() const;
+    RectangularLonLatDomain lonlatBoundingBox() const;
     std::string name() const;
     std::string uid() const;
 
