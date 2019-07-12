@@ -191,24 +191,6 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
     // 2. locate latitude extrema by checking if poles are included (in the un-projected frame) and if not, find extrema
     // not at the corners by refining iteratively
 
-    {
-        auto xyz = [=]( const PointXY& p ) -> PointXYZ {
-            PointXYZ r;
-            util::Earth::convertSphericalToCartesian( this->lonlat( p ), r );
-            return r;
-        };
-
-        using interpolation::element::Quad3D;
-        using interpolation::method::Ray;
-        const Quad3D quad( xyz( corners[0] ), xyz( corners[1] ), xyz( corners[2] ), xyz( corners[3] ) );
-
-        PointXY NP{xy( {0., 90.} )};
-        PointXY SP{xy( {0., -90.} )};
-
-        bounds.includesNorthPole( quad.intersects( Ray( xyz( NP ) ) ) );
-        bounds.includesSouthPole( quad.intersects( Ray( xyz( SP ) ) ) );
-    }
-
     for ( size_t i = 0; i < corners.size(); ++i ) {
         if ( !bounds.includesNorthPole() || !bounds.includesSouthPole() ) {
             PointXY A = corners[i];
