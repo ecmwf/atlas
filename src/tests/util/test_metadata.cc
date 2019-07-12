@@ -33,8 +33,9 @@ CASE( "test_broadcast_to_self" ) {
     metadata.broadcast();
 
     EXPECT( metadata.has( "paramID" ) );
-    if ( metadata.has( "paramID" ) )
+    if ( metadata.has( "paramID" ) ) {
         EXPECT( metadata.get<int>( "paramID" ) == 128 );
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -52,11 +53,13 @@ CASE( "test_broadcast_to_other" ) {
     global.broadcast( local );
 
     EXPECT( local.has( "paramID" ) );
-    if ( local.has( "paramID" ) )
+    if ( local.has( "paramID" ) ) {
         EXPECT( local.get<int>( "paramID" ) == 128 );
+    }
 
-    if ( mpi::comm().rank() != root )
+    if ( mpi::comm().rank() != root ) {
         EXPECT( !global.has( "paramID" ) );
+    }
 }
 
 //-----------------------------------------------------------------------------

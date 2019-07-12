@@ -27,11 +27,13 @@ static bool _is_global( double ymin, double ymax ) {
 static std::array<double, 2> get_interval_y( const eckit::Parametrisation& params ) {
     double ymin, ymax;
 
-    if ( !params.get( "ymin", ymin ) )
+    if ( !params.get( "ymin", ymin ) ) {
         throw_Exception( "ymin missing in Params", Here() );
+    }
 
-    if ( !params.get( "ymax", ymax ) )
+    if ( !params.get( "ymax", ymax ) ) {
         throw_Exception( "ymax missing in Params", Here() );
+    }
 
     return {ymin, ymax};
 }

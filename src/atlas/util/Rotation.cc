@@ -126,8 +126,9 @@ void Rotation::precompute() {
 Rotation::Rotation( const PointLonLat& south_pole, double rotation_angle ) {
     spole_ = south_pole;
     npole_ = PointLonLat( spole_.lon() - 180., spole_.lat() + 180. );
-    if ( npole_.lat() > 90 )
+    if ( npole_.lat() > 90 ) {
         npole_.lon() += 180.;
+    }
     angle_ = wrap_angle( rotation_angle );
 
     precompute();
@@ -143,14 +144,16 @@ Rotation::Rotation( const eckit::Parametrisation& p ) {
     if ( p.get( "north_pole", pole ) ) {
         npole_ = PointLonLat( pole.data() );
         spole_ = PointLonLat( npole_.lon() + 180., npole_.lat() - 180. );
-        if ( spole_.lat() < -90 )
+        if ( spole_.lat() < -90 ) {
             spole_.lon() -= 180.;
+        }
     }
     else if ( p.get( "south_pole", pole ) ) {
         spole_ = PointLonLat( pole.data() );
         npole_ = PointLonLat( spole_.lon() - 180., spole_.lat() + 180. );
-        if ( npole_.lat() > 90 )
+        if ( npole_.lat() > 90 ) {
             npole_.lon() += 180.;
+        }
     }
 
     precompute();

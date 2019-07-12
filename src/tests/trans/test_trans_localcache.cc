@@ -46,8 +46,9 @@ using LinearSpacing = grid::LinearSpacing;
 
 eckit::PathName CacheFile( const std::string& path ) {
     eckit::PathName cachefile( path );
-    if ( cachefile.exists() )
+    if ( cachefile.exists() ) {
         cachefile.unlink();
+    }
     return cachefile;
 }
 

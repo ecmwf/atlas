@@ -130,12 +130,15 @@ void Library::initialise( const eckit::Parametrisation& config ) {
         config.get( "trace.report", trace_report_ );
     }
 
-    if ( not debug_ )
+    if ( not debug_ ) {
         debug_channel_.reset();
-    if ( not trace_ )
+    }
+    if ( not trace_ ) {
         trace_channel_.reset();
-    if ( not info_ )
+    }
+    if ( not info_ ) {
         info_channel_.reset();
+    }
 
     // Summary
     if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::comm().rank() ) ) {
@@ -195,8 +198,9 @@ eckit::Channel& Library::infoChannel() const {
 }
 
 eckit::Channel& Library::traceChannel() const {
-    if ( trace_channel_ )
+    if ( trace_channel_ ) {
         return *trace_channel_;
+    }
     if ( trace_ ) {
         trace_channel_.reset( new eckit::Channel(
             new eckit::PrefixTarget( "ATLAS_TRACE", new eckit::OStreamTarget( eckit::Log::info() ) ) ) );

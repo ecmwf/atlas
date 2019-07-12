@@ -211,8 +211,9 @@ idx_t Spectral::nb_spectral_coefficients_global() const {
 
 array::DataType Spectral::config_datatype( const eckit::Configuration& config ) const {
     array::DataType::kind_t kind;
-    if ( !config.get( "datatype", kind ) )
+    if ( !config.get( "datatype", kind ) ) {
         throw_Exception( "datatype missing", Here() );
+    }
     return array::DataType( kind );
 }
 
@@ -235,8 +236,9 @@ Field Spectral::createField( const eckit::Configuration& options ) const {
     array_shape.push_back( nb_spec_coeffs );
 
     idx_t levels = config_levels( options );
-    if ( levels )
+    if ( levels ) {
         array_shape.push_back( levels );
+    }
 
     Field field = Field( config_name( options ), config_datatype( options ), array_shape );
 

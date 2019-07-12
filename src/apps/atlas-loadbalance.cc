@@ -97,8 +97,9 @@ private:
 //------------------------------------------------------------------------------------------------------
 
 void AtlasLoadbalance::run() {
-    if ( !do_run )
+    if ( !do_run ) {
         return;
+    }
 
     StructuredGrid grid;
     try {
@@ -107,8 +108,9 @@ void AtlasLoadbalance::run() {
     catch ( eckit::Exception& err ) {
     }
 
-    if ( !grid )
+    if ( !grid ) {
         return;
+    }
     MeshGenerator meshgenerator( "structured" );
     Mesh mesh = meshgenerator.generate( grid );
 

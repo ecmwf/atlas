@@ -102,8 +102,9 @@ FieldCreator* FieldCreatorFactory::build( const std::string& name ) {
     if ( j == m->end() ) {
         Log::error() << "No FieldCreatorFactory for [" << name << "]" << '\n';
         Log::error() << "FieldCreatorFactories are:" << '\n';
-        for ( j = m->begin(); j != m->end(); ++j )
+        for ( j = m->begin(); j != m->end(); ++j ) {
             Log::error() << "   " << ( *j ).first << '\n';
+        }
         throw_Exception( std::string( "No FieldCreatorFactory called " ) + name );
     }
 
@@ -122,8 +123,9 @@ FieldCreator* FieldCreatorFactory::build( const std::string& name, const eckit::
     if ( j == m->end() ) {
         Log::error() << "No FieldCreatorFactory for [" << name << "]" << '\n';
         Log::error() << "FieldCreatorFactories are:" << '\n';
-        for ( j = m->begin(); j != m->end(); ++j )
+        for ( j = m->begin(); j != m->end(); ++j ) {
             Log::error() << "   " << ( *j ).first << '\n';
+        }
         throw_Exception( std::string( "No FieldCreatorFactory called " ) + name );
     }
 

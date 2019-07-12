@@ -101,15 +101,17 @@ public:
             if ( std::string( argv[i] ) == "-i" ) {
                 for ( int j = i + 1; j < argc; ++j ) {
                     std::string in_file( argv[j] );
-                    if ( in_file[0] == '-' )
+                    if ( in_file[0] == '-' ) {
                         break;
+                    }
                     in_files.push_back( in_file );
                 }
             }
         }
 
-        if ( in_files.empty() )
+        if ( in_files.empty() ) {
             throw_Exception( "missing input filename, parameter -i\n" + help_str, Here() );
+        }
     }
 
 private:
@@ -123,19 +125,22 @@ private:
 //------------------------------------------------------------------------------------------------------
 
 void gmsh_extract::run() {
-    if ( !do_run )
+    if ( !do_run ) {
         return;
+    }
     atlas::Library::instance().initialise( argc(), argv() );
     Log::debug() << "Command line:" << std::endl;
-    for ( int i = 0; i < argc(); ++i )
+    for ( int i = 0; i < argc(); ++i ) {
         Log::debug() << argv( i ) << std::endl;
+    }
     Log::debug() << Translator<std::vector<std::string>, std::string>()( in_files ) << std::endl;
 
     std::ofstream out_file;
     if ( !out_filename.empty() ) {
         out_file.open( out_filename.c_str(), std::ios::out | std::ios::binary );
-        if ( !out_file.is_open() )
+        if ( !out_file.is_open() ) {
             throw_CantOpenFile( out_filename );
+        }
     }
 
     std::ostream& out = out_filename.empty() ? std::cout : out_file;
@@ -150,15 +155,17 @@ void gmsh_extract::run() {
 
         std::ifstream in_file;
         in_file.open( gmsh_file.localPath(), std::ios::in | std::ios::binary );
-        if ( !in_file.is_open() )
+        if ( !in_file.is_open() ) {
             throw_CantOpenFile( gmsh_file );
+        }
 
         std::string line;
         std::string ctxt = "";
         while ( true ) {
             std::getline( in_file, line );
-            if ( in_file.eof() )
+            if ( in_file.eof() ) {
                 break;
+            }
             if ( line == "$MeshFormat" ) {
                 out << line << "\n";
                 std::getline( in_file, line );
@@ -167,12 +174,15 @@ void gmsh_extract::run() {
                 out << line << "\n";
                 std::getline( in_file, line );
             }
-            if ( line == "$NodeData" )
+            if ( line == "$NodeData" ) {
                 ctxt = "NodeData";
-            if ( line == "$ElementData" )
+            }
+            if ( line == "$ElementData" ) {
                 ctxt = "ElementData";
-            if ( line == "$ElementNodeData" )
+            }
+            if ( line == "$ElementNodeData" ) {
                 ctxt = "ElementNodeData";
+            }
 
             if ( !ctxt.empty() ) {
                 std::string end_ctxt = "$End" + ctxt;
@@ -218,8 +228,9 @@ void gmsh_extract::run() {
             }
         }
     }
-    if ( !out_filename.empty() )
+    if ( !out_filename.empty() ) {
         out_file.close();
+    }
     atlas::Library::instance().finalise();
 }
 

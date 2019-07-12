@@ -250,8 +250,9 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
     // This piece should be somewhere central ... could be NPROMA ?
     // ---------->
     std::vector<idx_t> proc( nparts );
-    for ( idx_t jpart = 0; jpart < nparts; ++jpart )
+    for ( idx_t jpart = 0; jpart < nparts; ++jpart ) {
         proc[jpart] = jpart;
+    }
     // <---------
 
     auto ridx      = array::make_indexview<idx_t, 1>( nodes.remote_index() );
@@ -708,8 +709,9 @@ Field& build_edges_partition( Mesh& mesh ) {
         }
     }
     mpi::comm().allReduceInPlace( insane, eckit::mpi::max() );
-    if ( insane && eckit::mpi::comm().rank() == 0 )
+    if ( insane && eckit::mpi::comm().rank() == 0 ) {
         throw_Exception( "Sanity check failed", Here() );
+    }
 
     //#ifdef DEBUGGING_PARFIELDS
     //        if( OWNED_EDGE(jedge) )
@@ -785,10 +787,12 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
                Topology::check( flags( ip2 ), Topology::PERIODIC ) &&
                !Topology::check( flags( ip2 ), Topology::BC | Topology::WEST ) ) ) {
             needed = true;
-            if ( Topology::check( flags( ip1 ), Topology::EAST ) )
+            if ( Topology::check( flags( ip1 ), Topology::EAST ) ) {
                 transform( centroid, -1 );
-            else
+            }
+            else {
                 transform( centroid, +1 );
+            }
         }
 
         uid_t uid = util::unique_lonlat( centroid );

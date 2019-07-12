@@ -180,8 +180,9 @@ CASE( "test_functionspace_NodeColumns" ) {
 
     // glb_field->dump( Log::info() );
 
-    if ( mpi::comm().rank() == root )
+    if ( mpi::comm().rank() == root ) {
         glb_field.metadata().set( "test_broadcast", 123 );
+    }
 
     arr.assign( -1 );
     nodes_fs.scatter( glb_field, field );

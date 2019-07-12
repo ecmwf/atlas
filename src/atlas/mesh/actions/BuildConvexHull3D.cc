@@ -74,8 +74,9 @@ static Polyhedron_3* create_convex_hull_from_points( const std::vector<Point3>& 
     // insertion from a vector :
 
     std::vector<Point_3> vertices( pts.size() );
-    for ( idx_t i = 0, size = vertices.size(); i < size; ++i )
+    for ( idx_t i = 0, size = vertices.size(); i < size; ++i ) {
         vertices[i] = Point_3( pts[i]( XX ), pts[i]( YY ), pts[i]( ZZ ) );
+    }
 
     // compute convex hull of non-collinear points
 
@@ -142,8 +143,9 @@ static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, Point
 
             FT innerp = n * p0;
 
-            if ( innerp < 0 )  // need to swap an edge of the triag
+            if ( innerp < 0 ) {  // need to swap an edge of the triag
                 std::swap( vts[1], vts[2] );
+            }
         }
 
         /* define the triag */
@@ -180,8 +182,9 @@ static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, Point
 
 void BuildConvexHull3D::operator()( Mesh& mesh ) const {
     // don't tesselate meshes already with triags or quads
-    if ( mesh.cells().size() )
+    if ( mesh.cells().size() ) {
         return;
+    }
 
     ATLAS_TRACE();
 

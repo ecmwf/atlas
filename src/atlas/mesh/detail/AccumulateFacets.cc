@@ -81,8 +81,9 @@ void accumulate_facets( const mesh::HybridElements& cells, const mesh::Nodes& no
         std::vector<idx_t> facet_nodes( nb_nodes_in_facet );
 
         for ( idx_t e = 0; e < nb_elems; ++e ) {
-            if ( patch( e ) )
+            if ( patch( e ) ) {
                 continue;
+            }
             for ( idx_t f = 0; f < nb_facets_in_elem; ++f ) {
                 bool found_face = false;
 
@@ -187,8 +188,9 @@ void accumulate_facets_in_range( std::vector<array::Range>& range, const mesh::H
         const idx_t e_end   = range[t].end();
 
         for ( idx_t e = e_start; e < e_end; ++e ) {
-            if ( patch( e ) )
+            if ( patch( e ) ) {
                 continue;
+            }
 
             for ( idx_t f = 0; f < nb_facets_in_elem; ++f ) {
                 bool found_face = false;

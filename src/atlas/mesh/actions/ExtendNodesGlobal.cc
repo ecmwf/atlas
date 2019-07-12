@@ -27,8 +27,9 @@ namespace actions {
 ExtendNodesGlobal::ExtendNodesGlobal( const std::string& gridname ) : gridname_( gridname ) {}
 
 void ExtendNodesGlobal::operator()( const Grid& grid, Mesh& mesh ) const {
-    if ( grid.domain().global() )
+    if ( grid.domain().global() ) {
         return;  // don't add virtual points to global domains
+    }
 
     Grid O16( "O16" );
 

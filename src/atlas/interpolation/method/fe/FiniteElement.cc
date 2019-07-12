@@ -122,8 +122,9 @@ struct Stencil {
 void FiniteElement::print( std::ostream& out ) const {
     functionspace::NodeColumns src( source_ );
     functionspace::NodeColumns tgt( target_ );
-    if ( not tgt )
+    if ( not tgt ) {
         ATLAS_NOTIMPLEMENTED;
+    }
     auto gidx_src = array::make_view<gidx_t, 1>( src.nodes().global_index() );
 
     ATLAS_ASSERT( tgt.nodes().size() == idx_t( matrix_.rows() ) );

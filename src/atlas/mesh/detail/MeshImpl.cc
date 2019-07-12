@@ -54,21 +54,28 @@ size_t MeshImpl::footprint() const {
     size_t size = sizeof( *this );
 
     size += metadata_.footprint();
-    if ( nodes_ )
+    if ( nodes_ ) {
         size += nodes_->footprint();
-    if ( cells_ )
+    }
+    if ( cells_ ) {
         size += cells_->footprint();
-    if ( facets_ )
+    }
+    if ( facets_ ) {
         size += facets_->footprint();
-    if ( ridges_ )
+    }
+    if ( ridges_ ) {
         size += ridges_->footprint();
-    if ( peaks_ )
+    }
+    if ( peaks_ ) {
         size += peaks_->footprint();
-    if ( partition_graph_ )
+    }
+    if ( partition_graph_ ) {
         size += partition_graph_->footprint();
+    }
     for ( const auto& polygon : polygons_ ) {
-        if ( polygon )
+        if ( polygon ) {
             size += polygon->footprint();
+        }
     }
 
     return size;
@@ -79,12 +86,15 @@ void MeshImpl::createElements() {
     facets_.reset( new HybridElements() );
     ridges_.reset( new HybridElements() );
     peaks_.reset( new HybridElements() );
-    if ( dimensionality_ == 2 )
+    if ( dimensionality_ == 2 ) {
         edges_ = facets_;
-    else if ( dimensionality_ == 3 )
+    }
+    else if ( dimensionality_ == 3 ) {
         edges_ = ridges_;
-    else
+    }
+    else {
         throw_Exception( "Invalid Mesh dimensionality", Here() );
+    }
 
     ATLAS_ASSERT( edges_.owners() == 2 );
 }
@@ -99,8 +109,9 @@ void MeshImpl::setProjection( const Projection& projection ) {
 
 void MeshImpl::setGrid( const Grid& grid ) {
     grid_.reset( new Grid( grid ) );
-    if ( not projection_ )
+    if ( not projection_ ) {
         projection_ = grid_->projection();
+    }
 }
 
 idx_t MeshImpl::nb_partitions() const {
@@ -112,42 +123,57 @@ idx_t MeshImpl::partition() const {
 }
 
 void MeshImpl::cloneToDevice() const {
-    if ( nodes_ )
+    if ( nodes_ ) {
         nodes_->cloneToDevice();
-    if ( cells_ )
+    }
+    if ( cells_ ) {
         cells_->cloneToDevice();
-    if ( facets_ )
+    }
+    if ( facets_ ) {
         facets_->cloneToDevice();
-    if ( ridges_ )
+    }
+    if ( ridges_ ) {
         ridges_->cloneToDevice();
-    if ( peaks_ )
+    }
+    if ( peaks_ ) {
         peaks_->cloneToDevice();
+    }
 }
 
 void MeshImpl::cloneFromDevice() const {
-    if ( nodes_ )
+    if ( nodes_ ) {
         nodes_->cloneFromDevice();
-    if ( cells_ )
+    }
+    if ( cells_ ) {
         cells_->cloneFromDevice();
-    if ( facets_ )
+    }
+    if ( facets_ ) {
         facets_->cloneFromDevice();
-    if ( ridges_ )
+    }
+    if ( ridges_ ) {
         ridges_->cloneFromDevice();
-    if ( peaks_ )
+    }
+    if ( peaks_ ) {
         peaks_->cloneFromDevice();
+    }
 }
 
 void MeshImpl::syncHostDevice() const {
-    if ( nodes_ )
+    if ( nodes_ ) {
         nodes_->syncHostDevice();
-    if ( cells_ )
+    }
+    if ( cells_ ) {
         cells_->syncHostDevice();
-    if ( facets_ )
+    }
+    if ( facets_ ) {
         facets_->syncHostDevice();
-    if ( ridges_ )
+    }
+    if ( ridges_ ) {
         ridges_->syncHostDevice();
-    if ( peaks_ )
+    }
+    if ( peaks_ ) {
         peaks_->syncHostDevice();
+    }
 }
 
 const PartitionGraph& MeshImpl::partitionGraph() const {

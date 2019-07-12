@@ -132,8 +132,9 @@ PartitionGraph::PartitionGraph( idx_t values[], idx_t rows, idx_t displs[], idx_
         for ( idx_t neighbour : nearestNeighbours( jpart ) ) {
             bool found( false );
             for ( idx_t nextneighbour : nearestNeighbours( neighbour ) ) {
-                if ( nextneighbour == jpart )
+                if ( nextneighbour == jpart ) {
                     found = true;
+                }
             }
             if ( not found ) {
                 values_.insert( values_.begin() + displs_[neighbour] + counts_[neighbour], jpart );

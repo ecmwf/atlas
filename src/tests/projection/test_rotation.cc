@@ -88,8 +88,9 @@ private:
 
         double PXROT = std::acos( ZCXROT ) * r2d;
 
-        if ( ZSXROT < 0.0 )
+        if ( ZSXROT < 0.0 ) {
             PXROT = -PXROT;
+        }
 
         return PointLonLat( PXROT, PYROT );
     }
@@ -111,8 +112,9 @@ private:
         ZCXMXC                    = std::max( std::min( ZCXMXC, +1.0 ), -1.0 );
         double ZSXMXC             = cos_lat * sin_lat / ZCYREG;
         double ZXMXC              = std::acos( ZCXMXC ) * r2d;
-        if ( ZSXMXC < 0.0 )
+        if ( ZSXMXC < 0.0 ) {
             ZXMXC = -ZXMXC;
+        }
         double PXREG = ZXMXC + south_pole_.lon();
 
         return PointLonLat( PXREG, PYREG );

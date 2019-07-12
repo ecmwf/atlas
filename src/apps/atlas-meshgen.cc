@@ -138,13 +138,16 @@ int Meshgen2Gmsh::execute( const Args& args ) {
     args.get( "binary", binary );
 
     std::string path_in_str = "";
-    if ( args.get( "grid.json", path_in_str ) )
+    if ( args.get( "grid.json", path_in_str ) ) {
         path_in = path_in_str;
+    }
 
-    if ( args.count() )
+    if ( args.count() ) {
         path_out = args( 0 );
-    else
+    }
+    else {
         path_out = "mesh.msh";
+    }
 
     if ( path_in_str.empty() && key.empty() ) {
         Log::warning() << "missing argument --grid.name or --grid.json" << std::endl;
@@ -152,8 +155,9 @@ int Meshgen2Gmsh::execute( const Args& args ) {
         return failed();
     }
 
-    if ( edges )
+    if ( edges ) {
         halo = std::max( halo, 1l );
+    }
 
     StructuredGrid grid;
     if ( key.size() ) {
@@ -176,8 +180,9 @@ int Meshgen2Gmsh::execute( const Args& args ) {
         Log::error() << "No grid specified." << std::endl;
     }
 
-    if ( !grid )
+    if ( !grid ) {
         return failed();
+    }
 
     Log::debug() << "Domain: " << grid.domain() << std::endl;
     Log::debug() << "Periodic: " << grid.periodic() << std::endl;
@@ -186,8 +191,9 @@ int Meshgen2Gmsh::execute( const Args& args ) {
     std::string Implementationype = ( RegularGrid( grid ) ? "regular" : "structured" );
     args.get( "generator", Implementationype );
     eckit::LocalConfiguration meshgenerator_config( args );
-    if ( mpi::comm().size() > 1 || edges )
+    if ( mpi::comm().size() > 1 || edges ) {
         meshgenerator_config.set( "3d", false );
+    }
 
     MeshGenerator meshgenerator( Implementationype, meshgenerator_config );
 
@@ -212,10 +218,12 @@ int Meshgen2Gmsh::execute( const Args& args ) {
     }
     if ( edges && grid.projection().units() == "degrees" ) {
         functionspace::EdgeColumns edges_fs( mesh, option::halo( halo ) );
-        if ( brick )
+        if ( brick ) {
             build_brick_dual_mesh( grid, mesh );
-        else
+        }
+        else {
             build_median_dual_mesh( mesh );
+        }
     }
 
     if ( stats ) {

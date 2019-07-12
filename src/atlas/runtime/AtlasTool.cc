@@ -51,8 +51,9 @@ void debug_addTarget( eckit::LogTarget* target ) {
             lib.debugChannel().addTarget( new eckit::PrefixTarget( debug_prefix( libname ), target ) );
         }
     }
-    if ( eckit::Log::debug() )
+    if ( eckit::Log::debug() ) {
         eckit::Log::debug().addTarget( target );
+    }
 }
 
 void debug_setTarget( eckit::LogTarget* target ) {
@@ -62,8 +63,9 @@ void debug_setTarget( eckit::LogTarget* target ) {
             lib.debugChannel().setTarget( new eckit::PrefixTarget( debug_prefix( libname ), target ) );
         }
     }
-    if ( eckit::Log::debug() )
+    if ( eckit::Log::debug() ) {
         eckit::Log::debug().setTarget( target );
+    }
 }
 
 void debug_reset() {
@@ -73,8 +75,9 @@ void debug_reset() {
             lib.debugChannel().reset();
         }
     }
-    if ( eckit::Log::debug() )
+    if ( eckit::Log::debug() ) {
         eckit::Log::debug().reset();
+    }
 }
 
 bool getEnv( const std::string& env, bool default_value ) {
@@ -134,9 +137,10 @@ static std::string workdir;
                 << "[" << mpi::comm().rank() << "] Aborting " << eckit::Main::instance().displayName() << "\n"
                 << "-----------------------------------------\n"
                 << exception.what() << "\n";
-            if ( exception.location() )
+            if ( exception.location() ) {
                 out << "-----------------------------------------\n"
                     << "LOCATION: " << exception.location() << "\n";
+            }
             out << "-----------------------------------------\n"
                 << "BACKTRACE\n"
                 << "-----------------------------------------\n"
@@ -155,9 +159,10 @@ static std::string workdir;
                 << exception.what() << "\n"
                 << "-----------------------------------------\n";
 
-            if ( exception.location() )
+            if ( exception.location() ) {
                 out << "LOCATION: " << exception.location() << "\n"
                     << "-----------------------------------------\n";
+            }
 
             out << "BACKTRACE\n"
                 << "-----------------------------------------\n"
@@ -216,8 +221,9 @@ void atlas::AtlasTool::add_option( eckit::option::Option* option ) {
 void atlas::AtlasTool::help( std::ostream& out ) {
     out << "NAME\n" << indent() << name();
     std::string brief = briefDescription();
-    if ( brief.size() )
+    if ( brief.size() ) {
         out << " - " << brief << '\n';
+    }
 
     std::string usg = usage();
     if ( usg.size() ) {
@@ -240,8 +246,9 @@ void atlas::AtlasTool::help( std::ostream& out ) {
 bool atlas::AtlasTool::handle_help() {
     for ( int i = 1; i < argc(); ++i ) {
         if ( argv( i ) == "--help" || argv( i ) == "-h" ) {
-            if ( taskID() == 0 )
+            if ( taskID() == 0 ) {
                 help( std::cout );
+            }
             return true;
         }
     }
@@ -272,12 +279,14 @@ atlas::AtlasTool::AtlasTool( int argc, char** argv ) : eckit::Tool( argc, argv )
 
 int atlas::AtlasTool::start() {
     try {
-        if ( handle_help() )
+        if ( handle_help() ) {
             return success();
+        }
 
         if ( argc() - 1 < minimumPositionalArguments() ) {
-            if ( taskID() == 0 )
+            if ( taskID() == 0 ) {
                 std::cout << "Usage: " << usage() << std::endl;
+            }
             return failed();
         }
         Options opts = options_;
@@ -322,8 +331,9 @@ void atlas::AtlasTool::setupLogging() {
 
     int d               = digits( mpi::comm().size() );
     std::string rankstr = std::to_string( taskID() );
-    for ( int i = rankstr.size(); i < d; ++i )
+    for ( int i = rankstr.size(); i < d; ++i ) {
         rankstr = "0" + rankstr;
+    }
 
     logfile_name = workdir + "/" + displayName() + ".log.p" + rankstr;
 
@@ -331,32 +341,41 @@ void atlas::AtlasTool::setupLogging() {
         eckit::LogTarget* logfile = new eckit::FileTarget( logfile_name );
 
         if ( int( mpi::comm().rank() ) == log_rank ) {
-            if ( Log::info() )
+            if ( Log::info() ) {
                 Log::info().addTarget( logfile );
-            if ( Log::warning() )
+            }
+            if ( Log::warning() ) {
                 Log::warning().addTarget( logfile );
-            if ( Log::error() )
+            }
+            if ( Log::error() ) {
                 Log::error().addTarget( logfile );
+            }
             debug_addTarget( logfile );
         }
         else {
-            if ( Log::info() )
+            if ( Log::info() ) {
                 Log::info().setTarget( logfile );
-            if ( Log::warning() )
+            }
+            if ( Log::warning() ) {
                 Log::warning().setTarget( logfile );
-            if ( Log::error() )
+            }
+            if ( Log::error() ) {
                 Log::error().setTarget( logfile );
+            }
             debug_setTarget( logfile );
         }
     }
     else {
         if ( int( mpi::comm().rank() ) != log_rank ) {
-            if ( Log::info() )
+            if ( Log::info() ) {
                 Log::info().reset();
-            if ( Log::warning() )
+            }
+            if ( Log::warning() ) {
                 Log::warning().reset();
-            if ( Log::error() )
+            }
+            if ( Log::error() ) {
                 Log::error().reset();
+            }
             debug_reset();
         }
     }

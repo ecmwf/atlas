@@ -96,11 +96,13 @@ void build_median_dual_mesh( Mesh& mesh ) {
     Field dual_volumes =
         nodes.add( Field( "dual_volumes", array::make_datatype<double>(), array::make_shape( nodes.size() ) ) );
 
-    if ( !mesh.cells().has_field( "centroids_xy" ) )
+    if ( !mesh.cells().has_field( "centroids_xy" ) ) {
         mesh.cells().add( Field( "centroids_xy", build_centroids_xy( mesh.cells(), mesh.nodes().xy() ) ) );
+    }
 
-    if ( !mesh.edges().has_field( "centroids_xy" ) )
+    if ( !mesh.edges().has_field( "centroids_xy" ) ) {
         mesh.edges().add( Field( "centroids_xy", build_centroids_xy( mesh.edges(), mesh.nodes().xy() ) ) );
+    }
 
     array::ArrayView<double, 1, array::Intent::ReadWrite> v =
         array::make_view<double, 1, array::Intent::ReadWrite>( dual_volumes );
@@ -173,15 +175,17 @@ void add_median_dual_volume_contribution_cells( const mesh::HybridElements& cell
     // special ordering for bit-identical results
     idx_t nb_cells = cells.size();
     std::vector<Node> ordering( nb_cells );
-    for ( idx_t jcell = 0; jcell < nb_cells; ++jcell )
+    for ( idx_t jcell = 0; jcell < nb_cells; ++jcell ) {
         ordering[jcell] =
             Node( util::unique_lonlat( cell_centroids( jcell, XX ), cell_centroids( jcell, YY ) ), jcell );
+    }
     std::sort( ordering.data(), ordering.data() + nb_cells );
 
     for ( idx_t jcell = 0; jcell < nb_cells; ++jcell ) {
         idx_t icell = ordering[jcell].i;
-        if ( patch( icell ) )
+        if ( patch( icell ) ) {
             continue;
+        }
         double x0 = cell_centroids( icell, XX );
         double y0 = cell_centroids( icell, YY );
 
@@ -237,10 +241,12 @@ void add_median_dual_volume_contribution_poles( const mesh::HybridElements& edge
             y1                = edge_centroids( iedge, YY );
 
             y2 = 0.;
-            if ( std::abs( y1 - max[YY] ) < tol )
+            if ( std::abs( y1 - max[YY] ) < tol ) {
                 y2 = 90.;
-            else if ( std::abs( y1 - min[YY] ) < tol )
+            }
+            else if ( std::abs( y1 - min[YY] ) < tol ) {
                 y2 = -90.;
+            }
 
             if ( y2 != 0 ) {
                 const double quad_area = std::abs( ( x1 - x0 ) * ( y2 - y0 ) );
@@ -306,10 +312,12 @@ void build_dual_normals( Mesh& mesh ) {
                 }
                 if ( cnt == 2 ) {
                     dual_normals( edge, XX ) = 0;
-                    if ( node_xy( node, YY ) < 0. )
+                    if ( node_xy( node, YY ) < 0. ) {
                         dual_normals( edge, YY ) = -std::abs( x[1] - x[0] );
-                    else if ( node_xy( node, YY ) > 0. )
+                    }
+                    else if ( node_xy( node, YY ) > 0. ) {
                         dual_normals( edge, YY ) = std::abs( x[1] - x[0] );
+                    }
 
                     // std::cout << "pole dual_normal = " << dual_normals(YY,edge) <<
                     // std::endl;
@@ -326,10 +334,12 @@ void build_dual_normals( Mesh& mesh ) {
                 xr = edge_centroids( edge, XX );
                 yr = edge_centroids( edge, YY );
                 ;
-                if ( std::abs( yr - max[YY] ) < tol )
+                if ( std::abs( yr - max[YY] ) < tol ) {
                     yr = 90.;
-                else if ( std::abs( yr - min[YY] ) < tol )
+                }
+                else if ( std::abs( yr - min[YY] ) < tol ) {
                     yr = -90.;
+                }
             }
             else {
                 xr = elem_centroids( right_elem, XX );
@@ -371,8 +381,9 @@ void make_dual_normals_outward( Mesh& mesh ) {
 void build_brick_dual_mesh( const Grid& grid, Mesh& mesh ) {
     auto g = StructuredGrid( grid );
     if ( g ) {
-        if ( mpi::comm().size() != 1 )
+        if ( mpi::comm().size() != 1 ) {
             throw_Exception( "Cannot build_brick_dual_mesh with more than 1 task", Here() );
+        }
 
         mesh::Nodes& nodes                       = mesh.nodes();
         array::ArrayView<double, 2> xy           = array::make_view<double, 2>( nodes.xy() );
@@ -390,8 +401,9 @@ void build_brick_dual_mesh( const Grid& grid, Mesh& mesh ) {
             double dlon = 360. / static_cast<double>( g.nx( jlat ) );
 
             for ( idx_t jlon = 0; jlon < g.nx( jlat ); ++jlon ) {
-                while ( gidx( c ) != n + 1 )
+                while ( gidx( c ) != n + 1 ) {
                     c++;
+                }
                 ATLAS_ASSERT( xy( c, XX ) == g.x( jlon, jlat ) );
                 ATLAS_ASSERT( xy( c, YY ) == lat );
                 dual_volumes( c ) = dlon * dlat;

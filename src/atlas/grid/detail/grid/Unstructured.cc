@@ -194,8 +194,9 @@ idx_t Unstructured::size() const {
 }
 
 Grid::Spec Unstructured::spec() const {
-    if ( cached_spec_ )
+    if ( cached_spec_ ) {
         return *cached_spec_;
+    }
 
     cached_spec_.reset( new Grid::Spec );
 

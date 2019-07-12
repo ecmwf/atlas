@@ -113,8 +113,9 @@ void legpol_newton_iteration( int kn, const double pfn[], double px, double& pxn
 
     zdlx = px;
     zdlk = 0.;
-    if ( kodd == 0 )
+    if ( kodd == 0 ) {
         zdlk = 0.5 * pfn[0];
+    }
     zdlxn  = 0.;
     zdlldn = 0.;
     ik     = 1;
@@ -215,8 +216,9 @@ void legpol_quadrature( const int kn, const double pfn[], double& pl, double& pw
             legpol_weight( kn, pfn, zx, zw );
             break;
         }
-        if ( std::abs( pmod ) <= zeps * 1000. )
+        if ( std::abs( pmod ) <= zeps * 1000. ) {
             iflag = 1;
+        }
     }
     if ( iflag != 1 ) {
         std::stringstream s;

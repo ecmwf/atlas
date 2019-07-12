@@ -133,8 +133,9 @@ void Nodes::print( std::ostream& os ) const {
     os << "\t fields=\n";
     for ( idx_t i = 0; i < nb_fields(); ++i ) {
         os << "\t\t" << field( i );
-        if ( i != nb_fields() - 1 )
+        if ( i != nb_fields() - 1 ) {
             os << ",";
+        }
         os << "\n";
     }
     os << "]";

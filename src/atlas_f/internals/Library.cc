@@ -34,10 +34,12 @@ const char* atlas__eckit_git_sha1() {
 
 const char* atlas__eckit_git_sha1_abbrev( int length ) {
     static std::string git_sha1( eckit_git_sha1() );
-    if ( git_sha1.empty() )
+    if ( git_sha1.empty() ) {
         git_sha1 = "not available";
-    else
+    }
+    else {
         git_sha1 = git_sha1.substr( 0, std::min( length, 40 ) );
+    }
     return git_sha1.c_str();
 }
 

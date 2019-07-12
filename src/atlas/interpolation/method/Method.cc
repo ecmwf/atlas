@@ -107,8 +107,9 @@ void Method::interpolate_field_rank2( const Field& src, Field& tgt ) const {
         for ( idx_t c = outer[r]; c < outer[r + 1]; ++c ) {
             idx_t n = index[c];
             Value w = static_cast<Value>( weight[c] );
-            for ( idx_t k = 0; k < Nk; ++k )
+            for ( idx_t k = 0; k < Nk; ++k ) {
                 v_tgt( r, k ) += w * v_src( n, k );
+            }
         }
     }
 }
@@ -136,9 +137,11 @@ void Method::interpolate_field_rank3( const Field& src, Field& tgt ) const {
         for ( idx_t c = outer[r]; c < outer[r + 1]; ++c ) {
             idx_t n = index[c];
             Value w = static_cast<Value>( weight[c] );
-            for ( idx_t k = 0; k < Nk; ++k )
-                for ( idx_t l = 0; l < Nl; ++l )
+            for ( idx_t k = 0; k < Nk; ++k ) {
+                for ( idx_t l = 0; l < Nl; ++l ) {
                     v_tgt( r, k, l ) += w * v_src( n, k, l );
+                }
+            }
         }
     }
 }
@@ -206,8 +209,9 @@ void Method::haloExchange( const FieldSet& fields ) const {
     }
 }
 void Method::haloExchange( const Field& field ) const {
-    if ( field.dirty() )
+    if ( field.dirty() ) {
         source().haloExchange( field );
+    }
 }
 
 }  // namespace interpolation

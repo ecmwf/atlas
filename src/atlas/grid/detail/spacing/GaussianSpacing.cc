@@ -34,8 +34,9 @@ GaussianSpacing::GaussianSpacing( long N ) {
 GaussianSpacing::GaussianSpacing( const eckit::Parametrisation& params ) {
     // retrieve N from params
     long N;
-    if ( !params.get( "N", N ) )
+    if ( !params.get( "N", N ) ) {
         throw_Exception( "N missing in Params", Here() );
+    }
 
     // perform checks
     ATLAS_ASSERT( N % 2 == 0 );

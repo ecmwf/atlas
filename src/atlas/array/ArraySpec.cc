@@ -22,8 +22,9 @@ idx_t compute_allocated_size( idx_t size, idx_t alignment ) {
     idx_t div             = size / alignment;
     idx_t mod             = size % alignment;
     idx_t _allocated_size = div * alignment;
-    if ( mod > 0 )
+    if ( mod > 0 ) {
         _allocated_size += alignment;
+    }
     return _allocated_size;
 }
 }  // namespace
@@ -33,8 +34,9 @@ ArraySpec::ArraySpec() : size_(), rank_(), allocated_size_(), contiguous_( true 
 ArraySpec::ArraySpec( const ArrayShape& shape ) : ArraySpec( shape, ArrayAlignment() ) {}
 
 ArraySpec::ArraySpec( const ArrayShape& shape, ArrayAlignment&& alignment ) {
-    if ( int( alignment ) > 1 )
+    if ( int( alignment ) > 1 ) {
         ATLAS_NOTIMPLEMENTED;  // innermost dimension needs to be padded
+    }
 
     rank_ = static_cast<int>( shape.size() );
     size_ = 1;

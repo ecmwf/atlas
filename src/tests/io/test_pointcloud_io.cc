@@ -69,8 +69,9 @@ const std::vector<std::string> fnames( test_arrays::fnames, test_arrays::fnames 
 }  // namespace test_vectors
 
 bool test_write_file( const std::string& file_path, const size_t& nb_pts, const size_t& nb_columns ) {
-    if ( !nb_pts )
+    if ( !nb_pts ) {
         return false;
+    }
     std::ofstream f( file_path.c_str() );
     return ( f && f << "PointCloudIO " << nb_pts << "	" << nb_columns
                     << "  lon	lat	f_1				"

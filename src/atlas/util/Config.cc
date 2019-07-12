@@ -76,8 +76,9 @@ Config& Config::set( const eckit::LocalConfiguration& other ) {
 
 Config& Config::set( const std::string& name, const std::vector<Config>& values ) {
     std::vector<eckit::LocalConfiguration> metadatavalues( values.size() );
-    for ( size_t i = 0; i < metadatavalues.size(); ++i )
+    for ( size_t i = 0; i < metadatavalues.size(); ++i ) {
         metadatavalues[i] = values[i];
+    }
     set( name, metadatavalues );
     return *this;
 }
@@ -179,8 +180,9 @@ void atlas__Config__set_array_double( Config* This, const char* name, double val
 
 int atlas__Config__get_config( Config* This, const char* name, Config* value ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Config" );
-    if ( !This->get( std::string( name ), *value ) )
+    if ( !This->get( std::string( name ), *value ) ) {
         return false;
+    }
     return true;
 }
 
@@ -188,8 +190,9 @@ int atlas__Config__get_config_list( Config* This, const char* name, Config**& va
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Config" );
     value = nullptr;
     std::vector<Config> vector;
-    if ( !This->get( std::string( name ), vector ) )
+    if ( !This->get( std::string( name ), vector ) ) {
         return false;
+    }
     size      = vector.size();
     value     = new Config*[size];
     allocated = true;
@@ -202,30 +205,34 @@ int atlas__Config__get_config_list( Config* This, const char* name, Config**& va
 int atlas__Config__get_int( Config* This, const char* name, int& value ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Config" );
     long long_value = value;
-    if ( !This->get( std::string( name ), long_value ) )
+    if ( !This->get( std::string( name ), long_value ) ) {
         return false;
+    }
     ATLAS_ASSERT( int( long_value ) == long_value );
     value = long_value;
     return true;
 }
 int atlas__Config__get_long( Config* This, const char* name, long& value ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Config" );
-    if ( !This->get( std::string( name ), value ) )
+    if ( !This->get( std::string( name ), value ) ) {
         return false;
+    }
     return true;
 }
 int atlas__Config__get_float( Config* This, const char* name, float& value ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Config" );
     double double_value;
-    if ( !This->get( std::string( name ), double_value ) )
+    if ( !This->get( std::string( name ), double_value ) ) {
         return false;
+    }
     value = static_cast<float>( double_value );
     return true;
 }
 int atlas__Config__get_double( Config* This, const char* name, double& value ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Config" );
-    if ( !This->get( std::string( name ), value ) )
+    if ( !This->get( std::string( name ), value ) ) {
         return false;
+    }
     return true;
 }
 int atlas__Config__get_string( Config* This, const char* name, char*& value, int& size, int& allocated ) {
@@ -244,8 +251,9 @@ int atlas__Config__get_string( Config* This, const char* name, char*& value, int
 int atlas__Config__get_array_int( Config* This, const char* name, int*& value, int& size, int& allocated ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Config" );
     std::vector<long> v;
-    if ( !This->get( std::string( name ), v ) )
+    if ( !This->get( std::string( name ), v ) ) {
         return false;
+    }
     size  = v.size();
     value = new int[size];
     for ( size_t j = 0; j < v.size(); ++j ) {
@@ -258,20 +266,23 @@ int atlas__Config__get_array_int( Config* This, const char* name, int*& value, i
 int atlas__Config__get_array_long( Config* This, const char* name, long*& value, int& size, int& allocated ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Config" );
     std::vector<long> v;
-    if ( !This->get( std::string( name ), v ) )
+    if ( !This->get( std::string( name ), v ) ) {
         return false;
+    }
     size  = v.size();
     value = new long[size];
-    for ( size_t j = 0; j < v.size(); ++j )
+    for ( size_t j = 0; j < v.size(); ++j ) {
         value[j] = v[j];
+    }
     allocated = true;
     return true;
 }
 int atlas__Config__get_array_float( Config* This, const char* name, float*& value, int& size, int& allocated ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Config" );
     std::vector<double> v;
-    if ( !This->get( std::string( name ), v ) )
+    if ( !This->get( std::string( name ), v ) ) {
         return false;
+    }
     size  = v.size();
     value = new float[size];
     for ( size_t j = 0; j < v.size(); ++j ) {
@@ -283,12 +294,14 @@ int atlas__Config__get_array_float( Config* This, const char* name, float*& valu
 int atlas__Config__get_array_double( Config* This, const char* name, double*& value, int& size, int& allocated ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Config" );
     std::vector<double> v;
-    if ( !This->get( std::string( name ), v ) )
+    if ( !This->get( std::string( name ), v ) ) {
         return false;
+    }
     size  = v.size();
     value = new double[size];
-    for ( size_t j = 0; j < v.size(); ++j )
+    for ( size_t j = 0; j < v.size(); ++j ) {
         value[j] = v[j];
+    }
     allocated = true;
     return true;
 }

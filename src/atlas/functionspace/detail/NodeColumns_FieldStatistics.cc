@@ -59,28 +59,34 @@ array::LocalView<T, 3> make_leveled_view( const Field& field ) {
 template <typename T>
 array::LocalView<T, 2> make_leveled_scalar_view( const Field& field ) {
     using namespace array;
-    if ( field.levels() )
+    if ( field.levels() ) {
         return make_view<T, 2>( field ).slice( Range::all(), Range::all() );
-    else
+    }
+    else {
         return make_view<T, 1>( field ).slice( Range::all(), Range::dummy() );
+    }
 }
 
 template <typename T>
 array::LocalView<T, 2> make_surface_view( const Field& field ) {
     using namespace array;
-    if ( field.variables() )
+    if ( field.variables() ) {
         return make_view<T, 2>( field ).slice( Range::all(), Range::all() );
-    else
+    }
+    else {
         return make_view<T, 1>( field ).slice( Range::all(), Range::dummy() );
+    }
 }
 
 template <typename T>
 array::LocalView<T, 2> make_per_level_view( const Field& field ) {
     using namespace array;
-    if ( field.rank() == 2 )
+    if ( field.rank() == 2 ) {
         return make_view<T, 2>( field ).slice( Range::all(), Range::all() );
-    else
+    }
+    else {
         return make_view<T, 1>( field ).slice( Range::all(), Range::dummy() );
+    }
 }
 
 }  // namespace
@@ -103,8 +109,9 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, T& result, idx_t& 
   atlas_omp_pragma( omp parallel for default(shared) reduction(+:local_sum) )
   for( idx_t n=0; n<npts; ++n ) {
       if ( !is_ghost( n ) ) {
-          for ( idx_t l = 0; l < nlev; ++l )
+          for ( idx_t l = 0; l < nlev; ++l ) {
               local_sum += arr( n, l );
+          }
       }
   }
   ATLAS_TRACE_MPI( ALLREDUCE ) { mpi::comm().allReduce( local_sum, result, eckit::mpi::sum() ); }
@@ -225,8 +232,9 @@ void dispatch_sum_per_level( const NodeColumns& fs, const Field& field, Field& s
 
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
-    for ( idx_t j = 1; j < field.rank(); ++j )
+    for ( idx_t j = 1; j < field.rank(); ++j ) {
         shape.push_back( field.shape( j ) );
+    }
     sum.resize( shape );
 
     auto arr = make_leveled_view<T>( field );
@@ -374,8 +382,9 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& fiel
                                         idx_t& N ) {
     idx_t nvar = field.variables();
     result.resize( nvar );
-    for ( idx_t j = 0; j < nvar; ++j )
+    for ( idx_t j = 0; j < nvar; ++j ) {
         result[j] = 0.;
+    }
     Field global = fs.createField( field, option::name( "global" ) | option::global() );
     fs.gather( field, global );
     if ( mpi::comm().rank() == 0 ) {
@@ -466,8 +475,9 @@ template <typename T>
 void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Field& field, Field& sumfield, idx_t& N ) {
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
-    for ( idx_t j = 1; j < field.rank(); ++j )
+    for ( idx_t j = 1; j < field.rank(); ++j ) {
         shape.push_back( field.shape( j ) );
+    }
     sumfield.resize( shape );
 
     auto sum = make_per_level_view<T>( sumfield );
@@ -676,8 +686,9 @@ template <typename T>
 void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Field& min_field ) {
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
-    for ( idx_t j = 1; j < field.rank(); ++j )
+    for ( idx_t j = 1; j < field.rank(); ++j ) {
         shape.push_back( field.shape( j ) );
+    }
     min_field.resize( shape );
     auto min = make_per_level_view<T>( min_field );
 
@@ -738,8 +749,9 @@ template <typename T>
 void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Field& max_field ) {
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
-    for ( idx_t j = 1; j < field.rank(); ++j )
+    for ( idx_t j = 1; j < field.rank(); ++j ) {
         shape.push_back( field.shape( j ) );
+    }
     max_field.resize( shape );
     auto max = make_per_level_view<T>( max_field );
 
@@ -1057,8 +1069,9 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field
     const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
-    for ( idx_t j = 1; j < field.rank(); ++j )
+    for ( idx_t j = 1; j < field.rank(); ++j ) {
         shape.push_back( field.shape( j ) );
+    }
     min_field.resize( shape );
     glb_idx_field.resize( shape );
     const idx_t nvar = arr.shape( 2 );
@@ -1156,8 +1169,9 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field
     const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
-    for ( idx_t j = 1; j < field.rank(); ++j )
+    for ( idx_t j = 1; j < field.rank(); ++j ) {
         shape.push_back( field.shape( j ) );
+    }
     max_field.resize( shape );
     glb_idx_field.resize( shape );
     const idx_t nvar = arr.shape( 2 );

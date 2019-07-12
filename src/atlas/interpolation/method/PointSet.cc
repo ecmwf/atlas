@@ -48,16 +48,18 @@ PointSet::PointSet( Mesh& mesh ) {
         std::vector<PointIndex3::Value> pidx;
         pidx.reserve( npts_ );
 
-        for ( size_t ip = 0; ip < npts_; ++ip )
+        for ( size_t ip = 0; ip < npts_; ++ip ) {
             pidx.push_back(
                 PointIndex3::Value( PointIndex3::Point( coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 ) ), ip ) );
+        }
 
         tree_->build( pidx.begin(), pidx.end() );
     }
     else {
-        for ( size_t ip = 0; ip < npts_; ++ip )
+        for ( size_t ip = 0; ip < npts_; ++ip ) {
             tree_->insert(
                 PointIndex3::Value( PointIndex3::Point( coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 ) ), ip ) );
+        }
     }
 }
 
@@ -77,8 +79,9 @@ size_t PointSet::search_unique( const Point& p, size_t idx, uint32_t n ) {
             //                std::cout << "      EQUAL !!" << std::endl;
             equals.push_back( nidx );
         }
-        else
+        else {
             break;
+        }
     }
 
     if ( equals.size() == nearest.size() ) /* need to increase the search to find
@@ -90,11 +93,13 @@ size_t PointSet::search_unique( const Point& p, size_t idx, uint32_t n ) {
     {
         size_t ret = idx; /* if nothing found return same idx */
 
-        if ( equals.size() >= 1 ) /* if an equal point was found return the first one */
+        if ( equals.size() >= 1 ) { /* if an equal point was found return the first one */
             ret = equals[0];
+        }
 
-        for ( size_t n = 1; n < equals.size(); ++n )
+        for ( size_t n = 1; n < equals.size(); ++n ) {
             duplicates_[equals[n]] = ret;
+        }
 
         return ret;
     }

@@ -32,8 +32,9 @@ FieldImpl* FieldCreatorIFS::createField( const eckit::Parametrisation& params ) 
     size_t nproma = 1;
     size_t nlev   = 1;
 
-    if ( !params.get( "ngptot", ngptot ) )
+    if ( !params.get( "ngptot", ngptot ) ) {
         throw_Exception( "Could not find parameter 'ngptot' in Parametrisation" );
+    }
     params.get( "nproma", nproma );
     params.get( "nlev", nlev );
     params.get( "nvar", nvar );
@@ -59,10 +60,12 @@ FieldImpl* FieldCreatorIFS::createField( const eckit::Parametrisation& params ) 
     array::ArrayShape s;
     bool fortran( false );
     params.get( "fortran", fortran );
-    if ( fortran )
+    if ( fortran ) {
         s = array::make_shape( nproma, nlev, nvar, nblk );
-    else
+    }
+    else {
         s = array::make_shape( nblk, nvar, nlev, nproma );
+    }
 
     std::string name;
     params.get( "name", name );

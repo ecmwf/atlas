@@ -92,20 +92,23 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
     if ( do_all ) {
         points_to_edit.resize( nodes_glb_idx.size() );
-        for ( idx_t i = 0; i < nodes_glb_idx.size(); ++i )
+        for ( idx_t i = 0; i < nodes_glb_idx.size(); ++i ) {
             points_to_edit[i] = i;
+        }
     }
     else {
         glb_idx_max = nodes.global_index().metadata().getLong( "max", 0 );
         points_to_edit.resize( build_halo.periodic_points_local_index_.size() );
-        for ( size_t i = 0; i < points_to_edit.size(); ++i )
+        for ( size_t i = 0; i < points_to_edit.size(); ++i ) {
             points_to_edit[i] = build_halo.periodic_points_local_index_[i];
+        }
     }
 
     std::vector<gidx_t> glb_idx( points_to_edit.size() );
     idx_t nb_nodes = static_cast<idx_t>( glb_idx.size() );
-    for ( idx_t i = 0; i < nb_nodes; ++i )
+    for ( idx_t i = 0; i < nb_nodes; ++i ) {
         glb_idx[i] = nodes_glb_idx( points_to_edit[i] );
+    }
 
     //  ATLAS_DEBUG_VAR( points_to_edit );
     //  ATLAS_DEBUG_VAR( points_to_edit.size() );
@@ -223,8 +226,9 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
     std::vector<gidx_t> glb_idx( cells_to_edit.size() );
     const idx_t nb_cells = static_cast<idx_t>( glb_idx.size() );
-    for ( idx_t i = 0; i < nb_cells; ++i )
+    for ( idx_t i = 0; i < nb_cells; ++i ) {
         glb_idx[i] = cells_glb_idx( cells_to_edit[i] );
+    }
 
     // 1) Gather all global indices, together with location
 
@@ -384,8 +388,9 @@ std::vector<int> filter_nodes( std::vector<int> nodes, const Predicate& predicat
     std::vector<int> filtered;
     filtered.reserve( nodes.size() );
     for ( int inode : nodes ) {
-        if ( predicate( inode ) )
+        if ( predicate( inode ) ) {
             filtered.push_back( inode );
+        }
     }
     return filtered;
 }
@@ -403,8 +408,9 @@ public:
     std::string str() const {
         std::stringstream stream;
         for ( size_t jnote = 0; jnote < notes.size(); ++jnote ) {
-            if ( jnote > 0 )
+            if ( jnote > 0 ) {
                 stream << "\n";
+            }
             stream << notes[jnote];
         }
         return stream.str();
@@ -446,8 +452,9 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node ) {
             notes.add_error( msg.str() );
         }
     }
-    if ( notes.error() )
+    if ( notes.error() ) {
         throw_Exception( notes.str(), Here() );
+    }
 }
 
 void accumulate_elements( const Mesh& mesh, const mpi::BufferView<uid_t>& request_node_uid, const Uid2Node& uid2node,
@@ -714,8 +721,9 @@ public:
             buf.elem_part[p][jelem]    = elem_part( ielem );
             Topology::set( buf.elem_flags[p][jelem], elem_flags( ielem ) );
             buf.elem_type[p][jelem] = mesh.cells().type_idx( ielem );
-            for ( idx_t jnode = 0; jnode < elem_nodes->cols( ielem ); ++jnode )
+            for ( idx_t jnode = 0; jnode < elem_nodes->cols( ielem ); ++jnode ) {
                 buf.elem_nodes_id[p][jelemnode++] = compute_uid( ( *elem_nodes )( ielem, jnode ) );
+            }
         }
     }
 
@@ -928,8 +936,9 @@ public:
             }
         };
 
-        if ( not status.new_periodic_ghost_cells.size() )
+        if ( not status.new_periodic_ghost_cells.size() ) {
             status.new_periodic_ghost_cells.resize( mesh.cells().nb_types() );
+        }
 
         std::vector<std::vector<idx_t>> received_new_elems( mpi_size );
         for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
@@ -964,8 +973,9 @@ public:
 
             // Add new elements
             BlockConnectivity& node_connectivity = elements.node_connectivity();
-            if ( nb_elements_of_type[t] == 0 )
+            if ( nb_elements_of_type[t] == 0 ) {
                 continue;
+            }
 
             idx_t old_size      = elements.size();
             idx_t new_elems_pos = elements.add( nb_elements_of_type[t] );
@@ -1087,11 +1097,13 @@ void gather_bdry_nodes( const BuildHaloHelper& helper, const std::vector<uid_t>&
 
 void increase_halo_interior( BuildHaloHelper& helper ) {
     helper.update();
-    if ( helper.node_to_elem.size() == 0 )
+    if ( helper.node_to_elem.size() == 0 ) {
         build_lookup_node2elem( helper.mesh, helper.node_to_elem );
+    }
 
-    if ( helper.uid2node.size() == 0 )
+    if ( helper.uid2node.size() == 0 ) {
         build_lookup_uid2node( helper.mesh, helper.uid2node );
+    }
 
     // All buffers needed to move elements and nodes
     BuildHaloHelper::Buffers sendmesh( helper.mesh );
@@ -1106,8 +1118,9 @@ void increase_halo_interior( BuildHaloHelper& helper ) {
     // 2) Communicate uid of these boundary nodes to other partitions
 
     std::vector<uid_t> send_bdry_nodes_uid( bdry_nodes.size() );
-    for ( idx_t jnode = 0; jnode < nb_bdry_nodes; ++jnode )
+    for ( idx_t jnode = 0; jnode < nb_bdry_nodes; ++jnode ) {
         send_bdry_nodes_uid[jnode] = helper.compute_uid( bdry_nodes[jnode] );
+    }
 
     idx_t mpi_size = static_cast<idx_t>( mpi::comm().size() );
     atlas::mpi::Buffer<uid_t, 1> recv_bdry_nodes_uid_from_parts( mpi_size );
@@ -1156,10 +1169,12 @@ public:
     }
 
     bool operator()( int j ) const {
-        if ( j >= N_ )
+        if ( j >= N_ ) {
             return false;
-        if ( Topology::check( flags_( j ), flag_ ) )
+        }
+        if ( Topology::check( flags_( j ), flag_ ) ) {
             return true;
+        }
         return false;
     }
 
@@ -1171,8 +1186,9 @@ private:
     friend std::ostream& operator<<( std::ostream& os, const PeriodicPoints& periodic_points ) {
         os << "[";
         for ( idx_t j = 0; j < periodic_points.flags_.shape( 0 ); ++j ) {
-            if ( periodic_points( j ) )
+            if ( periodic_points( j ) ) {
                 os << " " << j + 1;
+            }
         }
         os << " ]";
         return os;
@@ -1196,8 +1212,9 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
     // 1) Find boundary nodes of this partition:
 
-    if ( !helper.bdry_nodes.size() )
+    if ( !helper.bdry_nodes.size() ) {
         accumulate_partition_bdry_nodes( helper.mesh, helper.halosize, helper.bdry_nodes );
+    }
 
     std::vector<idx_t> bdry_nodes = filter_nodes( helper.bdry_nodes, periodic_points );
     const idx_t nb_bdry_nodes     = static_cast<idx_t>( bdry_nodes.size() );
@@ -1264,8 +1281,9 @@ void BuildHalo::operator()( int nb_elems ) {
     int halo = 0;
     mesh_.metadata().get( "halo", halo );
 
-    if ( halo == nb_elems )
+    if ( halo == nb_elems ) {
         return;
+    }
 
     ATLAS_TRACE( "Increasing mesh halo" );
 

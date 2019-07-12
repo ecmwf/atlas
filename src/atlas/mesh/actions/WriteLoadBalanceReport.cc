@@ -63,10 +63,12 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs ) {
         idx_t nowned( 0 );
         idx_t nghost( 0 );
         for ( idx_t n = 0; n < nb_nodes; ++n ) {
-            if ( is_ghost( n ) )
+            if ( is_ghost( n ) ) {
                 ++nghost;
-            else
+            }
+            else {
                 ++nowned;
+            }
         }
 
         /// @note this could be improved by packing the 3 integers in a vector, and
@@ -99,10 +101,12 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs ) {
         idx_t nowned( 0 );
         idx_t nghost( 0 );
         for ( idx_t j = 0; j < nb_edges; ++j ) {
-            if ( is_ghost( edge_nodes( j, 0 ) ) )
+            if ( is_ghost( edge_nodes( j, 0 ) ) ) {
                 ++nghost;
-            else
+            }
+            else {
                 ++nowned;
+            }
         }
 
         /// @note this could be improved by packing the 3 integers in a vector, and

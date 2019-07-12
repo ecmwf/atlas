@@ -113,8 +113,9 @@ const OutputImpl* OutputFactory::build( const std::string& name, Stream& stream 
     if ( j == m->end() ) {
         Log::error() << "No OutputFactory for [" << name << "]" << std::endl;
         Log::error() << "OutputFactories are:" << std::endl;
-        for ( j = m->begin(); j != m->end(); ++j )
+        for ( j = m->begin(); j != m->end(); ++j ) {
             Log::error() << "   " << ( *j ).first << std::endl;
+        }
         throw_Exception( std::string( "No OutputFactory called " ) + name );
     }
 
@@ -132,8 +133,9 @@ const OutputImpl* OutputFactory::build( const std::string& name, Stream& stream,
     if ( j == m->end() ) {
         Log::error() << "No OutputFactory for [" << name << "]" << std::endl;
         Log::error() << "OutputFactories are:" << std::endl;
-        for ( j = m->begin(); j != m->end(); ++j )
+        for ( j = m->begin(); j != m->end(); ++j ) {
             Log::error() << "   " << ( *j ).first << std::endl;
+        }
         throw_Exception( std::string( "No OutputFactory called " ) + name );
     }
 

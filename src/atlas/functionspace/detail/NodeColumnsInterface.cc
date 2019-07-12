@@ -191,8 +191,9 @@ void atlas__NodesFunctionSpace__sum_arr_double( const NodeColumns* This, const f
     This->orderIndependentSum( field, sumvec, idx_t_N );
     size = sumvec.size();
     sum  = new double[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         sum[j] = sumvec[j];
+    }
     N = idx_t_N;
 }
 
@@ -205,8 +206,9 @@ void atlas__NodesFunctionSpace__sum_arr_float( const NodeColumns* This, const fi
     This->orderIndependentSum( field, sumvec, idx_t_N );
     size = sumvec.size();
     sum  = new float[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         sum[j] = sumvec[j];
+    }
     N = idx_t_N;
 }
 
@@ -219,8 +221,9 @@ void atlas__NodesFunctionSpace__sum_arr_long( const NodeColumns* This, const fie
     This->orderIndependentSum( field, sumvec, idx_t_N );
     size = sumvec.size();
     sum  = new long[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         sum[j] = sumvec[j];
+    }
     N = idx_t_N;
 }
 
@@ -233,8 +236,9 @@ void atlas__NodesFunctionSpace__sum_arr_int( const NodeColumns* This, const fiel
     This->orderIndependentSum( field, sumvec, idx_t_N );
     size = sumvec.size();
     sum  = new int[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         sum[j] = sumvec[j];
+    }
     N = idx_t_N;
 }
 
@@ -274,8 +278,9 @@ void atlas__NodesFunctionSpace__oisum_arr_double( const NodeColumns* This, const
     This->orderIndependentSum( field, sumvec, idx_t_N );
     size = sumvec.size();
     sum  = new double[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         sum[j] = sumvec[j];
+    }
     N = idx_t_N;
 }
 
@@ -288,8 +293,9 @@ void atlas__NodesFunctionSpace__oisum_arr_float( const NodeColumns* This, const 
     This->orderIndependentSum( field, sumvec, idx_t_N );
     size = sumvec.size();
     sum  = new float[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         sum[j] = sumvec[j];
+    }
     N = idx_t_N;
 }
 
@@ -360,8 +366,9 @@ void atlas__NodesFunctionSpace__min_arr_double( const NodeColumns* This, const f
     This->minimum( field, minvec );
     size    = minvec.size();
     minimum = new double[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         minimum[j] = minvec[j];
+    }
 }
 
 void atlas__NodesFunctionSpace__min_arr_float( const NodeColumns* This, const field::FieldImpl* field, float*& minimum,
@@ -372,8 +379,9 @@ void atlas__NodesFunctionSpace__min_arr_float( const NodeColumns* This, const fi
     This->minimum( field, minvec );
     size    = minvec.size();
     minimum = new float[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         minimum[j] = minvec[j];
+    }
 }
 
 void atlas__NodesFunctionSpace__min_arr_long( const NodeColumns* This, const field::FieldImpl* field, long*& minimum,
@@ -384,9 +392,9 @@ void atlas__NodesFunctionSpace__min_arr_long( const NodeColumns* This, const fie
     This->minimum( field, minvec );
     size    = minvec.size();
     minimum = new long[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         minimum[j] = minvec[j];
-    ;
+    };
 }
 
 void atlas__NodesFunctionSpace__min_arr_int( const NodeColumns* This, const field::FieldImpl* field, int*& minimum,
@@ -397,8 +405,9 @@ void atlas__NodesFunctionSpace__min_arr_int( const NodeColumns* This, const fiel
     This->minimum( field, minvec );
     size    = minvec.size();
     minimum = new int[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         minimum[j] = minvec[j];
+    }
 }
 
 void atlas__NodesFunctionSpace__max_arr_double( const NodeColumns* This, const field::FieldImpl* field,
@@ -422,8 +431,9 @@ void atlas__NodesFunctionSpace__max_arr_float( const NodeColumns* This, const fi
     This->maximum( field, maxvec );
     size    = maxvec.size();
     maximum = new float[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         maximum[j] = maxvec[j];
+    }
 }
 
 void atlas__NodesFunctionSpace__max_arr_long( const NodeColumns* This, const field::FieldImpl* field, long*& maximum,
@@ -434,8 +444,9 @@ void atlas__NodesFunctionSpace__max_arr_long( const NodeColumns* This, const fie
     This->maximum( field, maxvec );
     size    = maxvec.size();
     maximum = new long[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         maximum[j] = maxvec[j];
+    }
 }
 
 void atlas__NodesFunctionSpace__max_arr_int( const NodeColumns* This, const field::FieldImpl* field, int*& maximum,
@@ -446,8 +457,9 @@ void atlas__NodesFunctionSpace__max_arr_int( const NodeColumns* This, const fiel
     This->maximum( field, maxvec );
     size    = maxvec.size();
     maximum = new int[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         maximum[j] = maxvec[j];
+    }
 }
 
 void atlas__NodesFunctionSpace__minloc_double( const NodeColumns* This, const field::FieldImpl* field, double& minimum,
@@ -686,8 +698,9 @@ void atlas__NodesFunctionSpace__mean_arr_double( const NodeColumns* This, const 
     This->mean( field, meanvec, idx_t_N );
     size = meanvec.size();
     mean = new double[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         mean[j] = meanvec[j];
+    }
     N = idx_t_N;
 }
 
@@ -700,8 +713,9 @@ void atlas__NodesFunctionSpace__mean_arr_float( const NodeColumns* This, const f
     This->mean( field, meanvec, idx_t_N );
     size = meanvec.size();
     mean = new float[size];
-    for ( idx_t j = 0; j < (idx_t)size; ++j )
+    for ( idx_t j = 0; j < (idx_t)size; ++j ) {
         mean[j] = meanvec[j];
+    }
     N = idx_t_N;
 }
 

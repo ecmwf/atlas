@@ -73,8 +73,9 @@ std::string checksum_3d_field( const parallel::Checksum& checksum, const Field& 
     atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
         for ( idx_t j = 0; j < surface.shape( 1 ); ++j ) {
             surface( n, j ) = 0.;
-            for ( idx_t l = 0; l < values.shape( 1 ); ++l )
+            for ( idx_t l = 0; l < values.shape( 1 ); ++l ) {
                 surface( n, j ) += values( n, l, j );
+            }
         }
     }
     return checksum.execute( surface.data(), surface_field.stride( 0 ) );
@@ -202,22 +203,25 @@ const parallel::GatherScatter& StructuredColumns::gather() const {
 }
 
 const parallel::GatherScatter& StructuredColumns::scatter() const {
-    if ( gather_scatter_ )
+    if ( gather_scatter_ ) {
         return *gather_scatter_;
+    }
     gather_scatter_ = StructuredColumnsGatherScatterCache::instance().get_or_create( *this );
     return *gather_scatter_;
 }
 
 const parallel::Checksum& StructuredColumns::checksum() const {
-    if ( checksum_ )
+    if ( checksum_ ) {
         return *checksum_;
+    }
     checksum_ = StructuredColumnsChecksumCache::instance().get_or_create( *this );
     return *checksum_;
 }
 
 const parallel::HaloExchange& StructuredColumns::halo_exchange() const {
-    if ( halo_exchange_ )
+    if ( halo_exchange_ ) {
         return *halo_exchange_;
+    }
     halo_exchange_ = StructuredColumnsHaloExchangeCache::instance().get_or_create( *this );
     return *halo_exchange_;
 }
@@ -250,8 +254,9 @@ void StructuredColumns::set_field_metadata( const eckit::Configuration& config, 
 
 array::DataType StructuredColumns::config_datatype( const eckit::Configuration& config ) const {
     array::DataType::kind_t kind;
-    if ( !config.get( "datatype", kind ) )
+    if ( !config.get( "datatype", kind ) ) {
         throw_Exception( "datatype missing", Here() );
+    }
     return array::DataType( kind );
 }
 
@@ -274,13 +279,15 @@ array::ArrayShape StructuredColumns::config_shape( const eckit::Configuration& c
 
     idx_t levels( nb_levels_ );
     config.get( "levels", levels );
-    if ( levels > 0 )
+    if ( levels > 0 ) {
         shape.push_back( levels );
+    }
 
     idx_t variables( 0 );
     config.get( "variables", variables );
-    if ( variables > 0 )
+    if ( variables > 0 ) {
         shape.push_back( variables );
+    }
 
     return shape;
 }
@@ -295,10 +302,12 @@ void StructuredColumns::Map2to1::print( std::ostream& out ) const {
         out << std::setw( 4 ) << j << " : ";
         for ( idx_t i = i_min_; i <= i_max_; ++i ) {
             idx_t v = operator()( i, j );
-            if ( v == missing() )
+            if ( v == missing() ) {
                 out << std::setw( 6 ) << "X";
-            else
+            }
+            else {
                 out << std::setw( 6 ) << v;
+            }
         }
         out << '\n';
     }
@@ -307,10 +316,12 @@ void StructuredColumns::Map2to1::print( std::ostream& out ) const {
 void StructuredColumns::IndexRange::print( std::ostream& out ) const {
     for ( idx_t i = min_; i <= max_; ++i ) {
         idx_t v = operator()( i );
-        if ( v == missing() )
+        if ( v == missing() ) {
             out << std::setw( 4 ) << "X";
-        else
+        }
+        else {
             out << std::setw( 4 ) << v;
+        }
     }
     out << '\n';
 }
@@ -467,8 +478,9 @@ void StructuredColumns::gather( const FieldSet& local_fieldset, FieldSet& global
             parallel::Field<double> glb_field( make_leveled_view<double>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
-        else
+        else {
             throw_Exception( "datatype not supported", Here() );
+        }
     }
 }
 // ----------------------------------------------------------------------------
@@ -518,8 +530,9 @@ void StructuredColumns::scatter( const FieldSet& global_fieldset, FieldSet& loca
             parallel::Field<double> loc_field( make_leveled_view<double>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
-        else
+        else {
             throw_Exception( "datatype not supported", Here() );
+        }
 
         glb.metadata().broadcast( loc.metadata(), root );
         loc.metadata().set( "global", false );
@@ -543,16 +556,21 @@ std::string StructuredColumns::checksum( const FieldSet& fieldset ) const {
     eckit::MD5 md5;
     for ( idx_t f = 0; f < fieldset.size(); ++f ) {
         const Field& field = fieldset[f];
-        if ( field.datatype() == array::DataType::kind<int>() )
+        if ( field.datatype() == array::DataType::kind<int>() ) {
             md5 << checksum_3d_field<int>( checksum(), field );
-        else if ( field.datatype() == array::DataType::kind<long>() )
+        }
+        else if ( field.datatype() == array::DataType::kind<long>() ) {
             md5 << checksum_3d_field<long>( checksum(), field );
-        else if ( field.datatype() == array::DataType::kind<float>() )
+        }
+        else if ( field.datatype() == array::DataType::kind<float>() ) {
             md5 << checksum_3d_field<float>( checksum(), field );
-        else if ( field.datatype() == array::DataType::kind<double>() )
+        }
+        else if ( field.datatype() == array::DataType::kind<double>() ) {
             md5 << checksum_3d_field<double>( checksum(), field );
-        else
+        }
+        else {
             throw_Exception( "datatype not supported", Here() );
+        }
     }
     return md5;
 }
@@ -663,8 +681,9 @@ void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exc
         halo_exchange.template execute<double, RANK>( field.array(), false );
         fixup_halos.template apply<double>( field );
     }
-    else
+    else {
         throw_Exception( "datatype not supported", Here() );
+    }
     field.set_dirty( false );
 }
 }  // namespace
@@ -700,18 +719,24 @@ void StructuredColumns::haloExchange( const Field& field, bool ) const {
 size_t StructuredColumns::footprint() const {
     size_t size = sizeof( *this );
     size += ij2gp_.footprint();
-    if ( field_xy_ )
+    if ( field_xy_ ) {
         size += field_xy_.footprint();
-    if ( field_partition_ )
+    }
+    if ( field_partition_ ) {
         size += field_partition_.footprint();
-    if ( field_global_index_ )
+    }
+    if ( field_global_index_ ) {
         size += field_global_index_.footprint();
-    if ( field_remote_index_ )
+    }
+    if ( field_remote_index_ ) {
         size += field_remote_index_.footprint();
-    if ( field_index_i_ )
+    }
+    if ( field_index_i_ ) {
         size += field_index_i_.footprint();
-    if ( field_index_j_ )
+    }
+    if ( field_index_j_ ) {
         size += field_index_j_.footprint();
+    }
     return size;
 }
 

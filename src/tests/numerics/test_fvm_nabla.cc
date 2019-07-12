@@ -103,8 +103,9 @@ void rotated_flow_magnitude( const fvm::Method& fvm, Field& field, const double&
         double Ux =
             pvel * ( std::cos( beta ) + std::tan( y ) * std::cos( x ) * std::sin( beta ) ) * radius * std::cos( y );
         double Uy = -pvel * std::sin( x ) * std::sin( beta ) * radius;
-        for ( idx_t jlev = 0; jlev < field.levels(); ++jlev )
+        for ( idx_t jlev = 0; jlev < field.levels(); ++jlev ) {
             var( jnode, jlev ) = std::sqrt( Ux * Ux + Uy * Uy );
+        }
     }
 }
 

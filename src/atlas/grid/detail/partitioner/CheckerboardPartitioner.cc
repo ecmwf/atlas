@@ -54,8 +54,9 @@ CheckerboardPartitioner::CheckerboardPartitioner( int N, int nbands, bool checke
 CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard( const Grid& grid ) const {
     // grid dimensions
     const RegularGrid rg( grid );
-    if ( !rg )
+    if ( !rg ) {
         throw_Exception( "Checkerboard Partitioner only works for Regular grids.", Here() );
+    }
 
     Checkerboard cb;
 
@@ -70,19 +71,23 @@ CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard( con
         // default number of bands
         double zz = std::sqrt( (double)( nparts * cb.ny ) / cb.nx );  // aim at +/-square regions
         cb.nbands = (idx_t)zz + 0.5;
-        if ( cb.nbands < 1 )
+        if ( cb.nbands < 1 ) {
             cb.nbands = 1;  // at least one band
-        if ( cb.nbands > nparts )
+        }
+        if ( cb.nbands > nparts ) {
             cb.nbands = nparts;  // not more bands than procs
+        }
 
         // true checkerboard means nbands must divide nparts
         if ( checkerboard_ ) {
-            while ( nparts % cb.nbands != 0 )
+            while ( nparts % cb.nbands != 0 ) {
                 cb.nbands--;
+            }
         }
     }
-    if ( checkerboard_ && nparts % cb.nbands != 0 )
+    if ( checkerboard_ && nparts % cb.nbands != 0 ) {
         throw_Exception( "number of bands doesn't divide number of partitions", Here() );
+    }
 
     return cb;
 }
@@ -90,20 +95,24 @@ CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard( con
 bool compare_Y_X( const CheckerboardPartitioner::NodeInt& node1, const CheckerboardPartitioner::NodeInt& node2 ) {
     // comparison of two locations; X1 < X2 if it's to the south, then to the
     // east.
-    if ( node1.y < node2.y )
+    if ( node1.y < node2.y ) {
         return true;
-    if ( node1.y == node2.y )
+    }
+    if ( node1.y == node2.y ) {
         return ( node1.x < node2.x );
+    }
     return false;
 }
 
 bool compare_X_Y( const CheckerboardPartitioner::NodeInt& node1, const CheckerboardPartitioner::NodeInt& node2 ) {
     // comparison of two locations; X1 < X2 if it's to the east, then to the
     // south.
-    if ( node1.x < node2.x )
+    if ( node1.x < node2.x ) {
         return true;
-    if ( node1.x == node2.x )
+    }
+    if ( node1.x == node2.x ) {
         return ( node1.y < node2.y );
+    }
     return false;
 }
 
@@ -131,8 +140,9 @@ Number of procs per band
         remainder -= npartsb[iband];
     }
     // distribute remaining procs over first bands
-    for ( size_t iband = 0; iband < remainder; iband++ )
+    for ( size_t iband = 0; iband < remainder; iband++ ) {
         ++npartsb[iband];
+    }
 
     /*
 Number of gridpoints per band
@@ -146,8 +156,9 @@ Number of gridpoints per band
             remainder -= ngpb[iband];
         }
         // distribute remaining gridpoints over first bands
-        for ( size_t iband = 0; iband < remainder; iband++ )
+        for ( size_t iband = 0; iband < remainder; iband++ ) {
             ++ngpb[iband];
+        }
     }
     else {
         remainder = ny;
@@ -156,8 +167,9 @@ Number of gridpoints per band
             remainder -= ngpb[iband] / nx;
         }
         // distribute remaining rows over first bands
-        for ( size_t iband = 0; iband < remainder; iband++ )
+        for ( size_t iband = 0; iband < remainder; iband++ ) {
             ngpb[iband] += nx;
+        }
     }
 
     // for (int iband=0;iband<nbands; iband++ ) std::cout << "band " << iband << "
@@ -186,8 +198,9 @@ Number of gridpoints per band
             // std::cout << "remainder = " << remainder << std::endl;
         }
         // distribute remaining gridpoints over first parts
-        for ( size_t ipart = 0; ipart < remainder; ipart++ )
+        for ( size_t ipart = 0; ipart < remainder; ipart++ ) {
             ++ngpp[ipart];
+        }
 
         /*
 std::cout << "ngpb = " << ngpb[iband] << "\n";
@@ -212,8 +225,9 @@ std::cout << std::endl;
 void CheckerboardPartitioner::partition( const Grid& grid, int part[] ) const {
     if ( nb_partitions() == 1 )  // trivial solution, so much faster
     {
-        for ( idx_t j = 0; j < grid.size(); ++j )
+        for ( idx_t j = 0; j < grid.size(); ++j ) {
             part[j] = 0;
+        }
     }
     else {
         auto cb = checkerboard( grid );

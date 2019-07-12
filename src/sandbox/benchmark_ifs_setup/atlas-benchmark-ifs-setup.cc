@@ -81,8 +81,9 @@ int Tool::execute( const Args& args ) {
     args.get( "grid", key );
 
     std::string path_in_str = "";
-    if ( args.get( "grid", path_in_str ) )
+    if ( args.get( "grid", path_in_str ) ) {
         path_in = path_in_str;
+    }
 
     StructuredGrid grid;
     if ( key.size() ) {
@@ -96,8 +97,9 @@ int Tool::execute( const Args& args ) {
         Log::error() << "No grid specified." << std::endl;
     }
 
-    if ( !grid )
+    if ( !grid ) {
         return failed();
+    }
 
     size_t halo = args.getLong( "halo", halo_default() );
 

@@ -373,8 +373,9 @@ ASSERT(0);
 
             const mesh::HybridElements::Connectivity& cell_node_connectivity = m.cells().node_connectivity();
             for ( idx_t jelem = 0; jelem < static_cast<idx_t>( m.cells().size() ); ++jelem ) {
-                for ( idx_t jnode = 0; jnode < cell_node_connectivity.cols( jelem ); ++jnode )
+                for ( idx_t jnode = 0; jnode < cell_node_connectivity.cols( jelem ); ++jnode ) {
                     node_elem_connections[cell_node_connectivity( jelem, jnode )]++;
+                }
             }
             for ( idx_t jnode = 0; jnode < nb_nodes; ++jnode ) {
                 if ( node_elem_connections[jnode] == 0 ) {
@@ -390,9 +391,10 @@ ASSERT(0);
             if ( gidx( n ) <= grid.size() ) {
                 if ( part( n ) == p ) {
                     ++nb_owned;
-                    if ( all_owned[gidx( n ) - 1] != -1 )
+                    if ( all_owned[gidx( n ) - 1] != -1 ) {
                         std::cout << "node " << gidx( n ) << " already visited by " << all_owned[gidx( n ) - 1]
                                   << std::endl;
+                    }
                     EXPECT( all_owned[gidx( n ) - 1] == -1 );
                     all_owned[gidx( n ) - 1] = part( n );
                 }

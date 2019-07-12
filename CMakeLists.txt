@@ -257,6 +257,19 @@ endif()
 set( MIR_NEEDS_TRANSI TRUE CACHE BOOL "Deprecated" INTERNAL )
 
 include(CompileFlags)
+
+find_program (CLANG_TIDY_EXE NAMES "clang-tidy" )
+if( CLANG_TIDY_EXE )
+    message(STATUS "Found clang-tidy: ${CLANG_TIDY_EXE}")
+endif()
+ecbuild_add_option( FEATURE CLANG_TIDY
+                    DESCRIPTION "Use clang-tidy"
+                    CONDITION CLANG_TIDY_EXE )
+if (HAVE_CLANG_TIDY)
+  set(CLANG_TIDY_CHECKS "-*,readability-braces-around-statements,redundant-string-init")
+  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-checks=${CLANG_TIDY_CHECKS};-header-filter='${CMAKE_SOURCE_DIR}/*'")
+endif()
+
 add_subdirectory( src )
 
 ################################################################################

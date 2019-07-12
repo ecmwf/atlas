@@ -209,8 +209,9 @@ idx_t EdgeColumns::config_size( const eckit::Configuration& config ) const {
 
 array::DataType EdgeColumns::config_datatype( const eckit::Configuration& config ) const {
     array::DataType::kind_t kind;
-    if ( !config.get( "datatype", kind ) )
+    if ( !config.get( "datatype", kind ) ) {
         throw_Exception( "datatype missing", Here() );
+    }
     return array::DataType( kind );
 }
 
@@ -233,13 +234,15 @@ array::ArrayShape EdgeColumns::config_shape( const eckit::Configuration& config 
 
     idx_t levels( nb_levels_ );
     config.get( "levels", levels );
-    if ( levels > 0 )
+    if ( levels > 0 ) {
         shape.push_back( levels );
+    }
 
     idx_t variables( 0 );
     config.get( "variables", variables );
-    if ( variables > 0 )
+    if ( variables > 0 ) {
         shape.push_back( variables );
+    }
 
     return shape;
 }
@@ -297,8 +300,9 @@ idx_t EdgeColumns::nb_edges() const {
 }
 
 idx_t EdgeColumns::nb_edges_global() const {
-    if ( nb_edges_global_ >= 0 )
+    if ( nb_edges_global_ >= 0 ) {
         return nb_edges_global_;
+    }
     nb_edges_global_ = gather().glb_dof();
     return nb_edges_global_;
 }
@@ -329,8 +333,9 @@ void EdgeColumns::haloExchange( const FieldSet& fieldset, bool on_device ) const
         else if ( field.datatype() == array::DataType::kind<double>() ) {
             halo_exchange().execute<double, 2>( field.array(), on_device );
         }
-        else
+        else {
             throw_Exception( "datatype not supported", Here() );
+        }
         field.set_dirty( false );
     }
 }
@@ -340,8 +345,9 @@ void EdgeColumns::haloExchange( const Field& field, bool on_device ) const {
     haloExchange( fieldset, on_device );
 }
 const parallel::HaloExchange& EdgeColumns::halo_exchange() const {
-    if ( halo_exchange_ )
+    if ( halo_exchange_ ) {
         return *halo_exchange_;
+    }
     halo_exchange_ = EdgeColumnsHaloExchangeCache::instance().get_or_create( mesh_ );
     return *halo_exchange_;
 }
@@ -375,8 +381,9 @@ void EdgeColumns::gather( const FieldSet& local_fieldset, FieldSet& global_field
             parallel::Field<double> glb_field( make_leveled_view<double>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
-        else
+        else {
             throw_Exception( "datatype not supported", Here() );
+        }
     }
 }
 
@@ -388,14 +395,16 @@ void EdgeColumns::gather( const Field& local, Field& global ) const {
     gather( local_fields, global_fields );
 }
 const parallel::GatherScatter& EdgeColumns::gather() const {
-    if ( gather_scatter_ )
+    if ( gather_scatter_ ) {
         return *gather_scatter_;
+    }
     gather_scatter_ = EdgeColumnsGatherScatterCache::instance().get_or_create( mesh_ );
     return *gather_scatter_;
 }
 const parallel::GatherScatter& EdgeColumns::scatter() const {
-    if ( gather_scatter_ )
+    if ( gather_scatter_ ) {
         return *gather_scatter_;
+    }
     gather_scatter_ = EdgeColumnsGatherScatterCache::instance().get_or_create( mesh_ );
     return *gather_scatter_;
 }
@@ -430,8 +439,9 @@ void EdgeColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fiel
             parallel::Field<double> loc_field( make_leveled_view<double>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
-        else
+        else {
             throw_Exception( "datatype not supported", Here() );
+        }
 
         glb.metadata().broadcast( loc.metadata(), root );
         loc.metadata().set( "global", false );
@@ -454,8 +464,9 @@ std::string checksum_3d_field( const parallel::Checksum& checksum, const Field& 
     for ( idx_t n = 0; n < values.shape( 0 ); ++n ) {
         for ( idx_t j = 0; j < surface.shape( 1 ); ++j ) {
             surface( n, j ) = 0.;
-            for ( idx_t l = 0; l < values.shape( 1 ); ++l )
+            for ( idx_t l = 0; l < values.shape( 1 ); ++l ) {
                 surface( n, j ) += values( n, l, j );
+            }
         }
     }
     return checksum.execute( surface.data(), surface_field.stride( 0 ) );
@@ -473,31 +484,40 @@ std::string EdgeColumns::checksum( const FieldSet& fieldset ) const {
     for ( idx_t f = 0; f < fieldset.size(); ++f ) {
         const Field& field = fieldset[f];
         if ( field.datatype() == array::DataType::kind<int>() ) {
-            if ( field.levels() )
+            if ( field.levels() ) {
                 md5 << checksum_3d_field<int>( checksum(), field );
-            else
+            }
+            else {
                 md5 << checksum_2d_field<int>( checksum(), field );
+            }
         }
         else if ( field.datatype() == array::DataType::kind<long>() ) {
-            if ( field.levels() )
+            if ( field.levels() ) {
                 md5 << checksum_3d_field<long>( checksum(), field );
-            else
+            }
+            else {
                 md5 << checksum_2d_field<long>( checksum(), field );
+            }
         }
         else if ( field.datatype() == array::DataType::kind<float>() ) {
-            if ( field.levels() )
+            if ( field.levels() ) {
                 md5 << checksum_3d_field<float>( checksum(), field );
-            else
+            }
+            else {
                 md5 << checksum_2d_field<float>( checksum(), field );
+            }
         }
         else if ( field.datatype() == array::DataType::kind<double>() ) {
-            if ( field.levels() )
+            if ( field.levels() ) {
                 md5 << checksum_3d_field<double>( checksum(), field );
-            else
+            }
+            else {
                 md5 << checksum_2d_field<double>( checksum(), field );
+            }
         }
-        else
+        else {
             throw_Exception( "datatype not supported", Here() );
+        }
     }
     return md5;
 }
@@ -508,8 +528,9 @@ std::string EdgeColumns::checksum( const Field& field ) const {
 }
 
 const parallel::Checksum& EdgeColumns::checksum() const {
-    if ( checksum_ )
+    if ( checksum_ ) {
         return *checksum_;
+    }
     checksum_ = EdgeColumnsChecksumCache::instance().get_or_create( mesh_ );
     return *checksum_;
 }

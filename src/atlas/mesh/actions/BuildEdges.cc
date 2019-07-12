@@ -87,8 +87,9 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
     {
         UniqueLonLat compute_uid( mesh );
 
-        for ( idx_t jedge = 0; jedge < nb_edges; ++jedge )
+        for ( idx_t jedge = 0; jedge < nb_edges; ++jedge ) {
             edge_sort.emplace_back( Sort( compute_uid( edge_node_connectivity.row( jedge ) ), jedge ) );
+        }
 
         std::sort( edge_sort.data(), edge_sort.data() + nb_edges );
     }
@@ -129,8 +130,9 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
     };
 
     for ( idx_t jcell = 0; jcell < mesh.cells().size(); ++jcell ) {
-        if ( patch( jcell ) )
+        if ( patch( jcell ) ) {
             continue;
+        }
         for ( idx_t jcol = 0; jcol < cell_edge_connectivity.cols( jcell ); ++jcol ) {
             if ( cell_edge_connectivity( jcell, jcol ) == cell_edge_connectivity.missing_value() ) {
                 const array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( mesh.nodes().global_index() );
@@ -165,13 +167,15 @@ void build_node_to_edge_connectivity( Mesh& mesh ) {
 
     node_to_edge.add( nodes.size(), to_edge_size.data() );
 
-    for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode )
+    for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
         to_edge_size[jnode] = 0;
+    }
 
     UniqueLonLat compute_uid( mesh );
     std::vector<Sort> edge_sort( nb_edges );
-    for ( idx_t jedge = 0; jedge < nb_edges; ++jedge )
+    for ( idx_t jedge = 0; jedge < nb_edges; ++jedge ) {
         edge_sort[jedge] = Sort( compute_uid( edge_node_connectivity.row( jedge ) ), jedge );
+    }
     std::stable_sort( edge_sort.data(), edge_sort.data() + nb_edges );
 
     for ( idx_t jedge = 0; jedge < nb_edges; ++jedge ) {
@@ -240,8 +244,9 @@ public:
                 int npart = -1;
                 for ( std::set<int>::iterator it = pole_nodes[NS].begin(); it != pole_nodes[NS].end(); ++it ) {
                     int node = *it;
-                    if ( npart == -1 )
+                    if ( npart == -1 ) {
                         npart = part( node );
+                    }
                     else if ( part( node ) != npart ) {
                         // Not implemented yet, when pole-lattitude is split.
                         std::stringstream msg;
@@ -327,8 +332,9 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
             int npart = -1;
             for ( std::set<int>::iterator it = pole_nodes[NS].begin(); it != pole_nodes[NS].end(); ++it ) {
                 int node = *it;
-                if ( npart == -1 )
+                if ( npart == -1 ) {
                     npart = part( node );
+                }
                 else if ( part( node ) != npart ) {
                     // Not implemented yet, when pole-lattitude is split.
                     std::stringstream msg;
@@ -377,10 +383,12 @@ struct ComputeUniquePoleEdgeIndex {
         }
         centroid[XX] /= 2.;
         centroid[YY] /= 2.;
-        if ( centroid[YY] > 0 )
+        if ( centroid[YY] > 0 ) {
             centroid[YY] = 90.;
-        else
+        }
+        else {
             centroid[YY] = -90.;
+        }
         /// FIXME make this into `util::unique_lonlat(centroid)` but this causes
         /// weird parallel behavior
         return util::detail::unique32( microdeg( centroid[XX] ), microdeg( centroid[YY] ) );
@@ -567,14 +575,16 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
         int nb_edges = mesh.edges().size();
         for ( int jedge = 0; jedge < nb_edges; ++jedge ) {
             nb_edges_including_halo[edge_halo( jedge )] = jedge + 1;
-            if ( jedge > 0 )
+            if ( jedge > 0 ) {
                 ATLAS_ASSERT( edge_halo( jedge ) >= edge_halo( jedge - 1 ) );
+            }
         }
     }
 
     for ( int i = 0; i <= max_halo; ++i ) {
-        if ( i > 0 )
+        if ( i > 0 ) {
             ATLAS_ASSERT( nb_edges_including_halo[i] > nb_edges_including_halo[i - 1] );
+        }
         std::stringstream ss;
         ss << "nb_edges_including_halo[" << i << "]";
         mesh.metadata().set( ss.str(), nb_edges_including_halo[i] );

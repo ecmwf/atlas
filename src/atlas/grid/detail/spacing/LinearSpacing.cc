@@ -62,10 +62,12 @@ LinearSpacing::Params::Params( const eckit::Parametrisation& params ) {
     }
     length = end - start;
 
-    if ( endpoint && N > 1 )
+    if ( endpoint && N > 1 ) {
         step = length / double( N - 1 );
-    else
+    }
+    else {
         step = length / double( N );
+    }
 }
 
 LinearSpacing::LinearSpacing( const eckit::Parametrisation& params ) {
@@ -94,10 +96,12 @@ void LinearSpacing::setup( double start, double end, long N, bool endpoint ) {
     x_.resize( N );
 
     double step;
-    if ( endpoint && N > 1 )
+    if ( endpoint && N > 1 ) {
         step = ( end - start ) / double( N - 1 );
-    else
+    }
+    else {
         step = ( end - start ) / double( N );
+    }
 
     for ( long i = 0; i < N; ++i ) {
         x_[i] = start + i * step;
@@ -113,10 +117,12 @@ void LinearSpacing::setup( double start, double end, long N, bool endpoint ) {
 }
 
 double LinearSpacing::step() const {
-    if ( size() > 1 )
+    if ( size() > 1 ) {
         return x_[1] - x_[0];
-    else
+    }
+    else {
         return 0.;
+    }
 }
 
 bool LinearSpacing::endpoint() const {

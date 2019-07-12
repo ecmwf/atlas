@@ -543,8 +543,9 @@ CASE( "test_valid" ) {
 CASE( "test_wrap" ) {
     array::ArrayT<int> arr_t( 3, 2 );
     EXPECT( arr_t.shape( 0 ) == 3 );
-    if ( NOT_PADDED )
+    if ( NOT_PADDED ) {
         EXPECT( arr_t.stride( 0 ) == 2 );
+    }
     EXPECT( arr_t.shape( 1 ) == 2 );
     EXPECT( arr_t.stride( 1 ) == 1 );
     EXPECT( arr_t.rank() == 2 );

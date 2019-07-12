@@ -210,8 +210,9 @@ void atlas__Metadata__get_array_int( Metadata* This, const char* name, int*& val
     std::vector<int> v = This->get<std::vector<int>>( std::string( name ) );
     size               = v.size();
     value              = new int[size];
-    for ( size_t j = 0; j < v.size(); ++j )
+    for ( size_t j = 0; j < v.size(); ++j ) {
         value[j] = v[j];
+    }
     allocated = true;
 }
 void atlas__Metadata__get_array_long( Metadata* This, const char* name, long*& value, int& size, int& allocated ) {
@@ -219,8 +220,9 @@ void atlas__Metadata__get_array_long( Metadata* This, const char* name, long*& v
     std::vector<long> v = This->get<std::vector<long>>( std::string( name ) );
     size                = v.size();
     value               = new long[size];
-    for ( size_t j = 0; j < v.size(); ++j )
+    for ( size_t j = 0; j < v.size(); ++j ) {
         value[j] = v[j];
+    }
     allocated = true;
 }
 void atlas__Metadata__get_array_float( Metadata* This, const char* name, float*& value, int& size, int& allocated ) {
@@ -228,8 +230,9 @@ void atlas__Metadata__get_array_float( Metadata* This, const char* name, float*&
     std::vector<float> v = This->get<std::vector<float>>( std::string( name ) );
     size                 = v.size();
     value                = new float[size];
-    for ( size_t j = 0; j < v.size(); ++j )
+    for ( size_t j = 0; j < v.size(); ++j ) {
         value[j] = v[j];
+    }
     allocated = true;
 }
 void atlas__Metadata__get_array_double( Metadata* This, const char* name, double*& value, int& size, int& allocated ) {

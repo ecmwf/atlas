@@ -116,8 +116,9 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
     auto box_horizontal = []( int n ) {
         std::string s;
         s.reserve( 2 * n );
-        for ( int i = 0; i < n; ++i )
+        for ( int i = 0; i < n; ++i ) {
             s += "\u2500";
+        }
         return s;
     };
     std::string box_corner_tl( "\u250c" );
@@ -166,8 +167,9 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
     std::set<size_t> excluded_timers( excluded_timers_vector.begin(), excluded_timers_vector.end() );
 
     auto excluded = [&]( size_t i ) -> bool {
-        if ( depth and nest_[i] > depth )
+        if ( depth and nest_[i] > depth ) {
             return true;
+        }
         return excluded_timers.count( i );
     };
 
@@ -188,8 +190,9 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
     for ( auto& label : include_back ) {
         auto timers = labels_[label];
         for ( size_t j : timers ) {
-            if ( nest_[j] == excluded_nest_stored[j] )
+            if ( nest_[j] == excluded_nest_stored[j] ) {
                 excluded_timers.erase( j );
+            }
         }
     }
 
@@ -281,19 +284,25 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
 
             std::stringstream out;
             for ( long i = 0; i < nest - 1; ++i ) {
-                if ( active[i] )
+                if ( active[i] ) {
                     out << box_vertical;
-                else
+                }
+                else {
                     out << " ";
-                for ( long j = 1; j < indent; ++j )
+                }
+                for ( long j = 1; j < indent; ++j ) {
                     out << " ";
+                }
             }
-            if ( active[nest - 1] )
+            if ( active[nest - 1] ) {
                 out << box_T_right;
-            else
+            }
+            else {
                 out << box_corner_bl;
-            for ( long j = 1; j < indent; ++j )
+            }
+            for ( long j = 1; j < indent; ++j ) {
                 out << box_horizontal( 1 );
+            }
 
             prefix_[k] = out.str();
         }

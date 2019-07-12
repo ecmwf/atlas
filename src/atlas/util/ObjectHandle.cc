@@ -54,8 +54,9 @@ void ObjectHandleBase::assign( const Object* other ) {
 
 
 void ObjectHandleBase::attach() {
-    if ( !null() )
+    if ( !null() ) {
         object_->attach();
+    }
 }
 
 // ------------------------------------------------------------------
