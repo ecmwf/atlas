@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include <array>
 #include <string>
 
 #include "atlas/util/Factory.h"

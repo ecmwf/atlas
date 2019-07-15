@@ -8,20 +8,19 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <algorithm>
+#include <cstddef>
 #include <memory>
+#include <vector>
 
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
 
-#include "atlas/interpolation/element/Quad3D.h"
-#include "atlas/interpolation/method/Ray.h"
-#include "atlas/projection/detail/LonLatProjection.h"
+#include "ProjectionImpl.h"
+
 #include "atlas/projection/detail/ProjectionFactory.h"
-#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
-#include "atlas/util/Earth.h"
 
 namespace atlas {
 namespace projection {
