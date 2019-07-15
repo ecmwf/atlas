@@ -7,6 +7,21 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.18.0] - 2019-07-15
+### Changed
+- Make grid hashes crossplatform
+
+### Added
+- Fortran: Can now use TransLocal
+- Fortran: Can now create unstructured grids
+- LonLat Bounding box computations for grids using its projection
+- Serialisation of Mesh Connectivity tables to/from eckit::Stream
+
+### Fixed
+- Structured interpolation bugs
+- StructuredColumns bug with iSend
+- Memory corruption in Spectral functionspace with GT CUDA backend
+
 ## [0.17.2] - 2019-06-04
 ### Fixed
 - Compilation with PGI 19.4
@@ -113,6 +128,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.18.0]: https://github.com/ecmwf/atlas/compare/0.17.2...0.18.0
 [0.17.2]: https://github.com/ecmwf/atlas/compare/0.17.1...0.17.2
 [0.17.1]: https://github.com/ecmwf/atlas/compare/0.17.0...0.17.1
 [0.17.0]: https://github.com/ecmwf/atlas/compare/0.16.0...0.17.0
