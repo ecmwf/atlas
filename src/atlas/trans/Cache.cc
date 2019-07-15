@@ -80,11 +80,15 @@ Cache::~Cache() {}
 TransCache::TransCache( const Trans& trans ) : Cache( trans.get() ) {}
 
 TransCacheOwnedMemoryEntry::TransCacheOwnedMemoryEntry( size_t size ) : size_( size ) {
-    if ( size_ ) { data_ = std::malloc( size_ ); }
+    if ( size_ ) {
+        data_ = std::malloc( size_ );
+    }
 }
 
 TransCacheOwnedMemoryEntry::~TransCacheOwnedMemoryEntry() {
-    if ( size_ ) { std::free( data_ ); }
+    if ( size_ ) {
+        std::free( data_ );
+    }
 }
 
 }  // namespace trans

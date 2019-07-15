@@ -216,7 +216,9 @@ CASE( "test vertical stencil" ) {
                 Log::info() << stencil.k( k ) << "[" << vertical[stencil.k( k )] << "] ";
             }
             Log::info() << "     interval = " << stencil.k_interval() << std::endl;
-            if ( p < vertical[0] ) { EXPECT( stencil.k_interval() == -1 ); }
+            if ( p < vertical[0] ) {
+                EXPECT( stencil.k_interval() == -1 );
+            }
             else if ( p < vertical[1] ) {
                 EXPECT( stencil.k_interval() == 0 );
             }
@@ -233,7 +235,7 @@ CASE( "test vertical stencil" ) {
     }
 }
 
-    //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 #if 1
 CASE( "ifs method to find nearest grid point" ) {

@@ -39,7 +39,9 @@ template <typename T>
 array::LocalView<T, 3> make_leveled_view( const Field& field ) {
     using namespace array;
     if ( field.levels() ) {
-        if ( field.variables() ) { return make_view<T, 3>( field ).slice( Range::all(), Range::all(), Range::all() ); }
+        if ( field.variables() ) {
+            return make_view<T, 3>( field ).slice( Range::all(), Range::all(), Range::all() );
+        }
         else {
             return make_view<T, 2>( field ).slice( Range::all(), Range::all(), Range::dummy() );
         }
@@ -57,28 +59,34 @@ array::LocalView<T, 3> make_leveled_view( const Field& field ) {
 template <typename T>
 array::LocalView<T, 2> make_leveled_scalar_view( const Field& field ) {
     using namespace array;
-    if ( field.levels() )
+    if ( field.levels() ) {
         return make_view<T, 2>( field ).slice( Range::all(), Range::all() );
-    else
+    }
+    else {
         return make_view<T, 1>( field ).slice( Range::all(), Range::dummy() );
+    }
 }
 
 template <typename T>
 array::LocalView<T, 2> make_surface_view( const Field& field ) {
     using namespace array;
-    if ( field.variables() )
+    if ( field.variables() ) {
         return make_view<T, 2>( field ).slice( Range::all(), Range::all() );
-    else
+    }
+    else {
         return make_view<T, 1>( field ).slice( Range::all(), Range::dummy() );
+    }
 }
 
 template <typename T>
 array::LocalView<T, 2> make_per_level_view( const Field& field ) {
     using namespace array;
-    if ( field.rank() == 2 )
+    if ( field.rank() == 2 ) {
         return make_view<T, 2>( field ).slice( Range::all(), Range::all() );
-    else
+    }
+    else {
         return make_view<T, 1>( field ).slice( Range::all(), Range::dummy() );
+    }
 }
 
 }  // namespace
@@ -97,11 +105,13 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, T& result, idx_t& 
     const array::LocalView<T, 2> arr = make_leveled_scalar_view<T>( field );
     T local_sum                      = 0;
     const idx_t npts                 = std::min<idx_t>( arr.shape( 0 ), fs.nb_nodes() );
+    const idx_t nlev                 = arr.shape( 1 );
   atlas_omp_pragma( omp parallel for default(shared) reduction(+:local_sum) )
   for( idx_t n=0; n<npts; ++n ) {
       if ( !is_ghost( n ) ) {
-          for ( idx_t l = 0; l < arr.shape( 1 ); ++l )
+          for ( idx_t l = 0; l < nlev; ++l ) {
               local_sum += arr( n, l );
+          }
       }
   }
   ATLAS_TRACE_MPI( ALLREDUCE ) { mpi::comm().allReduce( local_sum, result, eckit::mpi::sum() ); }
@@ -111,7 +121,9 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, T& result, idx_t& 
 
 template <typename T>
 void sum( const NodeColumns& fs, const Field& field, T& result, idx_t& N ) {
-    if ( field.datatype() == array::DataType::kind<T>() ) { return dispatch_sum( fs, field, result, N ); }
+    if ( field.datatype() == array::DataType::kind<T>() ) {
+        return dispatch_sum( fs, field, result, N );
+    }
     else {
         switch ( field.datatype().kind() ) {
             case array::DataType::KIND_INT32: {
@@ -148,17 +160,18 @@ template <typename T>
 void dispatch_sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, idx_t& N ) {
     const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
     const mesh::IsGhostNode is_ghost( fs.nodes() );
+    const idx_t npts = std::min( arr.shape( 0 ), fs.nb_nodes() );
+    const idx_t nlev = arr.shape( 1 );
     const idx_t nvar = arr.shape( 2 );
     std::vector<T> local_sum( nvar, 0 );
     result.resize( nvar );
 
     atlas_omp_parallel {
         std::vector<T> local_sum_private( nvar, 0 );
-        const idx_t npts = arr.shape( 0 );
         atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
             if ( !is_ghost( n ) ) {
-                for ( idx_t l = 0; l < arr.shape( 1 ); ++l ) {
-                    for ( idx_t j = 0; j < arr.shape( 2 ); ++j ) {
+                for ( idx_t l = 0; l < nlev; ++l ) {
+                    for ( idx_t j = 0; j < nvar; ++j ) {
                         local_sum_private[j] += arr( n, l, j );
                     }
                 }
@@ -173,12 +186,14 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, std::vector<T>& re
 
     ATLAS_TRACE_MPI( ALLREDUCE ) { mpi::comm().allReduce( local_sum, result, eckit::mpi::sum() ); }
 
-    N = fs.nb_nodes_global() * arr.shape( 1 );
+    N = fs.nb_nodes_global() * nlev;
 }
 
 template <typename T>
 void sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, idx_t& N ) {
-    if ( field.datatype() == array::DataType::kind<T>() ) { return dispatch_sum( fs, field, result, N ); }
+    if ( field.datatype() == array::DataType::kind<T>() ) {
+        return dispatch_sum( fs, field, result, N );
+    }
     else {
         switch ( field.datatype().kind() ) {
             case array::DataType::KIND_INT32: {
@@ -217,11 +232,16 @@ void dispatch_sum_per_level( const NodeColumns& fs, const Field& field, Field& s
 
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
-    for ( idx_t j = 1; j < field.rank(); ++j )
+    for ( idx_t j = 1; j < field.rank(); ++j ) {
         shape.push_back( field.shape( j ) );
+    }
     sum.resize( shape );
 
     auto arr = make_leveled_view<T>( field );
+
+    const idx_t npts = std::min( arr.shape( 0 ), fs.nb_nodes() );
+    const idx_t nlev = arr.shape( 1 );
+    const idx_t nvar = arr.shape( 2 );
 
     auto sum_per_level = make_per_level_view<T>( sum );
 
@@ -241,11 +261,10 @@ void dispatch_sum_per_level( const NodeColumns& fs, const Field& field, Field& s
             }
         }
 
-        const idx_t npts = arr.shape( 0 );
         atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
             if ( !is_ghost( n ) ) {
-                for ( idx_t l = 0; l < arr.shape( 1 ); ++l ) {
-                    for ( idx_t j = 0; j < arr.shape( 2 ); ++j ) {
+                for ( idx_t l = 0; l < nlev; ++l ) {
+                    for ( idx_t j = 0; j < nvar; ++j ) {
                         sum_per_level_private_view( l, j ) += arr( n, l, j );
                     }
                 }
@@ -266,7 +285,9 @@ void dispatch_sum_per_level( const NodeColumns& fs, const Field& field, Field& s
 }
 
 void sum_per_level( const NodeColumns& fs, const Field& field, Field& sum, idx_t& N ) {
-    if ( field.datatype() != sum.datatype() ) { throw_Exception( "Field and sum are not of same datatype.", Here() ); }
+    if ( field.datatype() != sum.datatype() ) {
+        throw_Exception( "Field and sum are not of same datatype.", Here() );
+    }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_sum_per_level<int>( fs, field, sum, N );
@@ -361,8 +382,9 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& fiel
                                         idx_t& N ) {
     idx_t nvar = field.variables();
     result.resize( nvar );
-    for ( idx_t j = 0; j < nvar; ++j )
+    for ( idx_t j = 0; j < nvar; ++j ) {
         result[j] = 0.;
+    }
     Field global = fs.createField( field, option::name( "global" ) | option::global() );
     fs.gather( field, global );
     if ( mpi::comm().rank() == 0 ) {
@@ -381,22 +403,24 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& fiel
 template <typename T>
 void dispatch_order_independent_sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, idx_t& N ) {
     if ( field.levels() ) {
-        const idx_t nvar = field.variables();
         const auto arr   = make_leveled_view<T>( field );
+        const idx_t npts = std::min( arr.shape( 0 ), fs.nb_nodes() );
+        const idx_t nlev = arr.shape( 1 );
+        const idx_t nvar = arr.shape( 2 );
 
         Field surface_field =
             fs.createField<T>( option::name( "surface" ) | option::variables( nvar ) | option::levels( false ) );
         auto surface = make_surface_view<T>( surface_field );
 
-        atlas_omp_for( idx_t n = 0; n < arr.shape( 0 ); ++n ) {
-            for ( idx_t j = 0; j < arr.shape( 2 ); ++j ) {
+        atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
+            for ( idx_t j = 0; j < nvar; ++j ) {
                 surface( n, j ) = 0;
             }
         }
 
-        for ( idx_t n = 0; n < arr.shape( 0 ); ++n ) {
-            for ( idx_t l = 0; l < arr.shape( 1 ); ++l ) {
-                for ( idx_t j = 0; j < arr.shape( 2 ); ++j ) {
+        for ( idx_t n = 0; n < npts; ++n ) {
+            for ( idx_t l = 0; l < nlev; ++l ) {
+                for ( idx_t j = 0; j < nvar; ++j ) {
                     surface( n, j ) += arr( n, l, j );
                 }
             }
@@ -451,8 +475,9 @@ template <typename T>
 void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Field& field, Field& sumfield, idx_t& N ) {
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
-    for ( idx_t j = 1; j < field.rank(); ++j )
+    for ( idx_t j = 1; j < field.rank(); ++j ) {
         shape.push_back( field.shape( j ) );
+    }
     sumfield.resize( shape );
 
     auto sum = make_per_level_view<T>( sumfield );
@@ -501,7 +526,9 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
 }
 
 void order_independent_sum_per_level( const NodeColumns& fs, const Field& field, Field& sum, idx_t& N ) {
-    if ( field.datatype() != sum.datatype() ) { throw_Exception( "Field and sum are not of same datatype.", Here() ); }
+    if ( field.datatype() != sum.datatype() ) {
+        throw_Exception( "Field and sum are not of same datatype.", Here() );
+    }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_order_independent_sum_per_level<int>( fs, field, sum, N );
@@ -544,7 +571,9 @@ void dispatch_minimum( const NodeColumns& fs, const Field& field, std::vector<T>
 
 template <typename T>
 void minimum( const NodeColumns& fs, const Field& field, std::vector<T>& min ) {
-    if ( field.datatype() == array::DataType::kind<T>() ) { return dispatch_minimum( fs, field, min ); }
+    if ( field.datatype() == array::DataType::kind<T>() ) {
+        return dispatch_minimum( fs, field, min );
+    }
     else {
         switch ( field.datatype().kind() ) {
             case array::DataType::KIND_INT32: {
@@ -604,7 +633,9 @@ void dispatch_maximum( const NodeColumns& fs, const Field& field, std::vector<T>
 
 template <typename T>
 void maximum( const NodeColumns& fs, const Field& field, std::vector<T>& max ) {
-    if ( field.datatype() == array::DataType::kind<T>() ) { return dispatch_maximum( fs, field, max ); }
+    if ( field.datatype() == array::DataType::kind<T>() ) {
+        return dispatch_maximum( fs, field, max );
+    }
     else {
         switch ( field.datatype().kind() ) {
             case array::DataType::KIND_INT32: {
@@ -655,8 +686,9 @@ template <typename T>
 void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Field& min_field ) {
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
-    for ( idx_t j = 1; j < field.rank(); ++j )
+    for ( idx_t j = 1; j < field.rank(); ++j ) {
         shape.push_back( field.shape( j ) );
+    }
     min_field.resize( shape );
     auto min = make_per_level_view<T>( min_field );
 
@@ -696,7 +728,9 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Fiel
 }
 
 void minimum_per_level( const NodeColumns& fs, const Field& field, Field& min ) {
-    if ( field.datatype() != min.datatype() ) { throw_Exception( "Field and min are not of same datatype.", Here() ); }
+    if ( field.datatype() != min.datatype() ) {
+        throw_Exception( "Field and min are not of same datatype.", Here() );
+    }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_minimum_per_level<int>( fs, field, min );
@@ -715,8 +749,9 @@ template <typename T>
 void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Field& max_field ) {
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
-    for ( idx_t j = 1; j < field.rank(); ++j )
+    for ( idx_t j = 1; j < field.rank(); ++j ) {
         shape.push_back( field.shape( j ) );
+    }
     max_field.resize( shape );
     auto max = make_per_level_view<T>( max_field );
 
@@ -757,7 +792,9 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Fiel
 }
 
 void maximum_per_level( const NodeColumns& fs, const Field& field, Field& max ) {
-    if ( field.datatype() != max.datatype() ) { throw_Exception( "Field and max are not of same datatype.", Here() ); }
+    if ( field.datatype() != max.datatype() ) {
+        throw_Exception( "Field and max are not of same datatype.", Here() );
+    }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_maximum_per_level<int>( fs, field, max );
@@ -1032,8 +1069,9 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field
     const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
-    for ( idx_t j = 1; j < field.rank(); ++j )
+    for ( idx_t j = 1; j < field.rank(); ++j ) {
         shape.push_back( field.shape( j ) );
+    }
     min_field.resize( shape );
     glb_idx_field.resize( shape );
     const idx_t nvar = arr.shape( 2 );
@@ -1105,7 +1143,9 @@ void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field
 }
 
 void minimum_and_location_per_level( const NodeColumns& fs, const Field& field, Field& min, Field& glb_idx ) {
-    if ( field.datatype() != min.datatype() ) { throw_Exception( "Field and min are not of same datatype.", Here() ); }
+    if ( field.datatype() != min.datatype() ) {
+        throw_Exception( "Field and min are not of same datatype.", Here() );
+    }
     if ( glb_idx.datatype() != array::DataType::kind<gidx_t>() ) {
         throw_Exception( "glb_idx Field is not of correct datatype", Here() );
     }
@@ -1129,8 +1169,9 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field
     const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
-    for ( idx_t j = 1; j < field.rank(); ++j )
+    for ( idx_t j = 1; j < field.rank(); ++j ) {
         shape.push_back( field.shape( j ) );
+    }
     max_field.resize( shape );
     glb_idx_field.resize( shape );
     const idx_t nvar = arr.shape( 2 );
@@ -1203,7 +1244,9 @@ void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field
 }
 
 void maximum_and_location_per_level( const NodeColumns& fs, const Field& field, Field& max, Field& glb_idx ) {
-    if ( field.datatype() != max.datatype() ) { throw_Exception( "Field and max are not of same datatype.", Here() ); }
+    if ( field.datatype() != max.datatype() ) {
+        throw_Exception( "Field and max are not of same datatype.", Here() );
+    }
     if ( glb_idx.datatype() != array::DataType::kind<gidx_t>() ) {
         throw_Exception( "glb_idx Field is not of correct datatype", Here() );
     }
@@ -1247,7 +1290,9 @@ void dispatch_mean_per_level( const NodeColumns& fs, const Field& field, Field& 
 }
 
 void mean_per_level( const NodeColumns& fs, const Field& field, Field& mean, idx_t& N ) {
-    if ( field.datatype() != mean.datatype() ) { throw_Exception( "Field and sum are not of same datatype.", Here() ); }
+    if ( field.datatype() != mean.datatype() ) {
+        throw_Exception( "Field and sum are not of same datatype.", Here() );
+    }
     switch ( field.datatype().kind() ) {
         case array::DataType::KIND_INT32:
             return dispatch_mean_per_level<int>( fs, field, mean, N );

@@ -199,7 +199,6 @@ private:  // Fortran access
     array::LocalView<int, 1, array::Intent::ReadOnly> nmyms() const;   // Return list of local zonal wavenumbers "m"
     array::LocalView<int, 1, array::Intent::ReadOnly> nasm0() const;
 
-
 private:  // data
     idx_t nb_levels_;
     int truncation_;
@@ -214,6 +213,7 @@ private:  // data
 
 class Spectral : public FunctionSpace {
 public:
+    Spectral();
     Spectral( const FunctionSpace& );
     Spectral( const eckit::Configuration& );
     Spectral( const int truncation, const eckit::Configuration& = util::NoConfig() );

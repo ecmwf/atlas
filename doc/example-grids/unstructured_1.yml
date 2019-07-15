@@ -1,0 +1,15 @@
+type : "unstructured"
+
+xy : [
+  0,   90,
+  0,  -90,
+  180,-90,
+  180, 90
+]
+
+check :
+  size : 4
+  lonlat(first) : [0,90]
+  lonlat(last)  : [180,90]
+  uid : b704ab522505497c6d622f27c429bffe
+  bounding_box(n,w,s,e) : [90,0,-90,360]

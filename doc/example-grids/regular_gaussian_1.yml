@@ -1,0 +1,12 @@
+# Regular Gaussian grid 'F4'
+
+type : "regular_gaussian"
+N : 4
+
+
+check : 
+  size : 128
+  lonlat(first) : [0,73.7992]
+  lonlat(last)  : [337.5,-73.7992]
+  uid : 4db8793a3e589a0f497cbe84ff34e5b8
+  bounding_box(n,w,s,e) : [90,0,-90,360]

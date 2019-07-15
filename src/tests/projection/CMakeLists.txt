@@ -7,9 +7,10 @@
 # does it submit to any jurisdiction.
 
 foreach(test
-          test_rotation
-          test_projection_LAEA )
+          test_bounding_box
+          test_projection_LAEA
+          test_rotation )
 
-    ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas )
+    ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 
 endforeach()

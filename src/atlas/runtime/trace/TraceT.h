@@ -150,7 +150,9 @@ template <typename TraceTraits>
 inline void TraceT<TraceTraits>::start() {
     if ( Control::enabled() ) {
         running_ = true;
-        if ( not callstack_ ) { callstack_ = CurrentCallStack::instance().push( loc_, title_ ); }
+        if ( not callstack_ ) {
+            callstack_ = CurrentCallStack::instance().push( loc_, title_ );
+        }
         registerTimer();
         Tracing::start( title_ );
         barrier();

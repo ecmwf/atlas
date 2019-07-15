@@ -1,0 +1,16 @@
+# Regular Gaussian grid 'F4'
+
+type : "regular_gaussian"
+N    : 4
+projection :
+    type : "rotated_schmidt"
+    stretching_factor : 2.0
+    north_pole : [3.0,47.0]
+
+
+check : 
+  size : 128
+  lonlat(first) : [3,38.8589]
+  lonlat(last)  : [-135.011,-72.4668]
+  uid : d179fd0b56811242a1a0a8e83dade6a1
+  bounding_box(n,w,s,e) : [90,0,-90,360]

@@ -181,10 +181,12 @@ idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements, c
     element_types_.push_back( etype );
     elements_.resize( element_types_.size() );
     for ( idx_t t = 0; t < nb_types(); ++t ) {
-        if ( elements_[t] )
+        if ( elements_[t] ) {
             elements_[t]->rebuild();
-        else
+        }
+        else {
             elements_[t] = util::ObjectHandle<Elements>( new Elements( *this, t ) );
+        }
     }
 
     node_connectivity_->add( nb_elements, nb_nodes, connectivity, fortran_array );
@@ -241,8 +243,9 @@ idx_t HybridElements::elemtype_nb_edges( idx_t elem_idx ) const {
 void HybridElements::insert( idx_t type_idx, idx_t position, idx_t nb_elements ) {
     type_idx_.insert( type_idx_.begin() + position, nb_elements, type_idx );
     elements_size_[type_idx] += nb_elements;
-    for ( idx_t jtype = type_idx + 1; jtype < nb_types() + 1; ++jtype )
+    for ( idx_t jtype = type_idx + 1; jtype < nb_types() + 1; ++jtype ) {
         elements_begin_[jtype] += nb_elements;
+    }
     for ( idx_t t = 0; t < nb_types(); ++t ) {
         elements_[t]->rebuild();
     }

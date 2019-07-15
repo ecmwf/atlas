@@ -35,10 +35,14 @@ namespace atlas {
 
 namespace detail {
 inline void Assert( bool success, const char* code, const char* file, int line, const char* func ) {
-    if ( not success ) { throw_AssertionFailed( code, eckit::CodeLocation( file, line, func ) ); }
+    if ( not success ) {
+        throw_AssertionFailed( code, eckit::CodeLocation( file, line, func ) );
+    }
 }
 inline void Assert( bool success, const char* code, const char* msg, const char* file, int line, const char* func ) {
-    if ( not success ) { throw_AssertionFailed( code, msg, eckit::CodeLocation( file, line, func ) ); }
+    if ( not success ) {
+        throw_AssertionFailed( code, msg, eckit::CodeLocation( file, line, func ) );
+    }
 }
 }  // namespace detail
 }  // namespace atlas

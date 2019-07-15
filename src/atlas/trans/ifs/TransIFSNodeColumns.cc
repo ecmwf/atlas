@@ -24,6 +24,7 @@ TransIFSNodeColumns::TransIFSNodeColumns( const Cache& cache, const functionspac
                                           const functionspace::Spectral& sp, const eckit::Configuration& config ) :
     TransIFS( cache, gp.mesh().grid(), sp.truncation(), config ) {
     assertCompatibleDistributions( gp, sp );
+    spectral_ = sp;
 }
 
 TransIFSNodeColumns::~TransIFSNodeColumns() {}

@@ -27,7 +27,9 @@ static eckit::Translator<std::string, int> to_int;
 
 static Domain domain( const Grid::Config& grid ) {
     Grid::Config config;
-    if ( grid.get( "domain", config ) ) { return Domain( config ); }
+    if ( grid.get( "domain", config ) ) {
+        return Domain( config );
+    }
     return Domain();
 }
 
@@ -76,18 +78,24 @@ StructuredGrid::grid_t* create_lonlat( long nlon, long nlat, Shift shift,
 
     Projection projection;
     Grid::Config config_projection;
-    if ( config.get( "projection", config_projection ) ) { projection = Projection( config_projection ); }
+    if ( config.get( "projection", config_projection ) ) {
+        projection = Projection( config_projection );
+    }
 
     std::string name;
 
-    if ( shifted_x and shifted_y )
+    if ( shifted_x and shifted_y ) {
         name = "S";
-    else if ( shifted_x and not shifted_y )
+    }
+    else if ( shifted_x and not shifted_y ) {
         name = "Slon";
-    else if ( not shifted_x and shifted_y )
+    }
+    else if ( not shifted_x and shifted_y ) {
         name = "Slat";
-    else
+    }
+    else {
         name = "L";
+    }
 
     name += std::to_string( nlon ) + "x" + std::to_string( nlat );
 

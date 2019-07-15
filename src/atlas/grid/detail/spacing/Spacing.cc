@@ -20,7 +20,9 @@ namespace spacing {
 
 const Spacing* Spacing::create( const eckit::Parametrisation& params ) {
     std::string spacingType;
-    if ( not params.get( "type", spacingType ) ) { throw_Exception( "type missing in configuration", Here() ); }
+    if ( not params.get( "type", spacingType ) ) {
+        throw_Exception( "type missing in configuration", Here() );
+    }
     return SpacingFactory::build( spacingType, params );
 }
 

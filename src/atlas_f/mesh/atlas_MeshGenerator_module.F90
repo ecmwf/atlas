@@ -38,6 +38,7 @@ END TYPE atlas_MeshGenerator
 interface atlas_MeshGenerator
   module procedure atlas_MeshGenerator__cptr
   module procedure atlas_MeshGenerator__config
+  module procedure atlas_MeshGenerator__type
 end interface
 
 !------------------------------------------------------------------------------
@@ -56,6 +57,14 @@ function atlas_MeshGenerator__cptr(cptr) result(this)
   call this%return()
 end function
 
+function atlas_MeshGenerator__type(type) result(this)
+  use fckit_c_interop_module, only: c_str
+  use atlas_MeshGenerator_c_binding
+  type(atlas_MeshGenerator) :: this
+  character(len=*), intent(in) :: type
+  call this%reset_c_ptr( atlas__MeshGenerator__create_noconfig(c_str(type)) )
+  call this%return()
+end function
 
 function atlas_MeshGenerator__config(config) result(this)
   use fckit_c_interop_module, only: c_str

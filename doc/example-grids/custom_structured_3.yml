@@ -1,0 +1,21 @@
+# Octahedral Gaussian grid 'O4'
+
+type     : "structured"
+yspace   : { type : "gaussian", N :8, start : 90, end : -90 }
+xspace[] :
+  - { type : "linear", N : 20, start : 0, end : 360, endpoint : false }
+  - { type : "linear", N : 24, start : 0, end : 360, endpoint : false }
+  - { type : "linear", N : 28, start : 0, end : 360, endpoint : false }
+  - { type : "linear", N : 32, start : 0, end : 360, endpoint : false }
+  - { type : "linear", N : 32, start : 0, end : 360, endpoint : false }
+  - { type : "linear", N : 28, start : 0, end : 360, endpoint : false }
+  - { type : "linear", N : 24, start : 0, end : 360, endpoint : false }
+  - { type : "linear", N : 20, start : 0, end : 360, endpoint : false }
+
+
+check :
+  size : 208
+  lonlat(first) : [0,73.7992]
+  lonlat(last)  : [342,-73.7992]
+  uid : 238a876f8ddaf43100fe643f1283f78a
+  bounding_box(n,w,s,e) : [90,0,-90,360]

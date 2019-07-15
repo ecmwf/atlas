@@ -27,7 +27,9 @@ method::Intersect Quad3D::intersects( const method::Ray& r, double edgeEpsilon, 
 
     Triag3D T013( v00, v10, v01 );
     isect = T013.intersects( r, edgeEpsilon, epsilon );
-    if ( isect ) return isect;
+    if ( isect ) {
+        return isect;
+    }
 
     Triag3D T231( v11, v01, v10 );
     isect = T231.intersects( r, edgeEpsilon, epsilon );

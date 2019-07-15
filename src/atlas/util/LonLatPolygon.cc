@@ -65,7 +65,9 @@ bool LonLatPolygon::contains( const PointLonLat& P ) const {
 
         if ( APB != BPA ) {
             const double side = cross_product_analog( P, A, B );
-            if ( APB && side > 0 ) { ++wn; }
+            if ( APB && side > 0 ) {
+                ++wn;
+            }
             else if ( BPA && side < 0 ) {
                 --wn;
             }

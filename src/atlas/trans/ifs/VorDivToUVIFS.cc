@@ -49,7 +49,7 @@ void VorDivToUVIFS::execute( const int nb_coeff, const int nb_fields, const doub
     vordiv_to_UV.nfld                  = nb_fields;
     vordiv_to_UV.ncoeff                = nb_coeff;
     vordiv_to_UV.nsmax                 = truncation_;
-    TRANS_CHECK(::trans_vordiv_to_UV( &vordiv_to_UV ) );
+    TRANS_CHECK( ::trans_vordiv_to_UV( &vordiv_to_UV ) );
 }
 
 VorDivToUVIFS::VorDivToUVIFS( const int truncation, const eckit::Configuration& ) : truncation_( truncation ) {}

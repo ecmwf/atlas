@@ -8,16 +8,14 @@
  * nor does it submit to any jurisdiction.
  */
 
-
 #pragma once
 
+#include "atlas/domain.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
-
 
 namespace atlas {
 namespace projection {
 namespace detail {
-
 
 class LambertAzimuthalEqualAreaProjection final : public ProjectionImpl {
 public:
@@ -26,8 +24,6 @@ public:
 
     // projection name
     static std::string static_type() { return "lambert_azimuthal_equal_area"; }
-
-    // projection name
     std::string type() const override { return static_type(); }
 
     // projection and inverse projection
@@ -35,6 +31,9 @@ public:
     void lonlat2xy( double crd[] ) const override;
 
     bool strictlyRegional() const override { return true; }
+    RectangularLonLatDomain lonlatBoundingBox( const Domain& domain ) const override {
+        return ProjectionImpl::lonlatBoundingBox( domain );
+    }
 
     // specification
     Spec spec() const override;
@@ -52,7 +51,6 @@ private:
     double sin_phi1_;
     double cos_phi1_;
 };
-
 
 }  // namespace detail
 }  // namespace projection

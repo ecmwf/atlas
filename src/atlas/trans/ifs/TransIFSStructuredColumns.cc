@@ -26,6 +26,7 @@ TransIFSStructuredColumns::TransIFSStructuredColumns( const Cache& cache, const 
                                                       const eckit::Configuration& config ) :
     TransIFS( cache, gp.grid(), sp.truncation(), config ) {
     assertCompatibleDistributions( gp, sp );
+    spectral_ = sp;
 }
 
 TransIFSStructuredColumns::~TransIFSStructuredColumns() {}

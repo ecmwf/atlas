@@ -56,7 +56,9 @@ static const double parametricEpsilon = 1e-15;
 
 
 void FiniteElement::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
+    if ( mpi::comm().size() > 1 ) {
+        ATLAS_NOTIMPLEMENTED;
+    }
     auto functionspace = []( const Grid& grid ) {
         Mesh mesh;
         if ( StructuredGrid{grid} ) {
@@ -120,7 +122,9 @@ struct Stencil {
 void FiniteElement::print( std::ostream& out ) const {
     functionspace::NodeColumns src( source_ );
     functionspace::NodeColumns tgt( target_ );
-    if ( not tgt ) ATLAS_NOTIMPLEMENTED;
+    if ( not tgt ) {
+        ATLAS_NOTIMPLEMENTED;
+    }
     auto gidx_src = array::make_view<gidx_t, 1>( src.nodes().global_index() );
 
     ATLAS_ASSERT( tgt.nodes().size() == idx_t( matrix_.rows() ) );
@@ -236,7 +240,9 @@ void FiniteElement::setup( const FunctionSpace& source ) {
         eckit::ProgressTimer progress( "Computing interpolation weights", out_npts, "point", double( 5 ),
                                        Log::debug() );
         for ( idx_t ip = 0; ip < out_npts; ++ip, ++progress ) {
-            if ( out_ghosts( ip ) ) { continue; }
+            if ( out_ghosts( ip ) ) {
+                continue;
+            }
 
             PointXYZ p{( *ocoords_ )( ip, 0 ), ( *ocoords_ )( ip, 1 ), ( *ocoords_ )( ip, 2 )};  // lookup point
 
@@ -435,9 +441,13 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
                 w[2] = is.v;
 
                 if ( on_triag_edge() ) {
-                    if ( on_single_point() ) { triplets.emplace_back( ip, idx[single_point], w[single_point] ); }
+                    if ( on_single_point() ) {
+                        triplets.emplace_back( ip, idx[single_point], w[single_point] );
+                    }
                     else {
-                        if ( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) { edge.swap(); }
+                        if ( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) {
+                            edge.swap();
+                        }
                         interpolate_edge( triag.p( edge.idx[0] ), triag.p( edge.idx[1] ) );
                         for ( size_t i = 0; i < 2; ++i ) {
                             triplets.emplace_back( ip, idx[edge.idx[i]], w[edge.idx[i]] );
@@ -476,9 +486,13 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
                 w[3] = ( 1. - is.u ) * is.v;
 
                 if ( on_quad_edge() ) {
-                    if ( on_single_point() ) { triplets.emplace_back( ip, idx[single_point], w[single_point] ); }
+                    if ( on_single_point() ) {
+                        triplets.emplace_back( ip, idx[single_point], w[single_point] );
+                    }
                     else {
-                        if ( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) { edge.swap(); }
+                        if ( ( *igidx_ )( idx[edge.idx[1]] ) < ( *igidx_ )( idx[edge.idx[0]] ) ) {
+                            edge.swap();
+                        }
                         interpolate_edge( quad.p( edge.idx[0] ), quad.p( edge.idx[1] ) );
                         for ( size_t i = 0; i < 2; ++i ) {
                             triplets.emplace_back( ip, idx[edge.idx[i]], w[edge.idx[i]] );
@@ -496,7 +510,9 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
 
     }  // loop over nearest elements
 
-    if ( !triplets.empty() ) { normalise( triplets ); }
+    if ( !triplets.empty() ) {
+        normalise( triplets );
+    }
     return triplets;
 }
 

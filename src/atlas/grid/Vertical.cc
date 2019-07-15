@@ -25,12 +25,15 @@ std::vector<double> linspace( double start, double end, idx_t N, bool endpoint )
     x_.resize( N );
 
     double step;
-    if ( endpoint && N > 1 )
+    if ( endpoint && N > 1 ) {
         step = ( end - start ) / double( N - 1 );
-    else if ( N > 0 )
+    }
+    else if ( N > 0 ) {
         step = ( end - start ) / double( N );
-    else
+    }
+    else {
         step = 0.;
+    }
 
     for ( idx_t i = 0; i < N; ++i ) {
         x_[i] = start + i * step;

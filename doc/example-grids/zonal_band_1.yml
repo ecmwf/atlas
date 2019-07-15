@@ -1,0 +1,13 @@
+type : "zonal_band"
+nx : 5
+ny : 3
+north : 70
+south : 30
+
+
+check:
+  size : 15
+  lonlat(first) : [0,70]
+  lonlat(last)  : [288,30]
+  uid : 7f1b0971ad5d9f581e2d35914d916a67
+  bounding_box(n,w,s,e) : [70,0,30,360]

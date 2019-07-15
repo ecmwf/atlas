@@ -135,9 +135,15 @@ CASE( "test horizontal cubic interpolation" ) {
 //-----------------------------------------------------------------------------
 
 bool operator==( const eckit::linalg::Triplet& t1, const eckit::linalg::Triplet& t2 ) {
-    if ( t1.row() != t2.row() ) return false;
-    if ( t1.col() != t2.col() ) return false;
-    if ( !is_approximately_equal( t1.value(), t2.value() ) ) return false;
+    if ( t1.row() != t2.row() ) {
+        return false;
+    }
+    if ( t1.col() != t2.col() ) {
+        return false;
+    }
+    if ( !is_approximately_equal( t1.value(), t2.value() ) ) {
+        return false;
+    }
 
     return true;
 }
@@ -145,9 +151,13 @@ bool operator!=( const eckit::linalg::Triplet& t1, const eckit::linalg::Triplet&
     return !( t1 == t2 );
 }
 bool operator==( const std::vector<eckit::linalg::Triplet>& t1, const std::vector<eckit::linalg::Triplet>& t2 ) {
-    if ( t1.size() != t2.size() ) return false;
+    if ( t1.size() != t2.size() ) {
+        return false;
+    }
     for ( size_t i = 0; i < t1.size(); ++i ) {
-        if ( t1[i] != t2[i] ) return false;
+        if ( t1[i] != t2[i] ) {
+            return false;
+        }
     }
     return true;
 }
@@ -155,7 +165,9 @@ std::ostream& operator<<( std::ostream& out, const LocalView<double, 1>& array )
     out << "{ ";
     for ( idx_t i = 0; i < array.size(); ++i ) {
         out << array( i );
-        if ( i < array.size() - 1 ) { out << ","; }
+        if ( i < array.size() - 1 ) {
+            out << ",";
+        }
         out << " ";
     }
     out << "}";

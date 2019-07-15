@@ -1,0 +1,16 @@
+type : "regional"
+nx : 35
+ny : 25
+north : -10
+south : -50
+east : 170
+west : 100
+y_numbering: +1
+
+
+check : 
+  size : 875
+  lonlat(first) : [100,-50]
+  lonlat(last)  : [170,-10]
+  uid : 3c64a36ae3357c0d8f1148fc0e983cfb
+  bounding_box(n,w,s,e) : [-10,100,-50,170]

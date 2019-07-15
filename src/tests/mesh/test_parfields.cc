@@ -49,8 +49,12 @@ public:
         mypart_( mpi::comm().rank() ) {}
 
     bool operator()( idx_t idx ) const {
-        if ( part_( idx ) != mypart_ ) return true;
-        if ( ridx_( idx ) != idx ) return true;
+        if ( part_( idx ) != mypart_ ) {
+            return true;
+        }
+        if ( ridx_( idx ) != idx ) {
+            return true;
+        }
         return false;
     }
 
@@ -202,26 +206,37 @@ CASE( "test2" ) {
 
     idx_t nb_ghost = 0;
     for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
-        if ( is_ghost( jnode ) ) ++nb_ghost;
+        if ( is_ghost( jnode ) ) {
+            ++nb_ghost;
+        }
     }
 
     ATLAS_DEBUG_VAR( nb_ghost );
-    if ( mpi::comm().rank() == 0 ) EXPECT( nb_ghost == 128 );  // South boundary of Northern hemisphere
-    if ( mpi::comm().rank() == 1 ) EXPECT( nb_ghost == 0 );    // Southern hemisphere has no ghosts
+    if ( mpi::comm().rank() == 0 ) {
+        EXPECT( nb_ghost == 128 );  // South boundary of Northern hemisphere
+    }
+    if ( mpi::comm().rank() == 1 ) {
+        EXPECT( nb_ghost == 0 );  // Southern hemisphere has no ghosts
+    }
 
     mesh::actions::build_periodic_boundaries( m );
 
     int nb_periodic = -nb_ghost;
     for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
-        if ( is_ghost( jnode ) ) ++nb_periodic;
+        if ( is_ghost( jnode ) ) {
+            ++nb_periodic;
+        }
     }
 
     ATLAS_DEBUG_VAR( nb_periodic );
 
-    if ( mpi::comm().rank() == 0 )
-        EXPECT( nb_periodic == 33 );                             // Periodic East boundary of Northern hemisphere
-                                                                 // (plus one point south)
-    if ( mpi::comm().rank() == 1 ) EXPECT( nb_periodic == 32 );  // Periodic East boundary of Southern hemisphere
+    if ( mpi::comm().rank() == 0 ) {
+        EXPECT( nb_periodic == 33 );  // Periodic East boundary of Northern hemisphere
+    }
+    // (plus one point south)
+    if ( mpi::comm().rank() == 1 ) {
+        EXPECT( nb_periodic == 32 );  // Periodic East boundary of Southern hemisphere
+    }
 
     Gmsh( "periodic.msh", util::Config( "info", true ) ).write( m );
 }

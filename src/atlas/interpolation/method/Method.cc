@@ -43,9 +43,15 @@ void Method::check_compatibility( const Field& src, const Field& tgt ) const {
 template <typename Value>
 void Method::interpolate_field( const Field& src, Field& tgt ) const {
     check_compatibility( src, tgt );
-    if ( src.rank() == 1 ) { interpolate_field_rank1<Value>( src, tgt ); }
-    if ( src.rank() == 2 ) { interpolate_field_rank2<Value>( src, tgt ); }
-    if ( src.rank() == 3 ) { interpolate_field_rank3<Value>( src, tgt ); }
+    if ( src.rank() == 1 ) {
+        interpolate_field_rank1<Value>( src, tgt );
+    }
+    if ( src.rank() == 2 ) {
+        interpolate_field_rank2<Value>( src, tgt );
+    }
+    if ( src.rank() == 3 ) {
+        interpolate_field_rank3<Value>( src, tgt );
+    }
 }
 
 template <typename Value>
@@ -60,8 +66,8 @@ void Method::interpolate_field_rank1( const Field& src, Field& tgt ) const {
             throw_NotImplemented( "Only double precision interpolation is currently implemented with eckit backend",
                                   Here() );
         }
-        ATLAS_ASSERT( src.array().contiguous() );
-        ATLAS_ASSERT( tgt.array().contiguous() );
+        ATLAS_ASSERT( src.contiguous() );
+        ATLAS_ASSERT( tgt.contiguous() );
 
         eckit::linalg::Vector v_src( array::make_view<double, 1>( src ).data(), src.shape( 0 ) );
         eckit::linalg::Vector v_tgt( array::make_view<double, 1>( tgt ).data(), tgt.shape( 0 ) );
@@ -101,8 +107,9 @@ void Method::interpolate_field_rank2( const Field& src, Field& tgt ) const {
         for ( idx_t c = outer[r]; c < outer[r + 1]; ++c ) {
             idx_t n = index[c];
             Value w = static_cast<Value>( weight[c] );
-            for ( idx_t k = 0; k < Nk; ++k )
+            for ( idx_t k = 0; k < Nk; ++k ) {
                 v_tgt( r, k ) += w * v_src( n, k );
+            }
         }
     }
 }
@@ -130,9 +137,11 @@ void Method::interpolate_field_rank3( const Field& src, Field& tgt ) const {
         for ( idx_t c = outer[r]; c < outer[r + 1]; ++c ) {
             idx_t n = index[c];
             Value w = static_cast<Value>( weight[c] );
-            for ( idx_t k = 0; k < Nk; ++k )
-                for ( idx_t l = 0; l < Nl; ++l )
+            for ( idx_t k = 0; k < Nk; ++k ) {
+                for ( idx_t l = 0; l < Nl; ++l ) {
                     v_tgt( r, k, l ) += w * v_src( n, k, l );
+                }
+            }
         }
     }
 }
@@ -169,8 +178,12 @@ void Method::execute( const Field& src, Field& tgt ) const {
 
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
 
-    if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) { interpolate_field<double>( src, tgt ); }
-    if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) { interpolate_field<float>( src, tgt ); }
+    if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
+        interpolate_field<double>( src, tgt );
+    }
+    if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
+        interpolate_field<float>( src, tgt );
+    }
 
     tgt.set_dirty();
 }
@@ -196,7 +209,9 @@ void Method::haloExchange( const FieldSet& fields ) const {
     }
 }
 void Method::haloExchange( const Field& field ) const {
-    if ( field.dirty() ) source().haloExchange( field );
+    if ( field.dirty() ) {
+        source().haloExchange( field );
+    }
 }
 
 }  // namespace interpolation

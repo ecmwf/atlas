@@ -10,38 +10,37 @@
 
 #pragma once
 
+#include "atlas/domain.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 
 namespace atlas {
 namespace projection {
 namespace detail {
 
-class LambertProjection : public ProjectionImpl {
+class LambertProjection final : public ProjectionImpl {
 public:
     // constructor
-    LambertProjection( const eckit::Parametrisation& p );
+    LambertProjection( const eckit::Parametrisation& );
 
-    // destructor
-    ~LambertProjection() override {}
-
-    // class name
+    // projection name
     static std::string static_type() { return "lambert"; }
-    virtual std::string type() const override { return static_type(); }
+    std::string type() const override { return static_type(); }
 
     // projection and inverse projection
-    virtual void xy2lonlat( double crd[] ) const override;
-    virtual void lonlat2xy( double crd[] ) const override;
+    void xy2lonlat( double crd[] ) const override;
+    void lonlat2xy( double crd[] ) const override;
 
-    virtual bool strictlyRegional() const override {
-        return true;
-    }  // lambert projection cannot be used for global grids
+    bool strictlyRegional() const override { return true; }
+    RectangularLonLatDomain lonlatBoundingBox( const Domain& domain ) const override {
+        return ProjectionImpl::lonlatBoundingBox( domain );
+    }
 
     // specification
-    virtual Spec spec() const override;
+    Spec spec() const override;
 
-    virtual std::string units() const override { return "meters"; }
+    std::string units() const override { return "meters"; }
 
-    virtual void hash( eckit::Hash& ) const override;
+    void hash( eckit::Hash& ) const override;
 
 private:
     double lat1_, lat2_;                  // First and second latitude at which the secant cone

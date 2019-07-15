@@ -25,13 +25,17 @@ namespace test {
 
 CASE( "test_broadcast_to_self" ) {
     Metadata metadata;
-    if ( mpi::comm().rank() == 0 ) { metadata.set( "paramID", 128 ); }
+    if ( mpi::comm().rank() == 0 ) {
+        metadata.set( "paramID", 128 );
+    }
 
     // broadcast
     metadata.broadcast();
 
     EXPECT( metadata.has( "paramID" ) );
-    if ( metadata.has( "paramID" ) ) EXPECT( metadata.get<int>( "paramID" ) == 128 );
+    if ( metadata.has( "paramID" ) ) {
+        EXPECT( metadata.get<int>( "paramID" ) == 128 );
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -39,7 +43,9 @@ CASE( "test_broadcast_to_self" ) {
 CASE( "test_broadcast_to_other" ) {
     size_t root = 0;
     Metadata global;
-    if ( mpi::comm().rank() == root ) { global.set( "paramID", 128 ); }
+    if ( mpi::comm().rank() == root ) {
+        global.set( "paramID", 128 );
+    }
 
     Metadata local;
 
@@ -47,9 +53,13 @@ CASE( "test_broadcast_to_other" ) {
     global.broadcast( local );
 
     EXPECT( local.has( "paramID" ) );
-    if ( local.has( "paramID" ) ) EXPECT( local.get<int>( "paramID" ) == 128 );
+    if ( local.has( "paramID" ) ) {
+        EXPECT( local.get<int>( "paramID" ) == 128 );
+    }
 
-    if ( mpi::comm().rank() != root ) EXPECT( !global.has( "paramID" ) );
+    if ( mpi::comm().rank() != root ) {
+        EXPECT( !global.has( "paramID" ) );
+    }
 }
 
 //-----------------------------------------------------------------------------

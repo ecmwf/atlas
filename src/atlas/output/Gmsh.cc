@@ -46,12 +46,16 @@ std::string GmshFileStream::parallelPathName( const PathName& path, int part ) {
 GmshFileStream::GmshFileStream( const PathName& file_path, const char* mode, int part ) {
     PathName par_path( file_path );
     std::ios_base::openmode omode = std::ios_base::out;
-    if ( std::string( mode ) == "w" )
+    if ( std::string( mode ) == "w" ) {
         omode = std::ios_base::out;
-    else if ( std::string( mode ) == "a" )
+    }
+    else if ( std::string( mode ) == "a" ) {
         omode = std::ios_base::app;
+    }
 
-    if ( part < 0 || mpi::comm().size() == 1 ) { std::ofstream::open( file_path.localPath(), omode ); }
+    if ( part < 0 || mpi::comm().size() == 1 ) {
+        std::ofstream::open( file_path.localPath(), omode );
+    }
     else {
         if ( mpi::comm().rank() == 0 ) {
             PathName par_path( file_path );
@@ -118,11 +122,15 @@ detail::GmshIO writer( const Gmsh::Configuration& c ) {
 
 std::ios_base::openmode openmode( const Gmsh::Configuration& c ) {
     std::ios_base::openmode omode( std::ios_base::out );
-    if ( std::string( c.openmode ) == "w" )
+    if ( std::string( c.openmode ) == "w" ) {
         omode = std::ios_base::out;
-    else if ( std::string( c.openmode ) == "a" )
+    }
+    else if ( std::string( c.openmode ) == "a" ) {
         omode = std::ios_base::app;
-    if ( c.binary ) omode |= std::ios::binary;
+    }
+    if ( c.binary ) {
+        omode |= std::ios::binary;
+    }
     return omode;
 }
 

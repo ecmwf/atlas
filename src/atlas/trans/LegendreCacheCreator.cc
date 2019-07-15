@@ -58,8 +58,9 @@ LegendreCacheCreatorFactory& factory( const std::string& name ) {
     if ( j == m->end() ) {
         Log::error() << "No LegendreCacheCreatorFactory for [" << name << "]" << std::endl;
         Log::error() << "TransFactories are:" << std::endl;
-        for ( j = m->begin(); j != m->end(); ++j )
+        for ( j = m->begin(); j != m->end(); ++j ) {
             Log::error() << "   " << ( *j ).first << std::endl;
+        }
         throw_Exception( std::string( "No LegendreCacheCreatorFactory called " ) + name );
     }
     return *j->second;

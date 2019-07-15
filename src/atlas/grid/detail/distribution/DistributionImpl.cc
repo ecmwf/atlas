@@ -22,8 +22,12 @@ namespace grid {
 
 namespace {
 std::string distribution_type( int N, const Partitioner& p = Partitioner() ) {
-    if ( N == 1 ) { return "serial"; }
-    if ( not p ) { return "custom"; }
+    if ( N == 1 ) {
+        return "serial";
+    }
+    if ( not p ) {
+        return "custom";
+    }
     return p.type();
 }
 }  // namespace
@@ -41,8 +45,9 @@ DistributionImpl::DistributionImpl( const Grid& grid, const Partitioner& partiti
     partitioner.partition( grid, part_.data() );
     nb_partitions_ = partitioner.nb_partitions();
     nb_pts_.resize( nb_partitions_, 0 );
-    for ( idx_t j = 0, size = static_cast<idx_t>( part_.size() ); j < size; ++j )
+    for ( idx_t j = 0, size = static_cast<idx_t>( part_.size() ); j < size; ++j ) {
         ++nb_pts_[part_[j]];
+    }
     max_pts_ = *std::max_element( nb_pts_.begin(), nb_pts_.end() );
     min_pts_ = *std::min_element( nb_pts_.begin(), nb_pts_.end() );
     type_    = distribution_type( nb_partitions_, partitioner );
@@ -68,7 +73,9 @@ void DistributionImpl::print( std::ostream& s ) const {
     s << "Distribution( "
       << "type: " << type_ << ", nbPoints: " << part_.size() << ", nbPartitions: " << nb_pts_.size() << ", parts : [";
     for ( idx_t i = 0, size = static_cast<idx_t>( part_.size() ); i < size; i++ ) {
-        if ( i != 0 ) s << ',';
+        if ( i != 0 ) {
+            s << ',';
+        }
         s << part_[i];
     }
     s << ']';

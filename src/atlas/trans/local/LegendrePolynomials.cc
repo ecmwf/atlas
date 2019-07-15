@@ -124,7 +124,9 @@ void compute_legendre_polynomials_lat( const int trc,     // truncation (in)
             double sq = std::sqrt( ( 2. * jn + 1. ) / ( 2. * jn ) );
 
             legpol[idxmn( jn, jn )] = legpol[idxmn( jn - 1, jn - 1 )] * zdlsita * sq;
-            if ( std::abs( legpol[idxmn( jn, jn )] ) < zdls ) legpol[idxmn( jn, jn )] = 0.0;
+            if ( std::abs( legpol[idxmn( jn, jn )] ) < zdls ) {
+                legpol[idxmn( jn, jn )] = 0.0;
+            }
         }
 
         // ---------------------------------------------

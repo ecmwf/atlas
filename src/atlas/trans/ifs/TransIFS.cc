@@ -23,6 +23,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/trans/Trans.h"
 #include "atlas/trans/detail/TransFactory.h"
 #include "atlas/trans/ifs/TransIFS.h"
 
@@ -89,7 +90,8 @@ namespace {
 std::string fieldset_functionspace( const FieldSet& fields ) {
     std::string functionspace( "undefined" );
     for ( idx_t jfld = 0; jfld < fields.size(); ++jfld ) {
-        if ( functionspace == "undefined" ) functionspace = fields[jfld].functionspace().type();
+        if ( functionspace == "undefined" )
+            functionspace = fields[jfld].functionspace().type();
         if ( fields[jfld].functionspace().type() != functionspace ) {
             throw_Exception( ": fielset has fields with different functionspaces", Here() );
         }
@@ -256,7 +258,7 @@ void TransIFS::invtrans( const int nb_scalar_fields, const double scalar_spectra
     args.lvordivgp           = params.vorticity_divergence_fields();
     args.nproma              = params.nproma();
     args.ngpblks             = params.ngpblks();
-    TRANS_CHECK(::trans_invtrans( &args ) );
+    TRANS_CHECK( ::trans_invtrans( &args ) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -287,7 +289,7 @@ void TransIFS::dirtrans( const int nb_fields, const double scalar_fields[], doub
     args.lglobal             = params.global();
     args.nproma              = params.nproma();
     args.ngpblks             = params.ngpblks();
-    TRANS_CHECK(::trans_dirtrans( &args ) );
+    TRANS_CHECK( ::trans_dirtrans( &args ) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -304,7 +306,7 @@ void TransIFS::dirtrans( const int nb_fields, const double wind_fields[], double
     args.lglobal             = params.global();
     args.nproma              = params.nproma();
     args.ngpblks             = params.ngpblks();
-    TRANS_CHECK(::trans_dirtrans( &args ) );
+    TRANS_CHECK( ::trans_dirtrans( &args ) );
 }
 
 }  // namespace trans
@@ -367,7 +369,8 @@ struct PackNodeColumns {
     }
     void pack_3( const Field& field, idx_t components ) {
         const ArrayView<double, 3> gpfield = make_view<double, 3>( field );
-        if ( not components ) components = gpfield.shape( 2 );
+        if ( not components )
+            components = gpfield.shape( 2 );
         for ( idx_t jcomp = 0; jcomp < components; ++jcomp ) {
             for ( idx_t jlev = 0; jlev < gpfield.shape( 1 ); ++jlev ) {
                 idx_t n = 0;
@@ -524,7 +527,8 @@ struct UnpackNodeColumns {
     }
     void unpack_3( Field& field, idx_t components ) {
         ArrayView<double, 3> gpfield = make_view<double, 3>( field );
-        if ( not components ) components = gpfield.shape( 2 );
+        if ( not components )
+            components = gpfield.shape( 2 );
         for ( idx_t jcomp = 0; jcomp < components; ++jcomp ) {
             for ( idx_t jlev = 0; jlev < gpfield.shape( 1 ); ++jlev ) {
                 idx_t n = 0;
@@ -655,10 +659,7 @@ TransIFS::TransIFS( const Cache& cache, const Grid& grid, const long truncation,
 }
 
 TransIFS::TransIFS( const Grid& grid, const long truncation, const eckit::Configuration& config ) :
-    TransIFS( Cache(), grid, truncation, config ) {
-    ATLAS_ASSERT( grid.domain().global() );
-    ATLAS_ASSERT( not grid.projection() );
-}
+    TransIFS( Cache(), grid, truncation, config ) {}
 
 TransIFS::TransIFS( const Grid& grid, const eckit::Configuration& config ) :
     TransIFS( grid, /*grid-only*/ -1, config ) {}
@@ -737,93 +738,109 @@ const int* atlas::trans::TransIFS::n_regions( int& size ) const {
 
 const int* atlas::trans::TransIFS::nfrstlat( int& size ) const {
     size = trans_->n_regions_NS;
-    if ( trans_->nfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nfrstlat" );
+    if ( trans_->nfrstlat == nullptr )
+        ::trans_inquire( trans_.get(), "nfrstlat" );
     return trans_->nfrstlat;
 }
 
 const int* atlas::trans::TransIFS::nlstlat( int& size ) const {
     size = trans_->n_regions_NS;
-    if ( trans_->nlstlat == nullptr ) ::trans_inquire( trans_.get(), "nlstlat" );
+    if ( trans_->nlstlat == nullptr )
+        ::trans_inquire( trans_.get(), "nlstlat" );
     return trans_->nlstlat;
 }
 
 const int* atlas::trans::TransIFS::nptrfrstlat( int& size ) const {
     size = trans_->n_regions_NS;
-    if ( trans_->nptrfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nptrfrstlat" );
+    if ( trans_->nptrfrstlat == nullptr )
+        ::trans_inquire( trans_.get(), "nptrfrstlat" );
     return trans_->nptrfrstlat;
 }
 
 const int* atlas::trans::TransIFS::nsta( int& sizef2, int& sizef1 ) const {
     sizef1 = trans_->ndgl + trans_->n_regions_NS - 1;
     sizef2 = trans_->n_regions_EW;
-    if ( trans_->nsta == nullptr ) ::trans_inquire( trans_.get(), "nsta" );
+    if ( trans_->nsta == nullptr )
+        ::trans_inquire( trans_.get(), "nsta" );
     return trans_->nsta;
 }
 
 const int* atlas::trans::TransIFS::nonl( int& sizef2, int& sizef1 ) const {
     sizef1 = trans_->ndgl + trans_->n_regions_NS - 1;
     sizef2 = trans_->n_regions_EW;
-    if ( trans_->nonl == nullptr ) ::trans_inquire( trans_.get(), "nonl" );
+    if ( trans_->nonl == nullptr )
+        ::trans_inquire( trans_.get(), "nonl" );
     return trans_->nonl;
 }
 
 const int* atlas::trans::TransIFS::nmyms( int& size ) const {
     size = trans_->nump;
-    if ( trans_->nmyms == nullptr ) ::trans_inquire( trans_.get(), "nmyms" );
+    if ( trans_->nmyms == nullptr )
+        ::trans_inquire( trans_.get(), "nmyms" );
     return trans_->nmyms;
 }
 
 const int* atlas::trans::TransIFS::nasm0( int& size ) const {
     size = trans_->nsmax + 1;  // +1 because zeroth wave included
-    if ( trans_->nasm0 == nullptr ) ::trans_inquire( trans_.get(), "nasm0" );
+    if ( trans_->nasm0 == nullptr )
+        ::trans_inquire( trans_.get(), "nasm0" );
     return trans_->nasm0;
 }
 
 const int* atlas::trans::TransIFS::nvalue( int& size ) const {
     size = trans_->nspec2;
-    if ( trans_->nvalue == nullptr ) ::trans_inquire( trans_.get(), "nvalue" );
+    if ( trans_->nvalue == nullptr )
+        ::trans_inquire( trans_.get(), "nvalue" );
     return trans_->nvalue;
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nvalue() const {
-    if ( trans_->nvalue == nullptr ) ::trans_inquire( trans_.get(), "nvalue" );
+    if ( trans_->nvalue == nullptr )
+        ::trans_inquire( trans_.get(), "nvalue" );
     return array::LocalView<int, 1>( trans_->nvalue, array::make_shape( trans_->nspec2 ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nasm0() const {
-    if ( trans_->nasm0 == nullptr ) ::trans_inquire( trans_.get(), "nasm0" );
+    if ( trans_->nasm0 == nullptr )
+        ::trans_inquire( trans_.get(), "nasm0" );
     return array::LocalView<int, 1>( trans_->nasm0, array::make_shape( trans_->nsmax + 1 ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nmyms() const {
-    if ( trans_->nmyms == nullptr ) ::trans_inquire( trans_.get(), "nmyms" );
+    if ( trans_->nmyms == nullptr )
+        ::trans_inquire( trans_.get(), "nmyms" );
     return array::LocalView<int, 1>( trans_->nmyms, array::make_shape( trans_->nump ) );
 }
 
 array::LocalView<int, 2> atlas::trans::TransIFS::nonl() const {
-    if ( trans_->nonl == nullptr ) ::trans_inquire( trans_.get(), "nonl" );
+    if ( trans_->nonl == nullptr )
+        ::trans_inquire( trans_.get(), "nonl" );
     return array::LocalView<int, 2>(
         trans_->nonl, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
 }
 
 array::LocalView<int, 2> atlas::trans::TransIFS::nsta() const {
-    if ( trans_->nsta == nullptr ) ::trans_inquire( trans_.get(), "nsta" );
+    if ( trans_->nsta == nullptr )
+        ::trans_inquire( trans_.get(), "nsta" );
     return array::LocalView<int, 2>(
         trans_->nsta, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nptrfrstlat() const {
-    if ( trans_->nptrfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nptrfrstlat" );
+    if ( trans_->nptrfrstlat == nullptr )
+        ::trans_inquire( trans_.get(), "nptrfrstlat" );
     return array::LocalView<int, 1>( trans_->nptrfrstlat, array::make_shape( trans_->n_regions_NS ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nlstlat() const {
-    if ( trans_->nlstlat == nullptr ) ::trans_inquire( trans_.get(), "nlstlat" );
+    if ( trans_->nlstlat == nullptr )
+        ::trans_inquire( trans_.get(), "nlstlat" );
     return array::LocalView<int, 1>( trans_->nlstlat, array::make_shape( trans_->n_regions_NS ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nfrstlat() const {
-    if ( trans_->nfrstlat == nullptr ) ::trans_inquire( trans_.get(), "nfrstlat" );
+    if ( trans_->nfrstlat == nullptr )
+        ::trans_inquire( trans_.get(), "nfrstlat" );
     return array::LocalView<int, 1>( trans_->nfrstlat, array::make_shape( trans_->n_regions_NS ) );
 }
 
@@ -856,12 +873,23 @@ int atlas::trans::TransIFS::truncation() const {
     return std::max( 0, trans_->nsmax );
 }
 
-size_t atlas::trans::TransIFS::spectralCoefficients() const {
+size_t TransIFS::nb_spectral_coefficients() const {
+    return trans_->nspec2;
+}
+
+size_t TransIFS::nb_spectral_coefficients_global() const {
     return trans_->nspec2g;
 }
 
+const functionspace::Spectral& TransIFS::spectral() const {
+    if ( not spectral_ ) {
+        spectral_ = functionspace::Spectral( Trans( this ) );
+    }
+    return spectral_;
+}
+
 void TransIFS::ctor( const Grid& grid, long truncation, const eckit::Configuration& config ) {
-    trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, [](::Trans_t* p ) {
+    trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, []( ::Trans_t* p ) {
         ::trans_delete( p );
         delete p;
     } );
@@ -879,28 +907,18 @@ void TransIFS::ctor( const Grid& grid, long truncation, const eckit::Configurati
     throw_NotImplemented( "Grid type not supported for Spectral Transforms", Here() );
 }
 
-void TransIFS::ctor_spectral_only( long truncation, const eckit::Configuration& ) {
-    trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, [](::Trans_t* p ) {
-        ::trans_delete( p );
-        delete p;
-    } );
-    TRANS_CHECK(::trans_new( trans_.get() ) );
-    TRANS_CHECK(::trans_set_trunc( trans_.get(), truncation ) );
-    TRANS_CHECK(::trans_use_mpi( mpi::comm().size() > 1 ) );
-    TRANS_CHECK(::trans_setup( trans_.get() ) );
-}
-
 void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, const eckit::Configuration& config ) {
     TransParameters p( *this, config );
     std::vector<int> nloen( nlat );
     for ( long jlat = 0; jlat < nlat; ++jlat )
         nloen[jlat] = pl[jlat];
-    TRANS_CHECK(::trans_new( trans_.get() ) );
-    TRANS_CHECK(::trans_use_mpi( mpi::comm().size() > 1 ) );
-    TRANS_CHECK(::trans_set_resol( trans_.get(), nlat, nloen.data() ) );
-    if ( truncation >= 0 ) TRANS_CHECK(::trans_set_trunc( trans_.get(), truncation ) );
+    TRANS_CHECK( ::trans_new( trans_.get() ) );
+    TRANS_CHECK( ::trans_use_mpi( mpi::comm().size() > 1 ) );
+    TRANS_CHECK( ::trans_set_resol( trans_.get(), nlat, nloen.data() ) );
+    if ( truncation >= 0 )
+        TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
 
-    TRANS_CHECK(::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
+    TRANS_CHECK( ::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
 
     if ( p.read_legendre().size() && mpi::comm().size() == 1 ) {
         eckit::PathName file( p.read_legendre() );
@@ -909,26 +927,27 @@ void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, con
             msg << "File " << file << " doesn't exist";
             throw_CantOpenFile( msg.str(), Here() );
         }
-        TRANS_CHECK(::trans_set_read( trans_.get(), file.asString().c_str() ) );
+        TRANS_CHECK( ::trans_set_read( trans_.get(), file.asString().c_str() ) );
     }
     if ( p.write_legendre().size() && mpi::comm().size() == 1 ) {
         eckit::PathName file( p.write_legendre() );
-        TRANS_CHECK(::trans_set_write( trans_.get(), file.asString().c_str() ) );
+        TRANS_CHECK( ::trans_set_write( trans_.get(), file.asString().c_str() ) );
     }
 
     trans_->fft    = p.fft();
     trans_->lsplit = p.split_latitudes();
     trans_->flt    = p.flt();
-    ATLAS_TRACE_SCOPE( "trans_setup" ) { TRANS_CHECK(::trans_setup( trans_.get() ) ); }
+    ATLAS_TRACE_SCOPE( "trans_setup" ) { TRANS_CHECK( ::trans_setup( trans_.get() ) ); }
 }
 
 void TransIFS::ctor_lonlat( const long nlon, const long nlat, long truncation, const eckit::Configuration& config ) {
     TransParameters p( *this, config );
-    TRANS_CHECK(::trans_new( trans_.get() ) );
-    TRANS_CHECK(::trans_use_mpi( mpi::comm().size() > 1 ) );
-    TRANS_CHECK(::trans_set_resol_lonlat( trans_.get(), nlon, nlat ) );
-    if ( truncation >= 0 ) TRANS_CHECK(::trans_set_trunc( trans_.get(), truncation ) );
-    TRANS_CHECK(::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
+    TRANS_CHECK( ::trans_new( trans_.get() ) );
+    TRANS_CHECK( ::trans_use_mpi( mpi::comm().size() > 1 ) );
+    TRANS_CHECK( ::trans_set_resol_lonlat( trans_.get(), nlon, nlat ) );
+    if ( truncation >= 0 )
+        TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
+    TRANS_CHECK( ::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
 
     if ( p.read_legendre().size() && mpi::comm().size() == 1 ) {
         eckit::PathName file( p.read_legendre() );
@@ -937,18 +956,18 @@ void TransIFS::ctor_lonlat( const long nlon, const long nlat, long truncation, c
             msg << "File " << file << " doesn't exist";
             throw_CantOpenFile( msg.str(), Here() );
         }
-        TRANS_CHECK(::trans_set_read( trans_.get(), file.asString().c_str() ) );
+        TRANS_CHECK( ::trans_set_read( trans_.get(), file.asString().c_str() ) );
     }
     if ( p.write_legendre().size() && mpi::comm().size() == 1 ) {
         eckit::PathName file( p.write_legendre() );
-        TRANS_CHECK(::trans_set_write( trans_.get(), file.asString().c_str() ) );
+        TRANS_CHECK( ::trans_set_write( trans_.get(), file.asString().c_str() ) );
     }
 
     trans_->fft    = p.fft();
     trans_->lsplit = p.split_latitudes();
     trans_->flt    = p.flt();
 
-    TRANS_CHECK(::trans_setup( trans_.get() ) );
+    TRANS_CHECK( ::trans_setup( trans_.get() ) );
 }
 
 // --------------------------------------------------------------------------------------------
@@ -995,7 +1014,7 @@ void TransIFS::__dirtrans( const functionspace::NodeColumns& gp, const FieldSet&
         transform.nscalar             = nfld;
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
-        TRANS_CHECK(::trans_dirtrans( &transform ) );
+        TRANS_CHECK( ::trans_dirtrans( &transform ) );
     }
 
     // Unpack the spectral fields
@@ -1043,7 +1062,7 @@ void TransIFS::__dirtrans( const StructuredColumns& gp, const Field& gpfield, co
         transform.rspscalar           = rsp.data();
         transform.ngpblks             = ngptot();
         transform.nproma              = 1;
-        TRANS_CHECK(::trans_dirtrans( &transform ) );
+        TRANS_CHECK( ::trans_dirtrans( &transform ) );
     }
 
     // Unpack spectral
@@ -1089,7 +1108,7 @@ void TransIFS::__dirtrans( const StructuredColumns& gp, const FieldSet& gpfields
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
 
-        TRANS_CHECK(::trans_dirtrans( &transform ) );
+        TRANS_CHECK( ::trans_dirtrans( &transform ) );
     }
 
     // Unpack the spectral fields
@@ -1148,7 +1167,7 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, co
         transform.rspscalar           = rsp.data();
         transform.lscalarders         = true;
 
-        TRANS_CHECK(::trans_invtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans( &transform ) );
     }
 
     // Unpack the gridpoint fields
@@ -1233,7 +1252,7 @@ void TransIFS::__invtrans( const Spectral& sp, const FieldSet& spfields, const f
         transform.nscalar             = nfld;
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
-        TRANS_CHECK(::trans_invtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans( &transform ) );
     }
 
     // Unpack the gridpoint fields
@@ -1281,7 +1300,7 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const Field& spfie
         transform.rspscalar           = rsp.data();
         transform.ngpblks             = ngptot();
         transform.nproma              = 1;
-        TRANS_CHECK(::trans_invtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans( &transform ) );
     }
 
     // Unpack gridpoint fields
@@ -1334,7 +1353,7 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& sp
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
 
-        TRANS_CHECK(::trans_invtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans( &transform ) );
     }
 
     // Unpack the gridpoint fields
@@ -1369,8 +1388,10 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
         throw_Exception( msg.str(), Here() );
     }
 
-    if ( spvor.size() == 0 ) throw_Exception( "dirtrans: spectral vorticity field is empty." );
-    if ( spdiv.size() == 0 ) throw_Exception( "dirtrans: spectral divergence field is empty." );
+    if ( spvor.size() == 0 )
+        throw_Exception( "dirtrans: spectral vorticity field is empty." );
+    if ( spdiv.size() == 0 )
+        throw_Exception( "dirtrans: spectral divergence field is empty." );
 
     // Arrays Trans expects
     std::vector<double> rgp( 2 * nfld * ngptot() );
@@ -1397,7 +1418,7 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
 
         ATLAS_ASSERT( transform.rspvor );
         ATLAS_ASSERT( transform.rspdiv );
-        TRANS_CHECK(::trans_dirtrans( &transform ) );
+        TRANS_CHECK( ::trans_dirtrans( &transform ) );
     }
 
     // Pack spectral fields
@@ -1432,8 +1453,10 @@ void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, c
 
     ATLAS_ASSERT( spvor.rank() == 2 );
     ATLAS_ASSERT( spdiv.rank() == 2 );
-    if ( spvor.size() == 0 ) throw_Exception( "invtrans: spectral vorticity field is empty." );
-    if ( spdiv.size() == 0 ) throw_Exception( "invtrans: spectral divergence field is empty." );
+    if ( spvor.size() == 0 )
+        throw_Exception( "invtrans: spectral vorticity field is empty." );
+    if ( spdiv.size() == 0 )
+        throw_Exception( "invtrans: spectral divergence field is empty." );
 
     // Arrays Trans expects
     std::vector<double> rgp( 2 * nfld * ngptot() );
@@ -1459,7 +1482,7 @@ void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, c
 
         ATLAS_ASSERT( transform.rspvor );
         ATLAS_ASSERT( transform.rspdiv );
-        TRANS_CHECK(::trans_invtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans( &transform ) );
     }
 
     // Unpack the gridpoint fields
@@ -1479,7 +1502,7 @@ void TransIFS::distspec( const int nb_fields, const int origin[], const double g
     args.rspecg              = global_spectra;
     args.nfrom               = origin;
     args.rspec               = spectra;
-    TRANS_CHECK(::trans_distspec( &args ) );
+    TRANS_CHECK( ::trans_distspec( &args ) );
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1491,7 +1514,7 @@ void TransIFS::gathspec( const int nb_fields, const int destination[], const dou
     args.rspecg              = global_spectra;
     args.nto                 = destination;
     args.rspec               = spectra;
-    TRANS_CHECK(::trans_gathspec( &args ) );
+    TRANS_CHECK( ::trans_gathspec( &args ) );
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1503,7 +1526,7 @@ void TransIFS::distgrid( const int nb_fields, const int origin[], const double g
     args.nfrom               = origin;
     args.rgpg                = global_fields;
     args.rgp                 = fields;
-    TRANS_CHECK(::trans_distgrid( &args ) );
+    TRANS_CHECK( ::trans_distgrid( &args ) );
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1515,7 +1538,7 @@ void TransIFS::gathgrid( const int nb_fields, const int destination[], const dou
     args.nto                 = destination;
     args.rgp                 = fields;
     args.rgpg                = global_fields;
-    TRANS_CHECK(::trans_gathgrid( &args ) );
+    TRANS_CHECK( ::trans_gathgrid( &args ) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1526,214 +1549,10 @@ void TransIFS::specnorm( const int nb_fields, const double spectra[], double nor
     args.rspec               = spectra;
     args.rnorm               = norms;
     args.nmaster             = rank + 1;
-    TRANS_CHECK(::trans_specnorm( &args ) );
+    TRANS_CHECK( ::trans_specnorm( &args ) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-extern "C" {
-
-TransIFS* atlas__Trans__new( const Grid::Implementation* grid, int nsmax ) {
-    ATLAS_ASSERT( grid != nullptr );
-    return new TransIFS( Grid( grid ), nsmax );
-}
-
-void atlas__Trans__delete( TransIFS* This ) {
-    ATLAS_ASSERT( This != nullptr );
-    delete This;
-}
-
-int atlas__Trans__handle( const TransIFS* This ) {
-    ATLAS_ASSERT( This != nullptr );
-    ::Trans_t* t = *This;
-    return t->handle;
-}
-
-void atlas__Trans__distspec( const TransIFS* t, int nb_fields, int origin[], double global_spectra[],
-                             double spectra[] ) {
-    ATLAS_ASSERT( t != nullptr );
-    struct ::DistSpec_t args = new_distspec( t->trans() );
-    args.nfld                = nb_fields;
-    args.rspecg              = global_spectra;
-    args.nfrom               = origin;
-    args.rspec               = spectra;
-    TRANS_CHECK(::trans_distspec( &args ) );
-}
-
-void atlas__Trans__gathspec( const TransIFS* t, int nb_fields, int destination[], double spectra[],
-                             double global_spectra[] ) {
-    ATLAS_ASSERT( t != nullptr );
-    struct ::GathSpec_t args = new_gathspec( t->trans() );
-    args.nfld                = nb_fields;
-    args.rspecg              = global_spectra;
-    args.nto                 = destination;
-    args.rspec               = spectra;
-    TRANS_CHECK(::trans_gathspec( &args ) );
-}
-
-void atlas__Trans__distgrid( const TransIFS* t, int nb_fields, int origin[], double global_fields[], double fields[] ) {
-    ATLAS_ASSERT( t != nullptr );
-    struct ::DistGrid_t args = new_distgrid( t->trans() );
-    args.nfld                = nb_fields;
-    args.nfrom               = origin;
-    args.rgpg                = global_fields;
-    args.rgp                 = fields;
-    TRANS_CHECK(::trans_distgrid( &args ) );
-}
-
-void atlas__Trans__gathgrid( const TransIFS* t, int nb_fields, int destination[], double fields[],
-                             double global_fields[] ) {
-    ATLAS_ASSERT( t = nullptr );
-    struct ::GathGrid_t args = new_gathgrid( t->trans() );
-    args.nfld                = nb_fields;
-    args.nto                 = destination;
-    args.rgp                 = fields;
-    args.rgpg                = global_fields;
-    TRANS_CHECK(::trans_gathgrid( &args ) );
-}
-
-void atlas__Trans__invtrans_scalar( const TransIFS* t, int nb_fields, double scalar_spectra[],
-                                    double scalar_fields[] ) {
-    ATLAS_ASSERT( t != nullptr );
-    return t->invtrans( nb_fields, scalar_spectra, scalar_fields );
-}
-
-void atlas__Trans__invtrans_vordiv2wind( const TransIFS* t, int nb_fields, double vorticity_spectra[],
-                                         double divergence_spectra[], double wind_fields[] ) {
-    ATLAS_ASSERT( t != nullptr );
-    return t->invtrans( nb_fields, vorticity_spectra, divergence_spectra, wind_fields );
-}
-
-void atlas__Trans__dirtrans_scalar( const TransIFS* t, int nb_fields, double scalar_fields[],
-                                    double scalar_spectra[] ) {
-    ATLAS_ASSERT( t != nullptr );
-    return t->dirtrans( nb_fields, scalar_fields, scalar_spectra );
-}
-
-void atlas__Trans__dirtrans_wind2vordiv( const TransIFS* t, int nb_fields, double wind_fields[],
-                                         double vorticity_spectra[], double divergence_spectra[] ) {
-    ATLAS_ASSERT( t != nullptr );
-    return t->dirtrans( nb_fields, wind_fields, vorticity_spectra, divergence_spectra );
-}
-
-void atlas__Trans__specnorm( const TransIFS* t, int nb_fields, double spectra[], double norms[], int rank ) {
-    ATLAS_ASSERT( t != nullptr );
-    return t->specnorm( nb_fields, spectra, norms, rank );
-}
-
-int atlas__Trans__nspec2( const TransIFS* This ) {
-    ATLAS_ASSERT( This != nullptr );
-    return This->trans()->nspec2;
-}
-
-int atlas__Trans__nspec2g( const TransIFS* This ) {
-    ATLAS_ASSERT( This != nullptr );
-    return This->trans()->nspec2g;
-}
-
-int atlas__Trans__ngptot( const TransIFS* This ) {
-    ATLAS_ASSERT( This != nullptr );
-    return This->trans()->ngptot;
-}
-
-int atlas__Trans__ngptotg( const TransIFS* This ) {
-    ATLAS_ASSERT( This != nullptr );
-    return This->trans()->ngptotg;
-}
-
-int atlas__Trans__truncation( const TransIFS* This ) {
-    ATLAS_ASSERT( This != nullptr );
-    return This->truncation();
-}
-
-const Grid::Implementation* atlas__Trans__grid( const TransIFS* This ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( This->grid() );
-    return This->grid().get();
-}
-
-void atlas__Trans__dirtrans_fieldset( const TransIFS* This, const field::FieldSetImpl* gpfields,
-                                      field::FieldSetImpl* spfields, const eckit::Configuration* parameters ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( gpfields );
-    ATLAS_ASSERT( spfields );
-    ATLAS_ASSERT( parameters );
-    FieldSet fspfields( spfields );
-    This->dirtrans( gpfields, fspfields, *parameters );
-}
-
-void atlas__Trans__dirtrans_field( const TransIFS* This, const field::FieldImpl* gpfield, field::FieldImpl* spfield,
-                                   const eckit::Configuration* parameters ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( spfield );
-    ATLAS_ASSERT( gpfield );
-    ATLAS_ASSERT( parameters );
-    Field fspfield( spfield );
-    This->dirtrans( gpfield, fspfield, *parameters );
-}
-
-void atlas__Trans__invtrans_fieldset( const TransIFS* This, const field::FieldSetImpl* spfields,
-                                      field::FieldSetImpl* gpfields, const eckit::Configuration* parameters ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( spfields );
-    ATLAS_ASSERT( gpfields );
-    ATLAS_ASSERT( parameters );
-    FieldSet fgpfields( gpfields );
-    This->invtrans( spfields, fgpfields, *parameters );
-}
-
-void atlas__Trans__invtrans_field( const TransIFS* This, const field::FieldImpl* spfield, field::FieldImpl* gpfield,
-                                   const eckit::Configuration* parameters ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( spfield );
-    ATLAS_ASSERT( gpfield );
-    ATLAS_ASSERT( parameters );
-    Field fgpfield( gpfield );
-    This->invtrans( spfield, fgpfield, *parameters );
-}
-
-void atlas__Trans__dirtrans_wind2vordiv_field( const TransIFS* This, const field::FieldImpl* gpwind,
-                                               field::FieldImpl* spvor, field::FieldImpl* spdiv,
-                                               const eckit::Configuration* parameters ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( gpwind );
-    ATLAS_ASSERT( spvor );
-    ATLAS_ASSERT( spdiv );
-    ATLAS_ASSERT( parameters );
-    Field fspvor( spvor );
-    Field fspdiv( spdiv );
-    This->dirtrans_wind2vordiv( gpwind, fspvor, fspdiv, *parameters );
-}
-
-void atlas__Trans__invtrans_vordiv2wind_field( const TransIFS* This, const field::FieldImpl* spvor,
-                                               const field::FieldImpl* spdiv, field::FieldImpl* gpwind,
-                                               const eckit::Configuration* parameters ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( spvor );
-    ATLAS_ASSERT( spdiv );
-    ATLAS_ASSERT( gpwind );
-    ATLAS_ASSERT( parameters );
-    Field fgpwind( gpwind );
-    This->invtrans_vordiv2wind( spvor, spdiv, fgpwind, *parameters );
-}
-
-void atlas__Trans__invtrans( const TransIFS* This, int nb_scalar_fields, double scalar_spectra[], int nb_vordiv_fields,
-                             double vorticity_spectra[], double divergence_spectra[], double gp_fields[],
-                             const eckit::Configuration* parameters ) {
-    ATLAS_ASSERT( This != nullptr );
-    This->invtrans( nb_scalar_fields, scalar_spectra, nb_vordiv_fields, vorticity_spectra, divergence_spectra,
-                    gp_fields, *parameters );
-}
-
-void atlas__Trans__invtrans_grad_field( const TransIFS* This, const field::FieldImpl* spfield,
-                                        field::FieldImpl* gpfield, const eckit::Configuration* config ) {
-    ATLAS_ASSERT( This != nullptr );
-    ATLAS_ASSERT( spfield );
-    ATLAS_ASSERT( gpfield );
-    Field fgpfield( gpfield );
-    This->invtrans_grad( spfield, fgpfield, *config );
-}
-}
 
 }  // namespace trans
 }  // namespace atlas

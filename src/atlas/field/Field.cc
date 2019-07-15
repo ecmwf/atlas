@@ -138,6 +138,10 @@ size_t Field::bytes() const {
     return get()->bytes();
 }
 
+bool Field::contiguous() const {
+    return array().contiguous();
+}
+
 /// @brief Output information of field plus raw data
 void Field::dump( std::ostream& os ) const {
     get()->dump( os );

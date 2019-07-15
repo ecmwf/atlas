@@ -9,6 +9,7 @@
 ecbuild_add_test( TARGET atlas_test_fvm_nabla
   SOURCES   test_fvm_nabla.cc
   LIBS      atlas ${OMP_CXX}
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 if( HAVE_FCTEST)
@@ -16,11 +17,13 @@ if( HAVE_FCTEST)
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_fvm_nabla.F90
     LIBS            atlas_f ${OMP_Fortran}
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
   
   add_fctest( TARGET atlas_fctest_ifs_setup
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_ifs_setup.F90
     LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 endif()

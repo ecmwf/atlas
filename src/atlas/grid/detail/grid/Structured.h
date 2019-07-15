@@ -111,7 +111,8 @@ public:
                     i_ = 0;
                 }
                 ++n_;
-                if ( n_ == size_ ) return *this;
+                if ( n_ == size_ )
+                    return *this;
             } while ( not p_( n_ ) );
             return *this;
         }
@@ -380,9 +381,11 @@ protected:  // methods
 
     virtual void hash( eckit::Hash& ) const override;
 
+    virtual RectangularLonLatDomain lonlatBoundingBox() const override;
+
     void computeTruePeriodicity();
 
-    void computeDomain();
+    Domain computeDomain() const;
 
     void crop( const Domain& );
 

@@ -42,67 +42,87 @@ extern "C" {
 
 void atlas_omp_set_num_threads( int num_threads ) {
 #if ATLAS_HAVE_OMP
-    if ( omp_set_num_threads ) omp_set_num_threads( num_threads );
+    if ( omp_set_num_threads ) {
+        omp_set_num_threads( num_threads );
+    }
 #endif
 }
 
 int atlas_omp_get_num_threads( void ) {
 #if ATLAS_HAVE_OMP
-    if ( omp_get_num_threads ) return omp_get_num_threads();
+    if ( omp_get_num_threads ) {
+        return omp_get_num_threads();
+    }
 #endif
     return 1;
 }
 
 int atlas_omp_get_max_threads( void ) {
 #if ATLAS_HAVE_OMP
-    if ( omp_get_max_threads ) return omp_get_max_threads();
+    if ( omp_get_max_threads ) {
+        return omp_get_max_threads();
+    }
 #endif
     return 1;
 }
 
 int atlas_omp_get_thread_num( void ) {
 #if ATLAS_HAVE_OMP
-    if ( omp_get_thread_num ) return omp_get_thread_num();
+    if ( omp_get_thread_num ) {
+        return omp_get_thread_num();
+    }
 #endif
     return 0;
 }
 
 int atlas_omp_get_num_procs( void ) {
 #if ATLAS_HAVE_OMP
-    if ( omp_get_num_procs ) return omp_get_num_procs();
+    if ( omp_get_num_procs ) {
+        return omp_get_num_procs();
+    }
 #endif
     return 1;
 }
 
 int atlas_omp_in_parallel( void ) {
 #if ATLAS_HAVE_OMP
-    if ( omp_in_parallel ) return omp_in_parallel();
+    if ( omp_in_parallel ) {
+        return omp_in_parallel();
+    }
 #endif
     return 0;
 }
 
 void atlas_omp_set_dynamic( int dynamic_threads ) {
 #if ATLAS_HAVE_OMP
-    if ( omp_set_dynamic ) omp_set_dynamic( dynamic_threads );
+    if ( omp_set_dynamic ) {
+        omp_set_dynamic( dynamic_threads );
+    }
 #endif
 }
 
 int atlas_omp_get_dynamic( void ) {
 #if ATLAS_HAVE_OMP
-    if ( omp_get_dynamic ) return omp_get_dynamic();
+    if ( omp_get_dynamic ) {
+        return omp_get_dynamic();
+    }
 #endif
     return 0;
 }
 
 void atlas_omp_set_nested( int nested ) {
 #if ATLAS_HAVE_OMP
-    if ( omp_set_nested ) omp_set_nested( nested );
+    if ( omp_set_nested ) {
+        omp_set_nested( nested );
+    }
 #endif
 }
 
 int atlas_omp_get_nested( void ) {
 #if ATLAS_HAVE_OMP
-    if ( omp_get_nested ) return omp_get_nested();
+    if ( omp_get_nested ) {
+        return omp_get_nested();
+    }
 #endif
     return 0;
 }

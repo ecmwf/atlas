@@ -1,0 +1,24 @@
+# Zigzag Gaussian grid (N=8)
+
+type   : "structured"
+yspace : { type : "gaussian", start : 90, end : -90, N : 8 }
+xspace : { type : "linear",  N : 16, length : 360, endpoint : false,
+    start[]: [
+       0,
+      -11.25,
+       0,
+      -11.25,
+       0,
+      -11.25,
+       0,
+      -11.25
+    ] }
+
+
+# Expected
+check:
+  size : 128
+  lonlat(first) : [0,73.7992]
+  lonlat(last)  : [326.25,-73.7992]
+  uid : d5944053929a124fd786c2121ba3d064
+  bounding_box(n,w,s,e) : [90,-11.25,-90,360]

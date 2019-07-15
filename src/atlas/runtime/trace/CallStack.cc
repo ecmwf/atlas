@@ -27,7 +27,9 @@ void CallStack::pop_front() {
 }
 
 size_t CallStack::hash() const {
-    if ( hash_ ) return hash_;
+    if ( hash_ ) {
+        return hash_;
+    }
     for ( auto h : stack_ ) {
         hash_ ^= ( h << 1 );
     }

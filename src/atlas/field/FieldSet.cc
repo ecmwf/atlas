@@ -28,7 +28,9 @@ void FieldSetImpl::clear() {
 }
 
 Field FieldSetImpl::add( const Field& field ) {
-    if ( field.name().size() ) { index_[field.name()] = size(); }
+    if ( field.name().size() ) {
+        index_[field.name()] = size();
+    }
     else {
         std::stringstream name;
         name << name_ << "[" << size() << "]";
@@ -66,8 +68,9 @@ void FieldSetImpl::set_dirty( bool value ) const {
 std::vector<std::string> FieldSetImpl::field_names() const {
     std::vector<std::string> ret;
 
-    for ( const_iterator field = cbegin(); field != cend(); ++field )
+    for ( const_iterator field = cbegin(); field != cend(); ++field ) {
         ret.push_back( field->name() );
+    }
 
     return ret;
 }

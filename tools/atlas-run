@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# (C) Copyright 2013 ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation nor
+# does it submit to any jurisdiction.
+
+
+set -e
+
+while test $# -gt 0; do
+
+  case "$1" in
+    --*)
+    ATLAS_RUN_MPI_ARGS="${ATLAS_RUN_MPI_ARGS} $1"
+    shift # past argument
+    ;;
+    -n|-np)
+    ATLAS_RUN_NPROCS="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    *)    # unknown option
+    break
+    ;;
+  esac
+done
+
+command_exists() {
+  type "$1" &> /dev/null ;
+}
+
+if [ -n "${ATLAS_RUN_NTHREADS}" ]; then
+  export OMP_NUM_THREADS=${ATLAS_RUN_NTHREADS}
+fi
+
+if command_exists aprun            && \
+  [[ ${EC_queue:-unset} != "nf" ]] && \
+  [[ ${EC_queue:-unset} != "ns" ]]
+then
+  LAUNCH="aprun ${ATLAS_RUN_MPI_ARGS}"
+  if [ -z "${ATLAS_RUN_NPROCS}" ]; then
+     LAUNCH="${LAUNCH} -n 1"
+  else
+    LAUNCH="${LAUNCH} -n ${ATLAS_RUN_NPROCS}"
+  fi
+  if [ -n "${OMP_NUM_THREADS}" ]; then
+    LAUNCH="${LAUNCH} -d ${OMP_NUM_THREADS}"
+  fi
+
+elif command_exists srun ; then
+  LAUNCH="srun ${ATLAS_RUN_MPI_ARGS}"
+  if [ -n "${ATLAS_RUN_NGPUS}" ]; then
+    LAUNCH="${LAUNCH} --gres=gpu:${ATLAS_RUN_NGPUS}"
+  fi
+  if [ -z "${ATLAS_RUN_NPROCS}" ]; then
+    LAUNCH="${LAUNCH} -n 1"
+  else
+    LAUNCH="${LAUNCH} -n ${ATLAS_RUN_NPROCS}"
+  fi
+  SLURM_EXPORT_ENV=ALL # Required to propagate environment variables to srun'd program
+
+else
+  if [[ ${ARCH:-unset} == "cray" ]]; then
+    echo + module load cray-snplauncher
+    module load cray-snplauncher
+  fi
+  if [ -z "${ATLAS_RUN_NPROCS}" ]; then
+    unset LAUNCH
+  elif command_exists mpirun ; then
+    LAUNCH="mpirun ${ATLAS_RUN_MPI_ARGS} -np ${ATLAS_RUN_NPROCS}"
+  elif command_exists mpiexec; then
+    LAUNCH="mpiexec ${ATLAS_RUN_MPI_ARGS} -n ${ATLAS_RUN_NPROCS}"
+  else
+    echo "No MPI driver found (mpirun,mpiexec,aprun,srun)"
+    exit 1
+  fi
+fi
+
+if [ -z "${ATLAS_RUN_NPROCS}" ]; then
+  echo + export ECKIT_MPI_FORCE=serial
+  export ECKIT_MPI_FORCE=serial
+fi
+
+echo + $LAUNCH "$@"
+$LAUNCH "$@"
+

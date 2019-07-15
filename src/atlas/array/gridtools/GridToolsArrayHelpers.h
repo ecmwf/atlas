@@ -119,7 +119,7 @@ struct get_stride_component {
 
         template <typename StorageInfoPtr>
         ATLAS_HOST_DEVICE constexpr static Value apply( StorageInfoPtr a ) {
-            static_assert( (::gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value ),
+            static_assert( ( ::gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value ),
                            "Error: not a storage_info" );
             return a->template stride<Idx>();
         }
@@ -135,7 +135,7 @@ struct get_shape_component {
 
         template <typename StorageInfoPtr>
         ATLAS_HOST_DEVICE constexpr static Value apply( StorageInfoPtr a ) {
-            static_assert( (::gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value ),
+            static_assert( ( ::gridtools::is_storage_info<typename std::remove_pointer<StorageInfoPtr>::type>::value ),
                            "Error: not a storage_info" );
             return a->template total_length<Idx>();
         }
@@ -165,7 +165,9 @@ typename gt_storage_t<Value, LayoutMap, get_pack_size<UInts...>::type::value>::t
     typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
     data_store_t* ds;
-    if (::gridtools::accumulate(::gridtools::multiplies(), dims... ) == 0 ) { ds = new data_store_t(); }
+    if ( ::gridtools::accumulate( ::gridtools::multiplies(), dims... ) == 0 ) {
+        ds = new data_store_t();
+    }
     else {
         storage_info_ty si( dims... );
         ds = new data_store_t( si );
@@ -201,7 +203,7 @@ constexpr idx_t zero( idx_t ) {
 }
 
 template <idx_t... Is>
-ArrayStrides make_null_strides(::gridtools::gt_integer_sequence<idx_t, Is...> ) {
+ArrayStrides make_null_strides( ::gridtools::gt_integer_sequence<idx_t, Is...> ) {
     return make_strides( zero( Is )... );
 }
 
@@ -232,7 +234,7 @@ struct my_apply_gt_integer_sequence<::gridtools::gt_integer_sequence<UInt, Indic
 
 template <typename DataStore, typename... Dims>
 ArraySpec ATLAS_HOST make_spec( DataStore* gt_data_store_ptr, Dims... dims ) {
-    static_assert( (::gridtools::is_data_store<DataStore>::value ), "Internal Error: passing a non GT data store" );
+    static_assert( ( ::gridtools::is_data_store<DataStore>::value ), "Internal Error: passing a non GT data store" );
 
     if ( gt_data_store_ptr->valid() ) {
         auto storage_info_ptr = gt_data_store_ptr->get_storage_info_ptr().get();
@@ -251,7 +253,7 @@ ArraySpec ATLAS_HOST make_spec( DataStore* gt_data_store_ptr, Dims... dims ) {
     }
     else {
         return ArraySpec( make_shape( {dims...} ),
-                          make_null_strides(::gridtools::make_gt_integer_sequence<idx_t, sizeof...( dims )>() ) );
+                          make_null_strides( ::gridtools::make_gt_integer_sequence<idx_t, sizeof...( dims )>() ) );
     }
 }
 #endif

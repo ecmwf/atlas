@@ -38,7 +38,8 @@ public:
     template <typename ValueT>
     ValueT get( const std::string& name ) const {
         ValueT value;
-        if ( not eckit::LocalConfiguration::get( name, value ) ) throw_not_found( name );
+        if ( not eckit::LocalConfiguration::get( name, value ) )
+            throw_not_found( name );
         return value;
     }
 

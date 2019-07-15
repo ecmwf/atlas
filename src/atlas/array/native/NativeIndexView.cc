@@ -29,8 +29,9 @@ template <typename Value, int Rank>
 void IndexView<Value, Rank>::dump( std::ostream& os ) const {
     os << "size: " << size() << " , values: ";
     os << "[ ";
-    for ( idx_t j = 0; j < size(); ++j )
+    for ( idx_t j = 0; j < size(); ++j ) {
         os << ( *this )( j ) << " ";
+    }
     os << "]" << std::endl;
 }
 

@@ -34,8 +34,12 @@ struct IsGhostPoint {
     }
 
     bool operator()( idx_t idx ) {
-        if ( part_[idx] != mypart_ ) return true;
-        if ( ridx_[idx] != base_ + idx ) return true;
+        if ( part_[idx] != mypart_ ) {
+            return true;
+        }
+        if ( ridx_[idx] != base_ + idx ) {
+            return true;
+        }
         return false;
     }
     int mypart_;
@@ -153,7 +157,9 @@ void GatherScatter::setup( const int part[], const idx_t remote_idx[], const int
         idx_t jproc                             = node.p;
         glbmap_[glbdispls_[jproc] + idx[jproc]] = n++;
 
-        if ( jproc == myproc ) locmap_[idx[jproc]] = node.i;
+        if ( jproc == myproc ) {
+            locmap_[idx[jproc]] = node.i;
+        }
 
         ++idx[jproc];
     }

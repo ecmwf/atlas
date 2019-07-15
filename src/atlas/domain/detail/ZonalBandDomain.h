@@ -23,7 +23,7 @@ class ZonalBandDomain;
 namespace atlas {
 namespace domain {
 
-class ZonalBandDomain : public atlas::domain::RectangularDomain {
+class ZonalBandDomain : public atlas::domain::RectangularLonLatDomain {
 protected:
     static constexpr char units_[] = "degrees";
 

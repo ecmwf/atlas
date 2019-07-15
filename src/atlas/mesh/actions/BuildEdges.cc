@@ -38,8 +38,8 @@
 
 using atlas::mesh::detail::accumulate_facets_ordered_by_halo;
 using Topology = atlas::mesh::Nodes::Topology;
-using atlas::util::UniqueLonLat;
 using atlas::util::microdeg;
+using atlas::util::UniqueLonLat;
 
 namespace atlas {
 namespace mesh {
@@ -87,8 +87,9 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
     {
         UniqueLonLat compute_uid( mesh );
 
-        for ( idx_t jedge = 0; jedge < nb_edges; ++jedge )
+        for ( idx_t jedge = 0; jedge < nb_edges; ++jedge ) {
             edge_sort.emplace_back( Sort( compute_uid( edge_node_connectivity.row( jedge ) ), jedge ) );
+        }
 
         std::sort( edge_sort.data(), edge_sort.data() + nb_edges );
     }
@@ -129,7 +130,9 @@ void build_element_to_edge_connectivity( Mesh& mesh ) {
     };
 
     for ( idx_t jcell = 0; jcell < mesh.cells().size(); ++jcell ) {
-        if ( patch( jcell ) ) continue;
+        if ( patch( jcell ) ) {
+            continue;
+        }
         for ( idx_t jcol = 0; jcol < cell_edge_connectivity.cols( jcell ); ++jcol ) {
             if ( cell_edge_connectivity( jcell, jcol ) == cell_edge_connectivity.missing_value() ) {
                 const array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( mesh.nodes().global_index() );
@@ -164,13 +167,15 @@ void build_node_to_edge_connectivity( Mesh& mesh ) {
 
     node_to_edge.add( nodes.size(), to_edge_size.data() );
 
-    for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode )
+    for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
         to_edge_size[jnode] = 0;
+    }
 
     UniqueLonLat compute_uid( mesh );
     std::vector<Sort> edge_sort( nb_edges );
-    for ( idx_t jedge = 0; jedge < nb_edges; ++jedge )
+    for ( idx_t jedge = 0; jedge < nb_edges; ++jedge ) {
         edge_sort[jedge] = Sort( compute_uid( edge_node_connectivity.row( jedge ) ), jedge );
+    }
     std::stable_sort( edge_sort.data(), edge_sort.data() + nb_edges );
 
     for ( idx_t jedge = 0; jedge < nb_edges; ++jedge ) {
@@ -225,7 +230,9 @@ public:
 
         // Collect all nodes closest to poles
         for ( idx_t node = 0; node < nb_nodes; ++node ) {
-            if ( std::abs( xy( node, YY ) - max[YY] ) < tol ) { pole_nodes[NORTH].insert( node ); }
+            if ( std::abs( xy( node, YY ) - max[YY] ) < tol ) {
+                pole_nodes[NORTH].insert( node );
+            }
             else if ( std::abs( xy( node, YY ) - min[YY] ) < tol ) {
                 pole_nodes[SOUTH].insert( node );
             }
@@ -237,8 +244,9 @@ public:
                 int npart = -1;
                 for ( std::set<int>::iterator it = pole_nodes[NS].begin(); it != pole_nodes[NS].end(); ++it ) {
                     int node = *it;
-                    if ( npart == -1 )
+                    if ( npart == -1 ) {
                         npart = part( node );
+                    }
                     else if ( part( node ) != npart ) {
                         // Not implemented yet, when pole-lattitude is split.
                         std::stringstream msg;
@@ -310,7 +318,9 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
     // Collect all nodes closest to poles
     std::vector<std::set<int>> pole_nodes( 2 );
     for ( idx_t node = 0; node < nb_nodes; ++node ) {
-        if ( std::abs( xy( node, YY ) - max[YY] ) < tol ) { pole_nodes[NORTH].insert( node ); }
+        if ( std::abs( xy( node, YY ) - max[YY] ) < tol ) {
+            pole_nodes[NORTH].insert( node );
+        }
         else if ( std::abs( xy( node, YY ) - min[YY] ) < tol ) {
             pole_nodes[SOUTH].insert( node );
         }
@@ -322,8 +332,9 @@ void accumulate_pole_edges( mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_no
             int npart = -1;
             for ( std::set<int>::iterator it = pole_nodes[NS].begin(); it != pole_nodes[NS].end(); ++it ) {
                 int node = *it;
-                if ( npart == -1 )
+                if ( npart == -1 ) {
                     npart = part( node );
+                }
                 else if ( part( node ) != npart ) {
                     // Not implemented yet, when pole-lattitude is split.
                     std::stringstream msg;
@@ -372,10 +383,12 @@ struct ComputeUniquePoleEdgeIndex {
         }
         centroid[XX] /= 2.;
         centroid[YY] /= 2.;
-        if ( centroid[YY] > 0 )
+        if ( centroid[YY] > 0 ) {
             centroid[YY] = 90.;
-        else
+        }
+        else {
             centroid[YY] = -90.;
+        }
         /// FIXME make this into `util::unique_lonlat(centroid)` but this causes
         /// weird parallel behavior
         return util::detail::unique32( microdeg( centroid[XX] ), microdeg( centroid[YY] ) );
@@ -404,7 +417,9 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
 
     bool pole_edges{false};
     if ( StructuredGrid grid = mesh.grid() ) {
-        if ( Domain domain = grid.domain() ) { pole_edges = domain.global(); }
+        if ( Domain domain = grid.domain() ) {
+            pole_edges = domain.global();
+        }
     }
     config.get( "pole_edges", pole_edges );
 
@@ -431,7 +446,9 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
                                        nb_inner_edges, missing_value, edge_halo_offsets );
 
     std::shared_ptr<AccumulatePoleEdges> pole_edge_accumulator;
-    if ( pole_edges ) { pole_edge_accumulator = std::make_shared<AccumulatePoleEdges>( nodes ); }
+    if ( pole_edges ) {
+        pole_edge_accumulator = std::make_shared<AccumulatePoleEdges>( nodes );
+    }
 
     for ( int halo = 0; halo <= mesh_halo; ++halo ) {
         edge_start = edge_end;
@@ -558,12 +575,16 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
         int nb_edges = mesh.edges().size();
         for ( int jedge = 0; jedge < nb_edges; ++jedge ) {
             nb_edges_including_halo[edge_halo( jedge )] = jedge + 1;
-            if ( jedge > 0 ) ATLAS_ASSERT( edge_halo( jedge ) >= edge_halo( jedge - 1 ) );
+            if ( jedge > 0 ) {
+                ATLAS_ASSERT( edge_halo( jedge ) >= edge_halo( jedge - 1 ) );
+            }
         }
     }
 
     for ( int i = 0; i <= max_halo; ++i ) {
-        if ( i > 0 ) ATLAS_ASSERT( nb_edges_including_halo[i] > nb_edges_including_halo[i - 1] );
+        if ( i > 0 ) {
+            ATLAS_ASSERT( nb_edges_including_halo[i] > nb_edges_including_halo[i - 1] );
+        }
         std::stringstream ss;
         ss << "nb_edges_including_halo[" << i << "]";
         mesh.metadata().set( ss.str(), nb_edges_including_halo[i] );

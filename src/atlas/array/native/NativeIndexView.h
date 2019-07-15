@@ -172,7 +172,9 @@ private:
 
     template <int Dim, typename Int, typename... Ints>
     void check_bounds_part( Int idx, Ints... next_idx ) const {
-        if ( idx_t( idx ) >= shape_[Dim] ) { throw_OutOfRange( "IndexView", array_dim<Dim>(), idx, shape_[Dim] ); }
+        if ( idx_t( idx ) >= shape_[Dim] ) {
+            throw_OutOfRange( "IndexView", array_dim<Dim>(), idx, shape_[Dim] );
+        }
         check_bounds_part<Dim + 1>( next_idx... );
     }
 

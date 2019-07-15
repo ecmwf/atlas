@@ -69,8 +69,9 @@ void Version::run() {
                     << std::endl;
         return;
     }
-    else
+    else {
         Log::info() << "usage: atlas [--help] [--version] [--git] [--info]" << std::endl;
+    }
 }
 
 }  // namespace atlas

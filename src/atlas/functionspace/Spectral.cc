@@ -42,21 +42,20 @@ namespace atlas {
 namespace functionspace {
 namespace detail {
 
-
 #if ATLAS_HAVE_TRANS
 class Spectral::Parallelisation {
 public:
     Parallelisation( const std::shared_ptr<::Trans_t> other ) : trans_( other ) {}
 
     Parallelisation( int truncation ) {
-        trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, [](::Trans_t* p ) {
-            TRANS_CHECK(::trans_delete( p ) );
+        trans_ = std::shared_ptr<::Trans_t>( new ::Trans_t, []( ::Trans_t* p ) {
+            TRANS_CHECK( ::trans_delete( p ) );
             delete p;
         } );
-        TRANS_CHECK(::trans_new( trans_.get() ) );
-        TRANS_CHECK(::trans_set_trunc( trans_.get(), truncation ) );
-        TRANS_CHECK(::trans_use_mpi( mpi::comm().size() > 1 ) );
-        TRANS_CHECK(::trans_setup( trans_.get() ) );
+        TRANS_CHECK( ::trans_new( trans_.get() ) );
+        TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
+        TRANS_CHECK( ::trans_use_mpi( mpi::comm().size() > 1 ) );
+        TRANS_CHECK( ::trans_setup( trans_.get() ) );
     }
 
     int nb_spectral_coefficients_global() const { return trans_->nspec2g; }
@@ -65,17 +64,20 @@ public:
     int nump() const { return trans_->nump; }
 
     array::LocalView<int, 1, array::Intent::ReadOnly> nvalue() const {
-        if ( trans_->nvalue == nullptr ) ::trans_inquire( trans_.get(), "nvalue" );
+        if ( trans_->nvalue == nullptr )
+            ::trans_inquire( trans_.get(), "nvalue" );
         return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nvalue, array::make_shape( trans_->nspec2 ) );
     }
 
     array::LocalView<int, 1, array::Intent::ReadOnly> nmyms() const {
-        if ( trans_->nmyms == nullptr ) ::trans_inquire( trans_.get(), "nmyms" );
+        if ( trans_->nmyms == nullptr )
+            ::trans_inquire( trans_.get(), "nmyms" );
         return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nmyms, array::make_shape( nump() ) );
     }
 
     array::LocalView<int, 1, array::Intent::ReadOnly> nasm0() const {
-        if ( trans_->nasm0 == nullptr ) ::trans_inquire( trans_.get(), "nasm0" );
+        if ( trans_->nasm0 == nullptr )
+            ::trans_inquire( trans_.get(), "nasm0" );
         return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nasm0,
                                                                   array::make_shape( trans_->nsmax + 1 ) );
     }
@@ -175,11 +177,15 @@ Spectral::Spectral( const int truncation, const eckit::Configuration& config ) :
 Spectral::Spectral( const trans::Trans& trans, const eckit::Configuration& config ) :
     nb_levels_( 0 ),
     truncation_( trans.truncation() ),
+    parallelisation_( [&trans, this]() -> Parallelisation* {
 #if ATLAS_HAVE_TRANS
-    parallelisation_( new Parallelisation( dynamic_cast<const trans::TransIFS&>( *trans.get() ).trans_ ) ) {
-#else
-    parallelisation_( new Parallelisation( truncation_ ) ) {
+        const auto* trans_ifs = dynamic_cast<const trans::TransIFS*>( trans.get() );
+        if ( trans_ifs ) {
+            return new Parallelisation( trans_ifs->trans_ );
+        }
 #endif
+        return new Parallelisation( truncation_ );
+    }() ) {
     config.get( "levels", nb_levels_ );
 }
 
@@ -205,7 +211,9 @@ idx_t Spectral::nb_spectral_coefficients_global() const {
 
 array::DataType Spectral::config_datatype( const eckit::Configuration& config ) const {
     array::DataType::kind_t kind;
-    if ( !config.get( "datatype", kind ) ) throw_Exception( "datatype missing", Here() );
+    if ( !config.get( "datatype", kind ) ) {
+        throw_Exception( "datatype missing", Here() );
+    }
     return array::DataType( kind );
 }
 
@@ -228,7 +236,9 @@ Field Spectral::createField( const eckit::Configuration& options ) const {
     array_shape.push_back( nb_spec_coeffs );
 
     idx_t levels = config_levels( options );
-    if ( levels ) array_shape.push_back( levels );
+    if ( levels ) {
+        array_shape.push_back( levels );
+    }
 
     Field field = Field( config_name( options ), config_datatype( options ), array_shape );
 
@@ -258,7 +268,8 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
         idx_t rank = static_cast<idx_t>( mpi::comm().rank() );
         glb.metadata().get( "owner", root );
         ATLAS_ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
-        if ( rank == root ) ATLAS_ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
+        if ( rank == root )
+            ATLAS_ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
         std::vector<int> nto( 1, root + 1 );
         if ( loc.rank() > 1 ) {
             nto.resize( loc.stride( 0 ) );
@@ -266,12 +277,17 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
                 nto[i] = root + 1;
         }
 
+        if ( not loc.contiguous() ) {
+            throw_Exception( "Cannot gather field " + loc.name() +
+                             " using IFS trans library as its data is not contiguous" );
+        }
+
         struct ::GathSpec_t args = new_gathspec( *parallelisation_ );
         args.nfld                = nto.size();
         args.rspecg              = glb.data<double>();
         args.nto                 = nto.data();
         args.rspec               = loc.data<double>();
-        TRANS_CHECK(::trans_gathspec( &args ) );
+        TRANS_CHECK( ::trans_gathspec( &args ) );
 #else
 
         throw_Exception(
@@ -307,7 +323,8 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
 
         glb.metadata().get( "owner", root );
         ATLAS_ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
-        if ( rank == root ) ATLAS_ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
+        if ( rank == root )
+            ATLAS_ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
         std::vector<int> nfrom( 1, root + 1 );
         if ( loc.rank() > 1 ) {
             nfrom.resize( loc.stride( 0 ) );
@@ -315,12 +332,17 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
                 nfrom[i] = root + 1;
         }
 
+        if ( not loc.contiguous() ) {
+            throw_Exception( "Cannot scatter field " + glb.name() +
+                             " using IFS trans library as its data is not contiguous" );
+        }
+
         struct ::DistSpec_t args = new_distspec( *parallelisation_ );
         args.nfld                = int( nfrom.size() );
         args.rspecg              = glb.data<double>();
         args.nfrom               = nfrom.data();
         args.rspec               = loc.data<double>();
-        TRANS_CHECK(::trans_distspec( &args ) );
+        TRANS_CHECK( ::trans_distspec( &args ) );
 
         glb.metadata().broadcast( loc.metadata(), root );
         loc.metadata().set( "global", false );
@@ -358,7 +380,7 @@ void Spectral::norm( const Field& field, double& norm, int rank ) const {
     args.rspec               = field.data<double>();
     args.rnorm               = &norm;
     args.nmaster             = rank + 1;
-    TRANS_CHECK(::trans_specnorm( &args ) );
+    TRANS_CHECK( ::trans_specnorm( &args ) );
 #else
     throw_Exception(
         "Cannot compute spectral norms because Atlas has not "
@@ -367,12 +389,16 @@ void Spectral::norm( const Field& field, double& norm, int rank ) const {
 }
 void Spectral::norm( const Field& field, double norm_per_level[], int rank ) const {
 #if ATLAS_HAVE_TRANS
+    if ( not field.contiguous() ) {
+        throw_Exception( "Cannot compute spectral norm of field " + field.name() +
+                         " using IFS trans library as its data is not contiguous" );
+    }
     struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
     args.nfld                = std::max<int>( 1, field.levels() );
     args.rspec               = field.data<double>();
     args.rnorm               = norm_per_level;
     args.nmaster             = rank + 1;
-    TRANS_CHECK(::trans_specnorm( &args ) );
+    TRANS_CHECK( ::trans_specnorm( &args ) );
 #else
     throw_Exception(
         "Cannot compute spectral norms because Atlas has not "
@@ -407,6 +433,8 @@ array::LocalView<int, 1, array::Intent::ReadOnly> Spectral::nasm0() const {
 }  // namespace detail
 
 // ----------------------------------------------------------------------
+
+Spectral::Spectral() : FunctionSpace(), functionspace_{nullptr} {}
 
 Spectral::Spectral( const FunctionSpace& functionspace ) :
     FunctionSpace( functionspace ),

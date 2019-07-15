@@ -135,8 +135,9 @@ Partitioner* PartitionerFactory::build( const std::string& name ) {
     if ( j == m->end() ) {
         Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
         Log::error() << "PartitionerFactories are:" << '\n';
-        for ( j = m->begin(); j != m->end(); ++j )
+        for ( j = m->begin(); j != m->end(); ++j ) {
             Log::error() << "   " << ( *j ).first << '\n';
+        }
         throw_Exception( std::string( "No PartitionerFactory called " ) + name );
     }
 
@@ -157,8 +158,9 @@ Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_
     if ( j == m->end() ) {
         Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
         Log::error() << "PartitionerFactories are:" << '\n';
-        for ( j = m->begin(); j != m->end(); ++j )
+        for ( j = m->begin(); j != m->end(); ++j ) {
             Log::error() << "   " << ( *j ).first << '\n';
+        }
         throw_Exception( std::string( "No PartitionerFactory called " ) + name );
     }
 

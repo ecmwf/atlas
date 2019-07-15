@@ -24,20 +24,26 @@ namespace field {
 
 FieldImpl* FieldCreatorArraySpec::createField( const eckit::Parametrisation& params ) const {
     std::vector<long> shape;
-    if ( !params.get( "shape", shape ) ) throw_Exception( "Could not find parameter 'shape' in Parametrisation" );
+    if ( !params.get( "shape", shape ) ) {
+        throw_Exception( "Could not find parameter 'shape' in Parametrisation" );
+    }
 
     std::vector<idx_t> s( shape.size() );
 
     bool fortran( false );
     params.get( "fortran", fortran );
-    if ( fortran )
+    if ( fortran ) {
         std::reverse_copy( shape.begin(), shape.end(), s.begin() );
-    else
+    }
+    else {
         s.assign( shape.begin(), shape.end() );
+    }
 
     array::DataType datatype = array::DataType::create<double>();
     std::string datatype_str;
-    if ( params.get( "datatype", datatype_str ) ) { datatype = array::DataType( datatype_str ); }
+    if ( params.get( "datatype", datatype_str ) ) {
+        datatype = array::DataType( datatype_str );
+    }
     else {
         array::DataType::kind_t kind( array::DataType::kind<double>() );
         params.get( "kind", kind );

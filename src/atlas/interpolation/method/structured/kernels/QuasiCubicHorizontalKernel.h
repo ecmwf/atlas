@@ -166,7 +166,9 @@ public:
             }
         }
 
-        if ( limiter_ ) { limit( output, index, input ); }
+        if ( limiter_ ) {
+            limit( output, index, input );
+        }
         return output;
     }
 
@@ -190,7 +192,9 @@ public:
                 minval     = std::min( minval, val );
             }
         }
-        if ( output < minval ) { output = minval; }
+        if ( output < minval ) {
+            output = minval;
+        }
         else if ( output > maxval ) {
             output = maxval;
         }
@@ -227,7 +231,9 @@ public:
             }
         }
 
-        if ( limiter_ ) { limit( index, input, output, r ); }
+        if ( limiter_ ) {
+            limit( index, input, output, r );
+        }
     }
 
     template <typename Value, int Rank>
@@ -250,7 +256,9 @@ public:
                 minval    = std::min( minval, val );
             }
         }
-        if ( output( r ) < minval ) { output( r ) = minval; }
+        if ( output( r ) < minval ) {
+            output( r ) = minval;
+        }
         else if ( output( r ) > maxval ) {
             output( r ) = maxval;
         }
@@ -293,7 +301,9 @@ public:
             }
         }
 
-        if ( limiter_ ) { limit( index, input, output, r ); }
+        if ( limiter_ ) {
+            limit( index, input, output, r );
+        }
     }
 
     template <typename Value, int Rank>
@@ -317,7 +327,9 @@ public:
                     minval    = std::min( minval, val );
                 }
             }
-            if ( output( r, k ) < minval ) { output( r, k ) = minval; }
+            if ( output( r, k ) < minval ) {
+                output( r, k ) = minval;
+            }
             else if ( output( r, k ) > maxval ) {
                 output( r, k ) = maxval;
             }

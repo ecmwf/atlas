@@ -11,6 +11,9 @@
 #include <algorithm>
 #include <limits>
 
+#include "eckit/io/Buffer.h"
+#include "eckit/serialisation/Stream.h"
+
 #include "atlas/array.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
@@ -18,6 +21,8 @@
 #include "atlas/library/config.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/runtime/Exception.h"
+
+#include "atlas/runtime/Log.h"
 
 #if ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
@@ -90,6 +95,10 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( const IrregularConnectivit
     mincols_( other.mincols_ ),
     ctxt_( nullptr ) {}
 
+IrregularConnectivityImpl::IrregularConnectivityImpl( eckit::Stream& s ) {
+    decode_( s );
+}
+
 //------------------------------------------------------------------------------------------------------
 
 IrregularConnectivityImpl::~IrregularConnectivityImpl() {
@@ -124,13 +133,17 @@ void IrregularConnectivityImpl::clear() {
 //------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivityImpl::on_delete() {
-    if ( ctxt_ && callback_delete_ ) callback_delete_( ctxt_ );
+    if ( ctxt_ && callback_delete_ ) {
+        callback_delete_( ctxt_ );
+    }
 }
 
 //------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivityImpl::on_update() {
-    if ( ctxt_ && callback_update_ ) callback_update_( ctxt_ );
+    if ( ctxt_ && callback_update_ ) {
+        callback_update_( ctxt_ );
+    }
 }
 
 void IrregularConnectivityImpl::resize( idx_t old_size, idx_t new_size, bool initialize, const idx_t values[],
@@ -155,7 +168,9 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[
     ATLAS_ASSERT( owns_, "Connectivity must be owned to be resized directly" );
     idx_t old_size = values_.size();
 
-    if ( rows_ == 0 ) old_size = 0;
+    if ( rows_ == 0 ) {
+        old_size = 0;
+    }
 
     idx_t new_size = old_size + rows * cols;
     idx_t new_rows = rows_ + rows;
@@ -164,7 +179,7 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[
     //    ATLAS_ASSERT( displs_] != nullptr );
     //    ATLAS_ASSERT( data_[_counts_] != nullptr );
     displs_.resize( new_rows + 1 );
-    counts_.resize( new_rows + 1 );
+    counts_.resize( new_rows );
 
     for ( idx_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
         displs_[rows_ + 1] = displs_[rows_] + cols;
@@ -197,11 +212,12 @@ void IrregularConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
     ATLAS_ASSERT( owns_, "Connectivity must be owned to be resized directly" );
     idx_t old_size = values_.size();
     idx_t new_size = old_size;
-    for ( idx_t j = 0; j < rows; ++j )
+    for ( idx_t j = 0; j < rows; ++j ) {
         new_size += cols[j];
+    }
     idx_t new_rows = rows_ + rows;
     displs_.resize( new_rows + 1 );
-    counts_.resize( new_rows + 1 );
+    counts_.resize( new_rows );
 
     for ( idx_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
         displs_[rows_ + 1] = displs_[rows_] + cols[j];
@@ -221,7 +237,9 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols ) {
     ATLAS_ASSERT( owns_, "Connectivity must be owned to be resized directly" );
     idx_t old_size = values_.size();
 
-    if ( rows_ == 0 ) old_size = 0;
+    if ( rows_ == 0 ) {
+        old_size = 0;
+    }
 
     idx_t new_size = old_size + rows * cols;
     idx_t new_rows = rows_ + rows;
@@ -230,7 +248,7 @@ void IrregularConnectivityImpl::add( idx_t rows, idx_t cols ) {
     //    ATLAS_ASSERT( data_[_displs_] != nullptr );
     //    ATLAS_ASSERT( data_[_counts_] != nullptr );
     displs_.resize( new_rows + 1 );
-    counts_.resize( new_rows + 1 );
+    counts_.resize( new_rows );
 
     for ( idx_t j = 0; rows_ < new_rows; ++rows_, ++j ) {
         displs_[rows_ + 1] = displs_[rows_] + cols;
@@ -318,8 +336,9 @@ void IrregularConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t 
     }
 
     idx_t insert_size( 0 );
-    for ( idx_t j = 0; j < rows; ++j )
+    for ( idx_t j = 0; j < rows; ++j ) {
         insert_size += cols[j];
+    }
 
     values_.insert( position_displs, insert_size );
 
@@ -341,6 +360,57 @@ size_t IrregularConnectivityImpl::footprint() const {
 
 void IrregularConnectivityImpl::dump( std::ostream& os ) const {
     //TODO dump
+}
+
+eckit::Stream& operator>>( eckit::Stream& s, array::SVector<idx_t>& x ) {
+    size_t size;
+    s >> size;
+    eckit::Buffer buffer( size * sizeof( idx_t ) );
+    s >> buffer;
+    idx_t* data = static_cast<idx_t*>( buffer.data() );
+    idx_t N     = static_cast<idx_t>( size );
+    x.resize( N );
+    for ( idx_t i = 0; i < N; ++i ) {
+        x( i ) = data[i];
+    }
+    return s;
+}
+
+eckit::Stream& operator<<( eckit::Stream& s, const array::SVector<idx_t>& x ) {
+    size_t size = x.size();
+    s << size;
+    eckit::Buffer buffer( reinterpret_cast<const char*>( x.data() ), size * sizeof( idx_t ) );
+    s << buffer;
+    return s;
+}
+
+void IrregularConnectivityImpl::encode_( eckit::Stream& s ) const {
+    s << name();
+    s << values_;
+    s << displs_;
+    s << counts_;
+    s << missing_value_;
+    s << rows_;
+    s << maxcols_;
+    s << mincols_;
+}
+
+
+void IrregularConnectivityImpl::decode_( eckit::Stream& s ) {
+    std::string name;
+    s >> name;
+    s >> values_;
+    s >> displs_;
+    s >> counts_;
+    s >> missing_value_;
+    s >> rows_;
+    s >> maxcols_;
+    s >> mincols_;
+    if ( not name.empty() ) {
+        rename( name );
+    }
+    ctxt_ = nullptr;
+    owns_ = true;
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -374,6 +444,10 @@ MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( const std::string& name 
     block_cols_( 1 ),
     block_( 0 ) {
     block_displs_( 0 ) = 0;
+}
+
+MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( eckit::Stream& s ) : IrregularConnectivityImpl( s ) {
+    decode_( s );
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -475,8 +549,9 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols,
     ATLAS_ASSERT( blk_idx >= 0l );
     ATLAS_ASSERT( cols == block( blk_idx ).cols() );
 
-    for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk )
+    for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk ) {
         block_displs_[jblk + 1] += rows;
+    }
 
     IrregularConnectivityImpl::insert( position, rows, cols, values, fortran_array );
     rebuild_block_connectivity();
@@ -496,8 +571,9 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols 
 
     IrregularConnectivityImpl::insert( position, rows, cols );
 
-    for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk )
+    for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk ) {
         block_displs_[jblk + 1] += rows;
+    }
     rebuild_block_connectivity();
 }
 
@@ -525,15 +601,16 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t
 
     IrregularConnectivityImpl::insert( position, rows, cols );
 
-    for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk )
+    for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk ) {
         block_displs_[jblk + 1] += rows;
+    }
     rebuild_block_connectivity();
 }
 
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::rebuild_block_connectivity() {
-    block_.resize( blocks_, std::move( BlockConnectivityImpl() ) );
+    block_.resize( blocks_, BlockConnectivityImpl() );
 
     for ( idx_t b = 0; b < blocks_; ++b ) {
         block_[b].rebuild( block_displs_[b + 1] - block_displs_[b],  // rows
@@ -553,6 +630,23 @@ size_t MultiBlockConnectivityImpl::footprint() const {
         size += block_[j].footprint();
     }
     return size;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void MultiBlockConnectivityImpl::encode_( eckit::Stream& s ) const {
+    s << blocks_;
+    s << block_displs_;
+    s << block_cols_;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void MultiBlockConnectivityImpl::decode_( eckit::Stream& s ) {
+    s >> blocks_;
+    s >> block_displs_;
+    s >> block_cols_;
+    rebuild_block_connectivity();
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -599,6 +693,10 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t valu
             }
         }
     }
+}
+
+BlockConnectivityImpl::BlockConnectivityImpl( eckit::Stream& s ) {
+    decode( s );
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -648,11 +746,28 @@ void BlockConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values[], b
     }
 }
 
+void BlockConnectivityImpl::encode( eckit::Stream& s ) const {
+    s << values_;
+    s << rows_;
+    s << cols_;
+    s << missing_value_;
+}
+
+void BlockConnectivityImpl::decode( eckit::Stream& s ) {
+    owns_ = true;
+    s >> values_;
+    s >> rows_;
+    s >> cols_;
+    s >> missing_value_;
+}
+
 //------------------------------------------------------------------------------------------------------
 
 size_t BlockConnectivityImpl::footprint() const {
     size_t size = sizeof( *this );
-    if ( owns() ) size += values_.footprint();
+    if ( owns() ) {
+        size += values_.footprint();
+    }
     return size;
 }
 

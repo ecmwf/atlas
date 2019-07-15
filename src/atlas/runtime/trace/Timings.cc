@@ -116,8 +116,9 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
     auto box_horizontal = []( int n ) {
         std::string s;
         s.reserve( 2 * n );
-        for ( int i = 0; i < n; ++i )
+        for ( int i = 0; i < n; ++i ) {
             s += "\u2500";
+        }
         return s;
     };
     std::string box_corner_tl( "\u250c" );
@@ -166,15 +167,21 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
     std::set<size_t> excluded_timers( excluded_timers_vector.begin(), excluded_timers_vector.end() );
 
     auto excluded = [&]( size_t i ) -> bool {
-        if ( depth and nest_[i] > depth ) return true;
+        if ( depth and nest_[i] > depth ) {
+            return true;
+        }
         return excluded_timers.count( i );
     };
 
     std::vector<long> excluded_nest_stored( size() );
     long excluded_nest = size();
     for ( size_t j = 0; j < size(); ++j ) {
-        if ( nest_[j] > excluded_nest ) { excluded_timers.insert( j ); }
-        if ( not excluded( j ) ) { excluded_nest = nest_[j] + 1; }
+        if ( nest_[j] > excluded_nest ) {
+            excluded_timers.insert( j );
+        }
+        if ( not excluded( j ) ) {
+            excluded_nest = nest_[j] + 1;
+        }
         else {
             excluded_nest = std::min( excluded_nest, nest_[j] );
         }
@@ -183,7 +190,9 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
     for ( auto& label : include_back ) {
         auto timers = labels_[label];
         for ( size_t j : timers ) {
-            if ( nest_[j] == excluded_nest_stored[j] ) excluded_timers.erase( j );
+            if ( nest_[j] == excluded_nest_stored[j] ) {
+                excluded_timers.erase( j );
+            }
         }
     }
 
@@ -205,7 +214,9 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
         }
     }
     size_t max_count_length = digits( max_count );
-    if ( header ) { max_count_length = std::max( std::string( "cnt" ).size(), max_count_length ); }
+    if ( header ) {
+        max_count_length = std::max( std::string( "cnt" ).size(), max_count_length );
+    }
     size_t max_digits_before_decimal = digits_before_decimal( max_seconds );
 
     auto print_time = [max_digits_before_decimal, decimals]( double x ) -> std::string {
@@ -260,7 +271,9 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
             auto next_it = next_stack.rbegin();
             for ( size_t i = 0; this_it != this_stack.rend() && next_it != next_stack.rend();
                   ++i, ++this_it, ++next_it ) {
-                if ( *this_it == *next_it ) { active[i] = active[i] or false; }
+                if ( *this_it == *next_it ) {
+                    active[i] = active[i] or false;
+                }
                 else {
                     active[i] = true;
                 }
@@ -271,19 +284,25 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
 
             std::stringstream out;
             for ( long i = 0; i < nest - 1; ++i ) {
-                if ( active[i] )
+                if ( active[i] ) {
                     out << box_vertical;
-                else
+                }
+                else {
                     out << " ";
-                for ( long j = 1; j < indent; ++j )
+                }
+                for ( long j = 1; j < indent; ++j ) {
                     out << " ";
+                }
             }
-            if ( active[nest - 1] )
+            if ( active[nest - 1] ) {
                 out << box_T_right;
-            else
+            }
+            else {
                 out << box_corner_bl;
-            for ( long j = 1; j < indent; ++j )
+            }
+            for ( long j = 1; j < indent; ++j ) {
                 out << box_horizontal( 1 );
+            }
 
             prefix_[k] = out.str();
         }

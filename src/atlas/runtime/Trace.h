@@ -79,8 +79,8 @@ public:
 #undef ATLAS_TRACE
 #undef ATLAS_TRACE_SCOPE
 
-#define ATLAS_TRACE( ... ) __ATLAS_TYPE(::atlas::Trace, Here() __ATLAS_COMMA_ARGS( __VA_ARGS__ ) )
-#define ATLAS_TRACE_SCOPE( ... ) __ATLAS_TYPE_SCOPE(::atlas::Trace, Here() __ATLAS_COMMA_ARGS( __VA_ARGS__ ) )
+#define ATLAS_TRACE( ... ) __ATLAS_TYPE( ::atlas::Trace, Here() __ATLAS_COMMA_ARGS( __VA_ARGS__ ) )
+#define ATLAS_TRACE_SCOPE( ... ) __ATLAS_TYPE_SCOPE( ::atlas::Trace, Here() __ATLAS_COMMA_ARGS( __VA_ARGS__ ) )
 
 #endif
 

@@ -127,8 +127,9 @@ const NablaImpl* NablaFactory::build( const Method& method, const eckit::Paramet
     if ( j == m->end() ) {
         Log::error() << "No NablaFactory for [" << method.name() << "]" << '\n';
         Log::error() << "NablaFactories are:" << '\n';
-        for ( j = m->begin(); j != m->end(); ++j )
+        for ( j = m->begin(); j != m->end(); ++j ) {
             Log::error() << "   " << ( *j ).first << '\n';
+        }
         throw_Exception( std::string( "No NablaFactory called " ) + method.name() );
     }
 

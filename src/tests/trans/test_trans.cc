@@ -54,7 +54,8 @@ namespace test {
 
 struct AtlasTransEnvironment : public AtlasTestEnvironment {
     AtlasTransEnvironment( int argc, char* argv[] ) : AtlasTestEnvironment( argc, argv ) {
-        if ( mpi::comm().size() == 1 ) trans_use_mpi( false );
+        if ( mpi::comm().size() == 1 )
+            trans_use_mpi( false );
         trans_init();
     }
 
@@ -63,12 +64,12 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
 
 //-----------------------------------------------------------------------------
 
-void read_rspecg( trans::TransImpl& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int& nfld ) {
+void read_rspecg( const trans::TransImpl& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int& nfld ) {
     Log::info() << "read_rspecg ...\n";
     nfld = 2;
     if ( mpi::comm().rank() == 0 ) {
-        rspecg.resize( nfld * trans.spectralCoefficients() );
-        for ( size_t i = 0; i < trans.spectralCoefficients(); ++i ) {
+        rspecg.resize( nfld * trans.nb_spectral_coefficients_global() );
+        for ( size_t i = 0; i < trans.nb_spectral_coefficients_global(); ++i ) {
             rspecg[i * nfld + 0] = ( i == 0 ? 1. : 0. );  // scalar field 1
             rspecg[i * nfld + 1] = ( i == 0 ? 2. : 0. );  // scalar field 2
         }
@@ -89,6 +90,7 @@ void read_rspecg( Field spec ) {
         int nb_spectral_coefficients_global =
             functionspace::Spectral( spec.functionspace() ).nb_spectral_coefficients_global();
         auto view = array::make_view<double, 2>( spec );
+        ATLAS_ASSERT( view.shape( 0 ) == nb_spectral_coefficients_global );
         ATLAS_ASSERT( view.shape( 1 ) >= 2 );
         for ( int i = 0; i < nb_spectral_coefficients_global; ++i ) {
             view( i, 0 ) = ( i == 0 ? 1. : 0. );  // scalar field 1
@@ -99,6 +101,8 @@ void read_rspecg( Field spec ) {
 }
 
 //-----------------------------------------------------------------------------
+
+#if 1
 
 CASE( "test_trans_distribution_matches_atlas" ) {
     EXPECT( grid::Partitioner::exists( "trans" ) );
@@ -186,6 +190,9 @@ CASE( "test_write_read_cache" ) {
 }
 #endif
 
+#endif
+
+#if 1
 CASE( "test_distspec" ) {
     trans::TransIFS trans( Grid( "F80" ), 159 );
     Log::info() << "Trans initialized" << std::endl;
@@ -207,12 +214,16 @@ CASE( "test_distspec" ) {
     trans.gathgrid( nfld, nto.data(), rgp.data(), rgpg.data() );
 
     if ( mpi::comm().rank() == 0 ) {
+        ATLAS_DEBUG_VAR( specnorms[0] );
+        ATLAS_DEBUG_VAR( specnorms[1] );
         EXPECT( eckit::types::is_approximately_equal( specnorms[0], 1., 1.e-10 ) );
         EXPECT( eckit::types::is_approximately_equal( specnorms[1], 2., 1.e-10 ) );
     }
 
     Log::info() << "end test_distspec" << std::endl;
 }
+
+#endif
 
 CASE( "test_distspec_speconly" ) {
     functionspace::Spectral fs( 159 );
@@ -224,16 +235,30 @@ CASE( "test_distspec_speconly" ) {
 
     Field dist = fs.createField( glb );
 
-    fs.scatter( glb, dist );
-    fs.norm( dist, specnorms );
+    if ( not dist.contiguous() ) {
+        EXPECT_THROWS_AS( fs.scatter( glb, dist ), eckit::Exception );
+        if ( mpi::comm().size() == 1 ) {
+            dist = glb;
+            EXPECT_THROWS_AS( fs.norm( dist, specnorms ), eckit::Exception );
+        }
+        return;
+    }
+    else {
+        EXPECT_NO_THROW( fs.scatter( glb, dist ) );
+        EXPECT_NO_THROW( fs.norm( dist, specnorms ) );
+    }
+
 
     if ( mpi::comm().rank() == 0 ) {
+        ATLAS_DEBUG_VAR( specnorms[0] );
+        ATLAS_DEBUG_VAR( specnorms[1] );
         EXPECT( eckit::types::is_approximately_equal( specnorms[0], 1., 1.e-10 ) );
         EXPECT( eckit::types::is_approximately_equal( specnorms[1], 2., 1.e-10 ) );
     }
     Log::info() << "end test_distspec_only" << std::endl;
 }
 
+#if 1
 CASE( "test_distribution" ) {
     Grid g( "O80" );
 
@@ -334,7 +359,18 @@ CASE( "test_nomesh" ) {
         spg( imag ) = ( n == 0 ? 0 : -m * spectral.truncation() + n );
     } );
 
-    EXPECT_NO_THROW( spectral.scatter( spfg, spf ) );
+    if ( not spf.contiguous() ) {
+        EXPECT_THROWS_AS( spectral.scatter( spfg, spf ), eckit::Exception );
+        if ( mpi::comm().size() == 1 ) {
+            spf = spfg;
+        }
+        else {
+            return;
+        }
+    }
+    else {
+        EXPECT_NO_THROW( spectral.scatter( spfg, spf ) );
+    }
 
     array::ArrayView<double, 1> sp = array::make_view<double, 1>( spf );
 
@@ -362,7 +398,18 @@ CASE( "test_nomesh" ) {
 
     EXPECT_NO_THROW( trans.dirtrans( gpf, spf ) );
 
-    EXPECT_NO_THROW( spectral.gather( spf, spfg ) );
+    if ( not spf.contiguous() ) {
+        EXPECT_THROWS_AS( spectral.gather( spf, spfg ), eckit::Exception );
+        if ( mpi::comm().size() == 1 ) {
+            spfg = spf;
+        }
+        else {
+            return;
+        }
+    }
+    else {
+        EXPECT_NO_THROW( spectral.gather( spf, spfg ) );
+    }
 
     spectral.parallel_for( option::global(), [&]( idx_t real, idx_t imag, int n ) {
         EXPECT( is_approximately_equal( spg( real ), ( n == 0 ? 4. : 0. ), 0.001 ) );
@@ -543,6 +590,7 @@ CASE( "test_trans_VorDivToUV" ) {
         }
     }
 }
+#endif
 
 //-----------------------------------------------------------------------------
 

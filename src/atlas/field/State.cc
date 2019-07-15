@@ -112,8 +112,9 @@ const Field& State::field( const idx_t idx ) const {
         throw_AssertionFailed( msg.str(), Here() );
     }
     FieldMap::const_iterator it = fields_.begin();
-    for ( idx_t i = 0; i < idx; ++i )
+    for ( idx_t i = 0; i < idx; ++i ) {
         ++it;
+    }
     return it->second;
 }
 
@@ -123,7 +124,9 @@ Field& State::field( const idx_t idx ) {
 
 std::vector<std::string> State::field_names() const {
     std::vector<std::string> ret;
-    if ( fields_.size() ) ret.reserve( fields_.size() );
+    if ( fields_.size() ) {
+        ret.reserve( fields_.size() );
+    }
 
     for ( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it ) {
         ret.push_back( it->first );
@@ -160,8 +163,9 @@ StateGenerator* StateGeneratorFactory::build( const std::string& name, const eck
     if ( j == m->end() ) {
         Log::error() << "No StateGeneratorFactory for [" << name << "]" << std::endl;
         Log::error() << "StateFactories are:" << std::endl;
-        for ( j = m->begin(); j != m->end(); ++j )
+        for ( j = m->begin(); j != m->end(); ++j ) {
             Log::error() << "   " << ( *j ).first << std::endl;
+        }
         throw_Exception( std::string( "No StateGeneratorFactory called " ) + name, Here() );
     }
 

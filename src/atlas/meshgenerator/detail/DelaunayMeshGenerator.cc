@@ -74,6 +74,8 @@ void DelaunayMeshGenerator::generate( const Grid& g, Mesh& mesh ) const {
     mesh::actions::ExtendNodesGlobal()( g,
                                         mesh );  ///< does nothing if global domain
     mesh::actions::BuildConvexHull3D()( mesh );
+
+    setGrid( mesh, g, "serial" );
 }
 
 void DelaunayMeshGenerator::createNodes( const Grid& grid, Mesh& mesh ) const {

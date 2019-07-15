@@ -22,6 +22,7 @@ private :: atlas_Config
 private :: c_ptr
 
 public :: atlas_Grid
+public :: atlas_UnstructuredGrid
 public :: atlas_StructuredGrid
 public :: atlas_GaussianGrid
 public :: atlas_ReducedGaussianGrid
@@ -58,6 +59,34 @@ interface atlas_Grid
   module procedure atlas_Grid__ctor_id
   module procedure atlas_Grid__ctor_config
   module procedure atlas_Grid__ctor_cptr
+end interface
+
+!------------------------------------------------------------------------------
+
+TYPE, extends(atlas_Grid) :: atlas_UnstructuredGrid
+
+! Purpose :
+! -------
+!   *atlas_UnstructuredGrid* : Object Grid specifications for Reduced Grids
+
+! Methods :
+! -------
+
+! Author :
+! ------
+!   8-Jun-2019 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_UnstructuredGrid__final_auto
+#endif
+END TYPE atlas_UnstructuredGrid
+
+interface atlas_UnstructuredGrid
+  module procedure atlas_UnstructuredGrid__ctor_points
+  module procedure atlas_UnstructuredGrid__ctor_config
+  module procedure atlas_UnstructuredGrid__ctor_cptr
 end interface
 
 !------------------------------------------------------------------------------
@@ -265,6 +294,14 @@ ATLAS_FINAL subroutine atlas_Grid__final_auto(this)
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
 
+ATLAS_FINAL subroutine atlas_UnstructuredGrid__final_auto(this)
+  type(atlas_UnstructuredGrid), intent(inout) :: this
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
 ATLAS_FINAL subroutine atlas_StructuredGrid__final_auto(this)
   type(atlas_StructuredGrid), intent(inout) :: this
 #if FCKIT_FINAL_NOT_PROPAGATING
@@ -333,6 +370,42 @@ function atlas_Grid__ctor_cptr(cptr) result(this)
   type(atlas_Grid) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )
+  call this%return()
+end function
+
+! -----------------------------------------------------------------------------
+
+function atlas_UnstructuredGrid__ctor_config(config) result(this)
+  use atlas_grid_unstructured_c_binding
+  type(atlas_UnstructuredGrid) :: this
+  type(atlas_Config), intent(in) :: config
+  call this%reset_c_ptr( atlas__grid__Unstructured__config(config%CPTR_PGIBUG_B) )
+  call this%return()
+end function
+
+function atlas_UnstructuredGrid__ctor_cptr(cptr) result(this)
+  use fckit_c_interop_module, only: c_str
+  use atlas_grid_unstructured_c_binding
+  type(atlas_UnstructuredGrid) :: this
+  type(c_ptr), intent(in) :: cptr
+  call this%reset_c_ptr( cptr )
+  call this%return()
+end function
+
+function atlas_UnstructuredGrid__ctor_points( xy ) result(this)
+  use, intrinsic :: iso_c_binding, only : c_double, c_int
+  use fckit_c_interop_module, only : c_str
+  use fckit_array_module, only : array_strides, array_view1d
+  use atlas_grid_unstructured_c_binding
+  type(atlas_UnstructuredGrid) :: this
+  real(c_double), intent(in) :: xy(:,:)
+  integer(c_int) :: shapef(2)
+  integer(c_int) :: stridesf(2)
+  real(c_double), pointer :: xy1d(:)
+  xy1d => array_view1d(xy)
+  shapef = shape(xy)
+  stridesf = array_strides(xy)
+  call this%reset_c_ptr( atlas__grid__Unstructured__points( xy1d, shapef, stridesf ) )
   call this%return()
 end function
 

@@ -24,12 +24,14 @@
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/array.h"
+#include "atlas/field.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/trans/Trans.h"
 #include "atlas/trans/VorDivToUV.h"
 #include "atlas/trans/detail/TransFactory.h"
 #include "atlas/trans/local/LegendrePolynomials.h"
@@ -186,7 +188,9 @@ void alloc_aligned( double*& ptr, size_t n ) {
     const size_t alignment = 64 * sizeof( double );
     size_t bytes           = sizeof( double ) * n;
     int err                = posix_memalign( (void**)&ptr, alignment, bytes );
-    if ( err ) { throw_AllocationFailed( bytes, Here() ); }
+    if ( err ) {
+        throw_AllocationFailed( bytes, Here() );
+    }
 }
 
 void free_aligned( double*& ptr ) {
@@ -301,6 +305,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
     nlatsLegReduced_  = 0;
     bool useGlobalLeg = true;
     bool no_nest      = false;
+
     if ( StructuredGrid( grid_ ) && not grid_.projection() ) {
         StructuredGrid g( grid_ );
         nlats    = g.ny();
@@ -317,7 +322,9 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
             nlatsNH_++;
             nlatsSH_++;
         }
-        if ( nlatsNH_ >= nlatsSH_ ) { nlatsLegDomain_ = nlatsNH_; }
+        if ( nlatsNH_ >= nlatsSH_ ) {
+            nlatsLegDomain_ = nlatsNH_;
+        }
         else {
             nlatsLegDomain_ = nlatsSH_;
         }
@@ -355,11 +362,15 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         jlonMin_[0]  = 0;
         jlatMin_     = 0;
         nlatsGlobal_ = gs_global.ny();
-        if ( grid_.domain().global() ) { Log::debug() << "Global grid with " << nlats << " latitudes." << std::endl; }
+        if ( grid_.domain().global() ) {
+            Log::debug() << "Global grid with " << nlats << " latitudes." << std::endl;
+        }
         else {
             Log::debug() << "Grid has " << nlats << " latitudes. Global grid has " << nlatsGlobal_ << std::endl;
         }
-        if ( useGlobalLeg ) { nlatsLeg_ = ( nlatsGlobal_ + 1 ) / 2; }
+        if ( useGlobalLeg ) {
+            nlatsLeg_ = ( nlatsGlobal_ + 1 ) / 2;
+        }
         else {
             nlatsLeg_        = nlatsLegDomain_;
             nlatsLegReduced_ = nlatsLeg_;
@@ -372,12 +383,18 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         }
         //Log::info() << std::endl;
         int jlatMinLeg_ = jlatMin_;
-        if ( nlatsNH_ < nlatsSH_ ) { jlatMinLeg_ += nlatsNH_ - nlatsSH_; };
+        if ( nlatsNH_ < nlatsSH_ ) {
+            jlatMinLeg_ += nlatsNH_ - nlatsSH_;
+        };
         if ( jlatMin_ >= ( nlatsGlobal_ + 1 ) / 2 ) {
             jlatMinLeg_ -= 2 * ( jlatMin_ - ( nlatsGlobal_ + 1 ) / 2 );
-            if ( nlatsGlobal_ % 2 == 1 ) { jlatMinLeg_--; }
+            if ( nlatsGlobal_ % 2 == 1 ) {
+                jlatMinLeg_--;
+            }
         };
-        if ( useGlobalLeg ) { nlatsLegReduced_ = jlatMinLeg_ + nlatsLegDomain_; }
+        if ( useGlobalLeg ) {
+            nlatsLegReduced_ = jlatMinLeg_ + nlatsLegDomain_;
+        }
 
         // reduce truncation towards the pole for reduced meshes:
         nlat0_.resize( truncation_ + 1 );
@@ -394,7 +411,9 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                                                RegularGrid( gs_global ) );
                 nmen     = std::max( nmen0, nmen );
                 int ndgluj = nlatsLeg_ - std::min( nlatsLeg_, nlatsLeg_ + jlatMinLeg_ - jlat );
-                if ( useGlobalLeg ) { ndgluj = std::max( jlatMinLeg_, jlat ); }
+                if ( useGlobalLeg ) {
+                    ndgluj = std::max( jlatMinLeg_, jlat );
+                }
                 for ( int j = nmen0 + 1; j <= nmen; j++ ) {
                     nlat0_[j] = ndgluj;
                 }
@@ -411,17 +430,23 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         // compute longitudinal location of domain within global grid for using FFT:
         auto wrapAngle = [&]( double angle ) {
             double result = std::fmod( angle, 360. );
-            if ( result < 0. ) { result += 360.; }
+            if ( result < 0. ) {
+                result += 360.;
+            }
             return result;
         };
         if ( useFFT_ ) {
             double lonmin = wrapAngle( g.x( 0, 0 ) );
-            if ( nlonsMax < fft_threshold * nlonsMaxGlobal_ ) { useFFT_ = false; }
+            if ( nlonsMax < fft_threshold * nlonsMaxGlobal_ ) {
+                useFFT_ = false;
+            }
             else {
                 // need to use FFT with cropped grid
                 if ( RegularGrid( gridGlobal_ ) ) {
                     for ( idx_t jlon = 0; jlon < nlonsMaxGlobal_; ++jlon ) {
-                        if ( gs_global.x( jlon, 0 ) < lonmin ) { jlonMin_[0]++; }
+                        if ( gs_global.x( jlon, 0 ) < lonmin ) {
+                            jlonMin_[0]++;
+                        }
                     }
                 }
                 else {
@@ -432,7 +457,9 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                         nlonsGlobal_[jlat] = gs_global.nx( jlat + jlatMin_ );
                         jlonMin_[jlat]     = 0;
                         for ( idx_t jlon = 0; jlon < nlonsGlobal_[jlat]; ++jlon ) {
-                            if ( gs_global.x( jlon, jlat + jlatMin_ ) < lonmin ) { jlonMin_[jlat]++; }
+                            if ( gs_global.x( jlon, jlat + jlatMin_ ) < lonmin ) {
+                                jlonMin_[jlat]++;
+                            }
                         }
                     }
                 }
@@ -444,16 +471,24 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
         if ( nlatsNH_ >= nlatsSH_ || useGlobalLeg ) {
             for ( idx_t j = 0; j < nlatsLeg_; ++j ) {
                 double lat = gsLeg.y( j );
-                if ( lat > latPole ) { lat = latPole; }
-                if ( lat < -latPole ) { lat = -latPole; }
+                if ( lat > latPole ) {
+                    lat = latPole;
+                }
+                if ( lat < -latPole ) {
+                    lat = -latPole;
+                }
                 lats[j] = lat * util::Constants::degreesToRadians();
             }
         }
         else {
             for ( idx_t j = nlats - 1, idx = 0; idx < nlatsLeg_; --j, ++idx ) {
                 double lat = gsLeg.y( j );
-                if ( lat > latPole ) { lat = latPole; }
-                if ( lat < -latPole ) { lat = -latPole; }
+                if ( lat > latPole ) {
+                    lat = latPole;
+                }
+                if ( lat < -latPole ) {
+                    lat = -latPole;
+                }
                 lats[idx] = -lat * util::Constants::degreesToRadians();
             }
         }
@@ -584,7 +619,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 //                    write.close();
                 //                }
             }
-                // other FFT implementations should be added with #elif statements
+            // other FFT implementations should be added with #elif statements
 #else
             useFFT_               = false;  // no FFT implemented => default to dgemm
             std::string file_path = TransParameters( config ).write_fft();
@@ -608,7 +643,9 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 int idx = 0;
                 for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
                     double factor = 1.;
-                    if ( jm > 0 ) { factor = 2.; }
+                    if ( jm > 0 ) {
+                        factor = 2.;
+                    }
                     for ( int jlon = 0; jlon < nlonsMax; jlon++ ) {
                         fourier_[idx++] = +std::cos( jm * lons[jlon] ) * factor;  // real part
                     }
@@ -624,7 +661,9 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 for ( int jlon = 0; jlon < nlonsMax; jlon++ ) {
                     double factor = 1.;
                     for ( int jm = 0; jm < truncation_ + 1; jm++ ) {
-                        if ( jm > 0 ) { factor = 2.; }
+                        if ( jm > 0 ) {
+                            factor = 2.;
+                        }
                         fourier_[idx++] = +std::cos( jm * lons[jlon] ) * factor;  // real part
                         fourier_[idx++] = -std::sin( jm * lons[jlon] ) * factor;  // imaginary part
                     }
@@ -663,7 +702,7 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
                 "Caching for unstructured grids or structured grids with projections not yet implemented", Here() );
         }
     }
-}  // namespace trans
+}
 
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -700,20 +739,47 @@ TransLocal::~TransLocal() {
         }
     }
     else {
-        if ( unstruct_precomp_ ) { free_aligned( legendre_, "Legendre coeffs." ); }
+        if ( unstruct_precomp_ ) {
+            free_aligned( legendre_, "Legendre coeffs." );
+        }
     }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans( const Field& /*spfield*/, Field& /*gpfield*/, const eckit::Configuration& ) const {
-    ATLAS_NOTIMPLEMENTED;
+const functionspace::Spectral& TransLocal::spectral() const {
+    if ( not spectral_ ) {
+        spectral_ = functionspace::Spectral( Trans( this ) );
+    }
+    return spectral_;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans( const FieldSet& /*spfields*/, FieldSet& /*gpfields*/, const eckit::Configuration& ) const {
-    ATLAS_NOTIMPLEMENTED;
+void TransLocal::invtrans( const Field& spfield, Field& gpfield, const eckit::Configuration& config ) const {
+    // VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES
+    int nb_scalar_fields      = 1;
+    const auto scalar_spectra = array::make_view<double, 1>( spfield );
+    auto gp_fields            = array::make_view<double, 1>( gpfield );
+
+    if ( gp_fields.shape( 0 ) < grid().size() ) {
+        // Hopefully the halo (if present) is appended
+        ATLAS_DEBUG_VAR( gp_fields.shape( 0 ) );
+        ATLAS_DEBUG_VAR( grid().size() );
+        ATLAS_ASSERT( gp_fields.shape( 0 ) < grid().size() );
+    }
+
+    invtrans( nb_scalar_fields, scalar_spectra.data(), gp_fields.data(), config );
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+
+void TransLocal::invtrans( const FieldSet& spfields, FieldSet& gpfields, const eckit::Configuration& config ) const {
+    // VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES
+    ATLAS_ASSERT( spfields.size() == gpfields.size() );
+    for ( idx_t f = 0; f < spfields.size(); ++f ) {
+        invtrans( spfields[f], gpfields[f], config );
+    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -731,9 +797,36 @@ void TransLocal::invtrans_grad( const FieldSet& /*spfields*/, FieldSet& /*gradfi
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtrans_vordiv2wind( const Field& /*spvor*/, const Field& /*spdiv*/, Field& /*gpwind*/,
-                                       const eckit::Configuration& ) const {
-    ATLAS_NOTIMPLEMENTED;
+void gp_transpose( const int nb_size, const int nb_fields, const double gp_tmp[], double gp_fields[] ) {
+    for ( int jgp = 0; jgp < nb_size; jgp++ ) {
+        for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
+            gp_fields[jfld * nb_size + jgp] = gp_tmp[jgp * nb_fields + jfld];
+        }
+    }
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+
+void TransLocal::invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
+                                       const eckit::Configuration& config ) const {
+    // VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES
+    int nb_vordiv_fields          = 1;
+    const auto vorticity_spectra  = array::make_view<double, 1>( spvor );
+    const auto divergence_spectra = array::make_view<double, 1>( spdiv );
+    auto gp_fields                = array::make_view<double, 2>( gpwind );
+
+    if ( gp_fields.shape( 1 ) == grid().size() && gp_fields.shape( 0 ) == 2 ) {
+        invtrans( nb_vordiv_fields, vorticity_spectra.data(), divergence_spectra.data(), gp_fields.data(), config );
+    }
+    else if ( gp_fields.shape( 0 ) == grid().size() && gp_fields.shape( 1 ) == 2 ) {
+        array::ArrayT<double> gpwind_t( gp_fields.shape( 1 ), gp_fields.shape( 0 ) );
+        auto gp_fields_t = array::make_view<double, 2>( gpwind_t );
+        invtrans( nb_vordiv_fields, vorticity_spectra.data(), divergence_spectra.data(), gp_fields_t.data(), config );
+        gp_transpose( grid().size(), 2, gp_fields_t.data(), gp_fields.data() );
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -743,15 +836,6 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
     invtrans_uv( truncation_, nb_scalar_fields, 0, scalar_spectra, gp_fields, config );
 }
 
-// --------------------------------------------------------------------------------------------------------------------
-
-void gp_transpose( const int nb_size, const int nb_fields, const double gp_tmp[], double gp_fields[] ) {
-    for ( int jgp = 0; jgp < nb_size; jgp++ ) {
-        for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
-            gp_fields[jfld * nb_size + jgp] = gp_tmp[jgp * nb_fields + jfld];
-        }
-    }
-}
 
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -795,13 +879,17 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                             for ( int jfld = 0; jfld < nb_fields; jfld++ ) {
                                 idx = jfld + nb_fields * ( imag + 2 * ( jn - jm ) );
                                 if ( jn <= truncation && jm < truncation ) {
-                                    if ( ( jn - jm ) % 2 == 0 ) { scalar_sym[is++] = scalar_spectra[idx + ioff]; }
+                                    if ( ( jn - jm ) % 2 == 0 ) {
+                                        scalar_sym[is++] = scalar_spectra[idx + ioff];
+                                    }
                                     else {
                                         scalar_asym[ia++] = scalar_spectra[idx + ioff];
                                     }
                                 }
                                 else {
-                                    if ( ( jn - jm ) % 2 == 0 ) { scalar_sym[is++] = 0.; }
+                                    if ( ( jn - jm ) % 2 == 0 ) {
+                                        scalar_sym[is++] = 0.;
+                                    }
                                     else {
                                         scalar_asym[ia++] = 0.;
                                     }
@@ -937,7 +1025,9 @@ void TransLocal::invtrans_fourier_regular( const int nlats, const int nlons, con
                     for ( int jlat = 0; jlat < nlats; jlat++ ) {
                         for ( int jlon = 0; jlon < nlons; jlon++ ) {
                             int j = jlon + jlonMin_[0];
-                            if ( j >= nlonsMaxGlobal_ ) { j -= nlonsMaxGlobal_; }
+                            if ( j >= nlonsMaxGlobal_ ) {
+                                j -= nlonsMaxGlobal_;
+                            }
                             gp_fields[jlon + nlons * ( jlat + nlats * jfld )] = fftw_->out[j + nlonsMaxGlobal_ * jlat];
                         }
                     }
@@ -1024,12 +1114,16 @@ void TransLocal::invtrans_fourier_reduced( const int nlats, const StructuredGrid
                         //Log::info() << std::endl;
                         //Log::info() << jlat << "out:" << std::endl;
                         int jplan = nlatsLegDomain_ - nlatsNH_ + jlat;
-                        if ( jplan >= nlatsLegDomain_ ) { jplan = nlats - 1 + nlatsLegDomain_ - nlatsSH_ - jlat; };
+                        if ( jplan >= nlatsLegDomain_ ) {
+                            jplan = nlats - 1 + nlatsLegDomain_ - nlatsSH_ - jlat;
+                        };
                         //ASSERT( jplan < nlatsLeg_ && jplan >= 0 );
                         fftw_execute_dft_c2r( fftw_->plans[jplan], fftw_->in, fftw_->out );
                         for ( int jlon = 0; jlon < g.nx( jlat ); jlon++ ) {
                             int j = jlon + jlonMin_[jlat];
-                            if ( j >= nlonsGlobal_[jlat] ) { j -= nlonsGlobal_[jlat]; }
+                            if ( j >= nlonsGlobal_[jlat] ) {
+                                j -= nlonsGlobal_[jlat];
+                            }
                             //Log::info() << fftw_->out[j] << " ";
                             ATLAS_ASSERT( j < nlonsMaxGlobal_ );
                             gp_fields[jgp++] = fftw_->out[j];
@@ -1293,8 +1387,12 @@ void TransLocal::invtrans_uv( const int truncation, const int nb_scalar_fields, 
                     std::vector<double> coslatinvs( nlats );
                     for ( idx_t j = 0; j < nlats; ++j ) {
                         double lat = g.y( j );
-                        if ( lat > latPole ) { lat = latPole; }
-                        if ( lat < -latPole ) { lat = -latPole; }
+                        if ( lat > latPole ) {
+                            lat = latPole;
+                        }
+                        if ( lat < -latPole ) {
+                            lat = -latPole;
+                        }
                         double coslat = std::cos( lat * util::Constants::degreesToRadians() );
                         coslatinvs[j] = 1. / coslat;
                         //Log::info() << "lat=" << g.y( j ) << " coslat=" << coslat << std::endl;
@@ -1342,7 +1440,9 @@ void extend_truncation( const int old_truncation, const int nb_fields, const dou
         for ( int n = m; n <= old_truncation + 1; n++ ) {         // total wavenumber
             for ( int imag = 0; imag < 2; imag++ ) {              // imaginary/real part
                 for ( int jfld = 0; jfld < nb_fields; jfld++ ) {  // field
-                    if ( m == old_truncation + 1 || n == old_truncation + 1 ) { new_spectra[k++] = 0.; }
+                    if ( m == old_truncation + 1 || n == old_truncation + 1 ) {
+                        new_spectra[k++] = 0.;
+                    }
                     else {
                         new_spectra[k++] = old_spectra[k_old++];
                     }

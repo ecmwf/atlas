@@ -22,12 +22,9 @@
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/parallel/Checksum.h"
-#include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
-#include "atlas/util/Checksum.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
@@ -84,7 +81,9 @@ public:
 void StructuredColumns::setup( const grid::Distribution& distribution, const eckit::Configuration& config ) {
     ATLAS_TRACE( "Generating StructuredColumns..." );
     bool periodic_points = config.getInt( "periodic_points", false );
-    if ( not( *grid_ ) ) { throw_Exception( "Grid is not a grid::Structured type", Here() ); }
+    if ( not( *grid_ ) ) {
+        throw_Exception( "Grid is not a grid::Structured type", Here() );
+    }
     const eckit::mpi::Comm& comm = mpi::comm();
 
 
@@ -137,12 +136,16 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
 
     std::function<idx_t( idx_t )> compute_j;
     compute_j = [this, &compute_j]( idx_t j ) -> idx_t {
-        if ( j < 0 ) { j = ( grid_->y( 0 ) == 90. ) ? -j : -j - 1; }
+        if ( j < 0 ) {
+            j = ( grid_->y( 0 ) == 90. ) ? -j : -j - 1;
+        }
         else if ( j >= grid_->ny() ) {
             idx_t jlast = grid_->ny() - 1;
             j           = ( grid_->y( jlast ) == -90. ) ? jlast - 1 - ( j - grid_->ny() ) : jlast - ( j - grid_->ny() );
         }
-        if ( j < 0 or j >= grid_->ny() ) { j = compute_j( j ); }
+        if ( j < 0 or j >= grid_->ny() ) {
+            j = compute_j( j );
+        }
         return j;
     };
 
@@ -222,14 +225,18 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
             for ( idx_t j = j_begin_; j < j_end_; ++j ) {
                 for ( idx_t i : {i_begin_[j], i_end_[j] - 1} ) {
                     // Following line only, increases periodic halo on the east side by 1
-                    if ( periodic_points && i == grid_->nx( j ) - 1 ) { ++i; }
+                    if ( periodic_points && i == grid_->nx( j ) - 1 ) {
+                        ++i;
+                    }
 
                     double x      = grid_->x( i, j );
                     double x_next = grid_->x( i + 1, j );
                     double x_prev = grid_->x( i - 1, j );
                     for ( idx_t jj = j - halo; jj <= j + halo; ++jj ) {
                         idx_t last = grid_->nx( compute_j( jj ) ) - 1;
-                        if ( i == grid_->nx( j ) ) { ++last; }
+                        if ( i == grid_->nx( j ) ) {
+                            ++last;
+                        }
 
                         jmin = std::min( jmin, jj );
                         jmax = std::max( jmax, jj );
@@ -353,7 +360,9 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
 
         for ( const GridPoint& gp : gridpoints ) {
             xy( gp.r, XX ) = compute_x( gp.i, gp.j );
-            if ( gp.j >= 0 && gp.j < grid_->ny() ) { xy( gp.r, YY ) = grid_->y( gp.j ); }
+            if ( gp.j >= 0 && gp.j < grid_->ny() ) {
+                xy( gp.r, YY ) = grid_->y( gp.j );
+            }
             else {
                 xy( gp.r, YY ) = compute_y( gp.j );
             }
@@ -365,16 +374,34 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                     gidx_t k           = global_offsets[gp.j] + gp.i;
                     part( gp.r )       = distribution.partition( k );
                     global_idx( gp.r ) = k + 1;
-                    ghost( gp.r )      = 0;
                 }
             }
             if ( not in_domain ) {
                 global_idx( gp.r ) = compute_g( gp.i, gp.j );
                 part( gp.r )       = compute_p( gp.i, gp.j );
-                ghost( gp.r )      = 1;
             }
             index_i( gp.r ) = gp.i;
             index_j( gp.r ) = gp.j;
+            ghost( gp.r )   = 0;
+        }
+
+        for ( idx_t j = j_begin_halo_; j < j_begin_; ++j ) {
+            for ( idx_t i = i_begin_halo_( j ); i < i_end_halo_( j ); ++i ) {
+                ghost( index( i, j ) ) = 1;
+            }
+        }
+        for ( idx_t j = j_begin_; j < j_end_; ++j ) {
+            for ( idx_t i = i_begin_halo_( j ); i < i_begin_[j]; ++i ) {
+                ghost( index( i, j ) ) = 1;
+            }
+            for ( idx_t i = i_end_[j]; i < i_end_halo_( j ); ++i ) {
+                ghost( index( i, j ) ) = 1;
+            }
+        }
+        for ( idx_t j = j_end_; j < j_end_halo_; ++j ) {
+            for ( idx_t i = i_begin_halo_( j ); i < i_end_halo_( j ); ++i ) {
+                ghost( index( i, j ) ) = 1;
+            }
         }
     }
 }

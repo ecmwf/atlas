@@ -11,6 +11,7 @@
 #include "atlas/grid/detail/grid/Unstructured.h"
 
 #include <initializer_list>
+#include <iomanip>
 #include <limits>
 #include <memory>
 
@@ -20,6 +21,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Iterator.h"
+#include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -33,8 +35,6 @@ namespace atlas {
 namespace grid {
 namespace detail {
 namespace grid {
-
-//static eckit::ConcreteBuilderT1<Grid, Unstructured> builder_Unstructured( Unstructured::static_type() );
 
 namespace {
 static GridFactoryBuilder<Unstructured> __register_Unstructured( Unstructured::static_type() );
@@ -64,7 +64,9 @@ public:
         normalise_( domain.xmin(), domain.xmax() ) {}
 
     double operator()( double x ) const {
-        if ( degrees_ ) { x = normalise_( x ); }
+        if ( degrees_ ) {
+            x = normalise_( x );
+        }
         return x;
     }
 
@@ -79,19 +81,25 @@ Unstructured::Unstructured( const Grid& grid, Domain domain ) : Grid() {
     domain_ = domain;
     points_.reset( new std::vector<PointXY> );
     points_->reserve( grid.size() );
-    if ( not domain_ ) { domain_ = Domain( option::type( "global" ) ); }
+    if ( not domain_ ) {
+        domain_ = GlobalDomain();
+    }
     atlas::grid::IteratorXY it( grid.xy_begin() );
     PointXY p;
     if ( RectangularDomain( domain_ ) ) {
         auto normalise = Normalise( RectangularDomain( domain_ ) );
         while ( it.next( p ) ) {
             p.x() = normalise( p.x() );
-            if ( domain_.contains( p ) ) { points_->emplace_back( p ); }
+            if ( domain_.contains( p ) ) {
+                points_->emplace_back( p );
+            }
         }
     }
     else if ( ZonalBandDomain( domain_ ) ) {
         while ( it.next( p ) ) {
-            if ( domain_.contains( p ) ) { points_->emplace_back( p ); }
+            if ( domain_.contains( p ) ) {
+                points_->emplace_back( p );
+            }
         }
     }
     else {
@@ -102,33 +110,53 @@ Unstructured::Unstructured( const Grid& grid, Domain domain ) : Grid() {
     points_->shrink_to_fit();
 }
 
-Unstructured::Unstructured( const util::Config& ) : Grid() {
+Unstructured::Unstructured( const util::Config& config ) : Grid() {
     util::Config config_domain;
-    config_domain.set( "type", "global" );
+    if ( not config.get( "domain", config_domain ) ) {
+        config_domain.set( "type", "global" );
+    }
     domain_ = Domain( config_domain );
-    ATLAS_NOTIMPLEMENTED;
+    std::vector<double> xy;
+    if ( config.get( "xy", xy ) ) {
+        const size_t N = xy.size() / 2;
+        points_.reset( new std::vector<PointXY> );
+        points_->reserve( N );
+        for ( size_t n = 0; n < N; ++n ) {
+            points_->emplace_back( PointXY{xy[2 * n], xy[2 * n + 1]} );
+        }
+    }
+    else {
+        std::vector<double> x;
+        std::vector<double> y;
+        if ( not config.get( "x", x ) ) {
+            throw_Exception( "x missing from configuration" );
+        }
+        if ( not config.get( "y", y ) ) {
+            throw_Exception( "y missing from configuration" );
+        }
+        ATLAS_ASSERT( x.size() == y.size() );
+        points_.reset( new std::vector<PointXY> );
+        points_->reserve( x.size() );
+        for ( size_t n = 0; n < x.size(); ++n ) {
+            points_->emplace_back( PointXY{x[n], y[n]} );
+        }
+    }
 }
 
 Unstructured::Unstructured( std::vector<PointXY>* pts ) : Grid(), points_( pts ) {
-    util::Config config_domain;
-    config_domain.set( "type", "global" );
-    domain_ = Domain( config_domain );
+    domain_ = GlobalDomain();
 }
 
 Unstructured::Unstructured( std::vector<PointXY>&& pts ) :
     Grid(),
     points_( new std::vector<PointXY>( std::move( pts ) ) ) {
-    util::Config config_domain;
-    config_domain.set( "type", "global" );
-    domain_ = Domain( config_domain );
+    domain_ = GlobalDomain();
 }
 
 Unstructured::Unstructured( std::initializer_list<PointXY> initializer_list ) :
     Grid(),
     points_( new std::vector<PointXY>( initializer_list ) ) {
-    util::Config config_domain;
-    config_domain.set( "type", "global" );
-    domain_ = Domain( config_domain );
+    domain_ = GlobalDomain();
 }
 
 Unstructured::~Unstructured() {}
@@ -156,13 +184,19 @@ void Unstructured::hash( eckit::Hash& h ) const {
     projection().hash( h );
 }
 
+RectangularLonLatDomain Unstructured::lonlatBoundingBox() const {
+    return projection_ ? projection_.lonlatBoundingBox( domain_ ) : domain_;
+}
+
 idx_t Unstructured::size() const {
     ATLAS_ASSERT( points_ != nullptr );
     return static_cast<idx_t>( points_->size() );
 }
 
 Grid::Spec Unstructured::spec() const {
-    if ( cached_spec_ ) return *cached_spec_;
+    if ( cached_spec_ ) {
+        return *cached_spec_;
+    }
 
     cached_spec_.reset( new Grid::Spec );
 
@@ -201,6 +235,53 @@ bool Unstructured::IteratorXYPredicated::next( PointXY& /*xy*/ ) {
     }
 #endif
 }
+
+namespace {  // anonymous
+
+static class unstructured : public GridBuilder {
+    using Implementation = atlas::Grid::Implementation;
+    using Config         = Grid::Config;
+
+public:
+    unstructured() : GridBuilder( "unstructured" ) {}
+
+    virtual void print( std::ostream& os ) const {
+        os << std::left << std::setw( 20 ) << " "
+           << "Unstructured grid";
+    }
+
+    virtual const Implementation* create( const std::string& /* name */, const Config& ) const {
+        throw_NotImplemented( "Cannot create unstructured grid from name", Here() );
+    }
+
+    virtual const Implementation* create( const Config& config ) const { return new Unstructured( config ); }
+
+} unstructured_;
+
+}  // anonymous namespace
+
+extern "C" {
+const Unstructured* atlas__grid__Unstructured__points( const double xy[], int shapef[], int stridesf[] ) {
+    size_t nb_points = shapef[1];
+    ATLAS_ASSERT( shapef[0] == 2 );
+    size_t stride_n = stridesf[1];
+    size_t stride_v = stridesf[0];
+    std::vector<PointXY> points;
+    points.reserve( nb_points );
+    for ( idx_t n = 0; n < nb_points; ++n ) {
+        points.emplace_back( PointXY{xy[n * stride_n + 0], xy[n * stride_n + 1 * stride_v]} );
+    }
+    return new Unstructured( std::move( points ) );
+}
+
+const Unstructured* atlas__grid__Unstructured__config( util::Config* conf ) {
+    ATLAS_ASSERT( conf != nullptr );
+    const Unstructured* grid = dynamic_cast<const Unstructured*>( Grid::create( *conf ) );
+    ATLAS_ASSERT( grid != nullptr );
+    return grid;
+}
+}
+
 
 }  // namespace grid
 }  // namespace detail

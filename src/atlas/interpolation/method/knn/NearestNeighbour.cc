@@ -34,7 +34,9 @@ MethodBuilder<NearestNeighbour> __builder( "nearest-neighbour" );
 }  // namespace
 
 void NearestNeighbour::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
+    if ( mpi::comm().size() > 1 ) {
+        ATLAS_NOTIMPLEMENTED;
+    }
     auto functionspace = []( const Grid& grid ) -> FunctionSpace {
         Mesh mesh;
         if ( StructuredGrid( grid ) ) {

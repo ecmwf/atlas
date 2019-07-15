@@ -104,7 +104,9 @@ public:
     }
     void add( const std::string& backend ) {
         lock_guard lock( mutex_ );
-        if ( backends_.find( backend ) == backends_.end() ) { backends_[backend] = 1; }
+        if ( backends_.find( backend ) == backends_.end() ) {
+            backends_[backend] = 1;
+        }
         else {
             ++backends_[backend];
         }
@@ -112,7 +114,9 @@ public:
     void remove( const std::string& backend ) {
         lock_guard lock( mutex_ );
         --backends_[backend];
-        if ( backends_[backend] == 0 ) { backends_.erase( backend ); }
+        if ( backends_[backend] == 0 ) {
+            backends_.erase( backend );
+        }
     }
 
     void backend( const std::string& backend ) {
@@ -123,7 +127,9 @@ public:
     void config( const eckit::Configuration& config ) {
         std::string type = default_options_.getString( "type" );
         default_options_ = config;
-        if ( not config.has( "type" ) ) { default_options_.set( "type", type ); }
+        if ( not config.has( "type" ) ) {
+            default_options_.set( "type", type );
+        }
     }
     const eckit::Configuration& config() { return default_options_; }
 

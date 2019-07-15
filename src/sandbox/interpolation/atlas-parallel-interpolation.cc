@@ -38,13 +38,15 @@ auto vortex_rollup = []( double lon, double lat, double t ) {
     const double rho          = 3. * std::sqrt( 1. - sqr( std::cos( lat ) ) * sqr( std::sin( lon - Omega * t ) ) );
     double omega              = 0.;
     double a                  = util::Earth::radius();
-    if ( rho != 0. ) { omega = 0.5 * 3 * std::sqrt( 3 ) * a * Omega * sqr( sech( rho ) ) * std::tanh( rho ) / rho; }
+    if ( rho != 0. ) {
+        omega = 0.5 * 3 * std::sqrt( 3 ) * a * Omega * sqr( sech( rho ) ) * std::tanh( rho ) / rho;
+    }
     double q = 1. - std::tanh( 0.2 * rho * std::sin( lambda_prime - omega / a * t ) );
     return q;
 };
 
 class AtlasParallelInterpolation : public AtlasTool {
-    void execute( const AtlasTool::Args& args );
+    int execute( const AtlasTool::Args& args );
     std::string briefDescription() { return "Demonstration of parallel interpolation"; }
     std::string usage() {
         return name() +
@@ -99,7 +101,7 @@ public:
     }
 };
 
-void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
+int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     // Get user options
     std::string option;
     bool trigs   = false;
@@ -111,13 +113,17 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     idx_t log_rank = 0;
     args.get( "log-rank", log_rank );
 
-    if ( idx_t( eckit::mpi::comm().rank() ) != log_rank ) { Log::reset(); }
+    if ( idx_t( eckit::mpi::comm().rank() ) != log_rank ) {
+        Log::reset();
+    }
 
     std::string interpolation_method = "finite-element";
     args.get( "method", interpolation_method );
 
 
-    if ( args.get( "backend", option ) ) { eckit::linalg::LinearAlgebra::backend( option ); }
+    if ( args.get( "backend", option ) ) {
+        eckit::linalg::LinearAlgebra::backend( option );
+    }
 
     // Generate and partition source & target mesh
     // source mesh is partitioned on its own, the target mesh uses
@@ -194,7 +200,9 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
             Interpolation( option::type( backward_interpolation_method ), tgt_functionspace, src_functionspace );
     }
 
-    if ( args.getBool( "forward-interpolator-output", false ) ) { interpolator_forward.print( Log::info() ); }
+    if ( args.getBool( "forward-interpolator-output", false ) ) {
+        interpolator_forward.print( Log::info() );
+    }
 
     // Create source FunctionSpace and fields
 
@@ -292,6 +300,7 @@ void AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         Log::info() << "Writing backward interpolation results to src-back.msh" << std::endl;
         src.writeGmsh( "src-back.msh", src_fields );
     }
+    return success();
 }
 
 int main( int argc, char* argv[] ) {

@@ -29,10 +29,11 @@ FieldImpl* FieldImpl::create( const eckit::Parametrisation& params ) {
         std::unique_ptr<field::FieldCreator> creator( field::FieldCreatorFactory::build( creator_factory, params ) );
         return creator->createField( params );
     }
-    else
+    else {
         throw_Exception(
             "Could not find parameter 'creator' "
             "in Parametrisation for call to FieldImpl::create()" );
+    }
 }
 
 FieldImpl* FieldImpl::create( const std::string& name, array::DataType datatype, const array::ArrayShape& shape ) {
@@ -64,7 +65,9 @@ FieldImpl::FieldImpl( const std::string& name, array::Array* array ) : functions
 
 FieldImpl::~FieldImpl() {
     array_->detach();
-    if ( array_->owners() == 0 ) delete array_;
+    if ( array_->owners() == 0 ) {
+        delete array_;
+    }
     delete functionspace_;
 }
 
@@ -96,7 +99,9 @@ std::string vector_to_str( const std::vector<T>& t ) {
     std::stringstream s;
     s << '[';
     for ( size_t i = 0; i < t.size(); i++ ) {
-        if ( i != 0 ) s << ',';
+        if ( i != 0 ) {
+            s << ',';
+        }
         s << t[i];
     }
     s << ']';

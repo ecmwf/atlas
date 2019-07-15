@@ -1,0 +1,18 @@
+type : "regional"
+nx : 50
+ny : 40
+dx : 50000
+dy : 50000
+lonlat(centre) : [4,50]
+projection :
+    type       : "rotated_mercator"
+    north_pole : [-176,40]
+y_numbering : +1
+
+
+check : 
+  size : 2000
+  lonlat(first) : [-10.319,40.2109]
+  lonlat(last)  : [24.4206,57.2263]
+  uid : 340321ee9855b47bbaadb581d2c86238
+  bounding_box(n,w,s,e) : [58.735,-16.4216,40.2099,24.4216]

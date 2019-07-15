@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include <array>
 #include <string>
 
+#include "atlas/util/Factory.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/Rotation.h"
@@ -23,6 +23,8 @@ class Hash;
 }  // namespace eckit
 
 namespace atlas {
+class Domain;
+class RectangularLonLatDomain;
 namespace util {
 class Config;
 }
@@ -39,8 +41,8 @@ public:
 public:
     static const ProjectionImpl* create( const eckit::Parametrisation& p );
 
-    ProjectionImpl() {}
-    virtual ~ProjectionImpl() {}  // destructor should be virtual
+    ProjectionImpl()          = default;
+    virtual ~ProjectionImpl() = default;  // destructor should be virtual
 
     virtual std::string type() const = 0;
 
@@ -50,7 +52,8 @@ public:
     PointLonLat lonlat( const PointXY& ) const;
     PointXY xy( const PointLonLat& ) const;
 
-    virtual bool strictlyRegional() const = 0;
+    virtual bool strictlyRegional() const                                    = 0;
+    virtual RectangularLonLatDomain lonlatBoundingBox( const Domain& ) const = 0;
 
     virtual Spec spec() const = 0;
 
@@ -59,6 +62,54 @@ public:
     virtual operator bool() const { return true; }
 
     virtual void hash( eckit::Hash& ) const = 0;
+
+    struct BoundLonLat {
+        operator RectangularLonLatDomain() const;
+        void extend( PointLonLat p, PointLonLat eps );
+
+        bool crossesDateLine( bool );
+        bool includesNorthPole( bool );
+        bool includesSouthPole( bool );
+
+        bool crossesDateLine() const { return crossesDateLine_; }
+        bool includesNorthPole() const { return includesNorthPole_; }
+        bool includesSouthPole() const { return includesSouthPole_; }
+
+    private:
+        PointLonLat min_;
+        PointLonLat max_;
+        bool crossesDateLine_   = false;
+        bool includesNorthPole_ = false;
+        bool includesSouthPole_ = false;
+        bool first_             = true;
+    };
+
+    struct Derivate {
+        Derivate( const ProjectionImpl& p, PointXY A, PointXY B, double h );
+        virtual ~Derivate();
+        virtual PointLonLat d( PointXY ) const = 0;
+
+    protected:
+        const ProjectionImpl& projection_;
+        const PointXY H_;
+        const double normH_;
+        PointLonLat xy2lonlat( const PointXY& p ) const {
+            PointLonLat q( p );
+            projection_.xy2lonlat( q.data() );
+            return q;
+        }
+    };
+
+    struct DerivateFactory : public util::Factory<DerivateFactory> {
+        static std::string className() { return "DerivateFactory"; }
+        static ProjectionImpl::Derivate* build( const std::string& type, const ProjectionImpl& p, PointXY A, PointXY B,
+                                                double h = 0.001 );
+
+    protected:
+        using Factory::Factory;
+        virtual ~DerivateFactory();
+        virtual ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) = 0;
+    };
 };
 
 inline PointLonLat ProjectionImpl::lonlat( const PointXY& xy ) const {
@@ -73,13 +124,15 @@ inline PointXY ProjectionImpl::xy( const PointLonLat& lonlat ) const {
     return xy;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+
 class Rotated : public util::Rotation {
 public:
     using Spec = ProjectionImpl::Spec;
 
     Rotated( const PointLonLat& south_pole, double rotation_angle = 0. );
     Rotated( const eckit::Parametrisation& );
-    virtual ~Rotated() {}
+    virtual ~Rotated() = default;
 
     static std::string classNamePrefix() { return "Rotated"; }
     static std::string typePrefix() { return "rotated_"; }
@@ -93,9 +146,9 @@ class NotRotated {
 public:
     using Spec = ProjectionImpl::Spec;
 
-    NotRotated() {}
+    NotRotated() = default;
     NotRotated( const eckit::Parametrisation& ) {}
-    virtual ~NotRotated() {}
+    virtual ~NotRotated() = default;
 
     static std::string classNamePrefix() { return ""; }  // deliberately empty
     static std::string typePrefix() { return ""; }       // deliberately empty

@@ -117,9 +117,10 @@ void build_statistics( Mesh& mesh ) {
     array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( nodes.lonlat() );
 
     if ( mesh.edges().size() ) {
-        if ( !mesh.edges().has_field( "arc_length" ) )
+        if ( !mesh.edges().has_field( "arc_length" ) ) {
             mesh.edges().add(
                 Field( "arc_length", array::make_datatype<double>(), array::make_shape( mesh.edges().size() ) ) );
+        }
         array::ArrayView<double, 1> dist = array::make_view<double, 1>( mesh.edges().field( "arc_length" ) );
         const mesh::HybridElements::Connectivity& edge_nodes = mesh.edges().node_connectivity();
 
@@ -147,7 +148,9 @@ void build_statistics( Mesh& mesh ) {
 
     // Cell statistics
     {
-        if ( mpi::comm().size() == 1 ) ofs.open( stats_path.localPath(), std::ofstream::app );
+        if ( mpi::comm().size() == 1 ) {
+            ofs.open( stats_path.localPath(), std::ofstream::app );
+        }
 
         array::ArrayView<double, 1> rho = array::make_view<double, 1>( mesh.cells().add(
             Field( "stats_rho", array::make_datatype<double>(), array::make_shape( mesh.cells().size() ) ) ) );
@@ -197,7 +200,9 @@ void build_statistics( Mesh& mesh ) {
                 }
             }
         }
-        if ( mpi::comm().size() == 1 ) ofs.close();
+        if ( mpi::comm().size() == 1 ) {
+            ofs.close();
+        }
     }
 
     eckit::PathName dual_stats_path( "dual_stats.txt" );
@@ -226,7 +231,9 @@ void build_statistics( Mesh& mesh ) {
             }
         }
     }
-    if ( mpi::comm().size() == 1 ) ofs.close();
+    if ( mpi::comm().size() == 1 ) {
+        ofs.close();
+    }
 }
 
 // ------------------------------------------------------------------

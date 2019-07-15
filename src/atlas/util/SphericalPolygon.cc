@@ -35,7 +35,9 @@ bool SphericalPolygon::contains( const PointLonLat& P ) const {
     ATLAS_ASSERT( coordinates_.size() >= 2 );
 
     // check first bounding box
-    if ( coordinatesMax_.lon() <= P.lon() || P.lon() < coordinatesMin_.lon() ) { return false; }
+    if ( coordinatesMax_.lon() <= P.lon() || P.lon() < coordinatesMin_.lon() ) {
+        return false;
+    }
 
     // winding number
     int wn = 0;
@@ -61,7 +63,9 @@ bool SphericalPolygon::contains( const PointLonLat& P ) const {
             }();
 
             ATLAS_ASSERT( !std::isnan( lat ) );
-            if ( is_approximately_equal( P.lat(), lat ) ) { return true; }
+            if ( is_approximately_equal( P.lat(), lat ) ) {
+                return true;
+            }
 
             wn += ( P.lat() > lat ? -1 : 1 ) * ( APB ? -1 : 1 );
         }

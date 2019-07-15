@@ -99,8 +99,12 @@ struct TimerStats {
     }
     void update( Trace& timer ) {
         double t = timer.elapsed();
-        if ( min < 0 ) min = t;
-        if ( max < 0 ) max = t;
+        if ( min < 0 ) {
+            min = t;
+        }
+        if ( max < 0 ) {
+            max = t;
+        }
         min = std::min( min, t );
         max = std::max( max, t );
         avg = ( avg * cnt + t ) / ( cnt + 1 );
@@ -122,7 +126,7 @@ struct TimerStats {
 //----------------------------------------------------------------------------------------------------------------------
 
 class AtlasBenchmark : public AtlasTool {
-    virtual void execute( const Args& args );
+    virtual int execute( const Args& args );
 
 public:
     AtlasBenchmark( int argc, char** argv ) : AtlasTool( argc, argv ) {
@@ -170,14 +174,11 @@ private:
     TimerStats haloexchange_timer;
     idx_t iter;
     bool progress;
-
-public:
-    int exit_code;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void AtlasBenchmark::execute( const Args& args ) {
+int AtlasBenchmark::execute( const Args& args ) {
     Trace timer( Here(), "atlas-benchmark" );
     // Timer::Logging set_channel( Log::info() );
 
@@ -201,7 +202,9 @@ void AtlasBenchmark::execute( const Args& args ) {
     iteration_timer    = TimerStats( "iteration" );
     haloexchange_timer = TimerStats( "halo-exchange" );
 
-    if ( omp_threads > 0 ) atlas_omp_set_num_threads( omp_threads );
+    if ( omp_threads > 0 ) {
+        atlas_omp_set_num_threads( omp_threads );
+    }
 
     Log::info() << "atlas-benchmark\n" << endl;
     Log::info() << Library::instance().information() << endl;
@@ -234,7 +237,9 @@ void AtlasBenchmark::execute( const Args& args ) {
                 ++tic;
             }
             if ( iter == niter - 1 ) {
-                if ( tic < 51 ) Log::info() << '*';
+                if ( tic < 51 ) {
+                    Log::info() << '*';
+                }
                 Log::info() << endl;
             }
         }
@@ -253,8 +258,9 @@ void AtlasBenchmark::execute( const Args& args ) {
 
     util::Config report_config;
     report_config.set( "indent", 4 );
-    if ( not args.getBool( "details", false ) )
+    if ( not args.getBool( "details", false ) ) {
         report_config.set( "exclude", std::vector<std::string>{"halo-exchange", "atlas-benchmark-setup/*"} );
+    }
     Log::info() << timer.report( report_config ) << std::endl;
     Log::info() << endl;
 
@@ -265,7 +271,7 @@ void AtlasBenchmark::execute( const Args& args ) {
     double res = result();
 
     Log::info() << endl;
-    exit_code = verify( res );
+    return verify( res );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -286,8 +292,9 @@ void AtlasBenchmark::initial_condition( const Field& field, const double& beta )
         double Ux =
             pvel * ( std::cos( beta ) + std::tan( y ) * std::cos( x ) * std::sin( beta ) ) * radius * std::cos( y );
         double Uy = -pvel * std::sin( x ) * std::sin( beta ) * radius;
-        for ( idx_t jlev = 0; jlev < field.levels(); ++jlev )
+        for ( idx_t jlev = 0; jlev < field.levels(); ++jlev ) {
             var( jnode, jlev ) = std::sqrt( Ux * Ux + Uy * Uy );
+        }
     }
 }
 
@@ -357,10 +364,12 @@ void AtlasBenchmark::setup() {
         for ( idx_t jedge = 0; jedge < node2edge.cols( jnode ); ++jedge ) {
             idx_t iedge = node2edge( jnode, jedge );
             idx_t ip1   = edge2node( iedge, 0 );
-            if ( jnode == ip1 )
+            if ( jnode == ip1 ) {
                 node2edge_sign( jnode, jedge ) = 1.;
-            else
+            }
+            else {
                 node2edge_sign( jnode, jedge ) = -1.;
+            }
         }
     }
 
@@ -370,11 +379,14 @@ void AtlasBenchmark::setup() {
     vector<idx_t> tmp( nedges );
     int c( 0 );
     for ( idx_t jedge = 0; jedge < nedges; ++jedge ) {
-        if ( is_pole_edge( jedge ) ) tmp[c++] = jedge;
+        if ( is_pole_edge( jedge ) ) {
+            tmp[c++] = jedge;
+        }
     }
     pole_edges.reserve( c );
-    for ( idx_t jedge = 0; jedge < c; ++jedge )
+    for ( idx_t jedge = 0; jedge < c; ++jedge ) {
         pole_edges.push_back( tmp[jedge] );
+    }
 
     auto flags = array::make_view<int, 1>( mesh.nodes().flags() );
     is_ghost.reserve( nnodes );
@@ -434,8 +446,9 @@ void AtlasBenchmark::iteration() {
         idx_t iedge = pole_edges[jedge];
         idx_t ip2   = edge2node( iedge, 1 );
         // correct for wrong Y-derivatives in previous loop
-        for ( idx_t jlev = 0; jlev < nlev; ++jlev )
+        for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
             grad( ip2, jlev, LAT ) += 2. * avgS( iedge, jlev, LAT ) / V( ip2 );
+        }
     }
 
     double dzi   = 1. / dz;
@@ -451,7 +464,9 @@ void AtlasBenchmark::iteration() {
             grad( jnode, 0, ZZ )        = ( field( jnode, 1 ) - field( jnode, 0 ) ) * dzi;
             grad( jnode, nlev - 1, ZZ ) = ( field( jnode, nlev - 2 ) - field( jnode, nlev - 1 ) ) * dzi;
         }
-        if ( nlev == 1 ) grad( jnode, 0, ZZ ) = 0.;
+        if ( nlev == 1 ) {
+            grad( jnode, 0, ZZ ) = 0.;
+        }
     }
     compute.stop();
 
@@ -479,8 +494,9 @@ void AtlasBenchmark::iteration() {
 template <typename DATA_TYPE>
 DATA_TYPE vecnorm( const DATA_TYPE vec[], size_t size ) {
     DATA_TYPE norm = 0;
-    for ( size_t j = 0; j < size; ++j )
+    for ( size_t j = 0; j < size; ++j ) {
         norm += vec[j] * vec[j];
+    }
     return norm;
 }
 
@@ -551,7 +567,7 @@ double AtlasBenchmark::result() {
 
 int AtlasBenchmark::verify( const double& norm ) {
     Log::warning() << "Verification is not yet implemented" << endl;
-    return 1;
+    return failed();
 }
 
 //----------------------------------------------------------------------------------------------------------------------

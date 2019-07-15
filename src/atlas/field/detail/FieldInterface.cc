@@ -221,6 +221,11 @@ int atlas__Field__dirty( FieldImpl* This ) {
     return This->dirty();
 }
 
+int atlas__Field__contiguous( FieldImpl* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Field" );
+    return This->array().contiguous();
+}
+
 void atlas__Field__halo_exchange( FieldImpl* This, int on_device ) {
     ATLAS_ASSERT( This != nullptr, "Cannot halo-exchange uninitialised atlas_Field" );
     return This->haloExchange( on_device );

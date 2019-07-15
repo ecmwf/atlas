@@ -58,7 +58,9 @@ std::string LegendreCacheCreatorIFS::uid() const {
         std::ostringstream stream;
         stream << "ifs-T" << truncation_ << "-";
         if ( GaussianGrid( grid_ ) ) {
-            if ( RegularGaussianGrid( grid_ ) ) { stream << "RegularGaussianN" << GaussianGrid( grid_ ).N(); }
+            if ( RegularGaussianGrid( grid_ ) ) {
+                stream << "RegularGaussianN" << GaussianGrid( grid_ ).N();
+            }
             else {
                 stream << "ReducedGaussianN" << GaussianGrid( grid_ ).N() << "-PL";
                 stream << hash( grid_ );
@@ -66,7 +68,9 @@ std::string LegendreCacheCreatorIFS::uid() const {
         }
         else if ( RegularLonLatGrid( grid_ ) ) {
             auto g = RegularLonLatGrid( grid_ );
-            if ( g.standard() || g.shifted() ) { stream << ( g.standard() ? "L" : "S" ) << g.nx() << "x" << g.ny(); }
+            if ( g.standard() || g.shifted() ) {
+                stream << ( g.standard() ? "L" : "S" ) << g.nx() << "x" << g.ny();
+            }
             else {
                 // We cannot make more assumptions on reusability for different grids
                 stream << "grid-" << hash( grid_ );
@@ -85,10 +89,14 @@ std::string LegendreCacheCreatorIFS::uid() const {
 LegendreCacheCreatorIFS::~LegendreCacheCreatorIFS() {}
 
 bool LegendreCacheCreatorIFS::supported() const {
-    if ( GaussianGrid( grid_ ) ) { return true; }
+    if ( GaussianGrid( grid_ ) ) {
+        return true;
+    }
     else if ( RegularLonLatGrid( grid_ ) ) {
         auto g = RegularLonLatGrid( grid_ );
-        if ( g.standard() || g.shifted() ) { return true; }
+        if ( g.standard() || g.shifted() ) {
+            return true;
+        }
     }
     return false;
 }

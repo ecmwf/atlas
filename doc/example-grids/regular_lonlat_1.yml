@@ -1,0 +1,12 @@
+# Regular lonlat
+type : "regular_lonlat"
+nx : 128
+ny : 65
+
+
+check:
+  size : 8320
+  lonlat(first) : [0,90]
+  lonlat(last)  : [357.188,-90]
+  uid : f109da5924c5998453cdb7d5854ebd1a
+  bounding_box(n,w,s,e) : [90,0,-90,360]

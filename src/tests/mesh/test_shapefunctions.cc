@@ -100,7 +100,8 @@ public:
 
 public:
     Polynomial& add( const monomial_type& mononomial ) {
-        if ( mononomial.coeff != 0 ) mononomials_.push_back( mononomial );
+        if ( mononomial.coeff != 0 )
+            mononomials_.push_back( mononomial );
         return *this;
     }
 
@@ -169,7 +170,9 @@ public:
 
     static std::vector<Polynomial> curl( const std::vector<Polynomial>& pvec ) {
         std::vector<Polynomial> p( 3 );
-        if ( NDIM == 2 ) { p[2] = pvec[1].deriv( 0 ) - pvec[0].deriv( 1 ); }
+        if ( NDIM == 2 ) {
+            p[2] = pvec[1].deriv( 0 ) - pvec[0].deriv( 1 );
+        }
         if ( NDIM == 3 ) {
             p[0] = pvec[2].deriv( 1 ) - pvec[1].deriv( 2 );
             p[1] = pvec[0].deriv( 2 ) - pvec[2].deriv( 0 );
@@ -215,7 +218,9 @@ private:
             }
         }
         for ( size_t j = 0; j < other.mononomials_.size(); ++j ) {
-            if ( !matched[j] ) { add( other.mononomials_[j] ); }
+            if ( !matched[j] ) {
+                add( other.mononomials_[j] );
+            }
         }
         return *this;
     }
@@ -421,7 +426,8 @@ public:
     /// @brief Set the total number of nodes in FunctionSpace
     void set_nb_nodes( int nb_nodes ) {
         nb_nodes_ = nb_nodes;
-        if ( nproma_ == 0 ) nproma_ = 1;
+        if ( nproma_ == 0 )
+            nproma_ = 1;
         ATLAS_ASSERT( nb_nodes_ % nproma_ == 0 );
         nblk_ = nb_nodes_ / nproma_;
     }
@@ -441,12 +447,18 @@ public:
 
     /// @brief Add elements
     const ElementType& add_elements( const std::string& element_type, int nelem ) {
-        if ( element_type == "Polygon" ) element_types_.push_back( ElementType::Ptr( new Polygon() ) );
-        if ( element_type == "QuadP1" ) element_types_.push_back( ElementType::Ptr( new QuadP1 ) );
-        if ( element_type == "TriagP1" ) element_types_.push_back( ElementType::Ptr( new TriagP1 ) );
-        if ( element_type == "LineP0" ) element_types_.push_back( ElementType::Ptr( new LineP0 ) );
-        if ( element_type == "LineP1" ) element_types_.push_back( ElementType::Ptr( new LineP1 ) );
-        if ( element_type == "LineP2" ) element_types_.push_back( ElementType::Ptr( new LineP2 ) );
+        if ( element_type == "Polygon" )
+            element_types_.push_back( ElementType::Ptr( new Polygon() ) );
+        if ( element_type == "QuadP1" )
+            element_types_.push_back( ElementType::Ptr( new QuadP1 ) );
+        if ( element_type == "TriagP1" )
+            element_types_.push_back( ElementType::Ptr( new TriagP1 ) );
+        if ( element_type == "LineP0" )
+            element_types_.push_back( ElementType::Ptr( new LineP0 ) );
+        if ( element_type == "LineP1" )
+            element_types_.push_back( ElementType::Ptr( new LineP1 ) );
+        if ( element_type == "LineP2" )
+            element_types_.push_back( ElementType::Ptr( new LineP2 ) );
         index_[element_type] = nelem_per_type_.size();
         nelem_per_type_.push_back( nelem );
 
@@ -475,13 +487,20 @@ public:
                                                   int idx7 = IDX_NOTUSED ) {
         atlas::array::ArrayShape shape;
         shape.reserve( 7 );
-        if ( idx1 != IDX_NOTUSED ) shape.push_back( range( idx1 ) );
-        if ( idx2 != IDX_NOTUSED ) shape.push_back( range( idx2 ) );
-        if ( idx3 != IDX_NOTUSED ) shape.push_back( range( idx3 ) );
-        if ( idx4 != IDX_NOTUSED ) shape.push_back( range( idx4 ) );
-        if ( idx5 != IDX_NOTUSED ) shape.push_back( range( idx5 ) );
-        if ( idx6 != IDX_NOTUSED ) shape.push_back( range( idx6 ) );
-        if ( idx7 != IDX_NOTUSED ) shape.push_back( range( idx7 ) );
+        if ( idx1 != IDX_NOTUSED )
+            shape.push_back( range( idx1 ) );
+        if ( idx2 != IDX_NOTUSED )
+            shape.push_back( range( idx2 ) );
+        if ( idx3 != IDX_NOTUSED )
+            shape.push_back( range( idx3 ) );
+        if ( idx4 != IDX_NOTUSED )
+            shape.push_back( range( idx4 ) );
+        if ( idx5 != IDX_NOTUSED )
+            shape.push_back( range( idx5 ) );
+        if ( idx6 != IDX_NOTUSED )
+            shape.push_back( range( idx6 ) );
+        if ( idx7 != IDX_NOTUSED )
+            shape.push_back( range( idx7 ) );
         atlas::array::ArrayT<DATA_TYPE> field( shape );
         return field;
     }
@@ -498,7 +517,8 @@ private:
             case IDX_NPROMA:
                 return nproma();
             default:
-                if ( idx_type >= 0 ) return idx_type;
+                if ( idx_type >= 0 )
+                    return idx_type;
         }
         throw_Exception( "idx_type not recognized" );
         return 0;

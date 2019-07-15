@@ -33,8 +33,12 @@ struct IsGhostPoint {
     }
 
     bool operator()( idx_t idx ) {
-        if ( part_[idx] != mypart_ ) return true;
-        if ( ridx_[idx] != base_ + idx ) return true;
+        if ( part_[idx] != mypart_ ) {
+            return true;
+        }
+        if ( ridx_[idx] != base_ + idx ) {
+            return true;
+        }
         return false;
     }
     int mypart_;
@@ -74,7 +78,9 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
     IsGhostPoint is_ghost( part, remote_idx, base, parsize_ );
 
     for ( int jj = 0; jj < parsize_; ++jj ) {
-        if ( is_ghost( jj ) ) ++recvcounts_[part[jj]];
+        if ( is_ghost( jj ) ) {
+            ++recvcounts_[part[jj]];
+        }
     }
     recvcnt_ = std::accumulate( recvcounts_.begin(), recvcounts_.end(), 0 );
 
@@ -127,8 +133,9 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
   here
 */
     sendmap_.resize( sendcnt_ );
-    for ( int jj = 0; jj < sendcnt_; ++jj )
+    for ( int jj = 0; jj < sendcnt_; ++jj ) {
         sendmap_[jj] = recv_requests[jj];
+    }
 
     is_setup_        = true;
     backdoor.parsize = parsize_;
@@ -144,12 +151,14 @@ void execute_halo_exchange( HaloExchange* This, Value field[], int var_strides[]
     // slowest moving
 
     array::ArrayShape shape{This->backdoor.parsize};
-    for ( int j = 0; j < var_rank; ++j )
+    for ( int j = 0; j < var_rank; ++j ) {
         shape.push_back( var_extents[j] );
+    }
 
     array::ArrayStrides strides{var_extents[0] * var_strides[0]};
-    for ( int j = 0; j < var_rank; ++j )
+    for ( int j = 0; j < var_rank; ++j ) {
         strides.push_back( var_strides[j] );
+    }
 
     std::unique_ptr<array::Array> arr( array::Array::wrap( field, array::ArraySpec{shape, strides} ) );
 

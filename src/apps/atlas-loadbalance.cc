@@ -77,7 +77,9 @@ public:
 
         key = "";
         for ( int i = 0; i < argc; ++i ) {
-            if ( i == 1 && argv[i][0] != '-' ) { key = std::string( argv[i] ); }
+            if ( i == 1 && argv[i][0] != '-' ) {
+                key = std::string( argv[i] );
+            }
         }
 
         halo   = Resource<int>( "--halo", 1 );
@@ -95,7 +97,9 @@ private:
 //------------------------------------------------------------------------------------------------------
 
 void AtlasLoadbalance::run() {
-    if ( !do_run ) return;
+    if ( !do_run ) {
+        return;
+    }
 
     StructuredGrid grid;
     try {
@@ -104,18 +108,24 @@ void AtlasLoadbalance::run() {
     catch ( eckit::Exception& err ) {
     }
 
-    if ( !grid ) return;
+    if ( !grid ) {
+        return;
+    }
     MeshGenerator meshgenerator( "structured" );
     Mesh mesh = meshgenerator.generate( grid );
 
     functionspace::NodeColumns nodes( mesh, option::halo( halo ) );
 
-    if ( output.size() ) { write_load_balance_report( mesh, output ); }
+    if ( output.size() ) {
+        write_load_balance_report( mesh, output );
+    }
     else {
         std::stringstream s;
         write_load_balance_report( mesh, s );
 
-        if ( mpi::comm().rank() == 0 ) { std::cout << s.str() << std::endl; }
+        if ( mpi::comm().rank() == 0 ) {
+            std::cout << s.str() << std::endl;
+        }
     }
     atlas::Library::instance().finalise();
 }

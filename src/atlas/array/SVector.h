@@ -59,7 +59,8 @@ public:
     ATLAS_HOST_DEVICE
     ~SVector() {
 #ifndef __CUDA_ARCH__
-        if ( !externally_allocated_ ) util::delete_managedmem( data_ );
+        if ( !externally_allocated_ )
+            util::delete_managedmem( data_ );
 #endif
     }
 
@@ -114,7 +115,8 @@ public:
     idx_t size() const { return size_; }
 
     void resize_impl( idx_t N ) {
-        if ( N == size_ ) return;
+        if ( N == size_ )
+            return;
 
         T* d_ = nullptr;
         util::allocate_managedmem( d_, N );

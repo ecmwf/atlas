@@ -120,8 +120,12 @@ LegendreCacheCreatorLocal::LegendreCacheCreatorLocal( const Grid& grid, int trun
     config_( config ) {}
 
 bool LegendreCacheCreatorLocal::supported() const {
-    if ( not StructuredGrid( grid_ ) ) return false;
-    if ( grid_.projection() ) return false;
+    if ( not StructuredGrid( grid_ ) ) {
+        return false;
+    }
+    if ( grid_.projection() ) {
+        return false;
+    }
     return true;
 }
 

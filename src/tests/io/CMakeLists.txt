@@ -9,11 +9,13 @@
 ecbuild_add_test( TARGET atlas_test_gmsh
   SOURCES  test_gmsh.cc ../TestMeshes.h
   LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_pointcloud_io
   SOURCES   test_pointcloud_io.cc
   LIBS      atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 if( HAVE_FCTEST )
@@ -22,6 +24,7 @@ add_fctest( TARGET atlas_fctest_gmsh
   LINKER_LANGUAGE Fortran
   SOURCES         fctest_gmsh.F90
   LIBS            atlas_f
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 endif()

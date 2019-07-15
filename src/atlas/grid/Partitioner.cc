@@ -38,7 +38,9 @@ namespace {
 detail::partitioner::Partitioner* partitioner_from_config( const Partitioner::Config& config ) {
     std::string type;
     long partitions = mpi::comm().size();
-    if ( not config.get( "type", type ) ) throw_Exception( "'type' missing in configuration for Partitioner", Here() );
+    if ( not config.get( "type", type ) ) {
+        throw_Exception( "'type' missing in configuration for Partitioner", Here() );
+    }
     config.get( "partitions", partitions );
     return Factory::build( type, partitions );
 }

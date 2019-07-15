@@ -46,7 +46,9 @@ using LinearSpacing = grid::LinearSpacing;
 
 eckit::PathName CacheFile( const std::string& path ) {
     eckit::PathName cachefile( path );
-    if ( cachefile.exists() ) cachefile.unlink();
+    if ( cachefile.exists() ) {
+        cachefile.unlink();
+    }
     return cachefile;
 }
 
@@ -111,7 +113,9 @@ CASE( "test_global_grids" ) {
             EXPECT( cache_creator.supported() );
             auto cachefile = CacheFile( "leg_" + cache_creator.uid() + ".bin" );
             cache_creator.create( cachefile );
-            if ( GaussianGrid( grid ) ) { EXPECT( hash( cachefile ) == F_cache_hash ); }
+            if ( GaussianGrid( grid ) ) {
+                EXPECT( hash( cachefile ) == F_cache_hash );
+            }
 
             ATLAS_TRACE_SCOPE( "create without cache" )
             Trans( grid, truncation );

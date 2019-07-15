@@ -27,9 +27,13 @@ static bool _is_global( double ymin, double ymax ) {
 static std::array<double, 2> get_interval_y( const eckit::Parametrisation& params ) {
     double ymin, ymax;
 
-    if ( !params.get( "ymin", ymin ) ) throw_Exception( "ymin missing in Params", Here() );
+    if ( !params.get( "ymin", ymin ) ) {
+        throw_Exception( "ymin missing in Params", Here() );
+    }
 
-    if ( !params.get( "ymax", ymax ) ) throw_Exception( "ymax missing in Params", Here() );
+    if ( !params.get( "ymax", ymax ) ) {
+        throw_Exception( "ymax missing in Params", Here() );
+    }
 
     return {ymin, ymax};
 }
@@ -60,7 +64,7 @@ ZonalBandDomain::ZonalBandDomain( const eckit::Parametrisation& params ) :
 ZonalBandDomain::ZonalBandDomain( const Interval& interval_y ) : ZonalBandDomain( interval_y, /*west*/ 0. ) {}
 
 ZonalBandDomain::ZonalBandDomain( const Interval& interval_y, const double west ) :
-    RectangularDomain( {west, west + 360.}, interval_y, units_ ) {
+    RectangularLonLatDomain( {west, west + 360.}, interval_y ) {
     global_   = _is_global( ymin(), ymax() );
     ymin_tol_ = ymin() - 1.e-6;
     ymax_tol_ = ymax() + 1.e-6;
@@ -75,7 +79,9 @@ ZonalBandDomain::Spec ZonalBandDomain::spec() const {
     domain_spec.set( "type", type() );
     domain_spec.set( "ymin", ymin() );
     domain_spec.set( "ymax", ymax() );
-    if ( xmin() != 0. ) { domain_spec.set( "west", xmin() ); }
+    if ( xmin() != 0. ) {
+        domain_spec.set( "west", xmin() );
+    }
     return domain_spec;
 }
 

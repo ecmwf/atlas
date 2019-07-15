@@ -1,6 +1,0 @@
-{
-  "//" : "Shifted lonlat grid 'S45'",
-
-  "name" : "S45",
-  "domain" : { "type": "zonal_band", "ymax": 90, "ymin": 45 }
-}

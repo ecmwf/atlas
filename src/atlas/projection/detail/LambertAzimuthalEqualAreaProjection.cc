@@ -21,8 +21,8 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
-
 
 namespace atlas {
 namespace projection {
@@ -31,41 +31,41 @@ namespace detail {
 
 LambertAzimuthalEqualAreaProjection::LambertAzimuthalEqualAreaProjection( const eckit::Parametrisation& params ) :
     radius_( util::Earth::radius() ) {
-    if ( !params.get( "radius", radius_ ) ) radius_ = util::Earth::radius();
-    ATLAS_ASSERT( params.get( "central_longitude", reference_[0] ) );
-    ATLAS_ASSERT( params.get( "standard_parallel", reference_[1] ) );
+    ATLAS_ASSERT( params.get( "central_longitude", reference_[LON] ) );
+    ATLAS_ASSERT( params.get( "standard_parallel", reference_[LAT] ) );
+    params.get( "radius", radius_ = util::Earth::radius() );
 
-    lambda0_  = util::Constants::degreesToRadians() * reference_[0];
-    phi1_     = util::Constants::degreesToRadians() * reference_[1];
+    lambda0_  = util::Constants::degreesToRadians() * reference_[LON];
+    phi1_     = util::Constants::degreesToRadians() * reference_[LAT];
     sin_phi1_ = std::sin( phi1_ );
     cos_phi1_ = std::cos( phi1_ );
 }
 
 
 void LambertAzimuthalEqualAreaProjection::lonlat2xy( double crd[] ) const {
-    double dlambda     = util::Constants::degreesToRadians() * ( crd[0] - reference_.lon() );
+    double dlambda     = util::Constants::degreesToRadians() * ( crd[LON] - reference_.lon() );
     double cos_dlambda = std::cos( dlambda );
     double sin_dlambda = std::sin( dlambda );
 
-    double phi     = util::Constants::degreesToRadians() * crd[1];
+    double phi     = util::Constants::degreesToRadians() * crd[LAT];
     double sin_phi = std::sin( phi );
     double cos_phi = std::cos( phi );
 
     double kp = radius_ * std::sqrt( 2. / ( 1. + sin_phi1_ * sin_phi + cos_phi1_ * cos_phi * cos_dlambda ) );
 
-    crd[0] = kp * cos_phi * sin_dlambda;
-    crd[1] = kp * ( cos_phi1_ * sin_phi - sin_phi1_ * cos_phi * cos_dlambda );
+    crd[XX] = kp * cos_phi * sin_dlambda;
+    crd[YY] = kp * ( cos_phi1_ * sin_phi - sin_phi1_ * cos_phi * cos_dlambda );
 }
 
 
 void LambertAzimuthalEqualAreaProjection::xy2lonlat( double crd[] ) const {
-    const double& x = crd[0];
-    const double& y = crd[1];
+    const double& x = crd[XX];
+    const double& y = crd[YY];
 
     const double rho = std::sqrt( x * x + y * y );
-    if ( eckit::types::is_approximately_equal( rho, 0. ) ) {
-        crd[0] = reference_[0];
-        crd[1] = reference_[1];
+    if ( std::abs( rho ) < 1.e-12 ) {
+        crd[LON] = reference_[LON];
+        crd[LAT] = reference_[LAT];
         return;
     }
 
@@ -73,19 +73,19 @@ void LambertAzimuthalEqualAreaProjection::xy2lonlat( double crd[] ) const {
     double cos_c = std::cos( c );
     double sin_c = std::sin( c );
 
-    double lon_r = lambda0_ + std::atan2( x * sin_c, rho * cos_phi1_ * cos_c - y * sin_phi1_ * sin_c );
-    double lat_r = std::asin( cos_c * sin_phi1_ + y * sin_c * cos_phi1_ / rho );
+    double lon_r     = lambda0_ + std::atan2( x * sin_c, rho * cos_phi1_ * cos_c - y * sin_phi1_ * sin_c );
+    double sin_lat_r = cos_c * sin_phi1_ + y * sin_c * cos_phi1_ / rho;
 
-    crd[0] = lon_r * util::Constants::radiansToDegrees();
-    crd[1] = lat_r * util::Constants::radiansToDegrees();
+    crd[LON] = lon_r * util::Constants::radiansToDegrees();
+    crd[LAT] = sin_lat_r > 1 ? 90 : sin_lat_r < -1 ? -90 : util::Constants::radiansToDegrees() * std::asin( sin_lat_r );
 }
 
 
 LambertAzimuthalEqualAreaProjection::Spec LambertAzimuthalEqualAreaProjection::spec() const {
     Spec proj;
     proj.set( "type", static_type() );
-    proj.set( "central_longitude", reference_[0] );
-    proj.set( "standard_parallel", reference_[1] );
+    proj.set( "central_longitude", reference_[LON] );
+    proj.set( "standard_parallel", reference_[LAT] );
     proj.set( "radius", radius_ );
 
     return proj;
@@ -95,8 +95,8 @@ LambertAzimuthalEqualAreaProjection::Spec LambertAzimuthalEqualAreaProjection::s
 void LambertAzimuthalEqualAreaProjection::hash( eckit::Hash& h ) const {
     h.add( static_type() );
     h.add( radius_ );
-    h.add( reference_[0] );
-    h.add( reference_[1] );
+    h.add( reference_[LON] );
+    h.add( reference_[LAT] );
 }
 
 

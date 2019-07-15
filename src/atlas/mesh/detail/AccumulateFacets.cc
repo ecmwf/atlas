@@ -31,8 +31,12 @@ void accumulate_facets( const mesh::HybridElements& cells, const mesh::Nodes& no
     }
     nb_facets       = 0;
     nb_inner_facets = 0;
-    if ( connectivity_facet_to_elem.size() == 0 ) { connectivity_facet_to_elem.reserve( 6 * cells.size() ); }
-    if ( facet_nodes_data.size() == 0 ) { facet_nodes_data.reserve( 6 * cells.size() ); }
+    if ( connectivity_facet_to_elem.size() == 0 ) {
+        connectivity_facet_to_elem.reserve( 6 * cells.size() );
+    }
+    if ( facet_nodes_data.size() == 0 ) {
+        facet_nodes_data.reserve( 6 * cells.size() );
+    }
     for ( idx_t t = 0; t < cells.nb_types(); ++t ) {
         const mesh::Elements& elements            = cells.elements( t );
         const mesh::BlockConnectivity& elem_nodes = elements.node_connectivity();
@@ -77,7 +81,9 @@ void accumulate_facets( const mesh::HybridElements& cells, const mesh::Nodes& no
         std::vector<idx_t> facet_nodes( nb_nodes_in_facet );
 
         for ( idx_t e = 0; e < nb_elems; ++e ) {
-            if ( patch( e ) ) continue;
+            if ( patch( e ) ) {
+                continue;
+            }
             for ( idx_t f = 0; f < nb_facets_in_elem; ++f ) {
                 bool found_face = false;
 
@@ -130,8 +136,12 @@ void accumulate_facets_in_range( std::vector<array::Range>& range, const mesh::H
                                  idx_t& nb_inner_facets, idx_t& missing_value,
                                  std::vector<std::vector<idx_t>>& node_to_facet ) {
     ATLAS_TRACE();
-    if ( connectivity_facet_to_elem.size() == 0 ) { connectivity_facet_to_elem.reserve( 6 * cells.size() ); }
-    if ( facet_nodes_data.size() == 0 ) { facet_nodes_data.reserve( 6 * cells.size() ); }
+    if ( connectivity_facet_to_elem.size() == 0 ) {
+        connectivity_facet_to_elem.reserve( 6 * cells.size() );
+    }
+    if ( facet_nodes_data.size() == 0 ) {
+        facet_nodes_data.reserve( 6 * cells.size() );
+    }
     for ( idx_t t = 0; t < cells.nb_types(); ++t ) {
         const mesh::Elements& elements            = cells.elements( t );
         const mesh::BlockConnectivity& elem_nodes = elements.node_connectivity();
@@ -178,7 +188,9 @@ void accumulate_facets_in_range( std::vector<array::Range>& range, const mesh::H
         const idx_t e_end   = range[t].end();
 
         for ( idx_t e = e_start; e < e_end; ++e ) {
-            if ( patch( e ) ) continue;
+            if ( patch( e ) ) {
+                continue;
+            }
 
             for ( idx_t f = 0; f < nb_facets_in_elem; ++f ) {
                 bool found_face = false;

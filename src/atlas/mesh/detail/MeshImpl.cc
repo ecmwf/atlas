@@ -54,14 +54,28 @@ size_t MeshImpl::footprint() const {
     size_t size = sizeof( *this );
 
     size += metadata_.footprint();
-    if ( nodes_ ) size += nodes_->footprint();
-    if ( cells_ ) size += cells_->footprint();
-    if ( facets_ ) size += facets_->footprint();
-    if ( ridges_ ) size += ridges_->footprint();
-    if ( peaks_ ) size += peaks_->footprint();
-    if ( partition_graph_ ) size += partition_graph_->footprint();
+    if ( nodes_ ) {
+        size += nodes_->footprint();
+    }
+    if ( cells_ ) {
+        size += cells_->footprint();
+    }
+    if ( facets_ ) {
+        size += facets_->footprint();
+    }
+    if ( ridges_ ) {
+        size += ridges_->footprint();
+    }
+    if ( peaks_ ) {
+        size += peaks_->footprint();
+    }
+    if ( partition_graph_ ) {
+        size += partition_graph_->footprint();
+    }
     for ( const auto& polygon : polygons_ ) {
-        if ( polygon ) size += polygon->footprint();
+        if ( polygon ) {
+            size += polygon->footprint();
+        }
     }
 
     return size;
@@ -72,12 +86,15 @@ void MeshImpl::createElements() {
     facets_.reset( new HybridElements() );
     ridges_.reset( new HybridElements() );
     peaks_.reset( new HybridElements() );
-    if ( dimensionality_ == 2 )
+    if ( dimensionality_ == 2 ) {
         edges_ = facets_;
-    else if ( dimensionality_ == 3 )
+    }
+    else if ( dimensionality_ == 3 ) {
         edges_ = ridges_;
-    else
+    }
+    else {
         throw_Exception( "Invalid Mesh dimensionality", Here() );
+    }
 
     ATLAS_ASSERT( edges_.owners() == 2 );
 }
@@ -92,7 +109,9 @@ void MeshImpl::setProjection( const Projection& projection ) {
 
 void MeshImpl::setGrid( const Grid& grid ) {
     grid_.reset( new Grid( grid ) );
-    if ( not projection_ ) projection_ = grid_->projection();
+    if ( not projection_ ) {
+        projection_ = grid_->projection();
+    }
 }
 
 idx_t MeshImpl::nb_partitions() const {
@@ -104,31 +123,63 @@ idx_t MeshImpl::partition() const {
 }
 
 void MeshImpl::cloneToDevice() const {
-    if ( nodes_ ) nodes_->cloneToDevice();
-    if ( cells_ ) cells_->cloneToDevice();
-    if ( facets_ ) facets_->cloneToDevice();
-    if ( ridges_ ) ridges_->cloneToDevice();
-    if ( peaks_ ) peaks_->cloneToDevice();
+    if ( nodes_ ) {
+        nodes_->cloneToDevice();
+    }
+    if ( cells_ ) {
+        cells_->cloneToDevice();
+    }
+    if ( facets_ ) {
+        facets_->cloneToDevice();
+    }
+    if ( ridges_ ) {
+        ridges_->cloneToDevice();
+    }
+    if ( peaks_ ) {
+        peaks_->cloneToDevice();
+    }
 }
 
 void MeshImpl::cloneFromDevice() const {
-    if ( nodes_ ) nodes_->cloneFromDevice();
-    if ( cells_ ) cells_->cloneFromDevice();
-    if ( facets_ ) facets_->cloneFromDevice();
-    if ( ridges_ ) ridges_->cloneFromDevice();
-    if ( peaks_ ) peaks_->cloneFromDevice();
+    if ( nodes_ ) {
+        nodes_->cloneFromDevice();
+    }
+    if ( cells_ ) {
+        cells_->cloneFromDevice();
+    }
+    if ( facets_ ) {
+        facets_->cloneFromDevice();
+    }
+    if ( ridges_ ) {
+        ridges_->cloneFromDevice();
+    }
+    if ( peaks_ ) {
+        peaks_->cloneFromDevice();
+    }
 }
 
 void MeshImpl::syncHostDevice() const {
-    if ( nodes_ ) nodes_->syncHostDevice();
-    if ( cells_ ) cells_->syncHostDevice();
-    if ( facets_ ) facets_->syncHostDevice();
-    if ( ridges_ ) ridges_->syncHostDevice();
-    if ( peaks_ ) peaks_->syncHostDevice();
+    if ( nodes_ ) {
+        nodes_->syncHostDevice();
+    }
+    if ( cells_ ) {
+        cells_->syncHostDevice();
+    }
+    if ( facets_ ) {
+        facets_->syncHostDevice();
+    }
+    if ( ridges_ ) {
+        ridges_->syncHostDevice();
+    }
+    if ( peaks_ ) {
+        peaks_->syncHostDevice();
+    }
 }
 
 const PartitionGraph& MeshImpl::partitionGraph() const {
-    if ( not partition_graph_ ) { partition_graph_.reset( build_partition_graph( *this ) ); }
+    if ( not partition_graph_ ) {
+        partition_graph_.reset( build_partition_graph( *this ) );
+    }
     return *partition_graph_;
 }
 
@@ -137,7 +188,9 @@ PartitionGraph::Neighbours MeshImpl::nearestNeighbourPartitions() const {
 }
 
 const PartitionPolygon& MeshImpl::polygon( idx_t halo ) const {
-    if ( halo >= static_cast<idx_t>( polygons_.size() ) ) { polygons_.resize( halo + 1 ); }
+    if ( halo >= static_cast<idx_t>( polygons_.size() ) ) {
+        polygons_.resize( halo + 1 );
+    }
     if ( not polygons_[halo] ) {
         int mesh_halo = 0;
         metadata().get( "halo", mesh_halo );

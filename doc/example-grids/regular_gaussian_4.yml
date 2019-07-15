@@ -1,0 +1,13 @@
+# Regular Gaussian grid (Ngauss=8) starting at -180 and much denser x-spacing than y-spacing
+
+type   : "structured"
+yspace : { type : "gaussian", N : 16 }
+xspace : { type : "linear",   N : 160, start : -180,  length : 360, endpoint : false }
+
+
+check :
+  size : 2560
+  lonlat(first) : [-180,81.6506]
+  lonlat(last)  : [177.75,-81.6506]
+  uid : 8e729027737aece8db5883e3a475d5cb
+  bounding_box(n,w,s,e) : [90,-180,-90,180]

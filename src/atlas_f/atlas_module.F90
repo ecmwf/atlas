@@ -67,7 +67,8 @@ use atlas_Mesh_module, only: &
 use atlas_GridDistribution_module, only: &
     & atlas_GridDistribution
 use atlas_Grid_module, only: &
-    & atlas_Grid , &
+    & atlas_Grid, &
+    & atlas_UnstructuredGrid, &
     & atlas_StructuredGrid, &
     & atlas_GaussianGrid, &
     & atlas_ReducedGaussianGrid, &

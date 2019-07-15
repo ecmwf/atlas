@@ -44,7 +44,9 @@ Polygon::Polygon( const Polygon::edge_set_t& edges ) {
     // get external edges by attempting to remove reversed edges, if any
     edge_set_t extEdges;
     for ( const edge_t& e : edges ) {
-        if ( !extEdges.erase( e.reverse() ) ) { extEdges.insert( e ); }
+        if ( !extEdges.erase( e.reverse() ) ) {
+            extEdges.insert( e );
+        }
     }
     ATLAS_ASSERT( extEdges.size() >= 2 );
 
@@ -72,7 +74,9 @@ Polygon::operator bool() const {
 }
 
 Polygon& Polygon::operator+=( const Polygon& other ) {
-    if ( empty() ) { return operator=( other ); }
+    if ( empty() ) {
+        return operator=( other );
+    }
 
     // polygon can have multiple cycles, but must be connected graphs
     // Note: a 'cycle' is handled by repeating the indices, excluding (repeated)

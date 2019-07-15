@@ -52,10 +52,7 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
     xspace_( xspace ),
     yspace_( yspace ) {
     // Copy members
-    if ( projection )
-        projection_ = projection;
-    else
-        projection_ = Projection();
+    projection_ = projection ? projection : Projection();
 
     y_.assign( yspace_.begin(), yspace_.end() );
     idx_t ny{static_cast<idx_t>( y_.size() )};
@@ -88,12 +85,11 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
     computeTruePeriodicity();
 }
 
-void Structured::computeDomain() {
-    if ( periodic() ) { domain_ = ZonalBandDomain( {yspace().min(), yspace().max()}, xspace().min() ); }
-    else {
-        domain_ = RectangularDomain( {xspace().min(), xspace().max()}, {yspace().min(), yspace().max()},
-                                     projection_.units() );
+Domain Structured::computeDomain() const {
+    if ( periodic() ) {
+        return ZonalBandDomain( {yspace().min(), yspace().max()}, xspace().min() );
     }
+    return RectangularDomain( {xspace().min(), xspace().max()}, {yspace().min(), yspace().max()}, projection_.units() );
 }
 
 Structured::~Structured() {}
@@ -143,10 +139,18 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
         std::max( v_N.size(), std::max( v_start.size(), std::max( v_end.size(), std::max( v_length.size(), 1ul ) ) ) );
     reserve( ny );
 
-    if ( not v_N.empty() ) ATLAS_ASSERT( static_cast<idx_t>( v_N.size() ) == ny );
-    if ( not v_start.empty() ) ATLAS_ASSERT( static_cast<idx_t>( v_start.size() ) == ny );
-    if ( not v_end.empty() ) ATLAS_ASSERT( static_cast<idx_t>( v_end.size() ) == ny );
-    if ( not v_length.empty() ) ATLAS_ASSERT( static_cast<idx_t>( v_length.size() ) == ny );
+    if ( not v_N.empty() ) {
+        ATLAS_ASSERT( static_cast<idx_t>( v_N.size() ) == ny );
+    }
+    if ( not v_start.empty() ) {
+        ATLAS_ASSERT( static_cast<idx_t>( v_start.size() ) == ny );
+    }
+    if ( not v_end.empty() ) {
+        ATLAS_ASSERT( static_cast<idx_t>( v_end.size() ) == ny );
+    }
+    if ( not v_length.empty() ) {
+        ATLAS_ASSERT( static_cast<idx_t>( v_length.size() ) == ny );
+    }
 
     nxmin_ = std::numeric_limits<idx_t>::max();
     nxmax_ = 0;
@@ -154,10 +158,18 @@ Structured::XSpace::Implementation::Implementation( const Config& config ) {
     max_   = -std::numeric_limits<double>::max();
 
     for ( idx_t j = 0; j < ny; ++j ) {
-        if ( not v_N.empty() ) config_xspace.set( "N", v_N[j] );
-        if ( not v_start.empty() ) config_xspace.set( "start", v_start[j] );
-        if ( not v_end.empty() ) config_xspace.set( "end", v_end[j] );
-        if ( not v_length.empty() ) config_xspace.set( "length", v_length[j] );
+        if ( not v_N.empty() ) {
+            config_xspace.set( "N", v_N[j] );
+        }
+        if ( not v_start.empty() ) {
+            config_xspace.set( "start", v_start[j] );
+        }
+        if ( not v_end.empty() ) {
+            config_xspace.set( "end", v_end[j] );
+        }
+        if ( not v_length.empty() ) {
+            config_xspace.set( "length", v_length[j] );
+        }
         spacing::LinearSpacing::Params xspace( config_xspace );
         xmin_.push_back( xspace.start );
         xmax_.push_back( xspace.end );
@@ -301,15 +313,21 @@ Grid::Spec Structured::XSpace::Implementation::spec() const {
     bool endpoint = std::abs( ( xmax - xmin ) - ( nx - 1 ) * dx ) < 1.e-10;
 
     spec.set( "type", "linear" );
-    if ( same_xmin ) { spec.set( "start", xmin ); }
+    if ( same_xmin ) {
+        spec.set( "start", xmin );
+    }
     else {
         spec.set( "start[]", xmin_ );
     }
-    if ( same_xmax ) { spec.set( "end", xmax ); }
+    if ( same_xmax ) {
+        spec.set( "end", xmax );
+    }
     else {
         spec.set( "end[]", xmax_ );
     }
-    if ( same_nx ) { spec.set( "N", nx ); }
+    if ( same_nx ) {
+        spec.set( "N", nx );
+    }
     else {
         spec.set( "N[]", nx_ );
     }
@@ -326,7 +344,9 @@ public:
         normalise_( domain.xmin() ) {}
 
     double operator()( double x ) const {
-        if ( degrees_ ) { x = normalise_( x ); }
+        if ( degrees_ ) {
+            x = normalise_( x );
+        }
         return x;
     }
 
@@ -443,7 +463,9 @@ void Structured::crop( const Domain& dom ) {
             throw_Exception( errmsg.str(), Here() );
         }
     }
-    domain_ = RectangularDomain( {xspace_.min(), xspace_.max()}, {yspace_.min(), yspace_.max()}, projection_.units() );
+    domain_ =
+        dom ? dom
+            : RectangularDomain( {xspace_.min(), xspace_.max()}, {yspace_.min(), yspace_.max()}, projection_.units() );
 }
 
 void Structured::computeTruePeriodicity() {
@@ -478,21 +500,34 @@ std::string Structured::type() const {
 }
 
 void Structured::hash( eckit::Hash& h ) const {
-    h.add( y().data(), sizeof( double ) * y().size() );
+    auto add_double        = [&]( const double& x ) { h.add( std::round( x * 1.e8 ) ); };
+    auto add_double_vector = [&]( const std::vector<double>& xvec ) {
+        for ( auto& x : xvec ) {
+            add_double( x );
+        }
+    };
+    auto add_long        = [&]( const idx_t& x ) { h.add( long( x ) ); };
+    auto add_long_vector = [&]( const std::vector<idx_t>& xvec ) {
+        for ( auto& x : xvec ) {
+            add_long( x );
+        }
+    };
 
-    // We can use nx() directly, but it could change the hash
-    std::vector<long> hashed_nx( nx().begin(), nx().end() );
-    h.add( hashed_nx.data(), sizeof( long ) * ny() );
+    add_double_vector( y() );
+    add_long_vector( nx() );
 
-    // also add lonmin and lonmax
-    h.add( xmin_.data(), sizeof( double ) * xmin_.size() );
-    h.add( dx_.data(), sizeof( double ) * dx_.size() );
+    add_double_vector( xmin_ );
+    add_double_vector( dx_ );
 
     // also add projection information
     projection().hash( h );
 
     // also add domain information, even though already encoded in grid.
     domain().hash( h );
+}
+
+RectangularLonLatDomain Structured::lonlatBoundingBox() const {
+    return projection_ ? projection_.lonlatBoundingBox( computeDomain() ) : domain();
 }
 
 Grid::Spec Structured::spec() const {
@@ -511,7 +546,7 @@ Grid::Spec Structured::spec() const {
     return grid_spec;
 }
 
-    // --------------------------------------------------------------------
+// --------------------------------------------------------------------
 
 #if 1
 namespace {  // anonymous
@@ -539,13 +574,19 @@ public:
         Domain domain;
 
         Config config_proj;
-        if ( config.get( "projection", config_proj ) ) projection = Projection( config_proj );
+        if ( config.get( "projection", config_proj ) ) {
+            projection = Projection( config_proj );
+        }
 
         Config config_domain;
-        if ( config.get( "domain", config_domain ) ) { domain = Domain( config_domain ); }
+        if ( config.get( "domain", config_domain ) ) {
+            domain = Domain( config_domain );
+        }
 
         Config config_yspace;
-        if ( not config.get( "yspace", config_yspace ) ) throw_Exception( "yspace missing in configuration", Here() );
+        if ( not config.get( "yspace", config_yspace ) ) {
+            throw_Exception( "yspace missing in configuration", Here() );
+        }
         yspace = Spacing( config_yspace );
 
         XSpace xspace;
@@ -553,7 +594,9 @@ public:
         Config config_xspace;
         std::vector<Config> config_xspace_list;
 
-        if ( config.get( "xspace[]", config_xspace_list ) ) { xspace = XSpace( config_xspace_list ); }
+        if ( config.get( "xspace[]", config_xspace_list ) ) {
+            xspace = XSpace( config_xspace_list );
+        }
         else if ( config.get( "xspace", config_xspace ) ) {
             xspace = XSpace( config_xspace );
         }

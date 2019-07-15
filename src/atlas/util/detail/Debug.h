@@ -48,7 +48,8 @@ inline bool is_node_global_index( gidx_t x ) {
     static std::vector<gidx_t> v =
         eckit::Resource<std::vector<gidx_t>>( "$ATLAS_DEBUG_NODE_GLOBAL_INDEX", std::vector<gidx_t>() );
     for ( gidx_t g : v ) {
-        if ( x == g ) return true;
+        if ( x == g )
+            return true;
     }
     return false;
 }
@@ -57,7 +58,8 @@ inline bool is_edge_global_index( gidx_t x ) {
     static std::vector<gidx_t> v =
         eckit::Resource<std::vector<gidx_t>>( "$ATLAS_DEBUG_EDGE_GLOBAL_INDEX", std::vector<gidx_t>() );
     for ( gidx_t g : v ) {
-        if ( x == g ) return true;
+        if ( x == g )
+            return true;
     }
     return false;
 }
@@ -66,7 +68,8 @@ inline bool is_cell_global_index( gidx_t x ) {
     static std::vector<gidx_t> v =
         eckit::Resource<std::vector<gidx_t>>( "$ATLAS_DEBUG_CELL_GLOBAL_INDEX", std::vector<gidx_t>() );
     for ( gidx_t g : v ) {
-        if ( x == g ) return true;
+        if ( x == g )
+            return true;
     }
     return false;
 }
@@ -75,7 +78,8 @@ inline bool is_node_uid( gidx_t x ) {
     static std::vector<gidx_t> v =
         eckit::Resource<std::vector<gidx_t>>( "$ATLAS_DEBUG_NODE_UID", std::vector<gidx_t>() );
     for ( gidx_t g : v ) {
-        if ( x == g ) return true;
+        if ( x == g )
+            return true;
     }
     return false;
 }
@@ -84,7 +88,8 @@ inline bool is_cell_uid( gidx_t x ) {
     static std::vector<gidx_t> v =
         eckit::Resource<std::vector<gidx_t>>( "$ATLAS_DEBUG_CELL_UID", std::vector<gidx_t>() );
     for ( gidx_t g : v ) {
-        if ( x == g ) return true;
+        if ( x == g )
+            return true;
     }
     return false;
 }
@@ -98,7 +103,8 @@ inline int is_mpi_rank() {
     static std::vector<long> v = eckit::Resource<std::vector<long>>( "$ATLAS_DEBUG_MPI_RANK", std::vector<long>() );
     static int r               = mpi::comm().rank();
     for ( long g : v ) {
-        if ( r == g ) return true;
+        if ( r == g )
+            return true;
     }
     return false;
 }
@@ -106,7 +112,8 @@ inline int is_mpi_rank() {
 inline int is_mpi_rank( int x ) {
     static std::vector<long> v = eckit::Resource<std::vector<long>>( "$ATLAS_DEBUG_MPI_RANK", std::vector<long>() );
     for ( long g : v ) {
-        if ( x == g ) return true;
+        if ( x == g )
+            return true;
     }
     return false;
 }

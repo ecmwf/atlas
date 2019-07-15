@@ -1,0 +1,13 @@
+# Regular lonlat grid 'L4' but given in custom manner
+
+type   : "structured"
+yspace : { type : "linear", N : 9,  start : 90, end : -90 }
+xspace : { type : "linear", N : 16, start : 0,  end :  360, endpoint : false }
+
+
+check :
+  size : 144
+  lonlat(first) : [0,90]
+  lonlat(last)  : [337.5,-90]
+  uid : 714c5d2db88b5eefdf8f789e8012f0aa
+  bounding_box(n,w,s,e) : [90,0,-90,360]

@@ -391,6 +391,8 @@ trans/detail/TransFactory.h
 trans/detail/TransFactory.cc
 trans/detail/TransImpl.h
 trans/detail/TransImpl.cc
+trans/detail/TransInterface.h
+trans/detail/TransInterface.cc
 )
 if( ATLAS_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs

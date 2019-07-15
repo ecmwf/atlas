@@ -37,7 +37,9 @@ void PartitionedMesh::writeGmsh( const std::string& fileName, const FieldSet& fi
     output::Gmsh out( fileName, output_config );
     out.write( mesh_ );
 
-    if ( not fields.empty() ) { out.write( fields ); }
+    if ( not fields.empty() ) {
+        out.write( fields );
+    }
 }
 
 void PartitionedMesh::partition( const Grid& grid ) {

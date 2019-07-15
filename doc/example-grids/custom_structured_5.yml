@@ -1,0 +1,14 @@
+# Rotated lonlat grid 'L4'
+
+type       :  "structured"
+yspace     : { type : "linear", N : 9,  start : 90, end : -90 }
+xspace     : { type : "linear", N : 16, start : 0 , end :  360 , endpoint : false }
+projection : { type : "rotated_lonlat", north_pole :[3,40] }
+
+
+check :
+  size : 144
+  lonlat(first) : [3,40]
+  lonlat(last)  : [-177,-40]
+  uid : d55211f27c4a8c6ce94ea67f0c706e22
+  bounding_box(n,w,s,e) : [90,0,-90,360]

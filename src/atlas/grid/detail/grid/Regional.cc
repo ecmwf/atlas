@@ -25,7 +25,9 @@ namespace {  // anonymous
 
 static Domain domain( const Grid::Config& grid ) {
     Grid::Config config;
-    if ( grid.get( "domain", config ) ) { return Domain( config ); }
+    if ( grid.get( "domain", config ) ) {
+        return Domain( config );
+    }
     return Domain();
 }
 
@@ -45,10 +47,12 @@ struct ConfigParser {
 
     double step( double min, double max, long N, bool endpoint = true ) {
         double l = max - min;
-        if ( endpoint && N > 1 )
+        if ( endpoint && N > 1 ) {
             return l / double( N - 1 );
-        else
+        }
+        else {
             return l / double( N );
+        }
     }
 
     static bool parse( const Projection&, const Grid::Config&, Parsed& x, Parsed& y );
@@ -64,7 +68,9 @@ struct Parse_llc_step : ConfigParser {
         valid = config.get( "nx", x.N ) && config.get( "ny", y.N ) && config.get( "dx", x.step ) &&
                 config.get( "dy", y.step ) && config.get( "lonlat(centre)", centre_lonlat );
 
-        if ( not valid ) return;
+        if ( not valid ) {
+            return;
+        }
 
         double centre[] = {centre_lonlat[0], centre_lonlat[1]};
         p.lonlat2xy( centre );
@@ -84,7 +90,9 @@ struct Parse_bounds_xy : ConfigParser {
         valid = config.get( "nx", x.N ) && config.get( "ny", y.N ) && config.get( "xmin", x.min ) &&
                 config.get( "xmax", x.max ) && config.get( "ymin", y.min ) && config.get( "ymax", y.max );
 
-        if ( not valid ) return;
+        if ( not valid ) {
+            return;
+        }
 
         x.step = step( x.min, x.max, x.N );
         y.step = step( y.min, y.max, y.N );
@@ -113,7 +121,9 @@ struct Parse_bounds_lonlat : ConfigParser {
             }
         }
 
-        if ( not valid ) return;
+        if ( not valid ) {
+            return;
+        }
 
         x.step = step( x.min, x.max, x.N );
         y.step = step( y.min, y.max, y.N );
@@ -128,7 +138,9 @@ struct Parse_ll00_ll11 : ConfigParser {
                 config.get( "lonlat(xmin,ymin)", sw )      // includes rotation
                 && config.get( "lonlat(xmax,ymax)", ne );  // includes rotation
 
-        if ( not valid ) return;
+        if ( not valid ) {
+            return;
+        }
 
         p.lonlat2xy( sw.data() );
         p.lonlat2xy( ne.data() );
@@ -142,13 +154,30 @@ struct Parse_ll00_ll11 : ConfigParser {
     }
 };
 
+struct Parse_xy01_step : ConfigParser {
+    Parse_xy01_step( const Projection&, const Grid::Config& config ) {
+        valid = config.get( "nx", x.N ) && config.get( "ny", y.N ) && config.get( "dx", x.step ) &&
+                config.get( "dy", y.step ) && config.get( "xmin", x.min ) &&
+                config.get( "ymax", y.max );  // includes rotation
+
+        if ( not valid ) {
+            return;
+        }
+
+        x.max = x.min + x.step * ( x.N - 1 );
+        y.min = y.max - y.step * ( y.N - 1 );
+    }
+};
+
 struct Parse_ll00_step : ConfigParser {
     Parse_ll00_step( const Projection& p, const Grid::Config& config ) {
         std::vector<double> sw;
         valid = config.get( "nx", x.N ) && config.get( "ny", y.N ) && config.get( "dx", x.step ) &&
                 config.get( "dy", y.step ) && config.get( "lonlat(xmin,ymin)", sw );  // includes rotation
 
-        if ( not valid ) return;
+        if ( not valid ) {
+            return;
+        }
 
         p.lonlat2xy( sw.data() );
         x.min = sw[0];
@@ -159,13 +188,30 @@ struct Parse_ll00_step : ConfigParser {
     }
 };
 
+struct Parse_xy00_step : ConfigParser {
+    Parse_xy00_step( const Projection&, const Grid::Config& config ) {
+        valid = config.get( "nx", x.N ) && config.get( "ny", y.N ) && config.get( "dx", x.step ) &&
+                config.get( "dy", y.step ) && config.get( "xmin", x.min ) && config.get( "ymin", y.min );
+
+        if ( not valid ) {
+            return;
+        }
+
+        x.max = x.min + x.step * ( x.N - 1 );
+        y.max = y.min + y.step * ( y.N - 1 );
+    }
+};
+
+
 struct Parse_ll01_step : ConfigParser {  // This resembles GRIB input for "lambert_azimutal_equal_area"
     Parse_ll01_step( const Projection& p, const Grid::Config& config ) {
         std::vector<double> nw;
         valid = config.get( "nx", x.N ) && config.get( "ny", y.N ) && config.get( "dx", x.step ) &&
                 config.get( "dy", y.step ) && config.get( "lonlat(xmin,ymax)", nw );  // includes rotation
 
-        if ( not valid ) return;
+        if ( not valid ) {
+            return;
+        }
 
         p.lonlat2xy( nw.data() );
         x.min = nw[0];
@@ -190,24 +236,42 @@ bool ConfigParser::parse( const Projection& projection, const Grid::Config& conf
 
 bool ConfigParser::parse( const Projection& projection, const Grid::Config& config, Parsed& x, Parsed& y ) {
     // bounding box using 4 variables  (any projection allowed)
-    if ( ConfigParser::parse<Parse_bounds_xy>( projection, config, x, y ) ) return true;
+    if ( ConfigParser::parse<Parse_bounds_xy>( projection, config, x, y ) ) {
+        return true;
+    }
 
     // centre of domain and increments  (any projection allowed)
-    if ( ConfigParser::parse<Parse_llc_step>( projection, config, x, y ) ) return true;
+    if ( ConfigParser::parse<Parse_llc_step>( projection, config, x, y ) ) {
+        return true;
+    }
 
     // top-left of domain and increments (any projection allowed)
-    if ( ConfigParser::parse<Parse_ll01_step>( projection, config, x, y ) ) return true;
+    if ( ConfigParser::parse<Parse_ll01_step>( projection, config, x, y ) ) {
+        return true;
+    }
+    if ( ConfigParser::parse<Parse_xy01_step>( projection, config, x, y ) ) {
+        return true;
+    }
 
     // bottom-left of domain and increments (any projection allowed)
-    if ( ConfigParser::parse<Parse_ll00_step>( projection, config, x, y ) ) return true;
+    if ( ConfigParser::parse<Parse_ll00_step>( projection, config, x, y ) ) {
+        return true;
+    }
+    if ( ConfigParser::parse<Parse_xy00_step>( projection, config, x, y ) ) {
+        return true;
+    }
 
     // bounding box using two points defined in lonlat (any projection allowed)
-    if ( ConfigParser::parse<Parse_ll00_ll11>( projection, config, x, y ) ) return true;
+    if ( ConfigParser::parse<Parse_ll00_ll11>( projection, config, x, y ) ) {
+        return true;
+    }
 
     //-------- From here on, projection must be (rotated) lonlat --------//
 
     // bounding box using 4 variables (south west north east)
-    if ( ConfigParser::parse<Parse_bounds_lonlat>( projection, config, x, y ) ) return true;
+    if ( ConfigParser::parse<Parse_bounds_lonlat>( projection, config, x, y ) ) {
+        return true;
+    }
 
     return false;
 }
@@ -231,7 +295,9 @@ public:
         Projection projection;
         {
             util::Config config_proj;
-            if ( config.get( "projection", config_proj ) ) { projection = Projection( config_proj ); }
+            if ( config.get( "projection", config_proj ) ) {
+                projection = Projection( config_proj );
+            }
         }
 
         // Read grid configuration
@@ -240,12 +306,11 @@ public:
             throw_Exception( "Could not parse configuration for RegularRegional grid", Here() );
         }
 
-        YSpace yspace = config.getBool( "y_increasing", true ) ? LinearSpacing( y.min, y.max, y.N, y.endpoint )
-                                                               : LinearSpacing( y.max, y.min, y.N, y.endpoint );
+        YSpace yspace = config.getInt( "y_numbering", -1 ) < 0 ? LinearSpacing( y.max, y.min, y.N, y.endpoint )
+                                                               : LinearSpacing( y.min, y.max, y.N, y.endpoint );
 
         bool with_endpoint = true;
         XSpace xspace( {x.min, x.max}, std::vector<long>( y.N, x.N ), with_endpoint );
-
         return new StructuredGrid::grid_t( xspace, yspace, projection, domain( config ) );
     }
 
@@ -272,7 +337,9 @@ public:
         Projection projection;
         {
             util::Config config_proj;
-            if ( config.get( "projection", config_proj ) ) { projection = Projection( config_proj ); }
+            if ( config.get( "projection", config_proj ) ) {
+                projection = Projection( config_proj );
+            }
         }
 
         ATLAS_ASSERT( projection.units() == "degrees" );
@@ -280,13 +347,21 @@ public:
         // Read grid configuration
         ConfigParser::Parsed y;
         long nx;
-        if ( not config.get( "nx", nx ) ) throw_Exception( "Parameter 'nx' missing in configuration", Here() );
-        if ( not config.get( "ny", y.N ) ) throw_Exception( "Parameter 'ny' missing in configuration", Here() );
-        if ( not( config.get( "ymin", y.min ) or config.get( "south", y.min ) ) ) y.min = -90.;
-        if ( not( config.get( "ymax", y.max ) or config.get( "north", y.max ) ) ) y.max = 90.;
+        if ( not config.get( "nx", nx ) ) {
+            throw_Exception( "Parameter 'nx' missing in configuration", Here() );
+        }
+        if ( not config.get( "ny", y.N ) ) {
+            throw_Exception( "Parameter 'ny' missing in configuration", Here() );
+        }
+        if ( not( config.get( "ymin", y.min ) or config.get( "south", y.min ) ) ) {
+            y.min = -90.;
+        }
+        if ( not( config.get( "ymax", y.max ) or config.get( "north", y.max ) ) ) {
+            y.max = 90.;
+        }
 
-        YSpace yspace = config.getBool( "y_increasing", true ) ? LinearSpacing( y.min, y.max, y.N, true )
-                                                               : LinearSpacing( y.max, y.min, y.N, true );
+        YSpace yspace = config.getInt( "y_numbering", -1 ) < 0 ? LinearSpacing( y.max, y.min, y.N, true )
+                                                               : LinearSpacing( y.min, y.max, y.N, true );
 
         XSpace xspace( {0., 360.}, std::vector<long>( y.N, nx ), false );
 

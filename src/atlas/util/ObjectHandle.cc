@@ -43,7 +43,9 @@ void ObjectHandleBase::assign( const ObjectHandleBase& other ) {
 }
 
 void ObjectHandleBase::assign( const Object* other ) {
-    if ( object_ ) { release(); }
+    if ( object_ ) {
+        release();
+    }
 
     object_ = const_cast<Object*>( other );
 
@@ -52,7 +54,9 @@ void ObjectHandleBase::assign( const Object* other ) {
 
 
 void ObjectHandleBase::attach() {
-    if ( !null() ) object_->attach();
+    if ( !null() ) {
+        object_->attach();
+    }
 }
 
 // ------------------------------------------------------------------

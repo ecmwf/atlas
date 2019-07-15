@@ -21,18 +21,24 @@ public:
     ObjectHandleBase( const Object* object ) : object_( const_cast<Object*>( object ) ) { attach(); }
 
     virtual ~ObjectHandleBase() {
-        if ( object_ ) { release(); }
+        if ( object_ ) {
+            release();
+        }
     }
 
     const ObjectHandleBase& operator=( const ObjectHandleBase& other ) {
-        if ( object_ != other.object_ ) { assign( other ); }
+        if ( object_ != other.object_ ) {
+            assign( other );
+        }
         return *this;
     }
 
     operator bool() const { return object_ != nullptr; }
 
     void reset( const Object* other ) {
-        if ( object_ != other ) { assign( other ); }
+        if ( object_ != other ) {
+            assign( other );
+        }
     }
 
     int owners() const;

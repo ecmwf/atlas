@@ -1,0 +1,16 @@
+# Classic Gaussian grid 'N16'
+
+type       : "classic_gaussian"
+N          : 16
+projection :
+    type              : "rotated_schmidt"
+    stretching_factor : 2.0
+    north_pole        : [3.0,47.0]
+
+
+check : 
+  size : 1688
+  lonlat(first) : [3,44.8796]
+  lonlat(last)  : [-172.453,-54.9736]
+  uid : 64d609c6ee4b036b209047aef97a10eb
+  bounding_box(n,w,s,e) : [90,0,-90,360]

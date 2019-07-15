@@ -49,10 +49,14 @@ RegularMeshGenerator::RegularMeshGenerator( const eckit::Parametrisation& p ) {
 
     // options copied from Structured MeshGenerator
     size_t nb_parts;
-    if ( p.get( "nb_parts", nb_parts ) ) options.set( "nb_parts", nb_parts );
+    if ( p.get( "nb_parts", nb_parts ) ) {
+        options.set( "nb_parts", nb_parts );
+    }
 
     size_t part;
-    if ( p.get( "part", part ) ) options.set( "part", part );
+    if ( p.get( "part", part ) ) {
+        options.set( "part", part );
+    }
 
     std::string partitioner;
     if ( p.get( "partitioner", partitioner ) ) {
@@ -66,10 +70,14 @@ RegularMeshGenerator::RegularMeshGenerator( const eckit::Parametrisation& p ) {
 
     // options specifically for this MeshGenerator
     bool periodic_x;
-    if ( p.get( "periodic_x", periodic_x ) ) options.set( "periodic_x", periodic_x );
+    if ( p.get( "periodic_x", periodic_x ) ) {
+        options.set( "periodic_x", periodic_x );
+    }
 
     bool periodic_y;
-    if ( p.get( "periodic_y", periodic_y ) ) options.set( "periodic_y", periodic_y );
+    if ( p.get( "periodic_y", periodic_y ) ) {
+        options.set( "periodic_y", periodic_y );
+    }
 
     bool biperiodic;
     if ( p.get( "biperiodic", biperiodic ) ) {
@@ -87,10 +95,12 @@ void RegularMeshGenerator::configure_defaults() {
 
     // This options sets the default partitioner
     std::string partitioner;
-    if ( grid::Partitioner::exists( "trans" ) && mpi::comm().size() > 1 )
+    if ( grid::Partitioner::exists( "trans" ) && mpi::comm().size() > 1 ) {
         partitioner = "trans";
-    else
+    }
+    else {
         partitioner = "checkerboard";
+    }
     options.set<std::string>( "partitioner", partitioner );
 
     // Options for for periodic grids
@@ -102,7 +112,9 @@ void RegularMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
     ATLAS_ASSERT( !mesh.generated() );
 
     const RegularGrid rg = RegularGrid( grid );
-    if ( !rg ) throw_Exception( "RegularMeshGenerator can only work with a Regular grid", Here() );
+    if ( !rg ) {
+        throw_Exception( "RegularMeshGenerator can only work with a Regular grid", Here() );
+    }
 
     size_t nb_parts = options.get<size_t>( "nb_parts" );
 
@@ -126,7 +138,9 @@ void RegularMeshGenerator::hash( eckit::Hash& h ) const {
 
 void RegularMeshGenerator::generate( const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const {
     const auto rg = RegularGrid( grid );
-    if ( !rg ) throw_Exception( "Grid could not be cast to a Regular", Here() );
+    if ( !rg ) {
+        throw_Exception( "Grid could not be cast to a Regular", Here() );
+    }
 
     ATLAS_ASSERT( !mesh.generated() );
 
@@ -415,7 +429,9 @@ void RegularMeshGenerator::generate_mesh( const RegularGrid& rg, const std::vect
             // node properties
             if ( is_node_SR[ii] ) {
                 // set node counter
-                if ( is_ghost_SR[ii] ) { inode = inode_ghost++; }
+                if ( is_ghost_SR[ii] ) {
+                    inode = inode_ghost++;
+                }
                 else {
                     inode = inode_nonghost++;
                 }

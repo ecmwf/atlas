@@ -1,0 +1,11 @@
+# Octahedral Gaussian grid 'O16'
+
+name : "O16"
+
+
+check : 
+  size : 1600
+  lonlat(first) : [0,85.7606]
+  lonlat(last)  : [342,-85.7606]
+  uid : 957667adfecf4f2394e4ec9bb0b25569
+  bounding_box(n,w,s,e) : [90,0,-90,360]

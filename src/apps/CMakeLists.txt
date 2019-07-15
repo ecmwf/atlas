@@ -10,7 +10,6 @@ if( ECKIT_INCLUDE_DIRS ) # eckit not yet ported to CMake3
     include_directories( ${ECKIT_INCLUDE_DIRS} )
 endif()
 
-
 ecbuild_add_executable(
   TARGET      atlas-main
   OUTPUT_NAME atlas

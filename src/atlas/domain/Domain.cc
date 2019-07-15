@@ -26,7 +26,8 @@ RectangularDomain::RectangularDomain( const Interval& x, const Interval& y, cons
     Domain( ( RD::is_global( x, y, units ) )
                 ? new atlas::domain::GlobalDomain( x[0] )
                 : ( RD::is_zonal_band( x, units ) ? new atlas::domain::ZonalBandDomain( y, x[0] )
-                                                  : new atlas::domain::RectangularDomain( x, y, units ) ) ) {}
+                                                  : new atlas::domain::RectangularDomain( x, y, units ) ) ),
+    domain_( dynamic_cast<const atlas::domain::RectangularDomain*>( get() ) ) {}
 
 RectangularDomain::RectangularDomain( const Domain& domain ) :
     Domain( domain ),
@@ -60,13 +61,32 @@ double RectangularDomain::ymax() const {
     return domain_->ymax();
 }
 
+ZonalBandDomain::ZonalBandDomain( const Interval& y ) :
+    RectangularLonLatDomain( ( ZD::is_global( y ) ) ? new atlas::domain::GlobalDomain()
+                                                    : new atlas::domain::ZonalBandDomain( y ) ),
+    domain_( dynamic_cast<const atlas::domain::ZonalBandDomain*>( get() ) ) {}
+
 ZonalBandDomain::ZonalBandDomain( const Interval& y, const double& west ) :
-    RectangularDomain( ( ZD::is_global( y ) ) ? new atlas::domain::GlobalDomain( west )
-                                              : new atlas::domain::ZonalBandDomain( y, west ) ) {}
+    RectangularLonLatDomain( ( ZD::is_global( y ) ) ? new atlas::domain::GlobalDomain( west )
+                                                    : new atlas::domain::ZonalBandDomain( y, west ) ),
+    domain_( dynamic_cast<const atlas::domain::ZonalBandDomain*>( get() ) ) {}
 
 ZonalBandDomain::ZonalBandDomain( const Domain& domain ) :
-    RectangularDomain( domain ),
+    RectangularLonLatDomain( domain ),
     domain_( dynamic_cast<const atlas::domain::ZonalBandDomain*>( get() ) ) {}
+
+GlobalDomain::GlobalDomain( const double& west ) :
+    ZonalBandDomain( new atlas::domain::GlobalDomain( west ) ),
+    domain_( dynamic_cast<const atlas::domain::GlobalDomain*>( get() ) ) {}
+
+GlobalDomain::GlobalDomain() :
+    ZonalBandDomain( new atlas::domain::GlobalDomain() ),
+    domain_( dynamic_cast<const atlas::domain::GlobalDomain*>( get() ) ) {}
+
+GlobalDomain::GlobalDomain( const Domain& domain ) :
+    ZonalBandDomain( domain ),
+    domain_( dynamic_cast<const atlas::domain::GlobalDomain*>( get() ) ) {}
+
 
 std::string atlas::Domain::type() const {
     return get()->type();

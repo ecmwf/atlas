@@ -36,7 +36,8 @@ ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 # options & dependencies
 
-ecbuild_add_cxx11_flags()
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ecbuild_find_python()
 
@@ -239,12 +240,48 @@ ecbuild_add_option( FEATURE SANDBOX
                     DESCRIPTION "Build the sandbox stuff" )
 
 
+### use of atlas-run for tests
+ecbuild_add_option( FEATURE ATLAS_RUN
+                    DEFAULT ON
+                    DESCRIPTION "Use atlas/tools/atlas-run to run atlas tests" )
+
+if( HAVE_ATLAS_RUN )
+  set( MPIEXEC_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/tools/atlas-run )
+  set( MPIEXEC_NUMPROC_FLAG='-n' )
+  set( CMAKE_CROSSCOMPILING_EMULATOR ${CMAKE_CURRENT_SOURCE_DIR}/tools/atlas-run )
+endif()
+
 ################################################################################
 # sources
 
 set( MIR_NEEDS_TRANSI TRUE CACHE BOOL "Deprecated" INTERNAL )
 
 include(CompileFlags)
+
+find_program (CLANG_TIDY_EXE NAMES "clang-tidy" )
+if( CLANG_TIDY_EXE )
+    message(STATUS "Found clang-tidy: ${CLANG_TIDY_EXE}")
+endif()
+ecbuild_add_option( FEATURE CLANG_TIDY
+                    DESCRIPTION "Use clang-tidy"
+                    CONDITION CLANG_TIDY_EXE )
+if (HAVE_CLANG_TIDY)
+  set(CLANG_TIDY_CHECKS "-*,readability-braces-around-statements,redundant-string-init")
+  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-checks=${CLANG_TIDY_CHECKS};-header-filter='${CMAKE_SOURCE_DIR}/*'")
+endif()
+
+find_program (INCLUDE_WHAT_YOU_USE_EXE NAMES "include-what-you-use" )
+if( INCLUDE_WHAT_YOU_USE_EXE )
+    message(STATUS "Found include-what-you-use: ${INCLUDE_WHAT_YOU_USE_EXE}" )
+endif()
+ecbuild_add_option( FEATURE INCLUDE_WHAT_YOU_USE
+                    DEFAULT OFF # Need clang compiler?
+                    DESCRIPTION "Use include-what-you-use clang-tool"
+                    CONDITION INCLUDE_WHAT_YOU_USE_EXE )
+if( HAVE_INCLUDE_WHAT_YOU_USE )
+    set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${INCLUDE_WHAT_YOU_USE_EXE})
+endif()
+
 add_subdirectory( src )
 
 ################################################################################

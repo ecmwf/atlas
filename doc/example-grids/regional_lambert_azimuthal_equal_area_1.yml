@@ -1,0 +1,19 @@
+type : "regional"
+nx : 50
+ny : 40
+dx : 50000
+dy : 50000
+lonlat(centre) : [4,50]
+projection :
+    type : "lambert_azimuthal_equal_area"
+    standard_parallel : 50
+    central_longitude : 4
+y_numbering : +1
+
+
+check : 
+  size : 2000
+  lonlat(first) : [-10.4643,40.1877]
+  lonlat(last)  : [24.6228,57.1968]
+  uid : 16663e1f4f3deb724712dd2698008915
+  bounding_box(n,w,s,e) : [58.7776,-16.6238,40.1867,24.6238]

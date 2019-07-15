@@ -44,12 +44,20 @@ namespace detail {
 // constructors
 LambertProjection::LambertProjection( const eckit::Parametrisation& params ) {
     // check presence of radius
-    if ( !params.get( "radius", radius_ ) ) radius_ = util::Earth::radius();
+    if ( !params.get( "radius", radius_ ) ) {
+        radius_ = util::Earth::radius();
+    }
     // check presence of lat1 and lat2
-    if ( !params.get( "latitude1", lat1_ ) ) throw_Exception( "latitude1 missing in Params", Here() );
-    if ( !params.get( "latitude2", lat2_ ) ) lat2_ = lat1_;
+    if ( !params.get( "latitude1", lat1_ ) ) {
+        throw_Exception( "latitude1 missing in Params", Here() );
+    }
+    if ( !params.get( "latitude2", lat2_ ) ) {
+        lat2_ = lat1_;
+    }
     // check presence of lon0
-    if ( !params.get( "longitude0", lon0_ ) ) throw_Exception( "longitude0 missing in Params", Here() );
+    if ( !params.get( "longitude0", lon0_ ) ) {
+        throw_Exception( "longitude0 missing in Params", Here() );
+    }
 
     setup();
 }
@@ -57,7 +65,9 @@ LambertProjection::LambertProjection( const eckit::Parametrisation& params ) {
 void LambertProjection::setup() {
     // setup (derived) constants
     is_tangent_ = std::equal_to<double>()( lat1_, lat2_ );
-    if ( is_tangent_ ) { n_ = std::sin( D2R( lat1_ ) ); }
+    if ( is_tangent_ ) {
+        n_ = std::sin( D2R( lat1_ ) );
+    }
     else {
         n_ = std::log( std::cos( D2R( lat1_ ) ) / std::cos( D2R( lat2_ ) ) ) /
              std::log( std::tan( D2R( 45 + lat2_ * 0.5 ) ) / std::tan( D2R( 45. + lat1_ * 0.5 ) ) );
@@ -88,7 +98,9 @@ void LambertProjection::xy2lonlat( double crd[] ) const {
     crd[0] = theta * inv_n_ + lon0_;
 
     // latitude
-    if ( rho == 0. ) { crd[1] = sign_ * 90.; }
+    if ( rho == 0. ) {
+        crd[1] = sign_ * 90.;
+    }
     else {
         crd[1] = 2. * R2D( std::atan( std::pow( radius_ * F_ / rho, inv_n_ ) ) ) - 90.;
     }
@@ -101,7 +113,9 @@ LambertProjection::Spec LambertProjection::spec() const {
     proj_spec.set( "latitude1", lat1_ );
     proj_spec.set( "latitude2", lat2_ );
     proj_spec.set( "longitude0", lon0_ );
-    if ( std::not_equal_to<double>()( radius_, util::Earth::radius() ) ) proj_spec.set( "radius", radius_ );
+    if ( std::not_equal_to<double>()( radius_, util::Earth::radius() ) ) {
+        proj_spec.set( "radius", radius_ );
+    }
     return proj_spec;
 }
 

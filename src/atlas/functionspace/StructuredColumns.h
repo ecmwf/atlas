@@ -137,7 +137,9 @@ public:
     Field partition() const { return field_partition_; }
     Field global_index() const { return field_global_index_; }
     Field remote_index() const {
-        if ( not field_remote_index_ ) { create_remote_index(); }
+        if ( not field_remote_index_ ) {
+            create_remote_index();
+        }
         return field_remote_index_;
     }
     Field index_i() const { return field_index_i_; }
@@ -164,8 +166,12 @@ private:  // methods
 
     void check_bounds( idx_t i, idx_t j ) const {
 #if ATLAS_ARRAYVIEW_BOUNDS_CHECKING
-        if ( j < j_begin_halo() || j >= j_end_halo() ) { throw_outofbounds( i, j ); }
-        if ( i < i_begin_halo( j ) || i >= i_end_halo( j ) ) { throw_outofbounds( i, j ); }
+        if ( j < j_begin_halo() || j >= j_end_halo() ) {
+            throw_outofbounds( i, j );
+        }
+        if ( i < i_begin_halo( j ) || i >= i_end_halo( j ) ) {
+            throw_outofbounds( i, j );
+        }
 #endif
     }
     [[noreturn]] void throw_outofbounds( idx_t i, idx_t j ) const;
@@ -307,8 +313,11 @@ public:
     StructuredColumns( const FunctionSpace& );
     StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
     StructuredColumns( const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig() );
+    StructuredColumns( const Grid&, const grid::Distribution&, const eckit::Configuration& = util::NoConfig() );
     StructuredColumns( const Grid&, const Vertical&, const eckit::Configuration& = util::NoConfig() );
     StructuredColumns( const Grid&, const Vertical&, const grid::Partitioner&,
+                       const eckit::Configuration& = util::NoConfig() );
+    StructuredColumns( const Grid&, const grid::Distribution&, const Vertical&,
                        const eckit::Configuration& = util::NoConfig() );
 
     static std::string type() { return detail::StructuredColumns::static_type(); }

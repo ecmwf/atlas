@@ -133,7 +133,9 @@ double vortex_rollup( double lon, double lat, double t ) {
     const double rho          = 3. * std::sqrt( 1. - sqr( std::cos( lat ) ) * sqr( std::sin( lon - Omega * t ) ) );
     double omega              = 0.;
     double a                  = util::Earth::radius();
-    if ( rho != 0. ) { omega = 0.5 * 3 * std::sqrt( 3 ) * a * Omega * sqr( sech( rho ) ) * std::tanh( rho ) / rho; }
+    if ( rho != 0. ) {
+        omega = 0.5 * 3 * std::sqrt( 3 ) * a * Omega * sqr( sech( rho ) ) * std::tanh( rho ) / rho;
+    }
     double q = 1. - std::tanh( 0.2 * rho * std::sin( lambda_prime - omega / a * t ) );
     return q;
 };

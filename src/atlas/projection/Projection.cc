@@ -50,6 +50,10 @@ bool atlas::Projection::strictlyRegional() const {
     return get()->strictlyRegional();
 }
 
+RectangularLonLatDomain Projection::lonlatBoundingBox( const Domain& domain ) const {
+    return get()->lonlatBoundingBox( domain );
+}
+
 Projection::Spec atlas::Projection::spec() const {
     return get()->spec();
 }

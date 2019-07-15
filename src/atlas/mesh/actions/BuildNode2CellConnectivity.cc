@@ -41,8 +41,8 @@
 
 using atlas::mesh::detail::accumulate_facets_ordered_by_halo;
 using Topology = atlas::mesh::Nodes::Topology;
-using atlas::util::UniqueLonLat;
 using atlas::util::microdeg;
+using atlas::util::UniqueLonLat;
 
 namespace atlas {
 namespace mesh {
@@ -81,8 +81,9 @@ void BuildNode2CellConnectivity::operator()() {
 
     node_to_cell.add( nodes.size(), to_cell_size.data() );
 
-    for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode )
+    for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
         to_cell_size[jnode] = 0;
+    }
 
     UniqueLonLat compute_uid( mesh_ );
     std::vector<Sort> cell_sort( nb_cells );

@@ -1,0 +1,13 @@
+# Regular Gaussian grid 'F4' coded in custom way
+
+type   : "structured"
+yspace : { type :"gaussian", N : 8,  start : 90, end : -90 }
+xspace : { type :"linear",   N : 16, start : 0,  end :  360, endpoint:false }
+
+
+check :
+  size : 128
+  lonlat(first) : [0,73.7992]
+  lonlat(last)  : [337.5,-73.7992]
+  uid : 4db8793a3e589a0f497cbe84ff34e5b8
+  bounding_box(n,w,s,e) : [90,0,-90,360]

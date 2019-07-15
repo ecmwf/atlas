@@ -49,7 +49,9 @@ double dual_volume( Mesh& mesh ) {
     array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
     double area                              = 0;
     for ( int node = 0; node < nb_nodes; ++node ) {
-        if ( !is_ghost_node( node ) ) { area += dual_volumes( node ); }
+        if ( !is_ghost_node( node ) ) {
+            area += dual_volumes( node );
+        }
     }
 
     ATLAS_TRACE_MPI( ALLREDUCE ) { mpi::comm().allReduceInPlace( area, eckit::mpi::sum() ); }

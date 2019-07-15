@@ -27,7 +27,9 @@ namespace actions {
 ExtendNodesGlobal::ExtendNodesGlobal( const std::string& gridname ) : gridname_( gridname ) {}
 
 void ExtendNodesGlobal::operator()( const Grid& grid, Mesh& mesh ) const {
-    if ( grid.domain().global() ) return;  // don't add virtual points to global domains
+    if ( grid.domain().global() ) {
+        return;  // don't add virtual points to global domains
+    }
 
     Grid O16( "O16" );
 
@@ -39,7 +41,9 @@ void ExtendNodesGlobal::operator()( const Grid& grid, Mesh& mesh ) const {
 
     for ( const PointLonLat& lonlat : O16.lonlat() ) {
         PointXY xy = grid.projection().xy( lonlat );
-        if ( not grid.domain().contains( xy ) ) { extended_pts.push_back( xy ); }
+        if ( not grid.domain().contains( xy ) ) {
+            extended_pts.push_back( xy );
+        }
     }
 
     mesh::Nodes& nodes = mesh.nodes();

@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "atlas/array.h"
+#include "atlas/functionspace/Spectral.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/trans/detail/TransImpl.h"
 
@@ -76,9 +77,14 @@ public:
     virtual ~TransLocal() override;
 
     virtual int truncation() const override { return truncation_; }
-    virtual size_t spectralCoefficients() const override { return ( truncation_ + 1 ) * ( truncation_ + 2 ); }
+
+    virtual size_t nb_spectral_coefficients() const override { return ( truncation_ + 1 ) * ( truncation_ + 2 ); }
+    virtual size_t nb_spectral_coefficients_global() const override {
+        return ( truncation_ + 1 ) * ( truncation_ + 2 );
+    }
 
     virtual const Grid& grid() const override { return grid_; }
+    virtual const functionspace::Spectral& spectral() const override;
 
     virtual void invtrans( const Field& spfield, Field& gpfield,
                            const eckit::Configuration& = util::NoConfig() ) const override;
@@ -162,6 +168,7 @@ private:
     friend class LegendreCacheCreatorLocal;
 
 private:
+    mutable functionspace::Spectral spectral_;
     Grid grid_;
     Grid gridGlobal_;
     bool useFFT_;

@@ -40,7 +40,9 @@ GlobalDomain::GlobalDomain( const eckit::Parametrisation& params ) : GlobalDomai
 GlobalDomain::Spec GlobalDomain::spec() const {
     Spec domain_spec;
     domain_spec.set( "type", type() );
-    if ( xmin() != 0. ) { domain_spec.set( "west", xmin() ); }
+    if ( xmin() != 0. ) {
+        domain_spec.set( "west", xmin() );
+    }
     return domain_spec;
 }
 

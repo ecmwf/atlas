@@ -12,6 +12,7 @@
 
 #include <string>
 
+#include "atlas/domain/Domain.h"
 #include "atlas/util/ObjectHandle.h"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -57,6 +58,7 @@ public:
     PointXY xy( const PointLonLat& ) const;
 
     bool strictlyRegional() const;
+    RectangularLonLatDomain lonlatBoundingBox( const Domain& ) const;
 
     Spec spec() const;
 

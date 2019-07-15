@@ -12,12 +12,14 @@ if( HAVE_FCTEST )
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field.F90
     LIBS            atlas_f
+    ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT}
   )
   
   add_fctest( TARGET atlas_fctest_field_wrap
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field_wrap.F90
     LIBS            atlas_f
+    ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT}
   )
 
   add_fctest( TARGET atlas_fctest_field_view
@@ -25,6 +27,7 @@ if( HAVE_FCTEST )
     SOURCES         fctest_field_view.F90
     LIBS            atlas_f OpenMP::OpenMP_Fortran
     OMP             3
+    ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT}
     CONDITION       ATLAS_HAVE_OMP_Fortran
   )
 
@@ -33,6 +36,7 @@ if( HAVE_FCTEST )
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field_host.F90
     LIBS            atlas_f
+    ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT}
   )
 
   add_fctest( TARGET atlas_fctest_field_device
@@ -40,6 +44,7 @@ if( HAVE_FCTEST )
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field_gpu.F90 external_acc_routine.F90
     LIBS            atlas_f
+    ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
   )
 
   if( TARGET atlas_fctest_field_device )

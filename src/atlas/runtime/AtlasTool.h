@@ -60,9 +60,12 @@ public:
 
     int start();
 
-    virtual void run();
+    virtual void run();  // unused
 
-    virtual void execute( const Args& ) = 0;
+    virtual int execute( const Args& ) = 0;
+
+    static constexpr int success() { return 0; }
+    static constexpr int failed() { return 1; }
 
 private:
     void setupLogging();

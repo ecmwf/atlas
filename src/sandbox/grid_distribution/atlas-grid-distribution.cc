@@ -40,7 +40,7 @@ using eckit::PathName;
 //------------------------------------------------------------------------------
 
 class Tool : public AtlasTool {
-    virtual void execute( const Args& args );
+    virtual int execute( const Args& args );
     virtual std::string briefDescription() {
         return "Tool to generate a python script that plots the grid-distribution "
                "of a given grid";
@@ -68,12 +68,14 @@ Tool::Tool( int argc, char** argv ) : AtlasTool( argc, argv ) {
 
 //-----------------------------------------------------------------------------
 
-void Tool::execute( const Args& args ) {
+int Tool::execute( const Args& args ) {
     key = "";
     args.get( "grid.name", key );
 
     std::string path_in_str = "";
-    if ( args.get( "grid.json", path_in_str ) ) path_in = path_in_str;
+    if ( args.get( "grid.json", path_in_str ) ) {
+        path_in = path_in_str;
+    }
 
     StructuredGrid grid;
     if ( key.size() ) {
@@ -96,13 +98,17 @@ void Tool::execute( const Args& args ) {
         Log::error() << "No grid specified." << std::endl;
     }
 
-    if ( !grid ) return;
+    if ( !grid ) {
+        return failed();
+    }
 
     Log::debug() << "Domain: " << grid.domain() << std::endl;
     Log::debug() << "Periodic: " << grid.periodic() << std::endl;
 
     std::string partitioner_type;
-    if ( not args.get( "partitioner", partitioner_type ) ) partitioner_type = "equal_regions";
+    if ( not args.get( "partitioner", partitioner_type ) ) {
+        partitioner_type = "equal_regions";
+    }
 
     long N = mpi::comm().size();
     args.get( "partitions", N );
@@ -188,6 +194,7 @@ void Tool::execute( const Args& args ) {
              "\n"
              "plt.show()";
     }
+    return success();
 }
 
 //------------------------------------------------------------------------------

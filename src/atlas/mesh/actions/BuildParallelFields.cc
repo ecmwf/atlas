@@ -134,7 +134,9 @@ Field& build_nodes_global_idx( mesh::Nodes& nodes ) {
     UniqueLonLat compute_uid( nodes );
 
     for ( idx_t jnode = 0; jnode < glb_idx.shape( 0 ); ++jnode ) {
-        if ( glb_idx( jnode ) <= 0 ) { glb_idx( jnode ) = compute_uid( jnode ); }
+        if ( glb_idx( jnode ) <= 0 ) {
+            glb_idx( jnode ) = compute_uid( jnode );
+        }
     }
     return nodes.global_index();
 }
@@ -170,7 +172,9 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes ) {
  */
     int nb_nodes = glb_idx.shape( 0 );
     for ( int jnode = 0; jnode < nb_nodes; ++jnode ) {
-        if ( glb_idx( jnode ) <= 0 ) { glb_idx( jnode ) = compute_uid( jnode ); }
+        if ( glb_idx( jnode ) <= 0 ) {
+            glb_idx( jnode ) = compute_uid( jnode );
+        }
     }
 
     // 1) Gather all global indices, together with location
@@ -213,7 +217,9 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes ) {
     uid_t gid                   = 0;
     const idx_t nb_sorted_nodes = static_cast<idx_t>( node_sort.size() );
     for ( idx_t jnode = 0; jnode < nb_sorted_nodes; ++jnode ) {
-        if ( jnode == 0 ) { ++gid; }
+        if ( jnode == 0 ) {
+            ++gid;
+        }
         else if ( node_sort[jnode].g != node_sort[jnode - 1].g ) {
             ++gid;
         }
@@ -244,8 +250,9 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
     // This piece should be somewhere central ... could be NPROMA ?
     // ---------->
     std::vector<idx_t> proc( nparts );
-    for ( idx_t jpart = 0; jpart < nparts; ++jpart )
+    for ( idx_t jpart = 0; jpart < nparts; ++jpart ) {
         proc[jpart] = jpart;
+    }
     // <---------
 
     auto ridx      = array::make_indexview<idx_t, 1>( nodes.remote_index() );
@@ -363,23 +370,37 @@ Field& build_edges_partition( Mesh& mesh ) {
         return Topology::check( flags( ip1 ), flag ) && Topology::check( flags( ip2 ), flag );
     };
     auto domain_bdry = [&]( idx_t jedge ) {
-        if ( check_flags( jedge, Topology::BC | Topology::NORTH ) ) { return true; }
-        if ( check_flags( jedge, Topology::BC | Topology::SOUTH ) ) { return true; }
-        if ( check_flags( jedge, Topology::BC | Topology::WEST ) ) { return true; }
-        if ( check_flags( jedge, Topology::BC | Topology::EAST ) ) { return true; }
+        if ( check_flags( jedge, Topology::BC | Topology::NORTH ) ) {
+            return true;
+        }
+        if ( check_flags( jedge, Topology::BC | Topology::SOUTH ) ) {
+            return true;
+        }
+        if ( check_flags( jedge, Topology::BC | Topology::WEST ) ) {
+            return true;
+        }
+        if ( check_flags( jedge, Topology::BC | Topology::EAST ) ) {
+            return true;
+        }
         return false;
     };
     auto periodic_east = [&]( idx_t jedge ) {
-        if ( check_flags( jedge, Topology::PERIODIC | Topology::EAST ) ) { return true; }
+        if ( check_flags( jedge, Topology::PERIODIC | Topology::EAST ) ) {
+            return true;
+        }
         return false;
     };
     auto periodic_west = [&]( idx_t jedge ) {
-        if ( check_flags( jedge, Topology::PERIODIC | Topology::WEST ) ) { return true; }
+        if ( check_flags( jedge, Topology::PERIODIC | Topology::WEST ) ) {
+            return true;
+        }
         return false;
     };
 
     auto periodic_west_bdry = [&]( idx_t jedge ) {
-        if ( check_flags( jedge, Topology::PERIODIC | Topology::WEST | Topology::BC ) ) { return true; }
+        if ( check_flags( jedge, Topology::PERIODIC | Topology::WEST | Topology::BC ) ) {
+            return true;
+        }
         return false;
     };
 
@@ -395,7 +416,9 @@ Field& build_edges_partition( Mesh& mesh ) {
     PeriodicTransform transform_periodic_west( +360. );
     UniqueLonLat _compute_uid( mesh );
     auto compute_uid = [&]( idx_t jedge ) -> gidx_t {
-        if ( periodic_east( jedge ) ) { return -_compute_uid( edge_nodes.row( jedge ), transform_periodic_east ); }
+        if ( periodic_east( jedge ) ) {
+            return -_compute_uid( edge_nodes.row( jedge ), transform_periodic_east );
+        }
         else if ( periodic_west_bdry( jedge ) ) {
             return _compute_uid( edge_nodes.row( jedge ) );
         }
@@ -463,7 +486,9 @@ Field& build_edges_partition( Mesh& mesh ) {
             ATLAS_NOTIMPLEMENTED;
         }
         else if ( elem2 == missing ) {
-            if ( pn1 == pn2 ) { p = pn1; }
+            if ( pn1 == pn2 ) {
+                p = pn1;
+            }
             else if ( periodic_east( jedge ) ) {
 #ifdef DEBUGGING_PARFIELDS
                 if ( FIND_EDGE( jedge ) )
@@ -539,7 +564,8 @@ Field& build_edges_partition( Mesh& mesh ) {
             if ( global_to_local.count( master_gidx ) ) {
                 idx_t iedge = global_to_local[master_gidx];
 #ifdef DEBUGGING_PARFIELDS
-                if ( FIND_GIDX( master_gidx ) ) std::cout << "[" << mypart << "] found " << EDGE( iedge ) << std::endl;
+                if ( FIND_GIDX( master_gidx ) )
+                    std::cout << "[" << mypart << "] found " << EDGE( iedge ) << std::endl;
 #endif
                 if ( not is_bdry_edge( master_gidx ) ) {
                     send_gidx[p].push_back( gidx );
@@ -683,7 +709,9 @@ Field& build_edges_partition( Mesh& mesh ) {
         }
     }
     mpi::comm().allReduceInPlace( insane, eckit::mpi::max() );
-    if ( insane && eckit::mpi::comm().rank() == 0 ) throw_Exception( "Sanity check failed", Here() );
+    if ( insane && eckit::mpi::comm().rank() == 0 ) {
+        throw_Exception( "Sanity check failed", Here() );
+    }
 
     //#ifdef DEBUGGING_PARFIELDS
     //        if( OWNED_EDGE(jedge) )
@@ -742,7 +770,9 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
         int ip2      = edge_nodes( jedge, 1 );
         centroid[XX] = 0.5 * ( xy( ip1, XX ) + xy( ip2, XX ) );
         centroid[YY] = 0.5 * ( xy( ip1, YY ) + xy( ip2, YY ) );
-        if ( has_pole_edges && is_pole_edge( jedge ) ) { centroid[YY] = centroid[YY] > 0 ? 90. : -90.; }
+        if ( has_pole_edges && is_pole_edge( jedge ) ) {
+            centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
+        }
 
         bool needed( false );
 
@@ -757,10 +787,12 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
                Topology::check( flags( ip2 ), Topology::PERIODIC ) &&
                !Topology::check( flags( ip2 ), Topology::BC | Topology::WEST ) ) ) {
             needed = true;
-            if ( Topology::check( flags( ip1 ), Topology::EAST ) )
+            if ( Topology::check( flags( ip1 ), Topology::EAST ) ) {
                 transform( centroid, -1 );
-            else
+            }
+            else {
                 transform( centroid, +1 );
+            }
         }
 
         uid_t uid = util::unique_lonlat( centroid );
@@ -770,7 +802,9 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
             edge_ridx( jedge ) = jedge;
 
 #ifdef DEBUGGING_PARFIELDS
-            if ( FIND_EDGE( jedge ) ) { ATLAS_DEBUG( "Found " << EDGE( jedge ) ); }
+            if ( FIND_EDGE( jedge ) ) {
+                ATLAS_DEBUG( "Found " << EDGE( jedge ) );
+            }
 #endif
         }
         else  // All ghost edges PLUS the periodic edges identified edges above
@@ -876,7 +910,9 @@ Field& build_edges_global_idx( Mesh& mesh ) {
         if ( edge_gidx( jedge ) <= 0 ) {
             centroid[XX] = 0.5 * ( xy( edge_nodes( jedge, 0 ), XX ) + xy( edge_nodes( jedge, 1 ), XX ) );
             centroid[YY] = 0.5 * ( xy( edge_nodes( jedge, 0 ), YY ) + xy( edge_nodes( jedge, 1 ), YY ) );
-            if ( has_pole_edges && is_pole_edge( jedge ) ) { centroid[YY] = centroid[YY] > 0 ? 90. : -90.; }
+            if ( has_pole_edges && is_pole_edge( jedge ) ) {
+                centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
+            }
             edge_gidx( jedge ) = util::unique_lonlat( centroid );
         }
     }
@@ -924,7 +960,9 @@ Field& build_edges_global_idx( Mesh& mesh ) {
     // Assume edge gid start
     uid_t gid( 0 );
     for ( size_t jedge = 0; jedge < edge_sort.size(); ++jedge ) {
-        if ( jedge == 0 ) { ++gid; }
+        if ( jedge == 0 ) {
+            ++gid;
+        }
         else if ( edge_sort[jedge].g != edge_sort[jedge - 1].g ) {
             ++gid;
         }

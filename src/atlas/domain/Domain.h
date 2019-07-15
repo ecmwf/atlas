@@ -90,7 +90,8 @@ private:
 
 namespace domain {
 class RectangularDomain;
-}
+class RectangularLonLatDomain;
+}  // namespace domain
 
 class RectangularDomain : public Domain {
 public:
@@ -102,7 +103,7 @@ public:
 
     RectangularDomain( const Domain& );
 
-    operator bool() { return domain_; }
+    operator bool() const { return domain_; }
 
     /// Checks if the x-value is contained in the domain
     bool contains_x( double x ) const;
@@ -123,23 +124,60 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+class RectangularLonLatDomain : public RectangularDomain {
+public:
+    using RectangularDomain::RectangularDomain;
+    RectangularLonLatDomain( const Interval& x, const Interval& y ) : RectangularDomain( x, y, "degrees" ) {}
+    RectangularLonLatDomain( const double& north, const double& west, const double& south, const double& east ) :
+        RectangularLonLatDomain( {west, east}, {south, north} ) {}
+
+    operator bool() const { return RectangularDomain::operator bool() && units() == "degrees"; }
+
+    double west() const { return xmin(); }
+    double east() const { return xmax(); }
+    double north() const { return ymax(); }
+    double south() const { return ymin(); }
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
 namespace domain {
 class ZonalBandDomain;
 }
 
-class ZonalBandDomain : public RectangularDomain {
+class ZonalBandDomain : public RectangularLonLatDomain {
 public:
     using Interval = std::array<double, 2>;
 
 public:
-    using RectangularDomain::RectangularDomain;
-    ZonalBandDomain( const Interval& y, const double& west = 0. );
+    using RectangularLonLatDomain::RectangularLonLatDomain;
+    ZonalBandDomain( const Interval& y, const double& west );
+    ZonalBandDomain( const Interval& y );
     ZonalBandDomain( const Domain& );
 
-    operator bool() { return domain_; }
+    operator bool() const { return domain_; }
 
 private:
     const ::atlas::domain::ZonalBandDomain* domain_;
+};
+
+
+namespace domain {
+class GlobalDomain;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+
+class GlobalDomain : public ZonalBandDomain {
+public:
+    GlobalDomain( const double& west );
+    GlobalDomain();
+    GlobalDomain( const Domain& );
+
+    operator bool() const { return domain_; }
+
+private:
+    const ::atlas::domain::GlobalDomain* domain_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------

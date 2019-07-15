@@ -125,6 +125,8 @@ public:
     /// @brief Number of bytes occupied by the values of this field
     size_t bytes() const;
 
+    bool contiguous() const;
+
     /// @brief Output information of field
     friend std::ostream& operator<<( std::ostream& os, const Field& v );
 

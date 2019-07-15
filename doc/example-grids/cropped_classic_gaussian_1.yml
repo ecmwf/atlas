@@ -1,0 +1,17 @@
+# Classic Gaussian grid 'N16'
+
+type : "classic_gaussian"
+N    : 16
+
+domain : 
+    type : "zonal_band"
+    ymax : 90
+    ymin : 45 
+
+
+check : 
+  size : 332
+  lonlat(first) : [0,85.7606]
+  lonlat(last)  : [354,47.0696]
+  uid : 7f87a4865eb08403c179c6488c2eeeca
+  bounding_box(n,w,s,e) : [90,0,45,360]

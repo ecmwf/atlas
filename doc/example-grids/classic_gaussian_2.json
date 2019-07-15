@@ -1,7 +1,0 @@
-{
-  "//" : "Classic Gaussian grid 'N16'",
-
-  "type" : "classic_gaussian",
-  "N" : 16,
-  "projection" : { "type": "rotated_schmidt", "stretching_factor": 2.0,  "north_pole": [3.0,47.0] }
-}

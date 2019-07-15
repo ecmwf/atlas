@@ -90,19 +90,22 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
     if ( do_all ) {
         points_to_edit.resize( nodes_glb_idx.size() );
-        for ( idx_t i = 0; i < nodes_glb_idx.size(); ++i )
+        for ( idx_t i = 0; i < nodes_glb_idx.size(); ++i ) {
             points_to_edit[i] = i;
+        }
     }
     else {
         glb_idx_max = nodes.global_index().metadata().getLong( "max", 0 );
         points_to_edit.resize( build_halo.periodic_points_local_index_.size() );
-        for ( size_t i = 0; i < points_to_edit.size(); ++i )
+        for ( size_t i = 0; i < points_to_edit.size(); ++i ) {
             points_to_edit[i] = build_halo.periodic_points_local_index_[i];
+        }
     }
 
     std::vector<gidx_t> glb_idx( points_to_edit.size() );
-    for ( size_t i = 0; i < points_to_edit.size(); ++i )
+    for ( size_t i = 0; i < points_to_edit.size(); ++i ) {
         glb_idx[i] = nodes_glb_idx( i );
+    }
 
     ATLAS_DEBUG_VAR( points_to_edit );
     ATLAS_DEBUG_VAR( points_to_edit.size() );
@@ -148,7 +151,9 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
     gidx_t gid = glb_idx_max;
     for ( size_t jnode = 0; jnode < node_sort.size(); ++jnode ) {
-        if ( jnode == 0 ) { ++gid; }
+        if ( jnode == 0 ) {
+            ++gid;
+        }
         else if ( node_sort[jnode].g != node_sort[jnode - 1].g ) {
             ++gid;
         }
@@ -174,7 +179,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 //-----------------------------------------------------------------------------
 
 class Tool : public AtlasTool {
-    virtual void execute( const Args& args );
+    virtual int execute( const Args& args );
     virtual std::string briefDescription() {
         return "Tool to generate a python script that plots the grid-distribution "
                "of a given grid";
@@ -201,14 +206,16 @@ Tool::Tool( int argc, char** argv ) : AtlasTool( argc, argv ) {
 
 //-----------------------------------------------------------------------------
 
-void Tool::execute( const Args& args ) {
+int Tool::execute( const Args& args ) {
     Trace t( Here(), "main" );
 
     key = "";
     args.get( "grid", key );
 
     std::string path_in_str = "";
-    if ( args.get( "grid", path_in_str ) ) path_in = path_in_str;
+    if ( args.get( "grid", path_in_str ) ) {
+        path_in = path_in_str;
+    }
 
     StructuredGrid grid;
     if ( key.size() ) {
@@ -222,7 +229,9 @@ void Tool::execute( const Args& args ) {
         Log::error() << "No grid specified." << std::endl;
     }
 
-    if ( !grid ) return;
+    if ( !grid ) {
+        return failed();
+    }
 
     Log::debug() << "Domain: " << grid.domain() << std::endl;
     Log::debug() << "Periodic: " << grid.periodic() << std::endl;
@@ -257,6 +266,7 @@ void Tool::execute( const Args& args ) {
     Log::info() << Trace::report( Config( "indent", 2 )( "decimals", 2 )
                                   // ("depth",5)
     );
+    return success();
 }
 
 //------------------------------------------------------------------------------

@@ -25,6 +25,9 @@ class FieldSet;
 class FunctionSpace;
 class Grid;
 class Domain;
+namespace functionspace {
+class Spectral;
+}
 }  // namespace atlas
 
 //-----------------------------------------------------------------------------
@@ -61,6 +64,7 @@ public:
     int truncation() const;
     size_t spectralCoefficients() const;
     const Grid& grid() const;
+    const functionspace::Spectral& spectral() const;
 
     void dirtrans( const Field& gpfield, Field& spfield, const eckit::Configuration& = util::NoConfig() ) const;
 

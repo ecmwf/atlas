@@ -1,0 +1,20 @@
+# Classic Gaussian grid 'N16'
+
+type : "octahedral_gaussian"
+N    : 16
+
+domain:
+    type  : "rectangular"
+    ymax  :  45
+    ymin  : -45
+    xmin  :  45
+    xmax  :  90
+    units : "degrees"
+
+
+check : 
+  size : 144
+  lonlat(first) : [48.4615,41.5325]
+  lonlat(last)  : [90,-41.5325]
+  uid : e55a302d0bb56f50523e6bc2d28c4234
+  bounding_box(n,w,s,e) : [45,45,-45,90]

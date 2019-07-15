@@ -46,7 +46,7 @@ template <int Rank>
 using UintSequence = ::gridtools::make_gt_integer_sequence<unsigned int, Rank>;
 
 template <typename Value, template <class> class Storage, typename StorageInfo>
-static Array* wrap_array(::gridtools::data_store<Storage<Value>, StorageInfo>* ds, const ArraySpec& spec ) {
+static Array* wrap_array( ::gridtools::data_store<Storage<Value>, StorageInfo>* ds, const ArraySpec& spec ) {
     assert( ds );
     using data_store_t         = typename std::remove_pointer<decltype( ds )>::type;
     ArrayDataStore* data_store = new GridToolsDataStore<data_store_t>( ds );
@@ -167,7 +167,8 @@ public:
             throw_Exception( err.str(), Here() );
         }
 
-        if ( array_.valid() ) array_.syncHostDevice();
+        if ( array_.valid() )
+            array_.syncHostDevice();
 
         Array* resized = Array::create<Value>( ArrayShape{(idx_t)c...} );
 
@@ -346,10 +347,13 @@ void ArrayT<Value>::insert( idx_t idx1, idx_t size1 ) {
     // if( hostNeedsUpdate() ) {
     //    cloneFromDevice();
     //}
-    if ( not hasDefaultLayout() ) ATLAS_NOTIMPLEMENTED;
+    if ( not hasDefaultLayout() )
+        ATLAS_NOTIMPLEMENTED;
 
     ArrayShape nshape = shape();
-    if ( idx1 > nshape[0] ) { throw_Exception( "can not insert into an array at a position beyond its size", Here() ); }
+    if ( idx1 > nshape[0] ) {
+        throw_Exception( "can not insert into an array at a position beyond its size", Here() );
+    }
     nshape[0] += size1;
 
     Array* resized = Array::create<Value>( nshape );
@@ -495,7 +499,8 @@ ArrayT<Value>::ArrayT( const ArrayShape& shape, const ArrayLayout& layout ) {
 
 template <typename Value>
 ArrayT<Value>::ArrayT( const ArraySpec& spec ) {
-    if ( not spec.contiguous() ) ATLAS_NOTIMPLEMENTED;
+    if ( not spec.contiguous() )
+        ATLAS_NOTIMPLEMENTED;
     ArrayT_impl<Value>( *this ).construct( spec.shape(), spec.layout() );
 }
 

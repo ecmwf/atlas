@@ -1,0 +1,13 @@
+# Shifted lat grid 'Slat3'
+
+type   : "structured"
+yspace : { type: custom, N : 6, values : [75,45,15,-15,-45,-75], interval:[-90,90] }
+xspace : { type: linear, N : 12, start:0, end:360, endpoint:false }
+
+
+check : 
+  size : 72
+  lonlat(first) : [0,75]
+  lonlat(last)  : [330,-75]
+  uid : 76839204fa9d69232192dedc19ecef08
+  bounding_box(n,w,s,e) : [90,0,-90,360]

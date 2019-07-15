@@ -112,7 +112,9 @@ public:
             }
         }
 
-        if ( limiter_ ) { limit_scalar( output, index, stencil, input ); }
+        if ( limiter_ ) {
+            limit_scalar( output, index, stencil, input );
+        }
         return output;
     }
 
@@ -129,7 +131,9 @@ public:
         //        x        x        x         x
         idx_t k = stencil.k_interval();
         idx_t k1, k2;
-        if ( k < 0 ) { k1 = k2 = 0; }
+        if ( k < 0 ) {
+            k1 = k2 = 0;
+        }
         else if ( k > 2 ) {
             k1 = k2 = 3;
         }
@@ -153,7 +157,9 @@ public:
                 minval = std::min( minval, f2 );
             }
         }
-        if ( output < minval ) { output = minval; }
+        if ( output < minval ) {
+            output = minval;
+        }
         else if ( output > maxval ) {
             output = maxval;
         }
@@ -216,7 +222,9 @@ public:
             }
         }
 
-        if ( limiter_ ) { limit_vars( index, stencil, input, output, nvar ); }
+        if ( limiter_ ) {
+            limit_vars( index, stencil, input, output, nvar );
+        }
     }
 
     template <typename InputArray, typename OutputArray, typename stencil_t>
@@ -234,7 +242,9 @@ public:
 
         const idx_t k = stencil.k_interval();
         idx_t k1, k2;
-        if ( k < 0 ) { k1 = k2 = stencil.k( 0 ); }
+        if ( k < 0 ) {
+            k1 = k2 = stencil.k( 0 );
+        }
         else if ( k > 2 ) {
             k1 = k2 = stencil.k( 3 );
         }
@@ -260,7 +270,9 @@ public:
                     minval = std::min( minval, f2 );
                 }
             }
-            if ( limited < minval ) { limited = minval; }
+            if ( limited < minval ) {
+                limited = minval;
+            }
             else if ( limited > maxval ) {
                 limited = maxval;
             }

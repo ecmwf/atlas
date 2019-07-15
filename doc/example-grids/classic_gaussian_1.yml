@@ -1,0 +1,10 @@
+type : "classic_gaussian"
+N    : 16
+
+
+check : 
+  size : 1688
+  lonlat(first) : [0,85.7606]
+  lonlat(last)  : [342,-85.7606]
+  uid : 49cbbc2cde26050896e000d1e0f5fb7b
+  bounding_box(n,w,s,e) : [90,0,-90,360]

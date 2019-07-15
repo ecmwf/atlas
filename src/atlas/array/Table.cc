@@ -172,7 +172,8 @@ void Table::add( size_t rows, size_t cols, const idx_t values[], bool fortran_ar
     ATLAS_ASSERT( owns_, "HybridConnectivity must be owned to be resized directly" );
     size_t old_size = size();
 
-    if ( rows_ == 0 ) old_size = 0;
+    if ( rows_ == 0 )
+        old_size = 0;
 
     size_t new_size = old_size + rows * cols;
     size_t new_rows = rows_ + rows;
@@ -217,7 +218,8 @@ void Table::add( size_t rows, size_t cols ) {
     ATLAS_ASSERT( owns_, "HybridConnectivity must be owned to be resized directly" );
     size_t old_size = size();
 
-    if ( rows_ == 0 ) old_size = 0;
+    if ( rows_ == 0 )
+        old_size = 0;
 
     size_t new_size = old_size + rows * cols;
     size_t new_rows = rows_ + rows;
@@ -281,7 +283,9 @@ void Table::insert( size_t position, size_t rows, const size_t cols[] ) {
     size_t position_displs = displs_( position );
 
     if ( rows_ == 0 ) {
-        if ( position > 1 ) { insert_counts_and_displs( position - 1, rows ); }
+        if ( position > 1 ) {
+            insert_counts_and_displs( position - 1, rows );
+        }
     }
     else {
         insert_counts_and_displs( position, rows );
