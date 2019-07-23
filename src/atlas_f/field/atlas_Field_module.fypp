@@ -58,6 +58,9 @@ contains
   procedure :: kind => Field__kind
   generic :: shape => shape_array, shape_idx
   procedure :: contiguous
+  procedure, public :: strides_array => Field__strides_array
+  procedure, public :: strides_idx   => Field__strides_idx
+  generic :: strides => strides_array, strides_idx
 
   procedure :: halo_exchange
   procedure :: dirty
@@ -534,6 +537,40 @@ function Field__shape_idx(this,idx) result(shape_val)
   @:ATLAS_ASSERT( idx <= field_rank )
   shape_val = shape_f_ptr(idx)
 end function Field__shape_idx
+
+!-------------------------------------------------------------------------------
+
+function Field__strides_array(this) result(strides)
+  use atlas_field_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_f_pointer
+  class(atlas_Field), intent(in) :: this
+  integer, allocatable :: strides(:)
+  type(c_ptr) :: strides_c_ptr
+  integer, pointer :: strides_f_ptr(:)
+  integer(c_int) :: field_rank
+  call atlas__Field__stridesf(this%CPTR_PGIBUG_A, strides_c_ptr, field_rank)
+  call c_f_pointer ( strides_c_ptr , strides_f_ptr , (/field_rank/) )
+  allocate( strides(field_rank) )
+  strides(:) = strides_f_ptr(:)
+end function
+
+!-------------------------------------------------------------------------------
+
+function Field__strides_idx(this,idx) result(strides_val)
+  use atlas_field_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_f_pointer
+  @:ENABLE_ATLAS_MACROS()
+  integer :: strides_val
+  class(atlas_Field), intent(in) :: this
+  integer, intent(in) :: idx
+  type(c_ptr) :: strides_c_ptr
+  integer, pointer :: strides_f_ptr(:)
+  integer(c_int) :: field_rank
+  call atlas__Field__stridesf(this%CPTR_PGIBUG_A, strides_c_ptr, field_rank)
+  call c_f_pointer ( strides_c_ptr , strides_f_ptr , (/field_rank/) )
+  @:ATLAS_ASSERT( idx <= field_rank )
+  strides_val = strides_f_ptr(idx)
+end function
 
 !-------------------------------------------------------------------------------
 
