@@ -129,13 +129,13 @@ public:
     template <typename Int, bool EnableBool = true>
     typename std::enable_if<( Rank == 1 && EnableBool ), const value_type&>::type operator[]( Int idx ) const {
         check_bounds( idx );
-        return data_[idx];
+        return data_[idx * strides_[0]];
     }
 
     template <typename Int, bool EnableBool = true>
     typename std::enable_if<( Rank == 1 && EnableBool ), value_type&>::type operator[]( Int idx ) {
         check_bounds( idx );
-        return data_[idx];
+        return data_[idx * strides_[0]];
     }
 
     template <unsigned int Dim>
