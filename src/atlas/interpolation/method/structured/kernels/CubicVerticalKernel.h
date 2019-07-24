@@ -29,7 +29,7 @@ class CubicVerticalKernel {
     idx_t last_level_;
     bool limiter_;
 
-    constexpr bool match_IFS() { return true; }
+    static constexpr bool match_IFS() { return true; }
 
 public:
     CubicVerticalKernel() = default;
