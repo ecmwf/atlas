@@ -42,7 +42,7 @@ class HaloExchange : public util::Object {
 public:
     HaloExchange();
     HaloExchange( const std::string& name );
-    virtual ~HaloExchange() {}
+    virtual ~HaloExchange();
 
 public:  // methods
     const std::string& name() const { return name_; }

@@ -302,6 +302,33 @@ CASE( "test_functionspace_StructuredColumns_halo checks without output" ) {
 
 //-----------------------------------------------------------------------------
 
+CASE( "test_functionspace_StructuredColumns halo exchange registration" ) {
+    // Test by observing log with ATLAS_DEBUG=1
+    // The HaloExchange Cache should be created twice, already found 4 times,
+    // erased twice.
+
+    std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
+
+    StructuredGrid grid( gridname );
+
+    util::Config config;
+    config.set( "levels", 10 );
+    config.set( "periodic_points", true );
+    for ( idx_t i = 0; i < 3; ++i ) {
+        config.set( "halo", 2 );
+        functionspace::StructuredColumns fs1( grid, grid::Partitioner( "equal_regions" ), config );
+        config.set( "halo", 4 );
+        functionspace::StructuredColumns fs2( grid, grid::Partitioner( "equal_regions" ), config );
+
+        Field field1 = fs1.createField<long>( option::name( "field" ) );
+        Field field2 = fs2.createField<long>( option::name( "field" ) );
+
+        field1.haloExchange();
+        field2.haloExchange();
+    }
+}
+
+//-----------------------------------------------------------------------------
 
 }  // namespace test
 }  // namespace atlas

@@ -31,6 +31,11 @@ public:
     virtual ~Cache() {}
 
     ObjectHandle<value_type> get_or_create( const key_type& key, const creator_type& creator ) {
+        return get_or_create( key, key, creator );
+    }
+
+    ObjectHandle<value_type> get_or_create( const key_type& key, const key_type& remove_key,
+                                            const creator_type& creator ) {
         std::lock_guard<std::mutex> guard( lock_ );
         auto it = map_.find( key );
         if ( it != map_.end() ) {
@@ -44,20 +49,37 @@ public:
                              << "\" but is not valid. Revert to not found." << std::endl;
             }
         }
-        Log::debug() << "Key \"" << key << "\" not found in cache \"" << name_ << "\" , creating new" << std::endl;
+        Log::debug() << "Key \"" << key << "\" not found in cache \"" << name_
+                     << "\" , creating new, removable with key \"" << remove_key << "\"" << std::endl;
         ObjectHandle<value_type> value( creator() );
         map_[key] = value;
+        remove_[remove_key].emplace_back( key );
         return value;
     }
 
-    void remove( const key_type& key ) {
+    void remove( const key_type& remove_key ) {
         std::lock_guard<std::mutex> guard( lock_ );
-        if ( map_.erase( key ) ) {
-            Log::debug() << "Erased key \"" << key << "\" from cache \"" << name_ << "\"." << std::endl;
+        if ( remove_.find( remove_key ) != remove_.end() ) {
+            for ( auto& key : remove_[remove_key] ) {
+                bool erased = map_.erase( key );
+                if ( erased ) {
+                    if ( remove_key == key ) {
+                        Log::debug() << "Erased key \"" << key << "\" from cache \"" << name_ << "\"." << std::endl;
+                    }
+                    else {
+                        Log::debug() << "Erased key \"" << key << "\" via remove_key \"" << remove_key
+                                     << "\" from cache  \"" << name_ << "\"." << std::endl;
+                    }
+                }
+                else {
+                    Log::debug() << "Tried to erase key \"" << key << "\" from cache \"" << name_
+                                 << "\" but it was not found." << std::endl;
+                }
+            }
         }
         else {
-            Log::debug() << "Tried to erase key \"" << key << "\" from cache \"" << name_ << "\" but it was not found."
-                         << std::endl;
+            Log::debug() << "Tried to erase key \"" << remove_key << "\" from cache \"" << name_
+                         << "\" but it was not found." << std::endl;
         }
     }
 
@@ -65,6 +87,7 @@ private:
     std::string name_;
     std::mutex lock_;
     std::map<key_type, ObjectHandle<value_type>> map_;
+    std::map<key_type, std::vector<key_type>> remove_;
 };
 
 }  // namespace util
