@@ -13,6 +13,8 @@
 #include <cmath>
 #include <limits>
 
+#include "CubicHorizontalLimiter.h"
+
 #include "eckit/linalg/Triplet.h"
 
 #include "atlas/array/ArrayView.h"
@@ -29,6 +31,7 @@ namespace interpolation {
 namespace method {
 
 class CubicHorizontalKernel {
+    using Limiter  = CubicHorizontalLimiter;
     using Triplet  = eckit::linalg::Triplet;
     using Triplets = std::vector<Triplet>;
 
@@ -141,37 +144,9 @@ public:
         }
 
         if ( limiter_ ) {
-            limit( output, index, input );
+            Limiter::limit( output, index, input );
         }
         return output;
-    }
-
-    template <typename array_t>
-    void limit( typename array_t::value_type& output, const std::array<std::array<idx_t, 4>, 4>& index,
-                const array_t& input ) const {
-        using Scalar = typename array_t::value_type;
-        // Limit output to max/min of values in stencil marked by '*'
-        //         x        x        x         x
-        //              x     *-----*     x
-        //                   /   P  |
-        //          x       *------ *        x
-        //        x        x        x         x
-        Scalar maxval = std::numeric_limits<Scalar>::lowest();
-        Scalar minval = std::numeric_limits<Scalar>::max();
-        for ( idx_t j = 1; j < 3; ++j ) {
-            for ( idx_t i = 1; i < 3; ++i ) {
-                idx_t n    = index[j][i];
-                Scalar val = input[n];
-                maxval     = std::max( maxval, val );
-                minval     = std::min( minval, val );
-            }
-        }
-        if ( output < minval ) {
-            output = minval;
-        }
-        else if ( output > maxval ) {
-            output = maxval;
-        }
     }
 
 
@@ -194,35 +169,7 @@ public:
         }
 
         if ( limiter_ ) {
-            limit( index, input, output, r );
-        }
-    }
-
-    template <typename Value, int Rank>
-    typename std::enable_if<( Rank == 1 ), void>::type limit( const std::array<std::array<idx_t, 4>, 4>& index,
-                                                              const array::ArrayView<Value, Rank>& input,
-                                                              array::ArrayView<Value, Rank>& output, idx_t r ) const {
-        // Limit output to max/min of values in stencil marked by '*'
-        //         x        x        x         x
-        //              x     *-----*     x
-        //                   /   P  |
-        //          x       *------ *        x
-        //        x        x        x         x
-        Value maxval = std::numeric_limits<Value>::lowest();
-        Value minval = std::numeric_limits<Value>::max();
-        for ( idx_t j = 1; j < 3; ++j ) {
-            for ( idx_t i = 1; i < 3; ++i ) {
-                idx_t n   = index[j][i];
-                Value val = input[n];
-                maxval    = std::max( maxval, val );
-                minval    = std::min( minval, val );
-            }
-        }
-        if ( output( r ) < minval ) {
-            output( r ) = minval;
-        }
-        else if ( output( r ) > maxval ) {
-            output( r ) = maxval;
+            Limiter::limit( index, input, output, r );
         }
     }
 
@@ -251,40 +198,9 @@ public:
         }
 
         if ( limiter_ ) {
-            limit( index, input, output, r );
+            Limiter::limit( index, input, output, r );
         }
     }
-
-    template <typename Value, int Rank>
-    typename std::enable_if<( Rank == 2 ), void>::type limit( const std::array<std::array<idx_t, 4>, 4>& index,
-                                                              const array::ArrayView<Value, Rank>& input,
-                                                              array::ArrayView<Value, Rank>& output, idx_t r ) const {
-        // Limit output to max/min of values in stencil marked by '*'
-        //         x        x        x         x
-        //              x     *-----*     x
-        //                   /   P  |
-        //          x       *------ *        x
-        //        x        x        x         x
-        for ( idx_t k = 0; k < output.shape( 1 ); ++k ) {
-            Value maxval = std::numeric_limits<Value>::lowest();
-            Value minval = std::numeric_limits<Value>::max();
-            for ( idx_t j = 1; j < 3; ++j ) {
-                for ( idx_t i = 1; i < 3; ++i ) {
-                    idx_t n   = index[j][i];
-                    Value val = input( n, k );
-                    maxval    = std::max( maxval, val );
-                    minval    = std::min( minval, val );
-                }
-            }
-            if ( output( r, k ) < minval ) {
-                output( r, k ) = minval;
-            }
-            else if ( output( r, k ) > maxval ) {
-                output( r, k ) = maxval;
-            }
-        }
-    }
-
 
     template <typename array_t>
     typename array_t::value_type operator()( const double x, const double y, const array_t& input ) const {

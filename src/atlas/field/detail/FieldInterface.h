@@ -42,6 +42,7 @@ int atlas__Field__size( FieldImpl* This );
 int atlas__Field__levels( FieldImpl* This );
 double atlas__Field__bytes( FieldImpl* This );
 void atlas__Field__shapef( FieldImpl* This, int*& shape, int& rank );
+void atlas__Field__stridesf( FieldImpl* This, int*& strides, int& rank );
 void atlas__Field__data_int_specf( FieldImpl* This, int*& field_data, int& rank, int*& field_shapef,
                                    int*& field_stridesf );
 void atlas__Field__data_long_specf( FieldImpl* This, long*& field_data, int& rank, int*& field_shapef,

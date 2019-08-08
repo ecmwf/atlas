@@ -55,6 +55,7 @@ END TYPE atlas_Vertical
 interface atlas_Vertical
   module procedure atlas_Vertical__ctor_from_cptr
   module procedure atlas_Vertical__ctor_from_array
+  module procedure atlas_Vertical__ctor_from_array_with_interval
 end interface
 
 private :: c_ptr, c_double
@@ -89,10 +90,23 @@ function atlas_Vertical__ctor_from_array( levels ) result(this)
   use atlas_vertical_c_binding
   use atlas_kinds_module, only : ATLAS_KIND_IDX
   type(atlas_Vertical) :: this
-  real(c_double) :: levels(:)
+  real(c_double), intent(in) :: levels(:)
   integer(ATLAS_KIND_IDX) :: nb_levels
   nb_levels = size(levels)
   call this%reset_c_ptr( atlas__Vertical__new(nb_levels, levels), &
+    & fckit_c_deleter(atlas__Vertical__delete) )
+  call this%return()
+end function
+
+function atlas_Vertical__ctor_from_array_with_interval( levels, interval ) result(this)
+  use atlas_vertical_c_binding
+  use atlas_kinds_module, only : ATLAS_KIND_IDX
+  type(atlas_Vertical) :: this
+  real(c_double), intent(in) :: levels(:)
+  real(c_double), intent(in) :: interval(2)
+  integer(ATLAS_KIND_IDX) :: nb_levels
+  nb_levels = size(levels)
+  call this%reset_c_ptr( atlas__Vertical__new_interval(nb_levels, levels, interval), &
     & fckit_c_deleter(atlas__Vertical__delete) )
   call this%return()
 end function
