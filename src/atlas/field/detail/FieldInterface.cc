@@ -156,6 +156,12 @@ void atlas__Field__shapef( FieldImpl* This, int*& shape, int& rank ) {
     rank  = This->shapef().size();
 }
 
+void atlas__Field__stridesf( FieldImpl* This, int*& shape, int& rank ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access bytes occupied by uninitialised atlas_Field" );
+    shape = const_cast<int*>( &This->stridesf().front() );
+    rank  = This->stridesf().size();
+}
+
 void atlas__Field__data_int_specf( FieldImpl* This, int*& data, int& rank, int*& shapef, int*& stridesf ) {
     atlas__Field__data_specf( This, data, rank, shapef, stridesf );
 }

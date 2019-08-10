@@ -29,6 +29,8 @@ class CubicVerticalKernel {
     idx_t last_level_;
     bool limiter_;
 
+    static constexpr bool match_IFS() { return true; }
+
 public:
     CubicVerticalKernel() = default;
 
@@ -72,6 +74,71 @@ public:
         //            w[2]       = 1. - w[0] - w[1];
         //        };
 
+        auto cubic_interpolation = [z]( const double zvec[], double w[] ) {
+            double d01 = zvec[0] - zvec[1];
+            double d02 = zvec[0] - zvec[2];
+            double d03 = zvec[0] - zvec[3];
+            double d12 = zvec[1] - zvec[2];
+            double d13 = zvec[1] - zvec[3];
+            double d23 = zvec[2] - zvec[3];
+            double dc0 = d01 * d02 * d03;
+            double dc1 = -d01 * d12 * d13;
+            double dc2 = d02 * d12 * d23;
+
+            double d0 = z - zvec[0];
+            double d1 = z - zvec[1];
+            double d2 = z - zvec[2];
+            double d3 = z - zvec[3];
+
+            w[0] = ( d1 * d2 * d3 ) / dc0;
+            w[1] = ( d0 * d2 * d3 ) / dc1;
+            w[2] = ( d0 * d1 * d3 ) / dc2;
+            w[3] = 1. - w[0] - w[1] - w[2];
+        };
+
+        if ( stencil.k_interval() == 1 ) {
+            // lev(k+0)   lev(k+1)   lev(k+2)   lev(k+3)
+            //    |          |     x    |          |
+            cubic_interpolation( zvec.data(), w.data() );
+            return;
+        }
+
+        if ( stencil.k_interval() == 0 ) {
+            if ( match_IFS() ) {
+                // linear interpolation
+                // lev0   lev1   lev2   lev3
+                //  |  +   |      |      |
+                //               w=0    w=0
+                const double alpha = ( zvec[1] - z ) / ( zvec[1] - zvec[0] );
+                w[0]               = alpha;
+                w[1]               = 1. - alpha;
+                w[2]               = 0.;
+                w[3]               = 0.;
+            }
+            else {
+                cubic_interpolation( zvec.data(), w.data() );
+            }
+            return;
+        }
+
+        if ( stencil.k_interval() == 2 ) {
+            if ( match_IFS() ) {
+                // linear interpolation
+                // lev(n-4)  lev(n-3)  lev(n-2)  lev(n-1)
+                //   |         |         |    +    |
+                //  w=0       w=0
+                const double alpha = ( zvec[3] - z ) / ( zvec[3] - zvec[2] );
+                w[0]               = 0.;
+                w[1]               = 0.;
+                w[2]               = alpha;
+                w[3]               = 1. - alpha;
+            }
+            else {
+                cubic_interpolation( zvec.data(), w.data() );
+            }
+            return;
+        }
+
         if ( stencil.k_interval() == -1 ) {
             // constant extrapolation
             //        lev0   lev1   lev2   lev3
@@ -83,7 +150,8 @@ public:
             w[3] = 0.;
             return;
         }
-        else if ( stencil.k_interval() == 3 ) {
+
+        if ( stencil.k_interval() == 3 ) {
             // constant extrapolation
             //   lev(n-4)  lev(n-3)  lev(n-2)  lev(n-1)
             //      X---------X---------X---------|   +
@@ -94,47 +162,7 @@ public:
             w[3] = 1.;
             return;
         }
-        //        else if ( stencil.k_interval() == 0 ) {
-        //            // quadratic interpolation
-        //            // lev0   lev1   lev2   lev3
-        //            //  |  +   |      |      |
-        //            //                      w=0
-        //            quadratic_interpolation( zvec.data(), w.data() );
-        //            w[3] = 0.;
-        //            return;
-        //        }
-        //        else if ( stencil.k_interval() == 2 ) {
-        //            // quadratic interpolation
-        //            // lev(n-4)  lev(n-3)  lev(n-2)  lev(n-1)
-        //            //   |         |         |    +    |
-        //            //  w=0
-        //            quadratic_interpolation( zvec.data() + 1, w.data() + 1 );
-        //            w[0] = 0.;
-        //            return;
-        //        }
-
-        // cubic interpolation
-        // lev(k+0)   lev(k+1)   lev(k+2)   lev(k+3)
-        //    |          |     x    |          |
-        double d01 = zvec[0] - zvec[1];
-        double d02 = zvec[0] - zvec[2];
-        double d03 = zvec[0] - zvec[3];
-        double d12 = zvec[1] - zvec[2];
-        double d13 = zvec[1] - zvec[3];
-        double d23 = zvec[2] - zvec[3];
-        double dc0 = d01 * d02 * d03;
-        double dc1 = -d01 * d12 * d13;
-        double dc2 = d02 * d12 * d23;
-
-        double d0 = z - zvec[0];
-        double d1 = z - zvec[1];
-        double d2 = z - zvec[2];
-        double d3 = z - zvec[3];
-
-        w[0] = ( d1 * d2 * d3 ) / dc0;
-        w[1] = ( d0 * d2 * d3 ) / dc1;
-        w[2] = ( d0 * d1 * d3 ) / dc2;
-        w[3] = 1. - w[0] - w[1] - w[2];
+        ATLAS_NOTIMPLEMENTED;  // should never be here
     }
 
     template <typename stencil_t, typename weights_t, typename array_t>
@@ -149,15 +177,17 @@ public:
         if ( limiter_ ) {
             idx_t k = stencil.k_interval();
             idx_t k1, k2;
-            if ( k < 0 ) {
-                k1 = k2 = 0;
+            if ( k < 1 ) {
+                k1 = 0;
+                k2 = 1;
             }
-            else if ( k > 2 ) {
-                k1 = k2 = 3;
+            else if ( k > 1 ) {
+                k1 = 2;
+                k2 = 3;
             }
             else {
-                k1 = k;
-                k2 = k + 1;
+                k1 = 1;
+                k2 = 2;
             }
             double f1     = input[stencil.k( k1 )];
             double f2     = input[stencil.k( k2 )];

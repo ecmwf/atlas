@@ -11,6 +11,7 @@
 #include "atlas/functionspace/StructuredColumns.h"
 
 #include <iomanip>
+#include <mutex>
 #include <sstream>
 #include <string>
 
@@ -81,7 +82,6 @@ std::string checksum_3d_field( const parallel::Checksum& checksum, const Field& 
     return checksum.execute( surface.data(), surface_field.stride( 0 ) );
 }
 
-
 }  // namespace
 
 class StructuredColumnsHaloExchangeCache : public util::Cache<std::string, parallel::HaloExchange>,
@@ -97,12 +97,19 @@ public:
     }
     util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& funcspace ) {
         creator_type creator = std::bind( &StructuredColumnsHaloExchangeCache::create, &funcspace );
-        return Base::get_or_create( key( *funcspace.grid().get() ), creator );
+        return Base::get_or_create( key( *funcspace.grid().get(), funcspace.halo() ),
+                                    remove_key( *funcspace.grid().get() ), creator );
     }
-    virtual void onGridDestruction( grid::detail::grid::Grid& grid ) { remove( key( grid ) ); }
+    virtual void onGridDestruction( grid::detail::grid::Grid& grid ) { remove( remove_key( grid ) ); }
 
 private:
-    static Base::key_type key( const grid::detail::grid::Grid& grid ) {
+    static Base::key_type key( const grid::detail::grid::Grid& grid, idx_t halo ) {
+        std::ostringstream key;
+        key << "grid[address=" << &grid << ",halo=" << halo << "]";
+        return key.str();
+    }
+
+    static Base::key_type remove_key( const grid::detail::grid::Grid& grid ) {
         std::ostringstream key;
         key << "grid[address=" << &grid << "]";
         return key.str();

@@ -111,8 +111,10 @@ interface atlas_functionspace_StructuredColumns
   module procedure ctor_grid
   module procedure ctor_grid_dist
   module procedure ctor_grid_dist_levels
+  module procedure ctor_grid_dist_vertical
   module procedure ctor_grid_part
   module procedure ctor_grid_part_levels
+  module procedure ctor_grid_part_vertical
 end interface
 
 

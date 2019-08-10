@@ -23,6 +23,11 @@ Vertical* atlas__Vertical__new( idx_t levels, const double z[] ) {
     return new Vertical( levels, zvec );
 }
 
+Vertical* atlas__Vertical__new_interval( idx_t levels, const double z[], const double interval[] ) {
+    std::vector<double> zvec( z, z + levels );
+    return new Vertical( levels, zvec, interval );
+}
+
 void atlas__Vertical__delete( Vertical* This ) {
     delete This;
 }

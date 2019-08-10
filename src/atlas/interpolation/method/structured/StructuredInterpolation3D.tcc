@@ -91,7 +91,6 @@ void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source, cons
     source_ = source;
 
     if ( target.functionspace() ) { target_ = target.functionspace(); }
-    ATLAS_ASSERT( target.levels() );
 
     target_3d_ = target;
 
@@ -106,7 +105,6 @@ void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source, cons
 
     ATLAS_ASSERT( target.size() >= 3 );
     if ( target[0].functionspace() ) { target_ = target[0].functionspace(); }
-    ATLAS_ASSERT( target[0].levels() );
 
     target_xyz_ = target;
 
