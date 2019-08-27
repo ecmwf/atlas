@@ -200,6 +200,13 @@ ecbuild_add_option( FEATURE EIGEN
                     DESCRIPTION "Use Eigen linear algebra library"
                     REQUIRED_PACKAGES Eigen3 )
 
+### Proj
+
+ecbuild_add_option( FEATURE PROJ
+                    DESCRIPTION "PROJ-based projections"
+                    DEFAULT OFF
+                    REQUIRED_PACKAGES PROJ4 )
+
 ### Type for Global indices and unique point ids
 
 set( ATLAS_BITS_GLOBAL 64 )

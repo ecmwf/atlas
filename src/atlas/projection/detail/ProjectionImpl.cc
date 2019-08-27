@@ -160,6 +160,12 @@ const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) 
     throw_Exception( "type missing in Params", Here() );
 }
 
+PointXYZ ProjectionImpl::xyz( const PointLonLat& lonlat ) const {
+    atlas::PointXYZ xyz;
+    atlas::util::Earth::convertSphericalToCartesian( lonlat, xyz );
+    return xyz;
+}
+
 RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain ) const {
     using eckit::types::is_strictly_greater;
 
