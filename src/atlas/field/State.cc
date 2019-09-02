@@ -29,8 +29,8 @@ namespace field {
 
 namespace {
 
-static eckit::Mutex* local_mutex                        = 0;
-static std::map<std::string, StateGeneratorFactory*>* m = 0;
+static eckit::Mutex* local_mutex                        = nullptr;
+static std::map<std::string, StateGeneratorFactory*>* m = nullptr;
 static pthread_once_t once                              = PTHREAD_ONCE_INIT;
 
 static void init() {

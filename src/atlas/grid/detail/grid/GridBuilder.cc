@@ -100,9 +100,9 @@ private:
     bool use_case_;
 };
 
-static eckit::Mutex* local_mutex          = 0;
-static GridBuilder::Registry* named_grids = 0;
-static GridBuilder::Registry* typed_grids = 0;
+static eckit::Mutex* local_mutex          = nullptr;
+static GridBuilder::Registry* named_grids = nullptr;
+static GridBuilder::Registry* typed_grids = nullptr;
 
 static pthread_once_t once = PTHREAD_ONCE_INIT;
 
