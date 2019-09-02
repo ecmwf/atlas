@@ -64,20 +64,23 @@ public:
     int nump() const { return trans_->nump; }
 
     array::LocalView<int, 1, array::Intent::ReadOnly> nvalue() const {
-        if ( trans_->nvalue == nullptr )
+        if ( trans_->nvalue == nullptr ) {
             ::trans_inquire( trans_.get(), "nvalue" );
+        }
         return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nvalue, array::make_shape( trans_->nspec2 ) );
     }
 
     array::LocalView<int, 1, array::Intent::ReadOnly> nmyms() const {
-        if ( trans_->nmyms == nullptr )
+        if ( trans_->nmyms == nullptr ) {
             ::trans_inquire( trans_.get(), "nmyms" );
+        }
         return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nmyms, array::make_shape( nump() ) );
     }
 
     array::LocalView<int, 1, array::Intent::ReadOnly> nasm0() const {
-        if ( trans_->nasm0 == nullptr )
+        if ( trans_->nasm0 == nullptr ) {
             ::trans_inquire( trans_.get(), "nasm0" );
+        }
         return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nasm0,
                                                                   array::make_shape( trans_->nsmax + 1 ) );
     }
@@ -268,13 +271,15 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
         idx_t rank = static_cast<idx_t>( mpi::comm().rank() );
         glb.metadata().get( "owner", root );
         ATLAS_ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
-        if ( rank == root )
+        if ( rank == root ) {
             ATLAS_ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
+        }
         std::vector<int> nto( 1, root + 1 );
         if ( loc.rank() > 1 ) {
             nto.resize( loc.stride( 0 ) );
-            for ( size_t i = 0; i < nto.size(); ++i )
+            for ( size_t i = 0; i < nto.size(); ++i ) {
                 nto[i] = root + 1;
+            }
         }
 
         if ( not loc.contiguous() ) {
@@ -323,13 +328,15 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
 
         glb.metadata().get( "owner", root );
         ATLAS_ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
-        if ( rank == root )
+        if ( rank == root ) {
             ATLAS_ASSERT( glb.shape( 0 ) == nb_spectral_coefficients_global() );
+        }
         std::vector<int> nfrom( 1, root + 1 );
         if ( loc.rank() > 1 ) {
             nfrom.resize( loc.stride( 0 ) );
-            for ( size_t i = 0; i < nfrom.size(); ++i )
+            for ( size_t i = 0; i < nfrom.size(); ++i ) {
                 nfrom[i] = root + 1;
+            }
         }
 
         if ( not loc.contiguous() ) {
