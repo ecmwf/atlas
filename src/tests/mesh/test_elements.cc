@@ -247,7 +247,7 @@ CASE( "block_connectivity" ) {
 
 CASE( "zero_elements" ) {
     HybridElements hybrid_elements;
-    idx_t* nodes = 0;
+    idx_t* nodes = nullptr;
 
     hybrid_elements.add( new Triangle(), 0, nodes );
     hybrid_elements.add( new Quadrilateral(), 0, nodes );

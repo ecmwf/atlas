@@ -775,8 +775,8 @@ size_t BlockConnectivityImpl::footprint() const {
 
 class ConnectivityPrivateAccess {
 private:
-    typedef Connectivity::ctxt_t ctxt_t;
-    typedef Connectivity::callback_t callback_t;
+    using ctxt_t     = Connectivity::ctxt_t;
+    using callback_t = Connectivity::callback_t;
 
 public:
     ConnectivityPrivateAccess( Connectivity& connectivity ) : connectivity_( connectivity ) {}

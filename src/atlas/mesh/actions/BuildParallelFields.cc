@@ -73,7 +73,7 @@ Field& build_edges_global_idx( Mesh& mesh );
 
 //----------------------------------------------------------------------------------------------------------------------
 
-typedef gidx_t uid_t;
+using uid_t = gidx_t;
 
 namespace {
 

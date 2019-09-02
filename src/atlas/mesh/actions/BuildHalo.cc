@@ -284,7 +284,7 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
 // -------------------------------------------------------------------------------------
 
-typedef gidx_t uid_t;
+using uid_t = gidx_t;
 
 // ------------------------------------------------------------------
 class BuildHaloHelper;
@@ -302,7 +302,7 @@ public:
     WestEast() { x_translation_ = 360.; }
 };
 
-typedef std::vector<std::vector<idx_t>> Node2Elem;
+using Node2Elem = std::vector<std::vector<idx_t>>;
 
 void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem ) {
     ATLAS_TRACE();

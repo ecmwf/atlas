@@ -32,7 +32,7 @@ namespace atlas {
 namespace mesh {
 namespace actions {
 
-typedef gidx_t uid_t;
+using uid_t = gidx_t;
 
 void build_periodic_boundaries( Mesh& mesh ) {
     ATLAS_TRACE();
