@@ -242,6 +242,8 @@ CASE( "test horizontal cubic interpolation triplets" ) {
 //-----------------------------------------------------------------------------
 
 CASE( "test 3d cubic interpolation" ) {
+    const double tolerance = 1.e-15;
+
     //if ( mpi::comm().size() == 1 ) {
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
     idx_t nlev           = 11;
@@ -314,7 +316,7 @@ CASE( "test 3d cubic interpolation" ) {
             double interpolated = cubic_interpolation( p, f );
             double exact        = fp( p );
             Log::info() << p << "  -->  " << interpolated << "      [exact] " << exact << std::endl;
-            EXPECT( is_approximately_equal( interpolated, exact ) );
+            EXPECT( is_approximately_equal( interpolated, exact, tolerance ) );
         }
     }
 
@@ -332,7 +334,7 @@ CASE( "test 3d cubic interpolation" ) {
             double interpolated = output_view( n++ );
             double exact        = fp( p );
             Log::info() << p << "  -->  " << interpolated << "      [exact] " << exact << std::endl;
-            EXPECT( is_approximately_equal( interpolated, exact ) );
+            EXPECT( is_approximately_equal( interpolated, exact, tolerance ) );
         }
     }
 
@@ -379,7 +381,7 @@ CASE( "test 3d cubic interpolation" ) {
                     double interpolated = output_view( n, k );
                     double exact        = fp( p );
                     Log::info() << p << "  -->  " << interpolated << "      [exact] " << exact << std::endl;
-                    EXPECT( is_approximately_equal( interpolated, exact ) );
+                    EXPECT( is_approximately_equal( interpolated, exact, tolerance ) );
                 }
             }
         }

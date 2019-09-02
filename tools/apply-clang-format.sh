@@ -10,6 +10,8 @@
 
 _REQUIRED_CLANG_VERSION='7.0.1'
 
+export PATH=/usr/local/apps/clang/7.0.1/bin:$PATH
+
 if ! [ -x "$(command -v clang-format)" ]; then
   echo 'Error: clang-format is not installed.' >&2
   exit 1
