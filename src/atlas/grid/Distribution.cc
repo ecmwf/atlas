@@ -28,7 +28,7 @@ Distribution::Distribution( const Grid& grid, const Partitioner& partitioner ) :
 
 Distribution::Distribution( idx_t npts, int part[], int part0 ) : Handle( new Implementation( npts, part, part0 ) ) {}
 
-Distribution::~Distribution() {}
+Distribution::~Distribution() = default;
 
 int Distribution::partition( const gidx_t gidx ) const {
     return get()->partition( gidx );

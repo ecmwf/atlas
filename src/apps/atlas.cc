@@ -22,7 +22,7 @@ class Version : public Tool {
 public:
     Version( int argc, char** argv ) : Tool( argc, argv ) {}
 
-    ~Version() override {}
+    ~Version() override = default;
 
     void run() override;
 };

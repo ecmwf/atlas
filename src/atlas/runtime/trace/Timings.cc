@@ -48,7 +48,7 @@ private:
 
     std::map<std::string, std::vector<size_t>> labels_;
 
-    TimingsRegistry() {}
+    TimingsRegistry() = default;
 
 public:
     static TimingsRegistry& instance() {

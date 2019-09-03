@@ -33,7 +33,7 @@ static Domain domain( const Grid::Config& grid ) {
 
 struct ConfigParser {
     struct Parsed {
-        Parsed() {}
+        Parsed() = default;
         Parsed( std::initializer_list<double> interval ) : min( *interval.begin() ), max( *( interval.begin() + 1 ) ) {}
         double min;
         double max;

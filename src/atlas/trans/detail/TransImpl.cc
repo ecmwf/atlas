@@ -15,7 +15,7 @@
 namespace atlas {
 namespace trans {
 
-TransImpl::~TransImpl() {}
+TransImpl::~TransImpl() = default;
 
 int TransImpl::handle() const {
     ATLAS_NOTIMPLEMENTED;

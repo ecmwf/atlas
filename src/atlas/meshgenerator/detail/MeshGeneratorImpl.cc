@@ -29,9 +29,9 @@ namespace meshgenerator {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-MeshGeneratorImpl::MeshGeneratorImpl() {}
+MeshGeneratorImpl::MeshGeneratorImpl() = default;
 
-MeshGeneratorImpl::~MeshGeneratorImpl() {}
+MeshGeneratorImpl::~MeshGeneratorImpl() = default;
 
 Mesh MeshGeneratorImpl::operator()( const Grid& grid ) const {
     Mesh mesh;

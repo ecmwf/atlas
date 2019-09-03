@@ -283,7 +283,7 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config )
     ATLAS_ASSERT( nb_edges_ );
 }
 
-EdgeColumns::~EdgeColumns() {}
+EdgeColumns::~EdgeColumns() = default;
 
 size_t EdgeColumns::footprint() const {
     size_t size = sizeof( *this );

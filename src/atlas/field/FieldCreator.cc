@@ -55,9 +55,9 @@ struct force_link {
 
 // ------------------------------------------------------------------
 
-FieldCreator::FieldCreator() {}
+FieldCreator::FieldCreator() = default;
 
-FieldCreator::~FieldCreator() {}
+FieldCreator::~FieldCreator() = default;
 
 FieldCreatorFactory::FieldCreatorFactory( const std::string& name ) : name_( name ) {
     pthread_once( &once, init );

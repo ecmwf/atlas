@@ -42,7 +42,7 @@ TransPartitioner::TransPartitioner( const idx_t N ) : Partitioner( N ) {
     }
 }
 
-TransPartitioner::~TransPartitioner() {}
+TransPartitioner::~TransPartitioner() = default;
 
 void TransPartitioner::partition( const Grid& grid, int part[] ) const {
     ATLAS_TRACE( "TransPartitioner::partition" );

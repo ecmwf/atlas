@@ -41,7 +41,7 @@ namespace test {
 class MyStateGenerator : public StateGenerator {
 public:
     MyStateGenerator( const eckit::Parametrisation& p = util::Config() ) : StateGenerator( p ) {}
-    ~MyStateGenerator() override {}
+    ~MyStateGenerator() override = default;
     void generate( State& state, const eckit::Parametrisation& p = util::Config() ) const override;
 };
 

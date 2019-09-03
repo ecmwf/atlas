@@ -517,7 +517,7 @@ GmshIO::GmshIO() {
     options.set<std::vector<long>>( "levels", std::vector<long>() );
 }
 
-GmshIO::~GmshIO() {}
+GmshIO::~GmshIO() = default;
 
 Mesh GmshIO::read( const PathName& file_path ) const {
     Mesh mesh;

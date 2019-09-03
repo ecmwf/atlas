@@ -37,7 +37,7 @@ double cross_product_analog( const PointLonLat& A, const PointLonLat& B, const P
 
 //------------------------------------------------------------------------------------------------------
 
-Polygon::Polygon() {}
+Polygon::Polygon() = default;
 
 Polygon::Polygon( const Polygon::edge_set_t& edges ) {
     ATLAS_TRACE();
@@ -162,7 +162,7 @@ PolygonCoordinates::PolygonCoordinates( const std::vector<PointLonLat>& points )
     }
 }
 
-PolygonCoordinates::~PolygonCoordinates() {}
+PolygonCoordinates::~PolygonCoordinates() = default;
 
 const PointLonLat& PolygonCoordinates::coordinatesMax() const {
     return coordinatesMax_;

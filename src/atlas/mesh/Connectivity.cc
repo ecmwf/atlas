@@ -452,7 +452,7 @@ MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( eckit::Stream& s ) : Irr
 
 //------------------------------------------------------------------------------------------------------
 
-MultiBlockConnectivityImpl::~MultiBlockConnectivityImpl() {}
+MultiBlockConnectivityImpl::~MultiBlockConnectivityImpl() = default;
 
 //------------------------------------------------------------------------------------------------------
 

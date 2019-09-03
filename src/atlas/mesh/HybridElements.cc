@@ -75,7 +75,7 @@ HybridElements::HybridElements() : size_( 0 ), elements_size_(), elements_begin_
     cell_connectivity_ = &add( new Connectivity( "cell" ) );
 }
 
-HybridElements::~HybridElements() {}
+HybridElements::~HybridElements() = default;
 
 Field HybridElements::add( const Field& field ) {
     ATLAS_ASSERT( field );

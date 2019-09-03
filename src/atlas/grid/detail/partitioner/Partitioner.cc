@@ -54,7 +54,7 @@ Partitioner::Partitioner() : nb_partitions_( mpi::comm().size() ) {}
 
 Partitioner::Partitioner( const idx_t nb_partitions ) : nb_partitions_( nb_partitions ) {}
 
-Partitioner::~Partitioner() {}
+Partitioner::~Partitioner() = default;
 
 idx_t Partitioner::nb_partitions() const {
     return nb_partitions_;

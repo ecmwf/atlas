@@ -49,7 +49,7 @@ namespace actions {
 
 namespace {  // anonymous
 struct Sort {
-    Sort() {}
+    Sort() = default;
     Sort( gidx_t gid, idx_t idx ) {
         g = gid;
         i = idx;

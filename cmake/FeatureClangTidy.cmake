@@ -33,6 +33,8 @@ if (HAVE_CLANG_TIDY)
     modernize-use-using
     modernize-use-override
     modernize-use-emplace
+    modernize-use-equals-default
+    modernize-use-equals-delete
     )
     set( CLANG_TIDY_CHECKS "${CLANG_TIDY_CHECKS},${_clang_tidy_check}" )
   endforeach()

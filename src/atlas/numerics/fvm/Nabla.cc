@@ -48,7 +48,7 @@ Nabla::Nabla( const numerics::Method& method, const eckit::Parametrisation& p ) 
     setup();
 }
 
-Nabla::~Nabla() {}
+Nabla::~Nabla() = default;
 
 void Nabla::setup() {
     const mesh::Edges& edges = fvm_->mesh().edges();

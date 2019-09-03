@@ -125,7 +125,7 @@ private:
                       funcspace->sizeHalo() );
         return value;
     }
-    ~StructuredColumnsHaloExchangeCache() override {}
+    ~StructuredColumnsHaloExchangeCache() override = default;
 };
 
 class StructuredColumnsGatherScatterCache : public util::Cache<std::string, parallel::GatherScatter>,
@@ -162,7 +162,7 @@ private:
                       array::make_view<gidx_t, 1>( funcspace->global_index() ).data(), funcspace->sizeOwned() );
         return value;
     }
-    ~StructuredColumnsGatherScatterCache() override {}
+    ~StructuredColumnsGatherScatterCache() override = default;
 };
 
 class StructuredColumnsChecksumCache : public util::Cache<std::string, parallel::Checksum>,
@@ -197,7 +197,7 @@ private:
         value->setup( gather );
         return value;
     }
-    ~StructuredColumnsChecksumCache() override {}
+    ~StructuredColumnsChecksumCache() override = default;
 };
 
 

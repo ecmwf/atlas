@@ -192,7 +192,7 @@ Spectral::Spectral( const trans::Trans& trans, const eckit::Configuration& confi
     config.get( "levels", nb_levels_ );
 }
 
-Spectral::~Spectral() {}
+Spectral::~Spectral() = default;
 
 std::string Spectral::distribution() const {
     return parallelisation_->distribution();

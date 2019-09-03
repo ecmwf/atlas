@@ -159,7 +159,7 @@ Unstructured::Unstructured( std::initializer_list<PointXY> initializer_list ) :
     domain_ = GlobalDomain();
 }
 
-Unstructured::~Unstructured() {}
+Unstructured::~Unstructured() = default;
 
 Grid::uid_t Unstructured::name() const {
     if ( shortName_.empty() ) {

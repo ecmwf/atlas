@@ -58,7 +58,7 @@ void State::initialize( const std::string& generator, const eckit::Parametrisati
 
 //------------------------------------------------------------------------------------------------------
 
-State::State() {}
+State::State() = default;
 
 State::State( const std::string& generator, const eckit::Parametrisation& params ) {
     initialize( generator, params );
@@ -147,7 +147,7 @@ void State::remove( const std::string& name ) {
 
 StateGenerator::StateGenerator( const eckit::Parametrisation& ) {}
 
-StateGenerator::~StateGenerator() {}
+StateGenerator::~StateGenerator() = default;
 
 StateGenerator* StateGeneratorFactory::build( const std::string& name, const eckit::Parametrisation& param ) {
     pthread_once( &once, init );

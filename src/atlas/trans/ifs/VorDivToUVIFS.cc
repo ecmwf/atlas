@@ -57,7 +57,7 @@ VorDivToUVIFS::VorDivToUVIFS( const int truncation, const eckit::Configuration& 
 VorDivToUVIFS::VorDivToUVIFS( const FunctionSpace& fs, const eckit::Configuration& ) :
     truncation_( Spectral( fs ).truncation() ) {}
 
-VorDivToUVIFS::~VorDivToUVIFS() {}
+VorDivToUVIFS::~VorDivToUVIFS() = default;
 
 }  // namespace trans
 }  // namespace atlas

@@ -121,7 +121,7 @@ PartitionGraph::Neighbours PartitionGraph::nearestNeighbours( const idx_t partit
     return Neighbours( values_.data() + displs_[partition], values_.data() + displs_[partition] + counts_[partition] );
 }
 
-PartitionGraph::PartitionGraph() {}
+PartitionGraph::PartitionGraph() = default;
 
 PartitionGraph::PartitionGraph( idx_t values[], idx_t rows, idx_t displs[], idx_t counts[] ) {
     displs_.assign( displs, displs + rows );

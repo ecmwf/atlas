@@ -65,7 +65,7 @@ void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2]
 }
 
 struct Node {
-    Node() {}
+    Node() = default;
     Node( gidx_t gid, idx_t idx ) {
         g = gid;
         i = idx;

@@ -86,7 +86,7 @@ std::string LegendreCacheCreatorIFS::uid() const {
     return unique_identifier_;
 }
 
-LegendreCacheCreatorIFS::~LegendreCacheCreatorIFS() {}
+LegendreCacheCreatorIFS::~LegendreCacheCreatorIFS() = default;
 
 bool LegendreCacheCreatorIFS::supported() const {
     if ( GaussianGrid( grid_ ) ) {

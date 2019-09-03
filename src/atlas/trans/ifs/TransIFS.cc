@@ -49,7 +49,7 @@ static TransBuilderGrid<TransIFS> builder( "ifs", "ifs" );
 class TransParameters {
 public:
     TransParameters( const TransIFS& trans, const eckit::Configuration& config ) : trans_( trans ), config_( config ) {}
-    ~TransParameters() {}
+    ~TransParameters() = default;
 
     bool scalar_derivatives() const { return config_.getBool( "scalar_derivatives", false ); }
 
@@ -886,7 +886,7 @@ TransIFS::TransIFS( const Cache& cache, const Grid& grid, const Domain& domain, 
     ATLAS_ASSERT( domain.global() );
 }
 
-TransIFS::~TransIFS() {}
+TransIFS::~TransIFS() = default;
 
 int atlas::trans::TransIFS::truncation() const {
     return std::max( 0, trans_->nsmax );

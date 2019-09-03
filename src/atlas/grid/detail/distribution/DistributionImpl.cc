@@ -67,7 +67,7 @@ DistributionImpl::DistributionImpl( idx_t npts, int part[], int part0 ) {
     type_    = distribution_type( nb_partitions_ );
 }
 
-DistributionImpl::~DistributionImpl() {}
+DistributionImpl::~DistributionImpl() = default;
 
 void DistributionImpl::print( std::ostream& s ) const {
     s << "Distribution( "

@@ -59,7 +59,7 @@ namespace {
 class TransParameters {
 public:
     TransParameters( const eckit::Configuration& config ) : config_( config ) {}
-    ~TransParameters() {}
+    ~TransParameters() = default;
 
     /*
      * For the future

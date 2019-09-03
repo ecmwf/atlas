@@ -42,9 +42,9 @@ static void init() {
     m           = new std::map<std::string, OutputFactory*>();
 }
 
-OutputImpl::OutputImpl() {}
+OutputImpl::OutputImpl() = default;
 
-OutputImpl::~OutputImpl() {}
+OutputImpl::~OutputImpl() = default;
 
 Output::Output( const std::string& key, Stream& stream, const eckit::Parametrisation& params ) :
     Handle( OutputFactory::build( key, stream, params ) ) {}

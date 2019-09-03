@@ -92,11 +92,11 @@ Domain Structured::computeDomain() const {
     return RectangularDomain( {xspace().min(), xspace().max()}, {yspace().min(), yspace().max()}, projection_.units() );
 }
 
-Structured::~Structured() {}
+Structured::~Structured() = default;
 
 Structured::XSpace::XSpace() : impl_( nullptr ) {}
 
-Structured::XSpace::XSpace( const XSpace& xspace ) : impl_( xspace.impl_ ) {}
+Structured::XSpace::XSpace( const XSpace& xspace ) = default;
 
 template <typename NVector>
 Structured::XSpace::XSpace( const std::array<double, 2>& interval, const NVector& N, bool endpoint ) :

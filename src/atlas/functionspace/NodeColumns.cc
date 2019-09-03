@@ -231,7 +231,7 @@ NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration& config ) :
     }
 }
 
-NodeColumns::~NodeColumns() {}
+NodeColumns::~NodeColumns() = default;
 
 std::string NodeColumns::distribution() const {
     return mesh().metadata().getString( "distribution" );
