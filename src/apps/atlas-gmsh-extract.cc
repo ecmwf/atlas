@@ -33,7 +33,7 @@ using namespace atlas;
 //------------------------------------------------------------------------------------------------------
 
 class gmsh_extract : public eckit::Tool {
-    virtual void run();
+    void run() override;
 
 public:
     gmsh_extract( int argc, char** argv ) : eckit::Tool( argc, argv ) {

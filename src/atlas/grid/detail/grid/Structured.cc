@@ -559,16 +559,16 @@ static class structured : public GridBuilder {
 public:
     structured() : GridBuilder( "structured" ) {}
 
-    virtual void print( std::ostream& os ) const {
+    void print( std::ostream& os ) const override {
         os << std::left << std::setw( 20 ) << " "
            << "Structured grid";
     }
 
-    virtual const Implementation* create( const std::string& /* name */, const Config& ) const {
+    const Implementation* create( const std::string& /* name */, const Config& ) const override {
         throw_NotImplemented( "Cannot create structured grid from name", Here() );
     }
 
-    virtual const Implementation* create( const Config& config ) const {
+    const Implementation* create( const Config& config ) const override {
         Projection projection;
         Spacing yspace;
         Domain domain;

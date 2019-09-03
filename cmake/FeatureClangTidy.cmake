@@ -30,7 +30,9 @@ if (HAVE_CLANG_TIDY)
     readability-braces-around-statements
     redundant-string-init
     modernize-use-nullptr
-    modernize-use-using )
+    modernize-use-using
+    modernize-use-override
+    )
     set( CLANG_TIDY_CHECKS "${CLANG_TIDY_CHECKS},${_clang_tidy_check}" )
   endforeach()
   set( CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-checks=${CLANG_TIDY_CHECKS};-header-filter='${CMAKE_SOURCE_DIR}/*'${CLANG_TIDY_FIXIT}" )

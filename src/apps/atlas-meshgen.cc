@@ -57,9 +57,9 @@ using eckit::PathName;
 //------------------------------------------------------------------------------
 
 class Meshgen2Gmsh : public AtlasTool {
-    virtual int execute( const Args& args );
-    virtual std::string briefDescription() { return "Mesh generator for Structured compatible meshes"; }
-    virtual std::string usage() { return name() + " (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT [--help]"; }
+    int execute( const Args& args ) override;
+    std::string briefDescription() override { return "Mesh generator for Structured compatible meshes"; }
+    std::string usage() override { return name() + " (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT [--help]"; }
 
 public:
     Meshgen2Gmsh( int argc, char** argv );

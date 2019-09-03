@@ -33,7 +33,7 @@ namespace {
 template <class T>
 struct DerivateBuilder : public ProjectionImpl::DerivateFactory {
     using DerivateFactory::DerivateFactory;
-    ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) {
+    ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) override {
         return new T( p, A, B, h );
     }
 };

@@ -37,7 +37,7 @@ double vortex_rollup( double lon, double lat, double t, double mean );
 //------------------------------------------------------------------------------
 
 class Program : public AtlasTool {
-    virtual int execute( const Args& args );
+    int execute( const Args& args ) override;
 
 public:
     Program( int argc, char** argv );

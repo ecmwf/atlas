@@ -83,7 +83,7 @@ public:
         creator_type creator = std::bind( &EdgeColumnsHaloExchangeCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) { remove( key( mesh ) ); }
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override { remove( key( mesh ) ); }
 
 private:
     static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
@@ -117,7 +117,7 @@ public:
         creator_type creator = std::bind( &EdgeColumnsGatherScatterCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) { remove( key( mesh ) ); }
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override { remove( key( mesh ) ); }
 
 private:
     static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
@@ -151,7 +151,7 @@ public:
         creator_type creator = std::bind( &EdgeColumnsChecksumCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) { remove( key( mesh ) ); }
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override { remove( key( mesh ) ); }
 
 private:
     static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {

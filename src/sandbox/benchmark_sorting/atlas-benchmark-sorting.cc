@@ -179,12 +179,12 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
 //-----------------------------------------------------------------------------
 
 class Tool : public AtlasTool {
-    virtual int execute( const Args& args );
-    virtual std::string briefDescription() {
+    int execute( const Args& args ) override;
+    std::string briefDescription() override {
         return "Tool to generate a python script that plots the grid-distribution "
                "of a given grid";
     }
-    virtual std::string usage() { return name() + " (--grid=name) [--help]"; }
+    std::string usage() override { return name() + " (--grid=name) [--help]"; }
 
 public:
     Tool( int argc, char** argv );

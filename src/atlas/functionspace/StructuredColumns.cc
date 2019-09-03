@@ -100,7 +100,7 @@ public:
         return Base::get_or_create( key( *funcspace.grid().get(), funcspace.halo() ),
                                     remove_key( *funcspace.grid().get() ), creator );
     }
-    virtual void onGridDestruction( grid::detail::grid::Grid& grid ) { remove( remove_key( grid ) ); }
+    void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( remove_key( grid ) ); }
 
 private:
     static Base::key_type key( const grid::detail::grid::Grid& grid, idx_t halo ) {
@@ -125,7 +125,7 @@ private:
                       funcspace->sizeHalo() );
         return value;
     }
-    virtual ~StructuredColumnsHaloExchangeCache() {}
+    ~StructuredColumnsHaloExchangeCache() override {}
 };
 
 class StructuredColumnsGatherScatterCache : public util::Cache<std::string, parallel::GatherScatter>,
@@ -143,7 +143,7 @@ public:
         creator_type creator = std::bind( &StructuredColumnsGatherScatterCache::create, &funcspace );
         return Base::get_or_create( key( *funcspace.grid().get() ), creator );
     }
-    virtual void onGridDestruction( grid::detail::grid::Grid& grid ) { remove( key( grid ) ); }
+    void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( key( grid ) ); }
 
 private:
     static Base::key_type key( const grid::detail::grid::Grid& grid ) {
@@ -162,7 +162,7 @@ private:
                       array::make_view<gidx_t, 1>( funcspace->global_index() ).data(), funcspace->sizeOwned() );
         return value;
     }
-    virtual ~StructuredColumnsGatherScatterCache() {}
+    ~StructuredColumnsGatherScatterCache() override {}
 };
 
 class StructuredColumnsChecksumCache : public util::Cache<std::string, parallel::Checksum>,
@@ -180,7 +180,7 @@ public:
         creator_type creator = std::bind( &StructuredColumnsChecksumCache::create, &funcspace );
         return Base::get_or_create( key( *funcspace.grid().get() ), creator );
     }
-    virtual void onGridDestruction( grid::detail::grid::Grid& grid ) { remove( key( grid ) ); }
+    void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( key( grid ) ); }
 
 private:
     static Base::key_type key( const grid::detail::grid::Grid& grid ) {
@@ -197,7 +197,7 @@ private:
         value->setup( gather );
         return value;
     }
-    virtual ~StructuredColumnsChecksumCache() {}
+    ~StructuredColumnsChecksumCache() override {}
 };
 
 

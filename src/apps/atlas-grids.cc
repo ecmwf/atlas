@@ -29,11 +29,11 @@
 //----------------------------------------------------------------------------------------------------------------------
 
 struct AtlasGrids : public atlas::AtlasTool {
-    virtual bool serial() { return true; }
-    virtual int execute( const Args& args );
-    virtual std::string briefDescription() { return "Catalogue of available built-in grids"; }
-    virtual std::string usage() { return name() + " GRID [OPTION]... [--help,-h]"; }
-    virtual std::string longDescription() {
+    bool serial() override { return true; }
+    int execute( const Args& args ) override;
+    std::string briefDescription() override { return "Catalogue of available built-in grids"; }
+    std::string usage() override { return name() + " GRID [OPTION]... [--help,-h]"; }
+    std::string longDescription() override {
         return "Catalogue of available built-in grids\n"
                "\n"
                "       Browse catalogue of grids\n"

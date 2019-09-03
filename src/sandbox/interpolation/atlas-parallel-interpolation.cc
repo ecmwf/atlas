@@ -46,16 +46,16 @@ auto vortex_rollup = []( double lon, double lat, double t ) {
 };
 
 class AtlasParallelInterpolation : public AtlasTool {
-    int execute( const AtlasTool::Args& args );
-    std::string briefDescription() { return "Demonstration of parallel interpolation"; }
-    std::string usage() {
+    int execute( const AtlasTool::Args& args ) override;
+    std::string briefDescription() override { return "Demonstration of parallel interpolation"; }
+    std::string usage() override {
         return name() +
                " [--source-gridname=gridname] "
                "[--target-gridname=gridname] [OPTION]... [--help]";
     }
 
-    int numberOfPositionalArguments() { return -1; }
-    int minimumPositionalArguments() { return 0; }
+    int numberOfPositionalArguments() override { return -1; }
+    int minimumPositionalArguments() override { return 0; }
 
 public:
     AtlasParallelInterpolation( int argc, char* argv[] ) : AtlasTool( argc, argv ) {

@@ -126,7 +126,7 @@ struct TimerStats {
 //----------------------------------------------------------------------------------------------------------------------
 
 class AtlasBenchmark : public AtlasTool {
-    virtual int execute( const Args& args );
+    int execute( const Args& args ) override;
 
 public:
     AtlasBenchmark( int argc, char** argv ) : AtlasTool( argc, argv ) {

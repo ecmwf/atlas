@@ -245,16 +245,16 @@ static class unstructured : public GridBuilder {
 public:
     unstructured() : GridBuilder( "unstructured" ) {}
 
-    virtual void print( std::ostream& os ) const {
+    void print( std::ostream& os ) const override {
         os << std::left << std::setw( 20 ) << " "
            << "Unstructured grid";
     }
 
-    virtual const Implementation* create( const std::string& /* name */, const Config& ) const {
+    const Implementation* create( const std::string& /* name */, const Config& ) const override {
         throw_NotImplemented( "Cannot create unstructured grid from name", Here() );
     }
 
-    virtual const Implementation* create( const Config& config ) const { return new Unstructured( config ); }
+    const Implementation* create( const Config& config ) const override { return new Unstructured( config ); }
 
 } unstructured_;
 
@@ -268,7 +268,7 @@ const Unstructured* atlas__grid__Unstructured__points( const double xy[], int sh
     size_t stride_v = stridesf[0];
     std::vector<PointXY> points;
     points.reserve( nb_points );
-    for ( idx_t n = 0; n < nb_points; ++n ) {
+    for ( size_t n = 0; n < nb_points; ++n ) {
         points.emplace_back( PointXY{xy[n * stride_n + 0], xy[n * stride_n + 1 * stride_v]} );
     }
     return new Unstructured( std::move( points ) );

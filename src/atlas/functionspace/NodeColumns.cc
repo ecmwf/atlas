@@ -83,7 +83,7 @@ public:
         creator_type creator = std::bind( &NodeColumnsHaloExchangeCache::create, mesh, halo );
         return Base::get_or_create( key( *mesh.get(), halo ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) {
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override {
         for ( long jhalo = 1; jhalo < mesh::Halo( mesh ).size(); ++jhalo ) {
             remove( key( mesh, jhalo ) );
         }
@@ -128,7 +128,7 @@ public:
         creator_type creator = std::bind( &NodeColumnsGatherScatterCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) { remove( key( mesh ) ); }
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override { remove( key( mesh ) ); }
 
 private:
     static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
@@ -179,7 +179,7 @@ public:
         creator_type creator = std::bind( &NodeColumnsChecksumCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) { remove( key( mesh ) ); }
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override { remove( key( mesh ) ); }
 
 private:
     static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
