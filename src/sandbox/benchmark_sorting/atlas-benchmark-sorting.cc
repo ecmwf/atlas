@@ -144,7 +144,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
     std::vector<Node> node_sort;
     node_sort.reserve( glb_nb_nodes );
     for ( size_t jnode = 0; jnode < glb_idx_gathered.size(); ++jnode ) {
-        node_sort.push_back( Node( glb_idx_gathered[jnode], jnode ) );
+        node_sort.emplace_back( glb_idx_gathered[jnode], jnode );
     }
 
     ATLAS_TRACE_SCOPE( "local_sort" ) { std::sort( node_sort.begin(), node_sort.end() ); }

@@ -120,7 +120,7 @@ void KNearestNeighbours::setup( const FunctionSpace& source, const FunctionSpace
             for ( size_t j = 0; j < npts; ++j ) {
                 size_t jp = nn[j].payload();
                 ATLAS_ASSERT( jp < inp_npts );
-                weights_triplets.push_back( Triplet( ip, jp, weights[j] / sum ) );
+                weights_triplets.emplace_back( ip, jp, weights[j] / sum );
             }
         }
     }

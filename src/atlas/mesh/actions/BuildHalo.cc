@@ -153,7 +153,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
     node_sort.reserve( glb_nb_nodes );
     const idx_t nb_glb_idx_gathered = static_cast<idx_t>( glb_idx_gathered.size() );
     for ( idx_t jnode = 0; jnode < nb_glb_idx_gathered; ++jnode ) {
-        node_sort.push_back( Entity( glb_idx_gathered[jnode], jnode ) );
+        node_sort.emplace_back( glb_idx_gathered[jnode], jnode );
     }
 
     ATLAS_TRACE_SCOPE( "sort on rank 0" ) { std::sort( node_sort.begin(), node_sort.end() ); }
@@ -253,7 +253,7 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
     std::vector<Entity> cell_sort;
     cell_sort.reserve( glb_nb_cells );
     for ( idx_t jcell = 0; jcell < glb_nb_cells; ++jcell ) {
-        cell_sort.push_back( Entity( glb_idx_gathered[jcell], jcell ) );
+        cell_sort.emplace_back( glb_idx_gathered[jcell], jcell );
     }
 
     ATLAS_TRACE_SCOPE( "sort on rank 0" ) { std::sort( cell_sort.begin(), cell_sort.end() ); }

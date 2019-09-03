@@ -208,7 +208,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes ) {
     node_sort.reserve( glb_nb_nodes );
     ATLAS_TRACE_SCOPE( "sort global indices" ) {
         for ( idx_t jnode = 0; jnode < glb_id.shape( 0 ); ++jnode ) {
-            node_sort.push_back( Node( glb_id( jnode ), jnode ) );
+            node_sort.emplace_back( glb_id( jnode ), jnode );
         }
         std::sort( node_sort.begin(), node_sort.end() );
     }
