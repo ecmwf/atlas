@@ -287,6 +287,8 @@ mesh/actions/BuildXYZField.h
 mesh/actions/WriteLoadBalanceReport.cc
 mesh/actions/BuildTorusXYZField.h
 mesh/actions/BuildTorusXYZField.cc
+mesh/actions/ReorderHilbert.h
+mesh/actions/ReorderHilbert.cc
 
 meshgenerator.h
 meshgenerator/MeshGenerator.cc
