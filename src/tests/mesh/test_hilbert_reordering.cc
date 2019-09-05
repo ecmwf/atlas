@@ -15,6 +15,7 @@
 #include "atlas/meshgenerator.h"
 
 #include "atlas/mesh/actions/ReorderHilbert.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 
@@ -85,7 +86,7 @@ void outputPythonScript( const eckit::PathName& filepath, const eckit::Configura
                  "verts_"
               << r << " = [";
             for ( idx_t n = 0; n < xy.shape( 0 ); ++n ) {
-                idx_t i = reorder.hilbert_reordering_[n].second;
+                idx_t i = n;  //reorder.hilbert_reordering_[n].second;
                 f << "\n  (" << xy( i, XX ) << ", " << xy( i, YY ) << "), ";
             }
             f << "\n]"
@@ -129,10 +130,10 @@ void outputPythonScript( const eckit::PathName& filepath, const eckit::Configura
               << r << ",ys_" << r
               << ", '-', lw=1, color=c )"
                  "\n"
-                 //"for i in range( len(verts_0) ):"
-                 //"\n"
-                 //"  plt.text( xs_0[i], ys_0[i], str(i) )"
-                 "\n"
+                 //                 "for i in range( len(verts_0) ):"
+                 //                 "\n"
+                 //                 "  plt.text( xs_0[i], ys_0[i], str(i) )"
+                 //                 "\n"
                  "";
             if ( mpi_rank == mpi_size - 1 ) {
                 f << "\n"
@@ -157,8 +158,8 @@ void outputPythonScript( const eckit::PathName& filepath, const eckit::Configura
 
 
 CASE( "test_hilbert_reordering" ) {
-    Mesh mesh    = StructuredMeshGenerator().generate( Grid( "O16" ) );
-    auto reorder = mesh::actions::ReorderHilbert{mesh, util::Config( "recursion", 6 )};
+    Mesh mesh    = StructuredMeshGenerator().generate( Grid( "O32" ) );
+    auto reorder = mesh::actions::ReorderHilbert{mesh, util::Config( "recursion", 8 )};
     auto xy      = array::make_view<double, 2>( mesh.nodes().xy() );
 
     reorder();
@@ -169,7 +170,7 @@ CASE( "test_hilbert_reordering" ) {
         auto hilbert_idx = reorder.hilbert_reordering_[n].first;
         idx_t ip         = reorder.hilbert_reordering_[n].second;
         PointXY p{xy( ip, 0 ), xy( ip, 1 )};
-        Log::info() << ip << '\t' << p << "\t" << hilbert_idx << std::endl;
+        //Log::info() << ip << '\t' << p << "\t" << hilbert_idx << std::endl;
         if ( hilbert_idx == previous_hilbert_idx ) {
             //throw_Exception("Duplicate hilbert index detected in ReorderHilbert", Here() );
         }
@@ -178,6 +179,9 @@ CASE( "test_hilbert_reordering" ) {
 
     outputPythonScript( "hilbert.py", util::NoConfig(), xy, reorder );
 #endif
+
+    output::Gmsh gmsh{"hilbert.msh"};
+    gmsh.write( mesh );
 }
 
 //-----------------------------------------------------------------------------

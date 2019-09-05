@@ -345,11 +345,6 @@ Field NodeColumns::createField( const Field& other, const eckit::Configuration& 
 
 namespace {
 
-template <typename DATA_TYPE, int RANK>
-array::ArrayView<DATA_TYPE, RANK> get_field_view( const Field& field, bool on_device ) {
-    return on_device ? array::make_device_view<DATA_TYPE, RANK>( field ) : array::make_view<DATA_TYPE, RANK>( field );
-}
-
 template <int RANK>
 void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exchange, bool on_device ) {
     if ( field.datatype() == array::DataType::kind<int>() ) {

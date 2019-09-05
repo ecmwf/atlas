@@ -14,6 +14,7 @@
 #include "atlas/array.h"
 #include "atlas/domain/Domain.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/ReorderHilbert.h"
@@ -206,11 +207,90 @@ ReorderHilbert::ReorderHilbert( Mesh& mesh, const eckit::Configuration& config )
     config.get( "recursion", recursion_ );
 }
 
-void ReorderHilbert::operator()() {
-    ATLAS_TRACE( "ReorderHilbert()" );
+template <typename Value, int Rank>
+struct ReorderField {};
 
-    auto xy    = array::make_view<double, 2>( mesh_.nodes().xy() );
-    auto ghost = array::make_view<int, 1>( mesh_.nodes().ghost() );
+template <typename Value>
+struct ReorderField<Value, 1> {
+    static constexpr int Rank = 1;
+    static std::string apply( Field& field, const std::vector<idx_t>& order ) {
+        auto array = array::make_view<Value, Rank>( field );
+        array::ArrayT<Value> tmp_array( field.shape() );
+        auto tmp = array::make_view<Value, Rank>( tmp_array );
+        for ( idx_t n = 0; n < array.shape( 0 ); ++n ) {
+            tmp( n ) = array( n );
+        }
+        for ( idx_t n = 0; n < array.shape( 0 ); ++n ) {
+            array( n ) = tmp( order[n] );
+        }
+        return field.name();
+    }
+};
+
+template <typename Value>
+struct ReorderField<Value, 2> {
+    static constexpr int Rank = 2;
+    static std::string apply( Field& field, const std::vector<idx_t>& order ) {
+        auto array = array::make_view<Value, Rank>( field );
+        array::ArrayT<Value> tmp_array( field.shape() );
+        auto tmp = array::make_view<Value, Rank>( tmp_array );
+        for ( idx_t n = 0; n < array.shape( 0 ); ++n ) {
+            tmp( n, 0 ) = array( n, 0 );
+            tmp( n, 1 ) = array( n, 1 );
+        }
+        for ( idx_t n = 0; n < array.shape( 0 ); ++n ) {
+            array( n, 0 ) = tmp( order[n], 0 );
+            array( n, 1 ) = tmp( order[n], 1 );
+        }
+        return field.name();
+    }
+};
+
+template <typename Value>
+std::string reorder_field_T( Field& field, const std::vector<idx_t>& order ) {
+    if ( field.rank() == 1 ) {
+        return ReorderField<Value, 1>::apply( field, order );
+    }
+    else if ( field.rank() == 2 ) {
+        return ReorderField<Value, 2>::apply( field, order );
+    }
+    else {
+        throw_Exception( "rank not supported", Here() );
+    }
+}
+
+std::string reorder_field( Field& field, const std::vector<idx_t>& order ) {
+    if ( field.datatype() == array::DataType::kind<int>() ) {
+        return reorder_field_T<int>( field, order );
+    }
+    else if ( field.datatype() == array::DataType::kind<long>() ) {
+        return reorder_field_T<long>( field, order );
+    }
+    else if ( field.datatype() == array::DataType::kind<float>() ) {
+        return reorder_field_T<float>( field, order );
+    }
+    else if ( field.datatype() == array::DataType::kind<double>() ) {
+        return reorder_field_T<double>( field, order );
+    }
+    else {
+        throw_Exception( "datatype not supported", Here() );
+    }
+}
+
+void reorder_connectivity( mesh::HybridElements::Connectivity& connectivity, const std::vector<idx_t>& order ) {
+    for ( idx_t b = 0; b < connectivity.blocks(); ++b ) {
+        auto& block = connectivity.block( b );
+        for ( idx_t r = 0; r < block.rows(); ++r ) {
+            for ( idx_t c = 0; c < block.cols(); ++c ) {
+                idx_t n = block( r, c );
+                block.set( r, c, order.at( n ) );
+            }
+        }
+    }
+}
+
+Domain global_bounding_box( const Mesh& mesh ) {
+    auto xy = array::make_view<double, 2>( mesh.nodes().xy() );
 
     double xmin = std::numeric_limits<double>::max();
     double xmax = -std::numeric_limits<double>::max();
@@ -228,9 +308,16 @@ void ReorderHilbert::operator()() {
     comm.allReduceInPlace( xmax, eckit::mpi::max() );
     comm.allReduceInPlace( ymin, eckit::mpi::min() );
     comm.allReduceInPlace( ymax, eckit::mpi::max() );
-    auto domain = RectangularDomain( {xmin, xmax}, {ymin, ymax} );
+    return RectangularDomain( {xmin, xmax}, {ymin, ymax} );
+}
 
-    Hilbert hilbert{domain, recursion_};
+void ReorderHilbert::operator()() {
+    ATLAS_TRACE( "ReorderHilbert()" );
+
+    Hilbert hilbert{global_bounding_box( mesh_ ), recursion_};
+
+    auto xy    = array::make_view<double, 2>( mesh_.nodes().xy() );
+    auto ghost = array::make_view<int, 1>( mesh_.nodes().ghost() );
 
     idx_t size = xy.shape( 0 );
     hilbert_reordering_.clear();
@@ -241,11 +328,26 @@ void ReorderHilbert::operator()() {
             auto hilbert_idx = hilbert( p );
             hilbert_reordering_.emplace_back( hilbert_idx, n );
         }
-        else {
-            hilbert_reordering_.emplace_back( hilbert.nb_keys() * 2 + n, n );
+        else {  // ghost nodes get a fake "hilbert_idx" at the end
+            hilbert_reordering_.emplace_back( hilbert.nb_keys() + n, n );
         }
     }
     std::sort( hilbert_reordering_.begin(), hilbert_reordering_.end() );
+    std::vector<idx_t> order;
+    order.reserve( size );
+    std::vector<idx_t> order_inverse;
+    order_inverse.resize( size );
+    idx_t c{0};
+    for ( const auto& pair : hilbert_reordering_ ) {
+        order.emplace_back( pair.second );
+        order_inverse[pair.second] = c++;
+    }
+
+    for ( idx_t ifield = 0; ifield < mesh_.nodes().nb_fields(); ++ifield ) {
+        reorder_field( mesh_.nodes().field( ifield ), order );
+    }
+
+    reorder_connectivity( mesh_.cells().node_connectivity(), order_inverse );
 }
 
 // ------------------------------------------------------------------
