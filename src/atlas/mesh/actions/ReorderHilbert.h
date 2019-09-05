@@ -10,6 +10,12 @@
 
 #pragma once
 
+#include <utility>
+#include <vector>
+
+#include "atlas/library/config.h"
+#include "atlas/util/Config.h"
+
 namespace atlas {
 class Mesh;
 
@@ -20,11 +26,15 @@ namespace actions {
 
 class ReorderHilbert {
 public:
-    ReorderHilbert( Mesh& mesh );
+    ReorderHilbert( Mesh& mesh, const eckit::Configuration& config = util::NoConfig() );
     void operator()();
 
 private:
     Mesh& mesh_;
+    idx_t recursion_{20};
+
+public:
+    std::vector<std::pair<gidx_t, idx_t>> hilbert_reordering_;
 };
 
 // ------------------------------------------------------------------
