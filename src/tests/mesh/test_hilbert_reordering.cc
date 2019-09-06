@@ -10,6 +10,7 @@
 
 #include <cmath>
 
+#include "atlas/functionspace.h"
 #include "atlas/grid.h"
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
@@ -26,8 +27,7 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-void outputPythonScript( const eckit::PathName& filepath, const eckit::Configuration& config,
-                         const array::ArrayView<double, 2>& xy, const mesh::actions::ReorderHilbert& reorder ) {
+void outputHilbertCurve( const eckit::PathName& filepath, const array::ArrayView<double, 2>& xy ) {
     const eckit::mpi::Comm& comm = atlas::mpi::comm();
     int mpi_rank                 = int( comm.rank() );
     int mpi_size                 = int( comm.size() );
@@ -51,90 +51,81 @@ void outputPythonScript( const eckit::PathName& filepath, const eckit::Configura
 
             if ( mpi_rank == 0 ) {
                 f << "\n"
-                     "# Configuration option to plot nodes"
                      "\n"
-                     "plot_nodes = " +
-                         std::string( ( config.getBool( "nodes", false ) ? "True" : "False" ) ) +
-                         "\n"
-                         "\n"
-                         "import matplotlib.pyplot as plt"
-                         "\n"
-                         "from matplotlib.path import Path"
-                         "\n"
-                         "import matplotlib.patches as patches"
-                         "\n"
-                         ""
-                         "\n"
-                         "from itertools import cycle"
-                         "\n"
-                         "import matplotlib.cm as cm"
-                         "\n"
-                         "import numpy as np"
-                         "\n"
-                         "cycol = cycle([cm.Paired(i) for i in "
-                         "np.linspace(0,1,12,endpoint=True)]).next"
-                         "\n"
-                         ""
-                         "\n"
-                         "fig = plt.figure()"
-                         "\n"
-                         "ax = fig.add_subplot(111,aspect='equal')"
-                         "\n"
-                         "";
+                     "import matplotlib.pyplot as plt"
+                     "\n"
+                     "from matplotlib.path import Path"
+                     "\n"
+                     "import matplotlib.patches as patches"
+                     "\n"
+                     ""
+                     "\n"
+                     "from itertools import cycle"
+                     "\n"
+                     "import matplotlib.cm as cm"
+                     "\n"
+                     "import numpy as np"
+                     "\n"
+                     "cycol = cycle([cm.Paired(i) for i in "
+                     "np.linspace(0,1,12,endpoint=True)]).next"
+                     "\n"
+                     ""
+                     "\n"
+                     "fig = plt.figure()"
+                     "\n"
+                     "ax = fig.add_subplot(111,aspect='equal')"
+                     "\n"
+                     "";
             }
-            f << "\n"
-                 "verts_"
-              << r << " = [";
-            for ( idx_t n = 0; n < xy.shape( 0 ); ++n ) {
-                idx_t i = n;  //reorder.hilbert_reordering_[n].second;
-                f << "\n  (" << xy( i, XX ) << ", " << xy( i, YY ) << "), ";
+
+            if ( mpi_rank == r ) {  // replace "r" with rank you wish to plot only
+                f << "\n"
+                     "verts_"
+                  << r << " = [";
+                for ( idx_t n = 0; n < xy.shape( 0 ); ++n ) {
+                    idx_t i = n;  //reorder.hilbert_reordering_[n].second;
+                    f << "\n  (" << xy( i, XX ) << ", " << xy( i, YY ) << "), ";
+                }
+                f << "\n]"
+                     "\n"
+                     ""
+                     "\n"
+                     "codes_"
+                  << r
+                  << " = [Path.MOVETO]"
+                     "\n"
+                     "codes_"
+                  << r << ".extend([Path.LINETO] * " << ( xy.shape( 0 ) - 2 )
+                  << ")"
+                     "\n"
+                     "codes_"
+                  << r
+                  << ".extend([Path.LINETO])"
+                     "\n"
+                     ""
+                     "\n"
+                     "count_"
+                  << r << " = " << count
+                  << "\n"
+                     "count_all_"
+                  << r << " = " << count_all
+                  << "\n"
+                     "c = cycol()"
+                     "\n"
+                     "xs_"
+                  << r << ", ys_" << r << " = zip(*verts_" << r
+                  << ")"
+                     "\n"
+                     "ax.plot(xs_"
+                  << r << ",ys_" << r
+                  << ", '-', lw=1, color=c )"
+                     "\n"
+                     //                 "for i in range( len(verts_0) ):"
+                     //                 "\n"
+                     //                 "  plt.text( xs_0[i], ys_0[i], str(i) )"
+                     //                 "\n"
+                     "";
             }
-            f << "\n]"
-                 "\n"
-                 ""
-                 "\n"
-                 "codes_"
-              << r
-              << " = [Path.MOVETO]"
-                 "\n"
-                 "codes_"
-              << r << ".extend([Path.LINETO] * " << ( xy.shape( 0 ) - 2 )
-              << ")"
-                 "\n"
-                 "codes_"
-              << r
-              << ".extend([Path.LINETO])"
-                 "\n"
-                 ""
-                 "\n"
-                 "count_"
-              << r << " = " << count
-              << "\n"
-                 "count_all_"
-              << r << " = " << count_all
-              << "\n"
-                 ""
-                 //"\n" "x_" << r << " = ["; for (idx_t i=0; i<count; ++i) { f <<
-                 // xy(i, XX) << ", "; } f << "]"
-                 //"\n" "y_" << r << " = ["; for (idx_t i=0; i<count; ++i) { f <<
-                 // xy(i, YY) << ", "; } f << "]"
-                 "\n"
-                 "\n"
-                 "c = cycol()"
-                 "\n"
-                 "xs_"
-              << r << ", ys_" << r << " = zip(*verts_" << r
-              << ")"
-                 "\n"
-                 "ax.plot(xs_"
-              << r << ",ys_" << r
-              << ", '-', lw=1, color=c )"
-                 "\n"
-                 //                 "for i in range( len(verts_0) ):"
-                 //                 "\n"
-                 //                 "  plt.text( xs_0[i], ys_0[i], str(i) )"
-                 //                 "\n"
-                 "";
             if ( mpi_rank == mpi_size - 1 ) {
                 f << "\n"
                      "ax.set_xlim( "
@@ -156,32 +147,51 @@ void outputPythonScript( const eckit::PathName& filepath, const eckit::Configura
     }
 }
 
+Field create_cell_centres( Mesh& mesh ) {
+    auto cell_centres =
+        Field( "cell_centres", array::make_datatype<double>(), array::make_shape( mesh.cells().size(), 2 ) );
+    auto nodes_xy = array::make_view<double, 2>( mesh.nodes().xy() );
+    for ( idx_t t = 0; t < mesh.cells().nb_types(); ++t ) {
+        auto& cells = mesh.cells().elements( t );
+        auto xy     = cells.view<double, 2>( cell_centres );
+
+        // Compute cell-centres
+        {
+            const auto& node_connectivity = cells.node_connectivity();
+            const idx_t nb_nodes          = cells.nb_nodes();
+            const double nb_nodes_double  = nb_nodes;
+            for ( idx_t e = 0; e < cells.size(); ++e ) {
+                double x{0};
+                double y{0};
+                for ( idx_t c = 0; c < nb_nodes; ++c ) {
+                    idx_t n = node_connectivity( e, c );
+                    x += nodes_xy( n, XX );
+                    y += nodes_xy( n, YY );
+                }
+                xy( e, XX ) = x / nb_nodes_double;
+                xy( e, YY ) = y / nb_nodes_double;
+            }
+        }
+    }
+    return cell_centres;
+}
 
 CASE( "test_hilbert_reordering" ) {
-    Mesh mesh    = StructuredMeshGenerator().generate( Grid( "O32" ) );
-    auto reorder = mesh::actions::ReorderHilbert{mesh, util::Config( "recursion", 8 )};
-    auto xy      = array::make_view<double, 2>( mesh.nodes().xy() );
+    auto meshgenerator = StructuredMeshGenerator( util::Config( "patch_pole", false )( "triangulate", true ) );
+    Mesh mesh          = meshgenerator( Grid( "O32" ) );
+    auto reorder       = mesh::actions::ReorderHilbert{util::Config( "recursion", 30 )};
+    reorder( mesh );
 
-    reorder();
+    // functionspace::NodeColumns( mesh, option::halo( 2 ) );
 
-#if 1
-    gidx_t previous_hilbert_idx{-1};
-    for ( idx_t n = 0; n < xy.shape( 0 ); ++n ) {
-        auto hilbert_idx = reorder.hilbert_reordering_[n].first;
-        idx_t ip         = reorder.hilbert_reordering_[n].second;
-        PointXY p{xy( ip, 0 ), xy( ip, 1 )};
-        //Log::info() << ip << '\t' << p << "\t" << hilbert_idx << std::endl;
-        if ( hilbert_idx == previous_hilbert_idx ) {
-            //throw_Exception("Duplicate hilbert index detected in ReorderHilbert", Here() );
-        }
-        previous_hilbert_idx = hilbert_idx;
-    }
-
-    outputPythonScript( "hilbert.py", util::NoConfig(), xy, reorder );
-#endif
-
-    output::Gmsh gmsh{"hilbert.msh"};
+    auto xy = array::make_view<double, 2>( mesh.nodes().xy() );
+    outputHilbertCurve( "hilbert_nodes.py", xy );
+    output::Gmsh gmsh{"hilbert.msh", util::Config( "coordinates", "xy" )};
     gmsh.write( mesh );
+
+    Field cell_centres   = create_cell_centres( mesh );
+    auto cell_centres_xy = array::make_view<double, 2>( cell_centres );
+    outputHilbertCurve( "hilbert_elements.py", cell_centres_xy );
 }
 
 //-----------------------------------------------------------------------------
