@@ -15,6 +15,7 @@
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 
+#include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/ReorderHilbert.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/Log.h"
@@ -176,6 +177,31 @@ Field create_cell_centres( Mesh& mesh ) {
     return cell_centres;
 }
 
+Field create_edge_centres( Mesh& mesh ) {
+    auto edge_centres =
+        Field( "edge_centres", array::make_datatype<double>(), array::make_shape( mesh.edges().size(), 2 ) );
+    auto nodes_xy = array::make_view<double, 2>( mesh.nodes().xy() );
+    auto& edges   = mesh.edges();
+    auto xy       = array::make_view<double, 2>( edge_centres );
+
+    // Compute edge-centres
+    {
+        const auto& node_connectivity = edges.node_connectivity();
+        for ( idx_t e = 0; e < edges.size(); ++e ) {
+            double x{0};
+            double y{0};
+            for ( idx_t c = 0; c < 2; ++c ) {
+                idx_t n = node_connectivity( e, c );
+                x += nodes_xy( n, XX );
+                y += nodes_xy( n, YY );
+            }
+            xy( e, XX ) = 0.5 * x;
+            xy( e, YY ) = 0.5 * y;
+        }
+    }
+    return edge_centres;
+}
+
 CASE( "test_hilbert_reordering" ) {
     auto meshgenerator = StructuredMeshGenerator( util::Config( "patch_pole", false )( "triangulate", true ) );
     Mesh mesh          = meshgenerator( Grid( "O32" ) );
@@ -192,6 +218,11 @@ CASE( "test_hilbert_reordering" ) {
     Field cell_centres   = create_cell_centres( mesh );
     auto cell_centres_xy = array::make_view<double, 2>( cell_centres );
     outputHilbertCurve( "hilbert_elements.py", cell_centres_xy );
+
+    mesh::actions::build_edges( mesh );
+    Field edge_centres   = create_edge_centres( mesh );
+    auto edge_centres_xy = array::make_view<double, 2>( edge_centres );
+    outputHilbertCurve( "hilbert_edges.py", edge_centres_xy );
 }
 
 //-----------------------------------------------------------------------------
