@@ -16,32 +16,31 @@ namespace atlas {
 namespace mesh {
 namespace actions {
 
-//----------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------
 
-/// Reorder implementation that reorders nodes of a mesh following a Hilbert Space-filling curve.
+/// Reorder implementation that reorders nodes of a mesh following a Reverse Cuthill-Mckee algorithm
+/// based on the node-to-node connectivity by mesh edges
 /// Cells and edges are reordered to follow lowest node index.
 ///
 /// Usage:
-///     auto reorder = Reorder{ option::type("hilbert") | config };
+///     auto reorder = Reorder{ option::type("reverse_cuthill_mckee") | config };
 ///     reorder( mesh );
 ///
 /// The optional extra config can contain:
 ///
-///     - "recursion"    : <int>  (default=30)   // Recursion of hilbert space-filling curve,
-///                                             // needs to be large enough to provide unique node indices.
-///
 ///    - "ghost_at_end" : <bool> (default=true) // Determines if ghost nodes should be reordered in between
 ///                                             // internal nodes or added/remain at the end
-class ReorderHilbert : public ReorderImpl {
+
+class ReorderReverseCuthillMckee : public ReorderImpl {
 public:
-    ReorderHilbert( const eckit::Parametrisation& config = util::NoConfig() );
+    ReorderReverseCuthillMckee( const eckit::Parametrisation& = util::NoConfig() );
 
     std::vector<idx_t> computeNodesOrder( Mesh& ) override;
 
 private:
-    idx_t recursion_{30};
     bool ghost_at_end_{true};
 };
+
 
 // ------------------------------------------------------------------
 

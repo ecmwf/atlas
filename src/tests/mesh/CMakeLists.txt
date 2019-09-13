@@ -88,7 +88,7 @@ ecbuild_add_test( TARGET atlas_test_mesh_node2cell
 )
 
 
-foreach( test connectivity stream_connectivity elements ll meshgen3d rgg hilbert_reordering )
+foreach( test connectivity stream_connectivity elements ll meshgen3d rgg mesh_reorder )
   ecbuild_add_test( TARGET atlas_test_${test}
     SOURCES test_${test}.cc
     LIBS atlas

@@ -20,7 +20,6 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/actions/BuildCellCentres.h"
 #include "atlas/mesh/actions/ReorderHilbert.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
@@ -42,11 +41,12 @@ namespace actions {
 /// - John J. Bartholdi and Paul Goldsman "Vertex-Labeling Algorithms for the Hilbert Spacefilling Curve"\n
 /// It is adapted to return contiguous numbers of the gidx_t type, instead of a double [0,1]
 ///
-/// Given a bounding box and number of hilbert levels, the bounding box can be divided in
+/// Given a bounding box and number of hilbert recursions, the bounding box can be divided in
 /// 2^(dim*levels) equally spaced cells. A given coordinate falling inside one of these cells, is assigned
 /// the 1-dimensional Hilbert-index of this cell. To make sure that 1 coordinate corresponds to only 1
 /// Hilbert index, the number of levels have to be increased.
-/// In 2D, the levels cannot be higher than 15, if you want the indices to fit in "unsigned int" type of 32bit.
+/// In 2D, the recursion cannot be higher than 15, if you want the indices to fit in "unsigned int" type of 32bit.
+/// In 2D, the recursion cannot be higher than 30, if you want the indices to fit in "unsigned int" type of 64bit.
 ///
 ///
 /// No attempt is made to provide the most efficient algorithm. There exist other open-source
@@ -207,116 +207,11 @@ gidx_t Hilbert::recursive_algorithm( const PointXY& p, const box_t& box, idx_t l
 
 // ------------------------------------------------------------------
 
-ReorderHilbert::ReorderHilbert( const eckit::Configuration& config ) {
+ReorderHilbert::ReorderHilbert( const eckit::Parametrisation& config ) {
     config.get( "recursion", recursion_ );
+    config.get( "ghost_at_end", ghost_at_end_ );
 }
 
-template <typename Value, int Rank>
-struct ReorderField {};
-
-template <typename Value>
-struct ReorderField<Value, 1> {
-    static constexpr int Rank = 1;
-    static std::string apply( Field& field, const std::vector<idx_t>& order, idx_t begin, idx_t end ) {
-        auto array = array::make_view<Value, Rank>( field );
-        end        = std::min( end, array.shape( 0 ) );
-        idx_t size = end - begin;
-        array::ArrayT<Value> tmp_array( size );
-        auto tmp = array::make_view<Value, Rank>( tmp_array );
-        for ( idx_t n = 0; n < size; ++n ) {
-            tmp( n ) = array( begin + n );
-        }
-        for ( idx_t n = 0; n < size; ++n ) {
-            array( begin + n ) = tmp( order[n] );
-        }
-        return field.name();
-    }
-};
-
-template <typename Value>
-struct ReorderField<Value, 2> {
-    static constexpr int Rank = 2;
-    static std::string apply( Field& field, const std::vector<idx_t>& order, idx_t begin, idx_t end ) {
-        auto array = array::make_view<Value, Rank>( field );
-        end        = std::min( end, array.shape( 0 ) );
-        idx_t size = end - begin;
-        array::ArrayT<Value> tmp_array( size, field.shape( 1 ) );
-        auto tmp = array::make_view<Value, Rank>( tmp_array );
-        for ( idx_t n = 0; n < size; ++n ) {
-            for ( idx_t v = 0; v < array.shape( 1 ); ++v ) {
-                tmp( n, v ) = array( begin + n, v );
-            }
-        }
-        for ( idx_t n = 0; n < size; ++n ) {
-            for ( idx_t v = 0; v < array.shape( 1 ); ++v ) {
-                array( begin + n, v ) = tmp( order[n], v );
-            }
-        }
-        return field.name();
-    }
-};
-
-template <typename Value>
-std::string reorder_field_T( Field& field, const std::vector<idx_t>& order, idx_t begin, idx_t end ) {
-    if ( field.rank() == 1 ) {
-        return ReorderField<Value, 1>::apply( field, order, begin, end );
-    }
-    else if ( field.rank() == 2 ) {
-        return ReorderField<Value, 2>::apply( field, order, begin, end );
-    }
-    else {
-        throw_Exception( "rank not supported", Here() );
-    }
-}
-
-std::string reorder_field( Field& field, const std::vector<idx_t>& order, idx_t begin = 0,
-                           idx_t end = std::numeric_limits<idx_t>::max() ) {
-    if ( field.datatype() == array::DataType::kind<int>() ) {
-        return reorder_field_T<int>( field, order, begin, end );
-    }
-    else if ( field.datatype() == array::DataType::kind<long>() ) {
-        return reorder_field_T<long>( field, order, begin, end );
-    }
-    else if ( field.datatype() == array::DataType::kind<float>() ) {
-        return reorder_field_T<float>( field, order, begin, end );
-    }
-    else if ( field.datatype() == array::DataType::kind<double>() ) {
-        return reorder_field_T<double>( field, order, begin, end );
-    }
-    else {
-        throw_Exception( "datatype not supported", Here() );
-    }
-}
-
-void update_connectivity( mesh::HybridElements::Connectivity& connectivity, const std::vector<idx_t>& order ) {
-    for ( idx_t b = 0; b < connectivity.blocks(); ++b ) {
-        auto& block = connectivity.block( b );
-        for ( idx_t r = 0; r < block.rows(); ++r ) {
-            for ( idx_t c = 0; c < block.cols(); ++c ) {
-                idx_t n = block( r, c );
-                block.set( r, c, order.at( n ) );
-            }
-        }
-    }
-}
-
-void reorder_connectivity( BlockConnectivity& connectivity, const std::vector<idx_t>& order ) {
-    ATLAS_ASSERT( connectivity.rows() == order.size() );
-    BlockConnectivity tmp;
-    tmp.add( connectivity.rows(), connectivity.cols(), connectivity.data(), true );
-    for ( idx_t r = 0; r < connectivity.rows(); ++r ) {
-        for ( idx_t c = 0; c < connectivity.cols(); ++c ) {
-            if ( connectivity( r, c ) != tmp( r, c ) ) {
-                ATLAS_DEBUG_VAR( r );
-                ATLAS_DEBUG_VAR( c );
-                ATLAS_DEBUG_VAR( connectivity( r, c ) );
-                ATLAS_DEBUG_VAR( tmp( r, c ) );
-            }
-            ATLAS_ASSERT( connectivity( r, c ) == tmp( r, c ) );
-            connectivity.set( r, c, tmp( order.at( r ), c ) );
-        }
-    }
-}
 
 Domain global_bounding_box( const Mesh& mesh ) {
     auto xy = array::make_view<double, 2>( mesh.nodes().xy() );
@@ -340,128 +235,125 @@ Domain global_bounding_box( const Mesh& mesh ) {
     return RectangularDomain( {xmin, xmax}, {ymin, ymax} );
 }
 
-void ReorderHilbert::operator()( Mesh& mesh ) {
-    ATLAS_TRACE( "ReorderHilbert()" );
-
+std::vector<idx_t> ReorderHilbert::computeNodesOrder( Mesh& mesh ) {
     using hilbert_reordering_t = std::vector<std::pair<gidx_t, idx_t>>;
 
     Hilbert hilbert{global_bounding_box( mesh ), recursion_};
 
-    // Reorder nodes
-    {
-        auto xy    = array::make_view<double, 2>( mesh.nodes().xy() );
-        auto ghost = array::make_view<int, 1>( mesh.nodes().ghost() );
+    auto xy    = array::make_view<double, 2>( mesh.nodes().xy() );
+    auto ghost = array::make_view<int, 1>( mesh.nodes().ghost() );
 
-        idx_t size = xy.shape( 0 );
-        hilbert_reordering_t hilbert_reordering;
-        hilbert_reordering.reserve( size );
-        ATLAS_TRACE_SCOPE( "hilbert nodes" ) {
-            for ( idx_t n = 0; n < size; ++n ) {
-                if ( not ghost( n ) ) {
-                    PointXY p{xy( n, XX ), xy( n, YY )};
-                    auto hilbert_idx = hilbert( p );
-                    hilbert_reordering.emplace_back( hilbert_idx, n );
+    idx_t size = xy.shape( 0 );
+    hilbert_reordering_t hilbert_reordering;
+    hilbert_reordering.reserve( size );
+    ATLAS_TRACE_SCOPE( "hilbert nodes" ) {
+        for ( idx_t n = 0; n < size; ++n ) {
+            PointXY p{xy( n, XX ), xy( n, YY )};
+            if ( not ghost( n ) ) {
+                hilbert_reordering.emplace_back( hilbert( p ), n );
+            }
+            else {
+                if ( ghost_at_end_ ) {
+                    // ghost nodes get a fake "hilbert_idx" at the end
+                    hilbert_reordering.emplace_back( hilbert.nb_keys() + n, n );
                 }
-                else {  // ghost nodes get a fake "hilbert_idx" at the end
+                else {
+                    hilbert_reordering.emplace_back( hilbert( p ), n );
+                }
+            }
+        }
+    }
+
+    std::sort( hilbert_reordering.begin(), hilbert_reordering.end() );
+    std::vector<idx_t> order;
+    order.reserve( size );
+    for ( const auto& pair : hilbert_reordering ) {
+        order.emplace_back( pair.second );
+    }
+    return order;
+}
+
+
+#if 0
+// Reorder elements
+if ( 0 ) {
+    hilbert_reordering_t hilbert_reordering;
+    std::vector<idx_t> order;
+    std::vector<idx_t> order_inverse;
+
+    auto cell_centres =
+        Field( "cell_centres", array::make_datatype<double>(), array::make_shape( mesh.cells().size(), 2 ) );
+    auto nodes_xy = array::make_view<double, 2>( mesh.nodes().xy() );
+    for ( idx_t t = 0; t < mesh.cells().nb_types(); ++t ) {
+        auto& cells = mesh.cells().elements( t );
+        auto xy     = cells.view<double, 2>( cell_centres );
+        auto flags  = cells.view<int, 1>( mesh.cells().flags() );
+        auto halo   = cells.view<idx_t, 1>( mesh.cells().halo() );
+
+        // Compute cell-centres
+        {
+            const auto& node_connectivity = cells.node_connectivity();
+            const idx_t nb_nodes          = cells.nb_nodes();
+            const double nb_nodes_double  = nb_nodes;
+            for ( idx_t e = 0; e < cells.size(); ++e ) {
+                double x{0};
+                double y{0};
+                for ( idx_t c = 0; c < nb_nodes; ++c ) {
+                    idx_t n = node_connectivity( e, c );
+                    x += nodes_xy( n, XX );
+                    y += nodes_xy( n, YY );
+                }
+                xy( e, XX ) = x / nb_nodes_double;
+                xy( e, YY ) = y / nb_nodes_double;
+            }
+        }
+
+
+        auto skip = [&]( idx_t n ) {
+            if ( halo( n ) || mesh::Nodes::Topology::check( flags( n ), mesh::Nodes::Topology::PATCH ) ) {
+                return true;
+            }
+            return false;
+        };
+        idx_t size = xy.shape( 0 );
+        hilbert_reordering.clear();
+        hilbert_reordering.reserve( size );
+        ATLAS_TRACE_SCOPE( "hilbert elements[" + std::to_string( t ) + "]" ) {
+            for ( idx_t n = 0; n < size; ++n ) {
+                PointXY p{xy( n, XX ), xy( n, YY )};
+                if ( not skip( n ) ) {
+                    hilbert_reordering.emplace_back( hilbert( p ), n );
+                }
+                else {  // halo elements get a fake "hilbert_idx" at the end
                     hilbert_reordering.emplace_back( hilbert.nb_keys() + n, n );
                 }
             }
         }
-
+        ATLAS_ASSERT( hilbert_reordering.size() == size );
         std::sort( hilbert_reordering.begin(), hilbert_reordering.end() );
-        std::vector<idx_t> order;
+        order.clear();
         order.reserve( size );
-        std::vector<idx_t> order_inverse;
         order_inverse.resize( size );
         idx_t c{0};
         for ( const auto& pair : hilbert_reordering ) {
             order.emplace_back( pair.second );
             order_inverse[pair.second] = c++;
+            ATLAS_ASSERT( pair.second < size );
         }
 
-        for ( idx_t ifield = 0; ifield < mesh.nodes().nb_fields(); ++ifield ) {
-            reorder_field( mesh.nodes().field( ifield ), order );
+        for ( idx_t ifield = 0; ifield < mesh.cells().nb_fields(); ++ifield ) {
+            reorder_field( mesh.cells().field( ifield ), order, cells.begin(), cells.end() );
         }
 
-        update_connectivity( mesh.cells().node_connectivity(), order_inverse );
-    }
-
-    // Reorder elements
-    if ( 1 ) {
-        hilbert_reordering_t hilbert_reordering;
-        std::vector<idx_t> order;
-        std::vector<idx_t> order_inverse;
-
-        auto cell_centres =
-            Field( "cell_centres", array::make_datatype<double>(), array::make_shape( mesh.cells().size(), 2 ) );
-        auto nodes_xy = array::make_view<double, 2>( mesh.nodes().xy() );
-        for ( idx_t t = 0; t < mesh.cells().nb_types(); ++t ) {
-            auto& cells = mesh.cells().elements( t );
-            auto xy     = cells.view<double, 2>( cell_centres );
-            auto flags  = cells.view<int, 1>( mesh.cells().flags() );
-            auto halo   = cells.view<idx_t, 1>( mesh.cells().halo() );
-
-            // Compute cell-centres
-            {
-                const auto& node_connectivity = cells.node_connectivity();
-                const idx_t nb_nodes          = cells.nb_nodes();
-                const double nb_nodes_double  = nb_nodes;
-                for ( idx_t e = 0; e < cells.size(); ++e ) {
-                    double x{0};
-                    double y{0};
-                    for ( idx_t c = 0; c < nb_nodes; ++c ) {
-                        idx_t n = node_connectivity( e, c );
-                        x += nodes_xy( n, XX );
-                        y += nodes_xy( n, YY );
-                    }
-                    xy( e, XX ) = x / nb_nodes_double;
-                    xy( e, YY ) = y / nb_nodes_double;
-                }
-            }
-
-
-            auto skip = [&]( idx_t n ) {
-                if ( halo( n ) || mesh::Nodes::Topology::check( flags( n ), mesh::Nodes::Topology::PATCH ) ) {
-                    return true;
-                }
-                return false;
-            };
-            idx_t size = xy.shape( 0 );
-            hilbert_reordering.clear();
-            hilbert_reordering.reserve( size );
-            ATLAS_TRACE_SCOPE( "hilbert elements[" + std::to_string( t ) + "]" ) {
-                for ( idx_t n = 0; n < size; ++n ) {
-                    PointXY p{xy( n, XX ), xy( n, YY )};
-                    if ( not skip( n ) ) {
-                        hilbert_reordering.emplace_back( hilbert( p ), n );
-                    }
-                    else {  // halo elements get a fake "hilbert_idx" at the end
-                        hilbert_reordering.emplace_back( hilbert.nb_keys() + n, n );
-                    }
-                }
-            }
-            ATLAS_ASSERT( hilbert_reordering.size() == size );
-            std::sort( hilbert_reordering.begin(), hilbert_reordering.end() );
-            order.clear();
-            order.reserve( size );
-            order_inverse.resize( size );
-            idx_t c{0};
-            for ( const auto& pair : hilbert_reordering ) {
-                order.emplace_back( pair.second );
-                order_inverse[pair.second] = c++;
-                ATLAS_ASSERT( pair.second < size );
-            }
-
-            for ( idx_t ifield = 0; ifield < mesh.cells().nb_fields(); ++ifield ) {
-                reorder_field( mesh.cells().field( ifield ), order, cells.begin(), cells.end() );
-            }
-
-            reorder_connectivity( cells.node_connectivity(), order );
-        }
+        reorder_connectivity( cells.node_connectivity(), order );
     }
 }
+#endif
 
-// ------------------------------------------------------------------
+namespace {
+static ReorderBuilder<ReorderHilbert> __ReorderHilbert( "hilbert" );
+}  // namespace
+
 
 }  // namespace actions
 }  // namespace mesh
