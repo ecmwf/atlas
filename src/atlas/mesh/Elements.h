@@ -35,8 +35,6 @@ namespace mesh {
 /// @brief Describe elements of a single type
 class Elements : public util::Object {
 public:
-    // typedef atlas::mesh::BlockConnectivity Connectivity;
-public:
     //-- Constructors
 
     /// @brief Constructor that treats elements as sub-elements in HybridElements

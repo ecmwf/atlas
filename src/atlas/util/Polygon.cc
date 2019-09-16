@@ -55,10 +55,10 @@ Polygon::Polygon( const Polygon::edge_set_t& edges ) {
     clear();
     reserve( extEdges.size() + 1 );
 
-    push_back( extEdges.begin()->first );
+    emplace_back( extEdges.begin()->first );
     for ( edge_set_t::iterator e = extEdges.begin(); e != extEdges.end() && e->first == back();
           e                      = extEdges.lower_bound( edge_t( back(), std::numeric_limits<idx_t>::min() ) ) ) {
-        push_back( e->second );
+        emplace_back( e->second );
         extEdges.erase( *e );
     }
     ATLAS_ASSERT( front() == back() );

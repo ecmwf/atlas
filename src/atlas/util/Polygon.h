@@ -49,8 +49,8 @@ public:
         };
     };
 
-    typedef std::set<edge_t, typename edge_t::LessThan> edge_set_t;
-    typedef std::vector<idx_t> container_t;
+    using edge_set_t  = std::set<edge_t, typename edge_t::LessThan>;
+    using container_t = std::vector<idx_t>;
 
     // -- Constructors
 

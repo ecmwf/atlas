@@ -428,7 +428,7 @@ private:
     std::vector<std::string> notes;
 };
 
-typedef std::map<uid_t, idx_t> Uid2Node;
+using Uid2Node = std::map<uid_t, idx_t>;
 void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node ) {
     ATLAS_TRACE();
     Notification notes;
