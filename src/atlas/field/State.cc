@@ -44,10 +44,7 @@ void load_builder() {
 }
 
 struct force_link {
-    force_link() {
-        // load_builder< A DERIVED TYPE >();
-        // ...
-    }
+    force_link() = default;
 };
 }  // namespace
 

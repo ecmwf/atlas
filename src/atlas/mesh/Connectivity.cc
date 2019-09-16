@@ -710,9 +710,7 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t valu
 
 //------------------------------------------------------------------------------------------------------
 
-BlockConnectivityImpl::~BlockConnectivityImpl() {
-    //TODO owns_ not used ?
-}
+BlockConnectivityImpl::~BlockConnectivityImpl() = default;
 
 //------------------------------------------------------------------------------------------------------
 
