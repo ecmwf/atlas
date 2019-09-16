@@ -424,6 +424,9 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
     }
     config.get( "pole_edges", pole_edges );
 
+    bool sort_edges{false};
+    config.get( "sort_edges", sort_edges );
+
 
     mesh::Nodes& nodes = mesh.nodes();
     auto node_part     = array::make_view<int, 1>( nodes.partition() );
@@ -458,7 +461,7 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
         edge_start = edge_end;
         edge_end += ( edge_halo_offsets[halo + 1] - edge_halo_offsets[halo] );
 
-        if ( /*sort edges based on lowest node local index =*/false ) {
+        if ( /*sort edges based on lowest node local index = */ sort_edges ) {
             if ( sorted_edge_nodes_data.empty() ) {
                 sorted_edge_nodes_data.resize( edge_nodes_data.size() );
             }

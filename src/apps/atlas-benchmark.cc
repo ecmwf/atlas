@@ -140,6 +140,7 @@ public:
         add_option( new SimpleOption<long>( "exclude", "Exclude number of iterations in statistics (default=1)" ) );
         add_option( new SimpleOption<bool>( "details", "Show detailed timers (default=false)" ) );
         add_option( new SimpleOption<std::string>( "reorder", "Reorder mesh (default=none)" ) );
+        add_option( new SimpleOption<bool>( "sort_edges", "Sort edges by lowest node local index" ) );
     }
 
     void setup();
@@ -172,6 +173,7 @@ private:
     double dz;
     std::string gridname;
     std::string reorder{"none"};
+    bool sort_edges{false};
 
     TimerStats iteration_timer;
     TimerStats haloexchange_timer;
@@ -200,6 +202,7 @@ int AtlasBenchmark::execute( const Args& args ) {
     output = false;
     args.get( "output", output );
     args.get( "reorder", reorder );
+    args.get( "sort_edges", sort_edges );
     bool help( false );
     args.get( "help", help );
 
@@ -315,7 +318,9 @@ void AtlasBenchmark::setup() {
     mesh::actions::Reorder{option::type( reorder )}( mesh );
 
     ATLAS_TRACE_SCOPE( "Create node_fs" ) { nodes_fs = functionspace::NodeColumns( mesh, option::halo( halo ) ); }
-    ATLAS_TRACE_SCOPE( "Create edges_fs" ) { edges_fs = functionspace::EdgeColumns( mesh, option::halo( halo ) ); }
+    ATLAS_TRACE_SCOPE( "Create edges_fs" ) {
+        edges_fs = functionspace::EdgeColumns( mesh, option::halo( halo ) | util::Config( "sort_edges", sort_edges ) );
+    }
 
     // mesh.polygon(0).outputPythonScript("plot_polygon.py");
     //  atlas::output::Output gmsh = atlas::output::Gmsh( "edges.msh",
