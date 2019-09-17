@@ -150,6 +150,8 @@ public:
         return strides_[idx];
     }
 
+    const idx_t* shape() const { return shape_; }
+
     value_type const* data() const { return data_; }
 
     return_type* data() { return data_; }
