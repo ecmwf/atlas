@@ -340,6 +340,8 @@ field/detail/FieldInterface.cc
 
 list( APPEND atlas_functionspace_srcs
 functionspace.h
+functionspace/CellColumns.h
+functionspace/CellColumns.cc
 functionspace/EdgeColumns.h
 functionspace/EdgeColumns.cc
 functionspace/FunctionSpace.h

@@ -29,6 +29,12 @@ ecbuild_add_test( TARGET atlas_test_functionspace
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_cellcolumns
+  SOURCES  test_cellcolumns.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_structuredcolumns
   SOURCES  test_structuredcolumns.cc
   LIBS     atlas

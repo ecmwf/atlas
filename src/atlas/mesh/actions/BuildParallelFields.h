@@ -54,6 +54,8 @@ void build_nodes_parallel_fields( mesh::Nodes& nodes );
  */
 void build_edges_parallel_fields( Mesh& mesh );
 
+void build_cells_parallel_fields( Mesh& mesh );
+
 void renumber_nodes_glb_idx( mesh::Nodes& nodes );
 
 // ------------------------------------------------------------------

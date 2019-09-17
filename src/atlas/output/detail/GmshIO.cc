@@ -355,6 +355,54 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
 }
 // ----------------------------------------------------------------------------
 
+template <typename DATATYPE>
+void write_field_elems( const Metadata& gmsh_options, const functionspace::CellColumns& function_space,
+                        const Field& field, std::ostream& out ) {
+#if 1
+    Log::debug() << "writing CellColumns field " << field.name() << "..." << std::endl;
+
+    bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
+    // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
+    idx_t nlev                       = std::max<idx_t>( 1, field.levels() );
+    idx_t ndata                      = std::min<idx_t>( function_space.nb_cells(), field.shape( 0 ) );
+    idx_t nvars                      = std::max<idx_t>( 1, field.variables() );
+    array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( function_space.cells().global_index() );
+    Field gidx_glb;
+    Field field_glb;
+    if ( gather ) {
+        gidx_glb = function_space.createField<gidx_t>( option::name( "gidx_glb" ) | option::levels( false ) |
+                                                       option::global() );
+        function_space.gather( function_space.cells().global_index(), gidx_glb );
+        gidx = array::make_view<gidx_t, 1>( gidx_glb );
+
+        field_glb = function_space.createField( field, option::global() );
+        function_space.gather( field, field_glb );
+        ndata = std::min<idx_t>( function_space.nb_cells_global(), field_glb.shape( 0 ) );
+    }
+
+    std::vector<int> lev = get_levels( nlev, gmsh_options );
+    for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
+        int jlev = lev[ilev];
+        if ( ( gather && atlas::mpi::comm().rank() == 0 ) || !gather ) {
+            out << "$ElementData\n";
+            out << "1\n";
+            out << "\"" << field.name() << field_lev( field, jlev ) << "\"\n";
+            out << "1\n";
+            out << field_time( field ) << "\n";
+            out << "4\n";
+            out << field_step( field ) << "\n";
+            out << field_vars( nvars ) << "\n";
+            out << ndata << "\n";
+            out << atlas::mpi::comm().rank() << "\n";
+            auto data = gather ? make_level_view<DATATYPE>( field_glb, ndata, jlev )
+                               : make_level_view<DATATYPE>( field, ndata, jlev );
+            write_level( out, gidx, data );
+            out << "$EndElementData\n";
+        }
+    }
+#endif
+}
+
 // ----------------------------------------------------------------------------
 #if 0
 template< typename DATA_TYPE >
@@ -999,6 +1047,11 @@ void GmshIO::write( const Field& field, const PathName& file_path, openmode mode
         fieldset.add( field );
         write( fieldset, field.functionspace(), file_path, mode );
     }
+    else if ( functionspace::CellColumns( field.functionspace() ) ) {
+        FieldSet fieldset;
+        fieldset.add( field );
+        write( fieldset, field.functionspace(), file_path, mode );
+    }
     else {
         std::stringstream msg;
         msg << "Field [" << field.name() << "] has functionspace [" << field.functionspace().type()
@@ -1066,6 +1119,44 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Node
     }
     file.close();
 }
+
+void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::CellColumns& functionspace,
+                             const eckit::PathName& file_path, GmshIO::openmode mode ) const {
+    bool is_new_file = ( mode != std::ios_base::app || !file_path.exists() );
+    bool binary( !options.get<bool>( "ascii" ) );
+    if ( binary ) {
+        mode |= std::ios_base::binary;
+    }
+    bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
+    GmshFile file( file_path, mode, gather ? -1 : int( atlas::mpi::comm().rank() ) );
+
+    // Header
+    if ( is_new_file ) {
+        write_header_ascii( file );
+    }
+
+    // field::Fields
+    for ( idx_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {
+        const Field& field = fieldset[field_idx];
+        Log::debug() << "writing field " << field.name() << " to gmsh file " << file_path << std::endl;
+
+        if ( field.datatype() == array::DataType::int32() ) {
+            write_field_elems<int>( options, functionspace, field, file );
+        }
+        else if ( field.datatype() == array::DataType::int64() ) {
+            write_field_elems<long>( options, functionspace, field, file );
+        }
+        else if ( field.datatype() == array::DataType::real32() ) {
+            write_field_elems<float>( options, functionspace, field, file );
+        }
+        else if ( field.datatype() == array::DataType::real64() ) {
+            write_field_elems<double>( options, functionspace, field, file );
+        }
+
+        file << std::flush;
+    }
+    file.close();
+}
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
@@ -1120,6 +1211,9 @@ void GmshIO::write( const FieldSet& fieldset, const FunctionSpace& funcspace, co
     }
     else if ( functionspace::StructuredColumns( funcspace ) ) {
         write_delegate( fieldset, functionspace::StructuredColumns( funcspace ), file_path, mode );
+    }
+    else if ( functionspace::CellColumns( funcspace ) ) {
+        write_delegate( fieldset, functionspace::CellColumns( funcspace ), file_path, mode );
     }
     else {
         ATLAS_NOTIMPLEMENTED;
