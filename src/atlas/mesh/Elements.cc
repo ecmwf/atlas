@@ -164,6 +164,21 @@ idx_t Elements::add( const idx_t nb_elements ) {
     return position;
 }
 
+
+template <>
+array::IndexView<idx_t, 1> Elements::indexview( Field& field ) const {
+    auto local_view = array::make_host_view<int, 2, array::Intent::ReadWrite>( field ).slice(
+        array::Range{begin(), begin() + size()}, array::Range::all() );
+    return array::IndexView<idx_t, 1>( local_view.data(), local_view.shape() );
+}
+
+template <>
+array::IndexView<idx_t, 1> Elements::indexview( const Field& field ) const {
+    auto local_view = array::make_host_view<int, 2, array::Intent::ReadWrite>( field ).slice(
+        array::Range{begin(), begin() + size()}, array::Range::all() );
+    return array::IndexView<idx_t, 1>( local_view.data(), local_view.shape() );
+}
+
 //-----------------------------------------------------------------------------
 
 extern "C" {

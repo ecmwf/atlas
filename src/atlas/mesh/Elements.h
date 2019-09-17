@@ -17,6 +17,7 @@
 #pragma once
 
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/util/Object.h"
@@ -121,6 +122,12 @@ public:
 
     template <typename DATATYPE, int RANK>
     array::LocalView<DATATYPE, RANK, array::Intent::ReadWrite> view( Field& ) const;
+
+    template <typename DATATYPE, int RANK>
+    array::IndexView<DATATYPE, RANK> indexview( const Field& ) const;
+
+    template <typename DATATYPE, int RANK>
+    array::IndexView<DATATYPE, RANK> indexview( Field& ) const;
 
     idx_t add( const idx_t nb_elements );
 
