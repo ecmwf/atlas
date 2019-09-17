@@ -46,6 +46,7 @@ public:
 public:
     using Handle::Handle;
     MeshGenerator( const std::string&, const eckit::Parametrisation& = util::NoConfig() );
+    MeshGenerator( const eckit::Parametrisation& );
 
     void hash( eckit::Hash& ) const;
 

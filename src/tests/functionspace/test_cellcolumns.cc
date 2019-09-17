@@ -33,9 +33,38 @@ namespace atlas {
 namespace test {
 
 Mesh generate_mesh() {
-    auto grid          = Grid{"O16"};
-    auto meshgenerator = StructuredMeshGenerator{util::Config( "patch_pole", false )( "triangulate", true )};
+    auto grid = Grid{"O16"};
+    auto meshgenerator =
+        MeshGenerator{util::Config( "type", "structured" )( "patch_pole", false )( "triangulate", true )};
     return meshgenerator.generate( grid );
+}
+
+void set_field_values( const Mesh& mesh, Field& field ) {
+    auto value     = array::make_view<int, 1>( field );
+    auto partition = array::make_view<int, 1>( mesh.cells().partition() );
+    auto halo      = array::make_view<int, 1>( mesh.cells().halo() );
+
+    EXPECT( field.shape( 0 ) == mesh.cells().size() );
+
+    const size_t nb_cells = mesh.cells().size();
+    for ( size_t j = 0; j < nb_cells; ++j ) {
+        if ( halo( j ) ) {
+            value( j ) = -1;
+        }
+        else {
+            value( j ) = partition( j );
+        }
+    }
+}
+
+void check_field_values( const Mesh& mesh, Field& field ) {
+    auto value            = array::make_view<int, 1>( field );
+    auto partition        = array::make_view<int, 1>( mesh.cells().partition() );
+    auto halo             = array::make_view<int, 1>( mesh.cells().halo() );
+    const size_t nb_cells = mesh.cells().size();
+    for ( size_t j = 0; j < nb_cells; ++j ) {
+        EXPECT( value( j ) == partition( j ) );
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -43,64 +72,27 @@ Mesh generate_mesh() {
 CASE( "test_functionspace_CellColumns_no_halo" ) {
     Mesh mesh = generate_mesh();
     CellColumns fs( mesh );
+
     Field field( fs.createField<int>() );
-    EXPECT( field.shape( 0 ) == mesh.cells().size() );
-    EXPECT( field.shape( 0 ) == fs.nb_cells() );
 
-    array::ArrayView<int, 1> value     = array::make_view<int, 1>( field );
-    array::ArrayView<int, 1> halo      = array::make_view<int, 1>( mesh.cells().halo() );
-    array::ArrayView<int, 1> partition = array::make_view<int, 1>( mesh.cells().partition() );
-    array::IndexView<idx_t, 1> ridx    = array::make_indexview<idx_t, 1>( mesh.cells().remote_index() );
-    array::ArrayView<gidx_t, 1> gidx   = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
-
-    const size_t nb_cells = mesh.cells().size();
-    for ( size_t j = 0; j < nb_cells; ++j ) {
-        if ( halo( j ) ) {
-            value( j ) = -1;
-            EXPECT( false );
-        }
-        else {
-            value( j ) = partition( j );
-        }
-    }
+    set_field_values( mesh, field );
 
     fs.haloExchange( field );
 
-    for ( size_t j = 0; j < nb_cells; ++j ) {
-        EXPECT( value( j ) == partition( j ) );
-    }
+    check_field_values( mesh, field );
 }
 
 CASE( "test_functionspace_CellColumns_halo_1" ) {
     Mesh mesh = generate_mesh();
     CellColumns fs( mesh, option::halo( 1 ) );
 
-    Field field( fs.createField<double>() );
-    EXPECT( field.shape( 0 ) == mesh.cells().size() );
-    EXPECT( field.shape( 0 ) == fs.nb_cells() );
+    Field field( fs.createField<int>() );
 
-    auto value     = array::make_view<double, 1>( field );
-    auto halo      = array::make_view<int, 1>( mesh.cells().halo() );
-    auto partition = array::make_view<int, 1>( mesh.cells().partition() );
-    auto ridx      = array::make_indexview<idx_t, 1>( mesh.cells().remote_index() );
-    auto gidx      = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
+    set_field_values( mesh, field );
 
-
-    const size_t nb_cells = mesh.cells().size();
-    for ( size_t j = 0; j < nb_cells; ++j ) {
-        if ( halo( j ) ) {
-            value( j ) = -1.;
-        }
-        else {
-            value( j ) = partition( j );
-        }
-    }
     fs.haloExchange( field );
-    for ( size_t j = 0; j < nb_cells; ++j ) {
-        Log::info() << j << "\t" << gidx( j ) << "\t" << ridx( j ) << "\t" << gidx( ridx( j ) ) << " --- " << value( j )
-                    << std::endl;
-        EXPECT( value( j ) == partition( j ) );
-    }
+
+    check_field_values( mesh, field );
 
     output::Gmsh output( "cellcolumns_halo1.msh" );
     output.write( mesh, util::Config( "ghost", true ) );
