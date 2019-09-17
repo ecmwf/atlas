@@ -21,52 +21,31 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-auto check_xy = []( PointXY xy, PointXY ref ) {
-    double tolerance_micrometers = 1.e-6;
+template <typename POINT>
+void check( const POINT& a, const POINT& b ) {
+    static constexpr double eps = 1.e-6;
 
     auto old = Log::info().precision( 16 );
-    Log::info() << "Check " << xy << " = (reference) " << ref << std::endl;
+    Log::info() << "Check " << a << " = " << b << std::endl;
     Log::info().precision( old );
 
-    EXPECT( is_approximately_equal( xy.x(), ref.x(), tolerance_micrometers ) );
-    EXPECT( is_approximately_equal( xy.y(), ref.y(), tolerance_micrometers ) );
-};
-
-auto check_ll = []( PointLonLat ll, PointLonLat ref ) {
-    double tolerance_microdegrees = 1.e-6;
-
-    auto old = Log::info().precision( 16 );
-    Log::info() << "Check " << ll << " = (reference) " << ref << std::endl;
-    Log::info().precision( old );
-
-    EXPECT( is_approximately_equal( ll.lon(), ref.lon(), tolerance_microdegrees ) );
-    EXPECT( is_approximately_equal( ll.lat(), ref.lat(), tolerance_microdegrees ) );
-};
-
-//-----------------------------------------------------------------------------
-
-CASE( "test_proj_example_string" ) {
-    Projection projection( util::Config( "type", "proj" ).set( "proj", "+proj=utm +zone=32 +datum=WGS84" ) );
-
-    PointLonLat a{12, 55};
-    check_ll( a, {12, 55} );
-
-    PointXY b = projection.xy( a );
-    check_xy( b, {691875.632137542, 6098907.825129169} );
-    check_ll( projection.lonlat( b ), {12, 55} );
+    EXPECT( is_approximately_equal( a[0], b[0], eps ) );
+    EXPECT( is_approximately_equal( a[1], b[1], eps ) );
 }
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_proj_example_EPSG:32632" ) {
-    Projection projection( util::Config( "type", "proj" ).set( "proj", "EPSG:32632" ) );
-
+CASE( "test_proj" ) {
     PointLonLat a{12, 55};
-    check_ll( a, {12, 55} );
+    check( a, {12, 55} );
 
-    PointXY b = projection.xy( a );
-    check_xy( b, {691875.632137542, 6098907.825129169} );
-    check_ll( projection.lonlat( b ), {12, 55} );
+    for ( auto proj : {"+proj=utm +zone=32 +datum=WGS84", "EPSG:32632"} ) {
+        Projection projection( util::Config( "type", "proj" ).set( "proj", proj ) );
+
+        PointXY b = projection.xy( a );
+        check( b, {691875.632137542, 6098907.825129169} );
+        check( projection.lonlat( b ), {12, 55} );
+    }
 }
 
 //-----------------------------------------------------------------------------
