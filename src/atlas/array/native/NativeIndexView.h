@@ -70,14 +70,6 @@ public:
         set( other.get() );
         return *this;
     }
-    FortranIndex<Value>& operator+( const Value& value ) {
-        *( idx_ ) += value;
-        return *this;
-    }
-    FortranIndex<Value>& operator-( const Value& value ) {
-        *( idx_ ) -= value;
-        return *this;
-    }
     FortranIndex<Value>& operator--() {
         --( *( idx_ ) );
         return *this;
