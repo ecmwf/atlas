@@ -44,7 +44,7 @@ CASE( "test_proj" ) {
 
         PointXY b = projection.xy( a );
         check( b, {691875.632137542, 6098907.825129169} );
-        check( projection.lonlat( b ), {12, 55} );
+        check( projection.lonlat( b ), a );
     }
 }
 
