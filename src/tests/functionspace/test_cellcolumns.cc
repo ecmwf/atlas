@@ -8,6 +8,15 @@
  * nor does it submit to any jurisdiction.
  */
 
+
+/// Linked JIRA issue: ATLAS-247
+/// For now the CellColumns functionspace only works when the mesh has elements of only one type.
+/// For this reason we triangulate the mesh always, and don't patch the pole
+/// The problem is in the computation of mesh.cells().remote_index() during BuildHalo called
+/// within the CellColumns constructor. Meshes without any parallel halo will also succeed as
+/// the BuildHalo routine is not called.
+
+
 #include "eckit/types/Types.h"
 
 #include "atlas/array/ArrayView.h"
