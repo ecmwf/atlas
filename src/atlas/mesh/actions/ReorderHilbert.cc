@@ -134,9 +134,30 @@ gidx_t Hilbert::recursive_algorithm( const PointXY& p, const box_t& box, idx_t l
 
     double min_distance = std::numeric_limits<double>::max();
 
+    auto compute_distance2 = []( const PointXY& p1, const PointXY& p2 ) {
+        // workaround because of eckit 1.3.2 issue with constness in KPoint
+        double d = 0;
+        for ( size_t i = 0; i < 2; i++ ) {
+            double dx = p1[i] - p2[i];
+            d += dx * dx;
+        }
+        return d;
+    };
+
+    auto compute_average = []( const PointXY& p1, const PointXY& p2 ) {
+        // workaround because of eckit 1.3.2 issue with constness in KPoint
+        PointXY avg;
+        avg.x() = p1.x() + p2.x();
+        avg.x() *= 0.5;
+        avg.y() = p1.y() + p2.y();
+        avg.y() *= 0.5;
+        return avg;
+    };
+
     idx_t quadrant;
     for ( idx_t idx = 0; idx < 4; ++idx ) {
-        double distance = box[idx].distance2( p );
+        // double distance = box[idx].distance2( p );  // does not compile with eckit 1.3.2
+        double distance = compute_distance2( p, box[idx] );  // workaround
         if ( distance < min_distance ) {
             quadrant     = idx;
             min_distance = distance;
@@ -147,27 +168,41 @@ gidx_t Hilbert::recursive_algorithm( const PointXY& p, const box_t& box, idx_t l
     switch ( quadrant ) {
         case A:
             box_quadrant[A] = box[A];
-            box_quadrant[B] = ( box[A] + box[D] ) * 0.5;
-            box_quadrant[C] = ( box[A] + box[C] ) * 0.5;
-            box_quadrant[D] = ( box[A] + box[B] ) * 0.5;
+            // box_quadrant[B] = ( box[A] + box[D] ) * 0.5;  // does not compile with eckit 1.3.2
+            // box_quadrant[C] = ( box[A] + box[C] ) * 0.5;  // does not compile with eckit 1.3.2
+            // box_quadrant[D] = ( box[A] + box[B] ) * 0.5;  // does not compile with eckit 1.3.2
+            box_quadrant[B] = compute_average( box[A], box[D] );  // workaround
+            box_quadrant[C] = compute_average( box[A], box[C] );  // workaround
+            box_quadrant[D] = compute_average( box[A], box[B] );  // workaround
             break;
         case B:
-            box_quadrant[A] = ( box[B] + box[A] ) * 0.5;
+            // box_quadrant[A] = ( box[B] + box[A] ) * 0.5;  // does not compile with eckit 1.3.2
             box_quadrant[B] = box[B];
-            box_quadrant[C] = ( box[B] + box[C] ) * 0.5;
-            box_quadrant[D] = ( box[B] + box[D] ) * 0.5;
+            // box_quadrant[C] = ( box[B] + box[C] ) * 0.5;  // does not compile with eckit 1.3.2
+            // box_quadrant[D] = ( box[B] + box[D] ) * 0.5;  // does not compile with eckit 1.3.2
+            box_quadrant[A] = compute_average( box[B], box[A] );  // workaround
+            box_quadrant[C] = compute_average( box[B], box[C] );  // workaround
+            box_quadrant[D] = compute_average( box[B], box[D] );  // workaround
             break;
         case C:
-            box_quadrant[A] = ( box[C] + box[A] ) * 0.5;
-            box_quadrant[B] = ( box[C] + box[B] ) * 0.5;
+            // box_quadrant[A] = ( box[C] + box[A] ) * 0.5;  // does not compile with eckit 1.3.2
+            // box_quadrant[B] = ( box[C] + box[B] ) * 0.5;  // does not compile with eckit 1.3.2
             box_quadrant[C] = box[C];
-            box_quadrant[D] = ( box[C] + box[D] ) * 0.5;
+            // box_quadrant[D] = ( box[C] + box[D] ) * 0.5;  // does not compile with eckit 1.3.2
+            box_quadrant[A] = compute_average( box[C], box[A] );  // workaround
+            box_quadrant[B] = compute_average( box[C], box[B] );  // workaround
+            box_quadrant[D] = compute_average( box[C], box[D] );  // workaround
+
             break;
         case D:
-            box_quadrant[A] = ( box[D] + box[C] ) * 0.5;
-            box_quadrant[B] = ( box[D] + box[B] ) * 0.5;
-            box_quadrant[C] = ( box[D] + box[A] ) * 0.5;
+            // box_quadrant[A] = ( box[D] + box[C] ) * 0.5;  // does not compile with eckit 1.3.2
+            // box_quadrant[B] = ( box[D] + box[B] ) * 0.5;  // does not compile with eckit 1.3.2
+            // box_quadrant[C] = ( box[D] + box[A] ) * 0.5;  // does not compile with eckit 1.3.2
             box_quadrant[D] = box[D];
+            box_quadrant[A] = compute_average( box[D], box[C] );  // workaround
+            box_quadrant[B] = compute_average( box[D], box[B] );  // workaround
+            box_quadrant[C] = compute_average( box[D], box[A] );  // workaround
+
             break;
     }
 
