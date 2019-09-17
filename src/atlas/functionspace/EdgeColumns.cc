@@ -318,23 +318,47 @@ Field EdgeColumns::createField( const Field& other, const eckit::Configuration& 
                         option::variables( other.variables() ) | config );
 }
 
+namespace {
+
+template <int RANK>
+void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exchange, bool on_device ) {
+    if ( field.datatype() == array::DataType::kind<int>() ) {
+        halo_exchange.template execute<int, RANK>( field.array(), on_device );
+    }
+    else if ( field.datatype() == array::DataType::kind<long>() ) {
+        halo_exchange.template execute<long, RANK>( field.array(), on_device );
+    }
+    else if ( field.datatype() == array::DataType::kind<float>() ) {
+        halo_exchange.template execute<float, RANK>( field.array(), on_device );
+    }
+    else if ( field.datatype() == array::DataType::kind<double>() ) {
+        halo_exchange.template execute<double, RANK>( field.array(), on_device );
+    }
+    else {
+        throw_Exception( "datatype not supported", Here() );
+    }
+    field.set_dirty( false );
+}
+}  // namespace
+
 void EdgeColumns::haloExchange( const FieldSet& fieldset, bool on_device ) const {
     for ( idx_t f = 0; f < fieldset.size(); ++f ) {
         Field& field = const_cast<FieldSet&>( fieldset )[f];
-        if ( field.datatype() == array::DataType::kind<int>() ) {
-            halo_exchange().execute<int, 2>( field.array(), on_device );
-        }
-        else if ( field.datatype() == array::DataType::kind<long>() ) {
-            halo_exchange().execute<long, 2>( field.array(), on_device );
-        }
-        else if ( field.datatype() == array::DataType::kind<float>() ) {
-            halo_exchange().execute<float, 2>( field.array(), on_device );
-        }
-        else if ( field.datatype() == array::DataType::kind<double>() ) {
-            halo_exchange().execute<double, 2>( field.array(), on_device );
-        }
-        else {
-            throw_Exception( "datatype not supported", Here() );
+        switch ( field.rank() ) {
+            case 1:
+                dispatch_haloExchange<1>( field, halo_exchange(), on_device );
+                break;
+            case 2:
+                dispatch_haloExchange<2>( field, halo_exchange(), on_device );
+                break;
+            case 3:
+                dispatch_haloExchange<3>( field, halo_exchange(), on_device );
+                break;
+            case 4:
+                dispatch_haloExchange<4>( field, halo_exchange(), on_device );
+                break;
+            default:
+                throw_Exception( "Rank not supported", Here() );
         }
         field.set_dirty( false );
     }
@@ -344,6 +368,7 @@ void EdgeColumns::haloExchange( const Field& field, bool on_device ) const {
     fieldset.add( field );
     haloExchange( fieldset, on_device );
 }
+
 const parallel::HaloExchange& EdgeColumns::halo_exchange() const {
     if ( halo_exchange_ ) {
         return *halo_exchange_;
