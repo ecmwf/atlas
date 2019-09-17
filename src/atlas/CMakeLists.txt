@@ -229,6 +229,13 @@ list( APPEND atlas_grid_srcs
   grid/detail/partitioner/TransPartitioner.cc
 )
 endif()
+if( ATLAS_HAVE_PROJ )
+list( APPEND atlas_grid_srcs
+  projection/detail/ProjProjection.cc
+  projection/detail/ProjProjection.h
+)
+endif()
+
 
 # Append CGAL_COMPLE_FLAGS only to this file ( see ATLAS-193 )
 if( CGAL_COMPILE_FLAGS )
@@ -677,6 +684,11 @@ if( ATLAS_HAVE_TRANS )
       target_link_libraries( atlas PRIVATE transi )
     endif()
   endif()
+endif()
+
+if( ATLAS_HAVE_PROJ )
+    target_link_libraries( atlas PRIVATE ${PROJ4_LIBRARIES} )
+    target_include_directories( atlas PRIVATE ${PROJ4_INCLUDE_DIRS} )
 endif()
 
 if( eckit_VERSION )
