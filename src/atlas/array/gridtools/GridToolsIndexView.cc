@@ -29,6 +29,20 @@ void IndexView<Value, Rank>::dump( std::ostream& os ) const {
     os << "]" << std::endl;
 }
 
+template <typename Value, int Rank>
+LocalIndexView<Value, Rank>::LocalIndexView( Value* data, const idx_t shape[1] ) : data_( const_cast<Value*>( data ) ) {
+    strides_[0] = 1;
+    shape_[0]   = shape[0];
+}
+
+template <typename Value, int Rank>
+LocalIndexView<Value, Rank>::LocalIndexView( Value* data, const idx_t shape[1], const idx_t strides[1] ) :
+    data_( const_cast<Value*>( data ) ) {
+    strides_[0] = strides[0];
+    shape_[0]   = shape[0];
+}
+
+
 //------------------------------------------------------------------------------------------------------
 
 }  // namespace array
@@ -41,5 +55,8 @@ namespace array {
 
 template class IndexView<int, 1>;
 template class IndexView<long, 1>;
+template class LocalIndexView<int, 1>;
+template class LocalIndexView<long, 1>;
+
 }  // namespace array
 }  // namespace atlas

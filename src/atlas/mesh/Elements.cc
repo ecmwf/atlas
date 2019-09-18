@@ -166,17 +166,17 @@ idx_t Elements::add( const idx_t nb_elements ) {
 
 
 template <>
-array::IndexView<idx_t, 1> Elements::indexview( Field& field ) const {
-    auto local_view = array::make_host_view<int, 2, array::Intent::ReadWrite>( field ).slice(
-        array::Range{begin(), begin() + size()}, array::Range::all() );
-    return array::IndexView<idx_t, 1>( local_view.data(), local_view.shape() );
+array::LocalIndexView<idx_t, 1> Elements::indexview( Field& field ) const {
+    auto local_view = array::make_host_view<int, 1, array::Intent::ReadWrite>( field ).slice(
+        array::Range{begin(), begin() + size()} );
+    return array::LocalIndexView<idx_t, 1>( local_view.data(), local_view.shape(), local_view.strides() );
 }
 
 template <>
-array::IndexView<idx_t, 1> Elements::indexview( const Field& field ) const {
-    auto local_view = array::make_host_view<int, 2, array::Intent::ReadWrite>( field ).slice(
-        array::Range{begin(), begin() + size()}, array::Range::all() );
-    return array::IndexView<idx_t, 1>( local_view.data(), local_view.shape() );
+array::LocalIndexView<idx_t, 1> Elements::indexview( const Field& field ) const {
+    auto local_view = array::make_host_view<int, 1, array::Intent::ReadWrite>( field ).slice(
+        array::Range{begin(), begin() + size()} );
+    return array::LocalIndexView<idx_t, 1>( local_view.data(), local_view.shape(), local_view.strides() );
 }
 
 //-----------------------------------------------------------------------------

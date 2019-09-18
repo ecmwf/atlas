@@ -124,10 +124,10 @@ public:
     array::LocalView<DATATYPE, RANK, array::Intent::ReadWrite> view( Field& ) const;
 
     template <typename DATATYPE, int RANK>
-    array::IndexView<DATATYPE, RANK> indexview( const Field& ) const;
+    array::LocalIndexView<DATATYPE, RANK> indexview( const Field& ) const;
 
     template <typename DATATYPE, int RANK>
-    array::IndexView<DATATYPE, RANK> indexview( Field& ) const;
+    array::LocalIndexView<DATATYPE, RANK> indexview( Field& ) const;
 
     idx_t add( const idx_t nb_elements );
 

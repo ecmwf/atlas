@@ -152,6 +152,8 @@ public:
 
     const idx_t* shape() const { return shape_; }
 
+    const idx_t* strides() const { return strides_; }
+
     value_type const* data() const { return data_; }
 
     return_type* data() { return data_; }

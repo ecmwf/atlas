@@ -114,6 +114,8 @@ public:
 public:
     IndexView( Value* data, const idx_t shape[Rank] );
 
+    IndexView( Value* data, const idx_t shape[Rank], const idx_t strides[Rank] );
+
     // -- Access methods
 
     template <typename... Idx>
@@ -186,6 +188,19 @@ private:
     idx_t strides_[Rank];
     idx_t shape_[Rank];
 };
+
+template <typename Value, int Rank>
+class LocalIndexView : public IndexView<Value, Rank> {
+    using Base = IndexView<Value, Rank>;
+
+public:
+    using Base::Base;
+};
+
+#undef INDEX_REF
+#undef FROM_FORTRAN
+#undef TO_FORTRAN
+
 
 //------------------------------------------------------------------------------------------------------
 
