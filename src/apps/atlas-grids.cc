@@ -19,7 +19,7 @@
 #include "eckit/filesystem/PathName.h"
 #include "eckit/log/Bytes.h"
 #include "eckit/log/Log.h"
-#include "eckit/parser/JSON.h"
+#include "eckit/log/JSON.h"
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/grid.h"
