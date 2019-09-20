@@ -117,7 +117,7 @@ public:
 
     const Polygon& polygon( idx_t halo = 0 ) const { return get()->polygon( halo ); }
 
-    const Grid& grid() const { return get()->grid(); }
+    const Grid grid() const { return get()->grid(); }
 
 private:  // methods
     friend std::ostream& operator<<( std::ostream& s, const Mesh& p ) {

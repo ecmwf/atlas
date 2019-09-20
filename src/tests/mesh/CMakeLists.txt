@@ -88,13 +88,57 @@ ecbuild_add_test( TARGET atlas_test_mesh_node2cell
 )
 
 
-foreach( test connectivity stream_connectivity elements ll meshgen3d rgg mesh_reorder )
+foreach( test connectivity stream_connectivity elements ll meshgen3d rgg )
   ecbuild_add_test( TARGET atlas_test_${test}
     SOURCES test_${test}.cc
     LIBS atlas
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 endforeach()
+
+
+ecbuild_add_executable( TARGET atlas_test_mesh_reorder
+  SOURCES  test_mesh_reorder.cc
+  LIBS     atlas
+  NOINSTALL
+)
+
+if( ECBUILD-432-fixed )
+# When ECBUILD-432 is fixed (already fixed in develop on top of ecbuild 3.0.0), we don't need TARGET_FILE
+ecbuild_add_test( TARGET atlas_test_mesh_reorder_O16
+  COMMAND atlas_test_mesh_reorder ARGS --grid O16
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_mesh_reorder_unstructured
+  COMMAND atlas_test_mesh_reorder ARGS --mesh ${CMAKE_CURRENT_SOURCE_DIR}/test_mesh_reorder_unstructured.msh --grid "unstructured"
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+else()
+   # TO BE REMOVED!
+
+  set( exe_atlas_test_mesh_reorder $<TARGET_FILE:atlas_test_mesh_reorder> )
+  if( CMAKE_CROSSCOMPILING_EMULATOR )
+    set( exe_atlas_test_mesh_reorder ${CMAKE_CROSSCOMPILING_EMULATOR} )
+    set( arg_atlas_test_mesh_reorder $<TARGET_FILE:atlas_test_mesh_reorder> )
+  endif()
+
+  ecbuild_add_test( TARGET atlas_test_mesh_reorder_O16
+    COMMAND ${exe_atlas_test_mesh_reorder} ARGS ${arg_atlas_test_mesh_reorder} --grid O16
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
+
+  ecbuild_add_test( TARGET atlas_test_mesh_reorder_unstructured
+    COMMAND ${exe_atlas_test_mesh_reorder} ARGS ${arg_atlas_test_mesh_reorder} --mesh ${CMAKE_CURRENT_SOURCE_DIR}/test_mesh_reorder_unstructured.msh --grid "unstructured"
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
+
+endif()
+
+
+
+
 
 atlas_add_cuda_test(
   TARGET atlas_test_connectivity_kernel

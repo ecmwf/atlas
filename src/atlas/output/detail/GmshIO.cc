@@ -617,11 +617,14 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
 
     mesh::Nodes& nodes = mesh.nodes();
 
-    nodes.add( Field( "xyz", array::make_datatype<double>(), array::make_shape( nb_nodes, 3 ) ) );
+    //nodes.add( Field( "xyz", array::make_datatype<double>(), array::make_shape( nb_nodes, 3 ) ) );
 
-    array::ArrayView<double, 2> coords  = array::make_view<double, 2>( nodes.field( "xyz" ) );
+    //    array::ArrayView<double, 2> coords  = array::make_view<double, 2>( nodes.field( "xyz" ) );
+    array::ArrayView<double, 2> xy      = array::make_view<double, 2>( nodes.xy() );
+    array::ArrayView<double, 2> lonlat  = array::make_view<double, 2>( nodes.lonlat() );
     array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
     array::ArrayView<int, 1> part       = array::make_view<int, 1>( nodes.partition() );
+    array::ArrayView<int, 1> ghost      = array::make_view<int, 1>( nodes.ghost() );
 
     std::map<int, int> glb_to_loc;
     int g;
@@ -644,21 +647,17 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
         else {
             file >> g >> x >> y >> z;
         }
-        glb_idx( n )    = g;
-        coords( n, XX ) = x;
-        coords( n, YY ) = y;
-        coords( n, ZZ ) = z;
-        glb_to_loc[g]   = n;
-        part( n )       = 0;
-        max_glb_idx     = std::max( max_glb_idx, static_cast<gidx_t>( g ) );
-        xmax            = std::max( x, xmax );
-        zmax            = std::max( z, zmax );
-    }
-    if ( xmax < 4 * M_PI && zmax == 0. ) {
-        for ( idx_t n = 0; n < nb_nodes; ++n ) {
-            coords( n, XX ) *= rad2deg;
-            coords( n, YY ) *= rad2deg;
-        }
+        glb_idx( n )     = g;
+        xy( n, XX )      = x;
+        xy( n, YY )      = y;
+        lonlat( n, LON ) = x;
+        lonlat( n, LAT ) = y;
+        glb_to_loc[g]    = n;
+        part( n )        = 0;
+        ghost( n )       = 0;
+        max_glb_idx      = std::max( max_glb_idx, static_cast<gidx_t>( g ) );
+        xmax             = std::max( x, xmax );
+        zmax             = std::max( z, zmax );
     }
     for ( int i = 0; i < 3; ++i ) {
         std::getline( file, line );
@@ -735,11 +734,11 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
 
         mesh::Elements& quads  = mesh.cells().elements( mesh.cells().add( make_element_type( QUAD ), nb_quads ) );
         mesh::Elements& triags = mesh.cells().elements( mesh.cells().add( make_element_type( TRIAG ), nb_triags ) );
-        mesh::Elements& edges  = mesh.edges().elements( mesh.edges().add( make_element_type( LINE ), nb_edges ) );
+        //        mesh::Elements& edges  = mesh.edges().elements( mesh.edges().add( make_element_type( LINE ), nb_edges ) );
 
         mesh::BlockConnectivity& quad_nodes  = quads.node_connectivity();
         mesh::BlockConnectivity& triag_nodes = triags.node_connectivity();
-        mesh::BlockConnectivity& edge_nodes  = edges.node_connectivity();
+        //        mesh::BlockConnectivity& edge_nodes  = edges.node_connectivity();
 
         array::ArrayView<gidx_t, 1> quad_glb_idx = array::make_view<gidx_t, 1>( quads.global_index() );
         array::ArrayView<int, 1> quad_part       = array::make_view<int, 1>( quads.partition() );
@@ -747,8 +746,8 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
         array::ArrayView<gidx_t, 1> triag_glb_idx = array::make_view<gidx_t, 1>( triags.global_index() );
         array::ArrayView<int, 1> triag_part       = array::make_view<int, 1>( triags.partition() );
 
-        array::ArrayView<gidx_t, 1> edge_glb_idx = array::make_view<gidx_t, 1>( edges.global_index() );
-        array::ArrayView<int, 1> edge_part       = array::make_view<int, 1>( edges.partition() );
+        //        array::ArrayView<gidx_t, 1> edge_glb_idx = array::make_view<gidx_t, 1>( edges.global_index() );
+        //        array::ArrayView<int, 1> edge_part       = array::make_view<int, 1>( edges.partition() );
 
         // Now read all elements
         file.seekg( position, std::ios::beg );
@@ -792,12 +791,12 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
                     break;
                 case ( LINE ):
                     file >> gn0 >> gn1;
-                    edge_glb_idx( edge ) = g;
-                    edge_part( edge )    = part;
-                    enodes[0]            = glb_to_loc[gn0];
-                    enodes[1]            = glb_to_loc[gn1];
-                    edge_nodes.set( edge, enodes );
-                    ++edge;
+                    //                    edge_glb_idx( edge ) = g;
+                    //                    edge_part( edge )    = part;
+                    //                    enodes[0]            = glb_to_loc[gn0];
+                    //                    enodes[1]            = glb_to_loc[gn1];
+                    //                    edge_nodes.set( edge, enodes );
+                    //                    ++edge;
                     break;
                 case ( POINT ):
                     file >> gn0;

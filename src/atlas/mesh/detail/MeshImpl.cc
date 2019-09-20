@@ -108,9 +108,9 @@ void MeshImpl::setProjection( const Projection& projection ) {
 }
 
 void MeshImpl::setGrid( const Grid& grid ) {
-    grid_.reset( new Grid( grid ) );
+    grid_ = grid;
     if ( not projection_ ) {
-        projection_ = grid_->projection();
+        projection_ = grid_.projection();
     }
 }
 
