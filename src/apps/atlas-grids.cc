@@ -319,19 +319,24 @@ int AtlasGrids::execute( const Args& args ) {
             std::vector<double> bbox;
             if ( config_check.get( "bounding_box(n,w,s,e)", bbox ) && bbox.size() == 4 ) {
                 auto bb = grid.lonlatBoundingBox();
-                if ( ( check_failed = !bb ) ) {
+                if ( !bb ) {
+                    check_failed = true;
                     out << "Check failed: cannot calculate bounding box for " << grid.spec() << std::endl;
                 }
-                else if ( ( check_failed = !equal( bb.north(), bbox[0] ) ) ) {
+                else if ( !equal( bb.north(), bbox[0] ) ) {
+                    check_failed = true;
                     out << "Check failed: n=" << bb.north() << " expected to be " << bbox[0] << std::endl;
                 }
-                else if ( ( check_failed = !equal( bb.west(), bbox[1] ) ) ) {
+                else if ( !equal( bb.west(), bbox[1] ) ) {
+                    check_failed = true;
                     out << "Check failed: w=" << bb.west() << " expected to be " << bbox[1] << std::endl;
                 }
-                else if ( ( check_failed = !equal( bb.south(), bbox[2] ) ) ) {
+                else if ( !equal( bb.south(), bbox[2] ) ) {
+                    check_failed = true;
                     out << "Check failed: s=" << bb.south() << " expected to be " << bbox[2] << std::endl;
                 }
-                else if ( ( check_failed = !equal( bb.east(), bbox[3] ) ) ) {
+                else if ( !equal( bb.east(), bbox[3] ) ) {
+                    check_failed = true;
                     out << "Check failed: e=" << bb.east() << " expected to be " << bbox[3] << std::endl;
                 }
             }
@@ -343,6 +348,37 @@ int AtlasGrids::execute( const Args& args ) {
             else {
                 Log::warning() << "Check for bounding_box(n,w,s,e) skipped" << std::endl;
             }
+
+            auto rel_equal = []( double a, double b ) { return std::abs( ( a - b ) / a ) < 1.e-6; };
+
+            double xmin;
+            if ( config_check.get( "xmin", xmin ) ) {
+                if ( !rel_equal( RectangularDomain( grid.domain() ).xmin(), xmin ) ) {
+                    auto precision = out.precision( 2 );
+                    out << "Check failed: grid xmin " << std::fixed << RectangularDomain( grid.domain() ).xmin()
+                        << " expected to be " << std::fixed << xmin << std::endl;
+                    out.precision( precision );
+                    check_failed = true;
+                }
+            }
+            else {
+                Log::warning() << "Check for xmin skipped" << std::endl;
+            }
+
+            double ymin;
+            if ( config_check.get( "ymin", ymin ) ) {
+                if ( !rel_equal( RectangularDomain( grid.domain() ).ymin(), ymin ) ) {
+                    auto precision = out.precision( 2 );
+                    out << "Check failed: grid ymin " << std::fixed << RectangularDomain( grid.domain() ).ymin()
+                        << " expected to be " << std::fixed << ymin << std::endl;
+                    out.precision( precision );
+                    check_failed = true;
+                }
+            }
+            else {
+                Log::warning() << "Check for ymin skipped" << std::endl;
+            }
+
 
             if ( check_failed ) {
                 return failed();
