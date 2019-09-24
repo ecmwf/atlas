@@ -17,13 +17,13 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
-class LambertConformalProjection final : public ProjectionImpl {
+class LambertConformalConicProjection final : public ProjectionImpl {
 public:
     // constructor
-    LambertConformalProjection( const eckit::Parametrisation& );
+    LambertConformalConicProjection( const eckit::Parametrisation& );
 
     // projection name
-    static std::string static_type() { return "lambert_conformal"; }
+    static std::string static_type() { return "lambert_conformal_conic"; }
     std::string type() const override { return static_type(); }
 
     // projection and inverse projection
@@ -31,6 +31,7 @@ public:
     void lonlat2xy( double crd[] ) const override;
 
     bool strictlyRegional() const override { return true; }
+
     RectangularLonLatDomain lonlatBoundingBox( const Domain& domain ) const override {
         return ProjectionImpl::lonlatBoundingBox( domain );
     }
@@ -43,12 +44,12 @@ public:
     void hash( eckit::Hash& ) const override;
 
 private:
-//    PointLonLat reference_;  ///< central longitude/standard parallel [degree]/[degree]
     double radius_;  ///< sphere radius
     double lat1_;    ///< first latitude from the pole at which the secant cone cuts the sphere
     double lat2_;    ///< second latitude from the pole at which the secant cone cuts the sphere
-    double latD_;    ///< latitude where Dx and Dy are specified
-    double lon0_;    ///< longitude of meridian parallel to y-axis along which latitude increases as the y-coordinate increases
+    double lat0_;    ///< latitude of origin, where Dx and Dy are specified
+    double lon0_;    ///< longitude of origin, meridian parallel to y-axis along which latitude increases
+                     ///  as the y-coordinate increases
 
     double F_;
     double n_;

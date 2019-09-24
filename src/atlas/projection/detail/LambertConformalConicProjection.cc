@@ -9,7 +9,7 @@
  */
 
 
-#include "LambertConformalProjection.h"
+#include "LambertConformalConicProjection.h"
 
 #include <cmath>
 
@@ -53,15 +53,19 @@ inline double cos_d( double theta_d ) {
     return std::cos( util::Constants::degreesToRadians() * theta_d );
 }
 
-static ProjectionBuilder<LambertConformalProjection> register_1( LambertConformalProjection::static_type() );
+static ProjectionBuilder<LambertConformalConicProjection> register_1( LambertConformalConicProjection::static_type() );
 
 }  // namespace
 
-LambertConformalProjection::LambertConformalProjection( const eckit::Parametrisation& params ) {
-    ATLAS_ASSERT( params.get( "latitude1", lat1_ = 0 ) );
-    ATLAS_ASSERT( params.get( "latitude2", lat2_ = 0 ) );
-    ATLAS_ASSERT( params.get( "latitudeD", latD_ = 0 ) );
+LambertConformalConicProjection::LambertConformalConicProjection( const eckit::Parametrisation& params ) {
     ATLAS_ASSERT( params.get( "longitude0", lon0_ = 0 ) );
+    ATLAS_ASSERT( params.get( "latitude1", lat1_ = 0 ) );
+    if ( not params.get( "latitude0", lat0_ ) ) {
+        lat0_ = lat1_;
+    }
+    if ( not params.get( "latitude2", lat2_ ) ) {
+        lat2_ = lat1_;
+    }
     params.get( "radius", radius_ = util::Earth::radius() );
 
     n_ = eckit::types::is_approximately_equal( lat1_, lat2_ )
@@ -71,10 +75,10 @@ LambertConformalProjection::LambertConformalProjection( const eckit::Parametrisa
     sign_  = n_ < 0. ? -1. : 1.;  // n < 0: adjustment for southern hemisphere
 
     F_    = ( cos_d( lat1_ ) * std::pow( tan_d( lat1_ ), n_ ) ) / n_;
-    rho0_ = sign_ * radius_ * F_ * std::pow( tan_d( latD_ ), -n_ );
+    rho0_ = sign_ * radius_ * F_ * std::pow( tan_d( lat0_ ), -n_ );
 }
 
-void LambertConformalProjection::lonlat2xy( double crd[] ) const {
+void LambertConformalConicProjection::lonlat2xy( double crd[] ) const {
     double rho   = radius_ * F_ * std::pow( tan_d( crd[1] ), -n_ );
     double theta = n_ * normalise( crd[0] - lon0_, -180, 360 );
 
@@ -82,7 +86,7 @@ void LambertConformalProjection::lonlat2xy( double crd[] ) const {
     crd[YY] = rho0_ - rho * cos_d( theta );
 }
 
-void LambertConformalProjection::xy2lonlat( double crd[] ) const {
+void LambertConformalConicProjection::xy2lonlat( double crd[] ) const {
     double x = sign_ * crd[XX];
     double y = rho0_ - sign_ * crd[YY];
 
@@ -96,25 +100,24 @@ void LambertConformalProjection::xy2lonlat( double crd[] ) const {
             : util::Constants::radiansToDegrees() * 2. * std::atan( std::pow( radius_ * F_ / rho, inv_n_ ) ) - 90.;
 }
 
-LambertConformalProjection::Spec LambertConformalProjection::spec() const {
+LambertConformalConicProjection::Spec LambertConformalConicProjection::spec() const {
     Spec spec;
     spec.set( "type", static_type() );
+    spec.set( "longitude0", lon0_ );
+    spec.set( "latitude0", lat0_ );
     spec.set( "latitude1", lat1_ );
     spec.set( "latitude2", lat2_ );
-    spec.set( "latitudeD", latD_ );
-    spec.set( "longitude0", lon0_ );
     if ( !eckit::types::is_approximately_equal( radius_, util::Earth::radius() ) ) {
         spec.set( "radius", radius_ );
     }
-
     return spec;
 }
 
-void LambertConformalProjection::hash( eckit::Hash& h ) const {
+void LambertConformalConicProjection::hash( eckit::Hash& h ) const {
     h.add( static_type() );
     h.add( lat1_ );
     h.add( lat2_ );
-    h.add( latD_ );
+    h.add( lat0_ );
     h.add( lon0_ );
     h.add( radius_ );
 }
