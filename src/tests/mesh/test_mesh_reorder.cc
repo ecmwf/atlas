@@ -246,7 +246,8 @@ Mesh get_mesh() {
     }
     else {
         output::detail::GmshIO gmsh_reader;
-        return gmsh_reader.read( std::string{eckit::Resource<std::string>( "--mesh", "" )} );
+        std::string file = eckit::Resource<std::string>( "--mesh", "" );
+        return gmsh_reader.read( file );
     }
 }
 
