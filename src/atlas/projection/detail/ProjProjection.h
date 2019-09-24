@@ -88,7 +88,7 @@ public:
     // -- Friends
     // None
 
-private:
+public:
     // -- Types
 
     struct pj_t : std::unique_ptr<PJ, decltype( &proj_destroy )> {
@@ -128,10 +128,12 @@ private:
     // None
 
     // -- Members
-
+private:
     std::string proj_;
     std::string source_;
     std::string geocentric_;
+    bool source_encoded_;
+    bool geocentric_encoded_;
 
     pj_t sourceToTarget_;
     pj_t sourceToGeocentric_;
