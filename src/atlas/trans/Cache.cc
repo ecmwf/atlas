@@ -69,13 +69,13 @@ Cache::Cache( const TransImpl* trans ) :
 
 Cache::Cache() : trans_( nullptr ), legendre_( new EmptyCacheEntry() ), fft_( new EmptyCacheEntry() ) {}
 
-Cache::Cache( const Cache& other ) : trans_( other.trans_ ), legendre_( other.legendre_ ), fft_( other.fft_ ) {}
+Cache::Cache( const Cache& other ) = default;
 
 Cache::operator bool() const {
     return trans_ || bool( legendre() );
 }
 
-Cache::~Cache() {}
+Cache::~Cache() = default;
 
 TransCache::TransCache( const Trans& trans ) : Cache( trans.get() ) {}
 

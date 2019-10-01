@@ -931,7 +931,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
                         ++node_number;
                     }
                     else {
-                        ghost_nodes.push_back( GhostNode( jlat, jlon, jnode ) );
+                        ghost_nodes.emplace_back( jlat, jlon, jnode );
                     }
                     ++jnode;
                 }
@@ -942,7 +942,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std
                     // part(jnode)      = parts.at( offset_glb.at(jlat) );
                     ghost( jnode ) = 1;
                     halo( jnode )  = 0;
-                    ghost_nodes.push_back( GhostNode( jlat, rg.nx( jlat ), jnode ) );
+                    ghost_nodes.emplace_back( jlat, rg.nx( jlat ), jnode );
                     ++jnode;
                 }
                 else {

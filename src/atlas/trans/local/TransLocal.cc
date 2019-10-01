@@ -20,7 +20,11 @@
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Matrix.h"
 #include "eckit/log/Bytes.h"
+#if 10000 * ECKIT_MAJOR_VERSION + 100 * ECKIT_MINOR_VERSION < 10400
 #include "eckit/parser/JSON.h"
+#else
+#include "eckit/log/JSON.h"
+#endif
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/array.h"
@@ -59,7 +63,7 @@ namespace {
 class TransParameters {
 public:
     TransParameters( const eckit::Configuration& config ) : config_( config ) {}
-    ~TransParameters() {}
+    ~TransParameters() = default;
 
     /*
      * For the future

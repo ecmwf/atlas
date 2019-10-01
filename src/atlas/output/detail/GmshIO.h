@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "atlas/functionspace/CellColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/util/Metadata.h"
@@ -101,6 +102,12 @@ private:
     ///  Depending on argument "mode", the fields will be appended,
     ///  or existing file will be overwritten
     void write_delegate( const FieldSet& fieldset, const functionspace::NodeColumns&, const eckit::PathName& file_path,
+                         openmode mode = std::ios::out ) const;
+
+    /// Write fieldset to file using Cells functionspace
+    ///  Depending on argument "mode", the fields will be appended,
+    ///  or existing file will be overwritten
+    void write_delegate( const FieldSet& fieldset, const functionspace::CellColumns&, const eckit::PathName& file_path,
                          openmode mode = std::ios::out ) const;
 
     /// Write fieldset to file using StructuredColumns functionspace

@@ -53,7 +53,7 @@ struct Node {
     idx_t i;
     gidx_t g;
 
-    Node() {}
+    Node() = default;
     Node( gidx_t gid, int part, idx_t idx ) {
         g = gid;
         p = part;

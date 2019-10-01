@@ -26,6 +26,13 @@ IndexView<Value, Rank>::IndexView( Value* data, const idx_t shape[1] ) : data_( 
 }
 
 template <typename Value, int Rank>
+IndexView<Value, Rank>::IndexView( Value* data, const idx_t shape[1], const idx_t strides[1] ) :
+    data_( const_cast<Value*>( data ) ) {
+    strides_[0] = strides[0];
+    shape_[0]   = shape[0];
+}
+
+template <typename Value, int Rank>
 void IndexView<Value, Rank>::dump( std::ostream& os ) const {
     os << "size: " << size() << " , values: ";
     os << "[ ";

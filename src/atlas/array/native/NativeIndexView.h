@@ -70,14 +70,6 @@ public:
         set( other.get() );
         return *this;
     }
-    FortranIndex<Value>& operator+( const Value& value ) {
-        *( idx_ ) += value;
-        return *this;
-    }
-    FortranIndex<Value>& operator-( const Value& value ) {
-        *( idx_ ) -= value;
-        return *this;
-    }
     FortranIndex<Value>& operator--() {
         --( *( idx_ ) );
         return *this;
@@ -121,6 +113,8 @@ public:
 
 public:
     IndexView( Value* data, const idx_t shape[Rank] );
+
+    IndexView( Value* data, const idx_t shape[Rank], const idx_t strides[Rank] );
 
     // -- Access methods
 
@@ -194,6 +188,19 @@ private:
     idx_t strides_[Rank];
     idx_t shape_[Rank];
 };
+
+template <typename Value, int Rank>
+class LocalIndexView : public IndexView<Value, Rank> {
+    using Base = IndexView<Value, Rank>;
+
+public:
+    using Base::Base;
+};
+
+#undef INDEX_REF
+#undef FROM_FORTRAN
+#undef TO_FORTRAN
+
 
 //------------------------------------------------------------------------------------------------------
 

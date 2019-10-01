@@ -153,7 +153,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
     node_sort.reserve( glb_nb_nodes );
     const idx_t nb_glb_idx_gathered = static_cast<idx_t>( glb_idx_gathered.size() );
     for ( idx_t jnode = 0; jnode < nb_glb_idx_gathered; ++jnode ) {
-        node_sort.push_back( Entity( glb_idx_gathered[jnode], jnode ) );
+        node_sort.emplace_back( glb_idx_gathered[jnode], jnode );
     }
 
     ATLAS_TRACE_SCOPE( "sort on rank 0" ) { std::sort( node_sort.begin(), node_sort.end() ); }
@@ -253,7 +253,7 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
     std::vector<Entity> cell_sort;
     cell_sort.reserve( glb_nb_cells );
     for ( idx_t jcell = 0; jcell < glb_nb_cells; ++jcell ) {
-        cell_sort.push_back( Entity( glb_idx_gathered[jcell], jcell ) );
+        cell_sort.emplace_back( glb_idx_gathered[jcell], jcell );
     }
 
     ATLAS_TRACE_SCOPE( "sort on rank 0" ) { std::sort( cell_sort.begin(), cell_sort.end() ); }
@@ -284,7 +284,7 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
 
 // -------------------------------------------------------------------------------------
 
-typedef gidx_t uid_t;
+using uid_t = gidx_t;
 
 // ------------------------------------------------------------------
 class BuildHaloHelper;
@@ -302,7 +302,7 @@ public:
     WestEast() { x_translation_ = 360.; }
 };
 
-typedef std::vector<std::vector<idx_t>> Node2Elem;
+using Node2Elem = std::vector<std::vector<idx_t>>;
 
 void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem ) {
     ATLAS_TRACE();
@@ -428,7 +428,7 @@ private:
     std::vector<std::string> notes;
 };
 
-typedef std::map<uid_t, idx_t> Uid2Node;
+using Uid2Node = std::map<uid_t, idx_t>;
 void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node ) {
     ATLAS_TRACE();
     Notification notes;
@@ -529,6 +529,8 @@ public:
 
         std::vector<std::vector<int>> elem_part;
 
+        std::vector<std::vector<int>> elem_ridx;
+
         std::vector<std::vector<int>> elem_flags;
 
         std::vector<std::vector<int>> elem_type;
@@ -545,6 +547,7 @@ public:
             elem_nodes_id.resize( mpi_size );
             elem_nodes_displs.resize( mpi_size );
             elem_part.resize( mpi_size );
+            elem_ridx.resize( mpi_size );
             elem_flags.resize( mpi_size );
             elem_type.resize( mpi_size );
         }
@@ -591,6 +594,7 @@ public:
             comm.allToAll( send.elem_glb_idx, recv.elem_glb_idx );
             comm.allToAll( send.elem_nodes_id, recv.elem_nodes_id );
             comm.allToAll( send.elem_part, recv.elem_part );
+            comm.allToAll( send.elem_ridx, recv.elem_ridx );
             comm.allToAll( send.elem_type, recv.elem_type );
             comm.allToAll( send.elem_flags, recv.elem_flags );
             comm.allToAll( send.elem_nodes_displs, recv.elem_nodes_displs );
@@ -615,6 +619,7 @@ public:
     array::ArrayView<int, 1> ghost;
     mesh::HybridElements::Connectivity* elem_nodes;
     array::ArrayView<int, 1> elem_part;
+    array::IndexView<idx_t, 1> elem_ridx;
     array::ArrayView<int, 1> elem_flags;
     array::ArrayView<gidx_t, 1> elem_glb_idx;
 
@@ -638,6 +643,7 @@ public:
         ghost( array::make_view<int, 1>( mesh.nodes().ghost() ) ),
         elem_nodes( &mesh.cells().node_connectivity() ),
         elem_part( array::make_view<int, 1>( mesh.cells().partition() ) ),
+        elem_ridx( array::make_indexview<idx_t, 1>( mesh.cells().remote_index() ) ),
         elem_flags( array::make_view<int, 1>( mesh.cells().flags() ) ),
         elem_glb_idx( array::make_view<gidx_t, 1>( mesh.cells().global_index() ) ),
         compute_uid( mesh ) {
@@ -660,6 +666,7 @@ public:
 
         elem_nodes   = &mesh.cells().node_connectivity();
         elem_part    = array::make_view<int, 1>( mesh.cells().partition() );
+        elem_ridx    = array::make_indexview<idx_t, 1>( mesh.cells().remote_index() );
         elem_flags   = array::make_view<int, 1>( mesh.cells().flags() );
         elem_glb_idx = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
     }
@@ -708,6 +715,7 @@ public:
 
         buf.elem_glb_idx[p].resize( nb_elems );
         buf.elem_part[p].resize( nb_elems );
+        buf.elem_ridx[p].resize( nb_elems );
         buf.elem_flags[p].resize( nb_elems, Topology::NONE );
         buf.elem_type[p].resize( nb_elems );
         buf.elem_nodes_id[p].resize( nb_elem_nodes );
@@ -719,6 +727,7 @@ public:
 
             buf.elem_glb_idx[p][jelem] = elem_glb_idx( ielem );
             buf.elem_part[p][jelem]    = elem_part( ielem );
+            buf.elem_ridx[p][jelem]    = elem_ridx( ielem );
             Topology::set( buf.elem_flags[p][jelem], elem_flags( ielem ) );
             buf.elem_type[p][jelem] = mesh.cells().type_idx( ielem );
             for ( idx_t jnode = 0; jnode < elem_nodes->cols( ielem ); ++jnode ) {
@@ -774,6 +783,7 @@ public:
 
         buf.elem_glb_idx[p].resize( nb_elems );
         buf.elem_part[p].resize( nb_elems );
+        buf.elem_ridx[p].resize( nb_elems );
         buf.elem_flags[p].resize( nb_elems, Topology::NONE );
         buf.elem_type[p].resize( nb_elems );
         buf.elem_nodes_id[p].resize( nb_elem_nodes );
@@ -783,6 +793,7 @@ public:
             buf.elem_nodes_displs[p][jelem] = jelemnode;
             idx_t ielem                     = elems[jelem];
             buf.elem_part[p][jelem]         = elem_part( ielem );
+            buf.elem_ridx[p][jelem]         = elem_ridx( ielem );
             Topology::set( buf.elem_flags[p][jelem], elem_flags( ielem ) | newflags );
             buf.elem_type[p][jelem] = mesh.cells().type_idx( ielem );
             std::vector<double> crds( elem_nodes->cols( ielem ) * 2 );
@@ -950,7 +961,7 @@ public:
             const idx_t nb_elems_from_part = static_cast<idx_t>( buf.elem_glb_idx[jpart].size() );
             for ( idx_t e = 0; e < nb_elems_from_part; ++e ) {
                 if ( element_already_exists( buf.elem_glb_idx[jpart][e] ) == false ) {
-                    received_new_elems[jpart].push_back( e );
+                    received_new_elems[jpart].emplace_back( e );
                 }
             }
             nb_new_elems += received_new_elems[jpart].size();
@@ -962,7 +973,7 @@ public:
 
         for ( idx_t jpart = 0; jpart < mpi_size; ++jpart ) {
             for ( const idx_t ielem : received_new_elems[jpart] ) {
-                elements_of_type[buf.elem_type[jpart][ielem]][jpart].push_back( ielem );
+                elements_of_type[buf.elem_type[jpart][ielem]][jpart].emplace_back( ielem );
                 ++nb_elements_of_type[buf.elem_type[jpart][ielem]];
             }
         }
@@ -982,6 +993,7 @@ public:
 
             auto elem_type_glb_idx = elements.view<gidx_t, 1>( mesh.cells().global_index() );
             auto elem_type_part    = elements.view<int, 1>( mesh.cells().partition() );
+            auto elem_type_ridx    = elements.indexview<idx_t, 1>( mesh.cells().remote_index() );
             auto elem_type_halo    = elements.view<int, 1>( mesh.cells().halo() );
             auto elem_type_flags   = elements.view<int, 1>( mesh.cells().flags() );
 
@@ -992,6 +1004,7 @@ public:
                     int loc_idx                  = new_elems_pos + new_elem;
                     elem_type_glb_idx( loc_idx ) = std::abs( buf.elem_glb_idx[jpart][jelem] );
                     elem_type_part( loc_idx )    = buf.elem_part[jpart][jelem];
+                    elem_type_ridx( loc_idx )    = buf.elem_ridx[jpart][jelem];
                     elem_type_halo( loc_idx )    = halosize + 1;
                     elem_type_flags( loc_idx )   = buf.elem_flags[jpart][jelem];
                     for ( idx_t n = 0; n < node_connectivity.cols(); ++n ) {
@@ -1324,9 +1337,17 @@ void BuildHalo::operator()( int nb_elems ) {
             }
         }
 
-        std::stringstream ss;
-        ss << "nb_nodes_including_halo[" << jhalo + 1 << "]";
-        mesh_.metadata().set( ss.str(), mesh_.nodes().size() );
+        {
+            std::stringstream ss;
+            ss << "nb_nodes_including_halo[" << jhalo + 1 << "]";
+            mesh_.metadata().set( ss.str(), mesh_.nodes().size() );
+        }
+
+        for ( int t = 0; t < mesh_.cells().nb_types(); ++t ) {
+            std::stringstream ss;
+            ss << "nb_cells_including_halo[" << t << "][" << jhalo + 1 << "]";
+            mesh_.metadata().set( ss.str(), mesh_.cells().elements( t ).size() );
+        }
         mesh_.metadata().set( "halo", jhalo + 1 );
         mesh_.nodes().global_index().metadata().set( "human_readable", false );
         mesh_.cells().global_index().metadata().set( "human_readable", false );

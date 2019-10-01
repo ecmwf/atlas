@@ -26,7 +26,7 @@
 namespace atlas {
 namespace trans {
 
-LegendreCacheCreatorImpl::~LegendreCacheCreatorImpl() {}
+LegendreCacheCreatorImpl::~LegendreCacheCreatorImpl() = default;
 
 namespace {
 

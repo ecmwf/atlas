@@ -23,7 +23,7 @@
 #include "tests/AtlasTestEnvironment.h"
 
 /// POD: Type to test
-typedef double POD;
+using POD = double;
 
 namespace atlas {
 namespace test {

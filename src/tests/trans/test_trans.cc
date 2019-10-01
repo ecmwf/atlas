@@ -54,8 +54,9 @@ namespace test {
 
 struct AtlasTransEnvironment : public AtlasTestEnvironment {
     AtlasTransEnvironment( int argc, char* argv[] ) : AtlasTestEnvironment( argc, argv ) {
-        if ( mpi::comm().size() == 1 )
+        if ( mpi::comm().size() == 1 ) {
             trans_use_mpi( false );
+        }
         trans_init();
     }
 
@@ -75,8 +76,9 @@ void read_rspecg( const trans::TransImpl& trans, std::vector<double>& rspecg, st
         }
     }
     nfrom.resize( nfld );
-    for ( int jfld = 0; jfld < nfld; ++jfld )
+    for ( int jfld = 0; jfld < nfld; ++jfld ) {
         nfrom[jfld] = 1;
+    }
 
     Log::info() << "read_rspecg ... done" << std::endl;
 }
@@ -129,8 +131,9 @@ CASE( "test_trans_distribution_matches_atlas" ) {
     if ( mpi::comm().rank() == 0 )  // all tasks do the same, so only one needs to check
     {
         int max_nb_regions_EW( 0 );
-        for ( int j = 0; j < trans_partitioner->nb_bands(); ++j )
+        for ( int j = 0; j < trans_partitioner->nb_bands(); ++j ) {
             max_nb_regions_EW = std::max( max_nb_regions_EW, trans_partitioner->nb_regions( j ) );
+        }
 
         EXPECT( t->n_regions_NS == trans_partitioner->nb_bands() );
         EXPECT( t->n_regions_EW == max_nb_regions_EW );
@@ -140,16 +143,18 @@ CASE( "test_trans_distribution_matches_atlas" ) {
 
         std::vector<int> npts( distribution.nb_partitions(), 0 );
 
-        for ( idx_t j = 0; j < g.size(); ++j )
+        for ( idx_t j = 0; j < g.size(); ++j ) {
             ++npts[distribution.partition( j )];
+        }
 
         EXPECT( t->ngptotg == g.size() );
         EXPECT( t->ngptot == npts[mpi::comm().rank()] );
         EXPECT( t->ngptotmx == *std::max_element( npts.begin(), npts.end() ) );
 
         // array::LocalView<int,1> n_regions ( trans.n_regions() ) ;
-        for ( int j = 0; j < trans_partitioner->nb_bands(); ++j )
+        for ( int j = 0; j < trans_partitioner->nb_bands(); ++j ) {
             EXPECT( t->n_regions[j] == trans_partitioner->nb_regions( j ) );
+        }
     }
 }
 
@@ -549,8 +554,9 @@ CASE( "test_trans_VorDivToUV" ) {
         // TODO: initialise field_vor and field_div with something meaningful
         field_vor[2 * nfld] = 1.;
         Log::info() << "vor: " << std::endl;
-        for ( int j = 0; j < nfld * nspec2; j++ )
+        for ( int j = 0; j < nfld * nspec2; j++ ) {
             Log::info() << field_vor[j] << " ";
+        }
         Log::info() << std::endl;
 
         // With IFS
@@ -566,8 +572,9 @@ CASE( "test_trans_VorDivToUV" ) {
             // TODO: do some meaningful checks
             Log::info() << "Trans library" << std::endl;
             Log::info() << "U: " << std::endl;
-            for ( int j = 0; j < nfld * nspec2; j++ )
+            for ( int j = 0; j < nfld * nspec2; j++ ) {
                 Log::info() << field_U[j] << " ";
+            }
             Log::info() << std::endl;
         }
 
@@ -584,8 +591,9 @@ CASE( "test_trans_VorDivToUV" ) {
             // TODO: do some meaningful checks
             Log::info() << "Local transform" << std::endl;
             Log::info() << "U: " << std::endl;
-            for ( int j = 0; j < nfld * nspec2; j++ )
+            for ( int j = 0; j < nfld * nspec2; j++ ) {
                 Log::info() << field_U[j] << " ";
+            }
             Log::info() << std::endl;
         }
     }

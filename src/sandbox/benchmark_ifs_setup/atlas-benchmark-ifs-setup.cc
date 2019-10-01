@@ -44,12 +44,12 @@ using eckit::PathName;
 //------------------------------------------------------------------------------
 
 class Tool : public AtlasTool {
-    virtual int execute( const Args& args );
-    virtual std::string briefDescription() {
+    int execute( const Args& args ) override;
+    std::string briefDescription() override {
         return "Tool to generate a python script that plots the grid-distribution "
                "of a given grid";
     }
-    virtual std::string usage() { return name() + " --grid=name [OPTION]... OUTPUT [--help]"; }
+    std::string usage() override { return name() + " --grid=name [OPTION]... OUTPUT [--help]"; }
 
 public:
     Tool( int argc, char** argv );

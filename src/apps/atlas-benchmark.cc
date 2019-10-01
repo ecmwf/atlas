@@ -47,6 +47,7 @@
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
+#include "atlas/mesh/actions/Reorder.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/Checksum.h"
@@ -126,7 +127,7 @@ struct TimerStats {
 //----------------------------------------------------------------------------------------------------------------------
 
 class AtlasBenchmark : public AtlasTool {
-    virtual int execute( const Args& args );
+    int execute( const Args& args ) override;
 
 public:
     AtlasBenchmark( int argc, char** argv ) : AtlasTool( argc, argv ) {
@@ -138,6 +139,8 @@ public:
         add_option( new SimpleOption<bool>( "output", "Write output in gmsh format" ) );
         add_option( new SimpleOption<long>( "exclude", "Exclude number of iterations in statistics (default=1)" ) );
         add_option( new SimpleOption<bool>( "details", "Show detailed timers (default=false)" ) );
+        add_option( new SimpleOption<std::string>( "reorder", "Reorder mesh (default=none)" ) );
+        add_option( new SimpleOption<bool>( "sort_edges", "Sort edges by lowest node local index" ) );
     }
 
     void setup();
@@ -169,6 +172,8 @@ private:
     long omp_threads;
     double dz;
     std::string gridname;
+    std::string reorder{"none"};
+    bool sort_edges{false};
 
     TimerStats iteration_timer;
     TimerStats haloexchange_timer;
@@ -196,6 +201,8 @@ int AtlasBenchmark::execute( const Args& args ) {
     args.get( "exclude", exclude );
     output = false;
     args.get( "output", output );
+    args.get( "reorder", reorder );
+    args.get( "sort_edges", sort_edges );
     bool help( false );
     args.get( "help", help );
 
@@ -308,9 +315,12 @@ void AtlasBenchmark::setup() {
     ATLAS_TRACE_SCOPE( "Create mesh" ) {
         mesh = MeshGenerator( "structured", util::Config( "partitioner", "equal_regions" ) ).generate( grid );
     }
+    mesh::actions::Reorder{option::type( reorder )}( mesh );
 
     ATLAS_TRACE_SCOPE( "Create node_fs" ) { nodes_fs = functionspace::NodeColumns( mesh, option::halo( halo ) ); }
-    ATLAS_TRACE_SCOPE( "Create edges_fs" ) { edges_fs = functionspace::EdgeColumns( mesh, option::halo( halo ) ); }
+    ATLAS_TRACE_SCOPE( "Create edges_fs" ) {
+        edges_fs = functionspace::EdgeColumns( mesh, option::halo( halo ) | util::Config( "sort_edges", sort_edges ) );
+    }
 
     // mesh.polygon(0).outputPythonScript("plot_polygon.py");
     //  atlas::output::Output gmsh = atlas::output::Gmsh( "edges.msh",

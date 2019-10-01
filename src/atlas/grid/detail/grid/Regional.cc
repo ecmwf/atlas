@@ -33,7 +33,7 @@ static Domain domain( const Grid::Config& grid ) {
 
 struct ConfigParser {
     struct Parsed {
-        Parsed() {}
+        Parsed() = default;
         Parsed( std::initializer_list<double> interval ) : min( *interval.begin() ), max( *( interval.begin() + 1 ) ) {}
         double min;
         double max;
@@ -280,17 +280,17 @@ static class regional : public GridBuilder {
 public:
     regional() : GridBuilder( "regional" ) {}
 
-    virtual void print( std::ostream& os ) const {
+    void print( std::ostream& os ) const override {
         // os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian
         // grid";
     }
 
-    virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
+    const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
         throw_NotImplemented( "There are no named regional grids implemented.", Here() );
         return nullptr;
     }
 
-    virtual const Grid::Implementation* create( const Grid::Config& config ) const {
+    const Grid::Implementation* create( const Grid::Config& config ) const override {
         // read projection subconfiguration
         Projection projection;
         {
@@ -322,17 +322,17 @@ static class zonal_band : public GridBuilder {
 public:
     zonal_band() : GridBuilder( "zonal_band" ) {}
 
-    virtual void print( std::ostream& os ) const {
+    void print( std::ostream& os ) const override {
         // os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian
         // grid";
     }
 
-    virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
+    const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
         throw_NotImplemented( "There are no named zonal_band grids implemented.", Here() );
         return nullptr;
     }
 
-    virtual const Grid::Implementation* create( const Grid::Config& config ) const {
+    const Grid::Implementation* create( const Grid::Config& config ) const override {
         // read projection subconfiguration
         Projection projection;
         {

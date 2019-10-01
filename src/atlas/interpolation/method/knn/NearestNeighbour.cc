@@ -91,7 +91,7 @@ void NearestNeighbour::setup( const FunctionSpace& source, const FunctionSpace& 
 
             // insert the weights into the interpolant matrix
             ATLAS_ASSERT( jp < inp_npts );
-            weights_triplets.push_back( Triplet( ip, jp, 1 ) );
+            weights_triplets.emplace_back( ip, jp, 1 );
         }
     }
 

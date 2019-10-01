@@ -557,8 +557,9 @@ CASE( "test_SpectralFunctionSpace_trans_global" ) {
 
     EXPECT( surface_scalar_field.name() == std::string( "scalar" ) );
 
-    if ( eckit::mpi::comm().rank() == 0 )
+    if ( eckit::mpi::comm().rank() == 0 ) {
         EXPECT( surface_scalar_field.size() == nspec2g );
+    }
 
     EXPECT( surface_scalar_field.rank() == 1 );
 
@@ -604,14 +605,16 @@ CASE( "test_SpectralFunctionSpace_norm" ) {
     {
         auto twoD = array::make_view<double, 1>( twoD_field );
         twoD.assign( 0. );
-        if ( mpi::comm().rank() == 0 )
+        if ( mpi::comm().rank() == 0 ) {
             twoD( 0 ) = 1.;
+        }
 
         auto threeD = array::make_view<double, 2>( threeD_field );
         threeD.assign( 0. );
         for ( size_t jlev = 0; jlev < nb_levels; ++jlev ) {
-            if ( mpi::comm().rank() == 0 )
+            if ( mpi::comm().rank() == 0 ) {
                 threeD( 0, jlev ) = jlev;
+            }
         }
     }
 

@@ -66,8 +66,8 @@ projection/Projection.cc
 projection/Projection.h
 projection/detail/LambertAzimuthalEqualAreaProjection.cc
 projection/detail/LambertAzimuthalEqualAreaProjection.h
-projection/detail/LambertProjection.cc
-projection/detail/LambertProjection.h
+projection/detail/LambertConformalConicProjection.cc
+projection/detail/LambertConformalConicProjection.h
 projection/detail/LonLatProjection.cc
 projection/detail/LonLatProjection.h
 projection/detail/MercatorProjection.cc
@@ -229,6 +229,13 @@ list( APPEND atlas_grid_srcs
   grid/detail/partitioner/TransPartitioner.cc
 )
 endif()
+if( ATLAS_HAVE_PROJ )
+list( APPEND atlas_grid_srcs
+  projection/detail/ProjProjection.cc
+  projection/detail/ProjProjection.h
+)
+endif()
+
 
 # Append CGAL_COMPLE_FLAGS only to this file ( see ATLAS-193 )
 if( CGAL_COMPILE_FLAGS )
@@ -287,6 +294,12 @@ mesh/actions/BuildXYZField.h
 mesh/actions/WriteLoadBalanceReport.cc
 mesh/actions/BuildTorusXYZField.h
 mesh/actions/BuildTorusXYZField.cc
+mesh/actions/Reorder.h
+mesh/actions/Reorder.cc
+mesh/actions/ReorderHilbert.h
+mesh/actions/ReorderHilbert.cc
+mesh/actions/ReorderReverseCuthillMckee.h
+mesh/actions/ReorderReverseCuthillMckee.cc
 
 meshgenerator.h
 meshgenerator/MeshGenerator.cc
@@ -334,6 +347,8 @@ field/detail/FieldInterface.cc
 
 list( APPEND atlas_functionspace_srcs
 functionspace.h
+functionspace/CellColumns.h
+functionspace/CellColumns.cc
 functionspace/EdgeColumns.h
 functionspace/EdgeColumns.cc
 functionspace/FunctionSpace.h
@@ -669,6 +684,11 @@ if( ATLAS_HAVE_TRANS )
       target_link_libraries( atlas PRIVATE transi )
     endif()
   endif()
+endif()
+
+if( ATLAS_HAVE_PROJ )
+    target_link_libraries( atlas PRIVATE ${PROJ4_LIBRARIES} )
+    target_include_directories( atlas PRIVATE ${PROJ4_INCLUDE_DIRS} )
 endif()
 
 if( eckit_VERSION )

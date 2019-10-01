@@ -22,9 +22,9 @@ class Version : public Tool {
 public:
     Version( int argc, char** argv ) : Tool( argc, argv ) {}
 
-    ~Version() {}
+    ~Version() override = default;
 
-    virtual void run();
+    void run() override;
 };
 
 void Version::run() {

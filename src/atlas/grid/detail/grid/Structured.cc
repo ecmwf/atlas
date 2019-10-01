@@ -92,11 +92,11 @@ Domain Structured::computeDomain() const {
     return RectangularDomain( {xspace().min(), xspace().max()}, {yspace().min(), yspace().max()}, projection_.units() );
 }
 
-Structured::~Structured() {}
+Structured::~Structured() = default;
 
 Structured::XSpace::XSpace() : impl_( nullptr ) {}
 
-Structured::XSpace::XSpace( const XSpace& xspace ) : impl_( xspace.impl_ ) {}
+Structured::XSpace::XSpace( const XSpace& xspace ) = default;
 
 template <typename NVector>
 Structured::XSpace::XSpace( const std::array<double, 2>& interval, const NVector& N, bool endpoint ) :
@@ -559,16 +559,16 @@ static class structured : public GridBuilder {
 public:
     structured() : GridBuilder( "structured" ) {}
 
-    virtual void print( std::ostream& os ) const {
+    void print( std::ostream& os ) const override {
         os << std::left << std::setw( 20 ) << " "
            << "Structured grid";
     }
 
-    virtual const Implementation* create( const std::string& /* name */, const Config& ) const {
+    const Implementation* create( const std::string& /* name */, const Config& ) const override {
         throw_NotImplemented( "Cannot create structured grid from name", Here() );
     }
 
-    virtual const Implementation* create( const Config& config ) const {
+    const Implementation* create( const Config& config ) const override {
         Projection projection;
         Spacing yspace;
         Domain domain;

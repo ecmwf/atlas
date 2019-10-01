@@ -60,7 +60,7 @@ Array* Array::wrap( Value* data, const ArraySpec& spec ) {
     return new ArrayT<Value>( new native::WrappedDataStore<Value>( data ), spec );
 }
 
-Array::~Array() {}
+Array::~Array() = default;
 
 Array* Array::create( DataType datatype, const ArrayShape& shape ) {
     switch ( datatype.kind() ) {

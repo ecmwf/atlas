@@ -32,6 +32,11 @@ foreach(test
 endforeach()
 
 file( GLOB grids ${PROJECT_SOURCE_DIR}/doc/example-grids/*.yml )
+if( NOT HAVE_PROJ )
+    ecbuild_list_exclude_pattern(
+        LIST  grids
+        REGEX regional_lambert_azimuthal_equal_area_[3|4].yml )
+endif()
 
 foreach( grid ${grids} )
     get_filename_component( grid_name ${grid} NAME_WE )

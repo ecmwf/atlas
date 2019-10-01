@@ -29,8 +29,8 @@ namespace field {
 
 namespace {
 
-static eckit::Mutex* local_mutex                        = 0;
-static std::map<std::string, StateGeneratorFactory*>* m = 0;
+static eckit::Mutex* local_mutex                        = nullptr;
+static std::map<std::string, StateGeneratorFactory*>* m = nullptr;
 static pthread_once_t once                              = PTHREAD_ONCE_INIT;
 
 static void init() {
@@ -44,10 +44,7 @@ void load_builder() {
 }
 
 struct force_link {
-    force_link() {
-        // load_builder< A DERIVED TYPE >();
-        // ...
-    }
+    force_link() = default;
 };
 }  // namespace
 
@@ -58,7 +55,7 @@ void State::initialize( const std::string& generator, const eckit::Parametrisati
 
 //------------------------------------------------------------------------------------------------------
 
-State::State() {}
+State::State() = default;
 
 State::State( const std::string& generator, const eckit::Parametrisation& params ) {
     initialize( generator, params );
@@ -147,7 +144,7 @@ void State::remove( const std::string& name ) {
 
 StateGenerator::StateGenerator( const eckit::Parametrisation& ) {}
 
-StateGenerator::~StateGenerator() {}
+StateGenerator::~StateGenerator() = default;
 
 StateGenerator* StateGeneratorFactory::build( const std::string& name, const eckit::Parametrisation& param ) {
     pthread_once( &once, init );

@@ -452,7 +452,7 @@ MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( eckit::Stream& s ) : Irr
 
 //------------------------------------------------------------------------------------------------------
 
-MultiBlockConnectivityImpl::~MultiBlockConnectivityImpl() {}
+MultiBlockConnectivityImpl::~MultiBlockConnectivityImpl() = default;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -710,9 +710,7 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t valu
 
 //------------------------------------------------------------------------------------------------------
 
-BlockConnectivityImpl::~BlockConnectivityImpl() {
-    //TODO owns_ not used ?
-}
+BlockConnectivityImpl::~BlockConnectivityImpl() = default;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -775,8 +773,8 @@ size_t BlockConnectivityImpl::footprint() const {
 
 class ConnectivityPrivateAccess {
 private:
-    typedef Connectivity::ctxt_t ctxt_t;
-    typedef Connectivity::callback_t callback_t;
+    using ctxt_t     = Connectivity::ctxt_t;
+    using callback_t = Connectivity::callback_t;
 
 public:
     ConnectivityPrivateAccess( Connectivity& connectivity ) : connectivity_( connectivity ) {}

@@ -49,8 +49,7 @@ PointSet::PointSet( Mesh& mesh ) {
         pidx.reserve( npts_ );
 
         for ( size_t ip = 0; ip < npts_; ++ip ) {
-            pidx.push_back(
-                PointIndex3::Value( PointIndex3::Point( coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 ) ), ip ) );
+            pidx.emplace_back( PointIndex3::Point( coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 ) ), ip );
         }
 
         tree_->build( pidx.begin(), pidx.end() );

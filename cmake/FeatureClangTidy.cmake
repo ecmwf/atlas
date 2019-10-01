@@ -21,6 +21,22 @@ ecbuild_add_option( FEATURE CLANG_TIDY
                     CONDITION CLANG_TIDY_EXE )
 
 if (HAVE_CLANG_TIDY)
-  set(CLANG_TIDY_CHECKS "-*,readability-braces-around-statements,redundant-string-init")
-  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-checks=${CLANG_TIDY_CHECKS};-header-filter='${CMAKE_SOURCE_DIR}/*'")
+
+  # Uncomment to apply fixes. Make sure to use a clean build, and apply clang-format afterwards!
+  # set( CLANG_TIDY_FIXIT ";-fix" )
+
+  set( CLANG_TIDY_CHECKS "-*" )
+  foreach( _clang_tidy_check
+    readability-braces-around-statements
+    redundant-string-init
+    modernize-use-nullptr
+    modernize-use-using
+    modernize-use-override
+    modernize-use-emplace
+    modernize-use-equals-default
+    modernize-use-equals-delete
+    )
+    set( CLANG_TIDY_CHECKS "${CLANG_TIDY_CHECKS},${_clang_tidy_check}" )
+  endforeach()
+  set( CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-checks=${CLANG_TIDY_CHECKS};-header-filter='${CMAKE_SOURCE_DIR}/*'${CLANG_TIDY_FIXIT}" )
 endif()

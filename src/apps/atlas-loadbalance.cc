@@ -37,7 +37,7 @@ using namespace atlas::mesh;
 //------------------------------------------------------------------------------------------------------
 
 class AtlasLoadbalance : public eckit::Tool {
-    virtual void run();
+    void run() override;
 
 public:
     AtlasLoadbalance( int argc, char** argv ) : eckit::Tool( argc, argv ) {

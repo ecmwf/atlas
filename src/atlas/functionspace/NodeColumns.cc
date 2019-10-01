@@ -83,7 +83,7 @@ public:
         creator_type creator = std::bind( &NodeColumnsHaloExchangeCache::create, mesh, halo );
         return Base::get_or_create( key( *mesh.get(), halo ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) {
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override {
         for ( long jhalo = 1; jhalo < mesh::Halo( mesh ).size(); ++jhalo ) {
             remove( key( mesh, jhalo ) );
         }
@@ -128,7 +128,7 @@ public:
         creator_type creator = std::bind( &NodeColumnsGatherScatterCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) { remove( key( mesh ) ); }
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override { remove( key( mesh ) ); }
 
 private:
     static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
@@ -179,7 +179,7 @@ public:
         creator_type creator = std::bind( &NodeColumnsChecksumCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) { remove( key( mesh ) ); }
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override { remove( key( mesh ) ); }
 
 private:
     static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
@@ -231,7 +231,7 @@ NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration& config ) :
     }
 }
 
-NodeColumns::~NodeColumns() {}
+NodeColumns::~NodeColumns() = default;
 
 std::string NodeColumns::distribution() const {
     return mesh().metadata().getString( "distribution" );
@@ -344,11 +344,6 @@ Field NodeColumns::createField( const Field& other, const eckit::Configuration& 
 }
 
 namespace {
-
-template <typename DATA_TYPE, int RANK>
-array::ArrayView<DATA_TYPE, RANK> get_field_view( const Field& field, bool on_device ) {
-    return on_device ? array::make_device_view<DATA_TYPE, RANK>( field ) : array::make_view<DATA_TYPE, RANK>( field );
-}
 
 template <int RANK>
 void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exchange, bool on_device ) {

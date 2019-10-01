@@ -31,7 +31,7 @@ ecbuild_declare_project()
 
 ### eckit
 
-ecbuild_use_package( PROJECT eckit VERSION 0.21.0 REQUIRED )
+ecbuild_use_package( PROJECT eckit VERSION 1.0.2 REQUIRED )
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 # options & dependencies
@@ -199,6 +199,13 @@ endif()
 ecbuild_add_option( FEATURE EIGEN
                     DESCRIPTION "Use Eigen linear algebra library"
                     REQUIRED_PACKAGES Eigen3 )
+
+### Proj
+
+ecbuild_add_option( FEATURE PROJ
+                    DESCRIPTION "PROJ-based projections"
+                    DEFAULT OFF
+                    REQUIRED_PACKAGES PROJ4 )
 
 ### Type for Global indices and unique point ids
 

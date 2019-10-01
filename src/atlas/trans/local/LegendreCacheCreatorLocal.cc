@@ -111,7 +111,7 @@ std::string LegendreCacheCreatorLocal::uid() const {
     return unique_identifier_;
 }
 
-LegendreCacheCreatorLocal::~LegendreCacheCreatorLocal() {}
+LegendreCacheCreatorLocal::~LegendreCacheCreatorLocal() = default;
 
 LegendreCacheCreatorLocal::LegendreCacheCreatorLocal( const Grid& grid, int truncation,
                                                       const eckit::Configuration& config ) :

@@ -21,8 +21,8 @@ ElementType* ElementType::create( const std::string& ) {
     ATLAS_NOTIMPLEMENTED;
 }
 
-ElementType::ElementType() {}
-ElementType::~ElementType() {}
+ElementType::ElementType()  = default;
+ElementType::~ElementType() = default;
 
 //-----------------------------------------------------------------------------
 

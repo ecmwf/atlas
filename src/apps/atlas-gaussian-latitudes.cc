@@ -35,7 +35,7 @@ using atlas::grid::spacing::GaussianSpacing;
 //------------------------------------------------------------------------------------------------------
 
 class AtlasGaussianLatitudes : public eckit::Tool {
-    virtual void run();
+    void run() override;
 
 public:
     AtlasGaussianLatitudes( int argc, char** argv ) : eckit::Tool( argc, argv ) {

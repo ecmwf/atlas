@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2013 ECMWF.
+ * (C) Copyright 1996- ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -17,13 +17,13 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
-class LambertProjection final : public ProjectionImpl {
+class LambertConformalConicProjection final : public ProjectionImpl {
 public:
     // constructor
-    LambertProjection( const eckit::Parametrisation& );
+    LambertConformalConicProjection( const eckit::Parametrisation& );
 
     // projection name
-    static std::string static_type() { return "lambert"; }
+    static std::string static_type() { return "lambert_conformal_conic"; }
     std::string type() const override { return static_type(); }
 
     // projection and inverse projection
@@ -31,6 +31,7 @@ public:
     void lonlat2xy( double crd[] ) const override;
 
     bool strictlyRegional() const override { return true; }
+
     RectangularLonLatDomain lonlatBoundingBox( const Domain& domain ) const override {
         return ProjectionImpl::lonlatBoundingBox( domain );
     }
@@ -43,15 +44,18 @@ public:
     void hash( eckit::Hash& ) const override;
 
 private:
-    double lat1_, lat2_;                  // First and second latitude at which the secant cone
-                                          // cuts the sphere
-    bool is_tangent_;                     // If the first and second latitude are equal, then the
-                                          // projection is on a tangent cone
-    double lon0_;                         // central longitude
-    double radius_;                       // sphere radius
-    double n_, inv_n_, F_, rho0_, sign_;  // projection constants
+    double radius_;  ///< sphere radius
+    double lat1_;    ///< first latitude from the pole at which the secant cone cuts the sphere
+    double lat2_;    ///< second latitude from the pole at which the secant cone cuts the sphere
+    double lat0_;    ///< latitude of origin, where Dx and Dy are specified
+    double lon0_;    ///< longitude of origin, meridian parallel to y-axis along which latitude increases
+                     ///  as the y-coordinate increases
 
-    void setup();
+    double F_;
+    double n_;
+    double inv_n_;
+    double rho0_;
+    double sign_;
 };
 
 }  // namespace detail

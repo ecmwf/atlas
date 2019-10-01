@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "atlas/functionspace/CellColumns.h"
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/NodeColumns.h"
