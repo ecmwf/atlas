@@ -2,7 +2,7 @@ set( CLANG_TIDY_SUPPORTED_COMPILERS     GNU Clang )
 
 set( CLANG_TIDY_DEFAULT OFF )
 foreach( _clang_tidy_supported_compiler ${CLANG_TIDY_SUPPORTED_COMPILERS} )
-  if( CMake_CXX_COMPILER_ID MATCHES ${_clang_tidy_supported_compiler} )
+  if( CMAKE_CXX_COMPILER_ID MATCHES ${_clang_tidy_supported_compiler} )
     set( CLANG_TIDY_DEFAULT ON )
   endif()
 endforeach()
