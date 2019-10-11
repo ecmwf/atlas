@@ -15,3 +15,10 @@ ecbuild_add_executable(
     NOINSTALL
 )
 
+ecbuild_add_executable(
+    TARGET  atlas-parallel-structured-interpolation
+    SOURCES atlas-parallel-structured-interpolation.cc
+    LIBS    atlas
+    NOINSTALL
+)
+

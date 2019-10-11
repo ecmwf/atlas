@@ -27,6 +27,7 @@
 #include "atlas/util/Config.h"
 #include "atlas/util/ObjectHandle.h"
 #include "atlas/util/Point.h"
+#include "atlas/util/Polygon.h"
 
 namespace eckit {
 class Configuration;
@@ -60,7 +61,53 @@ namespace functionspace {
 // -------------------------------------------------------------------
 
 namespace detail {
+
+
+/**
+ * @brief Polygon class that holds the boundary of a mesh partition
+ */
+class PartitionPolygon : public util::Object {
+public:  // methods
+    //-- Constructors
+
+    /// @brief Construct "size" polygon
+    PartitionPolygon( const FunctionSpaceImpl& fs, idx_t halo );
+
+    //-- Accessors
+
+    idx_t halo() const { return halo_; }
+
+    /// @brief Return the memory footprint of the Polygon
+    size_t footprint() const;
+
+    void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const;
+
+    const std::vector<PointXY>& xy() { return points_; }
+    const std::vector<PointLonLat>& lonlat() { return points_ll_; }
+
+private:
+    void print( std::ostream& ) const;
+
+    friend std::ostream& operator<<( std::ostream& s, const PartitionPolygon& p ) {
+        p.print( s );
+        return s;
+    }
+
+    util::Polygon::edge_set_t compute_edges( std::vector<PointXY>& points_ );
+
+private:
+    util::Polygon polygon_;
+    std::vector<PointXY> points_;
+    std::vector<PointLonLat> points_ll_;
+    const FunctionSpaceImpl& fs_;
+    idx_t halo_;
+};
+
+
 class StructuredColumns : public FunctionSpaceImpl {
+public:
+    using Polygon = PartitionPolygon;
+
 public:
     StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
 

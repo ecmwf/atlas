@@ -42,7 +42,7 @@ bool LonLatPolygon::contains( const PointLonLat& P ) const {
     ATLAS_ASSERT( coordinates_.size() >= 2 );
 
     // check first bounding box
-    if ( coordinatesMax_.lon() <= P.lon() || P.lon() < coordinatesMin_.lon() || coordinatesMax_.lat() <= P.lat() ||
+    if ( coordinatesMax_.lon() < P.lon() || P.lon() < coordinatesMin_.lon() || coordinatesMax_.lat() < P.lat() ||
          P.lat() < coordinatesMin_.lat() ) {
         return false;
     }
@@ -60,8 +60,8 @@ bool LonLatPolygon::contains( const PointLonLat& P ) const {
         // intersecting either:
         // - "up" on upward crossing & P left of edge, or
         // - "down" on downward crossing & P right of edge
-        const bool APB = ( A.lat() <= P.lat() && P.lat() < B.lat() );
-        const bool BPA = ( B.lat() <= P.lat() && P.lat() < A.lat() );
+        const bool APB = ( A.lat() <= P.lat() && P.lat() <= B.lat() );
+        const bool BPA = ( B.lat() <= P.lat() && P.lat() <= A.lat() );
 
         if ( APB != BPA ) {
             const double side = cross_product_analog( P, A, B );

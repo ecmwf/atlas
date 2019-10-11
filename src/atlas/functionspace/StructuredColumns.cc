@@ -10,6 +10,7 @@
 
 #include "atlas/functionspace/StructuredColumns.h"
 
+#include <fstream>
 #include <iomanip>
 #include <mutex>
 #include <sstream>
@@ -19,6 +20,7 @@
 
 #include "atlas/array/Array.h"
 #include "atlas/array/MakeView.h"
+#include "atlas/domain.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Partitioner.h"
@@ -42,7 +44,245 @@ namespace atlas {
 namespace functionspace {
 namespace detail {
 
+
+util::Polygon::edge_set_t PartitionPolygon::compute_edges( std::vector<PointXY>& points ) {
+    ATLAS_TRACE( "PartitionPolygon" );
+    const auto& fs  = dynamic_cast<const StructuredColumns&>( fs_ );
+    const auto grid = fs.grid();
+    const auto dom  = RectangularDomain( grid.domain() );
+
+    if ( halo_ > 0 ) {
+        throw_Exception( "halo must be smaller than that of StructuredColumns", Here() );
+    }
+
+    auto equal = []( const double& a, const double& b ) { return std::abs( a - b ) < 1.e-12; };
+
+    util::Polygon::edge_set_t edges;
+
+    PointXY p;
+    idx_t c{0};
+    idx_t i, j;
+
+    auto add_edge = [&]( idx_t p1, idx_t p2 ) {
+        util::Polygon::edge_t edge = {p1, p2};
+        edges.insert( edge );
+        //Log::info() << edge.first << "  " << edge.second << std::endl;
+    };
+
+    auto make_corner = [&]() {
+        PointXY ptmp;
+        ptmp  = p;
+        p.x() = points.back().x();
+        p.y() = 0.5 * ( points.back().y() + grid.y( j ) );
+        points.emplace_back( p );
+        add_edge( c, c + 1 );
+        c++;
+        p = ptmp;
+
+
+        ptmp  = p;
+        p.y() = points.back().y();
+        points.emplace_back( p );
+        add_edge( c, c + 1 );
+        c++;
+        p = ptmp;
+    };
+
+    bool debug = true;
+
+    // Top
+    // Top left point
+    {
+        j = fs.j_begin();
+        i = fs.i_begin( j );
+        if ( j == 0 ) {
+            p.y() = dom.ymax();
+        }
+        else {
+            p.y() = 0.5 * ( grid.y( j - 1 ) + grid.y( j ) );
+        }
+        if ( i == 0 ) {
+            p.x() = dom.xmin();
+        }
+        else {
+            p.x() = 0.5 * ( grid.x( i - 1, j ) + grid.x( i, j ) );
+        }
+        points.emplace_back( p );
+    }
+
+    // Top right point
+    {
+        j = fs.j_begin();
+        i = fs.i_end( j ) - 1;
+        if ( j == 0 ) {
+            p.y() = dom.ymax();
+        }
+        else {
+            p.y() = 0.5 * ( grid.y( j - 1 ) + grid.y( j ) );
+        }
+        if ( i == grid.nx( j ) - 1 ) {
+            p.x() = dom.xmax();
+        }
+        else {
+            p.x() = 0.5 * ( grid.x( i, j ) + grid.x( i + 1, j ) );
+        }
+        points.emplace_back( p );
+        add_edge( c, c + 1 );
+        c++;
+    }
+    // Right side
+    {
+        for ( j = fs.j_begin(); j < fs.j_end() - 1; ++j ) {
+            p.y() = grid.y( j );
+            i     = fs.i_end( j ) - 1;
+            if ( i == grid.nx( j ) - 1 ) {
+                p.x() = dom.xmax();
+            }
+            else {
+                p.x() = 0.5 * ( grid.x( i, j ) + grid.x( i + 1, j ) );
+            }
+            if ( j > fs.j_begin() && not equal( p.x(), points.back().x() ) ) {
+                if ( not debug ) {
+                    make_corner();
+                }
+                else {
+                    PointXY ptmp = p;
+                    p.x()        = points.back().x();
+                    p.y()        = 0.5 * ( points.back().y() + p.y() );
+                    points.emplace_back( p );
+                    add_edge( c, c + 1 );
+                    c++;
+                    p = ptmp;
+
+                    ptmp  = p;
+                    p.y() = points.back().y();
+                    points.emplace_back( p );
+                    add_edge( c, c + 1 );
+                    c++;
+                    p = ptmp;
+                }
+            }
+            points.emplace_back( p );
+            add_edge( c, c + 1 );
+            c++;
+        }
+    }
+    // Bottom
+    // Bottom right point(s)
+    {
+        j = fs.j_end() - 1;
+        i = fs.i_end( j ) - 1;
+        if ( j == grid.ny() - 1 ) {
+            p.y() = dom.ymin();
+        }
+        else {
+            p.y() = 0.5 * ( grid.y( j ) + grid.y( j + 1 ) );
+        }
+        if ( i == grid.nx( j ) - 1 ) {
+            p.x() = dom.xmax();
+        }
+        else {
+            p.x() = 0.5 * ( grid.x( i, j ) + grid.x( i + 1, j ) );
+        }
+
+        if ( not equal( p.x(), points.back().x() ) ) {
+            if ( not debug ) {
+                make_corner();
+            }
+            else {
+                PointXY ptmp;
+                ptmp  = p;
+                p.x() = points.back().x();
+                p.y() = 0.5 * ( points.back().y() + grid.y( j ) );
+                points.emplace_back( p );
+                add_edge( c, c + 1 );
+                c++;
+                p = ptmp;
+
+
+                ptmp  = p;
+                p.y() = points.back().y();
+                points.emplace_back( p );
+                add_edge( c, c + 1 );
+                c++;
+                p = ptmp;
+            }
+        }
+
+
+        points.emplace_back( p );
+        add_edge( c, c + 1 );
+        c++;
+    }
+    // Bottom left point
+    {
+        j = fs.j_end() - 1;
+        i = fs.i_begin( j );
+        if ( j == grid.ny() - 1 ) {
+            p.y() = dom.ymin();
+        }
+        else {
+            p.y() = 0.5 * ( grid.y( j ) + grid.y( j + 1 ) );
+        }
+        if ( i == 0 ) {
+            p.x() = dom.xmin();
+        }
+        else {
+            p.x() = 0.5 * ( grid.x( i - 1, j ) + grid.x( i, j ) );
+        }
+        points.emplace_back( p );
+        add_edge( c, c + 1 );
+        c++;
+    }
+    // Left side
+    {
+        for ( j = fs.j_end() - 1; j >= fs.j_begin(); --j ) {
+            p.y() = grid.y( j );
+            i     = fs.i_begin( j );
+            if ( i == 0 ) {
+                p.x() = dom.xmin();
+            }
+            else {
+                p.x() = 0.5 * ( grid.x( i - 1, j ) + grid.x( i, j ) );
+            }
+
+            if ( j < fs.j_end() - 1 && not equal( p.x(), points.back().x() ) ) {
+                if ( not debug ) {
+                    make_corner();
+                }
+                else {
+                    PointXY ptmp;
+                    ptmp  = p;
+                    p.x() = points.back().x();
+                    p.y() = 0.5 * ( points.back().y() + grid.y( j ) );
+                    points.emplace_back( p );
+                    add_edge( c, c + 1 );
+                    c++;
+                    p = ptmp;
+
+
+                    ptmp  = p;
+                    p.y() = points.back().y();
+                    points.emplace_back( p );
+                    add_edge( c, c + 1 );
+                    c++;
+                    p = ptmp;
+                }
+            }
+
+
+            points.emplace_back( p );
+            add_edge( c, c + 1 );
+            c++;
+        }
+    }
+    // Connect to top
+    add_edge( c, 0 );
+    return edges;
+}
+
 namespace {
+
 
 template <typename T>
 array::LocalView<T, 3> make_leveled_view( const Field& field ) {
@@ -83,6 +323,171 @@ std::string checksum_3d_field( const parallel::Checksum& checksum, const Field& 
 }
 
 }  // namespace
+
+
+PartitionPolygon::PartitionPolygon( const FunctionSpaceImpl& fs, idx_t halo ) : fs_( fs ), halo_( halo ) {
+    polygon_ = util::Polygon( compute_edges( points_ ) );
+    points_.emplace_back( points_[0] );
+    points_ll_.reserve( points_.size() );
+    for ( const Point2& p : points_ ) {
+        points_ll_.emplace_back( p );
+    }
+}
+
+size_t PartitionPolygon::footprint() const {
+    size_t size = sizeof( *this );
+    size += polygon_.capacity() * sizeof( idx_t );
+    return size;
+}
+
+void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, const eckit::Configuration& config ) const {
+    ATLAS_TRACE( "Output PartitionPolygon" );
+    const eckit::mpi::Comm& comm = atlas::mpi::comm();
+    int mpi_rank                 = int( comm.rank() );
+    int mpi_size                 = int( comm.size() );
+
+    auto xy = array::make_view<double, 2>( dynamic_cast<const StructuredColumns&>( fs_ ).xy() );
+
+    double xmin = std::numeric_limits<double>::max();
+    double xmax = -std::numeric_limits<double>::max();
+    for ( idx_t i : polygon_ ) {
+        xmin = std::min( xmin, points_[i].x() );
+        xmax = std::max( xmax, points_[i].x() );
+    }
+    comm.allReduceInPlace( xmin, eckit::mpi::min() );
+    comm.allReduceInPlace( xmax, eckit::mpi::max() );
+
+    idx_t count     = dynamic_cast<const StructuredColumns&>( fs_ ).sizeOwned();
+    idx_t count_all = count;
+    comm.allReduceInPlace( count_all, eckit::mpi::sum() );
+
+    bool plot_nodes = config.getBool( "nodes", false );
+    for ( int r = 0; r < mpi_size; ++r ) {
+        if ( mpi_rank == r ) {
+            std::ofstream f( filepath.asString().c_str(), mpi_rank == 0 ? std::ios::trunc : std::ios::app );
+
+            if ( mpi_rank == 0 ) {
+                f << "\n"
+                     "# Configuration option to plot nodes"
+                     "\n"
+                     "plot_nodes = " +
+                         std::string( plot_nodes ? "True" : "False" ) +
+                         "\n"
+                         "\n"
+                         "import matplotlib.pyplot as plt"
+                         "\n"
+                         "from matplotlib.path import Path"
+                         "\n"
+                         "import matplotlib.patches as patches"
+                         "\n"
+                         ""
+                         "\n"
+                         "from itertools import cycle"
+                         "\n"
+                         "import matplotlib.cm as cm"
+                         "\n"
+                         "import numpy as np"
+                         "\n"
+                         "cycol = cycle([cm.Paired(i) for i in "
+                         "np.linspace(0,1,12,endpoint=True)]).next"
+                         "\n"
+                         ""
+                         "\n"
+                         "fig = plt.figure()"
+                         "\n"
+                         "ax = fig.add_subplot(111,aspect='equal')"
+                         "\n"
+                         "";
+            }
+            f << "\n"
+                 "verts_"
+              << r << " = [";
+            for ( idx_t i : static_cast<const util::Polygon::container_t&>( polygon_ ) ) {
+                f << "\n  (" << points_[i].x() << ", " << points_[i].y() << "), ";
+            }
+            f << "\n]"
+                 "\n"
+                 ""
+                 "\n"
+                 "codes_"
+              << r
+              << " = [Path.MOVETO]"
+                 "\n"
+                 "codes_"
+              << r << ".extend([Path.LINETO] * " << ( polygon_.size() - 2 )
+              << ")"
+                 "\n"
+                 "codes_"
+              << r
+              << ".extend([Path.CLOSEPOLY])"
+                 "\n"
+                 ""
+                 "\n"
+                 "count_"
+              << r << " = " << count
+              << "\n"
+                 "count_all_"
+              << r << " = " << count_all
+              << "\n"
+                 "";
+            if ( plot_nodes ) {
+                f << "\n"
+                     "x_"
+                  << r << " = [";
+                for ( idx_t i = 0; i < count; ++i ) {
+                    f << xy( i, XX ) << ", ";
+                }
+                f << "]"
+                     "\n"
+                     "y_"
+                  << r << " = [";
+                for ( idx_t i = 0; i < count; ++i ) {
+                    f << xy( i, YY ) << ", ";
+                }
+                f << "]";
+            }
+            f << "\n"
+                 "\n"
+                 "c = cycol()"
+                 "\n"
+                 "ax.add_patch(patches.PathPatch(Path(verts_"
+              << r << ", codes_" << r << "), facecolor=c, color=c, alpha=0.3, lw=1))";
+            if ( plot_nodes ) {
+                f << "\n"
+                     "if plot_nodes:"
+                     "\n"
+                     "    ax.scatter(x_"
+                  << r << ", y_" << r << ", color=c, marker='o')";
+            }
+            f << "\n"
+                 "";
+            if ( mpi_rank == mpi_size - 1 ) {
+                f << "\n"
+                     "ax.set_xlim( "
+                  << xmin << "-5, " << xmax
+                  << "+5)"
+                     "\n"
+                     "ax.set_ylim(-90-5,  90+5)"
+                     "\n"
+                     "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
+                     "\n"
+                     "ax.set_yticks([-90,-45,0,45,90])"
+                     "\n"
+                     "plt.grid()"
+                     "\n"
+                     "plt.show()";
+            }
+        }
+        comm.barrier();
+    }
+}
+
+void PartitionPolygon::print( std::ostream& out ) const {
+    out << "polygon:{"
+        << "halo:" << halo_ << ",size:" << polygon_.size() << ",nodes:" << static_cast<const util::Polygon&>( polygon_ )
+        << "}";
+}
+
 
 class StructuredColumnsHaloExchangeCache : public util::Cache<std::string, parallel::HaloExchange>,
                                            public grid::detail::grid::GridObserver {
@@ -282,18 +687,18 @@ idx_t StructuredColumns::config_levels( const eckit::Configuration& config ) con
 array::ArrayShape StructuredColumns::config_shape( const eckit::Configuration& config ) const {
     array::ArrayShape shape;
 
-    shape.push_back( config_size( config ) );
+    shape.emplace_back( config_size( config ) );
 
     idx_t levels( nb_levels_ );
     config.get( "levels", levels );
     if ( levels > 0 ) {
-        shape.push_back( levels );
+        shape.emplace_back( levels );
     }
 
     idx_t variables( 0 );
     config.get( "variables", variables );
     if ( variables > 0 ) {
-        shape.push_back( variables );
+        shape.emplace_back( variables );
     }
 
     return shape;
@@ -395,16 +800,21 @@ StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical
     grid_( new StructuredGrid( grid ) ) {
     grid::Partitioner partitioner( p );
     if ( not partitioner ) {
-        if ( grid_->domain().global() ) {
-            partitioner = grid::Partitioner( "equal_regions" );
+        if ( config.has( "partitioner" ) ) {
+            partitioner = grid::Partitioner( config.getSubConfiguration( "partitioner" ) );
         }
         else {
-            partitioner = grid::Partitioner( "checkerboard" );
+            if ( grid_->domain().global() ) {
+                partitioner = grid::Partitioner( "equal_regions" );
+            }
+            else {
+                partitioner = grid::Partitioner( "checkerboard" );
+            }
         }
     }
 
     grid::Distribution distribution;
-    ATLAS_TRACE_SCOPE( "Partitioning grid ..." ) { distribution = grid::Distribution( grid, partitioner ); }
+    ATLAS_TRACE_SCOPE( "Partitioning grid" ) { distribution = grid::Distribution( grid, partitioner ); }
 
     setup( distribution, config );
 }
