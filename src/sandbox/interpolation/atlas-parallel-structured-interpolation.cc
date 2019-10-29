@@ -22,6 +22,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatPolygon.h"
+#include "atlas/parallel/omp/omp.h"
 
 
 using namespace atlas;
@@ -118,17 +119,45 @@ grid::Distribution distribution( Grid& grid, FunctionSpace& src ) {
     
     int rank = mpi::comm().rank();
     util::LonLatPolygon poly{ p.lonlat() };
-    std::vector<int> part; part.reserve( grid.size() );
-    for( auto p : grid.lonlat() ) {
-        if( poly.contains(p) ) {
-            part.emplace_back( rank );
-        } 
-        else {
-            part.emplace_back( -1 );
+    std::vector<int> part( grid.size() );
+    {
+        ATLAS_TRACE("point-in-polygon check for entire grid (" + std::to_string( grid.size() ) + " points)");
+        size_t num_threads = atlas_omp_get_max_threads();
+        atlas_omp_parallel {
+            const size_t thread_num =  atlas_omp_get_thread_num();
+            const size_t begin = thread_num * size_t(grid.size())/num_threads;
+            const size_t end = (thread_num+1) * size_t(grid.size())/num_threads;
+            auto it = grid.xy().begin();
+            it += thread_num * grid.size()/num_threads;
+            for( size_t n=begin ; n<end; ++n ) {
+                if( poly.contains(*it) ) {
+                    part[n] = rank;
+                }
+                else {
+                    part[n] = -1;
+                }
+                ++it;
+            }
+        }
+
+        ATLAS_TRACE_SCOPE("Load imbalance") { 
+            mpi::comm().barrier();
         }
     }
-    mpi::comm().allReduceInPlace(part.begin(),part.end(),eckit::mpi::max());
-    return grid::Distribution(part.size(),part.data());
+    {
+        ATLAS_TRACE("all_reduce");
+        mpi::comm().allReduceInPlace(part.begin(),part.end(),eckit::mpi::max());
+    }
+    grid::Distribution dist;
+    {
+        ATLAS_TRACE("convert to grid::Distribution");
+        dist = grid::Distribution(mpi::comm().size(), std::move(part) );
+        ATLAS_TRACE_SCOPE("Load imbalance") { 
+            mpi::comm().barrier();
+        }
+
+    }
+    return dist;
 }
 
 
@@ -173,11 +202,15 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         auto source = array::make_view<double, 1>( src_field );
         idx_t size = src_fs.size();
         idx_t k = args.getInt("vortex-rollup",0);
-        for ( idx_t n = 0; n < size; ++n ) {
+        atlas_omp_parallel_for ( idx_t n = 0; n < size; ++n ) {
             source( n ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
         };
     }
     
+    ATLAS_TRACE_SCOPE("Load imbalance") { 
+        mpi::comm().barrier();
+    }
+
 
     src_field.haloExchange();
     
@@ -192,16 +225,22 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         ATLAS_TRACE("Interpolation: Source to Target");
         Interpolation interpolation_fwd( config, src_fs, tgt_fs );
         interpolation_fwd.execute( src_field, tgt_field );
-    }    
+    } 
 
-    tgt_field.haloExchange();
+    ATLAS_TRACE_SCOPE("Load imbalance") { 
+        mpi::comm().barrier();
+    }
+
+
     if( args.getBool("output-gmsh",false) ) {
+        tgt_field.haloExchange();
         tgt_gmsh.write( tgt_field );
     }
     
     if( args.getBool("with-backwards",false))
     {
-       {
+        tgt_field.haloExchange();
+        {
             ATLAS_TRACE("Interpolation: Target to Source");
             Interpolation interpolation_bwd( config, tgt_fs, src_fs );
             interpolation_bwd.execute( tgt_field, src_field );

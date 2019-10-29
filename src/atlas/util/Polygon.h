@@ -84,6 +84,7 @@ public:
     PolygonCoordinates( const Polygon&, const atlas::Field& lonlat, bool removeAlignedPoints );
 
     PolygonCoordinates( const std::vector<PointLonLat>& points );
+    PolygonCoordinates( const std::vector<PointLonLat>& points,  bool removeAlignedPoints );
 
     // -- Destructor
 
@@ -104,6 +105,8 @@ public:
 protected:
     // -- Members
 
+    PointLonLat centroid_;
+    double inner_radius_squared_{0.};
     PointLonLat coordinatesMin_;
     PointLonLat coordinatesMax_;
     std::vector<PointLonLat> coordinates_;

@@ -15,6 +15,7 @@
 #include <limits>
 
 #include "atlas/runtime/Exception.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatPolygon.h"
 
@@ -36,15 +37,30 @@ double cross_product_analog( const PointLonLat& A, const PointLonLat& B, const P
 LonLatPolygon::LonLatPolygon( const Polygon& poly, const atlas::Field& lonlat, bool removeAlignedPoints ) :
     PolygonCoordinates( poly, lonlat, removeAlignedPoints ) {}
 
-LonLatPolygon::LonLatPolygon( const std::vector<PointLonLat>& points ) : PolygonCoordinates( points ) {}
+LonLatPolygon::LonLatPolygon( const std::vector<PointLonLat>& points, bool removeAlignedPoints ) : PolygonCoordinates( points, removeAlignedPoints ) {
+    ATLAS_ASSERT( contains(centroid_) );
+}
 
 bool LonLatPolygon::contains( const PointLonLat& P ) const {
     ATLAS_ASSERT( coordinates_.size() >= 2 );
 
     // check first bounding box
-    if ( coordinatesMax_.lon() < P.lon() || P.lon() < coordinatesMin_.lon() || coordinatesMax_.lat() < P.lat() ||
-         P.lat() < coordinatesMin_.lat() ) {
+    if ( coordinatesMax_.lat() < P.lat() ||
+         P.lat() < coordinatesMin_.lat() || coordinatesMax_.lon() < P.lon() || P.lon() < coordinatesMin_.lon() ) {
         return false;
+    }
+
+    auto distance2 = [](const PointLonLat& p, const PointLonLat& centroid) {
+      double dx = (p[0]-centroid[0]);
+      double dy = (p[1]-centroid[1]);
+      return dx*dx + dy*dy;
+    };
+
+    // check inscribed circle
+    if( inner_radius_squared_ > 0 ) {
+        if( distance2(P,centroid_) < inner_radius_squared_ ) {
+            return true;
+        }
     }
 
     // winding number

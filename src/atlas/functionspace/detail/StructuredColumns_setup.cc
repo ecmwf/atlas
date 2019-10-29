@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <numeric>
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/FieldSet.h"
@@ -23,8 +24,10 @@
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
@@ -73,6 +76,7 @@ public:
 
     const_iterator begin() const { return set.begin(); }
     const_iterator end() const { return set.end(); }
+    const GridPoint& operator[](idx_t i) { return set[i]; }
 };
 
 }  // namespace
@@ -99,16 +103,82 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
     j_end_   = std::numeric_limits<idx_t>::min();
     i_begin_.resize( grid_->ny(), std::numeric_limits<idx_t>::max() );
     i_end_.resize( grid_->ny(), std::numeric_limits<idx_t>::min() );
-    idx_t c( 0 );
     idx_t owned( 0 );
-    for ( idx_t j = 0; j < grid_->ny(); ++j ) {
-        for ( idx_t i = 0; i < grid_->nx( j ); ++i, ++c ) {
-            if ( distribution.partition( c ) == mpi_rank ) {
-                j_begin_    = std::min<idx_t>( j_begin_, j );
-                j_end_      = std::max<idx_t>( j_end_, j + 1 );
-                i_begin_[j] = std::min<idx_t>( i_begin_[j], i );
-                i_end_[j]   = std::max<idx_t>( i_end_[j], i + 1 );
-                ++owned;
+
+    ATLAS_TRACE_SCOPE("Compute bounds owned") {
+        size_t num_threads = atlas_omp_get_max_threads();
+        if( num_threads > 1 ) {
+            std::vector<idx_t> thread_reduce_j_begin(num_threads, std::numeric_limits<idx_t>::max());
+            std::vector<idx_t> thread_reduce_j_end(num_threads, std::numeric_limits<idx_t>::min());
+            std::vector<std::vector<idx_t>> thread_reduce_i_begin( grid_->ny(), std::vector<idx_t>(num_threads, std::numeric_limits<idx_t>::max()) );
+            std::vector<std::vector<idx_t>> thread_reduce_i_end( grid_->ny(), std::vector<idx_t>(num_threads, std::numeric_limits<idx_t>::min()) );
+            std::vector<idx_t> thread_reduce_owned(num_threads,0);
+            atlas_omp_parallel {
+                const size_t thread_num =  atlas_omp_get_thread_num();
+                const size_t begin = thread_num * size_t(grid_->size())/num_threads;
+                const size_t end = (thread_num+1) * size_t(grid_->size())/num_threads;
+                idx_t thread_j_begin = 0;
+                std::vector<idx_t> thread_i_begin(grid_->ny());
+                std::vector<idx_t> thread_i_end(grid_->ny());
+                size_t n = 0;
+                for( idx_t j = 0; j < grid_->ny(); ++j ) {
+                    if( n + grid_->nx(j) > begin ) {
+                        thread_j_begin = j;
+                        thread_i_begin[j] = begin - n;
+                        break;
+                    }
+                    n += grid_->nx(j);
+                }
+                idx_t thread_j_end;
+                for( idx_t j = thread_j_begin; j < grid_->ny(); ++j ) {
+                    idx_t i_end = end - n;
+                    if( j > thread_j_begin ) {
+                        thread_i_begin[j] = 0;
+                    }
+                    if( i_end > grid_->nx(j) ) {
+                        thread_i_end[j] = grid_->nx(j);
+                        n += grid_->nx(j);
+                    }
+                    else {
+                        thread_i_end[j] = i_end;
+                        thread_j_end = j+1;
+                        break;
+                    }
+                }
+                size_t c = begin;
+                for ( idx_t j = thread_j_begin; j < thread_j_end; ++j ) {
+                    for ( idx_t i = thread_i_begin[j]; i < thread_i_end[j]; ++i, ++c ) {
+                        if ( distribution.partition( c ) == mpi_rank ) {
+                            thread_reduce_j_begin[thread_num]    = std::min<idx_t>( thread_reduce_j_begin[thread_num], j );
+                            thread_reduce_j_end[thread_num]      = std::max<idx_t>( thread_reduce_j_end[thread_num], j + 1 );
+                            thread_reduce_i_begin[j][thread_num] = std::min<idx_t>( thread_reduce_i_begin[j][thread_num], i );
+                            thread_reduce_i_end[j][thread_num]   = std::max<idx_t>( thread_reduce_i_end[j][thread_num], i + 1 );
+                            ++thread_reduce_owned[thread_num];
+                        }
+                    }
+                }
+                ATLAS_ASSERT( c == end );
+            }
+            owned = std::accumulate(thread_reduce_owned.begin(),thread_reduce_owned.end(),0);
+            j_begin_ = *std::min_element(thread_reduce_j_begin.begin(),thread_reduce_j_begin.end());
+            j_end_   = *std::max_element(thread_reduce_j_end.begin(),thread_reduce_j_end.end());
+            for( idx_t j=j_begin_; j<j_end_; ++j ) {
+                i_begin_[j] = *std::min_element(thread_reduce_i_begin[j].begin(),thread_reduce_i_begin[j].end());
+                i_end_[j]   = *std::max_element(thread_reduce_i_end[j].begin(),thread_reduce_i_end[j].end());
+            }
+        }
+        else { // single-threaded
+            idx_t c( 0 );
+            for ( idx_t j = 0; j < grid_->ny(); ++j ) {
+                for ( idx_t i = 0; i < grid_->nx( j ); ++i, ++c ) {
+                    if ( distribution.partition( c ) == mpi_rank ) {
+                        j_begin_    = std::min<idx_t>( j_begin_, j );
+                        j_end_      = std::max<idx_t>( j_end_, j + 1 );
+                        i_begin_[j] = std::min<idx_t>( i_begin_[j], i );
+                        i_end_[j]   = std::max<idx_t>( i_end_[j], i + 1 );
+                        ++owned;
+                    }
+                }
             }
         }
     }
@@ -134,6 +204,16 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         return i;
     };
 
+    auto compute_i_fast = []( idx_t i, const idx_t nx ) -> idx_t {
+        while ( i >= nx ) {
+            i -= nx;
+        }
+        while ( i < 0 ) {
+            i += nx;
+        }
+        return i;
+    };
+
     std::function<idx_t( idx_t )> compute_j;
     compute_j = [this, &compute_j]( idx_t j ) -> idx_t {
         if ( j < 0 ) {
@@ -150,13 +230,18 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
     };
 
     auto compute_x = [this, &compute_i, &compute_j]( idx_t i, idx_t j ) -> double {
-        idx_t ii, jj;
-        double x;
-        jj             = compute_j( j );
-        ii             = compute_i( i, jj );  // guaranteed between 0 and nx(jj)
-        const idx_t nx = grid_->nx( jj );
+        const idx_t jj = compute_j( j );
+        const idx_t ii = compute_i( i, jj );  // guaranteed between 0 and nx(jj)
+        const idx_t nx = grid_->nx(jj);
         const double a = ( ii - i ) / nx;
-        x              = grid_->x( ii, jj ) - a * grid_->x( nx, jj );
+        const double x = grid_->x( ii, jj ) - a * grid_->x( nx, jj );
+        return x;
+    };
+
+    auto compute_x_fast = [this, &compute_i_fast]( idx_t i, idx_t jj, idx_t nx ) -> double {
+        const idx_t ii             = compute_i_fast( i, nx );  // guaranteed between 0 and nx(jj)
+        const double a = ( ii - i ) / nx;
+        const double x              = grid_->x( ii, jj ) - a * grid_->x( nx, jj );
         return x;
     };
 
@@ -204,8 +289,8 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         return p;
     };
 
-    if ( atlas::Library::instance().debug() ) {
-        ATLAS_TRACE_SCOPE( "Load imbalance" ) { comm.barrier(); }
+    ATLAS_TRACE_SCOPE("Load imbalance") { 
+        mpi::comm().barrier();
     }
 
     GridPointSet gridpoints;
@@ -216,13 +301,13 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         idx_t jmin = std::numeric_limits<idx_t>::max();
         idx_t jmax = -std::numeric_limits<idx_t>::max();
 
-        ATLAS_TRACE_SCOPE( "Compute bounds" ) {
+        ATLAS_TRACE_SCOPE( "Compute bounds halo" ) {
             for ( idx_t j = j_begin_halo_; j < j_end_halo_; ++j ) {
                 i_begin_halo_( j ) = imin;
                 i_end_halo_( j )   = imax;
             }
             double eps = 1.e-12;
-            for ( idx_t j = j_begin_; j < j_end_; ++j ) {
+            atlas_omp_parallel_for ( idx_t j = j_begin_; j < j_end_; ++j ) {
                 for ( idx_t i : {i_begin_[j], i_end_[j] - 1} ) {
                     // Following line only, increases periodic halo on the east side by 1
                     if ( periodic_points && i == grid_->nx( j ) - 1 ) {
@@ -233,7 +318,9 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                     double x_next = grid_->x( i + 1, j );
                     double x_prev = grid_->x( i - 1, j );
                     for ( idx_t jj = j - halo; jj <= j + halo; ++jj ) {
-                        idx_t last = grid_->nx( compute_j( jj ) ) - 1;
+                        idx_t jjj = compute_j( jj );
+                        idx_t nx_jjj = grid_->nx( jjj );
+                        idx_t last = grid_->nx( jjj ) - 1;
                         if ( i == grid_->nx( j ) ) {
                             ++last;
                         }
@@ -251,7 +338,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                         // ii-halo       ii
 
                         idx_t ii = -halo;
-                        while ( compute_x( ii, jj ) < x - eps ) {
+                        while ( compute_x_fast( ii, jjj, nx_jjj ) < x - eps ) {
                             ii++;
                         }
 
@@ -259,7 +346,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                         // This while should not have to be there, but is here because of
                         // the MatchingMeshDomainDecomposition algorithm. that may lead to points
                         // left of the point ii.
-                        while ( compute_x( ii - 1, jj ) > x_prev + eps ) {
+                        while ( compute_x_fast( ii - 1, jjj, nx_jjj ) > x_prev + eps ) {
                             --ii;
                         }
 
@@ -272,7 +359,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                         // ii-halo            iii       iii+halo
                         //
                         idx_t iii = ii;
-                        while ( compute_x( iii + 1, jj ) < x_next - eps ) {
+                        while ( compute_x_fast( iii + 1, jjj, nx_jjj ) < x_next - eps ) {
                             ++iii;
                         }
                         iii               = std::min( iii, last );
@@ -303,6 +390,8 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         gridpoints = GridPointSet{static_cast<size_t>( owned + extra_halo )};
 
         ATLAS_TRACE_SCOPE( "Assemble gridpoints" ) {
+
+
             for ( idx_t j = j_begin_; j < j_end_; ++j ) {
                 for ( idx_t i = i_begin_[j]; i < i_end_[j]; ++i ) {
                     gridpoints.insert( i, j );
@@ -336,9 +425,13 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         ATLAS_TRACE_SCOPE( "Fill in ij2gp " ) {
             ij2gp_.resize( {imin, imax}, {jmin, jmax} );
 
-            for ( const GridPoint& gp : gridpoints ) {
+            atlas_omp_parallel_for( idx_t n=0; n<gridpoints.size(); ++n ) {
+                const GridPoint& gp = gridpoints[n];
                 ij2gp_.set( gp.i, gp.j, gp.r );
             }
+        }
+        ATLAS_TRACE_SCOPE("Load imbalance") { 
+          mpi::comm().barrier();
         }
     }
 
@@ -358,7 +451,8 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         auto index_i    = array::make_indexview<idx_t, 1>( field_index_i_ );
         auto index_j    = array::make_indexview<idx_t, 1>( field_index_j_ );
 
-        for ( const GridPoint& gp : gridpoints ) {
+        atlas_omp_parallel_for( idx_t n=0; n<gridpoints.size(); ++n ) {
+            const GridPoint& gp = gridpoints[n];
             xy( gp.r, XX ) = compute_x( gp.i, gp.j );
             if ( gp.j >= 0 && gp.j < grid_->ny() ) {
                 xy( gp.r, YY ) = grid_->y( gp.j );
@@ -390,7 +484,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                 ghost( index( i, j ) ) = 1;
             }
         }
-        for ( idx_t j = j_begin_; j < j_end_; ++j ) {
+        atlas_omp_parallel_for ( idx_t j = j_begin_; j < j_end_; ++j ) {
             for ( idx_t i = i_begin_halo_( j ); i < i_begin_[j]; ++i ) {
                 ghost( index( i, j ) ) = 1;
             }

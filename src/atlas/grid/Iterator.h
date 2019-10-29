@@ -11,6 +11,7 @@
 #pragma once
 
 #include <memory>
+#include <iterator>
 
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/util/Point.h"
@@ -23,21 +24,28 @@ namespace grid {
 //---------------------------------------------------------------------------------------------------------------------
 
 class IteratorXY {
+    using difference_type = size_t;
 public:
     IteratorXY( detail::grid::Grid::IteratorXY* iterator ) : iterator_( iterator ) {}
 
     bool next( PointXY& xy ) { return iterator_->next( xy ); }
 
-    PointXY operator*() const { return iterator_->operator*(); }
+    const PointXY& operator*() const { return iterator_->operator*(); }
 
     const IteratorXY& operator++() {
         iterator_->operator++();
         return *this;
     }
 
-    bool operator==( const IteratorXY& other ) const { return iterator_->operator==( *other.iterator_ ); }
+    const IteratorXY& operator+=(difference_type distance) {
+        iterator_->operator+=(distance);
+        return *this;
+    }
 
+    bool operator==( const IteratorXY& other ) const { return iterator_->operator==( *other.iterator_ ); }
     bool operator!=( const IteratorXY& other ) const { return iterator_->operator!=( *other.iterator_ ); }
+    // bool operator<( const IteratorXY& other ) const { return iterator_->operator<( *other.iterator_ ); }
+    // bool operator>( const IteratorXY& other ) const { return iterator_->operator>( *other.iterator_ ); }
 
 private:
     std::unique_ptr<detail::grid::Grid::IteratorXY> iterator_;
@@ -80,6 +88,7 @@ public:
     IterateXY( const Grid& grid ) : grid_( grid ) {}
     iterator begin() const;
     iterator end() const;
+    void access( size_t i, PointXY& );
 
 private:
     const Grid& grid_;

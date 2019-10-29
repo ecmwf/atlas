@@ -13,6 +13,7 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <iterator>
 
 #include "atlas/domain/Domain.h"
 #include "atlas/library/config.h"
@@ -49,11 +50,14 @@ public:  // types
     class IteratorXY {
     public:
         using Predicate                                          = std::function<bool( long )>;
+        using difference_type = size_t;
         virtual bool next( PointXY& )                            = 0;
-        virtual const PointXY operator*() const                  = 0;
+        virtual const PointXY& operator*() const                 = 0;
         virtual const IteratorXY& operator++()                   = 0;
+        virtual const IteratorXY& operator+=(difference_type distance) = 0;
         virtual bool operator==( const IteratorXY& other ) const = 0;
         virtual bool operator!=( const IteratorXY& other ) const = 0;
+
         virtual ~IteratorXY() {}
     };
 

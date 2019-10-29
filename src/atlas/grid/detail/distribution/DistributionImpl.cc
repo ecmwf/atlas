@@ -9,6 +9,7 @@
  */
 
 #include <algorithm>
+#include <vector>
 
 #include "DistributionImpl.h"
 
@@ -16,6 +17,7 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/parallel/omp/omp.h"
 
 namespace atlas {
 namespace grid {
@@ -53,15 +55,47 @@ DistributionImpl::DistributionImpl( const Grid& grid, const Partitioner& partiti
     type_    = distribution_type( nb_partitions_, partitioner );
 }
 
-DistributionImpl::DistributionImpl( idx_t npts, int part[], int part0 ) {
+DistributionImpl::DistributionImpl(  int nb_partitions, idx_t npts, int part[], int part0 ) {
     part_.assign( part, part + npts );
-    std::set<int> partset( part_.begin(), part_.end() );
-    nb_partitions_ = static_cast<idx_t>( partset.size() );
+    if( nb_partitions == 0 ) {
+        std::set<int> partset( part_.begin(), part_.end() );
+        nb_partitions_ = static_cast<idx_t>( partset.size() );
+    }
+    else {
+        nb_partitions_ = nb_partitions;
+    }
     nb_pts_.resize( nb_partitions_, 0 );
     for ( idx_t j = 0, size = static_cast<idx_t>( part_.size() ); j < size; ++j ) {
         part_[j] -= part0;
         ++nb_pts_[part_[j]];
     }
+    max_pts_ = *std::max_element( nb_pts_.begin(), nb_pts_.end() );
+    min_pts_ = *std::min_element( nb_pts_.begin(), nb_pts_.end() );
+    type_    = distribution_type( nb_partitions_ );
+}
+
+DistributionImpl::DistributionImpl( int nb_partitions, std::vector<int>&& part ) :
+    part_( std::move(part) ),
+    nb_partitions_(nb_partitions),
+    nb_pts_( nb_partitions_, 0 ) {
+
+    size_t size = part_.size();
+    int num_threads = atlas_omp_get_max_threads();
+    std::vector< std::vector<int> > nb_pts_per_thread( num_threads, std::vector<int>(nb_partitions_) );
+    atlas_omp_parallel {
+        int thread = atlas_omp_get_thread_num();
+        auto& nb_pts = nb_pts_per_thread[thread];
+        atlas_omp_for ( size_t j = 0; j < size; ++j ) {
+           int p = part_[j];
+           ++nb_pts[p];
+        }
+    }
+    for( int thread=0; thread<num_threads; ++thread) {
+        for( int p=0; p<nb_partitions_; ++p) {
+            nb_pts_[p] += nb_pts_per_thread[thread][p];
+        }
+    }
+    
     max_pts_ = *std::max_element( nb_pts_.begin(), nb_pts_.end() );
     min_pts_ = *std::min_element( nb_pts_.begin(), nb_pts_.end() );
     type_    = distribution_type( nb_partitions_ );
@@ -83,7 +117,7 @@ void DistributionImpl::print( std::ostream& s ) const {
 
 
 DistributionImpl* atlas__GridDistribution__new( idx_t npts, int part[], int part0 ) {
-    return new DistributionImpl( npts, part, part0 );
+    return new DistributionImpl( 0, npts, part, part0 );
 }
 
 void atlas__GridDistribution__delete( DistributionImpl* This ) {

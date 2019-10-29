@@ -33,7 +33,9 @@ public:
 
     DistributionImpl( const Grid&, const Partitioner& );
 
-    DistributionImpl( idx_t npts, int partition[], int part0 = 0 );
+    DistributionImpl( int nb_partitions, idx_t npts, int partition[], int part0 = 0 );
+
+    DistributionImpl( int nb_partitions, std::vector<int>&& partition );
 
     virtual ~DistributionImpl();
 

@@ -39,7 +39,9 @@ public:
 
     Distribution( const Grid&, const Partitioner& );
 
-    Distribution( idx_t npts, int partition[], int part0 = 0 );
+    Distribution( int nb_partitions, idx_t npts, int partition[], int part0 = 0 );
+
+    Distribution( int nb_partitions, std::vector<int>&& partition );
 
     ~Distribution();
 

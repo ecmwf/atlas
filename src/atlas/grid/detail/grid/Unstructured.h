@@ -22,6 +22,7 @@
 
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/util/Point.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 class Mesh;
@@ -51,10 +52,15 @@ public:
             }
         }
 
-        virtual const PointXY operator*() const { return grid_.xy( n_ ); }
+        virtual const PointXY& operator*() const { return grid_.xy( n_ ); }
 
         virtual const Grid::IteratorXY& operator++() {
             ++n_;
+            return *this;
+        }
+
+        virtual const Grid::IteratorXY& operator+=(difference_type distance) {
+            n_ += distance;
             return *this;
         }
 
@@ -85,7 +91,7 @@ public:
 
         virtual bool next( PointXY& xy );
 
-        virtual const PointXY operator*() const { return grid_.xy( n_ ); }
+        virtual const PointXY& operator*() const { return grid_.xy( n_ ); }
 
         virtual const Grid::IteratorXY& operator++() {
             do {
@@ -95,6 +101,11 @@ public:
             } while ( not p_( n_ ) );
             return *this;
         }
+
+        virtual const Grid::IteratorXY& operator+=(difference_type distance) {
+            throw_Exception("Cannot do random-access for IteratorXYPredicated" ); 
+        }
+
 
         virtual bool operator==( const Grid::IteratorXY& other ) const {
             return n_ == static_cast<const IteratorXYPredicated&>( other ).n_;
@@ -179,7 +190,7 @@ public:  // methods
 
     virtual Spec spec() const override;
 
-    PointXY xy( idx_t n ) const { return ( *points_ )[n]; }
+    const PointXY& xy( idx_t n ) const { return ( *points_ )[n]; }
 
     PointLonLat lonlat( idx_t n ) const { return projection_.lonlat( ( *points_ )[n] ); }
 

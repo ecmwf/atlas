@@ -45,18 +45,25 @@ void StructuredColumns::create_remote_index() const {
             const int mpi_size           = int( comm.size() );
             const int mpi_rank           = int( comm.rank() );
 
-            auto p = array::make_view<int, 1>( this->partition() );
+            auto part = array::make_view<int, 1>( this->partition() );
 
-            std::set<int> others_set;
-            others_set.insert( mpi_rank );
+            std::vector<int> others_set(mpi_size,0);
+            others_set[ mpi_rank ] = 1;
             for ( idx_t i = size_owned_; i < size_halo_; ++i ) {
-                others_set.insert( p( i ) );
+                others_set[part(i)] = 1; // present
             }
-            std::vector<int> others( others_set.begin(), others_set.end() );
+            std::vector<int> others; others.reserve(mpi_size);
+            for( idx_t p=0; p<mpi_size; ++p ) {
+                if( others_set[p] ) {
+                    others.emplace_back(p);
+                }
+            }
 
             eckit::mpi::Buffer<int> recv_others( mpi_size );
 
-            comm.allGatherv( others.begin(), others.end(), recv_others );
+            ATLAS_TRACE_MPI( ALLGATHER ) {
+                comm.allGatherv( others.begin(), others.end(), recv_others );
+            }
 
             std::vector<idx_t> counts( recv_others.counts.begin(), recv_others.counts.end() );
             std::vector<idx_t> displs( recv_others.displs.begin(), recv_others.displs.end() );

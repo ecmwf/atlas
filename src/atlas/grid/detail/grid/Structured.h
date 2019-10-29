@@ -19,6 +19,7 @@
 #include "atlas/util/Object.h"
 #include "atlas/util/ObjectHandle.h"
 #include "atlas/util/Point.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
@@ -38,11 +39,15 @@ class Structured : public Grid {
 public:
     class IteratorXY : public Grid::IteratorXY {
     public:
-        IteratorXY( const Structured& grid, bool begin = true ) : grid_( grid ), i_( 0 ), j_( begin ? 0 : grid.ny() ) {}
+        IteratorXY( const Structured& grid, bool begin = true ) : grid_( grid ), i_( 0 ), j_( begin ? 0 : grid.ny() ) {
+            if( begin && grid_.size() ) {
+                grid_.xy(i_,j_,point_.data());
+            }
+        }
 
         virtual bool next( PointXY& xy ) {
             if ( j_ < grid_.ny() && i_ < grid_.nx( j_ ) ) {
-                xy = grid_.xy( i_++, j_ );
+                grid_.xy( i_++, j_, xy.data() );
 
                 if ( i_ == grid_.nx( j_ ) ) {
                     j_++;
@@ -53,7 +58,9 @@ public:
             return false;
         }
 
-        virtual const PointXY operator*() const { return grid_.xy( i_, j_ ); }
+        virtual const PointXY& operator*() const {
+            return point_;
+        }
 
         virtual const Grid::IteratorXY& operator++() {
             ++i_;
@@ -61,8 +68,26 @@ public:
                 ++j_;
                 i_ = 0;
             }
+            if( j_ < grid_.ny() ) {
+                grid_.xy( i_, j_, point_.data() );
+            }
             return *this;
         }
+
+        virtual const IteratorXY& operator+=(difference_type distance) {
+            while( distance >= (grid_.nx(j_)-i_) ) {
+                distance -= (grid_.nx(j_) - i_ );
+                ++j_;
+                i_ = 0;
+            }
+            i_ += distance;
+            if( j_ < grid_.ny() ) {
+                ATLAS_ASSERT( i_ < grid_.nx(j_) );
+                grid_.xy( i_, j_, point_.data() );
+            }
+            return *this;
+        }
+
 
         virtual bool operator==( const Grid::IteratorXY& other ) const {
             return j_ == static_cast<const IteratorXY&>( other ).j_ && i_ == static_cast<const IteratorXY&>( other ).i_;
@@ -76,6 +101,7 @@ public:
         const Structured& grid_;
         idx_t i_;
         idx_t j_;
+        PointXY point_;
     };
 
     class IteratorXYPredicated : public Grid::IteratorXY {
@@ -101,7 +127,9 @@ public:
 
         virtual bool next( PointXY& xy );
 
-        virtual const PointXY operator*() const { return grid_.xy( i_, j_ ); }
+        virtual const PointXY& operator*() const {
+            return point_;
+        }
 
         virtual const Grid::IteratorXY& operator++() {
             do {
@@ -114,7 +142,12 @@ public:
                 if ( n_ == size_ )
                     return *this;
             } while ( not p_( n_ ) );
+            grid_.xy( i_, j_, point_.data() );
             return *this;
+        }
+
+        virtual const Grid::IteratorXY& operator+=(difference_type distance) {
+            throw_Exception("Cannot do random-access for IteratorXYPredicated" ); 
         }
 
         virtual bool operator==( const Grid::IteratorXY& other ) const {
@@ -134,6 +167,7 @@ public:
         idx_t j_;
         idx_t n_;
         idx_t size_;
+        PointXY point_;
     };
 
     class IteratorLonLat : public Grid::IteratorLonLat {
@@ -145,7 +179,7 @@ public:
 
         virtual bool next( PointLonLat& lonlat ) {
             if ( j_ < grid_.ny() && i_ < grid_.nx( j_ ) ) {
-                lonlat = grid_.lonlat( i_++, j_ );
+                grid_.lonlat( i_++, j_, lonlat.data() );
 
                 if ( i_ == grid_.nx( j_ ) ) {
                     j_++;

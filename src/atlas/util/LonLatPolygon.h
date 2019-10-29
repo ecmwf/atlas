@@ -25,7 +25,7 @@ public:
 
     LonLatPolygon( const Polygon&, const atlas::Field& lonlat, bool removeAlignedPoints = true );
 
-    LonLatPolygon( const std::vector<PointLonLat>& points );
+    LonLatPolygon( const std::vector<PointLonLat>& points, bool removeAlignedPoints = true  );
 
     // -- Overridden methods
 
