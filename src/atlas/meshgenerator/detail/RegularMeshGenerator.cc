@@ -159,7 +159,7 @@ void RegularMeshGenerator::generate( const Grid& grid, const grid::Distribution&
     generate_mesh( rg, distribution, mesh );
 }
 
-void RegularMeshGenerator::generate_mesh( const RegularGrid& rg, const std::vector<int>& parts,
+void RegularMeshGenerator::generate_mesh( const RegularGrid& rg, const grid::Distribution::partition_t& parts,
                                           // const Region& region,
                                           Mesh& mesh ) const {
     int mypart = options.get<size_t>( "part" );

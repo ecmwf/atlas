@@ -23,6 +23,7 @@ class Parametrisation;
 namespace atlas {
 class RegularGrid;
 class Mesh;
+template< typename T > class vector;
 }  // namespace atlas
 
 namespace atlas {
@@ -50,7 +51,7 @@ private:
 
     void configure_defaults();
 
-    void generate_mesh( const RegularGrid&, const std::vector<int>& parts, Mesh& m ) const;
+    void generate_mesh( const RegularGrid&, const atlas::vector<int>& parts, Mesh& m ) const;
 
 private:
     util::Metadata options;

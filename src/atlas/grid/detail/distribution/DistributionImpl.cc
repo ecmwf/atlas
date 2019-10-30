@@ -42,8 +42,8 @@ DistributionImpl::DistributionImpl( const Grid& grid ) :
     min_pts_( grid.size() ),
     type_( distribution_type( nb_partitions_ ) ) {}
 
-DistributionImpl::DistributionImpl( const Grid& grid, const Partitioner& partitioner ) {
-    part_.resize( grid.size() );
+DistributionImpl::DistributionImpl( const Grid& grid, const Partitioner& partitioner ) :
+    part_( grid.size() ) {
     partitioner.partition( grid, part_.data() );
     nb_partitions_ = partitioner.nb_partitions();
     nb_pts_.resize( nb_partitions_, 0 );
@@ -74,7 +74,7 @@ DistributionImpl::DistributionImpl(  int nb_partitions, idx_t npts, int part[], 
     type_    = distribution_type( nb_partitions_ );
 }
 
-DistributionImpl::DistributionImpl( int nb_partitions, std::vector<int>&& part ) :
+DistributionImpl::DistributionImpl( int nb_partitions, partition_t&& part ) :
     part_( std::move(part) ),
     nb_partitions_(nb_partitions),
     nb_pts_( nb_partitions_, 0 ) {

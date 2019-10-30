@@ -233,7 +233,7 @@ void StructuredMeshGenerator::generate( const Grid& grid, const grid::Distributi
 // show distribution
 #if DEBUG_OUTPUT
     int inode              = 0;
-    std::vector<int> parts = distribution;
+    atlas::vector<int> parts = distribution;
     Log::info() << "Partition : " << std::endl;
     for ( size_t ilat = 0; ilat < rg.ny(); ilat++ ) {
         for ( size_t ilon = 0; ilon < rg.nx( ilat ); ilon++ ) {
@@ -253,7 +253,7 @@ void StructuredMeshGenerator::generate( const Grid& grid, const grid::Distributi
     generate_mesh( rg, distribution, region, mesh );
 }
 
-void StructuredMeshGenerator::generate_region( const StructuredGrid& rg, const std::vector<int>& parts, int mypart,
+void StructuredMeshGenerator::generate_region( const StructuredGrid& rg, const atlas::vector<int>& parts, int mypart,
                                                Region& region ) const {
     ATLAS_TRACE();
 
@@ -783,7 +783,7 @@ struct GhostNode {
 };
 }  // namespace
 
-void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const std::vector<int>& parts,
+void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atlas::vector<int>& parts,
                                              const Region& region, Mesh& mesh ) const {
     ATLAS_TRACE();
 

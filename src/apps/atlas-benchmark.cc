@@ -160,8 +160,8 @@ private:
     Field scalar_field;
     Field grad_field;
 
-    vector<idx_t> pole_edges;
-    vector<bool> is_ghost;
+    std::vector<idx_t> pole_edges;
+    std::vector<bool> is_ghost;
 
     idx_t nnodes;
     idx_t nedges;
@@ -386,7 +386,7 @@ void AtlasBenchmark::setup() {
     auto edge_flags   = array::make_view<int, 1>( mesh.edges().flags() );
     auto is_pole_edge = [&]( size_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
 
-    vector<idx_t> tmp( nedges );
+    std::vector<idx_t> tmp( nedges );
     int c( 0 );
     for ( idx_t jedge = 0; jedge < nedges; ++jedge ) {
         if ( is_pole_edge( jedge ) ) {

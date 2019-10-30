@@ -119,7 +119,7 @@ grid::Distribution distribution( Grid& grid, FunctionSpace& src ) {
     
     int rank = mpi::comm().rank();
     util::LonLatPolygon poly{ p.lonlat() };
-    std::vector<int> part( grid.size() );
+    atlas::vector<int> part( grid.size() );
     {
         ATLAS_TRACE("point-in-polygon check for entire grid (" + std::to_string( grid.size() ) + " points)");
         size_t num_threads = atlas_omp_get_max_threads();
@@ -146,7 +146,7 @@ grid::Distribution distribution( Grid& grid, FunctionSpace& src ) {
     }
     {
         ATLAS_TRACE("all_reduce");
-        mpi::comm().allReduceInPlace(part.begin(),part.end(),eckit::mpi::max());
+        mpi::comm().allReduceInPlace(part.data(),part.size(),eckit::mpi::max());
     }
     grid::Distribution dist;
     {
