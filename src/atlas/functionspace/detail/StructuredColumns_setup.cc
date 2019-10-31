@@ -90,6 +90,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
     }
     const eckit::mpi::Comm& comm = mpi::comm();
 
+    const double eps = 1.e-12;
 
     ny_                  = grid_->ny();
     north_pole_included_ = 90. - grid_->y( 0 ) == 0.;
@@ -245,6 +246,12 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         return x;
     };
 
+    auto compute_i_less_equal_x = [this, &compute_x_fast, &eps](const double& x, idx_t j, idx_t nx, idx_t halo ) -> idx_t {
+        const double dx = grid_->xspace().dx()[j];
+        idx_t i = std::floor((x+eps-grid_->xspace().xmin()[j])/dx);
+        return i;
+    };
+
     auto compute_y = [this, &compute_j]( idx_t j ) -> double {
         idx_t jj;
         double y;
@@ -306,8 +313,9 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                 i_begin_halo_( j ) = imin;
                 i_end_halo_( j )   = imax;
             }
-            double eps = 1.e-12;
-            atlas_omp_parallel_for ( idx_t j = j_begin_; j < j_end_; ++j ) {
+
+            // Following cannot be multithreaded in current form due to race-conditions related to index jj
+            for ( idx_t j = j_begin_; j < j_end_; ++j ) {
                 for ( idx_t i : {i_begin_[j], i_end_[j] - 1} ) {
                     // Following line only, increases periodic halo on the east side by 1
                     if ( periodic_points && i == grid_->nx( j ) - 1 ) {
@@ -337,10 +345,12 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                         //    |-----|-----|--+--|-----|
                         // ii-halo       ii
 
-                        idx_t ii = -halo;
-                        while ( compute_x_fast( ii, jjj, nx_jjj ) < x - eps ) {
-                            ii++;
-                        }
+                        // idx_t ii = -halo;
+                        // while ( compute_x_fast( ii, jjj, nx_jjj ) < x - eps ) {
+                        //     ii++;
+                        // }
+                        // Question: is following implementation reproducible with above original while loop?
+                        idx_t ii = compute_i_less_equal_x(x,jjj,nx_jjj,halo);
 
                         // ATLAS-186 workaround
                         // This while should not have to be there, but is here because of
@@ -352,7 +362,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
 
                         idx_t i_minus_halo = ii - halo;
 
-                        // Compute ii as index less-equal of x_next
+                        // Compute iii as index less-equal of x_next
                         //
                         //               x(i,j) x_next(i,j)
                         //   |-----|-----|-+---|-+---|-----|
