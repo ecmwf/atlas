@@ -83,7 +83,7 @@ public:
 
 
 void StructuredColumns::setup( const grid::Distribution& distribution, const eckit::Configuration& config ) {
-    ATLAS_TRACE( "Generating StructuredColumns..." );
+    ATLAS_TRACE( "Generating StructuredColumns" );
     bool periodic_points = config.getInt( "periodic_points", false );
     if ( not( *grid_ ) ) {
         throw_Exception( "Grid is not a grid::Structured type", Here() );
@@ -115,13 +115,13 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
             std::vector<std::vector<idx_t>> thread_reduce_i_end( grid_->ny(), std::vector<idx_t>(num_threads, std::numeric_limits<idx_t>::min()) );
             std::vector<idx_t> thread_reduce_owned(num_threads,0);
             atlas_omp_parallel {
-                const size_t thread_num =  atlas_omp_get_thread_num();
-                const size_t begin = thread_num * size_t(grid_->size())/num_threads;
-                const size_t end = (thread_num+1) * size_t(grid_->size())/num_threads;
+                const idx_t thread_num =  atlas_omp_get_thread_num();
+                const idx_t begin = thread_num * size_t(grid_->size())/num_threads;
+                const idx_t end = (thread_num+1) * size_t(grid_->size())/num_threads;
                 idx_t thread_j_begin = 0;
                 std::vector<idx_t> thread_i_begin(grid_->ny());
                 std::vector<idx_t> thread_i_end(grid_->ny());
-                size_t n = 0;
+                idx_t n = 0;
                 for( idx_t j = 0; j < grid_->ny(); ++j ) {
                     if( n + grid_->nx(j) > begin ) {
                         thread_j_begin = j;
@@ -146,7 +146,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                         break;
                     }
                 }
-                size_t c = begin;
+                idx_t c = begin;
                 for ( idx_t j = thread_j_begin; j < thread_j_end; ++j ) {
                     for ( idx_t i = thread_i_begin[j]; i < thread_i_end[j]; ++i, ++c ) {
                         if ( distribution.partition( c ) == mpi_rank ) {
@@ -302,7 +302,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
 
     GridPointSet gridpoints;
 
-    ATLAS_TRACE_SCOPE( "Compute mapping ..." ) {
+    ATLAS_TRACE_SCOPE( "Compute mapping" ) {
         idx_t imin = std::numeric_limits<idx_t>::max();
         idx_t imax = -std::numeric_limits<idx_t>::max();
         idx_t jmin = std::numeric_limits<idx_t>::max();

@@ -114,6 +114,11 @@ double vortex_rollup( double lon, double lat, double t ) {
 };
 
 grid::Distribution distribution( Grid& grid, FunctionSpace& src ) {
+        {
+            ATLAS_TRACE_SCOPE("Load imbalance") { 
+               mpi::comm().barrier();
+            }
+        }
     ATLAS_TRACE("Computing distribution from source");
     functionspace::detail::PartitionPolygon p(*src.get(),0);
     
@@ -123,12 +128,14 @@ grid::Distribution distribution( Grid& grid, FunctionSpace& src ) {
     {
         ATLAS_TRACE("point-in-polygon check for entire grid (" + std::to_string( grid.size() ) + " points)");
         size_t num_threads = atlas_omp_get_max_threads();
-        atlas_omp_parallel {
-            const size_t thread_num =  atlas_omp_get_thread_num();
-            const size_t begin = thread_num * size_t(grid.size())/num_threads;
-            const size_t end = (thread_num+1) * size_t(grid.size())/num_threads;
+        size_t chunk_size = grid.size()/(1000*num_threads);
+        size_t chunks = num_threads == 1 ? 1 : std::max( size_t(1),size_t(grid.size())/chunk_size);
+        atlas_omp_pragma(omp parallel for schedule(dynamic,1))
+        for( size_t chunk=0; chunk < chunks; ++chunk) {
+            const size_t begin = chunk * size_t(grid.size())/chunks;
+            const size_t end = (chunk+1) * size_t(grid.size())/chunks;
             auto it = grid.xy().begin();
-            it += thread_num * grid.size()/num_threads;
+            it += chunk * grid.size()/chunks;
             for( size_t n=begin ; n<end; ++n ) {
                 if( poly.contains(*it) ) {
                     part[n] = rank;

@@ -97,6 +97,29 @@ public:
     struct NodeInt {
         int x, y;
         int n;
+        bool operator!=(const NodeInt& other) const {
+            return n != other.n;
+        }
+        bool operator==(const NodeInt& other) const {
+            return n == other.n;
+        }
+        void swap( NodeInt& other ) {
+            int tmp;
+            tmp = other.n;
+            other.n = n;
+            n = tmp;
+            tmp = other.x;
+            other.x = x;
+            x = tmp;
+            tmp = other.y;
+            other.y = y;
+            y = tmp;
+        }
+        friend void swap(NodeInt& a, NodeInt& b) {
+            a.swap(b);
+        }
+
+        //operator double() { return double(n); }
     };
 
 private:

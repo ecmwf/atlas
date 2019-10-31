@@ -53,6 +53,10 @@ public:
     }
     const_iterator begin() const { return data_; }
     const_iterator end() const { return data_+size_; }
+    iterator begin() { return data_; }
+    iterator end() { return data_+size_; }
+    const_iterator cbegin() const { return data_; }
+    const_iterator cend() const { return data_+size_; }
 private:
     T* data_;
     idx_t size_;
