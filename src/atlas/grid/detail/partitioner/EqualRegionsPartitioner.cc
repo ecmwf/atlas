@@ -25,39 +25,161 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/MicroDeg.h"
+#include "atlas/util/detail/Debug.h"
+#include "atlas/util/Vector.h"
 
 
-#include "atlas/grid/detail/distribution/DistributionImpl.h"
 #include <omp.h>
+
 namespace atlas {
 namespace util {
 
+#if 0
+template<typename BidirIt, typename BlocksIt, typename Pred>
+void mergeBlocksRecursive( BidirIt begin, BidirIt end, BlocksIt blocks_begin, BlocksIt blocks_end,  Pred compare ) {
+//
+// #warning    assert that (end-begin) = *(blocks_end) - *(blocks_begin)
 
-template<typename BidirIt, typename Pred>
-void omp_sort( BidirIt begin, BidirIt end, Pred compare ) {
-    auto size = std::distance(begin,end);
+    auto blocks_size = std::distance(blocks_begin,blocks_end);
+    if( blocks_size == 1 ) {
+        // recursion done, go back out
+        return;
+    }
+    auto blocks_split = blocks_begin + blocks_size/2;
+    
+    auto block_begin = begin;
+    auto block_split = begin + (*blocks_split - *blocks_begin);
+    auto block_end   = begin + (*blocks_end   - *blocks_begin);
+    #pragma omp taskgroup
+    {
+        #pragma omp task shared(block_begin, block_split,blocks_begin,blocks_split)
+        mergeBlocksRecursive( block_begin, block_split, blocks_begin, blocks_split, compare);
+        #pragma omp task shared(block_split,block_end,blocks_split,blocks_end)
+        mergeBlocksRecursive( block_split, block_end, blocks_split, blocks_end, compare);
+        //#pragma omp taskyield
+    }
+    // #pragma omp critical
+    // {
+    //     Log::info() << rank_str() << "inplace_merge( " << *blocks_begin << " , " << *blocks_split << " , " << *blocks_end << " ); " << std::endl;
+    // }
+    std::inplace_merge( block_begin, block_split, block_end, compare);
+}
+#endif
 
-    auto get_block_edge = [size](decltype(size) block, decltype(size) blocks) {
-      return block * size / blocks;
-    };
 
+template<typename SortVector, typename BlocksVector, typename Pred>
+void mergeBlocksRecursive2( SortVector& vec, const BlocksVector& blocks, size_t begin, size_t end, Pred compare, int recursion ) {
 
-    int blocks = 0;
+    // #pragma omp critical
+    // {
+    //     std::cout <<  debug::rank_str() << recursion << " mergeBlocksRecursive2( " << begin << " , "  << end << " ); " << std::endl;
+    // }
+    if( end <= begin + 1 ) {
+        // recursion done, go back out
+        return;
+    }
+    size_t mid = (end+begin)/2;
+    #pragma omp taskgroup
+    {
+        #pragma omp task shared(vec,blocks)
+        mergeBlocksRecursive2( vec, blocks, begin, mid, compare, recursion+1 );
+
+        #pragma omp task shared(vec,blocks)
+        mergeBlocksRecursive2( vec, blocks, mid, end, compare, recursion+1 );
+
+        //#pragma omp taskyield
+    }
+    // #pragma omp critical
+    // {
+    //     std::cout <<  debug::rank_str() << recursion << "  inplace_merge( " << begin << " , " << mid << " , " << end << " ); " << std::endl;
+    // }
+    auto vec_begin = &vec[0];
+    std::inplace_merge( vec_begin + blocks[begin], vec_begin + blocks[mid], vec_begin + blocks[end], compare);
+}
+
+#if 0
+template<typename BidirIt, typename BlocksIt, typename Pred>
+void omp_merge_blocks( BidirIt begin, BidirIt end, BlocksIt blocks_begin, BlocksIt blocks_end, Pred compare ) {
     #pragma omp parallel
     {
-        blocks = omp_get_num_threads();
-        decltype(size) block = omp_get_thread_num();
-        decltype(size) start = get_block_edge( block, blocks );
-        decltype(size) finish = get_block_edge( block+1, blocks );
-        std::sort( begin+start, begin+finish, compare );
+        #pragma omp single
+        {
+            mergeBlocksRecursive( begin, end, blocks_begin, blocks_end, compare );
+        }
     }
-    for( int block = 0; block < blocks; ++block ){
-        std::inplace_merge( begin, begin + get_block_edge(block,blocks), begin + get_block_edge(block+1,blocks), compare );
+}
+#endif
+
+
+template<typename SortVector, typename BlocksVector, typename Pred>
+void omp_merge_blocks2( SortVector& vec, const BlocksVector& blocks, size_t begin, size_t end, Pred compare ) {
+    #pragma omp parallel
+    #pragma omp single
+    mergeBlocksRecursive2( vec, blocks, begin, end, compare, 0 );
+}
+
+#if 0
+template<typename BidirIt, typename Pred>
+void mergeSortRecursive( BidirIt begin, BidirIt end, Pred compare ) {
+    auto size = std::distance(begin,end);
+    if (size >= 32) {
+        auto mid = begin + size/2;
+        #pragma omp taskgroup
+        {
+            #pragma omp task untied if(size >= (1<<14))
+            mergeSortRecursive(begin, mid, compare);
+            //#pragma omp task untied if(size >= (1<<14))
+            mergeSortRecursive(mid, end, compare);
+            //#pragma omp taskyield
+        }
+        std::inplace_merge( begin, mid, end, compare);
+    }
+    else {
+        std::sort(begin,end, compare);
+    }
+}
+#endif
+
+template<typename SortVector, typename Pred>
+void mergeSortRecursive2( SortVector& vec, size_t begin, size_t end, Pred compare ) {
+    auto size = end - begin;
+    if (size >= 256) {
+        auto mid = begin + size/2;
+        #pragma omp taskgroup
+        {
+            #pragma omp task shared(vec) untied if(size >= (1<<15))
+            mergeSortRecursive2(vec, begin, mid, compare);
+            #pragma omp task shared(vec) untied if(size >= (1<<15))
+            mergeSortRecursive2(vec, mid, end, compare);
+            //#pragma omp taskyield
+        }
+        auto vec_begin = &vec[0];
+        std::inplace_merge( vec_begin+begin, vec_begin+mid, vec_begin+end, compare);
+    }
+    else {
+        auto vec_begin = &vec[0];
+        std::sort(vec_begin+begin,vec_begin+end, compare);
     }
 }
 
+#if 0
+template<typename BidirIt, typename Pred>
+void omp_sort( BidirIt begin, BidirIt end, Pred compare ) {
+    #pragma omp parallel
+    #pragma omp single
+    mergeSortRecursive( begin, end, compare );
 }
+#endif
+
+template<typename SortVector, typename Pred>
+void omp_sort2( SortVector& vec, size_t begin, size_t end, Pred compare ) {
+    #pragma omp parallel
+    #pragma omp single
+    mergeSortRecursive2( vec, begin, end, compare );
 }
+
+} // namespace util
+} // namespace atlas
 
 using atlas::util::microdeg;
 
@@ -590,7 +712,7 @@ void EqualRegionsPartitioner::partition( int nb_nodes, NodeInt nodes[], int part
 
 void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
     if ( N_ == 1 ) {  // trivial solution, so much faster
-        for ( idx_t j = 0; j < grid.size(); ++j ) {
+        atlas_omp_parallel_for ( idx_t j = 0; j < grid.size(); ++j ) {
             part[j] = 0;
         }
     }
@@ -684,6 +806,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
             }
         }
         else {
+            #if 0
             ATLAS_TRACE( "sort all" );
             std::vector<eckit::mpi::Request> requests;
 
@@ -736,8 +859,9 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                         }
                     }
                     ATLAS_TRACE_SCOPE( "sort one bit" ) {
-                        util::omp_sort( w_nodes.begin(), w_nodes.end(), compare_NS_WE );
-                        // std::sort( w_nodes.begin(), w_nodes.end(), compare_NS_WE );
+                        //util::omp_sort( w_nodes.begin(), w_nodes.end(), compare_NS_WE );
+                        util::omp_sort2( w_nodes, 0, w_size, compare_NS_WE );
+                        //std::sort( w_nodes.begin(), w_nodes.end(), compare_NS_WE );
                     }
                     ATLAS_TRACE_SCOPE( "send to rank0" ) {
                         ATLAS_ASSERT( valid_mpi_size(w_size * 3) );
@@ -767,6 +891,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                 ATLAS_ASSERT( valid_mpi_size(grid.size() * 3) );
                 comm.broadcast( nodes_buffer, grid.size() * 3, /* root= */ 0 );
             }
+            #endif
         }  // sort all
 
         /*
@@ -786,26 +911,28 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
             std::vector<size_t> count;
             count.reserve( nb_parts );
             std::vector<size_t> displs;
-            displs.reserve( nb_parts );
+            displs.reserve( nb_parts+1 );
             std::vector<size_t> b_count;
             b_count.reserve( nb_bands() );
             std::vector<size_t> b_displs;
-            b_displs.reserve( nb_bands() );
+            b_displs.reserve( nb_bands()+1 );
 
             {
                 size_t end = 0;
                 for ( int band = 0; band < nb_bands(); ++band ) {
-                    b_displs.push_back( end );
+                    b_displs.emplace_back( end );
                     size_t b_size( 0 );
                     for ( int p = 0; p < nb_regions( band ); ++p ) {
-                        size_t w_size = chunk_size + ( remainder-- > 0 ? 1 : 0 );
-                        displs.push_back( end );
-                        count.push_back( w_size );
+                        size_t w_size = chunk_size + ( remainder-- > 0 ? size_t(1) : size_t(0) );
+                        displs.emplace_back( end );
+                        count.emplace_back( w_size );
                         end += w_size;
                         b_size += w_size;
                     }
-                    b_count.push_back( b_size );
+                    b_count.emplace_back( b_size );
                 }
+                displs.emplace_back(end);
+                b_displs.emplace_back(end);
             }
 
             int w( 0 );
@@ -827,14 +954,17 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                         }
                     }
                     if ( work_rank == mpi_rank ) {
-                        ATLAS_TRACE_SCOPE( "sort one bit" ) {
-                            atlas::util::omp_sort(  nodes.data() + w_begin, nodes.data() + w_end, compare_WE_NS );
+                        ATLAS_TRACE_SCOPE( "sort bit of band on each MPI rank" ) {
+                            //atlas::util::omp_sort(  nodes.data() + w_begin, nodes.data() + w_end, compare_WE_NS );
+                            atlas::util::omp_sort2( nodes, w_begin, w_end, compare_WE_NS );
                             //std::sort( nodes.data() + w_begin, nodes.data() + w_end, compare_WE_NS );
                         }
                         if ( mpi_rank != w0_work_rank ) {
-                            ATLAS_ASSERT( valid_mpi_size(w_size * 3) );
-                            comm.send( nodes_buffer + w_begin * 3, w_size * 3,
-                                       /* dest= */ w0_work_rank, /* tag= */ 0 );
+                            ATLAS_TRACE_SCOPE( "send bit of band to band leader "+std::to_string(w0_work_rank) ) {
+                                ATLAS_ASSERT( valid_mpi_size(w_size * 3) );
+                                comm.send( nodes_buffer + w_begin * 3, w_size * 3,
+                                           /* dest= */ w0_work_rank, /* tag= */ 0 );
+                            }
                         }
                     }
                     ++w;
@@ -846,45 +976,101 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                 }
             }
             requests.clear();
-            w = 0;
-            ATLAS_TRACE_SCOPE("merge bits")
-            for ( int band = 0; band < nb_bands(); ++band ) {
-                int w0           = w;
-                size_t w0_begin  = b_displs[band];
-                size_t w0_size   = b_count[band];
-                int w0_work_rank = std::min( w0, mpi_size - 1 );
+            std::vector<int> w0_band(nb_bands());
+            for ( int band = 0, w=0; band < nb_bands(); ++band ) {
+                w0_band[band] = w;
+                w += nb_regions(band);
+            }
 
-                for ( int p = 0; p < nb_regions( band ); ++p ) {
-                    size_t w_begin = displs[w];
-                    size_t w_size  = count[w];
-                    size_t w_end   = w_begin + w_size;
-                    if ( w != w0 && mpi_rank == w0_work_rank ) {
-                        ATLAS_TRACE( "merge sort" );
-                        std::inplace_merge( nodes.begin() + w0_begin, nodes.begin() + w_begin, nodes.begin() + w_end,
-                                            compare_WE_NS );
-                    }
-                    ++w;
-                }
-                if ( mpi_rank == 0 ) {
-                    if ( mpi_rank != w0_work_rank ) {
-                        ATLAS_ASSERT( valid_mpi_size(w0_size * 3) );
-                        requests.push_back( comm.iReceive( nodes_buffer + w0_begin * 3, w0_size * 3,
-                                                           /* source= */ w0_work_rank, /* tag= */ 0 ) );
-                    }
-                }
+            for ( int band = 0; band < nb_bands(); ++band ) {
+                int w0           = w0_band[band];
+                int w0_work_rank = std::min( w0, mpi_size - 1 );
                 if ( mpi_rank == w0_work_rank ) {
-                    if ( mpi_rank != 0 ) {
-                        ATLAS_ASSERT( valid_mpi_size(w0_size * 3) );
-                        comm.send( nodes_buffer + w0_begin * 3, w0_size * 3, /* dest= */ 0,
-                                   /* tag= */ 0 );
+                    auto nodes_band_begin = nodes.begin() + b_displs[band];
+                    auto nodes_band_end   = nodes_band_begin + b_count[band];
+                    auto blocks_begin = displs.begin()+w0;
+                    auto blocks_end = blocks_begin+nb_regions(band);
+                    Log::info() << "merge blocks: " ; 
+                    for( idx_t j=0; j<nb_regions(band); ++j ) {
+                        Log::info() <<  w0+j << " ";
+                    }
+                    Log::info() << std::endl;
+                    ATLAS_TRACE_SCOPE("band leader merging bits for band "+std::to_string(band)) {
+                        //atlas::util::omp_merge_blocks( nodes.begin(), nodes.end(), blocks_begin, blocks_end, compare_WE_NS );
+                        atlas::util::omp_merge_blocks2( nodes, displs, w0, w0+nb_regions(band) , compare_WE_NS );
                     }
                 }
             }
-            ATLAS_TRACE_MPI( WAIT ) {
-                for ( auto request : requests ) {
-                    comm.wait( request );
+
+
+#if 0
+                for ( int band = 0; band < nb_bands(); ++band ) {
+                    int w0                = w0_band[band];
+                    auto nodes_band_begin = nodes.begin() + b_displs[band];
+                    auto nodes_band_end   = nodes_band_begin + b_count[band];
+                    int w0_work_rank = std::min( w0, mpi_size - 1 );
+                    if ( mpi_rank == w0_work_rank ) {
+                        atlas::util::omp_sort( nodes_band_begin, nodes_band_end, compare_WE_NS );
+                    }
                 }
-            }
+#endif
+
+#if 0
+                #pragma omp parallel for schedule(dynamic,1)
+                for ( int band = 0; band < nb_bands(); ++band ) {
+                    int w0           = w0_band[band];
+                    size_t w0_begin  = b_displs[band];
+                    size_t w0_size   = b_count[band];
+                    int w0_work_rank = std::min( w0, mpi_size - 1 );
+
+                    for ( int p = 0, w = w0; p < nb_regions( band ); ++p ) {
+                        size_t w_begin = displs[w];
+                        size_t w_size  = count[w];
+                        size_t w_end   = w_begin + w_size;
+                        if ( w != w0 && mpi_rank == w0_work_rank ) {
+                            ATLAS_TRACE( "merge sort band "+std::to_string(band) );
+                            std::inplace_merge( nodes.begin() + w0_begin, nodes.begin() + w_begin, nodes.begin() + w_end,
+                                                compare_WE_NS );
+                        }
+                        ++w;
+                    }
+                }
+#endif
+            //}
+                for ( int band = 0; band < nb_bands(); ++band ) {
+                    int w0           = w0_band[band];
+                    size_t w0_begin  = b_displs[band];
+                    size_t w0_size   = b_count[band];
+                    int w0_work_rank = std::min( w0, mpi_size - 1 );
+
+                    if ( mpi_rank == 0 ) {
+                        if ( mpi_rank != w0_work_rank ) {
+                            ATLAS_ASSERT( valid_mpi_size(w0_size * 3) );
+                            requests.push_back( comm.iReceive( nodes_buffer + w0_begin * 3, w0_size * 3,
+                                                               /* source= */ w0_work_rank, /* tag= */ 0 ) );
+                        }
+                    }
+                    if ( mpi_rank == w0_work_rank ) {
+                        ATLAS_TRACE_SCOPE("send band to rank 0") {
+
+                            if ( mpi_rank != 0 ) {
+                                ATLAS_ASSERT( valid_mpi_size(w0_size * 3) );
+                                comm.send( nodes_buffer + w0_begin * 3, w0_size * 3, /* dest= */ 0,
+                                           /* tag= */ 0 );
+                            }
+                        }
+                    }
+                }
+                if( mpi_rank == 0 ) {
+                ATLAS_TRACE_SCOPE("rank 0 waiting for all bands to come in") {
+                    ATLAS_TRACE_MPI( WAIT ) {
+                        for ( auto request : requests ) {
+                            comm.wait( request );
+                        }
+                    }
+                }
+                }
+            
 
             /*
       Create list that tells in original node numbering which part the node

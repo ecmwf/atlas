@@ -26,6 +26,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/Vector.h"
 
 namespace atlas {
 namespace functionspace {
@@ -34,7 +35,7 @@ namespace detail {
 void StructuredColumns::create_remote_index() const {
     field_remote_index_ = Field( "remote_idx", array::make_datatype<idx_t>(), array::make_shape( size_halo_ ) );
     auto remote_idx     = array::make_view<idx_t, 1>( field_remote_index_ );
-    for ( idx_t n = 0; n < size_owned_; ++n ) {
+    atlas_omp_parallel_for ( idx_t n = 0; n < size_owned_; ++n ) {
         remote_idx( n ) = n;
     }
 
@@ -152,7 +153,7 @@ void StructuredColumns::create_remote_index() const {
             // TODO: using c++14 we can create a polymorphic lambda to avoid duplicated
             // code in the two branches of following if.
             if ( comm.size() == 1 ) {
-                std::vector<idx_t> g_to_r( size_owned_ + 1 );
+                atlas::vector<idx_t> g_to_r( size_owned_ + 1 );
 
                 ATLAS_TRACE_SCOPE( "g_to_r (using vector)" )
                 for ( idx_t j = 0; j < size_owned_; ++j ) {

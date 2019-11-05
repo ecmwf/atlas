@@ -22,6 +22,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatPolygon.h"
+#include "atlas/util/Vector.h"
 #include "atlas/parallel/omp/omp.h"
 
 

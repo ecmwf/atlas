@@ -146,17 +146,28 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                         break;
                     }
                 }
-                idx_t c = begin;
+                auto& __j_begin = thread_reduce_j_begin[thread_num];
+                auto& __j_end   = thread_reduce_j_end  [thread_num];
+                auto& __owned   = thread_reduce_owned  [thread_num];
+                idx_t c=begin;
+                const auto& partition = distribution.partition();
                 for ( idx_t j = thread_j_begin; j < thread_j_end; ++j ) {
+                    auto& __i_begin = thread_reduce_i_begin[j][thread_num];
+                    auto& __i_end   = thread_reduce_i_end  [j][thread_num];
+                    bool j_in_partition{ false };
                     for ( idx_t i = thread_i_begin[j]; i < thread_i_end[j]; ++i, ++c ) {
-                        if ( distribution.partition( c ) == mpi_rank ) {
-                            thread_reduce_j_begin[thread_num]    = std::min<idx_t>( thread_reduce_j_begin[thread_num], j );
-                            thread_reduce_j_end[thread_num]      = std::max<idx_t>( thread_reduce_j_end[thread_num], j + 1 );
-                            thread_reduce_i_begin[j][thread_num] = std::min<idx_t>( thread_reduce_i_begin[j][thread_num], i );
-                            thread_reduce_i_end[j][thread_num]   = std::max<idx_t>( thread_reduce_i_end[j][thread_num], i + 1 );
-                            ++thread_reduce_owned[thread_num];
+                        if ( partition[c] == mpi_rank ) {
+                            j_in_partition = true;
+                            __i_begin = std::min<idx_t>( __i_begin, i );
+                            __i_end   = std::max<idx_t>( __i_end, i + 1 );
+                            ++__owned;
                         }
                     }
+                    if( j_in_partition ) {
+                        __j_begin    = std::min<idx_t>( __j_begin, j );
+                        __j_end      = std::max<idx_t>( __j_end,   j + 1 );
+                    }
+
                 }
                 ATLAS_ASSERT( c == end );
             }
