@@ -23,6 +23,7 @@
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
+#include "atlas/parallel/omp/fill.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/ObjectHandle.h"
@@ -267,7 +268,7 @@ private:  // data
             j_max_    = j_range[1];
             j_stride_ = ( i_max_ - i_min_ + 1 );
             data_.resize( ( i_max_ - i_min_ + 1 ) * ( j_max_ - j_min_ + 1 ) );
-            atlas::omp_fill( data_.begin(), data_.end(), missing() + 1 );
+            atlas::omp::fill( data_.begin(), data_.end(), missing() + 1 );
         }
 
         atlas::vector<idx_t> data_;

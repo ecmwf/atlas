@@ -24,6 +24,7 @@
 #include "atlas/util/LonLatPolygon.h"
 #include "atlas/util/Vector.h"
 #include "atlas/parallel/omp/omp.h"
+#include "atlas/parallel/omp/fill.h"
 
 
 using namespace atlas;
@@ -120,7 +121,7 @@ grid::Distribution distribution( Grid& grid, FunctionSpace& src ) {
 
     if( mpi::comm().size() == 1 ) {
         // shortcut
-        omp_fill( part.begin(), part.end(), 0 );
+        omp::fill( part.begin(), part.end(), 0 );
     }
     else {
         functionspace::detail::PartitionPolygon p(*src.get(),0);

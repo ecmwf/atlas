@@ -50,6 +50,8 @@ parallel/mpi/mpi.cc
 parallel/mpi/mpi.h
 parallel/omp/omp.cc
 parallel/omp/omp.h
+parallel/omp/fill.h
+parallel/omp/sort.h
 )
 
 list( APPEND atlas_grid_srcs

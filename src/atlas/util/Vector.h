@@ -12,22 +12,8 @@
 
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/parallel/omp/omp.h"
 
 namespace atlas {
-
-template<typename BidirIt, typename T>
-void omp_fill( BidirIt begin, BidirIt end, const T& value ) {
-    auto size = std::distance(begin,end);
-    atlas_omp_parallel
-    {   
-        auto tid = atlas_omp_get_thread_num();
-        auto chunksize = size / atlas_omp_get_num_threads();
-        auto v_begin = begin + chunksize * tid;
-        auto v_end = (tid == atlas_omp_get_num_threads() -1) ? end : v_begin + chunksize;
-        std::fill(v_begin, v_end, value);
-    }
-}
 
 template< typename T >
 class vector {

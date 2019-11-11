@@ -90,7 +90,7 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
     atlas_omp_parallel_for( int jj = halo_begin; jj < parsize_; ++jj ) {
         if ( is_ghost( jj ) ) {
             idx_t p = part[jj];
-            #pragma omp critical
+            atlas_omp_critical
             {
                 ++recvcounts_[p];
                 ghost_points[nghost] = jj;
