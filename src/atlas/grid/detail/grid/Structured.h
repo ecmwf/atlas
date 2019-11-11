@@ -39,14 +39,14 @@ class Structured : public Grid {
 public:
     class IteratorXY : public Grid::IteratorXY {
     public:
-        IteratorXY( const Structured& grid, bool begin = true ) : grid_( grid ), i_( 0 ), j_( begin ? 0 : grid.ny() ) {
-            if( begin && grid_.size() ) {
+        IteratorXY( const Structured& grid, bool begin = true ) : grid_( grid ), ny_( grid_.ny() ), i_( 0 ), j_( begin ? 0 : ny_ ) {
+            if( j_ != ny_ && grid_.size() ) {
                 grid_.xy(i_,j_,point_.data());
             }
         }
 
         virtual bool next( PointXY& xy ) {
-            if ( j_ < grid_.ny() && i_ < grid_.nx( j_ ) ) {
+            if ( j_ < ny_ && i_ < grid_.nx( j_ ) ) {
                 grid_.xy( i_++, j_, xy.data() );
 
                 if ( i_ == grid_.nx( j_ ) ) {
@@ -68,9 +68,7 @@ public:
                 ++j_;
                 i_ = 0;
             }
-            if( j_ < grid_.ny() ) {
-                grid_.xy( i_, j_, point_.data() );
-            }
+            grid_.xy( i_, j_, point_.data() );
             return *this;
         }
 
@@ -81,10 +79,7 @@ public:
                 i_ = 0;
             }
             i_ += distance;
-            if( j_ < grid_.ny() ) {
-                ATLAS_ASSERT( i_ < grid_.nx(j_) );
-                grid_.xy( i_, j_, point_.data() );
-            }
+            grid_.xy( i_, j_, point_.data() );
             return *this;
         }
 
@@ -101,6 +96,7 @@ public:
         const Structured& grid_;
         idx_t i_;
         idx_t j_;
+        idx_t ny_;
         PointXY point_;
     };
 
