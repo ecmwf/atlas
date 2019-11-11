@@ -121,41 +121,49 @@ grid::Distribution distribution( Grid& grid, FunctionSpace& src ) {
             }
         }
     ATLAS_TRACE("Computing distribution from source");
-    functionspace::detail::PartitionPolygon p(*src.get(),0);
-    
-    int rank = mpi::comm().rank();
-    util::LonLatPolygon poly{ p.lonlat() };
     atlas::vector<int> part( grid.size() );
-    {
-        ATLAS_TRACE("point-in-polygon check for entire grid (" + std::to_string( grid.size() ) + " points)");
-        size_t num_threads = atlas_omp_get_max_threads();
-        size_t chunk_size = grid.size()/(1000*num_threads);
-        size_t chunks = num_threads == 1 ? 1 : std::max( size_t(1),size_t(grid.size())/chunk_size);
-        atlas_omp_pragma(omp parallel for schedule(dynamic,1))
-        for( size_t chunk=0; chunk < chunks; ++chunk) {
-            const size_t begin = chunk * size_t(grid.size())/chunks;
-            const size_t end = (chunk+1) * size_t(grid.size())/chunks;
-            auto it = grid.xy().begin();
-            it += chunk * grid.size()/chunks;
-            for( size_t n=begin ; n<end; ++n ) {
-                if( poly.contains(*it) ) {
-                    part[n] = rank;
+
+    if( mpi::comm().size() == 1 ) {
+        // shortcut
+        omp_fill( part.begin(), part.end(), 0 );
+    }
+    else {
+        functionspace::detail::PartitionPolygon p(*src.get(),0);
+    
+        int rank = mpi::comm().rank();
+        util::LonLatPolygon poly{ p.lonlat() };
+        {
+            ATLAS_TRACE("point-in-polygon check for entire grid (" + std::to_string( grid.size() ) + " points)");
+            size_t num_threads = atlas_omp_get_max_threads();
+            size_t chunk_size = grid.size()/(1000*num_threads);
+            size_t chunks = num_threads == 1 ? 1 : std::max( size_t(1),size_t(grid.size())/chunk_size);
+            atlas_omp_pragma(omp parallel for schedule(dynamic,1))
+            for( size_t chunk=0; chunk < chunks; ++chunk) {
+                const size_t begin = chunk * size_t(grid.size())/chunks;
+                const size_t end = (chunk+1) * size_t(grid.size())/chunks;
+                auto it = grid.xy().begin();
+                it += chunk * grid.size()/chunks;
+                for( size_t n=begin ; n<end; ++n ) {
+                    if( poly.contains(*it) ) {
+                        part[n] = rank;
+                    }
+                    else {
+                        part[n] = -1;
+                    }
+                    ++it;
                 }
-                else {
-                    part[n] = -1;
-                }
-                ++it;
+            }
+
+            ATLAS_TRACE_SCOPE("Load imbalance") { 
+                mpi::comm().barrier();
             }
         }
-
-        ATLAS_TRACE_SCOPE("Load imbalance") { 
-            mpi::comm().barrier();
+        {
+            ATLAS_TRACE("all_reduce");
+            mpi::comm().allReduceInPlace(part.data(),part.size(),eckit::mpi::max());
         }
     }
-    {
-        ATLAS_TRACE("all_reduce");
-        mpi::comm().allReduceInPlace(part.data(),part.size(),eckit::mpi::max());
-    }
+
     grid::Distribution dist;
     {
         ATLAS_TRACE("convert to grid::Distribution");
@@ -211,7 +219,7 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         idx_t size = src_fs.size();
         idx_t k = args.getInt("vortex-rollup",0);
         atlas_omp_parallel_for ( idx_t n = 0; n < size; ++n ) {
-            source( n ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
+            source( n ) = 0.;//vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
         };
     }
     
