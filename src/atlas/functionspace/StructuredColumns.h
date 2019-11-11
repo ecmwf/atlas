@@ -28,6 +28,7 @@
 #include "atlas/util/ObjectHandle.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/Polygon.h"
+#include "atlas/util/Vector.h"
 
 namespace eckit {
 class Configuration;
@@ -265,10 +266,11 @@ private:  // data
             j_min_    = j_range[0];
             j_max_    = j_range[1];
             j_stride_ = ( i_max_ - i_min_ + 1 );
-            data_.resize( ( i_max_ - i_min_ + 1 ) * ( j_max_ - j_min_ + 1 ), missing() + 1 );
+            data_.resize( ( i_max_ - i_min_ + 1 ) * ( j_max_ - j_min_ + 1 ) );
+            atlas::omp_fill( data_.begin(), data_.end(), missing() + 1 );
         }
 
-        std::vector<idx_t> data_;
+        atlas::vector<idx_t> data_;
         idx_t i_min_;
         idx_t i_max_;
         idx_t j_min_;
