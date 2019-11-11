@@ -49,6 +49,8 @@ public:  // methods
 
     void setup( const int part[], const idx_t remote_idx[], const int base, idx_t size );
 
+    void setup( const int part[], const idx_t remote_idx[], const int base, idx_t size, idx_t halo_begin );
+
     //  template <typename DATA_TYPE>
     //  void execute( DATA_TYPE field[], idx_t nb_vars ) const;
 

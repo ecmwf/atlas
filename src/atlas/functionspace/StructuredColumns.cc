@@ -527,7 +527,7 @@ private:
 
         value->setup( array::make_view<int, 1>( funcspace->partition() ).data(),
                       array::make_view<idx_t, 1>( funcspace->remote_index() ).data(), REMOTE_IDX_BASE,
-                      funcspace->sizeHalo() );
+                      funcspace->sizeHalo(), funcspace->sizeOwned() );
         return value;
     }
     ~StructuredColumnsHaloExchangeCache() override = default;
