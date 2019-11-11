@@ -68,7 +68,7 @@ void mergeBlocksRecursive( BidirIt begin, BidirIt end, BlocksIt blocks_begin, Bl
 
 
 template<typename SortVector, typename BlocksVector, typename Pred>
-void mergeBlocksRecursive2( SortVector& vec, const BlocksVector& blocks, size_t begin, size_t end, Pred compare, int recursion ) {
+void mergeBlocksRecursive2( SortVector& vec, const BlocksVector& blocks, size_t begin, size_t end, Pred compare ) {
 
     // #pragma omp critical
     // {
@@ -79,20 +79,35 @@ void mergeBlocksRecursive2( SortVector& vec, const BlocksVector& blocks, size_t 
         return;
     }
     size_t mid = (end+begin)/2;
-    #pragma omp taskgroup
+    //#pragma omp taskgroup
     {
         #pragma omp task shared(vec,blocks)
-        mergeBlocksRecursive2( vec, blocks, begin, mid, compare, recursion+1 );
+        mergeBlocksRecursive2( vec, blocks, begin, mid, compare );
 
         #pragma omp task shared(vec,blocks)
-        mergeBlocksRecursive2( vec, blocks, mid, end, compare, recursion+1 );
+        mergeBlocksRecursive2( vec, blocks, mid, end, compare );
 
+        #pragma omp taskwait
         //#pragma omp taskyield
     }
     // #pragma omp critical
     // {
     //     std::cout <<  debug::rank_str() << recursion << "  inplace_merge( " << begin << " , " << mid << " , " << end << " ); " << std::endl;
     // }
+    auto vec_begin = &vec[0];
+    std::inplace_merge( vec_begin + blocks[begin], vec_begin + blocks[mid], vec_begin + blocks[end], compare);
+}
+
+template<typename SortVector, typename BlocksVector, typename Pred>
+void mergeBlocksRecursiveSeq2( SortVector& vec, const BlocksVector& blocks, size_t begin, size_t end, Pred compare ) {
+
+    if( end <= begin + 1 ) {
+        // recursion done, go back out
+        return;
+    }
+    size_t mid = (end+begin)/2;
+    mergeBlocksRecursiveSeq2( vec, blocks, begin, mid, compare );
+    mergeBlocksRecursiveSeq2( vec, blocks, mid, end, compare );
     auto vec_begin = &vec[0];
     std::inplace_merge( vec_begin + blocks[begin], vec_begin + blocks[mid], vec_begin + blocks[end], compare);
 }
@@ -113,9 +128,14 @@ void omp_merge_blocks( BidirIt begin, BidirIt end, BlocksIt blocks_begin, Blocks
 
 template<typename SortVector, typename BlocksVector, typename Pred>
 void omp_merge_blocks2( SortVector& vec, const BlocksVector& blocks, size_t begin, size_t end, Pred compare ) {
-    #pragma omp parallel
-    #pragma omp single
-    mergeBlocksRecursive2( vec, blocks, begin, end, compare, 0 );
+    if( atlas_omp_get_max_threads() > 1 ) {
+        #pragma omp parallel
+        #pragma omp single
+        mergeBlocksRecursive2( vec, blocks, begin, end, compare );
+    } 
+    else {
+        mergeBlocksRecursiveSeq2( vec, blocks, begin, end, compare );
+    }
 }
 
 #if 0
@@ -145,13 +165,14 @@ void mergeSortRecursive2( SortVector& vec, size_t begin, size_t end, Pred compar
     auto size = end - begin;
     if (size >= 256) {
         auto mid = begin + size/2;
-        #pragma omp taskgroup
+        //#pragma omp taskgroup
         {
             #pragma omp task shared(vec) untied if(size >= (1<<15))
             mergeSortRecursive2(vec, begin, mid, compare);
             #pragma omp task shared(vec) untied if(size >= (1<<15))
             mergeSortRecursive2(vec, mid, end, compare);
             //#pragma omp taskyield
+            #pragma omp taskwait
         }
         auto vec_begin = &vec[0];
         std::inplace_merge( vec_begin+begin, vec_begin+mid, vec_begin+end, compare);
@@ -173,9 +194,15 @@ void omp_sort( BidirIt begin, BidirIt end, Pred compare ) {
 
 template<typename SortVector, typename Pred>
 void omp_sort2( SortVector& vec, size_t begin, size_t end, Pred compare ) {
-    #pragma omp parallel
-    #pragma omp single
-    mergeSortRecursive2( vec, begin, end, compare );
+    if( atlas_omp_get_max_threads() > 1 ) {
+        #pragma omp parallel
+        #pragma omp single
+        mergeSortRecursive2( vec, begin, end, compare );
+    }
+    else {
+        auto vec_begin = &vec[0];
+        std::sort(vec_begin+begin,vec_begin+end,compare);
+    }
 }
 
 } // namespace util
