@@ -12,17 +12,34 @@
 
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/parallel/omp/omp.h"
 
 namespace atlas {
+
+template<typename BidirIt, typename T>
+void omp_fill( BidirIt begin, BidirIt end, const T& value ) {
+    auto size = std::distance(begin,end);
+    atlas_omp_parallel
+    {   
+        auto tid = atlas_omp_get_thread_num();
+        auto chunksize = size / atlas_omp_get_num_threads();
+        auto v_begin = begin + chunksize * tid;
+        auto v_end = (tid == atlas_omp_get_num_threads() -1) ? end : v_begin + chunksize;
+        std::fill(v_begin, v_end, value);
+    }
+}
 
 template< typename T >
 class vector {
 public:
+    using value_type = T;
     using iterator = T*;
     using const_iterator = T const*;
-    vector() : data_( nullptr ), size_( 0 ) {}
-    vector( idx_t N ) : data_( new T[N] ), size_( N ) {}
-    vector( idx_t N, const T& value ) : vector(N) {
+    vector() = default;
+    vector( idx_t size ) {
+        resize( size );
+    }
+    vector( idx_t size, const T& value ) : vector(size) {
         for( idx_t i=0; i<size_; ++i ) {
             data_[i] = value;
         }
@@ -47,6 +64,20 @@ public:
     void assign( const Iter& begin, const Iter& end ) {
         ATLAS_NOTIMPLEMENTED;
     }
+    void reserve( idx_t size ) {
+        if( capacity_ != 0 ) ATLAS_NOTIMPLEMENTED;
+        data_ = new T[size];
+        capacity_ = size;
+    }
+    void resize( idx_t size ) {
+        if( capacity_ == 0 ) {
+            reserve( size );
+        }
+        if( size > capacity_ ) {
+            ATLAS_NOTIMPLEMENTED;
+        }
+        size_ = size;
+    }
     const_iterator begin() const { return data_; }
     const_iterator end() const { return data_+size_; }
     iterator begin() { return data_; }
@@ -54,8 +85,9 @@ public:
     const_iterator cbegin() const { return data_; }
     const_iterator cend() const { return data_+size_; }
 private:
-    T* data_;
-    idx_t size_;
+    T* data_{nullptr};
+    idx_t size_ {0};
+    idx_t capacity_{0};
 };
 
 }  // namespace atlas
