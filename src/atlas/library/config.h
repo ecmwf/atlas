@@ -18,6 +18,7 @@
 #include "atlas/library/defines.h"
 
 #define ATLAS_HAVE_TRACE 1
+#define ATLAS_HAVE_TRACE_BARRIERS 1
 
 namespace atlas {
 

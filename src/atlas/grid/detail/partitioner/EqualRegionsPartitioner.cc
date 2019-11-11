@@ -928,6 +928,8 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
     */
 
         ATLAS_TRACE_SCOPE( "sort bands" ) {
+            ATLAS_TRACE_BARRIERS(false); // avoid deadlock
+
             std::vector<eckit::mpi::Request> requests;
 
             int nb_parts           = N_;

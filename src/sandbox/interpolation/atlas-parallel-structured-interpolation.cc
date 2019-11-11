@@ -115,11 +115,6 @@ double vortex_rollup( double lon, double lat, double t ) {
 };
 
 grid::Distribution distribution( Grid& grid, FunctionSpace& src ) {
-        {
-            ATLAS_TRACE_SCOPE("Load imbalance") { 
-               mpi::comm().barrier();
-            }
-        }
     ATLAS_TRACE("Computing distribution from source");
     atlas::vector<int> part( grid.size() );
 
@@ -153,10 +148,6 @@ grid::Distribution distribution( Grid& grid, FunctionSpace& src ) {
                     ++it;
                 }
             }
-
-            ATLAS_TRACE_SCOPE("Load imbalance") { 
-                mpi::comm().barrier();
-            }
         }
         {
             ATLAS_TRACE("all_reduce");
@@ -168,10 +159,6 @@ grid::Distribution distribution( Grid& grid, FunctionSpace& src ) {
     {
         ATLAS_TRACE("convert to grid::Distribution");
         dist = grid::Distribution(mpi::comm().size(), std::move(part) );
-        ATLAS_TRACE_SCOPE("Load imbalance") { 
-            mpi::comm().barrier();
-        }
-
     }
     return dist;
 }
@@ -223,11 +210,6 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         };
     }
     
-    ATLAS_TRACE_SCOPE("Load imbalance") { 
-        mpi::comm().barrier();
-    }
-
-
     src_field.haloExchange();
     
     output::Gmsh src_gmsh("src_field.msh");
@@ -242,11 +224,6 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         Interpolation interpolation_fwd( config, src_fs, tgt_fs );
         interpolation_fwd.execute( src_field, tgt_field );
     } 
-
-    ATLAS_TRACE_SCOPE("Load imbalance") { 
-        mpi::comm().barrier();
-    }
-
 
     if( args.getBool("output-gmsh",false) ) {
         tgt_field.haloExchange();
@@ -266,7 +243,11 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
             src_gmsh.write( src_field );
         }
     }
-    
+
+    ATLAS_TRACE_SCOPE("Load imbalance") { 
+        mpi::comm().barrier();
+    }
+   
     return success();
 }
 

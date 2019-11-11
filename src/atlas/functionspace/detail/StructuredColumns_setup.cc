@@ -328,10 +328,6 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         return p;
     };
 
-    ATLAS_TRACE_SCOPE("Load imbalance") { 
-        mpi::comm().barrier();
-    }
-
     GridPointSet gridpoints;
 
     ATLAS_TRACE_SCOPE( "Compute mapping" ) {
@@ -534,9 +530,6 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                 ij2gp_.set( gp.i, gp.j, gp.r );
             }
         }
-        ATLAS_TRACE_SCOPE("Load imbalance") { 
-          mpi::comm().barrier();
-        }
     }
 
     ATLAS_TRACE_SCOPE( "Create fields" ) {
@@ -585,7 +578,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
             ghost( gp.r )   = 0;
         }
 
-        // Following short loops are not parallelized with OpenMP
+        // Following short loops are not parallelized with
 
         for ( idx_t j = j_begin_halo_; j < j_begin_; ++j ) {
             for ( idx_t i = i_begin_halo_( j ); i < i_end_halo_( j ); ++i ) {
