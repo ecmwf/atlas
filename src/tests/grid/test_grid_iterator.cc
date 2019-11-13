@@ -55,14 +55,14 @@ CASE( "test_iterator" ) {
         std::vector<PointLonLat> points_lonlat;
 
         // Iteration of xy in range-based for
-        for ( const atlas::PointXY& xy : grid.xy() ) {
+        for ( const PointXY& xy : grid.xy() ) {
             points_xy.push_back( xy );
         }
         EXPECT( points_xy.size() == grid.size() );
         EXPECT( points_xy == points );
 
         // Iteration of lonlat in range-based for
-        for ( const atlas::PointLonLat& ll : grid.lonlat() ) {
+        for ( const PointLonLat& ll : grid.lonlat() ) {
             points_lonlat.push_back( ll );
         }
         EXPECT( points_lonlat.size() == grid.size() );

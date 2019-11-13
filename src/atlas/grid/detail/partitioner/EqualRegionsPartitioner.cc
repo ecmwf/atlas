@@ -57,10 +57,10 @@ range_t<Iterator, Sentinel> range( Iterator b, Sentinel e ) {
   return {b,e};
 }
 
-template<typename Container>
-range_t<typename Container::const_iterator,typename Container::const_iterator> subrange( const Container& c,
-    std::array<typename std::iterator_traits<typename Container::const_iterator>::difference_type,2> _range ) {
-  return range(c.begin()+_range[0],c.begin()+_range[1]);
+template<typename Container, typename Int>
+range_t<typename Container::const_iterator,typename Container::const_iterator>
+subrange( const Container& c, std::initializer_list<Int>&& _range ) {
+  return range(c.begin()+_range.begin()[1],c.begin()+_range.begin()[2]);
 }
 
 }
