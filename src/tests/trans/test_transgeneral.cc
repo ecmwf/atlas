@@ -451,7 +451,7 @@ void spectral_transform_grid_analytic(
     }
     else {
         int idx = 0;
-        for ( PointXY p : grid.xy() ) {
+        for ( const PointXY& p : grid.xy() ) {
             double lon = p.x() * util::Constants::degreesToRadians();
             double lat = p.y() * util::Constants::degreesToRadians();
             // compute spherical harmonics:

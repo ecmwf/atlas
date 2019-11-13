@@ -724,22 +724,6 @@ namespace {
 GridFactoryBuilder<Structured> __register_Structured( Structured::static_type() );
 }
 
-bool Structured::IteratorXYPredicated::next( PointXY& /*xy*/ ) {
-    ATLAS_NOTIMPLEMENTED;
-#if 0
-    if ( j_ < grid_.ny() && i_ < grid_.nx( j_ ) ) {
-        xy = grid_.xy( i_++, j_ );
-
-        if ( i_ == grid_.nx( j_ ) ) {
-            j_++;
-            i_ = 0;
-        }
-        return true;
-    }
-    return false;
-#endif
-}
-
 }  // namespace grid
 }  // namespace detail
 }  // namespace grid

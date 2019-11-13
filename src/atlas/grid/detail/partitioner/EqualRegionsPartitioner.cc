@@ -41,6 +41,28 @@ namespace {
 static bool valid_mpi_size(size_t size) {
     return size < size_t( std::numeric_limits<int>::max() );
 }
+
+
+template<class Iterator, class Sentinel=Iterator>
+struct range_t {
+  Iterator b;
+  Sentinel e;
+  Iterator begin() const { return b; }
+  Sentinel end() const { return e; }
+  bool empty() const { return begin()==end(); }
+};
+
+template<class Iterator, class Sentinel>
+range_t<Iterator, Sentinel> range( Iterator b, Sentinel e ) {
+  return {b,e};
+}
+
+template<typename Container>
+range_t<typename Container::const_iterator,typename Container::const_iterator> subrange( const Container& c,
+    std::array<typename std::iterator_traits<typename Container::const_iterator>::difference_type,2> _range ) {
+  return range(c.begin()+_range[0],c.begin()+_range[1]);
+}
+
 }
 
 double gamma( const double& x ) {
@@ -685,7 +707,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                             auto filter = [w_begin, w_end]( long n ) { return ( n >= w_begin && n < w_end ); };
                             int i       = w_begin;
                             int j( 0 );
-                            for ( PointXY point : grid.xy( filter ) ) {
+                            for ( const PointXY& point : subrange( grid.xy(), {w_begin, w_end} ) ) {
                                 w_nodes[j].x = microdeg( point.x() );
                                 w_nodes[j].y = microdeg( point.y() );
                                 w_nodes[j].n = i++;

@@ -54,9 +54,8 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int part
         eckit::ProgressTimer timer( "Partitioning", grid.size(), "point", double( 10 ), atlas::Log::trace() );
         size_t i = 0;
 
-        for ( const PointXY Pxy : grid.xy() ) {
+        for ( const PointLonLat& P : grid.lonlat() ) {
             ++timer;
-            const PointLonLat P  = grid.projection().lonlat( Pxy );
             const bool atThePole = ( includesNorthPole && P.lat() >= poly.coordinatesMax().lat() ) ||
                                    ( includesSouthPole && P.lat() < poly.coordinatesMin().lat() );
 

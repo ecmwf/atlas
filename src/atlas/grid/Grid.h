@@ -53,10 +53,8 @@ public:
     using PointLonLat   = atlas::PointLonLat;  // must be sizeof(double)*2
     using IterateXY     = grid::IterateXY;
     using IterateLonLat = grid::IterateLonLat;
-    using Predicate     = std::function<bool( long )>;
 
 public:
-    IterateXY xy( Predicate p ) const;
     IterateXY xy() const;
     IterateLonLat lonlat() const;
 

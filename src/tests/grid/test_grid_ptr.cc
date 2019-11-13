@@ -169,41 +169,6 @@ CASE( "test_structured_3" ) {
     EXPECT( newgrid.name() == "O32" );
 }
 
-CASE( "test_iterator" ) {
-    Grid grid( "O4" );
-
-    for ( atlas::PointXY xy : grid.xy() ) {
-        Log::debug() << xy << '\n';
-    }
-
-    for ( atlas::PointLonLat ll : grid.lonlat() ) {
-        Log::debug() << ll << '\n';
-    }
-    Log::debug() << std::flush;
-}
-
-CASE( "test_iterator_with_predicate" ) {
-    Grid grid( "O4" );
-
-    auto filter = []( long n ) {
-        bool b = ( n >= 5 && n < 10 );
-        if ( b ) {
-            Log::debug() << "n = " << n << std::endl;
-        }
-        return b;
-    };
-
-    // auto pred = std::bind( filter, std::placeholders::_1, w_begin, w_end );
-
-    int i( 0 );
-    for ( atlas::PointXY xy : grid.xy( filter ) ) {
-        Log::debug() << i++ << "  " << xy << std::endl;
-    }
-    EXPECT( i == 5 );
-
-    Log::debug() << std::flush;
-}
-
 //-----------------------------------------------------------------------------
 
 }  // namespace test
