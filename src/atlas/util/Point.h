@@ -136,3 +136,16 @@ public:
 };
 
 }  // namespace atlas
+
+namespace eckit {
+    // When including "eckit/types/Types.h" we get an overload for
+    //    std::ostream& operator<<( std::ostream&, std::vector<T> )
+    // The default VectorPrintSelector is however the [VectorPrintContracted],
+    // which does not compile when [T={PointXY,PointLonLat,PointXYZ}]
+    // Following changes the default for these types to [VectorPrintSimple]
+    class VectorPrintSimple;
+    template <typename T> struct VectorPrintSelector;
+    template <> struct VectorPrintSelector< atlas::PointXY > { typedef VectorPrintSimple selector; };
+    template <> struct VectorPrintSelector< atlas::PointLonLat > { typedef VectorPrintSimple selector; };
+    template <> struct VectorPrintSelector< atlas::PointXYZ > { typedef VectorPrintSimple selector; };
+}
