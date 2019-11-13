@@ -12,6 +12,8 @@
 
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/parallel/omp/copy.h"
+#include "atlas/parallel/omp/fill.h"
 
 namespace atlas {
 
@@ -21,35 +23,78 @@ public:
     using value_type = T;
     using iterator = T*;
     using const_iterator = T const*;
+
+public:
+
     vector() = default;
+
     vector( idx_t size ) {
         resize( size );
     }
-    vector( idx_t size, const T& value ) : vector(size) {
-        for( idx_t i=0; i<size_; ++i ) {
-            data_[i] = value;
-        }
+
+    vector( idx_t size, const value_type& value ) : vector(size) {
+        assign( size, value );
     }
+
     vector( vector&& other ) : data_( other.data_ ), size_( other.size_ ) {
         other.data_ = nullptr;
         other.size_ = 0;
     }
+
     ~vector() {
         if( data_ ) {
           delete[] data_;
         }
     }
-    T& at(idx_t i) { return data_[i]; }
-    T const& at(idx_t i) const { return data_[i]; }
-    T& operator[](idx_t i) { return data_[i]; }
-    T const& operator[](idx_t i) const { return data_[i]; }
-    const T* data() const { return data_; }
-    T* data() { return data_; }
-    idx_t size() const { return size_; }
-    template< typename Iter >
-    void assign( const Iter& begin, const Iter& end ) {
-        ATLAS_NOTIMPLEMENTED;
+
+    T& at(idx_t i) noexcept(false) {
+        if( i >= size_ ) {
+            throw_OutOfRange( "atlas::vector", i, size_ );
+        }
+        return data_[i];
     }
+
+    T const& at(idx_t i) const noexcept(false) { 
+        if( i >= size_ ) {
+            throw_OutOfRange( "atlas::vector", i, size_ );
+        }
+        return data_[i];
+    }
+
+    T& operator[](idx_t i) {
+#if ATLAS_VECTOR_BOUNDS_CHECKING
+        return at(i);
+#else
+        return data_[i];
+#endif
+    }
+
+    T const& operator[](idx_t i) const { 
+#if ATLAS_VECTOR_BOUNDS_CHECKING
+        return at(i);
+#else
+        return data_[i];
+#endif
+    }
+
+    const T* data() const { return data_; }
+
+    T* data() { return data_; }
+
+    idx_t size() const { return size_; }
+
+    void assign( idx_t n, const value_type& value ) {
+        resize( n );
+        omp::fill( begin(), begin()+n, value );
+    }
+
+    template< typename Iter >
+    void assign( const Iter& first, const Iter& last ) {
+        size_t size = std::distance(first,last);
+        resize( size );
+        omp::copy( first, last, begin() );
+    }
+
     void reserve( idx_t size ) {
         if( capacity_ != 0 ) ATLAS_NOTIMPLEMENTED;
         data_ = new T[size];
@@ -70,8 +115,9 @@ public:
     iterator end() { return data_+size_; }
     const_iterator cbegin() const { return data_; }
     const_iterator cend() const { return data_+size_; }
+
 private:
-    T* data_{nullptr};
+    value_type* data_{nullptr};
     idx_t size_ {0};
     idx_t capacity_{0};
 };

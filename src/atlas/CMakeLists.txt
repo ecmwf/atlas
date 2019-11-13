@@ -50,6 +50,7 @@ parallel/mpi/mpi.cc
 parallel/mpi/mpi.h
 parallel/omp/omp.cc
 parallel/omp/omp.h
+parallel/omp/copy.h
 parallel/omp/fill.h
 parallel/omp/sort.h
 )

@@ -24,7 +24,15 @@ ecbuild_add_test( TARGET atlas_test_gather
 
 ecbuild_add_test( TARGET atlas_test_omp_sort
   OMP        8
-  SOURCES    test_sort.cc
+  SOURCES    test_omp_sort.cc
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+
+ecbuild_add_test( TARGET atlas_test_omp_copy
+  OMP        8
+  SOURCES    test_omp_copy.cc
+  LIBS       atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
