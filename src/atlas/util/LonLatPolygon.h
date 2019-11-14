@@ -27,6 +27,8 @@ public:
 
     LonLatPolygon( const std::vector<PointLonLat>& points, bool removeAlignedPoints = true  );
 
+    LonLatPolygon( const std::vector<PointLonLat>& points, const std::vector<PointLonLat>& inner_bounding_box, bool removeAlignedPoints = true  );
+
     // -- Overridden methods
 
     /*
@@ -38,6 +40,14 @@ public:
    * @return if point is in polygon
    */
     bool contains( const PointLonLat& P ) const;
+
+private:
+
+    PointLonLat centroid_;
+    double inner_radius_squared_{0};
+    PointLonLat inner_coordinatesMin_;
+    PointLonLat inner_coordinatesMax_;
+
 };
 
 //------------------------------------------------------------------------------------------------------

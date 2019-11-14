@@ -163,52 +163,6 @@ PolygonCoordinates::PolygonCoordinates( const std::vector<PointLonLat>& points )
     }
 }
 
-namespace {
-PointLonLat compute_centroid(const std::vector<PointLonLat>& points) {
-
-    ATLAS_ASSERT( eckit::geometry::points_equal( points.front(), points.back() ) );
-
-    PointLonLat centroid = {0, 0};
-    double signed_area = 0.;
-    double a = 0.;  // Partial signed area
-
-    for (size_t i=0; i<points.size()-1; ++i) {
-        const PointLonLat& p0 = points[i];
-        const PointLonLat& p1 = points[i+1];
-        a = p0[0]*p1[1] - p1[0]*p0[1];
-        signed_area += a;
-        centroid[0] += (p0[0] + p1[0])*a;
-        centroid[1] += (p0[1] + p1[1])*a;
-    }
-    signed_area *= 0.5;
-    centroid[0] /= (6.*signed_area);
-    centroid[1] /= (6.*signed_area);
-
-    return centroid;
-}
-
-double compute_inner_radius_squared(const std::vector<PointLonLat>& points, const PointLonLat& centroid) {
-  auto distance2 = [](const PointLonLat& a, const PointLonLat& b) {
-    double dx = (a[0]-b[0]);
-    double dy = (a[1]-b[1]);
-    return dx*dx + dy*dy;
-  };
-  auto dot = [](const PointLonLat& a, const PointLonLat& b) {
-    return a[0]*b[0]+a[1]*b[1];
-  };
-  double R2 = std::numeric_limits<double>::max();
-  PointLonLat projection;
-  for( size_t i=0; i<points.size()-1; ++i ) {
-    double d2 = distance2(points[i],points[i+1]);
-    double t = std::max(0.,std::min(1.,dot(centroid-points[i],points[i+1]-points[i])/d2));
-    projection[0] = points[i][0] + t * (points[i+1][0]-points[i][0]);
-    projection[1] = points[i][1] + t * (points[i+1][1]-points[i][1]);
-    R2 = std::min( R2, distance2(projection,centroid) );
-    //Log::info() << "Segment " << points[i] << " - " << points[i+1] << " :  projection = " << projection << "   \t distance = "  << std::sqrt(distance2(projection,centroid) ) << std::endl;
-  }
-  return R2;
-}
-} // namespace
 
 PolygonCoordinates::PolygonCoordinates( const std::vector<PointLonLat>& points,  bool removeAlignedPoints ) {
     coordinates_.clear();
@@ -240,9 +194,6 @@ PolygonCoordinates::PolygonCoordinates( const std::vector<PointLonLat>& points, 
 
     ATLAS_ASSERT( coordinates_.size() > 2 );
     ATLAS_ASSERT( eckit::geometry::points_equal( coordinates_.front(), coordinates_.back() ) );
-
-    centroid_ = compute_centroid( coordinates_ );
-    inner_radius_squared_ = compute_inner_radius_squared( coordinates_, centroid_ );
 }
 
 PolygonCoordinates::~PolygonCoordinates() = default;
