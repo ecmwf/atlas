@@ -95,12 +95,13 @@ private:
         return s;
     }
 
-    util::Polygon::edge_set_t compute_edges( std::vector<PointXY>& points_ );
+    util::Polygon::edge_set_t compute_edges( std::vector<PointXY>&, std::vector<PointXY>&  );
 
 private:
     util::Polygon polygon_;
     std::vector<PointXY> points_;
     std::vector<PointLonLat> points_ll_;
+    std::vector<PointXY>     inner_bounding_box_;
     const FunctionSpaceImpl& fs_;
     idx_t halo_;
 };

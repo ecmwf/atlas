@@ -58,9 +58,11 @@ public:
                                             "Output gmsh files src_field.msh and tgt_field.msh" ) );
         add_option(
             new SimpleOption<bool>( "output-polygons", "Output Python script that plots partitions polygons" ) );
+        add_option(
+            new SimpleOption<bool>( "output-inner-bounding-box", "Output Python script that plots inner bounding boxes for each partition") );
         
         add_option( new SimpleOption<long>( "vortex-rollup","Value that controls vortex rollup (default = 0)") );
-        add_option( new SimpleOption<bool>( "with-backwards","Do backwards interpolation") );
+        add_option( new SimpleOption<bool>( "with-backwards","Do backwards interp olation") );
         
     }
 };
@@ -181,18 +183,30 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
 
     auto src_fs  = functionspace::StructuredColumns{ src_grid, config | option::levels( nlev ) };
 
-    if( args.getBool("output-polygons",false) ) {
+    bool output_nodes = true;
+    if( args.getBool("output-polygons",false) || args.getBool("output-inner-bounding-box",false) ) {
         functionspace::detail::PartitionPolygon src_poly(*src_fs.get(),0);
         src_poly.outputPythonScript("src-polygons.py");
+        if( args.getBool("output-polygons",false) ) {
+            src_poly.outputPythonScript("src-polygons.py",Config("nodes",output_nodes));
+        }
+        if( args.getBool("output-inner-bounding-box",false) ) {
+            src_poly.outputPythonScript("src-inner-bounding-box.py",Config("nodes",output_nodes)|Config("inner_bounding_box",true));
+        }
     }
     
     
     auto tgt_dist = distribution(tgt_grid,src_fs);
     auto tgt_fs = functionspace::StructuredColumns{ tgt_grid, tgt_dist, config | option::levels( nlev ) };
 
-    if( args.getBool("output-polygons",false) ) {
+    if( args.getBool("output-polygons",false) || args.getBool("output-inner-bounding-box",false) ) {
         functionspace::detail::PartitionPolygon tgt_poly(*tgt_fs.get(),0);
-        tgt_poly.outputPythonScript("tgt-polygons.py",Config("nodes",false));
+        if( args.getBool("output-polygons",false) ) {
+            tgt_poly.outputPythonScript("tgt-polygons.py",Config("nodes",output_nodes));
+        }
+        if( args.getBool("output-inner-bounding-box",false) ) {
+            tgt_poly.outputPythonScript("tgt-inner-bounding-box.py",Config("nodes",output_nodes)|Config("inner_bounding_box",true));
+        }
     }
 
     

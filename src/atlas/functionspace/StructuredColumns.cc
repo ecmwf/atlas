@@ -45,7 +45,7 @@ namespace functionspace {
 namespace detail {
 
 
-util::Polygon::edge_set_t PartitionPolygon::compute_edges( std::vector<PointXY>& points ) {
+util::Polygon::edge_set_t PartitionPolygon::compute_edges( std::vector<PointXY>& points, std::vector<PointXY>& bb ) {
     ATLAS_TRACE( "PartitionPolygon" );
     const auto& fs  = dynamic_cast<const StructuredColumns&>( fs_ );
     const auto grid = fs.grid();
@@ -90,6 +90,8 @@ util::Polygon::edge_set_t PartitionPolygon::compute_edges( std::vector<PointXY>&
 
     bool debug = true;
 
+    double ymax, ymin, xmax, xmin;
+
     // Top
     // Top left point
     {
@@ -129,6 +131,9 @@ util::Polygon::edge_set_t PartitionPolygon::compute_edges( std::vector<PointXY>&
         points.emplace_back( p );
         add_edge( c, c + 1 );
         c++;
+
+        ymax = p.y();
+        xmax = p.x();
     }
     // Right side
     {
@@ -165,6 +170,8 @@ util::Polygon::edge_set_t PartitionPolygon::compute_edges( std::vector<PointXY>&
             points.emplace_back( p );
             add_edge( c, c + 1 );
             c++;
+
+            xmax = std::min(xmax, p.x() );
         }
     }
     // Bottom
@@ -185,6 +192,10 @@ util::Polygon::edge_set_t PartitionPolygon::compute_edges( std::vector<PointXY>&
             p.x() = 0.5 * ( grid.x( i, j ) + grid.x( i + 1, j ) );
         }
 
+        ymin = p.y();
+
+        PointXY pmin = p;
+
         if ( not equal( p.x(), points.back().x() ) ) {
             if ( not debug ) {
                 make_corner();
@@ -197,6 +208,9 @@ util::Polygon::edge_set_t PartitionPolygon::compute_edges( std::vector<PointXY>&
                 points.emplace_back( p );
                 add_edge( c, c + 1 );
                 c++;
+                pmin = p;
+                xmax = std::min(xmax, p.x() );
+
                 p = ptmp;
 
 
@@ -208,7 +222,12 @@ util::Polygon::edge_set_t PartitionPolygon::compute_edges( std::vector<PointXY>&
                 p = ptmp;
             }
         }
-
+        if( xmax - grid.xspace().dx()[j] < grid.x(i,j) ) {
+            xmax = std::min(xmax, 0.5*(grid.x(i+1,j)+grid.x(i,j)));
+        }
+        else {
+            ymin = pmin.y();
+        }
 
         points.emplace_back( p );
         add_edge( c, c + 1 );
@@ -233,6 +252,7 @@ util::Polygon::edge_set_t PartitionPolygon::compute_edges( std::vector<PointXY>&
         points.emplace_back( p );
         add_edge( c, c + 1 );
         c++;
+        xmin = p.x();
     }
     // Left side
     {
@@ -244,6 +264,20 @@ util::Polygon::edge_set_t PartitionPolygon::compute_edges( std::vector<PointXY>&
             }
             else {
                 p.x() = 0.5 * ( grid.x( i - 1, j ) + grid.x( i, j ) );
+            }
+
+            if( j > fs.j_begin() ) {
+              xmin = std::max(xmin, p.x());
+            }
+            if( j == fs.j_begin()+1 && xmin < points[0].x() ) {
+              idx_t jtop = fs.j_begin();
+              idx_t itop = fs.i_begin(jtop);
+              if( xmin + grid.xspace().dx()[jtop] > grid.x(itop,jtop) ) {
+                  xmin = std::max(xmin,0.5*(grid.x(itop-1,jtop)+grid.x(itop,jtop)));
+              }
+              else {
+                  ymax = 0.5*(p.y()+grid.y(jtop));
+              }
             }
 
             if ( j < fs.j_end() - 1 && not equal( p.x(), points.back().x() ) ) {
@@ -278,6 +312,15 @@ util::Polygon::edge_set_t PartitionPolygon::compute_edges( std::vector<PointXY>&
     }
     // Connect to top
     add_edge( c, 0 );
+
+
+    bb = std::vector<PointXY>{
+      {xmin,ymax},
+      {xmin,ymin},
+      {xmax,ymin},
+      {xmax,ymax}
+    };
+
     return edges;
 }
 
@@ -326,12 +369,13 @@ std::string checksum_3d_field( const parallel::Checksum& checksum, const Field& 
 
 
 PartitionPolygon::PartitionPolygon( const FunctionSpaceImpl& fs, idx_t halo ) : fs_( fs ), halo_( halo ) {
-    polygon_ = util::Polygon( compute_edges( points_ ) );
+    polygon_ = util::Polygon( compute_edges( points_, inner_bounding_box_ ) );
     points_.emplace_back( points_[0] );
     points_ll_.reserve( points_.size() );
     for ( const Point2& p : points_ ) {
         points_ll_.emplace_back( p );
     }
+    inner_bounding_box_.emplace_back( inner_bounding_box_[0] );
 }
 
 size_t PartitionPolygon::footprint() const {
@@ -348,11 +392,13 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
 
     auto xy = array::make_view<double, 2>( dynamic_cast<const StructuredColumns&>( fs_ ).xy() );
 
+    const std::vector<PointXY>& points = config.getBool("inner_bounding_box",false) ? inner_bounding_box_ : points_;
+
     double xmin = std::numeric_limits<double>::max();
     double xmax = -std::numeric_limits<double>::max();
-    for ( idx_t i : polygon_ ) {
-        xmin = std::min( xmin, points_[i].x() );
-        xmax = std::max( xmax, points_[i].x() );
+    for ( idx_t i=0; i<points.size(); ++i ) {
+        xmin = std::min( xmin, points[i].x() );
+        xmax = std::max( xmax, points[i].x() );
     }
     comm.allReduceInPlace( xmin, eckit::mpi::min() );
     comm.allReduceInPlace( xmax, eckit::mpi::max() );
@@ -402,8 +448,8 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
             f << "\n"
                  "verts_"
               << r << " = [";
-            for ( idx_t i : static_cast<const util::Polygon::container_t&>( polygon_ ) ) {
-                f << "\n  (" << points_[i].x() << ", " << points_[i].y() << "), ";
+            for ( idx_t i=0; i<points.size(); ++i ) {
+                f << "\n  (" << points[i].x() << ", " << points[i].y() << "), ";
             }
             f << "\n]"
                  "\n"
@@ -414,7 +460,7 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
               << " = [Path.MOVETO]"
                  "\n"
                  "codes_"
-              << r << ".extend([Path.LINETO] * " << ( polygon_.size() - 2 )
+              << r << ".extend([Path.LINETO] * " << ( points.size() - 2 )
               << ")"
                  "\n"
                  "codes_"
