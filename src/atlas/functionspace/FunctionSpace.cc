@@ -58,6 +58,9 @@ void FunctionSpace::haloExchange( const FieldSet& fields, bool on_device ) const
     return get()->haloExchange( fields, on_device );
 }
 
+const util::PartitionPolygon& FunctionSpace::polygon( idx_t halo ) const {
+    return get()->polygon( halo );
+}
 
 template <typename DATATYPE>
 Field FunctionSpace::createField() const {

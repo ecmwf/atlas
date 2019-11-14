@@ -18,6 +18,7 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatPolygon.h"
+#include "atlas/domain/Domain.h"
 
 namespace atlas {
 namespace util {
@@ -26,12 +27,13 @@ namespace util {
 
 namespace {
 
-double cross_product_analog( const PointLonLat& A, const PointLonLat& B, const PointLonLat& C ) {
-    return ( A.lon() - C.lon() ) * ( B.lat() - C.lat() ) - ( A.lat() - C.lat() ) * ( B.lon() - C.lon() );
+double cross_product_analog( const Point2& A, const Point2& B, const Point2& C ) {
+    return ( A[LON] - C[LON] ) * ( B[LAT] - C[LAT] ) - ( A[LAT] - C[LAT] ) * ( B[LON] - C[LON] );
 }
 
 
-PointLonLat compute_centroid(const std::vector<PointLonLat>& points) {
+template <typename PointContainer>
+PointLonLat compute_centroid(const PointContainer& points) {
 
     ATLAS_ASSERT( eckit::geometry::points_equal( points.front(), points.back() ) );
 
@@ -54,17 +56,18 @@ PointLonLat compute_centroid(const std::vector<PointLonLat>& points) {
     return centroid;
 }
 
-double compute_inner_radius_squared(const std::vector<PointLonLat>& points, const PointLonLat& centroid) {
-  auto distance2 = [](const PointLonLat& a, const PointLonLat& b) {
+template <typename PointContainer>
+double compute_inner_radius_squared(const PointContainer& points, const PointLonLat& centroid) {
+  auto distance2 = [](const Point2& a, const Point2& b) {
     double dx = (a[0]-b[0]);
     double dy = (a[1]-b[1]);
     return dx*dx + dy*dy;
   };
-  auto dot = [](const PointLonLat& a, const PointLonLat& b) {
+  auto dot = [](const Point2& a, const Point2& b) {
     return a[0]*b[0]+a[1]*b[1];
   };
   double R2 = std::numeric_limits<double>::max();
-  PointLonLat projection;
+  Point2 projection;
   for( size_t i=0; i<points.size()-1; ++i ) {
     double d2 = distance2(points[i],points[i+1]);
     double t = std::max(0.,std::min(1.,dot(centroid-points[i],points[i+1]-points[i])/d2));
@@ -80,15 +83,16 @@ double compute_inner_radius_squared(const std::vector<PointLonLat>& points, cons
 
 //------------------------------------------------------------------------------------------------------
 
-LonLatPolygon::LonLatPolygon( const Polygon& poly, const atlas::Field& lonlat, bool removeAlignedPoints ) :
-    PolygonCoordinates( poly, lonlat, removeAlignedPoints ) {
+LonLatPolygon::LonLatPolygon( const Polygon& poly, const atlas::Field& coordinates, bool removeAlignedPoints ) :
+    PolygonCoordinates( poly, coordinates, removeAlignedPoints ) {
 
     centroid_ = compute_centroid( coordinates_ );
     inner_radius_squared_ = compute_inner_radius_squared( coordinates_, centroid_ );
 
     }
 
-LonLatPolygon::LonLatPolygon( const std::vector<PointLonLat>& points, bool removeAlignedPoints ) :
+template < typename PointContainer >
+LonLatPolygon::LonLatPolygon( const PointContainer& points, bool removeAlignedPoints ) :
     PolygonCoordinates( points, removeAlignedPoints ) {
 
     centroid_ = compute_centroid( coordinates_ );
@@ -97,22 +101,26 @@ LonLatPolygon::LonLatPolygon( const std::vector<PointLonLat>& points, bool remov
     ATLAS_ASSERT( contains(centroid_) );
 }
 
-LonLatPolygon::LonLatPolygon( const std::vector<PointLonLat>& points, const std::vector<PointLonLat>& inner_bounding_box, bool removeAlignedPoints ) : 
-    PolygonCoordinates( points, removeAlignedPoints ) {
+LonLatPolygon::LonLatPolygon( const PartitionPolygon& partition_polygon ) :
+    PolygonCoordinates( partition_polygon.lonlat(), true ) {
+    RectangularLonLatDomain inscribed = partition_polygon.inscribedDomain();
+    if( inscribed ) {
+        inner_coordinatesMin_ = { inscribed.xmin(), inscribed.ymin() };
+        inner_coordinatesMax_ = { inscribed.xmax(), inscribed.ymax() };
+    }
+    else {
+        centroid_ = compute_centroid( coordinates_ );
+        inner_radius_squared_ = compute_inner_radius_squared( coordinates_, centroid_ );
 
-    inner_coordinatesMin_ = PointLonLat( std::numeric_limits<double>::max(), std::numeric_limits<double>::max() );
-    inner_coordinatesMax_ = PointLonLat( std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest() );
-    for ( size_t i = 0; i < inner_bounding_box.size(); ++i ) {
-        inner_coordinatesMin_ = PointLonLat::componentsMin( inner_coordinatesMin_, inner_bounding_box[i] );
-        inner_coordinatesMax_ = PointLonLat::componentsMax( inner_coordinatesMax_, inner_bounding_box[i] );
+        ATLAS_ASSERT( contains(centroid_) );
     }
 }
 
-bool LonLatPolygon::contains( const PointLonLat& P ) const {
+bool LonLatPolygon::contains( const Point2& P ) const {
 
     // check first bounding box
-    if ( coordinatesMax_.lat() < P.lat() ||
-         P.lat() < coordinatesMin_.lat() || coordinatesMax_.lon() < P.lon() || P.lon() < coordinatesMin_.lon() ) {
+    if ( coordinatesMax_[LAT] < P[LAT] ||
+         P[LAT] < coordinatesMin_[LAT] || coordinatesMax_[LON] < P[LON] || P[LON] < coordinatesMin_[LON] ) {
         return false;
     }
 
@@ -123,10 +131,10 @@ bool LonLatPolygon::contains( const PointLonLat& P ) const {
     };
 
     if( inner_radius_squared_ == 0 ) { // check inner bounding box
-        if ( inner_coordinatesMin_.lon() <= P.lon() &&
-             inner_coordinatesMax_.lon() >= P.lon() &&
-             inner_coordinatesMin_.lat() <= P.lat() &&
-             inner_coordinatesMax_.lat() >= P.lat() ) {
+        if ( inner_coordinatesMin_[LON] <= P[LON] &&
+             inner_coordinatesMax_[LON] >= P[LON] &&
+             inner_coordinatesMin_[LAT] <= P[LAT] &&
+             inner_coordinatesMax_[LAT] >= P[LAT] ) {
              return true;
         }
     }
@@ -149,8 +157,8 @@ bool LonLatPolygon::contains( const PointLonLat& P ) const {
         // intersecting either:
         // - "up" on upward crossing & P left of edge, or
         // - "down" on downward crossing & P right of edge
-        const bool APB = ( A.lat() <= P.lat() && P.lat() <= B.lat() );
-        const bool BPA = ( B.lat() <= P.lat() && P.lat() <= A.lat() );
+        const bool APB = ( A[LAT] <= P[LAT] && P[LAT] <= B[LAT] );
+        const bool BPA = ( B[LAT] <= P[LAT] && P[LAT] <= A[LAT] );
 
         if ( APB != BPA ) {
             const double side = cross_product_analog( P, A, B );

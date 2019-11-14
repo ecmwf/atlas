@@ -99,6 +99,7 @@ public:
 
 public:
     using Domain::Domain;
+    RectangularDomain() : Domain() {}
     RectangularDomain( const Interval& x, const Interval& y, const std::string& units = "degrees" );
 
     RectangularDomain( const Domain& );

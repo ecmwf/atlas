@@ -66,42 +66,43 @@ namespace detail {
 
 
 /**
- * @brief Polygon class that holds the boundary of a mesh partition
+ * @brief StructuredPartitionPolygon class that holds the boundary of a structured grid partition
  */
-class PartitionPolygon : public util::Object {
+class StructuredPartitionPolygon : public util::PartitionPolygon {
 public:  // methods
     //-- Constructors
 
     /// @brief Construct "size" polygon
-    PartitionPolygon( const FunctionSpaceImpl& fs, idx_t halo );
+    StructuredPartitionPolygon( const FunctionSpaceImpl& fs, idx_t halo );
 
     //-- Accessors
 
-    idx_t halo() const { return halo_; }
+    idx_t halo() const override { return halo_; }
 
     /// @brief Return the memory footprint of the Polygon
-    size_t footprint() const;
+    size_t footprint() const override;
 
-    void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const;
+    void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const override;
 
-    const std::vector<PointXY>& xy() { return points_; }
-    const std::vector<PointLonLat>& lonlat() { return points_ll_; }
-
-private:
-    void print( std::ostream& ) const;
-
-    friend std::ostream& operator<<( std::ostream& s, const PartitionPolygon& p ) {
-        p.print( s );
-        return s;
-    }
-
-    util::Polygon::edge_set_t compute_edges( std::vector<PointXY>&, std::vector<PointXY>&  );
+    const std::vector<Point2>& xy() const override { return points_; }
+    const std::vector<Point2>& lonlat() const override { return points_; }
+    const RectangularDomain& inscribedDomain() const override { return inscribed_domain_; }
 
 private:
-    util::Polygon polygon_;
-    std::vector<PointXY> points_;
-    std::vector<PointLonLat> points_ll_;
-    std::vector<PointXY>     inner_bounding_box_;
+    // void print( std::ostream& ) const;
+
+    // friend std::ostream& operator<<( std::ostream& s, const StructuredPartitionPolygon& p ) {
+    //     p.print( s );
+    //     return s;
+    // }
+
+    util::Polygon::edge_set_t compute_edges( std::vector<Point2>&, std::vector<Point2>&  );
+
+private:
+    //util::Polygon polygon_;
+    std::vector<Point2> points_;
+    std::vector<Point2> inner_bounding_box_;
+    RectangularDomain   inscribed_domain_;
     const FunctionSpaceImpl& fs_;
     idx_t halo_;
 };
@@ -109,7 +110,7 @@ private:
 
 class StructuredColumns : public FunctionSpaceImpl {
 public:
-    using Polygon = PartitionPolygon;
+    using Polygon = StructuredPartitionPolygon;
 
 public:
     StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
@@ -205,6 +206,13 @@ public:
 
     virtual size_t footprint() const override;
 
+    const util::PartitionPolygon& polygon( idx_t halo = 0 ) const override {
+        if( not polygon_ ) {
+            polygon_.reset( new Polygon( *this, halo ) );
+        }
+        return *polygon_;
+    }
+
 
 private:  // methods
     idx_t config_size( const eckit::Configuration& config ) const;
@@ -247,6 +255,7 @@ private:  // data
     mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;
     mutable util::ObjectHandle<parallel::Checksum> checksum_;
     mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
+    mutable std::unique_ptr<Polygon> polygon_;
 
     Field field_xy_;
     Field field_partition_;
@@ -360,6 +369,8 @@ private:  // data
 
 class StructuredColumns : public FunctionSpace {
 public:
+    using Polygon = detail::StructuredColumns::Polygon;
+public:
     StructuredColumns();
     StructuredColumns( const FunctionSpace& );
     StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
@@ -426,6 +437,8 @@ public:
     PointXY compute_xy( idx_t i, idx_t j ) const { return functionspace_->compute_xy( i, j ); }
 
     size_t footprint() const { return functionspace_->footprint(); }
+
+    const util::PartitionPolygon& polygon( idx_t halo = 0 ) const { return functionspace_->polygon( halo ); }
 
     class For {
     public:

@@ -22,6 +22,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/LonLatPolygon.h"
+#include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
 namespace grid {
@@ -56,8 +57,8 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int part
 
         for ( const PointLonLat& P : grid.lonlat() ) {
             ++timer;
-            const bool atThePole = ( includesNorthPole && P.lat() >= poly.coordinatesMax().lat() ) ||
-                                   ( includesSouthPole && P.lat() < poly.coordinatesMin().lat() );
+            const bool atThePole = ( includesNorthPole && P[LAT] >= poly.coordinatesMax()[LAT] ) ||
+                                   ( includesSouthPole && P[LAT] < poly.coordinatesMin()[LAT] );
 
             partitioning[i++] = atThePole || poly.contains( P ) ? mpi_rank : -1;
         }

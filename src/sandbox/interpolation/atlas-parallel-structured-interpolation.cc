@@ -117,7 +117,7 @@ double vortex_rollup( double lon, double lat, double t ) {
     return q;
 };
 
-grid::Distribution distribution( Grid& grid, FunctionSpace& src ) {
+grid::Distribution matching_distribution( Grid& grid, FunctionSpace& partitioned ) {
     ATLAS_TRACE("Computing distribution from source");
     atlas::vector<int> part( grid.size() );
 
@@ -126,10 +126,10 @@ grid::Distribution distribution( Grid& grid, FunctionSpace& src ) {
         omp::fill( part.begin(), part.end(), 0 );
     }
     else {
-        functionspace::detail::PartitionPolygon p(*src.get(),0);
+        const auto& p = partitioned.polygon();
     
         int rank = mpi::comm().rank();
-        util::LonLatPolygon poly{ p.lonlat() };
+        util::LonLatPolygon poly{ p };
         {
             ATLAS_TRACE("point-in-polygon check for entire grid (" + std::to_string( grid.size() ) + " points)");
             size_t num_threads = atlas_omp_get_max_threads();
@@ -185,7 +185,7 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
 
     bool output_nodes = true;
     if( args.getBool("output-polygons",false) || args.getBool("output-inner-bounding-box",false) ) {
-        functionspace::detail::PartitionPolygon src_poly(*src_fs.get(),0);
+        const auto& src_poly = src_fs.polygon();
         src_poly.outputPythonScript("src-polygons.py");
         if( args.getBool("output-polygons",false) ) {
             src_poly.outputPythonScript("src-polygons.py",Config("nodes",output_nodes));
@@ -196,11 +196,11 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     }
     
     
-    auto tgt_dist = distribution(tgt_grid,src_fs);
+    auto tgt_dist = matching_distribution(tgt_grid,src_fs);
     auto tgt_fs = functionspace::StructuredColumns{ tgt_grid, tgt_dist, config | option::levels( nlev ) };
 
     if( args.getBool("output-polygons",false) || args.getBool("output-inner-bounding-box",false) ) {
-        functionspace::detail::PartitionPolygon tgt_poly(*tgt_fs.get(),0);
+        const auto& tgt_poly = tgt_fs.polygon();
         if( args.getBool("output-polygons",false) ) {
             tgt_poly.outputPythonScript("tgt-polygons.py",Config("nodes",output_nodes));
         }

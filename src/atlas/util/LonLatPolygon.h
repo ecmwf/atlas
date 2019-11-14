@@ -23,11 +23,12 @@ class LonLatPolygon : public PolygonCoordinates {
 public:
     // -- Constructors
 
-    LonLatPolygon( const Polygon&, const atlas::Field& lonlat, bool removeAlignedPoints = true );
+    LonLatPolygon( const Polygon&, const atlas::Field& coordinates, bool removeAlignedPoints = true );
 
-    LonLatPolygon( const std::vector<PointLonLat>& points, bool removeAlignedPoints = true  );
+    LonLatPolygon( const PartitionPolygon& );
 
-    LonLatPolygon( const std::vector<PointLonLat>& points, const std::vector<PointLonLat>& inner_bounding_box, bool removeAlignedPoints = true  );
+    template< typename PointContainer >
+    explicit LonLatPolygon( const PointContainer& points, bool removeAlignedPoints = true  );
 
     // -- Overridden methods
 
@@ -39,7 +40,7 @@ public:
    * @param[in] P given point
    * @return if point is in polygon
    */
-    bool contains( const PointLonLat& P ) const;
+    bool contains( const Point2& P ) const;
 
 private:
 

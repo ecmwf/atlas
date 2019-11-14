@@ -21,9 +21,16 @@
 
 #include "atlas/library/config.h"
 #include "atlas/util/Point.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/Config.h"
+
+namespace eckit {
+class PathName;
+}
 
 namespace atlas {
 class Field;
+class RectangularDomain;
 }
 
 namespace atlas {
@@ -77,14 +84,40 @@ public:
 
 //------------------------------------------------------------------------------------------------------
 
+class PartitionPolygon : public Polygon, util::Object {
+public:
+    using Polygon::Polygon;
+
+    /// @brief Return inscribed rectangular domain (not rotated)
+    virtual const RectangularDomain& inscribedDomain() const;
+
+    /// @brief Return the memory footprint of the Polygon
+    virtual idx_t halo() const { return 0; }
+
+    /// @brief Return the memory footprint of the Polygon
+    virtual size_t footprint() const { return 0; }
+
+    /// @brief Output a python script that plots the partition
+    virtual void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const {}
+
+    virtual const std::vector<Point2>& xy() const = 0;
+
+    virtual const std::vector<Point2>& lonlat() const = 0;
+};
+
+//------------------------------------------------------------------------------------------------------
+
 class PolygonCoordinates {
 public:
     // -- Constructors
 
-    PolygonCoordinates( const Polygon&, const atlas::Field& lonlat, bool removeAlignedPoints );
+    PolygonCoordinates( const Polygon&, const atlas::Field& coordinates, bool removeAlignedPoints );
 
-    PolygonCoordinates( const std::vector<PointLonLat>& points );
-    PolygonCoordinates( const std::vector<PointLonLat>& points,  bool removeAlignedPoints );
+    template< typename PointContainer >
+    PolygonCoordinates( const PointContainer& points );
+
+    template< typename PointContainer >
+    PolygonCoordinates( const PointContainer& points,  bool removeAlignedPoints );
 
     // -- Destructor
 
@@ -97,19 +130,17 @@ public:
    * @param[in] P given point
    * @return if point is in polygon
    */
-    virtual bool contains( const PointLonLat& P ) const = 0;
+    virtual bool contains( const Point2& P ) const = 0;
 
-    const PointLonLat& coordinatesMax() const;
-    const PointLonLat& coordinatesMin() const;
+    const Point2& coordinatesMax() const;
+    const Point2& coordinatesMin() const;
 
 protected:
     // -- Members
 
-    PointLonLat centroid_;
-    double inner_radius_squared_{0.};
-    PointLonLat coordinatesMin_;
-    PointLonLat coordinatesMax_;
-    std::vector<PointLonLat> coordinates_;
+    Point2 coordinatesMin_;
+    Point2 coordinatesMax_;
+    std::vector<Point2> coordinates_;
 };
 
 //------------------------------------------------------------------------------------------------------

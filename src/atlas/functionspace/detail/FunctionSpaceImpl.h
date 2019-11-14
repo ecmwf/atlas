@@ -25,6 +25,7 @@ class FieldSet;
 class Field;
 namespace util {
 class Metadata;
+class PartitionPolygon;
 }
 }  // namespace atlas
 
@@ -90,6 +91,8 @@ public:
     virtual void haloExchange( const Field&, bool /* on_device*/ = false ) const;
 
     virtual idx_t size() const = 0;
+
+    virtual const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
 
 private:
     util::Metadata* metadata_;

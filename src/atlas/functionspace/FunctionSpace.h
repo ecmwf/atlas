@@ -25,6 +25,9 @@ class FieldSet;
 namespace functionspace {
 class FunctionSpaceImpl;
 }
+namespace util {
+class PartitionPolygon;
+}
 }  // namespace atlas
 
 namespace atlas {
@@ -54,6 +57,8 @@ public:
 
     void haloExchange( const FieldSet&, bool on_device = false ) const;
     void haloExchange( const Field&, bool on_device = false ) const;
+
+    const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
 
     idx_t size() const;
 };
