@@ -206,13 +206,13 @@ PolygonCoordinates::PolygonCoordinates( const PointContainer& points,  bool remo
     ATLAS_ASSERT( eckit::geometry::points_equal( coordinates_.front(), coordinates_.back() ) );
 }
 
-template PolygonCoordinates::PolygonCoordinates<std::vector<Point2>>( const std::vector<Point2>& );
-template PolygonCoordinates::PolygonCoordinates<std::vector<PointXY>>( const std::vector<PointXY>& );
-template PolygonCoordinates::PolygonCoordinates<std::vector<PointLonLat>>( const std::vector<PointLonLat>& );
+template PolygonCoordinates::PolygonCoordinates( const std::vector<Point2>& );
+template PolygonCoordinates::PolygonCoordinates( const std::vector<PointXY>& );
+template PolygonCoordinates::PolygonCoordinates( const std::vector<PointLonLat>& );
 
-template PolygonCoordinates::PolygonCoordinates<std::vector<Point2>>( const std::vector<Point2>&, bool );
-template PolygonCoordinates::PolygonCoordinates<std::vector<PointXY>>( const std::vector<PointXY>&, bool );
-template PolygonCoordinates::PolygonCoordinates<std::vector<PointLonLat>>( const std::vector<PointLonLat>&, bool );
+template PolygonCoordinates::PolygonCoordinates( const std::vector<Point2>&, bool );
+template PolygonCoordinates::PolygonCoordinates( const std::vector<PointXY>&, bool );
+template PolygonCoordinates::PolygonCoordinates( const std::vector<PointLonLat>&, bool );
 
 
 PolygonCoordinates::~PolygonCoordinates() = default;

@@ -10,25 +10,29 @@
 
 #pragma once
 
-#include <vector>
+#include <type_traits>
 
 #include "atlas/util/Polygon.h"
 
 namespace atlas {
 namespace util {
 
+
 //------------------------------------------------------------------------------------------------------
 
 class LonLatPolygon : public PolygonCoordinates {
+private:
+      template<typename PointContainer>
+      using enable_if_not_polygon = typename std::enable_if< !std::is_base_of<Polygon,PointContainer>::value, int >::type;
+
 public:
     // -- Constructors
 
     LonLatPolygon( const Polygon&, const atlas::Field& coordinates, bool removeAlignedPoints = true );
-
     LonLatPolygon( const PartitionPolygon& );
 
-    template< typename PointContainer >
-    explicit LonLatPolygon( const PointContainer& points, bool removeAlignedPoints = true  );
+    template <typename PointContainer, enable_if_not_polygon<PointContainer> = 0 >
+    LonLatPolygon( const PointContainer& points, bool removeAlignedPoints = true  );
 
     // -- Overridden methods
 

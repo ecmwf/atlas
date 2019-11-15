@@ -89,9 +89,9 @@ LonLatPolygon::LonLatPolygon( const Polygon& poly, const atlas::Field& coordinat
     centroid_ = compute_centroid( coordinates_ );
     inner_radius_squared_ = compute_inner_radius_squared( coordinates_, centroid_ );
 
-    }
+}
 
-template < typename PointContainer >
+template <typename PointContainer, LonLatPolygon::enable_if_not_polygon<PointContainer> >
 LonLatPolygon::LonLatPolygon( const PointContainer& points, bool removeAlignedPoints ) :
     PolygonCoordinates( points, removeAlignedPoints ) {
 
@@ -174,6 +174,12 @@ bool LonLatPolygon::contains( const Point2& P ) const {
     // wn == 0 only when P is outside
     return wn != 0;
 }
+
+//------------------------------------------------------------------------------------------------------
+
+template LonLatPolygon::LonLatPolygon( const std::vector<Point2>&, bool );
+template LonLatPolygon::LonLatPolygon( const std::vector<PointXY>&, bool );
+template LonLatPolygon::LonLatPolygon( const std::vector<PointLonLat>&, bool );
 
 //------------------------------------------------------------------------------------------------------
 
