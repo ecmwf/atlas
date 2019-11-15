@@ -395,6 +395,8 @@ functionspace/detail/StructuredColumnsInterface.h
 functionspace/detail/StructuredColumnsInterface.cc
 functionspace/detail/StructuredColumns_setup.cc
 functionspace/detail/StructuredColumns_create_remote_index.cc
+functionspace/detail/PointCloudInterface.h
+functionspace/detail/PointCloudInterface.cc
 )
 
 list( APPEND atlas_numerics_srcs

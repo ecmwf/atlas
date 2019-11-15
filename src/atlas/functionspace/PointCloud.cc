@@ -9,13 +9,19 @@
  */
 
 
-#include "atlas/functionspace/PointCloud.h"
 #include "atlas/array.h"
+#include "atlas/field/Field.h"
+#include "atlas/functionspace/PointCloud.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/option/Options.h"
 #include "atlas/runtime/Exception.h"
 
+#if ATLAS_HAVE_FORTRAN
+#define REMOTE_IDX_BASE 1
+#else
+#define REMOTE_IDX_BASE 0
+#endif
 
 namespace atlas {
 namespace functionspace {
@@ -69,12 +75,32 @@ const Field& PointCloud::ghost() const {
     return ghost_;
 }
 
-Field PointCloud::createField( const eckit::Configuration& ) const {
-    ATLAS_NOTIMPLEMENTED;
+Field PointCloud::createField( const eckit::Configuration& config ) const {
+    array::DataType::kind_t kind;
+    if ( !config.get( "datatype", kind ) ) {
+        throw_Exception( "datatype missing", Here() );
+    }
+    auto datatype = array::DataType( kind );
+
+    std::string name;
+    config.get( "name", name );
+    idx_t levels = levels_;
+    config.get( "levels", levels );
+    Field field;
+    if ( levels ) {
+        field = Field( name, datatype, array::make_shape( size(), levels ) );
+        field.set_levels( levels );
+    }
+    else {
+        field = Field( name, datatype, array::make_shape( size() ) );
+    }
+    field.set_functionspace( this );
+    return field;
 }
 
 Field PointCloud::createField( const Field& other, const eckit::Configuration& config ) const {
-    return createField( option::datatype( other.datatype() ) | config );
+    return createField( option::datatype( other.datatype() ) | option::levels( other.levels() ) |
+                        option::variables( other.variables() ) | config );
 }
 
 std::string PointCloud::distribution() const {
