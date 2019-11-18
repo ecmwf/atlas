@@ -18,6 +18,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 #include "atlas/grid/StructuredGrid.h"
+#include "atlas/grid/StructuredPartitionPolygon.h"
 #include "atlas/grid/Vertical.h"
 #include "atlas/library/config.h"
 #include "atlas/option.h"
@@ -64,53 +65,9 @@ namespace functionspace {
 
 namespace detail {
 
-
-/**
- * @brief StructuredPartitionPolygon class that holds the boundary of a structured grid partition
- */
-class StructuredPartitionPolygon : public util::PartitionPolygon {
-public:  // methods
-    //-- Constructors
-
-    /// @brief Construct "size" polygon
-    StructuredPartitionPolygon( const FunctionSpaceImpl& fs, idx_t halo );
-
-    //-- Accessors
-
-    idx_t halo() const override { return halo_; }
-
-    /// @brief Return the memory footprint of the Polygon
-    size_t footprint() const override;
-
-    void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const override;
-
-    const std::vector<Point2>& xy() const override { return points_; }
-    const std::vector<Point2>& lonlat() const override { return points_; }
-    const RectangularDomain& inscribedDomain() const override { return inscribed_domain_; }
-
-private:
-    // void print( std::ostream& ) const;
-
-    // friend std::ostream& operator<<( std::ostream& s, const StructuredPartitionPolygon& p ) {
-    //     p.print( s );
-    //     return s;
-    // }
-
-    util::Polygon::edge_set_t compute_edges( std::vector<Point2>&, std::vector<Point2>&  );
-
-private:
-    //util::Polygon polygon_;
-    std::vector<Point2> points_;
-    std::vector<Point2> inner_bounding_box_;
-    RectangularDomain   inscribed_domain_;
-    const FunctionSpaceImpl& fs_;
-    idx_t halo_;
-};
-
-
 class StructuredColumns : public FunctionSpaceImpl {
 public:
-    using Polygon = StructuredPartitionPolygon;
+    using Polygon = grid::StructuredPartitionPolygon;
 
 public:
     StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
@@ -212,6 +169,9 @@ public:
         }
         return *polygon_;
     }
+
+    idx_t nb_partitions() const override { return nb_partitions_; }
+
 
 
 private:  // methods
@@ -354,6 +314,8 @@ private:  // data
     idx_t north_pole_included_;
     idx_t south_pole_included_;
     idx_t ny_;
+
+    idx_t nb_partitions_;
 
     friend struct StructuredColumnsFortranAccess;
     Map2to1 ij2gp_;

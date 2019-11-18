@@ -24,6 +24,7 @@
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h"
+#include "atlas/grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h"
 #include "atlas/library/config.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
@@ -88,7 +89,9 @@ PartitionerFactory::PartitionerFactory( const std::string& name ) : name_( name 
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    ATLAS_ASSERT( m->find( name ) == m->end() );
+    if( m->find( name ) != m->end() ) {
+        throw_Exception("Partitioner with name ["+name+"] is already registered.", Here());
+    }
     ( *m )[name] = this;
 }
 
@@ -188,5 +191,16 @@ grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build( const 
     }
 }
 
+grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build( const std::string& type,
+                                                                          const FunctionSpace& partitioned ) {
+    using namespace grid::detail::partitioner;
+
+     if ( type == MatchingFunctionSpacePartitionerLonLatPolygon::static_type() ) {
+        return new MatchingFunctionSpacePartitionerLonLatPolygon( partitioned );
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
+}
 }  // namespace grid
 }  // namespace atlas

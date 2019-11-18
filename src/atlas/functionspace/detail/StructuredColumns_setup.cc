@@ -107,6 +107,8 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
 
     distribution_ = distribution.type();
 
+    nb_partitions_ = distribution.nb_partitions();
+
     int mpi_rank = int( mpi::comm().rank() );
     int mpi_size = int( mpi::comm().size() );
 

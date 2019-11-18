@@ -59,6 +59,11 @@ Field FunctionSpaceImpl::createField() const {
     return createField( option::datatypeT<DATATYPE>() );
 }
 
+idx_t FunctionSpaceImpl::nb_partitions() const {
+	ATLAS_NOTIMPLEMENTED;
+}
+
+
 template Field FunctionSpaceImpl::createField<double>() const;
 template Field FunctionSpaceImpl::createField<float>() const;
 template Field FunctionSpaceImpl::createField<int>() const;

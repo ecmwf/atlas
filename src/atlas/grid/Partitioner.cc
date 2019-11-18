@@ -14,6 +14,7 @@
 #include "atlas/grid/detail/distribution/DistributionImpl.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
@@ -81,6 +82,26 @@ MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh ) :
 MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh, const Config& config ) :
     Partitioner( matching_mesh_partititioner( mesh, config ) ) {}
 
+
+
+MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner() : Partitioner() {}
+
+grid::detail::partitioner::Partitioner* matching_functionspace_partititioner( const FunctionSpace& functionspace,
+                                                                const Partitioner::Config& config ) {
+    std::string type( "lonlat-polygon" );
+    config.get( "type", type );
+    return MatchedPartitionerFactory::build( type, functionspace );
+}
+
+MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner( const FunctionSpace& functionspace ) :
+    MatchingFunctionSpacePartitioner( functionspace, util::NoConfig() ) {}
+
+
+MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner( const FunctionSpace& functionspace, const Config& config ) :
+    Partitioner( matching_functionspace_partititioner( functionspace, config ) ) {}
+
+
+
 extern "C" {
 
 detail::partitioner::Partitioner* atlas__grid__Partitioner__new( const Partitioner::Config* config ) {
@@ -111,6 +132,19 @@ detail::partitioner::Partitioner* atlas__grid__MatchingMeshPartitioner__new( con
     detail::partitioner::Partitioner* p;
     {
         MatchingMeshPartitioner partitioner( Mesh( mesh ), *config );
+        p = const_cast<detail::partitioner::Partitioner*>( partitioner.get() );
+        p->attach();
+    }
+    p->detach();
+    return p;
+}
+
+detail::partitioner::Partitioner* atlas__grid__MatchingFunctionSpacePartitioner__new(
+        const FunctionSpace::Implementation* functionspace,
+        const Partitioner::Config* config ) {
+    detail::partitioner::Partitioner* p;
+    {
+        MatchingFunctionSpacePartitioner partitioner( FunctionSpace( functionspace ), *config );
         p = const_cast<detail::partitioner::Partitioner*>( partitioner.get() );
         p->attach();
     }

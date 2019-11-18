@@ -42,6 +42,10 @@ double cross_product_analog( const Point2& A, const Point2& B, const Point2& C )
 Polygon::Polygon() = default;
 
 Polygon::Polygon( const Polygon::edge_set_t& edges ) {
+    setup( edges );
+}
+
+void Polygon::setup( const Polygon::edge_set_t& edges ) {
     ATLAS_TRACE();
     // get external edges by attempting to remove reversed edges, if any
     edge_set_t extEdges;

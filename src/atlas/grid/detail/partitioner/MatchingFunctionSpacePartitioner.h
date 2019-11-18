@@ -13,25 +13,25 @@
 #include <vector>
 
 #include "atlas/grid/detail/partitioner/Partitioner.h"
-#include "atlas/mesh/Mesh.h"
+#include "atlas/functionspace/FunctionSpace.h"
 
 namespace atlas {
 namespace grid {
 namespace detail {
 namespace partitioner {
 
-class MatchingMeshPartitioner : public Partitioner {
+class MatchingFunctionSpacePartitioner : public Partitioner {
 public:
-    MatchingMeshPartitioner();
+    MatchingFunctionSpacePartitioner();
 
-    MatchingMeshPartitioner( const idx_t nb_partitions );
+    MatchingFunctionSpacePartitioner( const idx_t nb_partitions );
 
-    MatchingMeshPartitioner( const Mesh& );
+    MatchingFunctionSpacePartitioner( const FunctionSpace& );
 
-    virtual ~MatchingMeshPartitioner() override {}
+    virtual ~MatchingFunctionSpacePartitioner() override {}
 
 protected:
-    const Mesh prePartitionedMesh_;
+    const FunctionSpace partitioned_;
 };
 
 }  // namespace partitioner

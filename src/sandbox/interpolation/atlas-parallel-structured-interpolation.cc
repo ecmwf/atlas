@@ -62,7 +62,7 @@ public:
             new SimpleOption<bool>( "output-inner-bounding-box", "Output Python script that plots inner bounding boxes for each partition") );
         
         add_option( new SimpleOption<long>( "vortex-rollup","Value that controls vortex rollup (default = 0)") );
-        add_option( new SimpleOption<bool>( "with-backwards","Do backwards interp olation") );
+        add_option( new SimpleOption<bool>( "with-backwards","Do backwards interpolation") );
         
     }
 };
@@ -195,6 +195,8 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         }
     }
     
+    //auto tgt_partitioner = grid::MatchingFunctionSpacePartitioner(src_fs);
+    //auto tgt_fs = functionspace::StructuredColumns{ tgt_grid, tgt_partitioner, config | option::levels( nlev ) };
     
     auto tgt_dist = matching_distribution(tgt_grid,src_fs);
     auto tgt_fs = functionspace::StructuredColumns{ tgt_grid, tgt_dist, config | option::levels( nlev ) };

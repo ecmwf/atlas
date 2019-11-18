@@ -54,6 +54,10 @@ idx_t FunctionSpace::size() const {
     return get()->size();
 }
 
+idx_t FunctionSpace::nb_partitions() const {
+    return get()->nb_partitions();
+}
+
 void FunctionSpace::haloExchange( const FieldSet& fields, bool on_device ) const {
     return get()->haloExchange( fields, on_device );
 }

@@ -256,6 +256,8 @@ public:
 
     virtual idx_t size() const override { return nb_nodes_; }
 
+    idx_t nb_partitions() const override { return mesh_.nb_partitions(); }
+
 private:  // methods
     void constructor();
 

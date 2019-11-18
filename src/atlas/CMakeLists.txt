@@ -119,6 +119,8 @@ grid/Vertical.cc
 grid/Stencil.h
 grid/StencilComputer.h
 grid/StencilComputer.cc
+grid/StructuredPartitionPolygon.h
+grid/StructuredPartitionPolygon.cc
 
 grid/detail/grid/GridBuilder.h
 grid/detail/grid/GridBuilder.cc
@@ -155,6 +157,10 @@ grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.cc
 grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h
 grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.cc
 grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h
+grid/detail/partitioner/MatchingFunctionSpacePartitioner.h
+grid/detail/partitioner/MatchingFunctionSpacePartitioner.cc
+grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.cc
+grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h
 grid/detail/partitioner/Partitioner.cc
 grid/detail/partitioner/Partitioner.h
 

@@ -23,6 +23,7 @@ class Parametrisation;
 namespace atlas {
 class Grid;
 class Mesh;
+class FunctionSpace;
 namespace grid {
 class Distribution;
 class DistributionImpl;
@@ -41,6 +42,12 @@ namespace detail {
 class MeshImpl;
 }
 }  // namespace mesh
+}  // namespace atlas
+
+namespace atlas {
+namespace functionspace {
+class FunctionSpaceImpl;
+}  // namespace functionspace
 }  // namespace atlas
 
 namespace atlas {
@@ -94,8 +101,23 @@ public:
 
 public:
     MatchingMeshPartitioner();
-    MatchingMeshPartitioner( const Mesh& mesh );
-    MatchingMeshPartitioner( const Mesh& mesh, const Config& config );
+    MatchingMeshPartitioner( const Mesh& );
+    MatchingMeshPartitioner( const Mesh&, const Config& );
+};
+
+// ------------------------------------------------------------------
+
+class MatchingFunctionSpacePartitioner : public Partitioner {
+public:
+    using Config = eckit::Parametrisation;
+
+public:
+    static bool exists( const std::string& type );
+
+public:
+    MatchingFunctionSpacePartitioner();
+    MatchingFunctionSpacePartitioner( const FunctionSpace& );
+    MatchingFunctionSpacePartitioner( const FunctionSpace&, const Config& );
 };
 
 // ------------------------------------------------------------------
@@ -106,6 +128,8 @@ Partitioner::Implementation* atlas__grid__Partitioner__new( const Partitioner::C
 Partitioner::Implementation* atlas__grid__Partitioner__new_type( const char* type );
 
 Partitioner::Implementation* atlas__grid__MatchingMeshPartitioner__new( const mesh::detail::MeshImpl* mesh,
+                                                                        const Partitioner::Config* config );
+Partitioner::Implementation* atlas__grid__MatchingFunctionSpacePartitioner__new( const functionspace::FunctionSpaceImpl* mesh,
                                                                         const Partitioner::Config* config );
 void atlas__grid__Partitioner__delete( Partitioner::Implementation* This );
 DistributionImpl* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This, const GridImpl* grid );
