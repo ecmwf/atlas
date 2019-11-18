@@ -363,8 +363,13 @@ void StructuredPartitionPolygon::outputPythonScript( const eckit::PathName& file
             std::ofstream f( filepath.asString().c_str(), mpi_rank == 0 ? std::ios::trunc : std::ios::app );
 
             if ( mpi_rank == 0 ) {
-                f << "\n" "# Configuration option to plot nodes"
-                     "\n" "plot_nodes = " + std::string( plot_nodes ? "True" : "False" ) +
+                f << "\n" "import sys"
+                     "\n"
+                     "\n" "# Configuration option to plot nodes"
+                     "\n" "plot_nodes = False"
+                     "\n" "for argv in sys.argv[1:] :"
+                     "\n" "  if argv == \"--nodes\" :"
+                     "\n" "      plot_nodes = " + std::string( plot_nodes ? "True" : "False" ) +
                      "\n"
                      "\n" "import matplotlib.pyplot as plt"
                      "\n" "from matplotlib.path import Path"
