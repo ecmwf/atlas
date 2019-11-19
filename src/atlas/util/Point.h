@@ -145,7 +145,9 @@ namespace eckit {
     // Following changes the default for these types to [VectorPrintSimple]
     class VectorPrintSimple;
     template <typename T> struct VectorPrintSelector;
+    template <> struct VectorPrintSelector< atlas::Point2 > { typedef VectorPrintSimple selector; };
     template <> struct VectorPrintSelector< atlas::PointXY > { typedef VectorPrintSimple selector; };
     template <> struct VectorPrintSelector< atlas::PointLonLat > { typedef VectorPrintSimple selector; };
+    template <> struct VectorPrintSelector< atlas::Point3 > { typedef VectorPrintSimple selector; };
     template <> struct VectorPrintSelector< atlas::PointXYZ > { typedef VectorPrintSimple selector; };
 }

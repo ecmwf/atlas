@@ -170,12 +170,8 @@ Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_
     return ( *j ).second->make( nb_partitions );
 }
 
-}  // namespace partitioner
-}  // namespace detail
 
-grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build( const std::string& type,
-                                                                          const Mesh& partitioned ) {
-    using namespace grid::detail::partitioner;
+Partitioner* MatchingPartitionerFactory::build( const std::string& type, const Mesh& partitioned ) {
 
     if ( type == MatchingMeshPartitionerSphericalPolygon::static_type() ) {
         return new MatchingMeshPartitionerSphericalPolygon( partitioned );
@@ -191,10 +187,7 @@ grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build( const 
     }
 }
 
-grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build( const std::string& type,
-                                                                          const FunctionSpace& partitioned ) {
-    using namespace grid::detail::partitioner;
-
+Partitioner* MatchingPartitionerFactory::build( const std::string& type, const FunctionSpace& partitioned ) {
      if ( type == MatchingFunctionSpacePartitionerLonLatPolygon::static_type() ) {
         return new MatchingFunctionSpacePartitionerLonLatPolygon( partitioned );
     }
@@ -202,5 +195,8 @@ grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build( const 
         ATLAS_NOTIMPLEMENTED;
     }
 }
+
+}  // namespace partitioner
+}  // namespace detail
 }  // namespace grid
 }  // namespace atlas

@@ -92,7 +92,7 @@ public:
 
 // ------------------------------------------------------------------
 
-class MatchingMeshPartitioner : public Partitioner {
+class MatchingPartitioner : public Partitioner {
 public:
     using Config = eckit::Parametrisation;
 
@@ -100,24 +100,18 @@ public:
     static bool exists( const std::string& type );
 
 public:
-    MatchingMeshPartitioner();
-    MatchingMeshPartitioner( const Mesh& );
-    MatchingMeshPartitioner( const Mesh&, const Config& );
+    MatchingPartitioner();
+    MatchingPartitioner( const Mesh& );
+    MatchingPartitioner( const Mesh&, const Config& );
+    MatchingPartitioner( const FunctionSpace& );
+    MatchingPartitioner( const FunctionSpace&, const Config& );
 };
 
 // ------------------------------------------------------------------
 
-class MatchingFunctionSpacePartitioner : public Partitioner {
+class MatchingMeshPartitioner : public MatchingPartitioner {
 public:
-    using Config = eckit::Parametrisation;
-
-public:
-    static bool exists( const std::string& type );
-
-public:
-    MatchingFunctionSpacePartitioner();
-    MatchingFunctionSpacePartitioner( const FunctionSpace& );
-    MatchingFunctionSpacePartitioner( const FunctionSpace&, const Config& );
+    using MatchingPartitioner::MatchingPartitioner;
 };
 
 // ------------------------------------------------------------------

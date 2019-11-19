@@ -50,7 +50,7 @@ detail::partitioner::Partitioner* partitioner_from_config( const Partitioner::Co
 Partitioner::Partitioner( const Config& config ) : Handle( partitioner_from_config( config ) ) {}
 
 void Partitioner::partition( const Grid& grid, int part[] ) const {
-    ATLAS_TRACE();
+    ATLAS_TRACE("Partitioner::partition");
     get()->partition( grid, part );
 }
 
@@ -66,38 +66,37 @@ std::string Partitioner::type() const {
     return get()->type();
 }
 
-MatchingMeshPartitioner::MatchingMeshPartitioner() : Partitioner() {}
+MatchingPartitioner::MatchingPartitioner() : Partitioner() {}
 
 grid::detail::partitioner::Partitioner* matching_mesh_partititioner( const Mesh& mesh,
                                                                      const Partitioner::Config& config ) {
     std::string type( "lonlat-polygon" );
     config.get( "type", type );
-    return MatchedPartitionerFactory::build( type, mesh );
+    return grid::detail::partitioner::MatchingPartitionerFactory::build( type, mesh );
 }
 
-MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh ) :
-    MatchingMeshPartitioner( mesh, util::NoConfig() ) {}
+MatchingPartitioner::MatchingPartitioner( const Mesh& mesh ) :
+    MatchingPartitioner( mesh, util::NoConfig() ) {}
 
 
-MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh, const Config& config ) :
+MatchingPartitioner::MatchingPartitioner( const Mesh& mesh, const Config& config ) :
     Partitioner( matching_mesh_partititioner( mesh, config ) ) {}
 
 
 
-MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner() : Partitioner() {}
 
 grid::detail::partitioner::Partitioner* matching_functionspace_partititioner( const FunctionSpace& functionspace,
                                                                 const Partitioner::Config& config ) {
     std::string type( "lonlat-polygon" );
     config.get( "type", type );
-    return MatchedPartitionerFactory::build( type, functionspace );
+    return grid::detail::partitioner::MatchingPartitionerFactory::build( type, functionspace );
 }
 
-MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner( const FunctionSpace& functionspace ) :
-    MatchingFunctionSpacePartitioner( functionspace, util::NoConfig() ) {}
+MatchingPartitioner::MatchingPartitioner( const FunctionSpace& functionspace ) :
+    MatchingPartitioner( functionspace, util::NoConfig() ) {}
 
 
-MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner( const FunctionSpace& functionspace, const Config& config ) :
+MatchingPartitioner::MatchingPartitioner( const FunctionSpace& functionspace, const Config& config ) :
     Partitioner( matching_functionspace_partititioner( functionspace, config ) ) {}
 
 
@@ -131,7 +130,7 @@ detail::partitioner::Partitioner* atlas__grid__MatchingMeshPartitioner__new( con
                                                                              const Partitioner::Config* config ) {
     detail::partitioner::Partitioner* p;
     {
-        MatchingMeshPartitioner partitioner( Mesh( mesh ), *config );
+        MatchingPartitioner partitioner( Mesh( mesh ), *config );
         p = const_cast<detail::partitioner::Partitioner*>( partitioner.get() );
         p->attach();
     }
@@ -144,7 +143,7 @@ detail::partitioner::Partitioner* atlas__grid__MatchingFunctionSpacePartitioner_
         const Partitioner::Config* config ) {
     detail::partitioner::Partitioner* p;
     {
-        MatchingFunctionSpacePartitioner partitioner( FunctionSpace( functionspace ), *config );
+        MatchingPartitioner partitioner( FunctionSpace( functionspace ), *config );
         p = const_cast<detail::partitioner::Partitioner*>( partitioner.get() );
         p->attach();
     }

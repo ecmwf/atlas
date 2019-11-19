@@ -16,15 +16,8 @@
 #include "atlas/interpolation.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/config/Resource.h"
-#include "eckit/linalg/LinearAlgebra.h"
-#include "eckit/log/Plural.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/LonLatPolygon.h"
-#include "atlas/util/Vector.h"
 #include "atlas/parallel/omp/omp.h"
-#include "atlas/parallel/omp/fill.h"
 
 
 using namespace atlas;
@@ -35,8 +28,8 @@ class AtlasParallelInterpolation : public AtlasTool {
     std::string briefDescription() override { return "Demonstration of parallel interpolation"; }
     std::string usage() override {
         return name() +
-               " [--source-gridname=gridname] "
-               "[--target-gridname=gridname] [OPTION]... [--help]";
+            " [--source-gridname=gridname] "
+            "[--target-gridname=gridname] [OPTION]... [--help]";
     }
 
     int numberOfPositionalArguments() override { return -1; }
@@ -45,8 +38,8 @@ class AtlasParallelInterpolation : public AtlasTool {
 public:
     AtlasParallelInterpolation( int argc, char* argv[] ) : AtlasTool( argc, argv ) {
 
-        add_option( new SimpleOption<std::string>( "source-gridname", "source gridname" ) );
-        add_option( new SimpleOption<std::string>( "target-gridname", "target gridname" ) );
+        add_option( new SimpleOption<std::string>( "source", "source gridname" ) );
+        add_option( new SimpleOption<std::string>( "target", "target gridname" ) );
 
         add_option( new SimpleOption<std::string>( "method", "interpolation method (default linear)" ) );
         add_option( new SimpleOption<bool>( "matrix-free", "Don't store matrix for consecutive interpolations" ) );
@@ -59,7 +52,7 @@ public:
         add_option(
             new SimpleOption<bool>( "output-polygons", "Output Python script that plots partitions polygons" ) );
         add_option(
-            new SimpleOption<bool>( "output-inner-bounding-box", "Output Python script that plots inner bounding boxes for each partition") );
+            new SimpleOption<bool>( "output-inscribed-rectangle", "Output Python script that plots iscribed rectangular domain for each partition") );
         
         add_option( new SimpleOption<long>( "vortex-rollup","Value that controls vortex rollup (default = 0)") );
         add_option( new SimpleOption<bool>( "with-backwards","Do backwards interpolation") );
@@ -117,61 +110,12 @@ double vortex_rollup( double lon, double lat, double t ) {
     return q;
 };
 
-grid::Distribution matching_distribution( Grid& grid, FunctionSpace& partitioned ) {
-    ATLAS_TRACE("Computing distribution from source");
-    atlas::vector<int> part( grid.size() );
-
-    if( mpi::comm().size() == 1 ) {
-        // shortcut
-        omp::fill( part.begin(), part.end(), 0 );
-    }
-    else {
-        const auto& p = partitioned.polygon();
-    
-        int rank = mpi::comm().rank();
-        util::LonLatPolygon poly{ p };
-        {
-            ATLAS_TRACE("point-in-polygon check for entire grid (" + std::to_string( grid.size() ) + " points)");
-            size_t num_threads = atlas_omp_get_max_threads();
-            size_t chunk_size = grid.size()/(1000*num_threads);
-            size_t chunks = num_threads == 1 ? 1 : std::max( size_t(1),size_t(grid.size())/chunk_size);
-            atlas_omp_pragma(omp parallel for schedule(dynamic,1))
-            for( size_t chunk=0; chunk < chunks; ++chunk) {
-                const size_t begin = chunk * size_t(grid.size())/chunks;
-                const size_t end = (chunk+1) * size_t(grid.size())/chunks;
-                auto it = grid.xy().begin();
-                it += chunk * grid.size()/chunks;
-                for( size_t n=begin ; n<end; ++n ) {
-                    if( poly.contains(*it) ) {
-                        part[n] = rank;
-                    }
-                    else {
-                        part[n] = -1;
-                    }
-                    ++it;
-                }
-            }
-        }
-        {
-            ATLAS_TRACE("all_reduce");
-            mpi::comm().allReduceInPlace(part.data(),part.size(),eckit::mpi::max());
-        }
-    }
-
-    grid::Distribution dist;
-    {
-        ATLAS_TRACE("convert to grid::Distribution");
-        dist = grid::Distribution(mpi::comm().size(), std::move(part) );
-    }
-    return dist;
-}
-
-
 int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
 
     ATLAS_TRACE("AtlasParallelInterpolation::execute");
-    auto source_gridname = args.getString( "source-gridname", "O32" );
-    auto target_gridname = args.getString( "target-gridname", "O64" );
+    auto source_gridname = args.getString( "source", "O32" );
+    auto target_gridname = args.getString( "target", "O64" );
+    auto require_polygon = args.getBool("output-polygons",false) || args.getBool("output-inscribed-rectangle",false);
     auto config = processed_config(args);
 
     Log::info() << "atlas-parallel-interpolation from source grid " << source_gridname << " to " << target_gridname
@@ -179,35 +123,40 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     Grid src_grid( source_gridname );
     Grid tgt_grid( target_gridname );
 
+    functionspace::StructuredColumns src_fs;
+    functionspace::StructuredColumns tgt_fs;
+
     int nlev = 0;
 
-    auto src_fs  = functionspace::StructuredColumns{ src_grid, config | option::levels( nlev ) };
+    ATLAS_TRACE_SCOPE( "Create source function space" ) {
+        src_fs  = functionspace::StructuredColumns{ src_grid, config | option::levels( nlev ) };
+    }
 
     bool output_nodes = true;
-    if( args.getBool("output-polygons",false) || args.getBool("output-inner-bounding-box",false) ) {
+    if( require_polygon ) {
         const auto& src_poly = src_fs.polygon();
-        src_poly.outputPythonScript("src-polygons.py");
         if( args.getBool("output-polygons",false) ) {
             src_poly.outputPythonScript("src-polygons.py",Config("nodes",output_nodes));
         }
-        if( args.getBool("output-inner-bounding-box",false) ) {
-            src_poly.outputPythonScript("src-inner-bounding-box.py",Config("nodes",output_nodes)|Config("inner_bounding_box",true));
+        if( args.getBool("output-inscribed-rectangle",false) ) {
+            src_poly.outputPythonScript("src-inscribed-rectangle.py",Config("nodes",output_nodes)|Config("inscribed_rectangle",true));
         }
     }
     
-    //auto tgt_partitioner = grid::MatchingFunctionSpacePartitioner(src_fs);
-    //auto tgt_fs = functionspace::StructuredColumns{ tgt_grid, tgt_partitioner, config | option::levels( nlev ) };
-    
-    auto tgt_dist = matching_distribution(tgt_grid,src_fs);
-    auto tgt_fs = functionspace::StructuredColumns{ tgt_grid, tgt_dist, config | option::levels( nlev ) };
+    ATLAS_TRACE_SCOPE( "Create target function space" ) {
+        auto tgt_partitioner = grid::MatchingPartitioner(src_fs);
+        tgt_fs = functionspace::StructuredColumns{ tgt_grid, tgt_partitioner, config | option::levels( nlev ) };
+    }
 
-    if( args.getBool("output-polygons",false) || args.getBool("output-inner-bounding-box",false) ) {
+    
+
+    if( require_polygon ) {
         const auto& tgt_poly = tgt_fs.polygon();
         if( args.getBool("output-polygons",false) ) {
             tgt_poly.outputPythonScript("tgt-polygons.py",Config("nodes",output_nodes));
         }
-        if( args.getBool("output-inner-bounding-box",false) ) {
-            tgt_poly.outputPythonScript("tgt-inner-bounding-box.py",Config("nodes",output_nodes)|Config("inner_bounding_box",true));
+        if( args.getBool("output-inscribed-rectangle",false) ) {
+            tgt_poly.outputPythonScript("tgt-inscribed-rectangle.py",Config("nodes",output_nodes)("inscribed_rectangle",true));
         }
     }
 
@@ -229,10 +178,11 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     
     src_field.haloExchange();
     
-    output::Gmsh src_gmsh("src_field.msh");
-    output::Gmsh tgt_gmsh("tgt_field.msh",Config("ghost",true));
+    output::Output src_gmsh;
+    output::Output tgt_gmsh;
     
     if( args.getBool("output-gmsh",false) ) {
+        src_gmsh = output::Gmsh("src_field.msh");
         src_gmsh.write( src_field );
     }
     
@@ -244,6 +194,7 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
 
     if( args.getBool("output-gmsh",false) ) {
         tgt_field.haloExchange();
+        tgt_gmsh = output::Gmsh("tgt_field.msh",Config("ghost",true));
         tgt_gmsh.write( tgt_field );
     }
     

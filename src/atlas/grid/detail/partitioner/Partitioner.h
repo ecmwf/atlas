@@ -95,16 +95,15 @@ public:
 
 // ------------------------------------------------------------------
 
-}  // namespace partitioner
-}  // namespace detail
-
-class MatchedPartitionerFactory {
+class MatchingPartitionerFactory {
 public:
-    static grid::detail::partitioner::Partitioner* build( const std::string& type, const Mesh& partitioned );
-    static grid::detail::partitioner::Partitioner* build( const std::string& type, const FunctionSpace& partitioned );
+    static Partitioner* build( const std::string& type, const Mesh& partitioned );
+    static Partitioner* build( const std::string& type, const FunctionSpace& partitioned );
 };
 
 // ------------------------------------------------------------------
 
+}  // namespace partitioner
+}  // namespace detail
 }  // namespace grid
 }  // namespace atlas

@@ -133,7 +133,7 @@ DistributionImpl::~DistributionImpl() = default;
 
 void DistributionImpl::print( std::ostream& s ) const {
     s << "Distribution( "
-      << "type: " << type_ << ", nbPoints: " << part_.size() << ", nbPartitions: " << nb_pts_.size() << ", parts : [";
+      << "type: " << type_ << ", nb_points: " << part_.size() << ", nb_partitions: " << nb_pts_.size() << ", parts : [";
     for ( idx_t i = 0, size = static_cast<idx_t>( part_.size() ); i < size; i++ ) {
         if ( i != 0 ) {
             s << ',';

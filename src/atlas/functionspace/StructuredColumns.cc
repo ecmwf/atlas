@@ -397,6 +397,8 @@ StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical
     vertical_( vertical ),
     nb_levels_( vertical_.size() ),
     grid_( new StructuredGrid( grid ) ) {
+    ATLAS_TRACE( "StructuredColumns constructor" );
+
     grid::Partitioner partitioner( p );
     if ( not partitioner ) {
         if ( config.has( "partitioner" ) ) {

@@ -32,7 +32,8 @@ namespace detail {
 namespace partitioner {
 
 namespace {
-PartitionerBuilder<MatchingFunctionSpacePartitionerLonLatPolygon> __builder( "fs-lonlat-polygon" );
+    // We did not yet implement self-registration in MatchedPartitionerFactory
+    // PartitionerBuilder<MatchingFunctionSpacePartitionerLonLatPolygon> __builder( "lonlat-polygon" );
 }
 
 void MatchingFunctionSpacePartitionerLonLatPolygon::partition( const Grid& grid, int part[] ) const {
@@ -58,8 +59,7 @@ void MatchingFunctionSpacePartitionerLonLatPolygon::partition( const Grid& grid,
             for( size_t chunk=0; chunk < chunks; ++chunk) {
                 const size_t begin = chunk * size_t(grid.size())/chunks;
                 const size_t end = (chunk+1) * size_t(grid.size())/chunks;
-                auto it = grid.xy().begin();
-                it += chunk * grid.size()/chunks;
+                auto it = grid.xy().begin() + chunk * grid.size()/chunks;
                 for( size_t n=begin ; n<end; ++n ) {
                     if( poly.contains(*it) ) {
                         part[n] = rank;
@@ -71,8 +71,7 @@ void MatchingFunctionSpacePartitionerLonLatPolygon::partition( const Grid& grid,
                 }
             }
         }
-        {
-            ATLAS_TRACE("all_reduce");
+        ATLAS_TRACE_MPI(ALLREDUCE) {
             mpi::comm().allReduceInPlace(part,grid.size(),eckit::mpi::max());
         }
     }

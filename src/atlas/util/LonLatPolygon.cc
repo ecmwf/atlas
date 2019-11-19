@@ -42,8 +42,8 @@ PointLonLat compute_centroid(const PointContainer& points) {
     double a = 0.;  // Partial signed area
 
     for (size_t i=0; i<points.size()-1; ++i) {
-        const PointLonLat& p0 = points[i];
-        const PointLonLat& p1 = points[i+1];
+        const Point2& p0 = points[i];
+        const Point2& p1 = points[i+1];
         a = p0[0]*p1[1] - p1[0]*p0[1];
         signed_area += a;
         centroid[0] += (p0[0] + p1[0])*a;
@@ -117,18 +117,17 @@ LonLatPolygon::LonLatPolygon( const PartitionPolygon& partition_polygon ) :
 }
 
 bool LonLatPolygon::contains( const Point2& P ) const {
+    auto distance2 = [](const Point2& p, const Point2& centroid) {
+      double dx = (p[0]-centroid[0]);
+      double dy = (p[1]-centroid[1]);
+      return dx*dx + dy*dy;
+    };
 
     // check first bounding box
     if ( coordinatesMax_[LAT] < P[LAT] ||
          P[LAT] < coordinatesMin_[LAT] || coordinatesMax_[LON] < P[LON] || P[LON] < coordinatesMin_[LON] ) {
         return false;
     }
-
-    auto distance2 = [](const PointLonLat& p, const PointLonLat& centroid) {
-      double dx = (p[0]-centroid[0]);
-      double dy = (p[1]-centroid[1]);
-      return dx*dx + dy*dy;
-    };
 
     if( inner_radius_squared_ == 0 ) { // check inner bounding box
         if ( inner_coordinatesMin_[LON] <= P[LON] &&
@@ -149,8 +148,8 @@ bool LonLatPolygon::contains( const Point2& P ) const {
 
     // loop on polygon edges
     for ( size_t i = 1; i < coordinates_.size(); ++i ) {
-        const PointLonLat& A = coordinates_[i - 1];
-        const PointLonLat& B = coordinates_[i];
+        const Point2& A = coordinates_[i - 1];
+        const Point2& B = coordinates_[i];
 
         // check point-edge side and direction, using 2D-analog cross-product;
         // tests if P is left|on|right of a directed A-B infinite line, by
