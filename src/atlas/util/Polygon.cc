@@ -16,10 +16,8 @@
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/array.h"
-#include "atlas/mesh/Nodes.h"
+#include "atlas/field/Field.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/runtime/Trace.h"
-#include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Polygon.h"
 #include "atlas/domain/Domain.h"

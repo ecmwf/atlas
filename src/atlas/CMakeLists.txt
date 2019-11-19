@@ -379,6 +379,8 @@ functionspace/detail/NodeColumnsInterface.cc
 functionspace/detail/NodeColumns_FieldStatistics.cc
 functionspace/detail/SpectralInterface.h
 functionspace/detail/SpectralInterface.cc
+functionspace/detail/StructuredColumns.h
+functionspace/detail/StructuredColumns.cc
 functionspace/detail/StructuredColumnsInterface.h
 functionspace/detail/StructuredColumnsInterface.cc
 functionspace/detail/StructuredColumns_setup.cc

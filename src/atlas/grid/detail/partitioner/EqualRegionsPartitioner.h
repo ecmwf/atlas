@@ -104,22 +104,18 @@ public:
             return n == other.n;
         }
         void swap( NodeInt& other ) {
-            int tmp;
-            tmp = other.n;
-            other.n = n;
-            n = tmp;
-            tmp = other.x;
-            other.x = x;
-            x = tmp;
-            tmp = other.y;
-            other.y = y;
-            y = tmp;
+            auto _swap = [](int& a, int& b) {
+                int tmp = a;
+                a = b;
+                b = tmp;
+            };
+            _swap( x, other.x );
+            _swap( y, other.y );
+            _swap( n, other.n );
         }
         friend void swap(NodeInt& a, NodeInt& b) {
             a.swap(b);
         }
-
-        //operator double() { return double(n); }
     };
 
 private:

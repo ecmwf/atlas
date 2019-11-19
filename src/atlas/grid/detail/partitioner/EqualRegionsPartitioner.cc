@@ -26,7 +26,6 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/MicroDeg.h"
-#include "atlas/util/detail/Debug.h"
 #include "atlas/util/Vector.h"
 
 

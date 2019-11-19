@@ -63,29 +63,23 @@ struct GridPointSet {
 public:
     GridPointSet() = default;
 
-    atlas::vector<GridPoint> set_;
-    // bool insert( idx_t i, idx_t j ) {
-    //     idx_t r = static_cast<idx_t>( set_.size() );
-    //     set_.emplace_back( i, j, r );
-    //     return true;
-    // }
+    atlas::vector<GridPoint> gp_;
 
-    void reserve( size_t size ) { set_.reserve(size); }
-    void resize( size_t size ) { set_.resize(size); }
+    void reserve( size_t size ) { gp_.reserve(size); }
+    void resize( size_t size ) { gp_.resize(size); }
     void set( idx_t i, idx_t j, idx_t r ) {
-        // ATLAS_ASSERT( r < size() ); (perhaps only in debug build)
-        set_[r].i=i;
-        set_[r].j=j;
-        set_[r].r=r;
+        gp_[r].i=i;
+        gp_[r].j=j;
+        gp_[r].r=r;
     }
 
-    idx_t size() const { return static_cast<idx_t>( set_.size() ); }
+    idx_t size() const { return static_cast<idx_t>( gp_.size() ); }
 
-    using const_iterator = decltype( set_ )::const_iterator;
+    using const_iterator = decltype( gp_ )::const_iterator;
 
-    const_iterator begin() const { return set_.begin(); }
-    const_iterator end() const { return set_.end(); }
-    const GridPoint& operator[](idx_t i) const { return set_[i]; }
+    const_iterator begin() const { return gp_.begin(); }
+    const_iterator end() const { return gp_.end(); }
+    const GridPoint& operator[](idx_t i) const { return gp_[i]; }
 };
 
 }  // namespace
