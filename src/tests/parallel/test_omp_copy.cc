@@ -26,7 +26,7 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 CASE( "test omp::copy" ) {
-    Grid grid( "O4000" );
+    Grid grid( "O400" );
     atlas::vector<PointXY> points( grid.size() );
     omp::copy( grid.xy().begin(), grid.xy().end(), points.begin() );
 }
@@ -35,7 +35,7 @@ CASE( "test omp::copy" ) {
 CASE( "test atlas::vector assign" ) {
     // atlas::vector assign uses omp::copy
     // It should reproduce exactly the same points as previous test case
-    Grid grid( "O4000" );
+    Grid grid( "O400" );
     atlas::vector<PointXY> points;
     points.assign( grid.xy().begin(), grid.xy().end() );
     EXPECT( points.size() == grid.size() );
