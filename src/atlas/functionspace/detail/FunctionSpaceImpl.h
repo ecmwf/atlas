@@ -26,7 +26,7 @@ class Field;
 namespace util {
 class Metadata;
 class PartitionPolygon;
-}
+}  // namespace util
 }  // namespace atlas
 
 namespace atlas {

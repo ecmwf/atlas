@@ -63,7 +63,7 @@ struct TraceTraits {
 #else
     using Barriers = runtime::trace::NoBarriers;
 #endif
-    using Tracing  = runtime::trace::Logging;
+    using Tracing = runtime::trace::Logging;
 };
 
 class Trace : public runtime::trace::TraceT<TraceTraits> {

@@ -209,7 +209,7 @@ int AtlasGrids::execute( const Args& args ) {
                 }
                 auto it = grid.lonlat().begin();
                 Log::info() << "   lonlat(first)     : " << *it << std::endl;
-                it += grid.size()-1;
+                it += grid.size() - 1;
                 Log::info() << "   lonlat(last)      : " << *it << std::endl;
                 Log::info().precision( precision );
             }
@@ -298,7 +298,7 @@ int AtlasGrids::execute( const Args& args ) {
 
             std::vector<double> last_point_lonlat;
             if ( config_check.get( "lonlat(last)", last_point_lonlat ) ) {
-                PointLonLat last_point = *(grid.lonlat().begin() + (grid.size()-1) );
+                PointLonLat last_point = *( grid.lonlat().begin() + ( grid.size() - 1 ) );
                 if ( not equal( last_point.lon(), last_point_lonlat[0] ) or
                      not equal( last_point.lat(), last_point_lonlat[1] ) ) {
                     out << "Check failed: lonlat(last) " << last_point << " expected to be "

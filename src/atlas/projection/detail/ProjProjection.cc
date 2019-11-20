@@ -31,7 +31,6 @@ ProjProjection::ProjProjection( const eckit::Parametrisation& param ) :
     sourceToTarget_( nullptr ),
     sourceToGeocentric_( nullptr ),
     context_( PJ_DEFAULT_CTX ) {
-
     ATLAS_ASSERT( param.get( "proj", proj_ ) && !proj_.empty() );
     param.get( "proj_source", source_ = "EPSG:4326" );          // WGS 84 (lat, lon)
     param.get( "proj_geocentric", geocentric_ = "EPSG:4978" );  // WGS 84 (x, y, z)

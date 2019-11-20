@@ -23,7 +23,8 @@ class Parametrisation;
 namespace atlas {
 class RegularGrid;
 class Mesh;
-template< typename T > class vector;
+template <typename T>
+class vector;
 }  // namespace atlas
 
 namespace atlas {

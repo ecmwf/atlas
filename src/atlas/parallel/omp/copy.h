@@ -12,34 +12,32 @@
 
 #include <algorithm>
 #include <iterator>
- 
+
 #include "atlas/parallel/omp/omp.h"
 
-#include "atlas/runtime/Log.h"
 #include <iostream>
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace omp {
 
-template<class InputIterator, class OutputIterator>
-OutputIterator copy(InputIterator first, InputIterator last, OutputIterator result) {
-
-    if( atlas_omp_get_max_threads() > 1 ) {
-        auto size = std::distance(first,last);
-        atlas_omp_parallel
-        {
-            auto nthreads = atlas_omp_get_num_threads();
-            auto tid = atlas_omp_get_thread_num();
-            auto chunksize = size / nthreads;
-            auto v_begin = first + chunksize * tid;
-            auto v_end = (tid == nthreads -1) ? last : v_begin + chunksize;
+template <class InputIterator, class OutputIterator>
+OutputIterator copy( InputIterator first, InputIterator last, OutputIterator result ) {
+    if ( atlas_omp_get_max_threads() > 1 ) {
+        auto size = std::distance( first, last );
+        atlas_omp_parallel {
+            auto nthreads     = atlas_omp_get_num_threads();
+            auto tid          = atlas_omp_get_thread_num();
+            auto chunksize    = size / nthreads;
+            auto v_begin      = first + chunksize * tid;
+            auto v_end        = ( tid == nthreads - 1 ) ? last : v_begin + chunksize;
             auto result_begin = result + chunksize * tid;
             std::copy( v_begin, v_end, result_begin );
         }
         return result + size;
     }
     else {
-    	return std::copy( first, last, result );
+        return std::copy( first, last, result );
     }
 }
 

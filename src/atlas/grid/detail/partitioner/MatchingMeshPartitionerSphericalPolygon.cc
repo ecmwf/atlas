@@ -20,8 +20,8 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/util/SphericalPolygon.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/SphericalPolygon.h"
 
 namespace atlas {
 namespace grid {
@@ -61,7 +61,7 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
 
         for ( const PointLonLat& P : grid.lonlat() ) {
             ++timer;
-            partitioning[i++]   = at_the_pole( P ) || poly.contains( P ) ? mpi_rank : -1;
+            partitioning[i++] = at_the_pole( P ) || poly.contains( P ) ? mpi_rank : -1;
         }
     }
 

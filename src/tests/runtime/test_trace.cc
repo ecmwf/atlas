@@ -56,7 +56,6 @@ CASE( "test trace OpenMP" ) {
 }
 
 CASE( "test barrier" ) {
-
     EXPECT( runtime::trace::Barriers::state() == Library::instance().traceBarriers() );
     {
         runtime::trace::Barriers set_barriers( true );
@@ -68,7 +67,6 @@ CASE( "test barrier" ) {
         EXPECT( runtime::trace::Barriers::state() == true );
     }
     EXPECT( runtime::trace::Barriers::state() == Library::instance().traceBarriers() );
-
 }
 
 }  // namespace test

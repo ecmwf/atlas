@@ -123,8 +123,8 @@ Partitioner::Implementation* atlas__grid__Partitioner__new_type( const char* typ
 
 Partitioner::Implementation* atlas__grid__MatchingMeshPartitioner__new( const mesh::detail::MeshImpl* mesh,
                                                                         const Partitioner::Config* config );
-Partitioner::Implementation* atlas__grid__MatchingFunctionSpacePartitioner__new( const functionspace::FunctionSpaceImpl* mesh,
-                                                                        const Partitioner::Config* config );
+Partitioner::Implementation* atlas__grid__MatchingFunctionSpacePartitioner__new(
+    const functionspace::FunctionSpaceImpl* mesh, const Partitioner::Config* config );
 void atlas__grid__Partitioner__delete( Partitioner::Implementation* This );
 DistributionImpl* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This, const GridImpl* grid );
 }

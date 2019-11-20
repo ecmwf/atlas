@@ -11,10 +11,10 @@
 
 #include <functional>
 #include <iomanip>
+#include <new>  // for bad_alloc exception
 #include <sstream>
 #include <string>
 #include <unordered_map>
-#include <new> // for bad_alloc exception
 
 #include "eckit/log/Bytes.h"
 
@@ -37,9 +37,7 @@ namespace detail {
 void StructuredColumns::create_remote_index() const {
     field_remote_index_ = Field( "remote_idx", array::make_datatype<idx_t>(), array::make_shape( size_halo_ ) );
     auto remote_idx     = array::make_view<idx_t, 1>( field_remote_index_ );
-    atlas_omp_parallel_for ( idx_t n = 0; n < size_owned_; ++n ) {
-        remote_idx( n ) = n;
-    }
+    atlas_omp_parallel_for( idx_t n = 0; n < size_owned_; ++n ) { remote_idx( n ) = n; }
 
 
     ATLAS_TRACE_SCOPE( "Parallelisation ..." ) {
@@ -50,23 +48,22 @@ void StructuredColumns::create_remote_index() const {
 
             auto part = array::make_view<int, 1>( this->partition() );
 
-            std::vector<int> others_set(mpi_size,0);
-            others_set[ mpi_rank ] = 1;
+            std::vector<int> others_set( mpi_size, 0 );
+            others_set[mpi_rank] = 1;
             for ( idx_t i = size_owned_; i < size_halo_; ++i ) {
-                others_set[part(i)] = 1; // present
+                others_set[part( i )] = 1;  // present
             }
-            std::vector<int> others; others.reserve(mpi_size);
-            for( idx_t p=0; p<mpi_size; ++p ) {
-                if( others_set[p] ) {
-                    others.emplace_back(p);
+            std::vector<int> others;
+            others.reserve( mpi_size );
+            for ( idx_t p = 0; p < mpi_size; ++p ) {
+                if ( others_set[p] ) {
+                    others.emplace_back( p );
                 }
             }
 
             eckit::mpi::Buffer<int> recv_others( mpi_size );
 
-            ATLAS_TRACE_MPI( ALLGATHER ) {
-                comm.allGatherv( others.begin(), others.end(), recv_others );
-            }
+            ATLAS_TRACE_MPI( ALLGATHER ) { comm.allGatherv( others.begin(), others.end(), recv_others ); }
 
             std::vector<idx_t> counts( recv_others.counts.begin(), recv_others.counts.end() );
             std::vector<idx_t> displs( recv_others.displs.begin(), recv_others.displs.end() );
@@ -102,7 +99,7 @@ void StructuredColumns::create_remote_index() const {
             }
 
             std::vector<std::vector<gidx_t>> g_per_neighbour( neighbours.size() );
-            ATLAS_TRACE_SCOPE("assemble g_per_neighbour") {
+            ATLAS_TRACE_SCOPE( "assemble g_per_neighbour" ) {
                 for ( idx_t j = 0; j < nb_neighbours; ++j ) {
                     g_per_neighbour[j].reserve( halo_per_neighbour[j] );
                 }
@@ -161,20 +158,24 @@ void StructuredColumns::create_remote_index() const {
             try {
                 g_to_r_vector.resize( max_glb_idx + 1 );
             }
-            catch( std::bad_alloc& e ) {
-                if( comm.size() > 1 ) {
-                    Log::warning() << "Could not allocate " << eckit::Bytes( (max_glb_idx+1) * sizeof(idx_t) ) << Here() << "\n"
-                                   << "Using slower unordered_map fallback to map global to remote indices" << std::endl;
+            catch ( std::bad_alloc& e ) {
+                if ( comm.size() > 1 ) {
+                    Log::warning() << "Could not allocate " << eckit::Bytes( ( max_glb_idx + 1 ) * sizeof( idx_t ) )
+                                   << Here() << "\n"
+                                   << "Using slower unordered_map fallback to map global to remote indices"
+                                   << std::endl;
                     use_unordered_map_fallback = true;
                 }
                 else {
-                    throw_Exception("Could not allocate " + std::string(eckit::Bytes( (max_glb_idx+1) * sizeof(idx_t) )), Here());
+                    throw_Exception(
+                        "Could not allocate " + std::string( eckit::Bytes( ( max_glb_idx + 1 ) * sizeof( idx_t ) ) ),
+                        Here() );
                 }
             }
             if ( not use_unordered_map_fallback ) {
                 auto& g_to_r = g_to_r_vector;
                 ATLAS_TRACE_SCOPE( "g_to_r (using vector)" ) {
-                    atlas_omp_parallel_for ( idx_t j = 0; j < size_owned_; ++j ) {
+                    atlas_omp_parallel_for( idx_t j = 0; j < size_owned_; ++j ) {
                         // parallel omp possible for ``` g_to_r[g(j)] = j ``` as we only loop over size_owned,
                         // where global_index is such that race-conditions cannot occur
 #if ATLAS_ARRAYVIEW_BOUNDS_CHECKING
@@ -216,8 +217,8 @@ void StructuredColumns::create_remote_index() const {
             }
 
             std::vector<std::vector<idx_t>> r_per_neighbour( neighbours.size() );
-            
-            ATLAS_TRACE_SCOPE("send-receive r_per_neighbour") {
+
+            ATLAS_TRACE_SCOPE( "send-receive r_per_neighbour" ) {
                 for ( idx_t j = 0; j < nb_neighbours; ++j ) {
                     r_per_neighbour[j].resize( halo_per_neighbour[j] );
                 }

@@ -11,13 +11,12 @@
 
 #include <vector>
 
-#include "atlas/library/config.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/domain/Domain.h"
+#include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/library/config.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/Polygon.h"
-#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace grid {
@@ -61,7 +60,7 @@ private:
     //util::Polygon polygon_;
     std::vector<Point2> points_;
     std::vector<Point2> inner_bounding_box_;
-    RectangularDomain   inscribed_domain_;
+    RectangularDomain inscribed_domain_;
     const functionspace::FunctionSpaceImpl& fs_;
     idx_t halo_;
 };

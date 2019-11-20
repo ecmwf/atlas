@@ -232,7 +232,7 @@ void StructuredMeshGenerator::generate( const Grid& grid, const grid::Distributi
 
 // show distribution
 #if DEBUG_OUTPUT
-    int inode              = 0;
+    int inode                = 0;
     atlas::vector<int> parts = distribution;
     Log::info() << "Partition : " << std::endl;
     for ( size_t ilat = 0; ilat < rg.ny(); ilat++ ) {

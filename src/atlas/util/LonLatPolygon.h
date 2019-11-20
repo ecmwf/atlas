@@ -22,8 +22,8 @@ namespace util {
 
 class LonLatPolygon : public PolygonCoordinates {
 private:
-      template<typename PointContainer>
-      using enable_if_not_polygon = typename std::enable_if< !std::is_base_of<Polygon,PointContainer>::value, int >::type;
+    template <typename PointContainer>
+    using enable_if_not_polygon = typename std::enable_if<!std::is_base_of<Polygon, PointContainer>::value, int>::type;
 
 public:
     // -- Constructors
@@ -31,8 +31,8 @@ public:
     LonLatPolygon( const Polygon&, const atlas::Field& coordinates, bool removeAlignedPoints = true );
     LonLatPolygon( const PartitionPolygon& );
 
-    template <typename PointContainer, enable_if_not_polygon<PointContainer> = 0 >
-    LonLatPolygon( const PointContainer& points, bool removeAlignedPoints = true  );
+    template <typename PointContainer, enable_if_not_polygon<PointContainer> = 0>
+    LonLatPolygon( const PointContainer& points, bool removeAlignedPoints = true );
 
     // -- Overridden methods
 
@@ -47,12 +47,10 @@ public:
     bool contains( const Point2& P ) const;
 
 private:
-
     PointLonLat centroid_;
     double inner_radius_squared_{0};
     PointLonLat inner_coordinatesMin_;
     PointLonLat inner_coordinatesMax_;
-
 };
 
 //------------------------------------------------------------------------------------------------------

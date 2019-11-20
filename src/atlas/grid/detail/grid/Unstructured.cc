@@ -153,9 +153,7 @@ Unstructured::Unstructured( std::vector<PointXY>&& pts ) :
     domain_ = GlobalDomain();
 }
 
-Unstructured::Unstructured( const std::vector<PointXY>& pts ) :
-    Grid(),
-    points_( new std::vector<PointXY>( pts ) ) {
+Unstructured::Unstructured( const std::vector<PointXY>& pts ) : Grid(), points_( new std::vector<PointXY>( pts ) ) {
     domain_ = GlobalDomain();
 }
 

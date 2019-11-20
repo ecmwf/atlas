@@ -16,17 +16,18 @@
 #include <string>
 
 #include "atlas/array/MakeView.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/functionspace/StructuredColumns.h"
 
 namespace atlas {
 namespace grid {
 
-util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vector<Point2>& points, std::vector<Point2>& bb ) {
-    if( not dynamic_cast<const functionspace::detail::StructuredColumns*>( &_fs) ) {
-      throw_Exception("Could not cast functionspace to StructuredColumns",Here());
+util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl& _fs, idx_t _halo,
+                                         std::vector<Point2>& points, std::vector<Point2>& bb ) {
+    if ( not dynamic_cast<const functionspace::detail::StructuredColumns*>( &_fs ) ) {
+        throw_Exception( "Could not cast functionspace to StructuredColumns", Here() );
     }
     const auto& fs  = dynamic_cast<const functionspace::detail::StructuredColumns&>( _fs );
     const auto grid = fs.grid();
@@ -152,7 +153,7 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
             add_edge( c, c + 1 );
             c++;
 
-            xmax = std::min(xmax, p[XX] );
+            xmax = std::min( xmax, p[XX] );
         }
     }
     // Bottom
@@ -190,7 +191,7 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
                 add_edge( c, c + 1 );
                 c++;
                 pmin = p;
-                xmax = std::min(xmax, p[XX] );
+                xmax = std::min( xmax, p[XX] );
 
                 p = ptmp;
 
@@ -203,8 +204,8 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
                 p = ptmp;
             }
         }
-        if( xmax - grid.xspace().dx()[j] < grid.x(i,j) ) {
-            xmax = std::min(xmax, 0.5*(grid.x(i+1,j)+grid.x(i,j)));
+        if ( xmax - grid.xspace().dx()[j] < grid.x( i, j ) ) {
+            xmax = std::min( xmax, 0.5 * ( grid.x( i + 1, j ) + grid.x( i, j ) ) );
         }
         else {
             ymin = pmin[YY];
@@ -248,18 +249,18 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
                 p[XX] = 0.5 * ( grid.x( i - 1, j ) + grid.x( i, j ) );
             }
 
-            if( j > fs.j_begin() ) {
-              xmin = std::max(xmin, p[XX]);
+            if ( j > fs.j_begin() ) {
+                xmin = std::max( xmin, p[XX] );
             }
-            if( j == fs.j_begin()+1 && xmin < points[0][XX] ) {
-              idx_t jtop = fs.j_begin();
-              idx_t itop = fs.i_begin(jtop);
-              if( xmin + grid.xspace().dx()[jtop] > grid.x(itop,jtop) ) {
-                  xmin = std::max(xmin,0.5*(grid.x(itop-1,jtop)+grid.x(itop,jtop)));
-              }
-              else {
-                  ymax = 0.5*(p[YY]+grid.y(jtop));
-              }
+            if ( j == fs.j_begin() + 1 && xmin < points[0][XX] ) {
+                idx_t jtop = fs.j_begin();
+                idx_t itop = fs.i_begin( jtop );
+                if ( xmin + grid.xspace().dx()[jtop] > grid.x( itop, jtop ) ) {
+                    xmin = std::max( xmin, 0.5 * ( grid.x( itop - 1, jtop ) + grid.x( itop, jtop ) ) );
+                }
+                else {
+                    ymax = 0.5 * ( p[YY] + grid.y( jtop ) );
+                }
             }
 
             if ( j < fs.j_end() - 1 && not equal( p[XX], points.back()[XX] ) ) {
@@ -296,18 +297,14 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
     add_edge( c, 0 );
 
 
-    bb = std::vector<Point2>{
-      {xmin,ymax},
-      {xmin,ymin},
-      {xmax,ymin},
-      {xmax,ymax}
-    };
+    bb = std::vector<Point2>{{xmin, ymax}, {xmin, ymin}, {xmax, ymin}, {xmax, ymax}};
 
     return edges;
 }
 
 StructuredPartitionPolygon::StructuredPartitionPolygon( const functionspace::FunctionSpaceImpl& fs, idx_t halo ) :
-    fs_( fs ), halo_( halo ) {
+    fs_( fs ),
+    halo_( halo ) {
     ATLAS_TRACE( "StructuredPartitionPolygon" );
     setup( compute_edges( fs, halo, points_, inner_bounding_box_ ) );
     points_.emplace_back( points_[0] );
@@ -318,7 +315,7 @@ StructuredPartitionPolygon::StructuredPartitionPolygon( const functionspace::Fun
         min = Point2::componentsMin( min, inner_bounding_box_[i] );
         max = Point2::componentsMax( max, inner_bounding_box_[i] );
     }
-    inscribed_domain_ = { {min[XX],max[XX]}, {min[YY],max[YY]} };
+    inscribed_domain_ = {{min[XX], max[XX]}, {min[YY], max[YY]}};
 }
 
 size_t StructuredPartitionPolygon::footprint() const {
@@ -327,7 +324,8 @@ size_t StructuredPartitionPolygon::footprint() const {
     return size;
 }
 
-void StructuredPartitionPolygon::outputPythonScript( const eckit::PathName& filepath, const eckit::Configuration& config ) const {
+void StructuredPartitionPolygon::outputPythonScript( const eckit::PathName& filepath,
+                                                     const eckit::Configuration& config ) const {
     ATLAS_TRACE( "Output PartitionPolygon" );
     const eckit::mpi::Comm& comm = atlas::mpi::comm();
     int mpi_rank                 = int( comm.rank() );
@@ -335,11 +333,11 @@ void StructuredPartitionPolygon::outputPythonScript( const eckit::PathName& file
 
     auto xy = array::make_view<double, 2>( dynamic_cast<const functionspace::detail::StructuredColumns&>( fs_ ).xy() );
 
-    const std::vector<Point2>& points = config.getBool("inner_bounding_box",false) ? inner_bounding_box_ : points_;
+    const std::vector<Point2>& points = config.getBool( "inner_bounding_box", false ) ? inner_bounding_box_ : points_;
 
     double xmin = std::numeric_limits<double>::max();
     double xmax = -std::numeric_limits<double>::max();
-    for ( idx_t i=0; i<points.size(); ++i ) {
+    for ( idx_t i = 0; i < points.size(); ++i ) {
         xmin = std::min( xmin, points[i][XX] );
         xmax = std::max( xmax, points[i][XX] );
     }
@@ -352,7 +350,7 @@ void StructuredPartitionPolygon::outputPythonScript( const eckit::PathName& file
 
     bool plot_nodes = config.getBool( "nodes", false );
     for ( int r = 0; r < mpi_size; ++r ) {
-        //clang-format off
+        // clang-format off
         if ( mpi_rank == r ) {
             std::ofstream f( filepath.asString().c_str(), mpi_rank == 0 ? std::ios::trunc : std::ios::app );
 
@@ -421,7 +419,7 @@ void StructuredPartitionPolygon::outputPythonScript( const eckit::PathName& file
                      "\n" "plt.show()";
             }
         }
-        //clang-format on
+        // clang-format on
         comm.barrier();
     }
 }

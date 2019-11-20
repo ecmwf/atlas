@@ -12,8 +12,8 @@
 #include <functional>
 #include <type_traits>
 
-#include "atlas/functionspace/detail/StructuredColumns.h"
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/functionspace/detail/StructuredColumns.h"
 
 namespace atlas {
 namespace functionspace {

@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include <memory>
 #include <iterator>
+#include <memory>
 
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/util/Point.h"
@@ -25,14 +25,16 @@ namespace grid {
 
 class IteratorXY {
     using implementation_t = detail::grid::Grid::IteratorXY;
+
 public:
     using difference_type   = implementation_t::difference_type;
     using iterator_category = implementation_t::iterator_category;
     using value_type        = implementation_t::value_type;
     using pointer           = implementation_t::pointer;
     using reference         = implementation_t::reference;
+
 public:
-    IteratorXY( std::unique_ptr<implementation_t> iterator ) : iterator_( std::move(iterator) ) {}
+    IteratorXY( std::unique_ptr<implementation_t> iterator ) : iterator_( std::move( iterator ) ) {}
 
     IteratorXY( const IteratorXY& iterator ) : iterator_( iterator.iterator_->clone() ) {}
 
@@ -45,13 +47,13 @@ public:
         return *this;
     }
 
-    const IteratorXY& operator+=(difference_type distance) {
-        iterator_->operator+=(distance);
+    const IteratorXY& operator+=( difference_type distance ) {
+        iterator_->operator+=( distance );
         return *this;
     }
 
-    friend IteratorXY operator+( const IteratorXY& a, difference_type distance) {
-        IteratorXY result(a);
+    friend IteratorXY operator+( const IteratorXY& a, difference_type distance ) {
+        IteratorXY result( a );
         result += distance;
         return result;
     }
@@ -77,14 +79,16 @@ private:
 
 class IteratorLonLat {
     using implementation_t = detail::grid::Grid::IteratorLonLat;
+
 public:
     using difference_type   = implementation_t::difference_type;
     using iterator_category = implementation_t::iterator_category;
     using value_type        = implementation_t::value_type;
     using pointer           = implementation_t::pointer;
     using reference         = implementation_t::reference;
+
 public:
-    IteratorLonLat( std::unique_ptr<implementation_t> iterator ) : iterator_( std::move(iterator) ) {}
+    IteratorLonLat( std::unique_ptr<implementation_t> iterator ) : iterator_( std::move( iterator ) ) {}
 
     IteratorLonLat( const IteratorLonLat& iterator ) : iterator_( iterator.iterator_->clone() ) {}
 
@@ -97,13 +101,13 @@ public:
         return *this;
     }
 
-    const IteratorLonLat& operator+=(difference_type distance) {
-        iterator_->operator+=(distance);
+    const IteratorLonLat& operator+=( difference_type distance ) {
+        iterator_->operator+=( distance );
         return *this;
     }
 
-    friend IteratorLonLat operator+( const IteratorLonLat& a, difference_type distance) {
-        IteratorLonLat result(a);
+    friend IteratorLonLat operator+( const IteratorLonLat& a, difference_type distance ) {
+        IteratorLonLat result( a );
         result += distance;
         return result;
     }
@@ -116,9 +120,7 @@ public:
     bool operator!=( const IteratorLonLat& other ) const { return iterator_->operator!=( *other.iterator_ ); }
 
 private:
-    difference_type distance( const IteratorLonLat& other ) const {
-        return iterator_->distance( *other.iterator_ );
-    }
+    difference_type distance( const IteratorLonLat& other ) const { return iterator_->distance( *other.iterator_ ); }
 
 private:
     std::unique_ptr<implementation_t> iterator_;
@@ -162,11 +164,13 @@ private:
 
 namespace std {
 
-inline atlas::grid::IteratorXY::difference_type distance( const atlas::grid::IteratorXY& first, const atlas::grid::IteratorXY& last ) {
+inline atlas::grid::IteratorXY::difference_type distance( const atlas::grid::IteratorXY& first,
+                                                          const atlas::grid::IteratorXY& last ) {
     return last - first;
 }
-inline atlas::grid::IteratorLonLat::difference_type distance( const atlas::grid::IteratorLonLat& first, const atlas::grid::IteratorLonLat& last ) {
+inline atlas::grid::IteratorLonLat::difference_type distance( const atlas::grid::IteratorLonLat& first,
+                                                              const atlas::grid::IteratorLonLat& last ) {
     return last - first;
 }
 
-} // namespace std
+}  // namespace std

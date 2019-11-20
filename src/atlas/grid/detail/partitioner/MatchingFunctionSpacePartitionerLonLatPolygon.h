@@ -23,8 +23,10 @@ public:
 
 public:
     MatchingFunctionSpacePartitionerLonLatPolygon() : MatchingFunctionSpacePartitioner() {}
-    MatchingFunctionSpacePartitionerLonLatPolygon( const size_t nb_partitions ) : MatchingFunctionSpacePartitioner( nb_partitions ) {}
-    MatchingFunctionSpacePartitionerLonLatPolygon( const FunctionSpace& FunctionSpace ) : MatchingFunctionSpacePartitioner( FunctionSpace ) {}
+    MatchingFunctionSpacePartitionerLonLatPolygon( const size_t nb_partitions ) :
+        MatchingFunctionSpacePartitioner( nb_partitions ) {}
+    MatchingFunctionSpacePartitionerLonLatPolygon( const FunctionSpace& FunctionSpace ) :
+        MatchingFunctionSpacePartitioner( FunctionSpace ) {}
 
     /**
    * @brief Partition a grid, using the same partitions from a pre-partitioned

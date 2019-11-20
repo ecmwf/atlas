@@ -9,12 +9,12 @@
  */
 
 #include "atlas/grid/Partitioner.h"
+#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/distribution/DistributionImpl.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
@@ -50,7 +50,7 @@ detail::partitioner::Partitioner* partitioner_from_config( const Partitioner::Co
 Partitioner::Partitioner( const Config& config ) : Handle( partitioner_from_config( config ) ) {}
 
 void Partitioner::partition( const Grid& grid, int part[] ) const {
-    ATLAS_TRACE("Partitioner::partition");
+    ATLAS_TRACE( "Partitioner::partition" );
     get()->partition( grid, part );
 }
 
@@ -75,18 +75,15 @@ grid::detail::partitioner::Partitioner* matching_mesh_partititioner( const Mesh&
     return grid::detail::partitioner::MatchingPartitionerFactory::build( type, mesh );
 }
 
-MatchingPartitioner::MatchingPartitioner( const Mesh& mesh ) :
-    MatchingPartitioner( mesh, util::NoConfig() ) {}
+MatchingPartitioner::MatchingPartitioner( const Mesh& mesh ) : MatchingPartitioner( mesh, util::NoConfig() ) {}
 
 
 MatchingPartitioner::MatchingPartitioner( const Mesh& mesh, const Config& config ) :
     Partitioner( matching_mesh_partititioner( mesh, config ) ) {}
 
 
-
-
 grid::detail::partitioner::Partitioner* matching_functionspace_partititioner( const FunctionSpace& functionspace,
-                                                                const Partitioner::Config& config ) {
+                                                                              const Partitioner::Config& config ) {
     std::string type( "lonlat-polygon" );
     config.get( "type", type );
     return grid::detail::partitioner::MatchingPartitionerFactory::build( type, functionspace );
@@ -98,7 +95,6 @@ MatchingPartitioner::MatchingPartitioner( const FunctionSpace& functionspace ) :
 
 MatchingPartitioner::MatchingPartitioner( const FunctionSpace& functionspace, const Config& config ) :
     Partitioner( matching_functionspace_partititioner( functionspace, config ) ) {}
-
 
 
 extern "C" {
@@ -139,8 +135,7 @@ detail::partitioner::Partitioner* atlas__grid__MatchingMeshPartitioner__new( con
 }
 
 detail::partitioner::Partitioner* atlas__grid__MatchingFunctionSpacePartitioner__new(
-        const FunctionSpace::Implementation* functionspace,
-        const Partitioner::Config* config ) {
+    const FunctionSpace::Implementation* functionspace, const Partitioner::Config* config ) {
     detail::partitioner::Partitioner* p;
     {
         MatchingPartitioner partitioner( FunctionSpace( functionspace ), *config );

@@ -26,9 +26,11 @@ Distribution::Distribution( const Grid& grid ) : Handle( new Implementation( gri
 Distribution::Distribution( const Grid& grid, const Partitioner& partitioner ) :
     Handle( new Implementation( grid, partitioner ) ) {}
 
-Distribution::Distribution( int nb_partitions, idx_t npts, int part[], int part0 ) : Handle( new Implementation( nb_partitions, npts, part, part0 ) ) {}
+Distribution::Distribution( int nb_partitions, idx_t npts, int part[], int part0 ) :
+    Handle( new Implementation( nb_partitions, npts, part, part0 ) ) {}
 
-Distribution::Distribution( int nb_partitions, partition_t&& part ) : Handle( new Implementation( nb_partitions, std::move(part) ) ) {}
+Distribution::Distribution( int nb_partitions, partition_t&& part ) :
+    Handle( new Implementation( nb_partitions, std::move( part ) ) ) {}
 
 Distribution::~Distribution() = default;
 

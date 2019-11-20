@@ -21,8 +21,8 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/util/LonLatPolygon.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/LonLatPolygon.h"
 
 namespace atlas {
 namespace grid {

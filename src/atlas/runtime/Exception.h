@@ -31,7 +31,7 @@ namespace atlas {
 [[noreturn]] void throw_CantOpenFile( const std::string& );
 [[noreturn]] void throw_CantOpenFile( const std::string&, const eckit::CodeLocation& );
 
-[[noreturn]] void throw_OutOfRange( const std::string& varname, idx_t index, idx_t size);
+[[noreturn]] void throw_OutOfRange( const std::string& varname, idx_t index, idx_t size );
 [[noreturn]] void throw_OutOfRange( const std::string& varname, idx_t index, idx_t size, const eckit::CodeLocation& );
 
 namespace detail {

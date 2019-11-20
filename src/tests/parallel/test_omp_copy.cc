@@ -8,15 +8,15 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <random>     // mt19937 and uniform_int_distribution
-#include <algorithm>  // generate, is_sorted
-#include <vector>     // vector
-#include <functional> // bind
+#include <algorithm>   // generate, is_sorted
+#include <functional>  // bind
+#include <random>      // mt19937 and uniform_int_distribution
+#include <vector>      // vector
 
-#include "atlas/parallel/omp/copy.h"
-#include "atlas/util/Vector.h"
-#include "atlas/util/Point.h"
 #include "atlas/grid.h"
+#include "atlas/parallel/omp/copy.h"
+#include "atlas/util/Point.h"
+#include "atlas/util/Vector.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -26,20 +26,19 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 CASE( "test omp::copy" ) {
-  Grid grid( "O4000" );
-  atlas::vector<PointXY> points(grid.size());
-  omp::copy( grid.xy().begin(), grid.xy().end(), points.begin() );
+    Grid grid( "O4000" );
+    atlas::vector<PointXY> points( grid.size() );
+    omp::copy( grid.xy().begin(), grid.xy().end(), points.begin() );
 }
 
 
 CASE( "test atlas::vector assign" ) {
-  // atlas::vector assign uses omp::copy
-  // It should reproduce exactly the same points as previous test case
-  Grid grid( "O4000" );
-  atlas::vector<PointXY> points;
-  points.assign( grid.xy().begin(), grid.xy().end() );
-  EXPECT( points.size() == grid.size() );
-
+    // atlas::vector assign uses omp::copy
+    // It should reproduce exactly the same points as previous test case
+    Grid grid( "O4000" );
+    atlas::vector<PointXY> points;
+    points.assign( grid.xy().begin(), grid.xy().end() );
+    EXPECT( points.size() == grid.size() );
 }
 
 //-----------------------------------------------------------------------------

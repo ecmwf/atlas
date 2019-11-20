@@ -58,11 +58,9 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
 #endif
     }
 
-    ~AtlasTransEnvironment() {
 #if ATLAS_HAVE_TRANS
-        trans_finalize();
+    ~AtlasTransEnvironment() { trans_finalize(); }
 #endif
-    }
 };
 
 //-----------------------------------------------------------------------------

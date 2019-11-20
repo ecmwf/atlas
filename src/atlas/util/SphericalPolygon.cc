@@ -53,8 +53,7 @@ bool SphericalPolygon::contains( const Point2& P ) const {
 
         if ( APB != BPA ) {
             const double lat = [&] {
-                if ( is_approximately_equal( A[LAT], B[LAT] ) &&
-                     is_approximately_equal( std::abs( A[LAT] ), 90. ) ) {
+                if ( is_approximately_equal( A[LAT], B[LAT] ) && is_approximately_equal( std::abs( A[LAT] ), 90. ) ) {
                     return A[LAT];
                 }
                 else {

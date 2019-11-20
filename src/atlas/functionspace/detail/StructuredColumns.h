@@ -157,7 +157,6 @@ public:
     idx_t nb_partitions() const override { return nb_partitions_; }
 
 
-
 private:  // methods
     idx_t config_size( const eckit::Configuration& config ) const;
     array::DataType config_datatype( const eckit::Configuration& ) const;

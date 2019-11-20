@@ -12,24 +12,23 @@
 
 #include <algorithm>
 #include <iterator>
- 
+
 #include "atlas/parallel/omp/omp.h"
 
 namespace atlas {
 namespace omp {
 
-template<typename BidirIt, typename T>
+template <typename BidirIt, typename T>
 void fill( BidirIt begin, BidirIt end, const T& value ) {
-    if( atlas_omp_get_max_threads() > 1 ) {
-        auto size = std::distance(begin,end);
-        atlas_omp_parallel
-        {   
-            auto nthreads = atlas_omp_get_num_threads();
-            auto tid = atlas_omp_get_thread_num();
+    if ( atlas_omp_get_max_threads() > 1 ) {
+        auto size = std::distance( begin, end );
+        atlas_omp_parallel {
+            auto nthreads  = atlas_omp_get_num_threads();
+            auto tid       = atlas_omp_get_thread_num();
             auto chunksize = size / nthreads;
-            auto v_begin = begin + chunksize * tid;
-            auto v_end = (tid == nthreads -1) ? end : v_begin + chunksize;
-            std::fill(v_begin, v_end, value);
+            auto v_begin   = begin + chunksize * tid;
+            auto v_end     = ( tid == nthreads - 1 ) ? end : v_begin + chunksize;
+            std::fill( v_begin, v_end, value );
         }
     }
     else {

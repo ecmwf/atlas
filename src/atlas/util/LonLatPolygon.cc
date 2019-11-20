@@ -14,11 +14,11 @@
 #include <iostream>
 #include <limits>
 
+#include "atlas/domain/Domain.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatPolygon.h"
-#include "atlas/domain/Domain.h"
 
 namespace atlas {
 namespace util {
@@ -33,50 +33,47 @@ double cross_product_analog( const Point2& A, const Point2& B, const Point2& C )
 
 
 template <typename PointContainer>
-PointLonLat compute_centroid(const PointContainer& points) {
-
+PointLonLat compute_centroid( const PointContainer& points ) {
     ATLAS_ASSERT( eckit::geometry::points_equal( points.front(), points.back() ) );
 
     PointLonLat centroid = {0, 0};
-    double signed_area = 0.;
-    double a = 0.;  // Partial signed area
+    double signed_area   = 0.;
+    double a             = 0.;  // Partial signed area
 
-    for (size_t i=0; i<points.size()-1; ++i) {
+    for ( size_t i = 0; i < points.size() - 1; ++i ) {
         const Point2& p0 = points[i];
-        const Point2& p1 = points[i+1];
-        a = p0[0]*p1[1] - p1[0]*p0[1];
+        const Point2& p1 = points[i + 1];
+        a                = p0[0] * p1[1] - p1[0] * p0[1];
         signed_area += a;
-        centroid[0] += (p0[0] + p1[0])*a;
-        centroid[1] += (p0[1] + p1[1])*a;
+        centroid[0] += ( p0[0] + p1[0] ) * a;
+        centroid[1] += ( p0[1] + p1[1] ) * a;
     }
     signed_area *= 0.5;
-    centroid[0] /= (6.*signed_area);
-    centroid[1] /= (6.*signed_area);
+    centroid[0] /= ( 6. * signed_area );
+    centroid[1] /= ( 6. * signed_area );
 
     return centroid;
 }
 
 template <typename PointContainer>
-double compute_inner_radius_squared(const PointContainer& points, const PointLonLat& centroid) {
-  auto distance2 = [](const Point2& a, const Point2& b) {
-    double dx = (a[0]-b[0]);
-    double dy = (a[1]-b[1]);
-    return dx*dx + dy*dy;
-  };
-  auto dot = [](const Point2& a, const Point2& b) {
-    return a[0]*b[0]+a[1]*b[1];
-  };
-  double R2 = std::numeric_limits<double>::max();
-  Point2 projection;
-  for( size_t i=0; i<points.size()-1; ++i ) {
-    double d2 = distance2(points[i],points[i+1]);
-    double t = std::max(0.,std::min(1.,dot(centroid-points[i],points[i+1]-points[i])/d2));
-    projection[0] = points[i][0] + t * (points[i+1][0]-points[i][0]);
-    projection[1] = points[i][1] + t * (points[i+1][1]-points[i][1]);
-    R2 = std::min( R2, distance2(projection,centroid) );
-    //Log::info() << "Segment " << points[i] << " - " << points[i+1] << " :  projection = " << projection << "   \t distance = "  << std::sqrt(distance2(projection,centroid) ) << std::endl;
-  }
-  return R2;
+double compute_inner_radius_squared( const PointContainer& points, const PointLonLat& centroid ) {
+    auto distance2 = []( const Point2& a, const Point2& b ) {
+        double dx = ( a[0] - b[0] );
+        double dy = ( a[1] - b[1] );
+        return dx * dx + dy * dy;
+    };
+    auto dot  = []( const Point2& a, const Point2& b ) { return a[0] * b[0] + a[1] * b[1]; };
+    double R2 = std::numeric_limits<double>::max();
+    Point2 projection;
+    for ( size_t i = 0; i < points.size() - 1; ++i ) {
+        double d2     = distance2( points[i], points[i + 1] );
+        double t      = std::max( 0., std::min( 1., dot( centroid - points[i], points[i + 1] - points[i] ) / d2 ) );
+        projection[0] = points[i][0] + t * ( points[i + 1][0] - points[i][0] );
+        projection[1] = points[i][1] + t * ( points[i + 1][1] - points[i][1] );
+        R2            = std::min( R2, distance2( projection, centroid ) );
+        //Log::info() << "Segment " << points[i] << " - " << points[i+1] << " :  projection = " << projection << "   \t distance = "  << std::sqrt(distance2(projection,centroid) ) << std::endl;
+    }
+    return R2;
 }
 
 }  // namespace
@@ -85,60 +82,55 @@ double compute_inner_radius_squared(const PointContainer& points, const PointLon
 
 LonLatPolygon::LonLatPolygon( const Polygon& poly, const atlas::Field& coordinates, bool removeAlignedPoints ) :
     PolygonCoordinates( poly, coordinates, removeAlignedPoints ) {
-
-    centroid_ = compute_centroid( coordinates_ );
+    centroid_             = compute_centroid( coordinates_ );
     inner_radius_squared_ = compute_inner_radius_squared( coordinates_, centroid_ );
-
 }
 
 template <typename PointContainer, LonLatPolygon::enable_if_not_polygon<PointContainer> >
 LonLatPolygon::LonLatPolygon( const PointContainer& points, bool removeAlignedPoints ) :
     PolygonCoordinates( points, removeAlignedPoints ) {
-
-    centroid_ = compute_centroid( coordinates_ );
+    centroid_             = compute_centroid( coordinates_ );
     inner_radius_squared_ = compute_inner_radius_squared( coordinates_, centroid_ );
 
-    ATLAS_ASSERT( contains(centroid_) );
+    ATLAS_ASSERT( contains( centroid_ ) );
 }
 
 LonLatPolygon::LonLatPolygon( const PartitionPolygon& partition_polygon ) :
     PolygonCoordinates( partition_polygon.lonlat(), true ) {
     RectangularLonLatDomain inscribed = partition_polygon.inscribedDomain();
-    if( inscribed ) {
-        inner_coordinatesMin_ = { inscribed.xmin(), inscribed.ymin() };
-        inner_coordinatesMax_ = { inscribed.xmax(), inscribed.ymax() };
+    if ( inscribed ) {
+        inner_coordinatesMin_ = {inscribed.xmin(), inscribed.ymin()};
+        inner_coordinatesMax_ = {inscribed.xmax(), inscribed.ymax()};
     }
     else {
-        centroid_ = compute_centroid( coordinates_ );
+        centroid_             = compute_centroid( coordinates_ );
         inner_radius_squared_ = compute_inner_radius_squared( coordinates_, centroid_ );
 
-        ATLAS_ASSERT( contains(centroid_) );
+        ATLAS_ASSERT( contains( centroid_ ) );
     }
 }
 
 bool LonLatPolygon::contains( const Point2& P ) const {
-    auto distance2 = [](const Point2& p, const Point2& centroid) {
-      double dx = (p[0]-centroid[0]);
-      double dy = (p[1]-centroid[1]);
-      return dx*dx + dy*dy;
+    auto distance2 = []( const Point2& p, const Point2& centroid ) {
+        double dx = ( p[0] - centroid[0] );
+        double dy = ( p[1] - centroid[1] );
+        return dx * dx + dy * dy;
     };
 
     // check first bounding box
-    if ( coordinatesMax_[LAT] < P[LAT] ||
-         P[LAT] < coordinatesMin_[LAT] || coordinatesMax_[LON] < P[LON] || P[LON] < coordinatesMin_[LON] ) {
+    if ( coordinatesMax_[LAT] < P[LAT] || P[LAT] < coordinatesMin_[LAT] || coordinatesMax_[LON] < P[LON] ||
+         P[LON] < coordinatesMin_[LON] ) {
         return false;
     }
 
-    if( inner_radius_squared_ == 0 ) { // check inner bounding box
-        if ( inner_coordinatesMin_[LON] <= P[LON] &&
-             inner_coordinatesMax_[LON] >= P[LON] &&
-             inner_coordinatesMin_[LAT] <= P[LAT] &&
-             inner_coordinatesMax_[LAT] >= P[LAT] ) {
-             return true;
+    if ( inner_radius_squared_ == 0 ) {  // check inner bounding box
+        if ( inner_coordinatesMin_[LON] <= P[LON] && inner_coordinatesMax_[LON] >= P[LON] &&
+             inner_coordinatesMin_[LAT] <= P[LAT] && inner_coordinatesMax_[LAT] >= P[LAT] ) {
+            return true;
         }
     }
-    else {     // check inscribed circle
-        if( distance2(P,centroid_) < inner_radius_squared_ ) {
+    else {  // check inscribed circle
+        if ( distance2( P, centroid_ ) < inner_radius_squared_ ) {
             return true;
         }
     }

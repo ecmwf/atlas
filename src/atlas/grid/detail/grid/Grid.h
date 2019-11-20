@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
 #include <iterator>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "atlas/domain/Domain.h"
 #include "atlas/library/config.h"
@@ -67,8 +67,8 @@ public:  // types
         virtual std::unique_ptr<Derived> clone() const           = 0;
         virtual ~IteratorT() {}
     };
-    class IteratorXY : public IteratorT<IteratorXY,PointXY> {};
-    class IteratorLonLat : public IteratorT<IteratorLonLat,PointLonLat> {};
+    class IteratorXY : public IteratorT<IteratorXY, PointXY> {};
+    class IteratorLonLat : public IteratorT<IteratorLonLat, PointLonLat> {};
 
 public:  // methods
     static const Grid* create( const Config& );
@@ -116,10 +116,10 @@ public:  // methods
 
     virtual Spec spec() const = 0;
 
-    virtual std::unique_ptr<IteratorXY>     xy_begin()     const = 0;
-    virtual std::unique_ptr<IteratorXY>     xy_end()       const = 0;
+    virtual std::unique_ptr<IteratorXY> xy_begin() const         = 0;
+    virtual std::unique_ptr<IteratorXY> xy_end() const           = 0;
     virtual std::unique_ptr<IteratorLonLat> lonlat_begin() const = 0;
-    virtual std::unique_ptr<IteratorLonLat> lonlat_end()   const = 0;
+    virtual std::unique_ptr<IteratorLonLat> lonlat_end() const   = 0;
 
     void attachObserver( GridObserver& ) const;
     void detachObserver( GridObserver& ) const;

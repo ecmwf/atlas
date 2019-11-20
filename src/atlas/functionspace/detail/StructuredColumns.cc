@@ -32,8 +32,8 @@
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/parallel/omp/omp.h"
 #include "atlas/parallel/omp/fill.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Checksum.h"
@@ -453,7 +453,7 @@ void StructuredColumns::Map2to1::resize( std::array<idx_t, 2> i_range, std::arra
 }
 
 const util::PartitionPolygon& StructuredColumns::polygon( idx_t halo ) const {
-    if( not polygon_ ) {
+    if ( not polygon_ ) {
         polygon_.reset( new grid::StructuredPartitionPolygon( *this, halo ) );
     }
     return *polygon_;

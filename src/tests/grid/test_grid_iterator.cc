@@ -27,11 +27,11 @@ namespace atlas {
 namespace test {
 
 bool operator==( const std::vector<PointLonLat>& ll, const std::vector<PointXY>& xy ) {
-    if( ll.size() != xy.size() ) {
+    if ( ll.size() != xy.size() ) {
         return false;
     }
-    for ( idx_t i=0; i<xy.size(); ++i ) {
-        if( ll[i] != xy[i] ) {
+    for ( idx_t i = 0; i < xy.size(); ++i ) {
+        if ( ll[i] != xy[i] ) {
             return false;
         }
     }
@@ -43,15 +43,16 @@ bool operator==( const std::vector<PointLonLat>& ll, const std::vector<PointXY>&
 CASE( "test_iterator" ) {
     std::vector<Grid> grids;
 
-    std::vector<PointXY> points { {0,90},{90,90},{180,90},{270,90},{0,0},{90,0},{180,0},{270,0},{0,-90},{90,-90},{180,-90},{270,-90} };
+    std::vector<PointXY> points{{0, 90},  {90, 90}, {180, 90}, {270, 90}, {0, 0},     {90, 0},
+                                {180, 0}, {270, 0}, {0, -90},  {90, -90}, {180, -90}, {270, -90}};
 
     grids.emplace_back( "L4x3" );
     grids.emplace_back( UnstructuredGrid{points} );
 
-    for( auto grid : grids ) {
+    for ( auto grid : grids ) {
         Log::debug() << "grid : " << grid.name() << std::endl;
 
-        std::vector<PointXY>     points_xy;
+        std::vector<PointXY> points_xy;
         std::vector<PointLonLat> points_lonlat;
 
         // Iteration of xy in range-based for
@@ -78,11 +79,11 @@ CASE( "test_iterator" ) {
         EXPECT( points_lonlat == points );
 
         // Random access for xy iterator, required for parallelisation
-        EXPECT( *(grid.xy().begin() + grid.size()/2) == PointXY(180.,0.) );
+        EXPECT( *( grid.xy().begin() + grid.size() / 2 ) == PointXY( 180., 0. ) );
         EXPECT( grid.xy().begin() + grid.size() == grid.xy().end() );
 
         // Random access for lonlat iterator, required for parallelisation
-        EXPECT( *(grid.lonlat().begin() + grid.size()/2) == PointLonLat(180.,0.) );
+        EXPECT( *( grid.lonlat().begin() + grid.size() / 2 ) == PointLonLat( 180., 0. ) );
         EXPECT( grid.lonlat().begin() + grid.size() == grid.lonlat().end() );
     }
 }

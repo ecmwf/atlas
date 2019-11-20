@@ -12,8 +12,8 @@
 
 #include <vector>
 
-#include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/grid/detail/partitioner/Partitioner.h"
 
 namespace atlas {
 namespace grid {

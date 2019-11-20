@@ -16,11 +16,11 @@
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/array.h"
+#include "atlas/domain/Domain.h"
 #include "atlas/field/Field.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Polygon.h"
-#include "atlas/domain/Domain.h"
 
 namespace atlas {
 namespace util {
@@ -119,7 +119,8 @@ const RectangularDomain& PartitionPolygon::inscribedDomain() const {
 //------------------------------------------------------------------------------------------------------
 
 
-PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field& coordinates, bool removeAlignedPoints ) {
+PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field& coordinates,
+                                        bool removeAlignedPoints ) {
     ATLAS_ASSERT( poly.size() > 2 );
     ATLAS_ASSERT( poly.front() == poly.back() );
 
@@ -130,7 +131,7 @@ PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field&
     coordinates_.clear();
     coordinates_.reserve( poly.size() );
 
-    auto coord         = array::make_view<double, 2>( coordinates );
+    auto coord      = array::make_view<double, 2>( coordinates );
     coordinatesMin_ = Point2( coord( poly[0], XX ), coord( poly[0], YY ) );
     coordinatesMax_ = coordinatesMin_;
 
@@ -160,7 +161,7 @@ PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field&
 }
 
 
-template< typename PointContainer >
+template <typename PointContainer>
 PolygonCoordinates::PolygonCoordinates( const PointContainer& points ) {
     coordinates_.assign( points.begin(), points.end() );
     ATLAS_ASSERT( coordinates_.size() > 2 );
@@ -174,8 +175,8 @@ PolygonCoordinates::PolygonCoordinates( const PointContainer& points ) {
     }
 }
 
-template< typename PointContainer >
-PolygonCoordinates::PolygonCoordinates( const PointContainer& points,  bool removeAlignedPoints ) {
+template <typename PointContainer>
+PolygonCoordinates::PolygonCoordinates( const PointContainer& points, bool removeAlignedPoints ) {
     coordinates_.clear();
     coordinates_.reserve( points.size() );
 

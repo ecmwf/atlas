@@ -20,11 +20,11 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/partitioner/CheckerboardPartitioner.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h"
-#include "atlas/grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h"
 #include "atlas/library/config.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
@@ -89,8 +89,8 @@ PartitionerFactory::PartitionerFactory( const std::string& name ) : name_( name 
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    if( m->find( name ) != m->end() ) {
-        throw_Exception("Partitioner with name ["+name+"] is already registered.", Here());
+    if ( m->find( name ) != m->end() ) {
+        throw_Exception( "Partitioner with name [" + name + "] is already registered.", Here() );
     }
     ( *m )[name] = this;
 }
@@ -172,7 +172,6 @@ Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_
 
 
 Partitioner* MatchingPartitionerFactory::build( const std::string& type, const Mesh& partitioned ) {
-
     if ( type == MatchingMeshPartitionerSphericalPolygon::static_type() ) {
         return new MatchingMeshPartitionerSphericalPolygon( partitioned );
     }
@@ -188,7 +187,7 @@ Partitioner* MatchingPartitionerFactory::build( const std::string& type, const M
 }
 
 Partitioner* MatchingPartitionerFactory::build( const std::string& type, const FunctionSpace& partitioned ) {
-     if ( type == MatchingFunctionSpacePartitionerLonLatPolygon::static_type() ) {
+    if ( type == MatchingFunctionSpacePartitionerLonLatPolygon::static_type() ) {
         return new MatchingFunctionSpacePartitionerLonLatPolygon( partitioned );
     }
     else {

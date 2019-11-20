@@ -63,10 +63,10 @@ HaloExchange::~HaloExchange() = default;
 
 void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int base, const idx_t size ) {
     setup( part, remote_idx, base, size, 0 );
-}     
+}
 
-void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int base, idx_t parsize, idx_t halo_begin ) {
-
+void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int base, idx_t parsize,
+                          idx_t halo_begin ) {
     ATLAS_TRACE( "HaloExchange::setup" );
 
     parsize_ = parsize;
@@ -85,13 +85,12 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
 
     IsGhostPoint is_ghost( part, remote_idx, base, parsize_ );
 
-    atlas::vector<idx_t> ghost_points(parsize_);
-    idx_t nghost=0;
+    atlas::vector<idx_t> ghost_points( parsize_ );
+    idx_t nghost = 0;
     atlas_omp_parallel_for( int jj = halo_begin; jj < parsize_; ++jj ) {
         if ( is_ghost( jj ) ) {
             idx_t p = part[jj];
-            atlas_omp_critical
-            {
+            atlas_omp_critical {
                 ++recvcounts_[p];
                 ghost_points[nghost] = jj;
                 nghost++;
@@ -126,7 +125,7 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
     recvmap_.resize( recvcnt_ );
     std::vector<int> cnt( nproc, 0 );
     for ( idx_t jghost = 0; jghost < nghost; ++jghost ) {
-        const auto jj = ghost_points[jghost];
+        const auto jj          = ghost_points[jghost];
         const int req_idx      = recvdispls_[part[jj]] + cnt[part[jj]];
         send_requests[req_idx] = remote_idx[jj] - base;
         recvmap_[req_idx]      = jj;

@@ -20,9 +20,9 @@
 #include <vector>
 
 #include "atlas/library/config.h"
-#include "atlas/util/Point.h"
-#include "atlas/util/Object.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Object.h"
+#include "atlas/util/Point.h"
 
 namespace eckit {
 class PathName;
@@ -31,7 +31,7 @@ class PathName;
 namespace atlas {
 class Field;
 class RectangularDomain;
-}
+}  // namespace atlas
 
 namespace atlas {
 namespace util {
@@ -82,8 +82,7 @@ public:
     }
 
 protected:
-        void setup( const edge_set_t& );
-
+    void setup( const edge_set_t& );
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -117,11 +116,11 @@ public:
 
     PolygonCoordinates( const Polygon&, const atlas::Field& coordinates, bool removeAlignedPoints );
 
-    template< typename PointContainer >
+    template <typename PointContainer>
     PolygonCoordinates( const PointContainer& points );
 
-    template< typename PointContainer >
-    PolygonCoordinates( const PointContainer& points,  bool removeAlignedPoints );
+    template <typename PointContainer>
+    PolygonCoordinates( const PointContainer& points, bool removeAlignedPoints );
 
     // -- Destructor
 

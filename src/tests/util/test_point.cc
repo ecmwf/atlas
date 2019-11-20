@@ -58,6 +58,7 @@ CASE( "test PointLonLat normalisation" ) {
 }
 
 CASE( "test output vector<PointXY>" ) {
+    // clang-format off
     std::vector<PointXY> points = {
         {0.,1.},
         {0.,2.},
@@ -69,6 +70,7 @@ CASE( "test output vector<PointXY>" ) {
         {3.,2.},
         {4.,3.},
     };
+    // clang-format on
     Log::info() << "points = " << points << std::endl;
 }
 

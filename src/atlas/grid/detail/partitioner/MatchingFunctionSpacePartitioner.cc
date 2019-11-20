@@ -22,7 +22,8 @@ MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner() : Partition
     ATLAS_NOTIMPLEMENTED;
 }
 
-MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner( const idx_t nb_partitions ) : Partitioner( nb_partitions ) {
+MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner( const idx_t nb_partitions ) :
+    Partitioner( nb_partitions ) {
     ATLAS_NOTIMPLEMENTED;
 }
 
