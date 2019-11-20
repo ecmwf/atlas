@@ -18,6 +18,7 @@
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/CoordinateEnums.h"
 
 
 using namespace atlas;
@@ -28,8 +29,8 @@ class AtlasParallelInterpolation : public AtlasTool {
     std::string briefDescription() override { return "Demonstration of parallel interpolation"; }
     std::string usage() override {
         return name() +
-               " [--source-gridname=gridname] "
-               "[--target-gridname=gridname] [OPTION]... [--help]";
+               " [--source=gridname] "
+               "[--target=gridname] [OPTION]... [--help]";
     }
 
     int numberOfPositionalArguments() override { return -1; }
@@ -40,19 +41,24 @@ public:
         add_option( new SimpleOption<std::string>( "source", "source gridname" ) );
         add_option( new SimpleOption<std::string>( "target", "target gridname" ) );
 
-        add_option( new SimpleOption<std::string>( "method", "interpolation method (default linear)" ) );
-        add_option( new SimpleOption<bool>( "matrix-free", "Don't store matrix for consecutive interpolations" ) );
+        add_option(
+            new SimpleOption<std::string>( "method", "interpolation method [linear (default), cubic, quasicubic]" ) );
+        add_option( new SimpleOption<bool>( "with-matrix", "Store matrix for consecutive interpolations" ) );
 
         add_option(
-            new SimpleOption<std::string>( "partitioner", "source partitioner (equal_regions (default), ...)" ) );
+            new SimpleOption<std::string>( "partitioner", "source partitioner [equal_regions (default), ...]" ) );
 
         add_option( new SimpleOption<bool>( "output-gmsh", "Output gmsh files src_field.msh and tgt_field.msh" ) );
-        add_option(
-            new SimpleOption<bool>( "output-polygons", "Output Python script that plots partitions polygons" ) );
         add_option( new SimpleOption<bool>(
-            "output-inscribed-rectangle",
-            "Output Python script that plots iscribed rectangular domain for each partition" ) );
+            "output-polygons",
+            "Output Python scripts src-polygons.py and tgt-polygons.py that plots partitions polygons" ) );
+        add_option(
+            new SimpleOption<bool>( "output-inscribed-rectangle",
+                                    "Output Python scripts src-inscribed-rectangle.py and tgt-inscribed-rectangle.py "
+                                    "that plots iscribed rectangular domain for each partition" ) );
 
+        add_option(
+            new SimpleOption<std::string>( "init", "Setup initial source field [ zero, vortex-rollup (default) ]" ) );
         add_option( new SimpleOption<long>( "vortex-rollup", "Value that controls vortex rollup (default = 0)" ) );
         add_option( new SimpleOption<bool>( "with-backwards", "Do backwards interpolation" ) );
     }
@@ -78,7 +84,7 @@ static Config processed_config( const eckit::Configuration& _config ) {
         config.set( "halo", 2 );
     }
     config.set( "name", scheme_str );
-    config.set( "matrix_free", _config.getBool( "matrix-free", false ) );
+    config.set( "matrix_free", not _config.getBool( "with-matrix", false ) );
     return config;
 }
 
@@ -87,7 +93,7 @@ double vortex_rollup( double lon, double lat, double t ) {
     // lon and lat in degrees!
 
     // Formula found in "A Lagrangian Particle Method with Remeshing for Tracer Transport on the Sphere"
-    // by Peter Bosler, James Kent, Robert Krasny, CHristiane Jablonowski, JCP 2015
+    // by Peter Bosler, James Kent, Robert Krasny, Christiane Jablonowski, JCP 2015
 
     lon *= M_PI / 180.;
     lat *= M_PI / 180.;
@@ -169,10 +175,16 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         auto lonlat = array::make_view<double, 2>( src_fs.xy() );
         auto source = array::make_view<double, 1>( src_field );
         idx_t size  = src_fs.size();
-        idx_t k     = args.getInt( "vortex-rollup", 0 );
-        atlas_omp_parallel_for( idx_t n = 0; n < size; ++n ) {
-            source( n ) = 0.;  //vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
-        };
+
+        if ( args.getString( "init", "vortex-rollup" ) == "zero" ) {
+            atlas_omp_parallel_for( idx_t n = 0; n < size; ++n ) { source( n ) = 0.; }
+        }
+        else {
+            idx_t k = args.getInt( "vortex-rollup", 0 );
+            atlas_omp_parallel_for( idx_t n = 0; n < size; ++n ) {
+                source( n ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
+            }
+        }
     }
 
     src_field.haloExchange();

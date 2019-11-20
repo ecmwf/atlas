@@ -16,7 +16,7 @@
 #include "atlas/grid.h"
 #include "atlas/parallel/omp/copy.h"
 #include "atlas/util/Point.h"
-#include "atlas/util/Vector.h"
+#include "atlas/util/vector.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

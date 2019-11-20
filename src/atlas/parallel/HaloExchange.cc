@@ -19,7 +19,7 @@
 #include "atlas/array/Array.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/Statistics.h"
-#include "atlas/util/Vector.h"
+#include "atlas/util/vector.h"
 
 namespace atlas {
 namespace parallel {

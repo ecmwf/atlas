@@ -26,7 +26,7 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/MicroDeg.h"
-#include "atlas/util/Vector.h"
+#include "atlas/util/vector.h"
 
 
 using atlas::util::microdeg;

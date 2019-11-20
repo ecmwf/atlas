@@ -9,6 +9,7 @@
  */
 
 #include <algorithm>
+#include <ostream>
 #include <vector>
 
 #include "DistributionImpl.h"
@@ -17,7 +18,6 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
-#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace grid {

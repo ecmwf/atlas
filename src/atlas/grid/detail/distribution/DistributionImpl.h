@@ -14,7 +14,7 @@
 #include <vector>
 
 #include "atlas/util/Object.h"
-#include "atlas/util/Vector.h"
+#include "atlas/util/vector.h"
 
 #include "atlas/library/config.h"
 

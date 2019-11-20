@@ -22,11 +22,9 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/library/Library.h"
-#include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 

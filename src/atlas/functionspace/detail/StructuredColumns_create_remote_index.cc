@@ -28,7 +28,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
-#include "atlas/util/Vector.h"
+#include "atlas/util/vector.h"
 
 namespace atlas {
 namespace functionspace {

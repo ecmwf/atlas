@@ -14,7 +14,7 @@
 #include <vector>      // vector
 
 #include "atlas/parallel/omp/sort.h"
-#include "atlas/util/Vector.h"
+#include "atlas/util/vector.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

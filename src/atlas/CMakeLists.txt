@@ -589,7 +589,7 @@ util/Rotation.h
 util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
-util/Vector.h
+util/vector.h
 util/detail/BlackMagic.h
 util/detail/Cache.h
 util/detail/Debug.h

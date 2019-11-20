@@ -27,7 +27,7 @@
 #include "atlas/util/ObjectHandle.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/Polygon.h"
-#include "atlas/util/Vector.h"
+#include "atlas/util/vector.h"
 
 namespace atlas {
 namespace parallel {

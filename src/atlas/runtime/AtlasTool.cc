@@ -289,11 +289,12 @@ int atlas::AtlasTool::start() {
             }
             return failed();
         }
+        atlas::Library::instance().initialise();
+        setupLogging();
+
         Options opts = options_;
         Args args( &atlas::usage, opts, numberOfPositionalArguments(), minimumPositionalArguments() );
 
-        atlas::Library::instance().initialise();
-        setupLogging();
         int err_code = execute( args );
         atlas::Library::instance().finalise();
         return err_code;
