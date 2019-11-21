@@ -19,6 +19,17 @@
 
 #if ATLAS_HAVE_OMP
 #include <omp.h>
+#define ATLAS_HAVE_OMP_SORTING 1
+#else
+#define ATLAS_HAVE_OMP_SORTING 0
+#endif
+
+// Bug in Cray 8.5 or below results in segmentation fault in atlas_test_omp_sort
+#if ATLAS_HAVE_OMP_SORTING && defined(_CRAYC)
+#if _RELEASE <= 8 && _RELEASE_MINOR < 6
+#undef ATLAS_HAVE_OMP_SORTING
+#define ATLAS_HAVE_OMP_SORTING 0
+#endif
 #endif
 
 namespace atlas {
@@ -82,7 +93,7 @@ namespace omp {
 
 namespace detail {
 
-#if ATLAS_HAVE_OMP
+#if ATLAS_HAVE_OMP_SORTING
 template <typename RandomAccessIterator, typename Compare>
 void merge_sort_recursive( const RandomAccessIterator& iterator, size_t begin, size_t end, Compare compare ) {
     auto size = end - begin;
@@ -107,7 +118,7 @@ void merge_sort_recursive( const RandomAccessIterator& iterator, size_t begin, s
 }
 #endif
 
-#if ATLAS_HAVE_OMP
+#if ATLAS_HAVE_OMP_SORTING
 template <typename RandomAccessIterator, typename Indexable, typename Compare>
 void merge_blocks_recursive( const RandomAccessIterator& iterator, const Indexable& blocks, size_t blocks_begin,
                              size_t blocks_end, Compare compare ) {
@@ -157,7 +168,7 @@ void merge_blocks_recursive_seq( RandomAccessIterator& iterator, const Indexable
 
 template <typename RandomAccessIterator, typename Compare>
 void sort( RandomAccessIterator first, RandomAccessIterator last, Compare compare ) {
-#if ATLAS_HAVE_OMP
+#if ATLAS_HAVE_OMP_SORTING
     if ( atlas_omp_get_max_threads() > 1 ) {
 #pragma omp parallel
 #pragma omp single
@@ -187,7 +198,7 @@ void merge_blocks( RandomAccessIterator first, RandomAccessIterator last, Random
     for ( int i = 1; i < blocks_displs.size(); ++i ) {
         blocks_displs[i] = blocks_displs[i - 1] + blocks_size_first[i - 1];
     }
-#if ATLAS_HAVE_OMP
+#if ATLAS_HAVE_OMP_SORTING
     if ( atlas_omp_get_max_threads() > 1 ) {
 #pragma omp parallel
 #pragma omp single
