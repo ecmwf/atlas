@@ -332,6 +332,15 @@ output/Output.h
 output/Output.cc
 output/Gmsh.h
 output/Gmsh.cc
+output/detail/GmshIO.cc
+output/detail/GmshIO.h
+output/detail/GmshImpl.cc
+output/detail/GmshImpl.h
+output/detail/GmshInterface.cc
+output/detail/GmshInterface.h
+output/detail/PointCloudIO.cc
+output/detail/PointCloudIO.h
+
 )
 
 list( APPEND atlas_field_srcs
@@ -556,10 +565,6 @@ array/native/NativeMakeView.cc
 endif()
 
 list( APPEND atlas_util_srcs
-output/detail/GmshIO.cc
-output/detail/GmshIO.h
-output/detail/PointCloudIO.cc
-output/detail/PointCloudIO.h
 parallel/Checksum.cc
 parallel/Checksum.h
 parallel/GatherScatter.cc

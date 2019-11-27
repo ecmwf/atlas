@@ -8,6 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file array_fwd.h
+/// @brief Forward declarations of public API header atlas/array.h
+/// @author Willem Deconinck
+
+/// @file array_fwd.h
 /// @author Willem Deconinck
 
 #pragma once
@@ -62,16 +67,16 @@ IndexView<Value, NDims> make_indexview( const Array& array );
 template <typename Value, unsigned int NDims, Intent AccessMode = Intent::ReadWrite>
 IndexView<Value, NDims> make_host_indexview( const Array& array );
 
-class Table;
+// class Table;
 
-template <bool ReadOnly>
-class TableView;
+// template <bool ReadOnly>
+// class TableView;
 
-template <bool ReadOnly>
-class TableRow;
+// template <bool ReadOnly>
+// class TableRow;
 
-template <bool ReadOnly = true>
-TableView<ReadOnly> make_table_view( const Table& table );
+// template <bool ReadOnly = true>
+// TableView<ReadOnly> make_table_view( const Table& table );
 
 }  // namespace array
 }  // namespace atlas

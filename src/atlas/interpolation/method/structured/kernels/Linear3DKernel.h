@@ -51,7 +51,7 @@ public:
     static constexpr idx_t stencil_halo() { return 0; }
 
 public:
-    using Stencil = Stencil3D<2>;
+    using Stencil = grid::Stencil3D<2>;
     struct Weights {
         std::array<std::array<double, 2>, 2> weights_i;
         std::array<double, 2> weights_j;

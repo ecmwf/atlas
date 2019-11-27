@@ -33,13 +33,14 @@ namespace field {
 
 /*!
  * \brief Base class for creating new fields based on Parametrisation
- * Example to create field[100][3] of default type double:
+ *
+ * \details
+ *  Example to create field[100][3] of default type double:
  * \code{.cpp}
  *    FieldImpl* field = Field::create(
  *         Config
- *           ("creator","ArraySpec")      // ArraySpec FieldCreator
- *           ("shape",array::make_shape(100,3))  // Rank 2 field with indexing
- * [100][3]
+ *           ("creator","ArraySpec")             // ArraySpec FieldCreator
+ *           ("shape",array::make_shape(100,3))  // Rank 2 field with indexing [100][3]
  *         );
  * \endcode
  */

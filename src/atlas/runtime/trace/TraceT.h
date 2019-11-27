@@ -38,8 +38,9 @@ namespace trace {
 template <typename TraceTraits>
 class TraceT {
 public:
-    using Barriers = typename TraceTraits::Barriers;
-    using Tracing  = typename TraceTraits::Tracing;
+    using Traits   = TraceTraits;
+    using Barriers = typename Traits::Barriers;
+    using Tracing  = typename Traits::Tracing;
     using Labels   = std::vector<std::string>;
 
 public:  // static methods

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "atlas/interpolation/method/Method.h"
+#include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
@@ -29,7 +30,7 @@ class Method;
 
 namespace atlas {
 
-class Interpolation : public util::ObjectHandle<interpolation::Method> {
+class Interpolation : DOXYGEN_HIDE( public util::ObjectHandle<interpolation::Method> ) {
 public:
     using Config = eckit::Parametrisation;
 
@@ -58,8 +59,8 @@ public:
     const FunctionSpace& target() const;
 };
 
-/// C-interface
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 namespace functionspace {
 class FunctionSpaceImpl;
 }
@@ -88,5 +89,6 @@ void atlas__Interpolation__execute_field( Interpolation::Implementation* This, c
 void atlas__Interpolation__execute_fieldset( Interpolation::Implementation* This, const field::FieldSetImpl* source,
                                              field::FieldSetImpl* target );
 }
+#endif
 
 }  // namespace atlas

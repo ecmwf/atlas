@@ -58,7 +58,7 @@ public:
     }
 
 public:
-    using Stencil = Stencil3D<4>;
+    using Stencil = grid::Stencil3D<4>;
     struct Weights {
         std::array<std::array<double, 4>, 4> weights_i;
         std::array<double, 4> weights_j;

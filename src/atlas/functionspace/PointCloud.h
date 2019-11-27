@@ -25,7 +25,7 @@ namespace functionspace {
 
 namespace detail {
 
-class PointCloud : public FunctionSpaceImpl {
+class PointCloud : public functionspace::FunctionSpaceImpl {
 public:
     PointCloud( const std::vector<PointXY>& );
     PointCloud( PointXY, const std::vector<PointXY>& );
@@ -43,7 +43,6 @@ public:
     const Field& ghost() const;
     virtual idx_t size() const override { return lonlat_.shape( 0 ); }
 
-    /// @brief Create a spectral field
     using FunctionSpaceImpl::createField;
     virtual Field createField( const eckit::Configuration& ) const override;
     virtual Field createField( const Field&, const eckit::Configuration& ) const override;

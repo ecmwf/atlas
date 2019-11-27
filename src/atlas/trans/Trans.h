@@ -12,6 +12,7 @@
 
 #include <iosfwd>
 
+#include "atlas/library/config.h"
 #include "atlas/trans/Cache.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/ObjectHandle.h"
@@ -38,7 +39,7 @@ namespace trans {
 //----------------------------------------------------------------------------------------------------------------------
 
 class TransImpl;
-class Trans : public util::ObjectHandle<TransImpl> {
+class Trans : DOXYGEN_HIDE( public util::ObjectHandle<TransImpl> ) {
 public:
     static void listBackends( std::ostream& );
     static bool hasBackend( const std::string& );

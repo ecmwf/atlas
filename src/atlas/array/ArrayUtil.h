@@ -23,24 +23,6 @@
 namespace atlas {
 namespace array {
 
-template <typename T>
-struct remove_const {
-    typedef T type;
-};
-template <typename T>
-struct remove_const<T const> {
-    typedef T type;
-};
-
-template <typename T>
-struct add_const {
-    typedef const typename remove_const<T>::type type;
-};
-template <typename T>
-struct add_const<T const> {
-    typedef const T type;
-};
-
 class ArrayDataStore {
 public:
     virtual ~ArrayDataStore() {}
@@ -65,13 +47,14 @@ public:
     }
 };
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <int Dim>
 static constexpr char array_dim() {
     return Dim == 0 ? 'i' : ( Dim == 1 ? 'j' : ( Dim == 2 ? 'k' : ( Dim == 3 ? 'l' : ( Dim == 4 ? 'm' : ( '*' ) ) ) ) );
 }
 
 void throw_OutOfRange( const std::string& class_name, char idx_str, int idx, int max );
-
+#endif
 //------------------------------------------------------------------------------------------------------
 
 }  // namespace array

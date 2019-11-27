@@ -18,6 +18,7 @@
 
 namespace atlas {
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 [[noreturn]] void throw_NotImplemented( const eckit::CodeLocation& );
 [[noreturn]] void throw_NotImplemented( const std::string&, const eckit::CodeLocation& );
 
@@ -65,3 +66,5 @@ inline void Assert( bool success, const char* code, const char* msg, const char*
         ss << WHAT;                                   \
         ::atlas::throw_Exception( ss.str(), Here() ); \
     }
+
+#endif

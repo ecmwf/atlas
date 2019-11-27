@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file   BuildParallelFields.h
 /// @author Willem Deconinck
 /// @date   June 2014
 

@@ -146,7 +146,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
 
         auto triplets = kernel_->allocate_triplets( out_npts );
 
-        constexpr NormaliseLongitude normalise;
+        constexpr util::NormaliseLongitude normalise;
         //auto normalise = []( double x ) { return x; };
  
        ATLAS_TRACE_SCOPE( "Precomputing interpolation matrix" ) {

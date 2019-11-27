@@ -37,6 +37,7 @@
 using namespace eckit;
 using namespace atlas::functionspace;
 using namespace atlas::util;
+using namespace atlas::grid;
 
 
 namespace atlas {

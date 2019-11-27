@@ -34,7 +34,7 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-class FunctionSpace : public util::ObjectHandle<functionspace::FunctionSpaceImpl> {
+class FunctionSpace : DOXYGEN_HIDE( public util::ObjectHandle<functionspace::FunctionSpaceImpl> ) {
 public:
     using Handle::Handle;
     FunctionSpace();

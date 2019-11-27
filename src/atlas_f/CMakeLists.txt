@@ -86,9 +86,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/meshgenerator/detail/MeshGen
     MODULE atlas_meshgenerator_c_binding
     OUTPUT meshgenerator_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Output.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Gmsh.h
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/detail/GmshInterface.h
   MODULE    atlas_output_gmsh_c_binding
-  OUTPUT    outout_Gmsh_c_binding.f90)
+  OUTPUT    output_Gmsh_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/State.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/detail/FieldInterface.h
     MODULE    atlas_field_c_binding

@@ -25,11 +25,12 @@ namespace array {
 
 // --------------------------------------------------------------------------------------------
 // Forward declarations
-
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <typename Value>
 class ArrayT;
 template <typename Value>
 class ArrayT_impl;
+#endif
 
 // --------------------------------------------------------------------------------------------
 

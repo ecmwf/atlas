@@ -352,7 +352,7 @@ public:
 
 private:
     const bool degrees_;
-    NormaliseLongitude normalise_;
+    util::NormaliseLongitude normalise_;
 };
 }  // namespace
 

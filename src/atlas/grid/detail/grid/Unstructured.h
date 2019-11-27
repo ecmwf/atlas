@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file Unstructured.h
 /// @author Willem Deconinck
 /// @author Tiago Quintino
 /// @author Pedro Maciel

@@ -14,6 +14,7 @@
 namespace atlas {
 namespace array {
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <int cnt, int DimSkip, typename DATA_TYPE, int RANK, array::Intent AccessMode>
 constexpr typename std::enable_if<( cnt == RANK ), idx_t>::type get_var_size_impl(
     array::ArrayView<DATA_TYPE, RANK, AccessMode>& field ) {
@@ -49,6 +50,7 @@ constexpr unsigned int get_parallel_dim( array::ArrayView<DATA_TYPE, RANK, Acces
                ? 0
                : ( std::is_same<DimPolicy, LastDim>::value ? RANK - 1 : ( get_dim<DimPolicy>::value ) );
 }
+#endif
 
 }  // namespace array
 }  // namespace atlas

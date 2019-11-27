@@ -43,7 +43,25 @@ namespace atlas {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class Grid : public util::ObjectHandle<grid::detail::grid::Grid> {
+/// @class Grid
+/// @brief Most general grid container
+/// @details
+/// @code{.sh}
+///                                    Grid
+///                                      |
+///                           +----------+----------+
+///                           |                     |
+///                    StructuredGrid        UnstructuredGrid
+///                           |
+///      +--------------------+-----------------------+
+///      |                    |                       |
+/// ReducedGrid          GaussianGrid            RegularGrid
+///      |                 |     |                 |     |
+///      +--------+--------+     +--------+--------+     +-----+
+///               |                       |                    |
+///      ReducedGaussianGrid     RegularGaussianGrid    RegularLonLatGrid
+/// @endcode
+class Grid : DOXYGEN_HIDE( public util::ObjectHandle<grid::detail::grid::Grid> ) {
 public:
     using Config        = util::Config;
     using Spec          = util::Config;

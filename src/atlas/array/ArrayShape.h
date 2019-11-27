@@ -40,9 +40,8 @@ public:
     ArrayShape( idx_t data[], size_t size ) : Base( data, data + size ) {}
 };
 
-inline ArrayShape make_shape( std::initializer_list<idx_t> sizes ) {
-    return ArrayShape( sizes );
-}
+namespace detail {
+
 template <typename Int>
 inline ArrayShape make_shape( Int size1 ) {
     return ArrayShape{static_cast<idx_t>( size1 )};
@@ -65,6 +64,19 @@ inline ArrayShape make_shape( Int1 size1, Int2 size2, Int3 size3, Int4 size4, In
     return ArrayShape{static_cast<idx_t>( size1 ), static_cast<idx_t>( size2 ), static_cast<idx_t>( size3 ),
                       static_cast<idx_t>( size4 ), static_cast<idx_t>( size5 )};
 }
+
+}  // namespace detail
+
+
+inline ArrayShape make_shape( std::initializer_list<idx_t> sizes ) {
+    return ArrayShape( sizes );
+}
+
+template <typename... idx_t>
+ArrayShape make_shape( idx_t... indices ) {
+    return detail::make_shape( std::forward<idx_t>( indices )... );
+}
+
 
 //------------------------------------------------------------------------------------------------------
 

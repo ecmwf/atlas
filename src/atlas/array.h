@@ -8,7 +8,12 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file array.h
+/// @brief Public API header that includes all relevant headers for using the atlas::array namespace
 /// @author Willem Deconinck
+
+/// @namespace atlas::array
+/// @brief Contains classes to operate with multidimensional arrays
 
 #pragma once
 

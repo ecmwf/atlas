@@ -8,8 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file   Nodes.h
 /// @author Willem Deconinck
-/// @date August 2015
+/// @date   August 2015
 
 #pragma once
 
