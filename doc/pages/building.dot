@@ -1,0 +1,96 @@
+digraph "Atlas library dependency order" {
+    compound=true
+    rankdir=BT
+    ranksep=0.5
+    nodesep=0.5
+    style=solid
+    node [style=solid shape=rect margin="0.03,0.03"]
+    edge [arrowsize=0.8]
+
+
+
+
+    subgraph cluster_ecmwf {
+        nodesep=1.0
+
+        style=invisible
+        subgraph cluster_fckit {
+            style=dashed
+            fckit [class="m-primary"];
+        }
+        subgraph cluster_atlas {
+            style=dashed
+            nodesep=0.5
+            atlas [class="m-node m-primary"];
+            atlas_f [m_class="m-node m-primary"];
+       }
+        subgraph cluster_eckit {
+            style=dashed
+            nodesep=0.5
+            eckit [m_class="m-primary"]
+            eckit_mpi [m_class="m-primary"]
+            eckit_geometry [m_class="m-primary"]
+        }
+        subgraph cluster_transi {
+            nodesep=0.5
+            style=dashed
+            trans [class="m-info" style=dotted]
+            transi [class="m-info" style=dotted]
+        }
+
+
+    }
+
+    subgraph cluster_optional {
+        compound=true
+        group=a
+        style=invisible
+        MPI [class="m-node m-info" style=dotted]
+        OpenMP [class="m-info" style=dotted]
+        BLAS [class="m-info" style=dotted]
+        Eigen [class="m-info" style=dotted]
+        CGAL [class="m-info" style=dotted]
+        Proj [class="m-info" style=dotted]
+        fftw [class="m-info" style=dotted]
+        CUDA [class="m-info" style=dotted]
+        GridTools [class="m-info" style=dotted]
+        Boost [class="m-info" style=dotted]
+
+    };
+
+        GridTools -> Boost [style=dashed]
+        GridTools -> CUDA  [style=dotted]
+        CGAL -> Boost      [style=dashed]
+        trans -> fftw      [style=dashed]
+        trans -> OpenMP    [style=dotted]
+        trans -> MPI       [style=dashed]
+        trans -> BLAS      [style=dashed]
+        #BLAS -> MPI        [style="invisible" dir="none"]
+        OpenMP -> fftw   [style="invisible" dir="none"]
+        transi -> trans [style=dashed]
+
+    eckit_mpi -> MPI [style=dotted group=a]
+    eckit_mpi -> eckit
+    eckit_geometry -> eckit
+
+    fckit -> eckit_mpi [lhead="cluster_eckit"] #[style=dotted]
+    atlas -> eckit_mpi [lhead="cluster_eckit"]
+    atlas_f -> atlas   #[style=dotted]
+    atlas_f -> fckit [lhead="cluster_fckit"]
+
+    atlas -> transi         [style=dotted group=a lhead="cluster_transi"]
+    atlas -> Eigen         [style=dotted group=a]
+    atlas -> OpenMP         [style=dotted]
+    atlas -> CGAL           [style=dotted group=a]
+    atlas -> Proj           [style=dotted group=a]
+    atlas -> fftw           [style=dotted]
+    atlas -> CUDA           [style=dotted group=a]
+    atlas -> GridTools      [style=dotted group=a]
+
+    #{ rank=same atlas fftw }
+    #{ rank=same atlas Eigen3 }
+
+    #{rank=same; MPI; OpenMP;};
+    #{rank=same; atlas; atlas_f;};
+}
+

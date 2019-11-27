@@ -6,6 +6,8 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+if(ATLAS_HAVE_DOCS)
+
 add_subdirectory(user-guide)
 
 list( APPEND DOC_CODE_TARGETS
@@ -53,4 +55,46 @@ if( PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME )
 
 endif()
 
+endif()
 
+
+if( NOT DEFINED ATLAS_DOC_VERSION )
+  set( ATLAS_DOC_VERSION ${ATLAS_VERSION_STR} )
+endif()
+
+if( NOT DEFINED ATLAS_DOXYGEN_GENERATOR )
+  set( ATLAS_DOXYGEN_GENERATOR "m.css")
+endif()
+
+if( ATLAS_DOXYGEN_GENERATOR STREQUAL "m.css" )
+  if( NOT DEFINED ATLAS_DOXYGEN_EXECUTABLE )
+    set( ATLAS_DOXYGEN_EXECUTABLE doxygen.py )
+  endif()
+  set( ATLAS_DOXYFILE Doxyfile-mcss )
+else()
+  if( NOT DEFINED ATLAS_DOXYGEN_EXECUTABLE )
+    if( DOXYGEN_EXECUTABLE )
+      set( ATLAS_DOXYGEN_EXECUTABLE ${DOXYGEN_EXECUTABLE} )
+    else()
+      set( ATLAS_DOXYGEN_EXECUTABLE doxygen )
+    endif()    
+  endif()
+  set( ATLAS_DOXYFILE Doxyfile-stock )
+endif()
+
+foreach( doxyfile Doxyfile-default Doxyfile-custom Doxyfile-mcss Doxyfile-stock )
+  execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink 
+      ${CMAKE_CURRENT_SOURCE_DIR}/${doxyfile}
+      ${CMAKE_CURRENT_BINARY_DIR}/${doxyfile} )
+endforeach()
+
+configure_file(Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+
+add_custom_target(
+  atlas_doxygen
+  COMMAND ${ATLAS_DOXYGEN_EXECUTABLE} Doxyfile
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  COMMENT "Generating Doxygen documentation" VERBATIM
+)
+
+set_property(TARGET atlas_doxygen PROPERTY EXCLUDE_FROM_ALL TRUE)
