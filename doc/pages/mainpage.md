@@ -1,6 +1,5 @@
-namespace atlas {
-/**
-@mainpage Atlas
+Atlas                             {#mainpage}
+=====
 
 * *A library for numerical weather prediction and climate modelling*
 
@@ -23,27 +22,31 @@ It is known to run on a number of systems, some of which are directly supported
 by ECMWF.
 
 
-@section mainpage-whats-new What's new?
+What's new?                  {#mainpage-whats-new}
+-----------
 
 Curious about what was added or improved recently? Check out the
 [Changelog](https://github.com/ecmwf/atlas/blob/master/CHANGELOG.md)
 
-@section mainpage-getting-started Getting started
+Getting started             {#mainpage-getting-started}
+---------------
 
 The best way to get started is to read the @ref getting-started guide.
 
-@section mainpage-contributing Contributing
+Contributing                {#mainpage-contributing}
+------------
 
 Contributions to Atlas are welcome. In order to do so, please open an issue
 where a feature request or bug can be discussed. Then issue a pull request
 with your contribution. Pull requests must be issued against the develop branch.
 
-@section mainpage-citing-atlas Citing Atlas
+Citing Atlas                {#mainpage-citing-atlas}
+------------
 
 If you publish work which mentions Atlas, or Atlas has been useful in your research,
 please cite the following paper:
 
-@code{.bibtex}
+```bibtex
 @article{DECONINCK2017188,
 title = "Atlas : A library for numerical weather prediction and climate modelling",
 journal = "Computer Physics Communications",
@@ -56,7 +59,5 @@ url = "http://www.sciencedirect.com/science/article/pii/S0010465517302138",
 author = "Willem Deconinck and Peter Bauer and Michail Diamantakis and Mats Hamrud and Christian Kühnlein and Pedro Maciel and Gianmarco Mengaldo and Tiago Quintino and Baudouin Raoult and Piotr K. Smolarkiewicz and Nils P. Wedi",
 keywords = "Numerical weather prediction, Climate, Earth system, High performance computing, Meteorology, Flexible mesh data structure"
 }
-@endcode
+```
 
-*/
-}

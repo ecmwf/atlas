@@ -1,7 +1,10 @@
-namespace atlas {
-/** @page getting-started Getting started
+Getting started    {#getting-started}
+===============
 
-@section getting-started-requirements Requirements
+@tableofcontents
+
+Requirements  {#getting-started-requirements}
+------------
 
 Tested compilers include:
 
@@ -34,7 +37,8 @@ Optional dependencies:
 - Eigen3 -- For certain linear algebra operations
 - FFTW -- For enabling inverse spherical harmonics transforms (TransLocal)
 
-@section getting-started-installation Installation
+Installation  {#getting-started-installation}
+------------
 
 Atlas employs an out-of-source build/install based on CMake.
 
@@ -42,18 +46,17 @@ Make sure ecbuild, eckit and fckit are installed and the ecbuild
 executable script is found ( `which ecbuild` ). Following environment variables
 help the build system to detect the right dependencies:
 
-@code{.sh}
+```bash
 # For finding eckit
 ECKIT_PATH               # Path to eckit prefix
 
 # For finding fckit
 FCKIT_PATH               # Path to fckit prefix
-@endcode
-
+```
 
 Other environment variables that could be required for optional features:
 
-@code{.sh}
+```bash
 # For finding gridtools-storage
 GRIDTOOLS_STORAGE_PATH   # Path to gridtools-storage prefix
 
@@ -65,11 +68,11 @@ BOOST_ROOT               # Path to Boost prefix
 CGAL_DIR                 # Path to directory containing CGALConfig.cmake
 Eigen3_DIR               # Path to directory containing Eigen3Config.cmake
 FFTW_PATH                # Path to FFTW prefix
-@endcode
+```
 
 Now proceed with installation as follows
 
-@code{.sh}
+```bash
 # Environment --- Edit as needed
 ATLAS_SRC=$(pwd)
 ATLAS_BUILD=build
@@ -88,7 +91,7 @@ make install
 
 # 4. Check installation
 $ATLAS_INSTALL/bin/atlas --info
-@endcode
+```
 
 Extra flags maybe added to step 2 to fine-tune configuration.
 - `--build=DEBUG|RELEASE|BIT` --- Optimisation level <dl class="m-diary">
@@ -104,7 +107,8 @@ Extra flags maybe added to step 2 to fine-tune configuration.
     In this case, also compile atlas using static linking, by adding to step 2:
     `--static`
 
-@section getting-started-runtime-configuration Runtime Configuration
+Runtime Configuration   {#getting-started-runtime-configuration}
+---------------------
 
 Atlas behaviour can be configured through some environment variables with defaults marked in square brackets
 
@@ -113,12 +117,9 @@ Atlas behaviour can be configured through some environment variables with defaul
 - `ATLAS_TRACE=<[0]|1>` --- Control printing of Atlas traces (includes timings)
 
 
-@section getting-started-more 
+Additional information   {#getting-started-more}
+----------------------
 
 -   @subpage building --- @copybrief building
 -   @subpage cmake --- @copybrief cmake
 -   @subpage custom-buildsystems --- @copybrief custom-buildsystems
-
-*/
-}
-
