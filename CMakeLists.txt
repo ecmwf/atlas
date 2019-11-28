@@ -312,9 +312,7 @@ ecbuild_add_option( FEATURE DOCS
                     DEFAULT OFF
                     REQUIRED_PACKAGES "Latex" )
 
-if(ATLAS_HAVE_DOCS)
-    add_subdirectory( doc )
-endif()
+add_subdirectory( doc )
 
 ################################################################################
 # finalize

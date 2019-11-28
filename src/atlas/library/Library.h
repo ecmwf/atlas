@@ -70,7 +70,7 @@ protected:
     mutable std::unique_ptr<eckit::Channel> debug_channel_;
 };
 
-typedef Library Atlas;
+using Atlas = Library;
 
 //----------------------------------------------------------------------------------------------------------------------
 

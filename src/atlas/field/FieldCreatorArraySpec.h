@@ -31,12 +31,12 @@ namespace field {
 
 /*!
  * \brief Field creator using array::ArrayShape parametrisation
+ * \details
  * \code{.cpp}
  *    FieldImpl* field = Field::create(
  *         Config
- *           ("creator","ArraySpec")     // ArraySpec FieldCreator
- *           ("shape",array::make_shape(100,3))  // Rank 2 field with indexing
- * [100][3]
+ *           ("creator","ArraySpec")                // ArraySpec FieldCreator
+ *           ("shape",array::make_shape(100,3))     // Rank 2 field with indexing [100][3]
  *           ("datatype",array::DataType::real64()) // Field internal data type
  *         );
  * \endcode

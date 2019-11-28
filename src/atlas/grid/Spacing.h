@@ -13,10 +13,11 @@
 #include <array>
 #include <vector>
 
+#include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
 
 //---------------------------------------------------------------------------------------------------------------------
-
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 // Forward declarations
 namespace eckit {
 class Parametrisation;
@@ -31,6 +32,7 @@ class Spacing;
 }
 }  // namespace grid
 }  // namespace atlas
+#endif
 //---------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
@@ -38,7 +40,7 @@ namespace grid {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class Spacing : public util::ObjectHandle<atlas::grid::spacing::Spacing> {
+class Spacing : DOXYGEN_HIDE( public util::ObjectHandle<atlas::grid::spacing::Spacing> ) {
 public:
     using const_iterator = std::vector<double>::const_iterator;
     using Interval       = std::array<double, 2>;

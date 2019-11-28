@@ -162,6 +162,7 @@ private:
 }  // namespace grid
 }  // namespace atlas
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 namespace std {
 
 inline atlas::grid::IteratorXY::difference_type distance( const atlas::grid::IteratorXY& first,
@@ -174,3 +175,4 @@ inline atlas::grid::IteratorLonLat::difference_type distance( const atlas::grid:
 }
 
 }  // namespace std
+#endif

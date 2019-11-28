@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file HaloExchange.cc
 /// @author Willem Deconinck
 /// @date   Nov 2013
 

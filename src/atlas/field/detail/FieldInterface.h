@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file FieldInterface.h
 /// @author Willem Deconinck
 /// @date Sep 2014
 

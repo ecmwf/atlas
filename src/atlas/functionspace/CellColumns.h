@@ -39,7 +39,7 @@ namespace detail {
 
 // ----------------------------------------------------------------------------
 
-class CellColumns : public FunctionSpaceImpl {
+class CellColumns : public functionspace::FunctionSpaceImpl {
 public:
     CellColumns( const Mesh&, const eckit::Configuration& = util::NoConfig() );
 

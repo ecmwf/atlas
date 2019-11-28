@@ -12,6 +12,7 @@
 
 #include <numeric>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 #include "atlas/array/ArrayView.h"
@@ -25,29 +26,11 @@ namespace parallel {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-template <typename T>
-struct remove_const {
-    typedef T type;
-};
-template <typename T>
-struct remove_const<T const> {
-    typedef T type;
-};
-
-template <typename T>
-struct add_const {
-    typedef const typename remove_const<T>::type type;
-};
-template <typename T>
-struct add_const<T const> {
-    typedef const T type;
-};
-
 template <typename DATA_TYPE>
 class Field {
 private:
-    typedef typename remove_const<DATA_TYPE>::type NON_CONST_DATA_TYPE;
-    typedef typename add_const<DATA_TYPE>::type CONST_DATA_TYPE;
+    typedef typename std::remove_const<DATA_TYPE>::type NON_CONST_DATA_TYPE;
+    typedef typename std::add_const<DATA_TYPE>::type CONST_DATA_TYPE;
 
 public:
     Field() {}

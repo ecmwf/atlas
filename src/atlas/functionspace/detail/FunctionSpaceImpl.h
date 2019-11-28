@@ -11,6 +11,7 @@
 #pragma once
 
 #include <string>
+#include <type_traits>
 
 #include "atlas/util/Object.h"
 
@@ -32,31 +33,12 @@ class PartitionPolygon;
 namespace atlas {
 namespace functionspace {
 
-#define FunctionspaceT_nonconst typename FunctionSpaceImpl::remove_const<FunctionSpaceT>::type
-#define FunctionspaceT_const typename FunctionSpaceImpl::add_const<FunctionSpaceT>::type
+#define FunctionspaceT_nonconst typename std::remove_const<FunctionSpaceT>::type
+#define FunctionspaceT_const typename std::add_const<FunctionSpaceT>::type
 
 /// @brief FunctionSpace class helps to interprete Fields.
 /// @note  Abstract base class
 class FunctionSpaceImpl : public util::Object {
-private:
-    template <typename T>
-    struct remove_const {
-        typedef T type;
-    };
-    template <typename T>
-    struct remove_const<T const> {
-        typedef T type;
-    };
-
-    template <typename T>
-    struct add_const {
-        typedef const typename remove_const<T>::type type;
-    };
-    template <typename T>
-    struct add_const<T const> {
-        typedef const T type;
-    };
-
 public:
     FunctionSpaceImpl();
     virtual ~FunctionSpaceImpl();

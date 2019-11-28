@@ -40,7 +40,7 @@ namespace detail {
 
 // -------------------------------------------------------------------
 
-class Spectral : public FunctionSpaceImpl {
+class Spectral : public functionspace::FunctionSpaceImpl {
     /*
   Spectral data is organised as:
      m = zonal wavenumber
@@ -71,7 +71,6 @@ public:
 
     virtual std::string distribution() const override;
 
-    /// @brief Create a spectral field
     using FunctionSpaceImpl::createField;
     virtual Field createField( const eckit::Configuration& ) const override;
     virtual Field createField( const Field&, const eckit::Configuration& ) const override;

@@ -13,6 +13,7 @@
 #include "atlas/runtime/Exception.h"
 
 namespace atlas {
+namespace grid {
 
 ComputeLower::ComputeLower( const Vertical& z ) {
     nlev_ = z.size();
@@ -115,4 +116,5 @@ ComputeVerticalStencil::ComputeVerticalStencil( const Vertical& vertical, idx_t 
 
 //---------------------------------------------------------------------------------------------------------------------
 
+}  // namespace grid
 }  // namespace atlas

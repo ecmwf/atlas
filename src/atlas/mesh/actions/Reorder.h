@@ -78,7 +78,7 @@ public:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Reorder : public util::ObjectHandle<ReorderImpl> {
+class Reorder : DOXYGEN_HIDE( public util::ObjectHandle<ReorderImpl> ) {
 public:
     using Parameters = atlas::util::Config;
 

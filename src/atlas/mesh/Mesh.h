@@ -12,6 +12,7 @@
 
 #include <iosfwd>
 
+#include "atlas/library/config.h"
 #include "atlas/mesh/detail/MeshImpl.h"
 #include "atlas/util/ObjectHandle.h"
 
@@ -49,7 +50,7 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Mesh : public util::ObjectHandle<mesh::detail::MeshImpl> {
+class Mesh : DOXYGEN_HIDE( public util::ObjectHandle<mesh::detail::MeshImpl> ) {
 public:
     using Nodes          = mesh::Nodes;
     using Cells          = mesh::Cells;

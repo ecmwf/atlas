@@ -15,6 +15,7 @@
 #include "atlas/util/Config.h"
 #include "atlas/util/Metadata.h"
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 namespace eckit {
 class Parametrisation;
 }
@@ -31,6 +32,7 @@ namespace grid {
 class Distribution;
 }  // namespace grid
 }  // namespace atlas
+#endif
 
 namespace atlas {
 namespace meshgenerator {

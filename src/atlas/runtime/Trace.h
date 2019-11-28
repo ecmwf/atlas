@@ -57,17 +57,23 @@
 
 namespace atlas {
 
+namespace runtime {
+namespace trace {
 struct TraceTraits {
 #if ATLAS_HAVE_TRACE_BARRIERS
-    using Barriers = runtime::trace::Barriers;
+    using Barriers = ::atlas::runtime::trace::Barriers;
 #else
-    using Barriers = runtime::trace::NoBarriers;
+    using Barriers = ::atlas::runtime::trace::NoBarriers;
 #endif
-    using Tracing = runtime::trace::Logging;
+    using Tracing = ::atlas::runtime::trace::Logging;
 };
 
-class Trace : public runtime::trace::TraceT<TraceTraits> {
-    using Base = runtime::trace::TraceT<TraceTraits>;
+}  // namespace trace
+}  // namespace runtime
+
+class Trace : public runtime::trace::TraceT<runtime::trace::TraceTraits> {
+    using Base   = runtime::trace::TraceT<runtime::trace::TraceTraits>;
+    using Traits = runtime::trace::TraceTraits;
 
 public:
     using Base::Base;

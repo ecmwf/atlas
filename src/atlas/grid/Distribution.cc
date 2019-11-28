@@ -71,7 +71,7 @@ std::ostream& operator<<( std::ostream& os, const Distribution& distribution ) {
     return os;
 }
 
-atlas::grid::Distribution::operator const partition_t&() const {
+Distribution::operator const partition_t&() const {
     return *get();
 }
 

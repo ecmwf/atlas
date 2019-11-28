@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file PartitionPolygon.h
 /// @author Pedro Maciel
 /// @author Willem Deconinck
 /// @date September 2017

@@ -28,7 +28,7 @@ class Partitioner;
 namespace atlas {
 namespace grid {
 
-class Distribution : public util::ObjectHandle<DistributionImpl> {
+class Distribution : DOXYGEN_HIDE( public util::ObjectHandle<DistributionImpl> ) {
     friend class Partitioner;
 
 public:

@@ -13,6 +13,7 @@
 #include <string>
 
 #include "atlas/domain/Domain.h"
+#include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -40,7 +41,7 @@ class ProjectionImpl;
 }
 }  // namespace projection
 
-class Projection : public util::ObjectHandle<projection::detail::ProjectionImpl> {
+class Projection : DOXYGEN_HIDE( public util::ObjectHandle<projection::detail::ProjectionImpl> ) {
 public:
     using Spec = util::Config;
 

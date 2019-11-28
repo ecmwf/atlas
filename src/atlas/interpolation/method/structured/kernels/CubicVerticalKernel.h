@@ -21,7 +21,7 @@ namespace interpolation {
 namespace method {
 
 class CubicVerticalKernel {
-    ComputeVerticalStencil compute_vertical_stencil_;
+    grid::ComputeVerticalStencil compute_vertical_stencil_;
     Vertical vertical_;
     static constexpr idx_t stencil_width() { return 4; }
     static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
@@ -44,7 +44,7 @@ public:
     struct Weights {
         std::array<double, 4> weights_k;
     };
-    using Stencil = VerticalStencil<4>;
+    using Stencil = grid::VerticalStencil<4>;
 
     template <typename stencil_t>
     void compute_stencil( const double z, stencil_t& stencil ) const {
@@ -199,7 +199,7 @@ public:
 
     template <typename array_t>
     double operator()( const double z, const array_t& input ) const {
-        VerticalStencil<stencil_width()> stencil;
+        Stencil stencil;
         compute_vertical_stencil_( z, stencil );
         Weights weights;
         compute_weights( z, stencil, weights );

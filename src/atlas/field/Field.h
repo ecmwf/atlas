@@ -19,6 +19,7 @@
 #include "atlas/array/ArrayShape.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
+#include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
@@ -40,7 +41,7 @@ class FunctionSpace;
 
 namespace atlas {
 
-class Field : public util::ObjectHandle<field::FieldImpl> {
+class Field : DOXYGEN_HIDE( public util::ObjectHandle<field::FieldImpl> ) {
 public:
     using Handle::Handle;
     Field() = default;

@@ -12,6 +12,7 @@
 
 #include <string>
 
+#include "atlas/library/config.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/ObjectHandle.h"
 
@@ -39,7 +40,7 @@ class MeshGeneratorImpl;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class MeshGenerator : public util::ObjectHandle<meshgenerator::MeshGeneratorImpl> {
+class MeshGenerator : DOXYGEN_HIDE( public util::ObjectHandle<meshgenerator::MeshGeneratorImpl> ) {
 public:
     using Parameters = atlas::util::Config;
 

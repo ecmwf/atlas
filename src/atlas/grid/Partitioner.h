@@ -58,7 +58,6 @@ class Grid;
 }  // namespace grid
 }  // namespace detail
 }  // namespace grid
-using GridImpl = grid::detail::grid::Grid;
 }  // namespace atlas
 
 namespace atlas {
@@ -66,7 +65,7 @@ namespace grid {
 
 // ------------------------------------------------------------------
 
-class Partitioner : public util::ObjectHandle<detail::partitioner::Partitioner> {
+class Partitioner : DOXYGEN_HIDE( public util::ObjectHandle<detail::partitioner::Partitioner> ) {
 public:
     using Config         = eckit::Parametrisation;
     using Implementation = detail::partitioner::Partitioner;
@@ -116,6 +115,9 @@ public:
 
 // ------------------------------------------------------------------
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+using GridImpl = detail::grid::Grid;
+
 extern "C" {
 Partitioner::Implementation* atlas__grid__Partitioner__new( const Partitioner::Config* config );
 
@@ -128,6 +130,7 @@ Partitioner::Implementation* atlas__grid__MatchingFunctionSpacePartitioner__new(
 void atlas__grid__Partitioner__delete( Partitioner::Implementation* This );
 DistributionImpl* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This, const GridImpl* grid );
 }
+#endif
 
 }  // namespace grid
 }  // namespace atlas

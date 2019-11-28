@@ -48,7 +48,7 @@ namespace detail {
 
 // ----------------------------------------------------------------------------
 
-class NodeColumns : public FunctionSpaceImpl {
+class NodeColumns : public functionspace::FunctionSpaceImpl {
 public:
     NodeColumns( Mesh mesh, const eckit::Configuration& );
     NodeColumns( Mesh mesh );
