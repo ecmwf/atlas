@@ -31,13 +31,10 @@ std::string GmshFileStream::parallelPathName( const eckit::PathName& path, int p
     return s.str();
 }
 
-std::string GmshFileStream::parallelPathName( const eckit::PathName& path ) {
-    return parallelPathName( path, mpi::comm().rank() );
-}
-
 // -----------------------------------------------------------------------------
 
-GmshFileStream::GmshFileStream( const eckit::PathName& file_path, const char* mode, int part ) {
+GmshFileStream::GmshFileStream( const eckit::PathName& file_path, const char* mode, int part ) :
+    std::ofstream() {
     eckit::PathName par_path( file_path );
     std::ios_base::openmode omode = std::ios_base::out;
     if ( std::string( mode ) == "w" ) {
@@ -63,9 +60,6 @@ GmshFileStream::GmshFileStream( const eckit::PathName& file_path, const char* mo
         std::ofstream::open( path.localPath(), omode );
     }
 }
-
-GmshFileStream::GmshFileStream( const eckit::PathName& file_path, const char* mode ) :
-    GmshFileStream( file_path, mode, mpi::comm().rank() ) {}
 
 //----------------------------------------------------------------------------------------------------------------------
 

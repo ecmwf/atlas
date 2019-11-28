@@ -36,10 +36,8 @@ namespace output {
 
 class GmshFileStream : public std::ofstream {
 public:
-    static std::string parallelPathName( const eckit::PathName& path );
-    static std::string parallelPathName( const eckit::PathName& path, int part );
-    GmshFileStream( const eckit::PathName& file_path, const char* mode );
-    GmshFileStream( const eckit::PathName& file_path, const char* mode, int part );
+    static std::string parallelPathName( const eckit::PathName& path, int part = mpi::comm().rank() );
+    GmshFileStream( const eckit::PathName& file_path, const char* mode, int part = mpi::comm().rank() );
 };
 
 // -----------------------------------------------------------------------------
