@@ -103,7 +103,7 @@ private:
 template <typename Value, int Rank>
 class IndexView {
 public:
-    using value_type = typename std::remove_const<Value>::type;
+    using value_type = typename remove_const<Value>::type;
 
 #if ATLAS_HAVE_FORTRAN
     typedef detail::FortranIndex<Value> Index;

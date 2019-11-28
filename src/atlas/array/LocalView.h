@@ -59,7 +59,7 @@ template <typename Value, int Rank, Intent AccessMode = Intent::ReadWrite>
 class LocalView {
 public:
     // -- Type definitions
-    using value_type = typename std::remove_const<Value>::type;
+    using value_type = typename remove_const<Value>::type;
 
     using return_type =
         typename std::conditional<( AccessMode == Intent::ReadOnly ), const value_type, value_type>::type;

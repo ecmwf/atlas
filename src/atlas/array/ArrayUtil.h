@@ -23,6 +23,26 @@
 namespace atlas {
 namespace array {
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+template <typename T>
+struct remove_const {
+    typedef T type;
+};
+template <typename T>
+struct remove_const<T const> {
+    typedef T type;
+};
+
+template <typename T>
+struct add_const {
+    typedef const typename remove_const<T>::type type;
+};
+template <typename T>
+struct add_const<T const> {
+    typedef const T type;
+};
+#endif
+
 class ArrayDataStore {
 public:
     virtual ~ArrayDataStore() {}
@@ -55,6 +75,7 @@ static constexpr char array_dim() {
 
 void throw_OutOfRange( const std::string& class_name, char idx_str, int idx, int max );
 #endif
+
 //------------------------------------------------------------------------------------------------------
 
 }  // namespace array

@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include <type_traits>
-
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/library/config.h"
 
@@ -135,7 +133,7 @@ private:
 template <typename Value, int Rank>
 class LocalIndexView {
 public:
-    using value_type = typename std::remove_const<Value>::type;
+    using value_type = typename remove_const<Value>::type;
 
 #if ATLAS_HAVE_FORTRAN
     typedef detail::FortranIndex<Value> Index;
