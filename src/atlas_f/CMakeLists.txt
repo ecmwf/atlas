@@ -187,8 +187,8 @@ ecbuild_add_library( TARGET atlas_f
         ${FCKIT_INCLUDE_DIRS}
 )
 
-target_link_libraries( atlas_f PRIVATE
-  atlas )
+target_link_libraries( atlas_f PUBLIC
+  $<LINK_ONLY:atlas> )
 
 target_link_libraries( atlas_f PUBLIC
   fckit )
