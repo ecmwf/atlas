@@ -1,0 +1,17 @@
+@INCLUDE           = @PROJECT_SOURCE_DIR@/doc/@ATLAS_DOXYFILE@
+
+INPUT              = @PROJECT_SOURCE_DIR@/src/atlas
+INPUT             += @PROJECT_SOURCE_DIR@/doc/pages
+
+OUTPUT_DIRECTORY   = @PROJECT_BINARY_DIR@/doc/build
+
+STRIP_FROM_PATH    = @PROJECT_SOURCE_DIR@/src
+STRIP_FROM_PATH   += @PROJECT_SOURCE_DIR@/doc
+
+PROJECT_NAME       = Atlas
+PROJECT_NUMBER     = @ATLAS_DOC_VERSION@
+PROJECT_BRIEF      = "C++ docs &raquo @ATLAS_DOC_VERSION@" 
+
+ALIASES           += project_version=@ATLAS_DOC_VERSION@
+
+DOTFILE_DIRS       = @PROJECT_SOURCE_DIR@/doc/pages
