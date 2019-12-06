@@ -68,8 +68,11 @@ std::string LegendreCacheCreatorLocal::uid() const {
         };
         stream << "local-T" << truncation_ << "-";
         StructuredGrid structured( grid_ );
-        if ( GaussianGrid( grid_ ) ) {
-            // Same cache for any global Gaussian grid
+        if ( grid_.projection() ) {
+            give_up();
+        }
+        else if ( GaussianGrid( grid_ ) && eckit::types::is_approximately_equal( structured.xspace().min(), 0. ) ) {
+            // Same cache for any global Gaussian grid, starting at Greenwich
             stream << "GaussianN" << GaussianGrid( grid_ ).N();
         }
         else if ( RegularLonLatGrid( grid_ ) ) {
@@ -94,7 +97,7 @@ std::string LegendreCacheCreatorLocal::uid() const {
                 give_up();
             }
         }
-        else if ( RegularGrid( grid_ ) && not grid_.projection() && structured.yspace().type() == "linear" ) {
+        else if ( RegularGrid( grid_ ) && structured.yspace().type() == "linear" ) {
             RectangularDomain domain( grid_.domain() );
             ATLAS_ASSERT( domain );
             stream << "Regional";
