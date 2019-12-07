@@ -263,6 +263,43 @@ CASE( "test cache creator in memory" ) {
     auto trans2 = Trans( cache, grid_global, truncation );
 }
 
+CASE( "ATLAS-256: Legendre coefficient expected unique identifiers" ) {
+    util::Config options;
+    options.set( option::type( "local" ) );
+    options.set( "flt", false );
+
+    auto uids = {
+        "local-T20-GaussianN320-OPT4189816c2e",      "local-T639-GaussianN320-OPT4189816c2e",
+        "local-T1279-GaussianN320-OPT4189816c2e",    "local-T20-GaussianN640-OPT4189816c2e",
+        "local-T639-GaussianN640-OPT4189816c2e",     "local-T1279-GaussianN640-OPT4189816c2e",
+        "local-T20-GaussianN1280-OPT4189816c2e",     "local-T639-GaussianN1280-OPT4189816c2e",
+        "local-T1279-GaussianN1280-OPT4189816c2e",   "local-T20-grid-526e85fea7-OPT4189816c2e",
+        "local-T639-grid-526e85fea7-OPT4189816c2e",  "local-T1279-grid-526e85fea7-OPT4189816c2e",
+        "local-T20-grid-67c6c40d80-OPT4189816c2e",   "local-T639-grid-67c6c40d80-OPT4189816c2e",
+        "local-T1279-grid-67c6c40d80-OPT4189816c2e", "local-T20-grid-aa80a6f660-OPT4189816c2e",
+        "local-T639-grid-aa80a6f660-OPT4189816c2e",  "local-T1279-grid-aa80a6f660-OPT4189816c2e"
+    };
+    auto uid  = uids.begin();
+
+    for ( auto& domain : std::vector<Domain>{GlobalDomain(), RectangularDomain( {-10, 10}, {-20, 20} )} ) {
+        for ( auto N : {320, 640, 1280} ) {
+            for ( int T : {20, 639, 1279} ) {
+                Log::info() << "Case N:" << N << ", T:" << T << ", domain:" << domain << ", UID:'" << *uid << "'"
+                            << std::endl;
+
+                for ( auto& type : {"F", "N", "O"} ) {
+                    Grid grid( type + std::to_string( N ), domain );
+                    auto test = trans::LegendreCacheCreator( grid, T, options ).uid();
+                    ATLAS_DEBUG_VAR( test );
+                    EXPECT( test == *uid );
+                }
+
+                uid++;
+            }
+        }
+    }
+}
+
 }  // namespace test
 }  // namespace atlas
 

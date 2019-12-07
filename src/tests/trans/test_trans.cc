@@ -30,6 +30,7 @@
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/trans/LegendreCacheCreator.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/trans/VorDivToUV.h"
 #include "atlas/trans/detail/TransFactory.h"
@@ -595,6 +596,78 @@ CASE( "test_trans_VorDivToUV" ) {
                 Log::info() << field_U[j] << " ";
             }
             Log::info() << std::endl;
+        }
+    }
+}
+#endif
+
+#ifdef TRANS_HAVE_IO
+CASE( "ATLAS-256: Legendre coefficient expected unique identifiers" ) {
+    if ( mpi::comm().size() == 1 ) {
+        util::Config options;
+        options.set( option::type( "ifs" ) );
+        options.set( "flt", false );
+
+        auto uids = {"ifs-T20-RegularGaussianN320-OPT4189816c2e",
+                     "ifs-T20-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
+                     "ifs-T639-RegularGaussianN320-OPT4189816c2e",
+                     "ifs-T639-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
+                     "ifs-T1279-RegularGaussianN320-OPT4189816c2e",
+                     "ifs-T1279-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
+                     "ifs-T20-RegularGaussianN640-OPT4189816c2e",
+                     "ifs-T20-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
+                     "ifs-T639-RegularGaussianN640-OPT4189816c2e",
+                     "ifs-T639-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
+                     "ifs-T1279-RegularGaussianN640-OPT4189816c2e",
+                     "ifs-T1279-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
+                     "ifs-T20-RegularGaussianN1280-OPT4189816c2e",
+                     "ifs-T20-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
+                     "ifs-T639-RegularGaussianN1280-OPT4189816c2e",
+                     "ifs-T639-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
+                     "ifs-T1279-RegularGaussianN1280-OPT4189816c2e",
+                     "ifs-T1279-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
+                     "ifs-T20-grid-526e85fea7-OPT4189816c2e",
+                     "ifs-T20-grid-526e85fea7-OPT4189816c2e",
+                     "ifs-T639-grid-526e85fea7-OPT4189816c2e",
+                     "ifs-T639-grid-526e85fea7-OPT4189816c2e",
+                     "ifs-T1279-grid-526e85fea7-OPT4189816c2e",
+                     "ifs-T1279-grid-526e85fea7-OPT4189816c2e",
+                     "ifs-T20-grid-67c6c40d80-OPT4189816c2e",
+                     "ifs-T20-grid-67c6c40d80-OPT4189816c2e",
+                     "ifs-T639-grid-67c6c40d80-OPT4189816c2e",
+                     "ifs-T639-grid-67c6c40d80-OPT4189816c2e",
+                     "ifs-T1279-grid-67c6c40d80-OPT4189816c2e",
+                     "ifs-T1279-grid-67c6c40d80-OPT4189816c2e",
+                     "ifs-T20-grid-aa80a6f660-OPT4189816c2e",
+                     "ifs-T20-grid-aa80a6f660-OPT4189816c2e",
+                     "ifs-T639-grid-aa80a6f660-OPT4189816c2e",
+                     "ifs-T639-grid-aa80a6f660-OPT4189816c2e",
+                     "ifs-T1279-grid-aa80a6f660-OPT4189816c2e",
+                     "ifs-T1279-grid-aa80a6f660-OPT4189816c2e"};
+        auto uid  = uids.begin();
+
+        for ( auto& domain : std::vector<Domain>{GlobalDomain(), RectangularDomain( {-10, 10}, {-20, 20} )} ) {
+            for ( auto N : {320, 640, 1280} ) {
+                for ( int T : {20, 639, 1279} ) {
+                    Log::info() << "Case N:" << N << ", T:" << T << ", domain:" << domain << ", UID:'" << *uid << "'"
+                                << std::endl;
+
+                    Grid grid1( "F" + std::to_string( N ), domain );
+                    auto test1 = trans::LegendreCacheCreator( grid1, T, options ).uid();
+                    ATLAS_DEBUG_VAR( test1 );
+                    EXPECT( test1 == *uid );
+                    uid++;
+
+                    for ( auto& type : {"N", "O"} ) {
+                        Grid grid2( type + std::to_string( N ), domain );
+                        auto test2 = trans::LegendreCacheCreator( grid2, T, options ).uid();
+                        ATLAS_DEBUG_VAR( test2 );
+                        EXPECT( test2 == *uid );
+                    }
+                    uid++;
+
+                }
+            }
         }
     }
 }
