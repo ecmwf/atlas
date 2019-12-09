@@ -357,7 +357,7 @@ private:
 }  // namespace
 
 void Structured::crop( const Domain& dom ) {
-    if ( !dom || dom.global() ) {
+    if ( !dom ) {
         domain_ =
             RectangularDomain( {xspace_.min(), xspace_.max()}, {yspace_.min(), yspace_.max()}, projection_.units() );
         return;
@@ -387,6 +387,8 @@ void Structured::crop( const Domain& dom ) {
     ATLAS_ASSERT( jmax >= jmin );
 
     idx_t cropped_ny = jmax - jmin + 1;
+    ATLAS_ASSERT( cropped_ny <= ny() );
+
     std::vector<double> cropped_y( y_.begin() + jmin, y_.begin() + jmin + cropped_ny );
     std::vector<double> cropped_dx( dx_.begin() + jmin, dx_.begin() + jmin + cropped_ny );
 
@@ -430,8 +432,6 @@ void Structured::crop( const Domain& dom ) {
     }
     idx_t cropped_npts = std::accumulate( cropped_nx.begin(), cropped_nx.end(), idx_t{0} );
 
-    Spacing cropped_yspace( new spacing::CustomSpacing( cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax} ) );
-
     std::vector<Spacing> cropped_xspacings( cropped_ny );
     for ( idx_t j = 0; j < cropped_ny; ++j ) {
         cropped_xspacings[j] = new spacing::LinearSpacing( cropped_xmin[j], cropped_xmax[j], cropped_nx[j], endpoint );
@@ -449,7 +449,11 @@ void Structured::crop( const Domain& dom ) {
     }
 
     // Modify grid
-    yspace_ = cropped_yspace;
+    if (ny() != cropped_ny) {
+        // keep specialised spacing (Gaussian, Linear, ...) unless cropping happens
+        yspace_ = new spacing::CustomSpacing( cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax} );
+    }
+
     xspace_ = cropped_xspace;
     xmin_   = cropped_xmin;
     xmax_   = cropped_xmax;
