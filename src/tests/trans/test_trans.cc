@@ -608,64 +608,89 @@ CASE( "ATLAS-256: Legendre coefficient expected unique identifiers" ) {
         options.set( option::type( "ifs" ) );
         options.set( "flt", false );
 
-        auto uids = {"ifs-T20-RegularGaussianN320-OPT4189816c2e",
-                     "ifs-T20-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
-                     "ifs-T639-RegularGaussianN320-OPT4189816c2e",
-                     "ifs-T639-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
-                     "ifs-T1279-RegularGaussianN320-OPT4189816c2e",
-                     "ifs-T1279-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
-                     "ifs-T20-RegularGaussianN640-OPT4189816c2e",
-                     "ifs-T20-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
-                     "ifs-T639-RegularGaussianN640-OPT4189816c2e",
-                     "ifs-T639-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
-                     "ifs-T1279-RegularGaussianN640-OPT4189816c2e",
-                     "ifs-T1279-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
-                     "ifs-T20-RegularGaussianN1280-OPT4189816c2e",
-                     "ifs-T20-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
-                     "ifs-T639-RegularGaussianN1280-OPT4189816c2e",
-                     "ifs-T639-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
-                     "ifs-T1279-RegularGaussianN1280-OPT4189816c2e",
-                     "ifs-T1279-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
-                     "ifs-T20-grid-526e85fea7-OPT4189816c2e",
-                     "ifs-T20-grid-526e85fea7-OPT4189816c2e",
-                     "ifs-T639-grid-526e85fea7-OPT4189816c2e",
-                     "ifs-T639-grid-526e85fea7-OPT4189816c2e",
-                     "ifs-T1279-grid-526e85fea7-OPT4189816c2e",
-                     "ifs-T1279-grid-526e85fea7-OPT4189816c2e",
-                     "ifs-T20-grid-67c6c40d80-OPT4189816c2e",
-                     "ifs-T20-grid-67c6c40d80-OPT4189816c2e",
-                     "ifs-T639-grid-67c6c40d80-OPT4189816c2e",
-                     "ifs-T639-grid-67c6c40d80-OPT4189816c2e",
-                     "ifs-T1279-grid-67c6c40d80-OPT4189816c2e",
-                     "ifs-T1279-grid-67c6c40d80-OPT4189816c2e",
-                     "ifs-T20-grid-aa80a6f660-OPT4189816c2e",
-                     "ifs-T20-grid-aa80a6f660-OPT4189816c2e",
-                     "ifs-T639-grid-aa80a6f660-OPT4189816c2e",
-                     "ifs-T639-grid-aa80a6f660-OPT4189816c2e",
-                     "ifs-T1279-grid-aa80a6f660-OPT4189816c2e",
-                     "ifs-T1279-grid-aa80a6f660-OPT4189816c2e"};
+        auto uids = {
+            "ifs-T20-RegularGaussianN320-OPT4189816c2e",
+            "ifs-T20-RegularGaussianN640-OPT4189816c2e",
+            "ifs-T20-RegularGaussianN1280-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
+            "ifs-T20-L360x181-OPT4189816c2e",
+            "ifs-T20-L3600x1801-OPT4189816c2e",
+            "ifs-T639-RegularGaussianN320-OPT4189816c2e",
+            "ifs-T639-RegularGaussianN640-OPT4189816c2e",
+            "ifs-T639-RegularGaussianN1280-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
+            "ifs-T639-L360x181-OPT4189816c2e",
+            "ifs-T639-L3600x1801-OPT4189816c2e",
+            "ifs-T1279-RegularGaussianN320-OPT4189816c2e",
+            "ifs-T1279-RegularGaussianN640-OPT4189816c2e",
+            "ifs-T1279-RegularGaussianN1280-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
+            "ifs-T1279-L360x181-OPT4189816c2e",
+            "ifs-T1279-L3600x1801-OPT4189816c2e",
+            "ifs-T20-grid-526e85fea7-OPT4189816c2e",
+            "ifs-T20-grid-67c6c40d80-OPT4189816c2e",
+            "ifs-T20-grid-aa80a6f660-OPT4189816c2e",
+            "ifs-T20-grid-526e85fea7-OPT4189816c2e",
+            "ifs-T20-grid-67c6c40d80-OPT4189816c2e",
+            "ifs-T20-grid-aa80a6f660-OPT4189816c2e",
+            "ifs-T20-grid-526e85fea7-OPT4189816c2e",
+            "ifs-T20-grid-67c6c40d80-OPT4189816c2e",
+            "ifs-T20-grid-aa80a6f660-OPT4189816c2e",
+            "ifs-T20-grid-95fdf45d93-OPT4189816c2e",
+            "ifs-T20-grid-12e2d9ff5a-OPT4189816c2e",
+            "ifs-T639-grid-526e85fea7-OPT4189816c2e",
+            "ifs-T639-grid-67c6c40d80-OPT4189816c2e",
+            "ifs-T639-grid-aa80a6f660-OPT4189816c2e",
+            "ifs-T639-grid-526e85fea7-OPT4189816c2e",
+            "ifs-T639-grid-67c6c40d80-OPT4189816c2e",
+            "ifs-T639-grid-aa80a6f660-OPT4189816c2e",
+            "ifs-T639-grid-526e85fea7-OPT4189816c2e",
+            "ifs-T639-grid-67c6c40d80-OPT4189816c2e",
+            "ifs-T639-grid-aa80a6f660-OPT4189816c2e",
+            "ifs-T639-grid-95fdf45d93-OPT4189816c2e",
+            "ifs-T639-grid-12e2d9ff5a-OPT4189816c2e",
+            "ifs-T1279-grid-526e85fea7-OPT4189816c2e",
+            "ifs-T1279-grid-67c6c40d80-OPT4189816c2e",
+            "ifs-T1279-grid-aa80a6f660-OPT4189816c2e",
+            "ifs-T1279-grid-526e85fea7-OPT4189816c2e",
+            "ifs-T1279-grid-67c6c40d80-OPT4189816c2e",
+            "ifs-T1279-grid-aa80a6f660-OPT4189816c2e",
+            "ifs-T1279-grid-526e85fea7-OPT4189816c2e",
+            "ifs-T1279-grid-67c6c40d80-OPT4189816c2e",
+            "ifs-T1279-grid-aa80a6f660-OPT4189816c2e",
+            "ifs-T1279-grid-95fdf45d93-OPT4189816c2e",
+            "ifs-T1279-grid-12e2d9ff5a-OPT4189816c2e",
+        };
         auto uid  = uids.begin();
 
         for ( auto& domain : std::vector<Domain>{GlobalDomain(), RectangularDomain( {-10, 10}, {-20, 20} )} ) {
-            for ( auto N : {320, 640, 1280} ) {
-                for ( int T : {20, 639, 1279} ) {
-                    Log::info() << "Case N:" << N << ", T:" << T << ", domain:" << domain << ", UID:'" << *uid << "'"
+            for ( int T : {20, 639, 1279} ) {
+                for ( auto name :
+                      {"F320", "F640", "F1280", "N320", "N640", "N1280", "O320", "O640", "O1280", "L90", "L900"} ) {
+                    Log::info() << "Case name:" << name << ", T:" << T << ", domain:" << domain << ", UID:'" << *uid << "'"
                                 << std::endl;
 
-                    Grid grid1( "F" + std::to_string( N ), domain );
-                    auto test1 = trans::LegendreCacheCreator( grid1, T, options ).uid();
-                    ATLAS_DEBUG_VAR( test1 );
-                    EXPECT( test1 == *uid );
-                    uid++;
+                    Grid grid( name, domain );
+                    auto test = trans::LegendreCacheCreator( grid, T, options ).uid();
+                    ATLAS_DEBUG_VAR( test );
+                    EXPECT( test == *uid );
 
-                    for ( auto& type : {"N", "O"} ) {
-                        Grid grid2( type + std::to_string( N ), domain );
-                        auto test2 = trans::LegendreCacheCreator( grid2, T, options ).uid();
-                        ATLAS_DEBUG_VAR( test2 );
-                        EXPECT( test2 == *uid );
-                    }
                     uid++;
-
                 }
             }
         }
