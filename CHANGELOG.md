@@ -8,6 +8,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## [Unreleased]
 
 
+## [0.19.1] - 2019-12-19
+### Fixed
+- Keep Gaussian identity of a Gaussian grid if a given domain does not crop any latitudes
+- Fix naming for LegendreCache, to be more specific, and platform independent
+
 ## [0.19.0] - 2019-10-01
 ### Fixed
 - Lambert ( conformal conic ) projection xy coordinates are now corrected
