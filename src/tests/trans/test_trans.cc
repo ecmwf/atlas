@@ -105,8 +105,6 @@ void read_rspecg( Field spec ) {
 
 //-----------------------------------------------------------------------------
 
-#if 1
-
 CASE( "test_trans_distribution_matches_atlas" ) {
     EXPECT( grid::Partitioner::exists( "trans" ) );
 
@@ -196,9 +194,6 @@ CASE( "test_write_read_cache" ) {
 }
 #endif
 
-#endif
-
-#if 1
 CASE( "test_distspec" ) {
     trans::TransIFS trans( Grid( "F80" ), 159 );
     Log::info() << "Trans initialized" << std::endl;
@@ -228,8 +223,6 @@ CASE( "test_distspec" ) {
 
     Log::info() << "end test_distspec" << std::endl;
 }
-
-#endif
 
 CASE( "test_distspec_speconly" ) {
     functionspace::Spectral fs( 159 );
@@ -264,7 +257,6 @@ CASE( "test_distspec_speconly" ) {
     Log::info() << "end test_distspec_only" << std::endl;
 }
 
-#if 1
 CASE( "test_distribution" ) {
     Grid g( "O80" );
 
@@ -599,7 +591,6 @@ CASE( "test_trans_VorDivToUV" ) {
         }
     }
 }
-#endif
 
 #ifdef TRANS_HAVE_IO
 CASE( "ATLAS-256: Legendre coefficient expected unique identifiers" ) {
@@ -612,69 +603,69 @@ CASE( "ATLAS-256: Legendre coefficient expected unique identifiers" ) {
             "ifs-T20-RegularGaussianN320-OPT4189816c2e",
             "ifs-T20-RegularGaussianN640-OPT4189816c2e",
             "ifs-T20-RegularGaussianN1280-OPT4189816c2e",
-            "ifs-T20-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
-            "ifs-T20-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
-            "ifs-T20-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
-            "ifs-T20-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
-            "ifs-T20-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
-            "ifs-T20-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN320-PL52955330f8-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN640-PL296ba3f6fb-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN1280-PL9e14f63837-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN320-PL440b952c43-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN640-PLcbba2659c1-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN1280-PL8eadc35e89-OPT4189816c2e",
             "ifs-T20-L360x181-OPT4189816c2e",
             "ifs-T20-L3600x1801-OPT4189816c2e",
             "ifs-T639-RegularGaussianN320-OPT4189816c2e",
             "ifs-T639-RegularGaussianN640-OPT4189816c2e",
             "ifs-T639-RegularGaussianN1280-OPT4189816c2e",
-            "ifs-T639-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
-            "ifs-T639-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
-            "ifs-T639-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
-            "ifs-T639-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
-            "ifs-T639-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
-            "ifs-T639-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN320-PL52955330f8-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN640-PL296ba3f6fb-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN1280-PL9e14f63837-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN320-PL440b952c43-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN640-PLcbba2659c1-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN1280-PL8eadc35e89-OPT4189816c2e",
             "ifs-T639-L360x181-OPT4189816c2e",
             "ifs-T639-L3600x1801-OPT4189816c2e",
             "ifs-T1279-RegularGaussianN320-OPT4189816c2e",
             "ifs-T1279-RegularGaussianN640-OPT4189816c2e",
             "ifs-T1279-RegularGaussianN1280-OPT4189816c2e",
-            "ifs-T1279-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
-            "ifs-T1279-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
-            "ifs-T1279-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
-            "ifs-T1279-ReducedGaussianN320-PL41ba9c00c8-OPT4189816c2e",
-            "ifs-T1279-ReducedGaussianN640-PL4203da28f1-OPT4189816c2e",
-            "ifs-T1279-ReducedGaussianN1280-PL2146987264-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN320-PL52955330f8-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN640-PL296ba3f6fb-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN1280-PL9e14f63837-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN320-PL440b952c43-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN640-PLcbba2659c1-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN1280-PL8eadc35e89-OPT4189816c2e",
             "ifs-T1279-L360x181-OPT4189816c2e",
             "ifs-T1279-L3600x1801-OPT4189816c2e",
-            "ifs-T20-grid-526e85fea7-OPT4189816c2e",
-            "ifs-T20-grid-67c6c40d80-OPT4189816c2e",
-            "ifs-T20-grid-aa80a6f660-OPT4189816c2e",
-            "ifs-T20-grid-526e85fea7-OPT4189816c2e",
-            "ifs-T20-grid-67c6c40d80-OPT4189816c2e",
-            "ifs-T20-grid-aa80a6f660-OPT4189816c2e",
-            "ifs-T20-grid-526e85fea7-OPT4189816c2e",
-            "ifs-T20-grid-67c6c40d80-OPT4189816c2e",
-            "ifs-T20-grid-aa80a6f660-OPT4189816c2e",
-            "ifs-T20-grid-95fdf45d93-OPT4189816c2e",
-            "ifs-T20-grid-12e2d9ff5a-OPT4189816c2e",
-            "ifs-T639-grid-526e85fea7-OPT4189816c2e",
-            "ifs-T639-grid-67c6c40d80-OPT4189816c2e",
-            "ifs-T639-grid-aa80a6f660-OPT4189816c2e",
-            "ifs-T639-grid-526e85fea7-OPT4189816c2e",
-            "ifs-T639-grid-67c6c40d80-OPT4189816c2e",
-            "ifs-T639-grid-aa80a6f660-OPT4189816c2e",
-            "ifs-T639-grid-526e85fea7-OPT4189816c2e",
-            "ifs-T639-grid-67c6c40d80-OPT4189816c2e",
-            "ifs-T639-grid-aa80a6f660-OPT4189816c2e",
-            "ifs-T639-grid-95fdf45d93-OPT4189816c2e",
-            "ifs-T639-grid-12e2d9ff5a-OPT4189816c2e",
-            "ifs-T1279-grid-526e85fea7-OPT4189816c2e",
-            "ifs-T1279-grid-67c6c40d80-OPT4189816c2e",
-            "ifs-T1279-grid-aa80a6f660-OPT4189816c2e",
-            "ifs-T1279-grid-526e85fea7-OPT4189816c2e",
-            "ifs-T1279-grid-67c6c40d80-OPT4189816c2e",
-            "ifs-T1279-grid-aa80a6f660-OPT4189816c2e",
-            "ifs-T1279-grid-526e85fea7-OPT4189816c2e",
-            "ifs-T1279-grid-67c6c40d80-OPT4189816c2e",
-            "ifs-T1279-grid-aa80a6f660-OPT4189816c2e",
-            "ifs-T1279-grid-95fdf45d93-OPT4189816c2e",
-            "ifs-T1279-grid-12e2d9ff5a-OPT4189816c2e",
+            "ifs-T20-grid-800ac12540-OPT4189816c2e",
+            "ifs-T20-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T20-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T20-grid-800ac12540-OPT4189816c2e",
+            "ifs-T20-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T20-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T20-grid-800ac12540-OPT4189816c2e",
+            "ifs-T20-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T20-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T20-grid-7824deccdf-OPT4189816c2e",
+            "ifs-T20-grid-7d1771559e-OPT4189816c2e",
+            "ifs-T639-grid-800ac12540-OPT4189816c2e",
+            "ifs-T639-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T639-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T639-grid-800ac12540-OPT4189816c2e",
+            "ifs-T639-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T639-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T639-grid-800ac12540-OPT4189816c2e",
+            "ifs-T639-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T639-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T639-grid-7824deccdf-OPT4189816c2e",
+            "ifs-T639-grid-7d1771559e-OPT4189816c2e",
+            "ifs-T1279-grid-800ac12540-OPT4189816c2e",
+            "ifs-T1279-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T1279-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T1279-grid-800ac12540-OPT4189816c2e",
+            "ifs-T1279-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T1279-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T1279-grid-800ac12540-OPT4189816c2e",
+            "ifs-T1279-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T1279-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T1279-grid-7824deccdf-OPT4189816c2e",
+            "ifs-T1279-grid-7d1771559e-OPT4189816c2e",
         };
         auto uid  = uids.begin();
 

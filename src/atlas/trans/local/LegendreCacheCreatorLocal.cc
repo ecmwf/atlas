@@ -10,6 +10,7 @@
 
 #include "atlas/trans/local/LegendreCacheCreatorLocal.h"
 
+#include <cmath>
 #include <sstream>
 #include <string>
 
@@ -38,9 +39,12 @@ std::string truncate( const std::string& str ) {
 
 std::string hash( const Grid& grid ) {
     eckit::MD5 h;
-    if ( StructuredGrid( grid ) && not grid.projection() ) {
-        auto g = StructuredGrid( grid );
-        h.add( g.y().data(), g.y().size() * sizeof( double ) );
+
+    StructuredGrid structured( grid );
+    if ( structured && not grid.projection() ) {
+        for ( auto& y : structured.y() ) {
+            h.add( std::lround( y * 1.e8 ) );
+        }
     }
     else {
         grid.hash( h );
@@ -71,8 +75,8 @@ std::string LegendreCacheCreatorLocal::uid() const {
         if ( grid_.projection() ) {
             give_up();
         }
-        else if ( GaussianGrid( grid_ ) && eckit::types::is_approximately_equal( structured.xspace().min(), 0. ) ) {
-            // Same cache for any global Gaussian grid, starting at Greenwich
+        else if ( GaussianGrid( grid_ ) ) {
+            // Same cache for any global Gaussian grid
             stream << "GaussianN" << GaussianGrid( grid_ ).N();
         }
         else if ( RegularLonLatGrid( grid_ ) ) {
