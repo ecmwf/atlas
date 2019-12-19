@@ -165,21 +165,15 @@ static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, Point
 #else
 
 struct Polyhedron_3 {
-    idx_t size_;
-    idx_t size_of_vertices() const { return size_;}
+    idx_t size_of_vertices() const { return 0; }
 };
 
 static Polyhedron_3* create_convex_hull_from_points( const std::vector<Point3>& pts ) {
-    ATLAS_TRACE();
-
-    Polyhedron_3* poly = new Polyhedron_3();
-    poly->size_ = pts.size();
-
-    return poly;
+    throw_NotImplemented( "CGAL package not found -- Delaunay triangulation is disabled", Here() );
 }
 
 static void cgal_polyhedron_to_atlas_mesh( Mesh& mesh, Polyhedron_3& poly, PointSet& points ) {
-    atlas::Log::warning() << "WARNING: CGAL package not found -- Delaunay triangulation is disabled" << std::endl;
+    throw_NotImplemented( "CGAL package not found -- Delaunay triangulation is disabled", Here() );
 }
 
 #endif
