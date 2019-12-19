@@ -30,6 +30,7 @@
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/trans/LegendreCacheCreator.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/trans/VorDivToUV.h"
 #include "atlas/trans/detail/TransFactory.h"
@@ -103,8 +104,6 @@ void read_rspecg( Field spec ) {
 }
 
 //-----------------------------------------------------------------------------
-
-#if 1
 
 CASE( "test_trans_distribution_matches_atlas" ) {
     EXPECT( grid::Partitioner::exists( "trans" ) );
@@ -195,9 +194,6 @@ CASE( "test_write_read_cache" ) {
 }
 #endif
 
-#endif
-
-#if 1
 CASE( "test_distspec" ) {
     trans::TransIFS trans( Grid( "F80" ), 159 );
     Log::info() << "Trans initialized" << std::endl;
@@ -227,8 +223,6 @@ CASE( "test_distspec" ) {
 
     Log::info() << "end test_distspec" << std::endl;
 }
-
-#endif
 
 CASE( "test_distspec_speconly" ) {
     functionspace::Spectral fs( 159 );
@@ -263,7 +257,6 @@ CASE( "test_distspec_speconly" ) {
     Log::info() << "end test_distspec_only" << std::endl;
 }
 
-#if 1
 CASE( "test_distribution" ) {
     Grid g( "O80" );
 
@@ -595,6 +588,102 @@ CASE( "test_trans_VorDivToUV" ) {
                 Log::info() << field_U[j] << " ";
             }
             Log::info() << std::endl;
+        }
+    }
+}
+
+#ifdef TRANS_HAVE_IO
+CASE( "ATLAS-256: Legendre coefficient expected unique identifiers" ) {
+    if ( mpi::comm().size() == 1 ) {
+        util::Config options;
+        options.set( option::type( "ifs" ) );
+        options.set( "flt", false );
+
+        auto uids = {
+            "ifs-T20-RegularGaussianN320-OPT4189816c2e",
+            "ifs-T20-RegularGaussianN640-OPT4189816c2e",
+            "ifs-T20-RegularGaussianN1280-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN320-PL52955330f8-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN640-PL296ba3f6fb-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN1280-PL9e14f63837-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN320-PL440b952c43-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN640-PLcbba2659c1-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN1280-PL8eadc35e89-OPT4189816c2e",
+            "ifs-T20-L360x181-OPT4189816c2e",
+            "ifs-T20-L3600x1801-OPT4189816c2e",
+            "ifs-T639-RegularGaussianN320-OPT4189816c2e",
+            "ifs-T639-RegularGaussianN640-OPT4189816c2e",
+            "ifs-T639-RegularGaussianN1280-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN320-PL52955330f8-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN640-PL296ba3f6fb-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN1280-PL9e14f63837-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN320-PL440b952c43-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN640-PLcbba2659c1-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN1280-PL8eadc35e89-OPT4189816c2e",
+            "ifs-T639-L360x181-OPT4189816c2e",
+            "ifs-T639-L3600x1801-OPT4189816c2e",
+            "ifs-T1279-RegularGaussianN320-OPT4189816c2e",
+            "ifs-T1279-RegularGaussianN640-OPT4189816c2e",
+            "ifs-T1279-RegularGaussianN1280-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN320-PL52955330f8-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN640-PL296ba3f6fb-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN1280-PL9e14f63837-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN320-PL440b952c43-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN640-PLcbba2659c1-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN1280-PL8eadc35e89-OPT4189816c2e",
+            "ifs-T1279-L360x181-OPT4189816c2e",
+            "ifs-T1279-L3600x1801-OPT4189816c2e",
+            "ifs-T20-grid-800ac12540-OPT4189816c2e",
+            "ifs-T20-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T20-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T20-grid-800ac12540-OPT4189816c2e",
+            "ifs-T20-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T20-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T20-grid-800ac12540-OPT4189816c2e",
+            "ifs-T20-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T20-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T20-grid-7824deccdf-OPT4189816c2e",
+            "ifs-T20-grid-7d1771559e-OPT4189816c2e",
+            "ifs-T639-grid-800ac12540-OPT4189816c2e",
+            "ifs-T639-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T639-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T639-grid-800ac12540-OPT4189816c2e",
+            "ifs-T639-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T639-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T639-grid-800ac12540-OPT4189816c2e",
+            "ifs-T639-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T639-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T639-grid-7824deccdf-OPT4189816c2e",
+            "ifs-T639-grid-7d1771559e-OPT4189816c2e",
+            "ifs-T1279-grid-800ac12540-OPT4189816c2e",
+            "ifs-T1279-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T1279-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T1279-grid-800ac12540-OPT4189816c2e",
+            "ifs-T1279-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T1279-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T1279-grid-800ac12540-OPT4189816c2e",
+            "ifs-T1279-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T1279-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T1279-grid-7824deccdf-OPT4189816c2e",
+            "ifs-T1279-grid-7d1771559e-OPT4189816c2e",
+        };
+        auto uid  = uids.begin();
+
+        for ( auto& domain : std::vector<Domain>{GlobalDomain(), RectangularDomain( {-10, 10}, {-20, 20} )} ) {
+            for ( int T : {20, 639, 1279} ) {
+                for ( auto name :
+                      {"F320", "F640", "F1280", "N320", "N640", "N1280", "O320", "O640", "O1280", "L90", "L900"} ) {
+                    Log::info() << "Case name:" << name << ", T:" << T << ", domain:" << domain << ", UID:'" << *uid << "'"
+                                << std::endl;
+
+                    Grid grid( name, domain );
+                    auto test = trans::LegendreCacheCreator( grid, T, options ).uid();
+                    ATLAS_DEBUG_VAR( test );
+                    EXPECT( test == *uid );
+
+                    uid++;
+                }
+            }
         }
     }
 }
