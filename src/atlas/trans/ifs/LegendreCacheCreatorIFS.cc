@@ -9,12 +9,17 @@
  */
 
 #include "atlas/trans/ifs/LegendreCacheCreatorIFS.h"
+
+#include <cmath>
 #include <sstream>
 #include <string>
+
+#include "eckit/utils/MD5.h"
+
 #include "atlas/grid.h"
 #include "atlas/option.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/trans/Trans.h"
-#include "eckit/utils/MD5.h"
 
 namespace atlas {
 namespace trans {
@@ -32,13 +37,29 @@ std::string truncate( const std::string& str ) {
 
 std::string hash( const Grid& grid ) {
     eckit::MD5 h;
-    if ( StructuredGrid( grid ) && not grid.projection() ) {
-        auto g = StructuredGrid( grid );
-        h.add( g.y().data(), g.y().size() * sizeof( double ) );
+
+    StructuredGrid structured( grid );
+    if ( structured && not grid.projection() ) {
+        for ( auto& y : structured.y() ) {
+            h.add( std::lround( y * 1.e8 ) );
+        }
     }
     else {
         grid.hash( h );
     }
+    return truncate( h.digest() );
+}
+
+std::string hash_pl( const Grid& grid ) {
+    eckit::MD5 h;
+
+    StructuredGrid structured( grid );
+    ATLAS_ASSERT( structured );
+
+    for ( auto& n : structured.nx() ) {
+        h.add( long( n ) );
+    }
+
     return truncate( h.digest() );
 }
 
@@ -57,13 +78,13 @@ std::string LegendreCacheCreatorIFS::uid() const {
     if ( unique_identifier_.empty() ) {
         std::ostringstream stream;
         stream << "ifs-T" << truncation_ << "-";
-        if ( GaussianGrid( grid_ ) ) {
+        GaussianGrid gaussian( grid_ );
+        if ( gaussian ) {
             if ( RegularGaussianGrid( grid_ ) ) {
-                stream << "RegularGaussianN" << GaussianGrid( grid_ ).N();
+                stream << "RegularGaussianN" << gaussian.N();
             }
             else {
-                stream << "ReducedGaussianN" << GaussianGrid( grid_ ).N() << "-PL";
-                stream << hash( grid_ );
+                stream << "ReducedGaussianN" << gaussian.N() << "-PL" << hash_pl( grid_ );
             }
         }
         else if ( RegularLonLatGrid( grid_ ) ) {

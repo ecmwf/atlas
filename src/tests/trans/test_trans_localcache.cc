@@ -263,6 +263,99 @@ CASE( "test cache creator in memory" ) {
     auto trans2 = Trans( cache, grid_global, truncation );
 }
 
+CASE( "ATLAS-256: Legendre coefficient expected unique identifiers" ) {
+    util::Config options;
+    options.set( option::type( "local" ) );
+    options.set( "flt", false );
+
+    auto uids = {
+        "local-T20-GaussianN320-OPT4189816c2e",
+        "local-T20-GaussianN640-OPT4189816c2e",
+        "local-T20-GaussianN1280-OPT4189816c2e",
+        "local-T20-GaussianN320-OPT4189816c2e",
+        "local-T20-GaussianN640-OPT4189816c2e",
+        "local-T20-GaussianN1280-OPT4189816c2e",
+        "local-T20-GaussianN320-OPT4189816c2e",
+        "local-T20-GaussianN640-OPT4189816c2e",
+        "local-T20-GaussianN1280-OPT4189816c2e",
+        "local-T20-L-ny181-OPT4189816c2e",
+        "local-T20-L-ny1801-OPT4189816c2e",
+        "local-T639-GaussianN320-OPT4189816c2e",
+        "local-T639-GaussianN640-OPT4189816c2e",
+        "local-T639-GaussianN1280-OPT4189816c2e",
+        "local-T639-GaussianN320-OPT4189816c2e",
+        "local-T639-GaussianN640-OPT4189816c2e",
+        "local-T639-GaussianN1280-OPT4189816c2e",
+        "local-T639-GaussianN320-OPT4189816c2e",
+        "local-T639-GaussianN640-OPT4189816c2e",
+        "local-T639-GaussianN1280-OPT4189816c2e",
+        "local-T639-L-ny181-OPT4189816c2e",
+        "local-T639-L-ny1801-OPT4189816c2e",
+        "local-T1279-GaussianN320-OPT4189816c2e",
+        "local-T1279-GaussianN640-OPT4189816c2e",
+        "local-T1279-GaussianN1280-OPT4189816c2e",
+        "local-T1279-GaussianN320-OPT4189816c2e",
+        "local-T1279-GaussianN640-OPT4189816c2e",
+        "local-T1279-GaussianN1280-OPT4189816c2e",
+        "local-T1279-GaussianN320-OPT4189816c2e",
+        "local-T1279-GaussianN640-OPT4189816c2e",
+        "local-T1279-GaussianN1280-OPT4189816c2e",
+        "local-T1279-L-ny181-OPT4189816c2e",
+        "local-T1279-L-ny1801-OPT4189816c2e",
+        "local-T20-grid-800ac12540-OPT4189816c2e",
+        "local-T20-grid-0915e0f040-OPT4189816c2e",
+        "local-T20-grid-7c400822f0-OPT4189816c2e",
+        "local-T20-grid-800ac12540-OPT4189816c2e",
+        "local-T20-grid-0915e0f040-OPT4189816c2e",
+        "local-T20-grid-7c400822f0-OPT4189816c2e",
+        "local-T20-grid-800ac12540-OPT4189816c2e",
+        "local-T20-grid-0915e0f040-OPT4189816c2e",
+        "local-T20-grid-7c400822f0-OPT4189816c2e",
+        "local-T20-grid-7824deccdf-OPT4189816c2e",
+        "local-T20-grid-7d1771559e-OPT4189816c2e",
+        "local-T639-grid-800ac12540-OPT4189816c2e",
+        "local-T639-grid-0915e0f040-OPT4189816c2e",
+        "local-T639-grid-7c400822f0-OPT4189816c2e",
+        "local-T639-grid-800ac12540-OPT4189816c2e",
+        "local-T639-grid-0915e0f040-OPT4189816c2e",
+        "local-T639-grid-7c400822f0-OPT4189816c2e",
+        "local-T639-grid-800ac12540-OPT4189816c2e",
+        "local-T639-grid-0915e0f040-OPT4189816c2e",
+        "local-T639-grid-7c400822f0-OPT4189816c2e",
+        "local-T639-grid-7824deccdf-OPT4189816c2e",
+        "local-T639-grid-7d1771559e-OPT4189816c2e",
+        "local-T1279-grid-800ac12540-OPT4189816c2e",
+        "local-T1279-grid-0915e0f040-OPT4189816c2e",
+        "local-T1279-grid-7c400822f0-OPT4189816c2e",
+        "local-T1279-grid-800ac12540-OPT4189816c2e",
+        "local-T1279-grid-0915e0f040-OPT4189816c2e",
+        "local-T1279-grid-7c400822f0-OPT4189816c2e",
+        "local-T1279-grid-800ac12540-OPT4189816c2e",
+        "local-T1279-grid-0915e0f040-OPT4189816c2e",
+        "local-T1279-grid-7c400822f0-OPT4189816c2e",
+        "local-T1279-grid-7824deccdf-OPT4189816c2e",
+        "local-T1279-grid-7d1771559e-OPT4189816c2e",
+    };
+    auto uid = uids.begin();
+
+    for ( auto& domain : std::vector<Domain>{GlobalDomain(), RectangularDomain( {-10, 10}, {-20, 20} )} ) {
+        for ( int T : {20, 639, 1279} ) {
+            for ( auto name :
+                  {"F320", "F640", "F1280", "N320", "N640", "N1280", "O320", "O640", "O1280", "L90", "L900"} ) {
+                Log::info() << "Case name:'" << name << "', T:" << T << ", domain:" << domain << ", UID:'" << *uid
+                            << "'" << std::endl;
+
+                Grid grid( name, domain );
+                auto test = trans::LegendreCacheCreator( grid, T, options ).uid();
+                ATLAS_DEBUG_VAR( test );
+                EXPECT( test == *uid );
+
+                uid++;
+            }
+        }
+    }
+}
+
 }  // namespace test
 }  // namespace atlas
 

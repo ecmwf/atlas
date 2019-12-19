@@ -198,6 +198,17 @@ CASE( "Create unstructured from unstructured" ) {
     EXPECT( ugrid.size() == StructuredGrid( agrid, domain ).size() );
 }
 
+CASE( "ATLAS-255: regular Gaussian grid with global domain" ) {
+    GlobalDomain globe;
+    Grid grid( "F80", globe );
+    EXPECT( GaussianGrid( grid ) );
+}
+
+CASE( "ATLAS-255: reduced Gaussian grid with global domain" ) {
+    GlobalDomain globe;
+    Grid grid( "O80", globe );
+    EXPECT( GaussianGrid( grid ) );
+}
 
 CASE( "test_from_string_L32" ) {
     Grid grid;
