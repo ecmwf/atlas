@@ -80,10 +80,6 @@ using eckit::types::is_approximately_equal;
     if ( ( _num_subsections - 1 ) == _subsection )                                               \
     ATLAS_TRACE_SCOPE( _test_subsection )
 
-#ifndef SETUP
-#define SETUP( name )
-#endif
-
 //----------------------------------------------------------------------------------------------------------------------
 
 static double ATLAS_MPI_BARRIER_TIMEOUT() {

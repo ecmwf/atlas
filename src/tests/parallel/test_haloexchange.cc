@@ -666,7 +666,6 @@ void test_rank1_cinterface( Fixture& f ) {
 }
 
 CASE( "test_haloexchange" ) {
-    SETUP( "HaloExchanges_cpu" ) {
         Fixture f( false );
 
         SECTION( "test_rank0_arrview" ) { test_rank0_arrview( f ); }
@@ -703,7 +702,6 @@ CASE( "test_haloexchange" ) {
         SECTION( "test_rank0_wrap" ) { test_rank0_wrap( f ); }
 
 #endif
-    }
 }
 
 //-----------------------------------------------------------------------------
