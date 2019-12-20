@@ -9,6 +9,7 @@
  */
 
 #include "atlas/mesh/actions/BuildEdges.h"
+
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -16,6 +17,9 @@
 #include <memory>
 #include <set>
 #include <stdexcept>
+
+#include "eckit/types/FloatCompare.h"
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -418,8 +422,11 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
 
     bool pole_edges{false};
     if ( StructuredGrid grid = mesh.grid() ) {
-        if ( Domain domain = grid.domain() ) {
-            pole_edges = domain.global();
+        if ( RectangularDomain domain = grid.domain() ) {
+            if( domain.global() ) {
+                double ymax = std::max( std::abs(grid.y().front()), std::abs(grid.y().back()) );
+                pole_edges = not eckit::types::is_approximately_equal( ymax, domain.ymax() );
+            }
         }
     }
     config.get( "pole_edges", pole_edges );

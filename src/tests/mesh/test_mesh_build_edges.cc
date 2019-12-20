@@ -511,6 +511,26 @@ CASE( "test_build_edges_triangles_only" ) {
 
 //-----------------------------------------------------------------------------
 
+CASE( "test_pole_edge_default" ) {
+  auto pole_edges = [](const Grid& grid) {
+    auto mesh = StructuredMeshGenerator().generate(grid);
+    mesh::actions::build_edges(mesh);
+    return mesh.edges().metadata().getBool("pole_edges");
+  };
+  EXPECT( pole_edges(Grid("L10x11")) == false );
+  EXPECT( pole_edges(Grid("F4"))     == true  );
+  EXPECT( pole_edges(Grid("S4"))     == true  );
+  EXPECT( pole_edges(Grid("Slat4"))  == true  );
+  EXPECT( pole_edges(Grid("Slon4"))  == false );
+  EXPECT( pole_edges(Grid(Config
+      ("type","regional")
+      ("nx",35)("ny",25)
+      ("north",-10)("south",-50)
+      ("east",170)("west",100))) == false );
+}
+
+//-----------------------------------------------------------------------------
+
 }  // namespace test
 }  // namespace atlas
 

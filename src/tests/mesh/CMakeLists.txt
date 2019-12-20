@@ -73,8 +73,8 @@ ecbuild_add_test(
 )
 
 ecbuild_add_test(
-  TARGET atlas_test_accumulate_facets
-  SOURCES test_accumulate_facets.cc
+  TARGET atlas_test_mesh_build_edges
+  SOURCES test_mesh_build_edges.cc
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
