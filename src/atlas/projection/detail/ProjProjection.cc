@@ -44,12 +44,8 @@ bool proj_ellipsoid_params( PJ_CONTEXT* ctxt, const std::string& proj_str, doubl
 std::string source_str( PJ_CONTEXT* ctxt, const std::string& proj_str ) {
     double a, b;
     if ( proj_ellipsoid_params( ctxt, proj_str, a, b ) ) {
-        if ( b < a ) {
-            return "+proj=lonlat +a=" + std::to_string( a ) + " +b=" + std::to_string( b );
-        }
-        else {
-            return "+proj=lonlat +R=" + std::to_string( a );
-        }
+        return b < a ? "+proj=lonlat +a=" + std::to_string( a ) + " +b=" + std::to_string( b )
+                     : "+proj=lonlat +R=" + std::to_string( a );
     }
     else {
         return "EPSG:4326";  // WGS84 (lat,lon)
@@ -60,12 +56,8 @@ std::string source_str( PJ_CONTEXT* ctxt, const std::string& proj_str ) {
 std::string geocentric_str( PJ_CONTEXT* ctxt, const std::string& proj_str ) {
     double a, b;
     if ( proj_ellipsoid_params( ctxt, proj_str, a, b ) ) {
-        if ( b < a ) {
-            return "+proj=geocent +R=" + std::to_string( a );
-        }
-        else {
-            return "+proj=geocent +a=" + std::to_string( a ) + " +b=" + std::to_string( b );
-        }
+        return b < a ? "+proj=geocent +a=" + std::to_string( a ) + " +b=" + std::to_string( b )
+                     : "+proj=geocent +R=" + std::to_string( a );
     }
     else {
         return "EPSG:4978";  // WGS84 (x,y,z)
