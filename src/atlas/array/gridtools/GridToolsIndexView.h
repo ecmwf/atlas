@@ -9,6 +9,7 @@
  */
 
 #pragma once
+#include <type_traits>
 
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/library/config.h"
@@ -84,7 +85,7 @@ public:
 #define FROM_FORTRAN
 #define TO_FORTRAN
 #endif
-    using data_view_t = gridtools::data_view_tt<Value, Rank, ::gridtools::access_mode::ReadWrite>;
+    using data_view_t = gridtools::data_view_tt<Value, Rank, ::gridtools::access_mode::read_write>;
 
 public:
     IndexView( data_view_t data_view ) : gt_data_view_( data_view ) {
@@ -100,7 +101,7 @@ public:
         return INDEX_REF( &gt_data_view_( c... ) );
     }
 
-    template <typename... Coords, typename = typename boost::enable_if_c<( sizeof...( Coords ) == Rank ), int>::type>
+    template <typename... Coords, typename = typename std::enable_if<( sizeof...( Coords ) == Rank ), int>::type>
     ATLAS_HOST_DEVICE Value const operator()( Coords... c ) const {
         return gt_data_view_( c... ) FROM_FORTRAN;
     }

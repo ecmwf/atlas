@@ -613,7 +613,7 @@ CASE( "test_SpectralFunctionSpace_norm" ) {
         threeD.assign( 0. );
         for ( size_t jlev = 0; jlev < nb_levels; ++jlev ) {
             if ( mpi::comm().rank() == 0 ) {
-                threeD( 0, jlev ) = jlev;
+                threeD( (size_t)0, jlev ) = jlev;
             }
         }
     }

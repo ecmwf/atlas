@@ -281,7 +281,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
         std::ostringstream msg;
         msg << "Rank " << eckit::mpi::comm().rank() << " failed to project points:\n";
         for ( std::vector<size_t>::const_iterator i = failures.begin(); i != failures.end(); ++i ) {
-            const PointLonLat pll{out_lonlat( *i, 0 ), out_lonlat( *i, 1 )};  // lookup point
+            const PointLonLat pll{out_lonlat( *i, (size_t)0 ), out_lonlat( *i, (size_t)1 )};  // lookup point
             msg << "\t(lon,lat) = " << pll << "\n";
         }
 
@@ -313,8 +313,10 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
 
     Triplets triplets;
     triplets.reserve( 4 );
-    Ray ray( PointXYZ{( *ocoords_ )( ip, 0 ), ( *ocoords_ )( ip, 1 ), ( *ocoords_ )( ip, 2 )} );
-    const Vector3D p{( *ocoords_ )( ip, 0 ), ( *ocoords_ )( ip, 1 ), ( *ocoords_ )( ip, 2 )};
+    Ray ray( PointXYZ{( *ocoords_ )( ip, size_t( 0 ) ), ( *ocoords_ )( ip, size_t( 1 ) ),
+                      ( *ocoords_ )( ip, size_t( 2 ) )} );
+    const Vector3D p{( *ocoords_ )( ip, size_t( 0 ) ), ( *ocoords_ )( ip, size_t( 1 ) ),
+                     ( *ocoords_ )( ip, size_t( 2 ) )};
     ElementEdge edge;
     idx_t single_point;
     for ( ElemIndex3::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc ) {
@@ -421,10 +423,12 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
 
         if ( nb_cols == 3 ) {
             /* triangle */
-            element::Triag3D triag(
-                PointXYZ{( *icoords_ )( idx[0], 0 ), ( *icoords_ )( idx[0], 1 ), ( *icoords_ )( idx[0], 2 )},
-                PointXYZ{( *icoords_ )( idx[1], 0 ), ( *icoords_ )( idx[1], 1 ), ( *icoords_ )( idx[1], 2 )},
-                PointXYZ{( *icoords_ )( idx[2], 0 ), ( *icoords_ )( idx[2], 1 ), ( *icoords_ )( idx[2], 2 )} );
+            element::Triag3D triag( PointXYZ{( *icoords_ )( idx[0], size_t( 0 ) ), ( *icoords_ )( idx[0], size_t( 1 ) ),
+                                             ( *icoords_ )( idx[0], size_t( 2 ) )},
+                                    PointXYZ{( *icoords_ )( idx[1], size_t( 0 ) ), ( *icoords_ )( idx[1], size_t( 1 ) ),
+                                             ( *icoords_ )( idx[1], size_t( 2 ) )},
+                                    PointXYZ{( *icoords_ )( idx[2], size_t( 0 ) ), ( *icoords_ )( idx[2], size_t( 1 ) ),
+                                             ( *icoords_ )( idx[2], size_t( 2 ) )} );
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
@@ -465,11 +469,14 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
         }
         else {
             /* quadrilateral */
-            element::Quad3D quad(
-                PointXYZ{( *icoords_ )( idx[0], 0 ), ( *icoords_ )( idx[0], 1 ), ( *icoords_ )( idx[0], 2 )},
-                PointXYZ{( *icoords_ )( idx[1], 0 ), ( *icoords_ )( idx[1], 1 ), ( *icoords_ )( idx[1], 2 )},
-                PointXYZ{( *icoords_ )( idx[2], 0 ), ( *icoords_ )( idx[2], 1 ), ( *icoords_ )( idx[2], 2 )},
-                PointXYZ{( *icoords_ )( idx[3], 0 ), ( *icoords_ )( idx[3], 1 ), ( *icoords_ )( idx[3], 2 )} );
+            element::Quad3D quad( PointXYZ{( *icoords_ )( idx[0], (size_t)0 ), ( *icoords_ )( idx[0], (size_t)1 ),
+                                           ( *icoords_ )( idx[0], (size_t)2 )},
+                                  PointXYZ{( *icoords_ )( idx[1], (size_t)0 ), ( *icoords_ )( idx[1], (size_t)1 ),
+                                           ( *icoords_ )( idx[1], (size_t)2 )},
+                                  PointXYZ{( *icoords_ )( idx[2], (size_t)0 ), ( *icoords_ )( idx[2], (size_t)1 ),
+                                           ( *icoords_ )( idx[2], (size_t)2 )},
+                                  PointXYZ{( *icoords_ )( idx[3], (size_t)0 ), ( *icoords_ )( idx[3], (size_t)1 ),
+                                           ( *icoords_ )( idx[3], (size_t)2 )} );
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)

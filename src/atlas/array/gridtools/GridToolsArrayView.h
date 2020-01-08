@@ -13,6 +13,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstring>
+#include <type_traits>
 
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayUtil.h"
@@ -62,13 +63,13 @@ public:
     value_type* data() { return gt_data_view_.data(); }
     value_type const* data() const { return gt_data_view_.data(); }
 
-    template <typename... Coords, typename = typename boost::enable_if_c<( sizeof...( Coords ) == Rank ), int>::type>
+    template <typename... Coords, typename = typename std::enable_if<( sizeof...( Coords ) == Rank ), int>::type>
     ATLAS_HOST_DEVICE return_type& operator()( Coords... c ) {
         assert( sizeof...( Coords ) == Rank );
         return gt_data_view_( c... );
     }
 
-    template <typename... Coords, typename = typename boost::enable_if_c<( sizeof...( Coords ) == Rank ), int>::type>
+    template <typename... Coords, typename = typename std::enable_if<( sizeof...( Coords ) == Rank ), int>::type>
     ATLAS_HOST_DEVICE value_type const& operator()( Coords... c ) const {
         assert( sizeof...( Coords ) == Rank );
         return gt_data_view_( c... );

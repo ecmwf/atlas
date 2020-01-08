@@ -211,20 +211,34 @@ void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, a
   }
 }
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION(z, ParallelDim, RANK ) \
-template class halo_packer_cuda<ParallelDim, int,RANK>; \
-template class halo_packer_cuda<ParallelDim, long,RANK>; \
-template class halo_packer_cuda<ParallelDim, long unsigned,RANK>; \
-template class halo_packer_cuda<ParallelDim, float,RANK>; \
-template class halo_packer_cuda<ParallelDim, double,RANK>; \
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION_REP(RANK) \
-    BOOST_PP_REPEAT(RANK, EXPLICIT_TEMPLATE_INSTANTIATION, RANK)
+#define ATLAS_REPEAT_MACRO(n, m, p) ATLAS_REPEAT_MACRO_ ## n(m, p)
+// expands to m(0,p) m(1,p) ... m(n-1,p)
 
-  EXPLICIT_TEMPLATE_INSTANTIATION_REP(1)
-  EXPLICIT_TEMPLATE_INSTANTIATION_REP(2)
-  EXPLICIT_TEMPLATE_INSTANTIATION_REP(3)
-  EXPLICIT_TEMPLATE_INSTANTIATION_REP(4)
+#define ATLAS_REPEAT_MACRO_0(m, p)
+#define ATLAS_REPEAT_MACRO_1(m, p) ATLAS_REPEAT_MACRO_0(m, p) m(0, p)
+#define ATLAS_REPEAT_MACRO_2(m, p) ATLAS_REPEAT_MACRO_1(m, p) m(1, p)
+#define ATLAS_REPEAT_MACRO_3(m, p) ATLAS_REPEAT_MACRO_2(m, p) m(2, p)
+#define ATLAS_REPEAT_MACRO_4(m, p) ATLAS_REPEAT_MACRO_3(m, p) m(3, p)
+#define ATLAS_REPEAT_MACRO_5(m, p) ATLAS_REPEAT_MACRO_4(m, p) m(4, p)
+#define ATLAS_REPEAT_MACRO_6(m, p) ATLAS_REPEAT_MACRO_5(m, p) m(5, p)
+
+
+#define EXPLICIT_TEMPLATE_INSTANTIATION( ParallelDim, RANK )         \
+  template class halo_packer_cuda<ParallelDim, int,           RANK>; \
+  template class halo_packer_cuda<ParallelDim, long,          RANK>; \
+  template class halo_packer_cuda<ParallelDim, long unsigned, RANK>; \
+  template class halo_packer_cuda<ParallelDim, float,         RANK>; \
+  template class halo_packer_cuda<ParallelDim, double,        RANK>;
+
+#define EXPLICIT_TEMPLATE_INSTANTIATION_RANK(RANK) \
+  ATLAS_REPEAT_MACRO(RANK, EXPLICIT_TEMPLATE_INSTANTIATION, RANK)
+
+EXPLICIT_TEMPLATE_INSTANTIATION_RANK(1)
+EXPLICIT_TEMPLATE_INSTANTIATION_RANK(2)
+EXPLICIT_TEMPLATE_INSTANTIATION_RANK(3)
+EXPLICIT_TEMPLATE_INSTANTIATION_RANK(4)
+EXPLICIT_TEMPLATE_INSTANTIATION_RANK(5)
 
 } //namespace array
 } //namespace atlas

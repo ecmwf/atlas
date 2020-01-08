@@ -133,10 +133,10 @@ CASE( "test_array_shape" ) {
     EXPECT( gt_hv( 1, 1 ) == 4.5 );
     EXPECT( atlas_hv( 1, 1 ) == 4.5 );
 
-    EXPECT( ds->size() == 6 );
-    EXPECT( ds->rank() == 2 );
-    EXPECT( ds->stride( 0 ) == gt_hv.storage_info().stride<0>() );
-    EXPECT( ds->stride( 1 ) == gt_hv.storage_info().stride<1>() );
+    EXPECT_EQ( ds->size(), 6 );
+    EXPECT_EQ( ds->rank(), 2 );
+    EXPECT_EQ( ds->stride( 0 ), gt_hv.storage_info().stride<0>() );
+    EXPECT_EQ( ds->stride( 1 ), gt_hv.storage_info().stride<1>() );
     EXPECT( ds->contiguous() == NOT_PADDED );
     delete ds;
 }
@@ -154,9 +154,9 @@ CASE( "test_spec" ) {
     EXPECT( ds->spec().shapef()[2] == 4 );
 
     if ( NOT_PADDED ) {
-        EXPECT( ds->spec().strides()[0] == 6 * 5 );
-        EXPECT( ds->spec().strides()[1] == 6 );
-        EXPECT( ds->spec().strides()[2] == 1 );
+        EXPECT_EQ( ds->spec().strides()[0], 6 * 5 );
+        EXPECT_EQ( ds->spec().strides()[1], 6 );
+        EXPECT_EQ( ds->spec().strides()[2], 1 );
     }
     EXPECT( ds->spec().hasDefaultLayout() == true );
 

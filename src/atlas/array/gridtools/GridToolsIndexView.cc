@@ -8,7 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <ostream>
 #include <stdexcept>
+
 #include "atlas/array.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/field/Field.h"

@@ -47,7 +47,7 @@ macro( atlas_add_cuda_test )
     ecbuild_critical("Unknown keywords given to atlas_add_cuda_test(): \"${_PAR_UNPARSED_ARGUMENTS}\"")
   endif()
 
-  if( ATLAS_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAVE_CUDA AND HAVE_TESTS )
+  if( ATLAS_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAS_BACKEND_CUDA AND HAVE_TESTS )
 
     ecbuild_debug("atlas_add_cuda_test: Adding test ${_PAR_TARGET}")
 

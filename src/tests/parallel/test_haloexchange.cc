@@ -325,8 +325,10 @@ void test_rank2( Fixture& f ) {
     array::ArrayView<POD, 3> arrv = array::make_host_view<POD, 3>( arr );
     for ( int p = 0; p < f.N; ++p ) {
         for ( size_t i = 0; i < 3; ++i ) {
-            arrv( p, i, 0 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow( 10, i ) );
-            arrv( p, i, 1 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow( 10, i ) );
+            arrv( (size_t)p, i, (size_t)0 ) =
+                ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow( 10, i ) );
+            arrv( (size_t)p, i, (size_t)1 ) =
+                ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow( 10, i ) );
         }
     }
 
@@ -364,8 +366,10 @@ void test_rank2_l1( Fixture& f ) {
     array::ArrayView<POD, 3> arrv_t = array::make_host_view<POD, 3>( arr_t );
     for ( int p = 0; p < f.N; ++p ) {
         for ( size_t i = 0; i < 3; ++i ) {
-            arrv_t( p, i, 0 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow( 10, i ) );
-            arrv_t( p, i, 1 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow( 10, i ) );
+            arrv_t( (size_t)p, i, (size_t)0 ) =
+                ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow( 10, i ) );
+            arrv_t( (size_t)p, i, (size_t)1 ) =
+                ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow( 10, i ) );
         }
     }
     arr_t.syncHostDevice();
@@ -426,8 +430,10 @@ void test_rank2_l2_v2( Fixture& f ) {
     array::ArrayView<POD, 3> arrv_t = array::make_host_view<POD, 3>( arr_t );
     for ( int p = 0; p < f.N; ++p ) {
         for ( size_t i = 0; i < 3; ++i ) {
-            arrv_t( p, i, 0 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow( 10, i ) );
-            arrv_t( p, i, 1 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow( 10, i ) );
+            arrv_t( (size_t)p, i, (size_t)0 ) =
+                ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow( 10, i ) );
+            arrv_t( (size_t)p, i, (size_t)1 ) =
+                ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow( 10, i ) );
         }
     }
 
@@ -483,8 +489,10 @@ void test_rank2_v2( Fixture& f ) {
     array::ArrayView<POD, 3> arrv_t = array::make_view<POD, 3>( arr_t );
     for ( int p = 0; p < f.N; ++p ) {
         for ( size_t i = 0; i < 3; ++i ) {
-            arrv_t( p, i, 0 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow( 10, i ) );
-            arrv_t( p, i, 1 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow( 10, i ) );
+            arrv_t( (size_t)p, i, (size_t)0 ) =
+                ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow( 10, i ) );
+            arrv_t( (size_t)p, i, (size_t)1 ) =
+                ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow( 10, i ) );
         }
     }
 
@@ -597,8 +605,10 @@ void test_rank2_paralleldim2( Fixture& f ) {
     array::ArrayView<POD, 3> arrv = array::make_view<POD, 3>( arr );
     for ( int p = 0; p < f.N; ++p ) {
         for ( size_t i = 0; i < 3; ++i ) {
-            arrv( i, p, 0 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow( 10, i ) );
-            arrv( i, p, 1 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow( 10, i ) );
+            arrv( i, (size_t)p, (size_t)0 ) =
+                ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow( 10, i ) );
+            arrv( i, (size_t)p, (size_t)1 ) =
+                ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow( 10, i ) );
         }
     }
 

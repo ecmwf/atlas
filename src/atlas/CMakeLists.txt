@@ -685,6 +685,9 @@ ecbuild_add_library( TARGET atlas
   SOURCES
     ${source_list}
 )
+if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+  target_link_libraries(atlas PUBLIC GridTools::gridtools)
+endif( ATLAS_HAVE_GRIDTOOLS_STORAGE )
 
 if( ATLAS_HAVE_FORTRAN )
   target_link_libraries( atlas PRIVATE fckit )
@@ -752,7 +755,7 @@ if( ATLAS_HAVE_OMP_CXX )
 endif()
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
-  target_link_libraries( atlas PUBLIC gridtools::storage )
+  target_link_libraries( atlas PUBLIC GridTools::gridtools )
 endif()
 
 if( ATLAS_HAVE_ACC )

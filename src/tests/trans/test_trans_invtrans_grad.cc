@@ -87,8 +87,8 @@ void rotated_flow_magnitude( const functionspace::NodeColumns& fs, Field& field,
 
     size_t nnodes = fs.nodes().size();
     for ( size_t jnode = 0; jnode < nnodes; ++jnode ) {
-        double x = lonlat_deg( jnode, LON ) * deg2rad;
-        double y = lonlat_deg( jnode, LAT ) * deg2rad;
+        double x = lonlat_deg( jnode, (size_t)LON ) * deg2rad;
+        double y = lonlat_deg( jnode, (size_t)LAT ) * deg2rad;
         double Ux =
             pvel * ( std::cos( beta ) + std::tan( y ) * std::cos( x ) * std::sin( beta ) ) * radius * std::cos( y );
         double Uy    = -pvel * std::sin( x ) * std::sin( beta ) * radius;

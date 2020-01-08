@@ -43,7 +43,7 @@ namespace gridtools {
 //------------------------------------------------------------------------------
 
 template <int Rank>
-using UintSequence = ::gridtools::make_gt_integer_sequence<unsigned int, Rank>;
+using UintSequence = std::make_integer_sequence<unsigned int, Rank>;
 
 template <typename Value, template <class> class Storage, typename StorageInfo>
 static Array* wrap_array( ::gridtools::data_store<Storage<Value>, StorageInfo>* ds, const ArraySpec& spec ) {
@@ -178,7 +178,7 @@ public:
     }
 
     template <typename UInt, UInt... Indices>
-    void apply_resize( const ArrayShape& shape, ::gridtools::gt_integer_sequence<UInt, Indices...> ) {
+    void apply_resize( const ArrayShape& shape, std::integer_sequence<UInt, Indices...> ) {
         return resize_variadic( shape[Indices]... );
     }
 

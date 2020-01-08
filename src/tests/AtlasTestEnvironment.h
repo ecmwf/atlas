@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <chrono>
 #include <exception>
+#include <string>
 #include <thread>
 
 #include "eckit/config/LibEcKit.h"
@@ -79,6 +80,20 @@ using eckit::types::is_approximately_equal;
     }                                                                                            \
     if ( ( _num_subsections - 1 ) == _subsection )                                               \
     ATLAS_TRACE_SCOPE( _test_subsection )
+
+#ifdef EXPECT_EQ
+#undef EXPECT_EQ
+#endif
+#define EXPECT_EQ( lhs, rhs )                                                                                \
+    do {                                                                                                     \
+        if ( !( lhs == rhs ) ) {                                                                             \
+            throw eckit::testing::TestException( "EXPECT condition failed: " #lhs " == " #rhs                \
+                                                 "\n"                                                        \
+                                                 " --> " +                                                   \
+                                                     std::to_string( lhs ) + " != " + std::to_string( rhs ), \
+                                                 Here() );                                                   \
+        }                                                                                                    \
+    } while ( false )
 
 //----------------------------------------------------------------------------------------------------------------------
 
