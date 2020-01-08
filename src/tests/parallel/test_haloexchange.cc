@@ -666,40 +666,40 @@ void test_rank1_cinterface( Fixture& f ) {
 }
 
 CASE( "test_haloexchange" ) {
-        Fixture f( false );
+    Fixture f( false );
 
-        SECTION( "test_rank0_arrview" ) { test_rank0_arrview( f ); }
+    SECTION( "test_rank0_arrview" ) { test_rank0_arrview( f ); }
 
-        SECTION( "test_rank1" ) { test_rank1( f ); }
+    SECTION( "test_rank1" ) { test_rank1( f ); }
 
-        SECTION( "test_rank1_strided_v1" ) { test_rank1_strided_v1( f ); }
+    SECTION( "test_rank1_strided_v1" ) { test_rank1_strided_v1( f ); }
 
-        SECTION( "test_rank1_strided_v2" ) { test_rank1_strided_v2( f ); }
+    SECTION( "test_rank1_strided_v2" ) { test_rank1_strided_v2( f ); }
 
-        SECTION( "test_rank2" ) { test_rank2( f ); }
+    SECTION( "test_rank2" ) { test_rank2( f ); }
 
-        SECTION( "test_rank2_l1" ) { test_rank2_l1( f ); }
+    SECTION( "test_rank2_l1" ) { test_rank2_l1( f ); }
 
-        SECTION( "test_rank2_l2_v2" ) { test_rank2_l2_v2( f ); }
+    SECTION( "test_rank2_l2_v2" ) { test_rank2_l2_v2( f ); }
 
-        SECTION( "test_rank2_v2" ) { test_rank2_v2( f ); }
+    SECTION( "test_rank2_v2" ) { test_rank2_v2( f ); }
 
-        SECTION( "test_rank0_wrap" ) { test_rank0_wrap( f ); }
+    SECTION( "test_rank0_wrap" ) { test_rank0_wrap( f ); }
 
-        SECTION( "test_rank1_paralleldim_1" ) { test_rank1_paralleldim1( f ); }
+    SECTION( "test_rank1_paralleldim_1" ) { test_rank1_paralleldim1( f ); }
 
-        SECTION( "test_rank2_paralleldim_2" ) { test_rank2_paralleldim2( f ); }
-        SECTION( "test_rank1_cinterface" ) { test_rank1_cinterface( f ); }
+    SECTION( "test_rank2_paralleldim_2" ) { test_rank2_paralleldim2( f ); }
+    SECTION( "test_rank1_cinterface" ) { test_rank1_cinterface( f ); }
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-        f.on_device_ = true;
+    f.on_device_ = true;
 
-        SECTION( "test_rank0_arrview" ) { test_rank0_arrview( f ); }
+    SECTION( "test_rank0_arrview" ) { test_rank0_arrview( f ); }
 
-        SECTION( "test_rank1" ) { test_rank1( f ); }
+    SECTION( "test_rank1" ) { test_rank1( f ); }
 
-        SECTION( "test_rank2" ) { test_rank2( f ); }
-        SECTION( "test_rank0_wrap" ) { test_rank0_wrap( f ); }
+    SECTION( "test_rank2" ) { test_rank2( f ); }
+    SECTION( "test_rank0_wrap" ) { test_rank0_wrap( f ); }
 
 #endif
 }

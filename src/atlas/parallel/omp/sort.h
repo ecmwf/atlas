@@ -25,7 +25,7 @@
 #endif
 
 // Bug in Cray 8.5 or below results in segmentation fault in atlas_test_omp_sort
-#if ATLAS_HAVE_OMP_SORTING && defined(_CRAYC)
+#if ATLAS_HAVE_OMP_SORTING && defined( _CRAYC )
 #if _RELEASE <= 8 && _RELEASE_MINOR < 6
 #undef ATLAS_HAVE_OMP_SORTING
 #define ATLAS_HAVE_OMP_SORTING 0

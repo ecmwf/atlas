@@ -423,9 +423,9 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
     bool pole_edges{false};
     if ( StructuredGrid grid = mesh.grid() ) {
         if ( RectangularDomain domain = grid.domain() ) {
-            if( domain.global() ) {
-                double ymax = std::max( std::abs(grid.y().front()), std::abs(grid.y().back()) );
-                pole_edges = not eckit::types::is_approximately_equal( ymax, domain.ymax() );
+            if ( domain.global() ) {
+                double ymax = std::max( std::abs( grid.y().front() ), std::abs( grid.y().back() ) );
+                pole_edges  = not eckit::types::is_approximately_equal( ymax, domain.ymax() );
             }
         }
     }

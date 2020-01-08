@@ -33,8 +33,7 @@ std::string GmshFileStream::parallelPathName( const eckit::PathName& path, int p
 
 // -----------------------------------------------------------------------------
 
-GmshFileStream::GmshFileStream( const eckit::PathName& file_path, const char* mode, int part ) :
-    std::ofstream() {
+GmshFileStream::GmshFileStream( const eckit::PathName& file_path, const char* mode, int part ) : std::ofstream() {
     eckit::PathName par_path( file_path );
     std::ios_base::openmode omode = std::ios_base::out;
     if ( std::string( mode ) == "w" ) {

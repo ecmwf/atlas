@@ -108,7 +108,7 @@ void GmshImpl::setGmshConfiguration( detail::GmshIO& gmsh, const GmshImpl::Confi
 
 GmshImpl::GmshImpl( std::ostream& ) {
     defaults();
-    ATLAS_NOTIMPLEMENTED; // JIRA issue ATLAS-254
+    ATLAS_NOTIMPLEMENTED;  // JIRA issue ATLAS-254
 }
 
 // -----------------------------------------------------------------------------
@@ -116,7 +116,7 @@ GmshImpl::GmshImpl( std::ostream& ) {
 GmshImpl::GmshImpl( std::ostream&, const eckit::Parametrisation& config ) {
     defaults();
     merge( config_, config );
-    ATLAS_NOTIMPLEMENTED; // JIRA issue ATLAS-254
+    ATLAS_NOTIMPLEMENTED;  // JIRA issue ATLAS-254
 }
 
 // -----------------------------------------------------------------------------

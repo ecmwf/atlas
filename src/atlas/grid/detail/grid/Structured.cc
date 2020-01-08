@@ -449,7 +449,7 @@ void Structured::crop( const Domain& dom ) {
     }
 
     // Modify grid
-    if (ny() != cropped_ny) {
+    if ( ny() != cropped_ny ) {
         // keep specialised spacing (Gaussian, Linear, ...) unless cropping happens
         yspace_ = new spacing::CustomSpacing( cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax} );
     }
