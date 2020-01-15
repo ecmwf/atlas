@@ -22,6 +22,13 @@ namespace util {
 namespace detail {
 void allocate_cudamanaged( void** ptr, size_t size );
 void deallocate_cudamanaged( void* ptr );
+
+void allocate_cuda( void** ptr, size_t size );
+void deallocate_cuda( void* ptr );
+
+void allocate_host( void** ptr, size_t size );
+void deallocate_host( void* ptr );
+
 }  // namespace detail
 
 template <typename T>
@@ -38,6 +45,37 @@ void delete_managedmem( T*& data ) {
         data = nullptr;
     }
 }
+
+template <typename T>
+void allocate_devicemem( T*& data, idx_t N ) {
+    if ( N != 0 ) {
+        detail::allocate_cuda( reinterpret_cast<void**>( &data ), static_cast<size_t>( N ) * sizeof( T ) );
+    }
+}
+
+template <typename T>
+void delete_devicemem( T*& data ) {
+    if ( data ) {
+        detail::deallocate_cuda( data );
+        data = nullptr;
+    }
+}
+
+template <typename T>
+void allocate_hostmem( T*& data, idx_t N ) {
+    if ( N != 0 ) {
+        detail::allocate_host( reinterpret_cast<void**>( &data ), static_cast<size_t>( N ) * sizeof( T ) );
+    }
+}
+
+template <typename T>
+void delete_hostmem( T*& data ) {
+    if ( data ) {
+        detail::deallocate_host( data );
+        data = nullptr;
+    }
+}
+
 
 //------------------------------------------------------------------------------
 

@@ -51,6 +51,28 @@ void deallocate_cudamanaged( void* ptr ) {
 #endif
 }
 
+void allocate_cuda( void** ptr, size_t size ) {
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+    cudaError_t err = cudaMalloc( ptr, size );
+    if ( err != cudaSuccess )
+        throw_AssertionFailed( "failed to allocate GPU memory", Here() );
+#else
+    *ptr = malloc( size );
+#endif
+}
+
+void deallocate_cuda( void* ptr ) {
+    deallocate_cudamanaged( ptr );
+}
+
+void allocate_host( void** ptr, size_t size ) {
+    *ptr = malloc( size );
+}
+
+void deallocate_host( void* ptr ) {
+    free( ptr );
+}
+
 //------------------------------------------------------------------------------
 }  // namespace detail
 //------------------------------------------------------------------------------

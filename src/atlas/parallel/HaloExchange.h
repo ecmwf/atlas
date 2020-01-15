@@ -70,11 +70,11 @@ private:  // methods
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
     void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
-                           const array::ArrayView<DATA_TYPE, RANK>& dfield, array::SVector<DATA_TYPE>& send_buffer,
-                           const bool on_device ) const;
+                           const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer,
+                           int send_buffer_size, const bool on_device ) const;
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
-    void unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buffer,
+    void unpack_recv_buffer( const DATA_TYPE* recv_buffer, int recv_buffer_size,
                              const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
                              array::ArrayView<DATA_TYPE, RANK>& dfield, const bool on_device ) const;
 
@@ -121,8 +121,16 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
     int send_size             = sendcnt_ * var_size;
     int recv_size             = recvcnt_ * var_size;
 
-    array::SVector<DATA_TYPE> send_buffer( send_size );
-    array::SVector<DATA_TYPE> recv_buffer( recv_size );
+    DATA_TYPE* send_buffer;
+    DATA_TYPE* recv_buffer;
+    if ( on_device ) {
+        util::allocate_devicemem( send_buffer, send_size );
+        util::allocate_devicemem( recv_buffer, recv_size );
+    }
+    else {
+        util::allocate_hostmem( send_buffer, send_size );
+        util::allocate_hostmem( recv_buffer, recv_size );
+    }
     std::vector<int> send_displs( nproc );
     std::vector<int> recv_displs( nproc );
     std::vector<int> send_counts( nproc );
@@ -152,7 +160,7 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
     }
 
     /// Pack
-    pack_send_buffer<parallelDim>( field_hv, field_dv, send_buffer, on_device );
+    pack_send_buffer<parallelDim>( field_hv, field_dv, send_buffer, send_size, on_device );
 
     /// Send
     ATLAS_TRACE_MPI( ISEND ) {
@@ -173,7 +181,7 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
     }
 
     /// Unpack
-    unpack_recv_buffer<parallelDim>( recv_buffer, field_hv, field_dv, on_device );
+    unpack_recv_buffer<parallelDim>( recv_buffer, recv_size, field_hv, field_dv, on_device );
 
     /// Wait for sending to finish
     ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
@@ -183,14 +191,22 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
             }
         }
     }
+    if ( on_device ) {
+        util::delete_devicemem( send_buffer );
+        util::delete_devicemem( recv_buffer );
+    }
+    else {
+        util::allocate_hostmem( send_buffer, send_size );
+        util::allocate_hostmem( recv_buffer, recv_size );
+    }
 }
 
 template <int ParallelDim, int RANK>
 struct halo_packer {
     template <typename DATA_TYPE>
     static void pack( const int sendcnt, array::SVector<int> const& sendmap,
-                      const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite>& field,
-                      array::SVector<DATA_TYPE>& send_buffer ) {
+                      const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite>& field, DATA_TYPE* send_buffer,
+                      int send_buffer_size ) {
         idx_t ibuf = 0;
         for ( int node_cnt = 0; node_cnt < sendcnt; ++node_cnt ) {
             const idx_t node_idx = sendmap[node_cnt];
@@ -199,8 +215,8 @@ struct halo_packer {
     }
 
     template <typename DATA_TYPE>
-    static void unpack( const int recvcnt, array::SVector<int> const& recvmap,
-                        array::SVector<DATA_TYPE> const& recv_buffer, array::ArrayView<DATA_TYPE, RANK>& field ) {
+    static void unpack( const int recvcnt, array::SVector<int> const& recvmap, const DATA_TYPE* recv_buffer,
+                        int recv_buffer_size, array::ArrayView<DATA_TYPE, RANK>& field ) {
         idx_t ibuf = 0;
         for ( int node_cnt = 0; node_cnt < recvcnt; ++node_cnt ) {
             const idx_t node_idx = recvmap[node_cnt];
@@ -211,30 +227,32 @@ struct halo_packer {
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
 void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
-                                     const array::ArrayView<DATA_TYPE, RANK>& dfield,
-                                     array::SVector<DATA_TYPE>& send_buffer, const bool on_device ) const {
+                                     const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer,
+                                     int send_size, const bool on_device ) const {
     ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     if ( on_device ) {
-        halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( sendcnt_, sendmap_, hfield, dfield, send_buffer );
+        halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( sendcnt_, sendmap_, hfield, dfield, send_buffer,
+                                                              send_size );
     }
     else
 #endif
-        halo_packer<ParallelDim, RANK>::pack( sendcnt_, sendmap_, dfield, send_buffer );
+        halo_packer<ParallelDim, RANK>::pack( sendcnt_, sendmap_, dfield, send_buffer, send_size );
 }
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
-void HaloExchange::unpack_recv_buffer( const array::SVector<DATA_TYPE>& recv_buffer,
+void HaloExchange::unpack_recv_buffer( const DATA_TYPE* recv_buffer, int recv_size,
                                        const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
                                        array::ArrayView<DATA_TYPE, RANK>& dfield, const bool on_device ) const {
     ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     if ( on_device ) {
-        halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack( recvcnt_, recvmap_, recv_buffer, hfield, dfield );
+        halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack( recvcnt_, recvmap_, recv_buffer, recv_size, hfield,
+                                                                dfield );
     }
     else
 #endif
-        halo_packer<ParallelDim, RANK>::unpack( recvcnt_, recvmap_, recv_buffer, dfield );
+        halo_packer<ParallelDim, RANK>::unpack( recvcnt_, recvmap_, recv_buffer, recv_size, dfield );
 }
 
 // template<typename DATA_TYPE>

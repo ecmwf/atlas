@@ -40,10 +40,9 @@ struct get_buffer_index<ParallelDim, 2>{
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
 __global__ void pack_kernel(const int sendcnt, const int* sendmap_ptr, const idx_t sendmap_size,
-         const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer_ptr,
+         const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer,
          const idx_t send_buffer_size, const typename std::enable_if<RANK==1, int>::type = 0) {
     const array::SVector<int> sendmap(const_cast<int*>(sendmap_ptr), sendmap_size);
-    array::SVector<DATA_TYPE> send_buffer(const_cast<DATA_TYPE*>(send_buffer_ptr), send_buffer_size);
 
     const idx_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -54,10 +53,9 @@ __global__ void pack_kernel(const int sendcnt, const int* sendmap_ptr, const idx
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
 __global__ void pack_kernel(const int sendcnt,  const int* sendmap_ptr, const idx_t sendmap_size,
-         const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer_ptr,
+         const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite> field, DATA_TYPE* send_buffer,
          const idx_t send_buffer_size, const typename std::enable_if<RANK>=2, int>::type = 0) {
     const array::SVector<int> sendmap(const_cast<int*>(sendmap_ptr), sendmap_size);
-    array::SVector<DATA_TYPE> send_buffer(const_cast<DATA_TYPE*>(send_buffer_ptr), send_buffer_size);
 
     const idx_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
     const idx_t var1_idx = blockIdx.y*blockDim.y + threadIdx.y;
@@ -72,11 +70,10 @@ __global__ void pack_kernel(const int sendcnt,  const int* sendmap_ptr, const id
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const idx_t recvmap_size,
-         const DATA_TYPE* recv_buffer_ptr, const idx_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
+         const DATA_TYPE* recv_buffer, const idx_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
          array::Intent::ReadWrite> field, const typename std::enable_if<RANK==1, int>::type = 0) {
 
     const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
-    const array::SVector<DATA_TYPE> recv_buffer(const_cast<DATA_TYPE*>(recv_buffer_ptr), recv_buffer_size);
 
     idx_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -89,11 +86,10 @@ __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const i
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
 __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const idx_t recvmap_size,
-         const DATA_TYPE* recv_buffer_ptr, const idx_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
+         const DATA_TYPE* recv_buffer, const idx_t recv_buffer_size, array::ArrayView<DATA_TYPE, RANK,
          array::Intent::ReadWrite> field, const typename std::enable_if<RANK>=2, int>::type = 0) {
 
     const array::SVector<int> recvmap(const_cast<int*>(recvmap_ptr), recvmap_size);
-    const array::SVector<DATA_TYPE> recv_buffer(const_cast<DATA_TYPE*>(recv_buffer_ptr), recv_buffer_size);
 
     const idx_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
     const idx_t var1_idx = blockIdx.y*blockDim.y + threadIdx.y;
@@ -145,7 +141,7 @@ struct get_n_cuda_blocks<0, 1> {
 template<int ParallelDim, typename DATA_TYPE, int RANK>
 void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<int> const & sendmap,
                    const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield, const array::ArrayView<DATA_TYPE, RANK>& dfield,
-                   array::SVector<DATA_TYPE>& send_buffer )
+                   DATA_TYPE* send_buffer, int send_buffer_size )
 {
   const unsigned int block_size_x = 32;
   const unsigned int block_size_y = (RANK==1) ? 1 : 4;
@@ -161,7 +157,7 @@ void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, ar
     throw_Exception(msg);
   }
 
-  pack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap.data(), sendmap.size(), dfield, send_buffer.data(), send_buffer.size());
+  pack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap.data(), sendmap.size(), dfield, send_buffer, send_buffer_size);
   err = cudaGetLastError();
   if (err != cudaSuccess)
     throw_Exception("Error launching GPU packing kernel");
@@ -177,7 +173,7 @@ void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, ar
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
 void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
-                   const array::SVector<DATA_TYPE> &recv_buffer ,
+                   const DATA_TYPE* recv_buffer , int recv_buffer_size,
                    const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly> &hfield, array::ArrayView<DATA_TYPE, RANK> &dfield)
 {
   const unsigned int block_size_x = 32;
@@ -195,7 +191,7 @@ void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, a
     throw_Exception(msg);
   }
 
-  unpack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(recvcnt, recvmap.data(), recvmap.size(), recv_buffer.data(), recv_buffer.size(), dfield);
+  unpack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(recvcnt, recvmap.data(), recvmap.size(), recv_buffer, recv_buffer_size, dfield);
 
   err = cudaGetLastError();
   if (err != cudaSuccess) {
