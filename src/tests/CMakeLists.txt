@@ -51,28 +51,42 @@ macro( atlas_add_cuda_test )
 
     ecbuild_debug("atlas_add_cuda_test: Adding test ${_PAR_TARGET}")
 
-    list( APPEND _libs ${_PAR_LIBS} )
-
-    cuda_add_executable (${_PAR_TARGET} ${_PAR_SOURCES})
-    if( _libs )
-      ecbuild_debug("atlas_add_cuda_test: Test ${_PAR_TARGET} explicitly links with libraries ${_libs}")
-      target_link_libraries(${_PAR_TARGET} ${_libs})
-    endif()
-
-    # whatever project settings are, we always build tests with the build_rpath, not the install_rpath
-    set_property( TARGET ${_PAR_TARGET} PROPERTY BUILD_WITH_INSTALL_RPATH FALSE )
-    set_property( TARGET ${_PAR_TARGET} PROPERTY SKIP_BUILD_RPATH         FALSE )
-
-    if( CMAKE_CROSSCOMPILING_EMULATOR )
-      add_test ( NAME ${_PAR_TARGET} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} ${_PAR_TARGET} )
-    else()
-      add_test ( NAME ${_PAR_TARGET} COMMAND ${_PAR_TARGET} )
-    endif()
-
     list( APPEND _PAR_ENVIRONMENT "ATLAS_RUN_NGPUS=1" )
     list( REMOVE_DUPLICATES _PAR_ENVIRONMENT )
-    set_property( TEST ${_PAR_TARGET} APPEND PROPERTY ENVIRONMENT "${_PAR_ENVIRONMENT}" )
 
+    list( APPEND _libs ${_PAR_LIBS} )
+    if( _libs )
+      ecbuild_debug("atlas_add_cuda_test: Test ${_PAR_TARGET} explicitly links with libraries ${_libs}")
+    endif()
+
+    if( atlas_CUDA_LANGUAGE_ENABLED )
+
+      ecbuild_add_test( TARGET      ${_PAR_TARGET}
+                        SOURCES     ${_PAR_SOURCES}
+                        LIBS        ${_libs}
+                        ENVIRONMENT ${_PAR_ENVIRONMENT} )
+
+    else()
+
+      cuda_add_executable (${_PAR_TARGET} ${_PAR_SOURCES})
+
+      if( _libs )
+        target_link_libraries(${_PAR_TARGET} ${_libs})
+      endif()
+
+      # whatever project settings are, we always build tests with the build_rpath, not the install_rpath
+      set_property( TARGET ${_PAR_TARGET} PROPERTY BUILD_WITH_INSTALL_RPATH FALSE )
+      set_property( TARGET ${_PAR_TARGET} PROPERTY SKIP_BUILD_RPATH         FALSE )
+
+      if( CMAKE_CROSSCOMPILING_EMULATOR )
+        add_test ( NAME ${_PAR_TARGET} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} ${_PAR_TARGET} )
+      else()
+        add_test ( NAME ${_PAR_TARGET} COMMAND ${_PAR_TARGET} )
+      endif()
+
+      set_property( TEST ${_PAR_TARGET} APPEND PROPERTY ENVIRONMENT "${_PAR_ENVIRONMENT}" )
+
+    endif()
   endif()
 endmacro()
 

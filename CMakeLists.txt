@@ -7,9 +7,9 @@
 # does it submit to any jurisdiction.
 
 ############################################################################################
-# ATLAS
+# Atlas
 
-cmake_minimum_required( VERSION 2.8.4 FATAL_ERROR )
+cmake_minimum_required( VERSION 3.6 FATAL_ERROR )
 
 set( CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild/cmake" )
 
@@ -166,8 +166,23 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
   set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
 
   if( GRIDTOOLS_HAS_BACKEND_CUDA )
-    find_package(CUDA)
+
     ecbuild_info( "GridTools found with CUDA support" )
+
+    set( atlas_CUDA_LANGUAGE_ENABLED OFF CACHE BOOL "atlas enables CUDA language" )
+    # The above cached variable will be replaced with a check for a known-to-support ecbuild version once released
+    # if( DEFINED ecbuild_VERSION AND NOT ecbuild_VERSION VERSION_LESS 3.3 )
+    #    set( atlas_CUDA_LANGUAGE_ENABLED_DEFAULT ON )
+    # endif()
+
+    if( atlas_CUDA_LANGUAGE_ENABLED )
+      enable_language( CUDA )
+      ecbuild_info( "CUDA language enabled" )
+    else()
+      ecbuild_info("CUDA enabled through find_package(CUDA) instead of enable_language(CUDA)")
+      find_package( CUDA )
+    endif()
+
     set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
     set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
   endif()
