@@ -8,6 +8,9 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+set -e -o pipefail
+set +x
+
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export PATH=$SCRIPTDIR:$PATH
 
@@ -17,6 +20,8 @@ repo="unknown"
 branch=master
 PREFIX=$(pwd)/install
 skip_install=true
+cleanup=false
+version=${branch}
 
 while [ $# != 0 ]; do
     case "$1" in
@@ -27,7 +32,10 @@ while [ $# != 0 ]; do
         repo="$2"; shift
         ;;
     "--branch")
-        branch="$2"; shift
+        version="$2"; shift
+        ;;
+    "--version")
+        version="$2"; shift
         ;;
     "--depends")
         depends=($2); shift
@@ -41,6 +49,9 @@ while [ $# != 0 ]; do
     "--no-cache")
         skip_install=false;
         ;;
+    "--cleanup")
+        cleanup=true;
+        ;;
     *)
         echo "Unrecognized argument '$1'"
         exit 1
@@ -49,8 +60,20 @@ while [ $# != 0 ]; do
     shift
 done
 
-SHA=$(github-sha.sh ${owner} ${repo} ${branch})
-echo "Installing ${owner}/${repo} branch ${branch} at sha [${SHA}]"
+function cleanup_atexit {
+  EXIT_CODE=$?
+  { set +ex; } 2>/dev/null
+  if [ $EXIT_CODE != 0 ]; then
+    set -x
+    rm -f ${PREFIX}/${repo}-sha-${SHA}
+    rm -f ${PREFIX}/sha/${repo}
+  fi
+  exit $EXIT_CODE
+}
+trap cleanup_atexit EXIT
+
+SHA=$(github-sha.sh ${owner} ${repo} ${version})
+echo "Installing ${owner}/${repo} version ${version} at sha [${SHA}]"
 
 all_deps_uptodate=true
 for dep in "${depends[@]}"; do
@@ -80,39 +103,48 @@ if ${skip_install} ; then
   skip_install=${all_deps_uptodate}
 fi
 
-if [[ -f "${PREFIX}/sha-${SHA}" ]]; then
-  echo "Cached ${repo} (sha-${SHA}) is up to date."
+if [[ -f "${PREFIX}/${repo}-sha-${SHA}" ]]; then
+  echo "Cached ${repo} (${repo}-sha-${SHA}) is up to date."
 else
   skip_install=false
-  if ls ${PREFIX}/sha-* 1> /dev/null 2>&1; then
-     echo "Cached ${repo} $(ls -1 ${PREFIX}/sha-*) is out of date."
+  if ls ${PREFIX}/${repo}-sha-* 1> /dev/null 2>&1; then
+     echo "Cached ${repo} $(ls -1 ${PREFIX}/${repo}-sha-*) is out of date."
   fi
 fi
 
 if ! ${skip_install} ; then
-  echo "Installing ${repo} sha-${SHA}"
+  echo "Installing ${repo} ${repo}-sha-${SHA}"
   pushd . >> /dev/null 2>&1
   if [ -z "${TMPDIR}" ]; then
     TMPDIR=${HOME}/tmp
   fi
   SOURCE_DIR=${TMPDIR}/downloads/${repo}
   BUILD_DIR=${TMPDIR}/builds/${repo}
-  rm -rf ${PREFIX} ${SOURCE_DIR} ${BUILD_DIR}
+  rm -rf ${SOURCE_DIR} ${BUILD_DIR}
 
   # Download
   mkdir -p ${TMPDIR}/downloads
-  echo "+ git clone -b ${branch} https://github.com/${owner}/${repo} ${SOURCE_DIR}"
-  git clone -b ${branch} https://github.com/${owner}/${repo} ${SOURCE_DIR}
-
+  echo "+ git clone https://github.com/${owner}/${repo} ${SOURCE_DIR}"
+  git clone https://github.com/${owner}/${repo} ${SOURCE_DIR}
+  echo "+ cd ${SOURCE_DIR}"
+  cd ${SOURCE_DIR}
+  echo "+ git checkout ${version}"
+  git checkout ${version}
+  
   # Configure and install
   mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
-  echo "+ cmake -DCMAKE_MODULE_PATH=${ECBUILD_MODULE_PATH} -DCMAKE_INSTALL_PREFIX=${PREFIX} ${CMAKE_OPTIONS} ${SOURCE_DIR}"
-  cmake -DCMAKE_MODULE_PATH=${ECBUILD_MODULE_PATH} -DCMAKE_INSTALL_PREFIX=${PREFIX} ${CMAKE_OPTIONS} ${SOURCE_DIR}
+  if [ -z ${ECBUILD_MODULE_PATH+x} ]; then
+    echo "No ECBUILD_MODULE_PATH defined"
+  else
+    SET_CMAKE_MODULE_PATH="-DCMAKE_MODULE_PATH=${ECBUILD_MODULE_PATH}"
+  fi
+  echo "+ cmake ${SET_CMAKE_MODULE_PATH} -DCMAKE_INSTALL_PREFIX=${PREFIX} ${CMAKE_OPTIONS} ${SOURCE_DIR}"
+  cmake ${SET_CMAKE_MODULE_PATH} -DCMAKE_INSTALL_PREFIX=${PREFIX} ${CMAKE_OPTIONS} ${SOURCE_DIR}
   make -j4 install
 
   # Store version information
   mkdir -p ${PREFIX}/sha
-  touch ${PREFIX}/sha-${SHA}
+  touch ${PREFIX}/${repo}-sha-${SHA}
   echo ${SHA} > ${PREFIX}/sha/${repo}
   for dep in "${depends[@]}"; do
     DEP=$(echo ${dep} | awk '{print toupper($0)}')
@@ -121,11 +153,12 @@ if ! ${skip_install} ; then
     echo ${curr_sha} > ${PREFIX}/sha/${dep}
   done
   popd >> /dev/null 2>&1
-  rm -rf ${SOURCE_DIR} ${BUILD_DIR}
-
+  if ${cleanup} ; then
+    rm -rf ${SOURCE_DIR} ${BUILD_DIR}
+  fi
 fi
 
 # Export
-REPO=$(echo $repo | awk '{print toupper($0)}')
-echo "To make it easier to find ${repo}, execute now"
-echo "export ${REPO}_PATH=${PREFIX}"
+#REPO=$(echo $repo | awk '{print toupper($0)}')
+#echo "To make it easier to find ${repo}, execute now"
+#echo "export ${REPO}_PATH=${PREFIX}"
