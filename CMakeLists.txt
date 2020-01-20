@@ -174,11 +174,16 @@ if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
 
     ecbuild_info( "GridTools found with CUDA support" )
 
-    set( atlas_CUDA_LANGUAGE_ENABLED OFF CACHE BOOL "atlas enables CUDA language" )
-    # The above cached variable will be replaced with a check for a known-to-support ecbuild version once released
-    # if( DEFINED ecbuild_VERSION AND NOT ecbuild_VERSION VERSION_LESS 3.3 )
-    #    set( atlas_CUDA_LANGUAGE_ENABLED_DEFAULT ON )
-    # endif()
+    # Logic to check if we can use enable_language( CUDA )
+    #   - CMake already supports it (as GridTools requires version that supports it)
+    #   - ecbuild version 3.3 added support
+    #   - overriding mechanism possible with cached "atlas_CUDA_LANGUAGE_ENABLED" variable
+    if( DEFINED ecbuild_VERSION AND NOT ecbuild_VERSION VERSION_LESS 3.3 )
+      set( atlas_CUDA_LANGUAGE_ENABLED_DEFAULT ON )
+    else()
+      set( atlas_CUDA_LANGUAGE_ENABLED_DEFAULT OFF )
+    endif()
+    set( atlas_CUDA_LANGUAGE_ENABLED ${atlas_CUDA_LANGUAGE_ENABLED_DEFAULT} CACHE BOOL "atlas enables CUDA language" )
 
     if( atlas_CUDA_LANGUAGE_ENABLED )
       enable_language( CUDA )
