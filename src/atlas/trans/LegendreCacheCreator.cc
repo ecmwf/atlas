@@ -115,7 +115,7 @@ LegendreCacheCreator::Implementation* LegendreCacheCreatorFactory::build( const 
     static force_link static_linking;
 
     util::Config options = Trans::config();
-    options.set( config );
+    options.set( eckit::LocalConfiguration(config) );
 
     std::string name = options.getString( "type" );
 
