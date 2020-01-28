@@ -12,11 +12,7 @@
 #include <string>
 
 #include "eckit/eckit_version.h"
-#if 10000 * ECKIT_MAJOR_VERSION + 100 * ECKIT_MINOR_VERSION < 10400
-#include "eckit/parser/JSON.h"
-#else
 #include "eckit/log/JSON.h"
-#endif
 
 #include "eckit/parser/JSONParser.h"
 
