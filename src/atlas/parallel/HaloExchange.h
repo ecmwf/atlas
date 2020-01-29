@@ -121,8 +121,8 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
     int send_size             = sendcnt_ * var_size;
     int recv_size             = recvcnt_ * var_size;
 
-    DATA_TYPE* send_buffer;
-    DATA_TYPE* recv_buffer;
+    DATA_TYPE* send_buffer{nullptr};
+    DATA_TYPE* recv_buffer{nullptr};
     if ( on_device ) {
         util::allocate_devicemem( send_buffer, send_size );
         util::allocate_devicemem( recv_buffer, recv_size );
