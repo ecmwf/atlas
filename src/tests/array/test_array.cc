@@ -425,6 +425,7 @@ CASE( "test_insert_throw" ) {
     Array* ds = Array::create<double>( 7, 5, 8 );
 
     EXPECT_THROWS_AS( ds->insert( 8, 2 ), eckit::Exception );
+    delete ds;
 }
 
 CASE( "test_wrap_storage" ) {
@@ -584,6 +585,7 @@ CASE( "test_acc_map" ) {
     else {
         EXPECT( ds->accMap() == false );
     }
+    delete ds;
 }
 
 //-----------------------------------------------------------------------------

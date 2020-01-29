@@ -31,9 +31,10 @@ public:
 
     vector( idx_t size, const value_type& value ) : vector( size ) { assign( size, value ); }
 
-    vector( vector&& other ) : data_( other.data_ ), size_( other.size_ ), capacity_( other.capacity_ ) {
+    vector( vector&& other ) : data_( other.data_ ), size_( other.size_ ) {
         other.data_ = nullptr;
         other.size_ = 0;
+        other.capacity_ = 0;
     }
 
     ~vector() {
@@ -97,13 +98,15 @@ public:
         capacity_ = size;
     }
     void resize( idx_t size ) {
-        if ( capacity_ == 0 ) {
-            reserve( size );
+        if( size > 0 ) {
+            if ( capacity_ == 0 ) {
+                reserve( size );
+            }
+            if ( size > capacity_ ) {
+                ATLAS_NOTIMPLEMENTED;
+            }
+            size_ = size;
         }
-        if ( size > capacity_ ) {
-            ATLAS_NOTIMPLEMENTED;
-        }
-        size_ = size;
     }
     const_iterator begin() const { return data_; }
     const_iterator end() const { return data_ + size_; }
