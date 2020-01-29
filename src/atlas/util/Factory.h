@@ -49,17 +49,13 @@ template <typename T>
 struct FactoryRegistryT : public FactoryRegistry {
 public:
     static std::shared_ptr<FactoryRegistryT<T>> instance() {
-        struct make_shared_enabler : public FactoryRegistryT<T> {
-            make_shared_enabler( const std::string& factory ) : FactoryRegistryT<T>( factory ) {}
-        };
-
-        static auto env = std::make_shared<make_shared_enabler>( T::className() );
+        static std::shared_ptr<FactoryRegistryT<T>> env ( new FactoryRegistryT<T>( T::className() ) );
         return env;
     }
+    virtual ~FactoryRegistryT() {}
 
 protected:
     FactoryRegistryT( const std::string& factory ) : FactoryRegistry( factory ) {}
-    virtual ~FactoryRegistryT() {}
 };
 
 class FactoryBase {
