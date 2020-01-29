@@ -49,7 +49,7 @@ template <typename T>
 struct FactoryRegistryT : public FactoryRegistry {
 public:
     static std::shared_ptr<FactoryRegistryT<T>> instance() {
-        static std::shared_ptr<FactoryRegistryT<T>> env ( new FactoryRegistryT<T>( T::className() ) );
+        static std::shared_ptr<FactoryRegistryT<T>> env( new FactoryRegistryT<T>( T::className() ) );
         return env;
     }
     virtual ~FactoryRegistryT() {}

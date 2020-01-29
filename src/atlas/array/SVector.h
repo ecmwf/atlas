@@ -48,7 +48,13 @@ public:
         return *this;
     }
 
-    SVector& operator=( SVector&& other ) = default;
+    ATLAS_HOST_DEVICE
+    SVector& operator=( SVector&& other ) {
+        data_                 = other.data_;
+        size_                 = other.size_;
+        externally_allocated_ = other.externally_allocated_;
+        return *this;
+    }
 
     ATLAS_HOST_DEVICE
     SVector( T* data, idx_t size ) : data_( data ), size_( size ), externally_allocated_( true ) {}
@@ -59,15 +65,15 @@ public:
     ATLAS_HOST_DEVICE
     ~SVector() {
 #ifndef __CUDA_ARCH__
-        if ( !externally_allocated_ )
+        if ( !externally_allocated_ && data_ ) {
             util::delete_managedmem( data_ );
+        }
 #endif
     }
 
     void insert( idx_t pos, idx_t dimsize ) {
-        T* data;
+        T* data = nullptr;
         util::allocate_managedmem( data, size_ + dimsize );
-
         for ( idx_t c = 0; c < pos; ++c ) {
             data[c] = data_[c];
         }
@@ -121,7 +127,7 @@ public:
         T* d_ = nullptr;
         util::allocate_managedmem( d_, N );
         for ( idx_t c = 0; c < std::min( size_, N ); ++c ) {
-            d_[c] = data_[c];
+            d_[c] = std::move( data_[c] );
         }
         util::delete_managedmem( data_ );
         data_ = d_;

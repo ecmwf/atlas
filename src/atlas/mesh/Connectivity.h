@@ -535,8 +535,15 @@ public:
         cols_( other.cols_ ),
         missing_value_( other.missing_value_ ) {}
 
-    BlockConnectivityImpl( BlockConnectivityImpl&& ) = default;
-    BlockConnectivityImpl& operator=( const BlockConnectivityImpl& other ) = default;
+    BlockConnectivityImpl( BlockConnectivityImpl&& other ) :
+        owns_( other.owns_ ),
+        values_( std::move( other.values_ ) ),
+        rows_( other.rows_ ),
+        cols_( other.cols_ ),
+        missing_value_( other.missing_value_ ) {}
+
+    BlockConnectivityImpl& operator=( const BlockConnectivityImpl& ) = default;
+    BlockConnectivityImpl& operator=( BlockConnectivityImpl&& ) = default;
 
     /// @brief Construct a mesh from a Stream (serialization)
     explicit BlockConnectivityImpl( eckit::Stream& );
