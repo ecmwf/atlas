@@ -31,7 +31,7 @@ public:
 
     vector( idx_t size, const value_type& value ) : vector( size ) { assign( size, value ); }
 
-    vector( vector&& other ) : data_( other.data_ ), size_( other.size_ ) {
+    vector( vector&& other ) : data_( other.data_ ), size_( other.size_ ), capacity_( other.capacity_ ) {
         other.data_ = nullptr;
         other.size_ = 0;
     }

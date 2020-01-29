@@ -196,8 +196,8 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
         util::delete_devicemem( recv_buffer );
     }
     else {
-        util::allocate_hostmem( send_buffer, send_size );
-        util::allocate_hostmem( recv_buffer, recv_size );
+        util::delete_hostmem( send_buffer );
+        util::delete_hostmem( recv_buffer );
     }
 }
 
