@@ -1329,6 +1329,7 @@ void TransLocal::invtrans_unstructured( const int truncation, const int nb_field
     free_aligned( scl_fourier_tp );
     free_aligned( fouriertp );
     free_aligned( gp_opt );
+    free_aligned( zfn );
 }
 
 //-----------------------------------------------------------------------------

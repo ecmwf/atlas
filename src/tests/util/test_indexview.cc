@@ -148,6 +148,7 @@ EXPECT( val == 4 );
 val = iview(4)+1;
 EXPECT( val == 5 );
 */
+    delete array;
 }
 #else
 CASE( "test_indexview_1d" ) {
@@ -188,6 +189,7 @@ CASE( "test_indexview_1d" ) {
 
     val = iview( 4 ) + 1;
     EXPECT( val == 5 );
+    delete array;
 }
 #endif
 
