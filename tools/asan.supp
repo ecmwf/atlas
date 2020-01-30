@@ -1,0 +1,3 @@
+leak:libomp
+leak:libopen-pal
+leak:MPI_Init

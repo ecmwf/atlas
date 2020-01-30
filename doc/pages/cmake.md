@@ -13,7 +13,7 @@ cmake options:
     -DCMAKE_C_FLAGS='-fsanitize=address -fno-omit-frame-pointer' \
     -DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address
 
-create a suppressions file (e.g. asan.supp)
+create a suppressions file (e.g. as in atlas/tools/asan.supp)
 
     leak:libomp
     leak:libopen-pal
@@ -21,6 +21,6 @@ create a suppressions file (e.g. asan.supp)
 
 environment variable:
 
-    export LSAN_OPTIONS=suppressions=<path-to-asan.supp>:fast_unwind_on_malloc=0
+    export ASAN_OPTIONS=suppressions=<path-to-asan.supp>:fast_unwind_on_malloc=0
 
-In `LSAN_OPTIONS`, the option `fast_unwind_on_malloc=0` is required to get full stacktrace to be able to suppress MPI_Init
+In `ASAN_OPTIONS`, the option `fast_unwind_on_malloc=0` is required to get full stacktrace to be able to suppress MPI_Init
