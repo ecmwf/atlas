@@ -692,7 +692,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
             }
             else {
                 size_t jtype = mesh.cells().add( make_element_type( etype ), netype );
-                elements     = &mesh.edges().elements( jtype );
+                elements     = &mesh.cells().elements( jtype );
             }
 
             size_t nnodes_per_elem            = elements->element_type().nb_nodes();

@@ -172,7 +172,7 @@ CASE( "test_gather" ) {
                 idx_t loc_strides[] = {loc.stride( 0 ), 2};
                 idx_t loc_extents[] = {1, 1};
                 idx_t glb_strides[] = {glb2.stride( 0 ), glb2.stride( 1 )};
-                idx_t glb_extents[] = {1, glb2.shape( 2 )};
+                idx_t glb_extents[] = {1, glb2.shape( 1 )};
                 f.gather_scatter.gather( loc.data<POD>() + 1, loc_strides, loc_extents, 1, glb2.data<POD>(),
                                          glb_strides, glb_extents, 1, f.root );
             }
