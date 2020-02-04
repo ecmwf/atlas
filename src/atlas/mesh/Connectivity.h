@@ -184,16 +184,22 @@ public:
     /// No resizing can be performed as data is not owned.
     IrregularConnectivityImpl( idx_t values[], idx_t rows, idx_t displs[], idx_t counts[] );
 
+#ifdef __CUDACC__
     /// @brief Copy ctr (only to be used when calling a cuda kernel)
     // This ctr has to be defined in the header, since __CUDACC__ will identify
     // whether
     // it is compiled it for a GPU kernel
-
-    /// @brief Copy ctr (only to be used when calling a cuda kernel)
-    // This ctr has to be defined in the header, since __CUDACC__ will identify
-    // whether
-    // it is compiled it for a GPU kernel
-    IrregularConnectivityImpl( const IrregularConnectivityImpl& other );
+    IrregularConnectivityImpl( const IrregularConnectivityImpl& other ) :
+        owns_( false ),
+        values_( other.values_ ),
+        displs_( other.displs_ ),
+        counts_( other.counts_ ),
+        missing_value_( other.missing_value_ ),
+        rows_( other.rows_ ),
+        maxcols_( other.maxcols_ ),
+        mincols_( other.mincols_ ),
+        ctxt_( nullptr ) {}
+#endif
 
     /// @brief Construct a mesh from a Stream (serialization)
     explicit IrregularConnectivityImpl( eckit::Stream& );
@@ -524,26 +530,23 @@ public:
     /// No resizing can be performed as data is not owned.
     BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t values[] );
 
+#ifdef __CUDACC__
     /// @brief Copy ctr (only to be used when calling a cuda kernel)
     // This ctr has to be defined in the header, since __CUDACC__ will identify
-    // whether
-    // it is compiled it for a GPU kernel
+    // whether it is compiled it for a GPU kernel
     BlockConnectivityImpl( const BlockConnectivityImpl& other ) :
         owns_( false ),
         values_( other.values_ ),
         rows_( other.rows_ ),
         cols_( other.cols_ ),
-        missing_value_( other.missing_value_ ) {}
+        missing_value_( other.missing_value_ ) {
+    }
+#endif
 
-    BlockConnectivityImpl( BlockConnectivityImpl&& other ) :
-        owns_( other.owns_ ),
-        values_( std::move( other.values_ ) ),
-        rows_( other.rows_ ),
-        cols_( other.cols_ ),
-        missing_value_( other.missing_value_ ) {}
+    BlockConnectivityImpl( BlockConnectivityImpl&& other );
 
-    BlockConnectivityImpl& operator=( const BlockConnectivityImpl& ) = default;
-    BlockConnectivityImpl& operator=( BlockConnectivityImpl&& ) = default;
+    BlockConnectivityImpl& operator=( const BlockConnectivityImpl& other );
+    BlockConnectivityImpl& operator=( BlockConnectivityImpl&& other );
 
     /// @brief Construct a mesh from a Stream (serialization)
     explicit BlockConnectivityImpl( eckit::Stream& );
@@ -553,8 +556,6 @@ public:
 
     ATLAS_HOST_DEVICE
     idx_t index( idx_t i, idx_t j ) const;
-
-    void rebuild( idx_t rows, idx_t cols, idx_t values[] );
 
     //-- Accessors
 
@@ -600,7 +601,18 @@ public:
 
     bool owns() const { return owns_; }
 
+
+    friend std::ostream& operator<<( std::ostream& out, const BlockConnectivityImpl& x ) {
+        x.print( out );
+        return out;
+    }
+
+
 protected:
+    /// @brief Wrap existing and set owns_ = false
+    void rebuild( idx_t rows, idx_t cols, idx_t values[] );
+
+
     /// @brief Serialization to Stream
     void encode( eckit::Stream& ) const;
 
@@ -616,6 +628,8 @@ protected:
         x.decode( s );
         return s;
     }
+
+    void print( std::ostream& ) const;
 
 private:
     bool owns_;

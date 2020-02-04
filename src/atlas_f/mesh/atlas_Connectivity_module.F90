@@ -595,12 +595,14 @@ subroutine update_padded(this)
   integer(ATLAS_KIND_IDX) :: jrow, jcol
   if( associated(this%padded_) ) call atlas_deallocate_managedmem( this%padded_ )
   call atlas_allocate_managedmem( this%padded_, [this%maxcols_,this%rows()] )
-  this%padded_(:,:) = this%missing_value_
-  do jrow=1,this%rows()
-    do jcol=1,this%cols(jrow)
-      this%padded_(jcol,jrow) = this%value(jcol,jrow)
+  if( associated(this%padded_) ) then
+    this%padded_(:,:) = this%missing_value_
+    do jrow=1,this%rows()
+      do jcol=1,this%cols(jrow)
+        this%padded_(jcol,jrow) = this%value(jcol,jrow)
+      enddo
     enddo
-  enddo
+  endif
 end subroutine
 
 subroutine delete_access_c(this_ptr) bind(c)
@@ -609,6 +611,7 @@ subroutine delete_access_c(this_ptr) bind(c)
   type(atlas_ConnectivityAccess), pointer :: this
   call c_f_pointer(this_ptr,this)
   call delete_access(this)
+  deallocate(this)
 end subroutine
 
 subroutine delete_access(this)

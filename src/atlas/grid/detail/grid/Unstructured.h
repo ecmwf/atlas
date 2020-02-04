@@ -34,19 +34,45 @@ namespace detail {
 namespace grid {
 
 class Unstructured : public Grid {
-public:
-    template <typename Base, typename Derived>
+private:
+    struct ComputePointXY {
+        void update_value( idx_t n ) {}
+        void compute_value( idx_t n, PointXY& point ) { grid_.xy( n, point.data() ); }
+        const PointXY& get_reference( idx_t n ) const { return grid_.xy( n ); }
+
+        ComputePointXY( const Unstructured& grid ) : grid_( grid ) {}
+        const Unstructured& grid_;
+    };
+
+    struct ComputePointLonLat {
+        void update_value( idx_t n ) {
+            if ( n < size_ ) {
+                grid_.lonlat( n, point_.data() );
+            }
+        }
+        void compute_value( idx_t n, PointLonLat& point ) { grid_.lonlat( n, point.data() ); }
+        const PointLonLat& get_reference( idx_t n ) const { return point_; }
+
+        ComputePointLonLat( const Unstructured& grid ) : grid_( grid ), size_( grid_.size() ) {}
+        const Unstructured& grid_;
+        idx_t size_;
+        PointLonLat point_;
+    };
+
+    template <typename Base, typename ComputePoint>
     class UnstructuredIterator : public Base {
     public:
         UnstructuredIterator( const Unstructured& grid, bool begin = true ) :
             grid_( grid ),
             size_( static_cast<idx_t>( grid_.points_->size() ) ),
             n_( begin ? 0 : size_ ),
-            derived_( static_cast<Derived&>( *this ) ) {}
+            point_computer_{grid_} {
+            point_computer_.update_value( n_ );
+        }
 
         virtual bool next( typename Base::value_type& point ) {
             if ( n_ < size_ ) {
-                derived_.compute_value( n_, point );
+                point_computer_.compute_value( n_, point );
                 ++n_;
                 return true;
             }
@@ -55,34 +81,38 @@ public:
             }
         }
 
-        virtual typename Base::reference operator*() const { return derived_.get_reference( n_ ); }
+        virtual typename Base::reference operator*() const { return point_computer_.get_reference( n_ ); }
 
         virtual const Base& operator++() {
             ++n_;
-            derived_.update_value( n_ );
+            point_computer_.update_value( n_ );
             return *this;
         }
 
 
         virtual const Base& operator+=( typename Base::difference_type distance ) {
             n_ += distance;
-            derived_.update_value( n_ );
+            point_computer_.update_value( n_ );
             return *this;
         }
 
-        virtual bool operator==( const Base& other ) const { return n_ == static_cast<const Derived&>( other ).n_; }
+        virtual bool operator==( const Base& other ) const {
+            return n_ == static_cast<const UnstructuredIterator&>( other ).n_;
+        }
 
-        virtual bool operator!=( const Base& other ) const { return n_ != static_cast<const Derived&>( other ).n_; }
+        virtual bool operator!=( const Base& other ) const {
+            return n_ != static_cast<const UnstructuredIterator&>( other ).n_;
+        }
 
         virtual typename Base::difference_type distance( const Base& other ) const {
-            const auto& _other = static_cast<const Derived&>( other );
+            const auto& _other = static_cast<const UnstructuredIterator&>( other );
             return _other.n_ - n_;
         }
 
         virtual std::unique_ptr<Base> clone() const {
-            auto result = new Derived( grid_, false );
+            auto result = new UnstructuredIterator( grid_, false );
             result->n_  = n_;
-            result->update_value( n_ );
+            result->point_computer_.update_value( n_ );
             return std::unique_ptr<Base>( result );
         }
 
@@ -90,32 +120,12 @@ public:
         const Unstructured& grid_;
         idx_t size_;
         idx_t n_;
-        Derived& derived_;
+        ComputePoint point_computer_;
     };
 
-    class IteratorXY : public UnstructuredIterator<Grid::IteratorXY, IteratorXY> {
-    public:
-        using Base = UnstructuredIterator<Grid::IteratorXY, IteratorXY>;
-        using Base::Base;
-        void update_value( idx_t n ) {}
-        void compute_value( idx_t n, value_type& point ) { grid_.xy( n, point.data() ); }
-        reference get_reference( idx_t n ) { return grid_.xy( n ); }
-    };
-
-    class IteratorLonLat : public UnstructuredIterator<Grid::IteratorLonLat, IteratorLonLat> {
-    public:
-        using Base = UnstructuredIterator<Grid::IteratorLonLat, IteratorLonLat>;
-        IteratorLonLat( const Unstructured& grid, bool begin = true ) : Base( grid, begin ) { update_value( n_ ); }
-
-        void update_value( idx_t n ) {
-            if ( n < size_ ) {
-                grid_.lonlat( n, point_.data() );
-            }
-        }
-        void compute_value( idx_t n, value_type& point ) { grid_.lonlat( n, point.data() ); }
-        reference get_reference( idx_t n ) { return point_; }
-        value_type point_;
-    };
+public:
+    using IteratorXY     = UnstructuredIterator<Grid::IteratorXY, ComputePointXY>;
+    using IteratorLonLat = UnstructuredIterator<Grid::IteratorLonLat, ComputePointLonLat>;
 
 public:  // methods
     static std::string static_type() { return "unstructured"; }

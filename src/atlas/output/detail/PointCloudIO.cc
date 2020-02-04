@@ -191,9 +191,9 @@ void PointCloudIO::write( const eckit::PathName& path, const Mesh& mesh ) {
     std::vector<array::ArrayView<double, 1>> vfvalues;
     for ( idx_t i = 0; i < nodes.nb_fields(); ++i ) {
         const Field& field = nodes.field( i );
-        if( ((field.rank() == 1 && field.shape( 0 ) == lonlat.shape(0) ) ||
-             (field.rank() == 2 && field.shape( 0 ) == lonlat.shape(0) && field.shape(1) == 1 )) &&
-            field.datatype() == array::DataType::real64() ) { // FIXME: no support for non-double types!
+        if ( ( ( field.rank() == 1 && field.shape( 0 ) == lonlat.shape( 0 ) ) ||
+               ( field.rank() == 2 && field.shape( 0 ) == lonlat.shape( 0 ) && field.shape( 1 ) == 1 ) ) &&
+             field.datatype() == array::DataType::real64() ) {  // FIXME: no support for non-double types!
             vfnames.push_back( sanitize_field_name( field.name() ) );
             vfvalues.push_back( array::make_view<double, 1>( field ) );
         }

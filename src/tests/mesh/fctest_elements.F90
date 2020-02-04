@@ -15,6 +15,16 @@
 
 TESTSUITE(fctest_atlas_elements)
 
+TESTSUITE_INIT()
+use atlas_module
+call atlas_library%initialise()
+END_TESTSUITE_INIT
+
+TESTSUITE_FINALISE()
+use atlas_module
+call atlas_library%finalise()
+END_TESTSUITE_FINALIZE
+
 ! -----------------------------------------------------------------------------
 
 TEST( test_elementtype )
@@ -274,6 +284,8 @@ TEST( test_elements )
 
   node_connectivity = elements%node_connectivity()
   call node_connectivity%data(data)
+
+  FCTEST_CHECK_EQUAL( node_connectivity%missing_value(), 0 )
 
   FCTEST_CHECK_EQUAL( data(1,6) , node_connectivity%missing_value() )
   FCTEST_CHECK_EQUAL( data(2,6) , node_connectivity%missing_value() )

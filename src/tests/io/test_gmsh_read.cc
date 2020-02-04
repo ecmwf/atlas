@@ -22,13 +22,13 @@ namespace test {
 CASE( "test_gmsh_read" ) {
     output::detail::GmshIO gmsh_reader;
     std::string file = eckit::Resource<std::string>( "--mesh", "" );
-    if( file.empty() ) {
+    if ( file.empty() ) {
         Log::error() << "Argument --mesh missing" << std::endl;
     }
     Mesh mesh = gmsh_reader.read( file );
 
-    output::Gmsh gmsh("test_gmsh_read_output.msh");
-    gmsh.write(mesh);
+    output::Gmsh gmsh( "test_gmsh_read_output.msh" );
+    gmsh.write( mesh );
 }
 
 //-----------------------------------------------------------------------------
