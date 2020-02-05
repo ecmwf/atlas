@@ -151,8 +151,9 @@ TEST( test_hybridelements )
   FCTEST_CHECK_EQUAL( elements%size(), 5 )
   element_type = elements%element_type()
 
-  ! Should print ERROR
-  call node_connectivity%data(data)
+  ! Todo: Check this aborts,
+  !       because data has become irregular
+  ! call node_connectivity%data(data)
 
   call node_connectivity%padded_data(data)
   FCTEST_CHECK_EQUAL( data(1,6) , 16 )

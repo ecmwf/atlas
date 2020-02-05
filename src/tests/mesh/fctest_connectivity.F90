@@ -96,7 +96,10 @@ TEST( test_connectivity )
 
   !============= Padded Data pointer access =============!
 
-  call connectivity%data(data,ncols)
+
+  ! Todo: Check this aborts,
+  !       because data has become irregular
+  ! call connectivity%data(data,ncols)
 
 
   call connectivity%padded_data(padded,cols)
