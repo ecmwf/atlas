@@ -66,9 +66,7 @@ public:
 
     SVector( idx_t N ) : data_( nullptr ), size_( N ), externally_allocated_( false ) { allocate( data_, N ); }
     ATLAS_HOST_DEVICE
-    ~SVector() {
-        clear();
-    }
+    ~SVector() { clear(); }
 
     ATLAS_HOST_DEVICE
     void clear() {

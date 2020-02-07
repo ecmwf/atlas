@@ -22,8 +22,8 @@ namespace numerics {
 class Method : public util::Object {
 public:
     Method() {}
-    virtual ~Method()                = 0;
-    virtual std::string name() const = 0;
+    virtual ~Method()                       = 0;
+    virtual const std::string& name() const = 0;
 };
 
 inline Method::~Method() {}

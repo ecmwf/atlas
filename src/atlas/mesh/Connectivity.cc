@@ -679,8 +679,7 @@ BlockConnectivityImpl::BlockConnectivityImpl() :
     values_( 0 ),
     rows_( 0 ),
     cols_( 0 ),
-    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ) {
-}
+    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ) {}
 
 //------------------------------------------------------------------------------------------------------
 
@@ -730,8 +729,7 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t valu
     values_( values, rows * cols ),
     rows_( rows ),
     cols_( cols ),
-    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ) {
-}
+    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ) {}
 
 //------------------------------------------------------------------------------------------------------
 

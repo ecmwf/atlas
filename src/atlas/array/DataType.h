@@ -160,21 +160,19 @@ inline DataType::kind_t DataType::kind( const double& ) {
 }
 
 inline DataType::kind_t DataType::str_to_kind( const std::string& datatype ) {
-    DataType::kind_t kind = 0;
     if ( datatype == "int32" )
-        kind = KIND_INT32;
+        return KIND_INT32;
     else if ( datatype == "int64" )
-        kind = KIND_INT64;
+        return KIND_INT64;
     else if ( datatype == "uint64" )
-        kind = KIND_UINT64;
+        return KIND_UINT64;
     else if ( datatype == "real32" )
-        kind = KIND_REAL32;
+        return KIND_REAL32;
     else if ( datatype == "real64" )
-        kind = KIND_REAL64;
+        return KIND_REAL64;
     else {
         throw_not_recognised( datatype );
     }
-    return kind;
 }
 inline std::string DataType::kind_to_str( kind_t kind ) {
     switch ( kind ) {

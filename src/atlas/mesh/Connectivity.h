@@ -539,8 +539,7 @@ public:
         values_( other.values_ ),
         rows_( other.rows_ ),
         cols_( other.cols_ ),
-        missing_value_( other.missing_value_ ) {
-    }
+        missing_value_( other.missing_value_ ) {}
 #endif
 
     BlockConnectivityImpl( BlockConnectivityImpl&& other );
