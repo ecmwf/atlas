@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <ostream>
 
 #include "eckit/io/Buffer.h"
 #include "eckit/serialisation/Stream.h"
