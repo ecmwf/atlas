@@ -365,7 +365,6 @@ CASE( "test_structured_triangulated" ) {
             auto startpts = std::vector<double>( 8 );
             for ( int i = 0; i < 8; ++i ) {
                 startpts[i] = i * 12.;
-                q
             }
             return startpts;
         }() );
