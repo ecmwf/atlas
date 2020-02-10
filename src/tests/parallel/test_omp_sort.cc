@@ -76,11 +76,10 @@ CASE( "test_merge_blocks" ) {
     auto integers   = create_random_data( nb_blocks * block_size );
     std::vector<int> blocks_size( nb_blocks, block_size );
 
-    auto begin = integers.begin();
-    auto end   = integers.begin();
+    auto end = integers.begin();
     for ( int b = 0; b < nb_blocks; ++b ) {
-        begin = end;
-        end   = begin + blocks_size[b];
+        auto begin = end;
+        end        = begin + blocks_size[b];
         omp::sort( begin, end );
     }
 

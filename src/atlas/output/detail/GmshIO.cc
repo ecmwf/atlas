@@ -730,7 +730,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
 
         int nb_quads  = nb_etype[QUAD];
         int nb_triags = nb_etype[TRIAG];
-        int nb_edges  = nb_etype[LINE];
+        //int nb_edges  = nb_etype[LINE];
 
         mesh::Elements& quads  = mesh.cells().elements( mesh.cells().add( make_element_type( QUAD ), nb_quads ) );
         mesh::Elements& triags = mesh.cells().elements( mesh.cells().add( make_element_type( TRIAG ), nb_triags ) );
@@ -765,7 +765,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
                     std::max( part, *std::max_element( tags + 3, tags + ntags - 1 ) );  // one positive, others negative
             }
 
-            idx_t enodes[4];
+            idx_t enodes[4] = {-1, -1, -1, -1};
 
             switch ( etype ) {
                 case ( QUAD ):

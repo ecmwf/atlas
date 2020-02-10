@@ -54,8 +54,9 @@ void FactoryRegistry::add( const std::string& builder, FactoryBase* factory ) {
 
 void FactoryRegistry::remove( const std::string& builder ) {
     lock_guard lock( mutex_ );
-    FactoryBase* factory = factories_[builder];
+    ATLAS_ASSERT( factories_.find( builder ) != factories_.end() );
 #ifdef DEBUG_FACTORY_REGISTRATION
+    FactoryBase* factory = factories_[builder];
     std::cout << "Unregistered " << builder << " (" << factory << ") from " << factory_ << std::endl << std::flush;
 #endif
     factories_.erase( builder );
