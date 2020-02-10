@@ -123,9 +123,6 @@ TEST( test_connectivity )
 
   !============= Padded Data pointer access =============!
 
-  call connectivity%data(data,ncols)
-
-
   call connectivity%padded_data(padded,cols)
   FCTEST_CHECK_EQUAL(padded(1,1), 1)
   FCTEST_CHECK_EQUAL(padded(2,1), 2)

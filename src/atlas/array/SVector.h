@@ -65,13 +65,16 @@ public:
     SVector( T* data, idx_t size ) : data_( data ), size_( size ), externally_allocated_( true ) {}
 
     SVector( idx_t N ) : data_( nullptr ), size_( N ), externally_allocated_( false ) { allocate( data_, N ); }
+
     ATLAS_HOST_DEVICE
     ~SVector() { clear(); }
 
     ATLAS_HOST_DEVICE
     void clear() {
         if ( data_ && !externally_allocated_ ) {
+#ifndef __CUDA_ARCH__
             deallocate( data_, size_ );
+#endif
         }
         data_                 = nullptr;
         size_                 = 0;
