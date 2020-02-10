@@ -63,7 +63,7 @@ private:
     void generate_mesh( const StructuredGrid&, const atlas::vector<int>& parts, const Region& region, Mesh& m ) const;
 
 private:
-    util::Metadata options;
+    util::Config options;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

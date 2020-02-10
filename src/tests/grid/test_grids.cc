@@ -349,6 +349,40 @@ CASE( "test_structured_3" ) {
     EXPECT( newgrid.name() == "O32" );
 }
 
+CASE( "test_structured_triangulated" ) {
+    Grid grid;
+
+    // Create grid
+    {
+        using XSpace = StructuredGrid::XSpace;
+        using YSpace = StructuredGrid::YSpace;
+        auto xspace  = util::Config{};
+        xspace.set( "type", "linear" );
+        xspace.set( "N", 16 );
+        xspace.set( "length", 360 );
+        xspace.set( "endpoint", false );
+        xspace.set( "start[]", []() {
+            auto startpts = std::vector<double>( 8 );
+            for ( int i = 0; i < 8; ++i ) {
+                startpts[i] = i * 12.;
+                q
+            }
+            return startpts;
+        }() );
+        grid = StructuredGrid{XSpace{xspace}, YSpace{grid::LinearSpacing{{90., -90.}, 8}}};
+    }
+
+    EXPECT( grid );
+    Log::info() << grid.spec() << std::endl;
+
+    // Create and output mesh
+    {
+        auto meshgen = StructuredMeshGenerator{util::Config( "angle", -1. )};
+        auto mesh    = meshgen.generate( grid );
+        auto gmsh    = output::Gmsh{"structured_triangulated.msh"};
+        gmsh.write( mesh );
+    }
+}
 
 //-----------------------------------------------------------------------------
 
