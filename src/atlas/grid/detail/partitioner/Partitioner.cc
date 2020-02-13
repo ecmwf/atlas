@@ -51,7 +51,7 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-Partitioner::Partitioner() : nb_partitions_( mpi::comm().size() ) {}
+Partitioner::Partitioner() : nb_partitions_( mpi::size() ) {}
 
 Partitioner::Partitioner( const idx_t nb_partitions ) : nb_partitions_( nb_partitions ) {}
 

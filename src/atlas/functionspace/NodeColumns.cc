@@ -262,7 +262,7 @@ idx_t NodeColumns::config_nb_nodes( const eckit::Configuration& config ) const {
             idx_t owner( 0 );
             config.get( "owner", owner );
             idx_t _nb_nodes_global = nb_nodes_global();
-            size                   = ( idx_t( mpi::comm().rank() ) == owner ? _nb_nodes_global : 0 );
+            size                   = ( mpi::rank() == owner ? _nb_nodes_global : 0 );
         }
     }
     return size;

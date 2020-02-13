@@ -14,7 +14,6 @@
 #include "eckit/utils/MD5.h"
 
 #include "atlas/grid.h"
-#include "atlas/library/Library.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"

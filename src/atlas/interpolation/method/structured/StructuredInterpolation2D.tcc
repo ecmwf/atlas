@@ -53,7 +53,7 @@ StructuredInterpolation2D<Kernel>::StructuredInterpolation2D( const Method::Conf
 
 template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
+    if ( mpi::size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
 
 
     ATLAS_ASSERT( StructuredGrid( source ) );

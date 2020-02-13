@@ -17,11 +17,11 @@
 extern "C" {
 
 void atlas__atlas_init_noargs() {
-    atlas::Library::instance().initialise();
+    atlas::library::initialise();
 }
 
 void atlas__atlas_finalize() {
-    atlas::Library::instance().finalise();
+    atlas::library::finalise();
 }
 
 const char* atlas__eckit_version() {

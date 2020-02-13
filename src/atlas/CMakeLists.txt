@@ -25,6 +25,7 @@ install( FILES
 ### sources
 
 list( APPEND atlas_srcs
+library.h
 library/config.h
 library/Library.h
 library/Library.cc

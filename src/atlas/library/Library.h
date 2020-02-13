@@ -22,12 +22,24 @@ class Parametrisation;
 
 namespace atlas {
 
+namespace mpi {
+void finalise();
+void finalize();
+}  // namespace mpi
+
+namespace library {
+void initialise( int argc, char** argv );
+void initialize( int argc, char** argv );
+void initialise();
+void initialize();
+void finalise();
+void finalize();
+}  // namespace library
+
 //----------------------------------------------------------------------------------------------------------------------
 
 class Library : public eckit::system::Library {
 public:
-    Library();
-
     static Library& instance();
 
     virtual std::string version() const override;
@@ -56,6 +68,8 @@ public:
     virtual bool debug() const override { return debug_; }
 
     bool traceBarriers() const { return trace_barriers_; }
+
+    Library();
 
 protected:
     virtual const void* addr() const override;

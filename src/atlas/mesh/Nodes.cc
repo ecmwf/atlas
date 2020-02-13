@@ -99,7 +99,7 @@ void Nodes::resize( idx_t size ) {
         auto flag    = array::make_view<int, 1>( flags() );
         auto _halo   = array::make_view<int, 1>( halo() );
 
-        const int mpi_rank = static_cast<int>( mpi::comm().rank() );
+        const int mpi_rank = static_cast<int>( mpi::rank() );
         for ( idx_t n = previous_size; n < size_; ++n ) {
             glb_idx( n ) = 1 + n;
             part( n )    = mpi_rank;

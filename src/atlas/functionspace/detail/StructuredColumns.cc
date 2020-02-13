@@ -346,7 +346,7 @@ idx_t StructuredColumns::config_size( const eckit::Configuration& config ) const
         if ( global ) {
             idx_t owner( 0 );
             config.get( "owner", owner );
-            size = ( static_cast<idx_t>( mpi::comm().rank() ) == owner ? grid_->size() : 0 );
+            size = ( mpi::rank() == owner ? grid_->size() : 0 );
         }
     }
     return size;

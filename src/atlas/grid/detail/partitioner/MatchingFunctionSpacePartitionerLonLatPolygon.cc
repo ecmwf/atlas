@@ -40,14 +40,14 @@ void MatchingFunctionSpacePartitionerLonLatPolygon::partition( const Grid& grid,
     ATLAS_TRACE( "MatchingFunctionSpacePartitionerLonLatPolygon" );
     //atlas::vector<int> part( grid.size() );
 
-    if ( mpi::comm().size() == 1 ) {
+    if ( mpi::size() == 1 ) {
         // shortcut
         omp::fill( part, part + grid.size(), 0 );
     }
     else {
         const auto& p = partitioned_.polygon();
 
-        int rank = mpi::comm().rank();
+        int rank = mpi::rank();
         util::LonLatPolygon poly{p};
         {
             ATLAS_TRACE( "point-in-polygon check for entire grid (" + std::to_string( grid.size() ) + " points)" );

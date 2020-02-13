@@ -100,8 +100,8 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
 
     nb_partitions_ = distribution.nb_partitions();
 
-    int mpi_rank = int( mpi::comm().rank() );
-    int mpi_size = int( mpi::comm().size() );
+    int mpi_rank = int( mpi::rank() );
+    int mpi_size = int( mpi::size() );
 
     j_begin_ = std::numeric_limits<idx_t>::max();
     j_end_   = std::numeric_limits<idx_t>::min();

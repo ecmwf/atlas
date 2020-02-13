@@ -22,8 +22,6 @@
 #include "atlas/field/Field.h"
 #include "atlas/field/State.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/library/Library.h"
-#include "atlas/library/config.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"

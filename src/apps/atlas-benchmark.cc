@@ -39,7 +39,7 @@
 
 #include "atlas/functionspace.h"
 #include "atlas/grid.h"
-#include "atlas/library/Library.h"
+#include "atlas/library.h"
 #include "atlas/mesh.h"
 #include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
@@ -577,7 +577,7 @@ double AtlasBenchmark::result() {
 
 int AtlasBenchmark::verify( const double& norm ) {
     Log::warning() << "Verification is not yet implemented" << endl;
-    return failed();
+    return success();
 }
 
 //----------------------------------------------------------------------------------------------------------------------

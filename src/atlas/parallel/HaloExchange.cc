@@ -31,7 +31,7 @@ struct IsGhostPoint {
         part_   = part;
         ridx_   = ridx;
         base_   = base;
-        mypart_ = mpi::comm().rank();
+        mypart_ = mpi::rank();
     }
 
     bool operator()( idx_t idx ) {
@@ -51,13 +51,13 @@ struct IsGhostPoint {
 }  // namespace
 
 HaloExchange::HaloExchange() : name_(), is_setup_( false ) {
-    myproc = mpi::comm().rank();
-    nproc  = mpi::comm().size();
+    myproc = mpi::rank();
+    nproc  = mpi::size();
 }
 
 HaloExchange::HaloExchange( const std::string& name ) : name_( name ), is_setup_( false ) {
-    myproc = mpi::comm().rank();
-    nproc  = mpi::comm().size();
+    myproc = mpi::rank();
+    nproc  = mpi::size();
 }
 
 HaloExchange::~HaloExchange() = default;

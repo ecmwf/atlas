@@ -54,7 +54,7 @@ public:
         } );
         TRANS_CHECK( ::trans_new( trans_.get() ) );
         TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
-        TRANS_CHECK( ::trans_use_mpi( mpi::comm().size() > 1 ) );
+        TRANS_CHECK( ::trans_use_mpi( mpi::size() > 1 ) );
         TRANS_CHECK( ::trans_setup( trans_.get() ) );
     }
 
@@ -157,7 +157,7 @@ idx_t Spectral::config_size( const eckit::Configuration& config ) const {
         if ( global ) {
             idx_t owner( 0 );
             config.get( "owner", owner );
-            size = ( idx_t( mpi::comm().rank() ) == owner ? nb_spectral_coefficients_global() : 0 );
+            size = ( idx_t( mpi::rank() ) == owner ? nb_spectral_coefficients_global() : 0 );
         }
     }
     return size;
@@ -268,7 +268,7 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
 #if ATLAS_HAVE_TRANS
         Field& glb = global_fieldset[f];
         idx_t root = 0;
-        idx_t rank = static_cast<idx_t>( mpi::comm().rank() );
+        idx_t rank = mpi::rank();
         glb.metadata().get( "owner", root );
         ATLAS_ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );
         if ( rank == root ) {
@@ -324,7 +324,7 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
 
 #if ATLAS_HAVE_TRANS
         idx_t root = 0;
-        idx_t rank = static_cast<idx_t>( mpi::comm().rank() );
+        idx_t rank = mpi::rank();
 
         glb.metadata().get( "owner", root );
         ATLAS_ASSERT( loc.shape( 0 ) == nb_spectral_coefficients() );

@@ -94,7 +94,7 @@ std::string Checksum::execute( const DATA_TYPE data[], const int var_strides[], 
         local_checksums[pp] = util::checksum( data + pp * var_size, var_size );
     }
 
-    std::vector<util::checksum_t> global_checksums( mpi::comm().rank() == root ? gather_->glb_dof() : 0 );
+    std::vector<util::checksum_t> global_checksums( mpi::rank() == root ? gather_->glb_dof() : 0 );
     parallel::Field<util::checksum_t const> loc( local_checksums.data(), 1 );
     parallel::Field<util::checksum_t> glb( global_checksums.data(), 1 );
     gather_->gather( &loc, &glb, 1 );

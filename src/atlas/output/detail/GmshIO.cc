@@ -50,15 +50,14 @@ static double rad2deg = util::Constants::radiansToDegrees();
 
 class GmshFile : public std::ofstream {
 public:
-    GmshFile( const PathName& file_path, std::ios_base::openmode mode,
-              int part = static_cast<int>( mpi::comm().rank() ) ) {
+    GmshFile( const PathName& file_path, std::ios_base::openmode mode, int part = static_cast<int>( mpi::rank() ) ) {
         PathName par_path( file_path );
-        int mpi_size = static_cast<int>( mpi::comm().size() );
-        if ( atlas::mpi::comm().size() == 1 || part == -1 ) {
+        int mpi_size = static_cast<int>( mpi::size() );
+        if ( mpi::size() == 1 || part == -1 ) {
             std::ofstream::open( par_path.localPath(), mode );
         }
         else {
-            if ( atlas::mpi::comm().rank() == 0 ) {
+            if ( mpi::rank() == 0 ) {
                 PathName par_path( file_path );
                 std::ofstream par_file( par_path.localPath(), std::ios_base::out );
                 for ( int p = 0; p < mpi_size; ++p ) {
@@ -247,7 +246,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
                         const Field& field, std::ostream& out ) {
     Log::debug() << "writing NodeColumns field " << field.name() << " defined in NodeColumns..." << std::endl;
 
-    bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
+    bool gather( gmsh_options.get<bool>( "gather" ) && mpi::size() > 1 );
     // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
     idx_t nlev                       = std::max<idx_t>( 1, field.levels() );
     idx_t ndata                      = std::min<idx_t>( function_space.nb_nodes(), field.shape( 0 ) );
@@ -269,7 +268,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
     std::vector<int> lev = get_levels( nlev, gmsh_options );
     for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
         int jlev = lev[ilev];
-        if ( ( gather && atlas::mpi::comm().rank() == 0 ) || !gather ) {
+        if ( ( gather && mpi::rank() == 0 ) || !gather ) {
             out << "$NodeData\n";
             out << "1\n";
             out << "\"" << field.name() << field_lev( field, jlev ) << "\"\n";
@@ -279,7 +278,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
             out << field_step( field ) << "\n";
             out << field_vars( nvars ) << "\n";
             out << ndata << "\n";
-            out << atlas::mpi::comm().rank() << "\n";
+            out << mpi::rank() << "\n";
             auto data = gather ? make_level_view<DATATYPE>( field_glb, ndata, jlev )
                                : make_level_view<DATATYPE>( field, ndata, jlev );
             write_level( out, gidx, data );
@@ -309,7 +308,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
                         const Field& field, std::ostream& out ) {
     Log::debug() << "writing StructuredColumns field " << field.name() << "..." << std::endl;
 
-    bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
+    bool gather( gmsh_options.get<bool>( "gather" ) && mpi::size() > 1 );
     // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
     idx_t nlev  = std::max<idx_t>( 1, field.levels() );
     idx_t ndata = std::min<idx_t>( function_space.sizeOwned(), field.shape( 0 ) );
@@ -346,7 +345,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
         out << field_step( field ) << "\n";
         out << field_vars( nvars ) << "\n";
         out << ndata << "\n";
-        out << atlas::mpi::comm().rank() << "\n";
+        out << mpi::rank() << "\n";
         auto data = gather ? make_level_view<DATATYPE>( field_glb, ndata, jlev )
                            : make_level_view<DATATYPE>( field, ndata, jlev );
         write_level( out, gidx, data );
@@ -361,7 +360,7 @@ void write_field_elems( const Metadata& gmsh_options, const functionspace::CellC
 #if 1
     Log::debug() << "writing CellColumns field " << field.name() << "..." << std::endl;
 
-    bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
+    bool gather( gmsh_options.get<bool>( "gather" ) && mpi::size() > 1 );
     // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
     idx_t nlev                       = std::max<idx_t>( 1, field.levels() );
     idx_t ndata                      = std::min<idx_t>( function_space.nb_cells(), field.shape( 0 ) );
@@ -383,7 +382,7 @@ void write_field_elems( const Metadata& gmsh_options, const functionspace::CellC
     std::vector<int> lev = get_levels( nlev, gmsh_options );
     for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
         int jlev = lev[ilev];
-        if ( ( gather && atlas::mpi::comm().rank() == 0 ) || !gather ) {
+        if ( ( gather && mpi::rank() == 0 ) || !gather ) {
             out << "$ElementData\n";
             out << "1\n";
             out << "\"" << field.name() << field_lev( field, jlev ) << "\"\n";
@@ -393,7 +392,7 @@ void write_field_elems( const Metadata& gmsh_options, const functionspace::CellC
             out << field_step( field ) << "\n";
             out << field_vars( nvars ) << "\n";
             out << ndata << "\n";
-            out << atlas::mpi::comm().rank() << "\n";
+            out << mpi::rank() << "\n";
             auto data = gather ? make_level_view<DATATYPE>( field_glb, ndata, jlev )
                                : make_level_view<DATATYPE>( field, ndata, jlev );
             write_level( out, gidx, data );
@@ -453,7 +452,7 @@ void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& functi
     if     ( nvars == 1 ) out << nvars << "\n";
     else if( nvars <= 3 ) out << 3     << "\n";
     out << ndata << "\n";
-    out << mpi::comm().rank() << "\n";
+    out << mpi::rank() << "\n";
 
     if( binary )
     {
@@ -812,7 +811,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
 }
 
 void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
-    int part = mesh.metadata().has( "part" ) ? mesh.metadata().get<size_t>( "part" ) : atlas::mpi::comm().rank();
+    int part           = mesh.metadata().has( "part" ) ? mesh.metadata().get<size_t>( "part" ) : mpi::rank();
     bool include_ghost = options.get<bool>( "ghost" ) && options.get<bool>( "elements" );
 
     std::string nodes_field = options.get<std::string>( "nodes" );
@@ -1089,7 +1088,7 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Node
         mode |= std::ios_base::binary;
     }
     bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
-    GmshFile file( file_path, mode, gather ? -1 : int( atlas::mpi::comm().rank() ) );
+    GmshFile file( file_path, mode, gather ? -1 : int( mpi::rank() ) );
 
     // Header
     if ( is_new_file ) {
@@ -1127,7 +1126,7 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Cell
         mode |= std::ios_base::binary;
     }
     bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
-    GmshFile file( file_path, mode, gather ? -1 : int( atlas::mpi::comm().rank() ) );
+    GmshFile file( file_path, mode, gather ? -1 : int( mpi::rank() ) );
 
     // Header
     if ( is_new_file ) {
@@ -1170,7 +1169,7 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Stru
 
     bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
 
-    GmshFile file( file_path, mode, gather ? -1 : int( atlas::mpi::comm().rank() ) );
+    GmshFile file( file_path, mode, gather ? -1 : int( mpi::rank() ) );
 
     // Header
     if ( is_new_file ) {

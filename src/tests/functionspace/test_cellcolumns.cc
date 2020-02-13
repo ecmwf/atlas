@@ -25,7 +25,6 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/CellColumns.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/library/Library.h"
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"

@@ -74,6 +74,28 @@ int getEnv( const std::string& env, int default_value ) {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+namespace library {
+void initialise( int argc, char** argv ) {
+    Library::instance().initialise( argc, argv );
+}
+void initialize( int argc, char** argv ) {
+    Library::instance().initialise( argc, argv );
+}
+void initialise() {
+    Library::instance().initialise();
+}
+void initialize() {
+    Library::instance().initialise();
+}
+void finalise() {
+    Library::instance().finalise();
+}
+void finalize() {
+    Library::instance().finalise();
+}
+}  // namespace library
+
+
 static Library libatlas;
 
 Library::Library() :
@@ -87,6 +109,7 @@ Library::Library() :
 Library& Library::instance() {
     return libatlas;
 }
+
 
 const void* Library::addr() const {
     return this;
@@ -119,6 +142,7 @@ void Library::initialise( int argc, char** argv ) {
     initialise();
 }
 
+
 void Library::initialise( const eckit::Parametrisation& config ) {
     if ( config.has( "log" ) ) {
         config.get( "log.info", info_ );
@@ -141,7 +165,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
     }
 
     // Summary
-    if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::comm().rank() ) ) {
+    if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
         std::ostream& out = Log::debug();
         out << "Executable        [" << Main::instance().name() << "]\n";
         out << " \n";
@@ -149,8 +173,8 @@ void Library::initialise( const eckit::Parametrisation& config ) {
         out << " \n";
         out << "  MPI\n";
         out << "    communicator  [" << mpi::comm() << "] \n";
-        out << "    size          [" << mpi::comm().size() << "] \n";
-        out << "    rank          [" << mpi::comm().rank() << "] \n";
+        out << "    size          [" << mpi::size() << "] \n";
+        out << "    rank          [" << mpi::rank() << "] \n";
         out << " \n";
         out << "  log.info        [" << str( info_ ) << "] \n";
         out << "  log.trace       [" << str( trace() ) << "] \n";
@@ -163,6 +187,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
     }
 }
 
+
 void Library::initialise() {
     initialise( util::NoConfig() );
 }
@@ -173,8 +198,8 @@ void Library::finalise() {
     }
 
     if ( getEnv( "ATLAS_FINALISES_MPI", false ) ) {
-        Log::debug() << "ATLAS_FINALISES_MPI is set: calling eckit::mpi::finaliseAllComms()" << std::endl;
-        eckit::mpi::finaliseAllComms();
+        Log::debug() << "ATLAS_FINALISES_MPI is set: calling atlas::mpi::finalise()" << std::endl;
+        mpi::finalise();
     }
 
     // Make sure that these specialised channels that wrap Log::info() are

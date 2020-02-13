@@ -43,7 +43,7 @@ KNearestNeighbours::KNearestNeighbours( const Method::Config& config ) : KNeares
 }
 
 void KNearestNeighbours::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) {
+    if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
     auto functionspace = []( const Grid& grid ) -> FunctionSpace {

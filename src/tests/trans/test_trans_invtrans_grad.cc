@@ -18,7 +18,6 @@
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
-#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator.h"

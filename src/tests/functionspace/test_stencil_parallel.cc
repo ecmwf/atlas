@@ -14,7 +14,6 @@
 #include "atlas/grid/Stencil.h"
 #include "atlas/grid/StencilComputer.h"
 #include "atlas/grid/StructuredGrid.h"
-#include "atlas/library/Library.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 #include "tests/AtlasTestEnvironment.h"

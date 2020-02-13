@@ -43,14 +43,14 @@ GmshFileStream::GmshFileStream( const eckit::PathName& file_path, const char* mo
         omode = std::ios_base::app;
     }
 
-    if ( part < 0 || mpi::comm().size() == 1 ) {
+    if ( part < 0 || mpi::size() == 1 ) {
         std::ofstream::open( file_path.localPath(), omode );
     }
     else {
-        if ( mpi::comm().rank() == 0 ) {
+        if ( mpi::rank() == 0 ) {
             eckit::PathName par_path( file_path );
             std::ofstream par_file( par_path.localPath(), std::ios_base::out );
-            for ( size_t p = 0; p < mpi::comm().size(); ++p ) {
+            for ( size_t p = 0; p < mpi::size(); ++p ) {
                 par_file << "Merge \"" << parallelPathName( file_path, p ) << "\";" << std::endl;
             }
             par_file.close();

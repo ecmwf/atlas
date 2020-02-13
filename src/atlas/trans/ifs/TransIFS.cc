@@ -934,7 +934,7 @@ void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, con
         nloen[jlat] = pl[jlat];
     }
     TRANS_CHECK( ::trans_new( trans_.get() ) );
-    TRANS_CHECK( ::trans_use_mpi( mpi::comm().size() > 1 ) );
+    TRANS_CHECK( ::trans_use_mpi( mpi::size() > 1 ) );
     TRANS_CHECK( ::trans_set_resol( trans_.get(), nlat, nloen.data() ) );
     if ( truncation >= 0 ) {
         TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
@@ -942,7 +942,7 @@ void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, con
 
     TRANS_CHECK( ::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
 
-    if ( p.read_legendre().size() && mpi::comm().size() == 1 ) {
+    if ( p.read_legendre().size() && mpi::size() == 1 ) {
         eckit::PathName file( p.read_legendre() );
         if ( not file.exists() ) {
             std::stringstream msg;
@@ -951,7 +951,7 @@ void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, con
         }
         TRANS_CHECK( ::trans_set_read( trans_.get(), file.asString().c_str() ) );
     }
-    if ( p.write_legendre().size() && mpi::comm().size() == 1 ) {
+    if ( p.write_legendre().size() && mpi::size() == 1 ) {
         eckit::PathName file( p.write_legendre() );
         TRANS_CHECK( ::trans_set_write( trans_.get(), file.asString().c_str() ) );
     }
@@ -965,14 +965,14 @@ void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, con
 void TransIFS::ctor_lonlat( const long nlon, const long nlat, long truncation, const eckit::Configuration& config ) {
     TransParameters p( *this, config );
     TRANS_CHECK( ::trans_new( trans_.get() ) );
-    TRANS_CHECK( ::trans_use_mpi( mpi::comm().size() > 1 ) );
+    TRANS_CHECK( ::trans_use_mpi( mpi::size() > 1 ) );
     TRANS_CHECK( ::trans_set_resol_lonlat( trans_.get(), nlon, nlat ) );
     if ( truncation >= 0 ) {
         TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
     }
     TRANS_CHECK( ::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
 
-    if ( p.read_legendre().size() && mpi::comm().size() == 1 ) {
+    if ( p.read_legendre().size() && mpi::size() == 1 ) {
         eckit::PathName file( p.read_legendre() );
         if ( not file.exists() ) {
             std::stringstream msg;
@@ -981,7 +981,7 @@ void TransIFS::ctor_lonlat( const long nlon, const long nlat, long truncation, c
         }
         TRANS_CHECK( ::trans_set_read( trans_.get(), file.asString().c_str() ) );
     }
-    if ( p.write_legendre().size() && mpi::comm().size() == 1 ) {
+    if ( p.write_legendre().size() && mpi::size() == 1 ) {
         eckit::PathName file( p.write_legendre() );
         TRANS_CHECK( ::trans_set_write( trans_.get(), file.asString().c_str() ) );
     }

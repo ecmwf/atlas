@@ -387,7 +387,7 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& fiel
     }
     Field global = fs.createField( field, option::name( "global" ) | option::global() );
     fs.gather( field, global );
-    if ( mpi::comm().rank() == 0 ) {
+    if ( mpi::rank() == 0 ) {
         const auto glb = make_surface_view<DATATYPE>( global );
         for ( idx_t n = 0; n < fs.nb_nodes_global(); ++n ) {
             for ( idx_t j = 0; j < nvar; ++j ) {
@@ -491,7 +491,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
     Field global = fs.createField( field, option::name( "global" ) | option::global() );
 
     fs.gather( field, global );
-    if ( mpi::comm().rank() == 0 ) {
+    if ( mpi::rank() == 0 ) {
         const array::LocalView<T, 3> glb = make_leveled_view<T>( global );
 
         for ( idx_t n = 0; n < glb.shape( 0 ); ++n ) {
@@ -504,7 +504,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
     }
     ATLAS_TRACE_MPI( BROADCAST ) {
         std::vector<T> sum_array( sumfield.size() );
-        if ( mpi::comm().rank() == root ) {
+        if ( mpi::rank() == root ) {
             idx_t c( 0 );
             for ( idx_t l = 0; l < sum.shape( 0 ); ++l ) {
                 for ( idx_t j = 0; j < sum.shape( 1 ); ++j ) {
@@ -513,7 +513,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
             }
         }
         mpi::comm().broadcast( sum_array, root );
-        if ( mpi::comm().rank() != root ) {
+        if ( mpi::rank() != root ) {
             idx_t c( 0 );
             for ( idx_t l = 0; l < sum.shape( 0 ); ++l ) {
                 for ( idx_t j = 0; j < sum.shape( 1 ); ++j ) {

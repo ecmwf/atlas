@@ -18,7 +18,6 @@
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/StructuredGrid.h"
-#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator.h"

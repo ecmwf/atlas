@@ -161,10 +161,10 @@ void StructuredMeshGenerator::configure_defaults() {
     options.set( "3d", false );
 
     // This option sets number of parts the mesh will be split in
-    options.set( "nb_parts", mpi::comm().size() );
+    options.set( "nb_parts", mpi::size() );
 
     // This option sets the part that will be generated
-    options.set( "part", mpi::comm().rank() );
+    options.set( "part", mpi::rank() );
 
     // Experimental option. The result is a non-standard Reduced Gaussian Grid,
     // with a ragged Greenwich line
@@ -196,7 +196,7 @@ void StructuredMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
     if ( partitioner_type == "trans" && rg.ny() % 2 == 1 ) {
         partitioner_type = "equal_regions";  // Odd number of latitudes
     }
-    if ( nb_parts == 1 || mpi::comm().size() == 1 ) {
+    if ( nb_parts == 1 || mpi::size() == 1 ) {
         partitioner_type = "equal_regions";  // Only one part --> Trans is slower
     }
 

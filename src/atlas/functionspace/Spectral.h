@@ -117,7 +117,7 @@ public:
         void operator()( const Functor& f ) const {
             idx_t index = 0;
             if ( global ) {
-                if ( owner == mpi::comm().rank() ) {
+                if ( owner == mpi::rank() ) {
                     atlas_omp_parallel_for( int m = 0; m <= truncation; ++m ) {
                         for ( int n = m; n <= truncation; ++n ) {
                             f( index, index + 1, n, m );
@@ -143,7 +143,7 @@ public:
         void operator()( const Functor& f ) const {
             idx_t index = 0;
             if ( global ) {
-                if ( owner == mpi::comm().rank() ) {
+                if ( owner == mpi::rank() ) {
                     atlas_omp_parallel_for( int m = 0; m <= truncation; ++m ) {
                         for ( int n = m; n <= truncation; ++n ) {
                             f( index, index + 1, n );

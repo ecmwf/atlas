@@ -115,11 +115,11 @@ void MeshImpl::setGrid( const Grid& grid ) {
 }
 
 idx_t MeshImpl::nb_partitions() const {
-    return mpi::comm().size();
+    return mpi::size();
 }
 
 idx_t MeshImpl::partition() const {
-    return mpi::comm().rank();
+    return mpi::rank();
 }
 
 void MeshImpl::cloneToDevice() const {

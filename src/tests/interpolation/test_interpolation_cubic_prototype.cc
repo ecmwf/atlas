@@ -23,7 +23,6 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/interpolation.h"
-#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"

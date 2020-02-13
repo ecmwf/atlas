@@ -56,7 +56,7 @@ static const double parametricEpsilon = 1e-15;
 
 
 void FiniteElement::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) {
+    if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
     auto functionspace = []( const Grid& grid ) {
@@ -165,7 +165,7 @@ void FiniteElement::print( std::ostream& out ) const {
     tgt.gather().gather( stencil_points_loc, stencil_points_glb );
     tgt.gather().gather( stencil_weights_loc, stencil_weights_glb );
 
-    if ( mpi::comm().rank() == 0 ) {
+    if ( mpi::rank() == 0 ) {
         int precision = std::numeric_limits<double>::max_digits10;
         for ( idx_t i = 0; i < global_size; ++i ) {
             out << std::setw( 10 ) << i + 1 << " : ";
@@ -279,7 +279,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
     if ( failures.size() ) {
         // If this fails, consider lowering atlas::grid::parametricEpsilon
         std::ostringstream msg;
-        msg << "Rank " << eckit::mpi::comm().rank() << " failed to project points:\n";
+        msg << "Rank " << mpi::rank() << " failed to project points:\n";
         for ( std::vector<size_t>::const_iterator i = failures.begin(); i != failures.end(); ++i ) {
             const PointLonLat pll{out_lonlat( *i, (size_t)0 ), out_lonlat( *i, (size_t)1 )};  // lookup point
             msg << "\t(lon,lat) = " << pll << "\n";

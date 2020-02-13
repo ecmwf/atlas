@@ -54,7 +54,7 @@ StructuredInterpolation3D<Kernel>::StructuredInterpolation3D( const Method::Conf
 
 template <typename Kernel>
 void StructuredInterpolation3D<Kernel>::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
+    if ( mpi::size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
 
 
     ATLAS_ASSERT( StructuredGrid( source ) );

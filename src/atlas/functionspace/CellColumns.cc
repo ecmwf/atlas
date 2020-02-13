@@ -192,7 +192,7 @@ void CellColumns::set_field_metadata( const eckit::Configuration& config, Field&
 }
 
 idx_t CellColumns::config_size( const eckit::Configuration& config ) const {
-    const idx_t rank = static_cast<idx_t>( mpi::comm().rank() );
+    const idx_t rank = mpi::rank();
     idx_t size       = nb_cells();
     bool global( false );
     if ( config.get( "global", global ) ) {

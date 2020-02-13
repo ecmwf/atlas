@@ -381,7 +381,7 @@ void make_dual_normals_outward( Mesh& mesh ) {
 void build_brick_dual_mesh( const Grid& grid, Mesh& mesh ) {
     auto g = StructuredGrid( grid );
     if ( g ) {
-        if ( mpi::comm().size() != 1 ) {
+        if ( mpi::size() != 1 ) {
             throw_Exception( "Cannot build_brick_dual_mesh with more than 1 task", Here() );
         }
 

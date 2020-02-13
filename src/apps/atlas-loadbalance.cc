@@ -16,7 +16,7 @@
 
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
-#include "atlas/library/Library.h"
+#include "atlas/library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
@@ -73,7 +73,7 @@ public:
             do_run = false;
         }
 
-        atlas::Library::instance().initialise( argc, argv );
+        atlas::library::initialise( argc, argv );
 
         key = "";
         for ( int i = 0; i < argc; ++i ) {
@@ -127,7 +127,7 @@ void AtlasLoadbalance::run() {
             std::cout << s.str() << std::endl;
         }
     }
-    atlas::Library::instance().finalise();
+    atlas::library::finalise();
 }
 
 //------------------------------------------------------------------------------------------------------

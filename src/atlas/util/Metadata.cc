@@ -60,7 +60,7 @@ void Metadata::broadcast( Metadata& dest ) {
 void Metadata::broadcast( Metadata& dest, const size_t root ) {
     std::string buffer;
     int buffer_size{0};
-    if ( atlas::mpi::comm().rank() == root ) {
+    if ( mpi::rank() == root ) {
         std::stringstream s;
         eckit::JSON json( s );
         json.precision( 17 );
@@ -71,13 +71,13 @@ void Metadata::broadcast( Metadata& dest, const size_t root ) {
 
     ATLAS_TRACE_MPI( BROADCAST ) { atlas::mpi::comm().broadcast( buffer_size, root ); }
 
-    if ( atlas::mpi::comm().rank() != root ) {
+    if ( mpi::rank() != root ) {
         buffer.resize( buffer_size );
     }
 
-    ATLAS_TRACE_MPI( BROADCAST ) { atlas::mpi::comm().broadcast( buffer.begin(), buffer.end(), root ); }
+    ATLAS_TRACE_MPI( BROADCAST ) { mpi::comm().broadcast( buffer.begin(), buffer.end(), root ); }
 
-    if ( not( &dest == this && atlas::mpi::comm().rank() == root ) ) {
+    if ( not( &dest == this && mpi::rank() == root ) ) {
         std::stringstream s;
         s << buffer;
         eckit::JSONParser parser( s );
@@ -94,7 +94,7 @@ void Metadata::broadcast( Metadata& dest ) const {
 void Metadata::broadcast( Metadata& dest, const size_t root ) const {
     std::string buffer;
     int buffer_size{0};
-    if ( atlas::mpi::comm().rank() == root ) {
+    if ( mpi::rank() == root ) {
         std::stringstream s;
         eckit::JSON json( s );
         json.precision( 17 );
@@ -103,13 +103,13 @@ void Metadata::broadcast( Metadata& dest, const size_t root ) const {
         buffer_size = buffer.size();
     }
 
-    ATLAS_TRACE_MPI( BROADCAST ) { atlas::mpi::comm().broadcast( buffer_size, root ); }
+    ATLAS_TRACE_MPI( BROADCAST ) { mpi::comm().broadcast( buffer_size, root ); }
 
-    if ( atlas::mpi::comm().rank() != root ) {
+    if ( mpi::rank() != root ) {
         buffer.resize( buffer_size );
     }
 
-    ATLAS_TRACE_MPI( BROADCAST ) { atlas::mpi::comm().broadcast( buffer.begin(), buffer.end(), root ); }
+    ATLAS_TRACE_MPI( BROADCAST ) { mpi::comm().broadcast( buffer.begin(), buffer.end(), root ); }
 
     // Fill in dest
     {

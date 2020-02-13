@@ -60,7 +60,7 @@ Mesh MeshGeneratorImpl::generate( const Grid& grid, const grid::Distribution& di
 //----------------------------------------------------------------------------------------------------------------------
 
 void MeshGeneratorImpl::generateGlobalElementNumbering( Mesh& mesh ) const {
-    idx_t mpi_size = static_cast<idx_t>( mpi::comm().size() );
+    idx_t mpi_size = static_cast<idx_t>( mpi::size() );
 
     gidx_t loc_nb_elems = mesh.cells().size();
     std::vector<gidx_t> elem_counts( mpi_size );
@@ -73,7 +73,7 @@ void MeshGeneratorImpl::generateGlobalElementNumbering( Mesh& mesh ) const {
         elem_displs.at( jpart ) = elem_displs.at( jpart - 1 ) + elem_counts.at( jpart - 1 );
     }
 
-    gidx_t gid = 1 + elem_displs.at( mpi::comm().rank() );
+    gidx_t gid = 1 + elem_displs.at( mpi::rank() );
 
     array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
 
