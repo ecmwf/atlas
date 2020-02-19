@@ -246,6 +246,28 @@ StructuredGrid::grid_t* reduced_gaussian( const std::vector<int>& nx, const Doma
     return new StructuredGrid::grid_t( xspace( _nx ), Spacing( yspace ), Projection(), domain );
 }
 
+StructuredGrid::grid_t* reduced_gaussian( const std::vector<int> & nx, double centre[], double stretch) {
+  using namespace atlas::util;
+
+  std::vector<Spacing> spacings (nx.size ());
+
+  for (int i = 0; i < nx.size (); i++)
+    {   
+      double lonmax = 360.0 * double (nx[i] - 1) / double (nx[i]);
+      spacings[i] = Spacing (Config ("type", "linear") | Config ("N", nx[i])
+                           | Config ("start", 0) | Config ("end", lonmax));
+    }   
+
+  StructuredGrid::XSpace xspace (spacings);
+  StructuredGrid::YSpace yspace (Config ("type", "gaussian") | Config ("N", nx.size ()));
+
+  Projection proj (Config ("type", "rotated_schmidt") | Config ("stretching_factor", stretch) | Config ("rotation_angle", 0.0)
+                 | Config ("north_pole", std::vector<double>{centre[0], centre[1]})
+                 | Config ("arpege", true));
+
+  return new StructuredGrid::grid_t (xspace, yspace, proj, Domain ());
+}
+
 template <typename Int>
 inline std::vector<idx_t> idx_vector( Int nx, idx_t ny ) {
     std::vector<idx_t> _nx( ny );
@@ -264,6 +286,11 @@ StructuredGrid::grid_t* atlas__grid__reduced__ReducedGaussian_int( int nx[], lon
 StructuredGrid::grid_t* atlas__grid__reduced__ReducedGaussian_long( long nx[], long ny ) {
     return reduced_gaussian( idx_vector( nx, ny ) );
 }
+
+StructuredGrid::grid_t* atlas__grid__reduced__StretchedRotatedReducedGaussian_int ( int nx[], long ny, double centre[], double stretch) {
+    return reduced_gaussian( idx_vector( nx, ny ), centre, stretch );
+}
+
 }
 
 }  // namespace grid
