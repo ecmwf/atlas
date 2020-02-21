@@ -6,28 +6,25 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-if( ECKIT_INCLUDE_DIRS ) # eckit not yet ported to CMake3
-    include_directories( ${ECKIT_INCLUDE_DIRS} )
-endif()
-
 ecbuild_add_executable(
-  TARGET      atlas-main
-  OUTPUT_NAME atlas
-  SOURCES     atlas.cc
+  TARGET      atlas-loadbalance
+  SOURCES     atlas-loadbalance.cc
   LIBS        atlas )
 
 ecbuild_add_executable(
-  TARGET      atlas-meshgen
-  SOURCES     atlas-meshgen.cc
+  TARGET      atlas-gmsh-extract
+  SOURCES     atlas-gmsh-extract.cc
   LIBS        atlas )
 
 ecbuild_add_executable(
-  TARGET      atlas-grids
-  SOURCES     atlas-grids.cc
-  LIBS        atlas )
+  TARGET      atlas-benchmark
+  SOURCES     atlas-benchmark.cc
+  LIBS        atlas ${OMP_CXX}
+)
 
 ecbuild_add_executable(
-  TARGET      atlas-gaussian-latitudes
-  SOURCES     atlas-gaussian-latitudes.cc
-  LIBS        atlas )
-
+  TARGET      atlas-numerics-nabla
+  SOURCES     atlas-numerics-nabla.F90
+  LIBS        atlas_f ${OMP_Fortran}
+  LINKER_LANGUAGE Fortran
+  CONDITION   HAVE_FORTRAN )

@@ -160,6 +160,8 @@ private:
     Field scalar_field;
     Field grad_field;
 
+    unique_ptr<array::Array> avgS_arr;
+
     std::vector<idx_t> pole_edges;
     std::vector<bool> is_ghost;
 
@@ -299,7 +301,7 @@ void AtlasBenchmark::initial_condition( const Field& field, const double& beta )
         double Ux =
             pvel * ( std::cos( beta ) + std::tan( y ) * std::cos( x ) * std::sin( beta ) ) * radius * std::cos( y );
         double Uy = -pvel * std::sin( x ) * std::sin( beta ) * radius;
-        for ( idx_t jlev = 0; jlev < field.levels(); ++jlev ) {
+        for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
             var( jnode, jlev ) = std::sqrt( Ux * Ux + Uy * Uy );
         }
     }
@@ -410,7 +412,9 @@ void AtlasBenchmark::setup() {
 void AtlasBenchmark::iteration() {
     Trace t( Here() );
     Trace compute( Here(), "compute" );
-    unique_ptr<array::Array> avgS_arr( array::Array::create<double>( nedges, nlev, 2ul ) );
+    if ( !avgS_arr ) {
+        avgS_arr.reset( array::Array::create<double>( nedges, nlev, 2ul ) );
+    }
     const auto& node2edge     = mesh.nodes().edge_connectivity();
     const auto& edge2node     = mesh.edges().node_connectivity();
     const auto field          = array::make_view<double, 2>( scalar_field );
