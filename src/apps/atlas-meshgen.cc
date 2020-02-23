@@ -102,7 +102,8 @@ Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
     add_option( new SimpleOption<bool>( "stats", "Write statistics file" ) );
     add_option( new SimpleOption<bool>( "info", "Write Info" ) );
     add_option( new SimpleOption<bool>( "binary", "Write binary file" ) );
-    add_option( new SimpleOption<std::string>( "generator", "Mesh generator" ) );
+    add_option( new SimpleOption<std::string>(
+        "generator", "Mesh generator [structured,regular,delaunay] (default = structured)" ) );
     add_option( new SimpleOption<std::string>( "partitioner", "Mesh partitioner" ) );
     add_option( new SimpleOption<bool>( "periodic_x", "periodic mesh in x-direction" ) );
     add_option( new SimpleOption<bool>( "periodic_y", "periodic mesh in y-direction" ) );
@@ -164,23 +165,26 @@ int Meshgen2Gmsh::execute( const Args& args ) {
         try {
             grid = Grid( key );
         }
-        catch ( eckit::Exception& ) {
+        catch ( eckit::Exception& e ) {
+            Log::error() << e.what() << std::endl;
+            Log::error() << "Could not generate mesh for grid \"" << key << "\"" << std::endl;
+            return failed();
         }
     }
     else if ( path_in.path().size() ) {
         Log::info() << "Creating grid from file " << path_in << std::endl;
-        Log::debug() << Config( path_in ) << std::endl;
         try {
+            Log::debug() << Config( path_in ) << std::endl;
             grid = Grid( Config( path_in ) );
         }
-        catch ( eckit::Exception& ) {
+        catch ( eckit::Exception& e ) {
+            Log::error() << e.what() << std::endl;
+            Log::error() << "Could not generate mesh for grid defined in file \"" << path_in << "\"" << std::endl;
+            return failed();
         }
     }
     else {
         Log::error() << "No grid specified." << std::endl;
-    }
-
-    if ( !grid ) {
         return failed();
     }
 
@@ -188,17 +192,18 @@ int Meshgen2Gmsh::execute( const Args& args ) {
     Log::debug() << "Periodic: " << grid.periodic() << std::endl;
     Log::debug() << "Spec: " << grid.spec() << std::endl;
 
-    std::string Implementationype = ( RegularGrid( grid ) ? "regular" : "structured" );
-    args.get( "generator", Implementationype );
+    std::string generator = "structured";
+    args.get( "generator", generator );
     eckit::LocalConfiguration meshgenerator_config( args );
     if ( mpi::comm().size() > 1 || edges ) {
         meshgenerator_config.set( "3d", false );
     }
 
-    MeshGenerator meshgenerator( Implementationype, meshgenerator_config );
+    MeshGenerator meshgenerator( generator, meshgenerator_config );
 
     Mesh mesh;
     try {
+        Log::info() << "Generating mesh using " << generator << " generator" << std::endl;
         mesh = meshgenerator.generate( grid );
     }
     catch ( eckit::Exception& e ) {

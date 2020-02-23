@@ -1149,6 +1149,24 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
     idx_t quad_nodes[4];
     idx_t triag_nodes[3];
 
+    const int y_numbering     = ( rg.y().front() < rg.y().back() ) ? +1 : -1;
+    auto fix_quad_orientation = []( idx_t nodes[] ) {
+        idx_t tmp;
+        tmp      = nodes[0];
+        nodes[0] = nodes[1];
+        nodes[1] = tmp;
+        tmp      = nodes[2];
+        nodes[2] = nodes[3];
+        nodes[3] = tmp;
+    };
+    auto fix_triag_orientation = []( idx_t nodes[] ) {
+        idx_t tmp;
+        tmp      = nodes[0];
+        nodes[0] = nodes[1];
+        nodes[1] = tmp;
+    };
+
+
     for ( idx_t jlat = region.north; jlat < region.south; ++jlat ) {
         idx_t ilat  = jlat - region.north;
         idx_t jlatN = jlat;
@@ -1174,6 +1192,10 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
                     }
                 }
 
+                if ( y_numbering > 0 ) {
+                    fix_quad_orientation( quad_nodes );
+                }
+
                 jcell = quad_begin + jquad++;
                 node_connectivity.set( jcell, quad_nodes );
                 cells_glb_idx( jcell ) = jcell + 1;
@@ -1197,6 +1219,9 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
                             triag_nodes[2] = node_numbering.at( offset_loc.at( ilatS ) );
                         }
                     }
+                    if ( y_numbering > 0 ) {
+                        fix_triag_orientation( triag_nodes );
+                    }
                 }
                 else  // This is a triangle pointing down
                 {
@@ -1213,6 +1238,9 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
                         if ( elem( 3 ) == rg.nx( jlatN ) ) {
                             triag_nodes[2] = node_numbering.at( offset_loc.at( ilatN ) );
                         }
+                    }
+                    if ( y_numbering > 0 ) {
+                        fix_triag_orientation( triag_nodes );
                     }
                 }
                 jcell = triag_begin + jtriag++;
@@ -1236,6 +1264,9 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
             triag_nodes[0] = node_numbering.at( jnorth + ip1 );
             triag_nodes[1] = node_numbering.at( offset_loc.at( ilat ) + ip2 );
             triag_nodes[2] = node_numbering.at( offset_loc.at( ilat ) + ip3 );
+            if ( y_numbering > 0 ) {
+                fix_triag_orientation( triag_nodes );
+            }
             node_connectivity.set( jcell, triag_nodes );
             cells_glb_idx( jcell ) = jcell + 1;
             cells_part( jcell )    = mypart;
@@ -1265,6 +1296,9 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
             triag_nodes[0] = node_numbering.at( offset_loc.at( ilat ) + ip1 );
             triag_nodes[1] = node_numbering.at( offset_loc.at( ilat ) + ip2 );
             triag_nodes[2] = node_numbering.at( offset_loc.at( ilat ) + ip3 );
+            if ( y_numbering > 0 ) {
+                fix_triag_orientation( triag_nodes );
+            }
 
             jcell = triag_begin + jtriag++;
             node_connectivity.set( jcell, triag_nodes );
@@ -1302,6 +1336,10 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
             if ( three_dimensional && ip2 == rg.nx( jlat ) ) {
                 triag_nodes[1] = node_numbering.at( offset_loc.at( ilat ) + 0 );
             }
+            if ( y_numbering > 0 ) {
+                fix_triag_orientation( triag_nodes );
+            }
+
             node_connectivity.set( jcell, triag_nodes );
             cells_glb_idx( jcell ) = jcell + 1;
             cells_part( jcell )    = mypart;
@@ -1331,6 +1369,9 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
             triag_nodes[0] = node_numbering.at( offset_loc.at( ilat ) + ip1 );
             triag_nodes[1] = node_numbering.at( offset_loc.at( ilat ) + ip2 );
             triag_nodes[2] = node_numbering.at( offset_loc.at( ilat ) + ip3 );
+            if ( y_numbering > 0 ) {
+                fix_triag_orientation( triag_nodes );
+            }
 
             jcell = triag_begin + jtriag++;
             node_connectivity.set( jcell, triag_nodes );
