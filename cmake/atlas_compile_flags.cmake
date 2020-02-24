@@ -6,6 +6,9 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if( CMAKE_CXX_COMPILER_ID MATCHES Cray )
 
   ecbuild_add_cxx_flags("-hnomessage=3140") # colon separated numbers
@@ -16,9 +19,3 @@ if( CMAKE_CXX_COMPILER_ID MATCHES Cray )
 #          directives, ACC directives, or ASM intrinsics.
 
 endif()
-
-#ecbuild_add_cxx_flags("-Wl,-ydgemm_")
-#ecbuild_add_fortran_flags("-Wl,-ydgemm_")
-#ecbuild_add_cxx_flags("-fsanitize=address")
-#ecbuild_add_cxx_flags("-fsanitize=thread")
-#ecbuild_add_cxx_flags("-fsanitize=memory")
