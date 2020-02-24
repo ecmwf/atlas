@@ -47,7 +47,7 @@ macro( atlas_add_cuda_test )
     ecbuild_critical("Unknown keywords given to atlas_add_cuda_test(): \"${_PAR_UNPARSED_ARGUMENTS}\"")
   endif()
 
-  if( ATLAS_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAS_BACKEND_CUDA AND HAVE_TESTS )
+  if( atlas_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAS_BACKEND_CUDA AND HAVE_TESTS )
 
     ecbuild_debug("atlas_add_cuda_test: Adding test ${_PAR_TARGET}")
 
@@ -94,8 +94,10 @@ if( ECKIT_INCLUDE_DIRS ) # eckit not yet ported to CMake3
   include_directories( ${ECKIT_INCLUDE_DIRS} )
 endif()
 
-if( TRANSI_VERSION VERSION_LESS 0.6 )# transi not yet ported to CMake3
-  include_directories( ${TRANSI_INCLUDE_DIRS} )
+if( NOT DEFINED transi_VERSION )
+  if( TRANSI_VERSION VERSION_LESS 0.6 )# transi not yet ported to CMake3
+    include_directories( ${TRANSI_INCLUDE_DIRS} )
+  endif()
 endif()
 
 if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
@@ -118,3 +120,20 @@ add_subdirectory( trans )
 add_subdirectory( interpolation )
 
 add_subdirectory( acceptance_tests )
+
+ecbuild_add_test( TARGET atlas_test_build_hello_world
+    COMMAND     ${PROJECT_SOURCE_DIR}/doc/example-projects/build_hello_world.sh
+    ENVIRONMENT 
+        atlas_DIR=${PROJECT_BINARY_DIR}
+        CTEST_ARGS=-VV
+        MAKE_ARGS=VERBOSE=1
+)
+
+ecbuild_add_test( TARGET atlas_test_build_hello_world_fortran
+    COMMAND     ${PROJECT_SOURCE_DIR}/doc/example-projects/build_hello_world_fortran.sh
+    CONDITION   atlas_HAVE_FORTRAN
+    ENVIRONMENT 
+        atlas_DIR=${PROJECT_BINARY_DIR}
+        CTEST_ARGS=-VV
+        MAKE_ARGS=VERBOSE=1
+)

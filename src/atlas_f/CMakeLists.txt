@@ -193,7 +193,7 @@ target_link_libraries( atlas_f PUBLIC
 target_link_libraries( atlas_f PUBLIC
   fckit )
 
-if( ATLAS_HAVE_OMP_Fortran )
+if( atlas_HAVE_OMP_Fortran )
   target_link_libraries( atlas_f PRIVATE OpenMP::OpenMP_Fortran )
 endif()
 

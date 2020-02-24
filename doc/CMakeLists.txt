@@ -6,7 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-if(ATLAS_HAVE_DOCS)
+if(atlas_HAVE_DOCS)
 
 add_subdirectory(user-guide)
 
@@ -20,7 +20,7 @@ list( APPEND DOC_CODE_TARGETS
   atlas_c-NodeColumns
   atlas_c-StructuredColumns
 )
-if( ATLAS_HAVE_FORTRAN )
+if( atlas_HAVE_FORTRAN )
   list( APPEND DOC_CODE_TARGETS
     atlas_f-hello-world
     atlas_f-global-grids-Structured

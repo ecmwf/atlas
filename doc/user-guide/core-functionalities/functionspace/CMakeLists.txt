@@ -22,7 +22,7 @@ set_target_properties(atlas_c-NodeColumns
                       atlas_c-StructuredColumns
                       PROPERTIES EXCLUDE_FROM_ALL ${ENABLE_TESTS} )
 
-if( ATLAS_HAVE_FORTRAN )
+if( atlas_HAVE_FORTRAN )
 
 ecbuild_add_executable(
   TARGET      atlas_f-NodeColumns

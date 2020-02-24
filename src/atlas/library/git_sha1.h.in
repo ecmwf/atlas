@@ -10,7 +10,7 @@
 
 #pragma once
 
-#define ATLAS_GIT_SHA1 "@ATLAS_GIT_SHA1@"
+#define ATLAS_GIT_SHA1 "@atlas_GIT_SHA1@"
 
 #include <algorithm>
 #include <string>

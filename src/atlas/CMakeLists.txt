@@ -233,13 +233,13 @@ grid/detail/pl/classic_gaussian/N2000.cc  # TL3999
 grid/detail/pl/classic_gaussian/N4000.cc  # TL7999
 grid/detail/pl/classic_gaussian/N8000.cc  # TL15999
 )
-if( ATLAS_HAVE_TRANS )
+if( atlas_HAVE_TRANS )
 list( APPEND atlas_grid_srcs
   grid/detail/partitioner/TransPartitioner.h
   grid/detail/partitioner/TransPartitioner.cc
 )
 endif()
-if( ATLAS_HAVE_PROJ )
+if( atlas_HAVE_PROJ )
 list( APPEND atlas_grid_srcs
   projection/detail/ProjProjection.cc
   projection/detail/ProjProjection.h
@@ -430,7 +430,7 @@ trans/detail/TransImpl.cc
 trans/detail/TransInterface.h
 trans/detail/TransInterface.cc
 )
-if( ATLAS_HAVE_TRANS )
+if( atlas_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs
   trans/ifs/LegendreCacheCreatorIFS.h
   trans/ifs/LegendreCacheCreatorIFS.cc
@@ -539,7 +539,7 @@ array/helpers/ArraySlicer.h
 #array/TableView.h
 #array/TableView.cc
 )
-if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+if( atlas_HAVE_GRIDTOOLS_STORAGE )
 list( APPEND atlas_array_srcs
 array/gridtools/GPUClonable.h
 array/gridtools/GridToolsArray.cc
@@ -627,7 +627,7 @@ util/Allocate.cc
 
 ### atlas c++ library
 
-if( NOT ATLAS_HAVE_TRANS )
+if( NOT atlas_HAVE_TRANS )
   unset( TRANSI_INCLUDE_DIRS )
   unset( TRANSI_LIBRARIES )
 endif()
@@ -686,48 +686,27 @@ ecbuild_add_library( TARGET atlas
   SOURCES
     ${source_list}
 )
-if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
-  target_link_libraries(atlas PUBLIC GridTools::gridtools)
-endif( ATLAS_HAVE_GRIDTOOLS_STORAGE )
 
-if( ATLAS_HAVE_FORTRAN )
+if( atlas_HAVE_FORTRAN )
   target_link_libraries( atlas PRIVATE fckit )
 endif()
 
-if( ATLAS_HAVE_TRANS )
-  if( TRANSI_VERSION VERSION_LESS 0.6 )
+if( atlas_HAVE_TRANS )
     target_link_libraries( atlas PRIVATE transi )
-    target_include_directories( atlas PRIVATE ${TRANSI_INCLUDE_DIRS} )
-  else()
-    if( MIR_NEEDS_TRANSI )
-      target_link_libraries( atlas PUBLIC transi ) # Can become private when MIR doesn't use transi_version()
-    else()
-      target_link_libraries( atlas PRIVATE transi )
-    endif()
-  endif()
 endif()
 
-if( ATLAS_HAVE_PROJ )
+if( atlas_HAVE_PROJ )
     target_link_libraries( atlas PRIVATE ${PROJ4_LIBRARIES} )
     target_include_directories( atlas PRIVATE ${PROJ4_INCLUDE_DIRS} )
 endif()
 
-if( eckit_VERSION )
-    set( eckit_link_public PUBLIC )
-else()
-    set( eckit_link_public PRIVATE )
-endif()
-
-target_link_libraries( atlas ${eckit_link_public}
+target_link_libraries( atlas PUBLIC
   eckit
   eckit_geometry
   eckit_linalg
   eckit_mpi
   eckit_option
 )
-if( ECKIT_INCLUDE_DIRS )
-    target_include_directories( atlas PRIVATE ${ECKIT_INCLUDE_DIRS} )
-endif()
 
 target_include_directories( atlas PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
@@ -735,31 +714,30 @@ target_include_directories( atlas PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-
-
-if( ATLAS_HAVE_TESSELATION )
+if( atlas_HAVE_TESSELATION )
   target_link_libraries( atlas PRIVATE ${CGAL_LIBRARIES} )
   target_include_directories( atlas PRIVATE ${CGAL_INCLUDE_DIRS} )
 endif()
 
-if( ATLAS_HAVE_FFTW )
+if( atlas_HAVE_FFTW )
   target_link_libraries( atlas PRIVATE ${FFTW_LIBRARIES} )
   target_include_directories( atlas PRIVATE ${FFTW_INCLUDES} )
 endif()
 
-if( ATLAS_HAVE_EIGEN AND EIGEN3_INCLUDE_DIR )
-  target_include_directories( atlas PUBLIC ${EIGEN3_INCLUDE_DIR} )
+if( atlas_HAVE_EIGEN )
+  target_link_libraries( atlas PUBLIC Eigen3::Eigen )
 endif()
 
-if( ATLAS_HAVE_OMP_CXX )
-  target_link_libraries( atlas PRIVATE OpenMP::OpenMP_CXX )
+if( atlas_HAVE_OMP_CXX )
+  target_link_libraries( atlas PUBLIC OpenMP::OpenMP_CXX )
 endif()
 
-if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+if( atlas_HAVE_GRIDTOOLS_STORAGE )
   target_link_libraries( atlas PUBLIC GridTools::gridtools )
 endif()
 
-if( ATLAS_HAVE_ACC )
+if( atlas_HAVE_ACC )
   target_link_libraries( atlas PRIVATE atlas_acc_support )
 endif()
 
+target_compile_features( atlas PUBLIC cxx_std_11 )

@@ -30,7 +30,7 @@ if( CGAL_FOUND )
 
 endif()
 
-if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+if( atlas_HAVE_GRIDTOOLS_STORAGE )
 
     ecbuild_info( "GRIDTOOLS_STORAGE" )
     if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST )
@@ -51,7 +51,7 @@ if( CUDA_FOUND )
 
 endif()
 
-if( ATLAS_HAVE_ACC )
+if( atlas_HAVE_ACC )
 
     ecbuild_info( "ACC" )
     ecbuild_info( "    ACC_C_COMPILER     : [${ACC_C_COMPILER}]" )
