@@ -22,11 +22,6 @@ ecbuild_add_option(
 
 if( atlas_HAVE_GRIDTOOLS_STORAGE )
 
-  if( TARGET gridtools )
-    # Fix gridtools export name. Otherwise "gridtools" will be in the INTERFACE_LINK_LIBRARIES of atlas in atlas-targets.cmake
-    set_target_properties( gridtools PROPERTIES EXPORT_NAME GridTools::gridtools )
-   endif()
-
   set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
   set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
 
