@@ -46,8 +46,6 @@ namespace detail {
 
 namespace {
 
-static double rad2deg = util::Constants::radiansToDegrees();
-
 class GmshFile : public std::ofstream {
 public:
     GmshFile( const PathName& file_path, std::ios_base::openmode mode, int part = static_cast<int>( mpi::rank() ) ) {
@@ -751,7 +749,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
         // Now read all elements
         file.seekg( position, std::ios::beg );
         int gn0, gn1, gn2, gn3;
-        int quad = 0, triag = 0, edge = 0;
+        int quad = 0, triag = 0;
         int ntags, tags[100];
         for ( int e = 0; e < nb_elements; ++e ) {
             file >> g >> etype >> ntags;

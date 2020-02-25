@@ -140,7 +140,7 @@ void update_connectivity( mesh::HybridElements::Connectivity& connectivity, cons
 // ------------------------------------------------------------------
 
 void reorder_connectivity( BlockConnectivity& connectivity, const std::vector<idx_t>& order ) {
-    ATLAS_ASSERT( connectivity.rows() == order.size() );
+    ATLAS_ASSERT( connectivity.rows() == static_cast<idx_t>( order.size() ) );
     BlockConnectivity tmp;
     tmp.add( connectivity.rows(), connectivity.cols(), connectivity.data(), true );
     for ( idx_t r = 0; r < connectivity.rows(); ++r ) {

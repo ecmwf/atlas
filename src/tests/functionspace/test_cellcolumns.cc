@@ -72,6 +72,7 @@ void check_field_values( const Mesh& mesh, Field& field ) {
     const size_t nb_cells = mesh.cells().size();
     for ( size_t j = 0; j < nb_cells; ++j ) {
         EXPECT( value( j ) == partition( j ) );
+        EXPECT( halo( j ) == 0 );
     }
 }
 

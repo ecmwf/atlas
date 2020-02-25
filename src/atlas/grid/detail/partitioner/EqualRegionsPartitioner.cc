@@ -619,9 +619,11 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                 atlas_omp_parallel {
                     const idx_t num_threads = atlas_omp_get_num_threads();
                     const idx_t thread_num  = atlas_omp_get_thread_num();
-                    const idx_t begin       = thread_num * size_t( structured_grid.size() ) / num_threads;
-                    const idx_t end         = ( thread_num + 1 ) * size_t( structured_grid.size() ) / num_threads;
-                    idx_t thread_j_begin    = 0;
+                    const idx_t begin =
+                        static_cast<idx_t>( thread_num * size_t( structured_grid.size() ) / num_threads );
+                    const idx_t end =
+                        static_cast<idx_t>( ( thread_num + 1 ) * size_t( structured_grid.size() ) / num_threads );
+                    idx_t thread_j_begin = 0;
                     std::vector<idx_t> thread_i_begin( structured_grid.ny() );
                     std::vector<idx_t> thread_i_end( structured_grid.ny() );
                     idx_t n = 0;
@@ -633,7 +635,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                         }
                         n += structured_grid.nx( j );
                     }
-                    idx_t thread_j_end;
+                    idx_t thread_j_end{thread_j_begin};
                     for ( idx_t j = thread_j_begin; j < structured_grid.ny(); ++j ) {
                         idx_t i_end = end - n;
                         if ( j > thread_j_begin ) {
@@ -651,7 +653,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                     }
                     int nn = begin;
                     for ( idx_t j = thread_j_begin; j < thread_j_end; ++j ) {
-                        double y = microdeg( structured_grid.y( j ) );
+                        int y = microdeg( structured_grid.y( j ) );
                         for ( idx_t i = thread_i_begin[j]; i < thread_i_end[j]; ++i, ++nn ) {
                             nodes[nn].x = microdeg( structured_grid.x( i, j ) );
                             nodes[nn].y = y;
@@ -664,7 +666,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
             else {
                 int n( 0 );
                 for ( idx_t j = 0; j < structured_grid.ny(); ++j ) {
-                    double y = microdeg( structured_grid.y( j ) );
+                    int y = microdeg( structured_grid.y( j ) );
                     for ( idx_t i = 0; i < structured_grid.nx( j ); ++i, ++n ) {
                         nodes[n].x = microdeg( structured_grid.x( i, j ) );
                         nodes[n].y = y;
@@ -678,12 +680,12 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
             std::vector<eckit::mpi::Request> requests;
 
             for ( int w = 0; w < nb_workers; ++w ) {
-                int w_begin = w * grid.size() / N_;
-                int w_end   = ( w + 1 ) * grid.size() / N_;
+                idx_t w_begin = w * grid.size() / N_;
+                idx_t w_end   = ( w + 1 ) * grid.size() / N_;
                 if ( w == nb_workers - 1 ) {
                     w_end = grid.size();
                 }
-                size_t w_size = w_end - w_begin;
+                idx_t w_size = w_end - w_begin;
 
                 int work_rank = std::min( w, mpi_size - 1 );
 
@@ -701,8 +703,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                         if ( true )  // optimized experimental when true (still need to
                                      // benchmark)
                         {
-                            auto filter = [w_begin, w_end]( long n ) { return ( n >= w_begin && n < w_end ); };
-                            int i       = w_begin;
+                            int i = w_begin;
                             int j( 0 );
                             for ( const PointXY& point : subrange( grid.xy(), {w_begin, w_end} ) ) {
                                 w_nodes[j].x = microdeg( point.x() );

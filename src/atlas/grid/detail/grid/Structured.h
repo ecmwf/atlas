@@ -97,12 +97,13 @@ private:
         }
 
         virtual const Base& operator+=( typename Base::difference_type distance ) {
-            while ( j_ != ny_ && distance >= ( grid_.nx( j_ ) - i_ ) ) {
-                distance -= ( grid_.nx( j_ ) - i_ );
+            idx_t d = distance;
+            while ( j_ != ny_ && d >= ( grid_.nx( j_ ) - i_ ) ) {
+                d -= ( grid_.nx( j_ ) - i_ );
                 ++j_;
                 i_ = 0;
             }
-            i_ += distance;
+            i_ += d;
             compute_point( i_, j_, point_ );
             return *this;
         }

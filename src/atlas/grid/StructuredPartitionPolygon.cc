@@ -337,7 +337,7 @@ void StructuredPartitionPolygon::outputPythonScript( const eckit::PathName& file
 
     double xmin = std::numeric_limits<double>::max();
     double xmax = -std::numeric_limits<double>::max();
-    for ( idx_t i = 0; i < points.size(); ++i ) {
+    for ( size_t i = 0; i < points.size(); ++i ) {
         xmin = std::min( xmin, points[i][XX] );
         xmax = std::max( xmax, points[i][XX] );
     }
@@ -378,7 +378,7 @@ void StructuredPartitionPolygon::outputPythonScript( const eckit::PathName& file
                      "\n";
             }
             f << "\n" "verts_" << r << " = [";
-            for ( idx_t i=0; i<points.size(); ++i ) {
+            for ( size_t i=0; i<points.size(); ++i ) {
                 f << "\n  (" << points[i][XX] << ", " << points[i][YY] << "), ";
             }
             f << "\n]"

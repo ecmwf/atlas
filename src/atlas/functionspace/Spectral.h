@@ -98,14 +98,14 @@ public:
             truncation{fs.truncation()},
             zonal_wavenumbers{fs.zonal_wavenumbers()},
             global{config.getBool( "global", false )},
-            owner{config.getUnsigned( "owner", 0 )} {}
+            owner{config.getInt( "owner", 0 )} {}
 
     protected:
         using View = const array::LocalView<int, 1, array::Intent::ReadOnly>;
         int truncation;
         View zonal_wavenumbers;
         bool global;
-        size_t owner;
+        idx_t owner;
 
     public:
 #define FunctorArgs( ... )                                                                                             \

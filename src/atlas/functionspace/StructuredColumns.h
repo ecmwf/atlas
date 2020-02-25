@@ -96,13 +96,13 @@ public:
         For( const StructuredColumns& fs, const util::Config& config = util::NoConfig() ) :
             fs_{fs},
             global{config.getBool( "global", false )},
-            owner{config.getUnsigned( "owner", 0 )},
+            owner{config.getInt( "owner", 0 )},
             levels{config.getInt( "levels", fs_.levels() )} {}
 
     protected:
         const StructuredColumns& fs_;
         bool global;
-        size_t owner;
+        idx_t owner;
         idx_t levels;
 
     public:

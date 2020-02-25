@@ -27,9 +27,15 @@ public:
 public:
     vector() = default;
 
-    vector( idx_t size ) { resize( size ); }
+    template <typename size_t>
+    vector( size_t size ) {
+        resize( size );
+    }
 
-    vector( idx_t size, const value_type& value ) : vector( size ) { assign( size, value ); }
+    template <typename size_t>
+    vector( size_t size, const value_type& value ) : vector( size ) {
+        assign( size, value );
+    }
 
     vector( vector&& other ) : data_( other.data_ ), size_( other.size_ ) {
         other.data_     = nullptr;
@@ -43,6 +49,7 @@ public:
         }
     }
 
+    template <typename idx_t>
     T& at( idx_t i ) noexcept( false ) {
         if ( i >= size_ ) {
             throw_OutOfRange( "atlas::vector", i, size_ );
@@ -50,6 +57,7 @@ public:
         return data_[i];
     }
 
+    template <typename idx_t>
     T const& at( idx_t i ) const noexcept( false ) {
         if ( i >= size_ ) {
             throw_OutOfRange( "atlas::vector", i, size_ );
@@ -57,6 +65,7 @@ public:
         return data_[i];
     }
 
+    template <typename idx_t>
     T& operator[]( idx_t i ) {
 #if ATLAS_VECTOR_BOUNDS_CHECKING
         return at( i );
@@ -65,6 +74,7 @@ public:
 #endif
     }
 
+    template <typename idx_t>
     T const& operator[]( idx_t i ) const {
 #if ATLAS_VECTOR_BOUNDS_CHECKING
         return at( i );
@@ -91,18 +101,20 @@ public:
         omp::copy( first, last, begin() );
     }
 
-    void reserve( idx_t size ) {
+    template <typename Size>
+    void reserve( Size size ) {
         if ( capacity_ != 0 )
             ATLAS_NOTIMPLEMENTED;
         data_     = new T[size];
         capacity_ = size;
     }
-    void resize( idx_t size ) {
-        if ( size > 0 ) {
+    template <typename size_t>
+    void resize( size_t size ) {
+        if ( static_cast<idx_t>( size ) > 0 ) {
             if ( capacity_ == 0 ) {
                 reserve( size );
             }
-            if ( size > capacity_ ) {
+            if ( static_cast<idx_t>( size ) > capacity_ ) {
                 ATLAS_NOTIMPLEMENTED;
             }
             size_ = size;

@@ -487,7 +487,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
         }
     }
 
-    size_t root  = 0;
+    idx_t root   = 0;
     Field global = fs.createField( field, option::name( "global" ) | option::global() );
 
     fs.gather( field, global );

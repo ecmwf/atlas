@@ -37,11 +37,11 @@ namespace {
 struct GridPoint {
 public:
     idx_t i, j;
-    idx_t r;
+    size_t r;
 
     GridPoint() = default;
     GridPoint( idx_t _i, idx_t _j ) : i( _i ), j( _j ) {}
-    GridPoint( idx_t _i, idx_t _j, idx_t _r ) : i( _i ), j( _j ), r( _r ) {}
+    GridPoint( idx_t _i, idx_t _j, size_t _r ) : i( _i ), j( _j ), r( _r ) {}
 
     /* No longer used:
 
@@ -65,7 +65,7 @@ public:
 
     void reserve( size_t size ) { gp_.reserve( size ); }
     void resize( size_t size ) { gp_.resize( size ); }
-    void set( idx_t i, idx_t j, idx_t r ) {
+    void set( idx_t i, idx_t j, size_t r ) {
         gp_[r].i = i;
         gp_[r].j = j;
         gp_[r].r = r;
@@ -88,7 +88,6 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
     if ( not( *grid_ ) ) {
         throw_Exception( "Grid is not a grid::Structured type", Here() );
     }
-    const eckit::mpi::Comm& comm = mpi::comm();
 
     const double eps = 1.e-12;
 
@@ -159,7 +158,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                         }
                         n += grid_->nx( j );
                     }
-                    idx_t thread_j_end;
+                    idx_t thread_j_end{thread_j_begin};
                     for ( idx_t j = thread_j_begin; j < grid_->ny(); ++j ) {
                         idx_t i_end = end - n;
                         if ( j > thread_j_begin ) {
@@ -447,20 +446,20 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                     std::vector<idx_t> thread_i_end( grid_->ny() );
                     size_t n = 0;
                     for ( idx_t j = j_begin_; j < j_end_; ++j ) {
-                        idx_t j_size = ( i_end_[j] - i_begin_[j] );
+                        size_t j_size = static_cast<size_t>( i_end_[j] - i_begin_[j] );
                         if ( n + j_size > begin ) {
                             thread_j_begin    = j;
-                            thread_i_begin[j] = i_begin_[j] + begin - n;
+                            thread_i_begin[j] = i_begin_[j] + static_cast<idx_t>( begin - n );
                             break;
                         }
                         n += j_size;
                     }
-                    idx_t thread_j_end;
+                    idx_t thread_j_end{thread_j_begin};
                     for ( idx_t j = thread_j_begin; j < j_end_; ++j ) {
                         if ( j > thread_j_begin ) {
                             thread_i_begin[j] = i_begin_[j];
                         }
-                        idx_t remaining = end - n;
+                        idx_t remaining = static_cast<idx_t>( end - n );
                         idx_t j_size    = ( i_end_[j] - i_begin_[j] );
                         if ( remaining > j_size ) {
                             thread_i_end[j] = i_end_[j];
@@ -473,7 +472,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                         }
                     }
 
-                    idx_t r = begin;
+                    size_t r = begin;
                     for ( idx_t j = thread_j_begin; j < thread_j_end; ++j ) {
                         for ( idx_t i = thread_i_begin[j]; i < thread_i_end[j]; ++i, ++r ) {
                             gridpoints.set( i, j, r );

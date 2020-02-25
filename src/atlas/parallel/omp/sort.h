@@ -195,7 +195,7 @@ void merge_blocks( RandomAccessIterator first, RandomAccessIterator last, Random
     size_type nb_blocks = std::distance( blocks_size_first, blocks_size_last );
     std::vector<size_type> blocks_displs( nb_blocks + 1 );
     blocks_displs[0] = 0;
-    for ( int i = 1; i < blocks_displs.size(); ++i ) {
+    for ( size_t i = 1; i < blocks_displs.size(); ++i ) {
         blocks_displs[i] = blocks_displs[i - 1] + blocks_size_first[i - 1];
     }
 #if ATLAS_HAVE_OMP_SORTING

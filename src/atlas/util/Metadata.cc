@@ -42,22 +42,22 @@ size_t Metadata::footprint() const {
 }
 
 void Metadata::broadcast() {
-    size_t root = 0;
+    idx_t root = 0;
     get( "owner", root );
     broadcast( *this, root );
 }
 
-void Metadata::broadcast( const size_t root ) {
+void Metadata::broadcast( idx_t root ) {
     broadcast( *this, root );
 }
 
 void Metadata::broadcast( Metadata& dest ) {
-    size_t root = 0;
+    idx_t root = 0;
     get( "owner", root );
     broadcast( dest, root );
 }
 
-void Metadata::broadcast( Metadata& dest, const size_t root ) {
+void Metadata::broadcast( Metadata& dest, idx_t root ) {
     std::string buffer;
     int buffer_size{0};
     if ( mpi::rank() == root ) {
@@ -66,7 +66,7 @@ void Metadata::broadcast( Metadata& dest, const size_t root ) {
         json.precision( 17 );
         json << *this;
         buffer      = s.str();
-        buffer_size = buffer.size();
+        buffer_size = static_cast<int>( buffer.size() );
     }
 
     ATLAS_TRACE_MPI( BROADCAST ) { atlas::mpi::comm().broadcast( buffer_size, root ); }
@@ -86,12 +86,12 @@ void Metadata::broadcast( Metadata& dest, const size_t root ) {
 }
 
 void Metadata::broadcast( Metadata& dest ) const {
-    size_t root = 0;
+    idx_t root = 0;
     get( "owner", root );
     broadcast( dest, root );
 }
 
-void Metadata::broadcast( Metadata& dest, const size_t root ) const {
+void Metadata::broadcast( Metadata& dest, idx_t root ) const {
     std::string buffer;
     int buffer_size{0};
     if ( mpi::rank() == root ) {
@@ -100,7 +100,7 @@ void Metadata::broadcast( Metadata& dest, const size_t root ) const {
         json.precision( 17 );
         json << *this;
         buffer      = s.str();
-        buffer_size = buffer.size();
+        buffer_size = static_cast<int>( buffer.size() );
     }
 
     ATLAS_TRACE_MPI( BROADCAST ) { mpi::comm().broadcast( buffer_size, root ); }
@@ -180,7 +180,7 @@ void atlas__Metadata__set_array_double( Metadata* This, const char* name, double
 }
 int atlas__Metadata__get_int( Metadata* This, const char* name ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Metadata" );
-    return This->get<long>( std::string( name ) );
+    return This->get<int>( std::string( name ) );
 }
 long atlas__Metadata__get_long( Metadata* This, const char* name ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Metadata" );
@@ -210,7 +210,7 @@ void atlas__Metadata__get_string( Metadata* This, const char* name, char* output
 void atlas__Metadata__get_array_int( Metadata* This, const char* name, int*& value, int& size, int& allocated ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Metadata" );
     std::vector<int> v = This->get<std::vector<int>>( std::string( name ) );
-    size               = v.size();
+    size               = static_cast<int>( v.size() );
     value              = new int[size];
     for ( size_t j = 0; j < v.size(); ++j ) {
         value[j] = v[j];
@@ -220,7 +220,7 @@ void atlas__Metadata__get_array_int( Metadata* This, const char* name, int*& val
 void atlas__Metadata__get_array_long( Metadata* This, const char* name, long*& value, int& size, int& allocated ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Metadata" );
     std::vector<long> v = This->get<std::vector<long>>( std::string( name ) );
-    size                = v.size();
+    size                = static_cast<int>( v.size() );
     value               = new long[size];
     for ( size_t j = 0; j < v.size(); ++j ) {
         value[j] = v[j];
@@ -230,7 +230,7 @@ void atlas__Metadata__get_array_long( Metadata* This, const char* name, long*& v
 void atlas__Metadata__get_array_float( Metadata* This, const char* name, float*& value, int& size, int& allocated ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Metadata" );
     std::vector<float> v = This->get<std::vector<float>>( std::string( name ) );
-    size                 = v.size();
+    size                 = static_cast<int>( v.size() );
     value                = new float[size];
     for ( size_t j = 0; j < v.size(); ++j ) {
         value[j] = v[j];
@@ -240,7 +240,7 @@ void atlas__Metadata__get_array_float( Metadata* This, const char* name, float*&
 void atlas__Metadata__get_array_double( Metadata* This, const char* name, double*& value, int& size, int& allocated ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Metadata" );
     std::vector<double> v = This->get<std::vector<double>>( std::string( name ) );
-    size                  = v.size();
+    size                  = static_cast<int>( v.size() );
     value                 = new double[size];
     for ( size_t j = 0; j < v.size(); ++j ) {
         value[j] = v[j];
@@ -265,7 +265,7 @@ void atlas__Metadata__json( Metadata* This, char*& json, int& size, int& allocat
     j.precision( 16 );
     j << *This;
     std::string json_str = s.str();
-    size                 = json_str.size();
+    size                 = static_cast<int>( json_str.size() );
     json                 = new char[size + 1];
     allocated            = true;
     strcpy( json, json_str.c_str() );

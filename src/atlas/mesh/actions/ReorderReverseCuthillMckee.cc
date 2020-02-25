@@ -68,7 +68,7 @@ public:
 
         NotVisited_t not_visited;
 
-        for ( int i = 0; i < degrees.size(); i++ ) {
+        for ( size_t i = 0; i < degrees.size(); i++ ) {
             not_visited.emplace_back( i, degrees[i] );
         }
 

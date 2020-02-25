@@ -82,7 +82,7 @@ private:  // data
 template <typename DATA_TYPE>
 std::string Checksum::execute( const DATA_TYPE data[], const int var_strides[], const int var_extents[],
                                const int var_rank ) const {
-    size_t root = 0;
+    idx_t root = 0;
 
     if ( !is_setup_ ) {
         throw_Exception( "Checksum was not setup", Here() );

@@ -154,7 +154,7 @@ gidx_t Hilbert::recursive_algorithm( const PointXY& p, const box_t& box, idx_t l
         return avg;
     };
 
-    idx_t quadrant;
+    idx_t quadrant{0};
     for ( idx_t idx = 0; idx < 4; ++idx ) {
         // double distance = box[idx].distance2( p );  // does not compile with eckit 1.3.2
         double distance = compute_distance2( p, box[idx] );  // workaround

@@ -206,7 +206,7 @@ void BuildConvexHull3D::operator()( Mesh& mesh ) const {
     //    std::cout << "convex hull " << poly->size_of_vertices() << " vertices"
     //    << std::endl;
 
-    ATLAS_ASSERT( poly->size_of_vertices() == ipts.size() );
+    ATLAS_ASSERT( poly->size_of_vertices() == static_cast<idx_t>( ipts.size() ) );
 
     cgal_polyhedron_to_atlas_mesh( mesh, *poly, points );
 }

@@ -30,7 +30,7 @@ bool operator==( const std::vector<PointLonLat>& ll, const std::vector<PointXY>&
     if ( ll.size() != xy.size() ) {
         return false;
     }
-    for ( idx_t i = 0; i < xy.size(); ++i ) {
+    for ( size_t i = 0; i < xy.size(); ++i ) {
         if ( ll[i] != xy[i] ) {
             return false;
         }
@@ -59,14 +59,14 @@ CASE( "test_iterator" ) {
         for ( const PointXY& xy : grid.xy() ) {
             points_xy.push_back( xy );
         }
-        EXPECT( points_xy.size() == grid.size() );
+        EXPECT( points_xy.size() == static_cast<size_t>( grid.size() ) );
         EXPECT( points_xy == points );
 
         // Iteration of lonlat in range-based for
         for ( const PointLonLat& ll : grid.lonlat() ) {
             points_lonlat.push_back( ll );
         }
-        EXPECT( points_lonlat.size() == grid.size() );
+        EXPECT( points_lonlat.size() == static_cast<size_t>( grid.size() ) );
         EXPECT( points_lonlat == points );
 
 
