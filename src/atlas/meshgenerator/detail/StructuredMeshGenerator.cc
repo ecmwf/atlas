@@ -302,7 +302,7 @@ end_south:
     for ( idx_t jlat = 0; jlat < rg.ny(); ++jlat ) {
         offset.at( jlat ) = n;
         n += rg.nx( jlat );
-    };
+    }
 
     /*
 We need to connect to next region
@@ -570,7 +570,7 @@ We need to connect to next region
                 std::array<int, 4> np{pN1, pN2, pS1, pS2};
                 std::array<int, 4> pcnts;
                 for ( int j = 0; j < 4; ++j ) {
-                    pcnts[j] = std::count( np.begin(), np.end(), np[j] );
+                    pcnts[j] = static_cast<int>( std::count( np.begin(), np.end(), np[j] ) );
                 }
                 if ( pcnts[0] > 2 ) {  // 3 or more of pN1
                     pE = pN1;
@@ -883,7 +883,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
     for ( idx_t jlat = 0; jlat < rg.ny(); ++jlat ) {
         offset_glb.at( jlat ) = n;
         n += rg.nx( jlat );
-    };
+    }
 
     std::vector<int> periodic_glb( rg.ny() );
 
@@ -1065,7 +1065,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
                 --l;
             }
         }
-    };
+    }
 
     idx_t jnorth = -1;
     if ( include_north_pole ) {

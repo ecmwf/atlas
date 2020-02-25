@@ -37,11 +37,11 @@ namespace {
 struct GridPoint {
 public:
     idx_t i, j;
-    size_t r;
+    idx_t r;
 
     GridPoint() = default;
     GridPoint( idx_t _i, idx_t _j ) : i( _i ), j( _j ) {}
-    GridPoint( idx_t _i, idx_t _j, size_t _r ) : i( _i ), j( _j ), r( _r ) {}
+    GridPoint( idx_t _i, idx_t _j, idx_t _r ) : i( _i ), j( _j ), r( _r ) {}
 
     /* No longer used:
 
@@ -65,7 +65,7 @@ public:
 
     void reserve( size_t size ) { gp_.reserve( size ); }
     void resize( size_t size ) { gp_.resize( size ); }
-    void set( idx_t i, idx_t j, size_t r ) {
+    void set( idx_t i, idx_t j, idx_t r ) {
         gp_[r].i = i;
         gp_[r].j = j;
         gp_[r].r = r;
@@ -144,9 +144,11 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                 std::vector<idx_t> thread_reduce_owned( num_threads, 0 );
                 atlas_omp_parallel {
                     const idx_t thread_num = atlas_omp_get_thread_num();
-                    const idx_t begin      = size_t( thread_num ) * size_t( grid_->size() ) / size_t( num_threads );
-                    const idx_t end        = size_t( thread_num + 1 ) * size_t( grid_->size() ) / size_t( num_threads );
-                    idx_t thread_j_begin   = 0;
+                    const idx_t begin =
+                        static_cast<int>( size_t( thread_num ) * size_t( grid_->size() ) / size_t( num_threads ) );
+                    const idx_t end =
+                        static_cast<int>( size_t( thread_num + 1 ) * size_t( grid_->size() ) / size_t( num_threads ) );
+                    idx_t thread_j_begin = 0;
                     std::vector<idx_t> thread_i_begin( grid_->ny() );
                     std::vector<idx_t> thread_i_end( grid_->ny() );
                     idx_t n = 0;
@@ -271,10 +273,9 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         return x;
     };
 
-    auto compute_i_less_equal_x = [this, &compute_x_fast, &eps]( const double& x, idx_t j, idx_t nx,
-                                                                 idx_t halo ) -> idx_t {
+    auto compute_i_less_equal_x = [this, &eps]( const double& x, idx_t j ) -> idx_t {
         const double dx = grid_->xspace().dx()[j];
-        idx_t i         = std::floor( ( x + eps - grid_->xspace().xmin()[j] ) / dx );
+        idx_t i         = idx_t( std::floor( ( x + eps - grid_->xspace().xmin()[j] ) / dx ) );
         return i;
     };
 
@@ -372,7 +373,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                         //     ii++;
                         // }
                         // Question: is following implementation reproducible with above original while loop?
-                        idx_t ii = compute_i_less_equal_x( x, jjj, nx_jjj, halo );
+                        idx_t ii = compute_i_less_equal_x( x, jjj );
 
                         // ATLAS-186 workaround
                         // This while should not have to be there, but is here because of
@@ -472,19 +473,19 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                         }
                     }
 
-                    size_t r = begin;
+                    idx_t r = idx_t( begin );
                     for ( idx_t j = thread_j_begin; j < thread_j_end; ++j ) {
                         for ( idx_t i = thread_i_begin[j]; i < thread_i_end[j]; ++i, ++r ) {
                             gridpoints.set( i, j, r );
                         }
                     }
-                    if ( r != end ) {
+                    if ( r != idx_t( end ) ) {
                         ATLAS_DEBUG_VAR( thread_num );
                         ATLAS_DEBUG_VAR( begin );
                         ATLAS_DEBUG_VAR( end );
                         ATLAS_DEBUG_VAR( r );
                     }
-                    ATLAS_ASSERT( r == end );
+                    ATLAS_ASSERT( r == idx_t( end ) );
                 }
             }
 
