@@ -60,7 +60,7 @@ public:
     ArrayView( const ArrayView& other );
     ArrayView( data_view_t data_view, const Array& array );
 
-    value_type* data() { return gt_data_view_.data(); }
+    return_type* data() { return gt_data_view_.data(); }
     value_type const* data() const { return gt_data_view_.data(); }
 
     template <typename... Coords, typename = typename std::enable_if<( sizeof...( Coords ) == Rank ), int>::type>
@@ -70,20 +70,19 @@ public:
     }
 
     template <typename... Coords, typename = typename std::enable_if<( sizeof...( Coords ) == Rank ), int>::type>
-    ATLAS_HOST_DEVICE value_type const& operator()( Coords... c ) const {
+    ATLAS_HOST_DEVICE return_type const& operator()( Coords... c ) const {
         assert( sizeof...( Coords ) == Rank );
         return gt_data_view_( c... );
     }
 
     template <typename Int, bool EnableBool = true>
-    ATLAS_HOST_DEVICE typename std::enable_if<( Rank == 1 && EnableBool ), const value_type&>::type operator[](
+    ATLAS_HOST_DEVICE typename std::enable_if<( Rank == 1 && EnableBool ), const return_type&>::type operator[](
         Int idx ) const {
         return gt_data_view_( idx );
     }
 
     template <typename Int, bool EnableBool = true>
-    ATLAS_HOST_DEVICE typename std::enable_if<( Rank == 1 && EnableBool ), value_type&>::type operator[]( Int idx ) {
-        check_bounds( idx );
+    ATLAS_HOST_DEVICE typename std::enable_if<( Rank == 1 && EnableBool ), return_type&>::type operator[]( Int idx ) {
         return gt_data_view_( idx );
     }
 
