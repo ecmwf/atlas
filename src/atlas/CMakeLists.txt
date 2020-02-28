@@ -715,7 +715,7 @@ if( ATLAS_HAVE_EIGEN AND EIGEN3_INCLUDE_DIR )
 endif()
 
 if( ATLAS_HAVE_OMP_CXX )
-  target_link_libraries( atlas PRIVATE OpenMP::OpenMP_CXX )
+  target_link_libraries( atlas PUBLIC OpenMP::OpenMP_CXX )
 endif()
 
 if( ATLAS_HAVE_GRIDTOOLS_STORAGE )

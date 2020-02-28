@@ -49,7 +49,7 @@ function(generate_fortran_bindings output filename)
     OUTPUT ${outfile}
     COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
             -o ${outfile} -m ${_PAR_MODULE}
-            -t '{"idx_t":"${F_IDX}","gidx_t":"${F_GIDX}"}'
+            -t '{\"idx_t\":\"${F_IDX}\",\"gidx_t\":\"${F_GIDX}\"}'
     DEPENDS ${filename} )
   set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
 endfunction()
@@ -194,7 +194,7 @@ target_link_libraries( atlas_f PUBLIC
   fckit )
 
 if( ATLAS_HAVE_OMP_Fortran )
-  target_link_libraries( atlas_f PRIVATE OpenMP::OpenMP_Fortran )
+  target_link_libraries( atlas_f PUBLIC OpenMP::OpenMP_Fortran )
 endif()
 
 target_include_directories( atlas_f PUBLIC
