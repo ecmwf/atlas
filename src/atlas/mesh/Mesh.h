@@ -104,9 +104,9 @@ public:
 
     idx_t nb_partitions() const { return get()->nb_partitions(); }
 
-    void cloneToDevice() const { get()->cloneToDevice(); }
+    void updateDevice() const { get()->updateDevice(); }
 
-    void cloneFromDevice() const { get()->cloneFromDevice(); }
+    void updateHost() const { get()->updateHost(); }
 
     void syncHostDevice() const { get()->syncHostDevice(); }
 

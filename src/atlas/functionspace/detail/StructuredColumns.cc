@@ -49,8 +49,8 @@ namespace detail {
 namespace {
 
 
-template <typename T>
-array::LocalView<T, 3> make_leveled_view( const Field& field ) {
+template <typename T, typename Field>
+array::LocalView<T, 3> make_leveled_view( Field& field ) {
     using namespace array;
     if ( field.levels() ) {
         if ( field.variables() ) {
@@ -72,10 +72,10 @@ array::LocalView<T, 3> make_leveled_view( const Field& field ) {
 
 template <typename T>
 std::string checksum_3d_field( const parallel::Checksum& checksum, const Field& field ) {
-    array::LocalView<T, 3> values = make_leveled_view<T>( field );
+    auto values = make_leveled_view<const T>( field );
     array::ArrayT<T> surface_field( values.shape( 0 ), values.shape( 2 ) );
-    array::ArrayView<T, 2> surface = array::make_view<T, 2>( surface_field );
-    const idx_t npts               = values.shape( 0 );
+    auto surface     = array::make_view<T, 2>( surface_field );
+    const idx_t npts = values.shape( 0 );
     atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
         for ( idx_t j = 0; j < surface.shape( 1 ); ++j ) {
             surface( n, j ) = 0.;
@@ -497,22 +497,22 @@ void StructuredColumns::gather( const FieldSet& local_fieldset, FieldSet& global
         glb.metadata().get( "owner", root );
 
         if ( loc.datatype() == array::DataType::kind<int>() ) {
-            parallel::Field<int const> loc_field( make_leveled_view<int>( loc ) );
+            parallel::Field<int const> loc_field( make_leveled_view<const int>( loc ) );
             parallel::Field<int> glb_field( make_leveled_view<int>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<long>() ) {
-            parallel::Field<long const> loc_field( make_leveled_view<long>( loc ) );
+            parallel::Field<long const> loc_field( make_leveled_view<const long>( loc ) );
             parallel::Field<long> glb_field( make_leveled_view<long>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<float>() ) {
-            parallel::Field<float const> loc_field( make_leveled_view<float>( loc ) );
+            parallel::Field<float const> loc_field( make_leveled_view<const float>( loc ) );
             parallel::Field<float> glb_field( make_leveled_view<float>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<double>() ) {
-            parallel::Field<double const> loc_field( make_leveled_view<double>( loc ) );
+            parallel::Field<double const> loc_field( make_leveled_view<const double>( loc ) );
             parallel::Field<double> glb_field( make_leveled_view<double>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
@@ -549,22 +549,22 @@ void StructuredColumns::scatter( const FieldSet& global_fieldset, FieldSet& loca
         glb.metadata().get( "owner", root );
 
         if ( loc.datatype() == array::DataType::kind<int>() ) {
-            parallel::Field<int const> glb_field( make_leveled_view<int>( glb ) );
+            parallel::Field<int const> glb_field( make_leveled_view<const int>( glb ) );
             parallel::Field<int> loc_field( make_leveled_view<int>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<long>() ) {
-            parallel::Field<long const> glb_field( make_leveled_view<long>( glb ) );
+            parallel::Field<long const> glb_field( make_leveled_view<const long>( glb ) );
             parallel::Field<long> loc_field( make_leveled_view<long>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<float>() ) {
-            parallel::Field<float const> glb_field( make_leveled_view<float>( glb ) );
+            parallel::Field<float const> glb_field( make_leveled_view<const float>( glb ) );
             parallel::Field<float> loc_field( make_leveled_view<float>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<double>() ) {
-            parallel::Field<double const> glb_field( make_leveled_view<double>( glb ) );
+            parallel::Field<double const> glb_field( make_leveled_view<const double>( glb ) );
             parallel::Field<double> loc_field( make_leveled_view<double>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }

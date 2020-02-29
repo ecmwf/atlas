@@ -15,12 +15,6 @@
 namespace atlas {
 namespace array {
 
-enum class Intent
-{
-    ReadOnly,
-    ReadWrite
-};
-
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <int cDim>
 struct Dim {

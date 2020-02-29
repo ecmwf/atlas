@@ -315,14 +315,14 @@ void Table::insert( size_t position, size_t rows, const size_t cols[] ) {
 
 // ----------------------------------------------------------------------------
 
-void Table::cloneToDevice() const {
-    std::for_each( data_.begin(), data_.end(), []( array::Array* a ) { a->cloneToDevice(); } );
+void Table::updateDevice() const {
+    std::for_each( data_.begin(), data_.end(), []( array::Array* a ) { a->updateDevice(); } );
 }
 
 // ----------------------------------------------------------------------------
 
-void Table::cloneFromDevice() const {
-    std::for_each( data_.begin(), data_.end(), []( array::Array* a ) { a->cloneFromDevice(); } );
+void Table::updateHost() const {
+    std::for_each( data_.begin(), data_.end(), []( array::Array* a ) { a->updateHost(); } );
 }
 
 // ----------------------------------------------------------------------------

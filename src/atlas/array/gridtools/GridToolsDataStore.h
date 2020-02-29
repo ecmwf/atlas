@@ -28,12 +28,12 @@ struct GridToolsDataStore : ArrayDataStore {
         delete data_store_;
     }
 
-    void cloneToDevice() const {
+    void updateDevice() const {
         assert( data_store_ );
         data_store_->clone_to_device();
     }
 
-    void cloneFromDevice() const { data_store_->clone_from_device(); }
+    void updateHost() const { data_store_->clone_from_device(); }
 
     bool valid() const { return data_store_->valid(); }
 

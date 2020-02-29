@@ -118,10 +118,10 @@ public:
     Field& flags() { return hybrid_elements_->flags(); }
 
     template <typename DATATYPE, int RANK>
-    array::LocalView<DATATYPE, RANK, array::Intent::ReadOnly> view( const Field& ) const;
+    array::LocalView<const DATATYPE, RANK> view( const Field& ) const;
 
     template <typename DATATYPE, int RANK>
-    array::LocalView<DATATYPE, RANK, array::Intent::ReadWrite> view( Field& ) const;
+    array::LocalView<DATATYPE, RANK> view( Field& ) const;
 
     template <typename DATATYPE, int RANK>
     array::LocalIndexView<DATATYPE, RANK> indexview( const Field& ) const;

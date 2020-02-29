@@ -11,6 +11,7 @@
 #include "eckit/os/BackTrace.h"
 #include "eckit/utils/MD5.h"
 
+#include "atlas/array/Array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/Spectral.h"
@@ -63,26 +64,25 @@ public:
 
     int nump() const { return trans_->nump; }
 
-    array::LocalView<int, 1, array::Intent::ReadOnly> nvalue() const {
+    array::LocalView<const int, 1> nvalue() const {
         if ( trans_->nvalue == nullptr ) {
             ::trans_inquire( trans_.get(), "nvalue" );
         }
-        return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nvalue, array::make_shape( trans_->nspec2 ) );
+        return array::make_view<const int, 1>( trans_->nvalue, array::make_shape( trans_->nspec2 ) );
     }
 
-    array::LocalView<int, 1, array::Intent::ReadOnly> nmyms() const {
+    array::LocalView<const int, 1> nmyms() const {
         if ( trans_->nmyms == nullptr ) {
             ::trans_inquire( trans_.get(), "nmyms" );
         }
-        return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nmyms, array::make_shape( nump() ) );
+        return array::make_view<const int, 1>( trans_->nmyms, array::make_shape( nump() ) );
     }
 
-    array::LocalView<int, 1, array::Intent::ReadOnly> nasm0() const {
+    array::LocalView<const int, 1> nasm0() const {
         if ( trans_->nasm0 == nullptr ) {
             ::trans_inquire( trans_.get(), "nasm0" );
         }
-        return array::LocalView<int, 1, array::Intent::ReadOnly>( trans_->nasm0,
-                                                                  array::make_shape( trans_->nsmax + 1 ) );
+        return array::make_view<const int, 1>( trans_->nasm0, array::make_shape( trans_->nsmax + 1 ) );
     }
 
     std::string distribution() const { return "trans"; }
@@ -115,17 +115,16 @@ public:
 
     int nump() const { return truncation_ + 1; }
 
-    array::LocalView<int, 1, array::Intent::ReadOnly> nmyms() const {
-        return array::LocalView<int, 1, array::Intent::ReadOnly>( nmyms_.data(), array::make_shape( nump() ) );
+    array::LocalView<const int, 1> nmyms() const {
+        return array::make_view<int, 1>( nmyms_.data(), array::make_shape( nump() ) );
     }
 
-    array::LocalView<int, 1, array::Intent::ReadOnly> nvalue() const {
-        return array::LocalView<int, 1, array::Intent::ReadOnly>( nvalue_.data(),
-                                                                  array::make_shape( nb_spectral_coefficients() ) );
+    array::LocalView<const int, 1> nvalue() const {
+        return array::make_view<int, 1>( nvalue_.data(), array::make_shape( nb_spectral_coefficients() ) );
     }
 
-    array::LocalView<int, 1, array::Intent::ReadOnly> nasm0() const {
-        return array::LocalView<int, 1, array::Intent::ReadOnly>( nasm0_.data(), array::make_shape( truncation_ + 1 ) );
+    array::LocalView<const int, 1> nasm0() const {
+        return array::make_view<int, 1>( nasm0_.data(), array::make_shape( truncation_ + 1 ) );
     }
     std::vector<int> nmyms_;
     std::vector<int> nasm0_;
@@ -289,9 +288,9 @@ void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset
 
         struct ::GathSpec_t args = new_gathspec( *parallelisation_ );
         args.nfld                = nto.size();
-        args.rspecg              = glb.data<double>();
+        args.rspecg              = glb.array().data<double>();
         args.nto                 = nto.data();
-        args.rspec               = loc.data<double>();
+        args.rspec               = loc.array().data<double>();
         TRANS_CHECK( ::trans_gathspec( &args ) );
 #else
 
@@ -346,9 +345,9 @@ void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldse
 
         struct ::DistSpec_t args = new_distspec( *parallelisation_ );
         args.nfld                = int( nfrom.size() );
-        args.rspecg              = glb.data<double>();
+        args.rspecg              = glb.array().data<double>();
         args.nfrom               = nfrom.data();
-        args.rspec               = loc.data<double>();
+        args.rspec               = loc.array().data<double>();
         TRANS_CHECK( ::trans_distspec( &args ) );
 
         glb.metadata().broadcast( loc.metadata(), root );
@@ -384,7 +383,7 @@ void Spectral::norm( const Field& field, double& norm, int rank ) const {
                   "Only a single-level field can be used for computing single norm." );
     struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
     args.nfld                = 1;
-    args.rspec               = field.data<double>();
+    args.rspec               = field.array().data<double>();
     args.rnorm               = &norm;
     args.nmaster             = rank + 1;
     TRANS_CHECK( ::trans_specnorm( &args ) );
@@ -402,7 +401,7 @@ void Spectral::norm( const Field& field, double norm_per_level[], int rank ) con
     }
     struct ::SpecNorm_t args = new_specnorm( *parallelisation_ );
     args.nfld                = std::max<int>( 1, field.levels() );
-    args.rspec               = field.data<double>();
+    args.rspec               = field.array().data<double>();
     args.rnorm               = norm_per_level;
     args.nmaster             = rank + 1;
     TRANS_CHECK( ::trans_specnorm( &args ) );
@@ -416,7 +415,7 @@ void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, in
     norm( field, norm_per_level.data(), rank );
 }
 
-array::LocalView<int, 1, array::Intent::ReadOnly> Spectral::zonal_wavenumbers() const {
+array::LocalView<const int, 1> Spectral::zonal_wavenumbers() const {
     return parallelisation_->nmyms();
 }
 
@@ -424,15 +423,15 @@ int Spectral::nump() const {
     return parallelisation_->nump();
 }
 
-array::LocalView<int, 1, array::Intent::ReadOnly> Spectral::nvalue() const {
+array::LocalView<const int, 1> Spectral::nvalue() const {
     return parallelisation_->nvalue();
 }
 
-array::LocalView<int, 1, array::Intent::ReadOnly> Spectral::nmyms() const {
+array::LocalView<const int, 1> Spectral::nmyms() const {
     return parallelisation_->nmyms();
 }
 
-array::LocalView<int, 1, array::Intent::ReadOnly> Spectral::nasm0() const {
+array::LocalView<const int, 1> Spectral::nasm0() const {
     return parallelisation_->nasm0();
 }
 

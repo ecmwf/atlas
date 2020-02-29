@@ -69,8 +69,8 @@ public:
 
     private:
         const PointCloud& fs_;
-        const array::ArrayView<double, 2> xy_;
-        const array::ArrayView<double, 1> z_;
+        const array::ArrayView<const double, 2> xy_;
+        const array::ArrayView<const double, 1> z_;
         idx_t n_;
     };
 
@@ -110,7 +110,7 @@ public:
 
     private:
         const PointCloud& fs_;
-        const array::ArrayView<double, 2> xy_;
+        const array::ArrayView<const double, 2> xy_;
         idx_t n_;
     };
 

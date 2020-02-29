@@ -104,38 +104,38 @@ void write_header_binary( std::ostream& out ) {
 namespace {  // anonymous
 
 template <typename T>
-array::LocalView<T, 2> make_level_view( const Field& field, int ndata, int jlev ) {
+array::LocalView<const T, 2> make_level_view( const Field& field, int ndata, int jlev ) {
     using namespace array;
     if ( field.levels() ) {
         if ( field.variables() ) {
-            return make_view<T, 3>( field ).slice( Range::to( ndata ), jlev, Range::all() );
+            return make_view<const T, 3>( field ).slice( Range::to( ndata ), jlev, Range::all() );
         }
         else {
-            return make_view<T, 2>( field ).slice( Range::to( ndata ), jlev, Range::dummy() );
+            return make_view<const T, 2>( field ).slice( Range::to( ndata ), jlev, Range::dummy() );
         }
     }
     else {
         if ( field.variables() ) {
-            return make_view<T, 2>( field ).slice( Range::to( ndata ), Range::all() );
+            return make_view<const T, 2>( field ).slice( Range::to( ndata ), Range::all() );
         }
         else {
-            return make_view<T, 1>( field ).slice( Range::to( ndata ), Range::dummy() );
+            return make_view<const T, 1>( field ).slice( Range::to( ndata ), Range::dummy() );
         }
     }
 }
 
-template <typename DATATYPE>
-void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1> gidx,
-                  const array::LocalView<DATATYPE, 2> data ) {
-    int ndata = data.shape( 0 );
-    int nvars = data.shape( 1 );
+template <typename Value>
+void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1>& gidx, const array::LocalView<Value, 2>& data ) {
+    using value_type = typename std::remove_const<Value>::type;
+    int ndata        = data.shape( 0 );
+    int nvars        = data.shape( 1 );
     if ( nvars == 1 ) {
         for ( idx_t n = 0; n < ndata; ++n ) {
             out << gidx( n ) << " " << data( n, 0 ) << "\n";
         }
     }
     else if ( nvars <= 3 ) {
-        std::vector<DATATYPE> data_vec( 3, 0. );
+        std::vector<value_type> data_vec( 3, 0. );
         for ( idx_t n = 0; n < ndata; ++n ) {
             out << gidx( n );
             for ( idx_t v = 0; v < nvars; ++v ) {
@@ -148,7 +148,7 @@ void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1> gidx,
         }
     }
     else if ( nvars <= 9 ) {
-        std::vector<DATATYPE> data_vec( 9, 0. );
+        std::vector<value_type> data_vec( 9, 0. );
         if ( nvars == 4 ) {
             for ( int n = 0; n < ndata; ++n ) {
                 for ( int i = 0; i < 2; ++i ) {
@@ -239,17 +239,17 @@ int field_vars( int nvars ) {
 }  // namespace
 
 // ----------------------------------------------------------------------------
-template <typename DATATYPE>
+template <typename Value>
 void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeColumns& function_space,
                         const Field& field, std::ostream& out ) {
     Log::debug() << "writing NodeColumns field " << field.name() << " defined in NodeColumns..." << std::endl;
 
     bool gather( gmsh_options.get<bool>( "gather" ) && mpi::size() > 1 );
     // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
-    idx_t nlev                       = std::max<idx_t>( 1, field.levels() );
-    idx_t ndata                      = std::min<idx_t>( function_space.nb_nodes(), field.shape( 0 ) );
-    idx_t nvars                      = std::max<idx_t>( 1, field.variables() );
-    array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( function_space.nodes().global_index() );
+    idx_t nlev  = std::max<idx_t>( 1, field.levels() );
+    idx_t ndata = std::min<idx_t>( function_space.nb_nodes(), field.shape( 0 ) );
+    idx_t nvars = std::max<idx_t>( 1, field.variables() );
+    auto gidx   = array::make_view<gidx_t, 1>( function_space.nodes().global_index() );
     Field gidx_glb;
     Field field_glb;
     if ( gather ) {
@@ -277,8 +277,8 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
             out << field_vars( nvars ) << "\n";
             out << ndata << "\n";
             out << mpi::rank() << "\n";
-            auto data = gather ? make_level_view<DATATYPE>( field_glb, ndata, jlev )
-                               : make_level_view<DATATYPE>( field, ndata, jlev );
+            auto data = gather ? make_level_view<Value>( field_glb, ndata, jlev )
+                               : make_level_view<Value>( field, ndata, jlev );
             write_level( out, gidx, data );
             out << "$EndNodeData\n";
         }
@@ -360,10 +360,10 @@ void write_field_elems( const Metadata& gmsh_options, const functionspace::CellC
 
     bool gather( gmsh_options.get<bool>( "gather" ) && mpi::size() > 1 );
     // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
-    idx_t nlev                       = std::max<idx_t>( 1, field.levels() );
-    idx_t ndata                      = std::min<idx_t>( function_space.nb_cells(), field.shape( 0 ) );
-    idx_t nvars                      = std::max<idx_t>( 1, field.variables() );
-    array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( function_space.cells().global_index() );
+    idx_t nlev  = std::max<idx_t>( 1, field.levels() );
+    idx_t ndata = std::min<idx_t>( function_space.nb_cells(), field.shape( 0 ) );
+    idx_t nvars = std::max<idx_t>( 1, field.variables() );
+    auto gidx   = array::make_view<gidx_t, 1>( function_space.cells().global_index() );
     Field gidx_glb;
     Field field_glb;
     if ( gather ) {
@@ -814,9 +814,9 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
 
     std::string nodes_field = options.get<std::string>( "nodes" );
 
-    const mesh::Nodes& nodes            = mesh.nodes();
-    array::ArrayView<double, 2> coords  = array::make_view<double, 2>( nodes.field( nodes_field ) );
-    array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
+    const mesh::Nodes& nodes = mesh.nodes();
+    auto coords              = array::make_view<double, 2>( nodes.field( nodes_field ) );
+    auto glb_idx             = array::make_view<gidx_t, 1>( nodes.global_index() );
 
     const idx_t surfdim = coords.shape( 1 );  // nb of variables in coords
 
@@ -882,9 +882,9 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
         idx_t nb_elements( 0 );
         for ( const mesh::HybridElements* hybrid : grouped_elements ) {
             nb_elements += hybrid->size();
-            const array::ArrayView<int, 1> hybrid_halo  = array::make_view<int, 1>( hybrid->halo() );
-            const array::ArrayView<int, 1> hybrid_flags = array::make_view<int, 1>( hybrid->flags() );
-            auto hybrid_patch                           = [&]( idx_t e ) {
+            const auto hybrid_halo  = array::make_view<int, 1>( hybrid->halo() );
+            const auto hybrid_flags = array::make_view<int, 1>( hybrid->flags() );
+            auto hybrid_patch       = [&]( idx_t e ) {
                 return mesh::Nodes::Topology::check( hybrid_flags( e ), mesh::Nodes::Topology::PATCH );
             };
             auto exclude = [&]( idx_t e ) {

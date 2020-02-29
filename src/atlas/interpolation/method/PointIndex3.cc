@@ -23,7 +23,7 @@ namespace method {
 
 ElemIndex3* create_element_kdtree( const Field& field_centres ) {
     ATLAS_TRACE();
-    const array::ArrayView<double, 2> centres = array::make_view<double, 2>( field_centres );
+    const array::ArrayView<const double, 2> centres = array::make_view<double, 2>( field_centres );
 
     static bool fastBuildKDTrees = eckit::Resource<bool>( "$ATLAS_FAST_BUILD_KDTREES", true );
 

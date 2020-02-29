@@ -159,7 +159,7 @@ if ${with_deps}; then
         -DENABLE_XXHASH=OFF \
         -DENABLE_LZ4=OFF \
         -DENABLE_JEMALLOC=OFF \
-        -DENABLE_BZIPS2=OFF \
+        -DENABLE_BZIP2=OFF \
         -DCMAKE_DISABLE_FIND_PACKAGE_Doxygen=ON \
         ${CMAKE_OPTIONS} \
         ${SOURCES_DIR}/eckit

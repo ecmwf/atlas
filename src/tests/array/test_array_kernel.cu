@@ -49,7 +49,7 @@ CASE( "test_array" )
    auto hv = make_host_view<double, 3>(*ds);
    hv(3, 3, 3) = 4.5;
 
-   ds->cloneToDevice();
+   ds->updateDevice();
 
    auto cv = make_device_view<double, 3>(*ds);
 
@@ -57,7 +57,7 @@ CASE( "test_array" )
 
    cudaDeviceSynchronize();
 
-   ds->cloneFromDevice();
+   ds->updateHost();
    ds->reactivateHostWriteViews();
 
    EXPECT( hv(3, 3, 3) == 4.5 + dx*dy*dz );
@@ -81,7 +81,7 @@ CASE( "test_array_loop" )
      }
    }
 
-   ds->cloneToDevice();
+   ds->updateDevice();
 
    auto cv = make_device_view<double, 3>(*ds);
 
@@ -89,7 +89,7 @@ CASE( "test_array_loop" )
 
    cudaDeviceSynchronize();
 
-   ds->cloneFromDevice();
+   ds->updateHost();
    ds->reactivateHostWriteViews();
 
    for(int i=0; i < dx; i++) {

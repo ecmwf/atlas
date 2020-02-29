@@ -743,8 +743,8 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
     const array::ArrayView<int, 1> edge_part             = array::make_view<int, 1>( edges.partition() );
     const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
 
-    array::ArrayView<double, 2> xy = array::make_view<double, 2>( nodes.xy() );
-    array::ArrayView<int, 1> flags = array::make_view<int, 1>( nodes.flags() );
+    array::ArrayView<const double, 2> xy = array::make_view<double, 2>( nodes.xy() );
+    array::ArrayView<const int, 1> flags = array::make_view<int, 1>( nodes.flags() );
 #ifdef DEBUGGING_PARFIELDS
     array::ArrayView<gidx_t, 1> node_gidx = array::make_view<gidx_t, 1>( nodes.global_index() );
     array::ArrayView<int, 1> node_part    = array::make_view<int, 1>( nodes.partition() );

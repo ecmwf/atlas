@@ -132,9 +132,9 @@ public:  // methods
     /// @brief Return the memory footprint of the Nodes
     size_t footprint() const;
 
-    void cloneToDevice() const;
+    void updateDevice() const;
 
-    void cloneFromDevice() const;
+    void updateHost() const;
 
     void syncHostDevice() const;
 

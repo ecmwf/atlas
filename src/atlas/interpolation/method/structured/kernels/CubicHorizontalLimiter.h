@@ -52,7 +52,7 @@ public:
 
     template <typename Value, int Rank>
     static typename std::enable_if<( Rank == 1 ), void>::type limit( const std::array<std::array<idx_t, 4>, 4>& index,
-                                                                     const array::ArrayView<Value, Rank>& input,
+                                                                     const array::ArrayView<const Value, Rank>& input,
                                                                      array::ArrayView<Value, Rank>& output, idx_t r ) {
         // Limit output to max/min of values in stencil marked by '*'
         //         x        x        x         x
@@ -81,7 +81,7 @@ public:
 
     template <typename Value, int Rank>
     static typename std::enable_if<( Rank == 2 ), void>::type limit( const std::array<std::array<idx_t, 4>, 4>& index,
-                                                                     const array::ArrayView<Value, Rank>& input,
+                                                                     const array::ArrayView<const Value, Rank>& input,
                                                                      array::ArrayView<Value, Rank>& output, idx_t r ) {
         // Limit output to max/min of values in stencil marked by '*'
         //         x        x        x         x

@@ -273,13 +273,12 @@ void HybridElements::clear() {
 
 //-----------------------------------------------------------------------------
 
-void HybridElements::cloneToDevice() const {
-    std::for_each( fields_.begin(), fields_.end(), []( const FieldMap::value_type& v ) { v.second.cloneToDevice(); } );
+void HybridElements::updateDevice() const {
+    std::for_each( fields_.begin(), fields_.end(), []( const FieldMap::value_type& v ) { v.second.updateDevice(); } );
 }
 
-void HybridElements::cloneFromDevice() const {
-    std::for_each( fields_.begin(), fields_.end(),
-                   []( const FieldMap::value_type& v ) { v.second.cloneFromDevice(); } );
+void HybridElements::updateHost() const {
+    std::for_each( fields_.begin(), fields_.end(), []( const FieldMap::value_type& v ) { v.second.updateHost(); } );
 }
 
 void HybridElements::syncHostDevice() const {

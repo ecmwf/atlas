@@ -120,7 +120,7 @@ public:
 
     template <typename stencil_t, typename weights_t, typename Value, int Rank>
     typename std::enable_if<( Rank == 1 ), void>::type interpolate( const stencil_t& stencil, const weights_t& weights,
-                                                                    const array::ArrayView<Value, Rank>& input,
+                                                                    const array::ArrayView<const Value, Rank>& input,
                                                                     array::ArrayView<Value, Rank>& output,
                                                                     idx_t r ) const {
         const auto& weights_j = weights.weights_j;
@@ -137,7 +137,7 @@ public:
 
     template <typename stencil_t, typename weights_t, typename Value, int Rank>
     typename std::enable_if<( Rank == 2 ), void>::type interpolate( const stencil_t& stencil, const weights_t& weights,
-                                                                    const array::ArrayView<Value, Rank>& input,
+                                                                    const array::ArrayView<const Value, Rank>& input,
                                                                     array::ArrayView<Value, Rank>& output,
                                                                     idx_t r ) const {
         const auto& weights_j = weights.weights_j;

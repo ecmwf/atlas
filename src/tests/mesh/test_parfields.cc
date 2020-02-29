@@ -59,8 +59,8 @@ public:
     }
 
 private:
-    array::ArrayView<int, 1> part_;
-    IndexView<idx_t, 1> ridx_;
+    array::ArrayView<const int, 1> part_;
+    IndexView<const idx_t, 1> ridx_;
     int mypart_;
 };
 

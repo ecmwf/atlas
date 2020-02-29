@@ -82,10 +82,10 @@ CASE( "test_implicit_conversion" ) {
     array::ArrayView<double, 2> arrv = array::make_view<double, 2>( array );
     arrv( 0, 0 )                     = 8.;
 
-    const array::ArrayView<double, 2> carrv = array::make_view<double, 2>( const_array );
+    array::ArrayView<const double, 2> carrv = array::make_view<double, 2>( const_array );
     EXPECT( carrv( 0, 0 ) == 8. );
 
-    const array::ArrayView<double, 2> cfieldv = array::make_view<double, 2>( field );
+    array::ArrayView<const double, 2> cfieldv = array::make_view<const double, 2>( field );
     EXPECT( cfieldv( 0, 0 ) == 8. );
 
     take_array( field );

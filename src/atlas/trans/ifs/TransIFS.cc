@@ -345,8 +345,8 @@ struct PackNodeColumns {
     }
 
     void pack_1( const Field& field, idx_t ) {
-        const ArrayView<double, 1> gpfield = make_view<double, 1>( field );
-        idx_t n                            = 0;
+        auto gpfield = make_view<double, 1>( field );
+        idx_t n      = 0;
         for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
             if ( !is_ghost( jnode ) ) {
                 rgpview_( f, n ) = gpfield( jnode );
@@ -356,8 +356,8 @@ struct PackNodeColumns {
         ++f;
     }
     void pack_2( const Field& field, idx_t ) {
-        const ArrayView<double, 2> gpfield = make_view<double, 2>( field );
-        const idx_t nvars                  = gpfield.shape( 1 );
+        auto gpfield      = make_view<double, 2>( field );
+        const idx_t nvars = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
             for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
@@ -370,7 +370,7 @@ struct PackNodeColumns {
         }
     }
     void pack_3( const Field& field, idx_t components ) {
-        const ArrayView<double, 3> gpfield = make_view<double, 3>( field );
+        auto gpfield = make_view<double, 3>( field );
         if ( not components ) {
             components = gpfield.shape( 2 );
         }
@@ -411,8 +411,8 @@ struct PackStructuredColumns {
     }
 
     void pack_1( const Field& field ) {
-        const ArrayView<double, 1> gpfield = make_view<double, 1>( field );
-        idx_t n                            = 0;
+        auto gpfield = make_view<double, 1>( field );
+        idx_t n      = 0;
         for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
             rgpview_( f, n ) = gpfield( jnode );
             ++n;
@@ -420,8 +420,8 @@ struct PackStructuredColumns {
         ++f;
     }
     void pack_2( const Field& field ) {
-        const ArrayView<double, 2> gpfield = make_view<double, 2>( field );
-        const idx_t nvars                  = gpfield.shape( 1 );
+        auto gpfield      = make_view<double, 2>( field );
+        const idx_t nvars = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
             for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
@@ -454,7 +454,7 @@ struct PackSpectral {
     }
 
     void pack_1( const Field& field ) {
-        const ArrayView<double, 1> spfield = make_view<double, 1>( field );
+        auto spfield = make_view<double, 1>( field );
 
         for ( idx_t jwave = 0; jwave < spfield.shape( 0 ); ++jwave ) {
             rspecview_( jwave, f ) = spfield( jwave );
@@ -462,7 +462,7 @@ struct PackSpectral {
         ++f;
     }
     void pack_2( const Field& field ) {
-        const ArrayView<double, 2> spfield = make_view<double, 2>( field );
+        auto spfield = make_view<double, 2>( field );
 
         const idx_t nvars = spfield.shape( 1 );
 
@@ -504,7 +504,7 @@ struct UnpackNodeColumns {
     }
 
     void unpack_1( Field& field, idx_t ) {
-        ArrayView<double, 1> gpfield = make_view<double, 1>( field );
+        auto gpfield = make_view<double, 1>( field );
         idx_t n( 0 );
         for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
             if ( !is_ghost( jnode ) ) {
@@ -515,8 +515,8 @@ struct UnpackNodeColumns {
         ++f;
     }
     void unpack_2( Field& field, idx_t ) {
-        ArrayView<double, 2> gpfield = make_view<double, 2>( field );
-        const idx_t nvars            = gpfield.shape( 1 );
+        auto gpfield      = make_view<double, 2>( field );
+        const idx_t nvars = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
             for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
@@ -529,7 +529,7 @@ struct UnpackNodeColumns {
         }
     }
     void unpack_3( Field& field, idx_t components ) {
-        ArrayView<double, 3> gpfield = make_view<double, 3>( field );
+        auto gpfield = make_view<double, 3>( field );
         if ( not components ) {
             components = gpfield.shape( 2 );
         }
@@ -570,8 +570,8 @@ struct UnpackStructuredColumns {
     }
 
     void unpack_1( Field& field ) {
-        ArrayView<double, 1> gpfield = make_view<double, 1>( field );
-        idx_t n                      = 0;
+        auto gpfield = make_view<double, 1>( field );
+        idx_t n      = 0;
         for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
             gpfield( jnode ) = rgpview_( f, n );
             ++n;
@@ -579,8 +579,8 @@ struct UnpackStructuredColumns {
         ++f;
     }
     void unpack_2( Field& field ) {
-        ArrayView<double, 2> gpfield = make_view<double, 2>( field );
-        const idx_t nvars            = gpfield.shape( 1 );
+        auto gpfield      = make_view<double, 2>( field );
+        const idx_t nvars = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
             for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {

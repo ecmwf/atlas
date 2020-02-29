@@ -37,7 +37,7 @@ enddo
 ! We can either use the acc directive, or
 ! use the field's API to update the host
 !     !$acc update host(view)
-call field%clone_from_device()
+call field%update_host()
 
 
 ! Note that field%sync_host_device() is not working here...

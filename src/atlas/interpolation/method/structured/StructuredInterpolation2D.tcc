@@ -38,8 +38,12 @@ namespace method {
 template <typename Kernel>
 double StructuredInterpolation2D<Kernel>::convert_units_multiplier( const Field& field ) {
     std::string units = field.metadata().getString( "units", "degrees" );
-    if ( units == "degrees" ) { return 1.; }
-    if ( units == "radians" ) { return 180. / M_PI; }
+    if ( units == "degrees" ) {
+        return 1.;
+    }
+    if ( units == "radians" ) {
+        return 180. / M_PI;
+    }
     ATLAS_NOTIMPLEMENTED;
 }
 
@@ -53,7 +57,9 @@ StructuredInterpolation2D<Kernel>::StructuredInterpolation2D( const Method::Conf
 
 template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
+    if ( mpi::size() > 1 ) {
+        ATLAS_NOTIMPLEMENTED;
+    }
 
 
     ATLAS_ASSERT( StructuredGrid( source ) );
@@ -81,12 +87,14 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
         target_lonlat_ = tgt.lonlat();
         target_ghost_  = tgt.ghost();
     }
-    else if( functionspace::StructuredColumns tgt = target) {
+    else if ( functionspace::StructuredColumns tgt = target ) {
         target_lonlat_ = tgt.xy();
         target_ghost_  = tgt.ghost();
     }
     else {
-        throw_NotImplemented("Only interpolation to functionspaces NodeColumns, PointCloud or StructuredColumns are implemented", Here());
+        throw_NotImplemented(
+            "Only interpolation to functionspaces NodeColumns, PointCloud or StructuredColumns are implemented",
+            Here() );
     }
 
     setup( source );
@@ -98,7 +106,9 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
 
     source_ = source;
 
-    if ( target.functionspace() ) { target_ = target.functionspace(); }
+    if ( target.functionspace() ) {
+        target_ = target.functionspace();
+    }
 
     target_lonlat_ = target;
 
@@ -112,7 +122,9 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
     source_ = source;
 
     ATLAS_ASSERT( target.size() >= 2 );
-    if ( target[0].functionspace() ) { target_ = target[0].functionspace(); }
+    if ( target[0].functionspace() ) {
+        target_ = target[0].functionspace();
+    }
 
     target_lonlat_fields_ = target;
 
@@ -148,17 +160,16 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
 
         constexpr util::NormaliseLongitude normalise;
         //auto normalise = []( double x ) { return x; };
- 
-       ATLAS_TRACE_SCOPE( "Precomputing interpolation matrix" ) {
 
-
-            if( target_ghost_ ) {
-                auto ghost  = array::make_view<int, 1>( target_ghost_ );
+        ATLAS_TRACE_SCOPE( "Precomputing interpolation matrix" ) {
+            if ( target_ghost_ ) {
+                auto ghost = array::make_view<int, 1>( target_ghost_ );
                 atlas_omp_parallel {
                     typename Kernel::WorkSpace workspace;
                     atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                         if ( not ghost( n ) ) {
-                            PointLonLat p{normalise( lonlat( n, LON ) ) * convert_units, lonlat( n, LAT ) * convert_units};
+                            PointLonLat p{normalise( lonlat( n, LON ) ) * convert_units,
+                                          lonlat( n, LAT ) * convert_units};
                             kernel_->insert_triplets( n, p, triplets, workspace );
                         }
                     }
@@ -200,7 +211,8 @@ void StructuredInterpolation2D<Kernel>::execute( const FieldSet& src_fields, Fie
     const idx_t N = src_fields.size();
     ATLAS_ASSERT( N == tgt_fields.size() );
 
-    if ( N == 0 ) return;
+    if ( N == 0 )
+        return;
 
     haloExchange( src_fields );
 
@@ -237,7 +249,7 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
                                                       FieldSet& tgt_fields ) const {
     const idx_t N = src_fields.size();
 
-    std::vector<array::ArrayView<Value, Rank> > src_view;
+    std::vector<array::ArrayView<const Value, Rank> > src_view;
     std::vector<array::ArrayView<Value, Rank> > tgt_view;
     src_view.reserve( N );
     tgt_view.reserve( N );
@@ -250,9 +262,9 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
         double convert_units = convert_units_multiplier( target_lonlat_ );
 
         if ( target_ghost_ ) {
-            idx_t out_npts    = target_lonlat_.shape( 0 );
-            const auto ghost  = array::make_view<int, 1, array::Intent::ReadOnly>( target_ghost_ );
-            const auto lonlat = array::make_view<double, 2, array::Intent::ReadOnly>( target_lonlat_ );
+            idx_t out_npts = target_lonlat_.shape( 0 );
+            auto ghost     = array::make_view<int, 1>( target_ghost_ );
+            auto lonlat    = array::make_view<double, 2>( target_lonlat_ );
 
             atlas_omp_parallel {
                 typename Kernel::Stencil stencil;
@@ -271,7 +283,7 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
         }
         else {
             idx_t out_npts    = target_lonlat_.shape( 0 );
-            const auto lonlat = array::make_view<double, 2, array::Intent::ReadOnly>( target_lonlat_ );
+            const auto lonlat = array::make_view<double, 2>( target_lonlat_ );
 
             atlas_omp_parallel {
                 typename Kernel::Stencil stencil;
@@ -289,8 +301,8 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
     }
     else if ( not target_lonlat_fields_.empty() ) {
         idx_t out_npts       = target_lonlat_fields_[0].shape( 0 );
-        const auto lon       = array::make_view<double, 1, array::Intent::ReadOnly>( target_lonlat_fields_[LON] );
-        const auto lat       = array::make_view<double, 1, array::Intent::ReadOnly>( target_lonlat_fields_[LAT] );
+        const auto lon       = array::make_view<double, 1>( target_lonlat_fields_[LON] );
+        const auto lat       = array::make_view<double, 1>( target_lonlat_fields_[LAT] );
         double convert_units = convert_units_multiplier( target_lonlat_fields_[LON] );
 
         atlas_omp_parallel {

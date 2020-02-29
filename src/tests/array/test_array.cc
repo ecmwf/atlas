@@ -565,7 +565,7 @@ CASE( "test_wrap" ) {
     EXPECT( arr->stride( 0 ) == arr_t.stride( 0 ) );
     EXPECT( arr->rank() == 1 );
 
-    auto view = make_host_view<int, 1, array::Intent::ReadOnly>( *arr );
+    auto view = make_host_view<int, 1>( *arr );
 
     EXPECT( view.shape( 0 ) == 3 );
     EXPECT( view.stride( 0 ) == arr_t.stride( 0 ) );

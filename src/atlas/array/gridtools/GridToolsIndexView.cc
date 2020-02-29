@@ -14,6 +14,7 @@
 #include "atlas/array.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/field/Field.h"
+#include "atlas/runtime/Exception.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -24,12 +25,9 @@ namespace array {
 
 template <typename Value, int Rank>
 void IndexView<Value, Rank>::dump( std::ostream& os ) const {
-    os << "size: " << size() << " , values: ";
-    os << "[ ";
-    for ( size_t j = 0; j < size(); ++j )
-        os << ( *this )( j ) << " ";
-    os << "]" << std::endl;
+    ATLAS_NOTIMPLEMENTED;
 }
+
 
 template <typename Value, int Rank>
 LocalIndexView<Value, Rank>::LocalIndexView( Value* data, const idx_t shape[1] ) : data_( const_cast<Value*>( data ) ) {
@@ -55,10 +53,21 @@ LocalIndexView<Value, Rank>::LocalIndexView( Value* data, const idx_t shape[1], 
 namespace atlas {
 namespace array {
 
-template class IndexView<int, 1>;
-template class IndexView<long, 1>;
-template class LocalIndexView<int, 1>;
-template class LocalIndexView<long, 1>;
+#define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( TYPE, RANK ) \
+    template class IndexView<TYPE, RANK>;                       \
+    template class IndexView<const TYPE, RANK>;                 \
+    template class LocalIndexView<TYPE, RANK>;                  \
+    template class LocalIndexView<const TYPE, RANK>;
+
+#define EXPLICIT_TEMPLATE_INSTANTIATION( RANK )            \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( int, RANK ) \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( long, RANK )
+
+EXPLICIT_TEMPLATE_INSTANTIATION( 1 )
+EXPLICIT_TEMPLATE_INSTANTIATION( 2 )
+
+#undef EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK
+#undef EXPLICIT_TEMPLATE_INSTANTIATION
 
 }  // namespace array
 }  // namespace atlas

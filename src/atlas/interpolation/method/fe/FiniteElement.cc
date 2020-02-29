@@ -93,8 +93,8 @@ void FiniteElement::setup( const FunctionSpace& source, const FunctionSpace& tar
             target_xyz_    = Field( "xyz", array::make_datatype<double>(), array::make_shape( N, 3 ) );
             target_ghost_  = tgt.ghost();
             target_lonlat_ = tgt.lonlat();
-            array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( tgt.lonlat() );
-            array::ArrayView<double, 2> xyz    = array::make_view<double, 2>( target_xyz_ );
+            auto lonlat    = array::make_view<double, 2>( tgt.lonlat() );
+            auto xyz       = array::make_view<double, 2>( target_xyz_ );
             PointXYZ p2;
             for ( idx_t n = 0; n < N; ++n ) {
                 const PointLonLat p1( lonlat( n, 0 ), lonlat( n, 1 ) );

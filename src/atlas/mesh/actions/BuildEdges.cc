@@ -399,7 +399,7 @@ struct ComputeUniquePoleEdgeIndex {
         return util::detail::unique32( microdeg( centroid[XX] ), microdeg( centroid[YY] ) );
     }
 
-    array::ArrayView<double, 2> xy;
+    array::ArrayView<const double, 2> xy;
 };
 
 void build_edges( Mesh& mesh ) {

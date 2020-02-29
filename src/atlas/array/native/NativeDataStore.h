@@ -49,9 +49,9 @@ public:
 
     virtual ~DataStore() override { delete[] data_store_; }
 
-    virtual void cloneToDevice() const override {}
+    virtual void updateDevice() const override {}
 
-    virtual void cloneFromDevice() const override {}
+    virtual void updateHost() const override {}
 
     virtual bool valid() const override { return true; }
 
@@ -83,9 +83,9 @@ class WrappedDataStore : public ArrayDataStore {
 public:
     WrappedDataStore( Value* data_store ) : data_store_( data_store ) {}
 
-    virtual void cloneToDevice() const override {}
+    virtual void updateHost() const override {}
 
-    virtual void cloneFromDevice() const override {}
+    virtual void updateDevice() const override {}
 
     virtual bool valid() const override { return true; }
 

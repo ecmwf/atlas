@@ -10,6 +10,9 @@
 
 #pragma once
 
+#include <type_traits>
+#include <utility>
+
 #include "gridtools/common/generic_metafunctions/accumulate.hpp"
 #include "gridtools/common/generic_metafunctions/is_all_integrals.hpp"
 #include "gridtools/storage/storage_facility.hpp"
@@ -38,11 +41,18 @@ using storage_traits = ::gridtools::storage_traits<backend_t>;
 //------------------------------------------------------------------------------
 
 template <typename Value, unsigned int Rank, ::gridtools::access_mode AccessMode = ::gridtools::access_mode::read_write>
-using data_view_tt = ::gridtools::data_view<
-    gridtools::storage_traits::data_store_t<Value, gridtools::storage_traits::storage_info_t<0, Rank>>, AccessMode>;
+using data_view_tt =
+    ::gridtools::data_view<gridtools::storage_traits::data_store_t<typename std::remove_const<Value>::type,
+                                                                   gridtools::storage_traits::storage_info_t<0, Rank>>,
+                           AccessMode>;
 
-inline constexpr ::gridtools::access_mode get_access_mode( Intent kind ) {
-    return ( kind == Intent::ReadOnly ) ? ::gridtools::access_mode::read_only : ::gridtools::access_mode::read_write;
+template <typename Value, typename std::enable_if<std::is_const<Value>::value, Value>::type* = nullptr>
+inline constexpr ::gridtools::access_mode get_access_mode() {
+    return ::gridtools::access_mode::read_only;
+}
+template <typename Value, typename std::enable_if<!std::is_const<Value>::value, Value>::type* = nullptr>
+inline constexpr ::gridtools::access_mode get_access_mode() {
+    return ::gridtools::access_mode::read_write;
 }
 
 //------------------------------------------------------------------------------

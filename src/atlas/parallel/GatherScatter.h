@@ -28,37 +28,33 @@ namespace parallel {
 
 template <typename DATA_TYPE>
 class Field {
-private:
-    typedef typename std::remove_const<DATA_TYPE>::type NON_CONST_DATA_TYPE;
-    typedef typename std::add_const<DATA_TYPE>::type CONST_DATA_TYPE;
-
 public:
     Field() {}
 
-    Field( DATA_TYPE data_[], const idx_t var_strides_[], const idx_t var_shape_[], const idx_t var_rank_ ) :
+    Field( const DATA_TYPE data_[], const idx_t var_strides_[], const idx_t var_shape_[], const idx_t var_rank_ ) :
         data( const_cast<DATA_TYPE*>( data_ ) ),
         var_rank( var_rank_ ) {
         var_strides.assign( var_strides_, var_strides_ + var_rank_ );
         var_shape.assign( var_shape_, var_shape_ + var_rank_ );
     }
 
-    Field( DATA_TYPE data_[], const idx_t nb_vars ) : data( const_cast<DATA_TYPE*>( data_ ) ), var_rank( 1 ) {
+    Field( const DATA_TYPE data_[], const idx_t nb_vars ) : data( const_cast<DATA_TYPE*>( data_ ) ), var_rank( 1 ) {
         var_strides.assign( 1, 1 );
         var_shape.assign( 1, nb_vars );
     }
 
-    template <int RANK>
-    Field( const array::ArrayView<NON_CONST_DATA_TYPE, RANK>& arr ) {
+    template <typename Value, int Rank>
+    Field( const array::ArrayView<Value, Rank>& arr ) {
         data = const_cast<DATA_TYPE*>( arr.data() );
 
-        var_rank = RANK;
+        var_rank = Rank;
         var_strides.resize( var_rank );
         var_shape.resize( var_rank );
 
         if ( arr.rank() > 1 ) {
             var_strides[0] = arr.stride( 0 );
             var_shape[0]   = 1;
-            for ( int j = 1; j < RANK; ++j ) {
+            for ( int j = 1; j < Rank; ++j ) {
                 var_strides[j] = arr.stride( j );
                 var_shape[j]   = arr.shape( j );
             }
@@ -69,18 +65,18 @@ public:
         }
     }
 
-    template <int RANK>
-    Field( const array::LocalView<NON_CONST_DATA_TYPE, RANK>& arr ) {
+    template <typename Value, int Rank>
+    Field( const array::LocalView<Value, Rank>& arr ) {
         data = const_cast<DATA_TYPE*>( arr.data() );
 
-        var_rank = RANK;
+        var_rank = Rank;
         var_strides.resize( var_rank );
         var_shape.resize( var_rank );
 
         if ( arr.rank() > 1 ) {
             var_strides[0] = arr.stride( 0 );
             var_shape[0]   = 1;
-            for ( int j = 1; j < RANK; ++j ) {
+            for ( int j = 1; j < Rank; ++j ) {
                 var_strides[j] = arr.stride( j );
                 var_shape[j]   = arr.shape( j );
             }

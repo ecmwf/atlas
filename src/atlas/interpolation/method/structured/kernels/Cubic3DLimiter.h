@@ -25,9 +25,9 @@ public:
 
     template <typename array_t, typename stencil_t>
     static typename std::enable_if<( array_t::RANK == 2 ), void>::type limit_scalar(
-        typename array_t::value_type& output, const std::array<std::array<idx_t, 4>, 4>& index,
-        const stencil_t& stencil, const array_t& input ) {
-        using Scalar = typename array_t::value_type;
+        typename std::remove_const<typename array_t::value_type>::type& output,
+        const std::array<std::array<idx_t, 4>, 4>& index, const stencil_t& stencil, const array_t& input ) {
+        using Scalar = typename std::remove_const<typename array_t::value_type>::type;
         // Limit output to max/min of values in stencil marked by '*'
         //         x        x        x         x
         //              x     *-----*     x
@@ -83,7 +83,7 @@ public:
         //          x       *------ *        x
         //        x        x        x         x
 
-        using Value = typename InputArray::value_type;
+        using Value = typename OutputArray::value_type;
 
         const idx_t k = stencil.k_interval();
         idx_t k1, k2;

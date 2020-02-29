@@ -69,14 +69,14 @@ private:  // methods
     idx_t index( idx_t i, idx_t j, idx_t ni, idx_t nj ) const { return ( i + ni * j ); }
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
-    void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
+    void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& hfield,
                            const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer,
                            int send_buffer_size, const bool on_device ) const;
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
     void unpack_recv_buffer( const DATA_TYPE* recv_buffer, int recv_buffer_size,
-                             const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
-                             array::ArrayView<DATA_TYPE, RANK>& dfield, const bool on_device ) const;
+                             array::ArrayView<DATA_TYPE, RANK>& hfield, array::ArrayView<DATA_TYPE, RANK>& dfield,
+                             const bool on_device ) const;
 
     template <typename DATA_TYPE, int RANK>
     void var_info( const array::ArrayView<DATA_TYPE, RANK>& arr, std::vector<idx_t>& varstrides,
@@ -113,7 +113,7 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
 
     ATLAS_TRACE( "HaloExchange", {"halo-exchange"} );
 
-    auto field_hv = array::make_host_view<DATA_TYPE, RANK, array::Intent::ReadOnly>( field );
+    auto field_hv = array::make_host_view<DATA_TYPE, RANK>( field );
 
     int tag                   = 1;
     constexpr int parallelDim = array::get_parallel_dim<ParallelDim>( field_hv );
@@ -205,8 +205,7 @@ template <int ParallelDim, int RANK>
 struct halo_packer {
     template <typename DATA_TYPE>
     static void pack( const int sendcnt, array::SVector<int> const& sendmap,
-                      const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadWrite>& field, DATA_TYPE* send_buffer,
-                      int send_buffer_size ) {
+                      const array::ArrayView<DATA_TYPE, RANK>& field, DATA_TYPE* send_buffer, int send_buffer_size ) {
         idx_t ibuf = 0;
         for ( int node_cnt = 0; node_cnt < sendcnt; ++node_cnt ) {
             const idx_t node_idx = sendmap[node_cnt];
@@ -226,7 +225,7 @@ struct halo_packer {
 };
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
-void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
+void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& hfield,
                                      const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer,
                                      int send_size, const bool on_device ) const {
     ATLAS_TRACE();
@@ -242,7 +241,7 @@ void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK, arr
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
 void HaloExchange::unpack_recv_buffer( const DATA_TYPE* recv_buffer, int recv_size,
-                                       const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
+                                       array::ArrayView<DATA_TYPE, RANK>& hfield,
                                        array::ArrayView<DATA_TYPE, RANK>& dfield, const bool on_device ) const {
     ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA

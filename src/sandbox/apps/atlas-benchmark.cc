@@ -151,7 +151,7 @@ public:
 
     int verify( const double& );
 
-    void initial_condition( const Field& field, const double& beta );
+    void initial_condition( Field& field, const double& beta );
 
 private:
     Mesh mesh;
@@ -285,7 +285,7 @@ int AtlasBenchmark::execute( const Args& args ) {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void AtlasBenchmark::initial_condition( const Field& field, const double& beta ) {
+void AtlasBenchmark::initial_condition( Field& field, const double& beta ) {
     const double radius  = util::Earth::radius();
     const double USCAL   = 20.;
     const double pvel    = USCAL / radius;

@@ -46,8 +46,8 @@ struct add_const<T const> {
 class ArrayDataStore {
 public:
     virtual ~ArrayDataStore() {}
-    virtual void cloneToDevice() const              = 0;
-    virtual void cloneFromDevice() const            = 0;
+    virtual void updateDevice() const               = 0;
+    virtual void updateHost() const                 = 0;
     virtual bool valid() const                      = 0;
     virtual void syncHostDevice() const             = 0;
     virtual bool hostNeedsUpdate() const            = 0;
