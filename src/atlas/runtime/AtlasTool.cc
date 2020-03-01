@@ -293,7 +293,7 @@ int atlas::AtlasTool::start() {
         setupLogging();
 
         Options opts = options_;
-        Args args( &atlas::usage, opts, numberOfPositionalArguments(), minimumPositionalArguments() );
+        Args args( &atlas::usage, opts, numberOfPositionalArguments(), minimumPositionalArguments() > 0 );
 
         int err_code = execute( args );
         atlas::library::finalise();

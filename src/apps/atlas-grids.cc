@@ -25,6 +25,7 @@
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/grid.h"
+#include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/runtime/AtlasTool.h"
 
@@ -34,7 +35,7 @@ struct AtlasGrids : public atlas::AtlasTool {
     bool serial() override { return true; }
     int execute( const Args& args ) override;
     std::string briefDescription() override { return "Catalogue of available built-in grids"; }
-    std::string usage() override { return name() + " GRID [OPTION]... [--help,-h]"; }
+    std::string usage() override { return name() + " <grid> [OPTION]... [--help,-h]"; }
     std::string longDescription() override {
         return "Catalogue of available built-in grids\n"
                "\n"
@@ -46,8 +47,8 @@ struct AtlasGrids : public atlas::AtlasTool {
 
     AtlasGrids( int argc, char** argv ) : AtlasTool( argc, argv ) {
         add_option(
-            new SimpleOption<bool>( "list", "List all grids. The names are possible values for the GRID argument" ) );
-        add_option( new SimpleOption<bool>( "info", "List information about GRID" ) );
+            new SimpleOption<bool>( "list", "List all grids. The names are possible values for the <grid> argument" ) );
+        add_option( new SimpleOption<bool>( "info", "List information about <grid>" ) );
         add_option( new SimpleOption<bool>( "json", "Export json" ) );
         add_option( new SimpleOption<bool>( "rtable", "Export IFS rtable" ) );
         add_option( new SimpleOption<bool>( "check", "Check grid" ) );
@@ -91,10 +92,38 @@ int AtlasGrids::execute( const Args& args ) {
     }
 
     if ( list ) {
-        Log::info() << "usage: atlas-grids GRID [OPTION]... [--help]\n" << std::endl;
-        Log::info() << "Available grids:" << std::endl;
-        for ( const auto& key : grid::GridFactory::keys() ) {
-            Log::info() << "  -- " << key << std::endl;
+        Log::info() << "usage: atlas-grids <grid> [OPTION]... [--help]\n" << std::endl;
+        Log::info() << "\n";
+        Log::info() << "Available grid types:" << std::endl;
+        for ( auto b : grid::GridBuilder::typeRegistry() ) {
+            Log::info() << "  -- " << b.second->type() << '\n';
+        }
+        Log::info() << "\n";
+        Log::info() << "Available named grids:" << std::endl;
+
+        size_t maxlen = 0;
+        for ( auto b : grid::GridBuilder::nameRegistry() ) {
+            for ( const auto& name : b.second->names() ) {
+                maxlen = std::max( maxlen, name.size() );
+            }
+        }
+
+        for ( auto b : grid::GridBuilder::nameRegistry() ) {
+            int nb_names = b.second->names().size();
+            int c        = 0;
+            for ( const auto& name : b.second->names() ) {
+                if ( c == 0 ) {
+                    Log::info() << "  -- " << std::left << std::setw( maxlen + 8 ) << name;
+                    if ( !b.second->type().empty() ) {
+                        Log::info() << "type: " << b.second->type();
+                    }
+                    Log::info() << std::endl;
+                }
+                else {
+                    Log::info() << "     " << std::left << std::setw( maxlen + 8 ) << name << std::endl;
+                }
+                c++;
+            }
         }
     }
 

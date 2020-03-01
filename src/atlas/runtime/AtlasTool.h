@@ -36,10 +36,11 @@ using eckit::option::VectorOption;
 namespace atlas {
 
 class AtlasTool : public eckit::Tool {
-protected:
+public:
     typedef std::vector<eckit::option::Option*> Options;
     typedef eckit::option::CmdArgs Args;
 
+protected:
     virtual bool serial() { return false; }
     virtual std::string indent() { return "      "; }
     virtual std::string briefDescription() { return ""; }

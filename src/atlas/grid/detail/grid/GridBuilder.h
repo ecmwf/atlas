@@ -30,8 +30,8 @@ public:
 
 public:
     GridBuilder( const std::string& names );
-    GridBuilder( const std::vector<std::string>& names );
-    GridBuilder( const std::string& type, const std::vector<std::string>& names );
+    GridBuilder( const std::string& type, const std::vector<std::string>& regexes,
+                 const std::vector<std::string>& names );
 
     virtual ~GridBuilder();
 
@@ -39,7 +39,9 @@ public:
 
     virtual const Grid::Implementation* create( const std::string&, const Grid::Config& = Grid::Config() ) const = 0;
 
-    std::string type() const;
+    const std::string& type() const;
+    const std::vector<std::string>& regexes() const;
+    const std::vector<std::string>& names() const;
 
 protected:
     bool match( const std::string& string, std::vector<std::string>& matches, int& id ) const;
@@ -50,6 +52,7 @@ private:
     virtual void print( std::ostream& os ) const = 0;
 
     std::vector<std::string> names_;
+    std::vector<std::string> pretty_names_;
     std::string type_;
 };
 

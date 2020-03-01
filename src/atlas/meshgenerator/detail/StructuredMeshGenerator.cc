@@ -185,7 +185,7 @@ void StructuredMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
 
     const StructuredGrid rg = StructuredGrid( grid );
     if ( !rg ) {
-        throw_Exception( "Structured can only work with a Structured", Here() );
+        throw_Exception( "Structured can only work with a Structured grid", Here() );
     }
 
     idx_t nb_parts = options.getInt( "nb_parts" );

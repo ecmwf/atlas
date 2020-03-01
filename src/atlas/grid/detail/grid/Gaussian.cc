@@ -76,7 +76,7 @@ static StructuredGrid::XSpace xspace( const std::vector<idx_t>& nx ) {
 
 static class classic_gaussian : public GridBuilder {
 public:
-    classic_gaussian() : GridBuilder( "classic_gaussian", {"^[Nn]([0-9]+)$"} ) {}
+    classic_gaussian() : GridBuilder( "classic_gaussian", {"^[Nn]([0-9]+)$"}, {"N<gauss>"} ) {}
 
     void print( std::ostream& os ) const override {
         os << std::left << std::setw( 20 ) << "N<gauss>"
@@ -113,7 +113,7 @@ public:
 
 static class octahedral_gaussian : GridBuilder {
 public:
-    octahedral_gaussian() : GridBuilder( "octahedral_gaussian", {"^[Oo]([0-9]+)$"} ) {}
+    octahedral_gaussian() : GridBuilder( "octahedral_gaussian", {"^[Oo]([0-9]+)$"}, {"O<gauss>"} ) {}
 
     void print( std::ostream& os ) const override {
         os << std::left << std::setw( 20 ) << "O<gauss>"
@@ -157,7 +157,7 @@ public:
 
 static class regular_gaussian : GridBuilder {
 public:
-    regular_gaussian() : GridBuilder( "regular_gaussian", {"^[Ff]([0-9]+)$"} ) {}
+    regular_gaussian() : GridBuilder( "regular_gaussian", {"^[Ff]([0-9]+)$"}, {"F<gauss>"} ) {}
 
     void print( std::ostream& os ) const override {
         os << std::left << std::setw( 20 ) << "F<gauss>"
