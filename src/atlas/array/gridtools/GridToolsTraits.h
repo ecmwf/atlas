@@ -14,7 +14,6 @@
 #include <utility>
 
 #include "gridtools/common/generic_metafunctions/accumulate.hpp"
-#include "gridtools/common/generic_metafunctions/is_all_integrals.hpp"
 #include "gridtools/storage/storage_facility.hpp"
 
 #include "atlas/array/ArrayViewDefs.h"

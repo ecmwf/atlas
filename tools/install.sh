@@ -183,6 +183,7 @@ if ${with_deps}; then
     echo "Installing gridtools"
     # Note: known to work version: 80187f11
     [[ -d ${SOURCES_DIR}/gridtools ]] || git clone -b master https://github.com/gridtools/gridtools ${SOURCES_DIR}/gridtools
+	( cd ${SOURCES_DIR}/gridtools && git checkout 80187f11 )
     mkdir -p ${BUILDS_DIR}/gridtools && cd ${BUILDS_DIR}/gridtools
     cmake ${ECBUILD_MODULE_PATH} \
           -DCMAKE_INSTALL_PREFIX=${PREFIX} \
