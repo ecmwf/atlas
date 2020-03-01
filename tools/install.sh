@@ -20,6 +20,7 @@ PREFIX=$(pwd)/install
 CMAKE_OPTIONS=""
 with_gridtools=false
 with_fftw=false
+with_cgal=false
 with_deps=false
 WORK_DIR=$(pwd)
 BUILD_TYPE=RelWithDebInfo
