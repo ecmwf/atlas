@@ -192,7 +192,7 @@ const TransImpl* TransFactory::build( const Cache& cache, const FunctionSpace& g
     }
 
     util::Config options = TransBackend::instance().config();
-    options.set( config );
+    options.set( eckit::LocalConfiguration( config ) );
 
     std::string backend = options.getString( "type" );
 
@@ -236,7 +236,7 @@ const TransImpl* TransFactory::build( const Cache& cache, const Grid& grid, cons
         return cache.trans();
     }
     util::Config options = TransBackend::instance().config();
-    options.set( config );
+    options.set( eckit::LocalConfiguration( config ) );
 
     std::string backend = options.getString( "type" );
 

@@ -15,8 +15,11 @@
 #include <sstream>
 #include <stdexcept>
 
+
+#include "eckit/eckit_version.h"
+#include "eckit/log/JSON.h"
+
 #include "eckit/filesystem/PathName.h"
-#include "eckit/parser/JSON.h"
 #include "eckit/parser/YAMLParser.h"
 
 #include "atlas/grid/Grid.h"

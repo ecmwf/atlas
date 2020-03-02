@@ -187,38 +187,13 @@ void Field::haloExchange( bool on_device ) const {
     get()->haloExchange( on_device );
 }
 
-// -- dangerous methods
-template <typename DATATYPE>
-DATATYPE const* Field::data() const {
-    return get()->host_data<DATATYPE>();
-}
-template <typename DATATYPE>
-DATATYPE* Field::data() {
-    return get()->host_data<DATATYPE>();
-}
-template <typename DATATYPE>
-DATATYPE const* Field::host_data() const {
-    return get()->host_data<DATATYPE>();
-}
-template <typename DATATYPE>
-DATATYPE* Field::host_data() {
-    return get()->host_data<DATATYPE>();
-}
-template <typename DATATYPE>
-DATATYPE const* Field::device_data() const {
-    return get()->device_data<DATATYPE>();
-}
-template <typename DATATYPE>
-DATATYPE* Field::device_data() {
-    return get()->device_data<DATATYPE>();
-}
-
 // -- Methods related to host-device synchronisation, requires gridtools_storage
-void Field::cloneToDevice() const {
-    get()->cloneToDevice();
+
+void Field::updateHost() const {
+    get()->updateHost();
 }
-void Field::cloneFromDevice() const {
-    get()->cloneFromDevice();
+void Field::updateDevice() const {
+    get()->updateDevice();
 }
 void Field::syncHostDevice() const {
     get()->syncHostDevice();
@@ -246,30 +221,6 @@ template Field::Field( const std::string&, long*, const array::ArraySpec& );
 template Field::Field( const std::string&, long*, const array::ArrayShape& );
 template Field::Field( const std::string&, int*, const array::ArraySpec& );
 template Field::Field( const std::string&, int*, const array::ArrayShape& );
-template double const* Field::data() const;
-template double* Field::data();
-template float const* Field::data() const;
-template float* Field::data();
-template long const* Field::data() const;
-template long* Field::data();
-template int const* Field::data() const;
-template int* Field::data();
-template double const* Field::host_data() const;
-template double* Field::host_data();
-template float const* Field::host_data() const;
-template float* Field::host_data();
-template long const* Field::host_data() const;
-template long* Field::host_data();
-template int const* Field::host_data() const;
-template int* Field::host_data();
-template double const* Field::device_data() const;
-template double* Field::device_data();
-template float const* Field::device_data() const;
-template float* Field::device_data();
-template long const* Field::device_data() const;
-template long* Field::device_data();
-template int const* Field::device_data() const;
-template int* Field::device_data();
 
 // ------------------------------------------------------------------
 

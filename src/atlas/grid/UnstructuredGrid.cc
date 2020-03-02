@@ -45,6 +45,10 @@ UnstructuredGrid::UnstructuredGrid( std::vector<PointXY>&& xy ) :
     Grid( new UnstructuredGrid::grid_t( std::forward<std::vector<PointXY>>( xy ) ) ),
     grid_( unstructured_grid( get() ) ) {}
 
+UnstructuredGrid::UnstructuredGrid( const std::vector<PointXY>& xy ) :
+    Grid( new UnstructuredGrid::grid_t( std::forward<const std::vector<PointXY>>( xy ) ) ),
+    grid_( unstructured_grid( get() ) ) {}
+
 UnstructuredGrid::UnstructuredGrid( std::initializer_list<PointXY> xy ) :
     Grid( new UnstructuredGrid::grid_t( xy ) ),
     grid_( unstructured_grid( get() ) ) {}

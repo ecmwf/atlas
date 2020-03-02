@@ -23,7 +23,7 @@ namespace method {
 
 ElemIndex3* create_element_kdtree( const Field& field_centres ) {
     ATLAS_TRACE();
-    const array::ArrayView<double, 2> centres = array::make_view<double, 2>( field_centres );
+    const array::ArrayView<const double, 2> centres = array::make_view<double, 2>( field_centres );
 
     static bool fastBuildKDTrees = eckit::Resource<bool>( "$ATLAS_FAST_BUILD_KDTREES", true );
 
@@ -34,7 +34,7 @@ ElemIndex3* create_element_kdtree( const Field& field_centres ) {
         std::vector<ElemIndex3::Value> p;
         p.reserve( nb_cells );
 
-        for ( size_t j = 0; j < nb_cells; ++j ) {
+        for ( unsigned int j = 0; j < nb_cells; ++j ) {
             p.emplace_back( ElemIndex3::Point( centres( j, XX ), centres( j, YY ), centres( j, ZZ ) ),
                             ElemIndex3::Payload( j ) );
         }
@@ -42,7 +42,7 @@ ElemIndex3* create_element_kdtree( const Field& field_centres ) {
         tree->build( p.begin(), p.end() );
     }
     else {
-        for ( size_t j = 0; j < nb_cells; ++j ) {
+        for ( unsigned int j = 0; j < nb_cells; ++j ) {
             tree->insert( ElemIndex3::Value( ElemIndex3::Point( centres( j, XX ), centres( j, YY ), centres( j, ZZ ) ),
                                              ElemIndex3::Payload( j ) ) );
         }

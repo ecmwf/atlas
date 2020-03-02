@@ -35,8 +35,12 @@ namespace method {
 template <typename Kernel>
 double StructuredInterpolation3D<Kernel>::convert_units_multiplier( const Field& field ) {
     std::string units = field.metadata().getString( "units", "degrees" );
-    if ( units == "degrees" ) { return 1.; }
-    if ( units == "radians" ) { return 180. / M_PI; }
+    if ( units == "degrees" ) {
+        return 1.;
+    }
+    if ( units == "radians" ) {
+        return 180. / M_PI;
+    }
     ATLAS_NOTIMPLEMENTED;
 }
 
@@ -48,13 +52,17 @@ StructuredInterpolation3D<Kernel>::StructuredInterpolation3D( const Method::Conf
     config.get( "matrix_free", matrix_free_ );
     config.get( "limiter", limiter_ );
 
-    if ( not matrix_free_ ) { throw_NotImplemented( "Matrix-free StructuredInterpolation3D not implemented", Here() ); }
+    if ( not matrix_free_ ) {
+        throw_NotImplemented( "Matrix-free StructuredInterpolation3D not implemented", Here() );
+    }
 }
 
 
 template <typename Kernel>
 void StructuredInterpolation3D<Kernel>::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
+    if ( mpi::size() > 1 ) {
+        ATLAS_NOTIMPLEMENTED;
+    }
 
 
     ATLAS_ASSERT( StructuredGrid( source ) );
@@ -90,7 +98,9 @@ void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source, cons
 
     source_ = source;
 
-    if ( target.functionspace() ) { target_ = target.functionspace(); }
+    if ( target.functionspace() ) {
+        target_ = target.functionspace();
+    }
 
     target_3d_ = target;
 
@@ -104,7 +114,9 @@ void StructuredInterpolation3D<Kernel>::setup( const FunctionSpace& source, cons
     source_ = source;
 
     ATLAS_ASSERT( target.size() >= 3 );
-    if ( target[0].functionspace() ) { target_ = target[0].functionspace(); }
+    if ( target[0].functionspace() ) {
+        target_ = target[0].functionspace();
+    }
 
     target_xyz_ = target;
 
@@ -142,7 +154,8 @@ void StructuredInterpolation3D<Kernel>::execute( const FieldSet& src_fields, Fie
     const idx_t N = src_fields.size();
     ATLAS_ASSERT( N == tgt_fields.size() );
 
-    if ( N == 0 ) return;
+    if ( N == 0 )
+        return;
 
     haloExchange( src_fields );
 
@@ -181,10 +194,10 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
     const idx_t N = src_fields.size();
 
     auto make_src_view = [&]( const FieldSet& src_fields ) {
-        std::vector<array::ArrayView<Value, Rank, array::Intent::ReadOnly> > src_view;
+        std::vector<array::ArrayView<const Value, Rank> > src_view;
         src_view.reserve( N );
         for ( idx_t i = 0; i < N; ++i ) {
-            src_view.emplace_back( array::make_view<Value, Rank, array::Intent::ReadOnly>( src_fields[i] ) );
+            src_view.emplace_back( array::make_view<const Value, Rank>( src_fields[i] ) );
         }
         return src_view;
     };
@@ -193,18 +206,21 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
     ATLAS_ASSERT( tgt_fields.size() == src_fields.size() );
     idx_t tgt_rank = -1;
     for ( auto& f : tgt_fields ) {
-        if ( tgt_rank == -1 ) tgt_rank = f.rank();
-        if ( f.rank() != tgt_rank ) { throw_Exception( "target fields don't all have the same rank!", Here() ); }
+        if ( tgt_rank == -1 )
+            tgt_rank = f.rank();
+        if ( f.rank() != tgt_rank ) {
+            throw_Exception( "target fields don't all have the same rank!", Here() );
+        }
     }
 
     if ( functionspace::PointCloud( target() ) && tgt_rank == 1 ) {
         const idx_t out_npts = target_lonlat_.shape( 0 );
 
-        const auto ghost    = array::make_view<int, 1, array::Intent::ReadOnly>( target_ghost_ );
-        const auto lonlat   = array::make_view<double, 2, array::Intent::ReadOnly>( target_lonlat_ );
-        const auto vertical = array::make_view<double, 1, array::Intent::ReadOnly>( target_vertical_ );
+        const auto ghost    = array::make_view<int, 1>( target_ghost_ );
+        const auto lonlat   = array::make_view<double, 2>( target_lonlat_ );
+        const auto vertical = array::make_view<double, 1>( target_vertical_ );
 
-        const auto src_view = make_src_view( src_fields );
+        auto src_view = make_src_view( src_fields );
 
         constexpr int TargetRank = 1;
         std::vector<array::ArrayView<Value, TargetRank> > tgt_view;
@@ -235,7 +251,7 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
         const idx_t out_npts = target_3d_.shape( 0 );
         const idx_t out_nlev = target_3d_.shape( 1 );
 
-        const auto coords   = array::make_view<double, 3, array::Intent::ReadOnly>( target_3d_ );
+        const auto coords   = array::make_view<const double, 3>( target_3d_ );
         const auto src_view = make_src_view( src_fields );
 
         constexpr int TargetRank = Rank;
@@ -278,9 +294,9 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
         const idx_t out_npts = target_xyz_[0].shape( 0 );
         const idx_t out_nlev = target_xyz_[0].shape( 1 );
 
-        const auto xcoords  = array::make_view<double, 2, array::Intent::ReadOnly>( target_xyz_[LON] );
-        const auto ycoords  = array::make_view<double, 2, array::Intent::ReadOnly>( target_xyz_[LAT] );
-        const auto zcoords  = array::make_view<double, 2, array::Intent::ReadOnly>( target_xyz_[ZZ] );
+        const auto xcoords  = array::make_view<double, 2>( target_xyz_[LON] );
+        const auto ycoords  = array::make_view<double, 2>( target_xyz_[LAT] );
+        const auto zcoords  = array::make_view<double, 2>( target_xyz_[ZZ] );
         const auto src_view = make_src_view( src_fields );
 
         constexpr int TargetRank = Rank;

@@ -72,7 +72,7 @@ public:
 
 private:
     const bool degrees_;
-    NormaliseLongitude normalise_;
+    util::NormaliseLongitude normalise_;
 };
 }  // namespace
 
@@ -153,13 +153,17 @@ Unstructured::Unstructured( std::vector<PointXY>&& pts ) :
     domain_ = GlobalDomain();
 }
 
+Unstructured::Unstructured( const std::vector<PointXY>& pts ) : Grid(), points_( new std::vector<PointXY>( pts ) ) {
+    domain_ = GlobalDomain();
+}
+
 Unstructured::Unstructured( std::initializer_list<PointXY> initializer_list ) :
     Grid(),
     points_( new std::vector<PointXY>( initializer_list ) ) {
     domain_ = GlobalDomain();
 }
 
-Unstructured::~Unstructured() {}
+Unstructured::~Unstructured() = default;
 
 Grid::uid_t Unstructured::name() const {
     if ( shortName_.empty() ) {
@@ -205,7 +209,7 @@ Grid::Spec Unstructured::spec() const {
     cached_spec_->set( "domain", domain().spec() );
     cached_spec_->set( "projection", projection().spec() );
 
-    std::unique_ptr<IteratorXY> it( xy_begin() );
+    auto it = xy_begin();
     std::vector<double> coords( 2 * size() );
     idx_t c( 0 );
     PointXY xy;
@@ -223,19 +227,6 @@ void Unstructured::print( std::ostream& os ) const {
     os << "Unstructured(Npts:" << size() << ")";
 }
 
-bool Unstructured::IteratorXYPredicated::next( PointXY& /*xy*/ ) {
-    ATLAS_NOTIMPLEMENTED;
-#if 0
-    if ( n_ != grid_.points_->size() ) {
-        xy = grid_.xy( n_++ );
-        return true;
-    }
-    else {
-        return false;
-    }
-#endif
-}
-
 namespace {  // anonymous
 
 static class unstructured : public GridBuilder {
@@ -245,16 +236,16 @@ static class unstructured : public GridBuilder {
 public:
     unstructured() : GridBuilder( "unstructured" ) {}
 
-    virtual void print( std::ostream& os ) const {
+    void print( std::ostream& os ) const override {
         os << std::left << std::setw( 20 ) << " "
            << "Unstructured grid";
     }
 
-    virtual const Implementation* create( const std::string& /* name */, const Config& ) const {
+    const Implementation* create( const std::string& /* name */, const Config& ) const override {
         throw_NotImplemented( "Cannot create unstructured grid from name", Here() );
     }
 
-    virtual const Implementation* create( const Config& config ) const { return new Unstructured( config ); }
+    const Implementation* create( const Config& config ) const override { return new Unstructured( config ); }
 
 } unstructured_;
 
@@ -268,7 +259,7 @@ const Unstructured* atlas__grid__Unstructured__points( const double xy[], int sh
     size_t stride_v = stridesf[0];
     std::vector<PointXY> points;
     points.reserve( nb_points );
-    for ( idx_t n = 0; n < nb_points; ++n ) {
+    for ( size_t n = 0; n < nb_points; ++n ) {
         points.emplace_back( PointXY{xy[n * stride_n + 0], xy[n * stride_n + 1 * stride_v]} );
     }
     return new Unstructured( std::move( points ) );

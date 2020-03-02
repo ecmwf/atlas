@@ -70,14 +70,6 @@ public:
         set( other.get() );
         return *this;
     }
-    FortranIndex<Value>& operator+( const Value& value ) {
-        *( idx_ ) += value;
-        return *this;
-    }
-    FortranIndex<Value>& operator-( const Value& value ) {
-        *( idx_ ) -= value;
-        return *this;
-    }
     FortranIndex<Value>& operator--() {
         --( *( idx_ ) );
         return *this;
@@ -108,6 +100,16 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
+///@brief Multidimensional access to Array or Field objects containing index fields
+///       that are compatible with Fortran indexing
+///
+/// Index fields that are compatible with Fortran are 1-based: a value `1` corresponds
+/// to the first index in a Fortran array. In C++ the first index would of course correspond to
+/// the value `0`. To stay compatible, we created this class IndexView that subtracts `1`
+/// when an index value is accessed, and adds `1` when a value is set.
+///
+/// If Atlas is compiled without the FORTRAN feature (ATLAS_HAVE_FORTRAN==0), then the addition
+/// and substraction of `1` is compiled out, which may slightly improve performance.
 template <typename Value, int Rank>
 class IndexView {
 public:
@@ -120,16 +122,21 @@ public:
 #endif
 
 public:
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
     IndexView( Value* data, const idx_t shape[Rank] );
 
+    IndexView( Value* data, const idx_t shape[Rank], const idx_t strides[Rank] );
+#endif
     // -- Access methods
 
+    /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Idx>
     Index operator()( Idx... idx ) {
         check_bounds( idx... );
         return INDEX_REF( &data_[index( idx... )] );
     }
 
+    /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Ints>
     const value_type operator()( Ints... idx ) const {
         return data_[index( idx... )] FROM_FORTRAN;
@@ -194,6 +201,19 @@ private:
     idx_t strides_[Rank];
     idx_t shape_[Rank];
 };
+
+template <typename Value, int Rank>
+class LocalIndexView : public IndexView<Value, Rank> {
+    using Base = IndexView<Value, Rank>;
+
+public:
+    using Base::Base;
+};
+
+#undef INDEX_REF
+#undef FROM_FORTRAN
+#undef TO_FORTRAN
+
 
 //------------------------------------------------------------------------------------------------------
 

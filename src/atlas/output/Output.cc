@@ -28,26 +28,29 @@ using atlas::FunctionSpace;
 using atlas::Mesh;
 using atlas::field::FieldImpl;
 using atlas::field::FieldSetImpl;
-using eckit::Parametrisation;
 
 namespace atlas {
 namespace output {
 
-static eckit::Mutex* local_mutex                = nullptr;
-static std::map<std::string, OutputFactory*>* m = nullptr;
-static pthread_once_t once                      = PTHREAD_ONCE_INIT;
+static eckit::Mutex* local_mutex                        = nullptr;
+static std::map<std::string, detail::OutputFactory*>* m = nullptr;
+static pthread_once_t once                              = PTHREAD_ONCE_INIT;
 
 static void init() {
     local_mutex = new eckit::Mutex();
-    m           = new std::map<std::string, OutputFactory*>();
+    m           = new std::map<std::string, detail::OutputFactory*>();
 }
 
-OutputImpl::OutputImpl() {}
+namespace detail {
 
-OutputImpl::~OutputImpl() {}
+OutputImpl::OutputImpl() = default;
 
-Output::Output( const std::string& key, Stream& stream, const eckit::Parametrisation& params ) :
-    Handle( OutputFactory::build( key, stream, params ) ) {}
+OutputImpl::~OutputImpl() = default;
+
+}  // namespace detail
+
+Output::Output( const std::string& key, std::ostream& stream, const eckit::Parametrisation& params ) :
+    Handle( detail::OutputFactory::build( key, stream, params ) ) {}
 
 /// Write mesh file
 void Output::write( const Mesh& m, const eckit::Parametrisation& c ) const {
@@ -73,6 +76,8 @@ void Output::write( const Field& f, const FunctionSpace& fs, const eckit::Parame
 void Output::write( const FieldSet& f, const FunctionSpace& fs, const eckit::Parametrisation& c ) const {
     return get()->write( f, fs, c );
 }
+
+namespace detail {
 
 OutputFactory::OutputFactory( const std::string& name ) : name_( name ) {
     pthread_once( &once, init );
@@ -102,7 +107,7 @@ void OutputFactory::list( std::ostream& out ) {
     }
 }
 
-const OutputImpl* OutputFactory::build( const std::string& name, Stream& stream ) {
+const OutputImpl* OutputFactory::build( const std::string& name, std::ostream& stream ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
@@ -122,7 +127,8 @@ const OutputImpl* OutputFactory::build( const std::string& name, Stream& stream 
     return ( *j ).second->make( stream );
 }
 
-const OutputImpl* OutputFactory::build( const std::string& name, Stream& stream, const eckit::Parametrisation& param ) {
+const OutputImpl* OutputFactory::build( const std::string& name, std::ostream& stream,
+                                        const eckit::Parametrisation& param ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
@@ -149,7 +155,7 @@ void atlas__Output__delete( OutputImpl* This ) {
     delete This;
 }
 
-const OutputImpl* atlas__Output__create( const char* factory_key, Stream* stream,
+const OutputImpl* atlas__Output__create( const char* factory_key, std::ostream* stream,
                                          const eckit::Parametrisation* config ) {
     ATLAS_ASSERT( config != nullptr, "Cannot access uninitialisd atlas_Config" );
     const OutputImpl* output( nullptr );
@@ -162,18 +168,20 @@ const OutputImpl* atlas__Output__create( const char* factory_key, Stream* stream
     return output;
 }
 
-void atlas__Output__write_mesh( const OutputImpl* This, Mesh::Implementation* mesh, const Parametrisation* params ) {
+void atlas__Output__write_mesh( const OutputImpl* This, Mesh::Implementation* mesh,
+                                const eckit::Parametrisation* params ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
     Mesh m( mesh );
     This->write( m, *params );
 }
 void atlas__Output__write_fieldset( const OutputImpl* This, const FieldSetImpl* fieldset,
-                                    const Parametrisation* config ) {
+                                    const eckit::Parametrisation* config ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
     ATLAS_ASSERT( fieldset != nullptr, "Cannot access uninitialisd atlas_FieldSet" );
     This->write( fieldset, *config );
 }
-void atlas__Output__write_field( const OutputImpl* This, const FieldImpl* field, const Parametrisation* config ) {
+void atlas__Output__write_field( const OutputImpl* This, const FieldImpl* field,
+                                 const eckit::Parametrisation* config ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
     ATLAS_ASSERT( field != nullptr, "Cannot access uninitialisd atlas_Field" );
     ATLAS_ASSERT( config != nullptr, "Cannot access uninitialisd atlas_Config" );
@@ -181,7 +189,7 @@ void atlas__Output__write_field( const OutputImpl* This, const FieldImpl* field,
 }
 void atlas__Output__write_fieldset_fs( const OutputImpl* This, const FieldSetImpl* fieldset,
                                        const functionspace::FunctionSpaceImpl* functionspace,
-                                       const Parametrisation* params ) {
+                                       const eckit::Parametrisation* params ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
     ATLAS_ASSERT( fieldset != nullptr, "Cannot access uninitialisd atlas_FieldSet" );
     ATLAS_ASSERT( functionspace != nullptr, "Cannot access uninitialisd atlas_FunctionSpace" );
@@ -190,7 +198,7 @@ void atlas__Output__write_fieldset_fs( const OutputImpl* This, const FieldSetImp
 }
 void atlas__Output__write_field_fs( const OutputImpl* This, const FieldImpl* field,
                                     const functionspace::FunctionSpaceImpl* functionspace,
-                                    const Parametrisation* config ) {
+                                    const eckit::Parametrisation* config ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
     ATLAS_ASSERT( field != nullptr, "Cannot access uninitialisd atlas_Field" );
     ATLAS_ASSERT( functionspace != nullptr, "Cannot access uninitialisd atlas_FunctionSpace" );
@@ -199,5 +207,6 @@ void atlas__Output__write_field_fs( const OutputImpl* This, const FieldImpl* fie
 }
 }
 
+}  // namespace detail
 }  // namespace output
 }  // namespace atlas

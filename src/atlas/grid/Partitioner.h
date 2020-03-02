@@ -23,6 +23,7 @@ class Parametrisation;
 namespace atlas {
 class Grid;
 class Mesh;
+class FunctionSpace;
 namespace grid {
 class Distribution;
 class DistributionImpl;
@@ -44,6 +45,12 @@ class MeshImpl;
 }  // namespace atlas
 
 namespace atlas {
+namespace functionspace {
+class FunctionSpaceImpl;
+}  // namespace functionspace
+}  // namespace atlas
+
+namespace atlas {
 namespace grid {
 namespace detail {
 namespace grid {
@@ -51,7 +58,6 @@ class Grid;
 }  // namespace grid
 }  // namespace detail
 }  // namespace grid
-using GridImpl = grid::detail::grid::Grid;
 }  // namespace atlas
 
 namespace atlas {
@@ -59,7 +65,7 @@ namespace grid {
 
 // ------------------------------------------------------------------
 
-class Partitioner : public util::ObjectHandle<detail::partitioner::Partitioner> {
+class Partitioner : DOXYGEN_HIDE( public util::ObjectHandle<detail::partitioner::Partitioner> ) {
 public:
     using Config         = eckit::Parametrisation;
     using Implementation = detail::partitioner::Partitioner;
@@ -85,7 +91,7 @@ public:
 
 // ------------------------------------------------------------------
 
-class MatchingMeshPartitioner : public Partitioner {
+class MatchingPartitioner : public Partitioner {
 public:
     using Config = eckit::Parametrisation;
 
@@ -93,12 +99,24 @@ public:
     static bool exists( const std::string& type );
 
 public:
-    MatchingMeshPartitioner();
-    MatchingMeshPartitioner( const Mesh& mesh );
-    MatchingMeshPartitioner( const Mesh& mesh, const Config& config );
+    MatchingPartitioner();
+    MatchingPartitioner( const Mesh& );
+    MatchingPartitioner( const Mesh&, const Config& );
+    MatchingPartitioner( const FunctionSpace& );
+    MatchingPartitioner( const FunctionSpace&, const Config& );
 };
 
 // ------------------------------------------------------------------
+
+class MatchingMeshPartitioner : public MatchingPartitioner {
+public:
+    using MatchingPartitioner::MatchingPartitioner;
+};
+
+// ------------------------------------------------------------------
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+using GridImpl = detail::grid::Grid;
 
 extern "C" {
 Partitioner::Implementation* atlas__grid__Partitioner__new( const Partitioner::Config* config );
@@ -107,9 +125,12 @@ Partitioner::Implementation* atlas__grid__Partitioner__new_type( const char* typ
 
 Partitioner::Implementation* atlas__grid__MatchingMeshPartitioner__new( const mesh::detail::MeshImpl* mesh,
                                                                         const Partitioner::Config* config );
+Partitioner::Implementation* atlas__grid__MatchingFunctionSpacePartitioner__new(
+    const functionspace::FunctionSpaceImpl* mesh, const Partitioner::Config* config );
 void atlas__grid__Partitioner__delete( Partitioner::Implementation* This );
 DistributionImpl* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This, const GridImpl* grid );
 }
+#endif
 
 }  // namespace grid
 }  // namespace atlas

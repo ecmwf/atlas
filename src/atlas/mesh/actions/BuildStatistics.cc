@@ -137,7 +137,7 @@ void build_statistics( Mesh& mesh ) {
     std::ofstream ofs;
     eckit::PathName stats_path( "stats.txt" );
     int idt = 10;
-    if ( mpi::comm().size() == 1 ) {
+    if ( mpi::size() == 1 ) {
         ofs.open( stats_path.localPath(), std::ofstream::out );
         ofs << "# STATISTICS rho (min_length/max_length), eta (quality) \n";
         ofs << std::setw( idt ) << "# rho";
@@ -148,7 +148,7 @@ void build_statistics( Mesh& mesh ) {
 
     // Cell statistics
     {
-        if ( mpi::comm().size() == 1 ) {
+        if ( mpi::size() == 1 ) {
             ofs.open( stats_path.localPath(), std::ofstream::app );
         }
 
@@ -174,7 +174,7 @@ void build_statistics( Mesh& mesh ) {
 
                     tri_quality( eta( ielem ), rho( ielem ), p1, p2, p3 );
 
-                    if ( mpi::comm().size() == 1 ) {
+                    if ( mpi::size() == 1 ) {
                         ofs << std::setw( idt ) << rho( ielem ) << std::setw( idt ) << eta( ielem ) << "\n";
                     }
                 }
@@ -194,19 +194,19 @@ void build_statistics( Mesh& mesh ) {
 
                     quad_quality( eta( ielem ), rho( ielem ), p1, p2, p3, p4 );
 
-                    if ( mpi::comm().size() == 1 ) {
+                    if ( mpi::size() == 1 ) {
                         ofs << std::setw( idt ) << rho( ielem ) << std::setw( idt ) << eta( ielem ) << "\n";
                     }
                 }
             }
         }
-        if ( mpi::comm().size() == 1 ) {
+        if ( mpi::size() == 1 ) {
             ofs.close();
         }
     }
 
     eckit::PathName dual_stats_path( "dual_stats.txt" );
-    if ( mpi::comm().size() == 1 ) {
+    if ( mpi::size() == 1 ) {
         ofs.open( dual_stats_path.localPath(), std::ofstream::out );
         ofs << "# STATISTICS dual_area \n";
         ofs << std::setw( idt ) << "# area";
@@ -225,13 +225,13 @@ void build_statistics( Mesh& mesh ) {
             dual_delta_sph( jnode ) = std::sqrt( dual_volumes( jnode ) * hx * hy );
         }
 
-        if ( mpi::comm().size() == 1 ) {
+        if ( mpi::size() == 1 ) {
             for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
                 ofs << std::setw( idt ) << dual_delta_sph( jnode ) << "\n";
             }
         }
     }
-    if ( mpi::comm().size() == 1 ) {
+    if ( mpi::size() == 1 ) {
         ofs.close();
     }
 }

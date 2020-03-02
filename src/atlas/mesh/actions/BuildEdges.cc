@@ -9,12 +9,17 @@
  */
 
 #include "atlas/mesh/actions/BuildEdges.h"
+
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <limits>
 #include <memory>
 #include <set>
 #include <stdexcept>
+
+#include "eckit/types/FloatCompare.h"
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -49,7 +54,7 @@ namespace actions {
 
 namespace {  // anonymous
 struct Sort {
-    Sort() {}
+    Sort() = default;
     Sort( gidx_t gid, idx_t idx ) {
         g = gid;
         i = idx;
@@ -394,7 +399,7 @@ struct ComputeUniquePoleEdgeIndex {
         return util::detail::unique32( microdeg( centroid[XX] ), microdeg( centroid[YY] ) );
     }
 
-    array::ArrayView<double, 2> xy;
+    array::ArrayView<const double, 2> xy;
 };
 
 void build_edges( Mesh& mesh ) {
@@ -417,11 +422,17 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
 
     bool pole_edges{false};
     if ( StructuredGrid grid = mesh.grid() ) {
-        if ( Domain domain = grid.domain() ) {
-            pole_edges = domain.global();
+        if ( RectangularDomain domain = grid.domain() ) {
+            if ( domain.global() ) {
+                double ymax = std::max( std::abs( grid.y().front() ), std::abs( grid.y().back() ) );
+                pole_edges  = not eckit::types::is_approximately_equal( ymax, domain.ymax() );
+            }
         }
     }
     config.get( "pole_edges", pole_edges );
+
+    bool sort_edges{false};
+    config.get( "sort_edges", sort_edges );
 
 
     mesh::Nodes& nodes = mesh.nodes();
@@ -450,9 +461,47 @@ void build_edges( Mesh& mesh, const eckit::Configuration& config ) {
         pole_edge_accumulator = std::make_shared<AccumulatePoleEdges>( nodes );
     }
 
+    std::vector<idx_t> sorted_edge_nodes_data;
+    std::vector<idx_t> sorted_edge_to_elem_data;
+
     for ( int halo = 0; halo <= mesh_halo; ++halo ) {
         edge_start = edge_end;
         edge_end += ( edge_halo_offsets[halo + 1] - edge_halo_offsets[halo] );
+
+        if ( /*sort edges based on lowest node local index = */ sort_edges ) {
+            if ( sorted_edge_nodes_data.empty() ) {
+                sorted_edge_nodes_data.resize( edge_nodes_data.size() );
+            }
+            if ( sorted_edge_to_elem_data.empty() ) {
+                sorted_edge_to_elem_data.resize( edge_to_elem_data.size() );
+            }
+            std::vector<std::pair<idx_t, idx_t>> sorted_edges_by_lowest_node_index;
+            sorted_edges_by_lowest_node_index.reserve( edge_end - edge_start );
+            for ( idx_t e = edge_start; e < edge_end; ++e ) {
+                const idx_t iedge = edge_halo_offsets[halo] + ( e - edge_start );
+                idx_t lowest_node_idx =
+                    std::min( edge_nodes_data.at( 2 * iedge + 0 ), edge_nodes_data.at( 2 * iedge + 1 ) );
+                sorted_edges_by_lowest_node_index.emplace_back( lowest_node_idx, e );
+            }
+            std::sort( sorted_edges_by_lowest_node_index.begin(), sorted_edges_by_lowest_node_index.end() );
+            for ( idx_t e = edge_start; e < edge_end; ++e ) {
+                const idx_t iedge = edge_halo_offsets[halo] + ( e - edge_start );
+                const idx_t sedge =
+                    edge_halo_offsets[halo] + ( sorted_edges_by_lowest_node_index[e - edge_start].second - edge_start );
+                sorted_edge_nodes_data[2 * iedge + 0]   = edge_nodes_data[2 * sedge + 0];
+                sorted_edge_nodes_data[2 * iedge + 1]   = edge_nodes_data[2 * sedge + 1];
+                sorted_edge_to_elem_data[2 * iedge + 0] = edge_to_elem_data[2 * sedge + 0];
+                sorted_edge_to_elem_data[2 * iedge + 1] = edge_to_elem_data[2 * sedge + 1];
+            }
+
+            for ( idx_t e = edge_start; e < edge_end; ++e ) {
+                const idx_t iedge                = edge_halo_offsets[halo] + ( e - edge_start );
+                edge_nodes_data[2 * iedge + 0]   = sorted_edge_nodes_data[2 * iedge + 0];
+                edge_nodes_data[2 * iedge + 1]   = sorted_edge_nodes_data[2 * iedge + 1];
+                edge_to_elem_data[2 * iedge + 0] = sorted_edge_to_elem_data[2 * iedge + 0];
+                edge_to_elem_data[2 * iedge + 1] = sorted_edge_to_elem_data[2 * iedge + 1];
+            }
+        }
 
         // Build edges
         mesh.edges().add( new mesh::temporary::Line(), ( edge_end - edge_start ),

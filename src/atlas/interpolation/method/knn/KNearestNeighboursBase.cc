@@ -40,7 +40,7 @@ void KNearestNeighboursBase::buildPointSearchTree( Mesh& meshSource ) {
         pidx.reserve( meshSource.nodes().size() );
         for ( idx_t ip = 0; ip < meshSource.nodes().size(); ++ip ) {
             PointIndex3::Point p{coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 )};
-            pidx.push_back( PointIndex3::Value( p, ip ) );
+            pidx.emplace_back( p, ip );
         }
         pTree_->build( pidx.begin(), pidx.end() );
     }

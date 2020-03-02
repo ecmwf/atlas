@@ -59,7 +59,7 @@ public:
         size_ = N;
     }
 
-    void cloneToDevice() {
+    void updateDevice() {
         if ( !data_gpu_ ) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
             ::cudaMalloc( (void**)( &data_gpu_ ), sizeof( T* ) * size_ );
@@ -67,7 +67,7 @@ public:
             T* buff = new T[size_];
 
             for ( idx_t i = 0; i < size(); ++i ) {
-                data_[i]->cloneToDevice();
+                data_[i]->updateDevice();
                 buff[i] = data_[i]->gpu_object_ptr();
             }
             ::cudaMemcpy( data_gpu_, buff, sizeof( T* ) * size_, cudaMemcpyHostToDevice );
@@ -81,19 +81,19 @@ public:
             ATLAS_ASSERT( size_gpu_ == size_ );
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
             for ( idx_t i = 0; i < size(); ++i ) {
-                data_[i]->cloneToDevice();
+                data_[i]->updateDevice();
                 assert( data_gpu_[i] == data_[i]->gpu_object_ptr() );
             }
 #endif
         }
     }
-    void cloneFromDevice() {
+    void updateHost() {
         ATLAS_ASSERT( data_gpu_ != nullptr );
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
 
         for ( idx_t i = 0; i < size(); ++i ) {
-            data_[i]->cloneFromDevice();
+            data_[i]->updateHost();
         }
 #endif
     }

@@ -25,11 +25,12 @@ namespace array {
 
 // --------------------------------------------------------------------------------------------
 // Forward declarations
-
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <typename Value>
 class ArrayT;
 template <typename Value>
 class ArrayT_impl;
+#endif
 
 // --------------------------------------------------------------------------------------------
 
@@ -110,9 +111,9 @@ public:
 
     virtual const void* storage() const { return data_store_->voidDataStore(); }
 
-    void cloneToDevice() const { data_store_->cloneToDevice(); }
+    void updateDevice() const { data_store_->updateDevice(); }
 
-    void cloneFromDevice() const { data_store_->cloneFromDevice(); }
+    void updateHost() const { data_store_->updateHost(); }
 
     bool valid() const { return data_store_->valid(); }
 

@@ -17,7 +17,6 @@
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
-#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator.h"
@@ -44,11 +43,11 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 double dual_volume( const Mesh& mesh ) {
-    const mesh::Nodes& nodes                       = mesh.nodes();
-    int nb_nodes                                   = nodes.size();
-    const array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
-    const array::ArrayView<int, 1> is_ghost        = array::make_view<int, 1>( nodes.ghost() );
-    double area                                    = 0;
+    const mesh::Nodes& nodes = mesh.nodes();
+    int nb_nodes             = nodes.size();
+    auto dual_volumes        = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
+    auto is_ghost            = array::make_view<int, 1>( nodes.ghost() );
+    double area              = 0;
     for ( int node = 0; node < nb_nodes; ++node ) {
         if ( !is_ghost( node ) ) {
             area += dual_volumes( node );
@@ -68,8 +67,8 @@ void rotated_flow( const fvm::Method& fvm, Field& field, const double& beta ) {
     const double pvel    = USCAL / radius;
     const double deg2rad = M_PI / 180.;
 
-    array::ArrayView<double, 2> lonlat_deg = array::make_view<double, 2>( fvm.mesh().nodes().lonlat() );
-    array::ArrayView<double, 3> var        = array::make_view<double, 3>( field );
+    auto lonlat_deg = array::make_view<double, 2>( fvm.mesh().nodes().lonlat() );
+    auto var        = array::make_view<double, 3>( field );
 
     idx_t nnodes = fvm.mesh().nodes().size();
     for ( idx_t jnode = 0; jnode < nnodes; ++jnode ) {

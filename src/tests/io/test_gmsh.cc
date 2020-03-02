@@ -20,12 +20,18 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_gmsh_output" ) {
-    Mesh mesh = test::generate_mesh( Grid( "N128" ) );
-
-    atlas::output::GmshFileStream file( "bs.msh", "w" );
-    output::Gmsh gmsh( "test_gmsh_output.msh", util::Config( "binary", true )( "file", "test_gmsh_output.msh" ) );
+CASE( "test_gmsh_output_1" ) {
+    Mesh mesh = test::generate_mesh( Grid( "N32" ) );
+    output::Gmsh gmsh( "test_gmsh_output_1.msh" );
     gmsh.write( mesh );
+}
+
+CASE( "test_gmsh_output_2" ) {
+    Mesh mesh = test::generate_mesh( Grid( "N32" ) );
+    atlas::output::GmshFileStream file( "test_gmsh_output_2.msh", "w" );
+    Log::warning() << "TODO: Not yet implemented!!! ATLAS-254" << std::endl;
+    // output::Gmsh gmsh( file );
+    // gmsh.write( mesh );
 }
 
 //-----------------------------------------------------------------------------

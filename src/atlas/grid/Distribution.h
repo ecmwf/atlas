@@ -28,10 +28,12 @@ class Partitioner;
 namespace atlas {
 namespace grid {
 
-class Distribution : public util::ObjectHandle<DistributionImpl> {
+class Distribution : DOXYGEN_HIDE( public util::ObjectHandle<DistributionImpl> ) {
     friend class Partitioner;
 
 public:
+    using partition_t = DistributionImpl::partition_t;
+
     using Handle::Handle;
     Distribution() = default;
 
@@ -39,17 +41,19 @@ public:
 
     Distribution( const Grid&, const Partitioner& );
 
-    Distribution( idx_t npts, int partition[], int part0 = 0 );
+    Distribution( int nb_partitions, idx_t npts, int partition[], int part0 = 0 );
+
+    Distribution( int nb_partitions, partition_t&& partition );
 
     ~Distribution();
 
     int partition( const gidx_t gidx ) const;
 
-    const std::vector<int>& partition() const;
+    const partition_t& partition() const;
 
     idx_t nb_partitions() const;
 
-    operator const std::vector<int>&() const;
+    operator const partition_t&() const;
 
     const int* data() const;
 

@@ -48,7 +48,7 @@ public:
 
 // ------------------------------------------------------------------
 
-class LegendreCacheCreator : public util::ObjectHandle<LegendreCacheCreatorImpl> {
+class LegendreCacheCreator : DOXYGEN_HIDE( public util::ObjectHandle<LegendreCacheCreatorImpl> ) {
 public:
     using Handle::Handle;
     LegendreCacheCreator() = default;

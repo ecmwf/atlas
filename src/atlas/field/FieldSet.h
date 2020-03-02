@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file FieldSet.h
 /// @author Willem Deconinck
 /// @author Pedro Maciel
 /// @date Jan 2015
@@ -28,6 +29,8 @@
 namespace atlas {
 
 class FieldSet;
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 namespace field {
 
@@ -92,7 +95,6 @@ protected:                                // data
     std::map<std::string, idx_t> index_;  ///< name-to-index map, to refer fields by name
 };
 
-
 class FieldImpl;
 
 // C wrapper interfaces to C++ routines
@@ -109,13 +111,14 @@ void atlas__FieldSet__halo_exchange( FieldSetImpl* This, int on_device );
 }
 
 }  // namespace field
+#endif
 
 //---------------------------------------------------------------------------------------------------------------------
 
 /**
  * @brief Represents a set of fields, where order is preserved
  */
-class FieldSet : public util::ObjectHandle<field::FieldSetImpl> {
+class FieldSet : DOXYGEN_HIDE( public util::ObjectHandle<field::FieldSetImpl> ) {
 public:  // types
     using iterator       = Implementation::iterator;
     using const_iterator = Implementation::const_iterator;

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 # This script checks all example-grids and updates the uid to a newly calculated uid
@@ -25,29 +25,33 @@ def run_program_get_error(file):
 
 def process_file( file, newfile ):
 
-  import string
-  print( "File: " , file )
+    import string
+    print( "File: " , file )
 
-  f = open(file,"r+")
-  text = f.read()
-  f.close()
+    f = open(file,"r+")
+    text = f.read()
+    f.close()
 
-  line = run_program_get_error( file )
-  if line:
-      print( line )
-      import re
-      replace = re.match( r"Check failed: grid uid (.*) expected to be (.*)$", line ).group(1)
-      uid = re.findall( r"^  uid : (.*)$", text, re.MULTILINE)[0]
-      print("Search/Replace ",uid, " to ", replace )
-      newtext = text.replace( uid, replace )
-  else:
-      print( "Nothing to replace, copy-only" )
-      newtext = text
+    newtext = text
 
-  print( "New file: ", newfile)
-  f = open(newfile,"w")
-  f.write(newtext)
-  f.close()
+    lines = run_program_get_error( file )
+    if lines:
+        for line in lines.splitlines():
+            import re
+            matched = re.match( r"Check failed: grid uid (.*) expected to be (.*)$", line )
+            if matched :
+                print( line )
+                replace = matched.group(1)
+                uid = re.findall( r"^  uid : (.*)$", text, re.MULTILINE)[0]
+                print("Search/Replace ",uid, " to ", replace )
+                newtext = text.replace( uid, replace )
+    else:
+        print( "Nothing to replace, copy-only" )
+
+    print( "New file: ", newfile)
+    f = open(newfile,"w")
+    f.write(newtext)
+    f.close()
 
 
 import sys

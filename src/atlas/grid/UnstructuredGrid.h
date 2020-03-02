@@ -48,16 +48,17 @@ public:
     UnstructuredGrid( const Grid&, const Domain& );  // Create a new unstructured grid!
 
     operator bool() const { return valid(); }
-    UnstructuredGrid( std::vector<PointXY>&& );  // move constructor
+    UnstructuredGrid( std::vector<PointXY>&& );       // move constructor
+    UnstructuredGrid( const std::vector<PointXY>& );  // creates copy
 
     bool valid() const { return grid_; }
 
+    using Grid::lonlat;
     using Grid::xy;
-    void xy( idx_t n, double xy[] ) const {
-        PointXY _xy = grid_->xy( n );
-        xy[0]       = _xy.x();
-        xy[1]       = _xy.y();
-    }
+
+    void xy( idx_t n, double xy[] ) const { grid_->xy( n, xy ); }
+
+    void lonlat( idx_t n, double lonlat[] ) const { grid_->lonlat( n, lonlat ); }
 
     PointXY xy( idx_t n ) const { return grid_->xy( n ); }
 

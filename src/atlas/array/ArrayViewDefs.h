@@ -15,12 +15,7 @@
 namespace atlas {
 namespace array {
 
-enum class Intent
-{
-    ReadOnly,
-    ReadWrite
-};
-
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <int cDim>
 struct Dim {
     static constexpr int cdim = cDim;
@@ -38,6 +33,6 @@ template <>
 struct is_dim_policy<LastDim> : std::true_type {};
 template <>
 struct is_dim_policy<FirstDim> : std::true_type {};
-
+#endif
 }  // namespace array
 }  // namespace atlas

@@ -75,7 +75,7 @@ HybridElements::HybridElements() : size_( 0 ), elements_size_(), elements_begin_
     cell_connectivity_ = &add( new Connectivity( "cell" ) );
 }
 
-HybridElements::~HybridElements() {}
+HybridElements::~HybridElements() = default;
 
 Field HybridElements::add( const Field& field ) {
     ATLAS_ASSERT( field );
@@ -209,14 +209,11 @@ idx_t HybridElements::add( const ElementType* element_type, idx_t nb_elements ) 
         type_idx_[e] = element_types_.size();
     }
 
-    elements_begin_.push_back( new_size );
-    elements_size_.push_back( nb_elements );
+    elements_begin_.emplace_back( new_size );
+    elements_size_.emplace_back( nb_elements );
 
-    element_types_.push_back( etype );
-    elements_.resize( element_types_.size() );
-    for ( idx_t t = 0; t < nb_types(); ++t ) {
-        elements_[t] = util::ObjectHandle<Elements>( new Elements( *this, t ) );
-    }
+    element_types_.emplace_back( etype );
+    elements_.emplace_back( new Elements( *this, elements_.size() ) );
 
     node_connectivity_->add( nb_elements, nb_nodes );
     resize( new_size );
@@ -276,13 +273,12 @@ void HybridElements::clear() {
 
 //-----------------------------------------------------------------------------
 
-void HybridElements::cloneToDevice() const {
-    std::for_each( fields_.begin(), fields_.end(), []( const FieldMap::value_type& v ) { v.second.cloneToDevice(); } );
+void HybridElements::updateDevice() const {
+    std::for_each( fields_.begin(), fields_.end(), []( const FieldMap::value_type& v ) { v.second.updateDevice(); } );
 }
 
-void HybridElements::cloneFromDevice() const {
-    std::for_each( fields_.begin(), fields_.end(),
-                   []( const FieldMap::value_type& v ) { v.second.cloneFromDevice(); } );
+void HybridElements::updateHost() const {
+    std::for_each( fields_.begin(), fields_.end(), []( const FieldMap::value_type& v ) { v.second.updateHost(); } );
 }
 
 void HybridElements::syncHostDevice() const {

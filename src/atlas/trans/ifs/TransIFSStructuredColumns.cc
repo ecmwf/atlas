@@ -29,7 +29,7 @@ TransIFSStructuredColumns::TransIFSStructuredColumns( const Cache& cache, const 
     spectral_ = sp;
 }
 
-TransIFSStructuredColumns::~TransIFSStructuredColumns() {}
+TransIFSStructuredColumns::~TransIFSStructuredColumns() = default;
 
 namespace {
 static TransBuilderFunctionSpace<TransIFSStructuredColumns> builder( "ifs(StructuredColumns,Spectral)", "ifs" );

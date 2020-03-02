@@ -12,6 +12,7 @@
 
 #include <memory>
 
+#include "atlas/library/config.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/ObjectHandle.h"
@@ -105,7 +106,7 @@ public:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class VorDivToUV : public util::ObjectHandle<VorDivToUVImpl> {
+class VorDivToUV : DOXYGEN_HIDE( public util::ObjectHandle<VorDivToUVImpl> ) {
 public:
     using Handle::Handle;
     VorDivToUV() = default;

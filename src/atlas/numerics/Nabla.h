@@ -39,6 +39,7 @@ class FunctionSpace;
 namespace atlas {
 namespace numerics {
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 class NablaImpl : public util::Object {
 public:
     NablaImpl( const Method&, const eckit::Parametrisation& );
@@ -54,10 +55,11 @@ public:
 private:
     util::ObjectHandle<Method> method_;
 };
+#endif
 
 // ------------------------------------------------------------------
 
-class Nabla : public util::ObjectHandle<NablaImpl> {
+class Nabla : DOXYGEN_HIDE( public util::ObjectHandle<NablaImpl> ) {
 public:
     using Handle::Handle;
     Nabla() = default;
@@ -72,17 +74,11 @@ public:
 
 // ------------------------------------------------------------------
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 class NablaFactory {
 public:
-    /*!
-   * \brief build Nabla with factory key, constructor arguments
-   * \return Nabla
-   */
     static const Nabla::Implementation* build( const Method&, const eckit::Parametrisation& );
-
-    /*!
-   * \brief list all registered field creators
-   */
     static void list( std::ostream& );
     static bool has( const std::string& name );
 
@@ -111,7 +107,6 @@ private:
 };
 
 // ------------------------------------------------------------------
-
 extern "C" {
 
 void atlas__Nabla__delete( Nabla::Implementation* This );
@@ -125,6 +120,7 @@ void atlas__Nabla__laplacian( const Nabla::Implementation* This, const field::Fi
                               field::FieldImpl* laplacian );
 const functionspace::FunctionSpaceImpl* atlas__Nabla__functionspace( const Nabla::Implementation* This );
 }
+#endif
 
 }  // namespace numerics
 }  // namespace atlas

@@ -202,14 +202,14 @@ void atlas__Field__set_functionspace( FieldImpl* This, const functionspace::Func
     This->set_functionspace( functionspace );
 }
 
-void atlas__Field__clone_to_device( FieldImpl* This ) {
+void atlas__Field__update_device( FieldImpl* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Field" );
-    This->cloneToDevice();
+    This->updateDevice();
 }
 
-void atlas__Field__clone_from_device( FieldImpl* This ) {
+void atlas__Field__update_host( FieldImpl* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Field" );
-    This->cloneFromDevice();
+    This->updateHost();
 }
 
 void atlas__Field__sync_host_device( FieldImpl* This ) {

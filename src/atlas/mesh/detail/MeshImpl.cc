@@ -108,53 +108,53 @@ void MeshImpl::setProjection( const Projection& projection ) {
 }
 
 void MeshImpl::setGrid( const Grid& grid ) {
-    grid_.reset( new Grid( grid ) );
+    grid_ = grid;
     if ( not projection_ ) {
-        projection_ = grid_->projection();
+        projection_ = grid_.projection();
     }
 }
 
 idx_t MeshImpl::nb_partitions() const {
-    return mpi::comm().size();
+    return mpi::size();
 }
 
 idx_t MeshImpl::partition() const {
-    return mpi::comm().rank();
+    return mpi::rank();
 }
 
-void MeshImpl::cloneToDevice() const {
+void MeshImpl::updateDevice() const {
     if ( nodes_ ) {
-        nodes_->cloneToDevice();
+        nodes_->updateDevice();
     }
     if ( cells_ ) {
-        cells_->cloneToDevice();
+        cells_->updateDevice();
     }
     if ( facets_ ) {
-        facets_->cloneToDevice();
+        facets_->updateDevice();
     }
     if ( ridges_ ) {
-        ridges_->cloneToDevice();
+        ridges_->updateDevice();
     }
     if ( peaks_ ) {
-        peaks_->cloneToDevice();
+        peaks_->updateDevice();
     }
 }
 
-void MeshImpl::cloneFromDevice() const {
+void MeshImpl::updateHost() const {
     if ( nodes_ ) {
-        nodes_->cloneFromDevice();
+        nodes_->updateHost();
     }
     if ( cells_ ) {
-        cells_->cloneFromDevice();
+        cells_->updateHost();
     }
     if ( facets_ ) {
-        facets_->cloneFromDevice();
+        facets_->updateHost();
     }
     if ( ridges_ ) {
-        ridges_->cloneFromDevice();
+        ridges_->updateHost();
     }
     if ( peaks_ ) {
-        peaks_->cloneFromDevice();
+        peaks_->updateHost();
     }
 }
 

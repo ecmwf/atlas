@@ -42,7 +42,7 @@ endif()
 
 ecbuild_add_test( TARGET atlas_test_parfields
   MPI        2
-  CONDITION  ECKIT_HAVE_MPI
+  CONDITION  eckit_HAVE_MPI
   SOURCES    test_parfields.cc
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
@@ -50,7 +50,7 @@ ecbuild_add_test( TARGET atlas_test_parfields
 
 ecbuild_add_test( TARGET atlas_test_halo
   MPI        5
-  CONDITION  ECKIT_HAVE_MPI
+  CONDITION  eckit_HAVE_MPI
   SOURCES    test_halo.cc ../TestMeshes.h
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
@@ -58,7 +58,7 @@ ecbuild_add_test( TARGET atlas_test_halo
 
 ecbuild_add_test( TARGET atlas_test_distmesh
   MPI        5
-  CONDITION  ECKIT_HAVE_MPI
+  CONDITION  eckit_HAVE_MPI
   SOURCES    test_distmesh.cc ../TestMeshes.h
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
@@ -67,21 +67,21 @@ ecbuild_add_test( TARGET atlas_test_distmesh
 ecbuild_add_test(
   TARGET      atlas_test_cgal_mesh_gen_from_points
   SOURCES     test_cgal_mesh_gen_from_points.cc
-  CONDITION   ATLAS_HAVE_TESSELATION
+  CONDITION   atlas_HAVE_TESSELATION
   LIBS        atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test(
-  TARGET atlas_test_accumulate_facets
-  SOURCES test_accumulate_facets.cc
+  TARGET atlas_test_mesh_build_edges
+  SOURCES test_mesh_build_edges.cc
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_mesh_node2cell
   MPI        4
-  CONDITION  ECKIT_HAVE_MPI
+  CONDITION  eckit_HAVE_MPI
   SOURCES    test_mesh_node2cell.cc
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
@@ -95,6 +95,24 @@ foreach( test connectivity stream_connectivity elements ll meshgen3d rgg )
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 endforeach()
+
+
+ecbuild_add_executable( TARGET atlas_test_mesh_reorder
+  SOURCES  test_mesh_reorder.cc
+  LIBS     atlas
+  NOINSTALL
+)
+
+ecbuild_add_test( TARGET atlas_test_mesh_reorder_O16
+  COMMAND atlas_test_mesh_reorder ARGS --grid O16
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_mesh_reorder_unstructured
+  COMMAND atlas_test_mesh_reorder ARGS --mesh ${CMAKE_CURRENT_SOURCE_DIR}/test_mesh_reorder_unstructured.msh --grid "unstructured"
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 
 atlas_add_cuda_test(
   TARGET atlas_test_connectivity_kernel

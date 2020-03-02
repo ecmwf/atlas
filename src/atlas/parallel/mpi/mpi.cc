@@ -9,12 +9,17 @@
  */
 
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace mpi {
 
-const eckit::mpi::Comm& comm() {
-    return eckit::mpi::comm();
+void finalize() {
+    finalise();
+}
+void finalise() {
+    Log::debug() << "atlas::mpi::finalize() --> Finalizing MPI" << std::endl;
+    eckit::mpi::finaliseAllComms();
 }
 
 }  // namespace mpi

@@ -46,19 +46,16 @@ namespace detail {
 
 namespace {
 
-static double rad2deg = util::Constants::radiansToDegrees();
-
 class GmshFile : public std::ofstream {
 public:
-    GmshFile( const PathName& file_path, std::ios_base::openmode mode,
-              int part = static_cast<int>( mpi::comm().rank() ) ) {
+    GmshFile( const PathName& file_path, std::ios_base::openmode mode, int part = static_cast<int>( mpi::rank() ) ) {
         PathName par_path( file_path );
-        int mpi_size = static_cast<int>( mpi::comm().size() );
-        if ( atlas::mpi::comm().size() == 1 || part == -1 ) {
+        int mpi_size = static_cast<int>( mpi::size() );
+        if ( mpi::size() == 1 || part == -1 ) {
             std::ofstream::open( par_path.localPath(), mode );
         }
         else {
-            if ( atlas::mpi::comm().rank() == 0 ) {
+            if ( mpi::rank() == 0 ) {
                 PathName par_path( file_path );
                 std::ofstream par_file( par_path.localPath(), std::ios_base::out );
                 for ( int p = 0; p < mpi_size; ++p ) {
@@ -107,38 +104,38 @@ void write_header_binary( std::ostream& out ) {
 namespace {  // anonymous
 
 template <typename T>
-array::LocalView<T, 2> make_level_view( const Field& field, int ndata, int jlev ) {
+array::LocalView<const T, 2> make_level_view( const Field& field, int ndata, int jlev ) {
     using namespace array;
     if ( field.levels() ) {
         if ( field.variables() ) {
-            return make_view<T, 3>( field ).slice( Range::to( ndata ), jlev, Range::all() );
+            return make_view<const T, 3>( field ).slice( Range::to( ndata ), jlev, Range::all() );
         }
         else {
-            return make_view<T, 2>( field ).slice( Range::to( ndata ), jlev, Range::dummy() );
+            return make_view<const T, 2>( field ).slice( Range::to( ndata ), jlev, Range::dummy() );
         }
     }
     else {
         if ( field.variables() ) {
-            return make_view<T, 2>( field ).slice( Range::to( ndata ), Range::all() );
+            return make_view<const T, 2>( field ).slice( Range::to( ndata ), Range::all() );
         }
         else {
-            return make_view<T, 1>( field ).slice( Range::to( ndata ), Range::dummy() );
+            return make_view<const T, 1>( field ).slice( Range::to( ndata ), Range::dummy() );
         }
     }
 }
 
-template <typename DATATYPE>
-void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1> gidx,
-                  const array::LocalView<DATATYPE, 2> data ) {
-    int ndata = data.shape( 0 );
-    int nvars = data.shape( 1 );
+template <typename Value>
+void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1>& gidx, const array::LocalView<Value, 2>& data ) {
+    using value_type = typename std::remove_const<Value>::type;
+    int ndata        = data.shape( 0 );
+    int nvars        = data.shape( 1 );
     if ( nvars == 1 ) {
         for ( idx_t n = 0; n < ndata; ++n ) {
             out << gidx( n ) << " " << data( n, 0 ) << "\n";
         }
     }
     else if ( nvars <= 3 ) {
-        std::vector<DATATYPE> data_vec( 3, 0. );
+        std::vector<value_type> data_vec( 3, 0. );
         for ( idx_t n = 0; n < ndata; ++n ) {
             out << gidx( n );
             for ( idx_t v = 0; v < nvars; ++v ) {
@@ -151,7 +148,7 @@ void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1> gidx,
         }
     }
     else if ( nvars <= 9 ) {
-        std::vector<DATATYPE> data_vec( 9, 0. );
+        std::vector<value_type> data_vec( 9, 0. );
         if ( nvars == 4 ) {
             for ( int n = 0; n < ndata; ++n ) {
                 for ( int i = 0; i < 2; ++i ) {
@@ -242,17 +239,17 @@ int field_vars( int nvars ) {
 }  // namespace
 
 // ----------------------------------------------------------------------------
-template <typename DATATYPE>
+template <typename Value>
 void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeColumns& function_space,
                         const Field& field, std::ostream& out ) {
     Log::debug() << "writing NodeColumns field " << field.name() << " defined in NodeColumns..." << std::endl;
 
-    bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
+    bool gather( gmsh_options.get<bool>( "gather" ) && mpi::size() > 1 );
     // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
-    idx_t nlev                       = std::max<idx_t>( 1, field.levels() );
-    idx_t ndata                      = std::min<idx_t>( function_space.nb_nodes(), field.shape( 0 ) );
-    idx_t nvars                      = std::max<idx_t>( 1, field.variables() );
-    array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( function_space.nodes().global_index() );
+    idx_t nlev  = std::max<idx_t>( 1, field.levels() );
+    idx_t ndata = std::min<idx_t>( function_space.nb_nodes(), field.shape( 0 ) );
+    idx_t nvars = std::max<idx_t>( 1, field.variables() );
+    auto gidx   = array::make_view<gidx_t, 1>( function_space.nodes().global_index() );
     Field gidx_glb;
     Field field_glb;
     if ( gather ) {
@@ -269,7 +266,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
     std::vector<int> lev = get_levels( nlev, gmsh_options );
     for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
         int jlev = lev[ilev];
-        if ( ( gather && atlas::mpi::comm().rank() == 0 ) || !gather ) {
+        if ( ( gather && mpi::rank() == 0 ) || !gather ) {
             out << "$NodeData\n";
             out << "1\n";
             out << "\"" << field.name() << field_lev( field, jlev ) << "\"\n";
@@ -279,9 +276,9 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
             out << field_step( field ) << "\n";
             out << field_vars( nvars ) << "\n";
             out << ndata << "\n";
-            out << atlas::mpi::comm().rank() << "\n";
-            auto data = gather ? make_level_view<DATATYPE>( field_glb, ndata, jlev )
-                               : make_level_view<DATATYPE>( field, ndata, jlev );
+            out << mpi::rank() << "\n";
+            auto data = gather ? make_level_view<Value>( field_glb, ndata, jlev )
+                               : make_level_view<Value>( field, ndata, jlev );
             write_level( out, gidx, data );
             out << "$EndNodeData\n";
         }
@@ -309,7 +306,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
                         const Field& field, std::ostream& out ) {
     Log::debug() << "writing StructuredColumns field " << field.name() << "..." << std::endl;
 
-    bool gather( gmsh_options.get<bool>( "gather" ) && atlas::mpi::comm().size() > 1 );
+    bool gather( gmsh_options.get<bool>( "gather" ) && mpi::size() > 1 );
     // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
     idx_t nlev  = std::max<idx_t>( 1, field.levels() );
     idx_t ndata = std::min<idx_t>( function_space.sizeOwned(), field.shape( 0 ) );
@@ -346,7 +343,7 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
         out << field_step( field ) << "\n";
         out << field_vars( nvars ) << "\n";
         out << ndata << "\n";
-        out << atlas::mpi::comm().rank() << "\n";
+        out << mpi::rank() << "\n";
         auto data = gather ? make_level_view<DATATYPE>( field_glb, ndata, jlev )
                            : make_level_view<DATATYPE>( field, ndata, jlev );
         write_level( out, gidx, data );
@@ -354,6 +351,54 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::Struc
     }
 }
 // ----------------------------------------------------------------------------
+
+template <typename DATATYPE>
+void write_field_elems( const Metadata& gmsh_options, const functionspace::CellColumns& function_space,
+                        const Field& field, std::ostream& out ) {
+#if 1
+    Log::debug() << "writing CellColumns field " << field.name() << "..." << std::endl;
+
+    bool gather( gmsh_options.get<bool>( "gather" ) && mpi::size() > 1 );
+    // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
+    idx_t nlev  = std::max<idx_t>( 1, field.levels() );
+    idx_t ndata = std::min<idx_t>( function_space.nb_cells(), field.shape( 0 ) );
+    idx_t nvars = std::max<idx_t>( 1, field.variables() );
+    auto gidx   = array::make_view<gidx_t, 1>( function_space.cells().global_index() );
+    Field gidx_glb;
+    Field field_glb;
+    if ( gather ) {
+        gidx_glb = function_space.createField<gidx_t>( option::name( "gidx_glb" ) | option::levels( false ) |
+                                                       option::global() );
+        function_space.gather( function_space.cells().global_index(), gidx_glb );
+        gidx = array::make_view<gidx_t, 1>( gidx_glb );
+
+        field_glb = function_space.createField( field, option::global() );
+        function_space.gather( field, field_glb );
+        ndata = std::min<idx_t>( function_space.nb_cells_global(), field_glb.shape( 0 ) );
+    }
+
+    std::vector<int> lev = get_levels( nlev, gmsh_options );
+    for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
+        int jlev = lev[ilev];
+        if ( ( gather && mpi::rank() == 0 ) || !gather ) {
+            out << "$ElementData\n";
+            out << "1\n";
+            out << "\"" << field.name() << field_lev( field, jlev ) << "\"\n";
+            out << "1\n";
+            out << field_time( field ) << "\n";
+            out << "4\n";
+            out << field_step( field ) << "\n";
+            out << field_vars( nvars ) << "\n";
+            out << ndata << "\n";
+            out << mpi::rank() << "\n";
+            auto data = gather ? make_level_view<DATATYPE>( field_glb, ndata, jlev )
+                               : make_level_view<DATATYPE>( field, ndata, jlev );
+            write_level( out, gidx, data );
+            out << "$EndElementData\n";
+        }
+    }
+#endif
+}
 
 // ----------------------------------------------------------------------------
 #if 0
@@ -405,7 +450,7 @@ void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& functi
     if     ( nvars == 1 ) out << nvars << "\n";
     else if( nvars <= 3 ) out << 3     << "\n";
     out << ndata << "\n";
-    out << mpi::comm().rank() << "\n";
+    out << mpi::rank() << "\n";
 
     if( binary )
     {
@@ -517,7 +562,7 @@ GmshIO::GmshIO() {
     options.set<std::vector<long>>( "levels", std::vector<long>() );
 }
 
-GmshIO::~GmshIO() {}
+GmshIO::~GmshIO() = default;
 
 Mesh GmshIO::read( const PathName& file_path ) const {
     Mesh mesh;
@@ -569,11 +614,14 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
 
     mesh::Nodes& nodes = mesh.nodes();
 
-    nodes.add( Field( "xyz", array::make_datatype<double>(), array::make_shape( nb_nodes, 3 ) ) );
+    //nodes.add( Field( "xyz", array::make_datatype<double>(), array::make_shape( nb_nodes, 3 ) ) );
 
-    array::ArrayView<double, 2> coords  = array::make_view<double, 2>( nodes.field( "xyz" ) );
+    //    array::ArrayView<double, 2> coords  = array::make_view<double, 2>( nodes.field( "xyz" ) );
+    array::ArrayView<double, 2> xy      = array::make_view<double, 2>( nodes.xy() );
+    array::ArrayView<double, 2> lonlat  = array::make_view<double, 2>( nodes.lonlat() );
     array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
     array::ArrayView<int, 1> part       = array::make_view<int, 1>( nodes.partition() );
+    array::ArrayView<int, 1> ghost      = array::make_view<int, 1>( nodes.ghost() );
 
     std::map<int, int> glb_to_loc;
     int g;
@@ -596,21 +644,17 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
         else {
             file >> g >> x >> y >> z;
         }
-        glb_idx( n )    = g;
-        coords( n, XX ) = x;
-        coords( n, YY ) = y;
-        coords( n, ZZ ) = z;
-        glb_to_loc[g]   = n;
-        part( n )       = 0;
-        max_glb_idx     = std::max( max_glb_idx, static_cast<gidx_t>( g ) );
-        xmax            = std::max( x, xmax );
-        zmax            = std::max( z, zmax );
-    }
-    if ( xmax < 4 * M_PI && zmax == 0. ) {
-        for ( idx_t n = 0; n < nb_nodes; ++n ) {
-            coords( n, XX ) *= rad2deg;
-            coords( n, YY ) *= rad2deg;
-        }
+        glb_idx( n )     = g;
+        xy( n, XX )      = x;
+        xy( n, YY )      = y;
+        lonlat( n, LON ) = x;
+        lonlat( n, LAT ) = y;
+        glb_to_loc[g]    = n;
+        part( n )        = 0;
+        ghost( n )       = 0;
+        max_glb_idx      = std::max( max_glb_idx, static_cast<gidx_t>( g ) );
+        xmax             = std::max( x, xmax );
+        zmax             = std::max( z, zmax );
     }
     for ( int i = 0; i < 3; ++i ) {
         std::getline( file, line );
@@ -645,7 +689,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
             }
             else {
                 size_t jtype = mesh.cells().add( make_element_type( etype ), netype );
-                elements     = &mesh.edges().elements( jtype );
+                elements     = &mesh.cells().elements( jtype );
             }
 
             size_t nnodes_per_elem            = elements->element_type().nb_nodes();
@@ -683,15 +727,15 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
 
         int nb_quads  = nb_etype[QUAD];
         int nb_triags = nb_etype[TRIAG];
-        int nb_edges  = nb_etype[LINE];
+        //int nb_edges  = nb_etype[LINE];
 
         mesh::Elements& quads  = mesh.cells().elements( mesh.cells().add( make_element_type( QUAD ), nb_quads ) );
         mesh::Elements& triags = mesh.cells().elements( mesh.cells().add( make_element_type( TRIAG ), nb_triags ) );
-        mesh::Elements& edges  = mesh.edges().elements( mesh.edges().add( make_element_type( LINE ), nb_edges ) );
+        //        mesh::Elements& edges  = mesh.edges().elements( mesh.edges().add( make_element_type( LINE ), nb_edges ) );
 
         mesh::BlockConnectivity& quad_nodes  = quads.node_connectivity();
         mesh::BlockConnectivity& triag_nodes = triags.node_connectivity();
-        mesh::BlockConnectivity& edge_nodes  = edges.node_connectivity();
+        //        mesh::BlockConnectivity& edge_nodes  = edges.node_connectivity();
 
         array::ArrayView<gidx_t, 1> quad_glb_idx = array::make_view<gidx_t, 1>( quads.global_index() );
         array::ArrayView<int, 1> quad_part       = array::make_view<int, 1>( quads.partition() );
@@ -699,13 +743,13 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
         array::ArrayView<gidx_t, 1> triag_glb_idx = array::make_view<gidx_t, 1>( triags.global_index() );
         array::ArrayView<int, 1> triag_part       = array::make_view<int, 1>( triags.partition() );
 
-        array::ArrayView<gidx_t, 1> edge_glb_idx = array::make_view<gidx_t, 1>( edges.global_index() );
-        array::ArrayView<int, 1> edge_part       = array::make_view<int, 1>( edges.partition() );
+        //        array::ArrayView<gidx_t, 1> edge_glb_idx = array::make_view<gidx_t, 1>( edges.global_index() );
+        //        array::ArrayView<int, 1> edge_part       = array::make_view<int, 1>( edges.partition() );
 
         // Now read all elements
         file.seekg( position, std::ios::beg );
         int gn0, gn1, gn2, gn3;
-        int quad = 0, triag = 0, edge = 0;
+        int quad = 0, triag = 0;
         int ntags, tags[100];
         for ( int e = 0; e < nb_elements; ++e ) {
             file >> g >> etype >> ntags;
@@ -718,7 +762,7 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
                     std::max( part, *std::max_element( tags + 3, tags + ntags - 1 ) );  // one positive, others negative
             }
 
-            idx_t enodes[4];
+            idx_t enodes[4] = {-1, -1, -1, -1};
 
             switch ( etype ) {
                 case ( QUAD ):
@@ -744,12 +788,12 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
                     break;
                 case ( LINE ):
                     file >> gn0 >> gn1;
-                    edge_glb_idx( edge ) = g;
-                    edge_part( edge )    = part;
-                    enodes[0]            = glb_to_loc[gn0];
-                    enodes[1]            = glb_to_loc[gn1];
-                    edge_nodes.set( edge, enodes );
-                    ++edge;
+                    //                    edge_glb_idx( edge ) = g;
+                    //                    edge_part( edge )    = part;
+                    //                    enodes[0]            = glb_to_loc[gn0];
+                    //                    enodes[1]            = glb_to_loc[gn1];
+                    //                    edge_nodes.set( edge, enodes );
+                    //                    ++edge;
                     break;
                 case ( POINT ):
                     file >> gn0;
@@ -765,14 +809,14 @@ void GmshIO::read( const PathName& file_path, Mesh& mesh ) const {
 }
 
 void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
-    int part = mesh.metadata().has( "part" ) ? mesh.metadata().get<size_t>( "part" ) : atlas::mpi::comm().rank();
+    int part           = mesh.metadata().has( "part" ) ? mesh.metadata().get<size_t>( "part" ) : mpi::rank();
     bool include_ghost = options.get<bool>( "ghost" ) && options.get<bool>( "elements" );
 
     std::string nodes_field = options.get<std::string>( "nodes" );
 
-    const mesh::Nodes& nodes            = mesh.nodes();
-    array::ArrayView<double, 2> coords  = array::make_view<double, 2>( nodes.field( nodes_field ) );
-    array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
+    const mesh::Nodes& nodes = mesh.nodes();
+    auto coords              = array::make_view<double, 2>( nodes.field( nodes_field ) );
+    auto glb_idx             = array::make_view<gidx_t, 1>( nodes.global_index() );
 
     const idx_t surfdim = coords.shape( 1 );  // nb of variables in coords
 
@@ -838,9 +882,9 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
         idx_t nb_elements( 0 );
         for ( const mesh::HybridElements* hybrid : grouped_elements ) {
             nb_elements += hybrid->size();
-            const array::ArrayView<int, 1> hybrid_halo  = array::make_view<int, 1>( hybrid->halo() );
-            const array::ArrayView<int, 1> hybrid_flags = array::make_view<int, 1>( hybrid->flags() );
-            auto hybrid_patch                           = [&]( idx_t e ) {
+            const auto hybrid_halo  = array::make_view<int, 1>( hybrid->halo() );
+            const auto hybrid_flags = array::make_view<int, 1>( hybrid->flags() );
+            auto hybrid_patch       = [&]( idx_t e ) {
                 return mesh::Nodes::Topology::check( hybrid_flags( e ), mesh::Nodes::Topology::PATCH );
             };
             auto exclude = [&]( idx_t e ) {
@@ -999,6 +1043,11 @@ void GmshIO::write( const Field& field, const PathName& file_path, openmode mode
         fieldset.add( field );
         write( fieldset, field.functionspace(), file_path, mode );
     }
+    else if ( functionspace::CellColumns( field.functionspace() ) ) {
+        FieldSet fieldset;
+        fieldset.add( field );
+        write( fieldset, field.functionspace(), file_path, mode );
+    }
     else {
         std::stringstream msg;
         msg << "Field [" << field.name() << "] has functionspace [" << field.functionspace().type()
@@ -1037,7 +1086,7 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Node
         mode |= std::ios_base::binary;
     }
     bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
-    GmshFile file( file_path, mode, gather ? -1 : int( atlas::mpi::comm().rank() ) );
+    GmshFile file( file_path, mode, gather ? -1 : int( mpi::rank() ) );
 
     // Header
     if ( is_new_file ) {
@@ -1066,6 +1115,44 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Node
     }
     file.close();
 }
+
+void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::CellColumns& functionspace,
+                             const eckit::PathName& file_path, GmshIO::openmode mode ) const {
+    bool is_new_file = ( mode != std::ios_base::app || !file_path.exists() );
+    bool binary( !options.get<bool>( "ascii" ) );
+    if ( binary ) {
+        mode |= std::ios_base::binary;
+    }
+    bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
+    GmshFile file( file_path, mode, gather ? -1 : int( mpi::rank() ) );
+
+    // Header
+    if ( is_new_file ) {
+        write_header_ascii( file );
+    }
+
+    // field::Fields
+    for ( idx_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {
+        const Field& field = fieldset[field_idx];
+        Log::debug() << "writing field " << field.name() << " to gmsh file " << file_path << std::endl;
+
+        if ( field.datatype() == array::DataType::int32() ) {
+            write_field_elems<int>( options, functionspace, field, file );
+        }
+        else if ( field.datatype() == array::DataType::int64() ) {
+            write_field_elems<long>( options, functionspace, field, file );
+        }
+        else if ( field.datatype() == array::DataType::real32() ) {
+            write_field_elems<float>( options, functionspace, field, file );
+        }
+        else if ( field.datatype() == array::DataType::real64() ) {
+            write_field_elems<double>( options, functionspace, field, file );
+        }
+
+        file << std::flush;
+    }
+    file.close();
+}
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
@@ -1080,7 +1167,7 @@ void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::Stru
 
     bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
 
-    GmshFile file( file_path, mode, gather ? -1 : int( atlas::mpi::comm().rank() ) );
+    GmshFile file( file_path, mode, gather ? -1 : int( mpi::rank() ) );
 
     // Header
     if ( is_new_file ) {
@@ -1120,6 +1207,9 @@ void GmshIO::write( const FieldSet& fieldset, const FunctionSpace& funcspace, co
     }
     else if ( functionspace::StructuredColumns( funcspace ) ) {
         write_delegate( fieldset, functionspace::StructuredColumns( funcspace ), file_path, mode );
+    }
+    else if ( functionspace::CellColumns( funcspace ) ) {
+        write_delegate( fieldset, functionspace::CellColumns( funcspace ), file_path, mode );
     }
     else {
         ATLAS_NOTIMPLEMENTED;

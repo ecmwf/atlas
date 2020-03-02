@@ -87,6 +87,7 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
     idx_t count_all = count;
     comm.allReduceInPlace( count_all, eckit::mpi::sum() );
 
+    bool plot_nodes = config.getBool( "nodes", false );
     for ( int r = 0; r < mpi_size; ++r ) {
         if ( mpi_rank == r ) {
             std::ofstream f( filepath.asString().c_str(), mpi_rank == 0 ? std::ios::trunc : std::ios::app );
@@ -96,7 +97,7 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
                      "# Configuration option to plot nodes"
                      "\n"
                      "plot_nodes = " +
-                         std::string( ( config.getBool( "nodes", false ) ? "True" : "False" ) ) +
+                         std::string( plot_nodes ? "True" : "False" ) +
                          "\n"
                          "\n"
                          "import matplotlib.pyplot as plt"
@@ -154,22 +155,37 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
                  "count_all_"
               << r << " = " << count_all
               << "\n"
-                 ""
-                 //"\n" "x_" << r << " = ["; for (idx_t i=0; i<count; ++i) { f <<
-                 // xy(i, XX) << ", "; } f << "]"
-                 //"\n" "y_" << r << " = ["; for (idx_t i=0; i<count; ++i) { f <<
-                 // xy(i, YY) << ", "; } f << "]"
-                 "\n"
+                 "";
+            if ( plot_nodes ) {
+                f << "\n"
+                     "x_"
+                  << r << " = [";
+                for ( idx_t i = 0; i < count; ++i ) {
+                    f << xy( i, XX ) << ", ";
+                }
+                f << "]"
+                     "\n"
+                     "y_"
+                  << r << " = [";
+                for ( idx_t i = 0; i < count; ++i ) {
+                    f << xy( i, YY ) << ", ";
+                }
+                f << "]";
+            }
+            f << "\n"
                  "\n"
                  "c = cycol()"
                  "\n"
                  "ax.add_patch(patches.PathPatch(Path(verts_"
-              << r << ", codes_" << r
-              << "), facecolor=c, color=c, alpha=0.3, lw=1))"
-                 //"\n" "if plot_nodes:"
-                 //"\n" "    ax.scatter(x_" << r << ", y_" <<
-                 // r << ", color=c, marker='o')"
-                 "\n"
+              << r << ", codes_" << r << "), facecolor=c, color=c, alpha=0.3, lw=1))";
+            if ( plot_nodes ) {
+                f << "\n"
+                     "if plot_nodes:"
+                     "\n"
+                     "    ax.scatter(x_"
+                  << r << ", y_" << r << ", color=c, marker='o')";
+            }
+            f << "\n"
                  "";
             if ( mpi_rank == mpi_size - 1 ) {
                 f << "\n"

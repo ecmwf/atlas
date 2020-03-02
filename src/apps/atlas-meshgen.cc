@@ -20,7 +20,7 @@
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
-#include "atlas/library/Library.h"
+#include "atlas/library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildDualMesh.h"
@@ -57,9 +57,18 @@ using eckit::PathName;
 //------------------------------------------------------------------------------
 
 class Meshgen2Gmsh : public AtlasTool {
-    virtual int execute( const Args& args );
-    virtual std::string briefDescription() { return "Mesh generator for Structured compatible meshes"; }
-    virtual std::string usage() { return name() + " (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT [--help]"; }
+    int execute( const Args& args ) override;
+    std::string briefDescription() override { return "Mesh generator and output to Gmsh format"; }
+    std::string usage() override { return name() + " GRID [OUTPUT] [OPTION]... [--help]"; }
+    std::string longDescription() override {
+        return "    The 'GRID' argument can be either the name of a named grid, orthe path to a"
+               " YAML configuration file that describes the grid.\n"
+               "Example values for grid names are: N80, F40, O24, L64x33. See the program "
+               "'atlas-grids' for a list of named grids.\n"
+               "\n"
+               "    The optional 'OUTPUT' argument contains the path to the output file. "
+               "If not given, a default value 'mesh.msh' is employed.";
+    }
 
 public:
     Meshgen2Gmsh( int argc, char** argv );
@@ -102,7 +111,8 @@ Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
     add_option( new SimpleOption<bool>( "stats", "Write statistics file" ) );
     add_option( new SimpleOption<bool>( "info", "Write Info" ) );
     add_option( new SimpleOption<bool>( "binary", "Write binary file" ) );
-    add_option( new SimpleOption<std::string>( "generator", "Mesh generator" ) );
+    add_option( new SimpleOption<std::string>(
+        "generator", "Mesh generator [structured,regular,delaunay] (default = structured)" ) );
     add_option( new SimpleOption<std::string>( "partitioner", "Mesh partitioner" ) );
     add_option( new SimpleOption<bool>( "periodic_x", "periodic mesh in x-direction" ) );
     add_option( new SimpleOption<bool>( "periodic_y", "periodic mesh in y-direction" ) );
@@ -115,6 +125,35 @@ Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
 }
 
 //-----------------------------------------------------------------------------
+
+std::string get_arg( const AtlasTool::Args& args, const std::string& flag, const std::string default_value = "" ) {
+    for ( int i = 0; i < args.count() - 1; ++i ) {
+        if ( args( i ) == flag ) {
+            return args( i + 1 );
+        }
+    }
+    if ( not default_value.empty() ) {
+        return default_value;
+    }
+    throw_Exception( "Could not find argument for flag " + flag );
+}
+
+std::string get_positional_arg( const AtlasTool::Args& args, idx_t p ) {
+    // skip flags arguments ( "-o mesh.msh" does not count as a whole )
+    int c = 0;
+    for ( int i = 0; i < args.count(); ++i ) {
+        if ( args( i )[0] == '-' ) {
+            i++;
+        }
+        else {
+            if ( c == p ) {
+                return args( i );
+            }
+            c++;
+        }
+    }
+    return std::string{};
+}
 
 int Meshgen2Gmsh::execute( const Args& args ) {
     key = "";
@@ -142,63 +181,68 @@ int Meshgen2Gmsh::execute( const Args& args ) {
         path_in = path_in_str;
     }
 
-    if ( args.count() ) {
-        path_out = args( 0 );
-    }
-    else {
-        path_out = "mesh.msh";
-    }
+    key      = get_positional_arg( args, 0 );
+    path_out = get_arg( args, "-o", args.count() > 1 ? get_positional_arg( args, 1 ) : "mesh.msh" );
 
-    if ( path_in_str.empty() && key.empty() ) {
-        Log::warning() << "missing argument --grid.name or --grid.json" << std::endl;
-        Log::warning() << "Usage: " << usage() << std::endl;
-        return failed();
-    }
+
+    //    if ( path_in_str.empty() && key.empty() ) {
+    //        Log::warning() << "missing argument --grid.name or --grid.json" << std::endl;
+    //        Log::warning() << "Usage: " << usage() << std::endl;
+    //        return failed();
+    //    }
 
     if ( edges ) {
         halo = std::max( halo, 1l );
     }
 
-    StructuredGrid grid;
+    Grid grid;
     if ( key.size() ) {
+        eckit::PathName path_in{key};
         try {
-            grid = Grid( key );
+            if ( path_in.exists() ) {
+                Log::info() << "Creating grid from file " << path_in << std::endl;
+                Log::debug() << Config( path_in ) << std::endl;
+                grid = Grid( Config{path_in} );
+            }
+            else {
+                Log::info() << "Creating grid from name " << key << std::endl;
+                grid = Grid( key );
+            }
         }
-        catch ( eckit::Exception& ) {
-        }
-    }
-    else if ( path_in.path().size() ) {
-        Log::info() << "Creating grid from file " << path_in << std::endl;
-        Log::debug() << Config( path_in ) << std::endl;
-        try {
-            grid = Grid( Config( path_in ) );
-        }
-        catch ( eckit::Exception& ) {
+        catch ( eckit::Exception& e ) {
+            Log::error() << e.what() << std::endl;
+            if ( path_in.exists() ) {
+                Log::error() << "Could not generate mesh for grid defined in file \"" << path_in << "\"" << std::endl;
+            }
+            else {
+                Log::error() << "Could not generate mesh for grid \"" << key << "\"" << std::endl;
+            }
+            return failed();
         }
     }
     else {
         Log::error() << "No grid specified." << std::endl;
-    }
-
-    if ( !grid ) {
         return failed();
     }
 
     Log::debug() << "Domain: " << grid.domain() << std::endl;
-    Log::debug() << "Periodic: " << grid.periodic() << std::endl;
+    if ( auto g = StructuredGrid( grid ) ) {
+        Log::debug() << "Periodic: " << g.periodic() << std::endl;
+    }
     Log::debug() << "Spec: " << grid.spec() << std::endl;
 
-    std::string Implementationype = ( RegularGrid( grid ) ? "regular" : "structured" );
-    args.get( "generator", Implementationype );
+    std::string generator = ( StructuredGrid( grid ) ? "structured" : "delaunay" );
+    args.get( "generator", generator );
     eckit::LocalConfiguration meshgenerator_config( args );
     if ( mpi::comm().size() > 1 || edges ) {
         meshgenerator_config.set( "3d", false );
     }
 
-    MeshGenerator meshgenerator( Implementationype, meshgenerator_config );
+    MeshGenerator meshgenerator( generator, meshgenerator_config );
 
     Mesh mesh;
     try {
+        Log::info() << "Generating mesh using " << generator << " generator" << std::endl;
         mesh = meshgenerator.generate( grid );
     }
     catch ( eckit::Exception& e ) {
@@ -233,9 +277,14 @@ int Meshgen2Gmsh::execute( const Args& args ) {
     bool torus = false;
     args.get( "torus", torus );
     if ( torus ) {
-        dim_3d = true;
-        Log::debug() << "Building xyz representation for nodes on torus" << std::endl;
-        mesh::actions::BuildTorusXYZField( "xyz" )( mesh, grid.domain(), 5., 2., grid.nxmax(), grid.ny() );
+        if ( auto g = StructuredGrid( grid ) ) {
+            dim_3d = true;
+            Log::debug() << "Building xyz representation for nodes on torus" << std::endl;
+            mesh::actions::BuildTorusXYZField( "xyz" )( mesh, g.domain(), 5., 2., g.nxmax(), g.ny() );
+        }
+        else {
+            Log::error() << "Cannot output non StructuredGrid grids as torus at the moment" << std::endl;
+        }
     }
 
     bool lonlat = false;
@@ -252,7 +301,8 @@ int Meshgen2Gmsh::execute( const Args& args ) {
         Log::info() << "Partitioning graph: \n" << mesh.partitionGraph() << std::endl;
         Log::info() << "Mesh partition footprint: " << eckit::Bytes( mesh.footprint() ) << std::endl;
         for ( idx_t jhalo = 0; jhalo <= halo; ++jhalo ) {
-            mesh.polygon( jhalo ).outputPythonScript( "polygon_halo" + std::to_string( jhalo ) + ".py" );
+            mesh.polygon( jhalo ).outputPythonScript( "polygon_halo" + std::to_string( jhalo ) + ".py",
+                                                      Config( "nodes", false ) );
         }
     }
     return success();

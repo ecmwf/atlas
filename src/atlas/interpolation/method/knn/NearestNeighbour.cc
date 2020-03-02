@@ -34,7 +34,7 @@ MethodBuilder<NearestNeighbour> __builder( "nearest-neighbour" );
 }  // namespace
 
 void NearestNeighbour::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) {
+    if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
     auto functionspace = []( const Grid& grid ) -> FunctionSpace {
@@ -85,13 +85,13 @@ void NearestNeighbour::setup( const FunctionSpace& source, const FunctionSpace& 
             }
 
             // find the closest input point to the output point
-            PointIndex3::Point p{coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 )};
+            PointIndex3::Point p{coords( ip, (size_t)0 ), coords( ip, (size_t)1 ), coords( ip, (size_t)2 )};
             PointIndex3::NodeInfo nn = pTree_->nearestNeighbour( p );
             size_t jp                = nn.payload();
 
             // insert the weights into the interpolant matrix
             ATLAS_ASSERT( jp < inp_npts );
-            weights_triplets.push_back( Triplet( ip, jp, 1 ) );
+            weights_triplets.emplace_back( ip, jp, 1 );
         }
     }
 

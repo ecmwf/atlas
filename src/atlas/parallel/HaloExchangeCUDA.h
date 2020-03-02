@@ -20,13 +20,12 @@ namespace parallel {
 template <int ParallelDim, typename DATA_TYPE, int RANK>
 struct halo_packer_cuda {
     static void pack( const int sendcnt, array::SVector<int> const& sendmap,
-                      const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
-                      const array::ArrayView<DATA_TYPE, RANK>& dfield, array::SVector<DATA_TYPE>& send_buffer );
+                      const array::ArrayView<DATA_TYPE, RANK>& hfield, const array::ArrayView<DATA_TYPE, RANK>& dfield,
+                      DATA_TYPE* send_buffer, int send_buffer_size );
 
-    static void unpack( const int sendcnt, array::SVector<int> const& recvmap,
-                        const array::SVector<DATA_TYPE>& recv_buffer,
-                        const array::ArrayView<DATA_TYPE, RANK, array::Intent::ReadOnly>& hfield,
-                        array::ArrayView<DATA_TYPE, RANK>& dhfield );
+    static void unpack( const int sendcnt, array::SVector<int> const& recvmap, const DATA_TYPE* recv_buffer,
+                        int recv_buffer_size, array::ArrayView<DATA_TYPE, RANK>& hfield,
+                        array::ArrayView<DATA_TYPE, RANK>& dfield );
 };
 
 }  // namespace parallel

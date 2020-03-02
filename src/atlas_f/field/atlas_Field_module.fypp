@@ -88,8 +88,8 @@ contains
 
   procedure, public :: host_needs_update
   procedure, public :: device_needs_update
-  procedure, public :: clone_to_device
-  procedure, public :: clone_from_device
+  procedure, public :: update_device
+  procedure, public :: update_host
   procedure, public :: sync_host_device
 
   procedure, private :: dummy
@@ -628,18 +628,18 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine clone_to_device(this)
+subroutine update_device(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
-  call atlas__Field__clone_to_device(this%CPTR_PGIBUG_A)
+  call atlas__Field__update_device(this%CPTR_PGIBUG_A)
 end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine clone_from_device(this)
+subroutine update_host(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
-  call atlas__Field__clone_from_device(this%CPTR_PGIBUG_A)
+  call atlas__Field__update_host(this%CPTR_PGIBUG_A)
 end subroutine
 
 !-------------------------------------------------------------------------------

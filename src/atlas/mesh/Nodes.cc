@@ -99,7 +99,7 @@ void Nodes::resize( idx_t size ) {
         auto flag    = array::make_view<int, 1>( flags() );
         auto _halo   = array::make_view<int, 1>( halo() );
 
-        const int mpi_rank = static_cast<int>( mpi::comm().rank() );
+        const int mpi_rank = static_cast<int>( mpi::rank() );
         for ( idx_t n = previous_size; n < size_; ++n ) {
             glb_idx( n ) = 1 + n;
             part( n )    = mpi_rank;
@@ -174,13 +174,12 @@ IrregularConnectivity& Nodes::connectivity( const std::string& name ) {
     return *connectivities_.find( name )->second;
 }
 
-void Nodes::cloneToDevice() const {
-    std::for_each( fields_.begin(), fields_.end(), []( const FieldMap::value_type& v ) { v.second.cloneToDevice(); } );
+void Nodes::updateDevice() const {
+    std::for_each( fields_.begin(), fields_.end(), []( const FieldMap::value_type& v ) { v.second.updateDevice(); } );
 }
 
-void Nodes::cloneFromDevice() const {
-    std::for_each( fields_.begin(), fields_.end(),
-                   []( const FieldMap::value_type& v ) { v.second.cloneFromDevice(); } );
+void Nodes::updateHost() const {
+    std::for_each( fields_.begin(), fields_.end(), []( const FieldMap::value_type& v ) { v.second.updateHost(); } );
 }
 
 void Nodes::syncHostDevice() const {

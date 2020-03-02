@@ -11,6 +11,7 @@
 /// @file Connectivity.h
 /// @author Willem Deconinck
 /// @date October 2015
+/// @details
 /// This file contains Connectivity classes
 ///   - IrregularConnectivity
 ///   - BlockConnectivity
@@ -49,7 +50,7 @@ constexpr size_t MAX_STRING_SIZE() {
 }
 
 template <typename ConnectivityImpl>
-class ConnectivityInterface : public util::Object, public ConnectivityImpl {
+class ConnectivityInterface : public util::Object, DOXYGEN_HIDE( public ConnectivityImpl ) {
     using ConnectivityImpl::ConnectivityImpl;
     using util::Object::Object;
 };
@@ -61,14 +62,18 @@ class MultiBlockConnectivityImpl;
 
 // --------------------------------------------------------------------------
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 #if ATLAS_HAVE_FORTRAN
+#define INDEX_DEREF Index
 #define INDEX_REF Index
 #define FROM_FORTRAN -1
 #define TO_FORTRAN +1
 #else
-#define INDEX_REF *
+#define INDEX_DEREF *
+#define INDEX_REF idx_t&
 #define FROM_FORTRAN
 #define TO_FORTRAN
+#endif
 #endif
 
 /// @brief Irregular Connectivity Table
@@ -138,11 +143,10 @@ private:
 
 class ConnectivityRow {
 #if ATLAS_HAVE_FORTRAN
-    typedef detail::ConnectivityIndex Index;
+    using Index = detail::ConnectivityIndex;
 #else
-    typedef idx_t Index;
+    using Index = idx_t&;
 #endif
-
 public:
     ATLAS_HOST_DEVICE
     ConnectivityRow( idx_t* data, idx_t size ) : data_( data ), size_( size ) {}
@@ -153,8 +157,8 @@ public:
     }
 
     template <typename Int>
-    ATLAS_HOST_DEVICE Index operator()( Int i ) {
-        return INDEX_REF( data_ + i );
+    ATLAS_HOST_DEVICE INDEX_REF operator()( Int i ) {
+        return INDEX_DEREF( data_ + i );
     }
 
     ATLAS_HOST_DEVICE
@@ -180,16 +184,22 @@ public:
     /// No resizing can be performed as data is not owned.
     IrregularConnectivityImpl( idx_t values[], idx_t rows, idx_t displs[], idx_t counts[] );
 
+#ifdef __CUDACC__
     /// @brief Copy ctr (only to be used when calling a cuda kernel)
     // This ctr has to be defined in the header, since __CUDACC__ will identify
     // whether
     // it is compiled it for a GPU kernel
-
-    /// @brief Copy ctr (only to be used when calling a cuda kernel)
-    // This ctr has to be defined in the header, since __CUDACC__ will identify
-    // whether
-    // it is compiled it for a GPU kernel
-    IrregularConnectivityImpl( const IrregularConnectivityImpl& other );
+    IrregularConnectivityImpl( const IrregularConnectivityImpl& other ) :
+        owns_( false ),
+        values_( other.values_ ),
+        displs_( other.displs_ ),
+        counts_( other.counts_ ),
+        missing_value_( other.missing_value_ ),
+        rows_( other.rows_ ),
+        maxcols_( other.maxcols_ ),
+        mincols_( other.mincols_ ),
+        ctxt_( nullptr ) {}
+#endif
 
     /// @brief Construct a mesh from a Stream (serialization)
     explicit IrregularConnectivityImpl( eckit::Stream& );
@@ -235,7 +245,7 @@ public:
     ATLAS_HOST_DEVICE
     Row row( idx_t row_idx ) const;
 
-    ///-- Modifiers
+    // -- Modifiers
 
     /// @brief Modify row with given values. Values must be given with base 0
     void set( idx_t row_idx, const idx_t column_values[] );
@@ -341,13 +351,14 @@ private:
 
 // ----------------------------------------------------------------------------------------------
 
-/// @brief MultiBlockConnectivityImpl Table
+/// @brief Connectivity contiguously composed of multiple BlockConnectivityImpl
 /// @author Willem Deconinck
 ///
 /// Container for connectivity tables that are layed out in memory as multiple
 /// BlockConnectivities stitched together.
 /// This is e.g. the case for a element-node connectivity, with element-types
 /// grouped together:
+/// @code{.sh}
 ///  connectivity = [
 ///     # triangles  (block 0)
 ///         1   2   3
@@ -359,6 +370,7 @@ private:
 ///        17  18  19  20
 ///        21  22  23  24
 ///  ]
+/// @endcode
 ///
 /// This class can also be interpreted as a atlas::IrregularConnectivity without
 /// distinction between blocks
@@ -410,7 +422,7 @@ public:
     ATLAS_HOST_DEVICE
     idx_t operator()( idx_t block_idx, idx_t block_row_idx, idx_t block_col_idx ) const;
 
-    ///-- Modifiers
+    //-- Modifiers
 
     /// @brief Resize connectivity, and add given rows as a new block
     /// @note Can only be used when data is owned.
@@ -518,19 +530,22 @@ public:
     /// No resizing can be performed as data is not owned.
     BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t values[] );
 
+#ifdef __CUDACC__
     /// @brief Copy ctr (only to be used when calling a cuda kernel)
     // This ctr has to be defined in the header, since __CUDACC__ will identify
-    // whether
-    // it is compiled it for a GPU kernel
+    // whether it is compiled it for a GPU kernel
     BlockConnectivityImpl( const BlockConnectivityImpl& other ) :
         owns_( false ),
         values_( other.values_ ),
         rows_( other.rows_ ),
         cols_( other.cols_ ),
         missing_value_( other.missing_value_ ) {}
+#endif
 
-    BlockConnectivityImpl( BlockConnectivityImpl&& ) = default;
-    BlockConnectivityImpl& operator=( const BlockConnectivityImpl& other ) = default;
+    BlockConnectivityImpl( BlockConnectivityImpl&& other );
+
+    BlockConnectivityImpl& operator=( const BlockConnectivityImpl& other );
+    BlockConnectivityImpl& operator=( BlockConnectivityImpl&& other );
 
     /// @brief Construct a mesh from a Stream (serialization)
     explicit BlockConnectivityImpl( eckit::Stream& );
@@ -540,8 +555,6 @@ public:
 
     ATLAS_HOST_DEVICE
     idx_t index( idx_t i, idx_t j ) const;
-
-    void rebuild( idx_t rows, idx_t cols, idx_t values[] );
 
     //-- Accessors
 
@@ -587,7 +600,18 @@ public:
 
     bool owns() const { return owns_; }
 
+
+    friend std::ostream& operator<<( std::ostream& out, const BlockConnectivityImpl& x ) {
+        x.print( out );
+        return out;
+    }
+
+
 protected:
+    /// @brief Wrap existing and set owns_ = false
+    void rebuild( idx_t rows, idx_t cols, idx_t values[] );
+
+
     /// @brief Serialization to Stream
     void encode( eckit::Stream& ) const;
 
@@ -603,6 +627,8 @@ protected:
         x.decode( s );
         return s;
     }
+
+    void print( std::ostream& ) const;
 
 private:
     bool owns_;
@@ -700,7 +726,7 @@ void atlas__BlockConnectivity__delete( BlockConnectivityImpl* This );
 
 #undef FROM_FORTRAN
 #undef TO_FORTRAN
-#undef INDEX_REF
+#undef INDEX_DEREF
 
 //------------------------------------------------------------------------------------------------------
 

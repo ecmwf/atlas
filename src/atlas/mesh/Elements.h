@@ -17,6 +17,7 @@
 #pragma once
 
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/util/Object.h"
@@ -34,8 +35,6 @@ namespace mesh {
 
 /// @brief Describe elements of a single type
 class Elements : public util::Object {
-public:
-    // typedef atlas::mesh::BlockConnectivity Connectivity;
 public:
     //-- Constructors
 
@@ -119,10 +118,16 @@ public:
     Field& flags() { return hybrid_elements_->flags(); }
 
     template <typename DATATYPE, int RANK>
-    array::LocalView<DATATYPE, RANK, array::Intent::ReadOnly> view( const Field& ) const;
+    array::LocalView<const DATATYPE, RANK> view( const Field& ) const;
 
     template <typename DATATYPE, int RANK>
-    array::LocalView<DATATYPE, RANK, array::Intent::ReadWrite> view( Field& ) const;
+    array::LocalView<DATATYPE, RANK> view( Field& ) const;
+
+    template <typename DATATYPE, int RANK>
+    array::LocalIndexView<DATATYPE, RANK> indexview( const Field& ) const;
+
+    template <typename DATATYPE, int RANK>
+    array::LocalIndexView<DATATYPE, RANK> indexview( Field& ) const;
 
     idx_t add( const idx_t nb_elements );
 

@@ -8,8 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file   ElementType.h
 /// @author Willem Deconinck
-/// @date October 2015
+/// @date   October 2015
 
 #pragma once
 

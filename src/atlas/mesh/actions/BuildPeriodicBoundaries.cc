@@ -32,15 +32,15 @@ namespace atlas {
 namespace mesh {
 namespace actions {
 
-typedef gidx_t uid_t;
+using uid_t = gidx_t;
 
 void build_periodic_boundaries( Mesh& mesh ) {
     ATLAS_TRACE();
     bool periodic = false;
     mesh.metadata().get( "periodic", periodic );
 
-    auto mpi_size = static_cast<idx_t>( mpi::comm().size() );
-    auto mypart   = static_cast<idx_t>( mpi::comm().rank() );
+    auto mpi_size = mpi::size();
+    auto mypart   = mpi::rank();
 
     if ( !periodic ) {
         mesh::Nodes& nodes = mesh.nodes();
@@ -138,10 +138,10 @@ void build_periodic_boundaries( Mesh& mesh ) {
         std::vector<std::vector<int>> send_master_ridx( mpi_size );
         std::vector<std::vector<int>> recv_master_ridx( mpi_size );
 
-        //  std::vector< std::vector<int> > send_slave_part( mpi::comm().size() );
-        //  std::vector< std::vector<int> > recv_slave_part( mpi::comm().size() );
-        //  std::vector< std::vector<int> > send_slave_ridx( mpi::comm().size() );
-        //  std::vector< std::vector<int> > recv_slave_ridx( mpi::comm().size() );
+        //  std::vector< std::vector<int> > send_slave_part( mpi_size );
+        //  std::vector< std::vector<int> > recv_slave_part( mpi_size );
+        //  std::vector< std::vector<int> > send_slave_ridx( mpi_size );
+        //  std::vector< std::vector<int> > recv_slave_ridx( mpi_size );
 
         {
             for ( idx_t jproc = 0; jproc < mpi_size; ++jproc ) {

@@ -139,11 +139,11 @@ Mesh PointCloudIO::read( const eckit::PathName& path, std::vector<std::string>& 
             PointXY pxy;
             iss >> pxy.x() >> pxy.y();
 
-            xy( i, XX )      = pxy.x();
-            xy( i, YY )      = pxy.y();
-            lonlat( i, LON ) = pxy.x();
-            lonlat( i, LAT ) = pxy.y();
-            glb_idx( i )     = i + 1;
+            xy( i, (size_t)XX )      = pxy.x();
+            xy( i, (size_t)YY )      = pxy.y();
+            lonlat( i, (size_t)LON ) = pxy.x();
+            lonlat( i, (size_t)LAT ) = pxy.y();
+            glb_idx( i )             = i + 1;
 
             for ( j = 0; iss && j < nb_fld; ++j ) {
                 iss >> fields[j]( i );
@@ -180,7 +180,7 @@ void PointCloudIO::write( const eckit::PathName& path, const Mesh& mesh ) {
 
     const mesh::Nodes& nodes = mesh.nodes();
 
-    const array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( nodes.lonlat() );
+    auto lonlat = array::make_view<double, 2>( nodes.lonlat() );
     if ( !lonlat.size() ) {
         throw_Exception( msg + "invalid number of points (failed: nb_pts>0)" );
     }
@@ -188,13 +188,12 @@ void PointCloudIO::write( const eckit::PathName& path, const Mesh& mesh ) {
     // get the fields (sanitized) names and values
     // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
     std::vector<std::string> vfnames;
-    std::vector<array::ArrayView<double, 1>> vfvalues;
+    std::vector<array::ArrayView<const double, 1>> vfvalues;
     for ( idx_t i = 0; i < nodes.nb_fields(); ++i ) {
         const Field& field = nodes.field( i );
-        if ( field.shape( 0 ) == lonlat.shape( 0 ) && field.shape( 1 ) == 1 &&
-             field.datatype() == array::DataType::real64() )  // FIXME: no support for
-                                                              // non-double types!
-        {
+        if ( ( ( field.rank() == 1 && field.shape( 0 ) == lonlat.shape( 0 ) ) ||
+               ( field.rank() == 2 && field.shape( 0 ) == lonlat.shape( 0 ) && field.shape( 1 ) == 1 ) ) &&
+             field.datatype() == array::DataType::real64() ) {  // FIXME: no support for non-double types!
             vfnames.push_back( sanitize_field_name( field.name() ) );
             vfvalues.push_back( array::make_view<double, 1>( field ) );
         }
@@ -217,7 +216,7 @@ void PointCloudIO::write( const eckit::PathName& path, const Mesh& mesh ) {
 
     // data
     for ( size_t i = 0; i < Npts; ++i ) {
-        f << lonlat( i, 0 ) << '\t' << lonlat( i, 1 );
+        f << lonlat( i, (size_t)0 ) << '\t' << lonlat( i, (size_t)1 );
         for ( size_t j = 0; j < Nfld; ++j ) {
             f << '\t' << vfvalues[j]( i );
         }
@@ -247,7 +246,7 @@ void PointCloudIO::write( const eckit::PathName& path, const FieldSet& fieldset,
     // get the fields (sanitized) names and values
     // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
     std::vector<std::string> vfnames;
-    std::vector<array::ArrayView<double, 1>> vfvalues;
+    std::vector<array::ArrayView<const double, 1>> vfvalues;
     for ( idx_t i = 0; i < fieldset.size(); ++i ) {
         const Field& field = fieldset[i];
         if ( field.shape( 0 ) == lonlat.shape( 0 ) && field.rank() == 1 &&
@@ -275,7 +274,7 @@ void PointCloudIO::write( const eckit::PathName& path, const FieldSet& fieldset,
 
     // data
     for ( size_t i = 0; i < Npts; ++i ) {
-        f << lonlat( i, 0 ) << '\t' << lonlat( i, 1 );
+        f << lonlat( i, (size_t)0 ) << '\t' << lonlat( i, (size_t)1 );
         for ( size_t j = 0; j < Nfld; ++j ) {
             f << '\t' << vfvalues[j]( i );
         }

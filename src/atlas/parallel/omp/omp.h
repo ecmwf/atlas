@@ -31,11 +31,12 @@ int atlas_omp_get_nested( void );
 #define atlas_omp_pragma( x )
 #endif
 
-#define atlas_omp_parallel_for atlas_omp_pragma(omp parallel for schedule(static) ) for
-#define atlas_omp_for atlas_omp_pragma(omp for) for
+#define atlas_omp_parallel_for atlas_omp_pragma(omp parallel for schedule(guided) ) for
+#define atlas_omp_for atlas_omp_pragma(omp for schedule(guided)) for
 #define atlas_omp_parallel atlas_omp_pragma( omp parallel )
 #define atlas_omp_critical atlas_omp_pragma( omp critical )
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <typename T>
 class atlas_omp_scoped_helper {
 public:
@@ -49,6 +50,7 @@ private:
 };
 
 #define _atlas_omp_scoped( T, VAR, VAL ) for ( atlas_omp_scoped_helper<T> VAR( VAL ); VAR.once(); VAR.done() )
+#endif
 
 #define atlas_omp_critical_ordered                                          \
     _atlas_omp_scoped(const size_t, _nthreads, atlas_omp_get_num_threads()) \

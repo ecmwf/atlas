@@ -195,7 +195,7 @@ VorDivToUVLocal::VorDivToUVLocal( const int truncation, const eckit::Configurati
 VorDivToUVLocal::VorDivToUVLocal( const FunctionSpace& fs, const eckit::Configuration& config ) :
     truncation_( Spectral( fs ).truncation() ) {}
 
-VorDivToUVLocal::~VorDivToUVLocal() {}
+VorDivToUVLocal::~VorDivToUVLocal() = default;
 
 }  // namespace trans
 }  // namespace atlas

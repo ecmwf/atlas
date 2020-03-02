@@ -37,7 +37,7 @@ public:
    * @param[in] P given point
    * @return if point is in polygon
    */
-    bool contains( const PointLonLat& P ) const;
+    bool contains( const Point2& P ) const;
 };
 
 //------------------------------------------------------------------------------------------------------

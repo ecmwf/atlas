@@ -20,6 +20,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/SphericalPolygon.h"
 
 namespace atlas {
@@ -48,20 +49,19 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
     bool includesSouthPole = ( mpi_rank == mpi_size - 1 );
 
     const util::SphericalPolygon poly( prePartitionedMesh_.polygon( 0 ), prePartitionedMesh_.nodes().lonlat() );
-    const double maxlat = poly.coordinatesMax().lat();
-    const double minlat = poly.coordinatesMin().lat();
+    const double maxlat = poly.coordinatesMax()[LAT];
+    const double minlat = poly.coordinatesMin()[LAT];
     auto at_the_pole    = [&]( const PointLonLat& P ) {
-        return ( includesNorthPole && P.lat() >= maxlat ) || ( includesSouthPole && P.lat() < minlat );
+        return ( includesNorthPole && P[LAT] >= maxlat ) || ( includesSouthPole && P[LAT] < minlat );
     };
 
     {
         eckit::ProgressTimer timer( "Partitioning", grid.size(), "point", double( 10 ), atlas::Log::trace() );
         size_t i = 0;
 
-        for ( const PointXY Pxy : grid.xy() ) {
+        for ( const PointLonLat& P : grid.lonlat() ) {
             ++timer;
-            const PointLonLat P = grid.projection().lonlat( Pxy );
-            partitioning[i++]   = at_the_pole( P ) || poly.contains( P ) ? mpi_rank : -1;
+            partitioning[i++] = at_the_pole( P ) || poly.contains( P ) ? mpi_rank : -1;
         }
     }
 

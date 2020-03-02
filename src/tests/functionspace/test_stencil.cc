@@ -14,8 +14,6 @@
 #include "eckit/types/Types.h"
 
 #include "atlas/array.h"
-#include "atlas/array/ArrayView.h"
-#include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/PointCloud.h"
@@ -24,7 +22,6 @@
 #include "atlas/grid/Stencil.h"
 #include "atlas/grid/StencilComputer.h"
 #include "atlas/grid/StructuredGrid.h"
-#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
@@ -37,6 +34,7 @@
 using namespace eckit;
 using namespace atlas::functionspace;
 using namespace atlas::util;
+using namespace atlas::grid;
 
 
 namespace atlas {

@@ -20,6 +20,7 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/partitioner/CheckerboardPartitioner.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h"
@@ -50,11 +51,11 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-Partitioner::Partitioner() : nb_partitions_( mpi::comm().size() ) {}
+Partitioner::Partitioner() : nb_partitions_( mpi::size() ) {}
 
 Partitioner::Partitioner( const idx_t nb_partitions ) : nb_partitions_( nb_partitions ) {}
 
-Partitioner::~Partitioner() {}
+Partitioner::~Partitioner() = default;
 
 idx_t Partitioner::nb_partitions() const {
     return nb_partitions_;
@@ -88,7 +89,9 @@ PartitionerFactory::PartitionerFactory( const std::string& name ) : name_( name 
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    ATLAS_ASSERT( m->find( name ) == m->end() );
+    if ( m->find( name ) != m->end() ) {
+        throw_Exception( "Partitioner with name [" + name + "] is already registered.", Here() );
+    }
     ( *m )[name] = this;
 }
 
@@ -167,13 +170,8 @@ Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_
     return ( *j ).second->make( nb_partitions );
 }
 
-}  // namespace partitioner
-}  // namespace detail
 
-grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build( const std::string& type,
-                                                                          const Mesh& partitioned ) {
-    using namespace grid::detail::partitioner;
-
+Partitioner* MatchingPartitionerFactory::build( const std::string& type, const Mesh& partitioned ) {
     if ( type == MatchingMeshPartitionerSphericalPolygon::static_type() ) {
         return new MatchingMeshPartitionerSphericalPolygon( partitioned );
     }
@@ -188,5 +186,16 @@ grid::detail::partitioner::Partitioner* MatchedPartitionerFactory::build( const 
     }
 }
 
+Partitioner* MatchingPartitionerFactory::build( const std::string& type, const FunctionSpace& partitioned ) {
+    if ( type == MatchingFunctionSpacePartitionerLonLatPolygon::static_type() ) {
+        return new MatchingFunctionSpacePartitionerLonLatPolygon( partitioned );
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
+}
+
+}  // namespace partitioner
+}  // namespace detail
 }  // namespace grid
 }  // namespace atlas

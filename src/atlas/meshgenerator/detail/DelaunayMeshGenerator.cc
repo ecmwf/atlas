@@ -35,11 +35,11 @@ namespace meshgenerator {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-DelaunayMeshGenerator::DelaunayMeshGenerator() {}
+DelaunayMeshGenerator::DelaunayMeshGenerator() = default;
 
 DelaunayMeshGenerator::DelaunayMeshGenerator( const eckit::Parametrisation& ) {}
 
-DelaunayMeshGenerator::~DelaunayMeshGenerator() {}
+DelaunayMeshGenerator::~DelaunayMeshGenerator() = default;
 
 void DelaunayMeshGenerator::hash( eckit::Hash& h ) const {
     h.add( "Delaunay" );

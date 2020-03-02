@@ -23,7 +23,7 @@
 #include "eckit/runtime/Tool.h"
 
 #include "atlas/grid/detail/spacing/GaussianSpacing.h"
-#include "atlas/library/Library.h"
+#include "atlas/library.h"
 #include "atlas/runtime/Exception.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ using atlas::grid::spacing::GaussianSpacing;
 //------------------------------------------------------------------------------------------------------
 
 class AtlasGaussianLatitudes : public eckit::Tool {
-    virtual void run();
+    void run() override;
 
 public:
     AtlasGaussianLatitudes( int argc, char** argv ) : eckit::Tool( argc, argv ) {

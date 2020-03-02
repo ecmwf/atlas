@@ -17,7 +17,6 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/interpolation.h"
-#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
@@ -89,9 +88,9 @@ Grid lambert() {
     gridspec.set( "lonlat(centre)", std::vector<double>{4., 50} );
     gridspec.set( "projection", [] {
         Config projection;
-        projection.set( "type", "lambert" );
-        projection.set( "latitude1", 50. );
+        projection.set( "type", "lambert_conformal_conic" );
         projection.set( "longitude0", 4. );
+        projection.set( "latitude1", 50. );
         return projection;
     }() );
     return Grid{gridspec};

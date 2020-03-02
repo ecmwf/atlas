@@ -14,6 +14,7 @@
 
 #include "atlas/library/Library.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/trace/StopWatch.h"
 
 //-----------------------------------------------------------------------------------------------------------
@@ -62,7 +63,7 @@ void Barriers::restore() {
 }
 
 bool Barriers::state() {
-    return BarriersState::instance();
+    return BarriersState::instance() && ( atlas_omp_get_num_threads() <= 1 );
 }
 
 void Barriers::execute() {

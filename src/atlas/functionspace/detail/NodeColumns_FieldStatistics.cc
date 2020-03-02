@@ -35,8 +35,8 @@ namespace detail {
 
 namespace {
 
-template <typename T>
-array::LocalView<T, 3> make_leveled_view( const Field& field ) {
+template <typename T, typename Field>
+array::LocalView<T, 3> make_leveled_view( Field& field ) {
     using namespace array;
     if ( field.levels() ) {
         if ( field.variables() ) {
@@ -56,8 +56,8 @@ array::LocalView<T, 3> make_leveled_view( const Field& field ) {
     }
 }
 
-template <typename T>
-array::LocalView<T, 2> make_leveled_scalar_view( const Field& field ) {
+template <typename T, typename Field>
+array::LocalView<T, 2> make_leveled_scalar_view( Field& field ) {
     using namespace array;
     if ( field.levels() ) {
         return make_view<T, 2>( field ).slice( Range::all(), Range::all() );
@@ -67,8 +67,8 @@ array::LocalView<T, 2> make_leveled_scalar_view( const Field& field ) {
     }
 }
 
-template <typename T>
-array::LocalView<T, 2> make_surface_view( const Field& field ) {
+template <typename T, typename Field>
+array::LocalView<T, 2> make_surface_view( Field& field ) {
     using namespace array;
     if ( field.variables() ) {
         return make_view<T, 2>( field ).slice( Range::all(), Range::all() );
@@ -78,8 +78,8 @@ array::LocalView<T, 2> make_surface_view( const Field& field ) {
     }
 }
 
-template <typename T>
-array::LocalView<T, 2> make_per_level_view( const Field& field ) {
+template <typename T, typename Field>
+array::LocalView<T, 2> make_per_level_view( Field& field ) {
     using namespace array;
     if ( field.rank() == 2 ) {
         return make_view<T, 2>( field ).slice( Range::all(), Range::all() );
@@ -102,10 +102,10 @@ namespace detail {  // Collectives implementation
 template <typename T>
 void dispatch_sum( const NodeColumns& fs, const Field& field, T& result, idx_t& N ) {
     const mesh::IsGhostNode is_ghost( fs.nodes() );
-    const array::LocalView<T, 2> arr = make_leveled_scalar_view<T>( field );
-    T local_sum                      = 0;
-    const idx_t npts                 = std::min<idx_t>( arr.shape( 0 ), fs.nb_nodes() );
-    const idx_t nlev                 = arr.shape( 1 );
+    const array::LocalView<const T, 2> arr = make_leveled_scalar_view<const T>( field );
+    T local_sum                            = 0;
+    const idx_t npts                       = std::min<idx_t>( arr.shape( 0 ), fs.nb_nodes() );
+    const idx_t nlev                       = arr.shape( 1 );
   atlas_omp_pragma( omp parallel for default(shared) reduction(+:local_sum) )
   for( idx_t n=0; n<npts; ++n ) {
       if ( !is_ghost( n ) ) {
@@ -158,7 +158,7 @@ void sum( const NodeColumns& fs, const Field& field, T& result, idx_t& N ) {
 
 template <typename T>
 void dispatch_sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, idx_t& N ) {
-    const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
+    auto arr = make_leveled_view<const T>( field );
     const mesh::IsGhostNode is_ghost( fs.nodes() );
     const idx_t npts = std::min( arr.shape( 0 ), fs.nb_nodes() );
     const idx_t nlev = arr.shape( 1 );
@@ -237,7 +237,7 @@ void dispatch_sum_per_level( const NodeColumns& fs, const Field& field, Field& s
     }
     sum.resize( shape );
 
-    auto arr = make_leveled_view<T>( field );
+    auto arr = make_leveled_view<const T>( field );
 
     const idx_t npts = std::min( arr.shape( 0 ), fs.nb_nodes() );
     const idx_t nlev = arr.shape( 1 );
@@ -319,7 +319,7 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& fiel
 template <typename T>
 void dispatch_order_independent_sum( const NodeColumns& fs, const Field& field, T& result, idx_t& N ) {
     if ( field.levels() ) {
-        const array::LocalView<T, 2> arr = make_leveled_scalar_view<T>( field );
+        auto arr = make_leveled_scalar_view<const T>( field );
 
         Field surface_field = fs.createField<T>( option::name( "surface" ) | option::levels( false ) );
         auto surface        = array::make_view<T, 1>( surface_field );
@@ -387,7 +387,7 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& fiel
     }
     Field global = fs.createField( field, option::name( "global" ) | option::global() );
     fs.gather( field, global );
-    if ( mpi::comm().rank() == 0 ) {
+    if ( mpi::rank() == 0 ) {
         const auto glb = make_surface_view<DATATYPE>( global );
         for ( idx_t n = 0; n < fs.nb_nodes_global(); ++n ) {
             for ( idx_t j = 0; j < nvar; ++j ) {
@@ -403,7 +403,7 @@ void dispatch_order_independent_sum_2d( const NodeColumns& fs, const Field& fiel
 template <typename T>
 void dispatch_order_independent_sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, idx_t& N ) {
     if ( field.levels() ) {
-        const auto arr   = make_leveled_view<T>( field );
+        const auto arr   = make_leveled_view<const T>( field );
         const idx_t npts = std::min( arr.shape( 0 ), fs.nb_nodes() );
         const idx_t nlev = arr.shape( 1 );
         const idx_t nvar = arr.shape( 2 );
@@ -487,11 +487,11 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
         }
     }
 
-    size_t root  = 0;
+    idx_t root   = 0;
     Field global = fs.createField( field, option::name( "global" ) | option::global() );
 
     fs.gather( field, global );
-    if ( mpi::comm().rank() == 0 ) {
+    if ( mpi::rank() == 0 ) {
         const array::LocalView<T, 3> glb = make_leveled_view<T>( global );
 
         for ( idx_t n = 0; n < glb.shape( 0 ); ++n ) {
@@ -504,7 +504,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
     }
     ATLAS_TRACE_MPI( BROADCAST ) {
         std::vector<T> sum_array( sumfield.size() );
-        if ( mpi::comm().rank() == root ) {
+        if ( mpi::rank() == root ) {
             idx_t c( 0 );
             for ( idx_t l = 0; l < sum.shape( 0 ); ++l ) {
                 for ( idx_t j = 0; j < sum.shape( 1 ); ++j ) {
@@ -513,7 +513,7 @@ void dispatch_order_independent_sum_per_level( const NodeColumns& fs, const Fiel
             }
         }
         mpi::comm().broadcast( sum_array, root );
-        if ( mpi::comm().rank() != root ) {
+        if ( mpi::rank() != root ) {
             idx_t c( 0 );
             for ( idx_t l = 0; l < sum.shape( 0 ); ++l ) {
                 for ( idx_t j = 0; j < sum.shape( 1 ); ++j ) {
@@ -545,8 +545,8 @@ void order_independent_sum_per_level( const NodeColumns& fs, const Field& field,
 
 template <typename T>
 void dispatch_minimum( const NodeColumns& fs, const Field& field, std::vector<T>& min ) {
-    const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
-    const idx_t nvar                 = arr.shape( 2 );
+    auto arr         = make_leveled_view<const T>( field );
+    const idx_t nvar = arr.shape( 2 );
     min.resize( nvar );
     std::vector<T> local_minimum( nvar, std::numeric_limits<T>::max() );
     atlas_omp_parallel {
@@ -608,8 +608,8 @@ void minimum( const NodeColumns& fs, const Field& field, std::vector<T>& min ) {
 
 template <typename T>
 void dispatch_maximum( const NodeColumns& fs, const Field& field, std::vector<T>& max ) {
-    const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
-    const idx_t nvar                 = arr.shape( 2 );
+    auto arr         = make_leveled_view<const T>( field );
+    const idx_t nvar = arr.shape( 2 );
     max.resize( nvar );
     std::vector<T> local_maximum( nvar, -std::numeric_limits<T>::max() );
     atlas_omp_parallel {
@@ -698,7 +698,7 @@ void dispatch_minimum_per_level( const NodeColumns& fs, const Field& field, Fiel
         }
     }
 
-    const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
+    auto arr = make_leveled_view<const T>( field );
     atlas_omp_parallel {
         array::ArrayT<T> min_private( min.shape( 0 ), min.shape( 1 ) );
         array::ArrayView<T, 2> min_private_view = array::make_view<T, 2>( min_private );
@@ -746,7 +746,7 @@ void minimum_per_level( const NodeColumns& fs, const Field& field, Field& min ) 
 }
 
 template <typename T>
-void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Field& max_field ) {
+void dispatch_maximum_per_level( const NodeColumns&, const Field& field, Field& max_field ) {
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
     for ( idx_t j = 1; j < field.rank(); ++j ) {
@@ -761,7 +761,7 @@ void dispatch_maximum_per_level( const NodeColumns& fs, const Field& field, Fiel
         }
     }
 
-    const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
+    auto arr = make_leveled_view<const T>( field );
     atlas_omp_parallel {
         array::ArrayT<T> max_private( max.shape( 0 ), max.shape( 1 ) );
         array::ArrayView<T, 2> max_private_view = array::make_view<T, 2>( max_private );
@@ -812,8 +812,8 @@ void maximum_per_level( const NodeColumns& fs, const Field& field, Field& max ) 
 template <typename T>
 void dispatch_minimum_and_location( const NodeColumns& fs, const Field& field, std::vector<T>& min,
                                     std::vector<gidx_t>& glb_idx, std::vector<idx_t>& level ) {
-    array::LocalView<T, 3> arr = make_leveled_view<T>( field );
-    idx_t nvar                 = arr.shape( 2 );
+    auto arr   = make_leveled_view<const T>( field );
+    idx_t nvar = arr.shape( 2 );
     min.resize( nvar );
     glb_idx.resize( nvar );
     level.resize( nvar );
@@ -915,8 +915,8 @@ void minimum_and_location( const NodeColumns& fs, const Field& field, std::vecto
 template <typename T>
 void dispatch_maximum_and_location( const NodeColumns& fs, const Field& field, std::vector<T>& max,
                                     std::vector<gidx_t>& glb_idx, std::vector<idx_t>& level ) {
-    array::LocalView<T, 3> arr = make_leveled_view<T>( field );
-    idx_t nvar                 = arr.shape( 2 );
+    auto arr   = make_leveled_view<const T>( field );
+    idx_t nvar = arr.shape( 2 );
     max.resize( nvar );
     glb_idx.resize( nvar );
     level.resize( nvar );
@@ -1066,7 +1066,7 @@ void maximum_and_location( const NodeColumns& fs, const Field& field, T& max, gi
 template <typename T>
 void dispatch_minimum_and_location_per_level( const NodeColumns& fs, const Field& field, Field& min_field,
                                               Field& glb_idx_field ) {
-    const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
+    auto arr = make_leveled_view<const T>( field );
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
     for ( idx_t j = 1; j < field.rank(); ++j ) {
@@ -1166,7 +1166,7 @@ void minimum_and_location_per_level( const NodeColumns& fs, const Field& field, 
 template <typename T>
 void dispatch_maximum_and_location_per_level( const NodeColumns& fs, const Field& field, Field& max_field,
                                               Field& glb_idx_field ) {
-    const array::LocalView<T, 3> arr = make_leveled_view<T>( field );
+    auto arr = make_leveled_view<const T>( field );
     array::ArrayShape shape;
     shape.reserve( field.rank() - 1 );
     for ( idx_t j = 1; j < field.rank(); ++j ) {
@@ -1313,8 +1313,8 @@ void mean_and_standard_deviation( const NodeColumns& fs, const Field& field, T& 
     Field squared_diff_field = fs.createField( option::name( "sqr_diff" ) | option::datatype( field.datatype() ) |
                                                option::levels( field.levels() ) );
 
-    array::LocalView<T, 2> squared_diff = make_leveled_scalar_view<T>( squared_diff_field );
-    array::LocalView<T, 2> values       = make_leveled_scalar_view<T>( field );
+    auto squared_diff = make_leveled_scalar_view<T>( squared_diff_field );
+    auto values       = make_leveled_scalar_view<const T>( field );
 
     const idx_t npts = std::min<idx_t>( values.shape( 0 ), fs.nb_nodes() );
     atlas_omp_parallel_for( idx_t n = 0; n < npts; ++n ) {
@@ -1332,8 +1332,8 @@ void mean_and_standard_deviation( const NodeColumns& fs, const Field& field, std
     mean( fs, field, mu, N );
     Field squared_diff_field = fs.createField<T>( option::name( "sqr_diff" ) | option::levels( field.levels() ) |
                                                   option::variables( field.variables() ) );
-    array::LocalView<T, 3> squared_diff = make_leveled_view<T>( squared_diff_field );
-    array::LocalView<T, 3> values       = make_leveled_view<T>( field );
+    auto squared_diff        = make_leveled_view<T>( squared_diff_field );
+    auto values              = make_leveled_view<const T>( field );
 
     const idx_t npts = std::min<idx_t>( values.shape( 0 ), fs.nb_nodes() );
     atlas_omp_parallel_for( idx_t n = 0; n < npts; ++n ) {
@@ -1356,7 +1356,7 @@ void dispatch_mean_and_standard_deviation_per_level( const NodeColumns& fs, cons
     Field squared_diff_field = fs.createField<T>( option::name( "sqr_diff" ) | option::levels( field.levels() ) |
                                                   option::variables( field.variables() ) );
     auto squared_diff        = make_leveled_view<T>( squared_diff_field );
-    auto values              = make_leveled_view<T>( field );
+    auto values              = make_leveled_view<const T>( field );
     auto mu                  = make_per_level_view<T>( mean );
 
     const idx_t npts = std::min<idx_t>( values.shape( 0 ), fs.nb_nodes() );

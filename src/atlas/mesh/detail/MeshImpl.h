@@ -13,6 +13,7 @@
 #include <iosfwd>
 #include <memory>
 
+#include "atlas/grid/Grid.h"
 #include "atlas/mesh/PartitionPolygon.h"
 #include "atlas/mesh/detail/PartitionGraph.h"
 #include "atlas/projection/Projection.h"
@@ -27,7 +28,6 @@ class Stream;
 }
 
 namespace atlas {
-class Grid;
 class Mesh;
 namespace mesh {
 class PartitionPolygon;
@@ -94,9 +94,9 @@ public:  // methods
     idx_t partition() const;
     idx_t nb_partitions() const;
 
-    void cloneToDevice() const;
+    void updateDevice() const;
 
-    void cloneFromDevice() const;
+    void updateHost() const;
 
     void syncHostDevice() const;
 
@@ -108,7 +108,7 @@ public:  // methods
 
     const PartitionPolygon& polygon( idx_t halo = 0 ) const;
 
-    const Grid& grid() const { return *grid_; }
+    const Grid grid() const { return grid_; }
 
     void attachObserver( MeshObserver& ) const;
     void detachObserver( MeshObserver& ) const;
@@ -143,7 +143,7 @@ private:  // members
 
     Projection projection_;
 
-    std::unique_ptr<Grid> grid_;
+    Grid grid_;
 
     mutable util::ObjectHandle<PartitionGraph> partition_graph_;
 

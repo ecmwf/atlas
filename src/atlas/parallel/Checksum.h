@@ -82,7 +82,7 @@ private:  // data
 template <typename DATA_TYPE>
 std::string Checksum::execute( const DATA_TYPE data[], const int var_strides[], const int var_extents[],
                                const int var_rank ) const {
-    size_t root = 0;
+    idx_t root = 0;
 
     if ( !is_setup_ ) {
         throw_Exception( "Checksum was not setup", Here() );
@@ -94,7 +94,7 @@ std::string Checksum::execute( const DATA_TYPE data[], const int var_strides[], 
         local_checksums[pp] = util::checksum( data + pp * var_size, var_size );
     }
 
-    std::vector<util::checksum_t> global_checksums( mpi::comm().rank() == root ? gather_->glb_dof() : 0 );
+    std::vector<util::checksum_t> global_checksums( mpi::rank() == root ? gather_->glb_dof() : 0 );
     parallel::Field<util::checksum_t const> loc( local_checksums.data(), 1 );
     parallel::Field<util::checksum_t> glb( global_checksums.data(), 1 );
     gather_->gather( &loc, &glb, 1 );

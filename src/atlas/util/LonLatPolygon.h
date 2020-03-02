@@ -10,22 +10,29 @@
 
 #pragma once
 
-#include <vector>
+#include <type_traits>
 
 #include "atlas/util/Polygon.h"
 
 namespace atlas {
 namespace util {
 
+
 //------------------------------------------------------------------------------------------------------
 
 class LonLatPolygon : public PolygonCoordinates {
+private:
+    template <typename PointContainer>
+    using enable_if_not_polygon = typename std::enable_if<!std::is_base_of<Polygon, PointContainer>::value, int>::type;
+
 public:
     // -- Constructors
 
-    LonLatPolygon( const Polygon&, const atlas::Field& lonlat, bool removeAlignedPoints = true );
+    LonLatPolygon( const Polygon&, const atlas::Field& coordinates, bool removeAlignedPoints = true );
+    LonLatPolygon( const PartitionPolygon& );
 
-    LonLatPolygon( const std::vector<PointLonLat>& points );
+    template <typename PointContainer, enable_if_not_polygon<PointContainer> = 0>
+    LonLatPolygon( const PointContainer& points, bool removeAlignedPoints = true );
 
     // -- Overridden methods
 
@@ -37,7 +44,13 @@ public:
    * @param[in] P given point
    * @return if point is in polygon
    */
-    bool contains( const PointLonLat& P ) const;
+    bool contains( const Point2& P ) const;
+
+private:
+    PointLonLat centroid_;
+    double inner_radius_squared_{0};
+    PointLonLat inner_coordinatesMin_;
+    PointLonLat inner_coordinatesMax_;
 };
 
 //------------------------------------------------------------------------------------------------------

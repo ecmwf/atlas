@@ -21,6 +21,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/LonLatPolygon.h"
 
 namespace atlas {
@@ -54,11 +55,10 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int part
         eckit::ProgressTimer timer( "Partitioning", grid.size(), "point", double( 10 ), atlas::Log::trace() );
         size_t i = 0;
 
-        for ( const PointXY Pxy : grid.xy() ) {
+        for ( const PointLonLat& P : grid.lonlat() ) {
             ++timer;
-            const PointLonLat P  = grid.projection().lonlat( Pxy );
-            const bool atThePole = ( includesNorthPole && P.lat() >= poly.coordinatesMax().lat() ) ||
-                                   ( includesSouthPole && P.lat() < poly.coordinatesMin().lat() );
+            const bool atThePole = ( includesNorthPole && P[LAT] >= poly.coordinatesMax()[LAT] ) ||
+                                   ( includesSouthPole && P[LAT] < poly.coordinatesMin()[LAT] );
 
             partitioning[i++] = atThePole || poly.contains( P ) ? mpi_rank : -1;
         }

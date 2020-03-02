@@ -30,7 +30,7 @@ struct IsGhostPoint {
         part_   = part;
         ridx_   = ridx;
         base_   = base;
-        mypart_ = mpi::comm().rank();
+        mypart_ = mpi::rank();
     }
 
     bool operator()( idx_t idx ) {
@@ -53,7 +53,7 @@ struct Node {
     idx_t i;
     gidx_t g;
 
-    Node() {}
+    Node() = default;
     Node( gidx_t gid, int part, idx_t idx ) {
         g = gid;
         p = part;
@@ -68,13 +68,13 @@ struct Node {
 }  // namespace
 
 GatherScatter::GatherScatter() : name_(), is_setup_( false ) {
-    myproc = mpi::comm().rank();
-    nproc  = mpi::comm().size();
+    myproc = mpi::rank();
+    nproc  = mpi::size();
 }
 
 GatherScatter::GatherScatter( const std::string& name ) : name_( name ), is_setup_( false ) {
-    myproc = mpi::comm().rank();
-    nproc  = mpi::comm().size();
+    myproc = mpi::rank();
+    nproc  = mpi::size();
 }
 
 void GatherScatter::setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],

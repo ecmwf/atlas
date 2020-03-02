@@ -1,4 +1,7 @@
-# EFAS grid
+# Close resemblance to EFAS grid
+# Here the sphere is used instead of "GRS80" ellipsoid
+# Actual EFAS grid uses "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
+# For real EFAS grid, check "regional_lambert_azimuthal_equal_area_4.yml"
 
 type : "regional"
 nx : 1000
@@ -10,6 +13,8 @@ projection :
     type : "lambert_azimuthal_equal_area"
     standard_parallel : 52
     central_longitude : 10
+    false_easting : 4321000
+    false_northing : 3210000
 y_numbering : -1
 
 
@@ -18,4 +23,6 @@ check :
   lonlat(first) : [-35.034,66.9821]
   lonlat(last)  : [41.2436,23.8962]
   bounding_box(n,w,s,e) : [72.647, -35.035, 23.895, 74.144]
-  uid : a87b2f233e26156d01c05a9ef2466721
+  uid : 2ef4f1bb005cf8e24ecc9464f8b7e089
+  xmin : 2510375.79
+  ymin : 748404.45

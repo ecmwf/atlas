@@ -25,13 +25,16 @@ class FieldSet;
 namespace functionspace {
 class FunctionSpaceImpl;
 }
+namespace util {
+class PartitionPolygon;
+}
 }  // namespace atlas
 
 namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-class FunctionSpace : public util::ObjectHandle<functionspace::FunctionSpaceImpl> {
+class FunctionSpace : DOXYGEN_HIDE( public util::ObjectHandle<functionspace::FunctionSpaceImpl> ) {
 public:
     using Handle::Handle;
     FunctionSpace();
@@ -54,6 +57,10 @@ public:
 
     void haloExchange( const FieldSet&, bool on_device = false ) const;
     void haloExchange( const Field&, bool on_device = false ) const;
+
+    const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
+
+    idx_t nb_partitions() const;
 
     idx_t size() const;
 };

@@ -7,11 +7,30 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+
+## [0.19.1] - 2019-12-19
+### Fixed
+- Keep Gaussian identity of a Gaussian grid if a given domain does not crop any latitudes
+- Fix naming for LegendreCache, to be more specific, and platform independent
+
+## [0.19.0] - 2019-10-01
+### Fixed
+- Lambert ( conformal conic ) projection xy coordinates are now corrected
+
+### Changed
+- LambertProjection renamed to LambertConformalConic
+
+### Added
+- Reordering of nodes strategies (Hilbert curve, ReverseCuthillMckee)
+- Preliminary CellColumns functionspace with Gmsh IO; halos are not yet fully supported
+
+
 ## [0.18.1] - 2019-08-10
 ### Fixed
 - Match vertical structured interpolation to IFS
 - Fix in creating vertical dimension in StructuredColumns using interval
 - Fix in caching StructuredColumnsHaloExchange
+
 
 ## [0.18.0] - 2019-07-15
 ### Changed
@@ -27,6 +46,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 - Structured interpolation bugs
 - StructuredColumns bug with iSend
 - Memory corruption in Spectral functionspace with GT CUDA backend
+
 
 ## [0.17.2] - 2019-06-04
 ### Fixed
@@ -134,6 +154,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.19.0]: https://github.com/ecmwf/atlas/compare/0.18.1...0.19.0
 [0.18.1]: https://github.com/ecmwf/atlas/compare/0.18.0...0.18.1
 [0.18.0]: https://github.com/ecmwf/atlas/compare/0.17.2...0.18.0
 [0.17.2]: https://github.com/ecmwf/atlas/compare/0.17.1...0.17.2

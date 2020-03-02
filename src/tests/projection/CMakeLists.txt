@@ -14,3 +14,8 @@ foreach(test
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 
 endforeach()
+
+if(atlas_HAVE_PROJ)
+    ecbuild_add_test( TARGET atlas_test_proj SOURCES test_proj.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
+endif()
+

@@ -11,6 +11,7 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -27,14 +28,15 @@ class FactoryBase;
 class FactoryRegistry {
 protected:
     FactoryRegistry( const std::string& factory );
-    ~FactoryRegistry();
+    virtual ~FactoryRegistry();
 
 private:
     mutable std::mutex mutex_;
-    std::map<std::string, FactoryBase*> factories_;
     std::string factory_;
+    std::map<std::string, FactoryBase*> factories_;
 
 public:
+    const std::string& factory() const { return factory_; }
     std::vector<std::string> keys() const;
     void list( std::ostream& ) const;
     bool has( const std::string& builder ) const;
@@ -46,12 +48,13 @@ public:
 template <typename T>
 struct FactoryRegistryT : public FactoryRegistry {
 public:
-    static FactoryRegistryT<T>& instance() {
-        static FactoryRegistryT<T> env( T::className() );
+    static std::shared_ptr<FactoryRegistryT<T>> instance() {
+        static std::shared_ptr<FactoryRegistryT<T>> env( new FactoryRegistryT<T>( T::className() ) );
         return env;
     }
+    virtual ~FactoryRegistryT() {}
 
-private:
+protected:
     FactoryRegistryT( const std::string& factory ) : FactoryRegistry( factory ) {}
 };
 
@@ -59,11 +62,17 @@ class FactoryBase {
 private:
     FactoryRegistry& registry_;
     std::string builder_;
+    std::shared_ptr<FactoryRegistry> attached_registry_;
 
 protected:
     FactoryBase( FactoryRegistry&, const std::string& builder );
     virtual ~FactoryBase();
+    void attach_registry( const std::shared_ptr<FactoryRegistry>& registry ) { attached_registry_ = registry; }
     friend class FactoryRegistry;
+
+public:
+    const std::string& factoryBuilder() const { return builder_; }
+    const std::string& factoryName() const { return registry_.factory(); }
 };
 
 template <typename T>
@@ -74,11 +83,15 @@ public:
     static bool has( const std::string& builder ) { return registry().has( builder ); }
     static T* get( const std::string& builder ) { return dynamic_cast<T*>( registry().get( builder ) ); }
 
-    Factory( const std::string& builder = "" ) : FactoryBase( registry(), builder ) {}
+    Factory( const std::string& builder = "" ) : FactoryBase( registry(), builder ) {
+        if ( not builder.empty() ) {
+            attach_registry( FactoryRegistryT<T>::instance() );
+        }
+    }
 
 protected:
-    virtual ~Factory() = default;
-    static FactoryRegistryT<T>& registry() { return FactoryRegistryT<T>::instance(); }
+    virtual ~Factory(){};
+    static FactoryRegistry& registry() { return *FactoryRegistryT<T>::instance().get(); }
 };
 
 //----------------------------------------------------------------------------------------------------------------------

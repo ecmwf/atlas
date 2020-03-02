@@ -14,7 +14,6 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/library/Library.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"

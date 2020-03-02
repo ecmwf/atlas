@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/library/Library.h"
+#include "atlas/library.h"
 #include "atlas/runtime/Log.h"
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
@@ -22,9 +22,9 @@ class Version : public Tool {
 public:
     Version( int argc, char** argv ) : Tool( argc, argv ) {}
 
-    ~Version() {}
+    ~Version() override = default;
 
-    virtual void run();
+    void run() override;
 };
 
 void Version::run() {

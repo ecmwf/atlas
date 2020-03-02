@@ -43,7 +43,7 @@ namespace gridtools {
 //------------------------------------------------------------------------------
 
 template <int Rank>
-using UintSequence = ::gridtools::make_gt_integer_sequence<unsigned int, Rank>;
+using UintSequence = std::make_integer_sequence<unsigned int, Rank>;
 
 template <typename Value, template <class> class Storage, typename StorageInfo>
 static Array* wrap_array( ::gridtools::data_store<Storage<Value>, StorageInfo>* ds, const ArraySpec& spec ) {
@@ -178,7 +178,7 @@ public:
     }
 
     template <typename UInt, UInt... Indices>
-    void apply_resize( const ArrayShape& shape, ::gridtools::gt_integer_sequence<UInt, Indices...> ) {
+    void apply_resize( const ArrayShape& shape, std::integer_sequence<UInt, Indices...> ) {
         return resize_variadic( shape[Indices]... );
     }
 
@@ -345,7 +345,7 @@ bool ArrayT<Value>::accMap() const {
 template <typename Value>
 void ArrayT<Value>::insert( idx_t idx1, idx_t size1 ) {
     // if( hostNeedsUpdate() ) {
-    //    cloneFromDevice();
+    //    updateHost();
     //}
     if ( not hasDefaultLayout() )
         ATLAS_NOTIMPLEMENTED;
@@ -395,31 +395,31 @@ template <typename Value>
 void ArrayT<Value>::dump( std::ostream& out ) const {
     switch ( rank() ) {
         case 1:
-            make_host_view<Value, 1, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<Value, 1>( *this ).dump( out );
             break;
         case 2:
-            make_host_view<Value, 2, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<Value, 2>( *this ).dump( out );
             break;
         case 3:
-            make_host_view<Value, 3, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<Value, 3>( *this ).dump( out );
             break;
         case 4:
-            make_host_view<Value, 4, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<Value, 4>( *this ).dump( out );
             break;
         case 5:
-            make_host_view<Value, 5, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<Value, 5>( *this ).dump( out );
             break;
         case 6:
-            make_host_view<Value, 6, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<Value, 6>( *this ).dump( out );
             break;
         case 7:
-            make_host_view<Value, 7, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<Value, 7>( *this ).dump( out );
             break;
         case 8:
-            make_host_view<Value, 8, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<Value, 8>( *this ).dump( out );
             break;
         case 9:
-            make_host_view<Value, 9, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<Value, 9>( *this ).dump( out );
             break;
         default:
             ATLAS_NOTIMPLEMENTED;
