@@ -233,13 +233,13 @@ struct AtlasTestEnvironment {
             Log::error() << "Calling MPI_Abort" << std::endl;
             eckit::mpi::comm().abort();
         } );
-        atlas::library::initialise();
+        atlas::initialize();
         eckit::mpi::comm().barrier();
     }
 
     ~AtlasTestEnvironment() {
-        atlas::library::finalise();
-        atlas::mpi::finalise();
+        atlas::finalize();
+        atlas::mpi::finalize();
     }
 };
 

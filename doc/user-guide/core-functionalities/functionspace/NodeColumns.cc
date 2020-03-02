@@ -148,7 +148,7 @@ int main( int argc, char* argv[] ) {
                 << "nb_nodes: " << N << std::endl;
 
     atlas::Library::finalise();
-    atlas::mpi::finalise();
+    atlas::mpi::finalize();
 
     return 0;
 }

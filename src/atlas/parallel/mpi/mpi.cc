@@ -18,7 +18,7 @@ void finalize() {
     finalise();
 }
 void finalise() {
-    Log::debug() << "atlas::mpi::finalise() --> Finalizing MPI" << std::endl;
+    Log::debug() << "atlas::mpi::finalize() --> Finalizing MPI" << std::endl;
     eckit::mpi::finaliseAllComms();
 }
 

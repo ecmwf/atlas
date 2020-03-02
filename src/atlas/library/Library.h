@@ -27,14 +27,12 @@ void finalise();
 void finalize();
 }  // namespace mpi
 
-namespace library {
 void initialise( int argc, char** argv );
 void initialize( int argc, char** argv );
 void initialise();
 void initialize();
 void finalise();
 void finalize();
-}  // namespace library
 
 //----------------------------------------------------------------------------------------------------------------------
 

@@ -289,15 +289,15 @@ int atlas::AtlasTool::start() {
             }
             return failed();
         }
-        atlas::library::initialise();
+        atlas::initialize();
         setupLogging();
 
         Options opts = options_;
         Args args( &atlas::usage, opts, numberOfPositionalArguments(), minimumPositionalArguments() > 0 );
 
         int err_code = execute( args );
-        atlas::library::finalise();
-        atlas::mpi::finalise();
+        atlas::finalize();
+        atlas::mpi::finalize();
         return err_code;
     }
     catch ( ... ) {

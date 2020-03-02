@@ -196,6 +196,6 @@ int main( int argc, char* argv[] ) {
     Gmsh gmsh( "unstructured.msh", Config( "coordinates", "xyz" ) );
     gmsh.write( mesh );
 
-    atlas::library::finalise();
+    atlas::finalize();
     return 0;
 }

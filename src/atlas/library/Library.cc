@@ -74,7 +74,6 @@ int getEnv( const std::string& env, int default_value ) {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-namespace library {
 void initialise( int argc, char** argv ) {
     Library::instance().initialise( argc, argv );
 }
@@ -93,8 +92,6 @@ void finalise() {
 void finalize() {
     Library::instance().finalise();
 }
-}  // namespace library
-
 
 static Library libatlas;
 
@@ -198,7 +195,7 @@ void Library::finalise() {
     }
 
     if ( getEnv( "ATLAS_FINALISES_MPI", false ) ) {
-        Log::debug() << "ATLAS_FINALISES_MPI is set: calling atlas::mpi::finalise()" << std::endl;
+        Log::debug() << "ATLAS_FINALISES_MPI is set: calling atlas::mpi::finalize()" << std::endl;
         mpi::finalise();
     }
 

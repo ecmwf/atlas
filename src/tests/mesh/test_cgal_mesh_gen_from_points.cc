@@ -32,7 +32,7 @@ using namespace atlas::output;
 #define NLONG 128
 
 int main( int argc, char** argv ) {
-    atlas::library::initialise( argc, argv );
+    atlas::initialize( argc, argv );
     Grid grid( "L33x11" );
 
     // Build a mesh from grid
@@ -42,7 +42,7 @@ int main( int argc, char** argv ) {
     Gmsh gmsh( "earth.msh", util::Config( "coordinates", "xyz" ) );
     gmsh.write( mesh );
 
-    atlas::library::finalise();
-    atlas::mpi::finalise();
+    atlas::finalize();
+    atlas::mpi::finalize();
     return 0;
 }

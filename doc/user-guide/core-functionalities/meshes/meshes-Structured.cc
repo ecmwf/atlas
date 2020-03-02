@@ -12,7 +12,7 @@ using atlas::output::Gmsh;
 using atlas::util::Config;
 
 int main( int argc, char* argv[] ) {
-    atlas::library::initialise( argc, argv );
+    atlas::initialize( argc, argv );
 
     StructuredMeshGenerator meshgenerator;
 
@@ -25,7 +25,7 @@ int main( int argc, char* argv[] ) {
     gmsh_2d.write( mesh );
     gmsh_3d.write( mesh );
 
-    atlas::library::finalise();
+    atlas::finalize();
 
     return 0;
 }

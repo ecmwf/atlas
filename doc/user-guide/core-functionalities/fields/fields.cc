@@ -61,8 +61,8 @@ int main( int argc, char* argv[] ) {
     Log::info() << "wind(9, 0)  = " << wind( 9, 0 ) << std::endl;
     Log::info() << "wind(9, 1)  = " << wind( 9, 1 ) << std::endl;
 
-    atlas::library::finalise();
-    atlas::mpi::finalise();
+    atlas::finalize();
+    atlas::mpi::finalize();
 
     return 0;
 }

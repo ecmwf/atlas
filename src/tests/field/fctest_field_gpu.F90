@@ -46,7 +46,7 @@ TESTSUITE_WITH_FIXTURE(fcta_Field_gpu,fcta_Field_gpu_fxt)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-  call atlas_init()
+  call atlas_initialize()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------

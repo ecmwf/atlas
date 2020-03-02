@@ -6,7 +6,7 @@ using atlas::Log;
 using atlas::StructuredGrid;
 
 int main( int argc, char* argv[] ) {
-    atlas::library::initialise( argc, argv );
+    atlas::initialize( argc, argv );
 
     StructuredGrid grid( "O32" );
 
@@ -16,6 +16,6 @@ int main( int argc, char* argv[] ) {
     Log::info() << "xy        = " << grid.xy( 0, 0 ) << std::endl;
     Log::info() << "lonlat    = " << grid.lonlat( 0, 0 ) << std::endl;
 
-    atlas::library::finalise();
+    atlas::finalize();
     return 0;
 }
