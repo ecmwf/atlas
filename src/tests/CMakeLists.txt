@@ -84,8 +84,10 @@ if( TRANSI_VERSION VERSION_LESS 0.6 )# transi not yet ported to CMake3
   include_directories( ${TRANSI_INCLUDE_DIRS} )
 endif()
 
+list(APPEND ATLAS_TEST_ENVIRONMENT "SLURM_OVERCOMMIT=1" )
+
 if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
-  set( ATLAS_TEST_ENVIRONMENT "ATLAS_RUN_NGPUS=1" )
+  list(APPEND ATLAS_TEST_ENVIRONMENT "ATLAS_RUN_NGPUS=1" )
 endif()
 
 add_subdirectory( acc )
