@@ -309,6 +309,8 @@ public:
 
     inline double dx( idx_t j ) const { return dx_[j]; }
 
+    inline double xmin( idx_t j ) const { return xmin_[j]; }
+
     inline double x( idx_t i, idx_t j ) const { return xmin_[j] + static_cast<double>( i ) * dx_[j]; }
 
     inline double y( idx_t j ) const { return y_[j]; }
