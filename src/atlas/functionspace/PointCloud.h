@@ -14,7 +14,9 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
+#include "atlas/library/config.h"
 #include "atlas/util/Point.h"
+#include "atlas/option.h"
 
 namespace atlas {
 class Grid;
@@ -33,7 +35,7 @@ public:
     PointCloud( const Field& lonlat );
     PointCloud( const Field& lonlat, const Field& ghost );
     PointCloud( const Grid& );
-    virtual ~PointCloud() override {}
+    virtual ~PointCloud() override;
     virtual std::string type() const override { return "PointCloud"; }
     virtual operator bool() const override { return true; }
     virtual size_t footprint() const override { return sizeof( *this ); }
@@ -46,7 +48,6 @@ public:
     using FunctionSpaceImpl::createField;
     virtual Field createField( const eckit::Configuration& ) const override;
     virtual Field createField( const Field&, const eckit::Configuration& ) const override;
-
 
     class IteratorXYZ {
     public:
@@ -140,6 +141,13 @@ public:
     };
 
     Iterate iterate() const { return Iterate( *this ); }
+
+private:  // methods
+    array::DataType config_datatype( const eckit::Configuration& ) const;
+    std::string config_name( const eckit::Configuration& ) const;
+    idx_t config_levels( const eckit::Configuration& ) const;
+    array::ArrayShape config_shape( const eckit::Configuration& ) const;
+    void set_field_metadata( const eckit::Configuration&, Field& ) const;
 
 private:
     Field lonlat_;

@@ -291,8 +291,6 @@ mesh/actions/BuildEdges.cc
 mesh/actions/BuildEdges.h
 mesh/actions/BuildHalo.cc
 mesh/actions/BuildHalo.h
-mesh/actions/BuildNoConnectivityMesh.cc
-mesh/actions/BuildNoConnectivityMesh.h
 mesh/actions/BuildNode2CellConnectivity.cc
 mesh/actions/BuildNode2CellConnectivity.h
 mesh/actions/BuildParallelFields.cc
@@ -318,8 +316,6 @@ meshgenerator/MeshGenerator.cc
 meshgenerator/MeshGenerator.h
 meshgenerator/detail/DelaunayMeshGenerator.h
 meshgenerator/detail/DelaunayMeshGenerator.cc
-meshgenerator/detail/NoConnectivityMeshGenerator.h
-meshgenerator/detail/NoConnectivityMeshGenerator.cc
 meshgenerator/detail/StructuredMeshGenerator.h
 meshgenerator/detail/StructuredMeshGenerator.cc
 meshgenerator/detail/RegularMeshGenerator.cc
@@ -399,6 +395,8 @@ functionspace/detail/StructuredColumnsInterface.h
 functionspace/detail/StructuredColumnsInterface.cc
 functionspace/detail/StructuredColumns_setup.cc
 functionspace/detail/StructuredColumns_create_remote_index.cc
+functionspace/detail/PointCloudInterface.h
+functionspace/detail/PointCloudInterface.cc
 )
 
 list( APPEND atlas_numerics_srcs
