@@ -14,9 +14,8 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
-#include "atlas/library/config.h"
+#include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
-#include "atlas/option.h"
 
 namespace atlas {
 class Grid;
@@ -143,17 +142,11 @@ public:
 
     Iterate iterate() const { return Iterate( *this ); }
 
-private:  // methods
-    array::DataType config_datatype( const eckit::Configuration& ) const;
-    std::string config_name( const eckit::Configuration& ) const;
-    idx_t config_levels( const eckit::Configuration& ) const;
-    array::ArrayShape config_shape( const eckit::Configuration& ) const;
-    void set_field_metadata( const eckit::Configuration&, Field& ) const;
-
 private:
     Field lonlat_;
     Field vertical_;
     mutable Field ghost_;
+    idx_t levels_{0};
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -187,3 +180,4 @@ private:
 
 }  // namespace functionspace
 }  // namespace atlas
+

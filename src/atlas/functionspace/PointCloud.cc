@@ -72,10 +72,6 @@ PointCloud::PointCloud( const Grid& grid ) {
     }
 }
 
-std::string PointCloud::distribution() const {
-    return std::string( "serial" );
-}
-
 const Field& PointCloud::ghost() const {
     if ( not ghost_ ) {
         ghost_ = Field( "ghost", array::make_datatype<int>(), array::make_shape( size() ) );
@@ -84,63 +80,25 @@ const Field& PointCloud::ghost() const {
     return ghost_;
 }
 
-void PointCloud::set_field_metadata( const eckit::Configuration& config, Field& field ) const {
-    field.set_functionspace( this );
-
-    idx_t levels( 0 );
-    config.get( "levels", levels );
-    field.set_levels( levels );
-
-    idx_t variables( 0 );
-    config.get( "variables", variables );
-    field.set_variables( variables );
-}
-
-array::DataType PointCloud::config_datatype( const eckit::Configuration& config ) const {
+Field PointCloud::createField( const eckit::Configuration& config ) const {
     array::DataType::kind_t kind;
     if ( !config.get( "datatype", kind ) ) {
         throw_Exception( "datatype missing", Here() );
     }
-    return array::DataType( kind );
-}
+    auto datatype = array::DataType( kind );
 
-std::string PointCloud::config_name( const eckit::Configuration& config ) const {
     std::string name;
     config.get( "name", name );
-    return name;
-}
-
-idx_t PointCloud::config_levels( const eckit::Configuration& config ) const {
-    idx_t levels( 0 );
+    idx_t levels = levels_;
     config.get( "levels", levels );
-    return levels;
-}
-
-array::ArrayShape PointCloud::config_shape( const eckit::Configuration& config ) const {
-    array::ArrayShape shape;
-
-    shape.push_back( lonlat_.shape( 0 ) );
-
-    idx_t levels( 0 );
-    config.get( "levels", levels );
-    if ( levels > 0 ) {
-        shape.push_back( levels );
+    Field field;
+    if ( levels ) {
+        field = Field( name, datatype, array::make_shape( size(), levels ) );
+        field.set_levels( levels );
     }
-
-    idx_t variables( 0 );
-    config.get( "variables", variables );
-    if ( variables > 0 ) {
-        shape.push_back( variables );
+    else {
+        field = Field( name, datatype, array::make_shape( size() ) );
     }
-
-    return shape;
-}
-
-Field PointCloud::createField( const eckit::Configuration& config ) const {
-    Field field = Field( config_name( config ), config_datatype( config ), config_shape( config ) );
-
-    set_field_metadata( config, field );
-
     return field;
 }
 
@@ -149,6 +107,9 @@ Field PointCloud::createField( const Field& other, const eckit::Configuration& c
                         option::variables( other.variables() ) | config );
 }
 
+std::string PointCloud::distribution() const {
+    return std::string( "serial" );
+}
 
 atlas::functionspace::detail::PointCloud::IteratorXYZ::IteratorXYZ( const atlas::functionspace::detail::PointCloud& fs,
                                                                     bool begin ) :
