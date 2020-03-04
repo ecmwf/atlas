@@ -69,8 +69,26 @@ const Field& PointCloud::ghost() const {
     return ghost_;
 }
 
-Field PointCloud::createField( const eckit::Configuration& ) const {
-    ATLAS_NOTIMPLEMENTED;
+Field PointCloud::createField( const eckit::Configuration& config ) const {
+    array::DataType::kind_t kind;
+    if ( !config.get( "datatype", kind ) ) {
+        throw_Exception( "datatype missing", Here() );
+    }
+    auto datatype = array::DataType( kind );
+
+    std::string name;
+    config.get( "name", name );
+    idx_t levels = levels_;
+    config.get( "levels", levels );
+    Field field;
+    if ( levels ) {
+        field = Field( name, datatype, array::make_shape( size(), levels ) );
+        field.set_levels( levels );
+    }
+    else {
+        field = Field( name, datatype, array::make_shape( size() ) );
+    }
+    return field;
 }
 
 Field PointCloud::createField( const Field& other, const eckit::Configuration& config ) const {

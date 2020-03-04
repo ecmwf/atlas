@@ -14,6 +14,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
+#include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -145,6 +146,7 @@ private:
     Field lonlat_;
     Field vertical_;
     mutable Field ghost_;
+    idx_t levels_{0};
 };
 
 //------------------------------------------------------------------------------------------------------
