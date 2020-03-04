@@ -49,6 +49,7 @@ public:
     virtual Field createField( const eckit::Configuration& ) const override;
     virtual Field createField( const Field&, const eckit::Configuration& ) const override;
 
+
     class IteratorXYZ {
     public:
         IteratorXYZ( const PointCloud& fs, bool begin = true );
