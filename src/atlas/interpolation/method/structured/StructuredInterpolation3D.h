@@ -36,20 +36,7 @@ public:
 
     virtual ~StructuredInterpolation3D() override {}
 
-    virtual void setup( const Grid& source, const Grid& target ) override;
-
-    virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
-
-    virtual void setup( const FunctionSpace& source, const Field& target ) override;
-
-    virtual void setup( const FunctionSpace& source, const FieldSet& target ) override;
-
     virtual void print( std::ostream& ) const override;
-
-    virtual void execute( const Field& src, Field& tgt ) const override;
-
-    virtual void execute( const FieldSet& src, FieldSet& tgt ) const override;
-
 
 protected:
     void setup( const FunctionSpace& source );
@@ -59,6 +46,18 @@ protected:
     virtual const FunctionSpace& target() const override { return target_; }
 
 private:
+    virtual void do_setup( const Grid& source, const Grid& target ) override;
+
+    virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) override;
+
+    virtual void do_setup( const FunctionSpace& source, const Field& target ) override;
+
+    virtual void do_setup( const FunctionSpace& source, const FieldSet& target ) override;
+
+    virtual void do_execute( const Field& src, Field& tgt ) const override;
+
+    virtual void do_execute( const FieldSet& src, FieldSet& tgt ) const override;
+
     template <typename Value, int Rank>
     void execute_impl( const Kernel& kernel, const FieldSet& src, FieldSet& tgt ) const;
 
