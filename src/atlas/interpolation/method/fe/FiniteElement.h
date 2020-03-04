@@ -32,10 +32,6 @@ public:
 
     virtual ~FiniteElement() override {}
 
-    virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
-
-    virtual void setup( const Grid& source, const Grid& target ) override;
-
     virtual void print( std::ostream& ) const override;
 
 protected:
@@ -62,6 +58,11 @@ protected:
 
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
+
+private:
+    virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) override;
+
+    virtual void do_setup( const Grid& source, const Grid& target ) override;
 
 protected:
     mesh::MultiBlockConnectivity* connectivity_;
