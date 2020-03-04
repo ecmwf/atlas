@@ -35,7 +35,7 @@ public:
     PointCloud( const Field& lonlat );
     PointCloud( const Field& lonlat, const Field& ghost );
     PointCloud( const Grid& );
-    virtual ~PointCloud() override;
+    virtual ~PointCloud() override {}
     virtual std::string type() const override { return "PointCloud"; }
     virtual operator bool() const override { return true; }
     virtual size_t footprint() const override { return sizeof( *this ); }

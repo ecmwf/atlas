@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+
+#include "atlas/functionspace/PointCloud.h"
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
@@ -70,10 +72,8 @@ PointCloud::PointCloud( const Grid& grid ) {
     }
 }
 
-PointCloud::~PointCloud() = default;
-
 std::string PointCloud::distribution() const {
-    return "no_distribution_yet";
+    return std::string( "serial" );
 }
 
 const Field& PointCloud::ghost() const {
@@ -148,6 +148,7 @@ Field PointCloud::createField( const Field& other, const eckit::Configuration& c
     return createField( option::datatype( other.datatype() ) | option::levels( other.levels() ) |
                         option::variables( other.variables() ) | config );
 }
+
 
 atlas::functionspace::detail::PointCloud::IteratorXYZ::IteratorXYZ( const atlas::functionspace::detail::PointCloud& fs,
                                                                     bool begin ) :

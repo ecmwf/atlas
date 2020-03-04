@@ -47,4 +47,3 @@ const MeshGenerator::Implementation* MeshGeneratorFactory::build( const std::str
 
 }  // namespace meshgenerator
 }  // namespace atlas
-
