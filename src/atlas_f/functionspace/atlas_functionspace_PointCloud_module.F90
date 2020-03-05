@@ -49,6 +49,7 @@ END TYPE atlas_functionspace_PointCloud
 
 interface atlas_functionspace_PointCloud
   module procedure ctor_cptr
+  module procedure ctor_lonlat
   module procedure ctor_grid
 end interface
 
@@ -65,6 +66,16 @@ function ctor_cptr(cptr) result(this)
   type(atlas_functionspace_PointCloud) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )
+  call this%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function ctor_lonlat(lonlat) result(this)
+  use atlas_functionspace_PointCloud_c_binding
+  type(atlas_functionspace_PointCloud) :: this
+  class(atlas_Field), intent(in) :: lonlat
+  call this%reset_c_ptr( atlas__functionspace__PointCloud__new__lonlat( lonlat%CPTR_PGIBUG_A ) )
   call this%return()
 end function
 

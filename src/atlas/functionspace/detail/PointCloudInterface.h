@@ -33,6 +33,9 @@ namespace functionspace {
 // C wrapper interfaces to C++ routines
 extern "C" {
 
+const detail::PointCloud* atlas__functionspace__PointCloud__new__lonlat(
+    const field::FieldImpl* lonlat );
+
 const detail::PointCloud* atlas__functionspace__PointCloud__new__grid(
     const GridImpl* grid );
 
