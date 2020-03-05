@@ -471,7 +471,7 @@ util::Polygon::edge_set_t compute_edges( idx_t points_size ) {
 
 class SimplePolygon : public util::PartitionPolygon {
 public:
-    SimplePolygon( const std::vector<Point2>& points ) : points_( points ) { setup( compute_edges( points_.size() ) ); }
+    explicit SimplePolygon( const std::vector<Point2>& points ) : points_( points ) { setup( compute_edges( points_.size() ) ); }
 
     const std::vector<Point2>& xy() const override { return points_; }
     const std::vector<Point2>& lonlat() const override { return points_; }
