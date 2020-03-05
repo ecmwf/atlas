@@ -500,8 +500,8 @@ const std::vector<util::PartitionPolygon*>& StructuredColumns::polygons() const 
     mypolygon.reserve( poly.size() * 2 );
 
     for ( auto& p : poly.xy() ) {
-        mypolygon.push_back( p.x() );
-        mypolygon.push_back( p.y() );
+        mypolygon.push_back( p[XX] );
+        mypolygon.push_back( p[YY] );
         //Log::info() << p << std::endl;
     }
     ATLAS_ASSERT( mypolygon.size() >= 4 );

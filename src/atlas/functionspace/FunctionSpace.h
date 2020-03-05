@@ -11,6 +11,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
