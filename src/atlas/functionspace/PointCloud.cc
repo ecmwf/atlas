@@ -94,6 +94,7 @@ Field PointCloud::createField( const eckit::Configuration& config ) const {
     else {
         field = Field( name, datatype, array::make_shape( size() ) );
     }
+    field.set_functionspace( this );
     return field;
 }
 
