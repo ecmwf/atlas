@@ -9,9 +9,9 @@
  */
 
 
+#include "atlas/functionspace/PointCloud.h"
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
-#include "atlas/functionspace/PointCloud.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/option/Options.h"
