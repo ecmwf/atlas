@@ -17,8 +17,10 @@
 namespace atlas {
 namespace mpi {
 
-inline const eckit::mpi::Comm& comm() {
-    static const eckit::mpi::Comm& _comm = eckit::mpi::comm();
+using Comm = eckit::mpi::Comm;
+
+inline const Comm& comm() {
+    static const Comm& _comm = eckit::mpi::comm();
     return _comm;
 }
 

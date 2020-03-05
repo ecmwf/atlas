@@ -57,9 +57,7 @@ util::Polygon::edge_set_t compute_edges( const detail::MeshImpl& mesh, idx_t hal
 }  // namespace
 
 PartitionPolygon::PartitionPolygon( const detail::MeshImpl& mesh, idx_t halo ) :
-    util::Polygon( compute_edges( mesh, halo ) ),
-    mesh_( mesh ),
-    halo_( halo ) {}
+    util::Polygon( compute_edges( mesh, halo ) ), mesh_( mesh ), halo_( halo ) {}
 
 size_t PartitionPolygon::footprint() const {
     size_t size = sizeof( *this );

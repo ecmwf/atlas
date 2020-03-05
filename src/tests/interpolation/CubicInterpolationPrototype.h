@@ -201,8 +201,7 @@ public:
 
 public:
     CubicHorizontalInterpolation( const functionspace::StructuredColumns& fs ) :
-        fs_( fs ),
-        compute_horizontal_stencil_( fs.grid(), stencil_width() ) {}
+        fs_( fs ), compute_horizontal_stencil_( fs.grid(), stencil_width() ) {}
     template <typename weights_t>
     void compute_weights( const double x, const double y, weights_t& weights ) const {
         grid::HorizontalStencil<stencil_width()> stencil;
@@ -368,9 +367,7 @@ public:
     using Stencil = grid::Stencil3D<4>;
 
     Cubic3DInterpolation( const functionspace::StructuredColumns& fs ) :
-        fs_( fs ),
-        horizontal_interpolation_( fs ),
-        vertical_interpolation_( fs.vertical() ) {}
+        fs_( fs ), horizontal_interpolation_( fs ), vertical_interpolation_( fs.vertical() ) {}
 
     template <typename stencil_t>
     void compute_stencil( const double x, const double y, const double z, stencil_t& stencil ) const {

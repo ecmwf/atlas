@@ -368,12 +368,12 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                         //    |-----|-----|--+--|-----|
                         // ii-halo       ii
 
-                         idx_t ii = -halo;
-                         while ( compute_x_fast( ii, jjj, nx_jjj ) < x - eps ) {
-                             ii++;
-                         }
+                        idx_t ii = -halo;
+                        while ( compute_x_fast( ii, jjj, nx_jjj ) < x - eps ) {
+                            ii++;
+                        }
                         // Question: is following implementation reproducible with above original while loop?
-//                        idx_t ii = compute_i_less_equal_x( x, jjj );
+                        //                        idx_t ii = compute_i_less_equal_x( x, jjj );
 
                         // ATLAS-186 workaround
                         // This while should not have to be there, but is here because of

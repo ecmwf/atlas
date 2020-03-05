@@ -122,9 +122,7 @@ LegendreCacheCreatorLocal::~LegendreCacheCreatorLocal() = default;
 
 LegendreCacheCreatorLocal::LegendreCacheCreatorLocal( const Grid& grid, int truncation,
                                                       const eckit::Configuration& config ) :
-    grid_( grid ),
-    truncation_( truncation ),
-    config_( config ) {}
+    grid_( grid ), truncation_( truncation ), config_( config ) {}
 
 bool LegendreCacheCreatorLocal::supported() const {
     if ( not StructuredGrid( grid_ ) ) {

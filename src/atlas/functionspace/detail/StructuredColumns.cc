@@ -385,9 +385,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Distribution
 
 StructuredColumns::StructuredColumns( const Grid& grid, const grid::Distribution& distribution,
                                       const Vertical& vertical, const eckit::Configuration& config ) :
-    vertical_( vertical ),
-    nb_levels_( vertical_.size() ),
-    grid_( new StructuredGrid( grid ) ) {
+    vertical_( vertical ), nb_levels_( vertical_.size() ), grid_( new StructuredGrid( grid ) ) {
     setup( distribution, config );
 }
 
@@ -396,9 +394,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical
 
 StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical, const grid::Partitioner& p,
                                       const eckit::Configuration& config ) :
-    vertical_( vertical ),
-    nb_levels_( vertical_.size() ),
-    grid_( new StructuredGrid( grid ) ) {
+    vertical_( vertical ), nb_levels_( vertical_.size() ), grid_( new StructuredGrid( grid ) ) {
     ATLAS_TRACE( "StructuredColumns constructor" );
 
     grid::Partitioner partitioner( p );
@@ -459,10 +455,83 @@ const util::PartitionPolygon& StructuredColumns::polygon( idx_t halo ) const {
     return *polygon_;
 }
 
+util::Polygon::edge_set_t compute_edges( idx_t points_size ) {
+    util::Polygon::edge_set_t edges;
+    auto add_edge = [&]( idx_t p1, idx_t p2 ) {
+        util::Polygon::edge_t edge = {p1, p2};
+        edges.insert( edge );
+        // Log::info() << edge.first << "  " << edge.second << std::endl;
+    };
+    for ( idx_t p = 0; p < points_size - 2; ++p ) {
+        add_edge( p, p + 1 );
+    }
+    add_edge( points_size - 2, 0 );
+    return edges;
+}
+
+class SimplePolygon : public util::PartitionPolygon {
+public:
+    SimplePolygon( const std::vector<Point2>& points ) : points_( points ) { setup( compute_edges( points_.size() ) ); }
+
+    const std::vector<Point2>& xy() const override { return points_; }
+    const std::vector<Point2>& lonlat() const override { return points_; }
+
+
+private:
+    std::vector<Point2> points_;
+};
+
+
+const std::vector<util::PartitionPolygon*>& StructuredColumns::polygons() const {
+    if ( polygons_.size() ) {
+        return polygons_;
+    }
+    ATLAS_TRACE();
+
+    polygons_.reserve( mpi::size() );
+
+
+    const mpi::Comm& comm = mpi::comm();
+    const int mpi_size    = int( comm.size() );
+
+    auto& poly = polygon();
+
+    std::vector<double> mypolygon;
+    mypolygon.reserve( poly.size() * 2 );
+
+    for ( auto& p : poly.xy() ) {
+        mypolygon.push_back( p.x() );
+        mypolygon.push_back( p.y() );
+        //Log::info() << p << std::endl;
+    }
+    ATLAS_ASSERT( mypolygon.size() >= 4 );
+
+    eckit::mpi::Buffer<double> recv_polygons( mpi_size );
+
+    comm.allGatherv( mypolygon.begin(), mypolygon.end(), recv_polygons );
+
+    using PolygonXY = std::vector<Point2>;
+    for ( idx_t p = 0; p < mpi_size; ++p ) {
+        PolygonXY recv_points;
+        recv_points.reserve( recv_polygons.counts[p] );
+        for ( idx_t j = 0; j < recv_polygons.counts[p] / 2; ++j ) {
+            PointXY pxy( *( recv_polygons.begin() + recv_polygons.displs[p] + 2 * j + XX ),
+                         *( recv_polygons.begin() + recv_polygons.displs[p] + 2 * j + YY ) );
+            recv_points.push_back( pxy );
+        }
+        polygons_.emplace_back( new SimplePolygon( std::move( recv_points ) ) );
+    }
+
+    return polygons_;
+}
+
 // ----------------------------------------------------------------------------
 // Destructor
 // ----------------------------------------------------------------------------
 StructuredColumns::~StructuredColumns() {
+    for ( auto p : polygons_ ) {
+        delete p;
+    }
     delete grid_;
 }
 // ----------------------------------------------------------------------------

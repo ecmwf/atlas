@@ -201,10 +201,7 @@ private:
 NodeColumns::NodeColumns( Mesh mesh ) : NodeColumns( mesh, util::NoConfig() ) {}
 
 NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration& config ) :
-    mesh_( mesh ),
-    nodes_( mesh_.nodes() ),
-    nb_levels_( config.getInt( "levels", 0 ) ),
-    nb_nodes_( 0 ) {
+    mesh_( mesh ), nodes_( mesh_.nodes() ), nb_levels_( config.getInt( "levels", 0 ) ), nb_nodes_( 0 ) {
     ATLAS_TRACE();
     if ( config.has( "halo" ) ) {
         halo_ = mesh::Halo( config.getInt( "halo" ) );
@@ -591,8 +588,7 @@ const parallel::Checksum& NodeColumns::checksum() const {
 NodeColumns::NodeColumns() : FunctionSpace(), functionspace_( nullptr ) {}
 
 NodeColumns::NodeColumns( const FunctionSpace& functionspace ) :
-    FunctionSpace( functionspace ),
-    functionspace_( dynamic_cast<const detail::NodeColumns*>( get() ) ) {}
+    FunctionSpace( functionspace ), functionspace_( dynamic_cast<const detail::NodeColumns*>( get() ) ) {}
 
 namespace {
 detail::NodeColumns* make_functionspace( Mesh mesh, const eckit::Configuration& config ) {

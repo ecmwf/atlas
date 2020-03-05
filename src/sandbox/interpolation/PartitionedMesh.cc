@@ -20,8 +20,7 @@ namespace interpolation {
 
 PartitionedMesh::PartitionedMesh( const std::string& partitioner, const std::string& generator,
                                   bool generatorTriangulate, double generatorAngle ) :
-    optionPartitioner_( partitioner ),
-    optionGenerator_( generator ) {
+    optionPartitioner_( partitioner ), optionGenerator_( generator ) {
     generatorParams_.set( "three_dimensional", false );
     generatorParams_.set( "patch_pole", true );
     generatorParams_.set( "include_pole", false );

@@ -198,14 +198,12 @@ inline uidx_t unique_lonlat( const double elem_lonlat[], size_t npts ) {
 }
 
 inline UniqueLonLat::UniqueLonLat( const Mesh& mesh ) :
-    nodes( &mesh.nodes() ),
-    lonlat( array::make_view<double, 2>( nodes->lonlat() ) ) {
+    nodes( &mesh.nodes() ), lonlat( array::make_view<double, 2>( nodes->lonlat() ) ) {
     update();
 }
 
 inline UniqueLonLat::UniqueLonLat( const mesh::Nodes& _nodes ) :
-    nodes( &_nodes ),
-    lonlat( array::make_view<double, 2>( nodes->lonlat() ) ) {
+    nodes( &_nodes ), lonlat( array::make_view<double, 2>( nodes->lonlat() ) ) {
     update();
 }
 

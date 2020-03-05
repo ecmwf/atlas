@@ -98,8 +98,7 @@ void FactoryRegistry::list( std::ostream& out ) const {
 //----------------------------------------------------------------------------------------------------------------------
 
 FactoryBase::FactoryBase( FactoryRegistry& registry, const std::string& builder ) :
-    registry_( registry ),
-    builder_( builder ) {
+    registry_( registry ), builder_( builder ) {
     if ( not builder_.empty() ) {
         registry_.add( builder, this );
     }

@@ -247,10 +247,7 @@ array::ArrayShape CellColumns::config_shape( const eckit::Configuration& config 
 }
 
 CellColumns::CellColumns( const Mesh& mesh, const eckit::Configuration& config ) :
-    mesh_( mesh ),
-    cells_( mesh_.cells() ),
-    nb_levels_( config.getInt( "levels", 0 ) ),
-    nb_cells_( 0 ) {
+    mesh_( mesh ), cells_( mesh_.cells() ), nb_levels_( config.getInt( "levels", 0 ) ), nb_cells_( 0 ) {
     ATLAS_TRACE();
     if ( config.has( "halo" ) ) {
         halo_ = mesh::Halo( config.getInt( "halo" ) );
@@ -769,8 +766,7 @@ void atlas__fs__CellColumns__checksum_field( const CellColumns* This, const fiel
 CellColumns::CellColumns() : FunctionSpace(), functionspace_( nullptr ) {}
 
 CellColumns::CellColumns( const FunctionSpace& functionspace ) :
-    FunctionSpace( functionspace ),
-    functionspace_( dynamic_cast<const detail::CellColumns*>( get() ) ) {}
+    FunctionSpace( functionspace ), functionspace_( dynamic_cast<const detail::CellColumns*>( get() ) ) {}
 
 CellColumns::CellColumns( const Mesh& mesh, const eckit::Configuration& config ) :
     FunctionSpace( new detail::CellColumns( mesh, config ) ),

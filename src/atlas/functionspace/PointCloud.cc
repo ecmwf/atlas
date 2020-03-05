@@ -119,9 +119,7 @@ bool atlas::functionspace::detail::PointCloud::IteratorXYZ::next( PointXYZ& xyz 
 
 atlas::functionspace::detail::PointCloud::IteratorXY::IteratorXY( const atlas::functionspace::detail::PointCloud& fs,
                                                                   bool begin ) :
-    fs_( fs ),
-    xy_( array::make_view<double, 2>( fs_.lonlat() ) ),
-    n_( begin ? 0 : fs_.size() ) {}
+    fs_( fs ), xy_( array::make_view<double, 2>( fs_.lonlat() ) ), n_( begin ? 0 : fs_.size() ) {}
 
 bool atlas::functionspace::detail::PointCloud::IteratorXY::next( PointXY& xyz ) {
     if ( n_ < fs_.size() ) {
@@ -151,8 +149,7 @@ const PointXYZ atlas::functionspace::detail::PointCloud::IteratorXYZ::operator*(
 }  // namespace detail
 
 PointCloud::PointCloud( const FunctionSpace& functionspace ) :
-    FunctionSpace( functionspace ),
-    functionspace_( dynamic_cast<const detail::PointCloud*>( get() ) ) {}
+    FunctionSpace( functionspace ), functionspace_( dynamic_cast<const detail::PointCloud*>( get() ) ) {}
 
 PointCloud::PointCloud( const Field& points ) :
     FunctionSpace( new detail::PointCloud( points ) ),

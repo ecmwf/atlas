@@ -124,9 +124,7 @@ bool LegendreCacheCreatorIFS::supported() const {
 
 LegendreCacheCreatorIFS::LegendreCacheCreatorIFS( const Grid& grid, int truncation,
                                                   const eckit::Configuration& config ) :
-    grid_( grid ),
-    truncation_( truncation ),
-    config_( config ) {}
+    grid_( grid ), truncation_( truncation ), config_( config ) {}
 
 void LegendreCacheCreatorIFS::create( const std::string& path ) const {
     Trans( grid_, truncation_, config_ | option::type( "ifs" ) | option::write_legendre( path ) );

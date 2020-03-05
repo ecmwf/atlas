@@ -9,6 +9,7 @@
 # does it submit to any jurisdiction.
 
 _REQUIRED_CLANG_VERSION='7.0.1'
+_REQUIRED_CLANG_VERSION='9.0.0'
 
 export PATH=/usr/local/apps/clang/7.0.1/bin:$PATH
 

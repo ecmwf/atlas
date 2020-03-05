@@ -18,8 +18,7 @@ namespace functionspace {
 StructuredColumns::StructuredColumns() : FunctionSpace(), functionspace_( nullptr ) {}
 
 StructuredColumns::StructuredColumns( const FunctionSpace& functionspace ) :
-    FunctionSpace( functionspace ),
-    functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {}
+    FunctionSpace( functionspace ), functionspace_( dynamic_cast<const detail::StructuredColumns*>( get() ) ) {}
 
 StructuredColumns::StructuredColumns( const Grid& grid, const eckit::Configuration& config ) :
     FunctionSpace( new detail::StructuredColumns( grid, config ) ),

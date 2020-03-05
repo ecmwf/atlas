@@ -235,17 +235,18 @@ void test_rank1_strided_v1( Fixture& f ) {
     // (i.e. we are only selecting and exchanging the first component of the
     // field)
 
-    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( arrv_t.data(),
-                                                                array::ArraySpec {
-                                                                    array::make_shape( f.N, 1 ),
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>(
+        arrv_t.data(),
+        array::ArraySpec {
+            array::make_shape( f.N, 1 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-                                                                        array::make_strides( 32, 1 )
-                                                                }
+                array::make_strides( 32, 1 )
+        }
 #else
-                                                                        array::make_strides( 2, 1 )
-                                                                }
+                array::make_strides( 2, 1 )
+        }
 #endif
-                                                                ) );
+        ) );
 
     arr->syncHostDevice();
 
@@ -290,14 +291,15 @@ void test_rank1_strided_v2( Fixture& f ) {
     // (i.e. we are only selecting and exchanging the first component of the
     // field)
 
-    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( &( arrv_t( 0, 1 ) ), array::ArraySpec {
-        array::make_shape( f.N, 1 ),
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>(
+        &( arrv_t( 0, 1 ) ), array::ArraySpec {
+            array::make_shape( f.N, 1 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-            array::make_strides( 32, 1 )
+                array::make_strides( 32, 1 )
 #else
                      array::make_strides(2, 1)
 #endif
-    } ) );
+        } ) );
 
     f.halo_exchange.execute<POD, 2>( *arr, false );
 
@@ -374,14 +376,15 @@ void test_rank2_l1( Fixture& f ) {
     }
     arr_t.syncHostDevice();
 
-    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( arrv_t.data(), array::ArraySpec {
-        array::make_shape( f.N, 1, 2 ),
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>(
+        arrv_t.data(), array::ArraySpec {
+            array::make_shape( f.N, 1, 2 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-            array::make_strides( 96, 32, 1 )
+                array::make_strides( 96, 32, 1 )
 #else
          array::make_strides(6, 2, 1)
 #endif
-    } ) );
+        } ) );
 
     arr_t.syncHostDevice();
 
@@ -437,14 +440,15 @@ void test_rank2_l2_v2( Fixture& f ) {
         }
     }
 
-    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( &arrv_t( 0, 1, 1 ), array::ArraySpec {
-        array::make_shape( f.N, 1, 1 ),
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>(
+        &arrv_t( 0, 1, 1 ), array::ArraySpec {
+            array::make_shape( f.N, 1, 1 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-            array::make_strides( 192, 32, 1 )
+                array::make_strides( 192, 32, 1 )
 #else
                      array::make_strides(6, 2, 1)
 #endif
-    } ) );
+        } ) );
 
     f.halo_exchange.execute<POD, 3>( *arr, f.on_device_ );
 
@@ -496,14 +500,15 @@ void test_rank2_v2( Fixture& f ) {
         }
     }
 
-    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>( &arrv_t( 0, 0, 1 ), array::ArraySpec {
-        array::make_shape( f.N, 3, 1 ),
+    std::unique_ptr<array::Array> arr( array::Array::wrap<POD>(
+        &arrv_t( 0, 0, 1 ), array::ArraySpec {
+            array::make_shape( f.N, 3, 1 ),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-            array::make_strides( 192, 32, 2 )
+                array::make_strides( 192, 32, 2 )
 #else
                      array::make_strides(6, 2, 2)
 #endif
-    } ) );
+        } ) );
 
     f.halo_exchange.execute<POD, 3>( *arr, f.on_device_ );
 

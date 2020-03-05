@@ -66,6 +66,10 @@ const util::PartitionPolygon& FunctionSpace::polygon( idx_t halo ) const {
     return get()->polygon( halo );
 }
 
+const std::vector<util::PartitionPolygon*>& FunctionSpace::polygons() const {
+    return get()->polygons();
+}
+
 template <typename DATATYPE>
 Field FunctionSpace::createField() const {
     return get()->createField<DATATYPE>();

@@ -248,10 +248,7 @@ array::ArrayShape EdgeColumns::config_shape( const eckit::Configuration& config 
 }
 
 EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config ) :
-    mesh_( mesh ),
-    edges_( mesh_.edges() ),
-    nb_levels_( config.getInt( "levels", 0 ) ),
-    nb_edges_( 0 ) {
+    mesh_( mesh ), edges_( mesh_.edges() ), nb_levels_( config.getInt( "levels", 0 ) ), nb_edges_( 0 ) {
     ATLAS_TRACE();
     if ( config.has( "halo" ) ) {
         halo_ = mesh::Halo( config.getInt( "halo" ) );
@@ -767,8 +764,7 @@ void atlas__fs__EdgeColumns__checksum_field( const EdgeColumns* This, const fiel
 EdgeColumns::EdgeColumns() : FunctionSpace(), functionspace_( nullptr ) {}
 
 EdgeColumns::EdgeColumns( const FunctionSpace& functionspace ) :
-    FunctionSpace( functionspace ),
-    functionspace_( dynamic_cast<const detail::EdgeColumns*>( get() ) ) {}
+    FunctionSpace( functionspace ), functionspace_( dynamic_cast<const detail::EdgeColumns*>( get() ) ) {}
 
 EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config ) :
     FunctionSpace( new detail::EdgeColumns( mesh, config ) ),

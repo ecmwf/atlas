@@ -43,6 +43,14 @@ ecbuild_add_test( TARGET atlas_test_structuredcolumns
   CONDITION eckit_HAVE_MPI
 )
 
+ecbuild_add_test( TARGET atlas_test_polygons
+  SOURCES  test_polygons.cc
+  LIBS     atlas
+  MPI 4
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION eckit_HAVE_MPI
+)
+
 ecbuild_add_test( TARGET atlas_test_pointcloud
   SOURCES  test_pointcloud.cc
   LIBS     atlas

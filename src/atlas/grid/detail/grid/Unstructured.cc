@@ -60,8 +60,7 @@ namespace {
 class Normalise {
 public:
     Normalise( const RectangularDomain& domain ) :
-        degrees_( domain.units() == "degrees" ),
-        normalise_( domain.xmin(), domain.xmax() ) {}
+        degrees_( domain.units() == "degrees" ), normalise_( domain.xmin(), domain.xmax() ) {}
 
     double operator()( double x ) const {
         if ( degrees_ ) {
@@ -148,8 +147,7 @@ Unstructured::Unstructured( std::vector<PointXY>* pts ) : Grid(), points_( pts )
 }
 
 Unstructured::Unstructured( std::vector<PointXY>&& pts ) :
-    Grid(),
-    points_( new std::vector<PointXY>( std::move( pts ) ) ) {
+    Grid(), points_( new std::vector<PointXY>( std::move( pts ) ) ) {
     domain_ = GlobalDomain();
 }
 
@@ -158,8 +156,7 @@ Unstructured::Unstructured( const std::vector<PointXY>& pts ) : Grid(), points_(
 }
 
 Unstructured::Unstructured( std::initializer_list<PointXY> initializer_list ) :
-    Grid(),
-    points_( new std::vector<PointXY>( initializer_list ) ) {
+    Grid(), points_( new std::vector<PointXY>( initializer_list ) ) {
     domain_ = GlobalDomain();
 }
 

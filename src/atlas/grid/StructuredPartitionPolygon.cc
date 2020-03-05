@@ -303,8 +303,7 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
 }
 
 StructuredPartitionPolygon::StructuredPartitionPolygon( const functionspace::FunctionSpaceImpl& fs, idx_t halo ) :
-    fs_( fs ),
-    halo_( halo ) {
+    fs_( fs ), halo_( halo ) {
     ATLAS_TRACE( "StructuredPartitionPolygon" );
     setup( compute_edges( fs, halo, points_, inner_bounding_box_ ) );
     points_.emplace_back( points_[0] );
