@@ -9,18 +9,13 @@
  */
 
 
-#include "atlas/functionspace/PointCloud.h"
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
-#include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
-#include "atlas/library/config.h"
 #include "atlas/option/Options.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/runtime/Trace.h"
-#include "atlas/util/detail/Cache.h"
 
 #if ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1

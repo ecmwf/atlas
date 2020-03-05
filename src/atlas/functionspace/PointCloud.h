@@ -180,4 +180,3 @@ private:
 
 }  // namespace functionspace
 }  // namespace atlas
-
