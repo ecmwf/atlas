@@ -154,6 +154,8 @@ public:
 
     const util::PartitionPolygon& polygon( idx_t halo = 0 ) const override;
 
+    const std::vector<util::PartitionPolygon*>& polygons() const override;
+
     idx_t nb_partitions() const override { return nb_partitions_; }
 
 
@@ -199,6 +201,7 @@ private:  // data
     mutable util::ObjectHandle<parallel::Checksum> checksum_;
     mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
     mutable std::unique_ptr<util::PartitionPolygon> polygon_;
+    mutable std::vector<util::PartitionPolygon*> polygons_;
 
     Field field_xy_;
     Field field_partition_;

@@ -44,8 +44,7 @@ namespace detail {
 // constructors
 template <typename Rotation>
 MercatorProjectionT<Rotation>::MercatorProjectionT( const eckit::Parametrisation& params ) :
-    ProjectionImpl(),
-    rotation_( params ) {
+    ProjectionImpl(), rotation_( params ) {
     // check presence of radius
     if ( !params.get( "radius", radius_ ) ) {
         radius_ = util::Earth::radius();

@@ -12,6 +12,7 @@
 
 #include <string>
 #include <type_traits>
+#include <vector>
 
 #include "atlas/util/Object.h"
 
@@ -77,6 +78,8 @@ public:
     virtual idx_t nb_partitions() const;
 
     virtual const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
+
+    virtual const std::vector<util::PartitionPolygon*>& polygons() const;
 
 private:
     util::Metadata* metadata_;

@@ -42,9 +42,7 @@ public:
 
     ATLAS_HOST_DEVICE
     SVector( SVector&& other ) :
-        data_( other.data_ ),
-        size_( other.size_ ),
-        externally_allocated_( other.externally_allocated_ ) {
+        data_( other.data_ ), size_( other.size_ ), externally_allocated_( other.externally_allocated_ ) {
         other.data_                 = nullptr;
         other.size_                 = 0;
         other.externally_allocated_ = true;

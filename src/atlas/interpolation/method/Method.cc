@@ -69,7 +69,7 @@ void Method::interpolate_field_rank1( const Field& src, Field& tgt ) const {
         ATLAS_ASSERT( src.contiguous() );
         ATLAS_ASSERT( tgt.contiguous() );
 
-        eckit::linalg::Vector v_src( const_cast<double*>(array::make_view<double, 1>( src ).data()), src.shape( 0 ) );
+        eckit::linalg::Vector v_src( const_cast<double*>( array::make_view<double, 1>( src ).data() ), src.shape( 0 ) );
         eckit::linalg::Vector v_tgt( array::make_view<double, 1>( tgt ).data(), tgt.shape( 0 ) );
         eckit::linalg::LinearAlgebra::backend().spmv( matrix_, v_src, v_tgt );
     }
@@ -154,32 +154,32 @@ Method::Method( const Method::Config& config ) {
 
 void Method::setup( const FunctionSpace& source, const FunctionSpace& target ) {
     ATLAS_TRACE( "atlas::interpolation::method::Method::setup(FunctionSpace, FunctionSpace)" );
-    this->do_setup(source, target);
+    this->do_setup( source, target );
 }
 
 void Method::setup( const Grid& source, const Grid& target ) {
     ATLAS_TRACE( "atlas::interpolation::method::Method::setup(Grid, Grid)" );
-    this->do_setup(source, target);
+    this->do_setup( source, target );
 }
 
 void Method::setup( const FunctionSpace& source, const Field& target ) {
     ATLAS_TRACE( "atlas::interpolation::method::Method::setup(FunctionSpace, Field)" );
-    this->do_setup(source, target);
+    this->do_setup( source, target );
 }
 
 void Method::setup( const FunctionSpace& source, const FieldSet& target ) {
     ATLAS_TRACE( "atlas::interpolation::method::Method::setup(FunctionSpace, FieldSet)" );
-    this->do_setup(source, target);
+    this->do_setup( source, target );
 }
 
 void Method::execute( const FieldSet& source, FieldSet& target ) const {
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute(FieldSet, FieldSet)" );
-    this->do_execute(source, target);
+    this->do_execute( source, target );
 }
 
 void Method::execute( const Field& source, Field& target ) const {
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute(Field, Field)" );
-    this->do_execute(source, target);
+    this->do_execute( source, target );
 }
 
 void Method::do_setup( const FunctionSpace& /*source*/, const Field& /*target*/ ) {

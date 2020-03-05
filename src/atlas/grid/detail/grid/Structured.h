@@ -62,11 +62,7 @@ private:
     class StructuredIterator : public Base {
     public:
         StructuredIterator( const Structured& grid, bool begin = true ) :
-            grid_( grid ),
-            ny_( grid_.ny() ),
-            i_( 0 ),
-            j_( begin ? 0 : grid_.ny() ),
-            compute_point{grid_} {
+            grid_( grid ), ny_( grid_.ny() ), i_( 0 ), j_( begin ? 0 : grid_.ny() ), compute_point{grid_} {
             if ( j_ != ny_ && grid_.size() ) {
                 compute_point( i_, j_, point_ );
             }

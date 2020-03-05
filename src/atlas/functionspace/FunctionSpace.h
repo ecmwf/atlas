@@ -11,6 +11,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
@@ -59,6 +60,8 @@ public:
     void haloExchange( const Field&, bool on_device = false ) const;
 
     const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
+
+    const std::vector<util::PartitionPolygon*>& polygons() const;
 
     idx_t nb_partitions() const;
 
