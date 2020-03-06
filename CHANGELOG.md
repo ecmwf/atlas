@@ -7,6 +7,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.19.2] - 2020-01-28
+### Changed
+- Compatibility with eckit 1.7 due to API change in eckit::LocalConfiguration
 
 ## [0.19.1] - 2019-12-19
 ### Fixed
@@ -154,6 +157,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.19.2]: https://github.com/ecmwf/atlas/compare/0.19.1...0.19.2
+[0.19.1]: https://github.com/ecmwf/atlas/compare/0.19.0...0.19.1
 [0.19.0]: https://github.com/ecmwf/atlas/compare/0.18.1...0.19.0
 [0.18.1]: https://github.com/ecmwf/atlas/compare/0.18.0...0.18.1
 [0.18.0]: https://github.com/ecmwf/atlas/compare/0.17.2...0.18.0
