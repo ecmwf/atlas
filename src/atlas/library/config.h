@@ -17,24 +17,29 @@
 #include "atlas/atlas_ecbuild_config.h"
 #include "atlas/library/defines.h"
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#define DOXYGEN_HIDE( X ) X
+#endif
+
 #define ATLAS_HAVE_TRACE 1
+#define ATLAS_HAVE_TRACE_BARRIERS 1
 
 namespace atlas {
 
 /// @typedef gidx_t
 /// Integer type for global indices
 #if ATLAS_BITS_GLOBAL == 32
-typedef int gidx_t;
+using gidx_t = int;
 #else
-typedef long gidx_t;
+using gidx_t = long;
 #endif
 
 /// @typedef idx_t
 /// Integer type for indices in connectivity tables
 #if ( ATLAS_BITS_LOCAL == 32 )
-typedef int idx_t;
+using idx_t = int;
 #else
-typedef long idx_t;
+using idx_t  = long;
 #endif
 
 /// @typedef uidx_t

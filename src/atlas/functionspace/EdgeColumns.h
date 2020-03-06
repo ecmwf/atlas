@@ -39,7 +39,7 @@ namespace detail {
 
 // ----------------------------------------------------------------------------
 
-class EdgeColumns : public FunctionSpaceImpl {
+class EdgeColumns : public functionspace::FunctionSpaceImpl {
 public:
     EdgeColumns( const Mesh&, const eckit::Configuration& = util::NoConfig() );
 

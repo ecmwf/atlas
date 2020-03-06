@@ -22,22 +22,27 @@ namespace array {
 
 //------------------------------------------------------------------------------------------------------
 
-template <typename Value, int Rank, Intent AccessMode>
-void ArrayView<Value, Rank, AccessMode>::assign( const value_type& value ) {
+#undef ENABLE_IF_NON_CONST
+#define ENABLE_IF_NON_CONST \
+    template <bool EnableBool, typename std::enable_if<( !std::is_const<Value>::value && EnableBool ), int>::type*>
+
+
+template <typename Value, int Rank>
+ENABLE_IF_NON_CONST void ArrayView<Value, Rank>::assign( const value_type& value ) {
     helpers::array_assigner<Value, Rank>::apply( *this, value );
 }
 
 //------------------------------------------------------------------------------------------------------
 
-template <typename Value, int Rank, Intent AccessMode>
-void ArrayView<Value, Rank, AccessMode>::assign( const std::initializer_list<value_type>& list ) {
+template <typename Value, int Rank>
+ENABLE_IF_NON_CONST void ArrayView<Value, Rank>::assign( const std::initializer_list<value_type>& list ) {
     helpers::array_assigner<Value, Rank>::apply( *this, list );
 }
 
 //------------------------------------------------------------------------------------------------------
 
-template <typename Value, int Rank, Intent AccessMode>
-void ArrayView<Value, Rank, AccessMode>::dump( std::ostream& os ) const {
+template <typename Value, int Rank>
+void ArrayView<Value, Rank>::dump( std::ostream& os ) const {
     os << "size: " << size() << " , values: ";
     os << "[ ";
     helpers::array_writer::apply( *this, os );
@@ -53,17 +58,25 @@ void ArrayView<Value, Rank, AccessMode>::dump( std::ostream& os ) const {
 // Explicit instantiation
 namespace atlas {
 namespace array {
-#define EXPLICIT_TEMPLATE_INSTANTIATION( Rank )                       \
-    template class ArrayView<int, Rank, Intent::ReadOnly>;            \
-    template class ArrayView<int, Rank, Intent::ReadWrite>;           \
-    template class ArrayView<long, Rank, Intent::ReadOnly>;           \
-    template class ArrayView<long, Rank, Intent::ReadWrite>;          \
-    template class ArrayView<long unsigned, Rank, Intent::ReadOnly>;  \
-    template class ArrayView<long unsigned, Rank, Intent::ReadWrite>; \
-    template class ArrayView<float, Rank, Intent::ReadOnly>;          \
-    template class ArrayView<float, Rank, Intent::ReadWrite>;         \
-    template class ArrayView<double, Rank, Intent::ReadOnly>;         \
-    template class ArrayView<double, Rank, Intent::ReadWrite>;
+#define EXPLICIT_TEMPLATE_INSTANTIATION( Rank )                                                         \
+    template class ArrayView<int, Rank>;                                                                \
+    template class ArrayView<const int, Rank>;                                                          \
+    template class ArrayView<long, Rank>;                                                               \
+    template class ArrayView<const long, Rank>;                                                         \
+    template class ArrayView<long unsigned, Rank>;                                                      \
+    template class ArrayView<const long unsigned, Rank>;                                                \
+    template class ArrayView<float, Rank>;                                                              \
+    template class ArrayView<const float, Rank>;                                                        \
+    template class ArrayView<double, Rank>;                                                             \
+    template class ArrayView<const double, Rank>;                                                       \
+    template void ArrayView<int, Rank>::assign<true, nullptr>( int const& );                            \
+    template void ArrayView<long, Rank>::assign<true, nullptr>( long const& );                          \
+    template void ArrayView<float, Rank>::assign<true, nullptr>( float const& );                        \
+    template void ArrayView<double, Rank>::assign<true, nullptr>( double const& );                      \
+    template void ArrayView<int, Rank>::assign<true, nullptr>( std::initializer_list<int> const& );     \
+    template void ArrayView<long, Rank>::assign<true, nullptr>( std::initializer_list<long> const& );   \
+    template void ArrayView<float, Rank>::assign<true, nullptr>( std::initializer_list<float> const& ); \
+    template void ArrayView<double, Rank>::assign<true, nullptr>( std::initializer_list<double> const& );
 
 // For each NDims in [1..9]
 EXPLICIT_TEMPLATE_INSTANTIATION( 1 )
@@ -77,5 +90,6 @@ EXPLICIT_TEMPLATE_INSTANTIATION( 8 )
 EXPLICIT_TEMPLATE_INSTANTIATION( 9 )
 
 #undef EXPLICIT_TEMPLATE_INSTANTIATION
+
 }  // namespace array
 }  // namespace atlas

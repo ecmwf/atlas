@@ -57,7 +57,7 @@ CASE( "test_SliceRank" ) {
 #if 1
 CASE( "test_array_slicer_1d" ) {
     ArrayT<double> arr( 10 );
-    auto view = make_view<double, 1, Intent::ReadWrite>( arr );
+    auto view = make_view<double, 1>( arr );
     view.assign( {0, 1, 2, 3, 4, 5, 6, 7, 8, 9} );
 
     using View = decltype( view );
@@ -103,7 +103,7 @@ CASE( "test_array_slicer_1d" ) {
 #endif
 CASE( "test_array_slicer_2d" ) {
     ArrayT<double> arr( 3, 5 );
-    auto view = make_view<double, 2, Intent::ReadWrite>( arr );
+    auto view = make_view<double, 2>( arr );
     view.assign( {
         11,
         12,
@@ -157,7 +157,7 @@ CASE( "test_array_slicer_2d" ) {
 
 CASE( "test_array_slicer_3d" ) {
     ArrayT<double> arr( 2, 3, 5 );
-    auto view = make_view<double, 3, Intent::ReadWrite>( arr );
+    auto view = make_view<double, 3>( arr );
     view.assign( {111, 112, 113, 114, 115, 121, 122, 123, 124, 125, 131, 132, 133, 134, 135,
 
                   211, 212, 213, 214, 215, 221, 222, 223, 224, 225, 231, 232, 233, 234, 235} );
@@ -203,7 +203,7 @@ CASE( "test_array_slicer_3d" ) {
 
 CASE( "test_array_slicer_of_slice" ) {
     ArrayT<double> arr( 2, 3, 5 );
-    auto view = make_view<double, 3, Intent::ReadWrite>( arr );
+    auto view = make_view<double, 3>( arr );
     view.assign( {111, 112, 113, 114, 115, 121, 122, 123, 124, 125, 131, 132, 133, 134, 135,
 
                   211, 212, 213, 214, 215, 221, 222, 223, 224, 225, 231, 232, 233, 234, 235} );
@@ -239,7 +239,7 @@ CASE( "test_arrayview_slice_type" ) {
     }
 
     {
-        auto read_write_view = make_view<double, 3, Intent::ReadWrite>( arr );
+        auto read_write_view = make_view<double, 3>( arr );
 
         auto slice1 = read_write_view.slice( Range{0, 2}, 2, Range{2, 5} );
 
@@ -265,18 +265,13 @@ CASE( "test_arrayview_slice_type" ) {
 
         EXPECT( slice3 == 123 );
 
-        // Following static assert fails somehow for Cray <= 8.5 (8.6 OK)...
-        // Using runtime EXPECT instead works fine
-        // static_assert( read_write_view.ACCESS == Intent::ReadWrite, "failed" );
-        EXPECT( read_write_view.ACCESS == Intent::ReadWrite );
-
         static_assert( std::is_same<decltype( slice1 ), LocalView<double, 2>>::value, "failed" );
         static_assert( std::is_same<decltype( slice2 ), LocalView<double, 3>>::value, "failed" );
         static_assert( std::is_same<decltype( slice3 ), Reference<double>>::value, "failed" );
     }
 
     {
-        auto read_only_view = make_view<double, 3, Intent::ReadOnly>( arr );
+        auto read_only_view = make_view<const double, 3>( arr );
 
         auto slice1 = read_only_view.slice( Range{0, 2}, 2, Range{2, 5} );
 
@@ -306,20 +301,15 @@ CASE( "test_arrayview_slice_type" ) {
 
         EXPECT( slice4 == 123 );
 
-        // Following static assert fails somehow for Cray <= 8.5 (8.6 OK)...
-        // Using runtime EXPECT instead works fine
-        // static_assert( read_only_view.ACCESS == Intent::ReadOnly, "failed" );
-        EXPECT( read_only_view.ACCESS == Intent::ReadOnly );
-
-        static_assert( std::is_same<decltype( slice1 ), LocalView<double, 2, Intent::ReadOnly>>::value, "failed" );
-        static_assert( std::is_same<decltype( slice2 ), LocalView<double, 3, Intent::ReadOnly>>::value, "failed" );
-        static_assert( std::is_same<decltype( slice3 ), Reference<double const>>::value, "failed" );
+        static_assert( std::is_same<decltype( slice1 ), LocalView<const double, 2>>::value, "failed" );
+        static_assert( std::is_same<decltype( slice2 ), LocalView<const double, 3>>::value, "failed" );
+        static_assert( std::is_same<decltype( slice3 ), Reference<const double>>::value, "failed" );
         static_assert( std::is_same<decltype( slice4 ), double const&>::value, "failed" );
     }
 
     {
         const auto const_read_write_view = make_view<double, 3>( arr );
-        auto read_write_view             = make_view<double, 3, Intent::ReadWrite>( arr );
+        auto read_write_view             = make_view<double, 3>( arr );
 
         auto slice1 = const_read_write_view.slice( Range{0, 2}, 2, Range{2, 5} );
 
@@ -345,13 +335,8 @@ CASE( "test_arrayview_slice_type" ) {
 
         EXPECT( slice3 == 123 );
 
-        // Following static assert fails somehow for Cray <= 8.5 (8.6 OK)...
-        // Using runtime EXPECT instead works fine
-        // static_assert( read_write_view.ACCESS == Intent::ReadWrite, "failed" );
-        EXPECT( read_write_view.ACCESS == Intent::ReadWrite );
-
-        static_assert( std::is_same<decltype( slice1 ), LocalView<double, 2, Intent::ReadOnly>>::value, "failed" );
-        static_assert( std::is_same<decltype( slice2 ), LocalView<double, 3, Intent::ReadOnly>>::value, "failed" );
+        static_assert( std::is_same<decltype( slice1 ), LocalView<const double, 2>>::value, "failed" );
+        static_assert( std::is_same<decltype( slice2 ), LocalView<const double, 3>>::value, "failed" );
         static_assert( std::is_same<decltype( slice3 ), Reference<double const>>::value, "failed" );
     }
 }

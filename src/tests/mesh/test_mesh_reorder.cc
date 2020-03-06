@@ -272,7 +272,7 @@ void test_reordering( const util::Config& reorder_config, const std::vector<int>
     if ( false ) {  // output node_order to feed in to expected
         const auto _node_order = reorder.get()->computeNodesOrder( mesh );
         Log::info() << "{";
-        for ( idx_t i = 0; i < _node_order.size(); ++i ) {
+        for ( size_t i = 0; i < _node_order.size(); ++i ) {
             Log::info() << _node_order[i] << ",";
         }
         Log::info() << "}";

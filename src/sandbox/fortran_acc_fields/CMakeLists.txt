@@ -6,7 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-if( ATLAS_HAVE_ACC ) 
+if( atlas_HAVE_ACC ) 
     ecbuild_add_executable(
         TARGET  atlas-acc-fields
         SOURCES atlas-acc-fields.F90

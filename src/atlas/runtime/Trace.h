@@ -51,18 +51,29 @@
 ///
 #define ATLAS_TRACE( ... )
 #define ATLAS_TRACE_SCOPE( ... )
+#define ATLAS_TRACE_BARRIERS( enabled )
 
 //-----------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 
+namespace runtime {
+namespace trace {
 struct TraceTraits {
-    using Barriers = runtime::trace::NoBarriers;
-    using Tracing  = runtime::trace::Logging;
+#if ATLAS_HAVE_TRACE_BARRIERS
+    using Barriers = ::atlas::runtime::trace::Barriers;
+#else
+    using Barriers = ::atlas::runtime::trace::NoBarriers;
+#endif
+    using Tracing = ::atlas::runtime::trace::Logging;
 };
 
-class Trace : public runtime::trace::TraceT<TraceTraits> {
-    using Base = runtime::trace::TraceT<TraceTraits>;
+}  // namespace trace
+}  // namespace runtime
+
+class Trace : public runtime::trace::TraceT<runtime::trace::TraceTraits> {
+    using Base   = runtime::trace::TraceT<runtime::trace::TraceTraits>;
+    using Traits = runtime::trace::TraceTraits;
 
 public:
     using Base::Base;
@@ -78,9 +89,11 @@ public:
 
 #undef ATLAS_TRACE
 #undef ATLAS_TRACE_SCOPE
+#undef ATLAS_TRACE_BARRIERS
 
 #define ATLAS_TRACE( ... ) __ATLAS_TYPE( ::atlas::Trace, Here() __ATLAS_COMMA_ARGS( __VA_ARGS__ ) )
 #define ATLAS_TRACE_SCOPE( ... ) __ATLAS_TYPE_SCOPE( ::atlas::Trace, Here() __ATLAS_COMMA_ARGS( __VA_ARGS__ ) )
+#define ATLAS_TRACE_BARRIERS( enabled ) __ATLAS_TYPE( ::atlas::Trace::Barriers, enabled )
 
 #endif
 

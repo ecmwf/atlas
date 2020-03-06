@@ -10,9 +10,11 @@
 
 #pragma once
 
+#include <type_traits>
+#include <utility>
+
 #include "gridtools/common/generic_metafunctions/accumulate.hpp"
-#include "gridtools/common/generic_metafunctions/is_all_integrals.hpp"
-#include "gridtools/storage/storage-facility.hpp"
+#include "gridtools/storage/storage_facility.hpp"
 
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/library/config.h"
@@ -26,21 +28,30 @@ namespace gridtools {
 //------------------------------------------------------------------------------
 
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-using storage_traits = ::gridtools::storage_traits<::gridtools::target::cuda>;
+using backend_t      = ::gridtools::backend::cuda;
+using storage_traits = ::gridtools::storage_traits<backend_t>;
 #elif ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
-using storage_traits = ::gridtools::storage_traits<::gridtools::target::x86>;
+using backend_t      = ::gridtools::backend::x86;
+using storage_traits = ::gridtools::storage_traits<backend_t>;
 #else
 #error ATLAS_GRIDTOOLS_STORAGE_BACKEND_<HOST,CUDA> not set
 #endif
 
 //------------------------------------------------------------------------------
 
-template <typename Value, unsigned int Rank, ::gridtools::access_mode AccessMode = ::gridtools::access_mode::ReadWrite>
-using data_view_tt = ::gridtools::data_view<
-    gridtools::storage_traits::data_store_t<Value, gridtools::storage_traits::storage_info_t<0, Rank>>, AccessMode>;
+template <typename Value, unsigned int Rank, ::gridtools::access_mode AccessMode = ::gridtools::access_mode::read_write>
+using data_view_tt =
+    ::gridtools::data_view<gridtools::storage_traits::data_store_t<typename std::remove_const<Value>::type,
+                                                                   gridtools::storage_traits::storage_info_t<0, Rank>>,
+                           AccessMode>;
 
-inline constexpr ::gridtools::access_mode get_access_mode( Intent kind ) {
-    return ( kind == Intent::ReadOnly ) ? ::gridtools::access_mode::ReadOnly : ::gridtools::access_mode::ReadWrite;
+template <typename Value, typename std::enable_if<std::is_const<Value>::value, Value>::type* = nullptr>
+inline constexpr ::gridtools::access_mode get_access_mode() {
+    return ::gridtools::access_mode::read_only;
+}
+template <typename Value, typename std::enable_if<!std::is_const<Value>::value, Value>::type* = nullptr>
+inline constexpr ::gridtools::access_mode get_access_mode() {
+    return ::gridtools::access_mode::read_write;
 }
 
 //------------------------------------------------------------------------------

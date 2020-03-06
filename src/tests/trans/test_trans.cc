@@ -24,7 +24,6 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
-#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator.h"
@@ -600,6 +599,7 @@ CASE( "ATLAS-256: Legendre coefficient expected unique identifiers" ) {
         options.set( "flt", false );
 
         auto uids = {
+            // clang-format off
             "ifs-T20-RegularGaussianN320-OPT4189816c2e",
             "ifs-T20-RegularGaussianN640-OPT4189816c2e",
             "ifs-T20-RegularGaussianN1280-OPT4189816c2e",
@@ -666,15 +666,19 @@ CASE( "ATLAS-256: Legendre coefficient expected unique identifiers" ) {
             "ifs-T1279-grid-7c400822f0-OPT4189816c2e",
             "ifs-T1279-grid-7824deccdf-OPT4189816c2e",
             "ifs-T1279-grid-7d1771559e-OPT4189816c2e",
+            // clang-format on
         };
-        auto uid  = uids.begin();
+        auto uid = uids.begin();
 
-        for ( auto& domain : std::vector<Domain>{GlobalDomain(), RectangularDomain( {-10, 10}, {-20, 20} )} ) {
-            for ( int T : {20, 639, 1279} ) {
-                for ( auto name :
-                      {"F320", "F640", "F1280", "N320", "N640", "N1280", "O320", "O640", "O1280", "L90", "L900"} ) {
-                    Log::info() << "Case name:" << name << ", T:" << T << ", domain:" << domain << ", UID:'" << *uid << "'"
-                                << std::endl;
+        auto domains    = std::vector<Domain>{GlobalDomain(), RectangularDomain( {-10, 10}, {-20, 20} )};
+        auto spectral_T = std::vector<int>{20, 639, 1279};
+        auto grids      = std::vector<std::string>{"F320", "F640", "F1280", "N320", "N640", "N1280",
+                                              "O320", "O640", "O1280", "L90",  "L900"};
+        for ( auto& domain : domains ) {
+            for ( int T : spectral_T ) {
+                for ( auto name : grids ) {
+                    Log::info() << "Case name:" << name << ", T:" << T << ", domain:" << domain << ", UID:'" << *uid
+                                << "'" << std::endl;
 
                     Grid grid( name, domain );
                     auto test = trans::LegendreCacheCreator( grid, T, options ).uid();

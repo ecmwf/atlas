@@ -233,31 +233,31 @@ template <typename Value>
 void ArrayT<Value>::dump( std::ostream& out ) const {
     switch ( rank() ) {
         case 1:
-            make_host_view<Value, 1, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<const Value, 1>( *this ).dump( out );
             break;
         case 2:
-            make_host_view<Value, 2, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<const Value, 2>( *this ).dump( out );
             break;
         case 3:
-            make_host_view<Value, 3, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<const Value, 3>( *this ).dump( out );
             break;
         case 4:
-            make_host_view<Value, 4, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<const Value, 4>( *this ).dump( out );
             break;
         case 5:
-            make_host_view<Value, 5, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<const Value, 5>( *this ).dump( out );
             break;
         case 6:
-            make_host_view<Value, 6, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<const Value, 6>( *this ).dump( out );
             break;
         case 7:
-            make_host_view<Value, 7, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<const Value, 7>( *this ).dump( out );
             break;
         case 8:
-            make_host_view<Value, 8, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<const Value, 8>( *this ).dump( out );
             break;
         case 9:
-            make_host_view<Value, 9, Intent::ReadOnly>( *this ).dump( out );
+            make_host_view<const Value, 9>( *this ).dump( out );
             break;
         default:
             ATLAS_NOTIMPLEMENTED;

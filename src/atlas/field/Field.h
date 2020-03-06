@@ -19,6 +19,7 @@
 #include "atlas/array/ArrayShape.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
+#include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
@@ -40,7 +41,22 @@ class FunctionSpace;
 
 namespace atlas {
 
-class Field : public util::ObjectHandle<field::FieldImpl> {
+/// @brief A Field contains an Array, Metadata, and a reference to a FunctionSpace
+///
+/// The Field is a key component of Atlas. It contains an \ref array::Array object and a \ref util::Metadata object.
+/// Furthermore it contains a link to a FunctionSpace object.
+///
+/// A Field should typically be created via the FunctionSpace::createField() method, which ensures
+/// that the Field is completely setup.
+///
+/// A field can be implicitly converted to an Array reference, so that it can be passed to routines that
+/// expect an Array. This is especially useful to create an ArrayView:
+///
+/// @code{.cpp}
+///    Field field = functionspace.createField<double>( ... );
+///    auto view = array::make_view<double,2>( field );
+/// @endcode
+class Field : DOXYGEN_HIDE( public util::ObjectHandle<field::FieldImpl> ) {
 public:
     using Handle::Handle;
     Field() = default;
@@ -70,6 +86,7 @@ public:
     operator const array::Array&() const;
     operator array::Array&();
 
+    /// @brief Access contained Array
     const array::Array& array() const;
     array::Array& array();
 
@@ -153,24 +170,9 @@ public:
 
     void haloExchange( bool on_device = false ) const;
 
-    // -- dangerous methods
-    template <typename DATATYPE>
-    DATATYPE const* host_data() const;
-    template <typename DATATYPE>
-    DATATYPE* host_data();
-    template <typename DATATYPE>
-    DATATYPE const* device_data() const;
-    template <typename DATATYPE>
-    DATATYPE* device_data();
-    template <typename DATATYPE>
-    DATATYPE const* data() const;
-    template <typename DATATYPE>
-    DATATYPE* data();
-
-    // -- Methods related to host-device synchronisation, requires
-    // gridtools_storage
-    void cloneToDevice() const;
-    void cloneFromDevice() const;
+    // -- Methods related to host-device synchronisation
+    void updateHost() const;
+    void updateDevice() const;
     void syncHostDevice() const;
     bool hostNeedsUpdate() const;
     bool deviceNeedsUpdate() const;
@@ -186,30 +188,6 @@ extern template Field::Field( const std::string&, long*, const array::ArraySpec&
 extern template Field::Field( const std::string&, long*, const array::ArrayShape& );
 extern template Field::Field( const std::string&, int*, const array::ArraySpec& );
 extern template Field::Field( const std::string&, int*, const array::ArrayShape& );
-extern template double const* Field::data() const;
-extern template double* Field::data();
-extern template float const* Field::data() const;
-extern template float* Field::data();
-extern template long const* Field::data() const;
-extern template long* Field::data();
-extern template int const* Field::data() const;
-extern template int* Field::data();
-extern template double const* Field::host_data() const;
-extern template double* Field::host_data();
-extern template float const* Field::host_data() const;
-extern template float* Field::host_data();
-extern template long const* Field::host_data() const;
-extern template long* Field::host_data();
-extern template int const* Field::host_data() const;
-extern template int* Field::host_data();
-extern template double const* Field::device_data() const;
-extern template double* Field::device_data();
-extern template float const* Field::device_data() const;
-extern template float* Field::device_data();
-extern template long const* Field::device_data() const;
-extern template long* Field::device_data();
-extern template int const* Field::device_data() const;
-extern template int* Field::device_data();
 
 //------------------------------------------------------------------------------------------------------
 

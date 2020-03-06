@@ -27,8 +27,10 @@ BUILD_OUTPUT=${TMPDIR}/tmp-${repo}.log
 mkdir -p ${TMPDIR}
 touch $BUILD_OUTPUT
 pushd . >> ${BUILD_OUTPUT} 2>&1
-git clone --depth=1 -b ${branch} https://github.com/${owner}/${repo} ${SOURCE_DIR} >> ${BUILD_OUTPUT} 2>&1 
+#git clone --depth=1 -b ${branch} https://github.com/${owner}/${repo} ${SOURCE_DIR} >> ${BUILD_OUTPUT} 2>&1 
+git clone https://github.com/${owner}/${repo} ${SOURCE_DIR} >> ${BUILD_OUTPUT} 2>&1
 cd ${SOURCE_DIR} >> ${BUILD_OUTPUT} 2>&1 
+git checkout ${branch} >> ${BUILD_OUTPUT} 2>&1 
 git rev-parse HEAD
 cd ..
 rm -rf ${SOURCE_DIR}

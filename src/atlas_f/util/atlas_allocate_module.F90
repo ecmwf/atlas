@@ -49,8 +49,10 @@ subroutine atlas_allocate_managedmem_real64_r1( A, dims )
   real(c_double), pointer :: a(:)
   integer(c_int) :: dims(:)
   type(c_ptr) :: value_cptr
-  call atlas__allocate_managedmem_double( value_cptr, dims(1) )
-  call c_f_pointer(value_cptr,a,dims)
+  if( dims(1) > 0 ) then
+    call atlas__allocate_managedmem_double( value_cptr, dims(1) )
+    call c_f_pointer(value_cptr,a,dims)
+  endif
 end subroutine
 
 subroutine atlas_allocate_managedmem_real32_r1( A, dims )
@@ -59,8 +61,10 @@ subroutine atlas_allocate_managedmem_real32_r1( A, dims )
   real(c_float), pointer :: a(:)
   integer(c_int) :: dims(:)
   type(c_ptr) :: value_cptr
-  call atlas__allocate_managedmem_float( value_cptr, dims(1) )
-  call c_f_pointer(value_cptr,a,dims)
+  if( dims(1) > 0 ) then
+    call atlas__allocate_managedmem_float( value_cptr, dims(1) )
+    call c_f_pointer(value_cptr,a,dims)
+  endif
 end subroutine
 
 subroutine atlas_allocate_managedmem_int32_r1( A, dims )
@@ -69,8 +73,10 @@ subroutine atlas_allocate_managedmem_int32_r1( A, dims )
   integer(c_int), pointer :: a(:)
   integer(c_int) :: dims(:)
   type(c_ptr) :: value_cptr
-  call atlas__allocate_managedmem_int( value_cptr, dims(1) )
-  call c_f_pointer(value_cptr,a,dims)
+  if( dims(1) > 0 ) then
+    call atlas__allocate_managedmem_int( value_cptr, dims(1) )
+    call c_f_pointer(value_cptr,a,dims)
+  endif
 end subroutine
 
 subroutine atlas_allocate_managedmem_int64_r1( A, dims )
@@ -79,8 +85,10 @@ subroutine atlas_allocate_managedmem_int64_r1( A, dims )
   integer(c_long), pointer :: a(:)
   integer(c_int) :: dims(:)
   type(c_ptr) :: value_cptr
-  call atlas__allocate_managedmem_long( value_cptr, dims(1) )
-  call c_f_pointer(value_cptr,a,dims)
+  if( dims(1) > 0 ) then
+    call atlas__allocate_managedmem_long( value_cptr, dims(1) )
+    call c_f_pointer(value_cptr,a,dims)
+  endif
 end subroutine
 
 subroutine atlas_allocate_managedmem_int32_r2( A, dims )
@@ -89,8 +97,10 @@ subroutine atlas_allocate_managedmem_int32_r2( A, dims )
   integer(c_int), pointer :: a(:,:)
   integer(c_int) :: dims(:)
   type(c_ptr) :: value_cptr
-  call atlas__allocate_managedmem_int( value_cptr, dims(1)*dims(2) )
-  call c_f_pointer(value_cptr,a,dims)
+  if( dims(1)*dims(2) > 0 ) then
+    call atlas__allocate_managedmem_int( value_cptr, dims(1)*dims(2) )
+    call c_f_pointer(value_cptr,a,dims)
+  endif
 end subroutine
 
 subroutine atlas_allocate_managedmem_int64_r2( A, dims )
@@ -99,8 +109,10 @@ subroutine atlas_allocate_managedmem_int64_r2( A, dims )
   integer(c_long), pointer :: a(:,:)
   integer(c_int) :: dims(:)
   type(c_ptr) :: value_cptr
-  call atlas__allocate_managedmem_long( value_cptr, dims(1)*dims(2) )
-  call c_f_pointer(value_cptr,a,dims)
+  if( dims(1)*dims(2) > 0 ) then
+    call atlas__allocate_managedmem_long( value_cptr, dims(1)*dims(2) )
+    call c_f_pointer(value_cptr,a,dims)
+  endif
 end subroutine
 
 subroutine atlas_allocate_managedmem_real64_r2( A, dims )
@@ -109,8 +121,10 @@ subroutine atlas_allocate_managedmem_real64_r2( A, dims )
   real(c_double), pointer :: a(:,:)
   integer(c_int) :: dims(:)
   type(c_ptr) :: value_cptr
-  call atlas__allocate_managedmem_double( value_cptr, dims(1)*dims(2) )
-  call c_f_pointer(value_cptr,a,dims)
+  if( dims(1)*dims(2) > 0 ) then
+    call atlas__allocate_managedmem_double( value_cptr, dims(1)*dims(2) )
+    call c_f_pointer(value_cptr,a,dims)
+  endif
 end subroutine
 
 subroutine atlas_allocate_managedmem_real32_r2( A, dims )
@@ -119,8 +133,10 @@ subroutine atlas_allocate_managedmem_real32_r2( A, dims )
   real(c_float), pointer :: a(:,:)
   integer(c_int) :: dims(:)
   type(c_ptr) :: value_cptr
-  call atlas__allocate_managedmem_float( value_cptr, dims(1)*dims(2) )
-  call c_f_pointer(value_cptr,a,dims)
+  if( dims(1)*dims(2) > 0 ) then
+    call atlas__allocate_managedmem_float( value_cptr, dims(1)*dims(2) )
+    call c_f_pointer(value_cptr,a,dims)
+  endif
 end subroutine
 
 !------------------------------------------------------------------------------

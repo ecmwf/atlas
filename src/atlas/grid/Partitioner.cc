@@ -9,6 +9,7 @@
  */
 
 #include "atlas/grid/Partitioner.h"
+#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/distribution/DistributionImpl.h"
@@ -37,7 +38,7 @@ Partitioner::Partitioner( const std::string& type, const idx_t nb_partitions ) :
 namespace {
 detail::partitioner::Partitioner* partitioner_from_config( const Partitioner::Config& config ) {
     std::string type;
-    long partitions = mpi::comm().size();
+    long partitions = mpi::size();
     if ( not config.get( "type", type ) ) {
         throw_Exception( "'type' missing in configuration for Partitioner", Here() );
     }
@@ -49,7 +50,7 @@ detail::partitioner::Partitioner* partitioner_from_config( const Partitioner::Co
 Partitioner::Partitioner( const Config& config ) : Handle( partitioner_from_config( config ) ) {}
 
 void Partitioner::partition( const Grid& grid, int part[] ) const {
-    ATLAS_TRACE();
+    ATLAS_TRACE( "Partitioner::partition" );
     get()->partition( grid, part );
 }
 
@@ -65,21 +66,36 @@ std::string Partitioner::type() const {
     return get()->type();
 }
 
-MatchingMeshPartitioner::MatchingMeshPartitioner() : Partitioner() {}
+MatchingPartitioner::MatchingPartitioner() : Partitioner() {}
 
 grid::detail::partitioner::Partitioner* matching_mesh_partititioner( const Mesh& mesh,
                                                                      const Partitioner::Config& config ) {
     std::string type( "lonlat-polygon" );
     config.get( "type", type );
-    return MatchedPartitionerFactory::build( type, mesh );
+    return grid::detail::partitioner::MatchingPartitionerFactory::build( type, mesh );
 }
 
-MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh ) :
-    MatchingMeshPartitioner( mesh, util::NoConfig() ) {}
+MatchingPartitioner::MatchingPartitioner( const Mesh& mesh ) : MatchingPartitioner( mesh, util::NoConfig() ) {}
 
 
-MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh, const Config& config ) :
+MatchingPartitioner::MatchingPartitioner( const Mesh& mesh, const Config& config ) :
     Partitioner( matching_mesh_partititioner( mesh, config ) ) {}
+
+
+grid::detail::partitioner::Partitioner* matching_functionspace_partititioner( const FunctionSpace& functionspace,
+                                                                              const Partitioner::Config& config ) {
+    std::string type( "lonlat-polygon" );
+    config.get( "type", type );
+    return grid::detail::partitioner::MatchingPartitionerFactory::build( type, functionspace );
+}
+
+MatchingPartitioner::MatchingPartitioner( const FunctionSpace& functionspace ) :
+    MatchingPartitioner( functionspace, util::NoConfig() ) {}
+
+
+MatchingPartitioner::MatchingPartitioner( const FunctionSpace& functionspace, const Config& config ) :
+    Partitioner( matching_functionspace_partititioner( functionspace, config ) ) {}
+
 
 extern "C" {
 
@@ -110,7 +126,19 @@ detail::partitioner::Partitioner* atlas__grid__MatchingMeshPartitioner__new( con
                                                                              const Partitioner::Config* config ) {
     detail::partitioner::Partitioner* p;
     {
-        MatchingMeshPartitioner partitioner( Mesh( mesh ), *config );
+        MatchingPartitioner partitioner( Mesh( mesh ), *config );
+        p = const_cast<detail::partitioner::Partitioner*>( partitioner.get() );
+        p->attach();
+    }
+    p->detach();
+    return p;
+}
+
+detail::partitioner::Partitioner* atlas__grid__MatchingFunctionSpacePartitioner__new(
+    const FunctionSpace::Implementation* functionspace, const Partitioner::Config* config ) {
+    detail::partitioner::Partitioner* p;
+    {
+        MatchingPartitioner partitioner( FunctionSpace( functionspace ), *config );
         p = const_cast<detail::partitioner::Partitioner*>( partitioner.get() );
         p->attach();
     }

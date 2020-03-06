@@ -94,9 +94,9 @@ public:  // methods
     idx_t partition() const;
     idx_t nb_partitions() const;
 
-    void cloneToDevice() const;
+    void updateDevice() const;
 
-    void cloneFromDevice() const;
+    void updateHost() const;
 
     void syncHostDevice() const;
 

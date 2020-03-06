@@ -20,7 +20,7 @@ endif()
 foreach(test
         test_domain
         test_field
-        test_grid_ptr
+        test_grid_iterator
         test_grids
         test_grid_cropping
         test_vertical

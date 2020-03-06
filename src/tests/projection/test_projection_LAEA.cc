@@ -14,10 +14,7 @@
 #include "atlas/projection/Projection.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
-#include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Point.h"
-
-#include "FindGoodWest.h"
 
 #include "tests/AtlasTestEnvironment.h"
 

@@ -8,8 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file   Nodes.h
 /// @author Willem Deconinck
-/// @date August 2015
+/// @date   August 2015
 
 #pragma once
 
@@ -131,9 +132,9 @@ public:  // methods
     /// @brief Return the memory footprint of the Nodes
     size_t footprint() const;
 
-    void cloneToDevice() const;
+    void updateDevice() const;
 
-    void cloneFromDevice() const;
+    void updateHost() const;
 
     void syncHostDevice() const;
 

@@ -22,12 +22,22 @@ class Parametrisation;
 
 namespace atlas {
 
+namespace mpi {
+void finalise();
+void finalize();
+}  // namespace mpi
+
+void initialise( int argc, char** argv );
+void initialize( int argc, char** argv );
+void initialise();
+void initialize();
+void finalise();
+void finalize();
+
 //----------------------------------------------------------------------------------------------------------------------
 
 class Library : public eckit::system::Library {
 public:
-    Library();
-
     static Library& instance();
 
     virtual std::string version() const override;
@@ -57,6 +67,8 @@ public:
 
     bool traceBarriers() const { return trace_barriers_; }
 
+    Library();
+
 protected:
     virtual const void* addr() const override;
 
@@ -70,7 +82,7 @@ protected:
     mutable std::unique_ptr<eckit::Channel> debug_channel_;
 };
 
-typedef Library Atlas;
+using Atlas = Library;
 
 //----------------------------------------------------------------------------------------------------------------------
 

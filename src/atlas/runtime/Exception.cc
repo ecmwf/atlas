@@ -52,6 +52,13 @@ void throw_CantOpenFile( const std::string& file, const eckit::CodeLocation& loc
     throw eckit::CantOpenFile( file, loc );
 }
 
+void throw_OutOfRange( const std::string& varname, idx_t index, idx_t size ) {
+    std::ostringstream ss;
+    ss << "OutOfRange: Tried to access " << varname << " index " << index << " but maximum allowed index is "
+       << size - 1;
+    throw eckit::Exception( ss.str() );
+}
+
 void throw_OutOfRange( const std::string& varname, idx_t index, idx_t size, const eckit::CodeLocation& loc ) {
     std::ostringstream ss;
     ss << "OutOfRange: Tried to access " << varname << " index " << index << " but maximum allowed index is "

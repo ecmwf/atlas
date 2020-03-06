@@ -18,6 +18,14 @@ ecbuild_add_test( TARGET atlas_test_pointcloud_io
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_gmsh_read
+  SOURCES  test_gmsh_read.cc
+  ARGS     --mesh ${CMAKE_CURRENT_SOURCE_DIR}/../mesh/test_mesh_reorder_unstructured.msh
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+
 if( HAVE_FCTEST )
 
 add_fctest( TARGET atlas_fctest_gmsh

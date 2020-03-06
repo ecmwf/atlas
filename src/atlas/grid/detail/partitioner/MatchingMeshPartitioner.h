@@ -26,7 +26,7 @@ public:
 
     MatchingMeshPartitioner( const idx_t nb_partitions );
 
-    MatchingMeshPartitioner( const Mesh& mesh );
+    MatchingMeshPartitioner( const Mesh& );
 
     virtual ~MatchingMeshPartitioner() override {}
 

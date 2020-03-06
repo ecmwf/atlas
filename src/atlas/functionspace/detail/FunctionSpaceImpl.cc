@@ -45,6 +45,10 @@ Field NoFunctionSpace::createField( const Field&, const eckit::Configuration& ) 
     ATLAS_NOTIMPLEMENTED;
 }
 
+const util::PartitionPolygon& FunctionSpaceImpl::polygon( idx_t halo ) const {
+    throw_Exception( "polygon() not implemented in derived class", Here() );
+}
+
 template <typename DATATYPE>
 Field FunctionSpaceImpl::createField( const eckit::Configuration& options ) const {
     return createField( option::datatypeT<DATATYPE>() | options );
@@ -54,6 +58,11 @@ template <typename DATATYPE>
 Field FunctionSpaceImpl::createField() const {
     return createField( option::datatypeT<DATATYPE>() );
 }
+
+idx_t FunctionSpaceImpl::nb_partitions() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
 
 template Field FunctionSpaceImpl::createField<double>() const;
 template Field FunctionSpaceImpl::createField<float>() const;

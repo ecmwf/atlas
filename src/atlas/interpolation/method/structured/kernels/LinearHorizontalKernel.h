@@ -21,7 +21,6 @@
 #include "atlas/grid/StencilComputer.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -38,12 +37,12 @@ public:
     LinearHorizontalKernel( const functionspace::StructuredColumns& fs, const util::Config& = util::NoConfig() ) {
         src_ = fs;
         ATLAS_ASSERT( src_ );
-        compute_horizontal_stencil_ = ComputeHorizontalStencil( src_.grid(), stencil_width() );
+        compute_horizontal_stencil_ = grid::ComputeHorizontalStencil( src_.grid(), stencil_width() );
     }
 
 private:
     functionspace::StructuredColumns src_;
-    ComputeHorizontalStencil compute_horizontal_stencil_;
+    grid::ComputeHorizontalStencil compute_horizontal_stencil_;
 
 public:
     static std::string className() { return "LinearHorizontalKernel"; }
@@ -52,7 +51,7 @@ public:
     static constexpr idx_t stencil_halo() { return 0; }
 
 public:
-    using Stencil = HorizontalStencil<2>;
+    using Stencil = grid::HorizontalStencil<2>;
     struct Weights {
         std::array<std::array<double, 2>, 2> weights_i;
         std::array<double, 2> weights_j;
@@ -121,7 +120,7 @@ public:
 
     template <typename stencil_t, typename weights_t, typename Value, int Rank>
     typename std::enable_if<( Rank == 1 ), void>::type interpolate( const stencil_t& stencil, const weights_t& weights,
-                                                                    const array::ArrayView<Value, Rank>& input,
+                                                                    const array::ArrayView<const Value, Rank>& input,
                                                                     array::ArrayView<Value, Rank>& output,
                                                                     idx_t r ) const {
         const auto& weights_j = weights.weights_j;
@@ -138,7 +137,7 @@ public:
 
     template <typename stencil_t, typename weights_t, typename Value, int Rank>
     typename std::enable_if<( Rank == 2 ), void>::type interpolate( const stencil_t& stencil, const weights_t& weights,
-                                                                    const array::ArrayView<Value, Rank>& input,
+                                                                    const array::ArrayView<const Value, Rank>& input,
                                                                     array::ArrayView<Value, Rank>& output,
                                                                     idx_t r ) const {
         const auto& weights_j = weights.weights_j;

@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include <functional>
+#include <iterator>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -46,26 +47,28 @@ public:  // types
     using uid_t      = std::string;
     using hash_t     = std::string;
 
-    class IteratorXY {
+    template <typename Derived, typename Point>
+    class IteratorT {
     public:
-        using Predicate                                          = std::function<bool( long )>;
-        virtual bool next( PointXY& )                            = 0;
-        virtual const PointXY operator*() const                  = 0;
-        virtual const IteratorXY& operator++()                   = 0;
-        virtual bool operator==( const IteratorXY& other ) const = 0;
-        virtual bool operator!=( const IteratorXY& other ) const = 0;
-        virtual ~IteratorXY() {}
-    };
+        using difference_type   = size_t;
+        using iterator_category = std::random_access_iterator_tag;
+        using value_type        = Point;
+        using pointer           = const Point*;
+        using reference         = const Point&;
 
-    class IteratorLonLat {
     public:
-        virtual bool next( PointLonLat& )                            = 0;
-        virtual const PointLonLat operator*() const                  = 0;
-        virtual const IteratorLonLat& operator++()                   = 0;
-        virtual bool operator==( const IteratorLonLat& other ) const = 0;
-        virtual bool operator!=( const IteratorLonLat& other ) const = 0;
-        virtual ~IteratorLonLat() {}
+        virtual bool next( value_type& )                         = 0;
+        virtual reference operator*() const                      = 0;
+        virtual const Derived& operator++()                      = 0;
+        virtual const Derived& operator+=( difference_type )     = 0;
+        virtual bool operator==( const Derived& ) const          = 0;
+        virtual bool operator!=( const Derived& ) const          = 0;
+        virtual difference_type distance( const Derived& ) const = 0;
+        virtual std::unique_ptr<Derived> clone() const           = 0;
+        virtual ~IteratorT() {}
     };
+    class IteratorXY : public IteratorT<IteratorXY, PointXY> {};
+    class IteratorLonLat : public IteratorT<IteratorLonLat, PointLonLat> {};
 
 public:  // methods
     static const Grid* create( const Config& );
@@ -113,12 +116,10 @@ public:  // methods
 
     virtual Spec spec() const = 0;
 
-    virtual IteratorXY* xy_begin() const                          = 0;
-    virtual IteratorXY* xy_end() const                            = 0;
-    virtual IteratorXY* xy_begin( IteratorXY::Predicate p ) const = 0;
-    virtual IteratorXY* xy_end( IteratorXY::Predicate p ) const   = 0;
-    virtual IteratorLonLat* lonlat_begin() const                  = 0;
-    virtual IteratorLonLat* lonlat_end() const                    = 0;
+    virtual std::unique_ptr<IteratorXY> xy_begin() const         = 0;
+    virtual std::unique_ptr<IteratorXY> xy_end() const           = 0;
+    virtual std::unique_ptr<IteratorLonLat> lonlat_begin() const = 0;
+    virtual std::unique_ptr<IteratorLonLat> lonlat_end() const   = 0;
 
     void attachObserver( GridObserver& ) const;
     void detachObserver( GridObserver& ) const;

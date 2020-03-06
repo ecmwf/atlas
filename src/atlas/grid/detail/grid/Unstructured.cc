@@ -72,7 +72,7 @@ public:
 
 private:
     const bool degrees_;
-    NormaliseLongitude normalise_;
+    util::NormaliseLongitude normalise_;
 };
 }  // namespace
 
@@ -153,6 +153,10 @@ Unstructured::Unstructured( std::vector<PointXY>&& pts ) :
     domain_ = GlobalDomain();
 }
 
+Unstructured::Unstructured( const std::vector<PointXY>& pts ) : Grid(), points_( new std::vector<PointXY>( pts ) ) {
+    domain_ = GlobalDomain();
+}
+
 Unstructured::Unstructured( std::initializer_list<PointXY> initializer_list ) :
     Grid(),
     points_( new std::vector<PointXY>( initializer_list ) ) {
@@ -205,7 +209,7 @@ Grid::Spec Unstructured::spec() const {
     cached_spec_->set( "domain", domain().spec() );
     cached_spec_->set( "projection", projection().spec() );
 
-    std::unique_ptr<IteratorXY> it( xy_begin() );
+    auto it = xy_begin();
     std::vector<double> coords( 2 * size() );
     idx_t c( 0 );
     PointXY xy;
@@ -221,19 +225,6 @@ Grid::Spec Unstructured::spec() const {
 
 void Unstructured::print( std::ostream& os ) const {
     os << "Unstructured(Npts:" << size() << ")";
-}
-
-bool Unstructured::IteratorXYPredicated::next( PointXY& /*xy*/ ) {
-    ATLAS_NOTIMPLEMENTED;
-#if 0
-    if ( n_ != grid_.points_->size() ) {
-        xy = grid_.xy( n_++ );
-        return true;
-    }
-    else {
-        return false;
-    }
-#endif
 }
 
 namespace {  // anonymous

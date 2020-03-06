@@ -28,8 +28,8 @@ public:
     bool operator()( idx_t idx ) const { return Nodes::Topology::check( flags_( idx ), Nodes::Topology::GHOST ); }
 
 private:
-    array::ArrayView<int, 1> flags_;
-    array::ArrayView<int, 1> ghost_;
+    array::ArrayView<const int, 1> flags_;
+    array::ArrayView<const int, 1> ghost_;
 };
 
 }  // namespace mesh

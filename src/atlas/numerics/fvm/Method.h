@@ -43,7 +43,10 @@ public:
     Method( Mesh&, const mesh::Halo& );
     Method( Mesh& );
 
-    virtual std::string name() const { return "fvm"; }
+    virtual std::string& name() const override {
+        static std::string _name{"fvm"};
+        return _name;
+    }
 
     const atlas::Mesh& mesh() const { return mesh_; }
     atlas::Mesh& mesh() { return mesh_; }

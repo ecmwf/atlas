@@ -24,9 +24,9 @@ struct SpectralFortranAccess {
     const Spectral& fs_;
     SpectralFortranAccess( const Spectral& fs ) : fs_( fs ) {}
     int nump() const { return fs_.nump(); }
-    array::LocalView<int, 1, array::Intent::ReadOnly> nvalue() const { return fs_.nvalue(); }
-    array::LocalView<int, 1, array::Intent::ReadOnly> nmyms() const { return fs_.nmyms(); }
-    array::LocalView<int, 1, array::Intent::ReadOnly> nasm0() const { return fs_.nasm0(); }
+    array::LocalView<const int, 1> nvalue() const { return fs_.nvalue(); }
+    array::LocalView<const int, 1> nmyms() const { return fs_.nmyms(); }
+    array::LocalView<const int, 1> nasm0() const { return fs_.nasm0(); }
 };
 }  // namespace detail
 

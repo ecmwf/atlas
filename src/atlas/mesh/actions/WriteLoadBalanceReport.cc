@@ -30,20 +30,20 @@ namespace actions {
 
 void write_load_balance_report( const Mesh& mesh, const std::string& filename ) {
     std::ofstream ofs;
-    if ( mpi::comm().rank() == 0 ) {
+    if ( mpi::rank() == 0 ) {
         eckit::PathName path( filename );
         ofs.open( path.localPath(), std::ofstream::out );
     }
 
     write_load_balance_report( mesh, ofs );
 
-    if ( mpi::comm().rank() == 0 ) {
+    if ( mpi::rank() == 0 ) {
         ofs.close();
     }
 }
 
 void write_load_balance_report( const Mesh& mesh, std::ostream& ofs ) {
-    idx_t npart = mpi::comm().size();
+    idx_t npart = mpi::size();
     idx_t root  = 0;
 
     std::vector<idx_t> nb_total_nodes( npart, 0 );
@@ -117,7 +117,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs ) {
         mpi::comm().gather( nghost, nb_ghost_nodes, root );
     }
 
-    if ( mpi::comm().rank() == 0 ) {
+    if ( mpi::rank() == 0 ) {
         int idt = 10;
         ofs << "# STATISTICS\n";
         ofs << std::setw( 1 ) << "#" << std::setw( 5 ) << "";

@@ -19,7 +19,7 @@
 namespace atlas {
 namespace array {
 
-template <typename Value, int Rank, Intent AccessMode>
+template <typename Value, int Rank>
 class LocalView;
 
 template <typename Value>
@@ -50,12 +50,9 @@ struct Reference {
     }
 };
 
-template <typename Value, int Rank, Intent Access>
+template <typename Value, int Rank>
 struct get_slice_type {
-    using type = typename std::conditional<
-        ( Rank == 0 ),
-        typename std::conditional<( Access == Intent::ReadOnly ), Reference<Value const>, Reference<Value>>::type,
-        LocalView<Value, Rank, Access>>::type;
+    using type = typename std::conditional<( Rank == 0 ), Reference<Value>, LocalView<Value, Rank>>::type;
 };
 
 //------------------------------------------------------------------------------
@@ -108,16 +105,6 @@ struct SliceRank {
     static constexpr int value{SliceRank_impl<sizeof...( Args ), Args...>::value};
 };
 
-template <typename View, bool constness = false>
-struct get_access {
-    static constexpr Intent value{View::ACCESS};
-};
-
-template <typename View>
-struct get_access<View, true> {
-    static constexpr Intent value{Intent::ReadOnly};
-};
-
 // template <typename Value, int Rank, Intent AccessMode>
 template <typename View>
 class ArraySlicer {
@@ -126,8 +113,7 @@ public:
 
     template <typename... Args>
     struct Slice {
-        using type = typename get_slice_type<typename View::value_type, SliceRank<Args...>::value,
-                                             get_access<View, std::is_const<View>::value>::value>::type;
+        using type = typename get_slice_type<typename View::value_type, SliceRank<Args...>::value>::type;
     };
 
     template <typename... Args>

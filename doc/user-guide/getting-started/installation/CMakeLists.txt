@@ -7,7 +7,7 @@ ecbuild_add_executable(
 set_target_properties( atlas_c-hello-world
                        PROPERTIES EXCLUDE_FROM_ALL ${ENABLE_TESTS} )
 
-if( ATLAS_HAVE_FORTRAN )
+if( atlas_HAVE_FORTRAN )
   ecbuild_add_executable(
     LINKER_LANGUAGE Fortran
     TARGET      atlas_f-hello-world

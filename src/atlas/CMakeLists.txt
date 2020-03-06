@@ -25,6 +25,7 @@ install( FILES
 ### sources
 
 list( APPEND atlas_srcs
+library.h
 library/config.h
 library/Library.h
 library/Library.cc
@@ -50,6 +51,9 @@ parallel/mpi/mpi.cc
 parallel/mpi/mpi.h
 parallel/omp/omp.cc
 parallel/omp/omp.h
+parallel/omp/copy.h
+parallel/omp/fill.h
+parallel/omp/sort.h
 )
 
 list( APPEND atlas_grid_srcs
@@ -116,6 +120,8 @@ grid/Vertical.cc
 grid/Stencil.h
 grid/StencilComputer.h
 grid/StencilComputer.cc
+grid/StructuredPartitionPolygon.h
+grid/StructuredPartitionPolygon.cc
 
 grid/detail/grid/GridBuilder.h
 grid/detail/grid/GridBuilder.cc
@@ -152,6 +158,10 @@ grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.cc
 grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h
 grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.cc
 grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h
+grid/detail/partitioner/MatchingFunctionSpacePartitioner.h
+grid/detail/partitioner/MatchingFunctionSpacePartitioner.cc
+grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.cc
+grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h
 grid/detail/partitioner/Partitioner.cc
 grid/detail/partitioner/Partitioner.h
 
@@ -223,13 +233,13 @@ grid/detail/pl/classic_gaussian/N2000.cc  # TL3999
 grid/detail/pl/classic_gaussian/N4000.cc  # TL7999
 grid/detail/pl/classic_gaussian/N8000.cc  # TL15999
 )
-if( ATLAS_HAVE_TRANS )
+if( atlas_HAVE_TRANS )
 list( APPEND atlas_grid_srcs
   grid/detail/partitioner/TransPartitioner.h
   grid/detail/partitioner/TransPartitioner.cc
 )
 endif()
-if( ATLAS_HAVE_PROJ )
+if( atlas_HAVE_PROJ )
 list( APPEND atlas_grid_srcs
   projection/detail/ProjProjection.cc
   projection/detail/ProjProjection.h
@@ -323,6 +333,15 @@ output/Output.h
 output/Output.cc
 output/Gmsh.h
 output/Gmsh.cc
+output/detail/GmshIO.cc
+output/detail/GmshIO.h
+output/detail/GmshImpl.cc
+output/detail/GmshImpl.h
+output/detail/GmshInterface.cc
+output/detail/GmshInterface.h
+output/detail/PointCloudIO.cc
+output/detail/PointCloudIO.h
+
 )
 
 list( APPEND atlas_field_srcs
@@ -370,6 +389,8 @@ functionspace/detail/NodeColumnsInterface.cc
 functionspace/detail/NodeColumns_FieldStatistics.cc
 functionspace/detail/SpectralInterface.h
 functionspace/detail/SpectralInterface.cc
+functionspace/detail/StructuredColumns.h
+functionspace/detail/StructuredColumns.cc
 functionspace/detail/StructuredColumnsInterface.h
 functionspace/detail/StructuredColumnsInterface.cc
 functionspace/detail/StructuredColumns_setup.cc
@@ -409,7 +430,7 @@ trans/detail/TransImpl.cc
 trans/detail/TransInterface.h
 trans/detail/TransInterface.cc
 )
-if( ATLAS_HAVE_TRANS )
+if( atlas_HAVE_TRANS )
 list( APPEND atlas_numerics_srcs
   trans/ifs/LegendreCacheCreatorIFS.h
   trans/ifs/LegendreCacheCreatorIFS.cc
@@ -518,7 +539,7 @@ array/helpers/ArraySlicer.h
 #array/TableView.h
 #array/TableView.cc
 )
-if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
+if( atlas_HAVE_GRIDTOOLS_STORAGE )
 list( APPEND atlas_array_srcs
 array/gridtools/GPUClonable.h
 array/gridtools/GridToolsArray.cc
@@ -545,10 +566,6 @@ array/native/NativeMakeView.cc
 endif()
 
 list( APPEND atlas_util_srcs
-output/detail/GmshIO.cc
-output/detail/GmshIO.h
-output/detail/PointCloudIO.cc
-output/detail/PointCloudIO.h
 parallel/Checksum.cc
 parallel/Checksum.h
 parallel/GatherScatter.cc
@@ -578,6 +595,7 @@ util/Rotation.h
 util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
+util/vector.h
 util/detail/BlackMagic.h
 util/detail/Cache.h
 util/detail/Debug.h
@@ -609,7 +627,7 @@ util/Allocate.cc
 
 ### atlas c++ library
 
-if( NOT ATLAS_HAVE_TRANS )
+if( NOT atlas_HAVE_TRANS )
   unset( TRANSI_INCLUDE_DIRS )
   unset( TRANSI_LIBRARIES )
 endif()
@@ -669,44 +687,26 @@ ecbuild_add_library( TARGET atlas
     ${source_list}
 )
 
-if( ATLAS_HAVE_FORTRAN )
+if( atlas_HAVE_FORTRAN )
   target_link_libraries( atlas PRIVATE fckit )
 endif()
 
-if( ATLAS_HAVE_TRANS )
-  if( TRANSI_VERSION VERSION_LESS 0.6 )
+if( atlas_HAVE_TRANS )
     target_link_libraries( atlas PRIVATE transi )
-    target_include_directories( atlas PRIVATE ${TRANSI_INCLUDE_DIRS} )
-  else()
-    if( MIR_NEEDS_TRANSI )
-      target_link_libraries( atlas PUBLIC transi ) # Can become private when MIR doesn't use transi_version()
-    else()
-      target_link_libraries( atlas PRIVATE transi )
-    endif()
-  endif()
 endif()
 
-if( ATLAS_HAVE_PROJ )
+if( atlas_HAVE_PROJ )
     target_link_libraries( atlas PRIVATE ${PROJ4_LIBRARIES} )
     target_include_directories( atlas PRIVATE ${PROJ4_INCLUDE_DIRS} )
 endif()
 
-if( eckit_VERSION )
-    set( eckit_link_public PUBLIC )
-else()
-    set( eckit_link_public PRIVATE )
-endif()
-
-target_link_libraries( atlas ${eckit_link_public}
+target_link_libraries( atlas PUBLIC
   eckit
   eckit_geometry
   eckit_linalg
   eckit_mpi
   eckit_option
 )
-if( ECKIT_INCLUDE_DIRS )
-    target_include_directories( atlas PRIVATE ${ECKIT_INCLUDE_DIRS} )
-endif()
 
 target_include_directories( atlas PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
@@ -714,31 +714,30 @@ target_include_directories( atlas PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-
-
-if( ATLAS_HAVE_TESSELATION )
+if( atlas_HAVE_TESSELATION )
   target_link_libraries( atlas PRIVATE ${CGAL_LIBRARIES} )
   target_include_directories( atlas PRIVATE ${CGAL_INCLUDE_DIRS} )
 endif()
 
-if( ATLAS_HAVE_FFTW )
+if( atlas_HAVE_FFTW )
   target_link_libraries( atlas PRIVATE ${FFTW_LIBRARIES} )
   target_include_directories( atlas PRIVATE ${FFTW_INCLUDES} )
 endif()
 
-if( ATLAS_HAVE_EIGEN AND EIGEN3_INCLUDE_DIR )
-  target_include_directories( atlas PUBLIC ${EIGEN3_INCLUDE_DIR} )
+if( atlas_HAVE_EIGEN )
+  target_link_libraries( atlas PUBLIC Eigen3::Eigen )
 endif()
 
-if( ATLAS_HAVE_OMP_CXX )
-  target_link_libraries( atlas PRIVATE OpenMP::OpenMP_CXX )
+if( atlas_HAVE_OMP_CXX )
+  target_link_libraries( atlas PUBLIC OpenMP::OpenMP_CXX )
 endif()
 
-if( ATLAS_HAVE_GRIDTOOLS_STORAGE )
-  target_link_libraries( atlas PUBLIC gridtools::storage )
+if( atlas_HAVE_GRIDTOOLS_STORAGE )
+  target_link_libraries( atlas PUBLIC GridTools::gridtools )
 endif()
 
-if( ATLAS_HAVE_ACC )
+if( atlas_HAVE_ACC )
   target_link_libraries( atlas PRIVATE atlas_acc_support )
 endif()
 
+target_compile_features( atlas PUBLIC cxx_std_11 )

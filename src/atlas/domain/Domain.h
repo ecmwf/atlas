@@ -13,6 +13,7 @@
 #include <array>
 #include <string>
 
+#include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -32,13 +33,19 @@ namespace util {
 class Config;
 }  // namespace util
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 namespace domain {
 class Domain;
-}
+class GlobalDomain;
+class ZonalBandDomain;
+class RectangularDomain;
+class RectangularLonLatDomain;
+}  // namespace domain
+#endif
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class Domain : public util::ObjectHandle<atlas::domain::Domain> {
+class Domain : DOXYGEN_HIDE( public util::ObjectHandle<atlas::domain::Domain> ) {
 public:
     using Spec = util::Config;
 
@@ -88,17 +95,13 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-namespace domain {
-class RectangularDomain;
-class RectangularLonLatDomain;
-}  // namespace domain
-
 class RectangularDomain : public Domain {
 public:
     using Interval = std::array<double, 2>;
 
 public:
     using Domain::Domain;
+    RectangularDomain() : Domain() {}
     RectangularDomain( const Interval& x, const Interval& y, const std::string& units = "degrees" );
 
     RectangularDomain( const Domain& );
@@ -141,10 +144,6 @@ public:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-namespace domain {
-class ZonalBandDomain;
-}
-
 class ZonalBandDomain : public RectangularLonLatDomain {
 public:
     using Interval = std::array<double, 2>;
@@ -160,11 +159,6 @@ public:
 private:
     const ::atlas::domain::ZonalBandDomain* domain_;
 };
-
-
-namespace domain {
-class GlobalDomain;
-}
 
 //---------------------------------------------------------------------------------------------------------------------
 

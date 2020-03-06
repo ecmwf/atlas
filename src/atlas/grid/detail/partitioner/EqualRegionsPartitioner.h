@@ -97,6 +97,19 @@ public:
     struct NodeInt {
         int x, y;
         int n;
+        bool operator!=( const NodeInt& other ) const { return n != other.n; }
+        bool operator==( const NodeInt& other ) const { return n == other.n; }
+        void swap( NodeInt& other ) {
+            auto _swap = []( int& a, int& b ) {
+                int tmp = a;
+                a       = b;
+                b       = tmp;
+            };
+            _swap( x, other.x );
+            _swap( y, other.y );
+            _swap( n, other.n );
+        }
+        friend void swap( NodeInt& a, NodeInt& b ) { a.swap( b ); }
     };
 
 private:

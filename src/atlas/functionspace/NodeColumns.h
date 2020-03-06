@@ -48,7 +48,7 @@ namespace detail {
 
 // ----------------------------------------------------------------------------
 
-class NodeColumns : public FunctionSpaceImpl {
+class NodeColumns : public functionspace::FunctionSpaceImpl {
 public:
     NodeColumns( Mesh mesh, const eckit::Configuration& );
     NodeColumns( Mesh mesh );
@@ -255,6 +255,8 @@ public:
     void meanAndStandardDeviationPerLevel( const Field&, Field& mean, Field& stddev, idx_t& N ) const;
 
     virtual idx_t size() const override { return nb_nodes_; }
+
+    idx_t nb_partitions() const override { return mesh_.nb_partitions(); }
 
 private:  // methods
     void constructor();

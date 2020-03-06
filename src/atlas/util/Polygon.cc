@@ -16,9 +16,9 @@
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/array.h"
-#include "atlas/mesh/Nodes.h"
+#include "atlas/domain/Domain.h"
+#include "atlas/field/Field.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Polygon.h"
 
@@ -29,8 +29,8 @@ namespace {
 
 //------------------------------------------------------------------------------------------------------
 
-double cross_product_analog( const PointLonLat& A, const PointLonLat& B, const PointLonLat& C ) {
-    return ( A.lon() - C.lon() ) * ( B.lat() - C.lat() ) - ( A.lat() - C.lat() ) * ( B.lon() - C.lon() );
+double cross_product_analog( const Point2& A, const Point2& B, const Point2& C ) {
+    return ( A[XX] - C[XX] ) * ( B[YY] - C[YY] ) - ( A[YY] - C[YY] ) * ( B[XX] - C[XX] );
 }
 
 }  // namespace
@@ -40,7 +40,10 @@ double cross_product_analog( const PointLonLat& A, const PointLonLat& B, const P
 Polygon::Polygon() = default;
 
 Polygon::Polygon( const Polygon::edge_set_t& edges ) {
-    ATLAS_TRACE();
+    setup( edges );
+}
+
+void Polygon::setup( const Polygon::edge_set_t& edges ) {
     // get external edges by attempting to remove reversed edges, if any
     edge_set_t extEdges;
     for ( const edge_t& e : edges ) {
@@ -108,9 +111,16 @@ void Polygon::print( std::ostream& s ) const {
     s << '}';
 }
 
+const RectangularDomain& PartitionPolygon::inscribedDomain() const {
+    static RectangularDomain inscribed;
+    return inscribed;
+}
+
 //------------------------------------------------------------------------------------------------------
 
-PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field& lonlat, bool removeAlignedPoints ) {
+
+PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field& coordinates,
+                                        bool removeAlignedPoints ) {
     ATLAS_ASSERT( poly.size() > 2 );
     ATLAS_ASSERT( poly.front() == poly.back() );
 
@@ -121,22 +131,22 @@ PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field&
     coordinates_.clear();
     coordinates_.reserve( poly.size() );
 
-    auto ll         = array::make_view<double, 2>( lonlat );
-    coordinatesMin_ = PointLonLat( ll( poly[0], LON ), ll( poly[0], LAT ) );
+    auto coord      = array::make_view<double, 2>( coordinates );
+    coordinatesMin_ = Point2( coord( poly[0], XX ), coord( poly[0], YY ) );
     coordinatesMax_ = coordinatesMin_;
 
     size_t nb_removed_points_due_to_alignment = 0;
 
     for ( size_t i = 0; i < poly.size(); ++i ) {
-        PointLonLat A( ll( poly[i], LON ), ll( poly[i], LAT ) );
-        coordinatesMin_ = PointLonLat::componentsMin( coordinatesMin_, A );
-        coordinatesMax_ = PointLonLat::componentsMax( coordinatesMax_, A );
+        Point2 A( coord( poly[i], XX ), coord( poly[i], YY ) );
+        coordinatesMin_ = Point2::componentsMin( coordinatesMin_, A );
+        coordinatesMax_ = Point2::componentsMax( coordinatesMax_, A );
 
         // if new point is aligned with existing edge (cross product ~= 0) make the
         // edge longer
         if ( ( coordinates_.size() >= 2 ) && removeAlignedPoints ) {
-            const PointLonLat& B = coordinates_.back();
-            const PointLonLat& C = coordinates_[coordinates_.size() - 2];
+            const Point2& B = coordinates_.back();
+            const Point2& C = coordinates_[coordinates_.size() - 2];
             if ( eckit::types::is_approximately_equal( 0., cross_product_analog( A, B, C ) ) ) {
                 coordinates_.back() = A;
                 ++nb_removed_points_due_to_alignment;
@@ -144,31 +154,76 @@ PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field&
             }
         }
 
-        coordinates_.push_back( A );
+        coordinates_.emplace_back( A );
     }
 
     ATLAS_ASSERT( coordinates_.size() == poly.size() - nb_removed_points_due_to_alignment );
 }
 
-PolygonCoordinates::PolygonCoordinates( const std::vector<PointLonLat>& points ) : coordinates_( points ) {
+
+template <typename PointContainer>
+PolygonCoordinates::PolygonCoordinates( const PointContainer& points ) {
+    coordinates_.assign( points.begin(), points.end() );
     ATLAS_ASSERT( coordinates_.size() > 2 );
     ATLAS_ASSERT( eckit::geometry::points_equal( coordinates_.front(), coordinates_.back() ) );
 
     coordinatesMin_ = coordinates_.front();
     coordinatesMax_ = coordinatesMin_;
-    for ( const PointLonLat& P : coordinates_ ) {
-        coordinatesMin_ = PointLonLat::componentsMin( coordinatesMin_, P );
-        coordinatesMax_ = PointLonLat::componentsMax( coordinatesMax_, P );
+    for ( const Point2& P : coordinates_ ) {
+        coordinatesMin_ = Point2::componentsMin( coordinatesMin_, P );
+        coordinatesMax_ = Point2::componentsMax( coordinatesMax_, P );
     }
 }
 
+template <typename PointContainer>
+PolygonCoordinates::PolygonCoordinates( const PointContainer& points, bool removeAlignedPoints ) {
+    coordinates_.clear();
+    coordinates_.reserve( points.size() );
+
+    coordinatesMin_ = Point2( std::numeric_limits<double>::max(), std::numeric_limits<double>::max() );
+    coordinatesMax_ = Point2( std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest() );
+
+    size_t nb_removed_points_due_to_alignment = 0;
+
+    for ( size_t i = 0; i < points.size(); ++i ) {
+        const Point2& A = points[i];
+        coordinatesMin_ = Point2::componentsMin( coordinatesMin_, A );
+        coordinatesMax_ = Point2::componentsMax( coordinatesMax_, A );
+
+        // if new point is aligned with existing edge (cross product ~= 0) make the
+        // edge longer
+        if ( ( coordinates_.size() >= 2 ) && removeAlignedPoints ) {
+            const Point2& B = coordinates_.back();
+            const Point2& C = coordinates_[coordinates_.size() - 2];
+            if ( eckit::types::is_approximately_equal( 0., cross_product_analog( A, B, C ) ) ) {
+                coordinates_.back() = A;
+                ++nb_removed_points_due_to_alignment;
+                continue;
+            }
+        }
+        coordinates_.emplace_back( A );
+    }
+
+    ATLAS_ASSERT( coordinates_.size() > 2 );
+    ATLAS_ASSERT( eckit::geometry::points_equal( coordinates_.front(), coordinates_.back() ) );
+}
+
+template PolygonCoordinates::PolygonCoordinates( const std::vector<Point2>& );
+template PolygonCoordinates::PolygonCoordinates( const std::vector<PointXY>& );
+template PolygonCoordinates::PolygonCoordinates( const std::vector<PointLonLat>& );
+
+template PolygonCoordinates::PolygonCoordinates( const std::vector<Point2>&, bool );
+template PolygonCoordinates::PolygonCoordinates( const std::vector<PointXY>&, bool );
+template PolygonCoordinates::PolygonCoordinates( const std::vector<PointLonLat>&, bool );
+
+
 PolygonCoordinates::~PolygonCoordinates() = default;
 
-const PointLonLat& PolygonCoordinates::coordinatesMax() const {
+const Point2& PolygonCoordinates::coordinatesMax() const {
     return coordinatesMax_;
 }
 
-const PointLonLat& PolygonCoordinates::coordinatesMin() const {
+const Point2& PolygonCoordinates::coordinatesMin() const {
     return coordinatesMin_;
 }
 

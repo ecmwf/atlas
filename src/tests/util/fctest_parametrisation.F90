@@ -42,7 +42,7 @@ TEST( test_parametrisation )
 
   type(atlas_Config) :: params
   type(atlas_Config) :: nested
-  type(atlas_Config) :: list(2)
+  type(atlas_Config), allocatable :: list(:)
   logical :: found
   integer :: intval
   integer :: j
@@ -76,6 +76,7 @@ TEST( test_parametrisation )
   call nested%set("n1",11)
   call nested%set("n2",12)
 
+  allocate( list(2) )
   do j=1,2
     list(j) = atlas_Config()
     call list(j)%set("l1",21)

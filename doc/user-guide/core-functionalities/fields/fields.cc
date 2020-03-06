@@ -1,7 +1,7 @@
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/library/Library.h"
+#include "atlas/library.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Metadata.h"
 
@@ -13,7 +13,7 @@ using atlas::array::make_shape;
 using atlas::array::make_view;
 
 int main( int argc, char* argv[] ) {
-    atlas::Library::instance().initialise( argc, argv );
+    atlas::Library::initialise( argc, argv );
 
     // Define fields
     Field field_pressure( "pressure", make_datatype<double>(), make_shape( 100 ) );
@@ -61,7 +61,8 @@ int main( int argc, char* argv[] ) {
     Log::info() << "wind(9, 0)  = " << wind( 9, 0 ) << std::endl;
     Log::info() << "wind(9, 1)  = " << wind( 9, 1 ) << std::endl;
 
-    atlas::Library::instance().finalise();
+    atlas::finalize();
+    atlas::mpi::finalize();
 
     return 0;
 }

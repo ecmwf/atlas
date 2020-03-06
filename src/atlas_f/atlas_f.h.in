@@ -16,9 +16,9 @@
 #include "fckit/fckit.h"
 
 
-#define ATLAS_HAVE_OMP    @ATLAS_HAVE_OMP_Fortran@
-#define ATLAS_HAVE_TRANS  @ATLAS_HAVE_TRANS@
-#define ATLAS_HAVE_ACC    @ATLAS_HAVE_ACC@
+#define ATLAS_HAVE_OMP    @atlas_HAVE_OMP_Fortran@
+#define ATLAS_HAVE_TRANS  @atlas_HAVE_TRANS@
+#define ATLAS_HAVE_ACC    @atlas_HAVE_ACC@
 #define ATLAS_BITS_GLOBAL @ATLAS_BITS_GLOBAL@
 #define ATLAS_BITS_LOCAL  @ATLAS_BITS_LOCAL@
 

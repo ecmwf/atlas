@@ -22,7 +22,7 @@ namespace interpolation {
 namespace method {
 
 class LinearVerticalKernel {
-    ComputeVerticalStencil compute_vertical_stencil_;
+    grid::ComputeVerticalStencil compute_vertical_stencil_;
     Vertical vertical_;
     static constexpr idx_t stencil_width() { return 2; }
     static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
@@ -40,7 +40,7 @@ public:
     struct Weights {
         std::array<double, 2> weights_k;
     };
-    using Stencil = VerticalStencil<2>;
+    using Stencil = grid::VerticalStencil<2>;
 
     template <typename stencil_t>
     void compute_stencil( const double z, stencil_t& stencil ) const {

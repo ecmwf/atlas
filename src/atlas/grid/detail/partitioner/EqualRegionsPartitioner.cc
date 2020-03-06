@@ -21,10 +21,13 @@
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/sort.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/MicroDeg.h"
+#include "atlas/util/vector.h"
+
 
 using atlas::util::microdeg;
 
@@ -32,6 +35,34 @@ namespace atlas {
 namespace grid {
 namespace detail {
 namespace partitioner {
+
+namespace {
+static bool valid_mpi_size( size_t size ) {
+    return size < size_t( std::numeric_limits<int>::max() );
+}
+
+
+template <class Iterator, class Sentinel = Iterator>
+struct range_t {
+    Iterator b;
+    Sentinel e;
+    Iterator begin() const { return b; }
+    Sentinel end() const { return e; }
+    bool empty() const { return begin() == end(); }
+};
+
+template <class Iterator, class Sentinel>
+range_t<Iterator, Sentinel> range( Iterator b, Sentinel e ) {
+    return {b, e};
+}
+
+template <typename Container, typename Int>
+range_t<typename Container::const_iterator, typename Container::const_iterator> subrange(
+    const Container& c, std::initializer_list<Int>&& _range ) {
+    return range( c.begin() + _range.begin()[1], c.begin() + _range.begin()[2] );
+}
+
+}  // namespace
 
 double gamma( const double& x ) {
     double p[14];
@@ -551,9 +582,7 @@ void EqualRegionsPartitioner::partition( int nb_nodes, NodeInt nodes[], int part
 
 void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
     if ( N_ == 1 ) {  // trivial solution, so much faster
-        for ( idx_t j = 0; j < grid.size(); ++j ) {
-            part[j] = 0;
-        }
+        atlas_omp_parallel_for( idx_t j = 0; j < grid.size(); ++j ) { part[j] = 0; }
     }
     else {
         ATLAS_TRACE( "EqualRegionsPartitioner::partition" );
@@ -564,7 +593,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
         int mpi_rank     = static_cast<int>( comm.rank() );
         int mpi_size     = static_cast<int>( comm.size() );
 
-        std::vector<NodeInt> nodes( grid.size() );
+        atlas::vector<NodeInt> nodes( grid.size() );
         int* nodes_buffer = reinterpret_cast<int*>( nodes.data() );
         long nb_workers   = comm.size();
 
@@ -584,13 +613,65 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
             ATLAS_ASSERT( structured_grid.x( 1, 0 ) > structured_grid.x( 0, 0 ) );
 
             ATLAS_TRACE( "Take shortcut" );
-            int n( 0 );
-            for ( idx_t j = 0; j < structured_grid.ny(); ++j ) {
-                double y = microdeg( structured_grid.y( j ) );
-                for ( idx_t i = 0; i < structured_grid.nx( j ); ++i, ++n ) {
-                    nodes[n].x = microdeg( structured_grid.x( i, j ) );
-                    nodes[n].y = y;
-                    nodes[n].n = n;
+
+
+            if ( atlas_omp_get_max_threads() > 1 ) {
+                atlas_omp_parallel {
+                    const idx_t num_threads = atlas_omp_get_num_threads();
+                    const idx_t thread_num  = atlas_omp_get_thread_num();
+                    const idx_t begin =
+                        static_cast<idx_t>( thread_num * size_t( structured_grid.size() ) / num_threads );
+                    const idx_t end =
+                        static_cast<idx_t>( ( thread_num + 1 ) * size_t( structured_grid.size() ) / num_threads );
+                    idx_t thread_j_begin = 0;
+                    std::vector<idx_t> thread_i_begin( structured_grid.ny() );
+                    std::vector<idx_t> thread_i_end( structured_grid.ny() );
+                    idx_t n = 0;
+                    for ( idx_t j = 0; j < structured_grid.ny(); ++j ) {
+                        if ( n + structured_grid.nx( j ) > begin ) {
+                            thread_j_begin    = j;
+                            thread_i_begin[j] = begin - n;
+                            break;
+                        }
+                        n += structured_grid.nx( j );
+                    }
+                    idx_t thread_j_end{thread_j_begin};
+                    for ( idx_t j = thread_j_begin; j < structured_grid.ny(); ++j ) {
+                        idx_t i_end = end - n;
+                        if ( j > thread_j_begin ) {
+                            thread_i_begin[j] = 0;
+                        }
+                        if ( i_end > structured_grid.nx( j ) ) {
+                            thread_i_end[j] = structured_grid.nx( j );
+                            n += structured_grid.nx( j );
+                        }
+                        else {
+                            thread_i_end[j] = i_end;
+                            thread_j_end    = j + 1;
+                            break;
+                        }
+                    }
+                    int nn = begin;
+                    for ( idx_t j = thread_j_begin; j < thread_j_end; ++j ) {
+                        int y = microdeg( structured_grid.y( j ) );
+                        for ( idx_t i = thread_i_begin[j]; i < thread_i_end[j]; ++i, ++nn ) {
+                            nodes[nn].x = microdeg( structured_grid.x( i, j ) );
+                            nodes[nn].y = y;
+                            nodes[nn].n = nn;
+                        }
+                    }
+                    ATLAS_ASSERT( nn == end );
+                }
+            }
+            else {
+                int n( 0 );
+                for ( idx_t j = 0; j < structured_grid.ny(); ++j ) {
+                    int y = microdeg( structured_grid.y( j ) );
+                    for ( idx_t i = 0; i < structured_grid.nx( j ); ++i, ++n ) {
+                        nodes[n].x = microdeg( structured_grid.x( i, j ) );
+                        nodes[n].y = y;
+                        nodes[n].n = n;
+                    }
                 }
             }
         }
@@ -599,32 +680,32 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
             std::vector<eckit::mpi::Request> requests;
 
             for ( int w = 0; w < nb_workers; ++w ) {
-                int w_begin = w * grid.size() / N_;
-                int w_end   = ( w + 1 ) * grid.size() / N_;
+                idx_t w_begin = w * grid.size() / N_;
+                idx_t w_end   = ( w + 1 ) * grid.size() / N_;
                 if ( w == nb_workers - 1 ) {
                     w_end = grid.size();
                 }
-                size_t w_size = w_end - w_begin;
+                idx_t w_size = w_end - w_begin;
 
                 int work_rank = std::min( w, mpi_size - 1 );
 
                 if ( mpi_rank == 0 ) {
-                    requests.push_back( comm.iReceive( nodes_buffer + 3 * w_begin, 3 * w_size,
+                    ATLAS_ASSERT( valid_mpi_size( w_size * 3 ) );
+                    requests.push_back( comm.iReceive( nodes_buffer + w_begin * 3, w_size * 3,
                                                        /* source= */ work_rank, /* tag= */ 0 ) );
                 }
 
                 if ( mpi_rank == work_rank ) {
-                    std::vector<NodeInt> w_nodes( w_size );
+                    atlas::vector<NodeInt> w_nodes( w_size );
                     int* w_nodes_buffer = reinterpret_cast<int*>( w_nodes.data() );
 
                     ATLAS_TRACE_SCOPE( "create one bit" ) {
                         if ( true )  // optimized experimental when true (still need to
                                      // benchmark)
                         {
-                            auto filter = [w_begin, w_end]( long n ) { return ( n >= w_begin && n < w_end ); };
-                            int i       = w_begin;
+                            int i = w_begin;
                             int j( 0 );
-                            for ( PointXY point : grid.xy( filter ) ) {
+                            for ( const PointXY& point : subrange( grid.xy(), {w_begin, w_end} ) ) {
                                 w_nodes[j].x = microdeg( point.x() );
                                 w_nodes[j].y = microdeg( point.y() );
                                 w_nodes[j].n = i++;
@@ -634,7 +715,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                         else {
                             idx_t i( 0 );
                             idx_t j( 0 );
-                            for ( PointXY point : grid.xy() ) {
+                            for ( const PointXY& point : grid.xy() ) {
                                 if ( i >= w_begin && i < w_end ) {
                                     w_nodes[j].x = microdeg( point.x() );
                                     w_nodes[j].y = microdeg( point.y() );
@@ -645,9 +726,10 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                             }
                         }
                     }
-                    ATLAS_TRACE_SCOPE( "sort one bit" ) { std::sort( w_nodes.begin(), w_nodes.end(), compare_NS_WE ); }
+                    ATLAS_TRACE_SCOPE( "sort one bit" ) { omp::sort( w_nodes.begin(), w_nodes.end(), compare_NS_WE ); }
                     ATLAS_TRACE_SCOPE( "send to rank0" ) {
-                        comm.send( w_nodes_buffer, 3 * w_size, /* dest= */ 0, /* tag= */ 0 );
+                        ATLAS_ASSERT( valid_mpi_size( w_size * 3 ) );
+                        comm.send( w_nodes_buffer, w_size * 3, /* dest= */ 0, /* tag= */ 0 );
                     }
                 }
             }
@@ -669,7 +751,10 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                     }
                 }
             }
-            ATLAS_TRACE_MPI( BROADCAST ) { comm.broadcast( nodes_buffer, 3 * grid.size(), /* root= */ 0 ); }
+            ATLAS_TRACE_MPI( BROADCAST ) {
+                ATLAS_ASSERT( valid_mpi_size( grid.size() * 3 ) );
+                comm.broadcast( nodes_buffer, grid.size() * 3, /* root= */ 0 );
+            }
         }  // sort all
 
         /*
@@ -679,36 +764,40 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
     */
 
         ATLAS_TRACE_SCOPE( "sort bands" ) {
+            ATLAS_TRACE_BARRIERS( false );  // avoid deadlock
+
             std::vector<eckit::mpi::Request> requests;
 
-            int nb_parts        = N_;
-            int nb_nodes        = grid.size();
-            int chunk_size      = nb_nodes / nb_parts;
-            int chunk_remainder = nb_nodes - chunk_size * nb_parts;
-            int remainder       = chunk_remainder;
-            std::vector<int> count;
+            int nb_parts           = N_;
+            size_t nb_nodes        = grid.size();
+            size_t chunk_size      = nb_nodes / nb_parts;
+            size_t chunk_remainder = nb_nodes - chunk_size * nb_parts;
+            int remainder          = chunk_remainder;
+            std::vector<size_t> count;
             count.reserve( nb_parts );
-            std::vector<int> displs;
-            displs.reserve( nb_parts );
-            std::vector<int> b_count;
+            std::vector<size_t> displs;
+            displs.reserve( nb_parts + 1 );
+            std::vector<size_t> b_count;
             b_count.reserve( nb_bands() );
-            std::vector<int> b_displs;
-            b_displs.reserve( nb_bands() );
+            std::vector<size_t> b_displs;
+            b_displs.reserve( nb_bands() + 1 );
 
             {
-                int end = 0;
+                size_t end = 0;
                 for ( int band = 0; band < nb_bands(); ++band ) {
-                    b_displs.push_back( end );
-                    int b_size( 0 );
+                    b_displs.emplace_back( end );
+                    size_t b_size( 0 );
                     for ( int p = 0; p < nb_regions( band ); ++p ) {
-                        int w_size = chunk_size + ( remainder-- > 0 ? 1 : 0 );
-                        displs.push_back( end );
-                        count.push_back( w_size );
+                        size_t w_size = chunk_size + ( remainder-- > 0 ? size_t( 1 ) : size_t( 0 ) );
+                        displs.emplace_back( end );
+                        count.emplace_back( w_size );
                         end += w_size;
                         b_size += w_size;
                     }
-                    b_count.push_back( b_size );
+                    b_count.emplace_back( b_size );
                 }
+                displs.emplace_back( end );
+                b_displs.emplace_back( end );
             }
 
             int w( 0 );
@@ -717,25 +806,28 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                 int w0_work_rank = std::min( w0, mpi_size - 1 );
 
                 for ( int p = 0; p < nb_regions( band ); ++p ) {
-                    int w_begin   = displs[w];
-                    int w_size    = count[w];
-                    int w_end     = w_begin + w_size;
-                    int work_rank = std::min( w, mpi_size - 1 );
+                    size_t w_begin = displs[w];
+                    size_t w_size  = count[w];
+                    size_t w_end   = w_begin + w_size;
+                    int work_rank  = std::min( w, mpi_size - 1 );
 
                     if ( mpi_rank == w0_work_rank ) {
                         if ( mpi_rank != work_rank ) {
-                            requests.push_back( comm.iReceive( nodes_buffer + 3 * w_begin, 3 * w_size,
+                            ATLAS_ASSERT( valid_mpi_size( w_size * 3 ) );
+                            requests.push_back( comm.iReceive( nodes_buffer + w_begin * 3, w_size * 3,
                                                                /* source= */ work_rank, /* tag= */ 0 ) );
                         }
                     }
                     if ( work_rank == mpi_rank ) {
-                        ATLAS_TRACE_SCOPE( "sort one bit" ) {
-                            // std::cout << w << "sorting " << w_size << std::endl;
-                            std::sort( nodes.data() + w_begin, nodes.data() + w_end, compare_WE_NS );
+                        ATLAS_TRACE_SCOPE( "sort bit of band on each MPI rank" ) {
+                            omp::sort( nodes.data() + w_begin, nodes.data() + w_end, compare_WE_NS );
                         }
                         if ( mpi_rank != w0_work_rank ) {
-                            comm.send( nodes_buffer + 3 * w_begin, 3 * w_size,
-                                       /* dest= */ w0_work_rank, /* tag= */ 0 );
+                            ATLAS_TRACE_SCOPE( "send bit of band to band leader " + std::to_string( w0_work_rank ) ) {
+                                ATLAS_ASSERT( valid_mpi_size( w_size * 3 ) );
+                                comm.send( nodes_buffer + w_begin * 3, w_size * 3,
+                                           /* dest= */ w0_work_rank, /* tag= */ 0 );
+                            }
                         }
                     }
                     ++w;
@@ -747,55 +839,74 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                 }
             }
             requests.clear();
-            w = 0;
+            std::vector<int> w0_band( nb_bands() );
+            for ( int band = 0, w = 0; band < nb_bands(); ++band ) {
+                w0_band[band] = w;
+                w += nb_regions( band );
+            }
+
             for ( int band = 0; band < nb_bands(); ++band ) {
-                int w0           = w;
-                int w0_begin     = b_displs[band];
-                int w0_size      = b_count[band];
+                int w0           = w0_band[band];
+                int w0_work_rank = std::min( w0, mpi_size - 1 );
+                if ( mpi_rank == w0_work_rank ) {
+                    auto nodes_band_begin  = nodes.begin() + b_displs[band];
+                    auto nodes_band_end    = nodes_band_begin + b_count[band];
+                    auto blocks_size_begin = count.begin() + w0;
+                    auto blocks_size_end   = blocks_size_begin + nb_regions( band );
+                    ATLAS_TRACE_SCOPE( "band leader merging bits for band " + std::to_string( band ) ) {
+                        omp::merge_blocks( nodes_band_begin, nodes_band_end, blocks_size_begin, blocks_size_end,
+                                           compare_WE_NS );
+                    }
+                }
+            }
+
+            for ( int band = 0; band < nb_bands(); ++band ) {
+                int w0           = w0_band[band];
+                size_t w0_begin  = b_displs[band];
+                size_t w0_size   = b_count[band];
                 int w0_work_rank = std::min( w0, mpi_size - 1 );
 
-                for ( int p = 0; p < nb_regions( band ); ++p ) {
-                    int w_begin = displs[w];
-                    int w_size  = count[w];
-                    int w_end   = w_begin + w_size;
-                    if ( w != w0 && mpi_rank == w0_work_rank ) {
-                        ATLAS_TRACE( "merge sort" );
-                        std::inplace_merge( nodes.begin() + w0_begin, nodes.begin() + w_begin, nodes.begin() + w_end,
-                                            compare_WE_NS );
-                    }
-                    ++w;
-                }
                 if ( mpi_rank == 0 ) {
                     if ( mpi_rank != w0_work_rank ) {
-                        requests.push_back( comm.iReceive( nodes_buffer + 3 * w0_begin, 3 * w0_size,
+                        ATLAS_ASSERT( valid_mpi_size( w0_size * 3 ) );
+                        requests.push_back( comm.iReceive( nodes_buffer + w0_begin * 3, w0_size * 3,
                                                            /* source= */ w0_work_rank, /* tag= */ 0 ) );
                     }
                 }
                 if ( mpi_rank == w0_work_rank ) {
-                    if ( mpi_rank != 0 ) {
-                        comm.send( nodes_buffer + 3 * w0_begin, 3 * w0_size, /* dest= */ 0,
-                                   /* tag= */ 0 );
+                    ATLAS_TRACE_SCOPE( "send band to rank 0" ) {
+                        if ( mpi_rank != 0 ) {
+                            ATLAS_ASSERT( valid_mpi_size( w0_size * 3 ) );
+                            comm.send( nodes_buffer + w0_begin * 3, w0_size * 3, /* dest= */ 0,
+                                       /* tag= */ 0 );
+                        }
                     }
                 }
             }
-            ATLAS_TRACE_MPI( WAIT ) {
-                for ( auto request : requests ) {
-                    comm.wait( request );
+            if ( mpi_rank == 0 ) {
+                ATLAS_TRACE_SCOPE( "rank 0 waiting for all bands to come in" ) {
+                    ATLAS_TRACE_MPI( WAIT ) {
+                        for ( auto request : requests ) {
+                            comm.wait( request );
+                        }
+                    }
                 }
             }
+
 
             /*
       Create list that tells in original node numbering which part the node
       belongs to
       */
             for ( int p = 0; p < nb_parts; ++p ) {
-                int begin = displs[p];
-                int end   = begin + count[p];
-                for ( int i = begin; i < end; ++i ) {
-                    part[nodes[i].n] = p;
-                }
+                size_t begin = displs[p];
+                size_t end   = begin + count[p];
+                atlas_omp_parallel_for( size_t i = begin; i < end; ++i ) { part[nodes[i].n] = p; }
             }
-            ATLAS_TRACE_MPI( BROADCAST ) { comm.broadcast( part, nb_nodes, 0 ); }
+            ATLAS_TRACE_MPI( BROADCAST ) {
+                ATLAS_ASSERT( valid_mpi_size( nb_nodes ) );
+                comm.broadcast( part, nb_nodes, 0 );
+            }
 
         }  // sort bands
     }      // else

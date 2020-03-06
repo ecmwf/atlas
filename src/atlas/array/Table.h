@@ -103,10 +103,10 @@ public:
     virtual size_t footprint() const;
 
     /// @brief Clone data to device
-    virtual void cloneToDevice() const;
+    virtual void updateDevice() const;
 
     /// @brief Clone data from device
-    virtual void cloneFromDevice() const;
+    virtual void updateHost() const;
 
     /// @brief Synchronise data between host and device
     virtual void syncHostDevice() const;

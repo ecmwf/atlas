@@ -31,6 +31,7 @@ namespace atlas {
 namespace numerics {
 namespace fvm {
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 class Nabla : public atlas::numerics::NablaImpl {
 public:
     Nabla( const atlas::numerics::Method&, const eckit::Parametrisation& );
@@ -53,7 +54,7 @@ private:
     fvm::Method const* fvm_;
     std::vector<idx_t> pole_edges_;
 };
-
+#endif
 // ------------------------------------------------------------------
 
 }  // namespace fvm

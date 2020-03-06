@@ -1,0 +1,53 @@
+@INCLUDE = Doxyfile-default
+
+# Nested folders will be ignored without this.  You may not need it.
+RECURSIVE              = YES
+
+# Enable preprocessing and related preprocessor necessities
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+SKIP_FUNCTION_MACROS   = NO
+
+# extra defs for to help with building the _right_ version of the docs
+PREDEFINED             = DOXYGEN_DOCUMENTATION_BUILD
+PREDEFINED            += DOXYGEN_SHOULD_SKIP_THIS
+
+# Using `=` instead of `+=` overrides
+HIDE_FRIEND_COMPOUNDS = YES
+PREDEFINED += protected=private
+PREDEFINED += DOXYGEN_HIDE(X)=
+PREDEFINED += ATLAS_HOST_DEVICE= 
+PREDEFINED += INDEX_REF=idx_t&
+
+EXTRACT_PRIVATE = NO
+
+EXCLUDE_PATTERNS = */detail/*
+EXCLUDE_PATTERNS += detail/*
+EXCLUDE_PATTERNS += */test/*
+EXCLUDE_PATTERNS += */gridtools/*
+EXCLUDE_PATTERNS += */native/*
+EXCLUDE_PATTERNS += */helpers/*
+EXCLUDE_PATTERNS += */Object.h
+EXCLUDE_PATTERNS += */ObjectHandle.h
+EXCLUDE_PATTERNS += */State.h
+EXCLUDE_PATTERNS += *.cc
+EXCLUDE_PATTERNS += CMakeLists.txt 
+EXCLUDE_PATTERNS += */TableView.h 
+EXCLUDE_PATTERNS += */Table.h 
+ 
+EXCLUDE_SYMBOLS = detail
+EXCLUDE_SYMBOLS += eckit 
+
+INLINE_INHERITED_MEMB  = YES 
+
+HIDE_UNDOC_RELATIONS = NO 
+
+GENERATE_TODOLIST      = NO
+GENERATE_BUGLIST       = NO
+
+#BUILTIN_STL_SUPPORT    = NO 
+
+TOC_INCLUDE_HEADINGS = 5
+MARKDOWN_SUPPORT = YES
+

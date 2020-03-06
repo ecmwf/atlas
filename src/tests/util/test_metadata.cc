@@ -9,7 +9,6 @@
  */
 
 #include "atlas/array/ArrayView.h"
-#include "atlas/library/Library.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Metadata.h"
 

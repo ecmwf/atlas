@@ -16,6 +16,11 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 
+namespace eckit {
+class Parametrisation;
+class PathName;
+}  // namespace eckit
+
 namespace atlas {
 namespace output {
 namespace detail {
@@ -31,88 +36,24 @@ namespace output {
 
 class GmshFileStream : public std::ofstream {
 public:
-    static std::string parallelPathName( const PathName& path, int part = mpi::comm().rank() );
-    GmshFileStream( const PathName& file_path, const char* mode, int part = mpi::comm().rank() );
+    static std::string parallelPathName( const eckit::PathName& path, int part = mpi::rank() );
+    GmshFileStream( const eckit::PathName& file_path, const char* mode, int part = mpi::rank() );
 };
-
-// -----------------------------------------------------------------------------
-
-namespace detail {
-class Gmsh : public OutputImpl {
-public:
-    Gmsh( Stream& );
-    Gmsh( Stream&, const eckit::Parametrisation& );
-
-    Gmsh( const PathName&, const std::string& mode );
-    Gmsh( const PathName&, const std::string& mode, const eckit::Parametrisation& );
-
-    Gmsh( const PathName& );
-    Gmsh( const PathName&, const eckit::Parametrisation& );
-
-    virtual ~Gmsh();
-
-    /// Write mesh file
-    virtual void write( const Mesh&, const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    /// Write field to file
-    virtual void write( const Field&, const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    /// Write fieldset to file using FunctionSpace
-    virtual void write( const FieldSet&, const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    /// Write field to file using Functionspace
-    virtual void write( const Field&, const FunctionSpace&, const eckit::Parametrisation& = util::NoConfig() ) const;
-
-    /// Write fieldset to file using FunctionSpace
-    virtual void write( const FieldSet&, const FunctionSpace&, const eckit::Parametrisation& = util::NoConfig() ) const;
-
-public:
-    struct Configuration {
-        bool binary;
-        bool edges;
-        bool elements;
-        bool gather;
-        bool ghost;
-        bool info;
-        std::vector<long> levels;
-        std::string nodes;
-        std::string file;
-        std::string openmode;
-        std::string coordinates;
-    };
-
-    static void setGmshConfiguration( detail::GmshIO&, const Configuration& );
-
-private:
-    mutable Configuration config_;
-
-    void defaults();
-};
-}  // namespace detail
 
 // -----------------------------------------------------------------------------
 
 class Gmsh : public Output {
 public:
     Gmsh( const Output& output );
-    Gmsh( Stream& );
-    Gmsh( Stream&, const eckit::Parametrisation& );
+    Gmsh( std::ostream& );
+    Gmsh( std::ostream&, const eckit::Parametrisation& );
 
-    Gmsh( const PathName&, const std::string& mode );
-    Gmsh( const PathName&, const std::string& mode, const eckit::Parametrisation& );
+    Gmsh( const eckit::PathName&, const std::string& mode );
+    Gmsh( const eckit::PathName&, const std::string& mode, const eckit::Parametrisation& );
 
-    Gmsh( const PathName& );
-    Gmsh( const PathName&, const eckit::Parametrisation& );
+    Gmsh( const eckit::PathName& );
+    Gmsh( const eckit::PathName&, const eckit::Parametrisation& );
 };
-
-// -----------------------------------------------------------------------------
-
-extern "C" {
-
-detail::Gmsh* atlas__output__Gmsh__create_pathname_mode( const char* pathname, const char* mode );
-detail::Gmsh* atlas__output__Gmsh__create_pathname_mode_config( const char* pathname, const char* mode,
-                                                                const eckit::Parametrisation* params );
-}
 
 // -----------------------------------------------------------------------------
 

@@ -12,6 +12,7 @@
 
 #include <iosfwd>
 
+#include "atlas/library/config.h"
 #include "atlas/mesh/detail/MeshImpl.h"
 #include "atlas/util/ObjectHandle.h"
 
@@ -49,7 +50,7 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Mesh : public util::ObjectHandle<mesh::detail::MeshImpl> {
+class Mesh : DOXYGEN_HIDE( public util::ObjectHandle<mesh::detail::MeshImpl> ) {
 public:
     using Nodes          = mesh::Nodes;
     using Cells          = mesh::Cells;
@@ -103,9 +104,9 @@ public:
 
     idx_t nb_partitions() const { return get()->nb_partitions(); }
 
-    void cloneToDevice() const { get()->cloneToDevice(); }
+    void updateDevice() const { get()->updateDevice(); }
 
-    void cloneFromDevice() const { get()->cloneFromDevice(); }
+    void updateHost() const { get()->updateHost(); }
 
     void syncHostDevice() const { get()->syncHostDevice(); }
 

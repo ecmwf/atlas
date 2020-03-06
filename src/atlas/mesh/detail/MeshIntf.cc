@@ -47,14 +47,14 @@ size_t atlas__Mesh__footprint( Mesh::Implementation* This ) {
     return This->footprint();
 }
 
-void atlas__Mesh__clone_to_device( Mesh::Implementation* This ) {
+void atlas__Mesh__update_device( Mesh::Implementation* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
-    This->cloneToDevice();
+    This->updateDevice();
 }
 
-void atlas__Mesh__clone_from_device( Mesh::Implementation* This ) {
+void atlas__Mesh__update_host( Mesh::Implementation* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
-    This->cloneFromDevice();
+    This->updateHost();
 }
 
 void atlas__Mesh__sync_host_device( Mesh::Implementation* This ) {

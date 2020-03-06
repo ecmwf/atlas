@@ -16,6 +16,7 @@
 #include "eckit/config/Parametrisation.h"
 #include "eckit/serialisation/FileStream.h"
 
+#include "atlas/library/config.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/ObjectHandle.h"
@@ -53,11 +54,11 @@ class FunctionSpaceImpl;
 namespace atlas {
 namespace output {
 
-typedef std::ostream Stream;
-typedef eckit::PathName PathName;
+using PathName = eckit::PathName;
 
 // -----------------------------------------------------------------------------
 
+namespace detail {
 class OutputImpl : public util::Object {
 public:
     typedef atlas::util::Config Parameters;
@@ -85,11 +86,13 @@ public:
                         const eckit::Parametrisation& = util::NoConfig() ) const = 0;
 };
 
-class Output : public util::ObjectHandle<OutputImpl> {
+}  // namespace detail
+
+class Output : DOXYGEN_HIDE( public util::ObjectHandle<detail::OutputImpl> ) {
 public:
     using Handle::Handle;
     Output() = default;
-    Output( const std::string&, Stream&, const eckit::Parametrisation& = util::NoConfig() );
+    Output( const std::string&, std::ostream&, const eckit::Parametrisation& = util::NoConfig() );
 
     /// Write mesh file
     void write( const Mesh&, const eckit::Parametrisation& = util::NoConfig() ) const;
@@ -107,20 +110,22 @@ public:
     void write( const FieldSet&, const FunctionSpace&, const eckit::Parametrisation& = util::NoConfig() ) const;
 };
 
+namespace detail {
+
 class OutputFactory {
 public:
     /*!
    * \brief build Output with factory key, and default options
    * \return mesh generator
    */
-    static const OutputImpl* build( const std::string&, Stream& );
+    static const OutputImpl* build( const std::string&, std::ostream& );
 
     /*!
    * \brief build Output with factory key inside parametrisation,
    * and options specified in parametrisation as well
    * \return mesh generator
    */
-    static const OutputImpl* build( const std::string&, Stream&, const eckit::Parametrisation& );
+    static const OutputImpl* build( const std::string&, std::ostream&, const eckit::Parametrisation& );
 
     /*!
    * \brief list all registered mesh generators
@@ -129,8 +134,8 @@ public:
 
 private:
     std::string name_;
-    virtual const OutputImpl* make( Stream& )                                = 0;
-    virtual const OutputImpl* make( Stream&, const eckit::Parametrisation& ) = 0;
+    virtual const OutputImpl* make( std::ostream& )                                = 0;
+    virtual const OutputImpl* make( std::ostream&, const eckit::Parametrisation& ) = 0;
 
 protected:
     OutputFactory( const std::string& );
@@ -139,8 +144,8 @@ protected:
 
 template <class T>
 class OutputBuilder : public OutputFactory {
-    virtual const OutputImpl* make( Stream& stream ) { return new T( stream ); }
-    virtual const OutputImpl* make( Stream& stream, const eckit::Parametrisation& param ) {
+    virtual const OutputImpl* make( std::ostream& stream ) { return new T( stream ); }
+    virtual const OutputImpl* make( std::ostream& stream, const eckit::Parametrisation& param ) {
         return new T( stream, param );
     }
 
@@ -152,7 +157,7 @@ public:
 
 extern "C" {
 void atlas__Output__delete( OutputImpl* This );
-const OutputImpl* atlas__Output__create( const char* factory_key, Stream* stream,
+const OutputImpl* atlas__Output__create( const char* factory_key, std::ostream* stream,
                                          const eckit::Parametrisation* params );
 void atlas__Output__write_mesh( const OutputImpl* This, mesh::detail::MeshImpl* mesh,
                                 const eckit::Parametrisation* params );
@@ -168,5 +173,6 @@ void atlas__Output__write_field_fs( const OutputImpl* This, const field::FieldIm
                                     const eckit::Parametrisation* params );
 }
 
+}  // namespace detail
 }  // namespace output
 }  // namespace atlas

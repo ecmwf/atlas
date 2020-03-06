@@ -103,7 +103,7 @@ public:
 
 private:
     const mesh::Nodes* nodes;
-    array::ArrayView<double, 2> lonlat;
+    array::ArrayView<const double, 2> lonlat;
 };
 
 // ----------------------------------------------------------------------------

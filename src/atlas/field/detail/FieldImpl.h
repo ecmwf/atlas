@@ -181,8 +181,8 @@ public:  // Destructor
 
     // -- Methods related to host-device synchronisation, requires
     // gridtools_storage
-    void cloneToDevice() const { array_->cloneToDevice(); }
-    void cloneFromDevice() const { array_->cloneFromDevice(); }
+    void updateHost() const { array_->updateHost(); }
+    void updateDevice() const { array_->updateDevice(); }
     void syncHostDevice() const { array_->syncHostDevice(); }
     bool hostNeedsUpdate() const { return array_->hostNeedsUpdate(); }
     bool deviceNeedsUpdate() const { return array_->deviceNeedsUpdate(); }

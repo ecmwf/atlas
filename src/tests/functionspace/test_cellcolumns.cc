@@ -25,7 +25,6 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/CellColumns.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/library/Library.h"
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
@@ -69,7 +68,6 @@ void set_field_values( const Mesh& mesh, Field& field ) {
 void check_field_values( const Mesh& mesh, Field& field ) {
     auto value            = array::make_view<int, 1>( field );
     auto partition        = array::make_view<int, 1>( mesh.cells().partition() );
-    auto halo             = array::make_view<int, 1>( mesh.cells().halo() );
     const size_t nb_cells = mesh.cells().size();
     for ( size_t j = 0; j < nb_cells; ++j ) {
         EXPECT( value( j ) == partition( j ) );

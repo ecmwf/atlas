@@ -352,7 +352,7 @@ public:
 
 private:
     const bool degrees_;
-    NormaliseLongitude normalise_;
+    util::NormaliseLongitude normalise_;
 };
 }  // namespace
 
@@ -449,7 +449,7 @@ void Structured::crop( const Domain& dom ) {
     }
 
     // Modify grid
-    if (ny() != cropped_ny) {
+    if ( ny() != cropped_ny ) {
         // keep specialised spacing (Gaussian, Linear, ...) unless cropping happens
         yspace_ = new spacing::CustomSpacing( cropped_ny, cropped_y.data(), {cropped_ymin, cropped_ymax} );
     }
@@ -721,22 +721,6 @@ idx_t atlas__grid__Gaussian__N( Structured* This ) {
 
 namespace {
 GridFactoryBuilder<Structured> __register_Structured( Structured::static_type() );
-}
-
-bool Structured::IteratorXYPredicated::next( PointXY& /*xy*/ ) {
-    ATLAS_NOTIMPLEMENTED;
-#if 0
-    if ( j_ < grid_.ny() && i_ < grid_.nx( j_ ) ) {
-        xy = grid_.xy( i_++, j_ );
-
-        if ( i_ == grid_.nx( j_ ) ) {
-            j_++;
-            i_ = 0;
-        }
-        return true;
-    }
-    return false;
-#endif
 }
 
 }  // namespace grid

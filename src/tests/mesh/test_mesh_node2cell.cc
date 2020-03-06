@@ -9,7 +9,6 @@
  */
 
 #include "atlas/grid/Grid.h"
-#include "atlas/library/Library.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"

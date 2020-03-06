@@ -22,29 +22,7 @@ class StructuredGrid;
 }  // namespace atlas
 
 namespace atlas {
-
-//---------------------------------------------------------------------------------------------------------------------
-/// @class ComputeVertical
-/// @brief Compute lower vertical level index for given coordinate
-/// zcoord:
-/// @verbatim
-///   0----1----2----3--...--(n-1)----(n)----(n+1)
-///   --->|<---|<---|<--...-|<--------------------
-/// @endverbatim
-/// If coordinate falls on vertical level (+- epsilon), that level is returned
-/// If coordinate falls in range [0,1) or [n,n+1],
-/// the index is snapped to 1 and (n-1) respectively. This allows reliably that
-/// the returned index can be used for stencil operations.
-///
-/// IFS full levels don't have a level at the boundaries (0.,1.)
-/// It is the "half" levels that contain (0.,1.). For reasons of boundary conditions
-/// however, the full levels also have 0. prepended and 1. appended.
-///
-/// Example IFS full levels for regular distribution dz ( level 0 and n+1 are added for boundary conditions )
-///  0      :  0.0
-///  jlev   :  jlev*dz - 0.5*dz
-///  nlev   :  nlev*dz - 0.5*dz
-///  nlev+1 :  1.0
+namespace grid {
 
 class ComputeLower {
     std::vector<double> z_;
@@ -118,34 +96,36 @@ public:
         idx_t i  = static_cast<idx_t>( std::floor( ( x - xref[jj] ) / dx[jj] ) );
         return i;
     }
-};  // namespace test
+};
 
 
 //-----------------------------------------------------------------------------
 
-// @class ComputeHorizontalStencil
-// @brief Compute stencil in horizontal direction (i,j)
-//
-// Given a stencil width, the stencil for a given P{x,y} is:
-//
-//        i[0]     i[1]     i[2]    i[3]
-//         x        x        x         x       j + 0
-//          x       x       x        x         j + 1
-//                     P
-//          x       x       x        x         j + 2
-//         x        x        x         x       j + 3
-//
-//   In case the x-component of P is aligned with any
-//   stencil, gridpoint, the stencil will assume the grid point
-//   is on the point P's left side:
-//
-//        i[0]     i[1]     i[2]    i[3]
-//         x        x        x         x       j + 0
-//          x       x       x        x         j + 1
-//                  P
-//          x       x       x        x         j + 2
-//         x        x        x         x       j + 3
-
+/// @class ComputeHorizontalStencil
+/// @brief Compute stencil in horizontal direction (i,j)
+///
+/// @details
+/// Given a stencil width, the stencil for a given P{x,y} is:
+/// @code
+///        i[0]     i[1]     i[2]    i[3]
+///         x        x        x         x       j + 0
+///          x       x       x        x         j + 1
+///                     P
+///          x       x       x        x         j + 2
+///         x        x        x         x       j + 3
+/// @endcode
+///
+/// In case the x-component of P is aligned with any
+/// stencil, gridpoint, the stencil will assume the grid point
+/// is on the point P's left side:
+/// @code
+///        i[0]     i[1]     i[2]    i[3]
+///         x        x        x         x       j + 0
+///          x       x       x        x         j + 1
+///                  P
+///          x       x       x        x         j + 2
+///         x        x        x         x       j + 3
+/// @endcode
 class ComputeHorizontalStencil {
     idx_t halo_;
     ComputeNorth compute_north_;
@@ -170,6 +150,28 @@ public:
 
 //-----------------------------------------------------------------------------
 
+//---------------------------------------------------------------------------------------------------------------------
+/// @class ComputeVerticalStencil
+/// @brief Compute lower vertical level index for given coordinate
+/// zcoord:
+/// @verbatim
+///   0----1----2----3--...--(n-1)----(n)----(n+1)
+///   --->|<---|<---|<--...-|<--------------------
+/// @endverbatim
+/// If coordinate falls on vertical level (+- epsilon), that level is returned
+/// If coordinate falls in range [0,1) or [n,n+1],
+/// the index is snapped to 1 and (n-1) respectively. This allows reliably that
+/// the returned index can be used for stencil operations.
+///
+/// IFS full levels don't have a level at the boundaries (0.,1.)
+/// It is the "half" levels that contain (0.,1.). For reasons of boundary conditions
+/// however, the full levels also have 0. prepended and 1. appended.
+///
+/// Example IFS full levels for regular distribution dz ( level 0 and n+1 are added for boundary conditions )
+///  0      :  0.0
+///  jlev   :  jlev*dz - 0.5*dz
+///  nlev   :  nlev*dz - 0.5*dz
+///  nlev+1 :  1.0
 class ComputeVerticalStencil {
     ComputeLower compute_lower_;
     idx_t stencil_width_;
@@ -208,4 +210,5 @@ public:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+}  // namespace grid
 }  // namespace atlas

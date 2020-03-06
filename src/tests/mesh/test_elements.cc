@@ -14,7 +14,6 @@
 
 #include "atlas/field/Field.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/library/Library.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/mesh/ElementType.h"

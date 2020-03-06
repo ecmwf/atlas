@@ -8,8 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file   GaussianLatitudes.h
 /// @author Willem Deconinck
-/// @date Jan 2014
+/// @date   Jan 2014
 
 #pragma once
 

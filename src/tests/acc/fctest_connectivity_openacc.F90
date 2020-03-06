@@ -71,7 +71,7 @@ TEST( test_connectivity )
   field = atlas_Field(atlas_real(8),shape=[20])
   call field%data(values)
   values(:) = 0.
-  call field%clone_to_device()
+  call field%update_device()
 
 
 !$acc data present(values)
@@ -84,11 +84,11 @@ TEST( test_connectivity )
 !$acc end kernels
 !$acc end data
 
-  call field%clone_from_device()
+  call field%update_host()
   FCTEST_CHECK_EQUAL( values(1) , 10._8 )
   FCTEST_CHECK_EQUAL( values(2) , 26._8 )
   values(:) = 0.
-  call field%clone_to_device()
+  call field%update_device()
 
 
   call connectivity%add(2,3, &
@@ -123,9 +123,6 @@ TEST( test_connectivity )
 
   !============= Padded Data pointer access =============!
 
-  call connectivity%data(data,ncols)
-
-
   call connectivity%padded_data(padded,cols)
   FCTEST_CHECK_EQUAL(padded(1,1), 1)
   FCTEST_CHECK_EQUAL(padded(2,1), 2)
@@ -153,13 +150,13 @@ TEST( test_connectivity )
 !$acc end kernels
 !$acc end data
 
-  call field%clone_from_device()
+  call field%update_host()
   FCTEST_CHECK_EQUAL( values(1) , 10._8 )
   FCTEST_CHECK_EQUAL( values(2) , 26._8 )
   FCTEST_CHECK_EQUAL( values(3) , 30._8 )
   FCTEST_CHECK_EQUAL( values(4) , 39._8 )
   values(:) = 0.
-  call field%clone_to_device()
+  call field%update_device()
 
 #endif
   call connectivity%final()
@@ -192,7 +189,7 @@ TEST( test_multiblockconnectivity )
   field = atlas_Field(atlas_real(8),shape=[20])
   call field%data(values)
   values(:) = 0
-  call field%clone_to_device()
+  call field%update_device()
 
   multiblock = atlas_MultiBlockConnectivity()
 
@@ -243,11 +240,11 @@ TEST( test_multiblockconnectivity )
   enddo
 !$acc end kernels
 !$acc end data
-  call field%clone_from_device()
+  call field%update_host()
   FCTEST_CHECK_EQUAL( values(1) , 10._8 )
   FCTEST_CHECK_EQUAL( values(2) , 26._8 )
   values(:) = 0.
-  call field%clone_to_device()
+  call field%update_device()
 
   block = multiblock%block(2_ATLAS_KIND_IDX)
   !FCTEST_CHECK_EQUAL( block%owners(), 2 )
@@ -273,11 +270,11 @@ TEST( test_multiblockconnectivity )
 !$acc end kernels
 !$acc end data
 
-  call field%clone_from_device()
+  call field%update_host()
   FCTEST_CHECK_EQUAL( values(1) , 30._8 )
   FCTEST_CHECK_EQUAL( values(2) , 39._8 )
   values(:) = 0.
-  call field%clone_to_device()
+  call field%update_device()
 
   call block%final()
 
@@ -313,13 +310,13 @@ TEST( test_multiblockconnectivity )
 !$acc end kernels
 !$acc end data
 
-  call field%clone_from_device()
+  call field%update_host()
   FCTEST_CHECK_EQUAL( values(1) , 10._8 )
   FCTEST_CHECK_EQUAL( values(2) , 26._8 )
   FCTEST_CHECK_EQUAL( values(3) , 30._8 )
   FCTEST_CHECK_EQUAL( values(4) , 39._8 )
   values(:) = 0.
-  call field%clone_to_device()
+  call field%update_device()
 
   call multiblock%final()
 

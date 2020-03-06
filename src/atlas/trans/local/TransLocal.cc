@@ -20,11 +20,7 @@
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Matrix.h"
 #include "eckit/log/Bytes.h"
-#if 10000 * ECKIT_MAJOR_VERSION + 100 * ECKIT_MINOR_VERSION < 10400
-#include "eckit/parser/JSON.h"
-#else
 #include "eckit/log/JSON.h"
-#endif
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/array.h"
@@ -1333,6 +1329,7 @@ void TransLocal::invtrans_unstructured( const int truncation, const int nb_field
     free_aligned( scl_fourier_tp );
     free_aligned( fouriertp );
     free_aligned( gp_opt );
+    free_aligned( zfn );
 }
 
 //-----------------------------------------------------------------------------

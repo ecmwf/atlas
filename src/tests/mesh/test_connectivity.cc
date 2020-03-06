@@ -24,13 +24,11 @@ namespace test {
 
 #if ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
-#define INDEX_REF Index
 #define FROM_FORTRAN -1
 #define TO_FORTRAN +1
 #define IN_FORTRAN -1
 #else
 #define FORTRAN_BASE 0
-#define INDEX_REF *
 #define FROM_FORTRAN
 #define TO_FORTRAN
 #define IN_FORTRAN

@@ -15,6 +15,8 @@
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/config/Parametrisation.h"
 
+#include "atlas/library/config.h"
+
 namespace atlas {
 namespace util {
 
@@ -49,11 +51,11 @@ public:
     }
 
     void broadcast();
-    void broadcast( const size_t root );
+    void broadcast( idx_t root );
     void broadcast( Metadata& );
-    void broadcast( Metadata&, const size_t root );
+    void broadcast( Metadata&, idx_t root );
     void broadcast( Metadata& ) const;
-    void broadcast( Metadata&, const size_t root ) const;
+    void broadcast( Metadata&, idx_t root ) const;
 
     size_t footprint() const;
 

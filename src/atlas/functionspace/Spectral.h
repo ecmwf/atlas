@@ -40,7 +40,7 @@ namespace detail {
 
 // -------------------------------------------------------------------
 
-class Spectral : public FunctionSpaceImpl {
+class Spectral : public functionspace::FunctionSpaceImpl {
     /*
   Spectral data is organised as:
      m = zonal wavenumber
@@ -71,7 +71,6 @@ public:
 
     virtual std::string distribution() const override;
 
-    /// @brief Create a spectral field
     using FunctionSpaceImpl::createField;
     virtual Field createField( const eckit::Configuration& ) const override;
     virtual Field createField( const Field&, const eckit::Configuration& ) const override;
@@ -89,7 +88,7 @@ public:
     void norm( const Field&, double norm_per_level[], int rank = 0 ) const;
     void norm( const Field&, std::vector<double>& norm_per_level, int rank = 0 ) const;
 
-    array::LocalView<int, 1, array::Intent::ReadOnly> zonal_wavenumbers() const;  // zero-based, OK
+    array::LocalView<const int, 1> zonal_wavenumbers() const;  // zero-based, OK
 
     idx_t levels() const { return nb_levels_; }
 
@@ -99,14 +98,14 @@ public:
             truncation{fs.truncation()},
             zonal_wavenumbers{fs.zonal_wavenumbers()},
             global{config.getBool( "global", false )},
-            owner{config.getUnsigned( "owner", 0 )} {}
+            owner{config.getInt( "owner", 0 )} {}
 
     protected:
-        using View = const array::LocalView<int, 1, array::Intent::ReadOnly>;
+        using View = const array::LocalView<const int, 1>;
         int truncation;
         View zonal_wavenumbers;
         bool global;
-        size_t owner;
+        idx_t owner;
 
     public:
 #define FunctorArgs( ... )                                                                                             \
@@ -118,7 +117,7 @@ public:
         void operator()( const Functor& f ) const {
             idx_t index = 0;
             if ( global ) {
-                if ( owner == mpi::comm().rank() ) {
+                if ( owner == mpi::rank() ) {
                     atlas_omp_parallel_for( int m = 0; m <= truncation; ++m ) {
                         for ( int n = m; n <= truncation; ++n ) {
                             f( index, index + 1, n, m );
@@ -144,7 +143,7 @@ public:
         void operator()( const Functor& f ) const {
             idx_t index = 0;
             if ( global ) {
-                if ( owner == mpi::comm().rank() ) {
+                if ( owner == mpi::rank() ) {
                     atlas_omp_parallel_for( int m = 0; m <= truncation; ++m ) {
                         for ( int n = m; n <= truncation; ++n ) {
                             f( index, index + 1, n );
@@ -194,10 +193,10 @@ private:  // methods
 
 private:  // Fortran access
     friend struct SpectralFortranAccess;
-    int nump() const;                                                  // equivalent to nmyms().size()
-    array::LocalView<int, 1, array::Intent::ReadOnly> nvalue() const;  // Return wave number n for a given index
-    array::LocalView<int, 1, array::Intent::ReadOnly> nmyms() const;   // Return list of local zonal wavenumbers "m"
-    array::LocalView<int, 1, array::Intent::ReadOnly> nasm0() const;
+    int nump() const;                               // equivalent to nmyms().size()
+    array::LocalView<const int, 1> nvalue() const;  // Return wave number n for a given index
+    array::LocalView<const int, 1> nmyms() const;   // Return list of local zonal wavenumbers "m"
+    array::LocalView<const int, 1> nasm0() const;
 
 private:  // data
     idx_t nb_levels_;
