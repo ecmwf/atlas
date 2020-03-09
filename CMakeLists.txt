@@ -36,6 +36,7 @@ ecbuild_debug( "   eckit_FEATURES : [${eckit_FEATURES}]" )
 ################################################################################
 # Features that can be enabled / disabled with -DENABLE_<FEATURE>
 
+include( features/BOUNDSCHECKING )
 include( features/FORTRAN )
 include( features/MPI )
 include( features/OMP )
