@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "atlas/parallel/HaloExchangeImpl.h"
+#include "atlas/parallel/HaloAdjointExchangeImpl.h"
 #include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -42,7 +43,9 @@ namespace parallel {
 class HaloExchange : public util::Object {
 public:
     HaloExchange();
-    HaloExchange( const std::string& name );
+    HaloExchange( const bool is_adjoint );
+    HaloExchange( const std::string& name, const bool is_adjoint = false );
+
     virtual ~HaloExchange();
 
 public:  // methods
@@ -78,12 +81,20 @@ private:  // methods
                              array::ArrayView<DATA_TYPE, RANK>& hfield, array::ArrayView<DATA_TYPE, RANK>& dfield,
                              const bool on_device ) const;
 
+    template <int ParallelDim, typename DATA_TYPE, int RANK>
+    void zero_halos( const array::ArrayView<DATA_TYPE, RANK>& hfield,
+                     array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer,
+                     int send_buffer_size, const bool on_device ) const;
+
+
+
     template <typename DATA_TYPE, int RANK>
     void var_info( const array::ArrayView<DATA_TYPE, RANK>& arr, std::vector<idx_t>& varstrides,
                    std::vector<idx_t>& varshape ) const;
 
 private:  // data
     std::string name_;
+    bool is_adjoint_;
     bool is_setup_;
 
     int sendcnt_;
@@ -191,6 +202,12 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
             }
         }
     }
+
+    if (is_adjoint_) {
+        zero_halos<parallelDim>( field_hv, field_dv, send_buffer, send_size, on_device );
+    }
+
+
     if ( on_device ) {
         util::delete_devicemem( send_buffer );
         util::delete_devicemem( recv_buffer );
@@ -199,6 +216,7 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
         util::delete_hostmem( send_buffer );
         util::delete_hostmem( recv_buffer );
     }
+
 }
 
 template <int ParallelDim, int RANK>
@@ -224,6 +242,53 @@ struct halo_packer {
     }
 };
 
+template <int ParallelDim, int RANK>
+struct halo_adjoint_packer {
+    template <typename DATA_TYPE>
+    static void unpack( const int recvcnt, array::SVector<int> const& recvmap, const DATA_TYPE* recv_buffer,
+                        int recv_buffer_size, array::ArrayView<DATA_TYPE, RANK>& field ) {
+        idx_t ibuf = 0;
+        for ( int node_cnt = 0; node_cnt < recvcnt; ++node_cnt ) {
+            const idx_t node_idx = recvmap[node_cnt];
+            halo_adjoint_unpacker_impl<ParallelDim, RANK, 0>::apply( ibuf, node_idx, recv_buffer, field );
+        }
+    }
+};
+
+template <int ParallelDim, int RANK>
+struct halo_zeroer {
+    template <typename DATA_TYPE>
+    static void zeroer( const int sendcnt, array::SVector<int> const& sendmap,
+                        array::ArrayView<DATA_TYPE, RANK>& field, DATA_TYPE* send_buffer, int send_buffer_size ) {
+        idx_t ibuf = 0;
+        for ( int node_cnt = 0; node_cnt < sendcnt; ++node_cnt ) {
+            const idx_t node_idx = sendmap[node_cnt];
+            halo_zeroer_impl<ParallelDim, RANK, 0>::apply( ibuf, node_idx, field, send_buffer );
+        }
+    }
+};
+
+
+template <int ParallelDim, typename DATA_TYPE, int RANK>
+void HaloExchange::zero_halos( const array::ArrayView<DATA_TYPE, RANK>& hfield,
+                               array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer,
+                               int send_size, const bool on_device ) const {
+    ATLAS_TRACE();
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+    if ( is_adjoint_ ) {
+       throw_AssertionFailed(
+         "Adjoint halo::halo_zeroer_cuda not implemented for ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA");
+    }
+    if ( on_device ) {
+        halo_zeroer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( sendcnt_, sendmap_, hfield, dfield, send_buffer,
+                                                              send_size );
+    }
+    else
+#endif
+        halo_zeroer<ParallelDim, RANK>::zeroer( sendcnt_, sendmap_, dfield, send_buffer, send_size );
+}
+
+
 template <int ParallelDim, typename DATA_TYPE, int RANK>
 void HaloExchange::pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& hfield,
                                      const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer,
@@ -245,13 +310,21 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE* recv_buffer, int recv_si
                                        array::ArrayView<DATA_TYPE, RANK>& dfield, const bool on_device ) const {
     ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+    if (is_adjoint_) {
+       throw_AssertionFailed(
+         "Adjoint halo::unpack_recv_buffer not implemented for ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA");
+    }
     if ( on_device ) {
         halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack( recvcnt_, recvmap_, recv_buffer, recv_size, hfield,
                                                                 dfield );
     }
     else
 #endif
+    if (is_adjoint_) {
+        halo_adjoint_packer<ParallelDim, RANK>::unpack( recvcnt_, recvmap_, recv_buffer, recv_size, dfield );
+    } else {
         halo_packer<ParallelDim, RANK>::unpack( recvcnt_, recvmap_, recv_buffer, recv_size, dfield );
+    }
 }
 
 // template<typename DATA_TYPE>
