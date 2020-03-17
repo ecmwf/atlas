@@ -363,12 +363,12 @@ void test_rank1_adj_test( Fixture& f ) {
       array::make_host_view<POD, 2>( arr_init );
     array::ArrayView<POD, 2> arrv = array::make_host_view<POD, 2>( arr );
     for (std::size_t j = 0; j < static_cast<std::size_t>(f.N); ++j ) {
-        arrv_init( j, 0 ) = ( static_cast<size_t>( f.part[j] )
+        arrv_init( j, 0ul ) = ( static_cast<size_t>( f.part[j] )
                          != mpi::comm().rank() ? 0 : f.gidx[j] * 10 );
-        arrv_init( j, 1 ) = ( static_cast<size_t>( f.part[j] )
+        arrv_init( j, 1ul ) = ( static_cast<size_t>( f.part[j] )
                          != mpi::comm().rank() ? 0 : f.gidx[j] * 100 );
-        arrv( j, 0 ) = arrv_init( j, 0 );
-        arrv( j, 1 ) = arrv_init( j, 1 );
+        arrv( j, 0ul ) = arrv_init( j, 0ul );
+        arrv( j, 1ul ) = arrv_init( j, 1ul );
     }
 
     arr.syncHostDevice();
@@ -492,14 +492,14 @@ void test_rank1_strided_v1_adj_test( Fixture& f ) {
       array::make_host_view<POD, 2>( arr_t );
 
     for (std::size_t j = 0; j < static_cast<size_t>(f.N); ++j ) {
-        arrv_init_t( j, 0 ) =
+        arrv_init_t( j, 0ul ) =
           ( static_cast<size_t>( f.part[j] )
             != mpi::comm().rank() ? 0 : f.gidx[j] * 10 );
-        arrv_init_t( j, 1 ) =
+        arrv_init_t( j, 1ul ) =
           ( static_cast<size_t>( f.part[j] )
             != mpi::comm().rank() ? 0 : f.gidx[j] * 100 );
-        arrv_t( j, 0 ) =  arrv_init_t( j, 0 );
-        arrv_t( j, 1 ) =  arrv_init_t( j, 1 );
+        arrv_t( j, 0ul ) =  arrv_init_t( j, 0ul );
+        arrv_t( j, 1ul ) =  arrv_init_t( j, 1ul );
     }
 
     arr_init_t.syncHostDevice();
@@ -637,12 +637,12 @@ void test_rank1_strided_v2_adj_test( Fixture& f ) {
     array::ArrayT<POD> arr_t( f.N, 2 );
     array::ArrayView<POD, 2> arrv_t = array::make_host_view<POD, 2>( arr_t );
     for ( std::size_t j = 0; j < static_cast<size_t>(f.N); ++j ) {
-        arrv_init_t( j, 0 ) = ( static_cast<size_t>( f.part[j] )
+        arrv_init_t( j, 0ul ) = ( static_cast<size_t>( f.part[j] )
                                 != mpi::comm().rank() ? 0 : f.gidx[j] * 10 );
-        arrv_init_t( j, 1 ) = ( static_cast<size_t>( f.part[j] )
+        arrv_init_t( j, 1ul ) = ( static_cast<size_t>( f.part[j] )
                                 != mpi::comm().rank() ? 0 : f.gidx[j] * 100 );
-        arrv_t( j, 0 ) =  arrv_init_t( j, 0 );
-        arrv_t( j, 1 ) =  arrv_init_t( j, 1 );
+        arrv_t( j, 0ul ) =  arrv_init_t( j, 0ul );
+        arrv_t( j, 1ul ) =  arrv_init_t( j, 1ul );
     }
 
     arr_init_t.syncHostDevice();
@@ -1163,7 +1163,7 @@ void test_rank2_v2( Fixture& f ) {
                            -5, 10, -50,100, -500,1000,   // core
                            -6, 12, -60,120, -600,1200,   // core
                            -7,  0, -70,  0, -700,   0,   // halo
-                           -8,  0, -80,  0, -800,   0;   // halo
+                           -8,  0, -80,  0, -800,   0};   // halo
             validate<POD, 3>::apply( arrv_t, arr_c );
             break;
         }
@@ -1343,14 +1343,14 @@ void test_rank1_paralleldim1_adj_test( Fixture& f ) {
     array::ArrayT<POD> arr( 2, f.N );
     array::ArrayView<POD, 2> arrv = array::make_view<POD, 2>( arr );
     for ( std::size_t j = 0; j < static_cast<std::size_t>(f.N); ++j ) {
-        arrv_init( 0, j ) =
+        arrv_init( 0ul, j ) =
             ( static_cast<std::size_t>( f.part[j] ) !=
               mpi::comm().rank() ? 0 : f.gidx[j] * 10 );
-        arrv_init( 1, j ) =
+        arrv_init( 1ul, j ) =
             ( static_cast<std::size_t>( f.part[j] ) !=
               mpi::comm().rank() ? 0 : f.gidx[j] * 100 );
-        arrv( 0, j ) = arrv_init( 0, j );
-        arrv( 1, j ) = arrv_init( 1, j );
+        arrv( 0ul, j ) = arrv_init( 0ul, j );
+        arrv( 1ul, j ) = arrv_init( 1ul, j );
     }
 
     f.halo_exchange_std->execute<POD, 2, array::LastDim>( arr, false );
@@ -1536,7 +1536,7 @@ void test_rank1_cinterface( Fixture& f ) {
     int shapes[2]  = {(int)arrv.shape( 0 ), (int)arrv.shape( 1 )};
     int strides[2] = {(int)arrv.stride( 0 ), (int)arrv.stride( 1 )};
 
-    atlas__HaloExchange__execute_strided_double( &( f.halo_exchange_adj), arrv.data(),
+    atlas__HaloExchange__execute_strided_double( f.halo_exchange_adj.get(), arrv.data(),
                                                  &( strides[1] ), &( shapes[1] ),
                                                  1 );
 
