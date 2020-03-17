@@ -275,13 +275,9 @@ void HaloExchange::zero_halos( const array::ArrayView<DATA_TYPE, RANK>& hfield,
                                int send_size, const bool on_device ) const {
     ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    if ( is_adjoint_ ) {
-       throw_AssertionFailed(
-         "Adjoint halo::halo_zeroer_cuda not implemented for ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA");
-    }
     if ( on_device ) {
-        halo_zeroer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( sendcnt_, sendmap_, hfield, dfield, send_buffer,
-                                                              send_size );
+        throw_AssertionFailed(
+           "halo_zeroer not implemented for ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA");
     }
     else
 #endif
