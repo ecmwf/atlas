@@ -40,7 +40,7 @@ void NearestNeighbour::setup( const Grid& source, const Grid& target ) {
     auto functionspace = []( const Grid& grid ) -> FunctionSpace {
         Mesh mesh;
         if ( StructuredGrid( grid ) ) {
-            mesh = MeshGenerator( "structured", util::Config( "three_dimensional" ) ).generate( grid );
+            mesh = MeshGenerator( "structured", util::Config( "3d", true ) ).generate( grid );
         }
         else {
             mesh = MeshGenerator( "delaunay" ).generate( grid );
