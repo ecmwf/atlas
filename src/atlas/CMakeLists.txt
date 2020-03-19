@@ -598,6 +598,7 @@ util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
 util/vector.h
+util/VectorOfAbstract.h
 util/detail/BlackMagic.h
 util/detail/Cache.h
 util/detail/Debug.h

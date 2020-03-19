@@ -483,7 +483,7 @@ private:
 };
 
 
-const std::vector<util::PartitionPolygon*>& StructuredColumns::polygons() const {
+const atlas::util::PartitionPolygons& StructuredColumns::polygons() const {
     if ( polygons_.size() ) {
         return polygons_;
     }
@@ -530,9 +530,6 @@ const std::vector<util::PartitionPolygon*>& StructuredColumns::polygons() const 
 // Destructor
 // ----------------------------------------------------------------------------
 StructuredColumns::~StructuredColumns() {
-    for ( auto p : polygons_ ) {
-        delete p;
-    }
     delete grid_;
 }
 // ----------------------------------------------------------------------------

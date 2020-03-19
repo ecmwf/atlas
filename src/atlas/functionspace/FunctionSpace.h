@@ -11,7 +11,6 @@
 #pragma once
 
 #include <string>
-#include <vector>
 
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
@@ -28,7 +27,8 @@ class FunctionSpaceImpl;
 }
 namespace util {
 class PartitionPolygon;
-}
+class PartitionPolygons;
+}  // namespace util
 }  // namespace atlas
 
 namespace atlas {
@@ -61,7 +61,7 @@ public:
 
     const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
 
-    const std::vector<util::PartitionPolygon*>& polygons() const;
+    const util::PartitionPolygons& polygons() const;
 
     idx_t nb_partitions() const;
 

@@ -34,23 +34,29 @@ public:
     template <typename PointContainer, enable_if_not_polygon<PointContainer> = 0>
     LonLatPolygon( const PointContainer& points, bool removeAlignedPoints = true );
 
-    // -- Overridden methods
-
-    /*
-   * Point-in-polygon test based on winding number
-   * @note reference <a
-   * href="http://geomalgorithms.com/a03-_inclusion.html">Inclusion of a Point
-   * in a Polygon</a>
-   * @param[in] P given point
-   * @return if point is in polygon
-   */
-    bool contains( const Point2& P ) const;
+    /// @brief Point-in-polygon test based on winding number
+    /// @note reference <a href="http://geomalgorithms.com/a03-_inclusion.html">Inclusion of a Point in a Polygon</a>
+    /// @param[in] P given point
+    /// @return if point is in polygon
+    bool contains( const Point2& P ) const override;
 
 private:
     PointLonLat centroid_;
     double inner_radius_squared_{0};
     PointLonLat inner_coordinatesMin_;
     PointLonLat inner_coordinatesMax_;
+};
+
+//------------------------------------------------------------------------------------------------------
+
+class LonLatPolygons : public VectorOfAbstract<PolygonCoordinates> {
+public:
+    LonLatPolygons( const PartitionPolygons& partition_polygons ) {
+        reserve( partition_polygons.size() );
+        for ( auto& partition_polygon : partition_polygons ) {
+            emplace_back( new LonLatPolygon( partition_polygon ) );
+        }
+    }
 };
 
 //------------------------------------------------------------------------------------------------------

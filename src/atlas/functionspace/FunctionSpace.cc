@@ -66,7 +66,7 @@ const util::PartitionPolygon& FunctionSpace::polygon( idx_t halo ) const {
     return get()->polygon( halo );
 }
 
-const std::vector<util::PartitionPolygon*>& FunctionSpace::polygons() const {
+const util::PartitionPolygons& FunctionSpace::polygons() const {
     return get()->polygons();
 }
 

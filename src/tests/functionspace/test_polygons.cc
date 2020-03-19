@@ -29,21 +29,27 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 CASE( "test_polygons" ) {
-    size_t root          = 0;
     std::string gridname = eckit::Resource<std::string>( "--grid", "O32" );
     Grid grid( gridname );
     functionspace::StructuredColumns fs( grid );
 
-    auto lonlat_polygons = []( const functionspace::StructuredColumns& fs ) {
-        const auto& polygons = fs.polygons();
-        std::vector<std::unique_ptr<util::LonLatPolygon>> ll_poly( polygons.size() );
-        for ( idx_t p = 0; p < polygons.size(); ++p ) {
-            ll_poly[p].reset( new util::LonLatPolygon( *polygons[p] ) );
-        }
-        return ll_poly;
-    };
+    auto polygons = util::LonLatPolygons( fs.polygons() );
 
-    auto polygons = lonlat_polygons( fs );
+    std::vector<int> sizes( mpi::size() );
+    std::vector<int> simplified_sizes( mpi::size() );
+    for ( idx_t i = 0; i < mpi::size(); ++i ) {
+        sizes[i]            = fs.polygons()[i].size();
+        simplified_sizes[i] = polygons[i].size();
+    }
+
+    // Test iterator:
+    for ( auto& polygon : fs.polygons() ) {
+        Log::info() << "size of polygon = " << polygon.size() << std::endl;
+    }
+
+    for ( auto& polygon : polygons ) {
+        Log::info() << "size of lonlatpolygon = " << polygon.size() << std::endl;
+    }
 
     auto points = std::vector<PointLonLat>{
         {45., 75.},  {90., 75.},  {135., 75.},  {180., 75.},  {225., 75.},  {270., 75.},  {315., 75.},
@@ -52,10 +58,13 @@ CASE( "test_polygons" ) {
     };
 
     std::vector<int> part( points.size() );
-    for ( idx_t n = 0; n < points.size(); ++n ) {
+    for ( size_t n = 0; n < points.size(); ++n ) {
         Log::debug() << n << "  " << points[n];
+
+        // A brute force approach.
+        // This could be enhanced by a kd-tree search to nearest polygon centroid
         for ( idx_t p = 0; p < polygons.size(); ++p ) {
-            if ( polygons[p]->contains( points[n] ) ) {
+            if ( polygons[p].contains( points[n] ) ) {
                 Log::debug() << " : " << p;
                 part[n] = p;
             }
@@ -63,9 +72,23 @@ CASE( "test_polygons" ) {
         Log::debug() << std::endl;
     }
 
-    if ( mpi::size() == 4 ) {
-        auto expected_part = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
+    if ( mpi::size() == 1 ) {
+        auto expected_part  = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        auto expected_sizes = std::vector<int>{132};
+        auto expected_simplified_sizes = std::vector<int>{5};
+
         EXPECT( part == expected_part );
+        EXPECT( sizes == expected_sizes );
+        EXPECT( simplified_sizes == expected_simplified_sizes );
+    }
+    if ( mpi::size() == 4 ) {
+        auto expected_part  = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
+        auto expected_sizes = std::vector<int>{50, 84, 84, 50};
+        auto expected_simplified_sizes = std::vector<int>{7, 43, 43, 7};
+
+        EXPECT( part == expected_part );
+        EXPECT( sizes == expected_sizes );
+        EXPECT( simplified_sizes == expected_simplified_sizes );
     }
 }
 

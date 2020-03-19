@@ -16,6 +16,7 @@
 #pragma once
 
 #include <iosfwd>
+#include <memory>
 #include <set>
 #include <utility>
 #include <vector>
@@ -24,6 +25,7 @@
 #include "atlas/util/Config.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/Point.h"
+#include "atlas/util/VectorOfAbstract.h"
 
 namespace eckit {
 class PathName;
@@ -111,6 +113,10 @@ public:
 
 //------------------------------------------------------------------------------------------------------
 
+class PartitionPolygons : public VectorOfAbstract<PartitionPolygon> {};
+
+//------------------------------------------------------------------------------------------------------
+
 class PolygonCoordinates {
 public:
     // -- Constructors
@@ -129,15 +135,15 @@ public:
 
     // -- Methods
 
-    /*
-   * Point-in-partition test
-   * @param[in] P given point
-   * @return if point is in polygon
-   */
+    /// @brief Point-in-partition test
+    /// @param[in] P given point
+    /// @return if point is in polygon
     virtual bool contains( const Point2& P ) const = 0;
 
     const Point2& coordinatesMax() const;
     const Point2& coordinatesMin() const;
+
+    idx_t size() const { return coordinates_.size(); }
 
 protected:
     // -- Members

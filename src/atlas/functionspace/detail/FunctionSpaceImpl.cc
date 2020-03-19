@@ -49,7 +49,7 @@ const util::PartitionPolygon& FunctionSpaceImpl::polygon( idx_t halo ) const {
     throw_Exception( "polygon() not implemented in derived class", Here() );
 }
 
-const std::vector<util::PartitionPolygon*>& FunctionSpaceImpl::polygons() const {
+const util::PartitionPolygons& FunctionSpaceImpl::polygons() const {
     throw_Exception( "polygons() not implemented in derived class", Here() );
 }
 

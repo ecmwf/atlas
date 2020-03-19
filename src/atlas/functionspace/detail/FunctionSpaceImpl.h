@@ -28,6 +28,7 @@ class Field;
 namespace util {
 class Metadata;
 class PartitionPolygon;
+class PartitionPolygons;
 }  // namespace util
 }  // namespace atlas
 
@@ -79,7 +80,7 @@ public:
 
     virtual const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
 
-    virtual const std::vector<util::PartitionPolygon*>& polygons() const;
+    virtual const util::PartitionPolygons& polygons() const;
 
 private:
     util::Metadata* metadata_;
