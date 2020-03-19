@@ -403,11 +403,11 @@ CASE( "test_structured_from_config" ) {
     }() );
     StructuredGrid g{config};
     for ( idx_t j = 0; j < g.ny(); ++j ) {
-        EXPECT_EQ( g.nx(j) , 40 );
-        EXPECT_EQ( g.x(0,j), 5. );
-        EXPECT_EQ( g.x(g.nx(j),j), 365.);
-        EXPECT_EQ( g.dx(j), 9.);
-        EXPECT_EQ( g.xmin(j), 5.);
+        EXPECT_EQ( g.nx( j ), 40 );
+        EXPECT_EQ( g.x( 0, j ), 5. );
+        EXPECT_EQ( g.x( g.nx( j ), j ), 365. );
+        EXPECT_EQ( g.dx( j ), 9. );
+        EXPECT_EQ( g.xmin( j ), 5. );
     }
     EXPECT( not g.domain().global() );
 }
