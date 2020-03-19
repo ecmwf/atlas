@@ -142,6 +142,7 @@ public:
 
     const Point2& coordinatesMax() const;
     const Point2& coordinatesMin() const;
+    const Point2& centroid() const;
 
     idx_t size() const { return coordinates_.size(); }
 
@@ -150,6 +151,7 @@ protected:
 
     Point2 coordinatesMin_;
     Point2 coordinatesMax_;
+    Point2 centroid_;
     std::vector<Point2> coordinates_;
 };
 

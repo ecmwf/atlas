@@ -61,6 +61,7 @@ public:
     const_iterator begin() const { return make_dereference_iterator( container_.begin() ); }
     const_iterator end() const { return make_dereference_iterator( container_.end() ); }
     const_reference operator[]( idx_t i ) const { return *container_[i]; }
+    const_reference at( idx_t i ) const { return *container_[i]; }
     idx_t size() const { return container_.size(); }
     void reserve( size_t size ) { container_.reserve( size ); }
     template <typename... Args>

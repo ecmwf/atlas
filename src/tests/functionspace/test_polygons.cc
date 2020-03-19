@@ -19,7 +19,6 @@
 
 #include "tests/AtlasTestEnvironment.h"
 
-using namespace eckit;
 using namespace atlas::functionspace;
 using namespace atlas::util;
 
@@ -33,6 +32,7 @@ CASE( "test_polygons" ) {
     Grid grid( gridname );
     functionspace::StructuredColumns fs( grid );
 
+    ATLAS_TRACE( "computations after setup" );
     auto polygons = util::LonLatPolygons( fs.polygons() );
 
     std::vector<int> sizes( mpi::size() );
@@ -72,7 +72,7 @@ CASE( "test_polygons" ) {
         Log::debug() << std::endl;
     }
 
-    if ( mpi::size() == 1 ) {
+    if ( mpi::size() == 1 && gridname == "O32" ) {
         auto expected_part  = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         auto expected_sizes = std::vector<int>{132};
         auto expected_simplified_sizes = std::vector<int>{5};
@@ -81,7 +81,7 @@ CASE( "test_polygons" ) {
         EXPECT( sizes == expected_sizes );
         EXPECT( simplified_sizes == expected_simplified_sizes );
     }
-    if ( mpi::size() == 4 ) {
+    if ( mpi::size() == 4 && gridname == "O32" ) {
         auto expected_part  = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
         auto expected_sizes = std::vector<int>{50, 84, 84, 50};
         auto expected_simplified_sizes = std::vector<int>{7, 43, 43, 7};
@@ -90,6 +90,11 @@ CASE( "test_polygons" ) {
         EXPECT( sizes == expected_sizes );
         EXPECT( simplified_sizes == expected_simplified_sizes );
     }
+
+    for ( size_t n = 0; n < points.size(); ++n ) {
+        EXPECT_EQ( polygons.findPartition( points[n] ), part[n] );
+    }
+    Log::info() << std::endl;
 }
 
 //-----------------------------------------------------------------------------

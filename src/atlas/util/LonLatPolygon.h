@@ -12,6 +12,7 @@
 
 #include <type_traits>
 
+#include "atlas/util/KDTree.h"
 #include "atlas/util/Polygon.h"
 
 namespace atlas {
@@ -20,6 +21,7 @@ namespace util {
 
 //------------------------------------------------------------------------------------------------------
 
+/// @brief Implement PolygonCoordinates::contains for a polygon defined in LonLat space.
 class LonLatPolygon : public PolygonCoordinates {
 private:
     template <typename PointContainer>
@@ -47,8 +49,10 @@ private:
     PointLonLat inner_coordinatesMax_;
 };
 
+
 //------------------------------------------------------------------------------------------------------
 
+/// @brief Vector of all polygons with functionality to find partition using a KDTree
 class LonLatPolygons : public VectorOfAbstract<PolygonCoordinates> {
 public:
     LonLatPolygons( const PartitionPolygons& partition_polygons ) {
@@ -56,7 +60,32 @@ public:
         for ( auto& partition_polygon : partition_polygons ) {
             emplace_back( new LonLatPolygon( partition_polygon ) );
         }
+        search_.reserve( size() );
+        for ( idx_t p = 0; p < size(); ++p ) {
+            search_.insert( this->at( p ).centroid(), p );
+        }
+        search_.build();
+        k_ = std::min( k_, size() );
     }
+
+    /// @brief find the partition that holds the point (lon,lat)
+    idx_t findPartition( const Point2& point ) {
+        const auto found = search_.kNearestNeighbours( point, k_ );
+        idx_t partition{-1};
+        for ( size_t i = 0; i < found.size(); ++i ) {
+            idx_t ii = found[i].payload();
+            if ( this->at( ii ).contains( point ) ) {
+                partition = ii;
+                break;
+            }
+        }
+        ASSERT( partition >= 0 );
+        return partition;
+    }
+
+private:
+    KDTree<idx_t> search_;
+    idx_t k_{4};
 };
 
 //------------------------------------------------------------------------------------------------------

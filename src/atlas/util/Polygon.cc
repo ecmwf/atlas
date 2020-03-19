@@ -137,6 +137,7 @@ PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field&
 
     size_t nb_removed_points_due_to_alignment = 0;
 
+
     for ( size_t i = 0; i < poly.size(); ++i ) {
         Point2 A( coord( poly[i], XX ), coord( poly[i], YY ) );
         coordinatesMin_ = Point2::componentsMin( coordinatesMin_, A );
@@ -169,10 +170,15 @@ PolygonCoordinates::PolygonCoordinates( const PointContainer& points ) {
 
     coordinatesMin_ = coordinates_.front();
     coordinatesMax_ = coordinatesMin_;
+    centroid_       = Point2{0., 0.};
     for ( const Point2& P : coordinates_ ) {
         coordinatesMin_ = Point2::componentsMin( coordinatesMin_, P );
         coordinatesMax_ = Point2::componentsMax( coordinatesMax_, P );
+        centroid_[XX] += P[XX];
+        centroid_[YY] += P[YY];
     }
+    centroid_[XX] /= coordinates_.size();
+    centroid_[YY] /= coordinates_.size();
 }
 
 template <typename PointContainer>
@@ -180,8 +186,9 @@ PolygonCoordinates::PolygonCoordinates( const PointContainer& points, bool remov
     coordinates_.clear();
     coordinates_.reserve( points.size() );
 
-    coordinatesMin_ = Point2( std::numeric_limits<double>::max(), std::numeric_limits<double>::max() );
-    coordinatesMax_ = Point2( std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest() );
+    coordinatesMin_ = Point2{std::numeric_limits<double>::max(), std::numeric_limits<double>::max()};
+    coordinatesMax_ = Point2{std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest()};
+    centroid_       = Point2{0., 0.};
 
     size_t nb_removed_points_due_to_alignment = 0;
 
@@ -189,6 +196,8 @@ PolygonCoordinates::PolygonCoordinates( const PointContainer& points, bool remov
         const Point2& A = points[i];
         coordinatesMin_ = Point2::componentsMin( coordinatesMin_, A );
         coordinatesMax_ = Point2::componentsMax( coordinatesMax_, A );
+        centroid_[XX] += A[XX];
+        centroid_[YY] += A[YY];
 
         // if new point is aligned with existing edge (cross product ~= 0) make the
         // edge longer
@@ -203,6 +212,8 @@ PolygonCoordinates::PolygonCoordinates( const PointContainer& points, bool remov
         }
         coordinates_.emplace_back( A );
     }
+    centroid_[XX] /= points.size();
+    centroid_[YY] /= points.size();
 
     ATLAS_ASSERT( coordinates_.size() > 2 );
     ATLAS_ASSERT( eckit::geometry::points_equal( coordinates_.front(), coordinates_.back() ) );
@@ -225,6 +236,10 @@ const Point2& PolygonCoordinates::coordinatesMax() const {
 
 const Point2& PolygonCoordinates::coordinatesMin() const {
     return coordinatesMin_;
+}
+
+const Point2& PolygonCoordinates::centroid() const {
+    return centroid_;
 }
 
 //------------------------------------------------------------------------------------------------------

@@ -584,6 +584,7 @@ util/Constants.h
 util/Earth.h
 util/GaussianLatitudes.cc
 util/GaussianLatitudes.h
+util/KDTree.h
 util/LonLatPolygon.cc
 util/LonLatPolygon.h
 util/Metadata.cc
