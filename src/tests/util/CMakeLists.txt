@@ -56,3 +56,8 @@ ecbuild_add_test( TARGET atlas_test_metadata
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_kdtree
+  SOURCES  test_kdtree.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)

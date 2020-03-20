@@ -470,7 +470,8 @@ util::Polygon::edge_set_t compute_edges( idx_t points_size ) {
 
 class SimplePolygon : public util::PartitionPolygon {
 public:
-    explicit SimplePolygon( const std::vector<Point2>& points ) : points_( points ) {
+    explicit SimplePolygon( std::vector<Point2>&& points ) :
+        points_( std::move(points) ) {
         setup( compute_edges( points_.size() ) );
     }
 

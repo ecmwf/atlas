@@ -16,6 +16,7 @@
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/LonLatPolygon.h"
+#include "atlas/util/PolygonLocator.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -25,12 +26,34 @@ using namespace atlas::util;
 namespace atlas {
 namespace test {
 
+namespace {
+std::string gridname() {
+    static std::string _gridname = eckit::Resource<std::string>( "--grid", "O32" );
+    return _gridname;
+}
+
+FunctionSpace functionspace() {
+    static functionspace::StructuredColumns _fs = []() {
+        Grid grid( gridname() );
+        return functionspace::StructuredColumns{grid};
+    }();
+    return _fs;
+}
+
+std::vector<PointLonLat>& points() {
+    static std::vector<PointLonLat> _points{
+        {45., 75.},  {90., 75.},  {135., 75.},  {180., 75.},  {225., 75.},  {270., 75.},  {315., 75.},
+        {45., 15.},  {90., 15.},  {135., 15.},  {180., 15.},  {225., 15.},  {270., 15.},  {315., 15.},
+        {45., -75.}, {90., -75.}, {135., -75.}, {180., -75.}, {225., -75.}, {270., -75.}, {315., -75.},
+    };
+    return _points;
+}
+}  // namespace
+
 //-----------------------------------------------------------------------------
 
 CASE( "test_polygons" ) {
-    std::string gridname = eckit::Resource<std::string>( "--grid", "O32" );
-    Grid grid( gridname );
-    functionspace::StructuredColumns fs( grid );
+    auto fs = functionspace();
 
     ATLAS_TRACE( "computations after setup" );
     auto polygons = util::LonLatPolygons( fs.polygons() );
@@ -51,20 +74,14 @@ CASE( "test_polygons" ) {
         Log::info() << "size of lonlatpolygon = " << polygon.size() << std::endl;
     }
 
-    auto points = std::vector<PointLonLat>{
-        {45., 75.},  {90., 75.},  {135., 75.},  {180., 75.},  {225., 75.},  {270., 75.},  {315., 75.},
-        {45., 15.},  {90., 15.},  {135., 15.},  {180., 15.},  {225., 15.},  {270., 15.},  {315., 15.},
-        {45., -75.}, {90., -75.}, {135., -75.}, {180., -75.}, {225., -75.}, {270., -75.}, {315., -75.},
-    };
-
-    std::vector<int> part( points.size() );
-    for ( size_t n = 0; n < points.size(); ++n ) {
-        Log::debug() << n << "  " << points[n];
+    std::vector<int> part( points().size() );
+    for ( size_t n = 0; n < points().size(); ++n ) {
+        Log::debug() << n << "  " << points()[n];
 
         // A brute force approach.
         // This could be enhanced by a kd-tree search to nearest polygon centroid
         for ( idx_t p = 0; p < polygons.size(); ++p ) {
-            if ( polygons[p].contains( points[n] ) ) {
+            if ( polygons[p].contains( points()[n] ) ) {
                 Log::debug() << " : " << p;
                 part[n] = p;
             }
@@ -72,7 +89,7 @@ CASE( "test_polygons" ) {
         Log::debug() << std::endl;
     }
 
-    if ( mpi::size() == 1 && gridname == "O32" ) {
+    if ( mpi::size() == 1 && gridname() == "O32" ) {
         auto expected_part  = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         auto expected_sizes = std::vector<int>{132};
         auto expected_simplified_sizes = std::vector<int>{5};
@@ -81,7 +98,7 @@ CASE( "test_polygons" ) {
         EXPECT( sizes == expected_sizes );
         EXPECT( simplified_sizes == expected_simplified_sizes );
     }
-    if ( mpi::size() == 4 && gridname == "O32" ) {
+    if ( mpi::size() == 4 && gridname() == "O32" ) {
         auto expected_part  = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
         auto expected_sizes = std::vector<int>{50, 84, 84, 50};
         auto expected_simplified_sizes = std::vector<int>{7, 43, 43, 7};
@@ -91,10 +108,31 @@ CASE( "test_polygons" ) {
         EXPECT( simplified_sizes == expected_simplified_sizes );
     }
 
-    for ( size_t n = 0; n < points.size(); ++n ) {
-        EXPECT_EQ( polygons.findPartition( points[n] ), part[n] );
+    PolygonLocator find_partition( polygons );
+    for ( size_t n = 0; n < points().size(); ++n ) {
+        EXPECT_EQ( find_partition( points()[n] ), part[n] );
     }
     Log::info() << std::endl;
+}
+
+CASE( "test_polygon_locator_from_const_ref_polygons" ) {
+    auto polygons = LonLatPolygons{functionspace().polygons()};
+    PolygonLocator find_partition( polygons );
+    EXPECT_EQ( find_partition( PointLonLat{0., 90.} ), 0 );
+    EXPECT_EQ( find_partition( PointLonLat{0., -90.} ), mpi::size() - 1 );
+}
+
+CASE( "test_polygon_locator_from_move" ) {
+    PolygonLocator find_partition( LonLatPolygons{functionspace().polygons()} );
+    EXPECT_EQ( find_partition( PointLonLat{0., 90.} ), 0 );
+    EXPECT_EQ( find_partition( PointLonLat{0., -90.} ), mpi::size() - 1 );
+}
+
+CASE( "test_polygon_locator_from_shared" ) {
+    auto polygons = std::make_shared<LonLatPolygons>( functionspace().polygons() );
+    PolygonLocator find_partition( polygons );
+    EXPECT_EQ( find_partition( PointLonLat{0., 90.} ), 0 );
+    EXPECT_EQ( find_partition( PointLonLat{0., -90.} ), mpi::size() - 1 );
 }
 
 //-----------------------------------------------------------------------------

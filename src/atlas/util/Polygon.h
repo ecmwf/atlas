@@ -119,6 +119,7 @@ class PartitionPolygons : public VectorOfAbstract<PartitionPolygon> {};
 
 class PolygonCoordinates {
 public:
+    using Vector = VectorOfAbstract<PolygonCoordinates>;
     // -- Constructors
 
     PolygonCoordinates( const Polygon&, const atlas::Field& coordinates, bool removeAlignedPoints );

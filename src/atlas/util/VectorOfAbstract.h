@@ -58,6 +58,9 @@ public:
     using const_iterator  = DereferenceIterator<typename container_type::const_iterator>;
 
 public:
+    VectorOfAbstract() = default;
+    VectorOfAbstract( VectorOfAbstract&& other ) : container_( std::move( other.container_ ) ) {}
+
     const_iterator begin() const { return make_dereference_iterator( container_.begin() ); }
     const_iterator end() const { return make_dereference_iterator( container_.end() ); }
     const_reference operator[]( idx_t i ) const { return *container_[i]; }
