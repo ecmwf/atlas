@@ -66,14 +66,25 @@ public:  // methods
 
 private:  // methods
 
+    /*   Marek Note I can't see these used!
     void create_mappings( std::vector<int>& send_map, std::vector<int>& recv_map, idx_t nb_vars ) const;
 
     template <int N, int P>
     void create_mappings_impl( std::vector<int>& send_map, std::vector<int>& recv_map, idx_t nb_vars ) const;
+    */
 
     idx_t index( idx_t i, idx_t j, idx_t k, idx_t ni, idx_t nj, idx_t nk ) const { return ( i + ni * ( j + nj * k ) ); }
 
     idx_t index( idx_t i, idx_t j, idx_t ni, idx_t nj ) const { return ( i + ni * j ); }
+
+    template <typename DATA_TYPE>
+    void execute_setup(
+        const idx_t var_size,
+        std::vector<int> & send_counts, std::vector<int> & recv_counts,
+        std::vector<int> & send_displs, std::vector<int> & recv_displs ) const;
+
+    template <typename DATA_TYPE>
+    DATA_TYPE* allocate_buffer(const int buffer_size, const bool on_device) const;
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
     void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& hfield,
@@ -129,47 +140,29 @@ public:
 
 template <typename DATA_TYPE, int RANK, typename ParallelDim>
 void HaloExchange::execute( array::Array& field, bool on_device ) const {
-    if ( !is_setup_ ) {
-        throw_Exception( "HaloExchange was not setup", Here() );
-    }
 
     ATLAS_TRACE( "HaloExchange", {"halo-exchange"} );
 
     auto field_hv = array::make_host_view<DATA_TYPE, RANK>( field );
-
-    int tag                   = 1;
-    constexpr int parallelDim = array::get_parallel_dim<ParallelDim>( field_hv );
-    idx_t var_size            = array::get_var_size<parallelDim>( field_hv );
-    int send_size             = sendcnt_ * var_size;
-    int recv_size             = recvcnt_ * var_size;
-
-    DATA_TYPE* send_buffer{nullptr};
-    DATA_TYPE* recv_buffer{nullptr};
-    if ( on_device ) {
-        util::allocate_devicemem( send_buffer, send_size );
-        util::allocate_devicemem( recv_buffer, recv_size );
-    }
-    else {
-        util::allocate_hostmem( send_buffer, send_size );
-        util::allocate_hostmem( recv_buffer, recv_size );
-    }
-    std::vector<int> send_displs( nproc );
-    std::vector<int> recv_displs( nproc );
-    std::vector<int> send_counts( nproc );
-    std::vector<int> recv_counts( nproc );
-
-    std::vector<eckit::mpi::Request> send_req( nproc );
-    std::vector<eckit::mpi::Request> recv_req( nproc );
-
-    for ( int jproc = 0; jproc < nproc; ++jproc ) {
-        send_counts[jproc] = sendcounts_[jproc] * var_size;
-        recv_counts[jproc] = recvcounts_[jproc] * var_size;
-        send_displs[jproc] = senddispls_[jproc] * var_size;
-        recv_displs[jproc] = recvdispls_[jproc] * var_size;
-    }
-
     auto field_dv =
-        on_device ? array::make_device_view<DATA_TYPE, RANK>( field ) : array::make_host_view<DATA_TYPE, RANK>( field );
+        on_device ? array::make_device_view<DATA_TYPE, RANK>( field ) :
+        array::make_host_view<DATA_TYPE, RANK>( field );
+
+    constexpr int parallelDim = array::get_parallel_dim<ParallelDim>( field_hv );
+    idx_t var_size = array::get_var_size<parallelDim>( field_hv );
+
+    int tag(1), send_size, recv_size;
+    std::size_t  nproc_loc(static_cast<std::size_t>(nproc));
+    std::vector<int> send_counts(nproc_loc), recv_counts(nproc_loc);
+    std::vector<int> send_displs(nproc_loc), recv_displs(nproc_loc);
+    std::vector<eckit::mpi::Request> send_req(nproc_loc), recv_req(nproc_loc);
+
+    DATA_TYPE* send_buffer = allocate_buffer<DATA_TYPE>(sendcnt_ * var_size, on_device);
+    DATA_TYPE* recv_buffer = allocate_buffer<DATA_TYPE>(recvcnt_ * var_size, on_device);
+
+    execute_setup<DATA_TYPE>(var_size,
+                             send_counts, recv_counts,
+                             send_displs, recv_displs);
 
     ATLAS_TRACE_MPI( IRECEIVE ) {
         /// Let MPI know what we like to receive
@@ -231,7 +224,7 @@ void HaloExchange::execute_adjoint(array::Array &field, bool on_device) const {
         throw_Exception( "HaloExchange was not setup", Here() );
     }
 
-    ATLAS_TRACE( "HaloExchange", {"halo-exchange"} );
+    ATLAS_TRACE( "HaloExchange", {"halo-exchange-adjoint"} );
 
     auto field_hv = array::make_host_view<DATA_TYPE, RANK>( field );
 
@@ -275,7 +268,7 @@ void HaloExchange::execute_adjoint(array::Array &field, bool on_device) const {
         /// Let MPI know what we like to receive
         for ( int jproc = 0; jproc < nproc; ++jproc ) {
             if ( send_counts[jproc] > 0 ) {
-                recv_req[jproc] =
+                send_req[jproc] =
                     mpi::comm().iReceive( &send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag );
             }
         }
@@ -288,7 +281,7 @@ void HaloExchange::execute_adjoint(array::Array &field, bool on_device) const {
     ATLAS_TRACE_MPI( ISEND ) {
         for ( int jproc = 0; jproc < nproc; ++jproc ) {
             if ( recv_counts[jproc] > 0 ) {
-                send_req[jproc] = mpi::comm().iSend( &recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag );
+                recv_req[jproc] = mpi::comm().iSend( &recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag );
             }
         }
     }
@@ -297,8 +290,7 @@ void HaloExchange::execute_adjoint(array::Array &field, bool on_device) const {
     ATLAS_TRACE_MPI( WAIT, "mpi-wait receive" ) {
         for ( int jproc = 0; jproc < nproc; ++jproc ) {
             if ( sendcounts_[jproc] > 0 ) {
-                // I am here
-                mpi::comm().wait( recv_req[jproc] );
+                mpi::comm().wait( send_req[jproc] );
             }
         }
     }
@@ -310,7 +302,7 @@ void HaloExchange::execute_adjoint(array::Array &field, bool on_device) const {
     ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
         for ( int jproc = 0; jproc < nproc; ++jproc ) {
             if ( recvcounts_[jproc] > 0 ) {
-                mpi::comm().wait( send_req[jproc] );
+                mpi::comm().wait( recv_req[jproc] );
             }
         }
     }
@@ -326,6 +318,38 @@ void HaloExchange::execute_adjoint(array::Array &field, bool on_device) const {
         util::delete_hostmem( recv_buffer );
     }
 
+}
+
+template <typename DATA_TYPE>
+DATA_TYPE* HaloExchange::allocate_buffer(const int buffer_size,
+                                         const bool on_device) const {
+    DATA_TYPE* buffer{nullptr};
+
+    if ( on_device ) {
+        util::allocate_devicemem( buffer, buffer_size );
+    } else {
+        util::allocate_hostmem( buffer, buffer_size );
+    }
+
+    return buffer;
+}
+
+template <typename DATA_TYPE>
+void HaloExchange::execute_setup(
+    const idx_t var_size,
+    std::vector<int> & send_counts, std::vector<int> & recv_counts,
+    std::vector<int> & send_displs, std::vector<int> & recv_displs) const {
+
+    if ( !is_setup_ ) {
+        throw_Exception( "HaloExchange was not setup", Here() );
+    }
+
+    for ( int jproc = 0; jproc < nproc; ++jproc ) {
+        send_counts[jproc] = sendcounts_[jproc] * var_size;
+        recv_counts[jproc] = recvcounts_[jproc] * var_size;
+        send_displs[jproc] = senddispls_[jproc] * var_size;
+        recv_displs[jproc] = recvdispls_[jproc] * var_size;
+    }
 }
 
 template <int ParallelDim, int RANK>
