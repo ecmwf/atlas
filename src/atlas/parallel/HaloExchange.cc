@@ -254,6 +254,45 @@ void execute_halo_exchange( HaloExchange* This, Value field[], int var_strides[]
             throw_NotImplemented( "Rank not supported in halo exchange", Here() );
     }
 }
+
+template <typename Value>
+void execute_adjoint_halo_exchange( HaloExchange* This, Value field[], int var_strides[], int var_extents[], int var_rank ) {
+    // WARNING: Only works if there is only one parallel dimension AND being
+    // slowest moving
+
+    array::ArrayShape shape{This->backdoor.parsize};
+    for ( int j = 0; j < var_rank; ++j ) {
+        shape.push_back( var_extents[j] );
+    }
+
+    array::ArrayStrides strides{var_extents[0] * var_strides[0]};
+    for ( int j = 0; j < var_rank; ++j ) {
+        strides.push_back( var_strides[j] );
+    }
+
+    std::unique_ptr<array::Array> arr( array::Array::wrap( field, array::ArraySpec{shape, strides} ) );
+
+    switch ( arr->rank() ) {
+        case 1: {
+            This->execute_adjoint<Value, 1>( *arr );
+            break;
+        }
+        case 2: {
+            This->execute_adjoint<Value, 2>( *arr );
+            break;
+        }
+        case 3: {
+            This->execute_adjoint<Value, 3>( *arr );
+            break;
+        }
+        case 4: {
+            This->execute_adjoint<Value, 4>( *arr );
+            break;
+        }
+        default:
+            throw_NotImplemented( "Rank not supported in halo exchange", Here() );
+    }
+}
 }  // namespace
 
 extern "C" {
@@ -268,6 +307,27 @@ void atlas__HaloExchange__delete( HaloExchange* This ) {
 
 void atlas__HaloExchange__setup( HaloExchange* This, int part[], idx_t remote_idx[], int base, int size ) {
     This->setup( part, remote_idx, base, size );
+}
+
+
+void atlas__HaloExchange__execute_adjoint_strided_int( HaloExchange* This, int field[], int var_strides[], int var_extents[],
+                                               int var_rank ) {
+    execute_adjoint_halo_exchange( This, field, var_strides, var_extents, var_rank );
+}
+
+void atlas__HaloExchange__execute_adjoint_strided_long( HaloExchange* This, long field[], int var_strides[], int var_extents[],
+                                                int var_rank ) {
+    execute_adjoint_halo_exchange( This, field, var_strides, var_extents, var_rank );
+}
+
+void atlas__HaloExchange__execute_adjoint_strided_float( HaloExchange* This, float field[], int var_strides[],
+                                                 int var_extents[], int var_rank ) {
+    execute_adjoint_halo_exchange( This, field, var_strides, var_extents, var_rank );
+}
+
+void atlas__HaloExchange__execute_adjoint_strided_double( HaloExchange* This, double field[], int var_strides[],
+                                                  int var_extents[], int var_rank ) {
+    execute_adjoint_halo_exchange( This, field, var_strides, var_extents, var_rank );
 }
 
 void atlas__HaloExchange__execute_strided_int( HaloExchange* This, int field[], int var_strides[], int var_extents[],
