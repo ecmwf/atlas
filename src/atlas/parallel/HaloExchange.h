@@ -85,7 +85,6 @@ private:  // methods
                              array::ArrayView<DATA_TYPE, RANK>& hfield, array::ArrayView<DATA_TYPE, RANK>& dfield,
                              const bool on_device ) const;
 
-
     template <int ParallelDim, typename DATA_TYPE, int RANK>
     void pack_recv_adjoint_buffer( const array::ArrayView<DATA_TYPE, RANK>& hfield,
                            const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer,
@@ -98,11 +97,6 @@ private:  // methods
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
     void zero_halos( const array::ArrayView<DATA_TYPE, RANK>& hfield,
-                     array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer,
-                     int send_buffer_size, const bool on_device ) const;
-
-    template <int ParallelDim, typename DATA_TYPE, int RANK>
-    void zero_halos2( const array::ArrayView<DATA_TYPE, RANK>& hfield,
                      array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer,
                      int recv_buffer_size, const bool on_device ) const;
 
@@ -321,7 +315,7 @@ void HaloExchange::execute_adjoint(array::Array &field, bool on_device) const {
         }
     }
 
-    zero_halos2<parallelDim>( field_hv, field_dv, send_buffer, send_size, on_device );
+    zero_halos<parallelDim>( field_hv, field_dv, send_buffer, send_size, on_device );
 
     if ( on_device ) {
         util::delete_devicemem( send_buffer );
@@ -370,51 +364,23 @@ struct halo_adjoint_packer {
     }
 };
 
+
 template <int ParallelDim, int RANK>
 struct halo_zeroer {
-    template <typename DATA_TYPE>
-    static void zeroer( const int sendcnt, array::SVector<int> const& sendmap,
-                        array::ArrayView<DATA_TYPE, RANK>& field, DATA_TYPE* send_buffer, int send_buffer_size ) {
-        idx_t ibuf = 0;
-        for ( int node_cnt = 0; node_cnt < sendcnt; ++node_cnt ) {
-            const idx_t node_idx = sendmap[node_cnt];
-            halo_zeroer_impl<ParallelDim, RANK, 0>::apply( ibuf, node_idx, field, send_buffer );
-        }
-    }
-};
-
-
-template <int ParallelDim, int RANK>
-struct halo_zeroer2 {
     template <typename DATA_TYPE>
     static void zeroer( const int sendcnt, array::SVector<int> const& sendmap,
                         array::ArrayView<DATA_TYPE, RANK>& field, DATA_TYPE* recv_buffer, int recv_buffer_size ) {
         idx_t ibuf = 0;
         for ( int node_cnt = 0; node_cnt < sendcnt; ++node_cnt ) {
             const idx_t node_idx = sendmap[node_cnt];
-            halo_zeroer2_impl<ParallelDim, RANK, 0>::apply( ibuf, node_idx, field, recv_buffer );
+            halo_zeroer_impl<ParallelDim, RANK, 0>::apply( ibuf, node_idx, field, recv_buffer );
         }
     }
 };
 
+
 template <int ParallelDim, typename DATA_TYPE, int RANK>
 void HaloExchange::zero_halos( const array::ArrayView<DATA_TYPE, RANK>& hfield,
-                               array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer,
-                               int send_size, const bool on_device ) const {
-    ATLAS_TRACE();
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    if ( on_device ) {
-        halo_zeroer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( sendcnt_, sendmap_, hfield, dfield, send_buffer,
-                                                              send_size );
-    }
-    else
-#endif
-        halo_zeroer<ParallelDim, RANK>::zeroer( sendcnt_, sendmap_, dfield, send_buffer, send_size );
-
-}
-
-template <int ParallelDim, typename DATA_TYPE, int RANK>
-void HaloExchange::zero_halos2( const array::ArrayView<DATA_TYPE, RANK>& hfield,
                                array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer,
                                int recv_size, const bool on_device ) const {
     ATLAS_TRACE();
@@ -425,7 +391,7 @@ void HaloExchange::zero_halos2( const array::ArrayView<DATA_TYPE, RANK>& hfield,
     }
     else
 #endif
-        halo_zeroer2<ParallelDim, RANK>::zeroer( recvcnt_, recvmap_, dfield, recv_buffer, recv_size );
+        halo_zeroer<ParallelDim, RANK>::zeroer( recvcnt_, recvmap_, dfield, recv_buffer, recv_size );
 
 }
 
