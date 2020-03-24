@@ -126,13 +126,9 @@ struct Fixture {
     std::vector<idx_t> ridx;
     std::vector<POD> gidx;
     bool on_device_;
-    const bool is_adjoint = true;
 
     std::unique_ptr<parallel::HaloExchange>
       halo_exchange_std{new parallel::HaloExchange()};
-
-    std::unique_ptr<parallel::HaloExchange>
-      halo_exchange_adj{new parallel::HaloExchange(is_adjoint)};
 
     Fixture( bool on_device ) : on_device_( on_device ) {
         int nnodes_c[] = {5, 6, 7};
@@ -171,10 +167,6 @@ struct Fixture {
         std::cout << " standard setup "  << " " <<std::endl;
         halo_exchange_std->setup( part.data(), ridx.data(), 0, N );
 
-
-        std::cout << " adjoint setup "  << " " <<std::endl;
-        halo_exchange_adj->setup( part.data(), ridx.data(), 0, N );
-
     }
 
 };
@@ -184,14 +176,12 @@ struct Fixture {
 void test_rank0_arrview( Fixture& f ) {
     array::ArrayT<POD> arr( f.N );
     array::ArrayView<POD, 1> arrv = array::make_host_view<POD, 1>( arr );
-    array::ArrayT<POD> arr2( f.N );
-    array::ArrayView<POD, 1> arrv2 = array::make_host_view<POD, 1>( arr2 );
+
     switch ( mpi::comm().rank() ) {
         case 0: {
             POD arr_c[] = {9, 1, 2, 3, 4};
             for ( int j = 0; j < f.N; ++j ) {
                 arrv(j) = arr_c[j];
-                arrv2(j) = arrv[j];
             }
             break;
          }
@@ -199,7 +189,6 @@ void test_rank0_arrview( Fixture& f ) {
             POD arr_c[] = {3, 4, 5, 6, 7, 8};
             for ( int j = 0; j < f.N; ++j ) {
                 arrv(j) = arr_c[j];
-                arrv2(j) = arrv[j];
             }
             break;
          }
@@ -207,7 +196,6 @@ void test_rank0_arrview( Fixture& f ) {
              POD arr_c[] = {5, 6, 7, 8, 9, 1, 2};
              for ( int j = 0; j < f.N; ++j ) {
                  arrv(j) = arr_c[j];
-                 arrv2(j) = arrv[j];
              }
              break;
          }
@@ -215,34 +203,24 @@ void test_rank0_arrview( Fixture& f ) {
 
     arr.syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 1>( arr, f.on_device_ );
-
-    f.halo_exchange_std->execute_adjoint<POD, 1>( arr2, f.on_device_ );
+    f.halo_exchange_std->execute_adjoint<POD, 1>( arr, f.on_device_ );
 
     arr.syncHostDevice();
-    arr2.syncHostDevice();
-
-    for (int i= 0; i < f.N  ; ++i) {
-      std::cout << "test rank view " << mpi::comm().rank() << " " << i << " " <<  arrv2(i) << " " << arrv(i) << std::endl;
-    }
 
     switch ( mpi::comm().rank() ) {
         case 0: {
             POD arr_c[] = {0, 2, 4, 6, 0};
             validate<POD, 1>::apply( arrv, arr_c );
-            validate<POD, 1>::apply( arrv2, arr_c );
             break;
         }
         case 1: {
             POD arr_c[] = {0, 8, 10, 12, 0, 0};
             validate<POD, 1>::apply( arrv, arr_c );
-            validate<POD, 1>::apply( arrv2, arr_c );
             break;
         }
         case 2: {
             POD arr_c[] = {0, 0, 14, 16, 18, 0, 0};
             validate<POD, 1>::apply( arrv, arr_c );
-            validate<POD, 1>::apply( arrv2, arr_c );
             break;
         }
     }
@@ -306,8 +284,6 @@ void test_rank0_arrview_adj_test( Fixture& f ) {
 
     f.halo_exchange_std->execute_adjoint<POD, 1>( arr, f.on_device_ );
 
-  //  f.halo_exchange_adj->execute<POD, 1>( arr, f.on_device_ );
-
     arr.syncHostDevice();
 
     // sum2
@@ -354,7 +330,6 @@ void test_rank1( Fixture& f ) {
 
     arr.syncHostDevice();
 
-    // f.halo_exchange_adj->execute<POD, 2>( arr, f.on_device_ );
     f.halo_exchange_std->execute_adjoint<POD, 2>( arr, f.on_device_ );
 
     arr.syncHostDevice();
@@ -410,7 +385,6 @@ void test_rank1_adj_test( Fixture& f ) {
 
     arr.syncHostDevice();
 
-    // f.halo_exchange_adj->execute<POD, 2>( arr, f.on_device_ );
     f.halo_exchange_std->execute_adjoint<POD, 2>( arr, f.on_device_ );
 
     arr.syncHostDevice();
@@ -482,7 +456,6 @@ void test_rank1_strided_v1( Fixture& f ) {
 
     arr->syncHostDevice();
 
-   // f.halo_exchange_adj->execute<POD, 2>( *arr, f.on_device_ );
     f.halo_exchange_std->execute_adjoint<POD, 2>( *arr, f.on_device_ );
 
     arr->syncHostDevice();
@@ -566,7 +539,6 @@ void test_rank1_strided_v1_adj_test( Fixture& f ) {
 
     arr->syncHostDevice();
 
-    // f.halo_exchange_adj->execute<POD, 2>( *arr, f.on_device_ );
     f.halo_exchange_std->execute_adjoint<POD, 2>( *arr, f.on_device_ );
 
     arr->syncHostDevice();
@@ -634,7 +606,6 @@ void test_rank1_strided_v2( Fixture& f ) {
 #endif
         } ) );
 
-    // f.halo_exchange_adj->execute<POD, 2>( *arr, false );
     f.halo_exchange_std->execute_adjoint<POD, 2>( *arr, false );
 
     switch ( mpi::comm().rank() ) {
@@ -708,7 +679,6 @@ void test_rank1_strided_v2_adj_test( Fixture& f ) {
 
     arr->syncHostDevice();
 
-    // f.halo_exchange_adj->execute<POD, 2>( *arr, f.on_device_ );
     f.halo_exchange_std->execute_adjoint<POD, 2>( *arr, f.on_device_ );
 
     arr->syncHostDevice();
@@ -771,7 +741,6 @@ void test_rank2( Fixture& f ) {
 
     arr.syncHostDevice();
 
-   // f.halo_exchange_adj->execute<POD, 3>( arr, f.on_device_ );
     f.halo_exchange_std->execute_adjoint<POD, 3>( arr, f.on_device_ );
 
     arr.syncHostDevice();
@@ -839,7 +808,6 @@ void test_rank2_adj_test( Fixture& f ) {
 
     arr.syncHostDevice();
 
-   // f.halo_exchange_adj->execute<POD, 3>( arr, f.on_device_ );
     f.halo_exchange_std->execute_adjoint<POD, 3>( arr, f.on_device_ );
 
     arr.syncHostDevice();
@@ -910,7 +878,6 @@ void test_rank2_l1( Fixture& f ) {
 
     arr_t.syncHostDevice();
 
-    // f.halo_exchange_adj->execute<POD, 3>( *arr, false );
     f.halo_exchange_std->execute_adjoint<POD, 3>( *arr, false );
 
     arr_t.syncHostDevice();
@@ -999,7 +966,6 @@ void test_rank2_l1_adj_test( Fixture& f ) {
 
     arr->syncHostDevice();
 
-    //f.halo_exchange_adj->execute<POD, 3>( *arr, false);
     f.halo_exchange_std->execute_adjoint<POD, 3>( *arr, false );
 
     arr->syncHostDevice();
@@ -1079,7 +1045,6 @@ void test_rank2_l2_v2( Fixture& f ) {
 #endif
         } ) );
 
-   // f.halo_exchange_adj->execute<POD, 3>( *arr, f.on_device_ );
     f.halo_exchange_std->execute_adjoint<POD, 3>( *arr, f.on_device_ );
 
     switch ( mpi::comm().rank() ) {
@@ -1178,7 +1143,7 @@ void test_rank2_v2( Fixture& f ) {
 #endif
         } ) );
 
-   // f.halo_exchange_adj->execute<POD, 3>( *arr, f.on_device_ );
+
     f.halo_exchange_std->execute_adjoint<POD, 3>( *arr, f.on_device_ );
 
     switch ( mpi::comm().rank() ) {
@@ -1245,7 +1210,6 @@ void test_rank0_wrap( Fixture& f ) {
 
     arr->syncHostDevice();
 
-    // f.halo_exchange_adj->execute<POD, 1>( *arr, f.on_device_ );
     f.halo_exchange_std->execute_adjoint<POD, 1>( *arr, f.on_device_ );
 
     arr->syncHostDevice();
@@ -1307,7 +1271,6 @@ void test_rank0_wrap_adj_test( Fixture& f ) {
 
     arr->syncHostDevice();
 
-   // f.halo_exchange_adj->execute<POD, 1>( *arr, f.on_device_ );
     f.halo_exchange_std->execute_adjoint<POD, 1>( *arr, f.on_device_ );
 
     arr->syncHostDevice();
@@ -1352,7 +1315,6 @@ void test_rank1_paralleldim1( Fixture& f ) {
          }
     }
 
-   // f.halo_exchange_adj->execute<POD, 2, array::LastDim>( arr, false );
     f.halo_exchange_std->execute_adjoint<POD, 2, array::LastDim>( arr, false );
 
     switch ( mpi::comm().rank() ) {
@@ -1400,7 +1362,6 @@ void test_rank1_paralleldim1_adj_test( Fixture& f ) {
         }
     }
 
-    // f.halo_exchange_adj->execute<POD, 2, array::LastDim>( arr, false );
     f.halo_exchange_std->execute_adjoint<POD, 2, array::LastDim>( arr, false );
 
     // sum2
@@ -1457,7 +1418,6 @@ void test_rank2_paralleldim2( Fixture& f ) {
          }
     }
 
-   // f.halo_exchange_adj->execute<POD, 3, array::Dim<1>>( arr, false );
     f.halo_exchange_std->execute_adjoint<POD, 3, array::Dim<1>>( arr, false );
 
     switch ( mpi::comm().rank() ) {
@@ -1518,7 +1478,6 @@ void test_rank2_paralleldim2_adj_test( Fixture& f ) {
         }
     }
 
-    //f.halo_exchange_adj->execute<POD, 3, array::Dim<1>>( arr, false );
     f.halo_exchange_std->execute_adjoint<POD, 3, array::Dim<1>>( arr, false );
 
     // sum2
@@ -1577,13 +1536,9 @@ void test_rank1_cinterface( Fixture& f ) {
     int shapes[2]  = {(int)arrv.shape( 0 ), (int)arrv.shape( 1 )};
     int strides[2] = {(int)arrv.stride( 0 ), (int)arrv.stride( 1 )};
 
-  //  atlas__HaloExchange__execute_strided_double( &( f.halo_exchange_adj), arrv.data(),
-  //                                               &( strides[1] ), &( shapes[1] ),
-  //                                               1 );
-
-    atlas__AdjointHaloExchange__execute_strided_double( &( f.halo_exchange), arrv.data(),
-                                                        &( strides[1] ), &( shapes[1] ),
-                                                        1 );
+    atlas__HaloExchange__execute_adjoint_strided_double( &( f.halo_exchange), arrv.data(),
+                                                         &( strides[1] ), &( shapes[1] ),
+                                                         1 );
 
     switch ( mpi::comm().rank() ) {
         case 0: {

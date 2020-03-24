@@ -44,8 +44,7 @@ namespace parallel {
 class HaloExchange : public util::Object {
 public:
     HaloExchange();
-    HaloExchange( const bool is_adjoint );
-    HaloExchange( const std::string& name, const bool is_adjoint = false );
+    HaloExchange( const std::string& name );
 
     virtual ~HaloExchange();
 
@@ -113,7 +112,6 @@ private:  // methods
 
 private:  // data
     std::string name_;
-    bool is_adjoint_;
     bool is_setup_;
 
     int sendcnt_;
@@ -222,11 +220,6 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
         }
     }
 
-    if (is_adjoint_) {
-        zero_halos<parallelDim>( field_hv, field_dv, send_buffer, send_size, on_device );
-    }
-
-
     if ( on_device ) {
         util::delete_devicemem( send_buffer );
         util::delete_devicemem( recv_buffer );
@@ -330,7 +323,6 @@ void HaloExchange::execute_adjoint(array::Array &field, bool on_device) const {
 
     zero_halos2<parallelDim>( field_hv, field_dv, send_buffer, send_size, on_device );
 
-
     if ( on_device ) {
         util::delete_devicemem( send_buffer );
         util::delete_devicemem( recv_buffer );
@@ -411,10 +403,6 @@ void HaloExchange::zero_halos( const array::ArrayView<DATA_TYPE, RANK>& hfield,
                                int send_size, const bool on_device ) const {
     ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    if ( is_adjoint_ ) {
-       throw_AssertionFailed(
-         "Adjoint halo::halo_zeroer_cuda not implemented for ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA");
-    }
     if ( on_device ) {
         halo_zeroer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( sendcnt_, sendmap_, hfield, dfield, send_buffer,
                                                               send_size );
@@ -431,10 +419,6 @@ void HaloExchange::zero_halos2( const array::ArrayView<DATA_TYPE, RANK>& hfield,
                                int recv_size, const bool on_device ) const {
     ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    if ( is_adjoint_ ) {
-       throw_AssertionFailed(
-         "Adjoint halo::halo_zeroer_cuda not implemented for ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA");
-    }
     if ( on_device ) {
         halo_zeroer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( recvcnt_, recvmap_, hfield, dfield, recv_buffer,
                                                               recv_size );
@@ -466,21 +450,13 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE* recv_buffer, int recv_si
                                        array::ArrayView<DATA_TYPE, RANK>& dfield, const bool on_device ) const {
     ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    if (is_adjoint_) {
-       throw_AssertionFailed(
-         "Adjoint halo::unpack_recv_buffer not implemented for ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA");
-    }
     if ( on_device ) {
         halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack( recvcnt_, recvmap_, recv_buffer, recv_size, hfield,
                                                                 dfield );
     }
     else
 #endif
-    if (is_adjoint_) {
-        halo_adjoint_packer<ParallelDim, RANK>::unpack( recvcnt_, recvmap_, recv_buffer, recv_size, dfield );
-    } else {
-        halo_packer<ParallelDim, RANK>::unpack( recvcnt_, recvmap_, recv_buffer, recv_size, dfield );
-    }
+    halo_packer<ParallelDim, RANK>::unpack( recvcnt_, recvmap_, recv_buffer, recv_size, dfield );
 }
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
@@ -504,10 +480,6 @@ void HaloExchange::unpack_send_adjoint_buffer( const DATA_TYPE* send_buffer, int
                                        array::ArrayView<DATA_TYPE, RANK>& dfield, const bool on_device ) const {
     ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    if (is_adjoint_) {
-       throw_AssertionFailed(
-         "Adjoint halo::unpack_send_buffer not implemented for ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA");
-    }
     if ( on_device ) {
         halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack( sendcnt_, sendmap_, send_buffer, send_size, hfield,
                                                                 dfield );
