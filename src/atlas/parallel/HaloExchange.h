@@ -402,8 +402,7 @@ void HaloExchange::zero_halos( const array::ArrayView<DATA_TYPE, RANK>& hfield,
     ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     if ( on_device ) {
-        halo_zeroer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( recvcnt_, recvmap_, hfield, dfield, recv_buffer,
-                                                              recv_size );
+        ATLAS_NOTIMPLEMENTED;
     }
     else
 #endif
