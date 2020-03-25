@@ -126,13 +126,9 @@ struct Fixture {
     std::vector<idx_t> ridx;
     std::vector<POD> gidx;
     bool on_device_;
-    const bool is_adjoint = true;
 
     std::unique_ptr<parallel::HaloExchange>
       halo_exchange_std{new parallel::HaloExchange()};
-
-    std::unique_ptr<parallel::HaloExchange>
-      halo_exchange_adj{new parallel::HaloExchange(is_adjoint)};
 
     Fixture( bool on_device ) : on_device_( on_device ) {
         int nnodes_c[] = {5, 6, 7};
@@ -168,8 +164,9 @@ struct Fixture {
                 break;
             }
         }
-        halo_exchange_adj->setup( part.data(), ridx.data(), 0, N );
+        std::cout << " standard setup "  << " " <<std::endl;
         halo_exchange_std->setup( part.data(), ridx.data(), 0, N );
+
     }
 
 };
@@ -179,23 +176,24 @@ struct Fixture {
 void test_rank0_arrview( Fixture& f ) {
     array::ArrayT<POD> arr( f.N );
     array::ArrayView<POD, 1> arrv = array::make_host_view<POD, 1>( arr );
+
     switch ( mpi::comm().rank() ) {
         case 0: {
-            POD arr_c[] = {9, 1, 2, 3, 4};
+            POD arr_c[] = {90, 1, 2, 3, 40};
             for ( int j = 0; j < f.N; ++j ) {
                 arrv(j) = arr_c[j];
             }
             break;
          }
          case 1: {
-            POD arr_c[] = {3, 4, 5, 6, 7, 8};
+            POD arr_c[] = {30, 4, 5, 6, 70, 80};
             for ( int j = 0; j < f.N; ++j ) {
                 arrv(j) = arr_c[j];
             }
             break;
          }
          case 2: {
-             POD arr_c[] = {5, 6, 7, 8, 9, 1, 2};
+             POD arr_c[] = {50, 60, 7, 8, 9, 10, 20};
              for ( int j = 0; j < f.N; ++j ) {
                  arrv(j) = arr_c[j];
              }
@@ -205,23 +203,23 @@ void test_rank0_arrview( Fixture& f ) {
 
     arr.syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 1>( arr, f.on_device_ );
+    f.halo_exchange_std->execute_adjoint<POD, 1>( arr, f.on_device_ );
 
     arr.syncHostDevice();
 
     switch ( mpi::comm().rank() ) {
         case 0: {
-            POD arr_c[] = {0, 2, 4, 6, 0};
+            POD arr_c[] = {0, 11, 22, 33, 0};
             validate<POD, 1>::apply( arrv, arr_c );
             break;
         }
         case 1: {
-            POD arr_c[] = {0, 8, 10, 12, 0, 0};
+            POD arr_c[] = {0, 44, 55, 66, 0, 0};
             validate<POD, 1>::apply( arrv, arr_c );
             break;
         }
         case 2: {
-            POD arr_c[] = {0, 0, 14, 16, 18, 0, 0};
+            POD arr_c[] = {0, 0, 77, 88, 99, 0, 0};
             validate<POD, 1>::apply( arrv, arr_c );
             break;
         }
@@ -284,7 +282,7 @@ void test_rank0_arrview_adj_test( Fixture& f ) {
 
     arr.syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 1>( arr, f.on_device_ );
+    f.halo_exchange_std->execute_adjoint<POD, 1>( arr, f.on_device_ );
 
     arr.syncHostDevice();
 
@@ -332,7 +330,7 @@ void test_rank1( Fixture& f ) {
 
     arr.syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 2>( arr, f.on_device_ );
+    f.halo_exchange_std->execute_adjoint<POD, 2>( arr, f.on_device_ );
 
     arr.syncHostDevice();
 
@@ -387,7 +385,7 @@ void test_rank1_adj_test( Fixture& f ) {
 
     arr.syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 2>( arr, f.on_device_ );
+    f.halo_exchange_std->execute_adjoint<POD, 2>( arr, f.on_device_ );
 
     arr.syncHostDevice();
 
@@ -458,7 +456,7 @@ void test_rank1_strided_v1( Fixture& f ) {
 
     arr->syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 2>( *arr, f.on_device_ );
+    f.halo_exchange_std->execute_adjoint<POD, 2>( *arr, f.on_device_ );
 
     arr->syncHostDevice();
 
@@ -541,7 +539,7 @@ void test_rank1_strided_v1_adj_test( Fixture& f ) {
 
     arr->syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 2>( *arr, f.on_device_ );
+    f.halo_exchange_std->execute_adjoint<POD, 2>( *arr, f.on_device_ );
 
     arr->syncHostDevice();
 
@@ -608,7 +606,7 @@ void test_rank1_strided_v2( Fixture& f ) {
 #endif
         } ) );
 
-    f.halo_exchange_adj->execute<POD, 2>( *arr, false );
+    f.halo_exchange_std->execute_adjoint<POD, 2>( *arr, false );
 
     switch ( mpi::comm().rank() ) {
         case 0: {
@@ -681,7 +679,7 @@ void test_rank1_strided_v2_adj_test( Fixture& f ) {
 
     arr->syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 2>( *arr, f.on_device_ );
+    f.halo_exchange_std->execute_adjoint<POD, 2>( *arr, f.on_device_ );
 
     arr->syncHostDevice();
 
@@ -743,7 +741,7 @@ void test_rank2( Fixture& f ) {
 
     arr.syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 3>( arr, f.on_device_ );
+    f.halo_exchange_std->execute_adjoint<POD, 3>( arr, f.on_device_ );
 
     arr.syncHostDevice();
 
@@ -810,7 +808,7 @@ void test_rank2_adj_test( Fixture& f ) {
 
     arr.syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 3>( arr, f.on_device_ );
+    f.halo_exchange_std->execute_adjoint<POD, 3>( arr, f.on_device_ );
 
     arr.syncHostDevice();
 
@@ -880,7 +878,7 @@ void test_rank2_l1( Fixture& f ) {
 
     arr_t.syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 3>( *arr, false );
+    f.halo_exchange_std->execute_adjoint<POD, 3>( *arr, false );
 
     arr_t.syncHostDevice();
 
@@ -968,7 +966,7 @@ void test_rank2_l1_adj_test( Fixture& f ) {
 
     arr->syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 3>( *arr, false);
+    f.halo_exchange_std->execute_adjoint<POD, 3>( *arr, false );
 
     arr->syncHostDevice();
 
@@ -1047,7 +1045,7 @@ void test_rank2_l2_v2( Fixture& f ) {
 #endif
         } ) );
 
-    f.halo_exchange_adj->execute<POD, 3>( *arr, f.on_device_ );
+    f.halo_exchange_std->execute_adjoint<POD, 3>( *arr, f.on_device_ );
 
     switch ( mpi::comm().rank() ) {
         case 0: {
@@ -1145,7 +1143,8 @@ void test_rank2_v2( Fixture& f ) {
 #endif
         } ) );
 
-    f.halo_exchange_adj->execute<POD, 3>( *arr, f.on_device_ );
+
+    f.halo_exchange_std->execute_adjoint<POD, 3>( *arr, f.on_device_ );
 
     switch ( mpi::comm().rank() ) {
         case 0: {
@@ -1163,7 +1162,7 @@ void test_rank2_v2( Fixture& f ) {
                            -5, 10, -50,100, -500,1000,   // core
                            -6, 12, -60,120, -600,1200,   // core
                            -7,  0, -70,  0, -700,   0,   // halo
-                           -8,  0, -80,  0, -800,   0};   // halo
+                           -8,  0, -80,  0, -800,   0;   // halo
             validate<POD, 3>::apply( arrv_t, arr_c );
             break;
         }
@@ -1211,7 +1210,7 @@ void test_rank0_wrap( Fixture& f ) {
 
     arr->syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 1>( *arr, f.on_device_ );
+    f.halo_exchange_std->execute_adjoint<POD, 1>( *arr, f.on_device_ );
 
     arr->syncHostDevice();
 
@@ -1272,7 +1271,7 @@ void test_rank0_wrap_adj_test( Fixture& f ) {
 
     arr->syncHostDevice();
 
-    f.halo_exchange_adj->execute<POD, 1>( *arr, f.on_device_ );
+    f.halo_exchange_std->execute_adjoint<POD, 1>( *arr, f.on_device_ );
 
     arr->syncHostDevice();
 
@@ -1316,7 +1315,7 @@ void test_rank1_paralleldim1( Fixture& f ) {
          }
     }
 
-    f.halo_exchange_adj->execute<POD, 2, array::LastDim>( arr, false );
+    f.halo_exchange_std->execute_adjoint<POD, 2, array::LastDim>( arr, false );
 
     switch ( mpi::comm().rank() ) {
         case 0: {
@@ -1363,7 +1362,7 @@ void test_rank1_paralleldim1_adj_test( Fixture& f ) {
         }
     }
 
-    f.halo_exchange_adj->execute<POD, 2, array::LastDim>( arr, false );
+    f.halo_exchange_std->execute_adjoint<POD, 2, array::LastDim>( arr, false );
 
     // sum2
     POD sum2(0);
@@ -1419,7 +1418,7 @@ void test_rank2_paralleldim2( Fixture& f ) {
          }
     }
 
-    f.halo_exchange_adj->execute<POD, 3, array::Dim<1>>( arr, false );
+    f.halo_exchange_std->execute_adjoint<POD, 3, array::Dim<1>>( arr, false );
 
     switch ( mpi::comm().rank() ) {
         case 0: {
@@ -1468,6 +1467,7 @@ void test_rank2_paralleldim2_adj_test( Fixture& f ) {
 
     f.halo_exchange_std->execute<POD, 3, array::Dim<1>>( arr, false );
 
+
     // sum1
     POD sum1(0);
     for ( std::size_t p = 0; p < static_cast<std::size_t>(f.N); ++p ) {
@@ -1478,7 +1478,7 @@ void test_rank2_paralleldim2_adj_test( Fixture& f ) {
         }
     }
 
-    f.halo_exchange_adj->execute<POD, 3, array::Dim<1>>( arr, false );
+    f.halo_exchange_std->execute_adjoint<POD, 3, array::Dim<1>>( arr, false );
 
     // sum2
     POD sum2(0);
@@ -1536,9 +1536,9 @@ void test_rank1_cinterface( Fixture& f ) {
     int shapes[2]  = {(int)arrv.shape( 0 ), (int)arrv.shape( 1 )};
     int strides[2] = {(int)arrv.stride( 0 ), (int)arrv.stride( 1 )};
 
-    atlas__HaloExchange__execute_strided_double( f.halo_exchange_adj.get(), arrv.data(),
-                                                 &( strides[1] ), &( shapes[1] ),
-                                                 1 );
+    atlas__HaloExchange__execute_adjoint_strided_double( f.halo_exchange.get(), arrv.data(),
+                                                         &( strides[1] ), &( shapes[1] ),
+                                                         1 );
 
     switch ( mpi::comm().rank() ) {
         case 0: {
@@ -1560,7 +1560,7 @@ void test_rank1_cinterface( Fixture& f ) {
 #endif
 }
 
-CASE( "test_haloexchange" ) {
+CASE( "test_haloexchange_adjoint" ) {
     Fixture f( false );
 
     SECTION( "test_rank0_arrview" ) { test_rank0_arrview( f ); }
@@ -1605,7 +1605,6 @@ CASE( "test_haloexchange" ) {
     SECTION( "test_rank2_paralleldim_2" ) { test_rank2_paralleldim2( f ); }
 
     SECTION( "test_rank2_paralleldim_2_adj_test" ) { test_rank2_paralleldim2_adj_test( f ); }
-
 
 /* NOT TESTED AS USES ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
     SECTION( "test_rank1_cinterface" ) { test_rank1_cinterface( f ); }
