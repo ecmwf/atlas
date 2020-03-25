@@ -18,8 +18,8 @@
 #include <string>
 #include <vector>
 
-#include "atlas/parallel/HaloExchangeImpl.h"
 #include "atlas/parallel/HaloAdjointExchangeImpl.h"
+#include "atlas/parallel/HaloExchangeImpl.h"
 #include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -64,7 +64,6 @@ public:  // methods
     void execute_adjoint( array::Array& field, bool on_device = false ) const;
 
 private:  // methods
-
     /*   Marek Note I can't see these used!  Should these member functions be removed?
     void create_mappings( std::vector<int>& send_map, std::vector<int>& recv_map, idx_t nb_vars ) const;
 
@@ -77,33 +76,29 @@ private:  // methods
     idx_t index( idx_t i, idx_t j, idx_t ni, idx_t nj ) const { return ( i + ni * j ); }
 
     template <typename DATA_TYPE>
-    void counts_displs_setup(
-        const idx_t var_size,
-        std::vector<int> & send_counts_init, std::vector<int> & recv_counts_init,
-        std::vector<int> & send_counts, std::vector<int> & recv_counts,
-        std::vector<int> & send_displs, std::vector<int> & recv_displs ) const;
+    void counts_displs_setup( const idx_t var_size, std::vector<int>& send_counts_init,
+                              std::vector<int>& recv_counts_init, std::vector<int>& send_counts,
+                              std::vector<int>& recv_counts, std::vector<int>& send_displs,
+                              std::vector<int>& recv_displs ) const;
 
 
     template <typename DATA_TYPE>
-    void ireceive(
-        int tag, std::vector<int> & recv_displs, std::vector<int> & recv_counts,
-        std::vector<eckit::mpi::Request> & recv_req, DATA_TYPE* recv_buffer) const;
+    void ireceive( int tag, std::vector<int>& recv_displs, std::vector<int>& recv_counts,
+                   std::vector<eckit::mpi::Request>& recv_req, DATA_TYPE* recv_buffer ) const;
 
     template <typename DATA_TYPE>
-    void isend_and_wait_for_receive(
-        int tag, std::vector<int> & recv_counts_init, std::vector<eckit::mpi::Request> & recv_req,
-        std::vector<int> & send_displs, std::vector<int> & send_counts,
-        std::vector<eckit::mpi::Request> & send_req, DATA_TYPE* send_buffer ) const;
+    void isend_and_wait_for_receive( int tag, std::vector<int>& recv_counts_init,
+                                     std::vector<eckit::mpi::Request>& recv_req, std::vector<int>& send_displs,
+                                     std::vector<int>& send_counts, std::vector<eckit::mpi::Request>& send_req,
+                                     DATA_TYPE* send_buffer ) const;
 
-    void wait_for_send(
-        std::vector<int> & send_counts,
-        std::vector<eckit::mpi::Request> & send_req ) const;
+    void wait_for_send( std::vector<int>& send_counts, std::vector<eckit::mpi::Request>& send_req ) const;
 
     template <typename DATA_TYPE>
-    DATA_TYPE* allocate_buffer(const int buffer_size, const bool on_device) const;
+    DATA_TYPE* allocate_buffer( const int buffer_size, const bool on_device ) const;
 
     template <typename DATA_TYPE>
-    void deallocate_buffer(DATA_TYPE* buffer, const bool on_device) const;
+    void deallocate_buffer( DATA_TYPE* buffer, const bool on_device ) const;
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
     void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& hfield,
@@ -117,18 +112,17 @@ private:  // methods
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
     void pack_recv_adjoint_buffer( const array::ArrayView<DATA_TYPE, RANK>& hfield,
-                           const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer,
-                           int recv_buffer_size, const bool on_device ) const;
+                                   const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer,
+                                   int recv_buffer_size, const bool on_device ) const;
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
     void unpack_send_adjoint_buffer( const DATA_TYPE* send_buffer, int send_buffer_size,
-                             array::ArrayView<DATA_TYPE, RANK>& hfield, array::ArrayView<DATA_TYPE, RANK>& dfield,
-                             const bool on_device ) const;
+                                     array::ArrayView<DATA_TYPE, RANK>& hfield,
+                                     array::ArrayView<DATA_TYPE, RANK>& dfield, const bool on_device ) const;
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
-    void zero_halos( const array::ArrayView<DATA_TYPE, RANK>& hfield,
-                     array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer,
-                     int recv_buffer_size, const bool on_device ) const;
+    void zero_halos( const array::ArrayView<DATA_TYPE, RANK>& hfield, array::ArrayView<DATA_TYPE, RANK>& dfield,
+                     DATA_TYPE* recv_buffer, int recv_buffer_size, const bool on_device ) const;
 
     template <typename DATA_TYPE, int RANK>
     void var_info( const array::ArrayView<DATA_TYPE, RANK>& arr, std::vector<idx_t>& varstrides,
@@ -159,7 +153,6 @@ public:
 
 template <typename DATA_TYPE, int RANK, typename ParallelDim>
 void HaloExchange::execute( array::Array& field, bool on_device ) const {
-
     ATLAS_TRACE( "HaloExchange", {"halo-exchange"} );
     if ( !is_setup_ ) {
         throw_Exception( "HaloExchange was not setup", Here() );
@@ -167,48 +160,43 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
 
     auto field_hv = array::make_host_view<DATA_TYPE, RANK>( field );
     auto field_dv =
-        on_device ? array::make_device_view<DATA_TYPE, RANK>( field ) :
-        array::make_host_view<DATA_TYPE, RANK>( field );
+        on_device ? array::make_device_view<DATA_TYPE, RANK>( field ) : array::make_host_view<DATA_TYPE, RANK>( field );
 
     constexpr int parallelDim = array::get_parallel_dim<ParallelDim>( field_hv );
-    idx_t var_size = array::get_var_size<parallelDim>( field_hv );
+    idx_t var_size            = array::get_var_size<parallelDim>( field_hv );
 
-    int tag(1), inner_size, halo_size;
-    std::size_t  nproc_loc(static_cast<std::size_t>(nproc));
-    std::vector<int> inner_counts(nproc_loc), halo_counts(nproc_loc);
-    std::vector<int> inner_counts_init(nproc_loc), halo_counts_init(nproc_loc);
-    std::vector<int> inner_displs(nproc_loc), halo_displs(nproc_loc);
-    std::vector<eckit::mpi::Request> inner_req(nproc_loc), halo_req(nproc_loc);
+    int tag( 1 ), inner_size, halo_size;
+    std::size_t nproc_loc( static_cast<std::size_t>( nproc ) );
+    std::vector<int> inner_counts( nproc_loc ), halo_counts( nproc_loc );
+    std::vector<int> inner_counts_init( nproc_loc ), halo_counts_init( nproc_loc );
+    std::vector<int> inner_displs( nproc_loc ), halo_displs( nproc_loc );
+    std::vector<eckit::mpi::Request> inner_req( nproc_loc ), halo_req( nproc_loc );
 
-    DATA_TYPE* inner_buffer = allocate_buffer<DATA_TYPE>(sendcnt_ * var_size, on_device);
-    DATA_TYPE* halo_buffer = allocate_buffer<DATA_TYPE>(recvcnt_ * var_size, on_device);
+    DATA_TYPE* inner_buffer = allocate_buffer<DATA_TYPE>( sendcnt_ * var_size, on_device );
+    DATA_TYPE* halo_buffer  = allocate_buffer<DATA_TYPE>( recvcnt_ * var_size, on_device );
 
-    counts_displs_setup<DATA_TYPE>(var_size,
-                             inner_counts_init, halo_counts_init,
-                             inner_counts, halo_counts,
-                             inner_displs, halo_displs);
+    counts_displs_setup<DATA_TYPE>( var_size, inner_counts_init, halo_counts_init, inner_counts, halo_counts,
+                                    inner_displs, halo_displs );
 
-    ireceive<DATA_TYPE>(tag, halo_displs, halo_counts, halo_req, halo_buffer);
+    ireceive<DATA_TYPE>( tag, halo_displs, halo_counts, halo_req, halo_buffer );
 
     /// Pack
     pack_send_buffer<parallelDim>( field_hv, field_dv, inner_buffer, inner_size, on_device );
 
-    isend_and_wait_for_receive<DATA_TYPE>(tag, halo_counts_init, halo_req,
-                                         inner_displs, inner_counts, inner_req,
-                                         inner_buffer);
+    isend_and_wait_for_receive<DATA_TYPE>( tag, halo_counts_init, halo_req, inner_displs, inner_counts, inner_req,
+                                           inner_buffer );
 
     /// Unpack
     unpack_recv_buffer<parallelDim>( halo_buffer, halo_size, field_hv, field_dv, on_device );
 
-    wait_for_send(inner_counts_init, inner_req);
+    wait_for_send( inner_counts_init, inner_req );
 
-    deallocate_buffer<DATA_TYPE>(inner_buffer, on_device);
-    deallocate_buffer<DATA_TYPE>(halo_buffer, on_device);
-
+    deallocate_buffer<DATA_TYPE>( inner_buffer, on_device );
+    deallocate_buffer<DATA_TYPE>( halo_buffer, on_device );
 }
 
 template <typename DATA_TYPE, int RANK, typename ParallelDim>
-void HaloExchange::execute_adjoint(array::Array &field, bool on_device) const {
+void HaloExchange::execute_adjoint( array::Array& field, bool on_device ) const {
     if ( !is_setup_ ) {
         throw_Exception( "HaloExchange was not setup", Here() );
     }
@@ -217,57 +205,53 @@ void HaloExchange::execute_adjoint(array::Array &field, bool on_device) const {
 
     auto field_hv = array::make_host_view<DATA_TYPE, RANK>( field );
     auto field_dv =
-        on_device ? array::make_device_view<DATA_TYPE, RANK>( field ) :
-        array::make_host_view<DATA_TYPE, RANK>( field );
+        on_device ? array::make_device_view<DATA_TYPE, RANK>( field ) : array::make_host_view<DATA_TYPE, RANK>( field );
 
     constexpr int parallelDim = array::get_parallel_dim<ParallelDim>( field_hv );
-    idx_t var_size = array::get_var_size<parallelDim>( field_hv );
+    idx_t var_size            = array::get_var_size<parallelDim>( field_hv );
 
-    int tag(1), halo_size, inner_size;
-    std::size_t  nproc_loc(static_cast<std::size_t>(nproc));
-    std::vector<int> halo_counts(nproc_loc), inner_counts(nproc_loc);
-    std::vector<int> halo_counts_init(nproc_loc), inner_counts_init(nproc_loc);
-    std::vector<int> halo_displs(nproc_loc), inner_displs(nproc_loc);
-    std::vector<eckit::mpi::Request> halo_req(nproc_loc), inner_req(nproc_loc);
+    int tag( 1 ), halo_size, inner_size;
+    std::size_t nproc_loc( static_cast<std::size_t>( nproc ) );
+    std::vector<int> halo_counts( nproc_loc ), inner_counts( nproc_loc );
+    std::vector<int> halo_counts_init( nproc_loc ), inner_counts_init( nproc_loc );
+    std::vector<int> halo_displs( nproc_loc ), inner_displs( nproc_loc );
+    std::vector<eckit::mpi::Request> halo_req( nproc_loc ), inner_req( nproc_loc );
 
-    DATA_TYPE* halo_buffer = allocate_buffer<DATA_TYPE>(sendcnt_ * var_size, on_device);
-    DATA_TYPE* inner_buffer = allocate_buffer<DATA_TYPE>(recvcnt_ * var_size, on_device);
+    DATA_TYPE* halo_buffer  = allocate_buffer<DATA_TYPE>( sendcnt_ * var_size, on_device );
+    DATA_TYPE* inner_buffer = allocate_buffer<DATA_TYPE>( recvcnt_ * var_size, on_device );
 
-    counts_displs_setup<DATA_TYPE>(var_size,
-                             halo_counts_init, inner_counts_init,
-                             halo_counts, inner_counts,
-                             halo_displs, inner_displs);
+    counts_displs_setup<DATA_TYPE>( var_size, halo_counts_init, inner_counts_init, halo_counts, inner_counts,
+                                    halo_displs, inner_displs );
 
-    ireceive<DATA_TYPE>(tag, halo_displs, halo_counts, halo_req, halo_buffer);
+    ireceive<DATA_TYPE>( tag, halo_displs, halo_counts, halo_req, halo_buffer );
 
     /// Pack
     pack_recv_adjoint_buffer<parallelDim>( field_hv, field_dv, inner_buffer, inner_size, on_device );
 
     /// Send
-    isend_and_wait_for_receive<DATA_TYPE>(tag, halo_counts_init, halo_req,
-                                         inner_displs, inner_counts, inner_req, inner_buffer);
+    isend_and_wait_for_receive<DATA_TYPE>( tag, halo_counts_init, halo_req, inner_displs, inner_counts, inner_req,
+                                           inner_buffer );
 
     /// Unpack
     unpack_send_adjoint_buffer<parallelDim>( halo_buffer, halo_size, field_hv, field_dv, on_device );
 
     /// Wait for sending to finish
-    wait_for_send(inner_counts_init, inner_req);
+    wait_for_send( inner_counts_init, inner_req );
 
     zero_halos<parallelDim>( field_hv, field_dv, halo_buffer, halo_size, on_device );
 
-    deallocate_buffer<DATA_TYPE>(halo_buffer, on_device);
-    deallocate_buffer<DATA_TYPE>(inner_buffer, on_device);
-
+    deallocate_buffer<DATA_TYPE>( halo_buffer, on_device );
+    deallocate_buffer<DATA_TYPE>( inner_buffer, on_device );
 }
 
 template <typename DATA_TYPE>
-DATA_TYPE* HaloExchange::allocate_buffer(const int buffer_size,
-                                         const bool on_device) const {
+DATA_TYPE* HaloExchange::allocate_buffer( const int buffer_size, const bool on_device ) const {
     DATA_TYPE* buffer{nullptr};
 
     if ( on_device ) {
         util::allocate_devicemem( buffer, buffer_size );
-    } else {
+    }
+    else {
         util::allocate_hostmem( buffer, buffer_size );
     }
 
@@ -276,38 +260,34 @@ DATA_TYPE* HaloExchange::allocate_buffer(const int buffer_size,
 
 
 template <typename DATA_TYPE>
-void HaloExchange::deallocate_buffer(DATA_TYPE* buffer,
-                                     const bool on_device) const {
+void HaloExchange::deallocate_buffer( DATA_TYPE* buffer, const bool on_device ) const {
     if ( on_device ) {
         util::delete_devicemem( buffer );
-    } else {
+    }
+    else {
         util::delete_hostmem( buffer );
     }
 }
 
 
 template <typename DATA_TYPE>
-void HaloExchange::counts_displs_setup(
-    const idx_t var_size,
-    std::vector<int> & send_counts_init, std::vector<int> & recv_counts_init,
-    std::vector<int> & send_counts, std::vector<int> & recv_counts,
-    std::vector<int> & send_displs, std::vector<int> & recv_displs) const {
-
+void HaloExchange::counts_displs_setup( const idx_t var_size, std::vector<int>& send_counts_init,
+                                        std::vector<int>& recv_counts_init, std::vector<int>& send_counts,
+                                        std::vector<int>& recv_counts, std::vector<int>& send_displs,
+                                        std::vector<int>& recv_displs ) const {
     for ( int jproc = 0; jproc < nproc; ++jproc ) {
         send_counts_init[jproc] = sendcounts_[jproc];
         recv_counts_init[jproc] = recvcounts_[jproc];
-        send_counts[jproc] = sendcounts_[jproc] * var_size;
-        recv_counts[jproc] = recvcounts_[jproc] * var_size;
-        send_displs[jproc] = senddispls_[jproc] * var_size;
-        recv_displs[jproc] = recvdispls_[jproc] * var_size;
+        send_counts[jproc]      = sendcounts_[jproc] * var_size;
+        recv_counts[jproc]      = recvcounts_[jproc] * var_size;
+        send_displs[jproc]      = senddispls_[jproc] * var_size;
+        recv_displs[jproc]      = recvdispls_[jproc] * var_size;
     }
 }
 
 template <typename DATA_TYPE>
-void HaloExchange::ireceive(
-    int tag, std::vector<int> & recv_displs, std::vector<int> & recv_counts,
-    std::vector<eckit::mpi::Request> & recv_req, DATA_TYPE* recv_buffer) const {
-
+void HaloExchange::ireceive( int tag, std::vector<int>& recv_displs, std::vector<int>& recv_counts,
+                             std::vector<eckit::mpi::Request>& recv_req, DATA_TYPE* recv_buffer ) const {
     ATLAS_TRACE_MPI( IRECEIVE ) {
         /// Let MPI know what we like to receive
         for ( int jproc = 0; jproc < nproc; ++jproc ) {
@@ -320,14 +300,14 @@ void HaloExchange::ireceive(
 }
 
 template <typename DATA_TYPE>
-void HaloExchange::isend_and_wait_for_receive(
-    int tag, std::vector<int> & recv_counts_init, std::vector<eckit::mpi::Request> & recv_req,
-    std::vector<int> & send_displs, std::vector<int> & send_counts,
-    std::vector<eckit::mpi::Request> & send_req, DATA_TYPE* send_buffer ) const {
-
+void HaloExchange::isend_and_wait_for_receive( int tag, std::vector<int>& recv_counts_init,
+                                               std::vector<eckit::mpi::Request>& recv_req,
+                                               std::vector<int>& send_displs, std::vector<int>& send_counts,
+                                               std::vector<eckit::mpi::Request>& send_req,
+                                               DATA_TYPE* send_buffer ) const {
     /// Send
     ATLAS_TRACE_MPI( ISEND ) {
-        for (int jproc = 0; jproc < nproc; ++jproc ) {
+        for ( int jproc = 0; jproc < nproc; ++jproc ) {
             if ( send_counts[jproc] > 0 ) {
                 send_req[jproc] = mpi::comm().iSend( &send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag );
             }
@@ -384,8 +364,8 @@ struct halo_adjoint_packer {
 template <int ParallelDim, int RANK>
 struct halo_zeroer {
     template <typename DATA_TYPE>
-    static void zeroer( const int sendcnt, array::SVector<int> const& sendmap,
-                        array::ArrayView<DATA_TYPE, RANK>& field, DATA_TYPE* recv_buffer, int recv_buffer_size ) {
+    static void zeroer( const int sendcnt, array::SVector<int> const& sendmap, array::ArrayView<DATA_TYPE, RANK>& field,
+                        DATA_TYPE* recv_buffer, int recv_buffer_size ) {
         idx_t ibuf = 0;
         for ( int node_cnt = 0; node_cnt < sendcnt; ++node_cnt ) {
             const idx_t node_idx = sendmap[node_cnt];
@@ -397,8 +377,8 @@ struct halo_zeroer {
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
 void HaloExchange::zero_halos( const array::ArrayView<DATA_TYPE, RANK>& hfield,
-                               array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer,
-                               int recv_size, const bool on_device ) const {
+                               array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer, int recv_size,
+                               const bool on_device ) const {
     ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     if ( on_device ) {
@@ -407,7 +387,6 @@ void HaloExchange::zero_halos( const array::ArrayView<DATA_TYPE, RANK>& hfield,
     else
 #endif
         halo_zeroer<ParallelDim, RANK>::zeroer( recvcnt_, recvmap_, dfield, recv_buffer, recv_size );
-
 }
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
@@ -437,13 +416,13 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE* recv_buffer, int recv_si
     }
     else
 #endif
-    halo_packer<ParallelDim, RANK>::unpack( recvcnt_, recvmap_, recv_buffer, recv_size, dfield );
+        halo_packer<ParallelDim, RANK>::unpack( recvcnt_, recvmap_, recv_buffer, recv_size, dfield );
 }
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
 void HaloExchange::pack_recv_adjoint_buffer( const array::ArrayView<DATA_TYPE, RANK>& hfield,
-                                     const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer,
-                                     int recv_size, const bool on_device ) const {
+                                             const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer,
+                                             int recv_size, const bool on_device ) const {
     ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     if ( on_device ) {
@@ -457,8 +436,8 @@ void HaloExchange::pack_recv_adjoint_buffer( const array::ArrayView<DATA_TYPE, R
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
 void HaloExchange::unpack_send_adjoint_buffer( const DATA_TYPE* send_buffer, int send_size,
-                                       array::ArrayView<DATA_TYPE, RANK>& hfield,
-                                       array::ArrayView<DATA_TYPE, RANK>& dfield, const bool on_device ) const {
+                                               array::ArrayView<DATA_TYPE, RANK>& hfield,
+                                               array::ArrayView<DATA_TYPE, RANK>& dfield, const bool on_device ) const {
     ATLAS_TRACE();
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     if ( on_device ) {
@@ -467,8 +446,7 @@ void HaloExchange::unpack_send_adjoint_buffer( const DATA_TYPE* send_buffer, int
     }
     else
 #endif
-    halo_adjoint_packer<ParallelDim, RANK>::unpack( sendcnt_, sendmap_, send_buffer, send_size, dfield );
-
+        halo_adjoint_packer<ParallelDim, RANK>::unpack( sendcnt_, sendmap_, send_buffer, send_size, dfield );
 }
 
 // template<typename DATA_TYPE>
@@ -505,14 +483,14 @@ void atlas__HaloExchange__execute_int( HaloExchange* This, int field[], int var_
 void atlas__HaloExchange__execute_float( HaloExchange* This, float field[], int var_rank );
 void atlas__HaloExchange__execute_double( HaloExchange* This, double field[], int var_rank );
 
-void atlas__HaloExchange__execute_adjoint_strided_int( HaloExchange* This, int field[], int var_strides[], int var_shape[],
-                                               int var_rank );
-void atlas__HaloExchange__execute_adjoint_strided_long( HaloExchange* This, long field[], int var_strides[], int var_shape[],
-                                                int var_rank );
-void atlas__HaloExchange__execute_adjoint_strided_float( HaloExchange* This, float field[], int var_strides[], int var_shape[],
-                                                 int var_rank );
+void atlas__HaloExchange__execute_adjoint_strided_int( HaloExchange* This, int field[], int var_strides[],
+                                                       int var_shape[], int var_rank );
+void atlas__HaloExchange__execute_adjoint_strided_long( HaloExchange* This, long field[], int var_strides[],
+                                                        int var_shape[], int var_rank );
+void atlas__HaloExchange__execute_adjoint_strided_float( HaloExchange* This, float field[], int var_strides[],
+                                                         int var_shape[], int var_rank );
 void atlas__HaloExchange__execute_adjoint_strided_double( HaloExchange* This, double field[], int var_strides[],
-                                                  int var_shape[], int var_rank );
+                                                          int var_shape[], int var_rank );
 void atlas__HaloExchange__execute_adjoint_int( HaloExchange* This, int field[], int var_rank );
 void atlas__HaloExchange__execute_adjoint_float( HaloExchange* This, float field[], int var_rank );
 void atlas__HaloExchange__execute_adjoint_double( HaloExchange* This, double field[], int var_rank );
