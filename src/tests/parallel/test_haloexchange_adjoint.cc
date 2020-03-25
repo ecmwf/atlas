@@ -1162,7 +1162,7 @@ void test_rank2_v2( Fixture& f ) {
                            -5, 10, -50,100, -500,1000,   // core
                            -6, 12, -60,120, -600,1200,   // core
                            -7,  0, -70,  0, -700,   0,   // halo
-                           -8,  0, -80,  0, -800,   0;   // halo
+                           -8,  0, -80,  0, -800,   0};  // halo
             validate<POD, 3>::apply( arrv_t, arr_c );
             break;
         }
@@ -1536,7 +1536,7 @@ void test_rank1_cinterface( Fixture& f ) {
     int shapes[2]  = {(int)arrv.shape( 0 ), (int)arrv.shape( 1 )};
     int strides[2] = {(int)arrv.stride( 0 ), (int)arrv.stride( 1 )};
 
-    atlas__HaloExchange__execute_adjoint_strided_double( f.halo_exchange.get(), arrv.data(),
+    atlas__HaloExchange__execute_adjoint_strided_double( f.halo_exchange_std.get(), arrv.data(),
                                                          &( strides[1] ), &( shapes[1] ),
                                                          1 );
 
