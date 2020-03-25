@@ -83,8 +83,27 @@ private:  // methods
         std::vector<int> & send_counts, std::vector<int> & recv_counts,
         std::vector<int> & send_displs, std::vector<int> & recv_displs ) const;
 
+
+    template <typename DATA_TYPE>
+    void receive(
+        int tag, std::vector<int> & recv_displs, std::vector<int> & recv_counts,
+        std::vector<eckit::mpi::Request> & recv_req, DATA_TYPE* recv_buffer) const;
+
+    template <typename DATA_TYPE>
+    void send_and_wait_for_receive(
+        int tag, std::vector<eckit::mpi::Request> & recv_req,
+        std::vector<int> & send_displs, std::vector<int> & send_counts,
+        std::vector<eckit::mpi::Request> & send_req, DATA_TYPE* send_buffer ) const;
+
+    void wait_for_send(
+        std::vector<int> & send_counts,
+        std::vector<eckit::mpi::Request> & send_req ) const;
+
     template <typename DATA_TYPE>
     DATA_TYPE* allocate_buffer(const int buffer_size, const bool on_device) const;
+
+    template <typename DATA_TYPE>
+    void deallocate_buffer(DATA_TYPE* buffer, const bool on_device) const;
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
     void pack_send_buffer( const array::ArrayView<DATA_TYPE, RANK>& hfield,
@@ -164,49 +183,23 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
                              send_counts, recv_counts,
                              send_displs, recv_displs);
 
-    ATLAS_TRACE_MPI( IRECEIVE ) {
-        /// Let MPI know what we like to receive
-        for ( int jproc = 0; jproc < nproc; ++jproc ) {
-            if ( recv_counts[jproc] > 0 ) {
-                recv_req[jproc] =
-                    mpi::comm().iReceive( &recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag );
-            }
-        }
-    }
+    receive<DATA_TYPE>(tag, recv_displs, recv_counts, recv_req, recv_buffer);
+
 
     /// Pack
     pack_send_buffer<parallelDim>( field_hv, field_dv, send_buffer, send_size, on_device );
 
-    /// Send
-    ATLAS_TRACE_MPI( ISEND ) {
-        for ( int jproc = 0; jproc < nproc; ++jproc ) {
-            if ( send_counts[jproc] > 0 ) {
-                send_req[jproc] = mpi::comm().iSend( &send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag );
-            }
-        }
-    }
-
-    /// Wait for receiving to finish
-    ATLAS_TRACE_MPI( WAIT, "mpi-wait receive" ) {
-        for ( int jproc = 0; jproc < nproc; ++jproc ) {
-            if ( recvcounts_[jproc] > 0 ) {
-                mpi::comm().wait( recv_req[jproc] );
-            }
-        }
-    }
+    send_and_wait_for_receive<DATA_TYPE>(tag, recv_req,
+                              send_displs, send_counts, send_req, send_buffer);
 
     /// Unpack
     unpack_recv_buffer<parallelDim>( recv_buffer, recv_size, field_hv, field_dv, on_device );
 
-    /// Wait for sending to finish
-    ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
-        for ( int jproc = 0; jproc < nproc; ++jproc ) {
-            if ( sendcounts_[jproc] > 0 ) {
-                mpi::comm().wait( send_req[jproc] );
-            }
-        }
-    }
+    wait_for_send(send_counts, send_req);
 
+    deallocate_buffer(send_buffer, on_device);
+    deallocate_buffer(recv_buffer, on_device);
+    /*
     if ( on_device ) {
         util::delete_devicemem( send_buffer );
         util::delete_devicemem( recv_buffer );
@@ -215,6 +208,7 @@ void HaloExchange::execute( array::Array& field, bool on_device ) const {
         util::delete_hostmem( send_buffer );
         util::delete_hostmem( recv_buffer );
     }
+    */
 
 }
 
@@ -227,41 +221,25 @@ void HaloExchange::execute_adjoint(array::Array &field, bool on_device) const {
     ATLAS_TRACE( "HaloExchange", {"halo-exchange-adjoint"} );
 
     auto field_hv = array::make_host_view<DATA_TYPE, RANK>( field );
-
-    int tag                   = 1;
-    constexpr int parallelDim = array::get_parallel_dim<ParallelDim>( field_hv );
-    idx_t var_size            = array::get_var_size<parallelDim>( field_hv );
-    int send_size             = sendcnt_ * var_size;
-    int recv_size             = recvcnt_ * var_size;
-
-
-    DATA_TYPE* send_buffer{nullptr};
-    DATA_TYPE* recv_buffer{nullptr};
-    if ( on_device ) {
-        util::allocate_devicemem( send_buffer, send_size );
-        util::allocate_devicemem( recv_buffer, recv_size );
-    }
-    else {
-        util::allocate_hostmem( send_buffer, send_size );
-        util::allocate_hostmem( recv_buffer, recv_size );
-    }
-    std::vector<int> send_displs( nproc );
-    std::vector<int> recv_displs( nproc );
-    std::vector<int> send_counts( nproc );
-    std::vector<int> recv_counts( nproc );
-
-    std::vector<eckit::mpi::Request> send_req( nproc );
-    std::vector<eckit::mpi::Request> recv_req( nproc );
-
-    for ( int jproc = 0; jproc < nproc; ++jproc ) {
-        send_counts[jproc] = sendcounts_[jproc] * var_size;
-        recv_counts[jproc] = recvcounts_[jproc] * var_size;
-        send_displs[jproc] = senddispls_[jproc] * var_size;
-        recv_displs[jproc] = recvdispls_[jproc] * var_size;
-    }
-
     auto field_dv =
-        on_device ? array::make_device_view<DATA_TYPE, RANK>( field ) : array::make_host_view<DATA_TYPE, RANK>( field );
+        on_device ? array::make_device_view<DATA_TYPE, RANK>( field ) :
+        array::make_host_view<DATA_TYPE, RANK>( field );
+
+    constexpr int parallelDim = array::get_parallel_dim<ParallelDim>( field_hv );
+    idx_t var_size = array::get_var_size<parallelDim>( field_hv );
+
+    int tag(1), send_size, recv_size;
+    std::size_t  nproc_loc(static_cast<std::size_t>(nproc));
+    std::vector<int> send_counts(nproc_loc), recv_counts(nproc_loc);
+    std::vector<int> send_displs(nproc_loc), recv_displs(nproc_loc);
+    std::vector<eckit::mpi::Request> send_req(nproc_loc), recv_req(nproc_loc);
+
+    DATA_TYPE* send_buffer = allocate_buffer<DATA_TYPE>(sendcnt_ * var_size, on_device);
+    DATA_TYPE* recv_buffer = allocate_buffer<DATA_TYPE>(recvcnt_ * var_size, on_device);
+
+    execute_setup<DATA_TYPE>(var_size,
+                             send_counts, recv_counts,
+                             send_displs, recv_displs);
 
     // switching over send and receive buffers here
     ATLAS_TRACE_MPI( IRECEIVE ) {
@@ -334,6 +312,18 @@ DATA_TYPE* HaloExchange::allocate_buffer(const int buffer_size,
     return buffer;
 }
 
+
+template <typename DATA_TYPE>
+void HaloExchange::deallocate_buffer(DATA_TYPE* buffer,
+                                     const bool on_device) const {
+    if ( on_device ) {
+        util::delete_devicemem( buffer );
+    } else {
+        util::delete_hostmem( buffer );
+    }
+}
+
+
 template <typename DATA_TYPE>
 void HaloExchange::execute_setup(
     const idx_t var_size,
@@ -349,6 +339,47 @@ void HaloExchange::execute_setup(
         recv_counts[jproc] = recvcounts_[jproc] * var_size;
         send_displs[jproc] = senddispls_[jproc] * var_size;
         recv_displs[jproc] = recvdispls_[jproc] * var_size;
+    }
+}
+
+template <typename DATA_TYPE>
+void HaloExchange::receive(
+    int tag, std::vector<int> & recv_displs, std::vector<int> & recv_counts,
+    std::vector<eckit::mpi::Request> & recv_req, DATA_TYPE* recv_buffer) const {
+
+    ATLAS_TRACE_MPI( IRECEIVE ) {
+        /// Let MPI know what we like to receive
+        for ( int jproc = 0; jproc < nproc; ++jproc ) {
+            if ( recv_counts[jproc] > 0 ) {
+                recv_req[jproc] =
+                    mpi::comm().iReceive( &recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag );
+            }
+        }
+    }
+}
+
+template <typename DATA_TYPE>
+void HaloExchange::send_and_wait_for_receive(
+    int tag, std::vector<eckit::mpi::Request> & recv_req,
+    std::vector<int> & send_displs, std::vector<int> & send_counts,
+    std::vector<eckit::mpi::Request> & send_req, DATA_TYPE* send_buffer ) const {
+
+    /// Send
+    ATLAS_TRACE_MPI( ISEND ) {
+        for (int jproc = 0; jproc < nproc; ++jproc ) {
+            if ( send_counts[jproc] > 0 ) {
+                send_req[jproc] = mpi::comm().iSend( &send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag );
+            }
+        }
+    }
+
+    /// Wait for receiving to finish
+    ATLAS_TRACE_MPI( WAIT, "mpi-wait receive" ) {
+        for ( int jproc = 0; jproc < nproc; ++jproc ) {
+            if ( recvcounts_[jproc] > 0 ) {
+                mpi::comm().wait( recv_req[jproc] );
+            }
+        }
     }
 }
 

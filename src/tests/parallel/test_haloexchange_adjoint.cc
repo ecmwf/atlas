@@ -179,21 +179,21 @@ void test_rank0_arrview( Fixture& f ) {
 
     switch ( mpi::comm().rank() ) {
         case 0: {
-            POD arr_c[] = {9, 1, 2, 3, 4};
+            POD arr_c[] = {90, 1, 2, 3, 40};
             for ( int j = 0; j < f.N; ++j ) {
                 arrv(j) = arr_c[j];
             }
             break;
          }
          case 1: {
-            POD arr_c[] = {3, 4, 5, 6, 7, 8};
+            POD arr_c[] = {30, 4, 5, 6, 70, 80};
             for ( int j = 0; j < f.N; ++j ) {
                 arrv(j) = arr_c[j];
             }
             break;
          }
          case 2: {
-             POD arr_c[] = {5, 6, 7, 8, 9, 1, 2};
+             POD arr_c[] = {50, 60, 7, 8, 9, 10, 20};
              for ( int j = 0; j < f.N; ++j ) {
                  arrv(j) = arr_c[j];
              }
@@ -209,17 +209,17 @@ void test_rank0_arrview( Fixture& f ) {
 
     switch ( mpi::comm().rank() ) {
         case 0: {
-            POD arr_c[] = {0, 2, 4, 6, 0};
+            POD arr_c[] = {0, 11, 22, 33, 0};
             validate<POD, 1>::apply( arrv, arr_c );
             break;
         }
         case 1: {
-            POD arr_c[] = {0, 8, 10, 12, 0, 0};
+            POD arr_c[] = {0, 44, 55, 66, 0, 0};
             validate<POD, 1>::apply( arrv, arr_c );
             break;
         }
         case 2: {
-            POD arr_c[] = {0, 0, 14, 16, 18, 0, 0};
+            POD arr_c[] = {0, 0, 77, 88, 99, 0, 0};
             validate<POD, 1>::apply( arrv, arr_c );
             break;
         }

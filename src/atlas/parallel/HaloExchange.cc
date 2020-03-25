@@ -159,6 +159,19 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
 
 }
 
+void HaloExchange::wait_for_send(
+    std::vector<int> & send_counts,
+    std::vector<eckit::mpi::Request> & send_req) const {
+
+    ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
+        for ( int jproc = 0; jproc < nproc; ++jproc ) {
+            if ( sendcounts_[jproc] > 0 ) {
+                mpi::comm().wait( send_req[jproc] );
+            }
+        }
+    }
+}
+
 /////////////////////
 
 namespace {
