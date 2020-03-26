@@ -149,8 +149,6 @@ struct Fixture {
                 break;
             }
         }
-        std::cout << " standard setup "
-                  << " " << std::endl;
         halo_exchange_std->setup( part.data(), ridx.data(), 0, N );
     }
 };

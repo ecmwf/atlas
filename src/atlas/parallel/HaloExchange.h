@@ -23,7 +23,6 @@
 #include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/parallel/mpi/mpi.h"
 
-
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/ArrayViewUtil.h"
@@ -275,7 +274,7 @@ void HaloExchange::counts_displs_setup( const idx_t var_size, std::vector<int>& 
                                         std::vector<int>& recv_counts_init, std::vector<int>& send_counts,
                                         std::vector<int>& recv_counts, std::vector<int>& send_displs,
                                         std::vector<int>& recv_displs ) const {
-    for ( int jproc = 0; jproc < nproc; ++jproc ) {
+    for ( size_t jproc = 0; jproc < static_cast<size_t>(nproc); ++jproc ) {
         send_counts_init[jproc] = sendcounts_[jproc];
         recv_counts_init[jproc] = recvcounts_[jproc];
         send_counts[jproc]      = sendcounts_[jproc] * var_size;
@@ -290,7 +289,7 @@ void HaloExchange::ireceive( int tag, std::vector<int>& recv_displs, std::vector
                              std::vector<eckit::mpi::Request>& recv_req, DATA_TYPE* recv_buffer ) const {
     ATLAS_TRACE_MPI( IRECEIVE ) {
         /// Let MPI know what we like to receive
-        for ( int jproc = 0; jproc < nproc; ++jproc ) {
+        for ( size_t jproc = 0; jproc < static_cast<size_t>(nproc); ++jproc ) {
             if ( recv_counts[jproc] > 0 ) {
                 recv_req[jproc] =
                     mpi::comm().iReceive( &recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag );
@@ -307,7 +306,7 @@ void HaloExchange::isend_and_wait_for_receive( int tag, std::vector<int>& recv_c
                                                DATA_TYPE* send_buffer ) const {
     /// Send
     ATLAS_TRACE_MPI( ISEND ) {
-        for ( int jproc = 0; jproc < nproc; ++jproc ) {
+        for ( size_t jproc = 0; jproc < static_cast<size_t>(nproc); ++jproc ) {
             if ( send_counts[jproc] > 0 ) {
                 send_req[jproc] = mpi::comm().iSend( &send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag );
             }
@@ -316,7 +315,7 @@ void HaloExchange::isend_and_wait_for_receive( int tag, std::vector<int>& recv_c
 
     /// Wait for receiving to finish
     ATLAS_TRACE_MPI( WAIT, "mpi-wait receive" ) {
-        for ( int jproc = 0; jproc < nproc; ++jproc ) {
+        for ( size_t jproc = 0; jproc < static_cast<size_t>(nproc); ++jproc ) {
             if ( recv_counts_init[jproc] > 0 ) {
                 mpi::comm().wait( recv_req[jproc] );
             }
