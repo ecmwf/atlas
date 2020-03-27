@@ -80,6 +80,7 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &EdgeColumnsHaloExchangeCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
@@ -93,7 +94,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh ) {
-        mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
         value->setup( array::make_view<int, 1>( mesh.edges().partition() ).data(),
                       array::make_view<idx_t, 1>( mesh.edges().remote_index() ).data(), REMOTE_IDX_BASE,
@@ -114,6 +114,7 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &EdgeColumnsGatherScatterCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
@@ -127,7 +128,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh ) {
-        mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
         value->setup( array::make_view<int, 1>( mesh.edges().partition() ).data(),
                       array::make_view<idx_t, 1>( mesh.edges().remote_index() ).data(), REMOTE_IDX_BASE,
@@ -148,6 +148,7 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &EdgeColumnsChecksumCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
@@ -161,7 +162,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh ) {
-        mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
         util::ObjectHandle<parallel::GatherScatter> gather(
             EdgeColumnsGatherScatterCache::instance().get_or_create( mesh ) );
@@ -248,10 +248,7 @@ array::ArrayShape EdgeColumns::config_shape( const eckit::Configuration& config 
 }
 
 EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config ) :
-    mesh_( mesh ),
-    edges_( mesh_.edges() ),
-    nb_levels_( config.getInt( "levels", 0 ) ),
-    nb_edges_( 0 ) {
+    mesh_( mesh ), edges_( mesh_.edges() ), nb_levels_( config.getInt( "levels", 0 ) ), nb_edges_( 0 ) {
     ATLAS_TRACE();
     if ( config.has( "halo" ) ) {
         halo_ = mesh::Halo( config.getInt( "halo" ) );
@@ -767,8 +764,7 @@ void atlas__fs__EdgeColumns__checksum_field( const EdgeColumns* This, const fiel
 EdgeColumns::EdgeColumns() : FunctionSpace(), functionspace_( nullptr ) {}
 
 EdgeColumns::EdgeColumns( const FunctionSpace& functionspace ) :
-    FunctionSpace( functionspace ),
-    functionspace_( dynamic_cast<const detail::EdgeColumns*>( get() ) ) {}
+    FunctionSpace( functionspace ), functionspace_( dynamic_cast<const detail::EdgeColumns*>( get() ) ) {}
 
 EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config ) :
     FunctionSpace( new detail::EdgeColumns( mesh, config ) ),
