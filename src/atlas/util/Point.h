@@ -29,6 +29,13 @@ namespace atlas {
 using Point2 = eckit::geometry::Point2;
 using Point3 = eckit::geometry::Point3;
 
+inline bool operator==( const Point2& p1, const Point2& p2 ) {
+    return eckit::geometry::points_equal( p1, p2 );
+}
+inline bool operator!=( const Point2& p1, const Point2& p2 ) {
+    return !eckit::geometry::points_equal( p1, p2 );
+}
+
 /// @brief  Point in arbitrary XY-coordinate system
 class PointXY : public eckit::geometry::Point2 {
     using array_t = std::array<double, 2>;
