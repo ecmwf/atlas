@@ -43,14 +43,6 @@ ecbuild_add_test( TARGET atlas_test_structuredcolumns
   CONDITION eckit_HAVE_MPI
 )
 
-ecbuild_add_test( TARGET atlas_test_polygons
-  SOURCES  test_polygons.cc
-  LIBS     atlas
-  MPI 4
-  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  CONDITION eckit_HAVE_MPI
-)
-
 ecbuild_add_test( TARGET atlas_test_pointcloud
   SOURCES  test_pointcloud.cc
   LIBS     atlas
@@ -87,5 +79,28 @@ ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi16
   MPI 16
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   CONDITION eckit_HAVE_MPI
+)
+
+ecbuild_add_executable( TARGET atlas_test_polygons
+  SOURCES  test_polygons.cc
+  LIBS     atlas
+  NOINSTALL
+)
+
+set( _WITH_MPI )
+if( eckit_HAVE_MPI )
+    set( _WITH_MPI "MPI 4" )
+endif()
+
+ecbuild_add_test( TARGET atlas_test_polygons_structuredcolumns
+  COMMAND atlas_test_polygons ARGS --functionspace StructuredColumns
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  ${_WITH_MPI}
+)
+
+ecbuild_add_test( TARGET atlas_test_polygons_nodecolumns
+  COMMAND atlas_test_polygons ARGS --functionspace NodeColumns
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  ${_WITH_MPI}
 )
 

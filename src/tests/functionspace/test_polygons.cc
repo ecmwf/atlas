@@ -11,9 +11,11 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
+#include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/StructuredGrid.h"
+#include "atlas/meshgenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/LonLatPolygon.h"
 #include "atlas/util/PolygonLocator.h"
@@ -27,18 +29,47 @@ namespace atlas {
 namespace test {
 
 namespace {
-std::string gridname() {
+std::string grid_name() {
     static std::string _gridname = eckit::Resource<std::string>( "--grid", "O32" );
     return _gridname;
 }
 
-FunctionSpace functionspace() {
+std::string functionspace_name() {
+    static std::string _name = eckit::Resource<std::string>( "--functionspace", "StructuredColumns" );
+    return _name;
+}
+
+std::string configuration() {
+    std::stringstream out;
+    out << "mpi::size()=" << mpi::size() << ",grid_name()=" << grid_name()
+        << ",functionspace_name()=" << functionspace_name();
+    return out.str();
+};
+
+
+FunctionSpace structured_columns() {
     static functionspace::StructuredColumns _fs = []() {
-        Grid grid( gridname() );
+        Grid grid( grid_name() );
         return functionspace::StructuredColumns{grid};
     }();
     return _fs;
 }
+
+FunctionSpace node_columns() {
+    static functionspace::NodeColumns _fs = []() {
+        Grid grid( grid_name() );
+        Mesh mesh = StructuredMeshGenerator().generate( grid );
+        return functionspace::NodeColumns{mesh};
+    }();
+    return _fs;
+}
+
+
+FunctionSpace functionspace() {
+    static FunctionSpace _fs = functionspace_name() == "NodeColumns" ? node_columns() : structured_columns();
+    return _fs;
+}
+
 
 std::vector<PointLonLat>& points() {
     static std::vector<PointLonLat> _points{
@@ -48,6 +79,75 @@ std::vector<PointLonLat>& points() {
     };
     return _points;
 }
+
+void check_part( const std::vector<int>& vec ) {
+    Log::debug() << "part = " << vec << std::endl;
+    std::vector<int> expected;
+    if ( mpi::size() == 1 && grid_name() == "O32" ) {
+        expected = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    }
+    if ( mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "StructuredColumns" ) {
+        expected = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
+    }
+    if ( mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "NodeColumns" ) {
+        expected = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
+    }
+    if ( expected.size() ) {
+        EXPECT( vec == expected );
+    }
+    else {
+        Log::warning() << "Check for part not implemented for configuration " << configuration() << std::endl;
+    }
+}
+
+void check_sizes( const std::vector<int>& vec ) {
+    Log::debug() << "sizes = " << vec << std::endl;
+    std::vector<int> expected;
+    if ( mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "StructuredColumns" ) {
+        expected = std::vector<int>{132};
+    }
+    if ( mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "StructuredColumns" ) {
+        expected = std::vector<int>{50, 84, 84, 50};
+    }
+    if ( mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "NodeColumns" ) {
+        expected = std::vector<int>{167};
+    }
+    if ( mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "NodeColumns" ) {
+        expected = std::vector<int>{169, 147, 149, 165};
+    }
+    if ( expected.size() ) {
+        EXPECT( vec == expected );
+    }
+    else {
+        Log::warning() << "Check for sizes not implemented for configuration " << configuration() << std::endl;
+    }
+}
+
+void check_simplified_sizes( const std::vector<int>& vec ) {
+    Log::debug() << "simplified_sizes = " << vec << std::endl;
+    std::vector<int> expected;
+    if ( mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "StructuredColumns" ) {
+        expected = std::vector<int>{5};
+    }
+    if ( mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "StructuredColumns" ) {
+        expected = std::vector<int>{7, 43, 43, 7};
+    }
+    if ( mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "NodeColumns" ) {
+        expected = std::vector<int>{5};
+    }
+    if ( mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "NodeColumns" ) {
+        expected = std::vector<int>{8, 5, 8, 7};
+    }
+    if ( expected.size() ) {
+        EXPECT( vec == expected );
+    }
+    else {
+        Log::warning() << "Check for simplified_sizes not implemented for configuration " << configuration()
+                       << std::endl;
+    }
+}
+
+
 }  // namespace
 
 //-----------------------------------------------------------------------------
@@ -89,24 +189,9 @@ CASE( "test_polygons" ) {
         Log::debug() << std::endl;
     }
 
-    if ( mpi::size() == 1 && gridname() == "O32" ) {
-        auto expected_part  = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        auto expected_sizes = std::vector<int>{132};
-        auto expected_simplified_sizes = std::vector<int>{5};
-
-        EXPECT( part == expected_part );
-        EXPECT( sizes == expected_sizes );
-        EXPECT( simplified_sizes == expected_simplified_sizes );
-    }
-    if ( mpi::size() == 4 && gridname() == "O32" ) {
-        auto expected_part  = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
-        auto expected_sizes = std::vector<int>{50, 84, 84, 50};
-        auto expected_simplified_sizes = std::vector<int>{7, 43, 43, 7};
-
-        EXPECT( part == expected_part );
-        EXPECT( sizes == expected_sizes );
-        EXPECT( simplified_sizes == expected_simplified_sizes );
-    }
+    check_part( part );
+    check_sizes( sizes );
+    check_simplified_sizes( simplified_sizes );
 
     PolygonLocator find_partition( polygons );
     for ( size_t n = 0; n < points().size(); ++n ) {
