@@ -258,6 +258,10 @@ public:
 
     idx_t nb_partitions() const override { return mesh_.nb_partitions(); }
 
+    const util::PartitionPolygon& polygon( idx_t halo = 0 ) const override { return mesh_.polygon( halo ); }
+
+    const util::PartitionPolygons& polygons() const override { return mesh_.polygons(); }
+
 private:  // methods
     void constructor();
 

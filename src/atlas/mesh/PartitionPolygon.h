@@ -37,7 +37,7 @@ namespace mesh {
 /**
  * @brief Polygon class that holds the boundary of a mesh partition
  */
-class PartitionPolygon : public util::Polygon, public util::Object {
+class PartitionPolygon : public util::PartitionPolygon {
 public:  // methods
     //-- Constructors
 
@@ -46,12 +46,18 @@ public:  // methods
 
     //-- Accessors
 
-    idx_t halo() const { return halo_; }
+    idx_t halo() const override { return halo_; }
 
     /// @brief Return the memory footprint of the Polygon
-    size_t footprint() const;
+    size_t footprint() const override;
 
-    void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const;
+    void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const override;
+
+    void allGather( util::PartitionPolygons& ) const override;
+
+    PointsXY xy() const override;
+
+    PointsLonLat lonlat() const override;
 
 private:
     void print( std::ostream& ) const;

@@ -28,6 +28,9 @@ class Stream;
 }
 
 namespace atlas {
+namespace util {
+class PartitionPolygons;
+}
 class Mesh;
 namespace mesh {
 class PartitionPolygon;
@@ -107,6 +110,7 @@ public:  // methods
     PartitionGraph::Neighbours nearestNeighbourPartitions() const;
 
     const PartitionPolygon& polygon( idx_t halo = 0 ) const;
+    const util::PartitionPolygons& polygons() const;
 
     const Grid grid() const { return grid_; }
 
@@ -148,6 +152,8 @@ private:  // members
     mutable util::ObjectHandle<PartitionGraph> partition_graph_;
 
     mutable std::vector<util::ObjectHandle<PartitionPolygon>> polygons_;
+
+    mutable util::PartitionPolygons all_polygons_;  // from all partitions
 
     mutable std::vector<MeshObserver*> mesh_observers_;
 };
