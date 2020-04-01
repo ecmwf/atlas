@@ -242,6 +242,24 @@ const Point2& PolygonCoordinates::centroid() const {
     return centroid_;
 }
 
+Polygon::edge_set_t ExplicitPartitionPolygon::compute_edges( idx_t points_size ) {
+    util::Polygon::edge_set_t edges;
+    auto add_edge = [&]( idx_t p1, idx_t p2 ) {
+        util::Polygon::edge_t edge = {p1, p2};
+        edges.insert( edge );
+        // Log::info() << edge.first << "  " << edge.second << std::endl;
+    };
+    for ( idx_t p = 0; p < points_size - 2; ++p ) {
+        add_edge( p, p + 1 );
+    }
+    add_edge( points_size - 2, 0 );
+    return edges;
+}
+
+void ExplicitPartitionPolygon::allGather( PartitionPolygons& ) const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
 //------------------------------------------------------------------------------------------------------
 
 }  // namespace util

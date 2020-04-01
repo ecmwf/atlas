@@ -310,7 +310,7 @@ StructuredPartitionPolygon::StructuredPartitionPolygon( const functionspace::Fun
     inner_bounding_box_.emplace_back( inner_bounding_box_[0] );
     auto min = Point2( std::numeric_limits<double>::max(), std::numeric_limits<double>::max() );
     auto max = Point2( std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest() );
-    for ( size_t i = 0; i < inner_bounding_box_.size(); ++i ) {
+    for ( size_t i = 0; i < inner_bounding_box_.size() - 1; ++i ) {
         min = Point2::componentsMin( min, inner_bounding_box_[i] );
         max = Point2::componentsMax( max, inner_bounding_box_[i] );
     }
@@ -420,6 +420,55 @@ void StructuredPartitionPolygon::outputPythonScript( const eckit::PathName& file
         }
         // clang-format on
         comm.barrier();
+    }
+}
+
+util::PartitionPolygon::PointsXY StructuredPartitionPolygon::xy() const {
+    return points_;
+}
+
+util::PartitionPolygon::PointsLonLat StructuredPartitionPolygon::lonlat() const {
+    return points_;
+}
+
+void StructuredPartitionPolygon::allGather( util::PartitionPolygons& polygons ) const {
+    ATLAS_TRACE();
+
+    const auto& fs = dynamic_cast<const functionspace::detail::StructuredColumns&>( fs_ );
+    if ( fs.grid().projection() ) {
+        ATLAS_NOTIMPLEMENTED;  // because LonLat != XY
+    }
+
+    polygons.clear();
+    polygons.reserve( mpi::size() );
+
+    const mpi::Comm& comm = mpi::comm();
+    const int mpi_size    = int( comm.size() );
+
+    auto& poly = *this;
+
+    std::vector<double> mypolygon;
+    mypolygon.reserve( poly.size() * 2 );
+
+    for ( auto& p : poly.xy() ) {
+        mypolygon.push_back( p[XX] );
+        mypolygon.push_back( p[YY] );
+    }
+    ATLAS_ASSERT( mypolygon.size() >= 4 );
+
+    eckit::mpi::Buffer<double> recv_polygons( mpi_size );
+
+    comm.allGatherv( mypolygon.begin(), mypolygon.end(), recv_polygons );
+
+    for ( idx_t p = 0; p < mpi_size; ++p ) {
+        PointsXY recv_points;
+        recv_points.reserve( recv_polygons.counts[p] );
+        for ( idx_t j = 0; j < recv_polygons.counts[p] / 2; ++j ) {
+            PointXY pxy( *( recv_polygons.begin() + recv_polygons.displs[p] + 2 * j + XX ),
+                         *( recv_polygons.begin() + recv_polygons.displs[p] + 2 * j + YY ) );
+            recv_points.push_back( pxy );
+        }
+        polygons.emplace_back( new util::ExplicitPartitionPolygon( std::move( recv_points ) ) );
     }
 }
 

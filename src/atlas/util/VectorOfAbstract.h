@@ -72,6 +72,7 @@ public:
         container_.emplace_back( std::forward<Args>( args )... );
     }
     container_type& get() { return container_; }
+    void clear() { return container_.clear(); }
 
 private:
     container_type container_;

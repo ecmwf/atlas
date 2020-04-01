@@ -90,14 +90,18 @@ protected:
 
 //------------------------------------------------------------------------------------------------------
 
+class PartitionPolygons;
+
 class PartitionPolygon : public Polygon, util::Object {
 public:
     using Polygon::Polygon;
+    using PointsXY     = std::vector<Point2>;
+    using PointsLonLat = std::vector<Point2>;
 
     /// @brief Return inscribed rectangular domain (not rotated)
     virtual const RectangularDomain& inscribedDomain() const;
 
-    /// @brief Return the memory footprint of the Polygon
+    /// @brief Return value of halo
     virtual idx_t halo() const { return 0; }
 
     /// @brief Return the memory footprint of the Polygon
@@ -106,9 +110,33 @@ public:
     /// @brief Output a python script that plots the partition
     virtual void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const {}
 
-    virtual const std::vector<Point2>& xy() const = 0;
+    /// @brief All (x,y) coordinates defining a polygon. Last point should match first.
+    virtual PointsXY xy() const = 0;
 
-    virtual const std::vector<Point2>& lonlat() const = 0;
+    /// @brief All (lon,lat) coordinates defining a polygon. Last point should match first.
+    virtual PointsLonLat lonlat() const = 0;
+
+    virtual void allGather( PartitionPolygons& ) const = 0;
+};
+
+//------------------------------------------------------------------------------------------------------
+
+class ExplicitPartitionPolygon : public util::PartitionPolygon {
+public:
+    explicit ExplicitPartitionPolygon( PointsXY&& points ) : points_( std::move( points ) ) {
+        setup( compute_edges( points_.size() ) );
+    }
+
+    PointsXY xy() const override { return points_; }
+    PointsLonLat lonlat() const override { return points_; }
+
+private:
+    static util::Polygon::edge_set_t compute_edges( idx_t points_size );
+
+    void allGather( util::PartitionPolygons& ) const override;
+
+private:
+    std::vector<Point2> points_;
 };
 
 //------------------------------------------------------------------------------------------------------
