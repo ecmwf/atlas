@@ -404,6 +404,8 @@ functionspace/Spectral.h
 functionspace/Spectral.cc
 functionspace/PointCloud.h
 functionspace/PointCloud.cc
+functionspace/Points.h
+functionspace/Points.cc
 functionspace/detail/FunctionSpaceImpl.h
 functionspace/detail/FunctionSpaceImpl.cc
 functionspace/detail/FunctionSpaceInterface.h
@@ -497,6 +499,8 @@ interpolation/method/Ray.cc
 interpolation/method/Ray.h
 interpolation/method/fe/FiniteElement.cc
 interpolation/method/fe/FiniteElement.h
+interpolation/method/knn/GridBoxMethod.cc
+interpolation/method/knn/GridBoxMethod.h
 interpolation/method/knn/KNearestNeighbours.cc
 interpolation/method/knn/KNearestNeighbours.h
 interpolation/method/knn/KNearestNeighboursBase.cc
@@ -615,6 +619,8 @@ util/KDTree.cc
 util/KDTree.h
 util/PolygonXY.cc
 util/PolygonXY.h
+util/GridBox.cc
+util/GridBox.h
 util/Metadata.cc
 util/Metadata.h
 util/Point.cc

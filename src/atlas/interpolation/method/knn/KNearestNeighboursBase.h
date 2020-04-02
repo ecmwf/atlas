@@ -14,6 +14,7 @@
 
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/interpolation/method/PointIndex3.h"
+#include "atlas/functionspace/Points.h"
 
 namespace atlas {
 namespace interpolation {
@@ -26,6 +27,7 @@ public:
 
 protected:
     void buildPointSearchTree( Mesh& meshSource );
+    void buildPointSearchTree( const functionspace::Points& );
 
     std::unique_ptr<PointIndex3> pTree_;
 };

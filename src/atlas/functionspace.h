@@ -17,5 +17,6 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/PointCloud.h"
+#include "atlas/functionspace/Points.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
