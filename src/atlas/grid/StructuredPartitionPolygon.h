@@ -14,6 +14,7 @@
 #include "atlas/domain/Domain.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/library/config.h"
+#include "atlas/projection/Projection.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/Polygon.h"
@@ -43,8 +44,6 @@ public:  // methods
     void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const override;
 
     PointsXY xy() const override;
-
-    PointsLonLat lonlat() const override;
 
     const RectangularDomain& inscribedDomain() const override { return inscribed_domain_; }
 

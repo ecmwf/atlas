@@ -20,6 +20,7 @@
 #include "atlas/util/Object.h"
 
 #include "atlas/library/config.h"
+#include "atlas/projection/Projection.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Polygon.h"
 
@@ -53,11 +54,9 @@ public:  // methods
 
     void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const override;
 
-    void allGather( util::PartitionPolygons& ) const override;
-
     PointsXY xy() const override;
 
-    PointsLonLat lonlat() const override;
+    void allGather( util::PartitionPolygons& ) const override;
 
 private:
     void print( std::ostream& ) const;

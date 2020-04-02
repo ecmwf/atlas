@@ -22,26 +22,18 @@ class LonLatPolygons;
 
 //------------------------------------------------------------------------------------------------------
 
-/// @brief Implement PolygonCoordinates::contains for a polygon defined in LonLat space.
+/// @brief Implement PolygonCoordinates::contains for a polygon defined in XY space.
 class LonLatPolygon : public PolygonCoordinates {
-private:
-    template <typename PointContainer>
-    using enable_if_not_polygon = typename std::enable_if<!std::is_base_of<Polygon, PointContainer>::value, int>::type;
-
 public:
     using Vector = LonLatPolygons;
 
-    LonLatPolygon( const Polygon&, const atlas::Field& coordinates, bool removeAlignedPoints = true );
     LonLatPolygon( const PartitionPolygon& );
-
-    template <typename PointContainer, enable_if_not_polygon<PointContainer> = 0>
-    LonLatPolygon( const PointContainer& points, bool removeAlignedPoints = true );
 
     /// @brief Point-in-polygon test based on winding number
     /// @note reference <a href="http://geomalgorithms.com/a03-_inclusion.html">Inclusion of a Point in a Polygon</a>
     /// @param[in] P given point
-    /// @return if point is in polygon
-    bool contains( const Point2& P ) const override;
+    /// @return if point (x,y) is in polygon
+    bool contains( const Point2& Pxy ) const override;
 
 private:
     PointLonLat centroid_;

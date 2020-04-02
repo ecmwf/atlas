@@ -27,6 +27,8 @@
 #include "atlas/util/Point.h"
 #include "atlas/util/VectorOfAbstract.h"
 
+#include "atlas/projection/Projection.h"  // for ExplicitPartitionPolygon
+
 namespace eckit {
 class PathName;
 }
@@ -34,6 +36,7 @@ class PathName;
 namespace atlas {
 class Field;
 class RectangularDomain;
+class Projection;
 }  // namespace atlas
 
 namespace atlas {
@@ -113,9 +116,6 @@ public:
     /// @brief All (x,y) coordinates defining a polygon. Last point should match first.
     virtual PointsXY xy() const = 0;
 
-    /// @brief All (lon,lat) coordinates defining a polygon. Last point should match first.
-    virtual PointsLonLat lonlat() const = 0;
-
     virtual void allGather( PartitionPolygons& ) const = 0;
 };
 
@@ -123,21 +123,28 @@ public:
 
 class ExplicitPartitionPolygon : public util::PartitionPolygon {
 public:
-    explicit ExplicitPartitionPolygon( PointsXY&& points ) : points_( std::move( points ) ) {
+    explicit ExplicitPartitionPolygon( PointsXY&& points ) :
+        ExplicitPartitionPolygon( std::move( points ), RectangularDomain() ) {}
+
+    explicit ExplicitPartitionPolygon( PointsXY&& points, const RectangularDomain& inscribed ) :
+        points_( std::move( points ) ), inscribed_( inscribed ) {
         setup( compute_edges( points_.size() ) );
     }
 
     PointsXY xy() const override { return points_; }
-    PointsLonLat lonlat() const override { return points_; }
+
+    void allGather( util::PartitionPolygons& ) const override;
+
+    const RectangularDomain& inscribedDomain() const override { return inscribed_; }
 
 private:
     static util::Polygon::edge_set_t compute_edges( idx_t points_size );
 
-    void allGather( util::PartitionPolygons& ) const override;
 
 private:
     std::vector<Point2> points_;
-};
+    RectangularDomain inscribed_;
+};  // namespace util
 
 //------------------------------------------------------------------------------------------------------
 
@@ -174,6 +181,8 @@ public:
     const Point2& centroid() const;
 
     idx_t size() const { return coordinates_.size(); }
+
+    void print( std::ostream& ) const;
 
 protected:
     // -- Members

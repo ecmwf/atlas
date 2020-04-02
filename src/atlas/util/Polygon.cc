@@ -18,6 +18,7 @@
 #include "atlas/array.h"
 #include "atlas/domain/Domain.h"
 #include "atlas/field/Field.h"
+#include "atlas/projection/Projection.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Polygon.h"
@@ -240,6 +241,17 @@ const Point2& PolygonCoordinates::coordinatesMin() const {
 
 const Point2& PolygonCoordinates::centroid() const {
     return centroid_;
+}
+
+void PolygonCoordinates::print( std::ostream& out ) const {
+    out << "[";
+    for ( size_t i = 0; i < coordinates_.size(); ++i ) {
+        if ( i > 0 ) {
+            out << " ";
+        }
+        out << coordinates_[i];
+    }
+    out << "]";
 }
 
 Polygon::edge_set_t ExplicitPartitionPolygon::compute_edges( idx_t points_size ) {

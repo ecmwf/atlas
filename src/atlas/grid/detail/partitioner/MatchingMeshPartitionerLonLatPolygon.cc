@@ -49,7 +49,7 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int part
     bool includesNorthPole = ( mpi_rank == 0 );
     bool includesSouthPole = ( mpi_rank == mpi_size - 1 );
 
-    const util::LonLatPolygon poly( prePartitionedMesh_.polygon( 0 ), prePartitionedMesh_.nodes().lonlat() );
+    const util::LonLatPolygon poly{prePartitionedMesh_.polygon( 0 )};
 
     {
         eckit::ProgressTimer timer( "Partitioning", grid.size(), "point", double( 10 ), atlas::Log::trace() );

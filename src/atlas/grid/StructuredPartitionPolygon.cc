@@ -365,7 +365,7 @@ void StructuredPartitionPolygon::outputPythonScript( const eckit::PathName& file
                      "\n" "import matplotlib.pyplot as plt"
                      "\n" "from matplotlib.path import Path"
                      "\n" "import matplotlib.patches as patches"
-                     "\n" 
+                     "\n"
                      "\n" "from itertools import cycle"
                      "\n" "import matplotlib.cm as cm"
                      "\n" "import numpy as np"
@@ -427,20 +427,11 @@ util::PartitionPolygon::PointsXY StructuredPartitionPolygon::xy() const {
     return points_;
 }
 
-util::PartitionPolygon::PointsLonLat StructuredPartitionPolygon::lonlat() const {
-    return points_;
-}
-
-void StructuredPartitionPolygon::allGather( util::PartitionPolygons& polygons ) const {
+void StructuredPartitionPolygon::allGather( util::PartitionPolygons& polygons_ ) const {
     ATLAS_TRACE();
 
-    const auto& fs = dynamic_cast<const functionspace::detail::StructuredColumns&>( fs_ );
-    if ( fs.grid().projection() ) {
-        ATLAS_NOTIMPLEMENTED;  // because LonLat != XY
-    }
-
-    polygons.clear();
-    polygons.reserve( mpi::size() );
+    polygons_.clear();
+    polygons_.reserve( mpi::size() );
 
     const mpi::Comm& comm = mpi::comm();
     const int mpi_size    = int( comm.size() );
@@ -468,7 +459,7 @@ void StructuredPartitionPolygon::allGather( util::PartitionPolygons& polygons ) 
                          *( recv_polygons.begin() + recv_polygons.displs[p] + 2 * j + YY ) );
             recv_points.push_back( pxy );
         }
-        polygons.emplace_back( new util::ExplicitPartitionPolygon( std::move( recv_points ) ) );
+        polygons_.emplace_back( new util::ExplicitPartitionPolygon( std::move( recv_points ) ) );
     }
 }
 

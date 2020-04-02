@@ -10,12 +10,13 @@
 
 #pragma once
 
-#include <memory>
 #include <algorithm>
+#include <memory>
 
+#include "atlas/library/config.h"
+#include "atlas/projection/Projection.h"
 #include "atlas/util/KDTree.h"
 #include "atlas/util/Polygon.h"
-#include "atlas/library/config.h"
 
 namespace atlas {
 namespace util {
@@ -30,28 +31,28 @@ namespace util {
 /// visited in order of shortest distance, to check if the point is contained within.
 class PolygonLocator {
 public:
-
     /// @brief Construct PolygonLocator from shared_ptr of polygons
-    PolygonLocator( const std::shared_ptr<const PolygonCoordinates::Vector> polygons, idx_t k = 4 ) :
-        shared_polygons_( polygons ),
-        polygons_( *shared_polygons_ ) {
-        k_ = std::min( k, polygons_.size() );
+    PolygonLocator( const std::shared_ptr<const PolygonCoordinates::Vector> polygons,
+                    const Projection& projection = Projection() ) :
+        shared_polygons_( polygons ), polygons_( *shared_polygons_ ), projection_( projection ) {
+        k_ = std::min( k_, polygons_.size() );
         buildKDTree();
     }
 
     /// @brief Construct PolygonLocator and move polygons inside.
-    PolygonLocator( PolygonCoordinates::Vector&& polygons, idx_t k = 4 ) :
-        shared_polygons_( std::make_shared<PolygonCoordinates::Vector>( std::move(polygons) ) ),
-        polygons_( *shared_polygons_ ) {
-        k_ = std::min( k, polygons_.size() );
+    PolygonLocator( PolygonCoordinates::Vector&& polygons, const Projection& projection = Projection() ) :
+        shared_polygons_( std::make_shared<PolygonCoordinates::Vector>( std::move( polygons ) ) ),
+        polygons_( *shared_polygons_ ),
+        projection_( projection ) {
+        k_ = std::min( k_, polygons_.size() );
         buildKDTree();
     }
 
     /// @brief Construct PolygonLocator using reference to polygons.
     /// !WARNING! polygons should not go out of scope before PolygonLocator
-    PolygonLocator( const PolygonCoordinates::Vector& polygons, idx_t k = 4 ) :
-        polygons_( polygons ) {
-        k_ = std::min( k, polygons_.size() );
+    PolygonLocator( const PolygonCoordinates::Vector& polygons, const Projection& projection = Projection() ) :
+        polygons_( polygons ), projection_( projection ) {
+        k_ = std::min( k_, polygons_.size() );
         buildKDTree();
     }
 
@@ -61,7 +62,7 @@ public:
         idx_t partition{-1};
         for ( size_t i = 0; i < found.size(); ++i ) {
             idx_t ii = found[i].payload();
-            if ( polygons_[ii].contains( point ) ) {
+            if ( polygons_[ii].contains( lonlat2xy( point ) ) ) {
                 partition = ii;
                 break;
             }
@@ -71,18 +72,30 @@ public:
     }
 
 private:
-
     void buildKDTree() {
         kdtree_.reserve( polygons_.size() );
         for ( idx_t p = 0; p < polygons_.size(); ++p ) {
-            kdtree_.insert( polygons_[p].centroid(), p );
+            kdtree_.insert( xy2lonlat( polygons_[p].centroid() ), p );
         }
         kdtree_.build();
     }
 
+    Point2 lonlat2xy( const Point2& lonlat ) const {
+        Point2 xy{lonlat};
+        projection_.lonlat2xy( xy.data() );
+        return xy;
+    }
+    Point2 xy2lonlat( const Point2& xy ) const {
+        Point2 lonlat{xy};
+        projection_.xy2lonlat( lonlat.data() );
+        return lonlat;
+    }
+
+
     std::shared_ptr<const PolygonCoordinates::Vector> shared_polygons_;
     const PolygonCoordinates::Vector& polygons_;
-    idx_t k_;
+    Projection projection_;
+    idx_t k_{4};
     KDTree<idx_t> kdtree_;
 };
 

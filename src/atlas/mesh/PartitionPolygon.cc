@@ -210,13 +210,6 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
 void PartitionPolygon::allGather( util::PartitionPolygons& polygons ) const {
     ATLAS_TRACE();
 
-    auto xy     = array::make_view<double, 2>( mesh_.nodes().xy() );
-    auto lonlat = array::make_view<double, 2>( mesh_.nodes().lonlat() );
-
-    if ( Point2{lonlat( 0, LON ), lonlat( 0, LAT )} != Point2{xy( 0, XX ), xy( 0, YY )} ) {
-        ATLAS_NOTIMPLEMENTED;  // because LonLat != XY
-    }
-
     polygons.clear();
     polygons.reserve( mpi::size() );
 
@@ -267,7 +260,7 @@ PartitionPolygon::PointsXY PartitionPolygon::xy() const {
     bool domain_includes_north_pole = false;
     bool domain_includes_south_pole = false;
     if ( mesh_.grid() ) {
-        if ( mesh_.grid().domain() && not mesh_.grid().projection() ) {
+        if ( mesh_.grid().domain() ) {
             domain_includes_north_pole = mesh_.grid().domain().containsNorthPole();
             domain_includes_south_pole = mesh_.grid().domain().containsSouthPole();
         }
@@ -293,18 +286,6 @@ PartitionPolygon::PointsXY PartitionPolygon::xy() const {
     }
     return points_xy;
 }
-
-PartitionPolygon::PointsLonLat PartitionPolygon::lonlat() const {
-    if ( not mesh_.projection() ) {
-        return xy();
-    }
-    PointsLonLat points_lonlat = xy();
-    for ( auto& p : points_lonlat ) {
-        mesh_.projection().xy2lonlat( p.data() );
-    }
-    return points_lonlat;
-}
-
 
 }  // namespace mesh
 }  // namespace atlas
