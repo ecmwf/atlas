@@ -16,7 +16,6 @@
 #include <forward_list>
 
 #include "atlas/functionspace.h"
-#include "atlas/grid.h"
 #include "atlas/util/GridBox.h"
 
 
@@ -51,9 +50,6 @@ protected:
 private:
     FunctionSpace source_;
     FunctionSpace target_;
-
-    Grid sourceGrid_;
-    Grid targetGrid_;
 
     util::GridBoxes sourceBoxes_;
     util::GridBoxes targetBoxes_;

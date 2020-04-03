@@ -18,7 +18,6 @@
 #include "eckit/log/ProgressTimer.h"
 #include "eckit/types/FloatCompare.h"
 
-#include "atlas/functionspace/Points.h"
 #include "atlas/grid.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -119,11 +118,9 @@ void GridBoxMethod::setup( const Grid& source, const Grid& target ) {
 
     ATLAS_ASSERT( source );
     ATLAS_ASSERT( target );
-    sourceGrid_ = source;
-    targetGrid_ = target;
 
-    functionspace::Points src = source;
-    functionspace::Points tgt = target;
+    functionspace::Points src( source );
+    functionspace::Points tgt( target );
     ATLAS_ASSERT( src );
     ATLAS_ASSERT( tgt );
     source_ = src;
@@ -132,8 +129,8 @@ void GridBoxMethod::setup( const Grid& source, const Grid& target ) {
     buildPointSearchTree( src );
     ATLAS_ASSERT( pTree_ != nullptr );
 
-    sourceBoxes_ = util::GridBoxes( sourceGrid_ );
-    targetBoxes_ = util::GridBoxes( targetGrid_ );
+    sourceBoxes_ = util::GridBoxes( source );
+    targetBoxes_ = util::GridBoxes( target );
 
     searchRadius_ = sourceBoxes_.getLongestGridBoxDiagonal() + targetBoxes_.getLongestGridBoxDiagonal();
     failures_.clear();
@@ -186,6 +183,8 @@ void GridBoxMethod::execute( const FieldSet& source, FieldSet& target ) const {
         // ensure setup()
         functionspace::Points tgt = target_;
         ATLAS_ASSERT( tgt );
+
+        ATLAS_ASSERT( pTree_ != nullptr );
         ATLAS_ASSERT( searchRadius_ > 0. );
         ATLAS_ASSERT( !sourceBoxes_.empty() );
         ATLAS_ASSERT( !targetBoxes_.empty() );
