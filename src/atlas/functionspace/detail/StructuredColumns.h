@@ -109,6 +109,8 @@ public:
 
     const StructuredGrid& grid() const;
 
+    const Projection& projection() const override { return grid().projection(); }
+
     idx_t i_begin( idx_t j ) const { return i_begin_[j]; }
     idx_t i_end( idx_t j ) const { return i_end_[j]; }
 

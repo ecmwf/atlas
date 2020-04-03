@@ -262,6 +262,8 @@ public:
 
     const util::PartitionPolygons& polygons() const override { return mesh_.polygons(); }
 
+    const Projection& projection() const override { return mesh_.projection(); }
+
 private:  // methods
     void constructor();
 

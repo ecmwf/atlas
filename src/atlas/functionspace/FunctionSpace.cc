@@ -70,6 +70,10 @@ const util::PartitionPolygons& FunctionSpace::polygons() const {
     return get()->polygons();
 }
 
+const Projection& FunctionSpace::projection() const {
+    return get()->projection();
+}
+
 template <typename DATATYPE>
 Field FunctionSpace::createField() const {
     return get()->createField<DATATYPE>();

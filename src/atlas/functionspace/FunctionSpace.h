@@ -22,6 +22,7 @@ class Configuration;
 namespace atlas {
 class Field;
 class FieldSet;
+class Projection;
 namespace functionspace {
 class FunctionSpaceImpl;
 }
@@ -62,6 +63,8 @@ public:
     const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
 
     const util::PartitionPolygons& polygons() const;
+
+    const Projection& projection() const;
 
     idx_t nb_partitions() const;
 

@@ -45,12 +45,16 @@ Field NoFunctionSpace::createField( const Field&, const eckit::Configuration& ) 
     ATLAS_NOTIMPLEMENTED;
 }
 
-const util::PartitionPolygon& FunctionSpaceImpl::polygon( idx_t halo ) const {
+const util::PartitionPolygon& FunctionSpaceImpl::polygon( idx_t /*halo */ ) const {
     throw_Exception( "polygon() not implemented in derived class", Here() );
 }
 
 const util::PartitionPolygons& FunctionSpaceImpl::polygons() const {
     throw_Exception( "polygons() not implemented in derived class", Here() );
+}
+
+const Projection& FunctionSpaceImpl::projection() const {
+    throw_Exception( "projection() not implemented in derived class", Here() );
 }
 
 template <typename DATATYPE>
