@@ -40,6 +40,20 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
     auto equal = []( const double& a, const double& b ) { return std::abs( a - b ) < 1.e-12; };
 
     util::Polygon::edge_set_t edges;
+    auto last_edge_horizontal = [&]() {
+        if ( edges.empty() ) {
+            return false;
+        }
+        size_t size = points.size();
+        return equal( points.at( size - 1 )[YY], points.at( size - 2 )[YY] );
+    };
+    auto last_edge_vertical = [&]() {
+        if ( edges.empty() ) {
+            return false;
+        }
+        size_t size = points.size();
+        return equal( points.at( size - 1 )[XX], points.at( size - 2 )[XX] );
+    };
 
     PointXY p;
     idx_t c{0};
@@ -48,29 +62,36 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
     auto add_edge = [&]( idx_t p1, idx_t p2 ) {
         util::Polygon::edge_t edge = {p1, p2};
         edges.insert( edge );
-        //Log::info() << edge.first << "  " << edge.second << std::endl;
+        //        Log::info() << edge.first << "  " << edge.second << std::endl;
     };
 
-    auto make_corner = [&]() {
-        PointXY ptmp;
-        ptmp  = p;
-        p[XX] = points.back()[XX];
-        p[YY] = 0.5 * ( points.back()[YY] + grid.y( j ) );
-        points.emplace_back( p );
-        add_edge( c, c + 1 );
-        c++;
-        p = ptmp;
-
-
-        ptmp  = p;
-        p[YY] = points.back()[YY];
-        points.emplace_back( p );
-        add_edge( c, c + 1 );
-        c++;
-        p = ptmp;
+    auto add_point = [&]( const Point2& point ) {
+        points.emplace_back( point );
+        //        Log::info() << "add point (" << points.size() - 1 << ")  " << point << std::endl;
     };
 
-    bool debug = true;
+    auto add_vertical_edge = [&]( const Point2& point ) {
+        if ( last_edge_vertical() ) {
+            points.back()[YY] = point[YY];
+            //            Log::info() << "mod point (" << points.size() - 1 << ")  " << point << std::endl;
+        }
+        else {
+            add_point( point );
+            add_edge( points.size() - 2, points.size() - 1 );
+            c++;
+        }
+    };
+    auto add_horizontal_edge = [&]( const Point2& point ) {
+        if ( last_edge_horizontal() ) {
+            points.back()[XX] = point[XX];
+            //            Log::info() << "mod point (" << points.size() - 1 << ")  " << point << std::endl;
+        }
+        else {
+            add_point( point );
+            add_edge( points.size() - 2, points.size() - 1 );
+            c++;
+        }
+    };
 
     double ymax, ymin, xmax, xmin;
 
@@ -91,7 +112,7 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
         else {
             p[XX] = 0.5 * ( grid.x( i - 1, j ) + grid.x( i, j ) );
         }
-        points.emplace_back( p );
+        add_point( p );
     }
 
     // Top right point
@@ -110,9 +131,7 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
         else {
             p[XX] = 0.5 * ( grid.x( i, j ) + grid.x( i + 1, j ) );
         }
-        points.emplace_back( p );
-        add_edge( c, c + 1 );
-        c++;
+        add_horizontal_edge( p );
 
         ymax = p[YY];
         xmax = p[XX];
@@ -128,30 +147,27 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
             else {
                 p[XX] = 0.5 * ( grid.x( i, j ) + grid.x( i + 1, j ) );
             }
-            if ( j > fs.j_begin() && not equal( p[XX], points.back()[XX] ) ) {
-                if ( not debug ) {
-                    make_corner();
-                }
-                else {
-                    PointXY ptmp = p;
-                    p[XX]        = points.back()[XX];
-                    p[YY]        = 0.5 * ( points.back()[YY] + p[YY] );
-                    points.emplace_back( p );
-                    add_edge( c, c + 1 );
-                    c++;
-                    p = ptmp;
-
-                    ptmp  = p;
-                    p[YY] = points.back()[YY];
-                    points.emplace_back( p );
-                    add_edge( c, c + 1 );
-                    c++;
-                    p = ptmp;
-                }
+            if ( p == points.back() ) {
+                continue;
             }
-            points.emplace_back( p );
-            add_edge( c, c + 1 );
-            c++;
+            if ( not equal( p[XX], points.back()[XX] ) ) {
+                // Make a corner plus horizontal edge
+
+                PointXY ptmp = p;
+
+                // vertical edge
+                p[XX] = points.back()[XX];
+                p[YY] = 0.5 * ( points.back()[YY] + p[YY] );
+                add_vertical_edge( p );
+                p = ptmp;
+
+                // horizontal edge
+                ptmp  = p;
+                p[YY] = points.back()[YY];
+                add_horizontal_edge( p );
+                p = ptmp;
+            }
+            add_vertical_edge( p );
 
             xmax = std::min( xmax, p[XX] );
         }
@@ -179,30 +195,22 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
         PointXY pmin = p;
 
         if ( not equal( p[XX], points.back()[XX] ) ) {
-            if ( not debug ) {
-                make_corner();
-            }
-            else {
-                PointXY ptmp;
-                ptmp  = p;
-                p[XX] = points.back()[XX];
-                p[YY] = 0.5 * ( points.back()[YY] + grid.y( j ) );
-                points.emplace_back( p );
-                add_edge( c, c + 1 );
-                c++;
-                pmin = p;
-                xmax = std::min( xmax, p[XX] );
+            PointXY ptmp;
+            ptmp  = p;
+            p[XX] = points.back()[XX];
+            p[YY] = 0.5 * ( points.back()[YY] + grid.y( j ) );
+            add_vertical_edge( p );
 
-                p = ptmp;
+            pmin = p;
+            xmax = std::min( xmax, p[XX] );
+
+            p = ptmp;
 
 
-                ptmp  = p;
-                p[YY] = points.back()[YY];
-                points.emplace_back( p );
-                add_edge( c, c + 1 );
-                c++;
-                p = ptmp;
-            }
+            ptmp  = p;
+            p[YY] = points.back()[YY];
+            add_horizontal_edge( p );
+            p = ptmp;
         }
         if ( xmax - grid.xspace().dx()[j] < grid.x( i, j ) ) {
             xmax = std::min( xmax, 0.5 * ( grid.x( i + 1, j ) + grid.x( i, j ) ) );
@@ -210,10 +218,7 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
         else {
             ymin = pmin[YY];
         }
-
-        points.emplace_back( p );
-        add_edge( c, c + 1 );
-        c++;
+        add_vertical_edge( p );
     }
 
     // Bottom left point
@@ -232,9 +237,7 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
         else {
             p[XX] = 0.5 * ( grid.x( i - 1, j ) + grid.x( i, j ) );
         }
-        points.emplace_back( p );
-        add_edge( c, c + 1 );
-        c++;
+        add_horizontal_edge( p );
         xmin = p[XX];
     }
     // Left side
@@ -263,37 +266,37 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
                 }
             }
 
-            if ( j < fs.j_end() - 1 && not equal( p[XX], points.back()[XX] ) ) {
-                if ( not debug ) {
-                    make_corner();
-                }
-                else {
-                    PointXY ptmp;
-                    ptmp  = p;
-                    p[XX] = points.back()[XX];
-                    p[YY] = 0.5 * ( points.back()[YY] + grid.y( j ) );
-                    points.emplace_back( p );
-                    add_edge( c, c + 1 );
-                    c++;
-                    p = ptmp;
-
-
-                    ptmp  = p;
-                    p[YY] = points.back()[YY];
-                    points.emplace_back( p );
-                    add_edge( c, c + 1 );
-                    c++;
-                    p = ptmp;
-                }
+            if ( p == points.back() ) {
+                continue;
             }
 
+            if ( not equal( p[XX], points.back()[XX] ) ) {
+                PointXY ptmp;
+                ptmp = p;
 
-            points.emplace_back( p );
-            add_edge( c, c + 1 );
-            c++;
+                // vertical edge
+                p[XX] = points.back()[XX];
+                p[YY] = 0.5 * ( points.back()[YY] + grid.y( j ) );
+                add_vertical_edge( p );
+                p = ptmp;
+
+                // horizontal edge
+                ptmp  = p;
+                p[YY] = points.back()[YY];
+                add_horizontal_edge( p );
+                p = ptmp;
+            }
+
+            add_vertical_edge( p );
         }
     }
     // Connect to top
+    if ( last_edge_vertical() ) {
+        util::Polygon::edge_t last_edge = {c - 1, c};
+        edges.erase( last_edge );
+        points.pop_back();
+        c--;
+    }
     add_edge( c, 0 );
 
 

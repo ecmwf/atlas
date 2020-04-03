@@ -104,10 +104,10 @@ void check_sizes( const std::vector<int>& vec ) {
     Log::debug() << "sizes = " << vec << std::endl;
     std::vector<int> expected;
     if ( mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "StructuredColumns" ) {
-        expected = std::vector<int>{132};
+        expected = std::vector<int>{5};
     }
     if ( mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "StructuredColumns" ) {
-        expected = std::vector<int>{50, 84, 84, 50};
+        expected = std::vector<int>{7, 43, 43, 7};
     }
     if ( mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "NodeColumns" ) {
         expected = std::vector<int>{167};
@@ -152,6 +152,10 @@ void check_simplified_sizes( const std::vector<int>& vec ) {
 
 //-----------------------------------------------------------------------------
 
+CASE( "info" ) {
+    functionspace().polygon().outputPythonScript( "polygon.py" );
+}
+
 CASE( "test_polygons" ) {
     auto fs = functionspace();
 
@@ -179,7 +183,7 @@ CASE( "test_polygons" ) {
         Log::debug() << n << "  " << points()[n];
 
         // A brute force approach.
-        // This could be enhanced by a kd-tree search to nearest polygon centroid
+        // Use PolygonLocator class for optimized result
         for ( idx_t p = 0; p < polygons.size(); ++p ) {
             if ( polygons[p].contains( points()[n] ) ) {
                 Log::debug() << " : " << p;
