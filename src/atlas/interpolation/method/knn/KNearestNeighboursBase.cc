@@ -23,7 +23,7 @@ namespace interpolation {
 namespace method {
 
 void KNearestNeighboursBase::buildPointSearchTree( Mesh& meshSource ) {
-    eckit::TraceTimer<Atlas> tim( "KNearestNeighboursBase::setup()" );
+    eckit::TraceTimer<Atlas> tim( "KNearestNeighboursBase::buildPointSearchTree()" );
 
     // generate 3D point coordinates
     mesh::actions::BuildXYZField( "xyz" )( meshSource );
