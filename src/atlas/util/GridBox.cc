@@ -115,11 +115,11 @@ GridBoxes::GridBoxes( const Grid& grid ) {
     std::vector<double> lat;
     lat.reserve( y.size() + 1 );
 
-    lat.push_back( 90. );
+    lat.push_back( NORTH_POLE );
     for ( auto b = y.begin(), a = b++; b != y.end(); a = b++ ) {
         lat.push_back( ( *b + *a ) / 2. );
     }
-    lat.push_back( -90. );
+    lat.push_back( SOUTH_POLE );
 
 
     // Calculate grid-box meridians (longitude midpoints)
