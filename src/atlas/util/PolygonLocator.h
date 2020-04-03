@@ -12,11 +12,17 @@
 
 #include <algorithm>
 #include <memory>
+#include <sstream>
 
 #include "atlas/library/config.h"
 #include "atlas/projection/Projection.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/KDTree.h"
 #include "atlas/util/Polygon.h"
+
+#ifdef POLYGONLOCATOR_DEBUGGING
+#include "atlas/runtime/Log.h"
+#endif
 
 namespace atlas {
 namespace util {
@@ -62,12 +68,34 @@ public:
         idx_t partition{-1};
         for ( size_t i = 0; i < found.size(); ++i ) {
             idx_t ii = found[i].payload();
+#ifdef POLYGONLOCATOR_DEBUGGING
+            Log::info() << "Search point " << lonlat2xy( point ) << " in polygon " << ii << ": ";
+            polygons_[ii].print( Log::info() );
+            Log::info() << " ... ";
+#endif
             if ( polygons_[ii].contains( lonlat2xy( point ) ) ) {
                 partition = ii;
+#ifdef POLYGONLOCATOR_DEBUGGING
+                Log::info() << "FOUND" << std::endl;
+#endif
                 break;
             }
+#ifdef POLYGONLOCATOR_DEBUGGING
+            Log::info() << "NOT_FOUND" << std::endl;
+#endif
         }
-        ATLAS_ASSERT( partition >= 0, "Could not find find point in `k` \"nearest\" polygons. Increase `k`?" );
+        if ( partition < 0 ) {
+            std::stringstream out;
+            out << "Could not find find point {lon,lat} = " << point << " in `k=" << k_ << "` \"nearest\" polygons [";
+            for ( size_t i = 0; i < found.size(); ++i ) {
+                if ( i > 0 ) {
+                    out << ", ";
+                }
+                out << found[i].payload();
+            }
+            out << "]. Increase `k`?";
+            throw_AssertionFailed( out.str(), Here() );
+        }
         return partition;
     }
 
