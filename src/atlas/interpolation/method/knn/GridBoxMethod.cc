@@ -25,7 +25,6 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
-#include "atlas/util/GridBox.h"
 
 
 namespace atlas {
@@ -36,18 +35,8 @@ namespace method {
 MethodBuilder<GridBoxMethod> __builder( "grid-box-average" );
 
 
-void GridBoxMethod::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::size() > 1 ) {
-        ATLAS_NOTIMPLEMENTED;
-    }
-
-    ATLAS_ASSERT_MSG( !source.projection() && !target.projection(),
-                      "GridBoxMethod: rotated/projected grids not supported" );
-
-    sourceGrid_ = source;
-    targetGrid_ = target;
-
-    setup( functionspace::Points( source ), functionspace::Points( target ) );
+GridBoxMethod::GridBoxMethod( const Method::Config& config ) : KNearestNeighboursBase( config ), matrixFree_( false ) {
+    config.get( "matrix_free", matrixFree_ );
 }
 
 
@@ -59,7 +48,22 @@ void GridBoxMethod::print( std::ostream& out ) const {
 }
 
 
+void GridBoxMethod::setup( const Grid& source, const Grid& target ) {
+    ATLAS_TRACE( "GridBoxMethod::setup()" );
+
+    ATLAS_ASSERT_MSG( !source.projection() && !target.projection(),
+                      "GridBoxMethod: rotated/projected grids not supported" );
+
+    sourceGrid_ = source;
+    targetGrid_ = target;
+
+    setup( functionspace::Points( source ), functionspace::Points( target ) );
+}
+
+
 void GridBoxMethod::setup( const FunctionSpace& source, const FunctionSpace& target ) {
+    ATLAS_TRACE( "GridBoxMethod::setup()" );
+
     if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
@@ -74,18 +78,12 @@ void GridBoxMethod::setup( const FunctionSpace& source, const FunctionSpace& tar
     ATLAS_ASSERT( src );
     ATLAS_ASSERT( tgt );
 
-    auto src_npts = size_t( src.size() );
-    auto tgt_npts = size_t( tgt.size() );
-    Log::debug() << "GridBoxMethod: intersect " << eckit::BigNum( tgt_npts ) << " from "
-                 << eckit::Plural( tgt_npts, "grid box" ) << std::endl;
+    buildPointSearchTree( src );
+    ATLAS_ASSERT( pTree_ != nullptr );
 
-
-    // build point-search tree
-    {
-        Trace timer( Here(), "GridBoxMethod: build point search tree" );
-        buildPointSearchTree( src );
-        ATLAS_ASSERT( pTree_ != nullptr );
-    }
+    Trace timer( Here(), "GridBoxMethod: build grid boxes" );
+    sourceBoxes_ = util::GridBoxes( sourceGrid_ );
+    targetBoxes_ = util::GridBoxes( targetGrid_ );
 
 
     // helper structures
@@ -96,16 +94,12 @@ void GridBoxMethod::setup( const FunctionSpace& source, const FunctionSpace& tar
     std::vector<Triplet> triplets;
 
 
-    // set grid boxes
-    const util::GridBoxes sourceBoxes( sourceGrid_ );
-    const util::GridBoxes targetBoxes( targetGrid_ );
-    const auto R = sourceBoxes.getLongestGridBoxDiagonal() + targetBoxes.getLongestGridBoxDiagonal();
-
-
     // intersect grid boxes
     {
-        eckit::ProgressTimer progress( "Projecting", tgt_npts, "point", double( 5. ), Log::info() );
-        Trace timer( Here(), "GridBoxMethod: intersect grid boxes" );
+        eckit::ProgressTimer progress( "Intersecting", targetBoxes_.size(), "grid box", double( 5. ), Log::info() );
+        Trace timer( Here(), "GridBoxMethod: intersecting grid boxes" );
+
+        const auto R = sourceBoxes_.getLongestGridBoxDiagonal() + targetBoxes_.getLongestGridBoxDiagonal();
 
         size_t i = 0;
         for ( auto p : tgt.iterate().xyz() ) {
@@ -122,7 +116,7 @@ void GridBoxMethod::setup( const FunctionSpace& source, const FunctionSpace& tar
             triplets.clear();
             triplets.reserve( closest.size() );
 
-            auto& box   = targetBoxes.at( i );
+            auto& box   = targetBoxes_.at( i );
             double area = box.area();
             ASSERT( area > 0. );
 
@@ -130,7 +124,7 @@ void GridBoxMethod::setup( const FunctionSpace& source, const FunctionSpace& tar
             bool areaMatch       = false;
             for ( auto& c : closest ) {
                 auto j        = c.payload();
-                auto smallBox = sourceBoxes.at( j );
+                auto smallBox = sourceBoxes_.at( j );
 
                 if ( box.intersects( smallBox ) ) {
                     double smallArea = smallBox.area();
@@ -183,9 +177,28 @@ void GridBoxMethod::setup( const FunctionSpace& source, const FunctionSpace& tar
     // fill sparse matrix
     {
         Trace timer( Here(), "GridBoxMethod: build sparse matrix" );
-        Matrix A( tgt_npts, src_npts, weights_triplets );
+        Matrix A( targetBoxes_.size(), sourceBoxes_.size(), weights_triplets );
         matrix_.swap( A );
     }
+}
+
+
+void GridBoxMethod::execute( const FieldSet& source, FieldSet& target ) const {
+    ATLAS_TRACE( "GridBoxMethod::execute()" );
+
+    const idx_t N = source.size();
+    ATLAS_ASSERT( N == target.size() );
+
+    for ( idx_t i = 0; i < N; ++i ) {
+        Log::debug() << "GridBoxMethod::execute on field " << ( i + 1 ) << '/' << N << "..." << std::endl;
+        execute( source[i], target[i] );
+    }
+}
+
+
+void GridBoxMethod::execute( const Field& source, Field& target ) const {
+    Log::info() << std::endl;
+    ATLAS_NOTIMPLEMENTED;
 }
 
 

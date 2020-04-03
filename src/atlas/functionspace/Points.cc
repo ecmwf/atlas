@@ -10,11 +10,11 @@
 
 
 #include "atlas/functionspace/Points.h"
+
 #include "atlas/array.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/option/Options.h"
-#include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
 

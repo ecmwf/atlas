@@ -109,6 +109,7 @@ private:
 
 struct GridBoxes : std::vector<GridBox> {
     GridBoxes( const Grid& );
+    using vector<GridBox>::vector;
     double getLongestGridBoxDiagonal() const;
 };
 

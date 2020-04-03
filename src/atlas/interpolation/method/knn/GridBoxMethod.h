@@ -15,6 +15,7 @@
 
 #include "atlas/functionspace.h"
 #include "atlas/grid.h"
+#include "atlas/util/GridBox.h"
 
 
 namespace atlas {
@@ -24,20 +25,22 @@ namespace method {
 
 class GridBoxMethod : public KNearestNeighboursBase {
 public:
-    GridBoxMethod( const Config& config ) : KNearestNeighboursBase( config ) {}
+    GridBoxMethod( const Config& );
     virtual ~GridBoxMethod() override;
 
+protected:
     virtual void print( std::ostream& ) const override;
 
-protected:
     /**
      * @brief Create an interpolant sparse matrix relating two functionspaces, using grid-box average method
      * @param source functionspace containing source points
      * @param target functionspace containing target points
      */
     virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
-
     virtual void setup( const Grid& source, const Grid& target ) override;
+
+    virtual void execute( const FieldSet& source, FieldSet& target ) const override;
+    virtual void execute( const Field& source, Field& target ) const override;
 
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
@@ -45,8 +48,14 @@ protected:
 private:
     FunctionSpace source_;
     FunctionSpace target_;
+
     Grid sourceGrid_;
     Grid targetGrid_;
+
+    util::GridBoxes sourceBoxes_;
+    util::GridBoxes targetBoxes_;
+
+    bool matrixFree_;
 };
 
 
