@@ -160,14 +160,9 @@ CASE( "info" ) {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_polygons" ) {
-    auto fs = functionspace();
-
-    ATLAS_TRACE( "computations after setup" );
+CASE( "test_polygon_sizes" ) {
+    auto fs       = functionspace();
     auto polygons = util::LonLatPolygons( fs.polygons() );
-
-    auto projection = fs.projection();
-    EXPECT( projection );
 
     std::vector<int> sizes( mpi::size() );
     std::vector<int> simplified_sizes( mpi::size() );
@@ -175,44 +170,35 @@ CASE( "test_polygons" ) {
         sizes[i]            = fs.polygons()[i].size();
         simplified_sizes[i] = polygons[i].size();
     }
+    check_sizes( sizes );
+    check_simplified_sizes( simplified_sizes );
+}
 
-    // Test iterator:
-    Log::info() << "Iterating PartitionPolygons" << std::endl;
-    for ( auto& polygon : fs.polygons() ) {
-        Log::info() << "  size of polygon = " << polygon.size() << std::endl;
-    }
+CASE( "test_polygon_locator (per point)" ) {
+    std::vector<int> part;
 
-    Log::info() << "Iterating LonLatPolygons" << std::endl;
-    for ( auto& polygon : polygons ) {
-        Log::info() << "  size of lonlatpolygon = " << polygon.size() << std::endl;
-    }
+    auto fs             = functionspace();
+    auto find_partition = PolygonLocator{util::LonLatPolygons{fs.polygons()}, fs.projection()};
 
-    std::vector<int> part( points().size() );
-    for ( size_t n = 0; n < points().size(); ++n ) {
-        Log::debug() << n << "  " << points()[n];
-
-        // A brute force approach.
-        // Use PolygonLocator class for optimized result
-        for ( idx_t p = 0; p < polygons.size(); ++p ) {
-            if ( polygons[p].contains( projection.xy( points()[n] ) ) ) {
-                Log::debug() << " : " << p;
-                part[n] = p;
-            }
-        }
-        Log::debug() << std::endl;
+    part.reserve( points().size() );
+    for ( auto& point : points() ) {
+        part.emplace_back( find_partition( point ) );
     }
 
     check_part( part );
-    check_sizes( sizes );
-    check_simplified_sizes( simplified_sizes );
-
-    PolygonLocator find_partition( polygons, projection );
-    for ( size_t n = 0; n < points().size(); ++n ) {
-        int found_partition;
-        EXPECT_NO_THROW( found_partition = find_partition( points()[n] ) );
-        EXPECT_EQ( found_partition, part[n] );
-    }
 }
+
+CASE( "test_polygon_locator (for array)" ) {
+    std::vector<int> part( points().size() );
+
+    auto fs             = functionspace();
+    auto find_partition = PolygonLocator{util::LonLatPolygons{fs.polygons()}, fs.projection()};
+
+    find_partition( points(), part );
+
+    check_part( part );
+}
+
 
 //-----------------------------------------------------------------------------
 

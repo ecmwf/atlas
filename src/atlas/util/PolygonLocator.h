@@ -62,6 +62,17 @@ public:
         buildKDTree();
     }
 
+    template <typename PointContainer, typename PolygonIndexContainer>
+    void operator()( const PointContainer& points, PolygonIndexContainer& index ) {
+        ATLAS_ASSERT( points.size() == index.size() );
+        typename PointContainer::const_iterator p     = points.begin();
+        typename PointContainer::const_iterator p_end = points.end();
+        typename PolygonIndexContainer::iterator i    = index.begin();
+        for ( ; p != p_end; ++p, ++i ) {
+            *i = this->operator()( *p );
+        }
+    }
+
     /// @brief find the polygon that holds the point (lon,lat)
     idx_t operator()( const Point2& point ) const {
         const auto found = kdtree_.kNearestNeighbours( point, k_ );
