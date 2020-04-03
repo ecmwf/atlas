@@ -149,6 +149,9 @@ GridBoxes::GridBoxes( const Grid& grid ) {
 }
 
 
+GridBoxes::GridBoxes() = default;
+
+
 double GridBoxes::getLongestGridBoxDiagonal() const {
     ATLAS_ASSERT( !empty() );
 
