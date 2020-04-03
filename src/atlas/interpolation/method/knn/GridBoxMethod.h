@@ -13,6 +13,8 @@
 
 #include "atlas/interpolation/method/knn/KNearestNeighboursBase.h"
 
+#include <forward_list>
+
 #include "atlas/functionspace.h"
 #include "atlas/grid.h"
 #include "atlas/util/GridBox.h"
@@ -40,12 +42,11 @@ protected:
     virtual void setup( const Grid& source, const Grid& target ) override;
 
     virtual void execute( const FieldSet& source, FieldSet& target ) const override;
-    virtual void execute( const Field& source, Field& target ) const override;
 
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
 
-    bool intersect( size_t i, const util::GridBox& iBox, const PointIndex3::NodeList&, std::vector<Triplet>& );
+    bool intersect( size_t i, const util::GridBox& iBox, const PointIndex3::NodeList&, std::vector<Triplet>& ) const;
 
 private:
     FunctionSpace source_;
@@ -57,7 +58,12 @@ private:
     util::GridBoxes sourceBoxes_;
     util::GridBoxes targetBoxes_;
 
+    double searchRadius_;
+
+    mutable std::forward_list<size_t> failures_;
+
     bool matrixFree_;
+    bool failEarly_;
 };
 
 

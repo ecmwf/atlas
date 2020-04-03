@@ -15,6 +15,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/option/Options.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
 
@@ -57,6 +58,16 @@ Field Points::createField( const Field& other, const eckit::Configuration& confi
 
 Field Points::createField( const eckit::Configuration& ) const {
     ATLAS_NOTIMPLEMENTED;
+}
+
+
+void Points::haloExchange( const FieldSet&, bool ) const {
+    Log::debug() << "Points::haloExchange: ignored" << std::endl;
+}
+
+
+void Points::haloExchange( const Field&, bool ) const {
+    Log::debug() << "Points::haloExchange: ignored" << std::endl;
 }
 
 
