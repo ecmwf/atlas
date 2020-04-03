@@ -48,40 +48,66 @@ void GridBoxMethod::print( std::ostream& out ) const {
 }
 
 
-void GridBoxMethod::setup( const Grid& source, const Grid& target ) {
-    ATLAS_TRACE( "GridBoxMethod::setup()" );
-
-    ATLAS_ASSERT_MSG( !source.projection() && !target.projection(),
-                      "GridBoxMethod: rotated/projected grids not supported" );
-
-    sourceGrid_ = source;
-    targetGrid_ = target;
-
-    setup( functionspace::Points( source ), functionspace::Points( target ) );
+void GridBoxMethod::setup( const FunctionSpace& /*source*/, const FunctionSpace& /*target*/ ) {
+    ATLAS_NOTIMPLEMENTED;
 }
 
 
-void GridBoxMethod::setup( const FunctionSpace& source, const FunctionSpace& target ) {
+bool GridBoxMethod::intersect( size_t i, const util::GridBox& box, const PointIndex3::NodeList& closest,
+                               std::vector<eckit::linalg::Triplet>& triplets ) {
+    ASSERT( !closest.empty() );
+
+    triplets.clear();
+    triplets.reserve( closest.size() );
+
+    double area = box.area();
+    ASSERT( area > 0. );
+
+    double sumSmallAreas = 0.;
+    for ( auto& c : closest ) {
+        auto j        = c.payload();
+        auto smallBox = sourceBoxes_.at( j );
+
+        if ( box.intersects( smallBox ) ) {
+            double smallArea = smallBox.area();
+            ASSERT( smallArea > 0. );
+
+            triplets.emplace_back( i, j, smallArea / area );
+            sumSmallAreas += smallArea;
+
+            if ( eckit::types::is_approximately_equal( area, sumSmallAreas, 1. /*m^2*/ ) ) {
+                return true;
+            }
+        }
+    }
+
+    triplets.clear();
+    return false;
+}
+
+
+void GridBoxMethod::setup( const Grid& source, const Grid& target ) {
     ATLAS_TRACE( "GridBoxMethod::setup()" );
 
     if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
 
-    ATLAS_ASSERT( sourceGrid_ );
-    ATLAS_ASSERT( targetGrid_ );
-    source_ = source;
-    target_ = target;
+    ATLAS_ASSERT( source );
+    ATLAS_ASSERT( target );
+    sourceGrid_ = source;
+    targetGrid_ = target;
 
     functionspace::Points src = source;
     functionspace::Points tgt = target;
     ATLAS_ASSERT( src );
     ATLAS_ASSERT( tgt );
+    source_ = src;
+    target_ = tgt;
 
     buildPointSearchTree( src );
     ATLAS_ASSERT( pTree_ != nullptr );
 
-    Trace timer( Here(), "GridBoxMethod: build grid boxes" );
     sourceBoxes_ = util::GridBoxes( sourceGrid_ );
     targetBoxes_ = util::GridBoxes( targetGrid_ );
 
@@ -94,11 +120,11 @@ void GridBoxMethod::setup( const FunctionSpace& source, const FunctionSpace& tar
     std::vector<Triplet> triplets;
 
 
-    // intersect grid boxes
+    // intersect grid boxes and insert the interpolant weights into the global (sparse) interpolant matrix
     {
-        eckit::ProgressTimer progress( "Intersecting", targetBoxes_.size(), "grid box", double( 5. ), Log::info() );
-        Trace timer( Here(), "GridBoxMethod: intersecting grid boxes" );
+        ATLAS_TRACE( "GridBoxMethod::setup: intersecting grid boxes" );
 
+        eckit::ProgressTimer progress( "Intersecting", targetBoxes_.size(), "grid box", double( 5. ), Log::info() );
         const auto R = sourceBoxes_.getLongestGridBoxDiagonal() + targetBoxes_.getLongestGridBoxDiagonal();
 
         size_t i = 0;
@@ -107,41 +133,8 @@ void GridBoxMethod::setup( const FunctionSpace& source, const FunctionSpace& tar
                 Log::info() << "GridBoxMethod: " << *pTree_ << std::endl;
             }
 
-            // lookup
-            auto closest = pTree_->findInSphere( p, R );
-            ASSERT( !closest.empty() );
-
-
-            // calculate grid box intersections
-            triplets.clear();
-            triplets.reserve( closest.size() );
-
-            auto& box   = targetBoxes_.at( i );
-            double area = box.area();
-            ASSERT( area > 0. );
-
-            double sumSmallAreas = 0.;
-            bool areaMatch       = false;
-            for ( auto& c : closest ) {
-                auto j        = c.payload();
-                auto smallBox = sourceBoxes_.at( j );
-
-                if ( box.intersects( smallBox ) ) {
-                    double smallArea = smallBox.area();
-                    ASSERT( smallArea > 0. );
-
-                    triplets.emplace_back( i, j, smallArea / area );
-                    sumSmallAreas += smallArea;
-
-                    if ( ( areaMatch = eckit::types::is_approximately_equal( area, sumSmallAreas, 1. /*m^2*/ ) ) ) {
-                        break;
-                    }
-                }
-            }
-
-
-            // insert the interpolant weights into the global (sparse) interpolant matrix
-            if ( areaMatch ) {
+            if ( intersect( i, targetBoxes_.at( i ), pTree_->findInSphere( p, R ), triplets ) ) {
+                ATLAS_ASSERT( !triplets.empty() );
                 std::copy( triplets.begin(), triplets.end(), std::back_inserter( weights_triplets ) );
             }
             else {
@@ -149,34 +142,30 @@ void GridBoxMethod::setup( const FunctionSpace& source, const FunctionSpace& tar
                 failures.push_front( i );
             }
 
-
             ++i;
         }
-    }
 
-
-    // statistics
-    Log::debug() << "Intersected " << eckit::Plural( weights_triplets.size(), "grid box" ) << std::endl;
-
-    if ( nbFailures > 0 ) {
-        Log::warning() << "Failed to intersect points: ";
-        size_t count = 0;
-        auto sep     = "";
-        for ( const auto& f : failures ) {
-            Log::warning() << sep << f;
-            sep = ", ";
-            if ( ++count > 10 ) {
-                Log::warning() << "...";
-                break;
+        if ( nbFailures > 0 ) {
+            Log::warning() << "Failed to intersect grid boxes: ";
+            size_t count = 0;
+            auto sep     = "";
+            for ( const auto& f : failures ) {
+                Log::warning() << sep << f;
+                sep = ", ";
+                if ( ++count > 10 ) {
+                    Log::warning() << "... (" << nbFailures << " total)";
+                    break;
+                }
             }
+            Log::warning() << std::endl;
+            throw_Exception( "Failed to intersect grid boxes" );
         }
-        Log::warning() << std::endl;
     }
 
 
     // fill sparse matrix
     {
-        Trace timer( Here(), "GridBoxMethod: build sparse matrix" );
+        ATLAS_TRACE( "GridBoxMethod::setup: build sparse matrix" );
         Matrix A( targetBoxes_.size(), sourceBoxes_.size(), weights_triplets );
         matrix_.swap( A );
     }

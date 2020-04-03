@@ -45,6 +45,8 @@ protected:
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
 
+    bool intersect( size_t i, const util::GridBox& iBox, const PointIndex3::NodeList&, std::vector<Triplet>& );
+
 private:
     FunctionSpace source_;
     FunctionSpace target_;
