@@ -16,11 +16,12 @@
 #include <ostream>
 
 #include "eckit/types/FloatCompare.h"
+#include "eckit/types/Fraction.h"
 
+#include "atlas/grid.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
-#include "atlas/grid.h"
 
 
 static constexpr double GLOBE      = 360.;
@@ -101,21 +102,62 @@ void GridBox::print( std::ostream& out ) const {
 }
 
 
-GridBoxes::GridBoxes(const Grid& grid) {
+GridBoxes::GridBoxes( const Grid& grid ) {
+    StructuredGrid structured( grid );
+    if ( !structured || !structured.domain().global() || grid.projection() ) {
+        throw_NotImplemented( "GridBoxes only support structured, unprojected/unrotated global grids", Here() );
+    }
 
-    //std::vector<GridBox>(grid.gridBoxes())
 
-    ATLAS_ASSERT(idx_t(size()) == grid.size());
+    // Calculate grid-box parallels (latitude midpoints)
+    auto& y = structured.yspace();
+
+    std::vector<double> lat;
+    lat.reserve( y.size() + 1 );
+
+    lat.push_back( 90. );
+    for ( auto b = y.begin(), a = b++; b != y.end(); a = b++ ) {
+        lat.push_back( ( *b + *a ) / 2. );
+    }
+    lat.push_back( -90. );
+
+
+    // Calculate grid-box meridians (longitude midpoints)
+    auto& x = structured.xspace();
+    ATLAS_ASSERT( x.nx().size() == x.dx().size() );
+    ATLAS_ASSERT( x.nx().size() == x.xmin().size() );
+
+    clear();
+    reserve( grid.size() );
+    for ( size_t j = 0; j < x.nx().size(); ++j ) {
+        eckit::Fraction dx( x.dx()[j] );
+        eckit::Fraction xmin( x.xmin()[j] );
+        auto n = ( xmin / dx ).integralPart();
+        if ( n * dx < xmin ) {
+            n += 1;
+        }
+
+        eckit::Fraction lon1 = ( n * dx ) - ( dx / 2 );
+        for ( idx_t i = 0; i < x.nx()[j]; ++i ) {
+            double lon0 = lon1;
+            lon1 += dx;
+            emplace_back( GridBox( lat[j], lon0, lat[j + 1], lon1 ) );
+        }
+    }
+
+    ATLAS_ASSERT( idx_t( size() ) == grid.size() );
 }
 
 
 double GridBoxes::getLongestGridBoxDiagonal() const {
+    ATLAS_ASSERT( !empty() );
+
     double R = 0.;
-    for (auto& box : *this) {
-        R = std::max(R, box.diagonal());
+    for ( auto& box : *this ) {
+        R = std::max( R, box.diagonal() );
     }
 
-    ATLAS_ASSERT(R > 0.);
+    ATLAS_ASSERT( R > 0. );
     return R;
 }
 
