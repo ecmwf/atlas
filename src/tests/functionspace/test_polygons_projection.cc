@@ -18,8 +18,8 @@
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/util/LonLatPolygon.h"
 #include "atlas/util/PolygonLocator.h"
+#include "atlas/util/PolygonXY.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -162,7 +162,7 @@ CASE( "info" ) {
 
 CASE( "test_polygon_sizes" ) {
     auto fs       = functionspace();
-    auto polygons = util::LonLatPolygons( fs.polygons() );
+    auto polygons = ListPolygonXY( fs.polygons() );
 
     std::vector<int> sizes( mpi::size() );
     std::vector<int> simplified_sizes( mpi::size() );
@@ -178,7 +178,7 @@ CASE( "test_polygon_locator (per point)" ) {
     std::vector<int> part;
 
     auto fs             = functionspace();
-    auto find_partition = PolygonLocator{util::LonLatPolygons{fs.polygons()}, fs.projection()};
+    auto find_partition = PolygonLocator{ListPolygonXY{fs.polygons()}, fs.projection()};
 
     part.reserve( points().size() );
     for ( auto& point : points() ) {
@@ -192,7 +192,7 @@ CASE( "test_polygon_locator (for array)" ) {
     std::vector<int> part( points().size() );
 
     auto fs             = functionspace();
-    auto find_partition = PolygonLocator{util::LonLatPolygons{fs.polygons()}, fs.projection()};
+    auto find_partition = PolygonLocator{ListPolygonXY{fs.polygons()}, fs.projection()};
 
     find_partition( points(), part );
 

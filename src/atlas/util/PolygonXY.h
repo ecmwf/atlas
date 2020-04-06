@@ -17,17 +17,18 @@
 namespace atlas {
 namespace util {
 
-class LonLatPolygon;
-class LonLatPolygons;
+class PartitionPolygon;
+class PolygonXY;
+class ListPolygonXY;
 
 //------------------------------------------------------------------------------------------------------
 
 /// @brief Implement PolygonCoordinates::contains for a polygon defined in XY space.
-class LonLatPolygon : public PolygonCoordinates {
+class PolygonXY : public PolygonCoordinates {
 public:
-    using Vector = LonLatPolygons;
+    using Vector = ListPolygonXY;
 
-    LonLatPolygon( const PartitionPolygon& );
+    PolygonXY( const PartitionPolygon& );
 
     /// @brief Point-in-polygon test based on winding number
     /// @note reference <a href="http://geomalgorithms.com/a03-_inclusion.html">Inclusion of a Point in a Polygon</a>
@@ -46,12 +47,12 @@ private:
 //------------------------------------------------------------------------------------------------------
 
 /// @brief Vector of all polygons with functionality to find partition using a KDTree
-class LonLatPolygons : public PolygonCoordinates::Vector {
+class ListPolygonXY : public PolygonCoordinates::Vector {
 public:
-    LonLatPolygons( const PartitionPolygons& partition_polygons ) {
+    ListPolygonXY( const PartitionPolygons& partition_polygons ) {
         reserve( partition_polygons.size() );
         for ( auto& partition_polygon : partition_polygons ) {
-            emplace_back( new LonLatPolygon( partition_polygon ) );
+            emplace_back( new PolygonXY( partition_polygon ) );
         }
     }
 };

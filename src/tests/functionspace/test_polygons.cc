@@ -17,8 +17,8 @@
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/util/LonLatPolygon.h"
 #include "atlas/util/PolygonLocator.h"
+#include "atlas/util/PolygonXY.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -160,7 +160,7 @@ CASE( "test_polygons" ) {
     auto fs = functionspace();
 
     ATLAS_TRACE( "computations after setup" );
-    auto polygons = util::LonLatPolygons( fs.polygons() );
+    auto polygons = ListPolygonXY( fs.polygons() );
 
     std::vector<int> sizes( mpi::size() );
     std::vector<int> simplified_sizes( mpi::size() );
@@ -175,7 +175,7 @@ CASE( "test_polygons" ) {
     }
 
     for ( auto& polygon : polygons ) {
-        Log::info() << "size of lonlatpolygon = " << polygon.size() << std::endl;
+        Log::info() << "size of PolygonXY = " << polygon.size() << std::endl;
     }
 
     std::vector<int> part( points().size() );
@@ -205,20 +205,20 @@ CASE( "test_polygons" ) {
 }
 
 CASE( "test_polygon_locator_from_const_ref_polygons" ) {
-    auto polygons = LonLatPolygons{functionspace().polygons()};
+    auto polygons = ListPolygonXY{functionspace().polygons()};
     PolygonLocator find_partition( polygons );
     EXPECT_EQ( find_partition( PointLonLat{0., 90.} ), 0 );
     EXPECT_EQ( find_partition( PointLonLat{0., -90.} ), mpi::size() - 1 );
 }
 
 CASE( "test_polygon_locator_from_move" ) {
-    PolygonLocator find_partition( LonLatPolygons{functionspace().polygons()} );
+    PolygonLocator find_partition( ListPolygonXY{functionspace().polygons()} );
     EXPECT_EQ( find_partition( PointLonLat{0., 90.} ), 0 );
     EXPECT_EQ( find_partition( PointLonLat{0., -90.} ), mpi::size() - 1 );
 }
 
 CASE( "test_polygon_locator_from_shared" ) {
-    auto polygons = std::make_shared<LonLatPolygons>( functionspace().polygons() );
+    auto polygons = std::make_shared<ListPolygonXY>( functionspace().polygons() );
     PolygonLocator find_partition( polygons );
     EXPECT_EQ( find_partition( PointLonLat{0., 90.} ), 0 );
     EXPECT_EQ( find_partition( PointLonLat{0., -90.} ), mpi::size() - 1 );

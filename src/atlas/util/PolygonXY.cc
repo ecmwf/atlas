@@ -18,7 +18,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/LonLatPolygon.h"
+#include "atlas/util/PolygonXY.h"
 
 namespace atlas {
 namespace util {
@@ -80,8 +80,7 @@ double compute_inner_radius_squared( const PointContainer& points, const PointLo
 
 //------------------------------------------------------------------------------------------------------
 
-LonLatPolygon::LonLatPolygon( const PartitionPolygon& partition_polygon ) :
-    PolygonCoordinates( partition_polygon.xy(), true ) {
+PolygonXY::PolygonXY( const PartitionPolygon& partition_polygon ) : PolygonCoordinates( partition_polygon.xy(), true ) {
     RectangularLonLatDomain inscribed = partition_polygon.inscribedDomain();
     if ( inscribed ) {
         inner_coordinatesMin_ = {inscribed.xmin(), inscribed.ymin()};
@@ -95,7 +94,7 @@ LonLatPolygon::LonLatPolygon( const PartitionPolygon& partition_polygon ) :
     }
 }
 
-bool LonLatPolygon::contains( const Point2& P ) const {
+bool PolygonXY::contains( const Point2& P ) const {
     auto distance2 = []( const Point2& p, const Point2& centroid ) {
         double dx = ( p[0] - centroid[0] );
         double dy = ( p[1] - centroid[1] );

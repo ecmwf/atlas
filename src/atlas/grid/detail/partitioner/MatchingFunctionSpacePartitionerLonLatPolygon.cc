@@ -21,7 +21,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/LonLatPolygon.h"
+#include "atlas/util/PolygonXY.h"
 
 #include "atlas/parallel/omp/fill.h"
 #include "atlas/parallel/omp/omp.h"
@@ -48,7 +48,7 @@ void MatchingFunctionSpacePartitionerLonLatPolygon::partition( const Grid& grid,
         const auto& p = partitioned_.polygon();
 
         int rank = mpi::rank();
-        util::LonLatPolygon poly{p};
+        util::PolygonXY poly{p};
         {
             ATLAS_TRACE( "point-in-polygon check for entire grid (" + std::to_string( grid.size() ) + " points)" );
             size_t num_threads = atlas_omp_get_max_threads();
@@ -91,7 +91,7 @@ void MatchingFunctionSpacePartitionerLonLatPolygon::partition( const Grid& grid,
     bool includesNorthPole = ( mpi_rank == 0 );
     bool includesSouthPole = ( mpi_rank == mpi_size - 1 );
 
-    const util::LonLatPolygon poly( prePartitionedFunctionSpace_.polygon( 0 ), prePartitionedFunctionSpace_.nodes().lonlat() );
+    const util::PolygonXY poly( prePartitionedFunctionSpace_.polygon( 0 ), prePartitionedFunctionSpace_.nodes().lonlat() );
 
     {
         eckit::ProgressTimer timer( "Partitioning", grid.size(), "point", double( 10 ), atlas::Log::trace() );

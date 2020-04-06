@@ -22,7 +22,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/LonLatPolygon.h"
+#include "atlas/util/PolygonXY.h"
 
 namespace atlas {
 namespace grid {
@@ -49,7 +49,7 @@ void MatchingMeshPartitionerLonLatPolygon::partition( const Grid& grid, int part
     bool includesNorthPole = ( mpi_rank == 0 );
     bool includesSouthPole = ( mpi_rank == mpi_size - 1 );
 
-    const util::LonLatPolygon poly{prePartitionedMesh_.polygon( 0 )};
+    const util::PolygonXY poly{prePartitionedMesh_.polygon( 0 )};
     Projection projection = prePartitionedMesh_.projection();
 
     {
