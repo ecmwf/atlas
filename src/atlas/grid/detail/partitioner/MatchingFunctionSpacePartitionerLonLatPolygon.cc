@@ -91,7 +91,7 @@ void MatchingFunctionSpacePartitionerLonLatPolygon::partition( const Grid& grid,
     bool includesNorthPole = ( mpi_rank == 0 );
     bool includesSouthPole = ( mpi_rank == mpi_size - 1 );
 
-    const util::PolygonXY poly( prePartitionedFunctionSpace_.polygon( 0 ), prePartitionedFunctionSpace_.nodes().lonlat() );
+    const util::PolygonXY poly{prePartitionedFunctionSpace_.polygon( 0 )};
 
     {
         eckit::ProgressTimer timer( "Partitioning", grid.size(), "point", double( 10 ), atlas::Log::trace() );

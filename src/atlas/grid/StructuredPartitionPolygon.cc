@@ -24,8 +24,8 @@
 namespace atlas {
 namespace grid {
 
-util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl& _fs, idx_t _halo,
-                                         std::vector<Point2>& points, std::vector<Point2>& bb ) {
+void compute( const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vector<Point2>& points,
+              std::vector<Point2>& bb ) {
     if ( not dynamic_cast<const functionspace::detail::StructuredColumns*>( &_fs ) ) {
         throw_Exception( "Could not cast functionspace to StructuredColumns", Here() );
     }
@@ -39,16 +39,15 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
 
     auto equal = []( const double& a, const double& b ) { return std::abs( a - b ) < 1.e-12; };
 
-    util::Polygon::edge_set_t edges;
     auto last_edge_horizontal = [&]() {
-        if ( edges.empty() ) {
+        if ( points.size() < 2 ) {
             return false;
         }
         size_t size = points.size();
         return equal( points.at( size - 1 )[YY], points.at( size - 2 )[YY] );
     };
     auto last_edge_vertical = [&]() {
-        if ( edges.empty() ) {
+        if ( points.size() < 2 ) {
             return false;
         }
         size_t size = points.size();
@@ -58,12 +57,6 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
     PointXY p;
     idx_t c{0};
     idx_t i, j;
-
-    auto add_edge = [&]( idx_t p1, idx_t p2 ) {
-        util::Polygon::edge_t edge = {p1, p2};
-        edges.insert( edge );
-        //        Log::info() << edge.first << "  " << edge.second << std::endl;
-    };
 
     auto add_point = [&]( const Point2& point ) {
         points.emplace_back( point );
@@ -77,7 +70,6 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
         }
         else {
             add_point( point );
-            add_edge( points.size() - 2, points.size() - 1 );
             c++;
         }
     };
@@ -88,7 +80,6 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
         }
         else {
             add_point( point );
-            add_edge( points.size() - 2, points.size() - 1 );
             c++;
         }
     };
@@ -292,25 +283,18 @@ util::Polygon::edge_set_t compute_edges( const functionspace::FunctionSpaceImpl&
     }
     // Connect to top
     if ( last_edge_vertical() ) {
-        util::Polygon::edge_t last_edge = {c - 1, c};
-        edges.erase( last_edge );
         points.pop_back();
         c--;
     }
-    add_edge( c, 0 );
+    add_point( points.front() );
 
-
-    bb = std::vector<Point2>{{xmin, ymax}, {xmin, ymin}, {xmax, ymin}, {xmax, ymax}};
-
-    return edges;
+    bb = std::vector<Point2>{{xmin, ymax}, {xmin, ymin}, {xmax, ymin}, {xmax, ymax}, {xmin, ymax}};
 }
 
 StructuredPartitionPolygon::StructuredPartitionPolygon( const functionspace::FunctionSpaceImpl& fs, idx_t halo ) :
     fs_( fs ), halo_( halo ) {
     ATLAS_TRACE( "StructuredPartitionPolygon" );
-    setup( compute_edges( fs, halo, points_, inner_bounding_box_ ) );
-    points_.emplace_back( points_[0] );
-    inner_bounding_box_.emplace_back( inner_bounding_box_[0] );
+    compute( fs, halo, points_, inner_bounding_box_ );
     auto min = Point2( std::numeric_limits<double>::max(), std::numeric_limits<double>::max() );
     auto max = Point2( std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest() );
     for ( size_t i = 0; i < inner_bounding_box_.size() - 1; ++i ) {
