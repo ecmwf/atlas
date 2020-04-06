@@ -21,7 +21,11 @@ if ! [[ $(clang-format --version) =~ ${_REQUIRED_CLANG_VERSION} ]]; then
     echo "Error: Require clang-format version: ${_REQUIRED_CLANG_VERSION}"
     echo "    > $(which clang-format) --version"
     echo "      $(clang-format --version)"
-    exit 1
+    if [[ $1 =~ --no-version-check ]]; then
+        echo "--no-version-check --> Continue anyway"
+    else
+        exit 1
+    fi
 fi
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

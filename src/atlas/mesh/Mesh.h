@@ -26,7 +26,8 @@ class Projection;
 namespace atlas {
 namespace util {
 class Metadata;
-}
+class PartitionPolygons;
+}  // namespace util
 }  // namespace atlas
 
 namespace atlas {
@@ -58,6 +59,7 @@ public:
     using HybridElements = mesh::HybridElements;
     using PartitionGraph = mesh::detail::PartitionGraph;
     using Polygon        = mesh::PartitionPolygon;
+    using Polygons       = util::PartitionPolygons;
 
 public:
     using Handle::Handle;
@@ -117,6 +119,7 @@ public:
     PartitionGraph::Neighbours nearestNeighbourPartitions() const { return get()->nearestNeighbourPartitions(); }
 
     const Polygon& polygon( idx_t halo = 0 ) const { return get()->polygon( halo ); }
+    const Polygons& polygons() const { return get()->polygons(); }
 
     const Grid grid() const { return get()->grid(); }
 

@@ -18,6 +18,7 @@
 #include "atlas/array.h"
 #include "atlas/domain/Domain.h"
 #include "atlas/field/Field.h"
+#include "atlas/projection/Projection.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Polygon.h"
@@ -137,6 +138,7 @@ PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field&
 
     size_t nb_removed_points_due_to_alignment = 0;
 
+
     for ( size_t i = 0; i < poly.size(); ++i ) {
         Point2 A( coord( poly[i], XX ), coord( poly[i], YY ) );
         coordinatesMin_ = Point2::componentsMin( coordinatesMin_, A );
@@ -169,10 +171,15 @@ PolygonCoordinates::PolygonCoordinates( const PointContainer& points ) {
 
     coordinatesMin_ = coordinates_.front();
     coordinatesMax_ = coordinatesMin_;
+    centroid_       = Point2{0., 0.};
     for ( const Point2& P : coordinates_ ) {
         coordinatesMin_ = Point2::componentsMin( coordinatesMin_, P );
         coordinatesMax_ = Point2::componentsMax( coordinatesMax_, P );
+        centroid_[XX] += P[XX];
+        centroid_[YY] += P[YY];
     }
+    centroid_[XX] /= coordinates_.size();
+    centroid_[YY] /= coordinates_.size();
 }
 
 template <typename PointContainer>
@@ -180,8 +187,9 @@ PolygonCoordinates::PolygonCoordinates( const PointContainer& points, bool remov
     coordinates_.clear();
     coordinates_.reserve( points.size() );
 
-    coordinatesMin_ = Point2( std::numeric_limits<double>::max(), std::numeric_limits<double>::max() );
-    coordinatesMax_ = Point2( std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest() );
+    coordinatesMin_ = Point2{std::numeric_limits<double>::max(), std::numeric_limits<double>::max()};
+    coordinatesMax_ = Point2{std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest()};
+    centroid_       = Point2{0., 0.};
 
     size_t nb_removed_points_due_to_alignment = 0;
 
@@ -189,6 +197,8 @@ PolygonCoordinates::PolygonCoordinates( const PointContainer& points, bool remov
         const Point2& A = points[i];
         coordinatesMin_ = Point2::componentsMin( coordinatesMin_, A );
         coordinatesMax_ = Point2::componentsMax( coordinatesMax_, A );
+        centroid_[XX] += A[XX];
+        centroid_[YY] += A[YY];
 
         // if new point is aligned with existing edge (cross product ~= 0) make the
         // edge longer
@@ -203,6 +213,8 @@ PolygonCoordinates::PolygonCoordinates( const PointContainer& points, bool remov
         }
         coordinates_.emplace_back( A );
     }
+    centroid_[XX] /= points.size();
+    centroid_[YY] /= points.size();
 
     ATLAS_ASSERT( coordinates_.size() > 2 );
     ATLAS_ASSERT( eckit::geometry::points_equal( coordinates_.front(), coordinates_.back() ) );
@@ -225,6 +237,39 @@ const Point2& PolygonCoordinates::coordinatesMax() const {
 
 const Point2& PolygonCoordinates::coordinatesMin() const {
     return coordinatesMin_;
+}
+
+const Point2& PolygonCoordinates::centroid() const {
+    return centroid_;
+}
+
+void PolygonCoordinates::print( std::ostream& out ) const {
+    out << "[";
+    for ( size_t i = 0; i < coordinates_.size(); ++i ) {
+        if ( i > 0 ) {
+            out << " ";
+        }
+        out << coordinates_[i];
+    }
+    out << "]";
+}
+
+Polygon::edge_set_t ExplicitPartitionPolygon::compute_edges( idx_t points_size ) {
+    util::Polygon::edge_set_t edges;
+    auto add_edge = [&]( idx_t p1, idx_t p2 ) {
+        util::Polygon::edge_t edge = {p1, p2};
+        edges.insert( edge );
+        // Log::info() << edge.first << "  " << edge.second << std::endl;
+    };
+    for ( idx_t p = 0; p < points_size - 2; ++p ) {
+        add_edge( p, p + 1 );
+    }
+    add_edge( points_size - 2, 0 );
+    return edges;
+}
+
+void ExplicitPartitionPolygon::allGather( PartitionPolygons& ) const {
+    ATLAS_NOTIMPLEMENTED;
 }
 
 //------------------------------------------------------------------------------------------------------

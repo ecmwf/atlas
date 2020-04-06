@@ -109,6 +109,8 @@ public:
 
     const StructuredGrid& grid() const;
 
+    const Projection& projection() const override { return grid().projection(); }
+
     idx_t i_begin( idx_t j ) const { return i_begin_[j]; }
     idx_t i_end( idx_t j ) const { return i_end_[j]; }
 
@@ -153,6 +155,8 @@ public:
     virtual size_t footprint() const override;
 
     const util::PartitionPolygon& polygon( idx_t halo = 0 ) const override;
+
+    const util::PartitionPolygons& polygons() const override;
 
     idx_t nb_partitions() const override { return nb_partitions_; }
 
@@ -199,6 +203,7 @@ private:  // data
     mutable util::ObjectHandle<parallel::Checksum> checksum_;
     mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
     mutable std::unique_ptr<util::PartitionPolygon> polygon_;
+    mutable util::PartitionPolygons polygons_;
 
     Field field_xy_;
     Field field_partition_;

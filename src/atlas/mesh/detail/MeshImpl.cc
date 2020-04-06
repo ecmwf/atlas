@@ -205,6 +205,13 @@ const PartitionPolygon& MeshImpl::polygon( idx_t halo ) const {
     return *polygons_[halo];
 }
 
+const util::PartitionPolygons& MeshImpl::polygons() const {
+    if ( all_polygons_.size() == 0 ) {
+        polygon().allGather( all_polygons_ );
+    }
+    return all_polygons_;
+}
+
 void MeshImpl::attachObserver( MeshObserver& observer ) const {
     if ( std::find( mesh_observers_.begin(), mesh_observers_.end(), &observer ) == mesh_observers_.end() ) {
         mesh_observers_.push_back( &observer );

@@ -25,6 +25,10 @@ public:
     virtual void print( std::ostream& ) const override {}
 
 protected:
+    virtual const FunctionSpace& source() const override { return source_; }
+    virtual const FunctionSpace& target() const override { return target_; }
+
+private:
     /**
    * @brief Create an interpolant sparse matrix relating two (pre-partitioned)
    * meshes,
@@ -32,14 +36,10 @@ protected:
    * @param source functionspace containing source elements
    * @param target functionspace containing target points
    */
-    virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
+    virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) override;
 
-    virtual void setup( const Grid& source, const Grid& target ) override;
+    virtual void do_setup( const Grid& source, const Grid& target ) override;
 
-    virtual const FunctionSpace& source() const override { return source_; }
-    virtual const FunctionSpace& target() const override { return target_; }
-
-private:
     FunctionSpace source_;
     FunctionSpace target_;
 };

@@ -102,9 +102,7 @@ DistributionImpl::DistributionImpl( int nb_partitions, idx_t npts, int part[], i
 }
 
 DistributionImpl::DistributionImpl( int nb_partitions, partition_t&& part ) :
-    nb_partitions_( nb_partitions ),
-    part_( std::move( part ) ),
-    nb_pts_( nb_partitions_, 0 ) {
+    nb_partitions_( nb_partitions ), part_( std::move( part ) ), nb_pts_( nb_partitions_, 0 ) {
     size_t size     = part_.size();
     int num_threads = atlas_omp_get_max_threads();
     std::vector<std::vector<int> > nb_pts_per_thread( num_threads, std::vector<int>( nb_partitions_ ) );

@@ -58,8 +58,7 @@ struct DerivateBackwards final : ProjectionImpl::Derivate {
 
 struct DerivateCentral final : ProjectionImpl::Derivate {
     DerivateCentral( const ProjectionImpl& p, PointXY A, PointXY B, double h ) :
-        Derivate( p, A, B, h ),
-        H2_{PointXY::mul( H_, 0.5 )} {}
+        Derivate( p, A, B, h ), H2_{PointXY::mul( H_, 0.5 )} {}
     const PointXY H2_;
     PointLonLat d( PointXY P ) const override {
         PointXY A( xy2lonlat( PointXY::sub( P, H2_ ) ) );

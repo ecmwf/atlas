@@ -101,8 +101,7 @@ inline std::string TraceT<TraceTraits>::formatTitle( const std::string& _title )
 
 template <typename TraceTraits>
 inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc, const std::string& title ) :
-    loc_( loc ),
-    title_( formatTitle( title ) ) {
+    loc_( loc ), title_( formatTitle( title ) ) {
     start();
 }
 
@@ -113,9 +112,7 @@ inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc ) : loc_( loc ), tit
 
 template <typename TraceTraits>
 inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc, const std::string& title, const Labels& labels ) :
-    loc_( loc ),
-    title_( title ),
-    labels_( labels ) {
+    loc_( loc ), title_( title ), labels_( labels ) {
     start();
 }
 

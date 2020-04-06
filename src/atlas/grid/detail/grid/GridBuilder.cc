@@ -145,9 +145,7 @@ GridBuilder::GridBuilder( const std::string& type ) : names_(), type_( type ) {
 
 GridBuilder::GridBuilder( const std::string& type, const std::vector<std::string>& regexes,
                           const std::vector<std::string>& names ) :
-    names_( regexes ),
-    pretty_names_( names ),
-    type_( type ) {
+    names_( regexes ), pretty_names_( names ), type_( type ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 

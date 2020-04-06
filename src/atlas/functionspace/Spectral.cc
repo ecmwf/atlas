@@ -170,16 +170,12 @@ Spectral::Spectral( const eckit::Configuration& config ) :
 // ----------------------------------------------------------------------
 
 Spectral::Spectral( const int truncation, const eckit::Configuration& config ) :
-    nb_levels_( 0 ),
-    truncation_( truncation ),
-    parallelisation_( new Parallelisation( truncation_ ) ) {
+    nb_levels_( 0 ), truncation_( truncation ), parallelisation_( new Parallelisation( truncation_ ) ) {
     config.get( "levels", nb_levels_ );
 }
 
 Spectral::Spectral( const trans::Trans& trans, const eckit::Configuration& config ) :
-    nb_levels_( 0 ),
-    truncation_( trans.truncation() ),
-    parallelisation_( [&trans, this]() -> Parallelisation* {
+    nb_levels_( 0 ), truncation_( trans.truncation() ), parallelisation_( [&trans, this]() -> Parallelisation* {
 #if ATLAS_HAVE_TRANS
         const auto* trans_ifs = dynamic_cast<const trans::TransIFS*>( trans.get() );
         if ( trans_ifs ) {
@@ -443,12 +439,10 @@ array::LocalView<const int, 1> Spectral::nasm0() const {
 Spectral::Spectral() : FunctionSpace(), functionspace_{nullptr} {}
 
 Spectral::Spectral( const FunctionSpace& functionspace ) :
-    FunctionSpace( functionspace ),
-    functionspace_( dynamic_cast<const detail::Spectral*>( get() ) ) {}
+    FunctionSpace( functionspace ), functionspace_( dynamic_cast<const detail::Spectral*>( get() ) ) {}
 
 Spectral::Spectral( const eckit::Configuration& config ) :
-    FunctionSpace( new detail::Spectral( config ) ),
-    functionspace_( dynamic_cast<const detail::Spectral*>( get() ) ) {}
+    FunctionSpace( new detail::Spectral( config ) ), functionspace_( dynamic_cast<const detail::Spectral*>( get() ) ) {}
 
 Spectral::Spectral( const int truncation, const eckit::Configuration& config ) :
     FunctionSpace( new detail::Spectral( truncation, config ) ),

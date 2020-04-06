@@ -48,7 +48,10 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
     bool includesNorthPole = ( mpi_rank == 0 );
     bool includesSouthPole = ( mpi_rank == mpi_size - 1 );
 
-    const util::SphericalPolygon poly( prePartitionedMesh_.polygon( 0 ), prePartitionedMesh_.nodes().lonlat() );
+    if ( not prePartitionedMesh_.projection() ) {
+        ATLAS_NOTIMPLEMENTED;
+    }
+    const util::SphericalPolygon poly{prePartitionedMesh_.polygon( 0 )};
     const double maxlat = poly.coordinatesMax()[LAT];
     const double minlat = poly.coordinatesMin()[LAT];
     auto at_the_pole    = [&]( const PointLonLat& P ) {

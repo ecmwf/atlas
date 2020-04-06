@@ -12,6 +12,7 @@
 
 #include <string>
 #include <type_traits>
+#include <vector>
 
 #include "atlas/util/Object.h"
 
@@ -24,9 +25,11 @@ class Configuration;
 namespace atlas {
 class FieldSet;
 class Field;
+class Projection;
 namespace util {
 class Metadata;
 class PartitionPolygon;
+class PartitionPolygons;
 }  // namespace util
 }  // namespace atlas
 
@@ -77,6 +80,10 @@ public:
     virtual idx_t nb_partitions() const;
 
     virtual const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
+
+    virtual const util::PartitionPolygons& polygons() const;
+
+    virtual const Projection& projection() const;
 
 private:
     util::Metadata* metadata_;

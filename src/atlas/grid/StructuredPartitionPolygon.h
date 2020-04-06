@@ -14,6 +14,7 @@
 #include "atlas/domain/Domain.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/library/config.h"
+#include "atlas/projection/Projection.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/Polygon.h"
@@ -42,9 +43,11 @@ public:  // methods
 
     void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const override;
 
-    const std::vector<Point2>& xy() const override { return points_; }
-    const std::vector<Point2>& lonlat() const override { return points_; }
+    PointsXY xy() const override;
+
     const RectangularDomain& inscribedDomain() const override { return inscribed_domain_; }
+
+    void allGather( util::PartitionPolygons& ) const override;
 
 private:
     // void print( std::ostream& ) const;
@@ -56,10 +59,10 @@ private:
 
     //util::Polygon::edge_set_t compute_edges( std::vector<Point2>&, std::vector<Point2>&  );
 
+
 private:
-    //util::Polygon polygon_;
-    std::vector<Point2> points_;
-    std::vector<Point2> inner_bounding_box_;
+    PointsXY points_;
+    PointsXY inner_bounding_box_;
     RectangularDomain inscribed_domain_;
     const functionspace::FunctionSpaceImpl& fs_;
     idx_t halo_;

@@ -566,8 +566,7 @@ class Column : public ElementType  // Really is a Elementtype in 3D
 {
 public:
     Column( const ElementType::Ptr& horizontal, const ElementType::Ptr& vertical ) :
-        horizontal_( horizontal ),
-        vertical_( vertical ) {
+        horizontal_( horizontal ), vertical_( vertical ) {
         shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
     }
     size_t N() const { return npts() * nlev(); }

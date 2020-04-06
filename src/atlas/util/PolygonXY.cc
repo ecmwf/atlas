@@ -18,7 +18,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/LonLatPolygon.h"
+#include "atlas/util/PolygonXY.h"
 
 namespace atlas {
 namespace util {
@@ -80,23 +80,7 @@ double compute_inner_radius_squared( const PointContainer& points, const PointLo
 
 //------------------------------------------------------------------------------------------------------
 
-LonLatPolygon::LonLatPolygon( const Polygon& poly, const atlas::Field& coordinates, bool removeAlignedPoints ) :
-    PolygonCoordinates( poly, coordinates, removeAlignedPoints ) {
-    centroid_             = compute_centroid( coordinates_ );
-    inner_radius_squared_ = compute_inner_radius_squared( coordinates_, centroid_ );
-}
-
-template <typename PointContainer, LonLatPolygon::enable_if_not_polygon<PointContainer> >
-LonLatPolygon::LonLatPolygon( const PointContainer& points, bool removeAlignedPoints ) :
-    PolygonCoordinates( points, removeAlignedPoints ) {
-    centroid_             = compute_centroid( coordinates_ );
-    inner_radius_squared_ = compute_inner_radius_squared( coordinates_, centroid_ );
-
-    ATLAS_ASSERT( contains( centroid_ ) );
-}
-
-LonLatPolygon::LonLatPolygon( const PartitionPolygon& partition_polygon ) :
-    PolygonCoordinates( partition_polygon.lonlat(), true ) {
+PolygonXY::PolygonXY( const PartitionPolygon& partition_polygon ) : PolygonCoordinates( partition_polygon.xy(), true ) {
     RectangularLonLatDomain inscribed = partition_polygon.inscribedDomain();
     if ( inscribed ) {
         inner_coordinatesMin_ = {inscribed.xmin(), inscribed.ymin()};
@@ -110,7 +94,7 @@ LonLatPolygon::LonLatPolygon( const PartitionPolygon& partition_polygon ) :
     }
 }
 
-bool LonLatPolygon::contains( const Point2& P ) const {
+bool PolygonXY::contains( const Point2& P ) const {
     auto distance2 = []( const Point2& p, const Point2& centroid ) {
         double dx = ( p[0] - centroid[0] );
         double dy = ( p[1] - centroid[1] );
@@ -165,12 +149,6 @@ bool LonLatPolygon::contains( const Point2& P ) const {
     // wn == 0 only when P is outside
     return wn != 0;
 }
-
-//------------------------------------------------------------------------------------------------------
-
-template LonLatPolygon::LonLatPolygon( const std::vector<Point2>&, bool );
-template LonLatPolygon::LonLatPolygon( const std::vector<PointXY>&, bool );
-template LonLatPolygon::LonLatPolygon( const std::vector<PointLonLat>&, bool );
 
 //------------------------------------------------------------------------------------------------------
 

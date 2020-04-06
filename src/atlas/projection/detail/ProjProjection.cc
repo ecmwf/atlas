@@ -67,9 +67,7 @@ std::string geocentric_str( PJ_CONTEXT* ctxt, const std::string& proj_str ) {
 }  // namespace
 
 ProjProjection::ProjProjection( const eckit::Parametrisation& param ) :
-    sourceToTarget_( nullptr ),
-    sourceToGeocentric_( nullptr ),
-    context_( PJ_DEFAULT_CTX ) {
+    sourceToTarget_( nullptr ), sourceToGeocentric_( nullptr ), context_( PJ_DEFAULT_CTX ) {
     ATLAS_ASSERT( param.get( "proj", proj_ ) && !proj_.empty() );
     source_encoded_     = param.get( "proj_source", source_ = source_str( context_, proj_ ) );
     geocentric_encoded_ = param.get( "proj_geocentric", geocentric_ = geocentric_str( context_, proj_ ) );
