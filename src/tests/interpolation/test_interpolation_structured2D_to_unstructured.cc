@@ -85,8 +85,14 @@ FunctionSpace output_functionspace_match() {
             };
         }
     }
+    else if ( mpi::size() == 1 ) {
+        points = std::vector<PointXY>{
+            {45., 45.},  {90., 45.},  {135., 45.},  {180., 45.},  {225., 45.},  {270., 45.},  {315., 45.},
+            {45., -45.}, {90., -45.}, {135., -45.}, {180., -45.}, {225., -45.}, {270., -45.}, {315., -45.},
+        };
+    }
     else {
-        return FunctionSpace();
+        ATLAS_NOTIMPLEMENTED;
     }
     return PointCloud( points );
 }
@@ -105,8 +111,14 @@ FunctionSpace output_functionspace_nomatch() {
             };
         }
     }
+    else if ( mpi::size() == 1 ) {
+        points = std::vector<PointXY>{
+            {45., 45.},  {90., 45.},  {135., 45.},  {180., 45.},  {225., 45.},  {270., 45.},  {315., 45.},
+            {45., -45.}, {90., -45.}, {135., -45.}, {180., -45.}, {225., -45.}, {270., -45.}, {315., -45.},
+        };
+    }
     else {
-        return FunctionSpace();
+        ATLAS_NOTIMPLEMENTED;
     }
     return PointCloud( points );
 }
