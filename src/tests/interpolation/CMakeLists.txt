@@ -50,4 +50,7 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_unstructured
   SOURCES  test_interpolation_structured2D_to_unstructured.cc
   LIBS     atlas
   MPI      2
+  CONDITION eckit_HAVE_MPI
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+
