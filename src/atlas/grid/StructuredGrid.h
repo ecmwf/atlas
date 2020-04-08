@@ -88,6 +88,13 @@ public:
     /// y coordinate for given grid row {j}
     inline double y( idx_t j ) const { return grid_->y( j ); }
 
+    /// increment in x for a given grid row {j}
+    inline double dx( idx_t j ) const { return grid_->dx( j ); }
+
+    /// x coordinate of beginning of a given grid row {j}
+    inline double xmin( idx_t j ) const { return grid_->xmin( j ); }
+
+
     using Grid::xy;
     void xy( idx_t i, idx_t j, double xy[] ) const { grid_->xy( i, j, xy ); }
 

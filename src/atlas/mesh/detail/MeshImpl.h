@@ -155,7 +155,29 @@ private:  // members
 //----------------------------------------------------------------------------------------------------------------------
 
 class MeshObserver {
+private:
+    std::vector<const MeshImpl*> registered_meshes_;
+
 public:
+    void registerMesh( const MeshImpl& mesh ) {
+        if ( std::find( registered_meshes_.begin(), registered_meshes_.end(), &mesh ) == registered_meshes_.end() ) {
+            registered_meshes_.push_back( &mesh );
+            mesh.attachObserver( *this );
+        }
+    }
+    void unregisterMesh( const MeshImpl& mesh ) {
+        auto found = std::find( registered_meshes_.begin(), registered_meshes_.end(), &mesh );
+        if ( found != registered_meshes_.end() ) {
+            registered_meshes_.erase( found );
+            mesh.detachObserver( *this );
+        }
+    }
+    virtual ~MeshObserver() {
+        for ( auto mesh : registered_meshes_ ) {
+            mesh->detachObserver( *this );
+        }
+    }
+
     virtual void onMeshDestruction( MeshImpl& ) = 0;
 };
 

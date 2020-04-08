@@ -7,6 +7,15 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.20.1] - 2019-04-08
+### Fixed
+- Make feature BOUNDSCHECKING work again. It was not turned on for DEBUG builds
+- Workaround clang OpenMP bug
+- Fix Segfault due to unexpected order of destruction of singleton objects
+
+### Added
+- atlas-grids tool can now be used to compute approximate North-South grid resolution
+
 ## [0.20.0] - 2019-03-06
 ### Fixed
 - Pole edges hould not be created for global regular grids with points at poles
@@ -176,6 +185,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.20.1]: https://github.com/ecmwf/atlas/compare/0.20.0...0.20.1
 [0.20.0]: https://github.com/ecmwf/atlas/compare/0.20.0...0.19.2
 [0.19.2]: https://github.com/ecmwf/atlas/compare/0.19.1...0.19.2
 [0.19.1]: https://github.com/ecmwf/atlas/compare/0.19.0...0.19.1

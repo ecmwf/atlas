@@ -90,6 +90,12 @@ void make_dual_normals_outward( Mesh& mesh );
 
 void build_median_dual_mesh( Mesh& mesh ) {
     ATLAS_TRACE();
+    bool median_dual_mesh = false;
+    mesh.metadata().get( "median_dual_mesh", median_dual_mesh );
+    if ( median_dual_mesh ) {
+        return;
+    }
+    mesh.metadata().set( "median_dual_mesh", true );
 
     mesh::Nodes& nodes          = mesh.nodes();
     mesh::HybridElements& edges = mesh.edges();

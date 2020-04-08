@@ -274,8 +274,8 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
     };
 
     auto compute_i_less_equal_x = [this, &eps]( const double& x, idx_t j ) -> idx_t {
-        const double dx = grid_->xspace().dx()[j];
-        idx_t i         = idx_t( std::floor( ( x + eps - grid_->xspace().xmin()[j] ) / dx ) );
+        const double dx = grid_->dx(j);
+        idx_t i         = idx_t( std::floor( ( x + eps - grid_->xmin(j) ) / dx ) );
         return i;
     };
 
@@ -346,6 +346,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                     }
 
                     double x      = grid_->x( i, j );
+
                     double x_next = grid_->x( i + 1, j );
                     double x_prev = grid_->x( i - 1, j );
                     for ( idx_t jj = j - halo; jj <= j + halo; ++jj ) {

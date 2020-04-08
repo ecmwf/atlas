@@ -43,8 +43,10 @@ MeshImpl::MeshImpl() : nodes_( new mesh::Nodes() ), dimensionality_( 2 ) {
 }
 
 MeshImpl::~MeshImpl() {
-    for ( MeshObserver* o : mesh_observers_ ) {
+    while ( mesh_observers_.size() ) {
+        MeshObserver* o = mesh_observers_.back();
         o->onMeshDestruction( *this );
+        o->unregisterMesh( *this );  // will also delete observer from mesh
     }
 }
 
