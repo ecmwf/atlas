@@ -10,21 +10,26 @@
 
 #include "atlas/interpolation/method/Method.h"
 
+#include <algorithm>
+
 #include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Vector.h"
-#include "eckit/log/Timer.h"
-#include "eckit/thread/AutoLock.h"
-#include "eckit/thread/Mutex.h"
-#include "eckit/thread/Once.h"
+#include "eckit/types/Types.h"
 
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/PointCloud.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/Point.h"
+#include "atlas/util/PolygonLocator.h"
+#include "atlas/util/PolygonXY.h"
 
 namespace atlas {
 namespace interpolation {
@@ -150,11 +155,70 @@ Method::Method( const Method::Config& config ) {
     std::string spmv = "";
     config.get( "spmv", spmv );
     use_eckit_linalg_spmv_ = ( spmv == "eckit" );
+    config.get( "experimental-mpi-interpolation", use_experimental_mpi_interpolation_ );
 }
 
 void Method::setup( const FunctionSpace& source, const FunctionSpace& target ) {
     ATLAS_TRACE( "atlas::interpolation::method::Method::setup(FunctionSpace, FunctionSpace)" );
-    this->do_setup( source, target );
+
+    /// FIXME: The following if should be something more substantial
+    ///        for instance check that each point of target is embedded in source
+
+    if ( use_experimental_mpi_interpolation_ ) {
+        int ntasks = mpi::size();
+
+        /// FIXME west should be the west of the source domain
+        double west = 0.;
+
+        // FIXME the PolygonXY choice should come from the method
+        util::PolygonLocator find_polygon( util::ListPolygonXY( source.polygons() ), source.projection() );
+
+        // Distribute points to partitions
+        std::vector<std::vector<double> > sendpoints( ntasks );
+        recvpts_.resize( ntasks );
+        for ( int jtask = 0; jtask < ntasks; ++jtask ) {
+            recvpts_[jtask].clear();
+        }
+
+        auto lonlat = array::make_view<double, 2>( target.lonlat() );
+        auto ghost  = array::make_view<int, 1>( target.ghost() );
+
+        for ( idx_t ip = 0; ip < target.size(); ++ip ) {
+            if ( not ghost( ip ) ) {
+                PointLonLat pll{lonlat( ip, LON ), lonlat( ip, LAT )};
+                pll.normalise( west );
+                idx_t rank = find_polygon( pll );
+                sendpoints[rank].push_back( pll[LON] );
+                sendpoints[rank].push_back( pll[LAT] );
+                recvpts_[rank].push_back( ip );
+            }
+        }
+
+        //  Exchange locations of target points
+        std::vector<std::vector<double> > recvpoints( ntasks );
+        atlas::mpi::comm().allToAll( sendpoints, recvpoints );
+
+        //  Create PointCloud of target points with matching distribution
+        std::vector<PointXY> localOutPoints;
+        srcpts_.resize( ntasks );
+        for ( int jtask = 0; jtask < ntasks; ++jtask ) {
+            size_t npts = recvpoints[jtask].size() / 2;
+            ASSERT( recvpoints[jtask].size() == 2 * npts );
+            srcpts_[jtask] = npts;
+            for ( size_t jpt = 0; jpt < npts; ++jpt ) {
+                localOutPoints.emplace_back(
+                    PointXY( recvpoints[jtask][2 * jpt + LON], recvpoints[jtask][2 * jpt + LAT] ) );
+            }
+        }
+        //    ATLAS_DEBUG_VAR(localOutPoints);
+        localTargetPoints_.reset( new functionspace::PointCloud( localOutPoints ) );
+        //    ATLAS_DEBUG_VAR(srcpts_);
+        //  Call interpolation setup with local target points
+        this->do_setup( source, *localTargetPoints_ );
+    }
+    else {
+        this->do_setup( source, target );
+    }
 }
 
 void Method::setup( const Grid& source, const Grid& target ) {
@@ -174,12 +238,129 @@ void Method::setup( const FunctionSpace& source, const FieldSet& target ) {
 
 void Method::execute( const FieldSet& source, FieldSet& target ) const {
     ATLAS_TRACE( "atlas::interpolation::method::Method::execute(FieldSet, FieldSet)" );
-    this->do_execute( source, target );
+
+    if ( localTargetPoints_ ) {
+        //    Create FieldSet with target points to be interpolated on this task
+        FieldSet localout;
+        const idx_t N = target.size();
+        for ( idx_t i = 0; i < N; ++i ) {
+            localout.add( localTargetPoints_->createField( target[i], util::NoConfig() ) );
+        }
+
+        //    Local interpolation
+        this->do_execute( source, localout );
+
+        size_t ntasks = atlas::mpi::comm().size();
+        std::vector<std::vector<double> > sendbuf( ntasks );
+        for ( size_t jtask = 0; jtask < ntasks; ++jtask ) {
+            sendbuf[jtask].clear();
+        }
+
+        //    Copy interpolated fields into send buffer
+        for ( idx_t i = 0; i < N; ++i ) {
+            Field field = localout[i];
+            if ( field.datatype().kind() == array::DataType::KIND_REAL64 ) {
+                auto view = array::make_view<double, 2>( field );
+                idx_t ipt = 0;
+                for ( size_t jtask = 0; jtask < ntasks; ++jtask ) {
+                    //            ATLAS_DEBUG_VAR(jtask);
+                    for ( size_t jpt = 0; jpt < srcpts_[jtask]; ++jpt ) {
+                        //              ATLAS_DEBUG_VAR(ipt);
+                        for ( idx_t jlev = 0; jlev < view.shape( 1 ); ++jlev ) {
+                            sendbuf[jtask].push_back( view( ipt, jlev ) );
+                            //                ATLAS_DEBUG_VAR(ipt);
+                            //                ATLAS_DEBUG_VAR(view(ipt, jlev));
+                            //                ATLAS_DEBUG_VAR(sendbuf[jtask]);
+                        }
+                        ++ipt;
+                    }
+                }
+            }
+            if ( field.datatype().kind() == array::DataType::KIND_REAL32 ) {
+                ATLAS_NOTIMPLEMENTED;
+                auto view = array::make_view<float, 2>( field );
+            }
+            //        field.dump(Log::info() << std::endl << "----1----"<<std::endl); Log::info()<<std::endl;
+        }
+
+        //      for (size_t jtask = 0; jtask < ntasks; ++jtask) {
+        //        ATLAS_DEBUG_VAR(sendbuf[jtask].size());
+        //        ATLAS_DEBUG_VAR(sendbuf[jtask]);
+        //      }
+
+        //    Exchange interpolated values back
+        std::vector<std::vector<double> > recvbuf( ntasks );
+        atlas::mpi::comm().allToAll( sendbuf, recvbuf );
+
+        //      for (size_t jtask = 0; jtask < ntasks; ++jtask) {
+        //        ATLAS_DEBUG_VAR(recvbuf[jtask].size());
+        //        ATLAS_DEBUG_VAR(recvbuf[jtask]);
+        //      }
+
+        std::vector<size_t> jjs( ntasks );
+        for ( idx_t i = 0; i < N; ++i ) {
+            Field field = target[i];
+            if ( field.datatype().kind() == array::DataType::KIND_REAL64 ) {
+                auto view = array::make_view<double, 2>( field );
+
+                //          ATLAS_DEBUG_VAR(view.shape(0));
+                //          ATLAS_DEBUG_VAR(view.shape(1));
+                //        Fill with known number for easy debug
+                for ( idx_t jpt = 0; jpt < view.shape( 0 ); ++jpt ) {         // just for debug
+                    for ( idx_t jlev = 0; jlev < view.shape( 1 ); ++jlev ) {  // just for debug
+                        view( jpt, jlev ) = -99999.9999;                      // just for debug
+                    }                                                         // just for debug
+                }                                                             // just for debug
+
+                //        Copy receive buffer into target fields
+                idx_t ipt = 0;
+                for ( size_t jtask = 0; jtask < ntasks; ++jtask ) {
+                    //            ATLAS_DEBUG_VAR(jtask);
+                    //            ATLAS_DEBUG_VAR(recvbuf[jtask].size());
+                    //            ATLAS_DEBUG_VAR(recvbuf[jtask]);
+                    //            ATLAS_DEBUG_VAR(recvpts_[jtask].size());
+                    //            ATLAS_DEBUG_VAR(recvpts_[jtask]);
+                    for ( size_t jpt = 0; jpt < recvpts_[jtask].size(); ++jpt ) {
+                        ipt = recvpts_[jtask][jpt];
+                        //              ATLAS_DEBUG_VAR(ipt);
+                        for ( idx_t jlev = 0; jlev < view.shape( 1 ); ++jlev ) {
+                            view( ipt, jlev ) = recvbuf[jtask][jjs[jtask]];
+                            ++jjs[jtask];
+                        }
+                    }
+                    //            ATLAS_DEBUG_VAR(jjs[jtask]);
+                }
+
+                //        Debug prints
+#if 0
+                for ( idx_t jpt = 0; jpt < view.shape( 0 ); ++jpt ) {         // just for debug
+                    for ( idx_t jlev = 0; jlev < view.shape( 1 ); ++jlev ) {  // just for debug
+                        ATLAS_DEBUG_VAR( view( jpt, jlev ) );                 // just for debug
+                    }                                                         // just for debug
+                }                                                             // just for debug
+#endif
+                //          field.dump(Log::info() << std::endl << "----2----"<<std::endl); Log::info()<<std::endl;
+            }
+            if ( field.datatype().kind() == array::DataType::KIND_REAL32 ) {
+                ATLAS_NOTIMPLEMENTED;
+            }
+        }
+    }
+    else {
+        this->do_execute( source, target );
+    }
 }
 
 void Method::execute( const Field& source, Field& target ) const {
-    ATLAS_TRACE( "atlas::interpolation::method::Method::execute(Field, Field)" );
-    this->do_execute( source, target );
+    if ( localTargetPoints_ ) {
+        FieldSet sources( source );
+        FieldSet targets( target );
+        execute( sources, targets );
+    }
+    else {
+        ATLAS_TRACE( "atlas::interpolation::method::Method::execute(Field, Field)" );
+        this->do_execute( source, target );
+    }
 }
 
 void Method::do_setup( const FunctionSpace& /*source*/, const Field& /*target*/ ) {

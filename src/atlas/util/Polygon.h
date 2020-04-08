@@ -184,6 +184,8 @@ public:
 
     void print( std::ostream& ) const;
 
+    const std::vector<Point2>& lonlat() { return coordinates_; }
+
 protected:
     // -- Members
 

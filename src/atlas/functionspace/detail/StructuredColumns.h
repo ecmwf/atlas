@@ -131,6 +131,7 @@ public:
         return ij2gp_( i, j );
     }
 
+    Field lonlat() const override { return field_xy_; }
     Field xy() const { return field_xy_; }
     Field z() const { return vertical().z(); }
     Field partition() const { return field_partition_; }
@@ -143,7 +144,7 @@ public:
     }
     Field index_i() const { return field_index_i_; }
     Field index_j() const { return field_index_j_; }
-    Field ghost() const { return field_ghost_; }
+    Field ghost() const override { return field_ghost_; }
 
     void compute_xy( idx_t i, idx_t j, PointXY& xy ) const;
     PointXY compute_xy( idx_t i, idx_t j ) const {

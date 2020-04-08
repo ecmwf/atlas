@@ -45,6 +45,14 @@ Field NoFunctionSpace::createField( const Field&, const eckit::Configuration& ) 
     ATLAS_NOTIMPLEMENTED;
 }
 
+Field FunctionSpaceImpl::lonlat() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+Field FunctionSpaceImpl::ghost() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
 const util::PartitionPolygon& FunctionSpaceImpl::polygon( idx_t /*halo */ ) const {
     throw_Exception( "polygon() not implemented in derived class", Here() );
 }

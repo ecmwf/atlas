@@ -9,6 +9,7 @@
  */
 
 #include <fstream>
+#include <vector>
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"

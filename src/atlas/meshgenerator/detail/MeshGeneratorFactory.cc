@@ -24,8 +24,8 @@ namespace meshgenerator {
 void force_link() {
     static struct Link {
         Link() {
-            MeshGeneratorBuilder<meshgenerator::StructuredMeshGenerator>();
             MeshGeneratorBuilder<meshgenerator::DelaunayMeshGenerator>();
+            MeshGeneratorBuilder<meshgenerator::StructuredMeshGenerator>();
         }
     } link;
 }

@@ -69,6 +69,10 @@ public:
     idx_t nb_partitions() const;
 
     idx_t size() const;
+
+    Field lonlat() const;
+
+    Field ghost() const;
 };
 
 //------------------------------------------------------------------------------------------------------

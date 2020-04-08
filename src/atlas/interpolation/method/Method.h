@@ -11,9 +11,11 @@
 #pragma once
 
 #include <iosfwd>
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "atlas/functionspace/PointCloud.h"
 #include "atlas/util/Object.h"
 #include "eckit/config/Configuration.h"
 #include "eckit/linalg/SparseMatrix.h"
@@ -76,6 +78,8 @@ protected:
 
     bool use_eckit_linalg_spmv_;
 
+    bool use_experimental_mpi_interpolation_{false};
+
 private:
     virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
     virtual void do_setup( const Grid& source, const Grid& target )                   = 0;
@@ -95,6 +99,10 @@ private:
     void interpolate_field_rank3( const Field& src, Field& tgt ) const;
 
     void check_compatibility( const Field& src, const Field& tgt ) const;
+
+    std::unique_ptr<functionspace::PointCloud> localTargetPoints_;
+    std::vector<std::vector<size_t> > recvpts_;
+    std::vector<size_t> srcpts_;
 };
 
 }  // namespace interpolation

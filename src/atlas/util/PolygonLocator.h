@@ -97,7 +97,8 @@ public:
         }
         if ( partition < 0 ) {
             std::stringstream out;
-            out << "Could not find find point {lon,lat} = " << point << " in `k=" << k_ << "` \"nearest\" polygons [";
+            out << "Could not find find point {lon,lat} = " << point << "; {x,y} = " << lonlat2xy( point )
+                << " in `k=" << k_ << "` \"nearest\" polygons [";
             for ( size_t i = 0; i < found.size(); ++i ) {
                 if ( i > 0 ) {
                     out << ", ";

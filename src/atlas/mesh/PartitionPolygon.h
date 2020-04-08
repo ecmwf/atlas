@@ -15,8 +15,6 @@
 
 #pragma once
 
-#include <vector>
-
 #include "atlas/util/Object.h"
 
 #include "atlas/library/config.h"
