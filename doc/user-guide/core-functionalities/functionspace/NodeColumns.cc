@@ -19,7 +19,7 @@ using atlas::functionspace::NodeColumns;
 using atlas::output::Gmsh;
 
 int main( int argc, char* argv[] ) {
-    atlas::Library::initialise( argc, argv );
+    atlas::Library::instance().initialise( argc, argv );
 
     // Generate global classic reduced Gaussian grid
     StructuredGrid grid( "N32" );
@@ -147,7 +147,7 @@ int main( int argc, char* argv[] ) {
                 << "std_deviation: " << stddev << ",  "
                 << "nb_nodes: " << N << std::endl;
 
-    atlas::Library::finalise();
+    atlas::Library::instance().finalise();
     atlas::mpi::finalize();
 
     return 0;

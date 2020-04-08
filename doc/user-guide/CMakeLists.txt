@@ -21,7 +21,7 @@ file(MAKE_DIRECTORY ${USERGUIDE}/html)
 
 add_custom_target(atlas-user-guide-html
    export TEXINPUTS=${CMAKE_SOURCE_DIR}//:${USERGUIDESRC}//:${CMAKE_CURRENT_BINARY_DIR}//: &&
-   ${HTLATEX} ${USERGUIDESRC}/user-guide.tex
+   ${HTLATEX_COMPILER} ${USERGUIDESRC}/user-guide.tex
    "${USERGUIDESRC}/styling.cfg,html,3,next,NoFonts"
    WORKING_DIRECTORY ${USERGUIDE}/html )
 
@@ -69,8 +69,8 @@ ENDFOREACH()
 # PDF GENERATION ==============================================================
 add_custom_target(atlas-user-guide-pdf
    export TEXINPUTS=${CMAKE_SOURCE_DIR}//:${CMAKE_CURRENT_BINARY_DIR}//: &&
-   ${PDFLATEX} --output-directory ${USERGUIDE} ${USERGUIDESRC}/user-guide.tex
+   ${PDFLATEX_COMPILER} --output-directory ${USERGUIDE} ${USERGUIDESRC}/user-guide.tex
    COMMAND export TEXINPUTS=${CMAKE_SOURCE_DIR}//:${CMAKE_CURRENT_BINARY_DIR}//: &&
-   ${PDFLATEX} --output-directory ${USERGUIDE} ${USERGUIDESRC}/user-guide.tex
+   ${PDFLATEX_COMPILER} --output-directory ${USERGUIDE} ${USERGUIDESRC}/user-guide.tex
    WORKING_DIRECTORY ${USERGUIDESRC} )
 # =============================================================================
