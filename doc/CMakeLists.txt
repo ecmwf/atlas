@@ -69,23 +69,22 @@ if( NOT DEFINED ATLAS_DOXYGEN_GENERATOR )
 endif()
 
 if( ATLAS_DOXYGEN_GENERATOR STREQUAL "m.css" )
-  if( NOT DEFINED ATLAS_DOXYGEN_EXECUTABLE )
-    set( ATLAS_DOXYGEN_EXECUTABLE doxygen.py )
-  endif()
   set( ATLAS_DOXYFILE Doxyfile-mcss )
 else()
-  if( NOT DEFINED ATLAS_DOXYGEN_EXECUTABLE )
-    if( DOXYGEN_EXECUTABLE )
-      set( ATLAS_DOXYGEN_EXECUTABLE ${DOXYGEN_EXECUTABLE} )
-    else()
-      set( ATLAS_DOXYGEN_EXECUTABLE doxygen )
-    endif()    
-  endif()
   set( ATLAS_DOXYFILE Doxyfile-stock )
 endif()
 
+if( NOT DEFINED ATLAS_DOXYGEN_EXECUTABLE )
+  find_package(Doxygen REQUIRED dot)
+  if( DOXYGEN_FOUND )
+    set( ATLAS_DOXYGEN_EXECUTABLE ${DOXYGEN_EXECUTABLE} )
+  else()
+    set( ATLAS_DOXYGEN_EXECUTABLE doxygen )
+  endif()
+endif()
+
 foreach( doxyfile Doxyfile-default Doxyfile-custom Doxyfile-mcss Doxyfile-stock )
-  execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink 
+  execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
       ${CMAKE_CURRENT_SOURCE_DIR}/${doxyfile}
       ${CMAKE_CURRENT_BINARY_DIR}/${doxyfile} )
 endforeach()
