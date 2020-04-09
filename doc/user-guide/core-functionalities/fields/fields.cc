@@ -13,7 +13,7 @@ using atlas::array::make_shape;
 using atlas::array::make_view;
 
 int main( int argc, char* argv[] ) {
-    atlas::Library::initialise( argc, argv );
+    atlas::initialise( argc, argv );
 
     // Define fields
     Field field_pressure( "pressure", make_datatype<double>(), make_shape( 100 ) );
