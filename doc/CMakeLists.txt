@@ -39,9 +39,11 @@ add_custom_target(atlas_doc_pdf)
 add_dependencies (atlas_doc_pdf
                   atlas-user-guide-pdf )
 
-add_custom_target(atlas_doc_html)
-add_dependencies (atlas_doc_html
-                  atlas-user-guide-html )
+if( LATEX_HTLATEX_FOUND )
+  add_custom_target(atlas_doc_html)
+  add_dependencies (atlas_doc_html
+                    atlas-user-guide-html )
+endif()
 
 add_custom_target(atlas_doc)
 add_dependencies (atlas_doc
