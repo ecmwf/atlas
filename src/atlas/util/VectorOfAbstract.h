@@ -25,8 +25,8 @@ namespace util {
 
 //------------------------------------------------------------------------------------------------------
 
-template <class BaseIterator>
-class DereferenceIterator : public BaseIterator {
+template <typename BaseIterator>
+class DereferenceIterator : DOXYGEN_HIDE( public BaseIterator ) {
 public:
     using value_type = typename BaseIterator::value_type::element_type;
     using pointer    = value_type*;
