@@ -60,8 +60,8 @@ int main( int argc, char* argv[] ) {
     auto scalar1 = make_view<double, 1>( field_scalar1 );
     auto lonlat  = make_view<double, 2>( mesh.nodes().lonlat() );
     for ( size_t jnode = 0; jnode < nb_nodes; ++jnode ) {
-        zlon = lonlat( jnode, 0 ) * deg2rad;
-        zlat = lonlat( jnode, 1 ) * deg2rad;
+        zlon = lonlat( jnode, size_t( 0 ) ) * deg2rad;
+        zlat = lonlat( jnode, size_t( 1 ) ) * deg2rad;
 
         zdist =
             2.0 * sqrt( ( cos( zlat ) * sin( ( zlon - zlonc ) / 2 ) ) * ( cos( zlat ) * sin( ( zlon - zlonc ) / 2 ) ) +
