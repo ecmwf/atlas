@@ -22,16 +22,18 @@ namespace numerics {
 class Method : public util::Object {
 public:
     Method() {}
-    virtual ~Method()                = 0;
-    virtual std::string name() const = 0;
+    virtual ~Method()                       = 0;
+    virtual const std::string& name() const = 0;
 };
 
 inline Method::~Method() {}
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 extern "C" {
 void atlas__Method__delete( Method* This );
 const char* atlas__Method__name( Method* This );
 }
+#endif
 
 }  // namespace numerics
 }  // namespace atlas

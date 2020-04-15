@@ -31,7 +31,7 @@
 namespace atlas {
 namespace trans {
 
-VorDivToUVImpl::~VorDivToUVImpl() {}
+VorDivToUVImpl::~VorDivToUVImpl() = default;
 
 namespace {
 

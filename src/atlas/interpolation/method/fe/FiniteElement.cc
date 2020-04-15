@@ -55,14 +55,14 @@ static const double parametricEpsilon = 1e-15;
 }  // namespace
 
 
-void FiniteElement::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) {
+void FiniteElement::do_setup( const Grid& source, const Grid& target ) {
+    if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
     auto functionspace = []( const Grid& grid ) {
         Mesh mesh;
         if ( StructuredGrid{grid} ) {
-            mesh = MeshGenerator( "structured", util::Config( "three_dimensional", true ) ).generate( grid );
+            mesh = MeshGenerator( "structured", util::Config( "3d", true ) ).generate( grid );
         }
         else {
             mesh = MeshGenerator( "delaunay" ).generate( grid );
@@ -70,11 +70,11 @@ void FiniteElement::setup( const Grid& source, const Grid& target ) {
         return functionspace::NodeColumns( mesh );
     };
 
-    setup( functionspace( source ), functionspace( target ) );
+    do_setup( functionspace( source ), functionspace( target ) );
 }
 
-void FiniteElement::setup( const FunctionSpace& source, const FunctionSpace& target ) {
-    ATLAS_TRACE( "atlas::interpolation::method::FiniteElement::setup()" );
+void FiniteElement::do_setup( const FunctionSpace& source, const FunctionSpace& target ) {
+    ATLAS_TRACE( "atlas::interpolation::method::FiniteElement::do_setup()" );
 
     source_ = source;
     target_ = target;
@@ -93,8 +93,8 @@ void FiniteElement::setup( const FunctionSpace& source, const FunctionSpace& tar
             target_xyz_    = Field( "xyz", array::make_datatype<double>(), array::make_shape( N, 3 ) );
             target_ghost_  = tgt.ghost();
             target_lonlat_ = tgt.lonlat();
-            array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( tgt.lonlat() );
-            array::ArrayView<double, 2> xyz    = array::make_view<double, 2>( target_xyz_ );
+            auto lonlat    = array::make_view<double, 2>( tgt.lonlat() );
+            auto xyz       = array::make_view<double, 2>( target_xyz_ );
             PointXYZ p2;
             for ( idx_t n = 0; n < N; ++n ) {
                 const PointLonLat p1( lonlat( n, 0 ), lonlat( n, 1 ) );
@@ -165,7 +165,7 @@ void FiniteElement::print( std::ostream& out ) const {
     tgt.gather().gather( stencil_points_loc, stencil_points_glb );
     tgt.gather().gather( stencil_weights_loc, stencil_weights_glb );
 
-    if ( mpi::comm().rank() == 0 ) {
+    if ( mpi::rank() == 0 ) {
         int precision = std::numeric_limits<double>::max_digits10;
         for ( idx_t i = 0; i < global_size; ++i ) {
             out << std::setw( 10 ) << i + 1 << " : ";
@@ -279,9 +279,9 @@ void FiniteElement::setup( const FunctionSpace& source ) {
     if ( failures.size() ) {
         // If this fails, consider lowering atlas::grid::parametricEpsilon
         std::ostringstream msg;
-        msg << "Rank " << eckit::mpi::comm().rank() << " failed to project points:\n";
+        msg << "Rank " << mpi::rank() << " failed to project points:\n";
         for ( std::vector<size_t>::const_iterator i = failures.begin(); i != failures.end(); ++i ) {
-            const PointLonLat pll{out_lonlat( *i, 0 ), out_lonlat( *i, 1 )};  // lookup point
+            const PointLonLat pll{out_lonlat( *i, (size_t)0 ), out_lonlat( *i, (size_t)1 )};  // lookup point
             msg << "\t(lon,lat) = " << pll << "\n";
         }
 
@@ -313,8 +313,10 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
 
     Triplets triplets;
     triplets.reserve( 4 );
-    Ray ray( PointXYZ{( *ocoords_ )( ip, 0 ), ( *ocoords_ )( ip, 1 ), ( *ocoords_ )( ip, 2 )} );
-    const Vector3D p{( *ocoords_ )( ip, 0 ), ( *ocoords_ )( ip, 1 ), ( *ocoords_ )( ip, 2 )};
+    Ray ray( PointXYZ{( *ocoords_ )( ip, size_t( 0 ) ), ( *ocoords_ )( ip, size_t( 1 ) ),
+                      ( *ocoords_ )( ip, size_t( 2 ) )} );
+    const Vector3D p{( *ocoords_ )( ip, size_t( 0 ) ), ( *ocoords_ )( ip, size_t( 1 ) ),
+                     ( *ocoords_ )( ip, size_t( 2 ) )};
     ElementEdge edge;
     idx_t single_point;
     for ( ElemIndex3::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc ) {
@@ -421,10 +423,12 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
 
         if ( nb_cols == 3 ) {
             /* triangle */
-            element::Triag3D triag(
-                PointXYZ{( *icoords_ )( idx[0], 0 ), ( *icoords_ )( idx[0], 1 ), ( *icoords_ )( idx[0], 2 )},
-                PointXYZ{( *icoords_ )( idx[1], 0 ), ( *icoords_ )( idx[1], 1 ), ( *icoords_ )( idx[1], 2 )},
-                PointXYZ{( *icoords_ )( idx[2], 0 ), ( *icoords_ )( idx[2], 1 ), ( *icoords_ )( idx[2], 2 )} );
+            element::Triag3D triag( PointXYZ{( *icoords_ )( idx[0], size_t( 0 ) ), ( *icoords_ )( idx[0], size_t( 1 ) ),
+                                             ( *icoords_ )( idx[0], size_t( 2 ) )},
+                                    PointXYZ{( *icoords_ )( idx[1], size_t( 0 ) ), ( *icoords_ )( idx[1], size_t( 1 ) ),
+                                             ( *icoords_ )( idx[1], size_t( 2 ) )},
+                                    PointXYZ{( *icoords_ )( idx[2], size_t( 0 ) ), ( *icoords_ )( idx[2], size_t( 1 ) ),
+                                             ( *icoords_ )( idx[2], size_t( 2 ) )} );
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
@@ -465,11 +469,14 @@ Method::Triplets FiniteElement::projectPointToElements( size_t ip, const ElemInd
         }
         else {
             /* quadrilateral */
-            element::Quad3D quad(
-                PointXYZ{( *icoords_ )( idx[0], 0 ), ( *icoords_ )( idx[0], 1 ), ( *icoords_ )( idx[0], 2 )},
-                PointXYZ{( *icoords_ )( idx[1], 0 ), ( *icoords_ )( idx[1], 1 ), ( *icoords_ )( idx[1], 2 )},
-                PointXYZ{( *icoords_ )( idx[2], 0 ), ( *icoords_ )( idx[2], 1 ), ( *icoords_ )( idx[2], 2 )},
-                PointXYZ{( *icoords_ )( idx[3], 0 ), ( *icoords_ )( idx[3], 1 ), ( *icoords_ )( idx[3], 2 )} );
+            element::Quad3D quad( PointXYZ{( *icoords_ )( idx[0], (size_t)0 ), ( *icoords_ )( idx[0], (size_t)1 ),
+                                           ( *icoords_ )( idx[0], (size_t)2 )},
+                                  PointXYZ{( *icoords_ )( idx[1], (size_t)0 ), ( *icoords_ )( idx[1], (size_t)1 ),
+                                           ( *icoords_ )( idx[1], (size_t)2 )},
+                                  PointXYZ{( *icoords_ )( idx[2], (size_t)0 ), ( *icoords_ )( idx[2], (size_t)1 ),
+                                           ( *icoords_ )( idx[2], (size_t)2 )},
+                                  PointXYZ{( *icoords_ )( idx[3], (size_t)0 ), ( *icoords_ )( idx[3], (size_t)1 ),
+                                           ( *icoords_ )( idx[3], (size_t)2 )} );
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)

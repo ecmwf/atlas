@@ -28,12 +28,12 @@ struct GridToolsDataStore : ArrayDataStore {
         delete data_store_;
     }
 
-    void cloneToDevice() const {
+    void updateDevice() const {
         assert( data_store_ );
         data_store_->clone_to_device();
     }
 
-    void cloneFromDevice() const { data_store_->clone_from_device(); }
+    void updateHost() const { data_store_->clone_from_device(); }
 
     bool valid() const { return data_store_->valid(); }
 
@@ -43,21 +43,21 @@ struct GridToolsDataStore : ArrayDataStore {
 
     bool deviceNeedsUpdate() const { return data_store_->device_needs_update(); }
 
-    void reactivateDeviceWriteViews() const { data_store_->reactivate_device_write_views(); }
+    void reactivateDeviceWriteViews() const { data_store_->reactivate_target_write_views(); }
 
     void reactivateHostWriteViews() const { data_store_->reactivate_host_write_views(); }
 
     void* voidDataStore() { return static_cast<void*>( const_cast<gt_DataStore*>( data_store_ ) ); }
 
     void* voidHostData() {
-        return ::gridtools::make_host_view<::gridtools::access_mode::ReadOnly>( *data_store_ ).data();
+        return ::gridtools::make_host_view<::gridtools::access_mode::read_only>( *data_store_ ).data();
     }
 
     void* voidDeviceData() {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-        return ::gridtools::make_device_view<::gridtools::access_mode::ReadOnly>( *data_store_ ).data();
+        return ::gridtools::make_device_view<::gridtools::access_mode::read_only>( *data_store_ ).data();
 #else
-        return ::gridtools::make_host_view<::gridtools::access_mode::ReadOnly>( *data_store_ ).data();
+        return ::gridtools::make_host_view<::gridtools::access_mode::read_only>( *data_store_ ).data();
 #endif
     }
 

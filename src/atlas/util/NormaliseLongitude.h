@@ -13,6 +13,7 @@
 /// @file NormaliseLongitude.h
 
 namespace atlas {
+namespace util {
 
 class NormaliseLongitude {
 public:
@@ -43,4 +44,5 @@ public:
     static constexpr double eps_ = 1.e-11;
 };
 
+}  // namespace util
 }  // namespace atlas

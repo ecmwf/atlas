@@ -27,13 +27,13 @@
 #include <CGAL/convex_hull_3.h>
 #include <CGAL/point_generators_3.h>
 
-typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-typedef CGAL::Polyhedron_3<K> Polyhedron_3;
+using K            = CGAL::Exact_predicates_inexact_constructions_kernel;
+using Polyhedron_3 = CGAL::Polyhedron_3<K>;
 
-typedef K::Vector_3 Vector_3;
-typedef K::FT FT;
-typedef K::Segment_3 Segment_3;
-typedef K::Point_3 Point_3;
+using Vector_3  = K::Vector_3;
+using FT        = K::FT;
+using Segment_3 = K::Segment_3;
+using Point_3   = K::Point_3;
 
 const Point_3 origin = Point_3( CGAL::ORIGIN );
 
@@ -206,7 +206,7 @@ void BuildConvexHull3D::operator()( Mesh& mesh ) const {
     //    std::cout << "convex hull " << poly->size_of_vertices() << " vertices"
     //    << std::endl;
 
-    ATLAS_ASSERT( poly->size_of_vertices() == ipts.size() );
+    ATLAS_ASSERT( poly->size_of_vertices() == static_cast<idx_t>( ipts.size() ) );
 
     cgal_polyhedron_to_atlas_mesh( mesh, *poly, points );
 }

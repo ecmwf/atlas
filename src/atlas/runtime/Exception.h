@@ -18,6 +18,7 @@
 
 namespace atlas {
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 [[noreturn]] void throw_NotImplemented( const eckit::CodeLocation& );
 [[noreturn]] void throw_NotImplemented( const std::string&, const eckit::CodeLocation& );
 
@@ -31,6 +32,7 @@ namespace atlas {
 [[noreturn]] void throw_CantOpenFile( const std::string& );
 [[noreturn]] void throw_CantOpenFile( const std::string&, const eckit::CodeLocation& );
 
+[[noreturn]] void throw_OutOfRange( const std::string& varname, idx_t index, idx_t size );
 [[noreturn]] void throw_OutOfRange( const std::string& varname, idx_t index, idx_t size, const eckit::CodeLocation& );
 
 namespace detail {
@@ -64,3 +66,5 @@ inline void Assert( bool success, const char* code, const char* msg, const char*
         ss << WHAT;                                   \
         ::atlas::throw_Exception( ss.str(), Here() ); \
     }
+
+#endif

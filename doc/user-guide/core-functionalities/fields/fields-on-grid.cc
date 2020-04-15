@@ -1,18 +1,18 @@
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid.h"
-#include "atlas/library/Library.h"
+#include "atlas/library.h"
 #include "atlas/runtime/Log.h"
 
 using atlas::Field;
 using atlas::Log;
+using atlas::StructuredGrid;
 using atlas::array::make_datatype;
 using atlas::array::make_shape;
 using atlas::array::make_view;
-using atlas::StructuredGrid;
 
 int main( int argc, char* argv[] ) {
-    atlas::Library::instance().initialise( argc, argv );
+    atlas::initialise( argc, argv );
 
     int jnode            = 0;
     const double rpi     = 2.0 * asin( 1.0 );
@@ -39,7 +39,9 @@ int main( int argc, char* argv[] ) {
                                 sin( ( zlat - zlatc ) / 2 ) * sin( ( zlat - zlatc ) / 2 ) );
 
             pressure( jnode ) = 0.0;
-            if ( zdist < zrad ) { pressure( jnode ) = 0.5 * ( 1. + cos( rpi * zdist / zrad ) ); }
+            if ( zdist < zrad ) {
+                pressure( jnode ) = 0.5 * ( 1. + cos( rpi * zdist / zrad ) );
+            }
             jnode = jnode + 1;
         }
     }
@@ -48,7 +50,8 @@ int main( int argc, char* argv[] ) {
     Log::info() << "memory field_pressure = " << field_pressure.bytes() * 1.e-9 << " GB" << std::endl;
     Log::info() << "==========================================" << std::endl;
 
-    atlas::Library::instance().finalise();
+    atlas::finalise();
+    atlas::mpi::finalize();
 
     return 0;
 }

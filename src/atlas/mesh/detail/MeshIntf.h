@@ -25,8 +25,8 @@ Nodes* atlas__Mesh__nodes( Mesh::Implementation* This );
 Edges* atlas__Mesh__edges( Mesh::Implementation* This );
 Cells* atlas__Mesh__cells( Mesh::Implementation* This );
 size_t atlas__Mesh__footprint( Mesh::Implementation* This );
-void atlas__Mesh__clone_to_device( Mesh::Implementation* This );
-void atlas__Mesh__clone_from_device( Mesh::Implementation* This );
+void atlas__Mesh__update_device( Mesh::Implementation* This );
+void atlas__Mesh__update_host( Mesh::Implementation* This );
 void atlas__Mesh__sync_host_device( Mesh::Implementation* This );
 }
 

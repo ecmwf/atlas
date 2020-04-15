@@ -12,34 +12,7 @@
 /// This file contains the LocalView class, a class that allows to wrap any
 /// contiguous raw data into
 /// a view which is accessible with multiple indices.
-/// All it needs is the strides for each index, and the shape of each index.
-/// ATTENTION: The last index is stride 1
-///
-/// Bounds-checking can be turned ON by defining
-/// "ATLAS_ARRAYVIEW_BOUNDS_CHECKING"
-/// before including this header.
-///
-/// Example 1:
-///     int[] array = { 1, 2, 3, 4, 5, 6, 7, 8, 9};
-///     int[2] strides = { 3, 1 };
-///     int[2] shape = { 3, 3 };
-///     LocalView<int,2> matrix( array, shape, strides );
-///     for( idx_t i=0; i<matrix.shape(0); ++i ) {
-///       for( idx_t j=0; j<matrix.shape(1); ++j ) {
-///         matrix(i,j) *= 10;
-///       }
-///     }
-///
-/// Strides can also be omitted as for most common cases it can be inferred
-/// from the shape.
-///
-/// Example 2:
-///     int[] array = { 1, 2, 3, 4, 5, 6, 7, 8, 9};
-///     int[2] shape = { 3, 3 };
-///     LocalView<int,2> matrix( array, shape );
-/// which is identical for this matrix to previous Example 1
-///
-/// @author Willem Deconinck
+
 #pragma once
 
 #include <cstddef>
@@ -55,21 +28,52 @@
 namespace atlas {
 namespace array {
 
-template <typename Value, int Rank, Intent AccessMode = Intent::ReadWrite>
+/// @brief Multi-dimensional access existing POD array pointer.
+///
+/// A LocalView is a wrapper around data that enables multidimensional access, and has the exact
+/// same API as ArrayView.
+///
+/// The data may be strided.
+///
+/// ### Example 1:
+///
+/// @code{.cpp}
+///     int[] array = { 1, 2, 3, 4, 5, 6, 7, 8, 9};
+///     int[2] strides = { 3, 1 };
+///     int[2] shape = { 3, 3 };
+///     LocalView<int,2> matrix( array, shape, strides );
+///     for( idx_t i=0; i<matrix.shape(0); ++i ) {
+///         for( idx_t j=0; j<matrix.shape(1); ++j ) {
+///             matrix(i,j) *= 10;
+///         }
+///     }
+/// @endcode
+///
+/// Strides can also be omitted as for most common cases it can be inferred
+/// from the shape.
+///
+/// ### Example 2:
+///
+/// @code{.cpp}
+///     int[] array = { 1, 2, 3, 4, 5, 6, 7, 8, 9};
+///     int[2] shape = { 3, 3 };
+///     LocalView<int,2> matrix( array, shape );
+/// which is identical for this matrix to previous Example 1
+/// @endcode
+
+
+template <typename Value, int Rank>
 class LocalView {
 public:
     // -- Type definitions
-    using value_type = typename remove_const<Value>::type;
+    using value_type  = Value;
+    using return_type = value_type;
 
-    using return_type =
-        typename std::conditional<( AccessMode == Intent::ReadOnly ), const value_type, value_type>::type;
-
-    static constexpr Intent ACCESS{AccessMode};
     static constexpr int RANK{Rank};
 
 private:
-    using slicer_t       = typename helpers::ArraySlicer<LocalView<Value, Rank, AccessMode>>;
-    using const_slicer_t = typename helpers::ArraySlicer<const LocalView<Value, Rank, AccessMode>>;
+    using slicer_t       = typename helpers::ArraySlicer<LocalView<Value, Rank>>;
+    using const_slicer_t = typename helpers::ArraySlicer<const LocalView<const Value, Rank>>;
 
     template <typename... Args>
     struct slice_t {
@@ -84,8 +88,9 @@ private:
 public:
     // -- Constructors
 
-    LocalView( const value_type* data, const idx_t shape[], const idx_t strides[] ) :
-        data_( const_cast<value_type*>( data ) ) {
+    template <typename value_type, typename = typename std::enable_if<std::is_const<Value>::value &&
+                                                                      !std::is_const<value_type>::value>::type>
+    LocalView( value_type* data, const idx_t shape[], const idx_t strides[] ) : data_( data ) {
         size_ = 1;
         for ( idx_t j = 0; j < Rank; ++j ) {
             shape_[j]   = shape[j];
@@ -94,7 +99,19 @@ public:
         }
     }
 
-    LocalView( const value_type* data, const idx_t shape[] ) : data_( const_cast<value_type*>( data ) ) {
+    LocalView( value_type* data, const idx_t shape[], const idx_t strides[] ) : data_( data ) {
+        size_ = 1;
+        for ( idx_t j = 0; j < Rank; ++j ) {
+            shape_[j]   = shape[j];
+            strides_[j] = strides[j];
+            size_ *= shape_[j];
+        }
+    }
+
+
+    template <typename value_type, typename = typename std::enable_if<std::is_const<Value>::value &&
+                                                                      !std::is_const<value_type>::value>::type>
+    LocalView( value_type* data, const idx_t shape[] ) : data_( data ) {
         size_ = 1;
         for ( int j = Rank - 1; j >= 0; --j ) {
             shape_[j]   = shape[j];
@@ -103,19 +120,46 @@ public:
         }
     }
 
-    LocalView( const value_type* data, const ArrayShape& shape ) : data_( const_cast<value_type*>( data ) ) {
+    LocalView( value_type* data, const idx_t shape[] ) : data_( data ) {
         size_ = 1;
         for ( int j = Rank - 1; j >= 0; --j ) {
             shape_[j]   = shape[j];
             strides_[j] = size_;
             size_ *= shape_[j];
         }
+    }
+
+
+    template <typename value_type, typename = typename std::enable_if<std::is_const<Value>::value &&
+                                                                      !std::is_const<value_type>::value>::type>
+    LocalView( value_type* data, const ArrayShape& shape ) : data_( data ) {
+        size_ = 1;
+        for ( int j = Rank - 1; j >= 0; --j ) {
+            shape_[j]   = shape[j];
+            strides_[j] = size_;
+            size_ *= shape_[j];
+        }
+    }
+
+    LocalView( value_type* data, const ArrayShape& shape ) : data_( data ) {
+        size_ = 1;
+        for ( int j = Rank - 1; j >= 0; --j ) {
+            shape_[j]   = shape[j];
+            strides_[j] = size_;
+            size_ *= shape_[j];
+        }
+    }
+
+    using non_const_value_type = typename std::remove_const<Value>::type;
+
+    operator const LocalView<non_const_value_type, Rank>&() const {
+        return (const LocalView<non_const_value_type, Rank>&)( *this );
     }
 
     // -- Access methods
 
     template <typename... Ints>
-    return_type& operator()( Ints... idx ) {
+    value_type& operator()( Ints... idx ) {
         check_bounds( idx... );
         return data_[index( idx... )];
     }
@@ -150,12 +194,21 @@ public:
         return strides_[idx];
     }
 
+    const idx_t* shape() const { return shape_; }
+
+    const idx_t* strides() const { return strides_; }
+
     value_type const* data() const { return data_; }
 
-    return_type* data() { return data_; }
+    value_type* data() { return data_; }
 
     bool contiguous() const { return ( size_ == shape_[0] * strides_[0] ? true : false ); }
 
+#define ENABLE_IF_NON_CONST                                                                               \
+    template <bool EnableBool                                                                     = true, \
+              typename std::enable_if<( !std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
+
+    ENABLE_IF_NON_CONST
     void assign( const value_type& value );
 
     void dump( std::ostream& os ) const;
@@ -170,6 +223,11 @@ public:
     template <typename... Args>
     typename const_slice_t<Args...>::type slice( Args... args ) const {
         return const_slicer_t( *this ).apply( args... );
+    }
+
+    friend std::ostream& operator<<( std::ostream& out, const LocalView& x ) {
+        x.dump( out );
+        return out;
     }
 
 private:
@@ -233,3 +291,5 @@ private:
 
 }  // namespace array
 }  // namespace atlas
+
+#undef ENABLE_IF_NON_CONST

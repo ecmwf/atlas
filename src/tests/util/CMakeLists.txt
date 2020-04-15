@@ -44,15 +44,20 @@ endforeach()
 ecbuild_add_test( TARGET atlas_test_vector
   SOURCES  test_vector.cc
   LIBS     atlas
-  CONDITION ATLAS_HAVE_GRIDTOOLS_STORAGE
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION atlas_HAVE_GRIDTOOLS_STORAGE
 )
 
 ecbuild_add_test( TARGET atlas_test_metadata
   MPI        4
-  CONDITION  ECKIT_HAVE_MPI
+  CONDITION  eckit_HAVE_MPI
   SOURCES    test_metadata.cc
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_kdtree
+  SOURCES  test_kdtree.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)

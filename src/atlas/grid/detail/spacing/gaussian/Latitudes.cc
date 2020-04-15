@@ -8,8 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file   Latitidus.cc
 /// @author Willem Deconinck
-/// @date Jan 2014
+/// @date   Jan 2014
 
 #include <limits>
 #include <memory>

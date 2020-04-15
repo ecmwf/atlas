@@ -8,7 +8,7 @@
 
 ecbuild_add_test( TARGET atlas_test_haloexchange
   MPI        3
-  CONDITION  ECKIT_HAVE_MPI
+  CONDITION  eckit_HAVE_MPI
   SOURCES    test_haloexchange.cc
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
@@ -16,8 +16,22 @@ ecbuild_add_test( TARGET atlas_test_haloexchange
 
 ecbuild_add_test( TARGET atlas_test_gather
   MPI        3
-  CONDITION  ECKIT_HAVE_MPI
+  CONDITION  eckit_HAVE_MPI
   SOURCES    test_gather.cc
+  LIBS       atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_omp_sort
+  OMP        8
+  SOURCES    test_omp_sort.cc
+  LIBS       atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_omp_copy
+  OMP        8
+  SOURCES    test_omp_copy.cc
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )

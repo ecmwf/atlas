@@ -34,7 +34,7 @@ namespace atlas {
 namespace mpi {
 
 struct StatisticsTimerTraits {
-    using Barriers = runtime::trace::Barriers;
+    using Barriers = runtime::trace::NoBarriers;
     using Tracing  = runtime::trace::NoLogging;
 };
 

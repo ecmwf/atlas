@@ -1,12 +1,12 @@
 #include "atlas/grid.h"
-#include "atlas/library/Library.h"
+#include "atlas/library.h"
 #include "atlas/runtime/Log.h"
 
 using atlas::Log;
 using atlas::StructuredGrid;
 
 int main( int argc, char* argv[] ) {
-    atlas::Library::instance().initialise( argc, argv );
+    atlas::initialize( argc, argv );
 
     StructuredGrid grid( "O32" );
 
@@ -16,6 +16,6 @@ int main( int argc, char* argv[] ) {
     Log::info() << "xy        = " << grid.xy( 0, 0 ) << std::endl;
     Log::info() << "lonlat    = " << grid.lonlat( 0, 0 ) << std::endl;
 
-    atlas::Library::instance().finalise();
+    atlas::finalize();
     return 0;
 }

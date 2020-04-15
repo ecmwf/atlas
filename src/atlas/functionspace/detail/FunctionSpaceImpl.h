@@ -11,6 +11,8 @@
 #pragma once
 
 #include <string>
+#include <type_traits>
+#include <vector>
 
 #include "atlas/util/Object.h"
 
@@ -23,39 +25,23 @@ class Configuration;
 namespace atlas {
 class FieldSet;
 class Field;
+class Projection;
 namespace util {
 class Metadata;
-}
+class PartitionPolygon;
+class PartitionPolygons;
+}  // namespace util
 }  // namespace atlas
 
 namespace atlas {
 namespace functionspace {
 
-#define FunctionspaceT_nonconst typename FunctionSpaceImpl::remove_const<FunctionSpaceT>::type
-#define FunctionspaceT_const typename FunctionSpaceImpl::add_const<FunctionSpaceT>::type
+#define FunctionspaceT_nonconst typename std::remove_const<FunctionSpaceT>::type
+#define FunctionspaceT_const typename std::add_const<FunctionSpaceT>::type
 
 /// @brief FunctionSpace class helps to interprete Fields.
 /// @note  Abstract base class
 class FunctionSpaceImpl : public util::Object {
-private:
-    template <typename T>
-    struct remove_const {
-        typedef T type;
-    };
-    template <typename T>
-    struct remove_const<T const> {
-        typedef T type;
-    };
-
-    template <typename T>
-    struct add_const {
-        typedef const typename remove_const<T>::type type;
-    };
-    template <typename T>
-    struct add_const<T const> {
-        typedef const T type;
-    };
-
 public:
     FunctionSpaceImpl();
     virtual ~FunctionSpaceImpl();
@@ -90,6 +76,14 @@ public:
     virtual void haloExchange( const Field&, bool /* on_device*/ = false ) const;
 
     virtual idx_t size() const = 0;
+
+    virtual idx_t nb_partitions() const;
+
+    virtual const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
+
+    virtual const util::PartitionPolygons& polygons() const;
+
+    virtual const Projection& projection() const;
 
 private:
     util::Metadata* metadata_;

@@ -31,6 +31,7 @@ namespace field {
 
 /*!
  * \brief Field creator using IFS parametrisation
+ * \details
  * Ideally this class should belong to IFS.
  * The only reference to IFS in Atlas should be here.
  * Example use:

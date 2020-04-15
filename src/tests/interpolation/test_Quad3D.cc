@@ -193,16 +193,16 @@ CASE( "test_quadrilateral_intersection_corners" ) {
     EXPECT( quad.validate() );
 
     std::vector<PointXYZ> corners;
-    corners.push_back( PointXYZ( 0.0, -2.0, 1. ) );
-    corners.push_back( PointXYZ( 2.5, 0.0, 1. ) );
-    corners.push_back( PointXYZ( 0.0, 3.5, 1. ) );
-    corners.push_back( PointXYZ( -1.5, 0.0, 1. ) );
+    corners.emplace_back( 0.0, -2.0, 1. );
+    corners.emplace_back( 2.5, 0.0, 1. );
+    corners.emplace_back( 0.0, 3.5, 1. );
+    corners.emplace_back( -1.5, 0.0, 1. );
 
     std::vector<std::pair<double, double>> uvs;
-    uvs.push_back( std::make_pair( 0., 0. ) );
-    uvs.push_back( std::make_pair( 1., 0. ) );
-    uvs.push_back( std::make_pair( 1., 1. ) );
-    uvs.push_back( std::make_pair( 0., 1. ) );
+    uvs.emplace_back( 0., 0. );
+    uvs.emplace_back( 1., 0. );
+    uvs.emplace_back( 1., 1. );
+    uvs.emplace_back( 0., 1. );
 
     for ( size_t i = 0; i < 4; ++i ) {
         PointXYZ orig = corners[i];

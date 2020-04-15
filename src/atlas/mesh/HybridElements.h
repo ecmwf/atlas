@@ -170,9 +170,9 @@ public:  // methods
 
     void insert( idx_t type_idx, idx_t position, idx_t nb_elements = 1 );
 
-    void cloneToDevice() const;
+    void updateDevice() const;
 
-    void cloneFromDevice() const;
+    void updateHost() const;
 
     void syncHostDevice() const;
 

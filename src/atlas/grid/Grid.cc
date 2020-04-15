@@ -24,10 +24,6 @@
 
 namespace atlas {
 
-Grid::IterateXY Grid::xy( Grid::IterateXY::Predicate p ) const {
-    return Grid::IterateXY( *get(), p );
-}
-
 Grid::IterateXY Grid::xy() const {
     return Grid::IterateXY( *get() );
 }

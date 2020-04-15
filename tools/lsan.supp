@@ -1,0 +1,5 @@
+leak:libomp
+leak:libopen-pal
+leak:MPI_Init
+leak:MPI_Group_incl
+leak:MPI_Cart_create

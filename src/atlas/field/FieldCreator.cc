@@ -25,8 +25,8 @@
 #include "atlas/runtime/Log.h"
 
 namespace {
-static eckit::Mutex* local_mutex                                    = 0;
-static std::map<std::string, atlas::field::FieldCreatorFactory*>* m = 0;
+static eckit::Mutex* local_mutex                                    = nullptr;
+static std::map<std::string, atlas::field::FieldCreatorFactory*>* m = nullptr;
 static pthread_once_t once                                          = PTHREAD_ONCE_INIT;
 
 static void init() {
@@ -55,9 +55,9 @@ struct force_link {
 
 // ------------------------------------------------------------------
 
-FieldCreator::FieldCreator() {}
+FieldCreator::FieldCreator() = default;
 
-FieldCreator::~FieldCreator() {}
+FieldCreator::~FieldCreator() = default;
 
 FieldCreatorFactory::FieldCreatorFactory( const std::string& name ) : name_( name ) {
     pthread_once( &once, init );

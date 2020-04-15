@@ -15,6 +15,7 @@ use fckit_owned_object_module, only : fckit_owned_object
 use fckit_object_module, only : fckit_object
 use atlas_kinds_module, only : ATLAS_KIND_IDX
 use atlas_allocate_module, only : atlas_allocate_managedmem, atlas_deallocate_managedmem
+use fckit_exception_module, only : fckit_exception
 implicit none
 
 private :: c_ptr
@@ -138,7 +139,7 @@ contains
 end type
 
 type :: atlas_ConnectivityAccess
-  integer(ATLAS_KIND_IDX),    private, pointer :: values_(:) => null()
+  integer(ATLAS_KIND_IDX), private, pointer :: values_(:) => null()
   integer(ATLAS_KIND_IDX), private, pointer :: displs_(:) => null()
   integer(ATLAS_KIND_IDX), public,  pointer :: cols(:)    => null()
   type(atlas_ConnectivityAccessRow), public, pointer :: row(:) => null()
@@ -328,7 +329,8 @@ subroutine atlas_Connectivity__data(this, data)
           & (/maxcols,this%access%rows_/))
     endif
   else
-    write(0,*) "ERROR: Cannot point connectivity pointer data(:,:) to irregular table"
+    call fckit_exception%abort("ERROR: Cannot point connectivity pointer data(:,:) to irregular table",&
+      & "atlas_Connectivity_module.F90", __LINE__ )
   endif
 end subroutine
 
@@ -347,7 +349,8 @@ subroutine atlas_Connectivity__data_int(this, data, ncols)
       ncols = maxcols
     endif
   else
-    write(0,*) "ERROR: Cannot point connectivity pointer data(:,:) to irregular table"
+    call fckit_exception%abort("ERROR: Cannot point connectivity pointer data(:,:) to irregular table",&
+      & "atlas_Connectivity_module.F90", __LINE__ )
   endif
 end subroutine
 
@@ -366,7 +369,8 @@ subroutine atlas_Connectivity__data_long(this, data, ncols)
       ncols = maxcols
     endif
   else
-    write(0,*) "ERROR: Cannot point connectivity pointer data(:,:) to irregular table"
+    call fckit_exception%abort("ERROR: Cannot point connectivity pointer data(:,:) to irregular table",&
+      & "atlas_Connectivity_module.F90", __LINE__ )
   endif
 end subroutine
 
@@ -539,6 +543,7 @@ subroutine set_access(this)
     call c_f_pointer(ctxt,this%access)
   else
     allocate( this%access )
+    write(0,*) "allocate access ", loc(this%access)
     call atlas__connectivity__register_ctxt  ( this%CPTR_PGIBUG_A, c_loc(this%access) )
     call atlas__connectivity__register_update( this%CPTR_PGIBUG_A, c_funloc(update_access_c) )
     call atlas__connectivity__register_delete( this%CPTR_PGIBUG_A, c_funloc(delete_access_c) )
@@ -595,12 +600,14 @@ subroutine update_padded(this)
   integer(ATLAS_KIND_IDX) :: jrow, jcol
   if( associated(this%padded_) ) call atlas_deallocate_managedmem( this%padded_ )
   call atlas_allocate_managedmem( this%padded_, [this%maxcols_,this%rows()] )
-  this%padded_(:,:) = this%missing_value_
-  do jrow=1,this%rows()
-    do jcol=1,this%cols(jrow)
-      this%padded_(jcol,jrow) = this%value(jcol,jrow)
+  if( associated(this%padded_) ) then
+    this%padded_(:,:) = this%missing_value_
+    do jrow=1,this%rows()
+      do jcol=1,this%cols(jrow)
+        this%padded_(jcol,jrow) = this%value(jcol,jrow)
+      enddo
     enddo
-  enddo
+  endif
 end subroutine
 
 subroutine delete_access_c(this_ptr) bind(c)
@@ -614,9 +621,17 @@ end subroutine
 subroutine delete_access(this)
   use, intrinsic :: iso_c_binding, only : c_int
   use atlas_connectivity_c_binding
-  type(atlas_ConnectivityAccess), intent(inout) :: this
+  type(atlas_ConnectivityAccess), pointer, intent(inout) :: this
   if( associated( this%row ) )    deallocate(this%row)
   if( associated( this%padded_) ) call atlas_deallocate_managedmem(this%padded_)
+#ifndef _CRAYFTN
+  ! Cray compiler bug (CCE/8.7) leads to following runtime error here.
+  !     lib-4412 : UNRECOVERABLE library error
+  !       An argument in the DEALLOCATE statement is a disassociated pointer, an
+  !       unallocated array, or a pointer not allocated as a pointer.
+  ! --> Does this lead to a (tiny) memory leak?
+  deallocate(this)
+#endif
 end subroutine
 
 !-------------------------------------------------------------------------------

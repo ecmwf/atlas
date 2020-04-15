@@ -42,14 +42,14 @@ KNearestNeighbours::KNearestNeighbours( const Method::Config& config ) : KNeares
     ATLAS_ASSERT( k_ );
 }
 
-void KNearestNeighbours::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) {
+void KNearestNeighbours::do_setup( const Grid& source, const Grid& target ) {
+    if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
     auto functionspace = []( const Grid& grid ) -> FunctionSpace {
         Mesh mesh;
         if ( StructuredGrid( grid ) ) {
-            mesh = MeshGenerator( "structured", util::Config( "three_dimensional", true ) ).generate( grid );
+            mesh = MeshGenerator( "structured", util::Config( "3d", true ) ).generate( grid );
         }
         else {
             mesh = MeshGenerator( "delaunay" ).generate( grid );
@@ -57,10 +57,10 @@ void KNearestNeighbours::setup( const Grid& source, const Grid& target ) {
         return functionspace::NodeColumns( mesh );
     };
 
-    setup( functionspace( source ), functionspace( target ) );
+    do_setup( functionspace( source ), functionspace( target ) );
 }
 
-void KNearestNeighbours::setup( const FunctionSpace& source, const FunctionSpace& target ) {
+void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSpace& target ) {
     source_                        = source;
     target_                        = target;
     functionspace::NodeColumns src = source;
@@ -86,7 +86,7 @@ void KNearestNeighbours::setup( const FunctionSpace& source, const FunctionSpace
     std::vector<Triplet> weights_triplets;
     weights_triplets.reserve( out_npts * k_ );
     {
-        Trace timer( Here(), "atlas::interpolation::method::NearestNeighbour::setup()" );
+        Trace timer( Here(), "atlas::interpolation::method::NearestNeighbour::do_setup()" );
 
         std::vector<double> weights;
 
@@ -97,7 +97,7 @@ void KNearestNeighbours::setup( const FunctionSpace& source, const FunctionSpace
             }
 
             // find the closest input points to the output point
-            PointIndex3::Point p{coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 )};
+            PointIndex3::Point p{coords( ip, (size_t)0 ), coords( ip, (size_t)1 ), coords( ip, (size_t)2 )};
             PointIndex3::NodeList nn = pTree_->kNearestNeighbours( p, k_ );
 
             // calculate weights (individual and total, to normalise) using distance
@@ -120,7 +120,7 @@ void KNearestNeighbours::setup( const FunctionSpace& source, const FunctionSpace
             for ( size_t j = 0; j < npts; ++j ) {
                 size_t jp = nn[j].payload();
                 ATLAS_ASSERT( jp < inp_npts );
-                weights_triplets.push_back( Triplet( ip, jp, weights[j] / sum ) );
+                weights_triplets.emplace_back( ip, jp, weights[j] / sum );
             }
         }
     }

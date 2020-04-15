@@ -34,6 +34,9 @@ LambertAzimuthalEqualAreaProjection::LambertAzimuthalEqualAreaProjection( const 
     ATLAS_ASSERT( params.get( "central_longitude", reference_[LON] ) );
     ATLAS_ASSERT( params.get( "standard_parallel", reference_[LAT] ) );
     params.get( "radius", radius_ = util::Earth::radius() );
+    params.get( "false_northing", false_northing_ );
+    params.get( "false_easting", false_easting_ );
+
 
     lambda0_  = util::Constants::degreesToRadians() * reference_[LON];
     phi1_     = util::Constants::degreesToRadians() * reference_[LAT];
@@ -55,12 +58,14 @@ void LambertAzimuthalEqualAreaProjection::lonlat2xy( double crd[] ) const {
 
     crd[XX] = kp * cos_phi * sin_dlambda;
     crd[YY] = kp * ( cos_phi1_ * sin_phi - sin_phi1_ * cos_phi * cos_dlambda );
+    crd[XX] += false_easting_;
+    crd[YY] += false_northing_;
 }
 
 
 void LambertAzimuthalEqualAreaProjection::xy2lonlat( double crd[] ) const {
-    const double& x = crd[XX];
-    const double& y = crd[YY];
+    const double x = crd[XX] - false_easting_;
+    const double y = crd[YY] - false_northing_;
 
     const double rho = std::sqrt( x * x + y * y );
     if ( std::abs( rho ) < 1.e-12 ) {
@@ -87,6 +92,8 @@ LambertAzimuthalEqualAreaProjection::Spec LambertAzimuthalEqualAreaProjection::s
     proj.set( "central_longitude", reference_[LON] );
     proj.set( "standard_parallel", reference_[LAT] );
     proj.set( "radius", radius_ );
+    proj.set( "false_easting", false_easting_ );
+    proj.set( "false_northing", false_northing_ );
 
     return proj;
 }

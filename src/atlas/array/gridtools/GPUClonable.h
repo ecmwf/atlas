@@ -33,12 +33,12 @@ struct GPUClonable {
 
     Base* gpu_object_ptr() { return static_cast<Base*>( gpu_object_ptr_ ); }
 
-    void cloneToDevice() {
+    void updateDevice() {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
         cudaMemcpy( gpu_object_ptr_, base_ptr_, sizeof( Base ), cudaMemcpyHostToDevice );
 #endif
     }
-    void cloneFromDevice() {
+    void updateHost() {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
         cudaMemcpy( base_ptr_, gpu_object_ptr_, sizeof( Base ), cudaMemcpyDeviceToHost );
 #endif

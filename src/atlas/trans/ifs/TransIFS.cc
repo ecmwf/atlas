@@ -8,7 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/parser/JSON.h"
+#include "eckit/eckit_version.h"
+#include "eckit/log/JSON.h"
 
 #include "transi/trans.h"
 
@@ -49,7 +50,7 @@ static TransBuilderGrid<TransIFS> builder( "ifs", "ifs" );
 class TransParameters {
 public:
     TransParameters( const TransIFS& trans, const eckit::Configuration& config ) : trans_( trans ), config_( config ) {}
-    ~TransParameters() {}
+    ~TransParameters() = default;
 
     bool scalar_derivatives() const { return config_.getBool( "scalar_derivatives", false ); }
 
@@ -90,8 +91,9 @@ namespace {
 std::string fieldset_functionspace( const FieldSet& fields ) {
     std::string functionspace( "undefined" );
     for ( idx_t jfld = 0; jfld < fields.size(); ++jfld ) {
-        if ( functionspace == "undefined" )
+        if ( functionspace == "undefined" ) {
             functionspace = fields[jfld].functionspace().type();
+        }
         if ( fields[jfld].functionspace().type() != functionspace ) {
             throw_Exception( ": fielset has fields with different functionspaces", Here() );
         }
@@ -320,9 +322,7 @@ struct PackNodeColumns {
     size_t f;
 
     PackNodeColumns( LocalView<double, 2>& rgpview, const NodeColumns& fs ) :
-        rgpview_( rgpview ),
-        is_ghost( fs.nodes() ),
-        f( 0 ) {}
+        rgpview_( rgpview ), is_ghost( fs.nodes() ), f( 0 ) {}
 
     void operator()( const Field& field, idx_t components = 0 ) {
         switch ( field.rank() ) {
@@ -343,8 +343,8 @@ struct PackNodeColumns {
     }
 
     void pack_1( const Field& field, idx_t ) {
-        const ArrayView<double, 1> gpfield = make_view<double, 1>( field );
-        idx_t n                            = 0;
+        auto gpfield = make_view<double, 1>( field );
+        idx_t n      = 0;
         for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
             if ( !is_ghost( jnode ) ) {
                 rgpview_( f, n ) = gpfield( jnode );
@@ -354,8 +354,8 @@ struct PackNodeColumns {
         ++f;
     }
     void pack_2( const Field& field, idx_t ) {
-        const ArrayView<double, 2> gpfield = make_view<double, 2>( field );
-        const idx_t nvars                  = gpfield.shape( 1 );
+        auto gpfield      = make_view<double, 2>( field );
+        const idx_t nvars = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
             for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
@@ -368,9 +368,10 @@ struct PackNodeColumns {
         }
     }
     void pack_3( const Field& field, idx_t components ) {
-        const ArrayView<double, 3> gpfield = make_view<double, 3>( field );
-        if ( not components )
+        auto gpfield = make_view<double, 3>( field );
+        if ( not components ) {
             components = gpfield.shape( 2 );
+        }
         for ( idx_t jcomp = 0; jcomp < components; ++jcomp ) {
             for ( idx_t jlev = 0; jlev < gpfield.shape( 1 ); ++jlev ) {
                 idx_t n = 0;
@@ -408,8 +409,8 @@ struct PackStructuredColumns {
     }
 
     void pack_1( const Field& field ) {
-        const ArrayView<double, 1> gpfield = make_view<double, 1>( field );
-        idx_t n                            = 0;
+        auto gpfield = make_view<double, 1>( field );
+        idx_t n      = 0;
         for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
             rgpview_( f, n ) = gpfield( jnode );
             ++n;
@@ -417,8 +418,8 @@ struct PackStructuredColumns {
         ++f;
     }
     void pack_2( const Field& field ) {
-        const ArrayView<double, 2> gpfield = make_view<double, 2>( field );
-        const idx_t nvars                  = gpfield.shape( 1 );
+        auto gpfield      = make_view<double, 2>( field );
+        const idx_t nvars = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
             for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
@@ -451,7 +452,7 @@ struct PackSpectral {
     }
 
     void pack_1( const Field& field ) {
-        const ArrayView<double, 1> spfield = make_view<double, 1>( field );
+        auto spfield = make_view<double, 1>( field );
 
         for ( idx_t jwave = 0; jwave < spfield.shape( 0 ); ++jwave ) {
             rspecview_( jwave, f ) = spfield( jwave );
@@ -459,7 +460,7 @@ struct PackSpectral {
         ++f;
     }
     void pack_2( const Field& field ) {
-        const ArrayView<double, 2> spfield = make_view<double, 2>( field );
+        auto spfield = make_view<double, 2>( field );
 
         const idx_t nvars = spfield.shape( 1 );
 
@@ -478,9 +479,7 @@ struct UnpackNodeColumns {
     size_t f;
 
     UnpackNodeColumns( const LocalView<double, 2>& rgpview, const NodeColumns& fs ) :
-        rgpview_( rgpview ),
-        is_ghost( fs.nodes() ),
-        f( 0 ) {}
+        rgpview_( rgpview ), is_ghost( fs.nodes() ), f( 0 ) {}
 
     void operator()( Field& field, int components = 0 ) {
         switch ( field.rank() ) {
@@ -501,7 +500,7 @@ struct UnpackNodeColumns {
     }
 
     void unpack_1( Field& field, idx_t ) {
-        ArrayView<double, 1> gpfield = make_view<double, 1>( field );
+        auto gpfield = make_view<double, 1>( field );
         idx_t n( 0 );
         for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
             if ( !is_ghost( jnode ) ) {
@@ -512,8 +511,8 @@ struct UnpackNodeColumns {
         ++f;
     }
     void unpack_2( Field& field, idx_t ) {
-        ArrayView<double, 2> gpfield = make_view<double, 2>( field );
-        const idx_t nvars            = gpfield.shape( 1 );
+        auto gpfield      = make_view<double, 2>( field );
+        const idx_t nvars = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
             for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
@@ -526,9 +525,10 @@ struct UnpackNodeColumns {
         }
     }
     void unpack_3( Field& field, idx_t components ) {
-        ArrayView<double, 3> gpfield = make_view<double, 3>( field );
-        if ( not components )
+        auto gpfield = make_view<double, 3>( field );
+        if ( not components ) {
             components = gpfield.shape( 2 );
+        }
         for ( idx_t jcomp = 0; jcomp < components; ++jcomp ) {
             for ( idx_t jlev = 0; jlev < gpfield.shape( 1 ); ++jlev ) {
                 idx_t n = 0;
@@ -566,8 +566,8 @@ struct UnpackStructuredColumns {
     }
 
     void unpack_1( Field& field ) {
-        ArrayView<double, 1> gpfield = make_view<double, 1>( field );
-        idx_t n                      = 0;
+        auto gpfield = make_view<double, 1>( field );
+        idx_t n      = 0;
         for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
             gpfield( jnode ) = rgpview_( f, n );
             ++n;
@@ -575,8 +575,8 @@ struct UnpackStructuredColumns {
         ++f;
     }
     void unpack_2( Field& field ) {
-        ArrayView<double, 2> gpfield = make_view<double, 2>( field );
-        const idx_t nvars            = gpfield.shape( 1 );
+        auto gpfield      = make_view<double, 2>( field );
+        const idx_t nvars = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
             for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
@@ -650,9 +650,7 @@ void TransIFS::assertCompatibleDistributions( const FunctionSpace& gp, const Fun
 }
 
 TransIFS::TransIFS( const Cache& cache, const Grid& grid, const long truncation, const eckit::Configuration& config ) :
-    grid_( grid ),
-    cache_( cache.legendre().data() ),
-    cachesize_( cache.legendre().size() ) {
+    grid_( grid ), cache_( cache.legendre().data() ), cachesize_( cache.legendre().size() ) {
     ATLAS_ASSERT( grid.domain().global() );
     ATLAS_ASSERT( not grid.projection() );
     ctor( grid, truncation, config );
@@ -738,109 +736,125 @@ const int* atlas::trans::TransIFS::n_regions( int& size ) const {
 
 const int* atlas::trans::TransIFS::nfrstlat( int& size ) const {
     size = trans_->n_regions_NS;
-    if ( trans_->nfrstlat == nullptr )
+    if ( trans_->nfrstlat == nullptr ) {
         ::trans_inquire( trans_.get(), "nfrstlat" );
+    }
     return trans_->nfrstlat;
 }
 
 const int* atlas::trans::TransIFS::nlstlat( int& size ) const {
     size = trans_->n_regions_NS;
-    if ( trans_->nlstlat == nullptr )
+    if ( trans_->nlstlat == nullptr ) {
         ::trans_inquire( trans_.get(), "nlstlat" );
+    }
     return trans_->nlstlat;
 }
 
 const int* atlas::trans::TransIFS::nptrfrstlat( int& size ) const {
     size = trans_->n_regions_NS;
-    if ( trans_->nptrfrstlat == nullptr )
+    if ( trans_->nptrfrstlat == nullptr ) {
         ::trans_inquire( trans_.get(), "nptrfrstlat" );
+    }
     return trans_->nptrfrstlat;
 }
 
 const int* atlas::trans::TransIFS::nsta( int& sizef2, int& sizef1 ) const {
     sizef1 = trans_->ndgl + trans_->n_regions_NS - 1;
     sizef2 = trans_->n_regions_EW;
-    if ( trans_->nsta == nullptr )
+    if ( trans_->nsta == nullptr ) {
         ::trans_inquire( trans_.get(), "nsta" );
+    }
     return trans_->nsta;
 }
 
 const int* atlas::trans::TransIFS::nonl( int& sizef2, int& sizef1 ) const {
     sizef1 = trans_->ndgl + trans_->n_regions_NS - 1;
     sizef2 = trans_->n_regions_EW;
-    if ( trans_->nonl == nullptr )
+    if ( trans_->nonl == nullptr ) {
         ::trans_inquire( trans_.get(), "nonl" );
+    }
     return trans_->nonl;
 }
 
 const int* atlas::trans::TransIFS::nmyms( int& size ) const {
     size = trans_->nump;
-    if ( trans_->nmyms == nullptr )
+    if ( trans_->nmyms == nullptr ) {
         ::trans_inquire( trans_.get(), "nmyms" );
+    }
     return trans_->nmyms;
 }
 
 const int* atlas::trans::TransIFS::nasm0( int& size ) const {
     size = trans_->nsmax + 1;  // +1 because zeroth wave included
-    if ( trans_->nasm0 == nullptr )
+    if ( trans_->nasm0 == nullptr ) {
         ::trans_inquire( trans_.get(), "nasm0" );
+    }
     return trans_->nasm0;
 }
 
 const int* atlas::trans::TransIFS::nvalue( int& size ) const {
     size = trans_->nspec2;
-    if ( trans_->nvalue == nullptr )
+    if ( trans_->nvalue == nullptr ) {
         ::trans_inquire( trans_.get(), "nvalue" );
+    }
     return trans_->nvalue;
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nvalue() const {
-    if ( trans_->nvalue == nullptr )
+    if ( trans_->nvalue == nullptr ) {
         ::trans_inquire( trans_.get(), "nvalue" );
+    }
     return array::LocalView<int, 1>( trans_->nvalue, array::make_shape( trans_->nspec2 ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nasm0() const {
-    if ( trans_->nasm0 == nullptr )
+    if ( trans_->nasm0 == nullptr ) {
         ::trans_inquire( trans_.get(), "nasm0" );
+    }
     return array::LocalView<int, 1>( trans_->nasm0, array::make_shape( trans_->nsmax + 1 ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nmyms() const {
-    if ( trans_->nmyms == nullptr )
+    if ( trans_->nmyms == nullptr ) {
         ::trans_inquire( trans_.get(), "nmyms" );
+    }
     return array::LocalView<int, 1>( trans_->nmyms, array::make_shape( trans_->nump ) );
 }
 
 array::LocalView<int, 2> atlas::trans::TransIFS::nonl() const {
-    if ( trans_->nonl == nullptr )
+    if ( trans_->nonl == nullptr ) {
         ::trans_inquire( trans_.get(), "nonl" );
+    }
     return array::LocalView<int, 2>(
         trans_->nonl, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
 }
 
 array::LocalView<int, 2> atlas::trans::TransIFS::nsta() const {
-    if ( trans_->nsta == nullptr )
+    if ( trans_->nsta == nullptr ) {
         ::trans_inquire( trans_.get(), "nsta" );
+    }
     return array::LocalView<int, 2>(
         trans_->nsta, array::make_shape( trans_->n_regions_EW, trans_->ndgl + trans_->n_regions_NS - 1 ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nptrfrstlat() const {
-    if ( trans_->nptrfrstlat == nullptr )
+    if ( trans_->nptrfrstlat == nullptr ) {
         ::trans_inquire( trans_.get(), "nptrfrstlat" );
+    }
     return array::LocalView<int, 1>( trans_->nptrfrstlat, array::make_shape( trans_->n_regions_NS ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nlstlat() const {
-    if ( trans_->nlstlat == nullptr )
+    if ( trans_->nlstlat == nullptr ) {
         ::trans_inquire( trans_.get(), "nlstlat" );
+    }
     return array::LocalView<int, 1>( trans_->nlstlat, array::make_shape( trans_->n_regions_NS ) );
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nfrstlat() const {
-    if ( trans_->nfrstlat == nullptr )
+    if ( trans_->nfrstlat == nullptr ) {
         ::trans_inquire( trans_.get(), "nfrstlat" );
+    }
     return array::LocalView<int, 1>( trans_->nfrstlat, array::make_shape( trans_->n_regions_NS ) );
 }
 
@@ -867,7 +881,7 @@ TransIFS::TransIFS( const Cache& cache, const Grid& grid, const Domain& domain, 
     ATLAS_ASSERT( domain.global() );
 }
 
-TransIFS::~TransIFS() {}
+TransIFS::~TransIFS() = default;
 
 int atlas::trans::TransIFS::truncation() const {
     return std::max( 0, trans_->nsmax );
@@ -910,17 +924,19 @@ void TransIFS::ctor( const Grid& grid, long truncation, const eckit::Configurati
 void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, const eckit::Configuration& config ) {
     TransParameters p( *this, config );
     std::vector<int> nloen( nlat );
-    for ( long jlat = 0; jlat < nlat; ++jlat )
+    for ( long jlat = 0; jlat < nlat; ++jlat ) {
         nloen[jlat] = pl[jlat];
+    }
     TRANS_CHECK( ::trans_new( trans_.get() ) );
-    TRANS_CHECK( ::trans_use_mpi( mpi::comm().size() > 1 ) );
+    TRANS_CHECK( ::trans_use_mpi( mpi::size() > 1 ) );
     TRANS_CHECK( ::trans_set_resol( trans_.get(), nlat, nloen.data() ) );
-    if ( truncation >= 0 )
+    if ( truncation >= 0 ) {
         TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
+    }
 
     TRANS_CHECK( ::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
 
-    if ( p.read_legendre().size() && mpi::comm().size() == 1 ) {
+    if ( p.read_legendre().size() && mpi::size() == 1 ) {
         eckit::PathName file( p.read_legendre() );
         if ( not file.exists() ) {
             std::stringstream msg;
@@ -929,7 +945,7 @@ void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, con
         }
         TRANS_CHECK( ::trans_set_read( trans_.get(), file.asString().c_str() ) );
     }
-    if ( p.write_legendre().size() && mpi::comm().size() == 1 ) {
+    if ( p.write_legendre().size() && mpi::size() == 1 ) {
         eckit::PathName file( p.write_legendre() );
         TRANS_CHECK( ::trans_set_write( trans_.get(), file.asString().c_str() ) );
     }
@@ -943,13 +959,14 @@ void TransIFS::ctor_rgg( const long nlat, const idx_t pl[], long truncation, con
 void TransIFS::ctor_lonlat( const long nlon, const long nlat, long truncation, const eckit::Configuration& config ) {
     TransParameters p( *this, config );
     TRANS_CHECK( ::trans_new( trans_.get() ) );
-    TRANS_CHECK( ::trans_use_mpi( mpi::comm().size() > 1 ) );
+    TRANS_CHECK( ::trans_use_mpi( mpi::size() > 1 ) );
     TRANS_CHECK( ::trans_set_resol_lonlat( trans_.get(), nlon, nlat ) );
-    if ( truncation >= 0 )
+    if ( truncation >= 0 ) {
         TRANS_CHECK( ::trans_set_trunc( trans_.get(), truncation ) );
+    }
     TRANS_CHECK( ::trans_set_cache( trans_.get(), cache_, cachesize_ ) );
 
-    if ( p.read_legendre().size() && mpi::comm().size() == 1 ) {
+    if ( p.read_legendre().size() && mpi::size() == 1 ) {
         eckit::PathName file( p.read_legendre() );
         if ( not file.exists() ) {
             std::stringstream msg;
@@ -958,7 +975,7 @@ void TransIFS::ctor_lonlat( const long nlon, const long nlat, long truncation, c
         }
         TRANS_CHECK( ::trans_set_read( trans_.get(), file.asString().c_str() ) );
     }
-    if ( p.write_legendre().size() && mpi::comm().size() == 1 ) {
+    if ( p.write_legendre().size() && mpi::size() == 1 ) {
         eckit::PathName file( p.write_legendre() );
         TRANS_CHECK( ::trans_set_write( trans_.get(), file.asString().c_str() ) );
     }
@@ -1004,8 +1021,9 @@ void TransIFS::__dirtrans( const functionspace::NodeColumns& gp, const FieldSet&
     // Pack gridpoints
     {
         PackNodeColumns pack( rgpview, gp );
-        for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld )
+        for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld ) {
             pack( gpfields[jfld] );
+        }
     }
 
     // Do transform
@@ -1020,8 +1038,9 @@ void TransIFS::__dirtrans( const functionspace::NodeColumns& gp, const FieldSet&
     // Unpack the spectral fields
     {
         UnpackSpectral unpack( rspview );
-        for ( idx_t jfld = 0; jfld < spfields.size(); ++jfld )
+        for ( idx_t jfld = 0; jfld < spfields.size(); ++jfld ) {
             unpack( spfields[jfld] );
+        }
     }
 }
 
@@ -1097,8 +1116,9 @@ void TransIFS::__dirtrans( const StructuredColumns& gp, const FieldSet& gpfields
     // Pack gridpoints
     {
         PackStructuredColumns pack( rgpview );
-        for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld )
+        for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld ) {
             pack( gpfields[jfld] );
+        }
     }
 
     // Do transform
@@ -1114,8 +1134,9 @@ void TransIFS::__dirtrans( const StructuredColumns& gp, const FieldSet& gpfields
     // Unpack the spectral fields
     {
         UnpackSpectral unpack( rspview );
-        for ( idx_t jfld = 0; jfld < spfields.size(); ++jfld )
+        for ( idx_t jfld = 0; jfld < spfields.size(); ++jfld ) {
             unpack( spfields[jfld] );
+        }
     }
 }
 
@@ -1138,11 +1159,12 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, co
     const int nb_gridpoint_field = compute_nfld( gradfields );
     const int nfld               = compute_nfld( spfields );
 
-    if ( nb_gridpoint_field != 2 * nfld )  // factor 2 because N-S and E-W derivatives
+    if ( nb_gridpoint_field != 2 * nfld ) {  // factor 2 because N-S and E-W derivatives
         throw_Exception(
             "invtrans_grad: different number of gridpoint "
             "fields than spectral fields",
             Here() );
+    }
 
     // Arrays Trans expects
     // Allocate space for
@@ -1155,8 +1177,9 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, co
     // Pack spectral fields
     {
         PackSpectral pack( rspview );
-        for ( idx_t jfld = 0; jfld < spfields.size(); ++jfld )
+        for ( idx_t jfld = 0; jfld < spfields.size(); ++jfld ) {
             pack( spfields[jfld] );
+        }
     }
 
     // Do transform
@@ -1230,8 +1253,9 @@ void TransIFS::__invtrans( const Spectral& sp, const FieldSet& spfields, const f
     const int nfld               = compute_nfld( gpfields );
     const int nb_spectral_fields = compute_nfld( spfields );
 
-    if ( nfld != nb_spectral_fields )
+    if ( nfld != nb_spectral_fields ) {
         throw_Exception( "invtrans: different number of gridpoint fields than spectral fields", Here() );
+    }
 
     // Arrays Trans expects
     std::vector<double> rgp( nfld * ngptot() );
@@ -1242,8 +1266,9 @@ void TransIFS::__invtrans( const Spectral& sp, const FieldSet& spfields, const f
     // Pack spectral fields
     {
         PackSpectral pack( rspview );
-        for ( idx_t jfld = 0; jfld < spfields.size(); ++jfld )
+        for ( idx_t jfld = 0; jfld < spfields.size(); ++jfld ) {
             pack( spfields[jfld] );
+        }
     }
 
     // Do transform
@@ -1258,8 +1283,9 @@ void TransIFS::__invtrans( const Spectral& sp, const FieldSet& spfields, const f
     // Unpack the gridpoint fields
     {
         UnpackNodeColumns unpack( rgpview, gp );
-        for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld )
+        for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld ) {
             unpack( gpfields[jfld] );
+        }
     }
 }
 
@@ -1342,8 +1368,9 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& sp
     // Pack spectral fields
     {
         PackSpectral pack( rspview );
-        for ( idx_t jfld = 0; jfld < spfields.size(); ++jfld )
+        for ( idx_t jfld = 0; jfld < spfields.size(); ++jfld ) {
             pack( spfields[jfld] );
+        }
     }
 
     // Do transform
@@ -1359,8 +1386,9 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& sp
     // Unpack the gridpoint fields
     {
         UnpackStructuredColumns unpack( rgpview );
-        for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld )
+        for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld ) {
             unpack( gpfields[jfld] );
+        }
     }
 }
 
@@ -1372,13 +1400,16 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
 
     // Count total number of fields and do sanity checks
     const size_t nfld = compute_nfld( spvor );
-    if ( spdiv.shape( 0 ) != spvor.shape( 0 ) )
+    if ( spdiv.shape( 0 ) != spvor.shape( 0 ) ) {
         throw_Exception( "invtrans: vorticity not compatible with divergence.", Here() );
-    if ( spdiv.shape( 1 ) != spvor.shape( 1 ) )
+    }
+    if ( spdiv.shape( 1 ) != spvor.shape( 1 ) ) {
         throw_Exception( "invtrans: vorticity not compatible with divergence.", Here() );
+    }
     const size_t nwindfld = compute_nfld( gpwind );
-    if ( nwindfld != 2 * nfld && nwindfld != 3 * nfld )
+    if ( nwindfld != 2 * nfld && nwindfld != 3 * nfld ) {
         throw_Exception( "dirtrans: wind field is not compatible with vorticity, divergence.", Here() );
+    }
 
     if ( spdiv.shape( 0 ) != nspec2() ) {
         std::stringstream msg;
@@ -1388,10 +1419,12 @@ void TransIFS::__dirtrans_wind2vordiv( const functionspace::NodeColumns& gp, con
         throw_Exception( msg.str(), Here() );
     }
 
-    if ( spvor.size() == 0 )
+    if ( spvor.size() == 0 ) {
         throw_Exception( "dirtrans: spectral vorticity field is empty." );
-    if ( spdiv.size() == 0 )
+    }
+    if ( spdiv.size() == 0 ) {
         throw_Exception( "dirtrans: spectral divergence field is empty." );
+    }
 
     // Arrays Trans expects
     std::vector<double> rgp( 2 * nfld * ngptot() );
@@ -1435,13 +1468,16 @@ void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, c
 
     // Count total number of fields and do sanity checks
     const int nfld = compute_nfld( spvor );
-    if ( spdiv.shape( 0 ) != spvor.shape( 0 ) )
+    if ( spdiv.shape( 0 ) != spvor.shape( 0 ) ) {
         throw_Exception( "invtrans: vorticity not compatible with divergence.", Here() );
-    if ( spdiv.shape( 1 ) != spvor.shape( 1 ) )
+    }
+    if ( spdiv.shape( 1 ) != spvor.shape( 1 ) ) {
         throw_Exception( "invtrans: vorticity not compatible with divergence.", Here() );
+    }
     const int nwindfld = compute_nfld( gpwind );
-    if ( nwindfld != 2 * nfld && nwindfld != 3 * nfld )
+    if ( nwindfld != 2 * nfld && nwindfld != 3 * nfld ) {
         throw_Exception( "invtrans: wind field is not compatible with vorticity, divergence.", Here() );
+    }
 
     if ( spdiv.shape( 0 ) != nspec2() ) {
         std::stringstream msg;
@@ -1453,10 +1489,12 @@ void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, c
 
     ATLAS_ASSERT( spvor.rank() == 2 );
     ATLAS_ASSERT( spdiv.rank() == 2 );
-    if ( spvor.size() == 0 )
+    if ( spvor.size() == 0 ) {
         throw_Exception( "invtrans: spectral vorticity field is empty." );
-    if ( spdiv.size() == 0 )
+    }
+    if ( spdiv.size() == 0 ) {
         throw_Exception( "invtrans: spectral divergence field is empty." );
+    }
 
     // Arrays Trans expects
     std::vector<double> rgp( 2 * nfld * ngptot() );

@@ -16,11 +16,11 @@ namespace atlas {
 namespace grid {
 
 IterateXY::iterator IterateXY::begin() const {
-    return use_p_ ? grid_.xy_begin( p_ ) : grid_.xy_begin();
+    return grid_.xy_begin();
 }
 
 IterateXY::iterator IterateXY::end() const {
-    return use_p_ ? grid_.xy_end( p_ ) : grid_.xy_end();
+    return grid_.xy_end();
 }
 
 IterateLonLat::iterator IterateLonLat::begin() const {

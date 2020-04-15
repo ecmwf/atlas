@@ -13,11 +13,13 @@
 #include <cassert>
 #include <cstddef>
 #include <cstring>
+#include <type_traits>
 
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/LocalView.h"
+#include "atlas/array/gridtools/GridToolsMakeView.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/library/config.h"
 
@@ -26,23 +28,30 @@
 namespace atlas {
 namespace array {
 
-
-template <typename Value, int Rank, Intent AccessMode = Intent::ReadWrite>
+template <typename Value, int Rank>
 class ArrayView {
 public:
     // -- Type definitions
-    using value_type = typename remove_const<Value>::type;
-    using return_type =
-        typename std::conditional<( AccessMode == Intent::ReadWrite ), value_type, value_type const>::type;
+    using value_type                   = Value;
+    using non_const_value_type         = typename std::remove_const<Value>::type;
+    static constexpr bool is_const     = std::is_const<Value>::value;
+    static constexpr bool is_non_const = !std::is_const<Value>::value;
+#define ENABLE_IF_CONST                                                                                  \
+    template <bool EnableBool                                                                    = true, \
+              typename std::enable_if<( std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
+#define ENABLE_IF_NON_CONST                                                                               \
+    template <bool EnableBool                                                                     = true, \
+              typename std::enable_if<( !std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
 
-    static constexpr Intent ACCESS{AccessMode};
+    //    static constexpr Intent ACCESS{AccessMode};
     static constexpr int RANK{Rank};
 
-    using data_view_t = gridtools::data_view_tt<value_type, Rank, gridtools::get_access_mode( AccessMode )>;
+
+    using data_view_t = gridtools::data_view_tt<Value, Rank, gridtools::get_access_mode<Value>()>;
 
 private:
-    using slicer_t       = typename helpers::ArraySlicer<ArrayView<Value, Rank, AccessMode>>;
-    using const_slicer_t = typename helpers::ArraySlicer<const ArrayView<Value, Rank, AccessMode>>;
+    using slicer_t       = typename helpers::ArraySlicer<ArrayView<Value, Rank>>;
+    using const_slicer_t = typename helpers::ArraySlicer<const ArrayView<const Value, Rank>>;
 
     template <typename... Args>
     struct slice_t {
@@ -57,18 +66,35 @@ private:
 public:
     ATLAS_HOST_DEVICE
     ArrayView( const ArrayView& other );
-    ArrayView( data_view_t data_view, const Array& array );
+    ArrayView( const Array& array, bool device_view );
+
+    ENABLE_IF_CONST
+    ArrayView( const ArrayView<non_const_value_type, Rank>& other ) :
+        gt_data_view_( other.is_device_view_ ? gridtools::make_gt_device_view<Value, Rank>( *other.array_ )
+                                             : gridtools::make_gt_host_view<Value, Rank>( *other.array_ ) ),
+        data_store_orig_( other.data_store_orig_ ),
+        array_( other.array_ ),
+        is_device_view_( other.is_device_view_ ) {
+        std::memcpy( shape_, other.shape_, sizeof( ArrayShape::value_type ) * Rank );
+        std::memcpy( strides_, other.strides_, sizeof( ArrayStrides::value_type ) * Rank );
+        size_ = other.size_;
+        // TODO: check compatibility
+    }
+
+    operator const ArrayView<non_const_value_type, Rank>&() const {
+        return *(const ArrayView<non_const_value_type, Rank>*)( this );
+    }
 
     value_type* data() { return gt_data_view_.data(); }
     value_type const* data() const { return gt_data_view_.data(); }
 
-    template <typename... Coords, typename = typename boost::enable_if_c<( sizeof...( Coords ) == Rank ), int>::type>
-    ATLAS_HOST_DEVICE return_type& operator()( Coords... c ) {
+    template <typename... Coords, typename = typename std::enable_if<( sizeof...( Coords ) == Rank ), int>::type>
+    ATLAS_HOST_DEVICE value_type& operator()( Coords... c ) {
         assert( sizeof...( Coords ) == Rank );
         return gt_data_view_( c... );
     }
 
-    template <typename... Coords, typename = typename boost::enable_if_c<( sizeof...( Coords ) == Rank ), int>::type>
+    template <typename... Coords, typename = typename std::enable_if<( sizeof...( Coords ) == Rank ), int>::type>
     ATLAS_HOST_DEVICE value_type const& operator()( Coords... c ) const {
         assert( sizeof...( Coords ) == Rank );
         return gt_data_view_( c... );
@@ -82,7 +108,6 @@ public:
 
     template <typename Int, bool EnableBool = true>
     ATLAS_HOST_DEVICE typename std::enable_if<( Rank == 1 && EnableBool ), value_type&>::type operator[]( Int idx ) {
-        check_bounds( idx );
         return gt_data_view_( idx );
     }
 
@@ -109,9 +134,11 @@ public:
 
     void dump( std::ostream& os ) const;
 
+    ENABLE_IF_NON_CONST
     void assign( const value_type& value );
 
-    void assign( const std::initializer_list<value_type>& );
+    ENABLE_IF_NON_CONST
+    void assign( const std::initializer_list<value_type>& list );
 
     const idx_t* strides() const { return strides_; }
 
@@ -137,6 +164,12 @@ public:
         return const_slicer_t( *this ).apply( args... );
     }
 
+    bool isDeviceView() const { return is_device_view_; }
+
+    // Befriend all template variations
+    template <typename friendValue, int friendRank>
+    friend class ArrayView;
+
 private:
     data_view_t gt_data_view_;
     idx_t shape_[Rank];
@@ -144,9 +177,12 @@ private:
     idx_t size_;
     ArrayDataStore const* data_store_orig_;
     Array const* array_;
+    bool is_device_view_{false};
 };
 
 //------------------------------------------------------------------------------------------------------
 
 }  // namespace array
 }  // namespace atlas
+#undef ENABLE_IF_NON_CONST
+#undef ENABLE_IF_CONST

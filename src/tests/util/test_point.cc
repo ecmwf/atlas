@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <limits>
+#include <vector>
 
 #include "atlas/util/Point.h"
 
@@ -55,6 +56,24 @@ CASE( "test PointLonLat normalisation" ) {
     p.normalise( -180. );
     EXPECT( is_approximately_equal( p.lon(), -180. ) );
 }
+
+CASE( "test output vector<PointXY>" ) {
+    // clang-format off
+    std::vector<PointXY> points = {
+        {0.,1.},
+        {0.,2.},
+        {0.,3.},
+        {1.,1.},
+        {1.,2.},
+        {1.,3.},
+        {2.,1.},
+        {3.,2.},
+        {4.,3.},
+    };
+    // clang-format on
+    Log::info() << "points = " << points << std::endl;
+}
+
 
 }  // namespace test
 }  // namespace atlas

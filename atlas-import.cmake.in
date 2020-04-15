@@ -1,0 +1,82 @@
+
+include( CMakeFindDependencyMacro )
+
+set( atlas_HAVE_MPI                          @atlas_HAVE_MPI@ )
+set( atlas_HAVE_OMP                          @atlas_HAVE_OMP@ )
+set( atlas_HAVE_OMP_CXX                      @atlas_HAVE_OMP_CXX@ )
+set( atlas_HAVE_OMP_Fortran                  @atlas_HAVE_OMP_Fortran@ )
+set( atlas_HAVE_TRANS                        @atlas_HAVE_TRANS@ )
+set( atlas_HAVE_FORTRAN                      @atlas_HAVE_FORTRAN@ )
+set( atlas_HAVE_EIGEN                        @atlas_HAVE_EIGEN@ )
+set( atlas_HAVE_GRIDTOOLS_STORAGE            @atlas_HAVE_GRIDTOOLS_STORAGE@ )
+set( atlas_HAVE_TESSELATION                  @atlas_HAVE_TESSELATION@ )
+set( ATLAS_LIBRARIES                         @ATLAS_LIBRARIES@ )
+set( atlas_VERSION_STR                       @atlas_VERSION_STR@ )
+set( atlas_REQUIRES_PRIVATE_DEPENDENCIES     @atlas_REQUIRES_PRIVATE_DEPENDENCIES@ )
+
+## eckit
+find_dependency( eckit HINTS ${CMAKE_CURRENT_LIST_DIR}/../eckit @eckit_DIR@ @eckit_BINARY_DIR@ )
+
+## fckit
+if( atlas_HAVE_FORTRAN )
+  find_dependency( fckit HINTS ${CMAKE_CURRENT_LIST_DIR}/../fckit @fckit_DIR@ @fckit_BINARY_DIR@ )
+endif()
+
+## Eigen3
+if( atlas_HAVE_EIGEN )
+  find_dependency( Eigen3 HINTS @Eigen3_DIR@ )
+endif()
+
+## gridtools_storage
+if( atlas_HAVE_GRIDTOOLS_STORAGE )
+  # Required for GridTools' find_package( MPI COMPONENTS CXX )
+  if( NOT CMAKE_CXX_COMPILER_LOADED )
+    enable_language( CXX )
+  endif()
+  find_dependency( GridTools HINTS
+        ${GridTools_ROOT}/lib/cmake       # non-standard install (reported upstream)
+        $ENV{GridTools_ROOT}/lib/cmake    # non-standard install (reported upstream)
+        ${CMAKE_CURRENT_LIST_DIR}/..      # non-standard install (reported upstream)
+        ${CMAKE_PREFIX_PATH}/lib/cmake    # non-standard install (reported upstream)
+        ${CMAKE_INSTALL_PREFIX}/lib/cmake # non-standard install (reported upstream)
+        ${CMAKE_CURRENT_LIST_DIR}/../gridtools
+        @GridTools_DIR@
+        @GridTools_BINARY_DIR@ )
+endif()
+
+## OpenMP
+unset( atlas_OMP_COMPONENTS )
+if( atlas_HAVE_OMP_Fortran AND 
+    CMAKE_Fortran_COMPILER_LOADED AND
+    atlas_REQUIRES_PRIVATE_DEPENDENCIES )
+  list( APPEND atlas_OMP_COMPONENTS Fortran )
+endif()
+if( atlas_HAVE_OMP_CXX )
+  if( NOT CMAKE_CXX_COMPILER_LOADED )
+    enable_language( CXX )
+  endif()
+  list( APPEND atlas_OMP_COMPONENTS CXX )
+endif()
+if( atlas_OMP_COMPONENTS )
+  find_dependency( OpenMP COMPONENTS ${atlas_OMP_COMPONENTS} )
+endif()
+
+## transi
+if( atlas_HAVE_TRANS AND atlas_REQUIRES_PRIVATE_DEPENDENCIES )
+    find_dependency( transi HINTS ${CMAKE_CURRENT_LIST_DIR}/../transi @transi_DIR@ @transi_BINARY_DIR@ )
+endif()
+
+## CGAL
+if( atlas_HAVE_TESSELATION AND atlas_REQUIRES_PRIVATE_DEPENDENCIES )
+    find_dependency( CGAL HINTS @CGAL_DIR@ )
+endif()
+
+## Fortran
+set( atlas_FORTRAN_FOUND 0 )
+if( atlas_HAVE_FORTRAN )
+  set( atlas_FORTRAN_FOUND 1 )
+elseif( atlas_FIND_REQUIRED_FORTRAN )
+  message( FATAL_ERROR "atlas was not compiled with FORTRAN enabled" )
+endif()
+
+set( @PROJECT_NAME@_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE STRING "" )

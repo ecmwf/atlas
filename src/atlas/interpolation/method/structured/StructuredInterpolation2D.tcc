@@ -38,8 +38,12 @@ namespace method {
 template <typename Kernel>
 double StructuredInterpolation2D<Kernel>::convert_units_multiplier( const Field& field ) {
     std::string units = field.metadata().getString( "units", "degrees" );
-    if ( units == "degrees" ) { return 1.; }
-    if ( units == "radians" ) { return 180. / M_PI; }
+    if ( units == "degrees" ) {
+        return 1.;
+    }
+    if ( units == "radians" ) {
+        return 180. / M_PI;
+    }
     ATLAS_NOTIMPLEMENTED;
 }
 
@@ -52,8 +56,10 @@ StructuredInterpolation2D<Kernel>::StructuredInterpolation2D( const Method::Conf
 
 
 template <typename Kernel>
-void StructuredInterpolation2D<Kernel>::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) { ATLAS_NOTIMPLEMENTED; }
+void StructuredInterpolation2D<Kernel>::do_setup( const Grid& source, const Grid& target ) {
+    if ( mpi::size() > 1 ) {
+        ATLAS_NOTIMPLEMENTED;
+    }
 
 
     ATLAS_ASSERT( StructuredGrid( source ) );
@@ -62,13 +68,13 @@ void StructuredInterpolation2D<Kernel>::setup( const Grid& source, const Grid& t
     // guarantee "1" halo for pole treatment!
     FunctionSpace target_fs = functionspace::PointCloud( target );
 
-    setup( source_fs, target_fs );
+    do_setup( source_fs, target_fs );
 }
 
 
 template <typename Kernel>
-void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, const FunctionSpace& target ) {
-    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation::setup()" );
+void StructuredInterpolation2D<Kernel>::do_setup( const FunctionSpace& source, const FunctionSpace& target ) {
+    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation2D::do_setup()" );
 
     source_ = source;
     target_ = target;
@@ -81,24 +87,28 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
         target_lonlat_ = tgt.lonlat();
         target_ghost_  = tgt.ghost();
     }
-    else if( functionspace::StructuredColumns tgt = target) {
+    else if ( functionspace::StructuredColumns tgt = target ) {
         target_lonlat_ = tgt.xy();
         target_ghost_  = tgt.ghost();
     }
     else {
-        throw_NotImplemented("Only interpolation to functionspaces NodeColumns, PointCloud or StructuredColumns are implemented", Here());
+        throw_NotImplemented(
+            "Only interpolation to functionspaces NodeColumns, PointCloud or StructuredColumns are implemented",
+            Here() );
     }
 
     setup( source );
 }
 
 template <typename Kernel>
-void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, const Field& target ) {
-    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::setup(FunctionSpace source, Field target)" );
+void StructuredInterpolation2D<Kernel>::do_setup( const FunctionSpace& source, const Field& target ) {
+    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::do_setup(FunctionSpace source, Field target)" );
 
     source_ = source;
 
-    if ( target.functionspace() ) { target_ = target.functionspace(); }
+    if ( target.functionspace() ) {
+        target_ = target.functionspace();
+    }
 
     target_lonlat_ = target;
 
@@ -106,13 +116,15 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, cons
 }
 
 template <typename Kernel>
-void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source, const FieldSet& target ) {
-    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::setup(FunctionSpace source,FieldSet target)" );
+void StructuredInterpolation2D<Kernel>::do_setup( const FunctionSpace& source, const FieldSet& target ) {
+    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::do_setup(FunctionSpace source,FieldSet target)" );
 
     source_ = source;
 
     ATLAS_ASSERT( target.size() >= 2 );
-    if ( target[0].functionspace() ) { target_ = target[0].functionspace(); }
+    if ( target[0].functionspace() ) {
+        target_ = target[0].functionspace();
+    }
 
     target_lonlat_fields_ = target;
 
@@ -146,19 +158,18 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
 
         auto triplets = kernel_->allocate_triplets( out_npts );
 
-        constexpr NormaliseLongitude normalise;
+        constexpr util::NormaliseLongitude normalise;
         //auto normalise = []( double x ) { return x; };
- 
-       ATLAS_TRACE_SCOPE( "Precomputing interpolation matrix" ) {
 
-
-            if( target_ghost_ ) {
-                auto ghost  = array::make_view<int, 1>( target_ghost_ );
+        ATLAS_TRACE_SCOPE( "Precomputing interpolation matrix" ) {
+            if ( target_ghost_ ) {
+                auto ghost = array::make_view<int, 1>( target_ghost_ );
                 atlas_omp_parallel {
                     typename Kernel::WorkSpace workspace;
                     atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                         if ( not ghost( n ) ) {
-                            PointLonLat p{normalise( lonlat( n, LON ) ) * convert_units, lonlat( n, LAT ) * convert_units};
+                            PointLonLat p{normalise( lonlat( n, LON ) ) * convert_units,
+                                          lonlat( n, LAT ) * convert_units};
                             kernel_->insert_triplets( n, p, triplets, workspace );
                         }
                     }
@@ -182,25 +193,26 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
 
 
 template <typename Kernel>
-void StructuredInterpolation2D<Kernel>::execute( const Field& src_field, Field& tgt_field ) const {
+void StructuredInterpolation2D<Kernel>::do_execute( const Field& src_field, Field& tgt_field ) const {
     FieldSet tgt( tgt_field );
-    execute( FieldSet( src_field ), tgt );
+    do_execute( FieldSet( src_field ), tgt );
 }
 
 
 template <typename Kernel>
-void StructuredInterpolation2D<Kernel>::execute( const FieldSet& src_fields, FieldSet& tgt_fields ) const {
+void StructuredInterpolation2D<Kernel>::do_execute( const FieldSet& src_fields, FieldSet& tgt_fields ) const {
     if ( not matrix_free_ ) {
-        Method::execute( src_fields, tgt_fields );
+        Method::do_execute( src_fields, tgt_fields );
         return;
     }
 
-    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::execute()" );
+    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::do_execute()" );
 
     const idx_t N = src_fields.size();
     ATLAS_ASSERT( N == tgt_fields.size() );
 
-    if ( N == 0 ) return;
+    if ( N == 0 )
+        return;
 
     haloExchange( src_fields );
 
@@ -237,7 +249,7 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
                                                       FieldSet& tgt_fields ) const {
     const idx_t N = src_fields.size();
 
-    std::vector<array::ArrayView<Value, Rank> > src_view;
+    std::vector<array::ArrayView<const Value, Rank> > src_view;
     std::vector<array::ArrayView<Value, Rank> > tgt_view;
     src_view.reserve( N );
     tgt_view.reserve( N );
@@ -250,9 +262,9 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
         double convert_units = convert_units_multiplier( target_lonlat_ );
 
         if ( target_ghost_ ) {
-            idx_t out_npts    = target_lonlat_.shape( 0 );
-            const auto ghost  = array::make_view<int, 1, array::Intent::ReadOnly>( target_ghost_ );
-            const auto lonlat = array::make_view<double, 2, array::Intent::ReadOnly>( target_lonlat_ );
+            idx_t out_npts = target_lonlat_.shape( 0 );
+            auto ghost     = array::make_view<int, 1>( target_ghost_ );
+            auto lonlat    = array::make_view<double, 2>( target_lonlat_ );
 
             atlas_omp_parallel {
                 typename Kernel::Stencil stencil;
@@ -271,7 +283,7 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
         }
         else {
             idx_t out_npts    = target_lonlat_.shape( 0 );
-            const auto lonlat = array::make_view<double, 2, array::Intent::ReadOnly>( target_lonlat_ );
+            const auto lonlat = array::make_view<double, 2>( target_lonlat_ );
 
             atlas_omp_parallel {
                 typename Kernel::Stencil stencil;
@@ -289,8 +301,8 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
     }
     else if ( not target_lonlat_fields_.empty() ) {
         idx_t out_npts       = target_lonlat_fields_[0].shape( 0 );
-        const auto lon       = array::make_view<double, 1, array::Intent::ReadOnly>( target_lonlat_fields_[LON] );
-        const auto lat       = array::make_view<double, 1, array::Intent::ReadOnly>( target_lonlat_fields_[LAT] );
+        const auto lon       = array::make_view<double, 1>( target_lonlat_fields_[LON] );
+        const auto lat       = array::make_view<double, 1>( target_lonlat_fields_[LAT] );
         double convert_units = convert_units_multiplier( target_lonlat_fields_[LON] );
 
         atlas_omp_parallel {

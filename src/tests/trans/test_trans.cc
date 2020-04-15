@@ -24,12 +24,12 @@
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
-#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/trans/LegendreCacheCreator.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/trans/VorDivToUV.h"
 #include "atlas/trans/detail/TransFactory.h"
@@ -54,8 +54,9 @@ namespace test {
 
 struct AtlasTransEnvironment : public AtlasTestEnvironment {
     AtlasTransEnvironment( int argc, char* argv[] ) : AtlasTestEnvironment( argc, argv ) {
-        if ( mpi::comm().size() == 1 )
+        if ( mpi::comm().size() == 1 ) {
             trans_use_mpi( false );
+        }
         trans_init();
     }
 
@@ -75,8 +76,9 @@ void read_rspecg( const trans::TransImpl& trans, std::vector<double>& rspecg, st
         }
     }
     nfrom.resize( nfld );
-    for ( int jfld = 0; jfld < nfld; ++jfld )
+    for ( int jfld = 0; jfld < nfld; ++jfld ) {
         nfrom[jfld] = 1;
+    }
 
     Log::info() << "read_rspecg ... done" << std::endl;
 }
@@ -101,8 +103,6 @@ void read_rspecg( Field spec ) {
 }
 
 //-----------------------------------------------------------------------------
-
-#if 1
 
 CASE( "test_trans_distribution_matches_atlas" ) {
     EXPECT( grid::Partitioner::exists( "trans" ) );
@@ -129,8 +129,9 @@ CASE( "test_trans_distribution_matches_atlas" ) {
     if ( mpi::comm().rank() == 0 )  // all tasks do the same, so only one needs to check
     {
         int max_nb_regions_EW( 0 );
-        for ( int j = 0; j < trans_partitioner->nb_bands(); ++j )
+        for ( int j = 0; j < trans_partitioner->nb_bands(); ++j ) {
             max_nb_regions_EW = std::max( max_nb_regions_EW, trans_partitioner->nb_regions( j ) );
+        }
 
         EXPECT( t->n_regions_NS == trans_partitioner->nb_bands() );
         EXPECT( t->n_regions_EW == max_nb_regions_EW );
@@ -140,16 +141,18 @@ CASE( "test_trans_distribution_matches_atlas" ) {
 
         std::vector<int> npts( distribution.nb_partitions(), 0 );
 
-        for ( idx_t j = 0; j < g.size(); ++j )
+        for ( idx_t j = 0; j < g.size(); ++j ) {
             ++npts[distribution.partition( j )];
+        }
 
         EXPECT( t->ngptotg == g.size() );
         EXPECT( t->ngptot == npts[mpi::comm().rank()] );
         EXPECT( t->ngptotmx == *std::max_element( npts.begin(), npts.end() ) );
 
         // array::LocalView<int,1> n_regions ( trans.n_regions() ) ;
-        for ( int j = 0; j < trans_partitioner->nb_bands(); ++j )
+        for ( int j = 0; j < trans_partitioner->nb_bands(); ++j ) {
             EXPECT( t->n_regions[j] == trans_partitioner->nb_regions( j ) );
+        }
     }
 }
 
@@ -190,9 +193,6 @@ CASE( "test_write_read_cache" ) {
 }
 #endif
 
-#endif
-
-#if 1
 CASE( "test_distspec" ) {
     trans::TransIFS trans( Grid( "F80" ), 159 );
     Log::info() << "Trans initialized" << std::endl;
@@ -222,8 +222,6 @@ CASE( "test_distspec" ) {
 
     Log::info() << "end test_distspec" << std::endl;
 }
-
-#endif
 
 CASE( "test_distspec_speconly" ) {
     functionspace::Spectral fs( 159 );
@@ -258,7 +256,6 @@ CASE( "test_distspec_speconly" ) {
     Log::info() << "end test_distspec_only" << std::endl;
 }
 
-#if 1
 CASE( "test_distribution" ) {
     Grid g( "O80" );
 
@@ -549,8 +546,9 @@ CASE( "test_trans_VorDivToUV" ) {
         // TODO: initialise field_vor and field_div with something meaningful
         field_vor[2 * nfld] = 1.;
         Log::info() << "vor: " << std::endl;
-        for ( int j = 0; j < nfld * nspec2; j++ )
+        for ( int j = 0; j < nfld * nspec2; j++ ) {
             Log::info() << field_vor[j] << " ";
+        }
         Log::info() << std::endl;
 
         // With IFS
@@ -566,8 +564,9 @@ CASE( "test_trans_VorDivToUV" ) {
             // TODO: do some meaningful checks
             Log::info() << "Trans library" << std::endl;
             Log::info() << "U: " << std::endl;
-            for ( int j = 0; j < nfld * nspec2; j++ )
+            for ( int j = 0; j < nfld * nspec2; j++ ) {
                 Log::info() << field_U[j] << " ";
+            }
             Log::info() << std::endl;
         }
 
@@ -584,9 +583,111 @@ CASE( "test_trans_VorDivToUV" ) {
             // TODO: do some meaningful checks
             Log::info() << "Local transform" << std::endl;
             Log::info() << "U: " << std::endl;
-            for ( int j = 0; j < nfld * nspec2; j++ )
+            for ( int j = 0; j < nfld * nspec2; j++ ) {
                 Log::info() << field_U[j] << " ";
+            }
             Log::info() << std::endl;
+        }
+    }
+}
+
+#ifdef TRANS_HAVE_IO
+CASE( "ATLAS-256: Legendre coefficient expected unique identifiers" ) {
+    if ( mpi::comm().size() == 1 ) {
+        util::Config options;
+        options.set( option::type( "ifs" ) );
+        options.set( "flt", false );
+
+        auto uids = {
+            // clang-format off
+            "ifs-T20-RegularGaussianN320-OPT4189816c2e",
+            "ifs-T20-RegularGaussianN640-OPT4189816c2e",
+            "ifs-T20-RegularGaussianN1280-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN320-PL52955330f8-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN640-PL296ba3f6fb-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN1280-PL9e14f63837-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN320-PL440b952c43-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN640-PLcbba2659c1-OPT4189816c2e",
+            "ifs-T20-ReducedGaussianN1280-PL8eadc35e89-OPT4189816c2e",
+            "ifs-T20-L360x181-OPT4189816c2e",
+            "ifs-T20-L3600x1801-OPT4189816c2e",
+            "ifs-T639-RegularGaussianN320-OPT4189816c2e",
+            "ifs-T639-RegularGaussianN640-OPT4189816c2e",
+            "ifs-T639-RegularGaussianN1280-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN320-PL52955330f8-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN640-PL296ba3f6fb-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN1280-PL9e14f63837-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN320-PL440b952c43-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN640-PLcbba2659c1-OPT4189816c2e",
+            "ifs-T639-ReducedGaussianN1280-PL8eadc35e89-OPT4189816c2e",
+            "ifs-T639-L360x181-OPT4189816c2e",
+            "ifs-T639-L3600x1801-OPT4189816c2e",
+            "ifs-T1279-RegularGaussianN320-OPT4189816c2e",
+            "ifs-T1279-RegularGaussianN640-OPT4189816c2e",
+            "ifs-T1279-RegularGaussianN1280-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN320-PL52955330f8-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN640-PL296ba3f6fb-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN1280-PL9e14f63837-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN320-PL440b952c43-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN640-PLcbba2659c1-OPT4189816c2e",
+            "ifs-T1279-ReducedGaussianN1280-PL8eadc35e89-OPT4189816c2e",
+            "ifs-T1279-L360x181-OPT4189816c2e",
+            "ifs-T1279-L3600x1801-OPT4189816c2e",
+            "ifs-T20-grid-800ac12540-OPT4189816c2e",
+            "ifs-T20-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T20-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T20-grid-800ac12540-OPT4189816c2e",
+            "ifs-T20-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T20-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T20-grid-800ac12540-OPT4189816c2e",
+            "ifs-T20-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T20-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T20-grid-7824deccdf-OPT4189816c2e",
+            "ifs-T20-grid-7d1771559e-OPT4189816c2e",
+            "ifs-T639-grid-800ac12540-OPT4189816c2e",
+            "ifs-T639-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T639-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T639-grid-800ac12540-OPT4189816c2e",
+            "ifs-T639-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T639-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T639-grid-800ac12540-OPT4189816c2e",
+            "ifs-T639-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T639-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T639-grid-7824deccdf-OPT4189816c2e",
+            "ifs-T639-grid-7d1771559e-OPT4189816c2e",
+            "ifs-T1279-grid-800ac12540-OPT4189816c2e",
+            "ifs-T1279-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T1279-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T1279-grid-800ac12540-OPT4189816c2e",
+            "ifs-T1279-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T1279-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T1279-grid-800ac12540-OPT4189816c2e",
+            "ifs-T1279-grid-0915e0f040-OPT4189816c2e",
+            "ifs-T1279-grid-7c400822f0-OPT4189816c2e",
+            "ifs-T1279-grid-7824deccdf-OPT4189816c2e",
+            "ifs-T1279-grid-7d1771559e-OPT4189816c2e",
+            // clang-format on
+        };
+        auto uid = uids.begin();
+
+        auto domains    = std::vector<Domain>{GlobalDomain(), RectangularDomain( {-10, 10}, {-20, 20} )};
+        auto spectral_T = std::vector<int>{20, 639, 1279};
+        auto grids      = std::vector<std::string>{"F320", "F640", "F1280", "N320", "N640", "N1280",
+                                              "O320", "O640", "O1280", "L90",  "L900"};
+        for ( auto& domain : domains ) {
+            for ( int T : spectral_T ) {
+                for ( auto name : grids ) {
+                    Log::info() << "Case name:" << name << ", T:" << T << ", domain:" << domain << ", UID:'" << *uid
+                                << "'" << std::endl;
+
+                    Grid grid( name, domain );
+                    auto test = trans::LegendreCacheCreator( grid, T, options ).uid();
+                    ATLAS_DEBUG_VAR( test );
+                    EXPECT( test == *uid );
+
+                    uid++;
+                }
+            }
         }
     }
 }

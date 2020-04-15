@@ -50,6 +50,8 @@ private:
     double phi1_;     ///< standard parallel [rad]
     double sin_phi1_;
     double cos_phi1_;
+    double false_northing_{0};
+    double false_easting_{0};
 };
 
 }  // namespace detail

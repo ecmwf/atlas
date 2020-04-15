@@ -14,6 +14,7 @@
 
 #include "eckit/types/FloatCompare.h"
 
+#include "atlas/array/Array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
@@ -374,11 +375,11 @@ CASE( "write_read_write_field" ) {
     // useful)
     const Field& field_from_FieldSet( mesh_from_FieldSet.nodes().field( "my_super_field" ) );
     const Field& field_from_Grid( mesh_from_FieldSet.nodes().field( "my_super_field" ) );
-    EXPECT( field.data<double>() != field_from_FieldSet.data<double>() );
-    EXPECT( field.data<double>() != field_from_Grid.data<double>() );
+    EXPECT( field.array().data<double>() != field_from_FieldSet.array().data<double>() );
+    EXPECT( field.array().data<double>() != field_from_Grid.array().data<double>() );
 
-    array::ArrayView<double, 1> field_from_FieldSet_data = array::make_view<double, 1>( field_from_FieldSet );
-    array::ArrayView<double, 1> field_from_Grid_data     = array::make_view<double, 1>( field_from_Grid );
+    auto field_from_FieldSet_data = array::make_view<double, 1>( field_from_FieldSet );
+    auto field_from_Grid_data     = array::make_view<double, 1>( field_from_Grid );
     for ( size_t i = 0; i < test_arrays::nb_pts; ++i ) {
         EXPECT( eckit::types::is_approximately_equal( field_data( i ), field_from_FieldSet_data( i ),
                                                       0.001 ) );  // 0.001% relative error

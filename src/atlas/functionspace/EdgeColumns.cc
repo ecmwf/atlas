@@ -46,8 +46,8 @@ namespace functionspace {
 namespace detail {
 
 namespace {
-template <typename T>
-array::LocalView<T, 3> make_leveled_view( const Field& field ) {
+template <typename T, typename Field>
+array::LocalView<T, 3> make_leveled_view( Field& field ) {
     using namespace array;
     if ( field.levels() ) {
         if ( field.variables() ) {
@@ -80,10 +80,11 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &EdgeColumnsHaloExchangeCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) { remove( key( mesh ) ); }
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override { remove( key( mesh ) ); }
 
 private:
     static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
@@ -93,7 +94,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh ) {
-        mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
         value->setup( array::make_view<int, 1>( mesh.edges().partition() ).data(),
                       array::make_view<idx_t, 1>( mesh.edges().remote_index() ).data(), REMOTE_IDX_BASE,
@@ -114,10 +114,11 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &EdgeColumnsGatherScatterCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) { remove( key( mesh ) ); }
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override { remove( key( mesh ) ); }
 
 private:
     static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
@@ -127,7 +128,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh ) {
-        mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
         value->setup( array::make_view<int, 1>( mesh.edges().partition() ).data(),
                       array::make_view<idx_t, 1>( mesh.edges().remote_index() ).data(), REMOTE_IDX_BASE,
@@ -148,10 +148,11 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &EdgeColumnsChecksumCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) { remove( key( mesh ) ); }
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override { remove( key( mesh ) ); }
 
 private:
     static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
@@ -161,7 +162,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh ) {
-        mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
         util::ObjectHandle<parallel::GatherScatter> gather(
             EdgeColumnsGatherScatterCache::instance().get_or_create( mesh ) );
@@ -193,7 +193,7 @@ void EdgeColumns::set_field_metadata( const eckit::Configuration& config, Field&
 }
 
 idx_t EdgeColumns::config_size( const eckit::Configuration& config ) const {
-    const idx_t rank = static_cast<idx_t>( mpi::comm().rank() );
+    const idx_t rank = mpi::rank();
     idx_t size       = nb_edges();
     bool global( false );
     if ( config.get( "global", global ) ) {
@@ -248,10 +248,7 @@ array::ArrayShape EdgeColumns::config_shape( const eckit::Configuration& config 
 }
 
 EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config ) :
-    mesh_( mesh ),
-    edges_( mesh_.edges() ),
-    nb_levels_( config.getInt( "levels", 0 ) ),
-    nb_edges_( 0 ) {
+    mesh_( mesh ), edges_( mesh_.edges() ), nb_levels_( config.getInt( "levels", 0 ) ), nb_edges_( 0 ) {
     ATLAS_TRACE();
     if ( config.has( "halo" ) ) {
         halo_ = mesh::Halo( config.getInt( "halo" ) );
@@ -283,7 +280,7 @@ EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config )
     ATLAS_ASSERT( nb_edges_ );
 }
 
-EdgeColumns::~EdgeColumns() {}
+EdgeColumns::~EdgeColumns() = default;
 
 size_t EdgeColumns::footprint() const {
     size_t size = sizeof( *this );
@@ -318,23 +315,47 @@ Field EdgeColumns::createField( const Field& other, const eckit::Configuration& 
                         option::variables( other.variables() ) | config );
 }
 
+namespace {
+
+template <int RANK>
+void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exchange, bool on_device ) {
+    if ( field.datatype() == array::DataType::kind<int>() ) {
+        halo_exchange.template execute<int, RANK>( field.array(), on_device );
+    }
+    else if ( field.datatype() == array::DataType::kind<long>() ) {
+        halo_exchange.template execute<long, RANK>( field.array(), on_device );
+    }
+    else if ( field.datatype() == array::DataType::kind<float>() ) {
+        halo_exchange.template execute<float, RANK>( field.array(), on_device );
+    }
+    else if ( field.datatype() == array::DataType::kind<double>() ) {
+        halo_exchange.template execute<double, RANK>( field.array(), on_device );
+    }
+    else {
+        throw_Exception( "datatype not supported", Here() );
+    }
+    field.set_dirty( false );
+}
+}  // namespace
+
 void EdgeColumns::haloExchange( const FieldSet& fieldset, bool on_device ) const {
     for ( idx_t f = 0; f < fieldset.size(); ++f ) {
         Field& field = const_cast<FieldSet&>( fieldset )[f];
-        if ( field.datatype() == array::DataType::kind<int>() ) {
-            halo_exchange().execute<int, 2>( field.array(), on_device );
-        }
-        else if ( field.datatype() == array::DataType::kind<long>() ) {
-            halo_exchange().execute<long, 2>( field.array(), on_device );
-        }
-        else if ( field.datatype() == array::DataType::kind<float>() ) {
-            halo_exchange().execute<float, 2>( field.array(), on_device );
-        }
-        else if ( field.datatype() == array::DataType::kind<double>() ) {
-            halo_exchange().execute<double, 2>( field.array(), on_device );
-        }
-        else {
-            throw_Exception( "datatype not supported", Here() );
+        switch ( field.rank() ) {
+            case 1:
+                dispatch_haloExchange<1>( field, halo_exchange(), on_device );
+                break;
+            case 2:
+                dispatch_haloExchange<2>( field, halo_exchange(), on_device );
+                break;
+            case 3:
+                dispatch_haloExchange<3>( field, halo_exchange(), on_device );
+                break;
+            case 4:
+                dispatch_haloExchange<4>( field, halo_exchange(), on_device );
+                break;
+            default:
+                throw_Exception( "Rank not supported", Here() );
         }
         field.set_dirty( false );
     }
@@ -344,6 +365,7 @@ void EdgeColumns::haloExchange( const Field& field, bool on_device ) const {
     fieldset.add( field );
     haloExchange( fieldset, on_device );
 }
+
 const parallel::HaloExchange& EdgeColumns::halo_exchange() const {
     if ( halo_exchange_ ) {
         return *halo_exchange_;
@@ -362,22 +384,22 @@ void EdgeColumns::gather( const FieldSet& local_fieldset, FieldSet& global_field
         idx_t root( 0 );
         glb.metadata().get( "owner", root );
         if ( loc.datatype() == array::DataType::kind<int>() ) {
-            parallel::Field<int const> loc_field( make_leveled_view<int>( loc ) );
+            parallel::Field<int const> loc_field( make_leveled_view<const int>( loc ) );
             parallel::Field<int> glb_field( make_leveled_view<int>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<long>() ) {
-            parallel::Field<long const> loc_field( make_leveled_view<long>( loc ) );
+            parallel::Field<long const> loc_field( make_leveled_view<const long>( loc ) );
             parallel::Field<long> glb_field( make_leveled_view<long>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<float>() ) {
-            parallel::Field<float const> loc_field( make_leveled_view<float>( loc ) );
+            parallel::Field<float const> loc_field( make_leveled_view<const float>( loc ) );
             parallel::Field<float> glb_field( make_leveled_view<float>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<double>() ) {
-            parallel::Field<double const> loc_field( make_leveled_view<double>( loc ) );
+            parallel::Field<double const> loc_field( make_leveled_view<const double>( loc ) );
             parallel::Field<double> glb_field( make_leveled_view<double>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
@@ -420,22 +442,22 @@ void EdgeColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fiel
         glb.metadata().get( "owner", root );
 
         if ( loc.datatype() == array::DataType::kind<int>() ) {
-            parallel::Field<int const> glb_field( make_leveled_view<int>( glb ) );
+            parallel::Field<int const> glb_field( make_leveled_view<const int>( glb ) );
             parallel::Field<int> loc_field( make_leveled_view<int>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<long>() ) {
-            parallel::Field<long const> glb_field( make_leveled_view<long>( glb ) );
+            parallel::Field<long const> glb_field( make_leveled_view<const long>( glb ) );
             parallel::Field<long> loc_field( make_leveled_view<long>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<float>() ) {
-            parallel::Field<float const> glb_field( make_leveled_view<float>( glb ) );
+            parallel::Field<float const> glb_field( make_leveled_view<const float>( glb ) );
             parallel::Field<float> loc_field( make_leveled_view<float>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<double>() ) {
-            parallel::Field<double const> glb_field( make_leveled_view<double>( glb ) );
+            parallel::Field<double const> glb_field( make_leveled_view<const double>( glb ) );
             parallel::Field<double> loc_field( make_leveled_view<double>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
@@ -458,9 +480,9 @@ void EdgeColumns::scatter( const Field& global, Field& local ) const {
 namespace {
 template <typename T>
 std::string checksum_3d_field( const parallel::Checksum& checksum, const Field& field ) {
-    array::ArrayView<T, 3> values = array::make_view<T, 3>( field );
+    auto values = array::make_view<T, 3>( field );
     array::ArrayT<T> surface_field( field.shape( 0 ), field.shape( 2 ) );
-    array::ArrayView<T, 2> surface = array::make_view<T, 2>( surface_field );
+    auto surface = array::make_view<T, 2>( surface_field );
     for ( idx_t n = 0; n < values.shape( 0 ); ++n ) {
         for ( idx_t j = 0; j < surface.shape( 1 ); ++j ) {
             surface( n, j ) = 0.;
@@ -473,7 +495,7 @@ std::string checksum_3d_field( const parallel::Checksum& checksum, const Field& 
 }
 template <typename T>
 std::string checksum_2d_field( const parallel::Checksum& checksum, const Field& field ) {
-    array::ArrayView<T, 2> values = array::make_view<T, 2>( field );
+    auto values = array::make_view<T, 2>( field );
     return checksum.execute( values.data(), field.stride( 0 ) );
 }
 
@@ -742,8 +764,7 @@ void atlas__fs__EdgeColumns__checksum_field( const EdgeColumns* This, const fiel
 EdgeColumns::EdgeColumns() : FunctionSpace(), functionspace_( nullptr ) {}
 
 EdgeColumns::EdgeColumns( const FunctionSpace& functionspace ) :
-    FunctionSpace( functionspace ),
-    functionspace_( dynamic_cast<const detail::EdgeColumns*>( get() ) ) {}
+    FunctionSpace( functionspace ), functionspace_( dynamic_cast<const detail::EdgeColumns*>( get() ) ) {}
 
 EdgeColumns::EdgeColumns( const Mesh& mesh, const eckit::Configuration& config ) :
     FunctionSpace( new detail::EdgeColumns( mesh, config ) ),

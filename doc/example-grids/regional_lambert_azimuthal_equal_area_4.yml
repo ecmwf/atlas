@@ -1,0 +1,26 @@
+# !!! Requires proj external package (aka proj4) --> ENABLE_PROJ=ON
+
+# EFAS grid
+
+type : "regional"
+nx : 1000
+ny : 950
+dx : 5000
+dy : 5000
+lonlat(xmin,ymax) : [-35.034,66.9821]
+projection :
+    type : "proj"
+    proj : "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
+# Equivalent proj string, but leads to different uid (a71208b89dc4bc8d20494514e562c6b7)
+#    proj : "EPSG:3035"
+y_numbering : -1
+
+
+check : 
+  size : 950000
+  lonlat(first) : [-35.034,66.9821]
+  lonlat(last)  : [41.1397,23.9423]
+  bounding_box(n,w,s,e) : [72.6426, -35.035, 23.9413, 73.9386]
+  uid : bd42a9d7bbf089251667a4cc553a664c
+  xmin : 2502497.60
+  ymin : 752495.56

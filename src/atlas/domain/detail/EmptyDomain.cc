@@ -19,7 +19,7 @@
 namespace atlas {
 namespace domain {
 
-EmptyDomain::EmptyDomain() {}
+EmptyDomain::EmptyDomain() = default;
 
 EmptyDomain::EmptyDomain( const eckit::Parametrisation& p ) {}
 

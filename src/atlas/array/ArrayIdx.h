@@ -11,15 +11,21 @@
 #pragma once
 
 #include <stddef.h>
+#include <utility>
 #include <vector>
+
 #include "atlas/library/config.h"
 
 //------------------------------------------------------------------------------------------------------
 
+
 namespace atlas {
 namespace array {
 
+//using ArrayIdx = std::vector<idx_t>;
 typedef std::vector<idx_t> ArrayIdx;
+
+namespace detail {
 
 inline ArrayIdx make_idx( idx_t size1 ) {
     return std::vector<idx_t>( 1, size1 );
@@ -45,6 +51,14 @@ inline ArrayIdx make_idx( idx_t size1, idx_t size2, idx_t size3, idx_t size4 ) {
     v[3] = size4;
     return v;
 }
+
+}  // namespace detail
+
+template <typename... idx_t>
+ArrayIdx make_idx( idx_t... indices ) {
+    return detail::make_idx( std::forward<idx_t>( indices )... );
+}
+
 
 //------------------------------------------------------------------------------------------------------
 

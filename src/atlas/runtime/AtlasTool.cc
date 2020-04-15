@@ -122,7 +122,7 @@ static std::string workdir;
 
     Log::flush();
 
-    if ( not use_logfile and mpi::comm().size() > 1 ) {
+    if ( not use_logfile and mpi::size() > 1 ) {
         eckit::LogTarget* logfile = new eckit::FileTarget( logfile_name );
         Log::error().addTarget( logfile );
     }
@@ -134,7 +134,7 @@ static std::string workdir;
         catch ( const eckit::Abort& exception ) {
             out << "\n"
                 << "=========================================\n"
-                << "[" << mpi::comm().rank() << "] Aborting " << eckit::Main::instance().displayName() << "\n"
+                << "[" << mpi::rank() << "] Aborting " << eckit::Main::instance().displayName() << "\n"
                 << "-----------------------------------------\n"
                 << exception.what() << "\n";
             if ( exception.location() ) {
@@ -154,7 +154,7 @@ static std::string workdir;
         catch ( const eckit::Exception& exception ) {
             out << "\n"
                 << "=========================================\n"
-                << "[" << mpi::comm().rank() << "] TERMINATING " << eckit::Main::instance().displayName() << "\n"
+                << "[" << mpi::rank() << "] TERMINATING " << eckit::Main::instance().displayName() << "\n"
                 << "-----------------------------------------\n"
                 << exception.what() << "\n"
                 << "-----------------------------------------\n";
@@ -176,7 +176,7 @@ static std::string workdir;
         catch ( const std::exception& exception ) {
             out << "\n"
                 << "=========================================\n"
-                << "[" << mpi::comm().rank() << "] TERMINATING " << eckit::Main::instance().displayName() << "\n"
+                << "[" << mpi::rank() << "] TERMINATING " << eckit::Main::instance().displayName() << "\n"
                 << "-----------------------------------------\n"
                 << exception.what() << "\n"
                 << "-----------------------------------------\n"
@@ -192,7 +192,7 @@ static std::string workdir;
         catch ( ... ) {
             out << "\n"
                 << "=========================================\n"
-                << "[" << mpi::comm().rank() << "] TERMINATING " << eckit::Main::instance().displayName() << "\n"
+                << "[" << mpi::rank() << "] TERMINATING " << eckit::Main::instance().displayName() << "\n"
                 << "-----------------------------------------\n"
                 << "BACKTRACE\n"
                 << "-----------------------------------------\n"
@@ -257,9 +257,9 @@ bool atlas::AtlasTool::handle_help() {
 
 atlas::AtlasTool::AtlasTool( int argc, char** argv ) : eckit::Tool( argc, argv ) {
     eckit::LibEcKit::instance().setAbortHandler( [] {
-        std::cerr << "[" << atlas::mpi::comm().rank() << "] "
+        std::cerr << "[" << atlas::mpi::rank() << "] "
                   << "calling MPI_Abort";
-        if ( not use_logfile and mpi::comm().size() > 1 ) {
+        if ( not use_logfile and mpi::size() > 1 ) {
             std::cerr << ", logfile: " << logfile_name;
         }
         std::cerr << std::endl;
@@ -289,13 +289,15 @@ int atlas::AtlasTool::start() {
             }
             return failed();
         }
-        Options opts = options_;
-        Args args( &atlas::usage, opts, numberOfPositionalArguments(), minimumPositionalArguments() );
-
-        atlas::Library::instance().initialise();
+        atlas::initialize();
         setupLogging();
+
+        Options opts = options_;
+        Args args( &atlas::usage, opts, numberOfPositionalArguments(), minimumPositionalArguments() > 0 );
+
         int err_code = execute( args );
-        atlas::Library::instance().finalise();
+        atlas::finalize();
+        atlas::mpi::finalize();
         return err_code;
     }
     catch ( ... ) {
@@ -329,7 +331,7 @@ void atlas::AtlasTool::setupLogging() {
     int log_rank = getEnv( "ATLAS_LOG_RANK", 0 );
     use_logfile  = getEnv( "ATLAS_LOG_FILE", false );
 
-    int d               = digits( mpi::comm().size() );
+    int d               = digits( mpi::size() );
     std::string rankstr = std::to_string( taskID() );
     for ( int i = rankstr.size(); i < d; ++i ) {
         rankstr = "0" + rankstr;
@@ -340,7 +342,7 @@ void atlas::AtlasTool::setupLogging() {
     if ( use_logfile ) {
         eckit::LogTarget* logfile = new eckit::FileTarget( logfile_name );
 
-        if ( int( mpi::comm().rank() ) == log_rank ) {
+        if ( int( mpi::rank() ) == log_rank ) {
             if ( Log::info() ) {
                 Log::info().addTarget( logfile );
             }
@@ -366,7 +368,7 @@ void atlas::AtlasTool::setupLogging() {
         }
     }
     else {
-        if ( int( mpi::comm().rank() ) != log_rank ) {
+        if ( int( mpi::rank() ) != log_rank ) {
             if ( Log::info() ) {
                 Log::info().reset();
             }

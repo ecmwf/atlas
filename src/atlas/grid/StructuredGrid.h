@@ -47,6 +47,12 @@ class ShiftedLonLatGrid;
 
 //---------------------------------------------------------------------------------------------------------------------
 
+/*! @class StructuredGrid
+ * @brief Specialization of Grid, where the grid can be represented by rows with uniform distribution
+ * @details 
+ * @copydetails Grid
+ * @dotfile classatlas_1_1StructuredGrid__inherit__graph.dot
+ */
 class StructuredGrid : public Grid {
 public:
     using grid_t = grid::detail::grid::Structured;
@@ -76,9 +82,18 @@ public:
 
     inline const std::vector<double>& y() const { return grid_->y(); }
 
+    /// x coordinate for given grid point {i,j}
     inline double x( idx_t i, idx_t j ) const { return grid_->x( i, j ); }
 
+    /// y coordinate for given grid row {j}
     inline double y( idx_t j ) const { return grid_->y( j ); }
+
+    /// increment in x for a given grid row {j}
+    inline double dx( idx_t j ) const { return grid_->dx( j ); }
+
+    /// x coordinate of beginning of a given grid row {j}
+    inline double xmin( idx_t j ) const { return grid_->xmin( j ); }
+
 
     using Grid::xy;
     void xy( idx_t i, idx_t j, double xy[] ) const { grid_->xy( i, j, xy ); }
@@ -106,6 +121,8 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+/// @class ReducedGrid
+/// @brief Specialization of StructuredGrid, where not all rows have the same number of grid points
 class ReducedGrid : public StructuredGrid {
 public:
     using StructuredGrid::StructuredGrid;
@@ -117,6 +134,8 @@ public:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+/// @class RegularGrid
+/// @brief Specialization of StructuredGrid, where all rows have the same number of grid points
 class RegularGrid : public StructuredGrid {
 public:
     using StructuredGrid::StructuredGrid;
@@ -157,6 +176,8 @@ protected:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+/// @class GaussianGrid
+/// @brief Specialization of StructuredGrid, where rows follow a Gaussian distribution
 class GaussianGrid : public Gaussian<StructuredGrid> {
     using grid_t = Gaussian<StructuredGrid>;
 
@@ -170,6 +191,8 @@ public:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+/// @class ReducedGaussianGrid
+/// @brief Specialization of ReducedGrid, where rows follow a Gaussian distribution
 class ReducedGaussianGrid : public Gaussian<ReducedGrid> {
     using grid_t = Gaussian<ReducedGrid>;
 
@@ -186,6 +209,8 @@ public:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+/// @class RegularGaussianGrid
+/// @brief Specialization of RegularGaussianGrid, where rows follow a Gaussian distribution
 class RegularGaussianGrid : public Gaussian<RegularGrid> {
     using grid_t = Gaussian<RegularGrid>;
 
@@ -206,6 +231,8 @@ public:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+/// @class RegularLonLatGrid
+/// @brief Specialization of RegularGrid, assuming a global domain
 class RegularLonLatGrid : public RegularGrid {
 public:
     using RegularGrid::RegularGrid;

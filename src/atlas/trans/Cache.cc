@@ -53,29 +53,23 @@ LegendreCache::LegendreCache( const void* address, size_t size ) :
     Cache( std::make_shared<TransCacheMemoryEntry>( address, size ) ) {}
 
 Cache::Cache( const std::shared_ptr<TransCacheEntry>& legendre ) :
-    trans_( nullptr ),
-    legendre_( legendre ),
-    fft_( new EmptyCacheEntry() ) {}
+    trans_( nullptr ), legendre_( legendre ), fft_( new EmptyCacheEntry() ) {}
 
 Cache::Cache( const std::shared_ptr<TransCacheEntry>& legendre, const std::shared_ptr<TransCacheEntry>& fft ) :
-    trans_( nullptr ),
-    legendre_( legendre ),
-    fft_( fft ) {}
+    trans_( nullptr ), legendre_( legendre ), fft_( fft ) {}
 
 Cache::Cache( const TransImpl* trans ) :
-    trans_( trans ),
-    legendre_( new EmptyCacheEntry() ),
-    fft_( new EmptyCacheEntry() ) {}
+    trans_( trans ), legendre_( new EmptyCacheEntry() ), fft_( new EmptyCacheEntry() ) {}
 
 Cache::Cache() : trans_( nullptr ), legendre_( new EmptyCacheEntry() ), fft_( new EmptyCacheEntry() ) {}
 
-Cache::Cache( const Cache& other ) : trans_( other.trans_ ), legendre_( other.legendre_ ), fft_( other.fft_ ) {}
+Cache::Cache( const Cache& other ) = default;
 
 Cache::operator bool() const {
     return trans_ || bool( legendre() );
 }
 
-Cache::~Cache() {}
+Cache::~Cache() = default;
 
 TransCache::TransCache( const Trans& trans ) : Cache( trans.get() ) {}
 

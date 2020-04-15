@@ -13,6 +13,7 @@
 #include <iosfwd>
 #include <memory>
 
+#include "atlas/grid/Grid.h"
 #include "atlas/mesh/PartitionPolygon.h"
 #include "atlas/mesh/detail/PartitionGraph.h"
 #include "atlas/projection/Projection.h"
@@ -27,7 +28,9 @@ class Stream;
 }
 
 namespace atlas {
-class Grid;
+namespace util {
+class PartitionPolygons;
+}
 class Mesh;
 namespace mesh {
 class PartitionPolygon;
@@ -94,9 +97,9 @@ public:  // methods
     idx_t partition() const;
     idx_t nb_partitions() const;
 
-    void cloneToDevice() const;
+    void updateDevice() const;
 
-    void cloneFromDevice() const;
+    void updateHost() const;
 
     void syncHostDevice() const;
 
@@ -107,8 +110,9 @@ public:  // methods
     PartitionGraph::Neighbours nearestNeighbourPartitions() const;
 
     const PartitionPolygon& polygon( idx_t halo = 0 ) const;
+    const util::PartitionPolygons& polygons() const;
 
-    const Grid& grid() const { return *grid_; }
+    const Grid grid() const { return grid_; }
 
     void attachObserver( MeshObserver& ) const;
     void detachObserver( MeshObserver& ) const;
@@ -143,11 +147,13 @@ private:  // members
 
     Projection projection_;
 
-    std::unique_ptr<Grid> grid_;
+    Grid grid_;
 
     mutable util::ObjectHandle<PartitionGraph> partition_graph_;
 
     mutable std::vector<util::ObjectHandle<PartitionPolygon>> polygons_;
+
+    mutable util::PartitionPolygons all_polygons_;  // from all partitions
 
     mutable std::vector<MeshObserver*> mesh_observers_;
 };
@@ -155,7 +161,29 @@ private:  // members
 //----------------------------------------------------------------------------------------------------------------------
 
 class MeshObserver {
+private:
+    std::vector<const MeshImpl*> registered_meshes_;
+
 public:
+    void registerMesh( const MeshImpl& mesh ) {
+        if ( std::find( registered_meshes_.begin(), registered_meshes_.end(), &mesh ) == registered_meshes_.end() ) {
+            registered_meshes_.push_back( &mesh );
+            mesh.attachObserver( *this );
+        }
+    }
+    void unregisterMesh( const MeshImpl& mesh ) {
+        auto found = std::find( registered_meshes_.begin(), registered_meshes_.end(), &mesh );
+        if ( found != registered_meshes_.end() ) {
+            registered_meshes_.erase( found );
+            mesh.detachObserver( *this );
+        }
+    }
+    virtual ~MeshObserver() {
+        for ( auto mesh : registered_meshes_ ) {
+            mesh->detachObserver( *this );
+        }
+    }
+
     virtual void onMeshDestruction( MeshImpl& ) = 0;
 };
 

@@ -29,8 +29,8 @@ struct int_gpu {
 
     int_gpu* gpu_object_ptr() {return gpu_clone_.gpu_object_ptr();}
 
-    void cloneToDevice(){ gpu_clone_.cloneToDevice();}
-    void cloneFromDevice(){ gpu_clone_.cloneFromDevice();}
+    void updateDevice(){ gpu_clone_.updateDevice();}
+    void updateHost(){ gpu_clone_.updateHost();}
 
     int val_;
 private:
@@ -80,7 +80,7 @@ CASE( "test_vector_kernel" )
     list_ints_h[1] = new int_gpu(4);
     list_ints_h[2] = new int_gpu(5);
     list_ints_h[3] = new int_gpu(6);
-    list_ints.cloneToDevice();
+    list_ints.updateDevice();
 
     VectorView<int_gpu*> list_ints_d = make_device_vector_view(list_ints);
 
@@ -92,7 +92,7 @@ CASE( "test_vector_kernel" )
     kernel_ex<<<1,1>>>(list_ints_dp);
 
     if( cudaPeekAtLastError() != cudaSuccess) std::cout << "ERROR " << std::endl;
-    list_ints.cloneFromDevice();
+    list_ints.updateHost();
 
     EXPECT( list_ints_h[0]->val_ == 8 );
 

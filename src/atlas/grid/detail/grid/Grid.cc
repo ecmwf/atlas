@@ -104,8 +104,10 @@ Grid::Grid() {
 }
 
 Grid::~Grid() {
-    for ( GridObserver* o : grid_observers_ ) {
+    while ( grid_observers_.size() ) {
+        GridObserver* o = grid_observers_.back();
         o->onGridDestruction( *this );
+        o->unregisterGrid( *this );  // will also delete observer from mesh
     }
 }
 

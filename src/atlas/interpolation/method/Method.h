@@ -40,13 +40,13 @@ public:
    * @param source functionspace containing source elements
    * @param target functionspace containing target points
    */
-    virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
-    virtual void setup( const Grid& source, const Grid& target )                   = 0;
-    virtual void setup( const FunctionSpace& source, const Field& target );
-    virtual void setup( const FunctionSpace& source, const FieldSet& target );
+    void setup( const FunctionSpace& source, const FunctionSpace& target );
+    void setup( const Grid& source, const Grid& target );
+    void setup( const FunctionSpace& source, const Field& target );
+    void setup( const FunctionSpace& source, const FieldSet& target );
 
-    virtual void execute( const FieldSet& source, FieldSet& target ) const;
-    virtual void execute( const Field& source, Field& target ) const;
+    void execute( const FieldSet& source, FieldSet& target ) const;
+    void execute( const Field& source, Field& target ) const;
 
     virtual void print( std::ostream& ) const = 0;
 
@@ -54,6 +54,9 @@ public:
     virtual const FunctionSpace& target() const = 0;
 
 protected:
+    virtual void do_execute( const FieldSet& source, FieldSet& target ) const;
+    virtual void do_execute( const Field& source, Field& target ) const;
+
     using Triplet  = eckit::linalg::Triplet;
     using Triplets = std::vector<Triplet>;
     using Matrix   = eckit::linalg::SparseMatrix;
@@ -74,6 +77,11 @@ protected:
     bool use_eckit_linalg_spmv_;
 
 private:
+    virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
+    virtual void do_setup( const Grid& source, const Grid& target )                   = 0;
+    virtual void do_setup( const FunctionSpace& source, const Field& target );
+    virtual void do_setup( const FunctionSpace& source, const FieldSet& target );
+
     template <typename Value>
     void interpolate_field( const Field& src, Field& tgt ) const;
 

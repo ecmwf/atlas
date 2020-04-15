@@ -88,14 +88,14 @@ RegularMeshGenerator::RegularMeshGenerator( const eckit::Parametrisation& p ) {
 
 void RegularMeshGenerator::configure_defaults() {
     // This option sets number of parts the mesh will be split in
-    options.set( "nb_parts", mpi::comm().size() );
+    options.set( "nb_parts", mpi::size() );
 
     // This option sets the part that will be generated
-    options.set( "part", mpi::comm().rank() );
+    options.set( "part", mpi::rank() );
 
     // This options sets the default partitioner
     std::string partitioner;
-    if ( grid::Partitioner::exists( "trans" ) && mpi::comm().size() > 1 ) {
+    if ( grid::Partitioner::exists( "trans" ) && mpi::size() > 1 ) {
         partitioner = "trans";
     }
     else {
@@ -159,7 +159,7 @@ void RegularMeshGenerator::generate( const Grid& grid, const grid::Distribution&
     generate_mesh( rg, distribution, mesh );
 }
 
-void RegularMeshGenerator::generate_mesh( const RegularGrid& rg, const std::vector<int>& parts,
+void RegularMeshGenerator::generate_mesh( const RegularGrid& rg, const grid::Distribution::partition_t& parts,
                                           // const Region& region,
                                           Mesh& mesh ) const {
     int mypart = options.get<size_t>( "part" );

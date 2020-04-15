@@ -14,20 +14,21 @@
 #ifndef atlas_library_defines_h
 #define atlas_library_defines_h
 
-#define ATLAS_HAVE_OMP                       @ATLAS_HAVE_OMP_CXX@
-#define ATLAS_HAVE_ACC                       @ATLAS_HAVE_ACC@
-#define ATLAS_HAVE_TESSELATION               @ATLAS_HAVE_TESSELATION@
-#define ATLAS_HAVE_FORTRAN                   @ATLAS_HAVE_FORTRAN@
-#define ATLAS_HAVE_EIGEN                     @ATLAS_HAVE_EIGEN@
-#define ATLAS_HAVE_FFTW                      @ATLAS_HAVE_FFTW@
+#define ATLAS_HAVE_OMP                       @atlas_HAVE_OMP_CXX@
+#define ATLAS_HAVE_ACC                       @atlas_HAVE_ACC@
+#define ATLAS_HAVE_TESSELATION               @atlas_HAVE_TESSELATION@
+#define ATLAS_HAVE_FORTRAN                   @atlas_HAVE_FORTRAN@
+#define ATLAS_HAVE_EIGEN                     @atlas_HAVE_EIGEN@
+#define ATLAS_HAVE_FFTW                      @atlas_HAVE_FFTW@
 #define ATLAS_BITS_GLOBAL                    @ATLAS_BITS_GLOBAL@
-#define ATLAS_ARRAYVIEW_BOUNDS_CHECKING      @ATLAS_HAVE_BOUNDSCHECKING@
-#define ATLAS_INDEXVIEW_BOUNDS_CHECKING      @ATLAS_HAVE_BOUNDSCHECKING@
-#define ATLAS_INIT_SNAN                      @ATLAS_HAVE_INIT_SNAN@
-#define ATLAS_HAVE_GRIDTOOLS_STORAGE         @ATLAS_HAVE_GRIDTOOLS_STORAGE@
+#define ATLAS_ARRAYVIEW_BOUNDS_CHECKING      @atlas_HAVE_BOUNDSCHECKING@
+#define ATLAS_INDEXVIEW_BOUNDS_CHECKING      @atlas_HAVE_BOUNDSCHECKING@
+#define ATLAS_VECTOR_BOUNDS_CHECKING         @atlas_HAVE_BOUNDSCHECKING@
+#define ATLAS_INIT_SNAN                      @atlas_HAVE_INIT_SNAN@
+#define ATLAS_HAVE_GRIDTOOLS_STORAGE         @atlas_HAVE_GRIDTOOLS_STORAGE@
 #define ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST @ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST@
 #define ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA @ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA@
-#define ATLAS_HAVE_TRANS                     @ATLAS_HAVE_TRANS@
+#define ATLAS_HAVE_TRANS                     @atlas_HAVE_TRANS@
 
 #ifdef __CUDACC__
 #define ATLAS_HOST_DEVICE __host__ __device__

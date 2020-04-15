@@ -6,7 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-if( ATLAS_HAVE_ACC )
+if( atlas_HAVE_ACC )
 
   if( NOT (CMAKE_C_COMPILER_ID MATCHES ${CMAKE_Fortran_COMPILER_ID}) )
     add_custom_command(

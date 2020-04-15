@@ -17,7 +17,23 @@
 namespace atlas {
 namespace mpi {
 
-const eckit::mpi::Comm& comm();
+using Comm = eckit::mpi::Comm;
+
+inline const Comm& comm() {
+    static const Comm& _comm = eckit::mpi::comm();
+    return _comm;
+}
+
+inline idx_t rank() {
+    return static_cast<idx_t>( comm().rank() );
+}
+
+inline int size() {
+    return static_cast<idx_t>( comm().size() );
+}
+
+void finalize();
+void finalise();
 
 }  // namespace mpi
 }  // namespace atlas

@@ -17,27 +17,24 @@
 namespace atlas {
 namespace util {
 
+class PartitionPolygon;
 //------------------------------------------------------------------------------------------------------
 
 class SphericalPolygon : public PolygonCoordinates {
 public:
-    // -- Constructors
-
-    SphericalPolygon( const Polygon&, const atlas::Field& lonlat );
+    SphericalPolygon( const PartitionPolygon& );
 
     SphericalPolygon( const std::vector<PointLonLat>& points );
-
-    // -- Overridden methods
 
     /*
    * Point-in-polygon test based on winding number
    * @note reference <a
    * href="http://geomalgorithms.com/a03-_inclusion.html">Inclusion of a Point
    * in a Polygon</a>
-   * @param[in] P given point
+   * @param[in] P given point in (lon,lat) coordinates
    * @return if point is in polygon
    */
-    bool contains( const PointLonLat& P ) const;
+    bool contains( const Point2& lonlat ) const override;
 };
 
 //------------------------------------------------------------------------------------------------------

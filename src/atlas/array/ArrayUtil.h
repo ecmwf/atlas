@@ -23,6 +23,7 @@
 namespace atlas {
 namespace array {
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <typename T>
 struct remove_const {
     typedef T type;
@@ -40,12 +41,13 @@ template <typename T>
 struct add_const<T const> {
     typedef const T type;
 };
+#endif
 
 class ArrayDataStore {
 public:
     virtual ~ArrayDataStore() {}
-    virtual void cloneToDevice() const              = 0;
-    virtual void cloneFromDevice() const            = 0;
+    virtual void updateDevice() const               = 0;
+    virtual void updateHost() const                 = 0;
     virtual bool valid() const                      = 0;
     virtual void syncHostDevice() const             = 0;
     virtual bool hostNeedsUpdate() const            = 0;
@@ -65,12 +67,14 @@ public:
     }
 };
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <int Dim>
 static constexpr char array_dim() {
     return Dim == 0 ? 'i' : ( Dim == 1 ? 'j' : ( Dim == 2 ? 'k' : ( Dim == 3 ? 'l' : ( Dim == 4 ? 'm' : ( '*' ) ) ) ) );
 }
 
 void throw_OutOfRange( const std::string& class_name, char idx_str, int idx, int max );
+#endif
 
 //------------------------------------------------------------------------------------------------------
 

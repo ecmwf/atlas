@@ -16,6 +16,9 @@
 
 #include "atlas/library/config.h"
 #include "atlas/util/Allocate.h"
+#ifndef __CUDA_ARCH__
+#include "atlas/runtime/Exception.h"
+#endif
 
 namespace atlas {
 namespace array {
@@ -31,53 +34,62 @@ public:
     ATLAS_HOST_DEVICE
     SVector( const T* data, const idx_t size ) : data_( data ), size_( size ), externally_allocated_( true ) {}
 
+#ifdef __CUDACC__
+    // Note that this does not copy!!! It is mainly intended to be passed to a CUDA kernel which requires value semantics for this class
     ATLAS_HOST_DEVICE
     SVector( SVector const& other ) : data_( other.data_ ), size_( other.size_ ), externally_allocated_( true ) {}
+#endif
 
     ATLAS_HOST_DEVICE
     SVector( SVector&& other ) :
-        data_( other.data_ ),
-        size_( other.size_ ),
-        externally_allocated_( other.externally_allocated_ ) {}
-
-    ATLAS_HOST_DEVICE
-    SVector& operator=( SVector const& other ) {
-        data_                 = other.data_;
-        size_                 = other.size_;
-        externally_allocated_ = true;
-        return *this;
+        data_( other.data_ ), size_( other.size_ ), externally_allocated_( other.externally_allocated_ ) {
+        other.data_                 = nullptr;
+        other.size_                 = 0;
+        other.externally_allocated_ = true;
     }
 
-    SVector& operator=( SVector&& other ) = default;
+    ATLAS_HOST_DEVICE
+    SVector& operator=( SVector&& other ) {
+        data_                       = other.data_;
+        size_                       = other.size_;
+        externally_allocated_       = other.externally_allocated_;
+        other.data_                 = nullptr;
+        other.size_                 = 0;
+        other.externally_allocated_ = true;
+        return *this;
+    }
 
     ATLAS_HOST_DEVICE
     SVector( T* data, idx_t size ) : data_( data ), size_( size ), externally_allocated_( true ) {}
 
-    SVector( idx_t N ) : data_( nullptr ), size_( N ), externally_allocated_( false ) {
-        util::allocate_managedmem( data_, N );
-    }
+    SVector( idx_t N ) : data_( nullptr ), size_( N ), externally_allocated_( false ) { allocate( data_, N ); }
+
     ATLAS_HOST_DEVICE
-    ~SVector() {
+    ~SVector() { clear(); }
+
+    ATLAS_HOST_DEVICE
+    void clear() {
+        if ( data_ && !externally_allocated_ ) {
 #ifndef __CUDA_ARCH__
-        if ( !externally_allocated_ )
-            util::delete_managedmem( data_ );
+            deallocate( data_, size_ );
 #endif
+        }
+        data_                 = nullptr;
+        size_                 = 0;
+        externally_allocated_ = false;
     }
 
     void insert( idx_t pos, idx_t dimsize ) {
-        T* data;
-        util::allocate_managedmem( data, size_ + dimsize );
-
+        T* data = nullptr;
+        allocate( data, size_ + dimsize );
         for ( idx_t c = 0; c < pos; ++c ) {
-            data[c] = data_[c];
+            data[c] = std::move( data_[c] );
         }
         for ( idx_t c = pos; c < size_; ++c ) {
-            data[c + dimsize] = data_[c];
+            data[c + dimsize] = std::move( data_[c] );
         }
-
-        T* oldptr = data_;
-        data_     = data;
-        util::delete_managedmem( oldptr );
+        deallocate( data_, size_ );
+        data_ = data;
         size_ += dimsize;
     }
 
@@ -119,25 +131,37 @@ public:
             return;
 
         T* d_ = nullptr;
-        util::allocate_managedmem( d_, N );
+        allocate( d_, N );
         for ( idx_t c = 0; c < std::min( size_, N ); ++c ) {
-            d_[c] = data_[c];
+            d_[c] = std::move( data_[c] );
         }
-        util::delete_managedmem( data_ );
+        deallocate( data_, size_ );
         data_ = d_;
     }
 
     void resize( idx_t N ) {
+#ifndef __CUDA_ARCH__
+        ATLAS_ASSERT( not externally_allocated_, "Cannot resize externally allocated (or wrapped) data" );
+#endif
         resize_impl( N );
         size_ = N;
     }
 
-
-    void resize( idx_t N, T&& val ) {
-        const int oldsize = size_;
-        resize( N );
-        for ( idx_t c = oldsize; c < size_; ++c ) {
-            data_[c] = val;
+private:
+    static void allocate( T*& ptr, idx_t size ) {
+        if ( size > 0 ) {
+            util::allocate_managedmem( ptr, size );
+            for ( idx_t c = 0; c < size; ++c ) {
+                new ( ptr + c ) T();
+            }
+        }
+    }
+    static void deallocate( T*& ptr, idx_t size ) {
+        if ( ptr ) {
+            for ( idx_t c = 0; c < size; ++c ) {
+                ptr[c].~T();
+            }
+            util::delete_managedmem( ptr );
         }
     }
 

@@ -31,7 +31,7 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 class CubicVerticalInterpolation {
-    ComputeVerticalStencil compute_vertical_stencil_;
+    grid::ComputeVerticalStencil compute_vertical_stencil_;
     Vertical vertical_;
     static constexpr idx_t stencil_width() { return 4; }
     static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
@@ -50,7 +50,7 @@ public:
     struct Weights {
         std::array<double, 4> weights_k;
     };
-    using Stencil = VerticalStencil<4>;
+    using Stencil = grid::VerticalStencil<4>;
 
     template <typename stencil_t>
     void compute_stencil( const double z, stencil_t& stencil ) const {
@@ -177,7 +177,7 @@ public:
 
     template <typename array_t>
     double operator()( const double z, const array_t& input ) const {
-        VerticalStencil<stencil_width()> stencil;
+        grid::VerticalStencil<stencil_width()> stencil;
         compute_vertical_stencil_( z, stencil );
         Weights weights;
         compute_weights( z, stencil, weights );
@@ -191,21 +191,20 @@ public:
 
 class CubicHorizontalInterpolation {
     functionspace::StructuredColumns fs_;
-    ComputeHorizontalStencil compute_horizontal_stencil_;
+    grid::ComputeHorizontalStencil compute_horizontal_stencil_;
     static constexpr idx_t stencil_width() { return 4; }
     static constexpr idx_t stencil_size() { return stencil_width() * stencil_width(); }
     bool limiter_{false};
 
 public:
-    using Stencil = HorizontalStencil<4>;
+    using Stencil = grid::HorizontalStencil<4>;
 
 public:
     CubicHorizontalInterpolation( const functionspace::StructuredColumns& fs ) :
-        fs_( fs ),
-        compute_horizontal_stencil_( fs.grid(), stencil_width() ) {}
+        fs_( fs ), compute_horizontal_stencil_( fs.grid(), stencil_width() ) {}
     template <typename weights_t>
     void compute_weights( const double x, const double y, weights_t& weights ) const {
-        HorizontalStencil<stencil_width()> stencil;
+        grid::HorizontalStencil<stencil_width()> stencil;
         compute_horizontal_stencil_( x, y, stencil );
         compute_weights( x, y, stencil, weights );
     }
@@ -303,7 +302,7 @@ public:
 
     template <typename array_t>
     double operator()( const double x, const double y, const array_t& input ) {
-        HorizontalStencil<stencil_width()> stencil;
+        grid::HorizontalStencil<stencil_width()> stencil;
         compute_horizontal_stencil_( x, y, stencil );
         Weights weights;
         compute_weights( x, y, stencil, weights );
@@ -313,7 +312,7 @@ public:
     }
 
     struct WorkSpace {
-        HorizontalStencil<4> stencil;
+        grid::HorizontalStencil<4> stencil;
         Weights weights;
     };
 
@@ -365,12 +364,10 @@ public:
         std::array<double, 4> weights_k;
     };
 
-    using Stencil = Stencil3D<4>;
+    using Stencil = grid::Stencil3D<4>;
 
     Cubic3DInterpolation( const functionspace::StructuredColumns& fs ) :
-        fs_( fs ),
-        horizontal_interpolation_( fs ),
-        vertical_interpolation_( fs.vertical() ) {}
+        fs_( fs ), horizontal_interpolation_( fs ), vertical_interpolation_( fs.vertical() ) {}
 
     template <typename stencil_t>
     void compute_stencil( const double x, const double y, const double z, stencil_t& stencil ) const {

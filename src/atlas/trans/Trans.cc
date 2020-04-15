@@ -25,7 +25,7 @@ namespace trans {
 namespace {
 util::Config options( const eckit::Configuration& config ) {
     util::Config opts = Trans::config();
-    opts.set( config );
+    opts.set( eckit::LocalConfiguration( config ) );
     return opts;
 }
 }  // namespace

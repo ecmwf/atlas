@@ -88,6 +88,12 @@ cd "${TEMPORARY_FILES}"/install_components && ./install
 
 PGI_VERSION=$(basename "${PGI_INSTALL_DIR}"/linux86-64/*.*/)
 
+# Use gcc which is available in PATH
+${PGI_INSTALL_DIR}/linux86-64/${PGI_VERSION}/bin/makelocalrc \
+  -x ${PGI_INSTALL_DIR}/linux86-64/${PGI_VERSION}/bin \
+  -gcc $(which gcc) \
+  -gpp $(which g++) \
+  -g77 $(which gfortran)
 
 cat > ${PGI_INSTALL_DIR}/env.sh << EOF
 ### Variables

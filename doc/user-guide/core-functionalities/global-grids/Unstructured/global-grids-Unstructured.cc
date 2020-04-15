@@ -1,6 +1,6 @@
 #include "atlas/grid.h"
+#include "atlas/library.h"
 #include "atlas/mesh.h"
-#include "atlas/library/Library.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/Log.h"
@@ -12,7 +12,7 @@ using atlas::output::Gmsh;
 using atlas::util::Config;
 
 int main( int argc, char* argv[] ) {
-    atlas::Library::instance().initialise( argc, argv );
+    atlas::initialise( argc, argv );
 
     Grid grid = UnstructuredGrid( {{180, 0},
                                    {90, 0},
@@ -196,6 +196,6 @@ int main( int argc, char* argv[] ) {
     Gmsh gmsh( "unstructured.msh", Config( "coordinates", "xyz" ) );
     gmsh.write( mesh );
 
-    atlas::Library::instance().finalise();
+    atlas::finalize();
     return 0;
 }

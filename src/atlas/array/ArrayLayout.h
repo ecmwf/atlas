@@ -29,6 +29,8 @@ public:
     ArrayLayout( Base&& base ) : Base( std::forward<Base>( base ) ) {}
 };
 
+namespace detail {
+
 inline ArrayLayout make_layout( idx_t size1 ) {
     return ArrayLayout{size1};
 }
@@ -44,6 +46,14 @@ inline ArrayLayout make_layout( idx_t size1, idx_t size2, idx_t size3, idx_t siz
 inline ArrayLayout make_layout( idx_t size1, idx_t size2, idx_t size3, idx_t size4, idx_t size5 ) {
     return ArrayLayout{size1, size2, size3, size4, size5};
 }
+
+}  // namespace detail
+
+template <typename... idx_t>
+ArrayLayout make_layout( idx_t... indices ) {
+    return detail::make_layout( std::forward<idx_t>( indices )... );
+}
+
 
 //------------------------------------------------------------------------------------------------------
 

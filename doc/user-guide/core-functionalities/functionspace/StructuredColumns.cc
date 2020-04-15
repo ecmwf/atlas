@@ -3,7 +3,7 @@
 #include "atlas/field.h"
 #include "atlas/functionspace.h"
 #include "atlas/grid.h"
-#include "atlas/library/Library.h"
+#include "atlas/library.h"
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
@@ -16,7 +16,7 @@ using atlas::functionspace::StructuredColumns;
 using atlas::output::Gmsh;
 
 int main( int argc, char* argv[] ) {
-    atlas::Library::instance().initialise( argc, argv );
+    atlas::initialise( argc, argv );
 
     // Generate global reduced grid
     Grid grid( "N32" );
@@ -45,7 +45,9 @@ int main( int argc, char* argv[] ) {
                                             std::sin( ( zlat - zlatc ) / 2. ) * std::sin( ( zlat - zlatc ) / 2. ) );
 
             scalar1( jnode ) = 0.0;
-            if ( zdist < zrad ) { scalar1( jnode ) = 0.5 * ( 1. + std::cos( M_PI * zdist / zrad ) ); }
+            if ( zdist < zrad ) {
+                scalar1( jnode ) = 0.5 * ( 1. + std::cos( M_PI * zdist / zrad ) );
+            }
             ++jnode;
         }
     }
@@ -61,6 +63,7 @@ int main( int argc, char* argv[] ) {
         gmsh.write( field_scalar1 );
     }
 
-    Library::instance().finalise();
+    atlas::finalise();
+    atlas::mpi::finalise();
     return 0;
 }

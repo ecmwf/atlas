@@ -18,7 +18,6 @@
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/StructuredGrid.h"
-#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator.h"
@@ -199,7 +198,7 @@ CASE( "test_functionspace_NodeColumns" ) {
 
     Log::info() << "Testing collectives for nodes scalar field" << std::endl;
     {
-        const Field& field                  = surface_scalar_field;
+        Field field                         = surface_scalar_field;
         const functionspace::NodeColumns fs = nodes_fs;
 
         double max;
@@ -211,7 +210,7 @@ CASE( "test_functionspace_NodeColumns" ) {
         gidx_t gidx_max;
         gidx_t gidx_min;
 
-        array::ArrayView<double, 1> sfc_arr = array::make_view<double, 1>( field );
+        auto sfc_arr = array::make_view<double, 1>( field );
         sfc_arr.assign( mpi::comm().rank() + 1 );
         fs.maximum( surface_scalar_field, max );
         EXPECT( max == double( mpi::comm().size() ) );
@@ -254,7 +253,7 @@ CASE( "test_functionspace_NodeColumns" ) {
 
     Log::info() << "Testing collectives for nodes vector field" << std::endl;
     {
-        const Field& field                  = surface_vector_field;
+        Field& field                        = surface_vector_field;
         const functionspace::NodeColumns fs = nodes_fs;
 
         std::vector<double> max;
@@ -307,7 +306,7 @@ CASE( "test_functionspace_NodeColumns" ) {
 
     Log::info() << "Testing collectives for columns scalar field" << std::endl;
     if ( 1 ) {
-        const Field& field                  = columns_scalar_field;
+        Field& field                        = columns_scalar_field;
         const functionspace::NodeColumns fs = nodes_fs;
         double max;
         double min;
@@ -321,7 +320,7 @@ CASE( "test_functionspace_NodeColumns" ) {
 
         EXPECT( field.levels() == nb_levels );
 
-        array::ArrayView<double, 2> arr = array::make_view<double, 2>( field );
+        auto arr = array::make_view<double, 2>( field );
         arr.assign( mpi::comm().rank() + 1 );
         fs.maximum( field, max );
         EXPECT( max == double( mpi::comm().size() ) );
@@ -387,7 +386,7 @@ CASE( "test_functionspace_NodeColumns" ) {
 
     Log::info() << "Testing collectives for columns vector field" << std::endl;
     if ( 1 ) {
-        const Field& field                  = columns_vector_field;
+        Field& field                        = columns_vector_field;
         const functionspace::NodeColumns fs = nodes_fs;
         idx_t nvar                          = field.variables();
         std::vector<double> max;
@@ -400,7 +399,7 @@ CASE( "test_functionspace_NodeColumns" ) {
         std::vector<gidx_t> gidx_min;
         std::vector<idx_t> levels;
 
-        array::ArrayView<double, 3> vec_arr = array::make_view<double, 3>( field );
+        auto vec_arr = array::make_view<double, 3>( field );
         vec_arr.assign( mpi::comm().rank() + 1 );
         fs.maximum( field, max );
         std::vector<double> check_max( nvar, mpi::comm().size() );
@@ -557,8 +556,9 @@ CASE( "test_SpectralFunctionSpace_trans_global" ) {
 
     EXPECT( surface_scalar_field.name() == std::string( "scalar" ) );
 
-    if ( eckit::mpi::comm().rank() == 0 )
+    if ( eckit::mpi::comm().rank() == 0 ) {
         EXPECT( surface_scalar_field.size() == nspec2g );
+    }
 
     EXPECT( surface_scalar_field.rank() == 1 );
 
@@ -604,14 +604,16 @@ CASE( "test_SpectralFunctionSpace_norm" ) {
     {
         auto twoD = array::make_view<double, 1>( twoD_field );
         twoD.assign( 0. );
-        if ( mpi::comm().rank() == 0 )
+        if ( mpi::comm().rank() == 0 ) {
             twoD( 0 ) = 1.;
+        }
 
         auto threeD = array::make_view<double, 2>( threeD_field );
         threeD.assign( 0. );
         for ( size_t jlev = 0; jlev < nb_levels; ++jlev ) {
-            if ( mpi::comm().rank() == 0 )
-                threeD( 0, jlev ) = jlev;
+            if ( mpi::comm().rank() == 0 ) {
+                threeD( (size_t)0, jlev ) = jlev;
+            }
         }
     }
 

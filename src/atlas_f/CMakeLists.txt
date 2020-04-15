@@ -86,9 +86,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/meshgenerator/detail/MeshGen
     MODULE atlas_meshgenerator_c_binding
     OUTPUT meshgenerator_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Output.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/Gmsh.h
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/detail/GmshInterface.h
   MODULE    atlas_output_gmsh_c_binding
-  OUTPUT    outout_Gmsh_c_binding.f90)
+  OUTPUT    output_Gmsh_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/State.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/field/detail/FieldInterface.h
     MODULE    atlas_field_c_binding
@@ -109,6 +109,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/NodeCol
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeColumns.h
     MODULE    atlas_functionspace_EdgeColumns_c_binding
     OUTPUT    functionspace_EdgeColumns_c_binding.f90)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/PointCloudInterface.h
+    MODULE    atlas_functionspace_PointCloud_c_binding
+    OUTPUT    functionspace_PointCloud_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Method.h )
@@ -150,6 +153,7 @@ ecbuild_add_library( TARGET atlas_f
         functionspace/atlas_functionspace_NodeColumns_module.fypp
         functionspace/atlas_functionspace_StructuredColumns_module.F90
         functionspace/atlas_functionspace_Spectral_module.F90
+        functionspace/atlas_functionspace_PointCloud_module.F90
         field/atlas_FieldSet_module.F90
         field/atlas_State_module.F90
         field/atlas_Field_module.fypp
@@ -187,13 +191,13 @@ ecbuild_add_library( TARGET atlas_f
         ${FCKIT_INCLUDE_DIRS}
 )
 
-target_link_libraries( atlas_f PRIVATE
-  atlas )
+target_link_libraries( atlas_f PUBLIC
+  $<LINK_ONLY:atlas> )
 
 target_link_libraries( atlas_f PUBLIC
   fckit )
 
-if( ATLAS_HAVE_OMP_Fortran )
+if( atlas_HAVE_OMP_Fortran )
   target_link_libraries( atlas_f PRIVATE OpenMP::OpenMP_Fortran )
 endif()
 

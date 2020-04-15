@@ -19,12 +19,7 @@ namespace spacing {
 //----------------------------------------------------------------------------------------------------------------------
 
 void force_link() {
-    static struct Link {
-        Link() {
-            //SpacingBuilder<meshgenerator::StructuredMeshGenerator>();
-            //SpacingBuilder<meshgenerator::DelaunayMeshGenerator>();
-        }
-    } link;
+    static struct Link { Link() = default; } link;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

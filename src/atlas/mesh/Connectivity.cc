@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <ostream>
 
 #include "eckit/io/Buffer.h"
 #include "eckit/serialisation/Stream.h"
@@ -21,8 +22,6 @@
 #include "atlas/library/config.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/runtime/Exception.h"
-
-#include "atlas/runtime/Log.h"
 
 #if ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
@@ -84,16 +83,7 @@ IrregularConnectivityImpl::IrregularConnectivityImpl( idx_t values[], idx_t rows
     }
 }
 
-IrregularConnectivityImpl::IrregularConnectivityImpl( const IrregularConnectivityImpl& other ) :
-    owns_( false ),
-    values_( other.values_ ),
-    displs_( other.displs_ ),
-    counts_( other.counts_ ),
-    missing_value_( other.missing_value_ ),
-    rows_( other.rows_ ),
-    maxcols_( other.maxcols_ ),
-    mincols_( other.mincols_ ),
-    ctxt_( nullptr ) {}
+//------------------------------------------------------------------------------------------------------
 
 IrregularConnectivityImpl::IrregularConnectivityImpl( eckit::Stream& s ) {
     decode_( s );
@@ -384,6 +374,21 @@ eckit::Stream& operator<<( eckit::Stream& s, const array::SVector<idx_t>& x ) {
     return s;
 }
 
+void BlockConnectivityImpl::print( std::ostream& out ) const {
+    out << "BlockConnectivity:{rows:" << rows_ << ",cols:" << cols_ << ",values:";
+    if ( values_.size() == 0 ) {
+        out << "null";
+    }
+    else {
+        out << "[";
+        for ( idx_t i = 0; i < values_.size(); ++i ) {
+            out << values_[i] << ( i < values_.size() - 1 ? "," : "]" );
+        }
+    }
+    out << "}";
+}
+
+
 void IrregularConnectivityImpl::encode_( eckit::Stream& s ) const {
     s << name();
     s << values_;
@@ -438,11 +443,7 @@ array::ArrayShape{blocks})),
 //------------------------------------------------------------------------------------------------------
 
 MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( const std::string& name ) :
-    IrregularConnectivityImpl( name ),
-    blocks_( 0 ),
-    block_displs_( 1 ),
-    block_cols_( 1 ),
-    block_( 0 ) {
+    IrregularConnectivityImpl( name ), blocks_( 0 ), block_displs_( 1 ), block_cols_( 1 ), block_( 0 ) {
     block_displs_( 0 ) = 0;
 }
 
@@ -452,7 +453,9 @@ MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( eckit::Stream& s ) : Irr
 
 //------------------------------------------------------------------------------------------------------
 
-MultiBlockConnectivityImpl::~MultiBlockConnectivityImpl() {}
+MultiBlockConnectivityImpl::~MultiBlockConnectivityImpl() {
+    clear();
+}
 
 //------------------------------------------------------------------------------------------------------
 
@@ -464,7 +467,7 @@ void MultiBlockConnectivityImpl::clear() {
         block_displs_( 0 ) = 0ul;
     }
     blocks_ = 0;
-    block_  = array::SVector<BlockConnectivityImpl>( 0 );
+    block_.clear();
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -473,6 +476,10 @@ void MultiBlockConnectivityImpl::add( idx_t rows, idx_t cols, const idx_t values
     ATLAS_ASSERT( owns(), "MultiBlockConnectivity must be owned to be resized directly" );
     idx_t old_rows = this->rows();
     IrregularConnectivityImpl::add( rows, cols, values, fortran_array );
+
+    for ( idx_t b = 0; b < blocks_; ++b ) {
+        ATLAS_ASSERT( block_[b].owns() == false );
+    }
 
     block_displs_.insert( block_displs_.size(), 1 );
     block_cols_.insert( block_cols_.size(), 1 );
@@ -497,6 +504,11 @@ void MultiBlockConnectivityImpl::add( idx_t rows, idx_t cols ) {
     ATLAS_ASSERT( owns(), "MultiBlockConnectivity must be owned to be resized directly" );
     idx_t old_rows = this->rows();
     IrregularConnectivityImpl::add( rows, cols );
+
+    for ( idx_t b = 0; b < blocks_; ++b ) {
+        ATLAS_ASSERT( block_[b].owns() == false );
+    }
+
 
     block_displs_.insert( block_displs_.size(), 1 );
     block_cols_.insert( block_cols_.size(), 1 );
@@ -524,6 +536,10 @@ void MultiBlockConnectivityImpl::add( idx_t rows, const idx_t cols[] ) {
                   "MultiBlockConnectivity::add(rows,cols[]): "
                   "all elements of cols[] must be identical" );
     IrregularConnectivityImpl::add( rows, cols );
+
+    for ( idx_t b = 0; b < blocks_; ++b ) {
+        ATLAS_ASSERT( block_[b].owns() == false );
+    }
 
     block_displs_.insert( block_displs_.size(), 1 );
     block_cols_.insert( block_cols_.size(), 1 );
@@ -569,6 +585,10 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, idx_t cols 
 
     ATLAS_ASSERT( blk_idx >= 0l );
 
+    for ( idx_t b = 0; b < blocks_; ++b ) {
+        ATLAS_ASSERT( block_[b].owns() == false );
+    }
+
     IrregularConnectivityImpl::insert( position, rows, cols );
 
     for ( idx_t jblk = blk_idx; jblk < blocks_; ++jblk ) {
@@ -610,7 +630,7 @@ void MultiBlockConnectivityImpl::insert( idx_t position, idx_t rows, const idx_t
 //------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivityImpl::rebuild_block_connectivity() {
-    block_.resize( blocks_, BlockConnectivityImpl() );
+    block_.resize( blocks_ );
 
     for ( idx_t b = 0; b < blocks_; ++b ) {
         block_[b].rebuild( block_displs_[b + 1] - block_displs_[b],  // rows
@@ -710,13 +730,38 @@ BlockConnectivityImpl::BlockConnectivityImpl( idx_t rows, idx_t cols, idx_t valu
 
 //------------------------------------------------------------------------------------------------------
 
+BlockConnectivityImpl::BlockConnectivityImpl( BlockConnectivityImpl&& other ) :
+    owns_( other.owns_ ),
+    values_( std::move( other.values_ ) ),
+    rows_( other.rows_ ),
+    cols_( other.cols_ ),
+    missing_value_( other.missing_value_ ) {
+    other.owns_ = false;
+    rows_       = 0;
+    cols_       = 0;
+}
+
+BlockConnectivityImpl& BlockConnectivityImpl::operator=( BlockConnectivityImpl&& other ) {
+    owns_          = other.owns_;
+    values_        = std::move( other.values_ );
+    rows_          = other.rows_;
+    cols_          = other.cols_;
+    missing_value_ = other.missing_value_;
+    other.owns_    = false;
+    other.rows_    = 0;
+    other.cols_    = 0;
+    return *this;
+}
+
+
 BlockConnectivityImpl::~BlockConnectivityImpl() {
-    //TODO owns_ not used ?
+    values_.clear();
 }
 
 //------------------------------------------------------------------------------------------------------
 
 void BlockConnectivityImpl::rebuild( idx_t rows, idx_t cols, idx_t values[] ) {
+    owns_   = false;
     rows_   = rows;
     cols_   = cols;
     values_ = array::SVector<idx_t>( values, rows * cols );
@@ -775,8 +820,8 @@ size_t BlockConnectivityImpl::footprint() const {
 
 class ConnectivityPrivateAccess {
 private:
-    typedef Connectivity::ctxt_t ctxt_t;
-    typedef Connectivity::callback_t callback_t;
+    using ctxt_t     = Connectivity::ctxt_t;
+    using callback_t = Connectivity::callback_t;
 
 public:
     ConnectivityPrivateAccess( Connectivity& connectivity ) : connectivity_( connectivity ) {}

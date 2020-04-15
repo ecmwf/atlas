@@ -12,10 +12,6 @@ ecbuild_add_executable(
     LIBS atlas
 )
 
-set( exe_atlas-atest-mgrids $<TARGET_FILE:atlas-atest-mgrids> )
-# When ECBUILD-432 is fixed (already fixed in develop on top of ecbuild 3.0.0), we don't need TARGET_FILE
-
-
 if( HAVE_TESTS )
   ecbuild_add_option( FEATURE ACCEPTANCE_TESTS DEFAULT OFF )
 endif()
@@ -24,8 +20,6 @@ if( HAVE_ACCEPTANCE_TESTS )
 
 set( HAVE_ACCEPTANCE_TESTS_SMALL ON )
 set( HAVE_ACCEPTANCE_TESTS_LARGE ON )
-
-if( TARGET atlas-atest-mgrids )
 
 function( atlas_atest_mgrids category case nprocs )
 
@@ -42,7 +36,7 @@ function( atlas_atest_mgrids category case nprocs )
         foreach( t 1 4 12 )
             set( test_name  atlas_atest_${category}_mgrids_${gridA}_to_${gridB}_n${n}_t${t} )
             ecbuild_add_test( TARGET ${test_name}
-                COMMAND ${exe_atlas-atest-mgrids}
+                COMMAND atlas-atest-mgrids
                 ARGS    --gridA=${gridA}
                         --gridB=${gridB}
                         --haloA=3
@@ -51,21 +45,21 @@ function( atlas_atest_mgrids category case nprocs )
                         --checksum=${test_name}.checksum
                         --matrix-free
                         ${PARTITIONER}
-               MPI ${n}
-               OMP ${t}
-               ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+                MPI ${n}
+                OMP ${t}
+                ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
             )
             list( APPEND checksums ${test_name}.checksum )
             list( APPEND case_tests ${test_name} )
         endforeach()
     endforeach()
     add_test(
-        NAME atlas_atest_mgrids_${gridA}_to_${gridB}_BitReproducible
+        NAME atlas_atest_${category}_mgrids_${gridA}_to_${gridB}_BitReproducible
         COMMAND ${CMAKE_COMMAND}
         "-DFILES=${checksums}" -P ${CMAKE_CURRENT_SOURCE_DIR}/compare.cmake
     )
     foreach( dep ${case_tests} )
-        set_tests_properties( atlas_atest_mgrids_${gridA}_to_${gridB}_BitReproducible PROPERTIES DEPENDS ${dep} )
+        set_tests_properties( atlas_atest_${category}_mgrids_${gridA}_to_${gridB}_BitReproducible PROPERTIES DEPENDS ${dep} )
     endforeach()
 endfunction()
 
@@ -99,4 +93,3 @@ endif()
 
 endif()
 
-endif()

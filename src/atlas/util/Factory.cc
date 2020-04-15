@@ -48,16 +48,18 @@ void FactoryRegistry::add( const std::string& builder, FactoryBase* factory ) {
     ATLAS_ASSERT( factories_.find( builder ) == factories_.end(), "Cannot find builder in factory" );
     factories_[builder] = factory;
 #ifdef DEBUG_FACTORY_REGISTRATION
-    std::cout << "Registered " << builder << " in " << factory_ << std::endl;
+    std::cout << "Registered " << builder << " (" << factory << ") in " << factory_ << std::endl << std::flush;
 #endif
 }
 
 void FactoryRegistry::remove( const std::string& builder ) {
     lock_guard lock( mutex_ );
-    factories_.erase( builder );
+    ATLAS_ASSERT( factories_.find( builder ) != factories_.end() );
 #ifdef DEBUG_FACTORY_REGISTRATION
-    std::cout << "Unregistered " << builder << " from " << factory_ << std::endl;
+    FactoryBase* factory = factories_[builder];
+    std::cout << "Unregistered " << builder << " (" << factory << ") from " << factory_ << std::endl << std::flush;
 #endif
+    factories_.erase( builder );
 }
 
 FactoryRegistry::FactoryRegistry( const std::string& factory ) : factory_( factory ) {
@@ -67,9 +69,10 @@ FactoryRegistry::FactoryRegistry( const std::string& factory ) : factory_( facto
 }
 
 FactoryRegistry::~FactoryRegistry() {
-    while ( not factories_.empty() ) {
-        delete factories_.begin()->second;  // will remove itself from registry in its destructor
-    }
+    ATLAS_ASSERT( factories_.empty(), "Registry should only be destroyed once all builders have been unregistrered" );
+#ifdef DEBUG_FACTORY_REGISTRATION
+    std::cout << "Destroyed " << factory_ << std::endl << std::flush;
+#endif
 }
 
 std::vector<std::string> FactoryRegistry::keys() const {
@@ -95,8 +98,7 @@ void FactoryRegistry::list( std::ostream& out ) const {
 //----------------------------------------------------------------------------------------------------------------------
 
 FactoryBase::FactoryBase( FactoryRegistry& registry, const std::string& builder ) :
-    registry_( registry ),
-    builder_( builder ) {
+    registry_( registry ), builder_( builder ) {
     if ( not builder_.empty() ) {
         registry_.add( builder, this );
     }

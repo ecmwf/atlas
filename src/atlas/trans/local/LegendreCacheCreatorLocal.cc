@@ -10,6 +10,7 @@
 
 #include "atlas/trans/local/LegendreCacheCreatorLocal.h"
 
+#include <cmath>
 #include <sstream>
 #include <string>
 
@@ -38,9 +39,12 @@ std::string truncate( const std::string& str ) {
 
 std::string hash( const Grid& grid ) {
     eckit::MD5 h;
-    if ( StructuredGrid( grid ) && not grid.projection() ) {
-        auto g = StructuredGrid( grid );
-        h.add( g.y().data(), g.y().size() * sizeof( double ) );
+
+    StructuredGrid structured( grid );
+    if ( structured && not grid.projection() ) {
+        for ( auto& y : structured.y() ) {
+            h.add( std::lround( y * 1.e8 ) );
+        }
     }
     else {
         grid.hash( h );
@@ -68,7 +72,10 @@ std::string LegendreCacheCreatorLocal::uid() const {
         };
         stream << "local-T" << truncation_ << "-";
         StructuredGrid structured( grid_ );
-        if ( GaussianGrid( grid_ ) ) {
+        if ( grid_.projection() ) {
+            give_up();
+        }
+        else if ( GaussianGrid( grid_ ) ) {
             // Same cache for any global Gaussian grid
             stream << "GaussianN" << GaussianGrid( grid_ ).N();
         }
@@ -94,7 +101,7 @@ std::string LegendreCacheCreatorLocal::uid() const {
                 give_up();
             }
         }
-        else if ( RegularGrid( grid_ ) && not grid_.projection() && structured.yspace().type() == "linear" ) {
+        else if ( RegularGrid( grid_ ) && structured.yspace().type() == "linear" ) {
             RectangularDomain domain( grid_.domain() );
             ATLAS_ASSERT( domain );
             stream << "Regional";
@@ -111,13 +118,11 @@ std::string LegendreCacheCreatorLocal::uid() const {
     return unique_identifier_;
 }
 
-LegendreCacheCreatorLocal::~LegendreCacheCreatorLocal() {}
+LegendreCacheCreatorLocal::~LegendreCacheCreatorLocal() = default;
 
 LegendreCacheCreatorLocal::LegendreCacheCreatorLocal( const Grid& grid, int truncation,
                                                       const eckit::Configuration& config ) :
-    grid_( grid ),
-    truncation_( truncation ),
-    config_( config ) {}
+    grid_( grid ), truncation_( truncation ), config_( config ) {}
 
 bool LegendreCacheCreatorLocal::supported() const {
     if ( not StructuredGrid( grid_ ) ) {

@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file   BuildParallelFields.h
 /// @author Willem Deconinck
 /// @date   June 2014
 
@@ -35,7 +36,7 @@ void build_parallel_fields( Mesh& mesh );
 /*
  * Build parallel fields for the "nodes" function space if they don't exist.
  * - glb_idx:    create unique indices for non-positive values
- * - partition:  set to mpi::comm().rank() for negative values
+ * - partition:  set to mpi::rank() for negative values
  * - remote_idx: rebuild from scratch
  */
 void build_nodes_parallel_fields( mesh::Nodes& nodes );
@@ -53,6 +54,8 @@ void build_nodes_parallel_fields( mesh::Nodes& nodes );
  * instead of 1!!!
  */
 void build_edges_parallel_fields( Mesh& mesh );
+
+void build_cells_parallel_fields( Mesh& mesh );
 
 void renumber_nodes_glb_idx( mesh::Nodes& nodes );
 

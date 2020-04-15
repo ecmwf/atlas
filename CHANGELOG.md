@@ -7,11 +7,61 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.20.1] - 2019-04-08
+### Fixed
+- Make feature BOUNDSCHECKING work again. It was not turned on for DEBUG builds
+- Workaround clang OpenMP bug
+- Fix Segfault due to unexpected order of destruction of singleton objects
+
+### Added
+- atlas-grids tool can now be used to compute approximate North-South grid resolution
+
+## [0.20.0] - 2019-03-06
+### Fixed
+- Pole edges hould not be created for global regular grids with points at poles
+- Update compatibility with more recent GridTools 
+- HaloExchange with CUDA
+- Self registration from external library
+
+### Added
+- Proj-based projections
+- OpenMP functions for sorting, filling, copying
+- Parallel structured grid interpolation
+
+### Changed
+- Grid iterators can have random access
+- Speed improvements for StructuredColumns constructor
+- Speed improvements for LonLatPolygon::contains()
+- Port to ecbuild 3 (also minimum required version)
+- Tidying up of atlas tools 
+
+## [0.19.2] - 2020-01-28
+### Changed
+- Compatibility with eckit 1.7 due to API change in eckit::LocalConfiguration
+
+## [0.19.1] - 2019-12-19
+### Fixed
+- Keep Gaussian identity of a Gaussian grid if a given domain does not crop any latitudes
+- Fix naming for LegendreCache, to be more specific, and platform independent
+
+## [0.19.0] - 2019-10-01
+### Fixed
+- Lambert ( conformal conic ) projection xy coordinates are now corrected
+
+### Changed
+- LambertProjection renamed to LambertConformalConic
+
+### Added
+- Reordering of nodes strategies (Hilbert curve, ReverseCuthillMckee)
+- Preliminary CellColumns functionspace with Gmsh IO; halos are not yet fully supported
+
+
 ## [0.18.1] - 2019-08-10
 ### Fixed
 - Match vertical structured interpolation to IFS
 - Fix in creating vertical dimension in StructuredColumns using interval
 - Fix in caching StructuredColumnsHaloExchange
+
 
 ## [0.18.0] - 2019-07-15
 ### Changed
@@ -27,6 +77,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 - Structured interpolation bugs
 - StructuredColumns bug with iSend
 - Memory corruption in Spectral functionspace with GT CUDA backend
+
 
 ## [0.17.2] - 2019-06-04
 ### Fixed
@@ -134,6 +185,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.20.1]: https://github.com/ecmwf/atlas/compare/0.20.0...0.20.1
+[0.20.0]: https://github.com/ecmwf/atlas/compare/0.20.0...0.19.2
+[0.19.2]: https://github.com/ecmwf/atlas/compare/0.19.1...0.19.2
+[0.19.1]: https://github.com/ecmwf/atlas/compare/0.19.0...0.19.1
+[0.19.0]: https://github.com/ecmwf/atlas/compare/0.18.1...0.19.0
 [0.18.1]: https://github.com/ecmwf/atlas/compare/0.18.0...0.18.1
 [0.18.0]: https://github.com/ecmwf/atlas/compare/0.17.2...0.18.0
 [0.17.2]: https://github.com/ecmwf/atlas/compare/0.17.1...0.17.2

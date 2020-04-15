@@ -8,8 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+/// @file   GaussianLatitudes.cc
 /// @author Willem Deconinck
-/// @date Jan 2014
+/// @date   Jan 2014
 
 #include "atlas/util/GaussianLatitudes.h"
 #include "atlas/grid/detail/spacing/gaussian/Latitudes.h"

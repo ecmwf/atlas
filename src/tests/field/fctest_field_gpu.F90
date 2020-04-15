@@ -46,7 +46,7 @@ TESTSUITE_WITH_FIXTURE(fcta_Field_gpu,fcta_Field_gpu_fxt)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-  call atlas_init()
+  call atlas_initialize()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
@@ -74,7 +74,7 @@ field = atlas_Field(kind=atlas_real(4),shape=[5,3])
 call field%data(view)
 view(:,:) = 0
 view(1,1) = 1
-call field%clone_to_device()
+call field%update_device()
 
 !$acc data present(view)
 !$acc kernels
@@ -83,12 +83,12 @@ view(1,1) = 2.
 !$acc end data
 
 FCTEST_CHECK_EQUAL( view(1,1), 1. )
-call field%clone_from_device()
+call field%update_host()
 FCTEST_CHECK_EQUAL( view(1,1), 2. )
 
 view(1,1) = 3.
 
-call field%clone_to_device()
+call field%update_device()
 
 write(0,*) "Calling module_acc_routine ..."
 call module_acc_routine(view)
@@ -99,7 +99,7 @@ call external_acc_routine(view)
 write(0,*) "Calling external_acc_routine ... done"
 
 FCTEST_CHECK_EQUAL( view(1,1), 3. )
-call field%clone_from_device()
+call field%update_host()
 FCTEST_CHECK_EQUAL( view(1,1), 4. )
 
 call field%final()

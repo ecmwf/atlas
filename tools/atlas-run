@@ -34,6 +34,7 @@ command_exists() {
 }
 
 if [ -n "${ATLAS_RUN_NTHREADS}" ]; then
+  echo + export OMP_NUM_THREADS=${ATLAS_RUN_NTHREADS}
   export OMP_NUM_THREADS=${ATLAS_RUN_NTHREADS}
 fi
 

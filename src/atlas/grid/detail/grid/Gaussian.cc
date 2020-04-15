@@ -76,14 +76,14 @@ static StructuredGrid::XSpace xspace( const std::vector<idx_t>& nx ) {
 
 static class classic_gaussian : public GridBuilder {
 public:
-    classic_gaussian() : GridBuilder( "classic_gaussian", {"^[Nn]([0-9]+)$"} ) {}
+    classic_gaussian() : GridBuilder( "classic_gaussian", {"^[Nn]([0-9]+)$"}, {"N<gauss>"} ) {}
 
-    virtual void print( std::ostream& os ) const {
+    void print( std::ostream& os ) const override {
         os << std::left << std::setw( 20 ) << "N<gauss>"
            << "Classic Gaussian grid";
     }
 
-    virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
+    const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
         int id;
         std::vector<std::string> matches;
         if ( match( name, matches, id ) ) {
@@ -96,7 +96,7 @@ public:
         return nullptr;
     }
 
-    virtual const Grid::Implementation* create( const Grid::Config& config ) const {
+    const Grid::Implementation* create( const Grid::Config& config ) const override {
         long N;
         config.get( "N", N );
         std::vector<idx_t> nx( 2 * N );
@@ -113,14 +113,14 @@ public:
 
 static class octahedral_gaussian : GridBuilder {
 public:
-    octahedral_gaussian() : GridBuilder( "octahedral_gaussian", {"^[Oo]([0-9]+)$"} ) {}
+    octahedral_gaussian() : GridBuilder( "octahedral_gaussian", {"^[Oo]([0-9]+)$"}, {"O<gauss>"} ) {}
 
-    virtual void print( std::ostream& os ) const {
+    void print( std::ostream& os ) const override {
         os << std::left << std::setw( 20 ) << "O<gauss>"
            << "Octahedral Gaussian grid";
     }
 
-    virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
+    const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
         int id;
         std::vector<std::string> matches;
         if ( match( name, matches, id ) ) {
@@ -133,7 +133,7 @@ public:
         return nullptr;
     }
 
-    virtual const Grid::Implementation* create( const Grid::Config& config ) const {
+    const Grid::Implementation* create( const Grid::Config& config ) const override {
         long N;
         config.get( "N", N );
 
@@ -157,14 +157,14 @@ public:
 
 static class regular_gaussian : GridBuilder {
 public:
-    regular_gaussian() : GridBuilder( "regular_gaussian", {"^[Ff]([0-9]+)$"} ) {}
+    regular_gaussian() : GridBuilder( "regular_gaussian", {"^[Ff]([0-9]+)$"}, {"F<gauss>"} ) {}
 
-    virtual void print( std::ostream& os ) const {
+    void print( std::ostream& os ) const override {
         os << std::left << std::setw( 20 ) << "F<gauss>"
            << "Regular Gaussian grid";
     }
 
-    virtual const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const {
+    const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
         int id;
         std::vector<std::string> matches;
         if ( match( name, matches, id ) ) {
@@ -177,7 +177,7 @@ public:
         return nullptr;
     }
 
-    virtual const Grid::Implementation* create( const Grid::Config& config ) const {
+    const Grid::Implementation* create( const Grid::Config& config ) const override {
         long N;
         config.get( "N", N );
         std::vector<idx_t> nx( 2 * N, 4 * N );

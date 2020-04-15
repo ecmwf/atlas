@@ -80,6 +80,8 @@ use atlas_functionspace_EdgeColumns_module, only: &
     & atlas_functionspace_EdgeColumns
 use atlas_functionspace_NodeColumns_module, only: &
     & atlas_functionspace_NodeColumns
+use atlas_functionspace_PointCloud_module, only: &
+    & atlas_functionspace_PointCloud
 use atlas_functionspace_StructuredColumns_module, only: &
     & atlas_functionspace_StructuredColumns
 use atlas_functionspace_Spectral_module, only: &
@@ -137,7 +139,9 @@ end ENUM
 type, private :: atlas_Library_type
 contains
   procedure, public, nopass :: initialise => atlas_init
-  procedure, public, nopass :: finalise   => atlas_finalise
+  procedure, public, nopass :: finalise   => atlas_final
+  procedure, public, nopass :: initialize => atlas_init
+  procedure, public, nopass :: finalize   => atlas_final
   procedure, public, nopass :: version    => atlas_version
   procedure, public, nopass :: gitsha1    => atlas_git_sha1_abbrev
 end type
@@ -151,6 +155,23 @@ type(atlas_library_type), public :: atlas_library
   end type
 
 type(eckit_library_type), public :: eckit_library
+
+
+interface atlas_initialize
+    module procedure atlas_init
+end interface
+
+interface atlas_initialise
+    module procedure atlas_init
+end interface
+
+interface atlas_finalize
+    module procedure atlas_final
+end interface
+
+interface atlas_finalise
+    module procedure atlas_final
+end interface
 
 ! =============================================================================
 CONTAINS
@@ -189,7 +210,7 @@ end subroutine
 
 
 
-subroutine atlas_finalise()
+subroutine atlas_final()
   use fckit_c_interop_module
   use atlas_library_c_binding
   call atlas__atlas_finalize()

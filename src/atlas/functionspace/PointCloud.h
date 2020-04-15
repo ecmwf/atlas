@@ -14,6 +14,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
+#include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -25,7 +26,7 @@ namespace functionspace {
 
 namespace detail {
 
-class PointCloud : public FunctionSpaceImpl {
+class PointCloud : public functionspace::FunctionSpaceImpl {
 public:
     PointCloud( const std::vector<PointXY>& );
     PointCloud( PointXY, const std::vector<PointXY>& );
@@ -43,7 +44,6 @@ public:
     const Field& ghost() const;
     virtual idx_t size() const override { return lonlat_.shape( 0 ); }
 
-    /// @brief Create a spectral field
     using FunctionSpaceImpl::createField;
     virtual Field createField( const eckit::Configuration& ) const override;
     virtual Field createField( const Field&, const eckit::Configuration& ) const override;
@@ -70,8 +70,8 @@ public:
 
     private:
         const PointCloud& fs_;
-        const array::ArrayView<double, 2> xy_;
-        const array::ArrayView<double, 1> z_;
+        const array::ArrayView<const double, 2> xy_;
+        const array::ArrayView<const double, 1> z_;
         idx_t n_;
     };
 
@@ -111,7 +111,7 @@ public:
 
     private:
         const PointCloud& fs_;
-        const array::ArrayView<double, 2> xy_;
+        const array::ArrayView<const double, 2> xy_;
         idx_t n_;
     };
 
@@ -146,6 +146,7 @@ private:
     Field lonlat_;
     Field vertical_;
     mutable Field ghost_;
+    idx_t levels_{0};
 };
 
 //------------------------------------------------------------------------------------------------------

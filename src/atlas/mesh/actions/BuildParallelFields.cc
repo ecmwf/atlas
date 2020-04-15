@@ -73,7 +73,7 @@ Field& build_edges_global_idx( Mesh& mesh );
 
 //----------------------------------------------------------------------------------------------------------------------
 
-typedef gidx_t uid_t;
+using uid_t = gidx_t;
 
 namespace {
 
@@ -158,8 +158,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes ) {
 
     UniqueLonLat compute_uid( nodes );
 
-    // unused // int mypart = mpi::comm().rank();
-    int nparts = mpi::comm().size();
+    // unused // int mypart = mpi::rank();
+    int nparts = mpi::size();
     idx_t root = 0;
 
     array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
@@ -185,8 +185,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes ) {
         loc_id( jnode ) = glb_idx( jnode );
     }
 
-    std::vector<int> recvcounts( mpi::comm().size() );
-    std::vector<int> recvdispls( mpi::comm().size() );
+    std::vector<int> recvcounts( mpi::size() );
+    std::vector<int> recvdispls( mpi::size() );
 
     ATLAS_TRACE_MPI( GATHER ) { mpi::comm().gather( nb_nodes, recvcounts, root ); }
 
@@ -208,7 +208,7 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes ) {
     node_sort.reserve( glb_nb_nodes );
     ATLAS_TRACE_SCOPE( "sort global indices" ) {
         for ( idx_t jnode = 0; jnode < glb_id.shape( 0 ); ++jnode ) {
-            node_sort.push_back( Node( glb_id( jnode ), jnode ) );
+            node_sort.emplace_back( glb_id( jnode ), jnode );
         }
         std::sort( node_sort.begin(), node_sort.end() );
     }
@@ -242,8 +242,8 @@ void renumber_nodes_glb_idx( mesh::Nodes& nodes ) {
 
 Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
     ATLAS_TRACE();
-    idx_t mypart = static_cast<idx_t>( mpi::comm().rank() );
-    idx_t nparts = static_cast<idx_t>( mpi::comm().size() );
+    idx_t mypart = static_cast<idx_t>( mpi::rank() );
+    idx_t nparts = static_cast<idx_t>( mpi::size() );
 
     UniqueLonLat compute_uid( nodes );
 
@@ -261,8 +261,8 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
 
     idx_t varsize = 2;
 
-    std::vector<std::vector<uid_t>> send_needed( mpi::comm().size() );
-    std::vector<std::vector<uid_t>> recv_needed( mpi::comm().size() );
+    std::vector<std::vector<uid_t>> send_needed( mpi::size() );
+    std::vector<std::vector<uid_t>> recv_needed( mpi::size() );
     int sendcnt = 0;
     std::map<uid_t, int> lookup;
     for ( idx_t jnode = 0; jnode < nb_nodes; ++jnode ) {
@@ -291,8 +291,8 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
 
     ATLAS_TRACE_MPI( ALLTOALL ) { mpi::comm().allToAll( send_needed, recv_needed ); }
 
-    std::vector<std::vector<int>> send_found( mpi::comm().size() );
-    std::vector<std::vector<int>> recv_found( mpi::comm().size() );
+    std::vector<std::vector<int>> send_found( mpi::size() );
+    std::vector<std::vector<int>> recv_found( mpi::size() );
 
     for ( idx_t jpart = 0; jpart < nparts; ++jpart ) {
         const std::vector<uid_t>& recv_node = recv_needed[proc[jpart]];
@@ -310,7 +310,7 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
             }
             else {
                 std::stringstream msg;
-                msg << "[" << mpi::comm().rank() << "] "
+                msg << "[" << mpi::rank() << "] "
                     << "Node requested by rank [" << jpart << "] with uid [" << uid
                     << "] that should be owned is not found";
                 throw_Exception( msg.str(), Here() );
@@ -346,7 +346,7 @@ Field& build_edges_partition( Mesh& mesh ) {
 
     const mesh::Nodes& nodes = mesh.nodes();
 
-    idx_t mypart = static_cast<idx_t>( mpi::comm().rank() );
+    idx_t mypart = mpi::rank();
 
     mesh::HybridElements& edges = mesh.edges();
     auto edge_part              = array::make_view<int, 1>( edges.partition() );
@@ -533,7 +533,7 @@ Field& build_edges_partition( Mesh& mesh ) {
 
             if ( p != elem_part( elem1 ) and p != elem_part( elem2 ) ) {
                 std::stringstream msg;
-                msg << "[" << eckit::mpi::comm().rank() << "] " << EDGE( jedge )
+                msg << "[" << mpi::rank() << "] " << EDGE( jedge )
                     << " has nodes and elements of different rank: elem1[p" << elem_part( elem1 ) << "] elem2[p"
                     << elem_part( elem2 ) << "]";
                 throw_Exception( msg.str(), Here() );
@@ -548,7 +548,7 @@ Field& build_edges_partition( Mesh& mesh ) {
         return found;
     };
 
-    int mpi_size = eckit::mpi::comm().size();
+    int mpi_size = mpi::size();
     mpi::Buffer<gidx_t, 1> recv_bdry_edges_from_parts( mpi_size );
     std::vector<std::vector<gidx_t>> send_gidx( mpi_size );
     std::vector<std::vector<int>> send_part( mpi_size );
@@ -641,7 +641,7 @@ Field& build_edges_partition( Mesh& mesh ) {
                     ped = ( ped == pn1 ) ? pn2 : pn1;
                     if ( ped != pe1 && p != pe2 ) {
                         std::stringstream msg;
-                        msg << "[" << eckit::mpi::comm().rank() << "] " << EDGE( iedge )
+                        msg << "[" << mpi::rank() << "] " << EDGE( iedge )
                             << " has nodes and elements of different rank: elem1[p" << pe1 << "] elem2[p" << pe2 << "]";
                         throw_Exception( msg.str(), Here() );
                     }
@@ -709,7 +709,7 @@ Field& build_edges_partition( Mesh& mesh ) {
         }
     }
     mpi::comm().allReduceInPlace( insane, eckit::mpi::max() );
-    if ( insane && eckit::mpi::comm().rank() == 0 ) {
+    if ( insane && mpi::rank() == 0 ) {
         throw_Exception( "Sanity check failed", Here() );
     }
 
@@ -733,8 +733,8 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
     const mesh::Nodes& nodes = mesh.nodes();
     UniqueLonLat compute_uid( mesh );
 
-    idx_t mypart = mpi::comm().rank();
-    idx_t nparts = mpi::comm().size();
+    idx_t mypart = mpi::rank();
+    idx_t nparts = mpi::size();
 
     mesh::HybridElements& edges = mesh.edges();
 
@@ -743,8 +743,8 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
     const array::ArrayView<int, 1> edge_part             = array::make_view<int, 1>( edges.partition() );
     const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
 
-    array::ArrayView<double, 2> xy = array::make_view<double, 2>( nodes.xy() );
-    array::ArrayView<int, 1> flags = array::make_view<int, 1>( nodes.flags() );
+    array::ArrayView<const double, 2> xy = array::make_view<double, 2>( nodes.xy() );
+    array::ArrayView<const int, 1> flags = array::make_view<int, 1>( nodes.flags() );
 #ifdef DEBUGGING_PARFIELDS
     array::ArrayView<gidx_t, 1> node_gidx = array::make_view<gidx_t, 1>( nodes.global_index() );
     array::ArrayView<int, 1> node_part    = array::make_view<int, 1>( nodes.partition() );
@@ -758,8 +758,8 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
     const int nb_edges = edges.size();
 
     double centroid[2];
-    std::vector<std::vector<uid_t>> send_needed( mpi::comm().size() );
-    std::vector<std::vector<uid_t>> recv_needed( mpi::comm().size() );
+    std::vector<std::vector<uid_t>> send_needed( mpi::size() );
+    std::vector<std::vector<uid_t>> recv_needed( mpi::size() );
     int sendcnt = 0;
     std::map<uid_t, int> lookup;
 
@@ -829,8 +829,8 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
 
     ATLAS_TRACE_MPI( ALLTOALL ) { mpi::comm().allToAll( send_needed, recv_needed ); }
 
-    std::vector<std::vector<int>> send_found( mpi::comm().size() );
-    std::vector<std::vector<int>> recv_found( mpi::comm().size() );
+    std::vector<std::vector<int>> send_found( mpi::size() );
+    std::vector<std::vector<int>> recv_found( mpi::size() );
 
     std::map<uid_t, int>::iterator found;
     for ( idx_t jpart = 0; jpart < nparts; ++jpart ) {
@@ -855,7 +855,7 @@ Field& build_edges_remote_idx( Mesh& mesh ) {
                 msg << "Edge with uid " << recv_uid;
 #endif
                 msg << " requested by rank [" << jpart << "]";
-                msg << " that should be owned by " << mpi::comm().rank()
+                msg << " that should be owned by " << mpi::rank()
                     << " is not found. This could be because no "
                        "halo was built.";
                 // throw_Exception(msg.str(),Here());
@@ -883,7 +883,7 @@ Field& build_edges_global_idx( Mesh& mesh ) {
 
     UniqueLonLat compute_uid( mesh );
 
-    int nparts = mpi::comm().size();
+    int nparts = mpi::size();
     idx_t root = 0;
 
     mesh::HybridElements& edges = mesh.edges();
@@ -929,8 +929,8 @@ Field& build_edges_global_idx( Mesh& mesh ) {
         loc_edge_id( jedge ) = edge_gidx( jedge );
     }
 
-    std::vector<int> recvcounts( mpi::comm().size() );
-    std::vector<int> recvdispls( mpi::comm().size() );
+    std::vector<int> recvcounts( mpi::size() );
+    std::vector<int> recvdispls( mpi::size() );
 
     ATLAS_TRACE_MPI( GATHER ) { mpi::comm().gather( nb_edges, recvcounts, root ); }
 
@@ -981,6 +981,105 @@ Field& build_edges_global_idx( Mesh& mesh ) {
     }
 
     return edges.global_index();
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+Field& build_cells_remote_idx( mesh::Cells& cells, const mesh::Nodes& nodes ) {
+    ATLAS_TRACE();
+    idx_t mypart = static_cast<idx_t>( mpi::rank() );
+    idx_t nparts = static_cast<idx_t>( mpi::size() );
+
+    UniqueLonLat compute_uid( nodes );
+
+    // This piece should be somewhere central ... could be NPROMA ?
+    // ---------->
+    std::vector<idx_t> proc( nparts );
+    for ( idx_t jpart = 0; jpart < nparts; ++jpart ) {
+        proc[jpart] = jpart;
+    }
+    // <---------
+
+    auto ridx                 = array::make_indexview<idx_t, 1>( cells.remote_index() );
+    auto part                 = array::make_view<int, 1>( cells.partition() );
+    const auto& element_nodes = cells.node_connectivity();
+    idx_t nb_cells            = cells.size();
+
+    idx_t varsize = 2;
+
+    std::vector<std::vector<uid_t>> send_needed( mpi::size() );
+    std::vector<std::vector<uid_t>> recv_needed( mpi::size() );
+    int sendcnt = 0;
+    std::map<uid_t, int> lookup;
+    for ( idx_t jcell = 0; jcell < nb_cells; ++jcell ) {
+        uid_t uid = compute_uid( element_nodes.row( jcell ) );
+
+        if ( idx_t( part( jcell ) ) == mypart ) {
+            lookup[uid]   = jcell;
+            ridx( jcell ) = jcell;
+        }
+        else {
+            ATLAS_ASSERT( jcell < part.shape( 0 ) );
+            if ( part( jcell ) >= static_cast<int>( proc.size() ) ) {
+                std::stringstream msg;
+                msg << "Assertion [part(" << jcell << ") < proc.size()] failed\n"
+                    << "part(" << jcell << ") = " << part( jcell ) << "\n"
+                    << "proc.size() = " << proc.size();
+                throw_AssertionFailed( msg.str(), Here() );
+            }
+            ATLAS_ASSERT( part( jcell ) < (idx_t)proc.size() );
+            ATLAS_ASSERT( (size_t)proc[part( jcell )] < send_needed.size() );
+            send_needed[proc[part( jcell )]].push_back( uid );
+            send_needed[proc[part( jcell )]].push_back( jcell );
+            sendcnt++;
+        }
+    }
+
+    ATLAS_TRACE_MPI( ALLTOALL ) { mpi::comm().allToAll( send_needed, recv_needed ); }
+
+    std::vector<std::vector<int>> send_found( mpi::size() );
+    std::vector<std::vector<int>> recv_found( mpi::size() );
+
+    for ( idx_t jpart = 0; jpart < nparts; ++jpart ) {
+        const std::vector<uid_t>& recv_cell = recv_needed[proc[jpart]];
+        const idx_t nb_recv_cells           = idx_t( recv_cell.size() ) / varsize;
+        // array::ArrayView<uid_t,2> recv_node( make_view( Array::wrap(shape,
+        // recv_needed[ proc[jpart] ].data()) ),
+        //     array::make_shape(recv_needed[ proc[jpart] ].size()/varsize,varsize)
+        //     );
+        for ( idx_t jcell = 0; jcell < nb_recv_cells; ++jcell ) {
+            uid_t uid = recv_cell[jcell * varsize + 0];
+            int icell = recv_cell[jcell * varsize + 1];
+            if ( lookup.count( uid ) ) {
+                send_found[proc[jpart]].push_back( icell );
+                send_found[proc[jpart]].push_back( lookup[uid] );
+            }
+            else {
+                std::stringstream msg;
+                msg << "[" << mpi::rank() << "] "
+                    << "Node requested by rank [" << jpart << "] with uid [" << uid
+                    << "] that should be owned is not found";
+                throw_Exception( msg.str(), Here() );
+            }
+        }
+    }
+
+    ATLAS_TRACE_MPI( ALLTOALL ) { mpi::comm().allToAll( send_found, recv_found ); }
+
+    for ( idx_t jpart = 0; jpart < nparts; ++jpart ) {
+        const std::vector<int>& recv_cell = recv_found[proc[jpart]];
+        const idx_t nb_recv_cells         = recv_cell.size() / 2;
+        // array::ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
+        //     array::make_shape(recv_found[ proc[jpart] ].size()/2,2) );
+        for ( idx_t jcell = 0; jcell < nb_recv_cells; ++jcell ) {
+            ridx( recv_cell[jcell * 2 + 0] ) = recv_cell[jcell * 2 + 1];
+        }
+    }
+    return cells.remote_index();
+}
+
+void build_cells_parallel_fields( Mesh& mesh ) {
+    build_cells_remote_idx( mesh.cells(), mesh.nodes() );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

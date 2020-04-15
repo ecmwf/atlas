@@ -2,24 +2,24 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/field.h"
 #include "atlas/grid.h"
-#include "atlas/library/Library.h"
+#include "atlas/library.h"
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/Log.h"
 
 using namespace atlas;
+using atlas::gidx_t;
+using atlas::idx_t;
+using atlas::StructuredGrid;
 using atlas::StructuredMeshGenerator;
 using atlas::array::make_shape;
 using atlas::array::make_view;
 using atlas::functionspace::NodeColumns;
-using atlas::gidx_t;
-using atlas::idx_t;
-using atlas::StructuredGrid;
 using atlas::output::Gmsh;
 
 int main( int argc, char* argv[] ) {
-    atlas::Library::instance().initialise( argc, argv );
+    atlas::initialise( argc, argv );
 
     // Generate global classic reduced Gaussian grid
     StructuredGrid grid( "N32" );
@@ -60,15 +60,17 @@ int main( int argc, char* argv[] ) {
     auto scalar1 = make_view<double, 1>( field_scalar1 );
     auto lonlat  = make_view<double, 2>( mesh.nodes().lonlat() );
     for ( size_t jnode = 0; jnode < nb_nodes; ++jnode ) {
-        zlon = lonlat( jnode, 0 ) * deg2rad;
-        zlat = lonlat( jnode, 1 ) * deg2rad;
+        zlon = lonlat( jnode, size_t( 0 ) ) * deg2rad;
+        zlat = lonlat( jnode, size_t( 1 ) ) * deg2rad;
 
         zdist =
             2.0 * sqrt( ( cos( zlat ) * sin( ( zlon - zlonc ) / 2 ) ) * ( cos( zlat ) * sin( ( zlon - zlonc ) / 2 ) ) +
                         sin( ( zlat - zlatc ) / 2 ) * sin( ( zlat - zlatc ) / 2 ) );
 
         scalar1( jnode ) = 0.0;
-        if ( zdist < zrad ) { scalar1( jnode ) = 0.5 * ( 1. + cos( rpi * zdist / zrad ) ); }
+        if ( zdist < zrad ) {
+            scalar1( jnode ) = 0.5 * ( 1. + cos( rpi * zdist / zrad ) );
+        }
     }
 
     // Write mesh and field in gmsh format for visualization
@@ -145,7 +147,8 @@ int main( int argc, char* argv[] ) {
                 << "std_deviation: " << stddev << ",  "
                 << "nb_nodes: " << N << std::endl;
 
-    atlas::Library::instance().finalise();
+    atlas::finalise();
+    atlas::mpi::finalize();
 
     return 0;
 }

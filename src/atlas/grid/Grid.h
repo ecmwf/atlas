@@ -43,7 +43,25 @@ namespace atlas {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class Grid : public util::ObjectHandle<grid::detail::grid::Grid> {
+/// @class Grid
+/// @brief Most general grid container
+/// @details
+/// @code{.sh}
+///                                    Grid
+///                                      |
+///                           +----------+----------+
+///                           |                     |
+///                    StructuredGrid        UnstructuredGrid
+///                           |
+///      +--------------------+-----------------------+
+///      |                    |                       |
+/// ReducedGrid          GaussianGrid            RegularGrid
+///      |                 |     |                 |     |
+///      +--------+--------+     +--------+--------+     +-----+
+///               |                       |                    |
+///      ReducedGaussianGrid     RegularGaussianGrid    RegularLonLatGrid
+/// @endcode
+class Grid : DOXYGEN_HIDE( public util::ObjectHandle<grid::detail::grid::Grid> ) {
 public:
     using Config        = util::Config;
     using Spec          = util::Config;
@@ -53,10 +71,8 @@ public:
     using PointLonLat   = atlas::PointLonLat;  // must be sizeof(double)*2
     using IterateXY     = grid::IterateXY;
     using IterateLonLat = grid::IterateLonLat;
-    using Predicate     = std::function<bool( long )>;
 
 public:
-    IterateXY xy( Predicate p ) const;
     IterateXY xy() const;
     IterateLonLat lonlat() const;
 

@@ -12,6 +12,7 @@
 
 #include <iosfwd>
 
+#include "atlas/library/config.h"
 #include "atlas/mesh/detail/MeshImpl.h"
 #include "atlas/util/ObjectHandle.h"
 
@@ -25,7 +26,8 @@ class Projection;
 namespace atlas {
 namespace util {
 class Metadata;
-}
+class PartitionPolygons;
+}  // namespace util
 }  // namespace atlas
 
 namespace atlas {
@@ -49,7 +51,7 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Mesh : public util::ObjectHandle<mesh::detail::MeshImpl> {
+class Mesh : DOXYGEN_HIDE( public util::ObjectHandle<mesh::detail::MeshImpl> ) {
 public:
     using Nodes          = mesh::Nodes;
     using Cells          = mesh::Cells;
@@ -57,6 +59,7 @@ public:
     using HybridElements = mesh::HybridElements;
     using PartitionGraph = mesh::detail::PartitionGraph;
     using Polygon        = mesh::PartitionPolygon;
+    using Polygons       = util::PartitionPolygons;
 
 public:
     using Handle::Handle;
@@ -103,9 +106,9 @@ public:
 
     idx_t nb_partitions() const { return get()->nb_partitions(); }
 
-    void cloneToDevice() const { get()->cloneToDevice(); }
+    void updateDevice() const { get()->updateDevice(); }
 
-    void cloneFromDevice() const { get()->cloneFromDevice(); }
+    void updateHost() const { get()->updateHost(); }
 
     void syncHostDevice() const { get()->syncHostDevice(); }
 
@@ -116,8 +119,9 @@ public:
     PartitionGraph::Neighbours nearestNeighbourPartitions() const { return get()->nearestNeighbourPartitions(); }
 
     const Polygon& polygon( idx_t halo = 0 ) const { return get()->polygon( halo ); }
+    const Polygons& polygons() const { return get()->polygons(); }
 
-    const Grid& grid() const { return get()->grid(); }
+    const Grid grid() const { return get()->grid(); }
 
 private:  // methods
     friend std::ostream& operator<<( std::ostream& s, const Mesh& p ) {

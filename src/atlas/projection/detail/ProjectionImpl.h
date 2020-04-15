@@ -49,8 +49,12 @@ public:
     virtual void xy2lonlat( double crd[] ) const = 0;
     virtual void lonlat2xy( double crd[] ) const = 0;
 
+    void xy2lonlat( Point2& ) const;
+    void lonlat2xy( Point2& ) const;
+
     PointLonLat lonlat( const PointXY& ) const;
     PointXY xy( const PointLonLat& ) const;
+    virtual PointXYZ xyz( const PointLonLat& ) const;
 
     virtual bool strictlyRegional() const                                    = 0;
     virtual RectangularLonLatDomain lonlatBoundingBox( const Domain& ) const = 0;
@@ -111,6 +115,14 @@ public:
         virtual ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) = 0;
     };
 };
+
+inline void ProjectionImpl::xy2lonlat( Point2& point ) const {
+    xy2lonlat( point.data() );
+}
+
+inline void ProjectionImpl::lonlat2xy( Point2& point ) const {
+    lonlat2xy( point.data() );
+}
 
 inline PointLonLat ProjectionImpl::lonlat( const PointXY& xy ) const {
     PointLonLat lonlat( xy );

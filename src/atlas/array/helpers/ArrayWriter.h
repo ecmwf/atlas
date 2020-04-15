@@ -30,7 +30,7 @@ struct array_writer;
 template <typename Value, int Rank, int Dim>
 struct array_writer_impl {
     template <typename View, typename... DimIndex>
-    static void apply( View& arr, std::ostream& out, DimIndex... idxs ) {
+    static void apply( const View& arr, std::ostream& out, DimIndex... idxs ) {
         for ( idx_t i = 0; i < arr.shape( Dim ); ++i ) {
             array_writer_impl<Value, Rank, Dim + 1>::apply( arr, out, idxs..., i );
             if ( i < arr.shape( Dim ) - 1 )
@@ -43,7 +43,7 @@ struct array_writer_impl {
 template <typename Value, int Rank>
 struct array_writer_impl<Value, Rank, Rank> {
     template <typename View, typename... DimIndex>
-    static void apply( View& arr, std::ostream& out, DimIndex... idxs ) {
+    static void apply( const View& arr, std::ostream& out, DimIndex... idxs ) {
         out << arr( idxs... );
     }
 };
@@ -51,8 +51,8 @@ struct array_writer_impl<Value, Rank, Rank> {
 //------------------------------------------------------------------------------
 
 struct array_writer {
-    template <typename Value, int Rank, Intent AccessMode>
-    static void apply( const ArrayView<Value, Rank, AccessMode>& arr, std::ostream& out ) {
+    template <typename Value, int Rank>
+    static void apply( const ArrayView<Value, Rank>& arr, std::ostream& out ) {
         array_writer_impl<Value, Rank, 0u>::apply( arr, out );
         // Note: no need to apply variadic pack (idxs...)
     }

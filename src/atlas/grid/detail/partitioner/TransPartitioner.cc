@@ -42,14 +42,15 @@ TransPartitioner::TransPartitioner( const idx_t N ) : Partitioner( N ) {
     }
 }
 
-TransPartitioner::~TransPartitioner() {}
+TransPartitioner::~TransPartitioner() = default;
 
 void TransPartitioner::partition( const Grid& grid, int part[] ) const {
     ATLAS_TRACE( "TransPartitioner::partition" );
 
     StructuredGrid g( grid );
-    if ( not g )
+    if ( not g ) {
         throw_Exception( "Grid is not a grid::Structured type. Cannot partition using IFS trans", Here() );
+    }
 
     trans::TransIFS t( grid );
     if ( nb_partitions() != idx_t( t.nproc() ) ) {
@@ -91,8 +92,9 @@ void TransPartitioner::partition( const Grid& grid, int part[] ) const {
                 int igl = nptrfrstlat( ja ) + jgl - nfrstlat( ja );
                 for ( int jl = nsta( jb, igl ) - 1; jl < nsta( jb, igl ) + nonl( jb, igl ) - 1; ++jl ) {
                     idx_t ind = iglobal[jgl * nlonmax + jl] - 1;
-                    if ( ind >= grid.size() )
+                    if ( ind >= grid.size() ) {
                         throw_OutOfRange( "part", ind, grid.size(), Here() );
+                    }
                     part[ind] = iproc;
                 }
             }

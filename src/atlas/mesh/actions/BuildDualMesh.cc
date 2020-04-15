@@ -44,12 +44,12 @@ namespace {
 void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2] ) {
     ATLAS_TRACE();
 
-    array::ArrayView<double, 2> xy = array::make_view<double, 2>( nodes.xy() );
-    const int nb_nodes             = nodes.size();
-    min[XX]                        = std::numeric_limits<double>::max();
-    min[YY]                        = std::numeric_limits<double>::max();
-    max[XX]                        = -std::numeric_limits<double>::max();
-    max[YY]                        = -std::numeric_limits<double>::max();
+    auto xy            = array::make_view<double, 2>( nodes.xy() );
+    const int nb_nodes = nodes.size();
+    min[XX]            = std::numeric_limits<double>::max();
+    min[YY]            = std::numeric_limits<double>::max();
+    max[XX]            = -std::numeric_limits<double>::max();
+    max[YY]            = -std::numeric_limits<double>::max();
 
     for ( int node = 0; node < nb_nodes; ++node ) {
         min[XX] = std::min( min[XX], xy( node, XX ) );
@@ -65,7 +65,7 @@ void global_bounding_box( const mesh::Nodes& nodes, double min[2], double max[2]
 }
 
 struct Node {
-    Node() {}
+    Node() = default;
     Node( gidx_t gid, idx_t idx ) {
         g = gid;
         i = idx;
@@ -90,6 +90,12 @@ void make_dual_normals_outward( Mesh& mesh );
 
 void build_median_dual_mesh( Mesh& mesh ) {
     ATLAS_TRACE();
+    bool median_dual_mesh = false;
+    mesh.metadata().get( "median_dual_mesh", median_dual_mesh );
+    if ( median_dual_mesh ) {
+        return;
+    }
+    mesh.metadata().set( "median_dual_mesh", true );
 
     mesh::Nodes& nodes          = mesh.nodes();
     mesh::HybridElements& edges = mesh.edges();
@@ -104,8 +110,7 @@ void build_median_dual_mesh( Mesh& mesh ) {
         mesh.edges().add( Field( "centroids_xy", build_centroids_xy( mesh.edges(), mesh.nodes().xy() ) ) );
     }
 
-    array::ArrayView<double, 1, array::Intent::ReadWrite> v =
-        array::make_view<double, 1, array::Intent::ReadWrite>( dual_volumes );
+    array::ArrayView<double, 1> v = array::make_view<double, 1>( dual_volumes );
     v.assign( 0. );
     add_median_dual_volume_contribution_cells( mesh.cells(), mesh.edges(), mesh.nodes(), dual_volumes );
     add_median_dual_volume_contribution_poles( mesh.edges(), mesh.nodes(), dual_volumes );
@@ -134,7 +139,7 @@ void build_median_dual_mesh( Mesh& mesh ) {
 }
 
 array::Array* build_centroids_xy( const mesh::HybridElements& elements, const Field& field_xy ) {
-    const array::ArrayView<double, 2> xy  = array::make_view<double, 2>( field_xy );
+    auto xy                               = array::make_view<double, 2>( field_xy );
     array::Array* array_centroids         = array::Array::create<double>( array::make_shape( elements.size(), 2 ) );
     array::ArrayView<double, 2> centroids = array::make_view<double, 2>( *array_centroids );
     idx_t nb_elems                        = elements.size();
@@ -158,11 +163,11 @@ void add_median_dual_volume_contribution_cells( const mesh::HybridElements& cell
                                                 const mesh::Nodes& nodes, array::Array& array_dual_volumes ) {
     ATLAS_TRACE();
 
-    array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>( array_dual_volumes );
+    auto dual_volumes = array::make_view<double, 1>( array_dual_volumes );
 
-    const array::ArrayView<double, 2> xy             = array::make_view<double, 2>( nodes.xy() );
-    const array::ArrayView<double, 2> cell_centroids = array::make_view<double, 2>( cells.field( "centroids_xy" ) );
-    const array::ArrayView<double, 2> edge_centroids = array::make_view<double, 2>( edges.field( "centroids_xy" ) );
+    auto xy             = array::make_view<double, 2>( nodes.xy() );
+    auto cell_centroids = array::make_view<double, 2>( cells.field( "centroids_xy" ) );
+    auto edge_centroids = array::make_view<double, 2>( edges.field( "centroids_xy" ) );
     const mesh::HybridElements::Connectivity& cell_edge_connectivity = cells.edge_connectivity();
     const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
     auto field_flags                                                 = array::make_view<int, 1>( cells.flags() );
@@ -208,9 +213,9 @@ void add_median_dual_volume_contribution_poles( const mesh::HybridElements& edge
                                                 array::Array& array_dual_volumes ) {
     ATLAS_TRACE();
 
-    array::ArrayView<double, 1> dual_volumes         = array::make_view<double, 1>( array_dual_volumes );
-    const array::ArrayView<double, 2> xy             = array::make_view<double, 2>( nodes.xy() );
-    const array::ArrayView<double, 2> edge_centroids = array::make_view<double, 2>( edges.field( "centroids_xy" ) );
+    array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>( array_dual_volumes );
+    auto xy                                  = array::make_view<double, 2>( nodes.xy() );
+    auto edge_centroids                      = array::make_view<double, 2>( edges.field( "centroids_xy" ) );
     const mesh::HybridElements::Connectivity& edge_node_connectivity = edges.node_connectivity();
     const mesh::HybridElements::Connectivity& edge_cell_connectivity = edges.cell_connectivity();
 
@@ -381,7 +386,7 @@ void make_dual_normals_outward( Mesh& mesh ) {
 void build_brick_dual_mesh( const Grid& grid, Mesh& mesh ) {
     auto g = StructuredGrid( grid );
     if ( g ) {
-        if ( mpi::comm().size() != 1 ) {
+        if ( mpi::size() != 1 ) {
             throw_Exception( "Cannot build_brick_dual_mesh with more than 1 task", Here() );
         }
 

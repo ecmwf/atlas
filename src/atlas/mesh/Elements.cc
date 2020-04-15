@@ -29,9 +29,7 @@ void Elements::rebuild() {
 }
 
 Elements::Elements( HybridElements& elements, idx_t type_idx ) :
-    owns_( false ),
-    hybrid_elements_( &elements ),
-    type_idx_( type_idx ) {
+    owns_( false ), hybrid_elements_( &elements ), type_idx_( type_idx ) {
     rebuild();
 }
 
@@ -61,107 +59,110 @@ const std::string& Elements::name() const {
 }
 
 template <>
-array::LocalView<double, 1, array::Intent::ReadOnly> Elements::view( const Field& field ) const {
-    return array::make_host_view<double, 1, array::Intent::ReadOnly>( field ).slice(
-        array::Range{begin(), begin() + size()} );
+array::LocalView<const double, 1> Elements::view( const Field& field ) const {
+    return array::make_host_view<double, 1>( field ).slice( array::Range{begin(), begin() + size()} );
 }
 
 template <>
-array::LocalView<float, 1, array::Intent::ReadOnly> Elements::view( const Field& field ) const {
-    return array::make_host_view<float, 1, array::Intent::ReadOnly>( field ).slice(
-        array::Range{begin(), begin() + size()} );
+array::LocalView<const float, 1> Elements::view( const Field& field ) const {
+    return array::make_host_view<float, 1>( field ).slice( array::Range{begin(), begin() + size()} );
 }
 
 template <>
-array::LocalView<int, 1, array::Intent::ReadOnly> Elements::view( const Field& field ) const {
-    return array::make_host_view<int, 1, array::Intent::ReadOnly>( field ).slice(
-        array::Range{begin(), begin() + size()} );
+array::LocalView<const int, 1> Elements::view( const Field& field ) const {
+    return array::make_host_view<int, 1>( field ).slice( array::Range{begin(), begin() + size()} );
 }
 
 template <>
-array::LocalView<long, 1, array::Intent::ReadOnly> Elements::view( const Field& field ) const {
-    return array::make_host_view<long, 1, array::Intent::ReadOnly>( field ).slice(
-        array::Range{begin(), begin() + size()} );
+array::LocalView<const long, 1> Elements::view( const Field& field ) const {
+    return array::make_host_view<long, 1>( field ).slice( array::Range{begin(), begin() + size()} );
 }
 
 template <>
-array::LocalView<double, 2, array::Intent::ReadOnly> Elements::view( const Field& field ) const {
-    return array::make_host_view<double, 2, array::Intent::ReadOnly>( field ).slice(
-        array::Range{begin(), begin() + size()}, array::Range::all() );
+array::LocalView<const double, 2> Elements::view( const Field& field ) const {
+    return array::make_host_view<double, 2>( field ).slice( array::Range{begin(), begin() + size()},
+                                                            array::Range::all() );
 }
 
 template <>
-array::LocalView<float, 2, array::Intent::ReadOnly> Elements::view( const Field& field ) const {
-    return array::make_host_view<float, 2, array::Intent::ReadOnly>( field ).slice(
-        array::Range{begin(), begin() + size()}, array::Range::all() );
+array::LocalView<const float, 2> Elements::view( const Field& field ) const {
+    return array::make_host_view<float, 2>( field ).slice( array::Range{begin(), begin() + size()},
+                                                           array::Range::all() );
 }
 
 template <>
-array::LocalView<int, 2, array::Intent::ReadOnly> Elements::view( const Field& field ) const {
-    return array::make_host_view<int, 2, array::Intent::ReadOnly>( field ).slice(
-        array::Range{begin(), begin() + size()}, array::Range::all() );
+array::LocalView<const int, 2> Elements::view( const Field& field ) const {
+    return array::make_host_view<int, 2>( field ).slice( array::Range{begin(), begin() + size()}, array::Range::all() );
 }
 
 template <>
-array::LocalView<long, 2, array::Intent::ReadOnly> Elements::view( const Field& field ) const {
-    return array::make_host_view<long, 2, array::Intent::ReadOnly>( field ).slice(
-        array::Range{begin(), begin() + size()}, array::Range::all() );
+array::LocalView<const long, 2> Elements::view( const Field& field ) const {
+    return array::make_host_view<long, 2>( field ).slice( array::Range{begin(), begin() + size()},
+                                                          array::Range::all() );
 }
 
 // ----------------------------------------------------------------------------
 
 template <>
-array::LocalView<double, 1, array::Intent::ReadWrite> Elements::view( Field& field ) const {
-    return array::make_host_view<double, 1, array::Intent::ReadWrite>( field ).slice(
-        array::Range{begin(), begin() + size()} );
+array::LocalView<double, 1> Elements::view( Field& field ) const {
+    return array::make_host_view<double, 1>( field ).slice( array::Range{begin(), begin() + size()} );
 }
 
 template <>
-array::LocalView<float, 1, array::Intent::ReadWrite> Elements::view( Field& field ) const {
-    return array::make_host_view<float, 1, array::Intent::ReadWrite>( field ).slice(
-        array::Range{begin(), begin() + size()} );
+array::LocalView<float, 1> Elements::view( Field& field ) const {
+    return array::make_host_view<float, 1>( field ).slice( array::Range{begin(), begin() + size()} );
 }
 
 template <>
-array::LocalView<int, 1, array::Intent::ReadWrite> Elements::view( Field& field ) const {
-    return array::make_host_view<int, 1, array::Intent::ReadWrite>( field ).slice(
-        array::Range{begin(), begin() + size()} );
+array::LocalView<int, 1> Elements::view( Field& field ) const {
+    return array::make_host_view<int, 1>( field ).slice( array::Range{begin(), begin() + size()} );
 }
 
 template <>
-array::LocalView<long, 1, array::Intent::ReadWrite> Elements::view( Field& field ) const {
-    return array::make_host_view<long, 1, array::Intent::ReadWrite>( field ).slice(
-        array::Range{begin(), begin() + size()} );
+array::LocalView<long, 1> Elements::view( Field& field ) const {
+    return array::make_host_view<long, 1>( field ).slice( array::Range{begin(), begin() + size()} );
 }
 
 template <>
-array::LocalView<double, 2, array::Intent::ReadWrite> Elements::view( Field& field ) const {
-    return array::make_host_view<double, 2, array::Intent::ReadWrite>( field ).slice(
-        array::Range{begin(), begin() + size()}, array::Range::all() );
+array::LocalView<double, 2> Elements::view( Field& field ) const {
+    return array::make_host_view<double, 2>( field ).slice( array::Range{begin(), begin() + size()},
+                                                            array::Range::all() );
 }
 
 template <>
-array::LocalView<float, 2, array::Intent::ReadWrite> Elements::view( Field& field ) const {
-    return array::make_host_view<float, 2, array::Intent::ReadWrite>( field ).slice(
-        array::Range{begin(), begin() + size()}, array::Range::all() );
+array::LocalView<float, 2> Elements::view( Field& field ) const {
+    return array::make_host_view<float, 2>( field ).slice( array::Range{begin(), begin() + size()},
+                                                           array::Range::all() );
 }
 
 template <>
-array::LocalView<int, 2, array::Intent::ReadWrite> Elements::view( Field& field ) const {
-    return array::make_host_view<int, 2, array::Intent::ReadWrite>( field ).slice(
-        array::Range{begin(), begin() + size()}, array::Range::all() );
+array::LocalView<int, 2> Elements::view( Field& field ) const {
+    return array::make_host_view<int, 2>( field ).slice( array::Range{begin(), begin() + size()}, array::Range::all() );
 }
 
 template <>
-array::LocalView<long, 2, array::Intent::ReadWrite> Elements::view( Field& field ) const {
-    return array::make_host_view<long, 2, array::Intent::ReadWrite>( field ).slice(
-        array::Range{begin(), begin() + size()}, array::Range::all() );
+array::LocalView<long, 2> Elements::view( Field& field ) const {
+    return array::make_host_view<long, 2>( field ).slice( array::Range{begin(), begin() + size()},
+                                                          array::Range::all() );
 }
 
 idx_t Elements::add( const idx_t nb_elements ) {
     idx_t position = size();
     hybrid_elements_->insert( type_idx_, end(), nb_elements );
     return position;
+}
+
+
+template <>
+array::LocalIndexView<idx_t, 1> Elements::indexview( Field& field ) const {
+    auto local_view = array::make_host_view<int, 1>( field ).slice( array::Range{begin(), begin() + size()} );
+    return array::LocalIndexView<idx_t, 1>( local_view.data(), local_view.shape(), local_view.strides() );
+}
+
+template <>
+array::LocalIndexView<const idx_t, 1> Elements::indexview( const Field& field ) const {
+    auto local_view = array::make_host_view<int, 1>( field ).slice( array::Range{begin(), begin() + size()} );
+    return array::LocalIndexView<const idx_t, 1>( local_view.data(), local_view.shape(), local_view.strides() );
 }
 
 //-----------------------------------------------------------------------------

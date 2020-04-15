@@ -1,0 +1,21 @@
+type : "regional"
+nx : 451
+ny : 337
+dx : 13545.0
+dy : 13545.0
+lonlat(xmin,ymin): [-126.138,16.281]
+projection :  
+    type : "lambert_conformal_conic"
+    latitude1  : 25.0
+    longitude0 : -95.0
+y_numbering : +1
+
+
+check : 
+  size : 151987
+  lonlat(first) : [-126.138,16.281]
+  lonlat(last)  : [-57.3811,55.4813]
+  uid : 5c9a0f242e68ff6dd7711ba3ab6f5c7b
+  bounding_box(n,w,s,e) : [58.3664,-139.857,16.28,-57.3801]
+  xmin : -3332155.29
+  ymin : -588892.76

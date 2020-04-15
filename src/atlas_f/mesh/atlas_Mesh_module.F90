@@ -54,8 +54,8 @@ contains
   procedure, public :: edges => Mesh__edges
   procedure, public :: footprint
 
-  procedure, public :: clone_to_device
-  procedure, public :: clone_from_device
+  procedure, public :: update_device
+  procedure, public :: update_host
   procedure, public :: sync_host_device
 
 #if FCKIT_FINAL_NOT_INHERITING
@@ -130,18 +130,18 @@ end function
 
 !-------------------------------------------------------------------------------
 
-subroutine clone_to_device(this)
+subroutine update_device(this)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(inout) :: this
-  call atlas__Mesh__clone_to_device(this%CPTR_PGIBUG_A)
+  call atlas__Mesh__update_device(this%CPTR_PGIBUG_A)
 end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine clone_from_device(this)
+subroutine update_host(this)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(inout) :: this
-  call atlas__Mesh__clone_from_device(this%CPTR_PGIBUG_A)
+  call atlas__Mesh__update_host(this%CPTR_PGIBUG_A)
 end subroutine
 
 ! ----------------------------------------------------------------------------------------

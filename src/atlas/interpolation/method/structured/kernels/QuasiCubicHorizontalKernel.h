@@ -23,7 +23,6 @@
 #include "atlas/grid/StencilComputer.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -43,13 +42,13 @@ public:
         src_ = fs;
         ATLAS_ASSERT( src_ );
         ATLAS_ASSERT( src_.halo() >= 2 );
-        compute_horizontal_stencil_ = ComputeHorizontalStencil( src_.grid(), stencil_width() );
+        compute_horizontal_stencil_ = grid::ComputeHorizontalStencil( src_.grid(), stencil_width() );
         limiter_                    = config.getBool( "limiter", false );
     }
 
 protected:
     functionspace::StructuredColumns src_;
-    ComputeHorizontalStencil compute_horizontal_stencil_;
+    grid::ComputeHorizontalStencil compute_horizontal_stencil_;
     bool limiter_{false};
 
 public:
@@ -61,7 +60,7 @@ public:
     }
 
 public:
-    using Stencil = HorizontalStencil<4>;
+    using Stencil = grid::HorizontalStencil<4>;
     struct Weights {
         std::array<std::array<double, 4>, 4> weights_i;
         std::array<double, 4> weights_j;
@@ -177,7 +176,7 @@ public:
 
     template <typename stencil_t, typename weights_t, typename Value, int Rank>
     typename std::enable_if<( Rank == 1 ), void>::type interpolate( const stencil_t& stencil, const weights_t& weights,
-                                                                    const array::ArrayView<Value, Rank>& input,
+                                                                    const array::ArrayView<const Value, Rank>& input,
                                                                     array::ArrayView<Value, Rank>& output,
                                                                     idx_t r ) const {
         std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;
@@ -212,7 +211,7 @@ public:
 
     template <typename stencil_t, typename weights_t, typename Value, int Rank>
     typename std::enable_if<( Rank == 2 ), void>::type interpolate( const stencil_t& stencil, const weights_t& weights,
-                                                                    const array::ArrayView<Value, Rank>& input,
+                                                                    const array::ArrayView<const Value, Rank>& input,
                                                                     array::ArrayView<Value, Rank>& output,
                                                                     idx_t r ) const {
         std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;

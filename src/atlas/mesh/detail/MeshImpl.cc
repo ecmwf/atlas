@@ -43,8 +43,10 @@ MeshImpl::MeshImpl() : nodes_( new mesh::Nodes() ), dimensionality_( 2 ) {
 }
 
 MeshImpl::~MeshImpl() {
-    for ( MeshObserver* o : mesh_observers_ ) {
+    while ( mesh_observers_.size() ) {
+        MeshObserver* o = mesh_observers_.back();
         o->onMeshDestruction( *this );
+        o->unregisterMesh( *this );  // will also delete observer from mesh
     }
 }
 
@@ -108,53 +110,53 @@ void MeshImpl::setProjection( const Projection& projection ) {
 }
 
 void MeshImpl::setGrid( const Grid& grid ) {
-    grid_.reset( new Grid( grid ) );
+    grid_ = grid;
     if ( not projection_ ) {
-        projection_ = grid_->projection();
+        projection_ = grid_.projection();
     }
 }
 
 idx_t MeshImpl::nb_partitions() const {
-    return mpi::comm().size();
+    return mpi::size();
 }
 
 idx_t MeshImpl::partition() const {
-    return mpi::comm().rank();
+    return mpi::rank();
 }
 
-void MeshImpl::cloneToDevice() const {
+void MeshImpl::updateDevice() const {
     if ( nodes_ ) {
-        nodes_->cloneToDevice();
+        nodes_->updateDevice();
     }
     if ( cells_ ) {
-        cells_->cloneToDevice();
+        cells_->updateDevice();
     }
     if ( facets_ ) {
-        facets_->cloneToDevice();
+        facets_->updateDevice();
     }
     if ( ridges_ ) {
-        ridges_->cloneToDevice();
+        ridges_->updateDevice();
     }
     if ( peaks_ ) {
-        peaks_->cloneToDevice();
+        peaks_->updateDevice();
     }
 }
 
-void MeshImpl::cloneFromDevice() const {
+void MeshImpl::updateHost() const {
     if ( nodes_ ) {
-        nodes_->cloneFromDevice();
+        nodes_->updateHost();
     }
     if ( cells_ ) {
-        cells_->cloneFromDevice();
+        cells_->updateHost();
     }
     if ( facets_ ) {
-        facets_->cloneFromDevice();
+        facets_->updateHost();
     }
     if ( ridges_ ) {
-        ridges_->cloneFromDevice();
+        ridges_->updateHost();
     }
     if ( peaks_ ) {
-        peaks_->cloneFromDevice();
+        peaks_->updateHost();
     }
 }
 
@@ -201,6 +203,13 @@ const PartitionPolygon& MeshImpl::polygon( idx_t halo ) const {
         polygons_[halo].reset( new PartitionPolygon( *this, halo ) );
     }
     return *polygons_[halo];
+}
+
+const util::PartitionPolygons& MeshImpl::polygons() const {
+    if ( all_polygons_.size() == 0 ) {
+        polygon().allGather( all_polygons_ );
+    }
+    return all_polygons_;
 }
 
 void MeshImpl::attachObserver( MeshObserver& observer ) const {

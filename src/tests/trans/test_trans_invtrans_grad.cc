@@ -18,7 +18,6 @@
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
-#include "atlas/library/Library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator.h"
@@ -43,8 +42,9 @@ namespace test {
 
 struct AtlasTransEnvironment : public AtlasTestEnvironment {
     AtlasTransEnvironment( int argc, char* argv[] ) : AtlasTestEnvironment( argc, argv ) {
-        if ( mpi::comm().size() == 1 )
+        if ( mpi::comm().size() == 1 ) {
             trans_use_mpi( false );
+        }
         trans_init();
     }
 
@@ -86,8 +86,8 @@ void rotated_flow_magnitude( const functionspace::NodeColumns& fs, Field& field,
 
     size_t nnodes = fs.nodes().size();
     for ( size_t jnode = 0; jnode < nnodes; ++jnode ) {
-        double x = lonlat_deg( jnode, LON ) * deg2rad;
-        double y = lonlat_deg( jnode, LAT ) * deg2rad;
+        double x = lonlat_deg( jnode, (size_t)LON ) * deg2rad;
+        double y = lonlat_deg( jnode, (size_t)LAT ) * deg2rad;
         double Ux =
             pvel * ( std::cos( beta ) + std::tan( y ) * std::cos( x ) * std::sin( beta ) ) * radius * std::cos( y );
         double Uy    = -pvel * std::sin( x ) * std::sin( beta ) * radius;

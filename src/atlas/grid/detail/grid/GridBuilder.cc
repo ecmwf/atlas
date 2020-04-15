@@ -100,9 +100,9 @@ private:
     bool use_case_;
 };
 
-static eckit::Mutex* local_mutex          = 0;
-static GridBuilder::Registry* named_grids = 0;
-static GridBuilder::Registry* typed_grids = 0;
+static eckit::Mutex* local_mutex          = nullptr;
+static GridBuilder::Registry* named_grids = nullptr;
+static GridBuilder::Registry* typed_grids = nullptr;
 
 static pthread_once_t once = PTHREAD_ONCE_INIT;
 
@@ -143,18 +143,9 @@ GridBuilder::GridBuilder( const std::string& type ) : names_(), type_( type ) {
     ( *typed_grids )[type] = this;
 }
 
-GridBuilder::GridBuilder( const std::vector<std::string>& names ) : names_( names ), type_() {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-    for ( const std::string& name : names_ ) {
-        ATLAS_ASSERT( named_grids->find( name ) == named_grids->end() );
-        ( *named_grids )[name] = this;
-    }
-}
-
-GridBuilder::GridBuilder( const std::string& type, const std::vector<std::string>& names ) :
-    names_( names ),
-    type_( type ) {
+GridBuilder::GridBuilder( const std::string& type, const std::vector<std::string>& regexes,
+                          const std::vector<std::string>& names ) :
+    names_( regexes ), pretty_names_( names ), type_( type ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
@@ -220,8 +211,16 @@ bool GridBuilder::match( const std::string& string, std::vector<std::string>& ma
     return false;
 }
 
-std::string GridBuilder::type() const {
+const std::string& GridBuilder::type() const {
     return type_;
+}
+
+const std::vector<std::string>& GridBuilder::names() const {
+    return pretty_names_;
+}
+
+const std::vector<std::string>& GridBuilder::regexes() const {
+    return names_;
 }
 
 std::ostream& operator<<( std::ostream& os, const GridBuilder& g ) {

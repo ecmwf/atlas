@@ -15,16 +15,6 @@
 /// This file contains classes and functions working on points.
 /// The Point classes are inherited from eckit::geometry::Point2
 /// or eckit::geometry::Point3.
-///
-/// Classes:
-///    - PointXY     : Point in arbitrary XY-coordinate system
-///    - PointXYZ    : Point in arbitrary XYZ-coordinate system
-///    - PointLonLat : Point in longitude-latitude coordinate system.
-///                    This class does *not* normalise the longitude!!!
-///
-/// Functions:
-///    - lonlat_to_geocentric : Converts a PointLonLat to a PointXYZ defined in
-///                             Earth-centred coordinates.
 
 #include <array>
 #include <initializer_list>
@@ -39,7 +29,15 @@ namespace atlas {
 using Point2 = eckit::geometry::Point2;
 using Point3 = eckit::geometry::Point3;
 
-class PointXY : public Point2 {
+inline bool operator==( const Point2& p1, const Point2& p2 ) {
+    return eckit::geometry::points_equal( p1, p2 );
+}
+inline bool operator!=( const Point2& p1, const Point2& p2 ) {
+    return !eckit::geometry::points_equal( p1, p2 );
+}
+
+/// @brief  Point in arbitrary XY-coordinate system
+class PointXY : public eckit::geometry::Point2 {
     using array_t = std::array<double, 2>;
 
 public:
@@ -64,7 +62,8 @@ public:
     }
 };
 
-class PointXYZ : public Point3 {
+/// @brief Point in arbitrary XYZ-coordinate system
+class PointXYZ : public eckit::geometry::Point3 {
     using array_t = std::array<double, 3>;
 
     PointXYZ( double, double ) { /* No automatic converion allowed, otherwise
@@ -97,7 +96,10 @@ public:
     }
 };
 
-class PointLonLat : public Point2 {
+/// @brief Point in longitude-latitude coordinate system.
+/// This class does *not* normalise the longitude by default,
+/// but contains a normalise function.
+class PointLonLat : public eckit::geometry::Point2 {
     using array_t = std::array<double, 2>;
 
 public:
@@ -136,3 +138,36 @@ public:
 };
 
 }  // namespace atlas
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+namespace eckit {
+// When including "eckit/types/Types.h" we get an overload for
+//    std::ostream& operator<<( std::ostream&, std::vector<T> )
+// The default VectorPrintSelector is however the [VectorPrintContracted],
+// which does not compile when [T={PointXY,PointLonLat,PointXYZ}]
+// Following changes the default for these types to [VectorPrintSimple]
+class VectorPrintSimple;
+template <typename T>
+struct VectorPrintSelector;
+template <>
+struct VectorPrintSelector<atlas::Point2> {
+    typedef VectorPrintSimple selector;
+};
+template <>
+struct VectorPrintSelector<atlas::PointXY> {
+    typedef VectorPrintSimple selector;
+};
+template <>
+struct VectorPrintSelector<atlas::PointLonLat> {
+    typedef VectorPrintSimple selector;
+};
+template <>
+struct VectorPrintSelector<atlas::Point3> {
+    typedef VectorPrintSimple selector;
+};
+template <>
+struct VectorPrintSelector<atlas::PointXYZ> {
+    typedef VectorPrintSimple selector;
+};
+}  // namespace eckit
+#endif

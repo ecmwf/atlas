@@ -12,17 +12,18 @@
 #include <iomanip>
 #include <sstream>
 
-#include "eckit/types/FloatCompare.h"
-
 #include "atlas/grid.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/library/Library.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/meshgenerator.h"
+#include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
-using Grid = atlas::Grid;
+using Grid   = atlas::Grid;
+using Config = atlas::util::Config;
 
 namespace atlas {
 namespace test {
@@ -194,6 +195,221 @@ CASE( "Create unstructured from unstructured" ) {
     auto domain = ZonalBandDomain( {33, 73} );
     UnstructuredGrid ugrid( global_unstructured, domain );
     EXPECT( ugrid.size() == StructuredGrid( agrid, domain ).size() );
+}
+
+CASE( "ATLAS-255: regular Gaussian grid with global domain" ) {
+    GlobalDomain globe;
+    Grid grid( "F80", globe );
+    EXPECT( GaussianGrid( grid ) );
+}
+
+CASE( "ATLAS-255: reduced Gaussian grid with global domain" ) {
+    GlobalDomain globe;
+    Grid grid( "O80", globe );
+    EXPECT( GaussianGrid( grid ) );
+}
+
+CASE( "test_from_string_L32" ) {
+    Grid grid;
+    EXPECT( not grid );
+
+    grid = Grid( "L32" );
+    EXPECT( grid );
+    EXPECT( StructuredGrid( grid ) == true );
+    EXPECT( RegularGrid( grid ) == true );
+
+    auto structured = StructuredGrid( grid );
+    EXPECT( structured.ny() == 65 );
+    EXPECT( structured.periodic() == true );
+    EXPECT( structured.nx( 0 ) == 128 );
+    EXPECT( structured.y().front() == 90. );
+    EXPECT( structured.y().back() == -90. );
+
+    auto regular = RegularGrid( grid );
+    EXPECT( regular.ny() == 65 );
+    EXPECT( regular.periodic() == true );
+    EXPECT( regular.nx() == 128 );
+    EXPECT( regular.y().front() == 90. );
+    EXPECT( regular.y().back() == -90. );
+}
+
+CASE( "test_from_string_O32" ) {
+    Grid grid;
+    EXPECT( not grid );
+
+    grid = Grid( "O32" );
+    EXPECT( grid );
+
+    EXPECT( StructuredGrid( grid ) );
+    EXPECT( !RegularGrid( grid ) );
+
+    auto structured = StructuredGrid( grid );
+    EXPECT( structured.ny() == 64 );
+    EXPECT( structured.periodic() == true );
+    EXPECT( structured.nx().front() == 20 );
+}
+
+CASE( "test_from_string_O32_with_domain" ) {
+    Grid grid;
+    EXPECT( not grid );
+
+    grid = Grid( "O32", RectangularDomain( {0, 90}, {0, 90} ) );
+    EXPECT( grid );
+
+    EXPECT( StructuredGrid( grid ) );
+    EXPECT( !RegularGrid( grid ) );
+
+    auto structured = StructuredGrid( grid );
+    EXPECT( structured.ny() == 32 );
+    EXPECT( structured.periodic() == false );
+    EXPECT( structured.nx().front() == 6 );
+
+    output::Gmsh gmsh( "test_grid_ptr_O32_subdomain.msh" );
+    Mesh mesh = StructuredMeshGenerator().generate( grid );
+    gmsh.write( mesh );
+}
+
+CASE( "test_structured_1" ) {
+    std::stringstream json;
+    json << "{"
+            "\"type\" : \"structured\","
+            "\"yspace\" : { \"type\":\"linear\", \"N\":9,  \"start\":90, "
+            "\"end\":-90 },"
+            "\"xspace\" : { \"type\":\"linear\", \"N\":16, \"start\":0,  "
+            "\"end\":360, \"endpoint\":false }"
+            "}";
+    json.seekp( 0 );
+
+    Grid grid;
+    EXPECT( not grid );
+
+    Config json_config( json );
+
+    grid = StructuredGrid( json_config );
+    EXPECT( grid );
+    EXPECT( StructuredGrid( grid ) );
+    EXPECT( RegularGrid( grid ) );
+
+    auto structured = StructuredGrid( grid );
+    EXPECT( structured.ny() == 9 );
+    EXPECT( structured.periodic() == true );
+    EXPECT( structured.nx( 0 ) == 16 );
+    EXPECT( structured.y().front() == 90. );
+    EXPECT( structured.y().back() == -90. );
+
+    auto regular = RegularGrid( grid );
+    EXPECT( regular.ny() == 9 );
+    EXPECT( regular.periodic() == true );
+    EXPECT( regular.nx() == 16 );
+    EXPECT( regular.y().front() == 90. );
+    EXPECT( regular.y().back() == -90. );
+
+    output::Gmsh gmsh( "test_grid_ptr.msh" );
+    Mesh mesh = StructuredMeshGenerator().generate( grid );
+    gmsh.write( mesh );
+}
+
+CASE( "test_structured_2" ) {
+    using XSpace     = StructuredGrid::XSpace;
+    using YSpace     = StructuredGrid::YSpace;
+    using Domain     = StructuredGrid::Domain;
+    using Projection = StructuredGrid::Projection;
+    StructuredGrid grid( XSpace( {0., 360.}, {2, 4, 6, 6, 4, 2}, false ),
+                         YSpace( grid::LinearSpacing( {90., -90.}, 6 ) ), Projection(), Domain() );
+    EXPECT( grid );
+
+    output::Gmsh gmsh( "test_grid_ptr_structured_2.msh" );
+    Mesh mesh = StructuredMeshGenerator().generate( grid );
+    gmsh.write( mesh );
+
+    Log::info() << grid.spec() << std::endl;
+
+    Grid newgrid( grid.spec() );
+    Log::info() << newgrid.spec() << std::endl;
+
+    Log::info() << "original: " << grid.uid() << std::endl;
+    Log::info() << "fromspec: " << newgrid.uid() << std::endl;
+    EXPECT( grid == newgrid );
+}
+
+CASE( "test_structured_3" ) {
+    StructuredGrid grid( "O32" );
+    EXPECT( grid );
+
+    Log::info() << grid.spec() << std::endl;
+
+    Grid newgrid( grid.spec() );
+    Log::info() << newgrid.spec() << std::endl;
+
+    Log::info() << "original: " << grid.uid() << std::endl;
+    Log::info() << "fromspec: " << newgrid.uid() << std::endl;
+    EXPECT( grid == newgrid );
+    EXPECT( grid.name() == "O32" );
+    EXPECT( newgrid.name() == "O32" );
+}
+
+CASE( "test_structured_triangulated" ) {
+    Grid grid;
+
+    // Create grid
+    {
+        using XSpace = StructuredGrid::XSpace;
+        using YSpace = StructuredGrid::YSpace;
+        auto xspace  = util::Config{};
+        xspace.set( "type", "linear" );
+        xspace.set( "N", 16 );
+        xspace.set( "length", 360 );
+        xspace.set( "endpoint", false );
+        xspace.set( "start[]", []() {
+            auto startpts = std::vector<double>( 8 );
+            for ( int i = 0; i < 8; ++i ) {
+                startpts[i] = i * 12.;
+            }
+            return startpts;
+        }() );
+        grid = StructuredGrid{XSpace{xspace}, YSpace{grid::LinearSpacing{{90., -90.}, 8}}};
+    }
+
+    EXPECT( grid );
+    Log::info() << grid.spec() << std::endl;
+
+    // Create and output mesh
+    {
+        auto meshgen = StructuredMeshGenerator{util::Config( "angle", -1. )};
+        auto mesh    = meshgen.generate( grid );
+        auto gmsh    = output::Gmsh{"structured_triangulated.msh"};
+        gmsh.write( mesh );
+    }
+}
+
+CASE( "test_structured_from_config" ) {
+    Config config;
+    config.set( "type", "structured" );
+    config.set( "xspace", []() {
+        Config config;
+        config.set( "type", "linear" );
+        config.set( "N", 40 );
+        config.set( "start", 5 );
+        config.set( "end", 365 );
+        config.set( "endpoint", false );
+        return config;
+    }() );
+    config.set( "yspace", []() {
+        Config config;
+        config.set( "type", "custom" );
+        config.set( "N", 9 );
+        config.set( "values", std::vector<double>{5., 15., 25., 35., 45., 55., 65., 75., 85.} );
+        return config;
+    }() );
+    StructuredGrid g{config};
+    for ( idx_t j = 0; j < g.ny(); ++j ) {
+        EXPECT_EQ( g.nx( j ), 40 );
+        EXPECT_EQ( g.x( 0, j ), 5. );
+        EXPECT_EQ( g.x( g.nx( j ), j ), 365. );
+        EXPECT_EQ( g.dx( j ), 9. );
+        EXPECT_EQ( g.xmin( j ), 5. );
+    }
+    EXPECT( not g.domain().global() );
 }
 
 

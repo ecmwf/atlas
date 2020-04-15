@@ -14,14 +14,17 @@
 #include <vector>
 
 #include "atlas/util/Object.h"
+#include "atlas/util/vector.h"
 
 #include "atlas/library/config.h"
 
 namespace atlas {
+
 class Grid;
 namespace grid {
 class Partitioner;
 }
+
 }  // namespace atlas
 
 namespace atlas {
@@ -29,21 +32,25 @@ namespace grid {
 
 class DistributionImpl : public util::Object {
 public:
+    using partition_t = atlas::vector<int>;
+
     DistributionImpl( const Grid& );
 
     DistributionImpl( const Grid&, const Partitioner& );
 
-    DistributionImpl( idx_t npts, int partition[], int part0 = 0 );
+    DistributionImpl( int nb_partitions, idx_t npts, int partition[], int part0 = 0 );
+
+    DistributionImpl( int nb_partitions, partition_t&& partition );
 
     virtual ~DistributionImpl();
 
     int partition( const gidx_t gidx ) const { return part_[gidx]; }
 
-    const std::vector<int>& partition() const { return part_; }
+    const partition_t& partition() const { return part_; }
 
     idx_t nb_partitions() const { return nb_partitions_; }
 
-    operator const std::vector<int>&() const { return part_; }
+    operator const partition_t&() const { return part_; }
 
     const int* data() const { return part_.data(); }
 
@@ -58,7 +65,7 @@ public:
 
 private:
     idx_t nb_partitions_;
-    std::vector<int> part_;
+    partition_t part_;
     std::vector<idx_t> nb_pts_;
     idx_t max_pts_;
     idx_t min_pts_;

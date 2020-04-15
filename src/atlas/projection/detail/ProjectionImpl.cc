@@ -33,7 +33,7 @@ namespace {
 template <class T>
 struct DerivateBuilder : public ProjectionImpl::DerivateFactory {
     using DerivateFactory::DerivateFactory;
-    ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) {
+    ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) override {
         return new T( p, A, B, h );
     }
 };
@@ -58,8 +58,7 @@ struct DerivateBackwards final : ProjectionImpl::Derivate {
 
 struct DerivateCentral final : ProjectionImpl::Derivate {
     DerivateCentral( const ProjectionImpl& p, PointXY A, PointXY B, double h ) :
-        Derivate( p, A, B, h ),
-        H2_{PointXY::mul( H_, 0.5 )} {}
+        Derivate( p, A, B, h ), H2_{PointXY::mul( H_, 0.5 )} {}
     const PointXY H2_;
     PointLonLat d( PointXY P ) const override {
         PointXY A( xy2lonlat( PointXY::sub( P, H2_ ) ) );
@@ -158,6 +157,12 @@ const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) 
 
     // should return error here
     throw_Exception( "type missing in Params", Here() );
+}
+
+PointXYZ ProjectionImpl::xyz( const PointLonLat& lonlat ) const {
+    atlas::PointXYZ xyz;
+    atlas::util::Earth::convertSphericalToCartesian( lonlat, xyz );
+    return xyz;
 }
 
 RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain ) const {

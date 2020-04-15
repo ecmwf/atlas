@@ -33,14 +33,14 @@ MethodBuilder<NearestNeighbour> __builder( "nearest-neighbour" );
 
 }  // namespace
 
-void NearestNeighbour::setup( const Grid& source, const Grid& target ) {
-    if ( mpi::comm().size() > 1 ) {
+void NearestNeighbour::do_setup( const Grid& source, const Grid& target ) {
+    if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
     auto functionspace = []( const Grid& grid ) -> FunctionSpace {
         Mesh mesh;
         if ( StructuredGrid( grid ) ) {
-            mesh = MeshGenerator( "structured", util::Config( "three_dimensional" ) ).generate( grid );
+            mesh = MeshGenerator( "structured", util::Config( "3d", true ) ).generate( grid );
         }
         else {
             mesh = MeshGenerator( "delaunay" ).generate( grid );
@@ -48,10 +48,10 @@ void NearestNeighbour::setup( const Grid& source, const Grid& target ) {
         return functionspace::NodeColumns( mesh );
     };
 
-    setup( functionspace( source ), functionspace( target ) );
+    do_setup( functionspace( source ), functionspace( target ) );
 }
 
-void NearestNeighbour::setup( const FunctionSpace& source, const FunctionSpace& target ) {
+void NearestNeighbour::do_setup( const FunctionSpace& source, const FunctionSpace& target ) {
     source_                        = source;
     target_                        = target;
     functionspace::NodeColumns src = source;
@@ -77,7 +77,7 @@ void NearestNeighbour::setup( const FunctionSpace& source, const FunctionSpace& 
     std::vector<Triplet> weights_triplets;
     weights_triplets.reserve( out_npts );
     {
-        Trace timer( Here(), "atlas::interpolation::method::NearestNeighbour::setup()" );
+        Trace timer( Here(), "atlas::interpolation::method::NearestNeighbour::do_setup()" );
         for ( size_t ip = 0; ip < out_npts; ++ip ) {
             if ( ip && ( ip % 1000 == 0 ) ) {
                 double rate = ip / timer.elapsed();
@@ -85,13 +85,13 @@ void NearestNeighbour::setup( const FunctionSpace& source, const FunctionSpace& 
             }
 
             // find the closest input point to the output point
-            PointIndex3::Point p{coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 )};
+            PointIndex3::Point p{coords( ip, (size_t)0 ), coords( ip, (size_t)1 ), coords( ip, (size_t)2 )};
             PointIndex3::NodeInfo nn = pTree_->nearestNeighbour( p );
             size_t jp                = nn.payload();
 
             // insert the weights into the interpolant matrix
             ATLAS_ASSERT( jp < inp_npts );
-            weights_triplets.push_back( Triplet( ip, jp, 1 ) );
+            weights_triplets.emplace_back( ip, jp, 1 );
         }
     }
 

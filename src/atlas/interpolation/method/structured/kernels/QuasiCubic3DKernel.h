@@ -70,7 +70,7 @@ public:
     }
 
 public:
-    using Stencil = Stencil3D<4>;
+    using Stencil = grid::Stencil3D<4>;
     struct Weights {
         std::array<std::array<double, 4>, 4> weights_i;
         std::array<double, 6> weights_j;
@@ -140,7 +140,7 @@ public:
     template <typename stencil_t, typename weights_t, typename array_t>
     typename std::enable_if<( array_t::RANK == 2 ), typename array_t::value_type>::type interpolate(
         const stencil_t& stencil, const weights_t& weights, const array_t& input ) const {
-        using Value = typename array_t::value_type;
+        using Value = typename std::remove_const<typename array_t::value_type>::type;
 
         std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;
         const auto& wk = weights.weights_k;
@@ -235,7 +235,7 @@ public:
                                                                                      const InputArray& input,
                                                                                      OutputArray& output,
                                                                                      const idx_t nvar ) const {
-        using Value = typename InputArray::value_type;
+        using Value = typename OutputArray::value_type;
 
         std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;
         const auto& wk = weights.weights_k;

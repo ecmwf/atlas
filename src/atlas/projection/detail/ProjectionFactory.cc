@@ -15,7 +15,7 @@
 #include "atlas/util/Config.h"
 
 #include "atlas/projection/detail/LambertAzimuthalEqualAreaProjection.h"
-#include "atlas/projection/detail/LambertProjection.h"
+#include "atlas/projection/detail/LambertConformalConicProjection.h"
 #include "atlas/projection/detail/LonLatProjection.h"
 #include "atlas/projection/detail/MercatorProjection.h"
 #include "atlas/projection/detail/SchmidtProjection.h"
@@ -34,7 +34,7 @@ void force_link() {
             ProjectionBuilder<detail::RotatedSchmidtProjection>();
             ProjectionBuilder<detail::MercatorProjection>();
             ProjectionBuilder<detail::RotatedMercatorProjection>();
-            ProjectionBuilder<detail::LambertProjection>();
+            ProjectionBuilder<detail::LambertConformalConicProjection>();
             ProjectionBuilder<detail::LambertAzimuthalEqualAreaProjection>();
         }
     } link;

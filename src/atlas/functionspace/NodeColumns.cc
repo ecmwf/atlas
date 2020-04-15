@@ -45,8 +45,8 @@ namespace detail {
 
 namespace {
 
-template <typename T>
-array::LocalView<T, 3> make_leveled_view( const Field& field ) {
+template <typename T, typename Field>
+array::LocalView<T, 3> make_leveled_view( Field& field ) {
     using namespace array;
     if ( field.levels() ) {
         if ( field.variables() ) {
@@ -80,10 +80,11 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh, long halo ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &NodeColumnsHaloExchangeCache::create, mesh, halo );
         return Base::get_or_create( key( *mesh.get(), halo ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) {
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override {
         for ( long jhalo = 1; jhalo < mesh::Halo( mesh ).size(); ++jhalo ) {
             remove( key( mesh, jhalo ) );
         }
@@ -97,8 +98,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh, long halo ) {
-        mesh.get()->attachObserver( instance() );
-
         value_type* value = new value_type();
 
         std::ostringstream ss;
@@ -125,10 +124,11 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &NodeColumnsGatherScatterCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) { remove( key( mesh ) ); }
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override { remove( key( mesh ) ); }
 
 private:
     static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
@@ -138,8 +138,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh ) {
-        mesh.get()->attachObserver( instance() );
-
         value_type* value = new value_type();
 
         mesh::IsGhostNode is_ghost( mesh.nodes() );
@@ -176,10 +174,11 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &NodeColumnsChecksumCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
-    virtual void onMeshDestruction( mesh::detail::MeshImpl& mesh ) { remove( key( mesh ) ); }
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override { remove( key( mesh ) ); }
 
 private:
     static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
@@ -189,7 +188,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh ) {
-        mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
         util::ObjectHandle<parallel::GatherScatter> gather(
             NodeColumnsGatherScatterCache::instance().get_or_create( mesh ) );
@@ -201,10 +199,7 @@ private:
 NodeColumns::NodeColumns( Mesh mesh ) : NodeColumns( mesh, util::NoConfig() ) {}
 
 NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration& config ) :
-    mesh_( mesh ),
-    nodes_( mesh_.nodes() ),
-    nb_levels_( config.getInt( "levels", 0 ) ),
-    nb_nodes_( 0 ) {
+    mesh_( mesh ), nodes_( mesh_.nodes() ), nb_levels_( config.getInt( "levels", 0 ) ), nb_nodes_( 0 ) {
     ATLAS_TRACE();
     if ( config.has( "halo" ) ) {
         halo_ = mesh::Halo( config.getInt( "halo" ) );
@@ -231,7 +226,7 @@ NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration& config ) :
     }
 }
 
-NodeColumns::~NodeColumns() {}
+NodeColumns::~NodeColumns() = default;
 
 std::string NodeColumns::distribution() const {
     return mesh().metadata().getString( "distribution" );
@@ -262,7 +257,7 @@ idx_t NodeColumns::config_nb_nodes( const eckit::Configuration& config ) const {
             idx_t owner( 0 );
             config.get( "owner", owner );
             idx_t _nb_nodes_global = nb_nodes_global();
-            size                   = ( idx_t( mpi::comm().rank() ) == owner ? _nb_nodes_global : 0 );
+            size                   = ( mpi::rank() == owner ? _nb_nodes_global : 0 );
         }
     }
     return size;
@@ -345,11 +340,6 @@ Field NodeColumns::createField( const Field& other, const eckit::Configuration& 
 
 namespace {
 
-template <typename DATA_TYPE, int RANK>
-array::ArrayView<DATA_TYPE, RANK> get_field_view( const Field& field, bool on_device ) {
-    return on_device ? array::make_device_view<DATA_TYPE, RANK>( field ) : array::make_view<DATA_TYPE, RANK>( field );
-}
-
 template <int RANK>
 void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exchange, bool on_device ) {
     if ( field.datatype() == array::DataType::kind<int>() ) {
@@ -417,22 +407,22 @@ void NodeColumns::gather( const FieldSet& local_fieldset, FieldSet& global_field
         glb.metadata().get( "owner", root );
 
         if ( loc.datatype() == array::DataType::kind<int>() ) {
-            parallel::Field<int const> loc_field( make_leveled_view<int>( loc ) );
+            parallel::Field<int const> loc_field( make_leveled_view<const int>( loc ) );
             parallel::Field<int> glb_field( make_leveled_view<int>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<long>() ) {
-            parallel::Field<long const> loc_field( make_leveled_view<long>( loc ) );
+            parallel::Field<long const> loc_field( make_leveled_view<const long>( loc ) );
             parallel::Field<long> glb_field( make_leveled_view<long>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<float>() ) {
-            parallel::Field<float const> loc_field( make_leveled_view<float>( loc ) );
+            parallel::Field<float const> loc_field( make_leveled_view<const float>( loc ) );
             parallel::Field<float> glb_field( make_leveled_view<float>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<double>() ) {
-            parallel::Field<double const> loc_field( make_leveled_view<double>( loc ) );
+            parallel::Field<double const> loc_field( make_leveled_view<const double>( loc ) );
             parallel::Field<double> glb_field( make_leveled_view<double>( glb ) );
             gather().gather( &loc_field, &glb_field, nb_fields, root );
         }
@@ -475,22 +465,22 @@ void NodeColumns::scatter( const FieldSet& global_fieldset, FieldSet& local_fiel
         glb.metadata().get( "owner", root );
 
         if ( loc.datatype() == array::DataType::kind<int>() ) {
-            parallel::Field<int const> glb_field( make_leveled_view<int>( glb ) );
+            parallel::Field<int const> glb_field( make_leveled_view<const int>( glb ) );
             parallel::Field<int> loc_field( make_leveled_view<int>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<long>() ) {
-            parallel::Field<long const> glb_field( make_leveled_view<long>( glb ) );
+            parallel::Field<long const> glb_field( make_leveled_view<const long>( glb ) );
             parallel::Field<long> loc_field( make_leveled_view<long>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<float>() ) {
-            parallel::Field<float const> glb_field( make_leveled_view<float>( glb ) );
+            parallel::Field<float const> glb_field( make_leveled_view<const float>( glb ) );
             parallel::Field<float> loc_field( make_leveled_view<float>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
         else if ( loc.datatype() == array::DataType::kind<double>() ) {
-            parallel::Field<double const> glb_field( make_leveled_view<double>( glb ) );
+            parallel::Field<double const> glb_field( make_leveled_view<const double>( glb ) );
             parallel::Field<double> loc_field( make_leveled_view<double>( loc ) );
             scatter().scatter( &glb_field, &loc_field, nb_fields, root );
         }
@@ -514,10 +504,10 @@ void NodeColumns::scatter( const Field& global, Field& local ) const {
 namespace {
 template <typename T>
 std::string checksum_3d_field( const parallel::Checksum& checksum, const Field& field ) {
-    array::LocalView<T, 3> values = make_leveled_view<T>( field );
+    auto values = make_leveled_view<const T>( field );
     array::ArrayT<T> surface_field( values.shape( 0 ), values.shape( 2 ) );
-    array::ArrayView<T, 2> surface = array::make_view<T, 2>( surface_field );
-    const idx_t npts               = values.shape( 0 );
+    auto surface     = array::make_view<T, 2>( surface_field );
+    const idx_t npts = values.shape( 0 );
     atlas_omp_for( idx_t n = 0; n < npts; ++n ) {
         for ( idx_t j = 0; j < surface.shape( 1 ); ++j ) {
             surface( n, j ) = 0.;
@@ -596,8 +586,7 @@ const parallel::Checksum& NodeColumns::checksum() const {
 NodeColumns::NodeColumns() : FunctionSpace(), functionspace_( nullptr ) {}
 
 NodeColumns::NodeColumns( const FunctionSpace& functionspace ) :
-    FunctionSpace( functionspace ),
-    functionspace_( dynamic_cast<const detail::NodeColumns*>( get() ) ) {}
+    FunctionSpace( functionspace ), functionspace_( dynamic_cast<const detail::NodeColumns*>( get() ) ) {}
 
 namespace {
 detail::NodeColumns* make_functionspace( Mesh mesh, const eckit::Configuration& config ) {

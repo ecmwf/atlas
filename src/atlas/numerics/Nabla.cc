@@ -40,7 +40,7 @@ namespace numerics {
 
 NablaImpl::NablaImpl( const Method& method, const eckit::Parametrisation& ) : method_( &method ) {}
 
-NablaImpl::~NablaImpl() {}
+NablaImpl::~NablaImpl() = default;
 
 Nabla::Nabla( const Method& method, const eckit::Parametrisation& p ) : Handle( NablaFactory::build( method, p ) ) {}
 

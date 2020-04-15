@@ -143,9 +143,7 @@ public:
 
 
 TransFactory::TransFactory( const std::string& name, const std::string& backend ) :
-    Factory( name ),
-    name_( name ),
-    backend_( backend ) {
+    Factory( name ), name_( name ), backend_( backend ) {
     TransBackend::instance().add( backend );
 }
 
@@ -192,7 +190,7 @@ const TransImpl* TransFactory::build( const Cache& cache, const FunctionSpace& g
     }
 
     util::Config options = TransBackend::instance().config();
-    options.set( config );
+    options.set( eckit::LocalConfiguration( config ) );
 
     std::string backend = options.getString( "type" );
 
@@ -236,7 +234,7 @@ const TransImpl* TransFactory::build( const Cache& cache, const Grid& grid, cons
         return cache.trans();
     }
     util::Config options = TransBackend::instance().config();
-    options.set( config );
+    options.set( eckit::LocalConfiguration( config ) );
 
     std::string backend = options.getString( "type" );
 

@@ -69,7 +69,7 @@ void Method::interpolate_field_rank1( const Field& src, Field& tgt ) const {
         ATLAS_ASSERT( src.contiguous() );
         ATLAS_ASSERT( tgt.contiguous() );
 
-        eckit::linalg::Vector v_src( array::make_view<double, 1>( src ).data(), src.shape( 0 ) );
+        eckit::linalg::Vector v_src( const_cast<double*>( array::make_view<double, 1>( src ).data() ), src.shape( 0 ) );
         eckit::linalg::Vector v_tgt( array::make_view<double, 1>( tgt ).data(), tgt.shape( 0 ) );
         eckit::linalg::LinearAlgebra::backend().spmv( matrix_, v_src, v_tgt );
     }
@@ -146,37 +146,66 @@ void Method::interpolate_field_rank3( const Field& src, Field& tgt ) const {
     }
 }
 
-
 Method::Method( const Method::Config& config ) {
     std::string spmv = "";
     config.get( "spmv", spmv );
     use_eckit_linalg_spmv_ = ( spmv == "eckit" );
 }
 
-void Method::setup( const FunctionSpace& /*source*/, const Field& /*target*/ ) {
+void Method::setup( const FunctionSpace& source, const FunctionSpace& target ) {
+    ATLAS_TRACE( "atlas::interpolation::method::Method::setup(FunctionSpace, FunctionSpace)" );
+    this->do_setup( source, target );
+}
+
+void Method::setup( const Grid& source, const Grid& target ) {
+    ATLAS_TRACE( "atlas::interpolation::method::Method::setup(Grid, Grid)" );
+    this->do_setup( source, target );
+}
+
+void Method::setup( const FunctionSpace& source, const Field& target ) {
+    ATLAS_TRACE( "atlas::interpolation::method::Method::setup(FunctionSpace, Field)" );
+    this->do_setup( source, target );
+}
+
+void Method::setup( const FunctionSpace& source, const FieldSet& target ) {
+    ATLAS_TRACE( "atlas::interpolation::method::Method::setup(FunctionSpace, FieldSet)" );
+    this->do_setup( source, target );
+}
+
+void Method::execute( const FieldSet& source, FieldSet& target ) const {
+    ATLAS_TRACE( "atlas::interpolation::method::Method::execute(FieldSet, FieldSet)" );
+    this->do_execute( source, target );
+}
+
+void Method::execute( const Field& source, Field& target ) const {
+    ATLAS_TRACE( "atlas::interpolation::method::Method::execute(Field, Field)" );
+    this->do_execute( source, target );
+}
+
+void Method::do_setup( const FunctionSpace& /*source*/, const Field& /*target*/ ) {
     ATLAS_NOTIMPLEMENTED;
 }
 
-void Method::setup( const FunctionSpace& /*source*/, const FieldSet& /*target*/ ) {
+void Method::do_setup( const FunctionSpace& /*source*/, const FieldSet& /*target*/ ) {
     ATLAS_NOTIMPLEMENTED;
 }
 
-void Method::execute( const FieldSet& fieldsSource, FieldSet& fieldsTarget ) const {
-    ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
+void Method::do_execute( const FieldSet& fieldsSource, FieldSet& fieldsTarget ) const {
+    ATLAS_TRACE( "atlas::interpolation::method::Method::do_execute()" );
 
     const idx_t N = fieldsSource.size();
     ATLAS_ASSERT( N == fieldsTarget.size() );
 
     for ( idx_t i = 0; i < fieldsSource.size(); ++i ) {
-        Log::debug() << "Method::execute() on field " << ( i + 1 ) << '/' << N << "..." << std::endl;
-        Method::execute( fieldsSource[i], fieldsTarget[i] );
+        Log::debug() << "Method::do_execute() on field " << ( i + 1 ) << '/' << N << "..." << std::endl;
+        Method::do_execute( fieldsSource[i], fieldsTarget[i] );
     }
 }
 
-void Method::execute( const Field& src, Field& tgt ) const {
+void Method::do_execute( const Field& src, Field& tgt ) const {
     haloExchange( src );
 
-    ATLAS_TRACE( "atlas::interpolation::method::Method::execute()" );
+    ATLAS_TRACE( "atlas::interpolation::method::Method::do_execute()" );
 
     if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
         interpolate_field<double>( src, tgt );

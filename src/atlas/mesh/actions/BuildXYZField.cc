@@ -25,8 +25,7 @@ namespace actions {
 //----------------------------------------------------------------------------------------------------------------------
 
 BuildXYZField::BuildXYZField( const std::string& name, bool force_recompute ) :
-    name_( name ),
-    force_recompute_( force_recompute ) {}
+    name_( name ), force_recompute_( force_recompute ) {}
 
 Field& BuildXYZField::operator()( Mesh& mesh ) const {
     return operator()( mesh.nodes() );
