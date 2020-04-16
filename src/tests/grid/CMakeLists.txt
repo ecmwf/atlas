@@ -22,6 +22,7 @@ foreach(test
         test_field
         test_grid_iterator
         test_grids
+        test_stretchedrotatedgaussian
         test_grid_cropping
         test_vertical
         test_state
