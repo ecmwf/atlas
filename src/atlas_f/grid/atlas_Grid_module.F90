@@ -24,6 +24,8 @@ private :: c_ptr
 public :: atlas_Grid
 public :: atlas_UnstructuredGrid
 public :: atlas_StructuredGrid
+public :: atlas_LambertRegionalGrid
+public :: atlas_LonLatRegionalGrid
 public :: atlas_GaussianGrid
 public :: atlas_ReducedGaussianGrid
 public :: atlas_RegularGaussianGrid
@@ -170,6 +172,65 @@ interface atlas_GaussianGrid
 end interface
 
 !------------------------------------------------------------------------------
+
+TYPE, extends(atlas_StructuredGrid) :: atlas_LonLatRegionalGrid
+
+! Purpose :
+! -------
+!   *atlas_LonLatRegionalGrid* : Object Grid specifications for Regional grid using LonLat projection
+
+! Methods :
+! -------
+
+! Author :
+! ------
+!   07-Apr-2020 Philippe Marguinaud      *Meteo-France*
+
+!------------------------------------------------------------------------------
+contains
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_LonLatRegionalGrid__final_auto
+#endif
+
+END TYPE atlas_LonLatRegionalGrid
+
+interface atlas_LonLatRegionalGrid
+  module procedure atlas_LonLatRegionalGrid__ctor_int32
+  module procedure atlas_LonLatRegionalGrid__ctor_int64
+end interface
+
+!------------------------------------------------------------------------------
+
+!------------------------------------------------------------------------------
+
+TYPE, extends(atlas_StructuredGrid) :: atlas_LambertRegionalGrid
+
+! Purpose :
+! -------
+!   *atlas_LambertRegionalGrid* : Object Grid specifications for Regional grid using Lambert projection
+
+! Methods :
+! -------
+
+! Author :
+! ------
+!   20-Fev-2020 Philippe Marguinaud      *Meteo-France*
+
+!------------------------------------------------------------------------------
+contains
+
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_LambertRegionalGrid__final_auto
+#endif
+
+END TYPE atlas_LambertRegionalGrid
+
+interface atlas_LambertRegionalGrid
+  module procedure atlas_LambertRegionalGrid__ctor_int32
+  module procedure atlas_LambertRegionalGrid__ctor_int64
+end interface
+
 !------------------------------------------------------------------------------
 
 TYPE, extends(atlas_StructuredGrid) :: atlas_ReducedGaussianGrid
@@ -312,6 +373,22 @@ end subroutine
 
 ATLAS_FINAL subroutine atlas_GaussianGrid__final_auto(this)
   type(atlas_GaussianGrid), intent(inout) :: this
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+ATLAS_FINAL subroutine atlas_LambertRegionalGrid__final_auto(this)
+  type(atlas_LambertRegionalGrid), intent(inout) :: this
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+ATLAS_FINAL subroutine atlas_LonLatRegionalGrid__final_auto(this)
+  type(atlas_LonLatRegionalGrid), intent(inout) :: this
 #if FCKIT_FINAL_NOT_PROPAGATING
   call this%final()
 #endif
@@ -487,6 +564,66 @@ function atlas_ReducedGaussianGrid__ctor_int64(nx) result(this)
   integer(c_long), intent(in)  :: nx(:)
   call this%reset_c_ptr( &
     & atlas__grid__reduced__ReducedGaussian_long( nx, int(size(nx),c_long) ) )
+  call this%return()
+end function
+
+!-----------------------------------------------------------------------------
+
+function atlas_LonLatRegionalGrid__ctor_int32(nx, ny, xmin, xmax, ymin, ymax) result(this)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long, c_double
+  use atlas_grid_Structured_c_binding
+  type(atlas_LonLatRegionalGrid) :: this
+  integer(c_int), intent(in)  :: nx, ny
+  real(c_double), intent (in) :: xmin, xmax, ymin, ymax
+  call this%reset_c_ptr( atlas__grid__LatLonRegional_int( nx, ny, xmin, xmax, ymin, ymax) )
+  call this%return()
+end function
+
+function atlas_LonLatRegionalGrid__ctor_int64(nx, ny, xmin, xmax, ymin, ymax) result(this)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long, c_double
+  use atlas_grid_Structured_c_binding
+  type(atlas_LonLatRegionalGrid) :: this
+  integer(c_long), intent(in)  :: nx, ny
+  real(c_double), intent (in) :: xmin, xmax, ymin, ymax
+  call this%reset_c_ptr( atlas__grid__LatLonRegional_long ( nx, ny, xmin, xmax, ymin, ymax) )
+  call this%return()
+end function
+
+!-----------------------------------------------------------------------------
+
+function atlas_LambertRegionalGrid__ctor_int32(nx, ny, xmin, ymin, dx, dy, &
+        & longitude0, latitude0, latitude1, latitude2) result(this)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long, c_double
+  use atlas_grid_Structured_c_binding
+  type(atlas_LambertRegionalGrid) :: this
+  integer(c_int), intent(in)  :: nx, ny
+  real(c_double), intent (in) :: xmin, ymin
+  real(c_double), intent (in) :: dx, dy
+  real(c_double), intent (in) :: longitude0, latitude0
+  real(c_double), intent (in) :: latitude1, latitude2
+
+  call this%reset_c_ptr( &
+    & atlas__grid__LambertRegional_int( nx, ny, xmin, ymin, dx, dy, &
+            & longitude0, latitude0, latitude1, latitude2) )
+
+  call this%return()
+end function
+
+function atlas_LambertRegionalGrid__ctor_int64(nx, ny, xmin, ymin, dx, dy, &
+        & longitude0, latitude0, latitude1, latitude2) result(this)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long, c_double
+  use atlas_grid_Structured_c_binding
+  type(atlas_LambertRegionalGrid) :: this
+  integer(c_long), intent(in)  :: nx, ny
+  real(c_double), intent (in) :: xmin, ymin
+  real(c_double), intent (in) :: dx, dy
+  real(c_double), intent (in) :: longitude0, latitude0
+  real(c_double), intent (in) :: latitude1, latitude2
+
+  call this%reset_c_ptr( &
+    & atlas__grid__LambertRegional_long( nx, ny, xmin, ymin, dx, dy, &
+            & longitude0, latitude0, latitude1, latitude2) )
+
   call this%return()
 end function
 
