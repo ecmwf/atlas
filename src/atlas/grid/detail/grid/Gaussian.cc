@@ -264,7 +264,7 @@ StructuredGrid::grid_t* reduced_gaussian( const std::vector<int> & nx, double ce
   Projection proj (Config ("type", "rotated_schmidt") | Config ("stretching_factor", stretch) | Config ("rotation_angle", 0.0)
                  | Config ("north_pole", std::vector<double>{centre[0], centre[1]}));
 
-  return new StructuredGrid::grid_t (xspace, yspace, proj, Domain ());
+  return new StructuredGrid::grid_t (xspace, yspace, proj, Domain (Config ("type", "global")));
 }
 
 template <typename Int>
