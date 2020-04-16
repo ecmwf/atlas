@@ -138,6 +138,11 @@ void Grid::detachObserver( GridObserver& observer ) const {
                            grid_observers_.end() );
 }
 
+idx_t atlas__grid__Grid__size( Grid* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Grid" );
+    return This->size();
+}
+
 util::Config * atlas__grid__Grid__spec( Grid* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Grid" );
     util::Config * config = new util::Config ();

@@ -178,6 +178,7 @@ public:
 //----------------------------------------------------------------------------------------------------------------------
 
 extern "C" {
+idx_t atlas__grid__Grid__size( Grid* This );
 util::Config * atlas__grid__Grid__spec ( Grid* This );
 }
 
