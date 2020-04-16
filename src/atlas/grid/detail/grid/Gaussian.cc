@@ -290,6 +290,10 @@ StructuredGrid::grid_t* atlas__grid__reduced__StretchedRotatedReducedGaussian_in
     return reduced_gaussian( idx_vector( nx, ny ), centre, stretch );
 }
 
+StructuredGrid::grid_t* atlas__grid__reduced__StretchedRotatedReducedGaussian_long ( long nx[], long ny, double centre[], double stretch) {
+    return reduced_gaussian( idx_vector( nx, ny ), centre, stretch );
+}
+
 }
 
 }  // namespace grid
