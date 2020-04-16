@@ -15,14 +15,24 @@
 
 #include "atlas/util/Object.h"
 #include "atlas/util/vector.h"
-
+#include "atlas/util/Config.h"
 #include "atlas/library/config.h"
+
+
+namespace eckit {
+class Parametrisation;
+}
 
 namespace atlas {
 
 class Grid;
 namespace grid {
 class Partitioner;
+namespace detail {
+namespace grid {
+class Grid;
+}
+}
 }
 
 }  // namespace atlas
@@ -32,9 +42,11 @@ namespace grid {
 
 class DistributionImpl : public util::Object {
 public:
+    using Config = atlas::util::Config;
     using partition_t = atlas::vector<int>;
 
     DistributionImpl( const Grid& );
+    DistributionImpl( const Grid&, const eckit::Parametrisation & );
 
     DistributionImpl( const Grid&, const Partitioner& );
 
@@ -64,6 +76,7 @@ public:
     void print( std::ostream& ) const;
 
 private:
+    void setupWithPartitioner (const Grid &, const Partitioner &);
     idx_t nb_partitions_;
     partition_t part_;
     std::vector<idx_t> nb_pts_;
@@ -72,8 +85,15 @@ private:
     std::string type_;
 };
 
+using GridImpl = atlas::grid::detail::grid::Grid;
+
 extern "C" {
+
+DistributionImpl* atlas__GridDistribution__new_gridconfig (const GridImpl * grid, const eckit::Parametrisation * config);
 DistributionImpl* atlas__GridDistribution__new( idx_t npts, int part[], int part0 );
+int atlas__GridDistribution__partition_int32 (DistributionImpl * dist, int i);
+long atlas__GridDistribution__partition_int64 (DistributionImpl * dist, long i);
+long atlas__GridDistribution__nb_partitions (DistributionImpl * dist);
 void atlas__GridDistribution__delete( DistributionImpl* This );
 }
 
