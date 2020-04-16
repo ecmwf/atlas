@@ -10,6 +10,7 @@
 
 #include <string>
 
+#include "atlas/meshgenerator/detail/CubedSphereMeshGenerator.h"
 #include "atlas/meshgenerator/detail/DelaunayMeshGenerator.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
 #include "atlas/meshgenerator/detail/StructuredMeshGenerator.h"
@@ -24,8 +25,9 @@ namespace meshgenerator {
 void force_link() {
     static struct Link {
         Link() {
-            MeshGeneratorBuilder<meshgenerator::StructuredMeshGenerator>();
+            MeshGeneratorBuilder<meshgenerator::CubedSphereMeshGenerator>();
             MeshGeneratorBuilder<meshgenerator::DelaunayMeshGenerator>();
+            MeshGeneratorBuilder<meshgenerator::StructuredMeshGenerator>();
         }
     } link;
 }
