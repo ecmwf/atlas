@@ -214,10 +214,10 @@ public:
       xy( i, j, t, xyt );
 
       double xytll[5];
-      xytll[0] = xyt[0];
-      xytll[1] = xyt[1];
-      xytll[2] = xyt[2];
-      
+      xytll[0] = i;
+      xytll[1] = j;
+      xytll[2] = t;
+
       projection_.xy2lonlat( xytll );
     }
 

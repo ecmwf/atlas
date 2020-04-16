@@ -19,6 +19,7 @@ namespace detail {
 
 CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params )
                                                             : tile1LonsArray_(), tile1LatsArray_() {
+  ATLAS_TRACE( "CubedSphereProjectionBase::CubedSphereProjectionBase" );
   // Get cube sphere face dimension
   params.get("CubeNx", cubeNx_);
 
@@ -45,6 +46,7 @@ void CubedSphereProjectionBase::xy2lonlat( double xytll[] ) const {
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::getTile1LonLat(double x, double y, double lonlat[]) const {
+  ATLAS_TRACE( "CubedSphereProjectionBase::getTile1LonLat" );
   // Get the array view to to tile 1
   auto tile1Lats = getLatArray();
   auto tile1Lons = getLonArray();
@@ -57,11 +59,13 @@ void CubedSphereProjectionBase::getTile1LonLat(double x, double y, double lonlat
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::xy2lonlat1( double xytll[] ) const {
+  ATLAS_TRACE( "CubedSphereProjectionBase::xy2lonlat1" );
   //  Face 1, nothing to do.
   double lonlat[2];
   this->getTile1LonLat(xytll[0], xytll[1], lonlat);
   xytll[3+LON] = lonlat[LON];
   xytll[3+LAT] = lonlat[LAT];
+  std::cout << "Lon, Lat: " << xytll[3+LON] << " " << xytll[3+LAT] << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -70,18 +74,20 @@ void CubedSphereProjectionBase::xy2lonlat2( double xytll[] ) const {
   //  Face 2: rotate -90.0 degrees about z axis
 
   double lonlat[2];
-  this->getTile1LonLat(xytll[0], xytll[1], lonlat);
-
   double xyz[3];
+  double angle;
+
+  this->getTile1LonLat(xytll[0], xytll[1], lonlat);
   ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
 
-  double angle = M_PI / 2.0;
-  ProjectionUtilities::rotate3d.at(3)(angle, xyz);
+  angle = -M_PI / 2.0;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
 
-  ProjectionUtilities::sphericalToCartesian(xyz, lonlat);
+  ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
 
   xytll[3+LON] = lonlat[LON];
   xytll[3+LAT] = lonlat[LAT];
+  std::cout << "Lon, Lat: " << xytll[3+LON] << " " << xytll[3+LAT] << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -89,7 +95,25 @@ void CubedSphereProjectionBase::xy2lonlat2( double xytll[] ) const {
 void CubedSphereProjectionBase::xy2lonlat3( double xytll[] ) const {
   //  Face 3: rotate -90.0 degrees about z axis
   //          rotate  90.0 degrees about x axis
-  std::cout << "xy2lonlat2" << std::endl;
+
+  double lonlat[2];
+  double xyz[3];
+  double angle;
+
+  this->getTile1LonLat(xytll[0], xytll[1], lonlat);
+
+  ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
+
+  angle = -M_PI / 2.0;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
+  angle = M_PI / 2.0;
+  ProjectionUtilities::rotate3dX(angle, xyz);
+
+  ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
+
+  xytll[3+LON] = lonlat[LON];
+  xytll[3+LAT] = lonlat[LAT];
+  std::cout << "Lon, Lat: " << xytll[3+LON] << " " << xytll[3+LAT] << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -97,57 +121,107 @@ void CubedSphereProjectionBase::xy2lonlat3( double xytll[] ) const {
 void CubedSphereProjectionBase::xy2lonlat4( double xytll[] ) const {
   //  Face 4: rotate -180.0 degrees about z axis
   //          rotate   90.0 degrees about x axis
-  std::cout << "xy2lonlat3" << std::endl;};
+
+  double lonlat[2];
+  double xyz[3];
+  double angle;
+
+  this->getTile1LonLat(xytll[0], xytll[1], lonlat);
+
+  ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
+
+  angle = -M_PI;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
+  angle = M_PI / 2.0;
+  ProjectionUtilities::rotate3dX(angle, xyz);
+
+  ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
+
+  xytll[3+LON] = lonlat[LON];
+  xytll[3+LAT] = lonlat[LAT];
+  std::cout << "Lon, Lat: " << xytll[3+LON] << " " << xytll[3+LAT] << std::endl;
+}
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::xy2lonlat5( double xytll[] ) const {
   //  Face 5: rotate 90.0 degrees about z axis
   //          rotate 90.0 degrees about y axis
-  std::cout << "xy2lonlat4" << std::endl;};
+
+  double lonlat[2];
+  double xyz[3];
+  double angle;
+
+  this->getTile1LonLat(xytll[0], xytll[1], lonlat);
+
+  ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
+
+  angle = M_PI / 2.0;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
+  angle = M_PI / 2.0;
+  ProjectionUtilities::rotate3dY(angle, xyz);
+
+  ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
+
+  xytll[3+LON] = lonlat[LON];
+  xytll[3+LAT] = lonlat[LAT];
+  std::cout << "Lon, Lat: " << xytll[3+LON] << " " << xytll[3+LAT] << std::endl;
+}
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::xy2lonlat6( double xytll[] ) const {
   //  Face 6: rotate 90.0 degrees about y axis
-  //          rotate 90.0 degrees about y axis
-  std::cout << "xy2lonlat5" << std::endl;
+  //          rotate  0.0 degrees about y axis
+
+  double lonlat[2];
+  double xyz[3];
+  double angle;
+
+  this->getTile1LonLat(xytll[0], xytll[1], lonlat);
+
+  ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
+
+  angle = -M_PI / 2.0;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
+  angle = M_PI / 2.0;
+  ProjectionUtilities::rotate3dX(angle, xyz);
+
+  ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
+
+  xytll[3+LON] = lonlat[LON];
+  xytll[3+LAT] = lonlat[LAT];
+  std::cout << "Lon, Lat: " << xytll[3+LON] << " " << xytll[3+LAT] << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::latlon2xy1( double xytll[] ) const {
-  std::cout << "latlon2xy0" << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::latlon2xy2( double xytll[] ) const {
-  std::cout << "latlon2xy1" << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::latlon2xy3( double xytll[] ) const {
-  std::cout << "latlon2xy2" << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::latlon2xy4( double xytll[] ) const {
-  std::cout << "latlon2xy3" << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::latlon2xy5( double xytll[] ) const {
-  std::cout << "latlon2xy4" << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::latlon2xy6( double xytll[] ) const {
-  std::cout << "latlon2xy5" << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------

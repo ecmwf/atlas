@@ -118,7 +118,6 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   tile_array_me.push_back(4);
   tile_array_me.push_back(5);
 
-
   // Array to hold whether a ghost point
   // -----------------------------------
   array::ArrayT<int> isGhostArray( cubeNx+1, cubeNx+1, 6 );
@@ -135,17 +134,18 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     }
   }
 
-  // Far edges are ghost point
-  for ( int it = 0; it < 6; it++ ) {
-    for ( int ix = 0; ix < cubeNx+1; ix++ ) {
-      isGhost(cubeNx+1, ix, it) = 1;
-      isGhost(ix, cubeNx+1, it) = 1;
-    }
-  }
 
-  // Two special points that are not ghost
-  isGhost(0,cubeNx+1,0) = 0; // First tile
-  isGhost(1,0,cubeNx+1) = 0; // Second tile
+//  // Far edges are ghost point
+//  for ( int it = 0; it < 6; it++ ) {
+//    for ( int ix = 0; ix < cubeNx+1; ix++ ) {
+//      isGhost(cubeNx+1, ix, it) = 1;
+//      isGhost(ix, cubeNx+1, it) = 1;
+//    }
+//  }
+//
+//  // Two special points that are not ghost
+//  isGhost(0,cubeNx+1,0) = 0; // First tile
+//  isGhost(1,0,cubeNx+1) = 0; // Second tile
 
   // Loop over entire grid, including the ghost points
   // -------------------------------------------------

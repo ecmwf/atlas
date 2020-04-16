@@ -13,6 +13,7 @@
 
 #include "atlas/array.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/runtime/Trace.h"
 
 namespace atlas {
 namespace projection {
@@ -68,10 +69,12 @@ class CubedSphereProjectionBase {
 
     // Array views for accessing data of tile 0 projection
     ArrayViewLatLon_ getLatArray() const {
+      ATLAS_TRACE( "CubedSphereProjectionBase::getLatArray" );
       array::ArrayView<double, 2> tile1Lats = array::make_view<double, 2>( *tile1LatsArray_ );
       return tile1Lats;
     };
     ArrayViewLatLon_ getLonArray() const {
+      ATLAS_TRACE( "CubedSphereProjectionBase::getLonArray" );
       array::ArrayView<double, 2> tile1Lats = array::make_view<double, 2>( *tile1LonsArray_ );
       return tile1Lats;
     };

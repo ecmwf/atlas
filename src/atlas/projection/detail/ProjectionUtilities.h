@@ -103,13 +103,6 @@ struct ProjectionUtilities {
 
   //--------------------------------------------------------------------------------------------------
 
-  // Rotate 3D vector in catesian space, angle in radians
-  static std::vector<std::function<void(double, double[])>> rotate3d =
-    {[](double angle, double xyz[]){rotate3dX(angle, xyz);},
-     [](double angle, double xyz[]){rotate3dY(angle, xyz);},
-     [](double angle, double xyz[]){rotate3dZ(angle, xyz);}
-    };
-
 };
 
 //--------------------------------------------------------------------------------------------------
