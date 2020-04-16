@@ -138,6 +138,13 @@ void Grid::detachObserver( GridObserver& observer ) const {
                            grid_observers_.end() );
 }
 
+util::Config * atlas__grid__Grid__spec( Grid* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Grid" );
+    util::Config * config = new util::Config ();
+    *config = This->spec();
+    return config;
+}
+
 }  // namespace grid
 }  // namespace detail
 }  // namespace grid

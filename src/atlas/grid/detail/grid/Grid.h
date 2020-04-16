@@ -177,6 +177,9 @@ public:
 
 //----------------------------------------------------------------------------------------------------------------------
 
+extern "C" {
+util::Config * atlas__grid__Grid__spec ( Grid* This );
+}
 
 }  // namespace grid
 }  // namespace detail
