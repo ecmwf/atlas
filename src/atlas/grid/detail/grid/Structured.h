@@ -438,7 +438,6 @@ gidx_t atlas__grid__Structured__index (Structured* This, idx_t i, idx_t j);
 void atlas__grid__Structured__index2ij (Structured* This, gidx_t gidx, idx_t & i, idx_t & j);
 idx_t atlas__grid__Structured__nxmin( Structured* This );
 idx_t atlas__grid__Structured__nxmax( Structured* This );
-idx_t atlas__grid__Structured__size( Structured* This );
 double atlas__grid__Structured__y( Structured* This, idx_t j );
 double atlas__grid__Structured__x( Structured* This, idx_t i, idx_t j );
 void atlas__grid__Structured__xy( Structured* This, idx_t i, idx_t j, double crd[] );

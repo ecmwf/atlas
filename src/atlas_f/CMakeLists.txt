@@ -55,6 +55,9 @@ function(generate_fortran_bindings output filename)
 endfunction()
 
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Grid.h
+    MODULE    atlas_grid_Grid_c_binding
+    OUTPUT    grid_Grid_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Structured.h
     MODULE    atlas_grid_Structured_c_binding
     OUTPUT    grid_Structured_c_binding.f90 )

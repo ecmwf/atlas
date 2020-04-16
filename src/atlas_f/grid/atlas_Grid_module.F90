@@ -48,6 +48,7 @@ TYPE, extends(fckit_owned_object) :: atlas_Grid
 !------------------------------------------------------------------------------
 contains
   procedure :: size => atlas_Grid__size
+  procedure :: spec => atlas_Grid__spec
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_Grid__final_auto
@@ -524,10 +525,18 @@ end function
 
 function atlas_Grid__size(this) result(npts)
   use, intrinsic :: iso_c_binding, only: c_long
-  use atlas_grid_Structured_c_binding
+  use atlas_grid_Grid_c_binding
   class(atlas_Grid), intent(in) :: this
   integer(c_long) :: npts
-  npts = atlas__grid__Structured__size(this%CPTR_PGIBUG_A)
+  npts = atlas__grid__Grid__size(this%CPTR_PGIBUG_A)
+end function
+
+function atlas_Grid__spec(this) result(spec)
+  use atlas_grid_Grid_c_binding
+  class(atlas_Grid), intent(in) :: this
+  type(atlas_Config) :: spec
+  call spec%reset_c_ptr( atlas__grid__Grid__spec(this%CPTR_PGIBUG_A) )
+  call spec%return ()
 end function
 
 function Gaussian__N(this) result(N)

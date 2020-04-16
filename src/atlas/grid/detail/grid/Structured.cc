@@ -643,11 +643,6 @@ idx_t atlas__grid__Structured__nxmin( Structured* This ) {
     return This->nxmin();
 }
 
-idx_t atlas__grid__Structured__size( Structured* This ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
-    return This->size();
-}
-
 double atlas__grid__Structured__y( Structured* This, idx_t j ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
     return This->y( j );
