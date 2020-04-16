@@ -172,6 +172,8 @@ void Rotation::rotate( double crd[] ) const {
         return;
     }
 
+    crd[LON] -= angle_;
+
     if ( !rotation_angle_only_ ) {
         const PointLonLat L( wrap_latitude( {crd[LON], crd[LAT]} ) );
         PointXYZ P;
@@ -184,16 +186,12 @@ void Rotation::rotate( double crd[] ) const {
         crd[LON] = Lt.lon();
         crd[LAT] = Lt.lat();
     }
-
-    crd[LON] -= angle_;
 }
 
 void Rotation::unrotate( double crd[] ) const {
     if ( !rotated_ ) {
         return;
     }
-
-    crd[LON] += angle_;
 
     if ( !rotation_angle_only_ ) {
         const PointLonLat Lt( crd );
@@ -207,6 +205,8 @@ void Rotation::unrotate( double crd[] ) const {
         crd[LON] = L.lon();
         crd[LAT] = L.lat();
     }
+
+    crd[LON] += angle_;
 }
 
 }  // namespace util
