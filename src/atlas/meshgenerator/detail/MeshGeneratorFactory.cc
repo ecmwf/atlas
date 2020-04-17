@@ -12,6 +12,7 @@
 
 #include "atlas/meshgenerator/detail/CubedSphereMeshGenerator.h"
 #include "atlas/meshgenerator/detail/DelaunayMeshGenerator.h"
+#include "atlas/meshgenerator/detail/NoConnectivityMeshGenerator.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
 #include "atlas/meshgenerator/detail/StructuredMeshGenerator.h"
 
@@ -27,6 +28,7 @@ void force_link() {
         Link() {
             MeshGeneratorBuilder<meshgenerator::CubedSphereMeshGenerator>();
             MeshGeneratorBuilder<meshgenerator::DelaunayMeshGenerator>();
+            MeshGeneratorBuilder<meshgenerator::NoConnectivityMeshGenerator>();
             MeshGeneratorBuilder<meshgenerator::StructuredMeshGenerator>();
         }
     } link;
