@@ -53,14 +53,12 @@ CASE ("lonlat -180/+180/-90/+90") {
 
   functionspace::StructuredColumns fs2 (grid2, grid::Partitioner ("checkerboard"), Config ("halo", 1) | Config ("periodic_points", true));
 
-  printf (" grid1.size (), fs1.sizeOwned () fs1.size () = %8d, %8d, %8d\n", grid1.size (), fs1.sizeOwned (), fs1.size ());
-  printf (" grid2.size (), fs2.sizeOwned () fs2.size () = %8d, %8d, %8d\n", grid2.size (), fs2.sizeOwned (), fs2.size ());
-
-
+  EXPECT (grid1.size () == grid2.size ());
+  EXPECT (fs1.size () == fs2.size ());
+  EXPECT (fs1.sizeOwned () == fs2.sizeOwned ());
 }
 
 
-#ifdef UNDEF
 CASE( "test_functionspace_StructuredColumns_no_halo" ) {
     size_t root          = 0;
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
@@ -352,7 +350,6 @@ CASE( "test_functionspace_StructuredColumns halo exchange registration" ) {
     }
 }
 
-#endif
 
 //-----------------------------------------------------------------------------
 
