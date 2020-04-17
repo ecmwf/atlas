@@ -110,6 +110,12 @@ contains
   procedure, private   :: nx_int32 => Structured__nx_int32
   procedure, private   :: nx_int64 => Structured__nx_int64
   generic   :: nx => nx_int32, nx_int64
+  procedure, private :: Structured__ij2gidx_int32
+  procedure, private :: Structured__ij2gidx_int64
+  generic   :: ij2gidx => Structured__ij2gidx_int32, Structured__ij2gidx_int64
+  procedure, private :: Structured__gidx2ij_int32
+  procedure, private :: Structured__gidx2ij_int64
+  generic   :: gidx2ij => Structured__gidx2ij_int32, Structured__gidx2ij_int64
   procedure :: nx_array  => Structured__nx_array
   procedure :: nxmin     => Structured__nxmin
   procedure :: nxmax     => Structured__nxmax
@@ -553,6 +559,43 @@ function Structured__ny(this) result(ny)
   ny = atlas__grid__Structured__ny(this%CPTR_PGIBUG_A)
 end function
 
+function Structured__gidx2ij_int32(this, gidx) result(ij)
+  use, intrinsic :: iso_c_binding, only: c_long, c_int
+  use atlas_grid_Structured_c_binding
+  integer(c_int), intent (in) :: gidx
+  class(atlas_StructuredGrid), intent(in) :: this
+  integer(c_int) :: ij (2)
+  call atlas__grid__Structured__gidx2ij(this%CPTR_PGIBUG_A, int (gidx-1, c_long), ij)
+  ij = ij + 1
+end function
+
+function Structured__gidx2ij_int64(this, gidx) result(ij)
+  use, intrinsic :: iso_c_binding, only: c_long, c_int
+  use atlas_grid_Structured_c_binding
+  integer(c_long), intent (in) :: gidx
+  class(atlas_StructuredGrid), intent(in) :: this
+  integer(c_int) :: ij (2)
+  call atlas__grid__Structured__gidx2ij(this%CPTR_PGIBUG_A, gidx-1, ij)
+  ij = ij + 1
+end function
+
+function Structured__ij2gidx_int32(this, i, j) result(gidx)
+  use, intrinsic :: iso_c_binding, only: c_long, c_int
+  use atlas_grid_Structured_c_binding
+  integer(c_long) :: gidx
+  class(atlas_StructuredGrid), intent(in) :: this
+  integer(c_int), intent(in) :: i, j
+  gidx = 1 + atlas__grid__Structured__ij2gidx(this%CPTR_PGIBUG_A, c_idx(i), c_idx(j) )
+end function
+
+function Structured__ij2gidx_int64(this, i, j) result(gidx)
+  use, intrinsic :: iso_c_binding, only: c_long
+  use atlas_grid_Structured_c_binding
+  integer(c_long) :: gidx
+  class(atlas_StructuredGrid), intent(in) :: this
+  integer(c_long), intent(in) :: i, j
+  gidx = 1 + atlas__grid__Structured__ij2gidx(this%CPTR_PGIBUG_A, c_idx(i), c_idx(j) )
+end function
 
 function Structured__nx_int32(this, j) result(nx)
   use, intrinsic :: iso_c_binding, only: c_long, c_int
