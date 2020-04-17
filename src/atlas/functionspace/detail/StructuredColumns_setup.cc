@@ -462,17 +462,26 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                         if ( j > thread_j_begin ) {
                             thread_i_begin[j] = i_begin_[j];
                         }
+                        idx_t j_size = ( i_end_[j] - i_begin_[j] );
+
                         idx_t remaining = static_cast<idx_t>( end - n );
-                        idx_t j_size    = ( i_end_[j] - i_begin_[j] );
-                        if ( remaining > j_size ) {
+                        if ( j_size <= remaining ) {
                             thread_i_end[j] = i_end_[j];
                             n += j_size;
+                            if ( n == end ) {
+                                goto stop;
+                            }
                         }
                         else {
-                            thread_i_end[j] = thread_i_begin[j] + remaining;
-                            thread_j_end    = j + 1;
-                            break;
+                            thread_i_end[j] = i_begin_[j] + remaining;
+                            goto stop;
                         }
+
+                        continue;
+
+                    stop:
+                        thread_j_end = j + 1;
+                        break;
                     }
 
                     idx_t r = idx_t( begin );
