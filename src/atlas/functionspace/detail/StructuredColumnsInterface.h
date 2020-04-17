@@ -71,10 +71,14 @@ void atlas__functionspace__StructuredColumns__delete( detail::StructuredColumns*
 field::FieldImpl* atlas__fs__StructuredColumns__create_field( const detail::StructuredColumns* This,
                                                               const eckit::Configuration* options );
 
-void atlas__functionspace__StructuredColumns__gather( const detail::StructuredColumns* This,
+void atlas__functionspace__StructuredColumns__gather_field( const detail::StructuredColumns* This,
                                                       const field::FieldImpl* local, field::FieldImpl* global );
-void atlas__functionspace__StructuredColumns__scatter( const detail::StructuredColumns* This,
+void atlas__functionspace__StructuredColumns__scatter_field( const detail::StructuredColumns* This,
                                                        const field::FieldImpl* global, field::FieldImpl* local );
+void atlas__functionspace__StructuredColumns__gather_fieldset( const detail::StructuredColumns* This,
+                                                      const field::FieldSetImpl* local, field::FieldSetImpl* global );
+void atlas__functionspace__StructuredColumns__scatter_fieldset( const detail::StructuredColumns* This,
+                                                       const field::FieldSetImpl* global, field::FieldSetImpl* local );
 void atlas__fs__StructuredColumns__checksum_fieldset( const detail::StructuredColumns* This,
                                                       const field::FieldSetImpl* fieldset, char*& checksum, idx_t& size,
                                                       int& allocated );
