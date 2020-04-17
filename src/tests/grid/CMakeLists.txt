@@ -9,6 +9,7 @@
 if( HAVE_FCTEST )
     foreach(test
             fctest_griddistribution
+            fctest_grids
             fctest_state )
 
         add_fctest( TARGET atlas_${test} SOURCES ${test}.F90 LINKER_LANGUAGE Fortran LIBS atlas_f ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )

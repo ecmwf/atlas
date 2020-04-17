@@ -345,6 +345,29 @@ public:
         return std::unique_ptr<Grid::IteratorLonLat>( new IteratorLonLat( *this, false ) );
     }
 
+    gidx_t index (idx_t i, idx_t j) const
+    {
+      return jglooff_[j] + i;
+    }
+
+    void index2ij (gidx_t gidx, idx_t & i, idx_t & j) const
+    {
+      if ((gidx < 0) || (gidx >= jglooff_.back ()))
+        throw_Exception ("Structured::index2ij: gidx out of bounds", Here ());
+      idx_t ja = 0, jb = jglooff_.size ();
+      while (jb - ja > 1)
+        {
+          idx_t jm = (ja + jb) / 2;
+          if (gidx < jglooff_[jm])
+            jb = jm;
+          else 
+            ja = jm;
+        }
+      i = gidx - jglooff_[ja];
+      j = ja;
+    }
+
+
 protected:  // methods
     virtual void print( std::ostream& ) const override;
 
@@ -386,6 +409,9 @@ protected:
     /// Periodicity in x-direction
     bool periodic_x_;
 
+    /// Per-row offset
+    std::vector<gidx_t> jglooff_;
+
 private:
     std::string name_ = {"structured"};
     XSpace xspace_;
@@ -408,6 +434,8 @@ Structured* atlas__grid__regular__ShiftedLat( long nx, long ny );
 void atlas__grid__Structured__nx_array( Structured* This, const idx_t*& nx, idx_t& size );
 idx_t atlas__grid__Structured__nx( Structured* This, idx_t j );
 idx_t atlas__grid__Structured__ny( Structured* This );
+gidx_t atlas__grid__Structured__index (Structured* This, idx_t i, idx_t j);
+void atlas__grid__Structured__index2ij (Structured* This, gidx_t gidx, idx_t & i, idx_t & j);
 idx_t atlas__grid__Structured__nxmin( Structured* This );
 idx_t atlas__grid__Structured__nxmax( Structured* This );
 idx_t atlas__grid__Structured__size( Structured* This );
