@@ -16,6 +16,7 @@
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 
+#include "atlas/util/Config.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/partitioner/CheckerboardPartitioner.h"
@@ -148,6 +149,11 @@ Partitioner* PartitionerFactory::build( const std::string& name ) {
 }
 
 Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_partitions ) {
+    atlas::util::Config config;
+    return build (name, nb_partitions, config);
+}
+
+Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_partitions, const eckit::Parametrisation & config ) {
     pthread_once( &once, init );
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
@@ -167,7 +173,7 @@ Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_
         throw_Exception( std::string( "No PartitionerFactory called " ) + name );
     }
 
-    return ( *j ).second->make( nb_partitions );
+    return ( *j ).second->make( nb_partitions, config );
 }
 
 

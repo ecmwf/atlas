@@ -41,6 +41,12 @@ CheckerboardPartitioner::CheckerboardPartitioner( int N ) : Partitioner( N ) {
     checkerboard_ = true;  // default
 }
 
+CheckerboardPartitioner::CheckerboardPartitioner( int N, const eckit::Parametrisation & config ) : Partitioner( N ) {
+    nbands_       = 0;     // to be computed later
+    config.get ("nbands", nbands_);
+    checkerboard_ = true;  // default
+}
+
 CheckerboardPartitioner::CheckerboardPartitioner( int N, int nbands ) : Partitioner( N ) {
     nbands_       = nbands;
     checkerboard_ = true;  // default

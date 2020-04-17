@@ -29,8 +29,6 @@ class Grid;
 namespace grid {
 class Partitioner;
 }
-}
-
 }  // namespace atlas
 
 namespace atlas {
