@@ -137,7 +137,7 @@ public:
     virtual void xy2lonlat( double crd[] ) const = 0;
     virtual void lonlat2xy( double crd[] ) const = 0;
 
-    virtual Jacobian getJacobianAtLonLat (const PointLonLat &) const = 0;
+    virtual Jacobian jacobian (const PointLonLat &) const = 0;
 
     void xy2lonlat( Point2& ) const;
     void lonlat2xy( Point2& ) const;

@@ -36,7 +36,7 @@ template <>
 void LonLatProjectionT<NotRotated>::lonlat2xy( double[] ) const {}
 
 template <>
-ProjectionImpl::Jacobian LonLatProjectionT<NotRotated>::getJacobianAtLonLat (const PointLonLat &) const 
+ProjectionImpl::Jacobian LonLatProjectionT<NotRotated>::jacobian (const PointLonLat &) const 
 {
   Jacobian jac;
   jac[0] = {1.0, 0.0};
@@ -45,9 +45,9 @@ ProjectionImpl::Jacobian LonLatProjectionT<NotRotated>::getJacobianAtLonLat (con
 }
 
 template <typename Rotation>
-ProjectionImpl::Jacobian LonLatProjectionT<Rotation>::getJacobianAtLonLat (const PointLonLat &) const 
+ProjectionImpl::Jacobian LonLatProjectionT<Rotation>::jacobian (const PointLonLat &) const 
 {
-  throw_NotImplemented ("LonLatProjectionT::getJacobianAtLonLat", Here ());
+  throw_NotImplemented ("LonLatProjectionT::jacobian", Here ());
 }
 
 template <>

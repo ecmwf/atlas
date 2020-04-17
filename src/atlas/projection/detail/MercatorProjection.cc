@@ -79,9 +79,9 @@ void MercatorProjectionT<Rotation>::xy2lonlat( double crd[] ) const {
 }
 
 template <typename Rotation>
-ProjectionImpl::Jacobian MercatorProjectionT<Rotation>::getJacobianAtLonLat (const PointLonLat &) const 
+ProjectionImpl::Jacobian MercatorProjectionT<Rotation>::jacobian (const PointLonLat &) const 
 {
-  throw_NotImplemented ("MercatorProjectionT::getJacobianAtLonLat", Here ());
+  throw_NotImplemented ("MercatorProjectionT::jacobian", Here ());
 }
 
 // specification

@@ -67,13 +67,13 @@ void SchmidtProjectionT<Rotation>::lonlat2xy( double crd[] ) const {
 }
 
 template <>
-ProjectionImpl::Jacobian SchmidtProjectionT<NotRotated>::getJacobianAtLonLat (const PointLonLat &) const 
+ProjectionImpl::Jacobian SchmidtProjectionT<NotRotated>::jacobian (const PointLonLat &) const 
 {
-  throw_NotImplemented ("SchmidtProjectionT<NotRotated>::getJacobianAtLonLat", Here ());
+  throw_NotImplemented ("SchmidtProjectionT<NotRotated>::jacobian", Here ());
 }
 
 template <typename Rotation>
-ProjectionImpl::Jacobian SchmidtProjectionT<Rotation>::getJacobianAtLonLat (const PointLonLat & lonlat) const 
+ProjectionImpl::Jacobian SchmidtProjectionT<Rotation>::jacobian (const PointLonLat & lonlat) const 
 {
 
   double xy[2] = {lonlat.lon (), lonlat.lat ()};

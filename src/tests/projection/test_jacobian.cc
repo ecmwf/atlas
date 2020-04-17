@@ -65,7 +65,7 @@ void doTaylorTest (const atlas::StructuredGrid & grid, double dmax, SKIP skip)
       double lonlat[2];
       grid.lonlat (i, j, lonlat);
 
-      auto jacA = proj.getJacobianAtLonLat (atlas::PointLonLat (lonlat[0], lonlat[1]));
+      auto jacA = proj.jacobian (atlas::PointLonLat (lonlat[0], lonlat[1]));
       auto jacB = getJacobian (proj, atlas::PointLonLat (lonlat[0], lonlat[1]));
       auto jacC = jacB * jacA.inverse () - atlas::Projection::Jacobian::Id ();
 

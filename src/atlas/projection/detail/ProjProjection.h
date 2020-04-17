@@ -56,7 +56,7 @@ public:
     void xy2lonlat( double[] ) const override;
     void lonlat2xy( double[] ) const override;
 
-    Jacobian getJacobianAtLonLat (const PointLonLat &) const override;
+    Jacobian jacobian (const PointLonLat &) const override;
 
     PointXYZ xyz( const PointLonLat& ) const override;
 

@@ -63,7 +63,7 @@ public:
     void lonlat2xy( double crd[] ) const;
     void lonlat2xy( Point2& ) const;
 
-    Jacobian getJacobianAtLonLat (const PointLonLat &) const;
+    Jacobian jacobian (const PointLonLat &) const;
 
     PointLonLat lonlat( const PointXY& ) const;
     PointXY xy( const PointLonLat& ) const;

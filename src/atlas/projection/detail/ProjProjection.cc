@@ -139,9 +139,9 @@ void ProjProjection::lonlat2xy( double crd[] ) const {
 }
 
 
-ProjectionImpl::Jacobian ProjProjection::getJacobianAtLonLat (const PointLonLat &) const 
+ProjectionImpl::Jacobian ProjProjection::jacobian (const PointLonLat &) const 
 {
-  throw_NotImplemented ("ProjProjection::getJacobianAtLonLat", Here ());
+  throw_NotImplemented ("ProjProjection::jacobian", Here ());
 }
 
 PointXYZ ProjProjection::xyz( const PointLonLat& lonlat ) const {

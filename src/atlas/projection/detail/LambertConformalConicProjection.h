@@ -30,7 +30,7 @@ public:
     void xy2lonlat( double crd[] ) const override;
     void lonlat2xy( double crd[] ) const override;
 
-    Jacobian getJacobianAtLonLat (const PointLonLat &) const override;
+    Jacobian jacobian (const PointLonLat &) const override;
 
     bool strictlyRegional() const override { return true; }
 

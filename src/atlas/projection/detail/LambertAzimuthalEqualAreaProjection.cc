@@ -86,9 +86,9 @@ void LambertAzimuthalEqualAreaProjection::xy2lonlat( double crd[] ) const {
 }
 
 
-ProjectionImpl::Jacobian LambertAzimuthalEqualAreaProjection::getJacobianAtLonLat (const PointLonLat &) const 
+ProjectionImpl::Jacobian LambertAzimuthalEqualAreaProjection::jacobian (const PointLonLat &) const 
 {
-  throw_NotImplemented ("LambertAzimuthalEqualAreaProjection::getJacobianAtLonLat", Here ());
+  throw_NotImplemented ("LambertAzimuthalEqualAreaProjection::jacobian", Here ());
 }
 
 LambertAzimuthalEqualAreaProjection::Spec LambertAzimuthalEqualAreaProjection::spec() const {
