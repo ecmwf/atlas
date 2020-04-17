@@ -37,10 +37,10 @@ protected:
      * @param source functionspace containing source points
      * @param target functionspace containing target points
      */
-    virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) override;
-    virtual void setup( const Grid& source, const Grid& target ) override;
+    virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) override;
+    virtual void do_setup( const Grid& source, const Grid& target ) override;
 
-    virtual void execute( const FieldSet& source, FieldSet& target ) const override;
+    virtual void do_execute( const FieldSet& source, FieldSet& target ) const override;
 
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }

@@ -65,7 +65,7 @@ void GridBoxMethod::print( std::ostream& out ) const {
 }
 
 
-void GridBoxMethod::setup( const FunctionSpace& /*source*/, const FunctionSpace& /*target*/ ) {
+void GridBoxMethod::do_setup( const FunctionSpace& /*source*/, const FunctionSpace& /*target*/ ) {
     ATLAS_NOTIMPLEMENTED;
 }
 
@@ -109,7 +109,7 @@ bool GridBoxMethod::intersect( size_t i, const util::GridBox& box, const PointIn
 }
 
 
-void GridBoxMethod::setup( const Grid& source, const Grid& target ) {
+void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
     ATLAS_TRACE( "GridBoxMethod::setup()" );
 
     if ( mpi::size() > 1 ) {
@@ -175,7 +175,7 @@ void GridBoxMethod::setup( const Grid& source, const Grid& target ) {
 }
 
 
-void GridBoxMethod::execute( const FieldSet& source, FieldSet& target ) const {
+void GridBoxMethod::do_execute( const FieldSet& source, FieldSet& target ) const {
     if ( matrixFree_ ) {
         ATLAS_TRACE( "GridBoxMethod::execute()" );
 
