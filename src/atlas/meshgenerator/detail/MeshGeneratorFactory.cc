@@ -11,7 +11,6 @@
 #include <string>
 
 #include "atlas/meshgenerator/detail/DelaunayMeshGenerator.h"
-#include "atlas/meshgenerator/detail/NoConnectivityMeshGenerator.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
 #include "atlas/meshgenerator/detail/StructuredMeshGenerator.h"
 
