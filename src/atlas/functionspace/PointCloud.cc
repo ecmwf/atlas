@@ -67,7 +67,7 @@ PointCloud::PointCloud( const Grid& grid ) {
     }
 }
 
-const Field& PointCloud::ghost() const {
+Field PointCloud::ghost() const {
     if ( not ghost_ ) {
         ghost_ = Field( "ghost", array::make_datatype<int>(), array::make_shape( size() ) );
         array::make_view<int, 1>( ghost_ ).assign( 0 );
