@@ -269,7 +269,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
     auto compute_x_fast = [this, &compute_i_fast]( idx_t i, idx_t jj, idx_t nx ) -> double {
         const idx_t ii = compute_i_fast( i, nx );  // guaranteed between 0 and nx(jj)
         const double a = ( ii - i ) / nx;
-        const double x = grid_->x( ii, jj ) - a * grid_->x( nx, jj );
+        const double x = grid_->x( ii, jj ) - a * (grid_->x( nx, jj ) - grid_->x(0, jj));
         return x;
     };
 
