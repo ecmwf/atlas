@@ -25,6 +25,7 @@ foreach(test
         test_grid_cropping
         test_vertical
         test_state
+        test_distribution
         test_grid_hash)
 
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )

@@ -15,14 +15,20 @@
 
 #include "atlas/util/Object.h"
 #include "atlas/util/vector.h"
-
+#include "atlas/util/Config.h"
 #include "atlas/library/config.h"
+
+
+namespace eckit {
+class Parametrisation;
+}
 
 namespace atlas {
 
 class Grid;
 namespace grid {
 class Partitioner;
+}
 }
 
 }  // namespace atlas
@@ -32,9 +38,11 @@ namespace grid {
 
 class DistributionImpl : public util::Object {
 public:
+    using Config = atlas::util::Config;
     using partition_t = atlas::vector<int>;
 
     DistributionImpl( const Grid& );
+    DistributionImpl( const Grid&, const eckit::Parametrisation & );
 
     DistributionImpl( const Grid&, const Partitioner& );
 
@@ -44,15 +52,21 @@ public:
 
     virtual ~DistributionImpl();
 
-    int partition( const gidx_t gidx ) const { return part_[gidx]; }
+    int partition( const gidx_t gidx ) const 
+    { 
+      if (part_.size () > 0)
+        return part_[gidx];
+      idx_t iblock = gidx / blocksize_;
+      return (iblock * nb_partitions_) / nb_blocks_;
+    }
 
-    const partition_t& partition() const { return part_; }
+    const partition_t& partition() const { checkPartition (); return part_; }
 
     idx_t nb_partitions() const { return nb_partitions_; }
 
     operator const partition_t&() const { return part_; }
 
-    const int* data() const { return part_.data(); }
+    const int* data() const { checkPartition (); return part_.data(); }
 
     const std::vector<idx_t>& nb_pts() const { return nb_pts_; }
 
@@ -63,8 +77,27 @@ public:
 
     void print( std::ostream& ) const;
 
+    size_t footprint () const
+    {
+      return nb_pts_.size () * sizeof (nb_pts_[0]) + part_.size () * sizeof (part_[0]);
+    }
+
+
 private:
-    idx_t nb_partitions_;
+
+    void setupWithPartitioner (const Grid &, const Partitioner &);
+
+    void checkPartition () const
+    {
+      if (part_.size () == 0)
+        throw_Exception ("partition array of distribution is empty");
+    }
+    // For trivial partitionning
+    size_t gridsize_ = 0;
+    idx_t nb_partitions_ = 0;
+    size_t blocksize_ = 0;
+    idx_t nb_blocks_ = 0;
+
     partition_t part_;
     std::vector<idx_t> nb_pts_;
     idx_t max_pts_;

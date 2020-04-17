@@ -15,6 +15,7 @@
 #include "atlas/grid/detail/distribution/DistributionImpl.h"
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
 class Grid;
@@ -33,11 +34,14 @@ class Distribution : DOXYGEN_HIDE( public util::ObjectHandle<DistributionImpl> )
 
 public:
     using partition_t = DistributionImpl::partition_t;
+    using Config = DistributionImpl::Config;
 
     using Handle::Handle;
     Distribution() = default;
 
     Distribution( const Grid& );
+
+    Distribution( const Grid&, const Config& );
 
     Distribution( const Grid&, const Partitioner& );
 
@@ -47,7 +51,16 @@ public:
 
     ~Distribution();
 
-    int partition( const gidx_t gidx ) const;
+    // This method has to be inlined
+    int partition( const gidx_t gidx ) const
+    {
+      return get()->partition( gidx );
+    }
+
+    size_t footprint () const
+    {
+      return get()->footprint ();
+    }
 
     const partition_t& partition() const;
 
