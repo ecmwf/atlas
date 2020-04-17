@@ -47,6 +47,12 @@ void atlas::Projection::lonlat2xy( Point2& point ) const {
     return get()->lonlat2xy( point );
 }
 
+atlas::Projection::Jacobian 
+atlas::Projection::getJacobianAtLonLat (const PointLonLat & p) const
+{
+  return get ()->getJacobianAtLonLat (p);
+}
+
 PointLonLat atlas::Projection::lonlat( const PointXY& xy ) const {
     return get()->lonlat( xy );
 }

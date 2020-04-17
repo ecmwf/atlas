@@ -9,6 +9,7 @@
 foreach(test
           test_bounding_box
           test_projection_LAEA
+          test_jacobian
           test_rotation )
 
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )

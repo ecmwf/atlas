@@ -139,6 +139,11 @@ void ProjProjection::lonlat2xy( double crd[] ) const {
 }
 
 
+ProjectionImpl::Jacobian ProjProjection::getJacobianAtLonLat (const PointLonLat &) const 
+{
+  throw_NotImplemented ("ProjProjection::getJacobianAtLonLat", Here ());
+}
+
 PointXYZ ProjProjection::xyz( const PointLonLat& lonlat ) const {
     PJ_COORD P = proj_coord( lonlat.lon(), lonlat.lat(), 0, 0 );
     P          = proj_trans( sourceToGeocentric_, PJ_FWD, P );

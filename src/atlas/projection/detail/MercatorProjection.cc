@@ -16,6 +16,7 @@
 
 #include "atlas/projection/detail/MercatorProjection.h"
 #include "atlas/projection/detail/ProjectionFactory.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
@@ -75,6 +76,12 @@ void MercatorProjectionT<Rotation>::xy2lonlat( double crd[] ) const {
 
     // then rotate
     rotation_.rotate( crd );
+}
+
+template <typename Rotation>
+ProjectionImpl::Jacobian MercatorProjectionT<Rotation>::getJacobianAtLonLat (const PointLonLat &) const 
+{
+  throw_NotImplemented ("MercatorProjectionT::getJacobianAtLonLat", Here ());
 }
 
 // specification

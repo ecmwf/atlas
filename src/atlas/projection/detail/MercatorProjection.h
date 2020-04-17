@@ -31,6 +31,8 @@ public:
     void xy2lonlat( double crd[] ) const override;
     void lonlat2xy( double crd[] ) const override;
 
+    Jacobian getJacobianAtLonLat (const PointLonLat &) const override;
+
     bool strictlyRegional() const override { return true; }  // Mercator projection cannot be used for global grids
     RectangularLonLatDomain lonlatBoundingBox( const Domain& domain ) const override {
         return ProjectionImpl::lonlatBoundingBox( domain );

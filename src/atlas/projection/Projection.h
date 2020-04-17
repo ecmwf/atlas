@@ -13,6 +13,7 @@
 #include <string>
 
 #include "atlas/domain/Domain.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
 
@@ -48,6 +49,7 @@ class ProjectionImpl;
 class Projection : DOXYGEN_HIDE( public util::ObjectHandle<projection::detail::ProjectionImpl> ) {
 public:
     using Spec = util::Config;
+    using Jacobian = projection::detail::ProjectionImpl::Jacobian;
 
 public:
     using Handle::Handle;
@@ -60,6 +62,8 @@ public:
     void xy2lonlat( Point2& ) const;
     void lonlat2xy( double crd[] ) const;
     void lonlat2xy( Point2& ) const;
+
+    Jacobian getJacobianAtLonLat (const PointLonLat &) const;
 
     PointLonLat lonlat( const PointXY& ) const;
     PointXY xy( const PointLonLat& ) const;
