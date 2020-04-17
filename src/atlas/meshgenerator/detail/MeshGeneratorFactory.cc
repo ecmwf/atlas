@@ -11,7 +11,6 @@
 #include <string>
 
 #include "atlas/meshgenerator/detail/DelaunayMeshGenerator.h"
-#include "atlas/meshgenerator/detail/NoConnectivityMeshGenerator.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
 #include "atlas/meshgenerator/detail/StructuredMeshGenerator.h"
 
@@ -25,9 +24,8 @@ namespace meshgenerator {
 void force_link() {
     static struct Link {
         Link() {
-            MeshGeneratorBuilder<meshgenerator::DelaunayMeshGenerator>();
-            MeshGeneratorBuilder<meshgenerator::NoConnectivityMeshGenerator>();
             MeshGeneratorBuilder<meshgenerator::StructuredMeshGenerator>();
+            MeshGeneratorBuilder<meshgenerator::DelaunayMeshGenerator>();
         }
     } link;
 }
