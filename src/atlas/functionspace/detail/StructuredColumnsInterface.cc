@@ -53,6 +53,11 @@ const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__g
     const eckit::Configuration* config ) {
     return new detail::StructuredColumns( Grid( grid ), grid::Distribution( dist ), *vert, *config );
 }
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_dist_config(
+    const Grid::Implementation* grid, const grid::DistributionImpl* dist, 
+    const eckit::Configuration* config ) {
+    return new detail::StructuredColumns( Grid( grid ), grid::Distribution( dist ),  *config );
+}
 
 const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_part(
     const Grid::Implementation* grid, const PartitionerImpl* partitioner, const eckit::Configuration* config ) {
