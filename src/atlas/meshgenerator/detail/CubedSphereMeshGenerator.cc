@@ -29,6 +29,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
 #define DEBUG_OUTPUT 0
@@ -172,8 +173,10 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
         csgrid.lonlat( ix, iy, it, lonlat_ );
 
-        lonlat( inode, LON ) = lonlat_[LON];
-        lonlat( inode, LAT ) = lonlat_[LAT];
+        std::cout << "PROJ OUT: " << lonlat_[LON] << " " << lonlat_[LAT] << std::endl;
+
+        lonlat( inode, LON ) = lonlat_[LON] * util::Constants::radiansToDegrees();
+        lonlat( inode, LAT ) = lonlat_[LAT] * util::Constants::radiansToDegrees();
 
         // Ghost nodes
         ghost(inode) = isGhost(ix, iy, it);
@@ -194,7 +197,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
   // Cells in mesh
   mesh.cells().add( new mesh::temporary::Quadrilateral(), ncells );
-  //int quad_begin  = mesh.cells().elements( 0 ).begin();
+  int quad_begin  = mesh.cells().elements( 0 ).begin();
   auto cells_part = array::make_view<int, 1>( mesh.cells().partition() );
   auto& node_connectivity = mesh.cells().node_connectivity();
 

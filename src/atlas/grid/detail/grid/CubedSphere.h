@@ -16,6 +16,7 @@
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/ObjectHandle.h"
 #include "atlas/util/Point.h"
@@ -209,7 +210,7 @@ public:
 
     PointLonLat lonlat( idx_t i, idx_t j, idx_t t ) const { return projection_.lonlat( xy( i, j, t ) ); }
 
-    void lonlat( idx_t i, idx_t j, idx_t t, double crd[] ) const {
+    void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const {
       double xyt[3];
       xy( i, j, t, xyt );
 
@@ -219,6 +220,9 @@ public:
       xytll[2] = t;
 
       projection_.xy2lonlat( xytll );
+
+      lonlat[LON] = xytll[3+LON];
+      lonlat[LAT] = xytll[3+LAT];
     }
 
     virtual std::unique_ptr<Grid::IteratorXY> xy_begin() const override {
