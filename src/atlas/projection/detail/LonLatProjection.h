@@ -41,6 +41,8 @@ public:
     void xy2lonlat( double crd[] ) const override { rotation_.rotate( crd ); }
     void lonlat2xy( double crd[] ) const override { rotation_.unrotate( crd ); }
 
+    Jacobian jacobian( const PointLonLat& ) const override;
+
     bool strictlyRegional() const override { return false; }
     RectangularLonLatDomain lonlatBoundingBox( const Domain& ) const override;
 

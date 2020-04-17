@@ -153,6 +153,11 @@ void MercatorProjectionT<Rotation>::xy2lonlat( double crd[] ) const {
     normalise_( crd );
 }
 
+template <typename Rotation>
+ProjectionImpl::Jacobian MercatorProjectionT<Rotation>::jacobian( const PointLonLat& ) const {
+    throw_NotImplemented( "MercatorProjectionT::jacobian", Here() );
+}
+
 // specification
 template <typename Rotation>
 typename MercatorProjectionT<Rotation>::Spec MercatorProjectionT<Rotation>::spec() const {
