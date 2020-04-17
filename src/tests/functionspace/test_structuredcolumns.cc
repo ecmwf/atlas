@@ -329,6 +329,7 @@ CASE( "test_functionspace_StructuredColumns halo exchange registration" ) {
 
 //-----------------------------------------------------------------------------
 
+
 }  // namespace test
 }  // namespace atlas
 
