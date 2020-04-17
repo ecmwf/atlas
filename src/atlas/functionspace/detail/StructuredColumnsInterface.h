@@ -60,6 +60,9 @@ const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__g
 const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_dist_vert(
     const GridImpl* grid, const grid::DistributionImpl* dist, const Vertical* vert,
     const eckit::Configuration* config );
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_dist_config(
+    const GridImpl* grid, const grid::DistributionImpl* dist,
+    const eckit::Configuration* config );
 
 const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_part(
     const GridImpl* grid, const PartitionerImpl* dist, const eckit::Configuration* config );
