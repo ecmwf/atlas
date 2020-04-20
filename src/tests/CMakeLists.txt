@@ -106,6 +106,7 @@ endif()
 
 add_subdirectory( acc )
 add_subdirectory( array )
+add_subdirectory( vector )
 add_subdirectory( util )
 add_subdirectory( runtime )
 add_subdirectory( parallel )
