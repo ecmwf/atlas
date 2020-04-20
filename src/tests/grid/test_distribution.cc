@@ -15,6 +15,10 @@
 #include "atlas/grid.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
+#include "atlas/array.h"
+#include "atlas/field.h"
+#include "atlas/functionspace.h"
+
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -23,6 +27,21 @@ using Config = atlas::util::Config;
 
 namespace atlas {
 namespace test {
+
+atlas::FieldSet 
+getIJ (const atlas::functionspace::StructuredColumns & fs) 
+{
+  atlas::FieldSet ij;
+  
+  auto i = atlas::array::make_view<int,1> (fs.index_i ());
+  auto j = atlas::array::make_view<int,1> (fs.index_j ());
+
+  ij.add (fs.index_i ());
+  ij.add (fs.index_j ());
+
+  return ij;
+}
+
 
 //-----------------------------------------------------------------------------
 
@@ -52,7 +71,9 @@ CASE( "test_light" )
   
   EXPECT (dist2.footprint () < 100);
 
-  if ((ny % nproc) == 0)
+  bool same = (ny % nproc) == 0; // Compare light & regular distributions when possible
+
+  if (same)
   for (int i = 0; i < grid.size (); i++)
     EXPECT (dist1.partition (i) == dist2.partition (i));
 
@@ -62,6 +83,40 @@ CASE( "test_light" )
       for (int ix = 0; ix < nx; ix++, jglo++)
         EXPECT (dist2.partition (jglo) == dist2.partition (jglo0));
     }
+
+
+  atlas::functionspace::StructuredColumns fs1 (grid, dist1, atlas::util::Config ("halo", 1) | Config ("periodic_points", true));
+  atlas::functionspace::StructuredColumns fs2 (grid, dist2, atlas::util::Config ("halo", 1) | Config ("periodic_points", true));
+
+  auto ij1 = getIJ (fs1);
+  auto ij2 = getIJ (fs2);
+
+  fs1.haloExchange (ij1);
+  fs2.haloExchange (ij2);
+
+  if (same)
+    {
+      EXPECT (fs1.size () == fs1.size ());
+      EXPECT (fs1.sizeOwned () == fs1.sizeOwned ());
+
+      auto i1 = atlas::array::make_view<int,1> (ij1[0]);
+      auto j1 = atlas::array::make_view<int,1> (ij1[1]);
+      auto i2 = atlas::array::make_view<int,1> (ij2[0]);
+      auto j2 = atlas::array::make_view<int,1> (ij2[1]);
+
+      for (int k = 0; k < fs1.sizeOwned (); k++)
+        {
+          EXPECT (i1[k] == i2[k]);
+          EXPECT (j1[k] == j2[k]);
+        }
+    }
+
+
+  for (int j = fs2.j_begin_halo (); j < fs2.j_end_halo (); j++)
+     {
+       EXPECT (fs2.i_begin_halo (j) == -1);
+       EXPECT (fs2.i_end_halo (j) == nx + 2);
+     }
 
 }
 
