@@ -91,7 +91,7 @@ std::string Points::type() const {
 }
 
 
-const Field& Points::ghost() const {
+atlas::Field Points::ghost() const {
     if ( not ghost_ ) {
         ghost_ = Field( "ghost", array::make_datatype<int>(), array::make_shape( size() ) );
         array::make_view<int, 1>( ghost_ ).assign( 0 );

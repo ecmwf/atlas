@@ -47,9 +47,10 @@ public:
     std::string distribution() const override;
     std::string type() const override;
 
-    const Field& lonlat() const { return lonlat_; }
-    const Field& xyz() const { return xyz_; }
-    const Field& ghost() const;
+    atlas::Field lonlat() const override { return lonlat_; }
+    atlas::Field ghost() const override;
+
+    const atlas::Field xyz() const { return xyz_; }
 
 
     template <typename T>
@@ -129,9 +130,9 @@ public:
 
     operator bool() const { return functionspace_ != nullptr; }
 
-    const Field& lonlat() const { return functionspace_->lonlat(); }
-    const Field& xyz() const { return functionspace_->xyz(); }
-    const Field& ghost() const { return functionspace_->ghost(); }
+    Field lonlat() const { return functionspace_->lonlat(); }
+    Field xyz() const { return functionspace_->xyz(); }
+    Field ghost() const { return functionspace_->ghost(); }
 
     detail::Points::Iterate iterate() const { return functionspace_->iterate(); }
 
