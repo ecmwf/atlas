@@ -56,12 +56,16 @@ public:
     using Grid::lonlat;
     using Grid::xy;
 
+    // @brief Copy coordinates x,y of point `n` into xy[2]
     void xy( idx_t n, double xy[] ) const { grid_->xy( n, xy ); }
 
+    // @brief Copy coordinates lon,lat of point `n` into lonlat[2]
     void lonlat( idx_t n, double lonlat[] ) const { grid_->lonlat( n, lonlat ); }
 
+    // @brief Create PointXY at grid index `n`
     PointXY xy( idx_t n ) const { return grid_->xy( n ); }
 
+    // @brief Create PointLonLat at grid index `n`
     PointLonLat lonlat( idx_t n ) const { return grid_->lonlat( n ); }
 
 private:

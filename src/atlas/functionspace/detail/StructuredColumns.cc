@@ -102,6 +102,8 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& funcspace ) {
+        registerGrid( *funcspace.grid().get() );
+
         creator_type creator = std::bind( &StructuredColumnsHaloExchangeCache::create, &funcspace );
         return Base::get_or_create( key( *funcspace.grid().get(), funcspace.halo() ),
                                     remove_key( *funcspace.grid().get() ), creator );
@@ -122,8 +124,6 @@ private:
     }
 
     static value_type* create( const detail::StructuredColumns* funcspace ) {
-        funcspace->grid().get()->attachObserver( instance() );
-
         value_type* value = new value_type();
 
         value->setup( array::make_view<int, 1>( funcspace->partition() ).data(),
@@ -146,6 +146,7 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& funcspace ) {
+        registerGrid( *funcspace.grid().get() );
         creator_type creator = std::bind( &StructuredColumnsGatherScatterCache::create, &funcspace );
         return Base::get_or_create( key( *funcspace.grid().get() ), creator );
     }
@@ -159,8 +160,6 @@ private:
     }
 
     static value_type* create( const detail::StructuredColumns* funcspace ) {
-        funcspace->grid().get()->attachObserver( instance() );
-
         value_type* value = new value_type();
 
         value->setup( array::make_view<int, 1>( funcspace->partition() ).data(),
@@ -183,6 +182,7 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& funcspace ) {
+        registerGrid( *funcspace.grid().get() );
         creator_type creator = std::bind( &StructuredColumnsChecksumCache::create, &funcspace );
         return Base::get_or_create( key( *funcspace.grid().get() ), creator );
     }
@@ -196,7 +196,6 @@ private:
     }
 
     static value_type* create( const detail::StructuredColumns* funcspace ) {
-        funcspace->grid().get()->attachObserver( instance() );
         value_type* value = new value_type();
         util::ObjectHandle<parallel::GatherScatter> gather(
             StructuredColumnsGatherScatterCache::instance().get_or_create( *funcspace ) );
@@ -385,9 +384,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const grid::Distribution
 
 StructuredColumns::StructuredColumns( const Grid& grid, const grid::Distribution& distribution,
                                       const Vertical& vertical, const eckit::Configuration& config ) :
-    vertical_( vertical ),
-    nb_levels_( vertical_.size() ),
-    grid_( new StructuredGrid( grid ) ) {
+    vertical_( vertical ), nb_levels_( vertical_.size() ), grid_( new StructuredGrid( grid ) ) {
     setup( distribution, config );
 }
 
@@ -396,9 +393,7 @@ StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical
 
 StructuredColumns::StructuredColumns( const Grid& grid, const Vertical& vertical, const grid::Partitioner& p,
                                       const eckit::Configuration& config ) :
-    vertical_( vertical ),
-    nb_levels_( vertical_.size() ),
-    grid_( new StructuredGrid( grid ) ) {
+    vertical_( vertical ), nb_levels_( vertical_.size() ), grid_( new StructuredGrid( grid ) ) {
     ATLAS_TRACE( "StructuredColumns constructor" );
 
     grid::Partitioner partitioner( p );
@@ -457,6 +452,15 @@ const util::PartitionPolygon& StructuredColumns::polygon( idx_t halo ) const {
         polygon_.reset( new grid::StructuredPartitionPolygon( *this, halo ) );
     }
     return *polygon_;
+}
+
+
+const atlas::util::PartitionPolygons& StructuredColumns::polygons() const {
+    if ( polygons_.size() ) {
+        return polygons_;
+    }
+    polygon().allGather( polygons_ );
+    return polygons_;
 }
 
 // ----------------------------------------------------------------------------

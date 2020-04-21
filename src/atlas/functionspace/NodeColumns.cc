@@ -80,6 +80,7 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh, long halo ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &NodeColumnsHaloExchangeCache::create, mesh, halo );
         return Base::get_or_create( key( *mesh.get(), halo ), creator );
     }
@@ -97,8 +98,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh, long halo ) {
-        mesh.get()->attachObserver( instance() );
-
         value_type* value = new value_type();
 
         std::ostringstream ss;
@@ -125,6 +124,7 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &NodeColumnsGatherScatterCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
@@ -138,8 +138,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh ) {
-        mesh.get()->attachObserver( instance() );
-
         value_type* value = new value_type();
 
         mesh::IsGhostNode is_ghost( mesh.nodes() );
@@ -176,6 +174,7 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &NodeColumnsChecksumCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
@@ -189,7 +188,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh ) {
-        mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
         util::ObjectHandle<parallel::GatherScatter> gather(
             NodeColumnsGatherScatterCache::instance().get_or_create( mesh ) );
@@ -201,10 +199,7 @@ private:
 NodeColumns::NodeColumns( Mesh mesh ) : NodeColumns( mesh, util::NoConfig() ) {}
 
 NodeColumns::NodeColumns( Mesh mesh, const eckit::Configuration& config ) :
-    mesh_( mesh ),
-    nodes_( mesh_.nodes() ),
-    nb_levels_( config.getInt( "levels", 0 ) ),
-    nb_nodes_( 0 ) {
+    mesh_( mesh ), nodes_( mesh_.nodes() ), nb_levels_( config.getInt( "levels", 0 ) ), nb_nodes_( 0 ) {
     ATLAS_TRACE();
     if ( config.has( "halo" ) ) {
         halo_ = mesh::Halo( config.getInt( "halo" ) );
@@ -591,8 +586,7 @@ const parallel::Checksum& NodeColumns::checksum() const {
 NodeColumns::NodeColumns() : FunctionSpace(), functionspace_( nullptr ) {}
 
 NodeColumns::NodeColumns( const FunctionSpace& functionspace ) :
-    FunctionSpace( functionspace ),
-    functionspace_( dynamic_cast<const detail::NodeColumns*>( get() ) ) {}
+    FunctionSpace( functionspace ), functionspace_( dynamic_cast<const detail::NodeColumns*>( get() ) ) {}
 
 namespace {
 detail::NodeColumns* make_functionspace( Mesh mesh, const eckit::Configuration& config ) {

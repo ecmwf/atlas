@@ -143,9 +143,7 @@ public:
 
 
 TransFactory::TransFactory( const std::string& name, const std::string& backend ) :
-    Factory( name ),
-    name_( name ),
-    backend_( backend ) {
+    Factory( name ), name_( name ), backend_( backend ) {
     TransBackend::instance().add( backend );
 }
 

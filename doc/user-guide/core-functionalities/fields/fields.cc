@@ -13,7 +13,7 @@ using atlas::array::make_shape;
 using atlas::array::make_view;
 
 int main( int argc, char* argv[] ) {
-    atlas::Library::initialise( argc, argv );
+    atlas::initialise( argc, argv );
 
     // Define fields
     Field field_pressure( "pressure", make_datatype<double>(), make_shape( 100 ) );
@@ -25,9 +25,9 @@ int main( int argc, char* argv[] ) {
 
     // Assign values to fields
     for ( size_t jnode = 0; jnode < 100; ++jnode ) {
-        pressure( jnode ) = 101325.0;
-        wind( jnode, 0 )  = 0.01 + double( jnode );
-        wind( jnode, 1 )  = 0.02 + double( jnode );
+        pressure( jnode )          = 101325.0;
+        wind( jnode, size_t( 0 ) ) = 0.01 + double( jnode );
+        wind( jnode, size_t( 1 ) ) = 0.02 + double( jnode );
     }
 
     // Add info to fields

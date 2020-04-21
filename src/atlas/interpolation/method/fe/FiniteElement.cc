@@ -55,14 +55,14 @@ static const double parametricEpsilon = 1e-15;
 }  // namespace
 
 
-void FiniteElement::setup( const Grid& source, const Grid& target ) {
+void FiniteElement::do_setup( const Grid& source, const Grid& target ) {
     if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
     auto functionspace = []( const Grid& grid ) {
         Mesh mesh;
         if ( StructuredGrid{grid} ) {
-            mesh = MeshGenerator( "structured", util::Config( "three_dimensional", true ) ).generate( grid );
+            mesh = MeshGenerator( "structured", util::Config( "3d", true ) ).generate( grid );
         }
         else {
             mesh = MeshGenerator( "delaunay" ).generate( grid );
@@ -70,11 +70,11 @@ void FiniteElement::setup( const Grid& source, const Grid& target ) {
         return functionspace::NodeColumns( mesh );
     };
 
-    setup( functionspace( source ), functionspace( target ) );
+    do_setup( functionspace( source ), functionspace( target ) );
 }
 
-void FiniteElement::setup( const FunctionSpace& source, const FunctionSpace& target ) {
-    ATLAS_TRACE( "atlas::interpolation::method::FiniteElement::setup()" );
+void FiniteElement::do_setup( const FunctionSpace& source, const FunctionSpace& target ) {
+    ATLAS_TRACE( "atlas::interpolation::method::FiniteElement::do_setup()" );
 
     source_ = source;
     target_ = target;

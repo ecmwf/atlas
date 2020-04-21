@@ -62,11 +62,7 @@ private:
     class StructuredIterator : public Base {
     public:
         StructuredIterator( const Structured& grid, bool begin = true ) :
-            grid_( grid ),
-            ny_( grid_.ny() ),
-            i_( 0 ),
-            j_( begin ? 0 : grid_.ny() ),
-            compute_point{grid_} {
+            grid_( grid ), ny_( grid_.ny() ), i_( 0 ), j_( begin ? 0 : grid_.ny() ), compute_point{grid_} {
             if ( j_ != ny_ && grid_.size() ) {
                 compute_point( i_, j_, point_ );
             }
@@ -308,6 +304,8 @@ public:
     inline const std::vector<double>& y() const { return y_; }
 
     inline double dx( idx_t j ) const { return dx_[j]; }
+
+    inline double xmin( idx_t j ) const { return xmin_[j]; }
 
     inline double x( idx_t i, idx_t j ) const { return xmin_[j] + static_cast<double>( i ) * dx_[j]; }
 

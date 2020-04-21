@@ -443,11 +443,7 @@ array::ArrayShape{blocks})),
 //------------------------------------------------------------------------------------------------------
 
 MultiBlockConnectivityImpl::MultiBlockConnectivityImpl( const std::string& name ) :
-    IrregularConnectivityImpl( name ),
-    blocks_( 0 ),
-    block_displs_( 1 ),
-    block_cols_( 1 ),
-    block_( 0 ) {
+    IrregularConnectivityImpl( name ), blocks_( 0 ), block_displs_( 1 ), block_cols_( 1 ), block_( 0 ) {
     block_displs_( 0 ) = 0;
 }
 

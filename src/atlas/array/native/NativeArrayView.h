@@ -130,10 +130,7 @@ public:
     // -- Constructors
 
     ArrayView( const ArrayView& other ) :
-        data_( other.data_ ),
-        size_( other.size_ ),
-        shape_( other.shape_ ),
-        strides_( other.strides_ ) {}
+        data_( other.data_ ), size_( other.size_ ), shape_( other.shape_ ), strides_( other.strides_ ) {}
 
     ENABLE_IF_CONST
     ArrayView( const ArrayView<non_const_value_type, Rank>& other ) : data_( other.data() ), size_( other.size() ) {

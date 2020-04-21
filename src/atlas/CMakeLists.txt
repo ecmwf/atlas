@@ -395,6 +395,8 @@ functionspace/detail/StructuredColumnsInterface.h
 functionspace/detail/StructuredColumnsInterface.cc
 functionspace/detail/StructuredColumns_setup.cc
 functionspace/detail/StructuredColumns_create_remote_index.cc
+functionspace/detail/PointCloudInterface.h
+functionspace/detail/PointCloudInterface.cc
 )
 
 list( APPEND atlas_numerics_srcs
@@ -583,8 +585,9 @@ util/Constants.h
 util/Earth.h
 util/GaussianLatitudes.cc
 util/GaussianLatitudes.h
-util/LonLatPolygon.cc
-util/LonLatPolygon.h
+util/KDTree.h
+util/PolygonXY.cc
+util/PolygonXY.h
 util/Metadata.cc
 util/Metadata.h
 util/Point.cc
@@ -597,6 +600,7 @@ util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
 util/vector.h
+util/VectorOfAbstract.h
 util/detail/BlackMagic.h
 util/detail/Cache.h
 util/detail/Debug.h

@@ -57,9 +57,7 @@ util::Polygon::edge_set_t compute_edges( const detail::MeshImpl& mesh, idx_t hal
 }  // namespace
 
 PartitionPolygon::PartitionPolygon( const detail::MeshImpl& mesh, idx_t halo ) :
-    util::Polygon( compute_edges( mesh, halo ) ),
-    mesh_( mesh ),
-    halo_( halo ) {}
+    util::PartitionPolygon( compute_edges( mesh, halo ) ), mesh_( mesh ), halo_( halo ) {}
 
 size_t PartitionPolygon::footprint() const {
     size_t size = sizeof( *this );
@@ -72,13 +70,14 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
     int mpi_rank                 = int( comm.rank() );
     int mpi_size                 = int( comm.size() );
 
-    auto xy = array::make_view<double, 2>( mesh_.nodes().xy() );
-
-    double xmin = std::numeric_limits<double>::max();
-    double xmax = -std::numeric_limits<double>::max();
-    for ( idx_t i : *this ) {
-        xmin = std::min( xmin, xy( i, XX ) );
-        xmax = std::max( xmax, xy( i, XX ) );
+    auto points = this->xy();
+    ATLAS_ASSERT( points.size() == size() );
+    const auto nodes_xy = array::make_view<double, 2>( mesh_.nodes().xy() );
+    double xmin         = std::numeric_limits<double>::max();
+    double xmax         = -std::numeric_limits<double>::max();
+    for ( const auto& p : points ) {
+        xmin = std::min( xmin, p[XX] );
+        xmax = std::max( xmax, p[XX] );
     }
     comm.allReduceInPlace( xmin, eckit::mpi::min() );
     comm.allReduceInPlace( xmax, eckit::mpi::max() );
@@ -128,8 +127,8 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
             f << "\n"
                  "verts_"
               << r << " = [";
-            for ( idx_t i : static_cast<const container_t&>( *this ) ) {
-                f << "\n  (" << xy( i, XX ) << ", " << xy( i, YY ) << "), ";
+            for ( const auto& p : points ) {
+                f << "\n  (" << p[XX] << ", " << p[YY] << "), ";
             }
             f << "\n]"
                  "\n"
@@ -161,14 +160,14 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
                      "x_"
                   << r << " = [";
                 for ( idx_t i = 0; i < count; ++i ) {
-                    f << xy( i, XX ) << ", ";
+                    f << nodes_xy( i, XX ) << ", ";
                 }
                 f << "]"
                      "\n"
                      "y_"
                   << r << " = [";
                 for ( idx_t i = 0; i < count; ++i ) {
-                    f << xy( i, YY ) << ", ";
+                    f << nodes_xy( i, YY ) << ", ";
                 }
                 f << "]";
             }
@@ -208,9 +207,84 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
     }
 }
 
+void PartitionPolygon::allGather( util::PartitionPolygons& polygons ) const {
+    ATLAS_TRACE();
+
+    polygons.clear();
+    polygons.reserve( mpi::size() );
+
+    const mpi::Comm& comm = mpi::comm();
+    const int mpi_size    = int( comm.size() );
+
+    auto& poly = *this;
+
+    std::vector<double> mypolygon;
+    mypolygon.reserve( poly.size() * 2 );
+
+    auto points_xy = poly.xy();
+    ATLAS_ASSERT( points_xy.front() == points_xy.back() );
+    for ( auto& p : points_xy ) {
+        mypolygon.push_back( p[XX] );
+        mypolygon.push_back( p[YY] );
+    }
+    ATLAS_ASSERT( mypolygon.size() >= 4 );
+
+    eckit::mpi::Buffer<double> recv_polygons( mpi_size );
+
+    comm.allGatherv( mypolygon.begin(), mypolygon.end(), recv_polygons );
+
+    for ( idx_t p = 0; p < mpi_size; ++p ) {
+        PointsXY recv_points;
+        recv_points.reserve( recv_polygons.counts[p] );
+        for ( idx_t j = 0; j < recv_polygons.counts[p] / 2; ++j ) {
+            PointXY pxy( *( recv_polygons.begin() + recv_polygons.displs[p] + 2 * j + XX ),
+                         *( recv_polygons.begin() + recv_polygons.displs[p] + 2 * j + YY ) );
+            recv_points.push_back( pxy );
+        }
+        polygons.emplace_back( new util::ExplicitPartitionPolygon( std::move( recv_points ) ) );
+    }
+}
+
 void PartitionPolygon::print( std::ostream& out ) const {
     out << "polygon:{"
         << "halo:" << halo_ << ",size:" << size() << ",nodes:" << static_cast<const util::Polygon&>( *this ) << "}";
+}
+
+PartitionPolygon::PointsXY PartitionPolygon::xy() const {
+    PointsXY points_xy;
+    points_xy.reserve( size() );
+
+    auto xy_view = array::make_view<double, 2>( mesh_.nodes().xy() );
+    auto flags   = array::make_view<int, 1>( mesh_.nodes().flags() );
+
+    bool domain_includes_north_pole = false;
+    bool domain_includes_south_pole = false;
+    if ( mesh_.grid() ) {
+        if ( mesh_.grid().domain() ) {
+            domain_includes_north_pole = mesh_.grid().domain().containsNorthPole();
+            domain_includes_south_pole = mesh_.grid().domain().containsSouthPole();
+        }
+    }
+    auto bc_north = [&flags, &domain_includes_north_pole]( idx_t n ) {
+        if ( domain_includes_north_pole ) {
+            using Topology = atlas::mesh::Nodes::Topology;
+            return Topology::check( flags( n ), Topology::BC | Topology::NORTH );
+        }
+        return false;
+    };
+    auto bc_south = [&flags, &domain_includes_south_pole]( idx_t n ) {
+        if ( domain_includes_south_pole ) {
+            using Topology = atlas::mesh::Nodes::Topology;
+            return Topology::check( flags( n ), Topology::BC | Topology::SOUTH );
+        }
+        return false;
+    };
+
+    for ( idx_t i : static_cast<const container_t&>( *this ) ) {
+        double y = bc_north( i ) ? 90. : bc_south( i ) ? -90. : xy_view( i, idx_t( YY ) );
+        points_xy.emplace_back( xy_view( i, idx_t( XX ) ), y );
+    }
+    return points_xy;
 }
 
 }  // namespace mesh

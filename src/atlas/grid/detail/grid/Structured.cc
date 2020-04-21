@@ -47,10 +47,7 @@ Structured::Structured( XSpace xspace, YSpace yspace, Projection p, Domain domai
     Structured( Structured::static_type(), xspace, yspace, p, domain ) {}
 
 Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, Projection projection, Domain domain ) :
-    Grid(),
-    name_( name ),
-    xspace_( xspace ),
-    yspace_( yspace ) {
+    Grid(), name_( name ), xspace_( xspace ), yspace_( yspace ) {
     // Copy members
     projection_ = projection ? projection : Projection();
 
@@ -217,11 +214,7 @@ void Structured::XSpace::Implementation::Implementation::reserve( idx_t ny ) {
 template <typename NVector>
 Structured::XSpace::Implementation::Implementation( const std::array<double, 2>& interval, const NVector& N,
                                                     bool endpoint ) :
-    ny_( N.size() ),
-    nx_( N.begin(), N.end() ),
-    xmin_( ny_, interval[0] ),
-    xmax_( ny_, interval[1] ),
-    dx_( ny_ ) {
+    ny_( N.size() ), nx_( N.begin(), N.end() ), xmin_( ny_, interval[0] ), xmax_( ny_, interval[1] ), dx_( ny_ ) {
     nxmin_        = std::numeric_limits<idx_t>::max();
     nxmax_        = 0;
     min_          = std::numeric_limits<double>::max();
@@ -246,11 +239,7 @@ Structured::XSpace::Implementation::Implementation( const std::array<double, 2>&
 
 
 Structured::XSpace::Implementation::Implementation( const Spacing& spacing ) :
-    ny_( 1 ),
-    nx_( ny_, spacing.size() ),
-    xmin_( ny_, spacing.min() ),
-    xmax_( ny_, spacing.max() ),
-    dx_( ny_ ) {
+    ny_( 1 ), nx_( ny_, spacing.size() ), xmin_( ny_, spacing.min() ), xmax_( ny_, spacing.max() ), dx_( ny_ ) {
     const spacing::LinearSpacing& linspace = dynamic_cast<const spacing::LinearSpacing&>( *spacing.get() );
     dx_[0]                                 = linspace.step();
     nxmax_                                 = nx_[0];
@@ -260,11 +249,7 @@ Structured::XSpace::Implementation::Implementation( const Spacing& spacing ) :
 }
 
 Structured::XSpace::Implementation::Implementation( const std::vector<Spacing>& spacings ) :
-    ny_( spacings.size() ),
-    nx_( ny_ ),
-    xmin_( ny_ ),
-    xmax_( ny_ ),
-    dx_( ny_ ) {
+    ny_( spacings.size() ), nx_( ny_ ), xmin_( ny_ ), xmax_( ny_ ), dx_( ny_ ) {
     nxmax_ = 0;
     nxmin_ = std::numeric_limits<idx_t>::max();
     min_   = std::numeric_limits<double>::max();
@@ -340,8 +325,7 @@ namespace {
 class Normalise {
 public:
     Normalise( const RectangularDomain& domain ) :
-        degrees_( domain.units() == "degrees" ),
-        normalise_( domain.xmin() ) {}
+        degrees_( domain.units() == "degrees" ), normalise_( domain.xmin() ) {}
 
     double operator()( double x ) const {
         if ( degrees_ ) {

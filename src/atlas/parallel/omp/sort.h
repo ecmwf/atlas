@@ -32,6 +32,16 @@
 #endif
 #endif
 
+#ifndef ATLAS_OMP_TASK_UNTIED_SUPPORTED
+#define ATLAS_OMP_TASK_UNTIED_SUPPORTED 1
+#endif
+#ifdef __clang__
+#if __clang_major__ <= 7
+#undef ATLAS_OMP_TASK_UNTIED_SUPPORTED
+#define ATLAS_OMP_TASK_UNTIED_SUPPORTED 0
+#endif
+#endif
+
 namespace atlas {
 namespace omp {
 
@@ -103,9 +113,17 @@ void merge_sort_recursive( const RandomAccessIterator& iterator, size_t begin, s
         //   --> it would be preferred to use taskgroup and taskyield instead of taskwait,
         //       but this leads to segfaults on Cray (cce/8.5.8)
         {
+#if ATLAS_OMP_TASK_UNTIED_SUPPORTED
 #pragma omp task shared( iterator ) untied if ( size >= ( 1 << 15 ) )
+#else
+#pragma omp task shared( iterator )
+#endif
             merge_sort_recursive( iterator, begin, mid, compare );
+#if ATLAS_OMP_TASK_UNTIED_SUPPORTED
 #pragma omp task shared( iterator ) untied if ( size >= ( 1 << 15 ) )
+#else
+#pragma omp task shared( iterator )
+#endif
             merge_sort_recursive( iterator, mid, end, compare );
 //#pragma omp taskyield
 #pragma omp taskwait
@@ -221,3 +239,6 @@ void merge_blocks( RandomAccessIterator first, RandomAccessIterator last, Random
 
 }  // namespace omp
 }  // namespace atlas
+
+#undef ATLAS_OMP_TASK_UNTIED_SUPPORTED
+#undef ATLAS_HAVE_OMP_SORTING

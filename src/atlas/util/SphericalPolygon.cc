@@ -24,8 +24,8 @@ namespace util {
 
 //------------------------------------------------------------------------------------------------------
 
-SphericalPolygon::SphericalPolygon( const Polygon& poly, const atlas::Field& lonlat ) :
-    PolygonCoordinates( poly, lonlat, false ) {}
+SphericalPolygon::SphericalPolygon( const PartitionPolygon& partition_polygon ) :
+    PolygonCoordinates( partition_polygon.xy(), false ) {}
 
 SphericalPolygon::SphericalPolygon( const std::vector<PointLonLat>& points ) : PolygonCoordinates( points ) {}
 

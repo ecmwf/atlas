@@ -39,9 +39,11 @@ add_custom_target(atlas_doc_pdf)
 add_dependencies (atlas_doc_pdf
                   atlas-user-guide-pdf )
 
-add_custom_target(atlas_doc_html)
-add_dependencies (atlas_doc_html
-                  atlas-user-guide-html )
+if( LATEX_HTLATEX_FOUND )
+  add_custom_target(atlas_doc_html)
+  add_dependencies (atlas_doc_html
+                    atlas-user-guide-html )
+endif()
 
 add_custom_target(atlas_doc)
 add_dependencies (atlas_doc
@@ -63,27 +65,27 @@ if( NOT DEFINED ATLAS_DOC_VERSION )
 endif()
 
 if( NOT DEFINED ATLAS_DOXYGEN_GENERATOR )
-  set( ATLAS_DOXYGEN_GENERATOR "m.css")
+  set( ATLAS_DOXYGEN_GENERATOR "stock")
 endif()
 
 if( ATLAS_DOXYGEN_GENERATOR STREQUAL "m.css" )
-  if( NOT DEFINED ATLAS_DOXYGEN_EXECUTABLE )
-    set( ATLAS_DOXYGEN_EXECUTABLE doxygen.py )
-  endif()
   set( ATLAS_DOXYFILE Doxyfile-mcss )
+  set( ATLAS_DOXYGEN_EXECUTABLE doxygen.py )
 else()
-  if( NOT DEFINED ATLAS_DOXYGEN_EXECUTABLE )
-    if( DOXYGEN_EXECUTABLE )
-      set( ATLAS_DOXYGEN_EXECUTABLE ${DOXYGEN_EXECUTABLE} )
-    else()
-      set( ATLAS_DOXYGEN_EXECUTABLE doxygen )
-    endif()    
-  endif()
   set( ATLAS_DOXYFILE Doxyfile-stock )
 endif()
 
+if( NOT DEFINED ATLAS_DOXYGEN_EXECUTABLE )
+  find_package(Doxygen COMPONENTS dot)
+  if( DOXYGEN_FOUND )
+    set( ATLAS_DOXYGEN_EXECUTABLE ${DOXYGEN_EXECUTABLE} )
+  else()
+    set( ATLAS_DOXYGEN_EXECUTABLE doxygen )
+  endif()
+endif()
+
 foreach( doxyfile Doxyfile-default Doxyfile-custom Doxyfile-mcss Doxyfile-stock )
-  execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink 
+  execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
       ${CMAKE_CURRENT_SOURCE_DIR}/${doxyfile}
       ${CMAKE_CURRENT_BINARY_DIR}/${doxyfile} )
 endforeach()

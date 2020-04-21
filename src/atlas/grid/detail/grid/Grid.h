@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <iterator>
 #include <memory>
 #include <string>
@@ -149,7 +150,28 @@ protected:  // members
 };
 
 class GridObserver {
+private:
+    std::vector<const Grid*> registered_grids_;
+
 public:
+    void registerGrid( const Grid& grid ) {
+        if ( std::find( registered_grids_.begin(), registered_grids_.end(), &grid ) == registered_grids_.end() ) {
+            registered_grids_.push_back( &grid );
+            grid.attachObserver( *this );
+        }
+    }
+    void unregisterGrid( const Grid& grid ) {
+        auto found = std::find( registered_grids_.begin(), registered_grids_.end(), &grid );
+        if ( found != registered_grids_.end() ) {
+            registered_grids_.erase( found );
+            grid.detachObserver( *this );
+        }
+    }
+    virtual ~GridObserver() {
+        for ( auto grid : registered_grids_ ) {
+            grid->detachObserver( *this );
+        }
+    }
     virtual void onGridDestruction( Grid& ) = 0;
 };
 

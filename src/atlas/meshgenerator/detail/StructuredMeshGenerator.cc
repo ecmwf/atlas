@@ -983,6 +983,9 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
         }
     }
 
+    const int y_numbering = ( rg.y().front() < rg.y().back() ) ? +1 : -1;
+
+
     idx_t jnode = 0;
     l           = 0;
     for ( idx_t jlat = region.north; jlat <= region.south; ++jlat ) {
@@ -1017,14 +1020,25 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
                 ghost( inode )   = 0;
                 halo( inode )    = 0;
                 Topology::reset( flags( inode ) );
-                if ( jlat == 0 && !include_north_pole ) {
-                    Topology::set( flags( inode ), Topology::BC | Topology::NORTH );
+                Topology::set( flags( inode ), Topology::BC );
+                if ( jlat == 0 ) {
+                    if ( y_numbering < 0 && !include_north_pole ) {
+                        Topology::set( flags( inode ), Topology::NORTH );
+                    }
+                    if ( y_numbering > 0 && !include_south_pole ) {
+                        Topology::set( flags( inode ), Topology::SOUTH );
+                    }
                 }
-                if ( jlat == rg.ny() - 1 && !include_south_pole ) {
-                    Topology::set( flags( inode ), Topology::BC | Topology::SOUTH );
+                if ( jlat == rg.ny() - 1 ) {
+                    if ( y_numbering < 0 && !include_south_pole ) {
+                        Topology::set( flags( inode ), Topology::SOUTH );
+                    }
+                    if ( y_numbering > 0 && !include_north_pole ) {
+                        Topology::set( flags( inode ), Topology::NORTH );
+                    }
                 }
                 if ( jlon == 0 && include_periodic_ghost_points ) {
-                    Topology::set( flags( inode ), Topology::BC | Topology::WEST );
+                    Topology::set( flags( inode ), Topology::WEST );
                 }
                 if ( part( inode ) != mypart ) {
                     Topology::set( flags( inode ), Topology::GHOST );
@@ -1059,6 +1073,22 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
                 Topology::reset( flags( inode ) );
                 Topology::set( flags( inode ), Topology::BC | Topology::EAST );
                 Topology::set( flags( inode ), Topology::GHOST );
+                if ( jlat == 0 ) {
+                    if ( y_numbering < 0 && !include_north_pole ) {
+                        Topology::set( flags( inode ), Topology::NORTH );
+                    }
+                    if ( y_numbering > 0 && !include_south_pole ) {
+                        Topology::set( flags( inode ), Topology::SOUTH );
+                    }
+                }
+                if ( jlat == rg.ny() - 1 ) {
+                    if ( y_numbering < 0 && !include_south_pole ) {
+                        Topology::set( flags( inode ), Topology::SOUTH );
+                    }
+                    if ( y_numbering > 0 && !include_north_pole ) {
+                        Topology::set( flags( inode ), Topology::NORTH );
+                    }
+                }
                 ++jnode;
             }
             else {
@@ -1149,7 +1179,6 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
     idx_t quad_nodes[4];
     idx_t triag_nodes[3];
 
-    const int y_numbering     = ( rg.y().front() < rg.y().back() ) ? +1 : -1;
     auto fix_quad_orientation = []( idx_t nodes[] ) {
         idx_t tmp;
         tmp      = nodes[0];

@@ -29,6 +29,51 @@
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/runtime/AtlasTool.h"
 
+namespace atlas {
+
+template <typename Value>
+class FixedFormat {
+public:
+    using value_type = Value;
+    FixedFormat( value_type x, long precision ) : x_( x ), precision_( precision > 0 ? precision : 20 ) {}
+    void print( std::ostream& out ) const {
+        for ( long precision = 0; precision <= precision_; ++precision ) {
+            if ( is_precision( precision ) || precision == precision_ ) {
+                out << std::setprecision( precision );
+                out << std::fixed << x_;
+                break;
+            }
+        }
+    }
+
+    bool is_precision( long precision ) const {
+        std::stringstream ss;
+        ss << std::setprecision( precision );
+        ss << std::fixed << x_;
+        value_type _x;
+        ss >> _x;
+        return std::abs( x_ - _x ) < 1.e-20;
+    }
+
+    friend std::ostream& operator<<( std::ostream& out, const FixedFormat& This ) {
+        This.print( out );
+        return out;
+    }
+
+private:
+    float x_;
+    long precision_;
+};
+
+FixedFormat<double> fixed_format( double x, long precision ) {
+    return FixedFormat<double>( x, precision );
+}
+FixedFormat<float> fixed_format( float x, long precision ) {
+    return FixedFormat<float>( x, precision );
+}
+
+}  // namespace atlas
+
 //----------------------------------------------------------------------------------------------------------------------
 
 struct AtlasGrids : public atlas::AtlasTool {
@@ -54,6 +99,9 @@ struct AtlasGrids : public atlas::AtlasTool {
         add_option( new SimpleOption<bool>( "check", "Check grid" ) );
         add_option( new SimpleOption<bool>( "check-uid", "Check grid uid required" ) );
         add_option( new SimpleOption<bool>( "check-boundingbox", "Check grid bounding_box(n,w,s,e) required" ) );
+        add_option( new SimpleOption<long>( "precision", "Precision used for float output" ) );
+        add_option(
+            new SimpleOption<bool>( "approximate-resolution", "Approximate resolution in degrees (North-South)" ) );
     }
 };
 
@@ -85,7 +133,10 @@ int AtlasGrids::execute( const Args& args ) {
     bool list = false;
     args.get( "list", list );
 
-    bool do_run = list || ( !key.empty() && ( info || json || rtable || check ) );
+    bool approximate_resolution = false;
+    args.get( "approximate-resolution", approximate_resolution );
+
+    bool do_run = list || ( !key.empty() && ( info || json || rtable || check || approximate_resolution ) );
 
     if ( !key.empty() && !do_run ) {
         Log::error() << "Option wrong or missing after '" << key << "'" << std::endl;
@@ -237,6 +288,24 @@ int AtlasGrids::execute( const Args& args ) {
                 it += grid.size() - 1;
                 Log::info() << "   lonlat(last)      : " << *it << std::endl;
                 Log::info().precision( precision );
+            }
+        }
+
+        if ( approximate_resolution ) {
+            if ( auto structuredgrid = StructuredGrid( grid ) ) {
+                if ( structuredgrid.domain().global() ) {
+                    auto deg = ( structuredgrid.y().front() - structuredgrid.y().back() ) / ( structuredgrid.ny() - 1 );
+
+                    long precision = -1;
+                    args.get( "precision", precision );
+                    Log::info() << fixed_format( deg, precision ) << std::endl;
+                }
+                else {
+                    ATLAS_NOTIMPLEMENTED;
+                }
+            }
+            else {
+                ATLAS_NOTIMPLEMENTED;
             }
         }
 

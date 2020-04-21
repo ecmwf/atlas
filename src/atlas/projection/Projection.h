@@ -22,6 +22,9 @@
 namespace eckit {
 class Parametrisation;
 class Hash;
+namespace geometry {
+class Point2;
+}
 }  // namespace eckit
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -30,6 +33,7 @@ namespace atlas {
 
 class PointLonLat;
 class PointXY;
+using Point2 = eckit::geometry::Point2;
 
 //---------------------------------------------------------------------------------------------------------------------
 namespace util {
@@ -53,7 +57,9 @@ public:
     operator bool() const;
 
     void xy2lonlat( double crd[] ) const;
+    void xy2lonlat( Point2& ) const;
     void lonlat2xy( double crd[] ) const;
+    void lonlat2xy( Point2& ) const;
 
     PointLonLat lonlat( const PointXY& ) const;
     PointXY xy( const PointLonLat& ) const;

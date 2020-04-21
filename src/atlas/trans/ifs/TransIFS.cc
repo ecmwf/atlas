@@ -322,9 +322,7 @@ struct PackNodeColumns {
     size_t f;
 
     PackNodeColumns( LocalView<double, 2>& rgpview, const NodeColumns& fs ) :
-        rgpview_( rgpview ),
-        is_ghost( fs.nodes() ),
-        f( 0 ) {}
+        rgpview_( rgpview ), is_ghost( fs.nodes() ), f( 0 ) {}
 
     void operator()( const Field& field, idx_t components = 0 ) {
         switch ( field.rank() ) {
@@ -481,9 +479,7 @@ struct UnpackNodeColumns {
     size_t f;
 
     UnpackNodeColumns( const LocalView<double, 2>& rgpview, const NodeColumns& fs ) :
-        rgpview_( rgpview ),
-        is_ghost( fs.nodes() ),
-        f( 0 ) {}
+        rgpview_( rgpview ), is_ghost( fs.nodes() ), f( 0 ) {}
 
     void operator()( Field& field, int components = 0 ) {
         switch ( field.rank() ) {
@@ -654,9 +650,7 @@ void TransIFS::assertCompatibleDistributions( const FunctionSpace& gp, const Fun
 }
 
 TransIFS::TransIFS( const Cache& cache, const Grid& grid, const long truncation, const eckit::Configuration& config ) :
-    grid_( grid ),
-    cache_( cache.legendre().data() ),
-    cachesize_( cache.legendre().size() ) {
+    grid_( grid ), cache_( cache.legendre().data() ), cachesize_( cache.legendre().size() ) {
     ATLAS_ASSERT( grid.domain().global() );
     ATLAS_ASSERT( not grid.projection() );
     ctor( grid, truncation, config );

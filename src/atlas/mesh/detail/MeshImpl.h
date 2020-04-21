@@ -28,6 +28,9 @@ class Stream;
 }
 
 namespace atlas {
+namespace util {
+class PartitionPolygons;
+}
 class Mesh;
 namespace mesh {
 class PartitionPolygon;
@@ -107,6 +110,7 @@ public:  // methods
     PartitionGraph::Neighbours nearestNeighbourPartitions() const;
 
     const PartitionPolygon& polygon( idx_t halo = 0 ) const;
+    const util::PartitionPolygons& polygons() const;
 
     const Grid grid() const { return grid_; }
 
@@ -149,13 +153,37 @@ private:  // members
 
     mutable std::vector<util::ObjectHandle<PartitionPolygon>> polygons_;
 
+    mutable util::PartitionPolygons all_polygons_;  // from all partitions
+
     mutable std::vector<MeshObserver*> mesh_observers_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
 class MeshObserver {
+private:
+    std::vector<const MeshImpl*> registered_meshes_;
+
 public:
+    void registerMesh( const MeshImpl& mesh ) {
+        if ( std::find( registered_meshes_.begin(), registered_meshes_.end(), &mesh ) == registered_meshes_.end() ) {
+            registered_meshes_.push_back( &mesh );
+            mesh.attachObserver( *this );
+        }
+    }
+    void unregisterMesh( const MeshImpl& mesh ) {
+        auto found = std::find( registered_meshes_.begin(), registered_meshes_.end(), &mesh );
+        if ( found != registered_meshes_.end() ) {
+            registered_meshes_.erase( found );
+            mesh.detachObserver( *this );
+        }
+    }
+    virtual ~MeshObserver() {
+        for ( auto mesh : registered_meshes_ ) {
+            mesh->detachObserver( *this );
+        }
+    }
+
     virtual void onMeshDestruction( MeshImpl& ) = 0;
 };
 

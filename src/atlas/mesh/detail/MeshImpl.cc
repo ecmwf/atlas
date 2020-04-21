@@ -43,8 +43,10 @@ MeshImpl::MeshImpl() : nodes_( new mesh::Nodes() ), dimensionality_( 2 ) {
 }
 
 MeshImpl::~MeshImpl() {
-    for ( MeshObserver* o : mesh_observers_ ) {
+    while ( mesh_observers_.size() ) {
+        MeshObserver* o = mesh_observers_.back();
         o->onMeshDestruction( *this );
+        o->unregisterMesh( *this );  // will also delete observer from mesh
     }
 }
 
@@ -201,6 +203,13 @@ const PartitionPolygon& MeshImpl::polygon( idx_t halo ) const {
         polygons_[halo].reset( new PartitionPolygon( *this, halo ) );
     }
     return *polygons_[halo];
+}
+
+const util::PartitionPolygons& MeshImpl::polygons() const {
+    if ( all_polygons_.size() == 0 ) {
+        polygon().allGather( all_polygons_ );
+    }
+    return all_polygons_;
 }
 
 void MeshImpl::attachObserver( MeshObserver& observer ) const {

@@ -79,6 +79,7 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &CellColumnsHaloExchangeCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
@@ -92,7 +93,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh ) {
-        mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
         value->setup( array::make_view<int, 1>( mesh.cells().partition() ).data(),
                       array::make_view<idx_t, 1>( mesh.cells().remote_index() ).data(), REMOTE_IDX_BASE,
@@ -113,6 +113,7 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &CellColumnsGatherScatterCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
@@ -126,7 +127,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh ) {
-        mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
         value->setup( array::make_view<int, 1>( mesh.cells().partition() ).data(),
                       array::make_view<idx_t, 1>( mesh.cells().remote_index() ).data(), REMOTE_IDX_BASE,
@@ -147,6 +147,7 @@ public:
         return inst;
     }
     util::ObjectHandle<value_type> get_or_create( const Mesh& mesh ) {
+        registerMesh( *mesh.get() );
         creator_type creator = std::bind( &CellColumnsChecksumCache::create, mesh );
         return Base::get_or_create( key( *mesh.get() ), creator );
     }
@@ -160,7 +161,6 @@ private:
     }
 
     static value_type* create( const Mesh& mesh ) {
-        mesh.get()->attachObserver( instance() );
         value_type* value = new value_type();
         util::ObjectHandle<parallel::GatherScatter> gather(
             CellColumnsGatherScatterCache::instance().get_or_create( mesh ) );
@@ -247,10 +247,7 @@ array::ArrayShape CellColumns::config_shape( const eckit::Configuration& config 
 }
 
 CellColumns::CellColumns( const Mesh& mesh, const eckit::Configuration& config ) :
-    mesh_( mesh ),
-    cells_( mesh_.cells() ),
-    nb_levels_( config.getInt( "levels", 0 ) ),
-    nb_cells_( 0 ) {
+    mesh_( mesh ), cells_( mesh_.cells() ), nb_levels_( config.getInt( "levels", 0 ) ), nb_cells_( 0 ) {
     ATLAS_TRACE();
     if ( config.has( "halo" ) ) {
         halo_ = mesh::Halo( config.getInt( "halo" ) );
@@ -769,8 +766,7 @@ void atlas__fs__CellColumns__checksum_field( const CellColumns* This, const fiel
 CellColumns::CellColumns() : FunctionSpace(), functionspace_( nullptr ) {}
 
 CellColumns::CellColumns( const FunctionSpace& functionspace ) :
-    FunctionSpace( functionspace ),
-    functionspace_( dynamic_cast<const detail::CellColumns*>( get() ) ) {}
+    FunctionSpace( functionspace ), functionspace_( dynamic_cast<const detail::CellColumns*>( get() ) ) {}
 
 CellColumns::CellColumns( const Mesh& mesh, const eckit::Configuration& config ) :
     FunctionSpace( new detail::CellColumns( mesh, config ) ),

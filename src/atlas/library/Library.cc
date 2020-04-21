@@ -207,6 +207,14 @@ void Library::finalise() {
     Log::debug() << "Atlas finalised" << std::endl;
 
     Log::flush();
+
+    if ( debugChannel() ) {
+        debug_channel_.reset( new eckit::Channel( new eckit::PrefixTarget( "ATLAS_DEBUG" ) ) );
+    }
+    if ( infoChannel() ) {
+        info_ = false;
+        info_channel_.reset( new eckit::Channel( new eckit::PrefixTarget( "ATLAS_INFO" ) ) );
+    }
 }
 
 eckit::Channel& Library::infoChannel() const {
