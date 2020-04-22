@@ -50,18 +50,16 @@ public:
     atlas::Field lonlat() const override { return lonlat_; }
     atlas::Field ghost() const override;
 
-    const atlas::Field xyz() const { return xyz_; }
-
 
     template <typename T>
     struct IteratorT {
-        IteratorT( const Field& field, bool begin = true ) :
-            field_( field ),
-            view_( array::make_view<double, 2>( field_ ) ),
-            m_( field_.shape( 0 ) ),
+        IteratorT( const Field& field, bool begin ) :
+            lonlat_( field ),
+            view_( array::make_view<double, 2>( lonlat_ ) ),
+            m_( lonlat_.shape( 0 ) ),
             n_( begin ? 0 : m_ ) {}
 
-        bool next( PointXYZ& p ) {
+        bool next( T& p ) {
             if ( n_ < m_ ) {
                 p = operator*();
                 ++n_;
@@ -81,7 +79,7 @@ public:
         bool operator!=( const IteratorT& other ) const { return n_ != other.n_; }
 
     private:
-        const Field& field_;
+        const Field lonlat_;
         const array::ArrayView<const double, 2> view_;
         idx_t m_;
         idx_t n_;
@@ -93,29 +91,28 @@ public:
         using iterator       = IteratorT<T>;
         using const_iterator = iterator;
 
-        IterateT( const Field& field ) : field_( field ) {}
-        iterator begin() const { return {field_}; }
-        iterator end() const { return {field_, false}; }
+        IterateT( const Field& lonlat ) : lonlat_( lonlat ) {}
+        iterator begin() const { return {lonlat_, true}; }
+        iterator end() const { return {lonlat_, false}; }
 
     private:
-        const Field& field_;
+        const Field lonlat_;
     };
 
 
     struct Iterate {
-        Iterate( const Points& fs ) : fs_( fs ) {}
-        IterateT<PointXYZ> xyz() const { return {fs_.xyz()}; }
-        IterateT<PointLonLat> lonlat() const { return {fs_.lonlat()}; }
+        Iterate( const Points& points ) : lonlat_( points.lonlat() ) {}
+        IterateT<PointXYZ> xyz() const { return {lonlat_}; }
+        IterateT<PointLonLat> lonlat() const { return {lonlat_}; }
 
     private:
-        const Points& fs_;
+        const Field lonlat_;
     };
 
     Iterate iterate() const { return Iterate( *this ); }
 
 private:
     Field lonlat_;
-    Field xyz_;
     mutable Field ghost_;
 };
 
@@ -131,7 +128,6 @@ public:
     operator bool() const { return functionspace_ != nullptr; }
 
     Field lonlat() const { return functionspace_->lonlat(); }
-    Field xyz() const { return functionspace_->xyz(); }
     Field ghost() const { return functionspace_->ghost(); }
 
     detail::Points::Iterate iterate() const { return functionspace_->iterate(); }

@@ -26,23 +26,13 @@ namespace detail {
 
 
 Points::Points( const Grid& grid ) :
-    lonlat_( "lonlat", array::make_datatype<double>(), array::make_shape( grid.size(), 2 ) ),
-    xyz_( "xyz", array::make_datatype<double>(), array::make_shape( grid.size(), 3 ) ) {
+    lonlat_( "lonlat", array::make_datatype<double>(), array::make_shape( grid.size(), 2 ) ) {
     auto lonlat = array::make_view<double, 2>( lonlat_ );
-    auto xyz    = array::make_view<double, 2>( xyz_ );
 
-    PointXYZ q;
     idx_t j = 0;
     for ( auto p : grid.lonlat() ) {
-        util::Earth::convertSphericalToCartesian( p, q );
-
         lonlat( j, LON ) = p.lon();
         lonlat( j, LAT ) = p.lat();
-
-        xyz( j, XX ) = q.x();
-        xyz( j, YY ) = q.y();
-        xyz( j, ZZ ) = q.z();
-
         ++j;
     }
 }
@@ -102,7 +92,10 @@ atlas::Field Points::ghost() const {
 
 template <>
 const PointXYZ Points::IteratorT<PointXYZ>::operator*() const {
-    return {view_( n_, XX ), view_( n_, YY ), view_( ZZ )};
+    PointXYZ q;
+    Point2 p = {view_( n_, LON ), view_( n_, LAT )};
+    util::Earth::convertSphericalToCartesian( p, q );
+    return q;
 }
 
 
