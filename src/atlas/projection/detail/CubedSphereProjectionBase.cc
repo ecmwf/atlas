@@ -65,7 +65,6 @@ void CubedSphereProjectionBase::xy2lonlat1( double xytll[] ) const {
   this->getTile1LonLat(xytll[0], xytll[1], lonlat);
   xytll[3+LON] = lonlat[LON];
   xytll[3+LAT] = lonlat[LAT];
-  std::cout << "Lon, Lat: " << xytll[3+LON] << " " << xytll[3+LAT] << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -87,7 +86,6 @@ void CubedSphereProjectionBase::xy2lonlat2( double xytll[] ) const {
 
   xytll[3+LON] = lonlat[LON];
   xytll[3+LAT] = lonlat[LAT];
-  std::cout << "Lon, Lat: " << xytll[3+LON] << " " << xytll[3+LAT] << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -113,7 +111,6 @@ void CubedSphereProjectionBase::xy2lonlat3( double xytll[] ) const {
 
   xytll[3+LON] = lonlat[LON];
   xytll[3+LAT] = lonlat[LAT];
-  std::cout << "Lon, Lat: " << xytll[3+LON] << " " << xytll[3+LAT] << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -139,7 +136,6 @@ void CubedSphereProjectionBase::xy2lonlat4( double xytll[] ) const {
 
   xytll[3+LON] = lonlat[LON];
   xytll[3+LAT] = lonlat[LAT];
-  std::cout << "Lon, Lat: " << xytll[3+LON] << " " << xytll[3+LAT] << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -165,7 +161,6 @@ void CubedSphereProjectionBase::xy2lonlat5( double xytll[] ) const {
 
   xytll[3+LON] = lonlat[LON];
   xytll[3+LAT] = lonlat[LAT];
-  std::cout << "Lon, Lat: " << xytll[3+LON] << " " << xytll[3+LAT] << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -182,16 +177,15 @@ void CubedSphereProjectionBase::xy2lonlat6( double xytll[] ) const {
 
   ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
 
-  angle = -M_PI / 2.0;
-  ProjectionUtilities::rotate3dZ(angle, xyz);
   angle = M_PI / 2.0;
-  ProjectionUtilities::rotate3dX(angle, xyz);
+  ProjectionUtilities::rotate3dY(angle, xyz);
+  angle = 0.0;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
 
   ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
 
   xytll[3+LON] = lonlat[LON];
   xytll[3+LAT] = lonlat[LAT];
-  std::cout << "Lon, Lat: " << xytll[3+LON] << " " << xytll[3+LAT] << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------

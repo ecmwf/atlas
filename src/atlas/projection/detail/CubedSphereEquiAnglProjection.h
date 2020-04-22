@@ -7,15 +7,17 @@
 
 #pragma once
 
+#include "atlas/array.h"
 #include "atlas/domain.h"
+#include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 
 namespace atlas {
 namespace projection {
 namespace detail {
 
-class CubedSphereEquiAnglProjection final : public ProjectionImpl {
-public:
+class CubedSphereEquiAnglProjection final : public ProjectionImpl, public CubedSphereProjectionBase {
+  public:
     // constructor
     CubedSphereEquiAnglProjection( const eckit::Parametrisation& );
 
@@ -27,7 +29,7 @@ public:
     void xy2lonlat( double crd[] ) const override;
     void lonlat2xy( double crd[] ) const override;
 
-    bool strictlyRegional() const override { return true; }
+    bool strictlyRegional() const override { return false; }
     RectangularLonLatDomain lonlatBoundingBox( const Domain& domain ) const override {
         return ProjectionImpl::lonlatBoundingBox( domain );
     }

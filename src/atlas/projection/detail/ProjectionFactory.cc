@@ -14,6 +14,7 @@
 #include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/util/Config.h"
 
+#include "atlas/projection/detail/CubedSphereEquiAnglProjection.h"
 #include "atlas/projection/detail/CubedSphereEquiDistProjection.h"
 #include "atlas/projection/detail/LambertAzimuthalEqualAreaProjection.h"
 #include "atlas/projection/detail/LambertConformalConicProjection.h"
@@ -29,6 +30,7 @@ namespace projection {
 void force_link() {
     static struct Link {
         Link() {
+            ProjectionBuilder<detail::CubedSphereEquiAnglProjection>();
             ProjectionBuilder<detail::CubedSphereEquiDistProjection>();
             ProjectionBuilder<detail::LonLatProjection>();
             ProjectionBuilder<detail::RotatedLonLatProjection>();

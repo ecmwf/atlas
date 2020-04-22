@@ -211,8 +211,6 @@ public:
     PointLonLat lonlat( idx_t i, idx_t j, idx_t t ) const { return projection_.lonlat( xy( i, j, t ) ); }
 
     void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const {
-      double xyt[3];
-      xy( i, j, t, xyt );
 
       double xytll[5];
       xytll[0] = i;

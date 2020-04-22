@@ -65,7 +65,7 @@ struct ProjectionUtilities {
   //--------------------------------------------------------------------------------------------------
 
   static void sphericalToCartesian(double lonlat[], double xyz[]) {
-    double r = util::Earth::radius();
+    const double r = util::Earth::radius();
     xyz[XX] = r * cos(lonlat[LON]) * cos(lonlat[LAT]);
     xyz[YY] = r * sin(lonlat[LON]) * cos(lonlat[LAT]);
     xyz[ZZ] = -r * sin(lonlat[LAT]);
@@ -74,9 +74,10 @@ struct ProjectionUtilities {
   //--------------------------------------------------------------------------------------------------
 
   static void rotate3dX(double angle, double xyz[]) {
-    double c = cos(angle);
-    double s = sin(angle);
-    auto xyz_in = xyz;
+    const double c = cos(angle);
+    const double s = sin(angle);
+    double xyz_in[3];
+    std::copy(xyz, xyz+3, xyz_in);
     xyz[YY] =  c*xyz_in[YY] + s*xyz_in[ZZ];
     xyz[ZZ] = -s*xyz_in[YY] + c*xyz_in[ZZ];
   };
@@ -84,9 +85,10 @@ struct ProjectionUtilities {
   //--------------------------------------------------------------------------------------------------
 
   static void rotate3dY(double angle, double xyz[]) {
-    double c = cos(angle);
-    double s = sin(angle);
-    auto xyz_in = xyz;
+    const double c = cos(angle);
+    const double s = sin(angle);
+    double xyz_in[3];
+    std::copy(xyz, xyz+3, xyz_in);
     xyz[XX] = c*xyz_in[XX] - s*xyz_in[ZZ];
     xyz[ZZ] = s*xyz_in[XX] + c*xyz_in[ZZ];
   };
@@ -94,9 +96,10 @@ struct ProjectionUtilities {
   //--------------------------------------------------------------------------------------------------
 
   static void rotate3dZ(double angle, double xyz[]) {
-    double c = cos(angle);
-    double s = sin(angle);
-    auto xyz_in = xyz;
+    const double c = cos(angle);
+    const double s = sin(angle);
+    double xyz_in[3];
+    std::copy(xyz, xyz+3, xyz_in);
     xyz[XX] =  c*xyz_in[XX] + s*xyz_in[YY];
     xyz[YY] = -s*xyz_in[XX] + c*xyz_in[YY];
   };

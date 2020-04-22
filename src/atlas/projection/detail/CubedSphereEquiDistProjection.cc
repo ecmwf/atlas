@@ -31,7 +31,7 @@ namespace detail {
 CubedSphereEquiDistProjection::CubedSphereEquiDistProjection( const eckit::Parametrisation& params )
                                                                : CubedSphereProjectionBase(params) {
   // Get Base data
-  auto cubeNx = getCubeNx();
+  const auto cubeNx = getCubeNx();
   auto tile1Lats = getLatArray();
   auto tile1Lons = getLonArray();
 
@@ -42,8 +42,8 @@ CubedSphereEquiDistProjection::CubedSphereEquiDistProjection( const eckit::Param
   const double z0 = -rsq3;
 
   // Equidistant
-  const double dy = -2.0*rsq3/cubeNx;
-  const double dz =  2.0*rsq3/cubeNx;
+  const double dy = -2.0*rsq3/static_cast<double>(cubeNx);
+  const double dz =  2.0*rsq3/static_cast<double>(cubeNx);
 
   double p1;
   double p2;
@@ -54,18 +54,15 @@ CubedSphereEquiDistProjection::CubedSphereEquiDistProjection( const eckit::Param
     for ( int iy = 0; iy < cubeNx+1; iy++ ) {
       // Grid points in cartesian coordinates
       double p1 = x0;
-      double p2 = y0 + iy*dy;
-      double p3 = z0 + ix*dz;
+      double p2 = y0 + static_cast<double>(ix)*dy;
+      double p3 = z0 + static_cast<double>(iy)*dz;
 
       ProjectionUtilities::cartesianToLatLon(p1, p2, p3, lonlat);
 
-      tile1Lons(ix,iy) = lonlat[LON] - M_PI;
-      tile1Lats(ix,iy) = lonlat[LAT];
+      tile1Lons(ix, iy) = lonlat[LON] - M_PI;
+      tile1Lats(ix, iy) = lonlat[LAT];
     }
   }
-
-  std::cout << "tile1Lons(0,0)"           << tile1Lons(0,0) << std::endl;
-  std::cout << "tile1Lons(cubeNx,cubeNx)" << tile1Lons(cubeNx,cubeNx) << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------

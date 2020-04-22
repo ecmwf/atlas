@@ -298,7 +298,7 @@ public:
     cubedsphere_equiangular() : GridBuilder( "cubedsphere_equiangular", {"^[Cc][Ss][Ee][Aa]([0-9]+)$"}, {"CSEA<cubedsphere>"} ) {}
 
     void print( std::ostream& os ) const override {
-        os << std::left << std::setw( 20 ) << "CSED<FaceNx>"
+        os << std::left << std::setw( 20 ) << "CSEA<FaceNx>"
            << "Cubed sphere, equiangular";
     }
 
@@ -320,6 +320,7 @@ public:
         config.get( "CubeNx", CubeNx );
         util::Config projconf;
         projconf.set("type", "cubedsphere_equiangular");
+        projconf.set("CubeNx", CubeNx);
         return new CubedSphereGrid::grid_t( "CSEA" + std::to_string( CubeNx ), CubeNx, Projection( projconf ) );
     }
 

@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include "atlas/array.h"
+#include "atlas/mesh/Connectivity.h"
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorImpl.h"
 #include "atlas/util/Config.h"
@@ -41,6 +44,10 @@ public:
 
     virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const override;
     virtual void generate( const Grid&, Mesh& ) const override;
+
+    void setNeighbours(int, int, int, int, idx_t quad_nodes[],
+                       array::ArrayView<int, 3>, atlas::mesh::HybridElements::Connectivity,
+                       array::ArrayView<int, 1>) const;
 
     using MeshGenerator::Implementation::generate;
 
