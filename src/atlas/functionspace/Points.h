@@ -15,7 +15,6 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
-#include "atlas/runtime/Exception.h"
 #include "atlas/util/Point.h"
 
 
@@ -73,7 +72,7 @@ public:
             return *this;
         }
 
-        const T operator*() const { ATLAS_NOTIMPLEMENTED; }
+        T operator*() const;
 
         bool operator==( const IteratorT& other ) const { return n_ == other.n_; }
         bool operator!=( const IteratorT& other ) const { return n_ != other.n_; }
@@ -81,7 +80,7 @@ public:
     private:
         const Field lonlat_;
         const array::ArrayView<const double, 2> view_;
-        idx_t m_;
+        const idx_t m_;
         idx_t n_;
     };
 

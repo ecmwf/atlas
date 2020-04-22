@@ -11,10 +11,13 @@
 
 #include "atlas/functionspace/Points.h"
 
+// #include <algorithm>
+
 #include "atlas/array.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/option/Options.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
@@ -33,6 +36,9 @@ Points::Points( const Grid& grid ) :
     for ( auto p : grid.lonlat() ) {
         lonlat( j, LON ) = p.lon();
         lonlat( j, LAT ) = p.lat();
+
+        // shouldn't be necessary
+        // lonlat( j, LAT ) = std::min(90., std::max(-90., p.lat()));
         ++j;
     }
 }
@@ -90,8 +96,14 @@ atlas::Field Points::ghost() const {
 }
 
 
+template <typename T>
+T Points::IteratorT<T>::operator*() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+
 template <>
-const PointXYZ Points::IteratorT<PointXYZ>::operator*() const {
+PointXYZ Points::IteratorT<PointXYZ>::operator*() const {
     PointXYZ q;
     Point2 p = {view_( n_, LON ), view_( n_, LAT )};
     util::Earth::convertSphericalToCartesian( p, q );
@@ -100,7 +112,7 @@ const PointXYZ Points::IteratorT<PointXYZ>::operator*() const {
 
 
 template <>
-const PointLonLat Points::IteratorT<PointLonLat>::operator*() const {
+PointLonLat Points::IteratorT<PointLonLat>::operator*() const {
     return {view_( n_, LON ), view_( n_, LAT )};
 }
 
