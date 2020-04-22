@@ -1,5 +1,5 @@
 /*
- * (C) British Crown Cpyright 2020, Met Office
+ * (C) British Crown Copyright 2020, Met Office
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -233,7 +233,7 @@ void test_rank0_arrview_adj_test( Fixture& f ) {
     array::ArrayT<POD> arr_init( f.N );
     array::ArrayT<POD> arr( f.N );
     array::ArrayView<POD, 1> arrv_init = array::make_host_view<POD, 1>( arr_init );
-    array::ArrayView<POD, 1> arrv      = array::make_host_view<POD, 1>( arr_init );
+    array::ArrayView<POD, 1> arrv      = array::make_host_view<POD, 1>( arr );
 
     for ( std::size_t j = 0; j < static_cast<std::size_t>( f.N ); ++j ) {
         arrv_init( j ) = ( static_cast<std::size_t>( f.part[j] ) != mpi::comm().rank() ? 0 : f.gidx[j] );
