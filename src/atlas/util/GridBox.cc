@@ -104,7 +104,7 @@ void GridBox::print( std::ostream& out ) const {
 
 GridBoxes::GridBoxes( const Grid& grid ) {
     StructuredGrid structured( grid );
-    if ( !structured || !structured.domain().global() || grid.projection() ) {
+    if ( !structured || /*!structured.domain().global() ||*/ grid.projection() ) {
         throw_NotImplemented( "GridBoxes only support structured, unprojected/unrotated global grids", Here() );
     }
 

@@ -209,9 +209,7 @@ void GridBoxMethod::do_execute( const FieldSet& source, FieldSet& target ) const
         std::vector<Triplet> triplets;
         size_t i = 0;
         for ( auto p : tgt.iterate().xyz() ) {
-            if ( ++progress ) {
-                Log::info() << "GridBoxMethod: " << *pTree_ << std::endl;
-            }
+            ++progress;
 
             if ( intersect( i, targetBoxes_.at( i ), pTree_->findInSphere( p, searchRadius_ ), triplets ) ) {
                 auto& y = yarray[i /*t.col()*/];
