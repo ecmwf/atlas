@@ -40,6 +40,7 @@ TYPE, extends(fckit_owned_object) :: atlas_GridDistribution
 
 !------------------------------------------------------------------------------
 contains
+  procedure :: nb_pts => atlas_GridDistribution__nb_pts
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_GridDistribution__final_auto
 #endif
