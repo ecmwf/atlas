@@ -68,10 +68,12 @@ option/TransOptions.cc
 projection.h
 projection/Projection.cc
 projection/Projection.h
-projection/detail/CubedSphereEquiDistProjection.cc
-projection/detail/CubedSphereEquiDistProjection.h
 projection/detail/CubedSphereEquiAnglProjection.cc
 projection/detail/CubedSphereEquiAnglProjection.h
+projection/detail/CubedSphereEquiDistFV3Projection.cc
+projection/detail/CubedSphereEquiDistFV3Projection.h
+projection/detail/CubedSphereEquiDistProjection.cc
+projection/detail/CubedSphereEquiDistProjection.h
 projection/detail/CubedSphereProjectionBase.cc
 projection/detail/CubedSphereProjectionBase.h
 projection/detail/LambertAzimuthalEqualAreaProjection.cc
