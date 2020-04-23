@@ -85,13 +85,13 @@ function atlas_GridDistribution__ctor( part, part0 ) result(this)
   call this%return()
 end function
 
-function atlas_GridDistribution__nb_pts() result(nb_pts)
+function atlas_GridDistribution__nb_pts(this) result(nb_pts)
   use atlas_distribution_c_binding
   use fckit_module, only : fckit_mpi_comm
   use atlas_kinds_module, only : ATLAS_KIND_IDX
-  type (fckit_mpi_comm) :: comm
-  type(atlas_GridDistribution) :: this
+  class(atlas_GridDistribution) :: this
   integer(kind=ATLAS_KIND_IDX), allocatable :: nb_pts(:)
+  type (fckit_mpi_comm) :: comm
   comm = fckit_mpi_comm ()
   allocate (nb_pts (comm%size ()))
   call atlas__GridDistribution__nb_pts(this%CPTR_PGIBUG_A, nb_pts)
