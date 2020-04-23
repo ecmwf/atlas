@@ -26,196 +26,204 @@ CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisati
   // Arrays to hold projection for (0,0) centered tile
   tile1LonsArray_.reset(new ArrayLatLon_(cubeNx_+1, cubeNx_+1));
   tile1LatsArray_.reset(new ArrayLatLon_(cubeNx_+1, cubeNx_+1));
-
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::lonlat2xy( double xytll[] ) const {
-  this->lonlat2xyTile.at(xytll[2])(xytll);
+void CubedSphereProjectionBase::lonlat2xy( double llxytl[] ) const {
+
+  double lonlat[2];
+  double lonlat_in[2];
+  double xyz[3];
+
+  // Get full tile 1 lonlat arrays
+  auto tile1Lats = getLatArray();
+  auto tile1Lons = getLonArray();
+
+  // Get lonlat point array
+  lonlat_in[LON] = llxytl[LON];
+  lonlat_in[LAT] = llxytl[LAT];
+
+  // Loop over tiles
+  bool found = false;
+  for (int t = 0; t < 6; t++) {
+
+    // Copy before overwriting
+    std::copy(lonlat_in, lonlat_in+2, lonlat);
+
+    // Convert to cartesian
+    ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
+
+    // Perform tile specific rotations
+    tileRotateInverse.at(t)(xyz);
+
+    // Back to latlon
+    ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
+
+    // Loop over tile 1 array
+    for (int ix = 0; ix < cubeNx_+1; ix++) {
+      for (int iy = 0; iy < cubeNx_+1; iy++) {
+        // Check if this rotation landed the point on tile 1
+        if (tile1Lons(ix, iy) == lonlat[LON] && tile1Lats(ix, iy) == lonlat[LAT]) {
+          llxytl[2+XX] = ix;
+          llxytl[2+YY] = iy;
+          llxytl[4] = t;
+          found = true;
+          break;
+        }
+      }
+    }
+  }
+  ATLAS_ASSERT(found, "CubedSphereProjectionBase::lonlat2xy, LonLat not found");
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::xy2lonlat( double xytll[] ) const {
-  double xyz[3];
+
   double lonlat[2];
-  xy2lonlatTile.at(xytll[2])(xytll);
-}
+  double xyz[3];
+  double angle;
 
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::getTile1LonLat(double x, double y, double lonlat[]) const {
-  ATLAS_TRACE( "CubedSphereProjectionBase::getTile1LonLat" );
-  // Get the array view to to tile 1
+  // Get lat/lon for this index but on tile 1
   auto tile1Lats = getLatArray();
   auto tile1Lons = getLonArray();
-  int xi = static_cast<int>(x);
-  int yi = static_cast<int>(y);
-  lonlat[LON] = tile1Lons(xi, yi);
-  lonlat[LAT] = tile1Lats(xi, yi);
-}
+  lonlat[LON] = tile1Lons(static_cast<int>(xytll[XX]), static_cast<int>(xytll[YY]));
+  lonlat[LAT] = tile1Lats(static_cast<int>(xytll[XX]), static_cast<int>(xytll[YY]));
 
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::xy2lonlat1( double xytll[] ) const {
-  ATLAS_TRACE( "CubedSphereProjectionBase::xy2lonlat1" );
-  //  Face 1, nothing to do.
-  double lonlat[2];
-  this->getTile1LonLat(xytll[0], xytll[1], lonlat);
-  xytll[3+LON] = lonlat[LON];
-  xytll[3+LAT] = lonlat[LAT];
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::xy2lonlat2( double xytll[] ) const {
-  //  Face 2: rotate -90.0 degrees about z axis
-
-  double lonlat[2];
-  double xyz[3];
-  double angle;
-
-  this->getTile1LonLat(xytll[0], xytll[1], lonlat);
+  // Convert to cartesian
   ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
 
-  angle = -M_PI / 2.0;
-  ProjectionUtilities::rotate3dZ(angle, xyz);
+  // Perform tile specific rotation
+  tileRotate.at(xytll[2])(xyz);
 
+  // Back to latlon
   ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
 
+  // Fill outputs
   xytll[3+LON] = lonlat[LON];
   xytll[3+LAT] = lonlat[LAT];
+
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::xy2lonlat3( double xytll[] ) const {
+void CubedSphereProjectionBase::tile1Rotate( double xyz[] ) const {
+  //  Face 1, no rotation.
+}
+
+// -------------------------------------------------------------------------------------------------
+
+void CubedSphereProjectionBase::tile2Rotate( double xyz[] ) const {
+  //  Face 2: rotate -90.0 degrees about z axis
+  double angle;
+  angle = -M_PI / 2.0;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
+}
+
+// -------------------------------------------------------------------------------------------------
+
+void CubedSphereProjectionBase::tile3Rotate( double xyz[] ) const {
   //  Face 3: rotate -90.0 degrees about z axis
   //          rotate  90.0 degrees about x axis
-
-  double lonlat[2];
-  double xyz[3];
   double angle;
-
-  this->getTile1LonLat(xytll[0], xytll[1], lonlat);
-
-  ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
-
   angle = -M_PI / 2.0;
   ProjectionUtilities::rotate3dZ(angle, xyz);
   angle = M_PI / 2.0;
   ProjectionUtilities::rotate3dX(angle, xyz);
-
-  ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
-
-  xytll[3+LON] = lonlat[LON];
-  xytll[3+LAT] = lonlat[LAT];
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::xy2lonlat4( double xytll[] ) const {
+void CubedSphereProjectionBase::tile4Rotate( double xyz[] ) const {
   //  Face 4: rotate -180.0 degrees about z axis
   //          rotate   90.0 degrees about x axis
-
-  double lonlat[2];
-  double xyz[3];
   double angle;
-
-  this->getTile1LonLat(xytll[0], xytll[1], lonlat);
-
-  ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
-
   angle = -M_PI;
   ProjectionUtilities::rotate3dZ(angle, xyz);
   angle = M_PI / 2.0;
   ProjectionUtilities::rotate3dX(angle, xyz);
-
-  ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
-
-  xytll[3+LON] = lonlat[LON];
-  xytll[3+LAT] = lonlat[LAT];
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::xy2lonlat5( double xytll[] ) const {
+void CubedSphereProjectionBase::tile5Rotate( double xyz[] ) const {
   //  Face 5: rotate 90.0 degrees about z axis
   //          rotate 90.0 degrees about y axis
-
-  double lonlat[2];
-  double xyz[3];
   double angle;
-
-  this->getTile1LonLat(xytll[0], xytll[1], lonlat);
-
-  ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
-
   angle = M_PI / 2.0;
   ProjectionUtilities::rotate3dZ(angle, xyz);
   angle = M_PI / 2.0;
   ProjectionUtilities::rotate3dY(angle, xyz);
-
-  ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
-
-  xytll[3+LON] = lonlat[LON];
-  xytll[3+LAT] = lonlat[LAT];
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::xy2lonlat6( double xytll[] ) const {
+void CubedSphereProjectionBase::tile6Rotate( double xyz[] ) const {
   //  Face 6: rotate 90.0 degrees about y axis
-  //          rotate  0.0 degrees about y axis
-
-  double lonlat[2];
-  double xyz[3];
   double angle;
-
-  this->getTile1LonLat(xytll[0], xytll[1], lonlat);
-
-  ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
-
   angle = M_PI / 2.0;
   ProjectionUtilities::rotate3dY(angle, xyz);
-  angle = 0.0;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+void CubedSphereProjectionBase::tile1RotateInverse( double llxyt[] ) const {
+  //  Face 1, no rotation.
+}
+
+// -------------------------------------------------------------------------------------------------
+
+void CubedSphereProjectionBase::tile2RotateInverse( double xyz[] ) const {
+  //  Face 2: rotate 90.0 degrees about z axis
+  double angle;
+  angle = M_PI / 2.0;
   ProjectionUtilities::rotate3dZ(angle, xyz);
-
-  ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
-
-  xytll[3+LON] = lonlat[LON];
-  xytll[3+LAT] = lonlat[LAT];
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::latlon2xy1( double xytll[] ) const {
+void CubedSphereProjectionBase::tile3RotateInverse( double xyz[] ) const {
+  //  Face 3: rotate  90.0 degrees about x axis
+  //          rotate -90.0 degrees about z axis
+  double angle;
+  angle = M_PI / 2.0;
+  ProjectionUtilities::rotate3dX(angle, xyz);
+  angle = -M_PI / 2.0;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::latlon2xy2( double xytll[] ) const {
+void CubedSphereProjectionBase::tile4RotateInverse( double xyz[] ) const {
+  //  Face 4: rotate   90.0 degrees about x axis
+  //          rotate -180.0 degrees about z axis
+  double angle;
+  angle = M_PI / 2.0;
+  ProjectionUtilities::rotate3dX(angle, xyz);
+  angle = -M_PI;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::latlon2xy3( double xytll[] ) const {
+void CubedSphereProjectionBase::tile5RotateInverse( double xyz[] ) const {
+  //  Face 5: rotate -90.0 degrees about y axis
+  //          rotate -90.0 degrees about z axis
+  double angle;
+  angle = -M_PI / 2.0;
+  ProjectionUtilities::rotate3dY(angle, xyz);
+  angle = -M_PI / 2.0;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::latlon2xy4( double xytll[] ) const {
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::latlon2xy5( double xytll[] ) const {
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::latlon2xy6( double xytll[] ) const {
+void CubedSphereProjectionBase::tile6RotateInverse( double xyz[] ) const {
+  //  Face 6: rotate -90.0 degrees about y axis
+  double angle;
+  angle = -M_PI / 2.0;
+  ProjectionUtilities::rotate3dY(angle, xyz);
 }
 
 // -------------------------------------------------------------------------------------------------

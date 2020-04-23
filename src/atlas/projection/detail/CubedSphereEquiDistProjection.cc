@@ -45,19 +45,21 @@ CubedSphereEquiDistProjection::CubedSphereEquiDistProjection( const eckit::Param
   const double dy = -2.0*rsq3/static_cast<double>(cubeNx);
   const double dz =  2.0*rsq3/static_cast<double>(cubeNx);
 
-  double p1;
-  double p2;
-  double p3;
+  double xyz[3];
   double lonlat[2];
 
   for ( int ix = 0; ix < cubeNx+1; ix++ ) {
     for ( int iy = 0; iy < cubeNx+1; iy++ ) {
       // Grid points in cartesian coordinates
-      double p1 = x0;
-      double p2 = y0 + static_cast<double>(ix)*dy;
-      double p3 = z0 + static_cast<double>(iy)*dz;
+      xyz[XX] = -rsq3;
+      xyz[YY] =  rsq3 + static_cast<double>(ix)*dy;
+      xyz[ZZ] =  rsq3 - static_cast<double>(iy)*dz;
 
-      ProjectionUtilities::cartesianToLatLon(p1, p2, p3, lonlat);
+      ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
+
+      if (lonlat[LON] < 0.0) {
+        lonlat[LON] += 2.0*M_PI;
+      }
 
       tile1Lons(ix, iy) = lonlat[LON] - M_PI;
       tile1Lats(ix, iy) = lonlat[LAT];

@@ -22,35 +22,6 @@ namespace detail {
 
 struct ProjectionUtilities {
 
-  static void cartesianToLatLon(double p1, double p2, double p3, double lonlat[]) {
-    // Input is cartesian coordinates, output is degrees in radians
-
-    double dist = sqrt(pow(p1, 2) + pow(p2, 2) + pow(p3, 2));
-
-    double lon;
-    double lat;
-
-    p1 /= dist;
-    p2 /= dist;
-    p3 /= dist;
-
-    if ( (abs(p1) + abs(p2)) < util::Constants::esl() ) {
-      lon = 0.0;
-    } else {
-      lon = atan2( p2, p1 );
-    }
-
-    // 0 to 2pi
-    if (lon < 0.0) {
-      lon += 2.0*M_PI;
-    }
-
-    lat = asin(p3);
-
-    lonlat[LON] = lon;
-    lonlat[LAT] = lat;
-  }
-
   // -----------------------------------------------------------------------------------------------
 
   static void cartesianToSpherical(double xyz[], double lonlat[], bool right_hand = false) {
@@ -127,7 +98,8 @@ struct ProjectionUtilities {
 
   //------------------------------------------------------------------------------------------------
 
-  static void mirror_latlon(double lonlat2[], double lonlat3[], double lonlat1[], double lonlat4[]) {
+  static void mirror_latlon(double lonlat2[], double lonlat3[], double lonlat1[],
+                            double lonlat4[]) {
     // Given the "mirror" as defined by (lon1, lat1), (lon2, lat2), and center
     // of the sphere, compute the mirror image of (lon0, lat0) as  (lon3, lat3)
 
@@ -158,10 +130,10 @@ struct ProjectionUtilities {
       xyzout[n] = xyz0[n] - 2.0*dot*xyz1xyz2[n];
     }
 
-    cartesianToLatLon(xyzout[0], xyzout[1], xyzout[2], lonlat4);
+    cartesianToSpherical(xyzout, lonlat4);
   }
 
-  //--------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------
 
 };
 

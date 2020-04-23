@@ -159,10 +159,19 @@ CubedSphereEquiDistFV3Projection::CubedSphereEquiDistFV3Projection( const eckit:
     }
   }
 
+  for (ix = 0; ix < cubeNx+1; ix++) {
+    for (iy = 0; iy < cubeNx+1; iy++) {
+      xyzArray(ZZ,ix,iy) = -xyzArray(ZZ,0,iy);
+    }
+  }
+
   // To lonlat
   for (ix = 0; ix < cubeNx+1; ix++) {
     for (iy = 0; iy < cubeNx+1; iy++) {
-      ProjectionUtilities::cartesianToLatLon(xyzArray(XX,ix,iy), xyzArray(YY,ix,iy), xyzArray(ZZ,ix,iy), lonlat_tmp);
+      xyz_tmp[XX] = xyzArray(XX, ix, iy);
+      xyz_tmp[YY] = xyzArray(YY, ix, iy);
+      xyz_tmp[ZZ] = xyzArray(ZZ, ix, iy);
+      ProjectionUtilities::cartesianToSpherical(xyz_tmp, lonlat_tmp);
       tile1Lons(ix, iy) = lonlat_tmp[LON];
       tile1Lats(ix, iy) = lonlat_tmp[LAT];
     }

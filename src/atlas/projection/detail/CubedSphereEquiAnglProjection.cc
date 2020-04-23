@@ -41,19 +41,21 @@ CubedSphereEquiAnglProjection::CubedSphereEquiAnglProjection( const eckit::Param
   // Equiangular
   const double dp = 0.5*M_PI/static_cast<double>(cubeNx);
 
-  double p1;
-  double p2;
-  double p3;
+  double xyz[3];
   double lonlat[2];
 
   for ( int ix = 0; ix < cubeNx+1; ix++ ) {
     for ( int iy = 0; iy < cubeNx+1; iy++ ) {
       // Grid points in cartesian coordinates
-      double p1 = -rsq3;
-      double p2 = -rsq3*tan(-0.25*M_PI+static_cast<double>(ix)*dp);
-      double p3 =  rsq3*tan(-0.25*M_PI+static_cast<double>(iy)*dp);
+      xyz[XX] = -rsq3;
+      xyz[YY] = -rsq3*tan(-0.25*M_PI+static_cast<double>(ix)*dp);
+      xyz[ZZ] = -rsq3*tan(-0.25*M_PI+static_cast<double>(iy)*dp);
 
-      ProjectionUtilities::cartesianToLatLon(p1, p2, p3, lonlat);
+      ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
+
+      if (lonlat[LON] < 0.0) {
+        lonlat[LON] += 2.0*M_PI;
+      }
 
       tile1Lons(ix, iy) = lonlat[LON] - M_PI;
       tile1Lats(ix, iy) = lonlat[LAT];
