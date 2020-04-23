@@ -75,6 +75,7 @@ private:
 extern "C" {
 DistributionImpl* atlas__GridDistribution__new( idx_t npts, int part[], int part0 );
 void atlas__GridDistribution__delete( DistributionImpl* This );
+void atlas__GridDistribution__nb_pts (DistributionImpl * This, idx_t nb_pts[]);
 }
 
 }  // namespace grid

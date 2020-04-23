@@ -148,5 +148,11 @@ void atlas__GridDistribution__delete( DistributionImpl* This ) {
     delete This;
 }
 
+void atlas__GridDistribution__nb_pts (DistributionImpl * This, idx_t nb_pts[])
+{
+    const auto & nb_pts_ = This->nb_pts ();
+    std::copy (nb_pts_.begin (), nb_pts_.end (), &nb_pts[0]);
+}
+
 }  // namespace grid
 }  // namespace atlas
