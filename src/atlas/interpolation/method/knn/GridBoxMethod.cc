@@ -175,60 +175,59 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
 }
 
 
-void GridBoxMethod::do_execute( const FieldSet& source, FieldSet& target ) const {
-    if ( matrixFree_ ) {
-        ATLAS_TRACE( "GridBoxMethod::execute()" );
-
-
-        // ensure setup()
-        functionspace::Points tgt = target_;
-        ATLAS_ASSERT( tgt );
-
-        ATLAS_ASSERT( pTree_ != nullptr );
-        ATLAS_ASSERT( searchRadius_ > 0. );
-        ATLAS_ASSERT( !sourceBoxes_.empty() );
-        ATLAS_ASSERT( !targetBoxes_.empty() );
-
-
-        // set arrays
-        ATLAS_ASSERT( source.size() == 1 && source.field( 0 ).rank() == 1 );
-        ATLAS_ASSERT( target.size() == 1 && target.field( 0 ).rank() == 1 );
-
-        auto xarray = atlas::array::make_view<double, 1>( source.field( 0 ) );
-        auto yarray = atlas::array::make_view<double, 1>( target.field( 0 ) );
-        ATLAS_ASSERT( xarray.size() == idx_t( sourceBoxes_.size() ) );
-        ATLAS_ASSERT( yarray.size() == idx_t( targetBoxes_.size() ) );
-
-        yarray.assign( 0. );
-        failures_.clear();
-
-
-        // interpolate
-        eckit::ProgressTimer progress( "Intersecting", targetBoxes_.size(), "grid box", double( 5. ) );
-
-        std::vector<Triplet> triplets;
-        size_t i = 0;
-        for ( auto p : tgt.iterate().xyz() ) {
-            ++progress;
-
-            if ( intersect( i, targetBoxes_.at( i ), pTree_->findInSphere( p, searchRadius_ ), triplets ) ) {
-                auto& y = yarray[i /*t.col()*/];
-                for ( auto& t : triplets ) {
-                    y += xarray[t.col()] * t.value();
-                }
-            }
-
-            ++i;
-        }
-
-        if ( !failures_.empty() ) {
-            give_up( failures_ );
-        }
-
+void GridBoxMethod::do_execute( const Field& source, Field& target ) const {
+    if ( !matrixFree_ ) {
+        Method::execute( source, target );
         return;
     }
 
-    Method::execute( source, target );
+    ATLAS_TRACE( "GridBoxMethod::execute()" );
+
+
+    // ensure setup()
+    functionspace::Points tgt = target_;
+    ATLAS_ASSERT( tgt );
+
+    ATLAS_ASSERT( pTree_ != nullptr );
+    ATLAS_ASSERT( searchRadius_ > 0. );
+    ATLAS_ASSERT( !sourceBoxes_.empty() );
+    ATLAS_ASSERT( !targetBoxes_.empty() );
+
+
+    // set arrays
+    ATLAS_ASSERT( source.rank() == 1 );
+    ATLAS_ASSERT( target.rank() == 1 );
+
+    auto xarray = atlas::array::make_view<double, 1>( source );
+    auto yarray = atlas::array::make_view<double, 1>( target );
+    ATLAS_ASSERT( xarray.size() == idx_t( sourceBoxes_.size() ) );
+    ATLAS_ASSERT( yarray.size() == idx_t( targetBoxes_.size() ) );
+
+    yarray.assign( 0. );
+    failures_.clear();
+
+
+    // interpolate
+    eckit::ProgressTimer progress( "Intersecting", targetBoxes_.size(), "grid box", double( 5. ) );
+
+    std::vector<Triplet> triplets;
+    size_t i = 0;
+    for ( auto p : tgt.iterate().xyz() ) {
+        ++progress;
+
+        if ( intersect( i, targetBoxes_.at( i ), pTree_->findInSphere( p, searchRadius_ ), triplets ) ) {
+            auto& y = yarray[i];
+            for ( auto& t : triplets ) {
+                y += xarray[t.col()] * t.value();
+            }
+        }
+
+        ++i;
+    }
+
+    if ( !failures_.empty() ) {
+        give_up( failures_ );
+    }
 }
 
 

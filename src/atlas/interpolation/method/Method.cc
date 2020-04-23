@@ -198,7 +198,7 @@ void Method::do_execute( const FieldSet& fieldsSource, FieldSet& fieldsTarget ) 
 
     for ( idx_t i = 0; i < fieldsSource.size(); ++i ) {
         Log::debug() << "Method::do_execute() on field " << ( i + 1 ) << '/' << N << "..." << std::endl;
-        Method::do_execute( fieldsSource[i], fieldsTarget[i] );
+        do_execute( fieldsSource[i], fieldsTarget[i] );
     }
 }
 
