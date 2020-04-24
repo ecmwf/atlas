@@ -95,7 +95,6 @@ function atlas_GridDistribution__nb_pts(this) result(nb_pts)
   comm = fckit_mpi_comm ()
   allocate (nb_pts (comm%size ()))
   call atlas__GridDistribution__nb_pts(this%CPTR_PGIBUG_A, nb_pts)
-  call this%return()
   call comm%final ()
 end function
 
