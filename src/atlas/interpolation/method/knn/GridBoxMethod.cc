@@ -177,7 +177,7 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
 
 void GridBoxMethod::do_execute( const Field& source, Field& target ) const {
     if ( !matrixFree_ ) {
-        Method::execute( source, target );
+        Method::do_execute( source, target );
         return;
     }
 
