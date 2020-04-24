@@ -130,7 +130,13 @@ struct ProjectionUtilities {
       xyzout[n] = xyz0[n] - 2.0*dot*xyz1xyz2[n];
     }
 
+    xyzout[ZZ] = -xyzout[ZZ];
+
     cartesianToSpherical(xyzout, lonlat4);
+
+    if (lonlat4[LON] < 0.0) {
+      lonlat4[LON] += 2.0*M_PI;
+    }
   }
 
   //------------------------------------------------------------------------------------------------

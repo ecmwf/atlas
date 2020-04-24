@@ -32,7 +32,7 @@ namespace detail {
 CubedSphereEquiDistFV3Projection::CubedSphereEquiDistFV3Projection( const eckit::Parametrisation& params )
                                                                   : CubedSphereProjectionBase(params) {
 
-  //  Equal distance CS used in the FV3 dynamical core. ED along the 4 edges of the cubed sphere
+  //  Equidistant cubedsphere used in the FV3 dynamical core. Equidistant along the 4 edges of the cubed sphere
   //  Properties:
   //   - defined by intersections of great circles
   //   - max(dx,dy; global) / min(dx,dy; global) = sqrt(2) = 1.4142
@@ -159,19 +159,16 @@ CubedSphereEquiDistFV3Projection::CubedSphereEquiDistFV3Projection( const eckit:
     }
   }
 
-  for (ix = 0; ix < cubeNx+1; ix++) {
-    for (iy = 0; iy < cubeNx+1; iy++) {
-      xyzArray(ZZ,ix,iy) = -xyzArray(ZZ,0,iy);
-    }
-  }
-
   // To lonlat
   for (ix = 0; ix < cubeNx+1; ix++) {
     for (iy = 0; iy < cubeNx+1; iy++) {
       xyz_tmp[XX] = xyzArray(XX, ix, iy);
       xyz_tmp[YY] = xyzArray(YY, ix, iy);
-      xyz_tmp[ZZ] = xyzArray(ZZ, ix, iy);
+      xyz_tmp[ZZ] = -xyzArray(ZZ, ix, iy);
       ProjectionUtilities::cartesianToSpherical(xyz_tmp, lonlat_tmp);
+      if (lonlat_tmp[LON] < 0.0) {
+        lonlat_tmp[LON] += 2.0*M_PI;
+      }
       tile1Lons(ix, iy) = lonlat_tmp[LON];
       tile1Lats(ix, iy) = lonlat_tmp[LAT];
     }

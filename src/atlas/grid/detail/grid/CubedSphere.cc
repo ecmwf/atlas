@@ -316,7 +316,7 @@ public:
     }
 
     const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
-        int CubeNx;
+        int CubeNx = 0;
         config.get( "CubeNx", CubeNx );
         util::Config projconf;
         projconf.set("type", "cubedsphere_equiangular");
@@ -353,7 +353,7 @@ public:
     }
 
     const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
-        int CubeNx;
+        int CubeNx = 0;
         config.get( "CubeNx", CubeNx );
         util::Config projconf;
         projconf.set("type", "cubedsphere_equidistant");
@@ -390,7 +390,7 @@ public:
     }
 
     const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
-        int CubeNx;
+        int CubeNx = 0;
         config.get( "CubeNx", CubeNx );
         util::Config projconf;
         projconf.set("type", "cubedsphere_equidistant_fv3");

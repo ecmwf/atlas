@@ -1,0 +1,9 @@
+type   : "cubedsphere_equidistant"
+CubeNx : 12
+
+check :
+  size : 866
+  lonlat(first) : [0,85.7606]
+  lonlat(last)  : [342,-85.7606]
+  uid : 8ce0eb693f455e842ae494185147adea
+  bounding_box(n,w,s,e) : [90,0,-90,360]
