@@ -137,6 +137,26 @@ public:
     void normalise( double west, double east );
 };
 
+
+// ------------------------------------------------------------------
+// C wrapper interfaces to C++ routines
+
+extern "C" {
+PointLonLat* atlas__PointLonLat__new();
+PointLonLat* atlas__PointLonLat__new_lonlat(double lon, double lat);
+void atlas__PointLonLat__delete( PointLonLat* This );
+void atlas__PointLonLat__print( PointLonLat* This, std::ostream* channel );
+double atlas__PointLonLat__lon( PointLonLat* This );
+double atlas__PointLonLat__lat( PointLonLat* This );
+void atlas__PointLonLat__assign( PointLonLat* This, double lon, double lat );
+void atlas__PointLonLat__normalise( PointLonLat* This);
+void atlas__PointLonLat__normalise_west( PointLonLat* This, double west);
+void atlas__PointLonLat__normalise_west_east( PointLonLat* This, double west, double east );
+}
+
+// ------------------------------------------------------------------
+
+
 }  // namespace atlas
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
