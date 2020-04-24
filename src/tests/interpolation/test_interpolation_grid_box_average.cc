@@ -9,8 +9,6 @@
  */
 
 
-#include <cmath>
-
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/array.h"
@@ -43,20 +41,44 @@ double integral( const Grid& grid, const Field& field ) {
 
 
 CASE( "test_interpolation_grid_box_average" ) {
-    using eckit::types::is_approximately_equal;
-
     Grid gridA( "O32" );
     Grid gridB( "O64" );
     Grid gridC( "O32" );
 
 
-    // the integral of field = 1 is Earth's surface area
-    auto ref = util::Earth::area();
-    Log::info() << "Earth's surface = " << ref << " m2 (reference)" << std::endl;
-    static double interpolation_tolerance = 1e3;  // (Earth's surface area is large)
+    // the integral of a constant field = 1 is Earth's surface area
+    struct reference_t {
+        reference_t( double value, double tolerance ) : value_( value ), tolerance_( tolerance ) {
+            Log::info() << "Reference: " << value_ << ", abs. tolerance: +-" << tolerance_ << std::endl;
+        }
+
+        void check( std::string label, double value ) {
+            Log::info() << label << value << std::endl;
+            EXPECT( eckit::types::is_approximately_equal( value, value_, tolerance_ ) );
+        }
+
+        const double value_;
+        const double tolerance_;
+    } reference( util::Earth::area(), 1.e2 );
 
     Field fieldA( "A", array::make_datatype<double>(), array::make_shape( gridA.size() ) );
     array::make_view<double, 1>( fieldA ).assign( 1. );
+    reference.check( "Integral A: ", integral( gridA, fieldA ) );
+
+
+    SECTION( "matrix-based" ) {
+        Field fieldB( "B", array::make_datatype<double>(), array::make_shape( gridB.size() ) );
+        Field fieldC( "C", array::make_datatype<double>(), array::make_shape( gridC.size() ) );
+
+        auto config = option::type( "grid-box-average" );
+        config.set( "matrix_free", false );
+
+        Interpolation( config, gridA, gridB ).execute( fieldA, fieldB );
+        reference.check( "Integral B: ", integral( gridB, fieldB ) );
+
+        Interpolation( config, gridB, gridC ).execute( fieldB, fieldC );
+        reference.check( "Integral C: ", integral( gridC, fieldC ) );
+    }
 
 
     SECTION( "matrix-free" ) {
@@ -67,36 +89,10 @@ CASE( "test_interpolation_grid_box_average" ) {
         config.set( "matrix_free", true );
 
         Interpolation( config, gridA, gridB ).execute( fieldA, fieldB );
+        reference.check( "Integral B: ", integral( gridB, fieldB ) );
+
         Interpolation( config, gridB, gridC ).execute( fieldB, fieldC );
-
-        double integrals[]{integral( gridA, fieldA ), integral( gridB, fieldB ), integral( gridC, fieldC )};
-        Log::info() << "Integral A: " << integrals[0] << "\n"
-                    << "Integral B: " << integrals[1] << "\n"
-                    << "Integral C: " << integrals[2] << std::endl;
-
-        EXPECT( is_approximately_equal( integrals[0], ref, interpolation_tolerance ) );
-        EXPECT( is_approximately_equal( integrals[1], ref, interpolation_tolerance ) );
-        EXPECT( is_approximately_equal( integrals[2], ref, interpolation_tolerance ) );
-    }
-
-    SECTION( "matrix-based" ) {
-        Field fieldB( "B", array::make_datatype<double>(), array::make_shape( gridB.size() ) );
-        Field fieldC( "C", array::make_datatype<double>(), array::make_shape( gridC.size() ) );
-
-        auto config = option::type( "grid-box-average" );
-        config.set( "matrix_free", false );
-
-        Interpolation( config, gridA, gridB ).execute( fieldA, fieldB );
-        Interpolation( config, gridB, gridC ).execute( fieldB, fieldC );
-
-        double integrals[]{integral( gridA, fieldA ), integral( gridB, fieldB ), integral( gridC, fieldC )};
-        Log::info() << "Integral A: " << integrals[0] << "\n"
-                    << "Integral B: " << integrals[1] << "\n"
-                    << "Integral C: " << integrals[2] << std::endl;
-
-        EXPECT( is_approximately_equal( integrals[0], ref, interpolation_tolerance ) );
-        EXPECT( is_approximately_equal( integrals[1], ref, interpolation_tolerance ) );
-        EXPECT( is_approximately_equal( integrals[2], ref, interpolation_tolerance ) );
+        reference.check( "Integral C: ", integral( gridC, fieldC ) );
     }
 }
 
