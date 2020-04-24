@@ -8,7 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <utility>
 
 #include "eckit/types/FloatCompare.h"
 
@@ -42,7 +41,7 @@ double integral( const Grid& grid, const Field& field ) {
 
 
 void reset_fields( Field& f1, Field& f2, Field& f3 ) {
-    array::make_view<double, 1>( f1 ).assign( 1. );
+    array::make_view<double, 1>( f1 ).assign( 0. );
     array::make_view<double, 1>( f2 ).assign( 0. );
     array::make_view<double, 1>( f3 ).assign( 0. );
 }
@@ -100,6 +99,9 @@ CASE( "test_interpolation_grid_box_average" ) {
     reference_t surface2( util::Earth::area() * 2., 1.e3 );
     reference_t surface3( util::Earth::area() * 3., 1.e3 );
 
+    reference_t countA( double( gridA.size() ), 1.e-8 );
+    reference_t countB( double( gridB.size() ), 1.e-8 );
+
 
     // setup fields
     Field fieldA( "A", array::make_datatype<double>(), array::make_shape( gridA.size() ) );
@@ -113,6 +115,8 @@ CASE( "test_interpolation_grid_box_average" ) {
 
     SECTION( "Earth's surface area, Field interpolation, matrix-based" ) {
         reset_fields( fieldA, fieldB, fieldC );
+        array::make_view<double, 1>( fieldA ).assign( 1. );
+
         surface1.check( "Integral A: ", integral( gridA, fieldA ) );  // checked once
 
         auto config = option::type( "grid-box-average" );
@@ -146,6 +150,7 @@ CASE( "test_interpolation_grid_box_average" ) {
 
     SECTION( "Earth's surface area, Field interpolation, matrix-free" ) {
         reset_fields( fieldA, fieldB, fieldC );
+        array::make_view<double, 1>( fieldA ).assign( 1. );
 
         auto config = option::type( "grid-box-average" );
         config.set( "matrix_free", true );
@@ -173,6 +178,55 @@ CASE( "test_interpolation_grid_box_average" ) {
         surface1.check( "Integral C1: ", integral( gridC, fieldsC[0] ) );
         surface2.check( "Integral C2: ", integral( gridC, fieldsC[1] ) );
         surface3.check( "Integral C3: ", integral( gridC, fieldsC[2] ) );
+    }
+
+
+    SECTION( "Conserve count as integral value, low >> high >> low resolution, matrix-free" ) {
+        reset_fields( fieldA, fieldB, fieldC );
+
+        size_t i    = 0;
+        auto values = array::make_view<double, 1>( fieldA );
+        for ( auto& box : util::GridBoxes( gridA ) ) {
+            ATLAS_ASSERT( box.area() > 0. );
+            values( i++ ) = 1. / box.area();
+        }
+
+        auto config = option::type( "grid-box-average" );
+        config.set( "matrix_free", true );
+
+        countA.check( "Count A: ", integral( gridA, fieldA ) );
+
+        Interpolation( config, gridA, gridB ).execute( fieldA, fieldB );
+        countA.check( "Count B: ", integral( gridB, fieldB ) );
+
+        Interpolation( config, gridB, gridA ).execute( fieldB, fieldC );
+        countA.check( "Count A: ", integral( gridA, fieldC ) );
+    }
+
+
+    SECTION( "Conserve count as integral value, high >> low >> high resolution, matrix-free" ) {
+        reset_fields( fieldA, fieldB, fieldC );
+
+        Field fieldD( "D", array::make_datatype<double>(), array::make_shape( gridB.size() ) );
+        array::make_view<double, 1>( fieldD ).assign( 0. );
+
+        size_t i    = 0;
+        auto values = array::make_view<double, 1>( fieldB );
+        for ( auto& box : util::GridBoxes( gridB ) ) {
+            ATLAS_ASSERT( box.area() > 0. );
+            values( i++ ) = 1. / box.area();
+        }
+
+        auto config = option::type( "grid-box-average" );
+        config.set( "matrix_free", true );
+
+        countB.check( "Count B: ", integral( gridB, fieldB ) );
+
+        Interpolation( config, gridB, gridA ).execute( fieldB, fieldA );
+        countB.check( "Count A: ", integral( gridA, fieldA ) );
+
+        Interpolation( config, gridA, gridB ).execute( fieldA, fieldD );
+        countB.check( "Count B: ", integral( gridB, fieldD ) );
     }
 }
 
