@@ -175,13 +175,30 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
 }
 
 
+void GridBoxMethod::do_execute( const FieldSet& source, FieldSet& target ) const {
+    ATLAS_ASSERT( source.size() == target.size() );
+
+    // Matrix-based interpolation is handled by base (Method) class
+    // TODO: exploit sparse/dense matrix multiplication
+    for ( idx_t i = 0; i < source.size(); ++i ) {
+        if ( matrixFree_ ) {
+            GridBoxMethod::do_execute( source[i], target[i] );
+        }
+        else {
+            Method::do_execute( source[i], target[i] );
+        }
+    }
+}
+
+
 void GridBoxMethod::do_execute( const Field& source, Field& target ) const {
+    ATLAS_TRACE( "atlas::interpolation::method::GridBoxMethod::do_execute()" );
+
+    // Matrix-based interpolation is handled by base (Method) class
     if ( !matrixFree_ ) {
         Method::do_execute( source, target );
         return;
     }
-
-    ATLAS_TRACE( "GridBoxMethod::execute()" );
 
 
     // ensure setup()

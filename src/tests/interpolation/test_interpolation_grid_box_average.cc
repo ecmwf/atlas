@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <utility>
 
 #include "eckit/types/FloatCompare.h"
 
@@ -40,13 +41,45 @@ double integral( const Grid& grid, const Field& field ) {
 }
 
 
+void reset_fields( Field& f1, Field& f2, Field& f3 ) {
+    array::make_view<double, 1>( f1 ).assign( 1. );
+    array::make_view<double, 1>( f2 ).assign( 0. );
+    array::make_view<double, 1>( f3 ).assign( 0. );
+}
+
+
+void reset_fieldsets( FieldSet& f1, FieldSet& f2, FieldSet& f3 ) {
+    ATLAS_ASSERT( f1.size() == f2.size() );
+    ATLAS_ASSERT( f1.size() == f3.size() );
+
+    double value = 1.;  // or your money back :-)
+    for ( idx_t i = 0; i < f1.size(); ++i, value += 1. ) {
+        array::make_view<double, 1>( f1[i] ).assign( value );
+        array::make_view<double, 1>( f2[i] ).assign( 0. );
+        array::make_view<double, 1>( f3[i] ).assign( 0. );
+    }
+}
+
+
+FieldSet create_fieldset( std::string name, idx_t size, size_t number ) {
+    ATLAS_ASSERT( 1 <= number );
+
+    FieldSet set;
+    for ( size_t i = 1; i <= number; ++i ) {
+        set.add( Field( name + std::to_string( i ), array::make_datatype<double>(), array::make_shape( size ) ) );
+    }
+    return set;
+}
+
+
 CASE( "test_interpolation_grid_box_average" ) {
+    Log::info().precision( 16 );
+
     Grid gridA( "O32" );
     Grid gridB( "O64" );
     Grid gridC( "O32" );
 
 
-    // the integral of a constant field = 1 is Earth's surface area
     struct reference_t {
         reference_t( double value, double tolerance ) : value_( value ), tolerance_( tolerance ) {
             Log::info() << "Reference: " << value_ << ", abs. tolerance: +-" << tolerance_ << std::endl;
@@ -59,40 +92,87 @@ CASE( "test_interpolation_grid_box_average" ) {
 
         const double value_;
         const double tolerance_;
-    } reference( util::Earth::area(), 1.e2 );
+    };
 
+
+    // the integral of a constant field = 1 is Earth's surface area (and tolerance has to be large)
+    reference_t surface1( util::Earth::area(), 1.e3 );
+    reference_t surface2( util::Earth::area() * 2., 1.e3 );
+    reference_t surface3( util::Earth::area() * 3., 1.e3 );
+
+
+    // setup fields
     Field fieldA( "A", array::make_datatype<double>(), array::make_shape( gridA.size() ) );
-    array::make_view<double, 1>( fieldA ).assign( 1. );
-    reference.check( "Integral A: ", integral( gridA, fieldA ) );
+    Field fieldB( "B", array::make_datatype<double>(), array::make_shape( gridB.size() ) );
+    Field fieldC( "C", array::make_datatype<double>(), array::make_shape( gridC.size() ) );
+
+    FieldSet fieldsA( create_fieldset( "A", gridA.size(), 3 ) );
+    FieldSet fieldsB( create_fieldset( "B", gridB.size(), 3 ) );
+    FieldSet fieldsC( create_fieldset( "C", gridC.size(), 3 ) );
 
 
-    SECTION( "matrix-based" ) {
-        Field fieldB( "B", array::make_datatype<double>(), array::make_shape( gridB.size() ) );
-        Field fieldC( "C", array::make_datatype<double>(), array::make_shape( gridC.size() ) );
+    SECTION( "Earth's surface area, Field interpolation, matrix-based" ) {
+        reset_fields( fieldA, fieldB, fieldC );
+        surface1.check( "Integral A: ", integral( gridA, fieldA ) );  // checked once
 
         auto config = option::type( "grid-box-average" );
         config.set( "matrix_free", false );
 
         Interpolation( config, gridA, gridB ).execute( fieldA, fieldB );
-        reference.check( "Integral B: ", integral( gridB, fieldB ) );
+        surface1.check( "Integral B: ", integral( gridB, fieldB ) );
 
         Interpolation( config, gridB, gridC ).execute( fieldB, fieldC );
-        reference.check( "Integral C: ", integral( gridC, fieldC ) );
+        surface1.check( "Integral C: ", integral( gridC, fieldC ) );
     }
 
 
-    SECTION( "matrix-free" ) {
-        Field fieldB( "B", array::make_datatype<double>(), array::make_shape( gridB.size() ) );
-        Field fieldC( "C", array::make_datatype<double>(), array::make_shape( gridC.size() ) );
+    SECTION( "Earth's surface area, FieldSet interpolation, matrix-based" ) {
+        reset_fieldsets( fieldsA, fieldsB, fieldsC );
+
+        auto config = option::type( "grid-box-average" );
+        config.set( "matrix_free", false );
+
+        Interpolation( config, gridA, gridB ).execute( fieldsA, fieldsB );
+        surface1.check( "Integral B1: ", integral( gridB, fieldsB[0] ) );
+        surface2.check( "Integral B2: ", integral( gridB, fieldsB[1] ) );
+        surface3.check( "Integral B3: ", integral( gridB, fieldsB[2] ) );
+
+        Interpolation( config, gridB, gridC ).execute( fieldsB, fieldsC );
+        surface1.check( "Integral C1: ", integral( gridC, fieldsC[0] ) );
+        surface2.check( "Integral C2: ", integral( gridC, fieldsC[1] ) );
+        surface3.check( "Integral C3: ", integral( gridC, fieldsC[2] ) );
+    }
+
+
+    SECTION( "Earth's surface area, Field interpolation, matrix-free" ) {
+        reset_fields( fieldA, fieldB, fieldC );
 
         auto config = option::type( "grid-box-average" );
         config.set( "matrix_free", true );
 
         Interpolation( config, gridA, gridB ).execute( fieldA, fieldB );
-        reference.check( "Integral B: ", integral( gridB, fieldB ) );
+        surface1.check( "Integral B: ", integral( gridB, fieldB ) );
 
         Interpolation( config, gridB, gridC ).execute( fieldB, fieldC );
-        reference.check( "Integral C: ", integral( gridC, fieldC ) );
+        surface1.check( "Integral C: ", integral( gridC, fieldC ) );
+    }
+
+
+    SECTION( "Earth's surface area, FieldSet interpolation, matrix-free" ) {
+        reset_fieldsets( fieldsA, fieldsB, fieldsC );
+
+        auto config = option::type( "grid-box-average" );
+        config.set( "matrix_free", true );
+
+        Interpolation( config, gridA, gridB ).execute( fieldsA, fieldsB );
+        surface1.check( "Integral B1: ", integral( gridB, fieldsB[0] ) );
+        surface2.check( "Integral B2: ", integral( gridB, fieldsB[1] ) );
+        surface3.check( "Integral B3: ", integral( gridB, fieldsB[2] ) );
+
+        Interpolation( config, gridB, gridC ).execute( fieldsB, fieldsC );
+        surface1.check( "Integral C1: ", integral( gridC, fieldsC[0] ) );
+        surface2.check( "Integral C2: ", integral( gridC, fieldsC[1] ) );
+        surface3.check( "Integral C3: ", integral( gridC, fieldsC[2] ) );
     }
 }
 
