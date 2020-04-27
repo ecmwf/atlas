@@ -57,15 +57,15 @@ implicit none
   ! Check empty constructor and assign
   pointXY = atlas_PointXY()
   write(0,*) "pointXY%c_ptr() = ", c_ptr_to_loc(pointXY%CPTR_PGIBUG_A)
-  call pointXY%assign(-71.6_c_double, -33.0_c_double)
-  FCTEST_CHECK_EQUAL( pointXY%x() , -71.6_c_double )
-  FCTEST_CHECK_EQUAL( pointXY%y() , -33.0_c_double )
+  call pointXY%assign(1.687e6_c_double, -5.070e6_c_double)
+  FCTEST_CHECK_EQUAL( pointXY%x() , 1.687e6_c_double )
+  FCTEST_CHECK_EQUAL( pointXY%y() , -5.070e6_c_double )
   call pointXY%final()
 
   ! Check constructor with x/y
-  pointXY = atlas_PointXY(-71.6_c_double, -33.0_c_double)
-  FCTEST_CHECK_EQUAL( pointXY%x() , -71.6_c_double )
-  FCTEST_CHECK_EQUAL( pointXY%y() , -33.0_c_double )
+  pointXY = atlas_PointXY(1.687e6_c_double, -5.070e6_c_double)
+  FCTEST_CHECK_EQUAL( pointXY%x() , 1.687e6_c_double )
+  FCTEST_CHECK_EQUAL( pointXY%y() , -5.070e6_c_double )
 
   ! Check print
   call pointXY%print(info)
@@ -75,17 +75,17 @@ implicit none
   ! Check empty constructor and assign
   pointXYZ = atlas_PointXYZ()
   write(0,*) "pointXYZ%c_ptr() = ", c_ptr_to_loc(pointXYZ%CPTR_PGIBUG_A)
-  call pointXYZ%assign(-71.6_c_double, -33.0_c_double, 12.9_c_double)
-  FCTEST_CHECK_EQUAL( pointXYZ%x() , -71.6_c_double )
-  FCTEST_CHECK_EQUAL( pointXYZ%y() , -33.0_c_double )
-  FCTEST_CHECK_EQUAL( pointXYZ%z() , 12.9_c_double )
+  call pointXYZ%assign(1.687e6_c_double, -5.070e6_c_double, 3.470e6_c_double)
+  FCTEST_CHECK_EQUAL( pointXYZ%x() , 1.687e6_c_double )
+  FCTEST_CHECK_EQUAL( pointXYZ%y() , -5.070e6_c_double )
+  FCTEST_CHECK_EQUAL( pointXYZ%z() , 3.470e6_c_double )
   call pointXYZ%final()
 
   ! Check constructor with x/y/z
-  pointXYZ = atlas_PointXYZ(-71.6_c_double, -33.0_c_double, 12.9_c_double)
-  FCTEST_CHECK_EQUAL( pointXYZ%x() , -71.6_c_double )
-  FCTEST_CHECK_EQUAL( pointXYZ%y() , -33.0_c_double )
-  FCTEST_CHECK_EQUAL( pointXYZ%z() , 12.9_c_double )
+  pointXYZ = atlas_PointXYZ(1.687e6_c_double, -5.070e6_c_double, 3.470e6_c_double)
+  FCTEST_CHECK_EQUAL( pointXYZ%x() , 1.687e6_c_double )
+  FCTEST_CHECK_EQUAL( pointXYZ%y() , -5.070e6_c_double )
+  FCTEST_CHECK_EQUAL( pointXYZ%z() , 3.470e6_c_double )
 
   ! Check print
   call pointXYZ%print(info)
@@ -95,24 +95,24 @@ implicit none
   ! Check empty constructor and assign
   pointLonLat = atlas_PointLonLat()
   write(0,*) "pointLonLat%c_ptr() = ", c_ptr_to_loc(pointLonLat%CPTR_PGIBUG_A)
-  call pointLonLat%assign(-71.6_c_double, -33.0_c_double)
-  FCTEST_CHECK_EQUAL( pointLonLat%lon() , -71.6_c_double )
-  FCTEST_CHECK_EQUAL( pointLonLat%lat() , -33.0_c_double )
+  call pointLonLat%assign(-7.16e1_c_double, -3.3e1_c_double)
+  FCTEST_CHECK_EQUAL( pointLonLat%lon() , -7.16e1_c_double )
+  FCTEST_CHECK_EQUAL( pointLonLat%lat() , -3.3e1_c_double )
   call pointLonLat%final()
 
   ! Check constructor with lon/lat
-  pointLonLat = atlas_PointLonLat(-71.6_c_double, -33.0_c_double)
-  FCTEST_CHECK_EQUAL( pointLonLat%lon() , -71.6_c_double )
-  FCTEST_CHECK_EQUAL( pointLonLat%lat() , -33.0_c_double )
+  pointLonLat = atlas_PointLonLat(-7.16e1_c_double, -3.3e1_c_double)
+  FCTEST_CHECK_EQUAL( pointLonLat%lon() , -7.16e1_c_double )
+  FCTEST_CHECK_EQUAL( pointLonLat%lat() , -3.3e1_c_double )
 
   ! Check print
   call pointLonLat%print(info)
 
   ! Check normalise
   call pointLonLat%normalise()
-  FCTEST_CHECK_CLOSE( pointLonLat%lon() , -71.6_c_double + 360.0_c_double, 1.e-12_c_double )
+  FCTEST_CHECK_CLOSE( pointLonLat%lon() , -7.16e1_c_double + 360.0_c_double, 1.e-12_c_double )
   call pointLonLat%normalise(-180.0_c_double, 180.0_c_double)
-  FCTEST_CHECK_CLOSE( pointLonLat%lon() , -71.6_c_double, 1.e-12_c_double )
+  FCTEST_CHECK_CLOSE( pointLonLat%lon() , -7.16e1_c_double, 1.e-12_c_double )
   call pointLonLat%final()
 
 END_TEST

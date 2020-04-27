@@ -43,8 +43,6 @@ struct DatumWGS84SemiMajorAxis {
 
 typedef eckit::geometry::SphereT<DatumIFS> Earth;
 
-//------------------------------------------------------------------------------------------------------
-
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 

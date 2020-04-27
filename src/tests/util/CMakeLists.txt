@@ -45,6 +45,13 @@ if( HAVE_FCTEST )
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 
+  add_fctest( TARGET atlas_fctest_unit_sphere
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_unit_sphere.F90
+    LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
+
 endif()
 
 foreach( test earth flags footprint indexview polygon point )
