@@ -64,6 +64,13 @@ namespace array {
 
 template <typename Value, int Rank>
 class LocalView {
+#define ENABLE_IF_CONST                                                                                  \
+    template <bool EnableBool                                                                    = true, \
+              typename std::enable_if<( std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
+#define ENABLE_IF_NON_CONST                                                                               \
+    template <bool EnableBool                                                                     = true, \
+              typename std::enable_if<( !std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
+
 public:
     // -- Type definitions
     using value_type  = Value;
@@ -152,6 +159,7 @@ public:
 
     using non_const_value_type = typename std::remove_const<Value>::type;
 
+    ENABLE_IF_CONST
     operator const LocalView<non_const_value_type, Rank>&() const {
         return (const LocalView<non_const_value_type, Rank>&)( *this );
     }
@@ -203,10 +211,6 @@ public:
     value_type* data() { return data_; }
 
     bool contiguous() const { return ( size_ == shape_[0] * strides_[0] ? true : false ); }
-
-#define ENABLE_IF_NON_CONST                                                                               \
-    template <bool EnableBool                                                                     = true, \
-              typename std::enable_if<( !std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
 
     ENABLE_IF_NON_CONST
     void assign( const value_type& value );
@@ -287,9 +291,10 @@ private:
     idx_t size_;
     idx_t shape_[Rank];
     idx_t strides_[Rank];
+
+#undef ENABLE_IF_CONST
+#undef ENABLE_IF_NON_CONST
 };
 
 }  // namespace array
 }  // namespace atlas
-
-#undef ENABLE_IF_NON_CONST

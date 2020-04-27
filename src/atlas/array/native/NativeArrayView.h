@@ -152,6 +152,7 @@ public:
     }
 #endif
 
+    ENABLE_IF_CONST
     operator const ArrayView<non_const_value_type, Rank>&() const {
         return *(const ArrayView<non_const_value_type, Rank>*)( this );
     }
