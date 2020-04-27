@@ -7,6 +7,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.20.2] - 2019-04-27
+### Fixed
+- Avoid 100ds of compilation warnings introduced in version 0.20.0
+
 ## [0.20.1] - 2019-04-08
 ### Fixed
 - Make feature BOUNDSCHECKING work again. It was not turned on for DEBUG builds
@@ -185,6 +189,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.20.2]: https://github.com/ecmwf/atlas/compare/0.20.1...0.20.2
 [0.20.1]: https://github.com/ecmwf/atlas/compare/0.20.0...0.20.1
 [0.20.0]: https://github.com/ecmwf/atlas/compare/0.20.0...0.19.2
 [0.19.2]: https://github.com/ecmwf/atlas/compare/0.19.1...0.19.2
