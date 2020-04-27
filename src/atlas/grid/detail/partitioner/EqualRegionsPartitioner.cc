@@ -48,7 +48,8 @@ struct range_t {
     Sentinel e;
     Iterator begin() const { return b; }
     Sentinel end() const { return e; }
-    bool empty() const { return begin() == end(); }
+    // unused:
+    // bool empty() const { return begin() == end(); }
 };
 
 template <class Iterator, class Sentinel>

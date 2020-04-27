@@ -76,12 +76,13 @@ protected:
 
     bool use_eckit_linalg_spmv_;
 
-private:
+protected:
     virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
     virtual void do_setup( const Grid& source, const Grid& target )                   = 0;
     virtual void do_setup( const FunctionSpace& source, const Field& target );
     virtual void do_setup( const FunctionSpace& source, const FieldSet& target );
 
+private:
     template <typename Value>
     void interpolate_field( const Field& src, Field& tgt ) const;
 
