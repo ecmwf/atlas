@@ -559,7 +559,7 @@ const parallel::Checksum& EdgeColumns::checksum() const {
 }
 
 Field EdgeColumns::lonlat() const {
-    return mesh_.edges().field("lonlat");
+    return mesh_.edges().field( "lonlat" );
 }
 
 //------------------------------------------------------------------------------

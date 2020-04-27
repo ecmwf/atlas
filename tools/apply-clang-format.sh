@@ -8,9 +8,9 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-_REQUIRED_CLANG_VERSION='7.0.1'
+_REQUIRED_CLANG_VERSION='9.0.1'
 
-export PATH=/usr/local/apps/clang/7.0.1/bin:$PATH
+export PATH=/usr/local/apps/clang/9.0.1/bin:$PATH
 
 if ! [ -x "$(command -v clang-format)" ]; then
   echo 'Error: clang-format is not installed.' >&2
