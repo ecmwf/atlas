@@ -104,8 +104,8 @@ void GridBox::print( std::ostream& out ) const {
 
 GridBoxes::GridBoxes( const Grid& grid ) {
     StructuredGrid structured( grid );
-    if ( !structured || !structured.domain().global() || grid.projection() ) {
-        throw_NotImplemented( "GridBoxes only support structured, unprojected/unrotated global grids", Here() );
+    if ( !structured || grid.projection() ) {
+        throw_NotImplemented( "GridBoxes only support structured, unprojected/unrotated grids", Here() );
     }
 
 
@@ -115,11 +115,21 @@ GridBoxes::GridBoxes( const Grid& grid ) {
     std::vector<double> lat;
     lat.reserve( y.size() + 1 );
 
-    lat.push_back( NORTH_POLE );
+    RectangularDomain domain = structured.domain();
+    ATLAS_ASSERT( domain );
+
+    auto north = domain.ymax();
+    auto south = domain.ymin();
+    ATLAS_ASSERT( -90. <= south && south <= north && north <= 90. );
+
+    lat.push_back( north );
     for ( auto b = y.begin(), a = b++; b != y.end(); a = b++ ) {
         lat.push_back( ( *b + *a ) / 2. );
     }
-    lat.push_back( SOUTH_POLE );
+    lat.push_back( south );
+
+    lat.front() = std::min( north, std::max( south, lat.front() ) );  // clip to domain
+    lat.back()  = std::min( north, std::max( south, lat.back() ) );   // (...)
 
 
     // Calculate grid-box meridians (longitude midpoints)
@@ -127,14 +137,17 @@ GridBoxes::GridBoxes( const Grid& grid ) {
     ATLAS_ASSERT( x.nx().size() == x.dx().size() );
     ATLAS_ASSERT( x.nx().size() == x.xmin().size() );
 
+    bool periodic( ZonalBandDomain( structured.domain() ) );
+
     clear();
     reserve( grid.size() );
     for ( size_t j = 0; j < x.nx().size(); ++j ) {
         eckit::Fraction dx( x.dx()[j] );
         eckit::Fraction xmin( x.xmin()[j] );
+
         auto n = ( xmin / dx ).integralPart();
         if ( n * dx < xmin ) {
-            n += 1;
+            n += 1;  // (adjust double-fraction conversions)
         }
 
         eckit::Fraction lon1 = ( n * dx ) - ( dx / 2 );
@@ -142,6 +155,10 @@ GridBoxes::GridBoxes( const Grid& grid ) {
             double lon0 = lon1;
             lon1 += dx;
             emplace_back( GridBox( lat[j], lon0, lat[j + 1], lon1 ) );
+        }
+
+        if ( periodic ) {
+            ATLAS_ASSERT( lon1 == xmin - ( dx / 2 ) + 360 );
         }
     }
 
