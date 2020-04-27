@@ -36,6 +36,8 @@ use atlas_Config_module, only: &
 use atlas_Metadata_module, only: &
     & atlas_Metadata
 use atlas_Point_module, only: &
+    & atlas_PointXY, &
+    & atlas_PointXYZ, &
     & atlas_PointLonLat
 use atlas_HybridElements_module, only: &
     & atlas_HybridElements

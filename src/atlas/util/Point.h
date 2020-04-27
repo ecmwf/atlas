@@ -142,10 +142,27 @@ public:
 // C wrapper interfaces to C++ routines
 
 extern "C" {
+PointXY* atlas__PointXY__new();
+void atlas__PointXY__delete( PointXY* This );
+void atlas__PointXY__print( PointXY* This, std::ostream* channel );
+PointXY* atlas__PointXY__new_xy(double x, double y);
+double atlas__PointXY__x( PointXY* This );
+double atlas__PointXY__y( PointXY* This );
+void atlas__PointXY__assign( PointXY* This, double x, double y );
+
+PointXYZ* atlas__PointXYZ__new();
+void atlas__PointXYZ__delete( PointXYZ* This );
+void atlas__PointXYZ__print( PointXYZ* This, std::ostream* channel );
+PointXYZ* atlas__PointXYZ__new_xyz(double x, double y, double z);
+double atlas__PointXYZ__x( PointXYZ* This );
+double atlas__PointXYZ__y( PointXYZ* This );
+double atlas__PointXYZ__z( PointXYZ* This );
+void atlas__PointXYZ__assign( PointXYZ* This, double x, double y, double z );
+
 PointLonLat* atlas__PointLonLat__new();
-PointLonLat* atlas__PointLonLat__new_lonlat(double lon, double lat);
 void atlas__PointLonLat__delete( PointLonLat* This );
 void atlas__PointLonLat__print( PointLonLat* This, std::ostream* channel );
+PointLonLat* atlas__PointLonLat__new_lonlat(double lon, double lat);
 double atlas__PointLonLat__lon( PointLonLat* This );
 double atlas__PointLonLat__lat( PointLonLat* This );
 void atlas__PointLonLat__assign( PointLonLat* This, double lon, double lat );

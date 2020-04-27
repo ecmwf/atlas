@@ -33,11 +33,68 @@ void PointLonLat::normalise( double west, double east ) {
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
+PointXY* atlas__PointXY__new() {
+    return new PointXY();
+}
+void atlas__PointXY__delete( PointXY* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointXY" );
+    delete This;
+}
+void atlas__PointXY__print( PointXY* This, std::ostream* channel ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointXY" );
+    ATLAS_ASSERT( channel != nullptr );
+    *channel << *This;
+}
+PointXY* atlas__PointXY__new_xy(double x, double y) {
+    return new PointXY({x, y});
+}
+double atlas__PointXY__x( PointXY* This) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointXY" );
+    return This->x();
+}
+double atlas__PointXY__y( PointXY* This) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointXY" );
+    return This->y();
+}
+void atlas__PointXY__assign( PointXY* This, double x, double y ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointXY" );
+    This->assign(x, y);
+}
+
+PointXYZ* atlas__PointXYZ__new() {
+    return new PointXYZ();
+}
+void atlas__PointXYZ__delete( PointXYZ* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointXYZ" );
+    delete This;
+}
+void atlas__PointXYZ__print( PointXYZ* This, std::ostream* channel ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointXYZ" );
+    ATLAS_ASSERT( channel != nullptr );
+    *channel << *This;
+}
+PointXYZ* atlas__PointXYZ__new_xyz(double x, double y, double z) {
+    return new PointXYZ({x, y, z});
+}
+double atlas__PointXYZ__x( PointXYZ* This) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointXYZ" );
+    return This->x();
+}
+double atlas__PointXYZ__y( PointXYZ* This) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointXYZ" );
+    return This->y();
+}
+double atlas__PointXYZ__z( PointXYZ* This) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointXYZ" );
+    return This->z();
+}
+void atlas__PointXYZ__assign( PointXYZ* This, double x, double y, double z ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointXYZ" );
+    This->assign(x, y, z);
+}
+
 PointLonLat* atlas__PointLonLat__new() {
     return new PointLonLat();
-}
-PointLonLat* atlas__PointLonLat__new_lonlat(double lon, double lat) {
-    return new PointLonLat({lon, lat});
 }
 void atlas__PointLonLat__delete( PointLonLat* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointLonLat" );
@@ -47,6 +104,9 @@ void atlas__PointLonLat__print( PointLonLat* This, std::ostream* channel ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointLonLat" );
     ATLAS_ASSERT( channel != nullptr );
     *channel << *This;
+}
+PointLonLat* atlas__PointLonLat__new_lonlat(double lon, double lat) {
+    return new PointLonLat({lon, lat});
 }
 double atlas__PointLonLat__lon( PointLonLat* This) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_PointLonLat" );

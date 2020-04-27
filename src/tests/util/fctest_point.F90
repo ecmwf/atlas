@@ -44,10 +44,53 @@ use fckit_log_module
 use fckit_c_interop_module
 implicit none
 
+  type(atlas_PointXY) :: pointXY
+  type(atlas_PointXYZ) :: pointXYZ
   type(atlas_PointLonLat) :: pointLonLat
   type(fckit_logchannel) :: info
 
-  write(*,*) "test_point starting"
+  ! Get info channel
+  info = fckit_log%info_channel()
+
+  write(*,*) "test_point_xy starting"
+
+  ! Check empty constructor and assign
+  pointXY = atlas_PointXY()
+  write(0,*) "pointXY%c_ptr() = ", c_ptr_to_loc(pointXY%CPTR_PGIBUG_A)
+  call pointXY%assign(-71.6_c_double, -33.0_c_double)
+  FCTEST_CHECK_EQUAL( pointXY%x() , -71.6_c_double )
+  FCTEST_CHECK_EQUAL( pointXY%y() , -33.0_c_double )
+  call pointXY%final()
+
+  ! Check constructor with x/y
+  pointXY = atlas_PointXY(-71.6_c_double, -33.0_c_double)
+  FCTEST_CHECK_EQUAL( pointXY%x() , -71.6_c_double )
+  FCTEST_CHECK_EQUAL( pointXY%y() , -33.0_c_double )
+
+  ! Check print
+  call pointXY%print(info)
+
+  write(*,*) "test_point_xyz starting"
+
+  ! Check empty constructor and assign
+  pointXYZ = atlas_PointXYZ()
+  write(0,*) "pointXYZ%c_ptr() = ", c_ptr_to_loc(pointXYZ%CPTR_PGIBUG_A)
+  call pointXYZ%assign(-71.6_c_double, -33.0_c_double, 12.9_c_double)
+  FCTEST_CHECK_EQUAL( pointXYZ%x() , -71.6_c_double )
+  FCTEST_CHECK_EQUAL( pointXYZ%y() , -33.0_c_double )
+  FCTEST_CHECK_EQUAL( pointXYZ%z() , 12.9_c_double )
+  call pointXYZ%final()
+
+  ! Check constructor with x/y/z
+  pointXYZ = atlas_PointXYZ(-71.6_c_double, -33.0_c_double, 12.9_c_double)
+  FCTEST_CHECK_EQUAL( pointXYZ%x() , -71.6_c_double )
+  FCTEST_CHECK_EQUAL( pointXYZ%y() , -33.0_c_double )
+  FCTEST_CHECK_EQUAL( pointXYZ%z() , 12.9_c_double )
+
+  ! Check print
+  call pointXYZ%print(info)
+
+  write(*,*) "test_point_lonlat starting"
 
   ! Check empty constructor and assign
   pointLonLat = atlas_PointLonLat()
@@ -63,7 +106,6 @@ implicit none
   FCTEST_CHECK_EQUAL( pointLonLat%lat() , -33.0_c_double )
 
   ! Check print
-  info = fckit_log%info_channel()
   call pointLonLat%print(info)
 
   ! Check normalise
