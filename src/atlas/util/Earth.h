@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "eckit/geometry/Point2.h"
+#include "eckit/geometry/Point3.h"
 #include "eckit/geometry/SphereT.h"
 #include "eckit/geometry/UnitSphere.h"
 
@@ -17,6 +19,11 @@
 
 namespace atlas {
 namespace util {
+
+//------------------------------------------------------------------------------------------------------
+
+using eckit::geometry::Point2;
+using eckit::geometry::Point3;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -35,6 +42,27 @@ struct DatumWGS84SemiMajorAxis {
 //------------------------------------------------------------------------------------------------------
 
 typedef eckit::geometry::SphereT<DatumIFS> Earth;
+
+//------------------------------------------------------------------------------------------------------
+
+// ------------------------------------------------------------------
+// C wrapper interfaces to C++ routines
+
+extern "C" {
+Earth* atlas__Earth__new();
+void atlas__Earth__delete( Earth* This );
+double atlas__Earth__radius( Earth* This );
+double atlas__Earth__central_angle_2( Earth* This, const Point2* Alonlat, const Point2* Blonlat );
+double atlas__Earth__central_angle_3( Earth* This, const Point3* A, const Point3* B );
+double atlas__Earth__distance_2( Earth* This, const Point2* Alonlat, const Point2* Blonlat );
+double atlas__Earth__distance_3( Earth* This, const Point3* A, const Point3* B );
+double atlas__Earth__area( Earth* This );
+double atlas__Earth__area_wn_es( Earth* This, const Point2* WestNorth, const Point2* EastSouth );
+double atlas__Earth__great_circle_latitude_given_longitude( Earth* This, const Point2* Alonlat, const Point2* Blonlat, const double& Clon );
+void atlas__Earth__great_circle_longitude_given_latitude( Earth* This, const Point2* Alonlat, const Point2* Blonlat, const double& Clat, double& Clon1, double& Clon2 );
+void atlas__Earth__convert_spherical_to_cartesian( Earth* This, const Point2* Alonlat, Point3* B );
+void atlas__Earth__convert_cartesian_to_spherical( Earth* This, const Point3* A, Point2* Blonlat ); 
+}
 
 //------------------------------------------------------------------------------------------------------
 

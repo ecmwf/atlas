@@ -66,7 +66,7 @@ public:
 class PointXYZ : public eckit::geometry::Point3 {
     using array_t = std::array<double, 3>;
 
-    PointXYZ( double, double ) { /* No automatic converion allowed, otherwise
+    PointXYZ( double, double ) { /* No automatic conversion allowed, otherwise
                                 inherited from Point3 */
     }
 

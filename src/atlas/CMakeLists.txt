@@ -581,6 +581,7 @@ runtime/Exception.h
 util/Config.cc
 util/Config.h
 util/Constants.h
+util/Earth.cc
 util/Earth.h
 util/GaussianLatitudes.cc
 util/GaussianLatitudes.h
