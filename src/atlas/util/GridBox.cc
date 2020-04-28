@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <ostream>
+#include <vector>
 
 #include "eckit/types/FloatCompare.h"
 #include "eckit/types/Fraction.h"
@@ -109,18 +110,26 @@ GridBoxes::GridBoxes( const Grid& grid ) {
     }
 
 
-    // Calculate grid-box parallels (latitude midpoints)
-    auto& y = structured.yspace();
-
-    std::vector<double> lat;
-    lat.reserve( y.size() + 1 );
-
+    // Bounding box and periodicity
     RectangularDomain domain = structured.domain();
     ATLAS_ASSERT( domain );
 
     auto north = domain.ymax();
     auto south = domain.ymin();
+    auto west  = domain.xmin();
+    auto east  = domain.xmax();
     ATLAS_ASSERT( -90. <= south && south <= north && north <= 90. );
+    ATLAS_ASSERT( west <= east && east <= west + 360. );
+
+    bool periodic( ZonalBandDomain( structured.domain() ) );
+    const GridBox clip( north, west, south, east );
+
+
+    // Calculate grid-box parallels (latitude midpoints, or accumulated Gaussian quadrature weights on those grids)
+    auto& y = structured.yspace();
+
+    std::vector<double> lat;
+    lat.reserve( y.size() + 1 );
 
     lat.push_back( north );
     for ( auto b = y.begin(), a = b++; b != y.end(); a = b++ ) {
@@ -128,16 +137,11 @@ GridBoxes::GridBoxes( const Grid& grid ) {
     }
     lat.push_back( south );
 
-    lat.front() = std::min( north, std::max( south, lat.front() ) );  // clip to domain
-    lat.back()  = std::min( north, std::max( south, lat.back() ) );   // (...)
-
 
     // Calculate grid-box meridians (longitude midpoints)
     auto& x = structured.xspace();
     ATLAS_ASSERT( x.nx().size() == x.dx().size() );
     ATLAS_ASSERT( x.nx().size() == x.xmin().size() );
-
-    bool periodic( ZonalBandDomain( structured.domain() ) );
 
     clear();
     reserve( grid.size() );
@@ -150,15 +154,23 @@ GridBoxes::GridBoxes( const Grid& grid ) {
             n += 1;  // (adjust double-fraction conversions)
         }
 
+        // West- and East-most grid-boxes on non-global grids might need clipping
         eckit::Fraction lon1 = ( n * dx ) - ( dx / 2 );
         for ( idx_t i = 0; i < x.nx()[j]; ++i ) {
             double lon0 = lon1;
             lon1 += dx;
             emplace_back( GridBox( lat[j], lon0, lat[j + 1], lon1 ) );
+
+            if ( !periodic && i == 0 ) {
+                clip.intersects( back() );
+            }
         }
 
         if ( periodic ) {
             ATLAS_ASSERT( lon1 == xmin - ( dx / 2 ) + 360 );
+        }
+        else {
+            clip.intersects( back() );
         }
     }
 
