@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2013 ECMWF.
+ * (C) Copyright 2020 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -40,15 +40,17 @@ protected:
     virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) override;
     virtual void do_setup( const Grid& source, const Grid& target ) override;
 
-    virtual void do_execute( const FieldSet& source, FieldSet& target ) const override;
-    virtual void do_execute( const Field& source, Field& target ) const override;
-
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
 
     bool intersect( size_t i, const util::GridBox& iBox, const PointIndex3::NodeList&, std::vector<Triplet>& ) const;
 
-private:
+    virtual void do_execute( const FieldSet& source, FieldSet& target ) const = 0;
+    virtual void do_execute( const Field& source, Field& target ) const       = 0;
+
+protected:
+    static void giveUp( const std::forward_list<size_t>& );
+
     FunctionSpace source_;
     FunctionSpace target_;
 

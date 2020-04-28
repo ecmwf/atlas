@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2013 ECMWF.
+ * (C) Copyright 2020 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -19,7 +19,6 @@
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/grid.h"
-#include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
@@ -29,26 +28,6 @@
 namespace atlas {
 namespace interpolation {
 namespace method {
-
-
-MethodBuilder<GridBoxMethod> __builder( "grid-box-average" );
-
-
-void give_up( const std::forward_list<size_t>& failures ) {
-    Log::warning() << "Failed to intersect grid boxes: ";
-
-    size_t count = 0;
-    auto sep     = "";
-    for ( const auto& f : failures ) {
-        if ( count++ < 10 ) {
-            Log::warning() << sep << f;
-            sep = ", ";
-        }
-    }
-    Log::warning() << "... (" << eckit::Plural( count, "total failure" ) << std::endl;
-
-    throw_Exception( "Failed to intersect grid boxes" );
-}
 
 
 GridBoxMethod::GridBoxMethod( const Method::Config& config ) : KNearestNeighboursBase( config ) {
@@ -163,7 +142,7 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
         }
 
         if ( !failures_.empty() ) {
-            give_up( failures_ );
+            giveUp( failures_ );
         }
     }
 
@@ -175,76 +154,20 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
 }
 
 
-void GridBoxMethod::do_execute( const FieldSet& source, FieldSet& target ) const {
-    ATLAS_ASSERT( source.size() == target.size() );
+void GridBoxMethod::giveUp( const std::forward_list<size_t>& failures ) {
+    Log::warning() << "Failed to intersect grid boxes: ";
 
-    // Matrix-based interpolation is handled by base (Method) class
-    // TODO: exploit sparse/dense matrix multiplication
-    for ( idx_t i = 0; i < source.size(); ++i ) {
-        if ( matrixFree_ ) {
-            GridBoxMethod::do_execute( source[i], target[i] );
-        }
-        else {
-            Method::do_execute( source[i], target[i] );
+    size_t count = 0;
+    auto sep     = "";
+    for ( const auto& f : failures ) {
+        if ( count++ < 10 ) {
+            Log::warning() << sep << f;
+            sep = ", ";
         }
     }
-}
+    Log::warning() << "... (" << eckit::Plural( count, "total failure" ) << std::endl;
 
-
-void GridBoxMethod::do_execute( const Field& source, Field& target ) const {
-    ATLAS_TRACE( "atlas::interpolation::method::GridBoxMethod::do_execute()" );
-
-    // Matrix-based interpolation is handled by base (Method) class
-    if ( !matrixFree_ ) {
-        Method::do_execute( source, target );
-        return;
-    }
-
-
-    // ensure setup()
-    functionspace::Points tgt = target_;
-    ATLAS_ASSERT( tgt );
-
-    ATLAS_ASSERT( pTree_ != nullptr );
-    ATLAS_ASSERT( searchRadius_ > 0. );
-    ATLAS_ASSERT( !sourceBoxes_.empty() );
-    ATLAS_ASSERT( !targetBoxes_.empty() );
-
-
-    // set arrays
-    ATLAS_ASSERT( source.rank() == 1 );
-    ATLAS_ASSERT( target.rank() == 1 );
-
-    auto xarray = atlas::array::make_view<double, 1>( source );
-    auto yarray = atlas::array::make_view<double, 1>( target );
-    ATLAS_ASSERT( xarray.size() == idx_t( sourceBoxes_.size() ) );
-    ATLAS_ASSERT( yarray.size() == idx_t( targetBoxes_.size() ) );
-
-    yarray.assign( 0. );
-    failures_.clear();
-
-
-    // interpolate
-    eckit::ProgressTimer progress( "Intersecting", targetBoxes_.size(), "grid box", double( 5. ) );
-
-    std::vector<Triplet> triplets;
-    size_t i = 0;
-    for ( auto p : tgt.iterate().xyz() ) {
-        ++progress;
-
-        if ( intersect( i, targetBoxes_.at( i ), pTree_->findInSphere( p, searchRadius_ ), triplets ) ) {
-            auto& y = yarray[i];
-            for ( auto& t : triplets ) {
-                y += xarray[t.col()] * t.value();
-            }
-        }
-
-        ++i;
-    }
-
-    if ( !failures_.empty() ) {
-        give_up( failures_ );
-    }
+    throw_Exception( "Failed to intersect grid boxes" );
 }
 
 

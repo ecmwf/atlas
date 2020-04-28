@@ -499,6 +499,10 @@ interpolation/method/Ray.cc
 interpolation/method/Ray.h
 interpolation/method/fe/FiniteElement.cc
 interpolation/method/fe/FiniteElement.h
+interpolation/method/knn/GridBoxAverage.cc
+interpolation/method/knn/GridBoxAverage.h
+interpolation/method/knn/GridBoxMaximum.cc
+interpolation/method/knn/GridBoxMaximum.h
 interpolation/method/knn/GridBoxMethod.cc
 interpolation/method/knn/GridBoxMethod.h
 interpolation/method/knn/KNearestNeighbours.cc
