@@ -124,7 +124,6 @@ GridBoxes::GridBoxes( const Grid& grid ) {
     ATLAS_ASSERT( west <= east && east <= west + 360. );
 
     bool periodic( ZonalBandDomain( structured.domain() ) );
-    const GridBox clip( north, west, south, east );
 
 
     // Calculate grid-box parallels (latitude midpoints, or accumulated Gaussian quadrature weights)
@@ -191,23 +190,24 @@ GridBoxes::GridBoxes( const Grid& grid ) {
             n += 1;  // (adjust double-fraction conversions)
         }
 
-        // West- and East-most grid-boxes on non-global grids might need clipping
+        // On non-global grids, North- and South-most grid-boxes need clipping;
+        // West- and East-most grid-boxes need clipping on non-periodic grids
+        ATLAS_ASSERT( x.nx()[j] > 0 );
+
         eckit::Fraction lon1 = ( n * dx ) - ( dx / 2 );
         for ( idx_t i = 0; i < x.nx()[j]; ++i ) {
             double lon0 = lon1;
             lon1 += dx;
-            emplace_back( GridBox( lat[j], lon0, lat[j + 1], lon1 ) );
 
-            if ( !periodic && i == 0 ) {
-                clip.intersects( back() );
-            }
+            double n = std::min( north, lat[j] );
+            double s = std::max( south, lat[j + 1] );
+            double w = periodic ? lon0 : std::max<double>( west, lon0 );
+            double e = periodic ? lon1 : std::min<double>( east, lon1 );
+            emplace_back( GridBox( n, w, s, e ) );
         }
 
         if ( periodic ) {
             ATLAS_ASSERT( lon1 == xmin - ( dx / 2 ) + 360 );
-        }
-        else {
-            clip.intersects( back() );
         }
     }
 
