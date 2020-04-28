@@ -64,12 +64,18 @@ namespace array {
 
 template <typename Value, int Rank>
 class LocalView {
-#define ENABLE_IF_CONST                                                                                  \
-    template <bool EnableBool                                                                    = true, \
-              typename std::enable_if<( std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
+    template <typename T>
+    using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<Value>::type>;
+
 #define ENABLE_IF_NON_CONST                                                                               \
     template <bool EnableBool                                                                     = true, \
               typename std::enable_if<( !std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
+
+#define ENABLE_IF_CONST_WITH_NON_CONST( T )                                                                 \
+    template <typename T,                                                                                   \
+              typename std::enable_if<( std::is_const<Value>::value && is_non_const_value_type<T>::value ), \
+                                      int>::type* = nullptr>
+
 
 public:
     // -- Type definitions
@@ -95,8 +101,7 @@ private:
 public:
     // -- Constructors
 
-    template <typename value_type, typename = typename std::enable_if<std::is_const<Value>::value &&
-                                                                      !std::is_const<value_type>::value>::type>
+    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
     LocalView( value_type* data, const idx_t shape[], const idx_t strides[] ) : data_( data ) {
         size_ = 1;
         for ( idx_t j = 0; j < Rank; ++j ) {
@@ -116,8 +121,7 @@ public:
     }
 
 
-    template <typename value_type, typename = typename std::enable_if<std::is_const<Value>::value &&
-                                                                      !std::is_const<value_type>::value>::type>
+    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
     LocalView( value_type* data, const idx_t shape[] ) : data_( data ) {
         size_ = 1;
         for ( int j = Rank - 1; j >= 0; --j ) {
@@ -157,11 +161,11 @@ public:
         }
     }
 
-    using non_const_value_type = typename std::remove_const<Value>::type;
-
-    ENABLE_IF_CONST
-    operator const LocalView<non_const_value_type, Rank>&() const {
-        return (const LocalView<non_const_value_type, Rank>&)( *this );
+    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
+    operator const LocalView<value_type, Rank>&() const {
+        static_assert( std::is_const<Value>::value, "must be const" );
+        static_assert( !std::is_const<value_type>::value, "must be non-const" );
+        return (const LocalView<value_type, Rank>&)( *this );
     }
 
     // -- Access methods
@@ -292,8 +296,8 @@ private:
     idx_t shape_[Rank];
     idx_t strides_[Rank];
 
-#undef ENABLE_IF_CONST
 #undef ENABLE_IF_NON_CONST
+#undef ENABLE_IF_CONST_WITH_NON_CONST
 };
 
 }  // namespace array
