@@ -21,7 +21,9 @@
 
 #include "atlas/grid.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
+#include "atlas/util/GaussianLatitudes.h"
 #include "atlas/util/Point.h"
 
 
@@ -125,17 +127,52 @@ GridBoxes::GridBoxes( const Grid& grid ) {
     const GridBox clip( north, west, south, east );
 
 
-    // Calculate grid-box parallels (latitude midpoints, or accumulated Gaussian quadrature weights on those grids)
+    // Calculate grid-box parallels (latitude midpoints, or accumulated Gaussian quadrature weights)
     auto& y = structured.yspace();
 
     std::vector<double> lat;
     lat.reserve( y.size() + 1 );
 
-    lat.push_back( north );
-    for ( auto b = y.begin(), a = b++; b != y.end(); a = b++ ) {
-        lat.push_back( ( *b + *a ) / 2. );
+    GaussianGrid gaussian( grid );
+    if ( gaussian ) {
+        // FIXME: innefficient interface, latitudes are discarded
+        auto N = gaussian.N();
+        std::vector<double> latitudes( N * 2 );
+        std::vector<double> weights( N * 2 );
+        util::gaussian_quadrature_npole_spole( N, latitudes.data(), weights.data() );
+
+        std::vector<double> lat_global( y.size() + 1 );
+        auto b   = lat_global.rbegin();
+        auto f   = lat_global.begin();
+        *( b++ ) = -90.;
+        *( f++ ) = 90.;
+
+        double wacc = -1.;
+        for ( idx_t j = 0; j < N; ++j, ++b, ++f ) {
+            wacc += 2. * weights[j];
+            double deg = util::Constants::radiansToDegrees() * std::asin( wacc );
+            *b         = deg;
+            *f         = -( *b );
+        }
+        lat_global[N] = 0.;  // (equator)
+
+        // grids not covering the poles need clipping
+        for ( auto l : lat_global ) {
+            if ( eckit::types::is_approximately_lesser_or_equal( l, north ) &&
+                 eckit::types::is_approximately_lesser_or_equal( south, l ) ) {
+                lat.push_back( l );
+            }
+        }
     }
-    lat.push_back( south );
+    else {
+        // non-Gaussian (but structured) grids
+        lat.push_back( north );
+        for ( auto b = y.begin(), a = b++; b != y.end(); a = b++ ) {
+            lat.push_back( ( *b + *a ) / 2. );
+        }
+        lat.push_back( south );
+    }
+    ATLAS_ASSERT( !lat.empty() );
 
 
     // Calculate grid-box meridians (longitude midpoints)
