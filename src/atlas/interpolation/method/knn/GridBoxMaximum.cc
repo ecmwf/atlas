@@ -11,6 +11,15 @@
 
 #include "atlas/interpolation/method/knn/GridBoxMaximum.h"
 
+#include <algorithm>
+#include <limits>
+#include <vector>
+
+#include "eckit/log/ProgressTimer.h"
+#include "eckit/types/FloatCompare.h"
+
+#include "atlas/array.h"
+#include "atlas/functionspace/Points.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/runtime/Exception.h"
 
@@ -28,21 +37,85 @@ MethodBuilder<GridBoxMaximum> __builder( "grid-box-maximum" );
 void GridBoxMaximum::do_execute( const FieldSet& source, FieldSet& target ) const {
     ATLAS_ASSERT( source.size() == target.size() );
 
-    // Matrix-based interpolation is handled by base (Method) class
-    // TODO: exploit sparse/dense matrix multiplication
     for ( idx_t i = 0; i < source.size(); ++i ) {
-        if ( matrixFree_ ) {
-            GridBoxMaximum::do_execute( source[i], target[i] );
-        }
-        else {
-            Method::do_execute( source[i], target[i] );
-        }
+        do_execute( source[i], target[i] );
     }
 }
 
 
-void GridBoxMaximum::do_execute( const Field& /*source*/, Field& /*target*/ ) const {
-    ATLAS_NOTIMPLEMENTED;
+void GridBoxMaximum::do_execute( const Field& source, Field& target ) const {
+    ATLAS_TRACE( "atlas::interpolation::method::GridBoxMaximum::do_execute()" );
+
+    // set arrays
+    ATLAS_ASSERT( source.rank() == 1 );
+    ATLAS_ASSERT( target.rank() == 1 );
+
+    auto xarray = atlas::array::make_view<double, 1>( source );
+    auto yarray = atlas::array::make_view<double, 1>( target );
+    ATLAS_ASSERT( xarray.size() == idx_t( sourceBoxes_.size() ) );
+    ATLAS_ASSERT( yarray.size() == idx_t( targetBoxes_.size() ) );
+
+    yarray.assign( 0. );
+    failures_.clear();
+
+
+    if ( !matrixFree_ ) {
+        Matrix::const_iterator k( matrix_ );
+
+        for ( decltype( matrix_.rows() ) i = 0, j = 0; i < matrix_.rows(); ++i ) {
+            double max = std::numeric_limits<double>::lowest();
+            bool found = false;
+
+            for ( ; k != matrix_.end( i ); ++k ) {
+                ATLAS_ASSERT( k.col() < size_t( xarray.shape( 0 ) ) );
+                auto value = xarray[k.col()];
+                if ( max < value ) {
+                    max = value;
+                    j   = k.col();
+                }
+                found = true;
+            }
+
+            ATLAS_ASSERT( found );
+            yarray[i] = xarray[j];
+        }
+        return;
+    }
+
+
+    // ensure GridBoxMethod::setup()
+    functionspace::Points tgt = target_;
+    ATLAS_ASSERT( tgt );
+
+    ATLAS_ASSERT( pTree_ != nullptr );
+    ATLAS_ASSERT( searchRadius_ > 0. );
+    ATLAS_ASSERT( !sourceBoxes_.empty() );
+    ATLAS_ASSERT( !targetBoxes_.empty() );
+
+
+    // interpolate
+    eckit::ProgressTimer progress( "Intersecting", targetBoxes_.size(), "grid box", double( 5. ) );
+
+    std::vector<Triplet> triplets;
+    size_t i = 0;
+    for ( auto p : tgt.iterate().xyz() ) {
+        ++progress;
+
+        if ( intersect( i, targetBoxes_.at( i ), pTree_->findInSphere( p, searchRadius_ ), triplets ) ) {
+            auto triplet =
+                std::max_element( triplets.begin(), triplets.end(), []( const Triplet& a, const Triplet& b ) {
+                    return !eckit::types::is_approximately_greater_or_equal( a.value(), b.value() );
+                } );
+
+            yarray[i] = xarray[triplet->col()];
+        }
+
+        ++i;
+    }
+
+    if ( !failures_.empty() ) {
+        giveUp( failures_ );
+    }
 }
 
 
