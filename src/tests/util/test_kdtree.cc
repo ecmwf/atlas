@@ -91,7 +91,7 @@ static double radius() {
 }
 
 static Geometry& geometry() {
-    static Sphere _geometry( radius() );
+    static Geometry _geometry( radius() );
     return _geometry;
 }
 
