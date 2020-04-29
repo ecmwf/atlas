@@ -435,7 +435,7 @@ void atlas__grid__Structured__nx_array( Structured* This, const idx_t*& nx, idx_
 idx_t atlas__grid__Structured__nx( Structured* This, idx_t j );
 idx_t atlas__grid__Structured__ny( Structured* This );
 gidx_t atlas__grid__Structured__index (Structured* This, idx_t i, idx_t j);
-void atlas__grid__Structured__index2ij (Structured* This, gidx_t gidx, idx_t * i, idx_t * j);
+void atlas__grid__Structured__index2ij (Structured* This, gidx_t gidx, idx_t & i, idx_t & j);
 idx_t atlas__grid__Structured__nxmin( Structured* This );
 idx_t atlas__grid__Structured__nxmax( Structured* This );
 idx_t atlas__grid__Structured__size( Structured* This );

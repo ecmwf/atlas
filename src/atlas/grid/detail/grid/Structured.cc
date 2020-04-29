@@ -621,10 +621,10 @@ gidx_t atlas__grid__Structured__index (Structured* This, idx_t i, idx_t j)
     return This->index( i, j );
 }
 
-void atlas__grid__Structured__index2ij (Structured* This, gidx_t gidx, idx_t * i, idx_t * j)
+void atlas__grid__Structured__index2ij (Structured* This, gidx_t gidx, idx_t & i, idx_t & j)
 {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_StructuredGrid" );
-    This->index2ij (gidx, *i, *j);
+    This->index2ij (gidx, i, j);
 }
 
 void atlas__grid__Structured__nx_array( Structured* This, const idx_t*& nx_array, idx_t& size ) {

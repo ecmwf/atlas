@@ -567,7 +567,7 @@ subroutine Structured__index2ij_int32(this, gidx, i, j)
   integer(c_int), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_int), intent(out) :: i, j
-  call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, int (gidx-1, c_long), c_loc (i), c_loc(j))
+  call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, int (gidx-1, c_long), i, j)
   i = i + 1
   j = j + 1
 end subroutine
@@ -578,7 +578,7 @@ subroutine Structured__index2ij_int64(this, gidx, i, j)
   integer(c_long), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_int), intent(out) :: i, j
-  call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, gidx-1, c_loc (i), c_loc (j))
+  call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, gidx-1, i, j)
   i = i + 1
   j = j + 1
 end subroutine
@@ -589,7 +589,7 @@ function Structured__ij_int32(this, gidx) result(ij)
   integer(c_int), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_int) :: ij (2)
-  call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, int (gidx-1, c_long), c_loc(ij(1)), c_loc(ij(2)))
+  call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, int (gidx-1, c_long), ij(1), ij(2))
   ij = ij + 1
 end function
 
@@ -599,7 +599,7 @@ function Structured__ij_int64(this, gidx) result(ij)
   integer(c_long), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_int) :: ij (2)
-  call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, gidx-1, c_loc (ij(1)), c_loc (ij(2)))
+  call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, gidx-1, ij(1), ij(2))
   ij = ij + 1
 end function
 
