@@ -134,13 +134,12 @@ GridBoxes::GridBoxes( const Grid& grid ) {
 
     GaussianGrid gaussian( grid );
     if ( gaussian ) {
-        // FIXME: innefficient interface, latitudes are discarded
         auto N = gaussian.N();
         std::vector<double> latitudes( N * 2 );
         std::vector<double> weights( N * 2 );
         util::gaussian_quadrature_npole_spole( N, latitudes.data(), weights.data() );
 
-        std::vector<double> lat_global( y.size() + 1 );
+        std::vector<double> lat_global( N * 2 + 1 );
         auto b   = lat_global.rbegin();
         auto f   = lat_global.begin();
         *( b++ ) = -90.;
@@ -155,13 +154,19 @@ GridBoxes::GridBoxes( const Grid& grid ) {
         }
         lat_global[N] = 0.;  // (equator)
 
-        // grids not covering the poles need clipping
-        for ( auto l : lat_global ) {
-            if ( eckit::types::is_approximately_lesser_or_equal( l, north ) &&
-                 eckit::types::is_approximately_lesser_or_equal( south, l ) ) {
-                lat.push_back( l );
+        // Grids not covering the poles need clipping
+        size_t j = 0;
+        for ( ; j < latitudes.size(); ++j ) {
+            if ( eckit::types::is_approximately_lesser_or_equal( latitudes[j], north ) &&
+                 eckit::types::is_approximately_lesser_or_equal( south, latitudes[j] ) ) {
+                lat.push_back( std::min( north, lat_global[j] ) );
+            }
+            else if ( !lat.empty() ) {
+                break;
             }
         }
+        ATLAS_ASSERT( !lat.empty() );
+        lat.push_back( std::max( south, lat_global[j] ) );
     }
     else {
         // non-Gaussian (but structured) grids
@@ -171,7 +176,6 @@ GridBoxes::GridBoxes( const Grid& grid ) {
         }
         lat.push_back( south );
     }
-    ATLAS_ASSERT( !lat.empty() );
 
 
     // Calculate grid-box meridians (longitude midpoints)
@@ -190,8 +194,7 @@ GridBoxes::GridBoxes( const Grid& grid ) {
             n += 1;  // (adjust double-fraction conversions)
         }
 
-        // On non-global grids, North- and South-most grid-boxes need clipping;
-        // West- and East-most grid-boxes need clipping on non-periodic grids
+        // On non-periodic grids, West- and East-most grid-boxes need clipping
         ATLAS_ASSERT( x.nx()[j] > 0 );
 
         eckit::Fraction lon1 = ( n * dx ) - ( dx / 2 );
@@ -199,8 +202,8 @@ GridBoxes::GridBoxes( const Grid& grid ) {
             double lon0 = lon1;
             lon1 += dx;
 
-            double n = std::min( north, lat[j] );
-            double s = std::max( south, lat[j + 1] );
+            double n = lat[j];
+            double s = lat[j + 1];
             double w = periodic ? lon0 : std::max<double>( west, lon0 );
             double e = periodic ? lon1 : std::min<double>( east, lon1 );
             emplace_back( GridBox( n, w, s, e ) );
