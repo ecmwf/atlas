@@ -483,21 +483,15 @@ namespace test
                             | atlas::util::Config ("north_pole", std::vector<double>{centre[0], centre[1]}));
     
     grid = atlas::StructuredGrid (xspace, yspace, proj, atlas::Domain (atlas::util::Config ("type", "global")));
-    
+
     for (int j = 0, jglo = 0; j < grid.ny ( ); j++)
     for (int i = 0; i < grid.nx (j); i++, jglo++)
       {
         auto ll2 = grid.lonlat (i, j);
-        PointXYZ p1, p2;
         PointLonLat ll1 = PointLonLat (lonlat_arp_t32c24[2*jglo+0], lonlat_arp_t32c24[2*jglo+1]);
-        atlas::util::UnitSphere::convertSphericalToCartesian (ll1, p1);
-        atlas::util::UnitSphere::convertSphericalToCartesian (ll2, p2);
         EXPECT( is_approximately_equal(ll1.lon (), ll2.lon (), 0.001) );
         EXPECT( is_approximately_equal(ll1.lat (), ll2.lat (), 0.001) );
       }
-
-
-
   }
 }
 }
