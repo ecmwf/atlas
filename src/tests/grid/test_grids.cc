@@ -37,11 +37,11 @@ CASE( "test_ij2gidx") {
     for (int j = 0, jglo = 0; j < n16.ny (); j++)
     for (int i = 0; i < n16.nx (j); i++, jglo++)
       {
-        idx_t ij[2];
-        n16.gidx2ij (jglo, ij);
-        EXPECT (n16.ij2gidx (i, j) == jglo);
-        EXPECT (ij[0] == i);
-        EXPECT (ij[1] == j);
+        idx_t i1, j1;
+        n16.index2ij (jglo, i1, j1);
+        EXPECT (n16.index (i, j) == jglo);
+        EXPECT (i1 == i);
+        EXPECT (j1 == j);
       }
 }
 
