@@ -562,7 +562,7 @@ function Structured__ny(this) result(ny)
 end function
 
 subroutine Structured__index2ij_int32(this, gidx, i, j) 
-  use, intrinsic :: iso_c_binding, only: c_long, c_int, c_loc
+  use, intrinsic :: iso_c_binding, only: c_long, c_int
   use atlas_grid_Structured_c_binding
   integer(c_int), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
@@ -573,7 +573,7 @@ subroutine Structured__index2ij_int32(this, gidx, i, j)
 end subroutine
 
 subroutine Structured__index2ij_int64(this, gidx, i, j) 
-  use, intrinsic :: iso_c_binding, only: c_long, c_int, c_loc
+  use, intrinsic :: iso_c_binding, only: c_long, c_int
   use atlas_grid_Structured_c_binding
   integer(c_long), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
@@ -584,7 +584,7 @@ subroutine Structured__index2ij_int64(this, gidx, i, j)
 end subroutine
 
 function Structured__ij_int32(this, gidx) result(ij)
-  use, intrinsic :: iso_c_binding, only: c_long, c_int, c_loc
+  use, intrinsic :: iso_c_binding, only: c_long, c_int
   use atlas_grid_Structured_c_binding
   integer(c_int), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
@@ -594,7 +594,7 @@ function Structured__ij_int32(this, gidx) result(ij)
 end function
 
 function Structured__ij_int64(this, gidx) result(ij)
-  use, intrinsic :: iso_c_binding, only: c_long, c_int, c_loc
+  use, intrinsic :: iso_c_binding, only: c_long, c_int
   use atlas_grid_Structured_c_binding
   integer(c_long), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
