@@ -52,8 +52,15 @@ Field Points::createField( const Field& other, const eckit::Configuration& confi
 }
 
 
-Field Points::createField( const eckit::Configuration& ) const {
-    ATLAS_NOTIMPLEMENTED;
+Field Points::createField( const eckit::Configuration& config ) const {
+    array::DataType::kind_t kind;
+    if ( !config.get( "datatype", kind ) ) {
+        throw_Exception( "datatype missing", Here() );
+    }
+
+    Field field( config.getString( "name", "" ), array::DataType( kind ), array::make_shape( size() ) );
+    field.set_functionspace( this );
+    return field;
 }
 
 
