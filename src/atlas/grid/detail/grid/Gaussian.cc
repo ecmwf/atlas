@@ -246,7 +246,7 @@ StructuredGrid::grid_t* reduced_gaussian( const std::vector<int>& nx, const Doma
     return new StructuredGrid::grid_t( xspace( _nx ), Spacing( yspace ), Projection(), domain );
 }
 
-StructuredGrid::grid_t* reduced_gaussian( const std::vector<int> & nx, double centre[], double stretch) {
+StructuredGrid::grid_t* rotated_stretched_reduced_gaussian( const std::vector<int> & nx, double centre[], double stretch) {
   using namespace atlas::util;
 
   std::vector<Spacing> spacings (nx.size ());
@@ -287,11 +287,11 @@ StructuredGrid::grid_t* atlas__grid__reduced__ReducedGaussian_long( long nx[], l
 }
 
 StructuredGrid::grid_t* atlas__grid__reduced__StretchedRotatedReducedGaussian_int ( int nx[], long ny, double centre[], double stretch) {
-    return reduced_gaussian( idx_vector( nx, ny ), centre, stretch );
+    return rotated_stretched_reduced_gaussian( idx_vector( nx, ny ), centre, stretch );
 }
 
 StructuredGrid::grid_t* atlas__grid__reduced__StretchedRotatedReducedGaussian_long ( long nx[], long ny, double centre[], double stretch) {
-    return reduced_gaussian( idx_vector( nx, ny ), centre, stretch );
+    return rotated_stretched_reduced_gaussian( idx_vector( nx, ny ), centre, stretch );
 }
 
 }
