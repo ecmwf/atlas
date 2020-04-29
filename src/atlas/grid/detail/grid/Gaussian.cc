@@ -54,7 +54,8 @@ static Spacing yspace( const Grid::Config& grid ) {
     return Spacing( config );
 }
 
-static StructuredGrid::XSpace xspace( const std::vector<idx_t>& nx ) {
+template <typename V>
+static StructuredGrid::XSpace xspace( const V & nx ) {
     return StructuredGrid::XSpace( {0., 360.}, nx, false );
     // XSpace( const std::array<double,2>& interval, const std::vector<long>& N,
     // bool endpoint=true );
@@ -249,22 +250,12 @@ StructuredGrid::grid_t* reduced_gaussian( const std::vector<int>& nx, const Doma
 StructuredGrid::grid_t* rotated_stretched_reduced_gaussian( const std::vector<int> & nx, double centre[], double stretch) {
   using namespace atlas::util;
 
-  std::vector<Spacing> spacings (nx.size ());
-
-  for (int i = 0; i < nx.size (); i++)
-    {   
-      double lonmax = 360.0 * double (nx[i] - 1) / double (nx[i]);
-      spacings[i] = Spacing (Config ("type", "linear") | Config ("N", nx[i])
-                           | Config ("start", 0) | Config ("end", lonmax));
-    }   
-
-  StructuredGrid::XSpace xspace (spacings);
   StructuredGrid::YSpace yspace (Config ("type", "gaussian") | Config ("N", nx.size ()));
 
   Projection proj (Config ("type", "rotated_schmidt") | Config ("stretching_factor", stretch) | Config ("rotation_angle", 0.0)
                  | Config ("north_pole", std::vector<double>{centre[0], centre[1]}));
 
-  return new StructuredGrid::grid_t (xspace, yspace, proj, Domain (Config ("type", "global")));
+  return new StructuredGrid::grid_t (xspace (nx), yspace, proj, Domain (Config ("type", "global")));
 }
 
 template <typename Int>
