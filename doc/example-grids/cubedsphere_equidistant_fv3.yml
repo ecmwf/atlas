@@ -1,10 +1,9 @@
-type : "classic_gaussian"
-N    : 16
+type   : "cubedsphere_equidistant_fv3"
+CubeNx : 12
 
-
-check : 
-  size : 1688
-  lonlat(first) : [0,85.7606]
-  lonlat(last)  : [342,-85.7606]
-  uid : 49cbbc2cde26050896e000d1e0f5fb7b
+check :
+  size : 866
+  lonlat(first) : [315,-35.2644]
+  lonlat(last)  : [45, -41.5996]
+  uid : 22b8637a8f74ddba0ebe598c661e18b7
   bounding_box(n,w,s,e) : [90,0,-90,360]

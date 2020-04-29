@@ -55,7 +55,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
   ATLAS_ASSERT( !mesh.generated() );
   const CubedSphereGrid csg = CubedSphereGrid( grid );
   if ( !csg ) {
-      throw_Exception( "CubedSphereMeshGenerator can only work with a cubed-sphere grid", Here() );
+      throw_Exception( "CubedSphereMeshGenerator can only work with a cubedsphere grid", Here() );
   }
 
   // Number of processors
@@ -70,24 +70,6 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
   grid::Distribution distribution( partitioner.partition( grid ) );
 
   generate( grid, distribution, mesh );
-
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereMeshGenerator::setNeighbours(int it, int ix, int iy, int icell, idx_t quad_nodes[],
-                   array::ArrayView<int, 3> NodeArray, atlas::mesh::HybridElements::Connectivity node_connectivity,
-                   array::ArrayView<int, 1> cells_part) const {
-
-  quad_nodes[0] = NodeArray(it, ix  , iy  );
-  quad_nodes[1] = NodeArray(it, ix  , iy+1);
-  quad_nodes[2] = NodeArray(it, ix+1, iy+1);
-  quad_nodes[3] = NodeArray(it, ix+1, iy  );
-
-  node_connectivity.set( icell, quad_nodes );
-  cells_part( icell ) = 0;
-
-  ++icell;
 
 }
 
@@ -147,13 +129,13 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
         // Get xy from global xy grid array
         csgrid.xy( ix, iy, it, xy_ );
 
-        xy( inode, LON ) = xy_[LON];
-        xy( inode, LAT ) = xy_[LAT];
+        xy( inode, XX ) = xy_[XX];
+        xy( inode, YY ) = xy_[YY];
 
         csgrid.lonlat( ix, iy, it, lonlat_ );
 
-        lonlat( inode, LON ) = lonlat_[LON] * util::Constants::radiansToDegrees();
-        lonlat( inode, LAT ) = lonlat_[LAT] * util::Constants::radiansToDegrees();
+        lonlat( inode, LON ) = lonlat_[LON];
+        lonlat( inode, LAT ) = lonlat_[LAT];
 
         // Ghost nodes
         ghost(inode) = 0; // No ghost nodes
@@ -177,11 +159,11 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   iy = cubeNx;
 
   csgrid.xy( ix, iy, it, xy_ );
-  xy( inode, LON ) = xy_[LON];
-  xy( inode, LAT ) = xy_[LAT];
+  xy( inode, XX ) = xy_[XX];
+  xy( inode, YY ) = xy_[YY];
   csgrid.lonlat( ix, iy, it, lonlat_ );
-  lonlat( inode, LON ) = lonlat_[LON] * util::Constants::radiansToDegrees();
-  lonlat( inode, LAT ) = lonlat_[LAT] * util::Constants::radiansToDegrees();
+  lonlat( inode, LON ) = lonlat_[LON];
+  lonlat( inode, LAT ) = lonlat_[LAT];
   ghost(inode) = 0;
   glb_idx(inode) = inode;
   remote_idx(inode) = inode;
@@ -197,11 +179,11 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   iy = 0;
 
   csgrid.xy( ix, iy, it, xy_ );
-  xy( inode, LON ) = xy_[LON];
-  xy( inode, LAT ) = xy_[LAT];
+  xy( inode, XX ) = xy_[XX];
+  xy( inode, YY ) = xy_[YY];
   csgrid.lonlat( ix, iy, it, lonlat_ );
-  lonlat( inode, LON ) = lonlat_[LON] * util::Constants::radiansToDegrees();
-  lonlat( inode, LAT ) = lonlat_[LAT] * util::Constants::radiansToDegrees();
+  lonlat( inode, LON ) = lonlat_[LON];
+  lonlat( inode, LAT ) = lonlat_[LAT];
   ghost(inode) = 0;
   glb_idx(inode) = inode;
   remote_idx(inode) = inode;
@@ -303,8 +285,6 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     for ( int ix = 0; ix < cubeNx; ix++ ) {
       for ( int iy = 0; iy < cubeNx; iy++ ) {
 
-        //this->setNeighbours(it, ix, iy, icell, quad_nodes, NodeArray, node_connectivity, cells_part);
-
         quad_nodes[0] = NodeArray(it, ix  , iy  );
         quad_nodes[1] = NodeArray(it, ix  , iy+1);
         quad_nodes[2] = NodeArray(it, ix+1, iy+1);
@@ -320,12 +300,11 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   }
 
   // Assertion that correct number of cells are set
-  ATLAS_ASSERT( ncells == icell, "Insufficient nodes" );
+  ATLAS_ASSERT( ncells == icell, "Insufficient cells have been set" );
 
   // Parallel
   generateGlobalElementNumbering( mesh );
   nodes.metadata().set( "parallel", true );
-
 }
 
 // -------------------------------------------------------------------------------------------------

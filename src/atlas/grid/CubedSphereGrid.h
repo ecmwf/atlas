@@ -50,45 +50,29 @@ public:
     using grid_t = grid::detail::grid::CubedSphere;
 
 public:
-    CubedSphereGrid();
-    CubedSphereGrid( const Grid& );
-    CubedSphereGrid( const Grid::Implementation* );
-    CubedSphereGrid( const std::string& name );
-    CubedSphereGrid( const Config& );
-    CubedSphereGrid( const int&, const Projection& = Projection() );
+  CubedSphereGrid();
+  CubedSphereGrid( const Grid& );
+  CubedSphereGrid( const Grid::Implementation* );
+  CubedSphereGrid( const std::string& name );
+  CubedSphereGrid( const Config& );
+  CubedSphereGrid( const int&, const Projection& = Projection() );
 
-    operator bool() const { return valid(); }
+  operator bool() const { return valid(); }
 
-    bool valid() const { return grid_; }
+  bool valid() const { return grid_; }
 
-    inline idx_t ny() const { return grid_->ny(); }
+  using Grid::xy;
+  void xy( idx_t i, idx_t j, idx_t t, double xy[] ) const { grid_->xy( i, j, t, xy ); }
+  PointXY xy( idx_t i, idx_t j, idx_t t) const { return grid_->xy( i, j, t ); }
 
-    inline idx_t nx( idx_t j ) const { return grid_->nx( j ); }
+  using Grid::lonlat;
+  void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const { grid_->lonlat( i, j, t, lonlat ); }
+  PointLonLat lonlat( idx_t i, idx_t j, idx_t t ) const { return grid_->lonlat( i, j, t ); }
 
-    inline const std::vector<idx_t>& nx() const { return grid_->nx(); }
-
-    //inline const std::vector<double>& y() const { return grid_->y(); }
-
-    /// x coordinate for given grid point {i,j}
-    inline double x( idx_t i, idx_t j, idx_t t ) const { return grid_->x( i, j, t ); }
-
-    /// y coordinate for given grid row {j}
-    inline double y( idx_t i, idx_t j, idx_t t ) const { return grid_->y( i, j, t ); }
-
-    using Grid::xy;
-    void xy( idx_t i, idx_t j, idx_t t, double xy[] ) const { grid_->xy( i, j, t, xy ); }
-
-    using Grid::lonlat;
-    void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const { grid_->lonlat( i, j, t, lonlat ); }
-
-    PointXY xy( idx_t i, idx_t j, idx_t t) const { return PointXY( x( i, j, t), y( i, j, t ) ); }
-
-    PointLonLat lonlat( idx_t i, idx_t j, idx_t t ) const { return grid_->lonlat( i, j, t ); }
-
-    inline int GetCubeNx() const { return grid_->GetCubeNx(); }
+  inline int GetCubeNx() const { return grid_->GetCubeNx(); }
 
 private:
-    const grid_t* grid_;
+  const grid_t* grid_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------

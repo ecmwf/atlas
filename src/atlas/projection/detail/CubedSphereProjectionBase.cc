@@ -100,9 +100,14 @@ void CubedSphereProjectionBase::xy2lonlat( double xytll[] ) const {
   // Back to latlon
   ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
 
-  // Fill outputs
-  xytll[3+LON] = lonlat[LON];
-  xytll[3+LAT] = lonlat[LAT];
+  // Fill outputs and covert to degrees
+  xytll[3+LON] = lonlat[LON] * atlas::util::Constants::radiansToDegrees();
+  xytll[3+LAT] = lonlat[LAT] * atlas::util::Constants::radiansToDegrees();
+
+  // To 0, 360
+  if (xytll[3+LON] < 0.0) {
+    xytll[3+LON] = 360.0 + xytll[3+LON];
+  }
 
 }
 

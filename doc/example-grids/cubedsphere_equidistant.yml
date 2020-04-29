@@ -3,7 +3,7 @@ CubeNx : 12
 
 check :
   size : 866
-  lonlat(first) : [0,85.7606]
-  lonlat(last)  : [342,-85.7606]
-  uid : 8ce0eb693f455e842ae494185147adea
+  lonlat(first) : [315,-35.2644]
+  lonlat(last)  : [45, -40.3155]
+  uid : 7dbe9e608f467e6aaeface29dd56ecdd
   bounding_box(n,w,s,e) : [90,0,-90,360]
