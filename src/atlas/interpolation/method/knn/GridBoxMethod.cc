@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2020 ECMWF.
+ * (C) Copyright 1996- ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -49,7 +49,7 @@ void GridBoxMethod::do_setup( const FunctionSpace& /*source*/, const FunctionSpa
 }
 
 
-bool GridBoxMethod::intersect( size_t i, const util::GridBox& box, const PointIndex3::NodeList& closest,
+bool GridBoxMethod::intersect( size_t i, const GridBox& box, const PointIndex3::NodeList& closest,
                                std::vector<eckit::linalg::Triplet>& triplets ) const {
     ASSERT( !closest.empty() );
 
@@ -108,8 +108,8 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
     buildPointSearchTree( src );
     ATLAS_ASSERT( pTree_ != nullptr );
 
-    sourceBoxes_ = util::GridBoxes( source );
-    targetBoxes_ = util::GridBoxes( target );
+    sourceBoxes_ = GridBoxes( source );
+    targetBoxes_ = GridBoxes( target );
 
     searchRadius_ = sourceBoxes_.getLongestGridBoxDiagonal() + targetBoxes_.getLongestGridBoxDiagonal();
     failures_.clear();

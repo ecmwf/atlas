@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2020 ECMWF.
+ * (C) Copyright 1996- ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -16,7 +16,7 @@
 #include <forward_list>
 
 #include "atlas/functionspace.h"
-#include "atlas/util/GridBox.h"
+#include "atlas/interpolation/method/knn/GridBox.h"
 
 
 namespace atlas {
@@ -43,7 +43,7 @@ protected:
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
 
-    bool intersect( size_t i, const util::GridBox& iBox, const PointIndex3::NodeList&, std::vector<Triplet>& ) const;
+    bool intersect( size_t i, const GridBox& iBox, const PointIndex3::NodeList&, std::vector<Triplet>& ) const;
 
     virtual void do_execute( const FieldSet& source, FieldSet& target ) const = 0;
     virtual void do_execute( const Field& source, Field& target ) const       = 0;
@@ -54,8 +54,8 @@ protected:
     FunctionSpace source_;
     FunctionSpace target_;
 
-    util::GridBoxes sourceBoxes_;
-    util::GridBoxes targetBoxes_;
+    GridBoxes sourceBoxes_;
+    GridBoxes targetBoxes_;
 
     double searchRadius_;
 

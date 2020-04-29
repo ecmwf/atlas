@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2013 ECMWF.
+ * (C) Copyright 1996- ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -17,9 +17,9 @@
 #include "atlas/field.h"
 #include "atlas/grid.h"
 #include "atlas/interpolation.h"
+#include "atlas/interpolation/method/knn/GridBox.h"
 #include "atlas/option.h"
 #include "atlas/util/Config.h"
-#include "atlas/util/GridBox.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -28,10 +28,13 @@ namespace atlas {
 namespace test {
 
 
+using interpolation::method::GridBoxes;
+
+
 double integral( const Grid& grid, const Field& field ) {
     auto values = array::make_view<double, 1>( field );
 
-    auto boxes = util::GridBoxes( grid );
+    auto boxes = GridBoxes( grid );
     ATLAS_ASSERT( boxes.size() == size_t( field.shape( 0 ) ) );
 
     double i = 0.;
@@ -170,7 +173,7 @@ CASE( "test_interpolation_grid_box_average" ) {
 
         size_t i    = 0;
         auto values = array::make_view<double, 1>( fieldA );
-        for ( auto& box : util::GridBoxes( gridA ) ) {
+        for ( auto& box : GridBoxes( gridA ) ) {
             ATLAS_ASSERT( box.area() > 0. );
             values( i++ ) = 1. / box.area();
         }
@@ -192,7 +195,7 @@ CASE( "test_interpolation_grid_box_average" ) {
 
         size_t i    = 0;
         auto values = array::make_view<double, 1>( fieldA );
-        for ( auto& box : util::GridBoxes( gridB ) ) {
+        for ( auto& box : GridBoxes( gridB ) ) {
             ATLAS_ASSERT( box.area() > 0. );
             values( i++ ) = 1. / box.area();
         }

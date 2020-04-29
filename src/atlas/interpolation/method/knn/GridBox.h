@@ -22,7 +22,8 @@ class Grid;
 
 
 namespace atlas {
-namespace util {
+namespace interpolation {
+namespace method {
 
 
 class GridBox {
@@ -115,5 +116,6 @@ struct GridBoxes : std::vector<GridBox> {
 };
 
 
-}  // namespace util
+}  // namespace method
+}  // namespace interpolation
 }  // namespace atlas

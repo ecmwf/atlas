@@ -10,7 +10,7 @@
  */
 
 
-#include "atlas/util/GridBox.h"
+#include "atlas/interpolation/method/knn/GridBox.h"
 
 #include <algorithm>
 #include <ostream>
@@ -43,7 +43,8 @@ double normalise( double lon, double minimum ) {
 
 
 namespace atlas {
-namespace util {
+namespace interpolation {
+namespace method {
 
 
 GridBox::GridBox( double north, double west, double south, double east ) :
@@ -234,5 +235,6 @@ double GridBoxes::getLongestGridBoxDiagonal() const {
 }
 
 
-}  // namespace util
+}  // namespace method
+}  // namespace interpolation
 }  // namespace atlas

@@ -499,6 +499,8 @@ interpolation/method/Ray.cc
 interpolation/method/Ray.h
 interpolation/method/fe/FiniteElement.cc
 interpolation/method/fe/FiniteElement.h
+interpolation/method/knn/GridBox.cc
+interpolation/method/knn/GridBox.h
 interpolation/method/knn/GridBoxAverage.cc
 interpolation/method/knn/GridBoxAverage.h
 interpolation/method/knn/GridBoxMaximum.cc
@@ -623,8 +625,6 @@ util/KDTree.cc
 util/KDTree.h
 util/PolygonXY.cc
 util/PolygonXY.h
-util/GridBox.cc
-util/GridBox.h
 util/Metadata.cc
 util/Metadata.h
 util/Point.cc
