@@ -1,5 +1,5 @@
 /*
- * (C) British Crown Copyright, Met Office
+ * (C) British Crown Copyright, 2020, Met Office
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -154,65 +154,6 @@ struct Fixture {
 };
 
 //-----------------------------------------------------------------------------
-//  In this case we are having 3 PEs what have multiple overlapping halos
-//  PE number in curved brackets and global index in squared brackets
-//
-//       [1](0) [2](0) [5](1)
-//       [3](0) [4](0) [6](1)
-//       [7](2) [8](2) [9](2)
-//
-// Each PE has a halo of 1 grid point depth and there is wrap-around in
-// x and y directions.
-//-----------------------------------------------------------------------------
-struct Fixture2 {
-    int N;
-    std::vector<int> nb_nodes;
-    std::vector<int> part;
-    std::vector<idx_t> ridx;
-    std::vector<POD> gidx;
-    bool on_device_;
-
-    std::unique_ptr<parallel::HaloExchange> halo_exchange_std2{new parallel::HaloExchange()};
-
-    Fixture2( bool on_device ) : on_device_( on_device ) {
-        int nnodes_c[] = {16, 12, 15};
-        nb_nodes       = vec( nnodes_c );
-        N              = nb_nodes[mpi::comm().rank()];
-
-        switch ( mpi::comm().rank() ) {
-            case 0: {
-                int part_c[]   = {2, 2, 2, 2, 1, 1, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2};
-                part           = vec( part_c );
-                idx_t ridx_c[] = {7, 9, 8, 7, 5, 6, 1, 2, 3, 4, 5, 6, 7, 9, 8, 9};
-                ridx           = vec( ridx_c );
-                POD gidx_c[]   = {0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0, 0, 0};
-                gidx           = vec( gidx_c );
-                break;
-            }
-            case 1: {
-                int part_c[]   = {2, 2, 2, 0, 0, 1, 1, 0, 0, 2, 2, 2};
-                part           = vec( part_c );
-                idx_t ridx_c[] = {8, 7, 9, 2, 4, 5, 6, 1, 3, 8, 7, 9};
-                ridx           = vec( ridx_c );
-                POD gidx_c[]   = {0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0};
-                gidx           = vec( gidx_c );
-                break;
-            }
-            case 2: {
-                int part_c[]   = {0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 1, 1, 0, 0, 0};
-                part           = vec( part_c );
-                idx_t ridx_c[] = {3, 3, 4, 6, 6, 9, 7, 8, 9, 7, 5, 5, 1, 1, 2};
-                ridx           = vec( ridx_c );
-                POD gidx_c[]   = {0, 0, 0, 0, 0, 9, 7, 8, 9, 7, 0, 0, 0, 0, 0};
-                gidx           = vec( gidx_c );
-                break;
-            }
-        }
-        halo_exchange_std2->setup( part.data(), ridx.data(), 0, N );
-    }
-};
-
-//-----------------------------------------------------------------------------
 
 void test_rank0_arrview( Fixture& f ) {
     array::ArrayT<POD> arr( f.N );
@@ -325,52 +266,6 @@ void test_rank0_arrview_adj_test( Fixture& f ) {
 
     adjoint_test( sum1, sum2, "test_rank0_arrview_adj_test" );
 }
-
-void test_rank0_arrview_adj_test2( Fixture2& f2 ) {
-    array::ArrayT<POD> arr_init( f2.N );
-    array::ArrayT<POD> arr( f2.N );
-    array::ArrayView<POD, 1> arrv_init = array::make_host_view<POD, 1>( arr_init );
-    array::ArrayView<POD, 1> arrv      = array::make_host_view<POD, 1>( arr );
-
-    for ( std::size_t j = 0; j < static_cast<std::size_t>( f2.N ); ++j ) {
-       // arrv_init( j ) = f.gidx[j];
-        arrv_init( j ) = ( static_cast<std::size_t>( f2.part[j] ) != mpi::comm().rank() ? 0 : f2.gidx[j] );
-        arrv( j )      = arrv_init( j );
-       //  std::cout  << " test_rank0_arrview_adj_test2 init " << mpi::comm().rank() << " "
-       //             << j << " " << arrv(j) << " " << arrv_init(j) << std::endl;
-    }
-
-    arr.syncHostDevice();
-
-    f2.halo_exchange_std2->execute<POD, 1>( arr, f2.on_device_ );
-
-    arr.syncHostDevice();
-
-    // sum1
-    POD sum1( 0 );
-    for ( std::size_t j = 0; j < static_cast<std::size_t>( f2.N ); ++j ) {
-        sum1 += arrv( j ) * arrv( j );
-        std::cout  << " test_rank0_arrview_adj_test2 fwd " << mpi::comm().rank() << " "
-                   << j << " " << arrv(j) << " " << arrv_init(j) << std::endl;
-    }
-
-    arr.syncHostDevice();
-
-    f2.halo_exchange_std2->execute_adjoint<POD, 1>( arr, f2.on_device_ );
-
-    arr.syncHostDevice();
-
-    // sum2
-    POD sum2( 0 );
-    for ( std::size_t j = 0; j < static_cast<std::size_t>( f2.N ); ++j ) {
-        sum2 += arrv_init( j ) * arrv( j );
-        std::cout  << " test_rank0_arrview_adj_test2 adj " << mpi::comm().rank() << " "
-                   << j << " " << arrv(j) << " " << arrv_init(j) << std::endl;
-    }
-
-    adjoint_test( sum1, sum2, "test_rank0_arrview_adj_test" );
-}
-
 
 
 void test_rank1( Fixture& f ) {
@@ -1612,13 +1507,10 @@ void test_rank1_cinterface( Fixture& f ) {
 
 CASE( "test_haloexchange_adjoint" ) {
     Fixture f( false );
-    Fixture2 f2( false );
 
     SECTION( "test_rank0_arrview" ) { test_rank0_arrview( f ); }
 
     SECTION( "test_rank0_arrview_adj_test" ) { test_rank0_arrview_adj_test( f ); }
-
-    SECTION( "test_rank0_arrview_adj_test2" ) { test_rank0_arrview_adj_test2( f2 ); }
 
     SECTION( "test_rank1" ) { test_rank1( f ); }
 
