@@ -247,12 +247,12 @@ StructuredGrid::grid_t* reduced_gaussian( const std::vector<int>& nx, const Doma
     return new StructuredGrid::grid_t( xspace( _nx ), Spacing( yspace ), Projection(), domain );
 }
 
-StructuredGrid::grid_t* rotated_stretched_reduced_gaussian( const std::vector<int> & nx, double centre[], double stretch) {
+StructuredGrid::grid_t* rotated_stretched_reduced_gaussian( const std::vector<int> & nx, double centre[], double stretch, double angle) {
   using namespace atlas::util;
 
   StructuredGrid::YSpace yspace (Config ("type", "gaussian") | Config ("N", nx.size ()));
 
-  Projection proj (Config ("type", "rotated_schmidt") | Config ("stretching_factor", stretch) | Config ("rotation_angle", 0.0)
+  Projection proj (Config ("type", "rotated_schmidt") | Config ("stretching_factor", stretch) | Config ("rotation_angle", angle)
                  | Config ("north_pole", std::vector<double>{centre[0], centre[1]}));
 
   return new StructuredGrid::grid_t (xspace (nx), yspace, proj, Domain (Config ("type", "global")));
@@ -277,12 +277,12 @@ StructuredGrid::grid_t* atlas__grid__reduced__ReducedGaussian_long( long nx[], l
     return reduced_gaussian( idx_vector( nx, ny ) );
 }
 
-StructuredGrid::grid_t* atlas__grid__reduced__StretchedRotatedReducedGaussian_int ( int nx[], long ny, double centre[], double stretch) {
-    return rotated_stretched_reduced_gaussian( idx_vector( nx, ny ), centre, stretch );
+StructuredGrid::grid_t* atlas__grid__reduced__StretchedRotatedReducedGaussian_int ( int nx[], long ny, double centre[], double stretch, double angle) {
+    return rotated_stretched_reduced_gaussian( idx_vector( nx, ny ), centre, stretch, angle );
 }
 
-StructuredGrid::grid_t* atlas__grid__reduced__StretchedRotatedReducedGaussian_long ( long nx[], long ny, double centre[], double stretch) {
-    return rotated_stretched_reduced_gaussian( idx_vector( nx, ny ), centre, stretch );
+StructuredGrid::grid_t* atlas__grid__reduced__StretchedRotatedReducedGaussian_long ( long nx[], long ny, double centre[], double stretch, double angle) {
+    return rotated_stretched_reduced_gaussian( idx_vector( nx, ny ), centre, stretch, angle );
 }
 
 }

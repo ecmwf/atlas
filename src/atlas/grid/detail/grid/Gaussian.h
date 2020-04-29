@@ -23,6 +23,8 @@ StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx, const Dom
 StructuredGrid::grid_t* reduced_gaussian( const std::vector<int>& nx );
 StructuredGrid::grid_t* reduced_gaussian( const std::vector<int>& nx, const Domain& domain );
 
+StructuredGrid::grid_t* rotated_stretched_reduced_gaussian( const std::vector<int> & nx, double centre[], double stretch, double angle);
+
 }  // namespace grid
 }  // namespace detail
 }  // namespace grid

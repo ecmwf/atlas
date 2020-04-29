@@ -470,16 +470,18 @@ end function
 
 !-----------------------------------------------------------------------------
 
-function atlas_ReducedGaussianGrid__ctor_int32(nx, centre, stretch) result(this)
+function atlas_ReducedGaussianGrid__ctor_int32(nx, centre, stretch, angle) result(this)
   use, intrinsic :: iso_c_binding, only: c_int, c_long, c_double
   use atlas_grid_Structured_c_binding
   type(atlas_ReducedGaussianGrid) :: this
   integer(c_int), intent(in)  :: nx(:)
   real(c_double), optional, intent (in) :: centre (2)
   real(c_double), optional, intent (in) :: stretch
+  real(c_double), optional, intent (in) :: angle
 
   real(c_double) :: centre_ (2)
   real(c_double) :: stretch_
+  real(c_double) :: angle_
 
   if (present (centre)) then
     centre_ = centre
@@ -491,10 +493,15 @@ function atlas_ReducedGaussianGrid__ctor_int32(nx, centre, stretch) result(this)
   else
     stretch_ = 1.0_c_double;
   endif
+  if (present (angle)) then
+    angle_ = angle
+  else
+    angle_ = 0.0_c_double
+  endif
 
   if (present (centre) .or. present (stretch)) then
   call this%reset_c_ptr( &
-    & atlas__grid__reduced__StretchedRotatedReducedGaussian_int( nx, int(size(nx),c_long), centre_, stretch_ ) )
+    & atlas__grid__reduced__StretchedRotatedReducedGaussian_int( nx, int(size(nx),c_long), centre_, stretch_, angle_ ) )
   else
   call this%reset_c_ptr( &
     & atlas__grid__reduced__ReducedGaussian_int( nx, int(size(nx),c_long) ) )
@@ -502,16 +509,18 @@ function atlas_ReducedGaussianGrid__ctor_int32(nx, centre, stretch) result(this)
   call this%return()
 end function
 
-function atlas_ReducedGaussianGrid__ctor_int64(nx, centre, stretch) result(this)
+function atlas_ReducedGaussianGrid__ctor_int64(nx, centre, stretch, angle) result(this)
   use, intrinsic :: iso_c_binding, only: c_int, c_long, c_double
   use atlas_grid_Structured_c_binding
   type(atlas_ReducedGaussianGrid) :: this
   integer(c_long), intent(in)  :: nx(:)
   real(c_double), optional, intent (in) :: centre (2)
   real(c_double), optional, intent (in) :: stretch
+  real(c_double), optional, intent (in) :: angle
 
   real(c_double) :: centre_ (2)
   real(c_double) :: stretch_
+  real(c_double) :: angle_
 
   if (present (centre)) then
     centre_ = centre
@@ -523,10 +532,15 @@ function atlas_ReducedGaussianGrid__ctor_int64(nx, centre, stretch) result(this)
   else
     stretch_ = 1.0_c_double;
   endif
+  if (present (angle)) then
+    angle_ = angle
+  else
+    angle_ = 0.0_c_double
+  endif
 
   if (present (centre) .or. present (stretch)) then
   call this%reset_c_ptr( &
-    & atlas__grid__reduced__StretchedRotatedReducedGaussian_long( nx, int(size(nx),c_long), centre_, stretch_ ) )
+    & atlas__grid__reduced__StretchedRotatedReducedGaussian_long( nx, int(size(nx),c_long), centre_, stretch_, angle_ ) )
   else
   call this%reset_c_ptr( &
     & atlas__grid__reduced__ReducedGaussian_long( nx, int(size(nx),c_long) ) )
