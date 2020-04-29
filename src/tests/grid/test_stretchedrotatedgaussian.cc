@@ -1,19 +1,15 @@
-#include "atlas/library/Library.h"
-#include "atlas/util/Config.h"
-#include "atlas/grid.h"
-#include "atlas/array.h"
-#include "atlas/parallel/mpi/mpi.h"
-#include "atlas/functionspace.h"
-#include "atlas/util/UnitSphere.h"
-#include "tests/AtlasTestEnvironment.h"
-
 #include <algorithm>
 #include <vector>
 
-#include <sys/time.h>
-#include <stdio.h>
-#include <math.h>
-
+#include "atlas/array.h"
+#include "atlas/functionspace.h"
+#include "atlas/grid.h"
+#include "atlas/library/Library.h"
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/util/Config.h"
+#include "atlas/util/UnitSphere.h"
+#include "eckit/types/FloatCompare.h"
+#include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::util;
 using namespace atlas::grid;
@@ -496,9 +492,8 @@ namespace test
         PointLonLat ll1 = PointLonLat (lonlat_arp_t32c24[2*jglo+0], lonlat_arp_t32c24[2*jglo+1]);
         atlas::util::UnitSphere::convertSphericalToCartesian (ll1, p1);
         atlas::util::UnitSphere::convertSphericalToCartesian (ll2, p2);
-        EXPECT (fabs (ll1.lon () - ll2.lon ()) < 0.001);
-        EXPECT (fabs (ll1.lat () - ll2.lat ()) < 0.001);
-//      printf (" %12.4f, %12.4f | %12.4f, %12.4f\n", ll1.lon (), ll1.lat (), ll2.lon (), ll2.lat ());
+        eckit::types::is_approximately_equal (ll1.lon (), ll2.lon (), 0.001);
+        eckit::types::is_approximately_equal (ll1.lat (), ll2.lat (), 0.001);
       }
 
 
