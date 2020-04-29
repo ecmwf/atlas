@@ -174,7 +174,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
   // Extra point 2
   // -------------
-  it = 3;
+  it = 1;
   ix = cubeNx;
   iy = 0;
 
@@ -192,6 +192,40 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
   ++inode;
 
+#if 0
+  // TESTING: Check that inverse projection returns the correct xyt
+  // --------------------------------------------------------------
+  idx_t ijtnode[3];
+  idx_t ijtproj[3];
+  double lonlattest[2];
+
+  for (int n = 0; n < inode-2; n++) {
+    ijtnode[0] = -1;
+    ijtnode[1] = -1;
+    ijtnode[2] = -1;
+    ijtproj[0] = -2;
+    ijtproj[1] = -2;
+    ijtproj[2] = -2;
+    lonlattest[LON] = lonlat( n, LON );
+    lonlattest[LAT] = lonlat( n, LAT );
+    // Search the array for this node
+    for ( it = 0; it < 6; it++ ) {
+      for ( ix = 0; ix < cubeNx; ix++ ) {
+        for ( iy = 0; iy < cubeNx; iy++ ) {
+          if (NodeArray(it, ix, iy) == n) {
+            ijtnode[0] = ix;
+            ijtnode[1] = iy;
+            ijtnode[2] = it;
+            csgrid.lonlat2xy( lonlattest, ijtproj);
+          }
+        }
+      }
+    }
+    bool samePoint = ijtproj[0] == ijtnode[0] && ijtproj[1] == ijtnode[1] && ijtproj[2] == ijtnode[2];
+    ATLAS_ASSERT(samePoint, "NOT THE SAME POINT");
+  }
+#endif
+
   // Assert that the correct number of nodes have been set
   ATLAS_ASSERT( nnodes == inode, "Insufficient nodes" );
 
@@ -207,8 +241,8 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   // Special points have two duplicates each
   NodeArray(2, 0, cubeNx) = NodeArray(0, 0, cubeNx); ++inode;
   NodeArray(4, 0, cubeNx) = NodeArray(0, 0, cubeNx); ++inode;
-  NodeArray(1, cubeNx, 0) = NodeArray(3, cubeNx, 0); ++inode;
-  NodeArray(5, cubeNx, 0) = NodeArray(3, cubeNx, 0); ++inode;
+  NodeArray(3, cubeNx, 0) = NodeArray(1, cubeNx, 0); ++inode;
+  NodeArray(5, cubeNx, 0) = NodeArray(1, cubeNx, 0); ++inode;
 
   // Top & right duplicates
   // ----------------------

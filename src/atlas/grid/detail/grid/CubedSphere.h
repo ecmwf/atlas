@@ -36,6 +36,10 @@ namespace grid {
  * a cubed sphere.
  * This means the equidistant, equiangular or any other
  * such distribution can be represented with this class
+ *
+ * For the cubed sphere there is currently no xy in the way there is
+ * for e.g. the structured grid. In the below x and y are just indices
+ * in the grid.
  */
 
 class CubedSphere : public Grid {
@@ -245,6 +249,19 @@ public:
     double lonlat[2];
     this->lonlat(i, j, t, lonlat);
     return PointLonLat( lonlat[LON], lonlat[LAT] );
+  }
+
+  // Function for finding indices (xy) from lonlat (testing only)
+  // ------------------------------------------------------------
+
+  void lonlat2xy( double lonlat[], idx_t ijt[] ) const {
+    double llxyt[5];
+    llxyt[0] = lonlat[0];
+    llxyt[1] = lonlat[1];
+    projection_.lonlat2xy( llxyt );
+    ijt[0] = static_cast<int>( llxyt[2] );
+    ijt[1] = static_cast<int>( llxyt[3] );
+    ijt[2] = static_cast<int>( llxyt[4] );
   }
 
   // Check on whether i, j, t values are for extra point on tile 1

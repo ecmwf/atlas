@@ -68,6 +68,7 @@ public:
   using Grid::lonlat;
   void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const { grid_->lonlat( i, j, t, lonlat ); }
   PointLonLat lonlat( idx_t i, idx_t j, idx_t t ) const { return grid_->lonlat( i, j, t ); }
+  void lonlat2xy( double lonlat[], idx_t ijt[] ) const { grid_->lonlat2xy( lonlat, ijt ); }
 
   inline int GetCubeNx() const { return grid_->GetCubeNx(); }
 

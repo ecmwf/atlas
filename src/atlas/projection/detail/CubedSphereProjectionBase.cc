@@ -5,6 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include <cmath>
+
 #include "CubedSphereProjectionBase.h"
 
 #include "atlas/projection/detail/ProjectionUtilities.h"
@@ -44,32 +46,45 @@ void CubedSphereProjectionBase::lonlat2xy( double llxytl[] ) const {
   lonlat_in[LON] = llxytl[LON];
   lonlat_in[LAT] = llxytl[LAT];
 
+  // To -180, 180
+  if (lonlat_in[LON] > 180.0) {
+    lonlat_in[LON] = lonlat_in[LON] - 360.0;
+  }
+
+  // To radians
+  lonlat_in[LON] = lonlat_in[LON] * atlas::util::Constants::degreesToRadians();
+  lonlat_in[LAT] = lonlat_in[LAT] * atlas::util::Constants::degreesToRadians();
+
   // Loop over tiles
   bool found = false;
   for (int t = 0; t < 6; t++) {
 
-    // Copy before overwriting
-    std::copy(lonlat_in, lonlat_in+2, lonlat);
+    if (!found) {
 
-    // Convert to cartesian
-    ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
+      // Copy before overwriting
+      std::copy(lonlat_in, lonlat_in+2, lonlat);
 
-    // Perform tile specific rotations
-    tileRotateInverse.at(t)(xyz);
+      // Convert to cartesian
+      ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
 
-    // Back to latlon
-    ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
+      // Perform tile specific rotations
+      tileRotateInverse.at(t)(xyz);
 
-    // Loop over tile 1 array
-    for (int ix = 0; ix < cubeNx_+1; ix++) {
-      for (int iy = 0; iy < cubeNx_+1; iy++) {
-        // Check if this rotation landed the point on tile 1
-        if (tile1Lons(ix, iy) == lonlat[LON] && tile1Lats(ix, iy) == lonlat[LAT]) {
-          llxytl[2+XX] = ix;
-          llxytl[2+YY] = iy;
-          llxytl[4] = t;
-          found = true;
-          break;
+      // Back to latlon
+      ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
+
+      // Loop over tile 1 array
+      for (int ix = 0; ix < cubeNx_; ix++) {
+        for (int iy = 0; iy < cubeNx_; iy++) {
+          double absLonDiff = std::abs(tile1Lons(ix, iy) - lonlat[LON]);
+          double absLatDiff = std::abs(tile1Lats(ix, iy) - lonlat[LAT]);
+          // Check if this rotation landed the point on tile 1
+          if (!found && absLonDiff < 1.0e-15 && absLatDiff < 1.0e-15) {
+            llxytl[2+XX] = ix;
+            llxytl[2+YY] = iy;
+            llxytl[4] = t;
+            found = true;
+          }
         }
       }
     }
@@ -192,9 +207,9 @@ void CubedSphereProjectionBase::tile3RotateInverse( double xyz[] ) const {
   //  Face 3: rotate  90.0 degrees about x axis
   //          rotate -90.0 degrees about z axis
   double angle;
-  angle = M_PI / 2.0;
-  ProjectionUtilities::rotate3dX(angle, xyz);
   angle = -M_PI / 2.0;
+  ProjectionUtilities::rotate3dX(angle, xyz);
+  angle = M_PI / 2.0;
   ProjectionUtilities::rotate3dZ(angle, xyz);
 }
 
@@ -204,9 +219,9 @@ void CubedSphereProjectionBase::tile4RotateInverse( double xyz[] ) const {
   //  Face 4: rotate   90.0 degrees about x axis
   //          rotate -180.0 degrees about z axis
   double angle;
-  angle = M_PI / 2.0;
+  angle = -M_PI / 2.0;
   ProjectionUtilities::rotate3dX(angle, xyz);
-  angle = -M_PI;
+  angle = M_PI;
   ProjectionUtilities::rotate3dZ(angle, xyz);
 }
 
