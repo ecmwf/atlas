@@ -29,9 +29,7 @@ namespace interpolation {
 namespace method {
 
 
-namespace {
-MethodBuilder<GridBoxMaximum> __builder( "grid-box-maximum" );
-}
+static MethodBuilder<GridBoxMaximum> __builder( "grid-box-maximum" );
 
 
 void GridBoxMaximum::do_execute( const FieldSet& source, FieldSet& target ) const {

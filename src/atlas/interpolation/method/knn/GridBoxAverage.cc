@@ -26,9 +26,7 @@ namespace interpolation {
 namespace method {
 
 
-namespace {
-MethodBuilder<GridBoxAverage> __builder( "grid-box-average" );
-}
+static MethodBuilder<GridBoxAverage> __builder( "grid-box-average" );
 
 
 void GridBoxAverage::do_execute( const FieldSet& source, FieldSet& target ) const {
