@@ -492,8 +492,8 @@ namespace test
         PointLonLat ll1 = PointLonLat (lonlat_arp_t32c24[2*jglo+0], lonlat_arp_t32c24[2*jglo+1]);
         atlas::util::UnitSphere::convertSphericalToCartesian (ll1, p1);
         atlas::util::UnitSphere::convertSphericalToCartesian (ll2, p2);
-        eckit::types::is_approximately_equal (ll1.lon (), ll2.lon (), 0.001);
-        eckit::types::is_approximately_equal (ll1.lat (), ll2.lat (), 0.001);
+        EXPECT( is_approximately_equal(ll1.lon (), ll2.lon (), 0.001) );
+        EXPECT( is_approximately_equal(ll1.lat (), ll2.lat (), 0.001) );
       }
 
 
