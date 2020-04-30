@@ -75,7 +75,7 @@ public:
 
     /// @brief find the polygon that holds the point (lon,lat)
     idx_t operator()( const Point2& point ) const {
-        const auto found = kdtree_.kNearestNeighbours( point, k_ );
+        const auto found = kdtree_.closestPoints( point, k_ );
         idx_t partition{-1};
         for ( size_t i = 0; i < found.size(); ++i ) {
             idx_t ii = found[i].payload();
@@ -135,7 +135,7 @@ private:
     const PolygonCoordinates::Vector& polygons_;
     Projection projection_;
     idx_t k_{4};
-    KDTree<idx_t> kdtree_;
+    IndexKDTree kdtree_;
 };
 
 //------------------------------------------------------------------------------------------------------

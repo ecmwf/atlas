@@ -53,8 +53,12 @@ int atlas_omp_get_num_threads( void ) {
     if ( omp_get_num_threads ) {
         return omp_get_num_threads();
     }
-#endif
+    else {
+        return 1;
+    }
+#else
     return 1;
+#endif
 }
 
 int atlas_omp_get_max_threads( void ) {
@@ -62,8 +66,12 @@ int atlas_omp_get_max_threads( void ) {
     if ( omp_get_max_threads ) {
         return omp_get_max_threads();
     }
-#endif
+    else {
+        return 1;
+    }
+#else
     return 1;
+#endif
 }
 
 int atlas_omp_get_thread_num( void ) {
@@ -71,8 +79,12 @@ int atlas_omp_get_thread_num( void ) {
     if ( omp_get_thread_num ) {
         return omp_get_thread_num();
     }
-#endif
+    else {
+        return 0;
+    }
+#else
     return 0;
+#endif
 }
 
 int atlas_omp_get_num_procs( void ) {
@@ -80,8 +92,12 @@ int atlas_omp_get_num_procs( void ) {
     if ( omp_get_num_procs ) {
         return omp_get_num_procs();
     }
-#endif
+    else {
+        return 1;
+    }
+#else
     return 1;
+#endif
 }
 
 int atlas_omp_in_parallel( void ) {
@@ -89,8 +105,12 @@ int atlas_omp_in_parallel( void ) {
     if ( omp_in_parallel ) {
         return omp_in_parallel();
     }
-#endif
+    else {
+        return 0;
+    }
+#else
     return 0;
+#endif
 }
 
 void atlas_omp_set_dynamic( int dynamic_threads ) {
@@ -106,8 +126,12 @@ int atlas_omp_get_dynamic( void ) {
     if ( omp_get_dynamic ) {
         return omp_get_dynamic();
     }
-#endif
+    else {
+        return 0;
+    }
+#else
     return 0;
+#endif
 }
 
 void atlas_omp_set_nested( int nested ) {
@@ -123,6 +147,10 @@ int atlas_omp_get_nested( void ) {
     if ( omp_get_nested ) {
         return omp_get_nested();
     }
-#endif
+    else {
+        return 0;
+    }
+#else
     return 0;
+#endif
 }

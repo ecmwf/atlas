@@ -60,6 +60,7 @@ protected:
     virtual const FunctionSpace& target() const override { return target_; }
 
 private:
+    using Method::do_setup;
     virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) override;
 
     virtual void do_setup( const Grid& source, const Grid& target ) override;

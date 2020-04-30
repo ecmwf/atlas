@@ -454,8 +454,7 @@ const util::PartitionPolygon& StructuredColumns::polygon( idx_t halo ) const {
     return *polygon_;
 }
 
-
-const atlas::util::PartitionPolygons& StructuredColumns::polygons() const {
+const util::PartitionPolygons& StructuredColumns::polygons() const {
     if ( polygons_.size() ) {
         return polygons_;
     }

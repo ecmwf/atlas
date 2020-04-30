@@ -30,18 +30,24 @@ namespace array {
 
 template <typename Value, int Rank>
 class ArrayView {
+    template <typename T>
+    using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<Value>::type>;
+
+#define ENABLE_IF_NON_CONST                                                                               \
+    template <bool EnableBool                                                                     = true, \
+              typename std::enable_if<( !std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
+
+#define ENABLE_IF_CONST_WITH_NON_CONST( T )                                                                 \
+    template <typename T,                                                                                   \
+              typename std::enable_if<( std::is_const<Value>::value && is_non_const_value_type<T>::value ), \
+                                      int>::type* = nullptr>
+
 public:
     // -- Type definitions
     using value_type                   = Value;
     using non_const_value_type         = typename std::remove_const<Value>::type;
     static constexpr bool is_const     = std::is_const<Value>::value;
     static constexpr bool is_non_const = !std::is_const<Value>::value;
-#define ENABLE_IF_CONST                                                                                  \
-    template <bool EnableBool                                                                    = true, \
-              typename std::enable_if<( std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
-#define ENABLE_IF_NON_CONST                                                                               \
-    template <bool EnableBool                                                                     = true, \
-              typename std::enable_if<( !std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
 
     //    static constexpr Intent ACCESS{AccessMode};
     static constexpr int RANK{Rank};
@@ -68,8 +74,8 @@ public:
     ArrayView( const ArrayView& other );
     ArrayView( const Array& array, bool device_view );
 
-    ENABLE_IF_CONST
-    ArrayView( const ArrayView<non_const_value_type, Rank>& other ) :
+    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
+    ArrayView( const ArrayView<value_type, Rank>& other ) :
         gt_data_view_( other.is_device_view_ ? gridtools::make_gt_device_view<Value, Rank>( *other.array_ )
                                              : gridtools::make_gt_host_view<Value, Rank>( *other.array_ ) ),
         data_store_orig_( other.data_store_orig_ ),
@@ -81,9 +87,8 @@ public:
         // TODO: check compatibility
     }
 
-    operator const ArrayView<non_const_value_type, Rank>&() const {
-        return *(const ArrayView<non_const_value_type, Rank>*)( this );
-    }
+    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
+    operator const ArrayView<value_type, Rank>&() const { return *(const ArrayView<value_type, Rank>*)( this ); }
 
     value_type* data() { return gt_data_view_.data(); }
     value_type const* data() const { return gt_data_view_.data(); }
@@ -178,11 +183,11 @@ private:
     ArrayDataStore const* data_store_orig_;
     Array const* array_;
     bool is_device_view_{false};
+#undef ENABLE_IF_NON_CONST
+#undef ENABLE_IF_CONST_WITH_NON_CONST
 };
 
 //------------------------------------------------------------------------------------------------------
 
 }  // namespace array
 }  // namespace atlas
-#undef ENABLE_IF_NON_CONST
-#undef ENABLE_IF_CONST

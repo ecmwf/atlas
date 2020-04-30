@@ -43,9 +43,11 @@ void load_builder() {
     StateGeneratorBuilder<T>( "tmp" );
 }
 
-struct force_link {
-    force_link() = default;
-};
+void force_link() {
+    static struct Link { Link() = default; } link;
+    []( const Link& ) {}( link );  // disable unused warnings
+}
+
 }  // namespace
 
 void State::initialize( const std::string& generator, const eckit::Parametrisation& params ) {
@@ -151,7 +153,7 @@ StateGenerator* StateGeneratorFactory::build( const std::string& name, const eck
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    static force_link static_linking;
+    force_link();
 
     std::map<std::string, StateGeneratorFactory*>::const_iterator j = m->find( name );
 
@@ -174,7 +176,7 @@ void StateGeneratorFactory::list( std::ostream& out ) {
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    static force_link static_linking;
+    force_link();
 
     const char* sep = "";
     for ( std::map<std::string, StateGeneratorFactory*>::const_iterator j = m->begin(); j != m->end(); ++j ) {
@@ -188,7 +190,7 @@ bool StateGeneratorFactory::has( const std::string& name ) {
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
-    static force_link static_linking;
+    force_link();
 
     return ( m->find( name ) != m->end() );
 }

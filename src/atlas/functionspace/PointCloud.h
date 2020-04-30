@@ -39,9 +39,9 @@ public:
     virtual operator bool() const override { return true; }
     virtual size_t footprint() const override { return sizeof( *this ); }
     virtual std::string distribution() const override;
-    const Field& lonlat() const { return lonlat_; }
+    Field lonlat() const override { return lonlat_; }
     const Field& vertical() const { return vertical_; }
-    const Field& ghost() const;
+    Field ghost() const override;
     virtual idx_t size() const override { return lonlat_.shape( 0 ); }
 
     using FunctionSpaceImpl::createField;
@@ -167,9 +167,7 @@ public:
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
 
-    const Field& lonlat() const { return functionspace_->lonlat(); }
     const Field& vertical() const { return functionspace_->vertical(); }
-    const Field& ghost() const { return functionspace_->ghost(); }
 
     detail::PointCloud::Iterate iterate() const { return functionspace_->iterate(); }
 

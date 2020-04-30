@@ -73,11 +73,12 @@ public:
 
     idx_t size() const { return static_cast<idx_t>( gp_.size() ); }
 
-    using const_iterator = decltype( gp_ )::const_iterator;
-
-    const_iterator begin() const { return gp_.begin(); }
-    const_iterator end() const { return gp_.end(); }
     const GridPoint& operator[]( idx_t i ) const { return gp_[i]; }
+
+    // unused:
+    //using const_iterator = decltype( gp_ )::const_iterator;
+    //const_iterator begin() const { return gp_.begin(); }
+    //const_iterator end() const { return gp_.end(); }
 };
 
 }  // namespace
