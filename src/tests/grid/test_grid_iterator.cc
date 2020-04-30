@@ -15,6 +15,7 @@
 #include "eckit/types/FloatCompare.h"
 #include "eckit/types/Fraction.h"
 
+#include "atlas/domain/detail/ZonalBandDomain.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/grid/UnstructuredGrid.h"
@@ -112,6 +113,8 @@ CASE( "ATLAS-276" ) {
     // Tolerance might be suitable
     EXPECT( is_approximately_equal( y.front(), 90. ) );
     EXPECT( is_approximately_equal( y.back(), -90. ) );
+
+    EXPECT( domain::ZonalBandDomain::is_global( {y.front(), y.back()} ) );
 
     // Tolerance isn't suitable
     EXPECT( !( y.front() > 90. ) );
