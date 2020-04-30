@@ -109,14 +109,21 @@ CASE( "ATLAS-276" ) {
     EXPECT( N == 217 );
 
     StructuredGrid::YSpace y( grid::LinearSpacing( n, s, N ) );
+    Log::info() << "y.front() = " << std::setprecision(20) << y.front() << std::endl;
+    Log::info() << "y.back() = " << std::setprecision(20) << y.back() << std::endl;
 
-    // Tolerance might be suitable
+    // The true check that matters
+    EXPECT( domain::ZonalBandDomain::is_global( {y.front(), y.back()} ) );
+
+    // Tolerance is suitable
     EXPECT( is_approximately_equal( y.front(), 90. ) );
     EXPECT( is_approximately_equal( y.back(), -90. ) );
 
-    EXPECT( domain::ZonalBandDomain::is_global( {y.front(), y.back()} ) );
+    // Fraction is suitable
+    EXPECT( Fraction( y.front() ) == n );
+    EXPECT( Fraction( y.back() ) == s );
 
-    // Tolerance isn't suitable
+    // Direct comparison is not suitable
     EXPECT( !( y.front() > 90. ) );
     EXPECT( !( y.back() < -90. ) );
 }
