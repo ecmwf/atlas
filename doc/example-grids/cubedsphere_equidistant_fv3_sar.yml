@@ -1,10 +1,13 @@
 type   : "cubedsphere_equidistant_fv3"
 CubeNx : 12
-ShiftLon: -10
+DoSchmidt: true
+StretchFac: 3
+TargetLon: -45.5
+TargetLat: 90.0
 
 check :
   size : 866
-  lonlat(first) : [305,-35.2644]
-  lonlat(last)  : [35, -41.5996]
+  lonlat(first) : [359.5,70.4205]
+  lonlat(last)  : [269.5,72.9601]
   uid : 22b8637a8f74ddba0ebe598c661e18b7
   bounding_box(n,w,s,e) : [90,0,-90,360]

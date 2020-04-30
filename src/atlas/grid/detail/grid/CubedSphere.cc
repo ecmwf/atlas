@@ -199,7 +199,33 @@ public:
     util::Config projconf;
     projconf.set("type", "cubedsphere_equiangular");
     projconf.set("CubeNx", CubeNx);
-    return new CubedSphereGrid::grid_t( "CSEA" + std::to_string( CubeNx ), CubeNx, Projection( projconf ) );
+
+    // Shift projection by a longitude
+    double shiftLon = 0.0;
+    if (config.has("ShiftLon")) {
+      config.get("ShiftLon", shiftLon);
+      projconf.set("ShiftLon", shiftLon);
+    };
+
+    // Apply a Shmidt transform
+    bool doSchmidt = false;
+    double stretchFac;
+    double targetLon;
+    double targetLat;
+    if (config.has("DoSchmidt")) {
+      config.get("DoSchmidt", doSchmidt);
+      if (doSchmidt) {
+        config.get("StretchFac", stretchFac);
+        config.get("TargetLon", targetLon);
+        config.get("TargetLat", targetLat);
+        projconf.set("DoSchmidt", doSchmidt);
+        projconf.set("StretchFac", stretchFac);
+        projconf.set("TargetLon", targetLon);
+        projconf.set("TargetLat", targetLat);
+      }
+    };
+
+    return new CubedSphereGrid::grid_t( "CS-EA-" + std::to_string( CubeNx ), CubeNx, Projection( projconf ) );
   }
 
   void force_link() {}
@@ -235,7 +261,33 @@ public:
     util::Config projconf;
     projconf.set("type", "cubedsphere_equidistant");
     projconf.set("CubeNx", CubeNx);
-    return new CubedSphereGrid::grid_t( "CSED" + std::to_string( CubeNx ), CubeNx, Projection( projconf ) );
+
+    // Shift projection by a longitude
+    double shiftLon = 0.0;
+    if (config.has("ShiftLon")) {
+      config.get("ShiftLon", shiftLon);
+      projconf.set("ShiftLon", shiftLon);
+    };
+
+    // Apply a Shmidt transform
+    bool doSchmidt = false;
+    if (config.has("DoSchmidt")) {
+      config.get("DoSchmidt", doSchmidt);
+      if (doSchmidt) {
+        double stretchFac;
+        double targetLon;
+        double targetLat;
+        config.get("StretchFac", stretchFac);
+        config.get("TargetLon", targetLon);
+        config.get("TargetLat", targetLat);
+        projconf.set("DoSchmidt", doSchmidt);
+        projconf.set("StretchFac", stretchFac);
+        projconf.set("TargetLon", targetLon);
+        projconf.set("TargetLat", targetLat);
+      }
+    };
+
+    return new CubedSphereGrid::grid_t( "CS-ED-" + std::to_string( CubeNx ), CubeNx, Projection( projconf ) );
   }
 
   void force_link() {}
@@ -271,7 +323,33 @@ public:
     util::Config projconf;
     projconf.set("type", "cubedsphere_equidistant_fv3");
     projconf.set("CubeNx", CubeNx);
-    return new CubedSphereGrid::grid_t( "CSED" + std::to_string( CubeNx ), CubeNx, Projection( projconf ) );
+
+    // Shift projection by a longitude
+    double shiftLon = 0.0;
+    if (config.has("ShiftLon")) {
+      config.get("ShiftLon", shiftLon);
+      projconf.set("ShiftLon", shiftLon);
+    };
+
+    // Apply a Shmidt transform
+    bool doSchmidt = false;
+    if (config.has("DoSchmidt")) {
+      config.get("DoSchmidt", doSchmidt);
+      if (doSchmidt) {
+        double stretchFac;
+        double targetLon;
+        double targetLat;
+        config.get("StretchFac", stretchFac);
+        config.get("TargetLon", targetLon);
+        config.get("TargetLat", targetLat);
+        projconf.set("DoSchmidt", doSchmidt);
+        projconf.set("StretchFac", stretchFac);
+        projconf.set("TargetLon", targetLon);
+        projconf.set("TargetLat", targetLat);
+      }
+    };
+
+    return new CubedSphereGrid::grid_t( "CS-FV3-" + std::to_string( CubeNx ), CubeNx, Projection( projconf ) );
   }
 
   void force_link() {}

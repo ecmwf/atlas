@@ -78,10 +78,19 @@ class CubedSphereProjectionBase {
 
     int getCubeNx() const { return cubeNx_; };
 
+    void schmidtTransform(double, double, double, double[]) const;
+
   private:
     int cubeNx_;
     std::unique_ptr<ArrayLatLon_> tile1LonsArray_;
     std::unique_ptr<ArrayLatLon_> tile1LatsArray_;
+    // Shift entire grid
+    double shiftLon_;
+    // Schmidt transform
+    bool doSchmidt_;
+    double stretchFac_;
+    double targetLon_;
+    double targetLat_;
 };
 
 }  // namespace detail

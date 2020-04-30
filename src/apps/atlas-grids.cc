@@ -87,7 +87,7 @@ struct AtlasGrids : public atlas::AtlasTool {
                "       Browse catalogue of grids\n"
                "\n"
                "       GRID: unique identifier for grid \n"
-               "           Example values: N80, F40, O24, L32, CSED12\n";
+               "           Example values: N80, F40, O24, L32, CS-ED-12\n";
     }
 
     AtlasGrids( int argc, char** argv ) : AtlasTool( argc, argv ) {

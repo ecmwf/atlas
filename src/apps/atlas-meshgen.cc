@@ -63,7 +63,7 @@ class Meshgen2Gmsh : public AtlasTool {
     std::string longDescription() override {
         return "    The 'GRID' argument can be either the name of a named grid, orthe path to a"
                " YAML configuration file that describes the grid.\n"
-               "Example values for grid names are: N80, F40, O24, L64x33, CSED12. See the program "
+               "Example values for grid names are: N80, F40, O24, L64x33, CS-ED-12. See the program "
                "'atlas-grids' for a list of named grids.\n"
                "\n"
                "    The optional 'OUTPUT' argument contains the path to the output file. "
@@ -91,7 +91,7 @@ private:
 
 Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
     add_option( new SimpleOption<std::string>(
-        "grid.name", "Grid unique identifier\n" + indent() + "     Example values: N80, F40, O24, L32, CSED12" ) );
+        "grid.name", "Grid unique identifier\n" + indent() + "     Example values: N80, F40, O24, L32, CS-ED-12" ) );
     add_option( new SimpleOption<PathName>( "grid.json", "Grid described by json file" ) );
     add_option( new SimpleOption<double>( "angle", "Maximum element-edge slant deviation from meridian in degrees. \n" +
                                                        indent() + "     Value range between 0 and 30\n" + indent() +
