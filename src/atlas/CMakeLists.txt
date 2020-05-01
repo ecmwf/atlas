@@ -585,6 +585,7 @@ util/Earth.cc
 util/Earth.h
 util/GaussianLatitudes.cc
 util/GaussianLatitudes.h
+util/Geometry.h
 util/KDTree.h
 util/PolygonXY.cc
 util/PolygonXY.h
@@ -605,6 +606,7 @@ util/VectorOfAbstract.h
 util/detail/BlackMagic.h
 util/detail/Cache.h
 util/detail/Debug.h
+util/detail/KDTree.h
 )
 
 list( APPEND atlas_internals_srcs

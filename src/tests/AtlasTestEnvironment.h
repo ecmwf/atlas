@@ -84,15 +84,16 @@ using eckit::types::is_approximately_equal;
 #ifdef EXPECT_EQ
 #undef EXPECT_EQ
 #endif
-#define EXPECT_EQ( lhs, rhs )                                                                                \
-    do {                                                                                                     \
-        if ( !( lhs == rhs ) ) {                                                                             \
-            throw eckit::testing::TestException( "EXPECT condition failed: " #lhs " == " #rhs                \
-                                                 "\n"                                                        \
-                                                 " --> " +                                                   \
-                                                     std::to_string( lhs ) + " != " + std::to_string( rhs ), \
-                                                 Here() );                                                   \
-        }                                                                                                    \
+#define EXPECT_EQ( lhs, rhs )                                                                      \
+    do {                                                                                           \
+        if ( !( lhs == rhs ) ) {                                                                   \
+            using namespace std;                                                                   \
+            throw eckit::testing::TestException( "EXPECT condition failed: " #lhs " == " #rhs      \
+                                                 "\n"                                              \
+                                                 " --> " +                                         \
+                                                     to_string( lhs ) + " != " + to_string( rhs ), \
+                                                 Here() );                                         \
+        }                                                                                          \
     } while ( false )
 
 //----------------------------------------------------------------------------------------------------------------------

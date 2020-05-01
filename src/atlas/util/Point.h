@@ -72,6 +72,7 @@ class PointXYZ : public eckit::geometry::Point3 {
 
 public:
     using Point3::Point3;
+    using Point3::x;
 
     PointXYZ() : Point3() {}
 

@@ -15,6 +15,7 @@
 #include "eckit/utils/MD5.h"
 
 #include "atlas/array/MakeView.h"
+#include "atlas/field/detail/FieldImpl.h"
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/HybridElements.h"
@@ -555,6 +556,10 @@ const parallel::Checksum& EdgeColumns::checksum() const {
     }
     checksum_ = EdgeColumnsChecksumCache::instance().get_or_create( mesh_ );
     return *checksum_;
+}
+
+Field EdgeColumns::lonlat() const {
+    return mesh_.edges().field( "lonlat" );
 }
 
 //------------------------------------------------------------------------------

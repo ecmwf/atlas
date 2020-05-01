@@ -96,20 +96,24 @@ namespace array {
 
 template <typename Value, int Rank>
 class ArrayView {
+    template <typename T>
+    using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<Value>::type>;
+
+#define ENABLE_IF_NON_CONST                                                                               \
+    template <bool EnableBool                                                                     = true, \
+              typename std::enable_if<( !std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
+
+#define ENABLE_IF_CONST_WITH_NON_CONST( T )                                                                 \
+    template <typename T,                                                                                   \
+              typename std::enable_if<( std::is_const<Value>::value && is_non_const_value_type<T>::value ), \
+                                      int>::type* = nullptr>
+
 public:
     // -- Type definitions
     using value_type                   = Value;
     using non_const_value_type         = typename std::remove_const<Value>::type;
     static constexpr bool is_const     = std::is_const<Value>::value;
     static constexpr bool is_non_const = !std::is_const<Value>::value;
-#define ENABLE_IF_CONST                                                                                  \
-    template <bool EnableBool                                                                    = true, \
-              typename std::enable_if<( std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
-#define ENABLE_IF_NON_CONST                                                                               \
-    template <bool EnableBool                                                                     = true, \
-              typename std::enable_if<( !std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
-
-    //    static constexpr Intent ACCESS{AccessMode};
     static constexpr int RANK{Rank};
 
 private:
@@ -132,8 +136,8 @@ public:
     ArrayView( const ArrayView& other ) :
         data_( other.data_ ), size_( other.size_ ), shape_( other.shape_ ), strides_( other.strides_ ) {}
 
-    ENABLE_IF_CONST
-    ArrayView( const ArrayView<non_const_value_type, Rank>& other ) : data_( other.data() ), size_( other.size() ) {
+    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
+    ArrayView( const ArrayView<value_type, Rank>& other ) : data_( other.data() ), size_( other.size() ) {
         for ( idx_t j = 0; j < Rank; ++j ) {
             shape_[j]   = other.shape( j );
             strides_[j] = other.stride( j );
@@ -152,9 +156,8 @@ public:
     }
 #endif
 
-    operator const ArrayView<non_const_value_type, Rank>&() const {
-        return *(const ArrayView<non_const_value_type, Rank>*)( this );
-    }
+    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
+    operator const ArrayView<value_type, Rank>&() const { return *(const ArrayView<value_type, Rank>*)( this ); }
 
 
     // -- Access methods
@@ -369,8 +372,8 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-#undef ENABLE_IF_CONST
 #undef ENABLE_IF_NON_CONST
+#undef ENABLE_IF_CONST_WITH_NON_CONST
 
 }  // namespace array
 }  // namespace atlas

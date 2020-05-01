@@ -81,6 +81,10 @@ public:
 
     virtual const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
 
+    virtual atlas::Field lonlat() const;
+
+    virtual atlas::Field ghost() const;
+
     virtual const util::PartitionPolygons& polygons() const;
 
     virtual const Projection& projection() const;
