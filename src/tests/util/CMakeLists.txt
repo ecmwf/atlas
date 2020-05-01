@@ -38,16 +38,9 @@ if( HAVE_FCTEST )
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 
-  add_fctest( TARGET atlas_fctest_earth
+  add_fctest( TARGET atlas_fctest_geometry
     LINKER_LANGUAGE Fortran
-    SOURCES         fctest_earth.F90
-    LIBS            atlas_f
-    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  )
-
-  add_fctest( TARGET atlas_fctest_unit_sphere
-    LINKER_LANGUAGE Fortran
-    SOURCES         fctest_unit_sphere.F90
+    SOURCES         fctest_geometry.F90
     LIBS            atlas_f
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )

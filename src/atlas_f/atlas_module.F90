@@ -39,10 +39,8 @@ use atlas_Point_module, only: &
     & atlas_PointXY, &
     & atlas_PointXYZ, &
     & atlas_PointLonLat
-use atlas_Earth_module, only: &
-    & atlas_Earth
-use atlas_UnitSphere_module, only: &
-    & atlas_UnitSphere
+use atlas_Geometry_module, only: &
+    & atlas_Geometry
 use atlas_HybridElements_module, only: &
     & atlas_HybridElements
 use atlas_mesh_Edges_module, only: &

@@ -581,10 +581,10 @@ runtime/Exception.h
 util/Config.cc
 util/Config.h
 util/Constants.h
-util/Earth.cc
 util/Earth.h
 util/GaussianLatitudes.cc
 util/GaussianLatitudes.h
+util/Geometry.cc
 util/Geometry.h
 util/KDTree.h
 util/PolygonXY.cc
@@ -599,7 +599,6 @@ util/Rotation.cc
 util/Rotation.h
 util/SphericalPolygon.cc
 util/SphericalPolygon.h
-util/UnitSphere.cc
 util/UnitSphere.h
 util/vector.h
 util/VectorOfAbstract.h
