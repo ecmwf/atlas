@@ -25,6 +25,7 @@ foreach(test
         test_stretchedrotatedgaussian
         test_grid_cropping
         test_vertical
+        test_spacing
         test_state
         test_grid_hash)
 

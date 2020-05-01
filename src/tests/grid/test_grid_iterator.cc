@@ -12,10 +12,6 @@
 #include <iomanip>
 #include <sstream>
 
-#include "eckit/types/FloatCompare.h"
-#include "eckit/types/Fraction.h"
-
-#include "atlas/domain/detail/ZonalBandDomain.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/grid/UnstructuredGrid.h"
@@ -90,42 +86,6 @@ CASE( "test_iterator" ) {
         EXPECT( *( grid.lonlat().begin() + grid.size() / 2 ) == PointLonLat( 180., 0. ) );
         EXPECT( grid.lonlat().begin() + grid.size() == grid.lonlat().end() );
     }
-}
-
-//-----------------------------------------------------------------------------
-
-CASE( "ATLAS-276" ) {
-    using eckit::Fraction;
-    using eckit::types::is_approximately_equal;
-
-    Fraction n( 90. );
-    Fraction s( -90. );
-    Fraction sn( 5, 6 );
-
-    Fraction N_as_fraction = ( ( n - s ) / sn ) + 1;
-    EXPECT( N_as_fraction.integer() );
-
-    long N = N_as_fraction.integralPart();
-    EXPECT( N == 217 );
-
-    StructuredGrid::YSpace y( grid::LinearSpacing( n, s, N ) );
-    Log::info() << "y.front() = " << std::setprecision(20) << y.front() << std::endl;
-    Log::info() << "y.back() = " << std::setprecision(20) << y.back() << std::endl;
-
-    // The true check that matters
-    EXPECT( domain::ZonalBandDomain::is_global( {y.front(), y.back()} ) );
-
-    // Tolerance is suitable
-    EXPECT( is_approximately_equal( y.front(), 90. ) );
-    EXPECT( is_approximately_equal( y.back(), -90. ) );
-
-    // Fraction is suitable
-    EXPECT( Fraction( y.front() ) == n );
-    EXPECT( Fraction( y.back() ) == s );
-
-    // Direct comparison is not suitable
-    EXPECT( !( y.front() > 90. ) );
-    EXPECT( !( y.back() < -90. ) );
 }
 
 //-----------------------------------------------------------------------------
