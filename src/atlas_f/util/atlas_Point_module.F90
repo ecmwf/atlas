@@ -99,10 +99,10 @@ contains
   procedure :: assign => PointLonLat__assign
   procedure :: lon => PointLonLat__lon
   procedure :: lat => PointLonLat__lat
-  procedure :: normalise_ => PointLonLat__normalise
+  procedure :: normalise_only => PointLonLat__normalise_only
   procedure :: normalise_west => PointLonLat__normalise_west
   procedure :: normalise_west_east => PointLonLat__normalise_west_east
-  generic :: normalise => normalise_, normalise_west, normalise_west_east
+  generic :: normalise => normalise_only, normalise_west, normalise_west_east
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_PointLonLat__final_auto
 #endif
@@ -112,16 +112,19 @@ END TYPE atlas_PointLonLat
 !------------------------------------------------------------------------------
 
 interface atlas_PointXY
+  module procedure atlas_PointXY__cptr
   module procedure atlas_PointXY__ctor
   module procedure atlas_PointXY__ctor_xy
 end interface
 
 interface atlas_PointXYZ
+  module procedure atlas_PointXYZ__cptr
   module procedure atlas_PointXYZ__ctor
   module procedure atlas_PointXYZ__ctor_xyz
 end interface
 
 interface atlas_PointLonLat
+  module procedure atlas_PointLonLat__cptr
   module procedure atlas_PointLonLat__ctor
   module procedure atlas_PointLonLat__ctor_lonlat
 end interface
@@ -136,6 +139,13 @@ contains
 
 ! -----------------------------------------------------------------------------
 ! PointXY routines
+
+function atlas_PointXY__cptr(cptr) result(this)
+  use, intrinsic :: iso_c_binding, only: c_ptr
+  type(atlas_PointXY) :: this
+  type(c_ptr), intent(in) :: cptr
+  call this%reset_c_ptr( cptr )
+end function atlas_PointXY__cptr
 
 function atlas_PointXY__ctor() result(this)
   use atlas_point_c_binding
@@ -197,6 +207,13 @@ end subroutine PointXY__assign
 
 ! -----------------------------------------------------------------------------
 ! PointXYZ routines
+
+function atlas_PointXYZ__cptr(cptr) result(this)
+  use, intrinsic :: iso_c_binding, only: c_ptr
+  type(atlas_PointXYZ) :: this
+  type(c_ptr), intent(in) :: cptr
+  call this%reset_c_ptr( cptr )
+end function atlas_PointXYZ__cptr
 
 function atlas_PointXYZ__ctor() result(this)
   use atlas_point_c_binding
@@ -269,21 +286,19 @@ end subroutine PointXYZ__assign
 ! -----------------------------------------------------------------------------
 ! PointLonLat routines
 
+function atlas_PointLonLat__cptr(cptr) result(this)
+  use, intrinsic :: iso_c_binding, only: c_ptr
+  type(atlas_PointLonLat) :: this
+  type(c_ptr), intent(in) :: cptr
+  call this%reset_c_ptr( cptr )
+end function atlas_PointLonLat__cptr
+
 function atlas_PointLonLat__ctor() result(this)
   use atlas_point_c_binding
   use fckit_c_interop_module
   type(atlas_PointLonLat) :: this
   call this%reset_c_ptr( atlas__PointLonLat__new() )
 end function atlas_PointLonLat__ctor
-
-function atlas_PointLonLat__ctor_lonlat(lon, lat) result(this)
-  use atlas_point_c_binding
-  use fckit_c_interop_module
-  type(atlas_PointLonLat) :: this
-  real(c_double), intent(in) :: lon
-  real(c_double), intent(in) :: lat
-  call this%reset_c_ptr( atlas__PointLonLat__new_lonlat(lon, lat) )
-end function atlas_PointLonLat__ctor_lonlat
 
 subroutine atlas_PointLonLat__delete(this)
   use atlas_point_c_binding
@@ -301,6 +316,15 @@ subroutine PointLonLat__print(this, channel)
   type(fckit_logchannel), intent(in) :: channel
   call atlas__PointLonLat__print(this%CPTR_PGIBUG_A,channel%CPTR_PGIBUG_A)
 end subroutine PointLonLat__print
+
+function atlas_PointLonLat__ctor_lonlat(lon, lat) result(this)
+  use atlas_point_c_binding
+  use fckit_c_interop_module
+  type(atlas_PointLonLat) :: this
+  real(c_double), intent(in) :: lon
+  real(c_double), intent(in) :: lat
+  call this%reset_c_ptr( atlas__PointLonLat__new_lonlat(lon, lat) )
+end function atlas_PointLonLat__ctor_lonlat
 
 function PointLonLat__lon(this) result(lon)
   use atlas_point_c_binding
@@ -327,12 +351,12 @@ subroutine PointLonLat__assign(this, lon, lat)
   call atlas__PointLonLat__assign(this%CPTR_PGIBUG_A, lon, lat)
 end subroutine PointLonLat__assign
 
-subroutine PointLonLat__normalise(this)
+subroutine PointLonLat__normalise_only(this)
   use atlas_point_c_binding
   use, intrinsic :: iso_c_binding
   class(atlas_PointLonLat), intent(inout) :: this
   call atlas__PointLonLat__normalise(this%CPTR_PGIBUG_A)
-end subroutine PointLonLat__normalise
+end subroutine PointLonLat__normalise_only
 
 subroutine PointLonLat__normalise_west(this, west)
   use atlas_point_c_binding

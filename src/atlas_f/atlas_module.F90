@@ -41,6 +41,8 @@ use atlas_Point_module, only: &
     & atlas_PointLonLat
 use atlas_Geometry_module, only: &
     & atlas_Geometry
+use atlas_KDTree_module, only: &
+    & atlas_IndexKDTree
 use atlas_HybridElements_module, only: &
     & atlas_HybridElements
 use atlas_mesh_Edges_module, only: &

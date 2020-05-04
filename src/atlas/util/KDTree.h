@@ -174,6 +174,26 @@ using IndexKDTree2D = KDTree<idx_t, Point2>;  // 2D search: implementation is us
 using IndexKDTree3D = KDTree<idx_t, Point3>;  // 3D search: lonlat (2D) to xyz (3D) conversion is done internally
 using IndexKDTree   = IndexKDTree3D;
 
+// ------------------------------------------------------------------
+// C wrapper interfaces to C++ routines
+
+extern "C" {
+IndexKDTree* atlas__IndexKDTree__new();
+IndexKDTree* atlas__IndexKDTree__new_geometry( const Geometry* geometry );
+void atlas__IndexKDTree__delete( IndexKDTree* This );
+void atlas__IndexKDTree__reserve( IndexKDTree* This, idx_t size );
+void atlas__IndexKDTree__insert( IndexKDTree* This, const Point3* p, const idx_t index );
+void atlas__IndexKDTree__build( IndexKDTree* This );
+void atlas__IndexKDTree__closestPoints( IndexKDTree* This, const Point3* p, size_t k,
+                                        Point3*& points, idx_t*& indices, double*& distances );
+void atlas__IndexKDTree__closestPoint( IndexKDTree* This, const Point3* p,
+                                       Point3*& point, idx_t& index, double& distance );
+void atlas__IndexKDTree__closestPointsWithinRadius( IndexKDTree* This, const Point3* p, double radius,
+                                                    Point3*& points, idx_t*& indices, double*& distances,
+                                                    size_t& k );
+Geometry* atlas__IndexKDTree__geometry( IndexKDTree* This );
+}
+
 //------------------------------------------------------------------------------------------------------
 
 }  // namespace util

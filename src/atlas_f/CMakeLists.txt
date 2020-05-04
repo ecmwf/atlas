@@ -129,6 +129,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Metadata.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Config.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Point.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Geometry.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/KDTree.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/detail/GmshIO.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/HaloExchange.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/GatherScatter.h)
@@ -151,6 +152,7 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_allocate_module.F90
         util/atlas_Point_module.F90
         util/atlas_Geometry_module.F90
+        util/atlas_KDTree_module.F90
         output/atlas_output_module.F90
         functionspace/atlas_FunctionSpace_module.F90
         functionspace/atlas_functionspace_EdgeColumns_module.F90
