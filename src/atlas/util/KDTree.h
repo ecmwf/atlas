@@ -48,7 +48,7 @@ namespace util {
 template <typename PayloadT, typename PointT = Point3>
 class KDTree : ObjectHandle<detail::KDTreeBase<PayloadT, PointT>> {
 public:
-    using Handle         = typename ObjectHandle<detail::KDTreeBase<PayloadT, PointT>>::Handle;
+    using Handle         = ObjectHandle<detail::KDTreeBase<PayloadT, PointT>>;
     using Implementation = typename Handle::Implementation;
     using Point          = typename Implementation::Point;
     using Payload        = typename Implementation::Payload;
@@ -109,7 +109,7 @@ public:
     template <typename Longitudes, typename Latitudes, typename Payloads>
     void build( const Longitudes& longitudes, const Latitudes& latitudes, const Payloads& payloads ) {
         get()->build( longitudes, latitudes, payloads );
-    };
+    }
 
     /// @brief Build with spherical points (lon,lat) given separate iterator ranges for longitudes, latitudes, and payloads.
     /// Memory will be reserved with reserve() to match the size
@@ -127,7 +127,7 @@ public:
     template <typename Points, typename Payloads>
     void build( const Points& points, const Payloads& payloads ) {
         get()->build( points, payloads );
-    };
+    }
 
     /// @brief Build with spherical points (lon,lat) given separate iterator ranges for longitudes, latitudes, and payloads.
     /// Memory will be reserved with reserve() to match the size
