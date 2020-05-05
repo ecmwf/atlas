@@ -8,8 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <iostream>
-
 #include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
 
