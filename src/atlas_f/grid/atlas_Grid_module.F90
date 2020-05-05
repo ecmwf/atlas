@@ -535,7 +535,7 @@ function atlas_Grid__spec(this) result(spec)
   use atlas_grid_Grid_c_binding
   class(atlas_Grid), intent(in) :: this
   type(atlas_Config) :: spec
-  call spec%reset_c_ptr( atlas__grid__Grid__spec(this%CPTR_PGIBUG_A) )
+  spec = atlas_Config( atlas__grid__Grid__spec(this%CPTR_PGIBUG_A) )
   call spec%return ()
 end function
 

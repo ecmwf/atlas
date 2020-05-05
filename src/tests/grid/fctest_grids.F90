@@ -53,6 +53,24 @@ TEST( test_ij2gidx )
   
 END_TEST
 
+TEST( test_spec )
+  use atlas_module
+  implicit none
+  type(atlas_Grid) :: grid
+  type(atlas_Config) :: spec
+
+  grid = atlas_Grid ("O32")
+  spec = grid%spec()
+
+  FCTEST_CHECK_EQUAL( spec%owners(), 1 )
+  FCTEST_CHECK_EQUAL( spec%json(), '{"domain":{"type":"global"},"name":"O32","projection":{"type":"lonlat"}}' )
+
+  call spec%final()
+  call grid%final()
+
+END_TEST
+
+
 ! -----------------------------------------------------------------------------
 
 END_TESTSUITE

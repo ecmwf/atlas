@@ -143,11 +143,9 @@ idx_t atlas__grid__Grid__size( Grid* This ) {
     return This->size();
 }
 
-util::Config * atlas__grid__Grid__spec( Grid* This ) {
+Grid::Spec* atlas__grid__Grid__spec( Grid* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Grid" );
-    util::Config * config = new util::Config ();
-    *config = This->spec();
-    return config;
+    return new Grid::Spec( This->spec() );
 }
 
 }  // namespace grid
