@@ -182,7 +182,7 @@ IndexKDTree* atlas__IndexKDTree__new();
 IndexKDTree* atlas__IndexKDTree__new_geometry( const Geometry* geometry );
 void atlas__IndexKDTree__delete( IndexKDTree* This );
 void atlas__IndexKDTree__reserve( IndexKDTree* This, idx_t size );
-void atlas__IndexKDTree__insert( IndexKDTree* This, const Point3* p, const idx_t index );
+void atlas__IndexKDTree__insert( IndexKDTree* This, Point3* p, idx_t index );
 void atlas__IndexKDTree__build( IndexKDTree* This );
 void atlas__IndexKDTree__closestPoints( IndexKDTree* This, const Point3* p, size_t k,
                                         Point3*& points, idx_t*& indices, double*& distances );

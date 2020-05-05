@@ -10,6 +10,7 @@
 
 #include "eckit/geometry/Point3.h"
 
+#include "atlas/grid.h"
 #include "atlas/util/KDTree.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/detail/KDTree.h"
@@ -37,7 +38,7 @@ void atlas__IndexKDTree__reserve( IndexKDTree* This, idx_t size ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_IndexKDTree" );
     return This->reserve(size);
 }
-void atlas__IndexKDTree__insert( IndexKDTree* This, const Point3* p, const idx_t index ) {
+void atlas__IndexKDTree__insert( IndexKDTree* This, Point3* p, idx_t index ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_IndexKDTree" );
     return This->insert(*p, index);
 }

@@ -138,26 +138,20 @@ implicit none
 
   ! Check closestPoints
   call kdtree_point%closestPoints(p, k, points, indices, distances)
-  write(*,*) 'KDTree index   KDTree distance    Brute force index    Spherical distance'
   do i = 1, k
-    write(*,*) indices(i),distances(i),result_indices(i),result_distances(i)
-  end do
-  stop
-
-  do i = 1, k
-    FCTEST_CHECK_EQUAL( points(i)%lon() , result_lons(i) )
-    FCTEST_CHECK_EQUAL( points(i)%lat() , result_lats(i) )
+    FCTEST_CHECK_CLOSE( points(i)%lon() , result_lons(i), 1.e-12_c_double )
+    FCTEST_CHECK_CLOSE( points(i)%lat() , result_lats(i), 1.e-12_c_double )
     FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
     FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-3_c_double )
   end do
   call kdtree_real%closestPoints(plon, plat, k, lons, lats, indices, distances)
   do i = 1, k
-    FCTEST_CHECK_EQUAL( lons(i) , result_lons(i) )
-    FCTEST_CHECK_EQUAL( lats(i) , result_lats(i) )
+    FCTEST_CHECK_CLOSE( points(i)%lon() , result_lons(i), 1.e-12_c_double )
+    FCTEST_CHECK_CLOSE( points(i)%lat() , result_lats(i), 1.e-12_c_double )
     FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
     FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-3_c_double )
   end do
-
+stop
   ! Check closestPoint
   call kdtree_point%closestPoint(p, points(1), indices(1), distances(1))
   FCTEST_CHECK_EQUAL( points(1)%lon() , result_lons(1) )

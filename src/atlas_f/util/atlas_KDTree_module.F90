@@ -128,9 +128,11 @@ subroutine IndexKDTree__insert_point(this, p, index)
   class(atlas_IndexKDTree), intent(in) :: this
   type(atlas_PointLonLat), intent(in) :: p
   integer(c_int), intent(in) :: index
-  type(atlas_PointLonLat) :: p_tmp
-  p_tmp = atlas_PointLonLat(p%lon(), p%lat())
-  call p_tmp%normalise()
+  type(atlas_Geometry) :: geometry
+  type(atlas_PointXYZ) :: p_tmp
+  geometry = this%geometry()
+  p_tmp = atlas_PointXYZ()
+  call geometry%lonlat2xyz(p, p_tmp)
   call atlas__IndexKDTree__insert(this%CPTR_PGIBUG_A, p_tmp%CPTR_PGIBUG_A, index)
   call p_tmp%final()
 end subroutine IndexKDTree__insert_point
@@ -162,16 +164,10 @@ subroutine IndexKDTree__build_point(this, k, points, indices)
   type(atlas_PointLonLat), intent(in) :: points(k)
   integer(c_int), intent(in) :: indices(k)
   integer(c_int) :: i
-  type(atlas_PointLonLat) :: points_tmp(k)
   do i = 1, k
-    points_tmp(i) = atlas_PointLonLat(points(i)%lon(), points(i)%lat())
-    call points_tmp(i)%normalise()
-    call this%insert(points_tmp(i), indices(i))
+    call this%insert(points(i), indices(i))
   end do
   call this%build()
-  do i = 1, k
-    call points_tmp(i)%final()
-  end do
 end subroutine IndexKDTree__build_point
 
 subroutine IndexKDTree__build_real(this, k, lons, lats, indices)
@@ -200,7 +196,8 @@ subroutine IndexKDTree__closestPoints_point(this, p, k, points, indices, distanc
   integer(c_int), intent(out) :: indices(k)
   real(c_double), intent(out) :: distances(k)
   integer(c_size_t) :: k_tmp
-  type(atlas_PointLonLat) :: p_tmp
+  type(atlas_Geometry) :: geometry
+  type(atlas_PointXYZ) :: p_tmp
   integer(c_int) :: i
   type(c_ptr) :: points_cptr
   type(c_ptr) :: indices_cptr
@@ -209,19 +206,22 @@ subroutine IndexKDTree__closestPoints_point(this, p, k, points, indices, distanc
   integer(c_int), pointer :: indices_fptr(:)
   real(c_double), pointer :: distances_fptr(:)
   k_tmp = int(k, c_size_t)
-  p_tmp = atlas_PointLonLat(p%lon(), p%lat())
-  call p_tmp%normalise()
+  geometry = this%geometry()
+  p_tmp = atlas_PointXYZ()
+  call geometry%lonlat2xyz(p, p_tmp)
   call atlas__IndexKDTree__closestPoints(this%CPTR_PGIBUG_A, p_tmp%CPTR_PGIBUG_A, k_tmp, points_cptr, indices_cptr, &
                                        & distances_cptr)
   call c_f_pointer(points_cptr, points_fptr, (/k/))
   call c_f_pointer(indices_cptr, indices_fptr, (/k/))
   call c_f_pointer(distances_cptr, distances_fptr, (/k/))
-  do i = 1, k
-    p_tmp = atlas_PointLonLat(c_loc(points_fptr(i)))
-    points(i) = atlas_PointLonLat(p_tmp%lon(), p_tmp%lat())
-  end do
   indices(:) = indices_fptr(:)
   distances(:) = distances_fptr(:)
+  do i = 1, k
+    p_tmp = atlas_PointXYZ(c_loc(points_fptr(i)))
+    points(i) = atlas_PointLonLat()
+    call geometry%xyz2lonlat(p_tmp, points(i))
+    call points(i)%normalise()
+  end do
   call c_ptr_free(points_cptr)
   call c_ptr_free(indices_cptr)
   call c_ptr_free(distances_cptr)
