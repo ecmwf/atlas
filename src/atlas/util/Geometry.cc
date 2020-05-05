@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <iostream>
+
 #include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
 
@@ -29,21 +31,32 @@ void atlas__Geometry__delete( Geometry* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Geometry" );
     delete This;
 }
-void atlas__Geometry__xyz2lonlat( Geometry* This, const Point3* xyz, Point2* lonlat ) {
+void atlas__Geometry__xyz2lonlat( Geometry* This, const double x, const double y, const double z,
+                                  double& lon, double& lat ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Geometry" );
-    return This->xyz2lonlat(*xyz, *lonlat);
+    PointLonLat lonlat;
+    This->xyz2lonlat(PointXYZ{x, y, z}, lonlat);
+    lon = lonlat.lon();
+    lat = lonlat.lat();
 }
-void atlas__Geometry__lonlat2xyz( Geometry* This, const Point2* lonlat, Point3* xyz ) {
+void atlas__Geometry__lonlat2xyz( Geometry* This, const double lon, const double lat,
+                                  double& x, double& y, double& z ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Geometry" );
-    return This->lonlat2xyz(*lonlat, *xyz);
+    PointXYZ xyz;
+    This->lonlat2xyz(PointLonLat{lon, lat}, xyz);
+    x = xyz.x();
+    y = xyz.y();
+    z = xyz.z();
 }
-double atlas__Geometry__distance_2( Geometry* This, const Point2* p1, const Point2* p2 ) {
+double atlas__Geometry__distance_lonlat( Geometry* This, const double lon1, const double lat1,
+                                         const double lon2, const double lat2 ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Geometry" );
-    return This->distance(*p1, *p2);
+    return This->distance(PointLonLat{lon1, lat1}, PointLonLat{lon2, lat2});
 }
-double atlas__Geometry__distance_3( Geometry* This, const Point3* p1, const Point3* p2 ) {
+double atlas__Geometry__distance_xyz( Geometry* This, const double x1, const double y1, const double z1,
+                                      const double x2, const double y2, const double z2 ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Geometry" );
-    return This->distance(*p1, *p2);
+    return This->distance(PointXYZ{x1, y1, z1}, PointXYZ{x2, y2, z2});
 }
 double atlas__Geometry__radius( Geometry* This) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Geometry" );

@@ -144,10 +144,14 @@ extern "C" {
 Geometry* atlas__Geometry__new_name( const char* name );
 Geometry* atlas__Geometry__new_radius( const double radius );
 void atlas__Geometry__delete( Geometry* This );
-void atlas__Geometry__xyz2lonlat( Geometry* This, const Point3* xyz, Point2* lonlat );
-void atlas__Geometry__lonlat2xyz( Geometry* This, const Point2* lonlat, Point3* xyz );
-double atlas__Geometry__distance_2( Geometry* This, const Point2* p1, const Point2* p2 );
-double atlas__Geometry__distance_3( Geometry* This, const Point3* p1, const Point3* p2 );
+void atlas__Geometry__xyz2lonlat( Geometry* This, const double x, const double y, const double z,
+                                  double& lon, double& lat );
+void atlas__Geometry__lonlat2xyz( Geometry* This, const double lon, const double lat,
+                                  double& x, double& y, double& z );
+double atlas__Geometry__distance_lonlat( Geometry* This, const double lon1, const double lat1,
+                                         const double lon2, const double lat2 );
+double atlas__Geometry__distance_xyz( Geometry* This, const double x1, const double y1, const double z1,
+                                      const double x2, const double y2, const double z2 );
 double atlas__Geometry__radius( Geometry* This );
 double atlas__Geometry__area( Geometry* This );
 }

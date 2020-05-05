@@ -44,42 +44,37 @@ use fckit_log_module
 use fckit_c_interop_module
 implicit none
 
-  type(atlas_Geometry) :: geometry, geometry_test
-  type(atlas_IndexKDTree) :: kdtree_point, kdtree_real
+  type(atlas_Geometry) :: geometry
+  type(atlas_IndexKDTree) :: kdtree
   type(atlas_StructuredGrid) :: grid
-  integer(c_int) :: n, i, ix, iy, k
-  integer(c_int), allocatable :: tree_indices(:), indices(:), result_indices(:)
-  real(c_double) :: lonlat(2), plon, plat
+  integer(c_int) :: n, i, ix, iy, k, kk
+  integer(c_int), allocatable :: tree_indices(:), indices(:), indices_rad(:), result_indices(:)
+  real(c_double) :: lonlat(2), xyz(3), plon, plat, pxyz(3)
   real(c_double), allocatable :: tree_lons(:), tree_lats(:), tree_distances(:)
   real(c_double), allocatable :: lons(:), lats(:), distances(:)
+  real(c_double), allocatable :: lons_rad(:), lats_rad(:), distances_rad(:)
   real(c_double), allocatable :: result_lons(:), result_lats(:), result_distances(:)
-  type(atlas_PointLonLat) :: p
-  type(atlas_PointLonLat), allocatable :: tree_points(:), points(:), result_points(:)
 
   write(*,*) "test_kdtree for UnitSphere starting"
 
-  ! Define grid and geometry
+  ! Define grid
   grid = atlas_StructuredGrid("O32")
-  geometry = atlas_Geometry("UnitSphere")
 
   ! Allocation
   n = grid%size()
-  allocate(tree_indices(n))
   allocate(tree_lons(n))
   allocate(tree_lats(n))
-  allocate(tree_points(n))
+  allocate(tree_indices(n))
   allocate(tree_distances(n))
   k = 6
-  allocate(result_points(k))
   allocate(result_lons(k))
   allocate(result_lats(k))
   allocate(result_indices(k))
   allocate(result_distances(k))
-  allocate(points(k))
-  allocate(indices(k))
-  allocate(distances(k))
   allocate(lons(k))
   allocate(lats(k))
+  allocate(indices(k))
+  allocate(distances(k))
 
   ! Define tree points
   i = 0
@@ -90,19 +85,24 @@ implicit none
       lonlat = grid%lonlat(ix, iy)
       tree_lons(i) = lonlat(1)
       tree_lats(i) = lonlat(2)
-      tree_points(i) = atlas_PointLonLat(tree_lons(i), tree_lats(i))
     end do
   end do
 
   ! Define test point
   plon = -76.1_c_double
   plat = -33._c_double
-  p = atlas_PointLonLat(plon, plat)
+
+  ! Check constructor with specific geometry
+  geometry = atlas_Geometry("UnitSphere")
+  kdtree = atlas_IndexKDTree(geometry)
+  write(0,*) "kdtree%c_ptr() = ", c_ptr_to_loc(kdtree%CPTR_PGIBUG_A)
 
   ! Define result points
+  call geometry%lonlat2xyz(plon, plat, pxyz(1), pxyz(2), pxyz(3))
   tree_distances = 0.0
   do i = 1, n
-    tree_distances(i) = geometry%distance(p, tree_points(i))
+    call geometry%lonlat2xyz(tree_lons(i), tree_lats(i), xyz(1), xyz(2), xyz(3))
+    tree_distances(i) = sqrt(sum((xyz-pxyz)**2))
   end do
   do i = 1, k
     result_indices(i:i) = minloc(tree_distances)
@@ -110,145 +110,121 @@ implicit none
     tree_distances(result_indices(i)) = huge(c_double)
     result_lons(i) = tree_lons(result_indices(i))
     result_lats(i) = tree_lats(result_indices(i))
-    result_points(i) = atlas_PointLonLat(result_lons(i), result_lats(i))
   end do
 
-  ! Check constructor
-  kdtree_point = atlas_IndexKDTree(geometry)
-  kdtree_real = atlas_IndexKDTree(geometry)
-  write(0,*) "kdtree_point%c_ptr() = ", c_ptr_to_loc(kdtree_point%CPTR_PGIBUG_A)
-  write(0,*) "kdtree_real%c_ptr() = ", c_ptr_to_loc(kdtree_real%CPTR_PGIBUG_A)
-
-  ! Check geometry accessor
-  geometry_test = kdtree_point%geometry()
-  FCTEST_CHECK_EQUAL( geometry_test%radius() , 1.0_c_double )
-
   ! Check reserve
-  call kdtree_point%reserve(n)
+  call kdtree%reserve(n)
 
   ! Check insert
   do i = 1, n
-    call kdtree_point%insert(tree_points(i), tree_indices(i))
-    call kdtree_real%insert(tree_lons(i), tree_lats(i), tree_indices(i))
+    call kdtree%insert(tree_lons(i), tree_lats(i), tree_indices(i))
   end do
 
   ! Check build only
-  call kdtree_point%build()
-  call kdtree_real%build()
+  call kdtree%build()
 
   ! Check closestPoints
-  call kdtree_point%closestPoints(p, k, points, indices, distances)
+  call kdtree%closestPoints(plon, plat, k, lons, lats, indices, distances)
   do i = 1, k
-    FCTEST_CHECK_CLOSE( points(i)%lon() , result_lons(i), 1.e-12_c_double )
-    FCTEST_CHECK_CLOSE( points(i)%lat() , result_lats(i), 1.e-12_c_double )
+    FCTEST_CHECK_CLOSE( lons(i) , result_lons(i), 1.e-12_c_double )
+    FCTEST_CHECK_CLOSE( lats(i) , result_lats(i), 1.e-12_c_double )
     FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
-    FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-3_c_double )
+    FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-12_c_double )
   end do
-  call kdtree_real%closestPoints(plon, plat, k, lons, lats, indices, distances)
-  do i = 1, k
-    FCTEST_CHECK_CLOSE( points(i)%lon() , result_lons(i), 1.e-12_c_double )
-    FCTEST_CHECK_CLOSE( points(i)%lat() , result_lats(i), 1.e-12_c_double )
-    FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
-    FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-3_c_double )
-  end do
-stop
+
   ! Check closestPoint
-  call kdtree_point%closestPoint(p, points(1), indices(1), distances(1))
-  FCTEST_CHECK_EQUAL( points(1)%lon() , result_lons(1) )
-  FCTEST_CHECK_EQUAL( points(1)%lat() , result_lats(1) )
-  FCTEST_CHECK_EQUAL( indices(1) , result_indices(1) )
-  FCTEST_CHECK_CLOSE( distances(1) , result_distances(1) , 1.e-3_c_double )
-  call kdtree_real%closestPoint(plon, plat, lons(1), lats(1), indices(1), distances(1))
+  call kdtree%closestPoint(plon, plat, lons(1), lats(1), indices(1), distances(1))
   FCTEST_CHECK_EQUAL( lons(1) , result_lons(1) )
   FCTEST_CHECK_EQUAL( lats(1) , result_lats(1) )
   FCTEST_CHECK_EQUAL( indices(1) , result_indices(1) )
-  FCTEST_CHECK_CLOSE( distances(1) , result_distances(1) , 1.e-3_c_double )
+  FCTEST_CHECK_CLOSE( distances(1) , result_distances(1) , 1.e-12_c_double )
 
   ! Check closestPoints
-  call kdtree_point%closestPointsWithinRadius(p, 3.5_c_double, points, indices, distances)
-  k = size(points)
-  FCTEST_CHECK_EQUAL( k , 3 )
-  do i = 1, k
-    FCTEST_CHECK_EQUAL( points(i)%lon() , result_lons(i) )
-    FCTEST_CHECK_EQUAL( points(i)%lat() , result_lats(i) )
-    FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
-    FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-3_c_double )
-  end do
-  call kdtree_real%closestPointsWithinRadius(plon, plat, 3.5_c_double, lons, lats, indices, distances)
-  k = size(points)
-  FCTEST_CHECK_EQUAL( k , 3 )
-  do i = 1, k
-    FCTEST_CHECK_EQUAL( lons(i) , result_lons(i) )
-    FCTEST_CHECK_EQUAL( lats(i) , result_lats(i) )
-    FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
-    FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-3_c_double )
+  call kdtree%closestPointsWithinRadius(plon, plat, 5.e-2_c_double, kk, lons_rad, lats_rad, indices_rad, distances_rad)
+  FCTEST_CHECK_EQUAL( kk , 3 )
+  do i = 1, kk
+    FCTEST_CHECK_EQUAL( lons_rad(i) , result_lons(i) )
+    FCTEST_CHECK_EQUAL( lats_rad(i) , result_lats(i) )
+    FCTEST_CHECK_EQUAL( indices_rad(i) , result_indices(i) )
+    FCTEST_CHECK_CLOSE( distances_rad(i) , result_distances(i) , 1.e-12_c_double )
   end do
 
   ! Finalization
   call geometry%final()
-  call kdtree_point%final()
-  call kdtree_real%final()
+  call kdtree%final()
 
   ! Check constructor without geometry (Earth)
-  kdtree_point = atlas_IndexKDTree()
-  kdtree_real = atlas_IndexKDTree()
-  write(0,*) "kdtree_point%c_ptr() = ", c_ptr_to_loc(kdtree_point%CPTR_PGIBUG_A)
-  write(0,*) "kdtree_real%c_ptr() = ", c_ptr_to_loc(kdtree_real%CPTR_PGIBUG_A)
+  kdtree = atlas_IndexKDTree()
+  write(0,*) "kdtree%c_ptr() = ", c_ptr_to_loc(kdtree%CPTR_PGIBUG_A)
 
   ! Check geometry accessor
-  geometry_test = kdtree_point%geometry()
-  FCTEST_CHECK_EQUAL( geometry_test%radius() , 6371229._c_double )
+  geometry = kdtree%geometry()
+  FCTEST_CHECK_EQUAL( geometry%radius() , 6371229._c_double )
 
-  ! Check build with arrays
-  call kdtree_point%build(n, tree_points, tree_indices)
-  call kdtree_real%build(n, tree_lons, tree_lats, tree_indices)
+  ! Define result points
+  call geometry%lonlat2xyz(plon, plat, pxyz(1), pxyz(2), pxyz(3))
+  tree_distances = 0.0
+  do i = 1, n
+    call geometry%lonlat2xyz(tree_lons(i), tree_lats(i), xyz(1), xyz(2), xyz(3))
+    tree_distances(i) = sqrt(sum((xyz-pxyz)**2))
+  end do
+  do i = 1, k
+    result_indices(i:i) = minloc(tree_distances)
+    result_distances(i) = tree_distances(result_indices(i))
+    tree_distances(result_indices(i)) = huge(c_double)
+    result_lons(i) = tree_lons(result_indices(i))
+    result_lats(i) = tree_lats(result_indices(i))
+  end do
+
+  ! Check build with list
+  call kdtree%build(n, tree_lons, tree_lats, tree_indices)
 
   ! Check closestPoints
-  call kdtree_point%closestPoints(p, k, points, indices, distances)
+  call kdtree%closestPoints(plon, plat, k, lons, lats, indices, distances)
   do i = 1, k
-    FCTEST_CHECK_EQUAL( points(i)%lon() , result_lons(i) )
-    FCTEST_CHECK_EQUAL( points(i)%lat() , result_lats(i) )
+    FCTEST_CHECK_CLOSE( lons(i) , result_lons(i), 1.e-12_c_double )
+    FCTEST_CHECK_CLOSE( lats(i) , result_lats(i), 1.e-12_c_double )
     FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
-    FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-3_c_double )
+    FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-12_c_double )
   end do
-  call kdtree_real%closestPoints(plon, plat, k, lons, lats, indices, distances)
-  do i = 1, k
-    FCTEST_CHECK_EQUAL( lons(i) , result_lons(i) )
-    FCTEST_CHECK_EQUAL( lats(i) , result_lats(i) )
-    FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
-    FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-3_c_double )
+
+  ! Check closestPoint
+  call kdtree%closestPoint(plon, plat, lons(1), lats(1), indices(1), distances(1))
+  FCTEST_CHECK_EQUAL( lons(1) , result_lons(1) )
+  FCTEST_CHECK_EQUAL( lats(1) , result_lats(1) )
+  FCTEST_CHECK_EQUAL( indices(1) , result_indices(1) )
+  FCTEST_CHECK_CLOSE( distances(1) , result_distances(1) , 1.e-12_c_double )
+
+  ! Check closestPoints
+  call kdtree%closestPointsWithinRadius(plon, plat, 3.5e5_c_double, kk, lons_rad, lats_rad, indices_rad, distances_rad)
+  FCTEST_CHECK_EQUAL( kk , 4 )
+  do i = 1, kk
+    FCTEST_CHECK_EQUAL( lons_rad(i) , result_lons(i) )
+    FCTEST_CHECK_EQUAL( lats_rad(i) , result_lats(i) )
+    FCTEST_CHECK_EQUAL( indices_rad(i) , result_indices(i) )
+    FCTEST_CHECK_CLOSE( distances_rad(i) , result_distances(i) , 1.e-12_c_double )
   end do
 
   ! Finalization
   call geometry%final()
-  call geometry_test%final()
+  call kdtree%final()
   call grid%final()
-  call kdtree_point%final()
-  call kdtree_real%final()
-  deallocate(tree_indices)
-  deallocate(indices)
-  deallocate(result_indices)
   deallocate(tree_lons)
   deallocate(tree_lats)
+  deallocate(tree_indices)
+  deallocate(tree_distances)
   deallocate(lons)
   deallocate(lats)
+  deallocate(indices)
   deallocate(distances)
+  deallocate(lons_rad)
+  deallocate(lats_rad)
+  deallocate(indices_rad)
+  deallocate(distances_rad)
   deallocate(result_lons)
   deallocate(result_lats)
+  deallocate(result_indices)
   deallocate(result_distances)
-  call p%final()
-  do i = 1, size(tree_points)
-    call tree_points(i)%final()
-  end do
-  deallocate(tree_points)
-  do i = 1, size(points)
-    call points(i)%final()
-  end do
-  deallocate(points)
-  do i = 1, size(result_points)
-    call result_points(i)%final()
-  end do
-  deallocate(result_points)
 
 END_TEST
 ! -----------------------------------------------------------------------------

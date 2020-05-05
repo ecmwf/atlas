@@ -112,19 +112,16 @@ END TYPE atlas_PointLonLat
 !------------------------------------------------------------------------------
 
 interface atlas_PointXY
-  module procedure atlas_PointXY__cptr
   module procedure atlas_PointXY__ctor
   module procedure atlas_PointXY__ctor_xy
 end interface
 
 interface atlas_PointXYZ
-  module procedure atlas_PointXYZ__cptr
   module procedure atlas_PointXYZ__ctor
   module procedure atlas_PointXYZ__ctor_xyz
 end interface
 
 interface atlas_PointLonLat
-  module procedure atlas_PointLonLat__cptr
   module procedure atlas_PointLonLat__ctor
   module procedure atlas_PointLonLat__ctor_lonlat
 end interface
@@ -139,13 +136,6 @@ contains
 
 ! -----------------------------------------------------------------------------
 ! PointXY routines
-
-function atlas_PointXY__cptr(cptr) result(this)
-  use, intrinsic :: iso_c_binding, only: c_ptr
-  type(atlas_PointXY) :: this
-  type(c_ptr), intent(in) :: cptr
-  call this%reset_c_ptr( cptr )
-end function atlas_PointXY__cptr
 
 function atlas_PointXY__ctor() result(this)
   use atlas_point_c_binding
@@ -207,13 +197,6 @@ end subroutine PointXY__assign
 
 ! -----------------------------------------------------------------------------
 ! PointXYZ routines
-
-function atlas_PointXYZ__cptr(cptr) result(this)
-  use, intrinsic :: iso_c_binding, only: c_ptr
-  type(atlas_PointXYZ) :: this
-  type(c_ptr), intent(in) :: cptr
-  call this%reset_c_ptr( cptr )
-end function atlas_PointXYZ__cptr
 
 function atlas_PointXYZ__ctor() result(this)
   use atlas_point_c_binding
@@ -285,13 +268,6 @@ end subroutine PointXYZ__assign
 
 ! -----------------------------------------------------------------------------
 ! PointLonLat routines
-
-function atlas_PointLonLat__cptr(cptr) result(this)
-  use, intrinsic :: iso_c_binding, only: c_ptr
-  type(atlas_PointLonLat) :: this
-  type(c_ptr), intent(in) :: cptr
-  call this%reset_c_ptr( cptr )
-end function atlas_PointLonLat__cptr
 
 function atlas_PointLonLat__ctor() result(this)
   use atlas_point_c_binding
