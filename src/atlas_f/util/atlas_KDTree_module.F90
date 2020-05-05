@@ -129,15 +129,20 @@ subroutine IndexKDTree__build_list(this, k, lons, lats, indices)
   integer(c_int), intent(in) :: k  
   real(c_double), intent(in) :: lons(k)
   real(c_double), intent(in) :: lats(k)
-  integer(c_int), intent(in) :: indices(k)
-  integer(c_int) :: i
+  integer(c_int), intent(in), optional :: indices(k)
+  integer(c_int) :: i, index
   do i = 1, k
-    call this%insert(lons(i), lats(i), indices(i))
+    if (present(indices)) then
+      index = indices(i)
+    else
+      index = i
+    end if
+    call this%insert(lons(i), lats(i), index)
   end do
   call this%build()
 end subroutine IndexKDTree__build_list
 
-subroutine IndexKDTree__closestPoints(this, plon, plat, k, lons, lats, indices, distances)
+subroutine IndexKDTree__closestPoints(this, plon, plat, k, indices, distances, lons, lats)
   use atlas_KDTree_c_binding
   use, intrinsic :: iso_c_binding, only : c_f_pointer
   use fckit_c_interop_module
@@ -145,29 +150,35 @@ subroutine IndexKDTree__closestPoints(this, plon, plat, k, lons, lats, indices, 
   real(c_double), intent(in) :: plon
   real(c_double), intent(in) :: plat
   integer(c_int), intent(in) :: k
-  real(c_double), intent(out) :: lons(k)
-  real(c_double), intent(out) :: lats(k)
   integer(c_int), intent(out) :: indices(k)
-  real(c_double), intent(out) :: distances(k)
-  type(c_ptr) :: lons_cptr
-  type(c_ptr) :: lats_cptr
+  real(c_double), intent(out), optional :: distances(k)
+  real(c_double), intent(out), optional :: lons(k)
+  real(c_double), intent(out), optional :: lats(k)
   type(c_ptr) :: indices_cptr
   type(c_ptr) :: distances_cptr
-  real(c_double), pointer :: lons_fptr(:)
-  real(c_double), pointer :: lats_fptr(:)
+  type(c_ptr) :: lons_cptr
+  type(c_ptr) :: lats_cptr
   integer(c_int), pointer :: indices_fptr(:)
   real(c_double), pointer :: distances_fptr(:)
+  real(c_double), pointer :: lons_fptr(:)
+  real(c_double), pointer :: lats_fptr(:)
   if ( k > 0 ) then
     call atlas__IndexKDTree__closestPoints(this%CPTR_PGIBUG_A, plon, plat, int(k, c_size_t), lons_cptr, lats_cptr, indices_cptr, &
                                        & distances_cptr)
-    call c_f_pointer(lons_cptr, lons_fptr, (/k/))
-    call c_f_pointer(lats_cptr, lats_fptr, (/k/))
     call c_f_pointer(indices_cptr, indices_fptr, (/k/))
-    call c_f_pointer(distances_cptr, distances_fptr, (/k/))
-    lons(:) = lons_fptr(:)
-    lats(:) = lats_fptr(:)
     indices(:) = indices_fptr(:)
-    distances(:) = distances_fptr(:)
+    if (present(distances)) then
+      call c_f_pointer(distances_cptr, distances_fptr, (/k/))
+      distances(:) = distances_fptr(:)
+    end if
+    if (present(lons)) then
+      call c_f_pointer(lons_cptr, lons_fptr, (/k/))
+      lons(:) = lons_fptr(:)
+    end if
+    if (present(lats)) then
+      call c_f_pointer(lats_cptr, lats_fptr, (/k/))
+      lats(:) = lats_fptr(:)
+    end if
     call c_ptr_free(lons_cptr)
     call c_ptr_free(lats_cptr)
     call c_ptr_free(indices_cptr)
@@ -175,20 +186,24 @@ subroutine IndexKDTree__closestPoints(this, plon, plat, k, lons, lats, indices, 
   end if
 end subroutine IndexKDTree__closestPoints
 
-subroutine IndexKDTree__closestPoint(this, plon, plat, lon, lat, index, distance)
+subroutine IndexKDTree__closestPoint(this, plon, plat, index, distance, lon, lat)
   use atlas_KDTree_c_binding
   use fckit_c_interop_module
   class(atlas_IndexKDTree), intent(in) :: this
   real(c_double), intent(in) :: plon
   real(c_double), intent(in) :: plat
-  real(c_double), intent(out) :: lon
-  real(c_double), intent(out) :: lat
   integer(c_int), intent(out) :: index
-  real(c_double), intent(out) :: distance
-  call atlas__IndexKDTree__closestPoint(this%CPTR_PGIBUG_A, plon, plat, lon, lat, index, distance)
+  real(c_double), intent(out), optional :: distance
+  real(c_double), intent(out), optional :: lon
+  real(c_double), intent(out), optional :: lat
+  real(c_double) :: distance_tmp, lon_tmp, lat_tmp
+  call atlas__IndexKDTree__closestPoint(this%CPTR_PGIBUG_A, plon, plat, lon_tmp, lat_tmp, index, distance_tmp)
+  if (present(distance)) distance = distance_tmp
+  if (present(lon)) lon = lon_tmp
+  if (present(lat)) lat = lat_tmp
 end subroutine IndexKDTree__closestPoint
 
-subroutine IndexKDTree__closestPointsWithinRadius(this, plon, plat, radius, k, lons, lats, indices, distances)
+subroutine IndexKDTree__closestPointsWithinRadius(this, plon, plat, radius, k, indices, distances, lons, lats)
   use atlas_KDTree_c_binding
   use, intrinsic :: iso_c_binding, only : c_f_pointer
   use fckit_c_interop_module
@@ -197,10 +212,10 @@ subroutine IndexKDTree__closestPointsWithinRadius(this, plon, plat, radius, k, l
   real(c_double), intent(in) :: plat
   real(c_double), intent(in) :: radius
   integer(c_int), intent(out) :: k
-  real(c_double), allocatable, intent(inout) :: lons(:)
-  real(c_double), allocatable, intent(inout) :: lats(:)
-  integer(c_int), allocatable, intent(inout) :: indices(:)
-  real(c_double), allocatable, intent(inout) :: distances(:)
+  integer(c_int), allocatable, intent(inout), optional :: indices(:)
+  real(c_double), allocatable, intent(inout), optional :: distances(:)
+  real(c_double), allocatable, intent(inout), optional :: lons(:)
+  real(c_double), allocatable, intent(inout), optional :: lats(:)
   integer(c_size_t) :: k_tmp
   type(c_ptr) :: lons_cptr
   type(c_ptr) :: lats_cptr
@@ -213,28 +228,44 @@ subroutine IndexKDTree__closestPointsWithinRadius(this, plon, plat, radius, k, l
   call atlas__IndexKDTree__closestPointsWithinRadius(this%CPTR_PGIBUG_A, plon, plat, radius, &
                                                    & k_tmp, lons_cptr, lats_cptr, indices_cptr, distances_cptr)
   k = int(k_tmp, c_int)
-  if (allocated(lons)) deallocate(lons)
-  if (allocated(lats)) deallocate(lats)
-  if (allocated(indices)) deallocate(indices)
-  if (allocated(distances)) deallocate(distances)
-  allocate(lons(k))
-  allocate(lats(k))
-  allocate(indices(k))
-  allocate(distances(k))
+  if (present(indices)) then
+    if (allocated(indices)) deallocate(indices)
+    allocate(indices(k))
+  end if
+  if (present(distances)) then
+    if (allocated(distances)) deallocate(distances)
+    allocate(distances(k))
+  end if
+  if (present(lons)) then
+    if (allocated(lons)) deallocate(lons)
+    allocate(lons(k))
+  end if
+  if (present(lats)) then
+    if (allocated(lats)) deallocate(lats)
+    allocate(lats(k))
+  end if
   if ( k > 0 ) then
-    call c_f_pointer(lons_cptr, lons_fptr, (/k/))
-    call c_f_pointer(lats_cptr, lats_fptr, (/k/))
-    call c_f_pointer(indices_cptr, indices_fptr, (/k/))
-    call c_f_pointer(distances_cptr, distances_fptr, (/k/))
-    lons(:) = lons_fptr(:)
-    lats(:) = lats_fptr(:)
-    indices(:) = indices_fptr(:)
-    distances(:) = distances_fptr(:)
- end if
- call c_ptr_free(lons_cptr)
- call c_ptr_free(lats_cptr)
- call c_ptr_free(indices_cptr)
- call c_ptr_free(distances_cptr)
+    if (present(indices)) then
+      call c_f_pointer(indices_cptr, indices_fptr, (/k/))
+      indices(:) = indices_fptr(:)
+    end if
+    if (present(distances)) then
+      call c_f_pointer(distances_cptr, distances_fptr, (/k/))
+      distances(:) = distances_fptr(:)
+    end if
+    if (present(lons)) then
+      call c_f_pointer(lons_cptr, lons_fptr, (/k/))
+      lons(:) = lons_fptr(:)
+    end if
+    if (present(lats)) then
+      call c_f_pointer(lats_cptr, lats_fptr, (/k/))
+      lats(:) = lats_fptr(:)
+    end if
+  end if
+  call c_ptr_free(lons_cptr)
+  call c_ptr_free(lats_cptr)
+  call c_ptr_free(indices_cptr)
+  call c_ptr_free(distances_cptr)
 end subroutine IndexKDTree__closestPointsWithinRadius
 
 function IndexKDTree__geometry(this) result(geometry)
