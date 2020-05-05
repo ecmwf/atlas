@@ -115,15 +115,9 @@ public:
 
     const YSpace& yspace() const { return grid_->yspace(); }
 
-    gidx_t index (idx_t i, idx_t j) const
-    {
-      return grid_->index (i, j);
-    }
+    gidx_t index( idx_t i, idx_t j ) const { return grid_->index( i, j ); }
 
-    void index2ij (gidx_t gidx, idx_t & i, idx_t & j) const
-    {
-      grid_->index2ij (gidx, i, j);
-    }
+    void index2ij( gidx_t gidx, idx_t& i, idx_t& j ) const { grid_->index2ij( gidx, i, j ); }
 
 private:
     const grid_t* grid_;

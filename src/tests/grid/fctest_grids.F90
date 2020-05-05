@@ -5,8 +5,6 @@
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
-! This File contains Unit Tests for testing the
-! C++ / Fortran Interfaces to the Mesh Datastructure
 ! @author Willem Deconinck
 
 #include "fckit/fctest.h"

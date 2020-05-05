@@ -93,10 +93,10 @@ void LinearSpacing::setup( double start, double end, long N, bool endpoint ) {
     endpoint_ = endpoint;
 
     // For exact comparisons:
-    if( N > 1 ) {
+    if ( N > 1 ) {
         x_.front() = start;
     }
-    if( N > 2 && endpoint ) {
+    if ( N > 2 && endpoint ) {
         x_.back() = end;
     }
 }
