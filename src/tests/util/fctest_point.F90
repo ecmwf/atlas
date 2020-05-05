@@ -44,9 +44,9 @@ use fckit_log_module
 use fckit_c_interop_module
 implicit none
 
-  type(atlas_PointXY) :: pointXY, pointXY_ptr
-  type(atlas_PointXYZ) :: pointXYZ, pointXYZ_ptr
-  type(atlas_PointLonLat) :: pointLonLat, pointLonLat_ptr
+  type(atlas_PointXY) :: pointXY
+  type(atlas_PointXYZ) :: pointXYZ
+  type(atlas_PointLonLat) :: pointLonLat
   type(fckit_logchannel) :: info
 
   ! Get info channel
@@ -70,15 +70,8 @@ implicit none
   ! Check print
   call pointXY%print(info)
 
-  ! Check constructor with pointer 
-  pointXY_ptr = atlas_PointXY(pointXY%c_ptr())
-  write(0,*) "pointXY_ptr%c_ptr() = ", c_ptr_to_loc(pointXY_ptr%CPTR_PGIBUG_A)
-  FCTEST_CHECK_CLOSE( pointXY_ptr%x() , 1.687e6_c_double, 1.e-12_c_double )
-  FCTEST_CHECK_CLOSE( pointXY_ptr%y() , -5.070e6_c_double, 1.e-12_c_double )
-
   ! Finalization
   call pointXY%final()
-  call pointXY_ptr%final()
 
   write(*,*) "test_point_xyz starting"
 
@@ -100,16 +93,8 @@ implicit none
   ! Check print
   call pointXYZ%print(info)
 
-  ! Check constructor with pointer 
-  pointXYZ_ptr = atlas_PointXYZ(pointXYZ%c_ptr())
-  write(0,*) "pointXYZ_ptr%c_ptr() = ", c_ptr_to_loc(pointXYZ_ptr%CPTR_PGIBUG_A)
-  FCTEST_CHECK_EQUAL( pointXYZ_ptr%x() , 1.687e6_c_double )
-  FCTEST_CHECK_EQUAL( pointXYZ_ptr%y() , -5.070e6_c_double )
-  FCTEST_CHECK_EQUAL( pointXYZ_ptr%z() , 3.470e6_c_double )
-
   ! Finalization
   call pointXYZ%final()
-  call pointXYZ_ptr%final()
 
   write(*,*) "test_point_lonlat starting"
 
@@ -135,15 +120,8 @@ implicit none
   call pointLonLat%normalise(-180.0_c_double, 180.0_c_double)
   FCTEST_CHECK_CLOSE( pointLonLat%lon() , -71.6_c_double, 1.e-12_c_double )
 
-  ! Check constructor with pointer 
-  pointLonLat_ptr = atlas_PointLonLat(pointLonLat%c_ptr())
-  write(0,*) "pointLonLat_ptr%c_ptr() = ", c_ptr_to_loc(pointLonLat_ptr%CPTR_PGIBUG_A)
-  FCTEST_CHECK_CLOSE( pointLonLat_ptr%lon() , -71.6_c_double, 1.e-4_c_double )
-  FCTEST_CHECK_CLOSE( pointLonLat_ptr%lat() , -33._c_double, 1.e-4_c_double )
-
   ! Finalization
   call pointLonLat%final()
-  call pointLonLat_ptr%final()
 
 END_TEST
 ! -----------------------------------------------------------------------------
