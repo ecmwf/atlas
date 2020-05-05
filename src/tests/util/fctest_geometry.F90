@@ -162,6 +162,7 @@ implicit none
 
   ! Finalization
   call geometry%final()
+
 END_TEST
 ! -----------------------------------------------------------------------------
 

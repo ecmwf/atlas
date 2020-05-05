@@ -97,7 +97,7 @@ implicit none
   kdtree = atlas_IndexKDTree(geometry)
   write(0,*) "kdtree%c_ptr() = ", c_ptr_to_loc(kdtree%CPTR_PGIBUG_A)
 
-! Define result points
+  ! Define result points
   call geometry%lonlat2xyz(plon, plat, pxyz(1), pxyz(2), pxyz(3))
   tree_distances = 0.0
   do i = 1, n
@@ -124,7 +124,7 @@ implicit none
   call kdtree%build()
 
   ! Check closestPoints
-  call kdtree%closestPoints(plon, plat, k, lons, lats, indices, distances)
+  call kdtree%closestPoints(plon, plat, k, indices, distances, lons, lats)
   do i = 1, k
     FCTEST_CHECK_CLOSE( lons(i) , result_lons(i), 1.e-12_c_double )
     FCTEST_CHECK_CLOSE( lats(i) , result_lats(i), 1.e-12_c_double )
@@ -133,14 +133,14 @@ implicit none
   end do
 
   ! Check closestPoint
-  call kdtree%closestPoint(plon, plat, lons(1), lats(1), indices(1), distances(1))
+  call kdtree%closestPoint(plon, plat, indices(1), distances(1), lons(1), lats(1))
   FCTEST_CHECK_EQUAL( lons(1) , result_lons(1) )
   FCTEST_CHECK_EQUAL( lats(1) , result_lats(1) )
   FCTEST_CHECK_EQUAL( indices(1) , result_indices(1) )
   FCTEST_CHECK_CLOSE( distances(1) , result_distances(1) , 1.e-12_c_double )
 
   ! Check closestPoints
-  call kdtree%closestPointsWithinRadius(plon, plat, 5.e-2_c_double, kk, lons_rad, lats_rad, indices_rad, distances_rad)
+  call kdtree%closestPointsWithinRadius(plon, plat, 5.e-2_c_double, kk, indices_rad, distances_rad, lons_rad, lats_rad)
   FCTEST_CHECK_EQUAL( kk , 3 )
   do i = 1, kk
     FCTEST_CHECK_EQUAL( lons_rad(i) , result_lons(i) )
@@ -180,7 +180,7 @@ implicit none
   call kdtree%build(n, tree_lons, tree_lats, tree_indices)
 
   ! Check closestPoints
-  call kdtree%closestPoints(plon, plat, k, lons, lats, indices, distances)
+  call kdtree%closestPoints(plon, plat, k, indices, distances, lons, lats)
   do i = 1, k
     FCTEST_CHECK_CLOSE( lons(i) , result_lons(i), 1.e-12_c_double )
     FCTEST_CHECK_CLOSE( lats(i) , result_lats(i), 1.e-12_c_double )
@@ -189,14 +189,14 @@ implicit none
   end do
 
   ! Check closestPoint
-  call kdtree%closestPoint(plon, plat, lons(1), lats(1), indices(1), distances(1))
+  call kdtree%closestPoint(plon, plat, indices(1), distances(1), lons(1), lats(1))
   FCTEST_CHECK_EQUAL( lons(1) , result_lons(1) )
   FCTEST_CHECK_EQUAL( lats(1) , result_lats(1) )
   FCTEST_CHECK_EQUAL( indices(1) , result_indices(1) )
   FCTEST_CHECK_CLOSE( distances(1) , result_distances(1) , 1.e-12_c_double )
 
   ! Check closestPoints
-  call kdtree%closestPointsWithinRadius(plon, plat, 3.5e5_c_double, kk, lons_rad, lats_rad, indices_rad, distances_rad)
+  call kdtree%closestPointsWithinRadius(plon, plat, 3.5e5_c_double, kk, indices_rad, distances_rad, lons_rad, lats_rad)
   FCTEST_CHECK_EQUAL( kk , 4 )
   do i = 1, kk
     FCTEST_CHECK_EQUAL( lons_rad(i) , result_lons(i) )
