@@ -99,7 +99,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   auto remote_idx = array::make_indexview<idx_t, 1>( nodes.remote_index() );
   auto part       = array::make_view<int, 1>( nodes.partition() );
   auto ghost      = array::make_view<int, 1>( nodes.ghost() );
-  auto flags      = array::make_view<int, 1>( nodes.flags() );
+  //auto flags      = array::make_view<int, 1>( nodes.flags() );
 
   int inode = 0;
   double xy_[3];
@@ -308,7 +308,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
   // Cells in mesh
   mesh.cells().add( new mesh::temporary::Quadrilateral(), 6*cubeNx*cubeNx );
-  int quad_begin  = mesh.cells().elements( 0 ).begin();
+  //int quad_begin  = mesh.cells().elements( 0 ).begin();
   array::ArrayView<int, 1> cells_part = array::make_view<int, 1>( mesh.cells().partition() );
   atlas::mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
 

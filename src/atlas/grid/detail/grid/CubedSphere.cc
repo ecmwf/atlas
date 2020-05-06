@@ -82,9 +82,8 @@ std::string CubedSphere::name() const {
 CubedSphere::CubedSphere( int N, Projection p ) : CubedSphere( CubedSphere::static_type(), N, p ) {}
 
 CubedSphere::CubedSphere( const std::string& name, int CubeNx, Projection projection ) :
-                           Grid(), name_( name ) {
+                           Grid(), name_( name ), CubeNx_(CubeNx) {
   // Copy members
-  CubeNx_ = CubeNx;
   projection_ = projection ? projection : Projection();
 
   // Domain
@@ -209,12 +208,12 @@ public:
 
     // Apply a Shmidt transform
     bool doSchmidt = false;
-    double stretchFac;
-    double targetLon;
-    double targetLat;
     if (config.has("DoSchmidt")) {
       config.get("DoSchmidt", doSchmidt);
       if (doSchmidt) {
+        double stretchFac;
+        double targetLon;
+        double targetLat;
         config.get("StretchFac", stretchFac);
         config.get("TargetLon", targetLon);
         config.get("TargetLat", targetLat);
@@ -263,15 +262,15 @@ public:
     projconf.set("CubeNx", CubeNx);
 
     // Shift projection by a longitude
-    double shiftLon = 0.0;
     if (config.has("ShiftLon")) {
+      double shiftLon = 0.0;
       config.get("ShiftLon", shiftLon);
       projconf.set("ShiftLon", shiftLon);
     };
 
     // Apply a Shmidt transform
-    bool doSchmidt = false;
     if (config.has("DoSchmidt")) {
+      bool doSchmidt = false;
       config.get("DoSchmidt", doSchmidt);
       if (doSchmidt) {
         double stretchFac;

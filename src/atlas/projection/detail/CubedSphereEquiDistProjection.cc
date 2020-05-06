@@ -37,9 +37,6 @@ CubedSphereEquiDistProjection::CubedSphereEquiDistProjection( const eckit::Param
 
   // Cartesian coordinate starting points
   const double rsq3 = 1.0/sqrt(3.0);
-  const double x0 = -rsq3;
-  const double y0 = rsq3;
-  const double z0 = -rsq3;
 
   // Equidistant
   const double dy = -2.0*rsq3/static_cast<double>(cubeNx);

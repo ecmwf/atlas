@@ -31,7 +31,7 @@ struct ProjectionUtilities {
 
     double r = sqrt(xyz[XX]*xyz[XX] + xyz[YY]*xyz[YY] + xyz[ZZ]*xyz[ZZ]);
     lonlat[LON] = atan2(xyz[YY],xyz[XX]);
-    if ( (abs(xyz[XX]) + abs(xyz[YY])) < util::Constants::esl() ) {
+    if ( (std::abs(xyz[XX]) + std::abs(xyz[YY])) < util::Constants::esl() ) {
       lonlat[LON] = 0.0;  // Poles:
     }
     lonlat[LAT] = acos(xyz[ZZ]/r) - zz_fac * M_PI/2.0;

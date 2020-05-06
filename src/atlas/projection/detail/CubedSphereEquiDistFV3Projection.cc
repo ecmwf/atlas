@@ -227,16 +227,16 @@ CubedSphereEquiDistFV3Projection::CubedSphereEquiDistFV3Projection( const eckit:
   for (ix = 0; ix < cubeHalf + 1; ix++ ) {
     for (iy = 0; iy < cubeHalf + 1; iy++ ) {
 
-      x1 = 0.25 * ( abs(tile1Lons(ix       , iy       )) + abs(tile1Lons(cubeNx-ix, iy       )) +
-                    abs(tile1Lons(ix       , cubeNx-iy)) + abs(tile1Lons(cubeNx-ix, cubeNx-iy)) );
+      x1 = 0.25 * ( std::abs(tile1Lons(ix       , iy       )) + std::abs(tile1Lons(cubeNx-ix, iy       )) +
+                    std::abs(tile1Lons(ix       , cubeNx-iy)) + std::abs(tile1Lons(cubeNx-ix, cubeNx-iy)) );
 
       tile1Lons(ix       , iy       ) = copysign(x1, tile1Lons(ix       ,iy       ));
       tile1Lons(cubeNx-ix, iy       ) = copysign(x1, tile1Lons(cubeNx-ix,iy       ));
       tile1Lons(ix       , cubeNx-iy) = copysign(x1, tile1Lons(ix       ,cubeNx-iy));
       tile1Lons(cubeNx-ix, cubeNx-iy) = copysign(x1, tile1Lons(cubeNx-ix,cubeNx-iy));
 
-      y1 = 0.25 * ( abs(tile1Lats(ix       , iy       )) + abs(tile1Lats(cubeNx-ix, iy       )) +
-                    abs(tile1Lats(ix       , cubeNx-iy)) + abs(tile1Lats(cubeNx-ix, cubeNx-iy)) );
+      y1 = 0.25 * ( std::abs(tile1Lats(ix       , iy       )) + std::abs(tile1Lats(cubeNx-ix, iy       )) +
+                    std::abs(tile1Lats(ix       , cubeNx-iy)) + std::abs(tile1Lats(cubeNx-ix, cubeNx-iy)) );
 
       tile1Lats(ix       , iy       ) = copysign(y1, tile1Lats(ix       , iy       ));
       tile1Lats(cubeNx-ix, iy       ) = copysign(y1, tile1Lats(cubeNx-ix, iy       ));
