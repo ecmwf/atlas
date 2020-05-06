@@ -126,26 +126,26 @@ implicit none
   ! Check closestPoints
   call kdtree%closestPoints(plon, plat, k, indices, distances, lons, lats)
   do i = 1, k
+    FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
     FCTEST_CHECK_CLOSE( lons(i) , result_lons(i), 1.e-12_c_double )
     FCTEST_CHECK_CLOSE( lats(i) , result_lats(i), 1.e-12_c_double )
-    FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
     FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-12_c_double )
   end do
 
   ! Check closestPoint
   call kdtree%closestPoint(plon, plat, indices(1), distances(1), lons(1), lats(1))
-  FCTEST_CHECK_EQUAL( lons(1) , result_lons(1) )
-  FCTEST_CHECK_EQUAL( lats(1) , result_lats(1) )
   FCTEST_CHECK_EQUAL( indices(1) , result_indices(1) )
+  FCTEST_CHECK_CLOSE( lons(1) , result_lons(1), 1.e-12_c_double  )
+  FCTEST_CHECK_CLOSE( lats(1) , result_lats(1), 1.e-12_c_double  )
   FCTEST_CHECK_CLOSE( distances(1) , result_distances(1) , 1.e-12_c_double )
 
   ! Check closestPoints
   call kdtree%closestPointsWithinRadius(plon, plat, 5.e-2_c_double, kk, indices_rad, distances_rad, lons_rad, lats_rad)
   FCTEST_CHECK_EQUAL( kk , 3 )
   do i = 1, kk
-    FCTEST_CHECK_EQUAL( lons_rad(i) , result_lons(i) )
-    FCTEST_CHECK_EQUAL( lats_rad(i) , result_lats(i) )
     FCTEST_CHECK_EQUAL( indices_rad(i) , result_indices(i) )
+    FCTEST_CHECK_CLOSE( lons_rad(i) , result_lons(i), 1.e-12_c_double )
+    FCTEST_CHECK_CLOSE( lats_rad(i) , result_lats(i), 1.e-12_c_double )
     FCTEST_CHECK_CLOSE( distances_rad(i) , result_distances(i) , 1.e-12_c_double )
   end do
 
@@ -182,26 +182,26 @@ implicit none
   ! Check closestPoints
   call kdtree%closestPoints(plon, plat, k, indices, distances, lons, lats)
   do i = 1, k
+    FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
     FCTEST_CHECK_CLOSE( lons(i) , result_lons(i), 1.e-12_c_double )
     FCTEST_CHECK_CLOSE( lats(i) , result_lats(i), 1.e-12_c_double )
-    FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
     FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-12_c_double )
   end do
 
   ! Check closestPoint
   call kdtree%closestPoint(plon, plat, indices(1), distances(1), lons(1), lats(1))
-  FCTEST_CHECK_EQUAL( lons(1) , result_lons(1) )
-  FCTEST_CHECK_EQUAL( lats(1) , result_lats(1) )
   FCTEST_CHECK_EQUAL( indices(1) , result_indices(1) )
+  FCTEST_CHECK_CLOSE( lons(1) , result_lons(1), 1.e-12_c_double  )
+  FCTEST_CHECK_CLOSE( lats(1) , result_lats(1), 1.e-12_c_double  )
   FCTEST_CHECK_CLOSE( distances(1) , result_distances(1) , 1.e-12_c_double )
 
   ! Check closestPoints
   call kdtree%closestPointsWithinRadius(plon, plat, 3.5e5_c_double, kk, indices_rad, distances_rad, lons_rad, lats_rad)
   FCTEST_CHECK_EQUAL( kk , 4 )
   do i = 1, kk
-    FCTEST_CHECK_EQUAL( lons_rad(i) , result_lons(i) )
-    FCTEST_CHECK_EQUAL( lats_rad(i) , result_lats(i) )
     FCTEST_CHECK_EQUAL( indices_rad(i) , result_indices(i) )
+    FCTEST_CHECK_CLOSE( lons_rad(i) , result_lons(i), 1.e-12_c_double  )
+    FCTEST_CHECK_CLOSE( lats_rad(i) , result_lats(i), 1.e-12_c_double  )
     FCTEST_CHECK_CLOSE( distances_rad(i) , result_distances(i) , 1.e-12_c_double )
   end do
 
