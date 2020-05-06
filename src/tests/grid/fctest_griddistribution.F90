@@ -66,8 +66,6 @@ TEST( test_griddist )
   integer :: jnode
 
   grid = atlas_StructuredGrid("O16")
-  !grid = atlas_StructuredGrid("ll.128x64")
-  !grid = atlas_grid_ShiftedLonLat(128,64)
 
   allocate( part(grid%size()) )
   do jnode=1,grid%size()/3
@@ -78,6 +76,10 @@ TEST( test_griddist )
   enddo
 
   griddistribution = atlas_GridDistribution(part, part0=1)
+
+  FCTEST_CHECK_EQUAL( griddistribution%nb_partitions(), 1 )
+  FCTEST_CHECK_EQUAL( griddistribution%nb_pts(), [ int(grid%size(),ATLAS_KIND_IDX) ] )
+
 
   FCTEST_CHECK_EQUAL( grid%owners(), 1 )
 
