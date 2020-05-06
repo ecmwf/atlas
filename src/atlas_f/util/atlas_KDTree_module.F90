@@ -11,20 +11,20 @@
 module atlas_KDTree_module
 
 use, intrinsic :: iso_c_binding
-use fckit_object_module, only : fckit_object
+use fckit_owned_object_module, only : fckit_owned_object
 use atlas_point_module
 use atlas_geometry_module
 
 implicit none
 
-private :: fckit_object
+private :: fckit_owned_object
 
 public :: atlas_IndexKDTree
 
 private
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_object) :: atlas_IndexKDTree
+TYPE, extends(fckit_owned_object) :: atlas_IndexKDTree
 
 ! Purpose :
 ! -------
@@ -78,6 +78,7 @@ function atlas_IndexKDTree__ctor() result(this)
   use fckit_c_interop_module
   type(atlas_IndexKDTree) :: this
   call this%reset_c_ptr( atlas__IndexKDTree__new() )
+  call this%return()
 end function atlas_IndexKDTree__ctor
 
 function atlas_IndexKDTree__ctor_geometry(geometry) result(this)
@@ -86,6 +87,7 @@ function atlas_IndexKDTree__ctor_geometry(geometry) result(this)
   type(atlas_Geometry), intent(in) :: geometry
   type(atlas_IndexKDTree) :: this
   call this%reset_c_ptr( atlas__IndexKDTree__new_geometry( geometry%CPTR_PGIBUG_A ) )
+  call this%return()
 end function atlas_IndexKDTree__ctor_geometry
 
 subroutine atlas_IndexKDTree__delete(this)
@@ -274,6 +276,7 @@ function IndexKDTree__geometry(this) result(geometry)
   class(atlas_IndexKDTree), intent(in) :: this
   type(atlas_Geometry) :: geometry
   call geometry%reset_c_ptr( atlas__IndexKDTree__geometry( this%CPTR_PGIBUG_A ) )
+  call geometry%return()
 end function IndexKDTree__geometry
 
 !-------------------------------------------------------------------------------

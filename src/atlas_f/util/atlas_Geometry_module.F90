@@ -11,19 +11,19 @@
 module atlas_Geometry_module
 
 use, intrinsic :: iso_c_binding
-use fckit_object_module, only : fckit_object
+use fckit_owned_object_module, only : fckit_owned_object
 use atlas_point_module
 
 implicit none
 
-private :: fckit_object
+private :: fckit_owned_object
 
 public :: atlas_Geometry
 
 private
 
 !------------------------------------------------------------------------------
-TYPE, extends(fckit_object) :: atlas_Geometry
+TYPE, extends(fckit_owned_object) :: atlas_Geometry
 
 ! Purpose :
 ! -------
@@ -76,6 +76,7 @@ function atlas_Geometry__ctor_name(name) result(this)
   character(kind=c_char,len=*), intent(in) :: name
   type(atlas_Geometry) :: this
   call this%reset_c_ptr( atlas__Geometry__new_name( c_str(name) ) )
+  call this%return()
 end function atlas_Geometry__ctor_name
 
 function atlas_Geometry__ctor_radius(radius) result(this)
@@ -84,6 +85,7 @@ function atlas_Geometry__ctor_radius(radius) result(this)
   real(c_double), intent(in) :: radius
   type(atlas_Geometry) :: this
   call this%reset_c_ptr( atlas__Geometry__new_radius( radius ) )
+  call this%return()
 end function atlas_Geometry__ctor_radius
 
 subroutine atlas_Geometry__delete(this)

@@ -27,7 +27,7 @@ namespace geometry {
 
 namespace detail {
 
-class GeometryBase : util::Object {
+class GeometryBase : public util::Object {
 public:
     virtual ~GeometryBase()                                             = default;
     virtual void lonlat2xyz( const Point2&, Point3& ) const             = 0;
@@ -91,7 +91,7 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-class Geometry : util::ObjectHandle<geometry::detail::GeometryBase> {
+class Geometry : public util::ObjectHandle<geometry::detail::GeometryBase> {
 public:
     using Handle::Handle;
 
@@ -137,25 +137,27 @@ namespace geometry {
 using Earth      = Geometry;  // Sphere with util::Earth radius by default
 using UnitSphere = Geometry( eckit::geometry::UnitSphere() );
 
+}  // namespace geometry
+
+
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
 extern "C" {
-Geometry* atlas__Geometry__new_name( const char* name );
-Geometry* atlas__Geometry__new_radius( const double radius );
-void atlas__Geometry__delete( Geometry* This );
-void atlas__Geometry__xyz2lonlat( Geometry* This, const double x, const double y, const double z,
+Geometry::Implementation* atlas__Geometry__new_name( const char* name );
+Geometry::Implementation* atlas__Geometry__new_radius( const double radius );
+void atlas__Geometry__delete( Geometry::Implementation* This );
+void atlas__Geometry__xyz2lonlat( Geometry::Implementation* This, const double x, const double y, const double z,
                                   double& lon, double& lat );
-void atlas__Geometry__lonlat2xyz( Geometry* This, const double lon, const double lat,
+void atlas__Geometry__lonlat2xyz( Geometry::Implementation* This, const double lon, const double lat,
                                   double& x, double& y, double& z );
-double atlas__Geometry__distance_lonlat( Geometry* This, const double lon1, const double lat1,
+double atlas__Geometry__distance_lonlat( Geometry::Implementation* This, const double lon1, const double lat1,
                                          const double lon2, const double lat2 );
-double atlas__Geometry__distance_xyz( Geometry* This, const double x1, const double y1, const double z1,
+double atlas__Geometry__distance_xyz( Geometry::Implementation* This, const double x1, const double y1, const double z1,
                                       const double x2, const double y2, const double z2 );
-double atlas__Geometry__radius( Geometry* This );
-double atlas__Geometry__area( Geometry* This );
+double atlas__Geometry__radius( Geometry::Implementation* This );
+double atlas__Geometry__area( Geometry::Implementation* This );
 }
-}  // namespace geometry
 
 //------------------------------------------------------------------------------------------------------
 

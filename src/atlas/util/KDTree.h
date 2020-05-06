@@ -178,19 +178,19 @@ using IndexKDTree   = IndexKDTree3D;
 // C wrapper interfaces to C++ routines
 
 extern "C" {
-IndexKDTree* atlas__IndexKDTree__new();
-IndexKDTree* atlas__IndexKDTree__new_geometry( const Geometry* geometry );
-void atlas__IndexKDTree__delete( IndexKDTree* This );
-void atlas__IndexKDTree__reserve( IndexKDTree* This, const idx_t size );
-void atlas__IndexKDTree__insert( IndexKDTree* This, const double lon, const double lat, const idx_t index );
-void atlas__IndexKDTree__build( IndexKDTree* This );
-void atlas__IndexKDTree__closestPoints( IndexKDTree* This, const double plon, const double plat, const size_t k,
+IndexKDTree::Implementation* atlas__IndexKDTree__new();
+IndexKDTree::Implementation* atlas__IndexKDTree__new_geometry( const Geometry::Implementation* geometry );
+void atlas__IndexKDTree__delete( IndexKDTree::Implementation* This );
+void atlas__IndexKDTree__reserve( IndexKDTree::Implementation* This, const idx_t size );
+void atlas__IndexKDTree__insert( IndexKDTree::Implementation* This, const double lon, const double lat, const idx_t index );
+void atlas__IndexKDTree__build( IndexKDTree::Implementation* This );
+void atlas__IndexKDTree__closestPoints( const IndexKDTree::Implementation* This, const double plon, const double plat, const size_t k,
                                         double*& lon, double*& lat, idx_t*& indices, double*& distances );
-void atlas__IndexKDTree__closestPoint( IndexKDTree* This, const double plon, const double plat,
+void atlas__IndexKDTree__closestPoint( const IndexKDTree::Implementation* This, const double plon, const double plat,
                                        double& lon, double& lat, idx_t& index, double& distance );
-void atlas__IndexKDTree__closestPointsWithinRadius( IndexKDTree* This, const double plon, const double plat, const double radius,
+void atlas__IndexKDTree__closestPointsWithinRadius( const IndexKDTree::Implementation* This, const double plon, const double plat, const double radius,
                                                     size_t& k, double*& lon, double*& lat, idx_t*& indices, double*& distances );
-Geometry* atlas__IndexKDTree__geometry( IndexKDTree* This );
+const Geometry::Implementation* atlas__IndexKDTree__geometry( const IndexKDTree::Implementation* This );
 }
 
 //------------------------------------------------------------------------------------------------------
