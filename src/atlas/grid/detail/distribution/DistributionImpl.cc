@@ -58,8 +58,28 @@ DistributionImpl::DistributionImpl( const Grid & grid, const eckit::Parametrisat
      
       for (idx_t iproc = 0; iproc < nb_partitions_; iproc++)
          {
-           gidx_t imin = ((iproc + 0) * blocksize_ * nb_blocks_) / nb_partitions_;
-           gidx_t imax = ((iproc + 1) * blocksize_ * nb_blocks_) / nb_partitions_;
+           // Approximate values
+           gidx_t imin = blocksize_ * (((iproc + 0) * nb_blocks_) / nb_partitions_);
+           gidx_t imax = blocksize_ * (((iproc + 1) * nb_blocks_) / nb_partitions_);
+
+           while (imin > 0)
+             if (partition (imin-blocksize_) == iproc)
+               imin -= blocksize_;
+             else
+               break;
+
+           while (partition (imin) < iproc)
+             imin += blocksize_;
+
+           while (partition (imax-1) == iproc + 1)
+             imax -= blocksize_;
+
+           while (imax + blocksize_ <= gridsize_)
+             if (partition (imax) == iproc)
+               imax += blocksize_;
+             else
+               break;
+
            imax = std::min (imax, (gidx_t)gridsize_);
            nb_pts_.push_back (imax-imin);
          }
@@ -74,7 +94,6 @@ DistributionImpl::DistributionImpl( const Grid & grid, const eckit::Parametrisat
     }
 
 }
-
 
 DistributionImpl::DistributionImpl( const Grid& grid ) :
     nb_partitions_( 1 ),
