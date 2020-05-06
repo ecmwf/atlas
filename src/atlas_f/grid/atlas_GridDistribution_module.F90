@@ -40,6 +40,7 @@ TYPE, extends(fckit_owned_object) :: atlas_GridDistribution
 
 !------------------------------------------------------------------------------
 contains
+  procedure :: nb_partitions => atlas_GridDistribution__nb_partitions
   procedure :: nb_pts => atlas_GridDistribution__nb_pts
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_GridDistribution__final_auto
@@ -87,15 +88,19 @@ end function
 
 function atlas_GridDistribution__nb_pts(this) result(nb_pts)
   use atlas_distribution_c_binding
-  use fckit_module, only : fckit_mpi_comm
   use atlas_kinds_module, only : ATLAS_KIND_IDX
   class(atlas_GridDistribution) :: this
   integer(kind=ATLAS_KIND_IDX), allocatable :: nb_pts(:)
-  type (fckit_mpi_comm) :: comm
-  comm = fckit_mpi_comm ()
-  allocate (nb_pts (comm%size ()))
+  allocate (nb_pts (this%nb_partitions ()))
   call atlas__GridDistribution__nb_pts(this%CPTR_PGIBUG_A, nb_pts)
-  call comm%final ()
+end function
+
+function atlas_GridDistribution__nb_partitions(this) result(nb_partitions)
+  use, intrinsic :: iso_c_binding, only: c_long
+  use atlas_distribution_c_binding
+  class(atlas_GridDistribution), intent(in) :: this
+  integer(c_long) :: nb_partitions
+  nb_partitions = atlas__atlas__GridDistribution__nb_partitions(this%CPTR_PGIBUG_A)
 end function
 
 ! ----------------------------------------------------------------------------------------
