@@ -9,7 +9,10 @@
  */
 
 #include <cmath>
+#include <iomanip>
 #include <iostream>
+
+#include "eckit/config/Resource.h"
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
@@ -40,6 +43,42 @@ using namespace atlas::grid;
 namespace atlas {
 namespace test {
 
+
+int test_levels() {
+    static int levels = []() {
+        int levels = eckit::Resource<int>( "--levels", 0 );
+        Log::info() << "levels = " << levels << std::endl;
+        return levels;
+    }();
+    return levels;
+}
+
+static std::string griduid() {
+    return "Slat20";
+}
+
+array::LocalView<double, 3> make_vectorview( Field& field ) {
+    using array::Range;
+    return field.levels() ? array::make_view<double, 3>( field ).slice( Range::all(), Range::all(), Range::all() )
+                          : array::make_view<double, 2>( field ).slice( Range::all(), Range::dummy(), Range::all() );
+}
+
+array::LocalView<double, 2> make_scalarview( Field& field ) {
+    using array::Range;
+    return field.levels() ? array::make_view<double, 2>( field ).slice( Range::all(), Range::all() )
+                          : array::make_view<double, 1>( field ).slice( Range::all(), Range::dummy() );
+}
+
+
+#define print_min_max_mean( name )                                                \
+    do {                                                                          \
+        Log::info() << #name << std::endl;                                        \
+        Log::info() << std::setprecision( 18 ) << "  min  " << min << std::endl;  \
+        Log::info() << std::setprecision( 18 ) << "  max  " << max << std::endl;  \
+        Log::info() << std::setprecision( 18 ) << "  mean " << mean << std::endl; \
+    } while ( 0 )
+
+
 //-----------------------------------------------------------------------------
 
 double dual_volume( const Mesh& mesh ) {
@@ -68,16 +107,17 @@ void rotated_flow( const fvm::Method& fvm, Field& field, const double& beta ) {
     const double deg2rad = M_PI / 180.;
 
     auto lonlat_deg = array::make_view<double, 2>( fvm.mesh().nodes().lonlat() );
-    auto var        = array::make_view<double, 3>( field );
+    auto var        = make_vectorview( field );
 
-    idx_t nnodes = fvm.mesh().nodes().size();
+    const idx_t nnodes = fvm.mesh().nodes().size();
+    const idx_t nlev   = var.shape( 1 );
     for ( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
         double x = lonlat_deg( jnode, LON ) * deg2rad;
         double y = lonlat_deg( jnode, LAT ) * deg2rad;
         double Ux =
             pvel * ( std::cos( beta ) + std::tan( y ) * std::cos( x ) * std::sin( beta ) ) * radius * std::cos( y );
         double Uy = -pvel * std::sin( x ) * std::sin( beta ) * radius;
-        for ( idx_t jlev = 0; jlev < field.levels(); ++jlev ) {
+        for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
             var( jnode, jlev, LON ) = Ux;
             var( jnode, jlev, LAT ) = Uy;
         }
@@ -93,23 +133,20 @@ void rotated_flow_magnitude( const fvm::Method& fvm, Field& field, const double&
     const double deg2rad = M_PI / 180.;
 
     auto lonlat_deg = array::make_view<double, 2>( fvm.mesh().nodes().lonlat() );
-    auto var        = array::make_view<double, 2>( field );
+    auto var        = make_scalarview( field );
 
-    idx_t nnodes = fvm.mesh().nodes().size();
+    const idx_t nnodes = fvm.mesh().nodes().size();
+    const idx_t nlev   = var.shape( 1 );
     for ( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
         double x = lonlat_deg( jnode, LON ) * deg2rad;
         double y = lonlat_deg( jnode, LAT ) * deg2rad;
         double Ux =
             pvel * ( std::cos( beta ) + std::tan( y ) * std::cos( x ) * std::sin( beta ) ) * radius * std::cos( y );
         double Uy = -pvel * std::sin( x ) * std::sin( beta ) * radius;
-        for ( idx_t jlev = 0; jlev < field.levels(); ++jlev ) {
+        for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
             var( jnode, jlev ) = std::sqrt( Ux * Ux + Uy * Uy );
         }
     }
-}
-
-static std::string griduid() {
-    return "Slat20";
 }
 
 //-----------------------------------------------------------------------------
@@ -132,15 +169,15 @@ CASE( "test_build" ) {
 
 CASE( "test_grad" ) {
     Log::info() << "test_grad" << std::endl;
-    idx_t nlev  = 1;
     auto radius = option::radius( "Earth" );
     Grid grid( griduid() );
     MeshGenerator meshgenerator( "structured" );
     Mesh mesh = meshgenerator.generate( grid, Distribution( grid, Partitioner( "equal_regions" ) ) );
-    fvm::Method fvm( mesh, radius | option::levels( nlev ) );
+    fvm::Method fvm( mesh, radius | option::levels( test_levels() ) );
     Nabla nabla( fvm );
 
     idx_t nnodes = mesh.nodes().size();
+    idx_t nlev   = std::max( 1, test_levels() );
 
     FieldSet fields;
     fields.add( fvm.node_columns().createField<double>( option::name( "scalar" ) ) );
@@ -152,36 +189,22 @@ CASE( "test_grad" ) {
     fields.add( fvm.node_columns().createField<double>( option::name( "rxder" ) ) );
     fields.add( fvm.node_columns().createField<double>( option::name( "ryder" ) ) );
 
-    EXPECT( fields["scalar"].rank() == 2 );
-    EXPECT( fields["grad"].rank() == 3 );
-    EXPECT( fields["scalar"].levels() == nlev );
-    EXPECT( fields["grad"].levels() == nlev );
-    //  fields.add( fvm.createField<double>("exact_yder",nlev) );
-
-    //  const double deg2rad = M_PI/180.;
-    //  array::ArrayView<double,2> var( fields["scalar"] );
-    ////  array::ArrayView<double,2> exact_yder( fields["exact_yder"] );
-    //  for( size_t jnode=0; jnode< nnodes ; ++jnode )
-    //  {
-    //    const double y  = lonlat(jnode,LAT) * deg2rad ;
-
-    //    for(size_t jlev = 0; jlev < nlev; ++jlev) {
-    //      var(jnode,jlev)        = std::sin(4.*y);
-    ////      exact_yder(jnode,jlev) = 4.*std::cos(4.*y)/radius;
-    //    }
-    //  }
+    EXPECT( fields["scalar"].rank() == ( test_levels() ? 2 : 1 ) );
+    EXPECT( fields["grad"].rank() == fields["scalar"].rank() + 1 );
+    EXPECT( fields["scalar"].levels() == test_levels() );
+    EXPECT( fields["grad"].levels() == test_levels() );
 
     rotated_flow_magnitude( fvm, fields["scalar"], 0. );
     rotated_flow_magnitude( fvm, fields["rscalar"], M_PI_2 * 0.75 );
 
     nabla.gradient( fields["scalar"], fields["grad"] );
     nabla.gradient( fields["rscalar"], fields["rgrad"] );
-    auto xder        = array::make_view<double, 2>( fields["xder"] );
-    auto yder        = array::make_view<double, 2>( fields["yder"] );
-    auto rxder       = array::make_view<double, 2>( fields["rxder"] );
-    auto ryder       = array::make_view<double, 2>( fields["ryder"] );
-    const auto grad  = array::make_view<double, 3>( fields["grad"] );
-    const auto rgrad = array::make_view<double, 3>( fields["rgrad"] );
+    auto xder        = make_scalarview( fields["xder"] );
+    auto yder        = make_scalarview( fields["yder"] );
+    auto rxder       = make_scalarview( fields["rxder"] );
+    auto ryder       = make_scalarview( fields["ryder"] );
+    const auto grad  = make_vectorview( fields["grad"] );
+    const auto rgrad = make_vectorview( fields["rgrad"] );
     for ( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
         for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
             xder( jnode, jlev )  = grad( jnode, jlev, LON );
@@ -203,17 +226,52 @@ CASE( "test_grad" ) {
         gmsh_fields.write( fields["rxder"] );
         gmsh_fields.write( fields["ryder"] );
     }
+
+    double min, max, mean;
+    int N;
+
+    fvm.node_columns().minimum( fields["xder"], min );
+    fvm.node_columns().maximum( fields["xder"], max );
+    fvm.node_columns().mean( fields["xder"], mean, N );
+    print_min_max_mean( "xder" );
+    EXPECT_APPROX_EQ( min, 0., 1.e-20 );
+    EXPECT_APPROX_EQ( max, 0., 1.e-20 );
+    EXPECT_APPROX_EQ( mean, 0., 1.e-20 );
+
+    fvm.node_columns().minimum( fields["yder"], min );
+    fvm.node_columns().maximum( fields["yder"], max );
+    fvm.node_columns().mean( fields["yder"], mean, N );
+    print_min_max_mean( "yder" );
+    EXPECT_APPROX_EQ( min, -3.1141489788326316614e-06 );
+    EXPECT_APPROX_EQ( max, 3.1141489788326316614e-06 );
+    EXPECT_APPROX_EQ( mean, 0., 1.e-20 );
+
+
+    fvm.node_columns().minimum( fields["rxder"], min );
+    fvm.node_columns().maximum( fields["rxder"], max );
+    fvm.node_columns().mean( fields["rxder"], mean, N );
+    print_min_max_mean( "rxder" );
+    EXPECT_APPROX_EQ( min, -3.02863817262107e-06 );
+    EXPECT_APPROX_EQ( max, +3.02863817262107e-06 );
+    EXPECT_APPROX_EQ( mean, 0., 1.e-20 );
+
+    fvm.node_columns().minimum( fields["ryder"], min );
+    fvm.node_columns().maximum( fields["ryder"], max );
+    fvm.node_columns().mean( fields["ryder"], mean, N );
+    print_min_max_mean( "ryder" );
+    EXPECT_APPROX_EQ( min, -3.114148978832633e-06 );
+    EXPECT_APPROX_EQ( max, +3.114148978832633e-06 );
+    EXPECT_APPROX_EQ( mean, 0., 1.e-20 );
 }
 
 CASE( "test_div" ) {
     Log::info() << "test_div" << std::endl;
-    size_t nlev         = 1;
     const double radius = util::Earth::radius();
     //  const double radius = 1.;
     Grid grid( griduid() );
     MeshGenerator meshgenerator( "structured" );
     Mesh mesh = meshgenerator.generate( grid, Distribution( grid, Partitioner( "equal_regions" ) ) );
-    fvm::Method fvm( mesh, util::Config( "radius", radius ) | option::levels( nlev ) );
+    fvm::Method fvm( mesh, util::Config( "radius", radius ) | option::levels( test_levels() ) );
     Nabla nabla( fvm );
 
     FieldSet fields;
@@ -231,17 +289,28 @@ CASE( "test_div" ) {
         gmsh.write( fields["wind"] );
         gmsh.write( fields["div"] );
     }
+
+    double min, max, mean;
+    int N;
+    fvm.node_columns().minimum( fields["div"], min );
+    fvm.node_columns().maximum( fields["div"], max );
+    fvm.node_columns().mean( fields["div"], mean, N );
+
+    // Divergence free flow!
+    print_min_max_mean( "div" );
+    EXPECT_APPROX_EQ( min, 0., 1.e-18 );
+    EXPECT_APPROX_EQ( max, 0., 1.e-18 );
+    EXPECT_APPROX_EQ( mean, 0., 1.e-20 );
 }
 
 CASE( "test_curl" ) {
     Log::info() << "test_curl" << std::endl;
-    size_t nlev         = 1;
     const double radius = util::Earth::radius();
     //  const double radius = 1.;
     Grid grid( griduid() );
     MeshGenerator meshgenerator( "structured" );
     Mesh mesh = meshgenerator.generate( grid, Distribution( grid, Partitioner( "equal_regions" ) ) );
-    fvm::Method fvm( mesh, util::Config( "radius", radius ) | option::levels( nlev ) );
+    fvm::Method fvm( mesh, util::Config( "radius", radius ) | option::levels( test_levels() ) );
     Nabla nabla( fvm );
 
     FieldSet fields;
@@ -261,15 +330,15 @@ CASE( "test_curl" ) {
     fields.add( fvm.node_columns().createField<double>( option::name( "windXgradY" ) ) );
     fields.add( fvm.node_columns().createField<double>( option::name( "windYgradX" ) ) );
     fields.add( fvm.node_columns().createField<double>( option::name( "windYgradY" ) ) );
-    auto wind     = array::make_view<double, 3>( fields["wind"] );
-    auto windgrad = array::make_view<double, 3>( fields["windgrad"] );
+    auto wind     = make_vectorview( fields["wind"] );
+    auto windgrad = make_vectorview( fields["windgrad"] );
 
     auto windX      = array::make_view<double, 1>( fields["windX"] );
     auto windY      = array::make_view<double, 1>( fields["windY"] );
-    auto windXgradX = array::make_view<double, 2>( fields["windXgradX"] );
-    auto windXgradY = array::make_view<double, 2>( fields["windXgradY"] );
-    auto windYgradX = array::make_view<double, 2>( fields["windYgradX"] );
-    auto windYgradY = array::make_view<double, 2>( fields["windYgradY"] );
+    auto windXgradX = make_scalarview( fields["windXgradX"] );
+    auto windXgradY = make_scalarview( fields["windXgradY"] );
+    auto windYgradX = make_scalarview( fields["windYgradX"] );
+    auto windYgradY = make_scalarview( fields["windYgradY"] );
     for ( idx_t j = 0; j < windX.size(); ++j ) {
         static const idx_t lev0 = 0;
         static const idx_t XdX  = XX * 2 + XX;
@@ -297,17 +366,28 @@ CASE( "test_curl" ) {
         gmsh.write( fields["windYgradY"] );
         gmsh.write( fields["windgrad"] );
     }
+
+    double min, max, mean;
+    int N;
+
+    // Vorticity!
+    fvm.node_columns().minimum( fields["vor"], min );
+    fvm.node_columns().maximum( fields["vor"], max );
+    fvm.node_columns().mean( fields["vor"], mean, N );
+    print_min_max_mean( "vor" );
+    EXPECT_APPROX_EQ( min, -6.257451225821150e-06 );
+    EXPECT_APPROX_EQ( max, 6.257451225821150e-06 );
+    EXPECT_APPROX_EQ( mean, 0., 1.e-20 );
 }
 
 CASE( "test_lapl" ) {
     Log::info() << "test_lapl" << std::endl;
-    size_t nlev         = 1;
     const double radius = util::Earth::radius();
     //  const double radius = 1.;
     Grid grid( griduid() );
     MeshGenerator meshgenerator( "structured" );
     Mesh mesh = meshgenerator.generate( grid, Distribution( grid, Partitioner( "equal_regions" ) ) );
-    fvm::Method fvm( mesh, util::Config( "radius", radius ) | option::levels( nlev ) );
+    fvm::Method fvm( mesh, util::Config( "radius", radius ) | option::levels( test_levels() ) );
     Nabla nabla( fvm );
 
     FieldSet fields;
@@ -324,6 +404,16 @@ CASE( "test_lapl" ) {
         output::Gmsh gmsh( grid.name() + "_fields.msh", "a" );
         gmsh.write( fields["lapl"] );
     }
+
+    double min, max, mean;
+    int N;
+    fvm.node_columns().minimum( fields["lapl"], min );
+    fvm.node_columns().maximum( fields["lapl"], max );
+    fvm.node_columns().mean( fields["lapl"], mean, N );
+    print_min_max_mean( "lapl" );
+    EXPECT_APPROX_EQ( min, -6.4088005677811607095e-13 );
+    EXPECT_APPROX_EQ( max, 9.8984499569639476135e-12 );
+    EXPECT_APPROX_EQ( mean, -1.03409e-13 );
 }
 
 //-----------------------------------------------------------------------------

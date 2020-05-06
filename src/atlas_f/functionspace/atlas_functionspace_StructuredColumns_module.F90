@@ -110,6 +110,7 @@ interface atlas_functionspace_StructuredColumns
   module procedure ctor_cptr
   module procedure ctor_grid
   module procedure ctor_grid_dist
+  module procedure ctor_grid_dist_config
   module procedure ctor_grid_dist_levels
   module procedure ctor_grid_dist_vertical
   module procedure ctor_grid_part
@@ -220,6 +221,20 @@ function ctor_grid_dist_vertical(grid, distribution, vertical, halo) result(this
   call config%final()
   call this%return()
 end function
+
+function ctor_grid_dist_config(grid, distribution, config) result(this)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_functionspace_StructuredColumns) :: this
+  class(atlas_Grid), intent(in) :: grid
+  type(atlas_griddistribution), intent(in) :: distribution
+  type(atlas_Config), intent (in) :: config
+  call this%reset_c_ptr(atlas__functionspace__StructuredColumns__new__grid_dist_config( &
+      & grid%CPTR_PGIBUG_A, distribution%CPTR_PGIBUG_A, &
+      & config%CPTR_PGIBUG_B ) )
+  call this%set_index()
+  call this%return()
+end function
+
 
 function ctor_grid_part(grid, partitioner, halo, levels) result(this)
   use atlas_functionspace_StructuredColumns_c_binding

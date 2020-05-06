@@ -30,6 +30,21 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
+
+CASE( "test_ij2gidx" ) {
+    StructuredGrid n16 = Grid( "N16" );
+
+    for ( int j = 0, jglo = 0; j < n16.ny(); j++ ) {
+        for ( int i = 0; i < n16.nx( j ); i++, jglo++ ) {
+            idx_t i1, j1;
+            n16.index2ij( jglo, i1, j1 );
+            EXPECT( n16.index( i, j ) == jglo );
+            EXPECT( i1 == i );
+            EXPECT( j1 == j );
+        }
+    }
+}
+
 CASE( "test_factory" ) {
     StructuredGrid structured = Grid( "N80" );
 
