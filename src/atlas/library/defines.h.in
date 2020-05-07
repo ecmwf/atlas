@@ -43,4 +43,10 @@
 
 #define ATLAS_BITS_LOCAL @ATLAS_BITS_LOCAL@
 
+#if defined( __GNUC__ )
+#define ATLAS_MAYBE_UNUSED __attribute__( ( unused ) )
+#else
+#define ATLAS_MAYBE_UNUSED
+#endif
+
 #endif

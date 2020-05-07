@@ -574,6 +574,7 @@ parallel/GatherScatter.cc
 parallel/GatherScatter.h
 parallel/HaloExchange.cc
 parallel/HaloExchange.h
+parallel/HaloAdjointExchangeImpl.h
 parallel/HaloExchangeImpl.h
 parallel/mpi/Buffer.h
 runtime/Exception.cc

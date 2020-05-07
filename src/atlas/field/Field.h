@@ -169,6 +169,7 @@ public:
     void set_dirty( bool = true ) const;
 
     void haloExchange( bool on_device = false ) const;
+    void adjointHaloExchange( bool on_device = false ) const;
 
     // -- Methods related to host-device synchronisation
     void updateHost() const;

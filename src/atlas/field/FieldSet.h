@@ -87,6 +87,7 @@ public:  // methods
     const_iterator cend() const { return fields_.end(); }
 
     void haloExchange( bool on_device = false ) const;
+    void adjointHaloExchange( bool on_device = false ) const;
     void set_dirty( bool = true ) const;
 
 protected:                                // data

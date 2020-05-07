@@ -93,6 +93,9 @@ public:
     virtual void haloExchange( const FieldSet&, bool on_device = false ) const override;
     virtual void haloExchange( const Field&, bool on_device = false ) const override;
 
+    virtual void adjointHaloExchange( const FieldSet&, bool on_device = false ) const override;
+    virtual void adjointHaloExchange( const Field&, bool on_device = false ) const override;
+
     idx_t sizeOwned() const { return size_owned_; }
     idx_t sizeHalo() const { return size_halo_; }
     virtual idx_t size() const override { return size_halo_; }
