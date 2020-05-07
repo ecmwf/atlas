@@ -83,7 +83,7 @@ ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi16
 
 set( _WITH_MPI )
 if( eckit_HAVE_MPI )
-    set( _WITH_MPI "MPI 4" )
+    set( _WITH_MPI MPI 4 )
 endif()
 
 ecbuild_add_executable( TARGET atlas_test_polygons
