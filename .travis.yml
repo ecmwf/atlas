@@ -67,7 +67,7 @@ matrix:
         - CXX_COMPILER='clang++' C_COMPILER='clang' Fortran_COMPILER='gfortran'
         - MPI=openmpi
         - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
-        - ATLAS_CTEST_OPTIONS='-E "atlas_test_stencil_parallel_mpi16"'
+        - ATLAS_CTEST_OPTIONS="-E atlas_test_stencil_parallel_mpi16"
       osx_image: xcode10.1
       addons:
         homebrew:
