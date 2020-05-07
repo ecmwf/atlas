@@ -69,24 +69,6 @@ CASE( "test_light" )
   auto & comm = atlas::mpi::comm ();
   int nproc = comm.size ();
 
-  {
-    char f[128];
-    sprintf (f, "pid.%4.4d.txt", comm.rank ());  
-    FILE * fp = fopen (f, "w");
-    fprintf (fp, "%d\n", getpid ());
-    fclose (fp);
-  }
-
-  while (1)
-    {
-      struct stat st;
-      comm.barrier ();
-      if (stat ("go", &st) == 0)
-        break;
-      sleep (1);
-    }
-
-
   const int nx = 400, ny = 200;
 
   StructuredGrid grid = Grid (std::string ("L") + std::to_string (nx) + "x" + std::to_string (ny));
@@ -127,7 +109,6 @@ CASE( "test_light" )
 
   fs1.haloExchange (ij1);
   fs2.haloExchange (ij2);
-#ifdef UNDEF
 
   if (same)
     {
@@ -152,7 +133,6 @@ CASE( "test_light" )
        EXPECT (fs2.i_begin_halo (j) == -1);
        EXPECT (fs2.i_end_halo (j) == nx + 2);
      }
-#endif
 
 }
 
