@@ -55,6 +55,8 @@ namespace atlas {
 namespace functionspace {
 namespace detail {
 
+class StructuredColumnsHaloExchangeCache;
+
 // -------------------------------------------------------------------
 
 class StructuredColumns : public FunctionSpaceImpl {
@@ -197,6 +199,9 @@ private:  // data
     idx_t size_owned_;
     idx_t size_halo_;
     idx_t halo_;
+
+    friend class StructuredColumnsHaloExchangeCache;
+    bool periodic_points_{false};
 
     const StructuredGrid* grid_;
     mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;

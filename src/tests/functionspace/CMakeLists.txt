@@ -122,3 +122,11 @@ ecbuild_add_test( TARGET atlas_test_polygons_projections_nodecolumns
   ${_WITH_MPI}
 )
 
+# Tests ATLAS-286
+ecbuild_add_test( TARGET  atlas_test_structuredcolumns_haloexchange
+  ${_WITH_MPI}
+  SOURCES test_structuredcolumns_haloexchange.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
