@@ -40,11 +40,23 @@ getIJ (const atlas::functionspace::StructuredColumns & fs)
 {
   atlas::FieldSet ij;
   
-  auto i = atlas::array::make_view<int,1> (fs.index_i ());
-  auto j = atlas::array::make_view<int,1> (fs.index_j ());
+  auto vi0 = atlas::array::make_view<int,1> (fs.index_i ());
+  auto vj0 = atlas::array::make_view<int,1> (fs.index_j ());
 
-  ij.add (fs.index_i ());
-  ij.add (fs.index_j ());
+  auto fi = fs.createField<int> ();
+  auto fj = fs.createField<int> ();
+
+  auto vi1 = atlas::array::make_view<int,1> (fi);
+  auto vj1 = atlas::array::make_view<int,1> (fj);
+
+  for (int i = 0; i < fs.size (); i++)
+    {
+      vi1 (i) = vi0 (i);
+      vj1 (i) = vj0 (i);
+    }
+
+  ij.add (fi);
+  ij.add (fj);
 
   return ij;
 }
@@ -60,7 +72,10 @@ CASE( "test_broken" )
   const int nx = 400, ny = 200;
 
   StructuredGrid grid = Grid (std::string ("L") + std::to_string (nx) + "x" + std::to_string (ny));
-  atlas::grid::Distribution dist (grid, atlas::util::Config ("type", "checkerboard"));
+
+  atlas::grid::Partitioner partitioner (atlas::util::Config ("type", "checkerboard"));
+
+  atlas::grid::Distribution dist (grid, partitioner);
 
   atlas::functionspace::StructuredColumns fs1 (grid, dist, atlas::util::Config ("halo", 1) | Config ("periodic_points", true));
   atlas::functionspace::StructuredColumns fs2 (grid, dist, atlas::util::Config ("halo", 1));
@@ -71,9 +86,6 @@ CASE( "test_broken" )
   fs1.haloExchange (ij1);
   fs2.haloExchange (ij2);
 
-
-  printf ("%s:%d\n", __FILE__, __LINE__);
-  printf ("STOP\n");
 }
 
 
