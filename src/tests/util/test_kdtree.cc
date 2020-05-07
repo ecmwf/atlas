@@ -49,11 +49,13 @@ public:
             ++i_;
             return *this;
         }
+        /*
+        // unused
         iterator operator++( int ) {
             iterator copy( *this );
             ++i_;
             return copy;
-        }
+        }*/
 
         bool operator==( const iterator& other ) const { return i_ == other.i_; }
         bool operator!=( const iterator& other ) const { return i_ != other.i_; }

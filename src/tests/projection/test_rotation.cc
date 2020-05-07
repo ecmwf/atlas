@@ -149,9 +149,9 @@ CASE( "test_rotation_angle" ) {
         {2.00000, 46.70000},     {-178.00000, -46.70000}, {166.62343, -19.46929},  {156.02366, 8.65459},
         {143.57464, 36.43683},   {117.10894, 61.43199},   {43.88245, 68.00825},    {2.00000, 46.70000},
     };
-
-
-    for ( int i = 0, jglo = 0; i < nx; i++ )
+    
+    
+    for ( int i = 0, jglo = 0; i < nx; i++ ) {
         for ( int j = 0; j < ny + 1; j++, jglo++ ) {
             double lon = static_cast<double>( i ) * 360. / static_cast<double>( nx );
             double lat = static_cast<double>( j - ny / 2 ) * 90. / static_cast<double>( ny / 2 );
@@ -161,6 +161,7 @@ CASE( "test_rotation_angle" ) {
             EXPECT( equivalent( p0, p2 ) );
             EXPECT( equivalent( p1, ref[jglo] ) );
         }
+    }
 }
 
 CASE( "test_rotation_construction" ) {

@@ -146,7 +146,7 @@ public:
     void build( const Longitudes& longitudes, const Latitudes& latitudes, const Payloads& payloads ) {
         build( longitudes.begin(), longitudes.end(), latitudes.begin(), latitudes.end(), payloads.begin(),
                payloads.end() );
-    };
+    }
 
     /// @brief Build with spherical points (lon,lat) given separate iterator ranges for longitudes, latitudes, and payloads.
     /// Memory will be reserved with reserve() to match the size
@@ -172,7 +172,7 @@ public:
     template <typename Points, typename Payloads>
     void build( const Points& points, const Payloads& payloads ) {
         build( points.begin(), points.end(), payloads.begin(), payloads.end() );
-    };
+    }
 
     /// @brief Build with spherical points (lon,lat) given separate iterator ranges for longitudes, latitudes, and payloads.
     /// Memory will be reserved with reserve() to match the size
