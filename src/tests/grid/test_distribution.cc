@@ -60,30 +60,22 @@ CASE( "test_broken" )
   const int nx = 400, ny = 200;
 
   StructuredGrid grid = Grid (std::string ("L") + std::to_string (nx) + "x" + std::to_string (ny));
+  atlas::grid::Distribution dist (grid, atlas::util::Config ("type", "checkerboard"));
 
-  const int icnt[] = {26800, 26800, 26400};
-  int partition[grid.size ()];
+  atlas::functionspace::StructuredColumns fs1 (grid, dist, atlas::util::Config ("halo", 1) | Config ("periodic_points", true));
+  atlas::functionspace::StructuredColumns fs2 (grid, dist, atlas::util::Config ("halo", 1));
 
-  for (int irank = 0, ioff = 0; irank < 3; irank++)
-    {
-      for (int jglo = ioff; jglo < ioff + icnt[irank]; jglo++)
-        partition[jglo] = irank;
-      ioff += icnt[irank];
-    }
+  auto ij1 = getIJ (fs1);
+  auto ij2 = getIJ (fs2);
 
-  printf (" icnt = %8d\n", icnt[0]+icnt[1]+icnt[2]);
-  printf (" grid.size () = %8d\n", grid.size ());
+  fs1.haloExchange (ij1);
+  fs2.haloExchange (ij2);
 
-  EXPECT (grid.size () == icnt[0]+icnt[1]+icnt[2]);
-  EXPECT (comm.size () == 3);
-  
-  atlas::grid::Distribution dist (comm.size (), grid.size (), partition);
-  atlas::functionspace::StructuredColumns fs (grid, dist, atlas::util::Config ("halo", 1) | Config ("periodic_points", true));
 
-  auto ij = getIJ (fs);
-  fs.haloExchange (ij);
-
+  printf ("%s:%d\n", __FILE__, __LINE__);
+  printf ("STOP\n");
 }
+
 
 //-----------------------------------------------------------------------------
 
