@@ -105,15 +105,16 @@ public:
         registerGrid( *funcspace.grid().get() );
 
         creator_type creator = std::bind( &StructuredColumnsHaloExchangeCache::create, &funcspace );
-        return Base::get_or_create( key( *funcspace.grid().get(), funcspace.halo() ),
+        return Base::get_or_create( key( *funcspace.grid().get(), funcspace.halo(), funcspace.periodic_points_ ),
                                     remove_key( *funcspace.grid().get() ), creator );
     }
     void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( remove_key( grid ) ); }
 
 private:
-    static Base::key_type key( const grid::detail::grid::Grid& grid, idx_t halo ) {
+    static Base::key_type key( const grid::detail::grid::Grid& grid, idx_t halo, bool periodic_points ) {
         std::ostringstream key;
-        key << "grid[address=" << &grid << ",halo=" << halo << "]";
+        key << "grid[address=" << &grid << ",halo=" << halo << ",periodic_points=" << std::boolalpha << periodic_points
+            << "]";
         return key.str();
     }
 
