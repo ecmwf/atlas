@@ -94,6 +94,7 @@ contains
 ! -----------------------------------------------------------------------------
 ! Config routines
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_Config__final_auto(this)
   type(atlas_Config), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -104,6 +105,7 @@ ATLAS_FINAL subroutine atlas_Config__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 function atlas_Config__ctor() result(this)
   use atlas_Config_c_binding

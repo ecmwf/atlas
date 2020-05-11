@@ -272,6 +272,7 @@ end function
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_functionspace_Spectral__final_auto(this)
   type(atlas_functionspace_Spectral), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -282,6 +283,7 @@ ATLAS_FINAL subroutine atlas_functionspace_Spectral__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 end module atlas_functionspace_Spectral_module
 

@@ -160,8 +160,7 @@ int AtlasGrids::execute( const Args& args ) {
         }
 
         for ( auto b : grid::GridBuilder::nameRegistry() ) {
-            int nb_names = b.second->names().size();
-            int c        = 0;
+            int c = 0;
             for ( const auto& name : b.second->names() ) {
                 if ( c == 0 ) {
                     Log::info() << "  -- " << std::left << std::setw( maxlen + 8 ) << name;

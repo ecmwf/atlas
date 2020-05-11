@@ -501,6 +501,7 @@ end function
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine StructuredColumns__final_auto(this)
   type(atlas_functionspace_StructuredColumns), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -511,6 +512,7 @@ ATLAS_FINAL subroutine StructuredColumns__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 end module atlas_functionspace_StructuredColumns_module
 

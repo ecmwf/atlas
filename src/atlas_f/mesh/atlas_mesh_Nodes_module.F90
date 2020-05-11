@@ -292,6 +292,7 @@ end function
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_mesh_Nodes__final_auto(this)
   type(atlas_mesh_Nodes), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -302,6 +303,7 @@ ATLAS_FINAL subroutine atlas_mesh_Nodes__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 ! ----------------------------------------------------------------------------------------
 

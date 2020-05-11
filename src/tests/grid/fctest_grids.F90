@@ -31,8 +31,8 @@ TEST( test_ij2gidx )
   use atlas_module
   implicit none
   type(atlas_StructuredGrid) :: grid
-  integer :: jglo, i, j, i1, j1, jglo1
-
+  integer :: i, j, i1, j1
+  integer(ATLAS_KIND_IDX) :: jglo, jglo1
   grid = atlas_StructuredGrid ("N16")
 
   jglo = 1

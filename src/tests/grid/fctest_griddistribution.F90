@@ -63,7 +63,7 @@ TEST( test_griddist )
   type(atlas_GridDistribution) :: griddistribution
 
   integer, allocatable :: part(:)
-  integer :: jnode
+  integer(ATLAS_KIND_IDX) :: jnode
 
   grid = atlas_StructuredGrid("O16")
 

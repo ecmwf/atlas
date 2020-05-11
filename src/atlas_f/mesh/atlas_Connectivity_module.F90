@@ -635,6 +635,7 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_Connectivity__final_auto(this)
   type(atlas_Connectivity), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -645,9 +646,11 @@ ATLAS_FINAL subroutine atlas_Connectivity__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_MultiBlockConnectivity__final_auto(this)
   type(atlas_MultiBlockConnectivity), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -658,6 +661,7 @@ ATLAS_FINAL subroutine atlas_MultiBlockConnectivity__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 !-------------------------------------------------------------------------------
 

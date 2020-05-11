@@ -378,6 +378,7 @@ end subroutine invtrans_grad_field
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_Trans__final_auto(this)
   type(atlas_Trans), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -388,6 +389,7 @@ ATLAS_FINAL subroutine atlas_Trans__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 ! ----------------------------------------------------------------------------------------
 
