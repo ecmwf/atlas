@@ -6,7 +6,7 @@ dy : 13545.0
 lonlat(xmin,ymin): [-126.138,16.281]
 projection :  
     type : "lambert_conformal_conic"
-    latitude1  : 25.0
+    latitude0  : 25.0
     longitude0 : -95.0
 y_numbering : +1
 
