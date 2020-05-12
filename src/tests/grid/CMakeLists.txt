@@ -28,6 +28,7 @@ foreach(test
         test_vertical
         test_spacing
         test_state
+        test_largegrid
         test_grid_hash)
 
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
