@@ -177,6 +177,13 @@ public:
     void hash( eckit::Hash& ) const {}
 };
 
+extern "C" {
+const ProjectionImpl* atlas__Projection__ctor_config( const eckit::Parametrisation* config );
+void atlas__Projection__type( const ProjectionImpl* This, char*& type, int& size );
+void atlas__Projection__hash( const ProjectionImpl* This, char*& hash, int& size );
+ProjectionImpl::Spec* atlas__Projection__spec( const ProjectionImpl* This );
+}
+
 }  // namespace detail
 }  // namespace projection
 }  // namespace atlas

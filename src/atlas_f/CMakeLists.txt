@@ -71,6 +71,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/vertical/Vertica
     MODULE atlas_vertical_c_binding
     OUTPUT vertical_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Partitioner.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/projection/detail/ProjectionImpl.h
+    MODULE atlas_projection_c_binding
+    OUTPUT projection_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/detail/MeshIntf.h
     MODULE    atlas_mesh_c_binding
     OUTPUT    atlas_mesh_c_binding.f90 )
@@ -181,6 +184,7 @@ ecbuild_add_library( TARGET atlas_f
         parallel/atlas_GatherScatter_module.fypp
         parallel/atlas_Checksum_module.fypp
         parallel/atlas_HaloExchange_module.fypp
+        projection/atlas_Projection_module.F90
         trans/atlas_Trans_module.F90
         internals/atlas_read_file.h
         internals/atlas_read_file.cc

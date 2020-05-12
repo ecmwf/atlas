@@ -86,6 +86,11 @@ use atlas_functionspace_StructuredColumns_module, only: &
     & atlas_functionspace_StructuredColumns
 use atlas_functionspace_Spectral_module, only: &
     & atlas_functionspace_Spectral
+use atlas_Projection_module, only : &
+    & atlas_Projection, &
+    & atlas_RotatedLonLatProjection, &
+    & atlas_LambertConformalConicProjection, &
+    & atlas_RotatedSchmidtProjection
 use atlas_Trans_module, only : &
     & atlas_Trans
 use atlas_kinds_module, only: &

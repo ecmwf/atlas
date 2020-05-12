@@ -19,3 +19,6 @@ if(atlas_HAVE_PROJ)
     ecbuild_add_test( TARGET atlas_test_proj SOURCES test_proj.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 endif()
 
+if( HAVE_FCTEST )
+    add_fctest( TARGET atlas_fctest_projection SOURCES fctest_projection.F90 LINKER_LANGUAGE Fortran LIBS atlas_f ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
+endif()
