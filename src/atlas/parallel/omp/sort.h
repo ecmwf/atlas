@@ -32,16 +32,6 @@
 #endif
 #endif
 
-#ifndef ATLAS_OMP_TASK_UNTIED_SUPPORTED
-#define ATLAS_OMP_TASK_UNTIED_SUPPORTED 1
-#endif
-#ifdef __clang__
-#if __clang_major__ <= 7
-#undef ATLAS_OMP_TASK_UNTIED_SUPPORTED
-#define ATLAS_OMP_TASK_UNTIED_SUPPORTED 0
-#endif
-#endif
-
 namespace atlas {
 namespace omp {
 

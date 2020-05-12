@@ -309,7 +309,6 @@ CASE( "test_arrayview_slice_type" ) {
 
     {
         const auto const_read_write_view = make_view<double, 3>( arr );
-        auto read_write_view             = make_view<double, 3>( arr );
 
         auto slice1 = const_read_write_view.slice( Range{0, 2}, 2, Range{2, 5} );
 

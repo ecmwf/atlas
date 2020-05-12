@@ -64,6 +64,7 @@ void atlas__Field__update_host( FieldImpl* This );
 void atlas__Field__sync_host_device( FieldImpl* This );
 void atlas__Field__set_dirty( FieldImpl* This, int value );
 void atlas__Field__halo_exchange( FieldImpl* This, int on_device );
+void atlas__Field__adjoint_halo_exchange( FieldImpl* This, int on_device );
 int atlas__Field__dirty( FieldImpl* This );
 int atlas__Field__contiguous( FieldImpl* This );
 }

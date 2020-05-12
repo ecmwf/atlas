@@ -66,7 +66,7 @@ contains
   procedure :: dirty
   procedure :: set_dirty
 
-  procedure :: rename
+  procedure :: rename => rename_
   procedure :: set_levels
   procedure :: set_functionspace
 
@@ -583,7 +583,7 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
-subroutine rename(this,name)
+subroutine rename_(this,name)
   use atlas_field_c_binding
   use fckit_c_interop_module, only : c_str
   class(atlas_Field), intent(inout) :: this
@@ -716,6 +716,7 @@ end function
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_Field__final_auto(this)
   type(atlas_Field), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -726,6 +727,7 @@ ATLAS_FINAL subroutine atlas_Field__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 !-------------------------------------------------------------------------------
 

@@ -92,10 +92,6 @@ void Nabla::gradient_of_scalar( const Field& scalar_field, Field& grad_field ) c
 
     const idx_t nnodes = fvm_->node_columns().nb_nodes();
     const idx_t nedges = fvm_->edge_columns().nb_edges();
-    const idx_t nlev   = scalar_field.levels() ? scalar_field.levels() : 1;
-    if ( ( grad_field.levels() ? grad_field.levels() : 1 ) != nlev ) {
-        throw_AssertionFailed( "gradient field should have same number of levels", Here() );
-    }
 
     const auto scalar = scalar_field.levels()
                             ? array::make_view<double, 2>( scalar_field ).slice( Range::all(), Range::all() )
@@ -103,6 +99,11 @@ void Nabla::gradient_of_scalar( const Field& scalar_field, Field& grad_field ) c
     auto grad = grad_field.levels()
                     ? array::make_view<double, 3>( grad_field ).slice( Range::all(), Range::all(), Range::all() )
                     : array::make_view<double, 2>( grad_field ).slice( Range::all(), Range::dummy(), Range::all() );
+
+    const idx_t nlev = scalar.shape( 1 );
+    if ( grad.shape( 1 ) != nlev ) {
+        throw_AssertionFailed( "gradient field should have same number of levels", Here() );
+    }
 
     const auto lonlat_deg     = array::make_view<double, 2>( nodes.lonlat() );
     const auto dual_volumes   = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
@@ -144,6 +145,7 @@ void Nabla::gradient_of_scalar( const Field& scalar_field, Field& grad_field ) c
                     }
                 }
             }
+
             const double y        = lonlat_deg( jnode, LAT ) * deg2rad;
             const double metric_y = 1. / ( dual_volumes( jnode ) * scale );
             const double metric_x = metric_y / std::cos( y );
@@ -167,10 +169,6 @@ void Nabla::gradient_of_vector( const Field& vector_field, Field& grad_field ) c
 
     const idx_t nnodes = fvm_->node_columns().nb_nodes();
     const idx_t nedges = fvm_->edge_columns().nb_edges();
-    const idx_t nlev   = vector_field.levels();
-    if ( vector_field.levels() != nlev ) {
-        throw_AssertionFailed( "gradient field should have same number of levels", Here() );
-    }
 
     const auto vector =
         vector_field.levels()
@@ -179,6 +177,11 @@ void Nabla::gradient_of_vector( const Field& vector_field, Field& grad_field ) c
     auto grad = grad_field.levels()
                     ? array::make_view<double, 3>( grad_field ).slice( Range::all(), Range::all(), Range::all() )
                     : array::make_view<double, 2>( grad_field ).slice( Range::all(), Range::dummy(), Range::all() );
+
+    const idx_t nlev = vector.shape( 1 );
+    if ( grad.shape( 1 ) != nlev ) {
+        throw_AssertionFailed( "gradient field should have same number of levels", Here() );
+    }
 
     const auto lonlat_deg     = array::make_view<double, 2>( nodes.lonlat() );
     const auto dual_volumes   = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
@@ -274,10 +277,6 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
 
     const idx_t nnodes = fvm_->node_columns().nb_nodes();
     const idx_t nedges = fvm_->edge_columns().nb_edges();
-    const idx_t nlev   = vector_field.levels();
-    if ( div_field.levels() != nlev ) {
-        throw_AssertionFailed( "divergence field should have same number of levels", Here() );
-    }
 
     const auto vector =
         vector_field.levels()
@@ -285,6 +284,11 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
             : array::make_view<double, 2>( vector_field ).slice( Range::all(), Range::dummy(), Range::all() );
     auto div = div_field.levels() ? array::make_view<double, 2>( div_field ).slice( Range::all(), Range::all() )
                                   : array::make_view<double, 1>( div_field ).slice( Range::all(), Range::dummy() );
+
+    const idx_t nlev = vector.shape( 1 );
+    if ( div.shape( 1 ) != nlev ) {
+        throw_AssertionFailed( "div_field should have same number of levels", Here() );
+    }
 
     const auto lonlat_deg     = array::make_view<double, 2>( nodes.lonlat() );
     const auto dual_volumes   = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
@@ -359,10 +363,6 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
 
     const idx_t nnodes = fvm_->node_columns().nb_nodes();
     const idx_t nedges = fvm_->edge_columns().nb_edges();
-    const idx_t nlev   = vector_field.levels();
-    if ( curl_field.levels() != nlev ) {
-        throw_AssertionFailed( "curl field should have same number of levels", Here() );
-    }
 
     const auto vector =
         vector_field.levels()
@@ -370,6 +370,11 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
             : array::make_view<double, 2>( vector_field ).slice( Range::all(), Range::dummy(), Range::all() );
     auto curl = curl_field.levels() ? array::make_view<double, 2>( curl_field ).slice( Range::all(), Range::all() )
                                     : array::make_view<double, 1>( curl_field ).slice( Range::all(), Range::dummy() );
+
+    const idx_t nlev = vector.shape( 1 );
+    if ( curl.shape( 1 ) != nlev ) {
+        throw_AssertionFailed( "curl field should have same number of levels", Here() );
+    }
 
     const auto lonlat_deg     = array::make_view<double, 2>( nodes.lonlat() );
     const auto dual_volumes   = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );

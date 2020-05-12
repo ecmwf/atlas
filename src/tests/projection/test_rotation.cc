@@ -151,7 +151,7 @@ CASE( "test_rotation_angle" ) {
     };
 
 
-    for ( int i = 0, jglo = 0; i < nx; i++ )
+    for ( int i = 0, jglo = 0; i < nx; i++ ) {
         for ( int j = 0; j < ny + 1; j++, jglo++ ) {
             double lon = static_cast<double>( i ) * 360. / static_cast<double>( nx );
             double lat = static_cast<double>( j - ny / 2 ) * 90. / static_cast<double>( ny / 2 );
@@ -161,6 +161,7 @@ CASE( "test_rotation_angle" ) {
             EXPECT( equivalent( p0, p2 ) );
             EXPECT( equivalent( p1, ref[jglo] ) );
         }
+    }
 }
 
 CASE( "test_rotation_construction" ) {

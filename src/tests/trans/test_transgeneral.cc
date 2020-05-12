@@ -905,8 +905,8 @@ CASE( "test_trans_domain" ) {
                                 std::chrono::duration<double> elapsed_seconds = end - start;
                                 std::time_t end_time = std::chrono::system_clock::to_time_t( end );
                                 std::string time_str = std::ctime( &end_time );
-                                //Log::info() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
-                                //            << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
+                                Log::debug() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
+                                             << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
                             }
                             k++;
                         }
@@ -1091,8 +1091,8 @@ CASE( "test_trans_pole" ) {
                                 std::chrono::duration<double> elapsed_seconds = end - start;
                                 std::time_t end_time = std::chrono::system_clock::to_time_t( end );
                                 std::string time_str = std::ctime( &end_time );
-                                //Log::info() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
-                                //            << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
+                                Log::debug() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
+                                             << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
                             }
                             k++;
                         }
@@ -1283,8 +1283,8 @@ CASE( "test_trans_southpole" ) {
                                 std::chrono::duration<double> elapsed_seconds = end - start;
                                 std::time_t end_time = std::chrono::system_clock::to_time_t( end );
                                 std::string time_str = std::ctime( &end_time );
-                                //Log::info() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
-                                //            << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
+                                Log::debug() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
+                                             << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
                             }
                             k++;
                         }
@@ -1440,8 +1440,8 @@ CASE( "test_trans_unstructured" ) {
                                 std::chrono::duration<double> elapsed_seconds = end - start;
                                 std::time_t end_time = std::chrono::system_clock::to_time_t( end );
                                 std::string time_str = std::ctime( &end_time );
-                                //Log::info() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
-                                //            << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
+                                Log::debug() << "case " << icase << ", elapsed time: " << elapsed_seconds.count()
+                                             << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
                             }
                             k++;
                         }

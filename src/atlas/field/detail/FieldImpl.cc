@@ -17,6 +17,9 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/runtime/Exception.h"
 
+
+#include "atlas/runtime/Log.h"
+
 namespace atlas {
 namespace field {
 
@@ -158,7 +161,14 @@ void FieldImpl::haloExchange( bool on_device ) const {
         set_dirty( false );
     }
 }
+void FieldImpl::adjointHaloExchange( bool on_device ) const {
+    {
+        set_dirty();
 
+        ATLAS_ASSERT( functionspace() );
+        functionspace().adjointHaloExchange( Field( this ), on_device );
+    }
+}
 
 // ------------------------------------------------------------------
 

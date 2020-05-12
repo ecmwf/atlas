@@ -543,7 +543,6 @@ subroutine set_access(this)
     call c_f_pointer(ctxt,this%access)
   else
     allocate( this%access )
-    write(0,*) "allocate access ", loc(this%access)
     call atlas__connectivity__register_ctxt  ( this%CPTR_PGIBUG_A, c_loc(this%access) )
     call atlas__connectivity__register_update( this%CPTR_PGIBUG_A, c_funloc(update_access_c) )
     call atlas__connectivity__register_delete( this%CPTR_PGIBUG_A, c_funloc(delete_access_c) )
@@ -636,6 +635,7 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_Connectivity__final_auto(this)
   type(atlas_Connectivity), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -646,9 +646,11 @@ ATLAS_FINAL subroutine atlas_Connectivity__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_MultiBlockConnectivity__final_auto(this)
   type(atlas_MultiBlockConnectivity), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -659,6 +661,7 @@ ATLAS_FINAL subroutine atlas_MultiBlockConnectivity__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 !-------------------------------------------------------------------------------
 

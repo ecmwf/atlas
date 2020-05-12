@@ -131,6 +131,7 @@ end function
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_ElementType__final_auto(this)
   type(atlas_ElementType), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -141,6 +142,7 @@ ATLAS_FINAL subroutine atlas_ElementType__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 end module atlas_ElementType_module
 
