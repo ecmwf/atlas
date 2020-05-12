@@ -65,9 +65,16 @@ implicit none
   call geometry%xyz2lonlat(xyz1(1), xyz1(2), xyz1(3), lonlat(1), lonlat(2))
   FCTEST_CHECK_CLOSE( lonlat(1) , lonlat1(1), 1.e-2_c_double )
   FCTEST_CHECK_CLOSE( lonlat(2) , lonlat1(2), 1.e-2_c_double )
+  call geometry%xyz2lonlat(xyz1, lonlat)
+  FCTEST_CHECK_CLOSE( lonlat(1) , lonlat1(1), 1.e-2_c_double )
+  FCTEST_CHECK_CLOSE( lonlat(2) , lonlat1(2), 1.e-2_c_double )
 
   ! Check conversion from spherical to cartesian
   call geometry%lonlat2xyz(lonlat1(1), lonlat1(2), xyz(1), xyz(2), xyz(3))
+  FCTEST_CHECK_CLOSE( xyz(1) , xyz1(1) , 1.e3_c_double )
+  FCTEST_CHECK_CLOSE( xyz(2) , xyz1(2) , 1.e3_c_double )
+  FCTEST_CHECK_CLOSE( xyz(3) , xyz1(3) , 1.e3_c_double )
+  call geometry%lonlat2xyz(lonlat1, xyz)
   FCTEST_CHECK_CLOSE( xyz(1) , xyz1(1) , 1.e3_c_double )
   FCTEST_CHECK_CLOSE( xyz(2) , xyz1(2) , 1.e3_c_double )
   FCTEST_CHECK_CLOSE( xyz(3) , xyz1(3) , 1.e3_c_double )
@@ -75,7 +82,11 @@ implicit none
   ! Check distance
   distance = geometry%distance(lonlat1(1), lonlat1(2), lonlat2(1), lonlat2(2))
   FCTEST_CHECK_CLOSE( distance , 2.942_c_double , 1.e-3_c_double )
+  distance = geometry%distance(lonlat1, lonlat2)
+  FCTEST_CHECK_CLOSE( distance , 2.942_c_double , 1.e-3_c_double )
   distance = geometry%distance(xyz1(1), xyz1(2), xyz1(3), xyz2(1), xyz2(2), xyz2(3))
+  FCTEST_CHECK_CLOSE( distance , 2.942_c_double , 1.e-3_c_double )
+  distance = geometry%distance(xyz1, xyz2)
   FCTEST_CHECK_CLOSE( distance , 2.942_c_double , 1.e-3_c_double )
 
   ! Check radius
@@ -103,9 +114,16 @@ implicit none
   call geometry%xyz2lonlat(xyz1(1), xyz1(2), xyz1(3), lonlat(1), lonlat(2))
   FCTEST_CHECK_CLOSE( lonlat(1) , lonlat1(1), 1.e-2_c_double )
   FCTEST_CHECK_CLOSE( lonlat(2) , lonlat1(2), 1.e-2_c_double )
+  call geometry%xyz2lonlat(xyz1, lonlat)
+  FCTEST_CHECK_CLOSE( lonlat(1) , lonlat1(1), 1.e-2_c_double )
+  FCTEST_CHECK_CLOSE( lonlat(2) , lonlat1(2), 1.e-2_c_double )
 
   ! Check conversion from spherical to cartesian
   call geometry%lonlat2xyz(lonlat1(1), lonlat1(2), xyz(1), xyz(2), xyz(3))
+  FCTEST_CHECK_CLOSE( xyz(1) , xyz1(1) , 1.e3_c_double )
+  FCTEST_CHECK_CLOSE( xyz(2) , xyz1(2) , 1.e3_c_double )
+  FCTEST_CHECK_CLOSE( xyz(3) , xyz1(3) , 1.e3_c_double )
+  call geometry%lonlat2xyz(lonlat1, xyz)
   FCTEST_CHECK_CLOSE( xyz(1) , xyz1(1) , 1.e3_c_double )
   FCTEST_CHECK_CLOSE( xyz(2) , xyz1(2) , 1.e3_c_double )
   FCTEST_CHECK_CLOSE( xyz(3) , xyz1(3) , 1.e3_c_double )
@@ -113,7 +131,11 @@ implicit none
   ! Check distance
   distance = geometry%distance(lonlat1(1), lonlat1(2), lonlat2(1), lonlat2(2))
   FCTEST_CHECK_CLOSE( distance , 1.874e7_c_double , 1.e4_c_double )
+  distance = geometry%distance(lonlat1, lonlat2)
+  FCTEST_CHECK_CLOSE( distance , 1.874e7_c_double , 1.e4_c_double )
   distance = geometry%distance(xyz1(1), xyz1(2), xyz1(3), xyz2(1), xyz2(2), xyz2(3))
+  FCTEST_CHECK_CLOSE( distance , 1.874e7_c_double , 1.e4_c_double )
+  distance = geometry%distance(xyz1, xyz2)
   FCTEST_CHECK_CLOSE( distance , 1.874e7_c_double , 1.e4_c_double )
 
   ! Check radius
@@ -141,9 +163,16 @@ implicit none
   call geometry%xyz2lonlat(xyz1(1), xyz1(2), xyz1(3), lonlat(1), lonlat(2))
   FCTEST_CHECK_CLOSE( lonlat(1) , lonlat1(1), 1.e-2_c_double )
   FCTEST_CHECK_CLOSE( lonlat(2) , lonlat1(2), 1.e-2_c_double )
+  call geometry%xyz2lonlat(xyz1, lonlat)
+  FCTEST_CHECK_CLOSE( lonlat(1) , lonlat1(1), 1.e-2_c_double )
+  FCTEST_CHECK_CLOSE( lonlat(2) , lonlat1(2), 1.e-2_c_double )
 
   ! Check conversion from spherical to cartesian
   call geometry%lonlat2xyz(lonlat1(1), lonlat1(2), xyz(1), xyz(2), xyz(3))
+  FCTEST_CHECK_CLOSE( xyz(1) , xyz1(1) , 1.e3_c_double )
+  FCTEST_CHECK_CLOSE( xyz(2) , xyz1(2) , 1.e3_c_double )
+  FCTEST_CHECK_CLOSE( xyz(3) , xyz1(3) , 1.e3_c_double )
+  call geometry%lonlat2xyz(lonlat1, xyz)
   FCTEST_CHECK_CLOSE( xyz(1) , xyz1(1) , 1.e3_c_double )
   FCTEST_CHECK_CLOSE( xyz(2) , xyz1(2) , 1.e3_c_double )
   FCTEST_CHECK_CLOSE( xyz(3) , xyz1(3) , 1.e3_c_double )
@@ -151,7 +180,11 @@ implicit none
   ! Check distance
   distance = geometry%distance(lonlat1(1), lonlat1(2), lonlat2(1), lonlat2(2))
   FCTEST_CHECK_CLOSE( distance , 9.971e6_c_double , 1.e3_c_double )
+  distance = geometry%distance(lonlat1, lonlat2)
+  FCTEST_CHECK_CLOSE( distance , 9.971e6_c_double , 1.e3_c_double )
   distance = geometry%distance(xyz1(1), xyz1(2), xyz1(3), xyz2(1), xyz2(2), xyz2(3))
+  FCTEST_CHECK_CLOSE( distance , 9.971e6_c_double , 1.e3_c_double )
+  distance = geometry%distance(xyz1, xyz2)
   FCTEST_CHECK_CLOSE( distance , 9.971e6_c_double , 1.e3_c_double )
 
   ! Check radius
