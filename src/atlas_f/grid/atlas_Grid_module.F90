@@ -49,6 +49,7 @@ TYPE, extends(fckit_owned_object) :: atlas_Grid
 contains
   procedure :: size => atlas_Grid__size
   procedure :: spec => atlas_Grid__spec
+  procedure :: uid
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_Grid__final_auto
@@ -137,7 +138,6 @@ contains
   procedure, private :: lonlat_64    => Structured__lonlat_64
   generic :: lonlat    => lonlat_32, lonlat_64
   procedure :: reduced   => Structured__reduced
-
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_StructuredGrid__final_auto
 #endif
@@ -558,6 +558,19 @@ function atlas_Grid__spec(this) result(spec)
   type(atlas_Config) :: spec
   spec = atlas_Config( atlas__grid__Grid__spec(this%CPTR_PGIBUG_A) )
   call spec%return ()
+end function
+
+function uid(this)
+  use atlas_grid_Grid_c_binding
+  use fckit_c_interop_module, only : c_ptr_to_string, c_ptr_free
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  class(atlas_Grid), intent(in) :: this
+  character(len=:), allocatable :: uid
+  type(c_ptr) :: uid_c_str
+  integer :: size
+  call atlas__grid__Grid__uid(this%CPTR_PGIBUG_A, uid_c_str, size )
+  uid = c_ptr_to_string(uid_c_str)
+  call c_ptr_free(uid_c_str)
 end function
 
 function Gaussian__N(this) result(N)
