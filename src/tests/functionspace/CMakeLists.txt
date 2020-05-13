@@ -23,6 +23,12 @@ if( HAVE_FCTEST )
 
 endif()
 
+ecbuild_add_test( TARGET test_batchgather
+  SOURCES  test_batchgather.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_functionspace
   SOURCES  test_functionspace.cc
   LIBS     atlas
