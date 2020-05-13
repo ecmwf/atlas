@@ -14,7 +14,6 @@
 #include <iomanip>
 #include <limits>
 #include <numeric>
-#include <iostream>
 
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
