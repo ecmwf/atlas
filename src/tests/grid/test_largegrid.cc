@@ -26,6 +26,11 @@ CASE( "largeGrid" ) {
   struct rusage usage; 
 
   EXPECT (getrusage (RUSAGE_SELF, &usage) == 0);
+  
+  if (usage.ru_maxrss > 30000)
+    std::cout << " usage.ru_maxrss = " << usage.ru_maxrss << std::endl;
+
+
   EXPECT (usage.ru_maxrss < 30000); // 30Mb
 
 }

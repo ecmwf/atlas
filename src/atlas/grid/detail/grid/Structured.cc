@@ -357,10 +357,10 @@ void Structured::crop( const Domain& dom ) {
 
     auto rect_domain = RectangularDomain( dom );
 
-    bool same = true;
+    bool samerows = true;
 
-    for (idx_t j = 0; same && (j < ny ()); j++)
-      same = same && (xmin (j) == xmin (0)) && (dx (j) == dx (0));
+    for (idx_t j = 0; samerows && (j < ny ()); j++)
+      samerows = samerows && (xmin (j) == xmin (0)) && (dx (j) == dx (0));
 
     if ( !rect_domain ) {
         std::stringstream errmsg;
@@ -395,7 +395,7 @@ void Structured::crop( const Domain& dom ) {
     // Cropping in X
     Normalise normalise( rect_domain );
     for ( idx_t j = jmin, jcropped = 0; j <= jmax; ++j, ++jcropped ) {
-        if ((j == jmin) || (! same))
+        if ((j == jmin) || (! samerows))
           {
             idx_t n = 0;
             for ( idx_t i = 0; i < nx( j ); ++i ) {
@@ -439,23 +439,16 @@ void Structured::crop( const Domain& dom ) {
     }
     idx_t cropped_npts = std::accumulate( cropped_nx.begin(), cropped_nx.end(), idx_t{0} );
 
-
-
-
     std::vector<Spacing> cropped_xspacings( cropped_ny );
     for ( idx_t j = 0; j < cropped_ny; ++j ) {
         spacing::LinearSpacing * sp = nullptr;
         idx_t i = j - 1;
-        if ((j > 0) 
-         && (cropped_xmin[i] == cropped_xmin[j]) 
-         && (cropped_xmax[i] == cropped_xmax[j]) 
-         && (cropped_nx[i] == cropped_nx[j]))
+        if ((j > 0) && samerows)
           sp = dynamic_cast<spacing::LinearSpacing*> (cropped_xspacings[i].get ());
         else
           sp = new spacing::LinearSpacing( cropped_xmin[j], cropped_xmax[j], cropped_nx[j], endpoint );
         cropped_xspacings[j] = sp;
     }
-
 
     XSpace cropped_xspace( cropped_xspacings );
 
