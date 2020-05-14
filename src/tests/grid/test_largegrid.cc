@@ -27,11 +27,11 @@ CASE( "largeGrid" ) {
 
   EXPECT (getrusage (RUSAGE_SELF, &usage) == 0);
   
-  if (usage.ru_maxrss > 30000)
+  if (usage.ru_maxrss > 100000)
     std::cout << " usage.ru_maxrss = " << usage.ru_maxrss << std::endl;
 
 
-  EXPECT (usage.ru_maxrss < 30000); // 30Mb
+  EXPECT (usage.ru_maxrss < 100000); // 100 Mb
 
 }
 }  // namespace test
