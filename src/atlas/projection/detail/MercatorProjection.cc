@@ -104,10 +104,8 @@ void MercatorProjectionT<Rotation>::hash( eckit::Hash& hsh ) const {
     hsh.add( static_type() );
     rotation_.hash( hsh );
     hsh.add( lon0_ );
+    hsh.add( lat1_ );
     hsh.add( radius_ );
-    if ( lat1_ != 0. ) {
-        hsh.add( lat1_ );
-    }
 }
 
 template class MercatorProjectionT<NotRotated>;
