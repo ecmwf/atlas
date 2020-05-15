@@ -166,15 +166,9 @@ public:
 
     idx_t N() const { return Grid::ny() / 2; }
 
-    inline double lon( idx_t i, idx_t j ) const { return Grid::x( i, j ); }
-
-    inline double lat( idx_t j ) const { return Grid::y( j ); }
-
-    PointLonLat lonlat( idx_t i, idx_t j ) const { return Grid::xy( i, j ); }
-
 protected:
     bool gaussian() const {
-        return Grid::domain().global() && not Grid::projection() && Grid::yspace().type() == "gaussian";
+        return Grid::domain().global() && Grid::yspace().type() == "gaussian";
     }
 };
 
@@ -221,12 +215,6 @@ class RegularGaussianGrid : public Gaussian<RegularGrid> {
 public:
     using grid_t::grid_t;
     RegularGaussianGrid( int N, const Domain& = Domain() );
-
-    inline double lon( idx_t i ) const { return x( i ); }
-
-    inline double lat( idx_t j ) const { return y( j ); }
-
-    PointLonLat lonlat( idx_t i, idx_t j ) const { return xy( i, j ); }
 
     operator bool() const { return valid(); }
 
