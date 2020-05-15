@@ -8,21 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/log/Bytes.h"
-#include "eckit/types/Types.h"
-
-#include "atlas/array/ArrayView.h"
-#include "atlas/array/MakeView.h"
-#include "atlas/field/Field.h"
-#include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/grid/Partitioner.h"
-#include "atlas/grid/StructuredGrid.h"
-#include "atlas/meshgenerator.h"
-#include "atlas/output/Gmsh.h"
+#include "atlas/array.h"
+#include "atlas/field.h"
+#include "atlas/grid.h"
+#include "atlas/functionspace.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/MicroDeg.h"
-
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace eckit;
@@ -35,37 +25,55 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 CASE( "test_functionspace_StructuredColumns_batchgather" ) {
-    size_t root          = 0;
-    std::string gridname = eckit::Resource<std::string> ("--grid", "O8");
     int nfields = eckit::Resource<int> ("--fields", 3);
-    int irank = mpi::comm ().rank ();
-    int nproc = mpi::comm ().size ();
+    atlas::StructuredGrid grid (eckit::Resource<std::string> ("--grid", "N16"));
 
-    std::cout << " nfields = " << nfields << std::endl;
-    Grid grid (gridname);
+    auto & comm = mpi::comm ();
+    int irank = comm.rank ();
+    int nproc = comm.size ();
 
+    atlas::grid::Distribution dist (grid, atlas::grid::Partitioner ("equal_regions"));
+    atlas::functionspace::StructuredColumns fs (grid, dist, atlas::util::Config ("halo", 1) 
+                                              | atlas::util::Config ("periodic_points", true));
 
-    Distribution dist (grid, grid::Partitioner ("equal_regions"));
-    functionspace::StructuredColumns fs (grid, dist, util::Config ("halo", 1) 
-                                       | util::Config ("periodic_points", true));
-
-    std::vector<int> partition (grid.size ());
+    std::vector<int> prc (grid.size ());
+    std::vector<int> ind (grid.size ());
 
     for (int i = 0; i < grid.size (); i++)
-      partition[i] = dist.partition (i);
+      prc[i] = dist.partition (i);
+   
+    {
+      atlas::Field indloc = fs.createField<int> (atlas::util::Config ("name", "ind") | atlas::util::Config ("owner", 0));
+      atlas::Field indglo ("ind", &ind[0], {grid.size ()});
+      auto v = array::make_view<int,1> (indloc);
+      for (int i = 0; i < fs.sizeOwned (); i++)
+        v (i) = i;
+      fs.gather (indloc, indglo);
+      comm.broadcast (ind, 0);
+    }
 
-    FieldSet sloc;
-    FieldSet sglo;
+
+    atlas::FieldSet sloc;
+    atlas::FieldSet sglo;
+
+    auto func = [] (int fld, int prc, int ind)
+    {
+      double v = 1000.0 * static_cast<double> (fld) + prc + static_cast<double> (ind) / 1000.0;
+      return v;
+    };
 
     for (int i = 0; i < nfields; i++)
       {
+        int owner = i % nproc;
         std::string name = std::string ("#") + std::to_string (i);
-        Field floc = fs.createField<double> (option::name (name) | option::name ("owner", (i % nproc)));
+        atlas::Field floc = fs.createField<double> (atlas::util::Config ("name", name) 
+                                                  | atlas::util::Config ("owner", owner));
         auto v = array::make_view<double,1> (floc);
         for (int j = 0; j < fs.sizeOwned (); j++)
-          v[j] = irank + static_cast<double> (j) / 1000.0;
+          v[j] = func (i, irank, j);
         sloc.add (floc);
-        Field fglo = Field (name, atlas::array::DataType::kind<double> (), atlas::array::make_shape (grid.size ()));
+        Field fglo = Field (name, atlas::array::DataType::kind<double> (), {grid.size ()}); 
+        fglo.metadata ().set ("owner", owner);
         sglo.add (fglo);
       }
 
@@ -74,15 +82,19 @@ CASE( "test_functionspace_StructuredColumns_batchgather" ) {
     for (int i = 0; i < nfields; i++)
       {
         const auto & fglo = sglo[i];
-        const auto v = array::make_view<double,1> (fglo);
-        int owner = -1;
-        EXPECT (f.metadata ().get ("owner", owner));
+        int owner;
+        EXPECT (fglo.metadata ().get ("owner", owner));
         if (owner == irank)
           {
+            const auto v = array::make_view<double,1> (fglo);
             for (int j = 0; j < grid.size (); j++)
-              
+              {
+                double v1 = v[j], v2 = func (i, prc[j], ind[j]);
+                EXPECT_EQ (v1, v2);
+              }
           }
       }
+
 
 }
 
