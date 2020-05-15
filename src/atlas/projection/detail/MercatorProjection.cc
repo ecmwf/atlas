@@ -20,6 +20,8 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
 
+#include "atlas/runtime/Log.h"
+
 /*
 Projection formula's for Mercator projection from "Map Projections: A Working
 Manual"
@@ -53,7 +55,13 @@ MercatorProjectionT<Rotation>::MercatorProjectionT( const eckit::Parametrisation
     if ( !params.get( "longitude0", lon0_ ) ) {
         lon0_ = 0.0;
     }
-
+    if ( !params.get( "latitude1", lat1_ ) ) {
+        lat1_ = 0.0;
+    }
+    if ( lat1_ != 0.0 ) {
+        double k = std::cos( D2R( lat1_ ) );
+        radius_ *= k;
+    }
     inv_radius_ = 1. / radius_;
 }
 
@@ -83,6 +91,7 @@ typename MercatorProjectionT<Rotation>::Spec MercatorProjectionT<Rotation>::spec
     Spec proj_spec;
     proj_spec.set( "type", static_type() );
     proj_spec.set( "longitude0", lon0_ );
+    proj_spec.set( "latitude1", lat1_ );
     if ( std::not_equal_to<double>()( radius_, util::Earth::radius() ) ) {
         proj_spec.set( "radius", radius_ );
     }
@@ -96,6 +105,9 @@ void MercatorProjectionT<Rotation>::hash( eckit::Hash& hsh ) const {
     rotation_.hash( hsh );
     hsh.add( lon0_ );
     hsh.add( radius_ );
+    if ( lat1_ != 0. ) {
+        hsh.add( lat1_ );
+    }
 }
 
 template class MercatorProjectionT<NotRotated>;

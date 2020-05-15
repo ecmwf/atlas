@@ -44,7 +44,8 @@ public:
     void hash( eckit::Hash& ) const override;
 
 protected:
-    double lon0_;        // central longitude
+    double lon0_;        // central longitude (default = 0 )
+    double lat1_;        // latitude where cylinder cuts sphere (default = 0 )
     double radius_;      // sphere radius
     double inv_radius_;  // 1/(sphere radius)
 
