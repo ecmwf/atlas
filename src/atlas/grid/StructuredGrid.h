@@ -167,9 +167,7 @@ public:
     idx_t N() const { return Grid::ny() / 2; }
 
 protected:
-    bool gaussian() const {
-        return Grid::domain().global() && Grid::yspace().type() == "gaussian";
-    }
+    bool gaussian() const { return Grid::domain().global() && Grid::yspace().type() == "gaussian"; }
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -199,6 +197,8 @@ public:
     ReducedGaussianGrid( const std::initializer_list<idx_t>& pl );
     ReducedGaussianGrid( const std::vector<long>& pl, const Domain& = Domain() );
     ReducedGaussianGrid( const std::vector<int>& pl, const Domain& = Domain() );
+    ReducedGaussianGrid( const std::vector<long>& pl, const Projection& );
+    ReducedGaussianGrid( const std::vector<int>& pl, const Projection& );
 
     operator bool() const { return valid(); }
 

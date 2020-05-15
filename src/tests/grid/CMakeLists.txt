@@ -11,6 +11,7 @@ if( HAVE_FCTEST )
             fctest_griddistribution
             fctest_grids
             fctest_regional_grids
+            fctest_stretchedrotatedgaussiangrid
             fctest_state )
 
         add_fctest( TARGET atlas_${test} SOURCES ${test}.F90 LINKER_LANGUAGE Fortran LIBS atlas_f ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )

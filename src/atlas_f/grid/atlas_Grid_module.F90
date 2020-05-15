@@ -211,6 +211,8 @@ END TYPE atlas_ReducedGaussianGrid
 interface atlas_ReducedGaussianGrid
   module procedure atlas_ReducedGaussianGrid__ctor_int32
   module procedure atlas_ReducedGaussianGrid__ctor_int64
+  module procedure atlas_ReducedGaussianGrid__ctor_projection_int32
+  module procedure atlas_ReducedGaussianGrid__ctor_projection_int64
 end interface
 
 !------------------------------------------------------------------------------
@@ -531,6 +533,28 @@ function atlas_ReducedGaussianGrid__ctor_int64(nx) result(this)
   integer(c_long), intent(in)  :: nx(:)
   call this%reset_c_ptr( &
     & atlas__grid__reduced__ReducedGaussian_long( nx, int(size(nx),c_long) ) )
+  call this%return()
+end function
+
+function atlas_ReducedGaussianGrid__ctor_projection_int32(nx, projection) result(this)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long
+  use atlas_grid_Structured_c_binding
+  type(atlas_ReducedGaussianGrid) :: this
+  integer(c_int), intent(in)  :: nx(:)
+  type(atlas_Projection), intent(in) :: projection
+  call this%reset_c_ptr( &
+    & atlas__grid__reduced__ReducedGaussian_int_projection( nx, int(size(nx),c_long), projection%CPTR_PGIBUG_A ) )
+   call this%return()
+end function
+
+function atlas_ReducedGaussianGrid__ctor_projection_int64(nx, projection) result(this)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long
+  use atlas_grid_Structured_c_binding
+  type(atlas_ReducedGaussianGrid) :: this
+  integer(c_long), intent(in)  :: nx(:)
+  type(atlas_Projection), intent(in) :: projection
+  call this%reset_c_ptr( &
+    & atlas__grid__reduced__ReducedGaussian_long_projection( nx, int(size(nx),c_long), projection%CPTR_PGIBUG_A ) )
   call this%return()
 end function
 
