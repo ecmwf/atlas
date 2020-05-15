@@ -40,6 +40,7 @@ public:
 
 public:
     static const ProjectionImpl* create( const eckit::Parametrisation& p );
+    static const ProjectionImpl* create( const std::string& type, const eckit::Parametrisation& p );
 
     ProjectionImpl()          = default;
     virtual ~ProjectionImpl() = default;  // destructor should be virtual

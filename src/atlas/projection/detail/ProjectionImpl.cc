@@ -160,6 +160,11 @@ const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) 
     throw_Exception( "type missing in Params", Here() );
 }
 
+const ProjectionImpl* ProjectionImpl::create( const std::string& type, const eckit::Parametrisation& p ) {
+    return ProjectionFactory::build( type, p );
+}
+
+
 PointXYZ ProjectionImpl::xyz( const PointLonLat& lonlat ) const {
     atlas::PointXYZ xyz;
     atlas::util::Earth::convertSphericalToCartesian( lonlat, xyz );
