@@ -35,6 +35,10 @@ use atlas_Config_module, only: &
     & atlas_config
 use atlas_Metadata_module, only: &
     & atlas_Metadata
+use atlas_Geometry_module, only: &
+    & atlas_Geometry
+use atlas_KDTree_module, only: &
+    & atlas_IndexKDTree
 use atlas_HybridElements_module, only: &
     & atlas_HybridElements
 use atlas_mesh_Edges_module, only: &
