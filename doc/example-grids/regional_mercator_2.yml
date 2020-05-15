@@ -1,0 +1,20 @@
+# prmsl_mercator
+
+type : "regional"
+nx : 942
+ny : 882
+dx : 1500
+dy : 1500
+lonlat(xmin,ymin) : [3.61,35.505]
+projection:
+  type : "mercator"
+  latitude1 : 45.5
+
+check :
+  uid : 50cee0ba70062383166f3e0e0b2667a7
+  size : 830844
+  lonlat(first) : [3.61,35.505]
+  lonlat(last) :  [21.72,48.08]
+  bounding_box(n,w,s,e) : [48.081,3.609,35.504,21.721]
+  xmin : 281364.68
+  ymin : 2963540.96
