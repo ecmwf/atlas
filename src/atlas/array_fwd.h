@@ -53,6 +53,9 @@ template <typename Value, int Rank>
 ArrayView<Value, Rank> make_view( Array& array );
 
 template <typename Value, int Rank>
+ArrayView<Value, Rank> make_view_nocheck( Array& array );
+
+template <typename Value, int Rank>
 ArrayView<const Value, Rank> make_view( const Array& array );
 
 

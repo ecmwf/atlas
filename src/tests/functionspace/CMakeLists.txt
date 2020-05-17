@@ -29,6 +29,12 @@ ecbuild_add_test( TARGET test_batchgather
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET testphi
+  SOURCES  testphi.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_functionspace
   SOURCES  test_functionspace.cc
   LIBS     atlas

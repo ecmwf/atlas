@@ -144,6 +144,18 @@ public:
         }
     }
 
+    ArrayView<value_type,RANK-1>
+    drop (idx_t idx)
+    {
+      constexpr int rank = RANK-1;
+      idx_t _shape[rank], _strides[rank];
+      ArrayShape shape;
+      ArrayStrides strides;
+      std::copy (std::begin (shape_), std::begin (shape_) + rank, std::back_inserter (shape));
+      std::copy (std::begin (strides_), std::begin (strides_) + rank, std::back_inserter (strides));
+      return ArrayView<value_type,rank> (data_ + strides_[rank] * idx, shape, strides);
+    }   
+
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     // This constructor should not be used directly, but only through a array::make_view() function.
     ArrayView( value_type* data, const ArrayShape& shape, const ArrayStrides& strides ) : data_( data ) {
