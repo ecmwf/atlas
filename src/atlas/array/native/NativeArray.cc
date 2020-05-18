@@ -68,6 +68,8 @@ Array* Array::create( DataType datatype, const ArrayShape& shape ) {
             return new ArrayT<double>( shape );
         case DataType::KIND_REAL32:
             return new ArrayT<float>( shape );
+        case DataType::KIND_INT8:
+            return new ArrayT<char>( shape );
         case DataType::KIND_INT32:
             return new ArrayT<int>( shape );
         case DataType::KIND_INT64:

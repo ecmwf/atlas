@@ -21,6 +21,7 @@ namespace array {
 class DataType {
 public:
     typedef long kind_t;
+    static const kind_t KIND_INT8   = -1;
     static const kind_t KIND_INT32  = -4;
     static const kind_t KIND_INT64  = -8;
     static const kind_t KIND_REAL32 = 4;
@@ -30,6 +31,7 @@ public:
     template <typename DATATYPE>
     static DataType create();
 
+    static DataType int8() { return DataType( KIND_INT8 ); }
     static DataType int32() { return DataType( KIND_INT32 ); }
     static DataType int64() { return DataType( KIND_INT64 ); }
     static DataType real32() { return DataType( KIND_REAL32 ); }
@@ -51,6 +53,7 @@ public:
     static bool kind_valid( kind_t );
 
 private:
+    static std::string int8_str() { return "int8"; }
     static std::string int32_str() { return "int32"; }
     static std::string int64_str() { return "int64"; }
     static std::string real32_str() { return "real32"; }
@@ -79,6 +82,14 @@ private:
     kind_t kind_;
 };
 
+template <>
+inline std::string DataType::str<char>() {
+    return int8_str();
+}
+template <>
+inline std::string DataType::str<const char>() {
+    return int8_str();
+}
 template <>
 inline std::string DataType::str<int>() {
     return int32_str();
@@ -138,6 +149,14 @@ inline std::string DataType::str( const float& ) {
 template <>
 inline std::string DataType::str( const double& ) {
     return real64_str();
+}
+template <>
+inline DataType::kind_t DataType::kind<char>() {
+    return KIND_INT8;
+}
+template <>
+inline DataType::kind_t DataType::kind<const char>() {
+    return KIND_INT8;
 }
 template <>
 inline DataType::kind_t DataType::kind<int>() {
@@ -201,7 +220,9 @@ inline DataType::kind_t DataType::kind( const double& ) {
 }
 
 inline DataType::kind_t DataType::str_to_kind( const std::string& datatype ) {
-    if ( datatype == "int32" )
+    if ( datatype == "int8" )
+        return KIND_INT8;
+    else if ( datatype == "int32" )
         return KIND_INT32;
     else if ( datatype == "int64" )
         return KIND_INT64;
@@ -217,6 +238,8 @@ inline DataType::kind_t DataType::str_to_kind( const std::string& datatype ) {
 }
 inline std::string DataType::kind_to_str( kind_t kind ) {
     switch ( kind ) {
+        case KIND_INT8:
+            return int8_str();
         case KIND_INT32:
             return int32_str();
         case KIND_INT64:
@@ -233,6 +256,7 @@ inline std::string DataType::kind_to_str( kind_t kind ) {
 }
 inline bool DataType::kind_valid( kind_t kind ) {
     switch ( kind ) {
+        case KIND_INT8:
         case KIND_INT32:
         case KIND_INT64:
         case KIND_UINT64:

@@ -27,8 +27,6 @@ extern template IndexView<const idx_t, 1> make_indexview<idx_t, 1>( const Array&
 extern template IndexView<const idx_t, 2> make_indexview<idx_t, 2>( const Array& );
 
 
-extern template ArrayView<long, 2> make_view_nocheck<long, 2>( Array& );                         
-
 #define EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( TYPE, RANK )                                                \
     extern template ArrayView<TYPE, RANK> make_view<TYPE, RANK>( Array& );                                   \
     extern template ArrayView<const TYPE, RANK> make_view<const TYPE, RANK>( Array& );                       \
@@ -50,6 +48,7 @@ extern template ArrayView<long, 2> make_view_nocheck<long, 2>( Array& );
 
 
 #define EXPLICIT_TEMPLATE_DECLARATION( RANK )              \
+    EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( char, RANK )   \
     EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( int, RANK )   \
     EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( long, RANK )  \
     EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( float, RANK ) \

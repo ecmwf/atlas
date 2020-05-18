@@ -59,6 +59,8 @@ void ArrayView<Value, Rank>::dump( std::ostream& os ) const {
 namespace atlas {
 namespace array {
 #define EXPLICIT_TEMPLATE_INSTANTIATION( Rank )                                                         \
+    template class ArrayView<char, Rank>;                                                               \
+    template class ArrayView<const char, Rank>;                                                         \
     template class ArrayView<int, Rank>;                                                                \
     template class ArrayView<const int, Rank>;                                                          \
     template class ArrayView<long, Rank>;                                                               \
@@ -69,10 +71,12 @@ namespace array {
     template class ArrayView<const float, Rank>;                                                        \
     template class ArrayView<double, Rank>;                                                             \
     template class ArrayView<const double, Rank>;                                                       \
+    template void ArrayView<char, Rank>::assign<true, nullptr>( char const& );                          \
     template void ArrayView<int, Rank>::assign<true, nullptr>( int const& );                            \
     template void ArrayView<long, Rank>::assign<true, nullptr>( long const& );                          \
     template void ArrayView<float, Rank>::assign<true, nullptr>( float const& );                        \
     template void ArrayView<double, Rank>::assign<true, nullptr>( double const& );                      \
+    template void ArrayView<char, Rank>::assign<true, nullptr>( std::initializer_list<char> const& );   \
     template void ArrayView<int, Rank>::assign<true, nullptr>( std::initializer_list<int> const& );     \
     template void ArrayView<long, Rank>::assign<true, nullptr>( std::initializer_list<long> const& );   \
     template void ArrayView<float, Rank>::assign<true, nullptr>( std::initializer_list<float> const& ); \
