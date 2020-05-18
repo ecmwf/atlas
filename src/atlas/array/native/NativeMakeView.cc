@@ -15,30 +15,21 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace array {
 
 namespace {
 template <typename Value, int Rank>
-inline static void check_metadata( const Array& array, 
-                                   const bool check_rank = true, 
-                                   const bool check_type = true,
-                                   const bool check_size = true ) {
-    if ( check_rank && (array.rank() != Rank) ) {
+inline static void check_metadata( const Array& array ) {
+    if ( array.rank() != Rank ) {
         std::stringstream err;
         err << "Number of dimensions do not match: template argument " << Rank << " expected to be " << array.rank();
         throw_Exception( err.str(), Here() );
     }
-    if ( check_type && (array.datatype() != array::DataType::create<Value>()) ) {
+    if ( array.datatype() != array::DataType::create<Value>() ) {
         std::stringstream err;
         err << "Data Type does not match: template argument expected to be " << array.datatype().str();
-        throw_Exception( err.str(), Here() );
-    }
-    if ( check_size && (array.datatype().size () != array::DataType::create<Value>().size ()) ) {
-        std::stringstream err;
-        err << "Data Type size does not match: template argument size expected to be " << array.datatype().size ();
         throw_Exception( err.str(), Here() );
     }
 }
@@ -89,20 +80,6 @@ IndexView<const Value, Rank> make_indexview( const Array& array ) {
 }
 
 template <typename Value, int Rank>
-ArrayView<Value, Rank> make_view( Array& array, const util::Config & config ) {
-    bool check_type = true;
-    config.get ("check_type", check_type);
-    check_metadata<Value, Rank>( array );
-    return make_host_view<Value, Rank>( array );
-}
-
-template <typename Value, int Rank>
-ArrayView<Value, Rank> make_view_nocheck( Array& array ) {
-    check_metadata<Value, Rank>( array, true, false );
-    return make_host_view<Value, Rank>( array );
-}
-
-template <typename Value, int Rank>
 ArrayView<Value, Rank> make_view( Array& array ) {
     check_metadata<Value, Rank>( array );
     return make_host_view<Value, Rank>( array );
@@ -125,8 +102,6 @@ namespace atlas {
 namespace array {
 
 #define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( TYPE, RANK )                            \
-    template ArrayView<TYPE, RANK> make_view_nocheck<TYPE, RANK>( Array& );                \
-    template ArrayView<TYPE, RANK> make_view<TYPE, RANK>( Array&, const util::Config & );  \
     template ArrayView<TYPE, RANK> make_view<TYPE, RANK>( Array& );                        \
     template ArrayView<const TYPE, RANK> make_view<const TYPE, RANK>( Array& );            \
     template ArrayView<const TYPE, RANK> make_view<TYPE, RANK>( const Array& );            \
