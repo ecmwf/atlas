@@ -11,8 +11,8 @@
 #include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
 
-#include "atlas/util/Geometry.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/util/Geometry.h"
 
 namespace atlas {
 
@@ -22,7 +22,7 @@ extern "C" {
 Geometry::Implementation* atlas__Geometry__new_name( const char* name ) {
     Geometry::Implementation* geometry;
     {
-        Geometry handle{ std::string{name} };
+        Geometry handle{std::string{name}};
         geometry = handle.get();
         geometry->attach();
     }
@@ -32,7 +32,7 @@ Geometry::Implementation* atlas__Geometry__new_name( const char* name ) {
 geometry::detail::GeometryBase* atlas__Geometry__new_radius( const double radius ) {
     Geometry::Implementation* geometry;
     {
-        Geometry handle{ radius };
+        Geometry handle{radius};
         geometry = handle.get();
         geometry->attach();
     }
@@ -47,15 +47,15 @@ void atlas__Geometry__xyz2lonlat( Geometry::Implementation* This, const double x
                                   double& lon, double& lat ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Geometry" );
     PointLonLat lonlat;
-    This->xyz2lonlat(PointXYZ{x, y, z}, lonlat);
+    This->xyz2lonlat( PointXYZ{x, y, z}, lonlat );
     lon = lonlat.lon();
     lat = lonlat.lat();
 }
-void atlas__Geometry__lonlat2xyz( Geometry::Implementation* This, const double lon, const double lat,
-                                  double& x, double& y, double& z ) {
+void atlas__Geometry__lonlat2xyz( Geometry::Implementation* This, const double lon, const double lat, double& x,
+                                  double& y, double& z ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Geometry" );
     PointXYZ xyz;
-    This->lonlat2xyz(PointLonLat{lon, lat}, xyz);
+    This->lonlat2xyz( PointLonLat{lon, lat}, xyz );
     x = xyz.x();
     y = xyz.y();
     z = xyz.z();
@@ -63,22 +63,21 @@ void atlas__Geometry__lonlat2xyz( Geometry::Implementation* This, const double l
 double atlas__Geometry__distance_lonlat( Geometry::Implementation* This, const double lon1, const double lat1,
                                          const double lon2, const double lat2 ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Geometry" );
-    return This->distance(PointLonLat{lon1, lat1}, PointLonLat{lon2, lat2});
+    return This->distance( PointLonLat{lon1, lat1}, PointLonLat{lon2, lat2} );
 }
 double atlas__Geometry__distance_xyz( Geometry::Implementation* This, const double x1, const double y1, const double z1,
                                       const double x2, const double y2, const double z2 ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Geometry" );
-    return This->distance(PointXYZ{x1, y1, z1}, PointXYZ{x2, y2, z2});
+    return This->distance( PointXYZ{x1, y1, z1}, PointXYZ{x2, y2, z2} );
 }
-double atlas__Geometry__radius( Geometry::Implementation* This) {
+double atlas__Geometry__radius( Geometry::Implementation* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Geometry" );
     return This->radius();
 }
-double atlas__Geometry__area( Geometry::Implementation* This) {
+double atlas__Geometry__area( Geometry::Implementation* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Geometry" );
     return This->area();
 }
-
 }
 // ------------------------------------------------------------------
 

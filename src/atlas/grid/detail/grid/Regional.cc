@@ -306,7 +306,7 @@ public:
             throw_Exception( "Could not parse configuration for RegularRegional grid", Here() );
         }
 
-        YSpace yspace = config.getInt( "y_numbering", -1 ) < 0 ? LinearSpacing( y.max, y.min, y.N, y.endpoint )
+        YSpace yspace = config.getInt( "y_numbering", +1 ) < 0 ? LinearSpacing( y.max, y.min, y.N, y.endpoint )
                                                                : LinearSpacing( y.min, y.max, y.N, y.endpoint );
 
         bool with_endpoint = true;

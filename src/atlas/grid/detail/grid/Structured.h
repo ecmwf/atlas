@@ -424,6 +424,10 @@ const Structured* atlas__grid__Structured__config( util::Config* conf );
 Structured* atlas__grid__regular__RegularGaussian( long N );
 Structured* atlas__grid__reduced__ReducedGaussian_int( int nx[], long ny );
 Structured* atlas__grid__reduced__ReducedGaussian_long( long nx[], long ny );
+Structured* atlas__grid__reduced__ReducedGaussian_int_projection( int nx[], long ny,
+                                                                  const Projection::Implementation* projection );
+Structured* atlas__grid__reduced__ReducedGaussian_long_projection( long nx[], long ny,
+                                                                   const Projection::Implementation* projection );
 Structured* atlas__grid__regular__RegularLonLat( long nx, long ny );
 Structured* atlas__grid__regular__ShiftedLonLat( long nx, long ny );
 Structured* atlas__grid__regular__ShiftedLon( long nx, long ny );

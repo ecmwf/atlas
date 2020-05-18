@@ -2,19 +2,13 @@
 #include <vector>
 
 #include "atlas/array.h"
-#include "atlas/functionspace.h"
 #include "atlas/grid.h"
-#include "atlas/library/Library.h"
-#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/option.h"
 #include "atlas/util/Config.h"
-#include "atlas/util/UnitSphere.h"
-#include "eckit/types/FloatCompare.h"
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::util;
 using namespace atlas::grid;
-using namespace atlas;
-
 
 namespace {
 
@@ -869,46 +863,25 @@ const double lonlat_arp_t32c24[] = {
 namespace atlas {
 namespace test {
 CASE( "t31c2.4" ) {
-    atlas::StructuredGrid grid;
-    atlas::Projection proj;
+    auto nx = std::vector<int>{20, 27, 32, 40, 45, 48, 60, 60, 64, 64, 64, 64, 64, 64, 64, 64,
+                               64, 64, 64, 64, 64, 64, 64, 64, 60, 60, 48, 45, 40, 32, 27, 20};
 
+    auto proj = Projection( "rotated_schmidt", Config( "stretching_factor", 2.4 ) | Config( "rotation_angle", 180.0 ) |
+                                                   Config( "north_pole", {2.0, 46.7} ) );
 
-    const std::vector<int> nx = {20, 27, 32, 40, 45, 48, 60, 60, 64, 64, 64, 64, 64, 64, 64, 64,
-                                 64, 64, 64, 64, 64, 64, 64, 64, 60, 60, 48, 45, 40, 32, 27, 20};
+    auto grid = ReducedGaussianGrid( nx, proj );
 
-    const double stretch = 2.4, centre[2] = {2.0, 46.7};
-
-    std::vector<atlas::grid::Spacing> spacings( nx.size() );
-
-    for ( int i = 0; i < nx.size(); i++ ) {
-        double lonmax = 360.0 * double( nx[i] - 1 ) / double( nx[i] );
-        spacings[i] =
-            atlas::grid::Spacing( atlas::util::Config( "type", "linear" ) | atlas::util::Config( "N", nx[i] ) |
-                                  atlas::util::Config( "start", 0 ) | atlas::util::Config( "end", lonmax ) );
-    }
-
-    atlas::StructuredGrid::XSpace xspace( spacings );
-    atlas::StructuredGrid::YSpace yspace( atlas::util::Config( "type", "gaussian" ) |
-                                          atlas::util::Config( "N", nx.size() ) );
-
-    proj = atlas::Projection( atlas::util::Config( "type", "rotated_schmidt" ) |
-                              atlas::util::Config( "stretching_factor", stretch ) |
-                              atlas::util::Config( "rotation_angle", 180.0 ) |
-                              atlas::util::Config( "north_pole", std::vector<double>{centre[0], centre[1]} ) );
-
-    grid = atlas::StructuredGrid( xspace, yspace, proj, atlas::Domain( atlas::util::Config( "type", "global" ) ) );
-
-    for ( int j = 0, jglo = 0; j < grid.ny(); j++ )
+    for ( int j = 0, jglo = 0; j < grid.ny(); j++ ) {
         for ( int i = 0; i < grid.nx( j ); i++, jglo++ ) {
+            auto ll1 = PointLonLat( lonlat_arp_t32c24[2 * jglo + 0], lonlat_arp_t32c24[2 * jglo + 1] );
             auto ll2 = grid.lonlat( i, j );
-            PointXYZ p1, p2;
-            PointLonLat ll1 = PointLonLat( lonlat_arp_t32c24[2 * jglo + 0], lonlat_arp_t32c24[2 * jglo + 1] );
-            atlas::util::UnitSphere::convertSphericalToCartesian( ll1, p1 );
-            atlas::util::UnitSphere::convertSphericalToCartesian( ll2, p2 );
-            EXPECT( is_approximately_equal( ll1.lon(), ll2.lon(), 0.001 ) );
-            EXPECT( is_approximately_equal( ll1.lat(), ll2.lat(), 0.001 ) );
+            EXPECT_APPROX_EQ( ll1.lon(), ll2.lon(), 1.e-10 );
+            EXPECT_APPROX_EQ( ll1.lat(), ll2.lat(), 1.e-10 );
         }
+    }
 }
+
+
 }  // namespace test
 }  // namespace atlas
 

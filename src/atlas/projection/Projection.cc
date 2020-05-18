@@ -22,6 +22,9 @@ Projection::Projection() : Handle( new projection::detail::LonLatProjection() ) 
 
 Projection::Projection( const eckit::Parametrisation& p ) : Handle( Implementation::create( p ) ) {}
 
+Projection::Projection( const std::string& type, const eckit::Parametrisation& p ) :
+    Handle( Implementation::create( type, p ) ) {}
+
 atlas::Projection::operator bool() const {
     return get()->operator bool();
 }

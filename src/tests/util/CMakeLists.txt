@@ -31,14 +31,7 @@ if( HAVE_FCTEST )
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 
-  add_fctest( TARGET atlas_fctest_point
-    LINKER_LANGUAGE Fortran
-    SOURCES         fctest_point.F90
-    LIBS            atlas_f
-    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  )
-
-  add_fctest( TARGET atlas_fctest_geometry
+ add_fctest( TARGET atlas_fctest_geometry
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_geometry.F90
     LIBS            atlas_f

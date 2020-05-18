@@ -35,10 +35,6 @@ use atlas_Config_module, only: &
     & atlas_config
 use atlas_Metadata_module, only: &
     & atlas_Metadata
-use atlas_Point_module, only: &
-    & atlas_PointXY, &
-    & atlas_PointXYZ, &
-    & atlas_PointLonLat
 use atlas_Geometry_module, only: &
     & atlas_Geometry
 use atlas_KDTree_module, only: &
@@ -81,7 +77,8 @@ use atlas_Grid_module, only: &
     & atlas_GaussianGrid, &
     & atlas_ReducedGaussianGrid, &
     & atlas_RegularGaussianGrid, &
-    & atlas_RegularLonLatGrid
+    & atlas_RegularLonLatGrid, &
+    & atlas_RegionalGrid
 use atlas_Vertical_module, only :&
     & atlas_Vertical
 use atlas_functionspace_EdgeColumns_module, only: &
@@ -94,6 +91,11 @@ use atlas_functionspace_StructuredColumns_module, only: &
     & atlas_functionspace_StructuredColumns
 use atlas_functionspace_Spectral_module, only: &
     & atlas_functionspace_Spectral
+use atlas_Projection_module, only : &
+    & atlas_Projection, &
+    & atlas_RotatedLonLatProjection, &
+    & atlas_LambertConformalConicProjection, &
+    & atlas_RotatedSchmidtProjection
 use atlas_Trans_module, only : &
     & atlas_Trans
 use atlas_kinds_module, only: &

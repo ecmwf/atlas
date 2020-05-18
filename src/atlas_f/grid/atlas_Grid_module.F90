@@ -12,6 +12,7 @@ module atlas_Grid_module
 
 use fckit_owned_object_module, only: fckit_owned_object
 use atlas_Config_module, only: atlas_Config
+use atlas_Projection_module, only : atlas_Projection
 use atlas_kinds_module, only : ATLAS_KIND_IDX, ATLAS_KIND_GIDX
 use, intrinsic :: iso_c_binding, only : c_ptr
 
@@ -19,6 +20,7 @@ implicit none
 
 private :: fckit_owned_object
 private :: atlas_Config
+private :: atlas_Projection
 private :: c_ptr
 
 public :: atlas_Grid
@@ -28,6 +30,7 @@ public :: atlas_GaussianGrid
 public :: atlas_ReducedGaussianGrid
 public :: atlas_RegularGaussianGrid
 public :: atlas_RegularLonLatGrid
+public :: atlas_RegionalGrid
 
 private
 
@@ -49,6 +52,7 @@ TYPE, extends(fckit_owned_object) :: atlas_Grid
 contains
   procedure :: size => atlas_Grid__size
   procedure :: spec => atlas_Grid__spec
+  procedure :: uid
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_Grid__final_auto
@@ -137,7 +141,6 @@ contains
   procedure, private :: lonlat_64    => Structured__lonlat_64
   generic :: lonlat    => lonlat_32, lonlat_64
   procedure :: reduced   => Structured__reduced
-
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_StructuredGrid__final_auto
 #endif
@@ -208,6 +211,8 @@ END TYPE atlas_ReducedGaussianGrid
 interface atlas_ReducedGaussianGrid
   module procedure atlas_ReducedGaussianGrid__ctor_int32
   module procedure atlas_ReducedGaussianGrid__ctor_int64
+  module procedure atlas_ReducedGaussianGrid__ctor_projection_int32
+  module procedure atlas_ReducedGaussianGrid__ctor_projection_int64
 end interface
 
 !------------------------------------------------------------------------------
@@ -269,6 +274,16 @@ end interface
 
 !------------------------------------------------------------------------------
 
+interface atlas_RegionalGrid
+    module procedure atlas_RegionalGrid_ctor_int32
+    module procedure atlas_RegionalGrid_ctor_int64
+    module procedure atlas_RegionalGrid_ctor_nwse_int32
+    module procedure atlas_RegionalGrid_ctor_nwse_int64
+    module procedure atlas_RegionalGrid_ctor_increments_int32
+    module procedure atlas_RegionalGrid_ctor_increments_int64
+end interface
+
+!------------------------------------------------------------------------------
 interface c_idx
   module procedure c_idx_32
   module procedure c_idx_64
@@ -279,8 +294,8 @@ interface c_gidx
   module procedure c_gidx_64
 end interface
 
-
 !------------------------------------------------------------------------------
+
 !========================================================
 contains
 !========================================================
@@ -521,6 +536,28 @@ function atlas_ReducedGaussianGrid__ctor_int64(nx) result(this)
   call this%return()
 end function
 
+function atlas_ReducedGaussianGrid__ctor_projection_int32(nx, projection) result(this)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long
+  use atlas_grid_Structured_c_binding
+  type(atlas_ReducedGaussianGrid) :: this
+  integer(c_int), intent(in)  :: nx(:)
+  type(atlas_Projection), intent(in) :: projection
+  call this%reset_c_ptr( &
+    & atlas__grid__reduced__ReducedGaussian_int_projection( nx, int(size(nx),c_long), projection%CPTR_PGIBUG_A ) )
+   call this%return()
+end function
+
+function atlas_ReducedGaussianGrid__ctor_projection_int64(nx, projection) result(this)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long
+  use atlas_grid_Structured_c_binding
+  type(atlas_ReducedGaussianGrid) :: this
+  integer(c_long), intent(in)  :: nx(:)
+  type(atlas_Projection), intent(in) :: projection
+  call this%reset_c_ptr( &
+    & atlas__grid__reduced__ReducedGaussian_long_projection( nx, int(size(nx),c_long), projection%CPTR_PGIBUG_A ) )
+  call this%return()
+end function
+
 !-----------------------------------------------------------------------------
 
 function atlas_grid_RegularLonLat__ctor_int32(nlon,nlat) result(this)
@@ -558,6 +595,19 @@ function atlas_Grid__spec(this) result(spec)
   type(atlas_Config) :: spec
   spec = atlas_Config( atlas__grid__Grid__spec(this%CPTR_PGIBUG_A) )
   call spec%return ()
+end function
+
+function uid(this)
+  use atlas_grid_Grid_c_binding
+  use fckit_c_interop_module, only : c_ptr_to_string, c_ptr_free
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  class(atlas_Grid), intent(in) :: this
+  character(len=:), allocatable :: uid
+  type(c_ptr) :: uid_c_str
+  integer :: size
+  call atlas__grid__Grid__uid(this%CPTR_PGIBUG_A, uid_c_str, size )
+  uid = c_ptr_to_string(uid_c_str)
+  call c_ptr_free(uid_c_str)
 end function
 
 function Gaussian__N(this) result(N)
@@ -790,6 +840,188 @@ function Structured__lonlat_64(this, i,j) result(lonlat)
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_long) , intent(in) :: i,j
   call atlas__grid__Structured__lonlat(this%CPTR_PGIBUG_A, c_idx(i), c_idx(j), lonlat)
+end function
+
+! ----------------------------------------------------------------------------------------
+
+function atlas_RegionalGrid_ctor_int32( nx, ny, xy_min, xy_max, projection, y_numbering ) result(this)
+    use, intrinsic :: iso_c_binding, only : c_int, c_double
+    type(atlas_StructuredGrid) :: this
+    integer(c_int), intent(in) :: nx, ny
+    real(c_double), intent(in) :: xy_min(2), xy_max(2)
+    type(atlas_Projection), intent(in), optional :: projection
+    integer(c_int), intent(in), optional :: y_numbering
+    type(atlas_Config) :: config
+
+    config = atlas_Config()
+    call config%set("type","regional")
+    call config%set("nx",nx)
+    call config%set("ny",ny)
+    call config%set("xmin",xy_min(1))
+    call config%set("ymin",xy_min(2))
+    call config%set("xmax",xy_max(1))
+    call config%set("ymax",xy_max(2))
+    if( present(projection) ) then
+      call config%set("projection",projection%spec())
+    endif
+    if( present(y_numbering) ) then
+      call config%set("y_numbering",y_numbering)
+    endif
+    this = atlas_StructuredGrid(config)
+    call config%final()
+    call this%return()
+end function
+
+function atlas_RegionalGrid_ctor_int64( nx, ny, xy_min, xy_max, projection, y_numbering ) result(this)
+    use, intrinsic :: iso_c_binding, only : c_int, c_long, c_double
+    type(atlas_StructuredGrid) :: this
+    integer(c_long), intent(in) :: nx, ny
+    real(c_double), intent(in) :: xy_min(2), xy_max(2)
+    type(atlas_Projection), intent(in), optional :: projection
+    integer(c_int), intent(in), optional :: y_numbering
+    type(atlas_Config) :: config
+
+    config = atlas_Config()
+    call config%set("type","regional")
+    call config%set("nx",nx)
+    call config%set("ny",ny)
+    call config%set("xmin",xy_min(1))
+    call config%set("ymin",xy_min(2))
+    call config%set("xmax",xy_max(1))
+    call config%set("ymax",xy_max(2))
+    if( present(projection) ) then
+      call config%set("projection",projection%spec())
+    endif
+    if( present(y_numbering) ) then
+      call config%set("y_numbering",y_numbering)
+    endif
+    this = atlas_StructuredGrid(config)
+    call config%final()
+    call this%return()
+end function
+
+
+function atlas_RegionalGrid_ctor_nwse_int32( nx, ny, north, west, south, east, projection, y_numbering ) result(this)
+    use, intrinsic :: iso_c_binding, only : c_int, c_double
+    type(atlas_StructuredGrid) :: this
+    integer(c_int), intent(in) :: nx, ny
+    real(c_double), intent(in) :: north, west, south, east
+    type(atlas_Projection), intent(in), optional :: projection
+    integer(c_int), intent(in), optional :: y_numbering
+    type(atlas_Config) :: config
+
+    config = atlas_Config()
+    call config%set("type","regional")
+    call config%set("nx",nx)
+    call config%set("ny",ny)
+    call config%set("north",north)
+    call config%set("west",west)
+    call config%set("south",south)
+    call config%set("east",east)
+    if( present(projection) ) then
+      call config%set("projection",projection%spec())
+    endif
+    if( present(y_numbering) ) then
+      call config%set("y_numbering",y_numbering)
+    endif
+    this = atlas_StructuredGrid(config)
+    call config%final()
+    call this%return()
+end function
+
+function atlas_RegionalGrid_ctor_nwse_int64( nx, ny, north, west, south, east, projection, y_numbering ) result(this)
+    use, intrinsic :: iso_c_binding, only : c_int, c_long, c_double
+    type(atlas_Grid) :: this
+    integer(c_long), intent(in) :: nx, ny
+    real(c_double), intent(in) :: north, west, south, east
+    type(atlas_Projection), intent(in), optional :: projection
+    integer(c_int), intent(in), optional :: y_numbering
+    type(atlas_Config) :: config
+
+    config = atlas_Config()
+    call config%set("type","regional")
+    call config%set("nx",nx)
+    call config%set("ny",ny)
+    call config%set("north",north)
+    call config%set("west",west)
+    call config%set("south",south)
+    call config%set("east",east)
+    if( present(projection) ) then
+      call config%set("projection",projection%spec())
+    endif
+    if( present(y_numbering) ) then
+      call config%set("y_numbering",y_numbering)
+    endif
+    this = atlas_StructuredGrid(config)
+    call config%final()
+    call this%return()
+end function
+
+
+function atlas_RegionalGrid_ctor_increments_int32( nx, ny, dx, dy, xy_min, projection, y_numbering ) result(this)
+    use iso_c_binding, only : c_int, c_double
+    type(atlas_StructuredGrid) :: this
+    integer(c_int), intent(in) :: nx
+    integer(c_int), intent(in) :: ny
+    real(c_double), intent(in) :: xy_min(2)
+    real(c_double), intent(in) :: dx
+    real(c_double), intent(in) :: dy
+    type(atlas_Projection), intent(in), optional :: projection
+    integer(c_int), intent(in), optional :: y_numbering
+
+    type(atlas_Config) :: config
+
+    config = atlas_Config()
+    call config%set("type","regional")
+    call config%set("nx",nx)
+    call config%set("ny",ny)
+    call config%set("xmin",xy_min(1))
+    call config%set("ymin",xy_min(2))
+    call config%set("dx",dx)
+    call config%set("dy",dy)
+    if( present(projection) ) then
+      call config%set("projection",projection%spec())
+    endif
+    if( present(y_numbering) ) then
+      call config%set("y_numbering",y_numbering)
+    endif
+
+    this = atlas_StructuredGrid(config)
+    call config%final()
+    call this%return()
+end function
+
+function atlas_RegionalGrid_ctor_increments_int64( nx, ny, dx, dy, xy_min, projection, y_numbering ) result(this)
+    use iso_c_binding, only : c_int, c_long, c_double
+    type(atlas_StructuredGrid) :: this
+    integer(c_long), intent(in) :: nx
+    integer(c_long), intent(in) :: ny
+    real(c_double), intent(in) :: xy_min(2)
+    real(c_double), intent(in) :: dx
+    real(c_double), intent(in) :: dy
+    type(atlas_Projection), intent(in), optional :: projection
+    integer(c_int), intent(in), optional :: y_numbering
+
+    type(atlas_Config) :: config
+
+    config = atlas_Config()
+    call config%set("type","regional")
+    call config%set("nx",nx)
+    call config%set("ny",ny)
+    call config%set("xmin",xy_min(1))
+    call config%set("ymin",xy_min(2))
+    call config%set("dx",dx)
+    call config%set("dy",dy)
+    if( present(projection) ) then
+      call config%set("projection",projection%spec())
+    endif
+    if( present(y_numbering) ) then
+      call config%set("y_numbering",y_numbering)
+    endif
+
+    this = atlas_StructuredGrid(config)
+    call config%final()
+    call this%return()
 end function
 
 ! ----------------------------------------------------------------------------------------

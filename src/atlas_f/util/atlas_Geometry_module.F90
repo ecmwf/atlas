@@ -13,7 +13,6 @@ module atlas_Geometry_module
 use, intrinsic :: iso_c_binding
 use fckit_exception_module, only : fckit_exception
 use fckit_owned_object_module, only : fckit_owned_object
-use atlas_point_module
 
 implicit none
 

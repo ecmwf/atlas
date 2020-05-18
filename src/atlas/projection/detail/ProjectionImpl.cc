@@ -15,6 +15,7 @@
 
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
+#include "eckit/utils/MD5.h"
 
 #include "ProjectionImpl.h"
 
@@ -159,6 +160,11 @@ const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) 
     throw_Exception( "type missing in Params", Here() );
 }
 
+const ProjectionImpl* ProjectionImpl::create( const std::string& type, const eckit::Parametrisation& p ) {
+    return ProjectionFactory::build( type, p );
+}
+
+
 PointXYZ ProjectionImpl::xyz( const PointLonLat& lonlat ) const {
     atlas::PointXYZ xyz;
     atlas::util::Earth::convertSphericalToCartesian( lonlat, xyz );
@@ -288,6 +294,35 @@ void Rotated::hash( eckit::Hash& hsh ) const {
     hsh.add( southPole().lat() );
     hsh.add( rotationAngle() );
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+
+extern "C" {
+const ProjectionImpl* atlas__Projection__ctor_config( const eckit::Parametrisation* config ) {
+    return ProjectionImpl::create( *config );
+}
+void atlas__Projection__type( const ProjectionImpl* This, char*& type, int& size ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
+    std::string s = This->type();
+    size          = static_cast<int>( s.size() + 1 );
+    type          = new char[size];
+    strcpy( type, s.c_str() );
+}
+void atlas__Projection__hash( const ProjectionImpl* This, char*& hash, int& size ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
+    eckit::MD5 md5;
+    This->hash( md5 );
+    std::string s = md5.digest();
+    size          = static_cast<int>( s.size() + 1 );
+    hash          = new char[size];
+    strcpy( hash, s.c_str() );
+}
+ProjectionImpl::Spec* atlas__Projection__spec( const ProjectionImpl* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
+    return new ProjectionImpl::Spec( This->spec() );
+}
+
+}  // extern "C"
 
 }  // namespace detail
 }  // namespace projection

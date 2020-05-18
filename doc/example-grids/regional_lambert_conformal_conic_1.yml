@@ -8,7 +8,7 @@ lonlat(centre) : [4,50]
 projection :
     type : "lambert_conformal_conic"
     longitude0 : 4
-    latitude1  : 50
+    latitude0  : 50
 
 y_numbering : +1
 

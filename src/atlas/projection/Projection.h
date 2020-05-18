@@ -53,6 +53,7 @@ public:
     using Handle::Handle;
     Projection();
     Projection( const eckit::Parametrisation& );
+    Projection( const std::string& type, const eckit::Parametrisation& );
 
     operator bool() const;
 

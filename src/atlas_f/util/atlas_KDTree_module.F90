@@ -12,7 +12,6 @@ module atlas_KDTree_module
 
 use, intrinsic :: iso_c_binding
 use fckit_owned_object_module, only : fckit_owned_object
-use atlas_point_module
 use atlas_geometry_module
 
 implicit none
@@ -432,6 +431,7 @@ end function IndexKDTree__geometry
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_IndexKDTree__final_auto(this)
   type(atlas_IndexKDTree), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -442,5 +442,6 @@ ATLAS_FINAL subroutine atlas_IndexKDTree__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 end module atlas_KDTree_module

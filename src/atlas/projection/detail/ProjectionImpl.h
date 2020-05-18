@@ -40,6 +40,7 @@ public:
 
 public:
     static const ProjectionImpl* create( const eckit::Parametrisation& p );
+    static const ProjectionImpl* create( const std::string& type, const eckit::Parametrisation& p );
 
     ProjectionImpl()          = default;
     virtual ~ProjectionImpl() = default;  // destructor should be virtual
@@ -176,6 +177,13 @@ public:
 
     void hash( eckit::Hash& ) const {}
 };
+
+extern "C" {
+const ProjectionImpl* atlas__Projection__ctor_config( const eckit::Parametrisation* config );
+void atlas__Projection__type( const ProjectionImpl* This, char*& type, int& size );
+void atlas__Projection__hash( const ProjectionImpl* This, char*& hash, int& size );
+ProjectionImpl::Spec* atlas__Projection__spec( const ProjectionImpl* This );
+}
 
 }  // namespace detail
 }  // namespace projection

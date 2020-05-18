@@ -149,8 +149,8 @@ Geometry::Implementation* atlas__Geometry__new_radius( const double radius );
 void atlas__Geometry__delete( Geometry::Implementation* This );
 void atlas__Geometry__xyz2lonlat( Geometry::Implementation* This, const double x, const double y, const double z,
                                   double& lon, double& lat );
-void atlas__Geometry__lonlat2xyz( Geometry::Implementation* This, const double lon, const double lat,
-                                  double& x, double& y, double& z );
+void atlas__Geometry__lonlat2xyz( Geometry::Implementation* This, const double lon, const double lat, double& x,
+                                  double& y, double& z );
 double atlas__Geometry__distance_lonlat( Geometry::Implementation* This, const double lon1, const double lat1,
                                          const double lon2, const double lat2 );
 double atlas__Geometry__distance_xyz( Geometry::Implementation* This, const double x1, const double y1, const double z1,
