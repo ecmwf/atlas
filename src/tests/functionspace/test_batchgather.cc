@@ -14,6 +14,7 @@
 #include "atlas/functionspace.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "tests/AtlasTestEnvironment.h"
+#include "ioFieldDesc.h"
 
 using namespace eckit;
 using namespace atlas::functionspace;
@@ -24,9 +25,6 @@ namespace test {
 
 namespace
 {
-
-
-typedef char byte;
 
 void getprcind (const atlas::functionspace::StructuredColumns & fs, const atlas::grid::Distribution & dist,
                 std::vector<int> & prc, std::vector<int> & ind)
@@ -54,9 +52,10 @@ void getprcind (const atlas::functionspace::StructuredColumns & fs, const atlas:
 template <typename T, typename I>
 T reorder (const T & vec, const I & ord)
 {
-  T v (ord.size ());
+  T v;
+  v.reserve (ord.size ());
   for (typename I::value_type i = 0; i < ord.size (); i++)
-    v[i] = vec[ord[i]];
+    v.push_back (vec[ord[i]]);
   return v;
 }
 
@@ -68,98 +67,67 @@ void integrate (T & v)
     v[i].off = v[i-1].off + v[i-1].len;
 }
 
-void pack (const atlas::Field & f, size_t lsize, byte * buf)
+class mapping_t
 {
-  size_t dsize = f.datatype ().size ();
-
-  switch (f.rank ())
-    {
-      case 1:
-      case 2:
-      case 3:
-    }
-  
-
-
-}
-
-void gather (const atlas::StructuredGrid & grid, const atlas::grid::Distribution & dist, 
-             const atlas::FieldSet & sloc, atlas::FieldSet & sglo)
-{
-  ATLAS_ASSERT (sloc.size () == sglo.size ());
-  size_t nfld = sloc.size ();
-
-  auto & comm = mpi::comm ();
-  int nprc = comm.size ();
-  int lprc = comm.rank ();
-
-  std::vector<int> count (nprc);
-  std::vector<int> ind (grid.size ());
-
-  for (int i = 0; i < grid.size (); i++)
-    ind[i] = count[dist.partition (i)]++;
-
-  int max = *std::max_element (count.begin (), count.end ());
+private:
 
   class locprc_t
   {
   public:
-    locprc_t () = default;
-    locprc_t (const std::initializer_list<int> & l) 
-    {
-      auto it = l.begin ();
-      loc = *it++;
-      prc = *it++;
-    }
     int loc = std::numeric_limits<int>::min ();
     int prc = std::numeric_limits<int>::min ();
   };
 
-  class locprc2glo_t 
-  {
-  public:
-    locprc2glo_t (int _max, int _nprc) : max (_max), nprc (_nprc)
-    {
-      data.resize (max * nprc, std::numeric_limits<int>::min ());
-    }
-    int & operator () (int iprc, int jloc) 
-    {
-      return data[iprc * max + jloc];
-    }
-   
-    class slice_t
-    {
-    public:
-      slice_t (int _iprc, locprc2glo_t * _locprc2glo) 
-             : iprc (_iprc), locprc2glo (_locprc2glo)
-      {
-      }
-      int & operator [] (int jloc)
-      {
-        return (*locprc2glo) (iprc, jloc);
-      }
-    private:
-      locprc2glo_t * locprc2glo;
-      int iprc;
-    };
+  int max, nprc;
 
-    slice_t operator[] (int iprc)
-    {
-      return slice_t (iprc, this);
-    }
-  private:
-    int max, nprc;
-    std::vector<int> data;
-  };
-
-  class glo2locprc_t : public std::vector<locprc_t>
+  std::vector<int> prcloc2glo;
+  std::vector<locprc_t> glo2prcloc;
+public:
+  mapping_t (const atlas::StructuredGrid & grid, const atlas::grid::Distribution & dist)
   {
-  public:
-    glo2locprc_t () = default;
-    glo2locprc_t (size_t size) : std::vector<locprc_t> (size)
-    {
-    }
-  };
+    nprc = dist.nb_partitions ();
+
+    std::vector<int> count (nprc);
+    std::vector<int> ind (grid.size ());
+
+    for (int i = 0; i < grid.size (); i++)
+      ind[i] = count[dist.partition (i)]++;
+
+    max = *std::max_element (count.begin (), count.end ());
+
+    prcloc2glo.resize (max * nprc, std::numeric_limits<int>::min ());
+    glo2prcloc.resize (grid.size ());
+
+    for (int i = 0; i < grid.size (); i++)
+      {
+        prcloc2glo[max * dist.partition (i) + ind[i]] = i;
+        glo2prcloc[i].loc = ind[i];
+        glo2prcloc[i].prc = dist.partition (i);
+      }
+
+  }
+
+  int operator () (int iprc, int jloc) const
+  {
+    return prcloc2glo[iprc * max + jloc];
+  }
+
+  const locprc_t & operator () (int jglo) const
+  {
+    return glo2prcloc[jglo];
+  }
+ 
+};
+
+void gather (const atlas::StructuredGrid & grid, const atlas::grid::Distribution & dist, 
+             std::vector<ioFieldDesc> & floc, std::vector<ioFieldDesc> & fglo)
+{
+  ATLAS_ASSERT (floc.size () == fglo.size ());
+  size_t nfld = floc.size ();
+
+  auto & comm = mpi::comm ();
+  int nprc = comm.size ();
+  int lprc = comm.rank ();
 
   class offlen_t
   {
@@ -167,53 +135,20 @@ void gather (const atlas::StructuredGrid & grid, const atlas::grid::Distribution
     size_t off = 0, len = 0;
   };
 
-  class sizmul_t
-  {
-  public:
-    size_t siz = 0, mul = 1;
-  };
+  mapping_t mapping (grid, dist);
 
-  locprc2glo_t locprc2glo (max, nprc);
-  glo2locprc_t glo2locprc (grid.size ());
-  
-  for (int i = 0; i < grid.size (); i++)
-    {
-      locprc2glo[dist.partition (i)][ind[i]] = i;
-      glo2locprc[i] = {ind[i], dist.partition (i)};
-    }
-  
+  size_t ldim = dist.nb_pts ()[lprc];
+
   // Sort fields by owner
   
-  std::vector<atlas::Field> floc (nfld);
-  std::vector<atlas::Field> fglo (nfld);
-  std::vector<int> isort (nfld), owner (nfld);
-
-  for (int jfld = 0; jfld < nfld; jfld++)
-    {
-      floc[jfld] = sloc[jfld];
-      fglo[jfld] = sglo[jfld];
-      fglo[jfld].metadata ().get ("owner", owner[jfld]);
-    }
+  std::vector<int> isort (nfld);
 
   std::iota (std::begin (isort), std::end (isort), 0);
-  std::sort (std::begin (isort), std::end (isort), [&owner] (int a, int b) { return owner[a] < owner[b]; });
+  std::sort (std::begin (isort), std::end (isort), 
+             [&fglo] (int a, int b) { return fglo[a].owner () < fglo[b].owner (); });
 
-  owner = reorder (owner, isort);
   floc  = reorder (floc,  isort);
   fglo  = reorder (fglo,  isort);
-
-  // Collect field datatype size & number
-  
-  std::vector<sizmul_t> fld_info (nfld);
-
-  for (int jfld = 0; jfld < nfld; jfld++)
-    {
-      auto & f = floc[jfld];
-      const auto & ss = f.shape (); 
-      for (int i = 1; i < ss.size (); i++)
-        fld_info[jfld].mul *= ss[i];
-      fld_info[jfld].siz =  f.datatype ().size ();
-    }
 
   // SEND
 
@@ -222,35 +157,80 @@ void gather (const atlas::StructuredGrid & grid, const atlas::grid::Distribution
 
   for (int jfld = 0; jfld < nfld; jfld++)
     {
-      // datatype size x leading dimension x product of other dimension
-      fld_send[jfld].len = fld_info[jfld].siz * fld_info[jfld].mul;
-      prc_send[owner[jfld]].len += fld_send[jfld].len;
+      int owner = fglo[jfld].owner ();
+      fld_send[jfld].len = floc[jfld].size ();
+      prc_send[owner].len += floc[jfld].size ();
     }
+
+printf (" dist.nb_pts ()[lprc] = %8d\n", dist.nb_pts ()[lprc]);
 
   integrate (fld_send);
   integrate (prc_send);
 
   // Pack send buffer
 
-  std::vector<byte> buf_send (fld_send.back ().off * dist.nb_pts ()[lprc]);
+  std::vector<byte> buf_send (fld_send.back ().off);
 
   for (int jfld = 0; jfld < nfld; jfld++)
-    pack (floc[jfld], dist.nb_pts ()[lprc], &buf_send[fld_send[jfld].off]);
+    floc[jfld].pack (&buf_send[fld_send[jfld].off]);
 
   // RECV
 
+  std::vector<offlen_t> prc_recv (nprc + 1);
   std::vector<offlen_t> fld_recv (nfld + 1);
 
   for (int jfld = 0; jfld < nfld; jfld++)
-    if (lprc == owner[jfld])
-      fld_recv[jfld].len = fld_info[jfld].siz * fld_info[jfld].mul;
+    if (lprc == fglo[jfld].owner ())
+      fld_recv[jfld].len = fglo[jfld].dlen ();
 
   integrate (fld_recv);
 
-  
+  for (int iprc = 0; iprc < nprc; iprc++)
+     prc_recv[iprc].len = dist.nb_pts ()[iprc] * fld_recv.back ().off;
 
+  integrate (prc_recv);
 
+  std::vector<byte> buf_recv (prc_recv.back ().off);
 
+  std::vector<eckit::mpi::Request> rqr;
+
+  for (int iprc = 0; iprc < nprc; iprc++)
+    if (prc_recv[iprc].len > 0)
+      rqr.push_back (comm.iReceive (&buf_recv[prc_recv[iprc].off], 
+                                    prc_recv[iprc].len, iprc, 100));
+
+  comm.barrier ();
+
+  std::vector<eckit::mpi::Request> rqs;
+
+  for (int iprc = 0; iprc < nprc; iprc++)
+    if (prc_send[iprc].len > 0)
+      rqs.push_back (comm.iSend (&buf_send[prc_send[iprc].off], 
+                                 prc_send[iprc].len, iprc, 100));
+
+  for (auto & r : rqr)
+    comm.wait (r);
+
+  for (auto & r : rqs)
+    comm.wait (r);
+
+  // Unpack RECV buffer
+
+  for (int iprc = 0; iprc < nprc; iprc++)
+    if (prc_recv[iprc].len > 0)
+      {
+        int off = prc_recv[iprc].off;
+        for (int jfld = 0; jfld < nfld; jfld++)
+          {
+            if (fld_recv[jfld].len > 0)
+              {
+                for (int jloc = 0, k = 0; jloc < dist.nb_pts ()[iprc]; jloc++)
+                for (int j = 0; j < fld_recv[jfld].len; j++, k++)
+                  fglo[jfld](mapping (iprc, jloc), j) = buf_recv[off+k];
+                off += dist.nb_pts ()[iprc] * fglo[jfld].dlen ();
+              }
+          }
+      }
 }
 
 
@@ -277,11 +257,14 @@ CASE( "test_functionspace_StructuredColumns_batchgather" ) {
     atlas::FieldSet sloc;
     atlas::FieldSet sglo, sglo2;
 
-#ifdef UNDEF
+    {
+    char tmp[128];
+    sprintf (tmp, "prcind.%8.8d.txt", irank);
+    FILE * fp = fopen (tmp, "w");
     for (int i = 0; i < grid.size (); i++)
-      printf (" %8d > %8d, %8d\n", i, prc[i], ind[i]);
-#endif
-
+      fprintf (fp, " %8d > %8d, %8d\n", i, prc[i], ind[i]);
+    fclose (fp);
+    }
 
     using T = long;
 
@@ -295,6 +278,8 @@ CASE( "test_functionspace_StructuredColumns_batchgather" ) {
 
     auto func = [&ind_off,&prc_off,&fld_off] (int fld, int prc, int ind)
     {
+      long x = prc;
+      return x;
       long v = (static_cast<long> (fld) << fld_off) 
              + (static_cast<long> (prc) << prc_off) 
              + (static_cast<long> (ind) << ind_off);
@@ -304,6 +289,7 @@ CASE( "test_functionspace_StructuredColumns_batchgather" ) {
     for (int i = 0; i < nfields; i++)
       {
         int owner = i % nproc;
+
         std::string name = std::string ("#") + std::to_string (i);
         atlas::Field floc = fs.createField<T> (atlas::util::Config ("name", name) 
                                             |  atlas::util::Config ("owner", owner));
@@ -318,13 +304,46 @@ CASE( "test_functionspace_StructuredColumns_batchgather" ) {
 
         Field fglo2 = Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
         fglo2.metadata ().set ("owner", owner);
-        sglo2.add (fglo);
+        sglo2.add (fglo2);
 
       }
 
-    fs.gather (sloc, sglo);
-//  gather (grid, dist, sloc, sglo2);
 
+    fs.gather (sloc, sglo);
+
+    {
+
+    std::vector<ioFieldDesc> dloc;
+    std::vector<ioFieldDesc> dglo;
+
+    createIoFieldDescriptors (sloc,  dloc, fs.sizeOwned ());
+    createIoFieldDescriptors (sglo2, dglo, grid.size ());
+  
+    for (auto & d : dglo)
+      d.field ().metadata ().get ("owner", d.owner ());
+
+    printf (" dloc.size () = %8d\n", dloc.size ());
+    printf (" dglo.size () = %8d\n", dglo.size ());
+
+    gather (grid, dist, dloc, dglo);
+
+
+    for (int i = 0; i < sglo2.size (); i++)
+      {
+        auto v = array::make_view<T,1> (sglo2[i]);
+        if (v.size () == 0)
+          continue;
+
+        char tmp[128];
+        sprintf (tmp, "out.%8.8d.%8.8d.txt", irank, i);
+        FILE * fp = fopen (tmp, "w");
+        for (int i = 0; i < v.size (); i++)
+          fprintf (fp, "%8d > %8d\n", i, v (i));
+      }
+
+    }
+
+if(1)
     for (int i = 0; i < nfields; i++)
       {
         const auto & fglo = sglo[i];

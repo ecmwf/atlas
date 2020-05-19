@@ -24,13 +24,13 @@ if( HAVE_FCTEST )
 endif()
 
 ecbuild_add_test( TARGET test_batchgather
-  SOURCES  test_batchgather.cc
+  SOURCES  test_batchgather.cc ioFieldDesc.cc
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET testphi
-  SOURCES  testphi.cc
+  SOURCES  testphi.cc ioFieldDesc.cc
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
