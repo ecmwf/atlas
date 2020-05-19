@@ -66,32 +66,94 @@ byteView (const atlas::array::ArrayView<Value,Rank> & view)
 
 
 // The following templates create a list of byte views of rank 2 from a view of any rank, any type
+//
+
+class ioFieldDesc
+{
+public:
+  ioFieldDesc (atlas::array::ArrayView<byte,2> & _v, 
+               const std::vector<atlas::idx_t> & _ind,
+               const atlas::Field & _f) : v (_v), ind (_ind), f (_f) {}
+  const std::vector<atlas::idx_t> & indices () const
+  {
+    return ind;
+  }
+  const atlas::Field & field () const
+  {
+    return f;
+  }
+private:
+  atlas::array::ArrayView<byte,2> v;
+  const std::vector<atlas::idx_t> ind;
+  const atlas::Field & f;
+};
 
 template <int Rank>
 void listOf1DByteView (atlas::array::ArrayView<byte,Rank> & view,
-                       std::vector<atlas::array::ArrayView<byte,2>> & list)
+                       const std::vector<atlas::idx_t> & _ind,
+                       const atlas::Field & f,
+                       std::vector<ioFieldDesc> & list)
 {
   static_assert (Rank > 2, "listOf1DByteView should be called with views having a Rank > 2");
+
+  std::vector<atlas::idx_t> ind = _ind;
+  ind.push_back (0);
+
   for (int i = 0; i < view.shape (0); i++)
     {
       auto v = dropDimension (view, 0, i);
-      listOf1DByteView (v, list);
+      ind.back () = i;
+      listOf1DByteView (v, ind, f, list);
     }
 }
 
 template <>
 void listOf1DByteView (atlas::array::ArrayView<byte,2> & view,
-                       std::vector<atlas::array::ArrayView<byte,2>> & list)
+                       const std::vector<atlas::idx_t> & ind,
+                       const atlas::Field & f,
+                       std::vector<ioFieldDesc> & list)
 {
-  list.push_back (view);
+  list.push_back (ioFieldDesc (view, ind, f));
 }
 
 template <int Rank, typename Value>
 void createListOf1DByteView (atlas::array::ArrayView<Value,Rank> & view, 
-                       std::vector<atlas::array::ArrayView<byte,2>> & list)
+                             const atlas::Field & f,
+                             std::vector<ioFieldDesc> & list)
 {
   auto v = byteView (view);
-  listOf1DByteView (v, list);
+  listOf1DByteView (v, std::vector<atlas::idx_t> (), f, list);
+}
+
+void createIoFieldDescriptors (atlas::Field & f, std::vector<ioFieldDesc> & list)
+{
+  int rank = f.rank ();
+  auto type = f.datatype ();
+
+#define HANDLE_TYPE_RANK(__type,__rank) \
+   if (rank == __rank)                                                   \
+    {                                                                    \
+      auto v = atlas::array::make_view<__type,__rank> (f);               \
+      createListOf1DByteView (v, f, list);                               \
+      goto done;                                                         \
+    }
+
+#define HANDLE_TYPE(__type) \
+  if (type.kind () == atlas::array::DataType::create<__type> ().kind ()) \
+    {                                                                                           \
+      HANDLE_TYPE_RANK (__type, 1); HANDLE_TYPE_RANK (__type, 2); HANDLE_TYPE_RANK (__type, 3); \
+      HANDLE_TYPE_RANK (__type, 4); HANDLE_TYPE_RANK (__type, 5); HANDLE_TYPE_RANK (__type, 6); \
+      HANDLE_TYPE_RANK (__type, 7); HANDLE_TYPE_RANK (__type, 8); HANDLE_TYPE_RANK (__type, 9); \
+    }
+
+  HANDLE_TYPE (long);
+  HANDLE_TYPE (double);
+  HANDLE_TYPE (int);
+  HANDLE_TYPE (float);
+
+done:
+
+  return;
 }
 
 
@@ -123,9 +185,9 @@ int main (int argc, char * argv[])
 
   auto c = byteView (v);
   
-  std::vector<atlas::array::ArrayView<byte,2>> list;
+  std::vector<ioFieldDesc> list;
 
-  createListOf1DByteView (v, list);
+  createIoFieldDescriptors (f, list);
 
   std::cout << " list.size () = " << list.size () << std::endl;
 
