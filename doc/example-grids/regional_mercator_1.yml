@@ -12,7 +12,7 @@ projection:
   normalise : [0,360]
 
 check :
-  uid : 533cccd1092166ec17c1799a03abc674
+  uid : 632ee8b7bec231b64fbc34a78a5ff2ff
   size : 2464
   lonlat(first) : [262.036,14.7365]
   lonlat(last) :  [284.975,31.1731]
