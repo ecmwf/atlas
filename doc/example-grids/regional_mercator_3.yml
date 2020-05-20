@@ -9,12 +9,13 @@ lonlat(xmin,ymin) : [291.972,16.9775]
 projection:
   type : "mercator"
   latitude1 : 20.0
+  normalise : [0,360]
 
 check :
-  uid : d5e6735264fef7c5d5cf5839a4a96ae3
+  uid : 7e02e412ef4aa72f8e86aa281596ff1c
   size : 76275
   lonlat(first) : [291.972,16.9775]
   lonlat(last) :  [296.015,19.5221]
-  bounding_box(n,w,s,e) : [19.5231,291.971,16.9765,296.016]
-  xmin : 30508974.08
+  bounding_box(n,w,s,e) : [19.5221,291.9720,16.9775,296.0153]
+  xmin : -7108436.73
   ymin : 1800571.82

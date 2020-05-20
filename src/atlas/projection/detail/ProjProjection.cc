@@ -44,8 +44,8 @@ bool proj_ellipsoid_params( PJ_CONTEXT* ctxt, const std::string& proj_str, doubl
 std::string source_str( PJ_CONTEXT* ctxt, const std::string& proj_str ) {
     double a, b;
     if ( proj_ellipsoid_params( ctxt, proj_str, a, b ) ) {
-        return b < a ? "+proj=lonlat +a=" + std::to_string( a ) + " +b=" + std::to_string( b )
-                     : "+proj=lonlat +R=" + std::to_string( a );
+        auto axes = b < a ? " +a=" + std::to_string( a ) + " +b=" + std::to_string( b ) : " +R=" + std::to_string( a );
+        return "+proj=lonlat" + axes;
     }
     else {
         return "EPSG:4326";  // WGS84 (lat,lon)
@@ -67,7 +67,7 @@ std::string geocentric_str( PJ_CONTEXT* ctxt, const std::string& proj_str ) {
 }  // namespace
 
 ProjProjection::ProjProjection( const eckit::Parametrisation& param ) :
-    sourceToTarget_( nullptr ), sourceToGeocentric_( nullptr ), context_( PJ_DEFAULT_CTX ) {
+    normalise_( param ), sourceToTarget_( nullptr ), sourceToGeocentric_( nullptr ), context_( PJ_DEFAULT_CTX ) {
     ATLAS_ASSERT( param.get( "proj", proj_ ) && !proj_.empty() );
     source_encoded_     = param.get( "proj_source", source_ = source_str( context_, proj_ ) );
     geocentric_encoded_ = param.get( "proj_geocentric", geocentric_ = geocentric_str( context_, proj_ ) );
@@ -112,6 +112,9 @@ ProjProjection::ProjProjection( const eckit::Parametrisation& param ) :
                                     nullptr ) ) {
             std::string units( units_c_str );
             if ( !units.empty() ) {
+                if ( units == "metre" ) {
+                    units = "meters";
+                }
                 extraSpec_.set( "units", units );
             }
         }
@@ -126,6 +129,8 @@ void ProjProjection::xy2lonlat( double crd[] ) const {
     //    std::memcpy(crd, &P, 2 * sizeof(double));
     crd[LON] = P.enu.e;
     crd[LAT] = P.enu.n;
+
+    normalise_( crd );
 }
 
 
@@ -161,6 +166,7 @@ ProjProjection::Spec ProjProjection::spec() const {
     if ( geocentric_encoded_ ) {
         spec.set( "proj_geocentric", geocentric_ );
     }
+    normalise_.spec( spec );
     return spec | extraSpec_;
 }
 
@@ -179,6 +185,7 @@ void ProjProjection::hash( eckit::Hash& h ) const {
     if ( geocentric_encoded_ ) {
         h.add( geocentric_ );
     }
+    normalise_.hash( h );
 }
 
 

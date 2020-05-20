@@ -16,6 +16,6 @@ check :
   lonlat(first) : [-126.138,16.281]
   lonlat(last)  : [-57.3811,55.4813]
   uid : 5c9a0f242e68ff6dd7711ba3ab6f5c7b
-  bounding_box(n,w,s,e) : [58.3664,-139.857,16.28,-57.3801]
+  bounding_box(n,w,s,e) : [58.3654,-139.856,16.281,-57.3811]
   xmin : -3332155.29
   ymin : -588892.76

@@ -150,6 +150,48 @@ void ProjectionImpl::BoundLonLat::extend( PointLonLat p, PointLonLat eps ) {
 
 // --------------------------------------------------------------------------------------------------------------------
 
+ProjectionImpl::Normalise::Normalise( const eckit::Parametrisation& p ) {
+    values_.resize( 2 );
+    bool provided = false;
+    if ( p.get( "normalise", values_ ) ) {
+        provided = true;
+    }
+    else if ( p.get( "normalize", values_ ) ) {
+        provided = true;
+    }
+    else if ( p.get( "west", values_[0] ) ) {
+        values_[1] = values_[0] + 360.;
+        provided   = true;
+    }
+    if ( provided ) {
+        normalise_.reset( new util::NormaliseLongitude( values_[0], values_[1] ) );
+    }
+}
+
+ProjectionImpl::Normalise::Normalise( double west ) {
+    values_.resize( 2 );
+    values_[0] = west;
+    values_[1] = values_[0] + 360.;
+    normalise_.reset( new util::NormaliseLongitude( values_[0], values_[1] ) );
+}
+
+
+void ProjectionImpl::Normalise::hash( eckit::Hash& hash ) const {
+    if ( normalise_ ) {
+        hash.add( values_[0] );
+        hash.add( values_[1] );
+    }
+}
+
+void ProjectionImpl::Normalise::spec( Spec& s ) const {
+    if ( normalise_ ) {
+        s.set( "normalise", values_ );
+    }
+}
+
+
+// --------------------------------------------------------------------------------------------------------------------
+
 const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) {
     std::string projectionType;
     if ( p.get( "type", projectionType ) ) {
@@ -183,7 +225,7 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
 
-    constexpr double h     = 0.001;
+    constexpr double h     = 0.5e-6;  // precision to microdegrees;
     constexpr size_t Niter = 100;
 
 

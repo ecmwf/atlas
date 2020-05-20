@@ -11,10 +11,10 @@ projection:
   latitude1 : 14.0
 
 check :
-  uid : d0ea12a60648863d9f5af8054d156bc0
+  uid : b3a286f00887968240b93342e8a1e1a3
   size : 2464
   lonlat(first) : [262.036,14.7365]
   lonlat(last) :  [284.975,31.1731]
-  bounding_box(n,w,s,e) : [31.1741,262.035,14.7355,284.976]
-  xmin : 28272594.38
+  bounding_box(n,w,s,e) : [31.1731,262.036,14.7365,284.975]
+  xmin : -10569908.09
   ymin : 1607833.03

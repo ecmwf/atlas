@@ -15,6 +15,6 @@ check :
   size : 830844
   lonlat(first) : [3.61,35.505]
   lonlat(last) :  [21.72,48.08]
-  bounding_box(n,w,s,e) : [48.081,3.609,35.504,21.721]
+  bounding_box(n,w,s,e) : [48.08,3.61,35.505,21.72]
   xmin : 281364.68
   ymin : 2963540.96

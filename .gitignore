@@ -9,3 +9,4 @@ doc/latex
 build/*
 install/*
 env.sh
+*.DS_Store

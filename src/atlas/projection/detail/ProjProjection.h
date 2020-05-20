@@ -129,6 +129,7 @@ public:
 
     // -- Members
 private:
+    Normalise normalise_;
     std::string proj_;
     std::string source_;
     std::string geocentric_;

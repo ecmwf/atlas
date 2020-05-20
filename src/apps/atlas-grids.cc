@@ -28,6 +28,7 @@
 #include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/runtime/AtlasTool.h"
+#include "atlas/util/NormaliseLongitude.h"
 
 namespace atlas {
 
@@ -286,6 +287,12 @@ int AtlasGrids::execute( const Args& args ) {
                 Log::info() << "   lonlat(first)     : " << *it << std::endl;
                 it += grid.size() - 1;
                 Log::info() << "   lonlat(last)      : " << *it << std::endl;
+
+                if ( auto bb = grid.lonlatBoundingBox() ) {
+                    Log::info() << "   bounding_box(n,w,s,e) : { " << bb.north() << ", " << bb.west() << ", "
+                                << bb.south() << ", " << bb.east() << " }" << std::endl;
+                }
+
                 Log::info().precision( precision );
             }
         }
@@ -373,35 +380,36 @@ int AtlasGrids::execute( const Args& args ) {
             }
 
 
-            auto equal = []( double a, double b ) { return eckit::types::is_approximately_equal( a, b, 5.e-4 ); };
+            auto equal       = []( double a, double b ) { return eckit::types::is_approximately_equal( a, b, 5.e-4 ); };
+            auto point_equal = [&equal]( const PointLonLat& a, const PointLonLat& b ) -> bool {
+                return equal( a.lon(), b.lon() ) && equal( a.lat(), b.lat() );
+            };
+            auto difference_normalised = []( double a, double b ) {
+                util::NormaliseLongitude normalised( std::min( a, b ) );
+                return normalised( b ) - normalised( a );
+            };
 
-            std::vector<double> first_point_lonlat;
-            if ( config_check.get( "lonlat(first)", first_point_lonlat ) ) {
-                PointLonLat first_point = *grid.lonlat().begin();
-                if ( not equal( first_point.lon(), first_point_lonlat[0] ) or
-                     not equal( first_point.lat(), first_point_lonlat[1] ) ) {
-                    out << "Check failed: lonlat(first) " << first_point << " expected to be "
-                        << PointLonLat( first_point_lonlat.data() ) << std::endl;
-                    check_failed = true;
+            auto check_lonlat = [&]( const std::string& key, std::function<PointLonLat()>&& get_lonlat ) {
+                std::vector<double> lonlat_config;
+                if ( config_check.get( key, lonlat_config ) ) {
+                    PointLonLat lonlat_check = {lonlat_config.data()};
+                    PointLonLat lonlat       = get_lonlat();
+                    if ( not point_equal( lonlat, lonlat_check ) ) {
+                        out << std::setprecision( 4 ) << std::fixed << "Check failed: " << key << " " << lonlat
+                            << " expected to be " << lonlat_check;
+                        out << " ( normalised difference: {"
+                            << difference_normalised( lonlat.lon(), lonlat_check.lon() ) << ","
+                            << lonlat.lat() - lonlat_check.lat() << "} )" << std::endl;
+                        check_failed = true;
+                    }
                 }
-            }
-            else {
-                Log::warning() << "Check for lonlat(first) skipped" << std::endl;
-            }
+                else {
+                    Log::warning() << "Check for " << key << " skipped" << std::endl;
+                }
+            };
 
-            std::vector<double> last_point_lonlat;
-            if ( config_check.get( "lonlat(last)", last_point_lonlat ) ) {
-                PointLonLat last_point = *( grid.lonlat().begin() + ( grid.size() - 1 ) );
-                if ( not equal( last_point.lon(), last_point_lonlat[0] ) or
-                     not equal( last_point.lat(), last_point_lonlat[1] ) ) {
-                    out << "Check failed: lonlat(last) " << last_point << " expected to be "
-                        << PointLonLat( last_point_lonlat.data() ) << std::endl;
-                    check_failed = true;
-                }
-            }
-            else {
-                Log::warning() << "Check for lonlat(last) skipped" << std::endl;
-            }
+            check_lonlat( "lonlat(first)", [&]() { return *grid.lonlat().begin(); } );
+            check_lonlat( "lonlat(last)", [&]() { return *( grid.lonlat().begin() + ( grid.size() - 1 ) ); } );
 
             std::vector<double> bbox;
             if ( config_check.get( "bounding_box(n,w,s,e)", bbox ) && bbox.size() == 4 ) {
@@ -410,21 +418,34 @@ int AtlasGrids::execute( const Args& args ) {
                     check_failed = true;
                     out << "Check failed: cannot calculate bounding box for " << grid.spec() << std::endl;
                 }
-                else if ( !equal( bb.north(), bbox[0] ) ) {
-                    check_failed = true;
-                    out << "Check failed: n=" << bb.north() << " expected to be " << bbox[0] << std::endl;
-                }
-                else if ( !equal( bb.west(), bbox[1] ) ) {
-                    check_failed = true;
-                    out << "Check failed: w=" << bb.west() << " expected to be " << bbox[1] << std::endl;
-                }
-                else if ( !equal( bb.south(), bbox[2] ) ) {
-                    check_failed = true;
-                    out << "Check failed: s=" << bb.south() << " expected to be " << bbox[2] << std::endl;
-                }
-                else if ( !equal( bb.east(), bbox[3] ) ) {
-                    check_failed = true;
-                    out << "Check failed: e=" << bb.east() << " expected to be " << bbox[3] << std::endl;
+                else {
+                    bool any_value_failed = false;
+                    if ( !equal( bb.north(), bbox[0] ) ) {
+                        any_value_failed = true;
+                        out << "Check failed: n=" << bb.north() << " expected to be " << bbox[0] << std::endl;
+                    }
+                    if ( !equal( bb.west(), bbox[1] ) ) {
+                        any_value_failed = true;
+                        out << "Check failed: w=" << bb.west() << " expected to be " << bbox[1]
+                            << " ( normalised difference : " << difference_normalised( bb.west(), bbox[1] ) << " )"
+                            << std::endl;
+                    }
+                    if ( !equal( bb.south(), bbox[2] ) ) {
+                        any_value_failed = true;
+                        out << "Check failed: s=" << bb.south() << " expected to be " << bbox[2] << std::endl;
+                    }
+                    if ( !equal( bb.east(), bbox[3] ) ) {
+                        any_value_failed = true;
+                        out << "Check failed: e=" << bb.east() << " expected to be " << bbox[3]
+                            << " ( normalised difference : " << difference_normalised( bb.east(), bbox[3] ) << " )"
+                            << std::endl;
+                    }
+                    if ( any_value_failed ) {
+                        check_failed = true;
+                        out << "Check failed: bounding_box(n,w,s,e) [" << bb.north() << ", " << bb.west() << ", "
+                            << bb.south() << ", " << bb.east() << "] expected to be [" << bbox[0] << ", " << bbox[1]
+                            << ", " << bbox[2] << ", " << bbox[3] << "]" << std::endl;
+                    }
                 }
             }
             else if ( check_bbox && bbox.size() != 4 ) {

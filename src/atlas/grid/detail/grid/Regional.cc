@@ -10,10 +10,14 @@
 
 #include "Regional.h"
 
+#include "eckit/types/FloatCompare.h"
+
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/NormaliseLongitude.h"
 
 using atlas::grid::LinearSpacing;
 using XSpace = atlas::StructuredGrid::XSpace;
@@ -29,6 +33,93 @@ static Domain domain( const Grid::Config& grid ) {
         return Domain( config );
     }
     return Domain();
+}
+
+bool check_normalised_roundtrip( const Projection& projection, const PointLonLat& point ) {
+    using eckit::types::is_approximately_equal;
+    PointLonLat point_roundtrip = projection.lonlat( projection.xy( point ) );
+
+    constexpr util::NormaliseLongitude normalised;
+    return is_approximately_equal( point_roundtrip.lat(), point.lat(), 1.e-6 ) &&
+           is_approximately_equal( normalised( point_roundtrip.lon() ), normalised( point.lon() ) );
+}
+
+
+bool check_roundtrip( const Projection& projection, const PointLonLat& point ) {
+    using eckit::types::is_approximately_equal;
+    PointLonLat point_roundtrip = projection.lonlat( projection.xy( point ) );
+
+    return is_approximately_equal( point_roundtrip.lat(), point.lat(), 1.e-6 ) &&
+           is_approximately_equal( point_roundtrip.lon(), point.lon(), 1.e-6 );
+}
+
+
+static Projection projection( const Grid::Config& grid ) {
+    // Get the projection from the Grid::Config.
+    // Also try to infer "west" value that can be used for normalisation,
+    // and add it to the grid.
+
+    struct reference_t {
+        std::string key;
+        PointLonLat value;
+        bool found() { return key.size(); }
+    };
+
+    auto get_reference = [&]() -> reference_t {
+        reference_t ref;
+        auto lonlat_strings = std::vector<std::string>{"lonlat(xmin,ymin)", "lonlat(xmin,ymax)", "lonlat(centre)"};
+        for ( auto& lonlat_string : lonlat_strings ) {
+            std::vector<double> lonlat( 2 );
+            if ( grid.get( lonlat_string, lonlat ) ) {
+                ref.key   = lonlat_string;
+                ref.value = PointLonLat{lonlat.data()};
+                break;
+            }
+        }
+        return ref;
+    };
+
+    Grid::Config proj_config;
+    if ( grid.get( "projection", proj_config ) ) {
+        auto ref = get_reference();
+
+        bool retry = false;
+        double west;
+        do {
+            bool retried = retry;
+            retry        = false;
+            auto proj    = Projection{proj_config};
+            if ( ref.found() ) {
+                Log::warning().indent( "WARNING: " );
+                if ( not check_roundtrip( proj, ref.value ) ) {
+                    ATLAS_ASSERT( check_normalised_roundtrip( proj, ref.value ) );
+                    if ( retried ) {
+                        Log::warning() << "Projection roundtrip failed for point \"" << ref.value << "\"" << std::endl;
+                    }
+                    if ( not Projection::Implementation::Normalise( proj_config ) ) {
+                        west = std::floor( ref.value.lon() - 180. );
+                        Projection::Implementation::Normalise( west ).spec( proj_config );
+                        retry = true;
+                    }
+                }
+                else if ( retried ) {
+                    Log::warning()
+                        << "Projection roundtrip failed for reference point \"" << ref.key << " : " << ref.value
+                        << "\",\n"
+                           "but was succesful when retrying using estimated normalisation parameter \"normalise : ["
+                        << west << "," << west + 360. << "]\".\n"
+                        << "Continuing with new Projection, but it is advised to provide a suitable normalisation for "
+                           "this grid."
+                        << std::endl;
+                }
+                Log::warning().unindent();
+            }
+            if ( not retry || retried ) {
+                return proj;
+            }
+        } while ( retry );
+    }
+    return Projection();
 }
 
 struct ConfigParser {
@@ -86,7 +177,7 @@ struct Parse_llc_step : ConfigParser {
 };
 
 struct Parse_bounds_xy : ConfigParser {
-    Parse_bounds_xy( const Projection& p, const Grid::Config& config ) {
+    Parse_bounds_xy( const Projection& /*p*/, const Grid::Config& config ) {
         valid = config.get( "nx", x.N ) && config.get( "ny", y.N ) && config.get( "xmin", x.min ) &&
                 config.get( "xmax", x.max ) && config.get( "ymin", y.min ) && config.get( "ymax", y.max );
 
@@ -280,29 +371,23 @@ static class regional : public GridBuilder {
 public:
     regional() : GridBuilder( "regional" ) {}
 
-    void print( std::ostream& os ) const override {
+    void print( std::ostream& ) const override {
         // os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian
         // grid";
     }
 
-    const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
+    const Grid::Implementation* create( const std::string& /*name*/, const Grid::Config& /*config*/ ) const override {
         throw_NotImplemented( "There are no named regional grids implemented.", Here() );
         return nullptr;
     }
 
     const Grid::Implementation* create( const Grid::Config& config ) const override {
         // read projection subconfiguration
-        Projection projection;
-        {
-            util::Config config_proj;
-            if ( config.get( "projection", config_proj ) ) {
-                projection = Projection( config_proj );
-            }
-        }
+        Projection proj = projection( config );
 
         // Read grid configuration
         ConfigParser::Parsed x, y;
-        if ( not ConfigParser::parse( projection, config, x, y ) ) {
+        if ( not ConfigParser::parse( proj, config, x, y ) ) {
             throw_Exception( "Could not parse configuration for RegularRegional grid", Here() );
         }
 
@@ -311,7 +396,7 @@ public:
 
         bool with_endpoint = true;
         XSpace xspace( {x.min, x.max}, std::vector<long>( y.N, x.N ), with_endpoint );
-        return new StructuredGrid::grid_t( xspace, yspace, projection, domain( config ) );
+        return new StructuredGrid::grid_t( xspace, yspace, proj, domain( config ) );
     }
 
     void force_link() {}
@@ -322,12 +407,12 @@ static class zonal_band : public GridBuilder {
 public:
     zonal_band() : GridBuilder( "zonal_band" ) {}
 
-    void print( std::ostream& os ) const override {
+    void print( std::ostream& ) const override {
         // os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian
         // grid";
     }
 
-    const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
+    const Grid::Implementation* create( const std::string& /*name*/, const Grid::Config& ) const override {
         throw_NotImplemented( "There are no named zonal_band grids implemented.", Here() );
         return nullptr;
     }

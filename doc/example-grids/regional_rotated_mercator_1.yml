@@ -15,4 +15,4 @@ check :
   lonlat(first) : [-10.319,40.2109]
   lonlat(last)  : [24.4206,57.2263]
   uid : ed39d23003e1262ef8eb6e7b33689cd4
-  bounding_box(n,w,s,e) : [58.735,-16.4216,40.2099,24.4216]
+  bounding_box(n,w,s,e) : [58.734,-16.4206,40.2109,24.4206]
