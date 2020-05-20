@@ -78,6 +78,8 @@ void prff (const std::string & name, const atlas::FieldSet & sglo)
 CASE( "test_functionspace_StructuredColumns_batchgather" ) {
     int nfields = eckit::Resource<int> ("--fields", 3);
     atlas::StructuredGrid grid (eckit::Resource<std::string> ("--grid", "N16"));
+    bool gather1 (eckit::Resource<bool> ("--gather1", false));
+    bool gather2 (eckit::Resource<bool> ("--gather2", false));
 
     auto & comm = mpi::comm ();
     int irank = comm.rank ();
@@ -92,16 +94,8 @@ CASE( "test_functionspace_StructuredColumns_batchgather" ) {
     getprcind (fs, dist, prc, ind);
 
     atlas::FieldSet sloc;
-    atlas::FieldSet sglo1, sglo2;
-
-    {
-    char tmp[128];
-    sprintf (tmp, "prcind.%8.8d.txt", irank);
-    FILE * fp = fopen (tmp, "w");
-    for (int i = 0; i < grid.size (); i++)
-      fprintf (fp, " %8d > %8d, %8d\n", i, prc[i], ind[i]);
-    fclose (fp);
-    }
+    atlas::FieldSet sglo1;
+    atlas::FieldSet sglo2;
 
     using T = long;
 
@@ -121,58 +115,7 @@ CASE( "test_functionspace_StructuredColumns_batchgather" ) {
       return v;
     };
 
-    for (int i = 0; i < nfields; i++)
-      {
-        int owner = i % nproc;
-
-        std::string name = std::string ("#") + std::to_string (i);
-        atlas::Field floc = fs.createField<T> (atlas::util::Config ("name", name) 
-                                            |  atlas::util::Config ("owner", owner));
-        auto v = array::make_view<T,1> (floc);
-        for (int j = 0; j < fs.sizeOwned (); j++)
-          v[j] = func (i, irank, j);
-        sloc.add (floc);
-
-        Field fglo = Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
-        fglo.metadata ().set ("owner", owner);
-        sglo1.add (fglo);
-
-        Field fglo2 = Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
-        fglo2.metadata ().set ("owner", owner);
-        sglo2.add (fglo2);
-
-      }
-
-
-    fs.gather (sloc, sglo1);
-
-    {
-      std::vector<ioFieldDesc> dloc;
-      std::vector<ioFieldDesc> dglo;
-
-      createIoFieldDescriptors (sloc,  dloc, fs.sizeOwned ());
-      createIoFieldDescriptors (sglo2, dglo, grid.size ());
-     
-      for (auto & d : dglo)
-        d.field ().metadata ().get ("owner", d.owner ());
-
-      printf (" dloc.size () = %8d\n", dloc.size ());
-      printf (" dglo.size () = %8d\n", dglo.size ());
-
-      GatherScatter gs (grid, dist);
-
-      gs.gather (dloc, dglo);
-
-
-      prff<T> ("sglo2", sglo2);
-
-    }
-
-
-    prff<T> ("sglo1", sglo1);
-
-
-    auto cmp = [ind, prc, grid, func, irank] (const atlas::FieldSet & sglo)
+    auto check = [ind, prc, grid, func, irank] (const atlas::FieldSet & sglo)
     {
       for (int i = 0; i < sglo.size (); i++)
         {
@@ -191,8 +134,55 @@ CASE( "test_functionspace_StructuredColumns_batchgather" ) {
         }
     };
 
-    cmp (sglo1);
-    cmp (sglo2);
+    for (int i = 0; i < nfields; i++)
+      {
+        int owner = i % nproc;
+
+        std::string name = std::string ("#") + std::to_string (i);
+        atlas::Field floc = fs.createField<T> (atlas::util::Config ("name", name) 
+                                            |  atlas::util::Config ("owner", owner));
+        auto v = array::make_view<T,1> (floc);
+        for (int j = 0; j < fs.sizeOwned (); j++)
+          v[j] = func (i, irank, j);
+        sloc.add (floc);
+
+        Field fglo1 = Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
+        fglo1.metadata ().set ("owner", owner);
+        sglo1.add (fglo1);
+
+        Field fglo2 = Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
+        fglo2.metadata ().set ("owner", owner);
+        sglo2.add (fglo2);
+
+      }
+
+    fs.gather (sloc, sglo1);
+    check (sglo1);
+    prff<T> ("sglo1", sglo1);
+
+    {
+      std::vector<ioFieldDesc> dloc;
+      std::vector<ioFieldDesc> dglo;
+
+      createIoFieldDescriptors (sloc,  dloc, fs.sizeOwned ());
+      createIoFieldDescriptors (sglo2, dglo, grid.size ());
+     
+      for (auto & d : dglo)
+        d.field ().metadata ().get ("owner", d.owner ());
+
+      GatherScatter gs (grid, dist);
+
+      gs.gather (dloc, dglo);
+
+
+      prff<T> ("sglo2", sglo2);
+      check (sglo2);
+
+    }
+
+
+
+
 
 }
 
