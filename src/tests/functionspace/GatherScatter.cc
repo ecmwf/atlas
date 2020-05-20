@@ -170,16 +170,21 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
     for (int iprc = 0; iprc < nprc; iprc++)
       if (prc_recv[iprc].len > 0)
         {
-          int off = prc_recv[iprc].off;
           for (int jfld = 0; jfld < nfld; jfld++)
             {
-              auto & f = fglo[jfld];
               if (fld_recv[jfld].len > 0)
                 {
-                  for (int jloc = 0, k = 0; jloc < dist.nb_pts ()[iprc]; jloc++)
-                  for (int j = 0; j < fld_recv[jfld].len; j++, k++)
-                    f (prcloc2glo (iprc, jloc), j) = buf_recv[off+k];
-                  off += dist.nb_pts ()[iprc] * f.dlen ();
+                  const int ngptot = dist.nb_pts ()[iprc];
+                  const int off = prc_recv[iprc].off + ngptot * fld_recv[jfld].off;
+                  auto & f = fglo[jfld];
+#pragma omp parallel for 
+                  for (int jloc = 0; jloc < ngptot; jloc++)
+                  for (int j = 0; j < fld_recv[jfld].len; j++)
+                    {
+                      int k = jloc * fld_recv[jfld].len + j;
+                      f (prcloc2glo (iprc, jloc), j) = buf_recv[off+k];
+                    }
+
                 }
             }
         }

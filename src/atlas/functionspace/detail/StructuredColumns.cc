@@ -492,7 +492,8 @@ Field StructuredColumns::createField( const Field& other, const eckit::Configura
 // ----------------------------------------------------------------------------
 void StructuredColumns::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const {
     ATLAS_ASSERT( local_fieldset.size() == global_fieldset.size() );
-
+    ATLAS_TRACE_SCOPE ("StructuredColumns::gather")
+    {
     for ( idx_t f = 0; f < local_fieldset.size(); ++f ) {
         const Field& loc      = local_fieldset[f];
         Field& glb            = global_fieldset[f];
@@ -523,6 +524,7 @@ void StructuredColumns::gather( const FieldSet& local_fieldset, FieldSet& global
         else {
             throw_Exception( "datatype not supported", Here() );
         }
+    }
     }
 }
 // ----------------------------------------------------------------------------

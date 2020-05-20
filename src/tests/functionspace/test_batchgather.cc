@@ -107,20 +107,29 @@ CASE( "test_gatherscatter" )
     const int prc_bit = 21, prc_off = ind_off + ind_bit;
     const int fld_bit = 21, fld_off = prc_off + prc_bit;
   
-    ATLAS_ASSERT (fs.sizeOwned () < (1 << ind_bit));
-    ATLAS_ASSERT (nproc           < (1 << prc_bit));
-    ATLAS_ASSERT (nfields         < (1 << fld_bit));
+    if (check)
+      {
+        ATLAS_ASSERT (fs.sizeOwned () < (1 << ind_bit));
+        ATLAS_ASSERT (nproc           < (1 << prc_bit));
+        ATLAS_ASSERT (nfields         < (1 << fld_bit));
+     }
 
-    auto func = [&ind_off,&prc_off,&fld_off] (int fld, int prc, int ind)
+    auto func = [check,ind_off,prc_off,fld_off] (int fld, int prc, int ind)
     {
-      long v = (static_cast<long> (fld) << fld_off) 
-             + (static_cast<long> (prc) << prc_off) 
-             + (static_cast<long> (ind) << ind_off);
+      long v = 0;
+      if (check)
+        {
+          v = (static_cast<long> (fld) << fld_off) 
+            + (static_cast<long> (prc) << prc_off) 
+            + (static_cast<long> (ind) << ind_off);
+        }
       return v;
     };
 
     auto checkgather = [ind, prc, grid, func, irank] (const atlas::FieldSet & sglo)
     {
+      ATLAS_TRACE_SCOPE ("check")
+      {
       for (int i = 0; i < sglo.size (); i++)
         {
           const auto & fglo = sglo[i];
@@ -136,6 +145,7 @@ CASE( "test_gatherscatter" )
                 }
             }
         }
+      }
     };
 
     for (int i = 0; i < nfields; i++)
@@ -168,6 +178,10 @@ CASE( "test_gatherscatter" )
 
     if (gather1)
       {
+        {
+          atlas::FieldSet loc, glo;
+          fs.gather (loc, glo);
+        }
         ATLAS_TRACE_SCOPE ("test_gather1")
         {
           fs.gather (sloc, sglo1);
@@ -178,18 +192,19 @@ CASE( "test_gatherscatter" )
 
     if (gather2)
       {
+        GatherScatter gs (grid, dist);
         ATLAS_TRACE_SCOPE ("test_gather2")
         {
           std::vector<ioFieldDesc> dloc;
           std::vector<ioFieldDesc> dglo;
 
+          ATLAS_TRACE_SCOPE ("create io descriptors")
+          {
           createIoFieldDescriptors (sloc,  dloc, fs.sizeOwned ());
           createIoFieldDescriptors (sglo2, dglo, grid.size ());
-          
           for (auto & d : dglo)
             d.field ().metadata ().get ("owner", d.owner ());
-
-          GatherScatter gs (grid, dist);
+          }
 
           gs.gather (dloc, dglo);
 

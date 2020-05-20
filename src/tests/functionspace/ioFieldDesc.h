@@ -20,6 +20,13 @@ public:
     if (_ldim == 0)
       _ldim = _v.shape (0);
     _size = _ldim * _v.shape (1);
+    _contiguous = (_dlen == _v.stride (0));
+  }
+
+
+  bool contiguous () const
+  {  
+    return _contiguous;
   }
 
   atlas::array::ArrayView<byte,2> & view ()
@@ -82,6 +89,7 @@ private:
   size_t _ldim;
   size_t _size;
   size_t _dlen;
+  bool _contiguous;
 };
 
 void createIoFieldDescriptors (atlas::Field & f, std::vector<ioFieldDesc> & list, size_t ldim = 0);
