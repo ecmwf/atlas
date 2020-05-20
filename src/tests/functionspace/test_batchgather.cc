@@ -213,6 +213,9 @@ CASE( "test_gatherscatter" )
         }
       }
 
+  // Avoid Atlas barrier
+  comm.barrier ();
+
 }
 
 

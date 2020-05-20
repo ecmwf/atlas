@@ -181,17 +181,20 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
     std::vector<atlas::idx_t> flds = grep (nfld, 
        [&fld_recv] (atlas::idx_t i) { return fld_recv[i].len > 0; });
 
-//  for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
-//    if (prc_recv[iprc].len > 0)
-//
-    for (auto iprc : prcs)
+#ifdef UNDEF
+    for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
+      if (prc_recv[iprc].len > 0)
         {
-          for (auto jfld : flds)
+          for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
             {
-//        for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
-//          {
-//            if (fld_recv[jfld].len > 0)
+              if (fld_recv[jfld].len > 0)
+#endif
+
+    for (int ii = 0; ii < prcs.size (); ii++)
+    for (int jj = 0; jj < flds.size (); jj++)
                 {
+                  const atlas::idx_t iprc = prcs[ii];
+                  const atlas::idx_t jfld = flds[jj];
                   const atlas::idx_t ngptot = dist.nb_pts ()[iprc];
                   const size_t off = prc_recv[iprc].off + ngptot * fld_recv[jfld].off;
                   auto & f = fglo[jfld];
@@ -205,10 +208,10 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
                     }
 
                 }
-            }
-        }
 
   }
+
+
 }
 }
 
