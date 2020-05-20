@@ -11,13 +11,13 @@ private:
   class locprc_t
   {
   public:
-    int loc = std::numeric_limits<int>::min ();
-    int prc = std::numeric_limits<int>::min ();
+    atlas::idx_t loc = std::numeric_limits<atlas::idx_t>::min ();
+    atlas::idx_t prc = std::numeric_limits<atlas::idx_t>::min ();
   };
 
-  int max, nprc;
+  atlas::idx_t max, nprc;
 
-  std::vector<int> _prcloc2glo;
+  std::vector<atlas::gidx_t> _prcloc2glo;
   std::vector<locprc_t> _glo2prcloc;
 
   const atlas::StructuredGrid & grid;
@@ -26,12 +26,12 @@ private:
 public:
   GatherScatter (const atlas::StructuredGrid & _grid, const atlas::grid::Distribution & _dist);
 
-  int prcloc2glo (int iprc, int jloc) const
+  atlas::gidx_t prcloc2glo (atlas::idx_t iprc, atlas::idx_t jloc) const
   {
     return _prcloc2glo[iprc * max + jloc];
   }
 
-  const locprc_t & glo2prcloc (int jglo) const
+  const locprc_t & glo2prcloc (atlas::gidx_t jglo) const
   {
     return _glo2prcloc[jglo];
   }
