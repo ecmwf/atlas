@@ -139,6 +139,8 @@ public:
     iterator begin() const;
     iterator end() const;
     void access( size_t i, PointXY& );
+    PointXY front() { return *begin(); }
+    PointXY back() { return *( begin() + ( grid_.size() - 1 ) ); }
 
 private:
     const Grid& grid_;
@@ -154,6 +156,8 @@ public:
     IterateLonLat( const Grid& grid ) : grid_( grid ) {}
     iterator begin() const;
     iterator end() const;
+    PointLonLat front() { return *begin(); }
+    PointLonLat back() { return *( begin() + ( grid_.size() - 1 ) ); }
 
 private:
     const Grid& grid_;
