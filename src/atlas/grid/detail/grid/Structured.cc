@@ -489,7 +489,8 @@ std::string Structured::type() const {
 }
 
 void Structured::hash( eckit::Hash& h ) const {
-    auto add_double        = [&]( const double& x ) { h.add( std::round( x * 1.e8 ) ); };
+    double multiplier      = projection().units() == "meters" ? 1e2 : 1e8;
+    auto add_double        = [&]( const double& x ) { h.add( std::round( x * multiplier ) ); };
     auto add_double_vector = [&]( const std::vector<double>& xvec ) {
         for ( auto& x : xvec ) {
             add_double( x );

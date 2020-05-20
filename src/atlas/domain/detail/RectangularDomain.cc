@@ -125,7 +125,8 @@ void RectangularDomain::print( std::ostream& os ) const {
 }
 
 void RectangularDomain::hash( eckit::Hash& h ) const {
-    auto add_double = [&]( const double& x ) { h.add( std::round( x * 1.e8 ) ); };
+    double multiplier = units() == "meters" ? 1e2 : 1e8;
+    auto add_double   = [&]( const double& x ) { h.add( std::round( x * multiplier ) ); };
     h.add( type() );
     h.add( units() );
     add_double( xmin() );
