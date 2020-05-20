@@ -9,6 +9,7 @@ lonlat(xmin,ymin) : [262.036,14.7365]
 projection:
   type : "mercator"
   latitude1 : 14.0
+  normalise : [0,360]
 
 check :
   uid : 533cccd1092166ec17c1799a03abc674
