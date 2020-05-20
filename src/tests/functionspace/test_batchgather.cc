@@ -14,6 +14,7 @@
 #include "atlas/functionspace.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "tests/AtlasTestEnvironment.h"
+#include "atlas/runtime/Trace.h"
 
 #include "GatherScatter.h"
 #include "ioFieldDesc.h"
@@ -75,11 +76,14 @@ void prff (const std::string & name, const atlas::FieldSet & sglo)
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_functionspace_StructuredColumns_batchgather" ) {
+CASE( "test_gatherscatter" ) 
+{
     int nfields = eckit::Resource<int> ("--fields", 3);
     atlas::StructuredGrid grid (eckit::Resource<std::string> ("--grid", "N16"));
     bool gather1 (eckit::Resource<bool> ("--gather1", false));
     bool gather2 (eckit::Resource<bool> ("--gather2", false));
+    bool debug (eckit::Resource<bool> ("--debug", false));
+    bool check (eckit::Resource<bool> ("--check", false));
 
     auto & comm = mpi::comm ();
     int irank = comm.rank ();
@@ -115,7 +119,7 @@ CASE( "test_functionspace_StructuredColumns_batchgather" ) {
       return v;
     };
 
-    auto check = [ind, prc, grid, func, irank] (const atlas::FieldSet & sglo)
+    auto checkgather = [ind, prc, grid, func, irank] (const atlas::FieldSet & sglo)
     {
       for (int i = 0; i < sglo.size (); i++)
         {
@@ -146,43 +150,53 @@ CASE( "test_functionspace_StructuredColumns_batchgather" ) {
           v[j] = func (i, irank, j);
         sloc.add (floc);
 
-        Field fglo1 = Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
-        fglo1.metadata ().set ("owner", owner);
-        sglo1.add (fglo1);
+        if (gather1)
+          {
+            Field fglo1 = Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
+            fglo1.metadata ().set ("owner", owner);
+            sglo1.add (fglo1);
+          }
 
-        Field fglo2 = Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
-        fglo2.metadata ().set ("owner", owner);
-        sglo2.add (fglo2);
+        if (gather2)
+          {
+            Field fglo2 = Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
+            fglo2.metadata ().set ("owner", owner);
+            sglo2.add (fglo2);
+          }
 
       }
 
-    fs.gather (sloc, sglo1);
-    check (sglo1);
-    prff<T> ("sglo1", sglo1);
+    if (gather1)
+      {
+        ATLAS_TRACE_SCOPE ("test_gather1")
+        {
+          fs.gather (sloc, sglo1);
+          if (check) checkgather (sglo1);
+          if (debug) prff<T> ("sglo1", sglo1);
+        }
+      }
 
-    {
-      std::vector<ioFieldDesc> dloc;
-      std::vector<ioFieldDesc> dglo;
+    if (gather2)
+      {
+        ATLAS_TRACE_SCOPE ("test_gather2")
+        {
+          std::vector<ioFieldDesc> dloc;
+          std::vector<ioFieldDesc> dglo;
 
-      createIoFieldDescriptors (sloc,  dloc, fs.sizeOwned ());
-      createIoFieldDescriptors (sglo2, dglo, grid.size ());
-     
-      for (auto & d : dglo)
-        d.field ().metadata ().get ("owner", d.owner ());
+          createIoFieldDescriptors (sloc,  dloc, fs.sizeOwned ());
+          createIoFieldDescriptors (sglo2, dglo, grid.size ());
+          
+          for (auto & d : dglo)
+            d.field ().metadata ().get ("owner", d.owner ());
 
-      GatherScatter gs (grid, dist);
+          GatherScatter gs (grid, dist);
 
-      gs.gather (dloc, dglo);
+          gs.gather (dloc, dglo);
 
-
-      prff<T> ("sglo2", sglo2);
-      check (sglo2);
-
-    }
-
-
-
-
+          if (debug) prff<T> ("sglo2", sglo2);
+          if (check) checkgather (sglo2);
+        }
+      }
 
 }
 

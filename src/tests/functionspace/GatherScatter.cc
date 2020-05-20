@@ -4,6 +4,7 @@
 #include "atlas/field.h"
 #include "atlas/grid.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Trace.h"
 
 namespace
 {
@@ -31,6 +32,9 @@ void integrate (T & v)
 GatherScatter::GatherScatter (const atlas::StructuredGrid & _grid, const atlas::grid::Distribution & _dist)
  : grid (_grid), dist (_dist)
 {
+ATLAS_TRACE_SCOPE ("GatherScatter::GatherScatter")
+{
+
   nprc = dist.nb_partitions ();
 
   std::vector<int> count (nprc);
@@ -52,9 +56,13 @@ GatherScatter::GatherScatter (const atlas::StructuredGrid & _grid, const atlas::
     }
 
 }
+}
 
 void GatherScatter::gather (std::vector<ioFieldDesc> & floc, std::vector<ioFieldDesc> & fglo) const
 {
+ATLAS_TRACE_SCOPE ("GatherScatter::gather")
+{
+
   ATLAS_ASSERT (floc.size () == fglo.size ());
   size_t nfld = floc.size ();
 
@@ -100,14 +108,18 @@ void GatherScatter::gather (std::vector<ioFieldDesc> & floc, std::vector<ioField
 
   std::vector<byte> buf_send (fld_send.back ().off);
 
-  for (int jfld = 0; jfld < nfld; jfld++)
-    {
-      auto & f = floc[jfld];
-      byte * buffer = &buf_send[fld_send[jfld].off];
-      for (int i = 0; i < f.ldim (); i++)
-      for (int j = 0; j < f.dlen (); j++)
-        buffer[i*f.dlen ()+j] = f (i, j);
-    }
+  ATLAS_TRACE_SCOPE ("Pack")
+  {
+#pragma omp parallel for
+    for (int jfld = 0; jfld < nfld; jfld++)
+      {
+        auto & f = floc[jfld];
+        byte * buffer = &buf_send[fld_send[jfld].off];
+        for (int i = 0; i < f.ldim (); i++)
+        for (int j = 0; j < f.dlen (); j++)
+          buffer[i*f.dlen ()+j] = f (i, j);
+      }
+  }
 
   // RECV
 
@@ -127,45 +139,52 @@ void GatherScatter::gather (std::vector<ioFieldDesc> & floc, std::vector<ioField
 
   std::vector<byte> buf_recv (prc_recv.back ().off);
 
-  std::vector<eckit::mpi::Request> rqr;
+  ATLAS_TRACE_SCOPE ("SEND/RECV")
+  {
+    std::vector<eckit::mpi::Request> rqr;
+   
+    for (int iprc = 0; iprc < nprc; iprc++)
+      if (prc_recv[iprc].len > 0)
+        rqr.push_back (comm.iReceive (&buf_recv[prc_recv[iprc].off], 
+                                      prc_recv[iprc].len, iprc, 100));
+   
+    comm.barrier ();
+   
+    std::vector<eckit::mpi::Request> rqs;
+   
+    for (int iprc = 0; iprc < nprc; iprc++)
+      if (prc_send[iprc].len > 0)
+        rqs.push_back (comm.iSend (&buf_send[prc_send[iprc].off], 
+                                   prc_send[iprc].len, iprc, 100));
+   
+    for (auto & r : rqr)
+      comm.wait (r);
+   
+    for (auto & r : rqs)
+      comm.wait (r);
+  }
 
-  for (int iprc = 0; iprc < nprc; iprc++)
-    if (prc_recv[iprc].len > 0)
-      rqr.push_back (comm.iReceive (&buf_recv[prc_recv[iprc].off], 
-                                    prc_recv[iprc].len, iprc, 100));
+  ATLAS_TRACE_SCOPE ("Unpack")
+  {
+  
+    for (int iprc = 0; iprc < nprc; iprc++)
+      if (prc_recv[iprc].len > 0)
+        {
+          int off = prc_recv[iprc].off;
+          for (int jfld = 0; jfld < nfld; jfld++)
+            {
+              auto & f = fglo[jfld];
+              if (fld_recv[jfld].len > 0)
+                {
+                  for (int jloc = 0, k = 0; jloc < dist.nb_pts ()[iprc]; jloc++)
+                  for (int j = 0; j < fld_recv[jfld].len; j++, k++)
+                    f (prcloc2glo (iprc, jloc), j) = buf_recv[off+k];
+                  off += dist.nb_pts ()[iprc] * f.dlen ();
+                }
+            }
+        }
 
-  comm.barrier ();
-
-  std::vector<eckit::mpi::Request> rqs;
-
-  for (int iprc = 0; iprc < nprc; iprc++)
-    if (prc_send[iprc].len > 0)
-      rqs.push_back (comm.iSend (&buf_send[prc_send[iprc].off], 
-                                 prc_send[iprc].len, iprc, 100));
-
-  for (auto & r : rqr)
-    comm.wait (r);
-
-  for (auto & r : rqs)
-    comm.wait (r);
-
-  // Unpack RECV buffer
-
-  for (int iprc = 0; iprc < nprc; iprc++)
-    if (prc_recv[iprc].len > 0)
-      {
-        int off = prc_recv[iprc].off;
-        for (int jfld = 0; jfld < nfld; jfld++)
-          {
-            auto & f = fglo[jfld];
-            if (fld_recv[jfld].len > 0)
-              {
-                for (int jloc = 0, k = 0; jloc < dist.nb_pts ()[iprc]; jloc++)
-                for (int j = 0; j < fld_recv[jfld].len; j++, k++)
-                  f (prcloc2glo (iprc, jloc), j) = buf_recv[off+k];
-                off += dist.nb_pts ()[iprc] * f.dlen ();
-              }
-          }
-      }
+  }
+}
 }
 
