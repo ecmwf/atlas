@@ -93,8 +93,6 @@ void GatherScatter::gather (std::vector<ioFieldDesc> & floc, std::vector<ioField
       prc_send[owner].len += floc[jfld].size ();
     }
 
-printf (" dist.nb_pts ()[lprc] = %8d\n", dist.nb_pts ()[lprc]);
-
   integrate (fld_send);
   integrate (prc_send);
 
@@ -103,7 +101,13 @@ printf (" dist.nb_pts ()[lprc] = %8d\n", dist.nb_pts ()[lprc]);
   std::vector<byte> buf_send (fld_send.back ().off);
 
   for (int jfld = 0; jfld < nfld; jfld++)
-    floc[jfld].pack (&buf_send[fld_send[jfld].off]);
+    {
+      auto & f = floc[jfld];
+      byte * buffer = &buf_send[fld_send[jfld].off];
+      for (int i = 0; i < f.ldim (); i++)
+      for (int j = 0; j < f.dlen (); j++)
+        buffer[i*f.dlen ()+j] = f (i, j);
+    }
 
   // RECV
 
@@ -153,12 +157,13 @@ printf (" dist.nb_pts ()[lprc] = %8d\n", dist.nb_pts ()[lprc]);
         int off = prc_recv[iprc].off;
         for (int jfld = 0; jfld < nfld; jfld++)
           {
+            auto & f = fglo[jfld];
             if (fld_recv[jfld].len > 0)
               {
                 for (int jloc = 0, k = 0; jloc < dist.nb_pts ()[iprc]; jloc++)
                 for (int j = 0; j < fld_recv[jfld].len; j++, k++)
-                  fglo[jfld](prcloc2glo (iprc, jloc), j) = buf_recv[off+k];
-                off += dist.nb_pts ()[iprc] * fglo[jfld].dlen ();
+                  f (prcloc2glo (iprc, jloc), j) = buf_recv[off+k];
+                off += dist.nb_pts ()[iprc] * f.dlen ();
               }
           }
       }

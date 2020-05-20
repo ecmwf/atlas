@@ -52,6 +52,11 @@ public:
     return _size;
   }
 
+  size_t ldim () const
+  {
+    return _ldim;
+  }
+
   size_t dlen () const
   {
     return _dlen;
