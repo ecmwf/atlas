@@ -99,6 +99,7 @@ Library::Library() :
     eckit::system::Library( std::string( "atlas" ) ),
     debug_( eckit::system::Library::debug() ),
     info_( getEnv( "ATLAS_INFO", true ) ),
+    warning_( getEnv( "ATLAS_WARNING", true ) ),
     trace_( getEnv( "ATLAS_TRACE", false ) ),
     trace_barriers_( getEnv( "ATLAS_TRACE_BARRIERS", false ) ),
     trace_report_( getEnv( "ATLAS_TRACE_REPORT", false ) ) {}
@@ -144,6 +145,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
     if ( config.has( "log" ) ) {
         config.get( "log.info", info_ );
         config.get( "log.trace", trace_ );
+        config.get( "log.warning", warning_ );
         config.get( "log.debug", debug_ );
     }
     if ( config.has( "trace" ) ) {
@@ -160,6 +162,10 @@ void Library::initialise( const eckit::Parametrisation& config ) {
     if ( not info_ ) {
         info_channel_.reset();
     }
+    if ( not warning_ ) {
+        warning_channel_.reset();
+    }
+
 
     // Summary
     if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
@@ -215,6 +221,10 @@ void Library::finalise() {
         info_ = false;
         info_channel_.reset( new eckit::Channel( new eckit::PrefixTarget( "ATLAS_INFO" ) ) );
     }
+    if ( warningChannel() ) {
+        warning_ = false;
+        warning_channel_.reset( new eckit::Channel( new eckit::PrefixTarget( "ATLAS_WARNING" ) ) );
+    }
 }
 
 eckit::Channel& Library::infoChannel() const {
@@ -226,6 +236,18 @@ eckit::Channel& Library::infoChannel() const {
     }
     return *info_channel_;
 }
+
+
+eckit::Channel& Library::warningChannel() const {
+    if ( warning_ ) {
+        return eckit::Log::warning();
+    }
+    else if ( !warning_channel_ ) {
+        warning_channel_.reset( new eckit::Channel() );
+    }
+    return *warning_channel_;
+}
+
 
 eckit::Channel& Library::traceChannel() const {
     if ( trace_channel_ ) {

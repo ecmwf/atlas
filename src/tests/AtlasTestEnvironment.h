@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <chrono>
 #include <exception>
+#include <iomanip>
 #include <string>
 #include <thread>
 
@@ -112,16 +113,16 @@ using eckit::types::is_approximately_equal;
         }                                                             \
     } while ( false )
 
-#define __EXPECT_APPROX_EQ_TOL( lhs, rhs, tol )                       \
-    do {                                                              \
-        if ( !( is_approximately_equal( lhs, rhs, tol ) ) ) {         \
-            std::stringstream err;                                    \
-            err << "EXPECT condition failed: " #lhs " ~= " #rhs       \
-                   "\n"                                               \
-                   " --> "                                            \
-                << lhs << " != " << rhs;                              \
-            throw eckit::testing::TestException( err.str(), Here() ); \
-        }                                                             \
+#define __EXPECT_APPROX_EQ_TOL( lhs, rhs, tol )                                   \
+    do {                                                                          \
+        if ( !( is_approximately_equal( lhs, rhs, tol ) ) ) {                     \
+            std::stringstream err;                                                \
+            err << "EXPECT condition failed: " #lhs " ~= " #rhs                   \
+                   "\n"                                                           \
+                   " --> "                                                        \
+                << std::fixed << std::setprecision( 12 ) << lhs << " != " << rhs; \
+            throw eckit::testing::TestException( err.str(), Here() );             \
+        }                                                                         \
     } while ( false )
 
 #define EXPECT_APPROX_EQ( ... ) __ATLAS_SPLICE( __EXPECT_APPROX_EQ__, __ATLAS_NARG( __VA_ARGS__ ) )( __VA_ARGS__ )
