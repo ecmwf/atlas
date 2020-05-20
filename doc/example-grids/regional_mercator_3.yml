@@ -19,3 +19,4 @@ check :
   bounding_box(n,w,s,e) : [19.5221,291.9720,16.9775,296.0153]
   xmin : -7108436.73
   ymin : 1800571.82
+  proj : "+proj=merc +lat_ts=20 +R=6371229.0 +units=m +no_defs"

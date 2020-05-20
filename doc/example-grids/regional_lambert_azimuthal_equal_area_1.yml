@@ -17,3 +17,7 @@ check :
   lonlat(last)  : [24.6228,57.1968]
   uid : 16663e1f4f3deb724712dd2698008915
   bounding_box(n,w,s,e) : [58.7766,-16.6228,40.1877,24.6228]
+  xmin : -1225000.00
+  ymin : -975000.00
+  proj : "+proj=laea +lat_0=50 +lon_0=4 +R=6371229.0"
+

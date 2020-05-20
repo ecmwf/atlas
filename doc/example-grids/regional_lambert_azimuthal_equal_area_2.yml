@@ -26,3 +26,5 @@ check :
   uid : 2ef4f1bb005cf8e24ecc9464f8b7e089
   xmin : 2510375.79
   ymin : 748404.45
+  proj : "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +R=6371229.0"
+

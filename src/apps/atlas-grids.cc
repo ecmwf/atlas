@@ -27,6 +27,7 @@
 #include "atlas/grid.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
+#include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/util/NormaliseLongitude.h"
 
@@ -385,8 +386,11 @@ int AtlasGrids::execute( const Args& args ) {
                 return equal( a.lon(), b.lon() ) && equal( a.lat(), b.lat() );
             };
             auto difference_normalised = []( double a, double b ) {
-                util::NormaliseLongitude normalised( std::min( a, b ) );
-                return normalised( b ) - normalised( a );
+                constexpr util::NormaliseLongitude normalised( -180. );
+                return normalised( b - a );
+            };
+            auto point_equal_normalised = [&]( const PointLonLat& a, const PointLonLat& b ) -> bool {
+                return equal( a.lat(), b.lat() ) && equal( difference_normalised( a.lon(), b.lon() ), 0. );
             };
 
             auto check_lonlat = [&]( const std::string& key, std::function<PointLonLat()>&& get_lonlat ) {
@@ -408,8 +412,8 @@ int AtlasGrids::execute( const Args& args ) {
                 }
             };
 
-            check_lonlat( "lonlat(first)", [&]() { return *grid.lonlat().begin(); } );
-            check_lonlat( "lonlat(last)", [&]() { return *( grid.lonlat().begin() + ( grid.size() - 1 ) ); } );
+            check_lonlat( "lonlat(first)", [&]() { return grid.lonlat().front(); } );
+            check_lonlat( "lonlat(last)", [&]() { return grid.lonlat().back(); } );
 
             std::vector<double> bbox;
             if ( config_check.get( "bounding_box(n,w,s,e)", bbox ) && bbox.size() == 4 ) {
@@ -485,6 +489,34 @@ int AtlasGrids::execute( const Args& args ) {
             }
             else {
                 Log::warning() << "Check for ymin skipped" << std::endl;
+            }
+
+            if ( projection::ProjectionFactory::has( "proj" ) ) {
+                std::string proj_str;
+                if ( config_check.get( "proj", proj_str ) ) {
+                    Projection proj( util::Config( "type", "proj" ) | util::Config( "proj", proj_str ) );
+                    auto check_proj = [&]( const PointLonLat& lonlat, const PointLonLat& proj_lonlat,
+                                           const std::string& point = "" ) {
+                        if ( not point_equal( lonlat, proj_lonlat ) ) {
+                            if ( point_equal_normalised( lonlat, proj_lonlat ) ) {
+                                Log::warning()
+                                    << "WARNING: Projection of " << point
+                                    << " grid point is different from Proj only due to different normalisation: "
+                                    << lonlat << " != " << proj_lonlat << std::endl;
+                            }
+                            else {
+                                Log::info() << "Check failed: Projection of " << point
+                                            << " grid point is different from Proj: " << lonlat << " != " << proj_lonlat
+                                            << " normalised difference = {" << std::fixed << std::setprecision( 12 )
+                                            << difference_normalised( lonlat.lon(), proj_lonlat.lon() ) << ","
+                                            << lonlat.lat() - proj_lonlat.lat() << "}" << std::endl;
+                                check_failed = true;
+                            }
+                        }
+                    };
+                    check_proj( grid.lonlat().front(), proj.lonlat( grid.xy().front() ), "first" );
+                    check_proj( grid.lonlat().back(), proj.lonlat( grid.xy().back() ), "last" );
+                }
             }
 
 
