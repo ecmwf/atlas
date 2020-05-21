@@ -135,8 +135,6 @@ void GatherScatter::gather (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const
 {
 ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 {
-
-  ATLAS_ASSERT (floc.size () == fglo.size ());
   atlas::idx_t nfld = floc.size ();
 
   auto & comm = eckit::mpi::comm ();
@@ -146,16 +144,9 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 
   reOrderFields (floc, fglo);
 
-  // SEND
-
-  fldprc_t tloc;
+  fldprc_t tloc, tglo;
 
   computeTLoc (floc, tloc);
-
-  // RECV
-
-  fldprc_t tglo;
-
   computeTGlo (fglo, tglo);
 
   // Pack send buffer
