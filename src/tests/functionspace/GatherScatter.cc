@@ -140,14 +140,16 @@ void GatherScatter::processLocBuffer (ioFieldDesc_v & floc, const fldprc_t & tlo
 
   ATLAS_TRACE_SCOPE ("GatherScatter::processLocBuffer")
   {
-#pragma omp parallel for
+#pragma omp parallel for 
     for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
       {
         auto & f = floc[jfld];
         byte * buffer = &buf_loc[tloc.fld[jfld].off];
-        for (atlas::idx_t i = 0; i < f.ldim (); i++)
-        for (int j = 0; j < f.dlen (); j++)
-          a (buffer[i*f.dlen ()+j], f (i, j));
+        const size_t dlen = f.dlen ();
+        const size_t ldim = f.ldim ();
+        for (atlas::idx_t i = 0; i < ldim; i++)
+        for (int j = 0; j < dlen; j++)
+          a (buffer[i*dlen+j], f (i, j));
       }
   }
 

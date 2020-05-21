@@ -98,9 +98,14 @@ public:
 
     T* data() { return data_; }
 
-    idx_t size() const { return size_; }
+    size_t size() const { return size_; }
 
     void assign( idx_t n, const value_type& value ) {
+        resize( n );
+        omp::fill( begin(), begin() + n, value );
+    }
+
+    void assign( size_t n, const value_type& value ) {
         resize( n );
         omp::fill( begin(), begin() + n, value );
     }
@@ -121,11 +126,11 @@ public:
     }
     template <typename size_t>
     void resize( size_t size ) {
-        if ( static_cast<idx_t>( size ) > 0 ) {
+        if ( size > 0 ) {
             if ( capacity_ == 0 ) {
                 reserve( size );
             }
-            if ( static_cast<idx_t>( size ) > capacity_ ) {
+            if ( size > capacity_ ) {
                 ATLAS_NOTIMPLEMENTED;
             }
             size_ = size;
