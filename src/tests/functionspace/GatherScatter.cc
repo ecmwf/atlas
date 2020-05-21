@@ -93,6 +93,9 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
   floc  = reorder (floc,  isort);
   fglo  = reorder (fglo,  isort);
 
+  for (int jfld = 0; jfld < nfld; jfld++)
+    floc[jfld].owner () = fglo[jfld].owner ();
+
   // SEND
 
   offlen_v fld_loc (nfld + 1);
