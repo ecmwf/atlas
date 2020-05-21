@@ -48,7 +48,8 @@ private:
     return _glo2prcloc[jglo];
   }
  
- 
+  void reOrderFields (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const;
+
 
 };
 

@@ -67,19 +67,10 @@ ATLAS_TRACE_SCOPE ("GatherScatter::GatherScatter")
 }
 }
 
-void GatherScatter::gather (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const
+void GatherScatter::reOrderFields (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const
 {
-ATLAS_TRACE_SCOPE ("GatherScatter::gather")
-{
-
   ATLAS_ASSERT (floc.size () == fglo.size ());
-  atlas::idx_t nfld = floc.size ();
-
-  auto & comm = eckit::mpi::comm ();
-  atlas::idx_t nprc = comm.size ();
-  atlas::idx_t lprc = comm.rank ();
-
-  atlas::idx_t ldim = dist.nb_pts ()[lprc];
+  atlas::idx_t nfld = fglo.size ();  
 
   // Sort fields by owner
   
@@ -95,6 +86,23 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 
   for (int jfld = 0; jfld < nfld; jfld++)
     floc[jfld].owner () = fglo[jfld].owner ();
+
+}
+
+void GatherScatter::gather (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const
+{
+ATLAS_TRACE_SCOPE ("GatherScatter::gather")
+{
+
+  ATLAS_ASSERT (floc.size () == fglo.size ());
+  atlas::idx_t nfld = floc.size ();
+
+  auto & comm = eckit::mpi::comm ();
+  atlas::idx_t nprc = comm.size ();
+  atlas::idx_t lprc = comm.rank ();
+  atlas::idx_t ldim = dist.nb_pts ()[lprc];
+
+  reOrderFields (floc, fglo);
 
   // SEND
 
