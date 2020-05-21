@@ -3,6 +3,7 @@
 
 #include "ioFieldDesc.h"
 #include "atlas/grid.h"
+#include "atlas/util/vector.h"
 
 class GatherScatter
 {
@@ -32,7 +33,7 @@ private:
 
   using ioFieldDesc_v = std::vector<ioFieldDesc>;
 
-  using byte_v = std::vector<byte>;
+  using byte_v = atlas::vector<byte>;
 
   atlas::idx_t max, nprc;
 

@@ -140,8 +140,8 @@ public:
 
 private:
     value_type* data_{nullptr};
-    idx_t size_{0};
-    idx_t capacity_{0};
+    size_t size_{0};
+    size_t capacity_{0};
 };
 
 }  // namespace atlas
