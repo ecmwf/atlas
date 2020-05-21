@@ -103,7 +103,7 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 
   for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
     {
-      atlas::idx_t owner = fglo[jfld].owner ();
+      atlas::idx_t owner = floc[jfld].owner ();
       fld_loc[jfld].len = floc[jfld].size ();
       prc_loc[owner].len += floc[jfld].size ();
     }
