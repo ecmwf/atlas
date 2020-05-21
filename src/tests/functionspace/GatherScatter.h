@@ -32,6 +32,8 @@ private:
 
   using ioFieldDesc_v = std::vector<ioFieldDesc>;
 
+  using byte_v = std::vector<byte>;
+
   atlas::idx_t max, nprc;
 
   std::vector<atlas::gidx_t> _prcloc2glo;
@@ -60,7 +62,9 @@ private:
   void computeTLoc (const ioFieldDesc_v & floc, fldprc_t & tloc) const;
   void computeTGlo (const ioFieldDesc_v & fglo, fldprc_t & tglo) const;
   void processLocBuffer (const ioFieldDesc_v & floc, const fldprc_t & tloc,
-                         std::vector<byte> & buf_loc) const;
+                         byte_v & buf_loc) const;
+  void processGloBuffer (ioFieldDesc_v & fglo, const fldprc_t & tglo,
+                         const byte_v & buf_glo) const;
 
 
 };

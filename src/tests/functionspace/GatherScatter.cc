@@ -132,7 +132,7 @@ void GatherScatter::computeTGlo (const ioFieldDesc_v & fglo, fldprc_t & tglo) co
 }
 
 void GatherScatter::processLocBuffer (const ioFieldDesc_v & floc, const fldprc_t & tloc,
-                                      std::vector<byte> & buf_loc) const
+                                      byte_v & buf_loc) const
 {
   atlas::idx_t nfld = floc.size ();
 
@@ -151,57 +151,14 @@ void GatherScatter::processLocBuffer (const ioFieldDesc_v & floc, const fldprc_t
 
 }
 
-void GatherScatter::gather (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const
-{
-ATLAS_TRACE_SCOPE ("GatherScatter::gather")
+void GatherScatter::processGloBuffer (ioFieldDesc_v & fglo, const fldprc_t & tglo,
+                                      const byte_v & buf_glo) const
 {
   auto & comm = eckit::mpi::comm ();
-  atlas::idx_t nfld = floc.size ();
+  atlas::idx_t nfld = fglo.size ();
   atlas::idx_t nprc = comm.size ();
-  atlas::idx_t lprc = comm.rank ();
-  atlas::idx_t ldim = dist.nb_pts ()[lprc];
-
-  reOrderFields (floc, fglo);
-
-  fldprc_t tloc, tglo;
-
-  computeTLoc (floc, tloc);
-  computeTGlo (fglo, tglo);
-
-  // Pack send buffer
-
-  std::vector<byte> buf_loc (tloc.fld.back ().off);
-
-  processLocBuffer (floc, tloc, buf_loc);
-
-  std::vector<byte> buf_glo (tglo.prc.back ().off);
-
-  ATLAS_TRACE_SCOPE ("SEND/RECV")
-  {
-    std::vector<eckit::mpi::Request> rqr;
-   
-    for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
-      if (tglo.prc[iprc].len > 0)
-        rqr.push_back (comm.iReceive (&buf_glo[tglo.prc[iprc].off], 
-                                      tglo.prc[iprc].len, iprc, 100));
-   
-    comm.barrier ();
-   
-    std::vector<eckit::mpi::Request> rqs;
-   
-    for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
-      if (tloc.prc[iprc].len > 0)
-        rqs.push_back (comm.iSend (&buf_loc[tloc.prc[iprc].off], 
-                                   tloc.prc[iprc].len, iprc, 100));
-   
-    for (auto & r : rqr)
-      comm.wait (r);
-   
-    for (auto & r : rqs)
-      comm.wait (r);
-  }
-
-  ATLAS_TRACE_SCOPE ("Unpack")
+  
+  ATLAS_TRACE_SCOPE ("GatherScatter::processGloBuffer")
   {
     std::vector<atlas::idx_t> prcs = grep (nprc, 
        [&tglo] (atlas::idx_t i) { return tglo.prc[i].len > 0; });
@@ -237,7 +194,59 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
                 }
 
   }
+}
 
+void GatherScatter::gather (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const
+{
+ATLAS_TRACE_SCOPE ("GatherScatter::gather")
+{
+  auto & comm = eckit::mpi::comm ();
+  atlas::idx_t nfld = floc.size ();
+  atlas::idx_t nprc = comm.size ();
+  atlas::idx_t lprc = comm.rank ();
+  atlas::idx_t ldim = dist.nb_pts ()[lprc];
+
+  reOrderFields (floc, fglo);
+
+  fldprc_t tloc, tglo;
+
+  computeTLoc (floc, tloc);
+  computeTGlo (fglo, tglo);
+
+  // Pack send buffer
+
+  byte_v buf_loc (tloc.fld.back ().off);
+
+  processLocBuffer (floc, tloc, buf_loc);
+
+  byte_v buf_glo (tglo.prc.back ().off);
+
+  ATLAS_TRACE_SCOPE ("SEND/RECV")
+  {
+    std::vector<eckit::mpi::Request> rqr;
+   
+    for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
+      if (tglo.prc[iprc].len > 0)
+        rqr.push_back (comm.iReceive (&buf_glo[tglo.prc[iprc].off], 
+                                      tglo.prc[iprc].len, iprc, 100));
+   
+    comm.barrier ();
+   
+    std::vector<eckit::mpi::Request> rqs;
+   
+    for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
+      if (tloc.prc[iprc].len > 0)
+        rqs.push_back (comm.iSend (&buf_loc[tloc.prc[iprc].off], 
+                                   tloc.prc[iprc].len, iprc, 100));
+   
+    for (auto & r : rqr)
+      comm.wait (r);
+   
+    for (auto & r : rqs)
+      comm.wait (r);
+  }
+
+  processGloBuffer (fglo, tglo, buf_glo);
 
 }
 }
