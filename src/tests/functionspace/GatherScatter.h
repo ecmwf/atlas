@@ -15,6 +15,15 @@ private:
     atlas::idx_t prc = std::numeric_limits<atlas::idx_t>::min ();
   };
 
+  class offlen_t
+  {
+  public:
+    atlas::gidx_t off = 0, len = 0;
+  };
+
+  using offlen_v = std::vector<offlen_t>;
+  using ioFieldDesc_v = std::vector<ioFieldDesc>;
+
   atlas::idx_t max, nprc;
 
   std::vector<atlas::gidx_t> _prcloc2glo;
@@ -26,6 +35,9 @@ private:
 public:
   GatherScatter (const atlas::StructuredGrid & _grid, const atlas::grid::Distribution & _dist);
 
+  void gather (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const;
+
+private:
   atlas::gidx_t prcloc2glo (atlas::idx_t iprc, atlas::idx_t jloc) const
   {
     return _prcloc2glo[iprc * max + jloc];
@@ -36,7 +48,6 @@ public:
     return _glo2prcloc[jglo];
   }
  
-  void gather (std::vector<ioFieldDesc> & floc, std::vector<ioFieldDesc> & fglo) const;
  
 
 };

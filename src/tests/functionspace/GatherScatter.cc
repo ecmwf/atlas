@@ -67,7 +67,7 @@ ATLAS_TRACE_SCOPE ("GatherScatter::GatherScatter")
 }
 }
 
-void GatherScatter::gather (std::vector<ioFieldDesc> & floc, std::vector<ioFieldDesc> & fglo) const
+void GatherScatter::gather (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const
 {
 ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 {
@@ -78,12 +78,6 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
   auto & comm = eckit::mpi::comm ();
   atlas::idx_t nprc = comm.size ();
   atlas::idx_t lprc = comm.rank ();
-
-  class offlen_t
-  {
-  public:
-    atlas::gidx_t off = 0, len = 0;
-  };
 
   atlas::idx_t ldim = dist.nb_pts ()[lprc];
 
@@ -101,8 +95,8 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 
   // SEND
 
-  std::vector<offlen_t> fld_loc (nfld + 1);
-  std::vector<offlen_t> prc_loc (nprc + 1);
+  offlen_v fld_loc (nfld + 1);
+  offlen_v prc_loc (nprc + 1);
 
   for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
     {
@@ -116,8 +110,8 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 
   // RECV
 
-  std::vector<offlen_t> prc_glo (nprc + 1);
-  std::vector<offlen_t> fld_glo (nfld + 1);
+  offlen_v prc_glo (nprc + 1);
+  offlen_v fld_glo (nfld + 1);
 
   for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
     if (lprc == fglo[jfld].owner ())
