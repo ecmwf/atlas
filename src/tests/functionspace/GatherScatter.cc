@@ -201,6 +201,38 @@ void GatherScatter::processGloBuffer (ioFieldDesc_v & fglo, const fldprc_t & tgl
   }
 }
 
+std::vector<eckit::mpi::Request> GatherScatter::postRecv (byte_v & buf, const fldprc_t & t) const
+{
+ATLAS_TRACE_SCOPE ("GatherScatter::postRecv")
+{
+  std::vector<eckit::mpi::Request> rqr;
+  auto & comm = eckit::mpi::comm ();
+  atlas::idx_t nprc = comm.size ();
+
+  for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
+    if (t.prc[iprc].len > 0)
+      rqr.push_back (comm.iReceive (&buf[t.prc[iprc].off], t.prc[iprc].len, iprc, 100));
+ 
+  return rqr;
+}
+}
+
+std::vector<eckit::mpi::Request> GatherScatter::postSend (const byte_v & buf, const fldprc_t & t) const
+{
+ATLAS_TRACE_SCOPE ("GatherScatter::postSend")
+{
+  std::vector<eckit::mpi::Request> rqs;
+  auto & comm = eckit::mpi::comm ();
+  atlas::idx_t nprc = comm.size ();
+
+  for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
+    if (t.prc[iprc].len > 0)
+      rqs.push_back (comm.iSend (&buf[t.prc[iprc].off], t.prc[iprc].len, iprc, 100));
+
+  return rqs;
+}
+}
+   
 void GatherScatter::gather (const ioFieldDesc_v & _floc, ioFieldDesc_v & fglo) const
 {
 
@@ -229,25 +261,15 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 
   ATLAS_TRACE_SCOPE ("SEND/RECV")
   {
-    std::vector<eckit::mpi::Request> rqr;
-   
-    for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
-      if (tglo.prc[iprc].len > 0)
-        rqr.push_back (comm.iReceive (&buf_glo[tglo.prc[iprc].off], 
-                                      tglo.prc[iprc].len, iprc, 100));
+    std::vector<eckit::mpi::Request> rqr = postRecv (buf_glo, tglo);
    
     comm.barrier ();
    
-    std::vector<eckit::mpi::Request> rqs;
-   
-    for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
-      if (tloc.prc[iprc].len > 0)
-        rqs.push_back (comm.iSend (&buf_loc[tloc.prc[iprc].off], 
-                                   tloc.prc[iprc].len, iprc, 100));
-   
+    std::vector<eckit::mpi::Request> rqs = postSend (buf_loc, tloc);
+
     for (auto & r : rqr)
       comm.wait (r);
-   
+
     for (auto & r : rqs)
       comm.wait (r);
   }

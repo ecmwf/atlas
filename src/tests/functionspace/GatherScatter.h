@@ -4,6 +4,7 @@
 #include "ioFieldDesc.h"
 #include "atlas/grid.h"
 #include "atlas/util/vector.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 class GatherScatter
 {
@@ -70,6 +71,8 @@ private:
   void processGloBuffer (ioFieldDesc_v & fglo, const fldprc_t & tglo,
                          byte_v & buf_glo, A a) const;
 
+  std::vector<eckit::mpi::Request> postRecv (byte_v & buf, const fldprc_t & t) const;
+  std::vector<eckit::mpi::Request> postSend (const byte_v & buf, const fldprc_t & t) const;
 
 };
 
