@@ -41,6 +41,9 @@ if( NOT HAVE_PROJ )
     ecbuild_list_exclude_pattern(
         LIST  grids
         REGEX regional_lambert_azimuthal_equal_area_[3|4].yml )
+    ecbuild_list_exclude_pattern(
+        LIST  grids
+        REGEX regional_polar_stereographic_1.yml )
 endif()
 
 foreach( grid ${grids} )

@@ -35,89 +35,11 @@ static Domain domain( const Grid::Config& grid ) {
     return Domain();
 }
 
-bool check_normalised_roundtrip( const Projection& projection, const PointLonLat& point ) {
-    using eckit::types::is_approximately_equal;
-    PointLonLat point_roundtrip = projection.lonlat( projection.xy( point ) );
-
-    constexpr util::NormaliseLongitude normalised;
-    return is_approximately_equal( point_roundtrip.lat(), point.lat(), 1.e-6 ) &&
-           is_approximately_equal( normalised( point_roundtrip.lon() ), normalised( point.lon() ) );
-}
-
-
-bool check_roundtrip( const Projection& projection, const PointLonLat& point ) {
-    using eckit::types::is_approximately_equal;
-    PointLonLat point_roundtrip = projection.lonlat( projection.xy( point ) );
-
-    return is_approximately_equal( point_roundtrip.lat(), point.lat(), 1.e-6 ) &&
-           is_approximately_equal( point_roundtrip.lon(), point.lon(), 1.e-6 );
-}
-
-
 static Projection projection( const Grid::Config& grid ) {
     // Get the projection from the Grid::Config.
-    // Also try to infer "west" value that can be used for normalisation,
-    // and add it to the grid.
-
-    struct reference_t {
-        std::string key;
-        PointLonLat value;
-        bool found() { return key.size(); }
-    };
-
-    auto get_reference = [&]() -> reference_t {
-        reference_t ref;
-        auto lonlat_strings = std::vector<std::string>{"lonlat(xmin,ymin)", "lonlat(xmin,ymax)", "lonlat(centre)"};
-        for ( auto& lonlat_string : lonlat_strings ) {
-            std::vector<double> lonlat( 2 );
-            if ( grid.get( lonlat_string, lonlat ) ) {
-                ref.key   = lonlat_string;
-                ref.value = PointLonLat{lonlat.data()};
-                break;
-            }
-        }
-        return ref;
-    };
-
     Grid::Config proj_config;
     if ( grid.get( "projection", proj_config ) ) {
-        auto ref = get_reference();
-
-        bool retry = false;
-        double west;
-        do {
-            bool retried = retry;
-            retry        = false;
-            auto proj    = Projection{proj_config};
-            if ( ref.found() ) {
-                Log::warning().indent( "WARNING: " );
-                if ( not check_roundtrip( proj, ref.value ) ) {
-                    ATLAS_ASSERT( check_normalised_roundtrip( proj, ref.value ) );
-                    if ( retried ) {
-                        Log::warning() << "Projection roundtrip failed for point \"" << ref.value << "\"" << std::endl;
-                    }
-                    if ( not Projection::Implementation::Normalise( proj_config ) ) {
-                        west = std::floor( ref.value.lon() - 180. );
-                        Projection::Implementation::Normalise( west ).spec( proj_config );
-                        retry = true;
-                    }
-                }
-                else if ( retried ) {
-                    Log::warning()
-                        << "Projection roundtrip failed for reference point \"" << ref.key << " : " << ref.value
-                        << "\",\n"
-                           "but was succesful when retrying using estimated normalisation parameter \"normalise : ["
-                        << west << "," << west + 360. << "]\".\n"
-                        << "Continuing with new Projection, but it is advised to provide a suitable normalisation for "
-                           "this grid."
-                        << std::endl;
-                }
-                Log::warning().unindent();
-            }
-            if ( not retry || retried ) {
-                return proj;
-            }
-        } while ( retry );
+        return Projection{proj_config};
     }
     return Projection();
 }
