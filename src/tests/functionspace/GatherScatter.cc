@@ -123,19 +123,21 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 
   // RECV
 
-  offlen_v prc_glo (nprc + 1);
-  offlen_v fld_glo (nfld + 1);
+  fldprc_t glo;
+
+  glo.prc.resize (nprc + 1);
+  glo.fld.resize (nfld + 1);
 
   for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
     if (lprc == fglo[jfld].owner ())
-      fld_glo[jfld].len = fglo[jfld].dlen ();
+      glo.fld[jfld].len = fglo[jfld].dlen ();
 
-  integrate (fld_glo);
+  integrate (glo.fld);
 
   for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
-     prc_glo[iprc].len = dist.nb_pts ()[iprc] * fld_glo.back ().off;
+     glo.prc[iprc].len = dist.nb_pts ()[iprc] * glo.fld.back ().off;
 
-  integrate (prc_glo);
+  integrate (glo.prc);
 
   // Pack send buffer
 
@@ -154,16 +156,16 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
       }
   }
 
-  std::vector<byte> buf_glo (prc_glo.back ().off);
+  std::vector<byte> buf_glo (glo.prc.back ().off);
 
   ATLAS_TRACE_SCOPE ("SEND/RECV")
   {
     std::vector<eckit::mpi::Request> rqr;
    
     for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
-      if (prc_glo[iprc].len > 0)
-        rqr.push_back (comm.iReceive (&buf_glo[prc_glo[iprc].off], 
-                                      prc_glo[iprc].len, iprc, 100));
+      if (glo.prc[iprc].len > 0)
+        rqr.push_back (comm.iReceive (&buf_glo[glo.prc[iprc].off], 
+                                      glo.prc[iprc].len, iprc, 100));
    
     comm.barrier ();
    
@@ -184,17 +186,17 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
   ATLAS_TRACE_SCOPE ("Unpack")
   {
     std::vector<atlas::idx_t> prcs = grep (nprc, 
-       [&prc_glo] (atlas::idx_t i) { return prc_glo[i].len > 0; });
+       [&glo] (atlas::idx_t i) { return glo.prc[i].len > 0; });
     std::vector<atlas::idx_t> flds = grep (nfld, 
-       [&fld_glo] (atlas::idx_t i) { return fld_glo[i].len > 0; });
+       [&glo] (atlas::idx_t i) { return glo.fld[i].len > 0; });
 
 #ifdef UNDEF
     for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
-      if (prc_glo[iprc].len > 0)
+      if (glo.prc[iprc].len > 0)
         {
           for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
             {
-              if (fld_glo[jfld].len > 0)
+              if (glo.fld[jfld].len > 0)
 #endif
 
     for (int ii = 0; ii < prcs.size (); ii++)
@@ -203,14 +205,14 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
                   const atlas::idx_t iprc = prcs[ii];
                   const atlas::idx_t jfld = flds[jj];
                   const atlas::idx_t ngptot = dist.nb_pts ()[iprc];
-                  const size_t off = prc_glo[iprc].off + ngptot * fld_glo[jfld].off;
+                  const size_t off = glo.prc[iprc].off + ngptot * glo.fld[jfld].off;
                   auto & f = fglo[jfld];
-                  const size_t len = fld_glo[jfld].len;
+                  const size_t len = glo.fld[jfld].len;
 #pragma omp parallel for 
                   for (atlas::idx_t jloc = 0; jloc < ngptot; jloc++)
                   for (int j = 0; j < len; j++)
                     {
-                      size_t k = jloc * fld_glo[jfld].len + j;
+                      size_t k = jloc * glo.fld[jfld].len + j;
                       f (prcloc2glo (iprc, jloc), j) = buf_glo[off+k];
                     }
 
