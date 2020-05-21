@@ -59,6 +59,8 @@ private:
   void reOrderFields (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const;
   void computeTLoc (const ioFieldDesc_v & floc, fldprc_t & tloc) const;
   void computeTGlo (const ioFieldDesc_v & fglo, fldprc_t & tglo) const;
+  void processLocBuffer (const ioFieldDesc_v & floc, const fldprc_t & tloc,
+                         std::vector<byte> & buf_loc) const;
 
 
 };

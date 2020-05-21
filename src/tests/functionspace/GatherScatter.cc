@@ -131,13 +131,32 @@ void GatherScatter::computeTGlo (const ioFieldDesc_v & fglo, fldprc_t & tglo) co
   integrate (tglo.prc);
 }
 
+void GatherScatter::processLocBuffer (const ioFieldDesc_v & floc, const fldprc_t & tloc,
+                                      std::vector<byte> & buf_loc) const
+{
+  atlas::idx_t nfld = floc.size ();
+
+  ATLAS_TRACE_SCOPE ("GatherScatter::processLocBuffer")
+  {
+#pragma omp parallel for
+    for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
+      {
+        auto & f = floc[jfld];
+        byte * buffer = &buf_loc[tloc.fld[jfld].off];
+        for (atlas::idx_t i = 0; i < f.ldim (); i++)
+        for (int j = 0; j < f.dlen (); j++)
+          buffer[i*f.dlen ()+j] = f (i, j);
+      }
+  }
+
+}
+
 void GatherScatter::gather (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const
 {
 ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 {
-  atlas::idx_t nfld = floc.size ();
-
   auto & comm = eckit::mpi::comm ();
+  atlas::idx_t nfld = floc.size ();
   atlas::idx_t nprc = comm.size ();
   atlas::idx_t lprc = comm.rank ();
   atlas::idx_t ldim = dist.nb_pts ()[lprc];
@@ -153,18 +172,7 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 
   std::vector<byte> buf_loc (tloc.fld.back ().off);
 
-  ATLAS_TRACE_SCOPE ("Pack")
-  {
-#pragma omp parallel for
-    for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
-      {
-        auto & f = floc[jfld];
-        byte * buffer = &buf_loc[tloc.fld[jfld].off];
-        for (atlas::idx_t i = 0; i < f.ldim (); i++)
-        for (int j = 0; j < f.dlen (); j++)
-          buffer[i*f.dlen ()+j] = f (i, j);
-      }
-  }
+  processLocBuffer (floc, tloc, buf_loc);
 
   std::vector<byte> buf_glo (tglo.prc.back ().off);
 

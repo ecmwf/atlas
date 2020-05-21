@@ -81,6 +81,11 @@ public:
     return _v (i, j);
   }
 
+  byte operator () (int i, int j) const
+  {
+    return _v (i, j);
+  }
+
 private:
   atlas::array::ArrayView<byte,2> _v;
   const std::vector<atlas::idx_t> _ind;
