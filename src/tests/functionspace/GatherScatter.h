@@ -48,6 +48,7 @@ public:
   GatherScatter (const atlas::StructuredGrid & _grid, const atlas::grid::Distribution & _dist);
 
   void gather (const ioFieldDesc_v & _floc, ioFieldDesc_v & fglo) const;
+  void scatter (const ioFieldDesc_v & _fglo, ioFieldDesc_v & floc) const;
 
 private:
   atlas::gidx_t prcloc2glo (atlas::idx_t iprc, atlas::idx_t jloc) const
@@ -61,8 +62,8 @@ private:
   }
  
   void reOrderFields (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const;
-  void computeTLoc (const ioFieldDesc_v & floc, fldprc_t & tloc) const;
-  void computeTGlo (const ioFieldDesc_v & fglo, fldprc_t & tglo) const;
+  fldprc_t computeTLoc (const ioFieldDesc_v & floc) const;
+  fldprc_t computeTGlo (const ioFieldDesc_v & fglo) const;
 
   template <typename A>
   void processLocBuffer (ioFieldDesc_v & floc, const fldprc_t & tloc,

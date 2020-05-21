@@ -129,7 +129,7 @@ CASE( "test_gatherscatter" )
 
     auto checkgather = [ind, prc, grid, func, irank] (const atlas::FieldSet & sglo)
     {
-      ATLAS_TRACE_SCOPE ("check")
+      ATLAS_TRACE_SCOPE ("checkgather")
       {
       for (int i = 0; i < sglo.size (); i++)
         {
@@ -144,6 +144,23 @@ CASE( "test_gatherscatter" )
                   T v1 = v[j], v2 = func (i, prc[j], ind[j]);
                   EXPECT_EQ (v1, v2);
                 }
+            }
+        }
+      }
+    };
+
+    auto checkscatter = [fs, func, irank] (const atlas::FieldSet & sloc)
+    {
+      ATLAS_TRACE_SCOPE ("checkscatter")
+      {
+      for (int i = 0; i < sloc.size (); i++)
+        {
+          const auto & floc = sloc[i];
+          const auto v = array::make_view<T,1> (floc);
+          for (int j = 0; j < fs.sizeOwned (); j++)
+            {
+              T v1 = v[j], v2 = func (i, irank, j);
+              EXPECT_EQ (v1, v2);
             }
         }
       }
@@ -211,10 +228,22 @@ CASE( "test_gatherscatter" )
 
           if (debug) prff<T> ("sglo2", sglo2);
           if (check) checkgather (sglo2);
+
+          for (int i = 0; i < sloc.size (); i++)
+            {
+              auto v = array::make_view<T,1> (sloc[i]);
+              for (int j = 0; j < fs.sizeOwned (); j++)
+                v (j) = 0;
+            }
+
+          gs.scatter (dglo, dloc);
+
+          if (check) checkscatter (sloc);
         }
       }
 
-  // Avoid Atlas barrier
+
+  // Prevent error in Atlas barrier
   comm.barrier ();
 
 }
