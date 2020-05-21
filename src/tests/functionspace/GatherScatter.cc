@@ -241,40 +241,31 @@ ioFieldDesc_v floc = _floc;
 ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 {
   auto & comm = eckit::mpi::comm ();
-  atlas::idx_t nfld = floc.size ();
-  atlas::idx_t nprc = comm.size ();
-  atlas::idx_t lprc = comm.rank ();
-  atlas::idx_t ldim = dist.nb_pts ()[lprc];
 
   reOrderFields (floc, fglo);
 
   fldprc_t tloc, tglo;
 
-  computeTLoc (floc, tloc);
   computeTGlo (fglo, tglo);
-
-  byte_v buf_loc (tloc.fld.back ().off);
-
-  processLocBuffer (floc, tloc, buf_loc, [] (byte & a, const byte & b) { a = b; });
-
   byte_v buf_glo (tglo.prc.back ().off);
+  std::vector<eckit::mpi::Request> rqr = postRecv (buf_glo, tglo);
 
-  ATLAS_TRACE_SCOPE ("SEND/RECV")
-  {
-    std::vector<eckit::mpi::Request> rqr = postRecv (buf_glo, tglo);
-   
-    comm.barrier ();
-   
-    std::vector<eckit::mpi::Request> rqs = postSend (buf_loc, tloc);
+  computeTLoc (floc, tloc);
+  byte_v buf_loc (tloc.fld.back ().off);
+  processLocBuffer (floc, tloc, buf_loc, [] (byte & a, const byte & b) { a = b; });
+  
+  comm.barrier ();
+  
+  std::vector<eckit::mpi::Request> rqs = postSend (buf_loc, tloc);
 
-    for (auto & r : rqr)
-      comm.wait (r);
-
-    for (auto & r : rqs)
-      comm.wait (r);
-  }
+  for (auto & r : rqr)
+    comm.wait (r);
 
   processGloBuffer (fglo, tglo, buf_glo, [] (const byte & a, byte & b) { b = a; });
+
+  for (auto & r : rqs)
+    comm.wait (r);
+
 
 }
 }
