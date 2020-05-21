@@ -131,8 +131,10 @@ void GatherScatter::computeTGlo (const ioFieldDesc_v & fglo, fldprc_t & tglo) co
   integrate (tglo.prc);
 }
 
-void GatherScatter::processLocBuffer (const ioFieldDesc_v & floc, const fldprc_t & tloc,
-                                      byte_v & buf_loc) const
+
+template <typename A>
+void GatherScatter::processLocBuffer (ioFieldDesc_v & floc, const fldprc_t & tloc,
+                                      byte_v & buf_loc, A a) const
 {
   atlas::idx_t nfld = floc.size ();
 
@@ -145,14 +147,15 @@ void GatherScatter::processLocBuffer (const ioFieldDesc_v & floc, const fldprc_t
         byte * buffer = &buf_loc[tloc.fld[jfld].off];
         for (atlas::idx_t i = 0; i < f.ldim (); i++)
         for (int j = 0; j < f.dlen (); j++)
-          buffer[i*f.dlen ()+j] = f (i, j);
+          a (buffer[i*f.dlen ()+j], f (i, j));
       }
   }
 
 }
 
+template <typename A>
 void GatherScatter::processGloBuffer (ioFieldDesc_v & fglo, const fldprc_t & tglo,
-                                      const byte_v & buf_glo) const
+                                      byte_v & buf_glo, A a) const
 {
   auto & comm = eckit::mpi::comm ();
   atlas::idx_t nfld = fglo.size ();
@@ -188,7 +191,7 @@ void GatherScatter::processGloBuffer (ioFieldDesc_v & fglo, const fldprc_t & tgl
                   for (int j = 0; j < len; j++)
                     {
                       size_t k = jloc * tglo.fld[jfld].len + j;
-                      f (prcloc2glo (iprc, jloc), j) = buf_glo[off+k];
+                      a (buf_glo[off+k], f (prcloc2glo (iprc, jloc), j));
                     }
 
                 }
@@ -196,8 +199,11 @@ void GatherScatter::processGloBuffer (ioFieldDesc_v & fglo, const fldprc_t & tgl
   }
 }
 
-void GatherScatter::gather (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const
+void GatherScatter::gather (const ioFieldDesc_v & _floc, ioFieldDesc_v & fglo) const
 {
+
+ioFieldDesc_v floc = _floc;
+
 ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 {
   auto & comm = eckit::mpi::comm ();
@@ -213,11 +219,9 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
   computeTLoc (floc, tloc);
   computeTGlo (fglo, tglo);
 
-  // Pack send buffer
-
   byte_v buf_loc (tloc.fld.back ().off);
 
-  processLocBuffer (floc, tloc, buf_loc);
+  processLocBuffer (floc, tloc, buf_loc, [] (byte & a, const byte & b) { a = b; });
 
   byte_v buf_glo (tglo.prc.back ().off);
 
@@ -246,7 +250,7 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
       comm.wait (r);
   }
 
-  processGloBuffer (fglo, tglo, buf_glo);
+  processGloBuffer (fglo, tglo, buf_glo, [] (const byte & a, byte & b) { b = a; });
 
 }
 }
