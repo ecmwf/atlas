@@ -109,6 +109,28 @@ void GatherScatter::computeTLoc (const ioFieldDesc_v & floc, fldprc_t & tloc) co
   integrate (tloc.prc);
 }
 
+void GatherScatter::computeTGlo (const ioFieldDesc_v & fglo, fldprc_t & tglo) const
+{
+  auto & comm = eckit::mpi::comm ();
+  atlas::idx_t nprc = comm.size ();
+  atlas::idx_t lprc = comm.rank ();
+  atlas::idx_t nfld = fglo.size ();
+
+  tglo.prc.resize (nprc + 1);
+  tglo.fld.resize (nfld + 1);
+
+  for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
+    if (lprc == fglo[jfld].owner ())
+      tglo.fld[jfld].len = fglo[jfld].dlen ();
+
+  integrate (tglo.fld);
+
+  for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
+     tglo.prc[iprc].len = dist.nb_pts ()[iprc] * tglo.fld.back ().off;
+
+  integrate (tglo.prc);
+}
+
 void GatherScatter::gather (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const
 {
 ATLAS_TRACE_SCOPE ("GatherScatter::gather")
@@ -134,19 +156,7 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 
   fldprc_t tglo;
 
-  tglo.prc.resize (nprc + 1);
-  tglo.fld.resize (nfld + 1);
-
-  for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
-    if (lprc == fglo[jfld].owner ())
-      tglo.fld[jfld].len = fglo[jfld].dlen ();
-
-  integrate (tglo.fld);
-
-  for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
-     tglo.prc[iprc].len = dist.nb_pts ()[iprc] * tglo.fld.back ().off;
-
-  integrate (tglo.prc);
+  computeTGlo (fglo, tglo);
 
   // Pack send buffer
 
