@@ -106,18 +106,20 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 
   // SEND
 
-  offlen_v fld_loc (nfld + 1);
-  offlen_v prc_loc (nprc + 1);
+  fldprc_t loc;
+
+  loc.fld.resize (nfld + 1);
+  loc.prc.resize (nprc + 1);
 
   for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
     {
       atlas::idx_t owner = floc[jfld].owner ();
-      fld_loc[jfld].len = floc[jfld].size ();
-      prc_loc[owner].len += floc[jfld].size ();
+      loc.fld[jfld].len = floc[jfld].size ();
+      loc.prc[owner].len += floc[jfld].size ();
     }
 
-  integrate (fld_loc);
-  integrate (prc_loc);
+  integrate (loc.fld);
+  integrate (loc.prc);
 
   // RECV
 
@@ -137,7 +139,7 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 
   // Pack send buffer
 
-  std::vector<byte> buf_loc (fld_loc.back ().off);
+  std::vector<byte> buf_loc (loc.fld.back ().off);
 
   ATLAS_TRACE_SCOPE ("Pack")
   {
@@ -145,7 +147,7 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
     for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
       {
         auto & f = floc[jfld];
-        byte * buffer = &buf_loc[fld_loc[jfld].off];
+        byte * buffer = &buf_loc[loc.fld[jfld].off];
         for (atlas::idx_t i = 0; i < f.ldim (); i++)
         for (int j = 0; j < f.dlen (); j++)
           buffer[i*f.dlen ()+j] = f (i, j);
@@ -168,9 +170,9 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
     std::vector<eckit::mpi::Request> rqs;
    
     for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
-      if (prc_loc[iprc].len > 0)
-        rqs.push_back (comm.iSend (&buf_loc[prc_loc[iprc].off], 
-                                   prc_loc[iprc].len, iprc, 100));
+      if (loc.prc[iprc].len > 0)
+        rqs.push_back (comm.iSend (&buf_loc[loc.prc[iprc].off], 
+                                   loc.prc[iprc].len, iprc, 100));
    
     for (auto & r : rqr)
       comm.wait (r);

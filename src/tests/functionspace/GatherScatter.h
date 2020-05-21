@@ -22,6 +22,14 @@ private:
   };
 
   using offlen_v = std::vector<offlen_t>;
+
+  class fldprc_t
+  {
+  public:
+    offlen_v prc;
+    offlen_v fld;
+  };
+
   using ioFieldDesc_v = std::vector<ioFieldDesc>;
 
   atlas::idx_t max, nprc;
