@@ -95,7 +95,8 @@ CASE( "test_gatherscatter" )
 
     std::vector<int> prc, ind;
 
-    getprcind (fs, dist, prc, ind);
+    if (check)
+      getprcind (fs, dist, prc, ind);
 
     atlas::FieldSet sloc;
     atlas::FieldSet sglo1;
