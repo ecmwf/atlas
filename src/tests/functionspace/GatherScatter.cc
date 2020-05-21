@@ -89,6 +89,26 @@ void GatherScatter::reOrderFields (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) c
 
 }
 
+void GatherScatter::computeTLoc (const ioFieldDesc_v & floc, fldprc_t & tloc) const
+{
+  auto & comm = eckit::mpi::comm ();
+  atlas::idx_t nprc = comm.size ();
+  atlas::idx_t nfld = floc.size ();
+
+  tloc.fld.resize (nfld + 1);
+  tloc.prc.resize (nprc + 1);
+
+  for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
+    {
+      atlas::idx_t owner = floc[jfld].owner ();
+      tloc.fld[jfld].len = floc[jfld].size ();
+      tloc.prc[owner].len += floc[jfld].size ();
+    }
+
+  integrate (tloc.fld);
+  integrate (tloc.prc);
+}
+
 void GatherScatter::gather (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const
 {
 ATLAS_TRACE_SCOPE ("GatherScatter::gather")
@@ -108,18 +128,7 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 
   fldprc_t tloc;
 
-  tloc.fld.resize (nfld + 1);
-  tloc.prc.resize (nprc + 1);
-
-  for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
-    {
-      atlas::idx_t owner = floc[jfld].owner ();
-      tloc.fld[jfld].len = floc[jfld].size ();
-      tloc.prc[owner].len += floc[jfld].size ();
-    }
-
-  integrate (tloc.fld);
-  integrate (tloc.prc);
+  computeTLoc (floc, tloc);
 
   // RECV
 

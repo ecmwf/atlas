@@ -57,6 +57,7 @@ private:
   }
  
   void reOrderFields (ioFieldDesc_v & floc, ioFieldDesc_v & fglo) const;
+  void computeTLoc (const ioFieldDesc_v & floc, fldprc_t & tloc) const;
 
 
 };
