@@ -62,8 +62,13 @@ contains
 
   procedure, public :: assignment_operator_hook
 
-  procedure, public :: gather
-  procedure, public :: scatter
+  procedure, private :: gather_fieldset
+  procedure, private :: gather_field
+  generic, public :: gather => gather_fieldset, gather_field
+
+  procedure, private :: scatter_fieldset
+  procedure, private :: scatter_field
+  generic, public :: scatter => scatter_fieldset, scatter_field
 
   procedure, private :: checksum_fieldset
   procedure, private :: checksum_field
@@ -110,6 +115,7 @@ interface atlas_functionspace_StructuredColumns
   module procedure ctor_cptr
   module procedure ctor_grid
   module procedure ctor_grid_dist
+  module procedure ctor_grid_dist_config
   module procedure ctor_grid_dist_levels
   module procedure ctor_grid_dist_vertical
   module procedure ctor_grid_part
@@ -221,6 +227,20 @@ function ctor_grid_dist_vertical(grid, distribution, vertical, halo) result(this
   call this%return()
 end function
 
+function ctor_grid_dist_config(grid, distribution, config) result(this)
+  use atlas_functionspace_StructuredColumns_c_binding
+  type(atlas_functionspace_StructuredColumns) :: this
+  class(atlas_Grid), intent(in) :: grid
+  type(atlas_griddistribution), intent(in) :: distribution
+  type(atlas_Config), intent (in) :: config
+  call this%reset_c_ptr(atlas__functionspace__StructuredColumns__new__grid_dist_config( &
+      & grid%CPTR_PGIBUG_A, distribution%CPTR_PGIBUG_A, &
+      & config%CPTR_PGIBUG_B ) )
+  call this%set_index()
+  call this%return()
+end function
+
+
 function ctor_grid_part(grid, partitioner, halo, levels) result(this)
   use atlas_functionspace_StructuredColumns_c_binding
   type(atlas_functionspace_StructuredColumns) :: this
@@ -281,20 +301,36 @@ function ctor_grid_part_vertical(grid, partitioner, vertical, halo) result(this)
 end function
 
 
-subroutine gather(this,local,global)
+subroutine gather_field(this,local,global)
   use atlas_functionspace_StructuredColumns_c_binding
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: local
   type(atlas_Field), intent(inout) :: global
-  call atlas__functionspace__StructuredColumns__gather(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
+  call atlas__functionspace__StructuredColumns__gather_field(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
 end subroutine
 
-subroutine scatter(this,global,local)
+subroutine gather_fieldset(this,local,global)
+  use atlas_functionspace_StructuredColumns_c_binding
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  type(atlas_FieldSet), intent(in) :: local
+  type(atlas_FieldSet), intent(inout) :: global
+  call atlas__functionspace__StructuredColumns__gather_fieldset(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
+end subroutine
+
+subroutine scatter_field(this,global,local)
   use atlas_functionspace_StructuredColumns_c_binding
   class(atlas_functionspace_StructuredColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: global
   type(atlas_Field), intent(inout) :: local
-  call atlas__functionspace__StructuredColumns__scatter(this%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
+  call atlas__functionspace__StructuredColumns__scatter_field(this%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
+end subroutine
+
+subroutine scatter_fieldset(this,global,local)
+  use atlas_functionspace_StructuredColumns_c_binding
+  class(atlas_functionspace_StructuredColumns), intent(in) :: this
+  type(atlas_FieldSet), intent(in) :: global
+  type(atlas_FieldSet), intent(inout) :: local
+  call atlas__functionspace__StructuredColumns__scatter_fieldset(this%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
 end subroutine
 
 function checksum_fieldset(this,fieldset) result(checksum)
@@ -486,6 +522,7 @@ end function
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine StructuredColumns__final_auto(this)
   type(atlas_functionspace_StructuredColumns), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -496,6 +533,7 @@ ATLAS_FINAL subroutine StructuredColumns__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 end module atlas_functionspace_StructuredColumns_module
 

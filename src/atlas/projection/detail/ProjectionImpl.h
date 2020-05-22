@@ -10,9 +10,11 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 
 #include "atlas/util/Factory.h"
+#include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/Rotation.h"
@@ -40,6 +42,7 @@ public:
 
 public:
     static const ProjectionImpl* create( const eckit::Parametrisation& p );
+    static const ProjectionImpl* create( const std::string& type, const eckit::Parametrisation& p );
 
     ProjectionImpl()          = default;
     virtual ~ProjectionImpl() = default;  // destructor should be virtual
@@ -86,6 +89,23 @@ public:
         bool includesNorthPole_ = false;
         bool includesSouthPole_ = false;
         bool first_             = true;
+    };
+
+    struct Normalise {
+        Normalise( const eckit::Parametrisation& );
+        Normalise( double west );
+        void hash( eckit::Hash& ) const;
+        void spec( Spec& ) const;
+        void operator()( double crd[] ) const {
+            if ( normalise_ ) {
+                crd[0] = ( *normalise_ )( crd[0] );
+            }
+        }
+        operator bool() const { return bool( normalise_ ); }
+
+    private:
+        std::unique_ptr<util::NormaliseLongitude> normalise_;
+        std::vector<double> values_;
     };
 
     struct Derivate {
@@ -176,6 +196,13 @@ public:
 
     void hash( eckit::Hash& ) const {}
 };
+
+extern "C" {
+const ProjectionImpl* atlas__Projection__ctor_config( const eckit::Parametrisation* config );
+void atlas__Projection__type( const ProjectionImpl* This, char*& type, int& size );
+void atlas__Projection__hash( const ProjectionImpl* This, char*& hash, int& size );
+ProjectionImpl::Spec* atlas__Projection__spec( const ProjectionImpl* This );
+}
 
 }  // namespace detail
 }  // namespace projection

@@ -85,7 +85,7 @@ void Rotation::precompute() {
     rotation_angle_only_ = eq( sin_theta, 0 ) && eq( cos_theta, 1 ) && rotated_;
 
     if ( !rotated_ ) {
-        rotate_ = unrotate_ = {1., 0., 0., 0., 1., 0., 0., 0., 1.};
+        rotate_ = unrotate_ = RotationMatrix{{{1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}}};
         return;
     }
 
@@ -104,9 +104,9 @@ void Rotation::precompute() {
     // yt = -cos(ϑ) sin(φ) x + cos(φ) y - sin(ϑ) sin(φ) z
     // zt = -sin(ϑ)        x            + cos(ϑ)        z
 
-    rotate_ = {cos_theta * cos_phi,  sin_phi, sin_theta * cos_phi,
-               -cos_theta * sin_phi, cos_phi, -sin_theta * sin_phi,
-               -sin_theta,           0.,      cos_theta};
+    rotate_ = RotationMatrix{{{cos_theta * cos_phi, sin_phi, sin_theta * cos_phi},
+                              {-cos_theta * sin_phi, cos_phi, -sin_theta * sin_phi},
+                              {-sin_theta, 0., cos_theta}}};
 
     // Assume right hand rule, rotate about z axes and then y
     // P = Rot(y) * Rot(z) * Pt
@@ -119,8 +119,9 @@ void Rotation::precompute() {
     // y = ( sin(φ)       ,  cos(φ)       ,  0     ).(yt)
     // z   ( sin(ϑ) cos(φ), -sin(ϑ) sin(φ),  cos(ϑ)) (zt)
 
-    unrotate_ = {cos_theta * cos_phi, -cos_theta * sin_phi, -sin_theta, sin_phi, cos_phi, 0.,
-                 sin_theta * cos_phi, -sin_theta * sin_phi, cos_theta};
+    unrotate_ = RotationMatrix{{{cos_theta * cos_phi, -cos_theta * sin_phi, -sin_theta},
+                                {sin_phi, cos_phi, 0.},
+                                {sin_theta * cos_phi, -sin_theta * sin_phi, cos_theta}}};
 }
 
 Rotation::Rotation( const PointLonLat& south_pole, double rotation_angle ) {
@@ -172,6 +173,8 @@ void Rotation::rotate( double crd[] ) const {
         return;
     }
 
+    crd[LON] -= angle_;
+
     if ( !rotation_angle_only_ ) {
         const PointLonLat L( wrap_latitude( {crd[LON], crd[LAT]} ) );
         PointXYZ P;
@@ -184,16 +187,12 @@ void Rotation::rotate( double crd[] ) const {
         crd[LON] = Lt.lon();
         crd[LAT] = Lt.lat();
     }
-
-    crd[LON] -= angle_;
 }
 
 void Rotation::unrotate( double crd[] ) const {
     if ( !rotated_ ) {
         return;
     }
-
-    crd[LON] += angle_;
 
     if ( !rotation_angle_only_ ) {
         const PointLonLat Lt( crd );
@@ -207,6 +206,8 @@ void Rotation::unrotate( double crd[] ) const {
         crd[LON] = L.lon();
         crd[LAT] = L.lat();
     }
+
+    crd[LON] += angle_;
 }
 
 }  // namespace util

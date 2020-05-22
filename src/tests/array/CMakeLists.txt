@@ -25,6 +25,13 @@ ecbuild_add_test( TARGET atlas_test_array
 #  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 #)
 
+ecbuild_add_test( TARGET atlas_test_array_vector
+  SOURCES  test_array_vector.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION atlas_HAVE_GRIDTOOLS_STORAGE
+)
+
 ecbuild_add_test( TARGET atlas_test_svector
   SOURCES  test_svector.cc
   LIBS     atlas

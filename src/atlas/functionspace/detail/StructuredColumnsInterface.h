@@ -60,6 +60,8 @@ const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__g
 const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_dist_vert(
     const GridImpl* grid, const grid::DistributionImpl* dist, const Vertical* vert,
     const eckit::Configuration* config );
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_dist_config(
+    const GridImpl* grid, const grid::DistributionImpl* dist, const eckit::Configuration* config );
 
 const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_part(
     const GridImpl* grid, const PartitionerImpl* dist, const eckit::Configuration* config );
@@ -71,10 +73,16 @@ void atlas__functionspace__StructuredColumns__delete( detail::StructuredColumns*
 field::FieldImpl* atlas__fs__StructuredColumns__create_field( const detail::StructuredColumns* This,
                                                               const eckit::Configuration* options );
 
-void atlas__functionspace__StructuredColumns__gather( const detail::StructuredColumns* This,
-                                                      const field::FieldImpl* local, field::FieldImpl* global );
-void atlas__functionspace__StructuredColumns__scatter( const detail::StructuredColumns* This,
-                                                       const field::FieldImpl* global, field::FieldImpl* local );
+void atlas__functionspace__StructuredColumns__gather_field( const detail::StructuredColumns* This,
+                                                            const field::FieldImpl* local, field::FieldImpl* global );
+void atlas__functionspace__StructuredColumns__scatter_field( const detail::StructuredColumns* This,
+                                                             const field::FieldImpl* global, field::FieldImpl* local );
+void atlas__functionspace__StructuredColumns__gather_fieldset( const detail::StructuredColumns* This,
+                                                               const field::FieldSetImpl* local,
+                                                               field::FieldSetImpl* global );
+void atlas__functionspace__StructuredColumns__scatter_fieldset( const detail::StructuredColumns* This,
+                                                                const field::FieldSetImpl* global,
+                                                                field::FieldSetImpl* local );
 void atlas__fs__StructuredColumns__checksum_fieldset( const detail::StructuredColumns* This,
                                                       const field::FieldSetImpl* fieldset, char*& checksum, idx_t& size,
                                                       int& allocated );

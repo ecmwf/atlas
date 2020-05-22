@@ -160,18 +160,18 @@ bool operator==( const std::vector<eckit::linalg::Triplet>& t1, const std::vecto
     }
     return true;
 }
-std::ostream& operator<<( std::ostream& out, const LocalView<double, 1>& array ) {
-    out << "{ ";
-    for ( idx_t i = 0; i < array.size(); ++i ) {
-        out << array( i );
-        if ( i < array.size() - 1 ) {
-            out << ",";
-        }
-        out << " ";
-    }
-    out << "}";
-    return out;
-}
+//std::ostream& operator<<( std::ostream& out, const LocalView<double, 1>& array ) {
+//    out << "{ ";
+//    for ( idx_t i = 0; i < array.size(); ++i ) {
+//        out << array( i );
+//        if ( i < array.size() - 1 ) {
+//            out << ",";
+//        }
+//        out << " ";
+//    }
+//    out << "}";
+//    return out;
+//}
 
 //-----------------------------------------------------------------------------
 

@@ -54,6 +54,12 @@ ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx, const Dom
 ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<int>& nx, const Domain& domain ) :
     ReducedGaussianGrid::grid_t( grid::detail::grid::reduced_gaussian( nx, domain ) ) {}
 
+ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx, const Projection& projection ) :
+    ReducedGaussianGrid::grid_t( grid::detail::grid::reduced_gaussian( nx, projection ) ) {}
+
+ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<int>& nx, const Projection& projection ) :
+    ReducedGaussianGrid::grid_t( grid::detail::grid::reduced_gaussian( nx, projection ) ) {}
+
 ReducedGaussianGrid::ReducedGaussianGrid( const std::initializer_list<idx_t>& nx ) :
     ReducedGaussianGrid( std::vector<idx_t>( nx ) ) {}
 

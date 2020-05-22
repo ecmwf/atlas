@@ -31,6 +31,19 @@ if( HAVE_FCTEST )
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 
+ add_fctest( TARGET atlas_fctest_geometry
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_geometry.F90
+    LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
+
+  add_fctest( TARGET atlas_fctest_kdtree
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_kdtree.F90
+    LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
 endif()
 
 foreach( test earth flags footprint indexview polygon point )
@@ -45,7 +58,6 @@ ecbuild_add_test( TARGET atlas_test_vector
   SOURCES  test_vector.cc
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  CONDITION atlas_HAVE_GRIDTOOLS_STORAGE
 )
 
 ecbuild_add_test( TARGET atlas_test_metadata

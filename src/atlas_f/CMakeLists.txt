@@ -55,6 +55,9 @@ function(generate_fortran_bindings output filename)
 endfunction()
 
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Grid.h
+    MODULE    atlas_grid_Grid_c_binding
+    OUTPUT    grid_Grid_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/Structured.h
     MODULE    atlas_grid_Structured_c_binding
     OUTPUT    grid_Structured_c_binding.f90 )
@@ -68,6 +71,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/vertical/Vertica
     MODULE atlas_vertical_c_binding
     OUTPUT vertical_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Partitioner.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/projection/detail/ProjectionImpl.h
+    MODULE atlas_projection_c_binding
+    OUTPUT projection_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/detail/MeshIntf.h
     MODULE    atlas_mesh_c_binding
     OUTPUT    atlas_mesh_c_binding.f90 )
@@ -127,6 +133,8 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/detail/TransInterface.
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Allocate.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Metadata.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Config.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Geometry.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/KDTree.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/output/detail/GmshIO.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/HaloExchange.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/GatherScatter.h)
@@ -145,6 +153,8 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_kinds_module.F90
         util/atlas_JSON_module.F90
         util/atlas_Config_module.F90
+        util/atlas_Geometry_module.F90
+        util/atlas_KDTree_module.F90
         util/atlas_Metadata_module.F90
         util/atlas_allocate_module.F90
         output/atlas_output_module.F90
@@ -178,6 +188,7 @@ ecbuild_add_library( TARGET atlas_f
         parallel/atlas_GatherScatter_module.fypp
         parallel/atlas_Checksum_module.fypp
         parallel/atlas_HaloExchange_module.fypp
+        projection/atlas_Projection_module.F90
         trans/atlas_Trans_module.F90
         internals/atlas_read_file.h
         internals/atlas_read_file.cc

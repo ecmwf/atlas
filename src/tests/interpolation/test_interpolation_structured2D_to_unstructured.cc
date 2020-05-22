@@ -33,14 +33,6 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-static Config scheme() {
-    Config scheme;
-    scheme.set( "type", "structured-linear2D" );
-    scheme.set( "halo", 1 );
-    scheme.set( "name", "linear" );
-    return scheme;
-}
-
 std::string input_gridname( const std::string& default_grid ) {
     return eckit::Resource<std::string>( "--input-grid", default_grid );
 }

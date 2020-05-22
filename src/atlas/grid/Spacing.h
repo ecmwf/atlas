@@ -83,6 +83,7 @@ public:
     LinearSpacing() = default;
     LinearSpacing( double start, double stop, long N, bool endpoint = true );
     LinearSpacing( const Interval&, long N, bool endpoint = true );
+    double step() const;
 };
 
 //---------------------------------------------------------------------------------------------------------------------

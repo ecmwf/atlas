@@ -42,12 +42,11 @@ END_TESTSUITE_FINALIZE
 
 TEST( test_host_data )
 type(atlas_Field) :: field
-real(8), pointer :: host(:,:)
-real(8), pointer :: device(:,:)
+real(8), pointer :: view(:,:)
 
 field = atlas_Field(kind=atlas_real(8),shape=[10,5])
 
-call field%data(host)
+call field%data(view)
 
 FCTEST_CHECK( .not. field%host_needs_update() )
 FCTEST_CHECK( .not. field%device_needs_update() )

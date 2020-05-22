@@ -74,8 +74,7 @@ TEST( test_trans )
   type(atlas_FieldSet)      :: spectralfields
   real(c_double), pointer :: scal1(:,:), scal2(:), spec1(:,:), spec2(:), wind(:,:,:), vor(:,:), div(:,:)
   real(c_double), allocatable :: check(:)
-  integer :: nlev, truncation, jn, in, jlev
-  integer, pointer :: nvalue(:)
+  integer :: nlev, truncation
   type(atlas_Field) :: glb_vorfield
 
   real(c_double) :: tol
@@ -252,8 +251,7 @@ TEST( test_trans_nomesh )
   type(atlas_FieldSet)      :: spectralfields
   real(c_double), pointer :: scal1(:,:), scal2(:), spec1(:,:), spec2(:)
   real(c_double), allocatable :: check(:)
-  integer :: nlev, truncation, jn, in, jlev
-  integer, pointer :: nvalue(:)
+  integer :: nlev, truncation
   real(c_double) :: tol
 
   tol = 1.e-8
@@ -344,7 +342,6 @@ type(atlas_functionspace_Spectral) :: spectral
 type(atlas_Field) :: fieldg, field
 type(atlas_FieldSet) :: gpfields, spfields
 integer :: jfld, nfld
-character(len=10) :: fieldname
 real(c_double) :: norm
 real(c_double), pointer :: gvar(:)
 
@@ -406,8 +403,6 @@ TEST( test_spectral_only )
 type(atlas_functionspace_Spectral) :: spectral
 type(atlas_Field) :: field, fieldg
 integer :: jfld, nfld, T
-character(len=10) :: fieldname
-real(c_double) :: norm
 integer, parameter :: RE=0
 integer, parameter :: IM=1
 integer :: jm, jn, n, m, jc

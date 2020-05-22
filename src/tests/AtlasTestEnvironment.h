@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <chrono>
 #include <exception>
+#include <iomanip>
 #include <string>
 #include <thread>
 
@@ -84,16 +85,50 @@ using eckit::types::is_approximately_equal;
 #ifdef EXPECT_EQ
 #undef EXPECT_EQ
 #endif
-#define EXPECT_EQ( lhs, rhs )                                                                                \
-    do {                                                                                                     \
-        if ( !( lhs == rhs ) ) {                                                                             \
-            throw eckit::testing::TestException( "EXPECT condition failed: " #lhs " == " #rhs                \
-                                                 "\n"                                                        \
-                                                 " --> " +                                                   \
-                                                     std::to_string( lhs ) + " != " + std::to_string( rhs ), \
-                                                 Here() );                                                   \
-        }                                                                                                    \
+#ifdef EXPECT_APPROX_EQ
+#undef EXPECT_APPROX_EQ
+#endif
+
+#define EXPECT_EQ( lhs, rhs )                                                                      \
+    do {                                                                                           \
+        if ( !( lhs == rhs ) ) {                                                                   \
+            using namespace std;                                                                   \
+            throw eckit::testing::TestException( "EXPECT condition failed: " #lhs " == " #rhs      \
+                                                 "\n"                                              \
+                                                 " --> " +                                         \
+                                                     to_string( lhs ) + " != " + to_string( rhs ), \
+                                                 Here() );                                         \
+        }                                                                                          \
     } while ( false )
+
+#define __EXPECT_APPROX_EQ( lhs, rhs )                                \
+    do {                                                              \
+        if ( !( is_approximately_equal( lhs, rhs ) ) ) {              \
+            std::stringstream err;                                    \
+            err << "EXPECT condition failed: " #lhs " ~= " #rhs       \
+                   "\n"                                               \
+                   " --> "                                            \
+                << lhs << " != " << rhs;                              \
+            throw eckit::testing::TestException( err.str(), Here() ); \
+        }                                                             \
+    } while ( false )
+
+#define __EXPECT_APPROX_EQ_TOL( lhs, rhs, tol )                                   \
+    do {                                                                          \
+        if ( !( is_approximately_equal( lhs, rhs, tol ) ) ) {                     \
+            std::stringstream err;                                                \
+            err << "EXPECT condition failed: " #lhs " ~= " #rhs                   \
+                   "\n"                                                           \
+                   " --> "                                                        \
+                << std::fixed << std::setprecision( 12 ) << lhs << " != " << rhs; \
+            throw eckit::testing::TestException( err.str(), Here() );             \
+        }                                                                         \
+    } while ( false )
+
+#define EXPECT_APPROX_EQ( ... ) __ATLAS_SPLICE( __EXPECT_APPROX_EQ__, __ATLAS_NARG( __VA_ARGS__ ) )( __VA_ARGS__ )
+#define __EXPECT_APPROX_EQ__2 __EXPECT_APPROX_EQ
+#define __EXPECT_APPROX_EQ__3 __EXPECT_APPROX_EQ_TOL
+
 
 //----------------------------------------------------------------------------------------------------------------------
 

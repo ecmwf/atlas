@@ -1556,16 +1556,16 @@ void NodeColumns::FieldStatistics::meanAndStandardDeviationPerLevel( const Field
     detail::mean_and_standard_deviation_per_level( functionspace, field, mean, stddev, N );
 }
 
-template class NodeColumns::FieldStatisticsT<int>;
-template class NodeColumns::FieldStatisticsT<long>;
-template class NodeColumns::FieldStatisticsT<float>;
-template class NodeColumns::FieldStatisticsT<double>;
-// template class NodeColumns::FieldStatisticsT<unsigned long>;
-template class NodeColumns::FieldStatisticsVectorT<std::vector<int>>;
-template class NodeColumns::FieldStatisticsVectorT<std::vector<long>>;
-template class NodeColumns::FieldStatisticsVectorT<std::vector<float>>;
-template class NodeColumns::FieldStatisticsVectorT<std::vector<double>>;
-// template class NodeColumns::FieldStatisticsVectorT< std::vector<unsigned
+template struct NodeColumns::FieldStatisticsT<int>;
+template struct NodeColumns::FieldStatisticsT<long>;
+template struct NodeColumns::FieldStatisticsT<float>;
+template struct NodeColumns::FieldStatisticsT<double>;
+// template struct NodeColumns::FieldStatisticsT<unsigned long>;
+template struct NodeColumns::FieldStatisticsVectorT<std::vector<int>>;
+template struct NodeColumns::FieldStatisticsVectorT<std::vector<long>>;
+template struct NodeColumns::FieldStatisticsVectorT<std::vector<float>>;
+template struct NodeColumns::FieldStatisticsVectorT<std::vector<double>>;
+// template struct NodeColumns::FieldStatisticsVectorT< std::vector<unsigned
 // long> >;
 
 }  // namespace detail

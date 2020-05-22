@@ -53,6 +53,10 @@ const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__g
     const eckit::Configuration* config ) {
     return new detail::StructuredColumns( Grid( grid ), grid::Distribution( dist ), *vert, *config );
 }
+const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_dist_config(
+    const Grid::Implementation* grid, const grid::DistributionImpl* dist, const eckit::Configuration* config ) {
+    return new detail::StructuredColumns( Grid( grid ), grid::Distribution( dist ), *config );
+}
 
 const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__grid_part(
     const Grid::Implementation* grid, const PartitionerImpl* partitioner, const eckit::Configuration* config ) {
@@ -65,8 +69,8 @@ const detail::StructuredColumns* atlas__functionspace__StructuredColumns__new__g
     return new detail::StructuredColumns( Grid( grid ), *vert, grid::Partitioner( partitioner ), *config );
 }
 
-void atlas__functionspace__StructuredColumns__gather( const detail::StructuredColumns* This,
-                                                      const field::FieldImpl* local, field::FieldImpl* global ) {
+void atlas__functionspace__StructuredColumns__gather_field( const detail::StructuredColumns* This,
+                                                            const field::FieldImpl* local, field::FieldImpl* global ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_functionspace_StructuredColumns" );
     ATLAS_ASSERT( global != nullptr, "Cannot access uninitialised atlas_Field" );
     ATLAS_ASSERT( local != nullptr, "Cannot access uninitialised atlas_Field" );
@@ -75,13 +79,35 @@ void atlas__functionspace__StructuredColumns__gather( const detail::StructuredCo
     This->gather( l, g );
 }
 
-void atlas__functionspace__StructuredColumns__scatter( const detail::StructuredColumns* This,
-                                                       const field::FieldImpl* global, field::FieldImpl* local ) {
+void atlas__functionspace__StructuredColumns__scatter_field( const detail::StructuredColumns* This,
+                                                             const field::FieldImpl* global, field::FieldImpl* local ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_functionspace_StructuredColumns" );
     ATLAS_ASSERT( global != nullptr, "Cannot access uninitialised atlas_Field" );
     ATLAS_ASSERT( local != nullptr, "Cannot access uninitialised atlas_Field" );
     const Field g( global );
     Field l( local );
+    This->scatter( g, l );
+}
+
+void atlas__functionspace__StructuredColumns__gather_fieldset( const detail::StructuredColumns* This,
+                                                               const field::FieldSetImpl* local,
+                                                               field::FieldSetImpl* global ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_functionspace_StructuredColumns" );
+    ATLAS_ASSERT( global != nullptr, "Cannot access uninitialised atlas_FieldSet" );
+    ATLAS_ASSERT( local != nullptr, "Cannot access uninitialised atlas_FieldSet" );
+    const FieldSet l( local );
+    FieldSet g( global );
+    This->gather( l, g );
+}
+
+void atlas__functionspace__StructuredColumns__scatter_fieldset( const detail::StructuredColumns* This,
+                                                                const field::FieldSetImpl* global,
+                                                                field::FieldSetImpl* local ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_functionspace_StructuredColumns" );
+    ATLAS_ASSERT( global != nullptr, "Cannot access uninitialised atlas_FieldSet" );
+    ATLAS_ASSERT( local != nullptr, "Cannot access uninitialised atlas_FieldSet" );
+    const FieldSet g( global );
+    FieldSet l( local );
     This->scatter( g, l );
 }
 

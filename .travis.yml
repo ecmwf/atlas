@@ -67,6 +67,7 @@ matrix:
         - CXX_COMPILER='clang++' C_COMPILER='clang' Fortran_COMPILER='gfortran'
         - MPI=openmpi
         - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
+        - ATLAS_CTEST_OPTIONS="-E atlas_test_stencil_parallel_mpi16"
       osx_image: xcode10.1
       addons:
         homebrew:
@@ -232,7 +233,7 @@ script:
   #################################################################
   # Test Atlas
   #################################################################
-  - ctest
+  - ctest ${ATLAS_CTEST_OPTIONS}
 
 after_success:
 
@@ -250,5 +251,5 @@ after_success:
 after_failure:
 
   - cd ${ATLAS_BUILD_DIR}
-  - ctest -VV --rerun-failed
+  - ctest -VV --rerun-failed ${ATLAS_CTEST_OPTIONS}
   - cat ecbuild.log

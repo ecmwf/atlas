@@ -75,11 +75,18 @@ public:
     virtual void haloExchange( const FieldSet&, bool /*on_device*/ = false ) const;
     virtual void haloExchange( const Field&, bool /* on_device*/ = false ) const;
 
+    virtual void adjointHaloExchange( const FieldSet&, bool /*on_device*/ = false ) const;
+    virtual void adjointHaloExchange( const Field&, bool /* on_device*/ = false ) const;
+
     virtual idx_t size() const = 0;
 
     virtual idx_t nb_partitions() const;
 
     virtual const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
+
+    virtual atlas::Field lonlat() const;
+
+    virtual atlas::Field ghost() const;
 
     virtual const util::PartitionPolygons& polygons() const;
 

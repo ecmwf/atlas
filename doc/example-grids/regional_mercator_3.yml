@@ -1,0 +1,22 @@
+# blend.t04z.master.f004.pr.grib2_001
+
+type : "regional"
+nx : 339
+ny : 225
+dx : 1250
+dy : 1250
+lonlat(xmin,ymin) : [291.972,16.9775]
+projection:
+  type : "mercator"
+  latitude1 : 20.0
+  normalise : [0,360]
+
+check :
+  uid : 9a76e31630682f7f13cd38d540e45270
+  size : 76275
+  lonlat(first) : [291.972,16.9775]
+  lonlat(last) :  [296.015,19.5221]
+  bounding_box(n,w,s,e) : [19.5221,291.9720,16.9775,296.0153]
+  xmin : -7108436.73
+  ymin : 1800571.82
+  proj : "+proj=merc +lat_ts=20 +R=6371229.0 +units=m +no_defs"

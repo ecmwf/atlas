@@ -193,6 +193,7 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_Trace__final_auto(this)
   type(atlas_Trace), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -203,6 +204,7 @@ ATLAS_FINAL subroutine atlas_Trace__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 end module atlas_Trace_module
 

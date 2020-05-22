@@ -10,11 +10,9 @@
 
 #pragma once
 
-#include "eckit/container/KDTree.h"
-
-#include "atlas/library/config.h"
-#include "atlas/runtime/Exception.h"
-#include "atlas/util/Point.h"
+#include "atlas/util/Geometry.h"
+#include "atlas/util/ObjectHandle.h"
+#include "atlas/util/detail/KDTree.h"
 
 namespace atlas {
 namespace util {
@@ -43,158 +41,159 @@ namespace util {
 /// We can now do e.g. a search for the nearest 4 neighbours (k=4) sorted by shortest distance
 /// @code{.cpp}
 ///     idx_t k = 4;
-///     auto neighbours = search.kNearestNeighbours( PointLonLat{180., 45.}, k ).payloads();
+///     auto neighbours = search.closestPoints( PointLonLat{180., 45.}, k ).payloads();
 /// @endcode
 /// The variable `neighbours` is now a container of indices (the payloads) of the 4 nearest points
-template <typename PayloadT>
-class KDTree {
-private:
-    struct eckit_KDTreeTraits {
-        using Point   = Point3;
-        using Payload = PayloadT;
-    };
-    using eckit_KDTree = eckit::KDTreeMemory<eckit_KDTreeTraits>;
+
+template <typename PayloadT, typename PointT = Point3>
+class KDTree : ObjectHandle<detail::KDTreeBase<PayloadT, PointT>> {
+public:
+    using Handle         = ObjectHandle<detail::KDTreeBase<PayloadT, PointT>>;
+    using Implementation = typename Handle::Implementation;
+    using Point          = typename Implementation::Point;
+    using Payload        = typename Implementation::Payload;
+    using PayloadList    = typename Implementation::PayloadList;
+    using Value          = typename Implementation::Value;
+    using ValueList      = typename Implementation::ValueList;
+
+    using Handle::get;
+    using Handle::Handle;
 
 public:
-    using Payload     = PayloadT;
-    using Node        = typename eckit_KDTree::NodeInfo;
-    using PayLoadList = std::vector<Payload>;
+    //--------------------------------------------------------------------------------------
+    // Constructors
 
-    class NodeList : public eckit_KDTree::NodeList {
-        using Base = typename eckit_KDTree::NodeList;
+    KDTree( const KDTree& handle ) : Handle( handle ) {}
 
-    public:
-        NodeList( typename eckit_KDTree::NodeList&& list ) : Base( std::move( list ) ) {}
-        PayLoadList payloads() const {
-            PayLoadList list;
-            list.reserve( Base::size() );
-            for ( auto& item : *this ) {
-                list.emplace_back( item.payload() );
-            }
-            return list;
-        }
-    };
+    /// @brief Construct an empty kd-tree with default geometry (Earth)
+    KDTree() : Handle( new detail::KDTreeMemory<Payload, Point>() ) {}
 
-    /// @brief Reserve memory for building the kdtree in one shot (optional, at cost of extra memory)
-    void reserve( idx_t size );
+    /// @brief Construct an empty kd-tree with custom geometry
+    KDTree( const Geometry& geometry ) : Handle( new detail::KDTreeMemory<Payload, Point>( geometry ) ) {}
 
-    /// @brief Insert spherical point (lon,lat)
-    /// If memory has been reserved with reserve(), insertion will be delayed until build() is called.
-    void insert( const Point2& p2, const Payload& payload );
+    /// @brief Construct a shared kd-tree with default geometry (Earth)
+    template <typename Tree>
+    KDTree( const std::shared_ptr<Tree>& kdtree ) :
+        Handle( new detail::KDTree_eckit<Tree, Payload, Point>( kdtree ) ) {}
 
-    /// @brief Insert 3D cartesian point (x,y,z)
-    /// If memory has been reserved with reserve(), insertion will be delayed until build() is called.
-    void insert( const Point3& p3, const Payload& payload );
+    /// @brief Construct a shared kd-tree with custom geometry
+    template <typename Tree>
+    KDTree( const std::shared_ptr<Tree>& kdtree, const Geometry& geometry ) :
+        Handle( new detail::KDTree_eckit<Tree, Payload, Point>( kdtree, geometry ) ) {}
+
+    //--------------------------------------------------------------------------------------
+    // Methods to build the KDTree
+
+    /// @brief Reserve memory for building the kd-tree in one shot (optional, at cost of extra memory)
+    void reserve( idx_t size ) { get()->reserve( size ); }
+
+    /// @brief Insert spherical point (lon,lat) or 3D cartesian point (x,y,z)
+    /// @warning If memory has been reserved with reserve(), insertion will be delayed until build() is called.
+    template <typename Point>
+    void insert( const Point& p, const Payload& payload ) {
+        get()->insert( p, payload );
+    }
+
+    /// @brief Insert kd-tree value in tree
+    /// @warning If memory has been reserved with reserve(), insertion will be delayed until build() is called.
+    void insert( const Value& value ) { get()->insert( value ); }
 
     /// @brief Build the kd-tree in one shot, if memory has been reserved.
-    /// This will need to be called before all search functions like kNearestNeighbours().
-    void build();
+    /// This will need to be called before all search functions like closestPoints().
+    /// @post The KDTree is ready to be used
+    void build() { get()->build(); }
 
-    /// @brief Find k nearest neighbour given a 2D lonlat point (lon,lat)
-    NodeList kNearestNeighbours( const Point2& p2, size_t k ) const;
+    /// @brief Build with spherical points (lon,lat) where longitudes, latitudes, and payloads are separate containers.
+    /// Memory will be reserved with reserve() to match the size
+    /// @post The KDTree is ready to be used
+    template <typename Longitudes, typename Latitudes, typename Payloads>
+    void build( const Longitudes& longitudes, const Latitudes& latitudes, const Payloads& payloads ) {
+        get()->build( longitudes, latitudes, payloads );
+    }
 
-    /// @brief Find k nearest neighbours given a 3D cartesian point (x,y,z)
-    NodeList kNearestNeighbours( const Point3& p3, size_t k ) const;
+    /// @brief Build with spherical points (lon,lat) given separate iterator ranges for longitudes, latitudes, and payloads.
+    /// Memory will be reserved with reserve() to match the size
+    /// @post The KDTree is ready to be used
+    template <typename LongitudesIterator, typename LatitudesIterator, typename PayloadsIterator>
+    void build( const LongitudesIterator& longitudes_begin, const LongitudesIterator& longitudes_end,
+                const LatitudesIterator& latitudes_begin, const LatitudesIterator& latitudes_end,
+                const PayloadsIterator& payloads_begin, const PayloadsIterator& payloads_end ) {
+        get()->build( longitudes_begin, longitudes_end, latitudes_begin, latitudes_end, payloads_begin, payloads_end );
+    }
 
-    /// @brief Find nearest neighbour given a 2D lonlat point (lon,lat)
-    Node nearestNeighbour( const Point2& p2 ) const;
+    /// @brief Build with templated points. Points can be either 2D (lon,lat) or 3D (x,y,z)
+    /// Memory will be reserved with reserve() to match the size
+    /// @post The KDTree is ready to be used
+    template <typename Points, typename Payloads>
+    void build( const Points& points, const Payloads& payloads ) {
+        get()->build( points, payloads );
+    }
 
-    /// @brief Find nearest neighbour given a 3D cartesian point (x,y,z)
-    Node nearestNeighbour( const Point3& p3 ) const;
+    /// @brief Build with spherical points (lon,lat) given separate iterator ranges for longitudes, latitudes, and payloads.
+    /// Memory will be reserved with reserve() to match the size
+    /// @post The KDTree is ready to be used
+    template <typename PointIterator, typename PayloadsIterator>
+    void build( const PointIterator& points_begin, const PointIterator& points_end,
+                const PayloadsIterator& payloads_begin, const PayloadsIterator& payloads_end ) {
+        get()->build( points_begin, points_end, payloads_begin, payloads_end );
+    }
 
-    /// @brief Find all points in within a distance of given radius from a given point (lon,lat)
-    NodeList findInSphere( const Point2& p2, double radius ) const;
+    /// @brief Build with vector of Value
+    /// @post The KDTree is ready to be used
+    void build( const std::vector<Value>& values ) { get()->build( values ); }
 
-    /// @brief Find all points in within a distance of given radius from a given point (x,y,z)
-    NodeList findInSphere( const Point3& p3, double radius ) const;
+    //--------------------------------------------------------------------------------------
+    // Methods to access the KDTree
 
-    const eckit_KDTree& tree() const { return tree_; }
+    /// @brief Find k closest points given a 3D cartesian point (x,y,z) or 2D lonlat point(lon,lat)
+    template <typename Point>
+    ValueList closestPoints( const Point& p, size_t k ) const {
+        return get()->closestPoints( p, k );
+    }
 
-private:
-    void assert_built() const;
+    /// @brief Find closest point given a 3D cartesian point (x,y,z) or 2D lonlat point(lon,lat)
+    template <typename Point>
+    Value closestPoint( const Point& p ) const {
+        return get()->closestPoint( p );
+    }
 
-private:
-    std::vector<typename eckit_KDTree::Value> tmp_;
-    mutable eckit_KDTree tree_;  // mutable because its member functions are non-const...
+    /// @brief Find all points within a distance of given radius from a given point 3D cartesian point (x,y,z)
+    /// or a 2D (lon,lat) point
+    template <typename Point>
+    ValueList closestPointsWithinRadius( const Point& p, double radius ) const {
+        return get()->closestPointsWithinRadius( p, radius );
+    }
+
+    /// @brief Return geometry used to convert (lon,lat) to (x,y,z) coordinates
+    const Geometry& geometry() const { return get()->geometry(); }
 };
 
 //------------------------------------------------------------------------------------------------------
 
-template <typename PayloadT>
-void KDTree<PayloadT>::reserve( idx_t size ) {
-    tmp_.reserve( size );
-}
+using IndexKDTree2D = KDTree<idx_t, Point2>;  // 2D search: implementation is using 2D points only
+using IndexKDTree3D = KDTree<idx_t, Point3>;  // 3D search: lonlat (2D) to xyz (3D) conversion is done internally
+using IndexKDTree   = IndexKDTree3D;
 
-template <typename PayloadT>
-void KDTree<PayloadT>::insert( const Point2& p2, const Payload& payload ) {
-    Point3 p3;
-    util::Earth::convertSphericalToCartesian( p2, p3 );
-    insert( p3, payload );
-}
+// ------------------------------------------------------------------
+// C wrapper interfaces to C++ routines
 
-template <typename PayloadT>
-void KDTree<PayloadT>::insert( const Point3& p3, const Payload& payload ) {
-    if ( tmp_.capacity() ) {
-        tmp_.emplace_back( p3, payload );
-    }
-    else {
-        tree_.insert( {p3, payload} );
-    }
-}
-
-template <typename PayloadT>
-void KDTree<PayloadT>::build() {
-    if ( tmp_.size() ) {
-        tree_.build( tmp_.begin(), tmp_.end() );
-        tmp_.clear();
-        tmp_.shrink_to_fit();
-    }
-}
-
-template <typename PayloadT>
-typename KDTree<PayloadT>::NodeList KDTree<PayloadT>::kNearestNeighbours( const Point2& p2, size_t k ) const {
-    Point3 p3;
-    util::Earth::convertSphericalToCartesian( p2, p3 );
-    return kNearestNeighbours( p3, k );
-}
-
-template <typename PayloadT>
-typename KDTree<PayloadT>::NodeList KDTree<PayloadT>::kNearestNeighbours( const Point3& p3, size_t k ) const {
-    assert_built();
-    return tree_.kNearestNeighbours( p3, k );
-}
-
-template <typename PayloadT>
-typename KDTree<PayloadT>::Node KDTree<PayloadT>::nearestNeighbour( const Point2& p2 ) const {
-    Point3 p3;
-    util::Earth::convertSphericalToCartesian( p2, p3 );
-    return nearestNeighbour( p3 );
-}
-
-template <typename PayloadT>
-typename KDTree<PayloadT>::Node KDTree<PayloadT>::nearestNeighbour( const Point3& p3 ) const {
-    assert_built();
-    return tree_.nearestNeighbour( p3 );
-}
-
-template <typename PayloadT>
-typename KDTree<PayloadT>::NodeList KDTree<PayloadT>::findInSphere( const Point2& p2, double radius ) const {
-    Point3 p3;
-    util::Earth::convertSphericalToCartesian( p2, p3 );
-    return findInSphere( p3, radius );
-}
-
-template <typename PayloadT>
-typename KDTree<PayloadT>::NodeList KDTree<PayloadT>::findInSphere( const Point3& p3, double radius ) const {
-    assert_built();
-    return tree_.findInSphere( p3, radius );
-}
-
-template <typename PayloadT>
-void KDTree<PayloadT>::assert_built() const {
-    if ( tmp_.capacity() ) {
-        throw_AssertionFailed( "KDTree was used before calling build()" );
-    }
+extern "C" {
+IndexKDTree::Implementation* atlas__IndexKDTree__new();
+IndexKDTree::Implementation* atlas__IndexKDTree__new_geometry( const Geometry::Implementation* geometry );
+void atlas__IndexKDTree__delete( IndexKDTree::Implementation* This );
+void atlas__IndexKDTree__reserve( IndexKDTree::Implementation* This, const idx_t size );
+void atlas__IndexKDTree__insert( IndexKDTree::Implementation* This, const double lon, const double lat,
+                                 const idx_t index );
+void atlas__IndexKDTree__build( IndexKDTree::Implementation* This );
+void atlas__IndexKDTree__closestPoints( const IndexKDTree::Implementation* This, const double plon, const double plat,
+                                        const size_t k, double*& lon, double*& lat, idx_t*& indices,
+                                        double*& distances );
+void atlas__IndexKDTree__closestPoint( const IndexKDTree::Implementation* This, const double plon, const double plat,
+                                       double& lon, double& lat, idx_t& index, double& distance );
+void atlas__IndexKDTree__closestPointsWithinRadius( const IndexKDTree::Implementation* This, const double plon,
+                                                    const double plat, const double radius, size_t& k, double*& lon,
+                                                    double*& lat, idx_t*& indices, double*& distances );
+const Geometry::Implementation* atlas__IndexKDTree__geometry( const IndexKDTree::Implementation* This );
 }
 
 //------------------------------------------------------------------------------------------------------

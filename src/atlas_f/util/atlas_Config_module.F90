@@ -41,6 +41,7 @@ contains
   procedure, private :: set_config_list => atlas_Config__set_config_list
   procedure, private :: set_logical => atlas_Config__set_logical
   procedure, private :: set_int32 => atlas_Config__set_int32
+  procedure, private :: set_int64 => atlas_Config__set_int64
   procedure, private :: set_real32 => atlas_Config__set_real32
   procedure, private :: set_real64 => atlas_Config__set_real64
   procedure, private :: set_string => atlas_Config__set_string
@@ -49,7 +50,7 @@ contains
   procedure, private :: set_array_real32 => atlas_Config__set_array_real32
   procedure, private :: set_array_real64 => atlas_Config__set_array_real64
   procedure :: has => atlas_Config__has
-  generic :: set => set_config, set_config_list, set_logical, set_int32, set_real32, set_real64, &
+  generic :: set => set_config, set_config_list, set_logical, set_int32, set_int64, set_real32, set_real64, &
                     set_string, set_array_int32, set_array_int64, set_array_real32, set_array_real64
   procedure, private :: get_config => atlas_Config__get_config
   procedure, private :: get_config_list => atlas_Config__get_config_list
@@ -94,6 +95,7 @@ contains
 ! -----------------------------------------------------------------------------
 ! Config routines
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_Config__final_auto(this)
   type(atlas_Config), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -104,6 +106,7 @@ ATLAS_FINAL subroutine atlas_Config__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 function atlas_Config__ctor() result(this)
   use atlas_Config_c_binding
@@ -210,13 +213,24 @@ subroutine atlas_Config__set_logical(this, name, value)
 end subroutine atlas_Config__set_logical
 
 subroutine atlas_Config__set_int32(this, name, value)
+  use, intrinsic :: iso_c_binding, only : c_int
   use fckit_c_interop_module, only : c_str
   use atlas_Config_c_binding
   class(atlas_Config), intent(inout) :: this
   character(len=*), intent(in) :: name
-  integer, intent(in) :: value
+  integer(c_int), intent(in) :: value
   call atlas__Config__set_int(this%CPTR_PGIBUG_B, c_str(name), value)
 end subroutine atlas_Config__set_int32
+
+subroutine atlas_Config__set_int64(this, name, value)
+  use, intrinsic :: iso_c_binding, only : c_long
+  use fckit_c_interop_module, only : c_str
+  use atlas_Config_c_binding
+  class(atlas_Config), intent(inout) :: this
+  character(len=*), intent(in) :: name
+  integer(c_long), intent(in) :: value
+  call atlas__Config__set_long(this%CPTR_PGIBUG_B, c_str(name), value)
+end subroutine atlas_Config__set_int64
 
 subroutine atlas_Config__set_real32(this, name, value)
   use, intrinsic :: iso_c_binding, only : c_float

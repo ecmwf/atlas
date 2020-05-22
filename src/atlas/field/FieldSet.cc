@@ -59,6 +59,12 @@ void FieldSetImpl::haloExchange( bool on_device ) const {
     }
 }
 
+void FieldSetImpl::adjointHaloExchange( bool on_device ) const {
+    for ( idx_t i = 0; i < size(); ++i ) {
+        field( i ).adjointHaloExchange( on_device );
+    }
+}
+
 void FieldSetImpl::set_dirty( bool value ) const {
     for ( idx_t i = 0; i < size(); ++i ) {
         field( i ).set_dirty( value );

@@ -29,6 +29,8 @@ protected:
     virtual const FunctionSpace& target() const override { return target_; }
 
 private:
+    using KNearestNeighboursBase::do_setup;
+
     /**
    * @brief Create an interpolant sparse matrix relating two (pre-partitioned)
    * meshes,

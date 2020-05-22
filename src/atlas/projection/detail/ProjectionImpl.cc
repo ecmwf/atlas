@@ -15,6 +15,7 @@
 
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
+#include "eckit/utils/MD5.h"
 
 #include "ProjectionImpl.h"
 
@@ -149,6 +150,48 @@ void ProjectionImpl::BoundLonLat::extend( PointLonLat p, PointLonLat eps ) {
 
 // --------------------------------------------------------------------------------------------------------------------
 
+ProjectionImpl::Normalise::Normalise( const eckit::Parametrisation& p ) {
+    values_.resize( 2 );
+    bool provided = false;
+    if ( p.get( "normalise", values_ ) ) {
+        provided = true;
+    }
+    else if ( p.get( "normalize", values_ ) ) {
+        provided = true;
+    }
+    else if ( p.get( "west", values_[0] ) ) {
+        values_[1] = values_[0] + 360.;
+        provided   = true;
+    }
+    if ( provided ) {
+        normalise_.reset( new util::NormaliseLongitude( values_[0], values_[1] ) );
+    }
+}
+
+ProjectionImpl::Normalise::Normalise( double west ) {
+    values_.resize( 2 );
+    values_[0] = west;
+    values_[1] = values_[0] + 360.;
+    normalise_.reset( new util::NormaliseLongitude( values_[0], values_[1] ) );
+}
+
+
+void ProjectionImpl::Normalise::hash( eckit::Hash& hash ) const {
+    if ( normalise_ ) {
+        hash.add( values_[0] );
+        hash.add( values_[1] );
+    }
+}
+
+void ProjectionImpl::Normalise::spec( Spec& s ) const {
+    if ( normalise_ ) {
+        s.set( "normalise", values_ );
+    }
+}
+
+
+// --------------------------------------------------------------------------------------------------------------------
+
 const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) {
     std::string projectionType;
     if ( p.get( "type", projectionType ) ) {
@@ -158,6 +201,11 @@ const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) 
     // should return error here
     throw_Exception( "type missing in Params", Here() );
 }
+
+const ProjectionImpl* ProjectionImpl::create( const std::string& type, const eckit::Parametrisation& p ) {
+    return ProjectionFactory::build( type, p );
+}
+
 
 PointXYZ ProjectionImpl::xyz( const PointLonLat& lonlat ) const {
     atlas::PointXYZ xyz;
@@ -177,7 +225,7 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
 
-    constexpr double h     = 0.001;
+    constexpr double h     = 0.5e-6;  // precision to microdegrees;
     constexpr size_t Niter = 100;
 
 
@@ -288,6 +336,35 @@ void Rotated::hash( eckit::Hash& hsh ) const {
     hsh.add( southPole().lat() );
     hsh.add( rotationAngle() );
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+
+extern "C" {
+const ProjectionImpl* atlas__Projection__ctor_config( const eckit::Parametrisation* config ) {
+    return ProjectionImpl::create( *config );
+}
+void atlas__Projection__type( const ProjectionImpl* This, char*& type, int& size ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
+    std::string s = This->type();
+    size          = static_cast<int>( s.size() + 1 );
+    type          = new char[size];
+    strcpy( type, s.c_str() );
+}
+void atlas__Projection__hash( const ProjectionImpl* This, char*& hash, int& size ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
+    eckit::MD5 md5;
+    This->hash( md5 );
+    std::string s = md5.digest();
+    size          = static_cast<int>( s.size() + 1 );
+    hash          = new char[size];
+    strcpy( hash, s.c_str() );
+}
+ProjectionImpl::Spec* atlas__Projection__spec( const ProjectionImpl* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
+    return new ProjectionImpl::Spec( This->spec() );
+}
+
+}  // extern "C"
 
 }  // namespace detail
 }  // namespace projection

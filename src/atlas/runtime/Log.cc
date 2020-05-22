@@ -44,6 +44,10 @@ Log::Channel& Log::info() {
     return atlas::Library::instance().infoChannel();
 }
 
+Log::Channel& Log::warning() {
+    return atlas::Library::instance().warningChannel();
+}
+
 Log::Channel& Log::trace() {
     return atlas::Library::instance().traceChannel();
 }

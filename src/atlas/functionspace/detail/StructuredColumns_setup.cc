@@ -73,18 +73,19 @@ public:
 
     idx_t size() const { return static_cast<idx_t>( gp_.size() ); }
 
-    using const_iterator = decltype( gp_ )::const_iterator;
-
-    const_iterator begin() const { return gp_.begin(); }
-    const_iterator end() const { return gp_.end(); }
     const GridPoint& operator[]( idx_t i ) const { return gp_[i]; }
+
+    // unused:
+    //using const_iterator = decltype( gp_ )::const_iterator;
+    //const_iterator begin() const { return gp_.begin(); }
+    //const_iterator end() const { return gp_.end(); }
 };
 
 }  // namespace
 
 
 void StructuredColumns::setup( const grid::Distribution& distribution, const eckit::Configuration& config ) {
-    bool periodic_points = config.getInt( "periodic_points", false );
+    config.get( "periodic_points", periodic_points_ );
     if ( not( *grid_ ) ) {
         throw_Exception( "Grid is not a grid::Structured type", Here() );
     }
@@ -341,7 +342,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
             for ( idx_t j = j_begin_; j < j_end_; ++j ) {
                 for ( idx_t i : {i_begin_[j], i_end_[j] - 1} ) {
                     // Following line only, increases periodic halo on the east side by 1
-                    if ( periodic_points && i == grid_->nx( j ) - 1 ) {
+                    if ( periodic_points_ && i == grid_->nx( j ) - 1 ) {
                         ++i;
                     }
 

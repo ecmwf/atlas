@@ -55,6 +55,8 @@ namespace atlas {
 namespace functionspace {
 namespace detail {
 
+class StructuredColumnsHaloExchangeCache;
+
 // -------------------------------------------------------------------
 
 class StructuredColumns : public FunctionSpaceImpl {
@@ -92,6 +94,9 @@ public:
 
     virtual void haloExchange( const FieldSet&, bool on_device = false ) const override;
     virtual void haloExchange( const Field&, bool on_device = false ) const override;
+
+    virtual void adjointHaloExchange( const FieldSet&, bool on_device = false ) const override;
+    virtual void adjointHaloExchange( const Field&, bool on_device = false ) const override;
 
     idx_t sizeOwned() const { return size_owned_; }
     idx_t sizeHalo() const { return size_halo_; }
@@ -131,6 +136,7 @@ public:
         return ij2gp_( i, j );
     }
 
+    Field lonlat() const override { return field_xy_; }
     Field xy() const { return field_xy_; }
     Field z() const { return vertical().z(); }
     Field partition() const { return field_partition_; }
@@ -143,7 +149,7 @@ public:
     }
     Field index_i() const { return field_index_i_; }
     Field index_j() const { return field_index_j_; }
-    Field ghost() const { return field_ghost_; }
+    Field ghost() const override { return field_ghost_; }
 
     void compute_xy( idx_t i, idx_t j, PointXY& xy ) const;
     PointXY compute_xy( idx_t i, idx_t j ) const {
@@ -197,6 +203,9 @@ private:  // data
     idx_t size_owned_;
     idx_t size_halo_;
     idx_t halo_;
+
+    friend class StructuredColumnsHaloExchangeCache;
+    bool periodic_points_{false};
 
     const StructuredGrid* grid_;
     mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;

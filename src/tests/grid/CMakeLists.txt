@@ -9,6 +9,9 @@
 if( HAVE_FCTEST )
     foreach(test
             fctest_griddistribution
+            fctest_grids
+            fctest_regional_grids
+            fctest_stretchedrotatedgaussiangrid
             fctest_state )
 
         add_fctest( TARGET atlas_${test} SOURCES ${test}.F90 LINKER_LANGUAGE Fortran LIBS atlas_f ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
@@ -22,8 +25,10 @@ foreach(test
         test_field
         test_grid_iterator
         test_grids
+        test_stretchedrotatedgaussian
         test_grid_cropping
         test_vertical
+        test_spacing
         test_state
         test_grid_hash)
 
@@ -36,6 +41,9 @@ if( NOT HAVE_PROJ )
     ecbuild_list_exclude_pattern(
         LIST  grids
         REGEX regional_lambert_azimuthal_equal_area_[3|4].yml )
+    ecbuild_list_exclude_pattern(
+        LIST  grids
+        REGEX regional_polar_stereographic_1.yml )
 endif()
 
 foreach( grid ${grids} )

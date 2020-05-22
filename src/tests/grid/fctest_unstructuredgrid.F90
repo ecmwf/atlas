@@ -39,7 +39,6 @@ TEST( test_unstructuredgrid )
   type(atlas_Mesh) :: mesh
   type(atlas_Output) :: gmsh
   type(atlas_MeshGenerator) :: meshgenerator
-  type(atlas_Config) :: config
 
   real(c_double) :: xy(2,173)
   xy(:,1) = [180,0]

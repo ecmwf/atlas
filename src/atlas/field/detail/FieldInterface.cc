@@ -236,6 +236,11 @@ void atlas__Field__halo_exchange( FieldImpl* This, int on_device ) {
     ATLAS_ASSERT( This != nullptr, "Cannot halo-exchange uninitialised atlas_Field" );
     return This->haloExchange( on_device );
 }
+
+void atlas__Field__adjoint_halo_exchange( FieldImpl* This, int on_device ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot adjoint-halo-exchange uninitialised atlas_Field" );
+    return This->adjointHaloExchange( on_device );
+}
 }
 
 // ------------------------------------------------------------------

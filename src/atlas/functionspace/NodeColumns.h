@@ -13,8 +13,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 #include "atlas/library/config.h"
-#include "atlas/mesh/Halo.h"
-#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh.h"
 #include "atlas/option.h"
 
 // ----------------------------------------------------------------------------
@@ -257,6 +256,10 @@ public:
     virtual idx_t size() const override { return nb_nodes_; }
 
     idx_t nb_partitions() const override { return mesh_.nb_partitions(); }
+
+    Field lonlat() const override { return nodes_.lonlat(); }
+
+    Field ghost() const override { return nodes_.ghost(); }
 
     const util::PartitionPolygon& polygon( idx_t halo = 0 ) const override { return mesh_.polygon( halo ); }
 
