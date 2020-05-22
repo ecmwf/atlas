@@ -36,6 +36,9 @@ std::vector<atlas::idx_t> grep (I n, F f)
   return g;
 }
 
+inline void unpack (const byte & a, byte & b) { b = a; };
+inline void pack (byte & a, const byte & b) { a = b; };
+
 };
 
 GatherScatter::GatherScatter (const atlas::StructuredGrid & _grid, const atlas::grid::Distribution & _dist)
@@ -258,7 +261,7 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
 
   fldprc_t tloc = computeTLoc (floc);
   byte_v buf_loc (tloc.fld.back ().off);
-  processLocBuffer (floc, tloc, buf_loc, [] (byte & a, const byte & b) { a = b; });
+  processLocBuffer (floc, tloc, buf_loc, pack);
   
   comm.barrier ();
   
@@ -267,7 +270,7 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
   for (auto & r : rqr)
     comm.wait (r);
 
-  processGloBuffer (fglo, tglo, buf_glo, [] (const byte & a, byte & b) { b = a; });
+  processGloBuffer (fglo, tglo, buf_glo, unpack);
 
   for (auto & r : rqs)
     comm.wait (r);
@@ -294,7 +297,7 @@ ATLAS_TRACE_SCOPE ("GatherScatter::scatter")
 
   fldprc_t tglo = computeTGlo (fglo);
   byte_v buf_glo (tglo.prc.back ().off);
-  processGloBuffer (fglo, tglo, buf_glo, [] (byte & a, const byte & b) { a = b; });
+  processGloBuffer (fglo, tglo, buf_glo, pack);
   
   comm.barrier ();
   
@@ -303,7 +306,7 @@ ATLAS_TRACE_SCOPE ("GatherScatter::scatter")
   for (auto & r : rqr)
     comm.wait (r);
 
-  processLocBuffer (floc, tloc, buf_loc, [] (const byte & a, byte & b) { b = a; });
+  processLocBuffer (floc, tloc, buf_loc, unpack);
 
   for (auto & r : rqs)
     comm.wait (r);
