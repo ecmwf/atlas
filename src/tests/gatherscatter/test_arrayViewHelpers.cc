@@ -42,7 +42,7 @@ int main (int argc, char * argv[])
 
   prss ("c", c);
 
-  printf (" sizeof (c (0,0)) = %ld\n", sizeof (c (0,0)));
+  printf (" sizeof (c (0,0)) = %lu\n", sizeof (c (0,0)));
 
   for (int i = 0; i < 4; i++)
   printf (" &c(0,0,%d) = 0x%llx\n", i, &c(0,0,i));

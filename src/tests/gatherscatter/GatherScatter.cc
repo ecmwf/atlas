@@ -29,13 +29,20 @@ void integrate (T & v)
     v[i].off = v[i-1].off + v[i-1].len;
 }
 
-template <typename I, typename F>
-std::vector<atlas::idx_t> grep (I n, F f)
+template <typename V, typename F>
+V grep (const V v, F f)
 {
-  std::vector<atlas::idx_t> r (n), g;
-  std::iota (r.begin (), r.end (), 0);
-  std::copy_if (r.begin (), r.end (), std::back_inserter (g), f);
+  V g;
+  std::copy_if (v.begin (), v.end (), std::back_inserter (g), f);
   return g;
+}
+
+template <typename I, typename N>
+std::vector<I> range (N n)
+{
+  std::vector<I> r (n);
+  std::iota (r.begin (), r.end (), 0);
+  return r;
 }
 
 inline void unpack (const byte & a, byte & b) { b = a; };
@@ -175,10 +182,10 @@ void GatherScatter::processGloBuffer (ioFieldDesc_v & fglo, const fldprc_t & tgl
   
   ATLAS_TRACE_SCOPE ("GatherScatter::processGloBuffer")
   {
-    std::vector<atlas::idx_t> prcs = grep (nprc, 
-       [&tglo] (atlas::idx_t i) { return tglo.prc[i].len > 0; });
-    std::vector<atlas::idx_t> flds = grep (nfld, 
-       [&tglo] (atlas::idx_t i) { return tglo.fld[i].len > 0; });
+    std::vector<atlas::idx_t> prcs = grep (range<atlas::idx_t> (nprc), 
+                            [&tglo] (atlas::idx_t i) { return tglo.prc[i].len > 0; });
+    std::vector<atlas::idx_t> flds = grep (range<atlas::idx_t> (nfld),
+                            [&tglo] (atlas::idx_t i) { return tglo.fld[i].len > 0; });
 
 #ifdef UNDEF
     for (atlas::idx_t iprc = 0; iprc < nprc; iprc++)
