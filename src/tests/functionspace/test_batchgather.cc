@@ -82,6 +82,8 @@ CASE( "test_gatherscatter" )
     atlas::StructuredGrid grid (eckit::Resource<std::string> ("--grid", "N16"));
     bool gather1 (eckit::Resource<bool> ("--gather1", false));
     bool gather2 (eckit::Resource<bool> ("--gather2", false));
+    bool scatter1 (eckit::Resource<bool> ("--scatter1", false));
+    bool scatter2 (eckit::Resource<bool> ("--scatter2", false));
     bool debug (eckit::Resource<bool> ("--debug", false));
     bool check (eckit::Resource<bool> ("--check", false));
 
@@ -206,11 +208,28 @@ CASE( "test_gatherscatter" )
           if (check) checkgather (sglo1);
           if (debug) prff<T> ("sglo1", sglo1);
         }
+
+        if (scatter2)
+          {
+            ATLAS_TRACE_SCOPE ("test_scatter1")
+            {
+            for (int i = 0; i < sloc.size (); i++)
+              {
+                auto v = array::make_view<T,1> (sloc[i]);
+                for (int j = 0; j < fs.sizeOwned (); j++)
+                  v (j) = 0;
+              }
+
+            fs.scatter (sglo1, sloc);
+
+            if (check) checkscatter (sloc);
+            }
+          }
       }
 
     if (gather2)
       {
-        GatherScatter gs (grid, dist);
+        GatherScatter gs (dist);
         ATLAS_TRACE_SCOPE ("test_gather2")
         {
           std::vector<ioFieldDesc> dloc;
@@ -229,16 +248,22 @@ CASE( "test_gatherscatter" )
           if (debug) prff<T> ("sglo2", sglo2);
           if (check) checkgather (sglo2);
 
-          for (int i = 0; i < sloc.size (); i++)
+          if (scatter2)
             {
-              auto v = array::make_view<T,1> (sloc[i]);
-              for (int j = 0; j < fs.sizeOwned (); j++)
-                v (j) = 0;
+              ATLAS_TRACE_SCOPE ("test_scatter2")
+              {
+              for (int i = 0; i < sloc.size (); i++)
+                {
+                  auto v = array::make_view<T,1> (sloc[i]);
+                  for (int j = 0; j < fs.sizeOwned (); j++)
+                    v (j) = 0;
+                }
+
+              gs.scatter (dglo, dloc);
+
+              if (check) checkscatter (sloc);
+              }
             }
-
-          gs.scatter (dglo, dloc);
-
-          if (check) checkscatter (sloc);
         }
       }
 

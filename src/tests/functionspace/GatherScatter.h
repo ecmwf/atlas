@@ -41,11 +41,10 @@ private:
   std::vector<atlas::gidx_t> _prcloc2glo;
   std::vector<locprc_t> _glo2prcloc;
 
-  const atlas::StructuredGrid & grid;
   const atlas::grid::Distribution & dist;
 
 public:
-  GatherScatter (const atlas::StructuredGrid & _grid, const atlas::grid::Distribution & _dist);
+  GatherScatter (const atlas::grid::Distribution & _dist);
 
   void gather (const ioFieldDesc_v & _floc, ioFieldDesc_v & fglo) const;
   void scatter (const ioFieldDesc_v & _fglo, ioFieldDesc_v & floc) const;

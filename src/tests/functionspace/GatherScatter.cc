@@ -41,8 +41,7 @@ inline void pack (byte & a, const byte & b) { a = b; };
 
 };
 
-GatherScatter::GatherScatter (const atlas::StructuredGrid & _grid, const atlas::grid::Distribution & _dist)
- : grid (_grid), dist (_dist)
+GatherScatter::GatherScatter (const atlas::grid::Distribution & _dist) : dist (_dist)
 {
 ATLAS_TRACE_SCOPE ("GatherScatter::GatherScatter")
 {
@@ -50,17 +49,17 @@ ATLAS_TRACE_SCOPE ("GatherScatter::GatherScatter")
   nprc = dist.nb_partitions ();
 
   std::vector<atlas::gidx_t> count (nprc);
-  std::vector<atlas::idx_t> ind (grid.size ());
+  std::vector<atlas::idx_t> ind (dist.size ());
 
-  for (atlas::gidx_t i = 0; i < grid.size (); i++)
+  for (atlas::gidx_t i = 0; i < dist.size (); i++)
     ind[i] = count[dist.partition (i)]++;
 
   max = *std::max_element (count.begin (), count.end ());
 
   _prcloc2glo.resize (max * nprc, std::numeric_limits<atlas::gidx_t>::min ());
-  _glo2prcloc.resize (grid.size ());
+  _glo2prcloc.resize (dist.size ());
 
-  for (atlas::gidx_t i = 0; i < grid.size (); i++)
+  for (atlas::gidx_t i = 0; i < dist.size (); i++)
     {
       _prcloc2glo[max * dist.partition (i) + ind[i]] = i;
       _glo2prcloc[i].loc = ind[i];

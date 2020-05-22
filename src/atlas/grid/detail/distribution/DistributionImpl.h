@@ -59,6 +59,8 @@ public:
     idx_t max_pts() const { return max_pts_; }
     idx_t min_pts() const { return min_pts_; }
 
+    gidx_t size () const { return size_; }
+
     const std::string& type() const { return type_; }
 
     void print( std::ostream& ) const;
@@ -70,6 +72,7 @@ private:
     idx_t max_pts_;
     idx_t min_pts_;
     std::string type_;
+    gidx_t size_;
 };
 
 extern "C" {
