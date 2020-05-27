@@ -37,25 +37,20 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 
-CASE ("lonlat -180/+180/-90/+90") {
+CASE( "ATLAS-295 (Github PR 32): Fix StructuredColumns when domain is shifted by 180 degrees (Github PR 32)" ) {
+    auto grid1 = Grid( "S80x40", GlobalDomain{-180} );
 
-  StructuredGrid grid1 (Config ("nx", 80) | Config ("ny", 40) | Config ("type", "shifted_lonlat")
-                      | Config ("domain", Config ("type", "rectangular") | Config ("units", "degrees")
-                                        | Config ("xmin", -180.0) | Config ("xmax", +180.0)
-                                        | Config ("ymin", -90.0) | Config ("ymax", +90.0)));
+    functionspace::StructuredColumns fs1( grid1, grid::Partitioner( "checkerboard" ),
+                                          Config( "halo", 1 ) | Config( "periodic_points", true ) );
 
-  functionspace::StructuredColumns fs1 (grid1, grid::Partitioner ("checkerboard"), Config ("halo", 1) | Config ("periodic_points", true));
+    auto grid2 = Grid{"S80x40"};
 
-  StructuredGrid grid2 (Config ("nx", 80) | Config ("ny", 40) | Config ("type", "shifted_lonlat")
-                      | Config ("domain", Config ("type", "rectangular") | Config ("units", "degrees")
-                                        | Config ("xmin", 0.0) | Config ("xmax", 360.0)
-                                        | Config ("ymin", -90.0) | Config ("ymax", +90.0)));
+    functionspace::StructuredColumns fs2( grid2, grid::Partitioner( "checkerboard" ),
+                                          Config( "halo", 1 ) | Config( "periodic_points", true ) );
 
-  functionspace::StructuredColumns fs2 (grid2, grid::Partitioner ("checkerboard"), Config ("halo", 1) | Config ("periodic_points", true));
-
-  EXPECT (grid1.size () == grid2.size ());
-  EXPECT (fs1.size () == fs2.size ());
-  EXPECT (fs1.sizeOwned () == fs2.sizeOwned ());
+    EXPECT_EQ( grid1.size(), grid2.size() );
+    EXPECT_EQ( fs1.size(), fs2.size() );
+    EXPECT_EQ( fs1.sizeOwned(), fs2.sizeOwned() );
 }
 
 
