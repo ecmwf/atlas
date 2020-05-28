@@ -90,5 +90,5 @@ private:
   size_t _dlen;
 };
 
-void createIoFieldDescriptors (atlas::Field & f, std::vector<ioFieldDesc> & list, size_t ldim = 0);
-void createIoFieldDescriptors (atlas::FieldSet & s, std::vector<ioFieldDesc> & list, size_t ldim = 0);
+void createIoFieldDescriptors (atlas::Field & f, std::vector<ioFieldDesc> & list, size_t ldim = 0, atlas::idx_t gdim = -1);
+void createIoFieldDescriptors (atlas::FieldSet & s, std::vector<ioFieldDesc> & list, size_t ldim = 0, atlas::idx_t gdim = -1);
