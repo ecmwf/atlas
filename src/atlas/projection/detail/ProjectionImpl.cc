@@ -42,29 +42,30 @@ struct DerivateBuilder : public ProjectionImpl::DerivateFactory {
 struct DerivateForwards final : ProjectionImpl::Derivate {
     using Derivate::Derivate;
     PointLonLat d( PointXY P ) const override {
-        PointXY A( xy2lonlat( P ) );
-        PointXY B( xy2lonlat( PointXY::add( P, H_ ) ) );
-        return PointXY::div( PointXY::sub( B, A ), normH_ );
+        PointLonLat A( xy2lonlat( P ) );
+        PointLonLat B( xy2lonlat( PointXY::add( P, H_ ) ) );
+        return PointLonLat::div( PointLonLat::sub( B, A ), normH_ );
     }
 };
 
 struct DerivateBackwards final : ProjectionImpl::Derivate {
     using Derivate::Derivate;
     PointLonLat d( PointXY P ) const override {
-        PointXY A( xy2lonlat( PointXY::sub( P, H_ ) ) );
-        PointXY B( xy2lonlat( P ) );
-        return PointXY::div( PointXY::sub( B, A ), normH_ );
+        PointLonLat A( xy2lonlat( PointXY::sub( P, H_ ) ) );
+        PointLonLat B( xy2lonlat( P ) );
+        return PointLonLat::div( PointLonLat::sub( B, A ), normH_ );
     }
 };
 
 struct DerivateCentral final : ProjectionImpl::Derivate {
     DerivateCentral( const ProjectionImpl& p, PointXY A, PointXY B, double h ) :
-        Derivate( p, A, B, h ), H2_{PointXY::mul( H_, 0.5 )} {}
+        Derivate( p, A, B, h ),
+        H2_{PointXY::mul( H_, 0.5 )} {}
     const PointXY H2_;
     PointLonLat d( PointXY P ) const override {
-        PointXY A( xy2lonlat( PointXY::sub( P, H2_ ) ) );
-        PointXY B( xy2lonlat( PointXY::add( P, H2_ ) ) );
-        return PointXY::div( PointXY::sub( B, A ), normH_ );
+        PointLonLat A( xy2lonlat( PointXY::sub( P, H2_ ) ) );
+        PointLonLat B( xy2lonlat( PointXY::add( P, H2_ ) ) );
+        return PointLonLat::div( PointLonLat::sub( B, A ), normH_ );
     }
 };
 
@@ -225,8 +226,9 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
 
-    constexpr double h     = 0.5e-6;  // precision to microdegrees;
-    constexpr size_t Niter = 100;
+    const std::string derivative = "central";
+    constexpr double h           = 0.5e-6;  // precision to microdegrees
+    constexpr size_t Niter       = 100;
 
 
     // 1. determine box from projected corners
@@ -248,7 +250,7 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
-            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, A, B ) );
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( derivative, *this, A, B, h ) );
             double dAdy = derivate->d( A ).lat();
             double dBdy = derivate->d( B ).lat();
 
@@ -276,14 +278,14 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
     }
 
 
-    // 3. locate latitude extrema not at the corners by refining iteratively
+    // 3. locate longitude extrema not at the corners by refining iteratively
 
     for ( size_t i = 0; i < corners.size(); ++i ) {
         if ( !bounds.crossesDateLine() ) {
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
-            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, A, B ) );
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( derivative, *this, A, B, h) );
             double dAdx = derivate->d( A ).lon();
             double dBdx = derivate->d( B ).lon();
 

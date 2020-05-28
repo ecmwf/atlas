@@ -127,7 +127,7 @@ public:
     struct DerivateFactory : public util::Factory<DerivateFactory> {
         static std::string className() { return "DerivateFactory"; }
         static ProjectionImpl::Derivate* build( const std::string& type, const ProjectionImpl& p, PointXY A, PointXY B,
-                                                double h = 0.001 );
+                                                double h );
 
     protected:
         using Factory::Factory;
