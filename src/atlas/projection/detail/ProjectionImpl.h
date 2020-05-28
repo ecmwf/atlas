@@ -109,7 +109,7 @@ public:
     };
 
     struct Derivate {
-        Derivate( const ProjectionImpl& p, PointXY A, PointXY B, double h );
+        Derivate( const ProjectionImpl& p, PointXY A, PointXY B, double h, double refLongitude = 0. );
         virtual ~Derivate();
         virtual PointLonLat d( PointXY ) const = 0;
 
@@ -117,22 +117,20 @@ public:
         const ProjectionImpl& projection_;
         const PointXY H_;
         const double normH_;
-        PointLonLat xy2lonlat( const PointXY& p ) const {
-            PointLonLat q( p );
-            projection_.xy2lonlat( q.data() );
-            return q;
-        }
+        const double refLongitude_;
+        PointLonLat xy2lonlat( const PointXY& p ) const;
     };
 
     struct DerivateFactory : public util::Factory<DerivateFactory> {
         static std::string className() { return "DerivateFactory"; }
         static ProjectionImpl::Derivate* build( const std::string& type, const ProjectionImpl& p, PointXY A, PointXY B,
-                                                double h );
+                                                double h, double refLongitude = 0. );
 
     protected:
         using Factory::Factory;
         virtual ~DerivateFactory();
-        virtual ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) = 0;
+        virtual ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h,
+                                                double refLongitude = 0. ) = 0;
     };
 };
 

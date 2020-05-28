@@ -17,7 +17,7 @@
 #include "eckit/utils/Hash.h"
 #include "eckit/utils/MD5.h"
 
-#include "ProjectionImpl.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 
 #include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/runtime/Exception.h"
@@ -31,11 +31,22 @@ namespace detail {
 
 namespace {
 
+void longitude_in_range( double reference, double& lon ) {
+    // keep longitude difference (to reference) range below +-180 degree
+    while ( lon > reference + 180. ) {
+        lon -= 360.;
+    }
+    while ( lon <= reference - 180. ) {
+        lon += 360.;
+    }
+}
+
 template <class T>
 struct DerivateBuilder : public ProjectionImpl::DerivateFactory {
     using DerivateFactory::DerivateFactory;
-    ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) override {
-        return new T( p, A, B, h );
+    ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h,
+                                    double refLongitude ) override {
+        return new T( p, A, B, h, refLongitude );
     }
 };
 
@@ -58,8 +69,8 @@ struct DerivateBackwards final : ProjectionImpl::Derivate {
 };
 
 struct DerivateCentral final : ProjectionImpl::Derivate {
-    DerivateCentral( const ProjectionImpl& p, PointXY A, PointXY B, double h ) :
-        Derivate( p, A, B, h ),
+    DerivateCentral( const ProjectionImpl& p, PointXY A, PointXY B, double h, double refLongitude ) :
+        Derivate( p, A, B, h, refLongitude ),
         H2_{PointXY::mul( H_, 0.5 )} {}
     const PointXY H2_;
     PointLonLat d( PointXY P ) const override {
@@ -71,15 +82,17 @@ struct DerivateCentral final : ProjectionImpl::Derivate {
 
 }  // namespace
 
-ProjectionImpl::Derivate::Derivate( const ProjectionImpl& p, PointXY A, PointXY B, double h ) :
+ProjectionImpl::Derivate::Derivate( const ProjectionImpl& p, PointXY A, PointXY B, double h, double refLongitude ) :
     projection_( p ),
     H_{PointXY::mul( PointXY::normalize( PointXY::sub( B, A ) ), h )},
-    normH_( PointXY::norm( H_ ) ) {}
+    normH_( PointXY::norm( H_ ) ),
+    refLongitude_( refLongitude ) {}
 
 ProjectionImpl::Derivate::~Derivate() = default;
 
 ProjectionImpl::Derivate* ProjectionImpl::DerivateFactory::build( const std::string& type, const ProjectionImpl& p,
-                                                                  PointXY A, PointXY B, double h ) {
+                                                                  PointXY A, PointXY B, double h,
+                                                                  double refLongitude ) {
     ATLAS_ASSERT( 0. < h );
 
     // force_link
@@ -92,7 +105,7 @@ ProjectionImpl::Derivate* ProjectionImpl::DerivateFactory::build( const std::str
             using Derivate::Derivate;
             PointLonLat d( PointXY ) const override { return {}; }
         };
-        return new DerivateDegenerate( p, A, B, h );
+        return new DerivateDegenerate( p, A, B, h, refLongitude );
     }
 
     auto factory = get( type );
@@ -100,6 +113,13 @@ ProjectionImpl::Derivate* ProjectionImpl::DerivateFactory::build( const std::str
 }
 
 ProjectionImpl::DerivateFactory::~DerivateFactory() = default;
+
+PointLonLat ProjectionImpl::Derivate::xy2lonlat( const PointXY& p ) const {
+    PointLonLat q( p );
+    projection_.xy2lonlat( q.data() );
+    longitude_in_range( refLongitude_, q.lon() );
+    return q;
+}
 
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -226,6 +246,10 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
 
+    // use central longitude as absolute reference (keep points within +-180 longitude range)
+    const auto centre = lonlat( {( rect.xmin() + rect.xmax() ) / 2., ( rect.ymin() + rect.ymax() ) / 2.} );
+
+    
     const std::string derivative = "central";
     constexpr double h           = 0.5e-6;  // precision to microdegrees
     constexpr size_t Niter       = 100;
@@ -238,7 +262,9 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
 
     BoundLonLat bounds;
     for ( auto& p : corners ) {
-        bounds.extend( lonlat( p ), PointLonLat{h, h} );
+        auto q = lonlat( p );
+        longitude_in_range( centre.lon(), q.lon() );
+        bounds.extend( q, PointLonLat{h, h} );
     }
 
 
@@ -250,7 +276,7 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
-            std::unique_ptr<Derivate> derivate( DerivateFactory::build( derivative, *this, A, B, h ) );
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( derivative, *this, A, B, h, centre.lon() ) );
             double dAdy = derivate->d( A ).lat();
             double dBdy = derivate->d( B ).lat();
 
@@ -285,7 +311,7 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
-            std::unique_ptr<Derivate> derivate( DerivateFactory::build( derivative, *this, A, B, h) );
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( derivative, *this, A, B, h, centre.lon() ) );
             double dAdx = derivate->d( A ).lon();
             double dBdx = derivate->d( B ).lon();
 
