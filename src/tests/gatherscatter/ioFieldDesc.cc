@@ -2,6 +2,8 @@
 #include "arrayViewHelpers.h"
 
 
+namespace
+{
 
 // The following templates create a list of byte views of rank 2 from a view of any rank, any type
 //
@@ -42,6 +44,9 @@ void createListOf1DByteView (atlas::array::ArrayView<Value,Rank> & view,
   auto v = byteView (view);
   listOf1DByteView (v, std::vector<atlas::idx_t> (), f, ldim, list);
 }
+
+};
+
 
 void createIoFieldDescriptors (atlas::Field & f, std::vector<ioFieldDesc> & list, size_t ldim)
 {

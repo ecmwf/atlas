@@ -37,9 +37,10 @@ dropDimension (const atlas::array::ArrayView<Value,Rank> & view, int dim, atlas:
 // Convert a view to a view of bytes (add an extra inner dimension)
 
 template <typename Value, int Rank>
-atlas::array::ArrayView<byte,Rank+1>
+atlas::array::ArrayView<typename std::conditional<std::is_const<Value>::value, const byte, byte>::type,Rank+1>
 byteView (const atlas::array::ArrayView<Value,Rank> & view)
 {
+  using B = typename std::conditional<std::is_const<Value>::value, const byte, byte>::type;
   constexpr int rank = Rank+1;
   atlas::array::ArrayShape shape;
   atlas::array::ArrayStrides strides;
@@ -55,8 +56,8 @@ byteView (const atlas::array::ArrayView<Value,Rank> & view)
   shape.push_back (dlen);
   strides.push_back (1);
 
-  byte * data = (byte *) (view.data ());
+  B * data = (B *) (view.data ());
 
-  return atlas::array::ArrayView<byte,rank> (data, shape, strides);
+  return atlas::array::ArrayView<B,rank> (data, shape, strides);
 }
 
