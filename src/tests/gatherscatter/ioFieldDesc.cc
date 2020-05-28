@@ -33,7 +33,8 @@ void listOf1DByteView (atlas::array::ArrayView<byte,2> & view,
                        const atlas::Field & f, size_t ldim,
                        std::vector<ioFieldDesc> & list)
 {
-  list.push_back (ioFieldDesc (view, ind, f, ldim));
+  auto v = addDummyDimension (view);
+  list.push_back (ioFieldDesc (v, ind, f, ldim));
 }
 
 template <int Rank, typename Value>

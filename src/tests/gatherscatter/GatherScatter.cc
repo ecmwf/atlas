@@ -164,9 +164,14 @@ void GatherScatter::processLocBuffer (ioFieldDesc_v & floc, const fldprc_t & tlo
         byte * buffer = &buf_loc[tloc.fld[jfld].off];
         const size_t dlen = f.dlen ();
         const size_t ldim = f.ldim ();
-        for (atlas::idx_t i = 0; i < ldim; i++)
+        const size_t nblk = f.nblk ();
+
+auto jlonjblk2jgp = [] (atlas::idx_t jlon, atlas::idx_t jblk) { ATLAS_ASSERT (jblk == 0); return jlon; };
+
+        for (atlas::idx_t jblk = 0; jblk < nblk; jblk++)
+        for (atlas::idx_t jlon = 0; jlon < ldim; jlon++)
         for (int j = 0; j < dlen; j++)
-          a (buffer[i*dlen+j], f (i, j));
+          a (buffer[jlonjblk2jgp (jlon, jblk)*dlen+j], f (jblk, jlon, j));
       }
   }
 
@@ -211,7 +216,7 @@ void GatherScatter::processGloBuffer (ioFieldDesc_v & fglo, const fldprc_t & tgl
                   for (int j = 0; j < len; j++)
                     {
                       size_t k = jloc * tglo.fld[jfld].len + j;
-                      a (buf_glo[off+k], f (prcloc2glo (iprc, jloc), j));
+                      a (buf_glo[off+k], f (0, prcloc2glo (iprc, jloc), j));
                     }
 
                 }

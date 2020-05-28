@@ -11,25 +11,20 @@ typedef char byte;
 class ioFieldDesc
 {
 public:
-  ioFieldDesc (atlas::array::ArrayView<byte,2> & v, 
+  ioFieldDesc (atlas::array::ArrayView<byte,3> & v, 
                const std::vector<atlas::idx_t> & ind,
                const atlas::Field & f, size_t ldim) 
                : _v (v), _ind (ind), _f (f), _ldim (ldim) 
   {
-    _dlen = _v.shape (1);
+    _nblk = _v.shape (0);
+    _dlen = _v.shape (2);
     if (_ldim == 0)
-      _ldim = _v.shape (0);
-    _size = _ldim * _v.shape (1);
-    _contiguous = (_dlen == _v.stride (0));
+      _ldim = _v.shape (1);
+    _size = _nblk * _ldim * _dlen;
   }
 
 
-  bool contiguous () const
-  {  
-    return _contiguous;
-  }
-
-  atlas::array::ArrayView<byte,2> & view ()
+  atlas::array::ArrayView<byte,3> & view ()
   {
     return _v;
   }
@@ -59,6 +54,11 @@ public:
     return _size;
   }
 
+  size_t nblk () const
+  {
+    return _nblk;
+  }
+
   size_t ldim () const
   {
     return _ldim;
@@ -69,32 +69,25 @@ public:
     return _dlen;
   }
 
-  void pack (byte * buffer) const
+  byte & operator () (int jblk, int jlon, int k)
   {
-    for (int i = 0; i < _ldim; i++)
-    for (int j = 0; j < _dlen; j++)
-      buffer[i*_dlen+j] = _v (i, j);
-  }
- 
-  byte & operator () (int i, int j)
-  {
-    return _v (i, j);
+    return _v (jblk, jlon, k);
   }
 
-  byte operator () (int i, int j) const
+  byte operator () (int jblk, int jlon, int k) const
   {
-    return _v (i, j);
+    return _v (jblk, jlon, k);
   }
 
 private:
-  atlas::array::ArrayView<byte,2> _v;
+  atlas::array::ArrayView<byte,3> _v; // NGPBKLS, NPROMA, sizeof (element)
   const std::vector<atlas::idx_t> _ind;
   const atlas::Field & _f;
   int _owner = 0;
   size_t _ldim;
+  size_t _nblk;
   size_t _size;
   size_t _dlen;
-  bool _contiguous;
 };
 
 void createIoFieldDescriptors (atlas::Field & f, std::vector<ioFieldDesc> & list, size_t ldim = 0);

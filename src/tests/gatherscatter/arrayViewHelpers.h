@@ -61,3 +61,28 @@ byteView (const atlas::array::ArrayView<Value,Rank> & view)
   return atlas::array::ArrayView<B,rank> (data, shape, strides);
 }
 
+// Add an extra outer dummy dimension
+
+template <typename Value, int Rank>
+atlas::array::ArrayView<Value,Rank+1>
+addDummyDimension (const atlas::array::ArrayView<Value,Rank> & view)
+{
+  constexpr int rank = Rank+1;
+  atlas::array::ArrayShape shape = {1};
+  atlas::array::ArrayStrides strides = {view.size ()};
+
+  for (int i = 0; i < Rank; i++)
+    {
+      shape.push_back (view.shape (i));
+      strides.push_back (view.stride (i));
+    }
+
+  using nonConstValue = typename std::remove_const<Value>::type;
+
+  Value * data = (nonConstValue *) (view.data ());
+
+  return atlas::array::ArrayView<Value,rank> (data, shape, strides);
+}   
+
+
+
