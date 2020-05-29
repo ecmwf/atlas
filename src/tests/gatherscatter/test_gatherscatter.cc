@@ -140,61 +140,87 @@ CASE( "test_gatherscatter_nflevgxngptot" )
       return v;
     };
 
-    atlas::Field floc ("field", atlas::array::DataType::kind<T> (), {nfield, grid.size (), nflevg});
+
+    // Distributed field, Fortran dimensions (1:NFLEVG,1:NGPTOT,1:NFIELDS)
+    atlas::Field floc ("field", atlas::array::DataType::kind<T> (), {nfield, fs.size (), nflevg});
 
     auto v = array::make_view<T,3> (floc);
 
-    for (int jfld = 0; jfld < nfield; jfld++)
-    for (int jlev = 0; jlev < nflevg; jlev++)
-    for (int jloc = 0; jloc < fs.sizeOwned (); jloc++)
-      v (jfld, jloc, jlev) = func (jfld, jlev, irank, jloc);
+    if (check)
+      {
+        for (int jfld = 0; jfld < nfield; jfld++)
+        for (int jlev = 0; jlev < nflevg; jlev++)
+        for (int jloc = 0; jloc < fs.sizeOwned (); jloc++)
+          v (jfld, jloc, jlev) = func (jfld, jlev, irank, jloc);
+      }
 
+    // Gather our multi-field, multi-level Atlas field to a set of fields (1:NGPTOTG)
     atlas::FieldSet sglo;
 
     for (int jfld = 0, count = 0; jfld < nfield; jfld++)
     for (int jlev = 0; jlev < nflevg; jlev++, count++)
       {
-        int owner = count % nproc;
+        int owner = count % nproc;  // RR distribution
         std::string name = std::string ("#") + std::to_string (jfld) + std::string (",") + std::to_string (jlev);
         atlas::Field fglo = atlas::Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
         fglo.metadata ().set ("owner", owner);
         sglo.add (fglo);
       }
 
+    // IO descriptors
     std::vector<ioFieldDesc> dloc;
     std::vector<ioFieldDesc> dglo;
 
-    createIoFieldDescriptors (floc, dloc, fs.sizeOwned (), 1);
-    createIoFieldDescriptors (sglo, dglo, fs.sizeOwned ());
+    createIoFieldDescriptors (floc, dloc, fs.sizeOwned (), 1); // Grid dimension is 1
+    createIoFieldDescriptors (sglo, dglo, fs.sizeOwned ());    // Default for grid dimension is inner dimension
 
+    // Set target processor for all fields
     for (auto & d : dglo)
       d.field ().metadata ().get ("owner", d.owner ());
   
     GatherScatter gs (dist);
-    gs.gather (dloc, dglo);
 
+    // Gather
 
-    for (int jfld = 0, count = 0; jfld < nfield; jfld++)
-    for (int jlev = 0; jlev < nflevg; jlev++, count++)
+    if (gather)
       {
-        atlas::Field fglo = sglo[count];
-        int owner; fglo.metadata ().get ("owner", owner);
-        if (owner == irank)
-          {
-            auto v = array::make_view<T,1> (fglo);
-            for (int jglo = 0; jglo < grid.size (); jglo++)
-              {
-                T v1 = v (jglo), v2 = func (jfld, jlev, prc[jglo], ind[jglo]);
-                EXPECT (v1 == v2);
-              }
-          }
+        gs.gather (dloc, dglo);
+
+        if (check)
+          for (int jfld = 0, count = 0; jfld < nfield; jfld++)
+          for (int jlev = 0; jlev < nflevg; jlev++, count++)
+            {
+              atlas::Field fglo = sglo[count];
+              int owner; fglo.metadata ().get ("owner", owner);
+              if (owner == irank)
+                {
+                  auto v = array::make_view<T,1> (fglo);
+                  for (int jglo = 0; jglo < grid.size (); jglo++)
+                    {
+                      T v1 = v (jglo), v2 = func (jfld, jlev, prc[jglo], ind[jglo]);
+                      EXPECT (v1 == v2);
+                    }
+                }
+            }
       }
 
-  {
-  auto v = array::make_view<T,3> (floc);
-  filterView (v, [](T & z){ z = 0; });
-  }
+  // Scatter
 
+  if (scatter)
+    {
+      // Set distributed field to zero
+      if (check)
+        filterView (v, [](T & z){ z = 0; });
+      gs.scatter (dglo, dloc);
+      if (check)
+        for (int jfld = 0; jfld < nfield; jfld++)
+        for (int jlev = 0; jlev < nflevg; jlev++)
+        for (int jloc = 0; jloc < fs.sizeOwned (); jloc++)
+          {
+            T v1 = v (jfld, jloc, jlev), v2 = func (jfld, jlev, irank, jloc);
+            EXPECT (v1 == v2);
+          }
+    }
 
 }
 
@@ -284,6 +310,7 @@ CASE( "test_gatherscatter_ngptotxnflevg" )
       d.field ().metadata ().get ("owner", d.owner ());
   
     GatherScatter gs (dist);
+
     gs.gather (dloc, dglo);
 
 
