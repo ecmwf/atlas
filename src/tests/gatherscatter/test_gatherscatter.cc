@@ -192,8 +192,7 @@ CASE( "test_gatherscatter_nflevgxngptot" )
 
   {
   auto v = array::make_view<T,3> (floc);
-  filterViewHelper<3,T>::apply (v, [](T & z){ z = 0; });
-
+  filterView (v, [](T & z){ z = 0; });
   }
 
 

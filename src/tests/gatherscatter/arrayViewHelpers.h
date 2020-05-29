@@ -91,13 +91,13 @@ class filterViewHelper
 {
 public:
   template <typename Func>
-  static void apply (atlas::array::ArrayView<Value,Rank> x, Func func)
+  static void apply (atlas::array::ArrayView<Value,Rank> view, Func func)
   {
     constexpr int rank = Rank-1;
-    for (int i = 0; i < x.shape (0); i++)
+    for (int i = 0; i < view.shape (0); i++)
       {
-        atlas::array::ArrayView<Value,rank> y = dropDimension (x, 0, i);
-        filterViewHelper<rank,Value>::apply (y, func);
+        atlas::array::ArrayView<Value,rank> v = dropDimension (view, 0, i);
+        filterViewHelper<rank,Value>::apply (v, func);
       }
   }
 };
@@ -107,12 +107,18 @@ class filterViewHelper<1, Value>
 {
 public:
   template <typename Func>
-  static void apply (atlas::array::ArrayView<Value,1> x, Func func)
+  static void apply (atlas::array::ArrayView<Value,1> view, Func func)
   {
-    for (int i = 0; i < x.shape (0); i++)
-      func (x (i));
+    for (int i = 0; i < view.shape (0); i++)
+      func (view (i));
   }
 };
+
+template <typename Value, int Rank, typename Func>
+void filterView (atlas::array::ArrayView<Value,Rank> view, Func func)
+{
+  filterViewHelper<Rank,Value>::apply (view, func);
+}
 
 
 
