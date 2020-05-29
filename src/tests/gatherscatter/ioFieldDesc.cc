@@ -61,7 +61,8 @@ void createListOf1DByteView (atlas::array::ArrayView<Value,Rank> & view,
 };
 
 
-void createIoFieldDescriptors (atlas::Field & f, std::vector<ioFieldDesc> & list, size_t ldim, atlas::idx_t gdim)
+void createIoFieldDescriptors 
+  (atlas::Field & f, std::vector<ioFieldDesc> & list, size_t ldim, atlas::idx_t gdim)
 {
   int rank = f.rank ();
   auto type = f.datatype ();
@@ -95,7 +96,8 @@ done:
   return;
 }
 
-void createIoFieldDescriptors (atlas::FieldSet & s, std::vector<ioFieldDesc> & list, size_t ldim, atlas::idx_t gdim)
+void createIoFieldDescriptors 
+  (atlas::FieldSet & s, std::vector<ioFieldDesc> & list, size_t ldim, atlas::idx_t gdim)
 {
   for (auto & f : s)
     createIoFieldDescriptors (f, list, ldim, gdim);

@@ -84,5 +84,73 @@ addDummyDimension (const atlas::array::ArrayView<Value,Rank> & view)
   return atlas::array::ArrayView<Value,rank> (data, shape, strides);
 }   
 
+// Apply a function to view elements
+
+#ifdef UNDEF
+template <int Rank, typename Value>
+class filterView
+{
+public:
+  template <typename Func>
+  static void apply (atlas::array::ArrayView<Value,Rank> & view, Func func)
+  {
+    constexpr int rank = Rank-1;
+    for (int i = 0; i < view.shape (0); i++)
+      {
+        auto v = dropDimension (view, 0, i);
+        filterView<rank,Value>::apply (v, func);
+      }
+  }
+};
+
+template <typename Value>
+class filterView<1, Value>
+{
+  template <typename Func>
+  static void apply (atlas::array::ArrayView<Value,1> & view, Func func)
+  {
+    for (int i = 0; i < view.size (); i++)
+      func (view (i));
+  }
+};
+
+#endif
+
+
+template <typename Value, int Rank>
+class arr
+{
+public:
+  arr (atlas::array::ArrayView<Value,Rank> v) : view (v) {}
+  Value val;
+  atlas::array::ArrayView<Value,Rank> view;
+};
+
+template <int Rank, typename Value>
+class ww
+{
+public:
+  template <typename Func>
+  static void toto (arr<Value,Rank> x, Func func)
+  {
+    constexpr int rank = Rank-1;
+    arr<Value,rank> y (dropDimension (x.view, 0, 0));
+    y.val = x.val;
+    ww<rank,Value>::toto (y, func);
+  }
+};
+
+template <typename Value>
+class ww<1, Value>
+{
+public:
+  template <typename Func>
+  static void toto (arr<Value,1> x, Func func)
+  {
+    func (x.val);
+    std::cout << "coucou" << std::endl;
+  }
+};
+
 
 

@@ -18,6 +18,7 @@
 
 #include "GatherScatter.h"
 #include "ioFieldDesc.h"
+#include "arrayViewHelpers.h"
 
 using namespace eckit;
 using namespace atlas::functionspace;
@@ -84,6 +85,123 @@ void prff (const std::string & name, const atlas::Field & f)
 
 //-----------------------------------------------------------------------------
 
+CASE( "test_gatherscatter_nflevgxngptot" ) 
+{
+    if (! eckit::Resource<bool> ("--nflevgxngptot", false))
+      return;
+
+    int nfield = eckit::Resource<int> ("--fields", 3);
+    int nflevg = eckit::Resource<int> ("--nflevg", 10);
+    atlas::StructuredGrid grid (eckit::Resource<std::string> ("--grid", "N16"));
+    bool gather (eckit::Resource<bool> ("--gather", false));
+    bool scatter (eckit::Resource<bool> ("--scatter", false));
+    bool check (eckit::Resource<bool> ("--check", false));
+
+
+    auto & comm = mpi::comm ();
+    int irank = comm.rank ();
+    int nproc = comm.size ();
+
+    atlas::grid::Distribution dist (grid, atlas::grid::Partitioner ("equal_regions"));
+    atlas::functionspace::StructuredColumns fs (grid, dist, atlas::util::Config ("halo", 1) 
+                                              | atlas::util::Config ("periodic_points", true));
+    std::vector<int> prc, ind;
+
+    if (check)
+      getprcind (fs, dist, prc, ind);
+
+    atlas::FieldSet sloc;
+
+    using T = long;
+
+    const int ind_bit = 24, ind_off =  0;
+    const int prc_bit = 12, prc_off = ind_off + ind_bit;
+    const int fld_bit = 14, fld_off = prc_off + prc_bit;
+    const int lev_bit = 14, lev_off = fld_off + fld_bit;
+  
+    if (check)
+      {
+        ATLAS_ASSERT (fs.sizeOwned () < (1 << ind_bit));
+        ATLAS_ASSERT (nproc           < (1 << prc_bit));
+        ATLAS_ASSERT (nfield          < (1 << fld_bit));
+        ATLAS_ASSERT (nflevg          < (1 << lev_bit));
+     }
+
+    using T = long;
+
+    auto func = [check,ind_off,prc_off,fld_off,lev_off] (int fld, int lev, int prc, int ind)
+    {
+      long v = 0;
+      if (check)
+        {
+          v = (static_cast<long> (fld) << fld_off) + (static_cast<long> (lev) << lev_off) 
+            + (static_cast<long> (prc) << prc_off) + (static_cast<long> (ind) << ind_off);
+        }
+      return v;
+    };
+
+    atlas::Field floc ("field", atlas::array::DataType::kind<T> (), {nfield, grid.size (), nflevg});
+
+    auto v = array::make_view<T,3> (floc);
+
+    for (int jfld = 0; jfld < nfield; jfld++)
+    for (int jlev = 0; jlev < nflevg; jlev++)
+    for (int jloc = 0; jloc < fs.sizeOwned (); jloc++)
+      v (jfld, jloc, jlev) = func (jfld, jlev, irank, jloc);
+
+    atlas::FieldSet sglo;
+
+    for (int jfld = 0, count = 0; jfld < nfield; jfld++)
+    for (int jlev = 0; jlev < nflevg; jlev++, count++)
+      {
+        int owner = count % nproc;
+        std::string name = std::string ("#") + std::to_string (jfld) + std::string (",") + std::to_string (jlev);
+        atlas::Field fglo = atlas::Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
+        fglo.metadata ().set ("owner", owner);
+        sglo.add (fglo);
+      }
+
+    std::vector<ioFieldDesc> dloc;
+    std::vector<ioFieldDesc> dglo;
+
+    createIoFieldDescriptors (floc, dloc, fs.sizeOwned (), 1);
+    createIoFieldDescriptors (sglo, dglo, fs.sizeOwned ());
+
+    for (auto & d : dglo)
+      d.field ().metadata ().get ("owner", d.owner ());
+  
+    GatherScatter gs (dist);
+    gs.gather (dloc, dglo);
+
+
+    for (int jfld = 0, count = 0; jfld < nfield; jfld++)
+    for (int jlev = 0; jlev < nflevg; jlev++, count++)
+      {
+        atlas::Field fglo = sglo[count];
+        int owner; fglo.metadata ().get ("owner", owner);
+        if (owner == irank)
+          {
+            auto v = array::make_view<T,1> (fglo);
+            for (int jglo = 0; jglo < grid.size (); jglo++)
+              {
+                T v1 = v (jglo), v2 = func (jfld, jlev, prc[jglo], ind[jglo]);
+                EXPECT (v1 == v2);
+              }
+          }
+      }
+
+  {
+  auto v = array::make_view<T,3> (floc);
+//  filterView<3,T>::apply (v, [] (T & t) { t = 0; });
+  arr<T,3> x (v);
+  x.val = 12345;
+  ww<3,T>::toto (x, [](double z){ std::cout << " z = " << z << std::endl;});
+
+  }
+
+
+}
+
 CASE( "test_gatherscatter_ngptotxnflevg" ) 
 {
     if (! eckit::Resource<bool> ("--ngptotxnflevg", false))
@@ -109,8 +227,6 @@ CASE( "test_gatherscatter_ngptotxnflevg" )
       getprcind (fs, dist, prc, ind);
 
     atlas::FieldSet sloc;
-    atlas::FieldSet sglo1;
-    atlas::FieldSet sglo2;
 
     using T = long;
 
