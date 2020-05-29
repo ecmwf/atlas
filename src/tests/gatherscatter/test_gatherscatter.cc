@@ -192,10 +192,7 @@ CASE( "test_gatherscatter_nflevgxngptot" )
 
   {
   auto v = array::make_view<T,3> (floc);
-//  filterView<3,T>::apply (v, [] (T & t) { t = 0; });
-  arr<T,3> x (v);
-  x.val = 12345;
-  ww<3,T>::toto (x, [](double z){ std::cout << " z = " << z << std::endl;});
+  filterViewHelper<3,T>::apply (v, [](T & z){ z = 0; });
 
   }
 
