@@ -144,14 +144,14 @@ CASE( "test_gatherscatter_nflevgxngptot" )
     // Distributed field, Fortran dimensions (1:NFLEVG,1:NGPTOT,1:NFIELDS)
     atlas::Field floc ("field", atlas::array::DataType::kind<T> (), {nfield, fs.size (), nflevg});
 
-    auto v = array::make_view<T,3> (floc);
+    auto vloc = array::make_view<T,3> (floc);
 
     if (check)
       {
         for (int jfld = 0; jfld < nfield; jfld++)
         for (int jlev = 0; jlev < nflevg; jlev++)
         for (int jloc = 0; jloc < fs.sizeOwned (); jloc++)
-          v (jfld, jloc, jlev) = func (jfld, jlev, irank, jloc);
+          vloc (jfld, jloc, jlev) = func (jfld, jlev, irank, jloc);
       }
 
     // Gather our multi-field, multi-level Atlas field to a set of fields (1:NGPTOTG)
@@ -208,16 +208,34 @@ CASE( "test_gatherscatter_nflevgxngptot" )
 
   if (scatter)
     {
-      // Set distributed field to zero
       if (check)
-        filterView (v, [](T & z){ z = 0; });
+        {
+          // Set distributed field to zero
+          filterView (vloc, [](T & z){ z = 0; });
+
+          // Compute global fields
+          for (int jfld = 0, count = 0; jfld < nfield; jfld++)
+          for (int jlev = 0; jlev < nflevg; jlev++, count++)
+            {
+              atlas::Field fglo = sglo[count];
+              int owner; fglo.metadata ().get ("owner", owner);
+              if (owner == irank)
+                {
+                  auto v = array::make_view<T,1> (fglo);
+                  for (int jglo = 0; jglo < grid.size (); jglo++)
+                    v (jglo) = func (jfld, jlev, prc[jglo], ind[jglo]);
+                }
+            }
+        }
+
       gs.scatter (dglo, dloc);
+
       if (check)
         for (int jfld = 0; jfld < nfield; jfld++)
         for (int jlev = 0; jlev < nflevg; jlev++)
         for (int jloc = 0; jloc < fs.sizeOwned (); jloc++)
           {
-            T v1 = v (jfld, jloc, jlev), v2 = func (jfld, jlev, irank, jloc);
+            T v1 = vloc (jfld, jloc, jlev), v2 = func (jfld, jlev, irank, jloc);
             EXPECT (v1 == v2);
           }
     }
