@@ -251,9 +251,8 @@ int AtlasGrids::execute( const Args& args ) {
                     if ( structuredgrid.xspace().nxmax() == structuredgrid.xspace().nxmin() ) {
                         Log::info() << "   dx : " << structuredgrid.xspace().dx()[0] / 1000. << " km" << std::endl;
                     }
-                    Log::info() << "   dy : "
-                                << std::abs( structuredgrid.yspace()[1] - structuredgrid.yspace()[0] ) / 1000. << " km"
-                                << std::endl;
+                    Log::info() << "   dy : " << std::abs( structuredgrid.y( 1 ) - structuredgrid.y( 0 ) ) / 1000.
+                                << " km" << std::endl;
                     Log::info() << "   lonlat(centre)    : "
                                 << grid.projection().lonlat(
                                        {0.5 * ( structuredgrid.xspace().max() + structuredgrid.xspace().min() ),
