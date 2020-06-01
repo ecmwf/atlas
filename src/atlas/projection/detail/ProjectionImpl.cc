@@ -70,8 +70,7 @@ struct DerivateBackwards final : ProjectionImpl::Derivate {
 
 struct DerivateCentral final : ProjectionImpl::Derivate {
     DerivateCentral( const ProjectionImpl& p, PointXY A, PointXY B, double h, double refLongitude ) :
-        Derivate( p, A, B, h, refLongitude ),
-        H2_{PointXY::mul( H_, 0.5 )} {}
+        Derivate( p, A, B, h, refLongitude ), H2_{PointXY::mul( H_, 0.5 )} {}
     const PointXY H2_;
     PointLonLat d( PointXY P ) const override {
         PointLonLat A( xy2lonlat( PointXY::sub( P, H2_ ) ) );
@@ -249,11 +248,13 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
     // use central longitude as absolute reference (keep points within +-180 longitude range)
     const auto centre = lonlat( {( rect.xmin() + rect.xmax() ) / 2., ( rect.ymin() + rect.ymax() ) / 2.} );
 
-    
+
     const std::string derivative = "central";
-    constexpr double h           = 0.5e-6;  // precision to microdegrees
+    constexpr double h_deg       = 0.5e-6;  // precision to microdegrees
+    constexpr double h_meters    = 0.5e-1;  // precision to decimeters
     constexpr size_t Niter       = 100;
 
+    const double h = units() == "degrees" ? h_deg : h_meters;
 
     // 1. determine box from projected corners
 
@@ -264,7 +265,7 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
     for ( auto& p : corners ) {
         auto q = lonlat( p );
         longitude_in_range( centre.lon(), q.lon() );
-        bounds.extend( q, PointLonLat{h, h} );
+        bounds.extend( q, PointLonLat{h_deg, h_deg} );
     }
 
 
@@ -298,7 +299,7 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
                 }
 
                 // update extrema, extended by 'a small amount' (arbitrary)
-                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{0, h} );
+                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{0, h_deg} );
             }
         }
     }
@@ -333,7 +334,7 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
                 }
 
                 // update extrema, extended by 'a small amount' (arbitrary)
-                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{h, 0} );
+                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{h_deg, 0} );
             }
         }
     }

@@ -27,8 +27,7 @@ namespace detail {
 
 template <typename Rotation>
 LonLatProjectionT<Rotation>::LonLatProjectionT( const eckit::Parametrisation& config ) :
-    ProjectionImpl(),
-    rotation_( config ) {}
+    ProjectionImpl(), rotation_( config ) {}
 
 template <>
 void LonLatProjectionT<NotRotated>::xy2lonlat( double[] ) const {}

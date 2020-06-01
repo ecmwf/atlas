@@ -148,7 +148,7 @@ CASE( "test_grid_creation_from_GRIB" ) {
         EXPECT_APPROX_EQ( bb.west(), -90., tolerance );
         EXPECT_APPROX_EQ( bb.east(), 41.882046, tolerance );
         EXPECT_APPROX_EQ( bb.south(), 3.818356, tolerance );
-        EXPECT_APPROX_EQ( bb.north(), 76.040329, tolerance );
+        EXPECT_APPROX_EQ( bb.north(), 76.040387, tolerance );
         for ( PointLonLat p : g.lonlat() ) {
             EXPECT( bb.contains( p ) );
         }
