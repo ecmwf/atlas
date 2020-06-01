@@ -354,7 +354,13 @@ void Structured::crop( const Domain& dom ) {
     }
 
     ATLAS_ASSERT( dom.units() == projection().units() );
+
     auto rect_domain = RectangularDomain( dom );
+
+    bool samerows = true;
+
+    for (idx_t j = 0; samerows && (j < ny ()); j++)
+      samerows = samerows && (xmin (j) == xmin (0)) && (dx (j) == dx (0));
 
     if ( !rect_domain ) {
         std::stringstream errmsg;
@@ -389,17 +395,27 @@ void Structured::crop( const Domain& dom ) {
     // Cropping in X
     Normalise normalise( rect_domain );
     for ( idx_t j = jmin, jcropped = 0; j <= jmax; ++j, ++jcropped ) {
-        idx_t n = 0;
-        for ( idx_t i = 0; i < nx( j ); ++i ) {
-            const double _x = normalise( x( i, j ) );
-            if ( rect_domain.contains_x( _x ) ) {
-                cropped_xmin[jcropped] = std::min( cropped_xmin[jcropped], _x );
-                cropped_xmax[jcropped] = std::max( cropped_xmax[jcropped], _x );
-                ++n;
+        if ((j == jmin) || (! samerows))
+          {
+            idx_t n = 0;
+            for ( idx_t i = 0; i < nx( j ); ++i ) {
+                const double _x = normalise( x( i, j ) );
+                if ( rect_domain.contains_x( _x ) ) {
+                    cropped_xmin[jcropped] = std::min( cropped_xmin[jcropped], _x );
+                    cropped_xmax[jcropped] = std::max( cropped_xmax[jcropped], _x );
+                    ++n;
+                }
             }
-        }
-        cropped_nx[jcropped] = n;
+            cropped_nx[jcropped] = n;
+          }
+        else
+          {
+            cropped_xmin[jcropped] = cropped_xmin[jcropped-1];
+            cropped_xmax[jcropped] = cropped_xmax[jcropped-1];
+            cropped_nx[jcropped] = cropped_nx[jcropped-1];
+          }
     }
+
     bool endpoint = true;
     if ( ZonalBandDomain( rect_domain ) ) {
         for ( idx_t j = 0; j < cropped_ny; ++j ) {
@@ -416,6 +432,7 @@ void Structured::crop( const Domain& dom ) {
     idx_t cropped_nxmin, cropped_nxmax;
     cropped_nxmin = cropped_nxmax = cropped_nx.front();
 
+
     for ( idx_t j = 1; j < cropped_ny; ++j ) {
         cropped_nxmin = std::min( cropped_nx[j], cropped_nxmin );
         cropped_nxmax = std::max( cropped_nx[j], cropped_nxmax );
@@ -424,8 +441,15 @@ void Structured::crop( const Domain& dom ) {
 
     std::vector<Spacing> cropped_xspacings( cropped_ny );
     for ( idx_t j = 0; j < cropped_ny; ++j ) {
-        cropped_xspacings[j] = new spacing::LinearSpacing( cropped_xmin[j], cropped_xmax[j], cropped_nx[j], endpoint );
+        spacing::LinearSpacing * sp = nullptr;
+        idx_t i = j - 1;
+        if ((j > 0) && samerows)
+          sp = dynamic_cast<spacing::LinearSpacing*> (cropped_xspacings[i].get ());
+        else
+          sp = new spacing::LinearSpacing( cropped_xmin[j], cropped_xmax[j], cropped_nx[j], endpoint );
+        cropped_xspacings[j] = sp;
     }
+
     XSpace cropped_xspace( cropped_xspacings );
 
     for ( idx_t j = 0; j < cropped_ny; ++j ) {
