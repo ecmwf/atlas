@@ -72,7 +72,9 @@ public:
         double length;
         bool endpoint;
         double step;
+        Params() = default;
         Params( const eckit::Parametrisation& p );
+        Params( double start, double end, long N, bool endpoint );
     };
 
 protected:

@@ -26,6 +26,7 @@
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/UnitSphere.h"
@@ -110,9 +111,12 @@ template Structured::XSpace::XSpace( const std::array<double, 2>& interval, cons
 Structured::XSpace::XSpace( const std::array<double, 2>& interval, std::initializer_list<int>&& N, bool endpoint ) :
     XSpace( interval, std::vector<int>{N}, endpoint ) {}
 
-Structured::XSpace::XSpace( const Spacing& spacing ) : impl_( new Implementation( spacing ) ) {}
+Structured::XSpace::XSpace( const Spacing& spacing, idx_t ny ) : impl_( new Implementation( spacing, ny ) ) {}
 
 Structured::XSpace::XSpace( const std::vector<Spacing>& spacings ) : impl_( new Implementation( spacings ) ) {}
+
+Structured::XSpace::XSpace( const std::vector<spacing::LinearSpacing::Params>& spacings ) :
+    impl_( new Implementation( spacings ) ) {}
 
 Structured::XSpace::XSpace( const Config& config ) : impl_( new Implementation( config ) ) {}
 
@@ -209,6 +213,28 @@ Structured::XSpace::Implementation::Implementation( const std::vector<Config>& c
     }
 }
 
+Structured::XSpace::Implementation::Implementation( const std::vector<spacing::LinearSpacing::Params>& spacings ) {
+    reserve( spacings.size() );
+
+    nxmin_ = std::numeric_limits<idx_t>::max();
+    nxmax_ = 0;
+    min_   = std::numeric_limits<double>::max();
+    max_   = -std::numeric_limits<double>::max();
+
+    for ( idx_t j = 0; j < ny(); ++j ) {
+        const auto& xspace = spacings[j];
+        xmin_.push_back( xspace.start );
+        xmax_.push_back( xspace.end );
+        nx_.push_back( xspace.N );
+        dx_.push_back( xspace.step );
+        nxmin_ = std::min( nxmin_, nx_[j] );
+        nxmax_ = std::max( nxmax_, nx_[j] );
+        min_   = std::min( min_, xspace.start );
+        max_   = std::max( max_, xspace.end );
+    }
+}
+
+
 void Structured::XSpace::Implementation::Implementation::reserve( idx_t ny ) {
     ny_ = ny;
     nx_.reserve( ny );
@@ -244,14 +270,17 @@ Structured::XSpace::Implementation::Implementation( const std::array<double, 2>&
     Implementation( interval, std::vector<int>{N}, endpoint ) {}
 
 
-Structured::XSpace::Implementation::Implementation( const Spacing& spacing ) :
-    ny_( 1 ), nx_( ny_, spacing.size() ), xmin_( ny_, spacing.min() ), xmax_( ny_, spacing.max() ), dx_( ny_ ) {
+Structured::XSpace::Implementation::Implementation( const Spacing& spacing, idx_t ny ) :
+    ny_( ny ), nx_( ny_, spacing.size() ), xmin_( ny_, spacing.min() ), xmax_( ny_, spacing.max() ), dx_( ny_ ) {
     const spacing::LinearSpacing& linspace = dynamic_cast<const spacing::LinearSpacing&>( *spacing.get() );
     dx_[0]                                 = linspace.step();
-    nxmax_                                 = nx_[0];
-    nxmin_                                 = nx_[0];
-    min_                                   = spacing.min();
-    max_                                   = spacing.max();
+    for ( idx_t j = 1; j < ny_; ++j ) {
+        dx_[j] = dx_[0];
+    }
+    nxmax_ = nx_[0];
+    nxmin_ = nx_[0];
+    min_   = spacing.min();
+    max_   = spacing.max();
 }
 
 Structured::XSpace::Implementation::Implementation( const std::vector<Spacing>& spacings ) :
@@ -347,6 +376,8 @@ private:
 }  // namespace
 
 void Structured::crop( const Domain& dom ) {
+    using eckit::types::is_approximately_equal;
+
     if ( !dom ) {
         domain_ =
             RectangularDomain( {xspace_.min(), xspace_.max()}, {yspace_.min(), yspace_.max()}, projection_.units() );
@@ -354,13 +385,7 @@ void Structured::crop( const Domain& dom ) {
     }
 
     ATLAS_ASSERT( dom.units() == projection().units() );
-
     auto rect_domain = RectangularDomain( dom );
-
-    bool samerows = true;
-
-    for (idx_t j = 0; samerows && (j < ny ()); j++)
-      samerows = samerows && (xmin (j) == xmin (0)) && (dx (j) == dx (0));
 
     if ( !rect_domain ) {
         std::stringstream errmsg;
@@ -392,37 +417,141 @@ void Structured::crop( const Domain& dom ) {
     std::vector<double> cropped_xmax( cropped_ny, -std::numeric_limits<double>::max() );
     std::vector<idx_t> cropped_nx( cropped_ny );
 
-    // Cropping in X
     Normalise normalise( rect_domain );
-    for ( idx_t j = jmin, jcropped = 0; j <= jmax; ++j, ++jcropped ) {
-        if ((j == jmin) || (! samerows))
-          {
-            idx_t n = 0;
-            for ( idx_t i = 0; i < nx( j ); ++i ) {
-                const double _x = normalise( x( i, j ) );
-                if ( rect_domain.contains_x( _x ) ) {
-                    cropped_xmin[jcropped] = std::min( cropped_xmin[jcropped], _x );
-                    cropped_xmax[jcropped] = std::max( cropped_xmax[jcropped], _x );
-                    ++n;
+
+    auto index_of_smallest_normalised_x = [&]( idx_t j ) {
+        // Compute point of normalisation with bisection method
+        idx_t imin        = 0;
+        idx_t imax        = nx( j ) - 1;
+        auto normalised_x = [&]( idx_t i ) { return normalise( x( i, j ) ); };
+        double xmin       = normalised_x( imin );
+        double xmax       = normalised_x( imax );
+        idx_t max_iter    = nx( j );
+        idx_t iter        = 0;
+        while ( xmax < xmin && imax != imin + 1 ) {
+            idx_t imid = ( imin + imax ) / 2;
+            if ( normalised_x( imid ) > xmin ) {
+                imin = imid;
+                xmin = normalised_x( imin );
+            }
+            else {
+                imax = imid;
+                xmax = normalised_x( imax );
+            }
+            if ( iter == max_iter ) {
+                ATLAS_THROW_EXCEPTION( "Could not converge" );
+            }
+            ++iter;
+        }
+        return ( xmin < xmax ? imin : imax );
+    };
+
+    bool is_regular = [&]() {
+        if ( reduced() ) {
+            return false;
+        }
+        long _nx     = nx( jmin );
+        double _dx   = _nx > 0 ? dx( jmin ) : std::numeric_limits<double>::max();
+        double _xmin = _nx > 0 ? xmin( jmin ) : std::numeric_limits<double>::max();
+
+        for ( idx_t j = jmin; j <= jmax; ++j ) {
+            if ( nx( j ) != _nx ) {
+                return false;
+            }
+            if ( dx( j ) != _dx ) {
+                return false;
+            }
+            if ( xmin( j ) != _xmin ) {
+                return false;
+            }
+        }
+        return true;
+    }();
+
+    // Cropping in X
+    bool endpoint = true;
+    {
+        bool do_normalise = false;
+        for ( idx_t j = jmin, jcropped = 0; j <= jmax; ++j, ++jcropped ) {
+            double x_first = x( 0, j );
+            double x_last  = x( nx( j ) - 1, j );
+            if ( normalise( x_first ) != x_first || normalise( x_last ) != x_last ) {
+                do_normalise = true;
+            }
+        }
+
+        if ( rect_domain.zonal_band() ) {
+            for ( idx_t j = jmin, jcropped = 0; j <= jmax; ++j, ++jcropped ) {
+                if ( is_regular && jcropped > 0 ) {
+                    cropped_xmin[jcropped] = cropped_xmin[0];
+                    cropped_xmax[jcropped] = cropped_xmax[0];
+                    cropped_nx[jcropped]   = cropped_nx[0];
+                    continue;
+                }
+                idx_t i_xmin           = index_of_smallest_normalised_x( j );
+                idx_t i_xmax           = i_xmin == 0 ? nx( j ) - 1 : i_xmin - 1;
+                cropped_xmin[jcropped] = normalise( x( i_xmin, j ) );
+                cropped_xmax[jcropped] = normalise( x( i_xmax, j ) );
+                cropped_nx[jcropped]   = nx( j );
+                if ( is_approximately_equal( cropped_xmax[jcropped] + cropped_dx[jcropped],
+                                             cropped_xmin[jcropped] + 360., 1.e-10 ) ) {
+                    cropped_xmax[jcropped] = cropped_xmin[jcropped] + 360.;
+                    endpoint               = false;
                 }
             }
-            cropped_nx[jcropped] = n;
-          }
-        else
-          {
-            cropped_xmin[jcropped] = cropped_xmin[jcropped-1];
-            cropped_xmax[jcropped] = cropped_xmax[jcropped-1];
-            cropped_nx[jcropped] = cropped_nx[jcropped-1];
-          }
-    }
+        }
+        else {
+            for ( idx_t j = jmin, jcropped = 0; j <= jmax; ++j, ++jcropped ) {
+                if ( is_regular && jcropped > 0 ) {
+                    cropped_xmin[jcropped] = cropped_xmin[0];
+                    cropped_xmax[jcropped] = cropped_xmax[0];
+                    cropped_nx[jcropped]   = cropped_nx[0];
+                    continue;
+                }
 
-    bool endpoint = true;
-    if ( ZonalBandDomain( rect_domain ) ) {
-        for ( idx_t j = 0; j < cropped_ny; ++j ) {
-            if ( eckit::types::is_approximately_equal( cropped_xmax[j] + cropped_dx[j], cropped_xmin[j] + 360.,
-                                                       1.e-10 ) ) {
-                cropped_xmax[j] = cropped_xmin[j] + 360.;
-                endpoint        = false;
+                idx_t i_xmin = index_of_smallest_normalised_x( j );
+
+                for ( idx_t n = 0; n < nx( j ); ++n ) {
+                    idx_t i = i_xmin + n;
+                    if ( i >= nx( j ) ) {
+                        i -= nx( j );
+                    }
+                    double xmin = normalise( x( i, j ) );
+                    if ( rect_domain.contains_x( xmin ) ) {
+                        i_xmin                 = i;
+                        cropped_xmin[jcropped] = xmin;
+                        break;
+                    }
+                }
+                double xmin    = normalise( x( i_xmin, j ) );
+                idx_t i_xmax   = i_xmin;
+                idx_t max_iter = nx( j );
+                idx_t n        = 1;
+                ATLAS_ASSERT( rect_domain.contains_x( xmin ) );
+
+                while ( true ) {
+                    idx_t i_xmax_next = i_xmax + 1;
+                    if ( i_xmax_next == nx( j ) ) {
+                        i_xmax_next -= nx( j );
+                    }
+                    if ( i_xmax_next == i_xmin ) {
+                        break;
+                    }
+                    double xmax_next = normalise( x( i_xmax_next, j ) );
+
+                    if ( not rect_domain.contains_x( xmax_next ) ) {
+                        break;
+                    }
+                    if ( n == max_iter ) {
+                        ATLAS_THROW_EXCEPTION( "Could not converge" );
+                    }
+                    i_xmax++;
+                    n++;
+                }
+
+                cropped_xmin[jcropped] = normalise( x( i_xmin, j ) );
+                cropped_xmax[jcropped] = normalise( x( i_xmax, j ) );
+                cropped_nx[jcropped]   = std::max( 1, n );
             }
         }
     }
@@ -432,25 +561,28 @@ void Structured::crop( const Domain& dom ) {
     idx_t cropped_nxmin, cropped_nxmax;
     cropped_nxmin = cropped_nxmax = cropped_nx.front();
 
-
     for ( idx_t j = 1; j < cropped_ny; ++j ) {
         cropped_nxmin = std::min( cropped_nx[j], cropped_nxmin );
         cropped_nxmax = std::max( cropped_nx[j], cropped_nxmax );
+        if ( is_regular ) {
+            break;
+        }
     }
     idx_t cropped_npts = std::accumulate( cropped_nx.begin(), cropped_nx.end(), idx_t{0} );
 
-    std::vector<Spacing> cropped_xspacings( cropped_ny );
-    for ( idx_t j = 0; j < cropped_ny; ++j ) {
-        spacing::LinearSpacing * sp = nullptr;
-        idx_t i = j - 1;
-        if ((j > 0) && samerows)
-          sp = dynamic_cast<spacing::LinearSpacing*> (cropped_xspacings[i].get ());
-        else
-          sp = new spacing::LinearSpacing( cropped_xmin[j], cropped_xmax[j], cropped_nx[j], endpoint );
-        cropped_xspacings[j] = sp;
+
+    XSpace cropped_xspace;
+    if ( is_regular ) {
+        cropped_xspace = XSpace( LinearSpacing{cropped_xmin[0], cropped_xmax[0], cropped_nx[0], endpoint}, cropped_ny );
+    }
+    else {
+        std::vector<spacing::LinearSpacing::Params> cropped_xspacing_params( cropped_ny );
+        for ( idx_t j = 0; j < cropped_ny; ++j ) {
+            cropped_xspacing_params[j] = {cropped_xmin[j], cropped_xmax[j], cropped_nx[j], endpoint};
+        }
+        cropped_xspace = XSpace( cropped_xspacing_params );
     }
 
-    XSpace cropped_xspace( cropped_xspacings );
 
     for ( idx_t j = 0; j < cropped_ny; ++j ) {
         ATLAS_ASSERT( eckit::types::is_approximately_equal( cropped_xspace.xmin()[j], cropped_xmin[j] ) );
