@@ -96,6 +96,12 @@ foreach( test connectivity stream_connectivity elements ll meshgen3d rgg )
   )
 endforeach()
 
+ecbuild_add_test( TARGET atlas_test_healpixmeshgen
+  SOURCES test_healpixmeshgen.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 
 ecbuild_add_executable( TARGET atlas_test_mesh_reorder
   SOURCES  test_mesh_reorder.cc

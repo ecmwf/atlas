@@ -143,6 +143,8 @@ grid/detail/grid/LonLat.h
 grid/detail/grid/LonLat.cc
 grid/detail/grid/Regional.h
 grid/detail/grid/Regional.cc
+grid/detail/grid/Healpix.h
+grid/detail/grid/Healpix.cc
 
 grid/detail/distribution/DistributionImpl.h
 grid/detail/distribution/DistributionImpl.cc
@@ -350,6 +352,8 @@ meshgenerator/detail/MeshGeneratorImpl.cc
 meshgenerator/detail/MeshGeneratorImpl.h
 meshgenerator/detail/MeshGeneratorInterface.cc
 meshgenerator/detail/MeshGeneratorInterface.h
+meshgenerator/detail/HealpixMeshGenerator.h
+meshgenerator/detail/HealpixMeshGenerator.cc
 )
 
 list( APPEND atlas_output_srcs
