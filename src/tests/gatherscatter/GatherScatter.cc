@@ -276,18 +276,26 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
   byte_v buf_loc (tloc.fld.back ().off);
   processLocBuffer (floc, tloc, buf_loc, pack);
   
+  ATLAS_TRACE_SCOPE ("barrier")
+  {
   comm.barrier ();
+  }
   
   std::vector<eckit::mpi::Request> rqs = postSend (buf_loc, tloc);
 
+  ATLAS_TRACE_SCOPE ("waitRecv")
+  {
   for (auto & r : rqr)
     comm.wait (r);
+  }
 
   processGloBuffer (fglo, tglo, buf_glo, unpack);
 
+  ATLAS_TRACE_SCOPE ("waitSend")
+  {
   for (auto & r : rqs)
     comm.wait (r);
-
+  };
 
 }
 }
@@ -312,17 +320,26 @@ ATLAS_TRACE_SCOPE ("GatherScatter::scatter")
   byte_v buf_glo (tglo.prc.back ().off);
   processGloBuffer (fglo, tglo, buf_glo, pack);
   
+  ATLAS_TRACE_SCOPE ("barrier")
+  {
   comm.barrier ();
+  }
   
   std::vector<eckit::mpi::Request> rqs = postSend (buf_glo, tglo);
 
+  ATLAS_TRACE_SCOPE ("waitRecv")
+  {
   for (auto & r : rqr)
-    comm.wait (r);
+    comm.wait (r); 
+  }
 
   processLocBuffer (floc, tloc, buf_loc, unpack);
 
+  ATLAS_TRACE_SCOPE ("waitSend")
+  {
   for (auto & r : rqs)
     comm.wait (r);
+  }
 }
 }
 
