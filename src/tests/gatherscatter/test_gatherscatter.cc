@@ -90,12 +90,11 @@ CASE( "test_gatherscatter_NPROMAxNFLEVGxNGPBLKS" )
     if (! eckit::Resource<bool> ("--NPROMAxNFLEVGxNGPBLKS", false))
       return;
 
-    int nproma = eckit::Resource<int> ("--nproma", 8);
+    int nproma = eckit::Resource<int> ("--nproma", 24);
     int nflevg = eckit::Resource<int> ("--nflevg", 10);
     bool gather (eckit::Resource<bool> ("--gather", false));
     bool scatter (eckit::Resource<bool> ("--scatter", false));
     bool check (eckit::Resource<bool> ("--check", false));
-
 
     atlas::StructuredGrid grid (eckit::Resource<std::string> ("--grid", "N16"));
 
@@ -148,20 +147,7 @@ CASE( "test_gatherscatter_NPROMAxNFLEVGxNGPBLKS" )
     };
 
     // Distributed field, Fortran dimensions (1:NPROMA,1:NFLEVG,1:NGPBLKS)
-    atlas::Field floc ("field", atlas::array::DataType::kind<T> (), {nproma, nflevg, ngpblks});
-
-    auto vloc = array::make_view<T,3> (floc);
-
-    if (check)
-      {
-        for (int jblk = 0; jblk < ngpblks; jblk++)
-          {
-            const int jidia = 0, jfdia = std::min (nproma, ngptot - jblk * nproma);
-            for (int jlev = 0; jlev < nflevg; jlev++)
-              for (int jlon = jidia; jlon < jfdia; jlon++)
-                vloc (jlon, jlev, jblk) = func (jlev, irank, jlon + jblk * nproma);
-          }
-      }
+    atlas::Field floc ("field", atlas::array::DataType::kind<T> (), {ngpblks, nflevg, nproma});
 
     // Gather our multi-field, multi-level Atlas field to a set of fields (1:NGPTOTG)
     atlas::FieldSet sglo;
@@ -179,8 +165,71 @@ CASE( "test_gatherscatter_NPROMAxNFLEVGxNGPBLKS" )
     std::vector<ioFieldDesc> dloc;
     std::vector<ioFieldDesc> dglo;
 
-    createIoFieldDescriptors (sglo, dglo);    // Default for grid dimension is inner dimension
+    createIoFieldDescriptors (sglo, dglo); // Default for grid dimension is inner dimension
+    createIoFieldDescriptorsBlocked (floc, dloc, 0, 2, fs.sizeOwned ()); // NGPBLKS dimension, NPROMA dimension, NGPTOT
 
+    // Set target processor for all fields
+    for (auto & d : dglo)
+      d.field ().metadata ().get ("owner", d.owner ());
+
+    GatherScatter gs (dist);
+
+
+    auto walkLoc = [&floc,ngpblks,nproma,nflevg,ngptot,func,irank] (std::function<void(T &, T)> f)
+    {
+      auto vloc = array::make_view<T,3> (floc);
+      for (int jblk = 0; jblk < ngpblks; jblk++)
+        {
+          const int jidia = 0, jfdia = std::min (nproma, ngptot - jblk * nproma);
+          for (int jlev = 0; jlev < nflevg; jlev++)
+            for (int jlon = jidia; jlon < jfdia; jlon++)
+              f (vloc (jblk, jlev, jlon), func (jlev, irank, jlon + jblk * nproma));
+        }
+    };
+
+    auto walkGlo = [&sglo,nflevg,&grid,&irank,&prc,&ind,func] (std::function<void(T &, T)> f)
+    {
+      for (int jlev = 0; jlev < nflevg; jlev++)
+        {
+          auto fglo = sglo[jlev];
+          int owner;
+          fglo.metadata ().get ("owner", owner);
+          if (irank == owner)
+            {
+              auto vglo = array::make_view<T,1> (fglo);
+              for (int jglo = 0; jglo < grid.size (); jglo++)
+                f (vglo (jglo), func (jlev, prc[jglo], ind[jglo]));
+            }
+        }
+    };
+
+    auto set   = [](T & v, T r) { v = r; };
+    auto cmp   = [](T & v, T r) { EXPECT (v == r); };
+    auto clear = [](T & v, T r) { v = 0; };
+
+    if (gather)
+      {
+        if (check)
+          {
+            walkLoc (set);
+            walkGlo (clear);
+          }
+        gs.gather (dloc, dglo);
+        if (check)
+          walkGlo (cmp);
+      }
+
+   if (scatter)
+     {
+       if (check)
+         {
+           walkGlo (set);
+           walkLoc (clear);
+         }
+       gs.scatter (dglo, dloc);
+       if (check)
+         walkGlo (cmp);
+     }
 }
 
 CASE( "test_gatherscatter_NFLEVGxNGPTOT" ) 

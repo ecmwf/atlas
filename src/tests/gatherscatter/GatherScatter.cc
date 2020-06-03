@@ -172,7 +172,7 @@ void GatherScatter::processLocBuffer (ioFieldDesc_v & floc, const fldprc_t & tlo
             const int jidia = 0, jfdia = std::min (nproma, ngptot - jblk * nproma);
             for (atlas::idx_t jlon = jidia; jlon < jfdia; jlon++)
               {
-                atlas::idx_t k = (jlon+jblk*ngptot)*dlength;
+                atlas::idx_t k = (jlon+jblk*nproma)*dlength;
                 for (int j = 0; j < dlength; j++)
                   a (buffer[k+j], f (jblk, jlon, j));
               }
@@ -280,7 +280,7 @@ ATLAS_TRACE_SCOPE ("GatherScatter::gather")
   fldprc_t tloc = computeTLoc (floc);
   byte_v buf_loc (tloc.fld.back ().off);
   processLocBuffer (floc, tloc, buf_loc, pack);
-  
+
   ATLAS_TRACE_SCOPE ("barrier")
   {
   comm.barrier ();
