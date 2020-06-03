@@ -163,15 +163,20 @@ void GatherScatter::processLocBuffer (ioFieldDesc_v & floc, const fldprc_t & tlo
         auto & f = floc[jfld];
         byte * buffer = &buf_loc[tloc.fld[jfld].off];
         const size_t dlength = f.dlength ();
-        const size_t ngptot  = f.ngptot ();
+        const size_t ngptot  = f.ngptot  ();
+        const size_t nproma  = f.nproma  ();
         const size_t ngpblks = f.ngpblks ();
 
-        auto jlonjblk2jgp = [] (atlas::idx_t jlon, atlas::idx_t jblk) { ATLAS_ASSERT (jblk == 0); return jlon; };
-
         for (atlas::idx_t jblk = 0; jblk < ngpblks; jblk++)
-        for (atlas::idx_t jlon = 0; jlon < ngptot; jlon++)
-        for (int j = 0; j < dlength; j++)
-          a (buffer[jlonjblk2jgp (jlon, jblk)*dlength+j], f (jblk, jlon, j));
+          {
+            const int jidia = 0, jfdia = std::min (nproma, ngptot - jblk * nproma);
+            for (atlas::idx_t jlon = jidia; jlon < jfdia; jlon++)
+              {
+                atlas::idx_t k = (jlon+jblk*ngptot)*dlength;
+                for (int j = 0; j < dlength; j++)
+                  a (buffer[k+j], f (jblk, jlon, j));
+              }
+          }
       }
   }
 

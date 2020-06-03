@@ -14,7 +14,7 @@ namespace
 template <int Rank>
 void listOf1DByteView (atlas::array::ArrayView<byte,Rank> & view,
                        const std::vector<atlas::idx_t> & _ind,
-                       const atlas::Field & f, size_t ldim, atlas::idx_t gdim,
+                       const atlas::Field & f, size_t ngptot, atlas::idx_t gdim,
                        std::vector<ioFieldDesc> & list)
 {
   static_assert (Rank > 2, "listOf1DByteView should be called with views having a Rank > 2");
@@ -28,7 +28,7 @@ void listOf1DByteView (atlas::array::ArrayView<byte,Rank> & view,
         {
           auto v = dropDimension (view, 1, i);
           ind.back () = i;
-          listOf1DByteView (v, ind, f, ldim, 0, list);
+          listOf1DByteView (v, ind, f, ngptot, 0, list);
         }
     }
   else
@@ -37,7 +37,7 @@ void listOf1DByteView (atlas::array::ArrayView<byte,Rank> & view,
         {
           auto v = dropDimension (view, 0, i);
           ind.back () = i;
-          listOf1DByteView (v, ind, f, ldim, gdim-1, list);
+          listOf1DByteView (v, ind, f, ngptot, gdim-1, list);
         }
     }
 }
@@ -45,20 +45,20 @@ void listOf1DByteView (atlas::array::ArrayView<byte,Rank> & view,
 template <>
 void listOf1DByteView (atlas::array::ArrayView<byte,2> & view,
                        const std::vector<atlas::idx_t> & ind,
-                       const atlas::Field & f, size_t ldim, atlas::idx_t gdim,
+                       const atlas::Field & f, size_t ngptot, atlas::idx_t gdim,
                        std::vector<ioFieldDesc> & list)
 {
   auto v = addDummyDimension (view);
-  list.push_back (ioFieldDesc (v, ind, f, ldim));
+  list.push_back (ioFieldDesc (v, ind, f, ngptot));
 }
 
 template <int Rank, typename Value>
 void createListOf1DByteView (atlas::array::ArrayView<Value,Rank> & view, 
-                             const atlas::Field & f, size_t ldim, atlas::idx_t gdim,
+                             const atlas::Field & f, size_t ngptot, atlas::idx_t gdim,
                              std::vector<ioFieldDesc> & list)
 {
   auto v = byteView (view);
-  listOf1DByteView (v, std::vector<atlas::idx_t> (), f, ldim, gdim, list);
+  listOf1DByteView (v, std::vector<atlas::idx_t> (), f, ngptot, gdim, list);
 }
 
 // Blocked (1:NPROMA,1:NGPBLKS)
@@ -67,7 +67,7 @@ template <int Rank>
 void listOf1DByteViewBlocked 
   (atlas::array::ArrayView<byte,Rank> & view,
    const std::vector<atlas::idx_t> & _ind,
-   const atlas::Field & f, atlas::idx_t bdim, atlas::idx_t gdim, size_t ldim,
+   const atlas::Field & f, atlas::idx_t bdim, atlas::idx_t gdim, size_t ngptot,
    std::vector<ioFieldDesc> & list)
 {
   static_assert (Rank > 3, "listOf1DByteViewBlocked should be called with views having a Rank > 3");
@@ -87,7 +87,7 @@ void listOf1DByteViewBlocked
             {
               auto v = dropDimension (view, 2, i);
               ind.back () = i;
-              listOf1DByteViewBlocked (v, ind, f, bdim, gdim, ldim, list);
+              listOf1DByteViewBlocked (v, ind, f, bdim, gdim, ngptot, list);
             }
         }
       else
@@ -97,7 +97,7 @@ void listOf1DByteViewBlocked
             {
               auto v = dropDimension (view, 1, i);
               ind.back () = i;
-              listOf1DByteViewBlocked (v, ind, f, bdim, gdim-1, ldim, list);
+              listOf1DByteViewBlocked (v, ind, f, bdim, gdim-1, ngptot, list);
             }
         }
     }
@@ -108,7 +108,7 @@ void listOf1DByteViewBlocked
         {
           auto v = dropDimension (view, 0, i);
           ind.back () = i;
-          listOf1DByteViewBlocked (v, ind, f, bdim-1, gdim-1, ldim, list);
+          listOf1DByteViewBlocked (v, ind, f, bdim-1, gdim-1, ngptot, list);
         }
     }
 
@@ -118,26 +118,26 @@ template <>
 void listOf1DByteViewBlocked 
   (atlas::array::ArrayView<byte,3> & view,
    const std::vector<atlas::idx_t> & ind,
-   const atlas::Field & f, atlas::idx_t bdim, atlas::idx_t gdim, size_t ldim, 
+   const atlas::Field & f, atlas::idx_t bdim, atlas::idx_t gdim, size_t ngptot, 
    std::vector<ioFieldDesc> & list)
 {
-  list.push_back (ioFieldDesc (view, ind, f, ldim));
+  list.push_back (ioFieldDesc (view, ind, f, ngptot));
 }
 
 template <int Rank, typename Value>
 void createListOf1DByteViewBlocked (atlas::array::ArrayView<Value,Rank> & view, 
                                     const atlas::Field & f, atlas::idx_t bdim, atlas::idx_t gdim, 
-                                    size_t ldim, std::vector<ioFieldDesc> & list)
+                                    size_t ngptot, std::vector<ioFieldDesc> & list)
 {
   auto v = byteView (view);
-  listOf1DByteViewBlocked (v, std::vector<atlas::idx_t> (), f, bdim, gdim, ldim, list);
+  listOf1DByteViewBlocked (v, std::vector<atlas::idx_t> (), f, bdim, gdim, ngptot, list);
 }
 
 };
 
 
 void createIoFieldDescriptorsBlocked
-  (atlas::Field & f, std::vector<ioFieldDesc> & list, atlas::idx_t bdim, atlas::idx_t gdim, size_t ldim)
+  (atlas::Field & f, std::vector<ioFieldDesc> & list, atlas::idx_t bdim, atlas::idx_t gdim, size_t ngptot)
 {
   int rank = f.rank ();
   auto type = f.datatype ();
@@ -147,12 +147,12 @@ void createIoFieldDescriptorsBlocked
 
   auto v = atlas::array::make_view<long,3> (f);
 
-  createListOf1DByteViewBlocked (v, f, bdim, gdim, ldim, list);                  
+  createListOf1DByteViewBlocked (v, f, bdim, gdim, ngptot, list);                  
 }
 
 
 void createIoFieldDescriptors 
-  (atlas::Field & f, std::vector<ioFieldDesc> & list, size_t ldim, atlas::idx_t gdim)
+  (atlas::Field & f, std::vector<ioFieldDesc> & list, size_t ngptot, atlas::idx_t gdim)
 {
   int rank = f.rank ();
   auto type = f.datatype ();
@@ -164,7 +164,7 @@ void createIoFieldDescriptors
    if (rank == __rank)                                                   \
     {                                                                    \
       auto v = atlas::array::make_view<__type,__rank> (f);               \
-      createListOf1DByteView (v, f, ldim, gdim, list);                   \
+      createListOf1DByteView (v, f, ngptot, gdim, list);                 \
       goto done;                                                         \
     }
 
@@ -189,10 +189,10 @@ done:
 }
 
 void createIoFieldDescriptors 
-  (atlas::FieldSet & s, std::vector<ioFieldDesc> & list, size_t ldim, atlas::idx_t gdim)
+  (atlas::FieldSet & s, std::vector<ioFieldDesc> & list, size_t ngptot, atlas::idx_t gdim)
 {
   for (auto & f : s)
-    createIoFieldDescriptors (f, list, ldim, gdim);
+    createIoFieldDescriptors (f, list, ngptot, gdim);
 }
 
 

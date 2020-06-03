@@ -179,7 +179,7 @@ CASE( "test_gatherscatter_NPROMAxNFLEVGxNGPBLKS" )
     std::vector<ioFieldDesc> dloc;
     std::vector<ioFieldDesc> dglo;
 
-    createIoFieldDescriptors (sglo, dglo, fs.sizeOwned ());    // Default for grid dimension is inner dimension
+    createIoFieldDescriptors (sglo, dglo);    // Default for grid dimension is inner dimension
 
 }
 
@@ -270,7 +270,7 @@ CASE( "test_gatherscatter_NFLEVGxNGPTOT" )
     std::vector<ioFieldDesc> dglo;
 
     createIoFieldDescriptors (floc, dloc, fs.sizeOwned (), 1); // Grid dimension is 1
-    createIoFieldDescriptors (sglo, dglo, fs.sizeOwned ());    // Default for grid dimension is inner dimension
+    createIoFieldDescriptors (sglo, dglo);    // Default for grid dimension is inner dimension
 
     // Set target processor for all fields
     for (auto & d : dglo)
@@ -420,7 +420,7 @@ CASE( "test_gatherscatter_NGPTOTxNFLEVG" )
     std::vector<ioFieldDesc> dglo;
 
     createIoFieldDescriptors (floc, dloc, fs.sizeOwned ());
-    createIoFieldDescriptors (sglo, dglo, fs.sizeOwned ());
+    createIoFieldDescriptors (sglo, dglo);
 
     for (auto & d : dglo)
       d.field ().metadata ().get ("owner", d.owner ());
@@ -614,7 +614,7 @@ CASE( "test_gatherscatter_simple" )
           ATLAS_TRACE_SCOPE ("create io descriptors")
           {
           createIoFieldDescriptors (sloc,  dloc, fs.sizeOwned ());
-          createIoFieldDescriptors (sglo2, dglo, grid.size ());
+          createIoFieldDescriptors (sglo2, dglo);
           for (auto & d : dglo)
             d.field ().metadata ().get ("owner", d.owner ());
           }
