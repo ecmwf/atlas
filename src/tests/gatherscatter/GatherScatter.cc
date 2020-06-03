@@ -136,7 +136,7 @@ GatherScatter::fldprc_t GatherScatter::computeTGlo (const ioFieldDesc_v & fglo) 
 
   for (atlas::idx_t jfld = 0; jfld < nfld; jfld++)
     if (lprc == fglo[jfld].owner ())
-      tglo.fld[jfld].len = fglo[jfld].dlen ();
+      tglo.fld[jfld].len = fglo[jfld].dlength ();
 
   integrate (tglo.fld);
 
@@ -162,16 +162,16 @@ void GatherScatter::processLocBuffer (ioFieldDesc_v & floc, const fldprc_t & tlo
       {
         auto & f = floc[jfld];
         byte * buffer = &buf_loc[tloc.fld[jfld].off];
-        const size_t dlen = f.dlen ();
-        const size_t ldim = f.ldim ();
-        const size_t nblk = f.nblk ();
+        const size_t dlength = f.dlength ();
+        const size_t ngptot  = f.ngptot ();
+        const size_t ngpblks = f.ngpblks ();
 
-auto jlonjblk2jgp = [] (atlas::idx_t jlon, atlas::idx_t jblk) { ATLAS_ASSERT (jblk == 0); return jlon; };
+        auto jlonjblk2jgp = [] (atlas::idx_t jlon, atlas::idx_t jblk) { ATLAS_ASSERT (jblk == 0); return jlon; };
 
-        for (atlas::idx_t jblk = 0; jblk < nblk; jblk++)
-        for (atlas::idx_t jlon = 0; jlon < ldim; jlon++)
-        for (int j = 0; j < dlen; j++)
-          a (buffer[jlonjblk2jgp (jlon, jblk)*dlen+j], f (jblk, jlon, j));
+        for (atlas::idx_t jblk = 0; jblk < ngpblks; jblk++)
+        for (atlas::idx_t jlon = 0; jlon < ngptot; jlon++)
+        for (int j = 0; j < dlength; j++)
+          a (buffer[jlonjblk2jgp (jlon, jblk)*dlength+j], f (jblk, jlon, j));
       }
   }
 

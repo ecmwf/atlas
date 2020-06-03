@@ -85,9 +85,107 @@ void prff (const std::string & name, const atlas::Field & f)
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_gatherscatter_nflevgxngptot" ) 
+CASE( "test_gatherscatter_NPROMAxNFLEVGxNGPBLKS" ) 
 {
-    if (! eckit::Resource<bool> ("--nflevgxngptot", false))
+    if (! eckit::Resource<bool> ("--NPROMAxNFLEVGxNGPBLKS", false))
+      return;
+
+    int nproma = eckit::Resource<int> ("--nproma", 8);
+    int nflevg = eckit::Resource<int> ("--nflevg", 10);
+    bool gather (eckit::Resource<bool> ("--gather", false));
+    bool scatter (eckit::Resource<bool> ("--scatter", false));
+    bool check (eckit::Resource<bool> ("--check", false));
+
+
+    atlas::StructuredGrid grid (eckit::Resource<std::string> ("--grid", "N16"));
+
+    auto & comm = mpi::comm ();
+    int irank = comm.rank ();
+    int nproc = comm.size ();
+
+    atlas::grid::Distribution dist (grid, atlas::grid::Partitioner ("equal_regions"));
+    atlas::functionspace::StructuredColumns fs (grid, dist, atlas::util::Config ("halo", 1) 
+                                              | atlas::util::Config ("periodic_points", true));
+
+    int ngptot = fs.sizeOwned ();
+    int ngpblks = ngptot / nproma;
+
+    if (fs.sizeOwned () % nproma)
+      ngpblks++;
+
+    std::vector<int> prc, ind;
+
+    if (check)
+      getprcind (fs, dist, prc, ind);
+
+    atlas::FieldSet sloc;
+
+    using T = long;
+
+    const int ind_bit = 21, ind_off =  0;
+    const int prc_bit = 21, prc_off = ind_off + ind_bit;
+    const int lev_bit = 22, lev_off = prc_off + prc_bit;
+  
+    if (check)
+      {
+        ATLAS_ASSERT (fs.sizeOwned () < (1 << ind_bit));
+        ATLAS_ASSERT (nproc           < (1 << prc_bit));
+        ATLAS_ASSERT (nflevg          < (1 << lev_bit));
+     }
+
+    using T = long;
+
+    auto func = [check,ind_off,prc_off,lev_off] (int lev, int prc, int ind)
+    {
+      long v = 0;
+      if (check)
+        {
+          v = (static_cast<long> (lev) << lev_off) 
+            + (static_cast<long> (prc) << prc_off) 
+            + (static_cast<long> (ind) << ind_off);
+        }
+      return v;
+    };
+
+    // Distributed field, Fortran dimensions (1:NPROMA,1:NFLEVG,1:NGPBLKS)
+    atlas::Field floc ("field", atlas::array::DataType::kind<T> (), {nproma, nflevg, ngpblks});
+
+    auto vloc = array::make_view<T,3> (floc);
+
+    if (check)
+      {
+        for (int jblk = 0; jblk < ngpblks; jblk++)
+          {
+            const int jidia = 0, jfdia = std::min (nproma, ngptot - jblk * nproma);
+            for (int jlev = 0; jlev < nflevg; jlev++)
+              for (int jlon = jidia; jlon < jfdia; jlon++)
+                vloc (jlon, jlev, jblk) = func (jlev, irank, jlon + jblk * nproma);
+          }
+      }
+
+    // Gather our multi-field, multi-level Atlas field to a set of fields (1:NGPTOTG)
+    atlas::FieldSet sglo;
+
+    for (int jlev = 0; jlev < nflevg; jlev++)
+      {
+        int owner = jlev % nproc;  // RR distribution
+        std::string name = std::string ("#") + std::to_string (jlev);
+        atlas::Field fglo = atlas::Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
+        fglo.metadata ().set ("owner", owner);
+        sglo.add (fglo);
+      }
+
+    // IO descriptors
+    std::vector<ioFieldDesc> dloc;
+    std::vector<ioFieldDesc> dglo;
+
+    createIoFieldDescriptors (sglo, dglo, fs.sizeOwned ());    // Default for grid dimension is inner dimension
+
+}
+
+CASE( "test_gatherscatter_NFLEVGxNGPTOT" ) 
+{
+    if (! eckit::Resource<bool> ("--NFLEVGxNGPTOT", false))
       return;
 
     int nfield = eckit::Resource<int> ("--fields", 3);
@@ -242,9 +340,9 @@ CASE( "test_gatherscatter_nflevgxngptot" )
 
 }
 
-CASE( "test_gatherscatter_ngptotxnflevg" ) 
+CASE( "test_gatherscatter_NGPTOTxNFLEVG" ) 
 {
-    if (! eckit::Resource<bool> ("--ngptotxnflevg", false))
+    if (! eckit::Resource<bool> ("--NGPTOTxNFLEVG", false))
       return;
     int nfield = eckit::Resource<int> ("--fields", 3);
     int nflevg = eckit::Resource<int> ("--nflevg", 10);

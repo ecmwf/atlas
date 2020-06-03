@@ -13,14 +13,15 @@ class ioFieldDesc
 public:
   ioFieldDesc (atlas::array::ArrayView<byte,3> & v, 
                const std::vector<atlas::idx_t> & ind,
-               const atlas::Field & f, size_t ldim) 
-               : _v (v), _ind (ind), _f (f), _ldim (ldim) 
+               const atlas::Field & f, size_t ngptot) 
+               : _v (v), _ind (ind), _f (f), _ngptot (ngptot) 
   {
-    _nblk = _v.shape (0);
-    _dlen = _v.shape (2);
-    if (_ldim == 0)
-      _ldim = _v.shape (1);
-    _size = _nblk * _ldim * _dlen;
+    _ngpblks = _v.shape (0);
+    _nproma  = _v.shape (1);
+    _dlength = _v.shape (2);
+    if (_ngptot == 0)
+      _ngptot = _ngpblks * _nproma;
+    _size = _ngptot * _dlength;
   }
 
 
@@ -54,19 +55,24 @@ public:
     return _size;
   }
 
-  size_t nblk () const
+  size_t ngpblks () const
   {
-    return _nblk;
+    return _ngpblks;
   }
 
-  size_t ldim () const
+  size_t ngptot () const
   {
-    return _ldim;
+    return _ngptot;
   }
 
-  size_t dlen () const
+  size_t nproma () const
   {
-    return _dlen;
+    return _nproma;
+  }
+
+  size_t dlength () const
+  {
+    return _dlength;
   }
 
   byte & operator () (int jblk, int jlon, int k)
@@ -84,11 +90,15 @@ private:
   const std::vector<atlas::idx_t> _ind;
   const atlas::Field & _f;
   int _owner = 0;
-  size_t _ldim;
-  size_t _nblk;
-  size_t _size;
-  size_t _dlen;
+  size_t _ngptot;   // Total number of elements in a distributed field
+  size_t _nproma;   // Blocking factor; may be equal to NGPTOT
+  size_t _ngpblks;  // Number of blocks
+  size_t _size;     // Size in bytes
+  size_t _dlength;  // Element length
 };
 
-void createIoFieldDescriptors (atlas::Field & f, std::vector<ioFieldDesc> & list, size_t ldim = 0, atlas::idx_t gdim = -1);
-void createIoFieldDescriptors (atlas::FieldSet & s, std::vector<ioFieldDesc> & list, size_t ldim = 0, atlas::idx_t gdim = -1);
+void createIoFieldDescriptorsBlocked 
+  (atlas::Field & f, std::vector<ioFieldDesc> & list, atlas::idx_t bdim, atlas::idx_t gdim = -1, size_t ngptot = 0);
+
+void createIoFieldDescriptors (atlas::Field & f, std::vector<ioFieldDesc> & list, size_t ngptot = 0, atlas::idx_t gdim = -1);
+void createIoFieldDescriptors (atlas::FieldSet & s, std::vector<ioFieldDesc> & list, size_t ngptot = 0, atlas::idx_t gdim = -1);

@@ -17,96 +17,55 @@ void prss (const std::string & t, const V & v)
 
 int main (int argc, char * argv[])
 {
-  atlas::Field f ("f", atlas::array::DataType::kind<long> (), {5, 7});
+  const int ngpblks = 10, nflevg = 20, nproma = 16;
 
-  auto v = atlas::array::make_view<long,2> (f);
+  const int ngptot = ngpblks * nproma;
 
-  prss ("v", v);
+  atlas::Field f ("f", atlas::array::DataType::kind<long> (), {ngpblks, nflevg, nproma});
 
-  for (int i = 0; i < v.shape ()[0]; i++)
-  for (int j = 0; j < v.shape ()[1]; j++)
-    v (i, j) = i * 100 + j;
+  auto v = atlas::array::make_view<long,3> (f);
 
-
-  printf (" &v(0,0) = 0x%llx\n", &v(0,0));
-  printf (" &v(1,0) = 0x%llx\n", &v(1,0));
-  printf (" &v(0,1) = 0x%llx\n", &v(0,1));
-
-  auto c = byteView (v);
-  
-  std::vector<ioFieldDesc> list;
-
-  createIoFieldDescriptors (f, list);
-
-  std::cout << " list.size () = " << list.size () << std::endl;
-
-  prss ("c", c);
-
-  printf (" sizeof (c (0,0)) = %lu\n", sizeof (c (0,0)));
-
-  for (int i = 0; i < 4; i++)
-  printf (" &c(0,0,%d) = 0x%llx\n", i, &c(0,0,i));
-
-  for (int i = 0; i < 4; i++)
-  printf (" &c(0,%d,0) = 0x%llx\n", i, &c(0,i,0));
-
-  for (int i = 0; i < 4; i++)
-  printf (" &c(%d,0,0) = 0x%llx\n", i, &c(i,0,0));
-
-
-if(1)
-  for (int i = 0; i < 3; i++)
-    {
-      c (i, i, 0) = 0xff;
-      c (i, i, 1) = 0xff;
-      c (i, i, 2) = 0xff;
-      c (i, i, 3) = 0xff;
-      c (i, i, 4) = 0xff;
-      c (i, i, 5) = 0xff;
-      c (i, i, 6) = 0xff;
-      c (i, i, 7) = 0xff;
-    }
-  
-  printf (" %8s |", "");
-  for (int j = 0; j < v.shape ()[1]; j++)
-    printf (" %12d", j);
+  printf (" shape = ");
+  for (int i = 0; i < v.rank (); i++)
+    printf (" %8d", v.shape (i));
   printf ("\n");
 
-  for (int i = 0; i < v.shape ()[0]; i++)
+  for (int jblk = 0; jblk < ngpblks; jblk++)
+  for (int jlev = 0, jloc = 0; jlev < nflevg; jlev++)
+  for (int jlon = 0; jlon < nproma; jlon++)
+    v (jblk, jlev, jlon) = 1000 * jlev + jlon + jblk * nproma;
+  
+  std::vector<ioFieldDesc> df;
+  createIoFieldDescriptorsBlocked (f, df, 0, 2, ngptot); // NGPBLKS dimension, NPROMA dimension, NGPTOT
+
+  for (int i = 0; i < df.size (); i++)
     {
-      printf (" %8d |", i);
-      for (int j = 0; j < v.shape ()[1]; j++)
-        printf (" %12d", v (i, j));
-      printf ("\n");
+      auto & d = df[i];
+      auto & v = d.view ();
+
+      printf (" %8d | %8d | %8d | %8d | %8d\n", i, v.rank (), v.shape (0), v.shape (1), v.shape (2));
+
+      if (i == 3)
+        {
+          for (int jblk = 0; jblk < v.shape (0); jblk++)
+          for (int jlon = 0; jlon < v.shape (1); jlon++)
+            {
+              long x = 0;
+              for (int j = 0; j < 8; j++)
+                {
+                  byte * b = (byte *)&x + j;
+                  *b = v (jblk, jlon, j);
+                }
+              printf (" %8d", x);
+            }
+          printf ("\n");
+        }
+
+
+
     }
 
-  
-  auto v1 = dropDimension (v, -1, 0);
 
-  prss ("v1", v1);
-
-  std::cout << " v1.rank () = " << v1.rank () << std::endl;
-
-  for (int i = 0; i < v1.shape (0); i++)
-    printf (" %8d > %12d\n", i, v1 (i));
-  
-
-  auto v2 = dropDimension (v, -1, 1);
-
-  std::cout << " v2.rank () = " << v2.rank () << std::endl;
-
-  for (int i = 0; i < v2.shape (0); i++)
-    printf (" %8d > %12d\n", i, v2 (i));
-  
-  auto v3 = dropDimension (v, 0, 2);
-
-  std::cout << " v3.rank () = " << v3.rank () << std::endl;
-
-  prss ("v3", v3);
-
-  for (int i = 0; i < v3.shape (0); i++)
-    printf (" %8d > %12d\n", i, v3 (i));
-  
 
   return 0;
 
