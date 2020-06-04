@@ -137,12 +137,9 @@ CASE( "test_gatherscatter_NPROMAxNFLEVGxNGPBLKS" )
     auto func = [check,ind_off,prc_off,lev_off] (int lev, int prc, int ind)
     {
       long v = 0;
-      if (check)
-        {
-          v = (static_cast<long> (lev) << lev_off) 
-            + (static_cast<long> (prc) << prc_off) 
-            + (static_cast<long> (ind) << ind_off);
-        }
+      v = (static_cast<long> (lev) << lev_off) 
+        + (static_cast<long> (prc) << prc_off) 
+        + (static_cast<long> (ind) << ind_off);
       return v;
     };
 
@@ -279,29 +276,14 @@ CASE( "test_gatherscatter_NFLEVGxNGPTOT" )
     auto func = [check,ind_off,prc_off,fld_off,lev_off] (int fld, int lev, int prc, int ind)
     {
       long v = 0;
-      if (check)
-        {
-          v = (static_cast<long> (fld) << fld_off) + (static_cast<long> (lev) << lev_off) 
-            + (static_cast<long> (prc) << prc_off) + (static_cast<long> (ind) << ind_off);
-        }
+      v = (static_cast<long> (fld) << fld_off) + (static_cast<long> (lev) << lev_off) 
+        + (static_cast<long> (prc) << prc_off) + (static_cast<long> (ind) << ind_off);
       return v;
     };
 
 
     // Distributed field, Fortran dimensions (1:NFLEVG,1:NGPTOT,1:NFIELDS)
     atlas::Field floc ("field", atlas::array::DataType::kind<T> (), {nfield, fs.size (), nflevg});
-
-    auto vloc = array::make_view<T,3> (floc);
-
-    if (check)
-      {
-        for (int jfld = 0; jfld < nfield; jfld++)
-        for (int jlev = 0; jlev < nflevg; jlev++)
-        for (int jloc = 0; jloc < fs.sizeOwned (); jloc++)
-          vloc (jfld, jloc, jlev) = func (jfld, jlev, irank, jloc);
-      }
-
-    // Gather our multi-field, multi-level Atlas field to a set of fields (1:NGPTOTG)
     atlas::FieldSet sglo;
 
     for (int jfld = 0, count = 0; jfld < nfield; jfld++)
@@ -313,6 +295,35 @@ CASE( "test_gatherscatter_NFLEVGxNGPTOT" )
         fglo.metadata ().set ("owner", owner);
         sglo.add (fglo);
       }
+
+    auto walkLoc = [&floc, nfield, nflevg, &fs, irank, func] (std::function<void(T &, T)> f)
+    {
+      auto vloc = array::make_view<T,3> (floc);
+      for (int jfld = 0; jfld < nfield; jfld++)
+      for (int jlev = 0; jlev < nflevg; jlev++)
+      for (int jloc = 0; jloc < fs.sizeOwned (); jloc++)
+        f (vloc (jfld, jloc, jlev), func (jfld, jlev, irank, jloc));
+    };
+
+    auto walkGlo = [&sglo, nfield, nflevg, irank, func, &grid, &prc, &ind] (std::function<void(T &, T)> f)
+    {
+      for (int jfld = 0, count = 0; jfld < nfield; jfld++)
+      for (int jlev = 0; jlev < nflevg; jlev++, count++)
+        {
+          atlas::Field fglo = sglo[count];
+          int owner; EXPECT (fglo.metadata ().get ("owner", owner));
+          if (owner == irank)
+            {
+              auto v = array::make_view<T,1> (fglo);
+              for (int jglo = 0; jglo < grid.size (); jglo++)
+                f (v (jglo), func (jfld, jlev, prc[jglo], ind[jglo]));
+            }
+        }
+    };
+
+    auto set   = [](T & v, T r) { v = r; };
+    auto cmp   = [](T & v, T r) { EXPECT (v == r); };
+    auto clear = [](T & v, T r) { v = 0; };
 
     // IO descriptors
     std::vector<ioFieldDesc> dloc;
@@ -331,24 +342,16 @@ CASE( "test_gatherscatter_NFLEVGxNGPTOT" )
 
     if (gather)
       {
+        if (check)
+          {
+            walkLoc (set); 
+            walkGlo (clear);
+          }
+
         gs.gather (dloc, dglo);
 
         if (check)
-          for (int jfld = 0, count = 0; jfld < nfield; jfld++)
-          for (int jlev = 0; jlev < nflevg; jlev++, count++)
-            {
-              atlas::Field fglo = sglo[count];
-              int owner; fglo.metadata ().get ("owner", owner);
-              if (owner == irank)
-                {
-                  auto v = array::make_view<T,1> (fglo);
-                  for (int jglo = 0; jglo < grid.size (); jglo++)
-                    {
-                      T v1 = v (jglo), v2 = func (jfld, jlev, prc[jglo], ind[jglo]);
-                      EXPECT (v1 == v2);
-                    }
-                }
-            }
+          walkGlo (cmp);
       }
 
   // Scatter
@@ -357,34 +360,14 @@ CASE( "test_gatherscatter_NFLEVGxNGPTOT" )
     {
       if (check)
         {
-          // Set distributed field to zero
-          filterView (vloc, [](T & z){ z = 0; });
-
-          // Compute global fields
-          for (int jfld = 0, count = 0; jfld < nfield; jfld++)
-          for (int jlev = 0; jlev < nflevg; jlev++, count++)
-            {
-              atlas::Field fglo = sglo[count];
-              int owner; fglo.metadata ().get ("owner", owner);
-              if (owner == irank)
-                {
-                  auto v = array::make_view<T,1> (fglo);
-                  for (int jglo = 0; jglo < grid.size (); jglo++)
-                    v (jglo) = func (jfld, jlev, prc[jglo], ind[jglo]);
-                }
-            }
+          walkGlo (set);
+          walkLoc (clear);
         }
 
       gs.scatter (dglo, dloc);
 
       if (check)
-        for (int jfld = 0; jfld < nfield; jfld++)
-        for (int jlev = 0; jlev < nflevg; jlev++)
-        for (int jloc = 0; jloc < fs.sizeOwned (); jloc++)
-          {
-            T v1 = vloc (jfld, jloc, jlev), v2 = func (jfld, jlev, irank, jloc);
-            EXPECT (v1 == v2);
-          }
+        walkLoc (cmp);
     }
 
 }
@@ -435,16 +418,13 @@ CASE( "test_gatherscatter_simple" )
     auto func = [check,ind_off,prc_off,fld_off] (int fld, int prc, int ind)
     {
       long v = 0;
-      if (check)
-        {
-          v = (static_cast<long> (fld) << fld_off) 
-            + (static_cast<long> (prc) << prc_off) 
-            + (static_cast<long> (ind) << ind_off);
-        }
+      v = (static_cast<long> (fld) << fld_off) 
+        + (static_cast<long> (prc) << prc_off) 
+        + (static_cast<long> (ind) << ind_off);
       return v;
     };
 
-    auto walkGlo = [&ind, &prc, &grid, func, irank] (atlas::FieldSet &sglo, std::function<void(T &, T)> f)
+    auto walkGlo = [&sglo, &ind, &prc, &grid, func, irank] (std::function<void(T &, T)> f)
     {
       for (int i = 0; i < sglo.size (); i++)
         {
@@ -460,7 +440,7 @@ CASE( "test_gatherscatter_simple" )
         }
     };
 
-    auto walkLoc = [&fs,func,irank] (atlas::FieldSet & sloc, std::function<void(T &, T)> f)
+    auto walkLoc = [&sloc, &fs, func, irank] (std::function<void(T &, T)> f)
     {
       for (int i = 0; i < sloc.size (); i++)
         {
@@ -495,8 +475,8 @@ CASE( "test_gatherscatter_simple" )
       {
         if (check)
           {
-            walkLoc (sloc, set);
-            walkGlo (sglo, clear);
+            walkLoc (set);
+            walkGlo (clear);
           }
 
         ATLAS_TRACE_SCOPE ("test_gather1")
@@ -505,7 +485,7 @@ CASE( "test_gatherscatter_simple" )
         }
 
         if (check) 
-          walkGlo (sglo, cmp);
+          walkGlo (cmp);
 
         if (debug) prff<T> ("sglo1", sglo);
      }
@@ -514,15 +494,15 @@ CASE( "test_gatherscatter_simple" )
       {
         if (check)
           {
-            walkGlo (sglo, set);
-            walkLoc (sloc, clear);
+            walkGlo (set);
+            walkLoc (clear);
           }
         ATLAS_TRACE_SCOPE ("test_scatter1")
         {
           fs.scatter (sglo, sloc);
         };
         if (check) 
-          walkLoc (sloc, cmp);
+          walkLoc (cmp);
       }
 
     if (gather2)
@@ -530,8 +510,8 @@ CASE( "test_gatherscatter_simple" )
         GatherScatter gs (dist);
         if (check)
           {
-            walkLoc (sloc, set);
-            walkGlo (sglo, clear);
+            walkLoc (set);
+            walkGlo (clear);
           }
         ATLAS_TRACE_SCOPE ("test_gather2")
         {
@@ -550,7 +530,7 @@ CASE( "test_gatherscatter_simple" )
         };
 
         if (check) 
-          walkGlo (sglo, cmp);
+          walkGlo (cmp);
 
         if (debug) prff<T> ("sglo2", sglo);
       }
@@ -560,8 +540,8 @@ CASE( "test_gatherscatter_simple" )
         GatherScatter gs (dist);
         if (check)
           {
-            walkGlo (sglo, set);
-            walkLoc (sloc, clear);
+            walkGlo (set);
+            walkLoc (clear);
           }
         ATLAS_TRACE_SCOPE ("test_scatter2")
         {
@@ -580,7 +560,7 @@ CASE( "test_gatherscatter_simple" )
         };
 
         if (check) 
-          walkLoc (sloc, cmp);
+          walkLoc (cmp);
       }
 
 
