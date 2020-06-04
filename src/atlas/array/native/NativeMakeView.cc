@@ -118,6 +118,7 @@ namespace array {
     template ArrayView<const TYPE, RANK> make_device_view<const TYPE, RANK>( const Array& );
 
 #define EXPLICIT_TEMPLATE_INSTATIATION( RANK )                \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( char, RANK )   \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( int, RANK )    \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( long, RANK )   \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( float, RANK )  \

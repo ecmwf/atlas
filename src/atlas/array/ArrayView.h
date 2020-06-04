@@ -26,6 +26,7 @@ namespace array {
     extern template class ArrayView<const TYPE, RANK>;
 
 #define EXPLICIT_TEMPLATE_DECLARATION( RANK )               \
+    EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( char, RANK );  \
     EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( int, RANK );   \
     EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( long, RANK );  \
     EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( float, RANK ); \

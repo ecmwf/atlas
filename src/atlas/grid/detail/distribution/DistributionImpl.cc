@@ -40,9 +40,10 @@ DistributionImpl::DistributionImpl( const Grid& grid ) :
     nb_pts_( nb_partitions_, grid.size() ),
     max_pts_( grid.size() ),
     min_pts_( grid.size() ),
-    type_( distribution_type( nb_partitions_ ) ) {}
+    type_( distribution_type( nb_partitions_ ) ),
+    size_( grid.size ()) {}
 
-DistributionImpl::DistributionImpl( const Grid& grid, const Partitioner& partitioner ) : part_( grid.size() ) {
+DistributionImpl::DistributionImpl( const Grid& grid, const Partitioner& partitioner ) : part_( grid.size() ), size_ (grid.size ()) {
     partitioner.partition( grid, part_.data() );
     nb_partitions_ = partitioner.nb_partitions();
 
@@ -99,6 +100,7 @@ DistributionImpl::DistributionImpl( int nb_partitions, idx_t npts, int part[], i
     max_pts_ = *std::max_element( nb_pts_.begin(), nb_pts_.end() );
     min_pts_ = *std::min_element( nb_pts_.begin(), nb_pts_.end() );
     type_    = distribution_type( nb_partitions_ );
+    size_    = npts;
 }
 
 DistributionImpl::DistributionImpl( int nb_partitions, partition_t&& part ) :
@@ -123,6 +125,7 @@ DistributionImpl::DistributionImpl( int nb_partitions, partition_t&& part ) :
     max_pts_ = *std::max_element( nb_pts_.begin(), nb_pts_.end() );
     min_pts_ = *std::min_element( nb_pts_.begin(), nb_pts_.end() );
     type_    = distribution_type( nb_partitions_ );
+    size_    = size;
 }
 
 DistributionImpl::~DistributionImpl() = default;

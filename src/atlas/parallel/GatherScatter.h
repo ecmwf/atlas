@@ -227,15 +227,21 @@ void GatherScatter::gather( parallel::Field<DATA_TYPE const> lfields[], parallel
 
         /// Pack
 
-        pack_send_buffer( lfields[jfield], locmap_, loc_buffer.data() );
+        ATLAS_TRACE_SCOPE ("Pack")
+        {
+          pack_send_buffer( lfields[jfield], locmap_, loc_buffer.data() );
+        };
 
         /// Gather
 
         ATLAS_TRACE_MPI( GATHER ) { mpi::comm().gatherv( loc_buffer, glb_buffer, glb_counts, glb_displs, root ); }
 
+        ATLAS_TRACE_SCOPE ("Unpack")
+        {
         /// Unpack
         if ( myproc == root )
             unpack_recv_buffer( glbmap_, glb_buffer.data(), gfields[jfield] );
+        }
     }
 }
 

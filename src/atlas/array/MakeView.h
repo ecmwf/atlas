@@ -14,6 +14,7 @@
 #include "atlas/array/IndexView.h"
 #include "atlas/array/LocalView.h"
 #include "atlas/array_fwd.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace array {
@@ -24,6 +25,7 @@ extern template IndexView<const idx_t, 1> make_indexview<const idx_t, 1>( Array&
 extern template IndexView<const idx_t, 2> make_indexview<const idx_t, 2>( Array& );
 extern template IndexView<const idx_t, 1> make_indexview<idx_t, 1>( const Array& );
 extern template IndexView<const idx_t, 2> make_indexview<idx_t, 2>( const Array& );
+
 
 #define EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( TYPE, RANK )                                                \
     extern template ArrayView<TYPE, RANK> make_view<TYPE, RANK>( Array& );                                   \
@@ -46,6 +48,7 @@ extern template IndexView<const idx_t, 2> make_indexview<idx_t, 2>( const Array&
 
 
 #define EXPLICIT_TEMPLATE_DECLARATION( RANK )              \
+    EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( char, RANK )   \
     EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( int, RANK )   \
     EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( long, RANK )  \
     EXPLICIT_TEMPLATE_DECLARATION_TYPE_RANK( float, RANK ) \

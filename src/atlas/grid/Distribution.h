@@ -64,6 +64,11 @@ public:
 
     const std::string& type() const;
 
+    gidx_t size () const
+    {
+      return get ()->size ();
+    }
+
     friend std::ostream& operator<<( std::ostream& os, const Distribution& distribution );
 };
 
