@@ -56,7 +56,7 @@ int main (int argc, char * argv[])
                   byte * b = (byte *)&x + j;
                   *b = v (jblk, jlon, j);
                 }
-              printf (" %8d", x);
+              printf (" %8ld", x);
             }
           printf ("\n");
         }

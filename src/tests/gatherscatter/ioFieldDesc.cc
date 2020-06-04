@@ -145,9 +145,35 @@ void createIoFieldDescriptorsBlocked
   if (gdim < 0)
     gdim = gdim + rank;
 
-  auto v = atlas::array::make_view<long,3> (f);
+#define HANDLE_TYPE_RANK(__type,__rank) \
+   if (rank == __rank)                                                   \
+    {                                                                    \
+      auto v = atlas::array::make_view<__type,__rank> (f);               \
+      createListOf1DByteViewBlocked (v, f, bdim, gdim, ngptot, list);    \
+      goto done;                                                         \
+    }
 
-  createListOf1DByteViewBlocked (v, f, bdim, gdim, ngptot, list);                  
+#define HANDLE_TYPE(__type) \
+  if (type.kind () == atlas::array::DataType::create<__type> ().kind ()) \
+    {                                                                                           \
+                                    HANDLE_TYPE_RANK (__type, 2); HANDLE_TYPE_RANK (__type, 3); \
+      HANDLE_TYPE_RANK (__type, 4); HANDLE_TYPE_RANK (__type, 5); HANDLE_TYPE_RANK (__type, 6); \
+      HANDLE_TYPE_RANK (__type, 7); HANDLE_TYPE_RANK (__type, 8); HANDLE_TYPE_RANK (__type, 9); \
+    }
+
+  HANDLE_TYPE (long);
+  HANDLE_TYPE (double);
+  HANDLE_TYPE (int);
+  HANDLE_TYPE (float);
+
+#undef HANDLE_TYPE_RANK
+#undef HANDLE_TYPE
+
+  atlas::throw_NotImplemented ("createIoFieldDescriptorsBlocked type/rank", Here ());
+
+done:
+
+  return;
 }
 
 
@@ -180,6 +206,9 @@ void createIoFieldDescriptors
   HANDLE_TYPE (double);
   HANDLE_TYPE (int);
   HANDLE_TYPE (float);
+
+#undef HANDLE_TYPE_RANK
+#undef HANDLE_TYPE
 
   atlas::throw_NotImplemented ("createIoFieldDescriptors type/rank", Here ());
 
