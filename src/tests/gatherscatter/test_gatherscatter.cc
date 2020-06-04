@@ -175,7 +175,7 @@ CASE( "test_gatherscatter_NPROMAxNFLEVGxNGPBLKS" )
     GatherScatter gs (dist);
 
 
-    auto walkLoc = [&floc,ngpblks,nproma,nflevg,ngptot,func,irank] (std::function<void(T &, T)> f)
+    auto walkLoc = [&floc, ngpblks, nproma, nflevg, ngptot, func, irank] (std::function<void(T &, T)> f)
     {
       auto vloc = array::make_view<T,3> (floc);
       for (int jblk = 0; jblk < ngpblks; jblk++)
@@ -187,7 +187,7 @@ CASE( "test_gatherscatter_NPROMAxNFLEVGxNGPBLKS" )
         }
     };
 
-    auto walkGlo = [&sglo,nflevg,&grid,&irank,&prc,&ind,func] (std::function<void(T &, T)> f)
+    auto walkGlo = [&sglo, nflevg, &grid, &irank, &prc, &ind, func] (std::function<void(T &, T)> f)
     {
       for (int jlev = 0; jlev < nflevg; jlev++)
         {
@@ -526,8 +526,7 @@ CASE( "test_gatherscatter_simple" )
       getprcind (fs, dist, prc, ind);
 
     atlas::FieldSet sloc;
-    atlas::FieldSet sglo1;
-    atlas::FieldSet sglo2;
+    atlas::FieldSet sglo;
 
     using T = long;
 
@@ -554,44 +553,33 @@ CASE( "test_gatherscatter_simple" )
       return v;
     };
 
-    auto checkgather = [ind, prc, grid, func, irank] (const atlas::FieldSet & sglo)
+    auto walkGlo = [&ind, &prc, &grid, func, irank] (atlas::FieldSet &sglo, std::function<void(T &, T)> f)
     {
-      ATLAS_TRACE_SCOPE ("checkgather")
-      {
       for (int i = 0; i < sglo.size (); i++)
         {
-          const auto & fglo = sglo[i];
+          auto & fglo = sglo[i];
           int owner;
           EXPECT (fglo.metadata ().get ("owner", owner));
           if (owner == irank)
             {
-              const auto v = array::make_view<T,1> (fglo);
+              auto v = array::make_view<T,1> (fglo);
               for (int j = 0; j < grid.size (); j++)
-                {
-                  T v1 = v[j], v2 = func (i, prc[j], ind[j]);
-                  EXPECT_EQ (v1, v2);
-                }
+                f (v[j], func (i, prc[j], ind[j]));
             }
         }
-      }
     };
 
-    auto checkscatter = [fs, func, irank] (const atlas::FieldSet & sloc)
+    auto walkLoc = [&fs,func,irank] (atlas::FieldSet & sloc, std::function<void(T &, T)> f)
     {
-      ATLAS_TRACE_SCOPE ("checkscatter")
-      {
       for (int i = 0; i < sloc.size (); i++)
         {
-          const auto & floc = sloc[i];
-          const auto v = array::make_view<T,1> (floc);
+          auto & floc = sloc[i];
+          auto v = array::make_view<T,1> (floc);
           for (int j = 0; j < fs.sizeOwned (); j++)
-            {
-              T v1 = v[j], v2 = func (i, irank, j);
-              EXPECT_EQ (v1, v2);
-            }
+            f (v[j], func (i, irank, j));
         }
-      }
     };
+
 
     for (int i = 0; i < nfield; i++)
       {
@@ -600,61 +588,60 @@ CASE( "test_gatherscatter_simple" )
         std::string name = std::string ("#") + std::to_string (i);
         atlas::Field floc = fs.createField<T> (atlas::util::Config ("name", name) 
                                             |  atlas::util::Config ("owner", owner));
-        auto v = array::make_view<T,1> (floc);
-        for (int j = 0; j < fs.sizeOwned (); j++)
-          v[j] = func (i, irank, j);
+
         sloc.add (floc);
 
-        if (gather1)
-          {
-            Field fglo1 = Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
-            fglo1.metadata ().set ("owner", owner);
-            sglo1.add (fglo1);
-          }
-
-        if (gather2)
-          {
-            Field fglo2 = Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
-            fglo2.metadata ().set ("owner", owner);
-            sglo2.add (fglo2);
-          }
-
+        Field fglo = Field (name, atlas::array::DataType::kind<T> (), {irank == owner ? grid.size () : 0}); 
+        fglo.metadata ().set ("owner", owner);
+        sglo.add (fglo);
       }
+
+    auto set   = [](T & v, T r) { v = r; };
+    auto cmp   = [](T & v, T r) { EXPECT (v == r); };
+    auto clear = [](T & v, T r) { v = 0; };
 
     if (gather1)
       {
-        {
-          atlas::FieldSet loc, glo;
-          fs.gather (loc, glo);
-        }
+        if (check)
+          {
+            walkLoc (sloc, set);
+            walkGlo (sglo, clear);
+          }
+
         ATLAS_TRACE_SCOPE ("test_gather1")
         {
-          fs.gather (sloc, sglo1);
-          if (check) checkgather (sglo1);
-          if (debug) prff<T> ("sglo1", sglo1);
+          fs.gather (sloc, sglo);
         }
 
-        if (scatter1)
+        if (check) 
+          walkGlo (sglo, cmp);
+
+        if (debug) prff<T> ("sglo1", sglo);
+     }
+
+    if (scatter1)
+      {
+        if (check)
           {
-            ATLAS_TRACE_SCOPE ("test_scatter1")
-            {
-            for (int i = 0; i < sloc.size (); i++)
-              {
-                auto v = array::make_view<T,1> (sloc[i]);
-                for (int j = 0; j < fs.sizeOwned (); j++)
-                  v (j) = 0;
-              }
-
-            fs.scatter (sglo1, sloc);
-
-            if (check) checkscatter (sloc);
-            }
+            walkGlo (sglo, set);
+            walkLoc (sloc, clear);
           }
+        ATLAS_TRACE_SCOPE ("test_scatter1")
+        {
+          fs.scatter (sglo, sloc);
+        };
+        if (check) 
+          walkLoc (sloc, cmp);
       }
 
     if (gather2)
       {
         GatherScatter gs (dist);
+        if (check)
+          {
+            walkLoc (sloc, set);
+            walkGlo (sglo, clear);
+          }
         ATLAS_TRACE_SCOPE ("test_gather2")
         {
           std::vector<ioFieldDesc> dloc;
@@ -662,34 +649,47 @@ CASE( "test_gatherscatter_simple" )
 
           ATLAS_TRACE_SCOPE ("create io descriptors")
           {
-          createIoFieldDescriptors (sloc,  dloc, fs.sizeOwned ());
-          createIoFieldDescriptors (sglo2, dglo);
-          for (auto & d : dglo)
-            d.field ().metadata ().get ("owner", d.owner ());
+            createIoFieldDescriptors (sloc,  dloc, fs.sizeOwned ());
+            createIoFieldDescriptors (sglo, dglo);
+            for (auto & d : dglo)
+              EXPECT (d.field ().metadata ().get ("owner", d.owner ()));
           }
 
           gs.gather (dloc, dglo);
+        };
 
-          if (debug) prff<T> ("sglo2", sglo2);
-          if (check) checkgather (sglo2);
+        if (check) 
+          walkGlo (sglo, cmp);
 
-          if (scatter2)
-            {
-              ATLAS_TRACE_SCOPE ("test_scatter2")
-              {
-              for (int i = 0; i < sloc.size (); i++)
-                {
-                  auto v = array::make_view<T,1> (sloc[i]);
-                  for (int j = 0; j < fs.sizeOwned (); j++)
-                    v (j) = 0;
-                }
+        if (debug) prff<T> ("sglo2", sglo);
+      }
 
-              gs.scatter (dglo, dloc);
+    if (scatter2)
+      {
+        GatherScatter gs (dist);
+        if (check)
+          {
+            walkGlo (sglo, set);
+            walkLoc (sloc, clear);
+          }
+        ATLAS_TRACE_SCOPE ("test_scatter2")
+        {
+          std::vector<ioFieldDesc> dloc;
+          std::vector<ioFieldDesc> dglo;
 
-              if (check) checkscatter (sloc);
-              }
-            }
-        }
+          ATLAS_TRACE_SCOPE ("create io descriptors")
+          {
+            createIoFieldDescriptors (sloc,  dloc, fs.sizeOwned ());
+            createIoFieldDescriptors (sglo, dglo);
+            for (auto & d : dglo)
+              EXPECT (d.field ().metadata ().get ("owner", d.owner ()));
+          }
+
+          gs.scatter (dglo, dloc);
+        };
+
+        if (check) 
+          walkLoc (sloc, cmp);
       }
 
 
