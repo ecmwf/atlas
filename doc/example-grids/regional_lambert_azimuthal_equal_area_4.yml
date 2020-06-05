@@ -20,7 +20,7 @@ check :
   size : 950000
   lonlat(first) : [-35.034,66.9821]
   lonlat(last)  : [41.1397,23.9423]
-  bounding_box(n,w,s,e) : [72.6426, -35.035, 23.9413, 73.9386]
-  uid : bd42a9d7bbf089251667a4cc553a664c
+  bounding_box(n,w,s,e) : [72.6416, -35.034, 23.9423, 73.9376]
+  uid : dba9a7e48d9a5274ece3aea98335b6f0
   xmin : 2502497.60
   ymin : 752495.56

@@ -11,6 +11,7 @@ public:
     using Channel = eckit::Channel;  // derives from std::ostream
 
     static Channel& info();
+    static Channel& warning();
     static Channel& trace();
     static Channel& debug();
 

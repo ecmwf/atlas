@@ -187,6 +187,10 @@ void Field::haloExchange( bool on_device ) const {
     get()->haloExchange( on_device );
 }
 
+void Field::adjointHaloExchange( bool on_device ) const {
+    get()->adjointHaloExchange( on_device );
+}
+
 // -- Methods related to host-device synchronisation, requires gridtools_storage
 
 void Field::updateHost() const {

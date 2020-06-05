@@ -18,10 +18,12 @@ namespace detail {
 namespace grid {
 
 StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx );
-StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx, const Domain& domain );
+StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx, const Projection& );
+StructuredGrid::grid_t* reduced_gaussian( const std::vector<long>& nx, const Domain& );
 
 StructuredGrid::grid_t* reduced_gaussian( const std::vector<int>& nx );
-StructuredGrid::grid_t* reduced_gaussian( const std::vector<int>& nx, const Domain& domain );
+StructuredGrid::grid_t* reduced_gaussian( const std::vector<int>& nx, const Projection& );
+StructuredGrid::grid_t* reduced_gaussian( const std::vector<int>& nx, const Domain& );
 
 }  // namespace grid
 }  // namespace detail

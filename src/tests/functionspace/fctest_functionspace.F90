@@ -516,7 +516,6 @@ TEST( test_structuredcolumns )
 type(atlas_StructuredGrid) :: grid
 type(atlas_functionspace_StructuredColumns) :: fs
 type(atlas_functionspace) :: fs_base
-type(atlas_functionspace_StructuredColumns) :: fs_struct
 integer(ATLAS_KIND_IDX) :: i, j
 character(len=10) str
 

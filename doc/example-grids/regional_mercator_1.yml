@@ -1,0 +1,22 @@
+# test_mercator.temp
+
+type : "regional"
+nx : 56
+ny : 44
+dx : 45000
+dy : 45000
+lonlat(xmin,ymin) : [262.036,14.7365]
+projection:
+  type : "mercator"
+  latitude1 : 14.0
+  normalise : [0,360]
+
+check :
+  uid : 632ee8b7bec231b64fbc34a78a5ff2ff
+  size : 2464
+  lonlat(first) : [262.036,14.7365]
+  lonlat(last) :  [284.975,31.1731]
+  bounding_box(n,w,s,e) : [31.1731,262.036,14.7365,284.975]
+  xmin : -10569908.09
+  ymin : 1607833.03
+  proj : "+proj=merc +lat_ts=14.0 +R=6371229.0 +units=m +no_defs"

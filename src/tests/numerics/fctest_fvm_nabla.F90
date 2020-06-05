@@ -67,9 +67,9 @@ contains
         real(c_double) :: time
         if (.not. self%paused) then
             call system_clock ( self%clck_counts_stop, self%clck_rate )
-            time = (self%counted + self%clck_counts_stop - self%clck_counts_start)/real(self%clck_rate)
+            time = real(self%counted + self%clck_counts_stop - self%clck_counts_start,c_double)/real(self%clck_rate,c_double)
         else if (self%counted .ge. 0) then
-            time = self%counted/real(self%clck_rate)
+            time = real(self%counted,c_double)/real(self%clck_rate,c_double)
         else
             time = 0.
         end if

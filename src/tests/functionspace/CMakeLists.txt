@@ -83,7 +83,7 @@ ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi16
 
 set( _WITH_MPI )
 if( eckit_HAVE_MPI )
-    set( _WITH_MPI "MPI 4" )
+    set( _WITH_MPI MPI 4 )
 endif()
 
 ecbuild_add_executable( TARGET atlas_test_polygons
@@ -120,5 +120,13 @@ ecbuild_add_test( TARGET atlas_test_polygons_projections_nodecolumns
   COMMAND atlas_test_polygons_projection ARGS --functionspace NodeColumns
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   ${_WITH_MPI}
+)
+
+# Tests ATLAS-286
+ecbuild_add_test( TARGET  atlas_test_structuredcolumns_haloexchange
+  ${_WITH_MPI}
+  SOURCES test_structuredcolumns_haloexchange.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 

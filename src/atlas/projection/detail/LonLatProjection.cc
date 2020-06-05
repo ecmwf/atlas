@@ -53,8 +53,10 @@ RectangularLonLatDomain LonLatProjectionT<Rotation>::lonlatBoundingBox( const Do
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
 
-    constexpr double h     = 0.001;
-    constexpr size_t Niter = 100;
+
+    const std::string derivative = "central";
+    constexpr double h           = 0.001;  // precision to millidegrees
+    constexpr size_t Niter       = 100;
 
 
     // 1. determine box from projected corners
@@ -82,7 +84,7 @@ RectangularLonLatDomain LonLatProjectionT<Rotation>::lonlatBoundingBox( const Do
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
-            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, A, B ) );
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( derivative, *this, A, B, h ) );
             double dAdy = derivate->d( A ).lat();
             double dBdy = derivate->d( B ).lat();
 
@@ -110,7 +112,7 @@ RectangularLonLatDomain LonLatProjectionT<Rotation>::lonlatBoundingBox( const Do
     }
 
 
-    // 3. locate latitude extrema by checking if date line is crossed (in the un-projected frame), in which case we
+    // 3. locate longitude extrema by checking if date line is crossed (in the un-projected frame), in which case we
     // assume periodicity and if not, find extrema not at the corners by refining iteratively
 
     if ( !bounds.crossesDateLine() ) {
@@ -144,7 +146,7 @@ RectangularLonLatDomain LonLatProjectionT<Rotation>::lonlatBoundingBox( const Do
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
-            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, A, B ) );
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( derivative, *this, A, B, h ) );
             double dAdx = derivate->d( A ).lon();
             double dBdx = derivate->d( B ).lon();
 

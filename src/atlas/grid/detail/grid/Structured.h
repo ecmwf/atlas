@@ -15,6 +15,7 @@
 
 #include "atlas/grid/Spacing.h"
 #include "atlas/grid/detail/grid/Grid.h"
+#include "atlas/grid/detail/spacing/LinearSpacing.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Object.h"
@@ -160,13 +161,15 @@ public:
             Implementation( const std::array<double, 2>& interval, std::initializer_list<int>&& N,
                             bool endpoint = true );
 
-            Implementation( const Spacing& );
+            Implementation( const Spacing&, idx_t ny = 1 );
 
             Implementation( const std::vector<Spacing>& );
 
             Implementation( const Config& );
 
             Implementation( const std::vector<Config>& );
+
+            Implementation( const std::vector<spacing::LinearSpacing::Params>& );
 
             idx_t ny() const { return ny_; }
 
@@ -218,9 +221,11 @@ public:
 
         XSpace( const XSpace& );
 
-        XSpace( const Spacing& );
+        XSpace( const Spacing&, idx_t ny = 1 );
 
         XSpace( const std::vector<Spacing>& );
+
+        XSpace( const std::vector<spacing::LinearSpacing::Params>& );
 
         // Constructor NVector can be either std::vector<int> or std::vector<long> or initializer list
         template <typename NVector>
@@ -424,6 +429,10 @@ const Structured* atlas__grid__Structured__config( util::Config* conf );
 Structured* atlas__grid__regular__RegularGaussian( long N );
 Structured* atlas__grid__reduced__ReducedGaussian_int( int nx[], long ny );
 Structured* atlas__grid__reduced__ReducedGaussian_long( long nx[], long ny );
+Structured* atlas__grid__reduced__ReducedGaussian_int_projection( int nx[], long ny,
+                                                                  const Projection::Implementation* projection );
+Structured* atlas__grid__reduced__ReducedGaussian_long_projection( long nx[], long ny,
+                                                                   const Projection::Implementation* projection );
 Structured* atlas__grid__regular__RegularLonLat( long nx, long ny );
 Structured* atlas__grid__regular__ShiftedLonLat( long nx, long ny );
 Structured* atlas__grid__regular__ShiftedLon( long nx, long ny );

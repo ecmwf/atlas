@@ -1,0 +1,26 @@
+type : "regional"
+nx : 553
+ny : 425
+dx : 11250.
+dy : 11250.
+lonlat(xmin,ymin) : [187., 30.]
+projection:
+  type : "proj"
+  proj : "+proj=stere +lat_ts=60 +lat_0=90 +lon_0=225 +k_0=1 +R=6371229.0"
+
+check :  # optional section, intended for unit-testing
+
+  strict: false  # -> allow longitude values to be different due to normalisation only
+  uid : ignore  # -> special keyword that ignores uid check, but issues warning
+  size : 235025
+  lonlat(first) : [ 187., 30. ]
+  lonlat(last) : [ 297.1496, 70.1114 ]
+  bounding_box(n,w,s,e) : [ 83.84744, -216.402255, 30., -62.8504 ]
+  xmin : -4225928.24
+  ymin : -5408941.49
+
+  roundtrip: # check that projection can do roundtrip for following values
+    - lonlat: [ 187., 30. ]
+    - lonlat: [ 297.1496, 70.1114 ]
+
+

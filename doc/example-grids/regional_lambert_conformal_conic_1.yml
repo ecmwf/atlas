@@ -8,7 +8,7 @@ lonlat(centre) : [4,50]
 projection :
     type : "lambert_conformal_conic"
     longitude0 : 4
-    latitude1  : 50
+    latitude0  : 50
 
 y_numbering : +1
 
@@ -16,7 +16,7 @@ check :
   size : 2000
   lonlat(first) : [-10.3173,40.22]
   lonlat(last)  : [24.4368,57.2335]
-  uid : 2e01d66aa6df870b0ad346da4e80c4ff
-  bounding_box(n,w,s,e) : [58.7333,-16.4378,40.219,24.4378]
+  uid : 0914f1a75b5c5226e2b09ceed834a822
+  bounding_box(n,w,s,e) : [58.7320,-16.4368,40.2200,24.4368]
   xmin : -1225000.00
   ymin : -975000.00

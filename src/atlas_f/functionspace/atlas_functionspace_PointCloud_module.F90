@@ -45,7 +45,7 @@ TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_PointCloud
 !------------------------------------------------------------------------------
 contains
 
-  procedure, public :: size
+  procedure, public :: size => size_
   procedure, public :: lonlat
 
 END TYPE atlas_functionspace_PointCloud
@@ -94,11 +94,11 @@ end function
 
 !------------------------------------------------------------------------------
 
-function size(this)
+function size_(this)
   use atlas_functionspace_PointCloud_c_binding
-  integer :: size
+  integer :: size_
   class(atlas_functionspace_PointCloud), intent(in) :: this
-  size = atlas__fs__PointCloud__size(this%CPTR_PGIBUG_A)
+  size_ = atlas__fs__PointCloud__size(this%CPTR_PGIBUG_A)
 end function
 
 !------------------------------------------------------------------------------
@@ -113,6 +113,7 @@ end function
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_functionspace_PointCloud__final_auto(this)
   type(atlas_functionspace_PointCloud), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -123,6 +124,7 @@ ATLAS_FINAL subroutine atlas_functionspace_PointCloud__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 !------------------------------------------------------------------------------
 

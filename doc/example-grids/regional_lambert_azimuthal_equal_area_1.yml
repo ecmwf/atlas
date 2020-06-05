@@ -15,5 +15,9 @@ check :
   size : 2000
   lonlat(first) : [-10.4643,40.1877]
   lonlat(last)  : [24.6228,57.1968]
-  uid : 16663e1f4f3deb724712dd2698008915
-  bounding_box(n,w,s,e) : [58.7776,-16.6238,40.1867,24.6238]
+  uid : 0ee521e7f37c21d50b2f66655f178b65
+  bounding_box(n,w,s,e) : [58.7766,-16.6228,40.1877,24.6228]
+  xmin : -1225000.00
+  ymin : -975000.00
+  proj : "+proj=laea +lat_0=50 +lon_0=4 +R=6371229.0"
+

@@ -50,6 +50,11 @@ void FunctionSpace::haloExchange( const Field& field, bool on_device ) const {
     return get()->haloExchange( field, on_device );
 }
 
+void FunctionSpace::adjointHaloExchange( const Field& field, bool on_device ) const {
+    return get()->adjointHaloExchange( field, on_device );
+}
+
+
 idx_t FunctionSpace::size() const {
     return get()->size();
 }
@@ -68,6 +73,10 @@ Field FunctionSpace::ghost() const {
 
 void FunctionSpace::haloExchange( const FieldSet& fields, bool on_device ) const {
     return get()->haloExchange( fields, on_device );
+}
+
+void FunctionSpace::adjointHaloExchange( const FieldSet& fields, bool on_device ) const {
+    return get()->adjointHaloExchange( fields, on_device );
 }
 
 const util::PartitionPolygon& FunctionSpace::polygon( idx_t halo ) const {

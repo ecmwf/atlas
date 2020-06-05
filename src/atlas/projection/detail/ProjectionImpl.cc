@@ -15,8 +15,9 @@
 
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
+#include "eckit/utils/MD5.h"
 
-#include "ProjectionImpl.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 
 #include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/runtime/Exception.h"
@@ -30,54 +31,67 @@ namespace detail {
 
 namespace {
 
+void longitude_in_range( double reference, double& lon ) {
+    // keep longitude difference (to reference) range below +-180 degree
+    while ( lon > reference + 180. ) {
+        lon -= 360.;
+    }
+    while ( lon <= reference - 180. ) {
+        lon += 360.;
+    }
+}
+
 template <class T>
 struct DerivateBuilder : public ProjectionImpl::DerivateFactory {
     using DerivateFactory::DerivateFactory;
-    ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h ) override {
-        return new T( p, A, B, h );
+    ProjectionImpl::Derivate* make( const ProjectionImpl& p, PointXY A, PointXY B, double h,
+                                    double refLongitude ) override {
+        return new T( p, A, B, h, refLongitude );
     }
 };
 
 struct DerivateForwards final : ProjectionImpl::Derivate {
     using Derivate::Derivate;
     PointLonLat d( PointXY P ) const override {
-        PointXY A( xy2lonlat( P ) );
-        PointXY B( xy2lonlat( PointXY::add( P, H_ ) ) );
-        return PointXY::div( PointXY::sub( B, A ), normH_ );
+        PointLonLat A( xy2lonlat( P ) );
+        PointLonLat B( xy2lonlat( PointXY::add( P, H_ ) ) );
+        return PointLonLat::div( PointLonLat::sub( B, A ), normH_ );
     }
 };
 
 struct DerivateBackwards final : ProjectionImpl::Derivate {
     using Derivate::Derivate;
     PointLonLat d( PointXY P ) const override {
-        PointXY A( xy2lonlat( PointXY::sub( P, H_ ) ) );
-        PointXY B( xy2lonlat( P ) );
-        return PointXY::div( PointXY::sub( B, A ), normH_ );
+        PointLonLat A( xy2lonlat( PointXY::sub( P, H_ ) ) );
+        PointLonLat B( xy2lonlat( P ) );
+        return PointLonLat::div( PointLonLat::sub( B, A ), normH_ );
     }
 };
 
 struct DerivateCentral final : ProjectionImpl::Derivate {
-    DerivateCentral( const ProjectionImpl& p, PointXY A, PointXY B, double h ) :
-        Derivate( p, A, B, h ), H2_{PointXY::mul( H_, 0.5 )} {}
+    DerivateCentral( const ProjectionImpl& p, PointXY A, PointXY B, double h, double refLongitude ) :
+        Derivate( p, A, B, h, refLongitude ), H2_{PointXY::mul( H_, 0.5 )} {}
     const PointXY H2_;
     PointLonLat d( PointXY P ) const override {
-        PointXY A( xy2lonlat( PointXY::sub( P, H2_ ) ) );
-        PointXY B( xy2lonlat( PointXY::add( P, H2_ ) ) );
-        return PointXY::div( PointXY::sub( B, A ), normH_ );
+        PointLonLat A( xy2lonlat( PointXY::sub( P, H2_ ) ) );
+        PointLonLat B( xy2lonlat( PointXY::add( P, H2_ ) ) );
+        return PointLonLat::div( PointLonLat::sub( B, A ), normH_ );
     }
 };
 
 }  // namespace
 
-ProjectionImpl::Derivate::Derivate( const ProjectionImpl& p, PointXY A, PointXY B, double h ) :
+ProjectionImpl::Derivate::Derivate( const ProjectionImpl& p, PointXY A, PointXY B, double h, double refLongitude ) :
     projection_( p ),
     H_{PointXY::mul( PointXY::normalize( PointXY::sub( B, A ) ), h )},
-    normH_( PointXY::norm( H_ ) ) {}
+    normH_( PointXY::norm( H_ ) ),
+    refLongitude_( refLongitude ) {}
 
 ProjectionImpl::Derivate::~Derivate() = default;
 
 ProjectionImpl::Derivate* ProjectionImpl::DerivateFactory::build( const std::string& type, const ProjectionImpl& p,
-                                                                  PointXY A, PointXY B, double h ) {
+                                                                  PointXY A, PointXY B, double h,
+                                                                  double refLongitude ) {
     ATLAS_ASSERT( 0. < h );
 
     // force_link
@@ -90,7 +104,7 @@ ProjectionImpl::Derivate* ProjectionImpl::DerivateFactory::build( const std::str
             using Derivate::Derivate;
             PointLonLat d( PointXY ) const override { return {}; }
         };
-        return new DerivateDegenerate( p, A, B, h );
+        return new DerivateDegenerate( p, A, B, h, refLongitude );
     }
 
     auto factory = get( type );
@@ -98,6 +112,13 @@ ProjectionImpl::Derivate* ProjectionImpl::DerivateFactory::build( const std::str
 }
 
 ProjectionImpl::DerivateFactory::~DerivateFactory() = default;
+
+PointLonLat ProjectionImpl::Derivate::xy2lonlat( const PointXY& p ) const {
+    PointLonLat q( p );
+    projection_.xy2lonlat( q.data() );
+    longitude_in_range( refLongitude_, q.lon() );
+    return q;
+}
 
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -149,6 +170,48 @@ void ProjectionImpl::BoundLonLat::extend( PointLonLat p, PointLonLat eps ) {
 
 // --------------------------------------------------------------------------------------------------------------------
 
+ProjectionImpl::Normalise::Normalise( const eckit::Parametrisation& p ) {
+    values_.resize( 2 );
+    bool provided = false;
+    if ( p.get( "normalise", values_ ) ) {
+        provided = true;
+    }
+    else if ( p.get( "normalize", values_ ) ) {
+        provided = true;
+    }
+    else if ( p.get( "west", values_[0] ) ) {
+        values_[1] = values_[0] + 360.;
+        provided   = true;
+    }
+    if ( provided ) {
+        normalise_.reset( new util::NormaliseLongitude( values_[0], values_[1] ) );
+    }
+}
+
+ProjectionImpl::Normalise::Normalise( double west ) {
+    values_.resize( 2 );
+    values_[0] = west;
+    values_[1] = values_[0] + 360.;
+    normalise_.reset( new util::NormaliseLongitude( values_[0], values_[1] ) );
+}
+
+
+void ProjectionImpl::Normalise::hash( eckit::Hash& hash ) const {
+    if ( normalise_ ) {
+        hash.add( values_[0] );
+        hash.add( values_[1] );
+    }
+}
+
+void ProjectionImpl::Normalise::spec( Spec& s ) const {
+    if ( normalise_ ) {
+        s.set( "normalise", values_ );
+    }
+}
+
+
+// --------------------------------------------------------------------------------------------------------------------
+
 const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) {
     std::string projectionType;
     if ( p.get( "type", projectionType ) ) {
@@ -158,6 +221,11 @@ const ProjectionImpl* ProjectionImpl::create( const eckit::Parametrisation& p ) 
     // should return error here
     throw_Exception( "type missing in Params", Here() );
 }
+
+const ProjectionImpl* ProjectionImpl::create( const std::string& type, const eckit::Parametrisation& p ) {
+    return ProjectionFactory::build( type, p );
+}
+
 
 PointXYZ ProjectionImpl::xyz( const PointLonLat& lonlat ) const {
     atlas::PointXYZ xyz;
@@ -177,9 +245,16 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
     RectangularDomain rect( domain );
     ATLAS_ASSERT( rect );
 
-    constexpr double h     = 0.001;
-    constexpr size_t Niter = 100;
+    // use central longitude as absolute reference (keep points within +-180 longitude range)
+    const auto centre = lonlat( {( rect.xmin() + rect.xmax() ) / 2., ( rect.ymin() + rect.ymax() ) / 2.} );
 
+
+    const std::string derivative = "central";
+    constexpr double h_deg       = 0.5e-6;  // precision to microdegrees
+    constexpr double h_meters    = 0.5e-1;  // precision to decimeters
+    constexpr size_t Niter       = 100;
+
+    const double h = units() == "degrees" ? h_deg : h_meters;
 
     // 1. determine box from projected corners
 
@@ -188,7 +263,9 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
 
     BoundLonLat bounds;
     for ( auto& p : corners ) {
-        bounds.extend( lonlat( p ), PointLonLat{h, h} );
+        auto q = lonlat( p );
+        longitude_in_range( centre.lon(), q.lon() );
+        bounds.extend( q, PointLonLat{h_deg, h_deg} );
     }
 
 
@@ -200,7 +277,7 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
-            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, A, B ) );
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( derivative, *this, A, B, h, centre.lon() ) );
             double dAdy = derivate->d( A ).lat();
             double dBdy = derivate->d( B ).lat();
 
@@ -222,20 +299,20 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
                 }
 
                 // update extrema, extended by 'a small amount' (arbitrary)
-                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{0, h} );
+                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{0, h_deg} );
             }
         }
     }
 
 
-    // 3. locate latitude extrema not at the corners by refining iteratively
+    // 3. locate longitude extrema not at the corners by refining iteratively
 
     for ( size_t i = 0; i < corners.size(); ++i ) {
         if ( !bounds.crossesDateLine() ) {
             PointXY A = corners[i];
             PointXY B = corners[( i + 1 ) % corners.size()];
 
-            std::unique_ptr<Derivate> derivate( DerivateFactory::build( "central", *this, A, B ) );
+            std::unique_ptr<Derivate> derivate( DerivateFactory::build( derivative, *this, A, B, h, centre.lon() ) );
             double dAdx = derivate->d( A ).lon();
             double dBdx = derivate->d( B ).lon();
 
@@ -257,7 +334,7 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox( const Domain& domain 
                 }
 
                 // update extrema, extended by 'a small amount' (arbitrary)
-                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{h, 0} );
+                bounds.extend( lonlat( PointXY::middle( A, B ) ), PointLonLat{h_deg, 0} );
             }
         }
     }
@@ -288,6 +365,35 @@ void Rotated::hash( eckit::Hash& hsh ) const {
     hsh.add( southPole().lat() );
     hsh.add( rotationAngle() );
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+
+extern "C" {
+const ProjectionImpl* atlas__Projection__ctor_config( const eckit::Parametrisation* config ) {
+    return ProjectionImpl::create( *config );
+}
+void atlas__Projection__type( const ProjectionImpl* This, char*& type, int& size ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
+    std::string s = This->type();
+    size          = static_cast<int>( s.size() + 1 );
+    type          = new char[size];
+    strcpy( type, s.c_str() );
+}
+void atlas__Projection__hash( const ProjectionImpl* This, char*& hash, int& size ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
+    eckit::MD5 md5;
+    This->hash( md5 );
+    std::string s = md5.digest();
+    size          = static_cast<int>( s.size() + 1 );
+    hash          = new char[size];
+    strcpy( hash, s.c_str() );
+}
+ProjectionImpl::Spec* atlas__Projection__spec( const ProjectionImpl* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
+    return new ProjectionImpl::Spec( This->spec() );
+}
+
+}  // extern "C"
 
 }  // namespace detail
 }  // namespace projection

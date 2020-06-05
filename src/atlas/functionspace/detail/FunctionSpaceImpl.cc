@@ -37,6 +37,14 @@ void FunctionSpaceImpl::haloExchange( const Field&, bool ) const {
     ATLAS_NOTIMPLEMENTED;
 }
 
+void FunctionSpaceImpl::adjointHaloExchange( const FieldSet&, bool ) const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+void FunctionSpaceImpl::adjointHaloExchange( const Field&, bool ) const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
 Field NoFunctionSpace::createField( const eckit::Configuration& ) const {
     ATLAS_NOTIMPLEMENTED;
 }

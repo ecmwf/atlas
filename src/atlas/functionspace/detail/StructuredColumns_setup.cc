@@ -85,7 +85,7 @@ public:
 
 
 void StructuredColumns::setup( const grid::Distribution& distribution, const eckit::Configuration& config ) {
-    bool periodic_points = config.getInt( "periodic_points", false );
+    config.get( "periodic_points", periodic_points_ );
     if ( not( *grid_ ) ) {
         throw_Exception( "Grid is not a grid::Structured type", Here() );
     }
@@ -270,7 +270,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
     auto compute_x_fast = [this, &compute_i_fast]( idx_t i, idx_t jj, idx_t nx ) -> double {
         const idx_t ii = compute_i_fast( i, nx );  // guaranteed between 0 and nx(jj)
         const double a = ( ii - i ) / nx;
-        const double x = grid_->x( ii, jj ) - a * grid_->x( nx, jj );
+        const double x = grid_->x( ii, jj ) - a * ( grid_->x( nx, jj ) - grid_->x( 0, jj ) );
         return x;
     };
 
@@ -342,7 +342,7 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
             for ( idx_t j = j_begin_; j < j_end_; ++j ) {
                 for ( idx_t i : {i_begin_[j], i_end_[j] - 1} ) {
                     // Following line only, increases periodic halo on the east side by 1
-                    if ( periodic_points && i == grid_->nx( j ) - 1 ) {
+                    if ( periodic_points_ && i == grid_->nx( j ) - 1 ) {
                         ++i;
                     }
 
@@ -462,17 +462,26 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
                         if ( j > thread_j_begin ) {
                             thread_i_begin[j] = i_begin_[j];
                         }
+                        idx_t j_size = ( i_end_[j] - i_begin_[j] );
+
                         idx_t remaining = static_cast<idx_t>( end - n );
-                        idx_t j_size    = ( i_end_[j] - i_begin_[j] );
-                        if ( remaining > j_size ) {
+                        if ( j_size <= remaining ) {
                             thread_i_end[j] = i_end_[j];
                             n += j_size;
+                            if ( n == end ) {
+                                goto stop;
+                            }
                         }
                         else {
-                            thread_i_end[j] = thread_i_begin[j] + remaining;
-                            thread_j_end    = j + 1;
-                            break;
+                            thread_i_end[j] = i_begin_[j] + remaining;
+                            goto stop;
                         }
+
+                        continue;
+
+                    stop:
+                        thread_j_end = j + 1;
+                        break;
                     }
 
                     idx_t r = idx_t( begin );
