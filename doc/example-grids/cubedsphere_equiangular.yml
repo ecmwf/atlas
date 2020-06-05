@@ -1,3 +1,8 @@
+# Test for the cubed-sphere grid that uses the equiangular formulation and projection.
+# See following paper and references therein for a desciption of the grid.
+# Putman, W. M., and S.-J. Lin 2007 Finite-volume transport on various cubed-sphere grids.
+# J. Comput. Phys., 227, 55–78
+
 type   : "cubedsphere_equiangular"
 CubeNx : 12
 

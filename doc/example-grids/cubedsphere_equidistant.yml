@@ -1,3 +1,10 @@
+# Test for  the Cubed-Sphere grid that uses the standard equiangular formulation and projection.
+# For decription and references see:
+# Lin, S.-J. 2004 A “vertically Lagrangian” finite-volume dynamical core for global models.
+# Mon. Wea. Rev., 132, 2293–2307.
+# Lin, S.-J., and R. B. Rood 1996 Multidimensional flux-form semi-Lagrangian transport schemes.
+# Mon. Wea. Rev., 124, 2046–2070.
+
 type   : "cubedsphere_equidistant"
 CubeNx : 12
 

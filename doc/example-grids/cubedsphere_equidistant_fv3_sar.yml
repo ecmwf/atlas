@@ -1,3 +1,8 @@
+# Test for the regionally refined cubed-sphere grid that uses the equiangular 'FV3 flavour'
+# formulation and projection. In this mode a Schmidt scaling is used with a stretching factor to
+# effectively move grid points from one face to another. The target lon/lat is the center of the
+# grid points with shortest grid spacing.
+
 type   : "cubedsphere_equidistant_fv3"
 CubeNx : 12
 DoSchmidt: true

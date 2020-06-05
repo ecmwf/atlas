@@ -1,3 +1,13 @@
+# Test for the cubed-sphere grid that uses the equiangular 'FV3 flavour' formulation and projection.
+# For decription and references see:
+# Lin, S.-J. 2004 A “vertically Lagrangian” finite-volume dynamical core for global models.
+# Mon. Wea. Rev., 132, 2293–2307.
+# Lin, S.-J., and R. B. Rood 1996 Multidimensional flux-form semi-Lagrangian transport schemes.
+# Mon. Wea. Rev., 124, 2046–2070.
+# This FV3 version of the Equiangular cubed-sphere is the one used by the FV3 dynamical core in
+# NOAA's GFS model and NASA's GEOS model. It uses some extra routines to ensure symmetry of cube
+# faces compared with the regular equidistant projection.
+
 type   : "cubedsphere_equidistant_fv3"
 CubeNx : 12
 ShiftLon: -10
