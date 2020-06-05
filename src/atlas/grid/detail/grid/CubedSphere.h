@@ -34,16 +34,14 @@ namespace grid {
  *
  * This class is a base class for all grids that can be described as
  * a cubed sphere.
- * This means the equidistant, equiangular or any other
- * such distribution can be represented with this class
  *
- * For the cubed sphere there is currently no xy in the way there is
- * for e.g. the structured grid. In the below x and y are just indices
- * in the grid.
+ * For more detail on this implementation see atlas/grid/CubedSphereGrid.h
  */
 
 class CubedSphere : public Grid {
 private:
+
+  // Get the position in the xy plane and return as PointXY object
   struct ComputePointXY {
     ComputePointXY( const CubedSphere& grid ) : grid_( grid ) {}
     void operator()( idx_t i, idx_t j, idx_t t, PointXY& point ) {
@@ -52,6 +50,7 @@ private:
     const CubedSphere& grid_;
   };
 
+  // Get the lonlat and return as PointLonLat object
   struct ComputePointLonLat {
     ComputePointLonLat( const CubedSphere& grid ) : grid_( grid ) {}
     void operator()( idx_t i, idx_t j, idx_t t, PointLonLat& point ) {
@@ -65,19 +64,25 @@ private:
   template <typename Base, typename ComputePoint>
   class CubedSphereIterator : public Base {
   public:
+
+    // Create an iterator and return the first or last point. If begin is true it starts at the
+    // beginning of the iterator, otherwise at the end. Class is templated and point can be xy or
+    // lonlat.
     CubedSphereIterator( const CubedSphere& grid, bool begin = true ) :
                           grid_( grid ), i_( begin ? 0 : grid_.CubeNx() ),
                           j_( begin ? 0 : grid_.CubeNx() ), t_( begin ? 0 : 5 ),
                           compute_point{grid_} {
+      // Check that point lies in grid and if so return the xy/lonlat
       if ( grid_.inGrid(i_, j_, t_) ) {
         compute_point( i_, j_, t_, point_ );
       }
     }
 
+    // Return the point and move iterator to the next location
     virtual bool next( typename Base::value_type& point ) {
       if ( grid_.inGrid(i_, j_, t_) && !grid_.finalElement(i_, j_, t_)) {
         compute_point( i_, j_, t_, point );
-        int* ijt = grid_.nextElement(i_, j_, t_);
+        std::unique_ptr<int[]> ijt = grid_.nextElement(i_, j_, t_);
         i_ = ijt[0];
         j_ = ijt[1];
         t_ = ijt[2];
@@ -86,10 +91,12 @@ private:
       return false;
     }
 
+    // * operator
     virtual const typename Base::reference operator*() const { return point_; }
 
+    // ++ operator, move to next element in grid iterator and return point
     virtual const Base& operator++() {
-      int* ijt = grid_.nextElement(i_, j_, t_);
+      std::unique_ptr<int[]> ijt = grid_.nextElement(i_, j_, t_);
       i_ = ijt[0];
       j_ = ijt[1];
       t_ = ijt[2];
@@ -97,10 +104,11 @@ private:
       return *this;
     }
 
+    // += operator, move some distance d through the iterator and return point
     virtual const Base& operator+=( typename Base::difference_type distance ) {
       idx_t d = distance;
       for (int n = 0; n < d; n++) {
-        int* ijt = grid_.nextElement(i_, j_, t_);
+       std::unique_ptr<int[]> ijt = grid_.nextElement(i_, j_, t_);
         i_ = ijt[0];
         j_ = ijt[1];
         t_ = ijt[2];
@@ -109,6 +117,8 @@ private:
       return *this;
     }
 
+    // Given two poisitions in the grid iterator return the distance, which for the cubed-sphere
+    // grid is just the number of grid points between the two points.
     virtual typename Base::difference_type distance( const Base& other ) const {
       const auto& _other = static_cast<const CubedSphereIterator&>( other );
       typename Base::difference_type d = 0;
@@ -121,7 +131,7 @@ private:
           found = true;
           break;
         }
-        int* ijt = grid_.nextElement(i, j, t);
+        std::unique_ptr<int[]> ijt = grid_.nextElement(i, j, t);
         i = ijt[0];
         j = ijt[1];
         t = ijt[2];
@@ -131,18 +141,21 @@ private:
       return d;
     }
 
+    // == operator for checking two positions in the iterator are equal
     virtual bool operator==( const Base& other ) const {
       return i_ == static_cast<const CubedSphereIterator&>( other ).i_ &&
              j_ == static_cast<const CubedSphereIterator&>( other ).j_ &&
              t_ == static_cast<const CubedSphereIterator&>( other ).t_;
     }
 
+    // != operator for checking that two positions in the iterator are not equal
     virtual bool operator!=( const Base& other ) const {
       return i_ != static_cast<const CubedSphereIterator&>( other ).i_ ||
              j_ != static_cast<const CubedSphereIterator&>( other ).j_ ||
              t_ != static_cast<const CubedSphereIterator&>( other ).t_;
     }
 
+    // Clone the grid iterator
     virtual std::unique_ptr<Base> clone() const {
       auto result    = new CubedSphereIterator( grid_, false );
       result->i_     = i_;
@@ -163,6 +176,8 @@ private:
   // -----------------------------------------------------------------------------------------------
 
 public:
+
+  // Iterators for returning xy or lonlat
   using IteratorXY     = CubedSphereIterator<Grid::IteratorXY, ComputePointXY>;
   using IteratorLonLat = CubedSphereIterator<Grid::IteratorLonLat, ComputePointLonLat>;
 
@@ -173,21 +188,27 @@ public:
   CubedSphere( int, Projection );
   CubedSphere( const CubedSphere& );
 
-  // Functions overloaded from the base class
+  // Destructor
   virtual ~CubedSphere() override;
+
+  // Return total grid size
   virtual idx_t size() const override {
     return accumulate(npts_.begin(), npts_.end(), 0);
   }
+
+  // Return information about the grid
   virtual Spec spec() const override;
   virtual std::string name() const override;
   virtual std::string type() const override;
 
   // Return number of faces on cube
-  inline idx_t GetCubeNx() const { return CubeNx_; }
-  inline idx_t CubeNx() const { return CubeNx_; }
+  inline const idx_t GetCubeNx() const { return CubeNx_; }
+  inline const idx_t CubeNx() const { return CubeNx_; }
 
+  // Return number of tiles
+  inline const idx_t GetNTiles() const { return nTiles_; }
 
-  // Tole specific access to x and y locations
+  // Tile specific access to x and y locations
   // -----------------------------------------
 
   inline double x123( idx_t i, idx_t j, idx_t t ) const {
@@ -223,17 +244,17 @@ public:
   // --------------------------
 
   inline void xy( idx_t i, idx_t j, idx_t t, double xyt[] ) const {
-    xyt[0] = xtile.at(round(t/6.0))(i, j, t);
-    xyt[1] = ytile.at(round(t/6.0))(i, j, t);
+    xyt[0] = xtile.at(tileCases_ * t / nTiles_)(i, j, t);
+    xyt[1] = ytile.at(tileCases_ * t / nTiles_)(i, j, t);
     xyt[2] = static_cast<double>(t);
   }
 
   PointXY xy( idx_t i, idx_t j, idx_t t ) const {
-    return PointXY( xtile.at(round(t/6.0))(i, j, t), ytile.at(round(t/6.0))(i, j, t) );
+    return PointXY( xtile.at(tileCases_ * t / nTiles_)(i, j, t), ytile.at(tileCases_ * t / nTiles_)(i, j, t) );
   }
 
-  // Functions for returning lonlat
-  // ------------------------------
+  // Functions for returning lonlat, either as array or PointLonLat
+  // --------------------------------------------------------------
 
   void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const {
     double xytll[5];
@@ -315,9 +336,9 @@ public:
   // Move to next grid element in an iterator
   // ----------------------------------------
 
-  int* nextElement(const idx_t i, const idx_t j, const idx_t t) const {
+  std::unique_ptr<int[]> nextElement(const idx_t i, const idx_t j, const idx_t t) const {
 
-    int* ijt = new int[100];
+    std::unique_ptr<int[]> ijt (new int[3]);
 
     ijt[0] = i;
     ijt[1] = j;
@@ -351,8 +372,8 @@ public:
       return ijt;
     }
 
-    // Internal points
-    if (ijt[0] == CubeNx_-1 && ijt[1] < CubeNx_-1 && ijt[2] == 6) {  // Final point
+
+    if (ijt[0] == CubeNx_-1 && ijt[1] < CubeNx_-1 && ijt[2] == nTiles_) {  // Final point
       ijt[0] = 0;
       ijt[1] = 0;
       ijt[2] = 0;
@@ -363,7 +384,7 @@ public:
     } else if (ijt[0] == CubeNx_-1) {  // Edge
       ijt[0] = 0;
       ijt[1] = ijt[1] + 1;
-    } else {
+    } else { // Internal points
       ijt[0] = ijt[0] + 1;
     }
 
@@ -398,10 +419,15 @@ protected:
   // Nuber of faces on tile
   idx_t CubeNx_;
 
+  // Nuber of tiles
+  static const idx_t nTiles_ = 6;
+
+  const idx_t tileCases_ = 2;
+
   // Start points in x,y direction
-  int xs_[6];
-  int ys_[6];
-  int ysr_[6]; // (for panels 4, 5, 6)
+  int xs_[nTiles_];
+  int ys_[nTiles_];
+  int ysr_[nTiles_]; // (for panels 4, 5, 6)
 
   // Number of unique points on each tile
   std::vector<int> npts_;

@@ -80,14 +80,15 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
   const auto csgrid = CubedSphereGrid( grid );
 
-  int cubeNx = csgrid.GetCubeNx();
+  const int cubeNx = csgrid.GetCubeNx();
+  const int nTiles = csgrid.GetNTiles();
 
   ATLAS_TRACE( "Number of faces per tile = " + std::to_string(cubeNx) );
 
   // Number of nodes
-  int nnodes = 6*cubeNx*cubeNx+2;             // Number of unique grid nodes
-  int nnodes_all = 6*(cubeNx+1)*(cubeNx+1);   // Number of grid nodes including edge and corner duplicates
-  int ncells = 6*cubeNx*cubeNx;               // Number of unique grid cells
+  int nnodes = nTiles*cubeNx*cubeNx+2;             // Number of unique grid nodes
+  int nnodes_all = nTiles*(cubeNx+1)*(cubeNx+1);   // Number of grid nodes including edge and corner duplicates
+  int ncells = nTiles*cubeNx*cubeNx;               // Number of unique grid cells
 
   // Construct mesh nodes
   // --------------------
@@ -111,10 +112,16 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
   // Loop over entire grid
   // ---------------------
-  array::ArrayT<int> NodeArrayT( 6, cubeNx+1, cubeNx+1 ); // All grid points including duplicates
+
+  // Node array will include duplicates of the grid points to make it easier to fill up the
+  // neighbours. However the mesh will not contain these points so no Ghost nodes are required.
+  // We could include the duplicate points in the array if we make them Ghost nodes but it is not
+  // clear if this provides any benefit.
+
+  array::ArrayT<int> NodeArrayT( nTiles, cubeNx+1, cubeNx+1 ); // All grid points including duplicates
   array::ArrayView<int, 3> NodeArray = array::make_view<int, 3>( NodeArrayT );
 
-  for ( it = 0; it < 6; it++ ) {
+  for ( it = 0; it < nTiles; it++ ) {
     for ( ix = 0; ix < cubeNx+1; ix++ ) {
       for ( iy = 0; iy < cubeNx+1; iy++ ) {
         NodeArray(it, ix, iy) = -9999;
@@ -122,7 +129,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     }
   }
 
-  for ( it = 0; it < 6; it++ ) {               // 0, 1, 2, 3, 4, 5
+  for ( it = 0; it < nTiles; it++ ) {               // 0, 1, 2, 3, 4, 5
     for ( ix = 0; ix < cubeNx; ix++ ) {        // 0, 1, ..., cubeNx-1
       for ( iy = 0; iy < cubeNx; iy++ ) {      // 0, 1, ..., cubeNx-1
 
@@ -209,7 +216,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     lonlattest[LON] = lonlat( n, LON );
     lonlattest[LAT] = lonlat( n, LAT );
     // Search the array for this node
-    for ( it = 0; it < 6; it++ ) {
+    for ( it = 0; it < nTiles; it++ ) {
       for ( ix = 0; ix < cubeNx; ix++ ) {
         for ( iy = 0; iy < cubeNx; iy++ ) {
           if (NodeArray(it, ix, iy) == n) {
@@ -298,7 +305,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   // Assert that the correct number of nodes have been set when duplicates are added
   ATLAS_ASSERT( nnodes_all == inode, "Insufficient nodes" );
 
-  for ( it = 0; it < 6; it++ ) {
+  for ( it = 0; it < nTiles; it++ ) {
     for ( ix = 0; ix < cubeNx+1; ix++ ) {
       for ( iy = 0; iy < cubeNx+1; iy++ ) {
         ATLAS_ASSERT( NodeArray(it, ix, iy) != -9999, "Node Array Not Set Properly" );
@@ -307,7 +314,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   }
 
   // Cells in mesh
-  mesh.cells().add( new mesh::temporary::Quadrilateral(), 6*cubeNx*cubeNx );
+  mesh.cells().add( new mesh::temporary::Quadrilateral(), nTiles*cubeNx*cubeNx );
   //int quad_begin  = mesh.cells().elements( 0 ).begin();
   array::ArrayView<int, 1> cells_part = array::make_view<int, 1>( mesh.cells().partition() );
   atlas::mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
@@ -315,7 +322,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   int icell = 0;
   idx_t quad_nodes[4];
 
-  for ( int it = 0; it < 6; it++ ) {
+  for ( int it = 0; it < nTiles; it++ ) {
     for ( int ix = 0; ix < cubeNx; ix++ ) {
       for ( int iy = 0; iy < cubeNx; iy++ ) {
 

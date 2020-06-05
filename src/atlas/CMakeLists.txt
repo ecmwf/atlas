@@ -88,6 +88,7 @@ projection/detail/ProjectionFactory.cc
 projection/detail/ProjectionFactory.h
 projection/detail/ProjectionImpl.cc
 projection/detail/ProjectionImpl.h
+projection/detail/ProjectionUtilities.h
 projection/detail/SchmidtProjection.cc
 projection/detail/SchmidtProjection.h
 

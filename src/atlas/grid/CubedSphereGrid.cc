@@ -5,19 +5,13 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "atlas/grid/Grid.h"
 
-#include <limits>
 #include <string>
-#include <vector>
-
-#include "eckit/config/Parametrisation.h"
 
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/grid/detail/grid/CubedSphere.h"
 #include "atlas/projection/Projection.h"
-#include "atlas/util/Config.h"
 
 namespace atlas {
 

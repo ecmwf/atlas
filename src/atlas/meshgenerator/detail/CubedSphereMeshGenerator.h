@@ -45,10 +45,6 @@ public:
     virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const override;
     virtual void generate( const Grid&, Mesh& ) const override;
 
-    void setNeighbours(int, int, int, int, idx_t quad_nodes[],
-                       array::ArrayView<int, 3>, atlas::mesh::HybridElements::Connectivity,
-                       array::ArrayView<int, 1>) const;
-
     using MeshGenerator::Implementation::generate;
 
 private:
