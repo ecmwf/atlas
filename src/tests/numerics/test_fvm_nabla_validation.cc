@@ -91,16 +91,12 @@ public:
         cos_beta = std::cos( beta );
     }
     void wind( const double x, const double y, double& u, double& v ) {
-        using namespace std;
         double cos_x = std::cos( x );
         double cos_y = std::cos( y );
         double sin_x = std::sin( x );
         double sin_y = std::sin( y );
         u            = cos_y * cos_beta + cos_x * sin_y * sin_beta;
         v            = -sin_x * sin_beta;
-
-        u = cos( y ) * cos( beta ) + cos( x ) * sin( y ) * sin( beta );
-        v = -sin( x ) * sin( beta );
     }
 
     void vordiv( const double x, const double y, double& vor, double& div ) {
@@ -130,7 +126,6 @@ public:
     }
 
     void wind_magnitude_squared_gradient( const double x, const double y, double& dfdx, double& dfdy ) {
-        using namespace std;
         double cos_x = std::cos( x );
         double cos_y = std::cos( y );
         double sin_x = std::sin( x );
