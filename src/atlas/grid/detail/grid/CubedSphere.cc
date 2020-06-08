@@ -187,15 +187,15 @@ public:
     projconf.set("CubeNx", CubeNx);
 
     // Shift projection by a longitude
-    double shiftLon = 0.0;
     if (config.has("ShiftLon")) {
+      double shiftLon = 0.0;
       config.get("ShiftLon", shiftLon);
       projconf.set("ShiftLon", shiftLon);
     }
 
     // Apply a Schmidt transform
-    bool doSchmidt = false;
     if (config.has("DoSchmidt")) {
+      bool doSchmidt = false;
       config.get("DoSchmidt", doSchmidt);
       if (doSchmidt) {
         double stretchFac;
