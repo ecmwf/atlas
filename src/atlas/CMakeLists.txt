@@ -142,12 +142,27 @@ grid/detail/grid/Regional.cc
 
 grid/detail/distribution/DistributionImpl.h
 grid/detail/distribution/DistributionImpl.cc
+grid/detail/distribution/DistributionArray.cc
+grid/detail/distribution/DistributionArray.h
+grid/detail/distribution/DistributionFunction.cc
+grid/detail/distribution/DistributionFunction.h
+
+grid/detail/distribution/BandsDistribution.cc
+grid/detail/distribution/BandsDistribution.h
+grid/detail/distribution/SerialDistribution.cc
+grid/detail/distribution/SerialDistribution.h
+
 
 grid/detail/vertical/VerticalInterface.h
 grid/detail/vertical/VerticalInterface.cc
 
+
+grid/detail/partitioner/BandsPartitioner.cc
+grid/detail/partitioner/BandsPartitioner.h
 grid/detail/partitioner/CheckerboardPartitioner.cc
 grid/detail/partitioner/CheckerboardPartitioner.h
+grid/detail/partitioner/EqualBandsPartitioner.cc
+grid/detail/partitioner/EqualBandsPartitioner.h
 grid/detail/partitioner/EqualRegionsPartitioner.cc
 grid/detail/partitioner/EqualRegionsPartitioner.h
 grid/detail/partitioner/MatchingMeshPartitioner.h
@@ -164,6 +179,11 @@ grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.cc
 grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h
 grid/detail/partitioner/Partitioner.cc
 grid/detail/partitioner/Partitioner.h
+grid/detail/partitioner/RegularBandsPartitioner.cc
+grid/detail/partitioner/RegularBandsPartitioner.h
+grid/detail/partitioner/SerialPartitioner.cc
+grid/detail/partitioner/SerialPartitioner.h
+
 
 grid/detail/spacing/Spacing.cc
 grid/detail/spacing/Spacing.h

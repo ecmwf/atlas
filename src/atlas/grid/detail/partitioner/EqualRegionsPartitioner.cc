@@ -434,8 +434,7 @@ void eq_regions( int N, double xmin[], double xmax[], double ymin[], double ymax
     ymax[N - 1] = 0.5 * M_PI - s_cap[s_cap.size() - 2];
 }
 
-void EqualRegionsPartitioner:: init ()
-{
+void EqualRegionsPartitioner::init() {
     std::vector<double> s_cap;
     eq_caps( N_, sectors_, s_cap );
     bands_.resize( s_cap.size() );
@@ -445,15 +444,16 @@ void EqualRegionsPartitioner:: init ()
 }
 
 EqualRegionsPartitioner::EqualRegionsPartitioner() : Partitioner(), N_( nb_partitions() ) {
-    init ();
+    init();
 }
 
 EqualRegionsPartitioner::EqualRegionsPartitioner( int N ) : Partitioner( N ), N_( N ) {
-    init ();
+    init();
 }
 
-EqualRegionsPartitioner::EqualRegionsPartitioner( int N, const eckit::Parametrisation & config ) : Partitioner( N ), N_( N ) {
-    init ();
+EqualRegionsPartitioner::EqualRegionsPartitioner( int N, const eckit::Parametrisation& config ) :
+    Partitioner( N ), N_( N ) {
+    init();
 }
 
 int EqualRegionsPartitioner::partition( const double& x, const double& y ) const {

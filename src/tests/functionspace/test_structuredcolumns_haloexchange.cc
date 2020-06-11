@@ -89,6 +89,36 @@ CASE( "Two haloexchanges for StructuredColumns differing only by 'periodic_point
     EXPECT_NO_THROW( fs2.haloExchange( ij2 ) );
 }
 
+//-----------------------------------------------------------------------------
+
+CASE( "Two haloexchanges for StructuredColumns differing only by 'distribution'" ) {
+    Grid grid( "L400x201" );
+
+    grid::Distribution dist1( grid, grid::Partitioner( "checkerboard" ) );
+    grid::Distribution dist2( grid, grid::Partitioner( "regular_bands" ) );
+
+    functionspace::StructuredColumns fs1( grid, dist1, Config( "halo", 1 ) );
+    functionspace::StructuredColumns fs2( grid, dist2, Config( "halo", 1 ) );
+
+    if ( mpi::size() == 1 ) {
+        EXPECT_EQ( fs1.sizeOwned(), 80400 );
+        EXPECT_EQ( fs2.sizeOwned(), 80400 );
+        EXPECT_EQ( fs1.sizeHalo(), 81606 );
+        EXPECT_EQ( fs2.sizeHalo(), 81606 );
+    }
+    if ( mpi::size() == 4 ) {
+        EXPECT_EQ( fs1.sizeOwned(), 20100 );
+        EXPECT_EQ( fs2.sizeOwned(), ( std::vector<int>{20400, 20000, 20000, 20000}[mpi::rank()] ) );
+        EXPECT_EQ( fs1.sizeHalo(), ( std::vector<int>{20706, 20706, 20706, 20706}[mpi::rank()] ) );
+        EXPECT_EQ( fs2.sizeHalo(), ( std::vector<int>{21306, 20904, 20904, 20904}[mpi::rank()] ) );
+    }
+
+    auto ij1 = getIJ( fs1 );
+    auto ij2 = getIJ( fs2 );
+
+    EXPECT_NO_THROW( fs1.haloExchange( ij1 ) );
+    EXPECT_NO_THROW( fs2.haloExchange( ij2 ) );
+}
 
 //-----------------------------------------------------------------------------
 

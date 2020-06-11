@@ -12,9 +12,9 @@
 
 #include <string>
 
-#include "atlas/util/Object.h"
-#include "atlas/util/Config.h"
 #include "atlas/library/config.h"
+#include "atlas/util/Config.h"
+#include "atlas/util/Object.h"
 
 namespace atlas {
 class Grid;
@@ -41,7 +41,7 @@ public:
 
     virtual void partition( const Grid& grid, int part[] ) const = 0;
 
-    Distribution partition( const Grid& grid ) const;
+    virtual Distribution partition( const Grid& grid ) const;
 
     idx_t nb_partitions() const;
 
@@ -64,7 +64,7 @@ public:
    */
     static Partitioner* build( const std::string& );
     static Partitioner* build( const std::string&, const idx_t nb_partitions );
-    static Partitioner* build( const std::string&, const idx_t nb_partitions, const eckit::Parametrisation & );
+    static Partitioner* build( const std::string&, const idx_t nb_partitions, const eckit::Parametrisation& );
 
     /*!
    * \brief list all registered partioner builders
@@ -74,9 +74,9 @@ public:
 
 private:
     std::string name_;
-    virtual Partitioner* make()                                                            = 0;
-    virtual Partitioner* make( const idx_t nb_partitions )                                 = 0;
-    virtual Partitioner* make( const idx_t nb_partitions, const eckit::Parametrisation & ) = 0;
+    virtual Partitioner* make()                                                           = 0;
+    virtual Partitioner* make( const idx_t nb_partitions )                                = 0;
+    virtual Partitioner* make( const idx_t nb_partitions, const eckit::Parametrisation& ) = 0;
 
 protected:
     PartitionerFactory( const std::string& );
@@ -90,7 +90,9 @@ class PartitionerBuilder : public PartitionerFactory {
     virtual Partitioner* make() { return new T(); }
 
     virtual Partitioner* make( const idx_t nb_partitions ) { return new T( nb_partitions ); }
-    virtual Partitioner* make( const idx_t nb_partitions, const eckit::Parametrisation & config ) { return new T( nb_partitions, config ); }
+    virtual Partitioner* make( const idx_t nb_partitions, const eckit::Parametrisation& config ) {
+        return new T( nb_partitions, config );
+    }
 
 public:
     PartitionerBuilder( const std::string& name ) : PartitionerFactory( name ) {}

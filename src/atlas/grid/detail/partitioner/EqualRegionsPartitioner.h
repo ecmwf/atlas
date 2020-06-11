@@ -80,7 +80,7 @@ public:
     EqualRegionsPartitioner();
 
     EqualRegionsPartitioner( int N );
-    EqualRegionsPartitioner( int N, const eckit::Parametrisation & config );
+    EqualRegionsPartitioner( int N, const eckit::Parametrisation& config );
 
     void where( int partition, int& band, int& sector ) const;
     int nb_bands() const { return bands_.size(); }
@@ -114,7 +114,7 @@ public:
     };
 
 private:
-    void init ();
+    void init();
     // Doesn't matter if nodes[] is in degrees or radians, as a sorting
     // algorithm is used internally
     void partition( int nb_nodes, NodeInt nodes[], int part[] ) const;

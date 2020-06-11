@@ -8,44 +8,35 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <algorithm>
-
 #include "Distribution.h"
+
+#include "eckit/utils/MD5.h"
 
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
-#include "atlas/grid/detail/distribution/DistributionImpl.h"
-#include "atlas/parallel/mpi/mpi.h"
-#include "atlas/runtime/Log.h"
+#include "atlas/grid/detail/distribution/DistributionArray.h"
+#include "atlas/grid/detail/distribution/SerialDistribution.h"
 
 namespace atlas {
 namespace grid {
 
-Distribution::Distribution( const Grid& grid ) : Handle( new Implementation( grid ) ) {}
-Distribution::Distribution( const Grid& grid, const Config & config ) : Handle( new Implementation( grid, config ) ) {}
+using namespace detail::distribution;
+
+Distribution::Distribution( const Grid& grid ) : Handle( new SerialDistribution{grid} ) {}
+
+Distribution::Distribution( const Grid& grid, const Config& config ) :
+    Handle( Partitioner( config ).partition( grid ).get() ) {}
 
 Distribution::Distribution( const Grid& grid, const Partitioner& partitioner ) :
-    Handle( new Implementation( grid, partitioner ) ) {}
+    Handle( partitioner.partition( grid ) ) {}
 
 Distribution::Distribution( int nb_partitions, idx_t npts, int part[], int part0 ) :
-    Handle( new Implementation( nb_partitions, npts, part, part0 ) ) {}
+    Handle( new DistributionArray( nb_partitions, npts, part, part0 ) ) {}
 
 Distribution::Distribution( int nb_partitions, partition_t&& part ) :
-    Handle( new Implementation( nb_partitions, std::move( part ) ) ) {}
+    Handle( new DistributionArray( nb_partitions, std::move( part ) ) ) {}
 
 Distribution::~Distribution() = default;
-
-const Distribution::partition_t& Distribution::partition() const {
-    return get()->partition();
-}
-
-idx_t Distribution::nb_partitions() const {
-    return get()->nb_partitions();
-}
-
-const int* Distribution::data() const {
-    return get()->data();
-}
 
 const std::vector<idx_t>& Distribution::nb_pts() const {
     return get()->nb_pts();
@@ -68,8 +59,14 @@ std::ostream& operator<<( std::ostream& os, const Distribution& distribution ) {
     return os;
 }
 
-Distribution::operator const partition_t&() const {
-    return *get();
+void Distribution::hash( eckit::Hash& hash ) const {
+    get()->hash( hash );
+}
+
+std::string Distribution::hash() const {
+    eckit::MD5 h;
+    hash( h );
+    return h.digest();
 }
 
 }  // namespace grid

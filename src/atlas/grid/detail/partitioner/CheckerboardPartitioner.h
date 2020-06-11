@@ -24,7 +24,7 @@ public:
     CheckerboardPartitioner();
 
     CheckerboardPartitioner( int N );  // N is the number of parts (aka MPI tasks)
-    CheckerboardPartitioner( int N, const eckit::Parametrisation & );  
+    CheckerboardPartitioner( int N, const eckit::Parametrisation& );
 
     CheckerboardPartitioner( int N, int nbands );
     CheckerboardPartitioner( int N, int nbands, bool checkerboard );

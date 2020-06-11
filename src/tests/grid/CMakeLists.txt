@@ -31,12 +31,26 @@ foreach(test
         test_spacing
         test_state
         test_largegrid
-        test_distribution
+        
         test_grid_hash)
 
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 
 endforeach()
+
+set( _WITH_MPI )
+if( eckit_HAVE_MPI )
+    set( _WITH_MPI MPI 4 )
+endif()
+
+ecbuild_add_test( TARGET  atlas_test_distribution_regular_bands
+  ${_WITH_MPI}
+  SOURCES test_distribution_regular_bands.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+
 
 file( GLOB grids ${PROJECT_SOURCE_DIR}/doc/example-grids/*.yml )
 if( NOT HAVE_PROJ )

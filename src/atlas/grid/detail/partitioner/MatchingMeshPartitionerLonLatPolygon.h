@@ -24,7 +24,8 @@ public:
 public:
     MatchingMeshPartitionerLonLatPolygon() : MatchingMeshPartitioner() {}
     MatchingMeshPartitionerLonLatPolygon( const size_t nb_partitions ) : MatchingMeshPartitioner( nb_partitions ) {}
-    MatchingMeshPartitionerLonLatPolygon( const size_t nb_partitions, const eckit::Parametrisation & config ) : MatchingMeshPartitioner( nb_partitions ) {}
+    MatchingMeshPartitionerLonLatPolygon( const size_t nb_partitions, const eckit::Parametrisation& config ) :
+        MatchingMeshPartitioner( nb_partitions ) {}
     MatchingMeshPartitionerLonLatPolygon( const Mesh& mesh ) : MatchingMeshPartitioner( mesh ) {}
 
     /**

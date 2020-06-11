@@ -197,11 +197,12 @@ void StructuredMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
         partitioner_type = "equal_regions";  // Odd number of latitudes
     }
     if ( nb_parts == 1 || mpi::size() == 1 ) {
-        partitioner_type = "equal_regions";  // Only one part --> Trans is slower
+        partitioner_type = "equal_regions";
     }
 
     grid::Partitioner partitioner( partitioner_type, nb_parts );
     grid::Distribution distribution( partitioner.partition( grid ) );
+    ATLAS_DEBUG_VAR( distribution );
     generate( grid, distribution, mesh );
 }
 
@@ -220,12 +221,12 @@ void StructuredMeshGenerator::generate( const Grid& grid, const grid::Distributi
 
     ATLAS_ASSERT( !mesh.generated() );
 
-    if ( grid.size() != idx_t( distribution.partition().size() ) ) {
+    if ( grid.size() != idx_t( distribution.size() ) ) {
         std::stringstream msg;
         msg << "Number of points in grid (" << grid.size()
             << ") different from "
                "number of points in grid distribution ("
-            << distribution.partition().size() << ")";
+            << distribution.size() << ")";
         throw_AssertionFailed( msg.str(), Here() );
     }
 
@@ -254,8 +255,8 @@ void StructuredMeshGenerator::generate( const Grid& grid, const grid::Distributi
     generate_mesh( rg, distribution, region, mesh );
 }
 
-void StructuredMeshGenerator::generate_region( const StructuredGrid& rg, const atlas::vector<int>& parts, int mypart,
-                                               Region& region ) const {
+void StructuredMeshGenerator::generate_region( const StructuredGrid& rg, const grid::Distribution& distribution,
+                                               int mypart, Region& region ) const {
     ATLAS_TRACE();
 
     double max_angle        = options.getDouble( "angle" );
@@ -274,7 +275,7 @@ Find min and max latitudes used by this part.
     idx_t lat_north = -1;
     for ( idx_t jlat = 0; jlat < rg.ny(); ++jlat ) {
         for ( idx_t jlon = 0; jlon < rg.nx( jlat ); ++jlon ) {
-            if ( parts.at( n ) == mypart ) {
+            if ( distribution.partition( n ) == mypart ) {
                 lat_north = jlat;
                 goto end_north;
             }
@@ -287,7 +288,7 @@ end_north:
     idx_t lat_south = -1;
     for ( idx_t jlat = rg.ny() - 1; jlat >= 0; --jlat ) {
         for ( idx_t jlon = rg.nx( jlat ) - 1; jlon >= 0; --jlon ) {
-            if ( parts.at( n ) == mypart ) {
+            if ( distribution.partition( n ) == mypart ) {
                 lat_south = jlat;
                 goto end_south;
             }
@@ -370,7 +371,7 @@ We need to connect to next region
         ipS2 = std::min( ipS1 + 1, endS );
 
         idx_t jelem = 0;
-        int pE      = parts.at( offset.at( latN ) );
+        int pE      = distribution.partition( offset.at( latN ) );
 
 #if DEBUG_OUTPUT
         Log::info() << "=================\n";
@@ -391,29 +392,29 @@ We need to connect to next region
 
             int pN1, pS1, pN2, pS2;
             if ( ipN1 != rg.nx( latN ) ) {
-                pN1 = parts.at( offset.at( latN ) + ipN1 );
+                pN1 = distribution.partition( offset.at( latN ) + ipN1 );
             }
             else {
-                pN1 = parts.at( offset.at( latN ) );
+                pN1 = distribution.partition( offset.at( latN ) );
             }
             if ( ipS1 != rg.nx( latS ) ) {
-                pS1 = parts.at( offset.at( latS ) + ipS1 );
+                pS1 = distribution.partition( offset.at( latS ) + ipS1 );
             }
             else {
-                pS1 = parts.at( offset.at( latS ) );
+                pS1 = distribution.partition( offset.at( latS ) );
             }
 
             if ( ipN2 == rg.nx( latN ) ) {
-                pN2 = parts.at( offset.at( latN ) );
+                pN2 = distribution.partition( offset.at( latN ) );
             }
             else {
-                pN2 = parts.at( offset.at( latN ) + ipN2 );
+                pN2 = distribution.partition( offset.at( latN ) + ipN2 );
             }
             if ( ipS2 == rg.nx( latS ) ) {
-                pS2 = parts.at( offset.at( latS ) );
+                pS2 = distribution.partition( offset.at( latS ) );
             }
             else {
-                pS2 = parts.at( offset.at( latS ) + ipS2 );
+                pS2 = distribution.partition( offset.at( latS ) + ipS2 );
             }
 
             // Log::info()  << ipN1 << "("<<pN1<<") " << ipN2 <<"("<<pN2<<")" <<  std::endl;
@@ -759,7 +760,7 @@ We need to connect to next region
         n                           = offset.at( jlat );
         region.lat_begin.at( jlat ) = std::max( 0, region.lat_begin.at( jlat ) );
         for ( idx_t jlon = 0; jlon < rg.nx( jlat ); ++jlon ) {
-            if ( parts.at( n ) == mypart ) {
+            if ( distribution.partition( n ) == mypart ) {
                 region.lat_begin.at( jlat ) = std::min( region.lat_begin.at( jlat ), jlon );
                 region.lat_end.at( jlat )   = std::max( region.lat_end.at( jlat ), jlon );
             }
@@ -797,7 +798,7 @@ struct GhostNode {
 };
 }  // namespace
 
-void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atlas::vector<int>& parts,
+void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const grid::Distribution& distribution,
                                              const Region& region, Mesh& mesh ) const {
     ATLAS_TRACE();
 
@@ -938,7 +939,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
             for ( idx_t jlon = region.lat_begin.at( jlat ); jlon <= region.lat_end.at( jlat ); ++jlon ) {
                 if ( jlon < rg.nx( jlat ) ) {
                     n = offset_glb.at( jlat ) + jlon;
-                    if ( parts.at( n ) == mypart ) {
+                    if ( distribution.partition( n ) == mypart ) {
                         node_numbering.at( jnode ) = node_number;
                         ++node_number;
                     }
@@ -1016,7 +1017,7 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const atl
                 lonlat( inode, LAT ) = crd[LAT];
 
                 glb_idx( inode ) = n + 1;
-                part( inode )    = parts.at( n );
+                part( inode )    = distribution.partition( n );
                 ghost( inode )   = 0;
                 halo( inode )    = 0;
                 Topology::reset( flags( inode ) );
