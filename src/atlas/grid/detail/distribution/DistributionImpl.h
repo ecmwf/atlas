@@ -54,6 +54,8 @@ public:
     virtual size_t footprint() const = 0;
 
     virtual void hash( eckit::Hash& ) const = 0;
+
+    virtual void partition( gidx_t begin, gidx_t end, int partitions[] ) const = 0;
 };
 
 

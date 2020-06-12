@@ -68,6 +68,13 @@ public:
 
     void hash( eckit::Hash& ) const override;
 
+    void partition( gidx_t begin, gidx_t end, int partitions[] ) const override {
+        size_t i = 0;
+        for ( gidx_t n = begin; n < end; ++n, ++i ) {
+            partitions[i] = part_[n];
+        }
+    }
+
 protected:
     idx_t nb_partitions_ = 0;
 

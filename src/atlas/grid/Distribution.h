@@ -55,7 +55,12 @@ public:
 
     ~Distribution();
 
-    int partition( const gidx_t gidx ) const { return get()->partition( gidx ); }
+    int partition( gidx_t index ) const { return get()->partition( index ); }
+
+    template <typename PartitionContainer>
+    void partition( gidx_t begin, gidx_t end, PartitionContainer& partitions ) const {
+        return get()->partition( begin, end, partitions.data() );
+    }
 
     size_t footprint() const { return get()->footprint(); }
 

@@ -55,7 +55,14 @@ template <typename Derived>
 class DistributionFunctionT : public DistributionFunction {
 public:
     DistributionFunctionT( const Grid& grid ) : DistributionFunction( grid ) {}
-    int partition( gidx_t gidx ) const override { return static_cast<const Derived*>( this )->function( gidx ); }
+    int partition( gidx_t index ) const override { return static_cast<const Derived*>( this )->function( index ); }
+
+    void partition( gidx_t begin, gidx_t end, int partitions[] ) const override {
+        size_t i = 0;
+        for ( gidx_t n = begin; n < end; ++n, ++i ) {
+            partitions[i] = static_cast<const Derived*>( this )->function( n );
+        }
+    }
 };
 
 }  // namespace distribution
