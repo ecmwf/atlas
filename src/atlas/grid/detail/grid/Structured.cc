@@ -76,8 +76,18 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
         nxmin_ = std::min( nx_[j], nxmin_ );
         nxmax_ = std::max( nx_[j], nxmax_ );
     }
+    size_t npts_size_t = 0;
+    for ( auto& nx : nx_ ) {
+        npts_size_t += size_t( nx );
+    }
     npts_ = std::accumulate( nx_.begin(), nx_.end(), idx_t{0} );
-
+    if ( size_t( npts_ ) != npts_size_t ) {
+        ATLAS_THROW_EXCEPTION(
+            "Cannot represent grid.size() with idx_t of "
+            << ATLAS_BITS_LOCAL
+            << " bits.\n"
+               "Recompile atlas with idx_t 64bits, or wait for pending development where grid index to become gidx_t" );
+    }
     crop( domain );
 
     computeTruePeriodicity();
