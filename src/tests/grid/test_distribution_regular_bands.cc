@@ -9,6 +9,7 @@
  */
 
 #include <algorithm>
+#include <cstdint>
 #include <iomanip>
 #include <sstream>
 
@@ -16,7 +17,10 @@
 #include "atlas/field.h"
 #include "atlas/functionspace.h"
 #include "atlas/grid.h"
+#include "atlas/grid/detail/distribution/BandsDistribution.h"
+#include "atlas/grid/detail/distribution/SerialDistribution.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/util/Config.h"
 
 #include "tests/AtlasTestEnvironment.h"
@@ -134,6 +138,60 @@ CASE( "test_regular_bands" ) {
         }
     }
 }
+
+CASE( "test regular_bands performance test" ) {
+    // auto grid = StructuredGrid( "L40000x20000" );  //-- > test takes too long( less than 15 seconds )
+    // Example timings for L40000x20000:
+    // └─test regular_bands performance test       │ 1   │ 11.90776s
+    //   ├─inline access                           │ 1   │  3.52238s
+    //   ├─virtual access                          │ 1   │  4.11881s
+    //   └─virtual cached access                   │ 1   │  4.02159s
+
+    auto grid = StructuredGrid( "L5000x2500" );  // -> negligible time.
+
+    auto dist         = grid::Distribution( grid, grid::Partitioner( "regular_bands" ) );
+    auto& dist_direct = dynamic_cast<const grid::detail::distribution::BandsDistribution<int32_t>&>( *dist.get() );
+
+
+    // Trick to prevent the compiler from compiling out a loop if it sees the result was not used.
+    struct DoNotCompileOut {
+        int counter = 0;
+        ~DoNotCompileOut() { Log::debug() << counter << std::endl; }
+        void operator()( int p ) {
+            counter += p;
+            //
+        }
+    } do_not_compile_out;
+
+    gidx_t size = grid.size();
+
+    ATLAS_TRACE_SCOPE( "inline access" ) {
+        for ( gidx_t n = 0; n < size; ++n ) {
+            // inline function call
+            do_not_compile_out( dist_direct.function( n ) );
+        }
+    }
+
+    ATLAS_TRACE_SCOPE( "virtual access" ) {
+        for ( gidx_t n = 0; n < size; ++n ) {
+            // virtual function call
+            do_not_compile_out( dist.partition( n ) );
+        }
+    }
+
+    ATLAS_TRACE_SCOPE( "virtual cached access" ) {
+        gidx_t n = 0;
+        grid::Distribution::partition_t part( grid.nxmax() );
+        for ( idx_t j = 0; j < grid.ny(); ++j, n += grid.nx( j ) ) {
+            dist.partition( n, n + grid.nx( j ), part );
+            // this is one virtual call, which in turn has inline-access for nx(j) evaluations
+            for ( idx_t i = 0; i < grid.nx( j ); ++i ) {
+                do_not_compile_out( part[i] );
+            }
+        }
+    }
+}
+
 
 //-----------------------------------------------------------------------------
 

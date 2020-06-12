@@ -19,19 +19,22 @@ namespace grid {
 namespace detail {
 namespace distribution {
 
-
-class BandsDistribution : public DistributionFunctionT<BandsDistribution> {
+template <typename Int>
+class BandsDistribution : public DistributionFunctionT<BandsDistribution<Int>> {
 private:
-    size_t blocksize_;
-    idx_t nb_blocks_;
+    Int blocksize_;
+    Int nb_blocks_;
+    Int nb_partitions_Int_;
 
 public:
     BandsDistribution( const Grid& grid, idx_t nb_partitions, const std::string& type, size_t blocksize = 1 );
 
-    int function( gidx_t gidx ) const {
-        idx_t iblock = gidx / blocksize_;
-        return ( iblock * nb_partitions_ ) / nb_blocks_;
+    int function( gidx_t index ) const {
+        Int iblock = Int( index ) / blocksize_;
+        return ( iblock * nb_partitions_Int_ ) / nb_blocks_;
     }
+
+    static bool detectOverflow( size_t gridsize, size_t nb_partitions, size_t blocksize );
 };
 
 

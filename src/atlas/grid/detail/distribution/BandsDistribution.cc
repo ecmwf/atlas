@@ -11,34 +11,38 @@
 #include "BandsDistribution.h"
 
 #include <algorithm>
+#include <cstdint>
 
 #include "atlas/grid/Grid.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
 namespace detail {
 namespace distribution {
 
-BandsDistribution::BandsDistribution( const atlas::Grid& grid, atlas::idx_t nb_partitions, const std::string& type,
-                                      size_t blocksize ) :
-    DistributionFunctionT<BandsDistribution>( grid ) {
-    type_           = type;
-    size_t gridsize = grid.size();
-    size_           = gridsize;
-    nb_partitions_  = nb_partitions;
-    blocksize_      = blocksize;
+template <typename Int>
+BandsDistribution<Int>::BandsDistribution( const atlas::Grid& grid, atlas::idx_t nb_partitions, const std::string& type,
+                                           size_t blocksize ) :
+    DistributionFunctionT<BandsDistribution<Int>>( grid ) {
+    this->type_          = type;
+    size_t gridsize      = grid.size();
+    this->size_          = gridsize;
+    this->nb_partitions_ = nb_partitions;
+    nb_partitions_Int_   = nb_partitions;
+    blocksize_           = blocksize;
 
     nb_blocks_ = gridsize / blocksize_;
 
     if ( gridsize % blocksize_ )
         nb_blocks_++;
 
-    nb_pts_.reserve( nb_partitions_ );
+    this->nb_pts_.reserve( nb_partitions_Int_ );
 
-    for ( idx_t iproc = 0; iproc < nb_partitions_; iproc++ ) {
+    for ( idx_t iproc = 0; iproc < nb_partitions; iproc++ ) {
         // Approximate values
-        gidx_t imin = blocksize_ * ( ( ( iproc + 0 ) * nb_blocks_ ) / nb_partitions_ );
-        gidx_t imax = blocksize_ * ( ( ( iproc + 1 ) * nb_blocks_ ) / nb_partitions_ );
+        gidx_t imin = blocksize_ * ( ( ( iproc + 0 ) * nb_blocks_ ) / nb_partitions_Int_ );
+        gidx_t imax = blocksize_ * ( ( ( iproc + 1 ) * nb_blocks_ ) / nb_partitions_Int_ );
 
         while ( imin > 0 ) {
             if ( function( imin - blocksize_ ) == iproc )
@@ -65,12 +69,30 @@ BandsDistribution::BandsDistribution( const atlas::Grid& grid, atlas::idx_t nb_p
         }
 
         imax = std::min( imax, (gidx_t)gridsize );
-        nb_pts_.push_back( imax - imin );
+        this->nb_pts_.push_back( imax - imin );
     }
 
-    max_pts_ = *std::max_element( nb_pts_.begin(), nb_pts_.end() );
-    min_pts_ = *std::min_element( nb_pts_.begin(), nb_pts_.end() );
+    this->max_pts_ = *std::max_element( this->nb_pts_.begin(), this->nb_pts_.end() );
+    this->min_pts_ = *std::min_element( this->nb_pts_.begin(), this->nb_pts_.end() );
+
+    ATLAS_ASSERT( detectOverflow( gridsize, nb_partitions_Int_, blocksize_ ) == false );
 }
+
+template <typename Int>
+bool BandsDistribution<Int>::detectOverflow( size_t gridsize, size_t nb_partitions, size_t blocksize ) {
+    int64_t size                 = gridsize;
+    int64_t iblock               = ( size - 1 ) / int64_t( blocksize );
+    int64_t intermediate_product = iblock * int64_t( nb_partitions );
+    ATLAS_ASSERT( intermediate_product > 0, "Even 64 bits is insufficient to prevent overflow." );
+    if ( intermediate_product > std::numeric_limits<Int>::max() ) {
+        return true;
+    }
+    return false;
+}
+
+
+template class BandsDistribution<int32_t>;
+template class BandsDistribution<int64_t>;
 
 }  // namespace distribution
 }  // namespace detail

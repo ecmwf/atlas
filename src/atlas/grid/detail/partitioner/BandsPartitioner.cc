@@ -11,6 +11,8 @@
 
 #include "BandsPartitioner.h"
 
+#include <cstdint>
+
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/grid/detail/distribution/BandsDistribution.h"
 #include "atlas/runtime/Exception.h"
@@ -36,14 +38,31 @@ BandsPartitioner::BandsPartitioner() : Partitioner(), blocksize_{1} {}
 BandsPartitioner::BandsPartitioner( int N, int blocksize ) : Partitioner( N ), blocksize_( blocksize ) {}
 
 Distribution BandsPartitioner::partition( const Partitioner::Grid& grid ) const {
-    return Distribution{new distribution::BandsDistribution{grid, nb_partitions(), type(), blocksize( grid )}};
+    if ( not distribution::BandsDistribution<int32_t>::detectOverflow( grid.size(), nb_partitions(),
+                                                                       blocksize( ( grid ) ) ) ) {
+        return Distribution{
+            new distribution::BandsDistribution<int32_t>{grid, nb_partitions(), type(), blocksize( grid )}};
+    }
+    else {
+        return Distribution{
+            new distribution::BandsDistribution<int64_t>{grid, nb_partitions(), type(), blocksize( grid )}};
+    }
 }
 
 void BandsPartitioner::partition( const Partitioner::Grid& grid, int part[] ) const {
-    distribution::BandsDistribution distribution{grid, nb_partitions(), type(), blocksize( grid )};
     gidx_t gridsize = grid.size();
-    for ( gidx_t n = 0; n < gridsize; ++n ) {
-        part[n] = distribution.function( n );
+    if ( not distribution::BandsDistribution<int32_t>::detectOverflow( grid.size(), nb_partitions(),
+                                                                       blocksize( ( grid ) ) ) ) {
+        distribution::BandsDistribution<int32_t> distribution{grid, nb_partitions(), type(), blocksize( grid )};
+        for ( gidx_t n = 0; n < gridsize; ++n ) {
+            part[n] = distribution.function( n );
+        }
+    }
+    else {
+        distribution::BandsDistribution<int64_t> distribution{grid, nb_partitions(), type(), blocksize( grid )};
+        for ( gidx_t n = 0; n < gridsize; ++n ) {
+            part[n] = distribution.function( n );
+        }
     }
 }
 
