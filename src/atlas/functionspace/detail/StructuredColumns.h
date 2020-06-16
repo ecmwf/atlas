@@ -56,6 +56,9 @@ namespace functionspace {
 namespace detail {
 
 class StructuredColumnsHaloExchangeCache;
+class StructuredColumnsGatherScatterCache;
+class StructuredColumnsChecksumCache;
+
 
 // -------------------------------------------------------------------
 
@@ -205,6 +208,8 @@ private:  // data
     idx_t halo_;
 
     friend class StructuredColumnsHaloExchangeCache;
+    friend class StructuredColumnsGatherScatterCache;
+    friend class StructuredColumnsChecksumCache;
     bool periodic_points_{false};
 
     const StructuredGrid* grid_;
