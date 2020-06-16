@@ -192,7 +192,6 @@ ecbuild_add_library( TARGET atlas_f
         trans/atlas_Trans_module.F90
         internals/atlas_read_file.h
         internals/atlas_read_file.cc
-        internals/atlas_write_to_fortran_unit.F90
         internals/Library.h
         internals/Library.cc
         runtime/atlas_trace.cc
