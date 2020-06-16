@@ -53,6 +53,7 @@ private:
 private:
     fvm::Method const* fvm_;
     std::vector<idx_t> pole_edges_;
+    int metric_approach_{0};
 };
 #endif
 // ------------------------------------------------------------------

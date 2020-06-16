@@ -24,6 +24,12 @@ ecbuild_add_test( TARGET atlas_test_fvm_nabla_L5
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_fvm_nabla_validation
+  SOURCES test_fvm_nabla_validation.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 if( HAVE_FCTEST)
   add_fctest( TARGET atlas_fctest_fvm_nabla
     LINKER_LANGUAGE Fortran
