@@ -43,7 +43,7 @@ detail::partitioner::Partitioner* partitioner_from_config( const Partitioner::Co
         throw_Exception( "'type' missing in configuration for Partitioner", Here() );
     }
     config.get( "partitions", partitions );
-    return Factory::build( type, partitions );
+    return Factory::build( type, partitions, config );
 }
 }  // namespace
 

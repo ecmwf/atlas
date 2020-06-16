@@ -30,7 +30,7 @@ public:
     /// @brief Constructor
     TransPartitioner();
 
-    TransPartitioner( const idx_t nb_partitions );
+    TransPartitioner( const idx_t nb_partitions, const eckit::Parametrisation& = util::NoConfig() );
 
     virtual ~TransPartitioner();
 

@@ -24,6 +24,7 @@ public:
 public:
     MatchingMeshPartitionerSphericalPolygon() : MatchingMeshPartitioner() {}
     MatchingMeshPartitionerSphericalPolygon( const idx_t nb_partitions ) : MatchingMeshPartitioner( nb_partitions ) {}
+    MatchingMeshPartitionerSphericalPolygon( const idx_t nb_partitions, const eckit::Parametrisation & config ) : MatchingMeshPartitioner( nb_partitions ) {}
     MatchingMeshPartitionerSphericalPolygon( const Mesh& mesh ) : MatchingMeshPartitioner( mesh ) {}
 
     /**
