@@ -64,7 +64,7 @@ public:
 
     bool functional() const override { return false; }
 
-    virtual gidx_t size() const { return part_.size(); }
+    gidx_t size() const override { return part_.size(); }
 
     void hash( eckit::Hash& ) const override;
 

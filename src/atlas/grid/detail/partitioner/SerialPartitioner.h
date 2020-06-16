@@ -30,11 +30,11 @@ public:
     std::string type() const override { return static_type(); }
     static std::string static_type() { return "serial"; }
 
-    virtual Distribution partition( const Grid& grid ) const override {
+    Distribution partition( const Grid& grid ) const override {
         return Distribution{new distribution::SerialDistribution{grid}};
     }
 
-    virtual void partition( const Grid& grid, int part[] ) const {
+    void partition( const Grid& grid, int part[] ) const override {
         gidx_t gridsize = grid.size();
         for ( gidx_t n = 0; n < gridsize; ++n ) {
             part[n] = 0.;

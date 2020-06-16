@@ -27,16 +27,16 @@ public:
     bool functional() const override { return true; }
     size_t footprint() const override { return nb_pts_.size() * sizeof( nb_pts_[0] ); }
     const std::string& type() const override { return nb_partitions_ == 1 ? serial : type_; }
-    idx_t nb_partitions() const { return nb_partitions_; }
+    idx_t nb_partitions() const override { return nb_partitions_; }
 
-    virtual const std::vector<idx_t>& nb_pts() const { return nb_pts_; }
+    const std::vector<idx_t>& nb_pts() const override { return nb_pts_; }
 
-    virtual idx_t max_pts() const { return max_pts_; }
-    virtual idx_t min_pts() const { return min_pts_; }
+    idx_t max_pts() const override { return max_pts_; }
+    idx_t min_pts() const override { return min_pts_; }
 
-    virtual void print( std::ostream& ) const;
+    void print( std::ostream& ) const override;
 
-    virtual gidx_t size() const { return size_; }
+    gidx_t size() const override { return size_; }
 
     void hash( eckit::Hash& ) const override;
 

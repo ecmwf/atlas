@@ -44,9 +44,9 @@ public:
     std::string type() const override { return static_type(); }
     static std::string static_type() { return "bands"; }
 
-    virtual Distribution partition( const Grid& grid ) const override;
+    Distribution partition( const Grid& grid ) const override;
 
-    virtual void partition( const Grid& grid, int part[] ) const;
+    void partition( const Grid& grid, int part[] ) const override;
 };
 
 }  // namespace partitioner
