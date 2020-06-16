@@ -12,5 +12,5 @@ check :
   size : 866
   lonlat(first) : [315,-35.2644]
   lonlat(last)  : [45, -40.3155]
-  uid : 7dbe9e608f467e6aaeface29dd56ecdd
+  uid : 682db241b2f45498663d78d795ceb64d
   bounding_box(n,w,s,e) : [90,0,-90,360]

@@ -89,6 +89,7 @@ CubedSphereEquiAnglProjection::Spec CubedSphereEquiAnglProjection::spec() const 
 void CubedSphereEquiAnglProjection::hash( eckit::Hash& h ) const {
   // Add to hash
   h.add( static_type() );
+  CubedSphereProjectionBase::hash(h);
 }
 
 // -------------------------------------------------------------------------------------------------

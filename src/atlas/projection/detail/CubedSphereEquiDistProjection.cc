@@ -90,6 +90,7 @@ CubedSphereEquiDistProjection::Spec CubedSphereEquiDistProjection::spec() const 
 void CubedSphereEquiDistProjection::hash( eckit::Hash& h ) const {
   // Add to hash
   h.add( static_type() );
+  CubedSphereProjectionBase::hash(h);
 }
 
 // -------------------------------------------------------------------------------------------------

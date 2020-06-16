@@ -282,6 +282,7 @@ CubedSphereEquiDistFV3Projection::Spec CubedSphereEquiDistFV3Projection::spec() 
 void CubedSphereEquiDistFV3Projection::hash( eckit::Hash& h ) const {
   // Add to hash
   h.add( static_type() );
+  CubedSphereProjectionBase::hash(h);
 }
 
 // -------------------------------------------------------------------------------------------------

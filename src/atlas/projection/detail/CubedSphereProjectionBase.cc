@@ -35,6 +35,9 @@ CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisati
 
   // Apply a Shmidt transform
   doSchmidt_ = false;
+  stretchFac_ = 0.0;
+  targetLon_ = 0.0;
+  targetLat_ = 0.0;
   if (params.has("DoSchmidt")) {
     params.get("DoSchmidt", doSchmidt_);
     if (doSchmidt_) {
@@ -47,6 +50,17 @@ CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisati
   // Arrays to hold projection for (0,0) centered tile
   tile1LonsArray_.reset(new ArrayLatLon_(cubeNx_+1, cubeNx_+1));
   tile1LatsArray_.reset(new ArrayLatLon_(cubeNx_+1, cubeNx_+1));
+}
+
+// -------------------------------------------------------------------------------------------------
+
+void CubedSphereProjectionBase::hash( eckit::Hash& h ) const {
+  // Add stretching options to hash
+  h.add(shiftLon_);
+  h.add(doSchmidt_);
+  h.add(stretchFac_);
+  h.add(targetLon_);
+  h.add(targetLat_);
 }
 
 // -------------------------------------------------------------------------------------------------

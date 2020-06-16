@@ -10,6 +10,7 @@
 #include <functional>
 
 #include "eckit/config/Parametrisation.h"
+#include "eckit/utils/Hash.h"
 
 #include "atlas/array.h"
 #include "atlas/runtime/Exception.h"
@@ -25,6 +26,8 @@ class CubedSphereProjectionBase {
   public:
     // constructor
     CubedSphereProjectionBase( const eckit::Parametrisation& );
+
+    void hash( eckit::Hash& ) const;
 
     // projection and inverse projection
     void xy2lonlat( double xytll[] ) const;
