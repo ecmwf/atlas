@@ -175,13 +175,10 @@ CASE( "test_gatherscatter_NPROMAxNFLEVGxNGPBLKS" )
     auto walkLoc = [&floc, ngpblks, nproma, nflevg, ngptot, func, irank] (std::function<void(T &, T)> f)
     {
       auto vloc = array::make_view<T,3> (floc);
-      for (int jblk = 0; jblk < ngpblks; jblk++)
-        {
-          const int jidia = 0, jfdia = std::min (nproma, ngptot - jblk * nproma);
-          for (int jlev = 0; jlev < nflevg; jlev++)
-            for (int jlon = jidia; jlon < jfdia; jlon++)
-              f (vloc (jblk, jlev, jlon), func (jlev, irank, jlon + jblk * nproma));
-        }
+      viewLoop (vloc, 
+                [func,f,&irank,&nproma] (T & x, int jblk, int jlev, int jlon) 
+                { f (x, func (jlev, irank, jlon + jblk * nproma)); });
+std::cout << " walkLoc " << std::endl;
     };
 
     auto walkGlo = [&sglo, nflevg, &grid, &irank, &prc, &ind, func] (std::function<void(T &, T)> f)
@@ -299,10 +296,7 @@ CASE( "test_gatherscatter_NFLEVGxNGPTOT" )
     auto walkLoc = [&floc, nfield, nflevg, &fs, irank, func] (std::function<void(T &, T)> f)
     {
       auto vloc = array::make_view<T,3> (floc);
-      for (int jfld = 0; jfld < nfield; jfld++)
-      for (int jlev = 0; jlev < nflevg; jlev++)
-      for (int jloc = 0; jloc < fs.sizeOwned (); jloc++)
-        f (vloc (jfld, jloc, jlev), func (jfld, jlev, irank, jloc));
+      viewLoop (vloc, [func,&irank,f] (T & x, int jfld, int jloc, int jlev) { f (x, func (jfld, jlev, irank, jloc)); });
     };
 
     auto walkGlo = [&sglo, nfield, nflevg, irank, func, &grid, &prc, &ind] (std::function<void(T &, T)> f)

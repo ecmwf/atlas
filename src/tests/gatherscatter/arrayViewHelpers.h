@@ -86,39 +86,33 @@ addDummyDimension (const atlas::array::ArrayView<Value,Rank> & view)
 
 // Apply a function to view elements
 
-template <int Rank, typename Value>
-class filterViewHelper
+template <int Count>
+class viewLoopHelper
 {
 public:
-  template <typename Func>
-  static void apply (atlas::array::ArrayView<Value,Rank> view, Func func)
+  template <int Rank, typename Value, typename Func, typename ...Index>
+  static void apply (atlas::array::ArrayView<Value,Rank> view, Func func, Index... index)
   {
-    constexpr int rank = Rank-1;
-    for (int i = 0; i < view.shape (0); i++)
-      {
-        atlas::array::ArrayView<Value,rank> v = dropDimension (view, 0, i);
-        filterViewHelper<rank,Value>::apply (v, func);
-      }
+    for (int i = 0; i < view.shape (Rank - Count); i++)
+      viewLoopHelper<Count-1>::apply (view, func, index..., i);
   }
 };
 
-template <typename Value>
-class filterViewHelper<1, Value>
+template <>
+class viewLoopHelper<0>
 {
 public:
-  template <typename Func>
-  static void apply (atlas::array::ArrayView<Value,1> view, Func func)
+  template <int Rank, typename Value, typename Func, typename ...Index>
+  static void apply (atlas::array::ArrayView<Value,Rank> view, Func func, Index... index)
   {
-    for (int i = 0; i < view.shape (0); i++)
-      func (view (i));
+    func (view (index...), index...);
   }
 };
+
 
 template <typename Value, int Rank, typename Func>
-void filterView (atlas::array::ArrayView<Value,Rank> view, Func func)
+void viewLoop (atlas::array::ArrayView<Value,Rank> view, Func func)
 {
-  filterViewHelper<Rank,Value>::apply (view, func);
+  viewLoopHelper<Rank>::apply (view, func);
 }
-
-
 

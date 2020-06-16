@@ -4,6 +4,7 @@
 #include "atlas/field.h"
 #include "atlas/array.h"
 #include <iostream>
+#include <stdio.h>
 
 
 template <typename V>
@@ -25,47 +26,12 @@ int main (int argc, char * argv[])
 
   auto v = atlas::array::make_view<long,3> (f);
 
-  printf (" shape = ");
-  for (int i = 0; i < v.rank (); i++)
-    printf (" %8d", v.shape (i));
-  printf ("\n");
+  viewLoop (v, [] (long & x, int i, int j, int k) { x = 100000 * i + 100 * j + k; });
 
-  for (int jblk = 0; jblk < ngpblks; jblk++)
-  for (int jlev = 0, jloc = 0; jlev < nflevg; jlev++)
-  for (int jlon = 0; jlon < nproma; jlon++)
-    v (jblk, jlev, jlon) = 1000 * jlev + jlon + jblk * nproma;
-  
-  std::vector<ioFieldDesc> df;
-  createIoFieldDescriptorsBlocked (f, df, 0, 2, ngptot); // NGPBLKS dimension, NPROMA dimension, NGPTOT
-
-  for (int i = 0; i < df.size (); i++)
-    {
-      auto & d = df[i];
-      auto & v = d.view ();
-
-      printf (" %8d | %8d | %8d | %8d | %8d\n", i, v.rank (), v.shape (0), v.shape (1), v.shape (2));
-
-      if (i == 3)
-        {
-          for (int jblk = 0; jblk < v.shape (0); jblk++)
-          for (int jlon = 0; jlon < v.shape (1); jlon++)
-            {
-              long x = 0;
-              for (int j = 0; j < 8; j++)
-                {
-                  byte * b = (byte *)&x + j;
-                  *b = v (jblk, jlon, j);
-                }
-              printf (" %8ld", x);
-            }
-          printf ("\n");
-        }
-
-
-
-    }
-
-
+  for (int i = 0; i < v.shape (0); i++)
+  for (int j = 0; j < v.shape (1); j++)
+  for (int k = 0; k < v.shape (2); k++)
+    printf (" %10.10d\n", v (i, j, k));
 
   return 0;
 
