@@ -22,6 +22,7 @@ namespace atlas {
 namespace grid {
 
 Distribution::Distribution( const Grid& grid ) : Handle( new Implementation( grid ) ) {}
+Distribution::Distribution( const Grid& grid, const Config & config ) : Handle( new Implementation( grid, config ) ) {}
 
 Distribution::Distribution( const Grid& grid, const Partitioner& partitioner ) :
     Handle( new Implementation( grid, partitioner ) ) {}
@@ -33,10 +34,6 @@ Distribution::Distribution( int nb_partitions, partition_t&& part ) :
     Handle( new Implementation( nb_partitions, std::move( part ) ) ) {}
 
 Distribution::~Distribution() = default;
-
-int Distribution::partition( const gidx_t gidx ) const {
-    return get()->partition( gidx );
-}
 
 const Distribution::partition_t& Distribution::partition() const {
     return get()->partition();
