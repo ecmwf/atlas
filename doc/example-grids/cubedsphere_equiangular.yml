@@ -8,7 +8,7 @@ CubeNx : 12
 
 check :
   size : 866
-  lonlat(first) : [315,-35.2644]
-  lonlat(last)  : [45, -42.6612]
+  lonlat(first) : [315, -35.2644]
+  lonlat(last)  : [45.0000, -42.6612]
   uid : 8aa0b472107ce06c53b5c760886b9fb1
   bounding_box(n,w,s,e) : [90,0,-90,360]

@@ -18,8 +18,10 @@
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/library/config.h"
+#include "atlas/mesh/Connectivity.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
@@ -83,7 +85,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   const int cubeNx = csgrid.GetCubeNx();
   const int nTiles = csgrid.GetNTiles();
 
-  ATLAS_TRACE( "Number of faces per tile = " + std::to_string(cubeNx) );
+  ATLAS_TRACE( "Number of faces per tile edge = " + std::to_string(cubeNx) );
 
   // Number of nodes
   int nnodes = nTiles*cubeNx*cubeNx+2;             // Number of unique grid nodes

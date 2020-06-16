@@ -24,7 +24,8 @@ struct ProjectionUtilities {
 
   // -----------------------------------------------------------------------------------------------
 
-  static void cartesianToSpherical(double xyz[], double lonlat[], bool right_hand = false) {
+  static void cartesianToSpherical(const double xyz[], double lonlat[],
+                                   const bool right_hand = false) {
     // Left or right hand system
     double zz_fac = 1.0;
     if (right_hand) {zz_fac = 0.0;}
@@ -39,8 +40,8 @@ struct ProjectionUtilities {
 
   //------------------------------------------------------------------------------------------------
 
-  static void sphericalToCartesian(double lonlat[], double xyz[], bool right_hand = false,
-                                  bool unit = false) {
+  static void sphericalToCartesian(const double lonlat[], double xyz[],
+                                   const bool right_hand = false, const bool unit = false) {
     // Radius
     double r = util::Earth::radius();
     if (unit) {r = 1.0;}
@@ -56,7 +57,7 @@ struct ProjectionUtilities {
 
   //------------------------------------------------------------------------------------------------
 
-  static void rotate3dX(double angle, double xyz[]) {
+  static void rotate3dX(const double angle, double xyz[]) {
     const double c = cos(angle);
     const double s = sin(angle);
     double xyz_in[3];
@@ -67,7 +68,7 @@ struct ProjectionUtilities {
 
   //------------------------------------------------------------------------------------------------
 
-  static void rotate3dY(double angle, double xyz[]) {
+  static void rotate3dY(const double angle, double xyz[]) {
     const double c = cos(angle);
     const double s = sin(angle);
     double xyz_in[3];
@@ -78,7 +79,7 @@ struct ProjectionUtilities {
 
   //------------------------------------------------------------------------------------------------
 
-  static void rotate3dZ(double angle, double xyz[]) {
+  static void rotate3dZ(const double angle, double xyz[]) {
     const double c = cos(angle);
     const double s = sin(angle);
     double xyz_in[3];
@@ -89,7 +90,7 @@ struct ProjectionUtilities {
 
   //------------------------------------------------------------------------------------------------
 
-  static void vect_cross(double xyz1[], double xyz2[], double xyzp[]) {
+  static void vect_cross(const double xyz1[], const double xyz2[], double xyzp[]) {
     // Perform cross products of 3D vectors: xyzp = xyz1 X xyz2
     xyzp[XX] = xyz1[YY] * xyz2[ZZ] - xyz1[ZZ] * xyz2[YY];
     xyzp[YY] = xyz1[ZZ] * xyz2[XX] - xyz1[XX] * xyz2[ZZ];
@@ -98,10 +99,10 @@ struct ProjectionUtilities {
 
   //------------------------------------------------------------------------------------------------
 
-  static void mirror_latlon(double lonlat2[], double lonlat3[], double lonlat1[],
+  static void mirror_latlon(const double lonlat2[], const double lonlat3[], const double lonlat1[],
                             double lonlat4[]) {
-    // Given the "mirror" as defined by (lon1, lat1), (lon2, lat2), and center
-    // of the sphere, compute the mirror image of (lon0, lat0) as  (lon3, lat3)
+
+    // This routine comes from FV3 and is specific to the projection used for that model.
 
     double xyz0[3];
     double xyz1[3];

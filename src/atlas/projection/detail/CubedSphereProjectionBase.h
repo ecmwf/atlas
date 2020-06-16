@@ -72,14 +72,14 @@ class CubedSphereProjectionBase {
       ATLAS_TRACE( "CubedSphereProjectionBase::getLatArray" );
       array::ArrayView<double, 2> tile1Lats = array::make_view<double, 2>( *tile1LatsArray_ );
       return tile1Lats;
-    };
+    }
     ArrayViewLatLon_ getLonArray() const {
       ATLAS_TRACE( "CubedSphereProjectionBase::getLonArray" );
       array::ArrayView<double, 2> tile1Lats = array::make_view<double, 2>( *tile1LonsArray_ );
       return tile1Lats;
-    };
+    }
 
-    int getCubeNx() const { return cubeNx_; };
+    int getCubeNx() const { return cubeNx_; }
 
     void schmidtTransform(double, double, double, double[]) const;
 

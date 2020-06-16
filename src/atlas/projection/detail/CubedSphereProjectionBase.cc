@@ -31,9 +31,9 @@ CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisati
     params.get("ShiftLon", shiftLon_);
     ATLAS_ASSERT(shiftLon_ <= 90.0,  "ShiftLon should be <= 90.0 degrees");
     ATLAS_ASSERT(shiftLon_ >= -90.0, "ShiftLon should be >= -90.0 degrees");
-  };
+  }
 
-  // Apply a Shmidt transform
+  // Apply a Schmidt transform
   doSchmidt_ = false;
   stretchFac_ = 0.0;
   targetLon_ = 0.0;
@@ -45,7 +45,7 @@ CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisati
       params.get("TargetLon", targetLon_);
       params.get("TargetLat", targetLat_);
     }
-  };
+  }
 
   // Arrays to hold projection for (0,0) centered tile
   tile1LonsArray_.reset(new ArrayLatLon_(cubeNx_+1, cubeNx_+1));
@@ -101,7 +101,7 @@ void CubedSphereProjectionBase::lonlat2xy( double llxytl[] ) const {
       ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
 
       // Perform tile specific rotations
-      tileRotateInverse.at(t)(xyz);
+      tileRotateInverse.at(std::size_t(t))(xyz);
 
       // Back to latlon
       ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
@@ -131,7 +131,6 @@ void CubedSphereProjectionBase::xy2lonlat( double xytll[] ) const {
 
   double lonlat[2];
   double xyz[3];
-  double angle;
 
   // Get lat/lon for this index but on tile 1
   auto tile1Lats = getLatArray();

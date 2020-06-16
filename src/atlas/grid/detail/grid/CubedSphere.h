@@ -117,7 +117,7 @@ private:
       return *this;
     }
 
-    // Given two poisitions in the grid iterator return the distance, which for the cubed-sphere
+    // Given two positions in the grid iterator return the distance, which for the cubed-sphere
     // grid is just the number of grid points between the two points.
     virtual typename Base::difference_type distance( const Base& other ) const {
       const auto& _other = static_cast<const CubedSphereIterator&>( other );
@@ -202,55 +202,57 @@ public:
   virtual std::string type() const override;
 
   // Return number of faces on cube
-  inline const idx_t GetCubeNx() const { return CubeNx_; }
-  inline const idx_t CubeNx() const { return CubeNx_; }
+  inline idx_t GetCubeNx() const { return CubeNx_; }
+  inline idx_t CubeNx() const { return CubeNx_; }
 
   // Return number of tiles
-  inline const idx_t GetNTiles() const { return nTiles_; }
+  inline idx_t GetNTiles() const { return nTiles_; }
 
   // Tile specific access to x and y locations
   // -----------------------------------------
 
-  inline double x123( idx_t i, idx_t j, idx_t t ) const {
+  inline double x123( idx_t i, idx_t t ) const {
     return static_cast<double>(xs_[t]) + static_cast<double>(i);
   }
 
-  inline double x456( idx_t i, idx_t j, idx_t t ) const {
-    return static_cast<double>(xs_[t])  + (y123( i, j, t )-static_cast<double>(ys_[t]));
+  inline double x456( idx_t j, idx_t t ) const {
+    return static_cast<double>(xs_[t])  + (y123( j, t )-static_cast<double>(ys_[t]));
   }
 
-  inline double y123( idx_t i, idx_t j, idx_t t ) const {
+  inline double y123( idx_t j, idx_t t ) const {
     return static_cast<double>(ys_[t]) + static_cast<double>(j);
   }
 
-  inline double y456( idx_t i, idx_t j, idx_t t ) const {
-    return static_cast<double>(ysr_[t]) - x123( i, j, t ) + static_cast<double>(xs_[t]);
+  inline double y456( idx_t i, idx_t t ) const {
+    return static_cast<double>(ysr_[t]) - x123( i, t ) + static_cast<double>(xs_[t]);
   }
 
   // Lambdas for access to appropriate functions for tile
   // ----------------------------------------------------
 
   std::vector<std::function<double(int, int, int)>> xtile =
-    {[this](int i, int j, int t) -> double{return this->x123(i, j, t);},
-     [this](int i, int j, int t) -> double{return this->x456(i, j, t);}
+    {[this](int i, int j, int t) {return this->x123(i, t);},
+     [this](int i, int j, int t) {return this->x456(j, t);}
     };
 
   std::vector<std::function<double(int, int, int)>> ytile =
-    {[this](int i, int j, int t) -> double{return this->y123(i, j, t);},
-     [this](int i, int j, int t) -> double{return this->y456(i, j, t);}
+    {[this](int i, int j, int t) {return this->y123(j, t);},
+     [this](int i, int j, int t) {return this->y456(i, t);}
     };
 
   // Functions for returning xy
   // --------------------------
 
   inline void xy( idx_t i, idx_t j, idx_t t, double xyt[] ) const {
-    xyt[0] = xtile.at(tileCases_ * t / nTiles_)(i, j, t);
-    xyt[1] = ytile.at(tileCases_ * t / nTiles_)(i, j, t);
+    std::size_t tIndex = static_cast<std::size_t>(tileCases_ * t / nTiles_);
+    xyt[0] = xtile.at(tIndex)(i, j, t);
+    xyt[1] = ytile.at(tIndex)(i, j, t);
     xyt[2] = static_cast<double>(t);
   }
 
   PointXY xy( idx_t i, idx_t j, idx_t t ) const {
-    return PointXY( xtile.at(tileCases_ * t / nTiles_)(i, j, t), ytile.at(tileCases_ * t / nTiles_)(i, j, t) );
+    std::size_t tIndex = static_cast<std::size_t>(tileCases_ * t / nTiles_);
+    return PointXY( xtile.at(tIndex)(i, j, t), ytile.at(tIndex)(i, j, t) );
   }
 
   // Functions for returning lonlat, either as array or PointLonLat
@@ -373,7 +375,7 @@ public:
     }
 
 
-    if (ijt[0] == CubeNx_-1 && ijt[1] < CubeNx_-1 && ijt[2] == nTiles_) {  // Final point
+    if (ijt[0] == CubeNx_-1 && ijt[1] == CubeNx_-1 && ijt[2] == nTiles_-1) {  // Final point
       ijt[0] = 0;
       ijt[1] = 0;
       ijt[2] = 0;
@@ -416,10 +418,10 @@ protected:
 
   Domain computeDomain() const;
 
-  // Nuber of faces on tile
+  // Number of faces on tile
   idx_t CubeNx_;
 
-  // Nuber of tiles
+  // Number of tiles
   static const idx_t nTiles_ = 6;
 
   const idx_t tileCases_ = 2;

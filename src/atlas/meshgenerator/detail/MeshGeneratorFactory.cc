@@ -28,7 +28,6 @@ void force_link() {
             MeshGeneratorBuilder<meshgenerator::CubedSphereMeshGenerator>();
             MeshGeneratorBuilder<meshgenerator::DelaunayMeshGenerator>();
             MeshGeneratorBuilder<meshgenerator::StructuredMeshGenerator>();
-            MeshGeneratorBuilder<meshgenerator::DelaunayMeshGenerator>();
         }
     } link;
 }

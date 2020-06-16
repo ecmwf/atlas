@@ -14,7 +14,7 @@ ShiftLon: -10
 
 check :
   size : 866
-  lonlat(first) : [305,-35.2644]
-  lonlat(last)  : [35, -41.5996]
+  lonlat(first) : [305, -35.2644]
+  lonlat(last)  : [35.0000,-41.5996]
   uid : ca16ae87a51581a36eb6b0e9aba24d2f
   bounding_box(n,w,s,e) : [90,0,-90,360]

@@ -69,26 +69,133 @@ y
 
 ^             .......
 |            |       :
-|            |   3   :
+|            |   2   :
 |            |       :
 |             --->---
 |   *.......  .......  -------  -------
 |   |       :|       :|       :|       :
-|   |   1   :|   2   :v   4   :v   5   :
+|   |   0   :|   1   :v   3   :v   4   :
 |   |       :|       :|       :|       :
 |     --->---  --->--* .......  .......
 |                               -------
 |                              |       :
-|                              v   6   :
+|                              v   5   :
 |                              |       :
 |                               .......
 ----------------------------------------------------------->  x
 
-  Key
-  Solid lines: left and bottom edges of panel
-  Dotted lines: right and top edges of panel
-  >, <, v: direction of increasing index in first dimension
-  *: location of two extra points (ngrid = 6 * (NCube+1) * (NCube+1) + 2)
+Key
+Solid lines: left and bottom edges of panel
+Dotted lines: right and top edges of panel
+>, <, v: direction of increasing index in first dimension
+*: location of two extra points (ngrid = 6 * NCube * NCube + 2)
+
+----------------------------------------------------------------------------------------------------
+
+NCube = 3 example ( 6 * NCube * NCube + 2 = 56 grid points )
+
+Index of each point within the grid (i,j,t):
+
+  () denotes actual points in the grids
+  <> denotes points that are duplicates (not part of the grid) but shown for completeness of the grid
+
+
+
+                        <0,3,0>-<0,2,4>-<0,1,4>-<0,0,4>
+                           |                       |
+                           |                       |
+                        (0,1,2) (1,2,2) (2,2,2) <0,2,3>
+                           |                       |
+                           |                       |
+                        (0,1,2) (1,1,2) (2,1,2) <0,1,3>
+                           |                       |
+                           |                       |
+(0,3,0)-<0,1,2>-<0,1,2>-(0,0,2)-(1,0,2)-(2,0,2)-(0,0,3)-(0,1,3)-(0,2,3)-(0,0,4)-(0,1,4)-(0,2,4)-<0,3,0>
+  |                        |                       |                       |                       |
+  |                        |                       |                       |                       |
+(0,2,0) (1,2,0) (2,2,0) (0,1,1) (1,2,1) (2,2,1) (1,0,3) (1,1,3) (1,2,3) (1,0,4) (1,1,4) (1,2,4) <0,1,0>
+  |                        |                       |                       |                       |
+  |                        |                       |                       |                       |
+(0,1,0) (1,1,0) (2,1,0) (0,1,1) (1,1,1) (2,1,1) (2,0,3) (2,1,3) (2,2,3) (2,0,4) (2,1,4) (2,2,4) <0,1,0>
+  |                        |                       |                       |                       |
+  |                        |                       |                       |                       |
+(0,0,0)-(1,0,0)-(2,0,0)-(0,0,1)-(1,0,1)-(2,0,1)-(3,0,1)-<2,0,5>-<1,0,5>-(0,0,5)-(0,1,5)-(0,2,5)-<0,0,0>
+                                                                           |                       |
+                                                                           |                       |
+                                                                        (1,0,5) (1,1,5) (1,2,5) <1,0,0>
+                                                                           |                       |
+                                                                           |                       |
+                                                                        (2,0,5) (2,1,5) (2,2,5) <2,0,0>
+                                                                           |                       |
+                                                                           |                       |
+                                                                        <3,0,1>-<2,0,1>-<1,0,1>-<0,0,1>
+
+
+
+Position of each point within the grid (x,y,t):
+
+  () denotes actual points in the grids
+  +  denotes duplicate points
+
+  For the xyt, t is only required in order to pass to the projection and thus know how to rotate
+  the projection of tile 0 to obtain the other tiles
+
+
+                           +-------+-------+-------+
+                           |                       |
+                           |                       |
+                        (3,8,2) (4,8,2) (5,8,2)    +
+                           |                       |
+                           |                       |
+                        (3,7,2) (4,7,2) (5,7,2)    +
+                           |                       |
+                           |                       |
+(0,6,0)----+-------+----(3,6,2)-(4,6,2)-(5,6,2)-(6,6,3)-(7,6,3)-(8,6,3)-(9,6,4)-(10,6,4)-(11,6,4)----+
+   |                       |                       |                       |                         |
+   |                       |                       |                       |                         |
+(0,5,0) (1,5,0) (2,5,0) (3,5,1) (4,5,1) (5,5,1) (6,5,3) (7,5,3) (8,5,3) (9,5,4) (10,5,4) (11,5,4)    +
+   |                       |                       |                       |                         |
+   |                       |                       |                       |                         |
+(0,4,0) (1,4,0) (2,4,0) (3,4,1) (4,4,1) (5,4,1) (6,4,3) (7,4,3) (8,4,3) (9,4,4) (10,4,4) (11,4,4)    +
+   |                       |                       |                       |                         |
+   |                       |                       |                       |                         |
+(0,3,0)-(1,3,0)-(2,3,0)-(3,3,1)-(4,3,1)-(5,3,1)-(6,3,1)----+-------+----(9,3,5)-(10,3,5)-(11,3,5)----+
+                                                                           |                         |
+                                                                           |                         |
+                                                                        (9,2,5) (10,2,5) (11,2,5)    +
+                                                                           |                         |
+                                                                           |                         |
+                                                                        (9,1,5) (10,1,5) (11,1,5)    +
+                                                                           |                         |
+                                                                           |                         |
+                                                                           +--------+-------+--------+
+
+
+Position in the grid iterator/mesh:
+
+  First element of each tile: {0, 10, 20, 29, 38, 47}
+
+             +---+---+---+
+             |           |
+            26  27  28   +
+             |           |
+            23  24  25   +
+             |           |
+ 9---+---+--20--21--22--29--32--35---38--41--44---+
+ |           |           |            |           |
+ 6   7   8  17  18  19  30  33  36   39  42  45   +
+ |           |           |            |           |
+ 3   4   5  14  15  16  31  34  37   40  43  46   +
+ |           |           |            |           |
+ 0---1---2--10--11--12--13---+---+---47--50--53---+
+                                      |           |
+                                     48  51  54   +
+                                      |           |
+                                     49  52  55   +
+                                      |           |
+                                      +---+---+---+
+
+----------------------------------------------------------------------------------------------------
 
 */
 
@@ -126,10 +233,10 @@ public:
   void lonlat2xy( double lonlat[], idx_t ijt[] ) const { grid_->lonlat2xy( lonlat, ijt ); }
 
   // Return the size of the cubed sphere grid, where CubeNX is the number of grid boxes along the edge of a tile
-  inline const int GetCubeNx() const { return grid_->GetCubeNx(); }
+  inline int GetCubeNx() const { return grid_->GetCubeNx(); }
 
   // Return the number of tiles
-  inline const int GetNTiles() const { return grid_->GetNTiles(); }
+  inline int GetNTiles() const { return grid_->GetNTiles(); }
 
 private:
   const grid_t* grid_;

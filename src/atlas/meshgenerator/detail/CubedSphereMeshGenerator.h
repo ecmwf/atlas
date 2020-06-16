@@ -8,10 +8,8 @@
 #pragma once
 
 #include "atlas/array.h"
-#include "atlas/mesh/Connectivity.h"
-#include "atlas/mesh/HybridElements.h"
-#include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorImpl.h"
+#include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Metadata.h"
 
