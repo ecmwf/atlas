@@ -193,16 +193,20 @@ void StructuredMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
     std::string partitioner_type = "equal_regions";
     options.get( "partitioner", partitioner_type );
 
-    if ( partitioner_type == "trans" && rg.ny() % 2 == 1 ) {
-        partitioner_type = "equal_regions";  // Odd number of latitudes
+    if ( partitioner_type == "trans" ) {
+        if ( rg.ny() % 2 == 1 ) {
+            partitioner_type = "equal_regions";  // Odd number of latitudes
+        }
+        if ( nb_parts != mpi::size() ) {
+            partitioner_type = "equal_regions";
+        }
     }
-    if ( nb_parts == 1 || mpi::size() == 1 ) {
-        partitioner_type = "equal_regions";
+    if ( nb_parts == 1 ) {
+        partitioner_type = "serial";
     }
 
     grid::Partitioner partitioner( partitioner_type, nb_parts );
     grid::Distribution distribution( partitioner.partition( grid ) );
-    ATLAS_DEBUG_VAR( distribution );
     generate( grid, distribution, mesh );
 }
 
