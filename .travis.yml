@@ -233,7 +233,7 @@ script:
   #################################################################
   # Test Atlas
   #################################################################
-  - ctest --timeout 60 ${ATLAS_CTEST_OPTIONS}
+  - ATLAS_TRACE=1 ATLAS_DEBUG=1 ctest --output-on-failure --timeout 60 ${ATLAS_CTEST_OPTIONS}
 
 after_success:
 
@@ -251,5 +251,5 @@ after_success:
 after_failure:
 
   - cd ${ATLAS_BUILD_DIR}
-  - ctest -VV --rerun-failed --timeout 60 ${ATLAS_CTEST_OPTIONS}
+  - ATLAS_TRACE=1 ctest -VV --rerun-failed --timeout 60 ${ATLAS_CTEST_OPTIONS}
   - cat ecbuild.log
