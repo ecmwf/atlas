@@ -34,8 +34,9 @@ BandsDistribution<Int>::BandsDistribution( const atlas::Grid& grid, atlas::idx_t
 
     nb_blocks_ = gridsize / blocksize_;
 
-    if ( gridsize % blocksize_ )
+    if ( gridsize % blocksize_ ) {
         nb_blocks_++;
+    }
 
     this->nb_pts_.reserve( nb_partitions_Int_ );
 
@@ -45,10 +46,12 @@ BandsDistribution<Int>::BandsDistribution( const atlas::Grid& grid, atlas::idx_t
         gidx_t imax = blocksize_ * ( ( ( iproc + 1 ) * nb_blocks_ ) / nb_partitions_Int_ );
 
         while ( imin > 0 ) {
-            if ( function( imin - blocksize_ ) == iproc )
+            if ( function( imin - blocksize_ ) == iproc ) {
                 imin -= blocksize_;
-            else
+            }
+            else {
                 break;
+            }
         }
 
         while ( function( imin ) < iproc ) {

@@ -24,8 +24,9 @@ namespace test {
 template <typename T>
 atlas::vector<T> square( const int n ) {
     atlas::vector<T> x( n );
-    for ( int i = 0; i < n; i++ )
+    for ( int i = 0; i < n; i++ ) {
         x[i] = static_cast<T>( i ) * static_cast<T>( i );
+    }
 
     return x;
 }
@@ -34,8 +35,9 @@ template <typename T>
 void pp( const std::string& t, T& v ) {
     Log::info() << t << " = " << std::endl;
     Log::info() << v.size() << std::endl;
-    for ( int i = 0; i < v.size(); i++ )
+    for ( int i = 0; i < v.size(); i++ ) {
         Log::info() << i << " > " << v[i] << std::endl;
+    }
 }
 
 
