@@ -69,12 +69,6 @@ matrix:
         - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
         - ATLAS_CTEST_OPTIONS="-E atlas_test_stencil_parallel_mpi16"
       osx_image: xcode10.1
-      addons:
-        homebrew:
-          packages:
-          - openmpi
-          - cgal
-          - fftw
 
     - os: osx
       env:
