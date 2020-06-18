@@ -155,12 +155,9 @@ CASE( "test regular_bands performance test" ) {
 
     // Trick to prevent the compiler from compiling out a loop if it sees the result was not used.
     struct DoNotCompileOut {
-        int counter = 0;
-        ~DoNotCompileOut() { Log::debug() << counter << std::endl; }
-        void operator()( int p ) {
-            counter += p;
-            //
-        }
+        int x = 0;
+        ~DoNotCompileOut() { Log::debug() << x << std::endl; }
+        ATLAS_ALWAYS_INLINE void operator()( int p ) { x = p; }
     } do_not_compile_out;
 
     gidx_t size = grid.size();
@@ -183,10 +180,12 @@ CASE( "test regular_bands performance test" ) {
         gidx_t n = 0;
         grid::Distribution::partition_t part( grid.nxmax() );
         for ( idx_t j = 0; j < grid.ny(); ++j, n += grid.nx( j ) ) {
-            dist.partition( n, n + grid.nx( j ), part );
+            const idx_t nx = grid.nx( j );
+            dist.partition( n, n + nx, part );
             // this is one virtual call, which in turn has inline-access for nx(j) evaluations
-            for ( idx_t i = 0; i < grid.nx( j ); ++i ) {
-                do_not_compile_out( part[i] );
+            int* P = part.data();
+            for ( idx_t i = 0; i < nx; ++i ) {
+                do_not_compile_out( P[i] );
             }
         }
     }

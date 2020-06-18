@@ -29,7 +29,7 @@ private:
 public:
     BandsDistribution( const Grid& grid, idx_t nb_partitions, const std::string& type, size_t blocksize = 1 );
 
-    int function( gidx_t index ) const {
+    ATLAS_ALWAYS_INLINE int function( gidx_t index ) const {
         Int iblock = Int( index ) / blocksize_;
         return ( iblock * nb_partitions_Int_ ) / nb_blocks_;
     }

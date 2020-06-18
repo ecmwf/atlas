@@ -55,7 +55,7 @@ public:
 
     ~Distribution();
 
-    int partition( gidx_t index ) const { return get()->partition( index ); }
+    ATLAS_ALWAYS_INLINE int partition( gidx_t index ) const { return get()->partition( index ); }
 
     template <typename PartitionContainer>
     void partition( gidx_t begin, gidx_t end, PartitionContainer& partitions ) const {
@@ -64,9 +64,9 @@ public:
 
     size_t footprint() const { return get()->footprint(); }
 
-    idx_t nb_partitions() const { return get()->nb_partitions(); }
+    ATLAS_ALWAYS_INLINE idx_t nb_partitions() const { return get()->nb_partitions(); }
 
-    gidx_t size() const { return get()->size(); }
+    ATLAS_ALWAYS_INLINE gidx_t size() const { return get()->size(); }
 
     const std::vector<idx_t>& nb_pts() const;
 

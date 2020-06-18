@@ -22,7 +22,7 @@ class SerialDistribution : public DistributionFunctionT<SerialDistribution> {
 public:
     SerialDistribution( const Grid& grid );
 
-    int function( gidx_t gidx ) const { return 0; }
+    ATLAS_ALWAYS_INLINE int function( gidx_t gidx ) const { return 0; }
 };
 
 }  // namespace distribution
