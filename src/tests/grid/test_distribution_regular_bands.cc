@@ -179,7 +179,7 @@ CASE( "test regular_bands performance test" ) {
     ATLAS_TRACE_SCOPE( "virtual cached access" ) {
         gidx_t n = 0;
         grid::Distribution::partition_t part( grid.nxmax() );
-        for ( idx_t j = 0; j < grid.ny(); ++j, n += grid.nx( j ) ) {
+        for ( idx_t j = 0; j < grid.ny(); ++j ) {
             const idx_t nx = grid.nx( j );
             dist.partition( n, n + nx, part );
             // this is one virtual call, which in turn has inline-access for nx(j) evaluations
@@ -187,6 +187,7 @@ CASE( "test regular_bands performance test" ) {
             for ( idx_t i = 0; i < nx; ++i ) {
                 do_not_compile_out( P[i] );
             }
+            n += grid.nx( j );
         }
     }
 }
