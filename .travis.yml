@@ -227,7 +227,7 @@ script:
   #################################################################
   # Test Atlas
   #################################################################
-  - ATLAS_TRACE=1 ATLAS_DEBUG=1 ctest --output-on-failure --timeout 60 ${ATLAS_CTEST_OPTIONS}
+  - ATLAS_TRACE=1 ATLAS_DEBUG=1 ctest --output-on-failure --timeout 300 ${ATLAS_CTEST_OPTIONS}
 
 after_success:
 
