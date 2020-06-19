@@ -59,6 +59,7 @@ public:
 
     template <typename PartitionContainer>
     void partition( gidx_t begin, gidx_t end, PartitionContainer& partitions ) const {
+        ATLAS_ASSERT( end - begin <= partitions.size() );
         return get()->partition( begin, end, partitions.data() );
     }
 

@@ -53,8 +53,8 @@ inline void Assert( bool success, const char* code, const char* msg, const char*
 
 #define ATLAS_NOTIMPLEMENTED ::atlas::throw_NotImplemented( Here() )
 
-#define ATLAS_ASSERT_NOMSG( code ) ::atlas::detail::Assert( ( code ), #code, __FILE__, __LINE__, __func__ )
-#define ATLAS_ASSERT_MSG( code, msg ) ::atlas::detail::Assert( ( code ), #code, msg, __FILE__, __LINE__, __func__ )
+#define ATLAS_ASSERT_NOMSG( code ) ::atlas::detail::Assert( bool( code ), #code, __FILE__, __LINE__, __func__ )
+#define ATLAS_ASSERT_MSG( code, msg ) ::atlas::detail::Assert( bool( code ), #code, msg, __FILE__, __LINE__, __func__ )
 
 #define ATLAS_ASSERT( ... ) __ATLAS_SPLICE( __ATLAS_ASSERT_, __ATLAS_NARG( __VA_ARGS__ ) )( __VA_ARGS__ )
 #define __ATLAS_ASSERT_1 ATLAS_ASSERT_NOMSG
