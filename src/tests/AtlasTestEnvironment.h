@@ -61,8 +61,13 @@ public:
     ~Test() { current_test_ = nullptr; }
     void expect_failed( const std::string& message, const eckit::CodeLocation& location ) {
         failures_.emplace_back( Failure{message, location} );
+#if ECKIT_MAJOR_VERSION * 100 + ECKIT_MINOR_VERSION >= 112
         eckit::Log::error() << eckit::Colour::red << message << eckit::Colour::reset << " @ "
                             << eckit::PathName{location.file()}.baseName() << " +" << location.line() << std::endl;
+#else
+        eckit::Log::error() << message << " @ " << eckit::PathName{location.file()}.baseName() << " +"
+                            << location.line() << std::endl;
+#endif
         if ( failures_.size() == ATLAS_MAX_FAILED_EXPECTS() ) {
             std::stringstream msg;
             msg << "Maximum number of allowed EXPECTS have failed (${ATLAS_MAX_FAILED_EXPECTS}="
