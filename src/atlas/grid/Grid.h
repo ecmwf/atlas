@@ -96,6 +96,8 @@ public:
     /// Adds to the hash the information that makes this Grid unique
     void hash( eckit::Hash& h ) const;
 
+    size_t footprint() const;
+
     Spec spec() const;
 };
 

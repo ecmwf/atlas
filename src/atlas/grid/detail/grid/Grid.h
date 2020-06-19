@@ -106,6 +106,8 @@ public:  // methods
     /// @return parallel/meridian limits containing the grid
     virtual RectangularLonLatDomain lonlatBoundingBox() const = 0;
 
+    virtual size_t footprint() const { return 0; }
+
     /// @return projection (mapping between geographic coordinates and grid
     /// coordinates)
     const Projection& projection() const { return projection_; }
