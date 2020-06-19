@@ -7,7 +7,6 @@
  * granted to it by virtue of its status as an intergovernmental organisation
  * nor does it submit to any jurisdiction.
  */
-
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
@@ -76,6 +75,11 @@ StructuredMeshGenerator::StructuredMeshGenerator( const eckit::Parametrisation& 
     bool patch_pole;
     if ( p.get( "patch_pole", patch_pole ) ) {
         options.set( "patch_pole", patch_pole );
+    }
+
+    bool patch_quads;
+    if ( p.get( "patch_quads", patch_quads ) ) {
+        options.set( "patch_quads", patch_quads );
     }
 
     bool unique_pole;
@@ -166,9 +170,8 @@ void StructuredMeshGenerator::configure_defaults() {
     // This option sets the part that will be generated
     options.set( "part", mpi::rank() );
 
-    // Experimental option. The result is a non-standard Reduced Gaussian Grid,
-    // with a ragged Greenwich line
-    options.set( "stagger", false );
+    // Experimental option. This is what makes tripolar grid patched with quads
+    options.set( "patch_quads", false );
 
     // This option sets the maximum angle deviation for a quadrilateral element
     // angle = 30  -->  minimises number of triangles
@@ -335,7 +338,6 @@ We need to connect to next region
     array::ArrayView<int, 3> elemview = array::make_view<int, 3>( *region.elems );
     elemview.assign( -1 );
 
-    bool stagger = options.getBool( "stagger" );
     for ( idx_t jlat = lat_north; jlat < lat_south; ++jlat ) {
         //    std::stringstream filename; filename << "/tmp/debug/"<<jlat;
 
@@ -433,19 +435,6 @@ We need to connect to next region
             xN2 = rg.x( ipN2, latN ) * to_rad;
             xS1 = rg.x( ipS1, latS ) * to_rad;
             xS2 = rg.x( ipS2, latS ) * to_rad;
-
-            if ( stagger && ( latN + 1 ) % 2 == 0 ) {
-                xN1 += M_PI / static_cast<double>( rg.nx( latN ) );
-            }
-            if ( stagger && ( latN + 1 ) % 2 == 0 ) {
-                xN2 += M_PI / static_cast<double>( rg.nx( latN ) );
-            }
-            if ( stagger && ( latS + 1 ) % 2 == 0 ) {
-                xS1 += M_PI / static_cast<double>( rg.nx( latS ) );
-            }
-            if ( stagger && ( latS + 1 ) % 2 == 0 ) {
-                xS2 += M_PI / static_cast<double>( rg.nx( latS ) );
-            }
 
 #if DEBUG_OUTPUT
             Log::info() << "-------\n";
@@ -811,16 +800,34 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const gri
     int mypart = options.getInt( "part" );
     int nparts = options.getInt( "nb_parts" );
     int n, l;
+    const int y_numbering = ( rg.y().front() < rg.y().back() ) ? +1 : -1;
+    double y_north        = y_numbering < 0 ? rg.y().front() : rg.y().back();
+    double y_south        = y_numbering < 0 ? rg.y().back() : rg.y().front();
+    idx_t nx_north        = y_numbering < 0 ? rg.nx().front() : rg.nx().back();
+    idx_t nx_south        = y_numbering < 0 ? rg.nx().back() : rg.nx().front();
+
+    std::vector<int> part_north( nx_north );
+    std::vector<int> part_south( nx_south );
+    if ( y_numbering < 0 ) {
+        distribution.partition( 0, nx_north, part_north );
+        distribution.partition( rg.size() - nx_south, rg.size(), part_south );
+    }
+    else {
+        distribution.partition( 0, nx_south, part_south );
+        distribution.partition( rg.size() - nx_north, rg.size(), part_north );
+    }
+    bool mypart_at_north = std::any_of( part_north.begin(), part_north.end(), [&]( int p ) { return p == mypart; } );
+    bool mypart_at_south = std::any_of( part_south.begin(), part_south.end(), [&]( int p ) { return p == mypart; } );
 
     bool three_dimensional             = options.getBool( "3d" );
     bool periodic_east_west            = rg.periodic();
     bool include_periodic_ghost_points = periodic_east_west && !three_dimensional;
     bool remove_periodic_ghost_points  = periodic_east_west && three_dimensional;
 
-    bool has_point_at_north_pole = rg.y().front() == 90 && rg.nx().front() > 0;
-    bool has_point_at_south_pole = rg.y().back() == -90 && rg.nx().back() > 0;
-    bool possible_north_pole     = !has_point_at_north_pole && rg.domain().containsNorthPole() && ( mypart == 0 );
-    bool possible_south_pole = !has_point_at_south_pole && rg.domain().containsSouthPole() && ( mypart == nparts - 1 );
+    bool has_point_at_north_pole = y_north == 90 && nx_north > 0;
+    bool has_point_at_south_pole = y_south == -90 && nx_south > 0;
+    bool possible_north_pole     = !has_point_at_north_pole && rg.domain().containsNorthPole() && mypart_at_north;
+    bool possible_south_pole     = !has_point_at_south_pole && rg.domain().containsSouthPole() && mypart_at_south;
 
     bool force_include_north_pole( options.has( "force_include_north_pole" ) &&
                                    options.getBool( "force_include_north_pole" ) );
@@ -829,8 +836,9 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const gri
 
     bool include_north_pole = ( possible_north_pole && options.getBool( "include_pole" ) ) || force_include_north_pole;
     bool include_south_pole = ( possible_south_pole && options.getBool( "include_pole" ) ) || force_include_south_pole;
-    bool patch_north_pole   = possible_north_pole && options.getBool( "patch_pole" ) && rg.nx( 1 ) > 0;
-    bool patch_south_pole   = possible_south_pole && options.getBool( "patch_pole" ) && rg.nx( rg.ny() - 2 ) > 0;
+    bool patch_north_pole   = possible_north_pole && options.getBool( "patch_pole" ) && nx_north > 0;
+    bool patch_south_pole   = possible_south_pole && options.getBool( "patch_pole" ) && nx_south > 0;
+    bool patch_quads        = options.getBool( "patch_quads" );
 
     int nnewnodes = ( !has_point_at_north_pole && include_north_pole ? 1 : 0 ) +
                     ( !has_point_at_south_pole && include_south_pole ? 1 : 0 );
@@ -844,17 +852,27 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const gri
 
     if ( include_north_pole ) {
         ++nnodes;
-        ntriags += rg.nx( 0 ) - ( periodic_east_west ? 0 : 1 );
+        ntriags += nx_north - ( periodic_east_west ? 0 : 1 );
     }
     else if ( patch_north_pole ) {
-        ntriags += rg.nx( 0 ) - 2;
+        if ( patch_quads ) {
+            nquads += ( nx_north + 1 ) / 2;
+        }
+        else {
+            ntriags += nx_north - 2;
+        }
     }
     if ( include_south_pole ) {
         ++nnodes;
-        ntriags += rg.nx( rg.ny() - 1 ) - ( periodic_east_west ? 0 : 1 );
+        ntriags += nx_south - ( periodic_east_west ? 0 : 1 );
     }
     else if ( patch_south_pole ) {
-        ntriags += rg.nx( rg.ny() - 1 ) - 2;
+        if ( patch_quads ) {
+            nquads += ( nx_south + 1 ) / 2;
+        }
+        else {
+            ntriags += nx_south - 2;
+        }
     }
 
     size_t node_numbering_size = nnodes;
@@ -920,7 +938,6 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const gri
     auto flags   = array::make_view<int, 1>( nodes.flags() );
     auto halo    = array::make_view<int, 1>( nodes.halo() );
 
-    bool stagger = options.getBool( "stagger" );
 
     std::vector<idx_t> node_numbering( node_numbering_size, -1 );
     if ( options.getBool( "ghost_at_end" ) ) {
@@ -988,9 +1005,6 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const gri
         }
     }
 
-    const int y_numbering = ( rg.y().front() < rg.y().back() ) ? +1 : -1;
-
-
     idx_t jnode = 0;
     l           = 0;
     for ( idx_t jlat = region.north; jlat <= region.south; ++jlat ) {
@@ -1007,9 +1021,6 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const gri
                 double x = rg.x( jlon, jlat );
                 // std::cout << "jlat = " << jlat << "; jlon = " << jlon << "; x = " <<
                 // x << std::endl;
-                if ( stagger && ( jlat + 1 ) % 2 == 0 ) {
-                    x += 180. / static_cast<double>( rg.nx( jlat ) );
-                }
 
                 xy( inode, XX ) = x;
                 xy( inode, YY ) = y;
@@ -1056,9 +1067,6 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const gri
                 idx_t inode = node_numbering.at( jnode );
                 // int inode_left = node_numbering.at(jnode-1);
                 double x = rg.x( rg.nx( jlat ), jlat );
-                if ( stagger && ( jlat + 1 ) % 2 == 0 ) {
-                    x += 180. / static_cast<double>( rg.nx( jlat ) );
-                }
 
                 xy( inode, XX ) = x;
                 xy( inode, YY ) = y;
@@ -1307,58 +1315,94 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const gri
         }
     }
     else if ( patch_north_pole ) {
-        idx_t jlat = 0;
-        idx_t ilat = 0;
-        idx_t ip1, ip2, ip3;
+        idx_t jlat = y_numbering < 0 ? 0 : rg.ny() - 1;
+        idx_t ilat = y_numbering < 0 ? 0 : std::abs( region.south - region.north );
 
-        idx_t jforward  = 0;
-        idx_t jbackward = rg.nx( jlat ) - 1;
-        bool forward    = true;
+        if ( patch_quads ) {
+            idx_t ip1, ip2, ip3, ip4;
 
-        while ( true ) {
-            if ( forward ) {
+            idx_t jforward  = 0;
+            idx_t jbackward = rg.nx( jlat ) - 1;
+
+            while ( true ) {
                 ip1 = jforward;
                 ip2 = jforward + 1;
-                ip3 = jbackward;
-            }
-            else {
-                ip1 = jforward;
-                ip2 = jbackward - 1;
-                ip3 = jbackward;
-            }
+                ip3 = jbackward - 1;
+                ip4 = jbackward;
 
-            triag_nodes[0] = node_numbering.at( offset_loc.at( ilat ) + ip1 );
-            triag_nodes[1] = node_numbering.at( offset_loc.at( ilat ) + ip2 );
-            triag_nodes[2] = node_numbering.at( offset_loc.at( ilat ) + ip3 );
-            if ( y_numbering > 0 ) {
-                fix_triag_orientation( triag_nodes );
-            }
+                quad_nodes[0] = node_numbering.at( offset_loc.at( ilat ) + ip1 );
+                quad_nodes[1] = node_numbering.at( offset_loc.at( ilat ) + ip2 );
+                quad_nodes[2] = node_numbering.at( offset_loc.at( ilat ) + ip3 );
+                quad_nodes[3] = node_numbering.at( offset_loc.at( ilat ) + ip4 );
 
-            jcell = triag_begin + jtriag++;
-            node_connectivity.set( jcell, triag_nodes );
+                jcell = quad_begin + jquad++;
+                node_connectivity.set( jcell, quad_nodes );
 
-            cells_glb_idx( jcell ) = jcell + 1;
-            cells_part( jcell )    = mypart;
-            Topology::set( cells_flags( jcell ), Topology::PATCH );
+                cells_glb_idx( jcell ) = jcell + 1;
+                cells_part( jcell )    = mypart;
+                Topology::set( cells_flags( jcell ), Topology::PATCH );
 
-            if ( jbackward == jforward + 2 ) {
-                break;
-            }
-
-            if ( forward ) {
+                if ( jcell == cells_glb_idx.size() - 1 ) {
+                }
+                if ( jforward + 1 == jbackward ) {
+                    break;
+                }
                 ++jforward;
-                forward = false;
-            }
-            else {
                 --jbackward;
-                forward = true;
+            }
+        }
+        else {
+            idx_t ip1, ip2, ip3;
+
+            idx_t jforward  = 0;
+            idx_t jbackward = rg.nx( jlat ) - 1;
+            bool forward    = true;
+
+            while ( true ) {
+                if ( forward ) {
+                    ip1 = jforward;
+                    ip2 = jforward + 1;
+                    ip3 = jbackward;
+                }
+                else {
+                    ip1 = jforward;
+                    ip2 = jbackward - 1;
+                    ip3 = jbackward;
+                }
+
+                triag_nodes[0] = node_numbering.at( offset_loc.at( ilat ) + ip1 );
+                triag_nodes[1] = node_numbering.at( offset_loc.at( ilat ) + ip2 );
+                triag_nodes[2] = node_numbering.at( offset_loc.at( ilat ) + ip3 );
+                //            if ( y_numbering > 0 ) {
+                //                fix_triag_orientation( triag_nodes );
+                //            }
+
+                jcell = triag_begin + jtriag++;
+                node_connectivity.set( jcell, triag_nodes );
+
+                cells_glb_idx( jcell ) = jcell + 1;
+                cells_part( jcell )    = mypart;
+                Topology::set( cells_flags( jcell ), Topology::PATCH );
+
+                if ( jbackward == jforward + 2 ) {
+                    break;
+                }
+
+                if ( forward ) {
+                    ++jforward;
+                    forward = false;
+                }
+                else {
+                    --jbackward;
+                    forward = true;
+                }
             }
         }
     }
 
     if ( include_south_pole ) {
-        idx_t jlat = rg.ny() - 1;
-        idx_t ilat = region.south - region.north;
+        idx_t jlat = y_numbering > 0 ? 0 : rg.ny() - 1;
+        idx_t ilat = y_numbering > 0 ? 0 : std::abs( region.south - region.north );
         idx_t ip1  = 0;
         idx_t nlon = rg.nx( jlat ) + 1 - ( periodic_east_west ? 0 : 1 );
         for ( idx_t ip2 = 1; ip2 < nlon; ++ip2 ) {
@@ -1380,51 +1424,87 @@ void StructuredMeshGenerator::generate_mesh( const StructuredGrid& rg, const gri
         }
     }
     else if ( patch_south_pole ) {
-        idx_t jlat = rg.ny() - 1;
-        idx_t ilat = region.south - region.north;
-        idx_t ip1, ip2, ip3;
+        idx_t jlat = y_numbering > 0 ? 0 : rg.ny() - 1;
+        idx_t ilat = y_numbering > 0 ? 0 : std::abs( region.south - region.north );
 
-        idx_t jforward  = 0;
-        idx_t jbackward = rg.nx( jlat ) - 1;
-        bool forward    = true;
+        if ( patch_quads ) {
+            idx_t ip1, ip2, ip3, ip4;
 
-        while ( true ) {
-            if ( forward ) {
-                ip1 = jforward;
-                ip2 = jforward + 1;
-                ip3 = jbackward;
-            }
-            else {
-                ip1 = jforward;
+            idx_t jforward  = 0;
+            idx_t jbackward = rg.nx( jlat ) - 1;
+
+            while ( true ) {
+                ip1 = jbackward;
                 ip2 = jbackward - 1;
-                ip3 = jbackward;
-            }
+                ip3 = jforward + 1;
+                ip4 = jforward;
 
-            triag_nodes[0] = node_numbering.at( offset_loc.at( ilat ) + ip1 );
-            triag_nodes[1] = node_numbering.at( offset_loc.at( ilat ) + ip2 );
-            triag_nodes[2] = node_numbering.at( offset_loc.at( ilat ) + ip3 );
-            if ( y_numbering > 0 ) {
-                fix_triag_orientation( triag_nodes );
-            }
+                quad_nodes[0] = node_numbering.at( offset_loc.at( ilat ) + ip1 );
+                quad_nodes[1] = node_numbering.at( offset_loc.at( ilat ) + ip2 );
+                quad_nodes[2] = node_numbering.at( offset_loc.at( ilat ) + ip3 );
+                quad_nodes[3] = node_numbering.at( offset_loc.at( ilat ) + ip4 );
 
-            jcell = triag_begin + jtriag++;
-            node_connectivity.set( jcell, triag_nodes );
+                jcell = quad_begin + jquad++;
+                node_connectivity.set( jcell, quad_nodes );
 
-            cells_glb_idx( jcell ) = jcell + 1;
-            cells_part( jcell )    = mypart;
-            Topology::set( cells_flags( jcell ), Topology::PATCH );
+                cells_glb_idx( jcell ) = jcell + 1;
+                cells_part( jcell )    = mypart;
+                Topology::set( cells_flags( jcell ), Topology::PATCH );
 
-            if ( jbackward == jforward + 2 ) {
-                break;
-            }
-
-            if ( forward ) {
+                if ( jcell == cells_glb_idx.size() - 1 ) {
+                }
+                if ( jforward + 1 == jbackward ) {
+                    break;
+                }
                 ++jforward;
-                forward = false;
-            }
-            else {
                 --jbackward;
-                forward = true;
+            }
+        }
+        else {
+            idx_t ip1, ip2, ip3;
+
+            idx_t jforward  = 0;
+            idx_t jbackward = rg.nx( jlat ) - 1;
+            bool forward    = true;
+
+            while ( true ) {
+                if ( forward ) {
+                    ip1 = jbackward;
+                    ip2 = jforward + 1;
+                    ip3 = jforward;
+                }
+                else {
+                    ip1 = jbackward;
+                    ip2 = jbackward - 1;
+                    ip3 = jforward;
+                }
+
+                triag_nodes[0] = node_numbering.at( offset_loc.at( ilat ) + ip1 );
+                triag_nodes[1] = node_numbering.at( offset_loc.at( ilat ) + ip2 );
+                triag_nodes[2] = node_numbering.at( offset_loc.at( ilat ) + ip3 );
+                //            if ( y_numbering > 0 ) {
+                //                fix_triag_orientation( triag_nodes );
+                //            }
+
+                jcell = triag_begin + jtriag++;
+                node_connectivity.set( jcell, triag_nodes );
+
+                cells_glb_idx( jcell ) = jcell + 1;
+                cells_part( jcell )    = mypart;
+                Topology::set( cells_flags( jcell ), Topology::PATCH );
+
+                if ( jbackward == jforward + 2 ) {
+                    break;
+                }
+
+                if ( forward ) {
+                    ++jforward;
+                    forward = false;
+                }
+                else {
+                    --jbackward;
+                    forward = true;
+                }
             }
         }
     }
