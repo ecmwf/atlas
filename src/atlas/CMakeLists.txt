@@ -29,6 +29,8 @@ library.h
 library/config.h
 library/Library.h
 library/Library.cc
+library/Plugin.h
+library/Plugin.cc
 runtime/AtlasTool.h
 runtime/AtlasTool.cc
 runtime/Log.h
