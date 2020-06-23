@@ -24,6 +24,13 @@ case "$os" in
             openmpi)
                 brew ls --versions openmpi || brew install openmpi
                 echo "localhost slots=72" >> /usr/local/etc/openmpi-default-hostfile
+                # workaround for open-mpi/omp#7516
+                echo "setting the mca gds to hash..."
+                echo "gds = hash" >> /usr/local/etc/pmix-mca-params.conf
+
+                # workaround for open-mpi/ompi#5798
+                echo "setting the mca btl_vader_backing_directory to /tmp..."
+                echo "btl_vader_backing_directory = /tmp" >> /usr/local/etc/openmpi-mca-params.conf
                 ;;
             *)
                 echo "Unknown MPI implementation: $MPI"
