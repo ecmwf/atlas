@@ -104,7 +104,7 @@ function( atlas_create_plugin name )
   file( WRITE  ${CMAKE_BINARY_DIR}/${_plugin_file} "name: ${name}\n" )
   file( APPEND ${CMAKE_BINARY_DIR}/${_plugin_file} "version: ${_version}\n" )
   file( APPEND ${CMAKE_BINARY_DIR}/${_plugin_file} "library: ${_library}" )
-  install( FILES ${CMAKE_BINARY_DIR}/${_plugin_file} DESTINATION ${_plugin_file} )
+  install( FILES ${CMAKE_BINARY_DIR}/${_plugin_file} DESTINATION share/atlas/plugins )
 
 endfunction()
 

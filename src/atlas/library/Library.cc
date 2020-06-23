@@ -240,11 +240,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
 
     std::vector<std::string> plugins_search_paths =
         eckit::Resource<std::vector<std::string>>( "atlasPluginsSearchPaths;$ATLAS_PLUGINS_SEARCH_PATHS", {} );
-    plugins_search_paths.push_back( "~atlas" );
-
-    for ( eckit::PathName p : plugins_search_paths ) {
-        Log::info() << "plugins search path " << p.dirName() << std::endl;
-    }
+    plugins_search_paths.emplace_back( "~atlas" );
 
     auto is_plugin_loaded = [&]( const std::string& name ) {
         for ( auto& plugin : plugins() ) {
