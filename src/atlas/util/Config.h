@@ -43,13 +43,17 @@ public:
     template <typename ValueT>
     Config( const std::string& name, const ValueT& value );
 
+    template <typename ValueT>
+    Config( const std::string& name, std::initializer_list<ValueT>&& value );
+
     // -- Mutators
 
     /// @brief Operator that sets a key-value pair.
     template <typename ValueT>
     Config operator()( const std::string& name, const ValueT& value );
 
-    Config operator()( const std::string& name, const std::initializer_list<std::string>& value );
+    template <typename ValueT>
+    Config operator()( const std::string& name, std::initializer_list<ValueT>&& value );
 
     // Overload operators to merge two Config objects.
     Config operator|( const Config& other ) const;
@@ -60,6 +64,9 @@ public:
     Config& set( const std::string& name, const std::vector<Config>& );
 
     Config& set( const eckit::LocalConfiguration& );
+
+    template <typename T>
+    Config& set( const std::string& name, std::initializer_list<T>&& value );
 
     // -- Accessors, overloaded from eckit::Parametrisation
 
@@ -75,13 +82,25 @@ inline Config::Config( const std::string& name, const ValueT& value ) : eckit::L
 }
 
 template <typename ValueT>
+inline Config::Config( const std::string& name, std::initializer_list<ValueT>&& value ) : eckit::LocalConfiguration() {
+    set( name, value );
+}
+
+template <typename ValueT>
 inline Config Config::operator()( const std::string& name, const ValueT& value ) {
     set( name, value );
     return *this;
 }
 
-inline Config Config::operator()( const std::string& name, const std::initializer_list<std::string>& value ) {
-    set( name, std::vector<std::string>( value.begin(), value.end() ) );
+template <typename ValueT>
+inline Config& Config::set( const std::string& name, std::initializer_list<ValueT>&& value ) {
+    set( name, std::vector<ValueT>( value.begin(), value.end() ) );
+    return *this;
+}
+
+template <typename ValueT>
+inline Config Config::operator()( const std::string& name, std::initializer_list<ValueT>&& value ) {
+    set( name, std::vector<ValueT>( value.begin(), value.end() ) );
     return *this;
 }
 

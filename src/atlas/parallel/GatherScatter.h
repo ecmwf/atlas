@@ -32,8 +32,7 @@ public:
     Field() {}
 
     Field( const DATA_TYPE data_[], const idx_t var_strides_[], const idx_t var_shape_[], const idx_t var_rank_ ) :
-        data( const_cast<DATA_TYPE*>( data_ ) ),
-        var_rank( var_rank_ ) {
+        data( const_cast<DATA_TYPE*>( data_ ) ), var_rank( var_rank_ ) {
         var_strides.assign( var_strides_, var_strides_ + var_rank_ );
         var_shape.assign( var_shape_, var_shape_ + var_rank_ );
     }

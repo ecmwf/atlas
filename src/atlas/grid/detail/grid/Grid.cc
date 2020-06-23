@@ -138,6 +138,27 @@ void Grid::detachObserver( GridObserver& observer ) const {
                            grid_observers_.end() );
 }
 
+idx_t atlas__grid__Grid__size( Grid* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Grid" );
+    return This->size();
+}
+
+Grid::Spec* atlas__grid__Grid__spec( Grid* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Grid" );
+    return new Grid::Spec( This->spec() );
+}
+
+void atlas__grid__Grid__uid( const Grid* This, char*& uid, int& size ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
+    eckit::MD5 md5;
+    This->hash( md5 );
+    std::string s = This->uid();
+    size          = static_cast<int>( s.size() + 1 );
+    uid           = new char[size];
+    strcpy( uid, s.c_str() );
+}
+
+
 }  // namespace grid
 }  // namespace detail
 }  // namespace grid

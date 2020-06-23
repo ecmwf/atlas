@@ -28,9 +28,7 @@ namespace actions {
 //----------------------------------------------------------------------------------------------------------------------
 
 BuildCellCentres::BuildCellCentres( const std::string& field_name, bool force_recompute ) :
-    field_name_( field_name ),
-    force_recompute_( force_recompute ),
-    flatten_virtual_elements_( true ) {}
+    field_name_( field_name ), force_recompute_( force_recompute ), flatten_virtual_elements_( true ) {}
 
 BuildCellCentres::BuildCellCentres( eckit::Configuration& config ) :
     field_name_( config.getString( "name", "centre" ) ),

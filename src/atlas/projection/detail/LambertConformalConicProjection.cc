@@ -59,12 +59,12 @@ static ProjectionBuilder<LambertConformalConicProjection> register_1( LambertCon
 
 LambertConformalConicProjection::LambertConformalConicProjection( const eckit::Parametrisation& params ) {
     ATLAS_ASSERT( params.get( "longitude0", lon0_ = 0 ) );
-    ATLAS_ASSERT( params.get( "latitude1", lat1_ = 0 ) );
-    if ( not params.get( "latitude0", lat0_ ) ) {
-        lat0_ = lat1_;
+    ATLAS_ASSERT( params.get( "latitude0", lat0_ = 0 ) );
+    if ( not params.get( "latitude1", lat1_ ) ) {
+        lat1_ = lat0_;
     }
     if ( not params.get( "latitude2", lat2_ ) ) {
-        lat2_ = lat1_;
+        lat2_ = lat0_;
     }
     params.get( "radius", radius_ = util::Earth::radius() );
 

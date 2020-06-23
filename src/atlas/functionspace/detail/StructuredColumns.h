@@ -55,6 +55,11 @@ namespace atlas {
 namespace functionspace {
 namespace detail {
 
+class StructuredColumnsHaloExchangeCache;
+class StructuredColumnsGatherScatterCache;
+class StructuredColumnsChecksumCache;
+
+
 // -------------------------------------------------------------------
 
 class StructuredColumns : public FunctionSpaceImpl {
@@ -93,6 +98,9 @@ public:
     virtual void haloExchange( const FieldSet&, bool on_device = false ) const override;
     virtual void haloExchange( const Field&, bool on_device = false ) const override;
 
+    virtual void adjointHaloExchange( const FieldSet&, bool on_device = false ) const override;
+    virtual void adjointHaloExchange( const Field&, bool on_device = false ) const override;
+
     idx_t sizeOwned() const { return size_owned_; }
     idx_t sizeHalo() const { return size_halo_; }
     virtual idx_t size() const override { return size_halo_; }
@@ -108,6 +116,8 @@ public:
     const Vertical& vertical() const { return vertical_; }
 
     const StructuredGrid& grid() const;
+
+    const Projection& projection() const override { return grid().projection(); }
 
     idx_t i_begin( idx_t j ) const { return i_begin_[j]; }
     idx_t i_end( idx_t j ) const { return i_end_[j]; }
@@ -129,6 +139,7 @@ public:
         return ij2gp_( i, j );
     }
 
+    Field lonlat() const override { return field_xy_; }
     Field xy() const { return field_xy_; }
     Field z() const { return vertical().z(); }
     Field partition() const { return field_partition_; }
@@ -141,7 +152,7 @@ public:
     }
     Field index_i() const { return field_index_i_; }
     Field index_j() const { return field_index_j_; }
-    Field ghost() const { return field_ghost_; }
+    Field ghost() const override { return field_ghost_; }
 
     void compute_xy( idx_t i, idx_t j, PointXY& xy ) const;
     PointXY compute_xy( idx_t i, idx_t j ) const {
@@ -153,6 +164,8 @@ public:
     virtual size_t footprint() const override;
 
     const util::PartitionPolygon& polygon( idx_t halo = 0 ) const override;
+
+    const util::PartitionPolygons& polygons() const override;
 
     idx_t nb_partitions() const override { return nb_partitions_; }
 
@@ -194,11 +207,17 @@ private:  // data
     idx_t size_halo_;
     idx_t halo_;
 
+    friend class StructuredColumnsHaloExchangeCache;
+    friend class StructuredColumnsGatherScatterCache;
+    friend class StructuredColumnsChecksumCache;
+    bool periodic_points_{false};
+
     const StructuredGrid* grid_;
     mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;
     mutable util::ObjectHandle<parallel::Checksum> checksum_;
     mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
     mutable std::unique_ptr<util::PartitionPolygon> polygon_;
+    mutable util::PartitionPolygons polygons_;
 
     Field field_xy_;
     Field field_partition_;

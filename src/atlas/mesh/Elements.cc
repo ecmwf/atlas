@@ -29,9 +29,7 @@ void Elements::rebuild() {
 }
 
 Elements::Elements( HybridElements& elements, idx_t type_idx ) :
-    owns_( false ),
-    hybrid_elements_( &elements ),
-    type_idx_( type_idx ) {
+    owns_( false ), hybrid_elements_( &elements ), type_idx_( type_idx ) {
     rebuild();
 }
 

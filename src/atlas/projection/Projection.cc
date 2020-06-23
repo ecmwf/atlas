@@ -22,6 +22,9 @@ Projection::Projection() : Handle( new projection::detail::LonLatProjection() ) 
 
 Projection::Projection( const eckit::Parametrisation& p ) : Handle( Implementation::create( p ) ) {}
 
+Projection::Projection( const std::string& type, const eckit::Parametrisation& p ) :
+    Handle( Implementation::create( type, p ) ) {}
+
 atlas::Projection::operator bool() const {
     return get()->operator bool();
 }
@@ -34,8 +37,17 @@ void atlas::Projection::xy2lonlat( double crd[] ) const {
     return get()->xy2lonlat( crd );
 }
 
+void atlas::Projection::xy2lonlat( Point2& point ) const {
+    return get()->xy2lonlat( point );
+}
+
+
 void atlas::Projection::lonlat2xy( double crd[] ) const {
     return get()->lonlat2xy( crd );
+}
+
+void atlas::Projection::lonlat2xy( Point2& point ) const {
+    return get()->lonlat2xy( point );
 }
 
 PointLonLat atlas::Projection::lonlat( const PointXY& xy ) const {

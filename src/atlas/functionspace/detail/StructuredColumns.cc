@@ -105,16 +105,21 @@ public:
         registerGrid( *funcspace.grid().get() );
 
         creator_type creator = std::bind( &StructuredColumnsHaloExchangeCache::create, &funcspace );
-        return Base::get_or_create( key( *funcspace.grid().get(), funcspace.halo() ),
-                                    remove_key( *funcspace.grid().get() ), creator );
+        return Base::get_or_create( key( funcspace ), remove_key( funcspace ), creator );
     }
     void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( remove_key( grid ) ); }
 
 private:
-    static Base::key_type key( const grid::detail::grid::Grid& grid, idx_t halo ) {
+    static Base::key_type key( const detail::StructuredColumns& funcspace ) {
         std::ostringstream key;
-        key << "grid[address=" << &grid << ",halo=" << halo << "]";
+        key << "grid[address=" << funcspace.grid().get() << ",halo=" << funcspace.halo()
+            << ",periodic_points=" << std::boolalpha << funcspace.periodic_points_
+            << ",distribution=" << funcspace.distribution() << "]";
         return key.str();
+    }
+
+    static Base::key_type remove_key( const detail::StructuredColumns& funcspace ) {
+        return remove_key( *funcspace.grid().get() );
     }
 
     static Base::key_type remove_key( const grid::detail::grid::Grid& grid ) {
@@ -148,12 +153,24 @@ public:
     util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& funcspace ) {
         registerGrid( *funcspace.grid().get() );
         creator_type creator = std::bind( &StructuredColumnsGatherScatterCache::create, &funcspace );
-        return Base::get_or_create( key( *funcspace.grid().get() ), creator );
+        return Base::get_or_create( key( funcspace ), remove_key( funcspace ), creator );
     }
-    void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( key( grid ) ); }
+    void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( remove_key( grid ) ); }
 
 private:
-    static Base::key_type key( const grid::detail::grid::Grid& grid ) {
+    static Base::key_type key( const detail::StructuredColumns& funcspace ) {
+        std::ostringstream key;
+        key << "grid[address=" << funcspace.grid().get() << ",halo=" << funcspace.halo()
+            << ",periodic_points=" << std::boolalpha << funcspace.periodic_points_
+            << ",distribution=" << funcspace.distribution() << "]";
+        return key.str();
+    }
+
+    static Base::key_type remove_key( const detail::StructuredColumns& funcspace ) {
+        return remove_key( *funcspace.grid().get() );
+    }
+
+    static Base::key_type remove_key( const grid::detail::grid::Grid& grid ) {
         std::ostringstream key;
         key << "grid[address=" << &grid << "]";
         return key.str();
@@ -184,12 +201,24 @@ public:
     util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& funcspace ) {
         registerGrid( *funcspace.grid().get() );
         creator_type creator = std::bind( &StructuredColumnsChecksumCache::create, &funcspace );
-        return Base::get_or_create( key( *funcspace.grid().get() ), creator );
+        return Base::get_or_create( key( funcspace ), remove_key( funcspace ), creator );
     }
-    void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( key( grid ) ); }
+    void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( remove_key( grid ) ); }
 
 private:
-    static Base::key_type key( const grid::detail::grid::Grid& grid ) {
+    static Base::key_type key( const detail::StructuredColumns& funcspace ) {
+        std::ostringstream key;
+        key << "grid[address=" << funcspace.grid().get() << ",halo=" << funcspace.halo()
+            << ",periodic_points=" << std::boolalpha << funcspace.periodic_points_
+            << ",distribution=" << funcspace.distribution() << "]";
+        return key.str();
+    }
+
+    static Base::key_type remove_key( const detail::StructuredColumns& funcspace ) {
+        return remove_key( *funcspace.grid().get() );
+    }
+
+    static Base::key_type remove_key( const grid::detail::grid::Grid& grid ) {
         std::ostringstream key;
         key << "grid[address=" << &grid << "]";
         return key.str();
@@ -452,6 +481,14 @@ const util::PartitionPolygon& StructuredColumns::polygon( idx_t halo ) const {
         polygon_.reset( new grid::StructuredPartitionPolygon( *this, halo ) );
     }
     return *polygon_;
+}
+
+const util::PartitionPolygons& StructuredColumns::polygons() const {
+    if ( polygons_.size() ) {
+        return polygons_;
+    }
+    polygon().allGather( polygons_ );
+    return polygons_;
 }
 
 // ----------------------------------------------------------------------------
@@ -719,6 +756,33 @@ void dispatch_haloExchange( Field& field, const parallel::HaloExchange& halo_exc
     }
     field.set_dirty( false );
 }
+
+
+template <int RANK>
+void dispatch_adjointHaloExchange( Field& field, const parallel::HaloExchange& halo_exchange,
+                                   const StructuredColumns& fs ) {
+    FixupHaloForVectors<RANK> fixup_halos( fs );
+    if ( field.datatype() == array::DataType::kind<int>() ) {
+        halo_exchange.template execute_adjoint<int, RANK>( field.array(), false );
+        fixup_halos.template apply<int>( field );
+    }
+    else if ( field.datatype() == array::DataType::kind<long>() ) {
+        halo_exchange.template execute_adjoint<long, RANK>( field.array(), false );
+        fixup_halos.template apply<long>( field );
+    }
+    else if ( field.datatype() == array::DataType::kind<float>() ) {
+        halo_exchange.template execute_adjoint<float, RANK>( field.array(), false );
+        fixup_halos.template apply<float>( field );
+    }
+    else if ( field.datatype() == array::DataType::kind<double>() ) {
+        halo_exchange.template execute_adjoint<double, RANK>( field.array(), false );
+        fixup_halos.template apply<double>( field );
+    }
+    else {
+        throw_Exception( "datatype not supported", Here() );
+    }
+    field.set_dirty( false );
+}
 }  // namespace
 
 void StructuredColumns::haloExchange( const FieldSet& fieldset, bool ) const {
@@ -743,10 +807,38 @@ void StructuredColumns::haloExchange( const FieldSet& fieldset, bool ) const {
     }
 }
 
+void StructuredColumns::adjointHaloExchange( const FieldSet& fieldset, bool ) const {
+    for ( idx_t f = 0; f < fieldset.size(); ++f ) {
+        Field& field = const_cast<FieldSet&>( fieldset )[f];
+        switch ( field.rank() ) {
+            case 1:
+                dispatch_adjointHaloExchange<1>( field, halo_exchange(), *this );
+                break;
+            case 2:
+                dispatch_adjointHaloExchange<2>( field, halo_exchange(), *this );
+                break;
+            case 3:
+                dispatch_adjointHaloExchange<3>( field, halo_exchange(), *this );
+                break;
+            case 4:
+                dispatch_adjointHaloExchange<4>( field, halo_exchange(), *this );
+                break;
+            default:
+                throw_Exception( "Rank not supported", Here() );
+        }
+    }
+}
+
 void StructuredColumns::haloExchange( const Field& field, bool ) const {
     FieldSet fieldset;
     fieldset.add( field );
     haloExchange( fieldset );
+}
+
+void StructuredColumns::adjointHaloExchange( const Field& field, bool ) const {
+    FieldSet fieldset;
+    fieldset.add( field );
+    adjointHaloExchange( fieldset );
 }
 
 size_t StructuredColumns::footprint() const {

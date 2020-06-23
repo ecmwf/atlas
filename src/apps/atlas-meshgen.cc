@@ -237,6 +237,9 @@ int Meshgen2Gmsh::execute( const Args& args ) {
     if ( mpi::comm().size() > 1 || edges ) {
         meshgenerator_config.set( "3d", false );
     }
+    bool patch_pole = false;
+    args.get( "patch_pole", patch_pole );
+    meshgenerator_config.set( "patch_pole", patch_pole );
 
     MeshGenerator meshgenerator( generator, meshgenerator_config );
 

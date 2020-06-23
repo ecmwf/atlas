@@ -33,7 +33,7 @@ MethodBuilder<NearestNeighbour> __builder( "nearest-neighbour" );
 
 }  // namespace
 
-void NearestNeighbour::setup( const Grid& source, const Grid& target ) {
+void NearestNeighbour::do_setup( const Grid& source, const Grid& target ) {
     if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
@@ -48,10 +48,10 @@ void NearestNeighbour::setup( const Grid& source, const Grid& target ) {
         return functionspace::NodeColumns( mesh );
     };
 
-    setup( functionspace( source ), functionspace( target ) );
+    do_setup( functionspace( source ), functionspace( target ) );
 }
 
-void NearestNeighbour::setup( const FunctionSpace& source, const FunctionSpace& target ) {
+void NearestNeighbour::do_setup( const FunctionSpace& source, const FunctionSpace& target ) {
     source_                        = source;
     target_                        = target;
     functionspace::NodeColumns src = source;
@@ -77,7 +77,7 @@ void NearestNeighbour::setup( const FunctionSpace& source, const FunctionSpace& 
     std::vector<Triplet> weights_triplets;
     weights_triplets.reserve( out_npts );
     {
-        Trace timer( Here(), "atlas::interpolation::method::NearestNeighbour::setup()" );
+        Trace timer( Here(), "atlas::interpolation::method::NearestNeighbour::do_setup()" );
         for ( size_t ip = 0; ip < out_npts; ++ip ) {
             if ( ip && ( ip % 1000 == 0 ) ) {
                 double rate = ip / timer.elapsed();

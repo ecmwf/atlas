@@ -18,6 +18,7 @@
 
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Partitioner.h"
+#include "atlas/grid/detail/distribution/DistributionArray.h"
 #include "atlas/grid/detail/partitioner/CheckerboardPartitioner.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h"
@@ -29,6 +30,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/Config.h"
 
 #if ATLAS_HAVE_TRANS
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
@@ -62,7 +64,7 @@ idx_t Partitioner::nb_partitions() const {
 }
 
 Distribution Partitioner::partition( const Grid& grid ) const {
-    return Distribution( grid, atlas::grid::Partitioner( this ) );
+    return new distribution::DistributionArray{grid, atlas::grid::Partitioner( this )};
 }
 
 namespace {
@@ -148,6 +150,12 @@ Partitioner* PartitionerFactory::build( const std::string& name ) {
 }
 
 Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_partitions ) {
+    atlas::util::Config config;
+    return build( name, nb_partitions, config );
+}
+
+Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_partitions,
+                                        const eckit::Parametrisation& config ) {
     pthread_once( &once, init );
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
@@ -167,7 +175,7 @@ Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_
         throw_Exception( std::string( "No PartitionerFactory called " ) + name );
     }
 
-    return ( *j ).second->make( nb_partitions );
+    return ( *j ).second->make( nb_partitions, config );
 }
 
 

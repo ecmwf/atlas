@@ -50,6 +50,11 @@ void FunctionSpace::haloExchange( const Field& field, bool on_device ) const {
     return get()->haloExchange( field, on_device );
 }
 
+void FunctionSpace::adjointHaloExchange( const Field& field, bool on_device ) const {
+    return get()->adjointHaloExchange( field, on_device );
+}
+
+
 idx_t FunctionSpace::size() const {
     return get()->size();
 }
@@ -58,12 +63,32 @@ idx_t FunctionSpace::nb_partitions() const {
     return get()->nb_partitions();
 }
 
+Field FunctionSpace::lonlat() const {
+    return get()->lonlat();
+}
+
+Field FunctionSpace::ghost() const {
+    return get()->ghost();
+}
+
 void FunctionSpace::haloExchange( const FieldSet& fields, bool on_device ) const {
     return get()->haloExchange( fields, on_device );
 }
 
+void FunctionSpace::adjointHaloExchange( const FieldSet& fields, bool on_device ) const {
+    return get()->adjointHaloExchange( fields, on_device );
+}
+
 const util::PartitionPolygon& FunctionSpace::polygon( idx_t halo ) const {
     return get()->polygon( halo );
+}
+
+const util::PartitionPolygons& FunctionSpace::polygons() const {
+    return get()->polygons();
+}
+
+const Projection& FunctionSpace::projection() const {
+    return get()->projection();
 }
 
 template <typename DATATYPE>

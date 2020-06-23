@@ -145,10 +145,10 @@ CASE( "test_grid_creation_from_GRIB" ) {
     {
         RectangularLonLatDomain bb{g.lonlatBoundingBox()};
         const double tolerance = 1.e-6;
-        EXPECT( is_approximately_equal( bb.west(), -90.001, tolerance ) );
-        EXPECT( is_approximately_equal( bb.east(), 41.883045, tolerance ) );
-        EXPECT( is_approximately_equal( bb.south(), 3.817356, tolerance ) );
-        EXPECT( is_approximately_equal( bb.north(), 76.041386, tolerance ) );
+        EXPECT_APPROX_EQ( bb.west(), -90., tolerance );
+        EXPECT_APPROX_EQ( bb.east(), 41.882046, tolerance );
+        EXPECT_APPROX_EQ( bb.south(), 3.818356, tolerance );
+        EXPECT_APPROX_EQ( bb.north(), 76.040387, tolerance );
         for ( PointLonLat p : g.lonlat() ) {
             EXPECT( bb.contains( p ) );
         }

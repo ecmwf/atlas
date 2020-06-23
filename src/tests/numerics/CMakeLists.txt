@@ -6,11 +6,33 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-ecbuild_add_test( TARGET atlas_test_fvm_nabla
+ecbuild_add_executable( TARGET atlas_test_fvm_nabla_exe
   SOURCES   test_fvm_nabla.cc
   LIBS      atlas ${OMP_CXX}
+  NOINSTALL
+)
+
+ecbuild_add_test( TARGET atlas_test_fvm_nabla_L0
+  COMMAND atlas_test_fvm_nabla_exe
+  ARGS    "--levels 0"
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+
+ecbuild_add_test( TARGET atlas_test_fvm_nabla_L5
+  COMMAND atlas_test_fvm_nabla_exe
+  ARGS    "--levels 5"
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_fvm_nabla_validation
+  SOURCES test_fvm_nabla_validation.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+if( TEST atlas_test_fvm_nabla_validation )
+    set_tests_properties( atlas_test_fvm_nabla_validation PROPERTIES TIMEOUT 450 )
+      # For certain debug builds (e.g. with address-sanitizer)
+endif()
 
 if( HAVE_FCTEST)
   add_fctest( TARGET atlas_fctest_fvm_nabla

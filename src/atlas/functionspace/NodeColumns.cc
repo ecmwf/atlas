@@ -85,7 +85,7 @@ public:
         return Base::get_or_create( key( *mesh.get(), halo ), creator );
     }
     void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override {
-        for ( long jhalo = 1; jhalo < mesh::Halo( mesh ).size(); ++jhalo ) {
+        for ( long jhalo = 1; jhalo <= mesh::Halo( mesh ).size(); ++jhalo ) {
             remove( key( mesh, jhalo ) );
         }
     }

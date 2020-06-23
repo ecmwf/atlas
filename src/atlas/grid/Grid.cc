@@ -53,6 +53,10 @@ idx_t Grid::size() const {
     return get()->size();
 }
 
+size_t Grid::footprint() const {
+    return get()->footprint();
+}
+
 const Grid::Projection& Grid::projection() const {
     return get()->projection();
 }

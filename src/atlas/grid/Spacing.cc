@@ -69,6 +69,10 @@ LinearSpacing::LinearSpacing( double start, double stop, long N, bool endpoint )
 LinearSpacing::LinearSpacing( const Interval& interval, long N, bool endpoint ) :
     Spacing( new atlas::grid::spacing::LinearSpacing( interval, N, endpoint ) ) {}
 
+double LinearSpacing::step() const {
+    return dynamic_cast<const spacing::LinearSpacing*>( get() )->step();
+}
+
 GaussianSpacing::GaussianSpacing( long N ) : Spacing( new atlas::grid::spacing::GaussianSpacing( N ) ) {}
 
 }  // namespace grid

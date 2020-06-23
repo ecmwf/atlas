@@ -28,8 +28,7 @@ MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner( const idx_t 
 }
 
 MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner( const FunctionSpace& functionspace ) :
-    Partitioner( functionspace.nb_partitions() ),
-    partitioned_( functionspace ) {}
+    Partitioner( functionspace.nb_partitions() ), partitioned_( functionspace ) {}
 
 }  // namespace partitioner
 }  // namespace detail

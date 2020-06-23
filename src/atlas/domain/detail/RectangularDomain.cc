@@ -84,11 +84,7 @@ RectangularDomain::RectangularDomain( const eckit::Parametrisation& params ) :
     RectangularDomain( get_interval_x( params ), get_interval_y( params ), get_units( params ) ) {}
 
 RectangularDomain::RectangularDomain( const Interval& x, const Interval& y, const std::string& units ) :
-    xmin_( x[0] ),
-    xmax_( x[1] ),
-    ymin_( y[0] ),
-    ymax_( y[1] ),
-    units_( units ) {
+    xmin_( x[0] ), xmax_( x[1] ), ymin_( y[0] ), ymax_( y[1] ), units_( units ) {
     unit_degrees_ = ( units_ == "degrees" ) ? true : false;
 
     // Make sure xmax>=xmin and ymax>=ymin
@@ -129,7 +125,8 @@ void RectangularDomain::print( std::ostream& os ) const {
 }
 
 void RectangularDomain::hash( eckit::Hash& h ) const {
-    auto add_double = [&]( const double& x ) { h.add( std::round( x * 1.e8 ) ); };
+    double multiplier = units() == "meters" ? 1e2 : 1e8;
+    auto add_double   = [&]( const double& x ) { h.add( std::round( x * multiplier ) ); };
     h.add( type() );
     h.add( units() );
     add_double( xmin() );

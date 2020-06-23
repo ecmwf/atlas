@@ -22,3 +22,38 @@ endif()
 if( TARGET OpenMP::OpenMP_Fortran )
   set( OMP_Fortran OpenMP::OpenMP_Fortran )
 endif()
+
+if( HAVE_OMP_CXX )
+
+  if( NOT CMAKE_CXX_COMPILER_ID MATCHES Clang )
+    set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 1 )
+  endif()
+
+  if( NOT DEFINED ATLAS_OMP_TASK_UNTIED_SUPPORTED )
+    try_run( execute_result compile_result 
+                     ${CMAKE_CURRENT_BINARY_DIR}
+                     ${PROJECT_SOURCE_DIR}/cmake/features/OMP/test_omp_untied.cc
+                     LINK_LIBRARIES ${OMP_CXX}
+                     COMPILE_OUTPUT_VARIABLE compile_output
+                     RUN_OUTPUT_VARIABLE execute_output )
+
+    ecbuild_debug("Compiling and running ${PROJECT_SOURCE_DIR}/cmake/features/OMP/test_omp_untied.cc")
+    ecbuild_debug_var( compile_result )
+    ecbuild_debug_var( compile_output )
+    ecbuild_debug_var( execute_result )
+    ecbuild_debug_var( execute_output )
+
+    if( compile_result )
+      if( execute_result MATCHES 0 )
+        set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 1 )
+      else()
+        ecbuild_info("    Compiler failed to run program with omp pragma with 'untied if' construct."
+                     "Workaround will be enabled.")
+        set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 0 )
+      endif()
+    else() 
+      set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 0 )
+    endif()
+  endif()
+
+endif()

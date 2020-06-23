@@ -27,7 +27,7 @@ namespace parallel {
 
 namespace {
 struct IsGhostPoint {
-    IsGhostPoint( const int part[], const idx_t ridx[], const idx_t base, const int N ) {
+    IsGhostPoint( const int part[], const idx_t ridx[], const idx_t base, const int /*N*/ ) {
         part_   = part;
         ridx_   = ridx;
         base_   = base;
@@ -81,13 +81,13 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
     recvdispls_.assign( nproc, 0 );
 
     /*
-  Find the amount of nodes this proc has to receive from each other proc
-*/
+    Find the amount of nodes this proc has to receive from each other proc
+    */
 
     IsGhostPoint is_ghost( part, remote_idx, base, parsize_ );
-
     atlas::vector<idx_t> ghost_points( parsize_ );
     idx_t nghost = 0;
+
     atlas_omp_parallel_for( int jj = halo_begin; jj < parsize_; ++jj ) {
         if ( is_ghost( jj ) ) {
             idx_t p = part[jj];
@@ -98,11 +98,12 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
             }
         }
     }
+
     recvcnt_ = std::accumulate( recvcounts_.begin(), recvcounts_.end(), 0 );
 
     /*
-  Find the amount of nodes this proc has to send to each other proc
-*/
+    Find the amount of nodes this proc has to send to each other proc
+    */
     ATLAS_TRACE_MPI( ALLTOALL ) { mpi::comm().allToAll( recvcounts_, sendcounts_ ); }
 
     sendcnt_ = std::accumulate( sendcounts_.begin(), sendcounts_.end(), 0 );
@@ -115,16 +116,16 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
         senddispls_[jproc] = sendcounts_[jproc - 1] + senddispls_[jproc - 1];
     }
     /*
-  Fill vector "send_requests" with remote index of nodes needed, but are on
-  other procs
-  We can also fill in the vector "recvmap_" which holds local indices of
-  requested nodes
-*/
-
+    Fill vector "send_requests" with remote index of nodes needed, but are on
+    other procs
+    We can also fill in the vector "recvmap_" which holds local indices of
+    requested nodes
+    */
     std::vector<int> send_requests( recvcnt_ );
+    std::vector<int> recv_requests( sendcnt_ );
+    std::vector<int> cnt( nproc, 0 );
 
     recvmap_.resize( recvcnt_ );
-    std::vector<int> cnt( nproc, 0 );
     for ( idx_t jghost = 0; jghost < nghost; ++jghost ) {
         const auto jj          = ghost_points[jghost];
         const int req_idx      = recvdispls_[part[jj]] + cnt[part[jj]];
@@ -134,19 +135,18 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
     }
 
     /*
-  Fill vector "recv_requests" with what is needed by other procs
-*/
+    Fill vector "recv_requests" with what is needed by other procs
+    */
 
-    std::vector<int> recv_requests( sendcnt_ );
     ATLAS_TRACE_MPI( ALLTOALL ) {
         mpi::comm().allToAllv( send_requests.data(), recvcounts_.data(), recvdispls_.data(), recv_requests.data(),
                                sendcounts_.data(), senddispls_.data() );
     }
 
     /*
-  What needs to be sent to other procs is asked by remote_idx, which is local
-  here
-*/
+    What needs to be sent to other procs is asked by remote_idx, which is local
+    here
+    */
     sendmap_.resize( sendcnt_ );
     for ( int jj = 0; jj < sendcnt_; ++jj ) {
         sendmap_[jj] = recv_requests[jj];
@@ -156,7 +156,16 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
     backdoor.parsize = parsize_;
 }
 
-/////////////////////
+void HaloExchange::wait_for_send( std::vector<int>& send_counts_init,
+                                  std::vector<eckit::mpi::Request>& send_req ) const {
+    ATLAS_TRACE_MPI( WAIT, "mpi-wait send" ) {
+        for ( int jproc = 0; jproc < nproc; ++jproc ) {
+            if ( send_counts_init[jproc] > 0 ) {
+                mpi::comm().wait( send_req[jproc] );
+            }
+        }
+    }
+}
 
 namespace {
 
@@ -198,6 +207,46 @@ void execute_halo_exchange( HaloExchange* This, Value field[], int var_strides[]
             throw_NotImplemented( "Rank not supported in halo exchange", Here() );
     }
 }
+
+template <typename Value>
+void execute_adjoint_halo_exchange( HaloExchange* This, Value field[], int var_strides[], int var_extents[],
+                                    int var_rank ) {
+    // WARNING: Only works if there is only one parallel dimension AND being
+    // slowest moving
+
+    array::ArrayShape shape{This->backdoor.parsize};
+    for ( int j = 0; j < var_rank; ++j ) {
+        shape.push_back( var_extents[j] );
+    }
+
+    array::ArrayStrides strides{var_extents[0] * var_strides[0]};
+    for ( int j = 0; j < var_rank; ++j ) {
+        strides.push_back( var_strides[j] );
+    }
+
+    std::unique_ptr<array::Array> arr( array::Array::wrap( field, array::ArraySpec{shape, strides} ) );
+
+    switch ( arr->rank() ) {
+        case 1: {
+            This->execute_adjoint<Value, 1>( *arr );
+            break;
+        }
+        case 2: {
+            This->execute_adjoint<Value, 2>( *arr );
+            break;
+        }
+        case 3: {
+            This->execute_adjoint<Value, 3>( *arr );
+            break;
+        }
+        case 4: {
+            This->execute_adjoint<Value, 4>( *arr );
+            break;
+        }
+        default:
+            throw_NotImplemented( "Rank not supported in halo exchange", Here() );
+    }
+}
 }  // namespace
 
 extern "C" {
@@ -212,6 +261,27 @@ void atlas__HaloExchange__delete( HaloExchange* This ) {
 
 void atlas__HaloExchange__setup( HaloExchange* This, int part[], idx_t remote_idx[], int base, int size ) {
     This->setup( part, remote_idx, base, size );
+}
+
+
+void atlas__HaloExchange__execute_adjoint_strided_int( HaloExchange* This, int field[], int var_strides[],
+                                                       int var_extents[], int var_rank ) {
+    execute_adjoint_halo_exchange( This, field, var_strides, var_extents, var_rank );
+}
+
+void atlas__HaloExchange__execute_adjoint_strided_long( HaloExchange* This, long field[], int var_strides[],
+                                                        int var_extents[], int var_rank ) {
+    execute_adjoint_halo_exchange( This, field, var_strides, var_extents, var_rank );
+}
+
+void atlas__HaloExchange__execute_adjoint_strided_float( HaloExchange* This, float field[], int var_strides[],
+                                                         int var_extents[], int var_rank ) {
+    execute_adjoint_halo_exchange( This, field, var_strides, var_extents, var_rank );
+}
+
+void atlas__HaloExchange__execute_adjoint_strided_double( HaloExchange* This, double field[], int var_strides[],
+                                                          int var_extents[], int var_rank ) {
+    execute_adjoint_halo_exchange( This, field, var_strides, var_extents, var_rank );
 }
 
 void atlas__HaloExchange__execute_strided_int( HaloExchange* This, int field[], int var_strides[], int var_extents[],

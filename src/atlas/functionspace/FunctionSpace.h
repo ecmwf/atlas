@@ -22,12 +22,14 @@ class Configuration;
 namespace atlas {
 class Field;
 class FieldSet;
+class Projection;
 namespace functionspace {
 class FunctionSpaceImpl;
 }
 namespace util {
 class PartitionPolygon;
-}
+class PartitionPolygons;
+}  // namespace util
 }  // namespace atlas
 
 namespace atlas {
@@ -58,11 +60,22 @@ public:
     void haloExchange( const FieldSet&, bool on_device = false ) const;
     void haloExchange( const Field&, bool on_device = false ) const;
 
+    void adjointHaloExchange( const FieldSet&, bool on_device = false ) const;
+    void adjointHaloExchange( const Field&, bool on_device = false ) const;
+
     const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
+
+    const util::PartitionPolygons& polygons() const;
+
+    const Projection& projection() const;
 
     idx_t nb_partitions() const;
 
     idx_t size() const;
+
+    Field lonlat() const;
+
+    Field ghost() const;
 };
 
 //------------------------------------------------------------------------------------------------------

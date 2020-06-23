@@ -14,11 +14,13 @@
 #include <memory>
 #include <string>
 
+#include "eckit/filesystem/PathName.h"
 #include "eckit/system/Library.h"
 
 namespace eckit {
 class Parametrisation;
-}
+class PathName;
+}  // namespace eckit
 
 namespace atlas {
 
@@ -35,6 +37,7 @@ void finalise();
 void finalize();
 
 //----------------------------------------------------------------------------------------------------------------------
+class Plugin;
 
 class Library : public eckit::system::Library {
 public:
@@ -60,6 +63,7 @@ public:
     Information information() const { return Information(); }
 
     virtual eckit::Channel& infoChannel() const;
+    virtual eckit::Channel& warningChannel() const;
     virtual eckit::Channel& traceChannel() const;
     virtual eckit::Channel& debugChannel() const override;
     bool trace() const { return trace_; }
@@ -74,12 +78,21 @@ protected:
 
     bool debug_{false};
     bool info_{true};
+    bool warning_{true};
     bool trace_{false};
     bool trace_barriers_{false};
     bool trace_report_{false};
     mutable std::unique_ptr<eckit::Channel> info_channel_;
+    mutable std::unique_ptr<eckit::Channel> warning_channel_;
     mutable std::unique_ptr<eckit::Channel> trace_channel_;
     mutable std::unique_ptr<eckit::Channel> debug_channel_;
+
+private:
+    const std::vector<Plugin*>& plugins() { return plugins_; }
+
+    friend class Plugin;
+    void registerPlugin( Plugin& );
+    std::vector<Plugin*> plugins_;
 };
 
 using Atlas = Library;

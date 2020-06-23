@@ -10,10 +10,14 @@
 
 #include "Regional.h"
 
+#include "eckit/types/FloatCompare.h"
+
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/NormaliseLongitude.h"
 
 using atlas::grid::LinearSpacing;
 using XSpace = atlas::StructuredGrid::XSpace;
@@ -29,6 +33,15 @@ static Domain domain( const Grid::Config& grid ) {
         return Domain( config );
     }
     return Domain();
+}
+
+static Projection projection( const Grid::Config& grid ) {
+    // Get the projection from the Grid::Config.
+    Grid::Config proj_config;
+    if ( grid.get( "projection", proj_config ) ) {
+        return Projection{proj_config};
+    }
+    return Projection();
 }
 
 struct ConfigParser {
@@ -86,7 +99,7 @@ struct Parse_llc_step : ConfigParser {
 };
 
 struct Parse_bounds_xy : ConfigParser {
-    Parse_bounds_xy( const Projection& p, const Grid::Config& config ) {
+    Parse_bounds_xy( const Projection& /*p*/, const Grid::Config& config ) {
         valid = config.get( "nx", x.N ) && config.get( "ny", y.N ) && config.get( "xmin", x.min ) &&
                 config.get( "xmax", x.max ) && config.get( "ymin", y.min ) && config.get( "ymax", y.max );
 
@@ -280,38 +293,32 @@ static class regional : public GridBuilder {
 public:
     regional() : GridBuilder( "regional" ) {}
 
-    void print( std::ostream& os ) const override {
+    void print( std::ostream& ) const override {
         // os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian
         // grid";
     }
 
-    const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
+    const Grid::Implementation* create( const std::string& /*name*/, const Grid::Config& /*config*/ ) const override {
         throw_NotImplemented( "There are no named regional grids implemented.", Here() );
         return nullptr;
     }
 
     const Grid::Implementation* create( const Grid::Config& config ) const override {
         // read projection subconfiguration
-        Projection projection;
-        {
-            util::Config config_proj;
-            if ( config.get( "projection", config_proj ) ) {
-                projection = Projection( config_proj );
-            }
-        }
+        Projection proj = projection( config );
 
         // Read grid configuration
         ConfigParser::Parsed x, y;
-        if ( not ConfigParser::parse( projection, config, x, y ) ) {
+        if ( not ConfigParser::parse( proj, config, x, y ) ) {
             throw_Exception( "Could not parse configuration for RegularRegional grid", Here() );
         }
 
-        YSpace yspace = config.getInt( "y_numbering", -1 ) < 0 ? LinearSpacing( y.max, y.min, y.N, y.endpoint )
+        YSpace yspace = config.getInt( "y_numbering", +1 ) < 0 ? LinearSpacing( y.max, y.min, y.N, y.endpoint )
                                                                : LinearSpacing( y.min, y.max, y.N, y.endpoint );
 
         bool with_endpoint = true;
         XSpace xspace( {x.min, x.max}, std::vector<long>( y.N, x.N ), with_endpoint );
-        return new StructuredGrid::grid_t( xspace, yspace, projection, domain( config ) );
+        return new StructuredGrid::grid_t( xspace, yspace, proj, domain( config ) );
     }
 
     void force_link() {}
@@ -322,12 +329,12 @@ static class zonal_band : public GridBuilder {
 public:
     zonal_band() : GridBuilder( "zonal_band" ) {}
 
-    void print( std::ostream& os ) const override {
+    void print( std::ostream& ) const override {
         // os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian
         // grid";
     }
 
-    const Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
+    const Grid::Implementation* create( const std::string& /*name*/, const Grid::Config& ) const override {
         throw_NotImplemented( "There are no named zonal_band grids implemented.", Here() );
         return nullptr;
     }

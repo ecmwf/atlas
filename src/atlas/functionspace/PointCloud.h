@@ -14,6 +14,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
+#include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -38,9 +39,9 @@ public:
     virtual operator bool() const override { return true; }
     virtual size_t footprint() const override { return sizeof( *this ); }
     virtual std::string distribution() const override;
-    const Field& lonlat() const { return lonlat_; }
+    Field lonlat() const override { return lonlat_; }
     const Field& vertical() const { return vertical_; }
-    const Field& ghost() const;
+    Field ghost() const override;
     virtual idx_t size() const override { return lonlat_.shape( 0 ); }
 
     using FunctionSpaceImpl::createField;
@@ -145,6 +146,7 @@ private:
     Field lonlat_;
     Field vertical_;
     mutable Field ghost_;
+    idx_t levels_{0};
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -165,9 +167,7 @@ public:
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
 
-    const Field& lonlat() const { return functionspace_->lonlat(); }
     const Field& vertical() const { return functionspace_->vertical(); }
-    const Field& ghost() const { return functionspace_->ghost(); }
 
     detail::PointCloud::Iterate iterate() const { return functionspace_->iterate(); }
 

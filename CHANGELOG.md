@@ -7,11 +7,45 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
-## [0.20.2] - 2019-04-27
+## [0.21.0] - 2020-06-23
+### Fixed
+- Fixed Rotation order of applying the rotation angle
+- Fix nabla computation of surface vector fields
+- Fix registration and destruction issues of halo-exchange caches
+- Workaround Clang compiler problem with OpenMP tasking, using introspection
+- Fix bug in conversion of negative degrees to microdegrees
+- Fix problem in distribution of work amongst OpenMP threads in StructuredColumns::setup
+- Fix problem with StructuredColumns creation for grids defined with domains with negative West
+- Fix computation of Grid::lonlatBoundingBox for arbitrary projections crossing the dateline.
+
+### Changed
+- Snap LinearSpacing values to start and endpoint to allow exact comparisons
+- Improved performance and memory requirement of cropping of large StructuredGrids
+- Regional grids by default now have a positive y-numbering (previously negative).
+
+### Added
+- PolygonLocator based on functionspace partition polygons.
+- KDTree class which abstracts eckit concrete implementations, including Fortran interface
+- Geometry class with factory mechanism to configure which spheroid to use, including Fortran interface
+- StrcutredGrid function for i,j to index and inverse
+- Fortran interface to create StructuredColumns with custom distribution
+- Fortran interface to grid spec
+- Fortran interface to Projection
+- Adjoint of HaloExchange
+- Plugin mechanism to load plugins at runtime.
+- Fortran constructors for atlas_RegionalGrid
+- Fortran constructors for projected reduced Gaussian grids
+- Add copy constructor and assignment operator for atlas::vector
+- Mercator projection support for scaling, and operation on ellipsoid.
+- Grid Distribution can now also be created as a function, e.g. for Serial or Bands
+
+
+
+## [0.20.2] - 2020-04-27
 ### Fixed
 - Avoid 100ds of compilation warnings introduced in version 0.20.0
 
-## [0.20.1] - 2019-04-08
+## [0.20.1] - 2020-04-08
 ### Fixed
 - Make feature BOUNDSCHECKING work again. It was not turned on for DEBUG builds
 - Workaround clang OpenMP bug
@@ -20,7 +54,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Added
 - atlas-grids tool can now be used to compute approximate North-South grid resolution
 
-## [0.20.0] - 2019-03-06
+## [0.20.0] - 2020-03-06
 ### Fixed
 - Pole edges hould not be created for global regular grids with points at poles
 - Update compatibility with more recent GridTools 
@@ -189,6 +223,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.21.0]: https://github.com/ecmwf/atlas/compare/0.20.2...0.21.0
 [0.20.2]: https://github.com/ecmwf/atlas/compare/0.20.1...0.20.2
 [0.20.1]: https://github.com/ecmwf/atlas/compare/0.20.0...0.20.1
 [0.20.0]: https://github.com/ecmwf/atlas/compare/0.20.0...0.19.2

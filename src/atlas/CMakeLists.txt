@@ -29,6 +29,8 @@ library.h
 library/config.h
 library/Library.h
 library/Library.cc
+library/Plugin.h
+library/Plugin.cc
 runtime/AtlasTool.h
 runtime/AtlasTool.cc
 runtime/Log.h
@@ -142,12 +144,27 @@ grid/detail/grid/Regional.cc
 
 grid/detail/distribution/DistributionImpl.h
 grid/detail/distribution/DistributionImpl.cc
+grid/detail/distribution/DistributionArray.cc
+grid/detail/distribution/DistributionArray.h
+grid/detail/distribution/DistributionFunction.cc
+grid/detail/distribution/DistributionFunction.h
+
+grid/detail/distribution/BandsDistribution.cc
+grid/detail/distribution/BandsDistribution.h
+grid/detail/distribution/SerialDistribution.cc
+grid/detail/distribution/SerialDistribution.h
+
 
 grid/detail/vertical/VerticalInterface.h
 grid/detail/vertical/VerticalInterface.cc
 
+
+grid/detail/partitioner/BandsPartitioner.cc
+grid/detail/partitioner/BandsPartitioner.h
 grid/detail/partitioner/CheckerboardPartitioner.cc
 grid/detail/partitioner/CheckerboardPartitioner.h
+grid/detail/partitioner/EqualBandsPartitioner.cc
+grid/detail/partitioner/EqualBandsPartitioner.h
 grid/detail/partitioner/EqualRegionsPartitioner.cc
 grid/detail/partitioner/EqualRegionsPartitioner.h
 grid/detail/partitioner/MatchingMeshPartitioner.h
@@ -164,6 +181,11 @@ grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.cc
 grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h
 grid/detail/partitioner/Partitioner.cc
 grid/detail/partitioner/Partitioner.h
+grid/detail/partitioner/RegularBandsPartitioner.cc
+grid/detail/partitioner/RegularBandsPartitioner.h
+grid/detail/partitioner/SerialPartitioner.cc
+grid/detail/partitioner/SerialPartitioner.h
+
 
 grid/detail/spacing/Spacing.cc
 grid/detail/spacing/Spacing.h
@@ -395,6 +417,8 @@ functionspace/detail/StructuredColumnsInterface.h
 functionspace/detail/StructuredColumnsInterface.cc
 functionspace/detail/StructuredColumns_setup.cc
 functionspace/detail/StructuredColumns_create_remote_index.cc
+functionspace/detail/PointCloudInterface.h
+functionspace/detail/PointCloudInterface.cc
 )
 
 list( APPEND atlas_numerics_srcs
@@ -572,6 +596,7 @@ parallel/GatherScatter.cc
 parallel/GatherScatter.h
 parallel/HaloExchange.cc
 parallel/HaloExchange.h
+parallel/HaloAdjointExchangeImpl.h
 parallel/HaloExchangeImpl.h
 parallel/mpi/Buffer.h
 runtime/Exception.cc
@@ -582,8 +607,12 @@ util/Constants.h
 util/Earth.h
 util/GaussianLatitudes.cc
 util/GaussianLatitudes.h
-util/LonLatPolygon.cc
-util/LonLatPolygon.h
+util/Geometry.cc
+util/Geometry.h
+util/KDTree.cc
+util/KDTree.h
+util/PolygonXY.cc
+util/PolygonXY.h
 util/Metadata.cc
 util/Metadata.h
 util/Point.cc
@@ -596,9 +625,11 @@ util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
 util/vector.h
+util/VectorOfAbstract.h
 util/detail/BlackMagic.h
 util/detail/Cache.h
 util/detail/Debug.h
+util/detail/KDTree.h
 )
 
 list( APPEND atlas_internals_srcs

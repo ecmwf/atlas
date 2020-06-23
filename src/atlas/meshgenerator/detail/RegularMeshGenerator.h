@@ -54,7 +54,7 @@ private:
 
     void configure_defaults();
 
-    void generate_mesh( const RegularGrid&, const atlas::vector<int>& parts, Mesh& m ) const;
+    void generate_mesh( const RegularGrid&, const grid::Distribution& distribution, Mesh& m ) const;
 
 private:
     util::Metadata options;

@@ -45,6 +45,18 @@ Nabla::Nabla( const numerics::Method& method, const eckit::Parametrisation& p ) 
     Log::debug() << "Nabla constructed for method " << fvm_->name() << " with "
                  << fvm_->node_columns().nb_nodes_global() << " nodes total" << std::endl;
     fvm_->attach();
+
+    p.get( "metric_approach", metric_approach_ );
+    // Experimental, only affects divergence and curl !!!
+    // metric_approach = 0  ORIGINAL, DEFAULT
+    //   metric_term cos(y) is multiplied with each wind component
+    //   --> cell-interface:  avg = 0.5*( cos(y1)*u1 + cos(y2)*u2 )
+    // metric_approach = 1:
+    //   metric_term cos(0.5*(y1+y2)) is used at cell interface
+    //   --> cell-interface: avg = 0.5*(u1+u2)*cos(0.5*(y1+y2))
+    // Results seem to indicate that approach=0 is overall better, although approach=1
+    // seems to handle pole slightly better (error factor 2 to 4 times lower)
+
     setup();
 }
 
@@ -92,10 +104,6 @@ void Nabla::gradient_of_scalar( const Field& scalar_field, Field& grad_field ) c
 
     const idx_t nnodes = fvm_->node_columns().nb_nodes();
     const idx_t nedges = fvm_->edge_columns().nb_edges();
-    const idx_t nlev   = scalar_field.levels() ? scalar_field.levels() : 1;
-    if ( ( grad_field.levels() ? grad_field.levels() : 1 ) != nlev ) {
-        throw_AssertionFailed( "gradient field should have same number of levels", Here() );
-    }
 
     const auto scalar = scalar_field.levels()
                             ? array::make_view<double, 2>( scalar_field ).slice( Range::all(), Range::all() )
@@ -103,6 +111,11 @@ void Nabla::gradient_of_scalar( const Field& scalar_field, Field& grad_field ) c
     auto grad = grad_field.levels()
                     ? array::make_view<double, 3>( grad_field ).slice( Range::all(), Range::all(), Range::all() )
                     : array::make_view<double, 2>( grad_field ).slice( Range::all(), Range::dummy(), Range::all() );
+
+    const idx_t nlev = scalar.shape( 1 );
+    if ( grad.shape( 1 ) != nlev ) {
+        throw_AssertionFailed( "gradient field should have same number of levels", Here() );
+    }
 
     const auto lonlat_deg     = array::make_view<double, 2>( nodes.lonlat() );
     const auto dual_volumes   = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
@@ -144,6 +157,7 @@ void Nabla::gradient_of_scalar( const Field& scalar_field, Field& grad_field ) c
                     }
                 }
             }
+
             const double y        = lonlat_deg( jnode, LAT ) * deg2rad;
             const double metric_y = 1. / ( dual_volumes( jnode ) * scale );
             const double metric_x = metric_y / std::cos( y );
@@ -167,10 +181,6 @@ void Nabla::gradient_of_vector( const Field& vector_field, Field& grad_field ) c
 
     const idx_t nnodes = fvm_->node_columns().nb_nodes();
     const idx_t nedges = fvm_->edge_columns().nb_edges();
-    const idx_t nlev   = vector_field.levels();
-    if ( vector_field.levels() != nlev ) {
-        throw_AssertionFailed( "gradient field should have same number of levels", Here() );
-    }
 
     const auto vector =
         vector_field.levels()
@@ -179,6 +189,11 @@ void Nabla::gradient_of_vector( const Field& vector_field, Field& grad_field ) c
     auto grad = grad_field.levels()
                     ? array::make_view<double, 3>( grad_field ).slice( Range::all(), Range::all(), Range::all() )
                     : array::make_view<double, 2>( grad_field ).slice( Range::all(), Range::dummy(), Range::all() );
+
+    const idx_t nlev = vector.shape( 1 );
+    if ( grad.shape( 1 ) != nlev ) {
+        throw_AssertionFailed( "gradient field should have same number of levels", Here() );
+    }
 
     const auto lonlat_deg     = array::make_view<double, 2>( nodes.lonlat() );
     const auto dual_volumes   = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
@@ -274,10 +289,6 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
 
     const idx_t nnodes = fvm_->node_columns().nb_nodes();
     const idx_t nedges = fvm_->edge_columns().nb_edges();
-    const idx_t nlev   = vector_field.levels();
-    if ( div_field.levels() != nlev ) {
-        throw_AssertionFailed( "divergence field should have same number of levels", Here() );
-    }
 
     const auto vector =
         vector_field.levels()
@@ -285,6 +296,11 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
             : array::make_view<double, 2>( vector_field ).slice( Range::all(), Range::dummy(), Range::all() );
     auto div = div_field.levels() ? array::make_view<double, 2>( div_field ).slice( Range::all(), Range::all() )
                                   : array::make_view<double, 1>( div_field ).slice( Range::all(), Range::dummy() );
+
+    const idx_t nlev = vector.shape( 1 );
+    if ( div.shape( 1 ) != nlev ) {
+        throw_AssertionFailed( "div_field should have same number of levels", Here() );
+    }
 
     const auto lonlat_deg     = array::make_view<double, 2>( nodes.lonlat() );
     const auto dual_volumes   = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
@@ -301,30 +317,43 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
 
     const double scale = deg2rad * deg2rad * radius;
 
+    enum
+    {
+        LONdLON = 0,
+        LATdLAT = 1
+    };
     atlas_omp_parallel {
         atlas_omp_for( idx_t jedge = 0; jedge < nedges; ++jedge ) {
-            idx_t ip1    = edge2node( jedge, 0 );
-            idx_t ip2    = edge2node( jedge, 1 );
-            double y1    = lonlat_deg( ip1, LAT ) * deg2rad;
-            double y2    = lonlat_deg( ip2, LAT ) * deg2rad;
-            double cosy1 = std::cos( y1 );
-            double cosy2 = std::cos( y2 );
+            double pbc = 1 - is_pole_edge( jedge );
 
-            double pbc = 1. - is_pole_edge( jedge );
+            idx_t ip1 = edge2node( jedge, 0 );
+            idx_t ip2 = edge2node( jedge, 1 );
+            double y1 = lonlat_deg( ip1, LAT ) * deg2rad;
+            double y2 = lonlat_deg( ip2, LAT ) * deg2rad;
+
+            double cosy1, cosy2;
+            if ( metric_approach_ == 0 ) {
+                cosy1 = std::cos( y1 ) * pbc;
+                cosy2 = std::cos( y2 ) * pbc;
+            }
+            else {
+                cosy1 = cosy2 = std::cos( 0.5 * ( y1 + y2 ) ) * pbc;
+            }
+
+            double S[2] = {dual_normals( jedge, LON ) * deg2rad, dual_normals( jedge, LAT ) * deg2rad};
+            double avg[2];
 
             for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
-                double avg[2] = {
-                    ( vector( ip1, jlev, LON ) + vector( ip2, jlev, LON ) ) * 0.5,
-                    ( cosy1 * vector( ip1, jlev, LAT ) + cosy2 * vector( ip2, jlev, LAT ) ) * 0.5 *
-                        pbc  // (force cos(y)=0 at pole)
-                };
-                avgS( jedge, jlev, LON ) = dual_normals( jedge, LON ) * deg2rad * avg[LON];
-                // above = 0 at pole by construction of S
-                avgS( jedge, jlev, LAT ) = dual_normals( jedge, LAT ) * deg2rad * avg[LAT];
-                // above = 0 at pole by construction of pbc
-                // We don't need the cross terms for divergence,
-                //    i.e.      dual_normals(jedge,LON)*deg2rad*avg[LAT]
-                //        and   dual_normals(jedge,LAT)*deg2rad*avg[LON]
+                double u1 = vector( ip1, jlev, LON );
+                double u2 = vector( ip2, jlev, LON );
+                double v1 = vector( ip1, jlev, LAT ) * cosy1;
+                double v2 = vector( ip2, jlev, LAT ) * cosy2;
+
+                avg[LON] = ( u1 + u2 ) * 0.5;
+                avg[LAT] = ( v1 + v2 ) * 0.5;
+
+                avgS( jedge, jlev, LONdLON ) = avg[LON] * S[LON];
+                avgS( jedge, jlev, LATdLAT ) = avg[LAT] * S[LAT];
             }
         }
 
@@ -337,7 +366,7 @@ void Nabla::divergence( const Field& vector_field, Field& div_field ) const {
                 if ( iedge < nedges ) {
                     double add = node2edge_sign( jnode, jedge );
                     for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
-                        div( jnode, jlev ) += add * ( avgS( iedge, jlev, LON ) + avgS( iedge, jlev, LAT ) );
+                        div( jnode, jlev ) += add * ( avgS( iedge, jlev, LONdLON ) + avgS( iedge, jlev, LATdLAT ) );
                     }
                 }
             }
@@ -359,10 +388,6 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
 
     const idx_t nnodes = fvm_->node_columns().nb_nodes();
     const idx_t nedges = fvm_->edge_columns().nb_edges();
-    const idx_t nlev   = vector_field.levels();
-    if ( curl_field.levels() != nlev ) {
-        throw_AssertionFailed( "curl field should have same number of levels", Here() );
-    }
 
     const auto vector =
         vector_field.levels()
@@ -371,6 +396,11 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
     auto curl = curl_field.levels() ? array::make_view<double, 2>( curl_field ).slice( Range::all(), Range::all() )
                                     : array::make_view<double, 1>( curl_field ).slice( Range::all(), Range::dummy() );
 
+    const idx_t nlev = vector.shape( 1 );
+    if ( curl.shape( 1 ) != nlev ) {
+        throw_AssertionFailed( "curl field should have same number of levels", Here() );
+    }
+
     const auto lonlat_deg     = array::make_view<double, 2>( nodes.lonlat() );
     const auto dual_volumes   = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
     const auto dual_normals   = array::make_view<double, 2>( edges.field( "dual_normals" ) );
@@ -378,36 +408,54 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
     const auto edge_flags     = array::make_view<int, 1>( edges.flags() );
     auto is_pole_edge         = [&]( idx_t e ) { return Topology::check( edge_flags( e ), Topology::POLE ); };
 
+
     const mesh::Connectivity& node2edge           = nodes.edge_connectivity();
     const mesh::MultiBlockConnectivity& edge2node = edges.node_connectivity();
 
     array::ArrayT<double> avgS_arr( nedges, nlev, 2ul );
     array::ArrayView<double, 3> avgS = array::make_view<double, 3>( avgS_arr );
 
-    const double scale = deg2rad * deg2rad * radius * radius;
+    const double scale = deg2rad * deg2rad * radius;
+
+    enum
+    {
+        LONdLAT = 0,
+        LATdLON = 1
+    };
+
 
     atlas_omp_parallel {
         atlas_omp_for( idx_t jedge = 0; jedge < nedges; ++jedge ) {
-            idx_t ip1     = edge2node( jedge, 0 );
-            idx_t ip2     = edge2node( jedge, 1 );
-            double y1     = lonlat_deg( ip1, LAT ) * deg2rad;
-            double y2     = lonlat_deg( ip2, LAT ) * deg2rad;
-            double rcosy1 = radius * std::cos( y1 );
-            double rcosy2 = radius * std::cos( y2 );
+            idx_t ip1 = edge2node( jedge, 0 );
+            idx_t ip2 = edge2node( jedge, 1 );
+            double y1 = lonlat_deg( ip1, LAT ) * deg2rad;
+            double y2 = lonlat_deg( ip2, LAT ) * deg2rad;
 
             double pbc = 1 - is_pole_edge( jedge );
+            double cosy1;
+            double cosy2;
+            if ( metric_approach_ == 0 ) {
+                cosy1 = std::cos( y1 ) * pbc;
+                cosy2 = std::cos( y2 ) * pbc;
+            }
+            else {
+                cosy1 = cosy2 = std::cos( 0.5 * ( y1 + y2 ) ) * pbc;
+            }
+
+            double S[2] = {dual_normals( jedge, LON ) * deg2rad, dual_normals( jedge, LAT ) * deg2rad};
+            double avg[2];
 
             for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
-                double avg[2] = {( rcosy1 * vector( ip1, jlev, LON ) + rcosy2 * vector( ip2, jlev, LON ) ) * 0.5 *
-                                     pbc,  // (force R*cos(y)=0 at pole)
-                                 ( radius * vector( ip1, jlev, LAT ) + radius * vector( ip2, jlev, LAT ) ) * 0.5};
-                avgS( jedge, jlev, LON ) = dual_normals( jedge, LAT ) * deg2rad * avg[LON];
-                // above = 0 at pole by construction of pbc
-                avgS( jedge, jlev, LAT ) = dual_normals( jedge, LON ) * deg2rad * avg[LAT];
-                // above = 0 at pole by construction of S
-                // We don't need the non-cross terms for curl, i.e.
-                //          dual_normals(jedge,LON)*deg2rad*avg[LON]
-                //   and    dual_normals(jedge,LAT)*deg2rad*avg[LAT]
+                double u1 = vector( ip1, jlev, LON ) * cosy1;
+                double u2 = vector( ip2, jlev, LON ) * cosy2;
+                double v1 = vector( ip1, jlev, LAT );
+                double v2 = vector( ip2, jlev, LAT );
+
+                avg[LON] = ( u1 + u2 ) * 0.5;
+                avg[LAT] = ( v1 + v2 ) * 0.5;
+
+                avgS( jedge, jlev, LONdLAT ) = avg[LON] * S[LAT];
+                avgS( jedge, jlev, LATdLON ) = avg[LAT] * S[LON];
             }
         }
 
@@ -420,7 +468,7 @@ void Nabla::curl( const Field& vector_field, Field& curl_field ) const {
                 if ( iedge < nedges ) {
                     double add = node2edge_sign( jnode, jedge );
                     for ( idx_t jlev = 0; jlev < nlev; ++jlev ) {
-                        curl( jnode, jlev ) += add * ( avgS( iedge, jlev, LAT ) - avgS( iedge, jlev, LON ) );
+                        curl( jnode, jlev ) += add * ( avgS( iedge, jlev, LATdLON ) - avgS( iedge, jlev, LONdLAT ) );
                     }
                 }
             }

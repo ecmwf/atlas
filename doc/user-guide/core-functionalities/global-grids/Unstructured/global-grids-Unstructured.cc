@@ -12,7 +12,7 @@ using atlas::output::Gmsh;
 using atlas::util::Config;
 
 int main( int argc, char* argv[] ) {
-    atlas::Library::initialise( argc, argv );
+    atlas::initialise( argc, argv );
 
     Grid grid = UnstructuredGrid( {{180, 0},
                                    {90, 0},

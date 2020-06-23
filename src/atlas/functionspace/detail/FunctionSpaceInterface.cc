@@ -90,6 +90,25 @@ void atlas__FunctionSpace__halo_exchange_fieldset( const FunctionSpaceImpl* This
     FieldSet f( fieldset );
     This->haloExchange( f );
 }
+
+//------------------------------------------------------------------------------
+
+void atlas__FunctionSpace_adjoint_halo_exchange_field( const FunctionSpaceImpl* This, field::FieldImpl* field ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_FunctionSpace" );
+    ATLAS_ASSERT( field != nullptr, "Cannot access uninitialised atlas_Field" );
+    Field f( field );
+    This->adjointHaloExchange( f );
+}
+
+//------------------------------------------------------------------------------
+
+void atlas__FunctionSpace__adjoint_halo_exchange_fieldset( const FunctionSpaceImpl* This,
+                                                           field::FieldSetImpl* fieldset ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_FunctionSpace" );
+    ATLAS_ASSERT( fieldset != nullptr, "Cannot access uninitialised atlas_FieldSet" );
+    FieldSet f( fieldset );
+    This->adjointHaloExchange( f );
+}
 }
 
 // ------------------------------------------------------------------

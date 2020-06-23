@@ -81,3 +81,52 @@ ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi16
   CONDITION eckit_HAVE_MPI
 )
 
+set( _WITH_MPI )
+if( eckit_HAVE_MPI )
+    set( _WITH_MPI MPI 4 )
+endif()
+
+ecbuild_add_executable( TARGET atlas_test_polygons
+  SOURCES  test_polygons.cc
+  LIBS     atlas
+  NOINSTALL
+)
+
+ecbuild_add_test( TARGET atlas_test_polygons_structuredcolumns
+  COMMAND atlas_test_polygons ARGS --functionspace StructuredColumns
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  ${_WITH_MPI}
+)
+
+ecbuild_add_test( TARGET atlas_test_polygons_nodecolumns
+  COMMAND atlas_test_polygons ARGS --functionspace NodeColumns
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  ${_WITH_MPI}
+)
+
+ecbuild_add_executable( TARGET atlas_test_polygons_projection
+  SOURCES  test_polygons_projection.cc
+  LIBS     atlas
+  NOINSTALL
+)
+
+ecbuild_add_test( TARGET atlas_test_polygons_projections_structuredcolumns
+  COMMAND atlas_test_polygons_projection ARGS --functionspace StructuredColumns
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  ${_WITH_MPI}
+)
+
+ecbuild_add_test( TARGET atlas_test_polygons_projections_nodecolumns
+  COMMAND atlas_test_polygons_projection ARGS --functionspace NodeColumns
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  ${_WITH_MPI}
+)
+
+# Tests ATLAS-286
+ecbuild_add_test( TARGET  atlas_test_structuredcolumns_haloexchange
+  ${_WITH_MPI}
+  SOURCES test_structuredcolumns_haloexchange.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+

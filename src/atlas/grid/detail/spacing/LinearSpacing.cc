@@ -13,6 +13,7 @@
 #include <cmath>
 #include <ostream>
 
+
 #include "eckit/config/Parametrisation.h"
 
 #include "atlas/grid/detail/spacing/SpacingFactory.h"
@@ -26,21 +27,6 @@ LinearSpacing::Params::Params( const eckit::Parametrisation& params ) {
     endpoint = true;
     params.get( "endpoint", endpoint );
     std::vector<double> interval;
-    // if( params.get("step",step) ) {
-    //
-    //   // Several combinations possible:
-    //   if( params.get("start",start) && params.get("end",end) ) {
-    //     N = long( (end-start)/step ) + (endpoint ? 1 : 0 );
-    //   } else if( params.get("centre",centre) && params.get("N",N) ) {
-    //     start = endpoint ? centre - step * 0.5*double(N-1)
-    //                      : centre - step * 0.5*double(N);
-    //     end   = endpoint ? start + step * double(N-1) :
-    //                        start + step * double(N);
-    //   } else {
-    //     throw_Exception("Invalid combination of parameters",Here());
-    //   }
-    // }
-    // else
     if ( params.get( "N", N ) ) {
         // Only one remaining combinations possible:
         if ( params.get( "start", start ) && params.get( "end", end ) ) {
@@ -70,19 +56,21 @@ LinearSpacing::Params::Params( const eckit::Parametrisation& params ) {
     }
 }
 
+LinearSpacing::Params::Params( double _start, double _end, long _N, bool _endpoint ) :
+    N( _N ), start( _start ), end( _end ), endpoint( _endpoint ) {
+    length = end - start;
+    if ( endpoint && N > 1 ) {
+        step = length / double( N - 1 );
+    }
+    else {
+        step = length / double( N );
+    }
+}
+
 LinearSpacing::LinearSpacing( const eckit::Parametrisation& params ) {
     Params p( params );
     setup( p.start, p.end, p.N, p.endpoint );
 }
-
-// LinearSpacing::LinearSpacing( double centre, double step, long N, bool
-// endpoint ) {
-//   double start = endpoint ? centre - step * double(N-1)/2. :
-//                             centre - step * double(N)/2.;
-//   double end   = endpoint ? start + step * double(N-1) :
-//                             start + step * double(N);
-//   setup(start,end,N,endpoint);
-// }
 
 LinearSpacing::LinearSpacing( double start, double end, long N, bool endpoint ) {
     setup( start, end, N, endpoint );
@@ -114,6 +102,14 @@ void LinearSpacing::setup( double start, double end, long N, bool endpoint ) {
     end_      = end;
     N_        = N;
     endpoint_ = endpoint;
+
+    // For exact comparisons:
+    if ( N > 1 ) {
+        x_.front() = start;
+    }
+    if ( N > 2 && endpoint ) {
+        x_.back() = end;
+    }
 }
 
 double LinearSpacing::step() const {

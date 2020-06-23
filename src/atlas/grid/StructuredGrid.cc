@@ -37,25 +37,28 @@ StructuredGrid::StructuredGrid( const Grid& grid ) : Grid( grid ), grid_( struct
 StructuredGrid::StructuredGrid( const Grid::Implementation* grid ) : Grid( grid ), grid_( structured_grid( get() ) ) {}
 
 StructuredGrid::StructuredGrid( const std::string& grid, const Domain& domain ) :
-    Grid( grid, domain ),
-    grid_( structured_grid( get() ) ) {}
+    Grid( grid, domain ), grid_( structured_grid( get() ) ) {}
 
 StructuredGrid::StructuredGrid( const Config& grid ) : Grid( grid ), grid_( structured_grid( get() ) ) {}
 
 StructuredGrid::StructuredGrid( const XSpace& xspace, const YSpace& yspace, const Projection& projection,
                                 const Domain& domain ) :
-    Grid( new StructuredGrid::grid_t( xspace, yspace, projection, domain ) ),
-    grid_( structured_grid( get() ) ) {}
+    Grid( new StructuredGrid::grid_t( xspace, yspace, projection, domain ) ), grid_( structured_grid( get() ) ) {}
 
 StructuredGrid::StructuredGrid( const Grid& grid, const Grid::Domain& domain ) :
-    Grid( grid, domain ),
-    grid_( structured_grid( get() ) ) {}
+    Grid( grid, domain ), grid_( structured_grid( get() ) ) {}
 
 ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx, const Domain& domain ) :
     ReducedGaussianGrid::grid_t( grid::detail::grid::reduced_gaussian( nx, domain ) ) {}
 
 ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<int>& nx, const Domain& domain ) :
     ReducedGaussianGrid::grid_t( grid::detail::grid::reduced_gaussian( nx, domain ) ) {}
+
+ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<long>& nx, const Projection& projection ) :
+    ReducedGaussianGrid::grid_t( grid::detail::grid::reduced_gaussian( nx, projection ) ) {}
+
+ReducedGaussianGrid::ReducedGaussianGrid( const std::vector<int>& nx, const Projection& projection ) :
+    ReducedGaussianGrid::grid_t( grid::detail::grid::reduced_gaussian( nx, projection ) ) {}
 
 ReducedGaussianGrid::ReducedGaussianGrid( const std::initializer_list<idx_t>& nx ) :
     ReducedGaussianGrid( std::vector<idx_t>( nx ) ) {}

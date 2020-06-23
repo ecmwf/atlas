@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <utility>  // std::swap
+
 #include "atlas/library/config.h"
 #include "atlas/parallel/omp/copy.h"
 #include "atlas/parallel/omp/fill.h"
@@ -37,10 +39,19 @@ public:
         assign( size, value );
     }
 
-    vector( vector&& other ) : data_( other.data_ ), size_( other.size_ ) {
-        other.data_     = nullptr;
-        other.size_     = 0;
-        other.capacity_ = 0;
+    vector( const vector& other ) { assign( other.data_, other.data_ + other.size_ ); }
+
+    vector( vector&& other ) {
+        std::swap( data_, other.data_ );
+        std::swap( size_, other.size_ );
+        std::swap( capacity_, other.capacity_ );
+    }
+
+    vector& operator=( vector other ) {
+        std::swap( data_, other.data_ );
+        std::swap( size_, other.size_ );
+        std::swap( capacity_, other.capacity_ );
+        return *this;
     }
 
     ~vector() {

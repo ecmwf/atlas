@@ -68,6 +68,7 @@ Grid rotated_mercator() {
     gridspec.set( "ny", 40 );
     gridspec.set( "dx", 50000 );
     gridspec.set( "dy", 50000 );
+    gridspec.set( "y_numbering", -1 );
     gridspec.set( "lonlat(centre)", std::vector<double>{4., 50} );
     gridspec.set( "projection", [] {
         Config projection;
@@ -85,12 +86,13 @@ Grid lambert() {
     gridspec.set( "ny", 40 );
     gridspec.set( "dx", 50000 );
     gridspec.set( "dy", 50000 );
+    gridspec.set( "y_numbering", -1 );
     gridspec.set( "lonlat(centre)", std::vector<double>{4., 50} );
     gridspec.set( "projection", [] {
         Config projection;
         projection.set( "type", "lambert_conformal_conic" );
         projection.set( "longitude0", 4. );
-        projection.set( "latitude1", 50. );
+        projection.set( "latitude0", 50. );
         return projection;
     }() );
     return Grid{gridspec};

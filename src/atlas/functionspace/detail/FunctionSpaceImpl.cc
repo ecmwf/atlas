@@ -37,6 +37,14 @@ void FunctionSpaceImpl::haloExchange( const Field&, bool ) const {
     ATLAS_NOTIMPLEMENTED;
 }
 
+void FunctionSpaceImpl::adjointHaloExchange( const FieldSet&, bool ) const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+void FunctionSpaceImpl::adjointHaloExchange( const Field&, bool ) const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
 Field NoFunctionSpace::createField( const eckit::Configuration& ) const {
     ATLAS_NOTIMPLEMENTED;
 }
@@ -45,8 +53,24 @@ Field NoFunctionSpace::createField( const Field&, const eckit::Configuration& ) 
     ATLAS_NOTIMPLEMENTED;
 }
 
-const util::PartitionPolygon& FunctionSpaceImpl::polygon( idx_t halo ) const {
+Field FunctionSpaceImpl::lonlat() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+Field FunctionSpaceImpl::ghost() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+const util::PartitionPolygon& FunctionSpaceImpl::polygon( idx_t /*halo */ ) const {
     throw_Exception( "polygon() not implemented in derived class", Here() );
+}
+
+const util::PartitionPolygons& FunctionSpaceImpl::polygons() const {
+    throw_Exception( "polygons() not implemented in derived class", Here() );
+}
+
+const Projection& FunctionSpaceImpl::projection() const {
+    throw_Exception( "projection() not implemented in derived class", Here() );
 }
 
 template <typename DATATYPE>

@@ -16,7 +16,7 @@ using atlas::functionspace::StructuredColumns;
 using atlas::output::Gmsh;
 
 int main( int argc, char* argv[] ) {
-    Atlas::initialise( argc, argv );
+    atlas::initialise( argc, argv );
 
     // Generate global reduced grid
     Grid grid( "N32" );
@@ -63,7 +63,7 @@ int main( int argc, char* argv[] ) {
         gmsh.write( field_scalar1 );
     }
 
-    Library::finalise();
-    mpi::finalise();
+    atlas::finalise();
+    atlas::mpi::finalise();
     return 0;
 }

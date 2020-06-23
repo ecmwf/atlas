@@ -15,12 +15,15 @@
 #include <limits>
 #include <memory>
 
+#include "eckit/log/Bytes.h"
+
 #include "atlas/array.h"
 #include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
 #include "atlas/grid/detail/spacing/gaussian/N.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
@@ -239,7 +242,9 @@ void legpol_quadrature( const int kn, const double pfn[], double& pl, double& pw
 //-----------------------------------------------------------------------------
 
 void compute_gaussian_quadrature_npole_equator( const size_t N, double lats[], double weights[] ) {
-    Log::debug() << "Atlas computing Gaussian latitudes for N " << N << "\n";
+    Log::debug() << "Atlas computing Gaussian latitudes for N " << N << " which requires temporary memory of "
+                 << eckit::Bytes( sizeof( double ) * ( 2 * N + 1 ) * ( 2 * N + 1 ) ) << std::endl;
+    ATLAS_TRACE();
 
     // Compute first guess for colatitudes in radians
     double z;
@@ -250,6 +255,8 @@ void compute_gaussian_quadrature_npole_equator( const size_t N, double lats[], d
 
     int kdgl = 2 * N;
     array::ArrayT<double> zfn_( kdgl + 1, kdgl + 1 );
+    //    WARNING: potentially HUGE allocation ( N=16000 --> 7.6 Gbytes )
+
     ArrayView<double, 2> zfn = make_view<double, 2>( zfn_ );
 
     int iodd;

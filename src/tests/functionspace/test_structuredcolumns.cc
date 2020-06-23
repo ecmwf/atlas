@@ -36,6 +36,24 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
+
+CASE( "ATLAS-295 (Github PR 32): Fix StructuredColumns when domain is shifted by 180 degrees (Github PR 32)" ) {
+    auto grid1 = Grid( "S80x40", GlobalDomain{-180} );
+
+    functionspace::StructuredColumns fs1( grid1, grid::Partitioner( "checkerboard" ),
+                                          Config( "halo", 1 ) | Config( "periodic_points", true ) );
+
+    auto grid2 = Grid{"S80x40"};
+
+    functionspace::StructuredColumns fs2( grid2, grid::Partitioner( "checkerboard" ),
+                                          Config( "halo", 1 ) | Config( "periodic_points", true ) );
+
+    EXPECT_EQ( grid1.size(), grid2.size() );
+    EXPECT_EQ( fs1.size(), fs2.size() );
+    EXPECT_EQ( fs1.sizeOwned(), fs2.sizeOwned() );
+}
+
+
 CASE( "test_functionspace_StructuredColumns_no_halo" ) {
     size_t root          = 0;
     std::string gridname = eckit::Resource<std::string>( "--grid", "O8" );
@@ -326,6 +344,89 @@ CASE( "test_functionspace_StructuredColumns halo exchange registration" ) {
         field2.haloExchange();
     }
 }
+
+
+//-----------------------------------------------------------------------------
+
+long innerproductwithhalo( const atlas::Field& f1, const atlas::Field& f2 ) {
+    long sum( 0 );
+
+    auto view1 = atlas::array::make_view<long, 2>( f1 );
+    auto view2 = atlas::array::make_view<long, 2>( f2 );
+
+    for ( atlas::idx_t jn = 0; jn < f1.shape( 0 ); ++jn ) {
+        for ( atlas::idx_t jl = 0; jl < f1.levels(); ++jl ) {
+            sum += view1( jn, jl ) * view2( jn, jl );
+        }
+    }
+
+    atlas::mpi::comm().allReduceInPlace( sum, eckit::mpi::sum() );
+    return sum;
+}
+
+
+CASE( "test_functionspace_StructuredColumns halo exchange adjoint test 1" ) {
+    // Adjoint test for fields
+
+    std::string gridname = eckit::Resource<std::string>( "--grid", "S20x3" );
+
+    StructuredGrid grid( gridname );
+
+    util::Config config;
+    config.set( "levels", 1 );
+    config.set( "halo", 1 );
+
+    long sum1( 0 ), sum2( 0 );
+    functionspace::StructuredColumns fs( grid, grid::Partitioner( "checkerboard" ), config );
+    Field fieldInit = fs.createField<long>( option::name( "fieldInit" ) );
+
+    // Field setup  values 1 in interior and zeros in halos.
+    auto view1   = atlas::array::make_view<long, 2>( fieldInit );
+    auto i_index = atlas::array::make_view<int, 1>( fs.index_i() );
+    auto j_index = atlas::array::make_view<int, 1>( fs.index_j() );
+    for ( atlas::idx_t jn = 0; jn < fs.sizeOwned(); ++jn ) {
+        for ( atlas::idx_t jl = 0; jl < fieldInit.levels(); ++jl ) {
+            view1( jn, jl ) = 1;
+            std::cout << " initial  interior regions:: "
+                      << " size = " << atlas::mpi::comm().size() << " "
+                      << " jn = " << jn << " "
+                      << " rank = " << atlas::mpi::comm().rank() << " "
+                      << " jn = " << jn << " "
+                      << " view1 = " << view1( jn, 0 ) << " "
+                      << " i_index = " << i_index( jn ) << " "
+                      << " j_index = " << j_index( jn ) << std::endl;
+        }
+    }
+
+    Field fieldTmp = fs.createField<long>( option::name( "fieldTmp" ) );
+    auto viewTmp   = atlas::array::make_view<long, 2>( fieldTmp );
+    for ( atlas::idx_t jn = 0; jn < fieldTmp.shape( 0 ); ++jn ) {
+        for ( atlas::idx_t jl = 0; jl < fieldTmp.levels(); ++jl ) {
+            viewTmp( jn, jl ) = view1( jn, jl );
+        }
+    }
+    fieldTmp.haloExchange();
+
+    sum1 = innerproductwithhalo( fieldTmp, fieldTmp );
+
+    fieldTmp.adjointHaloExchange();
+
+    sum2 = innerproductwithhalo( fieldInit, fieldTmp );
+
+    atlas::Log::info() << "sum1 " << sum1 << "sum2 " << sum2 << std::endl;
+    EXPECT( sum1 == sum2 );
+
+    // check that it is zero is in the halo
+    sum1 = 0;
+    for ( atlas::idx_t jn = fs.sizeOwned(); jn < fieldTmp.shape( 0 ); ++jn ) {
+        for ( atlas::idx_t jl = 0; jl < fieldTmp.levels(); ++jl ) {
+            sum1 += viewTmp( jn, jl );
+        }
+    }
+    atlas::mpi::comm().allReduceInPlace( sum1, eckit::mpi::sum() );
+    EXPECT( sum1 == 0 );
+}
+
 
 //-----------------------------------------------------------------------------
 

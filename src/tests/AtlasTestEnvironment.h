@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <chrono>
 #include <exception>
+#include <iomanip>
 #include <string>
 #include <thread>
 
@@ -38,6 +39,63 @@ namespace test {
 
 using eckit::types::is_approximately_equal;
 
+class Test;
+static Test* current_test_{nullptr};
+
+static size_t ATLAS_MAX_FAILED_EXPECTS() {
+    static size_t v = size_t( eckit::Resource<long>( "$ATLAS_MAX_FAILED_EXPECTS", 100 ) );
+    return v;
+}
+
+class Test {
+    struct Failure {
+        std::string message;
+        eckit::CodeLocation location;
+    };
+
+public:
+    Test( const std::string& description, const eckit::CodeLocation& location ) :
+        description_( description ), location_( location ) {
+        current_test_ = this;
+    }
+    ~Test() { current_test_ = nullptr; }
+    void expect_failed( const std::string& message, const eckit::CodeLocation& location ) {
+        failures_.emplace_back( Failure{message, location} );
+#if ECKIT_MAJOR_VERSION * 100 + ECKIT_MINOR_VERSION >= 112
+        eckit::Log::error() << eckit::Colour::red << message << eckit::Colour::reset << " @ "
+                            << eckit::PathName{location.file()}.baseName() << " +" << location.line() << std::endl;
+#else
+        eckit::Log::error() << message << " @ " << eckit::PathName{location.file()}.baseName() << " +"
+                            << location.line() << std::endl;
+#endif
+        if ( failures_.size() == ATLAS_MAX_FAILED_EXPECTS() ) {
+            std::stringstream msg;
+            msg << "Maximum number of allowed EXPECTS have failed (${ATLAS_MAX_FAILED_EXPECTS}="
+                << ATLAS_MAX_FAILED_EXPECTS() << ").";
+            throw eckit::testing::TestException( msg.str(), location_ );
+        }
+    }
+    bool failed() const { return failures_.size() > 0; }
+    void throw_on_failed_expects() {
+        if ( failed() ) {
+            std::stringstream msg;
+            msg << failures_.size() << " EXPECTS have failed";
+            throw eckit::testing::TestException( msg.str(), location_ );
+        }
+    }
+    const std::string& description() const { return description_; }
+
+private:
+    std::vector<Failure> failures_;
+    std::string description_;
+    eckit::CodeLocation location_;
+};
+
+Test& current_test() {
+    ATLAS_ASSERT( current_test_ );
+    return *current_test_;
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 #ifdef MAYBE_UNUSED
@@ -57,9 +115,11 @@ using eckit::types::is_approximately_equal;
     void UNIQUE_NAME2( traced_test_, __LINE__ )( std::string & _test_subsection, int& _num_subsections,              \
                                                  int _subsection );                                                  \
     void UNIQUE_NAME2( test_, __LINE__ )( std::string & _test_subsection, int& _num_subsections, int _subsection ) { \
+        Test UNIQUE_NAME2( testobj_, __LINE__ )( description, Here() );                                              \
         ATLAS_TRACE( description );                                                                                  \
         UNIQUE_NAME2( traced_test_, __LINE__ )                                                                       \
         ( _test_subsection, _num_subsections, _subsection );                                                         \
+        current_test().throw_on_failed_expects();                                                                    \
         if ( atlas::test::barrier_timeout( atlas::test::ATLAS_MPI_BARRIER_TIMEOUT() ) ) {                            \
             atlas::Log::warning() << "\nWARNING: Test \"" << description                                             \
                                   << "\" failed with MPI deadlock.  (${ATLAS_MPI_BARRIER_TIMEOUT}="                  \
@@ -84,21 +144,74 @@ using eckit::types::is_approximately_equal;
 #ifdef EXPECT_EQ
 #undef EXPECT_EQ
 #endif
-#define EXPECT_EQ( lhs, rhs )                                                                                \
-    do {                                                                                                     \
-        if ( !( lhs == rhs ) ) {                                                                             \
-            throw eckit::testing::TestException( "EXPECT condition failed: " #lhs " == " #rhs                \
-                                                 "\n"                                                        \
-                                                 " --> " +                                                   \
-                                                     std::to_string( lhs ) + " != " + std::to_string( rhs ), \
-                                                 Here() );                                                   \
-        }                                                                                                    \
+#ifdef EXPECT_APPROX_EQ
+#undef EXPECT_APPROX_EQ
+#endif
+
+#ifdef EXPECT
+#undef EXPECT
+#endif
+
+#define REQUIRE( expr )                                                                       \
+    do {                                                                                      \
+        if ( !( expr ) ) {                                                                    \
+            throw eckit::testing::TestException( "EXPECT condition failed: " #expr, Here() ); \
+        }                                                                                     \
     } while ( false )
+
+#define EXPECT( expr )                                                                 \
+    do {                                                                               \
+        if ( !( expr ) ) {                                                             \
+            current_test().expect_failed( "EXPECT condition failed: " #expr, Here() ); \
+        }                                                                              \
+    } while ( false )
+
+
+#define EXPECT_EQ( lhs, rhs )                                                               \
+    do {                                                                                    \
+        if ( !( lhs == rhs ) ) {                                                            \
+            using namespace std;                                                            \
+            current_test().expect_failed( "EXPECT condition failed: " #lhs " == " #rhs      \
+                                          "\n"                                              \
+                                          " --> " +                                         \
+                                              to_string( lhs ) + " != " + to_string( rhs ), \
+                                          Here() );                                         \
+        }                                                                                   \
+    } while ( false )
+
+#define __EXPECT_APPROX_EQ( lhs, rhs )                                            \
+    do {                                                                          \
+        if ( !( is_approximately_equal( lhs, rhs ) ) ) {                          \
+            std::stringstream err;                                                \
+            err << "EXPECT condition failed: " #lhs " ~= " #rhs                   \
+                   "\n"                                                           \
+                   " --> "                                                        \
+                << std::fixed << std::setprecision( 12 ) << lhs << " != " << rhs; \
+            current_test().expect_failed( err.str(), Here() );                    \
+        }                                                                         \
+    } while ( false )
+
+#define __EXPECT_APPROX_EQ_TOL( lhs, rhs, tol )                                   \
+    do {                                                                          \
+        if ( !( is_approximately_equal( lhs, rhs, tol ) ) ) {                     \
+            std::stringstream err;                                                \
+            err << "EXPECT condition failed: " #lhs " ~= " #rhs                   \
+                   "\n"                                                           \
+                   " --> "                                                        \
+                << std::fixed << std::setprecision( 12 ) << lhs << " != " << rhs; \
+            current_test().expect_failed( err.str(), Here() );                    \
+        }                                                                         \
+    } while ( false )
+
+#define EXPECT_APPROX_EQ( ... ) __ATLAS_SPLICE( __EXPECT_APPROX_EQ__, __ATLAS_NARG( __VA_ARGS__ ) )( __VA_ARGS__ )
+#define __EXPECT_APPROX_EQ__2 __EXPECT_APPROX_EQ
+#define __EXPECT_APPROX_EQ__3 __EXPECT_APPROX_EQ_TOL
+
 
 //----------------------------------------------------------------------------------------------------------------------
 
 static double ATLAS_MPI_BARRIER_TIMEOUT() {
-    static double v = eckit::Resource<double>( "${ATLAS_MPI_BARRIER_TIMEOUT", 3. );
+    static double v = eckit::Resource<double>( "$ATLAS_MPI_BARRIER_TIMEOUT", 3. );
     return v;
 }
 
@@ -268,5 +381,5 @@ int run( int argc, char* argv[] ) {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // end namespace test
-}  // end namespace atlas
+}  // namespace test
+}  // namespace atlas

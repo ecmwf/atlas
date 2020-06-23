@@ -12,6 +12,7 @@
 
 #include "atlas/domain.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
+#include "atlas/util/NormaliseLongitude.h"
 
 namespace atlas {
 namespace projection {
@@ -44,9 +45,21 @@ public:
     void hash( eckit::Hash& ) const override;
 
 protected:
-    double lon0_;        // central longitude
-    double radius_;      // sphere radius
-    double inv_radius_;  // 1/(sphere radius)
+    Normalise normalise_;
+    util::NormaliseLongitude normalise_mercator_;
+    double lon0_;          // central longitude (default = 0 )
+    double lat1_;          // latitude where cylinder cuts sphere (default = 0 )
+    double radius_;        // sphere radius
+    double k_radius_;      // sphere radius
+    double inv_k_radius_;  // 1/(sphere radius)
+
+    double eccentricity_;
+    double semi_major_axis_;
+    double semi_minor_axis_;
+
+    double false_easting_;
+    double false_northing_;
+
 
     void setup( const eckit::Parametrisation& p );
 

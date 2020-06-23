@@ -4,7 +4,9 @@ CMakeLists.txt.user*
 doc/html
 doc/latex
 *.sublime-workspace
+*.swp
 .nfs*
 build/*
 install/*
 env.sh
+*.DS_Store

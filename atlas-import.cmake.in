@@ -80,3 +80,31 @@ elseif( atlas_FIND_REQUIRED_FORTRAN )
 endif()
 
 set( @PROJECT_NAME@_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE STRING "" )
+
+
+function( atlas_create_plugin name )
+
+  set( options )
+  set( single_value_args VERSION )
+  set( multi_value_args LIBRARY )
+  cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
+
+  set( _plugin_file share/atlas/plugins/${name}.yml )
+
+  if( NOT DEFINED _PAR_VERSION )
+    set( _version ${${PROJECT_NAME}_VERSION} )
+  else()
+    set( _version ${_PAR_VERSION} )
+  endif()
+  if( NOT DEFINED _PAR_LIBRARY )
+    set( _library "${name}" )
+  else()
+    set( _library "${_PAR_LIBRARY}" )
+  endif()
+  file( WRITE  ${CMAKE_BINARY_DIR}/${_plugin_file} "name: ${name}\n" )
+  file( APPEND ${CMAKE_BINARY_DIR}/${_plugin_file} "version: ${_version}\n" )
+  file( APPEND ${CMAKE_BINARY_DIR}/${_plugin_file} "library: ${_library}" )
+  install( FILES ${CMAKE_BINARY_DIR}/${_plugin_file} DESTINATION share/atlas/plugins )
+
+endfunction()
+

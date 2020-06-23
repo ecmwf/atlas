@@ -55,12 +55,14 @@ private:
 
     void configure_defaults();
 
-    void generate_region( const StructuredGrid&, const atlas::vector<int>& parts, int mypart, Region& region ) const;
+    void generate_region( const StructuredGrid&, const grid::Distribution& distribution, int mypart,
+                          Region& region ) const;
 
-    void generate_mesh_new( const StructuredGrid&, const atlas::vector<int>& parts, const Region& region,
+    void generate_mesh_new( const StructuredGrid&, const grid::Distribution& distribution, const Region& region,
                             Mesh& m ) const;
 
-    void generate_mesh( const StructuredGrid&, const atlas::vector<int>& parts, const Region& region, Mesh& m ) const;
+    void generate_mesh( const StructuredGrid&, const grid::Distribution& distribution, const Region& region,
+                        Mesh& m ) const;
 
 private:
     util::Config options;

@@ -593,7 +593,7 @@ subroutine minloclev_${dtype}$_r1(this,field,minimum,location,level)
   ${ftype}$, pointer :: min_fptr(:)
   integer(c_long),pointer :: loc_fptr(:)
   integer(c_long),pointer :: lev_fptr(:)
-  integer :: min_size
+  integer :: min_size, jlev
   call atlas__NodesFunctionSpace__minloclev_arr_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,min_cptr,loc_cptr,lev_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/min_size/))
@@ -603,7 +603,9 @@ subroutine minloclev_${dtype}$_r1(this,field,minimum,location,level)
   location(:) = loc_fptr(:)
   call c_f_pointer(lev_cptr,lev_fptr,(/min_size/))
   allocate(level(min_size))
-  level(:) = lev_fptr(:)
+  do jlev=1,min_size
+    level(jlev) = int(lev_fptr(jlev),c_int)
+  enddo
   call c_ptr_free(min_cptr)
   call c_ptr_free(loc_cptr)
   call c_ptr_free(lev_cptr)
@@ -623,7 +625,7 @@ subroutine maxloclev_${dtype}$_r1(this,field,maximum,location,level)
   ${ftype}$, pointer :: max_fptr(:)
   integer(c_long),pointer :: loc_fptr(:)
   integer(c_long),pointer :: lev_fptr(:)
-  integer :: max_size
+  integer :: max_size, jlev
   call atlas__NodesFunctionSpace__maxloclev_arr_${ctype}$(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,max_cptr,loc_cptr,lev_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/max_size/))
@@ -633,7 +635,9 @@ subroutine maxloclev_${dtype}$_r1(this,field,maximum,location,level)
   location(:) = loc_fptr(:)
   call c_f_pointer(lev_cptr,lev_fptr,(/max_size/))
   allocate(level(max_size))
-  level(:) = lev_fptr(:)
+  do jlev=1,max_size
+    level(jlev) = int(lev_fptr(jlev),c_int)
+  enddo
   call c_ptr_free(max_cptr)
   call c_ptr_free(loc_cptr)
   call c_ptr_free(lev_cptr)
@@ -786,6 +790,7 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
+#if FCKIT_FINAL_NOT_INHERITING
 ATLAS_FINAL subroutine atlas_functionspace_NodeColumns__final_auto(this)
   type(atlas_functionspace_NodeColumns), intent(inout) :: this
 #if FCKIT_FINAL_DEBUGGING
@@ -796,6 +801,7 @@ ATLAS_FINAL subroutine atlas_functionspace_NodeColumns__final_auto(this)
 #endif
   FCKIT_SUPPRESS_UNUSED( this )
 end subroutine
+#endif
 
 !------------------------------------------------------------------------------
 

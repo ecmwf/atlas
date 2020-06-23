@@ -42,7 +42,7 @@ KNearestNeighbours::KNearestNeighbours( const Method::Config& config ) : KNeares
     ATLAS_ASSERT( k_ );
 }
 
-void KNearestNeighbours::setup( const Grid& source, const Grid& target ) {
+void KNearestNeighbours::do_setup( const Grid& source, const Grid& target ) {
     if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
@@ -57,10 +57,10 @@ void KNearestNeighbours::setup( const Grid& source, const Grid& target ) {
         return functionspace::NodeColumns( mesh );
     };
 
-    setup( functionspace( source ), functionspace( target ) );
+    do_setup( functionspace( source ), functionspace( target ) );
 }
 
-void KNearestNeighbours::setup( const FunctionSpace& source, const FunctionSpace& target ) {
+void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSpace& target ) {
     source_                        = source;
     target_                        = target;
     functionspace::NodeColumns src = source;
@@ -86,7 +86,7 @@ void KNearestNeighbours::setup( const FunctionSpace& source, const FunctionSpace
     std::vector<Triplet> weights_triplets;
     weights_triplets.reserve( out_npts * k_ );
     {
-        Trace timer( Here(), "atlas::interpolation::method::NearestNeighbour::setup()" );
+        Trace timer( Here(), "atlas::interpolation::method::NearestNeighbour::do_setup()" );
 
         std::vector<double> weights;
 

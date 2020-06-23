@@ -30,6 +30,21 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
+
+CASE( "test_ij2gidx" ) {
+    StructuredGrid n16 = Grid( "N16" );
+
+    for ( int j = 0, jglo = 0; j < n16.ny(); j++ ) {
+        for ( int i = 0; i < n16.nx( j ); i++, jglo++ ) {
+            idx_t i1, j1;
+            n16.index2ij( jglo, i1, j1 );
+            EXPECT( n16.index( i, j ) == jglo );
+            EXPECT( i1 == i );
+            EXPECT( j1 == j );
+        }
+    }
+}
+
 CASE( "test_factory" ) {
     StructuredGrid structured = Grid( "N80" );
 
@@ -403,11 +418,11 @@ CASE( "test_structured_from_config" ) {
     }() );
     StructuredGrid g{config};
     for ( idx_t j = 0; j < g.ny(); ++j ) {
-        EXPECT_EQ( g.nx(j) , 40 );
-        EXPECT_EQ( g.x(0,j), 5. );
-        EXPECT_EQ( g.x(g.nx(j),j), 365.);
-        EXPECT_EQ( g.dx(j), 9.);
-        EXPECT_EQ( g.xmin(j), 5.);
+        EXPECT_EQ( g.nx( j ), 40 );
+        EXPECT_EQ( g.x( 0, j ), 5. );
+        EXPECT_EQ( g.x( g.nx( j ), j ), 365. );
+        EXPECT_EQ( g.dx( j ), 9. );
+        EXPECT_EQ( g.xmin( j ), 5. );
     }
     EXPECT( not g.domain().global() );
 }

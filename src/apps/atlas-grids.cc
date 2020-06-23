@@ -27,7 +27,9 @@
 #include "atlas/grid.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
+#include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/runtime/AtlasTool.h"
+#include "atlas/util/NormaliseLongitude.h"
 
 namespace atlas {
 
@@ -160,8 +162,7 @@ int AtlasGrids::execute( const Args& args ) {
         }
 
         for ( auto b : grid::GridBuilder::nameRegistry() ) {
-            int nb_names = b.second->names().size();
-            int c        = 0;
+            int c = 0;
             for ( const auto& name : b.second->names() ) {
                 if ( c == 0 ) {
                     Log::info() << "  -- " << std::left << std::setw( maxlen + 8 ) << name;
@@ -250,9 +251,8 @@ int AtlasGrids::execute( const Args& args ) {
                     if ( structuredgrid.xspace().nxmax() == structuredgrid.xspace().nxmin() ) {
                         Log::info() << "   dx : " << structuredgrid.xspace().dx()[0] / 1000. << " km" << std::endl;
                     }
-                    Log::info() << "   dy : "
-                                << std::abs( structuredgrid.yspace()[1] - structuredgrid.yspace()[0] ) / 1000. << " km"
-                                << std::endl;
+                    Log::info() << "   dy : " << std::abs( structuredgrid.y( 1 ) - structuredgrid.y( 0 ) ) / 1000.
+                                << " km" << std::endl;
                     Log::info() << "   lonlat(centre)    : "
                                 << grid.projection().lonlat(
                                        {0.5 * ( structuredgrid.xspace().max() + structuredgrid.xspace().min() ),
@@ -287,6 +287,12 @@ int AtlasGrids::execute( const Args& args ) {
                 Log::info() << "   lonlat(first)     : " << *it << std::endl;
                 it += grid.size() - 1;
                 Log::info() << "   lonlat(last)      : " << *it << std::endl;
+
+                if ( auto bb = grid.lonlatBoundingBox() ) {
+                    Log::info() << "   bounding_box(n,w,s,e) : { " << bb.north() << ", " << bb.west() << ", "
+                                << bb.south() << ", " << bb.east() << " }" << std::endl;
+                }
+
                 Log::info().precision( precision );
             }
         }
@@ -347,6 +353,8 @@ int AtlasGrids::execute( const Args& args ) {
                 return failed();
             }
 
+            bool strict = config_check.getBool( "strict", true );
+
             idx_t size;
             if ( config_check.get( "size", size ) ) {
                 if ( grid.size() != size ) {
@@ -360,7 +368,10 @@ int AtlasGrids::execute( const Args& args ) {
 
             std::string uid;
             if ( config_check.get( "uid", uid ) ) {
-                if ( grid.uid() != uid ) {
+                if ( uid == "ignore" ) {
+                    out << "WARNING: ignoring uid explicitly" << std::endl;
+                }
+                else if ( grid.uid() != uid ) {
                     out << "Check failed: grid uid " << grid.uid() << " expected to be " << uid << std::endl;
                     check_failed = true;
                 }
@@ -374,35 +385,48 @@ int AtlasGrids::execute( const Args& args ) {
             }
 
 
-            auto equal = []( double a, double b ) { return eckit::types::is_approximately_equal( a, b, 5.e-4 ); };
+            auto equal       = []( double a, double b ) { return eckit::types::is_approximately_equal( a, b, 5.e-4 ); };
+            auto point_equal = [&equal]( const PointLonLat& a, const PointLonLat& b ) -> bool {
+                return equal( a.lon(), b.lon() ) && equal( a.lat(), b.lat() );
+            };
+            auto difference_normalised = []( double a, double ref ) {
+                util::NormaliseLongitude normalised{ref - 180};
+                return normalised( a ) - ref;
+            };
+            auto point_equal_normalised = [&]( const PointLonLat& a, const PointLonLat& b ) -> bool {
+                return equal( a.lat(), b.lat() ) && equal( difference_normalised( a.lon(), b.lon() ), 0. );
+            };
+            auto equal_normalised = [&]( double a, double b ) { return equal( difference_normalised( a, b ), 0. ); };
 
-            std::vector<double> first_point_lonlat;
-            if ( config_check.get( "lonlat(first)", first_point_lonlat ) ) {
-                PointLonLat first_point = *grid.lonlat().begin();
-                if ( not equal( first_point.lon(), first_point_lonlat[0] ) or
-                     not equal( first_point.lat(), first_point_lonlat[1] ) ) {
-                    out << "Check failed: lonlat(first) " << first_point << " expected to be "
-                        << PointLonLat( first_point_lonlat.data() ) << std::endl;
-                    check_failed = true;
+            auto check_lonlat = [&]( const std::string& key, std::function<PointLonLat()>&& get_lonlat ) {
+                std::vector<double> lonlat_config;
+                if ( config_check.get( key, lonlat_config ) ) {
+                    PointLonLat lonlat_check = {lonlat_config.data()};
+                    PointLonLat lonlat       = get_lonlat();
+                    if ( not point_equal_normalised( lonlat, lonlat_check ) ) {
+                        out << std::setprecision( 4 ) << std::fixed << "Check failed: " << key << " " << lonlat
+                            << " expected to be " << lonlat_check;
+                        out << " ( normalised difference: {"
+                            << difference_normalised( lonlat.lon(), lonlat_check.lon() ) << ","
+                            << lonlat.lat() - lonlat_check.lat() << "} )" << std::endl;
+                        check_failed = true;
+                    }
+                    else if ( strict && not point_equal( lonlat, lonlat_check ) ) {
+                        out << std::setprecision( 4 ) << std::fixed << "Check failed: " << key << " " << lonlat
+                            << " expected to be " << lonlat_check;
+                        out << " ( normalised difference: {"
+                            << difference_normalised( lonlat.lon(), lonlat_check.lon() ) << ","
+                            << lonlat.lat() - lonlat_check.lat() << "} )" << std::endl;
+                        check_failed = true;
+                    }
                 }
-            }
-            else {
-                Log::warning() << "Check for lonlat(first) skipped" << std::endl;
-            }
+                else {
+                    Log::warning() << "Check for " << key << " skipped" << std::endl;
+                }
+            };
 
-            std::vector<double> last_point_lonlat;
-            if ( config_check.get( "lonlat(last)", last_point_lonlat ) ) {
-                PointLonLat last_point = *( grid.lonlat().begin() + ( grid.size() - 1 ) );
-                if ( not equal( last_point.lon(), last_point_lonlat[0] ) or
-                     not equal( last_point.lat(), last_point_lonlat[1] ) ) {
-                    out << "Check failed: lonlat(last) " << last_point << " expected to be "
-                        << PointLonLat( last_point_lonlat.data() ) << std::endl;
-                    check_failed = true;
-                }
-            }
-            else {
-                Log::warning() << "Check for lonlat(last) skipped" << std::endl;
-            }
+            check_lonlat( "lonlat(first)", [&]() { return grid.lonlat().front(); } );
+            check_lonlat( "lonlat(last)", [&]() { return grid.lonlat().back(); } );
 
             std::vector<double> bbox;
             if ( config_check.get( "bounding_box(n,w,s,e)", bbox ) && bbox.size() == 4 ) {
@@ -411,21 +435,45 @@ int AtlasGrids::execute( const Args& args ) {
                     check_failed = true;
                     out << "Check failed: cannot calculate bounding box for " << grid.spec() << std::endl;
                 }
-                else if ( !equal( bb.north(), bbox[0] ) ) {
-                    check_failed = true;
-                    out << "Check failed: n=" << bb.north() << " expected to be " << bbox[0] << std::endl;
-                }
-                else if ( !equal( bb.west(), bbox[1] ) ) {
-                    check_failed = true;
-                    out << "Check failed: w=" << bb.west() << " expected to be " << bbox[1] << std::endl;
-                }
-                else if ( !equal( bb.south(), bbox[2] ) ) {
-                    check_failed = true;
-                    out << "Check failed: s=" << bb.south() << " expected to be " << bbox[2] << std::endl;
-                }
-                else if ( !equal( bb.east(), bbox[3] ) ) {
-                    check_failed = true;
-                    out << "Check failed: e=" << bb.east() << " expected to be " << bbox[3] << std::endl;
+                else {
+                    bool any_value_failed = false;
+                    if ( !equal( bb.north(), bbox[0] ) ) {
+                        any_value_failed = true;
+                        out << "Check failed: n=" << bb.north() << " expected to be " << bbox[0] << std::endl;
+                    }
+                    if ( !equal_normalised( bb.west(), bbox[1] ) ) {
+                        any_value_failed = true;
+                        out << "Check failed: w=" << bb.west() << " expected to be " << bbox[1]
+                            << " ( normalised difference : " << difference_normalised( bb.west(), bbox[1] ) << " )"
+                            << std::endl;
+                    }
+                    else if ( strict && not equal( bb.west(), bbox[1] ) ) {
+                        out << "Check failed: w=" << bb.west() << " expected to be " << bbox[1]
+                            << " ( normalised difference : " << difference_normalised( bb.west(), bbox[1] ) << " )"
+                            << std::endl;
+                    }
+                    if ( !equal( bb.south(), bbox[2] ) ) {
+                        any_value_failed = true;
+                        out << "Check failed: s=" << bb.south() << " expected to be " << bbox[2] << std::endl;
+                    }
+                    if ( !equal_normalised( bb.east(), bbox[3] ) ) {
+                        any_value_failed = true;
+                        out << "Check failed: e=" << bb.east() << " expected to be " << bbox[3]
+                            << " ( normalised difference : " << difference_normalised( bb.east(), bbox[3] ) << " )"
+                            << std::endl;
+                    }
+                    else if ( strict && not equal( bb.east(), bbox[3] ) ) {
+                        any_value_failed = true;
+                        out << "Check failed: e=" << bb.east() << " expected to be " << bbox[3]
+                            << " ( normalised difference : " << difference_normalised( bb.east(), bbox[3] ) << " )"
+                            << std::endl;
+                    }
+                    if ( any_value_failed ) {
+                        check_failed = true;
+                        out << "Check failed: bounding_box(n,w,s,e) [" << bb.north() << ", " << bb.west() << ", "
+                            << bb.south() << ", " << bb.east() << "] expected to be [" << bbox[0] << ", " << bbox[1]
+                            << ", " << bbox[2] << ", " << bbox[3] << "]" << std::endl;
+                    }
                 }
             }
             else if ( check_bbox && bbox.size() != 4 ) {
@@ -465,6 +513,76 @@ int AtlasGrids::execute( const Args& args ) {
             }
             else {
                 Log::warning() << "Check for ymin skipped" << std::endl;
+            }
+
+            if ( projection::ProjectionFactory::has( "proj" ) ) {
+                std::string proj_str;
+                if ( config_check.get( "proj", proj_str ) ) {
+                    Projection proj( util::Config( "type", "proj" ) | util::Config( "proj", proj_str ) );
+                    auto check_proj = [&]( const PointLonLat& lonlat, const PointLonLat& proj_lonlat,
+                                           const std::string& point = "" ) {
+                        if ( not point_equal( lonlat, proj_lonlat ) ) {
+                            if ( point_equal_normalised( lonlat, proj_lonlat ) ) {
+                                Log::warning()
+                                    << "WARNING: Projection of " << point
+                                    << " grid point is different from Proj only due to different normalisation: "
+                                    << lonlat << " != " << proj_lonlat << std::endl;
+                            }
+                            else {
+                                Log::info() << "Check failed: Projection of " << point
+                                            << " grid point is different from Proj: " << lonlat << " != " << proj_lonlat
+                                            << " normalised difference = {" << std::fixed << std::setprecision( 12 )
+                                            << difference_normalised( lonlat.lon(), proj_lonlat.lon() ) << ","
+                                            << lonlat.lat() - proj_lonlat.lat() << "}" << std::endl;
+                                check_failed = true;
+                            }
+                        }
+                    };
+                    check_proj( grid.lonlat().front(), proj.lonlat( grid.xy().front() ), "first" );
+                    check_proj( grid.lonlat().back(), proj.lonlat( grid.xy().back() ), "last" );
+                }
+            }
+
+            auto check_roundtrip = [&]( const PointLonLat& point, bool strict = false ) {
+                using eckit::types::is_approximately_equal;
+                const auto projection       = grid.projection();
+                PointLonLat point_roundtrip = projection.lonlat( projection.xy( point ) );
+
+                bool roundtrip = is_approximately_equal( point_roundtrip.lat(), point.lat(), 1.e-6 ) &&
+                                 is_approximately_equal( point_roundtrip.lon(), point.lon(), 1.e-6 );
+                constexpr util::NormaliseLongitude normalised;
+                bool normalised_roundtrip =
+                    is_approximately_equal( point_roundtrip.lat(), point.lat(), 1.e-6 ) &&
+                    is_approximately_equal( normalised( point_roundtrip.lon() ), normalised( point.lon() ) );
+
+                if ( not normalised_roundtrip ) {
+                    check_failed = true;
+                    Log::info() << "Check failed: Roundtrip of point " << point
+                                << " failed, even with normalisation: " << point_roundtrip << " != " << point
+                                << " normalised difference = {" << std::fixed << std::setprecision( 12 )
+                                << difference_normalised( point_roundtrip.lon(), point.lon() ) << ","
+                                << point_roundtrip.lat() - point.lat() << "}" << std::endl;
+                }
+                if ( strict && not roundtrip ) {
+                    check_failed = true;
+                    Log::info() << "Check failed: Roundtrip of point " << point << " failed";
+                    if ( normalised_roundtrip ) {
+                        Log::info() << " but was OK with normalisation";
+                    }
+                    Log::info() << ": " << point_roundtrip << " != " << point << " normalised difference = {"
+                                << std::fixed << std::setprecision( 12 )
+                                << difference_normalised( point_roundtrip.lon(), point.lon() ) << ","
+                                << point_roundtrip.lat() - point.lat() << "}" << std::endl;
+                }
+            };
+
+            std::vector<util::Config> roundtrip;
+            if ( config_check.get( "roundtrip", roundtrip ) ) {
+                for ( auto& entry : roundtrip ) {
+                    std::vector<double> lonlat;
+                    entry.get( "lonlat", lonlat );
+                    check_roundtrip( {lonlat[0], lonlat[1]}, strict );
+                }
             }
 
 

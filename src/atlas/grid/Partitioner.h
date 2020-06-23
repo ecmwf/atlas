@@ -79,6 +79,7 @@ public:
     Partitioner( const std::string& type );
     Partitioner( const std::string& type, const idx_t nb_partitions );
     Partitioner( const Config& );
+    Partitioner( const std::string& type, const Config& );
 
     void partition( const Grid& grid, int part[] ) const;
 

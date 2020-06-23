@@ -190,6 +190,7 @@ public:  // Destructor
     void reactivateHostWriteViews() const { array_->reactivateHostWriteViews(); }
 
     void haloExchange( bool on_device = false ) const;
+    void adjointHaloExchange( bool on_device = false ) const;
 
 private:  // methods
     void print( std::ostream& os, bool dump = false ) const;
