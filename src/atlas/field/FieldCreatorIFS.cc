@@ -39,21 +39,14 @@ FieldImpl* FieldCreatorIFS::createField( const eckit::Parametrisation& params ) 
     params.get( "nlev", nlev );
     params.get( "nvar", nvar );
 
-    array::DataType datatype = array::DataType::create<double>();
-    std::string datatype_str;
-    if ( params.get( "datatype", datatype_str ) ) {
-        datatype = array::DataType( datatype_str );
+    array::DataType::kind_t kind = array::DataType::kind<double>();
+    params.get( "datatype", kind );
+    if ( !array::DataType::kind_valid( kind ) ) {
+        std::stringstream msg;
+        msg << "Could not create field. kind parameter " << kind << " unrecognized";
+        throw_Exception( msg.str() );
     }
-    else {
-        array::DataType::kind_t kind( array::DataType::kind<double>() );
-        params.get( "kind", kind );
-        if ( !array::DataType::kind_valid( kind ) ) {
-            std::stringstream msg;
-            msg << "Could not create field. kind parameter unrecognized";
-            throw_Exception( msg.str() );
-        }
-        datatype = array::DataType( kind );
-    }
+    auto datatype = array::DataType( kind );
 
     nblk = std::ceil( static_cast<double>( ngptot ) / static_cast<double>( nproma ) );
 

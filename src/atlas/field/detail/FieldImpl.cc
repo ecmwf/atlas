@@ -43,6 +43,10 @@ FieldImpl* FieldImpl::create( const std::string& name, array::DataType datatype,
     return new FieldImpl( name, datatype, shape );
 }
 
+FieldImpl* FieldImpl::create( const std::string& name, array::DataType datatype, array::ArraySpec&& spec ) {
+    return new FieldImpl( name, datatype, std::move( spec ) );
+}
+
 FieldImpl* FieldImpl::create( const std::string& name, array::Array* array ) {
     return new FieldImpl( name, array );
 }
@@ -57,6 +61,16 @@ FieldImpl::FieldImpl( const std::string& name, array::DataType datatype, const a
     set_levels( 0 );
     set_variables( 0 );
 }
+
+FieldImpl::FieldImpl( const std::string& name, array::DataType datatype, array::ArraySpec&& spec ) :
+    functionspace_( new FunctionSpace() ) {
+    array_ = array::Array::create( datatype, std::move( spec ) );
+    array_->attach();
+    rename( name );
+    set_levels( 0 );
+    set_variables( 0 );
+}
+
 
 FieldImpl::FieldImpl( const std::string& name, array::Array* array ) : functionspace_( new FunctionSpace() ) {
     array_ = array;

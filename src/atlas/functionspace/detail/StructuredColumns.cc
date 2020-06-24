@@ -332,6 +332,17 @@ array::ArrayShape StructuredColumns::config_shape( const eckit::Configuration& c
 
     return shape;
 }
+
+array::ArrayAlignment StructuredColumns::config_alignment( const eckit::Configuration& config ) const {
+    int alignment( 1 );
+    config.get( "alignment", alignment );
+    return alignment;
+}
+
+array::ArraySpec StructuredColumns::config_spec( const eckit::Configuration& config ) const {
+    return array::ArraySpec( config_shape( config ), config_alignment( config ) );
+}
+
 size_t StructuredColumns::Map2to1::footprint() const {
     size_t size = sizeof( *this );
     size += data_.size() * sizeof( decltype( data_ )::value_type );
@@ -503,7 +514,7 @@ StructuredColumns::~StructuredColumns() {
 // Create Field
 // ----------------------------------------------------------------------------
 Field StructuredColumns::createField( const eckit::Configuration& options ) const {
-    Field field( config_name( options ), config_datatype( options ), config_shape( options ) );
+    Field field( config_name( options ), config_datatype( options ), config_spec( options ) );
     set_field_metadata( options, field );
     return field;
 }

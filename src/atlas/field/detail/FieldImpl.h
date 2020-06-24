@@ -45,6 +45,9 @@ public:  // Static methods
     static FieldImpl* create( const std::string& name, array::DataType,
                               const array::ArrayShape& = array::ArrayShape() );
 
+    /// @brief Create field with given name, Datatype and ArrayShape
+    static FieldImpl* create( const std::string& name, array::DataType, array::ArraySpec&& );
+
     /// @brief Create field with given name, Datatype of template and ArrayShape
     template <typename DATATYPE>
     static FieldImpl* create( const std::string& name, const array::ArrayShape& = array::ArrayShape() );
@@ -65,6 +68,9 @@ public:  // Static methods
 private:  // Private constructors to force use of static create functions
     /// Allocate new Array internally
     FieldImpl( const std::string& name, array::DataType, const array::ArrayShape& );
+
+    /// Allocate new Array internally
+    FieldImpl( const std::string& name, array::DataType, array::ArraySpec&& );
 
     /// Transfer ownership of Array
     FieldImpl( const std::string& name, array::Array* );

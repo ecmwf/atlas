@@ -428,6 +428,24 @@ CASE( "test_functionspace_StructuredColumns halo exchange adjoint test 1" ) {
 }
 
 
+CASE( "create_aligned_field" ) {
+    std::string gridname = eckit::Resource<std::string>( "--grid", "S20x3" );
+    Grid grid( gridname );
+    functionspace::StructuredColumns fs( grid, option::levels( 5 ) );
+    Field field      = fs.createField<double>( option::variables( 3 ) | option::alignment( 4 ) );
+    auto check_field = [&]( const Field& field ) {
+        EXPECT_EQ( field.shape()[0], fs.size() );
+        EXPECT_EQ( field.shape()[1], 5 );
+        EXPECT_EQ( field.shape()[2], 3 );
+        EXPECT_EQ( field.size(), fs.size() * 5 * 3 );
+        EXPECT_EQ( field.contiguous(), false );
+        EXPECT_EQ( field.strides()[0], 5 * 4 );
+        EXPECT_EQ( field.strides()[1], 4 );
+        EXPECT_EQ( field.strides()[2], 1 );
+    };
+    check_field( field );
+}
+
 //-----------------------------------------------------------------------------
 
 }  // namespace test

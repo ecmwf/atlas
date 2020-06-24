@@ -43,9 +43,9 @@ public:
     ArraySpec( const ArrayShape& );
     ArraySpec( const ArrayShape&, const ArrayStrides& );
     ArraySpec( const ArrayShape&, const ArrayStrides&, const ArrayLayout& );
-    ArraySpec( const ArrayShape&, ArrayAlignment&& );
-    ArraySpec( const ArrayShape&, const ArrayStrides&, ArrayAlignment&& );
-    ArraySpec( const ArrayShape&, const ArrayStrides&, const ArrayLayout&, ArrayAlignment&& );
+    ArraySpec( const ArrayShape&, const ArrayAlignment& );
+    ArraySpec( const ArrayShape&, const ArrayStrides&, const ArrayAlignment& );
+    ArraySpec( const ArrayShape&, const ArrayStrides&, const ArrayLayout&, const ArrayAlignment& );
     idx_t allocatedSize() const { return allocated_size_; }
     idx_t size() const { return size_; }
     idx_t rank() const { return rank_; }

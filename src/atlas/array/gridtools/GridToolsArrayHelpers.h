@@ -97,6 +97,7 @@ struct default_layout_t {
     using type = typename get_layout<std::make_integer_sequence<::gridtools::uint_t, Rank>>::type;
 };
 
+
 template <typename Value, typename LayoutMap>
 struct get_layout_map_component {
     // TODO: static_assert( ::gridtools::is_layout_map<LayoutMap>(), "Error: not a
@@ -148,19 +149,20 @@ struct get_pack_size {
     using type = ::gridtools::static_uint<sizeof...( T )>;
 };
 
-template <typename Value, typename LayoutMap, size_t Rank>
+template <typename Value, typename LayoutMap, typename Alignment, size_t Rank>
 struct gt_storage_t {
-    using type = gridtools::storage_traits::data_store_t<
-        Value, gridtools::storage_traits::custom_layout_storage_info_t<0, LayoutMap, ::gridtools::zero_halo<Rank>>>;
+    using type =
+        gridtools::storage_traits::data_store_t<Value, gridtools::storage_traits::custom_layout_storage_info_align_t<
+                                                           0, LayoutMap, ::gridtools::zero_halo<Rank>, Alignment>>;
 };
 
-template <typename Value, typename LayoutMap, typename... UInts>
-typename gt_storage_t<Value, LayoutMap, get_pack_size<UInts...>::type::value>::type* create_gt_storage(
+template <typename Value, typename LayoutMap, typename Alignment, typename... UInts>
+typename gt_storage_t<Value, LayoutMap, Alignment, get_pack_size<UInts...>::type::value>::type* create_gt_storage(
     UInts... dims ) {
     static_assert( ( sizeof...( dims ) > 0 ), "Error: can not create storages without any dimension" );
-
     constexpr static unsigned int rank = get_pack_size<UInts...>::type::value;
-    typedef gridtools::storage_traits::custom_layout_storage_info_t<0, LayoutMap, ::gridtools::zero_halo<rank>>
+    typedef gridtools::storage_traits::custom_layout_storage_info_align_t<0, LayoutMap, ::gridtools::zero_halo<rank>,
+                                                                          Alignment>
         storage_info_ty;
     typedef gridtools::storage_traits::data_store_t<Value, storage_info_ty> data_store_t;
 
@@ -174,6 +176,13 @@ typename gt_storage_t<Value, LayoutMap, get_pack_size<UInts...>::type::value>::t
     }
     return ds;
 }
+
+template <typename Value, typename LayoutMap, typename... UInts>
+typename gt_storage_t<Value, LayoutMap, ::gridtools::alignment<1>, get_pack_size<UInts...>::type::value>::type*
+create_gt_storage( UInts... dims ) {
+    return create_gt_storage<Value, LayoutMap, ::gridtools::alignment<1>>( dims... );
+}
+
 
 template <typename Value, size_t Rank>
 struct gt_wrap_storage_t {

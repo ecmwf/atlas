@@ -67,6 +67,9 @@ public:
     /// @brief Create field with given name, Datatype and ArrayShape
     Field( const std::string& name, array::DataType, const array::ArrayShape& = array::ArrayShape() );
 
+    /// @brief Create field with given name, Datatype and ArraySpec
+    Field( const std::string& name, array::DataType, array::ArraySpec&& );
+
     /// @brief Create field with given name, and take ownership of given Array
     Field( const std::string& name, array::Array* );
 

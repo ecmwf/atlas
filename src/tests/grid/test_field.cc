@@ -16,6 +16,7 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/grid.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/ObjectHandle.h"
@@ -47,7 +48,7 @@ public:
 
 CASE( "test_fieldcreator" ) {
     Field field( util::Config( "creator", "ArraySpec" )( "shape", array::make_shape( 10, 2 ) )(
-        "datatype", array::DataType::real32().str() )( "name", "myfield" ) );
+        "datatype", array::DataType::real32().kind() )( "name", "myfield" ) );
 
     EXPECT( field.datatype() == array::DataType::real32() );
     EXPECT( field.name() == "myfield" );
@@ -62,7 +63,7 @@ CASE( "test_fieldcreator" ) {
     util::Config ifs_parameters = util::Config( "creator", "IFS" )( "nlev", 137 )( "nproma", 10 )( "ngptot", g.size() );
 
     Log::info() << "Creating IFS field " << std::endl;
-    Field ifs( util::Config( ifs_parameters )( "name", "myfield" )( "datatype", array::DataType::int32().str() )(
+    Field ifs( util::Config( ifs_parameters )( "name", "myfield" )( "datatype", array::DataType::int32().kind() )(
         "nvar", 8 ) );
 
     ATLAS_DEBUG_VAR( ifs );
@@ -119,6 +120,30 @@ CASE( "test_wrap_rawdata_through_field" ) {
     Field field( "name", rawdata.data(), array::make_shape( 10, 2 ) );
 }
 
+CASE( "test_field_aligned" ) {
+    using namespace array;
+    auto check_field = []( const Field& field ) {
+        EXPECT_EQ( field.shape()[0], 10 );
+        EXPECT_EQ( field.shape()[1], 5 );
+        EXPECT_EQ( field.shape()[2], 3 );
+        EXPECT_EQ( field.size(), 10 * 5 * 3 );
+        EXPECT_EQ( field.contiguous(), false );
+        EXPECT_EQ( field.strides()[0], 5 * 4 );
+        EXPECT_EQ( field.strides()[1], 4 );
+        EXPECT_EQ( field.strides()[2], 1 );
+    };
+    SECTION( "field(name,datatype,spec)" ) {
+        Field field( "name", make_datatype<double>(), ArraySpec{make_shape( 10, 5, 3 ), ArrayAlignment( 4 )} );
+        check_field( field );
+    }
+    SECTION( "field(config)" ) {
+        Field field( util::Config( "creator", "ArraySpec" ) |  //
+                     option::datatypeT<double>() |             //
+                     option::shape( {10, 5, 3} ) |             //
+                     option::alignment( 4 ) );
+        check_field( field );
+    }
+}
 
 //-----------------------------------------------------------------------------
 

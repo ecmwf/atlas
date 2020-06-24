@@ -588,6 +588,43 @@ CASE( "test_acc_map" ) {
     delete ds;
 }
 
+CASE( "test_aligned_ArraySpec" ) {
+    auto spec = ArraySpec( make_shape( 10, 5, 3 ), ArrayAlignment( 4 ) );
+    EXPECT_EQ( spec.shape()[0], 10 );
+    EXPECT_EQ( spec.shape()[1], 5 );
+    EXPECT_EQ( spec.shape()[2], 3 );
+    EXPECT_EQ( spec.size(), 10 * 5 * 3 );
+    EXPECT_EQ( spec.allocatedSize(), 10 * 5 * 4 );
+    EXPECT_EQ( spec.contiguous(), false );
+    EXPECT_EQ( spec.strides()[0], 5 * 4 );
+    EXPECT_EQ( spec.strides()[1], 4 );
+    EXPECT_EQ( spec.strides()[2], 1 );
+}
+
+CASE( "test_aligned_Array" ) {
+    auto shape       = make_shape( 10, 5, 3 );
+    auto alignment   = ArrayAlignment( 4 );
+    auto datatype    = make_datatype<double>();
+    auto check_array = []( const Array& array ) {
+        EXPECT_EQ( array.shape()[0], 10 );
+        EXPECT_EQ( array.shape()[1], 5 );
+        EXPECT_EQ( array.shape()[2], 3 );
+        EXPECT_EQ( array.size(), 10 * 5 * 3 );
+        EXPECT_EQ( array.contiguous(), false );
+        EXPECT_EQ( array.strides()[0], 5 * 4 );
+        EXPECT_EQ( array.strides()[1], 4 );
+        EXPECT_EQ( array.strides()[2], 1 );
+    };
+    SECTION( "ArrayT(shape,alignment)" ) {
+        ArrayT<double> array{shape, alignment};
+        check_array( array );
+    }
+    SECTION( "Array::create(spec)" ) {
+        std::unique_ptr<Array> array{Array::create( datatype, ArraySpec( shape, alignment ) )};
+        check_array( *array );
+    }
+}
+
 //-----------------------------------------------------------------------------
 
 }  // namespace test
