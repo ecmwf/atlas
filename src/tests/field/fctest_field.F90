@@ -165,6 +165,23 @@ implicit none
 
 END_TEST
 
+TEST( test_field_aligned )
+    implicit none
+    type(atlas_Field) :: field
+    real(c_double), pointer :: view(:,:,:)
+    field = atlas_Field("field_2",atlas_real(c_double),(/3,5,10/),alignment=4)
+    call field%data(view)
+    FCTEST_CHECK_EQUAL( size(view,1) , 3 )
+    FCTEST_CHECK_EQUAL( size(view,2) , 5 )
+    FCTEST_CHECK_EQUAL( size(view,3) , 10 )
+    FCTEST_CHECK_EQUAL( field%shape(1), 3 )
+    FCTEST_CHECK_EQUAL( field%shape(2), 5 )
+    FCTEST_CHECK_EQUAL( field%shape(3), 10 )
+    FCTEST_CHECK_EQUAL( field%stride(1), 1 )
+    FCTEST_CHECK_EQUAL( field%stride(2), 4 )
+    FCTEST_CHECK_EQUAL( field%stride(3), 4*5 )
+END_TEST
+
 ! -----------------------------------------------------------------------------
 
 END_TESTSUITE

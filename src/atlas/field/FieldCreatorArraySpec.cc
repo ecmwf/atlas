@@ -38,14 +38,22 @@ FieldImpl* FieldCreatorArraySpec::createField( const eckit::Parametrisation& par
     else {
         s.assign( shape.begin(), shape.end() );
     }
-    array::DataType::kind_t kind = array::DataType::kind<double>();
-    params.get( "datatype", kind );
-    if ( !array::DataType::kind_valid( kind ) ) {
-        std::stringstream msg;
-        msg << "Could not create field. kind parameter " << kind << " unrecognized";
-        throw_Exception( msg.str() );
+
+    array::DataType datatype = array::DataType::create<double>();
+    std::string datatype_str;
+    if ( params.get( "datatype", datatype_str ) ) {
+        datatype = array::DataType( datatype_str );
     }
-    auto datatype = array::DataType( kind );
+    else {
+        array::DataType::kind_t kind( array::DataType::kind<double>() );
+        params.get( "kind", kind );
+        if ( !array::DataType::kind_valid( kind ) ) {
+            std::stringstream msg;
+            msg << "Could not create field. kind parameter unrecognized";
+            throw_Exception( msg.str() );
+        }
+        datatype = array::DataType( kind );
+    }
 
     int alignment = 1;
     params.get( "alignment", alignment );

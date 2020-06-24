@@ -48,7 +48,7 @@ public:
 
 CASE( "test_fieldcreator" ) {
     Field field( util::Config( "creator", "ArraySpec" )( "shape", array::make_shape( 10, 2 ) )(
-        "datatype", array::DataType::real32().kind() )( "name", "myfield" ) );
+        "datatype", array::DataType::real32().str() )( "name", "myfield" ) );
 
     EXPECT( field.datatype() == array::DataType::real32() );
     EXPECT( field.name() == "myfield" );
@@ -63,7 +63,7 @@ CASE( "test_fieldcreator" ) {
     util::Config ifs_parameters = util::Config( "creator", "IFS" )( "nlev", 137 )( "nproma", 10 )( "ngptot", g.size() );
 
     Log::info() << "Creating IFS field " << std::endl;
-    Field ifs( util::Config( ifs_parameters )( "name", "myfield" )( "datatype", array::DataType::int32().kind() )(
+    Field ifs( util::Config( ifs_parameters )( "name", "myfield" )( "datatype", array::DataType::int32().str() )(
         "nvar", 8 ) );
 
     ATLAS_DEBUG_VAR( ifs );
@@ -137,9 +137,9 @@ CASE( "test_field_aligned" ) {
         check_field( field );
     }
     SECTION( "field(config)" ) {
-        Field field( util::Config( "creator", "ArraySpec" ) |  //
-                     option::datatypeT<double>() |             //
-                     option::shape( {10, 5, 3} ) |             //
+        Field field( util::Config( "creator", "ArraySpec" ) |                     //
+                     util::Config( "datatype", make_datatype<double>().str() ) |  //
+                     option::shape( {10, 5, 3} ) |                                //
                      option::alignment( 4 ) );
         check_field( field );
     }
