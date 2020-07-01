@@ -129,7 +129,7 @@ void load_library( const eckit::PathName& library_dir, const std::string library
     if ( !eckit::system::Library::exists( library_name ) ) {
         std::ostringstream ss;
         ss << "Shared library " << library_path << " loaded but Library " << library_name << " not registered";
-        throw eckit::UnexpectedState( ss.str(), Here() );
+        throw eckit::UnexpectedState( ss.str() );
     }
 }
 
