@@ -44,6 +44,10 @@ public:
 
     operator bool() const { return not stack_.empty(); }
 
+public:
+    CallStack() = default;
+    CallStack( const CallStack& other ) : stack_( other.stack_ ) {}
+
 private:
     std::list<size_t> stack_;
     mutable size_t hash_{0};

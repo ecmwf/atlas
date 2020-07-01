@@ -69,6 +69,58 @@ CASE( "test barrier" ) {
     EXPECT( runtime::trace::Barriers::state() == Library::instance().traceBarriers() );
 }
 
+// --------------------------------------------------------------------------
+
+
+void haloexchange() {
+    ATLAS_TRACE();
+}
+void wind_const() {
+    ATLAS_TRACE();
+}
+void wind_next() {
+    ATLAS_TRACE();
+    haloexchange();
+}
+static int count = 0;
+void dp_meth() {
+    ATLAS_TRACE();
+    if ( count == 0 ) {
+        wind_const();
+    }
+    else {
+        wind_next();
+    }
+    ++count;
+}
+void tracer_interpolation() {
+    ATLAS_TRACE();
+    haloexchange();
+}
+void execute_sladv() {
+    ATLAS_TRACE();
+    dp_meth();
+    tracer_interpolation();
+}
+
+CASE( "test report" ) {
+    SECTION( "1" ) {
+        for ( int i = 0; i < 3; ++i ) {
+            execute_sladv();
+        }
+    }
+    SECTION( "2" ) {
+        count = 0;
+        for ( int i = 0; i < 3; ++i ) {
+            execute_sladv();
+        }
+    }
+    Log::info() << atlas::Trace::report() << std::endl;
+}
+
+// --------------------------------------------------------------------------
+
+
 }  // namespace test
 }  // namespace atlas
 
