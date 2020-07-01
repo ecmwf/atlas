@@ -11,13 +11,15 @@
 #pragma once
 
 #include <algorithm>  // std::fill
-#include <cstdlib>    // posix_memalign
-#include <limits>     // std::numeric_limits<T>::signaling_NaN
+#include <atomic>
+#include <cstdlib>  // posix_memalign
+#include <limits>   // std::numeric_limits<T>::signaling_NaN
 #include <sstream>
 
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/log/Bytes.h"
 
 //------------------------------------------------------------------------------
@@ -25,6 +27,43 @@
 namespace atlas {
 namespace array {
 namespace native {
+
+struct MemoryHighWatermark {
+    std::atomic<size_t> bytes_{0};
+    std::atomic<size_t> high_{0};
+    void print( std::ostream& out ) const { out << eckit::Bytes( double( bytes_ ) ); }
+    friend std::ostream& operator<<( std::ostream& out, const MemoryHighWatermark& v ) {
+        v.print( out );
+        return out;
+    }
+    MemoryHighWatermark& operator+=( const size_t& bytes ) {
+        bytes_ += bytes;
+        update_maximum();
+        Log::trace() << "Memory: " << eckit::Bytes( double( bytes_ ) ) << "\t( +" << eckit::Bytes( double( bytes ) )
+                     << " \t| high watermark " << eckit::Bytes( double( high_ ) ) << "\t)" << std::endl;
+        return *this;
+    }
+    MemoryHighWatermark& operator-=( const size_t& bytes ) {
+        bytes_ -= bytes;
+        Log::trace() << "Memory: " << eckit::Bytes( double( bytes_ ) ) << "\t( -" << eckit::Bytes( double( bytes ) )
+                     << " \t| high watermark " << eckit::Bytes( double( high_ ) ) << "\t)" << std::endl;
+        return *this;
+    }
+
+private:
+    MemoryHighWatermark() = default;
+    void update_maximum() noexcept {
+        size_t prev_value = high_;
+        while ( prev_value < bytes_ && !high_.compare_exchange_weak( prev_value, bytes_ ) ) {
+        }
+    }
+
+public:
+    static MemoryHighWatermark& instance() {
+        static MemoryHighWatermark _instance;
+        return _instance;
+    }
+};
 
 template <typename Value>
 static constexpr Value invalid_value() {
@@ -88,7 +127,9 @@ private:
     void alloc_aligned( Value*& ptr, size_t n ) {
         const size_t alignment = 64 * sizeof( Value );
         size_t bytes           = sizeof( Value ) * n;
-        int err                = posix_memalign( (void**)&ptr, alignment, bytes );
+        MemoryHighWatermark::instance() += bytes;
+
+        int err = posix_memalign( (void**)&ptr, alignment, bytes );
         if ( err ) {
             throw_AllocationFailed( bytes, Here() );
         }
@@ -97,7 +138,10 @@ private:
     void free_aligned( Value*& ptr ) {
         free( ptr );
         ptr = nullptr;
+        MemoryHighWatermark::instance() -= footprint();
     }
+
+    size_t footprint() const { return sizeof( Value ) * size_; }
 
     Value* data_store_;
     size_t size_;

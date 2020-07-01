@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -198,6 +199,9 @@ public:  // Destructor
     void haloExchange( bool on_device = false ) const;
     void adjointHaloExchange( bool on_device = false ) const;
 
+
+    void callbackOnDestruction( std::function<void()>&& f ) { callback_on_destruction_.emplace_back( std::move( f ) ); }
+
 private:  // methods
     void print( std::ostream& os, bool dump = false ) const;
 
@@ -206,6 +210,7 @@ private:  // members
     util::Metadata metadata_;
     array::Array* array_;
     FunctionSpace* functionspace_;
+    std::vector<std::function<void()>> callback_on_destruction_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

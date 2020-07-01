@@ -83,6 +83,9 @@ FieldImpl::FieldImpl( const std::string& name, array::Array* array ) : functions
 FieldImpl::~FieldImpl() {
     array_->detach();
     if ( array_->owners() == 0 ) {
+        for ( auto& f : callback_on_destruction_ ) {
+            f();
+        }
         delete array_;
     }
     delete functionspace_;
