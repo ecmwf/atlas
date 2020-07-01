@@ -292,9 +292,9 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
     double fft_threshold = 0.0;  // fraction of latitudes of the full grid down to which FFT is used.
     // This threshold needs to be adjusted depending on the dgemm and FFT performance of the machine
     // on which this code is running!
-    int nlats         = 0;
-    int nlonsMax      = 0;
-    int neqtr         = 0;
+    idx_t nlats       = 0;
+    idx_t nlonsMax    = 0;
+    idx_t neqtr       = 0;
     useFFT_           = TransParameters( config ).fft();
     unstruct_precomp_ = ( config.has( "precompute" ) ? precompute_ : false );
     no_symmetry_      = false;

@@ -561,7 +561,7 @@ void Structured::crop( const Domain& dom ) {
 
                 cropped_xmin[jcropped] = normalise( x( i_xmin, j ) );
                 cropped_xmax[jcropped] = normalise( x( i_xmax, j ) );
-                cropped_nx[jcropped]   = std::max( 1, n );
+                cropped_nx[jcropped]   = std::max<idx_t>( 1, n );
             }
         }
     }

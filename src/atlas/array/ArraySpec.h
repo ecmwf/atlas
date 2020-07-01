@@ -26,9 +26,9 @@ namespace array {
 
 class ArraySpec {
 private:
-    idx_t size_;
+    size_t size_;
     idx_t rank_;
-    idx_t allocated_size_;
+    size_t allocated_size_;
     ArrayShape shape_;
     ArrayStrides strides_;
     ArrayLayout layout_;
@@ -46,8 +46,8 @@ public:
     ArraySpec( const ArrayShape&, const ArrayAlignment& );
     ArraySpec( const ArrayShape&, const ArrayStrides&, const ArrayAlignment& );
     ArraySpec( const ArrayShape&, const ArrayStrides&, const ArrayLayout&, const ArrayAlignment& );
-    idx_t allocatedSize() const { return allocated_size_; }
-    idx_t size() const { return size_; }
+    size_t allocatedSize() const { return allocated_size_; }
+    size_t size() const { return size_; }
     idx_t rank() const { return rank_; }
     const ArrayShape& shape() const { return shape_; }
     const ArrayAlignment& alignment() const { return alignment_; }

@@ -24,8 +24,8 @@ find_package( ecbuild 3.1.0 REQUIRED )
 
 project( atlas LANGUAGES CXX )
 
-set( ATLAS_BITS_GLOBAL 64 ) # bits used to define a global index (atlas::gidx_t)
-set( ATLAS_BITS_LOCAL 32 )  # bits used to define a local index  (atlas::idx_t)
+set( ATLAS_BITS_GLOBAL 64 CACHE STRING "bits used to define a global index (atlas::gidx_t)" )
+set( ATLAS_BITS_LOCAL  32 CACHE STRING "bits used to define a local index (atlas::idx_t)" )
 
 ################################################################################
 # Required packages

@@ -125,7 +125,7 @@ CASE( "test_array_shape" ) {
     EXPECT_EQ( ds->rank(), 2 );
     EXPECT_EQ( ds->stride( 0 ), gt_hv.storage_info().stride<0>() );
     EXPECT_EQ( ds->stride( 1 ), gt_hv.storage_info().stride<1>() );
-    EXPECT( ds->contiguous()  );
+    EXPECT( ds->contiguous() );
     delete ds;
 }
 #endif

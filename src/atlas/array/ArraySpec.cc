@@ -18,10 +18,10 @@ namespace atlas {
 namespace array {
 
 namespace {
-idx_t compute_aligned_size( idx_t size, idx_t alignment ) {
-    idx_t div           = size / alignment;
-    idx_t mod           = size % alignment;
-    idx_t _aligned_size = div * alignment;
+size_t compute_aligned_size( size_t size, size_t alignment ) {
+    size_t div           = size / alignment;
+    size_t mod           = size % alignment;
+    size_t _aligned_size = div * alignment;
     if ( mod > 0 ) {
         _aligned_size += alignment;
     }
@@ -47,10 +47,10 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayAlignment& alignment )
         shape_[j]   = shape[j];
         strides_[j] = allocated_size_;
         layout_[j]  = j;
-        size_ *= shape_[j];
-        allocated_size_ *= aligned_shape[j];
+        size_ *= size_t( shape_[j] );
+        allocated_size_ *= size_t( aligned_shape[j] );
     }
-    ATLAS_ASSERT( allocated_size_ == compute_aligned_size( shape_[0] * strides_[0], alignment ) );
+    ATLAS_ASSERT( allocated_size_ == compute_aligned_size( size_t( shape_[0] ) * size_t( strides_[0] ), alignment ) );
     contiguous_     = ( size_ == allocated_size_ );
     default_layout_ = true;
     alignment_      = alignment;

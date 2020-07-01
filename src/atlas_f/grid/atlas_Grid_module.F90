@@ -669,7 +669,7 @@ function Structured__ij_int32(this, gidx) result(ij)
   use atlas_grid_Structured_c_binding
   integer(c_int), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
-  integer(c_int) :: ij (2)
+  integer(ATLAS_KIND_IDX) :: ij (2)
   call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, c_gidx(gidx), ij(1), ij(2))
   ij = ij + 1
 end function
@@ -679,7 +679,7 @@ function Structured__ij_int64(this, gidx) result(ij)
   use atlas_grid_Structured_c_binding
   integer(c_long), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
-  integer(c_int) :: ij (2)
+  integer(ATLAS_KIND_IDX) :: ij (2)
   call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, c_gidx(gidx), ij(1), ij(2))
   ij = ij + 1
 end function

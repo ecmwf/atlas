@@ -228,7 +228,7 @@ CASE( "test_grad" ) {
     }
 
     double min, max, mean;
-    int N;
+    idx_t N;
 
     fvm.node_columns().minimum( fields["xder"], min );
     fvm.node_columns().maximum( fields["xder"], max );
@@ -291,7 +291,7 @@ CASE( "test_div" ) {
     }
 
     double min, max, mean;
-    int N;
+    idx_t N;
     fvm.node_columns().minimum( fields["div"], min );
     fvm.node_columns().maximum( fields["div"], max );
     fvm.node_columns().mean( fields["div"], mean, N );
@@ -368,7 +368,7 @@ CASE( "test_curl" ) {
     }
 
     double min, max, mean;
-    int N;
+    idx_t N;
 
     // Vorticity!
     fvm.node_columns().minimum( fields["vor"], min );
@@ -406,7 +406,7 @@ CASE( "test_lapl" ) {
     }
 
     double min, max, mean;
-    int N;
+    idx_t N;
     fvm.node_columns().minimum( fields["lapl"], min );
     fvm.node_columns().maximum( fields["lapl"], max );
     fvm.node_columns().mean( fields["lapl"], mean, N );
