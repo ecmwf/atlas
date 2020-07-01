@@ -60,8 +60,8 @@ public:
     }
 
     ATLAS_ALWAYS_INLINE void partition( gidx_t begin, gidx_t end, int partitions[] ) const override {
-        const Derived& derived = *static_cast<const Derived*>(this);
-        size_t i = 0;
+        const Derived& derived = *static_cast<const Derived*>( this );
+        size_t i               = 0;
         for ( gidx_t n = begin; n < end; ++n, ++i ) {
             partitions[i] = derived.function( n );
         }
