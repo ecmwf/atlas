@@ -27,6 +27,8 @@ install( FILES
 list( APPEND atlas_srcs
 library.h
 library/config.h
+library/FloatingPointExceptions.h
+library/FloatingPointExceptions.cc
 library/Library.h
 library/Library.cc
 library/Plugin.h

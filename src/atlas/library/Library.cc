@@ -8,11 +8,14 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/library/Library.h"
+
 #include <sstream>
 #include <string>
 
 #include <dlfcn.h>  // for dynamic loading (should be delegated to eckit)
 
+#include "eckit/config/LibEcKit.h"
 #include "eckit/config/Resource.h"
 #include "eckit/eckit.h"
 #include "eckit/filesystem/LocalPathName.h"
@@ -25,7 +28,7 @@
 #include "eckit/types/Types.h"
 #include "eckit/utils/Translator.h"
 
-#include "atlas/library/Library.h"
+#include "atlas/library/FloatingPointExceptions.h"
 #include "atlas/library/Plugin.h"
 #include "atlas/library/config.h"
 #include "atlas/library/git_sha1.h"
@@ -234,7 +237,6 @@ void Library::initialise( const eckit::Parametrisation& config ) {
         warning_channel_.reset();
     }
 
-
     std::vector<std::string> plugin_names =
         eckit::Resource<std::vector<std::string>>( "atlasPlugins;$ATLAS_PLUGINS", {} );
 
@@ -286,6 +288,8 @@ void Library::initialise( const eckit::Parametrisation& config ) {
         }
     }
 
+    library::enable_floating_point_exceptions();
+    library::enable_atlas_signal_handler();
 
     // Summary
     if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {

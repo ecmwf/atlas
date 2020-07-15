@@ -295,6 +295,11 @@ int getEnv( const std::string& env, int default_value ) {
     return default_value;
 }
 
+void setEnv( const std::string& env, bool value ) {
+    constexpr int DO_NOT_REPLACE_IF_EXISTS = 0;
+    ::setenv( env.c_str(), eckit::Translator<bool, std::string>()( value ).c_str(), DO_NOT_REPLACE_IF_EXISTS );
+}
+
 }  // namespace
 
 struct AtlasTestEnvironment {
@@ -346,6 +351,10 @@ struct AtlasTestEnvironment {
             Log::error() << "Calling MPI_Abort" << std::endl;
             eckit::mpi::comm().abort();
         } );
+
+        setEnv( "ATLAS_FPE", true );
+        setEnv( "ATLAS_SIGNAL_HANDLER", true );
+
         atlas::initialize();
         eckit::mpi::comm().barrier();
     }
