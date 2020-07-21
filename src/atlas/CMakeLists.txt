@@ -528,6 +528,12 @@ interpolation/method/structured/QuasiCubic2D.cc
 interpolation/method/structured/QuasiCubic2D.h
 interpolation/method/structured/QuasiCubic3D.cc
 interpolation/method/structured/QuasiCubic3D.h
+interpolation/nonlinear/MissingIfAllMissing.cc
+interpolation/nonlinear/MissingIfAllMissing.h
+interpolation/nonlinear/MissingIfAnyMissing.cc
+interpolation/nonlinear/MissingIfAnyMissing.h
+interpolation/nonlinear/MissingIfHeaviestMissing.cc
+interpolation/nonlinear/MissingIfHeaviestMissing.h
 interpolation/nonlinear/NonLinear.cc
 interpolation/nonlinear/NonLinear.h
 interpolation/nonlinear/NonLinearFactory.cc

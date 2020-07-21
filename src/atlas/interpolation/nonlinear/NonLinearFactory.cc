@@ -10,10 +10,13 @@
  */
 
 
+#include "atlas/interpolation/nonlinear/NonLinearFactory.h"
+
 #include <string>
 
-#include "atlas/interpolation/nonlinear/NonLinearFactory.h"
-//#include "atlas/interpolation/nonlinear/.h"
+#include "atlas/interpolation/nonlinear/MissingIfAllMissing.h"
+#include "atlas/interpolation/nonlinear/MissingIfAnyMissing.h"
+#include "atlas/interpolation/nonlinear/MissingIfHeaviestMissing.h"
 
 
 namespace atlas {
@@ -25,7 +28,9 @@ namespace {
 void force_link() {
     static struct Link {
         Link() {
-            //NonLinearFactoryBuilder<...>();
+            NonLinearFactoryBuilder<MissingIfHeaviestMissing>();
+            NonLinearFactoryBuilder<MissingIfAnyMissing>();
+            NonLinearFactoryBuilder<MissingIfAllMissing>();
         }
     } link;
 }
