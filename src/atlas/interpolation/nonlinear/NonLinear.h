@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include <memory>
-
 #include "eckit/config/Parametrisation.h"
 #include "eckit/linalg/SparseMatrix.h"
 
@@ -40,13 +38,6 @@ public:
     using Size   = eckit::linalg::Size;
 
     /**
-     * @brief Missing values indicator base class
-     */
-    struct MissingValue {
-        virtual bool operator()( const double& ) const = 0;
-    };
-
-    /**
      * @brief NonLinear ctor
      * @param [in] config with optional "missingValue", default NaN indicates missing value in field
      */
@@ -65,11 +56,16 @@ public:
      */
     virtual bool execute( Matrix& W, const Field& f ) const = 0;
 
-protected:
     /**
-     * @brief Missing values indicator
+     * @brief Return if value is considered a missing value
+     * @param [in] value to evaluate
+     * @return if value is considered a missing value
      */
-    std::unique_ptr<MissingValue> missingValue_;
+    bool missingValue( const double& ) const;
+
+private:
+    double missingValue_;
+    const bool missingValueIsNaN_;
 };
 
 

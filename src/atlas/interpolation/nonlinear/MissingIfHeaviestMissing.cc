@@ -32,8 +32,6 @@ bool MissingIfHeaviestMissing::execute( NonLinear::Matrix& W, const Field& field
     // NOTE only for scalars (for now)
     auto values = array::make_view<double, 1>( field );
 
-    ATLAS_ASSERT( missingValue_ );
-
     // correct matrix weigths for the missing values
     ATLAS_ASSERT( idx_t( W.cols() ) == values.size() );
 
@@ -56,7 +54,7 @@ bool MissingIfHeaviestMissing::execute( NonLinear::Matrix& W, const Field& field
         Matrix::iterator kt( it );
         Size k = i;
         for ( ; it != end; ++it, ++i, ++N_entries ) {
-            const bool miss = ( *missingValue_ )( values[it.col()] );
+            const bool miss = missingValue( values[it.col()] );
 
             if ( miss ) {
                 ++N_missing;
@@ -83,7 +81,7 @@ bool MissingIfHeaviestMissing::execute( NonLinear::Matrix& W, const Field& field
             else {
                 const double factor = 1. / sum;
                 for ( Size j = k; j < k + N_entries; ++j, ++kt ) {
-                    const bool miss = ( *missingValue_ )( values[kt.col()] );
+                    const bool miss = missingValue( values[kt.col()] );
                     data[j]         = miss ? 0. : ( factor * data[j] );
                 }
             }
