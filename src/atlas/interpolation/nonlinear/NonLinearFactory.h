@@ -14,7 +14,8 @@
 
 #include <string>
 
-#include "atlas/util/Config.h"
+#include "eckit/config/Parametrisation.h"
+
 #include "atlas/util/Factory.h"
 
 
@@ -24,23 +25,24 @@ namespace nonlinear {
 
 
 class NonLinear;
+using Config = eckit::Parametrisation;
 
 
 class NonLinearFactory : public util::Factory<NonLinearFactory> {
 public:
     static std::string className() { return "NonLinearFactory"; }
-    static const NonLinear* build( const std::string&, const util::Config& );
+    static const NonLinear* build( const std::string&, const Config& );
     using Factory::Factory;
 
 private:
-    virtual const NonLinear* make( const util::Config& ) = 0;
+    virtual const NonLinear* make( const Config& ) = 0;
 };
 
 
 template <class T>
 class NonLinearFactoryBuilder : public NonLinearFactory {
 private:
-    virtual const NonLinear* make( const util::Config& config ) override { return new T( config ); }
+    virtual const NonLinear* make( const Config& config ) override { return new T( config ); }
 
 public:
     using NonLinearFactory::NonLinearFactory;

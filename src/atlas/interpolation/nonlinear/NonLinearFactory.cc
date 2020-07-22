@@ -37,7 +37,7 @@ void force_link() {
 }  // namespace
 
 
-const NonLinear* NonLinearFactory::build( const std::string& builder, const util::Config& config ) {
+const NonLinear* NonLinearFactory::build( const std::string& builder, const Config& config ) {
     force_link();
     auto factory = get( builder );
     return factory->make( config );

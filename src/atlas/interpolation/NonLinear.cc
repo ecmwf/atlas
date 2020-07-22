@@ -21,14 +21,23 @@ namespace atlas {
 namespace interpolation {
 
 
+namespace {
+std::string get_string( const eckit::Parametrisation& p, const std::string& name ) {
+    std::string value;
+    ATLAS_ASSERT_MSG( p.get( name, value ), "" );
+    return value;
+}
+}  // namespace
+
+
 NonLinear::NonLinear() : Handle( nullptr ) {}
 
 
-NonLinear::NonLinear( const util::Config& config ) :
-    Handle( nonlinear::NonLinearFactory::build( config.getString( "type" ), config ) ) {}
+NonLinear::NonLinear( const NonLinear::Config& config ) :
+    Handle( nonlinear::NonLinearFactory::build( get_string( config, "type" ), config ) ) {}
 
 
-NonLinear::NonLinear( const std::string& type, const util::Config& config ) :
+NonLinear::NonLinear( const std::string& type, const NonLinear::Config& config ) :
     Handle( nonlinear::NonLinearFactory::build( type, config ) ) {}
 
 

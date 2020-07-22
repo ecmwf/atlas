@@ -36,13 +36,14 @@ namespace interpolation {
  */
 struct NonLinear : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::NonLinear> ) {
     using Spec   = util::Config;
+    using Config = nonlinear::NonLinear::Config;
     using Matrix = nonlinear::NonLinear::Matrix;
 
     // ctor
     using Handle::Handle;
     NonLinear();
-    NonLinear( const util::Config& );
-    NonLinear( const std::string& type, const util::Config& );
+    NonLinear( const Config& );
+    NonLinear( const std::string& type, const Config& );
 
     /**
      * @brief bool operator
