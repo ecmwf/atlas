@@ -12,6 +12,8 @@
 
 #include "atlas/interpolation/nonlinear/NonLinear.h"
 
+#include <cmath>
+
 #include "atlas/runtime/Exception.h"
 
 
@@ -20,14 +22,32 @@ namespace interpolation {
 namespace nonlinear {
 
 
-NonLinear::NonLinear( const Config& config ) : missingValue_( 0. ) {
-    config.get( "missingValue", missingValue_ );
-    ATLAS_ASSERT( missingValue_ == missingValue_ );
+/// @brief CompareNaN Indicate missing value if NaN
+struct CompareNaN : NonLinear::Compare {
+    bool operator()( const double& value ) const override { return std::isnan( value ); }
+};
+
+
+/// @brief CompareValue Indicate missing value if compares equally to pre-defined value
+struct CompareValue : NonLinear::Compare {
+    CompareValue( double missingValue ) : missingValue_( missingValue ) { ATLAS_ASSERT( !std::isnan( missingValue ) ); }
+
+    bool operator()( const double& value ) const override { return value == missingValue_; }
+
+    double missingValue_;
+};
+
+
+NonLinear::NonLinear( const Config& config ) : missingValue_( new CompareNaN() ) {
+    double missingValue;
+    if ( config.get( "missingValue", missingValue ) ) {
+        missingValue_.reset( new CompareValue( missingValue ) );
+    }
 }
 
 
 bool NonLinear::missingValue( const double& value ) const {
-    return value == missingValue_;
+    return ( *missingValue_ )( value );
 }
 
 

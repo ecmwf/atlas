@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "eckit/config/Parametrisation.h"
 #include "eckit/linalg/SparseMatrix.h"
 
@@ -37,6 +39,11 @@ public:
     using Scalar = eckit::linalg::Scalar;
     using Size   = eckit::linalg::Size;
 
+    /// Missing values indicator
+    struct Compare {
+        virtual bool operator()( const double& ) const = 0;
+    };
+
     /// ctor
     NonLinear( const Config& );
 
@@ -49,9 +56,9 @@ public:
     /// Check if value represents a  missing value
     virtual bool missingValue( const double& ) const;
 
-private:
-    /// Missing value to compare against
-    double missingValue_;
+protected:
+    /// Missing value indicator
+    std::unique_ptr<Compare> missingValue_;
 };
 
 
