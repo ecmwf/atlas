@@ -29,37 +29,41 @@
 namespace atlas {
 namespace interpolation {
 
-void Method::check_compatibility( const Field& src, const Field& tgt ) const {
+void Method::check_compatibility( const Field& src, const Field& tgt, const Matrix& W ) const {
     ATLAS_ASSERT( src.datatype() == tgt.datatype() );
     ATLAS_ASSERT( src.rank() == tgt.rank() );
     ATLAS_ASSERT( src.levels() == tgt.levels() );
     ATLAS_ASSERT( src.variables() == tgt.variables() );
 
-    ATLAS_ASSERT( !matrix_.empty() );
-    ATLAS_ASSERT( tgt.shape( 0 ) >= static_cast<idx_t>( matrix_.rows() ) );
-    ATLAS_ASSERT( src.shape( 0 ) >= static_cast<idx_t>( matrix_.cols() ) );
+    ATLAS_ASSERT( !W.empty() );
+    ATLAS_ASSERT( tgt.shape( 0 ) >= static_cast<idx_t>( W.rows() ) );
+    ATLAS_ASSERT( src.shape( 0 ) >= static_cast<idx_t>( W.cols() ) );
 }
 
 template <typename Value>
-void Method::interpolate_field( const Field& src, Field& tgt ) const {
-    check_compatibility( src, tgt );
+void Method::interpolate_field( const Field& src, Field& tgt, const Matrix& W ) const {
+    check_compatibility( src, tgt, W );
+
     if ( src.rank() == 1 ) {
-        interpolate_field_rank1<Value>( src, tgt );
+        interpolate_field_rank1<Value>( src, tgt, W );
     }
-    if ( src.rank() == 2 ) {
-        interpolate_field_rank2<Value>( src, tgt );
+    else if ( src.rank() == 2 ) {
+        interpolate_field_rank2<Value>( src, tgt, W );
     }
-    if ( src.rank() == 3 ) {
-        interpolate_field_rank3<Value>( src, tgt );
+    else if ( src.rank() == 3 ) {
+        interpolate_field_rank3<Value>( src, tgt, W );
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
     }
 }
 
 template <typename Value>
-void Method::interpolate_field_rank1( const Field& src, Field& tgt ) const {
-    const auto outer  = matrix_.outer();
-    const auto index  = matrix_.inner();
-    const auto weight = matrix_.data();
-    idx_t rows        = static_cast<idx_t>( matrix_.rows() );
+void Method::interpolate_field_rank1( const Field& src, Field& tgt, const Matrix& W ) const {
+    const auto outer  = W.outer();
+    const auto index  = W.inner();
+    const auto weight = W.data();
+    idx_t rows        = static_cast<idx_t>( W.rows() );
 
     if ( use_eckit_linalg_spmv_ ) {
         if ( src.datatype() != array::make_datatype<double>() ) {
@@ -71,7 +75,7 @@ void Method::interpolate_field_rank1( const Field& src, Field& tgt ) const {
 
         eckit::linalg::Vector v_src( const_cast<double*>( array::make_view<double, 1>( src ).data() ), src.shape( 0 ) );
         eckit::linalg::Vector v_tgt( array::make_view<double, 1>( tgt ).data(), tgt.shape( 0 ) );
-        eckit::linalg::LinearAlgebra::backend().spmv( matrix_, v_src, v_tgt );
+        eckit::linalg::LinearAlgebra::backend().spmv( W, v_src, v_tgt );
     }
     else {
         auto v_src = array::make_view<Value, 1>( src );
@@ -89,11 +93,11 @@ void Method::interpolate_field_rank1( const Field& src, Field& tgt ) const {
 }
 
 template <typename Value>
-void Method::interpolate_field_rank2( const Field& src, Field& tgt ) const {
-    const auto outer  = matrix_.outer();
-    const auto index  = matrix_.inner();
-    const auto weight = matrix_.data();
-    idx_t rows        = static_cast<idx_t>( matrix_.rows() );
+void Method::interpolate_field_rank2( const Field& src, Field& tgt, const Matrix& W ) const {
+    const auto outer  = W.outer();
+    const auto index  = W.inner();
+    const auto weight = W.data();
+    idx_t rows        = static_cast<idx_t>( W.rows() );
 
     auto v_src = array::make_view<Value, 2>( src );
     auto v_tgt = array::make_view<Value, 2>( tgt );
@@ -116,11 +120,11 @@ void Method::interpolate_field_rank2( const Field& src, Field& tgt ) const {
 
 
 template <typename Value>
-void Method::interpolate_field_rank3( const Field& src, Field& tgt ) const {
-    const auto outer  = matrix_.outer();
-    const auto index  = matrix_.inner();
-    const auto weight = matrix_.data();
-    idx_t rows        = static_cast<idx_t>( matrix_.rows() );
+void Method::interpolate_field_rank3( const Field& src, Field& tgt, const Matrix& W ) const {
+    const auto outer  = W.outer();
+    const auto index  = W.inner();
+    const auto weight = W.data();
+    idx_t rows        = static_cast<idx_t>( W.rows() );
 
     auto v_src = array::make_view<Value, 3>( src );
     auto v_tgt = array::make_view<Value, 3>( tgt );
@@ -150,6 +154,11 @@ Method::Method( const Method::Config& config ) {
     std::string spmv = "";
     config.get( "spmv", spmv );
     use_eckit_linalg_spmv_ = ( spmv == "eckit" );
+
+    std::string non_linear;
+    if ( config.get( "non_linear", non_linear ) ) {
+        nonLinear_ = NonLinear( non_linear, config );
+    }
 }
 
 void Method::setup( const FunctionSpace& source, const FunctionSpace& target ) {
@@ -203,15 +212,27 @@ void Method::do_execute( const FieldSet& fieldsSource, FieldSet& fieldsTarget ) 
 }
 
 void Method::do_execute( const Field& src, Field& tgt ) const {
-    haloExchange( src );
-
     ATLAS_TRACE( "atlas::interpolation::method::Method::do_execute()" );
 
-    if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
-        interpolate_field<double>( src, tgt );
+    haloExchange( src );
+
+    // non-linearities: a non-empty M matrix contains the corrections applied to matrix_
+    Matrix M;
+    if ( !matrix_.empty() && nonLinear_ ) {
+        Matrix W( matrix_ );  // copy (a big penalty -- copy-on-write would definitely be better)
+        if ( nonLinear_->execute( W, src ) ) {
+            M.swap( W );
+        }
     }
-    if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
-        interpolate_field<float>( src, tgt );
+
+    if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
+        interpolate_field<double>( src, tgt, M.empty() ? matrix_ : M );
+    }
+    else if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
+        interpolate_field<float>( src, tgt, M.empty() ? matrix_ : M );
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
     }
 
     tgt.set_dirty();
