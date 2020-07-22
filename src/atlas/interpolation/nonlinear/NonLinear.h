@@ -42,7 +42,7 @@ public:
     /**
      * @brief Missing values indicator base class
      */
-    struct Compare {
+    struct MissingValue {
         virtual bool operator()( const double& ) const = 0;
     };
 
@@ -50,7 +50,7 @@ public:
      * @brief NonLinear ctor
      * @param [in] config with optional "missingValue", default NaN indicates missing value in field
      */
-    NonLinear( const Config& config);
+    NonLinear( const Config& config );
 
     /**
      * @brief NonLinear dtor
@@ -60,16 +60,16 @@ public:
     /**
      * @brief Apply non-linear corrections to interpolation matrix
      * @param [inout] W interpolation matrix
-     * @param [in] field with missing values information
+     * @param [in] f field with missing values information
      * @return if W was modified
      */
-    virtual bool execute( Matrix& W, const Field& field ) const = 0;
+    virtual bool execute( Matrix& W, const Field& f ) const = 0;
 
 protected:
     /**
      * @brief Missing values indicator
      */
-    std::unique_ptr<Compare> missingValue_;
+    std::unique_ptr<MissingValue> missingValue_;
 };
 
 

@@ -13,6 +13,7 @@
 #include "atlas/interpolation/NonLinear.h"
 
 #include "atlas/interpolation/nonlinear/NonLinearFactory.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 
 
@@ -29,6 +30,12 @@ NonLinear::NonLinear( const util::Config& config ) :
 
 NonLinear::NonLinear( const std::string& type, const util::Config& config ) :
     Handle( nonlinear::NonLinearFactory::build( type, config ) ) {}
+
+
+bool NonLinear::execute( NonLinear::Matrix& W, const Field& f ) const {
+    ATLAS_ASSERT_MSG( this, "NonLinear: ObjectHandle<NonLinear> not setup" );
+    return get()->execute( W, f );
+}
 
 
 }  // namespace interpolation

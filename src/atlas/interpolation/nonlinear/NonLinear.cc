@@ -22,27 +22,29 @@ namespace interpolation {
 namespace nonlinear {
 
 
-/// @brief CompareNaN Indicate missing value if NaN
-struct CompareNaN : NonLinear::Compare {
+/// @brief Indicate missing value if NaN
+struct MissingValueNaN : NonLinear::MissingValue {
     bool operator()( const double& value ) const override { return std::isnan( value ); }
 };
 
 
-/// @brief CompareValue Indicate missing value if compares equally to pre-defined value
-struct CompareValue : NonLinear::Compare {
-    CompareValue( double missingValue ) : missingValue_( missingValue ) { ATLAS_ASSERT( !std::isnan( missingValue ) ); }
+/// @brief Indicate missing value if it compares equally to pre-defined value
+struct MissingValueFixed : NonLinear::MissingValue {
+    MissingValueFixed( double missingValue ) : missingValue_( missingValue ) {
+        ATLAS_ASSERT( !std::isnan( missingValue ) );
+    }
 
     bool operator()( const double& value ) const override { return value == missingValue_; }
 
-    double missingValue_;
+    const double missingValue_;
 };
 
 
-NonLinear::NonLinear( const Config& config ) : missingValue_( new CompareNaN() ) {
+NonLinear::NonLinear( const Config& config ) {
     double missingValue;
-    if ( config.get( "missingValue", missingValue ) ) {
-        missingValue_.reset( new CompareValue( missingValue ) );
-    }
+    missingValue_.reset( config.get( "missing_value", missingValue )
+                             ? static_cast<MissingValue*>( new MissingValueFixed( missingValue ) )
+                             : new MissingValueNaN() );
 }
 
 
