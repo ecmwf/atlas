@@ -39,25 +39,39 @@ public:
     using Scalar = eckit::linalg::Scalar;
     using Size   = eckit::linalg::Size;
 
-    /// Missing values indicator
+    /**
+     * @brief Missing values indicator base class
+     */
     struct Compare {
         virtual bool operator()( const double& ) const = 0;
     };
 
-    /// ctor
-    NonLinear( const Config& );
+    /**
+     * @brief NonLinear ctor
+     * @param [in] config with optional "missingValue", default NaN indicates missing value in field
+     */
+    NonLinear( const Config& config);
 
-    /// dtor
+    /**
+     * @brief NonLinear dtor
+     */
     virtual ~NonLinear();
 
-    /// Update interpolation linear system to account for non-linearities
-    virtual bool treatment( Matrix&, const Field& ) const = 0;
+    /**
+     * @brief Apply non-linear corrections to interpolation matrix
+     * @param [inout] W interpolation matrix
+     * @param [in] field with missing values information
+     * @return if W was modified
+     */
+    virtual bool treatment( Matrix& W, const Field& field ) const = 0;
 
     /// Check if value represents a  missing value
     virtual bool missingValue( const double& ) const;
 
 protected:
-    /// Missing value indicator
+    /**
+     * @brief Missing values indicator
+     */
     std::unique_ptr<Compare> missingValue_;
 };
 
